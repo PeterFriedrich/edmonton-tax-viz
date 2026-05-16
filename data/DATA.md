@@ -6,9 +6,11 @@ Reference for raw input files. Update this file when you discover column name qu
 
 ## 1. Property Assessment Data
 
-**File:** `data/raw/property_assessment.csv`
-**Source:** [Edmonton Open Data](https://data.edmonton.ca/City-Administration/Property-Assessment-Data-Current-Calendar-Year-/q7d6-ambg)
-**Format:** CSV, ~448,000 rows, updated annually
+**File:** `data/raw/Property_Assessment_Data__Current_Calendar_Year_.csv` *(filename as delivered by the API)*
+**Download:** `scripts/download_data.py`
+**Source:** [Edmonton Open Data](https://data.edmonton.ca/City-Administration/Property-Assessment-Data-Current-Calendar-Year-/q7d6-ambg) — dataset ID `q7d6-ambg`
+**API URL:** `https://data.edmonton.ca/api/views/q7d6-ambg/rows.csv?accessType=DOWNLOAD`
+**Format:** CSV, ~448,000 rows, updated annually (last confirmed: 2026-05-11)
 **Licence:** Open Government Licence – City of Edmonton
 
 ### Expected Columns
