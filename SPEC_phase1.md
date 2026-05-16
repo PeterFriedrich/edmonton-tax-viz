@@ -55,6 +55,10 @@ No database, no web framework, no GIS software required.
 - Per-ward or per-councillor breakdowns
 - Any web output
 
+## Deployment Horizon
+
+Phase 1 is intentionally local and static. The project will eventually move to a public web deployment with an interactive map. Phase 1 should not optimise for this, but should avoid patterns that create unnecessary rework — hardcoded paths, unstructured logging, and tightly coupled rendering are the main things to avoid.
+
 ---
 
 ## Acceptance Criteria

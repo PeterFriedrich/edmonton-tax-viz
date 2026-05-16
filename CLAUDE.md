@@ -27,5 +27,12 @@ See `CONTRIBUTING.md` for the full contributor guide including AI-assisted workf
 - No silent data drops — flag unmatched or missing records explicitly
 - Always set CRS explicitly before any area calculation
 
+## Deployment Horizon
+
+Phase 1 is local and static (script → PNG). The end goal is a public web deployment with an interactive map. Keep this in mind when making implementation decisions — prefer patterns that translate cleanly to a web context:
+- Configurable paths over hardcoded ones
+- Structured output over print statements for logging
+- Clean module boundaries so rendering can be swapped out later
+
 ## Data
 Raw data files are not committed. See `data/DATA.md` for what to expect and where to get it.
