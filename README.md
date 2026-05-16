@@ -60,8 +60,16 @@ Early stage. Research phase complete, moving to data acquisition and analysis.
 
 See [`/research`](/research) for background findings and data source inventory.
 
+## Technical Docs
+
+- [`CONTRIBUTING.md`](CONTRIBUTING.md) — dev pipeline, setup, coding conventions, AI-assisted workflow
+- [`ARCHITECTURE.md`](ARCHITECTURE.md) — module contracts and data flow
+- [`SPEC_phase1.md`](SPEC_phase1.md) — Phase 1 deliverable and acceptance criteria
+
 ## Contributing / Contact
 
 This is an independent civic project. If you work in urban planning, municipal finance, or GIS and want to collaborate — or if you have access to data that could help — get in touch.
+
+For code contributions, see [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
 Aligned with the work of [Strong Towns YEG](https://strongtownsyeg.ca/).
