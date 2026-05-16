@@ -59,6 +59,8 @@ No database, no web framework, no GIS software required.
 
 Phase 1 is intentionally local and static. The project will eventually move to a public web deployment with an interactive map. Phase 1 should not optimise for this, but should avoid patterns that create unnecessary rework — hardcoded paths, unstructured logging, and tightly coupled rendering are the main things to avoid.
 
+**Planned Phase 2 stack:** Python pipeline outputs a GeoJSON → Kepler.gl renders it as an interactive 3D hex bin map → exported as a self-contained HTML file hosted on GitHub Pages. This is intentionally lightweight: no server, no backend, free hosting, scales via CDN. If custom UI controls are ever needed (sliders, comparison tools, etc.), migrate to deck.gl + React at that point — not before.
+
 ---
 
 ## Acceptance Criteria

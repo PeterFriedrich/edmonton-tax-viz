@@ -209,3 +209,17 @@ Tests use `pytest`. All fixtures are synthetic — small inline DataFrames/GeoDa
 - Parcel-level granularity
 - Per-ward breakdowns
 - Any database or GIS software dependency
+
+## Deployment Horizon
+
+Phase 1 outputs a static PNG. The planned Phase 2 stack:
+
+- Phase 1 pipeline outputs a **GeoJSON** (in addition to the PNG) — this is the handoff artifact
+- **Kepler.gl** renders the GeoJSON as an interactive 3D hex bin map
+- Exported as a **self-contained HTML file** hosted on **GitHub Pages** — no server, no backend
+- If custom UI controls are needed (sliders, comparison tools), migrate to **deck.gl + React** at that point — not before
+
+Phase 1 decisions to keep Phase 2 viable:
+- No hardcoded paths
+- Clean module boundary between analysis and rendering (`plot_choropleth.py` does not contain analysis logic)
+- GeoJSON output from `join_and_calculate.py` should be straightforward to add alongside the PNG
