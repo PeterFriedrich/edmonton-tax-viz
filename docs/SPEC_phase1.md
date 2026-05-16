@@ -1,4 +1,18 @@
-# Phase 1 Spec: Edmonton Revenue Per Acre — Static Choropleth
+# Edmonton Revenue Per Acre — Spec
+
+## Roadmap
+
+| Phase | Output | Stack |
+|-------|--------|-------|
+| **1** | Static choropleth image | Python (pandas, geopandas, matplotlib) |
+| **2** | Interactive 3D hex map, hosted on GitHub Pages | Python pipeline → GeoJSON → Kepler.gl → static HTML |
+| **3** | Custom interactive map with UI controls | Python pipeline → GeoJSON → deck.gl + React |
+
+Each phase reuses the Python pipeline unchanged. Only the rendering layer changes. Phase 3 only if Phase 2 proves insufficient.
+
+---
+
+# Phase 1 Spec: Static Choropleth
 
 ## Goal
 

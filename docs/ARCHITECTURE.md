@@ -212,14 +212,17 @@ Tests use `pytest`. All fixtures are synthetic — small inline DataFrames/GeoDa
 
 ## Deployment Horizon
 
-Phase 1 outputs a static PNG. The planned Phase 2 stack:
+The Python pipeline is stable across all phases — only the rendering layer changes.
 
-- Phase 1 pipeline outputs a **GeoJSON** (in addition to the PNG) — this is the handoff artifact
-- **Kepler.gl** renders the GeoJSON as an interactive 3D hex bin map
-- Exported as a **self-contained HTML file** hosted on **GitHub Pages** — no server, no backend
-- If custom UI controls are needed (sliders, comparison tools), migrate to **deck.gl + React** at that point — not before
+| Phase | Rendering | Hosting |
+|-------|-----------|---------|
+| 1 | matplotlib → static PNG | local |
+| 2 | Kepler.gl → self-contained HTML | GitHub Pages |
+| 3 | deck.gl + React | TBD — only if Phase 2 insufficient |
 
-Phase 1 decisions to keep Phase 2 viable:
+**Phase 2 handoff:** `join_and_calculate.py` outputs a GeoJSON alongside the PNG. Kepler.gl consumes it directly — no changes to upstream modules needed.
+
+Phase 1 decisions that keep this viable:
 - No hardcoded paths
-- Clean module boundary between analysis and rendering (`plot_choropleth.py` does not contain analysis logic)
-- GeoJSON output from `join_and_calculate.py` should be straightforward to add alongside the PNG
+- No analysis logic in `plot_choropleth.py` — rendering only, swappable
+- Clean module boundaries so GeoJSON export can be added to `join_and_calculate.py` without touching other modules
