@@ -12,8 +12,8 @@ Work follows this sequence. Do not skip steps — each one informs the next.
 
 | Step | Artifact | Purpose |
 |------|----------|---------|
-| 1. Spec | `SPEC_phase1.md` | Defines what to build, inputs/outputs, and acceptance criteria |
-| 2. Architecture | `ARCHITECTURE.md` | Defines module contracts, data flow, and key technical decisions |
+| 1. Spec | `docs/SPEC_phase1.md` | Defines what to build, inputs/outputs, and acceptance criteria |
+| 2. Architecture | `docs/ARCHITECTURE.md` | Defines module contracts, data flow, and key technical decisions |
 | 3. Implementation | `src/*.py` | One module at a time, in data flow order |
 | 4. Tests | `tests/*.py` | Per module, using synthetic data only |
 | 5. Security audit | `docs/security-audit.md` | Post-implementation review checklist |

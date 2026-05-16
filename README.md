@@ -63,8 +63,8 @@ See [`/research`](/research) for background findings and data source inventory.
 ## Technical Docs
 
 - [`CONTRIBUTING.md`](CONTRIBUTING.md) — dev pipeline, setup, coding conventions, AI-assisted workflow
-- [`ARCHITECTURE.md`](ARCHITECTURE.md) — module contracts and data flow
-- [`SPEC_phase1.md`](SPEC_phase1.md) — Phase 1 deliverable and acceptance criteria
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — module contracts and data flow
+- [`docs/SPEC_phase1.md`](docs/SPEC_phase1.md) — Phase 1 deliverable and acceptance criteria
 
 ## Contributing / Contact
 
