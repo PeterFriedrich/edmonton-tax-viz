@@ -27,15 +27,13 @@ ENV/
 .ipynb_checkpoints/
 *.ipynb
 
-# Data files
-*.csv
-*.xlsx
-*.xls
-*.parquet
-*.json
-*.geojson
-*.zip
-*.tar.gz
+# Data files (scoped to raw inputs and outputs — track dirs via .gitkeep)
+data/raw/*
+!data/raw/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+output/*
+!output/.gitkeep
 
 # Environment variables
 .env
