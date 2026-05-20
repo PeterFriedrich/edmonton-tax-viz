@@ -101,6 +101,9 @@ Phase 1 is intentionally local and static. The project will eventually move to a
 │   ├── load_boundaries.py
 │   ├── join_and_calculate.py
 │   └── plot_choropleth.py
+├── notebooks/
+│   ├── exploration/          # scratch — understanding the data
+│   └── analysis/             # feature work, model experiments
 ├── output/                   # Final map image(s)
 ├── main.py                   # Entrypoint — calls steps in order
 ├── requirements.txt

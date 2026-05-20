@@ -202,6 +202,18 @@ Tests use `pytest`. All fixtures are synthetic — small inline DataFrames/GeoDa
 
 ---
 
+## Notebooks
+
+```
+notebooks/
+├── exploration/    # scratch — understanding the data
+└── analysis/       # deeper dives, feature work, model experiments
+```
+
+Notebooks are for exploration and visualization only. They call `src/` modules rather than reimplementing logic. Notebook outputs (cell results, plots) are not committed — use `nbstripout` or strip manually before committing.
+
+---
+
 ## What's Not Here (Phase 1 Scope)
 
 - Cost/expenditure side
