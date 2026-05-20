@@ -3,24 +3,11 @@
 ## Project
 Edmonton revenue-per-acre fiscal analysis. Python-only, no GIS software.
 
-## Development Pipeline
-
-Work follows this sequence — do not skip steps:
-
-1. **Spec** (`docs/SPEC_phase1.md`) — what to build and why
-2. **Architecture** (`docs/ARCHITECTURE.md`) — module contracts, data flow, key decisions
-3. **Implementation** — one module at a time, in data flow order
-4. **Tests** — per module in `tests/`, using synthetic data only
-5. **Security audit** (`docs/security-audit.md`) — post-implementation review checklist
-
-See `CONTRIBUTING.md` for the full contributor guide including AI-assisted workflow notes.
-
 ## Key Files
 - `docs/SPEC_phase1.md` — what we're building and why
 - `docs/ARCHITECTURE.md` — module interfaces, data flow, testing approach. **Read before writing any module.**
-- `CONTRIBUTING.md` — full dev pipeline, AI workflow notes, project structure
-- `docs/security-audit.md` — post-implementation security checklist and audit prompts
 - `data/DATA.md` — data source details, column names, known quirks. **Read before touching any data files. Update if you discover anything new.**
+- `session-summary/` — session handoff notes. Read the latest before starting work.
 
 ## Code Style
 - Keep processing steps as separate, independently runnable modules in `src/`
@@ -28,11 +15,6 @@ See `CONTRIBUTING.md` for the full contributor guide including AI-assisted workf
 - Always set CRS explicitly before any area calculation
 
 ## Deployment Horizon
-
-Phase 1 is local and static (script → PNG). The end goal is a public web deployment with an interactive map. Keep this in mind when making implementation decisions — prefer patterns that translate cleanly to a web context:
 - Configurable paths over hardcoded ones
 - Structured output over print statements for logging
 - Clean module boundaries so rendering can be swapped out later
-
-## Data
-Raw data files are not committed. See `data/DATA.md` for what to expect and where to get it.
