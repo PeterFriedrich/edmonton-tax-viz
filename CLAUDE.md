@@ -9,6 +9,9 @@ Edmonton revenue-per-acre fiscal analysis. Python-only, no GIS software.
 - `data/DATA.md` — data source details, column names, known quirks. **Read before touching any data files. Update if you discover anything new.**
 - `session-summary/` — session handoff notes. Read the latest before starting work.
 
+## Session Management
+- Always run `/handoff` before `/clear` — never wipe context without a written record in `session-summary/`
+
 ## Code Style
 - Keep processing steps as separate, independently runnable modules in `src/`
 - No silent data drops — flag unmatched or missing records explicitly
