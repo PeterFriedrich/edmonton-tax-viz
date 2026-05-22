@@ -13,23 +13,40 @@ Reference for raw input files. Update this file when you discover column name qu
 **Format:** CSV, ~448,000 rows, updated annually (last confirmed: 2026-05-11)
 **Licence:** Open Government Licence – City of Edmonton
 
-### Expected Columns
-
-To be confirmed on first load. Known relevant fields based on dataset documentation:
+### Columns (confirmed 2026-05-22)
 
 | Column | Type | Notes |
 |--------|------|-------|
-| `neighbourhood_name` | str | May have whitespace or casing inconsistencies — normalize on load |
-| `assessed_value` | float | Some rows may be null or zero — flag and drop |
-| *(tax-exempt flag)* | ? | Column name TBC — flag these rows, do not silently drop |
+| `Account Number` | int64 | Unique property identifier |
+| `Suite` | float64 | Mixed types — use `low_memory=False` on load |
+| `House Number` | int64 | |
+| `Street Name` | str | |
+| `Neighbourhood ID` | int64 | Numeric neighbourhood key |
+| `Neighbourhood` | str | Normalize (strip + uppercase) for joining |
+| `Ward` | str | |
+| `Assessed Value` | int64 | Main metric — 46 zero-value rows, 0 nulls (confirmed) |
+| `Tax Class` | str | Values: Residential, Non Residential, Other Residential, Farmland |
+| `Garage` | str | |
+| `Assessment Class 1` | str | See values below — no explicit "exempt" flag |
+| `Assessment Class 2` | float64 | |
+| `Assessment Class 3` | float64 | |
+| `Assessment Class % 1` | int64 | |
+| `Assessment Class % 2` | float64 | |
+| `Assessment Class % 3` | float64 | |
+| `Latitude` | float64 | |
+| `Longitude` | float64 | |
+| `Point Location` | str | |
 
-**Update this table with actual column names after first load.**
+**Assessment Class 1 values:** RESIDENTIAL (411,563), COMMERCIAL (23,054), OTHER RESIDENTIAL (4,356), FARMLAND (509), MA DERELICT RESIDENTIAL (284), NONRES MUNICIPAL/RES EDUCATION (3)
+
+**Tax-exempt flag:** No explicit exempt boolean. Best proxy is `Assessment Class 1 == 'NONRES MUNICIPAL/RES EDUCATION'` (3 rows). Flag these on load as `is_exempt`.
 
 ### Known Quirks
 
 - Condo units: multiple rows share one land parcel — this is expected and correct for this analysis
-- Tax-exempt properties (government, nonprofits) are included in the raw data — flag on load
-- *(Add quirks here as discovered)*
+- `Suite` column has mixed types — always load with `low_memory=False`
+- 46 rows have `Assessed Value == 0` — drop and flag count on load
+- No explicit tax-exempt column; proxy is `Assessment Class 1 == 'NONRES MUNICIPAL/RES EDUCATION'`
 
 ---
 
