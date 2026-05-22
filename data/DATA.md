@@ -50,7 +50,30 @@ Reference for raw input files. Update this file when you discover column name qu
 
 ---
 
-## 2. Neighbourhood Boundaries
+## 2. Richer Assessment Dataset (Lot Size available) — ⚠️ Investigate
+
+A second Edmonton Open Data dataset (source TBC — seen via data table view 2026-05-22) has different columns than our downloaded CSV:
+
+`Address 1, Address 2, Assessed Value, Account Number, Year Built, Lot Size, Class, Neighbourhood, Ward, Zoning, Legal Description`
+
+**This does not match our current CSV** (`q7d6-ambg`), which has no `Lot Size`, `Year Built`, or `Zoning`. This is likely a different dataset — needs to be located and downloaded.
+
+**Why this matters:** `Lot Size` per parcel would let us compute value-per-acre by dividing `Assessed Value / Lot Size` directly at the parcel level, then aggregate by neighbourhood. This would bypass the boundary file join entirely for the $/acre calculation.
+
+**Notes on Lot Size:**
+- Units appear to be sq ft based on sample values (e.g. 648,512 sq ft ≈ 14.9 acres — plausible for a large parcel)
+- `Neighbourhood` confirmed ALL CAPS — consistent with our current dataset, normalization strategy unchanged
+- `Class` column maps roughly to our `Tax Class` / `Assessment Class 1` — simpler
+
+**Before changing the pipeline architecture, confirm:**
+1. What is the dataset ID / URL for this richer dataset?
+2. Does it have the same row count (~440k)?
+3. Are lot sizes present for all rows, or only some?
+4. Do condo units (multiple units, one parcel) share a single lot size row, or are they duplicated?
+
+---
+
+## 3. Neighbourhood Boundaries
 
 **File:** `data/raw/neighbourhoods.geojson` *(or `.shp` — confirm format on download)*
 **Source:** [Edmonton ArcGIS](https://www.arcgis.com/home/item.html?id=558aec1b4d504f809cbbfa774c611230)

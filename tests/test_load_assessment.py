@@ -1,0 +1,95 @@
+import io
+import sys
+
+import pandas as pd
+import pytest
+
+sys.path.insert(0, "src")
+from load_assessment import load_assessment
+
+
+def _write_csv(rows: list[dict]) -> str:
+    df = pd.DataFrame(rows)
+    return df.to_csv(index=False)
+
+
+def _base_row(**kwargs) -> dict:
+    defaults = {
+        "Account Number": 1,
+        "Suite": None,
+        "House Number": 100,
+        "Street Name": "Main St",
+        "Neighbourhood ID": 1,
+        "Neighbourhood": "DOWNTOWN",
+        "Ward": "A",
+        "Assessed Value": 500000,
+        "Tax Class": "Residential",
+        "Garage": "N",
+        "Assessment Class 1": "RESIDENTIAL",
+        "Assessment Class 2": None,
+        "Assessment Class 3": None,
+        "Assessment Class % 1": 100,
+        "Assessment Class % 2": None,
+        "Assessment Class % 3": None,
+        "Latitude": 53.5,
+        "Longitude": -113.5,
+        "Point Location": "POINT (-113.5 53.5)",
+    }
+    return {**defaults, **kwargs}
+
+
+def test_normalizes_neighbourhood_name(tmp_path):
+    csv = tmp_path / "assess.csv"
+    csv.write_text(_write_csv([
+        _base_row(Neighbourhood="  downtown  "),
+        _base_row(Neighbourhood="West End"),
+    ]))
+    df = load_assessment(csv)
+    assert list(df["neighbourhood_name"]) == ["DOWNTOWN", "WEST END"]
+
+
+def test_drops_zero_assessed_value(tmp_path):
+    csv = tmp_path / "assess.csv"
+    csv.write_text(_write_csv([
+        _base_row(**{"Assessed Value": 0}),
+        _base_row(**{"Assessed Value": 100000}),
+    ]))
+    df = load_assessment(csv)
+    assert len(df) == 1
+    assert df.iloc[0]["assessed_value"] == 100000.0
+
+
+def test_drops_null_assessed_value(tmp_path):
+    csv = tmp_path / "assess.csv"
+    csv.write_text(_write_csv([
+        _base_row(**{"Assessed Value": None}),
+        _base_row(**{"Assessed Value": 200000}),
+    ]))
+    df = load_assessment(csv)
+    assert len(df) == 1
+
+
+def test_flags_exempt_rows_not_dropped(tmp_path):
+    csv = tmp_path / "assess.csv"
+    csv.write_text(_write_csv([
+        _base_row(**{"Assessment Class 1": "NONRES MUNICIPAL/RES EDUCATION"}),
+        _base_row(**{"Assessment Class 1": "RESIDENTIAL"}),
+    ]))
+    df = load_assessment(csv)
+    assert len(df) == 2
+    assert df[df["is_exempt"]].shape[0] == 1
+    assert df[~df["is_exempt"]].shape[0] == 1
+
+
+def test_output_columns(tmp_path):
+    csv = tmp_path / "assess.csv"
+    csv.write_text(_write_csv([_base_row()]))
+    df = load_assessment(csv)
+    assert set(df.columns) == {"neighbourhood_name", "assessed_value", "is_exempt"}
+
+
+def test_assessed_value_is_float(tmp_path):
+    csv = tmp_path / "assess.csv"
+    csv.write_text(_write_csv([_base_row()]))
+    df = load_assessment(csv)
+    assert df["assessed_value"].dtype == float
