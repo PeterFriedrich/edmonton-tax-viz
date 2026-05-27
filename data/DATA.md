@@ -50,57 +50,115 @@ Reference for raw input files. Update this file when you discover column name qu
 
 ---
 
-## 2. Richer Assessment Dataset (Lot Size available) — ⚠️ Investigate
+## 2. Property Info Dataset (Lot Size, Zoning, Year Built)
 
-A second Edmonton Open Data dataset (source TBC — seen via data table view 2026-05-22) has different columns than our downloaded CSV:
+**Source:** Edmonton Open Data — dataset ID `dkk9-cj3x` ("Property Info - Current Calendar Year")
+**API URL:** `https://data.edmonton.ca/resource/dkk9-cj3x.json`
+**Format:** SODA JSON API (no bulk CSV download confirmed; query via API)
+**Rows:** 439,769 (confirmed 2026-05-27 — closely matches assessment CSV row count)
+**Licence:** Open Government Licence – City of Edmonton
 
-`Address 1, Address 2, Assessed Value, Account Number, Year Built, Lot Size, Class, Neighbourhood, Ward, Zoning, Legal Description`
+**Reference implementation:** `scripts/edmonton_property_api_stuff.py` — Python equivalents of the JS query functions from the open-property app (github.com/[author]/open-property), reverse-engineered to understand how lot_size is sourced.
 
-**This does not match our current CSV** (`q7d6-ambg`), which has no `Lot Size`, `Year Built`, or `Zoning`. This is likely a different dataset — needs to be located and downloaded.
+### Columns (confirmed 2026-05-27)
 
-**Why this matters:** `Lot Size` per parcel would let us compute value-per-acre by dividing `Assessed Value / Lot Size` directly at the parcel level, then aggregate by neighbourhood. This would bypass the boundary file join entirely for the $/acre calculation.
+| Column | Type | Notes |
+|--------|------|-------|
+| `account_number` | str | Join key to assessment dataset (`q7d6-ambg`) |
+| `house_number` | str | |
+| `street_name` | str | |
+| `legal_description` | str | |
+| `zoning` | str | e.g. `RSF` — nullable |
+| `lot_size` | str (numeric) | Pre-computed by city; **not geometry-derived**. Units: sq metres (confirmed — sample value 335 m² is a typical residential lot). 2,728 nulls (~0.6%). |
+| `total_gross_area` | str | Building floor area |
+| `year_built` | str | Nullable |
+| `garage` | str | |
+| `neighbourhood_id` | str | Numeric key |
+| `neighbourhood` | str | ALL CAPS — consistent with assessment data |
+| `ward` | str | |
+| `latitude` | str | |
+| `longitude` | str | |
+| `point_location` | GeoJSON Point | Single coordinate per property — **no parcel polygon** |
 
-**Notes on Lot Size:**
-- Units appear to be sq ft based on sample values (e.g. 648,512 sq ft ≈ 14.9 acres — plausible for a large parcel)
-- `Neighbourhood` confirmed ALL CAPS — consistent with our current dataset, normalization strategy unchanged
-- `Class` column maps roughly to our `Tax Class` / `Assessment Class 1` — simpler
+### Key Findings
 
-**Before changing the pipeline architecture, confirm:**
-1. What is the dataset ID / URL for this richer dataset?
-2. Does it have the same row count (~440k)?
-3. Are lot sizes present for all rows, or only some?
-4. Do condo units (multiple units, one parcel) share a single lot size row, or are they duplicated?
+- **`lot_size` is a city-provided field, not computed** — Edmonton supplies it directly via the API. No geometry math needed.
+- **No parcel polygon geometry** — only a centroid point. Edmonton transferred parcel GIS data to AltaLIS in 2021; it's no longer freely available. Polygon boundaries require the neighbourhood boundary file (dataset `65fr-66s6`).
+- **`lot_size` units are sq metres** — divide by 4046.86 to get acres. (~0.6% null — minor, flag on load)
+- **Condo duplication TBC** — need to confirm whether multiple condo units on one parcel share a lot_size row or are duplicated. This matters for parcel-level $/acre aggregation.
+
+### Architecture Decision — Phase 1
+
+For Phase 1 (neighbourhood-level choropleth), two approaches are viable:
+
+| Approach | How | Tradeoff |
+|----------|-----|----------|
+| **A — Boundary join** | Sum `assessed_value` by neighbourhood → join to boundary polygons → divide by polygon area | Requires `load_boundaries.py` + area calc; clean for mapping |
+| **B — Parcel lot_size** | Join `dkk9-cj3x` to `q7d6-ambg` on `account_number` → sum `assessed_value` / sum `lot_size` by neighbourhood | Bypasses boundary file; condo duplication needs investigation first |
+
+**Current plan: Approach A** (boundary join) — boundary file already downloaded, simpler data flow, no condo ambiguity. Revisit Approach B for Phase 2 if parcel-level detail is needed.
 
 ---
 
 ## 3. Neighbourhood Boundaries
 
-**File:** `data/raw/neighbourhoods.geojson` *(or `.shp` — confirm format on download)*
-**Source:** [Edmonton ArcGIS](https://www.arcgis.com/home/item.html?id=558aec1b4d504f809cbbfa774c611230)
-**Format:** GeoJSON or Shapefile
-**CRS:** Likely WGS84 (EPSG:4326) — confirm on load, reproject to EPSG:3400 before area calculation
+**File:** `data/raw/neighbourhoods.geojson`
+**Source:** [Edmonton Open Data](https://data.edmonton.ca/resource/65fr-66s6.geojson) — dataset ID `65fr-66s6` ("City of Edmonton Neighbourhoods")
+**Download URL:** `https://data.edmonton.ca/resource/65fr-66s6.geojson?$limit=50000`
+**Format:** GeoJSON, 2.9 MB
+**Features:** 407 neighbourhoods
+**Geometry type:** MultiPolygon (all features)
+**CRS:** EPSG:4326 (WGS84) — reproject to EPSG:3400 before area calculation
+**Licence:** Open Government Licence – City of Edmonton
 
-### Expected Columns
+### Columns (confirmed 2026-05-27)
 
 | Column | Type | Notes |
 |--------|------|-------|
-| `neighbourhood_name` | str | May differ in casing/spelling from assessment data — normalize on load |
-| `geometry` | geometry | Polygon boundaries |
-
-**Update this table with actual column names after first load.**
+| `neighbourhood_number` | str | Numeric neighbourhood key |
+| `name` | str | ALL CAPS — use as `neighbourhood_name` join key |
+| `descriptive_name` | str | Human-readable name (may differ from `name`) |
+| `civic_ward_name` | str | Ward name |
+| `district` | str | District name |
+| `effective_start_date` | str | |
+| `effective_end_date` | str | |
+| `description` | str | |
+| `geometry` | MultiPolygon | Boundary polygon |
 
 ### Known Quirks
 
-- *(Add quirks here as discovered)*
+- `name` is already ALL CAPS — matches our `neighbourhood_name` normalization convention
+- 407 features vs 408 neighbourhoods in assessment aggregate — expect ~1 unmatched; investigate in `join_and_calculate.py`
 
 ---
 
 ## Name Matching
 
-Neighbourhood names between the two sources may not align exactly. Normalized exact match (strip + uppercase) is attempted first in `join_and_calculate.py`. If unmatched count is high after normalization, a correction dict lives in that module.
+Neighbourhood names between the two sources may not align exactly. Normalized exact match (strip + uppercase) is attempted first in `join_and_calculate.py`. Known mismatches are resolved via a correction dict in that module (keyed on assessment name → boundary name).
 
-**Document confirmed mismatches here as they are found:**
+**Investigation script:** `scripts/investigate_neighbourhood_names.py`
 
-| Assessment name | Boundary name | Resolution |
-|----------------|--------------|------------|
-| *(TBC)* | *(TBC)* | *(TBC)* |
+### Confirmed correction dict (assessment name → boundary name)
+
+```python
+NAME_CORRECTIONS = {
+    "ANTHONY HENDAY SOUTHEAST":        "ANTHONY HENDAY SOUTH EAST",
+    "CHAPPELLE AREA":                   "CHAPPELLE",
+    "EDMONTON RESEARCH AND DEVEL PARK": "EDMONTON RESEARCH AND DEVELOPMENT PARK",
+    "PLACE LA RUE":                     "PLACE LARUE",
+    "RAPPERSWIL":                       "RAPPERSWILL",
+    "RIVER VALLEY WINDEMERE":           "RIVER VALLEY WINDERMERE",
+    "SOUTHEAST (ANNEXED) INDUSTRIAL":   "SOUTHEAST INDUSTRIAL",
+    "WESTBROOK ESTATE":                 "WESTBROOK ESTATES",
+}
+```
+
+### Unresolved (as of 2026-05-27)
+
+| Assessment name | Boundary name | Issue |
+|----------------|--------------|-------|
+| `OLIVER` | *(no match)* | May be listed under a different name in boundaries — check `descriptive_name` |
+| `HERITAGE VALLEY TOWN CENTRE AREA` | *(no match)* | Possibly a new neighbourhood not yet in boundary file |
+| `LEWIS FARMS INDUSTRIAL` | `LEWIS FARMS BUSINESS EMPLOYMENT` | Genuine rename or different polygon? Check `neighbourhood_number` |
+
+These 3 will be dropped from the join and flagged in `join_and_calculate.py` output.
