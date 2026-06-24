@@ -10,7 +10,7 @@ Reference for raw input files. Update this file when you discover column name qu
 **Download:** `scripts/download_data.py`
 **Source:** [Edmonton Open Data](https://data.edmonton.ca/City-Administration/Property-Assessment-Data-Current-Calendar-Year-/q7d6-ambg) — dataset ID `q7d6-ambg`
 **API URL:** `https://data.edmonton.ca/api/views/q7d6-ambg/rows.csv?accessType=DOWNLOAD`
-**Format:** CSV, ~448,000 rows, updated annually (last confirmed: 2026-05-11)
+**Format:** CSV, 439,769 rows, updated annually (last confirmed: 2026-06-24)
 **Licence:** Open Government Licence – City of Edmonton
 
 ### Columns (confirmed 2026-05-22)
@@ -128,13 +128,13 @@ For Phase 1 (neighbourhood-level choropleth), two approaches are viable:
 ### Known Quirks
 
 - `name` is already ALL CAPS — matches our `neighbourhood_name` normalization convention
-- 407 features vs 408 neighbourhoods in assessment aggregate — expect ~1 unmatched; investigate in `join_and_calculate.py`
+- 407 boundary features vs 408 neighbourhoods in assessment aggregate. Actual join outcome: 3 assessment neighbourhoods with no boundary match (OLIVER, HERITAGE VALLEY TOWN CENTRE AREA, LEWIS FARMS INDUSTRIAL) and 2 boundary neighbourhoods with no assessment data (LEWIS FARMS, LEWIS FARMS BUSINESS EMPLOYMENT) → 405 of 407 boundaries rendered. See "Name Matching" below; flagged in `join_and_calculate.py`.
 
 ---
 
 ## Name Matching
 
-Neighbourhood names between the two sources may not align exactly. Normalized exact match (strip + uppercase) is attempted first in `join_and_calculate.py`. Known mismatches are resolved via a correction dict in that module (keyed on assessment name → boundary name).
+Neighbourhood names between the two sources may not align exactly. Normalization (strip + uppercase) and the `NAME_CORRECTIONS` dict (keyed assessment name → boundary name) are applied in `load_assessment.py`, *before* aggregation — applying corrections after aggregation could collapse two summed rows onto one boundary and duplicate it. `join_and_calculate.py` then does a normalized exact match on the already-corrected names and flags whatever remains unmatched.
 
 **Investigation script:** `scripts/investigate_neighbourhood_names.py`
 
