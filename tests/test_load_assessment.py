@@ -6,6 +6,7 @@ import pytest
 
 sys.path.insert(0, "src")
 from load_assessment import load_assessment
+from aggregate_by_neighbourhood import aggregate_by_neighbourhood
 
 
 def _write_csv(rows: list[dict]) -> str:
@@ -79,6 +80,28 @@ def test_flags_exempt_rows_not_dropped(tmp_path):
     assert len(df) == 2
     assert df[df["is_exempt"]].shape[0] == 1
     assert df[~df["is_exempt"]].shape[0] == 1
+
+
+def test_applies_name_correction(tmp_path):
+    csv = tmp_path / "assess.csv"
+    csv.write_text(_write_csv([_base_row(Neighbourhood="Chappelle Area")]))
+    df = load_assessment(csv)
+    assert df.iloc[0]["neighbourhood_name"] == "CHAPPELLE"
+
+
+def test_corrected_names_aggregate_together(tmp_path):
+    # Regression: "CHAPPELLE AREA" and "CHAPPELLE" must collapse to one summed
+    # row. Correcting after aggregation would leave two rows and duplicate the
+    # boundary at the join. Corrections run before aggregation to prevent this.
+    csv = tmp_path / "assess.csv"
+    csv.write_text(_write_csv([
+        _base_row(Neighbourhood="Chappelle Area", **{"Assessed Value": 300000}),
+        _base_row(Neighbourhood="Chappelle", **{"Assessed Value": 200000}),
+    ]))
+    agg = aggregate_by_neighbourhood(load_assessment(csv))
+    chappelle = agg[agg["neighbourhood_name"] == "CHAPPELLE"]
+    assert len(chappelle) == 1
+    assert chappelle.iloc[0]["total_assessed_value"] == pytest.approx(500000.0)
 
 
 def test_output_columns(tmp_path):

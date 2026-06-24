@@ -53,6 +53,7 @@ Raw CSV (assessment)         Raw GeoJSON (boundaries)
 - Load CSV, select relevant columns
 - Drop rows where `assessed_value` is null or zero (flag count to stdout)
 - Normalize `neighbourhood_name` for joining (strip whitespace, uppercase)
+- Apply `NAME_CORRECTIONS` (assessment name → boundary name) *before* aggregation, so names that collapse to one boundary are summed rather than duplicated at the join
 - Flag tax-exempt properties (do not silently drop — print count and examples)
 
 **Does not:** aggregate, join, or touch geometry
@@ -116,7 +117,7 @@ Raw CSV (assessment)         Raw GeoJSON (boundaries)
 - Calculate `value_per_acre = total_assessed_value / area_acres`
 - Guard against division by zero (flag, do not crash)
 
-**Matching note:** Neighbourhood names between the two sources may not align exactly. A normalized exact match is attempted first. If unmatched count is high, a fuzzy match lookup table may be needed — that lives here as a correction dict, not in upstream modules.
+**Matching note:** Neighbourhood names between the two sources may not align exactly. Normalization (strip + uppercase) and the `NAME_CORRECTIONS` lookup are applied upstream in `load_assessment.py`, before aggregation — applying corrections after aggregation risks collapsing two summed rows onto one boundary and duplicating it. This module attempts a normalized exact match on the already-corrected names and flags whatever remains unmatched.
 
 ---
 

@@ -5,28 +5,19 @@ import pandas as pd
 
 logger = logging.getLogger(__name__)
 
-# Assessment name → boundary name. See data/DATA.md "Name Matching" for the
-# three unresolved cases (OLIVER, HERITAGE VALLEY TOWN CENTRE AREA,
-# LEWIS FARMS INDUSTRIAL) that will be flagged as unmatched.
-NAME_CORRECTIONS = {
-    "ANTHONY HENDAY SOUTHEAST":        "ANTHONY HENDAY SOUTH EAST",
-    "CHAPPELLE AREA":                   "CHAPPELLE",
-    "EDMONTON RESEARCH AND DEVEL PARK": "EDMONTON RESEARCH AND DEVELOPMENT PARK",
-    "PLACE LA RUE":                     "PLACE LARUE",
-    "RAPPERSWIL":                       "RAPPERSWILL",
-    "RIVER VALLEY WINDEMERE":           "RIVER VALLEY WINDERMERE",
-    "SOUTHEAST (ANNEXED) INDUSTRIAL":   "SOUTHEAST INDUSTRIAL",
-    "WESTBROOK ESTATE":                 "WESTBROOK ESTATES",
-}
-
 
 def join_and_calculate(
     assessment: pd.DataFrame,
     boundaries: gpd.GeoDataFrame,
 ) -> gpd.GeoDataFrame:
-    """Left join boundaries → assessment, flag unmatched rows, compute value_per_acre."""
-    agg = assessment.copy()
-    agg["neighbourhood_name"] = agg["neighbourhood_name"].replace(NAME_CORRECTIONS)
+    """Left join boundaries → assessment, flag unmatched rows, compute value_per_acre.
+
+    Assessment names are expected to be corrected and aggregated already
+    (NAME_CORRECTIONS is applied upstream in load_assessment.py). The three
+    unresolved cases (OLIVER, HERITAGE VALLEY TOWN CENTRE AREA,
+    LEWIS FARMS INDUSTRIAL) surface here as unmatched warnings.
+    """
+    agg = assessment
 
     boundary_names = set(boundaries["neighbourhood_name"])
     unmatched_assessment = sorted(set(agg["neighbourhood_name"]) - boundary_names)

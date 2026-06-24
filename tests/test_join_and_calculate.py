@@ -61,14 +61,6 @@ def test_zero_area_does_not_crash():
     assert pd.isna(result.iloc[0]["value_per_acre"])
 
 
-def test_name_correction_applied():
-    result = join_and_calculate(
-        _assessment([{"neighbourhood_name": "RAPPERSWIL", "total_assessed_value": 500_000.0}]),
-        _boundaries([{"neighbourhood_name": "RAPPERSWILL", "area_acres": 100.0}]),
-    )
-    assert result.iloc[0]["value_per_acre"] == pytest.approx(5_000.0)
-
-
 def test_unmatched_assessment_flagged(caplog):
     with caplog.at_level("WARNING", logger="join_and_calculate"):
         join_and_calculate(
