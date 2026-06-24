@@ -230,10 +230,16 @@ The Python pipeline is stable across all phases — only the rendering layer cha
 | Phase | Rendering | Hosting |
 |-------|-----------|---------|
 | 1 | matplotlib → static PNG | local |
-| 2 | Kepler.gl → self-contained HTML | GitHub Pages |
+| 2 | MapLibre GL JS + deck.gl → static HTML | GitHub Pages |
 | 3 | deck.gl + React | TBD — only if Phase 2 insufficient |
 
-**Phase 2 handoff:** `join_and_calculate.py` outputs a GeoJSON alongside the PNG. Kepler.gl consumes it directly — no changes to upstream modules needed.
+**Phase 2 design decisions:**
+- **MapLibre + deck.gl directly** — Kepler.gl is just a UI wrapper around deck.gl; going direct gives full control over camera, layer styling, and interaction without the constraints
+- **Extruded PolygonLayer** (not H3 hex bins) — neighbourhood boundary shapes are meaningful to Edmonton readers; height = `value_per_acre`
+- **No basemap for v1** — neighbourhood polygons on a dark background are self-describing. Add CARTO Dark Matter free tiles if geographic context is needed; no R2 or Protomaps required at this traffic level
+- **No scheduled preprocessor** — assessment data updates once a year. Pipeline runs locally (or via oracle server cron), outputs updated GeoJSON, commit to repo. GitHub Pages picks it up automatically.
+
+**Phase 2 handoff:** `join_and_calculate.py` exports a slim GeoJSON alongside the PNG — only `neighbourhood_name`, `value_per_acre`, and `geometry`. No changes to upstream modules needed.
 
 Phase 1 decisions that keep this viable:
 - No hardcoded paths
