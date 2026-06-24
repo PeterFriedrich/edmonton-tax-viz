@@ -153,12 +153,17 @@ NAME_CORRECTIONS = {
 }
 ```
 
-### Unresolved (as of 2026-05-27)
+### Resolved
+
+| Assessment name | Boundary name | Resolution |
+|----------------|--------------|------------|
+| `OLIVER` | `WÎHKWÊNTÔWIN` (#1151) | 2024 rename. Assessment data has already migrated: 12,234 rows / $4.12B are tagged `WÎHKWÊNTÔWIN` (matches the boundary directly), with a single straggler row still tagged `OLIVER` ($500 total). The unmatched warning is real but immaterial — no correction-dict entry added, since mapping it would shift $500 onto a $4.12B neighbourhood. |
+
+### Unresolved (as of 2026-06-24)
 
 | Assessment name | Boundary name | Issue |
 |----------------|--------------|-------|
-| `OLIVER` | *(no match)* | May be listed under a different name in boundaries — check `descriptive_name` |
 | `HERITAGE VALLEY TOWN CENTRE AREA` | *(no match)* | Possibly a new neighbourhood not yet in boundary file |
 | `LEWIS FARMS INDUSTRIAL` | `LEWIS FARMS BUSINESS EMPLOYMENT` | Genuine rename or different polygon? Check `neighbourhood_number` |
 
-These 3 will be dropped from the join and flagged in `join_and_calculate.py` output.
+These 2 are dropped from the join and flagged in `join_and_calculate.py` output. The lone `OLIVER` straggler is also flagged but is immaterial (see Resolved above).
