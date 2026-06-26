@@ -29,6 +29,39 @@ Visual theming and accessibility decisions for the interactive map. Phase 1
 
 ---
 
+## Interaction & navigation
+
+The map opens tilted (pitch 52°) and relies on rotation to read the 3D
+extrusion, so camera control is core to the UX — not a nicety.
+
+**Current gestures** (MapLibre defaults — nothing in `index.html` customizes the
+interaction handlers):
+
+| Action | Desktop | Mobile / touch |
+| --- | --- | --- |
+| Spin / rotate (bearing) | Ctrl + drag | two-finger twist |
+| Tilt (pitch) | Ctrl + drag (vertical) | two-finger drag up/down |
+| Zoom | scroll | pinch |
+| Pan | drag | one-finger drag |
+
+**Gaps (as of 2026-06-26):**
+- **No reset / compass control.** No `NavigationControl` is added, so there's no
+  affordance to snap bearing back to north or reset pitch. A user who rotates into
+  an awkward angle — easy to do on a phone — has no obvious way back.
+- **Rotation is undiscoverable.** Both the desktop modifier (Ctrl) and the mobile
+  two-finger twist are hidden; first-time users often don't realize the view spins
+  at all, and the twist competes with pinch-zoom.
+
+**Proposed fix:** add the standard control —
+```js
+map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }));
+```
+Gives a compass (tap to reset bearing), zoom buttons, and a pitch indicator. The
+compass also doubles as a visible hint that the map rotates. Cheap, idiomatic, and
+helps desktop and mobile alike. Not yet added — flagged here for a UX pass.
+
+---
+
 ## Planned (later)
 
 ### Light mode
