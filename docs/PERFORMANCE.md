@@ -33,9 +33,11 @@ Chromium runs under **software WebGL (`--use-angle=swiftshader`)**.
 - **Not good for:** absolute FPS numbers — swiftshader is far slower than any
   real GPU, and a heavy config can stall the harness itself (see findings).
 
-Scripts live in the session scratchpad (not committed): `shot.js` (screenshot +
-console/WebGL error capture) and `profile.js` (frame-time stats under a driven
-drag). Re-create as needed; they point at a local `python -m http.server` in `web/`.
+The harness lives in **`tools/profiling/`** (see its `README.md` for setup +
+usage): `shot.js` (screenshot + console/WebGL error capture), `shot2.js`
+(screenshot an arbitrary URL), and `profile.js` (frame-time stats under a driven
+drag). One-time setup is `npm install && npx playwright install chromium`; the
+scripts point at a local `python -m http.server 8777` served from `web/`.
 
 ### 2. Real GPU (the authoritative measurement)
 
