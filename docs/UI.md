@@ -60,6 +60,13 @@ Gives a compass (tap to reset bearing), zoom buttons, and a pitch indicator. The
 compass also doubles as a visible hint that the map rotates. Cheap, idiomatic, and
 helps desktop and mobile alike. Not yet added — flagged here for a UX pass.
 
+**Wishlist (later — to design as a UX pass):**
+- **Recenter / reset-view button.** Distinct from the compass: snaps the *whole*
+  camera back to the default `CENTER` / zoom / pitch / bearing in one tap, not just
+  bearing-to-north. Needs a custom control (store the initial camera, `flyTo` it).
+- Other camera/UX niceties to gather here as they come up (e.g. preset viewpoints,
+  a "what am I looking at" intro hint, keyboard shortcuts list).
+
 ---
 
 ## Planned (later)
