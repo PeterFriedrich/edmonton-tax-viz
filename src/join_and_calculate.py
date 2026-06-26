@@ -57,3 +57,44 @@ def join_and_calculate(
     )
 
     return joined[["neighbourhood_name", "total_assessed_value", "area_acres", "value_per_acre", "geometry"]]
+
+
+# Columns the web client actually consumes. Everything else is dropped to keep
+# the GeoJSON the browser downloads small.
+SLIM_COLUMNS = ["neighbourhood_name", "value_per_acre", "geometry"]
+
+
+def export_geojson(
+    result: gpd.GeoDataFrame,
+    output_path: str,
+    crs: str = "EPSG:4326",
+) -> gpd.GeoDataFrame:
+    """Write a slim GeoJSON of the join result for the Phase 2 web map.
+
+    Keeps only the columns the deck.gl layer needs (SLIM_COLUMNS) and reprojects
+    to ``crs`` (default EPSG:4326 — MapLibre/deck.gl expect lon/lat geometry; the
+    join result is in projected EPSG:3400 for area math). Rows with no
+    value_per_acre cannot be rendered (null elevation), so they are dropped — but
+    the count is logged, never silently discarded.
+
+    Returns the slim GeoDataFrame that was written.
+    """
+    slim = result[SLIM_COLUMNS]
+
+    missing = slim["value_per_acre"].isna()
+    if missing.any():
+        logger.warning(
+            "Dropping %d neighbourhood(s) with no value_per_acre from GeoJSON export:\n  %s",
+            missing.sum(),
+            "\n  ".join(sorted(slim[missing]["neighbourhood_name"])),
+        )
+    slim = slim[~missing]
+
+    if slim.crs is None:
+        raise ValueError("result GeoDataFrame has no CRS set; cannot reproject for export")
+    slim = slim.to_crs(crs)
+
+    slim.to_file(output_path, driver="GeoJSON")
+    logger.info("Wrote slim GeoJSON (%d features, %s) to %s", len(slim), crs, output_path)
+
+    return slim
