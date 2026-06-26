@@ -74,6 +74,7 @@ def export_geojson(
     output_path: str,
     crs: str = "EPSG:4326",
     setback_m: float = 0.0,
+    simplify_tolerance_m: float = 0.0,
 ) -> gpd.GeoDataFrame:
     """Write a slim GeoJSON of the join result for the Phase 2 web map.
 
@@ -85,10 +86,19 @@ def export_geojson(
 
     ``setback_m`` (metres, default 0 = off) shrinks each polygon inward by a
     negative buffer so the extruded columns don't touch — a purely cosmetic
-    "city blocks" look. This is DISPLAY geometry only; value_per_acre is computed
-    from the true area upstream and is untouched. Thin sliver neighbourhoods can
-    collapse to empty/invalid under the buffer; those fall back to their original
-    footprint and the count is logged (no silent drops).
+    "city blocks" look. Thin sliver neighbourhoods can collapse to empty/invalid
+    under the buffer; those fall back to their original footprint, count logged.
+
+    ``simplify_tolerance_m`` (metres, default 0 = off) runs a topology-preserving
+    Douglas-Peucker simplification to cut vertex count — the dominant render-cost
+    lever on the iGPU baseline audience (see docs/PERFORMANCE.md). Applied AFTER
+    the setback so the final pass also collapses the rounded-corner vertices the
+    negative buffer adds, keeping the served file small (the extra export-time
+    cost of buffering full-resolution geometry is a once-a-year non-issue).
+
+    Both ``simplify_tolerance_m`` and ``setback_m`` are DISPLAY geometry only;
+    value_per_acre is computed from the true area upstream and is untouched.
+    Neither silently drops or alters a row without logging it.
 
     Returns the slim GeoDataFrame that was written.
     """
@@ -109,12 +119,15 @@ def export_geojson(
     if setback_m:
         slim = _apply_setback(slim, setback_m)
 
+    if simplify_tolerance_m:
+        slim = _apply_simplify(slim, simplify_tolerance_m)
+
     slim = slim.to_crs(crs)
 
     slim.to_file(output_path, driver="GeoJSON")
     logger.info(
-        "Wrote slim GeoJSON (%d features, %s, setback=%sm) to %s",
-        len(slim), crs, setback_m, output_path,
+        "Wrote slim GeoJSON (%d features, %s, simplify=%sm, setback=%sm) to %s",
+        len(slim), crs, simplify_tolerance_m, setback_m, output_path,
     )
 
     return slim
@@ -139,4 +152,46 @@ def _apply_setback(slim: gpd.GeoDataFrame, setback_m: float) -> gpd.GeoDataFrame
         )
 
     metric = metric.set_geometry(shrunk.where(~collapsed, metric.geometry))
+    return metric
+
+
+def _count_vertices(geom) -> int:
+    """Total coordinate count of a (Multi)Polygon, exterior + interiors."""
+    if geom is None or geom.is_empty:
+        return 0
+    if geom.geom_type == "Polygon":
+        return len(geom.exterior.coords) + sum(len(r.coords) for r in geom.interiors)
+    if geom.geom_type == "MultiPolygon":
+        return sum(_count_vertices(p) for p in geom.geoms)
+    return len(geom.coords)
+
+
+def _apply_simplify(slim: gpd.GeoDataFrame, tolerance_m: float) -> gpd.GeoDataFrame:
+    """Reduce vertex count via Douglas-Peucker in a projected metric CRS (display-only).
+
+    Topology-preserving so polygons stay valid (no new self-intersections) and no
+    shape is removed. Logs the vertex reduction; any shape that still lands
+    empty/invalid falls back to its original geometry (no silent changes).
+    """
+    metric = slim.to_crs(SETBACK_CRS)
+    before = int(metric.geometry.apply(_count_vertices).sum())
+
+    simplified = metric.geometry.simplify(tolerance_m, preserve_topology=True)
+
+    collapsed = simplified.is_empty | ~simplified.is_valid
+    if collapsed.any():
+        logger.warning(
+            "Simplify (%sm) produced %d empty/invalid geometry(ies); kept original:\n  %s",
+            tolerance_m,
+            int(collapsed.sum()),
+            "\n  ".join(sorted(metric.loc[collapsed, "neighbourhood_name"])),
+        )
+    simplified = simplified.where(~collapsed, metric.geometry)
+
+    metric = metric.set_geometry(simplified)
+    after = int(metric.geometry.apply(_count_vertices).sum())
+    logger.info(
+        "Simplify (%sm tolerance): %d -> %d vertices (%.0f%% reduction)",
+        tolerance_m, before, after, 100 * (1 - after / before) if before else 0.0,
+    )
     return metric

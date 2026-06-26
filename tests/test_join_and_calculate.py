@@ -187,3 +187,51 @@ def test_setback_collapses_sliver_falls_back_and_logs(tmp_path, caplog):
         slim = export_geojson(gdf, str(tmp_path / "slim.geojson"), setback_m=20.0)
     assert "SLIVER" in caplog.text and "collapsed" in caplog.text
     assert slim.to_crs("EPSG:3400").area.iloc[0] == pytest.approx(500, rel=0.02)
+
+
+# A 100m square carrying redundant collinear midpoints on every edge. Douglas-
+# Peucker drops the midpoints (zero deviation) back to the four corners.
+_SQUARE_WITH_MIDPOINTS_3400 = Polygon([
+    (600_000, 5_931_000), (600_050, 5_931_000), (600_100, 5_931_000),
+    (600_100, 5_931_050), (600_100, 5_931_100), (600_050, 5_931_100),
+    (600_000, 5_931_100), (600_000, 5_931_050),
+])
+
+
+def _midpoint_result():
+    return gpd.GeoDataFrame(
+        [{"neighbourhood_name": "DOWNTOWN", "value_per_acre": 10_000.0}],
+        geometry=[_SQUARE_WITH_MIDPOINTS_3400], crs="EPSG:3400",
+    )
+
+
+def test_simplify_reduces_vertices_and_logs(tmp_path, caplog):
+    from join_and_calculate import _count_vertices
+
+    before = _count_vertices(_SQUARE_WITH_MIDPOINTS_3400)
+    with caplog.at_level("INFO", logger="join_and_calculate"):
+        slim = export_geojson(
+            _midpoint_result(), str(tmp_path / "slim.geojson"), simplify_tolerance_m=5.0,
+        )
+    after = _count_vertices(slim.geometry.iloc[0])
+    assert after < before
+    assert "Simplify" in caplog.text and "reduction" in caplog.text
+
+
+def test_simplify_preserves_value_per_acre(tmp_path):
+    # Display-only: the value column must pass through untouched by simplification.
+    slim = export_geojson(
+        _midpoint_result(), str(tmp_path / "slim.geojson"), simplify_tolerance_m=5.0,
+    )
+    assert slim["value_per_acre"].iloc[0] == 10_000.0
+
+
+def test_simplify_and_setback_compose(tmp_path):
+    # Both display transforms applied together (setback then simplify): a 20m
+    # setback on the 100m square -> 60x60 = 3600 m^2, simplify leaves area intact.
+    slim = export_geojson(
+        _midpoint_result(), str(tmp_path / "slim.geojson"),
+        simplify_tolerance_m=5.0, setback_m=20.0,
+    )
+    area_m2 = slim.to_crs("EPSG:3400").area.iloc[0]
+    assert area_m2 == pytest.approx(3600, rel=0.02)
