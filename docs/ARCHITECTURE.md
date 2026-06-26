@@ -239,7 +239,11 @@ The Python pipeline is stable across all phases — only the rendering layer cha
 - **No basemap for v1** — neighbourhood polygons on a dark background are self-describing. Add CARTO Dark Matter free tiles if geographic context is needed; no R2 or Protomaps required at this traffic level
 - **No scheduled preprocessor** — assessment data updates once a year. Pipeline runs locally (or via oracle server cron), outputs updated GeoJSON, commit to repo. GitHub Pages picks it up automatically.
 
-**Phase 2 handoff:** `join_and_calculate.py` exports a slim GeoJSON alongside the PNG — only `neighbourhood_name`, `value_per_acre`, and `geometry`. No changes to upstream modules needed.
+**Phase 2 handoff:** `join_and_calculate.py` exports a slim GeoJSON via `export_geojson()` — only `neighbourhood_name`, `value_per_acre`, and `geometry`, reprojected to EPSG:4326 (deck.gl/MapLibre expect lon/lat). No changes to upstream modules needed.
+
+**Web app layout & export target:** The Phase 2 app lives in `web/` (`web/index.html` + `web/data/`). The export writes to **`web/data/neighbourhood_value_per_acre.geojson`** — a *tracked, served* location — NOT `output/` (which is gitignored as throwaway artifacts and cannot be served by Pages). `main.py` must point the GeoJSON export at `web/data/`, so each run regenerates the committed served file in place. The PNG stays in `output/` as a static fallback.
+
+**GitHub Pages serves only from repo root or `docs/`, not `web/`.** To keep the clean `web/` layout while still publishing, the intended path is a GitHub Action (`.github/workflows`) that serves `web/`. Alternatives if the Action is undesired: move the app to `docs/` or root. Decided at deploy time (Phase 2 step 4).
 
 Phase 1 decisions that keep this viable:
 - No hardcoded paths

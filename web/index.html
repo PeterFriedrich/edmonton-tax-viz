@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Edmonton — Assessed Value per Acre</title>
+
+  <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
+  <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+  <script src="https://unpkg.com/deck.gl@9.0.38/dist.min.js"></script>
+
+  <style>
+    html, body { margin: 0; height: 100%; background: #0a0a0f; }
+    #map { position: absolute; inset: 0; }
+    .panel {
+      position: absolute; z-index: 1; color: #e8e8ef;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      pointer-events: none;
+    }
+    #title { top: 20px; left: 22px; max-width: 360px; }
+    #title h1 { margin: 0 0 4px; font-size: 19px; font-weight: 600; letter-spacing: 0.2px; }
+    #title p  { margin: 0; font-size: 12.5px; line-height: 1.5; color: #9a9ab0; }
+    #legend { bottom: 22px; left: 22px; font-size: 11.5px; color: #b8b8c8; }
+    #legend .bar {
+      width: 200px; height: 10px; border-radius: 2px; margin: 6px 0 4px;
+      background: linear-gradient(90deg,
+        rgb(20,11,52), rgb(88,21,99), rgb(165,44,96), rgb(231,98,58), rgb(252,210,120));
+    }
+    #legend .scale { display: flex; justify-content: space-between; width: 200px; }
+    .tip {
+      font: 12px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: rgba(12,12,20,0.92); color: #f0f0f6;
+      padding: 6px 9px; border-radius: 5px; border: 1px solid #2a2a3a;
+    }
+    .tip b { color: #fcd278; }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+
+  <div id="title" class="panel">
+    <h1>Edmonton: Assessed Value per Acre</h1>
+    <p>Height and colour show total assessed property value divided by neighbourhood
+       area. Tall, bright districts generate the most value per unit of land.</p>
+  </div>
+
+  <div id="legend" class="panel">
+    <div>Value per acre</div>
+    <div class="bar"></div>
+    <div class="scale"><span>$0</span><span>$4M+</span></div>
+  </div>
+
+  <script>
+    // --- tunables -----------------------------------------------------------
+    const DATA_URL = "./data/neighbourhood_value_per_acre.geojson";
+    const COLOR_CLAMP = 4_000_000;   // value_per_acre at which colour saturates
+    const ELEVATION_SCALE = 0.0006;  // metres of height per $ of value_per_acre (linear)
+    const CENTER = [-113.50, 53.52]; // Edmonton, from the data centroid
+
+    // Sequential dark->bright ramp (inferno-ish), legible on a dark background.
+    const RAMP = [
+      [0.00, [ 20,  11,  52]],
+      [0.25, [ 88,  21,  99]],
+      [0.50, [165,  44,  96]],
+      [0.75, [231,  98,  58]],
+      [1.00, [252, 210, 120]],
+    ];
+
+    function colorFor(value) {
+      const t = Math.max(0, Math.min(1, value / COLOR_CLAMP));
+      for (let i = 1; i < RAMP.length; i++) {
+        if (t <= RAMP[i][0]) {
+          const [t0, c0] = RAMP[i - 1], [t1, c1] = RAMP[i];
+          const f = (t - t0) / (t1 - t0);
+          return [0, 1, 2].map(k => Math.round(c0[k] + f * (c1[k] - c0[k])));
+        }
+      }
+      return RAMP[RAMP.length - 1][1];
+    }
+
+    const fmt = v => "$" + Math.round(v).toLocaleString();
+
+    // --- base map (no basemap tiles for v1 — just a dark backdrop) -----------
+    const map = new maplibregl.Map({
+      container: "map",
+      style: {
+        version: 8,
+        sources: {},
+        layers: [{ id: "bg", type: "background", paint: { "background-color": "#0a0a0f" } }],
+      },
+      center: CENTER,
+      zoom: 10.2,
+      pitch: 52,
+      bearing: -18,
+      antialias: true,
+    });
+
+    map.on("load", async () => {
+      const data = await fetch(DATA_URL).then(r => r.json());
+
+      const layer = new deck.GeoJsonLayer({
+        id: "value-per-acre",
+        data,
+        extruded: true,
+        filled: true,
+        stroked: true,
+        wireframe: false,
+        getElevation: f => f.properties.value_per_acre,
+        elevationScale: ELEVATION_SCALE,
+        getFillColor: f => colorFor(f.properties.value_per_acre),
+        getLineColor: [10, 10, 16, 160],
+        lineWidthMinPixels: 0.5,
+        material: { ambient: 0.55, diffuse: 0.6, shininess: 32, specularColor: [60, 60, 70] },
+        pickable: true,
+        autoHighlight: true,
+        highlightColor: [255, 255, 255, 60],
+      });
+
+      const overlay = new deck.MapboxOverlay({
+        interleaved: true,
+        layers: [layer],
+        getTooltip: ({ object }) =>
+          object && {
+            className: "tip",
+            html: `<b>${object.properties.neighbourhood_name}</b><br/>${fmt(object.properties.value_per_acre)} / acre`,
+          },
+      });
+
+      map.addControl(overlay);
+    });
+  </script>
+</body>
+</html>
