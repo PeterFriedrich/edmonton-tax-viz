@@ -104,12 +104,14 @@
         extruded: true,
         filled: true,
         stroked: true,
+        // wireframe draws every triangulation edge of all 405 prisms -> laggy.
+        // stroked draws only the footprint ring (cheap) and still outlines shapes.
         wireframe: false,
         getElevation: f => f.properties.value_per_acre,
         elevationScale: ELEVATION_SCALE,
         getFillColor: f => colorFor(f.properties.value_per_acre),
-        getLineColor: [10, 10, 16, 160],
-        lineWidthMinPixels: 0.5,
+        getLineColor: [228, 228, 240, 170],   // crisp light footprint edge so each shape reads
+        lineWidthMinPixels: 1.2,
         material: { ambient: 0.55, diffuse: 0.6, shininess: 32, specularColor: [60, 60, 70] },
         pickable: true,
         autoHighlight: true,

@@ -161,3 +161,29 @@ def test_export_raises_without_crs(tmp_path):
     )
     with pytest.raises(ValueError, match="no CRS"):
         export_geojson(gdf, str(tmp_path / "x.geojson"))
+
+
+def test_setback_shrinks_footprint(tmp_path):
+    # 100m square, 20m setback -> 60x60 = 3600 m^2 (down from 10000).
+    slim = export_geojson(
+        _result([{"neighbourhood_name": "DOWNTOWN", "total_assessed_value": 1e6,
+                  "area_acres": 100.0, "value_per_acre": 10_000.0}]),
+        str(tmp_path / "slim.geojson"),
+        setback_m=20.0,
+    )
+    area_m2 = slim.to_crs("EPSG:3400").area.iloc[0]
+    assert area_m2 == pytest.approx(3600, rel=0.02)
+
+
+def test_setback_collapses_sliver_falls_back_and_logs(tmp_path, caplog):
+    # A 5m-wide sliver cannot survive a 20m inward buffer -> keep original (area ~500).
+    sliver = Polygon([(600_000, 5_931_000), (600_005, 5_931_000),
+                      (600_005, 5_931_100), (600_000, 5_931_100)])
+    gdf = gpd.GeoDataFrame(
+        [{"neighbourhood_name": "SLIVER", "value_per_acre": 10_000.0}],
+        geometry=[sliver], crs="EPSG:3400",
+    )
+    with caplog.at_level("WARNING", logger="join_and_calculate"):
+        slim = export_geojson(gdf, str(tmp_path / "slim.geojson"), setback_m=20.0)
+    assert "SLIVER" in caplog.text and "collapsed" in caplog.text
+    assert slim.to_crs("EPSG:3400").area.iloc[0] == pytest.approx(500, rel=0.02)
