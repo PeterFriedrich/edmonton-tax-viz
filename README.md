@@ -4,15 +4,15 @@ A public fiscal analysis examining which areas of Edmonton generate more propert
 
 ## What This Is
 
-Edmonton has a documented fiscal problem with suburban development. A Sustainable Prosperity report found that costs to the city will exceed revenues by **nearly $4 billion over 60 years** across just 17 planned new developments. A 2016 analysis of three new neighbourhoods (Decoteau, Riverview, Horse Hills) found they'll cost **$1.4 billion more** than they'll generate over 50 years.
+Several published studies have examined the fiscal balance of suburban development in Edmonton. A Sustainable Prosperity report found that costs to the city will exceed revenues by **nearly $4 billion over 60 years** across just 17 planned new developments. A 2016 analysis of three new neighbourhoods (Decoteau, Riverview, Horse Hills) found they'll cost **$1.4 billion more** than they'll generate over 50 years.
 
-Despite this, no one has published a comprehensive, public **revenue-per-acre analysis** for Edmonton — the kind of spatial fiscal analysis that makes the problem visible and legible to ordinary residents and councillors. This project aims to be the first.
+No comprehensive, public **revenue-per-acre analysis** has been published for Edmonton — the kind of spatial fiscal analysis that presents this data at the neighbourhood level for residents and councillors.
 
-The goal is straightforward: map Edmonton's property tax revenue against land area and estimated service costs to show which development patterns are fiscally productive and which are liabilities. Downtown mixed-use and established infill areas vs. suburban greenfield expansion. The math, made visible.
+The goal: map Edmonton's property tax revenue and estimated service costs against land area, broken out by area and development pattern — downtown mixed-use and established infill areas alongside suburban greenfield expansion — and present the per-acre figures.
 
 ## Why Now
 
-- Edmonton just raised property taxes by **6.9%**, with public frustration running high
+- Edmonton recently raised property taxes by **6.9%**
 - Council is actively debating development costs and suburban expansion
 - Edmonton has excellent open data infrastructure (~448,000 property assessment records publicly available)
 - No comparable public analysis exists for Edmonton, despite Calgary and Ottawa having attempted versions of this work
@@ -45,14 +45,14 @@ Edmonton transferred parcel-level GIS boundary data to AltaLIS (a provincial par
 3. Submit a FOIP request to the City for parcel area data
 4. Use manual sampling for high-contrast spotlight comparisons
 
-The neighbourhood-level approach can still produce politically compelling analysis — Ottawa's Hemson study and the Halifax infrastructure cost research both operated at similar levels of aggregation and created significant policy impact.
+The neighbourhood-level approach still supports analysis at this resolution — Ottawa's Hemson study and the Halifax infrastructure cost research both operated at similar levels of aggregation.
 
 ## Comparable Work
 
 - **Ottawa (2021):** Hemson Consulting analysis found suburban greenfield development runs a **$465/person/year deficit** while high-density infill generates a **$606/person/year surplus**. Councillor Shawn Menard requested and publicized this; it became a major input to Ottawa's growth strategy.
 - **Lafayette, LA:** Urban3's parcel-by-parcel analysis found $32 billion in infrastructure obligations against $16 million in annual maintenance revenue. The most comprehensive fiscal analysis ever done for a North American city.
 - **Halifax:** Academic cost-of-service study across 8 settlement types found road costs of $1,053/household/year at low density vs. $26 at high density — roughly a **40:1 ratio**.
-- **Calgary (2022):** Incomplete revenue-only analysis; lacked cost side and didn't achieve lasting policy impact. This project aims to do better.
+- **Calgary (2022):** Revenue-only analysis without a cost side.
 
 ## Status
 

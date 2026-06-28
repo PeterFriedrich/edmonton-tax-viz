@@ -25,8 +25,8 @@ Confirmed how comparable projects define the metric (web research, sources below
 - Some derivative practitioners apply the rate → revenue/acre
   (`(assessed value × tax rate) / acres`), but this is the minority/stricter form.
 
-**So the current metric (assessed value/acre) IS the common, defensible
-convention — it matches Urban3 directly. A rename alone would be legitimate.**
+**So the current metric (assessed value/acre) IS the common convention — it
+matches Urban3 directly. A rename alone would be legitimate.**
 
 **The deciding insight:** applying a *uniform* city-wide rate is just scaling
 every parcel by the same constant → an identical-looking map, only the legend
@@ -39,8 +39,8 @@ a genuinely new signal, not a unit change.
 **Decision: build the real computation, keep BOTH metrics as a toggle.** Keep
 assessed value/acre (the Urban3 convention, comparable to every other VPA map)
 *and* add revenue/acre using class-differential municipal mill rates. The gap
-between the two maps IS the mill-rate-bias story and is what makes this project
-distinctive. This also resolves the exempt question (below): Urban3/Strong Towns
+between the two maps reflects the effect of Edmonton's class-differential mill
+rates. This also resolves the exempt question (below): Urban3/Strong Towns
 use *taxable* value, so exempt parcels shouldn't inflate either metric — exclude/
 separate under value, $0 under revenue (the two treatments converge).
 
