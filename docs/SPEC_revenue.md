@@ -70,19 +70,17 @@ EDUCATION'` (3 rows, flagged `is_exempt` on load) — see exempt decision below.
 
 ## Data we still need (external)
 
-- **Edmonton municipal mill rates by tax class, for assessment year 2025**
-  (year confirmed — see Year alignment below). Published annually in the City's
-  tax rate bylaw. Must cover the four `Tax Class` values: Residential, Non
-  Residential, Other Residential, Farmland.
-  - **NOT YET FETCHED — do not build on guessed numbers.** Two figures surfaced
-    in earlier search and must NOT be used as-is: (1) a *residential* municipal
-    rate ≈ **0.0076648** — that is **2024, the wrong year**; discard it. (2) a
-    non-res ≈ **21 mills** figure (Alberta Municipal Affairs) — **UNVERIFIED**;
-    it reads like a combined **municipal + education** rate (~2× the true
-    municipal-only non-res rate), and building on it would overstate the
-    commercial/industrial uplift. Get all four rates from the **2025 City of
-    Edmonton tax rate bylaw** (or edmonton.ca tax pages), **municipal portion
-    only**.
+- **Edmonton municipal mill rates by tax class, assessment year 2025 — FETCHED
+  2026-06-28, stored in `data/mill_rates.json`.** Source: Edmonton Open Data
+  dataset `pwis-wc4c` ("Property and Education Tax Rates (2014 onward)"). 2025
+  municipal rates per $1,000: Residential **7.6254**, Other Residential
+  **8.3116**, Non Residential **24.2229**, Farmland **7.6254** (assumed =
+  Residential; no 2025 Farmland row — see DATA.md). Non-res ≈ 3.2× residential,
+  confirming the class differential.
+  - The earlier search figures were wrong and are now superseded: 0.0076648 was
+    the **2024** residential rate; the "21 mills" non-res was stale (true 2025
+    municipal non-res is 24.2229). Provenance + the education rates (unused) are
+    in `data/mill_rates.json`; full source detail in `DATA.md` §4.
 - **DECIDED: municipal mill rate only** (not municipal + education/provincial).
   Reason: this project models *City* fiscal sustainability, not total tax burden
   on residents. The education levy is set provincially and flows to schools, not

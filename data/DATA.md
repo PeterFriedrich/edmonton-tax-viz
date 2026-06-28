@@ -141,6 +141,36 @@ For Phase 1 (neighbourhood-level choropleth), two approaches are viable:
 
 ---
 
+## 4. Property and Education Tax Rates (revenue phase)
+
+**File:** `data/mill_rates.json` *(curated extract — see provenance inside)*
+**Source:** [Edmonton Open Data](https://data.edmonton.ca/resource/pwis-wc4c.json) — dataset ID `pwis-wc4c` ("Property and Education Tax Rates (2014 onward)")
+**Format:** Socrata JSON/SODA API (live; updated annually — 2026 rates already present, last update 2026-04-29)
+**Units:** amount per **$1,000** of assessed value (mills); also published per-dollar
+**Licence:** Open Government Licence – City of Edmonton
+
+Columns: `tax_year`, `tax_rate_type` (Municipal / Education / Education Requisition Allowance), `assessment_class`, `amount_per_1_000_of_assessed_value`, `amount_per_dollar_of_assessed_value`.
+
+**2025 Municipal rates (per $1,000)** — the year matching our assessment snapshot:
+
+| Tax Class | Municipal mill rate |
+|-----------|---------------------|
+| Residential | 7.6254 |
+| Other Residential | 8.3116 |
+| Non Residential | 24.2229 |
+| Farmland | 7.6254 *(assumed = Residential — see quirks)* |
+
+Non-residential is ~3.2× residential — this class differential is the basis of the revenue phase (`docs/SPEC_revenue.md`).
+
+### Known Quirks
+
+- **Join on assessment `Tax Class`** (clean 4-value field). Rate-table class names use spaces (`Non Residential`); some historical years use a hyphenated `Non-Residential` — normalize on load.
+- **No 2025 Farmland rate published.** The source dropped a separate Farmland class in 2025. Municipal Farmland == Municipal Residential in every year 2014–2024, so `mill_rates.json` sets 2025 Farmland municipal = Residential (7.6254) as a **flagged assumption**, not authoritative. Low impact (509 farmland parcels).
+- Rate-type label changed over time: older years (2014–2018) use `Municipal Tax Rate` / `Education Tax Rate`; 2019+ use `Municipal` / `Education`. Only 2019+ form is needed for 2025.
+- `Mature Area Derelict Residential` and `Transitional Residential` exist as rate classes but not as assessment `Tax Class` values — unused by the Tax-Class join.
+
+---
+
 ## Name Matching
 
 Neighbourhood names between the two sources may not align exactly. Normalization (strip + uppercase) and the `NAME_CORRECTIONS` dict (keyed assessment name → boundary name) are applied in `load_assessment.py`, *before* aggregation — applying corrections after aggregation could collapse two summed rows onto one boundary and duplicate it. `join_and_calculate.py` then does a normalized exact match on the already-corrected names and flags whatever remains unmatched.

@@ -1,0 +1,26 @@
+{
+  "source": {
+    "dataset": "City of Edmonton Open Data — Property and Education Tax Rates (2014 onward)",
+    "dataset_id": "pwis-wc4c",
+    "url": "https://data.edmonton.ca/resource/pwis-wc4c.json",
+    "retrieved": "2026-06-28",
+    "units": "amount per $1,000 of assessed value (mills)",
+    "rate_types_available": ["Municipal", "Education", "Education Requisition Allowance"]
+  },
+  "notes": [
+    "Revenue phase uses the MUNICIPAL rate only (City fiscal framing; education levy is provincial). Education rates are stored here for provenance/transparency, not used in the computation.",
+    "Join key is the assessment `Tax Class` field (Residential / Non Residential / Other Residential / Farmland). Source class names use spaces ('Non Residential'); some historical years use a hyphenated 'Non-Residential' variant — normalize on load.",
+    "FARMLAND 2025 is an ASSUMPTION, not published: the source dropped a separate Farmland class in 2025. Municipal Farmland == Municipal Residential in every year 2014-2024, so 2025 Farmland municipal is set = Residential (7.6254). Flag, do not treat as authoritative. Low impact (509 farmland parcels).",
+    "'Mature Area Derelict Residential' and 'Transitional Residential' are source rate classes that do not appear in the assessment `Tax Class` field; retained for fidelity but unused by the Tax-Class join."
+  ],
+  "rates": {
+    "2025": {
+      "Residential":                      { "municipal": 7.6254,  "education": 2.4366, "education_requisition_allowance": 0.0771 },
+      "Other Residential":                { "municipal": 8.3116,  "education": 2.4366, "education_requisition_allowance": 0.0771 },
+      "Non Residential":                  { "municipal": 24.2229, "education": 3.9762, "education_requisition_allowance": 0.0733 },
+      "Mature Area Derelict Residential": { "municipal": 24.2229, "education": 2.4366, "education_requisition_allowance": 0.0771 },
+      "Transitional Residential":         { "municipal": 7.6254,  "education": 2.4366, "education_requisition_allowance": 0.0771 },
+      "Farmland":                         { "municipal": 7.6254,  "_assumed": "no 2025 Farmland row published; set = Residential municipal (Farmland==Residential every year 2014-2024)" }
+    }
+  }
+}
