@@ -13,14 +13,43 @@ is higher than residential, so value-per-acre understates the revenue pull of
 commercial/industrial land relative to housing. True revenue/acre applies the
 per-class tax rate.
 
-## Verify first (methodology check)
+## Methodology check — RESOLVED 2026-06-28
 
-Before building: **confirm how comparable projects define the metric.** Strong
-Towns / Urban3-style "value per acre" maps often use **taxable assessed value**
-as the headline (i.e. our current metric is a common, defensible variant), while
-the stricter "revenue" version applies the levy. Decide whether we're matching
-the common convention or going stricter — this determines whether (2) is a
-rename or a real new computation. *(Peter is checking reference projects.)*
+Confirmed how comparable projects define the metric (web research, sources below):
+
+- **Strong Towns** (canonical how-to): primary metric is **assessed value per
+  acre**, explicitly does *not* apply mill rates; tax liability is offered only
+  as a secondary analysis.
+- **Urban3 / Joe Minicozzi** (originators of the 3D value-per-acre map — our
+  closest analog): **taxable assessed value per acre**.
+- Some derivative practitioners apply the rate → revenue/acre
+  (`(assessed value × tax rate) / acres`), but this is the minority/stricter form.
+
+**So the current metric (assessed value/acre) IS the common, defensible
+convention — it matches Urban3 directly. A rename alone would be legitimate.**
+
+**The deciding insight:** applying a *uniform* city-wide rate is just scaling
+every parcel by the same constant → an identical-looking map, only the legend
+units change. The map only changes shape if **rates differ by class**. Edmonton's
+do, substantially (see external data below: non-res ≈ 2–3× residential). So the
+real payoff of the revenue phase is capturing the **class differential**, which
+re-ranks neighbourhoods (commercial/industrial rises relative to residential) —
+a genuinely new signal, not a unit change.
+
+**Decision: build the real computation, keep BOTH metrics as a toggle.** Keep
+assessed value/acre (the Urban3 convention, comparable to every other VPA map)
+*and* add revenue/acre using class-differential municipal mill rates. The gap
+between the two maps IS the mill-rate-bias story and is what makes this project
+distinctive. This also resolves the exempt question (below): Urban3/Strong Towns
+use *taxable* value, so exempt parcels shouldn't inflate either metric — exclude/
+separate under value, $0 under revenue (the two treatments converge).
+
+Sources:
+- Strong Towns, "Value Per Acre Analysis: A How-To For Beginners" —
+  https://www.strongtowns.org/journal/2018-10-19-value-per-acre-analysis-a-how-to-for-beginners
+- Urban3 methodology (taxable value per acre, 3D) — https://www.urbanthree.com/
+- Urban Prosperity Network, value-per-acre how-to (the apply-the-rate variant) —
+  https://urbanprosperity.net/how-to-calculate-and-visualize-value-per-acre-in-your-city
 
 ## Data we already have
 
@@ -45,6 +74,15 @@ EDUCATION'` (3 rows, flagged `is_exempt` on load) — see exempt decision below.
   assessment dataset. Published annually by the City (tax rate bylaw). Must cover
   the four `Tax Class` values present: Residential, Non Residential, Other
   Residential, Farmland.
+  - **Partial data gathered 2026-06-28:** 2024 *residential* municipal rate
+    ≈ **0.0076648** (~7.66 mills); residential & farmland share the same rate.
+    Non-residential is materially higher (Alberta Municipal Affairs cites
+    Edmonton non-res ≈ 21 mills vs the residential figure — but that mixed/total
+    number may include education; **get the exact municipal-only non-res rate
+    from the 2024 City tax rate bylaw before computing**). Differential confirmed
+    at ~2–3×, which is the whole point (see Methodology check). Still need: exact
+    municipal non-res rate, and the "Other Residential" rate, for the year that
+    matches the assessment dataset.
 - Decide: **municipal mill rate only** (revenue *to the city*) vs **municipal +
   education/provincial** (total property tax). Municipal-only is the cleaner
   "city revenue" story; pick one and document it.
