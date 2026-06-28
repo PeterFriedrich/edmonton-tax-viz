@@ -1,0 +1,253 @@
+# Scope: Automated Backend + Static Deployment
+
+**Status: SCOPED, not started.** Target deployment architecture: a **scheduled
+GitHub Action** regenerates the map data when the source datasets change and
+publishes it to a fully static **GitHub Pages** frontend. No always-on server is
+required. No code yet — this doc is the agreed design.
+
+## The key fact this is built around
+
+**Everything that matters here updates at most once a year.** The Edmonton
+assessment dataset rolls its assessment year annually; the mill-rate dataset
+(`pwis-wc4c`) publishes new rates annually. The Socrata feed updates weekly, but
+those intra-year edits don't meaningfully move a neighbourhood-level
+value/revenue-per-acre map. So the system is optimized for **rare data changes**,
+not real-time freshness — which is exactly what a periodic batch job suits.
+
+## Core decision: push, not pull
+
+**DECIDED: the backend regenerates and commits static data into the repo; the
+frontend never calls a backend at runtime.**
+
+GitHub Pages serves *only* files committed to the repo — there is no external
+store it can read. So the data (GeoJSON) must live in the repo as committed
+files, and the backend's job ends by committing them. The alternative — a live
+frontend→server fetch — would couple every page load to a server being up,
+reachable, and CORS-configured, to serve a file that's identical for months. All
+downside.
+
+With the commit-and-publish model:
+- The site is **100% static** (HTML + committed GeoJSON), served by GitHub's CDN.
+- No CORS, no backend latency, no uptime coupling, no server to maintain.
+- It fits what already exists: `web/data/neighbourhood_value_per_acre.geojson` is
+  already a committed file. We're only automating *who* regenerates and commits
+  it, and *when*.
+
+## Backend: a scheduled GitHub Action (primary)
+
+**DECIDED: the backend is a scheduled GitHub Action, not a dedicated server.**
+Because the data has to end up in the repo anyway, GitHub's own runners can do
+the whole job for free — no VM to maintain, no deploy key, no "is the server up"
+question.
+
+```
+   Edmonton Open Data (Socrata)
+   ├─ assessment (q7d6-ambg) ─┐
+   └─ tax rates (pwis-wc4c)   │  download
+                              ▼
+   Scheduled GitHub Action ── run main.py ──▶ regenerate web/data/*.geojson
+                              │  commit (if changed) + deploy
+                              ▼
+   GitHub repo ──▶ GitHub Pages (static, CDN) ──▶ visitors
+```
+
+An Action is a YAML workflow in `.github/workflows/`. On a cron trigger, GitHub
+boots a fresh Ubuntu VM, runs the steps, and destroys it. Sketch:
+
+```yaml
+name: Refresh map data
+on:
+  schedule:
+    - cron: '0 8 * * 1'        # weekly, Mon 08:00 UTC (cron is UTC + best-effort)
+  workflow_dispatch: {}          # manual "run now" button
+
+permissions:
+  contents: write                # commit regenerated data back to the repo
+  pages: write                   # deploy to Pages
+  id-token: write                # required by the Pages deploy action
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - run: pip install -r requirements.txt
+      - run: python scripts/download_data.py     # pull Socrata data
+      - run: python main.py                       # regenerate web/data/*.geojson
+      - run: |                                     # commit only if changed
+          git config user.name  "data-bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add web/data
+          git commit -m "Auto-refresh map data" || echo "no changes"
+          git push
+      # then deploy web/ to Pages (upload-pages-artifact + deploy-pages)
+```
+
+That is the entire backend.
+
+**What the runner can/can't do (the edges):**
+- It's a real VM — installs any pip/apt deps, can run Docker, headless Chromium,
+  heavy parallel compute. The pipeline's deps (geopandas/shapely/pandas/
+  matplotlib) install cleanly on `ubuntu-latest`.
+- **Ephemeral:** destroyed at job end; no state persists except what's committed.
+- **Capped at 6 hours/job.** Fine for a batch job; can't host anything 24/7.
+- **No stable IP** — it can't *be* a server something connects to.
+- **Public-repo Actions minutes are free** (private repos: 2,000 min/month free —
+  this job is minutes per run either way).
+- ToS note: Actions is for repo-related automation; building this project's data
+  is squarely legitimate use.
+
+### Backend flow
+
+1. **Regenerate.** Download the raw assessment data + matching-year mill rates,
+   run `main.py` → PNG + `web/data/*.geojson` at the canonical params (setback
+   45 m, simplify 10 m).
+2. **Commit if changed.** `git add web/data && git commit || true && git push`.
+   The commit only lands if output actually changed, so **git is the change
+   detector** — a redundant run pushes nothing.
+3. **Deploy.** Publish `web/` to Pages via the official Pages actions
+   (`upload-pages-artifact` + `deploy-pages`). This serves `web/` directly and
+   removes any "Pages can't serve a subfolder" problem — no `gh-pages` branch or
+   `/docs` move needed.
+
+**Auth:** the workflow's built-in `GITHUB_TOKEN` (via `permissions:` above)
+covers both committing to this repo and deploying Pages — **no deploy key or PAT
+needed for the core flow.** (One exception under "stay-awake" below.)
+
+### Staying awake (the 60-day pause)
+
+Scheduled workflows are auto-disabled after **60 days of no repo activity**. Since
+annual data may not change for months, the run should write a **heartbeat** — bump
+a `last_checked` timestamp in the status manifest (below) every run and commit it.
+That commit is repo activity and keeps the schedule alive, *and* it's genuinely
+useful frontend metadata (two birds).
+
+Wrinkle: commits made with the default `GITHUB_TOKEN` are sometimes reported *not*
+to reset the inactivity timer (GitHub suppresses some automation-triggered
+events). If that proves true in practice, make the heartbeat commit with a small
+repo-scoped **PAT** instead, or just re-enable the workflow if it ever sleeps.
+
+## Year alignment
+
+The assessment year lives only in the dataset metadata (see `DATA.md`), and mill
+rates must match that year. The rate fetch should **auto-detect the assessment
+year from the assessment dataset metadata** and pull the matching `pwis-wc4c`
+rates, so the two can never silently desync.
+
+**When the years can't be aligned (graceful degradation, not a hard fail):** rates
+can lag the assessment roll by months — e.g. the 2026 assessment is published but
+2026 municipal rates aren't out yet. In that window the job must **not** compute a
+mismatched-year map. Instead:
+- **Keep serving last year's committed data** (already in the repo — the site
+  stays fully functional on the previous year).
+- **Set a banner** in the status manifest, e.g. *"Showing 2025 data — the 2026
+  assessment is out but Edmonton's 2026 municipal tax rates aren't published yet.
+  The map updates automatically once they are."*
+- Log/alert so we know it's in the holding state.
+
+So in that window only the banner updates; the data waits for matching rates.
+
+## Frontend (GitHub Pages, static)
+
+Serves `web/` + the committed GeoJSON. No runtime backend. CDN deps (MapLibre,
+deck.gl via unpkg) load client-side and need only the visitor's internet.
+
+**Status manifest + banner.** A small committed JSON file (`web/data/status.json`)
+records what the site is showing, doubles as the heartbeat, and carries an
+optional banner. The frontend fetches it on load and, if `banner` is non-null,
+renders a maintenance-style notice above the map. Example:
+
+```json
+{
+  "data_year": 2025,
+  "rate_year": 2025,
+  "generated": "2026-06-28",
+  "last_checked": "2026-06-28",
+  "banner": null
+}
+```
+
+`last_checked` is bumped every run (the heartbeat); `generated` changes only when
+the data actually changes; `banner` is set during the holding window or for any
+maintenance notice — settable by the backend with no frontend deploy. (Banner
+styling is a UI concern — see `docs/UI.md`.)
+
+## Decisions to settle (for review)
+
+1. **Change-detection strategy.** (a) poll Socrata metadata, download only if
+   changed; vs (b) re-run on schedule and let `git diff` gate the push.
+   *Leaning (b) to start — dead simple; the only cost is a redundant ~80 MB
+   download on the runner, which is free. Add (a) later if desired.*
+2. **Cron cadence.** Weekly vs monthly. *Leaning weekly* — overkill for annual
+   data but cheap, and bounds staleness to a week when the new year drops.
+3. **Heartbeat auth.** Rely on `GITHUB_TOKEN` and re-enable if it ever sleeps, vs
+   add a repo-scoped PAT for a guaranteed-alive heartbeat. *Leaning start with
+   `GITHUB_TOKEN`, add a PAT only if the schedule actually pauses.*
+
+(Previously open and now decided by the Action model: Pages-serves-`web/` →
+handled by the Pages deploy action; backend auth → built-in `GITHUB_TOKEN`;
+commit-data-to-repo → yes, ~0.5 MB, also enables the archive + heartbeat.)
+
+## Future work: multi-year data / archiving
+
+Not in initial scope, but the architecture should not preclude it. Pages storage
+is a non-constraint: the served GeoJSON is ~0.5 MB/year against a 1 GB site limit,
+so a multi-decade archive is trivial (the real ceiling is the ~100 GB/month
+bandwidth soft limit ≈ 200k loads/month). Multiple years would enable a **year
+selector** in the UI, pairing with the value↔revenue toggle.
+
+Two independent paths:
+- **Forward archiving (free — decide now).** The Action already regenerates each
+  year's data. If it writes **per-year files** (`web/data/2025.geojson`, …) and
+  **keeps rather than overwrites** them, an archive accumulates automatically.
+  Recommendation: archive from day one even if the UI shows only the latest at
+  first — years not captured can't be recovered from the current-year feed.
+- **Backfill (a real task — future).** Historical assessed values ARE available:
+  - **`qi6a-xuwt` — "Property Assessment Data (Historical)"**, coverage **2012–
+    2025**, updated annually, has an explicit **`assessment_year`** column, plus
+    `lot_size` / `zoning` / `year_built`.
+    Endpoint: `https://data.edmonton.ca/resource/qi6a-xuwt.json`.
+  - Caveats for a *revenue* backfill: (1) it exposes `mill_class_1/2/3` (the messy
+    COMMERCIAL/etc. values) but **not** the clean `Tax Class` join key we use —
+    needs a class→rate mapping step. (2) Mill rates (`pwis-wc4c`) only go back to
+    **2014**, so 2012–2013 would be **value-only** (no revenue layer).
+  - When this work starts, promote the dataset details into `data/DATA.md`.
+
+## Alternative backend: a dedicated server (e.g. Oracle Cloud free VM)
+
+Kept as an option, **not** the plan. A persistent VM running the same pipeline on
+cron + `git push` would also work. Choose it only if you later need something the
+Action can't do:
+
+| | Scheduled GitHub Action (chosen) | Dedicated VM (Oracle free tier) |
+|---|---|---|
+| Infra to maintain | none | VM, OS, cron, env |
+| Cost | free (public repo) | free tier |
+| RAM for ~80 MB CSV + geopandas | ~16 GB runner — fine | up to 24 GB ARM — fine |
+| State between runs | none (commit is the state) | persistent disk |
+| Max run length | 6 h/job | unbounded |
+| Stable IP / can host a service | no | yes |
+| Best when | periodic batch (this project) | a live API/daemon, heavy/long compute, or reusing the box |
+
+If a live backend is ever needed (e.g. on-the-fly queries, parcel-level data too
+big to precompute), revisit this.
+
+## Open questions / risks
+
+- **Runner deps** — confirm geopandas/shapely install cleanly on `ubuntu-latest`
+  (pip wheels normally suffice; add `apt-get` for GDAL only if a wheel needs it).
+- **Reproducibility** — keep `requirements.txt` (or an env file) authoritative so
+  the runner recreates the environment exactly.
+- **First-run bootstrap** — one-time manual step: enable Pages in repo Settings
+  (source = GitHub Actions) and run the workflow once via `workflow_dispatch`.
+- **Heartbeat reliability** — see the `GITHUB_TOKEN` wrinkle above.
+
+## Cross-refs
+
+- Pipeline entrypoint + canonical export params: `main.py`, `docs/PERFORMANCE.md`.
+- Data sources, dataset IDs, and the metadata-only assessment year: `data/DATA.md`.
+- Revenue phase (adds the mill-rate fetch this automation must also run):
+  `docs/SPEC_revenue.md`.
+- Intended Pages URL: `peterfriedrich.github.io/edmonton-tax-viz`.
