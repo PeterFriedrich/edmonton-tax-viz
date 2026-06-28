@@ -46,9 +46,8 @@ def join_and_calculate(
             "\n  ".join(sorted(joined[zero_area]["neighbourhood_name"])),
         )
 
-    joined["value_per_acre"] = (
-        joined["total_assessed_value"] / joined["area_acres"].replace(0, float("nan"))
-    )
+    safe_area = joined["area_acres"].replace(0, float("nan"))
+    joined["value_per_acre"] = joined["total_assessed_value"] / safe_area
 
     logger.info(
         "Joined %d boundary neighbourhoods; %d with value_per_acre calculated",
@@ -56,12 +55,24 @@ def join_and_calculate(
         joined["value_per_acre"].notna().sum(),
     )
 
-    return joined[["neighbourhood_name", "total_assessed_value", "area_acres", "value_per_acre", "geometry"]]
+    out_cols = ["neighbourhood_name", "total_assessed_value", "area_acres", "value_per_acre", "geometry"]
+
+    # Revenue phase: when total_revenue is present (apply_tax_rates ran upstream),
+    # add revenue_per_acre alongside value_per_acre — both metrics, web toggle.
+    if "total_revenue" in joined.columns:
+        joined["revenue_per_acre"] = joined["total_revenue"] / safe_area
+        out_cols = [
+            "neighbourhood_name", "total_assessed_value", "total_revenue",
+            "area_acres", "value_per_acre", "revenue_per_acre", "geometry",
+        ]
+
+    return joined[out_cols]
 
 
 # Columns the web client actually consumes. Everything else is dropped to keep
-# the GeoJSON the browser downloads small.
-SLIM_COLUMNS = ["neighbourhood_name", "value_per_acre", "geometry"]
+# the GeoJSON the browser downloads small. revenue_per_acre is included only when
+# present (revenue phase) — the value↔revenue toggle reads both.
+SLIM_COLUMNS = ["neighbourhood_name", "value_per_acre", "revenue_per_acre", "geometry"]
 
 
 # CRS used for the setback buffer — must be projected (metres), not degrees.
@@ -102,7 +113,7 @@ def export_geojson(
 
     Returns the slim GeoDataFrame that was written.
     """
-    slim = result[SLIM_COLUMNS]
+    slim = result[[c for c in SLIM_COLUMNS if c in result.columns]]
 
     missing = slim["value_per_acre"].isna()
     if missing.any():

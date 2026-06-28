@@ -10,10 +10,12 @@ Derived from `SPEC_phase1.md`. Describes module responsibilities, interfaces, an
 Raw CSV (assessment)         Raw GeoJSON (boundaries)
         |                            |
   load_assessment.py         load_boundaries.py
-        |                            |
+        |  (+ class columns)         |
+  apply_tax_rates.py  <-- mill_rates.json  (revenue phase; skipped for value-only)
+        |  (+ per-property levy)     |
   DataFrame:                  GeoDataFrame:
   neighbourhood_name          neighbourhood_name
-  assessed_value              geometry (projected)
+  assessed_value, levy        geometry (projected)
         |                     area_acres
         |                            |
   aggregate_by_neighbourhood.py      |
@@ -21,20 +23,22 @@ Raw CSV (assessment)         Raw GeoJSON (boundaries)
   DataFrame:                         |
   neighbourhood_name                 |
   total_assessed_value               |
+  total_revenue                      |
         \                           /
          \                         /
           join_and_calculate.py
                   |
           GeoDataFrame:
           neighbourhood_name
-          total_assessed_value
+          total_assessed_value, total_revenue
           area_acres
-          value_per_acre
+          value_per_acre, revenue_per_acre
           geometry
-                  |
-          plot_choropleth.py
-                  |
-          output/edmonton_value_per_acre.png
+                 / \
+                /   \
+   plot_choropleth.py  export_geojson()
+        |                   |
+  output/...png        web/data/...geojson  (both metrics → web toggle)
 ```
 
 ---
@@ -60,16 +64,33 @@ Raw CSV (assessment)         Raw GeoJSON (boundaries)
 
 ---
 
+### `src/apply_tax_rates.py` (revenue phase)
+
+**Inputs:** cleaned DataFrame from `load_assessment.py`; path to `data/mill_rates.json`; assessment year
+
+**Outputs:** the same DataFrame with a per-property `levy` column (float, dollars) appended
+
+**Responsibilities:**
+- Load municipal mill rates for the year from `mill_rates.json` (keyed by year + class — not hardcoded)
+- Compute `levy = assessed_value × Σ_slot (pct/100) × (rate[class]/1000)` over the up-to-3 split-class slices
+- Bridge the two class vocabularies (`COMMERCIAL` → `Non Residential`, etc. — see `docs/FINDINGS_assessment_classes.md`); exempt slices → $0
+- Flag (don't drop/normalize) rows whose class %s don't sum to 100; hard-error on an unmapped class label
+
+**Does not:** aggregate, join, or touch geometry. Skipped entirely on the Phase 1 (value-only) path — `aggregate`/`join` degrade gracefully when `levy`/`total_revenue` is absent.
+
+---
+
 ### `src/aggregate_by_neighbourhood.py`
 
-**Inputs:** cleaned DataFrame from `load_assessment.py`
+**Inputs:** cleaned DataFrame from `load_assessment.py` (optionally with `levy` from `apply_tax_rates.py`)
 
 **Outputs:** `pd.DataFrame` with columns:
 - `neighbourhood_name` (str)
 - `total_assessed_value` (float)
+- `total_revenue` (float) — only when `levy` is present (revenue phase)
 
 **Responsibilities:**
-- Group by `neighbourhood_name`, sum `assessed_value`
+- Group by `neighbourhood_name`, sum `assessed_value` (and `levy` → `total_revenue` if present)
 - No filtering or dropping here — that belongs upstream
 
 **Does not:** touch geometry or know about boundaries
@@ -106,15 +127,17 @@ Raw CSV (assessment)         Raw GeoJSON (boundaries)
 **Outputs:** `gpd.GeoDataFrame` with columns:
 - `neighbourhood_name`
 - `total_assessed_value`
+- `total_revenue` — only on the revenue path (when `aggregate` produced it)
 - `area_acres`
 - `value_per_acre`
+- `revenue_per_acre` — only on the revenue path
 - `geometry`
 
 **Responsibilities:**
 - Left join boundaries → assessment on `neighbourhood_name`
 - Flag boundary neighbourhoods with no assessment match (print names)
 - Flag assessment neighbourhoods with no boundary match (print names)
-- Calculate `value_per_acre = total_assessed_value / area_acres`
+- Calculate `value_per_acre = total_assessed_value / area_acres` (and `revenue_per_acre = total_revenue / area_acres` when present — both metrics, web toggle)
 - Guard against division by zero (flag, do not crash)
 
 **Matching note:** Neighbourhood names between the two sources may not align exactly. Normalization (strip + uppercase) and the `NAME_CORRECTIONS` lookup are applied upstream in `load_assessment.py`, before aggregation — applying corrections after aggregation risks collapsing two summed rows onto one boundary and duplicating it. This module attempts a normalized exact match on the already-corrected names and flags whatever remains unmatched.

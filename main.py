@@ -29,6 +29,7 @@ ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT / "src"))
 
 from load_assessment import load_assessment
+from apply_tax_rates import apply_tax_rates
 from aggregate_by_neighbourhood import aggregate_by_neighbourhood
 from load_boundaries import load_boundaries
 from join_and_calculate import join_and_calculate, export_geojson
@@ -39,8 +40,14 @@ logger = logging.getLogger(__name__)
 # --- Default paths (override via CLI) --------------------------------------
 ASSESSMENT_CSV = ROOT / "data/raw/Property_Assessment_Data__Current_Calendar_Year_.csv"
 BOUNDARIES_GEOJSON = ROOT / "data/raw/neighbourhoods.geojson"
+MILL_RATES_JSON = ROOT / "data/mill_rates.json"
 PNG_OUT = ROOT / "output/edmonton_value_per_acre.png"
 GEOJSON_OUT = ROOT / "web/data/neighbourhood_value_per_acre.geojson"
+
+# Assessment-year alignment: the local snapshot is 2025 data (the coverage year
+# lives in Socrata metadata, not the rows — see DATA.md). Mill rates MUST match.
+# A future re-download could roll the year; re-check metadata + bump this.
+ASSESSMENT_YEAR = 2025
 
 # --- Canonical web-export geometry parameters ------------------------------
 # Display-only. value_per_acre is computed from true area upstream and is
@@ -54,11 +61,16 @@ def run(
     boundaries_geojson: Path,
     png_out: Path | None,
     geojson_out: Path | None,
+    mill_rates_json: Path = MILL_RATES_JSON,
+    assessment_year: int = ASSESSMENT_YEAR,
     setback_m: float = SETBACK_M,
     simplify_tolerance_m: float = SIMPLIFY_TOLERANCE_M,
 ) -> None:
     """Run the full pipeline. Pass png_out/geojson_out=None to skip that output."""
-    aggregated = aggregate_by_neighbourhood(load_assessment(assessment_csv))
+    assessment = apply_tax_rates(
+        load_assessment(assessment_csv), mill_rates_json, assessment_year,
+    )
+    aggregated = aggregate_by_neighbourhood(assessment)
     boundaries = load_boundaries(str(boundaries_geojson))
     result = join_and_calculate(aggregated, boundaries)
 
@@ -82,6 +94,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--assessment-csv", type=Path, default=ASSESSMENT_CSV)
     p.add_argument("--boundaries-geojson", type=Path, default=BOUNDARIES_GEOJSON)
+    p.add_argument("--mill-rates-json", type=Path, default=MILL_RATES_JSON)
+    p.add_argument("--assessment-year", type=int, default=ASSESSMENT_YEAR)
     p.add_argument("--png-out", type=Path, default=PNG_OUT)
     p.add_argument("--geojson-out", type=Path, default=GEOJSON_OUT)
     p.add_argument("--setback-m", type=float, default=SETBACK_M)
@@ -104,6 +118,8 @@ def main(argv: list[str] | None = None) -> None:
         boundaries_geojson=args.boundaries_geojson,
         png_out=None if args.skip_png else args.png_out,
         geojson_out=None if args.skip_geojson else args.geojson_out,
+        mill_rates_json=args.mill_rates_json,
+        assessment_year=args.assessment_year,
         setback_m=args.setback_m,
         simplify_tolerance_m=args.simplify_tolerance_m,
     )

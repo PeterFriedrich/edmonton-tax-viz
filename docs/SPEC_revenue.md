@@ -1,7 +1,13 @@
 # Scope: True Revenue Per Acre (next phase)
 
-**Status: SCOPED, not started.** Captures what's needed to turn the current
-*assessed-value*-per-acre metric into an actual *tax-revenue*-per-acre metric.
+**Status: BUILT 2026-06-28.** The pipeline now computes per-property municipal
+levy (`src/apply_tax_rates.py`) and emits `revenue_per_acre` alongside
+`value_per_acre` in the served GeoJSON. Total 2025 municipal levy ≈ $2.67 B;
+class reweighting confirmed (Residential 68.5% of value / 46.2% of levy;
+Non Residential 21.7% / 46.4%). Remaining: web map value↔revenue toggle, and
+flagging exempt-heavy neighbourhoods in the UI. This doc captures the methodology
+that turned the *assessed-value*-per-acre metric into a *tax-revenue*-per-acre
+metric.
 
 ## Why
 
