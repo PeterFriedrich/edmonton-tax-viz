@@ -56,7 +56,12 @@ data/raw/neighbourhoods.geojson   # or .shp
 python main.py
 ```
 
-Output is written to `output/edmonton_value_per_acre.png`.
+Outputs:
+
+- `output/edmonton_value_per_acre.png` — Phase 1 static choropleth
+- `web/data/neighbourhood_value_per_acre.geojson` — Phase 2 web map data (setback 45 m, simplify 10 m; see `docs/PERFORMANCE.md`)
+
+Use `--skip-png` / `--skip-geojson` to produce just one. Run `python main.py --help` for all options.
 
 Each processing step can also be run and inspected independently:
 
