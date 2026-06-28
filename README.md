@@ -1,6 +1,6 @@
 # Edmonton Revenue Per Acre Analysis
 
-A public fiscal analysis examining which areas of Edmonton generate more property tax revenue than they cost to service — and which don't.
+A public fiscal analysis comparing Edmonton's property tax revenue to the cost of servicing it, by area.
 
 ## What This Is
 
@@ -50,7 +50,7 @@ The neighbourhood-level approach still supports analysis at this resolution — 
 ## Comparable Work
 
 - **Ottawa (2021):** Hemson Consulting analysis found suburban greenfield development runs a **$465/person/year deficit** while high-density infill generates a **$606/person/year surplus**. Councillor Shawn Menard requested and publicized this; it became a major input to Ottawa's growth strategy.
-- **Lafayette, LA:** Urban3's parcel-by-parcel analysis found $32 billion in infrastructure obligations against $16 million in annual maintenance revenue. The most comprehensive fiscal analysis ever done for a North American city.
+- **Lafayette, LA:** Urban3's parcel-by-parcel analysis found $32 billion in infrastructure obligations against $16 million in annual maintenance revenue. Apparently the most comprehensive fiscal analysis done for a North American city.
 - **Halifax:** Academic cost-of-service study across 8 settlement types found road costs of $1,053/household/year at low density vs. $26 at high density — roughly a **40:1 ratio**.
 - **Arlington, VA (Rosslyn–Ballston corridor):** Transit-oriented corridor occupying roughly **8% of the county's land** generates about **33% of its tax revenue**, alongside some of the lowest tax rates in Northern Virginia — a revenue-side example at scale.
 - **Calgary (2022):** Revenue-only analysis without a cost side.
