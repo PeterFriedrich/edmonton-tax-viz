@@ -70,22 +70,23 @@ EDUCATION'` (3 rows, flagged `is_exempt` on load) — see exempt decision below.
 
 ## Data we still need (external)
 
-- **Edmonton municipal mill rates by tax class**, for the **same year** as the
-  assessment dataset. Published annually by the City (tax rate bylaw). Must cover
-  the four `Tax Class` values present: Residential, Non Residential, Other
-  Residential, Farmland.
-  - **Partial data gathered 2026-06-28:** 2024 *residential* municipal rate
-    ≈ **0.0076648** (~7.66 mills); residential & farmland share the same rate.
-    Non-residential is materially higher (Alberta Municipal Affairs cites
-    Edmonton non-res ≈ 21 mills vs the residential figure — but that mixed/total
-    number may include education; **get the exact municipal-only non-res rate
-    from the 2024 City tax rate bylaw before computing**). Differential confirmed
-    at ~2–3×, which is the whole point (see Methodology check). Still need: exact
-    municipal non-res rate, and the "Other Residential" rate, for the year that
-    matches the assessment dataset.
-- Decide: **municipal mill rate only** (revenue *to the city*) vs **municipal +
-  education/provincial** (total property tax). Municipal-only is the cleaner
-  "city revenue" story; pick one and document it.
+- **Edmonton municipal mill rates by tax class, for assessment year 2025**
+  (year confirmed — see Year alignment below). Published annually in the City's
+  tax rate bylaw. Must cover the four `Tax Class` values: Residential, Non
+  Residential, Other Residential, Farmland.
+  - **NOT YET FETCHED — do not build on guessed numbers.** Two figures surfaced
+    in earlier search and must NOT be used as-is: (1) a *residential* municipal
+    rate ≈ **0.0076648** — that is **2024, the wrong year**; discard it. (2) a
+    non-res ≈ **21 mills** figure (Alberta Municipal Affairs) — **UNVERIFIED**;
+    it reads like a combined **municipal + education** rate (~2× the true
+    municipal-only non-res rate), and building on it would overstate the
+    commercial/industrial uplift. Get all four rates from the **2025 City of
+    Edmonton tax rate bylaw** (or edmonton.ca tax pages), **municipal portion
+    only**.
+- **DECIDED: municipal mill rate only** (not municipal + education/provincial).
+  Reason: this project models *City* fiscal sustainability, not total tax burden
+  on residents. The education levy is set provincially and flows to schools, not
+  city infrastructure, so including it would muddy what we are measuring.
 
 ## Computation
 
@@ -118,16 +119,31 @@ Then aggregate `levy` by neighbourhood → `total_revenue`, and
 
 ## Methodology decisions to settle
 
-- **Municipal-only vs total tax** (above).
-- **Tax-exempt properties.** Currently flagged + included (correct for an
-  *assessed value* analysis). Under a *revenue* framing they generate **$0**, so
-  they'd legitimately pull a neighbourhood's revenue/acre down. This is a real
-  treatment change, not a bug — decide and document.
-- **Year alignment.** Mill rate year must match the assessment year; the dataset
-  is "Current Calendar Year", so pin both.
-- **Keep both metrics?** Showing assessed-value/acre and revenue/acre side by
-  side is itself informative (the gap *is* the mill-rate story). Possible web
-  toggle.
+- **Municipal-only vs total tax — DECIDED: municipal-only** (reason under "Data
+  we still need").
+- **Tax-exempt properties — treatment under revenue (most consequential
+  decision).** Currently flagged + included (correct for an *assessed value*
+  analysis). Under a *revenue* framing they generate **$0**. Key constraint: our
+  denominator is the **neighbourhood boundary polygon area** (from
+  `load_boundaries`), NOT a sum of taxable parcel areas — so "exclude exempt land
+  from the denominator" (the Urban3 parcel-level move) is **not available**
+  without parcel-area data we don't have (the AltaLIS gap). So the practical +
+  honest choice is **$0 in the numerator, full boundary area in the
+  denominator**: exempt-heavy neighbourhoods (downtown government parcels, the
+  Legislature) will legitimately read **LOW** on revenue/acre. That is a true
+  city-fiscal fact but visually surprising, so **flag those neighbourhoods**
+  (we already detect `is_exempt`) rather than let them silently read as
+  unproductive.
+- **Year alignment — RESOLVED: 2025.** The assessment dataset (Socrata
+  `q7d6-ambg`) is a live weekly feed; its coverage year lives in the dataset
+  *metadata* ("effective 2025-01-01 to 2025-12-31"), not in the rows. Our local
+  snapshot (downloaded 2026-05-16) is 2025 data. Mill rates MUST be the **2025**
+  bylaw. A future re-download could roll to a new year — re-check the metadata.
+  See `DATA.md`.
+- **Keep both metrics — DECIDED: yes.** Show assessed-value/acre and
+  revenue/acre side by side (web toggle); the gap between them reflects the
+  class-differential mill rates. Keeping both is also more transparent than
+  picking one and hiding the other (supports the neutral-tone goal).
 
 ## Cross-refs
 

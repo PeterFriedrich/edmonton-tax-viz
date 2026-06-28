@@ -10,7 +10,15 @@ Reference for raw input files. Update this file when you discover column name qu
 **Download:** `scripts/download_data.py`
 **Source:** [Edmonton Open Data](https://data.edmonton.ca/City-Administration/Property-Assessment-Data-Current-Calendar-Year-/q7d6-ambg) — dataset ID `q7d6-ambg`
 **API URL:** `https://data.edmonton.ca/api/views/q7d6-ambg/rows.csv?accessType=DOWNLOAD`
-**Format:** CSV, 439,769 rows, updated annually (last confirmed: 2026-06-24)
+**Format:** CSV, 439,769 rows. **Live feed, updated weekly** (Socrata
+`Update Frequency: Weekly`); the assessment *year* rolls annually.
+**Assessment year:** **2025** — i.e. effective 2025-01-01 to 2025-12-31. The year
+is **not a column in the rows**; it lives only in the dataset metadata
+(`https://data.edmonton.ca/api/views/q7d6-ambg.json` → description /
+`custom_fields.Time Frame.Period of Coverage`). Our local snapshot was downloaded
+2026-05-16 and is 2025 data. **Re-check the metadata after any re-download** — a
+later pull can roll to a new year, which would silently desync from any
+year-matched mill rates (see `docs/SPEC_revenue.md`).
 **Licence:** Open Government Licence – City of Edmonton
 
 ### Columns (confirmed 2026-05-22)
@@ -47,6 +55,7 @@ Reference for raw input files. Update this file when you discover column name qu
 - `Suite` column has mixed types — always load with `low_memory=False`
 - 46 rows have `Assessed Value == 0` — drop and flag count on load
 - No explicit tax-exempt column; proxy is `Assessment Class 1 == 'NONRES MUNICIPAL/RES EDUCATION'`
+- Assessment year is metadata-only, not in the rows (year = 2025; see Format note above) — pin it against the mill-rate year for the revenue phase
 
 ---
 
