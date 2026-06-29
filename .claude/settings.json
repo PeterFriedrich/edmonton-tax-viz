@@ -1,0 +1,24 @@
+{
+  "hooks": {
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '{\"suppressOutput\":true,\"systemMessage\":\"\\u26a0\\ufe0f Context about to compact \\u2014 reconcile TODO.md and ensure a handoff exists in session-summary/.\",\"hookSpecificOutput\":{\"hookEventName\":\"PreCompact\",\"additionalContext\":\"BEFORE relying on compacted context: reconcile TODO.md (check off completed items, refresh the _Last reconciled_ date) and confirm a session handoff exists in session-summary/ for any substantive work done this session. CLAUDE.md requires a written record before context is lost.\"}}'"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '{\"systemMessage\":\"\\u26a0\\ufe0f Session ending \\u2014 if you did substantive work, reconcile TODO.md and run /handoff before this context is gone (CLAUDE.md rule).\"}'"
+          }
+        ]
+      }
+    ]
+  }
+}

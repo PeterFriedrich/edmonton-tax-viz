@@ -4,6 +4,7 @@
 Edmonton revenue-per-acre fiscal analysis. Python-only, no GIS software.
 
 ## Key Files
+- `TODO.md` — living backlog: the authoritative list of what's left. Read it to know what to work on; update it in place as items open/close. Session summaries narrate *what happened*; TODO.md owns *what's left*.
 - `docs/SPEC_phase1.md` — what we're building and why
 - `docs/ARCHITECTURE.md` — module interfaces, data flow, testing approach. **Read before writing any module.**
 - `data/DATA.md` — data source details, column names, known quirks. **Read before touching any data files. Update if you discover anything new.**
