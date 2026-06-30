@@ -20,18 +20,21 @@
     #title { top: 20px; left: 22px; max-width: 360px; }
     #title h1 { margin: 0 0 4px; font-size: 19px; font-weight: 600; letter-spacing: 0.2px; }
     #title p  { margin: 0; font-size: 12.5px; line-height: 1.5; color: #9a9ab0; }
-    #toggle {
-      top: 20px; right: 22px; display: flex; pointer-events: auto;
+    #toggle, #palette {
+      right: 22px; display: flex; pointer-events: auto;
       background: rgba(12,12,20,0.7); border: 1px solid #2a2a3a;
       border-radius: 6px; overflow: hidden;
     }
-    #toggle button {
+    #toggle { top: 20px; }
+    #palette { top: 58px; }
+    #toggle button, #palette button {
       appearance: none; border: 0; background: transparent; color: #9a9ab0;
       font: 12.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       padding: 7px 15px; cursor: pointer; transition: background 0.12s, color 0.12s;
     }
-    #toggle button:hover { color: #e8e8ef; }
-    #toggle button.active { background: #fcd278; color: #16111a; font-weight: 600; }
+    #palette button { padding: 6px 12px; font-size: 11.5px; }
+    #toggle button:hover, #palette button:hover { color: #e8e8ef; }
+    #toggle button.active, #palette button.active { background: #fcd278; color: #16111a; font-weight: 600; }
     #legend { bottom: 22px; left: 22px; font-size: 11.5px; color: #b8b8c8; }
     #legend .bar {
       width: 200px; height: 10px; border-radius: 2px; margin: 6px 0 4px;
@@ -62,6 +65,12 @@
     <button data-metric="value_per_acre">Value</button>
   </div>
 
+  <div id="palette" class="panel">
+    <button data-ramp="current" class="active">Inferno</button>
+    <button data-ramp="glow">Glow</button>
+    <button data-ramp="cividis">Cividis</button>
+  </div>
+
   <div id="legend" class="panel">
     <div id="legend-label">Revenue per acre</div>
     <div class="bar"></div>
@@ -72,7 +81,6 @@
     // --- tunables -----------------------------------------------------------
     const DATA_URL = "./data/neighbourhood_value_per_acre.geojson";
     const CENTER = [-113.50, 53.52]; // Edmonton, from the data centroid
-    const TOP_EDGE_COLOR = [40, 95, 120, 215]; // contrasting roof outline (deep muted teal vs warm fills)
 
     // Per-metric display config. The clamp (colour saturation) sits at the same
     // percentile (~p97.5) for both metrics, and the elevation scale is set so the
@@ -105,29 +113,68 @@
     };
 
     // Active metric defaults to revenue (matches the static HTML chrome above).
-    const state = { metric: "revenue_per_acre", data: null };
+    const state = { metric: "revenue_per_acre", ramp: "current", data: null };
     let overlay; // deck.gl MapboxOverlay, created on map load
 
-    // Sequential dark->bright ramp (inferno-ish), legible on a dark background.
-    const RAMP = [
-      [0.00, [ 20,  11,  52]],
-      [0.25, [ 88,  21,  99]],
-      [0.50, [165,  44,  96]],
-      [0.75, [231,  98,  58]],
-      [1.00, [252, 210, 120]],
-    ];
+    // Three neutral, luminance-sequential ramps to compare: dark = low, bright =
+    // high, with no semantic good/bad hue (consistent with the linear-elevation
+    // honesty choice — magnitude is encoded by brightness, not by a charged
+    // colour). Each carries its own background + roof-edge colour so a swap looks
+    // coherent. Switch live via the palette control.
+    const RAMPS = {
+      current: { // inferno-ish: the original warm ramp
+        bg: "#0a0a0f",
+        edge: [40, 95, 120, 215],
+        stops: [
+          [0.00, [ 20,  11,  52]],
+          [0.25, [ 88,  21,  99]],
+          [0.50, [165,  44,  96]],
+          [0.75, [231,  98,  58]],
+          [1.00, [252, 210, 120]],
+        ],
+      },
+      glow: { // same family, peak pushed to near-white so the tallest towers glow
+        bg: "#08060f",
+        edge: [70, 90, 120, 200],
+        stops: [
+          [0.00, [ 18,  10,  48]],
+          [0.30, [ 96,  26, 108]],
+          [0.55, [196,  70,  80]],
+          [0.78, [245, 160,  86]],
+          [1.00, [255, 246, 228]],
+        ],
+      },
+      cividis: { // perceptually uniform + colour-blind safe (blue -> yellow)
+        bg: "#04101f",
+        edge: [30, 50, 80, 210],
+        stops: [
+          [0.00, [  0,  34,  78]],
+          [0.25, [ 53,  69, 108]],
+          [0.50, [124, 123, 120]],
+          [0.75, [184, 173, 106]],
+          [1.00, [255, 233,  69]],
+        ],
+      },
+    };
 
     function colorFor(value, clamp) {
+      const stops = RAMPS[state.ramp].stops;
       const t = Math.max(0, Math.min(1, value / clamp));
-      for (let i = 1; i < RAMP.length; i++) {
-        if (t <= RAMP[i][0]) {
-          const [t0, c0] = RAMP[i - 1], [t1, c1] = RAMP[i];
+      for (let i = 1; i < stops.length; i++) {
+        if (t <= stops[i][0]) {
+          const [t0, c0] = stops[i - 1], [t1, c1] = stops[i];
           const f = (t - t0) / (t1 - t0);
           return [0, 1, 2].map(k => Math.round(c0[k] + f * (c1[k] - c0[k])));
         }
       }
-      return RAMP[RAMP.length - 1][1];
+      return stops[stops.length - 1][1];
     }
+
+    // CSS gradient string for the legend bar, built from a ramp's stops.
+    const gradientCss = stops =>
+      "linear-gradient(90deg," +
+      stops.map(([t, c]) => `rgb(${c[0]},${c[1]},${c[2]}) ${Math.round(t * 100)}%`).join(",") +
+      ")";
 
     const fmt = v => "$" + Math.round(v).toLocaleString();
 
@@ -182,8 +229,12 @@
         pickable: true,
         autoHighlight: true,
         highlightColor: [255, 255, 255, 60],
-        // Re-run the accessors when the metric changes (same data, new field).
-        updateTriggers: { getElevation: state.metric, getFillColor: state.metric },
+        // Re-run the accessors when the metric (field) or ramp (colour) changes;
+        // the data reference is stable, so without these deck.gl skips the accessor.
+        updateTriggers: {
+          getElevation: state.metric,
+          getFillColor: [state.metric, state.ramp],
+        },
       });
 
       // Crisp roof outline drawn on top of the prisms (depthTest so towers in
@@ -192,7 +243,7 @@
         id: "top-edges",
         data: topRings(state.data.features, cfg),
         getPath: d => d,
-        getColor: TOP_EDGE_COLOR,
+        getColor: RAMPS[state.ramp].edge,
         getWidth: 1.4,
         widthUnits: "pixels",
         widthMinPixels: 1,
@@ -230,6 +281,18 @@
         b.classList.toggle("active", b.dataset.metric === metric));
     }
 
+    // Switch colour ramp: rebuild layers, restyle the background + legend gradient.
+    function applyPalette(name) {
+      if (name === state.ramp || !RAMPS[name]) return;
+      state.ramp = name;
+      const ramp = RAMPS[name];
+      overlay.setProps({ layers: buildLayers() });
+      map.setPaintProperty("bg", "background-color", ramp.bg);
+      document.querySelector("#legend .bar").style.background = gradientCss(ramp.stops);
+      document.querySelectorAll("#palette button").forEach(b =>
+        b.classList.toggle("active", b.dataset.ramp === name));
+    }
+
     map.on("load", async () => {
       state.data = await fetch(DATA_URL).then(r => r.json());
 
@@ -242,6 +305,11 @@
 
       document.querySelectorAll("#toggle button").forEach(b =>
         b.addEventListener("click", () => applyMetric(b.dataset.metric)));
+      document.querySelectorAll("#palette button").forEach(b =>
+        b.addEventListener("click", () => applyPalette(b.dataset.ramp)));
+      // Sync the legend gradient to the default ramp (single source of truth).
+      document.querySelector("#legend .bar").style.background =
+        gradientCss(RAMPS[state.ramp].stops);
     });
   </script>
 </body>
