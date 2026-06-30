@@ -172,6 +172,47 @@ Non-residential is ~3.2× residential — this class differential is the basis o
 
 ---
 
+## 5. Zoning Bylaw Geographical Data (land-use layer, added 2026-06-29)
+
+**Source:** Edmonton Open Data — dataset ID `fixa-tstc` ("Zoning Bylaw Geographical Data")
+**Download URL:** `https://data.edmonton.ca/resource/fixa-tstc.geojson?$limit=20000`
+**Format:** GeoJSON, ~9.2 MB
+**Features:** 11,510 zoning polygons (MultiPolygon)
+**CRS:** CRS84 / EPSG:4326 — reproject to EPSG:3400 before any overlay/area
+**Vintage:** the **2024 Zoning Bylaw** (new codes, e.g. `RSF` = "Small Scale Flex
+Residential"). Assessment is 2025 — close enough; zoning is stable. Record the
+download date / `date_ext` for provenance.
+
+**Why:** neighbourhood-level aggregation needs explicit categorization of
+non-developable land (River Valley, parks, undeveloped) that parcel-level analysis
+handles implicitly. Overlaid on neighbourhood boundaries → land-use composition %
+per neighbourhood → drives the colour-scale set-aside. See `SPEC_revenue.md`
+(Update 2026-06-29) and `FINDINGS_revenue_scale.md`.
+
+### Columns
+| Column | Notes |
+|--------|-------|
+| `zoning` | zone code, e.g. `RSF`, `A`, `RM h16` — height/overlay suffixes appended; parse the **first token** for the base code |
+| `description` | human-readable, e.g. "River Valley", "Future Urban Development" |
+| `dc2_sub_area` | sub-area for `DC2` site-specific zones |
+| `geometry_multipolygon` | polygon |
+
+### Known Quirks
+- **Geometry needs cleaning before overlay.** Raw polygons are invalid/mixed-dimension
+  → geopandas `overlay` raises `GEOSException`. Fix: `buffer(0)`, drop empty + keep
+  only Polygon/MultiPolygon parts.
+- **Do NOT categorize by keyword/prefix.** "Energy & Technology **Park**" is industrial,
+  "Century **Park**" is a TOD redevelopment — the word "Park" ≠ green park. The `A*`
+  codes are mostly River Valley special areas (Hawrelak, Muttart) but `AED` =
+  Arena/Entertainment District (downtown), `ALA` = Ambleside apartments. Use an
+  **explicit `code → category` dictionary** (~95 base codes; descriptions make each
+  obvious). Lives in `src/load_zoning.py`.
+- **Set-aside categories:** never = River Valley (`A`,`NA`)/Parks (`PS`,`PSN`); not-yet
+  = Future (`FD`)/rural (`AG`,`RR`)/industrial reserve (`EET*`). Institutional
+  (`UI`,`UF`,`AJ`,`PU`) is a proxy for where exempt-roll understatement lives.
+- **Refresh requirement:** re-pull each pipeline cycle so developing land (rezoned
+  FD/AG → residential) graduates off the set-aside list automatically.
+
 ## Name Matching
 
 Neighbourhood names between the two sources may not align exactly. Normalization (strip + uppercase) and the `NAME_CORRECTIONS` dict (keyed assessment name → boundary name) are applied in `load_assessment.py`, *before* aggregation — applying corrections after aggregation could collapse two summed rows onto one boundary and duplicate it. `join_and_calculate.py` then does a normalized exact match on the already-corrected names and flags whatever remains unmatched.

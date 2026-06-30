@@ -6,15 +6,33 @@ Visual theming and accessibility decisions for the interactive map. Phase 1
 
 ---
 
-## Current state
+## Current state (updated 2026-06-29)
 
-- **Dark theme only.** Background `#0a0a0f`, no basemap (polygons on dark are
-  self-describing — see ARCHITECTURE.md Phase 2 notes).
-- **Fill ramp:** sequential dark→bright inferno-ish (`RAMP` in `index.html`),
-  clamped at `$4M`/acre (`COLOR_CLAMP`) for mid-band contrast.
-- **Top-cap edge:** deep muted teal, cool against the warm fills.
-- **Tunables** live at the top of `web/index.html`'s `<script>`: `RAMP`,
-  `COLOR_CLAMP`, `TOP_EDGE_COLOR`, and the MapLibre `background-color`.
+- **Dark theme only.** No basemap (polygons on dark are self-describing — see
+  ARCHITECTURE.md Phase 2 notes).
+- **Three swappable colour ramps** (`RAMPS` in `index.html`, palette switcher under
+  the Revenue/Value toggle), each carrying its own background + roof-edge colour:
+  - **Inferno** — original warm ramp, bg `#0a0a0f`, teal edge.
+  - **Glow** — near-white peak so the tallest towers glow, bg `#08060f`, cool slate
+    edge (this partly addresses the "edge not finalized" item below).
+  - **Cividis** — perceptually uniform + colour-blind safe (the colourblind-mode ramp;
+    see "Colourblind mode" — CVD-simulator verification still pending).
+  - All three are neutral luminance-sequential (magnitude = brightness, no good/bad hue).
+- **Clamp is per-metric** (`colorClamp` in each `METRICS` entry): revenue `$50k`,
+  value `$4M` (≈ same p97 percentile, so both saturate the top ~2.5%). **NOTE:** the
+  hard clamp creates a saturated plateau that reads as a fake threshold — being
+  replaced by a land-use set-aside + (likely) a log/sqrt transform; see
+  `SPEC_revenue.md` (Update 2026-06-29) and `FINDINGS_revenue_scale.md`.
+- **deck.gl gotcha:** colour accessors that depend on the active ramp need the ramp in
+  their `updateTriggers` (the data reference is stable, so deck.gl skips the re-render
+  otherwise). `getFillColor` uses `[state.metric, state.ramp]`.
+
+### Set-aside neutral treatment (DECIDED 2026-06-29, not yet built)
+Neighbourhoods that are ≥90% never/not-yet land (River Valley, parks, undeveloped —
+see `SPEC_revenue.md`) render in a **neutral grey**, distinct from the ramp, so they
+read as "outside the fiscal comparison" rather than as red/low. They are also excluded
+from the colour-scale fit. The full zoning-polygon overlay layer is a separate later
+product decision.
 
 ---
 

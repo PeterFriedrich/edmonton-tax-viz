@@ -4,10 +4,14 @@
 levy (`src/apply_tax_rates.py`) and emits `revenue_per_acre` alongside
 `value_per_acre` in the served GeoJSON. Total 2025 municipal levy ≈ $2.67 B;
 class reweighting confirmed (Residential 68.5% of value / 46.2% of levy;
-Non Residential 21.7% / 46.4%). Remaining: web map value↔revenue toggle, and
-flagging exempt-heavy neighbourhoods in the UI. This doc captures the methodology
-that turned the *assessed-value*-per-acre metric into a *tax-revenue*-per-acre
-metric.
+Non Residential 21.7% / 46.4%). Web map value↔revenue toggle: DONE (commit
+`a0cf2a0`). This doc captures the methodology that turned the *assessed-value*-per-acre
+metric into a *tax-revenue*-per-acre metric.
+
+**Update 2026-06-29:** the colour-scale work exposed that the "flag exempt-heavy
+neighbourhoods" plan was built on a false premise (exempt land is absent from the
+roll, not low). Superseded by a land-use set-aside via the zoning layer — see the
+dated section below and `docs/FINDINGS_revenue_scale.md`.
 
 ## Why
 
@@ -137,7 +141,11 @@ Then aggregate `levy` by neighbourhood → `total_revenue`, and
   Legislature) will legitimately read **LOW** on revenue/acre. That is a true
   city-fiscal fact but visually surprising, so **flag those neighbourhoods**
   (we already detect `is_exempt`) rather than let them silently read as
-  unproductive.
+  unproductive. **SUPERSEDED 2026-06-29 (see Update below):** `is_exempt` catches
+  only 3 parcels — exempt institutional land is *absent from the taxable roll
+  entirely*, so it cannot be flagged this way, and the near-zero neighbourhoods are
+  **low-coverage natural/undeveloped land** (river valley, ravines, ring-road
+  margins), not exempt. Separation is now by the zoning land-use layer.
 - **Year alignment — RESOLVED: 2025.** The assessment dataset (Socrata
   `q7d6-ambg`) is a live weekly feed; its coverage year lives in the dataset
   *metadata* ("effective 2025-01-01 to 2025-12-31"), not in the rows. Our local
@@ -149,7 +157,51 @@ Then aggregate `levy` by neighbourhood → `total_revenue`, and
   class-differential mill rates. Keeping both is also more transparent than
   picking one and hiding the other (supports the neutral-tone goal).
 
+## Update 2026-06-29: colour scale + land-use set-aside
+
+Full empirical detail in `docs/FINDINGS_revenue_scale.md`; decisions summarized here.
+
+**Problem.** The web map's colour clamp ($50k revenue / $4M value, ~p97) saturates
+the top ~2.5% to one peak colour — a hard plateau that reads as a meaningful
+threshold but is only a display device. Driven by severe right skew (revenue spans
+5.2 orders of magnitude; median would sit at 7% of a linear-to-max ramp).
+
+**The distribution is a two-population mixture** — a roughly log-normal taxable core
+plus a near-zero spike of ~57 neighbourhoods. The spike is **NOT exempt land**
+(that proxy is near-empty; exempt institutions are absent from the roll). It is
+**low-coverage natural/undeveloped land**, confirmed by zoning composition.
+
+**Separator — DECIDED: the Zoning Bylaw layer (`fixa-tstc`).** Spatially overlay
+zoning polygons on neighbourhood boundaries → land-use composition % per
+neighbourhood (`src/load_zoning.py`, see ARCHITECTURE.md + DATA.md §5). Set aside a
+neighbourhood when its **never + not-yet** share ≥ **0.90**:
+- **never** = River Valley / Natural Areas / Parks (permanent non-taxable land);
+- **not-yet** = Future Development + agricultural/rural fringe + industrial reserve.
+- Mixed cases (50–90%) and all developed land **stay on the scale** (zoning = what's
+  *allowed*, not *built*; underdeveloped-but-developed land is the fiscal story).
+
+**Why not-yet is included and still scales:** set-aside keys off *zoning*, not
+revenue. As fringe land develops the city rezones it, so it drops below 0.90 and
+**auto-rejoins the scale** next refresh — self-maintaining, no threshold to re-tune.
+This requires **zoning to be a refreshed pipeline input** (year-aligned, vintage
+recorded — see SPEC_deployment.md).
+
+**Visual — DECIDED:** set-aside neighbourhoods render in a **neutral grey**
+(distinct from the ramp, not red/low) and are **excluded from the colour-scale fit**.
+The full zoning-polygon overlay layer is a SEPARATE later product decision (not coupled).
+
+**Colour transform — DEFERRED to after the set-aside lands.** Re-run the skew test
+on the set-aside-excluded taxable set: if ≈ log-normal (likely), use **log** for
+colour; **sqrt** is the fallback. **Height stays LINEAR** (the standing honesty
+choice) regardless.
+
+**Permanent caveat:** revenue/acre understates any neighbourhood holding large
+exempt institutions (absent from the roll); zoning (`UI`/`UF`/`AJ`/`PU`) now lets us
+*flag* where, though zoning ≠ tax status (proxy only).
+
 ## Cross-refs
 
 - Current metric definition: `ARCHITECTURE.md` (join_and_calculate) + `DATA.md`.
 - Tax-exempt current handling: `ARCHITECTURE.md` Key Decisions table.
+- Colour scale + two-population finding: `docs/FINDINGS_revenue_scale.md`.
+- Zoning land-use layer: `DATA.md` §5, `ARCHITECTURE.md` (`load_zoning.py`).

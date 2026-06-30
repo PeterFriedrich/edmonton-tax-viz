@@ -149,6 +149,17 @@ mismatched-year map. Instead:
 
 So in that window only the banner updates; the data waits for matching rates.
 
+**Zoning is a third refreshed input (added 2026-06-29).** The land-use set-aside
+(`src/load_zoning.py`, see `SPEC_revenue.md`) keys off the zoning layer (`fixa-tstc`),
+NOT off revenue — so it only stays correct if zoning is re-pulled each cycle. As
+fringe land develops, the city rezones it (Future/Agricultural → residential), its
+set-aside fraction drops below 0.90, and it auto-rejoins the colour scale on the next
+run. If zoning is snapshotted once and never refreshed, developing neighbourhoods get
+wrongly greyed for years. So: **pull zoning alongside assessment + mill rates, and
+record its vintage** (add `zoning_year` to `status.json`). Zoning has no hard
+year-alignment constraint with assessment (it's stable land-use, not a tax rate), but
+its vintage should be visible for provenance.
+
 ## Frontend (GitHub Pages, static)
 
 Serves `web/` + the committed GeoJSON. No runtime backend. CDN deps (MapLibre,
@@ -163,6 +174,7 @@ renders a maintenance-style notice above the map. Example:
 {
   "data_year": 2025,
   "rate_year": 2025,
+  "zoning_year": 2024,
   "generated": "2026-06-28",
   "last_checked": "2026-06-28",
   "banner": null

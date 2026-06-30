@@ -7,12 +7,12 @@ Derived from `SPEC_phase1.md`. Describes module responsibilities, interfaces, an
 ## Data Flow
 
 ```
-Raw CSV (assessment)         Raw GeoJSON (boundaries)
-        |                            |
-  load_assessment.py         load_boundaries.py
-        |  (+ class columns)         |
-  apply_tax_rates.py  <-- mill_rates.json  (revenue phase; skipped for value-only)
-        |  (+ per-property levy)     |
+Raw CSV (assessment)         Raw GeoJSON (boundaries)      Raw GeoJSON (zoning, fixa-tstc)
+        |                            |                              |
+  load_assessment.py         load_boundaries.py            load_zoning.py
+        |  (+ class columns)         |   \________________________/  (overlay)
+  apply_tax_rates.py  <-- mill_rates.json                  |  set_aside_frac, is_set_aside
+        |  (+ per-property levy)     |                      |  (merged in join_and_calculate)
   DataFrame:                  GeoDataFrame:
   neighbourhood_name          neighbourhood_name
   assessed_value, levy        geometry (projected)
@@ -118,11 +118,43 @@ Raw CSV (assessment)         Raw GeoJSON (boundaries)
 
 ---
 
+### `src/load_zoning.py` (land-use layer — added 2026-06-29, design stage)
+
+**Inputs:** path to the zoning GeoJSON (`fixa-tstc`, see `DATA.md` §5); the boundary
+GeoDataFrame from `load_boundaries.py` (needs projected geometry for the overlay)
+
+**Outputs:** `pd.DataFrame` keyed by `neighbourhood_name`:
+- `set_aside_frac` (float 0–1) — share of neighbourhood area that is never/not-yet land
+- `is_set_aside` (bool) — `set_aside_frac >= 0.90`
+- land-use composition columns (developed vs never/not-yet categories) + a dominant
+  set-aside reason label for the tooltip
+
+**Responsibilities:**
+- Load zoning polygons, reproject to **EPSG:3400** (CRS set explicitly, per project
+  rule), clean geometry (`buffer(0)`; drop non-polygonal parts — raw municipal
+  polygons fail GEOS overlay otherwise)
+- Map zone code → land-use category via an **explicit `code → category` dictionary**
+  (NOT keyword/prefix heuristics — place-names like "Energy & Technology *Park*" and
+  the `A*` river-valley codes break fuzzy matching; see `FINDINGS_revenue_scale.md`)
+- Spatial-overlay zoning × neighbourhoods; sum intersection area by category →
+  composition %; derive `set_aside_frac` from never+not-yet categories
+- **Set-aside = never (River Valley/Natural/Parks) + not-yet (Future/rural/reserve)**,
+  threshold 0.90 (decision in `SPEC_revenue.md`)
+
+**Does not:** touch assessment/revenue values or fit the colour scale (that's a
+display decision downstream). Zoning is a **refreshed input** — re-pull each cycle so
+developing land graduates off the set-aside list automatically (see SPEC_deployment.md).
+
+---
+
 ### `src/join_and_calculate.py`
 
 **Inputs:**
 - Aggregated assessment DataFrame from `aggregate_by_neighbourhood.py`
 - Boundary GeoDataFrame from `load_boundaries.py`
+- (optional) zoning composition DataFrame from `load_zoning.py` — merged on
+  `neighbourhood_name`, adding `set_aside_frac` / `is_set_aside` to the output (and
+  thus the GeoJSON). Degrades gracefully when absent, like the revenue columns.
 
 **Outputs:** `gpd.GeoDataFrame` with columns:
 - `neighbourhood_name`

@@ -25,12 +25,46 @@ _Last reconciled: 2026-06-29_
   land (20× "RIVER VALLEY", golf courses, ring-road margins, energy parks,
   undeveloped town centres; 55/57 have <200 parcels). So the separator is
   coverage/land-use, not exempt share.
-  - [ ] Check the **boundary dataset for a neighbourhood type/descriptor field** —
-    if present, that's the principled non-arbitrary separator. Else fall back to
-    name-pattern + coverage, or to sqrt-and-document (no set-aside).
+  **APPROACH (decided 2026-06-29): the Zoning Bylaw layer (`fixa-tstc`).** Boundary
+  file has no type field (cols: number/name/descriptive_name/ward/district/desc/geom).
+  Instead use Edmonton's zoning polygons (11,510; codes + descriptions) spatially
+  overlaid on neighbourhood boundaries → land-use **composition %** per neighbourhood.
+  Principled, area-based, non-arbitrary. Buckets split THREE ways (the policy story):
+  - **Never taxable** — `A` River Valley, `NA` Natural Areas, `PS`/`PSN` Parks → set aside.
+  - **Not yet** — `FD` Future Urban Development (+ fringe `AG`/`RR`) → "fiscal potential", flag separately.
+  - **Genuine underperformer** — developed-zoned but low value/acre → STAYS on the scale
+    (zoning = what's *allowed*, not *built*; underdeveloped residential is the fiscal story).
+  - **Institutional/other-jurisdiction** — `UI`/`UF`/`AJ`/`PU` → proxy for where the
+    exempt-roll understatement lives (recovers the "undetectable" caveat, partially).
+  *Methodological framing (for the doc):* neighbourhood-level aggregation REQUIRES
+  explicit categorization of non-developable land that parcel-level (Urban3) handles
+  implicitly. It's compensation for our unit choice, not feature creep.
   - [ ] Methodology caveat to record: revenue/acre **understates** neighbourhoods
-    holding large exempt institutions, and we **cannot detect which** (absent data).
-  - [ ] (was: aggregate exempt share — DROPPED, nothing to aggregate.)
+    holding large exempt institutions; zoning (UI/UF/AJ) now lets us *flag* where,
+    though zoning ≠ tax status (proxy only).
+
+  **LOCKED 2026-06-29** (in specs — SPEC_revenue Update, ARCHITECTURE, DATA §5,
+  SPEC_deployment, UI): set-aside = **never + not-yet** at **≥0.90**; mixed (0.5–0.9)
+  + developed STAY on scale; set-aside renders **neutral grey**, excluded from the
+  scale fit; **zoning is a refreshed input** (auto-graduates developing land).
+  Validated in scratch: tail median set-aside 0.99 vs developed 0.11; 48 set aside,
+  24 mixed kept; ZERO genuine underperformers in the tail.
+  **NEXT-SESSION BUILD (not started):**
+  - [ ] `src/load_zoning.py` — explicit `code→category` dict (NOT keyword/prefix —
+    "Park" place-names + `A*` codes break it), reproject 3400, `buffer(0)` clean,
+    overlay → `set_aside_frac`/`is_set_aside` per neighbourhood. + tests (synthetic).
+  - [ ] Wire into `join_and_calculate` + `main.py`; commit zoning to `data/raw/`;
+    regenerate GeoJSON carrying the new columns.
+  - [ ] Re-run skew on the set-aside-excluded set → pick colour transform (log vs sqrt);
+    update FINDINGS_revenue_scale §6.
+  - [ ] Frontend: neutral-grey the set-aside neighbourhoods in `web/index.html`.
+  - Scratch validation lives in the session scratchpad (`zoning_list.py`); zoning
+    GeoJSON not yet committed (re-download from `fixa-tstc`).
+
+- [ ] **SCOPE: composition numbers now; full zoning POLYGON layer in the viewer is a
+  SEPARATE later product decision** — it changes the viz from "revenue/acre" to
+  "revenue/acre + land-use overlay" (clarity-vs-complexity call for a public audience).
+  Do NOT couple them.
 
 - [ ] **Colour scale for revenue/value — decide after exempt split.** Current hard
   clamp ($50k / $4M, ~p97) creates a visible saturated plateau that reads as a fake
