@@ -47,14 +47,14 @@ year-matched mill rates (see `docs/SPEC_revenue.md`).
 
 **Assessment Class 1 values:** RESIDENTIAL (411,563), COMMERCIAL (23,054), OTHER RESIDENTIAL (4,356), FARMLAND (509), MA DERELICT RESIDENTIAL (284), NONRES MUNICIPAL/RES EDUCATION (3)
 
-**Tax-exempt flag:** No explicit exempt boolean. Best proxy is `Assessment Class 1 == 'NONRES MUNICIPAL/RES EDUCATION'` (3 rows). Flag these on load as `is_exempt`.
+**Tax-exempt flag:** No explicit exempt boolean. Best proxy is `Assessment Class 1 == 'NONRES MUNICIPAL/RES EDUCATION'` (3 rows). Flag these on load as `is_exempt`. **Note (2026-06-29):** this proxy catches almost nothing — tax-exempt institutional land (Legislature, schools, hospitals, City property) is **absent from the taxable roll entirely**, not flagged or zeroed. So `is_exempt` cannot identify exempt-heavy neighbourhoods, and revenue/acre silently understates any neighbourhood holding large exempt institutions. See `docs/FINDINGS_revenue_scale.md` §4–5.
 
 ### Known Quirks
 
 - Condo units: multiple rows share one land parcel — this is expected and correct for this analysis
 - `Suite` column has mixed types — always load with `low_memory=False`
 - 46 rows have `Assessed Value == 0` — drop and flag count on load
-- No explicit tax-exempt column; proxy is `Assessment Class 1 == 'NONRES MUNICIPAL/RES EDUCATION'`
+- No explicit tax-exempt column; proxy is `Assessment Class 1 == 'NONRES MUNICIPAL/RES EDUCATION'` — but exempt institutional land is absent from the roll, so the proxy is near-empty (3 rows). The near-zero-revenue tail is **low-coverage** land (river valley / undeveloped), not exempt. See `docs/FINDINGS_revenue_scale.md`.
 - Assessment year is metadata-only, not in the rows (year = 2025; see Format note above) — pin it against the mill-rate year for the revenue phase
 
 ---
