@@ -29,16 +29,29 @@ def load_assessment(csv_path: str | Path) -> pd.DataFrame:
     """Load and clean the property assessment CSV.
 
     Returns a DataFrame with columns:
-        neighbourhood_name  str    normalized (stripped, uppercased)
-        assessed_value      float
-        is_exempt           bool   True for NONRES MUNICIPAL/RES EDUCATION rows
+        neighbourhood_name      str    normalized (stripped, uppercased)
+        assessed_value          float
+        is_exempt               bool   True for NONRES MUNICIPAL/RES EDUCATION rows
+        tax_class               str    clean 4-value class (rate join key)
+        assessment_class_1/2/3  str    split-class labels (NaN for unused slots)
+        assessment_class_pct_1/2/3  float  per-class apportionment %
+
+    The class columns are carried through for the revenue phase (per-property
+    municipal levy in apply_tax_rates.py). The assessment file uses two class
+    vocabularies — see docs/FINDINGS_assessment_classes.md.
     """
     df = pd.read_csv(csv_path, low_memory=False)
 
     df = df.rename(columns={
         "Neighbourhood": "neighbourhood_name",
         "Assessed Value": "assessed_value",
+        "Tax Class": "tax_class",
         "Assessment Class 1": "assessment_class_1",
+        "Assessment Class 2": "assessment_class_2",
+        "Assessment Class 3": "assessment_class_3",
+        "Assessment Class % 1": "assessment_class_pct_1",
+        "Assessment Class % 2": "assessment_class_pct_2",
+        "Assessment Class % 3": "assessment_class_pct_3",
     })
 
     df["neighbourhood_name"] = df["neighbourhood_name"].str.strip().str.upper()
@@ -59,4 +72,8 @@ def load_assessment(csv_path: str | Path) -> pd.DataFrame:
 
     df["assessed_value"] = df["assessed_value"].astype(float)
 
-    return df[["neighbourhood_name", "assessed_value", "is_exempt"]]
+    return df[[
+        "neighbourhood_name", "assessed_value", "is_exempt", "tax_class",
+        "assessment_class_1", "assessment_class_2", "assessment_class_3",
+        "assessment_class_pct_1", "assessment_class_pct_2", "assessment_class_pct_3",
+    ]]

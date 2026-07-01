@@ -10,7 +10,15 @@ Reference for raw input files. Update this file when you discover column name qu
 **Download:** `scripts/download_data.py`
 **Source:** [Edmonton Open Data](https://data.edmonton.ca/City-Administration/Property-Assessment-Data-Current-Calendar-Year-/q7d6-ambg) — dataset ID `q7d6-ambg`
 **API URL:** `https://data.edmonton.ca/api/views/q7d6-ambg/rows.csv?accessType=DOWNLOAD`
-**Format:** CSV, 439,769 rows, updated annually (last confirmed: 2026-06-24)
+**Format:** CSV, 439,769 rows. **Live feed, updated weekly** (Socrata
+`Update Frequency: Weekly`); the assessment *year* rolls annually.
+**Assessment year:** **2025** — i.e. effective 2025-01-01 to 2025-12-31. The year
+is **not a column in the rows**; it lives only in the dataset metadata
+(`https://data.edmonton.ca/api/views/q7d6-ambg.json` → description /
+`custom_fields.Time Frame.Period of Coverage`). Our local snapshot was downloaded
+2026-05-16 and is 2025 data. **Re-check the metadata after any re-download** — a
+later pull can roll to a new year, which would silently desync from any
+year-matched mill rates (see `docs/SPEC_revenue.md`).
 **Licence:** Open Government Licence – City of Edmonton
 
 ### Columns (confirmed 2026-05-22)
@@ -39,14 +47,15 @@ Reference for raw input files. Update this file when you discover column name qu
 
 **Assessment Class 1 values:** RESIDENTIAL (411,563), COMMERCIAL (23,054), OTHER RESIDENTIAL (4,356), FARMLAND (509), MA DERELICT RESIDENTIAL (284), NONRES MUNICIPAL/RES EDUCATION (3)
 
-**Tax-exempt flag:** No explicit exempt boolean. Best proxy is `Assessment Class 1 == 'NONRES MUNICIPAL/RES EDUCATION'` (3 rows). Flag these on load as `is_exempt`.
+**Tax-exempt flag:** No explicit exempt boolean. Best proxy is `Assessment Class 1 == 'NONRES MUNICIPAL/RES EDUCATION'` (3 rows). Flag these on load as `is_exempt`. **Note (2026-06-29):** this proxy catches almost nothing — tax-exempt institutional land (Legislature, schools, hospitals, City property) is **absent from the taxable roll entirely**, not flagged or zeroed. So `is_exempt` cannot identify exempt-heavy neighbourhoods, and revenue/acre silently understates any neighbourhood holding large exempt institutions. See `docs/FINDINGS_revenue_scale.md` §4–5.
 
 ### Known Quirks
 
 - Condo units: multiple rows share one land parcel — this is expected and correct for this analysis
 - `Suite` column has mixed types — always load with `low_memory=False`
 - 46 rows have `Assessed Value == 0` — drop and flag count on load
-- No explicit tax-exempt column; proxy is `Assessment Class 1 == 'NONRES MUNICIPAL/RES EDUCATION'`
+- No explicit tax-exempt column; proxy is `Assessment Class 1 == 'NONRES MUNICIPAL/RES EDUCATION'` — but exempt institutional land is absent from the roll, so the proxy is near-empty (3 rows). The near-zero-revenue tail is **low-coverage** land (river valley / undeveloped), not exempt. See `docs/FINDINGS_revenue_scale.md`.
+- Assessment year is metadata-only, not in the rows (year = 2025; see Format note above) — pin it against the mill-rate year for the revenue phase
 
 ---
 
@@ -131,6 +140,104 @@ For Phase 1 (neighbourhood-level choropleth), two approaches are viable:
 - 407 boundary features vs 408 neighbourhoods in assessment aggregate. Actual join outcome: 3 assessment neighbourhoods with no boundary match (OLIVER, HERITAGE VALLEY TOWN CENTRE AREA, LEWIS FARMS INDUSTRIAL) and 2 boundary neighbourhoods with no assessment data (LEWIS FARMS, LEWIS FARMS BUSINESS EMPLOYMENT) → 405 of 407 boundaries rendered. See "Name Matching" below; flagged in `join_and_calculate.py`.
 
 ---
+
+## 4. Property and Education Tax Rates (revenue phase)
+
+**File:** `data/mill_rates.json` *(curated extract — see provenance inside)*
+**Source:** [Edmonton Open Data](https://data.edmonton.ca/resource/pwis-wc4c.json) — dataset ID `pwis-wc4c` ("Property and Education Tax Rates (2014 onward)")
+**Format:** Socrata JSON/SODA API (live; updated annually — 2026 rates already present, last update 2026-04-29)
+**Units:** amount per **$1,000** of assessed value (mills); also published per-dollar
+**Licence:** Open Government Licence – City of Edmonton
+
+Columns: `tax_year`, `tax_rate_type` (Municipal / Education / Education Requisition Allowance), `assessment_class`, `amount_per_1_000_of_assessed_value`, `amount_per_dollar_of_assessed_value`.
+
+**2025 Municipal rates (per $1,000)** — the year matching our assessment snapshot:
+
+| Tax Class | Municipal mill rate |
+|-----------|---------------------|
+| Residential | 7.6254 |
+| Other Residential | 8.3116 |
+| Non Residential | 24.2229 |
+| Farmland | 7.6254 *(assumed = Residential — see quirks)* |
+
+Non-residential is ~3.2× residential — this class differential is the basis of the revenue phase (`docs/SPEC_revenue.md`).
+
+### Known Quirks
+
+- **Join on assessment `Tax Class`** (clean 4-value field). Rate-table class names use spaces (`Non Residential`); some historical years use a hyphenated `Non-Residential` — normalize on load.
+- **No 2025 Farmland rate published.** The source dropped a separate Farmland class in 2025. Municipal Farmland == Municipal Residential in every year 2014–2024, so `mill_rates.json` sets 2025 Farmland municipal = Residential (7.6254) as a **flagged assumption**, not authoritative. Low impact (509 farmland parcels).
+- Rate-type label changed over time: older years (2014–2018) use `Municipal Tax Rate` / `Education Tax Rate`; 2019+ use `Municipal` / `Education`. Only 2019+ form is needed for 2025.
+- `Mature Area Derelict Residential` and `Transitional Residential` exist as rate classes but not as assessment `Tax Class` values — unused by the Tax-Class join.
+- **Two class vocabularies in the assessment CSV.** `Tax Class` (col 9) is the clean 4-value field used for the join. The `Assessment Class 1/2/3` (+ `% 1/2/3`) columns describe split-class parcels using *different* labels (`COMMERCIAL` = `Non Residential`, plus `MA DERELICT RESIDENTIAL` → Non Residential, `NONRES MUNICIPAL/RES EDUCATION` → exempt). `map(Assessment Class 1)` equals `Tax Class` in 100% of rows, so only the 2nd/3rd slices add information; split-class is rare (~0.25% of rows). Full label→rate-class map, counts, and the unified levy formula: `docs/FINDINGS_assessment_classes.md`.
+
+---
+
+## 5. Zoning Bylaw Geographical Data (land-use layer, added 2026-06-29)
+
+**Source:** Edmonton Open Data — dataset ID `fixa-tstc` ("Zoning Bylaw Geographical Data")
+**Download URL:** `https://data.edmonton.ca/resource/fixa-tstc.geojson?$limit=20000`
+**Format:** GeoJSON, ~9.2 MB
+**Features:** 11,510 zoning polygons (MultiPolygon)
+**CRS:** CRS84 / EPSG:4326 — reproject to EPSG:3400 before any overlay/area
+**Vintage:** the **2024 Zoning Bylaw** (new codes, e.g. `RSF` = "Small Scale Flex
+Residential"). Assessment is 2025 — close enough; zoning is stable. Record the
+download date / `date_ext` for provenance.
+
+**Why:** neighbourhood-level aggregation needs explicit categorization of
+non-developable land (River Valley, parks, undeveloped) that parcel-level analysis
+handles implicitly. Overlaid on neighbourhood boundaries → land-use composition %
+per neighbourhood → drives the colour-scale set-aside. See `SPEC_revenue.md`
+(Update 2026-06-29) and `FINDINGS_revenue_scale.md`.
+
+### Columns (confirmed 2026-06-30)
+| Column | Notes |
+|--------|-------|
+| `zoning` | zone code, e.g. `RSF`, `A`, `RM h16` — height/overlay suffixes appended; parse the **first token** for the base code |
+| `description` | human-readable, e.g. "River Valley", "Small Scale Flex Residential" |
+| `url` | link to the bylaw page. **The path encodes the authoritative bylaw section** — `…/part-2-…/residential-zones/…`, `…/industrial-zones/…`, `…/open-space-and-urban-services-zones/…`, `…/agricultural-zones/…`, plus `…-special-area` groups. Use as an independent **cross-check** when building the code→category dict (see quirks), NOT as the category itself (groups are mixed — see below) |
+| `dc2_sub_area` | sub-area for `DC2` site-specific zones |
+| `date_ext` | extract timestamp (e.g. `2026-06-29 02:07:03`) — record for provenance |
+| `id`, `agreement_no` | record identifiers |
+| `geometry` | polygon (Socrata source field `geometry_multipolygon`; geopandas reads it as `geometry`) |
+
+### Known Quirks
+- **Geometry needs cleaning before overlay.** Raw polygons are invalid/mixed-dimension
+  → geopandas `overlay` raises `GEOSException`. Fix: `buffer(0)`, drop empty + keep
+  only Polygon/MultiPolygon parts.
+- **Do NOT categorize by keyword/prefix.** "Energy & Technology **Park**" is industrial,
+  "Century **Park**" is a TOD redevelopment — the word "Park" ≠ green park. The `A*`
+  codes are mostly River Valley special areas (Hawrelak, Muttart) but `AED` =
+  Arena/Entertainment District (downtown), `ALA` = Ambleside apartments. Use an
+  **explicit `code → category` dictionary** (exactly **95 base codes** confirmed
+  2026-06-30; `description` + `url` make each obvious). Lives in `src/load_zoning.py`.
+- **`url` cross-check (confirmed 2026-06-30).** The `url` path's bylaw section is a
+  useful *verification* signal but is NOT a drop-in category — groups mix set-aside and
+  developed codes. The `open-space-and-urban-services-zones` group is the clearest case:
+  it contains set-aside `A`/`NA`/`PS`/`PSN` **and** developed infrastructure `PU` (Public
+  Utility), `UF` (Urban Facilities), `UI` (Urban Institution), `AJ` (Alternative
+  Jurisdiction). Categorize at the code level; use `url` only to catch dict errors (e.g.
+  it correctly resolves the `A*` trap: `AED`→`downtown-special-area`, `ALA`/`AUVC`→
+  `ambleside-special-area`, not river valley).
+- **Direct Control zones (`DC`, `DC1`, `DC2`) — confirmed 2026-06-30.** ~1,081 rows are
+  site-specific / special-area zones with no standard `/part-N/` bylaw section in `url`
+  (`DC*`, plus named zones like Blatchford, Century Park, River Crossing). **Rule:**
+  `DC`/`DC1`/`DC2` default to **developed** (stay on scale — conservative, won't wrongly
+  hide land). Named-natural special-area codes (`NSRVES`, `A7` Hawrelak, etc.) are caught
+  by their own explicit dict entry, not by the `DC` default.
+- **Set-aside categories:** never = River Valley (`A`,`NA`)/Parks (`PS`,`PSN`); not-yet
+  = Future (`FD`)/rural (`AG`,`RR`)/industrial reserve (`EET*`). Institutional
+  (`UI`,`UF`,`AJ`,`PU`) is a proxy for where exempt-roll understatement lives.
+- **Residential split (added 2026-07-01, for the residential-only lens).** The developed
+  bucket is split by each code's `description` into `res` (primary permitted use is
+  housing — the `RS*`/`RM`/`RL`/`HDR`/`RMU` standard zones + special-area row-housing /
+  apartment / low-density codes, e.g. `GRH`, `BLMR`, `SRH`, `CCLD`) and `nonres`
+  (commercial / industrial / mixed-use / town-village centres). `is_residential` =
+  `frac_residential` ≥ **0.50** of *zoned* area (a display filter, **orthogonal to**
+  `is_set_aside` — the two can't both be true since fractions sum to 1). Conservative
+  calls: `DC*` and any unknown code → `nonres` (stays on scale, never *claimed* as
+  residential). Per-code assignments live in `src/load_zoning.py`.
+- **Refresh requirement:** re-pull each pipeline cycle so developing land (rezoned
+  FD/AG → residential) graduates off the set-aside list automatically.
 
 ## Name Matching
 

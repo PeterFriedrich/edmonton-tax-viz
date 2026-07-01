@@ -47,3 +47,7 @@ output/*
 # OS
 .DS_Store
 Thumbs.db
+
+# Profiling harness (tools/profiling) — Node deps, browser binaries, render artifacts
+node_modules/
+tools/profiling/*.png

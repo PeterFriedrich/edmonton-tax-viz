@@ -4,10 +4,18 @@
 Edmonton revenue-per-acre fiscal analysis. Python-only, no GIS software.
 
 ## Key Files
+- `TODO.md` — living backlog: the authoritative list of what's left. Read it to know what to work on; update it in place as items open/close. Session summaries narrate *what happened*; TODO.md owns *what's left*.
 - `docs/SPEC_phase1.md` — what we're building and why
 - `docs/ARCHITECTURE.md` — module interfaces, data flow, testing approach. **Read before writing any module.**
 - `data/DATA.md` — data source details, column names, known quirks. **Read before touching any data files. Update if you discover anything new.**
-- `session-summary/` — session handoff notes. Read the latest before starting work.
+- `docs/TOKEN_EFFICIENCY.md` — context/token hygiene (what NOT to read raw, session-summary archiving). **Read before bulk-reading data or summaries.**
+- `docs/ANALYSIS_BACKLOG.md` — analytical questions/investigations to run later (auto + by-hand). Distinct from TODO.md (build work) and FINDINGS_*.md (conclusions).
+- `docs/PARCEL_LEVEL_OPPORTUNITIES.md` — future work gated on parcel-level data (finer than the neighbourhood unit); the set-aside machinery exists because we aggregate to neighbourhood.
+- `session-summary/` — session handoff notes. Read the latest before starting work; older ones live in `session-summary/archive/` (don't bulk-read them).
+
+## Token Efficiency
+- **Never `Read` raw `.geojson`/`.csv` data files** — the zoning GeoJSON alone is ~2.3M tokens. Inspect via a small python/geopandas summary instead. See `docs/TOKEN_EFFICIENCY.md`.
+- Read only the **latest** session summary; keep the 3 most recent at top level, archive older.
 
 ## Session Management
 - Always run `/handoff` before `/clear` — never wipe context without a written record in `session-summary/`

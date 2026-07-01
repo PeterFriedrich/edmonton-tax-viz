@@ -1,0 +1,10 @@
+{
+  "name": "edmonton-tax-viz-profiling",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Headless profiling/screenshot harness for the Phase 2 web map (Playwright + Chromium, software WebGL).",
+  "license": "ISC",
+  "dependencies": {
+    "playwright": "^1.61.1"
+  }
+}

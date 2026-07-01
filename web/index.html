@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Edmonton — Tax Revenue per Acre</title>
+
+  <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
+  <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+  <script src="https://unpkg.com/deck.gl@9.0.38/dist.min.js"></script>
+
+  <style>
+    html, body { margin: 0; height: 100%; background: #0a0a0f; }
+    #map { position: absolute; inset: 0; }
+    .panel {
+      position: absolute; z-index: 1; color: #e8e8ef;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      pointer-events: none;
+    }
+    #title { top: 20px; left: 22px; max-width: 360px; }
+    #title h1 { margin: 0 0 4px; font-size: 19px; font-weight: 600; letter-spacing: 0.2px; }
+    #title p  { margin: 0; font-size: 12.5px; line-height: 1.5; color: #9a9ab0; }
+    #toggle, #palette, #lens {
+      right: 22px; display: flex; pointer-events: auto;
+      background: rgba(12,12,20,0.7); border: 1px solid #2a2a3a;
+      border-radius: 6px; overflow: hidden;
+    }
+    #toggle { top: 20px; }
+    #palette { top: 58px; }
+    #lens { top: 96px; }
+    #toggle button, #palette button, #lens button {
+      appearance: none; border: 0; background: transparent; color: #9a9ab0;
+      font: 12.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      padding: 7px 15px; cursor: pointer; transition: background 0.12s, color 0.12s;
+    }
+    #palette button, #lens button { padding: 6px 12px; font-size: 11.5px; }
+    #toggle button:hover, #palette button:hover, #lens button:hover { color: #e8e8ef; }
+    #toggle button.active, #palette button.active, #lens button.active { background: #fcd278; color: #16111a; font-weight: 600; }
+    #legend { bottom: 22px; left: 22px; font-size: 11.5px; color: #b8b8c8; }
+    #legend .bar {
+      width: 200px; height: 10px; border-radius: 2px; margin: 6px 0 4px;
+      background: linear-gradient(90deg,
+        rgb(20,11,52), rgb(88,21,99), rgb(165,44,96), rgb(231,98,58), rgb(252,210,120));
+    }
+    #legend .scale { display: flex; justify-content: space-between; width: 200px; }
+    #legend .aside {
+      display: flex; align-items: center; gap: 7px; margin-top: 9px; color: #9a9ab0;
+    }
+    #legend .aside .sw {
+      width: 12px; height: 12px; border-radius: 2px;
+      background: rgb(104,108,122); flex: 0 0 auto;
+    }
+    .tip {
+      font: 12px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: rgba(12,12,20,0.92); color: #f0f0f6;
+      padding: 6px 9px; border-radius: 5px; border: 1px solid #2a2a3a;
+    }
+    .tip b { color: #fcd278; }
+    .tip .muted { color: #b8b8c8; }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+
+  <div id="title" class="panel">
+    <h1 id="title-h">Edmonton: Tax Revenue per Acre</h1>
+    <p id="title-p">Height and colour show municipal property-tax revenue divided by
+       neighbourhood area, applying Edmonton's class-differential mill rates. Tall,
+       bright districts generate the most city revenue per unit of land. Height is
+       linear; colour is square-root–scaled to reveal the low end. Grey = set-aside
+       natural/undeveloped land, excluded from the scale.</p>
+  </div>
+
+  <div id="toggle" class="panel">
+    <button data-metric="revenue_per_acre" class="active">Revenue</button>
+    <button data-metric="value_per_acre">Value</button>
+  </div>
+
+  <div id="palette" class="panel">
+    <button data-ramp="current" class="active">Inferno</button>
+    <button data-ramp="glow">Glow</button>
+    <button data-ramp="cividis">Cividis</button>
+  </div>
+
+  <div id="lens" class="panel">
+    <button data-lens="residential" title="Fade non-residential neighbourhoods so residential land compares like-to-like">Residential only</button>
+  </div>
+
+  <div id="legend" class="panel">
+    <div id="legend-label">Revenue per acre</div>
+    <div class="bar"></div>
+    <div class="scale"><span>$0</span><span id="legend-max">$50k+</span></div>
+    <div class="aside"><span class="sw"></span><span>Set aside — natural / undeveloped land</span></div>
+  </div>
+
+  <script>
+    // --- tunables -----------------------------------------------------------
+    const DATA_URL = "./data/neighbourhood_value_per_acre.geojson";
+    const CENTER = [-113.50, 53.52]; // Edmonton, from the data centroid
+
+    // Per-metric display config. The clamp (colour saturation) sits at the same
+    // percentile (~p97.5) for both metrics, and the elevation scale is set so the
+    // tallest prism (Downtown in both) reaches the same height — so toggling is a
+    // fair visual comparison, not an arbitrary rescale. Both elevation curves stay
+    // LINEAR (the project's honesty choice — Downtown's spike IS the signal).
+    const METRICS = {
+      revenue_per_acre: {
+        key: "revenue_per_acre",
+        title: "Edmonton: Tax Revenue per Acre",
+        blurb: "Height and colour show municipal property-tax revenue divided by " +
+               "neighbourhood area, applying Edmonton's class-differential mill rates. " +
+               "Tall, bright districts generate the most city revenue per unit of land. " +
+               "Height is linear; colour is square-root–scaled to reveal the low end. " +
+               "Grey = set-aside natural/undeveloped land, excluded from the scale.",
+        legendLabel: "Revenue per acre",
+        legendMax: "$50k+",
+        colorClamp: 50_000,
+        elevationScale: 0.033,
+      },
+      value_per_acre: {
+        key: "value_per_acre",
+        title: "Edmonton: Assessed Value per Acre",
+        blurb: "Height and colour show total assessed property value divided by " +
+               "neighbourhood area. Tall, bright districts hold the most assessed " +
+               "value per unit of land. Height is linear; colour is square-root–scaled " +
+               "to reveal the low end. Grey = set-aside natural/undeveloped land, " +
+               "excluded from the scale.",
+        legendLabel: "Value per acre",
+        legendMax: "$4M+",
+        colorClamp: 4_000_000,
+        elevationScale: 0.0006,
+      },
+    };
+
+    // Active metric defaults to revenue (matches the static HTML chrome above).
+    // `residential` is the residential-only lens (off by default): when on,
+    // non-residential hoods fade translucent so residential land compares
+    // like-to-like without the Downtown / class-rate confound.
+    const state = { metric: "revenue_per_acre", ramp: "current", residential: false, data: null };
+    let overlay; // deck.gl MapboxOverlay, created on map load
+
+    // Three neutral, luminance-sequential ramps to compare: dark = low, bright =
+    // high, with no semantic good/bad hue (consistent with the linear-elevation
+    // honesty choice — magnitude is encoded by brightness, not by a charged
+    // colour). Each carries its own background + roof-edge colour so a swap looks
+    // coherent. Switch live via the palette control.
+    const RAMPS = {
+      current: { // inferno-ish: the original warm ramp
+        bg: "#0a0a0f",
+        edge: [40, 95, 120, 215],
+        stops: [
+          [0.00, [ 20,  11,  52]],
+          [0.25, [ 88,  21,  99]],
+          [0.50, [165,  44,  96]],
+          [0.75, [231,  98,  58]],
+          [1.00, [252, 210, 120]],
+        ],
+      },
+      glow: { // same family, peak pushed to near-white so the tallest towers glow
+        bg: "#08060f",
+        edge: [70, 90, 120, 200],
+        stops: [
+          [0.00, [ 18,  10,  48]],
+          [0.30, [ 96,  26, 108]],
+          [0.55, [196,  70,  80]],
+          [0.78, [245, 160,  86]],
+          [1.00, [255, 246, 228]],
+        ],
+      },
+      cividis: { // perceptually uniform + colour-blind safe (blue -> yellow)
+        bg: "#04101f",
+        edge: [30, 50, 80, 210],
+        stops: [
+          [0.00, [  0,  34,  78]],
+          [0.25, [ 53,  69, 108]],
+          [0.50, [124, 123, 120]],
+          [0.75, [184, 173, 106]],
+          [1.00, [255, 233,  69]],
+        ],
+      },
+    };
+
+    // Neutral off-ramp grey for set-aside neighbourhoods (>=90% never/not-yet
+    // zoning). They are EXCLUDED from the colour scale — their near-zero revenue
+    // is a land-use fact, not a fiscal signal (see FINDINGS §4/§6). Distinct from
+    // every ramp's low end (dark purple/blue), so "grey = not on the scale" reads
+    // unambiguously. Height stays their true (low) value — honest, de-emphasized.
+    const SET_ASIDE_COLOR = [104, 108, 122];
+
+    // Colour transform: SQRT of the clamped ratio (DECIDED 2026-07-01, FINDINGS
+    // §6.1). The taxable distribution is right-skewed but NOT log-normal at the
+    // 0.90 set-aside threshold (log over-corrects); sqrt tames the skew without
+    // crushing the low end. Height stays LINEAR regardless.
+    const scaleT = (value, clamp) => Math.sqrt(Math.max(0, Math.min(1, value / clamp)));
+
+    // Interpolate the active ramp at t in [0,1].
+    function rampColorAt(t) {
+      const stops = RAMPS[state.ramp].stops;
+      for (let i = 1; i < stops.length; i++) {
+        if (t <= stops[i][0]) {
+          const [t0, c0] = stops[i - 1], [t1, c1] = stops[i];
+          const f = (t - t0) / (t1 - t0);
+          return [0, 1, 2].map(k => Math.round(c0[k] + f * (c1[k] - c0[k])));
+        }
+      }
+      return stops[stops.length - 1][1];
+    }
+
+    const colorFor = (value, clamp) => rampColorAt(scaleT(value, clamp));
+
+    // Residential-only lens fade: non-residential hoods all render as ONE uniform
+    // translucent light grey (no ramp hue — the differing colours were the visual
+    // interference), so only the residential hoods carry colour. Visible but
+    // see-through, so the rest of the city still reads as spatial context.
+    const LENS_FADE_COLOR = [180, 183, 190]; // uniform light grey for faded hoods
+    const LENS_FADE_ALPHA = 90;              // see-through but still readable
+    const LENS_FADE_EDGE = [150, 153, 162, 45]; // neutral roof outline for faded hoods
+
+    // Linear-interpolated quantile of a pre-sorted array.
+    function quantile(sorted, q) {
+      const pos = (sorted.length - 1) * q;
+      const lo = Math.floor(pos), hi = Math.ceil(pos);
+      return lo === hi ? sorted[lo] : sorted[lo] + (sorted[hi] - sorted[lo]) * (pos - lo);
+    }
+
+    // Colour clamp for the residential-only lens: p97.5 of the residential subset for
+    // `key` (matches the fixed clamps' percentile), so the residential distribution
+    // spreads across the full ramp instead of crushing into the low end. Cached per
+    // metric; falls back to the metric's default clamp if the subset is empty.
+    const _resClampCache = {};
+    function residentialClampFor(key) {
+      if (key in _resClampCache) return _resClampCache[key];
+      const vals = state.data.features
+        .filter(f => f.properties.is_residential && f.properties[key] != null)
+        .map(f => f.properties[key])
+        .sort((a, b) => a - b);
+      return (_resClampCache[key] = vals.length ? quantile(vals, 0.975) : METRICS[key].colorClamp);
+    }
+
+    // Per-feature fill. Lens OFF: set-aside hoods grey, everything else the ramp colour
+    // at the metric clamp. Lens ON: residential hoods take the ramp colour RE-SCALED to
+    // the residential clamp; every non-residential hood (set-aside included) becomes the
+    // uniform translucent light grey.
+    function fillFor(f, cfg, clamp) {
+      const p = f.properties;
+      if (state.residential) {
+        return p.is_residential
+          ? colorFor(p[cfg.key], clamp)
+          : [LENS_FADE_COLOR[0], LENS_FADE_COLOR[1], LENS_FADE_COLOR[2], LENS_FADE_ALPHA];
+      }
+      return p.is_set_aside ? SET_ASIDE_COLOR : colorFor(p[cfg.key], clamp);
+    }
+
+    // Legend gradient for the CURRENT ramp under the sqrt transform: sample the
+    // bar in *value* space (linear $ from 0 to clamp) so the displayed colour at
+    // each dollar position matches what a neighbourhood of that value renders.
+    function legendGradient() {
+      const N = 16, parts = [];
+      for (let i = 0; i <= N; i++) {
+        const p = i / N;                       // fraction of the clamp ($ position)
+        const c = rampColorAt(Math.sqrt(p));   // scaleT(p*clamp, clamp) === sqrt(p)
+        parts.push(`rgb(${c[0]},${c[1]},${c[2]}) ${Math.round(p * 100)}%`);
+      }
+      return "linear-gradient(90deg," + parts.join(",") + ")";
+    }
+
+    const fmt = v => "$" + Math.round(v).toLocaleString();
+
+    // --- base map (no basemap tiles for v1 — just a dark backdrop) -----------
+    const map = new maplibregl.Map({
+      container: "map",
+      style: {
+        version: 8,
+        sources: {},
+        layers: [{ id: "bg", type: "background", paint: { "background-color": "#0a0a0f" } }],
+      },
+      center: CENTER,
+      zoom: 10.2,
+      pitch: 52,
+      bearing: -18,
+      antialias: true,
+    });
+
+    // Build the roof ring of each prism: the polygon's exterior ring lifted to
+    // the prism's top elevation (z in metres = value * ELEVATION_SCALE, matching
+    // the extrusion). One path per shape -> cheap, unlike wireframe (every edge).
+    function topRings(features, cfg) {
+      const out = [];
+      for (const f of features) {
+        const z = f.properties[cfg.key] * cfg.elevationScale;
+        const res = !!f.properties.is_residential;
+        const g = f.geometry;
+        const polys = g.type === "MultiPolygon" ? g.coordinates : [g.coordinates];
+        for (const poly of polys) {
+          // exterior ring only; carry is_residential so the lens can dim the edge.
+          out.push({ path: poly[0].map(([x, y]) => [x, y, z]), res });
+        }
+      }
+      return out;
+    }
+
+    // Build the two layers for the currently-active metric. Rebuilt on toggle.
+    function buildLayers() {
+      const cfg = METRICS[state.metric];
+      // Colour clamp: rescaled to the residential subset when the lens is on.
+      const clamp = state.residential ? residentialClampFor(cfg.key) : cfg.colorClamp;
+
+      // Filled extruded prisms. No stroke: the setback gaps already give every
+      // shape a dark border at ground level, so a footprint ring is redundant.
+      const layer = new deck.GeoJsonLayer({
+        id: "metric-extrusion",
+        data: state.data,
+        extruded: true,
+        filled: true,
+        stroked: false,
+        wireframe: false,
+        getElevation: f => f.properties[cfg.key],
+        elevationScale: cfg.elevationScale,
+        getFillColor: f => fillFor(f, cfg, clamp),
+        material: { ambient: 0.55, diffuse: 0.6, shininess: 32, specularColor: [60, 60, 70] },
+        pickable: true,
+        autoHighlight: true,
+        highlightColor: [255, 255, 255, 60],
+        // Re-run the accessors when the metric (field), ramp (colour), or the
+        // residential lens changes; the data reference is stable, so without these
+        // deck.gl skips the accessor.
+        updateTriggers: {
+          getElevation: state.metric,
+          getFillColor: [state.metric, state.ramp, state.residential],
+        },
+      });
+
+      // Crisp roof outline drawn on top of the prisms (depthTest so towers in
+      // front still occlude rings behind them).
+      const edge = RAMPS[state.ramp].edge;
+      const topEdges = new deck.PathLayer({
+        id: "top-edges",
+        data: topRings(state.data.features, cfg),
+        getPath: d => d.path,
+        // Neutral-grey the roof outline of non-residential hoods when the lens is on.
+        getColor: d => (state.residential && !d.res) ? LENS_FADE_EDGE : edge,
+        getWidth: 1.4,
+        widthUnits: "pixels",
+        widthMinPixels: 1,
+        // miter joints (the default): rounded caps/joints fan out extra triangles
+        // at every vertex -> with ~89k ring vertices that tessellation hangs.
+        capRounded: false,
+        jointRounded: false,
+        parameters: { depthTest: true },
+        updateTriggers: { getColor: [state.ramp, state.residential] },
+      });
+
+      return [layer, topEdges];
+    }
+
+    // Tooltip reads the active metric at hover time (closure over `state`).
+    function tooltipFor({ object }) {
+      if (!object) return null;
+      const p = object.properties;
+      if (p.is_set_aside) {
+        const pct = Math.round(p.set_aside_frac * 100);
+        return {
+          className: "tip",
+          html: `<b>${p.neighbourhood_name}</b><br/>` +
+                `<span class="muted">Set aside — ${p.set_aside_reason} (${pct}% of area)</span>`,
+        };
+      }
+      const cfg = METRICS[state.metric];
+      return {
+        className: "tip",
+        html: `<b>${p.neighbourhood_name}</b><br/>${fmt(p[cfg.key])} / acre`,
+      };
+    }
+
+    // Switch metric: rebuild layers and update the title/legend/toggle chrome.
+    function applyMetric(metric) {
+      if (metric === state.metric || !METRICS[metric]) return;
+      state.metric = metric;
+      const cfg = METRICS[metric];
+      overlay.setProps({ layers: buildLayers() });
+      document.getElementById("title-h").textContent = cfg.title;
+      document.getElementById("title-p").textContent = cfg.blurb;
+      document.getElementById("legend-label").textContent = cfg.legendLabel;
+      refreshLegend();
+      document.querySelectorAll("#toggle button").forEach(b =>
+        b.classList.toggle("active", b.dataset.metric === metric));
+    }
+
+    // Sync the legend max + the grey swatch/label to the current state. With the
+    // lens on the colour is rescaled, so the max shows the residential clamp and the
+    // grey means "faded non-residential"; otherwise it means "set aside".
+    function refreshLegend() {
+      const cfg = METRICS[state.metric];
+      document.getElementById("legend-max").textContent =
+        state.residential ? fmt(residentialClampFor(cfg.key)) + "+" : cfg.legendMax;
+      const label = document.querySelector("#legend .aside span:last-child");
+      const sw = document.querySelector("#legend .aside .sw");
+      if (state.residential) {
+        label.textContent = "Faded — non-residential land";
+        sw.style.background = `rgb(${LENS_FADE_COLOR.join(",")})`;
+      } else {
+        label.textContent = "Set aside — natural / undeveloped land";
+        sw.style.background = "rgb(104,108,122)";
+      }
+    }
+
+    // Switch colour ramp: rebuild layers, restyle the background + legend gradient.
+    function applyPalette(name) {
+      if (name === state.ramp || !RAMPS[name]) return;
+      state.ramp = name;
+      const ramp = RAMPS[name];
+      overlay.setProps({ layers: buildLayers() });
+      map.setPaintProperty("bg", "background-color", ramp.bg);
+      document.querySelector("#legend .bar").style.background = legendGradient();
+      document.querySelectorAll("#palette button").forEach(b =>
+        b.classList.toggle("active", b.dataset.ramp === name));
+    }
+
+    // Toggle the residential-only lens: fade non-residential hoods translucent.
+    function applyLens() {
+      state.residential = !state.residential;
+      overlay.setProps({ layers: buildLayers() });
+      document.querySelector("#lens button").classList.toggle("active", state.residential);
+      refreshLegend();
+    }
+
+    map.on("load", async () => {
+      state.data = await fetch(DATA_URL).then(r => r.json());
+
+      overlay = new deck.MapboxOverlay({
+        interleaved: true,
+        layers: buildLayers(),
+        getTooltip: tooltipFor,
+      });
+      map.addControl(overlay);
+
+      document.querySelectorAll("#toggle button").forEach(b =>
+        b.addEventListener("click", () => applyMetric(b.dataset.metric)));
+      document.querySelectorAll("#palette button").forEach(b =>
+        b.addEventListener("click", () => applyPalette(b.dataset.ramp)));
+      document.querySelector("#lens button").addEventListener("click", applyLens);
+      // Sync the legend gradient to the default ramp (single source of truth).
+      document.querySelector("#legend .bar").style.background = legendGradient();
+    });
+  </script>
+</body>
+</html>

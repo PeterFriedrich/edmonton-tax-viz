@@ -108,7 +108,28 @@ def test_output_columns(tmp_path):
     csv = tmp_path / "assess.csv"
     csv.write_text(_write_csv([_base_row()]))
     df = load_assessment(csv)
-    assert set(df.columns) == {"neighbourhood_name", "assessed_value", "is_exempt"}
+    assert set(df.columns) == {
+        "neighbourhood_name", "assessed_value", "is_exempt", "tax_class",
+        "assessment_class_1", "assessment_class_2", "assessment_class_3",
+        "assessment_class_pct_1", "assessment_class_pct_2", "assessment_class_pct_3",
+    }
+
+
+def test_carries_class_columns_through(tmp_path):
+    # Revenue phase: the split-class label + percentage columns must survive load
+    # (they feed apply_tax_rates). Split-class row → class 1 and 2 populated.
+    csv = tmp_path / "assess.csv"
+    csv.write_text(_write_csv([_base_row(**{
+        "Tax Class": "Non Residential",
+        "Assessment Class 1": "COMMERCIAL", "Assessment Class % 1": 73,
+        "Assessment Class 2": "RESIDENTIAL", "Assessment Class % 2": 27,
+    })]))
+    row = load_assessment(csv).iloc[0]
+    assert row["tax_class"] == "Non Residential"
+    assert row["assessment_class_1"] == "COMMERCIAL"
+    assert row["assessment_class_pct_1"] == 73
+    assert row["assessment_class_2"] == "RESIDENTIAL"
+    assert row["assessment_class_pct_2"] == 27
 
 
 def test_assessed_value_is_float(tmp_path):
