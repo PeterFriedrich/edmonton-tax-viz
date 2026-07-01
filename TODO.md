@@ -67,12 +67,25 @@ _Last reconciled: 2026-07-01_
   Pairs with the scale-toggle line above (this is its UI design); folds the residential
   filter in as a lens once built.
 
-- [ ] **Deployment** (per `docs/SPEC_deployment.md`): `.github/workflows/*.yml`
-  (scheduled Action), `web/data/status.json` + maintenance banner, per-year archive
-  filenames. Three open decisions, with leans:
-  - [ ] change-detection — lean: rerun + git-diff
-  - [ ] cron cadence — lean: weekly
-  - [ ] heartbeat auth — lean: start with `GITHUB_TOKEN`
+- [ ] **Deployment** (per `docs/SPEC_deployment.md`) — **backend BUILT on
+  `feature/deployment` (2026-07-01); only the one-time GitHub bootstrap + follow-ons
+  remain.**
+  - [x] `scripts/download_data.py` fetches all three raw inputs (assessment +
+    boundaries + zoning), not just assessment.
+  - [x] `scripts/generate_status.py` → `web/data/status.json` (provenance +
+    heartbeat + banner; `generated` bumps on content change, `last_checked` every run).
+  - [x] Frontend maintenance banner in `web/index.html` (verified headless).
+  - [x] `.github/workflows/refresh.yml` (weekly + dispatch) + `requirements-ci.txt`.
+  - [x] Decisions settled: change-detection = rerun+git-diff; cron = weekly;
+    heartbeat auth = `GITHUB_TOKEN`.
+  - [ ] **First-run bootstrap (manual, Peter — the workflow can't self-enable):**
+    (1) repo Settings → Pages → Source = "GitHub Actions"; (2) trigger the workflow
+    once via the "Run workflow" button to publish; (3) confirm the Pages URL loads.
+  - [ ] **Heartbeat watch:** if the schedule ever auto-disables after 60 days, add a
+    repo-scoped PAT for the heartbeat commit (see SPEC "Staying awake").
+  - [ ] **Not yet built (deferred, see SPEC):** auto-detect assessment year + fetch
+    matching mill rates (graceful year-mismatch banner); per-year archive filenames
+    (`web/data/YYYY.geojson`) for the future year selector.
 
 - [ ] **Visual polish** (pre-existing, untouched):
   - [ ] top-cap edge colour `TOP_EDGE_COLOR=[40,95,120,215]` in `web/index.html`
