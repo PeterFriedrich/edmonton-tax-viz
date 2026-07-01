@@ -37,18 +37,27 @@ legend carries a grey swatch. The full zoning-polygon overlay layer is a separat
 product decision.
 
 ### Residential-only lens (built 2026-07-01)
-A **"Residential only" toggle** (`#lens` panel, below the palette switcher) fades every
-non-residential neighbourhood translucent — fill α70, roof-edge α45 — so residential
-land compares like-to-like without the Downtown / class-rate-differential confound (the
-motivating problem in `SPEC_revenue.md`). Visible-but-see-through was a deliberate call
-(dimmed, not removed) so the rest of the city still reads as spatial context.
-- Drives off `is_residential` (≥0.50 residential zoned area; see `DATA.md` §5).
-  Set-aside hoods are never residential, so they fade too when the lens is on.
-- Off by default (the default view is unchanged); preserves the metric + palette state.
-- Orthogonal to the set-aside grey — the two flags are independent by construction.
+A **"Residential only" toggle** (`#lens` panel, below the palette switcher) isolates
+residential land so it compares like-to-like without the Downtown / class-rate-
+differential confound (the motivating problem in `SPEC_revenue.md`). Off by default
+(default view unchanged); preserves the metric + palette state. Two effects when on:
+- **Non-residential hoods → one uniform light grey** (`LENS_FADE_COLOR` at α90; roof
+  edge `LENS_FADE_EDGE`). Deliberately a *single* neutral colour, not a translucent
+  version of each hood's ramp colour — the differing colours were visual interference
+  that competed with the residential read. Visible-but-see-through (dimmed, not removed)
+  so the city still reads as spatial context. Set-aside hoods fade with the rest (a
+  set-aside hood is never residential).
+- **Residential colour is RE-SCALED** to the residential subset's p97.5
+  (`residentialClampFor`), so residential hoods spread across the full ramp instead of
+  crushing into the low end. The legend max + grey swatch/label update to match
+  (`refreshLegend`). Height stays absolute/linear (only colour rescales). NOTE: this
+  bites mainly on **Revenue** (residential clamp ≈ $37k vs the fixed $50k — non-res mill
+  rate drives the high revenue tail); **Value** barely moves (≈ $3.88M vs $4M).
+- Drives off `is_residential` (≥0.50 residential zoned area; see `DATA.md` §5);
+  orthogonal to the set-aside flag by construction.
 - **Still open** (`TODO.md`): the fuller "Color Adjustment vs lens controls" hierarchy +
-  self-describing state labels; the toggle is currently a plain button. Not yet
-  visually verified in a browser.
+  self-describing state labels; the toggle is currently a plain button. Alpha / grey /
+  clamp-percentile are easy tunables. Not yet visually verified in a browser.
 
 ---
 

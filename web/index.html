@@ -208,20 +208,47 @@
 
     const colorFor = (value, clamp) => rampColorAt(scaleT(value, clamp));
 
-    // Alpha for hoods faded out by the residential-only lens: visible but
+    // Residential-only lens fade: non-residential hoods all render as ONE uniform
+    // translucent light grey (no ramp hue — the differing colours were the visual
+    // interference), so only the residential hoods carry colour. Visible but
     // see-through, so the rest of the city still reads as spatial context.
-    const LENS_DIM_ALPHA = 70;   // fill (of 255)
-    const LENS_DIM_EDGE_ALPHA = 45; // roof outline
+    const LENS_FADE_COLOR = [180, 183, 190]; // uniform light grey for faded hoods
+    const LENS_FADE_ALPHA = 90;              // see-through but still readable
+    const LENS_FADE_EDGE = [150, 153, 162, 45]; // neutral roof outline for faded hoods
 
-    // Per-feature fill: set-aside hoods go neutral grey, off the ramp; everything
-    // else takes its ramp colour. When the residential lens is on, non-residential
-    // hoods (set-aside included — a set-aside hood is not residential) fade to a
-    // translucent version of that same colour.
-    function fillFor(f, cfg) {
+    // Linear-interpolated quantile of a pre-sorted array.
+    function quantile(sorted, q) {
+      const pos = (sorted.length - 1) * q;
+      const lo = Math.floor(pos), hi = Math.ceil(pos);
+      return lo === hi ? sorted[lo] : sorted[lo] + (sorted[hi] - sorted[lo]) * (pos - lo);
+    }
+
+    // Colour clamp for the residential-only lens: p97.5 of the residential subset for
+    // `key` (matches the fixed clamps' percentile), so the residential distribution
+    // spreads across the full ramp instead of crushing into the low end. Cached per
+    // metric; falls back to the metric's default clamp if the subset is empty.
+    const _resClampCache = {};
+    function residentialClampFor(key) {
+      if (key in _resClampCache) return _resClampCache[key];
+      const vals = state.data.features
+        .filter(f => f.properties.is_residential && f.properties[key] != null)
+        .map(f => f.properties[key])
+        .sort((a, b) => a - b);
+      return (_resClampCache[key] = vals.length ? quantile(vals, 0.975) : METRICS[key].colorClamp);
+    }
+
+    // Per-feature fill. Lens OFF: set-aside hoods grey, everything else the ramp colour
+    // at the metric clamp. Lens ON: residential hoods take the ramp colour RE-SCALED to
+    // the residential clamp; every non-residential hood (set-aside included) becomes the
+    // uniform translucent light grey.
+    function fillFor(f, cfg, clamp) {
       const p = f.properties;
-      const base = p.is_set_aside ? SET_ASIDE_COLOR : colorFor(p[cfg.key], cfg.colorClamp);
-      if (state.residential && !p.is_residential) return [base[0], base[1], base[2], LENS_DIM_ALPHA];
-      return base;
+      if (state.residential) {
+        return p.is_residential
+          ? colorFor(p[cfg.key], clamp)
+          : [LENS_FADE_COLOR[0], LENS_FADE_COLOR[1], LENS_FADE_COLOR[2], LENS_FADE_ALPHA];
+      }
+      return p.is_set_aside ? SET_ASIDE_COLOR : colorFor(p[cfg.key], clamp);
     }
 
     // Legend gradient for the CURRENT ramp under the sqrt transform: sample the
@@ -275,6 +302,8 @@
     // Build the two layers for the currently-active metric. Rebuilt on toggle.
     function buildLayers() {
       const cfg = METRICS[state.metric];
+      // Colour clamp: rescaled to the residential subset when the lens is on.
+      const clamp = state.residential ? residentialClampFor(cfg.key) : cfg.colorClamp;
 
       // Filled extruded prisms. No stroke: the setback gaps already give every
       // shape a dark border at ground level, so a footprint ring is redundant.
@@ -287,7 +316,7 @@
         wireframe: false,
         getElevation: f => f.properties[cfg.key],
         elevationScale: cfg.elevationScale,
-        getFillColor: f => fillFor(f, cfg),
+        getFillColor: f => fillFor(f, cfg, clamp),
         material: { ambient: 0.55, diffuse: 0.6, shininess: 32, specularColor: [60, 60, 70] },
         pickable: true,
         autoHighlight: true,
@@ -304,13 +333,12 @@
       // Crisp roof outline drawn on top of the prisms (depthTest so towers in
       // front still occlude rings behind them).
       const edge = RAMPS[state.ramp].edge;
-      const dimEdge = [edge[0], edge[1], edge[2], LENS_DIM_EDGE_ALPHA];
       const topEdges = new deck.PathLayer({
         id: "top-edges",
         data: topRings(state.data.features, cfg),
         getPath: d => d.path,
-        // Dim the roof outline of non-residential hoods when the lens is on.
-        getColor: d => (state.residential && !d.res) ? dimEdge : edge,
+        // Neutral-grey the roof outline of non-residential hoods when the lens is on.
+        getColor: d => (state.residential && !d.res) ? LENS_FADE_EDGE : edge,
         getWidth: 1.4,
         widthUnits: "pixels",
         widthMinPixels: 1,
@@ -353,9 +381,27 @@
       document.getElementById("title-h").textContent = cfg.title;
       document.getElementById("title-p").textContent = cfg.blurb;
       document.getElementById("legend-label").textContent = cfg.legendLabel;
-      document.getElementById("legend-max").textContent = cfg.legendMax;
+      refreshLegend();
       document.querySelectorAll("#toggle button").forEach(b =>
         b.classList.toggle("active", b.dataset.metric === metric));
+    }
+
+    // Sync the legend max + the grey swatch/label to the current state. With the
+    // lens on the colour is rescaled, so the max shows the residential clamp and the
+    // grey means "faded non-residential"; otherwise it means "set aside".
+    function refreshLegend() {
+      const cfg = METRICS[state.metric];
+      document.getElementById("legend-max").textContent =
+        state.residential ? fmt(residentialClampFor(cfg.key)) + "+" : cfg.legendMax;
+      const label = document.querySelector("#legend .aside span:last-child");
+      const sw = document.querySelector("#legend .aside .sw");
+      if (state.residential) {
+        label.textContent = "Faded — non-residential land";
+        sw.style.background = `rgb(${LENS_FADE_COLOR.join(",")})`;
+      } else {
+        label.textContent = "Set aside — natural / undeveloped land";
+        sw.style.background = "rgb(104,108,122)";
+      }
     }
 
     // Switch colour ramp: rebuild layers, restyle the background + legend gradient.
@@ -375,6 +421,7 @@
       state.residential = !state.residential;
       overlay.setProps({ layers: buildLayers() });
       document.querySelector("#lens button").classList.toggle("active", state.residential);
+      refreshLegend();
     }
 
     map.on("load", async () => {
