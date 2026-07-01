@@ -8,7 +8,12 @@ logger = logging.getLogger(__name__)
 
 # Zoning composition columns carried into the output when a zoning frame is
 # supplied. Kept small — the full per-category fractions stay in load_zoning.
-ZONING_COLUMNS = ["set_aside_frac", "is_set_aside", "set_aside_reason"]
+# set_aside_* drive the neutral-grey render; frac_residential/is_residential
+# drive the residential-only lens.
+ZONING_COLUMNS = [
+    "set_aside_frac", "is_set_aside", "set_aside_reason",
+    "frac_residential", "is_residential",
+]
 
 
 def join_and_calculate(
@@ -24,9 +29,10 @@ def join_and_calculate(
     LEWIS FARMS INDUSTRIAL) surface here as unmatched warnings.
 
     ``zoning`` (optional, from load_zoning.py) adds set_aside_frac / is_set_aside
-    / set_aside_reason, merged on neighbourhood_name. Degrades gracefully when
-    absent, like the revenue columns; boundaries with no zoning match default to
-    is_set_aside=False (stays on scale) and are flagged.
+    / set_aside_reason / frac_residential / is_residential, merged on
+    neighbourhood_name. Degrades gracefully when absent, like the revenue columns;
+    boundaries with no zoning match default to is_set_aside=False (stays on scale)
+    and is_residential=False, and are flagged.
     """
     agg = assessment
 
@@ -101,9 +107,11 @@ def join_and_calculate(
                 len(no_zoning),
                 "\n  ".join(sorted(no_zoning["neighbourhood_name"])),
             )
-        # Boundaries without a zoning match stay on the scale, not set aside.
+        # Boundaries without a zoning match stay on the scale, not set aside,
+        # and are not claimed residential (frac_* left NaN, like set_aside_frac).
         joined["is_set_aside"] = joined["is_set_aside"].fillna(False).astype(bool)
         joined["set_aside_reason"] = joined["set_aside_reason"].fillna("")
+        joined["is_residential"] = joined["is_residential"].fillna(False).astype(bool)
 
         # Insert zoning columns before geometry.
         out_cols = [c for c in out_cols if c != "geometry"] + ZONING_COLUMNS + ["geometry"]
@@ -113,12 +121,13 @@ def join_and_calculate(
 
 # Columns the web client actually consumes. Everything else is dropped to keep
 # the GeoJSON the browser downloads small. revenue_per_acre and the zoning
-# set-aside columns are included only when present (their respective phases) —
-# the value↔revenue toggle reads both metrics; is_set_aside/set_aside_reason
-# drive the neutral-grey render + tooltip.
+# columns are included only when present (their respective phases) — the
+# value↔revenue toggle reads both metrics; is_set_aside/set_aside_reason drive
+# the neutral-grey render + tooltip; is_residential drives the residential lens.
 SLIM_COLUMNS = [
     "neighbourhood_name", "value_per_acre", "revenue_per_acre",
-    "set_aside_frac", "is_set_aside", "set_aside_reason", "geometry",
+    "set_aside_frac", "is_set_aside", "set_aside_reason",
+    "frac_residential", "is_residential", "geometry",
 ]
 
 

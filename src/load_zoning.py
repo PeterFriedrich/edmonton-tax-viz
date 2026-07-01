@@ -16,6 +16,12 @@ logger = logging.getLogger(__name__)
 # Threshold above which a neighbourhood is set aside (SPEC_revenue.md 2026-06-29).
 SET_ASIDE_THRESHOLD = 0.90
 
+# Threshold above which a neighbourhood is flagged residential (residential-only
+# lens). Share of total ZONED area, consistent with the other fractions. Display
+# filter only — orthogonal to is_set_aside (a set-aside hood cannot also clear this,
+# since the fractions sum to 1 and 0.90 + 0.50 > 1).
+RESIDENTIAL_THRESHOLD = 0.50
+
 # ---------------------------------------------------------------------------
 # Explicit zone-code → land-use category dictionary.
 #
@@ -24,9 +30,13 @@ SET_ASIDE_THRESHOLD = 0.90
 #   never  — permanently non-taxable: River Valley / Natural Areas / Parks
 #   notyet — undeveloped holding land: Future Dev / rural fringe / industrial reserve
 #   inst   — institutional proxy (UI/UF/AJ/PU); STAYS on the scale, tracked separately
-#   dev    — developed (residential/commercial/industrial/mixed); stays on the scale
+#   res    — developed, primary permitted use is housing; stays on the scale
+#   nonres — developed, non-residential (commercial/industrial/mixed/DC); stays on scale
 #
-# set-aside = never + notyet.  dev + inst stay on the colour scale.
+# res + nonres = the old "dev" bucket (split 2026-07-01 for the residential lens).
+# Classification is by each code's authoritative `description` (housing zones → res;
+# commercial/industrial/mixed-use/town-village-centres/Direct Control → nonres).
+# set-aside = never + notyet.  res + nonres + inst stay on the colour scale.
 # Cross-checked against each row's `url` bylaw section (DATA.md §5).
 # ---------------------------------------------------------------------------
 ZONE_CATEGORY = {
@@ -64,51 +74,81 @@ ZONE_CATEGORY = {
     "UI": "inst",        # Urban Institution
     "AJ": "inst",        # Alternative Jurisdiction
 
-    # --- dev: developed (everything else) -------------------------------------
+    # --- res: developed, primary use is housing -------------------------------
     # Standard residential
-    "RSF": "dev", "RM": "dev", "RS": "dev", "RSM": "dev", "RL": "dev",
-    "HDR": "dev", "RMU": "dev",
+    "RSF": "res",        # Small Scale Flex Residential
+    "RS": "res",         # Small Scale Residential
+    "RSM": "res",        # Small-Medium Scale Transition Residential
+    "RM": "res",         # Medium Scale Residential
+    "RL": "res",         # Large Scale Residential
+    "HDR": "res",        # High Density Residential
+    "RMU": "res",        # Residential Mixed Use (primary use residential)
+    # Griesbach special area — housing
+    "GLD": "res",        # Griesbach Low Density Residential
+    "GLDF": "res",       # Griesbach Low Density Residential Flex
+    "GLRA": "res",       # Griesbach Low Rise Apartment
+    "GMRA": "res",       # Griesbach Medium Rise Apartment
+    "GRH": "res",        # Griesbach Row Housing
+    # Blatchford special area — housing
+    "BLMR": "res",       # Blatchford Low to Medium Rise Residential
+    "BMR": "res",        # Blatchford Medium Rise Residential
+    "BRH": "res",        # Blatchford Row Housing
+    # Stillwater special area — housing
+    "SLD": "res",        # Stillwater Low Density Residential
+    "SRA": "res",        # Stillwater Rear Attached Housing
+    "SRH": "res",        # Stillwater Row Housing
+    # Paisley special area — housing
+    "PLD": "res",        # Paisley Low Density
+    "PRH": "res",        # Paisley Row Housing
+    # Riverview special area — housing
+    "RVRH": "res",       # Riverview Row Housing
+    "RTCR": "res",       # Riverview Town Centre Residential
+    "RTCMR": "res",      # Riverview Town Centre Medium Rise Residential
+    # Ambleside special area — housing
+    "ALA": "res",        # Ambleside Low Rise Apartment
+    # Clareview Campus special area — housing
+    "CCSD": "res",       # Clareview Campus Single Detached Residential
+    "CCLD": "res",       # Clareview Campus Low Density Residential
+    "CCMD": "res",       # Clareview Campus Medium Density Residential
+    "CCHD": "res",       # Clareview Campus High Density Residential
+
+    # --- nonres: developed, non-residential -----------------------------------
     # Commercial / mixed use / business
-    "CN": "dev", "CG": "dev", "CB": "dev", "CCA": "dev", "CMU": "dev",
-    "MU": "dev", "MUN": "dev", "BE": "dev", "JAMSC": "dev", "AED": "dev",
-    "HA": "dev",
+    "CN": "nonres", "CG": "nonres", "CB": "nonres", "CCA": "nonres", "CMU": "nonres",
+    "MU": "nonres", "MUN": "nonres", "BE": "nonres", "JAMSC": "nonres", "AED": "nonres",
+    "HA": "nonres",
     # Industrial
-    "IM": "dev", "IH": "dev", "UW": "dev",
-    # Direct Control — default to developed (DATA.md §5 rule)
-    "DC": "dev", "DC1": "dev", "DC2": "dev", "DC/INDES": "dev",
-    # Griesbach special area
-    "GLDF": "dev", "GRH": "dev", "GLRA": "dev", "GMRA": "dev", "GLD": "dev",
-    "GVC": "dev",
-    # Blatchford special area
-    "BLMR": "dev", "BRH": "dev", "BMR": "dev",
-    # Stillwater special area
-    "SRH": "dev", "SLD": "dev", "SRA": "dev",
-    # Paisley special area
-    "PLD": "dev", "PRH": "dev",
-    # Riverview special area
-    "RVRH": "dev", "RTCMR": "dev", "RTCR": "dev",
-    # Ambleside special area
-    "ALA": "dev", "ASC": "dev", "AUVC": "dev",
-    # Clareview Campus special area
-    "CCSD": "dev", "CCMD": "dev", "CCLD": "dev", "CCHD": "dev", "CCNC": "dev",
-    # Marquis special area
-    "MRC": "dev", "MMUT": "dev", "MED": "dev", "MMS": "dev",
-    # Century Park special area
-    "CPMU": "dev", "CPT": "dev",
-    # River Crossing (developed portions)
-    "RCRM": "dev", "RCRL": "dev",
+    "IM": "nonres", "IH": "nonres", "UW": "nonres",
+    # Direct Control — heterogeneous, not claimed as residential (DATA.md §5 rule)
+    "DC": "nonres", "DC1": "nonres", "DC2": "nonres", "DC/INDES": "nonres",
+    # Griesbach village centre
+    "GVC": "nonres",
+    # Ambleside commercial
+    "ASC": "nonres", "AUVC": "nonres",
+    # Clareview Campus commercial
+    "CCNC": "nonres",
+    # Marquis special area (retail / entertainment / main street / mixed)
+    "MRC": "nonres", "MMUT": "nonres", "MED": "nonres", "MMS": "nonres",
+    # Century Park special area (mixed use / transition)
+    "CPMU": "nonres", "CPT": "nonres",
+    # River Crossing (large/medium scale redevelopment — mixed)
+    "RCRM": "nonres", "RCRL": "nonres",
     # Town Center / other special areas
-    "TC-MU": "dev", "TC-C": "dev", "CMUV": "dev",
-    # Ellerslie / Edmonton South industrial & commercial (rezoned = developed)
-    "EIB": "dev", "EIM": "dev", "ECB": "dev", "ILES": "dev", "IBES": "dev",
-    "UC3ES": "dev",
+    "TC-MU": "nonres", "TC-C": "nonres", "CMUV": "nonres",
+    # Ellerslie / Edmonton South industrial & commercial
+    "EIB": "nonres", "EIM": "nonres", "ECB": "nonres", "ILES": "nonres",
+    "IBES": "nonres", "UC3ES": "nonres",
 }
+
+# All land-use categories, in output order.
+CATEGORIES = ("never", "notyet", "inst", "res", "nonres")
 
 # never + notyet make up the set-aside share.
 SET_ASIDE_CATEGORIES = ("never", "notyet")
 
-# Unknown codes default here (conservative — won't wrongly hide land). Flagged.
-DEFAULT_CATEGORY = "dev"
+# Unknown codes default here (conservative — keeps land on the scale and does NOT
+# claim it as residential). Flagged.
+DEFAULT_CATEGORY = "nonres"
 
 # Human-readable dominant-reason labels for the tooltip.
 REASON_LABELS = {
@@ -170,10 +210,13 @@ def load_zoning(zoning_path: str, boundaries: gpd.GeoDataFrame) -> pd.DataFrame:
     Returns
     -------
     pd.DataFrame keyed by `neighbourhood_name` with columns:
-        frac_never, frac_notyet, frac_dev, frac_inst — land-use composition
+        frac_never, frac_notyet, frac_inst, frac_residential, frac_nonres
+                        — land-use composition (shares of total zoned area; sum to 1)
         set_aside_frac  — never + notyet share (0–1)
         is_set_aside    — set_aside_frac >= SET_ASIDE_THRESHOLD
         set_aside_reason — dominant set-aside category label (tooltip); "" if not set aside
+        is_residential  — frac_residential >= RESIDENTIAL_THRESHOLD (display filter,
+                          orthogonal to is_set_aside)
     """
     zoning = gpd.read_file(zoning_path)
     logger.info("Loaded %d zoning features (input CRS: %s)", len(zoning), zoning.crs)
@@ -209,19 +252,21 @@ def load_zoning(zoning_path: str, boundaries: gpd.GeoDataFrame) -> pd.DataFrame:
         .sum()
         .unstack(fill_value=0.0)
     )
-    for cat in ("never", "notyet", "dev", "inst"):
+    for cat in CATEGORIES:
         if cat not in by_cat.columns:
             by_cat[cat] = 0.0
 
-    totals = by_cat[["never", "notyet", "dev", "inst"]].sum(axis=1)
-    fracs = by_cat[["never", "notyet", "dev", "inst"]].div(totals, axis=0)
+    cols = list(CATEGORIES)
+    totals = by_cat[cols].sum(axis=1)
+    fracs = by_cat[cols].div(totals, axis=0)
 
     result = pd.DataFrame(
         {
             "frac_never": fracs["never"],
             "frac_notyet": fracs["notyet"],
-            "frac_dev": fracs["dev"],
             "frac_inst": fracs["inst"],
+            "frac_residential": fracs["res"],
+            "frac_nonres": fracs["nonres"],
         }
     )
     result["set_aside_frac"] = result["frac_never"] + result["frac_notyet"]
@@ -233,12 +278,17 @@ def load_zoning(zoning_path: str, boundaries: gpd.GeoDataFrame) -> pd.DataFrame:
     )
     result["set_aside_reason"] = dominant.where(result["is_set_aside"], "")
 
+    # Residential-only lens flag (display filter, orthogonal to is_set_aside).
+    result["is_residential"] = result["frac_residential"] >= RESIDENTIAL_THRESHOLD
+
     result = result.reset_index()
 
     logger.info(
-        "Zoning overlay: %d neighbourhoods, %d set aside (>= %.2f)",
+        "Zoning overlay: %d neighbourhoods, %d set aside (>= %.2f), %d residential (>= %.2f)",
         len(result),
         int(result["is_set_aside"].sum()),
         SET_ASIDE_THRESHOLD,
+        int(result["is_residential"].sum()),
+        RESIDENTIAL_THRESHOLD,
     )
     return result

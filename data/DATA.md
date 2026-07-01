@@ -227,6 +227,15 @@ per neighbourhood → drives the colour-scale set-aside. See `SPEC_revenue.md`
 - **Set-aside categories:** never = River Valley (`A`,`NA`)/Parks (`PS`,`PSN`); not-yet
   = Future (`FD`)/rural (`AG`,`RR`)/industrial reserve (`EET*`). Institutional
   (`UI`,`UF`,`AJ`,`PU`) is a proxy for where exempt-roll understatement lives.
+- **Residential split (added 2026-07-01, for the residential-only lens).** The developed
+  bucket is split by each code's `description` into `res` (primary permitted use is
+  housing — the `RS*`/`RM`/`RL`/`HDR`/`RMU` standard zones + special-area row-housing /
+  apartment / low-density codes, e.g. `GRH`, `BLMR`, `SRH`, `CCLD`) and `nonres`
+  (commercial / industrial / mixed-use / town-village centres). `is_residential` =
+  `frac_residential` ≥ **0.50** of *zoned* area (a display filter, **orthogonal to**
+  `is_set_aside` — the two can't both be true since fractions sum to 1). Conservative
+  calls: `DC*` and any unknown code → `nonres` (stays on scale, never *claimed* as
+  residential). Per-code assignments live in `src/load_zoning.py`.
 - **Refresh requirement:** re-pull each pipeline cycle so developing land (rezoned
   FD/AG → residential) graduates off the set-aside list automatically.
 

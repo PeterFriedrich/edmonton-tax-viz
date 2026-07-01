@@ -6,7 +6,12 @@ import pandas as pd
 from shapely.geometry import Polygon
 
 sys.path.insert(0, "src")
-from load_zoning import SET_ASIDE_THRESHOLD, _categorize, load_zoning
+from load_zoning import (
+    RESIDENTIAL_THRESHOLD,
+    SET_ASIDE_THRESHOLD,
+    _categorize,
+    load_zoning,
+)
 
 
 def _square(x0, y0, size):
@@ -39,7 +44,13 @@ def _run(boundaries, zoning):
 
 def test_categorize_parses_first_token():
     cats = _categorize(pd.Series(["RM h16", "A", "FD"]))
-    assert list(cats) == ["dev", "never", "notyet"]
+    assert list(cats) == ["res", "never", "notyet"]
+
+
+def test_categorize_splits_residential_from_nonresidential():
+    # The old "dev" bucket is split: housing → res, commercial/industrial → nonres.
+    assert list(_categorize(pd.Series(["RSF", "RM", "GRH"]))) == ["res"] * 3
+    assert list(_categorize(pd.Series(["CN", "IM", "MU"]))) == ["nonres"] * 3
 
 
 def test_categorize_institutional_not_set_aside():
@@ -47,15 +58,16 @@ def test_categorize_institutional_not_set_aside():
     assert list(_categorize(pd.Series(["PU", "UI", "AJ", "UF"]))) == ["inst"] * 4
 
 
-def test_categorize_unknown_defaults_to_dev_and_warns(caplog):
+def test_categorize_unknown_defaults_to_nonres_and_warns(caplog):
     with caplog.at_level("WARNING"):
         cats = _categorize(pd.Series(["ZZZ"]))
-    assert list(cats) == ["dev"]
+    assert list(cats) == ["nonres"]
     assert "ZZZ" in caplog.text
 
 
-def test_categorize_direct_control_is_dev():
-    assert list(_categorize(pd.Series(["DC", "DC1", "DC2"]))) == ["dev"] * 3
+def test_categorize_direct_control_is_nonres():
+    # DC is heterogeneous — stays on scale but is not claimed as residential.
+    assert list(_categorize(pd.Series(["DC", "DC1", "DC2"]))) == ["nonres"] * 3
 
 
 # --- load_zoning ---------------------------------------------------------------
@@ -127,3 +139,53 @@ def test_institutional_stays_on_scale():
     assert row["frac_inst"] == 1.0
     assert row["set_aside_frac"] == 0.0
     assert bool(row["is_set_aside"]) is False
+
+
+# --- residential-only lens -----------------------------------------------------
+
+def test_fully_residential_hood_flagged():
+    hood = _boundaries(["SUBURB"], [_square(0, 0, 100)])
+    zoning = _zoning(["RSF"], [_square(0, 0, 100)])
+    result = _run(hood, zoning)
+    row = result.iloc[0]
+    assert row["frac_residential"] == 1.0
+    assert bool(row["is_residential"]) is True
+
+
+def test_commercial_hood_not_residential():
+    hood = _boundaries(["STRIP"], [_square(0, 0, 100)])
+    zoning = _zoning(["CN"], [_square(0, 0, 100)])
+    result = _run(hood, zoning)
+    row = result.iloc[0]
+    assert row["frac_nonres"] == 1.0
+    assert row["frac_residential"] == 0.0
+    assert bool(row["is_residential"]) is False
+
+
+def test_residential_threshold_boundary():
+    # 60% residential, 40% commercial → above 0.50 → residential.
+    hood = _boundaries(["MOSTLY_HOMES"], [_square(0, 0, 100)])
+    zoning = _zoning(
+        ["RSF", "CN"],
+        [Polygon([(0, 0), (60, 0), (60, 100), (0, 100)]),
+         Polygon([(60, 0), (100, 0), (100, 100), (60, 100)])],
+    )
+    result = _run(hood, zoning)
+    row = result.iloc[0]
+    assert abs(row["frac_residential"] - 0.6) < 1e-6
+    assert bool(row["is_residential"]) is True
+    assert RESIDENTIAL_THRESHOLD == 0.50
+
+
+def test_set_aside_hood_is_not_residential():
+    # Orthogonality: a set-aside hood cannot clear the residential threshold.
+    hood = _boundaries(["RIVER VALLEY"], [_square(0, 0, 100)])
+    zoning = _zoning(
+        ["A", "RSF"],
+        [Polygon([(0, 0), (95, 0), (95, 100), (0, 100)]),
+         Polygon([(95, 0), (100, 0), (100, 100), (95, 100)])],
+    )
+    result = _run(hood, zoning)
+    row = result.iloc[0]
+    assert bool(row["is_set_aside"]) is True
+    assert bool(row["is_residential"]) is False

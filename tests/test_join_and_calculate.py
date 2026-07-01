@@ -248,12 +248,17 @@ def test_zoning_merge_adds_set_aside_columns():
         zoning=_zoning([{
             "neighbourhood_name": "RIVER VALLEY", "set_aside_frac": 0.98,
             "is_set_aside": True, "set_aside_reason": "River Valley / Natural / Parks",
+            "frac_residential": 0.0, "is_residential": False,
         }]),
     )
     row = result.iloc[0]
-    assert set(["set_aside_frac", "is_set_aside", "set_aside_reason"]).issubset(result.columns)
+    assert set([
+        "set_aside_frac", "is_set_aside", "set_aside_reason",
+        "frac_residential", "is_residential",
+    ]).issubset(result.columns)
     assert bool(row["is_set_aside"]) is True
     assert row["set_aside_reason"] == "River Valley / Natural / Parks"
+    assert bool(row["is_residential"]) is False
 
 
 def test_no_zoning_arg_omits_set_aside_columns():
@@ -275,9 +280,14 @@ def test_boundary_without_zoning_match_defaults_false(caplog):
             zoning=_zoning([{
                 "neighbourhood_name": "DOWNTOWN", "set_aside_frac": 0.1,
                 "is_set_aside": False, "set_aside_reason": "",
+                "frac_residential": 0.7, "is_residential": True,
             }]),
         )
+    downtown = result[result["neighbourhood_name"] == "DOWNTOWN"].iloc[0]
     outer = result[result["neighbourhood_name"] == "OUTER"].iloc[0]
+    assert bool(downtown["is_residential"]) is True
     assert bool(outer["is_set_aside"]) is False
     assert outer["set_aside_reason"] == ""
+    # Boundary with no zoning overlay defaults is_residential=False too.
+    assert bool(outer["is_residential"]) is False
     assert "no zoning overlay" in caplog.text
