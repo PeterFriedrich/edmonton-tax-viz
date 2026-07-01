@@ -23,16 +23,15 @@ _Last reconciled: 2026-07-01_
   no class-rate differential or Downtown outlier confounding the scale. The narrative
   "third lens" after sqrt-colour (orient) + linear-height (the Downtown reveal), which
   the current single view already fuses.
-  **Blocked on the zoning layer**, which today lumps residential + commercial +
-  industrial + mixed into one `dev` bucket (`src/load_zoning.py`) and exports only
-  `set_aside_frac`/`is_set_aside`/`set_aside_reason` (the per-category fracs are
-  computed but dropped). To unblock:
-  - [ ] Split `dev` → `residential` vs `non-residential` in `ZONE_CATEGORY` (data
-    supports it — descriptions distinguish "…Residential"; standard RSF/RM/RS/RSM/RL/
-    HDR/RMU + the special-area row-housing/apartment codes are residential).
-  - [ ] Emit `frac_residential` + `is_residential` (dominant, e.g. ≥0.50) per hood.
-  - [ ] Add them to `ZONING_COLUMNS` + `SLIM_COLUMNS` so they reach the GeoJSON.
+  **Backend done (2026-07-01, commit `02704b6`)** — only the frontend remains:
+  - [x] Split `dev` → `res` / `nonres` in `ZONE_CATEGORY` (by each code's
+    `description`; 28 housing codes → res, 39 commercial/industrial/mixed/DC → nonres).
+  - [x] Emit `frac_residential` + `is_residential` (≥0.50 of zoned area) per hood.
+    Validated on real data: 226 residential, 0 overlap with set-aside.
+  - [x] Added to `ZONING_COLUMNS` + `SLIM_COLUMNS`; regenerated GeoJSON carries both.
   - [ ] Frontend filter: make non-residential prisms transparent/dimmed on toggle.
+    **Open decision:** fully transparent (removed) vs dimmed-but-visible (context).
+    Lean: dimmed-but-visible so the city still reads as a whole.
   Note: `is_residential` is a display filter, orthogonal to `is_set_aside` (grey);
   a set-aside hood is not residential. Keep the two flags independent.
 
