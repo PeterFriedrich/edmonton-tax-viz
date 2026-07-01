@@ -1,0 +1,78 @@
+name: Refresh map data
+
+# Scheduled batch refresh (docs/SPEC_deployment.md). Downloads the Edmonton
+# open-data inputs, regenerates web/data/*.geojson, commits only if the data
+# actually changed (git is the change detector), and deploys web/ to GitHub
+# Pages. The status manifest is rewritten every run as a heartbeat so the
+# schedule isn't auto-disabled after 60 days of inactivity.
+
+on:
+  schedule:
+    - cron: '0 8 * * 1'      # weekly, Monday 08:00 UTC (cron is UTC, best-effort)
+  workflow_dispatch: {}       # manual "Run workflow" button (also the first-run bootstrap)
+
+# Least-privilege: write repo contents (commit regenerated data) + deploy Pages.
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+# Never let two refreshes race on the push/deploy.
+concurrency:
+  group: refresh-map-data
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: requirements-ci.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements-ci.txt
+
+      - name: Run tests (guard before regenerating)
+        run: python -m pytest tests/ -q
+
+      - name: Download source data
+        run: python scripts/download_data.py
+
+      - name: Regenerate web GeoJSON
+        run: python main.py --skip-png    # PNG is a Phase-1 local artifact, not served
+
+      - name: Update status manifest (provenance + heartbeat)
+        run: python scripts/generate_status.py
+
+      - name: Commit regenerated data + heartbeat if changed
+        run: |
+          git config user.name  "data-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add web/data
+          # git is the change detector: status.json's last_checked bumps daily
+          # (the heartbeat), so this normally commits; on a same-day re-run with
+          # no change, commit/push no-op gracefully.
+          git commit -m "Auto-refresh map data ($(date -u +%Y-%m-%d))" || echo "Nothing to commit."
+          git push || echo "Nothing to push."
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: web
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
