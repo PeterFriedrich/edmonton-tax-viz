@@ -173,6 +173,26 @@ Candidate methodology statement:
 > revenue/acre understates neighbourhoods containing such land; these cannot be
 > identified from the available data.
 
+### 6.2 Residential-only rescale confirms the mill-rate skew lives in revenue (2026-07-01)
+
+The residential-only lens (`web/index.html`, `is_residential` from
+`load_zoning.py`) rescales colour to the p97.5 of just the 226 residential hoods.
+That clamp lands very differently for the two metrics:
+
+| metric | full-set clamp (≈p97.5) | residential-only clamp | shift |
+|---|---|---|---|
+| revenue_per_acre | $50,000 | **$36,784** | −26% |
+| value_per_acre | $4,000,000 | **$3,881,318** | −3% |
+
+Removing non-residential land drops the **revenue** ceiling by a quarter but leaves
+the **value** ceiling almost untouched. This is empirical, neighbourhood-level
+confirmation of what `SPEC_revenue.md` asserts only from the rate schedule: Edmonton's
+non-residential mill rate is ≈ 3.2× residential, so commercial/industrial land drives
+the high revenue/acre tail — but assessed *value*/acre is not class-differentiated, so
+its residential range is essentially the whole-city range. The mill-rate skew is a
+**revenue** phenomenon, exactly where theory places it. (This is also why the
+residential lens visibly re-spreads the Revenue view but barely changes Value.)
+
 ## 7. Context: Urban3
 
 Urban3's value-per-acre work is **parcel-level** (e.g. the Asheville comparison: an
