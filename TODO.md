@@ -107,6 +107,25 @@ _Last reconciled: 2026-07-01_
   (Inferno / Glow / Cividis) + palette switcher — done, awaiting Peter's pick.
   *Not yet built:* scale toggle (linear+clamp / sqrt / log) for visual comparison.
 
+- [ ] **UI control hierarchy: separate "Color Adjustment" from lens controls.**
+  Two distinct categories, visually grouped apart so the distinction reads without
+  explanation:
+  - **Color Adjustment** (the sqrt scaling) sits *above*, as an on/off toggle — it's
+    about *how* colour is rendered, not *what* you're looking at. Label honestly as
+    "Color Adjustment (sqrt scaling)" — no implication either mode is the "correct"
+    one; someone who never clicks it still sees a valid map.
+    - [ ] Make sqrt a runtime toggle (currently hardcoded on via `scaleT`): Off =
+      linear+clamp (true magnitude), On = sqrt (spread across the distribution).
+      Legend gradient already recomputes per-transform (`legendGradient`), so wire it
+      to the toggle. Height stays LINEAR either way (locked).
+    - [ ] Self-describing state label that changes with the toggle:
+      Off → "Off — colour shows true magnitude";
+      On → "On — colour spread across distribution".
+  - **Lens controls** below — metric (Revenue/Value), palette (Inferno/Cividis…),
+    eventually the residential filter. These are about *what* you're looking at.
+  Pairs with the scale-toggle line above (this is its UI design); folds the residential
+  filter in as a lens once built.
+
 - [ ] **Deployment** (per `docs/SPEC_deployment.md`): `.github/workflows/*.yml`
   (scheduled Action), `web/data/status.json` + maintenance banner, per-year archive
   filenames. Three open decisions, with leans:
