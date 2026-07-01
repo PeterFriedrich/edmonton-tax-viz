@@ -6,7 +6,7 @@ Visual theming and accessibility decisions for the interactive map. Phase 1
 
 ---
 
-## Current state (updated 2026-06-29)
+## Current state (updated 2026-07-01)
 
 - **Dark theme only.** No basemap (polygons on dark are self-describing — see
   ARCHITECTURE.md Phase 2 notes).
@@ -18,21 +18,37 @@ Visual theming and accessibility decisions for the interactive map. Phase 1
   - **Cividis** — perceptually uniform + colour-blind safe (the colourblind-mode ramp;
     see "Colourblind mode" — CVD-simulator verification still pending).
   - All three are neutral luminance-sequential (magnitude = brightness, no good/bad hue).
-- **Clamp is per-metric** (`colorClamp` in each `METRICS` entry): revenue `$50k`,
-  value `$4M` (≈ same p97 percentile, so both saturate the top ~2.5%). **NOTE:** the
-  hard clamp creates a saturated plateau that reads as a fake threshold — being
-  replaced by a land-use set-aside + (likely) a log/sqrt transform; see
-  `SPEC_revenue.md` (Update 2026-06-29) and `FINDINGS_revenue_scale.md`.
-- **deck.gl gotcha:** colour accessors that depend on the active ramp need the ramp in
+- **Colour transform is SQRT** (`scaleT` in `index.html`, DECIDED 2026-07-01) of the
+  per-metric clamped ratio (`colorClamp`: revenue `$50k`, value `$4M`, ≈ p97.5). This
+  replaced the raw hard clamp — sqrt spreads the low/mid end so the plateau no longer
+  reads as a fake threshold. Set-aside land is off the ramp entirely (grey, below).
+  Height stays LINEAR. See `SPEC_revenue.md` (Update 2026-06-29) and
+  `FINDINGS_revenue_scale.md` §6.1.
+- **deck.gl gotcha:** colour accessors that depend on runtime state need that state in
   their `updateTriggers` (the data reference is stable, so deck.gl skips the re-render
-  otherwise). `getFillColor` uses `[state.metric, state.ramp]`.
+  otherwise). `getFillColor` uses `[state.metric, state.ramp, state.residential]`.
 
-### Set-aside neutral treatment (DECIDED 2026-06-29, not yet built)
+### Set-aside neutral treatment (built 2026-07-01)
 Neighbourhoods that are ≥90% never/not-yet land (River Valley, parks, undeveloped —
-see `SPEC_revenue.md`) render in a **neutral grey**, distinct from the ramp, so they
-read as "outside the fiscal comparison" rather than as red/low. They are also excluded
-from the colour-scale fit. The full zoning-polygon overlay layer is a separate later
+see `SPEC_revenue.md`) render in a **neutral grey** (`SET_ASIDE_COLOR`), distinct from
+the ramp, so they read as "outside the fiscal comparison" rather than as red/low. They
+are excluded from the colour-scale fit; the tooltip shows the set-aside reason + %; the
+legend carries a grey swatch. The full zoning-polygon overlay layer is a separate later
 product decision.
+
+### Residential-only lens (built 2026-07-01)
+A **"Residential only" toggle** (`#lens` panel, below the palette switcher) fades every
+non-residential neighbourhood translucent — fill α70, roof-edge α45 — so residential
+land compares like-to-like without the Downtown / class-rate-differential confound (the
+motivating problem in `SPEC_revenue.md`). Visible-but-see-through was a deliberate call
+(dimmed, not removed) so the rest of the city still reads as spatial context.
+- Drives off `is_residential` (≥0.50 residential zoned area; see `DATA.md` §5).
+  Set-aside hoods are never residential, so they fade too when the lens is on.
+- Off by default (the default view is unchanged); preserves the metric + palette state.
+- Orthogonal to the set-aside grey — the two flags are independent by construction.
+- **Still open** (`TODO.md`): the fuller "Color Adjustment vs lens controls" hierarchy +
+  self-describing state labels; the toggle is currently a plain button. Not yet
+  visually verified in a browser.
 
 ---
 
