@@ -20,21 +20,22 @@
     #title { top: 20px; left: 22px; max-width: 360px; }
     #title h1 { margin: 0 0 4px; font-size: 19px; font-weight: 600; letter-spacing: 0.2px; }
     #title p  { margin: 0; font-size: 12.5px; line-height: 1.5; color: #9a9ab0; }
-    #toggle, #palette {
+    #toggle, #palette, #lens {
       right: 22px; display: flex; pointer-events: auto;
       background: rgba(12,12,20,0.7); border: 1px solid #2a2a3a;
       border-radius: 6px; overflow: hidden;
     }
     #toggle { top: 20px; }
     #palette { top: 58px; }
-    #toggle button, #palette button {
+    #lens { top: 96px; }
+    #toggle button, #palette button, #lens button {
       appearance: none; border: 0; background: transparent; color: #9a9ab0;
       font: 12.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       padding: 7px 15px; cursor: pointer; transition: background 0.12s, color 0.12s;
     }
-    #palette button { padding: 6px 12px; font-size: 11.5px; }
-    #toggle button:hover, #palette button:hover { color: #e8e8ef; }
-    #toggle button.active, #palette button.active { background: #fcd278; color: #16111a; font-weight: 600; }
+    #palette button, #lens button { padding: 6px 12px; font-size: 11.5px; }
+    #toggle button:hover, #palette button:hover, #lens button:hover { color: #e8e8ef; }
+    #toggle button.active, #palette button.active, #lens button.active { background: #fcd278; color: #16111a; font-weight: 600; }
     #legend { bottom: 22px; left: 22px; font-size: 11.5px; color: #b8b8c8; }
     #legend .bar {
       width: 200px; height: 10px; border-radius: 2px; margin: 6px 0 4px;
@@ -79,6 +80,10 @@
     <button data-ramp="current" class="active">Inferno</button>
     <button data-ramp="glow">Glow</button>
     <button data-ramp="cividis">Cividis</button>
+  </div>
+
+  <div id="lens" class="panel">
+    <button data-lens="residential" title="Fade non-residential neighbourhoods so residential land compares like-to-like">Residential only</button>
   </div>
 
   <div id="legend" class="panel">
@@ -128,7 +133,10 @@
     };
 
     // Active metric defaults to revenue (matches the static HTML chrome above).
-    const state = { metric: "revenue_per_acre", ramp: "current", data: null };
+    // `residential` is the residential-only lens (off by default): when on,
+    // non-residential hoods fade translucent so residential land compares
+    // like-to-like without the Downtown / class-rate confound.
+    const state = { metric: "revenue_per_acre", ramp: "current", residential: false, data: null };
     let overlay; // deck.gl MapboxOverlay, created on map load
 
     // Three neutral, luminance-sequential ramps to compare: dark = low, bright =
@@ -200,9 +208,21 @@
 
     const colorFor = (value, clamp) => rampColorAt(scaleT(value, clamp));
 
-    // Per-feature fill: set-aside hoods go neutral grey, off the ramp.
-    const fillFor = (f, cfg) =>
-      f.properties.is_set_aside ? SET_ASIDE_COLOR : colorFor(f.properties[cfg.key], cfg.colorClamp);
+    // Alpha for hoods faded out by the residential-only lens: visible but
+    // see-through, so the rest of the city still reads as spatial context.
+    const LENS_DIM_ALPHA = 70;   // fill (of 255)
+    const LENS_DIM_EDGE_ALPHA = 45; // roof outline
+
+    // Per-feature fill: set-aside hoods go neutral grey, off the ramp; everything
+    // else takes its ramp colour. When the residential lens is on, non-residential
+    // hoods (set-aside included — a set-aside hood is not residential) fade to a
+    // translucent version of that same colour.
+    function fillFor(f, cfg) {
+      const p = f.properties;
+      const base = p.is_set_aside ? SET_ASIDE_COLOR : colorFor(p[cfg.key], cfg.colorClamp);
+      if (state.residential && !p.is_residential) return [base[0], base[1], base[2], LENS_DIM_ALPHA];
+      return base;
+    }
 
     // Legend gradient for the CURRENT ramp under the sqrt transform: sample the
     // bar in *value* space (linear $ from 0 to clamp) so the displayed colour at
@@ -241,10 +261,12 @@
       const out = [];
       for (const f of features) {
         const z = f.properties[cfg.key] * cfg.elevationScale;
+        const res = !!f.properties.is_residential;
         const g = f.geometry;
         const polys = g.type === "MultiPolygon" ? g.coordinates : [g.coordinates];
         for (const poly of polys) {
-          out.push(poly[0].map(([x, y]) => [x, y, z])); // exterior ring only
+          // exterior ring only; carry is_residential so the lens can dim the edge.
+          out.push({ path: poly[0].map(([x, y]) => [x, y, z]), res });
         }
       }
       return out;
@@ -270,21 +292,25 @@
         pickable: true,
         autoHighlight: true,
         highlightColor: [255, 255, 255, 60],
-        // Re-run the accessors when the metric (field) or ramp (colour) changes;
-        // the data reference is stable, so without these deck.gl skips the accessor.
+        // Re-run the accessors when the metric (field), ramp (colour), or the
+        // residential lens changes; the data reference is stable, so without these
+        // deck.gl skips the accessor.
         updateTriggers: {
           getElevation: state.metric,
-          getFillColor: [state.metric, state.ramp],
+          getFillColor: [state.metric, state.ramp, state.residential],
         },
       });
 
       // Crisp roof outline drawn on top of the prisms (depthTest so towers in
       // front still occlude rings behind them).
+      const edge = RAMPS[state.ramp].edge;
+      const dimEdge = [edge[0], edge[1], edge[2], LENS_DIM_EDGE_ALPHA];
       const topEdges = new deck.PathLayer({
         id: "top-edges",
         data: topRings(state.data.features, cfg),
-        getPath: d => d,
-        getColor: RAMPS[state.ramp].edge,
+        getPath: d => d.path,
+        // Dim the roof outline of non-residential hoods when the lens is on.
+        getColor: d => (state.residential && !d.res) ? dimEdge : edge,
         getWidth: 1.4,
         widthUnits: "pixels",
         widthMinPixels: 1,
@@ -293,6 +319,7 @@
         capRounded: false,
         jointRounded: false,
         parameters: { depthTest: true },
+        updateTriggers: { getColor: [state.ramp, state.residential] },
       });
 
       return [layer, topEdges];
@@ -343,6 +370,13 @@
         b.classList.toggle("active", b.dataset.ramp === name));
     }
 
+    // Toggle the residential-only lens: fade non-residential hoods translucent.
+    function applyLens() {
+      state.residential = !state.residential;
+      overlay.setProps({ layers: buildLayers() });
+      document.querySelector("#lens button").classList.toggle("active", state.residential);
+    }
+
     map.on("load", async () => {
       state.data = await fetch(DATA_URL).then(r => r.json());
 
@@ -357,6 +391,7 @@
         b.addEventListener("click", () => applyMetric(b.dataset.metric)));
       document.querySelectorAll("#palette button").forEach(b =>
         b.addEventListener("click", () => applyPalette(b.dataset.ramp)));
+      document.querySelector("#lens button").addEventListener("click", applyLens);
       // Sync the legend gradient to the default ramp (single source of truth).
       document.querySelector("#legend .bar").style.background = legendGradient();
     });

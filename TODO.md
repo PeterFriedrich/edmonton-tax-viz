@@ -29,9 +29,11 @@ _Last reconciled: 2026-07-01_
   - [x] Emit `frac_residential` + `is_residential` (≥0.50 of zoned area) per hood.
     Validated on real data: 226 residential, 0 overlap with set-aside.
   - [x] Added to `ZONING_COLUMNS` + `SLIM_COLUMNS`; regenerated GeoJSON carries both.
-  - [ ] Frontend filter: make non-residential prisms transparent/dimmed on toggle.
-    **Open decision:** fully transparent (removed) vs dimmed-but-visible (context).
-    Lean: dimmed-but-visible so the city still reads as a whole.
+  - [x] Frontend filter (`web/index.html`): "Residential only" toggle fades
+    non-residential hoods translucent (fill α70 / roof-edge α45 — **visible but
+    see-through**, Peter's call), residential hoods keep full colour. Off by
+    default; preserves metric/palette state. *(Not visually verified — no headless
+    browser; preview `cd web && python -m http.server 8777`.)*
   Note: `is_residential` is a display filter, orthogonal to `is_set_aside` (grey);
   a set-aside hood is not residential. Keep the two flags independent.
 
