@@ -9,6 +9,8 @@ Edmonton revenue-per-acre fiscal analysis. Python-only, no GIS software.
 - `docs/ARCHITECTURE.md` — module interfaces, data flow, testing approach. **Read before writing any module.**
 - `data/DATA.md` — data source details, column names, known quirks. **Read before touching any data files. Update if you discover anything new.**
 - `docs/TOKEN_EFFICIENCY.md` — context/token hygiene (what NOT to read raw, session-summary archiving). **Read before bulk-reading data or summaries.**
+- `docs/ANALYSIS_BACKLOG.md` — analytical questions/investigations to run later (auto + by-hand). Distinct from TODO.md (build work) and FINDINGS_*.md (conclusions).
+- `docs/PARCEL_LEVEL_OPPORTUNITIES.md` — future work gated on parcel-level data (finer than the neighbourhood unit); the set-aside machinery exists because we aggregate to neighbourhood.
 - `session-summary/` — session handoff notes. Read the latest before starting work; older ones live in `session-summary/archive/` (don't bulk-read them).
 
 ## Token Efficiency
