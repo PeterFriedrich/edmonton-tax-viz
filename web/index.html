@@ -42,12 +42,20 @@
         rgb(20,11,52), rgb(88,21,99), rgb(165,44,96), rgb(231,98,58), rgb(252,210,120));
     }
     #legend .scale { display: flex; justify-content: space-between; width: 200px; }
+    #legend .aside {
+      display: flex; align-items: center; gap: 7px; margin-top: 9px; color: #9a9ab0;
+    }
+    #legend .aside .sw {
+      width: 12px; height: 12px; border-radius: 2px;
+      background: rgb(104,108,122); flex: 0 0 auto;
+    }
     .tip {
       font: 12px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       background: rgba(12,12,20,0.92); color: #f0f0f6;
       padding: 6px 9px; border-radius: 5px; border: 1px solid #2a2a3a;
     }
     .tip b { color: #fcd278; }
+    .tip .muted { color: #b8b8c8; }
   </style>
 </head>
 <body>
@@ -57,7 +65,9 @@
     <h1 id="title-h">Edmonton: Tax Revenue per Acre</h1>
     <p id="title-p">Height and colour show municipal property-tax revenue divided by
        neighbourhood area, applying Edmonton's class-differential mill rates. Tall,
-       bright districts generate the most city revenue per unit of land.</p>
+       bright districts generate the most city revenue per unit of land. Height is
+       linear; colour is square-root–scaled to reveal the low end. Grey = set-aside
+       natural/undeveloped land, excluded from the scale.</p>
   </div>
 
   <div id="toggle" class="panel">
@@ -75,6 +85,7 @@
     <div id="legend-label">Revenue per acre</div>
     <div class="bar"></div>
     <div class="scale"><span>$0</span><span id="legend-max">$50k+</span></div>
+    <div class="aside"><span class="sw"></span><span>Set aside — natural / undeveloped land</span></div>
   </div>
 
   <script>
@@ -93,7 +104,9 @@
         title: "Edmonton: Tax Revenue per Acre",
         blurb: "Height and colour show municipal property-tax revenue divided by " +
                "neighbourhood area, applying Edmonton's class-differential mill rates. " +
-               "Tall, bright districts generate the most city revenue per unit of land.",
+               "Tall, bright districts generate the most city revenue per unit of land. " +
+               "Height is linear; colour is square-root–scaled to reveal the low end. " +
+               "Grey = set-aside natural/undeveloped land, excluded from the scale.",
         legendLabel: "Revenue per acre",
         legendMax: "$50k+",
         colorClamp: 50_000,
@@ -104,7 +117,9 @@
         title: "Edmonton: Assessed Value per Acre",
         blurb: "Height and colour show total assessed property value divided by " +
                "neighbourhood area. Tall, bright districts hold the most assessed " +
-               "value per unit of land.",
+               "value per unit of land. Height is linear; colour is square-root–scaled " +
+               "to reveal the low end. Grey = set-aside natural/undeveloped land, " +
+               "excluded from the scale.",
         legendLabel: "Value per acre",
         legendMax: "$4M+",
         colorClamp: 4_000_000,
@@ -157,9 +172,22 @@
       },
     };
 
-    function colorFor(value, clamp) {
+    // Neutral off-ramp grey for set-aside neighbourhoods (>=90% never/not-yet
+    // zoning). They are EXCLUDED from the colour scale — their near-zero revenue
+    // is a land-use fact, not a fiscal signal (see FINDINGS §4/§6). Distinct from
+    // every ramp's low end (dark purple/blue), so "grey = not on the scale" reads
+    // unambiguously. Height stays their true (low) value — honest, de-emphasized.
+    const SET_ASIDE_COLOR = [104, 108, 122];
+
+    // Colour transform: SQRT of the clamped ratio (DECIDED 2026-07-01, FINDINGS
+    // §6.1). The taxable distribution is right-skewed but NOT log-normal at the
+    // 0.90 set-aside threshold (log over-corrects); sqrt tames the skew without
+    // crushing the low end. Height stays LINEAR regardless.
+    const scaleT = (value, clamp) => Math.sqrt(Math.max(0, Math.min(1, value / clamp)));
+
+    // Interpolate the active ramp at t in [0,1].
+    function rampColorAt(t) {
       const stops = RAMPS[state.ramp].stops;
-      const t = Math.max(0, Math.min(1, value / clamp));
       for (let i = 1; i < stops.length; i++) {
         if (t <= stops[i][0]) {
           const [t0, c0] = stops[i - 1], [t1, c1] = stops[i];
@@ -170,11 +198,24 @@
       return stops[stops.length - 1][1];
     }
 
-    // CSS gradient string for the legend bar, built from a ramp's stops.
-    const gradientCss = stops =>
-      "linear-gradient(90deg," +
-      stops.map(([t, c]) => `rgb(${c[0]},${c[1]},${c[2]}) ${Math.round(t * 100)}%`).join(",") +
-      ")";
+    const colorFor = (value, clamp) => rampColorAt(scaleT(value, clamp));
+
+    // Per-feature fill: set-aside hoods go neutral grey, off the ramp.
+    const fillFor = (f, cfg) =>
+      f.properties.is_set_aside ? SET_ASIDE_COLOR : colorFor(f.properties[cfg.key], cfg.colorClamp);
+
+    // Legend gradient for the CURRENT ramp under the sqrt transform: sample the
+    // bar in *value* space (linear $ from 0 to clamp) so the displayed colour at
+    // each dollar position matches what a neighbourhood of that value renders.
+    function legendGradient() {
+      const N = 16, parts = [];
+      for (let i = 0; i <= N; i++) {
+        const p = i / N;                       // fraction of the clamp ($ position)
+        const c = rampColorAt(Math.sqrt(p));   // scaleT(p*clamp, clamp) === sqrt(p)
+        parts.push(`rgb(${c[0]},${c[1]},${c[2]}) ${Math.round(p * 100)}%`);
+      }
+      return "linear-gradient(90deg," + parts.join(",") + ")";
+    }
 
     const fmt = v => "$" + Math.round(v).toLocaleString();
 
@@ -224,7 +265,7 @@
         wireframe: false,
         getElevation: f => f.properties[cfg.key],
         elevationScale: cfg.elevationScale,
-        getFillColor: f => colorFor(f.properties[cfg.key], cfg.colorClamp),
+        getFillColor: f => fillFor(f, cfg),
         material: { ambient: 0.55, diffuse: 0.6, shininess: 32, specularColor: [60, 60, 70] },
         pickable: true,
         autoHighlight: true,
@@ -260,10 +301,19 @@
     // Tooltip reads the active metric at hover time (closure over `state`).
     function tooltipFor({ object }) {
       if (!object) return null;
+      const p = object.properties;
+      if (p.is_set_aside) {
+        const pct = Math.round(p.set_aside_frac * 100);
+        return {
+          className: "tip",
+          html: `<b>${p.neighbourhood_name}</b><br/>` +
+                `<span class="muted">Set aside — ${p.set_aside_reason} (${pct}% of area)</span>`,
+        };
+      }
       const cfg = METRICS[state.metric];
       return {
         className: "tip",
-        html: `<b>${object.properties.neighbourhood_name}</b><br/>${fmt(object.properties[cfg.key])} / acre`,
+        html: `<b>${p.neighbourhood_name}</b><br/>${fmt(p[cfg.key])} / acre`,
       };
     }
 
@@ -288,7 +338,7 @@
       const ramp = RAMPS[name];
       overlay.setProps({ layers: buildLayers() });
       map.setPaintProperty("bg", "background-color", ramp.bg);
-      document.querySelector("#legend .bar").style.background = gradientCss(ramp.stops);
+      document.querySelector("#legend .bar").style.background = legendGradient();
       document.querySelectorAll("#palette button").forEach(b =>
         b.classList.toggle("active", b.dataset.ramp === name));
     }
@@ -308,8 +358,7 @@
       document.querySelectorAll("#palette button").forEach(b =>
         b.addEventListener("click", () => applyPalette(b.dataset.ramp)));
       // Sync the legend gradient to the default ramp (single source of truth).
-      document.querySelector("#legend .bar").style.background =
-        gradientCss(RAMPS[state.ramp].stops);
+      document.querySelector("#legend .bar").style.background = legendGradient();
     });
   </script>
 </body>

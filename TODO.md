@@ -64,8 +64,12 @@ _Last reconciled: 2026-07-01_
     over-corrects to −4.19; the mixed 0.55–0.90 band stays on-scale by design and
     drags the left log-tail). Recorded in FINDINGS_revenue_scale §6.1; reproduce via
     `scripts/investigate_skew.py`.
-  - [ ] Frontend: switch colour to **sqrt** + neutral-grey the set-aside
-    neighbourhoods (exclude from scale fit) in `web/index.html`.
+  - [x] Frontend (`web/index.html`): colour now **sqrt**-scaled (`scaleT`);
+    set-aside hoods render neutral grey off the ramp (`SET_ASIDE_COLOR`, excluded
+    from the scale), legend gradient resampled under sqrt + a set-aside swatch,
+    tooltip shows the set-aside reason + %, blurbs note the transform. *(Not yet
+    eyeballed in a browser — no headless render here; preview via
+    `cd web && python -m http.server 8777`.)*
   - Zoning GeoJSON re-downloaded 2026-07-01 to `data/raw/zoning.geojson` (9.2 MB,
     gitignored) — ready to use, no re-download needed. Validated numbers to reproduce:
     tail median set-aside 0.99 vs developed 0.11; ~48 set aside, ~24 mixed kept.
