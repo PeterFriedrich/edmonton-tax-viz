@@ -12,68 +12,6 @@ _Last reconciled: 2026-07-01_
 
 ## Open work
 
-- [ ] **Separate the low-coverage tail — PREREQUISITE for the colour scale.**
-  The revenue distribution is a **mixture**: a roughly log-normal taxable core
-  (log-skew −0.22 with the tail removed) + a near-zero spike of ≈57 neighbourhoods.
-  Mixed, `log` over-corrects (left skew −2.16); the transform can't be chosen until
-  the spike is split out — **by category, not by a revenue threshold** (thresholding
-  is the arbitrary-cap sin).
-  **CORRECTION (2026-06-29):** the spike is NOT exempt land. `is_exempt` flags only
-  3 parcels citywide; exempt_share = 0.00 across all 57; tax-exempt institutional
-  land (Legislature/schools/etc.) is **absent from the taxable roll entirely**, not
-  flagged or zeroed. The spike is **low taxable coverage** — undeveloped/natural
-  land (20× "RIVER VALLEY", golf courses, ring-road margins, energy parks,
-  undeveloped town centres; 55/57 have <200 parcels). So the separator is
-  coverage/land-use, not exempt share.
-  **APPROACH (decided 2026-06-29): the Zoning Bylaw layer (`fixa-tstc`).** Boundary
-  file has no type field (cols: number/name/descriptive_name/ward/district/desc/geom).
-  Instead use Edmonton's zoning polygons (11,510; codes + descriptions) spatially
-  overlaid on neighbourhood boundaries → land-use **composition %** per neighbourhood.
-  Principled, area-based, non-arbitrary. Buckets split THREE ways (the policy story):
-  - **Never taxable** — `A` River Valley, `NA` Natural Areas, `PS`/`PSN` Parks → set aside.
-  - **Not yet** — `FD` Future Urban Development (+ fringe `AG`/`RR`) → "fiscal potential", flag separately.
-  - **Genuine underperformer** — developed-zoned but low value/acre → STAYS on the scale
-    (zoning = what's *allowed*, not *built*; underdeveloped residential is the fiscal story).
-  - **Institutional/other-jurisdiction** — `UI`/`UF`/`AJ`/`PU` → proxy for where the
-    exempt-roll understatement lives (recovers the "undetectable" caveat, partially).
-  *Methodological framing (for the doc):* neighbourhood-level aggregation REQUIRES
-  explicit categorization of non-developable land that parcel-level (Urban3) handles
-  implicitly. It's compensation for our unit choice, not feature creep.
-  - [ ] Methodology caveat to record: revenue/acre **understates** neighbourhoods
-    holding large exempt institutions; zoning (UI/UF/AJ) now lets us *flag* where,
-    though zoning ≠ tax status (proxy only).
-
-  **LOCKED 2026-06-29** (in specs — SPEC_revenue Update, ARCHITECTURE, DATA §5,
-  SPEC_deployment, UI): set-aside = **never + not-yet** at **≥0.90**; mixed (0.5–0.9)
-  + developed STAY on scale; set-aside renders **neutral grey**, excluded from the
-  scale fit; **zoning is a refreshed input** (auto-graduates developing land).
-  Validated in scratch: tail median set-aside 0.99 vs developed 0.11; 48 set aside,
-  24 mixed kept; ZERO genuine underperformers in the tail.
-  **BUILD:**
-  - [x] `src/load_zoning.py` — explicit `code→category` dict (all 95 base codes;
-    never/notyet/inst/dev), reproject 3400, `buffer(0)` clean, overlay →
-    `set_aside_frac`/`is_set_aside`/`set_aside_reason` per neighbourhood. + 10 synthetic
-    tests. *(2026-07-01: `DC`/`DC1`/`DC2` → developed; unknown codes warn + default dev.
-    Validated on real data: 48 set aside, zero unmatched codes.)*
-  - [x] Wire into `join_and_calculate` (optional `zoning=` arg, graceful when absent) +
-    `main.py` (`--zoning-geojson`/`--skip-zoning`); regenerated web GeoJSON now carries
-    `set_aside_frac`/`is_set_aside`/`set_aside_reason` (48 set-aside features). Raw
-    `zoning.geojson` stays gitignored + re-pulled each cycle (like the other raw inputs).
-  - [x] Re-run skew on the set-aside-excluded set → pick colour transform.
-    **DECIDED: sqrt** — taxable core is NOT log-normal at the 0.90 threshold (log
-    over-corrects to −4.19; the mixed 0.55–0.90 band stays on-scale by design and
-    drags the left log-tail). Recorded in FINDINGS_revenue_scale §6.1; reproduce via
-    `scripts/investigate_skew.py`.
-  - [x] Frontend (`web/index.html`): colour now **sqrt**-scaled (`scaleT`);
-    set-aside hoods render neutral grey off the ramp (`SET_ASIDE_COLOR`, excluded
-    from the scale), legend gradient resampled under sqrt + a set-aside swatch,
-    tooltip shows the set-aside reason + %, blurbs note the transform. *(Not yet
-    eyeballed in a browser — no headless render here; preview via
-    `cd web && python -m http.server 8777`.)*
-  - Zoning GeoJSON re-downloaded 2026-07-01 to `data/raw/zoning.geojson` (9.2 MB,
-    gitignored) — ready to use, no re-download needed. Validated numbers to reproduce:
-    tail median set-aside 0.99 vs developed 0.11; ~48 set aside, ~24 mixed kept.
-
 - [ ] **SCOPE: composition numbers now; full zoning POLYGON layer in the viewer is a
   SEPARATE later product decision** — it changes the viz from "revenue/acre" to
   "revenue/acre + land-use overlay" (clarity-vs-complexity call for a public audience).
@@ -103,8 +41,10 @@ _Last reconciled: 2026-07-01_
   threshold. Once exempt is split, re-run the skew check on the status-defined
   taxable set: if it's ≈ log-normal (likely), use `log` for the taxable scale; `sqrt`
   is the fallback if it stays mixed. Height stays LINEAR (locked honesty choice).
-  *In progress, uncommitted in `web/index.html`:* 3 swappable colour ramps
-  (Inferno / Glow / Cividis) + palette switcher — done, awaiting Peter's pick.
+  *Colour ramps in `web/index.html`:* 3 swappable ramps (Inferno / Glow /
+  Cividis) + palette switcher. **Default = Inferno (picked 2026-07-01).** Cividis
+  retained in the switcher as a liked alternative + the colourblind-friendly
+  option (see Visual polish → colourblind (cividis) mode below).
   *Not yet built:* scale toggle (linear+clamp / sqrt / log) for visual comparison.
 
 - [ ] **UI control hierarchy: separate "Color Adjustment" from lens controls.**
@@ -150,3 +90,13 @@ _Last reconciled: 2026-07-01_
   (committed `5912576`).
 - [x] Web value↔revenue toggle, revenue default (committed `a0cf2a0`).
 - [x] Push `feature/phase2-web` to origin.
+- [x] **Low-coverage tail separated via the Zoning Bylaw layer (`fixa-tstc`)** —
+  end-to-end land-use set-aside feature (2026-07-01). `src/load_zoning.py` (95 base
+  codes → never/notyet/inst/dev, overlay → `set_aside_frac`/`is_set_aside`/
+  `set_aside_reason`), wired through `join_and_calculate` + `main.py`; 48 hoods set
+  aside at ≥0.90. Colour transform **DECIDED: sqrt** (FINDINGS §6.1 — log over-corrects
+  to −4.19; the mixed 0.55–0.90 band stays on-scale by design). Frontend: sqrt colour
+  + neutral-grey set-aside hoods. Methodology caveat recorded in FINDINGS §5 (zoning
+  `UI`/`UF`/`AJ`/`PU` partially flags exempt-roll understatement). Refs:
+  `docs/FINDINGS_revenue_scale.md` §§5–6.1, `scripts/investigate_skew.py`,
+  `docs/SPEC_revenue.md` "Update 2026-06-29".

@@ -104,9 +104,17 @@ land** — separable by land-use/coverage, *not* by exempt status.
 ## 5. Methodology caveat (record regardless of downstream choices)
 
 Because exempt institutional land is absent from the roll, revenue/acre
-**understates** any neighbourhood that contains large exempt institutions, and the
-data gives **no way to detect which neighbourhoods those are**. This is a limitation
-of the source, not a modelling choice, and should be disclosed.
+**understates** any neighbourhood that contains large exempt institutions. This is a
+limitation of the source, not a modelling choice, and should be disclosed.
+
+The tax roll itself gives no way to detect which neighbourhoods those are. The
+zoning layer (`src/load_zoning.py`) now provides a **partial** proxy: its
+institutional codes — `UI` (Urban Institution), `UF` (Urban Facilities), `AJ`
+(Alternative Jurisdiction), `PU` (Public Utility) — flag *where* exempt-roll
+understatement is most likely to sit. This is a proxy only: zoning marks what a
+parcel is *zoned for*, not its *tax status*, so the flag neither confirms exempt
+land nor quantifies the understatement. These codes stay **on** the colour scale
+(classified `inst`, not set aside); the flag is a caveat aid, not an exclusion.
 
 ## 6. Colour-transform options
 
