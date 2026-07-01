@@ -59,9 +59,13 @@ _Last reconciled: 2026-07-01_
     `main.py` (`--zoning-geojson`/`--skip-zoning`); regenerated web GeoJSON now carries
     `set_aside_frac`/`is_set_aside`/`set_aside_reason` (48 set-aside features). Raw
     `zoning.geojson` stays gitignored + re-pulled each cycle (like the other raw inputs).
-  - [ ] Re-run skew on the set-aside-excluded set → pick colour transform (log vs sqrt);
-    update FINDINGS_revenue_scale §6.
-  - [ ] Frontend: neutral-grey the set-aside neighbourhoods in `web/index.html`.
+  - [x] Re-run skew on the set-aside-excluded set → pick colour transform.
+    **DECIDED: sqrt** — taxable core is NOT log-normal at the 0.90 threshold (log
+    over-corrects to −4.19; the mixed 0.55–0.90 band stays on-scale by design and
+    drags the left log-tail). Recorded in FINDINGS_revenue_scale §6.1; reproduce via
+    `scripts/investigate_skew.py`.
+  - [ ] Frontend: switch colour to **sqrt** + neutral-grey the set-aside
+    neighbourhoods (exclude from scale fit) in `web/index.html`.
   - Zoning GeoJSON re-downloaded 2026-07-01 to `data/raw/zoning.geojson` (9.2 MB,
     gitignored) — ready to use, no re-download needed. Validated numbers to reproduce:
     tail median set-aside 0.99 vs developed 0.11; ~48 set aside, ~24 mixed kept.

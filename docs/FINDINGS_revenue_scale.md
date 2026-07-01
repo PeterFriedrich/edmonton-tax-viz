@@ -127,11 +127,40 @@ Then re-run the §3 skew test on the **category-defined** taxable set. If it is
 low-coverage set separately. If it stays mixed, **sqrt** is the no-set-aside
 fallback.
 
+### 6.1 Result — DECIDED: sqrt (2026-07-01)
+
+Ran that test on the zoning-defined taxable set (`is_set_aside` from
+`src/load_zoning.py`; 48 of 405 hoods set aside at the locked ≥0.90 threshold).
+Reproduce with `scripts/investigate_skew.py` (biased skew, matching §3):
+
+| set | metric | n | raw | sqrt | log |
+|---|---|---|---|---|---|
+| all | revenue_per_acre | 405 | 5.83 | **0.36** | −2.16 |
+| **excl set-aside** | revenue_per_acre | 357 | 6.62 | **1.55** | **−4.19** |
+| all | value_per_acre | 405 | 2.72 | **−0.35** | −2.08 |
+| **excl set-aside** | value_per_acre | 357 | 3.54 | **0.21** | −3.88 |
+
+**The taxable core is NOT log-normal at the 0.90 threshold — the opposite of the
+§6 prediction.** Excluding the set-aside hoods pushes log-skew *further* negative
+(revenue −2.16 → −4.19), because the exclusion removes only the ≥0.90 hoods while
+the **mixed 0.55–0.90 band stays on the scale by design** and still holds
+near-zero-revenue land. The dozen lowest-revenue kept hoods are all in that band —
+RIVER VALLEY KENDAL $1.76/acre (set-aside 0.78), ANTHONY HENDAY MISTATIM $702
+(0.86), RIVER VALLEY CAMERON $325 (0.66) — their tiny revenue dominates the left
+log-tail. This is not a bug in the threshold: keeping underdeveloped-but-developed
+land on the scale is the fiscal story (§SPEC_revenue). It just means a single
+**log** scale over-corrects.
+
+**sqrt** is well-behaved everywhere (|skew| ≤ 1.55 across every cut; 0.36 / −0.35
+on the full set) — it tames the right skew without exploding the near-zero floor,
+and does not assume a clean log-normal core that the data does not have. **Use sqrt
+for colour.** Height stays linear regardless.
+
 Candidate methodology statement:
 
-> Colour encodes a square-root (or log, for the taxable core) transform of the
-> metric across the full distribution; height encodes the raw linear value.
-> Low-coverage natural/undeveloped neighbourhoods are displayed separately.
+> Colour encodes a square-root transform of the metric; height encodes the raw
+> linear value. Natural/undeveloped set-aside neighbourhoods (zoning ≥90% never +
+> not-yet) are shown in neutral grey, excluded from the colour-scale fit.
 > Tax-exempt institutional land is absent from the source assessment roll, so
 > revenue/acre understates neighbourhoods containing such land; these cannot be
 > identified from the available data.
@@ -147,6 +176,10 @@ pipeline), so documenting the transform explicitly is a more auditable position,
 not a deviation from a standard.
 
 ## To visualize (notebook later)
+
+Skew numbers here are reproducible headless via `scripts/investigate_skew.py`
+(`skew_table` / `load_metrics` / `lowest_kept` are importable). The plots below are
+the remaining visual confirmations:
 
 - Histogram of revenue/acre and value/acre on linear vs. sqrt vs. log axes — show
   the plateau and the log over-correction directly.
