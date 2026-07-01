@@ -6,9 +6,15 @@ import pandas as pd
 logger = logging.getLogger(__name__)
 
 
+# Zoning composition columns carried into the output when a zoning frame is
+# supplied. Kept small — the full per-category fractions stay in load_zoning.
+ZONING_COLUMNS = ["set_aside_frac", "is_set_aside", "set_aside_reason"]
+
+
 def join_and_calculate(
     assessment: pd.DataFrame,
     boundaries: gpd.GeoDataFrame,
+    zoning: pd.DataFrame | None = None,
 ) -> gpd.GeoDataFrame:
     """Left join boundaries → assessment, flag unmatched rows, compute value_per_acre.
 
@@ -16,6 +22,11 @@ def join_and_calculate(
     (NAME_CORRECTIONS is applied upstream in load_assessment.py). The three
     unresolved cases (OLIVER, HERITAGE VALLEY TOWN CENTRE AREA,
     LEWIS FARMS INDUSTRIAL) surface here as unmatched warnings.
+
+    ``zoning`` (optional, from load_zoning.py) adds set_aside_frac / is_set_aside
+    / set_aside_reason, merged on neighbourhood_name. Degrades gracefully when
+    absent, like the revenue columns; boundaries with no zoning match default to
+    is_set_aside=False (stays on scale) and are flagged.
     """
     agg = assessment
 
@@ -66,13 +77,49 @@ def join_and_calculate(
             "area_acres", "value_per_acre", "revenue_per_acre", "geometry",
         ]
 
+    # Zoning phase: merge land-use set-aside composition when supplied.
+    if zoning is not None:
+        boundary_names = set(joined["neighbourhood_name"])
+        unmatched_zoning = sorted(set(zoning["neighbourhood_name"]) - boundary_names)
+        if unmatched_zoning:
+            logger.warning(
+                "%d zoning neighbourhood(s) with no boundary match (dropped):\n  %s",
+                len(unmatched_zoning),
+                "\n  ".join(unmatched_zoning),
+            )
+
+        joined = joined.merge(
+            zoning[["neighbourhood_name", *ZONING_COLUMNS]],
+            on="neighbourhood_name",
+            how="left",
+        )
+
+        no_zoning = joined[joined["set_aside_frac"].isna()]
+        if len(no_zoning):
+            logger.warning(
+                "%d boundary neighbourhood(s) with no zoning overlay (default is_set_aside=False):\n  %s",
+                len(no_zoning),
+                "\n  ".join(sorted(no_zoning["neighbourhood_name"])),
+            )
+        # Boundaries without a zoning match stay on the scale, not set aside.
+        joined["is_set_aside"] = joined["is_set_aside"].fillna(False).astype(bool)
+        joined["set_aside_reason"] = joined["set_aside_reason"].fillna("")
+
+        # Insert zoning columns before geometry.
+        out_cols = [c for c in out_cols if c != "geometry"] + ZONING_COLUMNS + ["geometry"]
+
     return joined[out_cols]
 
 
 # Columns the web client actually consumes. Everything else is dropped to keep
-# the GeoJSON the browser downloads small. revenue_per_acre is included only when
-# present (revenue phase) — the value↔revenue toggle reads both.
-SLIM_COLUMNS = ["neighbourhood_name", "value_per_acre", "revenue_per_acre", "geometry"]
+# the GeoJSON the browser downloads small. revenue_per_acre and the zoning
+# set-aside columns are included only when present (their respective phases) —
+# the value↔revenue toggle reads both metrics; is_set_aside/set_aside_reason
+# drive the neutral-grey render + tooltip.
+SLIM_COLUMNS = [
+    "neighbourhood_name", "value_per_acre", "revenue_per_acre",
+    "set_aside_frac", "is_set_aside", "set_aside_reason", "geometry",
+]
 
 
 # CRS used for the setback buffer — must be projected (metres), not degrees.

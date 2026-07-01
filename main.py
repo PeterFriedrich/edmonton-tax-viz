@@ -32,6 +32,7 @@ from load_assessment import load_assessment
 from apply_tax_rates import apply_tax_rates
 from aggregate_by_neighbourhood import aggregate_by_neighbourhood
 from load_boundaries import load_boundaries
+from load_zoning import load_zoning
 from join_and_calculate import join_and_calculate, export_geojson
 from plot_choropleth import plot_choropleth
 
@@ -40,6 +41,7 @@ logger = logging.getLogger(__name__)
 # --- Default paths (override via CLI) --------------------------------------
 ASSESSMENT_CSV = ROOT / "data/raw/Property_Assessment_Data__Current_Calendar_Year_.csv"
 BOUNDARIES_GEOJSON = ROOT / "data/raw/neighbourhoods.geojson"
+ZONING_GEOJSON = ROOT / "data/raw/zoning.geojson"
 MILL_RATES_JSON = ROOT / "data/mill_rates.json"
 PNG_OUT = ROOT / "output/edmonton_value_per_acre.png"
 GEOJSON_OUT = ROOT / "web/data/neighbourhood_value_per_acre.geojson"
@@ -63,6 +65,7 @@ def run(
     geojson_out: Path | None,
     mill_rates_json: Path = MILL_RATES_JSON,
     assessment_year: int = ASSESSMENT_YEAR,
+    zoning_geojson: Path | None = ZONING_GEOJSON,
     setback_m: float = SETBACK_M,
     simplify_tolerance_m: float = SIMPLIFY_TOLERANCE_M,
 ) -> None:
@@ -72,7 +75,16 @@ def run(
     )
     aggregated = aggregate_by_neighbourhood(assessment)
     boundaries = load_boundaries(str(boundaries_geojson))
-    result = join_and_calculate(aggregated, boundaries)
+
+    # Zoning is an optional refreshed input — degrade gracefully if the file is
+    # absent (join_and_calculate omits the set-aside columns when zoning is None).
+    zoning = None
+    if zoning_geojson is not None and Path(zoning_geojson).exists():
+        zoning = load_zoning(str(zoning_geojson), boundaries)
+    elif zoning_geojson is not None:
+        logger.warning("Zoning file not found (%s) — skipping set-aside layer", zoning_geojson)
+
+    result = join_and_calculate(aggregated, boundaries, zoning=zoning)
 
     if png_out is not None:
         png_out.parent.mkdir(parents=True, exist_ok=True)
@@ -94,6 +106,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--assessment-csv", type=Path, default=ASSESSMENT_CSV)
     p.add_argument("--boundaries-geojson", type=Path, default=BOUNDARIES_GEOJSON)
+    p.add_argument("--zoning-geojson", type=Path, default=ZONING_GEOJSON)
     p.add_argument("--mill-rates-json", type=Path, default=MILL_RATES_JSON)
     p.add_argument("--assessment-year", type=int, default=ASSESSMENT_YEAR)
     p.add_argument("--png-out", type=Path, default=PNG_OUT)
@@ -102,6 +115,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p.add_argument("--simplify-tolerance-m", type=float, default=SIMPLIFY_TOLERANCE_M)
     p.add_argument("--skip-png", action="store_true", help="skip the Phase 1 PNG")
     p.add_argument("--skip-geojson", action="store_true", help="skip the Phase 2 web GeoJSON")
+    p.add_argument("--skip-zoning", action="store_true", help="skip the land-use set-aside layer")
     p.add_argument("--log-level", default="INFO", help="logging level (default INFO)")
     return p.parse_args(argv)
 
@@ -120,6 +134,7 @@ def main(argv: list[str] | None = None) -> None:
         geojson_out=None if args.skip_geojson else args.geojson_out,
         mill_rates_json=args.mill_rates_json,
         assessment_year=args.assessment_year,
+        zoning_geojson=None if args.skip_zoning else args.zoning_geojson,
         setback_m=args.setback_m,
         simplify_tolerance_m=args.simplify_tolerance_m,
     )

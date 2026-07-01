@@ -235,3 +235,49 @@ def test_simplify_and_setback_compose(tmp_path):
     )
     area_m2 = slim.to_crs("EPSG:3400").area.iloc[0]
     assert area_m2 == pytest.approx(3600, rel=0.02)
+
+
+def _zoning(rows):
+    return pd.DataFrame(rows)
+
+
+def test_zoning_merge_adds_set_aside_columns():
+    result = join_and_calculate(
+        _assessment([{"neighbourhood_name": "RIVER VALLEY", "total_assessed_value": 100.0}]),
+        _boundaries([{"neighbourhood_name": "RIVER VALLEY", "area_acres": 10.0}]),
+        zoning=_zoning([{
+            "neighbourhood_name": "RIVER VALLEY", "set_aside_frac": 0.98,
+            "is_set_aside": True, "set_aside_reason": "River Valley / Natural / Parks",
+        }]),
+    )
+    row = result.iloc[0]
+    assert set(["set_aside_frac", "is_set_aside", "set_aside_reason"]).issubset(result.columns)
+    assert bool(row["is_set_aside"]) is True
+    assert row["set_aside_reason"] == "River Valley / Natural / Parks"
+
+
+def test_no_zoning_arg_omits_set_aside_columns():
+    result = join_and_calculate(
+        _assessment([{"neighbourhood_name": "DOWNTOWN", "total_assessed_value": 100.0}]),
+        _boundaries([{"neighbourhood_name": "DOWNTOWN", "area_acres": 10.0}]),
+    )
+    assert "is_set_aside" not in result.columns
+
+
+def test_boundary_without_zoning_match_defaults_false(caplog):
+    with caplog.at_level("WARNING"):
+        result = join_and_calculate(
+            _assessment([{"neighbourhood_name": "DOWNTOWN", "total_assessed_value": 100.0}]),
+            _boundaries([
+                {"neighbourhood_name": "DOWNTOWN", "area_acres": 10.0},
+                {"neighbourhood_name": "OUTER", "area_acres": 20.0},
+            ]),
+            zoning=_zoning([{
+                "neighbourhood_name": "DOWNTOWN", "set_aside_frac": 0.1,
+                "is_set_aside": False, "set_aside_reason": "",
+            }]),
+        )
+    outer = result[result["neighbourhood_name"] == "OUTER"].iloc[0]
+    assert bool(outer["is_set_aside"]) is False
+    assert outer["set_aside_reason"] == ""
+    assert "no zoning overlay" in caplog.text

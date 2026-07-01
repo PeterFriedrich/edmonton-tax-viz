@@ -49,15 +49,16 @@ _Last reconciled: 2026-07-01_
   scale fit; **zoning is a refreshed input** (auto-graduates developing land).
   Validated in scratch: tail median set-aside 0.99 vs developed 0.11; 48 set aside,
   24 mixed kept; ZERO genuine underperformers in the tail.
-  **NEXT-SESSION BUILD (not started):**
-  - [ ] `src/load_zoning.py` — explicit `code→category` dict (NOT keyword/prefix —
-    "Park" place-names + `A*` codes break it), reproject 3400, `buffer(0)` clean,
-    overlay → `set_aside_frac`/`is_set_aside` per neighbourhood. + tests (synthetic).
-    *(2026-07-01: cross-check each dict entry against the row's `url` bylaw-section path
-    — mixed groups so it's a verifier, not the category; `DC`/`DC1`/`DC2` → developed.
-    See DATA.md §5.)*
-  - [ ] Wire into `join_and_calculate` + `main.py`; commit zoning to `data/raw/`;
-    regenerate GeoJSON carrying the new columns.
+  **BUILD:**
+  - [x] `src/load_zoning.py` — explicit `code→category` dict (all 95 base codes;
+    never/notyet/inst/dev), reproject 3400, `buffer(0)` clean, overlay →
+    `set_aside_frac`/`is_set_aside`/`set_aside_reason` per neighbourhood. + 10 synthetic
+    tests. *(2026-07-01: `DC`/`DC1`/`DC2` → developed; unknown codes warn + default dev.
+    Validated on real data: 48 set aside, zero unmatched codes.)*
+  - [x] Wire into `join_and_calculate` (optional `zoning=` arg, graceful when absent) +
+    `main.py` (`--zoning-geojson`/`--skip-zoning`); regenerated web GeoJSON now carries
+    `set_aside_frac`/`is_set_aside`/`set_aside_reason` (48 set-aside features). Raw
+    `zoning.geojson` stays gitignored + re-pulled each cycle (like the other raw inputs).
   - [ ] Re-run skew on the set-aside-excluded set → pick colour transform (log vs sqrt);
     update FINDINGS_revenue_scale §6.
   - [ ] Frontend: neutral-grey the set-aside neighbourhoods in `web/index.html`.
