@@ -8,7 +8,7 @@ check `git` / `pytest` directly — do not restate it here, it only goes stale.
 Session summaries (`session-summary/`) are dated *narratives* of what happened and
 why. This file owns *what's left*. When they disagree, this file wins.
 
-_Last reconciled: 2026-06-29_
+_Last reconciled: 2026-07-01_
 
 ## Open work
 
@@ -53,13 +53,17 @@ _Last reconciled: 2026-06-29_
   - [ ] `src/load_zoning.py` — explicit `code→category` dict (NOT keyword/prefix —
     "Park" place-names + `A*` codes break it), reproject 3400, `buffer(0)` clean,
     overlay → `set_aside_frac`/`is_set_aside` per neighbourhood. + tests (synthetic).
+    *(2026-07-01: cross-check each dict entry against the row's `url` bylaw-section path
+    — mixed groups so it's a verifier, not the category; `DC`/`DC1`/`DC2` → developed.
+    See DATA.md §5.)*
   - [ ] Wire into `join_and_calculate` + `main.py`; commit zoning to `data/raw/`;
     regenerate GeoJSON carrying the new columns.
   - [ ] Re-run skew on the set-aside-excluded set → pick colour transform (log vs sqrt);
     update FINDINGS_revenue_scale §6.
   - [ ] Frontend: neutral-grey the set-aside neighbourhoods in `web/index.html`.
-  - Scratch validation lives in the session scratchpad (`zoning_list.py`); zoning
-    GeoJSON not yet committed (re-download from `fixa-tstc`).
+  - Zoning GeoJSON re-downloaded 2026-07-01 to `data/raw/zoning.geojson` (9.2 MB,
+    gitignored) — ready to use, no re-download needed. Validated numbers to reproduce:
+    tail median set-aside 0.99 vs developed 0.11; ~48 set aside, ~24 mixed kept.
 
 - [ ] **SCOPE: composition numbers now; full zoning POLYGON layer in the viewer is a
   SEPARATE later product decision** — it changes the viz from "revenue/acre" to

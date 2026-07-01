@@ -189,13 +189,16 @@ handles implicitly. Overlaid on neighbourhood boundaries → land-use compositio
 per neighbourhood → drives the colour-scale set-aside. See `SPEC_revenue.md`
 (Update 2026-06-29) and `FINDINGS_revenue_scale.md`.
 
-### Columns
+### Columns (confirmed 2026-06-30)
 | Column | Notes |
 |--------|-------|
 | `zoning` | zone code, e.g. `RSF`, `A`, `RM h16` — height/overlay suffixes appended; parse the **first token** for the base code |
-| `description` | human-readable, e.g. "River Valley", "Future Urban Development" |
+| `description` | human-readable, e.g. "River Valley", "Small Scale Flex Residential" |
+| `url` | link to the bylaw page. **The path encodes the authoritative bylaw section** — `…/part-2-…/residential-zones/…`, `…/industrial-zones/…`, `…/open-space-and-urban-services-zones/…`, `…/agricultural-zones/…`, plus `…-special-area` groups. Use as an independent **cross-check** when building the code→category dict (see quirks), NOT as the category itself (groups are mixed — see below) |
 | `dc2_sub_area` | sub-area for `DC2` site-specific zones |
-| `geometry_multipolygon` | polygon |
+| `date_ext` | extract timestamp (e.g. `2026-06-29 02:07:03`) — record for provenance |
+| `id`, `agreement_no` | record identifiers |
+| `geometry` | polygon (Socrata source field `geometry_multipolygon`; geopandas reads it as `geometry`) |
 
 ### Known Quirks
 - **Geometry needs cleaning before overlay.** Raw polygons are invalid/mixed-dimension
@@ -205,8 +208,22 @@ per neighbourhood → drives the colour-scale set-aside. See `SPEC_revenue.md`
   "Century **Park**" is a TOD redevelopment — the word "Park" ≠ green park. The `A*`
   codes are mostly River Valley special areas (Hawrelak, Muttart) but `AED` =
   Arena/Entertainment District (downtown), `ALA` = Ambleside apartments. Use an
-  **explicit `code → category` dictionary** (~95 base codes; descriptions make each
-  obvious). Lives in `src/load_zoning.py`.
+  **explicit `code → category` dictionary** (exactly **95 base codes** confirmed
+  2026-06-30; `description` + `url` make each obvious). Lives in `src/load_zoning.py`.
+- **`url` cross-check (confirmed 2026-06-30).** The `url` path's bylaw section is a
+  useful *verification* signal but is NOT a drop-in category — groups mix set-aside and
+  developed codes. The `open-space-and-urban-services-zones` group is the clearest case:
+  it contains set-aside `A`/`NA`/`PS`/`PSN` **and** developed infrastructure `PU` (Public
+  Utility), `UF` (Urban Facilities), `UI` (Urban Institution), `AJ` (Alternative
+  Jurisdiction). Categorize at the code level; use `url` only to catch dict errors (e.g.
+  it correctly resolves the `A*` trap: `AED`→`downtown-special-area`, `ALA`/`AUVC`→
+  `ambleside-special-area`, not river valley).
+- **Direct Control zones (`DC`, `DC1`, `DC2`) — confirmed 2026-06-30.** ~1,081 rows are
+  site-specific / special-area zones with no standard `/part-N/` bylaw section in `url`
+  (`DC*`, plus named zones like Blatchford, Century Park, River Crossing). **Rule:**
+  `DC`/`DC1`/`DC2` default to **developed** (stay on scale — conservative, won't wrongly
+  hide land). Named-natural special-area codes (`NSRVES`, `A7` Hawrelak, etc.) are caught
+  by their own explicit dict entry, not by the `DC` default.
 - **Set-aside categories:** never = River Valley (`A`,`NA`)/Parks (`PS`,`PSN`); not-yet
   = Future (`FD`)/rural (`AG`,`RR`)/industrial reserve (`EET*`). Institutional
   (`UI`,`UF`,`AJ`,`PU`) is a proxy for where exempt-roll understatement lives.
