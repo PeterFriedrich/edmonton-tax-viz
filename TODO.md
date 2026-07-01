@@ -79,6 +79,25 @@ _Last reconciled: 2026-07-01_
   "revenue/acre + land-use overlay" (clarity-vs-complexity call for a public audience).
   Do NOT couple them.
 
+- [ ] **Residential-only lens (Phase 2 view — needs a pipeline extension first).**
+  Goal: a UI filter that fades non-residential/downtown prisms so councillors see a
+  pure residential-to-residential comparison (mature infill vs. greenfield suburb) —
+  no class-rate differential or Downtown outlier confounding the scale. The narrative
+  "third lens" after sqrt-colour (orient) + linear-height (the Downtown reveal), which
+  the current single view already fuses.
+  **Blocked on the zoning layer**, which today lumps residential + commercial +
+  industrial + mixed into one `dev` bucket (`src/load_zoning.py`) and exports only
+  `set_aside_frac`/`is_set_aside`/`set_aside_reason` (the per-category fracs are
+  computed but dropped). To unblock:
+  - [ ] Split `dev` → `residential` vs `non-residential` in `ZONE_CATEGORY` (data
+    supports it — descriptions distinguish "…Residential"; standard RSF/RM/RS/RSM/RL/
+    HDR/RMU + the special-area row-housing/apartment codes are residential).
+  - [ ] Emit `frac_residential` + `is_residential` (dominant, e.g. ≥0.50) per hood.
+  - [ ] Add them to `ZONING_COLUMNS` + `SLIM_COLUMNS` so they reach the GeoJSON.
+  - [ ] Frontend filter: make non-residential prisms transparent/dimmed on toggle.
+  Note: `is_residential` is a display filter, orthogonal to `is_set_aside` (grey);
+  a set-aside hood is not residential. Keep the two flags independent.
+
 - [ ] **Colour scale for revenue/value — decide after exempt split.** Current hard
   clamp ($50k / $4M, ~p97) creates a visible saturated plateau that reads as a fake
   threshold. Once exempt is split, re-run the skew check on the status-defined
