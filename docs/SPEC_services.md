@@ -15,6 +15,38 @@ assessment/rates/zoning); its provenance is `last_checked` itself.
 **Remaining from this spec:** the V2 revenue-per-road-metre ratio (fast
 follow, needs the set-aside/near-zero-revenue day-one answer).
 
+## Display architecture — REVISED 2026-07-01 (two-plane, stackable services)
+
+The road-supply **prism view built above is RETIRED** the same day (Peter's
+call). The metric/pipeline work stands unchanged — `road_m_per_acre` colours
+the network below and feeds the eventual ratio — but services do not render
+as extrusions. The display model going forward:
+
+- **Ground plane — service layers, STACKABLE.** Each service renders as its
+  own toggleable ground-level layer in a layers panel; roads are the first,
+  later services (each with its own spec section when it comes) add a
+  checkbox, not a rework. For roads: the actual centreline network —
+  **arterials in a neutral colour** (context: shared infrastructure, carries
+  no metric) and **collector + local roads coloured by their neighbourhood's
+  `road_m_per_acre`** (linear, clamp 53 — the §6.3 decision applies to the
+  network colouring).
+- **Above — the revenue/value prisms**, unchanged today; LATER gains a
+  transparency control so the money plane can overlay the service plane
+  without hiding it.
+- **Finally — a synthesis view:** the ratio of revenue to total services
+  (definition of "total services" deliberately deferred until more than one
+  service exists; revenue-per-road-metre is its single-service special case).
+
+Staging: (1) roads ground layer + layers panel ← NOW; (2) prism transparency
+overlay; (3) ratio view.
+
+**Web export (new pipeline output):** the browser needs road *geometry*,
+which the 62 MB raw file can't ship. Export a slim `web/data/roads.geojson`:
+City-filtered clipped segments, dissolved per (neighbourhood × arterial/access),
+line-simplified + coordinate-trimmed, properties reduced to the group flag and
+the hood's metric value. Lazy-loaded by the frontend on first toggle so the
+initial page payload is unchanged.
+
 This opens the **cost side** of the fiscal picture — explicitly out of scope in
 `SPEC_phase1.md` ("no service cost allocation yet — revenue only"). It is scoped
 as a **general services lens** whose first (and for now only) service is the

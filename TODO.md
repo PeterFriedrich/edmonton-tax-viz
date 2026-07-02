@@ -37,11 +37,19 @@ _Last reconciled: 2026-07-01_
     vintage~~ — done 2026-07-01. Resolution on vintage: **no roads year field**
     — the network is a live feed with no roll-year semantics; provenance =
     `last_checked` (recorded in SPEC_services + DATA.md §6).
-  - [ ] **V2 fast follow (not started): revenue per road-metre** — needs the
-    day-one answer for set-aside / near-zero-revenue hoods (ratio explodes);
-    see SPEC_services.md.
-  - [ ] Merge `feature/services-lens` → master via PR when Peter's eyeballed
-    the Roads view (`cd web && python3 -m http.server 8799`).
+  - [ ] **Display pivot (2026-07-01): two-plane stackable architecture**
+    (SPEC_services.md "Display architecture — REVISED"). Road prisms RETIRED;
+    services render as stackable ground layers, money prisms above. Staging:
+    - [ ] (1) Roads ground layer: slim `web/data/roads.geojson` export
+      (dissolved per hood × arterial/access, simplified, lazy-loaded) +
+      layers panel; arterials neutral, access roads coloured by hood
+      `road_m_per_acre` (linear, clamp 53); remove Roads from metric toggle.
+    - [ ] (2) Prism transparency control (money plane overlays service plane).
+    - [ ] (3) Ratio view: revenue vs total services (defer "total services"
+      definition until >1 service; revenue-per-road-metre is the
+      single-service case — subsumes the old V2 item).
+  - [ ] Merge `feature/services-lens` → master via PR once the ground-layer
+    view is in and Peter's eyeballed it (`cd web && python3 -m http.server 8799`).
 
 - [ ] **SCOPE: composition numbers now; full zoning POLYGON layer in the viewer is a
   SEPARATE later product decision** — it changes the viz from "revenue/acre" to
