@@ -1,14 +1,18 @@
 # Scope: Automated Backend + Static Deployment
 
-**Status: BACKEND BUILT (2026-07-01, branch `feature/deployment`).** A **scheduled
-GitHub Action** (`.github/workflows/refresh.yml`) regenerates the map data and
-publishes it to a fully static **GitHub Pages** frontend. No always-on server is
-required. What exists: `scripts/download_data.py` (fetch all three inputs),
+**Status: LIVE (2026-07-01/02).** The site is deployed and auto-refreshing at
+**https://peterfriedrich.github.io/edmonton-tax-viz/**. A **scheduled GitHub
+Action** (`.github/workflows/refresh.yml`) regenerates the map data and publishes
+it to a fully static **GitHub Pages** frontend; no always-on server. Built &
+verified in production: `scripts/download_data.py` (fetch all three inputs),
 `scripts/generate_status.py` (→ `web/data/status.json`), the frontend banner in
-`web/index.html`, the workflow, and `requirements-ci.txt`. **Remaining: the one-time
-GitHub bootstrap** (enable Pages → source "GitHub Actions", run the workflow once)
-**and the deferred follow-ons** (auto year-detection, per-year archives). This doc
-is the agreed design; the sub-sections below note where reality now differs.
+`web/index.html`, the workflow, and `requirements-ci.txt`. **Bootstrap done**
+(Pages enabled with `build_type: workflow` via API; first run green end-to-end).
+Action versions on node24 majors (checkout v7 / setup-python v6 / upload-pages-
+artifact v5 / deploy-pages v5). **Remaining: deferred follow-ons only** — auto
+year-detection + mismatch banner, per-year archives, and the 60-day heartbeat
+watch. This doc is the agreed design; the sub-sections below note where reality
+now differs.
 
 ## The key fact this is built around
 

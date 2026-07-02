@@ -41,6 +41,14 @@ The CSV describes a parcel's tax class in **two different vocabularies**:
 Note `COMMERCIAL` is the label that bills under the `Non Residential` mill rate —
 the core vocabulary mismatch.
 
+**Update (2026-07-02, from the live feed):** a re-download surfaced a new label
+`DESIGNATED IND PROPERTIES` (**1 row**) not present in the 2026-06-28 snapshot —
+Designated Industrial Property (provincially-assessed plants / linear / machinery).
+Its own `Tax Class` field reads `Non Residential`, so it's mapped there for the
+municipal levy (the only rate this project applies). This was caught by the
+pipeline's no-silent-drop guard (`apply_tax_rates` hard-fails on an unmapped
+label), not by chance — see the deployment dry-run in `session-summary/2026-07-01.md`.
+
 ## Label → mill-rate class map
 
 Every label that appears across `Assessment Class 1/2/3`, mapped to its
@@ -53,6 +61,7 @@ mill-rate class:
 | `OTHER RESIDENTIAL` | Other Residential | |
 | `FARMLAND` | Farmland | |
 | `MA DERELICT RESIDENTIAL` | Non Residential | all 284 rows have `Tax Class = Non Residential` |
+| `DESIGNATED IND PROPERTIES` | Non Residential | new in the live feed (2026-07-02, 1 row); its `Tax Class` reads Non Residential |
 | `NONRES MUNICIPAL/RES EDUCATION` | *exempt → $0* | the existing `EXEMPT_CLASS` |
 
 This map is exhaustive for the current snapshot — the labels appearing in the

@@ -57,7 +57,10 @@ The neighbourhood-level approach still supports analysis at this resolution — 
 
 ## Status
 
-Early stage. Research phase complete, moving to data acquisition and analysis.
+**Live:** interactive 3D map at **https://peterfriedrich.github.io/edmonton-tax-viz/**
+— municipal tax revenue (and assessed value) per acre by neighbourhood, with a
+land-use set-aside layer and a residential-only lens. A weekly GitHub Action
+regenerates the data and redeploys automatically (see `docs/SPEC_deployment.md`).
 
 See [`/research`](/research) for background findings and data source inventory.
 
