@@ -2,6 +2,8 @@
 
 A public fiscal analysis comparing Edmonton's property tax revenue to the cost of servicing it, by area.
 
+[Edmonton Tax Visualization](https://peterfriedrich.github.io/edmonton-tax-viz/)
+
 ## What This Is
 
 Several published studies have examined the fiscal balance of suburban development in Edmonton. A Sustainable Prosperity report found that costs to the city will exceed revenues by **nearly $4 billion over 60 years** across just 17 planned new developments. A 2016 analysis of three new neighbourhoods (Decoteau, Riverview, Horse Hills) found they'll cost **$1.4 billion more** than they'll generate over 50 years.
