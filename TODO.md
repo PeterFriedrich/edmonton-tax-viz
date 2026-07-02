@@ -13,9 +13,11 @@ _Last reconciled: 2026-07-01_
 ## Open work
 
 - [ ] **Services lens — road supply (SPEC'd 2026-07-01, branch `feature/services-lens`).**
-  Spec: `docs/SPEC_services.md`. V1 = `road_m_per_acre` (city-maintained road
-  centreline metres per boundary acre, per-class columns kept); V2 fast follow =
-  revenue per road-metre. Locked: alleys OUT, railway OUT, City-owned only.
+  Spec: `docs/SPEC_services.md`. V1 = `road_m_per_acre` (city-maintained
+  **collector + local** centreline metres per boundary acre; per-class columns
+  kept internally, arterials computed but excluded from the metric); V2 fast
+  follow = revenue per road-metre. Locked: alleys OUT, arterials OUT (shared
+  infrastructure), railway OUT, City-owned only.
   Build order:
   - [ ] Prerequisite commit: `$limit` count-vs-limit assertion in
     `scripts/download_data.py` + add roads source `9j8t-zm52` (closes the

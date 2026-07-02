@@ -19,8 +19,9 @@ is a defensible physical quantity requiring no cost model or allocation
 assumptions.
 
 **V1 metric — DECIDED: road supply first, ratio as a fast follow.**
-- **V1 ships `road_m_per_acre`** — metres of city-maintained road centreline per
-  acre of neighbourhood area. Purely descriptive infrastructure intensity.
+- **V1 ships `road_m_per_acre`** — metres of city-maintained **collector +
+  local** road centreline per acre of neighbourhood area (arterials excluded —
+  see Row filters). Purely descriptive infrastructure intensity.
 - **V2 (fast follow, same data):** revenue per road-metre — the fiscal
   "does this land's revenue cover its road supply" ratio. Deferred so the road
   layer is validated *before* anything is derived from it, and because the ratio
@@ -69,13 +70,25 @@ LineStrings, EPSG:4326 via Socrata GeoJSON. Inspected 2026-07-01:
   - Note: verify at build time how `Local-Private` interacts with this filter
     (private *function* vs City *responsibility* may not coincide); report the
     count either way.
+- **Arterials excluded from the metric (all four Arterial classes A–D).**
+  Arterials are **shared infrastructure**: they carry city-wide traffic and any
+  development pattern would entail them, so attributing their metres to the
+  neighbourhood they happen to pass through would embed a city-wide quantity
+  into a per-neighbourhood metric. The shipped total is **collector + local**
+  — the road supply that exists because of that neighbourhood's own layout.
+  `road_m_arterial` is still computed and kept as an internal column (it costs
+  nothing, feeds the conservation guard, and preserves the option of a later
+  arterial view), but it never enters `road_m_total` / `road_m_per_acre`.
+  Side effect: this removes most of the boundary-coincident assignment noise,
+  since arterials are precisely the segments that run along neighbourhood
+  boundaries (see Guards).
 
 ## Computation
 
 ```
-per hood:  road_m_<class> = Σ length(city road centrelines ∩ hood polygon), by class group
-           road_m_total   = Σ over class groups
-           road_m_per_acre = road_m_total / area_acres      # boundary acres
+per hood:  road_m_<class>  = Σ length(city road centrelines ∩ hood polygon), by class group
+           road_m_total    = road_m_collector + road_m_local   # arterials NOT included
+           road_m_per_acre = road_m_total / area_acres         # boundary acres
 ```
 
 - **Class groups:** roll the 15 codes up to **arterial / collector / local**
@@ -98,10 +111,12 @@ per hood:  road_m_<class> = Σ length(city road centrelines ∩ hood polygon), b
   tolerance of the citywide filtered pre-overlay total; report the unassigned
   remainder (segments outside any hood polygon — e.g. beyond city limits)
   explicitly, never silently.
-- **Boundary-coincident arterials caveat:** arterials commonly run *along*
-  neighbourhood boundaries, so assignment of a centreline lying exactly on a
-  shared edge is knife-edge. Accept the assignment noise in v1 (the
-  conservation check bounds the damage); note it as a known limitation.
+- **Boundary-coincident segments caveat:** roads running *along* a
+  neighbourhood boundary are knife-edge in the overlay. Excluding arterials
+  from the metric removes most of this (they are the main boundary-runners);
+  collectors can still trace boundaries occasionally. Accept the residual
+  noise in v1 (the conservation check bounds the damage); note it as a known
+  limitation.
 - **Download truncation:** 53,720 rows **exceeds the `$limit=20000` pattern**
   used for zoning — a copy-paste download would silently keep 37% of the
   network. The count-vs-limit assertion in `scripts/download_data.py` (already
@@ -134,8 +149,11 @@ per hood:  road_m_<class> = Σ length(city road centrelines ∩ hood polygon), b
 
 - **Alleys — DECIDED: excluded** (see Row filters). Recorded here so it
   doesn't get re-opened casually.
+- **Arterials — DECIDED: excluded from the metric** (shared infrastructure;
+  see Row filters). Kept as an internal column only.
 - **Ownership — DECIDED: City of Edmonton only.**
-- **V1 metric — DECIDED: supply (`road_m_per_acre`); ratio is V2.**
+- **V1 metric — DECIDED: supply (`road_m_per_acre` = collector + local); ratio
+  is V2.**
 - **Colour transform — OPEN, decide empirically.** Run the established skew
   method (`scripts/investigate_skew.py` pattern, biased skew) on
   `road_m_per_acre` once real numbers exist; don't assume sqrt carries over
