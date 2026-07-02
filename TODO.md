@@ -23,8 +23,10 @@ _Last reconciled: 2026-07-01_
     `scripts/download_data.py` + add roads source `9j8t-zm52`~~ — done
     2026-07-01 (closes the data-integrity §5 follow-on below); roads
     downloaded + verified (53,720 features, check passes).
-  - [ ] `src/load_roads.py` + synthetic tests (mirror `load_zoning.py`).
-  - [ ] Wire `join_and_calculate` (`ROAD_COLUMNS`) + `main.py` flags.
+  - [x] ~~`src/load_roads.py` + synthetic tests~~ — done 2026-07-01 (13 tests;
+    real data: 3,644 km collector+local in metric, 0.28% unassigned).
+  - [x] ~~Wire `join_and_calculate` (`ROAD_COLUMNS`) + `main.py` flags~~ — done
+    2026-07-01 (+4 tests; GeoJSON regenerated, `road_m_per_acre` on all 406).
   - [ ] Skew check on `road_m_per_acre` → pick colour transform (don't assume sqrt).
   - [ ] Frontend: third metric in the Revenue/Value toggle; set-aside grey kept
     in v1 (lean, revisit at V2).
