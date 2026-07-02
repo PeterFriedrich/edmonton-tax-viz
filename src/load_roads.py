@@ -17,7 +17,8 @@ from pathlib import Path
 
 import geopandas as gpd
 import pandas as pd
-from shapely.ops import linemerge
+from shapely.geometry import MultiLineString
+from shapely.ops import linemerge, unary_union
 
 logger = logging.getLogger(__name__)
 
@@ -241,9 +242,15 @@ def load_roads(roads_path: str, boundaries: gpd.GeoDataFrame) -> pd.DataFrame:
     return result
 
 
-# Simplification tolerance for the web export (metres). Same order as the
-# polygon export's 10 m — display geometry only, lengths/metrics unaffected.
-WEB_SIMPLIFY_M = 8.0
+# Web-export display tunables (display geometry ONLY — every published metric
+# comes from the full-resolution overlay in load_roads). Most vertices are
+# path endpoints at road junctions, which no simplify tolerance can remove —
+# so the export also welds contiguous parts (linemerge), drops sub-
+# WEB_MIN_PART_M access slivers left by the boundary clip, and dissolves
+# arterials citywide (per-hood clipping only chops a no-metric context layer).
+WEB_SIMPLIFY_ACCESS_M = 20.0    # access keeps more detail: it carries the colour
+WEB_SIMPLIFY_ARTERIAL_M = 40.0  # arterials are neutral context — coarse is fine
+WEB_MIN_PART_M = 20.0           # access parts shorter than this are clip slivers
 # Coordinate decimals in the web file (~1 m at Edmonton's latitude).
 WEB_PRECISION = 5
 
@@ -252,22 +259,29 @@ def export_roads_web(
     roads_path: str,
     boundaries: gpd.GeoDataFrame,
     out_path: str,
-    simplify_m: float = WEB_SIMPLIFY_M,
+    access_simplify_m: float = WEB_SIMPLIFY_ACCESS_M,
+    arterial_simplify_m: float = WEB_SIMPLIFY_ARTERIAL_M,
+    min_part_m: float = WEB_MIN_PART_M,
     precision: int = WEB_PRECISION,
 ) -> int:
     """Write the slim road-network GeoJSON the web map's ground layer renders.
 
     The raw feed (~62 MB) can't ship to the browser; this export shrinks it by
-    dissolving the clipped segments to ONE MultiLineString per
-    (neighbourhood × arterial/access), simplifying, and trimming coordinates.
-    Per-feature properties (SPEC_services.md "Display architecture"):
-        n — neighbourhood name (tooltip)
+    dissolving, welding (linemerge), thinning, simplifying, and trimming
+    coordinates. Per-feature properties (SPEC_services.md "Display
+    architecture"):
+        n — neighbourhood name (tooltip; null on the arterial feature)
         t — "arterial" (neutral context, no metric) or "access" (collector+local)
         v — the hood's road_m_per_acre, on access features only (colour driver;
             null on arterials)
 
+    Access roads dissolve PER NEIGHBOURHOOD (they carry the per-hood colour);
+    arterials dissolve CITYWIDE into one feature — they carry no metric, and
+    per-hood clipping only chops them at every boundary crossing.
+
     Display geometry only — all metrics come from the full-resolution overlay
-    in load_roads. Returns the number of features written.
+    in load_roads (v is computed before any display thinning). Returns the
+    number of features written.
     """
     overlay = _prepare_segments(roads_path, boundaries)
     overlay["t"] = overlay["group"].map(
@@ -275,6 +289,7 @@ def export_roads_web(
     )
 
     # The colour driver: the same metric join_and_calculate publishes.
+    # Computed from the full-resolution pieces, BEFORE any display thinning.
     per_hood = (
         overlay.loc[overlay["t"] == "access"]
         .groupby("neighbourhood_name")["piece_m"].sum()
@@ -284,33 +299,67 @@ def export_roads_web(
     )
     per_hood["v"] = per_hood["access_m"] / per_hood["area_acres"]
 
-    dissolved = overlay[["neighbourhood_name", "t", "geometry"]].dissolve(
-        by=["neighbourhood_name", "t"], as_index=False
+    # --- access: one feature per neighbourhood, carrying the colour value ----
+    acc = (
+        overlay.loc[overlay["t"] == "access", ["neighbourhood_name", "geometry"]]
+        .dissolve(by="neighbourhood_name", as_index=False)
+        .merge(per_hood[["neighbourhood_name", "v"]], on="neighbourhood_name", how="left")
     )
-    dissolved = dissolved.merge(
-        per_hood[["neighbourhood_name", "v"]], on="neighbourhood_name", how="left"
-    )
-    # Arterials carry no metric — explicit null, never a number.
-    dissolved.loc[dissolved["t"] == "arterial", "v"] = float("nan")
-    dissolved["v"] = dissolved["v"].round(1)
-    dissolved["n"] = dissolved["neighbourhood_name"]
+    acc["v"] = acc["v"].round(1)
+    acc["n"] = acc["neighbourhood_name"]
+    acc["t"] = "access"
 
     # Weld contiguous parts end-to-end (degree-2 junctions only) before
     # simplifying: the raw parts average ~2 vertices, so simplify has no
     # interior vertices to drop until streets are merged into longer lines.
     # Fewer paths + fewer vertices = less GPU tessellation in the browser.
-    dissolved = dissolved.set_geometry(dissolved.geometry.apply(
+    welded = acc.geometry.apply(
         lambda g: linemerge(g) if g.geom_type == "MultiLineString" else g
-    ))
+    )
 
-    simplified = dissolved.geometry.simplify(simplify_m, preserve_topology=True)
+    # Drop clip slivers / stubs shorter than min_part_m — display-only
+    # thinning, reported not silent (~12% of access paths but <1% of length).
+    def _drop_short_parts(geom):
+        parts = list(geom.geoms) if geom.geom_type == "MultiLineString" else [geom]
+        kept = [p for p in parts if p.length >= min_part_m]
+        return MultiLineString(kept) if kept else None
+
+    length_before = welded.length.sum()
+    thinned = gpd.GeoSeries(welded.apply(_drop_short_parts), crs=acc.crs)
+    acc = acc.set_geometry(thinned)
+    acc = acc[acc.geometry.notna()]
+    logger.info(
+        "Web export thinning: dropped access parts < %.0f m totalling %.1f km "
+        "(display only; metrics unaffected)",
+        min_part_m, (length_before - acc.geometry.length.sum()) / 1000,
+    )
+
+    simplified = acc.geometry.simplify(access_simplify_m, preserve_topology=True)
     bad = simplified.is_empty | ~simplified.is_valid
     if bad.any():
         logger.warning(
-            "Simplify (%sm) broke %d road geometry(ies); kept originals", simplify_m, int(bad.sum())
+            "Simplify (%sm) broke %d road geometry(ies); kept originals",
+            access_simplify_m, int(bad.sum()),
         )
-        simplified = simplified.where(~bad, dissolved.geometry)
-    dissolved = dissolved.set_geometry(simplified).to_crs(epsg=4326)
+        simplified = simplified.where(~bad, acc.geometry)
+    acc = acc.set_geometry(simplified)
+
+    # --- arterials: one citywide context feature, no metric, coarse ----------
+    art_pieces = overlay.loc[overlay["t"] == "arterial"].geometry
+    frames = [acc[["n", "t", "v", "geometry"]]]
+    if len(art_pieces):
+        art_geom = unary_union(art_pieces.values)
+        if art_geom.geom_type == "MultiLineString":
+            art_geom = linemerge(art_geom)
+        art_geom = art_geom.simplify(arterial_simplify_m, preserve_topology=True)
+        frames.append(gpd.GeoDataFrame(
+            {"n": [None], "t": ["arterial"], "v": [float("nan")]},
+            geometry=[art_geom], crs=acc.crs,
+        ))
+
+    dissolved = gpd.GeoDataFrame(
+        pd.concat(frames, ignore_index=True), crs=acc.crs
+    ).to_crs(epsg=4326)
 
     # Manual write with rounded coordinates — GeoJSON size is dominated by
     # coordinate digits, and driver-level precision options vary by engine.
@@ -343,7 +392,9 @@ def export_roads_web(
         {"type": "FeatureCollection", "features": features}, separators=(",", ":")
     ))
     logger.info(
-        "Wrote road ground-layer GeoJSON: %d features (%.1f MB, simplify=%sm, %sdp) to %s",
-        len(features), out.stat().st_size / 1e6, simplify_m, precision, out_path,
+        "Wrote road ground-layer GeoJSON: %d features (%.1f MB, simplify=%s/%sm, "
+        "min part=%sm, %sdp) to %s",
+        len(features), out.stat().st_size / 1e6, access_simplify_m,
+        arterial_simplify_m, min_part_m, precision, out_path,
     )
     return len(features)

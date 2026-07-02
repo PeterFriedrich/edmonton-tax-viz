@@ -53,10 +53,17 @@ Shares the load→filter→classify→clip front half with `load_roads` via
 `_prepare_segments()`. Per-feature properties: `n` (hood name), `t`
 (`"arterial"` | `"access"` = collector+local), `v` (the hood's
 `road_m_per_acre`, access only, null on arterials — same number
-`join_and_calculate` publishes). Contiguous parts welded (`linemerge`,
-added 2026-07-02 for browser render cost: −21% paths / −14% vertices),
-simplify 8 m, coordinates 5 dp → **791 features, 2.0 MB**; committed to the
-repo like the polygons file so CI's commit-if-changed step tracks it weekly.
+`join_and_calculate` publishes). Render-cost tuning (2026-07-02, after
+observed browser lag; all display-only, metrics computed before thinning):
+contiguous parts welded (`linemerge`); access simplify 20 m + sub-20 m clip
+slivers dropped (~12% of paths, <1% of length); **arterials dissolved
+CITYWIDE into one feature** (they carry no metric — per-hood clipping only
+chopped them at every boundary crossing; `n` is null) + simplify 40 m.
+Net vs the first cut: −33% paths, −30% vertices → **398 features, 1.6 MB**;
+committed to the repo like the polygons file so CI's commit-if-changed step
+tracks it weekly. Vertex floor: most remaining vertices are path endpoints
+at junctions, which no simplify tolerance can remove — next lever, if ever
+needed, is zoom-dependent rendering.
 
 *Stages 1–2 frontend as built (2026-07-02, `web/index.html`; display details in
 `UI.md`):* `#layers` service-layers panel (Roads checkbox, default off,

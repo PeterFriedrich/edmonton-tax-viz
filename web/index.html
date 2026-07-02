@@ -463,8 +463,10 @@
       if (p.t) { // roads ground-layer feature (slim props: n / t / v)
         return {
           className: "tip",
+          // Arterials are one citywide feature (no hood attribution — they
+          // carry no metric, so the export doesn't clip them per hood).
           html: p.t === "arterial"
-            ? `<b>${p.n}</b><br/><span class="muted">Arterial — shared infrastructure, no metric</span>`
+            ? `<span class="muted">Arterial — shared infrastructure, no metric</span>`
             : `<b>${p.n}</b><br/>${p.v} road m / acre <span class="muted">(collector + local)</span>`,
         };
       }

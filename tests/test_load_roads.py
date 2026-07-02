@@ -253,6 +253,48 @@ def test_export_v_on_access_only_arterial_null(tmp_path):
     assert props["arterial"]["v"] is None
 
 
+def test_export_arterials_dissolve_citywide(tmp_path):
+    """Arterials carry no metric, so the export doesn't clip them per hood:
+    ONE citywide feature (n null), re-welded across the boundary crossing."""
+    hoods = _boundaries_with_acres(
+        ["WEST", "EAST"], [_square(0, 0, 100), _square(100, 0, 100)]
+    )
+    roads = _roads(
+        [
+            ("Road", CITY, ARTERIAL, LineString([(0, 50), (200, 50)])),  # spans both
+            ("Road", CITY, LOCAL, LineString([(0, 10), (100, 10)])),
+        ]
+    )
+    out = tmp_path / "roads.geojson"
+    _export(hoods, roads, out)
+    art = [f for f in _read_fc(out)["features"] if f["properties"]["t"] == "arterial"]
+    assert len(art) == 1
+    assert art[0]["properties"]["n"] is None
+    g = art[0]["geometry"]
+    n_parts = 1 if g["type"] == "LineString" else len(g["coordinates"])
+    assert n_parts == 1  # the per-hood clip cut is welded back together
+
+
+def test_export_drops_short_access_slivers(tmp_path):
+    """Access parts shorter than WEB_MIN_PART_M are clip slivers — dropped
+    from the DISPLAY file only (v still counts their full-resolution length)."""
+    hood = _boundaries_with_acres(["ALPHA"], [_square(0, 0, 100)])
+    roads = _roads(
+        [
+            ("Road", CITY, LOCAL, LineString([(0, 10), (100, 10)])),  # kept
+            ("Road", CITY, LOCAL, LineString([(0, 90), (5, 90)])),    # 5 m sliver
+        ]
+    )
+    out = tmp_path / "roads.geojson"
+    _export(hood, roads, out)
+    (feat,) = _read_fc(out)["features"]
+    g = feat["geometry"]
+    n_parts = 1 if g["type"] == "LineString" else len(g["coordinates"])
+    assert n_parts == 1  # sliver gone from display geometry
+    acres = (100 * 100) / 4046.8564224
+    assert feat["properties"]["v"] == pytest.approx(105 / acres, abs=0.05)  # metric keeps it
+
+
 def test_export_props_and_geometry_shape(tmp_path):
     hoods = _boundaries_with_acres(
         ["WEST", "EAST"], [_square(0, 0, 100), _square(100, 0, 100)]

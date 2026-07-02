@@ -204,13 +204,17 @@ out_path)` — the ground-layer GeoJSON the web map renders
 (`web/data/roads.geojson`, committed; SPEC_services.md "Display architecture").
 Shares the load→filter→classify→clip front half with `load_roads` via
 `_prepare_segments()` (the raw file is read twice per pipeline run — accepted,
-keeps the two entry points independent). Dissolves clipped segments to one
-MultiLineString per (neighbourhood × arterial/access), welds contiguous parts
-end-to-end (`linemerge` — raw segments average ~2 vertices, so simplify has
-nothing to drop until streets are merged into longer lines), simplifies (8 m),
-rounds coordinates (5 dp), and writes features with props `n` / `t` / `v`
-(hood name / `"arterial"`|`"access"` / `road_m_per_acre` on access only).
-Display geometry only — all published metrics still come from `load_roads`.
+keeps the two entry points independent). Access roads dissolve to one
+MultiLineString per neighbourhood (they carry the per-hood colour value);
+arterials dissolve CITYWIDE into a single no-metric context feature (per-hood
+clipping only chops them at boundary crossings). Both are welded end-to-end
+(`linemerge` — raw segments average ~2 vertices, so simplify has nothing to
+drop until streets are merged into longer lines), simplified (access 20 m /
+arterial 40 m), thinned of sub-20 m access clip slivers (reported, not
+silent), and written with coordinates rounded to 5 dp and props `n` / `t` /
+`v` (hood name, null on the arterial feature / `"arterial"`|`"access"` /
+`road_m_per_acre` on access only). Display geometry only — all published
+metrics still come from `load_roads`, computed before any thinning.
 
 ---
 
