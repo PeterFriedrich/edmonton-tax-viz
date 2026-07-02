@@ -41,7 +41,7 @@ _Last reconciled: 2026-07-01_
     day-one answer for set-aside / near-zero-revenue hoods (ratio explodes);
     see SPEC_services.md.
   - [ ] Merge `feature/services-lens` → master via PR when Peter's eyeballed
-    the Roads view (http://localhost:8799, server running 2026-07-01).
+    the Roads view (`cd web && python3 -m http.server 8799`).
 
 - [ ] **SCOPE: composition numbers now; full zoning POLYGON layer in the viewer is a
   SEPARATE later product decision** — it changes the viz from "revenue/acre" to
