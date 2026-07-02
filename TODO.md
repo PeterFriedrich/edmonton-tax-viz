@@ -56,7 +56,9 @@ _Last reconciled: 2026-07-01_
       (only setback gaps show).
     - [ ] (3) Ratio view: revenue vs total services (defer "total services"
       definition until >1 service; revenue-per-road-metre is the
-      single-service case — subsumes the old V2 item).
+      single-service case — subsumes the old V2 item). Partial: the ratio
+      is in the hood TOOLTIP since 2026-07-02 (metric + road m/acre +
+      $/road-metre); the open work is the ratio as a coloured VIEW.
   - [ ] Merge `feature/services-lens` → master via PR once the ground-layer
     view is in and Peter's eyeballed it (`cd web && python3 -m http.server 8799`).
 

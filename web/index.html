@@ -393,7 +393,10 @@
         getLineWidth: f => f.properties.t === "arterial" ? 2 : 1.2,
         lineWidthUnits: "pixels",
         lineWidthMinPixels: 1,
-        pickable: true,
+        // Not pickable: a prism always sits on top of the network (picking
+        // ignores opacity), so a road tooltip could never actually fire —
+        // the road numbers live in the HOOD tooltip instead (tooltipFor).
+        pickable: false,
         updateTriggers: { getLineColor: state.ramp },
       })];
     }
@@ -457,19 +460,12 @@
     }
 
     // Tooltip reads the active metric at hover time (closure over `state`).
+    // Beyond the active metric, hood tooltips carry the road-supply number
+    // and the revenue-per-road-metre ratio (the acres cancel — this is the
+    // stage-3 ratio metric, previewed here at tooltip level).
     function tooltipFor({ object }) {
       if (!object) return null;
       const p = object.properties;
-      if (p.t) { // roads ground-layer feature (slim props: n / t / v)
-        return {
-          className: "tip",
-          // Arterials are one citywide feature (no hood attribution — they
-          // carry no metric, so the export doesn't clip them per hood).
-          html: p.t === "arterial"
-            ? `<span class="muted">Arterial — shared infrastructure, no metric</span>`
-            : `<b>${p.n}</b><br/>${p.v} road m / acre <span class="muted">(collector + local)</span>`,
-        };
-      }
       if (p.is_set_aside) {
         const pct = Math.round(p.set_aside_frac * 100);
         return {
@@ -479,10 +475,15 @@
         };
       }
       const cfg = METRICS[state.metric];
-      return {
-        className: "tip",
-        html: `<b>${p.neighbourhood_name}</b><br/>${cfg.fmt(p[cfg.key])} / acre`,
-      };
+      let html = `<b>${p.neighbourhood_name}</b><br/>${cfg.fmt(p[cfg.key])} / acre`;
+      if (p.road_m_per_acre != null) {
+        html += `<br/><span class="muted">${p.road_m_per_acre.toFixed(1)} road m / acre</span>`;
+        if (p.road_m_per_acre > 0 && p.revenue_per_acre != null) {
+          const perM = p.revenue_per_acre / p.road_m_per_acre;
+          html += `<br/><span class="muted">$${Math.round(perM).toLocaleString()} revenue / road metre</span>`;
+        }
+      }
+      return { className: "tip", html };
     }
 
     // Switch metric: rebuild layers and update the title/legend/toggle chrome.

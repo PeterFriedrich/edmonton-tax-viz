@@ -74,7 +74,11 @@ with it: a **money-plane opacity slider** (prism fill + roof edges), because
 headless verification showed the network is ~invisible under opaque prisms
 (only the 45 m setback gaps show). Enabling Roads auto-nudges opacity to 45%
 when the slider is untouched; manual moves cancel the auto behaviour.
-Remaining: stage 3 (ratio view).
+Remaining: stage 3 (ratio view) — its metric (revenue per road metre;
+`revenue_per_acre / road_m_per_acre`, acres cancel) is already previewed in
+the hood tooltip as of 2026-07-02. The roads layer itself is not pickable:
+picking ignores opacity, so a prism always wins the hover; road numbers
+live in the hood tooltip.
 
 This opens the **cost side** of the fiscal picture — explicitly out of scope in
 `SPEC_phase1.md` ("no service cost allocation yet — revenue only"). It is scoped

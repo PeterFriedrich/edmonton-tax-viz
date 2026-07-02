@@ -84,8 +84,13 @@ The road-prism metric view built earlier on 2026-07-01 was **retired the same da
   **collector + local coloured by their hood's `road_m_per_acre`** on the active
   ramp — **LINEAR, clamp 53 m/acre** (≈ p97.5; FINDINGS §6.3 — sqrt/log over-correct
   a bounded, near-symmetric quantity), 1.2 px. The palette switcher applies to the
-  network too. Tooltips: hood + `38.2 road m / acre (collector + local)`, or
-  "Arterial — shared infrastructure, no metric".
+  network too.
+- **The roads layer is NOT pickable** — deck.gl picking ignores opacity, so a prism
+  always wins the hover (even at 0% opacity) and a road tooltip could never fire.
+  Instead the **hood tooltip carries the road story** (2026-07-02): active metric +
+  `19.2 road m / acre` + `$967 revenue / road metre` — the acres cancel, so this is
+  the stage-3 ratio metric previewed at tooltip level. Ratio omitted when
+  `road_m_per_acre` is 0 or the columns are absent; set-aside tooltip unchanged.
 - **Money-plane opacity slider** (same panel, "Prisms", 0–100%): layer-level
   `opacity` on the prism fill AND the roof-edge rings (outlines floating over a
   ghosted plane read as clutter). This is what makes the ground plane *visible* —
