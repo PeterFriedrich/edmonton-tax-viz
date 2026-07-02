@@ -2,6 +2,18 @@
 
 Reference for raw input files. Update this file when you discover column name quirks, encoding issues, or anything unexpected. Do not rely on memory — write it down here.
 
+**Socrata download completeness (applies to every source below):** Socrata
+truncates silently at `$limit` — it returns exactly that many rows with no
+error. Historically SODA 2.0 also imposed a **server-side 50,000-row cap** on
+`$limit`; Edmonton's endpoints demonstrably don't today (the road network
+returned 53,720 features in one request, 2026-07-01), but a platform cap could
+(re)appear without touching our config. `scripts/download_data.py` therefore
+verifies every download two ways: post-download count vs. **our** declared
+`$limit` (fails at count >= limit), and vs. the **live server count** via
+`$select=count(*)` (mismatch fails hard; an unreachable count endpoint only
+warns — the guard must not add fragility). Verified against all four sources
+2026-07-01.
+
 ---
 
 ## 1. Property Assessment Data
@@ -248,6 +260,49 @@ per neighbourhood → drives the colour-scale set-aside. See `SPEC_revenue.md`
   residential). Per-code assignments live in `src/load_zoning.py`.
 - **Refresh requirement:** re-pull each pipeline cycle so developing land (rezoned
   FD/AG → residential) graduates off the set-aside list automatically.
+
+---
+
+## 6. Road Network (road supply layer, added 2026-07-01)
+
+**Source:** Edmonton Open Data — dataset ID `9j8t-zm52` ("Road Network")
+**Download URL:** `https://data.edmonton.ca/resource/9j8t-zm52.geojson?$limit=100000`
+**Download:** `scripts/download_data.py` → `data/raw/roads.geojson` (gitignored)
+**Format:** GeoJSON, ~62 MB — centreline **LineStrings**, no surface polygons
+**Features:** 53,720 segments (confirmed vs `count(*)` 2026-07-01)
+**CRS:** EPSG:4326 — reproject to EPSG:3400 before any length calculation
+
+**Why:** the services lens (`docs/SPEC_services.md`) — city-maintained road
+length per neighbourhood, the first cost-side metric. Consumed by
+`src/load_roads.py`; the shipped metric is **collector + local metres per
+boundary acre** (`road_m_per_acre`).
+
+### Key columns
+| Column | Notes |
+|---|---|
+| `centerline_type` | `Road` 39,515 / `Alley` 12,088 / `Railway` 2,117 — **filter to `Road`** |
+| `responsible_party_description` | City of Edmonton 49,794; Province 1,164 (ring road); CN/CP rail; Private 566; neighbouring municipalities — **filter to `City of Edmonton`** |
+| `functional_class_code` | closed enumeration, 15 values (4 Arterial classes, Collector/Local by adjoining land use, `Local-ParkWay`, `Local-Private`, `Alley-Residential`) — explicit dict `CLASS_GROUP` in `load_roads.py` |
+| `geometry` | LineString centrelines |
+
+### Known Quirks
+- **Null `functional_class_code` = Alley + Railway exactly** (14,205 = 12,088 +
+  2,117, verified 2026-07-01). After the Road + City filters every row is
+  classified — a null/unknown there means upstream drift (`load_roads` warns
+  loudly and defaults to `local` so the length stays in the metric).
+- **41 Road-type rows are functionally classed `Alley-Residential`** (all
+  City-owned, 5.7 km). Excluded per the alleys-out decision — function
+  governs, not `centerline_type` (SPEC_services.md).
+- **`Local-Private` ≠ privately owned:** 73 of the 376 `Local-Private` rows are
+  `responsible_party = City of Edmonton` and survive the ownership filter —
+  kept as `local` (responsibility governs, not the name).
+- **Arterials are computed but excluded from `road_m_total`** (shared
+  infrastructure — SPEC_services.md; don't re-litigate). ~0.28% of filtered
+  length falls outside all neighbourhood polygons (conservation guard reports
+  it every run).
+- **Vintage:** live feed like the others; no year semantics of its own (the
+  network changes continuously, not per roll year). Refresh weekly with the
+  other inputs.
 
 ## Name Matching
 

@@ -8,9 +8,94 @@ check `git` / `pytest` directly — do not restate it here, it only goes stale.
 Session summaries (`session-summary/`) are dated *narratives* of what happened and
 why. This file owns *what's left*. When they disagree, this file wins.
 
-_Last reconciled: 2026-07-01_
+_Last reconciled: 2026-07-02_
 
 ## Open work
+
+- [ ] **Services lens — road supply (SPEC'd 2026-07-01, branch `feature/services-lens`).**
+  Spec: `docs/SPEC_services.md`. V1 = `road_m_per_acre` (city-maintained
+  **collector + local** centreline metres per boundary acre; per-class columns
+  kept internally, arterials computed but excluded from the metric); V2 fast
+  follow = revenue per road-metre. Locked: alleys OUT, arterials OUT (shared
+  infrastructure), railway OUT, City-owned only.
+  Build order:
+  - [x] ~~Prerequisite commit: `$limit` count-vs-limit assertion in
+    `scripts/download_data.py` + add roads source `9j8t-zm52`~~ — done
+    2026-07-01 (closes the data-integrity §5 follow-on below); roads
+    downloaded + verified (53,720 features, check passes).
+  - [x] ~~`src/load_roads.py` + synthetic tests~~ — done 2026-07-01 (13 tests;
+    real data: 3,644 km collector+local in metric, 0.28% unassigned).
+  - [x] ~~Wire `join_and_calculate` (`ROAD_COLUMNS`) + `main.py` flags~~ — done
+    2026-07-01 (+4 tests; GeoJSON regenerated, `road_m_per_acre` on all 406).
+  - [x] ~~Skew check on `road_m_per_acre` → pick colour transform~~ — DECIDED
+    2026-07-01: **linear** (raw skew −0.29; sqrt/log over-correct; FINDINGS §6.3).
+    Clamp ≈ p97.5 = 53 m/acre.
+  - [x] ~~Frontend: third metric in the Revenue/Value toggle~~ — done 2026-07-01
+    (per-metric transforms, linear roads, button hides on pre-services data,
+    headless-verified; set-aside grey kept per the v1 lean).
+  - [x] ~~Docs: `DATA.md` §6, `ARCHITECTURE.md` module entry, status.json
+    vintage~~ — done 2026-07-01. Resolution on vintage: **no roads year field**
+    — the network is a live feed with no roll-year semantics; provenance =
+    `last_checked` (recorded in SPEC_services + DATA.md §6).
+  - [x] **Display pivot (2026-07-01): two-plane stackable architecture — COMPLETE
+    2026-07-02** (SPEC_services.md "Display architecture — REVISED"; final control
+    model = three discrete views **Money | Roads | Ratio**, UI.md "Services
+    views"). Road prisms RETIRED; staging as executed:
+    - [ ] (1) Roads ground layer:
+      - [x] ~~pipeline: slim `web/data/roads.geojson` export (dissolved per
+        hood × arterial/access, simplified 8 m, 5 dp)~~ — done 2026-07-02
+        (`export_roads_web` in `src/load_roads.py`, wired into `main.py`;
+        791 features, 2.3 MB, committed like the polygons file; +5 tests).
+      - [x] ~~frontend: layers panel, lazy-loaded ground layer; arterials
+        neutral, access roads coloured by hood `road_m_per_acre` (linear,
+        clamp 53); remove Roads from metric toggle~~ — done 2026-07-02
+        (headless-verified; details in UI.md "Roads ground layer").
+    - [x] ~~(2) Prism transparency control (money plane overlays service
+      plane)~~ — done 2026-07-02, landed with stage 1: opacity slider in the
+      layers panel (prisms + roof edges) + 45% auto-nudge on first Roads
+      enable — needed because the network is ~invisible under opaque prisms
+      (only setback gaps show).
+    - [x] ~~(3) Ratio view: revenue vs total services (revenue-per-road-metre
+      is the single-service case — subsumes the old V2 item)~~ — done
+      2026-07-02 as the **Ratio view** (Money | Roads | Ratio buttons;
+      ghost prisms of $/road-metre over the neutral network; log colour
+      FINDINGS §6.4; road-base floor 5 m/acre greys artifacts; UI.md
+      "Services views"). "Total services" DEFINITION still deferred until
+      a second service exists — reopen this staging list then.
+  - [ ] Merge `feature/services-lens` → master via PR once the ground-layer
+    view is in and Peter's eyeballed it (`cd web && python3 -m http.server 8799`).
+
+- [ ] **Views & lenses follow-ons (Peter, 2026-07-02).** Three asks on top of the
+  shipped Money | Roads | Ratio views:
+  - [ ] **Residential-only lens in the Ratio view.** The lens currently applies
+    to Money only (`buildLayers` ignores `state.residential` in Roads/Ratio;
+    the button still toggles state — confusing, tighten that too). Design to
+    settle: fade non-residential hoods' ratio prisms to the uniform lens grey
+    (the established convention), and decide whether the log colour anchors
+    **rescale to the residential subset** (a residential variant of
+    `ratioScale()`, like `residentialClampFor` does for money clamps).
+    Residential-only $/road-metre is arguably the fairest infill-vs-greenfield
+    comparison in the whole project — the non-res mill-rate skew (FINDINGS
+    §6.2) inflates the ratio exactly where non-res land sits.
+  - [ ] **More service layers (water / drainage / transit / …).** Each needs its
+    own SPEC_services section (dataset, filters, locked decisions), a
+    per-hood supply column, and a slim web export. Decide the UI shape when
+    the second service arrives: another view button doesn't scale — likely
+    the Roads view generalizes to a "Services" view with per-service
+    checkboxes (the original stackable idea returns, one level down). That's
+    also the trigger to define "total services" and reopen the ratio's
+    denominator (currently roads-only by construction).
+  - [ ] **Use-mix lens: surface each neighbourhood's zoning composition.**
+    A lens/view that shows what the land IS (res / non-res / institutional /
+    reserve mix), not what it yields. **Pipeline prerequisite:** `load_zoning`
+    computes the full composition (`frac_never/notyet/inst/res/nonres`, sums
+    to 1) but `join_and_calculate` exports only the set-aside + residential
+    columns — extend `ZONING_COLUMNS`/`SLIM_COLUMNS` + regen. Display design
+    open: dominant-use categorical colour vs. a mix/diversity index vs.
+    per-hood blended colour; also whether nonres should first split
+    commercial/industrial (ANALYSIS_BACKLOG item 1 wants that split anyway).
+    NOTE: this is hood-level composition — it does NOT reopen the "full
+    zoning polygon overlay" scope decision below; keep them decoupled.
 
 - [ ] **SCOPE: composition numbers now; full zoning POLYGON layer in the viewer is a
   SEPARATE later product decision** — it changes the viz from "revenue/acre" to
@@ -100,10 +185,10 @@ _Last reconciled: 2026-07-01_
   - [ ] **CI unmatched-set assertion (audit §4):** commit the expected unmatched
     list (now just the OLIVER straggler) and fail the CI build when the live
     unmatched set differs — converts name-drift from warn-silent to fail-loud.
-  - [ ] **Socrata `$limit` truncation check (audit §5):** in
-    `scripts/download_data.py`, assert post-download feature count is strictly
-    below the `$limit` (boundaries 500, zoning 20000) — Socrata truncates
-    silently at the limit.
+  - [x] ~~**Socrata `$limit` truncation check (audit §5)**~~ — built 2026-07-01
+    on `feature/services-lens` (`check_not_truncated()` in
+    `scripts/download_data.py`, fails at count >= limit; +6 tests; roads
+    source added in the same commit).
   - [ ] (Optional, fidelity) map `MA DERELICT RESIDENTIAL` to the dedicated
     "Mature Area Derelict Residential" rate class instead of "Non Residential" —
     identical municipal rate today, differs if `rate_type` ever changes (audit T1).

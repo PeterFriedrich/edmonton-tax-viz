@@ -193,7 +193,55 @@ its residential range is essentially the whole-city range. The mill-rate skew is
 **revenue** phenomenon, exactly where theory places it. (This is also why the
 residential lens visibly re-spreads the Revenue view but barely changes Value.)
 
-## 7. Context: Urban3
+### 6.3 Road supply is near-symmetric — DECIDED: linear colour (2026-07-01)
+
+`road_m_per_acre` (services lens, `SPEC_services.md`: city-maintained
+collector + local metres per boundary acre) ran through the same biased-skew
+test as §6.1 (`scripts/investigate_skew.py`, roads now in `METRICS`):
+
+| set | n | raw | sqrt | log |
+|---|---|---|---|---|
+| all | 400 | **−0.29** | −0.92 | −3.00 |
+| excl set-aside | 357 | **−0.43** | −1.16 | −4.77 |
+
+Raw is already the best-behaved by a wide margin — sqrt and log both
+over-correct into the left tail. Unlike revenue (5+ orders of magnitude),
+road supply is **physically bounded**: an acre only fits so much road
+(observed 0–60.0 m/acre, median 32.6, max/median 1.84×). A bounded,
+near-symmetric quantity needs no compression. **Colour for
+`road_m_per_acre` is LINEAR** (same decision criterion as §6.1 — minimize
+|skew| — opposite outcome). Clamp candidate ≈ p97.5 = 53 m/acre, per the
+established convention. Height, as always, stays linear.
+
+(The 6 zero-road hoods: 5 are set-aside — river valley / ring-road margins —
+and render grey anyway; zeros sit honestly at the bottom of a linear ramp,
+another reason no log.)
+
+### 6.4 Revenue per road metre is ~log-normal — DECIDED: log colour (2026-07-02)
+
+The ratio view's metric (`revenue_per_acre / road_m_per_acre` — acres cancel:
+$ of municipal revenue per metre of city-maintained collector+local road) ran
+through the same biased-skew test, computed from the web GeoJSON's two
+published columns (no pipeline change; derivation is client-side too):
+
+| set | n | median | p97.5 | max | raw | sqrt | log |
+|---|---|---|---|---|---|---|---|
+| all computable | 400 | $537 | $4,629 | $1,314,509 | 19.72 | 16.18 | **0.32** |
+| excl set-aside | 357 | $568 | $5,468 | $1,314,509 | 18.62 | 15.48 | 2.74 |
+
+The first log-transform metric in the project — a ratio of two positive
+quantities coming out ~log-normal is the textbook case, and sqrt barely
+dents a 19.7 skew. **Colour is LOG**, anchored between the kept subset's
+p2.5 and p97.5 (computed at runtime in `web/index.html` `ratioScale()`,
+≈ $264–$3,253 on 2026-07-02 data). Height, as always, stays linear.
+
+**The denominator-artifact tail is real and must be floored, not clamped
+away:** WESTVIEW VILLAGE's ratio is $1,314,509/m (next: KENDAL $96,132) —
+near-zero road base, exactly the low-denominator artifact
+`ANALYSIS_BACKLOG.md` item 1 anticipated. Hoods with `road_m_per_acre <
+5` (`RATIO_ROAD_FLOOR`) render grey + flat ("insufficient road base"),
+alongside the set-asides; the 6 zero-road hoods have no ratio at all and
+fall under the same floor. The floor is display-only and tunable.
 
 Urban3's value-per-acre work is **parcel-level** (e.g. the Asheville comparison: an
 edge Walmart ≈ $6,500/acre vs. a downtown building ≈ $634,000/acre, ~100×). This

@@ -28,6 +28,25 @@ backlog items are really the same limitation resurfacing, so they belong togethe
   assessment roll's coverage of non-taxable parcels (known gap — exempt institutional
   land is absent from the roll entirely, `FINDINGS_revenue_scale.md` §4–5).
 
+## Acquisition status / blocker (parcel geometry)
+
+Parcel lot polygons are **not free open data** for this project's purposes. Current
+understanding (as of 2026-07-01):
+
+- **Cost:** on the order of **~$300 for even a single download of a few
+  neighbourhoods** — not a whole-city dataset at that price. A city-wide or
+  subscription arrangement is an unknown, likely larger, cost.
+- **Free route:** appears to require **partnering with a local educational
+  institution** to obtain the data under an academic/research use arrangement — a
+  one-shot pull at best, not open-ended access.
+- **Timeline:** this is on the maintainer's real-world docket but **not happening in
+  the near term**. Treat P1–P5 as **parked pending data acquisition**, not merely
+  un-started.
+
+Everything downstream in this doc (P1–P5) inherits this blocker: without parcel
+geometry, the parcel-level map and the analyses that fall out of it cannot begin. The
+neighbourhood-level pipeline remains the approximation in the meantime.
+
 ---
 
 ## Opportunities

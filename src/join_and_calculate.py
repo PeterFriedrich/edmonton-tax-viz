@@ -15,11 +15,18 @@ ZONING_COLUMNS = [
     "frac_residential", "is_residential",
 ]
 
+# Road-supply column carried from load_roads when a roads frame is supplied
+# (services lens, SPEC_services.md). road_m_total = collector + local only;
+# the per-class breakdown stays in load_roads. road_m_per_acre is computed
+# HERE against boundary area_acres — the same denominator as value/revenue.
+ROAD_COLUMNS = ["road_m_total"]
+
 
 def join_and_calculate(
     assessment: pd.DataFrame,
     boundaries: gpd.GeoDataFrame,
     zoning: pd.DataFrame | None = None,
+    roads: pd.DataFrame | None = None,
 ) -> gpd.GeoDataFrame:
     """Left join boundaries → assessment, flag unmatched rows, compute value_per_acre.
 
@@ -33,6 +40,11 @@ def join_and_calculate(
     neighbourhood_name. Degrades gracefully when absent, like the revenue columns;
     boundaries with no zoning match default to is_set_aside=False (stays on scale)
     and is_residential=False, and are flagged.
+
+    ``roads`` (optional, from load_roads.py) adds road_m_total and computes
+    road_m_per_acre against boundary area_acres (SPEC_services.md). Boundaries
+    with no roads overlay default to 0 — genuinely zero city-maintained
+    collector/local road, unlike the zoning NaNs — and are flagged.
     """
     agg = assessment
 
@@ -116,6 +128,39 @@ def join_and_calculate(
         # Insert zoning columns before geometry.
         out_cols = [c for c in out_cols if c != "geometry"] + ZONING_COLUMNS + ["geometry"]
 
+    # Services lens: merge road supply when supplied (SPEC_services.md).
+    if roads is not None:
+        boundary_names = set(joined["neighbourhood_name"])
+        unmatched_roads = sorted(set(roads["neighbourhood_name"]) - boundary_names)
+        if unmatched_roads:
+            logger.warning(
+                "%d roads neighbourhood(s) with no boundary match (dropped):\n  %s",
+                len(unmatched_roads),
+                "\n  ".join(unmatched_roads),
+            )
+
+        joined = joined.merge(
+            roads[["neighbourhood_name", *ROAD_COLUMNS]],
+            on="neighbourhood_name",
+            how="left",
+        )
+
+        no_roads = joined["road_m_total"].isna()
+        if no_roads.any():
+            logger.warning(
+                "%d boundary neighbourhood(s) with no roads overlay (default 0 m):\n  %s",
+                int(no_roads.sum()),
+                "\n  ".join(sorted(joined.loc[no_roads, "neighbourhood_name"])),
+            )
+        # No overlay means genuinely zero city collector/local road there.
+        joined["road_m_total"] = joined["road_m_total"].fillna(0.0)
+        joined["road_m_per_acre"] = joined["road_m_total"] / safe_area
+
+        out_cols = (
+            [c for c in out_cols if c != "geometry"]
+            + ROAD_COLUMNS + ["road_m_per_acre"] + ["geometry"]
+        )
+
     return joined[out_cols]
 
 
@@ -123,11 +168,13 @@ def join_and_calculate(
 # the GeoJSON the browser downloads small. revenue_per_acre and the zoning
 # columns are included only when present (their respective phases) — the
 # value↔revenue toggle reads both metrics; is_set_aside/set_aside_reason drive
-# the neutral-grey render + tooltip; is_residential drives the residential lens.
+# the neutral-grey render + tooltip; is_residential drives the residential lens;
+# road_m_per_acre is the services-lens metric (SPEC_services.md — ratios only,
+# totals stay out of the slim file like total_assessed_value does).
 SLIM_COLUMNS = [
     "neighbourhood_name", "value_per_acre", "revenue_per_acre",
     "set_aside_frac", "is_set_aside", "set_aside_reason",
-    "frac_residential", "is_residential", "geometry",
+    "frac_residential", "is_residential", "road_m_per_acre", "geometry",
 ]
 
 

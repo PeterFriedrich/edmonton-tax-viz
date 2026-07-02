@@ -18,15 +18,17 @@ Visual theming and accessibility decisions for the interactive map. Phase 1
   - **Cividis** — perceptually uniform + colour-blind safe (the colourblind-mode ramp;
     see "Colourblind mode" — CVD-simulator verification still pending).
   - All three are neutral luminance-sequential (magnitude = brightness, no good/bad hue).
-- **Colour transform is SQRT** (`scaleT` in `index.html`, DECIDED 2026-07-01) of the
-  per-metric clamped ratio (`colorClamp`: revenue `$50k`, value `$4M`, ≈ p97.5). This
-  replaced the raw hard clamp — sqrt spreads the low/mid end so the plateau no longer
-  reads as a fake threshold. Set-aside land is off the ramp entirely (grey, below).
-  Height stays LINEAR. See `SPEC_revenue.md` (Update 2026-06-29) and
-  `FINDINGS_revenue_scale.md` §6.1.
+- **Colour transform is PER-METRIC** (`transform` in each `METRICS` entry, read by
+  `scaleT`/`legendGradient`; DECIDED 2026-07-01): **sqrt** for both right-skewed
+  money metrics (revenue clamp `$50k`, value `$4M`, ≈ p97.5 — FINDINGS §6.1). The
+  machinery stays per-metric (the legend gradient re-renders on metric switch via
+  `applyMetric`) even though both current metrics happen to share sqrt — the roads
+  ground layer uses its own linear mapping (below). Set-aside land is off the ramp
+  entirely (grey, below). Height stays LINEAR for every metric.
 - **deck.gl gotcha:** colour accessors that depend on runtime state need that state in
   their `updateTriggers` (the data reference is stable, so deck.gl skips the re-render
-  otherwise). `getFillColor` uses `[state.metric, state.ramp, state.residential]`.
+  otherwise). `getFillColor` uses `[state.metric, state.ramp, state.residential]`;
+  the roads layer's `getLineColor` uses `state.ramp`.
 
 ### Maintenance banner (built 2026-07-02, deployment)
 On load the page fetches `web/data/status.json` (`cache: no-store`) and, if its
@@ -66,6 +68,53 @@ differential confound (the motivating problem in `SPEC_revenue.md`). Off by defa
 - **Still open** (`TODO.md`): the fuller "Color Adjustment vs lens controls" hierarchy +
   self-describing state labels; the toggle is currently a plain button. Alpha / grey /
   clamp-percentile are easy tunables. Not yet visually verified in a browser.
+
+### Services views: Money | Roads | Ratio (built 2026-07-02, display pivot complete)
+The road-prism metric view built earlier on 2026-07-01 was **retired the same day**
+(`SPEC_services.md` "Display architecture — REVISED"). After two intermediate
+iterations (a Roads checkbox + free opacity slider; then a slider-at-0% roads-only
+mode), Peter settled the control model as **three discrete views** (`#views`
+buttons, below the lens button; `state.view`):
+
+- **Money** (default): the classic revenue/value prisms, always opaque. Metric
+  toggle, palette, residential lens all behave as before. Hood tooltip: active
+  metric + `19.2 road m / acre` + `$967 revenue / road metre` (ratio omitted when
+  road base is 0 / columns absent; set-aside tooltip unchanged).
+- **Roads**: the network alone on the ground — **no prism layers at all** (an
+  opacity-0 layer still tessellates, draws, picks, and auto-highlights; dropping
+  them is the honest render and the perf win). Arterials neutral grey
+  (`ARTERIAL_COLOR`, 2 px, no metric); collector + local coloured by their hood's
+  `road_m_per_acre` on the active ramp — **LINEAR, clamp 53** (FINDINGS §6.3),
+  1.2 px. Legend: road scale. Tooltip: road amount only. Title/blurb swap with the
+  view (`VIEWS` object).
+- **Ratio** (stage 3, the synthesis): ghost prisms of **revenue per road metre**
+  (`revenue_per_acre / road_m_per_acre`, client-side — no pipeline change) over
+  the network in all-neutral grey. Prism **colour is LOG** between the kept
+  subset's p2.5–p97.5 (≈ $264–$3,253; FINDINGS §6.4 — first log metric, skew
+  19.7 → 0.32), **height linear** (max kept ≈ $18k at the standard ~8.2 km peak;
+  `ratioScale()` computes anchors at runtime, cached). **Off-scale grey + flat:**
+  set-aside hoods AND hoods below `RATIO_ROAD_FLOOR = 5 m/acre` (denominator
+  artifacts — WESTVIEW VILLAGE hits $1.3M/m on a near-zero road base). Default
+  prism opacity **5%**, adjustable via the "Money plane" slider (`#layers` panel,
+  visible in this view only). Tooltip: ratio + both components, or the off-scale
+  reason. Legend: log gradient, `≤ $lo` / `$hi+`.
+
+Shared machinery:
+- **Lazy load:** `web/data/roads.geojson` (1.6 MB; ~400 dissolved features, slim
+  `n`/`t`/`v` props — ARCHITECTURE `export_roads_web`) fetched once, on first
+  non-Money view. Initial page payload unchanged.
+- **`hood-hover` layer** (Roads + Ratio views): flat, invisible, pickable —
+  carries the tooltips and lights the hovered hood (white α40, `depthTest:
+  false`). The road lines and ratio prisms themselves are NOT pickable (picking
+  ignores opacity; a prism always beat the roads, which is how this design
+  started).
+- Metric toggle in non-Money views only marks state (applies on return);
+  residential lens likewise ignored outside Money. Roads/Ratio buttons hide
+  when the served GeoJSON predates the services columns.
+- Headless-verified via Playwright (all three views: layer stacks, legend swaps,
+  tooltips incl. floored/set-aside cases, slider visibility) 2026-07-02.
+  Translucent-prism depth-ordering quirks: same acceptance as the residential
+  lens fade.
 
 ---
 

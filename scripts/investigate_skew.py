@@ -22,6 +22,11 @@ Key result (2026-07-01): excluding the 48 set-aside neighbourhoods does NOT yiel
 a log-normal taxable core — log-skew goes from -2.16 to -4.19 (worse), because the
 mixed 0.55-0.90 band (kept on-scale by design) still holds near-zero-revenue hoods.
 => log over-corrects; sqrt is the transform. See FINDINGS §6.
+
+Roads addendum (2026-07-01, services lens): road_m_per_acre is already
+near-symmetric RAW (biased skew -0.29 all / -0.43 excl set-aside; the metric is
+physically bounded ~0-60 m/acre, max/median 1.84x). sqrt (-0.92) and log (-3.0)
+both over-correct. => LINEAR colour for road_m_per_acre. See FINDINGS §6.3.
 """
 
 import json
@@ -30,7 +35,7 @@ import numpy as np
 import pandas as pd
 
 GEOJSON = "web/data/neighbourhood_value_per_acre.geojson"
-METRICS = ["revenue_per_acre", "value_per_acre"]
+METRICS = ["revenue_per_acre", "value_per_acre", "road_m_per_acre"]
 
 
 def biased_skew(s) -> float:
