@@ -41,6 +41,11 @@ Raw CSV (assessment)         Raw GeoJSON (boundaries)      Raw GeoJSON (zoning, 
   output/...png        web/data/...geojson  (both metrics → web toggle)
 ```
 
+**Planned (spec'd, not built — `SPEC_services.md`):** `load_roads.py` enters the
+diagram exactly where `load_zoning.py` does — a raw GeoJSON (`9j8t-zm52`) overlaid
+against the boundary frame, producing per-hood columns merged in
+`join_and_calculate` (`road_m_*`; `road_m_per_acre` computed there).
+
 ---
 
 ## Modules
@@ -152,6 +157,50 @@ developing land graduates off the set-aside list automatically (see SPEC_deploym
 
 ---
 
+### `src/load_roads.py` (services lens — spec'd 2026-07-01, NOT BUILT)
+
+Full methodology + locked decisions in `docs/SPEC_services.md`. Build to this
+interface; the section below is the module contract.
+
+**Inputs:** path to the Road Network GeoJSON (`9j8t-zm52`, centreline
+LineStrings; `DATA.md` §6 once written); the boundary GeoDataFrame from
+`load_boundaries.py` (projected geometry for the overlay)
+
+**Outputs:** `pd.DataFrame` keyed by `neighbourhood_name`:
+- `road_m_collector` / `road_m_local` (float, metres) — city-maintained
+  centreline length within the hood, by class group
+- `road_m_arterial` (float, metres) — **internal only**: computed and carried
+  (conservation guard, possible later views) but NEVER included in the metric
+- `road_m_total` (float) — **collector + local only** (arterials excluded:
+  shared infrastructure — see SPEC_services.md; alleys/railway excluded at the
+  row filter)
+
+(`road_m_per_acre = road_m_total / area_acres` is computed downstream in
+`join_and_calculate`, boundary-acre denominator — same acre as value/revenue.)
+
+**Responsibilities:**
+- Load centrelines; **filter rows**: `centerline_type == "Road"` (drops all
+  alleys + railway) and `responsible_party_description == "City of Edmonton"`
+  (drops provincial/private/rail/neighbouring-municipality segments)
+- Reproject to **EPSG:3400** (CRS set explicitly before any length calculation)
+- Map `functional_class_code` → class group via an **explicit code → group
+  dictionary** (arterial/collector/local; same philosophy as `ZONE_CATEGORY` —
+  every code hand-assigned, unknown codes warn loudly, no prefix heuristics)
+- Verify the null-class invariant: after the Road filter, every row has a
+  functional class (nulls = alleys + railway exactly, confirmed 2026-07-01)
+- Overlay lines × boundary polygons (`how="intersection"`,
+  `keep_geom_type=True`), sum clipped `.length` per (hood, class group)
+- **Conservation guard (no silent drops):** post-overlay total length ≈
+  pre-overlay filtered total within tolerance; report unassigned remainder
+  (segments outside any hood) explicitly
+
+**Does not:** weight classes by cost, compute ratios against revenue (that's
+the V2 fast-follow, a downstream/display concern), or touch assessment data.
+Like zoning, roads are a **refreshed input** (weekly CI re-pull; vintage in
+status.json).
+
+---
+
 ### `src/join_and_calculate.py`
 
 **Inputs:**
@@ -161,6 +210,9 @@ developing land graduates off the set-aside list automatically (see SPEC_deploym
   `neighbourhood_name`, adding `set_aside_frac` / `is_set_aside` / `set_aside_reason` /
   `frac_residential` / `is_residential` (the `ZONING_COLUMNS` list) to the output and
   thus the GeoJSON. Degrades gracefully when absent, like the revenue columns.
+- (planned, `SPEC_services.md`) roads DataFrame from `load_roads.py` — a
+  `ROAD_COLUMNS` merge on `neighbourhood_name`, same graceful-when-absent
+  pattern; `road_m_per_acre = road_m_total / area_acres` computed here.
 
 **Outputs:** `gpd.GeoDataFrame` with columns:
 - `neighbourhood_name`
