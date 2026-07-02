@@ -18,7 +18,10 @@ is **not a column in the rows**; it lives only in the dataset metadata
 `custom_fields.Time Frame.Period of Coverage`). Our local snapshot was downloaded
 2026-05-16 and is 2025 data. **Re-check the metadata after any re-download** — a
 later pull can roll to a new year, which would silently desync from any
-year-matched mill rates (see `docs/SPEC_revenue.md`).
+year-matched mill rates (see `docs/SPEC_revenue.md`). **This re-check is now
+automated in CI** (`scripts/check_year_alignment.py`, added 2026-07-01): every
+scheduled refresh compares the metadata year against the pinned
+`ASSESSMENT_YEAR` and holds (skip regen + banner) on mismatch.
 **Re-download 2026-07-02** (deployment dry-run + first CI run): metadata still
 effective **2025** (intra-year edits only, no year roll), so 2025 rates stay
 aligned. That pull also surfaced a new `Assessment Class 1` label

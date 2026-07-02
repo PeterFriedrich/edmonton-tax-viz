@@ -44,11 +44,38 @@ jobs:
       - name: Download source data
         run: python scripts/download_data.py
 
+      # Year-alignment guard (docs/FINDINGS_data_integrity_audit.md §3, SPEC
+      # "Year alignment"): the roll year lives only in Socrata metadata, so a
+      # year roll would otherwise silently apply stale rates. exit 0 = aligned,
+      # 3 = hold (roll != pin: skip regen, serve committed data + banner),
+      # 4 = inconclusive (metadata unreachable: proceed as aligned, warn).
+      - name: Check year alignment (guard before regenerating)
+        id: yearcheck
+        run: |
+          set +e
+          python scripts/check_year_alignment.py
+          code=$?
+          set -e
+          case $code in
+            0) ;;
+            3) echo "::warning::YEAR MISMATCH — holding window: keeping last committed data, setting banner. Bump ASSESSMENT_YEAR + mill_rates.json, then clear the banner (generate_status.py --clear-banner)." ;;
+            4) echo "::warning::Year-alignment check inconclusive (metadata fetch/parse failed) — proceeding as aligned." ;;
+            *) exit $code ;;
+          esac
+
       - name: Regenerate web GeoJSON
+        if: steps.yearcheck.outputs.result != 'hold'
         run: python main.py --skip-png    # PNG is a Phase-1 local artifact, not served
 
       - name: Update status manifest (provenance + heartbeat)
+        if: steps.yearcheck.outputs.result != 'hold'
         run: python scripts/generate_status.py
+
+      - name: Update status manifest (holding window — set year-mismatch banner)
+        if: steps.yearcheck.outputs.result == 'hold'
+        env:
+          BANNER: ${{ steps.yearcheck.outputs.banner }}
+        run: python scripts/generate_status.py --banner "$BANNER"
 
       - name: Commit regenerated data + heartbeat if changed
         run: |

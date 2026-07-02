@@ -213,12 +213,25 @@ archive + heartbeat.)
 - `status.json` carries a `_geojson_sha256` field (not in the example above) as the
   content-change detector so `generated` bumps only on real data change,
   independent of git.
-- Year alignment / graceful-degradation banner is **designed here but NOT yet
-  built** — the pipeline is pinned to `ASSESSMENT_YEAR=2025` and `status.json` reports
-  fixed years via `generate_status.py` config/CLI. Auto-detection is a follow-on.
+- **Year-alignment GUARD built 2026-07-01** (`scripts/check_year_alignment.py`,
+  wired into `refresh.yml` between download and regen; see
+  `docs/FINDINGS_data_integrity_audit.md` §3). It detects the roll year from
+  Socrata metadata (`Period of Coverage`) and compares it to the pinned
+  `ASSESSMENT_YEAR` + the years in `mill_rates.json`. Aligned → proceed;
+  mismatch → **holding window exactly as designed above**: regen is skipped,
+  the last committed data keeps serving, the banner is auto-set, and the run
+  gets a `::warning::` annotation. Metadata unreachable → proceed as aligned
+  (the guard adds no new fragility), with a warning.
+  **Recovery is still manual** (by design — rates are a reviewed input): bump
+  `ASSESSMENT_YEAR` in `main.py`, add the year to `mill_rates.json`, update
+  `generate_status.py` year constants, and **clear the banner**
+  (`generate_status.py --clear-banner` — aligned runs preserve it otherwise).
+- What remains a follow-on from the original design: **auto-fetching** the
+  matching `pwis-wc4c` rates for a newly detected year (the guard detects and
+  holds; it does not self-heal).
 - Mill rates are **not** fetched by `download_data.py` (they live in the committed
   `data/mill_rates.json`); refreshing them for a new year stays a manual, reviewed
-  step until auto year-detection lands.
+  step.
 
 ## Future work: multi-year data / archiving
 
