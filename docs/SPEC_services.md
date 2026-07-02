@@ -53,9 +53,10 @@ Shares the load→filter→classify→clip front half with `load_roads` via
 `_prepare_segments()`. Per-feature properties: `n` (hood name), `t`
 (`"arterial"` | `"access"` = collector+local), `v` (the hood's
 `road_m_per_acre`, access only, null on arterials — same number
-`join_and_calculate` publishes). Simplify 8 m, coordinates 5 dp → **791
-features, 2.3 MB**; committed to the repo like the polygons file so CI's
-commit-if-changed step tracks it weekly.
+`join_and_calculate` publishes). Contiguous parts welded (`linemerge`,
+added 2026-07-02 for browser render cost: −21% paths / −14% vertices),
+simplify 8 m, coordinates 5 dp → **791 features, 2.0 MB**; committed to the
+repo like the polygons file so CI's commit-if-changed step tracks it weekly.
 
 *Stages 1–2 frontend as built (2026-07-02, `web/index.html`; display details in
 `UI.md`):* `#layers` service-layers panel (Roads checkbox, default off,

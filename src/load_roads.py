@@ -17,6 +17,7 @@ from pathlib import Path
 
 import geopandas as gpd
 import pandas as pd
+from shapely.ops import linemerge
 
 logger = logging.getLogger(__name__)
 
@@ -293,6 +294,14 @@ def export_roads_web(
     dissolved.loc[dissolved["t"] == "arterial", "v"] = float("nan")
     dissolved["v"] = dissolved["v"].round(1)
     dissolved["n"] = dissolved["neighbourhood_name"]
+
+    # Weld contiguous parts end-to-end (degree-2 junctions only) before
+    # simplifying: the raw parts average ~2 vertices, so simplify has no
+    # interior vertices to drop until streets are merged into longer lines.
+    # Fewer paths + fewer vertices = less GPU tessellation in the browser.
+    dissolved = dissolved.set_geometry(dissolved.geometry.apply(
+        lambda g: linemerge(g) if g.geom_type == "MultiLineString" else g
+    ))
 
     simplified = dissolved.geometry.simplify(simplify_m, preserve_topology=True)
     bad = simplified.is_empty | ~simplified.is_valid

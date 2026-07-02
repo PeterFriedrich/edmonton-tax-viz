@@ -76,7 +76,7 @@ The road-prism metric view built earlier on 2026-07-01 was **retired the same da
 - **`#layers` panel** ("Service layers", below the lens button): stackable checkboxes,
   Roads first — later services add a checkbox + a `state.layers` key, not a rework.
   Default OFF; the initial view is unchanged.
-- **Lazy load:** `web/data/roads.geojson` (2.3 MB; 791 dissolved features, slim
+- **Lazy load:** `web/data/roads.geojson` (2.0 MB; 791 dissolved features, slim
   `n`/`t`/`v` props — ARCHITECTURE `export_roads_web`) is fetched once, on first
   enable. Initial page payload unchanged.
 - **Ground `GeoJsonLayer`** (first in the layer stack, z=0 under the prisms):

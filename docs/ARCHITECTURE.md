@@ -205,7 +205,9 @@ out_path)` — the ground-layer GeoJSON the web map renders
 Shares the load→filter→classify→clip front half with `load_roads` via
 `_prepare_segments()` (the raw file is read twice per pipeline run — accepted,
 keeps the two entry points independent). Dissolves clipped segments to one
-MultiLineString per (neighbourhood × arterial/access), simplifies (8 m),
+MultiLineString per (neighbourhood × arterial/access), welds contiguous parts
+end-to-end (`linemerge` — raw segments average ~2 vertices, so simplify has
+nothing to drop until streets are merged into longer lines), simplifies (8 m),
 rounds coordinates (5 dp), and writes features with props `n` / `t` / `v`
 (hood name / `"arterial"`|`"access"` / `road_m_per_acre` on access only).
 Display geometry only — all published metrics still come from `load_roads`.

@@ -290,6 +290,25 @@ def test_export_coordinates_rounded_and_wgs84(tmp_path):
             assert round(lon, 5) == lon and round(lat, 5) == lat
 
 
+def test_export_welds_contiguous_segments(tmp_path):
+    """Two touching collinear segments dissolve into ONE merged path, not a
+    2-part MultiLineString — linemerge runs before simplify so short raw
+    segments become long simplifiable lines (browser tessellation cost)."""
+    hood = _boundaries_with_acres(["ALPHA"], [_square(0, 0, 100)])
+    roads = _roads(
+        [
+            ("Road", CITY, LOCAL, LineString([(0, 10), (50, 10)])),
+            ("Road", CITY, LOCAL, LineString([(50, 10), (100, 10)])),
+        ]
+    )
+    out = tmp_path / "roads.geojson"
+    _export(hood, roads, out)
+    (feat,) = _read_fc(out)["features"]
+    g = feat["geometry"]
+    n_parts = 1 if g["type"] == "LineString" else len(g["coordinates"])
+    assert n_parts == 1
+
+
 def test_export_v_matches_load_roads_metric(tmp_path):
     """The colour driver v must equal road_m_total / area_acres — the same
     number join_and_calculate publishes as road_m_per_acre."""
