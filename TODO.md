@@ -12,6 +12,21 @@ _Last reconciled: 2026-07-01_
 
 ## Open work
 
+- [ ] **Services lens — road supply (SPEC'd 2026-07-01, branch `feature/services-lens`).**
+  Spec: `docs/SPEC_services.md`. V1 = `road_m_per_acre` (city-maintained road
+  centreline metres per boundary acre, per-class columns kept); V2 fast follow =
+  revenue per road-metre. Locked: alleys OUT, railway OUT, City-owned only.
+  Build order:
+  - [ ] Prerequisite commit: `$limit` count-vs-limit assertion in
+    `scripts/download_data.py` + add roads source `9j8t-zm52` (closes the
+    data-integrity §5 follow-on below).
+  - [ ] `src/load_roads.py` + synthetic tests (mirror `load_zoning.py`).
+  - [ ] Wire `join_and_calculate` (`ROAD_COLUMNS`) + `main.py` flags.
+  - [ ] Skew check on `road_m_per_acre` → pick colour transform (don't assume sqrt).
+  - [ ] Frontend: third metric in the Revenue/Value toggle; set-aside grey kept
+    in v1 (lean, revisit at V2).
+  - [ ] Docs: `DATA.md` §6, `ARCHITECTURE.md` module entry, status.json vintage.
+
 - [ ] **SCOPE: composition numbers now; full zoning POLYGON layer in the viewer is a
   SEPARATE later product decision** — it changes the viz from "revenue/acre" to
   "revenue/acre + land-use overlay" (clarity-vs-complexity call for a public audience).
