@@ -78,9 +78,14 @@ _Last reconciled: 2026-07-01_
   **Deferred follow-ons still open (below).**
 
 - [ ] **Deployment follow-ons (deferred, see `docs/SPEC_deployment.md`):**
-  - [ ] Auto-detect assessment year from Socrata metadata + fetch matching
-    `pwis-wc4c` rates; set the year-mismatch holding banner when rates lag the roll.
-    (Currently pinned `ASSESSMENT_YEAR=2025`; `generate_status.py` reports fixed years.)
+  - [x] ~~Year-mismatch **guard**~~ — built 2026-07-01 (`scripts/check_year_alignment.py`
+    + `refresh.yml` wiring): detects the roll year from Socrata metadata; on mismatch
+    skips regen, keeps serving committed data, auto-sets the holding banner. See
+    SPEC as-built notes + `docs/FINDINGS_data_integrity_audit.md` §3.
+  - [ ] Auto-**fetch** matching `pwis-wc4c` rates for a newly detected year (the
+    guard detects + holds; it doesn't self-heal). Recovery is manual: bump
+    `ASSESSMENT_YEAR`, extend `mill_rates.json`, update `generate_status.py` years,
+    `--clear-banner`.
   - [ ] Per-year archive filenames (`web/data/YYYY.geojson`, keep-not-overwrite) for
     the future UI year selector.
   - [ ] **Heartbeat watch:** if the schedule auto-disables after 60 days idle, add a
