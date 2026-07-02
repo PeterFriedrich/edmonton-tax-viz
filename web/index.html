@@ -329,14 +329,15 @@
       return p.is_set_aside ? SET_ASIDE_COLOR : colorFor(p[cfg.key], clamp);
     }
 
-    // Legend gradient for the CURRENT ramp under the CURRENT metric's transform:
+    // Legend gradient for the CURRENT ramp under the CURRENT transform:
     // sample the bar in *value* space (linear from 0 to clamp) so the displayed
     // colour at each position matches what a neighbourhood of that value renders.
+    // Roads-only mode shows the network's LINEAR road scale, not the metric's.
     function legendGradient() {
       const N = 16, parts = [];
       for (let i = 0; i <= N; i++) {
         const p = i / N;                 // fraction of the clamp (value position)
-        const c = rampColorAt(scaleT(p, 1));  // scaleT(p*clamp, clamp) === scaleT(p, 1)
+        const c = rampColorAt(roadsOnly() ? p : scaleT(p, 1));  // scaleT(p*clamp, clamp) === scaleT(p, 1)
         parts.push(`rgb(${c[0]},${c[1]},${c[2]}) ${Math.round(p * 100)}%`);
       }
       return "linear-gradient(90deg," + parts.join(",") + ")";
@@ -375,6 +376,12 @@
       return out;
     }
 
+    // Roads-only mode: the money plane is fully transparent AND the network is
+    // on. Prisms are genuinely DROPPED here — opacity 0 still tessellates,
+    // draws, picks, and auto-highlights (hover resurrects ghost prisms), so
+    // skipping the layers is both the honest render and the real perf win.
+    const roadsOnly = () => state.layers.roads && state.prismOpacity === 0;
+
     // The roads ground layer (when enabled + loaded). Sits first in the layer
     // array — z=0 under the prisms. Colour tracks the active ramp so the
     // palette switcher applies to the network too.
@@ -406,6 +413,28 @@
       const cfg = METRICS[state.metric];
       // Colour clamp: rescaled to the residential subset when the lens is on.
       const clamp = state.residential ? residentialClampFor(cfg.key) : cfg.colorClamp;
+
+      if (roadsOnly()) {
+        // No prisms, no roof edges. A flat invisible hood layer keeps the
+        // tooltips (with the road numbers + ratio) and lights the hovered
+        // neighbourhood up over the network — picking renders geometry with
+        // its own colours, so a fully-transparent fill still hovers fine.
+        const hoodHover = new deck.GeoJsonLayer({
+          id: "hood-hover",
+          data: state.data,
+          filled: true,
+          stroked: false,
+          extruded: false,
+          getFillColor: [0, 0, 0, 0],
+          pickable: true,
+          autoHighlight: true,
+          highlightColor: [255, 255, 255, 40],
+          // Coplanar with the road lines at z=0 — composite over them
+          // instead of depth-fighting.
+          parameters: { depthTest: false },
+        });
+        return [...roadLayers(), hoodHover];
+      }
 
       // Filled extruded prisms. No stroke: the setback gaps already give every
       // shape a dark border at ground level, so a footprint ring is redundant.
@@ -503,22 +532,35 @@
         b.classList.toggle("active", b.dataset.metric === metric));
     }
 
-    // Sync the legend max + the grey swatch/label to the current state. With the
-    // lens on the colour is rescaled, so the max shows the residential clamp and the
-    // grey means "faded non-residential"; otherwise it means "set aside".
+    // Sync the whole legend to the current state. Roads-only mode swaps the
+    // legend to the network's road scale (the prism metric isn't on screen).
+    // Otherwise: with the lens on the colour is rescaled, so the max shows the
+    // residential clamp and the grey means "faded non-residential"; else the
+    // grey means "set aside".
     function refreshLegend() {
       const cfg = METRICS[state.metric];
-      document.getElementById("legend-max").textContent =
-        state.residential ? cfg.fmt(residentialClampFor(cfg.key)) + "+" : cfg.legendMax;
       const label = document.querySelector("#legend .aside span:last-child");
       const sw = document.querySelector("#legend .aside .sw");
-      if (state.residential) {
-        label.textContent = "Faded — non-residential land";
-        sw.style.background = `rgb(${LENS_FADE_COLOR.join(",")})`;
+      if (roadsOnly()) {
+        document.getElementById("legend-label").textContent = "Road metres per acre";
+        document.getElementById("legend-min").textContent = "0 m";
+        document.getElementById("legend-max").textContent = ROAD_CLAMP + " m+";
+        label.textContent = "Arterial — shared infrastructure";
+        sw.style.background = `rgb(${ARTERIAL_COLOR.slice(0, 3).join(",")})`;
       } else {
-        label.textContent = "Set aside — natural / undeveloped land";
-        sw.style.background = "rgb(104,108,122)";
+        document.getElementById("legend-label").textContent = cfg.legendLabel;
+        document.getElementById("legend-min").textContent = cfg.legendMin;
+        document.getElementById("legend-max").textContent =
+          state.residential ? cfg.fmt(residentialClampFor(cfg.key)) + "+" : cfg.legendMax;
+        if (state.residential) {
+          label.textContent = "Faded — non-residential land";
+          sw.style.background = `rgb(${LENS_FADE_COLOR.join(",")})`;
+        } else {
+          label.textContent = "Set aside — natural / undeveloped land";
+          sw.style.background = "rgb(104,108,122)";
+        }
       }
+      document.querySelector("#legend .bar").style.background = legendGradient();
     }
 
     // Switch colour ramp: rebuild layers, restyle the background + legend gradient.
@@ -549,6 +591,7 @@
       document.getElementById("prism-opacity").value = pct;
       document.getElementById("prism-opacity-val").textContent = Math.round(pct) + "%";
       overlay.setProps({ layers: buildLayers() });
+      refreshLegend(); // entering/leaving roads-only swaps the legend scale
     }
 
     // Toggle a service layer. The roads geometry is fetched once, on first
@@ -571,6 +614,7 @@
         return;
       }
       overlay.setProps({ layers: buildLayers() });
+      refreshLegend(); // toggling roads at 0% opacity enters/leaves roads-only
     }
 
     map.on("load", async () => {

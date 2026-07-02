@@ -101,6 +101,17 @@ The road-prism metric view built earlier on 2026-07-01 was **retired the same da
   100% if the nudge is still what set it; any manual slider move cancels the
   auto behaviour (`opacityAutoSet`). Prevents the "toggle appears to do nothing"
   trap without taking the control away from the user.
+- **Roads-only mode (built 2026-07-02):** Roads on + slider at **0%** genuinely
+  DROPS the prism + roof-edge layers — deck.gl still tessellates, draws, picks,
+  and auto-highlights an opacity-0 layer (hover resurrected ghost prisms; also
+  wasted GPU on weak hardware), so 0% is a layer swap, not a fade. A flat
+  invisible hood layer (`hood-hover`, transparent fill, `depthTest: false`)
+  keeps the hood tooltips (with road numbers + ratio) and lights the hovered
+  neighbourhood up over the network (`highlightColor` white α40). The legend
+  swaps to the road scale (label "Road metres per acre", linear gradient,
+  0–53 m+, arterial-grey swatch) via `roadsOnly()` in `refreshLegend` /
+  `legendGradient`, and restores on leaving. Known rough edge: the title/blurb
+  still describe the active money metric in this mode.
 - Set-aside hoods keep their grey prisms; the network renders underneath like
   everywhere else (a set-aside hood's sparse roads are themselves informative).
 - The old Roads metric-toggle button, its `METRICS` entry (`elevationScale: 137`),

@@ -78,7 +78,11 @@ Remaining: stage 3 (ratio view) — its metric (revenue per road metre;
 `revenue_per_acre / road_m_per_acre`, acres cancel) is already previewed in
 the hood tooltip as of 2026-07-02. The roads layer itself is not pickable:
 picking ignores opacity, so a prism always wins the hover; road numbers
-live in the hood tooltip.
+live in the hood tooltip. At slider 0% + Roads on, the map enters
+**roads-only mode**: prism layers are dropped outright (opacity 0 still
+renders and picks — a fade is not a removal) and a flat invisible hood
+layer keeps tooltips + a hover highlight; the legend swaps to the road
+scale (UI.md has the details).
 
 This opens the **cost side** of the fiscal picture — explicitly out of scope in
 `SPEC_phase1.md` ("no service cost allocation yet — revenue only"). It is scoped
