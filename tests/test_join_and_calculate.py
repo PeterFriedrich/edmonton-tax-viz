@@ -291,3 +291,61 @@ def test_boundary_without_zoning_match_defaults_false(caplog):
     # Boundary with no zoning overlay defaults is_residential=False too.
     assert bool(outer["is_residential"]) is False
     assert "no zoning overlay" in caplog.text
+
+
+# --- roads merge (services lens, SPEC_services.md) ---------------------------
+
+def _roads(rows):
+    return pd.DataFrame(rows)
+
+
+def test_roads_merge_adds_road_columns_and_per_acre():
+    result = join_and_calculate(
+        _assessment([{"neighbourhood_name": "GRIDTOWN", "total_assessed_value": 100.0}]),
+        _boundaries([{"neighbourhood_name": "GRIDTOWN", "area_acres": 10.0}]),
+        roads=_roads([{"neighbourhood_name": "GRIDTOWN", "road_m_total": 250.0}]),
+    )
+    row = result.iloc[0]
+    assert row["road_m_total"] == pytest.approx(250.0)
+    assert row["road_m_per_acre"] == pytest.approx(25.0)
+
+
+def test_no_roads_arg_omits_road_columns():
+    result = join_and_calculate(
+        _assessment([{"neighbourhood_name": "DOWNTOWN", "total_assessed_value": 100.0}]),
+        _boundaries([{"neighbourhood_name": "DOWNTOWN", "area_acres": 10.0}]),
+    )
+    assert "road_m_total" not in result.columns
+    assert "road_m_per_acre" not in result.columns
+
+
+def test_boundary_without_roads_match_defaults_zero(caplog):
+    with caplog.at_level("WARNING"):
+        result = join_and_calculate(
+            _assessment([{"neighbourhood_name": "DOWNTOWN", "total_assessed_value": 100.0}]),
+            _boundaries([
+                {"neighbourhood_name": "DOWNTOWN", "area_acres": 10.0},
+                {"neighbourhood_name": "ROADLESS", "area_acres": 20.0},
+            ]),
+            roads=_roads([{"neighbourhood_name": "DOWNTOWN", "road_m_total": 100.0}]),
+        )
+    roadless = result[result["neighbourhood_name"] == "ROADLESS"].iloc[0]
+    assert roadless["road_m_total"] == 0.0
+    assert roadless["road_m_per_acre"] == 0.0
+    assert "no roads overlay" in caplog.text
+
+
+def test_roads_and_zoning_merges_compose():
+    result = join_and_calculate(
+        _assessment([{"neighbourhood_name": "GRIDTOWN", "total_assessed_value": 100.0}]),
+        _boundaries([{"neighbourhood_name": "GRIDTOWN", "area_acres": 10.0}]),
+        zoning=_zoning([{
+            "neighbourhood_name": "GRIDTOWN", "set_aside_frac": 0.1,
+            "is_set_aside": False, "set_aside_reason": "",
+            "frac_residential": 0.8, "is_residential": True,
+        }]),
+        roads=_roads([{"neighbourhood_name": "GRIDTOWN", "road_m_total": 250.0}]),
+    )
+    row = result.iloc[0]
+    assert bool(row["is_residential"]) is True
+    assert row["road_m_per_acre"] == pytest.approx(25.0)
