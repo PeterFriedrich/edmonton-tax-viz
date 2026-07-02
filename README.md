@@ -59,8 +59,12 @@ The neighbourhood-level approach still supports analysis at this resolution — 
 
 **Live:** interactive 3D map at **https://peterfriedrich.github.io/edmonton-tax-viz/**
 — municipal tax revenue (and assessed value) per acre by neighbourhood, with a
-land-use set-aside layer and a residential-only lens. A weekly GitHub Action
-regenerates the data and redeploys automatically (see `docs/SPEC_deployment.md`).
+land-use set-aside layer and a residential-only lens. The **cost side is now
+open** (`docs/SPEC_services.md`): a Roads view renders the city-maintained road
+network coloured by road supply per acre, and a Ratio view shows **revenue per
+road metre** — how much municipal revenue backs each metre of neighbourhood
+road. A weekly GitHub Action regenerates the data and redeploys automatically
+(see `docs/SPEC_deployment.md`).
 
 See [`/research`](/research) for background findings and data source inventory.
 
