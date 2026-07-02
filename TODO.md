@@ -45,10 +45,15 @@ _Last reconciled: 2026-07-01_
         hood × arterial/access, simplified 8 m, 5 dp)~~ — done 2026-07-02
         (`export_roads_web` in `src/load_roads.py`, wired into `main.py`;
         791 features, 2.3 MB, committed like the polygons file; +5 tests).
-      - [ ] frontend: layers panel, lazy-loaded ground PathLayer; arterials
+      - [x] ~~frontend: layers panel, lazy-loaded ground layer; arterials
         neutral, access roads coloured by hood `road_m_per_acre` (linear,
-        clamp 53); remove Roads from metric toggle.
-    - [ ] (2) Prism transparency control (money plane overlays service plane).
+        clamp 53); remove Roads from metric toggle~~ — done 2026-07-02
+        (headless-verified; details in UI.md "Roads ground layer").
+    - [x] ~~(2) Prism transparency control (money plane overlays service
+      plane)~~ — done 2026-07-02, landed with stage 1: opacity slider in the
+      layers panel (prisms + roof edges) + 45% auto-nudge on first Roads
+      enable — needed because the network is ~invisible under opaque prisms
+      (only setback gaps show).
     - [ ] (3) Ratio view: revenue vs total services (defer "total services"
       definition until >1 service; revenue-per-road-metre is the
       single-service case — subsumes the old V2 item).

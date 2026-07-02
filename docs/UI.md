@@ -19,15 +19,16 @@ Visual theming and accessibility decisions for the interactive map. Phase 1
     see "Colourblind mode" — CVD-simulator verification still pending).
   - All three are neutral luminance-sequential (magnitude = brightness, no good/bad hue).
 - **Colour transform is PER-METRIC** (`transform` in each `METRICS` entry, read by
-  `scaleT`/`legendGradient`; DECIDED 2026-07-01 ×2): **sqrt** for the right-skewed
-  money metrics (revenue clamp `$50k`, value `$4M`, ≈ p97.5 — FINDINGS §6.1), **linear**
-  for bounded near-symmetric road supply (clamp 53 m/acre — FINDINGS §6.3). The legend
-  gradient bar re-renders on metric switch because the transform changes with it
-  (`applyMetric`). Set-aside land is off the ramp entirely (grey, below). Height stays
-  LINEAR for every metric.
+  `scaleT`/`legendGradient`; DECIDED 2026-07-01): **sqrt** for both right-skewed
+  money metrics (revenue clamp `$50k`, value `$4M`, ≈ p97.5 — FINDINGS §6.1). The
+  machinery stays per-metric (the legend gradient re-renders on metric switch via
+  `applyMetric`) even though both current metrics happen to share sqrt — the roads
+  ground layer uses its own linear mapping (below). Set-aside land is off the ramp
+  entirely (grey, below). Height stays LINEAR for every metric.
 - **deck.gl gotcha:** colour accessors that depend on runtime state need that state in
   their `updateTriggers` (the data reference is stable, so deck.gl skips the re-render
-  otherwise). `getFillColor` uses `[state.metric, state.ramp, state.residential]`.
+  otherwise). `getFillColor` uses `[state.metric, state.ramp, state.residential]`;
+  the roads layer's `getLineColor` uses `state.ramp`.
 
 ### Maintenance banner (built 2026-07-02, deployment)
 On load the page fetches `web/data/status.json` (`cache: no-store`) and, if its
@@ -68,25 +69,41 @@ differential confound (the motivating problem in `SPEC_revenue.md`). Off by defa
   self-describing state labels; the toggle is currently a plain button. Alpha / grey /
   clamp-percentile are easy tunables. Not yet visually verified in a browser.
 
-### Roads metric (services lens v1, built 2026-07-01)
-Third entry in the metric toggle: **Roads** = `road_m_per_acre` (city-maintained
-collector + local centreline metres per boundary acre; arterials excluded as shared
-infrastructure — `SPEC_services.md`). Display decisions:
-- **Colour LINEAR, clamp 53 m/acre** (≈ p97.5; FINDINGS §6.3 — sqrt/log over-correct
-  a bounded, near-symmetric quantity). Per-metric `fmt` renders `38 m / acre` style
-  values in tooltip + legend (`legend-min` swaps `$0` ↔ `0 m`).
-- **Height parity kept:** `elevationScale: 137` puts the max (60 m/acre) at the same
-  ~8.2 km as the other metrics' peaks. Because the distribution is near-symmetric
-  (not spike-shaped), this view reads as a dense mid-height forest — that IS the
-  data's shape; the scale is the tunable if it feels heavy.
-- **Set-aside hoods stay grey** on the roads metric too (v1 lean — consistency across
-  metrics; revisit when the V2 revenue-per-road-metre ratio forces the question).
-- **Graceful degradation:** the Roads button hides itself when the served GeoJSON
-  lacks `road_m_per_acre` (pre-services data file) — never offer a metric that can't
-  render.
-- The residential lens composes: with the lens on, colour rescales to the residential
-  subset's p97.5 of the *road* metric (same `residentialClampFor` path).
-- Headless-verified via Playwright (default + roads views) 2026-07-01.
+### Roads ground layer + service layers panel (built 2026-07-02, display pivot stages 1–2)
+The road-prism metric view built earlier on 2026-07-01 was **retired the same day**
+(`SPEC_services.md` "Display architecture — REVISED"): road supply renders as the
+**actual network on the ground plane**, not as extrusions. As built:
+- **`#layers` panel** ("Service layers", below the lens button): stackable checkboxes,
+  Roads first — later services add a checkbox + a `state.layers` key, not a rework.
+  Default OFF; the initial view is unchanged.
+- **Lazy load:** `web/data/roads.geojson` (2.3 MB; 791 dissolved features, slim
+  `n`/`t`/`v` props — ARCHITECTURE `export_roads_web`) is fetched once, on first
+  enable. Initial page payload unchanged.
+- **Ground `GeoJsonLayer`** (first in the layer stack, z=0 under the prisms):
+  **arterials neutral grey** (`ARTERIAL_COLOR`, 2 px — context skeleton, no metric);
+  **collector + local coloured by their hood's `road_m_per_acre`** on the active
+  ramp — **LINEAR, clamp 53 m/acre** (≈ p97.5; FINDINGS §6.3 — sqrt/log over-correct
+  a bounded, near-symmetric quantity), 1.2 px. The palette switcher applies to the
+  network too. Tooltips: hood + `38.2 road m / acre (collector + local)`, or
+  "Arterial — shared infrastructure, no metric".
+- **Money-plane opacity slider** (same panel, "Prisms", 0–100%): layer-level
+  `opacity` on the prism fill AND the roof-edge rings (outlines floating over a
+  ghosted plane read as clutter). This is what makes the ground plane *visible* —
+  verified headless: at 100% prism opacity the network only peeks through the 45 m
+  setback gaps (~0.5% of pixels).
+- **Auto-nudge:** enabling Roads with the slider untouched at 100% drops it to
+  **45%** (visibly — the slider moves); disabling the last ground layer restores
+  100% if the nudge is still what set it; any manual slider move cancels the
+  auto behaviour (`opacityAutoSet`). Prevents the "toggle appears to do nothing"
+  trap without taking the control away from the user.
+- Set-aside hoods keep their grey prisms; the network renders underneath like
+  everywhere else (a set-aside hood's sparse roads are themselves informative).
+- The old Roads metric-toggle button, its `METRICS` entry (`elevationScale: 137`),
+  and the hide-if-absent fallback are **removed**.
+- Headless-verified via Playwright (layer on/off, ramp switch with layer on,
+  auto-nudge + restore) 2026-07-02. Known composition quirk: translucent extruded
+  prisms have the same deck.gl depth-ordering quirks as the residential-lens fade —
+  accepted there, same acceptance here.
 
 ---
 

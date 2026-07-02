@@ -55,7 +55,18 @@ Shares the load→filter→classify→clip front half with `load_roads` via
 `road_m_per_acre`, access only, null on arterials — same number
 `join_and_calculate` publishes). Simplify 8 m, coordinates 5 dp → **791
 features, 2.3 MB**; committed to the repo like the polygons file so CI's
-commit-if-changed step tracks it weekly. Frontend (layers panel) not yet built.
+commit-if-changed step tracks it weekly.
+
+*Stages 1–2 frontend as built (2026-07-02, `web/index.html`; display details in
+`UI.md`):* `#layers` service-layers panel (Roads checkbox, default off,
+lazy-fetch on first enable); ground `GeoJsonLayer` — arterials neutral,
+access roads on the active ramp at the hood's `road_m_per_acre` (linear,
+clamp 53); road prisms fully removed from the metric toggle. Stage 2 landed
+with it: a **money-plane opacity slider** (prism fill + roof edges), because
+headless verification showed the network is ~invisible under opaque prisms
+(only the 45 m setback gaps show). Enabling Roads auto-nudges opacity to 45%
+when the slider is untouched; manual moves cancel the auto behaviour.
+Remaining: stage 3 (ratio view).
 
 This opens the **cost side** of the fiscal picture — explicitly out of scope in
 `SPEC_phase1.md` ("no service cost allocation yet — revenue only"). It is scoped

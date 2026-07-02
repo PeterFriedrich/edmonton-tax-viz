@@ -20,7 +20,7 @@
     #title { top: 20px; left: 22px; max-width: 360px; }
     #title h1 { margin: 0 0 4px; font-size: 19px; font-weight: 600; letter-spacing: 0.2px; }
     #title p  { margin: 0; font-size: 12.5px; line-height: 1.5; color: #9a9ab0; }
-    #toggle, #palette, #lens {
+    #toggle, #palette, #lens, #layers {
       right: 22px; display: flex; pointer-events: auto;
       background: rgba(12,12,20,0.7); border: 1px solid #2a2a3a;
       border-radius: 6px; overflow: hidden;
@@ -28,6 +28,17 @@
     #toggle { top: 20px; }
     #palette { top: 58px; }
     #lens { top: 96px; }
+    #layers {
+      top: 134px; flex-direction: column; padding: 6px 12px; gap: 4px;
+      font-size: 11.5px; color: #9a9ab0;
+    }
+    #layers .hd { font-size: 10px; text-transform: uppercase; letter-spacing: 0.8px; color: #6a6a80; }
+    #layers label { display: flex; align-items: center; gap: 7px; cursor: pointer; padding: 2px 0; }
+    #layers label:hover { color: #e8e8ef; }
+    #layers input { accent-color: #fcd278; margin: 0; }
+    #layers .sep { border-top: 1px solid #2a2a3a; margin: 4px -12px 3px; }
+    #layers input[type="range"] { width: 86px; cursor: pointer; }
+    #layers .pct { min-width: 34px; text-align: right; color: #6a6a80; font-variant-numeric: tabular-nums; }
     #toggle button, #palette button, #lens button {
       appearance: none; border: 0; background: transparent; color: #9a9ab0;
       font: 12.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -83,7 +94,6 @@
   <div id="toggle" class="panel">
     <button data-metric="revenue_per_acre" class="active">Revenue</button>
     <button data-metric="value_per_acre">Value</button>
-    <button data-metric="road_m_per_acre" title="City-maintained collector + local road; arterials excluded as shared infrastructure">Roads</button>
   </div>
 
   <div id="palette" class="panel">
@@ -94,6 +104,20 @@
 
   <div id="lens" class="panel">
     <button data-lens="residential" title="Fade non-residential neighbourhoods so residential land compares like-to-like">Residential only</button>
+  </div>
+
+  <div id="layers" class="panel">
+    <span class="hd">Service layers</span>
+    <label title="City-maintained road network on the ground plane: collector + local roads coloured by their neighbourhood's road metres per acre; arterials neutral (shared infrastructure, no metric)">
+      <input type="checkbox" data-layer="roads" /> Roads
+    </label>
+    <div class="sep"></div>
+    <span class="hd">Money plane</span>
+    <label title="Prism opacity — lower it to see the service layers on the ground through the revenue/value prisms">
+      Prisms
+      <input type="range" id="prism-opacity" min="0" max="100" value="100" />
+      <span class="pct" id="prism-opacity-val">100%</span>
+    </label>
   </div>
 
   <div id="legend" class="panel">
@@ -118,11 +142,9 @@
     // (the project's honesty choice — Downtown's spike IS the signal).
     //
     // `transform` is the COLOUR transform, decided per metric from its skew
-    // (FINDINGS §6.1 / §6.3): money metrics are right-skewed → sqrt; road supply
-    // is bounded and near-symmetric → linear. `fmt` renders values for the
-    // tooltip + legend.
+    // (FINDINGS §6.1): both money metrics are right-skewed → sqrt. `fmt`
+    // renders values for the tooltip + legend.
     const fmtMoney = v => "$" + Math.round(v).toLocaleString();
-    const fmtMetres = v => Math.round(v).toLocaleString() + " m";
 
     const METRICS = {
       revenue_per_acre: {
@@ -157,30 +179,40 @@
         transform: "sqrt",
         fmt: fmtMoney,
       },
-      road_m_per_acre: {
-        key: "road_m_per_acre",
-        title: "Edmonton: Road Supply per Acre",
-        blurb: "Height and colour show metres of city-maintained neighbourhood road " +
-               "(collector + local; arterials are excluded as city-wide shared " +
-               "infrastructure) divided by neighbourhood area. Tall, bright districts " +
-               "carry the most road per unit of land. Height and colour are both " +
-               "linear. Grey = set-aside natural/undeveloped land.",
-        legendLabel: "Road metres per acre",
-        legendMin: "0 m",
-        legendMax: "53 m+",
-        colorClamp: 53,          // ≈ p97.5 (FINDINGS §6.3)
-        elevationScale: 137,     // max 60.0 m/acre → ~8,220 m, height parity
-        transform: "linear",
-        fmt: fmtMetres,
-      },
     };
+
+    // --- roads ground layer (services lens; SPEC_services.md display arch) ---
+    // Road supply renders as the actual network on the ground plane, not a
+    // prism metric (the prism view was retired 2026-07-01). Lazy-loaded from
+    // ROADS_URL on first enable. Access (collector + local) segments take the
+    // active ramp at their hood's road_m_per_acre — LINEAR, clamp = p97.5
+    // (FINDINGS §6.3); arterials render neutral (shared infrastructure — they
+    // carry no metric, only context).
+    const ROADS_URL = "./data/roads.geojson";
+    const ROAD_CLAMP = 53;
+    const ARTERIAL_COLOR = [116, 120, 132, 170];
 
     // Active metric defaults to revenue (matches the static HTML chrome above).
     // `residential` is the residential-only lens (off by default): when on,
     // non-residential hoods fade translucent so residential land compares
     // like-to-like without the Downtown / class-rate confound.
-    const state = { metric: "revenue_per_acre", ramp: "current", residential: false, data: null };
-    let overlay; // deck.gl MapboxOverlay, created on map load
+    // `layers.roads` is the ground-plane roads toggle (stackable service
+    // layers — later services add a key here + a checkbox, not a rework).
+    // `prismOpacity` is the money-plane transparency (SPEC_services display
+    // architecture, stage 2): lowering it lets the ground-plane service
+    // layers show through the prisms.
+    const state = { metric: "revenue_per_acre", ramp: "current", residential: false,
+                    layers: { roads: false }, prismOpacity: 1, data: null };
+    let overlay;         // deck.gl MapboxOverlay, created on map load
+    let roadsData = null;  // lazy-fetched roads FeatureCollection
+    let roadsFetch = null; // in-flight fetch guard (single fetch, ever)
+
+    // Enabling a ground layer under fully-opaque prisms would look like a
+    // no-op (the network only peeks through the setback gaps), so the first
+    // enable nudges the opacity down — visibly, via the slider — unless the
+    // user has taken the slider over themselves.
+    const AUTO_OPACITY_PCT = 45;
+    let opacityAutoSet = false; // slider last moved by the nudge, not the user
 
     // Three neutral, luminance-sequential ramps to compare: dark = low, bright =
     // high, with no semantic good/bad hue (consistent with the linear-elevation
@@ -343,7 +375,30 @@
       return out;
     }
 
-    // Build the two layers for the currently-active metric. Rebuilt on toggle.
+    // The roads ground layer (when enabled + loaded). Sits first in the layer
+    // array — z=0 under the prisms. Colour tracks the active ramp so the
+    // palette switcher applies to the network too.
+    function roadLayers() {
+      if (!state.layers.roads || !roadsData) return [];
+      return [new deck.GeoJsonLayer({
+        id: "roads-ground",
+        data: roadsData,
+        filled: false,
+        stroked: true,
+        getLineColor: f => f.properties.t === "arterial"
+          ? ARTERIAL_COLOR
+          : rampColorAt(Math.max(0, Math.min(1, f.properties.v / ROAD_CLAMP))),
+        // Arterials slightly wider: the neutral skeleton should read as
+        // structure, not noise, at city zoom.
+        getLineWidth: f => f.properties.t === "arterial" ? 2 : 1.2,
+        lineWidthUnits: "pixels",
+        lineWidthMinPixels: 1,
+        pickable: true,
+        updateTriggers: { getLineColor: state.ramp },
+      })];
+    }
+
+    // Build the layer stack for the current state. Rebuilt on any toggle.
     function buildLayers() {
       const cfg = METRICS[state.metric];
       // Colour clamp: rescaled to the residential subset when the lens is on.
@@ -361,6 +416,7 @@
         getElevation: f => f.properties[cfg.key],
         elevationScale: cfg.elevationScale,
         getFillColor: f => fillFor(f, cfg, clamp),
+        opacity: state.prismOpacity,
         material: { ambient: 0.55, diffuse: 0.6, shininess: 32, specularColor: [60, 60, 70] },
         pickable: true,
         autoHighlight: true,
@@ -383,6 +439,9 @@
         getPath: d => d.path,
         // Neutral-grey the roof outline of non-residential hoods when the lens is on.
         getColor: d => (state.residential && !d.res) ? LENS_FADE_EDGE : edge,
+        // The roof rings fade with the prisms — outlines floating over a
+        // ghosted (or invisible) money plane would read as clutter.
+        opacity: state.prismOpacity,
         getWidth: 1.4,
         widthUnits: "pixels",
         widthMinPixels: 1,
@@ -394,13 +453,21 @@
         updateTriggers: { getColor: [state.ramp, state.residential] },
       });
 
-      return [layer, topEdges];
+      return [...roadLayers(), layer, topEdges];
     }
 
     // Tooltip reads the active metric at hover time (closure over `state`).
     function tooltipFor({ object }) {
       if (!object) return null;
       const p = object.properties;
+      if (p.t) { // roads ground-layer feature (slim props: n / t / v)
+        return {
+          className: "tip",
+          html: p.t === "arterial"
+            ? `<b>${p.n}</b><br/><span class="muted">Arterial — shared infrastructure, no metric</span>`
+            : `<b>${p.n}</b><br/>${p.v} road m / acre <span class="muted">(collector + local)</span>`,
+        };
+      }
       if (p.is_set_aside) {
         const pct = Math.round(p.set_aside_frac * 100);
         return {
@@ -471,15 +538,40 @@
       refreshLegend();
     }
 
+    // Set the money-plane opacity (0–100). `auto` marks a programmatic nudge
+    // so it can be undone when the layer that caused it is turned back off.
+    function setPrismOpacity(pct, auto = false) {
+      opacityAutoSet = auto;
+      state.prismOpacity = pct / 100;
+      document.getElementById("prism-opacity").value = pct;
+      document.getElementById("prism-opacity-val").textContent = Math.round(pct) + "%";
+      overlay.setProps({ layers: buildLayers() });
+    }
+
+    // Toggle a service layer. The roads geometry is fetched once, on first
+    // enable — the initial page payload is unchanged when the layer is off.
+    async function toggleLayer(name, on) {
+      state.layers[name] = on;
+      if (name === "roads" && on && !roadsData) {
+        roadsFetch ??= fetch(ROADS_URL).then(r => r.json()).then(d => { roadsData = d; });
+        await roadsFetch;
+        if (!state.layers.roads) return; // unticked while the fetch was in flight
+      }
+      // Opacity nudge: ghost the prisms on enable (only from untouched 100%),
+      // restore on disable (only if the nudge is still what set it).
+      if (on && state.prismOpacity === 1) {
+        setPrismOpacity(AUTO_OPACITY_PCT, true);
+        return; // setPrismOpacity already rebuilt the layers
+      }
+      if (!on && opacityAutoSet && !Object.values(state.layers).some(Boolean)) {
+        setPrismOpacity(100);
+        return;
+      }
+      overlay.setProps({ layers: buildLayers() });
+    }
+
     map.on("load", async () => {
       state.data = await fetch(DATA_URL).then(r => r.json());
-
-      // A data file from before the services lens has no road_m_per_acre —
-      // hide the Roads toggle rather than offer a metric that can't render.
-      if (!state.data.features.some(f => f.properties.road_m_per_acre != null)) {
-        const b = document.querySelector('#toggle button[data-metric="road_m_per_acre"]');
-        if (b) b.style.display = "none";
-      }
 
       overlay = new deck.MapboxOverlay({
         interleaved: true,
@@ -493,6 +585,10 @@
       document.querySelectorAll("#palette button").forEach(b =>
         b.addEventListener("click", () => applyPalette(b.dataset.ramp)));
       document.querySelector("#lens button").addEventListener("click", applyLens);
+      document.querySelectorAll("#layers input[type=checkbox]").forEach(cb =>
+        cb.addEventListener("change", () => toggleLayer(cb.dataset.layer, cb.checked)));
+      document.getElementById("prism-opacity").addEventListener("input",
+        e => setPrismOpacity(+e.target.value)); // user move — clears the auto flag
       // Sync the legend gradient to the default ramp (single source of truth).
       document.querySelector("#legend .bar").style.background = legendGradient();
 
