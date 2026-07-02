@@ -11,7 +11,9 @@ Classification is an EXPLICIT class→group dict — never keyword/prefix
 heuristics (same philosophy as load_zoning's ZONE_CATEGORY).
 """
 
+import json
 import logging
+from pathlib import Path
 
 import geopandas as gpd
 import pandas as pd
@@ -109,26 +111,13 @@ def _clean_geometry(gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
     return gdf
 
 
-def load_roads(roads_path: str, boundaries: gpd.GeoDataFrame) -> pd.DataFrame:
-    """Overlay road centrelines on boundaries → per-neighbourhood road metres.
+def _prepare_segments(roads_path: str, boundaries: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
+    """Shared front half: load → filter → classify → clip to neighbourhoods.
 
-    Parameters
-    ----------
-    roads_path : str
-        Path to the Road Network GeoJSON (`9j8t-zm52`).
-    boundaries : gpd.GeoDataFrame
-        Output of load_boundaries — MUST carry projected geometry (EPSG:3400)
-        and a `neighbourhood_name` column.
-
-    Returns
-    -------
-    pd.DataFrame keyed by `neighbourhood_name` with columns:
-        road_m_arterial  — internal only; NEVER part of the metric
-        road_m_collector
-        road_m_local
-        road_m_total     — collector + local (the metric basis;
-                           road_m_per_acre is computed downstream in
-                           join_and_calculate against boundary acres)
+    Returns the clipped segments as a GeoDataFrame with `neighbourhood_name`,
+    `group` (arterial/collector/local), `piece_m`, and line geometry in
+    EPSG:3400. Used by both load_roads (aggregation) and export_roads_web
+    (the ground-layer geometry the browser renders).
     """
     roads = gpd.read_file(roads_path)
     logger.info("Loaded %d centreline features (input CRS: %s)", len(roads), roads.crs)
@@ -196,6 +185,31 @@ def load_roads(roads_path: str, boundaries: gpd.GeoDataFrame) -> pd.DataFrame:
         "%.1f km (%.2f%%) outside all boundaries",
         total_before / 1000, total_after / 1000, unassigned / 1000, 100 * unassigned_frac,
     )
+    return overlay
+
+
+def load_roads(roads_path: str, boundaries: gpd.GeoDataFrame) -> pd.DataFrame:
+    """Overlay road centrelines on boundaries → per-neighbourhood road metres.
+
+    Parameters
+    ----------
+    roads_path : str
+        Path to the Road Network GeoJSON (`9j8t-zm52`).
+    boundaries : gpd.GeoDataFrame
+        Output of load_boundaries — MUST carry projected geometry (EPSG:3400)
+        and a `neighbourhood_name` column.
+
+    Returns
+    -------
+    pd.DataFrame keyed by `neighbourhood_name` with columns:
+        road_m_arterial  — internal only; NEVER part of the metric
+        road_m_collector
+        road_m_local
+        road_m_total     — collector + local (the metric basis;
+                           road_m_per_acre is computed downstream in
+                           join_and_calculate against boundary acres)
+    """
+    overlay = _prepare_segments(roads_path, boundaries)
 
     by_group = (
         overlay.groupby(["neighbourhood_name", "group"])["piece_m"]
@@ -224,3 +238,103 @@ def load_roads(roads_path: str, boundaries: gpd.GeoDataFrame) -> pd.DataFrame:
         result["road_m_arterial"].sum() / 1000,
     )
     return result
+
+
+# Simplification tolerance for the web export (metres). Same order as the
+# polygon export's 10 m — display geometry only, lengths/metrics unaffected.
+WEB_SIMPLIFY_M = 8.0
+# Coordinate decimals in the web file (~1 m at Edmonton's latitude).
+WEB_PRECISION = 5
+
+
+def export_roads_web(
+    roads_path: str,
+    boundaries: gpd.GeoDataFrame,
+    out_path: str,
+    simplify_m: float = WEB_SIMPLIFY_M,
+    precision: int = WEB_PRECISION,
+) -> int:
+    """Write the slim road-network GeoJSON the web map's ground layer renders.
+
+    The raw feed (~62 MB) can't ship to the browser; this export shrinks it by
+    dissolving the clipped segments to ONE MultiLineString per
+    (neighbourhood × arterial/access), simplifying, and trimming coordinates.
+    Per-feature properties (SPEC_services.md "Display architecture"):
+        n — neighbourhood name (tooltip)
+        t — "arterial" (neutral context, no metric) or "access" (collector+local)
+        v — the hood's road_m_per_acre, on access features only (colour driver;
+            null on arterials)
+
+    Display geometry only — all metrics come from the full-resolution overlay
+    in load_roads. Returns the number of features written.
+    """
+    overlay = _prepare_segments(roads_path, boundaries)
+    overlay["t"] = overlay["group"].map(
+        {"arterial": "arterial", "collector": "access", "local": "access"}
+    )
+
+    # The colour driver: the same metric join_and_calculate publishes.
+    per_hood = (
+        overlay.loc[overlay["t"] == "access"]
+        .groupby("neighbourhood_name")["piece_m"].sum()
+        .rename("access_m")
+        .reset_index()
+        .merge(boundaries[["neighbourhood_name", "area_acres"]], on="neighbourhood_name")
+    )
+    per_hood["v"] = per_hood["access_m"] / per_hood["area_acres"]
+
+    dissolved = overlay[["neighbourhood_name", "t", "geometry"]].dissolve(
+        by=["neighbourhood_name", "t"], as_index=False
+    )
+    dissolved = dissolved.merge(
+        per_hood[["neighbourhood_name", "v"]], on="neighbourhood_name", how="left"
+    )
+    # Arterials carry no metric — explicit null, never a number.
+    dissolved.loc[dissolved["t"] == "arterial", "v"] = float("nan")
+    dissolved["v"] = dissolved["v"].round(1)
+    dissolved["n"] = dissolved["neighbourhood_name"]
+
+    simplified = dissolved.geometry.simplify(simplify_m, preserve_topology=True)
+    bad = simplified.is_empty | ~simplified.is_valid
+    if bad.any():
+        logger.warning(
+            "Simplify (%sm) broke %d road geometry(ies); kept originals", simplify_m, int(bad.sum())
+        )
+        simplified = simplified.where(~bad, dissolved.geometry)
+    dissolved = dissolved.set_geometry(simplified).to_crs(epsg=4326)
+
+    # Manual write with rounded coordinates — GeoJSON size is dominated by
+    # coordinate digits, and driver-level precision options vary by engine.
+    def _round_coords(obj):
+        if isinstance(obj, (list, tuple)):
+            if obj and isinstance(obj[0], float):
+                return [round(c, precision) for c in obj]
+            return [_round_coords(o) for o in obj]
+        return obj
+
+    features = []
+    for row in dissolved.itertuples():
+        geom = row.geometry.__geo_interface__
+        features.append({
+            "type": "Feature",
+            "properties": {
+                "n": row.n,
+                "t": row.t,
+                "v": None if pd.isna(row.v) else row.v,
+            },
+            "geometry": {
+                "type": geom["type"],
+                "coordinates": _round_coords(geom["coordinates"]),
+            },
+        })
+
+    out = Path(out_path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(
+        {"type": "FeatureCollection", "features": features}, separators=(",", ":")
+    ))
+    logger.info(
+        "Wrote road ground-layer GeoJSON: %d features (%.1f MB, simplify=%sm, %sdp) to %s",
+        len(features), out.stat().st_size / 1e6, simplify_m, precision, out_path,
+    )
+    return len(features)

@@ -1,3 +1,4 @@
+import json
 import sys
 from unittest.mock import patch
 
@@ -7,7 +8,7 @@ import pytest
 from shapely.geometry import LineString, Polygon
 
 sys.path.insert(0, "src")
-from load_roads import _classify, load_roads
+from load_roads import _classify, export_roads_web, load_roads
 
 
 def _square(x0, y0, size):
@@ -194,3 +195,116 @@ def test_empty_geometry_dropped():
     )
     row = _run(hood, roads).iloc[0]
     assert row["road_m_total"] == pytest.approx(100)
+
+
+# --- export_roads_web --------------------------------------------------------
+
+
+def _boundaries_with_acres(names, polys):
+    """Web-export boundaries also carry area_acres (the metric denominator)."""
+    gdf = _boundaries(names, polys)
+    gdf["area_acres"] = gdf.geometry.area / 4046.8564224
+    return gdf
+
+
+def _export(boundaries, roads, out_path):
+    with patch("load_roads.gpd.read_file", return_value=roads):
+        return export_roads_web("dummy.geojson", boundaries, str(out_path))
+
+
+def _read_fc(out_path):
+    fc = json.loads(out_path.read_text())
+    assert fc["type"] == "FeatureCollection"
+    return fc
+
+
+def test_export_dissolves_to_one_feature_per_hood_and_type(tmp_path):
+    hood = _boundaries_with_acres(["ALPHA"], [_square(0, 0, 100)])
+    roads = _roads(
+        [
+            ("Road", CITY, LOCAL, LineString([(0, 10), (100, 10)])),
+            ("Road", CITY, LOCAL, LineString([(0, 20), (100, 20)])),
+            ("Road", CITY, COLLECTOR, LineString([(0, 30), (100, 30)])),
+            ("Road", CITY, ARTERIAL, LineString([(0, 40), (100, 40)])),
+        ]
+    )
+    out = tmp_path / "roads.geojson"
+    n = _export(hood, roads, out)
+    fc = _read_fc(out)
+    # 3 local/collector segments dissolve into ONE access feature + 1 arterial.
+    assert n == len(fc["features"]) == 2
+    types = sorted(f["properties"]["t"] for f in fc["features"])
+    assert types == ["access", "arterial"]
+
+
+def test_export_v_on_access_only_arterial_null(tmp_path):
+    hood = _boundaries_with_acres(["ALPHA"], [_square(0, 0, 100)])
+    roads = _roads(
+        [
+            ("Road", CITY, LOCAL, LineString([(0, 10), (100, 10)])),
+            ("Road", CITY, ARTERIAL, LineString([(0, 40), (100, 40)])),
+        ]
+    )
+    out = tmp_path / "roads.geojson"
+    _export(hood, roads, out)
+    props = {f["properties"]["t"]: f["properties"] for f in _read_fc(out)["features"]}
+    acres = (100 * 100) / 4046.8564224
+    assert props["access"]["v"] == pytest.approx(100 / acres, abs=0.05)  # rounded 0.1
+    assert props["arterial"]["v"] is None
+
+
+def test_export_props_and_geometry_shape(tmp_path):
+    hoods = _boundaries_with_acres(
+        ["WEST", "EAST"], [_square(0, 0, 100), _square(100, 0, 100)]
+    )
+    roads = _roads(
+        [("Road", CITY, LOCAL, LineString([(0, 50), (200, 50)]))]  # spans both hoods
+    )
+    out = tmp_path / "roads.geojson"
+    _export(hoods, roads, out)
+    fc = _read_fc(out)
+    assert sorted(f["properties"]["n"] for f in fc["features"]) == ["EAST", "WEST"]
+    for f in fc["features"]:
+        assert set(f["properties"]) == {"n", "t", "v"}
+        assert f["geometry"]["type"] in ("LineString", "MultiLineString")
+
+
+def test_export_coordinates_rounded_and_wgs84(tmp_path):
+    hood = _boundaries_with_acres(["ALPHA"], [_square(0, 0, 100)])
+    roads = _roads([("Road", CITY, LOCAL, LineString([(0, 10), (100, 10)]))])
+    out = tmp_path / "roads.geojson"
+    _export(hood, roads, out)
+
+    def _flat(coords):
+        if coords and isinstance(coords[0], float):
+            yield coords
+        else:
+            for c in coords:
+                yield from _flat(c)
+
+    for f in _read_fc(out)["features"]:
+        for lon, lat in _flat(f["geometry"]["coordinates"]):
+            # Reprojected to lon/lat degrees — metre-scale values (0..200
+            # here) would blow these ranges, so this catches a skipped to_crs.
+            assert -180 <= lon <= 180 and -90 <= lat <= 90
+            assert round(lon, 5) == lon and round(lat, 5) == lat
+
+
+def test_export_v_matches_load_roads_metric(tmp_path):
+    """The colour driver v must equal road_m_total / area_acres — the same
+    number join_and_calculate publishes as road_m_per_acre."""
+    hood = _boundaries_with_acres(["ALPHA"], [_square(0, 0, 200)])
+    roads = _roads(
+        [
+            ("Road", CITY, LOCAL, LineString([(0, 10), (200, 10)])),
+            ("Road", CITY, COLLECTOR, LineString([(0, 30), (150, 30)])),
+            ("Road", CITY, ARTERIAL, LineString([(0, 50), (200, 50)])),
+        ]
+    )
+    metric = _run(hood, roads).iloc[0]
+    expected = metric["road_m_total"] / hood["area_acres"].iloc[0]
+
+    out = tmp_path / "roads.geojson"
+    _export(hood, roads, out)
+    access = [f for f in _read_fc(out)["features"] if f["properties"]["t"] == "access"]
+    assert access[0]["properties"]["v"] == pytest.approx(expected, abs=0.05)

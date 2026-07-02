@@ -199,6 +199,17 @@ the V2 fast-follow, a downstream/display concern), or touch assessment data.
 Like zoning, roads are a **refreshed input** (weekly CI re-pull; vintage in
 status.json).
 
+**Also exports (added 2026-07-02):** `export_roads_web(roads_path, boundaries,
+out_path)` — the ground-layer GeoJSON the web map renders
+(`web/data/roads.geojson`, committed; SPEC_services.md "Display architecture").
+Shares the load→filter→classify→clip front half with `load_roads` via
+`_prepare_segments()` (the raw file is read twice per pipeline run — accepted,
+keeps the two entry points independent). Dissolves clipped segments to one
+MultiLineString per (neighbourhood × arterial/access), simplifies (8 m),
+rounds coordinates (5 dp), and writes features with props `n` / `t` / `v`
+(hood name / `"arterial"`|`"access"` / `road_m_per_acre` on access only).
+Display geometry only — all published metrics still come from `load_roads`.
+
 ---
 
 ### `src/join_and_calculate.py`

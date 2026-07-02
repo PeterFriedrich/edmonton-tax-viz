@@ -33,7 +33,7 @@ from apply_tax_rates import apply_tax_rates
 from aggregate_by_neighbourhood import aggregate_by_neighbourhood
 from load_boundaries import load_boundaries
 from load_zoning import load_zoning
-from load_roads import load_roads
+from load_roads import load_roads, export_roads_web
 from join_and_calculate import join_and_calculate, export_geojson
 from plot_choropleth import plot_choropleth
 
@@ -47,6 +47,7 @@ ROADS_GEOJSON = ROOT / "data/raw/roads.geojson"
 MILL_RATES_JSON = ROOT / "data/mill_rates.json"
 PNG_OUT = ROOT / "output/edmonton_value_per_acre.png"
 GEOJSON_OUT = ROOT / "web/data/neighbourhood_value_per_acre.geojson"
+ROADS_WEB_OUT = ROOT / "web/data/roads.geojson"
 
 # Assessment-year alignment: the local snapshot is 2025 data (the coverage year
 # lives in Socrata metadata, not the rows — see DATA.md). Mill rates MUST match.
@@ -109,6 +110,10 @@ def run(
             setback_m=setback_m,
             simplify_tolerance_m=simplify_tolerance_m,
         )
+        # Ground-layer road geometry rides with the web export (services lens
+        # display architecture, SPEC_services.md) — skipped with the roads layer.
+        if roads is not None:
+            export_roads_web(str(roads_geojson), boundaries, str(ROADS_WEB_OUT))
 
     logger.info("Pipeline complete.")
 

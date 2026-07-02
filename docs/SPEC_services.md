@@ -47,6 +47,16 @@ line-simplified + coordinate-trimmed, properties reduced to the group flag and
 the hood's metric value. Lazy-loaded by the frontend on first toggle so the
 initial page payload is unchanged.
 
+*As built (2026-07-02):* `export_roads_web()` in `src/load_roads.py`, called
+from `main.py` alongside the polygon export (skipped with `--skip-roads`).
+Shares the load→filter→classify→clip front half with `load_roads` via
+`_prepare_segments()`. Per-feature properties: `n` (hood name), `t`
+(`"arterial"` | `"access"` = collector+local), `v` (the hood's
+`road_m_per_acre`, access only, null on arterials — same number
+`join_and_calculate` publishes). Simplify 8 m, coordinates 5 dp → **791
+features, 2.3 MB**; committed to the repo like the polygons file so CI's
+commit-if-changed step tracks it weekly. Frontend (layers panel) not yet built.
+
 This opens the **cost side** of the fiscal picture — explicitly out of scope in
 `SPEC_phase1.md` ("no service cost allocation yet — revenue only"). It is scoped
 as a **general services lens** whose first (and for now only) service is the

@@ -40,10 +40,14 @@ _Last reconciled: 2026-07-01_
   - [ ] **Display pivot (2026-07-01): two-plane stackable architecture**
     (SPEC_services.md "Display architecture — REVISED"). Road prisms RETIRED;
     services render as stackable ground layers, money prisms above. Staging:
-    - [ ] (1) Roads ground layer: slim `web/data/roads.geojson` export
-      (dissolved per hood × arterial/access, simplified, lazy-loaded) +
-      layers panel; arterials neutral, access roads coloured by hood
-      `road_m_per_acre` (linear, clamp 53); remove Roads from metric toggle.
+    - [ ] (1) Roads ground layer:
+      - [x] ~~pipeline: slim `web/data/roads.geojson` export (dissolved per
+        hood × arterial/access, simplified 8 m, 5 dp)~~ — done 2026-07-02
+        (`export_roads_web` in `src/load_roads.py`, wired into `main.py`;
+        791 features, 2.3 MB, committed like the polygons file; +5 tests).
+      - [ ] frontend: layers panel, lazy-loaded ground PathLayer; arterials
+        neutral, access roads coloured by hood `road_m_per_acre` (linear,
+        clamp 53); remove Roads from metric toggle.
     - [ ] (2) Prism transparency control (money plane overlays service plane).
     - [ ] (3) Ratio view: revenue vs total services (defer "total services"
       definition until >1 service; revenue-per-road-metre is the
