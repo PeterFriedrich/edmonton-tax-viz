@@ -24,9 +24,9 @@ def join_and_calculate(
     """Left join boundaries → assessment, flag unmatched rows, compute value_per_acre.
 
     Assessment names are expected to be corrected and aggregated already
-    (NAME_CORRECTIONS is applied upstream in load_assessment.py). The three
-    unresolved cases (OLIVER, HERITAGE VALLEY TOWN CENTRE AREA,
-    LEWIS FARMS INDUSTRIAL) surface here as unmatched warnings.
+    (NAME_CORRECTIONS is applied upstream in load_assessment.py). The one
+    expected unmatched case — the OLIVER straggler row, deliberately left
+    unmapped (DATA.md "Name Matching") — surfaces here as a warning.
 
     ``zoning`` (optional, from load_zoning.py) adds set_aside_frac / is_set_aside
     / set_aside_reason / frac_residential / is_residential, merged on

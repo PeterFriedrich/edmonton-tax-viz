@@ -143,7 +143,7 @@ For Phase 1 (neighbourhood-level choropleth), two approaches are viable:
 ### Known Quirks
 
 - `name` is already ALL CAPS — matches our `neighbourhood_name` normalization convention
-- 407 boundary features vs 408 neighbourhoods in assessment aggregate. Actual join outcome: 3 assessment neighbourhoods with no boundary match (OLIVER, HERITAGE VALLEY TOWN CENTRE AREA, LEWIS FARMS INDUSTRIAL) and 2 boundary neighbourhoods with no assessment data (LEWIS FARMS, LEWIS FARMS BUSINESS EMPLOYMENT) → 405 of 407 boundaries rendered. See "Name Matching" below; flagged in `join_and_calculate.py`.
+- 407 boundary features. Join outcome (after the 2026-07-01 audit corrections): 1 assessment neighbourhood with no boundary match (the immaterial `OLIVER` straggler, $500 — deliberately unmapped) and 1 boundary neighbourhood with no assessment data (`LEWIS FARMS`) → 406 of 407 boundaries rendered. See "Name Matching" below; flagged in `join_and_calculate.py`.
 
 ---
 
@@ -259,6 +259,8 @@ NAME_CORRECTIONS = {
     "ANTHONY HENDAY SOUTHEAST":        "ANTHONY HENDAY SOUTH EAST",
     "CHAPPELLE AREA":                   "CHAPPELLE",
     "EDMONTON RESEARCH AND DEVEL PARK": "EDMONTON RESEARCH AND DEVELOPMENT PARK",
+    "HERITAGE VALLEY TOWN CENTRE AREA": "HERITAGE VALLEY TOWN CENTRE",
+    "LEWIS FARMS INDUSTRIAL":           "LEWIS FARMS BUSINESS EMPLOYMENT",
     "PLACE LA RUE":                     "PLACE LARUE",
     "RAPPERSWIL":                       "RAPPERSWILL",
     "RIVER VALLEY WINDEMERE":           "RIVER VALLEY WINDERMERE",
@@ -272,12 +274,9 @@ NAME_CORRECTIONS = {
 | Assessment name | Boundary name | Resolution |
 |----------------|--------------|------------|
 | `OLIVER` | `WÎHKWÊNTÔWIN` (#1151) | 2024 rename. Assessment data has already migrated: 12,234 rows / $4.12B are tagged `WÎHKWÊNTÔWIN` (matches the boundary directly), with a single straggler row still tagged `OLIVER` ($500 total). The unmatched warning is real but immaterial — no correction-dict entry added, since mapping it would shift $500 onto a $4.12B neighbourhood. |
+| `HERITAGE VALLEY TOWN CENTRE AREA` | `HERITAGE VALLEY TOWN CENTRE` | Resolved 2026-07-01 (data-integrity audit): spatial containment — 945 of 946 properties fall inside the HVTC boundary polygon (1 in adjacent Desrochers). Before the correction the boundary matched only a 15-row / $2.25M slice under the exact name, rendering the hood at ~1/250th of its real $572.7M — a *partial* match, so the error was invisible on the map. Correction added. See `docs/FINDINGS_data_integrity_audit.md` §1. |
+| `LEWIS FARMS INDUSTRIAL` | `LEWIS FARMS BUSINESS EMPLOYMENT` | Resolved 2026-07-01 (data-integrity audit): spatial containment — 100 of 103 properties ($106.3M) fall inside the LFBE polygon (3 spill into adjacent LEWIS FARMS, boundary-edge cases). Previously LFBE had zero matched rows → dropped at export → hole in the map. Correction added. See `docs/FINDINGS_data_integrity_audit.md` §2. |
 
-### Unresolved (as of 2026-06-24)
+### Unresolved
 
-| Assessment name | Boundary name | Issue |
-|----------------|--------------|-------|
-| `HERITAGE VALLEY TOWN CENTRE AREA` | *(no match)* | Possibly a new neighbourhood not yet in boundary file |
-| `LEWIS FARMS INDUSTRIAL` | `LEWIS FARMS BUSINESS EMPLOYMENT` | Genuine rename or different polygon? Check `neighbourhood_number` |
-
-These 2 are dropped from the join and flagged in `join_and_calculate.py` output. The lone `OLIVER` straggler is also flagged but is immaterial (see Resolved above).
+*None.* The only expected unmatched warning is the `OLIVER` straggler (immaterial, deliberate — see Resolved above). Any **other** name appearing in the unmatched warning is new drift and should be investigated (spatial containment via the assessment lat/lon columns is the decisive test).

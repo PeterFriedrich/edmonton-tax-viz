@@ -10,13 +10,18 @@ EXEMPT_CLASS = "NONRES MUNICIPAL/RES EDUCATION"
 # Assessment name → boundary name. Applied before aggregation so that names
 # which collapse to the same boundary (e.g. "CHAPPELLE AREA" → "CHAPPELLE")
 # are summed together rather than producing duplicate rows at the join.
-# See data/DATA.md "Name Matching" for the three unresolved cases (OLIVER,
-# HERITAGE VALLEY TOWN CENTRE AREA, LEWIS FARMS INDUSTRIAL) that remain
-# unmatched and are flagged in join_and_calculate.py.
+# See data/DATA.md "Name Matching". The HERITAGE VALLEY / LEWIS FARMS entries
+# were confirmed by spatial containment (assessment lat/lon inside the target
+# boundary polygon: 945/946 and 100/103 respectively — see
+# docs/FINDINGS_data_integrity_audit.md). The lone remaining unmatched name is
+# the OLIVER straggler ($500), deliberately left unmapped (DATA.md "Resolved");
+# it is flagged in join_and_calculate.py.
 NAME_CORRECTIONS = {
     "ANTHONY HENDAY SOUTHEAST":          "ANTHONY HENDAY SOUTH EAST",
     "CHAPPELLE AREA":                    "CHAPPELLE",
     "EDMONTON RESEARCH AND DEVEL PARK":  "EDMONTON RESEARCH AND DEVELOPMENT PARK",
+    "HERITAGE VALLEY TOWN CENTRE AREA":  "HERITAGE VALLEY TOWN CENTRE",
+    "LEWIS FARMS INDUSTRIAL":            "LEWIS FARMS BUSINESS EMPLOYMENT",
     "PLACE LA RUE":                      "PLACE LARUE",
     "RAPPERSWIL":                        "RAPPERSWILL",
     "RIVER VALLEY WINDEMERE":            "RIVER VALLEY WINDERMERE",
