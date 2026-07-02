@@ -5,21 +5,28 @@ GitHub Actions VM has none of the raw inputs, so it must pull them before
 ``main.py`` can regenerate the map. Run locally the same way to refresh a
 snapshot.
 
-Three inputs come from Edmonton's Socrata open-data portal:
+Four inputs come from Edmonton's Socrata open-data portal:
   - assessment  q7d6-ambg  (Property Assessment Data, current year)  -> CSV
   - boundaries  65fr-66s6  (Neighbourhood Boundaries)                -> GeoJSON
   - zoning      fixa-tstc  (Zoning Bylaw Geographical Data)          -> GeoJSON
+  - roads       9j8t-zm52  (Road Network centrelines)                -> GeoJSON
 
 Mill rates (pwis-wc4c) are NOT fetched here — they live in the committed
 ``data/mill_rates.json`` (see DATA.md); refreshing them for a new year is a
 manual, reviewed step because the year must align with the assessment roll.
 
+GeoJSON sources carry an explicit ``limit`` (the URL's $limit): Socrata
+truncates silently at $limit, returning exactly that many features, so after
+download the feature count is checked and a count >= limit fails the run
+(see docs/FINDINGS_data_integrity_audit.md, the $limit truncation risk).
+
 Usage:
-    python scripts/download_data.py                 # fetch all three inputs
+    python scripts/download_data.py                 # fetch all inputs
     python scripts/download_data.py --only zoning   # fetch one (repeatable)
 """
 
 import argparse
+import json
 import logging
 import sys
 from pathlib import Path
@@ -33,20 +40,52 @@ RAW = Path(__file__).resolve().parent.parent / "data" / "raw"
 # Each input: the Socrata download URL + the local filename main.py expects.
 # GeoJSON exports use the resource endpoint with an explicit $limit above the
 # feature count (Socrata paginates at 1,000 by default and truncates silently).
+# ``limit`` must match the URL's $limit — it drives the truncation check.
 SOURCES = {
     "assessment": {
+        # Full-export endpoint, no $limit — not subject to the truncation check.
         "url": "https://data.edmonton.ca/api/views/q7d6-ambg/rows.csv?accessType=DOWNLOAD",
         "dest": RAW / "Property_Assessment_Data__Current_Calendar_Year_.csv",
     },
     "boundaries": {
         "url": "https://data.edmonton.ca/resource/65fr-66s6.geojson?$limit=500",
         "dest": RAW / "neighbourhoods.geojson",
+        "limit": 500,  # 407 neighbourhoods as of 2026-07
     },
     "zoning": {
         "url": "https://data.edmonton.ca/resource/fixa-tstc.geojson?$limit=20000",
         "dest": RAW / "zoning.geojson",
+        "limit": 20000,  # 11,510 features as of 2026-06
+    },
+    "roads": {
+        "url": "https://data.edmonton.ca/resource/9j8t-zm52.geojson?$limit=100000",
+        "dest": RAW / "roads.geojson",
+        "limit": 100000,  # 53,720 centrelines as of 2026-07 (SPEC_services.md)
     },
 }
+
+
+def feature_count(path: Path) -> int:
+    """Number of features in a GeoJSON FeatureCollection on disk."""
+    with open(path, encoding="utf-8") as f:
+        return len(json.load(f)["features"])
+
+
+def check_not_truncated(name: str, path: Path, limit: int) -> int:
+    """Fail loudly if a GeoJSON download hit its Socrata $limit.
+
+    Socrata returns exactly ``limit`` features when the dataset outgrows it —
+    a silently incomplete file, not an error. Raises ``RuntimeError`` when the
+    count reaches the limit; returns the count otherwise.
+    """
+    n = feature_count(path)
+    if n >= limit:
+        raise RuntimeError(
+            f"{name}: {n} features == $limit={limit} — download almost certainly "
+            f"truncated. Raise the $limit (and this source's 'limit') in SOURCES."
+        )
+    logger.info("%s: %d features (< $limit=%d, not truncated)", name, n, limit)
+    return n
 
 
 def download(url: str, dest: Path, timeout: int = 300) -> int:
@@ -75,7 +114,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--only",
         action="append",
         choices=sorted(SOURCES),
-        help="download only this input (repeatable); default is all three",
+        help="download only this input (repeatable); default is all of them",
     )
     p.add_argument("--log-level", default="INFO")
     return p.parse_args(argv)
@@ -94,6 +133,8 @@ def main(argv: list[str] | None = None) -> None:
         src = SOURCES[name]
         try:
             download(src["url"], src["dest"])
+            if "limit" in src:
+                check_not_truncated(name, src["dest"], src["limit"])
         except Exception as exc:  # noqa: BLE001 — report every input, don't stop at the first
             logger.error("FAILED to download %s: %s", name, exc)
             failures.append(name)
