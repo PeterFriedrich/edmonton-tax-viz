@@ -62,8 +62,9 @@ _Last reconciled: 2026-07-02_
       FINDINGS §6.4; road-base floor 5 m/acre greys artifacts; UI.md
       "Services views"). "Total services" DEFINITION still deferred until
       a second service exists — reopen this staging list then.
-  - [ ] Merge `feature/services-lens` → master via PR once the ground-layer
-    view is in and Peter's eyeballed it (`cd web && python3 -m http.server 8799`).
+  - [x] ~~Merge `feature/services-lens` → master via PR once Peter's eyeballed
+    it~~ — done 2026-07-02: PR #8 merged, refresh workflow run green, live site
+    verified serving the three views + roads.geojson.
 
 - [ ] **Views & lenses follow-ons (Peter, 2026-07-02).** Three asks on top of the
   shipped Money | Roads | Ratio views:
