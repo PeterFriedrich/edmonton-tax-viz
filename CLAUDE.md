@@ -11,6 +11,7 @@ Edmonton revenue-per-acre fiscal analysis. Python-only, no GIS software.
 - `docs/TOKEN_EFFICIENCY.md` — context/token hygiene (what NOT to read raw, session-summary archiving). **Read before bulk-reading data or summaries.**
 - `docs/ANALYSIS_BACKLOG.md` — analytical questions/investigations to run later (auto + by-hand). Distinct from TODO.md (build work) and FINDINGS_*.md (conclusions).
 - `docs/PARCEL_LEVEL_OPPORTUNITIES.md` — future work gated on parcel-level data (finer than the neighbourhood unit); the set-aside machinery exists because we aggregate to neighbourhood.
+- `docs/DATA_INTEGRITY.md` — standalone audit brief for checking the numbers are *right* (silent-correctness, not crashes). Point a model here for a full data-integrity pass: system map + ranked, pre-verified joints. Complements the `edmonton-audit` skill (which goes deep on ONE target).
 - `session-summary/` — session handoff notes. Read the latest before starting work; older ones live in `session-summary/archive/` (don't bulk-read them).
 
 ## Token Efficiency
