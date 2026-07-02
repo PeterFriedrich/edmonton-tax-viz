@@ -1,6 +1,19 @@
 # Scope: Services Lens — Road Supply (first service)
 
-**Status: SPEC 2026-07-01. Not built.** Branch `feature/services-lens`.
+**Status: V1 BUILT 2026-07-01** (same day as the spec), branch
+`feature/services-lens`. As built: `scripts/download_data.py` roads source +
+two-tier truncation guard; `src/load_roads.py` (13 tests; real data 3,644 km
+collector+local in the metric, 1,353 km arterial internal, 0.28% unassigned);
+`join_and_calculate` `ROAD_COLUMNS` merge + `road_m_per_acre`; `main.py`
+`--roads-geojson`/`--skip-roads`; **colour DECIDED: linear** (FINDINGS §6.3 —
+raw skew −0.29; the spec's don't-assume-sqrt caution was warranted); web map
+Roads toggle with per-metric transforms, headless-verified. Dataset facts +
+quirks: `DATA.md` §6.
+**Provenance note:** roads carries NO year pin in `status.json` — the network
+is a continuously-updated feed with no roll-year semantics (unlike
+assessment/rates/zoning); its provenance is `last_checked` itself.
+**Remaining from this spec:** the V2 revenue-per-road-metre ratio (fast
+follow, needs the set-aside/near-zero-revenue day-one answer).
 
 This opens the **cost side** of the fiscal picture — explicitly out of scope in
 `SPEC_phase1.md` ("no service cost allocation yet — revenue only"). It is scoped

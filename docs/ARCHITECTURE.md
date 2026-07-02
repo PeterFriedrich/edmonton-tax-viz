@@ -41,10 +41,10 @@ Raw CSV (assessment)         Raw GeoJSON (boundaries)      Raw GeoJSON (zoning, 
   output/...png        web/data/...geojson  (both metrics → web toggle)
 ```
 
-**Planned (spec'd, not built — `SPEC_services.md`):** `load_roads.py` enters the
+**Also in the flow (services lens, built 2026-07-01):** `load_roads.py` enters the
 diagram exactly where `load_zoning.py` does — a raw GeoJSON (`9j8t-zm52`) overlaid
 against the boundary frame, producing per-hood columns merged in
-`join_and_calculate` (`road_m_*`; `road_m_per_acre` computed there).
+`join_and_calculate` (`road_m_total`; `road_m_per_acre` computed there).
 
 ---
 
@@ -157,13 +157,13 @@ developing land graduates off the set-aside list automatically (see SPEC_deploym
 
 ---
 
-### `src/load_roads.py` (services lens — spec'd 2026-07-01, NOT BUILT)
+### `src/load_roads.py` (services lens — added 2026-07-01)
 
-Full methodology + locked decisions in `docs/SPEC_services.md`. Build to this
-interface; the section below is the module contract.
+Full methodology + locked decisions in `docs/SPEC_services.md`; dataset quirks
+in `DATA.md` §6. Built to this contract (13 synthetic tests).
 
 **Inputs:** path to the Road Network GeoJSON (`9j8t-zm52`, centreline
-LineStrings; `DATA.md` §6 once written); the boundary GeoDataFrame from
+LineStrings; `DATA.md` §6); the boundary GeoDataFrame from
 `load_boundaries.py` (projected geometry for the overlay)
 
 **Outputs:** `pd.DataFrame` keyed by `neighbourhood_name`:
@@ -210,9 +210,11 @@ status.json).
   `neighbourhood_name`, adding `set_aside_frac` / `is_set_aside` / `set_aside_reason` /
   `frac_residential` / `is_residential` (the `ZONING_COLUMNS` list) to the output and
   thus the GeoJSON. Degrades gracefully when absent, like the revenue columns.
-- (planned, `SPEC_services.md`) roads DataFrame from `load_roads.py` — a
+- (optional) roads DataFrame from `load_roads.py` (`SPEC_services.md`) — a
   `ROAD_COLUMNS` merge on `neighbourhood_name`, same graceful-when-absent
   pattern; `road_m_per_acre = road_m_total / area_acres` computed here.
+  Boundaries with no roads overlay default to a true 0 m (flagged) — unlike
+  the zoning NaNs, no overlay genuinely means no city collector/local road.
 
 **Outputs:** `gpd.GeoDataFrame` with columns:
 - `neighbourhood_name`

@@ -18,12 +18,13 @@ Visual theming and accessibility decisions for the interactive map. Phase 1
   - **Cividis** — perceptually uniform + colour-blind safe (the colourblind-mode ramp;
     see "Colourblind mode" — CVD-simulator verification still pending).
   - All three are neutral luminance-sequential (magnitude = brightness, no good/bad hue).
-- **Colour transform is SQRT** (`scaleT` in `index.html`, DECIDED 2026-07-01) of the
-  per-metric clamped ratio (`colorClamp`: revenue `$50k`, value `$4M`, ≈ p97.5). This
-  replaced the raw hard clamp — sqrt spreads the low/mid end so the plateau no longer
-  reads as a fake threshold. Set-aside land is off the ramp entirely (grey, below).
-  Height stays LINEAR. See `SPEC_revenue.md` (Update 2026-06-29) and
-  `FINDINGS_revenue_scale.md` §6.1.
+- **Colour transform is PER-METRIC** (`transform` in each `METRICS` entry, read by
+  `scaleT`/`legendGradient`; DECIDED 2026-07-01 ×2): **sqrt** for the right-skewed
+  money metrics (revenue clamp `$50k`, value `$4M`, ≈ p97.5 — FINDINGS §6.1), **linear**
+  for bounded near-symmetric road supply (clamp 53 m/acre — FINDINGS §6.3). The legend
+  gradient bar re-renders on metric switch because the transform changes with it
+  (`applyMetric`). Set-aside land is off the ramp entirely (grey, below). Height stays
+  LINEAR for every metric.
 - **deck.gl gotcha:** colour accessors that depend on runtime state need that state in
   their `updateTriggers` (the data reference is stable, so deck.gl skips the re-render
   otherwise). `getFillColor` uses `[state.metric, state.ramp, state.residential]`.
@@ -66,6 +67,26 @@ differential confound (the motivating problem in `SPEC_revenue.md`). Off by defa
 - **Still open** (`TODO.md`): the fuller "Color Adjustment vs lens controls" hierarchy +
   self-describing state labels; the toggle is currently a plain button. Alpha / grey /
   clamp-percentile are easy tunables. Not yet visually verified in a browser.
+
+### Roads metric (services lens v1, built 2026-07-01)
+Third entry in the metric toggle: **Roads** = `road_m_per_acre` (city-maintained
+collector + local centreline metres per boundary acre; arterials excluded as shared
+infrastructure — `SPEC_services.md`). Display decisions:
+- **Colour LINEAR, clamp 53 m/acre** (≈ p97.5; FINDINGS §6.3 — sqrt/log over-correct
+  a bounded, near-symmetric quantity). Per-metric `fmt` renders `38 m / acre` style
+  values in tooltip + legend (`legend-min` swaps `$0` ↔ `0 m`).
+- **Height parity kept:** `elevationScale: 137` puts the max (60 m/acre) at the same
+  ~8.2 km as the other metrics' peaks. Because the distribution is near-symmetric
+  (not spike-shaped), this view reads as a dense mid-height forest — that IS the
+  data's shape; the scale is the tunable if it feels heavy.
+- **Set-aside hoods stay grey** on the roads metric too (v1 lean — consistency across
+  metrics; revisit when the V2 revenue-per-road-metre ratio forces the question).
+- **Graceful degradation:** the Roads button hides itself when the served GeoJSON
+  lacks `road_m_per_acre` (pre-services data file) — never offer a metric that can't
+  render.
+- The residential lens composes: with the lens on, colour rescales to the residential
+  subset's p97.5 of the *road* metric (same `residentialClampFor` path).
+- Headless-verified via Playwright (default + roads views) 2026-07-01.
 
 ---
 

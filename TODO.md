@@ -30,9 +30,18 @@ _Last reconciled: 2026-07-01_
   - [x] ~~Skew check on `road_m_per_acre` → pick colour transform~~ — DECIDED
     2026-07-01: **linear** (raw skew −0.29; sqrt/log over-correct; FINDINGS §6.3).
     Clamp ≈ p97.5 = 53 m/acre.
-  - [ ] Frontend: third metric in the Revenue/Value toggle; set-aside grey kept
-    in v1 (lean, revisit at V2).
-  - [ ] Docs: `DATA.md` §6, `ARCHITECTURE.md` module entry, status.json vintage.
+  - [x] ~~Frontend: third metric in the Revenue/Value toggle~~ — done 2026-07-01
+    (per-metric transforms, linear roads, button hides on pre-services data,
+    headless-verified; set-aside grey kept per the v1 lean).
+  - [x] ~~Docs: `DATA.md` §6, `ARCHITECTURE.md` module entry, status.json
+    vintage~~ — done 2026-07-01. Resolution on vintage: **no roads year field**
+    — the network is a live feed with no roll-year semantics; provenance =
+    `last_checked` (recorded in SPEC_services + DATA.md §6).
+  - [ ] **V2 fast follow (not started): revenue per road-metre** — needs the
+    day-one answer for set-aside / near-zero-revenue hoods (ratio explodes);
+    see SPEC_services.md.
+  - [ ] Merge `feature/services-lens` → master via PR when Peter's eyeballed
+    the Roads view (http://localhost:8799, server running 2026-07-01).
 
 - [ ] **SCOPE: composition numbers now; full zoning POLYGON layer in the viewer is a
   SEPARATE later product decision** — it changes the viz from "revenue/acre" to
