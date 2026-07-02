@@ -46,6 +46,14 @@ diagram exactly where `load_zoning.py` does — a raw GeoJSON (`9j8t-zm52`) over
 against the boundary frame, producing per-hood columns merged in
 `join_and_calculate` (`road_m_total`; `road_m_per_acre` computed there).
 
+**One metric exists ONLY in the browser:** the Ratio view's revenue per road
+metre (`revenue_per_acre / road_m_per_acre` — the acres cancel) is derived
+client-side in `web/index.html` from the two published GeoJSON columns. No
+pipeline stage computes or exports it; its scale anchors (log-colour p2.5–p97.5,
+height parity) are computed at page load from the served data (`ratioScale()`),
+so they track weekly refreshes automatically. Transform decision + the 5 m/acre
+road-base artifact floor: FINDINGS §6.4.
+
 ---
 
 ## Modules

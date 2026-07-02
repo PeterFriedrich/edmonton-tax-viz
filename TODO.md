@@ -8,7 +8,7 @@ check `git` / `pytest` directly — do not restate it here, it only goes stale.
 Session summaries (`session-summary/`) are dated *narratives* of what happened and
 why. This file owns *what's left*. When they disagree, this file wins.
 
-_Last reconciled: 2026-07-01_
+_Last reconciled: 2026-07-02_
 
 ## Open work
 
@@ -37,9 +37,10 @@ _Last reconciled: 2026-07-01_
     vintage~~ — done 2026-07-01. Resolution on vintage: **no roads year field**
     — the network is a live feed with no roll-year semantics; provenance =
     `last_checked` (recorded in SPEC_services + DATA.md §6).
-  - [ ] **Display pivot (2026-07-01): two-plane stackable architecture**
-    (SPEC_services.md "Display architecture — REVISED"). Road prisms RETIRED;
-    services render as stackable ground layers, money prisms above. Staging:
+  - [x] **Display pivot (2026-07-01): two-plane stackable architecture — COMPLETE
+    2026-07-02** (SPEC_services.md "Display architecture — REVISED"; final control
+    model = three discrete views **Money | Roads | Ratio**, UI.md "Services
+    views"). Road prisms RETIRED; staging as executed:
     - [ ] (1) Roads ground layer:
       - [x] ~~pipeline: slim `web/data/roads.geojson` export (dissolved per
         hood × arterial/access, simplified 8 m, 5 dp)~~ — done 2026-07-02
@@ -63,6 +64,38 @@ _Last reconciled: 2026-07-01_
       a second service exists — reopen this staging list then.
   - [ ] Merge `feature/services-lens` → master via PR once the ground-layer
     view is in and Peter's eyeballed it (`cd web && python3 -m http.server 8799`).
+
+- [ ] **Views & lenses follow-ons (Peter, 2026-07-02).** Three asks on top of the
+  shipped Money | Roads | Ratio views:
+  - [ ] **Residential-only lens in the Ratio view.** The lens currently applies
+    to Money only (`buildLayers` ignores `state.residential` in Roads/Ratio;
+    the button still toggles state — confusing, tighten that too). Design to
+    settle: fade non-residential hoods' ratio prisms to the uniform lens grey
+    (the established convention), and decide whether the log colour anchors
+    **rescale to the residential subset** (a residential variant of
+    `ratioScale()`, like `residentialClampFor` does for money clamps).
+    Residential-only $/road-metre is arguably the fairest infill-vs-greenfield
+    comparison in the whole project — the non-res mill-rate skew (FINDINGS
+    §6.2) inflates the ratio exactly where non-res land sits.
+  - [ ] **More service layers (water / drainage / transit / …).** Each needs its
+    own SPEC_services section (dataset, filters, locked decisions), a
+    per-hood supply column, and a slim web export. Decide the UI shape when
+    the second service arrives: another view button doesn't scale — likely
+    the Roads view generalizes to a "Services" view with per-service
+    checkboxes (the original stackable idea returns, one level down). That's
+    also the trigger to define "total services" and reopen the ratio's
+    denominator (currently roads-only by construction).
+  - [ ] **Use-mix lens: surface each neighbourhood's zoning composition.**
+    A lens/view that shows what the land IS (res / non-res / institutional /
+    reserve mix), not what it yields. **Pipeline prerequisite:** `load_zoning`
+    computes the full composition (`frac_never/notyet/inst/res/nonres`, sums
+    to 1) but `join_and_calculate` exports only the set-aside + residential
+    columns — extend `ZONING_COLUMNS`/`SLIM_COLUMNS` + regen. Display design
+    open: dominant-use categorical colour vs. a mix/diversity index vs.
+    per-hood blended colour; also whether nonres should first split
+    commercial/industrial (ANALYSIS_BACKLOG item 1 wants that split anyway).
+    NOTE: this is hood-level composition — it does NOT reopen the "full
+    zoning polygon overlay" scope decision below; keep them decoupled.
 
 - [ ] **SCOPE: composition numbers now; full zoning POLYGON layer in the viewer is a
   SEPARATE later product decision** — it changes the viz from "revenue/acre" to
