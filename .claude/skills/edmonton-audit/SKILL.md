@@ -19,6 +19,13 @@ The goal of each audit run is a **single, deep, actionable verdict** on one aspe
 of the pipeline. Do not attempt a broad sweep; pick one focus, go deep, produce
 a clear pass/fail + specific fix if needed.
 
+> **Related, but different job:** `docs/DATA_INTEGRITY.md` is a standalone,
+> read-cold audit *brief* that maps the whole system and ranks the joints most
+> likely to be silently wrong — use it to decide *where* the risk is (or hand it
+> to another model for a broad verification sweep). This skill is the *deep dive*
+> on ONE target once you've picked it. If you're asked "where should I look?",
+> that doc's ranking (T1–T7) is a better starting point than a cold sweep here.
+
 ---
 
 ## Audit Targets (pick ONE per run)
