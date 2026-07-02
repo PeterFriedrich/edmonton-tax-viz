@@ -83,6 +83,7 @@
   <div id="toggle" class="panel">
     <button data-metric="revenue_per_acre" class="active">Revenue</button>
     <button data-metric="value_per_acre">Value</button>
+    <button data-metric="road_m_per_acre" title="City-maintained collector + local road; arterials excluded as shared infrastructure">Roads</button>
   </div>
 
   <div id="palette" class="panel">
@@ -98,7 +99,7 @@
   <div id="legend" class="panel">
     <div id="legend-label">Revenue per acre</div>
     <div class="bar"></div>
-    <div class="scale"><span>$0</span><span id="legend-max">$50k+</span></div>
+    <div class="scale"><span id="legend-min">$0</span><span id="legend-max">$50k+</span></div>
     <div class="aside"><span class="sw"></span><span>Set aside — natural / undeveloped land</span></div>
   </div>
 
@@ -111,10 +112,18 @@
     const CENTER = [-113.50, 53.52]; // Edmonton, from the data centroid
 
     // Per-metric display config. The clamp (colour saturation) sits at the same
-    // percentile (~p97.5) for both metrics, and the elevation scale is set so the
-    // tallest prism (Downtown in both) reaches the same height — so toggling is a
-    // fair visual comparison, not an arbitrary rescale. Both elevation curves stay
-    // LINEAR (the project's honesty choice — Downtown's spike IS the signal).
+    // percentile (~p97.5) for every metric, and the elevation scale is set so the
+    // tallest prism reaches the same height — so toggling is a fair visual
+    // comparison, not an arbitrary rescale. All elevation curves stay LINEAR
+    // (the project's honesty choice — Downtown's spike IS the signal).
+    //
+    // `transform` is the COLOUR transform, decided per metric from its skew
+    // (FINDINGS §6.1 / §6.3): money metrics are right-skewed → sqrt; road supply
+    // is bounded and near-symmetric → linear. `fmt` renders values for the
+    // tooltip + legend.
+    const fmtMoney = v => "$" + Math.round(v).toLocaleString();
+    const fmtMetres = v => Math.round(v).toLocaleString() + " m";
+
     const METRICS = {
       revenue_per_acre: {
         key: "revenue_per_acre",
@@ -125,9 +134,12 @@
                "Height is linear; colour is square-root–scaled to reveal the low end. " +
                "Grey = set-aside natural/undeveloped land, excluded from the scale.",
         legendLabel: "Revenue per acre",
+        legendMin: "$0",
         legendMax: "$50k+",
         colorClamp: 50_000,
         elevationScale: 0.033,
+        transform: "sqrt",
+        fmt: fmtMoney,
       },
       value_per_acre: {
         key: "value_per_acre",
@@ -138,9 +150,28 @@
                "to reveal the low end. Grey = set-aside natural/undeveloped land, " +
                "excluded from the scale.",
         legendLabel: "Value per acre",
+        legendMin: "$0",
         legendMax: "$4M+",
         colorClamp: 4_000_000,
         elevationScale: 0.0006,
+        transform: "sqrt",
+        fmt: fmtMoney,
+      },
+      road_m_per_acre: {
+        key: "road_m_per_acre",
+        title: "Edmonton: Road Supply per Acre",
+        blurb: "Height and colour show metres of city-maintained neighbourhood road " +
+               "(collector + local; arterials are excluded as city-wide shared " +
+               "infrastructure) divided by neighbourhood area. Tall, bright districts " +
+               "carry the most road per unit of land. Height and colour are both " +
+               "linear. Grey = set-aside natural/undeveloped land.",
+        legendLabel: "Road metres per acre",
+        legendMin: "0 m",
+        legendMax: "53 m+",
+        colorClamp: 53,          // ≈ p97.5 (FINDINGS §6.3)
+        elevationScale: 137,     // max 60.0 m/acre → ~8,220 m, height parity
+        transform: "linear",
+        fmt: fmtMetres,
       },
     };
 
@@ -199,11 +230,14 @@
     // unambiguously. Height stays their true (low) value — honest, de-emphasized.
     const SET_ASIDE_COLOR = [104, 108, 122];
 
-    // Colour transform: SQRT of the clamped ratio (DECIDED 2026-07-01, FINDINGS
-    // §6.1). The taxable distribution is right-skewed but NOT log-normal at the
-    // 0.90 set-aside threshold (log over-corrects); sqrt tames the skew without
-    // crushing the low end. Height stays LINEAR regardless.
-    const scaleT = (value, clamp) => Math.sqrt(Math.max(0, Math.min(1, value / clamp)));
+    // Colour transform of the clamped ratio, per metric (FINDINGS §6.1 / §6.3):
+    // sqrt for the right-skewed money metrics (log over-corrects at the 0.90
+    // set-aside threshold), linear for bounded near-symmetric road supply.
+    // Height stays LINEAR regardless.
+    function scaleT(value, clamp) {
+      const t = Math.max(0, Math.min(1, value / clamp));
+      return METRICS[state.metric].transform === "sqrt" ? Math.sqrt(t) : t;
+    }
 
     // Interpolate the active ramp at t in [0,1].
     function rampColorAt(t) {
@@ -263,20 +297,18 @@
       return p.is_set_aside ? SET_ASIDE_COLOR : colorFor(p[cfg.key], clamp);
     }
 
-    // Legend gradient for the CURRENT ramp under the sqrt transform: sample the
-    // bar in *value* space (linear $ from 0 to clamp) so the displayed colour at
-    // each dollar position matches what a neighbourhood of that value renders.
+    // Legend gradient for the CURRENT ramp under the CURRENT metric's transform:
+    // sample the bar in *value* space (linear from 0 to clamp) so the displayed
+    // colour at each position matches what a neighbourhood of that value renders.
     function legendGradient() {
       const N = 16, parts = [];
       for (let i = 0; i <= N; i++) {
-        const p = i / N;                       // fraction of the clamp ($ position)
-        const c = rampColorAt(Math.sqrt(p));   // scaleT(p*clamp, clamp) === sqrt(p)
+        const p = i / N;                 // fraction of the clamp (value position)
+        const c = rampColorAt(scaleT(p, 1));  // scaleT(p*clamp, clamp) === scaleT(p, 1)
         parts.push(`rgb(${c[0]},${c[1]},${c[2]}) ${Math.round(p * 100)}%`);
       }
       return "linear-gradient(90deg," + parts.join(",") + ")";
     }
-
-    const fmt = v => "$" + Math.round(v).toLocaleString();
 
     // --- base map (no basemap tiles for v1 — just a dark backdrop) -----------
     const map = new maplibregl.Map({
@@ -380,7 +412,7 @@
       const cfg = METRICS[state.metric];
       return {
         className: "tip",
-        html: `<b>${p.neighbourhood_name}</b><br/>${fmt(p[cfg.key])} / acre`,
+        html: `<b>${p.neighbourhood_name}</b><br/>${cfg.fmt(p[cfg.key])} / acre`,
       };
     }
 
@@ -393,6 +425,9 @@
       document.getElementById("title-h").textContent = cfg.title;
       document.getElementById("title-p").textContent = cfg.blurb;
       document.getElementById("legend-label").textContent = cfg.legendLabel;
+      document.getElementById("legend-min").textContent = cfg.legendMin;
+      // The colour transform is per-metric, so the gradient bar changes with it.
+      document.querySelector("#legend .bar").style.background = legendGradient();
       refreshLegend();
       document.querySelectorAll("#toggle button").forEach(b =>
         b.classList.toggle("active", b.dataset.metric === metric));
@@ -404,7 +439,7 @@
     function refreshLegend() {
       const cfg = METRICS[state.metric];
       document.getElementById("legend-max").textContent =
-        state.residential ? fmt(residentialClampFor(cfg.key)) + "+" : cfg.legendMax;
+        state.residential ? cfg.fmt(residentialClampFor(cfg.key)) + "+" : cfg.legendMax;
       const label = document.querySelector("#legend .aside span:last-child");
       const sw = document.querySelector("#legend .aside .sw");
       if (state.residential) {
@@ -438,6 +473,13 @@
 
     map.on("load", async () => {
       state.data = await fetch(DATA_URL).then(r => r.json());
+
+      // A data file from before the services lens has no road_m_per_acre —
+      // hide the Roads toggle rather than offer a metric that can't render.
+      if (!state.data.features.some(f => f.properties.road_m_per_acre != null)) {
+        const b = document.querySelector('#toggle button[data-metric="road_m_per_acre"]');
+        if (b) b.style.display = "none";
+      }
 
       overlay = new deck.MapboxOverlay({
         interleaved: true,
