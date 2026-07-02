@@ -193,6 +193,30 @@ its residential range is essentially the whole-city range. The mill-rate skew is
 **revenue** phenomenon, exactly where theory places it. (This is also why the
 residential lens visibly re-spreads the Revenue view but barely changes Value.)
 
+### 6.3 Road supply is near-symmetric — DECIDED: linear colour (2026-07-01)
+
+`road_m_per_acre` (services lens, `SPEC_services.md`: city-maintained
+collector + local metres per boundary acre) ran through the same biased-skew
+test as §6.1 (`scripts/investigate_skew.py`, roads now in `METRICS`):
+
+| set | n | raw | sqrt | log |
+|---|---|---|---|---|
+| all | 400 | **−0.29** | −0.92 | −3.00 |
+| excl set-aside | 357 | **−0.43** | −1.16 | −4.77 |
+
+Raw is already the best-behaved by a wide margin — sqrt and log both
+over-correct into the left tail. Unlike revenue (5+ orders of magnitude),
+road supply is **physically bounded**: an acre only fits so much road
+(observed 0–60.0 m/acre, median 32.6, max/median 1.84×). A bounded,
+near-symmetric quantity needs no compression. **Colour for
+`road_m_per_acre` is LINEAR** (same decision criterion as §6.1 — minimize
+|skew| — opposite outcome). Clamp candidate ≈ p97.5 = 53 m/acre, per the
+established convention. Height, as always, stays linear.
+
+(The 6 zero-road hoods: 5 are set-aside — river valley / ring-road margins —
+and render grey anyway; zeros sit honestly at the bottom of a linear ramp,
+another reason no log.)
+
 ## 7. Context: Urban3
 
 Urban3's value-per-acre work is **parcel-level** (e.g. the Asheville comparison: an
