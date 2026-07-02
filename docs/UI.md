@@ -69,57 +69,52 @@ differential confound (the motivating problem in `SPEC_revenue.md`). Off by defa
   self-describing state labels; the toggle is currently a plain button. Alpha / grey /
   clamp-percentile are easy tunables. Not yet visually verified in a browser.
 
-### Roads ground layer + service layers panel (built 2026-07-02, display pivot stages 1–2)
+### Services views: Money | Roads | Ratio (built 2026-07-02, display pivot complete)
 The road-prism metric view built earlier on 2026-07-01 was **retired the same day**
-(`SPEC_services.md` "Display architecture — REVISED"): road supply renders as the
-**actual network on the ground plane**, not as extrusions. As built:
-- **`#layers` panel** ("Service layers", below the lens button): stackable checkboxes,
-  Roads first — later services add a checkbox + a `state.layers` key, not a rework.
-  Default OFF; the initial view is unchanged.
+(`SPEC_services.md` "Display architecture — REVISED"). After two intermediate
+iterations (a Roads checkbox + free opacity slider; then a slider-at-0% roads-only
+mode), Peter settled the control model as **three discrete views** (`#views`
+buttons, below the lens button; `state.view`):
+
+- **Money** (default): the classic revenue/value prisms, always opaque. Metric
+  toggle, palette, residential lens all behave as before. Hood tooltip: active
+  metric + `19.2 road m / acre` + `$967 revenue / road metre` (ratio omitted when
+  road base is 0 / columns absent; set-aside tooltip unchanged).
+- **Roads**: the network alone on the ground — **no prism layers at all** (an
+  opacity-0 layer still tessellates, draws, picks, and auto-highlights; dropping
+  them is the honest render and the perf win). Arterials neutral grey
+  (`ARTERIAL_COLOR`, 2 px, no metric); collector + local coloured by their hood's
+  `road_m_per_acre` on the active ramp — **LINEAR, clamp 53** (FINDINGS §6.3),
+  1.2 px. Legend: road scale. Tooltip: road amount only. Title/blurb swap with the
+  view (`VIEWS` object).
+- **Ratio** (stage 3, the synthesis): ghost prisms of **revenue per road metre**
+  (`revenue_per_acre / road_m_per_acre`, client-side — no pipeline change) over
+  the network in all-neutral grey. Prism **colour is LOG** between the kept
+  subset's p2.5–p97.5 (≈ $264–$3,253; FINDINGS §6.4 — first log metric, skew
+  19.7 → 0.32), **height linear** (max kept ≈ $18k at the standard ~8.2 km peak;
+  `ratioScale()` computes anchors at runtime, cached). **Off-scale grey + flat:**
+  set-aside hoods AND hoods below `RATIO_ROAD_FLOOR = 5 m/acre` (denominator
+  artifacts — WESTVIEW VILLAGE hits $1.3M/m on a near-zero road base). Default
+  prism opacity **5%**, adjustable via the "Money plane" slider (`#layers` panel,
+  visible in this view only). Tooltip: ratio + both components, or the off-scale
+  reason. Legend: log gradient, `≤ $lo` / `$hi+`.
+
+Shared machinery:
 - **Lazy load:** `web/data/roads.geojson` (1.6 MB; ~400 dissolved features, slim
-  `n`/`t`/`v` props — ARCHITECTURE `export_roads_web`) is fetched once, on first
-  enable. Initial page payload unchanged.
-- **Ground `GeoJsonLayer`** (first in the layer stack, z=0 under the prisms):
-  **arterials neutral grey** (`ARTERIAL_COLOR`, 2 px — context skeleton, no metric);
-  **collector + local coloured by their hood's `road_m_per_acre`** on the active
-  ramp — **LINEAR, clamp 53 m/acre** (≈ p97.5; FINDINGS §6.3 — sqrt/log over-correct
-  a bounded, near-symmetric quantity), 1.2 px. The palette switcher applies to the
-  network too.
-- **The roads layer is NOT pickable** — deck.gl picking ignores opacity, so a prism
-  always wins the hover (even at 0% opacity) and a road tooltip could never fire.
-  Instead the **hood tooltip carries the road story** (2026-07-02): active metric +
-  `19.2 road m / acre` + `$967 revenue / road metre` — the acres cancel, so this is
-  the stage-3 ratio metric previewed at tooltip level. Ratio omitted when
-  `road_m_per_acre` is 0 or the columns are absent; set-aside tooltip unchanged.
-- **Money-plane opacity slider** (same panel, "Prisms", 0–100%): layer-level
-  `opacity` on the prism fill AND the roof-edge rings (outlines floating over a
-  ghosted plane read as clutter). This is what makes the ground plane *visible* —
-  verified headless: at 100% prism opacity the network only peeks through the 45 m
-  setback gaps (~0.5% of pixels).
-- **Auto-nudge:** enabling Roads with the slider untouched at 100% drops it to
-  **45%** (visibly — the slider moves); disabling the last ground layer restores
-  100% if the nudge is still what set it; any manual slider move cancels the
-  auto behaviour (`opacityAutoSet`). Prevents the "toggle appears to do nothing"
-  trap without taking the control away from the user.
-- **Roads-only mode (built 2026-07-02):** Roads on + slider at **0%** genuinely
-  DROPS the prism + roof-edge layers — deck.gl still tessellates, draws, picks,
-  and auto-highlights an opacity-0 layer (hover resurrected ghost prisms; also
-  wasted GPU on weak hardware), so 0% is a layer swap, not a fade. A flat
-  invisible hood layer (`hood-hover`, transparent fill, `depthTest: false`)
-  keeps the hood tooltips (with road numbers + ratio) and lights the hovered
-  neighbourhood up over the network (`highlightColor` white α40). The legend
-  swaps to the road scale (label "Road metres per acre", linear gradient,
-  0–53 m+, arterial-grey swatch) via `roadsOnly()` in `refreshLegend` /
-  `legendGradient`, and restores on leaving. Known rough edge: the title/blurb
-  still describe the active money metric in this mode.
-- Set-aside hoods keep their grey prisms; the network renders underneath like
-  everywhere else (a set-aside hood's sparse roads are themselves informative).
-- The old Roads metric-toggle button, its `METRICS` entry (`elevationScale: 137`),
-  and the hide-if-absent fallback are **removed**.
-- Headless-verified via Playwright (layer on/off, ramp switch with layer on,
-  auto-nudge + restore) 2026-07-02. Known composition quirk: translucent extruded
-  prisms have the same deck.gl depth-ordering quirks as the residential-lens fade —
-  accepted there, same acceptance here.
+  `n`/`t`/`v` props — ARCHITECTURE `export_roads_web`) fetched once, on first
+  non-Money view. Initial page payload unchanged.
+- **`hood-hover` layer** (Roads + Ratio views): flat, invisible, pickable —
+  carries the tooltips and lights the hovered hood (white α40, `depthTest:
+  false`). The road lines and ratio prisms themselves are NOT pickable (picking
+  ignores opacity; a prism always beat the roads, which is how this design
+  started).
+- Metric toggle in non-Money views only marks state (applies on return);
+  residential lens likewise ignored outside Money. Roads/Ratio buttons hide
+  when the served GeoJSON predates the services columns.
+- Headless-verified via Playwright (all three views: layer stacks, legend swaps,
+  tooltips incl. floored/set-aside cases, slider visibility) 2026-07-02.
+  Translucent-prism depth-ordering quirks: same acceptance as the residential
+  lens fade.
 
 ---
 

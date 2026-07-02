@@ -65,24 +65,24 @@ tracks it weekly. Vertex floor: most remaining vertices are path endpoints
 at junctions, which no simplify tolerance can remove — next lever, if ever
 needed, is zoom-dependent rendering.
 
-*Stages 1–2 frontend as built (2026-07-02, `web/index.html`; display details in
-`UI.md`):* `#layers` service-layers panel (Roads checkbox, default off,
-lazy-fetch on first enable); ground `GeoJsonLayer` — arterials neutral,
-access roads on the active ramp at the hood's `road_m_per_acre` (linear,
-clamp 53); road prisms fully removed from the metric toggle. Stage 2 landed
-with it: a **money-plane opacity slider** (prism fill + roof edges), because
-headless verification showed the network is ~invisible under opaque prisms
-(only the 45 m setback gaps show). Enabling Roads auto-nudges opacity to 45%
-when the slider is untouched; manual moves cancel the auto behaviour.
-Remaining: stage 3 (ratio view) — its metric (revenue per road metre;
-`revenue_per_acre / road_m_per_acre`, acres cancel) is already previewed in
-the hood tooltip as of 2026-07-02. The roads layer itself is not pickable:
-picking ignores opacity, so a prism always wins the hover; road numbers
-live in the hood tooltip. At slider 0% + Roads on, the map enters
-**roads-only mode**: prism layers are dropped outright (opacity 0 still
-renders and picks — a fade is not a removal) and a flat invisible hood
-layer keeps tooltips + a hover highlight; the legend swaps to the road
-scale (UI.md has the details).
+*Frontend as built — ALL THREE STAGES (2026-07-02, `web/index.html`; full
+display details in `UI.md` "Services views"):* after two intermediate
+control models (Roads checkbox + opacity slider; slider-at-0% roads-only
+mode), Peter settled on **three discrete views** — **Money** (the classic
+prisms, opaque), **Roads** (the network alone, access roads ramp-coloured by
+`road_m_per_acre`, no prism layers at all), and **Ratio** (stage 3: ghost
+prisms — default 5% opacity, slider-adjustable — of **revenue per road
+metre** over the all-neutral network). The ratio is computed client-side
+from the two published columns; colour is LOG (FINDINGS §6.4 — skew 19.7,
+log 0.32; anchors p2.5–p97.5 of the kept subset, runtime-computed), height
+linear. Set-aside hoods and hoods with `road_m_per_acre < 5`
+(`RATIO_ROAD_FLOOR`; denominator artifacts — WESTVIEW VILLAGE $1.3M/m)
+render grey + flat, off-scale. Road geometry lazy-loads on first non-Money
+view; a flat invisible hood layer carries tooltips + hover highlight in the
+Roads/Ratio views (roads/ratio prisms are not pickable — picking ignores
+opacity). "Total services" definition remains deferred until a second
+service exists; revenue-per-road-metre is its single-service case, now
+shipped.
 
 This opens the **cost side** of the fiscal picture — explicitly out of scope in
 `SPEC_phase1.md` ("no service cost allocation yet — revenue only"). It is scoped

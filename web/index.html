@@ -20,7 +20,7 @@
     #title { top: 20px; left: 22px; max-width: 360px; }
     #title h1 { margin: 0 0 4px; font-size: 19px; font-weight: 600; letter-spacing: 0.2px; }
     #title p  { margin: 0; font-size: 12.5px; line-height: 1.5; color: #9a9ab0; }
-    #toggle, #palette, #lens, #layers {
+    #toggle, #palette, #lens, #views, #layers {
       right: 22px; display: flex; pointer-events: auto;
       background: rgba(12,12,20,0.7); border: 1px solid #2a2a3a;
       border-radius: 6px; overflow: hidden;
@@ -28,15 +28,22 @@
     #toggle { top: 20px; }
     #palette { top: 58px; }
     #lens { top: 96px; }
+    #views { top: 134px; }
+    #views button {
+      appearance: none; border: 0; background: transparent; color: #9a9ab0;
+      font: 11.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      padding: 6px 12px; cursor: pointer; transition: background 0.12s, color 0.12s;
+    }
+    #views button:hover { color: #e8e8ef; }
+    #views button.active { background: #fcd278; color: #16111a; font-weight: 600; }
     #layers {
-      top: 134px; flex-direction: column; padding: 6px 12px; gap: 4px;
-      font-size: 11.5px; color: #9a9ab0;
+      top: 172px; flex-direction: column; padding: 6px 12px; gap: 4px;
+      font-size: 11.5px; color: #9a9ab0; display: none; /* ratio view only */
     }
     #layers .hd { font-size: 10px; text-transform: uppercase; letter-spacing: 0.8px; color: #6a6a80; }
     #layers label { display: flex; align-items: center; gap: 7px; cursor: pointer; padding: 2px 0; }
     #layers label:hover { color: #e8e8ef; }
     #layers input { accent-color: #fcd278; margin: 0; }
-    #layers .sep { border-top: 1px solid #2a2a3a; margin: 4px -12px 3px; }
     #layers input[type="range"] { width: 86px; cursor: pointer; }
     #layers .pct { min-width: 34px; text-align: right; color: #6a6a80; font-variant-numeric: tabular-nums; }
     #toggle button, #palette button, #lens button {
@@ -106,14 +113,15 @@
     <button data-lens="residential" title="Fade non-residential neighbourhoods so residential land compares like-to-like">Residential only</button>
   </div>
 
+  <div id="views" class="panel">
+    <button data-view="money" class="active" title="Revenue/value prisms — the money plane">Money</button>
+    <button data-view="roads" title="The road network on the ground: collector + local roads coloured by their neighbourhood's road metres per acre; arterials neutral">Roads</button>
+    <button data-view="ratio" title="Ghost prisms of revenue per road metre over the neutral road network">Ratio</button>
+  </div>
+
   <div id="layers" class="panel">
-    <span class="hd">Service layers</span>
-    <label title="City-maintained road network on the ground plane: collector + local roads coloured by their neighbourhood's road metres per acre; arterials neutral (shared infrastructure, no metric)">
-      <input type="checkbox" data-layer="roads" /> Roads
-    </label>
-    <div class="sep"></div>
     <span class="hd">Money plane</span>
-    <label title="Prism opacity — lower it to see the service layers on the ground through the revenue/value prisms">
+    <label title="Prism opacity — how strongly the ratio prisms overlay the road network">
       Prisms
       <input type="range" id="prism-opacity" min="0" max="100" value="100" />
       <span class="pct" id="prism-opacity-val">100%</span>
@@ -181,38 +189,68 @@
       },
     };
 
-    // --- roads ground layer (services lens; SPEC_services.md display arch) ---
-    // Road supply renders as the actual network on the ground plane, not a
-    // prism metric (the prism view was retired 2026-07-01). Lazy-loaded from
-    // ROADS_URL on first enable. Access (collector + local) segments take the
-    // active ramp at their hood's road_m_per_acre — LINEAR, clamp = p97.5
-    // (FINDINGS §6.3); arterials render neutral (shared infrastructure — they
-    // carry no metric, only context).
+    // --- services lens views (SPEC_services.md display architecture) --------
+    // Three views. "money": the classic revenue/value prisms. "roads": the
+    // road network alone on the ground, access (collector + local) segments
+    // coloured by their hood's road_m_per_acre on the active ramp — LINEAR,
+    // clamp = p97.5 (FINDINGS §6.3); arterials neutral (shared infrastructure,
+    // no metric). "ratio": the stage-3 synthesis — ghost prisms (default 5%
+    // opacity, slider-adjustable) of REVENUE PER ROAD METRE over the network
+    // in all-neutral grey. Road geometry lazy-loads from ROADS_URL on first
+    // non-money view.
     const ROADS_URL = "./data/roads.geojson";
     const ROAD_CLAMP = 53;
     const ARTERIAL_COLOR = [116, 120, 132, 170];
+
+    // Ratio view: revenue_per_acre / road_m_per_acre — the acres cancel, so
+    // this is $ of municipal revenue per metre of city-maintained access road.
+    // The distribution is extremely right-skewed and ~log-normal (FINDINGS
+    // §6.4: raw skew 19.7, sqrt 16.2, log 0.32) → colour is LOG-scaled between
+    // the kept subset's p2.5 and p97.5 (computed from the data, cached).
+    // Height stays linear (the honesty rule). Hoods with road_m_per_acre
+    // below RATIO_ROAD_FLOOR produce denominator artifacts (WESTVIEW VILLAGE:
+    // $1.3M/m on a near-zero road base) — greyed off-scale, height 0.
+    const RATIO_ROAD_FLOOR = 5; // m/acre; below this the ratio is an artifact
+    const ratioOf = p => p.revenue_per_acre / p.road_m_per_acre;
+    const ratioKept = p =>
+      p.road_m_per_acre != null && p.road_m_per_acre >= RATIO_ROAD_FLOOR &&
+      p.revenue_per_acre != null && !p.is_set_aside;
+    const fmtPerMetre = v => "$" + Math.round(v).toLocaleString() + " / road metre";
+
+    // Per-view chrome. money's title/blurb stay metric-driven (METRICS).
+    const VIEWS = {
+      roads: {
+        title: "Edmonton: The Road Network",
+        blurb: "City-maintained roads. Collector and local roads are coloured by " +
+               "their neighbourhood's road metres per acre — brighter means more " +
+               "road to maintain per unit of land (colour is linear). Arterials " +
+               "are shown in neutral grey: shared infrastructure that any " +
+               "development pattern entails, excluded from the measure.",
+        opacity: null, // no prisms in this view
+      },
+      ratio: {
+        title: "Edmonton: Revenue per Road Metre",
+        blurb: "Ghost prisms show municipal property-tax revenue per metre of " +
+               "city-maintained neighbourhood road (collector + local) — how much " +
+               "revenue backs each metre of the network below. Height is linear; " +
+               "colour is log-scaled. Grey flat = set-aside land or too little " +
+               "road base for a meaningful ratio.",
+        opacity: 5, // ghost prisms by default; slider adjusts
+      },
+    };
 
     // Active metric defaults to revenue (matches the static HTML chrome above).
     // `residential` is the residential-only lens (off by default): when on,
     // non-residential hoods fade translucent so residential land compares
     // like-to-like without the Downtown / class-rate confound.
-    // `layers.roads` is the ground-plane roads toggle (stackable service
-    // layers — later services add a key here + a checkbox, not a rework).
-    // `prismOpacity` is the money-plane transparency (SPEC_services display
-    // architecture, stage 2): lowering it lets the ground-plane service
-    // layers show through the prisms.
+    // `view` selects the display mode (money | roads | ratio); `prismOpacity`
+    // is the ratio view's ghost-prism strength (money prisms are always
+    // opaque; the roads view has no prisms).
     const state = { metric: "revenue_per_acre", ramp: "current", residential: false,
-                    layers: { roads: false }, prismOpacity: 1, data: null };
+                    view: "money", prismOpacity: 1, data: null };
     let overlay;         // deck.gl MapboxOverlay, created on map load
     let roadsData = null;  // lazy-fetched roads FeatureCollection
     let roadsFetch = null; // in-flight fetch guard (single fetch, ever)
-
-    // Enabling a ground layer under fully-opaque prisms would look like a
-    // no-op (the network only peeks through the setback gaps), so the first
-    // enable nudges the opacity down — visibly, via the slider — unless the
-    // user has taken the slider over themselves.
-    const AUTO_OPACITY_PCT = 45;
-    let opacityAutoSet = false; // slider last moved by the nudge, not the user
 
     // Three neutral, luminance-sequential ramps to compare: dark = low, bright =
     // high, with no semantic good/bad hue (consistent with the linear-elevation
@@ -329,15 +367,21 @@
       return p.is_set_aside ? SET_ASIDE_COLOR : colorFor(p[cfg.key], clamp);
     }
 
-    // Legend gradient for the CURRENT ramp under the CURRENT transform:
-    // sample the bar in *value* space (linear from 0 to clamp) so the displayed
-    // colour at each position matches what a neighbourhood of that value renders.
-    // Roads-only mode shows the network's LINEAR road scale, not the metric's.
+    // Legend gradient for the CURRENT ramp under the CURRENT view's transform:
+    // sample the bar in *value* space (linear across the displayed range) so
+    // the colour at each position matches what that value renders. money =
+    // per-metric transform; roads = linear road scale; ratio = log $/metre.
     function legendGradient() {
       const N = 16, parts = [];
       for (let i = 0; i <= N; i++) {
-        const p = i / N;                 // fraction of the clamp (value position)
-        const c = rampColorAt(roadsOnly() ? p : scaleT(p, 1));  // scaleT(p*clamp, clamp) === scaleT(p, 1)
+        const p = i / N;                 // fraction of the displayed range
+        let t;
+        if (state.view === "roads") t = p;
+        else if (state.view === "ratio") {
+          const s = ratioScale();
+          t = ratioT(s.lo + p * (s.hi - s.lo));
+        } else t = scaleT(p, 1);         // scaleT(p*clamp, clamp) === scaleT(p, 1)
+        const c = rampColorAt(t);
         parts.push(`rgb(${c[0]},${c[1]},${c[2]}) ${Math.round(p * 100)}%`);
       }
       return "linear-gradient(90deg," + parts.join(",") + ")";
@@ -376,23 +420,17 @@
       return out;
     }
 
-    // Roads-only mode: the money plane is fully transparent AND the network is
-    // on. Prisms are genuinely DROPPED here — opacity 0 still tessellates,
-    // draws, picks, and auto-highlights (hover resurrects ghost prisms), so
-    // skipping the layers is both the honest render and the real perf win.
-    const roadsOnly = () => state.layers.roads && state.prismOpacity === 0;
-
-    // The roads ground layer (when enabled + loaded). Sits first in the layer
-    // array — z=0 under the prisms. Colour tracks the active ramp so the
-    // palette switcher applies to the network too.
-    function roadLayers() {
-      if (!state.layers.roads || !roadsData) return [];
+    // The roads ground layer (roads + ratio views). In the roads view access
+    // segments take the active ramp at their hood's load; in the ratio view
+    // the whole network is neutral — the prisms carry the signal there.
+    function roadLayers(neutral) {
+      if (!roadsData) return [];
       return [new deck.GeoJsonLayer({
         id: "roads-ground",
         data: roadsData,
         filled: false,
         stroked: true,
-        getLineColor: f => f.properties.t === "arterial"
+        getLineColor: f => (neutral || f.properties.t === "arterial")
           ? ARTERIAL_COLOR
           : rampColorAt(Math.max(0, Math.min(1, f.properties.v / ROAD_CLAMP))),
         // Arterials slightly wider: the neutral skeleton should read as
@@ -400,41 +438,89 @@
         getLineWidth: f => f.properties.t === "arterial" ? 2 : 1.2,
         lineWidthUnits: "pixels",
         lineWidthMinPixels: 1,
-        // Not pickable: a prism always sits on top of the network (picking
-        // ignores opacity), so a road tooltip could never actually fire —
-        // the road numbers live in the HOOD tooltip instead (tooltipFor).
+        // Not pickable: hood hover/tooltips come from the flat hood layer.
         pickable: false,
-        updateTriggers: { getLineColor: state.ramp },
+        updateTriggers: { getLineColor: [state.ramp, neutral] },
       })];
     }
 
-    // Build the layer stack for the current state. Rebuilt on any toggle.
+    // Flat invisible hood layer for the roads/ratio views: keeps the hood
+    // tooltips and lights the hovered neighbourhood up over the network —
+    // picking renders geometry with its own colours, so a fully-transparent
+    // fill still hovers fine. depthTest off: coplanar with the road lines.
+    function hoodHoverLayer() {
+      return new deck.GeoJsonLayer({
+        id: "hood-hover",
+        data: state.data,
+        filled: true,
+        stroked: false,
+        extruded: false,
+        getFillColor: [0, 0, 0, 0],
+        pickable: true,
+        autoHighlight: true,
+        highlightColor: [255, 255, 255, 40],
+        parameters: { depthTest: false },
+      });
+    }
+
+    // Ratio-view scale anchors, computed once from the kept subset (hoods on
+    // the road floor / set-aside excluded): log-colour between p2.5 and p97.5,
+    // linear height scaled so the max kept ratio reaches the other views'
+    // ~8.2 km peak (height parity across views).
+    let _ratioScale = null;
+    function ratioScale() {
+      if (_ratioScale) return _ratioScale;
+      const vals = state.data.features
+        .map(f => f.properties).filter(ratioKept).map(ratioOf)
+        .sort((a, b) => a - b);
+      const lo = quantile(vals, 0.025), hi = quantile(vals, 0.975);
+      return (_ratioScale = {
+        lo, hi,
+        logLo: Math.log(lo), logSpan: Math.log(hi) - Math.log(lo),
+        elevationScale: 8220 / vals[vals.length - 1],
+      });
+    }
+    const ratioT = v => {
+      const s = ratioScale();
+      return Math.max(0, Math.min(1, (Math.log(Math.max(v, s.lo)) - s.logLo) / s.logSpan));
+    };
+
+    // Build the layer stack for the current view. Rebuilt on any toggle.
     function buildLayers() {
+      if (state.view === "roads") {
+        // The network alone, coloured by load. No prisms at all — an
+        // opacity-0 layer would still tessellate, draw, pick, and highlight.
+        return [...roadLayers(false), hoodHoverLayer()];
+      }
+
+      if (state.view === "ratio") {
+        // Neutral network below, ghost prisms of $/road-metre above.
+        const ratioPrisms = new deck.GeoJsonLayer({
+          id: "ratio-extrusion",
+          data: state.data,
+          extruded: true,
+          filled: true,
+          stroked: false,
+          wireframe: false,
+          // Artifact/set-aside hoods: flat + grey (their ratio is either
+          // meaningless or off the fiscal comparison).
+          getElevation: f => ratioKept(f.properties) ? ratioOf(f.properties) : 0,
+          elevationScale: ratioScale().elevationScale,
+          getFillColor: f => ratioKept(f.properties)
+            ? rampColorAt(ratioT(ratioOf(f.properties)))
+            : SET_ASIDE_COLOR,
+          opacity: state.prismOpacity,
+          material: { ambient: 0.55, diffuse: 0.6, shininess: 32, specularColor: [60, 60, 70] },
+          pickable: false, // hood hover layer handles tooltips
+          updateTriggers: { getFillColor: state.ramp },
+        });
+        return [...roadLayers(true), ratioPrisms, hoodHoverLayer()];
+      }
+
+      // --- money view (default): the classic metric prisms -----------------
       const cfg = METRICS[state.metric];
       // Colour clamp: rescaled to the residential subset when the lens is on.
       const clamp = state.residential ? residentialClampFor(cfg.key) : cfg.colorClamp;
-
-      if (roadsOnly()) {
-        // No prisms, no roof edges. A flat invisible hood layer keeps the
-        // tooltips (with the road numbers + ratio) and lights the hovered
-        // neighbourhood up over the network — picking renders geometry with
-        // its own colours, so a fully-transparent fill still hovers fine.
-        const hoodHover = new deck.GeoJsonLayer({
-          id: "hood-hover",
-          data: state.data,
-          filled: true,
-          stroked: false,
-          extruded: false,
-          getFillColor: [0, 0, 0, 0],
-          pickable: true,
-          autoHighlight: true,
-          highlightColor: [255, 255, 255, 40],
-          // Coplanar with the road lines at z=0 — composite over them
-          // instead of depth-fighting.
-          parameters: { depthTest: false },
-        });
-        return [...roadLayers(), hoodHover];
-      }
 
       // Filled extruded prisms. No stroke: the setback gaps already give every
       // shape a dark border at ground level, so a footprint ring is redundant.
@@ -448,7 +534,6 @@
         getElevation: f => f.properties[cfg.key],
         elevationScale: cfg.elevationScale,
         getFillColor: f => fillFor(f, cfg, clamp),
-        opacity: state.prismOpacity,
         material: { ambient: 0.55, diffuse: 0.6, shininess: 32, specularColor: [60, 60, 70] },
         pickable: true,
         autoHighlight: true,
@@ -471,9 +556,6 @@
         getPath: d => d.path,
         // Neutral-grey the roof outline of non-residential hoods when the lens is on.
         getColor: d => (state.residential && !d.res) ? LENS_FADE_EDGE : edge,
-        // The roof rings fade with the prisms — outlines floating over a
-        // ghosted (or invisible) money plane would read as clutter.
-        opacity: state.prismOpacity,
         getWidth: 1.4,
         widthUnits: "pixels",
         widthMinPixels: 1,
@@ -485,26 +567,52 @@
         updateTriggers: { getColor: [state.ramp, state.residential] },
       });
 
-      return [...roadLayers(), layer, topEdges];
+      return [layer, topEdges];
     }
 
-    // Tooltip reads the active metric at hover time (closure over `state`).
-    // Beyond the active metric, hood tooltips carry the road-supply number
-    // and the revenue-per-road-metre ratio (the acres cancel — this is the
-    // stage-3 ratio metric, previewed here at tooltip level).
+    // Tooltip content is per-view (closure over `state`). money: active
+    // metric + road supply + ratio. roads: road amount only. ratio: the full
+    // synthesis (ratio + its two components), or why the hood is off-scale.
     function tooltipFor({ object }) {
       if (!object) return null;
       const p = object.properties;
+      const name = `<b>${p.neighbourhood_name}</b><br/>`;
+
+      if (state.view === "roads") {
+        return {
+          className: "tip",
+          html: p.road_m_per_acre != null
+            ? name + `${p.road_m_per_acre.toFixed(1)} road m / acre <span class="muted">(collector + local)</span>`
+            : name + `<span class="muted">no road data</span>`,
+        };
+      }
+
+      if (state.view === "ratio") {
+        if (!ratioKept(p)) {
+          const why = p.is_set_aside
+            ? `Set aside — ${p.set_aside_reason}`
+            : `No meaningful ratio — road base below ${RATIO_ROAD_FLOOR} m / acre` +
+              (p.road_m_per_acre != null ? ` (${p.road_m_per_acre.toFixed(1)})` : "");
+          return { className: "tip", html: name + `<span class="muted">${why}</span>` };
+        }
+        return {
+          className: "tip",
+          html: name + fmtPerMetre(ratioOf(p)) +
+                `<br/><span class="muted">$${Math.round(p.revenue_per_acre).toLocaleString()} revenue / acre</span>` +
+                `<br/><span class="muted">${p.road_m_per_acre.toFixed(1)} road m / acre</span>`,
+        };
+      }
+
+      // money view
       if (p.is_set_aside) {
         const pct = Math.round(p.set_aside_frac * 100);
         return {
           className: "tip",
-          html: `<b>${p.neighbourhood_name}</b><br/>` +
-                `<span class="muted">Set aside — ${p.set_aside_reason} (${pct}% of area)</span>`,
+          html: name + `<span class="muted">Set aside — ${p.set_aside_reason} (${pct}% of area)</span>`,
         };
       }
       const cfg = METRICS[state.metric];
-      let html = `<b>${p.neighbourhood_name}</b><br/>${cfg.fmt(p[cfg.key])} / acre`;
+      let html = name + `${cfg.fmt(p[cfg.key])} / acre`;
       if (p.road_m_per_acre != null) {
         html += `<br/><span class="muted">${p.road_m_per_acre.toFixed(1)} road m / acre</span>`;
         if (p.road_m_per_acre > 0 && p.revenue_per_acre != null) {
@@ -516,37 +624,45 @@
     }
 
     // Switch metric: rebuild layers and update the title/legend/toggle chrome.
+    // In the roads/ratio views the metric only marks state (it takes effect on
+    // returning to Money — those views don't render the metric).
     function applyMetric(metric) {
       if (metric === state.metric || !METRICS[metric]) return;
       state.metric = metric;
+      document.querySelectorAll("#toggle button").forEach(b =>
+        b.classList.toggle("active", b.dataset.metric === metric));
+      if (state.view !== "money") return;
       const cfg = METRICS[metric];
       overlay.setProps({ layers: buildLayers() });
       document.getElementById("title-h").textContent = cfg.title;
       document.getElementById("title-p").textContent = cfg.blurb;
-      document.getElementById("legend-label").textContent = cfg.legendLabel;
-      document.getElementById("legend-min").textContent = cfg.legendMin;
-      // The colour transform is per-metric, so the gradient bar changes with it.
-      document.querySelector("#legend .bar").style.background = legendGradient();
-      refreshLegend();
-      document.querySelectorAll("#toggle button").forEach(b =>
-        b.classList.toggle("active", b.dataset.metric === metric));
+      refreshLegend(); // per-metric transform: the gradient bar changes too
     }
 
-    // Sync the whole legend to the current state. Roads-only mode swaps the
-    // legend to the network's road scale (the prism metric isn't on screen).
-    // Otherwise: with the lens on the colour is rescaled, so the max shows the
-    // residential clamp and the grey means "faded non-residential"; else the
-    // grey means "set aside".
+    // Sync the whole legend to the current view. roads: the network's linear
+    // road scale. ratio: the log $/road-metre scale between its data anchors.
+    // money: the metric scale; with the lens on the colour is rescaled, so the
+    // max shows the residential clamp and the grey means "faded
+    // non-residential"; else the grey means "set aside".
     function refreshLegend() {
       const cfg = METRICS[state.metric];
       const label = document.querySelector("#legend .aside span:last-child");
       const sw = document.querySelector("#legend .aside .sw");
-      if (roadsOnly()) {
+      if (state.view === "roads") {
         document.getElementById("legend-label").textContent = "Road metres per acre";
         document.getElementById("legend-min").textContent = "0 m";
         document.getElementById("legend-max").textContent = ROAD_CLAMP + " m+";
         label.textContent = "Arterial — shared infrastructure";
         sw.style.background = `rgb(${ARTERIAL_COLOR.slice(0, 3).join(",")})`;
+      } else if (state.view === "ratio") {
+        const s = ratioScale();
+        document.getElementById("legend-label").textContent = "Revenue per road metre (log colour)";
+        document.getElementById("legend-min").textContent =
+          "≤ $" + Math.round(s.lo).toLocaleString();
+        document.getElementById("legend-max").textContent =
+          "$" + Math.round(s.hi).toLocaleString() + "+";
+        label.textContent = "Set aside / insufficient road base";
+        sw.style.background = "rgb(104,108,122)";
       } else {
         document.getElementById("legend-label").textContent = cfg.legendLabel;
         document.getElementById("legend-min").textContent = cfg.legendMin;
@@ -583,38 +699,34 @@
       refreshLegend();
     }
 
-    // Set the money-plane opacity (0–100). `auto` marks a programmatic nudge
-    // so it can be undone when the layer that caused it is turned back off.
-    function setPrismOpacity(pct, auto = false) {
-      opacityAutoSet = auto;
+    // Set the ratio view's ghost-prism opacity (0–100). UI-state only — the
+    // caller rebuilds the layers.
+    function setPrismOpacity(pct) {
       state.prismOpacity = pct / 100;
       document.getElementById("prism-opacity").value = pct;
       document.getElementById("prism-opacity-val").textContent = Math.round(pct) + "%";
-      overlay.setProps({ layers: buildLayers() });
-      refreshLegend(); // entering/leaving roads-only swaps the legend scale
     }
 
-    // Toggle a service layer. The roads geometry is fetched once, on first
-    // enable — the initial page payload is unchanged when the layer is off.
-    async function toggleLayer(name, on) {
-      state.layers[name] = on;
-      if (name === "roads" && on && !roadsData) {
+    // Switch view (money | roads | ratio). Road geometry lazy-loads on the
+    // first non-money view; entering ratio resets the slider to its 5%
+    // default. Title/blurb follow the view (money's stay metric-driven).
+    async function applyView(v) {
+      if (v === state.view || (v !== "money" && !VIEWS[v])) return;
+      state.view = v;
+      document.querySelectorAll("#views button").forEach(b =>
+        b.classList.toggle("active", b.dataset.view === v));
+      document.getElementById("layers").style.display = v === "ratio" ? "flex" : "none";
+      if (v !== "money" && !roadsData) {
         roadsFetch ??= fetch(ROADS_URL).then(r => r.json()).then(d => { roadsData = d; });
         await roadsFetch;
-        if (!state.layers.roads) return; // unticked while the fetch was in flight
+        if (state.view !== v) return; // switched again while the fetch ran
       }
-      // Opacity nudge: ghost the prisms on enable (only from untouched 100%),
-      // restore on disable (only if the nudge is still what set it).
-      if (on && state.prismOpacity === 1) {
-        setPrismOpacity(AUTO_OPACITY_PCT, true);
-        return; // setPrismOpacity already rebuilt the layers
-      }
-      if (!on && opacityAutoSet && !Object.values(state.layers).some(Boolean)) {
-        setPrismOpacity(100);
-        return;
-      }
+      if (v === "ratio") setPrismOpacity(VIEWS.ratio.opacity);
       overlay.setProps({ layers: buildLayers() });
-      refreshLegend(); // toggling roads at 0% opacity enters/leaves roads-only
+      const chrome = v === "money" ? METRICS[state.metric] : VIEWS[v];
+      document.getElementById("title-h").textContent = chrome.title;
+      document.getElementById("title-p").textContent = chrome.blurb;
+      refreshLegend();
     }
 
     map.on("load", async () => {
@@ -632,10 +744,18 @@
       document.querySelectorAll("#palette button").forEach(b =>
         b.addEventListener("click", () => applyPalette(b.dataset.ramp)));
       document.querySelector("#lens button").addEventListener("click", applyLens);
-      document.querySelectorAll("#layers input[type=checkbox]").forEach(cb =>
-        cb.addEventListener("change", () => toggleLayer(cb.dataset.layer, cb.checked)));
-      document.getElementById("prism-opacity").addEventListener("input",
-        e => setPrismOpacity(+e.target.value)); // user move — clears the auto flag
+      document.querySelectorAll("#views button").forEach(b =>
+        b.addEventListener("click", () => applyView(b.dataset.view)));
+      document.getElementById("prism-opacity").addEventListener("input", e => {
+        setPrismOpacity(+e.target.value);
+        overlay.setProps({ layers: buildLayers() });
+      });
+      // A data file from before the services lens can't drive the roads/ratio
+      // views — hide those buttons rather than offer views that can't render.
+      if (!state.data.features.some(f => f.properties.road_m_per_acre != null)) {
+        document.querySelectorAll('#views button[data-view="roads"], #views button[data-view="ratio"]')
+          .forEach(b => { b.style.display = "none"; });
+      }
       // Sync the legend gradient to the default ramp (single source of truth).
       document.querySelector("#legend .bar").style.background = legendGradient();
 

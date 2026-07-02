@@ -217,7 +217,31 @@ established convention. Height, as always, stays linear.
 and render grey anyway; zeros sit honestly at the bottom of a linear ramp,
 another reason no log.)
 
-## 7. Context: Urban3
+### 6.4 Revenue per road metre is ~log-normal — DECIDED: log colour (2026-07-02)
+
+The ratio view's metric (`revenue_per_acre / road_m_per_acre` — acres cancel:
+$ of municipal revenue per metre of city-maintained collector+local road) ran
+through the same biased-skew test, computed from the web GeoJSON's two
+published columns (no pipeline change; derivation is client-side too):
+
+| set | n | median | p97.5 | max | raw | sqrt | log |
+|---|---|---|---|---|---|---|---|
+| all computable | 400 | $537 | $4,629 | $1,314,509 | 19.72 | 16.18 | **0.32** |
+| excl set-aside | 357 | $568 | $5,468 | $1,314,509 | 18.62 | 15.48 | 2.74 |
+
+The first log-transform metric in the project — a ratio of two positive
+quantities coming out ~log-normal is the textbook case, and sqrt barely
+dents a 19.7 skew. **Colour is LOG**, anchored between the kept subset's
+p2.5 and p97.5 (computed at runtime in `web/index.html` `ratioScale()`,
+≈ $264–$3,253 on 2026-07-02 data). Height, as always, stays linear.
+
+**The denominator-artifact tail is real and must be floored, not clamped
+away:** WESTVIEW VILLAGE's ratio is $1,314,509/m (next: KENDAL $96,132) —
+near-zero road base, exactly the low-denominator artifact
+`ANALYSIS_BACKLOG.md` item 1 anticipated. Hoods with `road_m_per_acre <
+5` (`RATIO_ROAD_FLOOR`) render grey + flat ("insufficient road base"),
+alongside the set-asides; the 6 zero-road hoods have no ratio at all and
+fall under the same floor. The floor is display-only and tunable.
 
 Urban3's value-per-acre work is **parcel-level** (e.g. the Asheville comparison: an
 edge Walmart ≈ $6,500/acre vs. a downtown building ≈ $634,000/acre, ~100×). This

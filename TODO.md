@@ -54,11 +54,13 @@ _Last reconciled: 2026-07-01_
       layers panel (prisms + roof edges) + 45% auto-nudge on first Roads
       enable — needed because the network is ~invisible under opaque prisms
       (only setback gaps show).
-    - [ ] (3) Ratio view: revenue vs total services (defer "total services"
-      definition until >1 service; revenue-per-road-metre is the
-      single-service case — subsumes the old V2 item). Partial: the ratio
-      is in the hood TOOLTIP since 2026-07-02 (metric + road m/acre +
-      $/road-metre); the open work is the ratio as a coloured VIEW.
+    - [x] ~~(3) Ratio view: revenue vs total services (revenue-per-road-metre
+      is the single-service case — subsumes the old V2 item)~~ — done
+      2026-07-02 as the **Ratio view** (Money | Roads | Ratio buttons;
+      ghost prisms of $/road-metre over the neutral network; log colour
+      FINDINGS §6.4; road-base floor 5 m/acre greys artifacts; UI.md
+      "Services views"). "Total services" DEFINITION still deferred until
+      a second service exists — reopen this staging list then.
   - [ ] Merge `feature/services-lens` → master via PR once the ground-layer
     view is in and Peter's eyeballed it (`cd web && python3 -m http.server 8799`).
 
