@@ -1,9 +1,14 @@
 # Scope: Automated Backend + Static Deployment
 
-**Status: SCOPED, not started.** Target deployment architecture: a **scheduled
-GitHub Action** regenerates the map data when the source datasets change and
+**Status: BACKEND BUILT (2026-07-01, branch `feature/deployment`).** A **scheduled
+GitHub Action** (`.github/workflows/refresh.yml`) regenerates the map data and
 publishes it to a fully static **GitHub Pages** frontend. No always-on server is
-required. No code yet — this doc is the agreed design.
+required. What exists: `scripts/download_data.py` (fetch all three inputs),
+`scripts/generate_status.py` (→ `web/data/status.json`), the frontend banner in
+`web/index.html`, the workflow, and `requirements-ci.txt`. **Remaining: the one-time
+GitHub bootstrap** (enable Pages → source "GitHub Actions", run the workflow once)
+**and the deferred follow-ons** (auto year-detection, per-year archives). This doc
+is the agreed design; the sub-sections below note where reality now differs.
 
 ## The key fact this is built around
 
@@ -186,21 +191,30 @@ the data actually changes; `banner` is set during the holding window or for any
 maintenance notice — settable by the backend with no frontend deploy. (Banner
 styling is a UI concern — see `docs/UI.md`.)
 
-## Decisions to settle (for review)
+## Decisions settled (2026-07-01, as built)
 
-1. **Change-detection strategy.** (a) poll Socrata metadata, download only if
-   changed; vs (b) re-run on schedule and let `git diff` gate the push.
-   *Leaning (b) to start — dead simple; the only cost is a redundant ~80 MB
-   download on the runner, which is free. Add (a) later if desired.*
-2. **Cron cadence.** Weekly vs monthly. *Leaning weekly* — overkill for annual
-   data but cheap, and bounds staleness to a week when the new year drops.
-3. **Heartbeat auth.** Rely on `GITHUB_TOKEN` and re-enable if it ever sleeps, vs
-   add a repo-scoped PAT for a guaranteed-alive heartbeat. *Leaning start with
-   `GITHUB_TOKEN`, add a PAT only if the schedule actually pauses.*
+1. **Change-detection strategy — DECIDED (b): re-run on schedule, `git diff` gates
+   the push.** Dead simple; the redundant download is free on the runner. Poll-
+   Socrata-metadata (a) can be added later if desired.
+2. **Cron cadence — DECIDED: weekly** (`0 8 * * 1`, Mon 08:00 UTC). Overkill for
+   annual data but cheap, and bounds staleness to a week when the new year drops.
+3. **Heartbeat auth — DECIDED: `GITHUB_TOKEN`.** If the schedule ever auto-disables
+   after 60 days, add a repo-scoped PAT for the heartbeat commit (tracked in TODO).
 
-(Previously open and now decided by the Action model: Pages-serves-`web/` →
-handled by the Pages deploy action; backend auth → built-in `GITHUB_TOKEN`;
-commit-data-to-repo → yes, ~0.5 MB, also enables the archive + heartbeat.)
+(Also decided by the Action model: Pages-serves-`web/` → the Pages deploy action;
+backend auth → built-in `GITHUB_TOKEN`; commit-data-to-repo → yes, also enables the
+archive + heartbeat.)
+
+**As-built notes vs. this design:**
+- `status.json` carries a `_geojson_sha256` field (not in the example above) as the
+  content-change detector so `generated` bumps only on real data change,
+  independent of git.
+- Year alignment / graceful-degradation banner is **designed here but NOT yet
+  built** — the pipeline is pinned to `ASSESSMENT_YEAR=2025` and `status.json` reports
+  fixed years via `generate_status.py` config/CLI. Auto-detection is a follow-on.
+- Mill rates are **not** fetched by `download_data.py` (they live in the committed
+  `data/mill_rates.json`); refreshing them for a new year stays a manual, reviewed
+  step until auto year-detection lands.
 
 ## Future work: multi-year data / archiving
 

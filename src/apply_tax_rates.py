@@ -35,6 +35,11 @@ ASSESSMENT_CLASS_TO_RATE_CLASS = {
     "OTHER RESIDENTIAL": "Other Residential",
     "FARMLAND": "Farmland",
     "MA DERELICT RESIDENTIAL": "Non Residential",
+    # Designated Industrial Property (provincially-assessed plants / linear /
+    # machinery). Appeared in the 2026 live feed (1 parcel); its own Tax Class
+    # field reads "Non Residential", and DIP is non-residential for the municipal
+    # levy (the only rate this project applies). See docs/FINDINGS_assessment_classes.md.
+    "DESIGNATED IND PROPERTIES": "Non Residential",
     EXEMPT_LABEL: None,
 }
 

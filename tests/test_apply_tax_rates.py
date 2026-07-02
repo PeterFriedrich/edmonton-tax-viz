@@ -92,6 +92,17 @@ def test_ma_derelict_bills_as_non_residential(rates_path):
     assert out["levy"].iloc[0] == pytest.approx(30_000.0)
 
 
+def test_designated_industrial_bills_as_non_residential(rates_path):
+    # DESIGNATED IND PROPERTIES (Designated Industrial Property; appeared in the
+    # 2026 live feed) → Non Residential rate (30), matching its Tax Class field.
+    df = pd.DataFrame([_row(
+        tax_class="Non Residential",
+        assessment_class_1="DESIGNATED IND PROPERTIES",
+    )])
+    out = apply_tax_rates(df, rates_path, 2025)
+    assert out["levy"].iloc[0] == pytest.approx(30_000.0)
+
+
 def test_unknown_label_raises(rates_path):
     df = pd.DataFrame([_row(assessment_class_1="SPACE ELEVATOR")])
     with pytest.raises(KeyError, match="Unmapped assessment class"):
