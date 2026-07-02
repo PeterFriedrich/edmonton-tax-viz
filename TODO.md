@@ -19,9 +19,10 @@ _Last reconciled: 2026-07-01_
   follow = revenue per road-metre. Locked: alleys OUT, arterials OUT (shared
   infrastructure), railway OUT, City-owned only.
   Build order:
-  - [ ] Prerequisite commit: `$limit` count-vs-limit assertion in
-    `scripts/download_data.py` + add roads source `9j8t-zm52` (closes the
-    data-integrity §5 follow-on below).
+  - [x] ~~Prerequisite commit: `$limit` count-vs-limit assertion in
+    `scripts/download_data.py` + add roads source `9j8t-zm52`~~ — done
+    2026-07-01 (closes the data-integrity §5 follow-on below); roads
+    downloaded + verified (53,720 features, check passes).
   - [ ] `src/load_roads.py` + synthetic tests (mirror `load_zoning.py`).
   - [ ] Wire `join_and_calculate` (`ROAD_COLUMNS`) + `main.py` flags.
   - [ ] Skew check on `road_m_per_acre` → pick colour transform (don't assume sqrt).
@@ -117,10 +118,10 @@ _Last reconciled: 2026-07-01_
   - [ ] **CI unmatched-set assertion (audit §4):** commit the expected unmatched
     list (now just the OLIVER straggler) and fail the CI build when the live
     unmatched set differs — converts name-drift from warn-silent to fail-loud.
-  - [ ] **Socrata `$limit` truncation check (audit §5):** in
-    `scripts/download_data.py`, assert post-download feature count is strictly
-    below the `$limit` (boundaries 500, zoning 20000) — Socrata truncates
-    silently at the limit.
+  - [x] ~~**Socrata `$limit` truncation check (audit §5)**~~ — built 2026-07-01
+    on `feature/services-lens` (`check_not_truncated()` in
+    `scripts/download_data.py`, fails at count >= limit; +6 tests; roads
+    source added in the same commit).
   - [ ] (Optional, fidelity) map `MA DERELICT RESIDENTIAL` to the dedicated
     "Mature Area Derelict Residential" rate class instead of "Non Residential" —
     identical municipal rate today, differs if `rate_type` ever changes (audit T1).
