@@ -19,6 +19,11 @@ is **not a column in the rows**; it lives only in the dataset metadata
 2026-05-16 and is 2025 data. **Re-check the metadata after any re-download** — a
 later pull can roll to a new year, which would silently desync from any
 year-matched mill rates (see `docs/SPEC_revenue.md`).
+**Re-download 2026-07-02** (deployment dry-run + first CI run): metadata still
+effective **2025** (intra-year edits only, no year roll), so 2025 rates stay
+aligned. That pull also surfaced a new `Assessment Class 1` label
+`DESIGNATED IND PROPERTIES` (1 row) — mapped to Non Residential; see
+`docs/FINDINGS_assessment_classes.md`.
 **Licence:** Open Government Licence – City of Edmonton
 
 ### Columns (confirmed 2026-05-22)
@@ -114,6 +119,7 @@ For Phase 1 (neighbourhood-level choropleth), two approaches are viable:
 **File:** `data/raw/neighbourhoods.geojson`
 **Source:** [Edmonton Open Data](https://data.edmonton.ca/resource/65fr-66s6.geojson) — dataset ID `65fr-66s6` ("City of Edmonton Neighbourhoods")
 **Download URL:** `https://data.edmonton.ca/resource/65fr-66s6.geojson?$limit=50000`
+**Download:** `scripts/download_data.py` (fetches this alongside assessment + zoning; uses `$limit=500`, which covers all 407)
 **Format:** GeoJSON, 2.9 MB
 **Features:** 407 neighbourhoods
 **Geometry type:** MultiPolygon (all features)
@@ -176,6 +182,7 @@ Non-residential is ~3.2× residential — this class differential is the basis o
 
 **Source:** Edmonton Open Data — dataset ID `fixa-tstc` ("Zoning Bylaw Geographical Data")
 **Download URL:** `https://data.edmonton.ca/resource/fixa-tstc.geojson?$limit=20000`
+**Download:** `scripts/download_data.py` (fetches this alongside assessment + boundaries)
 **Format:** GeoJSON, ~9.2 MB
 **Features:** 11,510 zoning polygons (MultiPolygon)
 **CRS:** CRS84 / EPSG:4326 — reproject to EPSG:3400 before any overlay/area

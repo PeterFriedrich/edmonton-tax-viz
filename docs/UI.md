@@ -28,6 +28,14 @@ Visual theming and accessibility decisions for the interactive map. Phase 1
   their `updateTriggers` (the data reference is stable, so deck.gl skips the re-render
   otherwise). `getFillColor` uses `[state.metric, state.ramp, state.residential]`.
 
+### Maintenance banner (built 2026-07-02, deployment)
+On load the page fetches `web/data/status.json` (`cache: no-store`) and, if its
+`banner` field is non-null, renders an amber notice (`#banner`) top-centre above the
+map. Used for the year-mismatch holding window and any maintenance note — the backend
+sets it in `status.json` with no frontend redeploy. Fetched defensively and separately
+from the map data: a missing/broken `status.json` never blanks the map. Hidden when
+`banner` is null. See `SPEC_deployment.md` ("Status manifest + banner").
+
 ### Set-aside neutral treatment (built 2026-07-01)
 Neighbourhoods that are ≥90% never/not-yet land (River Valley, parks, undeveloped —
 see `SPEC_revenue.md`) render in a **neutral grey** (`SET_ASIDE_COLOR`), distinct from

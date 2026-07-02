@@ -67,25 +67,26 @@ _Last reconciled: 2026-07-01_
   Pairs with the scale-toggle line above (this is its UI design); folds the residential
   filter in as a lens once built.
 
-- [ ] **Deployment** (per `docs/SPEC_deployment.md`) — **backend BUILT on
-  `feature/deployment` (2026-07-01); only the one-time GitHub bootstrap + follow-ons
-  remain.**
-  - [x] `scripts/download_data.py` fetches all three raw inputs (assessment +
-    boundaries + zoning), not just assessment.
-  - [x] `scripts/generate_status.py` → `web/data/status.json` (provenance +
-    heartbeat + banner; `generated` bumps on content change, `last_checked` every run).
-  - [x] Frontend maintenance banner in `web/index.html` (verified headless).
-  - [x] `.github/workflows/refresh.yml` (weekly + dispatch) + `requirements-ci.txt`.
-  - [x] Decisions settled: change-detection = rerun+git-diff; cron = weekly;
-    heartbeat auth = `GITHUB_TOKEN`.
-  - [ ] **First-run bootstrap (manual, Peter — the workflow can't self-enable):**
-    (1) repo Settings → Pages → Source = "GitHub Actions"; (2) trigger the workflow
-    once via the "Run workflow" button to publish; (3) confirm the Pages URL loads.
-  - [ ] **Heartbeat watch:** if the schedule ever auto-disables after 60 days, add a
-    repo-scoped PAT for the heartbeat commit (see SPEC "Staying awake").
-  - [ ] **Not yet built (deferred, see SPEC):** auto-detect assessment year + fetch
-    matching mill rates (graceful year-mismatch banner); per-year archive filenames
-    (`web/data/YYYY.geojson`) for the future year selector.
+- [x] **Deployment — LIVE (2026-07-01/02)** at
+  https://peterfriedrich.github.io/edmonton-tax-viz/ (merged to master, PRs #1–3).
+  Scheduled GitHub Action (`.github/workflows/refresh.yml`, weekly Mon 08:00 UTC +
+  dispatch) downloads all inputs → `main.py` → `status.json` heartbeat →
+  commit-if-changed → deploy Pages. `scripts/download_data.py` (all three inputs),
+  `scripts/generate_status.py`, frontend banner, `requirements-ci.txt`. Pages enabled
+  `build_type: workflow`; first run + node24-bump run both green in production.
+  Decisions settled: rerun+git-diff / weekly / `GITHUB_TOKEN`. See `docs/SPEC_deployment.md`.
+  **Deferred follow-ons still open (below).**
+
+- [ ] **Deployment follow-ons (deferred, see `docs/SPEC_deployment.md`):**
+  - [ ] Auto-detect assessment year from Socrata metadata + fetch matching
+    `pwis-wc4c` rates; set the year-mismatch holding banner when rates lag the roll.
+    (Currently pinned `ASSESSMENT_YEAR=2025`; `generate_status.py` reports fixed years.)
+  - [ ] Per-year archive filenames (`web/data/YYYY.geojson`, keep-not-overwrite) for
+    the future UI year selector.
+  - [ ] **Heartbeat watch:** if the schedule auto-disables after 60 days idle, add a
+    repo-scoped PAT for the heartbeat commit (SPEC "Staying awake").
+  - [ ] Optional tidy: delete merged branches on origin (`feature/phase2-web`,
+    `feature/deployment`, `chore/node24-actions`).
 
 - [ ] **Visual polish** (pre-existing, untouched):
   - [ ] top-cap edge colour `TOP_EDGE_COLOR=[40,95,120,215]` in `web/index.html`

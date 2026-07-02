@@ -298,13 +298,13 @@ The Python pipeline is stable across all phases — only the rendering layer cha
 - **MapLibre + deck.gl directly** — Kepler.gl is just a UI wrapper around deck.gl; going direct gives full control over camera, layer styling, and interaction without the constraints
 - **Extruded PolygonLayer** (not H3 hex bins) — neighbourhood boundary shapes are meaningful to Edmonton readers; height = `value_per_acre`
 - **No basemap for v1** — neighbourhood polygons on a dark background are self-describing. Add CARTO Dark Matter free tiles if geographic context is needed; no R2 or Protomaps required at this traffic level
-- **No scheduled preprocessor** — assessment data updates once a year. Pipeline runs locally (or via oracle server cron), outputs updated GeoJSON, commit to repo. GitHub Pages picks it up automatically.
+- **Scheduled preprocessor (BUILT + LIVE 2026-07-01/02)** — a weekly GitHub Action (`.github/workflows/refresh.yml`) downloads the source data, runs `main.py`, writes a `status.json` heartbeat, commits regenerated GeoJSON only if it changed, and deploys `web/` to Pages. Two supporting scripts: `scripts/download_data.py` (fetch assessment + boundaries + zoning) and `scripts/generate_status.py` (the manifest/heartbeat/banner). Optimized for rare (annual) data changes — see `docs/SPEC_deployment.md`.
 
 **Phase 2 handoff:** `join_and_calculate.py` exports a slim GeoJSON via `export_geojson()` — only `neighbourhood_name`, `value_per_acre`, and `geometry`, reprojected to EPSG:4326 (deck.gl/MapLibre expect lon/lat). No changes to upstream modules needed.
 
 **Web app layout & export target:** The Phase 2 app lives in `web/` (`web/index.html` + `web/data/`). The export writes to **`web/data/neighbourhood_value_per_acre.geojson`** — a *tracked, served* location — NOT `output/` (which is gitignored as throwaway artifacts and cannot be served by Pages). `main.py` must point the GeoJSON export at `web/data/`, so each run regenerates the committed served file in place. The PNG stays in `output/` as a static fallback.
 
-**GitHub Pages serves only from repo root or `docs/`, not `web/`.** To keep the clean `web/` layout while still publishing, the intended path is a GitHub Action (`.github/workflows`) that serves `web/`. Alternatives if the Action is undesired: move the app to `docs/` or root. Decided at deploy time (Phase 2 step 4).
+**GitHub Pages serving `web/` (RESOLVED + LIVE).** Pages can't serve a subfolder from a branch, so the workflow uses the official Pages actions (`upload-pages-artifact` with `path: web` → `deploy-pages`) to publish `web/` directly — no `gh-pages` branch and no moving the app to `docs/`/root. Pages is enabled with `build_type: workflow`. Live at https://peterfriedrich.github.io/edmonton-tax-viz/.
 
 **Phase 2 theming & accessibility** (palette, light mode, colourblind mode) lives in `UI.md`. **Render/performance** tradeoffs (vertex count, simplify, outline cost) live in `PERFORMANCE.md`.
 
