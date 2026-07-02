@@ -81,9 +81,11 @@ edge cases, same order of imprecision as the source's own neighbourhood labels).
 **Fix.** `"LEWIS FARMS INDUSTRIAL": "LEWIS FARMS BUSINESS EMPLOYMENT"`.
 
 **Also resolved.** `OLIVER` (1 remaining row, $500) sits inside
-**WÎHKWÊNTÔWIN** — the 2024 rename. Negligible value; fix for completeness:
-`"OLIVER": "WÎHKWÊNTÔWIN"`. With all three corrections applied, the expected
-unmatched set is **empty** (useful as a CI assertion baseline — see §4).
+**WÎHKWÊNTÔWIN** — the 2024 rename. *(Correction, post-write-up: DATA.md
+"Name Matching" records a deliberate, documented decision NOT to map this $500
+straggler onto the $4.12B neighbourhood — respected; no entry added.)* With the
+two material corrections applied, the expected unmatched set is **exactly the
+OLIVER straggler** (useful as a CI assertion baseline — see §4).
 
 ## 3. Roll-year / mill-rate vintage: unguarded [T2]
 
@@ -212,6 +214,13 @@ recoverable for Lewis Farms Business Employment. The single highest-leverage
 hardening is the **year-alignment guard (§3)** — the weekly CI schedule makes
 its eventual trigger a certainty, not a possibility.
 
-**Status of fixes: none applied as of this write-up** — per the brief, this run
-produced verdicts only. When fixes land, re-run the affected checks and update
-the verdicts here (or supersede this doc with the re-run's output).
+**Status of fixes (updated 2026-07-01, same day):**
+- **§1 + §2 FIXED** (PR #5): both `NAME_CORRECTIONS` entries added; export now
+  406/407 boundaries. **Deployed and verified live**: HVTC $1,977,595/acre
+  value, LFBE $656,128/acre. (OLIVER deliberately left unmapped per DATA.md —
+  see §2 correction note.)
+- **§3 FIXED** (PR #7): `scripts/check_year_alignment.py` + `refresh.yml`
+  wiring. First production run took the aligned path correctly (regen ran,
+  holding-banner step skipped). Auto-fetching new-year rates remains a
+  follow-on (TODO).
+- **§4 + §5 OPEN** — tracked in `TODO.md` "Data-integrity audit follow-ons".

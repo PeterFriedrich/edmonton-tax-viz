@@ -91,7 +91,22 @@ _Last reconciled: 2026-07-01_
   - [ ] **Heartbeat watch:** if the schedule auto-disables after 60 days idle, add a
     repo-scoped PAT for the heartbeat commit (SPEC "Staying awake").
   - [ ] Optional tidy: delete merged branches on origin (`feature/phase2-web`,
-    `feature/deployment`, `chore/node24-actions`).
+    `feature/deployment`, `chore/node24-actions`, and the three audit-session
+    branches from 2026-07-01: `docs/data-integrity-audit-brief`,
+    `fix/name-corrections-audit`, `feature/year-alignment-guard`).
+
+- [ ] **Data-integrity audit follow-ons** (found 2026-07-01, see
+  `docs/FINDINGS_data_integrity_audit.md` §4–5; findings 1–3 fixed + deployed):
+  - [ ] **CI unmatched-set assertion (audit §4):** commit the expected unmatched
+    list (now just the OLIVER straggler) and fail the CI build when the live
+    unmatched set differs — converts name-drift from warn-silent to fail-loud.
+  - [ ] **Socrata `$limit` truncation check (audit §5):** in
+    `scripts/download_data.py`, assert post-download feature count is strictly
+    below the `$limit` (boundaries 500, zoning 20000) — Socrata truncates
+    silently at the limit.
+  - [ ] (Optional, fidelity) map `MA DERELICT RESIDENTIAL` to the dedicated
+    "Mature Area Derelict Residential" rate class instead of "Non Residential" —
+    identical municipal rate today, differs if `rate_type` ever changes (audit T1).
 
 - [ ] **Visual polish** (pre-existing, untouched):
   - [ ] top-cap edge colour `TOP_EDGE_COLOR=[40,95,120,215]` in `web/index.html`
