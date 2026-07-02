@@ -117,11 +117,14 @@ per hood:  road_m_<class>  = Σ length(city road centrelines ∩ hood polygon), 
   collectors can still trace boundaries occasionally. Accept the residual
   noise in v1 (the conservation check bounds the damage); note it as a known
   limitation.
-- **Download truncation:** 53,720 rows **exceeds the `$limit=20000` pattern**
-  used for zoning — a copy-paste download would silently keep 37% of the
-  network. The count-vs-limit assertion in `scripts/download_data.py` (already
-  an open data-integrity follow-on in `TODO.md`) is a **prerequisite commit**
-  of this feature, not an optional follow-on.
+- **Download truncation — BUILT 2026-07-01 (the prerequisite commit):**
+  53,720 rows exceeds the `$limit=20000` pattern used for zoning — a
+  copy-paste download would have silently kept 37% of the network.
+  `scripts/download_data.py` now guards every source two ways: count vs. our
+  declared `$limit`, and count vs. the live Socrata `$select=count(*)` (which
+  also catches any *server-side* cap — SODA 2.0 historically capped `$limit`
+  at 50,000; see the completeness note at the top of `DATA.md`). Closed the
+  data-integrity audit `$limit` follow-on.
 
 ## Code changes
 

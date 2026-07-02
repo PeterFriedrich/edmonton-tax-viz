@@ -2,6 +2,18 @@
 
 Reference for raw input files. Update this file when you discover column name quirks, encoding issues, or anything unexpected. Do not rely on memory — write it down here.
 
+**Socrata download completeness (applies to every source below):** Socrata
+truncates silently at `$limit` — it returns exactly that many rows with no
+error. Historically SODA 2.0 also imposed a **server-side 50,000-row cap** on
+`$limit`; Edmonton's endpoints demonstrably don't today (the road network
+returned 53,720 features in one request, 2026-07-01), but a platform cap could
+(re)appear without touching our config. `scripts/download_data.py` therefore
+verifies every download two ways: post-download count vs. **our** declared
+`$limit` (fails at count >= limit), and vs. the **live server count** via
+`$select=count(*)` (mismatch fails hard; an unreachable count endpoint only
+warns — the guard must not add fragility). Verified against all four sources
+2026-07-01.
+
 ---
 
 ## 1. Property Assessment Data
