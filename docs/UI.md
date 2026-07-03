@@ -153,9 +153,12 @@ IS, not what it yields; the blurb states the zoning caveat (designation ≠ buil
   **data-driven**: only categories that are dominant somewhere on the served
   data (7 today — no hood is mixed-dominant, mixed zones are ~317 acres
   citywide; unclassified is empty by construction).
-- **Tooltip:** dominant category + the full composition largest-first
-  (sub-1% shares omitted), e.g. SOUTH EDMONTON COMMON → "Direct Control 81% ·
-  Institutional 17% · Future / rural 2%".
+- **Tooltip:** dominant category + a **mini stacked composition bar**
+  (`.mixbar` — 190×8 px, segments flex-grow proportional to each share in the
+  category colours, 2px surface gaps between segments) + the full composition
+  largest-first as text (sub-1% shares omitted), e.g. SOUTH EDMONTON COMMON →
+  "Direct Control 81% · Institutional 17% · Future / rural 2%". `.tip` gained
+  `max-width: 300px` so long compositions wrap.
 - **Residential lens disables** here (like Roads) — residential land is already
   an explicit category; state persists and re-applies on leaving. The metric
   toggle just marks state, as in Roads/Ratio.

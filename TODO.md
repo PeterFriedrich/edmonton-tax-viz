@@ -107,6 +107,17 @@ _Last reconciled: 2026-07-02_
       guard. Headless-verified (`tools/profiling/verify-uses.js`, 0/406 fill
       mismatches; `verify-lens.js` regression green) + screenshot. **Pending:
       Peter's eyeball → PR → merge → deploy.**
+    - [x] ~~Tooltip mini stacked composition bar~~ — done 2026-07-03 (Peter's
+      ask): 190×8 px flex bar in the category colours above the composition
+      text; `.tip` max-width 300px so long compositions wrap.
+    - [ ] **Hover-reveal real zoning geometry (Peter's direction, 2026-07-03):**
+      on hover/click in the Uses view, show the hood's actual zoning polygons
+      (simplified) instead of the single dominant colour. Needs a slim per-hood
+      zoning-polygon export (dissolve by category within hood, simplify like
+      roads, lazy-load) + a highlight-layer render path. This DOES step toward
+      the "full zoning polygon overlay" scope item below — sizing prototype
+      first (dissolved+simplified payload), then decide hover-only vs full
+      layer.
     NOTE: this is hood-level composition — it does NOT reopen the "full
     zoning polygon overlay" scope decision below; keep them decoupled.
     FINDING (for ANALYSIS_BACKLOG 1): the 8 dc-dominant hoods are the big-box
