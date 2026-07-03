@@ -243,6 +243,15 @@ near-zero road base, exactly the low-denominator artifact
 alongside the set-asides; the 6 zero-road hoods have no ratio at all and
 fall under the same floor. The floor is display-only and tunable.
 
+**Residential subset (2026-07-03, for the lens):** the kept residential
+hoods' anchors are p2.5 ≈ $258 / p97.5 ≈ $916 / max $2,197 (n=223) vs the
+full kept set's $264 / $3,253 / $18,025 (n=339). The floor barely moves but
+the ceiling drops ~3.5× — the ratio's entire high tail sits on
+non-residential land, the same mill-rate mechanism as §6.2 seen through the
+road denominator. The lens therefore rescales the log colour anchors to the
+residential kept subset (the ratio analogue of `residentialClampFor`);
+height stays on the full-subset scale.
+
 Urban3's value-per-acre work is **parcel-level** (e.g. the Asheville comparison: an
 edge Walmart ≈ $6,500/acre vs. a downtown building ≈ $634,000/acre, ~100×). This
 project is **neighbourhood-aggregate**, which structurally compresses the spread —

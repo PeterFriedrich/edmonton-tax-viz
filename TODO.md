@@ -68,16 +68,12 @@ _Last reconciled: 2026-07-02_
 
 - [ ] **Views & lenses follow-ons (Peter, 2026-07-02).** Three asks on top of the
   shipped Money | Roads | Ratio views:
-  - [ ] **Residential-only lens in the Ratio view.** The lens currently applies
-    to Money only (`buildLayers` ignores `state.residential` in Roads/Ratio;
-    the button still toggles state — confusing, tighten that too). Design to
-    settle: fade non-residential hoods' ratio prisms to the uniform lens grey
-    (the established convention), and decide whether the log colour anchors
-    **rescale to the residential subset** (a residential variant of
-    `ratioScale()`, like `residentialClampFor` does for money clamps).
-    Residential-only $/road-metre is arguably the fairest infill-vs-greenfield
-    comparison in the whole project — the non-res mill-rate skew (FINDINGS
-    §6.2) inflates the ratio exactly where non-res land sits.
+  - [x] ~~**Residential-only lens in the Ratio view.**~~ — done 2026-07-03
+    (`feature/ratio-residential-lens`): non-residential kept hoods fade to the
+    lens grey (height untouched), log colour anchors rescale to the residential
+    kept subset (≤ $258 … $916+ vs $264 … $3,253 — FINDINGS §6.4 addendum),
+    lens button disables in the Roads view (state persists). Headless-verified
+    (`tools/profiling/verify-lens.js` + screenshot); UI.md updated.
   - [ ] **More service layers (water / drainage / transit / …).** Each needs its
     own SPEC_services section (dataset, filters, locked decisions), a
     per-hood supply column, and a slim web export. Decide the UI shape when

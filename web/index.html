@@ -53,6 +53,8 @@
     }
     #palette button, #lens button { padding: 6px 12px; font-size: 11.5px; }
     #toggle button:hover, #palette button:hover, #lens button:hover { color: #e8e8ef; }
+    #lens button:disabled, #lens button:disabled:hover { color: #4a4a5e; cursor: default; }
+    #lens button.active:disabled { background: #6b5c34; color: #2a2430; }
     #toggle button.active, #palette button.active, #lens button.active { background: #fcd278; color: #16111a; font-weight: 600; }
     #legend { bottom: 22px; left: 22px; font-size: 11.5px; color: #b8b8c8; }
     #legend .bar {
@@ -242,7 +244,8 @@
     // Active metric defaults to revenue (matches the static HTML chrome above).
     // `residential` is the residential-only lens (off by default): when on,
     // non-residential hoods fade translucent so residential land compares
-    // like-to-like without the Downtown / class-rate confound.
+    // like-to-like without the Downtown / class-rate confound. Applies in the
+    // Money and Ratio views; disabled in Roads (no per-hood prisms to fade).
     // `view` selects the display mode (money | roads | ratio); `prismOpacity`
     // is the ratio view's ghost-prism strength (money prisms are always
     // opaque; the roads view has no prisms).
@@ -466,19 +469,30 @@
     // Ratio-view scale anchors, computed once from the kept subset (hoods on
     // the road floor / set-aside excluded): log-colour between p2.5 and p97.5,
     // linear height scaled so the max kept ratio reaches the other views'
-    // ~8.2 km peak (height parity across views).
-    let _ratioScale = null;
+    // ~8.2 km peak (height parity across views). With the residential lens on,
+    // the COLOUR anchors rescale to the residential kept subset — the ratio
+    // analogue of residentialClampFor (FINDINGS §6.2: the non-res mill-rate
+    // skew inflates the ratio exactly where non-residential land sits). Height
+    // stays on the full-subset scale, matching the money lens (only colour
+    // rescales).
+    let _ratioScales = null;
     function ratioScale() {
-      if (_ratioScale) return _ratioScale;
-      const vals = state.data.features
-        .map(f => f.properties).filter(ratioKept).map(ratioOf)
-        .sort((a, b) => a - b);
-      const lo = quantile(vals, 0.025), hi = quantile(vals, 0.975);
-      return (_ratioScale = {
-        lo, hi,
-        logLo: Math.log(lo), logSpan: Math.log(hi) - Math.log(lo),
-        elevationScale: 8220 / vals[vals.length - 1],
-      });
+      if (!_ratioScales) {
+        const kept = state.data.features.map(f => f.properties).filter(ratioKept);
+        const anchorsOf = props => {
+          const vals = props.map(ratioOf).sort((a, b) => a - b);
+          const lo = quantile(vals, 0.025), hi = quantile(vals, 0.975);
+          return { lo, hi, logLo: Math.log(lo), logSpan: Math.log(hi) - Math.log(lo) };
+        };
+        const res = kept.filter(p => p.is_residential);
+        _ratioScales = {
+          all: anchorsOf(kept),
+          res: res.length ? anchorsOf(res) : anchorsOf(kept),
+          elevationScale: 8220 / Math.max(...kept.map(ratioOf)),
+        };
+      }
+      const a = state.residential ? _ratioScales.res : _ratioScales.all;
+      return { ...a, elevationScale: _ratioScales.elevationScale };
     }
     const ratioT = v => {
       const s = ratioScale();
@@ -503,16 +517,21 @@
           stroked: false,
           wireframe: false,
           // Artifact/set-aside hoods: flat + grey (their ratio is either
-          // meaningless or off the fiscal comparison).
+          // meaningless or off the fiscal comparison). Lens on: non-residential
+          // hoods take the uniform fade grey (colour anchors rescale to the
+          // residential subset via ratioScale; height untouched).
           getElevation: f => ratioKept(f.properties) ? ratioOf(f.properties) : 0,
           elevationScale: ratioScale().elevationScale,
-          getFillColor: f => ratioKept(f.properties)
-            ? rampColorAt(ratioT(ratioOf(f.properties)))
-            : SET_ASIDE_COLOR,
+          getFillColor: f => {
+            const p = f.properties;
+            if (state.residential && !p.is_residential)
+              return [LENS_FADE_COLOR[0], LENS_FADE_COLOR[1], LENS_FADE_COLOR[2], LENS_FADE_ALPHA];
+            return ratioKept(p) ? rampColorAt(ratioT(ratioOf(p))) : SET_ASIDE_COLOR;
+          },
           opacity: state.prismOpacity,
           material: { ambient: 0.55, diffuse: 0.6, shininess: 32, specularColor: [60, 60, 70] },
           pickable: false, // hood hover layer handles tooltips
-          updateTriggers: { getFillColor: state.ramp },
+          updateTriggers: { getFillColor: [state.ramp, state.residential] },
         });
         return [...roadLayers(true), ratioPrisms, hoodHoverLayer()];
       }
@@ -640,10 +659,11 @@
     }
 
     // Sync the whole legend to the current view. roads: the network's linear
-    // road scale. ratio: the log $/road-metre scale between its data anchors.
-    // money: the metric scale; with the lens on the colour is rescaled, so the
-    // max shows the residential clamp and the grey means "faded
-    // non-residential"; else the grey means "set aside".
+    // road scale. ratio: the log $/road-metre scale between its data anchors
+    // (residential anchors when the lens is on). money: the metric scale; with
+    // the lens on the colour is rescaled, so the max shows the residential
+    // clamp. In money and ratio the grey swatch means "faded non-residential"
+    // when the lens is on, "set aside / off-scale" otherwise.
     function refreshLegend() {
       const cfg = METRICS[state.metric];
       const label = document.querySelector("#legend .aside span:last-child");
@@ -661,8 +681,13 @@
           "≤ $" + Math.round(s.lo).toLocaleString();
         document.getElementById("legend-max").textContent =
           "$" + Math.round(s.hi).toLocaleString() + "+";
-        label.textContent = "Set aside / insufficient road base";
-        sw.style.background = "rgb(104,108,122)";
+        if (state.residential) {
+          label.textContent = "Faded — non-residential land";
+          sw.style.background = `rgb(${LENS_FADE_COLOR.join(",")})`;
+        } else {
+          label.textContent = "Set aside / insufficient road base";
+          sw.style.background = "rgb(104,108,122)";
+        }
       } else {
         document.getElementById("legend-label").textContent = cfg.legendLabel;
         document.getElementById("legend-min").textContent = cfg.legendMin;
@@ -716,6 +741,9 @@
       document.querySelectorAll("#views button").forEach(b =>
         b.classList.toggle("active", b.dataset.view === v));
       document.getElementById("layers").style.display = v === "ratio" ? "flex" : "none";
+      // The lens applies in Money and Ratio; in Roads it has no effect, so the
+      // button disables (state persists and re-applies on leaving Roads).
+      document.querySelector("#lens button").disabled = v === "roads";
       if (v !== "money" && !roadsData) {
         roadsFetch ??= fetch(ROADS_URL).then(r => r.json()).then(d => { roadsData = d; });
         await roadsFetch;
