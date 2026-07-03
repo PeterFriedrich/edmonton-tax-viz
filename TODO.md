@@ -84,14 +84,17 @@ _Last reconciled: 2026-07-02_
     checkboxes (the original stackable idea returns, one level down). That's
     also the trigger to define "total services" and reopen the ratio's
     denominator (currently roads-only by construction).
-  - [ ] **Use-mix view: surface each neighbourhood's zoning composition.**
-    Shows what the land IS (res / com / ind / mixed / DC / institutional /
-    reserve), not what it yields. **Decisions (Peter, 2026-07-03):**
-    dominant-use categorical colour (full composition in the tooltip); nonres
-    split 4 ways `com`/`ind`/`mix`/`dc` — DC gets its own category (24% of
-    nonres area, bespoke bylaws, can't honestly fold elsewhere); a **fourth
-    view button** Money | Roads | Ratio | Uses (categorical colour replaces
-    the ramp — that's view behaviour, not lens behaviour).
+  - [x] ~~**Use-mix view: surface each neighbourhood's zoning composition.**~~
+    **SHIPPED 2026-07-03 — PR #10 merged + deployed** (run 28679596055, green
+    first try); live site verified serving the Uses view + `zoning.geojson`
+    (200, 1.17 MB). Shows what the land IS (res / com / ind / mixed / DC /
+    institutional / reserve), not what it yields. **Decisions (Peter,
+    2026-07-03):** nonres split 4 ways `com`/`ind`/`mix`/`dc` — DC its own
+    category (24% of nonres area, bespoke bylaws, can't honestly fold
+    elsewhere); a **fourth view button** Money | Roads | Ratio | Uses; real
+    bylaw geometry (clipped to the 45 m hood setbacks) rather than
+    dominant-colour hoods; tooltip = dominant use + stacked composition bar.
+    Sub-items below record the build trail.
     - [x] ~~Pipeline prerequisite: split `ZONE_CATEGORY` + export the full
       composition~~ — done 2026-07-03: 39 nonres codes re-tagged (ambiguous
       names resolved from bylaw purpose statements — UW/HA/MMS → mix, BE →
@@ -105,8 +108,9 @@ _Last reconciled: 2026-07-02_
       validator, min all-pairs CVD 10.6 w/ gap+tooltip relief), data-driven
       legend rows, composition tooltip, lens disabled in-view, old-data
       guard. Headless-verified (`tools/profiling/verify-uses.js`, 0/406 fill
-      mismatches; `verify-lens.js` regression green) + screenshot. **Pending:
-      Peter's eyeball → PR → merge → deploy.**
+      mismatches; `verify-lens.js` regression green) + screenshot.
+      (Superseded same day by the real-geometry render below; the
+      dominant-colour path remains as the fallback.)
     - [x] ~~Tooltip mini stacked composition bar~~ — done 2026-07-03 (Peter's
       ask): 190×8 px flex bar in the category colours above the composition
       text; `.tip` max-width 300px so long compositions wrap.
@@ -135,10 +139,11 @@ _Last reconciled: 2026-07-02_
     power centres — South Edmonton Common, Terra Losa, Mill Woods Town Centre,
     Calgary Trail South, Summerlea, Place LaRue, McCauley, Strathcona Junction.
 
-- [ ] **SCOPE: composition numbers now; full zoning POLYGON layer in the viewer is a
-  SEPARATE later product decision** — it changes the viz from "revenue/acre" to
-  "revenue/acre + land-use overlay" (clarity-vs-complexity call for a public audience).
-  Do NOT couple them.
+- [x] ~~**SCOPE: composition numbers now; full zoning POLYGON layer in the viewer is a
+  SEPARATE later product decision**~~ — RESOLVED 2026-07-03: Peter opted in for the
+  Uses view (PR #10) — the real bylaw geometry renders there, category-dissolved and
+  clipped to the hood setbacks. The metric views (Money/Roads/Ratio) stay
+  overlay-free; any zoning overlay ON those views would be a new decision.
 
 - [ ] **Residential-only lens (Phase 2 view — needs a pipeline extension first).**
   Goal: a UI filter that fades non-residential/downtown prisms so councillors see a
