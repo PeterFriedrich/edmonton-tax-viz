@@ -46,11 +46,13 @@ are excluded from the colour-scale fit; the tooltip shows the set-aside reason +
 legend carries a grey swatch. The full zoning-polygon overlay layer is a separate later
 product decision.
 
-### Residential-only lens (built 2026-07-01)
+### Residential-only lens (built 2026-07-01; extended to the Ratio view 2026-07-03)
 A **"Residential only" toggle** (`#lens` panel, below the palette switcher) isolates
 residential land so it compares like-to-like without the Downtown / class-rate-
 differential confound (the motivating problem in `SPEC_revenue.md`). Off by default
-(default view unchanged); preserves the metric + palette state. Two effects when on:
+(default view unchanged); preserves the metric + palette state. Applies in the
+**Money and Ratio** views; **disabled in Roads** (no per-hood prisms to fade — the
+button greys out, state persists and re-applies on leaving). Two effects when on:
 - **Non-residential hoods → one uniform light grey** (`LENS_FADE_COLOR` at α90; roof
   edge `LENS_FADE_EDGE`). Deliberately a *single* neutral colour, not a translucent
   version of each hood's ramp colour — the differing colours were visual interference
@@ -63,6 +65,13 @@ differential confound (the motivating problem in `SPEC_revenue.md`). Off by defa
   (`refreshLegend`). Height stays absolute/linear (only colour rescales). NOTE: this
   bites mainly on **Revenue** (residential clamp ≈ $37k vs the fixed $50k — non-res mill
   rate drives the high revenue tail); **Value** barely moves (≈ $3.88M vs $4M).
+- **In the Ratio view** (2026-07-03) the same two effects apply to the ratio prisms:
+  non-residential kept hoods take the fade grey (height untouched, matching Money),
+  and the log colour anchors rescale to the **residential kept subset** —
+  ≤ $258 … $916+ vs the full set's $264 … $3,253 (FINDINGS §6.4: the ratio's entire
+  high tail is non-residential land). Off-scale hoods (set-aside / below the road
+  floor) stay dark grey + flat regardless of lens. At the default 5% ghost opacity
+  the fade is near-invisible; it reads at higher slider values.
 - Drives off `is_residential` (≥0.50 residential zoned area; see `DATA.md` §5);
   orthogonal to the set-aside flag by construction.
 - **Still open** (`TODO.md`): the fuller "Color Adjustment vs lens controls" hierarchy +
@@ -108,13 +117,15 @@ Shared machinery:
   false`). The road lines and ratio prisms themselves are NOT pickable (picking
   ignores opacity; a prism always beat the roads, which is how this design
   started).
-- Metric toggle in non-Money views only marks state (applies on return);
-  residential lens likewise ignored outside Money. Roads/Ratio buttons hide
-  when the served GeoJSON predates the services columns.
+- Metric toggle in non-Money views only marks state (applies on return); the
+  residential lens applies in Money AND Ratio (2026-07-03), disabled in Roads.
+  Roads/Ratio buttons hide when the served GeoJSON predates the services
+  columns.
 - Headless-verified via Playwright (all three views: layer stacks, legend swaps,
-  tooltips incl. floored/set-aside cases, slider visibility) 2026-07-02.
-  Translucent-prism depth-ordering quirks: same acceptance as the residential
-  lens fade.
+  tooltips incl. floored/set-aside cases, slider visibility) 2026-07-02; lens ×
+  view matrix (anchors, fills, button disable) 2026-07-03
+  (`tools/profiling/verify-lens.js`). Translucent-prism depth-ordering quirks:
+  same acceptance as the residential lens fade.
 
 ---
 
