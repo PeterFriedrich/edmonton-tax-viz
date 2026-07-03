@@ -148,3 +148,64 @@ from "DC = legacy industrial" — currently all invisible inside `frac_dc`.
 - Zoning (including DC provisions) says *permitted*, not *built* — parcel-level
   assessment remains the better "what's actually there" source
   (`PARCEL_LEVEL_OPPORTUNITIES.md`).
+
+---
+
+## 4. Land-use diversity index — does mix correlate with fiscal productivity and servicing burden?
+
+_Added 2026-07-03 (Peter's direction, from a design discussion). Depends on the
+use-mix pipeline (shipped — the nine `frac_*` shares are exported end-to-end)._
+
+**Goal.** Compute a per-neighbourhood **land-use diversity index** (normalized
+Shannon entropy over zoned-area shares) as an independent variable, then test
+two relationships **in Edmonton's own data** rather than citing other cities'
+findings:
+
+1. `revenue_per_acre` vs diversity — does mix correlate with fiscal productivity?
+2. **Road supply per household vs diversity** — does mix correlate with lower
+   servicing burden? This is the one to lean into: if mixed-use hoods show
+   measurably less road per household than single-use ones *at comparable
+   density and era*, that's an Edmonton-specific, self-supporting result.
+   Framed as a hypothesis test; report whichever direction the data shows.
+
+**Index design (decide before computing):**
+- H = −Σ pᵢ ln pᵢ, normalized by ln(k) → 0–1.
+- **Renormalize over developed shares only** (res / com / ind / mix / inst) —
+  including never/notyet makes river-valley hoods read as "diverse".
+  Sensitivity-check with and without `inst`.
+- **The DC trap:** `frac_dc` is *unknown* use, not mixed use. Treating dc as its
+  own category makes SOUTH EDMONTON COMMON (81% DC, a single-use power centre)
+  score as diverse. Either exclude dc + flag high-`frac_dc` hoods as
+  low-confidence, or run item 3 (DC provision scrape) first and use the
+  resolved uses. **Item 3 materially upgrades this item.**
+- Limitation to state: the 2024 bylaw's broad zones understate fine-grained mix
+  (a residential zone can permit small-scale commercial within it), and zoning
+  is permitted-not-built. Neighbourhood-scale zoned mix is what we can measure.
+
+**Denominator work (the "per household" piece):**
+- We publish road **per acre**; the servicing-burden test wants per *household*.
+  No household dataset is loaded, but the assessment CSV already gives a serviceable
+  proxy: **count of residential property records per hood** (condo units are
+  individual records, so this approximates dwelling units). Zero new data needed
+  for a first pass; a municipal/federal census dwelling count is the upgrade.
+
+**Confounders (explicit ask — age, density, lot size):**
+- **Age:** median `year_built` from the property-info dataset `dkk9-cj3x`
+  (DATA.md §2 — documented but NOT yet fetched by `scripts/download_data.py`;
+  adding it needs the standard `$limit`/truncation guard, ~440k rows via SODA).
+- **Density:** residential-record count per acre (from data already loaded).
+- **Lot size:** median `lot_size` from `dkk9-cj3x` (city-provided, m²; ~0.6% null).
+- **Strategy:** (a) report the correlation matrix among mix / age / density /
+  lot size FIRST — in Edmonton, mature gridded hoods are plausibly old AND
+  mixed AND small-lot at once, and if mix≈age is near-collinear at n≈250–360
+  the honest finding is "not separable at this n", not a forced estimate;
+  (b) stratified comparison: diversity-high vs -low *within* era bands
+  (pre-1950 / 1950–80 / post-1980) × density terciles, shown as small
+  multiples; (c) regression / RF permutation importance with the controls in —
+  this folds into item 2's feature matrix (entropy becomes a feature there).
+- Set-aside hoods excluded (off the fiscal comparison, matching the views).
+
+**Sequencing note:** a first-pass scatter (revenue/acre vs H, road-per-unit vs
+H, coloured by era once `dkk9-cj3x` lands) is a notebook exercise on top of the
+already-served GeoJSON + assessment CSV. The deconfounded version needs the
+`dkk9-cj3x` download step first.
