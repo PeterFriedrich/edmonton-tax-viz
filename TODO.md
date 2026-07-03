@@ -99,11 +99,14 @@ _Last reconciled: 2026-07-02_
       (not `nonres`); `ZONING_COLUMNS`/`SLIM_COLUMNS` extended with all 9
       fracs; GeoJSON regenerated (0.68 MB, fracs sum to 1 on all 406, 48
       set-aside / 226 residential unchanged; +4 tests, 135 green).
-    - [ ] Frontend: "Uses" view — categorical palette (dominant use among the
-      9 fracs; kept-but-notyet/never-dominant hoods exist, n=30, need a
-      colour), legend, tooltip composition breakdown, lens/opacity interplay.
-      Dominant-use distribution on current data: res 254, ind 54, notyet 47,
-      never 31, dc 8, inst 7, com 5, mix 0.
+    - [x] ~~Frontend: "Uses" view~~ — built 2026-07-03: fourth view button,
+      flat categorical fill by dominant use, validated 7-hue palette + two
+      neutral greys (UI.md "Uses view" — colours computed through the dataviz
+      validator, min all-pairs CVD 10.6 w/ gap+tooltip relief), data-driven
+      legend rows, composition tooltip, lens disabled in-view, old-data
+      guard. Headless-verified (`tools/profiling/verify-uses.js`, 0/406 fill
+      mismatches; `verify-lens.js` regression green) + screenshot. **Pending:
+      Peter's eyeball → PR → merge → deploy.**
     NOTE: this is hood-level composition — it does NOT reopen the "full
     zoning polygon overlay" scope decision below; keep them decoupled.
     FINDING (for ANALYSIS_BACKLOG 1): the 8 dc-dominant hoods are the big-box

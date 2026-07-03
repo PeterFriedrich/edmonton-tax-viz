@@ -127,6 +127,46 @@ Shared machinery:
   (`tools/profiling/verify-lens.js`). Translucent-prism depth-ordering quirks:
   same acceptance as the residential lens fade.
 
+### Uses view (built 2026-07-03 — fourth view button)
+Dominant **zoned land use** per neighbourhood (largest of the nine `frac_*`
+composition shares, which sum to 1 — `src/load_zoning.py`). Shows what the land
+IS, not what it yields; the blurb states the zoning caveat (designation ≠ built).
+
+- **Flat categorical fill** — no extrusion (category is identity, not magnitude)
+  and no roads layer. The polygon layer itself is pickable (no separate
+  hood-hover layer). Colours are static per feature: no updateTriggers.
+- **Palette (dark bg):** 7 chromatic hues following zoning-map convention —
+  sand `#ad8a3a` Residential, red `#e05252` Commercial, violet `#8f80e0`
+  Industrial, brown-orange `#a54c1f` Mixed use, magenta `#d55181` Direct
+  Control, blue `#2a63b8` Institutional, green `#27853a` River valley / parks —
+  plus two **deliberate neutrals outside the identity set**: Future / rural
+  takes the set-aside grey (the app's "outside the fiscal story" colour) and
+  Unclassified a darker grey (never occurs on current data). Validated with the
+  dataviz six checks against `#0a0a0f`: all in the dark lightness band, chroma
+  floor, ≥3:1 contrast; **min all-pairs CVD ΔE 10.6** (protan, green↔sand) —
+  the 8–12 floor band, carried by secondary encoding (45 m setback gaps between
+  every polygon, hover tooltip naming the category, legend). Palette chosen by
+  brute-force search through the validator, not eyeballed. The palette switcher
+  (Inferno/Glow/Cividis) doesn't recolour this view — only the background
+  changes; the categorical colours are fixed.
+- **Legend** swaps the gradient bar for categorical swatch rows (`#legend-cats`),
+  **data-driven**: only categories that are dominant somewhere on the served
+  data (7 today — no hood is mixed-dominant, mixed zones are ~317 acres
+  citywide; unclassified is empty by construction).
+- **Tooltip:** dominant category + the full composition largest-first
+  (sub-1% shares omitted), e.g. SOUTH EDMONTON COMMON → "Direct Control 81% ·
+  Institutional 17% · Future / rural 2%".
+- **Residential lens disables** here (like Roads) — residential land is already
+  an explicit category; state persists and re-applies on leaving. The metric
+  toggle just marks state, as in Roads/Ratio.
+- **Old-data guard:** the Uses button hides when the served GeoJSON predates the
+  composition columns (checks `frac_commercial`), same pattern as Roads/Ratio.
+- Headless-verified 2026-07-03 (`tools/profiling/verify-uses.js`: legend row
+  swap + restore, 0/406 fill mismatches vs an independent dominant-use
+  computation, tooltip composition, lens disable/re-enable) + screenshot
+  eyeball (`tools/profiling/shot-uses.js`); the lens × view regression matrix
+  (`verify-lens.js`) re-run green after the applyView/refreshLegend changes.
+
 ---
 
 ## Open / unresolved

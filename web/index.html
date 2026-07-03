@@ -70,6 +70,10 @@
       width: 12px; height: 12px; border-radius: 2px;
       background: rgb(104,108,122); flex: 0 0 auto;
     }
+    /* Categorical rows (uses view) — the gradient bar/scale hide, these show. */
+    #legend-cats { display: none; }
+    #legend .cat { display: flex; align-items: center; gap: 7px; margin-top: 5px; color: #9a9ab0; }
+    #legend .cat .sw { width: 12px; height: 12px; border-radius: 2px; flex: 0 0 auto; }
     #banner {
       top: 20px; left: 50%; transform: translateX(-50%);
       max-width: 44%; pointer-events: auto; text-align: center;
@@ -119,6 +123,7 @@
     <button data-view="money" class="active" title="Revenue/value prisms — the money plane">Money</button>
     <button data-view="roads" title="The road network on the ground: collector + local roads coloured by their neighbourhood's road metres per acre; arterials neutral">Roads</button>
     <button data-view="ratio" title="Ghost prisms of revenue per road metre over the neutral road network">Ratio</button>
+    <button data-view="uses" title="Each neighbourhood's dominant zoned land use — what the land is designated for, not what it yields">Uses</button>
   </div>
 
   <div id="layers" class="panel">
@@ -135,6 +140,7 @@
     <div class="bar"></div>
     <div class="scale"><span id="legend-min">$0</span><span id="legend-max">$50k+</span></div>
     <div class="aside"><span class="sw"></span><span>Set aside — natural / undeveloped land</span></div>
+    <div id="legend-cats"></div>
   </div>
 
   <script>
@@ -219,6 +225,42 @@
       p.revenue_per_acre != null && !p.is_set_aside;
     const fmtPerMetre = v => "$" + Math.round(v).toLocaleString() + " / road metre";
 
+    // --- uses view (use-mix, 2026-07-03) -------------------------------------
+    // Dominant zoned land use per hood — categorical, flat (no extrusion: the
+    // view shows what the land IS, not a magnitude). The nine frac_* columns
+    // are shares of zoned area and sum to 1 (src/load_zoning.py). Chromatic
+    // hues follow zoning-map convention (green = parks, red = commercial,
+    // violet = industrial, blue = institutional…) and were VALIDATED with the
+    // dataviz six checks on this background: min all-pairs CVD ΔE 10.6
+    // (protan, green↔sand) — floor band, carried by the secondary encoding
+    // (45 m setback gaps, hover tooltip naming the category, legend). The two
+    // greys are deliberate neutrals OUTSIDE the identity set: future/rural is
+    // the app's "outside the fiscal story" grey; unclassified never occurs on
+    // current data (every zone code is mapped — DATA.md §5).
+    const USE_CATEGORIES = [
+      { frac: "frac_residential", label: "Residential",          color: [173, 138,  58] },
+      { frac: "frac_commercial",  label: "Commercial",           color: [224,  82,  82] },
+      { frac: "frac_industrial",  label: "Industrial",           color: [143, 128, 224] },
+      { frac: "frac_mixed",       label: "Mixed use",            color: [165,  76,  31] },
+      { frac: "frac_dc",          label: "Direct Control",       color: [213,  81, 129] },
+      { frac: "frac_inst",        label: "Institutional",        color: [ 42,  99, 184] },
+      { frac: "frac_never",       label: "River valley / parks", color: [ 39, 133,  58] },
+      { frac: "frac_notyet",      label: "Future / rural",       color: [104, 108, 122] },
+      { frac: "frac_other",       label: "Unclassified",         color: [ 88,  90, 102] },
+    ];
+
+    // Largest composition share wins (ties: first in USE_CATEGORIES order).
+    // null when the composition columns are absent (pre-mix-lens data file).
+    function dominantUse(p) {
+      let best = null, bestV = -1;
+      for (const c of USE_CATEGORIES) {
+        const v = p[c.frac];
+        if (v == null) return null;
+        if (v > bestV) { bestV = v; best = c; }
+      }
+      return best;
+    }
+
     // Per-view chrome. money's title/blurb stay metric-driven (METRICS).
     const VIEWS = {
       roads: {
@@ -238,6 +280,14 @@
                "colour is log-scaled. Grey flat = set-aside land or too little " +
                "road base for a meaningful ratio.",
         opacity: 5, // ghost prisms by default; slider adjusts
+      },
+      uses: {
+        title: "Edmonton: Zoned Land Use",
+        blurb: "Colour shows each neighbourhood's dominant land use under the " +
+               "2024 Zoning Bylaw — the largest share of its zoned area. Zoning " +
+               "describes what the land is designated for, not necessarily what " +
+               "is built on it. Hover a neighbourhood for its full composition.",
+        opacity: null, // flat categorical view — no prisms
       },
     };
 
@@ -501,6 +551,23 @@
 
     // Build the layer stack for the current view. Rebuilt on any toggle.
     function buildLayers() {
+      if (state.view === "uses") {
+        // Flat categorical fill — the polygon itself is the mark, so it also
+        // carries picking/tooltips (no separate hover layer needed). Colours
+        // are static per feature: no updateTriggers.
+        return [new deck.GeoJsonLayer({
+          id: "uses-flat",
+          data: state.data,
+          filled: true,
+          stroked: false,
+          extruded: false,
+          getFillColor: f => { const c = dominantUse(f.properties); return c ? c.color : [0, 0, 0, 0]; },
+          pickable: true,
+          autoHighlight: true,
+          highlightColor: [255, 255, 255, 40],
+        })];
+      }
+
       if (state.view === "roads") {
         // The network alone, coloured by load. No prisms at all — an
         // opacity-0 layer would still tessellate, draw, pick, and highlight.
@@ -606,6 +673,21 @@
         };
       }
 
+      if (state.view === "uses") {
+        const c = dominantUse(p);
+        if (!c) return { className: "tip", html: name + `<span class="muted">no zoning data</span>` };
+        // Full composition, largest first; sub-1% shares omitted as noise.
+        const parts = USE_CATEGORIES
+          .filter(u => p[u.frac] >= 0.005)
+          .sort((a, b) => p[b.frac] - p[a.frac])
+          .map(u => `${u.label} ${Math.round(p[u.frac] * 100)}%`);
+        return {
+          className: "tip",
+          html: name + c.label +
+                `<br/><span class="muted">${parts.join(" · ")}</span>`,
+        };
+      }
+
       if (state.view === "ratio") {
         if (!ratioKept(p)) {
           const why = p.is_set_aside
@@ -668,6 +750,19 @@
       const cfg = METRICS[state.metric];
       const label = document.querySelector("#legend .aside span:last-child");
       const sw = document.querySelector("#legend .aside .sw");
+      // The uses view swaps the gradient machinery for categorical rows.
+      const cat = state.view === "uses";
+      document.querySelector("#legend .bar").style.display = cat ? "none" : "";
+      document.querySelector("#legend .scale").style.display = cat ? "none" : "flex";
+      document.querySelector("#legend .aside").style.display = cat ? "none" : "flex";
+      document.getElementById("legend-cats").style.display = cat ? "block" : "none";
+      if (cat) {
+        document.getElementById("legend-label").textContent = "Dominant zoned land use";
+        document.getElementById("legend-cats").innerHTML = usesLegendCats()
+          .map(u => `<div class="cat"><span class="sw" style="background:rgb(${u.color.join(",")})"></span><span>${u.label}</span></div>`)
+          .join("");
+        return;
+      }
       if (state.view === "roads") {
         document.getElementById("legend-label").textContent = "Road metres per acre";
         document.getElementById("legend-min").textContent = "0 m";
@@ -702,6 +797,19 @@
         }
       }
       document.querySelector("#legend .bar").style.background = legendGradient();
+    }
+
+    // Legend rows for the uses view: only categories that are actually
+    // dominant somewhere on the served data (all nine stay defined for
+    // robustness; e.g. no hood is mixed-dominant today). Computed once.
+    let _usesLegendCats = null;
+    function usesLegendCats() {
+      if (!_usesLegendCats) {
+        const present = new Set(
+          state.data.features.map(f => dominantUse(f.properties)).filter(Boolean));
+        _usesLegendCats = USE_CATEGORIES.filter(u => present.has(u));
+      }
+      return _usesLegendCats;
     }
 
     // Switch colour ramp: rebuild layers, restyle the background + legend gradient.
@@ -741,10 +849,11 @@
       document.querySelectorAll("#views button").forEach(b =>
         b.classList.toggle("active", b.dataset.view === v));
       document.getElementById("layers").style.display = v === "ratio" ? "flex" : "none";
-      // The lens applies in Money and Ratio; in Roads it has no effect, so the
-      // button disables (state persists and re-applies on leaving Roads).
-      document.querySelector("#lens button").disabled = v === "roads";
-      if (v !== "money" && !roadsData) {
+      // The lens applies in Money and Ratio. In Roads it has no effect, and in
+      // Uses residential land is already an explicit category — the button
+      // disables in both (state persists and re-applies on leaving).
+      document.querySelector("#lens button").disabled = v === "roads" || v === "uses";
+      if ((v === "roads" || v === "ratio") && !roadsData) {
         roadsFetch ??= fetch(ROADS_URL).then(r => r.json()).then(d => { roadsData = d; });
         await roadsFetch;
         if (state.view !== v) return; // switched again while the fetch ran
@@ -783,6 +892,11 @@
       if (!state.data.features.some(f => f.properties.road_m_per_acre != null)) {
         document.querySelectorAll('#views button[data-view="roads"], #views button[data-view="ratio"]')
           .forEach(b => { b.style.display = "none"; });
+      }
+      // Same guard for the uses view: it needs the composition columns
+      // (pipeline 2026-07-03) — hide the button on older data files.
+      if (!state.data.features.some(f => f.properties.frac_commercial != null)) {
+        document.querySelector('#views button[data-view="uses"]').style.display = "none";
       }
       // Sync the legend gradient to the default ramp (single source of truth).
       document.querySelector("#legend .bar").style.background = legendGradient();
