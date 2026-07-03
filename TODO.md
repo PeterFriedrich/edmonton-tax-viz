@@ -68,12 +68,14 @@ _Last reconciled: 2026-07-02_
 
 - [ ] **Views & lenses follow-ons (Peter, 2026-07-02).** Three asks on top of the
   shipped Money | Roads | Ratio views:
-  - [x] ~~**Residential-only lens in the Ratio view.**~~ — done 2026-07-03
-    (`feature/ratio-residential-lens`): non-residential kept hoods fade to the
-    lens grey (height untouched), log colour anchors rescale to the residential
-    kept subset (≤ $258 … $916+ vs $264 … $3,253 — FINDINGS §6.4 addendum),
-    lens button disables in the Roads view (state persists). Headless-verified
-    (`tools/profiling/verify-lens.js` + screenshot); UI.md updated.
+  - [x] ~~**Residential-only lens in the Ratio view.**~~ — done 2026-07-03:
+    non-residential kept hoods fade to the lens grey (height untouched), log
+    colour anchors rescale to the residential kept subset (≤ $258 … $916+ vs
+    $264 … $3,253 — FINDINGS §6.4 addendum), lens button disables in the Roads
+    view (state persists). Headless-verified (`tools/profiling/verify-lens.js`
+    + screenshot); UI.md updated. **PR #9 merged + deployed** (run 28646374983;
+    deploy step needed one transient-error rerun); live site verified serving
+    the new code.
   - [ ] **More service layers (water / drainage / transit / …).** Each needs its
     own SPEC_services section (dataset, filters, locked decisions), a
     per-hood supply column, and a slim web export. Decide the UI shape when
