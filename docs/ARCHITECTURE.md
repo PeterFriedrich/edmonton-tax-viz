@@ -144,7 +144,10 @@ GeoDataFrame from `load_boundaries.py` (needs projected geometry for the overlay
 - `frac_residential` / `is_residential` — residential share of zoned area + `>= 0.50`
   flag (residential-only lens; orthogonal to `is_set_aside`, added 2026-07-01)
 - land-use composition columns (`frac_never`/`frac_notyet`/`frac_inst`/`frac_residential`/
-  `frac_nonres`, shares of zoned area, sum to 1)
+  `frac_commercial`/`frac_industrial`/`frac_mixed`/`frac_dc`/`frac_other`, shares of
+  zoned area, sum to 1 — the use-mix view's input; nonres split 4 ways 2026-07-03,
+  ambiguous codes resolved from bylaw purpose statements, DATA.md §5)
+- `frac_nonres` — sum of com/ind/mix/dc/other (the pre-split bucket, kept for continuity)
 
 **Responsibilities:**
 - Load zoning polygons, reproject to **EPSG:3400** (CRS set explicitly, per project
@@ -163,6 +166,20 @@ GeoDataFrame from `load_boundaries.py` (needs projected geometry for the overlay
 **Does not:** touch assessment/revenue values or fit the colour scale (that's a
 display decision downstream). Zoning is a **refreshed input** — re-pull each cycle so
 developing land graduates off the set-aside list automatically (see SPEC_deployment.md).
+
+**Also exports (added 2026-07-03):** `export_zoning_web(zoning_path, boundaries,
+out_path)` — the Uses-view ground layer (`web/data/zoning.geojson`, committed):
+the raw zoning polygons dissolved **citywide** into one MultiPolygon per
+land-use category, **clipped to the setback-shrunk neighbourhood footprints**
+(45 m — the same "city block" gaps the prisms carry, so the hood unit stays
+visible; collapsed slivers keep their full footprint, logged), simplified 10 m,
+coordinates snapped to the 1e-5 grid **topology-aware** (`shapely.set_precision`
+— plain rounding after a validity pass re-introduces degenerate rings that break
+the browser's tessellator), single `u` prop (category key). Shares
+`_load_categorized()` with `load_zoning` (the raw file is read once per entry
+point — same accepted pattern as `load_roads`' `_prepare_segments`). Display
+geometry only — all published composition metrics come from the full-resolution
+overlay.
 
 ---
 
@@ -233,9 +250,10 @@ metrics still come from `load_roads`, computed before any thinning.
 - Aggregated assessment DataFrame from `aggregate_by_neighbourhood.py`
 - Boundary GeoDataFrame from `load_boundaries.py`
 - (optional) zoning composition DataFrame from `load_zoning.py` — merged on
-  `neighbourhood_name`, adding `set_aside_frac` / `is_set_aside` / `set_aside_reason` /
-  `frac_residential` / `is_residential` (the `ZONING_COLUMNS` list) to the output and
-  thus the GeoJSON. Degrades gracefully when absent, like the revenue columns.
+  `neighbourhood_name`, adding the set-aside flags, the residential-lens flag, and
+  the full land-use composition fractions (the `ZONING_COLUMNS` list — use-mix view)
+  to the output and thus the GeoJSON. Degrades gracefully when absent, like the
+  revenue columns.
 - (optional) roads DataFrame from `load_roads.py` (`SPEC_services.md`) — a
   `ROAD_COLUMNS` merge on `neighbourhood_name`, same graceful-when-absent
   pattern; `road_m_per_acre = road_m_total / area_acres` computed here.

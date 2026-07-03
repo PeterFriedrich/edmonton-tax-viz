@@ -84,17 +84,56 @@ _Last reconciled: 2026-07-02_
     checkboxes (the original stackable idea returns, one level down). That's
     also the trigger to define "total services" and reopen the ratio's
     denominator (currently roads-only by construction).
-  - [ ] **Use-mix lens: surface each neighbourhood's zoning composition.**
-    A lens/view that shows what the land IS (res / non-res / institutional /
-    reserve mix), not what it yields. **Pipeline prerequisite:** `load_zoning`
-    computes the full composition (`frac_never/notyet/inst/res/nonres`, sums
-    to 1) but `join_and_calculate` exports only the set-aside + residential
-    columns — extend `ZONING_COLUMNS`/`SLIM_COLUMNS` + regen. Display design
-    open: dominant-use categorical colour vs. a mix/diversity index vs.
-    per-hood blended colour; also whether nonres should first split
-    commercial/industrial (ANALYSIS_BACKLOG item 1 wants that split anyway).
+  - [ ] **Use-mix view: surface each neighbourhood's zoning composition.**
+    Shows what the land IS (res / com / ind / mixed / DC / institutional /
+    reserve), not what it yields. **Decisions (Peter, 2026-07-03):**
+    dominant-use categorical colour (full composition in the tooltip); nonres
+    split 4 ways `com`/`ind`/`mix`/`dc` — DC gets its own category (24% of
+    nonres area, bespoke bylaws, can't honestly fold elsewhere); a **fourth
+    view button** Money | Roads | Ratio | Uses (categorical colour replaces
+    the ramp — that's view behaviour, not lens behaviour).
+    - [x] ~~Pipeline prerequisite: split `ZONE_CATEGORY` + export the full
+      composition~~ — done 2026-07-03: 39 nonres codes re-tagged (ambiguous
+      names resolved from bylaw purpose statements — UW/HA/MMS → mix, BE →
+      ind, MED/AED → com; DATA.md §5); unknown codes now default to `other`
+      (not `nonres`); `ZONING_COLUMNS`/`SLIM_COLUMNS` extended with all 9
+      fracs; GeoJSON regenerated (0.68 MB, fracs sum to 1 on all 406, 48
+      set-aside / 226 residential unchanged; +4 tests, 135 green).
+    - [x] ~~Frontend: "Uses" view~~ — built 2026-07-03: fourth view button,
+      flat categorical fill by dominant use, validated 7-hue palette + two
+      neutral greys (UI.md "Uses view" — colours computed through the dataviz
+      validator, min all-pairs CVD 10.6 w/ gap+tooltip relief), data-driven
+      legend rows, composition tooltip, lens disabled in-view, old-data
+      guard. Headless-verified (`tools/profiling/verify-uses.js`, 0/406 fill
+      mismatches; `verify-lens.js` regression green) + screenshot. **Pending:
+      Peter's eyeball → PR → merge → deploy.**
+    - [x] ~~Tooltip mini stacked composition bar~~ — done 2026-07-03 (Peter's
+      ask): 190×8 px flex bar in the category colours above the composition
+      text; `.tip` max-width 300px so long compositions wrap.
+    - [x] ~~Real zoning geometry IN the Uses view~~ (Peter's call — the
+      dominant-colour render was "meh utility"; consciously reopened the
+      "zoning polygon overlay" scope item for THIS view only) — done
+      2026-07-03: `export_zoning_web` (citywide category dissolve, simplify
+      10 m, grid-snap `set_precision` — plain rounding after the validity
+      pass broke the browser tessellator; 8 features, 1.1 MB), wired into
+      `main.py`; frontend lazy-loads it with dominant-colour fallback +
+      hood-hover tooltips on top; legend now shows all 8 present categories.
+      +4 tests (139 green); verify-uses.js + verify-lens.js green;
+      screenshot eyeballed.
+    - [ ] **NEXT after this ships — land-use diversity analysis (Peter,
+      2026-07-03):** ANALYSIS_BACKLOG item 4 (normalized entropy over the
+      composition shares → test revenue/acre vs mix and road-per-household vs
+      mix, deconfounded by age/density/lot size). Build prerequisites in order:
+      (1) `dkk9-cj3x` download step in `scripts/download_data.py` (+$limit
+      guard) for `year_built`/`lot_size`; (2) residential-record count per hood
+      (household proxy) — from the already-loaded assessment CSV; (3) the DC
+      provision scrape (ANALYSIS_BACKLOG 3) before trusting the entropy index
+      (DC = unknown use, not mixed use).
     NOTE: this is hood-level composition — it does NOT reopen the "full
     zoning polygon overlay" scope decision below; keep them decoupled.
+    FINDING (for ANALYSIS_BACKLOG 1): the 8 dc-dominant hoods are the big-box
+    power centres — South Edmonton Common, Terra Losa, Mill Woods Town Centre,
+    Calgary Trail South, Summerlea, Place LaRue, McCauley, Strathcona Junction.
 
 - [ ] **SCOPE: composition numbers now; full zoning POLYGON layer in the viewer is a
   SEPARATE later product decision** — it changes the viz from "revenue/acre" to

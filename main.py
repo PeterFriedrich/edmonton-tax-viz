@@ -32,7 +32,7 @@ from load_assessment import load_assessment
 from apply_tax_rates import apply_tax_rates
 from aggregate_by_neighbourhood import aggregate_by_neighbourhood
 from load_boundaries import load_boundaries
-from load_zoning import load_zoning
+from load_zoning import load_zoning, export_zoning_web
 from load_roads import load_roads, export_roads_web
 from join_and_calculate import join_and_calculate, export_geojson
 from plot_choropleth import plot_choropleth
@@ -48,6 +48,7 @@ MILL_RATES_JSON = ROOT / "data/mill_rates.json"
 PNG_OUT = ROOT / "output/edmonton_value_per_acre.png"
 GEOJSON_OUT = ROOT / "web/data/neighbourhood_value_per_acre.geojson"
 ROADS_WEB_OUT = ROOT / "web/data/roads.geojson"
+ZONING_WEB_OUT = ROOT / "web/data/zoning.geojson"
 
 # Assessment-year alignment: the local snapshot is 2025 data (the coverage year
 # lives in Socrata metadata, not the rows — see DATA.md). Mill rates MUST match.
@@ -114,6 +115,14 @@ def run(
         # display architecture, SPEC_services.md) — skipped with the roads layer.
         if roads is not None:
             export_roads_web(str(roads_geojson), boundaries, str(ROADS_WEB_OUT))
+        # Ground-layer zoning geometry for the Uses view (dissolved by
+        # category, clipped to the same setback gaps as the prisms; display
+        # only) — skipped with the zoning layer.
+        if zoning is not None:
+            export_zoning_web(
+                str(zoning_geojson), boundaries, str(ZONING_WEB_OUT),
+                setback_m=setback_m,
+            )
 
     logger.info("Pipeline complete.")
 

@@ -1,3 +1,4 @@
+import json
 import sys
 from unittest.mock import patch
 
@@ -10,6 +11,7 @@ from load_zoning import (
     RESIDENTIAL_THRESHOLD,
     SET_ASIDE_THRESHOLD,
     _categorize,
+    export_zoning_web,
     load_zoning,
 )
 
@@ -48,9 +50,18 @@ def test_categorize_parses_first_token():
 
 
 def test_categorize_splits_residential_from_nonresidential():
-    # The old "dev" bucket is split: housing → res, commercial/industrial → nonres.
+    # The old "dev" bucket is split: housing → res; the rest by use.
     assert list(_categorize(pd.Series(["RSF", "RM", "GRH"]))) == ["res"] * 3
-    assert list(_categorize(pd.Series(["CN", "IM", "MU"]))) == ["nonres"] * 3
+    assert list(_categorize(pd.Series(["CN", "IM", "MU"]))) == ["com", "ind", "mix"]
+
+
+def test_categorize_nonres_split_resolves_misleading_names():
+    # Assigned from the bylaw purpose statement, not the name: UW "Urban
+    # Warehouse" is a downtown mixed-use zone, BE "Business Employment" sits in
+    # the bylaw's industrial part (DATA.md §5).
+    assert list(_categorize(pd.Series(["UW", "HA", "MMS"]))) == ["mix"] * 3
+    assert list(_categorize(pd.Series(["BE"]))) == ["ind"]
+    assert list(_categorize(pd.Series(["MED", "AED"]))) == ["com"] * 2
 
 
 def test_categorize_institutional_not_set_aside():
@@ -58,16 +69,17 @@ def test_categorize_institutional_not_set_aside():
     assert list(_categorize(pd.Series(["PU", "UI", "AJ", "UF"]))) == ["inst"] * 4
 
 
-def test_categorize_unknown_defaults_to_nonres_and_warns(caplog):
+def test_categorize_unknown_defaults_to_other_and_warns(caplog):
+    # Unknown codes stay on scale but are not claimed as any specific use.
     with caplog.at_level("WARNING"):
         cats = _categorize(pd.Series(["ZZZ"]))
-    assert list(cats) == ["nonres"]
+    assert list(cats) == ["other"]
     assert "ZZZ" in caplog.text
 
 
-def test_categorize_direct_control_is_nonres():
-    # DC is heterogeneous — stays on scale but is not claimed as residential.
-    assert list(_categorize(pd.Series(["DC", "DC1", "DC2"]))) == ["nonres"] * 3
+def test_categorize_direct_control_is_own_category():
+    # DC is bespoke per-site bylaws — stays on scale, claimed as no single use.
+    assert list(_categorize(pd.Series(["DC", "DC1", "DC2"]))) == ["dc"] * 3
 
 
 # --- load_zoning ---------------------------------------------------------------
@@ -157,8 +169,46 @@ def test_commercial_hood_not_residential():
     zoning = _zoning(["CN"], [_square(0, 0, 100)])
     result = _run(hood, zoning)
     row = result.iloc[0]
-    assert row["frac_nonres"] == 1.0
+    assert row["frac_commercial"] == 1.0
+    assert row["frac_nonres"] == 1.0  # continuity: sum of the split categories
     assert row["frac_residential"] == 0.0
+    assert bool(row["is_residential"]) is False
+
+
+# --- use-mix composition ---------------------------------------------------------
+
+def test_composition_fractions_sum_to_one():
+    # Four quarters: residential / commercial / industrial / direct control.
+    hood = _boundaries(["QUARTERS"], [_square(0, 0, 100)])
+    zoning = _zoning(
+        ["RSF", "CN", "IM", "DC2"],
+        [_square(0, 0, 50), _square(50, 0, 50), _square(0, 50, 50), _square(50, 50, 50)],
+    )
+    result = _run(hood, zoning)
+    row = result.iloc[0]
+    for col in ("frac_residential", "frac_commercial", "frac_industrial", "frac_dc"):
+        assert abs(row[col] - 0.25) < 1e-6
+    frac_cols = [
+        "frac_never", "frac_notyet", "frac_inst", "frac_residential",
+        "frac_commercial", "frac_industrial", "frac_mixed", "frac_dc", "frac_other",
+    ]
+    assert abs(sum(row[c] for c in frac_cols) - 1.0) < 1e-6
+    assert abs(row["frac_nonres"] - 0.75) < 1e-6
+
+
+def test_mixed_use_hood_composition():
+    # 60% mixed-use zoning, 40% housing → mix-dominant but still nonres-minority.
+    hood = _boundaries(["TOD"], [_square(0, 0, 100)])
+    zoning = _zoning(
+        ["MU", "RSF"],
+        [Polygon([(0, 0), (60, 0), (60, 100), (0, 100)]),
+         Polygon([(60, 0), (100, 0), (100, 100), (60, 100)])],
+    )
+    result = _run(hood, zoning)
+    row = result.iloc[0]
+    assert abs(row["frac_mixed"] - 0.6) < 1e-6
+    assert abs(row["frac_residential"] - 0.4) < 1e-6
+    assert row["frac_commercial"] == 0.0
     assert bool(row["is_residential"]) is False
 
 
@@ -189,3 +239,72 @@ def test_set_aside_hood_is_not_residential():
     row = result.iloc[0]
     assert bool(row["is_set_aside"]) is True
     assert bool(row["is_residential"]) is False
+
+# --- export_zoning_web (Uses-view ground layer) ----------------------------------
+
+def _run_export(zoning, tmp_path, boundaries=None, **kwargs):
+    # Default: one big hood covering the synthetic zoning, setback off, so
+    # category tests aren't about the clip.
+    if boundaries is None:
+        boundaries = _boundaries(["ALL"], [_square(-100, -100, 800)])
+        kwargs.setdefault("setback_m", 0.0)
+    out = tmp_path / "zoning.geojson"
+    with patch("load_zoning.gpd.read_file", return_value=zoning):
+        n = export_zoning_web("dummy.geojson", boundaries, str(out), **kwargs)
+    return n, json.loads(out.read_text())
+
+
+def test_export_dissolves_by_category(tmp_path):
+    # Two residential squares + one commercial -> one feature per category.
+    zoning = _zoning(
+        ["RSF", "RM", "CN"],
+        [_square(0, 0, 100), _square(100, 0, 100), _square(300, 0, 100)],
+    )
+    n, fc = _run_export(zoning, tmp_path)
+    assert n == 2
+    cats = sorted(f["properties"]["u"] for f in fc["features"])
+    assert cats == ["com", "res"]
+
+
+def test_export_clips_setback_gaps_between_hoods(tmp_path):
+    # One residential sheet across two adjacent hoods; a 10 m setback must
+    # remove the 20 m strip around their shared boundary (x=200) from the
+    # display geometry.
+    zoning = _zoning(["RSF"], [_square(0, 0, 400)])
+    hoods = _boundaries(["WEST", "EAST"], [_square(0, 0, 200), _square(200, 0, 200)])
+    _, fc = _run_export(zoning, tmp_path, boundaries=hoods, setback_m=10.0,
+                        simplify_tolerance_m=0.0)
+    import shapely.geometry as sg
+    geom = sg.shape(fc["features"][0]["geometry"])
+    # Points either side of the gap survive; the boundary strip does not.
+    # (The export writes EPSG:4326 — probe via the projected frame instead.)
+    from pyproj import Transformer
+    t = Transformer.from_crs("EPSG:3400", "EPSG:4326", always_xy=True)
+    inside = sg.Point(t.transform(100, 100))
+    gap = sg.Point(t.transform(200, 100))
+    assert geom.contains(inside)
+    assert not geom.contains(gap)
+
+
+def test_export_carries_only_the_category_prop(tmp_path):
+    zoning = _zoning(["A"], [_square(0, 0, 100)])
+    _, fc = _run_export(zoning, tmp_path)
+    assert list(fc["features"][0]["properties"]) == ["u"]
+    assert fc["features"][0]["properties"]["u"] == "never"
+
+
+def test_export_rounds_coordinates(tmp_path):
+    zoning = _zoning(["RSF"], [_square(0, 0, 100)])
+    _, fc = _run_export(zoning, tmp_path, precision=3)
+
+    def flat(c):
+        return sum((flat(x) for x in c), []) if isinstance(c, list) else [c]
+
+    for v in flat(fc["features"][0]["geometry"]["coordinates"]):
+        assert round(v, 3) == v
+
+
+def test_export_unknown_code_lands_in_other(tmp_path):
+    zoning = _zoning(["ZZZ"], [_square(0, 0, 100)])
+    _, fc = _run_export(zoning, tmp_path)
+    assert fc["features"][0]["properties"]["u"] == "other"

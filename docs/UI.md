@@ -127,6 +127,67 @@ Shared machinery:
   (`tools/profiling/verify-lens.js`). Translucent-prism depth-ordering quirks:
   same acceptance as the residential lens fade.
 
+### Uses view (built 2026-07-03 — fourth view button; real geometry same day)
+**The city's actual zoning geometry**, coloured by land-use category. Shows what
+the land IS, not what it yields; the blurb states the zoning caveat
+(designation ≠ built).
+
+- **Ground layer = real bylaw polygons** (`web/data/zoning.geojson`, 1.2 MB —
+  `export_zoning_web`: the 11.5k zoning polygons dissolved CITYWIDE into one
+  MultiPolygon per category, **clipped to the setback-shrunk hood footprints
+  (45 m, same as the prisms) so the neighbourhood "city block" gaps stay
+  visible under the zoning fabric** (Peter's ask 2026-07-03), simplified 10 m,
+  5 dp, single `u` prop). Lazy-loaded like roads, on first Uses view. Flat,
+  not pickable; the invisible **hood-hover layer** on top carries the
+  per-neighbourhood tooltip (the composition data's granularity) + hover
+  highlight, and its (equally setback) footprint aligns with the visible
+  blocks. **Fallback:** if the file is missing (older deploy / fetch failure)
+  the view falls back to colouring each hood by its dominant category from
+  the main GeoJSON, and the legend label switches "Zoned land use" →
+  "Dominant zoned land use".
+- **Geometry-validity gotcha (found live):** rounding coordinates AFTER a
+  validity pass re-introduces degenerate rings, which deck.gl's tessellator
+  renders as stray filled black triangles. `export_zoning_web` therefore snaps
+  to the 1e-5 grid topology-aware (`shapely.set_precision`) before writing, so
+  the served file holds exactly the validated geometry (read-back all-valid).
+- Colours are static per feature: no updateTriggers. No extrusion (category is
+  identity, not magnitude) and no roads layer.
+- **Palette (dark bg):** 7 chromatic hues following zoning-map convention —
+  sand `#ad8a3a` Residential, red `#e05252` Commercial, violet `#8f80e0`
+  Industrial, brown-orange `#a54c1f` Mixed use, magenta `#d55181` Direct
+  Control, blue `#2a63b8` Institutional, green `#27853a` River valley / parks —
+  plus two **deliberate neutrals outside the identity set**: Future / rural
+  takes the set-aside grey (the app's "outside the fiscal story" colour) and
+  Unclassified a darker grey (never occurs on current data). Validated with the
+  dataviz six checks against `#0a0a0f`: all in the dark lightness band, chroma
+  floor, ≥3:1 contrast; **min all-pairs CVD ΔE 10.6** (protan, green↔sand) —
+  the 8–12 floor band, carried by secondary encoding (45 m setback gaps between
+  every polygon, hover tooltip naming the category, legend). Palette chosen by
+  brute-force search through the validator, not eyeballed. The palette switcher
+  (Inferno/Glow/Cividis) doesn't recolour this view — only the background
+  changes; the categorical colours are fixed.
+- **Legend** swaps the gradient bar for categorical swatch rows (`#legend-cats`),
+  **data-driven**: the categories present in the zoning ground layer (8 today —
+  the real geometry surfaces the mixed-use zones even though no hood is
+  mixed-DOMINANT; unclassified is empty by construction). On the fallback
+  path: only dominant-somewhere categories (7).
+- **Tooltip:** dominant category + a **mini stacked composition bar**
+  (`.mixbar` — 190×8 px, segments flex-grow proportional to each share in the
+  category colours, 2px surface gaps between segments) + the full composition
+  largest-first as text (sub-1% shares omitted), e.g. SOUTH EDMONTON COMMON →
+  "Direct Control 81% · Institutional 17% · Future / rural 2%". `.tip` gained
+  `max-width: 300px` so long compositions wrap.
+- **Residential lens disables** here (like Roads) — residential land is already
+  an explicit category; state persists and re-applies on leaving. The metric
+  toggle just marks state, as in Roads/Ratio.
+- **Old-data guard:** the Uses button hides when the served GeoJSON predates the
+  composition columns (checks `frac_commercial`), same pattern as Roads/Ratio.
+- Headless-verified 2026-07-03 (`tools/profiling/verify-uses.js`: legend row
+  swap + restore, layer stack zoning-ground + hood-hover, 0/8 category fill
+  mismatches, tooltip composition, lens disable/re-enable) + screenshot
+  eyeball (`tools/profiling/shot-uses.js`); the lens × view regression matrix
+  (`verify-lens.js`) re-run green after the applyView/refreshLegend changes.
+
 ---
 
 ## Open / unresolved
