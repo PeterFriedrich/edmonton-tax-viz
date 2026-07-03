@@ -76,9 +76,9 @@ performance. Complements item 1: item 1 eyeballs the tails; this quantifies the
 drivers across all neighbourhoods.
 
 **Candidate features** (assemble a neighbourhood-level matrix):
-- Land-use composition — `frac_residential` / `frac_nonres` / `frac_inst` /
-  `set_aside_frac` (already computed in `load_zoning.py`, but currently dropped before
-  output — see prerequisite).
+- Land-use composition — the full 9-fraction breakdown (`frac_residential` /
+  `frac_commercial` / `frac_industrial` / `frac_mixed` / `frac_dc` / `frac_inst` /
+  `set_aside_frac` …) — exported end-to-end since 2026-07-03 (use-mix view pipeline).
 - Density / built form — parcel count, area_acres, parcels-per-acre, median lot size,
   median year built (property-info dataset `dkk9-cj3x`).
 - Assessment-class mix — value / levy share by class (see `FINDINGS_assessment_classes.md`).
@@ -103,3 +103,48 @@ drivers across all neighbourhoods.
   numpy-only today). Adding it is the first setup step.
 - Notebook lives in `notebooks/exploration/`; per global CLAUDE.md use the Jupyter MCP
   tools, not NotebookEdit.
+
+---
+
+## 3. Direct Control provision scrape — what does the DC land actually permit?
+
+_Added 2026-07-03, out of the use-mix view build._
+
+**Observation.** The `dc` category (24% of nonres area) is honest but opaque by
+construction — Direct Control means a bespoke per-site bylaw, so `load_zoning.py`
+claims no single use for it. But the zoning dataset's `url` field points at the
+**per-provision** bylaw page for each DC site (`dc-20932`, `dc1-19431`, `dc2-277`,
+… ~1,070 polygons), and each page lists that specific site's permitted uses. The
+information we discard exists — one HTTP request per site away. Item 1 just made
+this concrete: the 8 DC-dominant neighbourhoods are the big-box power centres.
+
+**Why it matters.** Site-level use classification for the DC bucket would let the
+item 1 audit distinguish "DC = power-centre retail" from "DC = residential tower"
+from "DC = legacy industrial" — currently all invisible inside `frac_dc`.
+
+**Approach — auto:**
+- Collect the distinct DC `url` values from the zoning GeoJSON (dedupe: many
+  polygons share a provision); fetch each bylaw page politely (cache to disk,
+  rate-limit — it's a city web app, not a bulk API).
+- Extract the purpose statement + listed/permitted uses per provision; classify
+  each site into com / ind / res / mix (extraction is unstructured text →
+  LLM/heuristic, so it inherits a QA burden).
+- **Keep scraped classifications in separate columns** (e.g. `dc_inferred_use`,
+  per-hood `frac_dc_com`-style rollups) — never silently folded into the
+  bylaw-authoritative zoning categories. The honest `frac_dc` stays as-is.
+
+**Approach — by hand:**
+- Verify a random sample (~30 provisions) of the extracted classifications
+  against the pages before trusting any rollup.
+- Spot-check the 8 DC-dominant hoods first — highest leverage for item 1.
+
+**Caveats / shelf life:**
+- Scrape fragility: page structure can change; re-runs should diff against the
+  cached corpus rather than re-classify from scratch.
+- The 2024 bylaw renewal collapsed the standard zones into fewer, broader ones —
+  zoning-based inference is getting coarser in general. Legacy DC1/DC2
+  provisions, however, persist until sites redevelop, so this per-site detail
+  has a long shelf life; expect the DC corpus to shrink slowly, not vanish.
+- Zoning (including DC provisions) says *permitted*, not *built* — parcel-level
+  assessment remains the better "what's actually there" source
+  (`PARCEL_LEVEL_OPPORTUNITIES.md`).
