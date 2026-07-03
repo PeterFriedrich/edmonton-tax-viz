@@ -51,8 +51,9 @@ metre (`revenue_per_acre / road_m_per_acre` — the acres cancel) is derived
 client-side in `web/index.html` from the two published GeoJSON columns. No
 pipeline stage computes or exports it; its scale anchors (log-colour p2.5–p97.5,
 height parity) are computed at page load from the served data (`ratioScale()`),
-so they track weekly refreshes automatically. Transform decision + the 5 m/acre
-road-base artifact floor: FINDINGS §6.4.
+so they track weekly refreshes automatically — one anchor pair for the full kept
+subset, one for the residential lens (2026-07-03). Transform decision + the
+5 m/acre road-base artifact floor + the residential anchors: FINDINGS §6.4.
 
 ---
 
