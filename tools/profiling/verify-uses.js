@@ -32,26 +32,25 @@ const [url] = process.argv.slice(2);
   await page.waitForTimeout(2500);
   console.log('uses           :', JSON.stringify(await chrome()));
 
-  // Layer stack + per-hood fills: every hood's fill must equal its dominant
-  // category's colour; spot-report one hood per present category.
+  // Layer stack + per-category fills on the zoning ground layer: every
+  // feature's fill must equal its category colour from USE_CATEGORIES.
   const fills = await page.evaluate(() => {
     const layers = overlay._deck.layerManager.layers.map(l => l.id);
-    const layer = overlay._deck.layerManager.layers.find(l => l.id === 'uses-flat');
+    const layer = overlay._deck.layerManager.layers.find(l => l.id === 'zoning-ground');
+    if (!layer) return { layers, error: 'zoning-ground layer missing (fallback path?)' };
     const getFill = layer.props.getFillColor;
     let mismatches = 0;
-    const sample = {};
-    for (const f of state.data.features) {
-      const dom = dominantUse(f.properties);
+    const cats = {};
+    for (const f of zoningData.features) {
+      const u = USE_BY_KEY[f.properties.u];
       const fill = getFill(f);
-      if (!dom) { mismatches++; continue; }
-      if (fill.join() !== dom.color.join()) mismatches++;
-      else if (!(dom.label in sample))
-        sample[dom.label] = { hood: f.properties.neighbourhood_name, fill };
+      if (!u || fill.join() !== u.color.join()) mismatches++;
+      else cats[u.label] = fill;
     }
     return { layers, extruded: !!layer.props.extruded, pickable: !!layer.props.pickable,
-             n: state.data.features.length, mismatches, sample };
+             nFeatures: zoningData.features.length, mismatches, cats };
   });
-  console.log('uses fills     :', JSON.stringify(fills, null, 1));
+  console.log('zoning fills   :', JSON.stringify(fills, null, 1));
 
   // Tooltip composition for a known DC-dominant hood (big-box power centre).
   const tip = await page.evaluate(() => {

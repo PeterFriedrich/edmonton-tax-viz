@@ -1,3 +1,4 @@
+import json
 import sys
 from unittest.mock import patch
 
@@ -10,6 +11,7 @@ from load_zoning import (
     RESIDENTIAL_THRESHOLD,
     SET_ASIDE_THRESHOLD,
     _categorize,
+    export_zoning_web,
     load_zoning,
 )
 
@@ -237,3 +239,47 @@ def test_set_aside_hood_is_not_residential():
     row = result.iloc[0]
     assert bool(row["is_set_aside"]) is True
     assert bool(row["is_residential"]) is False
+
+# --- export_zoning_web (Uses-view ground layer) ----------------------------------
+
+def _run_export(zoning, tmp_path, **kwargs):
+    out = tmp_path / "zoning.geojson"
+    with patch("load_zoning.gpd.read_file", return_value=zoning):
+        n = export_zoning_web("dummy.geojson", str(out), **kwargs)
+    return n, json.loads(out.read_text())
+
+
+def test_export_dissolves_by_category(tmp_path):
+    # Two residential squares + one commercial -> one feature per category.
+    zoning = _zoning(
+        ["RSF", "RM", "CN"],
+        [_square(0, 0, 100), _square(100, 0, 100), _square(300, 0, 100)],
+    )
+    n, fc = _run_export(zoning, tmp_path)
+    assert n == 2
+    cats = sorted(f["properties"]["u"] for f in fc["features"])
+    assert cats == ["com", "res"]
+
+
+def test_export_carries_only_the_category_prop(tmp_path):
+    zoning = _zoning(["A"], [_square(0, 0, 100)])
+    _, fc = _run_export(zoning, tmp_path)
+    assert list(fc["features"][0]["properties"]) == ["u"]
+    assert fc["features"][0]["properties"]["u"] == "never"
+
+
+def test_export_rounds_coordinates(tmp_path):
+    zoning = _zoning(["RSF"], [_square(0, 0, 100)])
+    _, fc = _run_export(zoning, tmp_path, precision=3)
+
+    def flat(c):
+        return sum((flat(x) for x in c), []) if isinstance(c, list) else [c]
+
+    for v in flat(fc["features"][0]["geometry"]["coordinates"]):
+        assert round(v, 3) == v
+
+
+def test_export_unknown_code_lands_in_other(tmp_path):
+    zoning = _zoning(["ZZZ"], [_square(0, 0, 100)])
+    _, fc = _run_export(zoning, tmp_path)
+    assert fc["features"][0]["properties"]["u"] == "other"

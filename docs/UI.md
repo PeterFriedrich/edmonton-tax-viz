@@ -127,14 +127,27 @@ Shared machinery:
   (`tools/profiling/verify-lens.js`). Translucent-prism depth-ordering quirks:
   same acceptance as the residential lens fade.
 
-### Uses view (built 2026-07-03 — fourth view button)
-Dominant **zoned land use** per neighbourhood (largest of the nine `frac_*`
-composition shares, which sum to 1 — `src/load_zoning.py`). Shows what the land
-IS, not what it yields; the blurb states the zoning caveat (designation ≠ built).
+### Uses view (built 2026-07-03 — fourth view button; real geometry same day)
+**The city's actual zoning geometry**, coloured by land-use category. Shows what
+the land IS, not what it yields; the blurb states the zoning caveat
+(designation ≠ built).
 
-- **Flat categorical fill** — no extrusion (category is identity, not magnitude)
-  and no roads layer. The polygon layer itself is pickable (no separate
-  hood-hover layer). Colours are static per feature: no updateTriggers.
+- **Ground layer = real bylaw polygons** (`web/data/zoning.geojson`, 1.1 MB —
+  `export_zoning_web`: the 11.5k zoning polygons dissolved CITYWIDE into one
+  MultiPolygon per category, simplified 10 m, 5 dp, single `u` prop).
+  Lazy-loaded like roads, on first Uses view. Flat, not pickable; the
+  invisible **hood-hover layer** on top carries the per-neighbourhood tooltip
+  (the composition data's granularity) + hover highlight. **Fallback:** if the
+  file is missing (older deploy / fetch failure) the view falls back to
+  colouring each hood by its dominant category from the main GeoJSON, and the
+  legend label switches "Zoned land use" → "Dominant zoned land use".
+- **Geometry-validity gotcha (found live):** rounding coordinates AFTER a
+  validity pass re-introduces degenerate rings, which deck.gl's tessellator
+  renders as stray filled black triangles. `export_zoning_web` therefore snaps
+  to the 1e-5 grid topology-aware (`shapely.set_precision`) before writing, so
+  the served file holds exactly the validated geometry (read-back all-valid).
+- Colours are static per feature: no updateTriggers. No extrusion (category is
+  identity, not magnitude) and no roads layer.
 - **Palette (dark bg):** 7 chromatic hues following zoning-map convention —
   sand `#ad8a3a` Residential, red `#e05252` Commercial, violet `#8f80e0`
   Industrial, brown-orange `#a54c1f` Mixed use, magenta `#d55181` Direct
@@ -150,9 +163,10 @@ IS, not what it yields; the blurb states the zoning caveat (designation ≠ buil
   (Inferno/Glow/Cividis) doesn't recolour this view — only the background
   changes; the categorical colours are fixed.
 - **Legend** swaps the gradient bar for categorical swatch rows (`#legend-cats`),
-  **data-driven**: only categories that are dominant somewhere on the served
-  data (7 today — no hood is mixed-dominant, mixed zones are ~317 acres
-  citywide; unclassified is empty by construction).
+  **data-driven**: the categories present in the zoning ground layer (8 today —
+  the real geometry surfaces the mixed-use zones even though no hood is
+  mixed-DOMINANT; unclassified is empty by construction). On the fallback
+  path: only dominant-somewhere categories (7).
 - **Tooltip:** dominant category + a **mini stacked composition bar**
   (`.mixbar` — 190×8 px, segments flex-grow proportional to each share in the
   category colours, 2px surface gaps between segments) + the full composition
@@ -165,8 +179,8 @@ IS, not what it yields; the blurb states the zoning caveat (designation ≠ buil
 - **Old-data guard:** the Uses button hides when the served GeoJSON predates the
   composition columns (checks `frac_commercial`), same pattern as Roads/Ratio.
 - Headless-verified 2026-07-03 (`tools/profiling/verify-uses.js`: legend row
-  swap + restore, 0/406 fill mismatches vs an independent dominant-use
-  computation, tooltip composition, lens disable/re-enable) + screenshot
+  swap + restore, layer stack zoning-ground + hood-hover, 0/8 category fill
+  mismatches, tooltip composition, lens disable/re-enable) + screenshot
   eyeball (`tools/profiling/shot-uses.js`); the lens × view regression matrix
   (`verify-lens.js`) re-run green after the applyView/refreshLegend changes.
 

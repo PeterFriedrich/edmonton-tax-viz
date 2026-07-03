@@ -242,17 +242,27 @@
     // greys are deliberate neutrals OUTSIDE the identity set: future/rural is
     // the app's "outside the fiscal story" grey; unclassified never occurs on
     // current data (every zone code is mapped — DATA.md §5).
+    // `key` matches the `u` prop of the zoning ground layer (export_zoning_web);
+    // `frac` the hood composition columns. Same category, two granularities.
     const USE_CATEGORIES = [
-      { frac: "frac_residential", label: "Residential",          color: [173, 138,  58] },
-      { frac: "frac_commercial",  label: "Commercial",           color: [224,  82,  82] },
-      { frac: "frac_industrial",  label: "Industrial",           color: [143, 128, 224] },
-      { frac: "frac_mixed",       label: "Mixed use",            color: [165,  76,  31] },
-      { frac: "frac_dc",          label: "Direct Control",       color: [213,  81, 129] },
-      { frac: "frac_inst",        label: "Institutional",        color: [ 42,  99, 184] },
-      { frac: "frac_never",       label: "River valley / parks", color: [ 39, 133,  58] },
-      { frac: "frac_notyet",      label: "Future / rural",       color: [104, 108, 122] },
-      { frac: "frac_other",       label: "Unclassified",         color: [ 88,  90, 102] },
+      { key: "res",    frac: "frac_residential", label: "Residential",          color: [173, 138,  58] },
+      { key: "com",    frac: "frac_commercial",  label: "Commercial",           color: [224,  82,  82] },
+      { key: "ind",    frac: "frac_industrial",  label: "Industrial",           color: [143, 128, 224] },
+      { key: "mix",    frac: "frac_mixed",       label: "Mixed use",            color: [165,  76,  31] },
+      { key: "dc",     frac: "frac_dc",          label: "Direct Control",       color: [213,  81, 129] },
+      { key: "inst",   frac: "frac_inst",        label: "Institutional",        color: [ 42,  99, 184] },
+      { key: "never",  frac: "frac_never",       label: "River valley / parks", color: [ 39, 133,  58] },
+      { key: "notyet", frac: "frac_notyet",      label: "Future / rural",       color: [104, 108, 122] },
+      { key: "other",  frac: "frac_other",       label: "Unclassified",         color: [ 88,  90, 102] },
     ];
+    const USE_BY_KEY = Object.fromEntries(USE_CATEGORIES.map(u => [u.key, u]));
+
+    // The Uses ground layer: the REAL zoning geometry (11.5k bylaw polygons
+    // dissolved citywide into one feature per category, simplified 10 m —
+    // export_zoning_web). Lazy-loaded like roads; when the file is absent
+    // (older deploy / fetch failure) the view falls back to colouring each
+    // hood by its dominant category.
+    const ZONING_URL = "./data/zoning.geojson";
 
     // Largest composition share wins (ties: first in USE_CATEGORIES order).
     // null when the composition columns are absent (pre-mix-lens data file).
@@ -288,10 +298,10 @@
       },
       uses: {
         title: "Edmonton: Zoned Land Use",
-        blurb: "Colour shows each neighbourhood's dominant land use under the " +
-               "2024 Zoning Bylaw — the largest share of its zoned area. Zoning " +
-               "describes what the land is designated for, not necessarily what " +
-               "is built on it. Hover a neighbourhood for its full composition.",
+        blurb: "The city's zoning geometry under the 2024 Zoning Bylaw, " +
+               "coloured by land-use category. Zoning describes what the land " +
+               "is designated for, not necessarily what is built on it. Hover " +
+               "a neighbourhood for its land-use composition.",
         opacity: null, // flat categorical view — no prisms
       },
     };
@@ -309,6 +319,8 @@
     let overlay;         // deck.gl MapboxOverlay, created on map load
     let roadsData = null;  // lazy-fetched roads FeatureCollection
     let roadsFetch = null; // in-flight fetch guard (single fetch, ever)
+    let zoningData = null;  // lazy-fetched zoning ground layer (uses view)
+    let zoningFetch = null; // in-flight fetch guard; null result => fallback
 
     // Three neutral, luminance-sequential ramps to compare: dark = low, bright =
     // high, with no semantic good/bad hue (consistent with the linear-elevation
@@ -557,9 +569,26 @@
     // Build the layer stack for the current view. Rebuilt on any toggle.
     function buildLayers() {
       if (state.view === "uses") {
-        // Flat categorical fill — the polygon itself is the mark, so it also
-        // carries picking/tooltips (no separate hover layer needed). Colours
-        // are static per feature: no updateTriggers.
+        // Real zoning geometry, flat, coloured by category; the invisible
+        // hood layer on top carries hover/tooltips at the neighbourhood unit
+        // (the composition data's granularity). Colours are static per
+        // feature: no updateTriggers.
+        if (zoningData) {
+          return [
+            new deck.GeoJsonLayer({
+              id: "zoning-ground",
+              data: zoningData,
+              filled: true,
+              stroked: false,
+              extruded: false,
+              getFillColor: f => (USE_BY_KEY[f.properties.u] || { color: [0, 0, 0, 0] }).color,
+              pickable: false, // hood hover layer handles tooltips
+            }),
+            hoodHoverLayer(),
+          ];
+        }
+        // Fallback (zoning file absent / fetch failed): dominant category per
+        // hood — coarse but self-contained in the main GeoJSON.
         return [new deck.GeoJsonLayer({
           id: "uses-flat",
           data: state.data,
@@ -766,7 +795,10 @@
       document.querySelector("#legend .aside").style.display = cat ? "none" : "flex";
       document.getElementById("legend-cats").style.display = cat ? "block" : "none";
       if (cat) {
-        document.getElementById("legend-label").textContent = "Dominant zoned land use";
+        // Real geometry shows every category in place; the fallback colours
+        // whole hoods by their dominant category — label each honestly.
+        document.getElementById("legend-label").textContent =
+          zoningData ? "Zoned land use" : "Dominant zoned land use";
         document.getElementById("legend-cats").innerHTML = usesLegendCats()
           .map(u => `<div class="cat"><span class="sw" style="background:rgb(${u.color.join(",")})"></span><span>${u.label}</span></div>`)
           .join("");
@@ -808,17 +840,18 @@
       document.querySelector("#legend .bar").style.background = legendGradient();
     }
 
-    // Legend rows for the uses view: only categories that are actually
-    // dominant somewhere on the served data (all nine stay defined for
-    // robustness; e.g. no hood is mixed-dominant today). Computed once.
-    let _usesLegendCats = null;
+    // Legend rows for the uses view: the categories actually on screen —
+    // those present in the zoning ground layer (8 today: everything but the
+    // unknown-codes bucket), or, on the dominant-colour fallback, those that
+    // are dominant somewhere. Cheap enough to compute per refresh.
     function usesLegendCats() {
-      if (!_usesLegendCats) {
-        const present = new Set(
-          state.data.features.map(f => dominantUse(f.properties)).filter(Boolean));
-        _usesLegendCats = USE_CATEGORIES.filter(u => present.has(u));
+      if (zoningData) {
+        const present = new Set(zoningData.features.map(f => f.properties.u));
+        return USE_CATEGORIES.filter(u => present.has(u.key));
       }
-      return _usesLegendCats;
+      const present = new Set(
+        state.data.features.map(f => dominantUse(f.properties)).filter(Boolean));
+      return USE_CATEGORIES.filter(u => present.has(u));
     }
 
     // Switch colour ramp: rebuild layers, restyle the background + legend gradient.
@@ -865,6 +898,16 @@
       if ((v === "roads" || v === "ratio") && !roadsData) {
         roadsFetch ??= fetch(ROADS_URL).then(r => r.json()).then(d => { roadsData = d; });
         await roadsFetch;
+        if (state.view !== v) return; // switched again while the fetch ran
+      }
+      // Zoning ground layer for the uses view — fetched once; a missing file
+      // resolves null and the view falls back to dominant-colour hoods.
+      if (v === "uses" && !zoningData) {
+        zoningFetch ??= fetch(ZONING_URL)
+          .then(r => r.ok ? r.json() : null)
+          .then(d => { zoningData = d; })
+          .catch(() => {});
+        await zoningFetch;
         if (state.view !== v) return; // switched again while the fetch ran
       }
       if (v === "ratio") setPrismOpacity(VIEWS.ratio.opacity);

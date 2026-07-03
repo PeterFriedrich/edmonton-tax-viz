@@ -167,6 +167,17 @@ GeoDataFrame from `load_boundaries.py` (needs projected geometry for the overlay
 display decision downstream). Zoning is a **refreshed input** — re-pull each cycle so
 developing land graduates off the set-aside list automatically (see SPEC_deployment.md).
 
+**Also exports (added 2026-07-03):** `export_zoning_web(zoning_path, out_path)` —
+the Uses-view ground layer (`web/data/zoning.geojson`, committed): the raw zoning
+polygons dissolved **citywide** into one MultiPolygon per land-use category,
+simplified 10 m, coordinates snapped to the 1e-5 grid **topology-aware**
+(`shapely.set_precision` — plain rounding after a validity pass re-introduces
+degenerate rings that break the browser's tessellator), single `u` prop
+(category key). Shares `_load_categorized()` with `load_zoning` (the raw file is
+read once per entry point — same accepted pattern as `load_roads`'
+`_prepare_segments`). Display geometry only — all published composition metrics
+come from the full-resolution overlay.
+
 ---
 
 ### `src/load_roads.py` (services lens — added 2026-07-01)

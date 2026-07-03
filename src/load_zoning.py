@@ -6,10 +6,13 @@ and data/DATA.md §5. Categorization is an EXPLICIT code→category dict (95 bas
 codes confirmed 2026-06-30) — never keyword/prefix heuristics.
 """
 
+import json
 import logging
+from pathlib import Path
 
 import geopandas as gpd
 import pandas as pd
+from shapely import set_precision
 
 logger = logging.getLogger(__name__)
 
@@ -228,6 +231,25 @@ def _clean_geometry(gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
     return gdf
 
 
+def _load_categorized(zoning_path: str) -> gpd.GeoDataFrame:
+    """Shared front half: read the zoning GeoJSON, project to EPSG:3400, clean
+    geometry, and attach the land-use ``category`` column. Used by both the
+    composition overlay (load_zoning) and the web ground-layer export
+    (export_zoning_web) — like load_roads' _prepare_segments, the raw file is
+    read once per entry point so the two stay independently runnable."""
+    zoning = gpd.read_file(zoning_path)
+    logger.info("Loaded %d zoning features (input CRS: %s)", len(zoning), zoning.crs)
+
+    if zoning.crs is None:
+        logger.warning("Zoning CRS missing — assuming EPSG:4326 per DATA.md §5")
+        zoning = zoning.set_crs(epsg=4326)
+    zoning = zoning.to_crs(epsg=3400)
+
+    zoning = _clean_geometry(zoning)
+    zoning["category"] = _categorize(zoning["zoning"])
+    return zoning
+
+
 def load_zoning(zoning_path: str, boundaries: gpd.GeoDataFrame) -> pd.DataFrame:
     """Overlay zoning on neighbourhood boundaries → per-neighbourhood set-aside share.
 
@@ -253,16 +275,7 @@ def load_zoning(zoning_path: str, boundaries: gpd.GeoDataFrame) -> pd.DataFrame:
         is_residential  — frac_residential >= RESIDENTIAL_THRESHOLD (display filter,
                           orthogonal to is_set_aside)
     """
-    zoning = gpd.read_file(zoning_path)
-    logger.info("Loaded %d zoning features (input CRS: %s)", len(zoning), zoning.crs)
-
-    if zoning.crs is None:
-        logger.warning("Zoning CRS missing — assuming EPSG:4326 per DATA.md §5")
-        zoning = zoning.set_crs(epsg=4326)
-    zoning = zoning.to_crs(epsg=3400)
-
-    zoning = _clean_geometry(zoning)
-    zoning["category"] = _categorize(zoning["zoning"])
+    zoning = _load_categorized(zoning_path)
 
     # Keep only what the overlay needs.
     zoning = zoning[["category", "geometry"]]
@@ -333,3 +346,109 @@ def load_zoning(zoning_path: str, boundaries: gpd.GeoDataFrame) -> pd.DataFrame:
         RESIDENTIAL_THRESHOLD,
     )
     return result
+
+
+def export_zoning_web(
+    zoning_path: str,
+    out_path: str,
+    simplify_tolerance_m: float = 10.0,
+    precision: int = 5,
+) -> int:
+    """Write the Uses-view ground layer: the real zoning geometry, dissolved
+    CITYWIDE into one MultiPolygon per land-use category, simplified, and
+    written with rounded coordinates and a single ``u`` (category key) prop.
+
+    Display geometry only — every published composition metric comes from
+    load_zoning's overlay, computed from full-resolution geometry before any
+    of this. Categories are dissolved independently, so simplification can
+    open hairline gaps/overlaps along shared category boundaries — invisible
+    at city zoom, same acceptance as the road-layer clip slivers.
+
+    Returns the number of features written.
+    """
+    zoning = _load_categorized(zoning_path)
+
+    dissolved = (
+        zoning[["category", "geometry"]]
+        .dissolve(by="category")
+        .reset_index()
+    )
+    # Dissolve unions can leave invalid results on messy municipal geometry.
+    dissolved["geometry"] = dissolved.geometry.buffer(0)
+
+    def _n_vertices(geom):
+        if geom is None or geom.is_empty:
+            return 0
+        if geom.geom_type == "Polygon":
+            return len(geom.exterior.coords) + sum(len(r.coords) for r in geom.interiors)
+        if geom.geom_type == "MultiPolygon":
+            return sum(_n_vertices(p) for p in geom.geoms)
+        return 0
+
+    before = int(dissolved.geometry.apply(_n_vertices).sum())
+    simplified = dissolved.geometry.simplify(simplify_tolerance_m, preserve_topology=True)
+    bad = simplified.is_empty | ~simplified.is_valid
+    if bad.any():
+        logger.warning(
+            "Zoning web export: simplify (%sm) broke %d category geometry(ies); kept original:\n  %s",
+            simplify_tolerance_m, int(bad.sum()),
+            "\n  ".join(sorted(dissolved.loc[bad, "category"])),
+        )
+    dissolved = dissolved.set_geometry(simplified.where(~bad, dissolved.geometry))
+    after = int(dissolved.geometry.apply(_n_vertices).sum())
+    logger.info(
+        "Zoning web export: %d categories, simplify %sm: %d -> %d vertices (%.0f%% reduction)",
+        len(dissolved), simplify_tolerance_m, before, after,
+        100 * (1 - after / before) if before else 0.0,
+    )
+
+    dissolved = dissolved.to_crs(epsg=4326)
+
+    # Snap coordinates to the write grid TOPOLOGY-AWARE before writing.
+    # Rounding coordinates after a validity pass re-introduces degenerate
+    # rings (found live: the browser's tessellator rendered them as stray
+    # filled triangles); set_precision collapses them instead, so the file
+    # holds exactly the geometry we validated. buffer(0) first: set_precision
+    # requires valid input.
+    grid = 10 ** -precision
+    dissolved["geometry"] = dissolved.geometry.buffer(0)
+    dissolved["geometry"] = dissolved.geometry.apply(lambda g: set_precision(g, grid))
+    invalid = ~dissolved.geometry.is_valid
+    if invalid.any():
+        logger.warning(
+            "Zoning web export: %d category geometry(ies) still invalid after grid snap: %s",
+            int(invalid.sum()), sorted(dissolved.loc[invalid, "category"]),
+        )
+
+    # Manual write with rounded coordinates — GeoJSON size is dominated by
+    # coordinate digits, and driver-level precision options vary by engine
+    # (same mechanism as load_roads.export_roads_web). The geometry is already
+    # on the grid, so rounding here only shortens the printed floats.
+    def _round_coords(obj):
+        if isinstance(obj, (list, tuple)):
+            if obj and isinstance(obj[0], float):
+                return [round(c, precision) for c in obj]
+            return [_round_coords(o) for o in obj]
+        return obj
+
+    features = []
+    for row in dissolved.itertuples():
+        geom = row.geometry.__geo_interface__
+        features.append({
+            "type": "Feature",
+            "properties": {"u": row.category},
+            "geometry": {
+                "type": geom["type"],
+                "coordinates": _round_coords(geom["coordinates"]),
+            },
+        })
+
+    out = Path(out_path)
+    out.write_text(json.dumps(
+        {"type": "FeatureCollection", "features": features}, separators=(",", ":")
+    ))
+    logger.info(
+        "Wrote zoning ground-layer GeoJSON: %d features (%.1f MB, simplify=%sm, %sdp) to %s",
+        len(features), out.stat().st_size / 1e6, simplify_tolerance_m, precision, out_path,
+    )
+    return len(features)
