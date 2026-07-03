@@ -242,10 +242,15 @@ def test_set_aside_hood_is_not_residential():
 
 # --- export_zoning_web (Uses-view ground layer) ----------------------------------
 
-def _run_export(zoning, tmp_path, **kwargs):
+def _run_export(zoning, tmp_path, boundaries=None, **kwargs):
+    # Default: one big hood covering the synthetic zoning, setback off, so
+    # category tests aren't about the clip.
+    if boundaries is None:
+        boundaries = _boundaries(["ALL"], [_square(-100, -100, 800)])
+        kwargs.setdefault("setback_m", 0.0)
     out = tmp_path / "zoning.geojson"
     with patch("load_zoning.gpd.read_file", return_value=zoning):
-        n = export_zoning_web("dummy.geojson", str(out), **kwargs)
+        n = export_zoning_web("dummy.geojson", boundaries, str(out), **kwargs)
     return n, json.loads(out.read_text())
 
 
@@ -259,6 +264,26 @@ def test_export_dissolves_by_category(tmp_path):
     assert n == 2
     cats = sorted(f["properties"]["u"] for f in fc["features"])
     assert cats == ["com", "res"]
+
+
+def test_export_clips_setback_gaps_between_hoods(tmp_path):
+    # One residential sheet across two adjacent hoods; a 10 m setback must
+    # remove the 20 m strip around their shared boundary (x=200) from the
+    # display geometry.
+    zoning = _zoning(["RSF"], [_square(0, 0, 400)])
+    hoods = _boundaries(["WEST", "EAST"], [_square(0, 0, 200), _square(200, 0, 200)])
+    _, fc = _run_export(zoning, tmp_path, boundaries=hoods, setback_m=10.0,
+                        simplify_tolerance_m=0.0)
+    import shapely.geometry as sg
+    geom = sg.shape(fc["features"][0]["geometry"])
+    # Points either side of the gap survive; the boundary strip does not.
+    # (The export writes EPSG:4326 — probe via the projected frame instead.)
+    from pyproj import Transformer
+    t = Transformer.from_crs("EPSG:3400", "EPSG:4326", always_xy=True)
+    inside = sg.Point(t.transform(100, 100))
+    gap = sg.Point(t.transform(200, 100))
+    assert geom.contains(inside)
+    assert not geom.contains(gap)
 
 
 def test_export_carries_only_the_category_prop(tmp_path):

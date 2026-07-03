@@ -350,13 +350,22 @@ def load_zoning(zoning_path: str, boundaries: gpd.GeoDataFrame) -> pd.DataFrame:
 
 def export_zoning_web(
     zoning_path: str,
+    boundaries: gpd.GeoDataFrame,
     out_path: str,
+    setback_m: float = 45.0,
     simplify_tolerance_m: float = 10.0,
     precision: int = 5,
 ) -> int:
     """Write the Uses-view ground layer: the real zoning geometry, dissolved
-    CITYWIDE into one MultiPolygon per land-use category, simplified, and
-    written with rounded coordinates and a single ``u`` (category key) prop.
+    CITYWIDE into one MultiPolygon per land-use category, clipped to the
+    setback-shrunk neighbourhood footprints, simplified, and written with
+    rounded coordinates and a single ``u`` (category key) prop.
+
+    ``boundaries`` is the load_boundaries frame (projected EPSG:3400). The
+    clip bakes the same ``setback_m`` "city block" gaps between neighbourhoods
+    that the money prisms carry (export_geojson), so the neighbourhood unit
+    stays visible under the zoning fabric; a hood that collapses under the
+    negative buffer keeps its full footprint, logged (matching export_geojson).
 
     Display geometry only — every published composition metric comes from
     load_zoning's overlay, computed from full-resolution geometry before any
@@ -375,6 +384,28 @@ def export_zoning_web(
     )
     # Dissolve unions can leave invalid results on messy municipal geometry.
     dissolved["geometry"] = dissolved.geometry.buffer(0)
+
+    if boundaries.crs is None or boundaries.crs.to_epsg() != 3400:
+        raise ValueError(
+            f"boundaries must be projected to EPSG:3400 before the clip (got {boundaries.crs})"
+        )
+    shrunk = boundaries.geometry.buffer(-setback_m)
+    collapsed = shrunk.is_empty | ~shrunk.is_valid
+    if collapsed.any():
+        logger.warning(
+            "Zoning web export: setback (%sm) collapsed %d sliver neighbourhood(s); kept full footprint:\n  %s",
+            setback_m, int(collapsed.sum()),
+            "\n  ".join(sorted(boundaries.loc[collapsed, "neighbourhood_name"])),
+        )
+    mask = shrunk.where(~collapsed, boundaries.geometry).union_all()
+    dissolved["geometry"] = dissolved.geometry.intersection(mask)
+    dropped = dissolved.geometry.is_empty
+    if dropped.any():
+        logger.info(
+            "Zoning web export: %d category(ies) empty after the neighbourhood clip: %s",
+            int(dropped.sum()), sorted(dissolved.loc[dropped, "category"]),
+        )
+        dissolved = dissolved[~dropped]
 
     def _n_vertices(geom):
         if geom is None or geom.is_empty:

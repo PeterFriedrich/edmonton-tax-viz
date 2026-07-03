@@ -132,15 +132,19 @@ Shared machinery:
 the land IS, not what it yields; the blurb states the zoning caveat
 (designation ≠ built).
 
-- **Ground layer = real bylaw polygons** (`web/data/zoning.geojson`, 1.1 MB —
+- **Ground layer = real bylaw polygons** (`web/data/zoning.geojson`, 1.2 MB —
   `export_zoning_web`: the 11.5k zoning polygons dissolved CITYWIDE into one
-  MultiPolygon per category, simplified 10 m, 5 dp, single `u` prop).
-  Lazy-loaded like roads, on first Uses view. Flat, not pickable; the
-  invisible **hood-hover layer** on top carries the per-neighbourhood tooltip
-  (the composition data's granularity) + hover highlight. **Fallback:** if the
-  file is missing (older deploy / fetch failure) the view falls back to
-  colouring each hood by its dominant category from the main GeoJSON, and the
-  legend label switches "Zoned land use" → "Dominant zoned land use".
+  MultiPolygon per category, **clipped to the setback-shrunk hood footprints
+  (45 m, same as the prisms) so the neighbourhood "city block" gaps stay
+  visible under the zoning fabric** (Peter's ask 2026-07-03), simplified 10 m,
+  5 dp, single `u` prop). Lazy-loaded like roads, on first Uses view. Flat,
+  not pickable; the invisible **hood-hover layer** on top carries the
+  per-neighbourhood tooltip (the composition data's granularity) + hover
+  highlight, and its (equally setback) footprint aligns with the visible
+  blocks. **Fallback:** if the file is missing (older deploy / fetch failure)
+  the view falls back to colouring each hood by its dominant category from
+  the main GeoJSON, and the legend label switches "Zoned land use" →
+  "Dominant zoned land use".
 - **Geometry-validity gotcha (found live):** rounding coordinates AFTER a
   validity pass re-introduces degenerate rings, which deck.gl's tessellator
   renders as stray filled black triangles. `export_zoning_web` therefore snaps

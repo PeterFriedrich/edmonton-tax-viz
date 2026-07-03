@@ -116,9 +116,13 @@ def run(
         if roads is not None:
             export_roads_web(str(roads_geojson), boundaries, str(ROADS_WEB_OUT))
         # Ground-layer zoning geometry for the Uses view (dissolved by
-        # category, display only) — skipped with the zoning layer.
+        # category, clipped to the same setback gaps as the prisms; display
+        # only) — skipped with the zoning layer.
         if zoning is not None:
-            export_zoning_web(str(zoning_geojson), str(ZONING_WEB_OUT))
+            export_zoning_web(
+                str(zoning_geojson), boundaries, str(ZONING_WEB_OUT),
+                setback_m=setback_m,
+            )
 
     logger.info("Pipeline complete.")
 
