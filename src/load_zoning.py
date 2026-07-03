@@ -31,12 +31,19 @@ RESIDENTIAL_THRESHOLD = 0.50
 #   notyet — undeveloped holding land: Future Dev / rural fringe / industrial reserve
 #   inst   — institutional proxy (UI/UF/AJ/PU); STAYS on the scale, tracked separately
 #   res    — developed, primary permitted use is housing; stays on the scale
-#   nonres — developed, non-residential (commercial/industrial/mixed/DC); stays on scale
+#   com    — developed commercial / retail / entertainment; stays on the scale
+#   ind    — developed industrial / warehousing / business employment; stays on scale
+#   mix    — developed mixed use (purpose statement blends res + com ± inst)
+#   dc     — Direct Control: bespoke per-site bylaws, no single use claimable
+#   other  — unknown codes only (DEFAULT_CATEGORY); stays on scale, flagged loudly
 #
-# res + nonres = the old "dev" bucket (split 2026-07-01 for the residential lens).
-# Classification is by each code's authoritative `description` (housing zones → res;
-# commercial/industrial/mixed-use/town-village-centres/Direct Control → nonres).
-# set-aside = never + notyet.  res + nonres + inst stay on the colour scale.
+# res + the nonres group = the old "dev" bucket (split 2026-07-01 for the
+# residential lens; nonres split again com/ind/mix/dc 2026-07-03 for the use-mix
+# view). Classification is by each code's authoritative `description`; ambiguous
+# names resolved from the bylaw page's purpose statement (the `url` field) —
+# e.g. UW "Urban Warehouse" is a downtown mixed-use zone, NOT warehousing, and
+# BE "Business Employment" sits in the bylaw's industrial-zones part.
+# set-aside = never + notyet.  Everything else stays on the colour scale.
 # Cross-checked against each row's `url` bylaw section (DATA.md §5).
 # ---------------------------------------------------------------------------
 ZONE_CATEGORY = {
@@ -112,43 +119,67 @@ ZONE_CATEGORY = {
     "CCMD": "res",       # Clareview Campus Medium Density Residential
     "CCHD": "res",       # Clareview Campus High Density Residential
 
-    # --- nonres: developed, non-residential -----------------------------------
-    # Commercial / mixed use / business
-    "CN": "nonres", "CG": "nonres", "CB": "nonres", "CCA": "nonres", "CMU": "nonres",
-    "MU": "nonres", "MUN": "nonres", "BE": "nonres", "JAMSC": "nonres", "AED": "nonres",
-    "HA": "nonres",
-    # Industrial
-    "IM": "nonres", "IH": "nonres", "UW": "nonres",
-    # Direct Control — heterogeneous, not claimed as residential (DATA.md §5 rule)
-    "DC": "nonres", "DC1": "nonres", "DC2": "nonres", "DC/INDES": "nonres",
-    # Griesbach village centre
-    "GVC": "nonres",
-    # Ambleside commercial
-    "ASC": "nonres", "AUVC": "nonres",
-    # Clareview Campus commercial
-    "CCNC": "nonres",
-    # Marquis special area (retail / entertainment / main street / mixed)
-    "MRC": "nonres", "MMUT": "nonres", "MED": "nonres", "MMS": "nonres",
-    # Century Park special area (mixed use / transition)
-    "CPMU": "nonres", "CPT": "nonres",
-    # River Crossing (large/medium scale redevelopment — mixed)
-    "RCRM": "nonres", "RCRL": "nonres",
-    # Town Center / other special areas
-    "TC-MU": "nonres", "TC-C": "nonres", "CMUV": "nonres",
-    # Ellerslie / Edmonton South industrial & commercial
-    "EIB": "nonres", "EIM": "nonres", "ECB": "nonres", "ILES": "nonres",
-    "IBES": "nonres", "UC3ES": "nonres",
+    # --- com: commercial / retail / entertainment -----------------------------
+    "CN": "com",         # Neighbourhood Commercial
+    "CG": "com",         # General Commercial
+    "CB": "com",         # Business Commercial
+    "CCA": "com",        # Core Commercial Arts Zone (downtown)
+    "JAMSC": "com",      # Jasper Avenue Main Street Commercial Zone (downtown)
+    "AED": "com",        # Arena and Entertainment District Zone (downtown)
+    "MED": "com",        # Marquis Entertainment District
+    "MRC": "com",        # Marquis Retail Centre Zone
+    "ASC": "com",        # Ambleside Shopping Centre
+    "AUVC": "com",       # Ambleside Urban Village Commercial
+    "CCNC": "com",       # Clareview Campus Neighbourhood Commercial
+    "ECB": "com",        # Ellerslie Commercial Business Zone
+    "TC-C": "com",       # Town Center Commercial (Heritage Valley)
+    "UC3ES": "com",      # Urban Commercial 3 Edmonton South
+
+    # --- ind: industrial / warehousing / business employment ------------------
+    "IM": "ind",         # Medium Industrial
+    "IH": "ind",         # Heavy Industrial
+    "BE": "ind",         # Business Employment (bylaw part-2 industrial-zones)
+    "EIB": "ind",        # Ellerslie Industrial Business Zone
+    "EIM": "ind",        # Ellerslie Medium Industrial Zone
+    "ILES": "ind",       # Light Industrial Edmonton South
+    "IBES": "ind",       # Industrial Business Edmonton South
+
+    # --- mix: mixed use (bylaw purpose blends res + commercial ± inst) --------
+    "MU": "mix",         # Mixed Use
+    "MUN": "mix",        # Neighbourhood Mixed Use
+    "CMU": "mix",        # Commercial Mixed Use (downtown)
+    "HA": "mix",         # Heritage Area (downtown; purpose = res + com + community)
+    "UW": "mix",         # Urban Warehouse (downtown; purpose = mixed, NOT warehousing)
+    "MMS": "mix",        # Marquis Main Street (ground-floor retail, res/office above)
+    "MMUT": "mix",       # Marquis Mixed Use Transition Zone
+    "CMUV": "mix",       # Central McDougall Urban Village
+    "GVC": "mix",        # Griesbach Village Centre (businesses + residences + inst)
+    "CPMU": "mix",       # Century Park Mixed Use Zone
+    "CPT": "mix",        # Century Park Transition Zone (legacy TOD)
+    "TC-MU": "mix",      # Town Center Mixed Use (Heritage Valley)
+    "RCRM": "mix",       # River Crossing Medium Scale Zone (redevelopment)
+    "RCRL": "mix",       # River Crossing Large Scale Zone (redevelopment)
+
+    # --- dc: Direct Control — bespoke site-specific bylaws --------------------
+    "DC": "dc",          # Direct Control
+    "DC1": "dc",         # Direct Development Control Provision
+    "DC2": "dc",         # Site Specific Development Control Provision
+    "DC/INDES": "dc",    # Direct Control / Industrial District Edmonton South
 }
 
 # All land-use categories, in output order.
-CATEGORIES = ("never", "notyet", "inst", "res", "nonres")
+CATEGORIES = ("never", "notyet", "inst", "res", "com", "ind", "mix", "dc", "other")
 
 # never + notyet make up the set-aside share.
 SET_ASIDE_CATEGORIES = ("never", "notyet")
 
-# Unknown codes default here (conservative — keeps land on the scale and does NOT
-# claim it as residential). Flagged.
-DEFAULT_CATEGORY = "nonres"
+# The non-residential developed group (the pre-split "nonres" bucket) — summed
+# into frac_nonres for continuity with docs/analyses that reference it.
+NONRES_CATEGORIES = ("com", "ind", "mix", "dc", "other")
+
+# Unknown codes default here (conservative — keeps land on the scale, does NOT
+# claim it as residential or any specific non-residential use). Flagged.
+DEFAULT_CATEGORY = "other"
 
 # Human-readable dominant-reason labels for the tooltip.
 REASON_LABELS = {
@@ -161,7 +192,8 @@ def _categorize(zoning_series: pd.Series) -> pd.Series:
     """Map the `zoning` field to a land-use category via the explicit dict.
 
     Parses the first whitespace token as the base code, then looks it up.
-    Unmatched codes are flagged (no silent drops) and default to developed.
+    Unmatched codes are flagged (no silent drops) and default to "other" —
+    on the scale, claimed as no specific use.
     """
     base = zoning_series.fillna("").str.split().str[0]
     category = base.map(ZONE_CATEGORY)
@@ -210,8 +242,11 @@ def load_zoning(zoning_path: str, boundaries: gpd.GeoDataFrame) -> pd.DataFrame:
     Returns
     -------
     pd.DataFrame keyed by `neighbourhood_name` with columns:
-        frac_never, frac_notyet, frac_inst, frac_residential, frac_nonres
+        frac_never, frac_notyet, frac_inst, frac_residential, frac_commercial,
+        frac_industrial, frac_mixed, frac_dc, frac_other
                         — land-use composition (shares of total zoned area; sum to 1)
+        frac_nonres     — commercial + industrial + mixed + dc + other (the
+                          pre-split bucket, kept for continuity)
         set_aside_frac  — never + notyet share (0–1)
         is_set_aside    — set_aside_frac >= SET_ASIDE_THRESHOLD
         set_aside_reason — dominant set-aside category label (tooltip); "" if not set aside
@@ -266,9 +301,15 @@ def load_zoning(zoning_path: str, boundaries: gpd.GeoDataFrame) -> pd.DataFrame:
             "frac_notyet": fracs["notyet"],
             "frac_inst": fracs["inst"],
             "frac_residential": fracs["res"],
-            "frac_nonres": fracs["nonres"],
+            "frac_commercial": fracs["com"],
+            "frac_industrial": fracs["ind"],
+            "frac_mixed": fracs["mix"],
+            "frac_dc": fracs["dc"],
+            "frac_other": fracs["other"],
         }
     )
+    # Pre-split bucket, kept for continuity (docs/ANALYSIS_BACKLOG reference it).
+    result["frac_nonres"] = sum(fracs[c] for c in NONRES_CATEGORIES)
     result["set_aside_frac"] = result["frac_never"] + result["frac_notyet"]
     result["is_set_aside"] = result["set_aside_frac"] >= SET_ASIDE_THRESHOLD
 

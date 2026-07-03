@@ -48,9 +48,18 @@ def test_categorize_parses_first_token():
 
 
 def test_categorize_splits_residential_from_nonresidential():
-    # The old "dev" bucket is split: housing → res, commercial/industrial → nonres.
+    # The old "dev" bucket is split: housing → res; the rest by use.
     assert list(_categorize(pd.Series(["RSF", "RM", "GRH"]))) == ["res"] * 3
-    assert list(_categorize(pd.Series(["CN", "IM", "MU"]))) == ["nonres"] * 3
+    assert list(_categorize(pd.Series(["CN", "IM", "MU"]))) == ["com", "ind", "mix"]
+
+
+def test_categorize_nonres_split_resolves_misleading_names():
+    # Assigned from the bylaw purpose statement, not the name: UW "Urban
+    # Warehouse" is a downtown mixed-use zone, BE "Business Employment" sits in
+    # the bylaw's industrial part (DATA.md §5).
+    assert list(_categorize(pd.Series(["UW", "HA", "MMS"]))) == ["mix"] * 3
+    assert list(_categorize(pd.Series(["BE"]))) == ["ind"]
+    assert list(_categorize(pd.Series(["MED", "AED"]))) == ["com"] * 2
 
 
 def test_categorize_institutional_not_set_aside():
@@ -58,16 +67,17 @@ def test_categorize_institutional_not_set_aside():
     assert list(_categorize(pd.Series(["PU", "UI", "AJ", "UF"]))) == ["inst"] * 4
 
 
-def test_categorize_unknown_defaults_to_nonres_and_warns(caplog):
+def test_categorize_unknown_defaults_to_other_and_warns(caplog):
+    # Unknown codes stay on scale but are not claimed as any specific use.
     with caplog.at_level("WARNING"):
         cats = _categorize(pd.Series(["ZZZ"]))
-    assert list(cats) == ["nonres"]
+    assert list(cats) == ["other"]
     assert "ZZZ" in caplog.text
 
 
-def test_categorize_direct_control_is_nonres():
-    # DC is heterogeneous — stays on scale but is not claimed as residential.
-    assert list(_categorize(pd.Series(["DC", "DC1", "DC2"]))) == ["nonres"] * 3
+def test_categorize_direct_control_is_own_category():
+    # DC is bespoke per-site bylaws — stays on scale, claimed as no single use.
+    assert list(_categorize(pd.Series(["DC", "DC1", "DC2"]))) == ["dc"] * 3
 
 
 # --- load_zoning ---------------------------------------------------------------
@@ -157,8 +167,46 @@ def test_commercial_hood_not_residential():
     zoning = _zoning(["CN"], [_square(0, 0, 100)])
     result = _run(hood, zoning)
     row = result.iloc[0]
-    assert row["frac_nonres"] == 1.0
+    assert row["frac_commercial"] == 1.0
+    assert row["frac_nonres"] == 1.0  # continuity: sum of the split categories
     assert row["frac_residential"] == 0.0
+    assert bool(row["is_residential"]) is False
+
+
+# --- use-mix composition ---------------------------------------------------------
+
+def test_composition_fractions_sum_to_one():
+    # Four quarters: residential / commercial / industrial / direct control.
+    hood = _boundaries(["QUARTERS"], [_square(0, 0, 100)])
+    zoning = _zoning(
+        ["RSF", "CN", "IM", "DC2"],
+        [_square(0, 0, 50), _square(50, 0, 50), _square(0, 50, 50), _square(50, 50, 50)],
+    )
+    result = _run(hood, zoning)
+    row = result.iloc[0]
+    for col in ("frac_residential", "frac_commercial", "frac_industrial", "frac_dc"):
+        assert abs(row[col] - 0.25) < 1e-6
+    frac_cols = [
+        "frac_never", "frac_notyet", "frac_inst", "frac_residential",
+        "frac_commercial", "frac_industrial", "frac_mixed", "frac_dc", "frac_other",
+    ]
+    assert abs(sum(row[c] for c in frac_cols) - 1.0) < 1e-6
+    assert abs(row["frac_nonres"] - 0.75) < 1e-6
+
+
+def test_mixed_use_hood_composition():
+    # 60% mixed-use zoning, 40% housing → mix-dominant but still nonres-minority.
+    hood = _boundaries(["TOD"], [_square(0, 0, 100)])
+    zoning = _zoning(
+        ["MU", "RSF"],
+        [Polygon([(0, 0), (60, 0), (60, 100), (0, 100)]),
+         Polygon([(60, 0), (100, 0), (100, 100), (60, 100)])],
+    )
+    result = _run(hood, zoning)
+    row = result.iloc[0]
+    assert abs(row["frac_mixed"] - 0.6) < 1e-6
+    assert abs(row["frac_residential"] - 0.4) < 1e-6
+    assert row["frac_commercial"] == 0.0
     assert bool(row["is_residential"]) is False
 
 

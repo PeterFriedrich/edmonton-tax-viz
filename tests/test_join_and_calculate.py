@@ -237,8 +237,17 @@ def test_simplify_and_setback_compose(tmp_path):
     assert area_m2 == pytest.approx(3600, rel=0.02)
 
 
+# Full land-use composition ZONING_COLUMNS expects (use-mix view). Tests set
+# only what they assert on; the rest default to 0.0.
+_FRAC_DEFAULTS = {
+    "frac_never": 0.0, "frac_notyet": 0.0, "frac_inst": 0.0,
+    "frac_residential": 0.0, "frac_commercial": 0.0, "frac_industrial": 0.0,
+    "frac_mixed": 0.0, "frac_dc": 0.0, "frac_other": 0.0,
+}
+
+
 def _zoning(rows):
-    return pd.DataFrame(rows)
+    return pd.DataFrame([{**_FRAC_DEFAULTS, **row} for row in rows])
 
 
 def test_zoning_merge_adds_set_aside_columns():
@@ -248,7 +257,7 @@ def test_zoning_merge_adds_set_aside_columns():
         zoning=_zoning([{
             "neighbourhood_name": "RIVER VALLEY", "set_aside_frac": 0.98,
             "is_set_aside": True, "set_aside_reason": "River Valley / Natural / Parks",
-            "frac_residential": 0.0, "is_residential": False,
+            "frac_never": 0.98, "frac_residential": 0.0, "is_residential": False,
         }]),
     )
     row = result.iloc[0]
@@ -259,6 +268,27 @@ def test_zoning_merge_adds_set_aside_columns():
     assert bool(row["is_set_aside"]) is True
     assert row["set_aside_reason"] == "River Valley / Natural / Parks"
     assert bool(row["is_residential"]) is False
+
+
+def test_zoning_merge_carries_composition_fractions():
+    # The use-mix view needs the full composition in the output (and thus the
+    # GeoJSON) — dominant use is derived client-side from these.
+    result = join_and_calculate(
+        _assessment([{"neighbourhood_name": "TOD", "total_assessed_value": 100.0}]),
+        _boundaries([{"neighbourhood_name": "TOD", "area_acres": 10.0}]),
+        zoning=_zoning([{
+            "neighbourhood_name": "TOD", "set_aside_frac": 0.0,
+            "is_set_aside": False, "set_aside_reason": "",
+            "frac_residential": 0.4, "frac_mixed": 0.3, "frac_commercial": 0.2,
+            "frac_dc": 0.1, "is_residential": False,
+        }]),
+    )
+    row = result.iloc[0]
+    assert row["frac_mixed"] == pytest.approx(0.3)
+    assert row["frac_commercial"] == pytest.approx(0.2)
+    assert row["frac_dc"] == pytest.approx(0.1)
+    assert row["frac_industrial"] == 0.0
+    assert row["frac_other"] == 0.0
 
 
 def test_no_zoning_arg_omits_set_aside_columns():

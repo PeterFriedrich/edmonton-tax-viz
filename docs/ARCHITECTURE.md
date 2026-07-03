@@ -144,7 +144,10 @@ GeoDataFrame from `load_boundaries.py` (needs projected geometry for the overlay
 - `frac_residential` / `is_residential` — residential share of zoned area + `>= 0.50`
   flag (residential-only lens; orthogonal to `is_set_aside`, added 2026-07-01)
 - land-use composition columns (`frac_never`/`frac_notyet`/`frac_inst`/`frac_residential`/
-  `frac_nonres`, shares of zoned area, sum to 1)
+  `frac_commercial`/`frac_industrial`/`frac_mixed`/`frac_dc`/`frac_other`, shares of
+  zoned area, sum to 1 — the use-mix view's input; nonres split 4 ways 2026-07-03,
+  ambiguous codes resolved from bylaw purpose statements, DATA.md §5)
+- `frac_nonres` — sum of com/ind/mix/dc/other (the pre-split bucket, kept for continuity)
 
 **Responsibilities:**
 - Load zoning polygons, reproject to **EPSG:3400** (CRS set explicitly, per project
@@ -233,9 +236,10 @@ metrics still come from `load_roads`, computed before any thinning.
 - Aggregated assessment DataFrame from `aggregate_by_neighbourhood.py`
 - Boundary GeoDataFrame from `load_boundaries.py`
 - (optional) zoning composition DataFrame from `load_zoning.py` — merged on
-  `neighbourhood_name`, adding `set_aside_frac` / `is_set_aside` / `set_aside_reason` /
-  `frac_residential` / `is_residential` (the `ZONING_COLUMNS` list) to the output and
-  thus the GeoJSON. Degrades gracefully when absent, like the revenue columns.
+  `neighbourhood_name`, adding the set-aside flags, the residential-lens flag, and
+  the full land-use composition fractions (the `ZONING_COLUMNS` list — use-mix view)
+  to the output and thus the GeoJSON. Degrades gracefully when absent, like the
+  revenue columns.
 - (optional) roads DataFrame from `load_roads.py` (`SPEC_services.md`) — a
   `ROAD_COLUMNS` merge on `neighbourhood_name`, same graceful-when-absent
   pattern; `road_m_per_acre = road_m_total / area_acres` computed here.

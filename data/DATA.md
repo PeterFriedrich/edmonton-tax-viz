@@ -252,12 +252,24 @@ per neighbourhood → drives the colour-scale set-aside. See `SPEC_revenue.md`
 - **Residential split (added 2026-07-01, for the residential-only lens).** The developed
   bucket is split by each code's `description` into `res` (primary permitted use is
   housing — the `RS*`/`RM`/`RL`/`HDR`/`RMU` standard zones + special-area row-housing /
-  apartment / low-density codes, e.g. `GRH`, `BLMR`, `SRH`, `CCLD`) and `nonres`
-  (commercial / industrial / mixed-use / town-village centres). `is_residential` =
-  `frac_residential` ≥ **0.50** of *zoned* area (a display filter, **orthogonal to**
-  `is_set_aside` — the two can't both be true since fractions sum to 1). Conservative
-  calls: `DC*` and any unknown code → `nonres` (stays on scale, never *claimed* as
-  residential). Per-code assignments live in `src/load_zoning.py`.
+  apartment / low-density codes, e.g. `GRH`, `BLMR`, `SRH`, `CCLD`) and the
+  non-residential group. `is_residential` = `frac_residential` ≥ **0.50** of *zoned*
+  area (a display filter, **orthogonal to** `is_set_aside` — the two can't both be
+  true since fractions sum to 1). Per-code assignments live in `src/load_zoning.py`.
+- **Non-residential split (added 2026-07-03, for the use-mix view).** The old `nonres`
+  bucket is split four ways: `com` (commercial/retail/entertainment, 14 codes),
+  `ind` (industrial/warehousing/business employment, 7), `mix` (mixed use, 14), and
+  `dc` (Direct Control — bespoke per-site bylaws, no single use claimable; 24% of
+  nonres area so it can't honestly fold into another bucket). **Names mislead —
+  ambiguous codes were resolved from the bylaw page's purpose statement (the `url`
+  field):** `UW` "Urban Warehouse" is a downtown *mixed-use* zone, not warehousing;
+  `BE` "Business Employment" sits in the bylaw's *industrial-zones* part; `HA`
+  Heritage Area and `MMS` Marquis Main Street are mixed (ground-floor retail +
+  res/office above); `MED`/`AED` entertainment districts are commercial. Unknown
+  codes now default to `other` (on scale, claimed as no specific use, flagged
+  loudly) instead of `nonres`; `frac_nonres` is kept as the sum of the four split
+  categories + `other` for continuity. `frac_other` = 0 on current data (all 95
+  codes mapped).
 - **Refresh requirement:** re-pull each pipeline cycle so developing land (rezoned
   FD/AG → residential) graduates off the set-aside list automatically.
 

@@ -49,6 +49,22 @@ mixed-use may deserve its own treatment rather than folding into `nonres`).
   mixed-use behaves distinctly. (Would be a TODO build item.)
 - A findings note on what actually drives the outskirts high performers.
 
+**Update 2026-07-03 (from the use-mix view build).** The `nonres` split landed
+ahead of this audit: `com` / `ind` / `mix` / `dc` (Direct Control as its own
+category — 24% of nonres area; ambiguous codes resolved from bylaw purpose
+statements, DATA.md §5). Two composition facts already surfaced:
+- **The 8 DC-dominant neighbourhoods are largely the big-box power centres:**
+  South Edmonton Common, Terra Losa, Mill Woods Town Centre, Calgary Trail
+  South, Summerlea, Place LaRue — plus McCauley and Strathcona Junction. DC
+  zoning, not the standard commercial zones, is where the power-centre retail
+  sits — so when this audit annotates the top/bottom performers, `frac_dc` is
+  the column to watch alongside `frac_commercial`, and the "likely mixed-use"
+  suspect list should include DC-dominant hoods explicitly.
+- **No neighbourhood is mixed-dominant** (the true mixed-use zones total ~317
+  acres citywide, ~1% of nonres) — if mixed-use drives outliers it will show
+  as a minority fraction, not as dominance; use `frac_mixed > 0` rather than
+  a dominance test when flagging suspects.
+
 ---
 
 ## 2. Machine learning — feature importance (what drives revenue/value per acre?)

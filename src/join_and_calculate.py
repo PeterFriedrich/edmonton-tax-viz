@@ -7,12 +7,16 @@ logger = logging.getLogger(__name__)
 
 
 # Zoning composition columns carried into the output when a zoning frame is
-# supplied. Kept small — the full per-category fractions stay in load_zoning.
-# set_aside_* drive the neutral-grey render; frac_residential/is_residential
-# drive the residential-only lens.
+# supplied. set_aside_* drive the neutral-grey render; frac_residential/
+# is_residential drive the residential-only lens; the full per-category
+# fractions (sum to 1) drive the use-mix view — dominant use + tooltip
+# composition are derived client-side, like the ratio metric.
 ZONING_COLUMNS = [
     "set_aside_frac", "is_set_aside", "set_aside_reason",
-    "frac_residential", "is_residential",
+    "frac_never", "frac_notyet", "frac_inst",
+    "frac_residential", "frac_commercial", "frac_industrial",
+    "frac_mixed", "frac_dc", "frac_other",
+    "is_residential",
 ]
 
 # Road-supply column carried from load_roads when a roads frame is supplied
@@ -35,11 +39,12 @@ def join_and_calculate(
     expected unmatched case — the OLIVER straggler row, deliberately left
     unmapped (DATA.md "Name Matching") — surfaces here as a warning.
 
-    ``zoning`` (optional, from load_zoning.py) adds set_aside_frac / is_set_aside
-    / set_aside_reason / frac_residential / is_residential, merged on
-    neighbourhood_name. Degrades gracefully when absent, like the revenue columns;
-    boundaries with no zoning match default to is_set_aside=False (stays on scale)
-    and is_residential=False, and are flagged.
+    ``zoning`` (optional, from load_zoning.py) adds the ZONING_COLUMNS — the
+    set-aside flags, the residential-lens flag, and the full land-use
+    composition fractions (use-mix view) — merged on neighbourhood_name.
+    Degrades gracefully when absent, like the revenue columns; boundaries with
+    no zoning match default to is_set_aside=False (stays on scale) and
+    is_residential=False (frac_* left NaN), and are flagged.
 
     ``roads`` (optional, from load_roads.py) adds road_m_total and computes
     road_m_per_acre against boundary area_acres (SPEC_services.md). Boundaries
@@ -169,12 +174,17 @@ def join_and_calculate(
 # columns are included only when present (their respective phases) — the
 # value↔revenue toggle reads both metrics; is_set_aside/set_aside_reason drive
 # the neutral-grey render + tooltip; is_residential drives the residential lens;
-# road_m_per_acre is the services-lens metric (SPEC_services.md — ratios only,
-# totals stay out of the slim file like total_assessed_value does).
+# the frac_* composition (sums to 1) drives the use-mix view (dominant use is
+# derived client-side); road_m_per_acre is the services-lens metric
+# (SPEC_services.md — ratios only, totals stay out of the slim file like
+# total_assessed_value does).
 SLIM_COLUMNS = [
     "neighbourhood_name", "value_per_acre", "revenue_per_acre",
     "set_aside_frac", "is_set_aside", "set_aside_reason",
-    "frac_residential", "is_residential", "road_m_per_acre", "geometry",
+    "frac_never", "frac_notyet", "frac_inst",
+    "frac_residential", "frac_commercial", "frac_industrial",
+    "frac_mixed", "frac_dc", "frac_other",
+    "is_residential", "road_m_per_acre", "geometry",
 ]
 
 
