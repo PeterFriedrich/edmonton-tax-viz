@@ -122,6 +122,7 @@
 
   <div id="lens" class="panel">
     <button data-lens="residential" title="Fade non-residential neighbourhoods so residential land compares like-to-like">Residential only</button>
+    <button data-lens="labels" title="Show neighbourhood names on the map — labels declutter automatically and more appear as you zoom in">Labels</button>
   </div>
 
   <div id="views" class="panel">
@@ -315,7 +316,7 @@
     // is the ratio view's ghost-prism strength (money prisms are always
     // opaque; the roads view has no prisms).
     const state = { metric: "revenue_per_acre", ramp: "current", residential: false,
-                    view: "money", prismOpacity: 1, data: null };
+                    labels: false, view: "money", prismOpacity: 1, data: null };
     let overlay;         // deck.gl MapboxOverlay, created on map load
     let roadsData = null;  // lazy-fetched roads FeatureCollection
     let roadsFetch = null; // in-flight fetch guard (single fetch, ever)
@@ -533,6 +534,137 @@
       });
     }
 
+    // The label font, shared by the TextLayer and the width measurer below —
+    // the culling boxes are only honest if both use the same glyphs.
+    const LABEL_FONT_FAMILY = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    const LABEL_FONT_WEIGHT = 800;
+
+    // True rendered width of a name, in ems (multiply by the label size for
+    // px). Canvas measureText with the layer's font — a flat chars-per-em
+    // guess drifts with the glyph mix (RITCHIE vs WHITEMUD) and lets long
+    // names butt against neighbours.
+    const _measureEm = (() => {
+      const ctx = document.createElement("canvas").getContext("2d");
+      ctx.font = `${LABEL_FONT_WEIGHT} 64px ${LABEL_FONT_FAMILY}`;
+      return name => ctx.measureText(name).width / 64;
+    })();
+
+    // Label anchors, computed once per data load: one point per hood at the
+    // area-weighted centroid of its largest polygon (multipolygon hoods label
+    // the main body, not the average of disjoint pieces). Carries the ring
+    // area so the collision filter lets bigger hoods win when labels crowd.
+    let _labelAnchors = null;
+    function labelAnchors() {
+      if (_labelAnchors) return _labelAnchors;
+      _labelAnchors = state.data.features.map(f => {
+        const g = f.geometry;
+        const polys = g.type === "MultiPolygon" ? g.coordinates : [g.coordinates];
+        let best = polys[0][0][0], bestArea = -1;
+        for (const poly of polys) {
+          const ring = poly[0];
+          let a = 0, cx = 0, cy = 0; // shoelace centroid
+          for (let i = 0; i < ring.length - 1; i++) {
+            const [x0, y0] = ring[i], [x1, y1] = ring[i + 1];
+            const w = x0 * y1 - x1 * y0;
+            a += w; cx += (x0 + x1) * w; cy += (y0 + y1) * w;
+          }
+          const area = Math.abs(a) / 2;
+          if (area > bestArea) {
+            bestArea = area;
+            if (a !== 0) best = [cx / (3 * a), cy / (3 * a)];
+          }
+        }
+        return { name: f.properties.neighbourhood_name, position: best,
+                 em: _measureEm(f.properties.neighbourhood_name),
+                 area: bestArea, p: f.properties };
+      });
+      return _labelAnchors;
+    }
+
+    // Label elevation: the prism roof in the extruded views (a label sits on
+    // the tower it names), the ground in the flat ones. +60 m clears the roof.
+    const LABEL_LIFT = 60;
+    function labelZ(p) {
+      if (state.view === "money") {
+        const cfg = METRICS[state.metric];
+        return p[cfg.key] * cfg.elevationScale + LABEL_LIFT;
+      }
+      if (state.view === "ratio")
+        return (ratioKept(p) ? ratioOf(p) * ratioScale().elevationScale : 0) + LABEL_LIFT;
+      return LABEL_LIFT; // roads / uses: flat ground views
+    }
+
+    // Greedy screen-space decluttering: project every anchor through the live
+    // deck viewport, then keep labels biggest-hood-first, dropping any whose
+    // estimated text box overlaps an already-kept one — so the city view shows
+    // a readable scatter and zooming in reveals more. (deck's
+    // CollisionFilterExtension is the off-the-shelf answer, but its collision
+    // render pass draws nothing under this interleaved MapLibre overlay, so
+    // the culling lives here instead — deterministic and testable, at 406
+    // labels the O(n²) sweep is nothing.) Recomputed per buildLayers call;
+    // a moveend hook rebuilds when the camera settles.
+    const LABEL_SIZE = 15;       // px passed to getSize
+    // deck's TextLayer draws glyphs LARGER than getSize: the character
+    // sublayer gets sizeScale = atlas glyph height / fontSize (SDF padding +
+    // font line metrics; 1.2625 with these settings — read it off the
+    // hood-labels-characters sublayer). Box up the culling by the same
+    // factor or long names render past their box and butt into neighbours
+    // (STRATHCONA JUNCTION|RITCHIE was the tell). Slightly generous beats
+    // slightly tight: worst case a label too few, never an overlap.
+    const LABEL_DRAW_SCALE = 1.35;
+    const LABEL_PAD = 8;         // px of breathing room around each label box
+    function visibleLabels() {
+      const anchors = labelAnchors();
+      if (!overlay || !overlay._deck) return anchors; // pre-init: never hit with labels off
+      const vp = overlay._deck.getViewports()[0];
+      if (!vp) return anchors;
+      const boxes = [];
+      for (const d of anchors) {
+        const [px, py] = vp.project([d.position[0], d.position[1], labelZ(d.p)]);
+        // Offscreen anchors can neither render nor block others — skip.
+        if (px < -80 || px > vp.width + 80 || py < -40 || py > vp.height + 40) continue;
+        boxes.push({ d, px, py,
+                     w: d.em * LABEL_SIZE * LABEL_DRAW_SCALE + 2 * LABEL_PAD,
+                     h: LABEL_SIZE * LABEL_DRAW_SCALE + 2 * LABEL_PAD });
+      }
+      boxes.sort((a, b) => b.d.area - a.d.area); // bigger hoods win the spot
+      const kept = [];
+      for (const b of boxes) {
+        if (kept.every(k => Math.abs(k.px - b.px) * 2 > k.w + b.w ||
+                            Math.abs(k.py - b.py) * 2 > k.h + b.h))
+          kept.push(b);
+      }
+      return kept.map(b => b.d);
+    }
+
+    // The labels layer (all views, toggled from the lens panel). Billboarded
+    // names, decluttered by visibleLabels(); depthTest off so towers in front
+    // never swallow labels behind.
+    function labelLayer() {
+      if (!state.labels) return [];
+      return [new deck.TextLayer({
+        id: "hood-labels",
+        data: visibleLabels(),
+        getPosition: d => [d.position[0], d.position[1], labelZ(d.p)],
+        getText: d => d.name,
+        getSize: LABEL_SIZE,
+        sizeUnits: "pixels",
+        getColor: [240, 240, 246, 250],
+        outlineWidth: 3,
+        outlineColor: [0, 0, 0, 255],
+        fontFamily: LABEL_FONT_FAMILY,
+        fontWeight: LABEL_FONT_WEIGHT,
+        // sdf is required for the outline; the 128 px atlas (default 64)
+        // keeps edges crisp at city zoom, radius scales with it so the
+        // outline still fits inside the glyph's SDF spread.
+        fontSettings: { sdf: true, fontSize: 128, radius: 24, smoothing: 0.08 },
+        characterSet: "auto",            // WÎHKWÊNTÔWIN is beyond ASCII
+        billboard: true,
+        parameters: { depthTest: false },
+        pickable: false,
+      })];
+    }
+
     // Ratio-view scale anchors, computed once from the kept subset (hoods on
     // the road floor / set-aside excluded): log-colour between p2.5 and p97.5,
     // linear height scaled so the max kept ratio reaches the other views'
@@ -585,6 +717,7 @@
               pickable: false, // hood hover layer handles tooltips
             }),
             hoodHoverLayer(),
+            ...labelLayer(),
           ];
         }
         // Fallback (zoning file absent / fetch failed): dominant category per
@@ -599,13 +732,13 @@
           pickable: true,
           autoHighlight: true,
           highlightColor: [255, 255, 255, 40],
-        })];
+        }), ...labelLayer()];
       }
 
       if (state.view === "roads") {
         // The network alone, coloured by load. No prisms at all — an
         // opacity-0 layer would still tessellate, draw, pick, and highlight.
-        return [...roadLayers(false), hoodHoverLayer()];
+        return [...roadLayers(false), hoodHoverLayer(), ...labelLayer()];
       }
 
       if (state.view === "ratio") {
@@ -634,7 +767,7 @@
           pickable: false, // hood hover layer handles tooltips
           updateTriggers: { getFillColor: [state.ramp, state.residential] },
         });
-        return [...roadLayers(true), ratioPrisms, hoodHoverLayer()];
+        return [...roadLayers(true), ratioPrisms, hoodHoverLayer(), ...labelLayer()];
       }
 
       // --- money view (default): the classic metric prisms -----------------
@@ -687,7 +820,7 @@
         updateTriggers: { getColor: [state.ramp, state.residential] },
       });
 
-      return [layer, topEdges];
+      return [layer, topEdges, ...labelLayer()];
     }
 
     // Tooltip content is per-view (closure over `state`). money: active
@@ -874,6 +1007,15 @@
       refreshLegend();
     }
 
+    // Toggle the neighbourhood-name labels. View-independent: the layer
+    // builder appends the labels in every view when the state flag is on.
+    function applyLabels() {
+      state.labels = !state.labels;
+      overlay.setProps({ layers: buildLayers() });
+      document.querySelector('#lens button[data-lens="labels"]')
+        .classList.toggle("active", state.labels);
+    }
+
     // Set the ratio view's ghost-prism opacity (0–100). UI-state only — the
     // caller rebuilds the layers.
     function setPrismOpacity(pct) {
@@ -933,11 +1075,17 @@
       document.querySelectorAll("#palette button").forEach(b =>
         b.addEventListener("click", () => applyPalette(b.dataset.ramp)));
       document.querySelector("#lens button").addEventListener("click", applyLens);
+      document.querySelector('#lens button[data-lens="labels"]').addEventListener("click", applyLabels);
       document.querySelectorAll("#views button").forEach(b =>
         b.addEventListener("click", () => applyView(b.dataset.view)));
       document.getElementById("prism-opacity").addEventListener("input", e => {
         setPrismOpacity(+e.target.value);
         overlay.setProps({ layers: buildLayers() });
+      });
+      // Re-cull the labels once the camera settles — zooming in reveals more
+      // names. Unchanged layers diff to no-ops, so the rebuild is cheap.
+      map.on("moveend", () => {
+        if (state.labels) overlay.setProps({ layers: buildLayers() });
       });
       // A data file from before the services lens can't drive the roads/ratio
       // views — hide those buttons rather than offer views that can't render.
