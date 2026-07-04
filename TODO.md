@@ -164,8 +164,34 @@ _Last reconciled: 2026-07-02_
   see DATA.md §2): **100 m grid cells** (~35k, in Peter's "a tenth of 287k"
   range), height = **revenue in cell ÷ cell GROUND acres** (consistent with
   the hood metric's boundary-acre denominator; no condo/lot_size artifacts).
-  In progress on `feature/glass-view`: pipeline grid export + Glass view
-  renders the cells over the neutral hood plane.
+  Built on `feature/glass-view` (UNMERGED): pipeline grid export + Glass
+  view renders the cells over the neutral hood plane; large lots (> 1 cell,
+  5,514 rows / ~18% of value) spread over a synthetic footprint square so
+  WEM-scale parcels read as mesas, not needles. 149 tests + verify-glass.js
+  green; screenshots eyeballed.
+  - [ ] **BLOCKER before ship — set-aside artifacting (Peter, on-device
+    2026-07-04): "really bad artifacting, specifically in areas that are
+    actually set asides."** Not diagnosed (session ended). Hypotheses to
+    check, in order:
+    1. **Footprint-square spillover**: the spreading models a parcel as a
+       square centred on its point — quarter-section farm/rural parcels
+       (up to 1.46M m² → 1.2 km squares) and river-adjacent lots spill
+       cells onto land the parcel doesn't actually occupy (river valley,
+       set-aside hoods), painting faint cells where the plane should read
+       clean grey. Candidate fixes: clip spread cells to the parcel's own
+       hood polygon; spread only up to some max side; or only spread
+       non-farmland classes.
+    2. **Near-zero-height z-fighting**: tens of thousands of new sub-1 m
+       cells sit coplanar with the opaque hood plane at 60% opacity —
+       may shimmer/stipple. Candidate fixes: floor cell height, drop
+       cells below a $/acre floor (REPORTED, not silent), or lift cells
+       slightly off the plane.
+    3. The doubled cell count (34,675 → 69,272) is mostly these faint
+       fringe cells — if they're the artifact, a value floor shrinks the
+       file back too.
+    Diagnose with screenshots over a known set-aside area (river valley /
+    EDMONTON SOUTH EAST) before picking a fix; re-run verify-glass.js +
+    shot-glass.js after.
 
 - [ ] **Lot-size denominator variant for the grid spikes (Peter, 2026-07-04
   — later).** The true Urban3 metric is revenue per PARCEL acre
