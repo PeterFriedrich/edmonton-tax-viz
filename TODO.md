@@ -157,9 +157,10 @@ _Last reconciled: 2026-07-02_
   on the plane. Hover/tooltip lives on the hood plane, like the Uses-view
   pattern (hood layer under a display layer carries picking + highlight).
   No new data — hood polygons + all metrics already in the served GeoJSON
-  (display-only build). Still open at build time: which metrics get it
-  (money / ratio / both); fifth view button vs a "flat"/composition toggle
-  on existing views (overlaps the "control hierarchy" item below); prism
+  (display-only build). DECIDED 2026-07-04: **its own (fifth) view button** —
+  "directly cribbing the Urban3 style thing, just with our own interactive
+  flavor" (Peter). Still open at build time: which metrics get it
+  (money / ratio / both); prism
   opacity default (the existing opacity slider may already cover it); the
   two plane colours (neutral + set-aside — the current set-aside grey may
   serve as one of them); whether the road network stays underneath as
