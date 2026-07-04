@@ -147,17 +147,20 @@ _Last reconciled: 2026-07-02_
   64 at zoom 12.2. See UI.md "Neighbourhood labels" for the
   CollisionFilterExtension and glyph-scale gotchas.
 
-- [ ] **Choropleth view (Peter, 2026-07-03 — try later).** One more display
-  idea: a choropleth-style map — flat neighbourhood polygons coloured by the
-  metric, composed like the Ratio view but with the prisms replaced ("bars
-  transparent, with the neighbourhood underneath"): the hood colour plane on
-  the ground carries the signal instead of extrusion. No new data needed —
-  hood polygons + all metrics are already in the served GeoJSON (display-only
-  build). Design questions to settle at build time: which metrics get it
-  (money / ratio / both); fifth view button vs a "flat" toggle on existing
-  views (overlaps the "control hierarchy" item below); whether the road
-  network stays underneath as ground context like Ratio; how prism
-  transparency interacts (fully flat vs ghost prisms OVER the choropleth).
+- [ ] **Choropleth view (Peter, 2026-07-03; design clarified 2026-07-04).**
+  The Urban3-infographic composition: keep the extruded prisms but render
+  them **transparent**, with a flat choropleth plane of hood colours
+  UNDERNEATH carrying the metric — prisms give the skyline read, the ground
+  plane gives the per-hood colour read. Hover/tooltip lives on the hood
+  plane, "like we did for the ratio lens" (the Uses-view pattern: hood layer
+  under a display layer carries picking + highlight). NOT a prism
+  replacement — ghost prisms OVER the choropleth is the design. No new data —
+  hood polygons + all metrics already in the served GeoJSON (display-only
+  build). Still open at build time: which metrics get it (money / ratio /
+  both); fifth view button vs a "flat"/composition toggle on existing views
+  (overlaps the "control hierarchy" item below); prism opacity default (the
+  existing opacity slider may already cover it); whether the road network
+  stays underneath as ground context like Ratio.
 
 - [x] ~~**SCOPE: composition numbers now; full zoning POLYGON layer in the viewer is a
   SEPARATE later product decision**~~ — RESOLVED 2026-07-03: Peter opted in for the
