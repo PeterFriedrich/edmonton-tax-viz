@@ -38,7 +38,7 @@
     #views button.active { background: #fcd278; color: #16111a; font-weight: 600; }
     #layers {
       top: 172px; flex-direction: column; padding: 6px 12px; gap: 4px;
-      font-size: 11.5px; color: #9a9ab0; display: none; /* ratio view only */
+      font-size: 11.5px; color: #9a9ab0; display: none; /* ghost-prism views (ratio, glass) only */
     }
     #layers .hd { font-size: 10px; text-transform: uppercase; letter-spacing: 0.8px; color: #6a6a80; }
     #layers label { display: flex; align-items: center; gap: 7px; cursor: pointer; padding: 2px 0; }
@@ -130,6 +130,7 @@
     <button data-view="roads" title="The road network on the ground: collector + local roads coloured by their neighbourhood's road metres per acre; arterials neutral">Roads</button>
     <button data-view="ratio" title="Ghost prisms of revenue per road metre over the neutral road network">Ratio</button>
     <button data-view="uses" title="Each neighbourhood's dominant zoned land use — what the land is designated for, not what it yields">Uses</button>
+    <button data-view="glass" title="Translucent metric prisms over a neutral neighbourhood plane — hover the ground for each neighbourhood's numbers">Glass</button>
   </div>
 
   <div id="layers" class="panel">
@@ -305,6 +306,15 @@
                "a neighbourhood for its land-use composition.",
         opacity: null, // flat categorical view — no prisms
       },
+      glass: {
+        title: null, // metric-driven, like money (applyView/applyMetric)
+        blurb: "Translucent prisms of the active metric over a flat neutral " +
+               "neighbourhood plane. Height is linear; colour is " +
+               "square-root–scaled. The grey ground marks set-aside " +
+               "natural/undeveloped land. Hover a neighbourhood below for " +
+               "its numbers; the slider sets prism strength.",
+        opacity: 30, // translucent by default; slider adjusts
+      },
     };
 
     // Active metric defaults to revenue (matches the static HTML chrome above).
@@ -312,9 +322,9 @@
     // non-residential hoods fade translucent so residential land compares
     // like-to-like without the Downtown / class-rate confound. Applies in the
     // Money and Ratio views; disabled in Roads (no per-hood prisms to fade).
-    // `view` selects the display mode (money | roads | ratio); `prismOpacity`
-    // is the ratio view's ghost-prism strength (money prisms are always
-    // opaque; the roads view has no prisms).
+    // `view` selects the display mode (money | roads | ratio | uses | glass);
+    // `prismOpacity` is the ghost-prism strength in ratio and glass (money
+    // prisms are always opaque; roads and uses have no prisms).
     const state = { metric: "revenue_per_acre", ramp: "current", residential: false,
                     labels: false, view: "money", prismOpacity: 1, data: null };
     let overlay;         // deck.gl MapboxOverlay, created on map load
@@ -370,6 +380,13 @@
     // every ramp's low end (dark purple/blue), so "grey = not on the scale" reads
     // unambiguously. Height stays their true (low) value — honest, de-emphasized.
     const SET_ASIDE_COLOR = [104, 108, 122];
+
+    // Glass view's ground plane: one neutral dark slate for every hood — the
+    // plane is mouseover geography, not a signal carrier (all metric signal
+    // stays in the translucent prisms above). Set-aside hoods take the usual
+    // grey instead, so "off the fiscal scale" reads on the ground too.
+    // Darker than SET_ASIDE_COLOR but clearly above every ramp background.
+    const GLASS_PLANE_COLOR = [50, 53, 63];
 
     // Colour transform of the clamped ratio, per metric (FINDINGS §6.1 / §6.3):
     // sqrt for the right-skewed money metrics (log over-corrects at the 0.90
@@ -585,7 +602,7 @@
     // the tower it names), the ground in the flat ones. +60 m clears the roof.
     const LABEL_LIFT = 60;
     function labelZ(p) {
-      if (state.view === "money") {
+      if (state.view === "money" || state.view === "glass") {
         const cfg = METRICS[state.metric];
         return p[cfg.key] * cfg.elevationScale + LABEL_LIFT;
       }
@@ -739,6 +756,46 @@
         // The network alone, coloured by load. No prisms at all — an
         // opacity-0 layer would still tessellate, draw, pick, and highlight.
         return [...roadLayers(false), hoodHoverLayer(), ...labelLayer()];
+      }
+
+      if (state.view === "glass") {
+        // The Urban3-infographic composition: the money prisms rendered
+        // translucent over an opaque neutral hood plane. The plane carries
+        // picking + highlight (the hover target is the neighbourhood under
+        // the glass, and the highlight shows through the prisms); the prisms
+        // carry ALL the metric signal and are not pickable.
+        const cfg = METRICS[state.metric];
+        const clamp = state.residential ? residentialClampFor(cfg.key) : cfg.colorClamp;
+        const plane = new deck.GeoJsonLayer({
+          id: "glass-plane",
+          data: state.data,
+          filled: true,
+          stroked: false,
+          extruded: false,
+          getFillColor: f => f.properties.is_set_aside ? SET_ASIDE_COLOR : GLASS_PLANE_COLOR,
+          pickable: true,
+          autoHighlight: true,
+          highlightColor: [255, 255, 255, 40],
+        });
+        const prisms = new deck.GeoJsonLayer({
+          id: "glass-extrusion",
+          data: state.data,
+          extruded: true,
+          filled: true,
+          stroked: false,
+          wireframe: false,
+          getElevation: f => f.properties[cfg.key],
+          elevationScale: cfg.elevationScale,
+          getFillColor: f => fillFor(f, cfg, clamp),
+          opacity: state.prismOpacity,
+          material: { ambient: 0.55, diffuse: 0.6, shininess: 32, specularColor: [60, 60, 70] },
+          pickable: false, // the plane handles tooltips
+          updateTriggers: {
+            getElevation: state.metric,
+            getFillColor: [state.metric, state.ramp, state.residential],
+          },
+        });
+        return [plane, prisms, ...labelLayer()];
       }
 
       if (state.view === "ratio") {
@@ -896,18 +953,19 @@
     }
 
     // Switch metric: rebuild layers and update the title/legend/toggle chrome.
-    // In the roads/ratio views the metric only marks state (it takes effect on
-    // returning to Money — those views don't render the metric).
+    // Renders live in the Money and Glass views (both draw the metric); in
+    // roads/ratio/uses it only marks state and takes effect on returning.
     function applyMetric(metric) {
       if (metric === state.metric || !METRICS[metric]) return;
       state.metric = metric;
       document.querySelectorAll("#toggle button").forEach(b =>
         b.classList.toggle("active", b.dataset.metric === metric));
-      if (state.view !== "money") return;
+      if (state.view !== "money" && state.view !== "glass") return;
       const cfg = METRICS[metric];
       overlay.setProps({ layers: buildLayers() });
       document.getElementById("title-h").textContent = cfg.title;
-      document.getElementById("title-p").textContent = cfg.blurb;
+      document.getElementById("title-p").textContent =
+        state.view === "glass" ? VIEWS.glass.blurb : cfg.blurb;
       refreshLegend(); // per-metric transform: the gradient bar changes too
     }
 
@@ -1024,15 +1082,17 @@
       document.getElementById("prism-opacity-val").textContent = Math.round(pct) + "%";
     }
 
-    // Switch view (money | roads | ratio). Road geometry lazy-loads on the
-    // first non-money view; entering ratio resets the slider to its 5%
-    // default. Title/blurb follow the view (money's stay metric-driven).
+    // Switch view (money | roads | ratio | uses | glass). Road geometry
+    // lazy-loads on the first roads/ratio view; entering a ghost-prism view
+    // (ratio, glass) resets the slider to that view's default. Title/blurb
+    // follow the view (money's and glass's titles stay metric-driven).
     async function applyView(v) {
       if (v === state.view || (v !== "money" && !VIEWS[v])) return;
       state.view = v;
       document.querySelectorAll("#views button").forEach(b =>
         b.classList.toggle("active", b.dataset.view === v));
-      document.getElementById("layers").style.display = v === "ratio" ? "flex" : "none";
+      document.getElementById("layers").style.display =
+        (v === "ratio" || v === "glass") ? "flex" : "none";
       // The lens applies in Money and Ratio. In Roads it has no effect, and in
       // Uses residential land is already an explicit category — the button
       // disables in both (state persists and re-applies on leaving).
@@ -1052,10 +1112,13 @@
         await zoningFetch;
         if (state.view !== v) return; // switched again while the fetch ran
       }
-      if (v === "ratio") setPrismOpacity(VIEWS.ratio.opacity);
+      // Ghost-prism views reset the slider to their own default on entry.
+      if (VIEWS[v] && VIEWS[v].opacity != null) setPrismOpacity(VIEWS[v].opacity);
       overlay.setProps({ layers: buildLayers() });
+      // Glass shows the metric like Money, so its title stays metric-driven.
       const chrome = v === "money" ? METRICS[state.metric] : VIEWS[v];
-      document.getElementById("title-h").textContent = chrome.title;
+      document.getElementById("title-h").textContent =
+        v === "glass" ? METRICS[state.metric].title : chrome.title;
       document.getElementById("title-p").textContent = chrome.blurb;
       refreshLegend();
     }
