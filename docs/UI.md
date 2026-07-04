@@ -78,6 +78,37 @@ button greys out, state persists and re-applies on leaving). Two effects when on
   self-describing state labels; the toggle is currently a plain button. Alpha / grey /
   clamp-percentile are easy tunables. Not yet visually verified in a browser.
 
+### Neighbourhood labels (built 2026-07-03)
+A **"Labels" toggle** (second button in the `#lens` panel, after "Residential only")
+shows neighbourhood names on the map — the "which hood is that?" answer without
+hovering every prism. Off by default; works in **all four views** (never disabled;
+the residential button's disable rules are untouched). Implementation
+(`web/index.html`):
+- **One anchor per hood** (`labelAnchors`): the shoelace centroid of its largest
+  polygon (multipolygon hoods label the main body). Computed once per data load
+  from `neighbourhood_name` already in the main GeoJSON — no pipeline change.
+- **Billboarded `TextLayer`**, 11.5 px, white with a dark SDF outline;
+  `characterSet: "auto"` (WÎHKWÊNTÔWIN is beyond ASCII). Names stay the data's
+  ALL-CAPS — standard cartographic style for area labels. `depthTest: false` so
+  towers in front never swallow labels behind.
+- **Roof-height anchoring** (`labelZ`): in Money/Ratio the label sits at the
+  prism's top + 60 m, so a label rides the tower it names; flat views (Roads/
+  Uses) label at ground + 60 m. Off-scale ratio hoods label at ground.
+- **Greedy screen-space decluttering** (`visibleLabels`): anchors project through
+  the live deck viewport; labels keep biggest-hood-first, dropping any whose
+  estimated text box (chars × 0.62 × size + 8 px pad) overlaps a kept one.
+  ~52 of 406 show at city zoom; zooming in reveals more (a `moveend` hook
+  re-culls when the camera settles). deck.gl's `CollisionFilterExtension` was
+  the off-the-shelf answer but its collision render pass draws nothing under
+  this interleaved MapLibre overlay (verified 2026-07-03: layer present,
+  everything culled) — the JS cull is deterministic and testable instead.
+- **Verified** headless (`tools/profiling/verify-labels.js`): layer present/absent
+  per toggle across all four views, anchors in-bbox, overlap-free kept set,
+  zoom re-cull (52 → 98), roof-z exact in Money and Ratio, residential-lens
+  disable matrix unchanged; screenshot eyeball `tools/profiling/shot-labels.js`.
+  The existing verify scripts' `#lens button` selectors still resolve to the
+  residential button (Labels is second in the DOM — keep it that way).
+
 ### Services views: Money | Roads | Ratio (built 2026-07-02, display pivot complete)
 The road-prism metric view built earlier on 2026-07-01 was **retired the same day**
 (`SPEC_services.md` "Display architecture — REVISED"). After two intermediate
