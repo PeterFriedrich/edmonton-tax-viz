@@ -139,6 +139,42 @@ _Last reconciled: 2026-07-02_
     power centres — South Edmonton Common, Terra Losa, Mill Woods Town Centre,
     Calgary Trail South, Summerlea, Place LaRue, McCauley, Strathcona Junction.
 
+- [ ] **Neighbourhood labels — finish + ship (built 2026-07-03, branch
+  `feature/hood-labels`, UNMERGED).** A "Labels" toggle (second `#lens`-panel
+  button) shows hood names in all four views: one anchor per hood (shoelace
+  centroid of the largest polygon, names already in the GeoJSON — no pipeline
+  change), billboarded bold TextLayer at the prism roof in Money/Ratio, greedy
+  screen-space declutter (biggest hood wins, re-cull on `moveend`; deck's
+  `CollisionFilterExtension` renders nothing under the interleaved MapLibre
+  overlay — see UI.md "Neighbourhood labels" for that and the
+  `LABEL_DRAW_SCALE` 1.325 glyph-scale gotcha). Two commits on the branch,
+  headless-verified (`tools/profiling/verify-labels.js` + `shot-labels.js`;
+  lens/uses regressions green). Remaining:
+  - [ ] **One more bump: bigger + bolder** (Peter 2026-07-03: "a bit bigger
+    with a bit more bold and they'd be good"). Currently 13 px / weight 700 —
+    try ~15 px / 800. Culling boxes follow automatically (measured ems ×
+    `LABEL_SIZE` × `LABEL_DRAW_SCALE`).
+  - [ ] **Sharpness**: labels "don't seem sharp enough till you really zoom
+    in" (Peter). Suspect SDF blur at small on-screen sizes — try
+    `fontSettings: { fontSize: 128 }` (finer atlas) and/or trimming
+    `smoothing`; re-eyeball at city zoom before/after. May partially dissolve
+    with the size bump above.
+  - [ ] Then the usual trail: PR → merge → `gh workflow run "Refresh map
+    data"` → `git pull --rebase` → live verify; UI.md numbers (size/weight,
+    shown-at-city-zoom counts) need a final sync to whatever lands.
+
+- [ ] **Choropleth view (Peter, 2026-07-03 — try later).** One more display
+  idea: a choropleth-style map — flat neighbourhood polygons coloured by the
+  metric, composed like the Ratio view but with the prisms replaced ("bars
+  transparent, with the neighbourhood underneath"): the hood colour plane on
+  the ground carries the signal instead of extrusion. No new data needed —
+  hood polygons + all metrics are already in the served GeoJSON (display-only
+  build). Design questions to settle at build time: which metrics get it
+  (money / ratio / both); fifth view button vs a "flat" toggle on existing
+  views (overlaps the "control hierarchy" item below); whether the road
+  network stays underneath as ground context like Ratio; how prism
+  transparency interacts (fully flat vs ghost prisms OVER the choropleth).
+
 - [x] ~~**SCOPE: composition numbers now; full zoning POLYGON layer in the viewer is a
   SEPARATE later product decision**~~ — RESOLVED 2026-07-03: Peter opted in for the
   Uses view (PR #10) — the real bylaw geometry renders there, category-dissolved and
