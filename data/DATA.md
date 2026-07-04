@@ -114,7 +114,18 @@ aligned. That pull also surfaced a new `Assessment Class 1` label
 - **`lot_size` is a city-provided field, not computed** — Edmonton supplies it directly via the API. No geometry math needed.
 - **No parcel polygon geometry** — only a centroid point. Edmonton transferred parcel GIS data to AltaLIS in 2021; it's no longer freely available. Polygon boundaries require the neighbourhood boundary file (dataset `65fr-66s6`).
 - **`lot_size` units are sq metres** — divide by 4046.86 to get acres. (~0.6% null — minor, flag on load)
-- **Condo duplication TBC** — need to confirm whether multiple condo units on one parcel share a lot_size row or are duplicated. This matters for parcel-level $/acre aggregation.
+- **Condo `lot_size` semantics are INCONSISTENT (confirmed 2026-07-04)** — at the
+  3,002 lat/long points holding multiple units, `lot_size` is sometimes the parcel
+  size duplicated on every unit (summing overcounts the land), sometimes per-unit
+  apportioned shares (summing is correct), and sometimes null/zero (one 1,059-unit
+  building has nulls on 1,051 of them). No flag distinguishes the regimes. This is
+  why the Glass view's grid export divides by cell GROUND acres, not lot acres
+  (`src/export_value_grid.py`); a lot-acre variant needs a documented dedupe
+  heuristic first (TODO.md).
+- **Downloaded via `scripts/download_data.py --only property_info`** (added
+  2026-07-04): full-CSV export endpoint, server count(*) cross-check; lands at
+  `data/raw/Property_Info__Current_Calendar_Year_.csv`. Join to the assessment
+  roll on `Account Number`: 100% coverage (439,685 rows both sides, 2026-07-04).
 
 ### Architecture Decision — Phase 1
 

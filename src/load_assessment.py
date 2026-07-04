@@ -40,9 +40,11 @@ def load_assessment(csv_path: str | Path) -> pd.DataFrame:
         tax_class               str    clean 4-value class (rate join key)
         assessment_class_1/2/3  str    split-class labels (NaN for unused slots)
         assessment_class_pct_1/2/3  float  per-class apportionment %
+        latitude / longitude    float  property point (0 nulls as of 2026-07)
 
     The class columns are carried through for the revenue phase (per-property
-    municipal levy in apply_tax_rates.py). The assessment file uses two class
+    municipal levy in apply_tax_rates.py); latitude/longitude for the grid
+    export (export_value_grid.py). The assessment file uses two class
     vocabularies — see docs/FINDINGS_assessment_classes.md.
     """
     df = pd.read_csv(csv_path, low_memory=False)
@@ -57,6 +59,8 @@ def load_assessment(csv_path: str | Path) -> pd.DataFrame:
         "Assessment Class % 1": "assessment_class_pct_1",
         "Assessment Class % 2": "assessment_class_pct_2",
         "Assessment Class % 3": "assessment_class_pct_3",
+        "Latitude": "latitude",
+        "Longitude": "longitude",
     })
 
     df["neighbourhood_name"] = df["neighbourhood_name"].str.strip().str.upper()
@@ -81,4 +85,5 @@ def load_assessment(csv_path: str | Path) -> pd.DataFrame:
         "neighbourhood_name", "assessed_value", "is_exempt", "tax_class",
         "assessment_class_1", "assessment_class_2", "assessment_class_3",
         "assessment_class_pct_1", "assessment_class_pct_2", "assessment_class_pct_3",
+        "latitude", "longitude",
     ]]

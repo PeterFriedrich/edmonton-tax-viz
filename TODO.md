@@ -156,15 +156,27 @@ _Last reconciled: 2026-07-02_
   prisms. Exception: **set-aside/holdout hoods get their own distinct colour**
   on the plane. Hover/tooltip lives on the hood plane, like the Uses-view
   pattern (hood layer under a display layer carries picking + highlight).
-  No new data — hood polygons + all metrics already in the served GeoJSON
-  (display-only build). DECIDED 2026-07-04: **its own (fifth) view button** —
-  "directly cribbing the Urban3 style thing, just with our own interactive
-  flavor" (Peter). Still open at build time: which metrics get it
-  (money / ratio / both); prism
-  opacity default (the existing opacity slider may already cover it); the
-  two plane colours (neutral + set-aside — the current set-aside grey may
-  serve as one of them); whether the road network stays underneath as
-  ground context like Ratio.
+  DECIDED 2026-07-04: **its own (fifth) view button** — "directly cribbing
+  the Urban3 style thing, just with our own interactive flavor" (Peter).
+  V1 (hood-prism glass, built + verified on `feature/glass-view`) was then
+  refined by Peter: the spikes should be **finer than the hood unit** — the
+  Urban3 detail level. DECIDED 2026-07-04 (after the condo lot_size probe —
+  see DATA.md §2): **100 m grid cells** (~35k, in Peter's "a tenth of 287k"
+  range), height = **revenue in cell ÷ cell GROUND acres** (consistent with
+  the hood metric's boundary-acre denominator; no condo/lot_size artifacts).
+  In progress on `feature/glass-view`: pipeline grid export + Glass view
+  renders the cells over the neutral hood plane.
+
+- [ ] **Lot-size denominator variant for the grid spikes (Peter, 2026-07-04
+  — later).** The true Urban3 metric is revenue per PARCEL acre
+  (`dkk9-cj3x` `lot_size`), not per ground acre. Blocked on a documented
+  condo heuristic: at multi-unit points lot_size is inconsistently
+  duplicated-per-unit / apportioned-per-unit / null (one 1,059-unit
+  building has 1,051 nulls — DATA.md §2), so summing lot acres at exactly
+  the tallest spikes is guesswork today. Needs: a dedupe rule (e.g. sum
+  DISTINCT lot_size values per point), an exclusion list for null-lot
+  towers, and a validation pass against the ground-acre version before
+  offering it as a metric.
 
 - [x] ~~**SCOPE: composition numbers now; full zoning POLYGON layer in the viewer is a
   SEPARATE later product decision**~~ — RESOLVED 2026-07-03: Peter opted in for the

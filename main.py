@@ -35,6 +35,7 @@ from load_boundaries import load_boundaries
 from load_zoning import load_zoning, export_zoning_web
 from load_roads import load_roads, export_roads_web
 from join_and_calculate import join_and_calculate, export_geojson
+from export_value_grid import export_value_grid
 from plot_choropleth import plot_choropleth
 
 logger = logging.getLogger(__name__)
@@ -49,6 +50,7 @@ PNG_OUT = ROOT / "output/edmonton_value_per_acre.png"
 GEOJSON_OUT = ROOT / "web/data/neighbourhood_value_per_acre.geojson"
 ROADS_WEB_OUT = ROOT / "web/data/roads.geojson"
 ZONING_WEB_OUT = ROOT / "web/data/zoning.geojson"
+GRID_WEB_OUT = ROOT / "web/data/value_grid.json"
 
 # Assessment-year alignment: the local snapshot is 2025 data (the coverage year
 # lives in Socrata metadata, not the rows — see DATA.md). Mill rates MUST match.
@@ -60,6 +62,7 @@ ASSESSMENT_YEAR = 2025
 # untouched by either of these. See docs/PERFORMANCE.md / docs/ARCHITECTURE.md.
 SETBACK_M = 45.0             # inward buffer -> "city blocks" gaps between prisms
 SIMPLIFY_TOLERANCE_M = 10.0  # Douglas-Peucker vertex cut (applied AFTER setback)
+GRID_CELL_M = 100.0          # Glass-view spike grid (~35k occupied cells, 2026-07)
 
 
 def run(
@@ -123,6 +126,9 @@ def run(
                 str(zoning_geojson), boundaries, str(ZONING_WEB_OUT),
                 setback_m=setback_m,
             )
+        # Grid-cell spikes for the Glass view (Urban3-style detail;
+        # ground-acre denominator — see export_value_grid's docstring).
+        export_value_grid(assessment, GRID_WEB_OUT, cell_m=GRID_CELL_M)
 
     logger.info("Pipeline complete.")
 

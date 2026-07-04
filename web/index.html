@@ -308,14 +308,22 @@
       },
       glass: {
         title: null, // metric-driven, like money (applyView/applyMetric)
-        blurb: "Translucent prisms of the active metric over a flat neutral " +
-               "neighbourhood plane. Height is linear; colour is " +
-               "square-root–scaled. The grey ground marks set-aside " +
-               "natural/undeveloped land. Hover a neighbourhood below for " +
-               "its numbers; the slider sets prism strength.",
-        opacity: 30, // translucent by default; slider adjusts
+        blurb: "The active metric in 100 m grid cells — property points " +
+               "binned to squares, each cell's total divided by its ground " +
+               "acres. Height is linear; colour is square-root–scaled to " +
+               "the cell distribution. The neutral plane below is the " +
+               "neighbourhoods — hover for their numbers; grey = set-aside " +
+               "natural/undeveloped land. The slider sets spike opacity.",
+        opacity: 60, // translucent by default; slider adjusts
       },
     };
+
+    // Glass view's spike layer: pipeline-binned 100 m cells (export_value_grid
+    // — flat JSON, not GeoJSON: [lon, lat, value_per_acre, revenue_per_acre]
+    // rows at each cell's SW corner). Lazy-loaded like roads/zoning; when the
+    // file is absent (older deploy) the view falls back to translucent
+    // NEIGHBOURHOOD prisms — the coarse version of the same composition.
+    const GRID_URL = "./data/value_grid.json";
 
     // Active metric defaults to revenue (matches the static HTML chrome above).
     // `residential` is the residential-only lens (off by default): when on,
@@ -332,6 +340,8 @@
     let roadsFetch = null; // in-flight fetch guard (single fetch, ever)
     let zoningData = null;  // lazy-fetched zoning ground layer (uses view)
     let zoningFetch = null; // in-flight fetch guard; null result => fallback
+    let gridData = null;    // lazy-fetched grid cells (glass view)
+    let gridFetch = null;   // in-flight fetch guard; null result => hood-prism fallback
 
     // Three neutral, luminance-sequential ramps to compare: dark = low, bright =
     // high, with no semantic good/bad hue (consistent with the linear-elevation
@@ -387,6 +397,28 @@
     // grey instead, so "off the fiscal scale" reads on the ground too.
     // Darker than SET_ASIDE_COLOR but clearly above every ramp background.
     const GLASS_PLANE_COLOR = [50, 53, 63];
+
+    // Glass grid scale anchors, per metric, computed once from the fetched
+    // cells (so they track weekly refreshes, like ratioScale): colour clamp
+    // at the cells' p97.5 — the same percentile convention as every other
+    // clamp — and elevation scaled so the tallest cell reaches the money
+    // view's tallest hood prism (height parity across views; both LINEAR).
+    // The cell distribution is its own scale: one downtown tower in a
+    // 2.47-acre cell runs ~85x the p97.5, far past the hood-level range.
+    let _gridScales = null;
+    function gridScale() {
+      const key = state.metric;
+      if (_gridScales && _gridScales[key]) return _gridScales[key];
+      const col = gridData.columns[key];
+      const vals = gridData.cells.map(c => c[col]).sort((a, b) => a - b);
+      const cfg = METRICS[key];
+      const hoodMax = Math.max(...state.data.features.map(f => f.properties[key] || 0));
+      _gridScales ??= {};
+      return (_gridScales[key] = {
+        clamp: quantile(vals, 0.975),
+        elevationScale: (hoodMax * cfg.elevationScale) / vals[vals.length - 1],
+      });
+    }
 
     // Colour transform of the clamped ratio, per metric (FINDINGS §6.1 / §6.3):
     // sqrt for the right-skewed money metrics (log over-corrects at the 0.90
@@ -602,13 +634,13 @@
     // the tower it names), the ground in the flat ones. +60 m clears the roof.
     const LABEL_LIFT = 60;
     function labelZ(p) {
-      if (state.view === "money" || state.view === "glass") {
+      if (state.view === "money") {
         const cfg = METRICS[state.metric];
         return p[cfg.key] * cfg.elevationScale + LABEL_LIFT;
       }
       if (state.view === "ratio")
         return (ratioKept(p) ? ratioOf(p) * ratioScale().elevationScale : 0) + LABEL_LIFT;
-      return LABEL_LIFT; // roads / uses: flat ground views
+      return LABEL_LIFT; // roads / uses / glass: label at the ground
     }
 
     // Greedy screen-space decluttering: project every anchor through the live
@@ -759,13 +791,12 @@
       }
 
       if (state.view === "glass") {
-        // The Urban3-infographic composition: the money prisms rendered
-        // translucent over an opaque neutral hood plane. The plane carries
+        // The Urban3-infographic composition: translucent 100 m grid-cell
+        // spikes over an opaque neutral hood plane. The plane carries
         // picking + highlight (the hover target is the neighbourhood under
-        // the glass, and the highlight shows through the prisms); the prisms
+        // the glass, and the highlight shows through the cells); the cells
         // carry ALL the metric signal and are not pickable.
         const cfg = METRICS[state.metric];
-        const clamp = state.residential ? residentialClampFor(cfg.key) : cfg.colorClamp;
         const plane = new deck.GeoJsonLayer({
           id: "glass-plane",
           data: state.data,
@@ -777,7 +808,31 @@
           autoHighlight: true,
           highlightColor: [255, 255, 255, 40],
         });
-        const prisms = new deck.GeoJsonLayer({
+        const col = gridData ? gridData.columns[state.metric] : -1;
+        if (col >= 0) {
+          const gs = gridScale();
+          return [plane, new deck.GridCellLayer({
+            id: "glass-grid",
+            data: gridData.cells,
+            cellSize: gridData.cell,
+            extruded: true,
+            getPosition: d => [d[0], d[1]], // cell SW corner (export_value_grid)
+            getElevation: d => d[col],
+            elevationScale: gs.elevationScale,
+            getFillColor: d => rampColorAt(scaleT(d[col], gs.clamp)),
+            opacity: state.prismOpacity,
+            material: { ambient: 0.55, diffuse: 0.6, shininess: 32, specularColor: [60, 60, 70] },
+            pickable: false, // the plane handles tooltips
+            updateTriggers: {
+              getElevation: state.metric,
+              getFillColor: [state.metric, state.ramp],
+            },
+          }), ...labelLayer()];
+        }
+        // Fallback (grid file absent — older deploy): translucent
+        // NEIGHBOURHOOD prisms, the coarse version of the same composition.
+        // No lens handling — the lens button disables in Glass.
+        return [plane, new deck.GeoJsonLayer({
           id: "glass-extrusion",
           data: state.data,
           extruded: true,
@@ -786,16 +841,17 @@
           wireframe: false,
           getElevation: f => f.properties[cfg.key],
           elevationScale: cfg.elevationScale,
-          getFillColor: f => fillFor(f, cfg, clamp),
+          getFillColor: f => f.properties.is_set_aside
+            ? SET_ASIDE_COLOR
+            : colorFor(f.properties[cfg.key], cfg.colorClamp),
           opacity: state.prismOpacity,
           material: { ambient: 0.55, diffuse: 0.6, shininess: 32, specularColor: [60, 60, 70] },
           pickable: false, // the plane handles tooltips
           updateTriggers: {
             getElevation: state.metric,
-            getFillColor: [state.metric, state.ramp, state.residential],
+            getFillColor: [state.metric, state.ramp],
           },
-        });
-        return [plane, prisms, ...labelLayer()];
+        }), ...labelLayer()];
       }
 
       if (state.view === "ratio") {
@@ -1015,6 +1071,18 @@
           label.textContent = "Set aside / insufficient road base";
           sw.style.background = "rgb(104,108,122)";
         }
+      } else if (state.view === "glass") {
+        // Cell-scale anchors when the grid is present; the hood-prism
+        // fallback keeps the metric's hood anchors. The lens never applies
+        // here, so the aside always means the plane's set-aside grey.
+        const grid = gridData && gridData.columns[state.metric] >= 0;
+        document.getElementById("legend-label").textContent =
+          cfg.legendLabel + (grid ? " (100 m cells)" : "");
+        document.getElementById("legend-min").textContent = "$0";
+        document.getElementById("legend-max").textContent =
+          grid ? cfg.fmt(gridScale().clamp) + "+" : cfg.legendMax;
+        label.textContent = "Set aside — natural / undeveloped land";
+        sw.style.background = "rgb(104,108,122)";
       } else {
         document.getElementById("legend-label").textContent = cfg.legendLabel;
         document.getElementById("legend-min").textContent = cfg.legendMin;
@@ -1093,10 +1161,12 @@
         b.classList.toggle("active", b.dataset.view === v));
       document.getElementById("layers").style.display =
         (v === "ratio" || v === "glass") ? "flex" : "none";
-      // The lens applies in Money and Ratio. In Roads it has no effect, and in
-      // Uses residential land is already an explicit category — the button
-      // disables in both (state persists and re-applies on leaving).
-      document.querySelector("#lens button").disabled = v === "roads" || v === "uses";
+      // The lens applies in Money and Ratio. In Roads it has no effect, in
+      // Uses residential land is already an explicit category, and in Glass
+      // the grid cells carry no residential flag — the button disables in
+      // all three (state persists and re-applies on leaving).
+      document.querySelector("#lens button").disabled =
+        v === "roads" || v === "uses" || v === "glass";
       if ((v === "roads" || v === "ratio") && !roadsData) {
         roadsFetch ??= fetch(ROADS_URL).then(r => r.json()).then(d => { roadsData = d; });
         await roadsFetch;
@@ -1110,6 +1180,26 @@
           .then(d => { zoningData = d; })
           .catch(() => {});
         await zoningFetch;
+        if (state.view !== v) return; // switched again while the fetch ran
+      }
+      // Grid cells for the glass view — fetched once; a missing file resolves
+      // null and the view falls back to translucent hood prisms.
+      if (v === "glass" && !gridData) {
+        gridFetch ??= fetch(GRID_URL)
+          .then(r => r.ok ? r.json() : null)
+          .then(p => {
+            if (!p) return;
+            gridData = {
+              cell: p.cell_m,
+              columns: {
+                value_per_acre: p.columns.indexOf("value_per_acre"),
+                revenue_per_acre: p.columns.indexOf("revenue_per_acre"),
+              },
+              cells: p.cells,
+            };
+          })
+          .catch(() => {});
+        await gridFetch;
         if (state.view !== v) return; // switched again while the fetch ran
       }
       // Ghost-prism views reset the slider to their own default on entry.

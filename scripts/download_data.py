@@ -5,11 +5,13 @@ GitHub Actions VM has none of the raw inputs, so it must pull them before
 ``main.py`` can regenerate the map. Run locally the same way to refresh a
 snapshot.
 
-Four inputs come from Edmonton's Socrata open-data portal:
-  - assessment  q7d6-ambg  (Property Assessment Data, current year)  -> CSV
-  - boundaries  65fr-66s6  (Neighbourhood Boundaries)                -> GeoJSON
-  - zoning      fixa-tstc  (Zoning Bylaw Geographical Data)          -> GeoJSON
-  - roads       9j8t-zm52  (Road Network centrelines)                -> GeoJSON
+Five inputs come from Edmonton's Socrata open-data portal:
+  - assessment     q7d6-ambg  (Property Assessment Data, current year)  -> CSV
+  - boundaries     65fr-66s6  (Neighbourhood Boundaries)                -> GeoJSON
+  - zoning         fixa-tstc  (Zoning Bylaw Geographical Data)          -> GeoJSON
+  - roads          9j8t-zm52  (Road Network centrelines)                -> GeoJSON
+  - property_info  dkk9-cj3x  (Property Info: lot size / zoning /
+                               year built, current year)                -> CSV
 
 Mill rates (pwis-wc4c) are NOT fetched here — they live in the committed
 ``data/mill_rates.json`` (see DATA.md); refreshing them for a new year is a
@@ -80,6 +82,14 @@ SOURCES = {
         "dest": RAW / "roads.geojson",
         "limit": 100000,  # 53,720 centrelines as of 2026-07 (SPEC_services.md)
         "count_url": _count_url("9j8t-zm52"),
+    },
+    "property_info": {
+        # Full-export endpoint, no $limit — only the server cross-check applies.
+        # Lot size / zoning / year built per account (DATA.md §2); joins the
+        # assessment roll on account number. 439,685 rows as of 2026-07.
+        "url": "https://data.edmonton.ca/api/views/dkk9-cj3x/rows.csv?accessType=DOWNLOAD",
+        "dest": RAW / "Property_Info__Current_Calendar_Year_.csv",
+        "count_url": _count_url("dkk9-cj3x"),
     },
 }
 

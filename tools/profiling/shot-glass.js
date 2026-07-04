@@ -1,6 +1,6 @@
-// One-off: screenshot the Glass view (translucent metric prisms over the
-// neutral hood plane) at the default 30% and at a heavier 60%.
-// node shot-glass.js <url> <out-prefix>   -> <prefix>-30.png, <prefix>-60.png
+// One-off: screenshot the Glass view (translucent 100 m grid-cell spikes
+// over the neutral hood plane) at the default 60% and at a solid 100%.
+// node shot-glass.js <url> <out-prefix>   -> <prefix>-60.png, <prefix>-100.png
 const { chromium } = require('playwright');
 const [url, prefix] = process.argv.slice(2);
 (async () => {
@@ -14,14 +14,14 @@ const [url, prefix] = process.argv.slice(2);
   await page.waitForTimeout(4000);
   await page.$eval('#views button[data-view="glass"]', b => b.click());
   await page.waitForTimeout(45000); // swiftshader render settle
-  await page.screenshot({ path: `${prefix}-30.png`, timeout: 90000, animations: 'disabled', caret: 'initial' });
-  console.log('wrote', `${prefix}-30.png`);
-  await page.evaluate(() => {
-    const el = document.getElementById('prism-opacity');
-    el.value = 60; el.dispatchEvent(new Event('input'));
-  });
-  await page.waitForTimeout(20000);
   await page.screenshot({ path: `${prefix}-60.png`, timeout: 90000, animations: 'disabled', caret: 'initial' });
   console.log('wrote', `${prefix}-60.png`);
+  await page.evaluate(() => {
+    const el = document.getElementById('prism-opacity');
+    el.value = 100; el.dispatchEvent(new Event('input'));
+  });
+  await page.waitForTimeout(20000);
+  await page.screenshot({ path: `${prefix}-100.png`, timeout: 90000, animations: 'disabled', caret: 'initial' });
+  console.log('wrote', `${prefix}-100.png`);
   await browser.close();
 })();

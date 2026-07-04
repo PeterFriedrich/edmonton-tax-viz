@@ -229,32 +229,45 @@ the land IS, not what it yields; the blurb states the zoning caveat
   eyeball (`tools/profiling/shot-uses.js`); the lens × view regression matrix
   (`verify-lens.js`) re-run green after the applyView/refreshLegend changes.
 
-### Glass view (built 2026-07-04 — fifth view button)
+### Glass view (built 2026-07-04 — fifth view button; grid cells same day)
 The revenue-per-acre-infographic composition (the Urban3 style, with this
-project's interactivity): the Money view's metric prisms rendered
-**translucent** over an **opaque neutral hood plane**. The prisms carry all
-the metric signal; the plane is mouseover geography. Implementation
-(`web/index.html`, `state.view === "glass"`):
+project's interactivity): **translucent 100 m grid-cell spikes** over an
+**opaque neutral hood plane**. The cells carry all the metric signal; the
+plane is mouseover geography. Implementation (`web/index.html`,
+`state.view === "glass"`):
 - **Two layers**: `glass-plane` — flat hood polygons, one neutral dark slate
   (`GLASS_PLANE_COLOR` `[50,53,63]`) for every hood EXCEPT set-aside hoods,
   which take the standard `SET_ASIDE_COLOR` grey so "off the fiscal scale"
   reads on the ground too; pickable + `autoHighlight` (the highlight shows
-  through the glass). `glass-extrusion` — the Money prisms (same elevation,
-  fill, clamp and lens machinery) at `state.prismOpacity`, not pickable.
-- **Prism opacity**: the ratio view's slider panel shows here too; entering
-  Glass resets it to the view's own default (**30%**; Ratio stays 5%).
+  through the glass). `glass-grid` — a `GridCellLayer` of the pipeline's
+  100 m cells (`web/data/value_grid.json`, `export_value_grid.py`: property
+  points binned in EPSG:3400, cell total ÷ cell GROUND acres — see
+  ARCHITECTURE for the denominator decision), lazy-loaded like roads/zoning,
+  at `state.prismOpacity`, not pickable.
+- **Cell scale anchors** (`gridScale()`, per metric, cached — the
+  `ratioScale()` pattern): colour clamp at the cells' **p97.5** (~$144k/acre
+  revenue on 2025 data — the cell distribution is its own scale, far above
+  the hood clamp), sqrt colour transform like the hood money metrics;
+  **elevation parity** — the tallest cell (~$12.6M/acre, a downtown tower in
+  one 2.47-acre cell) reaches exactly the money view's tallest hood prism.
+  Both linear (the honesty rule). Legend relabels "… (100 m cells)".
+- **Spike opacity**: the ratio view's slider panel shows here too; entering
+  Glass resets it to the view's own default (**60%**; Ratio stays 5%).
 - **Metric-driven like Money**: the Revenue/Value toggle renders live
-  (title follows the metric; the blurb stays the Glass one), the legend is
-  the Money legend, the tooltip is the Money tooltip (plane-picked), and the
-  residential lens applies (fade fill + rescaled clamp, exactly as in Money).
-  Labels ride the prism roofs (`labelZ` treats glass like money).
-- No new data and no old-data guard — the view needs only the metric columns
-  every data file has.
+  (title follows the metric; the blurb stays the Glass one); the tooltip is
+  the Money tooltip (plane-picked). The **residential lens disables** (grid
+  cells carry no residential flag). Labels sit at the ground (like
+  Roads/Uses).
+- **Fallback**: when `value_grid.json` is absent (older deploy), the view
+  renders translucent NEIGHBOURHOOD prisms — the coarse version of the same
+  composition (no lens handling; the button is disabled here anyway).
 - Headless-verified 2026-07-04 (`tools/profiling/verify-glass.js`: layer
-  stack, 358 neutral + 48 set-aside plane fills / 0 mismatches, slider →
-  opacity live, per-view slider defaults on view switches, metric toggle
-  chrome, lens fade + legend flip, labels roof-z, money-branch tooltip) +
-  screenshot eyeball at 30% and 60% (`tools/profiling/shot-glass.js`).
+  stack, 358 neutral + 48 set-aside plane fills / 0 mismatches, 34,675 cells,
+  clamp == independent p97.5, elevation parity exact, mid-cell fill matches
+  the ramp, slider → opacity live, per-view slider defaults, metric toggle
+  chrome + cell legend, lens disabled, ground-z labels, money-branch
+  tooltip) + screenshot eyeball at 60% and 100%
+  (`tools/profiling/shot-glass.js`).
 
 ---
 

@@ -66,6 +66,8 @@ subset, one for the residential lens (2026-07-03). Transform decision + the
 **Outputs:** `pd.DataFrame` with columns:
 - `neighbourhood_name` (str, normalized — stripped, uppercased)
 - `assessed_value` (float)
+- `latitude` / `longitude` (float — the property point; feeds the grid export,
+  0 nulls as of 2026-07)
 
 **Responsibilities:**
 - Load CSV, select relevant columns
@@ -243,6 +245,33 @@ silent), and written with coordinates rounded to 5 dp and props `n` / `t` /
 metrics still come from `load_roads`, computed before any thinning.
 
 ---
+
+### `src/export_value_grid.py` (Glass-view spikes — added 2026-07-04)
+
+**Inputs:** the per-property DataFrame from `load_assessment.py` (needs
+`latitude`/`longitude`/`assessed_value`; `levy` optional from
+`apply_tax_rates.py`); output path; `cell_m` (default 100.0, pinned as
+`GRID_CELL_M` in `main.py`)
+
+**Outputs:** compact flat-JSON web file (`web/data/value_grid.json`): one row
+per occupied grid cell — `[lon, lat, value_per_acre, revenue_per_acre]` at
+the cell's SW corner (`revenue_per_acre` omitted on the value-only path).
+~34.7k cells / 1.3 MB on current data. Returns a stats dict.
+
+**Responsibilities:**
+- Bin property points into `cell_m` squares in **EPSG:3400** (CRS explicit,
+  per project rule); sum value (and levy) per cell
+- Divide by the cell's **GROUND acres** — the deliberate denominator decision
+  (2026-07-04): consistent with the hood metrics' boundary-acre denominator,
+  and immune to the condo `lot_size` inconsistencies (DATA.md §2). A
+  lot-acre variant is TODO.
+- No silent drops: null-coordinate rows counted and reported; a conservation
+  guard errors if cell sums don't reproduce the input totals
+
+**Does not:** pick colour/height scales — the browser computes the cell
+clamp (p97.5) and elevation parity from the served file at load
+(`gridScale()` in `web/index.html`, same pattern as `ratioScale()`), so they
+track weekly refreshes.
 
 ### `src/join_and_calculate.py`
 

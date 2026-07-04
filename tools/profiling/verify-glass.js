@@ -1,9 +1,11 @@
-// One-off verify for the Glass view (2026-07-04). DOM + layer checks:
-// layer stack (opaque neutral plane under translucent metric prisms),
-// plane fills (neutral vs set-aside), prism opacity follows the slider and
-// each ghost view's default, metric toggle renders live with a metric-driven
-// title + the glass blurb, residential lens applies, labels ride the prism
-// roofs, tooltip falls through to the money branch.
+// One-off verify for the Glass view (2026-07-04; grid-cell version). DOM +
+// layer checks: layer stack (opaque neutral plane under translucent 100 m
+// grid-cell spikes), plane fills (neutral vs set-aside), grid layer props +
+// cell count vs the served file, colour clamp = cells' p97.5 (independent
+// quantile), elevation parity with the money view's tallest hood, slider ->
+// opacity live with per-view defaults, metric toggle renders live with a
+// metric-driven title + the glass blurb + cell-scale legend, lens DISABLED,
+// labels at ground, tooltip falls through to the money branch.
 //   node verify-glass.js <url>
 const { chromium } = require('playwright');
 const [url] = process.argv.slice(2);
@@ -38,70 +40,70 @@ const [url] = process.argv.slice(2);
   console.log('money default  :', JSON.stringify(await chrome()));
 
   await click('#views button[data-view="glass"]');
-  await page.waitForTimeout(2500);
+  await page.waitForTimeout(3000);
   console.log('glass          :', JSON.stringify(await chrome()));
 
-  // Layer stack + plane fills. The plane must be flat, opaque-ish, pickable;
-  // the prisms extruded, translucent at the view default, not pickable.
+  // Layer stack, plane fills, grid props, and the scale anchors — the clamp
+  // recomputed here with an independent quantile, and elevation parity:
+  // tallest cell must reach exactly the money view's tallest hood prism.
   const stack = await page.evaluate(() => {
     const layers = overlay._deck.props.layers.map(l => l.id);
     const plane = overlay._deck.props.layers.find(l => l.id === 'glass-plane');
-    const prisms = overlay._deck.props.layers.find(l => l.id === 'glass-extrusion');
+    const grid = overlay._deck.props.layers.find(l => l.id === 'glass-grid');
     let neutral = 0, aside = 0, bad = 0;
     for (const f of state.data.features) {
       const fill = plane.props.getFillColor(f).join();
       if (f.properties.is_set_aside) fill === SET_ASIDE_COLOR.join() ? aside++ : bad++;
       else fill === GLASS_PLANE_COLOR.join() ? neutral++ : bad++;
     }
+    const col = gridData.columns[state.metric];
+    const vals = gridData.cells.map(c => c[col]).sort((a, b) => a - b);
+    const pos = (vals.length - 1) * 0.975, lo = Math.floor(pos);
+    const q = vals[lo] + (vals[Math.ceil(pos)] - vals[lo]) * (pos - lo);
+    const cfg = METRICS[state.metric];
+    const hoodMax = Math.max(...state.data.features.map(f => f.properties[cfg.key] || 0));
+    const cellMax = vals[vals.length - 1];
+    const gs = gridScale();
+    // spot-check a mid cell's fill against the ramp at the sqrt-clamped t
+    const mid = gridData.cells[Math.floor(gridData.cells.length / 2)];
+    const expected = rampColorAt(Math.sqrt(Math.min(1, mid[col] / gs.clamp)));
     return { layers,
-             planeFlat: !plane.props.extruded, planePickable: !!plane.props.pickable,
-             prismsExtruded: !!prisms.props.extruded, prismsPickable: !!prisms.props.pickable,
-             prismOpacity: prisms.props.opacity,
+             planePickable: !!plane.props.pickable,
+             gridPresent: !!grid, cellSize: grid && grid.props.cellSize,
+             gridPickable: grid && !!grid.props.pickable,
+             gridOpacity: grid && grid.props.opacity,
+             nCells: gridData.cells.length,
+             clampMatchesP975: Math.abs(gs.clamp - q) < 1e-6,
+             parityOk: Math.abs(gs.elevationScale * cellMax - hoodMax * cfg.elevationScale) < 1e-6,
+             midFillOk: grid.props.getFillColor(mid).join() === expected.join(),
              nHoods: state.data.features.length, neutral, aside, bad };
   });
-  console.log('stack + plane  :', JSON.stringify(stack));
+  console.log('stack + scales :', JSON.stringify(stack));
 
-  // Slider drives prism opacity live.
+  // Slider drives cell opacity live.
   await page.evaluate(() => {
     const el = document.getElementById('prism-opacity');
-    el.value = 60; el.dispatchEvent(new Event('input'));
+    el.value = 90; el.dispatchEvent(new Event('input'));
   });
   await page.waitForTimeout(500);
   const after = await page.evaluate(() =>
-    overlay._deck.props.layers.find(l => l.id === 'glass-extrusion').props.opacity);
-  console.log('slider -> 60   :', JSON.stringify({ prismOpacity: after }));
+    overlay._deck.props.layers.find(l => l.id === 'glass-grid').props.opacity);
+  console.log('slider -> 90   :', JSON.stringify({ gridOpacity: after }));
 
-  // Metric toggle renders live in glass: metric title, glass blurb kept.
+  // Metric toggle renders live: metric title, glass blurb kept, cell legend.
   await click('#toggle button[data-metric="value_per_acre"]');
   await page.waitForTimeout(1000);
   console.log('glass + value  :', JSON.stringify(await chrome()));
   await click('#toggle button[data-metric="revenue_per_acre"]');
   await page.waitForTimeout(1000);
 
-  // Residential lens applies to the prisms (fade fill for non-res).
-  await click('#lens button');
-  await page.waitForTimeout(1000);
-  const lens = await page.evaluate(() => {
-    const prisms = overlay._deck.props.layers.find(l => l.id === 'glass-extrusion');
-    const nonRes = state.data.features.find(f => !f.properties.is_residential && !f.properties.is_set_aside);
-    const res = state.data.features.find(f => f.properties.is_residential);
-    return { residential: state.residential,
-             nonResFill: prisms.props.getFillColor(nonRes),
-             resKeepsColour: prisms.props.getFillColor(res).join() !==
-                             [...LENS_FADE_COLOR, LENS_FADE_ALPHA].join() };
-  });
-  console.log('lens on        :', JSON.stringify(lens), '|', JSON.stringify(await chrome()));
-  await click('#lens button');
-  await page.waitForTimeout(500);
-
-  // Labels ride the prism roofs (money-style labelZ).
+  // Labels sit at the ground in glass (no hood prisms to ride).
   await click('#lens button[data-lens="labels"]');
   await page.waitForTimeout(1500);
   const labels = await page.evaluate(() => {
     const present = overlay._deck.props.layers.some(l => l.id === 'hood-labels');
-    const cfg = METRICS[state.metric];
     const f = state.data.features.find(f => f.properties.neighbourhood_name === 'DOWNTOWN').properties;
-    return { present, roofZOk: Math.abs(labelZ(f) - (f[cfg.key] * cfg.elevationScale + 60)) < 1e-6 };
+    return { present, groundZ: labelZ(f) };
   });
   console.log('labels         :', JSON.stringify(labels));
   await click('#lens button[data-lens="labels"]');
@@ -114,8 +116,8 @@ const [url] = process.argv.slice(2);
   });
   console.log('tooltip        :', tip);
 
-  // Leaving: money restores opaque pickable prisms + metric blurb; entering
-  // ratio resets the slider to ITS default (5), glass again -> 30.
+  // Leaving: money restores chrome + re-enables the lens; entering ratio
+  // resets the slider to ITS default (5), glass again -> its own (60).
   await click('#views button[data-view="money"]');
   await page.waitForTimeout(1500);
   console.log('back to money  :', JSON.stringify(await chrome()));
