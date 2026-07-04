@@ -87,25 +87,32 @@ the residential button's disable rules are untouched). Implementation
 - **One anchor per hood** (`labelAnchors`): the shoelace centroid of its largest
   polygon (multipolygon hoods label the main body). Computed once per data load
   from `neighbourhood_name` already in the main GeoJSON — no pipeline change.
-- **Billboarded `TextLayer`**, 11.5 px, white with a dark SDF outline;
-  `characterSet: "auto"` (WÎHKWÊNTÔWIN is beyond ASCII). Names stay the data's
-  ALL-CAPS — standard cartographic style for area labels. `depthTest: false` so
-  towers in front never swallow labels behind.
+- **Billboarded `TextLayer`**, 13 px bold (weight 700), near-white with a
+  3 px black SDF outline; `characterSet: "auto"` (WÎHKWÊNTÔWIN is beyond
+  ASCII). Names stay the data's ALL-CAPS — standard cartographic style for
+  area labels. `depthTest: false` so towers in front never swallow labels
+  behind.
 - **Roof-height anchoring** (`labelZ`): in Money/Ratio the label sits at the
   prism's top + 60 m, so a label rides the tower it names; flat views (Roads/
   Uses) label at ground + 60 m. Off-scale ratio hoods label at ground.
 - **Greedy screen-space decluttering** (`visibleLabels`): anchors project through
   the live deck viewport; labels keep biggest-hood-first, dropping any whose
-  estimated text box (chars × 0.62 × size + 8 px pad) overlaps a kept one.
-  ~52 of 406 show at city zoom; zooming in reveals more (a `moveend` hook
-  re-culls when the camera settles). deck.gl's `CollisionFilterExtension` was
-  the off-the-shelf answer but its collision render pass draws nothing under
-  this interleaved MapLibre overlay (verified 2026-07-03: layer present,
-  everything culled) — the JS cull is deterministic and testable instead.
+  text box overlaps a kept one. Box width is the name's REAL rendered width:
+  canvas-`measureText` ems (a flat chars-per-em guess drifts with the glyph
+  mix) × size × `LABEL_DRAW_SCALE` 1.35 — deck draws TextLayer glyphs at
+  `getSize` × (atlas glyph height / fontSize) ≈ 1.325, so un-scaled boxes let
+  long names butt into neighbours ("STRATHCONA JUNCTION|RITCHIE" was the
+  tell) — + 8 px pad. ~33 of 406 show at city zoom; zooming in reveals more
+  (a `moveend` hook re-culls when the camera settles). deck.gl's
+  `CollisionFilterExtension` was the off-the-shelf answer but its collision
+  render pass draws nothing under this interleaved MapLibre overlay (verified
+  2026-07-03: layer present, everything culled) — the JS cull is
+  deterministic and testable instead.
 - **Verified** headless (`tools/profiling/verify-labels.js`): layer present/absent
   per toggle across all four views, anchors in-bbox, overlap-free kept set,
-  zoom re-cull (52 → 98), roof-z exact in Money and Ratio, residential-lens
-  disable matrix unchanged; screenshot eyeball `tools/profiling/shot-labels.js`.
+  `LABEL_DRAW_SCALE` covers deck's live sublayer `sizeScale`, zoom re-cull
+  (33 → 73), roof-z exact in Money and Ratio, residential-lens disable matrix
+  unchanged; screenshot eyeball `tools/profiling/shot-labels.js`.
   The existing verify scripts' `#lens button` selectors still resolve to the
   residential button (Labels is second in the DOM — keep it that way).
 

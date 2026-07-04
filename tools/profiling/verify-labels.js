@@ -51,7 +51,7 @@ const [url] = process.argv.slice(2);
     const vp = overlay._deck.getViewports()[0];
     const box = d => {
       const [px, py] = vp.project([d.position[0], d.position[1], labelZ(d.p)]);
-      return { px, py, w: d.name.length * LABEL_SIZE * 0.62 + 16, h: LABEL_SIZE + 16 };
+      return { px, py, w: d.em * LABEL_SIZE * LABEL_DRAW_SCALE + 16, h: LABEL_SIZE * LABEL_DRAW_SCALE + 16 };
     };
     let overlaps = 0;
     const boxes = shown.map(box);
@@ -60,6 +60,10 @@ const [url] = process.argv.slice(2);
         const a = boxes[i], b = boxes[j];
         if (Math.abs(a.px - b.px) * 2 <= a.w + b.w && Math.abs(a.py - b.py) * 2 <= a.h + b.h) overlaps++;
       }
+    // The page's LABEL_DRAW_SCALE must cover deck's real glyph scale-up, or
+    // rendered text spills out of the culling boxes and labels butt together.
+    const chars = overlay._deck.layerManager.layers.find(l => l.id.includes('hood-labels-characters'));
+    const deckSizeScale = chars ? chars.props.sizeScale : null;
     const cfg = METRICS[state.metric];
     const tall = all.reduce((a, b) => (a.p[cfg.key] || 0) > (b.p[cfg.key] || 0) ? a : b);
     const names = new Set(shown.map(d => d.name));
@@ -69,6 +73,8 @@ const [url] = process.argv.slice(2);
       badAnchors: badAnchor.map(d => d.name),
       overlaps,
       hasWihkwentowinAnchor: all.some(d => d.name === 'WÎHKWÊNTÔWIN'),
+      deckSizeScale,
+      drawScaleCovers: deckSizeScale != null && LABEL_DRAW_SCALE >= deckSizeScale,
       biggestShown: names.has(all.reduce((a, b) => a.area > b.area ? a : b).name),
       tallest: tall.name,
       tallZOk: Math.abs(labelZ(tall.p) - (tall.p[cfg.key] * cfg.elevationScale + 60)) < 1e-6,
