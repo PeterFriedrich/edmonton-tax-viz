@@ -87,8 +87,10 @@ the residential button's disable rules are untouched). Implementation
 - **One anchor per hood** (`labelAnchors`): the shoelace centroid of its largest
   polygon (multipolygon hoods label the main body). Computed once per data load
   from `neighbourhood_name` already in the main GeoJSON — no pipeline change.
-- **Billboarded `TextLayer`**, 13 px bold (weight 700), near-white with a
-  3 px black SDF outline; `characterSet: "auto"` (WÎHKWÊNTÔWIN is beyond
+- **Billboarded `TextLayer`**, 15 px extra-bold (weight 800), near-white with
+  a 3 px black SDF outline rendered from a 128 px glyph atlas (deck's default
+  64 px atlas blurs at city zoom; radius scales with it so the outline fits
+  the SDF spread); `characterSet: "auto"` (WÎHKWÊNTÔWIN is beyond
   ASCII). Names stay the data's ALL-CAPS — standard cartographic style for
   area labels. `depthTest: false` so towers in front never swallow labels
   behind.
@@ -100,9 +102,10 @@ the residential button's disable rules are untouched). Implementation
   text box overlaps a kept one. Box width is the name's REAL rendered width:
   canvas-`measureText` ems (a flat chars-per-em guess drifts with the glyph
   mix) × size × `LABEL_DRAW_SCALE` 1.35 — deck draws TextLayer glyphs at
-  `getSize` × (atlas glyph height / fontSize) ≈ 1.325, so un-scaled boxes let
+  `getSize` × (atlas glyph height / fontSize) ≈ 1.26 with the 128 px atlas,
+  so un-scaled boxes let
   long names butt into neighbours ("STRATHCONA JUNCTION|RITCHIE" was the
-  tell) — + 8 px pad. ~33 of 406 show at city zoom; zooming in reveals more
+  tell) — + 8 px pad. ~27 of 406 show at city zoom; zooming in reveals more
   (a `moveend` hook re-culls when the camera settles). deck.gl's
   `CollisionFilterExtension` was the off-the-shelf answer but its collision
   render pass draws nothing under this interleaved MapLibre overlay (verified
@@ -111,7 +114,7 @@ the residential button's disable rules are untouched). Implementation
 - **Verified** headless (`tools/profiling/verify-labels.js`): layer present/absent
   per toggle across all four views, anchors in-bbox, overlap-free kept set,
   `LABEL_DRAW_SCALE` covers deck's live sublayer `sizeScale`, zoom re-cull
-  (33 → 73), roof-z exact in Money and Ratio, residential-lens disable matrix
+  (27 → 64), roof-z exact in Money and Ratio, residential-lens disable matrix
   unchanged; screenshot eyeball `tools/profiling/shot-labels.js`.
   The existing verify scripts' `#lens button` selectors still resolve to the
   residential button (Labels is second in the DOM — keep it that way).
