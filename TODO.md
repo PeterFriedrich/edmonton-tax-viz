@@ -193,7 +193,10 @@ _Last reconciled: 2026-07-02_
   Built on `feature/glass-view` (UNMERGED): pipeline grid export + Glass
   view renders the cells over the neutral hood plane (pure point binning,
   34,675 cells). 146 tests + verify-glass.js green; screenshots eyeballed.
-  - [ ] **Confirm the set-aside artifacting is gone (Peter, on-device).**
+  - [x] ~~**Confirm the set-aside artifacting is gone (Peter, on-device).**~~
+    CONFIRMED 2026-07-05 — Peter eyeballed the local preview (reverted
+    point-binned grid + the new denominator toggle): "looks fine". The
+    rollback stands; no further diagnosis needed. Original context below.
     Peter saw "really bad artifacting, specifically in areas that are
     actually set asides" (2026-07-04) after the footprint-spreading round.
     DECIDED 2026-07-04: **spreading ROLLED BACK** (`70a5d54` reverted in
@@ -252,9 +255,9 @@ _Last reconciled: 2026-07-02_
     cells DROPPED in lot mode (28), legend/blurb follow the denominator.
     verify-glass extended (denominator matrix green; lens+uses regressions
     green); shot-denom.js eyeballed — WEM needle collapses in lot mode.
-    UI.md synced. Awaits Peter's on-device eyeball + merge of
-    `feature/glass-view` (together with the set-aside artifact confirm
-    above).
+    UI.md synced. Peter's on-device eyeball PASSED 2026-07-05 ("looks
+    fine"). Remaining: PR + merge `feature/glass-view` → deploy (README
+    view list update rides in the PR).
 
 - [x] ~~**SCOPE: composition numbers now; full zoning POLYGON layer in the viewer is a
   SEPARATE later product decision**~~ — RESOLVED 2026-07-03: Peter opted in for the
