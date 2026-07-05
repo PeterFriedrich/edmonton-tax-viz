@@ -34,8 +34,9 @@ from aggregate_by_neighbourhood import aggregate_by_neighbourhood
 from load_boundaries import load_boundaries
 from load_zoning import load_zoning, export_zoning_web
 from load_roads import load_roads, export_roads_web
+from load_property_info import load_property_info
 from join_and_calculate import join_and_calculate, export_geojson
-from export_value_grid import export_value_grid
+from export_value_grid import export_value_grid, check_lot_acre_bounds
 from plot_choropleth import plot_choropleth
 
 logger = logging.getLogger(__name__)
@@ -45,6 +46,7 @@ ASSESSMENT_CSV = ROOT / "data/raw/Property_Assessment_Data__Current_Calendar_Yea
 BOUNDARIES_GEOJSON = ROOT / "data/raw/neighbourhoods.geojson"
 ZONING_GEOJSON = ROOT / "data/raw/zoning.geojson"
 ROADS_GEOJSON = ROOT / "data/raw/roads.geojson"
+PROPERTY_INFO_CSV = ROOT / "data/raw/Property_Info__Current_Calendar_Year_.csv"
 MILL_RATES_JSON = ROOT / "data/mill_rates.json"
 PNG_OUT = ROOT / "output/edmonton_value_per_acre.png"
 GEOJSON_OUT = ROOT / "web/data/neighbourhood_value_per_acre.geojson"
@@ -74,6 +76,7 @@ def run(
     assessment_year: int = ASSESSMENT_YEAR,
     zoning_geojson: Path | None = ZONING_GEOJSON,
     roads_geojson: Path | None = ROADS_GEOJSON,
+    property_info_csv: Path | None = PROPERTY_INFO_CSV,
     setback_m: float = SETBACK_M,
     simplify_tolerance_m: float = SIMPLIFY_TOLERANCE_M,
 ) -> None:
@@ -126,9 +129,22 @@ def run(
                 str(zoning_geojson), boundaries, str(ZONING_WEB_OUT),
                 setback_m=setback_m,
             )
-        # Grid-cell spikes for the Glass view (Urban3-style detail;
-        # ground-acre denominator — see export_value_grid's docstring).
-        export_value_grid(assessment, GRID_WEB_OUT, cell_m=GRID_CELL_M)
+        # Grid-cell spikes for the Glass view (Urban3-style detail). The
+        # lot_size join adds the lot-acre denominator variant (deduped per
+        # docs/FINDINGS_lot_dedupe.md); without the property-info file the
+        # grid degrades to ground-acre only.
+        grid_input = assessment
+        if property_info_csv is not None and Path(property_info_csv).exists():
+            grid_input = assessment.merge(
+                load_property_info(property_info_csv), on="account_number", how="left",
+            )
+            check_lot_acre_bounds(grid_input, boundaries)
+        elif property_info_csv is not None:
+            logger.warning(
+                "Property-info file not found (%s) — grid exports ground-acre only",
+                property_info_csv,
+            )
+        export_value_grid(grid_input, GRID_WEB_OUT, cell_m=GRID_CELL_M)
 
     logger.info("Pipeline complete.")
 
@@ -139,6 +155,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p.add_argument("--boundaries-geojson", type=Path, default=BOUNDARIES_GEOJSON)
     p.add_argument("--zoning-geojson", type=Path, default=ZONING_GEOJSON)
     p.add_argument("--roads-geojson", type=Path, default=ROADS_GEOJSON)
+    p.add_argument("--property-info-csv", type=Path, default=PROPERTY_INFO_CSV)
     p.add_argument("--mill-rates-json", type=Path, default=MILL_RATES_JSON)
     p.add_argument("--assessment-year", type=int, default=ASSESSMENT_YEAR)
     p.add_argument("--png-out", type=Path, default=PNG_OUT)
@@ -149,6 +166,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p.add_argument("--skip-geojson", action="store_true", help="skip the Phase 2 web GeoJSON")
     p.add_argument("--skip-zoning", action="store_true", help="skip the land-use set-aside layer")
     p.add_argument("--skip-roads", action="store_true", help="skip the road-supply layer")
+    p.add_argument("--skip-property-info", action="store_true",
+                   help="skip the lot_size join (grid exports ground-acre only)")
     p.add_argument("--log-level", default="INFO", help="logging level (default INFO)")
     return p.parse_args(argv)
 
@@ -169,6 +188,7 @@ def main(argv: list[str] | None = None) -> None:
         assessment_year=args.assessment_year,
         zoning_geojson=None if args.skip_zoning else args.zoning_geojson,
         roads_geojson=None if args.skip_roads else args.roads_geojson,
+        property_info_csv=None if args.skip_property_info else args.property_info_csv,
         setback_m=args.setback_m,
         simplify_tolerance_m=args.simplify_tolerance_m,
     )

@@ -246,28 +246,52 @@ metrics still come from `load_roads`, computed before any thinning.
 
 ---
 
-### `src/export_value_grid.py` (Glass-view spikes — added 2026-07-04)
+### `src/load_property_info.py` (lot-size join — added 2026-07-05)
+
+**Inputs:** the property-info CSV (`dkk9-cj3x`,
+`data/raw/Property_Info__Current_Calendar_Year_.csv`)
+
+**Outputs:** DataFrame `account_number` / `lot_size` (m², non-positive →
+NaN, nulls counted and reported). Raises if the account key stops being
+unique. Deliberately slim — `year_built` etc. stay out until the diversity
+analysis needs them (ANALYSIS_BACKLOG 4). Does NOT resolve the condo
+`lot_size` inconsistency; that lives with its consumer
+(`export_value_grid._point_lot_stats`).
+
+### `src/export_value_grid.py` (Glass-view spikes — added 2026-07-04; lot-acre variant 2026-07-05)
 
 **Inputs:** the per-property DataFrame from `load_assessment.py` (needs
 `latitude`/`longitude`/`assessed_value`; `levy` optional from
-`apply_tax_rates.py`); output path; `cell_m` (default 100.0, pinned as
-`GRID_CELL_M` in `main.py`)
+`apply_tax_rates.py`; `lot_size` optional — `main.py` merges it in from
+`load_property_info.py` on `account_number`); output path; `cell_m`
+(default 100.0, pinned as `GRID_CELL_M` in `main.py`)
 
 **Outputs:** compact flat-JSON web file (`web/data/value_grid.json`): one row
-per occupied grid cell — `[lon, lat, value_per_acre, revenue_per_acre]` at
-the cell's SW corner (`revenue_per_acre` omitted on the value-only path).
-~34.7k cells / 1.3 MB on current data. Returns a stats dict.
+per occupied grid cell — `[lon, lat, value_per_acre, revenue_per_acre,
+value_per_lot_acre, revenue_per_lot_acre]` at the cell's SW corner
+(`revenue_*` omitted on the value-only path; `*_per_lot_acre` omitted when
+`lot_size` is absent; lot-acre slots `null` where the cell has no eligible
+lot acres). ~34.7k cells / 1.8 MB on current data. Returns a stats dict.
 
 **Responsibilities:**
 - Bin property points into `cell_m` squares in **EPSG:3400** (CRS explicit,
   per project rule); sum value (and levy) per cell
-- Divide by the cell's **GROUND acres** — the deliberate denominator decision
-  (2026-07-04): consistent with the hood metrics' boundary-acre denominator,
-  and immune to the condo `lot_size` inconsistencies (DATA.md §2). Known
-  cost: large parcels needle (one point per account — DATA.md §2, WEM). A
-  lot-acre variant is the PRIORITY TODO.
-- No silent drops: null-coordinate rows counted and reported; a conservation
-  guard errors if cell sums don't reproduce the input totals
+- **Ground-acre metrics** (always): divide by the cell's fixed area —
+  consistent with the hood metrics' boundary-acre denominator. Known cost:
+  large parcels needle (one point per account — DATA.md §2, WEM).
+- **Lot-acre metrics** (when `lot_size` is present): divide ELIGIBLE dollars
+  by deduped parcel acres — the Urban3 land-productivity metric. Dedupe =
+  the repeat-aware heuristic of docs/FINDINGS_lot_dedupe.md
+  (`_point_lot_stats` / `SHARE_MAX_M2`); majority-null multi-unit points are
+  ineligible (excluded from numerator AND denominator, count + value
+  reported).
+- `check_lot_acre_bounds(df, boundaries)`: physical-bound validation —
+  per-hood deduped lot acres ≤ boundary acres, `KNOWN_BOUND_OUTLIERS`
+  (PEMBINA) exempt; RAISES on any new violation. `main.py` runs it before
+  every lot-acre export.
+- No silent drops: null-coordinate rows counted and reported; lot-ineligible
+  points reported with their value; a conservation guard errors if cell sums
+  don't reproduce the input totals
 
 **Does not:** pick colour/height scales — the browser computes the cell
 clamp (p97.5) and elevation parity from the served file at load

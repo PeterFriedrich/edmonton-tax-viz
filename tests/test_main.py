@@ -54,6 +54,14 @@ def test_skip_geojson_passes_none(monkeypatch):
     assert calls["png_out"] == main.PNG_OUT
 
 
+def test_skip_property_info_passes_none(monkeypatch):
+    calls = _capture_run(monkeypatch)
+    main.main(["--skip-property-info"])
+    assert calls["property_info_csv"] is None
+    main.main([])
+    assert calls["property_info_csv"] == main.PROPERTY_INFO_CSV
+
+
 def test_path_overrides_flow_through(monkeypatch):
     calls = _capture_run(monkeypatch)
     main.main(["--assessment-csv", "/tmp/a.csv", "--simplify-tolerance-m", "3.5"])

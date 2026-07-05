@@ -6,7 +6,12 @@ import pandas as pd
 import pytest
 
 sys.path.insert(0, "src")
-from export_value_grid import SQ_M_PER_ACRE, build_value_grid, export_value_grid
+from export_value_grid import (
+    SQ_M_PER_ACRE,
+    build_value_grid,
+    check_lot_acre_bounds,
+    export_value_grid,
+)
 
 # Two points well inside Edmonton, far enough apart (~1.1 km) to always land
 # in different 100 m cells; two more within ~10 m of the first to always share
@@ -75,6 +80,149 @@ def test_corner_is_wgs84_near_input():
     assert grid.iloc[0]["lat"] == pytest.approx(A["latitude"], abs=0.01)
 
 
+# --- lot-acre denominator variant (docs/FINDINGS_lot_dedupe.md) -------------
+
+
+def test_lot_acre_dedupes_duplicated_parcel():
+    # Duplicated-parcel regime: every unit repeats a PARCEL-SIZED value
+    # (>= SHARE_MAX_M2) — counted once.
+    df = _frame([
+        {**A, "assessed_value": 100.0, "lot_size": 5000.0},
+        {**A, "assessed_value": 200.0, "lot_size": 5000.0},
+    ])
+    grid = build_value_grid(df, cell_m=100.0)
+    lot_acres = 5000.0 / SQ_M_PER_ACRE
+    assert grid.iloc[0]["value_per_lot_acre"] == pytest.approx(300.0 / lot_acres)
+
+
+def test_lot_acre_sums_identical_small_shares():
+    # Identical apportioned shares (< SHARE_MAX_M2) are real land per unit —
+    # the townhouse-complex regime a plain distinct-sum collapses
+    # (FINDINGS_lot_dedupe §4.3).
+    df = _frame([
+        {**A, "assessed_value": 100.0, "lot_size": 150.0},
+        {**A, "assessed_value": 100.0, "lot_size": 150.0},
+        {**A, "assessed_value": 100.0, "lot_size": 150.0},
+    ])
+    grid = build_value_grid(df, cell_m=100.0)
+    lot_acres = 450.0 / SQ_M_PER_ACRE
+    assert grid.iloc[0]["value_per_lot_acre"] == pytest.approx(300.0 / lot_acres)
+
+
+def test_lot_acre_sums_apportioned_shares():
+    # Apportioned regime: differing per-unit shares all count.
+    df = _frame([
+        {**A, "assessed_value": 100.0, "lot_size": 300.0},
+        {**A, "assessed_value": 200.0, "lot_size": 200.0},
+    ])
+    grid = build_value_grid(df, cell_m=100.0)
+    lot_acres = 500.0 / SQ_M_PER_ACRE
+    assert grid.iloc[0]["value_per_lot_acre"] == pytest.approx(300.0 / lot_acres)
+
+
+def test_lot_acre_sums_across_points_in_cell():
+    # Two separate parcels in one cell: deduped per point, summed per cell.
+    df = _frame([
+        {**A, "assessed_value": 100.0, "lot_size": 400.0},
+        {**A2, "assessed_value": 200.0, "lot_size": 600.0},
+    ])
+    grid = build_value_grid(df, cell_m=100.0)
+    lot_acres = 1000.0 / SQ_M_PER_ACRE
+    assert grid.iloc[0]["value_per_lot_acre"] == pytest.approx(300.0 / lot_acres)
+
+
+def test_majority_null_point_ineligible_and_reported(caplog):
+    # >1 unit and >50% null lot_size: excluded from the lot-acre numerator
+    # AND denominator (understated land would fake a needle), reported.
+    df = _frame([
+        {**A, "assessed_value": 100.0, "lot_size": 250.0},
+        {**A, "assessed_value": 200.0, "lot_size": None},
+        {**A, "assessed_value": 300.0, "lot_size": None},
+        {**B, "assessed_value": 50.0, "lot_size": 100.0},
+    ])
+    with caplog.at_level("WARNING"):
+        grid = build_value_grid(df, cell_m=100.0)
+    assert "lot-ineligible" in caplog.text
+    cell_a = grid[grid["value_per_acre"] > grid["value_per_acre"].min()].iloc[0]
+    assert pd.isna(cell_a["value_per_lot_acre"])  # no eligible acres in A's cell
+    # ground-acre metric keeps the full dollars regardless
+    cell_acres = 100.0 * 100.0 / SQ_M_PER_ACRE
+    assert cell_a["value_per_acre"] == pytest.approx(600.0 / cell_acres)
+
+
+def test_half_null_point_stays_eligible():
+    # Exactly 50% null is NOT majority-null — the point stays in.
+    df = _frame([
+        {**A, "assessed_value": 100.0, "lot_size": 250.0},
+        {**A, "assessed_value": 200.0, "lot_size": None},
+    ])
+    grid = build_value_grid(df, cell_m=100.0)
+    lot_acres = 250.0 / SQ_M_PER_ACRE
+    assert grid.iloc[0]["value_per_lot_acre"] == pytest.approx(300.0 / lot_acres)
+
+
+def test_zero_lot_size_treated_as_null():
+    df = _frame([
+        {**A, "assessed_value": 100.0, "lot_size": 0.0},
+    ])
+    grid = build_value_grid(df, cell_m=100.0)
+    assert pd.isna(grid.iloc[0]["value_per_lot_acre"])
+
+
+def test_no_lot_column_omits_lot_metrics():
+    df = _frame([{**A, "assessed_value": 100.0}])
+    grid = build_value_grid(df)
+    assert "value_per_lot_acre" not in grid.columns
+
+
+def test_lot_revenue_uses_eligible_levy():
+    df = _frame([
+        {**A, "assessed_value": 100.0, "levy": 1.0, "lot_size": 500.0},
+        {**B, "assessed_value": 400.0, "levy": 4.0, "lot_size": None},
+    ])
+    grid = build_value_grid(df, cell_m=100.0)
+    lot_acres = 500.0 / SQ_M_PER_ACRE
+    ok = grid[grid["value_per_lot_acre"].notna()].iloc[0]
+    assert ok["revenue_per_lot_acre"] == pytest.approx(1.0 / lot_acres)
+
+
+def _bounds_frame(rows):
+    return _frame([{**r, "neighbourhood_name": r.get("neighbourhood_name", "H1")} for r in rows])
+
+
+def test_bound_check_passes_within_boundary():
+    df = _bounds_frame([
+        {**A, "assessed_value": 100.0, "lot_size": 2000.0},
+    ])
+    boundaries = pd.DataFrame([
+        {"neighbourhood_name": "H1", "area_acres": 1.0},  # 2000 m2 ~ 0.49 ac
+    ])
+    ratios = check_lot_acre_bounds(df, boundaries)
+    assert ratios.iloc[0]["ratio"] == pytest.approx(2000.0 / SQ_M_PER_ACRE, rel=1e-6)
+
+
+def test_bound_check_raises_on_new_violation():
+    df = _bounds_frame([
+        {**A, "assessed_value": 100.0, "lot_size": 9000.0},  # ~2.2 ac in a 1 ac hood
+    ])
+    boundaries = pd.DataFrame([
+        {"neighbourhood_name": "H1", "area_acres": 1.0},
+    ])
+    with pytest.raises(RuntimeError, match="H1"):
+        check_lot_acre_bounds(df, boundaries)
+
+
+def test_bound_check_allows_known_outlier():
+    df = _bounds_frame([
+        {**A, "assessed_value": 100.0, "lot_size": 9000.0, "neighbourhood_name": "PEMBINA"},
+    ])
+    boundaries = pd.DataFrame([
+        {"neighbourhood_name": "PEMBINA", "area_acres": 1.0},
+    ])
+    ratios = check_lot_acre_bounds(df, boundaries)  # must not raise
+    assert ratios.iloc[0]["ratio"] > 1.0
+
+
 def test_export_writes_compact_json(tmp_path):
     df = _frame([
         {**A, "assessed_value": 100.0, "levy": 1.0},
@@ -90,3 +238,25 @@ def test_export_writes_compact_json(tmp_path):
         assert len(row) == 4
         assert isinstance(row[2], int) and isinstance(row[3], int)  # whole dollars
     assert stats["has_revenue"] is True
+    assert stats["has_lot"] is False
+
+
+def test_export_lot_columns_and_nulls(tmp_path):
+    df = _frame([
+        {**A, "assessed_value": 100.0, "levy": 1.0, "lot_size": 500.0},
+        {**B, "assessed_value": 400.0, "levy": 4.0, "lot_size": None},  # no eligible acres
+    ])
+    out = tmp_path / "value_grid.json"
+    stats = export_value_grid(df, out, cell_m=100.0)
+    payload = json.loads(out.read_text())
+    assert payload["columns"] == [
+        "lon", "lat", "value_per_acre", "revenue_per_acre",
+        "value_per_lot_acre", "revenue_per_lot_acre",
+    ]
+    rows = {tuple(r[:2]): r for r in payload["cells"]}
+    lot_vals = sorted((r[4] for r in payload["cells"]), key=lambda v: (v is None, v))
+    assert None in lot_vals  # B's cell has no eligible lot acres -> null slots
+    lot_acres = 500.0 / SQ_M_PER_ACRE
+    assert round(100.0 / lot_acres) in lot_vals
+    assert stats["has_lot"] is True
+    assert stats["n_cells_without_lot"] == 1

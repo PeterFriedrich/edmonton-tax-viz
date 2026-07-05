@@ -44,29 +44,40 @@ assessed (13.3% of the roll). Regime breakdown at multi-unit points
 Almost all the money sits in the multi-value regime; the ambiguous one-value
 regime is small ($1.0B).
 
-## 3. The rule: sum of DISTINCT positive `lot_size` values per point
+## 3. The rule: repeat-aware dedupe (REVISED 2026-07-05, same day)
 
-Per point: `lot_acres = unique(lot_size > 0).sum() / 4046.86`.
+> The first draft of this doc proposed a plain sum-of-DISTINCT-values per
+> point. Cell-level validation (§4.3) showed that rule fails at
+> identically-apportioned townhouse complexes — it collapses hundreds of
+> legitimate identical shares to one, manufacturing $1B+/lot-acre needles
+> worse than the WEM artifact it exists to fix. The shipped rule:
 
-- **Duplicated-parcel regime:** every unit repeats the parcel size → distinct
-  collapses to one value → correct.
-- **Apportioned regime:** per-unit shares differ → distinct keeps them all →
-  correct. Where shares legitimately repeat (identical units), distinct
-  undercounts — measured small (§4.3).
-- **Null rows** contribute nothing; points with no usable value at all get no
-  lot-acre denominator (§5).
+Per point, group the positive `lot_size` values; a value repeated k times
+contributes:
+
+- **k × value** when the value is share-sized (`< SHARE_MAX_M2 = 1000 m²`) —
+  identical apportioned shares are real land per unit (the townhouse regime);
+- **value once** when parcel-sized (`>= 1000 m²`) — a large value repeated
+  across units reads as the parcel duplicated (the duplication guard).
+
+`lot_acres = Σ contributions / 4046.86`. Null rows contribute nothing; points
+with no usable value at all get no lot-acre denominator (§5). Implemented as
+`_point_lot_stats` in `src/export_value_grid.py`.
 
 ## 4. Validation
 
 ### 4.1 Physical bound: hood lot acres must fit inside the hood
 
-Deduped lot acres summed per neighbourhood, divided by boundary acres, over the
-398 hoods with assessed property: **median 0.65, p95 0.87, and 397 of 398 land
-below 1.0** — consistent with private lots covering roughly two-thirds of a
-neighbourhood (the rest being roads, parks, easements). The one violation is
-PEMBINA (§4.4). Citywide the deduped total is 139,821 lot acres against a
-~264,000-acre city footprint (which includes roads, the river valley, and
-non-assessed land) — plausible.
+Deduped lot acres summed per neighbourhood, divided by boundary acres:
+**median 0.69, p95 0.87, and 405 of 406 land below 1.0** (repeat-aware rule;
+the plain distinct-sum draft gave median 0.65 — the bound test does NOT
+discriminate between rule variants, §4.3 does) — consistent with private lots
+covering roughly two-thirds of a neighbourhood (the rest being roads, parks,
+easements). The one violation is PEMBINA (§4.4). Citywide totals (~140k lot
+acres against a ~264,000-acre city footprint including roads, the river
+valley, and non-assessed land) are plausible under every candidate rule.
+Enforced in the pipeline as `check_lot_acre_bounds` (raises on any new
+violation; PEMBINA committed in `KNOWN_BOUND_OUTLIERS`).
 
 ### 4.2 The known anchor cases flip correctly
 
@@ -77,17 +88,40 @@ variant, now confirmed by the full top-15 table rather than two hand-checked
 cells. Other top-value points land at sane magnitudes: University of Alberta
 holdings $26–55M/lot-acre, Kingsway Mall $5.4M, Southgate-area $9.1M.
 
-### 4.3 Collision risk (identical shares collapsing) is negligible
+### 4.3 The townhouse failure that forced the revision (found 2026-07-05, same day)
 
-1,917 of 2,473 multi-value points contain at least one repeated value; naive
-sum-all vs distinct-sum differs by 2,769 acres citywide (7,123 vs 4,354 at
-those points). The direction of truth per point is unknowable without a parcel
-fabric, but the one-value points where "identical shares" is the *likely*
-reading (lot_max < 100 m² — implausibly small for a multi-unit parcel) number
-just **9 points / $0.02B**. The physical-bound test (§4.1) shows distinct-sum
-does not systematically overcount; accepting a possible undercount of a few
-hundred acres spread over ~1,900 points (~1.4 ac/point) is the documented
-trade.
+The first-draft assessment ("identical shares collapsing is negligible —
+2,769 acres citywide, 9 suspect one-value points / $0.02B") was correct in
+*acres* and wrong in the *display metric*. Spot-checking the exported grid's
+top $/lot-acre cells found townhouse complexes where hundreds of units carry
+identical apportioned shares — KAMEYOSEK (309 accounts, $42M, shares of
+33.643 m² collapsing to a deduped 0.04 acres), SOUTH TERWILLEGAR (171
+accounts at 149.547 m²), CALLINGWOOD SOUTH (71 accounts at ~105–114 m²).
+Distinct-sum gave them up to **$1.2B value/lot-acre** — fake needles 2× worse
+than the WEM artifact the metric exists to remove. Lesson recorded: a
+citywide-aggregate error bound says nothing about a per-cell display metric;
+validate at the display grain.
+
+Rule-variant comparison (per-hood bound + worst townhouse-hood cell +
+citywide top-3):
+
+| rule | hood bound | townhouse max | citywide top 3 |
+|---|---|---|---|
+| distinct-sum | median 0.65, 1 hood > 1 | $1,209M/lot-ac | CALLINGWOOD S., KAMEYOSEK, DOWNTOWN |
+| repeat-aware (T=500) | median 0.69, 1 hood > 1 | $37.7M | DOWNTOWN $612M / $149M / $143M |
+| repeat-aware (T=1000) | identical | identical | identical |
+| repeat-aware (T=2000) | identical | identical | identical |
+| never dedupe | identical | identical | identical |
+
+Two conclusions: (1) the repeat-aware rule is **insensitive to the threshold**
+from 500–2000 m² — 1000 m² is committed as `SHARE_MAX_M2`; (2) "never dedupe"
+behaves identically today, i.e. parcel-sized values duplicated across many
+units barely exist in the current data — the ≥1000 m² dedupe is kept as a
+cheap guard in case that regime appears in a future refresh. Residual known
+bias: apportioned shares exclude common property, so complex-heavy cells
+overstate $/lot-acre somewhat (a 309-townhouse complex on ~2.5 deduped acres
+is denser than physically likely). Not correctable from open data; the
+ground-acre metric remains available for comparison.
 
 ### 4.4 Known outlier: PEMBINA (ratio 1.41 — flag, don't block)
 
@@ -112,27 +146,34 @@ null — the DATA.md §2 example), the Maple Ridge and Evergreen manufactured-ho
 points, 14105 West Block Drive NW (Glenora).
 
 Rule: a point is **lot-acre-ineligible** when it has >1 unit and >50% null
-`lot_size` (the 52 all-null points, $0.37B / 0.16% of roll, fall out
-automatically). Ineligible points are excluded from the lot-acre metric and
-their count + value reported at export time — no silent drops.
+`lot_size`, or no usable `lot_size` at all. As built, that's **56 points /
+4,307 rows / $1.23B (0.52% of roll)**, excluded from the lot-acre numerator
+AND denominator and reported at export time — no silent drops. (Their dollars
+stay in the ground-acre metric.)
 
-## 6. Resulting heuristic (for `export_value_grid`'s lot-acre variant)
+## 6. Shipped heuristic (`src/export_value_grid.py`, built 2026-07-05)
 
 1. Group accounts by exact `(lat, lon)`; treat `lot_size <= 0` as null.
-2. Per point: lot acres = sum of DISTINCT positive `lot_size` values ÷ 4046.86.
-3. Points with >1 unit and >50% null `lot_size` are ineligible — excluded from
-   the lot-acre metric, count + value REPORTED.
-4. Pipeline validation check: per-hood deduped lot acres ÷ boundary acres ≤ 1.0
-   for all hoods except a committed known-outlier list (currently PEMBINA);
-   report any new violation loudly (it means the dedupe broke or the data
-   regime changed).
-5. Validate the exported lot-acre grid against the ground-acre version before
-   offering it in the UI (TODO.md).
+2. Per point: repeat-aware dedupe (§3) — repeated values < `SHARE_MAX_M2`
+   (1000 m²) count per unit, repeated values ≥ it count once.
+3. Points with >1 unit and >50% null `lot_size`, or no usable `lot_size`, are
+   ineligible — excluded from the lot-acre numerator AND denominator, count +
+   value REPORTED (§5).
+4. Pipeline validation check (`check_lot_acre_bounds`, wired in `main.py`):
+   per-hood deduped lot acres ÷ boundary acres ≤ 1.0 for all hoods except
+   `KNOWN_BOUND_OUTLIERS` (currently PEMBINA); RAISES on any new violation
+   (it means the dedupe broke or the data regime changed).
+5. Exported-grid validation vs ground-acre (run 2026-07-05): 34,675 cells, 28
+   (0.1%) without a lot-acre value; revenue/lot-acre median $28.0k, p97.5
+   $105k vs ground-acre median $18.0k, p97.5 $144k; top-10 lot-acre cells are
+   all Downtown CBD; WEM $12.6M ground → $290k lot; 79% of cells read higher
+   under lot-acre (lots exclude streets), consistent with the denominators'
+   meanings.
 
 ## Open questions
 
-- Display: does lot-acre replace ground-acre as the Glass grid's height metric,
-  or ship as a toggle beside it? (Undecided as of 2026-07-05.)
+- ~~Display: replace ground-acre or toggle?~~ **DECIDED (Peter, 2026-07-05):
+  toggle — both denominators viewable in the Glass view.**
 - The PEMBINA mechanism (boundary-straddling `lot_size`) presumably also
   shaves accuracy in hoods that stayed under 1.0 — invisible to the bound test.
   A parcel-fabric cross-check is not possible with open data (AltaLIS transfer,

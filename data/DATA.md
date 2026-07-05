@@ -120,11 +120,13 @@ aligned. That pull also surfaced a new `Assessment Class 1` label
   apportioned shares (summing is correct), and sometimes null/zero (one 1,059-unit
   building has nulls on 1,051 of them). No flag distinguishes the regimes. This is
   why the Glass view's grid export divides by cell GROUND acres, not lot acres
-  (`src/export_value_grid.py`). **Dedupe heuristic designed + validated
-  2026-07-05** — sum of DISTINCT positive lot_size per point, majority-null
-  multi-unit points excluded (10 points / 0.45% of roll); per-hood bound test
-  passes 397/398 (PEMBINA the known outlier). Full numbers:
-  `docs/FINDINGS_lot_dedupe.md`.
+  (`src/export_value_grid.py`). **Dedupe heuristic built + validated
+  2026-07-05** — repeat-aware: repeated values < 1000 m² are per-unit shares
+  (count each; a plain distinct-sum collapses townhouse complexes and fakes
+  needles), ≥ 1000 m² are duplicated parcels (count once); majority-null
+  multi-unit points ineligible (56 points / 0.52% of roll, reported); per-hood
+  bound test passes 405/406 (PEMBINA the known outlier, enforced by
+  `check_lot_acre_bounds`). Full numbers: `docs/FINDINGS_lot_dedupe.md`.
 - **One lat/long per account concentrates large parcels onto a single point
   (quantified 2026-07-04)** — the coordinate is a centroid regardless of lot
   size, so any point-binned density map needles big lots: West Edmonton Mall

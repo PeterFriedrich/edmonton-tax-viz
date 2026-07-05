@@ -228,17 +228,28 @@ _Last reconciled: 2026-07-02_
   binning ÷ fixed cell area rewards "most dollars pinned to one point",
   not land productivity; the lot-acre denominator is the chosen fix
   (preferred over resurrecting the reverted footprint spreading).
-  **UNBLOCKED 2026-07-05 — dedupe heuristic designed + validated**
-  (`docs/FINDINGS_lot_dedupe.md`): sum of DISTINCT positive lot_size per
-  point; points with >1 unit and >50% null lot_size are ineligible
-  (10 such points, $1.07B / 0.45% of roll — excluded + REPORTED);
-  per-hood bound test (deduped lot acres ≤ boundary acres) passes
-  397/398, PEMBINA the committed known outlier (1.41, boundary-straddling
-  lots). Remaining build steps: (1) wire the heuristic into
-  `export_value_grid` as a lot-acre denominator + the per-hood bound
-  check; (2) validation pass of the exported lot-acre grid against the
-  ground-acre version; (3) DISPLAY DECISION (Peter): replace ground-acre
-  as the Glass height metric, or toggle beside it.
+  **PIPELINE BUILT + VALIDATED 2026-07-05** (`docs/FINDINGS_lot_dedupe.md`):
+  - [x] ~~Dedupe heuristic~~ — REVISED same day after cell-level validation:
+    the first-draft distinct-sum collapsed identically-apportioned townhouse
+    complexes (KAMEYOSEK 309 units → 0.04 ac → fake $1.2B/lot-acre needles).
+    Shipped rule = repeat-aware (`SHARE_MAX_M2 = 1000 m²`): repeated values
+    < 1000 m² count per unit (real shares), ≥ 1000 m² count once (duplication
+    guard); majority-null multi-unit points ineligible (56 points / $1.23B /
+    0.52% of roll, excluded + REPORTED). Threshold insensitive 500–2000 m².
+  - [x] ~~Wire into `export_value_grid`~~ — done: `load_property_info.py`
+    (new), `account_number` in load_assessment, `*_per_lot_acre` columns in
+    `value_grid.json` (1.8 MB, null where no eligible acres),
+    `check_lot_acre_bounds` RAISES on new bound violations (PEMBINA the
+    committed `KNOWN_BOUND_OUTLIERS`); `--skip-property-info` degrades to
+    ground-acre only. 163 tests green (+23).
+  - [x] ~~Validation vs ground-acre~~ — done (FINDINGS §6.5): top-10
+    lot-acre cells all Downtown CBD; WEM $12.6M → $290k; tower cell #1 at
+    $14.8M revenue/lot-acre; p97.5 $105k vs $144k ground.
+  - [ ] **Frontend: denominator toggle in the Glass view** (Peter,
+    2026-07-05: "make it togglable, so i can view both") — ground-acre vs
+    lot-acre for height+colour; needs its own scale anchors per denominator
+    (gridScale() pattern), legend + tooltip labels, cells with null lot-acre
+    handling (drop vs grey), verify-glass extension, UI.md sync.
 
 - [x] ~~**SCOPE: composition numbers now; full zoning POLYGON layer in the viewer is a
   SEPARATE later product decision**~~ — RESOLVED 2026-07-03: Peter opted in for the
