@@ -46,6 +46,17 @@
     #layers input { accent-color: #fcd278; margin: 0; }
     #layers input[type="range"] { width: 86px; cursor: pointer; }
     #layers .pct { min-width: 34px; text-align: right; color: #6a6a80; font-variant-numeric: tabular-nums; }
+    /* Glass-view spike denominator (ground vs lot acres) — hidden outside
+       glass and on data files without the lot-acre columns. */
+    #denom-hd, #denom { display: none; }
+    #denom { border: 1px solid #2a2a3a; border-radius: 5px; overflow: hidden; margin-bottom: 2px; }
+    #denom button {
+      appearance: none; border: 0; background: transparent; color: #9a9ab0;
+      font: 11px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      padding: 4px 10px; cursor: pointer; flex: 1; transition: background 0.12s, color 0.12s;
+    }
+    #denom button:hover { color: #e8e8ef; }
+    #denom button.active { background: #fcd278; color: #16111a; font-weight: 600; }
     #toggle button, #palette button, #lens button {
       appearance: none; border: 0; background: transparent; color: #9a9ab0;
       font: 12.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -140,6 +151,11 @@
       <input type="range" id="prism-opacity" min="0" max="100" value="100" />
       <span class="pct" id="prism-opacity-val">100%</span>
     </label>
+    <span class="hd" id="denom-hd">Spike denominator</span>
+    <div id="denom">
+      <button data-denom="ground" class="active" title="Divide each cell's total by the cell's own ground area (2.47 acres) — dollars pinned to this patch of map">Ground acres</button>
+      <button data-denom="lot" title="Divide each cell's total by the parcel acres its properties own — land productivity; large lots stop needling">Lot acres</button>
+    </div>
   </div>
 
   <div id="legend" class="panel">
@@ -308,15 +324,28 @@
       },
       glass: {
         title: null, // metric-driven, like money (applyView/applyMetric)
-        blurb: "The active metric in 100 m grid cells — property points " +
-               "binned to squares, each cell's total divided by its ground " +
-               "acres. Height is linear; colour is square-root–scaled to " +
-               "the cell distribution. The neutral plane below is the " +
-               "neighbourhoods — hover for their numbers; grey = set-aside " +
-               "natural/undeveloped land. The slider sets spike opacity.",
+        blurb: null, // denominator-driven — see glassBlurb()
         opacity: 60, // translucent by default; slider adjusts
       },
     };
+
+    // Glass blurb follows the spike denominator (the layers-panel toggle).
+    const GLASS_BLURBS = {
+      ground: "The active metric in 100 m grid cells — property points " +
+              "binned to squares, each cell's total divided by its ground " +
+              "acres. Height is linear; colour is square-root–scaled to " +
+              "the cell distribution. The neutral plane below is the " +
+              "neighbourhoods — hover for their numbers; grey = set-aside " +
+              "natural/undeveloped land. The slider sets spike opacity.",
+      lot:    "The active metric in 100 m grid cells, divided by the parcel " +
+              "acres the cell's properties own (city lot sizes, deduplicated " +
+              "at multi-unit points; cells with no usable lot size are " +
+              "omitted). Height is linear; colour is square-root–scaled to " +
+              "the cell distribution. The neutral plane below is the " +
+              "neighbourhoods — hover for their numbers; grey = set-aside " +
+              "natural/undeveloped land. The slider sets spike opacity.",
+    };
+    const glassBlurb = () => GLASS_BLURBS[state.denom];
 
     // Glass view's spike layer: pipeline-binned 100 m cells (export_value_grid
     // — flat JSON, not GeoJSON: [lon, lat, value_per_acre, revenue_per_acre]
@@ -333,8 +362,12 @@
     // `view` selects the display mode (money | roads | ratio | uses | glass);
     // `prismOpacity` is the ghost-prism strength in ratio and glass (money
     // prisms are always opaque; roads and uses have no prisms).
+    // `denom` is the Glass spike denominator: "ground" (the cell's fixed
+    // 2.47 acres) or "lot" (the parcel acres the cell's properties own —
+    // FINDINGS_lot_dedupe.md). Glass-only; other views ignore it.
     const state = { metric: "revenue_per_acre", ramp: "current", residential: false,
-                    labels: false, view: "money", prismOpacity: 1, data: null };
+                    labels: false, view: "money", prismOpacity: 1, denom: "ground",
+                    data: null };
     let overlay;         // deck.gl MapboxOverlay, created on map load
     let roadsData = null;  // lazy-fetched roads FeatureCollection
     let roadsFetch = null; // in-flight fetch guard (single fetch, ever)
@@ -398,21 +431,30 @@
     // Darker than SET_ASIDE_COLOR but clearly above every ramp background.
     const GLASS_PLANE_COLOR = [50, 53, 63];
 
-    // Glass grid scale anchors, per metric, computed once from the fetched
-    // cells (so they track weekly refreshes, like ratioScale): colour clamp
-    // at the cells' p97.5 — the same percentile convention as every other
-    // clamp — and elevation scaled so the tallest cell reaches the money
-    // view's tallest hood prism (height parity across views; both LINEAR).
-    // The cell distribution is its own scale: one downtown tower in a
-    // 2.47-acre cell runs ~85x the p97.5, far past the hood-level range.
+    // The grid column for the active metric + denominator: the lot-acre
+    // variants ride in the same file as `*_per_lot_acre` (export_value_grid).
+    const gridColKey = () => state.denom === "lot"
+      ? state.metric.replace("_per_acre", "_per_lot_acre")
+      : state.metric;
+
+    // Glass grid scale anchors, per metric + denominator, computed once from
+    // the fetched cells (so they track weekly refreshes, like ratioScale):
+    // colour clamp at the cells' p97.5 — the same percentile convention as
+    // every other clamp — and elevation scaled so the tallest cell reaches
+    // the money view's tallest hood prism (height parity across views AND
+    // across the two denominators; all LINEAR). The cell distribution is its
+    // own scale: one downtown tower in a 2.47-acre cell runs ~85x the p97.5,
+    // far past the hood-level range. Lot-acre cells can be null (no eligible
+    // lot acres) — excluded from the anchors and from the render.
     let _gridScales = null;
     function gridScale() {
-      const key = state.metric;
+      const key = gridColKey();
       if (_gridScales && _gridScales[key]) return _gridScales[key];
       const col = gridData.columns[key];
-      const vals = gridData.cells.map(c => c[col]).sort((a, b) => a - b);
-      const cfg = METRICS[key];
-      const hoodMax = Math.max(...state.data.features.map(f => f.properties[key] || 0));
+      const vals = gridData.cells.map(c => c[col]).filter(v => v != null)
+        .sort((a, b) => a - b);
+      const cfg = METRICS[state.metric];
+      const hoodMax = Math.max(...state.data.features.map(f => f.properties[state.metric] || 0));
       _gridScales ??= {};
       return (_gridScales[key] = {
         clamp: quantile(vals, 0.975),
@@ -808,12 +850,20 @@
           autoHighlight: true,
           highlightColor: [255, 255, 255, 40],
         });
-        const col = gridData ? gridData.columns[state.metric] : -1;
+        const colKey = gridColKey();
+        const col = gridData ? (gridData.columns[colKey] ?? -1) : -1;
         if (col >= 0) {
           const gs = gridScale();
+          // Lot-acre mode drops the (few) cells with no eligible lot acres —
+          // no denominator means no honest bar to draw. Cached per column so
+          // the layer's data identity is stable across rebuilds (moveend
+          // label re-culls must diff to a no-op, not re-tessellate 34k cells).
+          gridData.cellsFor ??= {};
+          const cells = (gridData.cellsFor[colKey] ??=
+            gridData.cells.filter(c => c[col] != null));
           return [plane, new deck.GridCellLayer({
             id: "glass-grid",
-            data: gridData.cells,
+            data: cells,
             cellSize: gridData.cell,
             extruded: true,
             getPosition: d => [d[0], d[1]], // cell SW corner (export_value_grid)
@@ -824,8 +874,8 @@
             material: { ambient: 0.55, diffuse: 0.6, shininess: 32, specularColor: [60, 60, 70] },
             pickable: false, // the plane handles tooltips
             updateTriggers: {
-              getElevation: state.metric,
-              getFillColor: [state.metric, state.ramp],
+              getElevation: colKey,
+              getFillColor: [colKey, state.ramp],
             },
           }), ...labelLayer()];
         }
@@ -1021,8 +1071,21 @@
       overlay.setProps({ layers: buildLayers() });
       document.getElementById("title-h").textContent = cfg.title;
       document.getElementById("title-p").textContent =
-        state.view === "glass" ? VIEWS.glass.blurb : cfg.blurb;
+        state.view === "glass" ? glassBlurb() : cfg.blurb;
       refreshLegend(); // per-metric transform: the gradient bar changes too
+    }
+
+    // Switch the Glass spike denominator (ground vs lot acres). Glass-only:
+    // the control is hidden in every other view, so no view guard is needed
+    // beyond rebuilding — scales and legend re-anchor to the new column.
+    function applyDenom(d) {
+      if (d === state.denom) return;
+      state.denom = d;
+      document.querySelectorAll("#denom button").forEach(b =>
+        b.classList.toggle("active", b.dataset.denom === d));
+      overlay.setProps({ layers: buildLayers() });
+      document.getElementById("title-p").textContent = glassBlurb();
+      refreshLegend();
     }
 
     // Sync the whole legend to the current view. roads: the network's linear
@@ -1075,9 +1138,12 @@
         // Cell-scale anchors when the grid is present; the hood-prism
         // fallback keeps the metric's hood anchors. The lens never applies
         // here, so the aside always means the plane's set-aside grey.
-        const grid = gridData && gridData.columns[state.metric] >= 0;
+        // With the lot denominator the label and anchors follow gridColKey().
+        const grid = gridData && (gridData.columns[gridColKey()] ?? -1) >= 0;
+        const lot = grid && state.denom === "lot";
         document.getElementById("legend-label").textContent =
-          cfg.legendLabel + (grid ? " (100 m cells)" : "");
+          (lot ? cfg.legendLabel.replace("per acre", "per lot acre") : cfg.legendLabel) +
+          (grid ? " (100 m cells)" : "");
         document.getElementById("legend-min").textContent = "$0";
         document.getElementById("legend-max").textContent =
           grid ? cfg.fmt(gridScale().clamp) + "+" : cfg.legendMax;
@@ -1194,9 +1260,14 @@
               columns: {
                 value_per_acre: p.columns.indexOf("value_per_acre"),
                 revenue_per_acre: p.columns.indexOf("revenue_per_acre"),
+                value_per_lot_acre: p.columns.indexOf("value_per_lot_acre"),
+                revenue_per_lot_acre: p.columns.indexOf("revenue_per_lot_acre"),
               },
               cells: p.cells,
             };
+            // The denominator toggle needs the lot-acre columns (pipeline
+            // 2026-07-05) — absent on older files, and the control stays hidden.
+            gridData.hasLot = gridData.columns.value_per_lot_acre >= 0;
           })
           .catch(() => {});
         await gridFetch;
@@ -1204,12 +1275,19 @@
       }
       // Ghost-prism views reset the slider to their own default on entry.
       if (VIEWS[v] && VIEWS[v].opacity != null) setPrismOpacity(VIEWS[v].opacity);
+      // The spike-denominator toggle only exists in Glass, and only when the
+      // grid file carries the lot-acre columns (pipeline 2026-07-05).
+      const denomShow = v === "glass" && gridData && gridData.hasLot;
+      document.getElementById("denom-hd").style.display = denomShow ? "block" : "none";
+      document.getElementById("denom").style.display = denomShow ? "flex" : "none";
       overlay.setProps({ layers: buildLayers() });
-      // Glass shows the metric like Money, so its title stays metric-driven.
+      // Glass shows the metric like Money, so its title stays metric-driven
+      // and its blurb follows the spike denominator.
       const chrome = v === "money" ? METRICS[state.metric] : VIEWS[v];
       document.getElementById("title-h").textContent =
         v === "glass" ? METRICS[state.metric].title : chrome.title;
-      document.getElementById("title-p").textContent = chrome.blurb;
+      document.getElementById("title-p").textContent =
+        v === "glass" ? glassBlurb() : chrome.blurb;
       refreshLegend();
     }
 
@@ -1229,6 +1307,8 @@
         b.addEventListener("click", () => applyPalette(b.dataset.ramp)));
       document.querySelector("#lens button").addEventListener("click", applyLens);
       document.querySelector('#lens button[data-lens="labels"]').addEventListener("click", applyLabels);
+      document.querySelectorAll("#denom button").forEach(b =>
+        b.addEventListener("click", () => applyDenom(b.dataset.denom)));
       document.querySelectorAll("#views button").forEach(b =>
         b.addEventListener("click", () => applyView(b.dataset.view)));
       document.getElementById("prism-opacity").addEventListener("input", e => {

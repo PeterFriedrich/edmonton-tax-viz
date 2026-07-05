@@ -245,11 +245,16 @@ _Last reconciled: 2026-07-02_
   - [x] ~~Validation vs ground-acre~~ — done (FINDINGS §6.5): top-10
     lot-acre cells all Downtown CBD; WEM $12.6M → $290k; tower cell #1 at
     $14.8M revenue/lot-acre; p97.5 $105k vs $144k ground.
-  - [ ] **Frontend: denominator toggle in the Glass view** (Peter,
-    2026-07-05: "make it togglable, so i can view both") — ground-acre vs
-    lot-acre for height+colour; needs its own scale anchors per denominator
-    (gridScale() pattern), legend + tooltip labels, cells with null lot-acre
-    handling (drop vs grey), verify-glass extension, UI.md sync.
+  - [x] ~~**Frontend: denominator toggle in the Glass view**~~ (Peter,
+    2026-07-05: "make it togglable, so i can view both") — built 2026-07-05:
+    "Ground acres | Lot acres" in the layers panel (Glass-only; hidden on
+    grid files without the lot columns), per-column scale anchors, null-lot
+    cells DROPPED in lot mode (28), legend/blurb follow the denominator.
+    verify-glass extended (denominator matrix green; lens+uses regressions
+    green); shot-denom.js eyeballed — WEM needle collapses in lot mode.
+    UI.md synced. Awaits Peter's on-device eyeball + merge of
+    `feature/glass-view` (together with the set-aside artifact confirm
+    above).
 
 - [x] ~~**SCOPE: composition numbers now; full zoning POLYGON layer in the viewer is a
   SEPARATE later product decision**~~ — RESOLVED 2026-07-03: Peter opted in for the

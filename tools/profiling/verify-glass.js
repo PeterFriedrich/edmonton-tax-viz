@@ -28,13 +28,15 @@ const [url] = process.argv.slice(2);
   const chrome = () => page.evaluate(() => ({
     view: state.view,
     title: document.getElementById('title-h').textContent,
-    blurbIsGlass: document.getElementById('title-p').textContent === VIEWS.glass.blurb,
+    blurbIsGlass: document.getElementById('title-p').textContent === glassBlurb(),
     label: document.getElementById('legend-label').textContent,
     max: document.getElementById('legend-max').textContent,
     aside: document.querySelector('#legend .aside span:last-child').textContent,
     sliderShown: getComputedStyle(document.getElementById('layers')).display !== 'none',
     sliderPct: document.getElementById('prism-opacity').value,
     lensDisabled: document.querySelector('#lens button').disabled,
+    denomShown: getComputedStyle(document.getElementById('denom')).display !== 'none',
+    denom: state.denom,
   }));
 
   console.log('money default  :', JSON.stringify(await chrome()));
@@ -96,6 +98,54 @@ const [url] = process.argv.slice(2);
   console.log('glass + value  :', JSON.stringify(await chrome()));
   await click('#toggle button[data-metric="revenue_per_acre"]');
   await page.waitForTimeout(1000);
+
+  // Spike denominator toggle (lot-acre variant, 2026-07-05): legend + scale
+  // re-anchor to the lot column, null-lot cells drop from the render, the
+  // blurb flips, and independent quantile/parity checks hold on the subset.
+  await click('#denom button[data-denom="lot"]');
+  await page.waitForTimeout(1500);
+  const lot = await page.evaluate(() => {
+    const grid = overlay._deck.props.layers.find(l => l.id === 'glass-grid');
+    const col = gridData.columns.revenue_per_lot_acre;
+    const nonNull = gridData.cells.filter(c => c[col] != null);
+    const vals = nonNull.map(c => c[col]).sort((a, b) => a - b);
+    const pos = (vals.length - 1) * 0.975, lo = Math.floor(pos);
+    const q = vals[lo] + (vals[Math.ceil(pos)] - vals[lo]) * (pos - lo);
+    const gs = gridScale();
+    const cfg = METRICS[state.metric];
+    const hoodMax = Math.max(...state.data.features.map(f => f.properties[cfg.key] || 0));
+    const mid = nonNull[Math.floor(nonNull.length / 2)];
+    const expected = rampColorAt(Math.sqrt(Math.min(1, mid[col] / gs.clamp)));
+    return { denom: state.denom,
+             dataN: grid.props.data.length, nonNullN: nonNull.length,
+             totalN: gridData.cells.length,
+             clampMatchesP975: Math.abs(gs.clamp - q) < 1e-6,
+             parityOk: Math.abs(gs.elevationScale * vals[vals.length - 1] - hoodMax * cfg.elevationScale) < 1e-6,
+             midFillOk: grid.props.getFillColor(mid).join() === expected.join(),
+             label: document.getElementById('legend-label').textContent,
+             max: document.getElementById('legend-max').textContent,
+             blurbIsLot: document.getElementById('title-p').textContent === GLASS_BLURBS.lot };
+  });
+  console.log('denom -> lot   :', JSON.stringify(lot));
+
+  // Metric toggle keeps the lot denominator (label follows both).
+  await click('#toggle button[data-metric="value_per_acre"]');
+  await page.waitForTimeout(1000);
+  console.log('lot + value    :', JSON.stringify(await chrome()));
+  await click('#toggle button[data-metric="revenue_per_acre"]');
+  await page.waitForTimeout(1000);
+
+  // Denominator state persists across a view round-trip; the control hides
+  // outside glass.
+  await click('#views button[data-view="money"]');
+  await page.waitForTimeout(1000);
+  console.log('money (denom?) :', JSON.stringify(await chrome()));
+  await click('#views button[data-view="glass"]');
+  await page.waitForTimeout(1000);
+  console.log('glass (denom?) :', JSON.stringify(await chrome()));
+  await click('#denom button[data-denom="ground"]');
+  await page.waitForTimeout(1000);
+  console.log('denom -> ground:', JSON.stringify(await chrome()));
 
   // Labels sit at the ground in glass (no hood prisms to ride).
   await click('#lens button[data-lens="labels"]');

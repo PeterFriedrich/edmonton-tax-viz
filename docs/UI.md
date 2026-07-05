@@ -253,12 +253,24 @@ plane is mouseover geography. Implementation (`web/index.html`,
   collapses onto a single point → one 2.47-acre cell) reaches exactly the
   money view's tallest hood prism. Both linear (the honesty rule). Legend
   relabels "… (100 m cells)".
-- **Known display caveat — single-point needles**: the metric is dollars in
-  the cell ÷ cell GROUND acres, so a large parcel's whole value lands in one
-  cell and its real land never enters the denominator (WEM reads 2× the top
-  downtown tower, though per lot acre the tower is ~50× WEM — DATA.md §2).
-  The PRIORITY lot-acre denominator variant (TODO.md) is the planned
-  correction.
+- **Spike denominator toggle (added 2026-07-05)**: a "Ground acres | Lot
+  acres" control in the layers panel (`#denom`, `state.denom`,
+  `applyDenom()`), Glass-only, hidden when the grid file predates the
+  lot-acre columns (`gridData.hasLot`). **Ground** (default) divides each
+  cell's total by the cell's fixed 2.47 acres; **Lot** divides by the parcel
+  acres the cell's properties own (`*_per_lot_acre` columns —
+  `export_value_grid.py`, dedupe heuristic in
+  `docs/FINDINGS_lot_dedupe.md`). Lot mode fixes the single-point-needle
+  caveat: a large parcel's whole value lands in one cell under ground acres
+  (WEM reads 2× the top downtown tower; per lot acre the tower is ~50× WEM —
+  DATA.md §2). `gridColKey()` maps metric+denom to the grid column; scale
+  anchors cache per column; cells with `null` lot acres (28 on 2025 data —
+  no eligible lot size) are **dropped** from the lot render (filtered lists
+  cached in `gridData.cellsFor` so moveend rebuilds diff to no-ops). Legend
+  relabels "… per lot acre (100 m cells)" (lot clamp ~$105k revenue vs
+  ~$144k ground); the blurb follows the denominator (`GLASS_BLURBS`). The
+  denominator persists across view round-trips; the control hides outside
+  Glass.
 - **Spike opacity**: the ratio view's slider panel shows here too; entering
   Glass resets it to the view's own default (**60%**; Ratio stays 5%).
 - **Metric-driven like Money**: the Revenue/Value toggle renders live
@@ -269,13 +281,17 @@ plane is mouseover geography. Implementation (`web/index.html`,
 - **Fallback**: when `value_grid.json` is absent (older deploy), the view
   renders translucent NEIGHBOURHOOD prisms — the coarse version of the same
   composition (no lens handling; the button is disabled here anyway).
-- Headless-verified 2026-07-04 (`tools/profiling/verify-glass.js`: layer
-  stack, 358 neutral + 48 set-aside plane fills / 0 mismatches, 34,675 cells,
-  clamp == independent p97.5, elevation parity exact, mid-cell fill matches
-  the ramp, slider → opacity live, per-view slider defaults, metric toggle
-  chrome + cell legend, lens disabled, ground-z labels, money-branch
-  tooltip) + screenshot eyeball at 60% and 100%
-  (`tools/profiling/shot-glass.js`).
+- Headless-verified 2026-07-04, extended 2026-07-05
+  (`tools/profiling/verify-glass.js`: layer stack, 358 neutral + 48
+  set-aside plane fills / 0 mismatches, 34,675 cells, clamp == independent
+  p97.5, elevation parity exact, mid-cell fill matches the ramp — all
+  re-checked per denominator on its own non-null subset (34,647 lot cells) —
+  slider → opacity live, per-view slider defaults, metric toggle chrome +
+  cell legend under both denominators, denominator persistence + hide
+  outside Glass, lens disabled, ground-z labels, money-branch tooltip) +
+  screenshot eyeball at 60% and 100% (`tools/profiling/shot-glass.js`) and
+  ground-vs-lot at 100% (`tools/profiling/shot-denom.js` — the WEM needle
+  visibly collapses in lot mode; downtown becomes the sole peak).
 
 ---
 
