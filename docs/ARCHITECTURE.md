@@ -46,6 +46,14 @@ diagram exactly where `load_zoning.py` does — a raw GeoJSON (`9j8t-zm52`) over
 against the boundary frame, producing per-hood columns merged in
 `join_and_calculate` (`road_m_total`; `road_m_per_acre` computed there).
 
+**Also in the flow (Glass-view grid, 2026-07-04/05):** a side branch that never
+touches the hood join — `main.py` takes the PER-PROPERTY frame (post
+`apply_tax_rates`), merges `load_property_info.py`'s `account_number → lot_size`
+onto it, runs `check_lot_acre_bounds` against the boundary frame (physical-bound
+validation, raises on new violations), and hands it to `export_value_grid.py`
+for the 100 m cell file (`web/data/value_grid.json`, ground- AND lot-acre
+metrics). Absent property-info file → ground-acre only.
+
 **One metric exists ONLY in the browser:** the Ratio view's revenue per road
 metre (`revenue_per_acre / road_m_per_acre` — the acres cancel) is derived
 client-side in `web/index.html` from the two published GeoJSON columns. No
@@ -64,8 +72,12 @@ subset, one for the residential lens (2026-07-03). Transform decision + the
 **Inputs:** path to raw assessment CSV
 
 **Outputs:** `pd.DataFrame` with columns:
+- `account_number` (int — join key to property-info `dkk9-cj3x`; feeds the
+  grid export's lot_size merge in `main.py`)
 - `neighbourhood_name` (str, normalized — stripped, uppercased)
 - `assessed_value` (float)
+- `latitude` / `longitude` (float — the property point; feeds the grid export,
+  0 nulls as of 2026-07)
 
 **Responsibilities:**
 - Load CSV, select relevant columns
@@ -243,6 +255,58 @@ silent), and written with coordinates rounded to 5 dp and props `n` / `t` /
 metrics still come from `load_roads`, computed before any thinning.
 
 ---
+
+### `src/load_property_info.py` (lot-size join — added 2026-07-05)
+
+**Inputs:** the property-info CSV (`dkk9-cj3x`,
+`data/raw/Property_Info__Current_Calendar_Year_.csv`)
+
+**Outputs:** DataFrame `account_number` / `lot_size` (m², non-positive →
+NaN, nulls counted and reported). Raises if the account key stops being
+unique. Deliberately slim — `year_built` etc. stay out until the diversity
+analysis needs them (ANALYSIS_BACKLOG 4). Does NOT resolve the condo
+`lot_size` inconsistency; that lives with its consumer
+(`export_value_grid._point_lot_stats`).
+
+### `src/export_value_grid.py` (Glass-view spikes — added 2026-07-04; lot-acre variant 2026-07-05)
+
+**Inputs:** the per-property DataFrame from `load_assessment.py` (needs
+`latitude`/`longitude`/`assessed_value`; `levy` optional from
+`apply_tax_rates.py`; `lot_size` optional — `main.py` merges it in from
+`load_property_info.py` on `account_number`); output path; `cell_m`
+(default 100.0, pinned as `GRID_CELL_M` in `main.py`)
+
+**Outputs:** compact flat-JSON web file (`web/data/value_grid.json`): one row
+per occupied grid cell — `[lon, lat, value_per_acre, revenue_per_acre,
+value_per_lot_acre, revenue_per_lot_acre]` at the cell's SW corner
+(`revenue_*` omitted on the value-only path; `*_per_lot_acre` omitted when
+`lot_size` is absent; lot-acre slots `null` where the cell has no eligible
+lot acres). ~34.7k cells / 1.8 MB on current data. Returns a stats dict.
+
+**Responsibilities:**
+- Bin property points into `cell_m` squares in **EPSG:3400** (CRS explicit,
+  per project rule); sum value (and levy) per cell
+- **Ground-acre metrics** (always): divide by the cell's fixed area —
+  consistent with the hood metrics' boundary-acre denominator. Known cost:
+  large parcels needle (one point per account — DATA.md §2, WEM).
+- **Lot-acre metrics** (when `lot_size` is present): divide ELIGIBLE dollars
+  by deduped parcel acres — the Urban3 land-productivity metric. Dedupe =
+  the repeat-aware heuristic of docs/FINDINGS_lot_dedupe.md
+  (`_point_lot_stats` / `SHARE_MAX_M2`); majority-null multi-unit points are
+  ineligible (excluded from numerator AND denominator, count + value
+  reported).
+- `check_lot_acre_bounds(df, boundaries)`: physical-bound validation —
+  per-hood deduped lot acres ≤ boundary acres, `KNOWN_BOUND_OUTLIERS`
+  (PEMBINA) exempt; RAISES on any new violation. `main.py` runs it before
+  every lot-acre export.
+- No silent drops: null-coordinate rows counted and reported; lot-ineligible
+  points reported with their value; a conservation guard errors if cell sums
+  don't reproduce the input totals
+
+**Does not:** pick colour/height scales — the browser computes the cell
+clamp (p97.5) and elevation parity from the served file at load
+(`gridScale()` in `web/index.html`, same pattern as `ratioScale()`), so they
+track weekly refreshes.
 
 ### `src/join_and_calculate.py`
 

@@ -114,7 +114,32 @@ aligned. That pull also surfaced a new `Assessment Class 1` label
 - **`lot_size` is a city-provided field, not computed** — Edmonton supplies it directly via the API. No geometry math needed.
 - **No parcel polygon geometry** — only a centroid point. Edmonton transferred parcel GIS data to AltaLIS in 2021; it's no longer freely available. Polygon boundaries require the neighbourhood boundary file (dataset `65fr-66s6`).
 - **`lot_size` units are sq metres** — divide by 4046.86 to get acres. (~0.6% null — minor, flag on load)
-- **Condo duplication TBC** — need to confirm whether multiple condo units on one parcel share a lot_size row or are duplicated. This matters for parcel-level $/acre aggregation.
+- **Condo `lot_size` semantics are INCONSISTENT (confirmed 2026-07-04)** — at the
+  3,002 lat/long points holding multiple units, `lot_size` is sometimes the parcel
+  size duplicated on every unit (summing overcounts the land), sometimes per-unit
+  apportioned shares (summing is correct), and sometimes null/zero (one 1,059-unit
+  building has nulls on 1,051 of them). No flag distinguishes the regimes. This is
+  why the Glass view's grid export divides by cell GROUND acres, not lot acres
+  (`src/export_value_grid.py`). **Dedupe heuristic built + validated
+  2026-07-05** — repeat-aware: repeated values < 1000 m² are per-unit shares
+  (count each; a plain distinct-sum collapses townhouse complexes and fakes
+  needles), ≥ 1000 m² are duplicated parcels (count once); majority-null
+  multi-unit points ineligible (56 points / 0.52% of roll, reported); per-hood
+  bound test passes 405/406 (PEMBINA the known outlier, enforced by
+  `check_lot_acre_bounds`). Full numbers: `docs/FINDINGS_lot_dedupe.md`.
+- **One lat/long per account concentrates large parcels onto a single point
+  (quantified 2026-07-04)** — the coordinate is a centroid regardless of lot
+  size, so any point-binned density map needles big lots: West Edmonton Mall
+  is one account ($1.285B assessed, 433,592 m² lot) behind one point — in the
+  100 m Glass grid that's the #1 cell citywide at $12.6M levy/acre, 2× the top
+  downtown tower ($620M on 3,754 m²), even though per LOT acre the tower beats
+  WEM ~50× ($612M vs $12M value/lot-acre). Citywide, lots > 1 ha are 5,524
+  rows carrying ~18% of the $237.5B roll. The lot-acre denominator variant
+  (TODO.md, PRIORITY) is the chosen correction.
+- **Downloaded via `scripts/download_data.py --only property_info`** (added
+  2026-07-04): full-CSV export endpoint, server count(*) cross-check; lands at
+  `data/raw/Property_Info__Current_Calendar_Year_.csv`. Join to the assessment
+  roll on `Account Number`: 100% coverage (439,685 rows both sides, 2026-07-04).
 
 ### Architecture Decision — Phase 1
 

@@ -84,6 +84,32 @@ _Last reconciled: 2026-07-02_
     checkboxes (the original stackable idea returns, one level down). That's
     also the trigger to define "total services" and reopen the ratio's
     denominator (currently roads-only by construction).
+    - [ ] **Fire lens — NEXT service candidate (Peter, 2026-07-04; datasets
+      probed, design NOT decided, nothing downloaded/built).** Two sources:
+      - `b4y7-zhnz` "Fire Stations" — 31 rows, station number + address +
+        lat/long point ONLY (no staffing/coverage/response data).
+      - `7hsn-idqi` "Fire Response: Current and Historical" — 947,781
+        dispatched events 2011–mid-2026. Per row: dispatch + close
+        datetimes, `event_duration_mins` (dispatch→CLOSE — there is **NO
+        on-scene-arrival timestamp anywhere**, so a true response-time
+        metric is NOT buildable from open data), `event_type_group` +
+        description, dispatch-priority `response_code`, lat/long, and
+        **`neighbourhood_name` pre-joined on ~99% of rows** (8,093 null)
+        — a per-hood metric needs no spatial work. Event mix (interpretive
+        trap): MEDICAL is 57% (536k); ALARMS 144k, MVI 65k, OUTSIDE FIRE
+        48k, CITIZEN ASSIST 36k, FIRE 24k, HAZMAT 20k; plus operational
+        noise to exclude (TRAINING/MAINTENANCE 18k, COMMUNITY EVENT,
+        PRE-INCIDENT PLANNING, nulls 31k).
+      **Open decisions (asked 2026-07-04, unanswered — re-ask before
+      building):** (1) lens shape — recommended: demand metric
+      (events/acre/year) + the 31 stations as context dots; alternatives:
+      add distance-to-nearest-station supply column, or proximity-only;
+      (2) event filter — recommended: all emergency responses minus
+      operational noise; alternative: fire-core only (~25%); (3) year
+      window — recommended: last 3 full years averaged (2023–2025);
+      (4) branch point — recommended: new branch off master, independent
+      of unmerged `feature/glass-view`. Reminder: second service = the
+      trigger for the parent item's Services-view UI decision.
   - [x] ~~**Use-mix view: surface each neighbourhood's zoning composition.**~~
     **SHIPPED 2026-07-03 — PR #10 merged + deployed** (run 28679596055, green
     first try); live site verified serving the Uses view + `zoning.geojson`
@@ -156,15 +182,82 @@ _Last reconciled: 2026-07-02_
   prisms. Exception: **set-aside/holdout hoods get their own distinct colour**
   on the plane. Hover/tooltip lives on the hood plane, like the Uses-view
   pattern (hood layer under a display layer carries picking + highlight).
-  No new data — hood polygons + all metrics already in the served GeoJSON
-  (display-only build). DECIDED 2026-07-04: **its own (fifth) view button** —
-  "directly cribbing the Urban3 style thing, just with our own interactive
-  flavor" (Peter). Still open at build time: which metrics get it
-  (money / ratio / both); prism
-  opacity default (the existing opacity slider may already cover it); the
-  two plane colours (neutral + set-aside — the current set-aside grey may
-  serve as one of them); whether the road network stays underneath as
-  ground context like Ratio.
+  DECIDED 2026-07-04: **its own (fifth) view button** — "directly cribbing
+  the Urban3 style thing, just with our own interactive flavor" (Peter).
+  V1 (hood-prism glass, built + verified on `feature/glass-view`) was then
+  refined by Peter: the spikes should be **finer than the hood unit** — the
+  Urban3 detail level. DECIDED 2026-07-04 (after the condo lot_size probe —
+  see DATA.md §2): **100 m grid cells** (~35k, in Peter's "a tenth of 287k"
+  range), height = **revenue in cell ÷ cell GROUND acres** (consistent with
+  the hood metric's boundary-acre denominator; no condo/lot_size artifacts).
+  Built on `feature/glass-view` (UNMERGED): pipeline grid export + Glass
+  view renders the cells over the neutral hood plane (pure point binning,
+  34,675 cells). 146 tests + verify-glass.js green; screenshots eyeballed.
+  - [x] ~~**Confirm the set-aside artifacting is gone (Peter, on-device).**~~
+    CONFIRMED 2026-07-05 — Peter eyeballed the local preview (reverted
+    point-binned grid + the new denominator toggle): "looks fine". The
+    rollback stands; no further diagnosis needed. Original context below.
+    Peter saw "really bad artifacting, specifically in areas that are
+    actually set asides" (2026-07-04) after the footprint-spreading round.
+    DECIDED 2026-07-04: **spreading ROLLED BACK** (`70a5d54` reverted in
+    `19c25fb`) rather than diagnosed — back to point binning. The
+    artifacting is presumed caused by the spreading (synthetic footprint
+    squares up to 1.2 km painting faint cells over river valley /
+    set-aside land, plus tens of thousands of sub-1 m cells coplanar with
+    the plane); needs Peter's eyeball on the reverted grid to confirm
+    before ship.
+  - [ ] **Large single-point lots needle the grid (known limitation,
+    post-rollback).** One lat/long per account means WEM ($1.285B,
+    43 ha) is a single $12.6M/acre spike — #1 citywide, 2× the top
+    downtown tower; lots > 1 ha are 5,524 rows / ~18% of citywide value.
+    **Chosen fix: the PRIORITY lot-size denominator variant below** (per
+    parcel acre, the tower correctly beats WEM ~50×). The reverted
+    footprint-spreading approach (spread value over a lot-area square
+    centred on the point, `git show 70a5d54`) also de-needled WEM but
+    caused the set-aside artifacting above; if ever revisited instead,
+    fix the spillover first (clip spread cells to the parcel's hood
+    polygon, cap the square side, floor displayed $/acre — REPORTED,
+    not silent).
+
+- [ ] **PRIORITY — Lot-size denominator variant for the grid spikes
+  (Peter, 2026-07-04; PRIORITIZED 2026-07-04 after the WEM verification —
+  next build item, deferred only for session budget).** The true Urban3
+  metric is revenue per PARCEL acre (`dkk9-cj3x` `lot_size`), not per
+  ground acre. **Why it's now priority:** verified 2026-07-04 that the
+  ground-acre grid ranks WEM (single account, $1.285B, 107-acre lot, one
+  lat/long → one 2.47-acre cell → $12.6M levy/acre needle, #1 citywide)
+  2× above the top downtown tower ($620M on 0.93 acres) — but per LOT
+  acre the tower beats WEM ~50× ($612M vs $12M value/lot-acre). Point
+  binning ÷ fixed cell area rewards "most dollars pinned to one point",
+  not land productivity; the lot-acre denominator is the chosen fix
+  (preferred over resurrecting the reverted footprint spreading).
+  **PIPELINE BUILT + VALIDATED 2026-07-05** (`docs/FINDINGS_lot_dedupe.md`):
+  - [x] ~~Dedupe heuristic~~ — REVISED same day after cell-level validation:
+    the first-draft distinct-sum collapsed identically-apportioned townhouse
+    complexes (KAMEYOSEK 309 units → 0.04 ac → fake $1.2B/lot-acre needles).
+    Shipped rule = repeat-aware (`SHARE_MAX_M2 = 1000 m²`): repeated values
+    < 1000 m² count per unit (real shares), ≥ 1000 m² count once (duplication
+    guard); majority-null multi-unit points ineligible (56 points / $1.23B /
+    0.52% of roll, excluded + REPORTED). Threshold insensitive 500–2000 m².
+  - [x] ~~Wire into `export_value_grid`~~ — done: `load_property_info.py`
+    (new), `account_number` in load_assessment, `*_per_lot_acre` columns in
+    `value_grid.json` (1.8 MB, null where no eligible acres),
+    `check_lot_acre_bounds` RAISES on new bound violations (PEMBINA the
+    committed `KNOWN_BOUND_OUTLIERS`); `--skip-property-info` degrades to
+    ground-acre only. 163 tests green (+23).
+  - [x] ~~Validation vs ground-acre~~ — done (FINDINGS §6.5): top-10
+    lot-acre cells all Downtown CBD; WEM $12.6M → $290k; tower cell #1 at
+    $14.8M revenue/lot-acre; p97.5 $105k vs $144k ground.
+  - [x] ~~**Frontend: denominator toggle in the Glass view**~~ (Peter,
+    2026-07-05: "make it togglable, so i can view both") — built 2026-07-05:
+    "Ground acres | Lot acres" in the layers panel (Glass-only; hidden on
+    grid files without the lot columns), per-column scale anchors, null-lot
+    cells DROPPED in lot mode (28), legend/blurb follow the denominator.
+    verify-glass extended (denominator matrix green; lens+uses regressions
+    green); shot-denom.js eyeballed — WEM needle collapses in lot mode.
+    UI.md synced. Peter's on-device eyeball PASSED 2026-07-05 ("looks
+    fine"). Remaining: PR + merge `feature/glass-view` → deploy (README
+    view list update rides in the PR).
 
 - [x] ~~**SCOPE: composition numbers now; full zoning POLYGON layer in the viewer is a
   SEPARATE later product decision**~~ — RESOLVED 2026-07-03: Peter opted in for the
