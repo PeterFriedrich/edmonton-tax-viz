@@ -75,40 +75,6 @@ def test_corner_is_wgs84_near_input():
     assert grid.iloc[0]["lat"] == pytest.approx(A["latitude"], abs=0.01)
 
 
-def test_large_lot_spreads_across_cells():
-    # One property with a 300 m-square lot (9 ha) must occupy multiple cells,
-    # not one needle — and still conserve its total exactly.
-    df = _frame([{**A, "assessed_value": 9e6, "levy": 9e4, "lot_size_m2": 90_000.0}])
-    grid = build_value_grid(df, cell_m=100.0)
-    assert len(grid) >= 9  # a 300 m square covers at least a 3x3 cell block
-    cell_acres = 100.0 * 100.0 / SQ_M_PER_ACRE
-    assert (grid["value_per_acre"] * cell_acres).sum() == pytest.approx(9e6)
-    assert (grid["revenue_per_acre"] * cell_acres).sum() == pytest.approx(9e4)
-    # No single cell holds more than the footprint's per-cell share (a full
-    # interior cell's worth) — the needle is gone.
-    assert grid["value_per_acre"].max() <= (9e6 / 9 / cell_acres) * (1 + 1e-9)
-
-
-def test_small_and_null_lots_stay_point_binned():
-    df = _frame([
-        {**A, "assessed_value": 100.0, "lot_size_m2": 500.0},   # typical lot
-        {**B, "assessed_value": 200.0, "lot_size_m2": None},    # null lot
-    ])
-    grid = build_value_grid(df, cell_m=100.0)
-    assert len(grid) == 2  # one cell each — no spreading
-
-
-def test_spread_and_binned_mix_conserves():
-    df = _frame([
-        {**A, "assessed_value": 9e6, "levy": 9e4, "lot_size_m2": 90_000.0},
-        {**B, "assessed_value": 100.0, "levy": 1.0, "lot_size_m2": 500.0},
-    ])
-    grid = build_value_grid(df, cell_m=100.0)
-    cell_acres = 100.0 * 100.0 / SQ_M_PER_ACRE
-    assert (grid["value_per_acre"] * cell_acres).sum() == pytest.approx(9e6 + 100.0)
-    assert (grid["revenue_per_acre"] * cell_acres).sum() == pytest.approx(9e4 + 1.0)
-
-
 def test_export_writes_compact_json(tmp_path):
     df = _frame([
         {**A, "assessed_value": 100.0, "levy": 1.0},

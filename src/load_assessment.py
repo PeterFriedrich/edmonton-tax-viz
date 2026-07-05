@@ -34,7 +34,6 @@ def load_assessment(csv_path: str | Path) -> pd.DataFrame:
     """Load and clean the property assessment CSV.
 
     Returns a DataFrame with columns:
-        account_number          int    unique property id (property-info join key)
         neighbourhood_name      str    normalized (stripped, uppercased)
         assessed_value          float
         is_exempt               bool   True for NONRES MUNICIPAL/RES EDUCATION rows
@@ -51,7 +50,6 @@ def load_assessment(csv_path: str | Path) -> pd.DataFrame:
     df = pd.read_csv(csv_path, low_memory=False)
 
     df = df.rename(columns={
-        "Account Number": "account_number",
         "Neighbourhood": "neighbourhood_name",
         "Assessed Value": "assessed_value",
         "Tax Class": "tax_class",
@@ -84,7 +82,7 @@ def load_assessment(csv_path: str | Path) -> pd.DataFrame:
     df["assessed_value"] = df["assessed_value"].astype(float)
 
     return df[[
-        "account_number", "neighbourhood_name", "assessed_value", "is_exempt", "tax_class",
+        "neighbourhood_name", "assessed_value", "is_exempt", "tax_class",
         "assessment_class_1", "assessment_class_2", "assessment_class_3",
         "assessment_class_pct_1", "assessment_class_pct_2", "assessment_class_pct_3",
         "latitude", "longitude",

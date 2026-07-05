@@ -246,42 +246,21 @@ metrics still come from `load_roads`, computed before any thinning.
 
 ---
 
-### `src/load_property_info.py` (lot sizes — added 2026-07-04)
-
-**Inputs:** path to the Property Info CSV (`dkk9-cj3x`, DATA.md §2)
-
-**Outputs:** `pd.DataFrame` with `account_number` (int, assessment join key)
-and `lot_size_m2` (float, NaN kept — ~0.6%). Currently lot size only; the
-diversity-analysis columns (`year_built` etc.) extend this module later.
-
-**Caution:** multi-unit `lot_size` values are inconsistent across units
-(DATA.md §2) — safe as a per-row footprint hint, NOT safe to sum as a land
-denominator.
-
 ### `src/export_value_grid.py` (Glass-view spikes — added 2026-07-04)
 
 **Inputs:** the per-property DataFrame from `load_assessment.py` (needs
 `latitude`/`longitude`/`assessed_value`; `levy` optional from
-`apply_tax_rates.py`; `lot_size_m2` optional from `load_property_info.py`,
-merged in `main.py`); output path; `cell_m` (default 100.0, pinned as
+`apply_tax_rates.py`); output path; `cell_m` (default 100.0, pinned as
 `GRID_CELL_M` in `main.py`)
 
 **Outputs:** compact flat-JSON web file (`web/data/value_grid.json`): one row
 per occupied grid cell — `[lon, lat, value_per_acre, revenue_per_acre]` at
 the cell's SW corner (`revenue_per_acre` omitted on the value-only path).
-~69k cells / 2.4 MB on current data. Returns a stats dict.
+~34.7k cells / 1.3 MB on current data. Returns a stats dict.
 
 **Responsibilities:**
 - Bin property points into `cell_m` squares in **EPSG:3400** (CRS explicit,
   per project rule); sum value (and levy) per cell
-- **Spread large lots** (`lot_size_m2 > cell_m²`; 5,514 rows / ~18% of all
-  assessed value on 2025 data): a parcel is modelled as a square of its lot
-  area centred on its point (no parcel polygons — DATA.md §2) and its value
-  distributed over the overlapped cells proportionally. Without this, one
-  point per parcel makes false needles — West Edmonton Mall is $1.3B behind
-  a single lat/long. Small/null lots point-bin, which also neutralizes the
-  inconsistent multi-unit `lot_size` values (each row only spreads over its
-  OWN square). Degrades to pure point binning when lot sizes are absent.
 - Divide by the cell's **GROUND acres** — the deliberate denominator decision
   (2026-07-04): consistent with the hood metrics' boundary-acre denominator,
   and immune to the condo `lot_size` inconsistencies (DATA.md §2). A

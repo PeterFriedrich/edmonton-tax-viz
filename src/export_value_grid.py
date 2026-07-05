@@ -43,59 +43,17 @@ _TO_ALBERTA = Transformer.from_crs(4326, 3400, always_xy=True)
 _TO_WGS84 = Transformer.from_crs(3400, 4326, always_xy=True)
 
 
-def _spread_large_lots(
-    x: np.ndarray, y: np.ndarray, side: np.ndarray, values: np.ndarray, cell_m: float
-) -> pd.DataFrame:
-    """Distribute each row's values over the cells its lot square overlaps.
-
-    Each row is modelled as a square of the lot's area centred on its point
-    (we have no parcel polygons — DATA.md §2); every overlapped cell receives
-    ``value × overlap_area / lot_area``. The fractions of a square across a
-    grid sum to exactly 1, so conservation is preserved by construction.
-    """
-    ixs, iys, out = [], [], []
-    for i in range(len(x)):
-        half = side[i] / 2.0
-        x0, x1 = x[i] - half, x[i] + half
-        y0, y1 = y[i] - half, y[i] + half
-        for ix in range(int(np.floor(x0 / cell_m)), int(np.floor(x1 / cell_m)) + 1):
-            ox = min(x1, (ix + 1) * cell_m) - max(x0, ix * cell_m)
-            if ox <= 0:
-                continue
-            for iy in range(int(np.floor(y0 / cell_m)), int(np.floor(y1 / cell_m)) + 1):
-                oy = min(y1, (iy + 1) * cell_m) - max(y0, iy * cell_m)
-                if oy <= 0:
-                    continue
-                ixs.append(ix)
-                iys.append(iy)
-                out.append(values[i] * (ox * oy) / (side[i] * side[i]))
-    frame = pd.DataFrame(np.asarray(out), columns=[f"c{j}" for j in range(values.shape[1])])
-    frame.insert(0, "ix", ixs)
-    frame.insert(1, "iy", iys)
-    return frame
-
-
 def build_value_grid(df: pd.DataFrame, cell_m: float = 100.0) -> pd.DataFrame:
     """Aggregate per-property values into square grid cells.
 
     Expects ``latitude``/``longitude``/``assessed_value`` (load_assessment
-    contract), optionally ``levy`` (apply_tax_rates) and ``lot_size_m2``
-    (load_property_info). Returns a DataFrame with one row per occupied cell:
+    contract) and optionally ``levy`` (apply_tax_rates). Returns a DataFrame
+    with one row per occupied cell:
 
         lon, lat                float  cell SW corner, WGS84
         value_per_acre          float  sum(assessed_value) / cell ground acres
         revenue_per_acre        float  sum(levy) / cell ground acres — only
                                        when ``levy`` is present
-
-    Properties whose lot is LARGER than one cell (``lot_size_m2 > cell_m²``)
-    are spread over the cells their footprint covers — modelled as a square
-    of the lot's area centred on the point — instead of dropping their whole
-    value into the single cell holding the point. Without this, a large
-    parcel reads as a false needle: West Edmonton Mall is $1.3B on a 43 ha
-    lot behind ONE lat/long; citywide, lots over 1 ha carry ~18% of all
-    assessed value. Rows with small or null lot sizes bin by point — which
-    also keeps the inconsistent multi-unit ``lot_size`` values (DATA.md §2)
-    from mattering: each row only ever spreads over its OWN lot square.
 
     No silent drops: rows with null coordinates are counted and reported
     (0 in the current data — DATA.md §2), and the cell sums are checked to
@@ -107,39 +65,18 @@ def build_value_grid(df: pd.DataFrame, cell_m: float = 100.0) -> pd.DataFrame:
     pts = df.loc[~missing]
 
     x, y = _TO_ALBERTA.transform(pts["longitude"].to_numpy(), pts["latitude"].to_numpy())
-    x, y = np.asarray(x), np.asarray(y)
-
-    value_cols = ["assessed_value"] + (["levy"] if "levy" in pts.columns else [])
-    values = pts[value_cols].to_numpy(dtype=float)
-
-    if "lot_size_m2" in pts.columns:
-        lot = pd.to_numeric(pts["lot_size_m2"], errors="coerce").to_numpy(dtype=float)
-        big = np.nan_to_num(lot) > cell_m * cell_m
-    else:
-        big = np.zeros(len(pts), dtype=bool)
-
-    # Point-binned rows (small/unknown lots): value lands in the point's cell.
-    binned = pd.DataFrame({
-        "ix": np.floor(x[~big] / cell_m).astype(np.int64),
-        "iy": np.floor(y[~big] / cell_m).astype(np.int64),
+    cells = pd.DataFrame({
+        "ix": np.floor(np.asarray(x) / cell_m).astype(np.int64),
+        "iy": np.floor(np.asarray(y) / cell_m).astype(np.int64),
+        "assessed_value": pts["assessed_value"].to_numpy(),
     })
-    for j, c in enumerate(value_cols):
-        binned[f"c{j}"] = values[~big, j]
+    agg_spec = {"assessed_value": "sum"}
+    if "levy" in pts.columns:
+        cells["levy"] = pts["levy"].to_numpy()
+        agg_spec["levy"] = "sum"
+    grid = cells.groupby(["ix", "iy"], as_index=False).agg(agg_spec)
 
-    # Large lots: spread over the footprint square.
-    parts = [binned]
-    if big.any():
-        logger.info(
-            "Spreading %d large-lot propert(ies) (> %.0f m² footprint) across their cells",
-            big.sum(), cell_m * cell_m,
-        )
-        parts.append(_spread_large_lots(x[big], y[big], np.sqrt(lot[big]), values[big], cell_m))
-
-    cells = pd.concat(parts, ignore_index=True)
-    grid = cells.groupby(["ix", "iy"], as_index=False).sum()
-    grid = grid.rename(columns={f"c{j}": c for j, c in enumerate(value_cols)})
-
-    # Conservation guard: binning/spreading must not create or lose a dollar.
+    # Conservation guard: binning must not create or lose a dollar.
     if not np.isclose(grid["assessed_value"].sum(), pts["assessed_value"].sum()):
         raise RuntimeError("grid cell sums do not conserve total assessed value")
 
@@ -152,7 +89,7 @@ def build_value_grid(df: pd.DataFrame, cell_m: float = 100.0) -> pd.DataFrame:
         "lat": lat,
         "value_per_acre": grid["assessed_value"] / cell_acres,
     })
-    if "levy" in value_cols:
+    if "levy" in agg_spec:
         out["revenue_per_acre"] = grid["levy"] / cell_acres
 
     logger.info(

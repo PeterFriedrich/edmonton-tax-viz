@@ -35,7 +35,6 @@ from load_boundaries import load_boundaries
 from load_zoning import load_zoning, export_zoning_web
 from load_roads import load_roads, export_roads_web
 from join_and_calculate import join_and_calculate, export_geojson
-from load_property_info import load_lot_sizes
 from export_value_grid import export_value_grid
 from plot_choropleth import plot_choropleth
 
@@ -43,7 +42,6 @@ logger = logging.getLogger(__name__)
 
 # --- Default paths (override via CLI) --------------------------------------
 ASSESSMENT_CSV = ROOT / "data/raw/Property_Assessment_Data__Current_Calendar_Year_.csv"
-PROPERTY_INFO_CSV = ROOT / "data/raw/Property_Info__Current_Calendar_Year_.csv"
 BOUNDARIES_GEOJSON = ROOT / "data/raw/neighbourhoods.geojson"
 ZONING_GEOJSON = ROOT / "data/raw/zoning.geojson"
 ROADS_GEOJSON = ROOT / "data/raw/roads.geojson"
@@ -76,7 +74,6 @@ def run(
     assessment_year: int = ASSESSMENT_YEAR,
     zoning_geojson: Path | None = ZONING_GEOJSON,
     roads_geojson: Path | None = ROADS_GEOJSON,
-    property_info_csv: Path | None = PROPERTY_INFO_CSV,
     setback_m: float = SETBACK_M,
     simplify_tolerance_m: float = SIMPLIFY_TOLERANCE_M,
 ) -> None:
@@ -131,19 +128,7 @@ def run(
             )
         # Grid-cell spikes for the Glass view (Urban3-style detail;
         # ground-acre denominator — see export_value_grid's docstring).
-        # Lot sizes let large parcels spread over their footprint instead of
-        # spiking one cell; absent file degrades to pure point binning.
-        grid_input = assessment
-        if property_info_csv is not None and Path(property_info_csv).exists():
-            grid_input = assessment.merge(
-                load_lot_sizes(property_info_csv), on="account_number", how="left"
-            )
-        elif property_info_csv is not None:
-            logger.warning(
-                "Property info file not found (%s) — grid export will point-bin "
-                "large lots too", property_info_csv,
-            )
-        export_value_grid(grid_input, GRID_WEB_OUT, cell_m=GRID_CELL_M)
+        export_value_grid(assessment, GRID_WEB_OUT, cell_m=GRID_CELL_M)
 
     logger.info("Pipeline complete.")
 
@@ -154,7 +139,6 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p.add_argument("--boundaries-geojson", type=Path, default=BOUNDARIES_GEOJSON)
     p.add_argument("--zoning-geojson", type=Path, default=ZONING_GEOJSON)
     p.add_argument("--roads-geojson", type=Path, default=ROADS_GEOJSON)
-    p.add_argument("--property-info-csv", type=Path, default=PROPERTY_INFO_CSV)
     p.add_argument("--mill-rates-json", type=Path, default=MILL_RATES_JSON)
     p.add_argument("--assessment-year", type=int, default=ASSESSMENT_YEAR)
     p.add_argument("--png-out", type=Path, default=PNG_OUT)
@@ -185,7 +169,6 @@ def main(argv: list[str] | None = None) -> None:
         assessment_year=args.assessment_year,
         zoning_geojson=None if args.skip_zoning else args.zoning_geojson,
         roads_geojson=None if args.skip_roads else args.roads_geojson,
-        property_info_csv=args.property_info_csv,
         setback_m=args.setback_m,
         simplify_tolerance_m=args.simplify_tolerance_m,
     )

@@ -109,7 +109,7 @@ def test_output_columns(tmp_path):
     csv.write_text(_write_csv([_base_row()]))
     df = load_assessment(csv)
     assert set(df.columns) == {
-        "account_number", "neighbourhood_name", "assessed_value", "is_exempt", "tax_class",
+        "neighbourhood_name", "assessed_value", "is_exempt", "tax_class",
         "assessment_class_1", "assessment_class_2", "assessment_class_3",
         "assessment_class_pct_1", "assessment_class_pct_2", "assessment_class_pct_3",
         "latitude", "longitude",

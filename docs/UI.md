@@ -241,16 +241,14 @@ plane is mouseover geography. Implementation (`web/index.html`,
   reads on the ground too; pickable + `autoHighlight` (the highlight shows
   through the glass). `glass-grid` — a `GridCellLayer` of the pipeline's
   100 m cells (`web/data/value_grid.json`, `export_value_grid.py`: property
-  points binned in EPSG:3400, large lots spread over their footprint square
-  so West-Edmonton-Mall-sized parcels read as mesas rather than one false
-  needle, cell total ÷ cell GROUND acres — see ARCHITECTURE for both
-  decisions), lazy-loaded like roads/zoning, at `state.prismOpacity`, not
-  pickable.
+  points binned in EPSG:3400, cell total ÷ cell GROUND acres — see
+  ARCHITECTURE for the denominator decision), lazy-loaded like roads/zoning,
+  at `state.prismOpacity`, not pickable.
 - **Cell scale anchors** (`gridScale()`, per metric, cached — the
-  `ratioScale()` pattern): colour clamp at the cells' **p97.5** (~$75k/acre
-  revenue on 2025 data — the cell distribution is its own scale, above the
-  hood clamp), sqrt colour transform like the hood money metrics;
-  **elevation parity** — the tallest cell (~$6.1M/acre, a downtown tower in
+  `ratioScale()` pattern): colour clamp at the cells' **p97.5** (~$144k/acre
+  revenue on 2025 data — the cell distribution is its own scale, far above
+  the hood clamp), sqrt colour transform like the hood money metrics;
+  **elevation parity** — the tallest cell (~$12.6M/acre, a downtown tower in
   one 2.47-acre cell) reaches exactly the money view's tallest hood prism.
   Both linear (the honesty rule). Legend relabels "… (100 m cells)".
 - **Spike opacity**: the ratio view's slider panel shows here too; entering
@@ -264,7 +262,7 @@ plane is mouseover geography. Implementation (`web/index.html`,
   renders translucent NEIGHBOURHOOD prisms — the coarse version of the same
   composition (no lens handling; the button is disabled here anyway).
 - Headless-verified 2026-07-04 (`tools/profiling/verify-glass.js`: layer
-  stack, 358 neutral + 48 set-aside plane fills / 0 mismatches, 69,272 cells,
+  stack, 358 neutral + 48 set-aside plane fills / 0 mismatches, 34,675 cells,
   clamp == independent p97.5, elevation parity exact, mid-cell fill matches
   the ramp, slider → opacity live, per-view slider defaults, metric toggle
   chrome + cell legend, lens disabled, ground-z labels, money-branch
