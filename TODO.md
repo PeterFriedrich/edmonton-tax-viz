@@ -84,6 +84,32 @@ _Last reconciled: 2026-07-02_
     checkboxes (the original stackable idea returns, one level down). That's
     also the trigger to define "total services" and reopen the ratio's
     denominator (currently roads-only by construction).
+    - [ ] **Fire lens — NEXT service candidate (Peter, 2026-07-04; datasets
+      probed, design NOT decided, nothing downloaded/built).** Two sources:
+      - `b4y7-zhnz` "Fire Stations" — 31 rows, station number + address +
+        lat/long point ONLY (no staffing/coverage/response data).
+      - `7hsn-idqi` "Fire Response: Current and Historical" — 947,781
+        dispatched events 2011–mid-2026. Per row: dispatch + close
+        datetimes, `event_duration_mins` (dispatch→CLOSE — there is **NO
+        on-scene-arrival timestamp anywhere**, so a true response-time
+        metric is NOT buildable from open data), `event_type_group` +
+        description, dispatch-priority `response_code`, lat/long, and
+        **`neighbourhood_name` pre-joined on ~99% of rows** (8,093 null)
+        — a per-hood metric needs no spatial work. Event mix (interpretive
+        trap): MEDICAL is 57% (536k); ALARMS 144k, MVI 65k, OUTSIDE FIRE
+        48k, CITIZEN ASSIST 36k, FIRE 24k, HAZMAT 20k; plus operational
+        noise to exclude (TRAINING/MAINTENANCE 18k, COMMUNITY EVENT,
+        PRE-INCIDENT PLANNING, nulls 31k).
+      **Open decisions (asked 2026-07-04, unanswered — re-ask before
+      building):** (1) lens shape — recommended: demand metric
+      (events/acre/year) + the 31 stations as context dots; alternatives:
+      add distance-to-nearest-station supply column, or proximity-only;
+      (2) event filter — recommended: all emergency responses minus
+      operational noise; alternative: fire-core only (~25%); (3) year
+      window — recommended: last 3 full years averaged (2023–2025);
+      (4) branch point — recommended: new branch off master, independent
+      of unmerged `feature/glass-view`. Reminder: second service = the
+      trigger for the parent item's Services-view UI decision.
   - [x] ~~**Use-mix view: surface each neighbourhood's zoning composition.**~~
     **SHIPPED 2026-07-03 — PR #10 merged + deployed** (run 28679596055, green
     first try); live site verified serving the Uses view + `zoning.geojson`
