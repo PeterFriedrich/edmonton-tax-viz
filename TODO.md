@@ -173,8 +173,12 @@ _Last reconciled: 2026-07-02_
   64 at zoom 12.2. See UI.md "Neighbourhood labels" for the
   CollisionFilterExtension and glyph-scale gotchas.
 
-- [ ] **Ghost prisms over a neutral hood plane (Peter, 2026-07-03; design
-  clarified 2026-07-04).** The Urban3-infographic composition: keep the
+- [x] ~~**Ghost prisms over a neutral hood plane (Peter, 2026-07-03; design
+  clarified 2026-07-04).**~~ **SHIPPED 2026-07-05 — PR #12 merged + deployed**
+  (run `28757734787`, green first try; live site serves the Glass view +
+  `value_grid.json` with the lot-acre columns, 1.76 MB / 200). Full design
+  trail below; the denominator story continues in the lot-size item after it.
+  The Urban3-infographic composition: keep the
   extruded prisms but render them **transparent**, over a flat hood plane
   UNDERNEATH that is **one neutral colour — NOT metric-coloured** (Peter:
   "i don't actually want the color on the hood underneath"). The plane is
@@ -190,9 +194,10 @@ _Last reconciled: 2026-07-02_
   see DATA.md §2): **100 m grid cells** (~35k, in Peter's "a tenth of 287k"
   range), height = **revenue in cell ÷ cell GROUND acres** (consistent with
   the hood metric's boundary-acre denominator; no condo/lot_size artifacts).
-  Built on `feature/glass-view` (UNMERGED): pipeline grid export + Glass
-  view renders the cells over the neutral hood plane (pure point binning,
-  34,675 cells). 146 tests + verify-glass.js green; screenshots eyeballed.
+  Built on `feature/glass-view` (merged in PR #12): pipeline grid export +
+  Glass view renders the cells over the neutral hood plane (pure point
+  binning, 34,675 cells). Tests + verify-glass.js green; screenshots
+  eyeballed.
   - [x] ~~**Confirm the set-aside artifacting is gone (Peter, on-device).**~~
     CONFIRMED 2026-07-05 — Peter eyeballed the local preview (reverted
     point-binned grid + the new denominator toggle): "looks fine". The
@@ -206,8 +211,12 @@ _Last reconciled: 2026-07-02_
     set-aside land, plus tens of thousands of sub-1 m cells coplanar with
     the plane); needs Peter's eyeball on the reverted grid to confirm
     before ship.
-  - [ ] **Large single-point lots needle the grid (known limitation,
-    post-rollback).** One lat/long per account means WEM ($1.285B,
+  - [x] ~~**Large single-point lots needle the grid (known limitation,
+    post-rollback).**~~ RESOLVED by the lot-acre denominator toggle
+    (shipped in the same PR — see the lot-size item below); the needle
+    remains visible in ground-acre mode by design (that metric honestly
+    shows dollars-per-map-cell). Original context: One lat/long per
+    account means WEM ($1.285B,
     43 ha) is a single $12.6M/acre spike — #1 citywide, 2× the top
     downtown tower; lots > 1 ha are 5,524 rows / ~18% of citywide value.
     **Chosen fix: the PRIORITY lot-size denominator variant below** (per
@@ -219,9 +228,10 @@ _Last reconciled: 2026-07-02_
     polygon, cap the square side, floor displayed $/acre — REPORTED,
     not silent).
 
-- [ ] **PRIORITY — Lot-size denominator variant for the grid spikes
-  (Peter, 2026-07-04; PRIORITIZED 2026-07-04 after the WEM verification —
-  next build item, deferred only for session budget).** The true Urban3
+- [x] ~~**PRIORITY — Lot-size denominator variant for the grid spikes**~~
+  **SHIPPED 2026-07-05 — PR #12** (with the Glass view above; deployed +
+  live-verified). (Peter, 2026-07-04; prioritized after the WEM
+  verification.) The true Urban3
   metric is revenue per PARCEL acre (`dkk9-cj3x` `lot_size`), not per
   ground acre. **Why it's now priority:** verified 2026-07-04 that the
   ground-acre grid ranks WEM (single account, $1.285B, 107-acre lot, one
@@ -256,8 +266,8 @@ _Last reconciled: 2026-07-02_
     verify-glass extended (denominator matrix green; lens+uses regressions
     green); shot-denom.js eyeballed — WEM needle collapses in lot mode.
     UI.md synced. Peter's on-device eyeball PASSED 2026-07-05 ("looks
-    fine"). Remaining: PR + merge `feature/glass-view` → deploy (README
-    view list update rides in the PR).
+    fine"); PR #12 merged + deployed same day (README view list rode in
+    the PR).
 
 - [x] ~~**SCOPE: composition numbers now; full zoning POLYGON layer in the viewer is a
   SEPARATE later product decision**~~ — RESOLVED 2026-07-03: Peter opted in for the
