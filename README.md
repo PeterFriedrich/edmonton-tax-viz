@@ -65,8 +65,11 @@ land-use set-aside layer and a residential-only lens. The **cost side is now
 open** (`docs/SPEC_services.md`): a Roads view renders the city-maintained road
 network coloured by road supply per acre, and a Ratio view shows **revenue per
 road metre** — how much municipal revenue backs each metre of neighbourhood
-road. A weekly GitHub Action regenerates the data and redeploys automatically
-(see `docs/SPEC_deployment.md`).
+road. A Uses view maps the zoning bylaw's land-use categories, and a Glass
+view renders the metric in **100 m grid cells** (the Urban3-style detail
+level), with a toggle between ground acres and **parcel (lot) acres** as the
+denominator. A weekly GitHub Action regenerates the data and redeploys
+automatically (see `docs/SPEC_deployment.md`).
 
 See [`/research`](/research) for background findings and data source inventory.
 
