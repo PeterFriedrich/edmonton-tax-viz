@@ -191,8 +191,10 @@ findings:
 
 **Confounders (explicit ask — age, density, lot size):**
 - **Age:** median `year_built` from the property-info dataset `dkk9-cj3x`
-  (DATA.md §2 — documented but NOT yet fetched by `scripts/download_data.py`;
-  adding it needs the standard `$limit`/truncation guard, ~440k rows via SODA).
+  (DATA.md §2 — fetched by `scripts/download_data.py --only property_info`
+  since 2026-07-04; the pipeline already loads its `lot_size` via
+  `src/load_property_info.py` for the grid's lot-acre metric, and `year_built`
+  is one usecols entry away).
 - **Density:** residential-record count per acre (from data already loaded).
 - **Lot size:** median `lot_size` from `dkk9-cj3x` (city-provided, m²; ~0.6% null).
 - **Strategy:** (a) report the correlation matrix among mix / age / density /
@@ -208,4 +210,5 @@ findings:
 **Sequencing note:** a first-pass scatter (revenue/acre vs H, road-per-unit vs
 H, coloured by era once `dkk9-cj3x` lands) is a notebook exercise on top of the
 already-served GeoJSON + assessment CSV. The deconfounded version needs the
-`dkk9-cj3x` download step first.
+`dkk9-cj3x` download step first (DONE 2026-07-04 — the file is a standing
+pipeline input now).

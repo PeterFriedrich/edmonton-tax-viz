@@ -46,6 +46,14 @@ diagram exactly where `load_zoning.py` does — a raw GeoJSON (`9j8t-zm52`) over
 against the boundary frame, producing per-hood columns merged in
 `join_and_calculate` (`road_m_total`; `road_m_per_acre` computed there).
 
+**Also in the flow (Glass-view grid, 2026-07-04/05):** a side branch that never
+touches the hood join — `main.py` takes the PER-PROPERTY frame (post
+`apply_tax_rates`), merges `load_property_info.py`'s `account_number → lot_size`
+onto it, runs `check_lot_acre_bounds` against the boundary frame (physical-bound
+validation, raises on new violations), and hands it to `export_value_grid.py`
+for the 100 m cell file (`web/data/value_grid.json`, ground- AND lot-acre
+metrics). Absent property-info file → ground-acre only.
+
 **One metric exists ONLY in the browser:** the Ratio view's revenue per road
 metre (`revenue_per_acre / road_m_per_acre` — the acres cancel) is derived
 client-side in `web/index.html` from the two published GeoJSON columns. No
@@ -64,6 +72,8 @@ subset, one for the residential lens (2026-07-03). Transform decision + the
 **Inputs:** path to raw assessment CSV
 
 **Outputs:** `pd.DataFrame` with columns:
+- `account_number` (int — join key to property-info `dkk9-cj3x`; feeds the
+  grid export's lot_size merge in `main.py`)
 - `neighbourhood_name` (str, normalized — stripped, uppercased)
 - `assessed_value` (float)
 - `latitude` / `longitude` (float — the property point; feeds the grid export,

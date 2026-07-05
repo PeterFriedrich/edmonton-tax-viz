@@ -20,9 +20,13 @@ backlog items are really the same limitation resurfacing, so they belong togethe
 
 ## What parcel data we already have vs. would need
 
-- **Available in the source datasets** (per-property / per-parcel, currently aggregated
-  away by the pipeline): the assessment roll `q7d6-ambg` (per-property value, class,
-  exempt flag) and the property-info dataset `dkk9-cj3x` (lot size, zoning, year built).
+- **Available in the source datasets** (per-property / per-parcel): the assessment
+  roll `q7d6-ambg` (per-property value, class, exempt flag) and the property-info
+  dataset `dkk9-cj3x` (lot size, zoning, year built). No longer entirely aggregated
+  away: since 2026-07-04/05 the Glass view's 100 m grid works per-property, and its
+  lot-acre metric uses `lot_size` directly (the first true parcel-denominator metric
+  — dedupe caveats in `docs/FINDINGS_lot_dedupe.md`). Parcel *geometry* remains the
+  blocker below.
 - **Would need acquiring / more work:** true parcel *geometry* (lot polygons) for a
   real parcel-level map; a clean parcel↔neighbourhood spatial join; confirming the
   assessment roll's coverage of non-taxable parcels (known gap — exempt institutional
