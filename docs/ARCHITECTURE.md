@@ -263,8 +263,9 @@ the cell's SW corner (`revenue_per_acre` omitted on the value-only path).
   per project rule); sum value (and levy) per cell
 - Divide by the cell's **GROUND acres** — the deliberate denominator decision
   (2026-07-04): consistent with the hood metrics' boundary-acre denominator,
-  and immune to the condo `lot_size` inconsistencies (DATA.md §2). A
-  lot-acre variant is TODO.
+  and immune to the condo `lot_size` inconsistencies (DATA.md §2). Known
+  cost: large parcels needle (one point per account — DATA.md §2, WEM). A
+  lot-acre variant is the PRIORITY TODO.
 - No silent drops: null-coordinate rows counted and reported; a conservation
   guard errors if cell sums don't reproduce the input totals
 

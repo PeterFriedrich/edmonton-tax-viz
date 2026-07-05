@@ -248,9 +248,17 @@ plane is mouseover geography. Implementation (`web/index.html`,
   `ratioScale()` pattern): colour clamp at the cells' **p97.5** (~$144k/acre
   revenue on 2025 data — the cell distribution is its own scale, far above
   the hood clamp), sqrt colour transform like the hood money metrics;
-  **elevation parity** — the tallest cell (~$12.6M/acre, a downtown tower in
-  one 2.47-acre cell) reaches exactly the money view's tallest hood prism.
-  Both linear (the honesty rule). Legend relabels "… (100 m cells)".
+  **elevation parity** — the tallest cell (~$12.6M/acre — West Edmonton
+  Mall, verified 2026-07-04: one $1.285B account whose 107-acre lot
+  collapses onto a single point → one 2.47-acre cell) reaches exactly the
+  money view's tallest hood prism. Both linear (the honesty rule). Legend
+  relabels "… (100 m cells)".
+- **Known display caveat — single-point needles**: the metric is dollars in
+  the cell ÷ cell GROUND acres, so a large parcel's whole value lands in one
+  cell and its real land never enters the denominator (WEM reads 2× the top
+  downtown tower, though per lot acre the tower is ~50× WEM — DATA.md §2).
+  The PRIORITY lot-acre denominator variant (TODO.md) is the planned
+  correction.
 - **Spike opacity**: the ratio view's slider panel shows here too; entering
   Glass resets it to the view's own default (**60%**; Ratio stays 5%).
 - **Metric-driven like Money**: the Revenue/Value toggle renders live

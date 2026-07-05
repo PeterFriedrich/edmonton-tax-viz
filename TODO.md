@@ -179,24 +179,37 @@ _Last reconciled: 2026-07-02_
     before ship.
   - [ ] **Large single-point lots needle the grid (known limitation,
     post-rollback).** One lat/long per account means WEM ($1.285B,
-    43 ha) is a single ~$10M/acre spike; lots > 1 ha are 5,524 rows /
-    ~18% of citywide value. The reverted footprint-spreading approach
-    (spread value over a lot-area square centred on the point,
-    `git show 70a5d54`) de-needled WEM but caused the set-aside
-    artifacting above. If revisited, fix the spillover first: clip spread
-    cells to the parcel's hood polygon, cap the square side, and/or floor
-    displayed $/acre (REPORTED, not silent).
+    43 ha) is a single $12.6M/acre spike — #1 citywide, 2× the top
+    downtown tower; lots > 1 ha are 5,524 rows / ~18% of citywide value.
+    **Chosen fix: the PRIORITY lot-size denominator variant below** (per
+    parcel acre, the tower correctly beats WEM ~50×). The reverted
+    footprint-spreading approach (spread value over a lot-area square
+    centred on the point, `git show 70a5d54`) also de-needled WEM but
+    caused the set-aside artifacting above; if ever revisited instead,
+    fix the spillover first (clip spread cells to the parcel's hood
+    polygon, cap the square side, floor displayed $/acre — REPORTED,
+    not silent).
 
-- [ ] **Lot-size denominator variant for the grid spikes (Peter, 2026-07-04
-  — later).** The true Urban3 metric is revenue per PARCEL acre
-  (`dkk9-cj3x` `lot_size`), not per ground acre. Blocked on a documented
-  condo heuristic: at multi-unit points lot_size is inconsistently
-  duplicated-per-unit / apportioned-per-unit / null (one 1,059-unit
-  building has 1,051 nulls — DATA.md §2), so summing lot acres at exactly
-  the tallest spikes is guesswork today. Needs: a dedupe rule (e.g. sum
-  DISTINCT lot_size values per point), an exclusion list for null-lot
-  towers, and a validation pass against the ground-acre version before
-  offering it as a metric.
+- [ ] **PRIORITY — Lot-size denominator variant for the grid spikes
+  (Peter, 2026-07-04; PRIORITIZED 2026-07-04 after the WEM verification —
+  next build item, deferred only for session budget).** The true Urban3
+  metric is revenue per PARCEL acre (`dkk9-cj3x` `lot_size`), not per
+  ground acre. **Why it's now priority:** verified 2026-07-04 that the
+  ground-acre grid ranks WEM (single account, $1.285B, 107-acre lot, one
+  lat/long → one 2.47-acre cell → $12.6M levy/acre needle, #1 citywide)
+  2× above the top downtown tower ($620M on 0.93 acres) — but per LOT
+  acre the tower beats WEM ~50× ($612M vs $12M value/lot-acre). Point
+  binning ÷ fixed cell area rewards "most dollars pinned to one point",
+  not land productivity; the lot-acre denominator is the chosen fix
+  (preferred over resurrecting the reverted footprint spreading).
+  Blocked on a documented condo heuristic: at multi-unit points lot_size
+  is inconsistently duplicated-per-unit / apportioned-per-unit / null
+  (one 1,059-unit building has 1,051 nulls — DATA.md §2), so summing lot
+  acres at exactly the tallest spikes is guesswork today. Needs: a dedupe
+  rule (e.g. sum DISTINCT lot_size values per point — worked correctly on
+  the WEM and downtown-tower cells checked), an exclusion list for
+  null-lot towers, and a validation pass against the ground-acre version
+  before offering it as a metric.
 
 - [x] ~~**SCOPE: composition numbers now; full zoning POLYGON layer in the viewer is a
   SEPARATE later product decision**~~ — RESOLVED 2026-07-03: Peter opted in for the

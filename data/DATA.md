@@ -122,6 +122,15 @@ aligned. That pull also surfaced a new `Assessment Class 1` label
   why the Glass view's grid export divides by cell GROUND acres, not lot acres
   (`src/export_value_grid.py`); a lot-acre variant needs a documented dedupe
   heuristic first (TODO.md).
+- **One lat/long per account concentrates large parcels onto a single point
+  (quantified 2026-07-04)** — the coordinate is a centroid regardless of lot
+  size, so any point-binned density map needles big lots: West Edmonton Mall
+  is one account ($1.285B assessed, 433,592 m² lot) behind one point — in the
+  100 m Glass grid that's the #1 cell citywide at $12.6M levy/acre, 2× the top
+  downtown tower ($620M on 3,754 m²), even though per LOT acre the tower beats
+  WEM ~50× ($612M vs $12M value/lot-acre). Citywide, lots > 1 ha are 5,524
+  rows carrying ~18% of the $237.5B roll. The lot-acre denominator variant
+  (TODO.md, PRIORITY) is the chosen correction.
 - **Downloaded via `scripts/download_data.py --only property_info`** (added
   2026-07-04): full-CSV export endpoint, server count(*) cross-check; lands at
   `data/raw/Property_Info__Current_Calendar_Year_.csv`. Join to the assessment
