@@ -84,3 +84,15 @@ The parcel-level 3D revenue/acre map is the method this project approximates at 
 neighbourhood scale (`FINDINGS_revenue_scale.md` §7). A genuine parcel map is the
 natural "Phase 3" once parcel geometry + a clean spatial join are in hand — and it
 would make P1–P4 fall out for free.
+
+### P6. True impervious-area stormwater (upgrade to the stormwater lens)
+_Added 2026-07-05 with `docs/SPEC_utilities.md`._ The stormwater lens computes
+A × I × R from `lot_size` and a **zone-average** runoff coefficient — faithful to
+how EPCOR actually bills, but R is a class proxy for what physically drives the
+cost: **impervious area** (the 2024 HDR cost-of-service study's stated basis).
+With parcel polygons (+ building footprints / pavement classification) the lens
+upgrades from zone-average R to measured per-parcel imperviousness — a cost
+model finer than the billing formula itself. Same AltaLIS blocker as P1–P5;
+partial credit is available sooner from building-footprint open data over
+assessment lot areas (footprint ÷ lot as a lower-bound imperviousness), without
+parcel polygons.

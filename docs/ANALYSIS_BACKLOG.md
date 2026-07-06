@@ -212,3 +212,56 @@ H, coloured by era once `dkk9-cj3x` lands) is a notebook exercise on top of the
 already-served GeoJSON + assessment CSV. The deconfounded version needs the
 `dkk9-cj3x` download step first (DONE 2026-07-04 — the file is a standing
 pipeline input now).
+
+---
+
+## 5. Growth servicing cost recovery — who funds new trunk infrastructure, and what does the city inherit?
+
+_Added 2026-07-05, out of the utility methods doc
+(`docs/utility_cost_estimation_lens_methods.md` §I and Stage 5). Analysis, not
+a lens build — the lens side is `docs/SPEC_utilities.md`._
+
+**Question.** Development-industry material (BILD Edmonton Metro's Urban
+Growth Case Study: Heritage Valley + Windermere) argues new growth is
+fiscally net-positive because developers fund upfront capital (~$3.2B
+claimed) and the area will contribute ~$309M/yr in property tax at build-out.
+The counter-consideration is the **long-tail liability**: once assets
+transfer, the City/EPCOR carry lifecycle renewal + O&M (regulated
+return-on-rate-base ~10.5–10.8% ROE on ~$888M of planned wastewater capital
+alone; a documented ~$10B ten-year infrastructure renewal shortfall). What
+can Edmonton's own data say about either side?
+
+**Documented facts to anchor on (sourced in the methods doc — both the BILD
+projections and the counter-framing carry advocacy weighting; label all of
+it):**
+- Sanitary Sewer Trunk Charge **paused 2024-05-13** (2024 rate was
+  $1,764/principal dwelling); ~$361M spent on deep trunks through the SSSF
+  to end-2024. While paused, new trunk servicing draws on the general
+  SSSF/ratepayer base — a measurable cross-subsidy channel.
+- Edmonton's off-site levies are structured as targeted instruments, low
+  relative to peers (e.g. Calgary's per-unit infill water/wastewater charges
+  + per-hectare greenfield fees).
+- BILD's figures are **projections at full build-out**, not realized
+  outcomes; City-side O&M figures in the same study (~$14M/yr roadways,
+  ~$9.7M/yr parks) are partial (no renewal, no utility side).
+
+**Approach — with our data (auto):**
+- Per-hood levy (have) vs per-hood modeled utility charges + road supply
+  (SPEC_utilities lenses when built) for the named growth areas vs mature
+  hoods — an Edmonton-data version of the case study's revenue side, with
+  the consumption side attached.
+- Neighbourhood age (`year_built` medians, `dkk9-cj3x`) × road-per-household
+  and (once built) stormwater-charge-per-acre: does new-greenfield servicing
+  intensity differ from mature-grid intensity? Overlaps item 4's servicing-
+  burden test; this item adds the growth-area framing.
+
+**Approach — by hand:**
+- Track SSTC resumption (SSSF Transformation project) and any off-site levy
+  changes; each changes the cross-subsidy picture materially.
+- Read the BILD study and the City's Capital Investment Outlook directly
+  before quoting either beyond the methods doc's citations.
+
+**Output:** a FINDINGS doc presenting both ledgers side by side — developer
+upfront capital (avoided City cost) AND inherited lifecycle/renewal + O&M —
+per the neutral-tone rule: surface the data, attribute the claims, no
+verdict language.

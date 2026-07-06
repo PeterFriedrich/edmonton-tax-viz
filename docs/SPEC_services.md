@@ -254,6 +254,11 @@ per hood:  road_m_<class>  = Σ length(city road centrelines ∩ hood polygon), 
 
 ## Cross-refs
 
+- **Candidate next services (each fires the Services-view UI trigger above):**
+  fire lens (datasets probed, design open — TODO.md "More service layers") and
+  the five utility cost lenses (`docs/SPEC_utilities.md`, SPEC'd 2026-07-05 —
+  stormwater recommended first; tariff methods in
+  `docs/utility_cost_estimation_lens_methods.md`).
 - Cost side declared out of scope in Phase 1: `docs/SPEC_phase1.md` (Out of Scope).
 - Municipal-only scoping precedent (education levy exclusion): `docs/SPEC_revenue.md`.
 - Module pattern + explicit-dict philosophy: `src/load_zoning.py`, `docs/ARCHITECTURE.md`.
