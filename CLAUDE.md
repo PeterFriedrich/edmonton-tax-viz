@@ -21,6 +21,10 @@ Edmonton revenue-per-acre fiscal analysis. Python-only, no GIS software.
 
 ## Session Management
 - Always run `/handoff` before `/clear` — never wipe context without a written record in `session-summary/`
+- **Remote/cloud VM sessions (Claude Code on the web): commit + push proactively — don't wait for Peter's push command.** The container is ephemeral and gets reclaimed on inactivity; unpushed work is LOST when that happens. Rules:
+  - Push to the session's designated branch at every natural checkpoint (module + tests green, docs updated, feature milestone) — small pushed commits beat one perfect unpushed one.
+  - If usage/budget feels like it might run out, or a long task is only partly done: STOP, write the handoff (state, stopping point, next steps), commit, push. A half-done feature safely on origin is recoverable; a finished one in a dead container is not.
+  - Peter may be away — never hold work hostage waiting for a "push it" confirmation in these environments. (This overrides the usual only-push-when-asked default.)
 
 ## Code Style
 - Keep processing steps as separate, independently runnable modules in `src/`
