@@ -123,6 +123,22 @@ def test_hood_normalized_and_corrected(tmp_path):
     assert out["fire_events_per_year"].iloc[0] == pytest.approx(1.0)
 
 
+def test_fire_specific_hood_corrections(tmp_path):
+    # FIRE_NAME_CORRECTIONS layers on top of the shared dict: the fire CSV
+    # still says OLIVER for the renamed WÎHKWÊNTÔWIN boundary, and the
+    # "AREA" names collapse into their boundary hoods (summed, not dupes).
+    rows = [
+        _row(when="2023-01-01T00:00:00", hood="OLIVER"),
+        _row(when="2024-01-01T00:00:00", hood="WÎHKWÊNTÔWIN"),
+        _row(when="2025-01-01T00:00:00", hood="keswick area"),
+        _row(when="2025-06-01T00:00:00", hood="KESWICK"),
+    ]
+    out = load_fire_events(_write_events(tmp_path, rows), YEARS).set_index("neighbourhood_name")
+    assert set(out.index) == {"WÎHKWÊNTÔWIN", "KESWICK"}
+    assert out["fire_events_per_year"]["WÎHKWÊNTÔWIN"] == pytest.approx(2 / 3)
+    assert out["fire_events_per_year"]["KESWICK"] == pytest.approx(2 / 3)
+
+
 def test_null_hood_excluded_and_counted(tmp_path, caplog):
     rows = _window_rows() + [_row(hood=None)]
     with caplog.at_level("WARNING"):
