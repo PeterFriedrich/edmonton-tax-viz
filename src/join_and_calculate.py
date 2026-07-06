@@ -223,16 +223,17 @@ def join_and_calculate(
 # value↔revenue toggle reads both metrics; is_set_aside/set_aside_reason drive
 # the neutral-grey render + tooltip; is_residential drives the residential lens;
 # the frac_* composition (sums to 1) drives the use-mix view (dominant use is
-# derived client-side); road_m_per_acre is the services-lens metric
-# (SPEC_services.md — ratios only, totals stay out of the slim file like
-# total_assessed_value does).
+# derived client-side); road_m_per_acre and storm_charge_per_acre are the
+# Services-view metrics (SPEC_services.md, SPEC_utilities.md — ratios only,
+# totals stay out of the slim file like total_assessed_value does; the storm
+# figure is MODELED, not billed — the client must label it as such).
 SLIM_COLUMNS = [
     "neighbourhood_name", "value_per_acre", "revenue_per_acre",
     "set_aside_frac", "is_set_aside", "set_aside_reason",
     "frac_never", "frac_notyet", "frac_inst",
     "frac_residential", "frac_commercial", "frac_industrial",
     "frac_mixed", "frac_dc", "frac_other",
-    "is_residential", "road_m_per_acre", "geometry",
+    "is_residential", "road_m_per_acre", "storm_charge_per_acre", "geometry",
 ]
 
 

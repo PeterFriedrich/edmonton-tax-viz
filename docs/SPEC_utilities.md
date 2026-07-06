@@ -96,9 +96,12 @@ PEMBINA is #1 per-acre — the known lot-bound outlier, consistent.
   citywide-total validation against EPCOR published revenue must bracket
   this. Possible refinement (a Peter decision): exclude or separately
   report set-aside/notyet-zoned parcels.
-- **NOT displayed anywhere yet** — `storm_charge_per_acre` exists in the
-  join result but is deliberately kept OUT of `SLIM_COLUMNS` (nothing
-  served changes) until open decision 2 (display shape) is settled.
+- **DISPLAYED as of 2026-07-05** (`feature/services-view`, decision 2):
+  `storm_charge_per_acre` joined `SLIM_COLUMNS` and rides the main hood
+  GeoJSON; the Services view (the Roads view generalized to per-service
+  checkboxes) renders it as a flat hood plane — linear colour, clamp p97.5
+  of non-set-aside hoods (≈ $2,700 on 2025 data), set-asides grey, legend
+  labeled "Modeled". Full display detail: `docs/UI.md` "Services views".
 - The AG runoff ambiguity below is coded as 0.1 with a VERIFY comment.
 
 **Metric:** modeled annual stormwater charge per hood (and per acre) =

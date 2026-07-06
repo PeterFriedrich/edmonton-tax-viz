@@ -78,15 +78,18 @@ _Last reconciled: 2026-07-02_
     the new code.
   - [ ] **More service layers (water / drainage / transit / …).** Each needs its
     own SPEC_services section (dataset, filters, locked decisions), a
-    per-hood supply column, and a slim web export. **UI shape DECIDED
-    2026-07-05 (Peter): the Roads view generalizes to a "Services" view with
-    per-service checkboxes** (the original stackable idea returns, one level
-    down) — Roads, Stormwater, later Fire; one service checked → its ramp,
-    two+ → pick which drives colour. Build on a fresh branch off master
-    AFTER the stormwater pipeline PR merges. Defining "total services" and
-    reopening the ratio's denominator (currently roads-only by construction)
-    remains open — SPEC_utilities decision 3: keep it physical until at
-    least two dollar services exist.
+    per-hood supply column, and a slim web export.
+    - [x] ~~**Services-view UI generalization**~~ — **BUILT 2026-07-05
+      (`feature/services-view`) per Peter's decision**: the Roads view is now
+      a "Services" view with per-service checkboxes (Roads, Stormwater; later
+      Fire) and a "colour" radio choosing which checked service drives the
+      ramp (others render neutral; defaults = the old Roads view exactly).
+      Headless-verified (`tools/profiling/verify-services.js` + regressions
+      green) + screenshots (`shot-services.js`). Display detail: UI.md
+      "Services views". Defining "total services" and reopening the ratio's
+      denominator (currently roads-only by construction) remains open —
+      SPEC_utilities decision 3: keep it physical until at least two dollar
+      services exist.
     - [ ] **Fire lens — design DECIDED 2026-07-05 (Peter), build AFTER the
       Services-view UI + stormwater display land; nothing downloaded/built
       yet.** Two sources:
@@ -129,13 +132,14 @@ _Last reconciled: 2026-07-02_
         river valley bottom). As-built numbers + caveats: SPEC_utilities
         Lens 1 (serviced-area assumption is the big one — EETP fringe = 5%
         of the total; AG runoff coded 0.1 with VERIFY flag).
-      - [ ] **Display shape — DECIDED 2026-07-05 (Peter; SPEC decision 2):
-        per-hood ground-plane layer ($/acre/yr, sequential ramp, MODELED
-        label) inside the generalized Services view.** Build order:
-        (a) merge this branch's pipeline PR as-is (nothing served changes,
-        CI green suffices), (b) fresh branch off master for the
-        Services-view UI (Roads → checkboxes) + the stormwater layer,
-        which also adds `storm_charge_per_acre` to `SLIM_COLUMNS`.
+      - [x] ~~**Display shape**~~ — DECIDED (Peter; SPEC decision 2) and
+        **BUILT 2026-07-05 (`feature/services-view`)**: per-hood
+        ground-plane layer in the generalized Services view — linear
+        colour, clamp p97.5 of non-set-aside hoods (≈ $2,700, runtime),
+        set-asides grey, legend + blurb labeled MODELED / "modeled, not
+        billed"; `storm_charge_per_acre` added to `SLIM_COLUMNS` (hood
+        GeoJSON 0.7 MB, all 406 hoods carry it). Pipeline PR #13 merged
+        first, as sequenced.
       - [ ] Validation pass vs EPCOR published stormwater revenue
         (order-of-magnitude; must bracket the serviced-area assumption /
         possibly exclude set-aside/notyet-zoned parcels — Peter decision).

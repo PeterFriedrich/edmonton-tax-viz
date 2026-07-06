@@ -72,7 +72,12 @@ mode), Peter settled on **three discrete views** — **Money** (the classic
 prisms, opaque), **Roads** (the network alone, access roads ramp-coloured by
 `road_m_per_acre`, no prism layers at all), and **Ratio** (stage 3: ghost
 prisms — default 5% opacity, slider-adjustable — of **revenue per road
-metre** over the all-neutral network). The ratio is computed client-side
+metre** over the all-neutral network). *2026-07-05: Roads GENERALIZED to the
+**Services view*** — per-service checkboxes (Roads, Stormwater; the original
+stackable idea, one level down), a "colour" radio picking which checked
+service drives the ramp (the rest render neutral), defaults reproducing the
+old Roads view exactly. The second service is the stormwater hood plane
+(`SPEC_utilities.md` Lens 1, MODELED label). The ratio is computed client-side
 from the two published columns; colour is LOG (FINDINGS §6.4 — skew 19.7,
 log 0.32; anchors p2.5–p97.5 of the kept subset, runtime-computed), height
 linear. Set-aside hoods and hoods with `road_m_per_acre < 5`

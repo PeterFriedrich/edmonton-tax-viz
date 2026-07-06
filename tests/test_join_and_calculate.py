@@ -122,6 +122,20 @@ def test_export_writes_only_slim_columns(tmp_path):
     assert set(written.columns) == {"neighbourhood_name", "value_per_acre", "geometry"}
 
 
+def test_export_keeps_storm_charge_per_acre_when_present(tmp_path):
+    out = tmp_path / "slim.geojson"
+    export_geojson(
+        _result([{"neighbourhood_name": "DOWNTOWN", "total_assessed_value": 1e6,
+                  "area_acres": 100.0, "value_per_acre": 10_000.0,
+                  "storm_charge_annual": 5000.0, "storm_charge_per_acre": 50.0}]),
+        str(out),
+    )
+    written = gpd.read_file(out)
+    assert "storm_charge_per_acre" in written.columns
+    # the per-acre ratio ships; the raw total stays out of the slim file
+    assert "storm_charge_annual" not in written.columns
+
+
 def test_export_reprojects_to_wgs84(tmp_path):
     out = tmp_path / "slim.geojson"
     export_geojson(

@@ -1,6 +1,7 @@
 // One-off verify for the ratio-view residential lens (2026-07-03).
 // Checks legend anchors/swatch across view+lens combinations and the
-// lens-button disable in Roads. DOM-level — see shot-click.js for pixels.
+// lens-button disable in Services (the generalized Roads view, 2026-07-05).
+// DOM-level — see shot-click.js for pixels.
 //   node verify-lens.js <url>
 const { chromium } = require('playwright');
 const [url] = process.argv.slice(2);
@@ -50,9 +51,9 @@ const [url] = process.argv.slice(2);
   });
   console.log('ratio fills, lens ON:', JSON.stringify(fills));
 
-  await page.click('#views button[data-view="roads"]');
+  await page.click('#views button[data-view="services"]');
   await page.waitForTimeout(2000);
-  console.log('roads          :', JSON.stringify(await legend()));
+  console.log('services       :', JSON.stringify(await legend()));
 
   await page.click('#views button[data-view="money"]');
   await page.waitForTimeout(2000);

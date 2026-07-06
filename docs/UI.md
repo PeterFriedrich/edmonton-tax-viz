@@ -119,24 +119,48 @@ the residential button's disable rules are untouched). Implementation
   The existing verify scripts' `#lens button` selectors still resolve to the
   residential button (Labels is second in the DOM — keep it that way).
 
-### Services views: Money | Roads | Ratio (built 2026-07-02, display pivot complete)
+### Services views: Money | Services | Ratio (built 2026-07-02 as Money | Roads | Ratio; Roads GENERALIZED to Services 2026-07-05)
 The road-prism metric view built earlier on 2026-07-01 was **retired the same day**
 (`SPEC_services.md` "Display architecture — REVISED"). After two intermediate
 iterations (a Roads checkbox + free opacity slider; then a slider-at-0% roads-only
 mode), Peter settled the control model as **three discrete views** (`#views`
-buttons, below the lens button; `state.view`):
+buttons, below the lens button; `state.view`). On 2026-07-05 — the second
+service (stormwater) being the standing trigger — the Roads view became the
+**Services view** (Peter's call, per-service checkboxes; the top bar stays at
+five buttons regardless of service count):
 
 - **Money** (default): the classic revenue/value prisms, always opaque. Metric
   toggle, palette, residential lens all behave as before. Hood tooltip: active
   metric + `19.2 road m / acre` + `$967 revenue / road metre` (ratio omitted when
   road base is 0 / columns absent; set-aside tooltip unchanged).
-- **Roads**: the network alone on the ground — **no prism layers at all** (an
-  opacity-0 layer still tessellates, draws, picks, and auto-highlights; dropping
-  them is the honest render and the perf win). Arterials neutral grey
-  (`ARTERIAL_COLOR`, 2 px, no metric); collector + local coloured by their hood's
-  `road_m_per_acre` on the active ramp — **LINEAR, clamp 53** (FINDINGS §6.3),
-  1.2 px. Legend: road scale. Tooltip: road amount only. Title/blurb swap with the
-  view (`VIEWS` object).
+- **Services** (generalized from Roads 2026-07-05): city services as stackable
+  ground-level layers — **no prism layers at all** (an opacity-0 layer still
+  tessellates, draws, picks, and auto-highlights; dropping them is the honest
+  render and the perf win). Per-service checkboxes live in the `#layers` panel
+  (`#services`, `state.services`); with 2+ checked, a **"colour" radio**
+  (`state.svcDriver`) picks which service drives the active ramp — the others
+  render neutral, so exactly one scale is on screen at a time. Legend and blurb
+  follow the driver (`servicesBlurb()` appends a line naming any neutral layer).
+  Both persist across view switches, like the Glass denominator. Services:
+  - **Roads** (default on, default driver — entering the view with defaults IS
+    the old Roads view): arterials neutral grey (`ARTERIAL_COLOR`, 2 px, no
+    metric); collector + local coloured by their hood's `road_m_per_acre` —
+    **LINEAR, clamp 53** (FINDINGS §6.3), 1.2 px. Neutral mode (storm drives):
+    the whole network in the arterial grey, same as the Ratio view's.
+  - **Stormwater** (default off; second service, SPEC_utilities Lens 1): a flat
+    hood plane coloured by `storm_charge_per_acre` — **MODELED** utility
+    charges (bylaw lot area × runoff × rate), EPCOR money not city tax revenue;
+    the legend says "Modeled" and the blurb says "modeled, not billed".
+    **LINEAR, clamp p97.5 of non-set-aside hoods** (`stormScale()`, runtime,
+    ≈ $2,700 on 2025 data; storm p97.5/median ≈ 1.8 — no skew correction
+    warranted). Set-aside hoods grey (the usual off-scale convention); neutral
+    mode (roads drive) renders the plane in the Glass view's signal-free slate
+    (`GLASS_PLANE_COLOR`). Drawn before the road lines: coplanar at z=0,
+    LEQUAL depth lets the later-drawn lines win. No fetch — the column rides
+    the main GeoJSON (SLIM_COLUMNS, 2026-07-05).
+  Tooltip: BOTH services' numbers whatever is checked (the neutral layer's
+  values stay readable there). Hood hover via the invisible `hood-hover` layer,
+  as before. Title "Edmonton: City Services".
 - **Ratio** (stage 3, the synthesis): ghost prisms of **revenue per road metre**
   (`revenue_per_acre / road_m_per_acre`, client-side — no pipeline change) over
   the network in all-neutral grey. Prism **colour is LOG** between the kept
@@ -159,14 +183,20 @@ Shared machinery:
   ignores opacity; a prism always beat the roads, which is how this design
   started).
 - Metric toggle in non-Money views only marks state (applies on return); the
-  residential lens applies in Money AND Ratio (2026-07-03), disabled in Roads.
-  Roads/Ratio buttons hide when the served GeoJSON predates the services
-  columns.
+  residential lens applies in Money AND Ratio (2026-07-03), disabled in
+  Services. Services/Ratio buttons hide when the served GeoJSON predates the
+  road column; a file with roads but no `storm_charge_per_acre` keeps the view
+  and hides just the stormwater row.
 - Headless-verified via Playwright (all three views: layer stacks, legend swaps,
   tooltips incl. floored/set-aside cases, slider visibility) 2026-07-02; lens ×
   view matrix (anchors, fills, button disable) 2026-07-03
-  (`tools/profiling/verify-lens.js`). Translucent-prism depth-ordering quirks:
-  same acceptance as the residential lens fade.
+  (`tools/profiling/verify-lens.js`); Services generalization 2026-07-05
+  (`tools/profiling/verify-services.js` — chrome on entry, per-checkbox layer
+  stacks, storm plane fills in all three colour states, independent p97.5
+  clamp check, driver handoff on unchecking the driving service, tooltip,
+  persistence round-trip; screenshots `tools/profiling/shot-services.js`).
+  Translucent-prism depth-ordering quirks: same acceptance as the residential
+  lens fade.
 
 ### Uses view (built 2026-07-03 — fourth view button; real geometry same day)
 **The city's actual zoning geometry**, coloured by land-use category. Shows what
