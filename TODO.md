@@ -78,14 +78,18 @@ _Last reconciled: 2026-07-02_
     the new code.
   - [ ] **More service layers (water / drainage / transit / …).** Each needs its
     own SPEC_services section (dataset, filters, locked decisions), a
-    per-hood supply column, and a slim web export. Decide the UI shape when
-    the second service arrives: another view button doesn't scale — likely
-    the Roads view generalizes to a "Services" view with per-service
-    checkboxes (the original stackable idea returns, one level down). That's
-    also the trigger to define "total services" and reopen the ratio's
-    denominator (currently roads-only by construction).
-    - [ ] **Fire lens — NEXT service candidate (Peter, 2026-07-04; datasets
-      probed, design NOT decided, nothing downloaded/built).** Two sources:
+    per-hood supply column, and a slim web export. **UI shape DECIDED
+    2026-07-05 (Peter): the Roads view generalizes to a "Services" view with
+    per-service checkboxes** (the original stackable idea returns, one level
+    down) — Roads, Stormwater, later Fire; one service checked → its ramp,
+    two+ → pick which drives colour. Build on a fresh branch off master
+    AFTER the stormwater pipeline PR merges. Defining "total services" and
+    reopening the ratio's denominator (currently roads-only by construction)
+    remains open — SPEC_utilities decision 3: keep it physical until at
+    least two dollar services exist.
+    - [ ] **Fire lens — design DECIDED 2026-07-05 (Peter), build AFTER the
+      Services-view UI + stormwater display land; nothing downloaded/built
+      yet.** Two sources:
       - `b4y7-zhnz` "Fire Stations" — 31 rows, station number + address +
         lat/long point ONLY (no staffing/coverage/response data).
       - `7hsn-idqi` "Fire Response: Current and Historical" — 947,781
@@ -100,16 +104,16 @@ _Last reconciled: 2026-07-02_
         48k, CITIZEN ASSIST 36k, FIRE 24k, HAZMAT 20k; plus operational
         noise to exclude (TRAINING/MAINTENANCE 18k, COMMUNITY EVENT,
         PRE-INCIDENT PLANNING, nulls 31k).
-      **Open decisions (asked 2026-07-04, unanswered — re-ask before
-      building):** (1) lens shape — recommended: demand metric
-      (events/acre/year) + the 31 stations as context dots; alternatives:
-      add distance-to-nearest-station supply column, or proximity-only;
-      (2) event filter — recommended: all emergency responses minus
-      operational noise; alternative: fire-core only (~25%); (3) year
-      window — recommended: last 3 full years averaged (2023–2025);
-      (4) branch point — recommended: new branch off master, independent
-      of unmerged `feature/glass-view`. Reminder: second service = the
-      trigger for the parent item's Services-view UI decision.
+      **Design DECIDED 2026-07-05 (Peter, all four recommendations):**
+      (1) lens shape — demand metric (events/acre/year) as the
+      Services-view ground plane + the 31 stations as context dots;
+      (2) event filter — all emergency responses minus operational noise
+      (TRAINING/MAINTENANCE, COMMUNITY EVENT, PRE-INCIDENT PLANNING,
+      nulls); the 57%-medical share gets a legend/docs caveat, NOT a
+      filter; (3) year window — last 3 full years averaged (2023–2025);
+      (4) branch point — new branch off master, after the Services-view
+      UI generalization lands (design was settled now so the Services UI
+      is designed once for both services).
     - [ ] **Utility cost lenses — SPEC'd 2026-07-05 (`docs/SPEC_utilities.md`);
       stormwater DECIDED first (Peter) and its v1 PIPELINE BUILT same day on
       `feature/stormwater-lens` (unmerged).** Five candidates in three
@@ -125,10 +129,13 @@ _Last reconciled: 2026-07-02_
         river valley bottom). As-built numbers + caveats: SPEC_utilities
         Lens 1 (serviced-area assumption is the big one — EETP fringe = 5%
         of the total; AG runoff coded 0.1 with VERIFY flag).
-      - [ ] **Display shape — OPEN (SPEC open decision 2), blocks anything
-        served/visible:** `storm_charge_per_acre` is deliberately NOT in
-        `SLIM_COLUMNS` yet. Decide with the fire lens: the second service
-        fires the Services-view UI generalization — design once, jointly.
+      - [ ] **Display shape — DECIDED 2026-07-05 (Peter; SPEC decision 2):
+        per-hood ground-plane layer ($/acre/yr, sequential ramp, MODELED
+        label) inside the generalized Services view.** Build order:
+        (a) merge this branch's pipeline PR as-is (nothing served changes,
+        CI green suffices), (b) fresh branch off master for the
+        Services-view UI (Roads → checkboxes) + the stormwater layer,
+        which also adds `storm_charge_per_acre` to `SLIM_COLUMNS`.
       - [ ] Validation pass vs EPCOR published stormwater revenue
         (order-of-magnitude; must bracket the serviced-area assumption /
         possibly exclude set-aside/notyet-zoned parcels — Peter decision).

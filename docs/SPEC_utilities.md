@@ -230,12 +230,14 @@ ANALYSIS_BACKLOG 5.
 
 1. **Go/no-go and which lens first.** Recommended: stormwater (bylaw-native
    formula, inputs already loaded, reuses the dedupe machinery).
-2. **Display shape.** Options: (a) per-hood ground-plane layer in the
-   Services-view generalization (the second-service trigger fires
-   regardless of whether fire or a utility lands first); (b) grid-cell
-   variant alongside Glass; (c) pipeline columns only, no display, feeding
-   analysis. Recommended: (a), decided jointly with the fire lens so the
-   Services UI is designed once.
+2. **Display shape — DECIDED 2026-07-05 (Peter): (a).** Per-hood
+   ground-plane layer ($/acre/yr, sequential ramp, MODELED label) in the
+   Services-view generalization, which was decided the same day: the Roads
+   view becomes a "Services" view with per-service checkboxes (Roads,
+   Stormwater, later Fire). Decided jointly with the fire lens (its design
+   is also settled — TODO.md) so the Services UI is designed once.
+   Rejected: (b) grid-cell variant alongside Glass (bigger build, per-cell
+   modeled-vs-billed labeling harder); (c) pipeline-only (lens invisible).
 3. **Does modeled utility $ enter "total services"?** The ratio view's
    denominator is currently roads-only by construction. Mixing physical
    units (road metres) with modeled dollars needs an explicit design —
@@ -245,8 +247,11 @@ ANALYSIS_BACKLOG 5.
    earlier as standalone columns, or not at all? Recommended: only with
    their lenses — a modeled revenue line without its cost context invites
    misreading.
-5. **Branch point:** new branch off master per lens, independent of other
-   feature branches (matches the fire-lens recommendation).
+5. **Branch point — DECIDED 2026-07-05 (Peter):** merge the
+   `feature/stormwater-lens` pipeline PR as-is first (nothing served
+   changes; CI green suffices), then the Services-view UI + stormwater
+   display on a fresh branch off master. Future lenses: new branch off
+   master each.
 
 ## Out of scope (this spec)
 
