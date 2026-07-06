@@ -51,3 +51,6 @@ Thumbs.db
 # Profiling harness (tools/profiling) — Node deps, browser binaries, render artifacts
 node_modules/
 tools/profiling/*.png
+
+# Claude Code personal settings (per-machine permission grants)
+.claude/settings.local.json
