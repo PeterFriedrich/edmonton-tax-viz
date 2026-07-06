@@ -164,9 +164,9 @@ five buttons regardless of service count):
     (no on-scene times exist in the open data) — the blurb and legend say
     so, and carry the medical-share caveat (most dispatches are medical
     calls). Rendering: the same flat hood plane as stormwater,
-    **provisionally LINEAR, clamp p97.5 of non-set-aside hoods** (skew
-    check on real data is an open follow-up — the build session had no
-    data access), plus the **31 station context dots** (`fire-stations`
+    **SQRT colour (FINDINGS §6.5, decided 2026-07-06 on real data — raw
+    skew +7.86, the project's worst), clamp p97.5 of non-set-aside
+    hoods**, plus the **31 station context dots** (`fire-stations`
     ScatterplotLayer, orange + white stroke, `depthTest: false` so they
     sit over the coplanar layers; lazy `web/data/fire_stations.json`,
     drawn whenever the service is checked — driver or not; a

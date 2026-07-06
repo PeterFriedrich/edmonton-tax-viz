@@ -27,6 +27,12 @@ Roads addendum (2026-07-01, services lens): road_m_per_acre is already
 near-symmetric RAW (biased skew -0.29 all / -0.43 excl set-aside; the metric is
 physically bounded ~0-60 m/acre, max/median 1.84x). sqrt (-0.92) and log (-3.0)
 both over-correct. => LINEAR colour for road_m_per_acre. See FINDINGS §6.3.
+
+Fire addendum (2026-07-06, services lens): fire_events_per_acre is the most
+skewed metric in the project (biased raw skew +7.86; clamp/median 5.8x on the
+p97.5 scale — linear put 59% of hoods in the ramp's bottom fifth). log
+over-corrects (-1.48, mixed distribution) and is undefined for the 5 true-zero
+hoods. => SQRT colour for fire_events_per_acre. See FINDINGS §6.5.
 """
 
 import json
@@ -35,7 +41,8 @@ import numpy as np
 import pandas as pd
 
 GEOJSON = "web/data/neighbourhood_value_per_acre.geojson"
-METRICS = ["revenue_per_acre", "value_per_acre", "road_m_per_acre"]
+METRICS = ["revenue_per_acre", "value_per_acre", "road_m_per_acre",
+           "fire_events_per_acre"]
 
 
 def biased_skew(s) -> float:
@@ -59,7 +66,7 @@ def load_metrics(path: str = GEOJSON) -> pd.DataFrame:
 
 def _row(label: str, series: pd.Series) -> dict:
     s = series.dropna()
-    s = s[s > 0]  # log/sqrt need positive support; drops nothing here (all > 0)
+    s = s[s > 0]  # log needs positive support; drops the 5 zero-event fire hoods
     return {
         "set": label,
         "n": len(s),
