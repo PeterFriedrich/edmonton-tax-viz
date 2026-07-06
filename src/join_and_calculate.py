@@ -31,6 +31,11 @@ ROAD_COLUMNS = ["road_m_total"]
 # computed HERE against boundary area_acres, same as everything else.
 STORM_COLUMNS = ["storm_charge_annual"]
 
+# Fire-demand column carried from load_fire when supplied (services lens #3,
+# SPEC_services.md "Fire lens"): mean annual dispatched emergency events in
+# the pinned window. Per-acre is computed HERE against boundary area_acres.
+FIRE_COLUMNS = ["fire_events_per_year"]
+
 
 def join_and_calculate(
     assessment: pd.DataFrame,
@@ -38,6 +43,7 @@ def join_and_calculate(
     zoning: pd.DataFrame | None = None,
     roads: pd.DataFrame | None = None,
     stormwater: pd.DataFrame | None = None,
+    fire: pd.DataFrame | None = None,
 ) -> gpd.GeoDataFrame:
     """Left join boundaries → assessment, flag unmatched rows, compute value_per_acre.
 
@@ -64,6 +70,12 @@ def join_and_calculate(
     default to $0 (roads semantics: no roll parcels there means no modeled
     charge) — with the shared caveat that the roll omits exempt institutional
     land, so hood totals understate where exempt land dominates.
+
+    ``fire`` (optional, from load_fire.py) adds fire_events_per_year and
+    computes fire_events_per_acre against boundary area_acres
+    (SPEC_services.md "Fire lens"). Boundaries with no events default to a
+    true 0/yr (roads semantics: no dispatched emergency events recorded
+    there in the window) — and are flagged.
     """
     agg = assessment
 
@@ -214,6 +226,41 @@ def join_and_calculate(
             + STORM_COLUMNS + ["storm_charge_per_acre"] + ["geometry"]
         )
 
+    # Services lens #3: merge fire demand when supplied (SPEC_services.md
+    # "Fire lens" — dispatched emergency events, a demand count, not a
+    # coverage or response-time claim).
+    if fire is not None:
+        boundary_names = set(joined["neighbourhood_name"])
+        unmatched_fire = sorted(set(fire["neighbourhood_name"]) - boundary_names)
+        if unmatched_fire:
+            logger.warning(
+                "%d fire neighbourhood(s) with no boundary match (dropped):\n  %s",
+                len(unmatched_fire),
+                "\n  ".join(unmatched_fire),
+            )
+
+        joined = joined.merge(
+            fire[["neighbourhood_name", *FIRE_COLUMNS]],
+            on="neighbourhood_name",
+            how="left",
+        )
+
+        no_fire = joined["fire_events_per_year"].isna()
+        if no_fire.any():
+            logger.warning(
+                "%d boundary neighbourhood(s) with no fire events in the window (default 0/yr):\n  %s",
+                int(no_fire.sum()),
+                "\n  ".join(sorted(joined.loc[no_fire, "neighbourhood_name"])),
+            )
+        # No kept events there in the window -> a true 0 events/yr.
+        joined["fire_events_per_year"] = joined["fire_events_per_year"].fillna(0.0)
+        joined["fire_events_per_acre"] = joined["fire_events_per_year"] / safe_area
+
+        out_cols = (
+            [c for c in out_cols if c != "geometry"]
+            + FIRE_COLUMNS + ["fire_events_per_acre"] + ["geometry"]
+        )
+
     return joined[out_cols]
 
 
@@ -223,17 +270,20 @@ def join_and_calculate(
 # value↔revenue toggle reads both metrics; is_set_aside/set_aside_reason drive
 # the neutral-grey render + tooltip; is_residential drives the residential lens;
 # the frac_* composition (sums to 1) drives the use-mix view (dominant use is
-# derived client-side); road_m_per_acre and storm_charge_per_acre are the
-# Services-view metrics (SPEC_services.md, SPEC_utilities.md — ratios only,
-# totals stay out of the slim file like total_assessed_value does; the storm
-# figure is MODELED, not billed — the client must label it as such).
+# derived client-side); road_m_per_acre, storm_charge_per_acre, and
+# fire_events_per_acre are the Services-view metrics (SPEC_services.md,
+# SPEC_utilities.md — ratios only, totals stay out of the slim file like
+# total_assessed_value does; the storm figure is MODELED, not billed, and the
+# fire figure is dispatched-event DEMAND, not coverage — the client must
+# label both as such).
 SLIM_COLUMNS = [
     "neighbourhood_name", "value_per_acre", "revenue_per_acre",
     "set_aside_frac", "is_set_aside", "set_aside_reason",
     "frac_never", "frac_notyet", "frac_inst",
     "frac_residential", "frac_commercial", "frac_industrial",
     "frac_mixed", "frac_dc", "frac_other",
-    "is_residential", "road_m_per_acre", "storm_charge_per_acre", "geometry",
+    "is_residential", "road_m_per_acre", "storm_charge_per_acre",
+    "fire_events_per_acre", "geometry",
 ]
 
 

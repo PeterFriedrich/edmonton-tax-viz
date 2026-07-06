@@ -439,3 +439,76 @@ def test_boundary_without_stormwater_match_defaults_zero(caplog):
     assert parkland["storm_charge_annual"] == 0.0
     assert parkland["storm_charge_per_acre"] == 0.0
     assert "no modeled stormwater points" in caplog.text
+
+
+# --- fire merge (services lens #3, SPEC_services.md "Fire lens") --------------
+
+def _fire(rows):
+    return pd.DataFrame(rows)
+
+
+def test_fire_merge_adds_columns_and_per_acre():
+    result = join_and_calculate(
+        _assessment([{"neighbourhood_name": "GRIDTOWN", "total_assessed_value": 100.0}]),
+        _boundaries([{"neighbourhood_name": "GRIDTOWN", "area_acres": 10.0}]),
+        fire=_fire([
+            {"neighbourhood_name": "GRIDTOWN", "fire_events_per_year": 30.0},
+        ]),
+    )
+    row = result.iloc[0]
+    assert row["fire_events_per_year"] == pytest.approx(30.0)
+    assert row["fire_events_per_acre"] == pytest.approx(3.0)
+
+
+def test_no_fire_arg_omits_fire_columns():
+    result = join_and_calculate(
+        _assessment([{"neighbourhood_name": "DOWNTOWN", "total_assessed_value": 100.0}]),
+        _boundaries([{"neighbourhood_name": "DOWNTOWN", "area_acres": 10.0}]),
+    )
+    assert "fire_events_per_year" not in result.columns
+    assert "fire_events_per_acre" not in result.columns
+
+
+def test_boundary_without_fire_match_defaults_zero(caplog):
+    with caplog.at_level("WARNING"):
+        result = join_and_calculate(
+            _assessment([{"neighbourhood_name": "DOWNTOWN", "total_assessed_value": 100.0}]),
+            _boundaries([
+                {"neighbourhood_name": "DOWNTOWN", "area_acres": 10.0},
+                {"neighbourhood_name": "PARKLAND", "area_acres": 20.0},
+            ]),
+            fire=_fire([
+                {"neighbourhood_name": "DOWNTOWN", "fire_events_per_year": 30.0},
+            ]),
+        )
+    parkland = result[result["neighbourhood_name"] == "PARKLAND"].iloc[0]
+    assert parkland["fire_events_per_year"] == 0.0
+    assert parkland["fire_events_per_acre"] == 0.0
+    assert "no fire events in the window" in caplog.text
+
+
+def test_unmatched_fire_hood_flagged(caplog):
+    with caplog.at_level("WARNING"):
+        join_and_calculate(
+            _assessment([{"neighbourhood_name": "DOWNTOWN", "total_assessed_value": 100.0}]),
+            _boundaries([{"neighbourhood_name": "DOWNTOWN", "area_acres": 10.0}]),
+            fire=_fire([
+                {"neighbourhood_name": "DOWNTOWN", "fire_events_per_year": 30.0},
+                {"neighbourhood_name": "NOWHERE", "fire_events_per_year": 5.0},
+            ]),
+        )
+    assert "NOWHERE" in caplog.text
+
+
+def test_export_keeps_fire_events_per_acre_when_present(tmp_path):
+    result = join_and_calculate(
+        _assessment([{"neighbourhood_name": "DOWNTOWN", "total_assessed_value": 100.0}]),
+        _boundaries([{"neighbourhood_name": "DOWNTOWN", "area_acres": 10.0}]),
+        fire=_fire([
+            {"neighbourhood_name": "DOWNTOWN", "fire_events_per_year": 30.0},
+        ]),
+    )
+    written = export_geojson(result, str(tmp_path / "out.geojson"))
+    assert "fire_events_per_acre" in written.columns
+    # the raw total stays out of the slim file, like every other total
+    assert "fire_events_per_year" not in written.columns

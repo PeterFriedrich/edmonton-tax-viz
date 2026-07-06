@@ -257,15 +257,112 @@ per hood:  road_m_<class>  = Σ length(city road centrelines ∩ hood polygon), 
   total metres; the per-class columns exist so weighting is a display/derived
   change later, not a pipeline change.
 
+## Fire lens — dispatched-event demand (third service; added 2026-07-06)
+
+**Status: design LOCKED 2026-07-05 (Peter, all four decisions); BUILT
+2026-07-06** (loader + join wiring + Services-view checkbox + station dots).
+Build-session caveat: the dev environment could not reach data.edmonton.ca
+(network policy), so the first real-data run happens in CI — the loader
+resolves its one unverified column name (the dispatch datetime) from an
+explicit candidate list and HARD-ERRORS listing the actual header if none
+match (see `src/load_fire.py`). Everything else is tested synthetically,
+the project's standard test pattern.
+
+### Why
+
+Roads measure physical supply; stormwater models a utility charge. Fire is
+the first *demand* service: how often the city's emergency apparatus is
+dispatched to a neighbourhood's land. It requires no cost model — an event
+count per acre per year is a defensible physical quantity, same spirit as
+road metres per acre.
+
+**What this is NOT (locked, don't oversell):** the events data has dispatch
+and close timestamps but **no on-scene-arrival timestamp anywhere**, so a
+true response-time / coverage-adequacy metric is NOT buildable from open
+data (confirmed against the full column list, Session 12). This lens is
+demand only; the 31 stations render as context dots, not a coverage claim.
+
+### Data
+
+Two sources (probed 2026-07-05; facts recorded in DATA.md §7–8):
+
+- **`7hsn-idqi` "Fire Response: Current and Historical"** — 947,781
+  dispatched events 2011–mid-2026, ~65k/yr. Key fields: dispatch + close
+  datetimes, `event_type_group` (+ description), dispatch-priority
+  `response_code` (letters, undecoded — do NOT filter on it), lat/long, and
+  **`neighbourhood_name` pre-joined on ~99% of rows** — the per-hood metric
+  needs no spatial work.
+- **`b4y7-zhnz` "Fire Stations"** — 31 rows: station number, address,
+  lat/long point only (no staffing/coverage data).
+
+### The four locked decisions (Peter, 2026-07-05)
+
+1. **Lens shape** — demand metric `fire_events_per_acre` (mean annual
+   dispatched emergency events per boundary acre) as the Services-view
+   ground plane, + the 31 stations as context dots.
+2. **Event filter** — ALL emergency responses MINUS operational noise:
+   `event_type_group` in TRAINING/MAINTENANCE, COMMUNITY EVENT,
+   PRE-INCIDENT PLANNING, and null groups are excluded (each count
+   reported). **The ~57% MEDICAL share is a legend/blurb caveat, NOT a
+   filter** — don't re-litigate; the mix is logged every load so drift is
+   visible. Unrecognized new groups stay IN (they are presumably real
+   dispatches) and are logged loudly.
+3. **Year window** — the last 3 full calendar years, **pinned as
+   `FIRE_YEARS = (2023, 2024, 2025)` in `main.py`** (an auto-rolling window
+   could silently average in a partial year). Averaged, not summed, so the
+   number reads "events per year". Bump the pin manually each January.
+4. **Branch point** — after the Services-view UI generalization (landed
+   2026-07-05, PR #14).
+
+### Computation
+
+```
+per hood:  events_y = count(kept events in year y, by neighbourhood_name)
+           fire_events_per_year = mean(events_2023, events_2024, events_2025)
+           fire_events_per_acre = fire_events_per_year / area_acres   # boundary acres, in join_and_calculate
+```
+
+- Hood names: strip + uppercase + `NAME_CORRECTIONS`, applied BEFORE
+  aggregation (the standard rule). Events with null `neighbourhood_name`
+  are excluded + counted (locked design: no spatial fallback — 99%
+  pre-joined coverage makes it not worth the machinery).
+- A hood with no kept events in the window is a true 0 events/yr
+  (roads-style fill semantics at the join).
+
+**Guards (no silent drops):**
+- Per-year kept-event counts logged; a window year with ZERO rows
+  HARD-ERRORS (wrong window pin or upstream drift, never a real year of
+  no fires citywide).
+- Excluded groups reported with counts; null-group and null-hood rows
+  counted; the full kept-group mix (medical share included) logged.
+- Download truncation: both `download_data.py` guards apply (explicit
+  `$limit` + live `count(*)` cross-check).
+
+### Display (as built)
+
+Third checkbox in the Services view (`web/index.html`): a flat hood plane
+coloured by `fire_events_per_acre` on the active ramp — the same plane
+machinery as stormwater (one shared hood plane; whichever plane-service
+drives the colour paints it, others render neutral slate). Station dots
+(`web/data/fire_stations.json`, committed, lazy-loaded) draw whenever the
+fire service is checked, driver or not. Legend + blurb carry the medical
+caveat and the "demand, not coverage" framing. The checkbox hides on data
+files without the fire column (same guard as stormwater).
+
+**Colour transform — provisionally LINEAR, clamp = runtime p97.5 of
+non-set-aside hoods (the stormScale pattern). OPEN: run the skew check on
+real numbers once CI has populated the column** (the build session had no
+data access); if events/acre is strongly right-skewed, revisit per the
+FINDINGS §6 method. Height: no extrusion (flat plane).
+
 ## Cross-refs
 
 - **Candidate next services — the Services-view UI trigger FIRED and the
   shape is DECIDED (2026-07-05, Peter): the Roads view generalizes to a
   "Services" view with per-service checkboxes.** Stormwater is the second
   service (pipeline built, display = per-hood ground-plane layer —
-  `docs/SPEC_utilities.md` decision 2); fire lens design is settled
-  (demand events/acre/yr plane + 31 station dots — TODO.md "More service
-  layers") and builds after the Services UI lands. Tariff methods in
+  `docs/SPEC_utilities.md` decision 2); fire is the third (dispatched-event
+  demand — its own section above). Tariff methods in
   `docs/utility_cost_estimation_lens_methods.md`.
 - Cost side declared out of scope in Phase 1: `docs/SPEC_phase1.md` (Out of Scope).
 - Municipal-only scoping precedent (education levy exclusion): `docs/SPEC_revenue.md`.
