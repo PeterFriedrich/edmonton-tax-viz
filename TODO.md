@@ -79,14 +79,18 @@ _Last reconciled: 2026-07-02_
   - [ ] **More service layers (water / drainage / transit / …).** Each needs its
     own SPEC_services section (dataset, filters, locked decisions), a
     per-hood supply column, and a slim web export.
-    - [x] ~~**Services-view UI generalization**~~ — **BUILT 2026-07-05
-      (`feature/services-view`) per Peter's decision**: the Roads view is now
-      a "Services" view with per-service checkboxes (Roads, Stormwater; later
-      Fire) and a "colour" radio choosing which checked service drives the
-      ramp (others render neutral; defaults = the old Roads view exactly).
-      Headless-verified (`tools/profiling/verify-services.js` + regressions
-      green) + screenshots (`shot-services.js`). Display detail: UI.md
-      "Services views". Defining "total services" and reopening the ratio's
+    - [x] ~~**Services-view UI generalization**~~ — **SHIPPED 2026-07-05:
+      PR #14 merged + deployed + LIVE** (run 28767241818 — deploy step
+      needed two transient-error reruns, "Deployment failed, try again
+      later"; live verified serving the Services button + storm column on
+      all 406 hoods; CI regenerated the geojson byte-identical). The Roads
+      view is now a "Services" view with per-service checkboxes (Roads,
+      Stormwater; later Fire) and a "colour" radio choosing which checked
+      service drives the ramp (others render neutral; defaults = the old
+      Roads view exactly). Headless-verified
+      (`tools/profiling/verify-services.js` + regressions green) +
+      screenshots (`shot-services.js`) + Peter's on-device eyeball. Display
+      detail: UI.md "Services views". Defining "total services" and reopening the ratio's
       denominator (currently roads-only by construction) remains open —
       SPEC_utilities decision 3: keep it physical until at least two dollar
       services exist.
@@ -133,13 +137,13 @@ _Last reconciled: 2026-07-02_
         Lens 1 (serviced-area assumption is the big one — EETP fringe = 5%
         of the total; AG runoff coded 0.1 with VERIFY flag).
       - [x] ~~**Display shape**~~ — DECIDED (Peter; SPEC decision 2) and
-        **BUILT 2026-07-05 (`feature/services-view`)**: per-hood
-        ground-plane layer in the generalized Services view — linear
-        colour, clamp p97.5 of non-set-aside hoods (≈ $2,700, runtime),
-        set-asides grey, legend + blurb labeled MODELED / "modeled, not
-        billed"; `storm_charge_per_acre` added to `SLIM_COLUMNS` (hood
-        GeoJSON 0.7 MB, all 406 hoods carry it). Pipeline PR #13 merged
-        first, as sequenced.
+        **SHIPPED 2026-07-05 (PR #14, with the Services-view item above)**:
+        per-hood ground-plane layer in the generalized Services view —
+        linear colour, clamp p97.5 of non-set-aside hoods (≈ $2,700,
+        runtime), set-asides grey, legend + blurb labeled MODELED /
+        "modeled, not billed"; `storm_charge_per_acre` added to
+        `SLIM_COLUMNS` (hood GeoJSON 0.7 MB, all 406 hoods carry it).
+        Pipeline PR #13 merged first, as sequenced.
       - [ ] Validation pass vs EPCOR published stormwater revenue
         (order-of-magnitude; must bracket the serviced-area assumption /
         possibly exclude set-aside/notyet-zoned parcels — Peter decision).
