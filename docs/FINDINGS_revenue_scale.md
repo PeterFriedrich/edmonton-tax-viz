@@ -260,6 +260,32 @@ methodology for handling the skew (the scaling lives inside an Esri/Blender
 pipeline), so documenting the transform explicitly is a more auditable position,
 not a deviation from a standard.
 
+### 6.5 Fire demand is the most skewed metric yet — DECIDED: sqrt colour (2026-07-06)
+
+`fire_events_per_acre` (SPEC_services "Fire lens"; shipped provisionally
+linear because the build session had no data access) ran through the same
+biased-skew test on the first real numbers (post-PR-#18 refresh, 406 hoods,
+5 true zeros):
+
+| set | n | median | p97.5 | max | raw | sqrt | log |
+|---|---|---|---|---|---|---|---|
+| all (positive) | 401 | 0.45 | — | 17.87 | 7.86 | **2.42** | −1.48 |
+| excl set-aside | 354 | — | 2.96 | 17.87 | 7.58 | **2.70** | −1.48 |
+
+Raw skew +7.86 beats revenue_per_acre's +5.83 — the worst in the project.
+On the shipped scale (linear, clamp = p97.5 of non-set-aside = 2.96), the
+clamp/median ratio is **5.8×** (storm's is ~1.8×, which is why storm stays
+linear): the median hood sits at 17% of the ramp and **59% of hoods occupy
+the bottom fifth** — the map reads as downtown-plus-uniform-void.
+WÎHKWÊNTÔWIN at 3.5 events/acre and a 0.3 suburb render nearly alike.
+
+**Log is rejected** on the §6.1 grounds: it over-corrects the mixed
+distribution into left skew (−1.48; not a log-normal core), and fire has 5
+true-zero hoods where log is undefined and would need an arbitrary floor.
+**sqrt** puts the median at 42% of the ramp and drops the bottom-fifth
+share to 11% — the same robust no-assumptions choice as the revenue/value
+colour. Height: still no extrusion (flat plane); tooltip stays raw.
+
 ## To visualize (notebook later)
 
 Skew numbers here are reproducible headless via `scripts/investigate_skew.py`

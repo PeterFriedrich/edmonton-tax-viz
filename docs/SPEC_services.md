@@ -351,11 +351,13 @@ fire service is checked, driver or not. Legend + blurb carry the medical
 caveat and the "demand, not coverage" framing. The checkbox hides on data
 files without the fire column (same guard as stormwater).
 
-**Colour transform — provisionally LINEAR, clamp = runtime p97.5 of
-non-set-aside hoods (the stormScale pattern). OPEN: run the skew check on
-real numbers once CI has populated the column** (the build session had no
-data access); if events/acre is strongly right-skewed, revisit per the
-FINDINGS §6 method. Height: no extrusion (flat plane).
+**Colour transform — DECIDED: SQRT (2026-07-06), clamp = runtime p97.5 of
+non-set-aside hoods (the stormScale pattern).** The skew check on the first
+real numbers (FINDINGS §6.5) found the worst right skew in the project
+(raw +7.86, clamp/median 5.8×) — linear crammed 59% of hoods into the
+bottom fifth of the ramp; log over-corrects and is undefined for the 5
+true-zero hoods. Storm and roads stay linear (their clamp/median ratios
+don't warrant a transform). Height: no extrusion (flat plane).
 
 ## Cross-refs
 

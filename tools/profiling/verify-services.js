@@ -161,7 +161,9 @@ const [url] = process.argv.slice(2);
       const q = vals[lo] + (vals[Math.ceil(pos)] - vals[lo]) * (pos - lo);
       const mid = kept[Math.floor(kept.length / 2)];
       const scale = svcScale('fire_events_per_acre');
-      const expected = rampColorAt(Math.min(1, mid.properties.fire_events_per_acre / scale.clamp));
+      // fire colour is SQRT (FINDINGS §6.5) — re-derive independently of svcT
+      const expected = rampColorAt(
+        Math.sqrt(Math.min(1, mid.properties.fire_events_per_acre / scale.clamp)));
       return { clampMatchesP975: Math.abs(scale.clamp - q) < 1e-6,
                midFillOk: plane.props.getFillColor(mid).join() === expected.join(),
                legendMax: document.getElementById('legend-max').textContent };

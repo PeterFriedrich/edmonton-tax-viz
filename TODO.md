@@ -116,10 +116,10 @@ _Last reconciled: 2026-07-02_
         eyeball the served fire plane + station dots, and sanity-check the
         logged kept-group mix / medical share / per-year counts against
         the Session-12 probe numbers.
-      - [ ] **Colour transform check on real `fire_events_per_acre`**
-        (SPEC_services "Fire lens" — provisionally LINEAR with runtime
-        p97.5 clamp; run the FINDINGS §6 skew method once the column has
-        real numbers).
+      - [x] ~~Colour transform check on real `fire_events_per_acre`~~ —
+        DECIDED 2026-07-06: **sqrt** (raw skew +7.86, the project's worst;
+        clamp/median 5.8×; linear crammed 59% of hoods into the ramp's
+        bottom fifth; log undefined on the 5 zero hoods. FINDINGS §6.5).
       - [ ] **January task**: bump `FIRE_YEARS` (main.py) AND the
         2023–2025 wording in the fire blurb + legend (`web/index.html`).
     - [ ] **Utility cost lenses — SPEC'd 2026-07-05 (`docs/SPEC_utilities.md`);

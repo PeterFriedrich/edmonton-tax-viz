@@ -343,10 +343,11 @@
     // Plane services (`plane.col` below) share ONE hood-plane layer — two
     // coplanar polygon layers would z-fight; the colour-driving plane paints
     // it, otherwise it renders the neutral slate.
-    // Colour is LINEAR for all (road supply FINDINGS §6.3; storm p97.5/median
-    // ~1.8; fire provisionally linear — skew check on real data is an open
-    // follow-up, SPEC_services "Fire lens"). Clamp: p97.5 of the
-    // non-set-aside hoods, computed from the data like ratioScale.
+    // Colour: roads + storm LINEAR (road supply FINDINGS §6.3; storm
+    // clamp/median ~1.8x), fire SQRT (FINDINGS §6.5 — raw skew +7.86,
+    // clamp/median 5.8x; linear crams 59% of hoods into the bottom fifth
+    // of the ramp). Clamp: p97.5 of the non-set-aside hoods, computed
+    // from the data like ratioScale.
     const SERVICES = {
       roads: {
         label: "Roads",
@@ -369,14 +370,15 @@
       },
       fire: {
         label: "Fire",
-        plane: { col: "fire_events_per_acre" },
+        plane: { col: "fire_events_per_acre", transform: "sqrt" },
         blurb: "Each neighbourhood is coloured by dispatched fire-department " +
                "emergency events per acre per year, averaged over 2023–2025 — " +
                "a demand measure, not response coverage (the open data has no " +
                "on-scene times). Most dispatched events are medical calls, not " +
                "fires; alarms, vehicle incidents, rescues and fires make up the " +
                "rest, with training and other operational records excluded. " +
-               "Dots mark the 31 fire stations. Colour is linear. Grey = " +
+               "Dots mark the 31 fire stations. Colour is square-root scaled — " +
+               "demand concentrates heavily in the central core. Grey = " +
                "set-aside natural/undeveloped land.",
       },
     };
@@ -622,14 +624,17 @@
     // Legend gradient for the CURRENT ramp under the CURRENT view's transform:
     // sample the bar in *value* space (linear across the displayed range) so
     // the colour at each position matches what that value renders. money =
-    // per-metric transform; services = linear (both service scales); ratio =
-    // log $/metre.
+    // per-metric transform; services = the driving plane service's transform
+    // (storm linear, fire sqrt); ratio = log $/metre.
     function legendGradient() {
       const N = 16, parts = [];
       for (let i = 0; i <= N; i++) {
         const p = i / N;                 // fraction of the displayed range
         let t;
-        if (state.view === "services") t = p;
+        if (state.view === "services") {
+          const plane = SERVICES[state.svcDriver] && SERVICES[state.svcDriver].plane;
+          t = plane && plane.transform === "sqrt" ? Math.sqrt(p) : p;
+        }
         else if (state.view === "ratio") {
           const s = ratioScale();
           t = ratioT(s.lo + p * (s.hi - s.lo));
@@ -701,7 +706,8 @@
     // Per-column service scale anchors, computed once from the data (tracks
     // weekly refreshes like ratioScale): colour clamp at p97.5 of the
     // non-set-aside hoods — set-asides are off the scale (grey), the usual
-    // convention. Shared by every plane service (storm, fire).
+    // convention. Shared by every plane service (storm, fire); carries the
+    // service's colour transform so plane + legend gradient stay in sync.
     const _svcScales = {};
     function svcScale(col) {
       if (_svcScales[col]) return _svcScales[col];
@@ -709,15 +715,25 @@
         .filter(p => !p.is_set_aside && p[col] != null)
         .map(p => p[col])
         .sort((a, b) => a - b);
-      return (_svcScales[col] = { clamp: quantile(vals, 0.975) });
+      const svc = Object.values(SERVICES).find(s => s.plane && s.plane.col === col);
+      return (_svcScales[col] = {
+        clamp: quantile(vals, 0.975),
+        transform: svc && svc.plane.transform,
+      });
+    }
+    // Clamped ramp position for a plane-service value under its transform.
+    function svcT(v, col) {
+      const s = svcScale(col);
+      const t = Math.max(0, Math.min(1, v / s.clamp));
+      return s.transform === "sqrt" ? Math.sqrt(t) : t;
     }
     const fmtStorm = v => "$" + Math.round(v).toLocaleString() +
       " modeled stormwater / acre / yr";
     const fmtFire = v => v.toFixed(v < 1 ? 2 : 1) + " dispatched events / acre / yr";
 
     // The shared service ground plane (services view): flat hoods coloured
-    // by the colour-driving plane service's column — linear on the active
-    // ramp. Plane services (storm, fire) draw ONE layer between them: two
+    // by the colour-driving plane service's column on the active ramp,
+    // under that service's colour transform (svcT). Plane services (storm, fire) draw ONE layer between them: two
     // coplanar hood-polygon layers would z-fight, and the non-driving
     // plane's "neutral" render is the same slate surface anyway. `col` null
     // (roads drive the colour) renders the whole plane in the Glass view's
@@ -735,7 +751,7 @@
           const p = f.properties;
           if (p.is_set_aside) return SET_ASIDE_COLOR;
           if (!col || p[col] == null) return GLASS_PLANE_COLOR;
-          return rampColorAt(Math.max(0, Math.min(1, p[col] / svcScale(col).clamp)));
+          return rampColorAt(svcT(p[col], col));
         },
         pickable: false,
         updateTriggers: { getFillColor: [state.ramp, col] },
@@ -1343,7 +1359,7 @@
           sw.style.background = "rgb(104,108,122)";
         } else if (state.svcDriver === "fire") {
           document.getElementById("legend-label").textContent =
-            "Fire dispatches per acre / yr (2023–2025 avg)";
+            "Fire dispatches per acre / yr (2023–2025 avg, sqrt colour)";
           document.getElementById("legend-min").textContent = "0";
           const clamp = svcScale("fire_events_per_acre").clamp;
           document.getElementById("legend-max").textContent =
