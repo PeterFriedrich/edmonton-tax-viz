@@ -110,6 +110,31 @@ _Last reconciled: 2026-07-02_
       (4) branch point — recommended: new branch off master, independent
       of unmerged `feature/glass-view`. Reminder: second service = the
       trigger for the parent item's Services-view UI decision.
+    - [ ] **Utility cost lenses — SPEC'd 2026-07-05 (`docs/SPEC_utilities.md`);
+      stormwater DECIDED first (Peter) and its v1 PIPELINE BUILT same day on
+      `feature/stormwater-lens` (unmerged).** Five candidates in three
+      fidelity tiers, from Peter's methods doc
+      (`docs/utility_cost_estimation_lens_methods.md` — verified 2025/2026
+      tariffs; rate numbers live there). All outputs MODELED, not billed.
+      - [x] ~~Stormwater pipeline (Lens 1)~~ — built 2026-07-05:
+        `src/load_stormwater.py` (bylaw A×I×R per point; `ZONE_RUNOFF`
+        explicit dict; condo dedupe reused; fixa-tstc zone fallback) +
+        year-keyed `data/stormwater_rates.json` + join/main wiring +
+        19 tests (182 green). Real data: 287,103/287,163 points, citywide
+        $240.4M/yr (2025 rate), ranking sanity passes (industrial top,
+        river valley bottom). As-built numbers + caveats: SPEC_utilities
+        Lens 1 (serviced-area assumption is the big one — EETP fringe = 5%
+        of the total; AG runoff coded 0.1 with VERIFY flag).
+      - [ ] **Display shape — OPEN (SPEC open decision 2), blocks anything
+        served/visible:** `storm_charge_per_acre` is deliberately NOT in
+        `SLIM_COLUMNS` yet. Decide with the fire lens: the second service
+        fires the Services-view UI generalization — design once, jointly.
+      - [ ] Validation pass vs EPCOR published stormwater revenue
+        (order-of-magnitude; must bracket the serviced-area assumption /
+        possibly exclude set-aside/notyet-zoned parcels — Peter decision).
+      - [ ] Remaining SPEC open decisions: (3) modeled $ in the "total
+        services" denominator (recommended: not yet); (4) franchise-fee
+        revenue columns only with their lenses; Lenses 2–4 unbuilt.
   - [x] ~~**Use-mix view: surface each neighbourhood's zoning composition.**~~
     **SHIPPED 2026-07-03 — PR #10 merged + deployed** (run 28679596055, green
     first try); live site verified serving the Uses view + `zoning.geojson`
