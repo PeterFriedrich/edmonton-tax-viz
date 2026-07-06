@@ -219,3 +219,27 @@ def test_stations_label_optional(tmp_path, caplog):
         export_fire_stations_web(p, out)
     assert json.loads(out.read_text())["stations"][0][2] == ""
     assert "unlabelled" in caplog.text
+
+
+def test_dispatch_column_substring_fallback(tmp_path, caplog):
+    # A header outside the candidate list but containing "dispatch" resolves
+    # as the single unambiguous match — loudly, so the name gets pinned.
+    rows = pd.DataFrame(_window_rows()).rename(
+        columns={"dispatch_datetime": "evt_dispatch_stamp"})
+    p = tmp_path / "fire_response.csv"
+    rows.to_csv(p, index=False)
+    with caplog.at_level("WARNING"):
+        out = load_fire_events(p, YEARS)
+    assert out["fire_events_per_year"].sum() == pytest.approx(1.0)
+    assert "evt_dispatch_stamp" in caplog.text
+
+
+def test_dispatch_column_not_datetime_errors(tmp_path):
+    # Resolving a column that doesn't parse as datetimes at all must fail
+    # loud, not silently produce an empty window.
+    rows = pd.DataFrame(_window_rows())
+    rows["dispatch_datetime"] = "banana"
+    p = tmp_path / "fire_response.csv"
+    rows.to_csv(p, index=False)
+    with pytest.raises(ValueError, match="does not parse"):
+        load_fire_events(p, YEARS)

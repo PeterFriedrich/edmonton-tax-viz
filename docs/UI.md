@@ -151,14 +151,34 @@ five buttons regardless of service count):
     hood plane coloured by `storm_charge_per_acre` — **MODELED** utility
     charges (bylaw lot area × runoff × rate), EPCOR money not city tax revenue;
     the legend says "Modeled" and the blurb says "modeled, not billed".
-    **LINEAR, clamp p97.5 of non-set-aside hoods** (`stormScale()`, runtime,
+    **LINEAR, clamp p97.5 of non-set-aside hoods** (runtime,
     ≈ $2,700 on 2025 data; storm p97.5/median ≈ 1.8 — no skew correction
     warranted). Set-aside hoods grey (the usual off-scale convention); neutral
     mode (roads drive) renders the plane in the Glass view's signal-free slate
     (`GLASS_PLANE_COLOR`). Drawn before the road lines: coplanar at z=0,
     LEQUAL depth lets the later-drawn lines win. No fetch — the column rides
     the main GeoJSON (SLIM_COLUMNS, 2026-07-05).
-  Tooltip: BOTH services' numbers whatever is checked (the neutral layer's
+  - **Fire** (default off; third service, SPEC_services "Fire lens",
+    2026-07-06): dispatched-event **DEMAND** — `fire_events_per_acre` (mean
+    annual kept events 2023–2025 ÷ boundary acres), NOT response coverage
+    (no on-scene times exist in the open data) — the blurb and legend say
+    so, and carry the medical-share caveat (most dispatches are medical
+    calls). Rendering: the same flat hood plane as stormwater,
+    **provisionally LINEAR, clamp p97.5 of non-set-aside hoods** (skew
+    check on real data is an open follow-up — the build session had no
+    data access), plus the **31 station context dots** (`fire-stations`
+    ScatterplotLayer, orange + white stroke, `depthTest: false` so they
+    sit over the coplanar layers; lazy `web/data/fire_stations.json`,
+    drawn whenever the service is checked — driver or not; a
+    "Fire station" row joins the legend via `#legend-cats`). Checkbox
+    hides on data files without the column, same guard as stormwater.
+  **Plane sharing (2026-07-06):** the plane services (storm, fire) draw ONE
+  `svc-plane` layer between them — two coplanar polygon layers would
+  z-fight, and a non-driving plane's "neutral" render is the same slate
+  surface anyway. `servicePlaneLayer(col)` paints the driver's column, or
+  slate when roads drive; `svcScale(col)` holds the per-column runtime
+  p97.5 clamps (replaced the storm-only `stormScale()`).
+  Tooltip: EVERY service's number whatever is checked (the neutral layers'
   values stay readable there). Hood hover via the invisible `hood-hover` layer,
   as before. Title "Edmonton: City Services".
 - **Ratio** (stage 3, the synthesis): ghost prisms of **revenue per road metre**
@@ -185,8 +205,8 @@ Shared machinery:
 - Metric toggle in non-Money views only marks state (applies on return); the
   residential lens applies in Money AND Ratio (2026-07-03), disabled in
   Services. Services/Ratio buttons hide when the served GeoJSON predates the
-  road column; a file with roads but no `storm_charge_per_acre` keeps the view
-  and hides just the stormwater row.
+  road column; a file with roads but no `storm_charge_per_acre` /
+  `fire_events_per_acre` keeps the view and just hides that service's row.
 - Headless-verified via Playwright (all three views: layer stacks, legend swaps,
   tooltips incl. floored/set-aside cases, slider visibility) 2026-07-02; lens ×
   view matrix (anchors, fills, button disable) 2026-07-03
@@ -194,7 +214,13 @@ Shared machinery:
   (`tools/profiling/verify-services.js` — chrome on entry, per-checkbox layer
   stacks, storm plane fills in all three colour states, independent p97.5
   clamp check, driver handoff on unchecking the driving service, tooltip,
-  persistence round-trip; screenshots `tools/profiling/shot-services.js`).
+  persistence round-trip; screenshots `tools/profiling/shot-services.js`);
+  fire service 2026-07-06 (same script, extended: single shared plane with
+  both plane services checked, station dots, fire p97.5 re-anchor, station
+  legend row — fire checks skip cleanly on pre-fire data files. Verified
+  against a mock bed with a SYNTHETIC fire column; the real-data eyeball
+  waits for the first CI refresh — data.edmonton.ca was unreachable from
+  the build session's environment).
   Translucent-prism depth-ordering quirks: same acceptance as the residential
   lens fade.
 

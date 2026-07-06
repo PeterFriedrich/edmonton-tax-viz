@@ -360,6 +360,55 @@ boundary acre** (`road_m_per_acre`).
   network changes continuously, not per roll year). Refresh weekly with the
   other inputs.
 
+## 7. Fire Response Events (fire lens, added 2026-07-06)
+
+**Source:** Edmonton Open Data — dataset ID `7hsn-idqi` ("Fire Response: Current and Historical")
+**Download URL:** `https://data.edmonton.ca/resource/7hsn-idqi.csv?$limit=2000000`
+**Download:** `scripts/download_data.py` → `data/raw/fire_response.csv` (gitignored)
+**Format:** CSV via the SODA resource endpoint (snake_case API headers)
+**Rows:** 947,781 dispatched events, 2011–mid-2026, growing ~65k/yr (probed 2026-07-05, Session 12)
+**Licence:** Open Government Licence – City of Edmonton
+
+**Why:** the fire lens (`docs/SPEC_services.md` "Fire lens") — dispatched
+emergency events per neighbourhood per year, the first *demand*-side
+service. Consumed by `src/load_fire.py`; the shipped metric is
+**`fire_events_per_acre`** (mean annual kept events over the pinned
+`FIRE_YEARS` window ÷ boundary acres).
+
+### Key columns (from the Session-12 probe; the full header list was confirmed then but not transcribed — see the dispatch caveat)
+| Column | Notes |
+|---|---|
+| dispatch datetime | **exact header NOT recorded** — `load_fire` resolves it from `DISPATCH_COLUMN_CANDIDATES`, then a single-match "dispatch" substring fallback (logged), then a hard error printing the real headers. **Pin the real name in the candidate list after the first CI run.** |
+| close datetime + `event_duration_mins` | dispatch→CLOSE, i.e. incident length. **There is NO on-scene-arrival timestamp anywhere** — a true response-time metric is NOT buildable from this data (confirmed against the full column list) |
+| `event_type_group` | MEDICAL 57% (536k), ALARMS 144k, MVI 65k, OUTSIDE FIRE 48k, CITIZEN ASSIST 36k, FIRE 24k, HAZMAT 20k, + operational noise (TRAINING/MAINTENANCE 18k, COMMUNITY EVENT, PRE-INCIDENT PLANNING, 31k nulls) |
+| `response_code` | dispatch-priority letters (D 446k, AL, NF, C, B, SR, E…) — **undecoded; never filter on it** |
+| `neighbourhood_name` | **pre-joined on ~99% of rows** (8,093 null over the full history) — the per-hood metric needs no spatial work |
+| lat/long | present; unused by the lens (locked: no spatial fallback) |
+
+### Known Quirks
+- **The 57% MEDICAL share is the interpretive trap** — the metric is
+  fire-department *demand*, mostly medical calls, not fires. Legend/blurb
+  caveat by locked decision, never a filter.
+- Live feed (current + historical); the metric window is pinned
+  (`FIRE_YEARS` in `main.py`, last 3 FULL years) so weekly refreshes don't
+  average in a partial year. Bump each January (blurb + legend years in
+  `web/index.html` ride along).
+- `load_fire` HARD-ERRORS if a window year has zero rows (wrong pin or
+  upstream drift) and keeps-but-logs unrecognized new `event_type_group`
+  vocabulary.
+
+## 8. Fire Stations (fire lens context dots, added 2026-07-06)
+
+**Source:** Edmonton Open Data — dataset ID `b4y7-zhnz` ("Fire Stations")
+**Download URL:** `https://data.edmonton.ca/resource/b4y7-zhnz.csv?$limit=500`
+**Download:** `scripts/download_data.py` → `data/raw/fire_stations.csv` (gitignored)
+**Rows:** 31 — station number, address, lat/long point ONLY (no
+staffing/coverage/response data; probed 2026-07-05).
+Exported by `load_fire.export_fire_stations_web` to
+`web/data/fire_stations.json` (committed) as `{"stations": [[lon, lat,
+label], …]}` — context dots in the Services view, not a coverage claim.
+Column resolution uses the same explicit-candidates rule as §7.
+
 ## Name Matching
 
 Neighbourhood names between the two sources may not align exactly. Normalization (strip + uppercase) and the `NAME_CORRECTIONS` dict (keyed assessment name → boundary name) are applied in `load_assessment.py`, *before* aggregation — applying corrections after aggregation could collapse two summed rows onto one boundary and duplicate it. `join_and_calculate.py` then does a normalized exact match on the already-corrected names and flags whatever remains unmatched.

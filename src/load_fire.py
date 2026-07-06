@@ -89,6 +89,29 @@ def _resolve_column(columns, candidates: tuple[str, ...], what: str, required: b
     return None
 
 
+def _resolve_dispatch_column(columns) -> str:
+    """The dispatch-datetime header: exact candidate first, then a single
+    unambiguous 'dispatch' substring match (logged loudly — pin it in the
+    candidate list), else a hard error with the real headers."""
+    exact = _resolve_column(columns, DISPATCH_COLUMN_CANDIDATES, "dispatch datetime", required=False)
+    if exact is not None:
+        return exact
+    matches = [c for c in columns if "dispatch" in str(c).lower()]
+    if len(matches) == 1:
+        logger.warning(
+            "dispatch datetime column resolved by substring match: %r — add it "
+            "to DISPATCH_COLUMN_CANDIDATES in src/load_fire.py to pin it",
+            matches[0],
+        )
+        return matches[0]
+    raise ValueError(
+        f"could not resolve the dispatch datetime column — no exact candidate "
+        f"({list(DISPATCH_COLUMN_CANDIDATES)}) and {len(matches)} substring "
+        f"matches ({matches}). File headers: {list(columns)}. Add the real "
+        f"name to the candidate list in src/load_fire.py."
+    )
+
+
 def load_fire_events(
     events_csv: str | Path,
     years: tuple[int, ...],
@@ -108,7 +131,7 @@ def load_fire_events(
     years = tuple(sorted(years))
 
     header = pd.read_csv(events_csv, nrows=0)
-    dispatch_col = _resolve_column(header.columns, DISPATCH_COLUMN_CANDIDATES, "dispatch datetime")
+    dispatch_col = _resolve_dispatch_column(header.columns)
     for needed in ("event_type_group", "neighbourhood_name"):
         if needed not in header.columns:
             raise ValueError(
@@ -126,6 +149,12 @@ def load_fire_events(
     # --- year window ---------------------------------------------------------
     when = pd.to_datetime(df[dispatch_col], errors="coerce", format="mixed")
     unparsed = when.isna()
+    if unparsed.all():
+        raise ValueError(
+            f"column {dispatch_col!r} in {events_csv} does not parse as "
+            f"datetimes at all — wrong column resolved; fix "
+            f"DISPATCH_COLUMN_CANDIDATES in src/load_fire.py"
+        )
     if unparsed.any():
         logger.warning(
             "%d of %d rows have unparseable %s values — excluded",
