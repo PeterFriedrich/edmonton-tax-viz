@@ -400,6 +400,16 @@ service. Consumed by `src/load_fire.py`; the shipped metric is
   not `event_type_group`** — the first real pull (2026-07-06) caught the
   original code filtering on the wrong column via exactly that unknown-
   vocabulary warning (the noise filter matched nothing, MEDICAL logged 0%).
+- **Hood names lag the boundary file** — `FIRE_NAME_CORRECTIONS` in
+  `src/load_fire.py` layers fire-specific fixes on top of the shared
+  `NAME_CORRECTIONS`: `OLIVER → WÎHKWÊNTÔWIN` (the fire CSV still uses the
+  old name; 1,476 events/yr — 5th-highest hood, displayed as 0 until the
+  first production refresh caught it), plus `KESWICK/MCCONACHIE/WINDERMERE
+  AREA` → their boundary hoods. Kept out of the shared dict because the
+  assessment side's OLIVER straggler is deliberately unmapped (see "Name
+  Matching"). Legitimately unmatched leftovers (~18 events/yr, flagged at
+  the join): COREYLAND, EDMONTON MUNICIPAL AIRPORT, UNKNOWN, RURAL SOUTH
+  EAST — no boundary polygon exists for them.
 
 ## 8. Fire Stations (fire lens context dots, added 2026-07-06)
 

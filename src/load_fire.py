@@ -70,6 +70,22 @@ DISPATCH_COLUMN_CANDIDATES = (
     "date_dispatched",
 )
 
+# Fire-CSV hood names → boundary names, layered ON TOP of the shared
+# NAME_CORRECTIONS. Confirmed on the first production refresh (2026-07-06):
+# the fire data still says OLIVER for the boundary file's renamed
+# WÎHKWÊNTÔWIN (~1,476 events/yr, 5th-highest hood — without this entry it
+# displays as 0), and three "AREA" names collapse to their boundary hoods
+# the same way the shared CHAPPELLE AREA entry does. Kept fire-local
+# because the assessment side's lone OLIVER straggler ($500) is
+# deliberately unmapped there (DATA.md "Name Matching").
+FIRE_NAME_CORRECTIONS = {
+    **NAME_CORRECTIONS,
+    "OLIVER": "WÎHKWÊNTÔWIN",
+    "KESWICK AREA": "KESWICK",
+    "MCCONACHIE AREA": "MCCONACHIE",
+    "WINDERMERE AREA": "WINDERMERE",
+}
+
 # Station-file column candidates (b4y7-zhnz: station number + address +
 # lat/long only). Same explicit-candidates rule as the dispatch column.
 STATION_LAT_CANDIDATES = ("latitude", "lat")
@@ -127,7 +143,7 @@ def load_fire_events(
 
     ``years`` is the pinned window of FULL calendar years (main.py
     FIRE_YEARS). Returns a DataFrame:
-        neighbourhood_name    str    normalized + NAME_CORRECTIONS applied
+        neighbourhood_name    str    normalized + FIRE_NAME_CORRECTIONS applied
         fire_events_per_year  float  kept events in window / len(years)
 
     A hood absent from the result had zero kept events in the window —
@@ -244,7 +260,7 @@ def load_fire_events(
     # --- hood normalization + aggregation -------------------------------------
     hood = (
         kept["neighbourhood_name"].astype("string").str.strip().str.upper()
-        .replace(NAME_CORRECTIONS)
+        .replace(FIRE_NAME_CORRECTIONS)
     )
     no_hood = hood.isna() | (hood == "")
     if no_hood.any():
