@@ -46,6 +46,13 @@
     #layers input { accent-color: #fcd278; margin: 0; }
     #layers input[type="range"] { width: 86px; cursor: pointer; }
     #layers .pct { min-width: 34px; text-align: right; color: #6a6a80; font-variant-numeric: tabular-nums; }
+    /* Services-view per-service rows — hidden outside the services view.
+       Each row: an on/off checkbox; the "colour" radio picks which service
+       drives the ramp and only shows when 2+ services are checked. */
+    #services-hd, #services { display: none; }
+    #services .svc { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    #services .svc-colour { color: #6a6a80; font-size: 10.5px; display: none; }
+    #services .svc-colour:hover { color: #e8e8ef; }
     /* Glass-view spike denominator (ground vs lot acres) — hidden outside
        glass and on data files without the lot-acre columns. */
     #denom-hd, #denom { display: none; }
@@ -138,19 +145,38 @@
 
   <div id="views" class="panel">
     <button data-view="money" class="active" title="Revenue/value prisms — the money plane">Money</button>
-    <button data-view="roads" title="The road network on the ground: collector + local roads coloured by their neighbourhood's road metres per acre; arterials neutral">Roads</button>
+    <button data-view="services" title="City services on the ground — toggle each service on its own layer; roads coloured by metres per acre, stormwater by its modeled charge per acre">Services</button>
     <button data-view="ratio" title="Ghost prisms of revenue per road metre over the neutral road network">Ratio</button>
     <button data-view="uses" title="Each neighbourhood's dominant zoned land use — what the land is designated for, not what it yields">Uses</button>
     <button data-view="glass" title="Translucent metric prisms over a neutral neighbourhood plane — hover the ground for each neighbourhood's numbers">Glass</button>
   </div>
 
   <div id="layers" class="panel">
-    <span class="hd">Money plane</span>
-    <label title="Prism opacity — how strongly the ratio prisms overlay the road network">
+    <span class="hd" id="prism-hd">Money plane</span>
+    <label id="prism-row" title="Prism opacity — how strongly the ratio prisms overlay the road network">
       Prisms
       <input type="range" id="prism-opacity" min="0" max="100" value="100" />
       <span class="pct" id="prism-opacity-val">100%</span>
     </label>
+    <span class="hd" id="services-hd">Services</span>
+    <div id="services">
+      <div class="svc" data-service="roads">
+        <label title="The road network: collector + local roads coloured by their neighbourhood's road metres per acre; arterials neutral">
+          <input type="checkbox" class="svc-on" checked /> Roads — m/acre
+        </label>
+        <label class="svc-colour" title="This service drives the colour ramp; the other renders neutral">
+          <input type="radio" name="svc-driver" checked /> colour
+        </label>
+      </div>
+      <div class="svc" data-service="storm">
+        <label title="Each neighbourhood coloured by its modeled annual stormwater utility charge per acre — estimated from lot sizes and zoning, not billed amounts">
+          <input type="checkbox" class="svc-on" /> Stormwater — modeled $/acre
+        </label>
+        <label class="svc-colour" title="This service drives the colour ramp; the other renders neutral">
+          <input type="radio" name="svc-driver" /> colour
+        </label>
+      </div>
+    </div>
     <span class="hd" id="denom-hd">Spike denominator</span>
     <div id="denom">
       <button data-denom="ground" class="active" title="Divide each cell's total by the cell's own ground area (2.47 acres) — dollars pinned to this patch of map">Ground acres</button>
@@ -221,14 +247,14 @@
     };
 
     // --- services lens views (SPEC_services.md display architecture) --------
-    // Three views. "money": the classic revenue/value prisms. "roads": the
-    // road network alone on the ground, access (collector + local) segments
-    // coloured by their hood's road_m_per_acre on the active ramp — LINEAR,
-    // clamp = p97.5 (FINDINGS §6.3); arterials neutral (shared infrastructure,
-    // no metric). "ratio": the stage-3 synthesis — ghost prisms (default 5%
-    // opacity, slider-adjustable) of REVENUE PER ROAD METRE over the network
-    // in all-neutral grey. Road geometry lazy-loads from ROADS_URL on first
-    // non-money view.
+    // "money": the classic revenue/value prisms. "services": the per-service
+    // ground layers (see SERVICES below); the road network's access
+    // (collector + local) segments colour by their hood's road_m_per_acre on
+    // the active ramp — LINEAR, clamp = p97.5 (FINDINGS §6.3); arterials
+    // neutral (shared infrastructure, no metric). "ratio": the stage-3
+    // synthesis — ghost prisms (default 5% opacity, slider-adjustable) of
+    // REVENUE PER ROAD METRE over the network in all-neutral grey. Road
+    // geometry lazy-loads from ROADS_URL on first services/ratio view.
     const ROADS_URL = "./data/roads.geojson";
     const ROAD_CLAMP = 53;
     const ARTERIAL_COLOR = [116, 120, 132, 170];
@@ -294,15 +320,44 @@
       return best;
     }
 
-    // Per-view chrome. money's title/blurb stay metric-driven (METRICS).
-    const VIEWS = {
+    // --- services view (SPEC_services.md UI generalization, 2026-07-05) -----
+    // The Roads view generalized: each service is a toggleable ground-level
+    // layer (per-service checkboxes in the layers panel). With 2+ services
+    // checked, a "colour" radio picks which one drives the active ramp — the
+    // others render neutral, so exactly one scale is on screen at a time.
+    // Roads: the network lines (as before). Stormwater: a flat hood plane
+    // coloured by storm_charge_per_acre — MODELED utility charges
+    // (SPEC_utilities.md Lens 1: Bylaw 20865 lot area x runoff x rate),
+    // EPCOR money not city tax revenue, and the chrome must say so.
+    // Colour is LINEAR for both (road supply FINDINGS §6.3; storm p97.5/median
+    // ~1.8 — no skew correction warranted). Clamp: p97.5 of the non-set-aside
+    // hoods, computed from the data like ratioScale.
+    const SERVICES = {
       roads: {
-        title: "Edmonton: The Road Network",
+        label: "Roads",
         blurb: "City-maintained roads. Collector and local roads are coloured by " +
                "their neighbourhood's road metres per acre — brighter means more " +
                "road to maintain per unit of land (colour is linear). Arterials " +
                "are shown in neutral grey: shared infrastructure that any " +
                "development pattern entails, excluded from the measure.",
+      },
+      storm: {
+        label: "Stormwater",
+        blurb: "Each neighbourhood is coloured by its modeled annual stormwater " +
+               "utility charge per acre — the drainage bylaw's formula (lot area " +
+               "× runoff coefficient × rate) applied to every assessed " +
+               "property. Modeled, not billed: an estimate from zoning and lot " +
+               "sizes of the utility charges a neighbourhood's land generates — " +
+               "separate money from municipal property tax. Colour is linear. " +
+               "Grey = set-aside natural/undeveloped land.",
+      },
+    };
+
+    // Per-view chrome. money's title/blurb stay metric-driven (METRICS).
+    const VIEWS = {
+      services: {
+        title: "Edmonton: City Services",
+        blurb: null, // follows the colour-driving service — servicesBlurb()
         opacity: null, // no prisms in this view
       },
       ratio: {
@@ -358,15 +413,20 @@
     // `residential` is the residential-only lens (off by default): when on,
     // non-residential hoods fade translucent so residential land compares
     // like-to-like without the Downtown / class-rate confound. Applies in the
-    // Money and Ratio views; disabled in Roads (no per-hood prisms to fade).
-    // `view` selects the display mode (money | roads | ratio | uses | glass);
+    // Money and Ratio views; disabled in Services (no per-hood prisms to fade).
+    // `view` selects the display mode (money | services | ratio | uses | glass);
     // `prismOpacity` is the ghost-prism strength in ratio and glass (money
-    // prisms are always opaque; roads and uses have no prisms).
+    // prisms are always opaque; services and uses have no prisms).
     // `denom` is the Glass spike denominator: "ground" (the cell's fixed
     // 2.47 acres) or "lot" (the parcel acres the cell's properties own —
     // FINDINGS_lot_dedupe.md). Glass-only; other views ignore it.
+    // `services` is the per-service on/off set of the Services view;
+    // `svcDriver` names the checked service that drives the colour ramp
+    // (kept pointing at a checked service by applyService). Both persist
+    // across view switches, matching the denominator toggle's behaviour.
     const state = { metric: "revenue_per_acre", ramp: "current", residential: false,
                     labels: false, view: "money", prismOpacity: 1, denom: "ground",
+                    services: { roads: true, storm: false }, svcDriver: "roads",
                     data: null };
     let overlay;         // deck.gl MapboxOverlay, created on map load
     let roadsData = null;  // lazy-fetched roads FeatureCollection
@@ -532,13 +592,14 @@
     // Legend gradient for the CURRENT ramp under the CURRENT view's transform:
     // sample the bar in *value* space (linear across the displayed range) so
     // the colour at each position matches what that value renders. money =
-    // per-metric transform; roads = linear road scale; ratio = log $/metre.
+    // per-metric transform; services = linear (both service scales); ratio =
+    // log $/metre.
     function legendGradient() {
       const N = 16, parts = [];
       for (let i = 0; i <= N; i++) {
         const p = i / N;                 // fraction of the displayed range
         let t;
-        if (state.view === "roads") t = p;
+        if (state.view === "services") t = p;
         else if (state.view === "ratio") {
           const s = ratioScale();
           t = ratioT(s.lo + p * (s.hi - s.lo));
@@ -582,9 +643,10 @@
       return out;
     }
 
-    // The roads ground layer (roads + ratio views). In the roads view access
-    // segments take the active ramp at their hood's load; in the ratio view
-    // the whole network is neutral — the prisms carry the signal there.
+    // The roads ground layer (services + ratio views). When roads drive the
+    // services colour, access segments take the active ramp at their hood's
+    // load; `neutral` (ratio view, or another service drives the colour)
+    // renders the whole network in the arterial grey.
     function roadLayers(neutral) {
       if (!roadsData) return [];
       return [new deck.GeoJsonLayer({
@@ -606,7 +668,59 @@
       })];
     }
 
-    // Flat invisible hood layer for the roads/ratio views: keeps the hood
+    // Stormwater scale anchor, computed once from the data (tracks weekly
+    // refreshes like ratioScale): colour clamp at p97.5 of the non-set-aside
+    // hoods — set-asides are off the scale (grey), the usual convention.
+    let _stormScale = null;
+    function stormScale() {
+      if (_stormScale) return _stormScale;
+      const vals = state.data.features.map(f => f.properties)
+        .filter(p => !p.is_set_aside && p.storm_charge_per_acre != null)
+        .map(p => p.storm_charge_per_acre)
+        .sort((a, b) => a - b);
+      return (_stormScale = { clamp: quantile(vals, 0.975) });
+    }
+    const fmtStorm = v => "$" + Math.round(v).toLocaleString() +
+      " modeled stormwater / acre / yr";
+
+    // The stormwater ground plane (services view): flat hoods coloured by
+    // their MODELED charge per acre — linear on the active ramp. `neutral`
+    // (another service drives the colour) renders the plane in the Glass
+    // view's signal-free slate so it stays a visible surface without
+    // carrying a second scale. Set-aside hoods take the usual grey either
+    // way. Not pickable — the hood hover layer on top owns tooltips.
+    function stormPlaneLayer(neutral) {
+      return new deck.GeoJsonLayer({
+        id: "storm-plane",
+        data: state.data,
+        filled: true,
+        stroked: false,
+        extruded: false,
+        getFillColor: f => {
+          const p = f.properties;
+          if (p.is_set_aside) return SET_ASIDE_COLOR;
+          if (neutral || p.storm_charge_per_acre == null) return GLASS_PLANE_COLOR;
+          return rampColorAt(Math.max(0, Math.min(1, p.storm_charge_per_acre / stormScale().clamp)));
+        },
+        pickable: false,
+        updateTriggers: { getFillColor: [state.ramp, neutral] },
+      });
+    }
+
+    // Services-view blurb: the colour-driving service's story, plus one line
+    // naming any other service that's on screen in neutral.
+    function servicesBlurb() {
+      const others = Object.keys(SERVICES)
+        .filter(k => state.services[k] && k !== state.svcDriver)
+        .map(k => SERVICES[k].label.toLowerCase());
+      let b = SERVICES[state.svcDriver].blurb;
+      if (others.length)
+        b += ` The ${others.join(" and ")} layer renders neutral — its "colour" ` +
+             `dot moves the ramp there.`;
+      return b;
+    }
+
+    // Flat invisible hood layer for the services/ratio views: keeps the hood
     // tooltips and lights the hovered neighbourhood up over the network —
     // picking renders geometry with its own colours, so a fully-transparent
     // fill still hovers fine. depthTest off: coplanar with the road lines.
@@ -682,7 +796,7 @@
       }
       if (state.view === "ratio")
         return (ratioKept(p) ? ratioOf(p) * ratioScale().elevationScale : 0) + LABEL_LIFT;
-      return LABEL_LIFT; // roads / uses / glass: label at the ground
+      return LABEL_LIFT; // services / uses / glass: label at the ground
     }
 
     // Greedy screen-space decluttering: project every anchor through the live
@@ -826,10 +940,19 @@
         }), ...labelLayer()];
       }
 
-      if (state.view === "roads") {
-        // The network alone, coloured by load. No prisms at all — an
-        // opacity-0 layer would still tessellate, draw, pick, and highlight.
-        return [...roadLayers(false), hoodHoverLayer(), ...labelLayer()];
+      if (state.view === "services") {
+        // Ground-level service layers, stacked per the checkboxes: the storm
+        // plane first (flat polygons), the road lines over it (drawn later at
+        // the same z, so LEQUAL depth lets them win), hover + labels on top.
+        // Exactly one checked service drives the ramp (state.svcDriver); the
+        // rest render neutral. No prisms at all — an opacity-0 layer would
+        // still tessellate, draw, pick, and highlight.
+        const layers = [];
+        if (state.services.storm)
+          layers.push(stormPlaneLayer(state.svcDriver !== "storm"));
+        if (state.services.roads)
+          layers.push(...roadLayers(state.svcDriver !== "roads"));
+        return [...layers, hoodHoverLayer(), ...labelLayer()];
       }
 
       if (state.view === "glass") {
@@ -994,12 +1117,19 @@
       const p = object.properties;
       const name = `<b>${p.neighbourhood_name}</b><br/>`;
 
-      if (state.view === "roads") {
+      if (state.view === "services") {
+        // Both service numbers, whichever layers are on — the tooltip is the
+        // place the neutral layer's values stay readable.
+        const rows = [];
+        if (p.road_m_per_acre != null)
+          rows.push(`${p.road_m_per_acre.toFixed(1)} road m / acre <span class="muted">(collector + local)</span>`);
+        if (p.storm_charge_per_acre != null)
+          rows.push(`<span class="muted">${fmtStorm(p.storm_charge_per_acre)}</span>`);
         return {
           className: "tip",
-          html: p.road_m_per_acre != null
-            ? name + `${p.road_m_per_acre.toFixed(1)} road m / acre <span class="muted">(collector + local)</span>`
-            : name + `<span class="muted">no road data</span>`,
+          html: rows.length
+            ? name + rows.join("<br/>")
+            : name + `<span class="muted">no service data</span>`,
         };
       }
 
@@ -1060,7 +1190,7 @@
 
     // Switch metric: rebuild layers and update the title/legend/toggle chrome.
     // Renders live in the Money and Glass views (both draw the metric); in
-    // roads/ratio/uses it only marks state and takes effect on returning.
+    // services/ratio/uses it only marks state and takes effect on returning.
     function applyMetric(metric) {
       if (metric === state.metric || !METRICS[metric]) return;
       state.metric = metric;
@@ -1114,12 +1244,24 @@
           .join("");
         return;
       }
-      if (state.view === "roads") {
-        document.getElementById("legend-label").textContent = "Road metres per acre";
-        document.getElementById("legend-min").textContent = "0 m";
-        document.getElementById("legend-max").textContent = ROAD_CLAMP + " m+";
-        label.textContent = "Arterial — shared infrastructure";
-        sw.style.background = `rgb(${ARTERIAL_COLOR.slice(0, 3).join(",")})`;
+      if (state.view === "services") {
+        // The legend reads the colour-driving service; the neutral layer's
+        // numbers live in the tooltip.
+        if (state.svcDriver === "storm") {
+          document.getElementById("legend-label").textContent =
+            "Modeled stormwater charge per acre / yr";
+          document.getElementById("legend-min").textContent = "$0";
+          document.getElementById("legend-max").textContent =
+            "$" + Math.round(stormScale().clamp).toLocaleString() + "+";
+          label.textContent = "Set aside — natural / undeveloped land";
+          sw.style.background = "rgb(104,108,122)";
+        } else {
+          document.getElementById("legend-label").textContent = "Road metres per acre";
+          document.getElementById("legend-min").textContent = "0 m";
+          document.getElementById("legend-max").textContent = ROAD_CLAMP + " m+";
+          label.textContent = "Arterial — shared infrastructure";
+          sw.style.background = `rgb(${ARTERIAL_COLOR.slice(0, 3).join(",")})`;
+        }
       } else if (state.view === "ratio") {
         const s = ratioScale();
         document.getElementById("legend-label").textContent = "Revenue per road metre (log colour)";
@@ -1216,8 +1358,8 @@
       document.getElementById("prism-opacity-val").textContent = Math.round(pct) + "%";
     }
 
-    // Switch view (money | roads | ratio | uses | glass). Road geometry
-    // lazy-loads on the first roads/ratio view; entering a ghost-prism view
+    // Switch view (money | services | ratio | uses | glass). Road geometry
+    // lazy-loads on the first services/ratio view; entering a ghost-prism view
     // (ratio, glass) resets the slider to that view's default. Title/blurb
     // follow the view (money's and glass's titles stay metric-driven).
     async function applyView(v) {
@@ -1225,15 +1367,24 @@
       state.view = v;
       document.querySelectorAll("#views button").forEach(b =>
         b.classList.toggle("active", b.dataset.view === v));
+      // The layers panel hosts three view-scoped sections: the prism slider
+      // (ratio + glass), the service checkboxes (services), the spike
+      // denominator (glass, further gated on the data below).
+      const prisms = v === "ratio" || v === "glass";
       document.getElementById("layers").style.display =
-        (v === "ratio" || v === "glass") ? "flex" : "none";
-      // The lens applies in Money and Ratio. In Roads it has no effect, in
-      // Uses residential land is already an explicit category, and in Glass
-      // the grid cells carry no residential flag — the button disables in
-      // all three (state persists and re-applies on leaving).
+        (prisms || v === "services") ? "flex" : "none";
+      document.getElementById("prism-hd").style.display = prisms ? "block" : "none";
+      document.getElementById("prism-row").style.display = prisms ? "flex" : "none";
+      document.getElementById("services-hd").style.display = v === "services" ? "block" : "none";
+      document.getElementById("services").style.display = v === "services" ? "block" : "none";
+      // The lens applies in Money and Ratio. In Services the per-hood signal
+      // is service supply, not the money metric, in Uses residential land is
+      // already an explicit category, and in Glass the grid cells carry no
+      // residential flag — the button disables in all three (state persists
+      // and re-applies on leaving).
       document.querySelector("#lens button").disabled =
-        v === "roads" || v === "uses" || v === "glass";
-      if ((v === "roads" || v === "ratio") && !roadsData) {
+        v === "services" || v === "uses" || v === "glass";
+      if ((v === "services" || v === "ratio") && !roadsData) {
         roadsFetch ??= fetch(ROADS_URL).then(r => r.json()).then(d => { roadsData = d; });
         await roadsFetch;
         if (state.view !== v) return; // switched again while the fetch ran
@@ -1282,12 +1433,48 @@
       document.getElementById("denom").style.display = denomShow ? "flex" : "none";
       overlay.setProps({ layers: buildLayers() });
       // Glass shows the metric like Money, so its title stays metric-driven
-      // and its blurb follows the spike denominator.
+      // and its blurb follows the spike denominator; the services blurb
+      // follows the colour-driving service.
       const chrome = v === "money" ? METRICS[state.metric] : VIEWS[v];
       document.getElementById("title-h").textContent =
         v === "glass" ? METRICS[state.metric].title : chrome.title;
       document.getElementById("title-p").textContent =
-        v === "glass" ? glassBlurb() : chrome.blurb;
+        v === "glass" ? glassBlurb() :
+        v === "services" ? servicesBlurb() : chrome.blurb;
+      refreshLegend();
+    }
+
+    // Services-view controls. `applyService` flips a service on/off;
+    // `applySvcDriver` moves the colour ramp between checked services. The
+    // driver invariant: it always names a CHECKED service while any is
+    // checked (unchecking the driver hands the ramp to the next checked
+    // service); the radios only show when the choice is real (2+ checked).
+    function syncServiceControls() {
+      const on = Object.keys(SERVICES).filter(k => state.services[k]);
+      document.querySelectorAll("#services .svc").forEach(el => {
+        const k = el.dataset.service;
+        el.querySelector(".svc-on").checked = state.services[k];
+        el.querySelector(".svc-colour").style.display =
+          (on.length >= 2 && state.services[k]) ? "flex" : "none";
+        el.querySelector('input[type="radio"]').checked = state.svcDriver === k;
+      });
+    }
+    function applyService(k, checked) {
+      state.services[k] = checked;
+      const on = Object.keys(SERVICES).filter(s => state.services[s]);
+      if (!checked && state.svcDriver === k && on.length) state.svcDriver = on[0];
+      if (checked && on.length === 1) state.svcDriver = k;
+      syncServiceControls();
+      overlay.setProps({ layers: buildLayers() });
+      document.getElementById("title-p").textContent = servicesBlurb();
+      refreshLegend();
+    }
+    function applySvcDriver(k) {
+      if (k === state.svcDriver || !state.services[k]) return;
+      state.svcDriver = k;
+      syncServiceControls();
+      overlay.setProps({ layers: buildLayers() });
+      document.getElementById("title-p").textContent = servicesBlurb();
       refreshLegend();
     }
 
@@ -1309,6 +1496,13 @@
       document.querySelector('#lens button[data-lens="labels"]').addEventListener("click", applyLabels);
       document.querySelectorAll("#denom button").forEach(b =>
         b.addEventListener("click", () => applyDenom(b.dataset.denom)));
+      document.querySelectorAll("#services .svc").forEach(el => {
+        const k = el.dataset.service;
+        el.querySelector(".svc-on").addEventListener("change",
+          e => applyService(k, e.target.checked));
+        el.querySelector('input[type="radio"]').addEventListener("change",
+          () => applySvcDriver(k));
+      });
       document.querySelectorAll("#views button").forEach(b =>
         b.addEventListener("click", () => applyView(b.dataset.view)));
       document.getElementById("prism-opacity").addEventListener("input", e => {
@@ -1320,12 +1514,19 @@
       map.on("moveend", () => {
         if (state.labels) overlay.setProps({ layers: buildLayers() });
       });
-      // A data file from before the services lens can't drive the roads/ratio
-      // views — hide those buttons rather than offer views that can't render.
+      // A data file from before the services lens can't drive the services/
+      // ratio views — hide those buttons rather than offer views that can't
+      // render. A file with roads but no stormwater column (pre-2026-07-05)
+      // keeps the view and just hides the stormwater row.
       if (!state.data.features.some(f => f.properties.road_m_per_acre != null)) {
-        document.querySelectorAll('#views button[data-view="roads"], #views button[data-view="ratio"]')
+        document.querySelectorAll('#views button[data-view="services"], #views button[data-view="ratio"]')
           .forEach(b => { b.style.display = "none"; });
       }
+      if (!state.data.features.some(f => f.properties.storm_charge_per_acre != null)) {
+        document.querySelector('#services .svc[data-service="storm"]').style.display = "none";
+        state.services.storm = false;
+      }
+      syncServiceControls();
       // Same guard for the uses view: it needs the composition columns
       // (pipeline 2026-07-03) — hide the button on older data files.
       if (!state.data.features.some(f => f.properties.frac_commercial != null)) {

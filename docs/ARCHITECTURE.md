@@ -335,7 +335,9 @@ roll year, like mill rates).
 
 (`storm_charge_per_acre = storm_charge_annual / area_acres` is computed
 downstream in `join_and_calculate`, boundary-acre denominator — same acre as
-every other per-acre metric.)
+every other per-acre metric. As of 2026-07-05 it is in `SLIM_COLUMNS` and
+ships in the web GeoJSON — the Services view's stormwater plane reads it;
+the raw `storm_*` totals stay out of the slim file like every other total.)
 
 **Responsibilities:**
 - Compute the Bylaw 20865 daily stormwater charge per PROPERTY POINT:
