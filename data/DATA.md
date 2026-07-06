@@ -140,6 +140,25 @@ aligned. That pull also surfaced a new `Assessment Class 1` label
   2026-07-04): full-CSV export endpoint, server count(*) cross-check; lands at
   `data/raw/Property_Info__Current_Calendar_Year_.csv`. Join to the assessment
   roll on `Account Number`: 100% coverage (439,685 rows both sides, 2026-07-04).
+- **`zoning` column probed 2026-07-05 (for the stormwater lens,
+  `docs/SPEC_utilities.md`):** null on 157,030 rows (35.71%); 78 distinct base
+  codes (first token) among the rest, and they are **current Bylaw 20001
+  vocabulary** (RS 146,567 / RSF 98,606 dominant — no legacy RF1-style codes in
+  the top ranks). 98.2% of non-null rows use base codes that appear directly in
+  EPCOR's runoff-coefficient table; the remainder are special-area codes (GLDF,
+  PLD, SLD, BRH, …) needing explicit hand assignments. 282,655 rows (64.3%)
+  have both non-null `zoning` and positive `lot_size`. Zone-null fallback:
+  point-in-polygon against `fixa-tstc` (§5). Follow-ups from the build run:
+  - The null `zoning` rows are almost all condo units at points where another
+    row carries the zone: per POINT, only 4,509 of 287,163 lack any zone, and
+    the `fixa-tstc` fallback resolves 4,508 of those (1 unresolved citywide).
+  - **Three legacy old-bylaw codes linger** (1 point each): `US`, `CSC`, `RSL`
+    — Bylaw 12800 vocabulary that never appears in `fixa-tstc`. Excluded +
+    reported by `load_stormwater` (`ZONE_RUNOFF` covers current codes only).
+  - **`Neighbourhood` contains two non-boundary names:** the known `OLIVER`
+    straggler (1 row, zero lot) and `SPUR LINES` (1 row, 62.5 ha of IM-zoned
+    rail-spur land, no boundary polygon) — both dropped + flagged at the
+    stormwater join, immaterial by count.
 
 ### Architecture Decision — Phase 1
 

@@ -25,12 +25,19 @@ ZONING_COLUMNS = [
 # HERE against boundary area_acres — the same denominator as value/revenue.
 ROAD_COLUMNS = ["road_m_total"]
 
+# Modeled stormwater column carried from load_stormwater when supplied
+# (utility lens #1, SPEC_utilities.md — MODELED, not billed). The rate-
+# independent lot/effective areas stay in load_stormwater; per-acre is
+# computed HERE against boundary area_acres, same as everything else.
+STORM_COLUMNS = ["storm_charge_annual"]
+
 
 def join_and_calculate(
     assessment: pd.DataFrame,
     boundaries: gpd.GeoDataFrame,
     zoning: pd.DataFrame | None = None,
     roads: pd.DataFrame | None = None,
+    stormwater: pd.DataFrame | None = None,
 ) -> gpd.GeoDataFrame:
     """Left join boundaries → assessment, flag unmatched rows, compute value_per_acre.
 
@@ -50,6 +57,13 @@ def join_and_calculate(
     road_m_per_acre against boundary area_acres (SPEC_services.md). Boundaries
     with no roads overlay default to 0 — genuinely zero city-maintained
     collector/local road, unlike the zoning NaNs — and are flagged.
+
+    ``stormwater`` (optional, from load_stormwater.py) adds the MODELED
+    storm_charge_annual and computes storm_charge_per_acre against boundary
+    area_acres (SPEC_utilities.md Lens 1). Boundaries with no modeled points
+    default to $0 (roads semantics: no roll parcels there means no modeled
+    charge) — with the shared caveat that the roll omits exempt institutional
+    land, so hood totals understate where exempt land dominates.
     """
     agg = assessment
 
@@ -164,6 +178,40 @@ def join_and_calculate(
         out_cols = (
             [c for c in out_cols if c != "geometry"]
             + ROAD_COLUMNS + ["road_m_per_acre"] + ["geometry"]
+        )
+
+    # Utility lens #1: merge the modeled stormwater charge when supplied
+    # (SPEC_utilities.md — modeled, not billed).
+    if stormwater is not None:
+        boundary_names = set(joined["neighbourhood_name"])
+        unmatched_storm = sorted(set(stormwater["neighbourhood_name"]) - boundary_names)
+        if unmatched_storm:
+            logger.warning(
+                "%d stormwater neighbourhood(s) with no boundary match (dropped):\n  %s",
+                len(unmatched_storm),
+                "\n  ".join(unmatched_storm),
+            )
+
+        joined = joined.merge(
+            stormwater[["neighbourhood_name", *STORM_COLUMNS]],
+            on="neighbourhood_name",
+            how="left",
+        )
+
+        no_storm = joined["storm_charge_annual"].isna()
+        if no_storm.any():
+            logger.warning(
+                "%d boundary neighbourhood(s) with no modeled stormwater points (default $0):\n  %s",
+                int(no_storm.sum()),
+                "\n  ".join(sorted(joined.loc[no_storm, "neighbourhood_name"])),
+            )
+        # No roll parcels modeled there -> modeled $0 (exempt-land caveat above).
+        joined["storm_charge_annual"] = joined["storm_charge_annual"].fillna(0.0)
+        joined["storm_charge_per_acre"] = joined["storm_charge_annual"] / safe_area
+
+        out_cols = (
+            [c for c in out_cols if c != "geometry"]
+            + STORM_COLUMNS + ["storm_charge_per_acre"] + ["geometry"]
         )
 
     return joined[out_cols]

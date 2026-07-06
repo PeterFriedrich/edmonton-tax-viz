@@ -254,6 +254,14 @@ per hood:  road_m_<class>  = Σ length(city road centrelines ∩ hood polygon), 
 
 ## Cross-refs
 
+- **Candidate next services — the Services-view UI trigger FIRED and the
+  shape is DECIDED (2026-07-05, Peter): the Roads view generalizes to a
+  "Services" view with per-service checkboxes.** Stormwater is the second
+  service (pipeline built, display = per-hood ground-plane layer —
+  `docs/SPEC_utilities.md` decision 2); fire lens design is settled
+  (demand events/acre/yr plane + 31 station dots — TODO.md "More service
+  layers") and builds after the Services UI lands. Tariff methods in
+  `docs/utility_cost_estimation_lens_methods.md`.
 - Cost side declared out of scope in Phase 1: `docs/SPEC_phase1.md` (Out of Scope).
 - Municipal-only scoping precedent (education levy exclusion): `docs/SPEC_revenue.md`.
 - Module pattern + explicit-dict philosophy: `src/load_zoning.py`, `docs/ARCHITECTURE.md`.

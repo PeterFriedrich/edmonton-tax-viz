@@ -54,6 +54,13 @@ validation, raises on new violations), and hands it to `export_value_grid.py`
 for the 100 m cell file (`web/data/value_grid.json`, ground- AND lot-acre
 metrics). Absent property-info file → ground-acre only.
 
+**Also in the flow (stormwater lens, built 2026-07-05):** `load_stormwater.py`
+reads the property-info CSV directly (per-point A × I × R charge model — see
+its module entry) with a `fixa-tstc` point-in-polygon fallback for zone-null
+rows, and produces per-hood columns merged in `join_and_calculate`
+(`storm_charge_annual`; `storm_charge_per_acre` computed there). Rates come
+from `data/stormwater_rates.json`, year-keyed like `mill_rates.json`.
+
 **One metric exists ONLY in the browser:** the Ratio view's revenue per road
 metre (`revenue_per_acre / road_m_per_acre` — the acres cancel) is derived
 client-side in `web/index.html` from the two published GeoJSON columns. No
@@ -308,6 +315,64 @@ clamp (p97.5) and elevation parity from the served file at load
 (`gridScale()` in `web/index.html`, same pattern as `ratioScale()`), so they
 track weekly refreshes.
 
+### `src/load_stormwater.py` (utility lens #1 — added 2026-07-05)
+
+Full methodology + open decisions in `docs/SPEC_utilities.md` Lens 1; tariff
+source `docs/utility_cost_estimation_lens_methods.md` §C. **Everything this
+module outputs is MODELED (bylaw formula on open data), not billed.**
+
+**Inputs:** the property-info CSV (`dkk9-cj3x` — needs `zoning`, `lot_size`,
+`Latitude`/`Longitude`, `Neighbourhood`; mixed header casing, DATA.md §2);
+optional path to the zoning GeoJSON (`fixa-tstc`) for the zone-null spatial
+fallback; `data/stormwater_rates.json` (rate by year — same year-keyed
+pattern as `mill_rates.json`); the assessment year (rates must match the
+roll year, like mill rates).
+
+**Outputs:** `pd.DataFrame` keyed by `neighbourhood_name`:
+- `storm_lot_m2` (float) — Σ eligible deduped parcel area
+- `storm_effective_m2` (float) — Σ A × I × R (rate-independent quantity)
+- `storm_charge_annual` (float, $/yr) — `storm_effective_m2` × annualized rate
+
+(`storm_charge_per_acre = storm_charge_annual / area_acres` is computed
+downstream in `join_and_calculate`, boundary-acre denominator — same acre as
+every other per-acre metric.)
+
+**Responsibilities:**
+- Compute the Bylaw 20865 daily stormwater charge per PROPERTY POINT:
+  `A × I × R × rate`, I = 1.0 (`intensity_default`; SIAP reductions out of
+  scope v1), annualized per the rate's unit (monthly × 12 / daily × 365)
+- **A (parcel area):** group rows by exact lat/long and reuse
+  `export_value_grid._point_lot_stats` — the repeat-aware condo dedupe
+  (FINDINGS_lot_dedupe) IS the bylaw's per-unit apportionment read back;
+  majority-null multi-unit points are ineligible, excluded + REPORTED
+  (accepted cross-module helper use, like `load_roads._prepare_segments`)
+- **R (runoff coefficient):** explicit `ZONE_RUNOFF` dict — every base code
+  hand-assigned (same philosophy as `ZONE_CATEGORY`), verified Bylaw-table
+  rows marked, special-area codes assigned by closest-aligned zone (the
+  bylaw's own rule for unlisted zones); lot-size splits (<450/>450 m² res,
+  <700/>700 m² DC) applied against the point's deduped area; unknown codes
+  warn loudly, excluded + reported
+- **Zone resolution order (each path's count reported):** (1) the row's own
+  `zoning` column (first token); (2) modal zone among rows at the same
+  point; (3) point-in-polygon against the `fixa-tstc` polygons (EPSG:3400,
+  explicit CRS) — never the stale historical layer `67p2-r285`;
+  (4) unresolved → excluded + reported
+- Aggregate points → hood via the CSV's `Neighbourhood` column (strip +
+  uppercase + `NAME_CORRECTIONS` from `load_assessment`, applied BEFORE
+  aggregation, same rule as everywhere)
+- No silent drops: every exclusion (ineligible lot, unknown zone,
+  unresolved zone, null coordinates) counted + reported with area/value
+
+**Known limitation (same as revenue):** the roll omits exempt institutional
+land entirely, so hood totals understate where exempt land dominates —
+recorded, not corrected.
+
+**Does not:** decide display (open decision — SPEC_utilities), apply SIAP/LID
+credits, project forward rates (PBR escalation out of scope), or claim
+billing accuracy for any specific address.
+
+---
+
 ### `src/join_and_calculate.py`
 
 **Inputs:**
@@ -323,6 +388,12 @@ track weekly refreshes.
   pattern; `road_m_per_acre = road_m_total / area_acres` computed here.
   Boundaries with no roads overlay default to a true 0 m (flagged) — unlike
   the zoning NaNs, no overlay genuinely means no city collector/local road.
+- (optional) stormwater DataFrame from `load_stormwater.py`
+  (`SPEC_utilities.md` Lens 1) — a `STORM_COLUMNS` merge on
+  `neighbourhood_name`; `storm_charge_per_acre = storm_charge_annual /
+  area_acres` computed here. Boundaries with no roll parcels default to a
+  true modeled $0 (flagged) — roads semantics, with the exempt-land
+  understatement caveat recorded in the module.
 
 **Outputs:** `gpd.GeoDataFrame` with columns:
 - `neighbourhood_name`

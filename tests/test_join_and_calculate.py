@@ -379,3 +379,49 @@ def test_roads_and_zoning_merges_compose():
     row = result.iloc[0]
     assert bool(row["is_residential"]) is True
     assert row["road_m_per_acre"] == pytest.approx(25.0)
+
+
+# --- stormwater merge (utility lens #1, SPEC_utilities.md) --------------------
+
+def _stormwater(rows):
+    return pd.DataFrame(rows)
+
+
+def test_stormwater_merge_adds_columns_and_per_acre():
+    result = join_and_calculate(
+        _assessment([{"neighbourhood_name": "GRIDTOWN", "total_assessed_value": 100.0}]),
+        _boundaries([{"neighbourhood_name": "GRIDTOWN", "area_acres": 10.0}]),
+        stormwater=_stormwater([
+            {"neighbourhood_name": "GRIDTOWN", "storm_charge_annual": 5000.0},
+        ]),
+    )
+    row = result.iloc[0]
+    assert row["storm_charge_annual"] == pytest.approx(5000.0)
+    assert row["storm_charge_per_acre"] == pytest.approx(500.0)
+
+
+def test_no_stormwater_arg_omits_storm_columns():
+    result = join_and_calculate(
+        _assessment([{"neighbourhood_name": "DOWNTOWN", "total_assessed_value": 100.0}]),
+        _boundaries([{"neighbourhood_name": "DOWNTOWN", "area_acres": 10.0}]),
+    )
+    assert "storm_charge_annual" not in result.columns
+    assert "storm_charge_per_acre" not in result.columns
+
+
+def test_boundary_without_stormwater_match_defaults_zero(caplog):
+    with caplog.at_level("WARNING"):
+        result = join_and_calculate(
+            _assessment([{"neighbourhood_name": "DOWNTOWN", "total_assessed_value": 100.0}]),
+            _boundaries([
+                {"neighbourhood_name": "DOWNTOWN", "area_acres": 10.0},
+                {"neighbourhood_name": "PARKLAND", "area_acres": 20.0},
+            ]),
+            stormwater=_stormwater([
+                {"neighbourhood_name": "DOWNTOWN", "storm_charge_annual": 5000.0},
+            ]),
+        )
+    parkland = result[result["neighbourhood_name"] == "PARKLAND"].iloc[0]
+    assert parkland["storm_charge_annual"] == 0.0
+    assert parkland["storm_charge_per_acre"] == 0.0
+    assert "no modeled stormwater points" in caplog.text

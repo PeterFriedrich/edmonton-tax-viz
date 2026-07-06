@@ -35,6 +35,7 @@ from load_boundaries import load_boundaries
 from load_zoning import load_zoning, export_zoning_web
 from load_roads import load_roads, export_roads_web
 from load_property_info import load_property_info
+from load_stormwater import load_stormwater
 from join_and_calculate import join_and_calculate, export_geojson
 from export_value_grid import export_value_grid, check_lot_acre_bounds
 from plot_choropleth import plot_choropleth
@@ -48,6 +49,7 @@ ZONING_GEOJSON = ROOT / "data/raw/zoning.geojson"
 ROADS_GEOJSON = ROOT / "data/raw/roads.geojson"
 PROPERTY_INFO_CSV = ROOT / "data/raw/Property_Info__Current_Calendar_Year_.csv"
 MILL_RATES_JSON = ROOT / "data/mill_rates.json"
+STORMWATER_RATES_JSON = ROOT / "data/stormwater_rates.json"
 PNG_OUT = ROOT / "output/edmonton_value_per_acre.png"
 GEOJSON_OUT = ROOT / "web/data/neighbourhood_value_per_acre.geojson"
 ROADS_WEB_OUT = ROOT / "web/data/roads.geojson"
@@ -77,6 +79,7 @@ def run(
     zoning_geojson: Path | None = ZONING_GEOJSON,
     roads_geojson: Path | None = ROADS_GEOJSON,
     property_info_csv: Path | None = PROPERTY_INFO_CSV,
+    stormwater_rates_json: Path | None = STORMWATER_RATES_JSON,
     setback_m: float = SETBACK_M,
     simplify_tolerance_m: float = SIMPLIFY_TOLERANCE_M,
 ) -> None:
@@ -103,7 +106,30 @@ def run(
     elif roads_geojson is not None:
         logger.warning("Roads file not found (%s) — skipping road-supply layer", roads_geojson)
 
-    result = join_and_calculate(aggregated, boundaries, zoning=zoning, roads=roads)
+    # Stormwater (utility lens #1, SPEC_utilities.md — MODELED, not billed)
+    # rides on inputs the pipeline already has: the property-info CSV and the
+    # zoning GeoJSON (zone-null fallback). Skipped when either the rates file
+    # or the property-info file is absent; the rate year is pinned to the
+    # assessment year, same rule as mill rates.
+    stormwater = None
+    if (
+        stormwater_rates_json is not None
+        and property_info_csv is not None
+        and Path(property_info_csv).exists()
+    ):
+        stormwater = load_stormwater(
+            property_info_csv, stormwater_rates_json, assessment_year,
+            zoning_geojson=zoning_geojson,
+        )
+    elif stormwater_rates_json is not None:
+        logger.warning(
+            "Property-info file not found (%s) — skipping the stormwater lens",
+            property_info_csv,
+        )
+
+    result = join_and_calculate(
+        aggregated, boundaries, zoning=zoning, roads=roads, stormwater=stormwater,
+    )
 
     if png_out is not None:
         png_out.parent.mkdir(parents=True, exist_ok=True)
@@ -167,7 +193,10 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p.add_argument("--skip-zoning", action="store_true", help="skip the land-use set-aside layer")
     p.add_argument("--skip-roads", action="store_true", help="skip the road-supply layer")
     p.add_argument("--skip-property-info", action="store_true",
-                   help="skip the lot_size join (grid exports ground-acre only)")
+                   help="skip the lot_size join (grid exports ground-acre only; "
+                        "also skips the stormwater lens, which needs the same file)")
+    p.add_argument("--skip-stormwater", action="store_true",
+                   help="skip the modeled stormwater lens (SPEC_utilities.md)")
     p.add_argument("--log-level", default="INFO", help="logging level (default INFO)")
     return p.parse_args(argv)
 
@@ -189,6 +218,7 @@ def main(argv: list[str] | None = None) -> None:
         zoning_geojson=None if args.skip_zoning else args.zoning_geojson,
         roads_geojson=None if args.skip_roads else args.roads_geojson,
         property_info_csv=None if args.skip_property_info else args.property_info_csv,
+        stormwater_rates_json=None if args.skip_stormwater else STORMWATER_RATES_JSON,
         setback_m=args.setback_m,
         simplify_tolerance_m=args.simplify_tolerance_m,
     )

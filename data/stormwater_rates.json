@@ -1,0 +1,15 @@
+{
+  "_provenance": [
+    "EPCOR stormwater utility rate (Bylaw 20865 daily charge = A x I x R x rate).",
+    "Source: EPCOR rates page via docs/utility_cost_estimation_lens_methods.md SC.",
+    "2025: $0.092750 per m2 per MONTH, effective 2025-04-01 (pre daily-transition).",
+    "2026: $0.00327 per m2 per DAY, effective 2026-04-01 (monthly-to-daily transition).",
+    "Rates reset each April 1 — re-pull before any production run (Methods, Caveats).",
+    "Everything computed from these is MODELED, not billed (SPEC_utilities.md)."
+  ],
+  "intensity_default": 1.0,
+  "years": {
+    "2025": {"rate": 0.09275, "per": "m2_month", "effective": "2025-04-01"},
+    "2026": {"rate": 0.00327, "per": "m2_day", "effective": "2026-04-01"}
+  }
+}
