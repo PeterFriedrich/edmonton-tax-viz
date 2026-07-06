@@ -8,7 +8,7 @@ check `git` / `pytest` directly — do not restate it here, it only goes stale.
 Session summaries (`session-summary/`) are dated *narratives* of what happened and
 why. This file owns *what's left*. When they disagree, this file wins.
 
-_Last reconciled: 2026-07-02_
+_Last reconciled: 2026-07-06_
 
 ## Open work
 
@@ -109,13 +109,14 @@ _Last reconciled: 2026-07-02_
       Dataset facts: DATA.md §7–8; spec: SPEC_services "Fire lens".
       **Remaining follow-ups (blocked on network access to
       data.edmonton.ca — the build session's VM policy denied it):**
-      - [ ] **First real-data run** (CI refresh after merge, or locally):
-        confirm the dispatch-datetime header resolves — on a hard error,
-        add the real name to `DISPATCH_COLUMN_CANDIDATES`
-        (`src/load_fire.py`; the error prints the file's headers). Then
-        eyeball the served fire plane + station dots, and sanity-check the
-        logged kept-group mix / medical share / per-year counts against
-        the Session-12 probe numbers.
+      - [x] ~~First real-data run~~ — DONE 2026-07-06 (Session 18, Oracle
+        server): `dispatch_datetime` resolved as the first exact candidate
+        (186 of 948k unparseable); mix verified (MEDICAL 60%, 4,025 noise
+        excluded, 88,065 kept events/yr / 408 fire hoods). Caught + fixed
+        TWO real-data bugs: PR #17 (event_type_group carries CODES — filter
+        on event_description) and PR #18 (`FIRE_NAME_CORRECTIONS`: fire CSV
+        still says OLIVER for WÎHKWÊNTÔWIN, 1,476 events/yr displayed as 0;
+        + 3 "AREA" collapses). Live-verified: plane + 31 dots + tooltip.
       - [x] ~~Colour transform check on real `fire_events_per_acre`~~ —
         DECIDED 2026-07-06: **sqrt** (raw skew +7.86, the project's worst;
         clamp/median 5.8×; linear crammed 59% of hoods into the ramp's
