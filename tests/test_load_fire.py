@@ -15,10 +15,17 @@ from load_fire import (
 YEARS = (2023, 2024, 2025)
 
 
+# Real-file shape: event_type_group carries two-letter codes; the long-name
+# vocabulary the filter matches lives in event_description.
+_CODES = {"MEDICAL": "MD", "FIRE": "FR", "TRAINING/MAINTENANCE": "TM",
+          "COMMUNITY EVENT": "CM", "PRE-INCIDENT PLANNING": "PP"}
+
+
 def _row(when="2024-06-01T12:00:00", group="MEDICAL", hood="ALPHA"):
     return {
         "dispatch_datetime": when,
-        "event_type_group": group,
+        "event_type_group": None if group in (None, "") else _CODES.get(group, "ZZ"),
+        "event_description": group,
         "neighbourhood_name": hood,
         # extra column proves the loader slims by usecols
         "response_code": "D",
@@ -72,7 +79,20 @@ def test_null_group_excluded_and_counted(tmp_path, caplog):
     with caplog.at_level("WARNING"):
         out = load_fire_events(_write_events(tmp_path, rows), YEARS)
     assert out["fire_events_per_year"].sum() == pytest.approx(1.0)
-    assert "null event_type_group" in caplog.text
+    assert "null event group" in caplog.text
+
+
+def test_code_only_rows_kept_via_fallback(tmp_path, caplog):
+    # A code with no description (the real DR/86/FP/HO case) is a real
+    # dispatch — kept under the bare code, loudly.
+    row = _row(group=None)
+    row["event_type_group"] = "DR"
+    rows = _window_rows() + [row]
+    with caplog.at_level("WARNING"):
+        out = load_fire_events(_write_events(tmp_path, rows), YEARS)
+    assert out["fire_events_per_year"].sum() == pytest.approx(4 / 3)
+    assert "bare code" in caplog.text
+    assert "DR" in caplog.text
 
 
 def test_unknown_group_kept_and_logged(tmp_path, caplog):

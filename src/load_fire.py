@@ -18,12 +18,14 @@ caveat, NOT a filter; the kept mix is logged every load so drift is
 visible. Unrecognized new groups stay IN (they are presumably real
 dispatches) and are logged loudly.
 
-Column-name caveat: the build session (2026-07-06) could not reach
-data.edmonton.ca, so the dispatch-datetime header could not be pinned.
-``DISPATCH_COLUMN_CANDIDATES`` enumerates the plausible snake_case API
-names; resolution HARD-ERRORS listing the file's actual headers if none
-match. ``event_type_group`` and ``neighbourhood_name`` were confirmed in
-the Session-12 probe.
+Column names (confirmed on the first real pull, 2026-07-06): the dispatch
+datetime is ``dispatch_datetime`` (first candidate, exact match). The
+Session-12 probe's long group names (MEDICAL, TRAINING/MAINTENANCE, …)
+live in ``event_description``; ``event_type_group`` itself carries
+two-letter CODES (MD, AL, TM…). The filter therefore runs on the
+description, falling back to the bare code for the ~1k rows with no
+description. ``DISPATCH_COLUMN_CANDIDATES`` and the hard-error paths stay
+as insurance against upstream drift.
 """
 
 import json
@@ -37,16 +39,21 @@ from load_assessment import NAME_CORRECTIONS
 logger = logging.getLogger(__name__)
 
 # Operational noise excluded from the demand metric (locked decision 2 —
-# SPEC_services.md "Fire lens"; counts as of the Session-12 probe:
-# TRAINING/MAINTENANCE 18k, plus COMMUNITY EVENT and PRE-INCIDENT PLANNING).
-# Matched against the stripped, uppercased event_type_group.
+# SPEC_services.md "Fire lens"; all-time counts: TRAINING/MAINTENANCE 18k,
+# COMMUNITY EVENT 2.5k, PRE-INCIDENT PLANNING 515). Matched against the
+# stripped, uppercased event_description (bare-code fallback).
 NOISE_GROUPS = {"TRAINING/MAINTENANCE", "COMMUNITY EVENT", "PRE-INCIDENT PLANNING"}
 
-# Emergency groups seen in the Session-12 probe — used ONLY to spot new
-# vocabulary (unknown groups are still kept; they get a loud log line).
+# Group vocabulary confirmed on the 2026-07-06 real pull — used ONLY to
+# spot new vocabulary (unknown groups are still kept; they get a loud log
+# line). The probe's MVI/HAZMAT shorthand is spelled out in the data.
 KNOWN_GROUPS = {
-    "MEDICAL", "ALARMS", "MOTOR VEHICLE INCIDENT", "MVI", "OUTSIDE FIRE",
-    "CITIZEN ASSIST", "FIRE", "HAZMAT", "RESCUE", "VEHICLE FIRE",
+    "MEDICAL", "ALARMS", "MOTOR VEHICLE INCIDENT", "OUTSIDE FIRE",
+    "CITIZEN ASSIST", "FIRE", "HAZARDOUS MATERIALS", "RESCUE",
+    "VEHICLE FIRE", "OTHER", "MESS", "PERMIT-BURNING OR OTHER",
+    # description-less event_type_group codes (~1k rows over 15 years),
+    # kept as bare codes — undecoded, watch for growth
+    "DR", "86", "88", "FP", "HO",
 }
 
 # Plausible snake_case API names for the dispatch datetime — the one keyed
@@ -132,7 +139,7 @@ def load_fire_events(
 
     header = pd.read_csv(events_csv, nrows=0)
     dispatch_col = _resolve_dispatch_column(header.columns)
-    for needed in ("event_type_group", "neighbourhood_name"):
+    for needed in ("event_type_group", "event_description", "neighbourhood_name"):
         if needed not in header.columns:
             raise ValueError(
                 f"expected column {needed!r} not in {events_csv} — headers: "
@@ -141,7 +148,7 @@ def load_fire_events(
 
     df = pd.read_csv(
         events_csv,
-        usecols=[dispatch_col, "event_type_group", "neighbourhood_name"],
+        usecols=[dispatch_col, "event_type_group", "event_description", "neighbourhood_name"],
         low_memory=False,
     )
     n_total = len(df)
@@ -179,12 +186,27 @@ def load_fire_events(
     )
 
     # --- event filter (locked decision 2) -------------------------------------
-    group = df["event_type_group"].astype("string").str.strip().str.upper()
+    # The long-name vocabulary lives in event_description; event_type_group
+    # is a two-letter code (MD, AL, TM…). Filter on the description, falling
+    # back to the bare code for the few description-less rows (kept as
+    # unknowns unless both are null).
+    desc = df["event_description"].astype("string").str.strip().str.upper()
+    code = df["event_type_group"].astype("string").str.strip().str.upper()
+    desc_missing = desc.isna() | (desc == "")
+    code_only = desc_missing & ~(code.isna() | (code == ""))
+    if code_only.any():
+        logger.warning(
+            "%d in-window rows have an event_type_group code but no "
+            "event_description — kept under the bare code: %s",
+            int(code_only.sum()), sorted(code[code_only].unique()),
+        )
+    group = desc.where(~desc_missing, code)
 
     null_group = group.isna() | (group == "")
     if null_group.any():
         logger.warning(
-            "%d in-window rows have a null event_type_group — excluded (operational noise)",
+            "%d in-window rows have a null event group (no description, no "
+            "code) — excluded (operational noise)",
             int(null_group.sum()),
         )
 
@@ -203,8 +225,8 @@ def load_fire_events(
     unknown = set(kept_groups.unique()) - KNOWN_GROUPS
     if unknown:
         logger.warning(
-            "event_type_group values not seen in the Session-12 probe — KEPT "
-            "(presumed real dispatches), review + add to KNOWN_GROUPS: %s",
+            "event group values not in KNOWN_GROUPS — KEPT (presumed real "
+            "dispatches), review + add to KNOWN_GROUPS: %s",
             sorted(unknown),
         )
 

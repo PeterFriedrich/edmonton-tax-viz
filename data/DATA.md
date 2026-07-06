@@ -366,7 +366,7 @@ boundary acre** (`road_m_per_acre`).
 **Download URL:** `https://data.edmonton.ca/resource/7hsn-idqi.csv?$limit=2000000`
 **Download:** `scripts/download_data.py` → `data/raw/fire_response.csv` (gitignored)
 **Format:** CSV via the SODA resource endpoint (snake_case API headers)
-**Rows:** 947,781 dispatched events, 2011–mid-2026, growing ~65k/yr (probed 2026-07-05, Session 12)
+**Rows:** 948,086 dispatched events, 2011–mid-2026 (pulled 2026-07-06); ~90k/yr in the 2023–2025 window — the long-run ~65k/yr average understates current volume
 **Licence:** Open Government Licence – City of Edmonton
 
 **Why:** the fire lens (`docs/SPEC_services.md` "Fire lens") — dispatched
@@ -375,12 +375,13 @@ service. Consumed by `src/load_fire.py`; the shipped metric is
 **`fire_events_per_acre`** (mean annual kept events over the pinned
 `FIRE_YEARS` window ÷ boundary acres).
 
-### Key columns (from the Session-12 probe; the full header list was confirmed then but not transcribed — see the dispatch caveat)
+### Key columns (headers confirmed on the first real pull, 2026-07-06; counts from the Session-12 probe)
 | Column | Notes |
 |---|---|
-| dispatch datetime | **exact header NOT recorded** — `load_fire` resolves it from `DISPATCH_COLUMN_CANDIDATES`, then a single-match "dispatch" substring fallback (logged), then a hard error printing the real headers. **Pin the real name in the candidate list after the first CI run.** |
-| close datetime + `event_duration_mins` | dispatch→CLOSE, i.e. incident length. **There is NO on-scene-arrival timestamp anywhere** — a true response-time metric is NOT buildable from this data (confirmed against the full column list) |
-| `event_type_group` | MEDICAL 57% (536k), ALARMS 144k, MVI 65k, OUTSIDE FIRE 48k, CITIZEN ASSIST 36k, FIRE 24k, HAZMAT 20k, + operational noise (TRAINING/MAINTENANCE 18k, COMMUNITY EVENT, PRE-INCIDENT PLANNING, 31k nulls) |
+| `dispatch_datetime` | **confirmed** — resolves as the first exact candidate in `DISPATCH_COLUMN_CANDIDATES` (the resolver + substring fallback + hard error stay as drift insurance). Only 186 of 948k rows unparseable. |
+| `event_close_datetime` + `event_duration_mins` | dispatch→CLOSE, i.e. incident length. **There is NO on-scene-arrival timestamp anywhere** — a true response-time metric is NOT buildable from this data (confirmed against the full column list) |
+| `event_type_group` | **two-letter CODES** (MD, AL, TA, OF, CA, FR, HZ, TM…), NOT the long names the Session-12 probe showed — those live in `event_description`. ~1k rows over 15 years are code-only with a null description (DR 762, `86` 165, FP 83, HO 47, `88` 1) — kept under the bare code. |
+| `event_description` | the long-name vocabulary (one-to-one with the codes): MEDICAL 57% (536k), ALARMS 144k, MOTOR VEHICLE INCIDENT 65k, OUTSIDE FIRE 48k, CITIZEN ASSIST 36k, FIRE 24k, HAZARDOUS MATERIALS 20k, OTHER 10k, RESCUE 7k, VEHICLE FIRE 5k, MESS 137, PERMIT-BURNING OR OTHER 10, + operational noise (TRAINING/MAINTENANCE 18k, COMMUNITY EVENT 2.5k, PRE-INCIDENT PLANNING 515, 31k both-null). **`load_fire` filters on this column** (bare-code fallback). |
 | `response_code` | dispatch-priority letters (D 446k, AL, NF, C, B, SR, E…) — **undecoded; never filter on it** |
 | `neighbourhood_name` | **pre-joined on ~99% of rows** (8,093 null over the full history) — the per-hood metric needs no spatial work |
 | lat/long | present; unused by the lens (locked: no spatial fallback) |
@@ -394,8 +395,11 @@ service. Consumed by `src/load_fire.py`; the shipped metric is
   average in a partial year. Bump each January (blurb + legend years in
   `web/index.html` ride along).
 - `load_fire` HARD-ERRORS if a window year has zero rows (wrong pin or
-  upstream drift) and keeps-but-logs unrecognized new `event_type_group`
-  vocabulary.
+  upstream drift) and keeps-but-logs group vocabulary outside
+  `KNOWN_GROUPS`. **The Session-12 probe read `event_description` values,
+  not `event_type_group`** — the first real pull (2026-07-06) caught the
+  original code filtering on the wrong column via exactly that unknown-
+  vocabulary warning (the noise filter matched nothing, MEDICAL logged 0%).
 
 ## 8. Fire Stations (fire lens context dots, added 2026-07-06)
 

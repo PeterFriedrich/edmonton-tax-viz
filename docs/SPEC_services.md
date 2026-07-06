@@ -286,9 +286,11 @@ demand only; the 31 stations render as context dots, not a coverage claim.
 
 Two sources (probed 2026-07-05; facts recorded in DATA.md §7–8):
 
-- **`7hsn-idqi` "Fire Response: Current and Historical"** — 947,781
-  dispatched events 2011–mid-2026, ~65k/yr. Key fields: dispatch + close
-  datetimes, `event_type_group` (+ description), dispatch-priority
+- **`7hsn-idqi` "Fire Response: Current and Historical"** — ~948k
+  dispatched events 2011–mid-2026, ~90k/yr in the current window. Key
+  fields: dispatch + close datetimes, `event_type_group` (two-letter
+  CODES) + `event_description` (the long-name vocabulary — **the filter
+  column**; confirmed 2026-07-06, DATA.md §7), dispatch-priority
   `response_code` (letters, undecoded — do NOT filter on it), lat/long, and
   **`neighbourhood_name` pre-joined on ~99% of rows** — the per-hood metric
   needs no spatial work.
@@ -301,9 +303,9 @@ Two sources (probed 2026-07-05; facts recorded in DATA.md §7–8):
    dispatched emergency events per boundary acre) as the Services-view
    ground plane, + the 31 stations as context dots.
 2. **Event filter** — ALL emergency responses MINUS operational noise:
-   `event_type_group` in TRAINING/MAINTENANCE, COMMUNITY EVENT,
-   PRE-INCIDENT PLANNING, and null groups are excluded (each count
-   reported). **The ~57% MEDICAL share is a legend/blurb caveat, NOT a
+   events whose group (`event_description`, bare-code fallback) is
+   TRAINING/MAINTENANCE, COMMUNITY EVENT, PRE-INCIDENT PLANNING, and
+   null groups are excluded (each count reported). **The ~57% MEDICAL share is a legend/blurb caveat, NOT a
    filter** — don't re-litigate; the mix is logged every load so drift is
    visible. Unrecognized new groups stay IN (they are presumably real
    dispatches) and are logged loudly.
