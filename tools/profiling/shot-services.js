@@ -1,9 +1,11 @@
-// One-off: screenshot the Services view in its three colour states — roads
-// only (the old Roads view look), both services with roads driving (storm
-// plane neutral below the coloured network), and both with stormwater
-// driving (coloured plane, neutral network).
+// One-off: screenshot the Services view in its colour states — roads only
+// (the old Roads view look), both services with roads driving (storm plane
+// neutral below the coloured network), both with stormwater driving
+// (coloured plane, neutral network), and — when the data carries the fire
+// column — fire driving (fire plane + station dots).
 // node shot-services.js <url> <out-prefix>
 //   -> <prefix>-roads.png, <prefix>-both-roads.png, <prefix>-storm.png
+//      [, <prefix>-fire.png]
 const { chromium } = require('playwright');
 const [url, prefix] = process.argv.slice(2);
 (async () => {
@@ -27,5 +29,17 @@ const [url, prefix] = process.argv.slice(2);
   await page.waitForTimeout(20000);
   await page.screenshot({ path: `${prefix}-storm.png`, timeout: 90000, animations: 'disabled', caret: 'initial' });
   console.log('wrote', `${prefix}-storm.png`);
+  const hasFire = await page.evaluate(() =>
+    state.data.features.some(f => f.properties.fire_events_per_acre != null));
+  if (hasFire) {
+    await page.$eval('#services .svc[data-service="fire"] .svc-on', b => b.click());
+    await page.waitForTimeout(5000); // station dots fetch
+    await page.$eval('#services .svc[data-service="fire"] input[type="radio"]', b => b.click());
+    await page.waitForTimeout(20000);
+    await page.screenshot({ path: `${prefix}-fire.png`, timeout: 90000, animations: 'disabled', caret: 'initial' });
+    console.log('wrote', `${prefix}-fire.png`);
+  } else {
+    console.log('fire shot skipped — data file has no fire_events_per_acre column');
+  }
   await browser.close();
 })();

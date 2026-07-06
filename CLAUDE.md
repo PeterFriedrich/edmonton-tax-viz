@@ -13,6 +13,7 @@ Edmonton revenue-per-acre fiscal analysis. Python-only, no GIS software.
 - `docs/ANALYSIS_BACKLOG.md` — analytical questions/investigations to run later (auto + by-hand). Distinct from TODO.md (build work) and FINDINGS_*.md (conclusions).
 - `docs/PARCEL_LEVEL_OPPORTUNITIES.md` — future work gated on parcel-level data (finer than the neighbourhood unit); the set-aside machinery exists because we aggregate to neighbourhood.
 - `docs/DATA_INTEGRITY.md` — standalone audit brief for checking the numbers are *right* (silent-correctness, not crashes). Point a model here for a full data-integrity pass: system map + ranked, pre-verified joints. Complements the `edmonton-audit` skill (which goes deep on ONE target).
+- `docs/REMOTE_VM.md` — **read FIRST in a Claude Code web/remote VM session** (repo at `/home/user/...`, no conda, empty `data/raw/`): network-policy constraints + fix, environment setup, headless-verify workarounds.
 - `session-summary/` — session handoff notes. Read the latest before starting work; older ones live in `session-summary/archive/` (don't bulk-read them).
 
 ## Token Efficiency
@@ -25,6 +26,7 @@ Edmonton revenue-per-acre fiscal analysis. Python-only, no GIS software.
   - Push to the session's designated branch at every natural checkpoint (module + tests green, docs updated, feature milestone) — small pushed commits beat one perfect unpushed one.
   - If usage/budget feels like it might run out, or a long task is only partly done: STOP, write the handoff (state, stopping point, next steps), commit, push. A half-done feature safely on origin is recoverable; a finished one in a dead container is not.
   - Peter may be away — never hold work hostage waiting for a "push it" confirmation in these environments. (This overrides the usual only-push-when-asked default.)
+  - Environment quirks (network policy, setup, headless verify): `docs/REMOTE_VM.md`.
 
 ## Code Style
 - Keep processing steps as separate, independently runnable modules in `src/`

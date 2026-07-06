@@ -61,6 +61,13 @@ rows, and produces per-hood columns merged in `join_and_calculate`
 (`storm_charge_annual`; `storm_charge_per_acre` computed there). Rates come
 from `data/stormwater_rates.json`, year-keyed like `mill_rates.json`.
 
+**Also in the flow (fire lens, built 2026-07-06):** `load_fire.py` reads the
+fire-response CSV (`7hsn-idqi` — the neighbourhood comes pre-joined, so no
+overlay) and produces a per-hood column merged in `join_and_calculate`
+(`fire_events_per_year`; `fire_events_per_acre` computed there). It also
+exports the 31 station points (`b4y7-zhnz`) to `web/data/fire_stations.json`
+for the Services view's context dots.
+
 **One metric exists ONLY in the browser:** the Ratio view's revenue per road
 metre (`revenue_per_acre / road_m_per_acre` — the acres cancel) is derived
 client-side in `web/index.html` from the two published GeoJSON columns. No
@@ -372,6 +379,61 @@ recorded, not corrected.
 **Does not:** decide display (open decision — SPEC_utilities), apply SIAP/LID
 credits, project forward rates (PBR escalation out of scope), or claim
 billing accuracy for any specific address.
+
+---
+
+### `src/load_fire.py` (services lens #3 — added 2026-07-06)
+
+Full methodology + the four locked decisions in `docs/SPEC_services.md`
+"Fire lens"; dataset facts in `DATA.md` §7–8. **Demand metric only** — the
+data has no on-scene-arrival timestamp, so no response-time/coverage claim
+is buildable (locked; don't oversell).
+
+**Inputs:** the fire-response CSV (`7hsn-idqi`, `data/raw/fire_response.csv`
+— snake_case API headers from the resource endpoint); the year window
+(pinned as `FIRE_YEARS` in `main.py` — the last 3 FULL calendar years,
+bumped manually each January so a partial year never dilutes the average).
+
+**Outputs:** `pd.DataFrame` keyed by `neighbourhood_name`:
+- `fire_events_per_year` (float) — mean annual dispatched emergency events
+  in the window (kept events ÷ window length; a hood missing a year counts
+  0 for it)
+
+(`fire_events_per_acre = fire_events_per_year / area_acres` is computed
+downstream in `join_and_calculate`, boundary-acre denominator — same acre
+as every other per-acre metric. It is in `SLIM_COLUMNS` and ships in the
+web GeoJSON; the Services view's fire plane reads it.)
+
+**Responsibilities:**
+- Resolve the dispatch-datetime column from an explicit candidate list
+  (`DISPATCH_COLUMN_CANDIDATES`) — HARD-ERROR listing the file's actual
+  headers if none match (the build session could not reach the API to pin
+  the name; the other keyed columns — `event_type_group`,
+  `neighbourhood_name` — were confirmed in the Session-12 probe)
+- Filter rows to the year window (unparseable dispatch dates counted +
+  reported); HARD-ERROR if any window year has zero rows (wrong pin or
+  upstream drift, never a real empty year)
+- Drop operational noise by `event_type_group` — the explicit
+  `NOISE_GROUPS` set (TRAINING/MAINTENANCE, COMMUNITY EVENT, PRE-INCIDENT
+  PLANNING) and null groups, each count reported. Everything else is KEPT,
+  including unrecognized new groups (logged loudly — they are presumably
+  real dispatches). The ~57% MEDICAL share is a display caveat, NOT a
+  filter (locked decision 2)
+- Log the kept-group mix (medical share included) every load
+- Normalize `neighbourhood_name` (strip + uppercase + `NAME_CORRECTIONS`)
+  BEFORE aggregation; null-hood rows excluded + counted (no spatial
+  fallback — locked: 99% pre-joined coverage)
+- Count events per (hood, year), average over the window
+
+**Also exports:** `export_fire_stations_web(stations_csv, out_path)` — the
+31 station points (`b4y7-zhnz`) as `web/data/fire_stations.json`
+(committed, lazy-loaded by the frontend): `{"stations": [[lon, lat,
+label], ...]}`. Lat/long columns resolved like the dispatch column
+(explicit candidates, hard error); null-coordinate rows dropped + reported.
+
+**Does not:** decode `response_code` (dispatch-priority letters, undecoded
+— never filter on it), touch geometry/boundaries, or claim
+coverage/response adequacy.
 
 ---
 

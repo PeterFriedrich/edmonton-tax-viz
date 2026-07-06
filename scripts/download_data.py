@@ -5,13 +5,15 @@ GitHub Actions VM has none of the raw inputs, so it must pull them before
 ``main.py`` can regenerate the map. Run locally the same way to refresh a
 snapshot.
 
-Five inputs come from Edmonton's Socrata open-data portal:
+Seven inputs come from Edmonton's Socrata open-data portal:
   - assessment     q7d6-ambg  (Property Assessment Data, current year)  -> CSV
   - boundaries     65fr-66s6  (Neighbourhood Boundaries)                -> GeoJSON
   - zoning         fixa-tstc  (Zoning Bylaw Geographical Data)          -> GeoJSON
   - roads          9j8t-zm52  (Road Network centrelines)                -> GeoJSON
   - property_info  dkk9-cj3x  (Property Info: lot size / zoning /
                                year built, current year)                -> CSV
+  - fire_events    7hsn-idqi  (Fire Response, current + historical)     -> CSV
+  - fire_stations  b4y7-zhnz  (Fire Stations: 31 points)                -> CSV
 
 Mill rates (pwis-wc4c) are NOT fetched here — they live in the committed
 ``data/mill_rates.json`` (see DATA.md); refreshing them for a new year is a
@@ -90,6 +92,23 @@ SOURCES = {
         "url": "https://data.edmonton.ca/api/views/dkk9-cj3x/rows.csv?accessType=DOWNLOAD",
         "dest": RAW / "Property_Info__Current_Calendar_Year_.csv",
         "count_url": _count_url("dkk9-cj3x"),
+    },
+    "fire_events": {
+        # Fire lens (SPEC_services.md "Fire lens"): dispatched events with the
+        # neighbourhood pre-joined. Resource endpoint (snake_case API headers,
+        # which load_fire keys on), all columns — the dataset grows ~65k/yr,
+        # so the $limit has decades of headroom.
+        "url": "https://data.edmonton.ca/resource/7hsn-idqi.csv?$limit=2000000",
+        "dest": RAW / "fire_response.csv",
+        "limit": 2000000,  # 947,781 events as of 2026-07 (2011–mid-2026)
+        "count_url": _count_url("7hsn-idqi"),
+    },
+    "fire_stations": {
+        # 31 station points — context dots in the Services view's fire layer.
+        "url": "https://data.edmonton.ca/resource/b4y7-zhnz.csv?$limit=500",
+        "dest": RAW / "fire_stations.csv",
+        "limit": 500,  # 31 stations as of 2026-07
+        "count_url": _count_url("b4y7-zhnz"),
     },
 }
 

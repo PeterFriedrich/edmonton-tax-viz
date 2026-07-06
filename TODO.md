@@ -85,7 +85,7 @@ _Last reconciled: 2026-07-02_
       later"; live verified serving the Services button + storm column on
       all 406 hoods; CI regenerated the geojson byte-identical). The Roads
       view is now a "Services" view with per-service checkboxes (Roads,
-      Stormwater; later Fire) and a "colour" radio choosing which checked
+      Stormwater; Fire added 2026-07-06) and a "colour" radio choosing which checked
       service drives the ramp (others render neutral; defaults = the old
       Roads view exactly). Headless-verified
       (`tools/profiling/verify-services.js` + regressions green) +
@@ -94,33 +94,34 @@ _Last reconciled: 2026-07-02_
       denominator (currently roads-only by construction) remains open —
       SPEC_utilities decision 3: keep it physical until at least two dollar
       services exist.
-    - [ ] **Fire lens — design DECIDED 2026-07-05 (Peter), build AFTER the
-      Services-view UI + stormwater display land; nothing downloaded/built
-      yet.** Two sources:
-      - `b4y7-zhnz` "Fire Stations" — 31 rows, station number + address +
-        lat/long point ONLY (no staffing/coverage/response data).
-      - `7hsn-idqi` "Fire Response: Current and Historical" — 947,781
-        dispatched events 2011–mid-2026. Per row: dispatch + close
-        datetimes, `event_duration_mins` (dispatch→CLOSE — there is **NO
-        on-scene-arrival timestamp anywhere**, so a true response-time
-        metric is NOT buildable from open data), `event_type_group` +
-        description, dispatch-priority `response_code`, lat/long, and
-        **`neighbourhood_name` pre-joined on ~99% of rows** (8,093 null)
-        — a per-hood metric needs no spatial work. Event mix (interpretive
-        trap): MEDICAL is 57% (536k); ALARMS 144k, MVI 65k, OUTSIDE FIRE
-        48k, CITIZEN ASSIST 36k, FIRE 24k, HAZMAT 20k; plus operational
-        noise to exclude (TRAINING/MAINTENANCE 18k, COMMUNITY EVENT,
-        PRE-INCIDENT PLANNING, nulls 31k).
-      **Design DECIDED 2026-07-05 (Peter, all four recommendations):**
-      (1) lens shape — demand metric (events/acre/year) as the
-      Services-view ground plane + the 31 stations as context dots;
-      (2) event filter — all emergency responses minus operational noise
-      (TRAINING/MAINTENANCE, COMMUNITY EVENT, PRE-INCIDENT PLANNING,
-      nulls); the 57%-medical share gets a legend/docs caveat, NOT a
-      filter; (3) year window — last 3 full years averaged (2023–2025);
-      (4) branch point — new branch off master, after the Services-view
-      UI generalization lands (design was settled now so the Services UI
-      is designed once for both services).
+    - [x] ~~**Fire lens**~~ — **BUILT 2026-07-06** (design DECIDED 2026-07-05,
+      Peter, all four recommendations: demand metric events/acre/yr as the
+      Services ground plane + 31 station dots; all emergency responses minus
+      operational noise, medical share a caveat NOT a filter; 2023–2025
+      averaged, pinned `FIRE_YEARS`; built after the Services UI landed).
+      As built (branch `claude/session-summary-review-vwweia`):
+      `src/load_fire.py` (+21 tests) + `download_data.py` sources
+      (`7hsn-idqi`, `b4y7-zhnz`) + `join_and_calculate` FIRE_COLUMNS →
+      `fire_events_per_acre` in SLIM_COLUMNS + `main.py --skip-fire` +
+      third Services checkbox (shared `svc-plane`, station dots,
+      demand/medical caveats) + verify-services/shot-services extended.
+      209 pytest green; headless-verified against a SYNTHETIC fire column.
+      Dataset facts: DATA.md §7–8; spec: SPEC_services "Fire lens".
+      **Remaining follow-ups (blocked on network access to
+      data.edmonton.ca — the build session's VM policy denied it):**
+      - [ ] **First real-data run** (CI refresh after merge, or locally):
+        confirm the dispatch-datetime header resolves — on a hard error,
+        add the real name to `DISPATCH_COLUMN_CANDIDATES`
+        (`src/load_fire.py`; the error prints the file's headers). Then
+        eyeball the served fire plane + station dots, and sanity-check the
+        logged kept-group mix / medical share / per-year counts against
+        the Session-12 probe numbers.
+      - [ ] **Colour transform check on real `fire_events_per_acre`**
+        (SPEC_services "Fire lens" — provisionally LINEAR with runtime
+        p97.5 clamp; run the FINDINGS §6 skew method once the column has
+        real numbers).
+      - [ ] **January task**: bump `FIRE_YEARS` (main.py) AND the
+        2023–2025 wording in the fire blurb + legend (`web/index.html`).
     - [ ] **Utility cost lenses — SPEC'd 2026-07-05 (`docs/SPEC_utilities.md`);
       stormwater DECIDED first (Peter) and its v1 PIPELINE BUILT same day on
       `feature/stormwater-lens` (unmerged).** Five candidates in three
