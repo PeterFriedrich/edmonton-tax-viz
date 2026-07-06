@@ -164,7 +164,7 @@
         <label title="The road network: collector + local roads coloured by their neighbourhood's road metres per acre; arterials neutral">
           <input type="checkbox" class="svc-on" checked /> Roads — m/acre
         </label>
-        <label class="svc-colour" title="This service drives the colour ramp; the other renders neutral">
+        <label class="svc-colour" title="This service drives the colour ramp; the others render neutral">
           <input type="radio" name="svc-driver" checked /> colour
         </label>
       </div>
@@ -172,7 +172,15 @@
         <label title="Each neighbourhood coloured by its modeled annual stormwater utility charge per acre — estimated from lot sizes and zoning, not billed amounts">
           <input type="checkbox" class="svc-on" /> Stormwater — modeled $/acre
         </label>
-        <label class="svc-colour" title="This service drives the colour ramp; the other renders neutral">
+        <label class="svc-colour" title="This service drives the colour ramp; the others render neutral">
+          <input type="radio" name="svc-driver" /> colour
+        </label>
+      </div>
+      <div class="svc" data-service="fire">
+        <label title="Each neighbourhood coloured by dispatched fire-department emergency events per acre per year (2023–2025 average) — demand, not response coverage; dots mark the 31 fire stations">
+          <input type="checkbox" class="svc-on" /> Fire — events/acre/yr
+        </label>
+        <label class="svc-colour" title="This service drives the colour ramp; the others render neutral">
           <input type="radio" name="svc-driver" /> colour
         </label>
       </div>
@@ -328,10 +336,17 @@
     // Roads: the network lines (as before). Stormwater: a flat hood plane
     // coloured by storm_charge_per_acre — MODELED utility charges
     // (SPEC_utilities.md Lens 1: Bylaw 20865 lot area x runoff x rate),
-    // EPCOR money not city tax revenue, and the chrome must say so.
-    // Colour is LINEAR for both (road supply FINDINGS §6.3; storm p97.5/median
-    // ~1.8 — no skew correction warranted). Clamp: p97.5 of the non-set-aside
-    // hoods, computed from the data like ratioScale.
+    // EPCOR money not city tax revenue, and the chrome must say so. Fire: a
+    // flat hood plane coloured by fire_events_per_acre — dispatched-event
+    // DEMAND, not response coverage (SPEC_services.md "Fire lens"), + the
+    // 31 station context dots whenever the service is checked.
+    // Plane services (`plane.col` below) share ONE hood-plane layer — two
+    // coplanar polygon layers would z-fight; the colour-driving plane paints
+    // it, otherwise it renders the neutral slate.
+    // Colour is LINEAR for all (road supply FINDINGS §6.3; storm p97.5/median
+    // ~1.8; fire provisionally linear — skew check on real data is an open
+    // follow-up, SPEC_services "Fire lens"). Clamp: p97.5 of the
+    // non-set-aside hoods, computed from the data like ratioScale.
     const SERVICES = {
       roads: {
         label: "Roads",
@@ -343,6 +358,7 @@
       },
       storm: {
         label: "Stormwater",
+        plane: { col: "storm_charge_per_acre" },
         blurb: "Each neighbourhood is coloured by its modeled annual stormwater " +
                "utility charge per acre — the drainage bylaw's formula (lot area " +
                "× runoff coefficient × rate) applied to every assessed " +
@@ -350,6 +366,18 @@
                "sizes of the utility charges a neighbourhood's land generates — " +
                "separate money from municipal property tax. Colour is linear. " +
                "Grey = set-aside natural/undeveloped land.",
+      },
+      fire: {
+        label: "Fire",
+        plane: { col: "fire_events_per_acre" },
+        blurb: "Each neighbourhood is coloured by dispatched fire-department " +
+               "emergency events per acre per year, averaged over 2023–2025 — " +
+               "a demand measure, not response coverage (the open data has no " +
+               "on-scene times). Most dispatched events are medical calls, not " +
+               "fires; alarms, vehicle incidents, rescues and fires make up the " +
+               "rest, with training and other operational records excluded. " +
+               "Dots mark the 31 fire stations. Colour is linear. Grey = " +
+               "set-aside natural/undeveloped land.",
       },
     };
 
@@ -426,7 +454,7 @@
     // across view switches, matching the denominator toggle's behaviour.
     const state = { metric: "revenue_per_acre", ramp: "current", residential: false,
                     labels: false, view: "money", prismOpacity: 1, denom: "ground",
-                    services: { roads: true, storm: false }, svcDriver: "roads",
+                    services: { roads: true, storm: false, fire: false }, svcDriver: "roads",
                     data: null };
     let overlay;         // deck.gl MapboxOverlay, created on map load
     let roadsData = null;  // lazy-fetched roads FeatureCollection
@@ -435,6 +463,8 @@
     let zoningFetch = null; // in-flight fetch guard; null result => fallback
     let gridData = null;    // lazy-fetched grid cells (glass view)
     let gridFetch = null;   // in-flight fetch guard; null result => hood-prism fallback
+    let fireStationsData = null;  // lazy-fetched station dots (services view, fire on)
+    let fireStationsFetch = null; // in-flight fetch guard; missing file => no dots
 
     // Three neutral, luminance-sequential ramps to compare: dark = low, bright =
     // high, with no semantic good/bad hue (consistent with the linear-elevation
@@ -668,30 +698,35 @@
       })];
     }
 
-    // Stormwater scale anchor, computed once from the data (tracks weekly
-    // refreshes like ratioScale): colour clamp at p97.5 of the non-set-aside
-    // hoods — set-asides are off the scale (grey), the usual convention.
-    let _stormScale = null;
-    function stormScale() {
-      if (_stormScale) return _stormScale;
+    // Per-column service scale anchors, computed once from the data (tracks
+    // weekly refreshes like ratioScale): colour clamp at p97.5 of the
+    // non-set-aside hoods — set-asides are off the scale (grey), the usual
+    // convention. Shared by every plane service (storm, fire).
+    const _svcScales = {};
+    function svcScale(col) {
+      if (_svcScales[col]) return _svcScales[col];
       const vals = state.data.features.map(f => f.properties)
-        .filter(p => !p.is_set_aside && p.storm_charge_per_acre != null)
-        .map(p => p.storm_charge_per_acre)
+        .filter(p => !p.is_set_aside && p[col] != null)
+        .map(p => p[col])
         .sort((a, b) => a - b);
-      return (_stormScale = { clamp: quantile(vals, 0.975) });
+      return (_svcScales[col] = { clamp: quantile(vals, 0.975) });
     }
     const fmtStorm = v => "$" + Math.round(v).toLocaleString() +
       " modeled stormwater / acre / yr";
+    const fmtFire = v => v.toFixed(v < 1 ? 2 : 1) + " dispatched events / acre / yr";
 
-    // The stormwater ground plane (services view): flat hoods coloured by
-    // their MODELED charge per acre — linear on the active ramp. `neutral`
-    // (another service drives the colour) renders the plane in the Glass
-    // view's signal-free slate so it stays a visible surface without
-    // carrying a second scale. Set-aside hoods take the usual grey either
-    // way. Not pickable — the hood hover layer on top owns tooltips.
-    function stormPlaneLayer(neutral) {
+    // The shared service ground plane (services view): flat hoods coloured
+    // by the colour-driving plane service's column — linear on the active
+    // ramp. Plane services (storm, fire) draw ONE layer between them: two
+    // coplanar hood-polygon layers would z-fight, and the non-driving
+    // plane's "neutral" render is the same slate surface anyway. `col` null
+    // (roads drive the colour) renders the whole plane in the Glass view's
+    // signal-free slate so it stays a visible surface without carrying a
+    // second scale. Set-aside hoods take the usual grey either way. Not
+    // pickable — the hood hover layer on top owns tooltips.
+    function servicePlaneLayer(col) {
       return new deck.GeoJsonLayer({
-        id: "storm-plane",
+        id: "svc-plane",
         data: state.data,
         filled: true,
         stroked: false,
@@ -699,12 +734,50 @@
         getFillColor: f => {
           const p = f.properties;
           if (p.is_set_aside) return SET_ASIDE_COLOR;
-          if (neutral || p.storm_charge_per_acre == null) return GLASS_PLANE_COLOR;
-          return rampColorAt(Math.max(0, Math.min(1, p.storm_charge_per_acre / stormScale().clamp)));
+          if (!col || p[col] == null) return GLASS_PLANE_COLOR;
+          return rampColorAt(Math.max(0, Math.min(1, p[col] / svcScale(col).clamp)));
         },
         pickable: false,
-        updateTriggers: { getFillColor: [state.ramp, neutral] },
+        updateTriggers: { getFillColor: [state.ramp, col] },
       });
+    }
+
+    // Fire-station context dots (SPEC_services.md "Fire lens"): 31 points,
+    // drawn whenever the fire service is checked — driver or not, they are
+    // geography, not a scale. depthTest off so the dots sit over the
+    // coplanar plane + road lines. Not pickable (hood hover owns tooltips).
+    const FIRE_STATION_COLOR = [235, 100, 60, 235];
+    function fireStationsLayer() {
+      if (!fireStationsData) return [];
+      return [new deck.ScatterplotLayer({
+        id: "fire-stations",
+        data: fireStationsData.stations,
+        getPosition: d => [d[0], d[1]],
+        getFillColor: FIRE_STATION_COLOR,
+        stroked: true,
+        getLineColor: [255, 255, 255, 220],
+        lineWidthMinPixels: 1.5,
+        radiusMinPixels: 4,
+        radiusMaxPixels: 9,
+        getRadius: 60,
+        pickable: false,
+        parameters: { depthTest: false },
+      })];
+    }
+
+    // Lazy fetch for the station dots — kicked when the fire service is (or
+    // becomes) visible; a missing file (older deploy) just means no dots.
+    const FIRE_STATIONS_URL = "./data/fire_stations.json";
+    function ensureFireStations() {
+      if (fireStationsData) return;
+      fireStationsFetch ??= fetch(FIRE_STATIONS_URL)
+        .then(r => r.ok ? r.json() : null)
+        .then(d => {
+          fireStationsData = d;
+          if (d && state.view === "services" && state.services.fire)
+            overlay.setProps({ layers: buildLayers() });
+        })
+        .catch(() => {});
     }
 
     // Services-view blurb: the colour-driving service's story, plus one line
@@ -714,9 +787,12 @@
         .filter(k => state.services[k] && k !== state.svcDriver)
         .map(k => SERVICES[k].label.toLowerCase());
       let b = SERVICES[state.svcDriver].blurb;
-      if (others.length)
-        b += ` The ${others.join(" and ")} layer renders neutral — its "colour" ` +
+      if (others.length === 1)
+        b += ` The ${others[0]} layer renders neutral — its "colour" ` +
              `dot moves the ramp there.`;
+      else if (others.length)
+        b += ` The ${others.join(" and ")} layers render neutral — their ` +
+             `"colour" dots move the ramp.`;
       return b;
     }
 
@@ -941,17 +1017,24 @@
       }
 
       if (state.view === "services") {
-        // Ground-level service layers, stacked per the checkboxes: the storm
-        // plane first (flat polygons), the road lines over it (drawn later at
-        // the same z, so LEQUAL depth lets them win), hover + labels on top.
-        // Exactly one checked service drives the ramp (state.svcDriver); the
-        // rest render neutral. No prisms at all — an opacity-0 layer would
-        // still tessellate, draw, pick, and highlight.
+        // Ground-level service layers, stacked per the checkboxes: the shared
+        // service plane first (flat polygons), the road lines over it (drawn
+        // later at the same z, so LEQUAL depth lets them win), station dots,
+        // hover + labels on top. Exactly one checked service drives the ramp
+        // (state.svcDriver); the rest render neutral. No prisms at all — an
+        // opacity-0 layer would still tessellate, draw, pick, and highlight.
         const layers = [];
-        if (state.services.storm)
-          layers.push(stormPlaneLayer(state.svcDriver !== "storm"));
+        const planeOn = Object.keys(SERVICES)
+          .some(k => state.services[k] && SERVICES[k].plane);
+        if (planeOn) {
+          const drv = SERVICES[state.svcDriver];
+          layers.push(servicePlaneLayer(
+            (state.services[state.svcDriver] && drv.plane) ? drv.plane.col : null));
+        }
         if (state.services.roads)
           layers.push(...roadLayers(state.svcDriver !== "roads"));
+        if (state.services.fire)
+          layers.push(...fireStationsLayer());
         return [...layers, hoodHoverLayer(), ...labelLayer()];
       }
 
@@ -1118,13 +1201,15 @@
       const name = `<b>${p.neighbourhood_name}</b><br/>`;
 
       if (state.view === "services") {
-        // Both service numbers, whichever layers are on — the tooltip is the
-        // place the neutral layer's values stay readable.
+        // Every service's number, whichever layers are on — the tooltip is
+        // the place the neutral layers' values stay readable.
         const rows = [];
         if (p.road_m_per_acre != null)
           rows.push(`${p.road_m_per_acre.toFixed(1)} road m / acre <span class="muted">(collector + local)</span>`);
         if (p.storm_charge_per_acre != null)
           rows.push(`<span class="muted">${fmtStorm(p.storm_charge_per_acre)}</span>`);
+        if (p.fire_events_per_acre != null)
+          rows.push(`<span class="muted">${fmtFire(p.fire_events_per_acre)}</span>`);
         return {
           className: "tip",
           html: rows.length
@@ -1245,14 +1330,24 @@
         return;
       }
       if (state.view === "services") {
-        // The legend reads the colour-driving service; the neutral layer's
-        // numbers live in the tooltip.
+        // The legend reads the colour-driving service; the neutral layers'
+        // numbers live in the tooltip. A checked fire service adds a
+        // station-dot row (the dots show driver or not).
         if (state.svcDriver === "storm") {
           document.getElementById("legend-label").textContent =
             "Modeled stormwater charge per acre / yr";
           document.getElementById("legend-min").textContent = "$0";
           document.getElementById("legend-max").textContent =
-            "$" + Math.round(stormScale().clamp).toLocaleString() + "+";
+            "$" + Math.round(svcScale("storm_charge_per_acre").clamp).toLocaleString() + "+";
+          label.textContent = "Set aside — natural / undeveloped land";
+          sw.style.background = "rgb(104,108,122)";
+        } else if (state.svcDriver === "fire") {
+          document.getElementById("legend-label").textContent =
+            "Fire dispatches per acre / yr (2023–2025 avg)";
+          document.getElementById("legend-min").textContent = "0";
+          const clamp = svcScale("fire_events_per_acre").clamp;
+          document.getElementById("legend-max").textContent =
+            clamp.toFixed(clamp < 10 ? 1 : 0) + "+";
           label.textContent = "Set aside — natural / undeveloped land";
           sw.style.background = "rgb(104,108,122)";
         } else {
@@ -1261,6 +1356,11 @@
           document.getElementById("legend-max").textContent = ROAD_CLAMP + " m+";
           label.textContent = "Arterial — shared infrastructure";
           sw.style.background = `rgb(${ARTERIAL_COLOR.slice(0, 3).join(",")})`;
+        }
+        if (state.services.fire) {
+          document.getElementById("legend-cats").style.display = "block";
+          document.getElementById("legend-cats").innerHTML =
+            `<div class="cat"><span class="sw" style="background:rgb(${FIRE_STATION_COLOR.slice(0, 3).join(",")});border-radius:50%"></span><span>Fire station</span></div>`;
         }
       } else if (state.view === "ratio") {
         const s = ratioScale();
@@ -1389,6 +1489,9 @@
         await roadsFetch;
         if (state.view !== v) return; // switched again while the fetch ran
       }
+      // Station dots for the fire service — non-blocking (the fetch's own
+      // resolve rebuilds the layers if the dots are still wanted).
+      if (v === "services" && state.services.fire) ensureFireStations();
       // Zoning ground layer for the uses view — fetched once; a missing file
       // resolves null and the view falls back to dominant-colour hoods.
       if (v === "uses" && !zoningData) {
@@ -1464,6 +1567,7 @@
       const on = Object.keys(SERVICES).filter(s => state.services[s]);
       if (!checked && state.svcDriver === k && on.length) state.svcDriver = on[0];
       if (checked && on.length === 1) state.svcDriver = k;
+      if (k === "fire" && checked) ensureFireStations();
       syncServiceControls();
       overlay.setProps({ layers: buildLayers() });
       document.getElementById("title-p").textContent = servicesBlurb();
@@ -1525,6 +1629,11 @@
       if (!state.data.features.some(f => f.properties.storm_charge_per_acre != null)) {
         document.querySelector('#services .svc[data-service="storm"]').style.display = "none";
         state.services.storm = false;
+      }
+      // Same guard for the fire column (pre-2026-07-06 data files).
+      if (!state.data.features.some(f => f.properties.fire_events_per_acre != null)) {
+        document.querySelector('#services .svc[data-service="fire"]').style.display = "none";
+        state.services.fire = false;
       }
       syncServiceControls();
       // Same guard for the uses view: it needs the composition columns
