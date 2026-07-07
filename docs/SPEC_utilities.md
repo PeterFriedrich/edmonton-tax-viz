@@ -204,8 +204,9 @@ show the connection-cost signal alone.
   dwelling stock — the floor-area→units estimate is the suspected
   overcount; volumetric impact bounded (~4% of the total).
   **VALIDATED 2026-07-07** (`docs/FINDINGS_utility_validation.md`):
-  $588.1M vs ≈$440M published at matching res+multi-res scope (≈1.33×,
-  range 1.25–1.40 — the water utility's class split is estimated);
+  $588.1M vs ≈$467M published at matching res+multi-res scope (≈1.26×,
+  range 1.17–1.30 — the water utility's res+MR class split is derived to
+  ~80% from EPCOR's by-class counts, §2.2, not read off a revenue schedule);
   connection count 13% UNDER EPCOR accounts (268,489 vs 308,389), so the
   excess is per-connection (households/consumption), not count.
 - **Colour: LINEAR** (FINDINGS §6.6) — clamp/median 2.2× (storm territory);
@@ -267,10 +268,13 @@ collinearity below).
   shape unaffected (linear in dwellings). Gas franchise base follows Methods
   §E (all riders in the delivery base × 35%); Rider B property-tax rider
   excluded (a tax pass-through, not a franchise fee).
-- **Not yet validated against the City budget's franchise-fee line** —
-  edmonton.ca is unreachable from the build box (handoff blocker); residential
-  $162.6M is expected UNDER the City total (commercial + the LAF underestimate
-  both push it up). Left as a FINDINGS follow-up.
+- **VALIDATED 2026-07-07 vs the City's audited franchise-fee line**
+  (2024 Financial Annual Report, Note 24; FINDINGS §5.1): combined elec+gas
+  modeled $162.6M (residential) vs $175.9M City actual = **0.92×**, but that
+  masks two offsetting errors — **gas 1.32× over** (Rider T in the 35% base;
+  excl → 1.00× — Peter parked the Rider-T call, TODO), **elec 0.46× under**
+  (the LAF floor; real EDTI distribution base is 2.19× modeled). Line-by-line
+  is the honest read; the combined near-match is coincidental cancellation.
 
 ---
 
