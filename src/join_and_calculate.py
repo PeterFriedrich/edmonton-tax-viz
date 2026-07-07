@@ -42,6 +42,16 @@ FIRE_COLUMNS = ["fire_events_per_year"]
 # connection-vs-consumption split; per-acre is computed HERE.
 WATER_COLUMNS = ["water_charge_annual", "water_fixed_annual"]
 
+# Modeled electricity/gas franchise columns carried from load_franchise when
+# supplied (utility lens #3, SPEC_utilities.md — MODELED, not billed;
+# residential scope; COLLINEAR with dwelling_count). Carried on the full frame
+# for the totals + future display/analysis; deliberately NOT in SLIM_COLUMNS
+# (no display layer yet) and no per-acre derived here for the same reason.
+FRANCHISE_COLUMNS = [
+    "dwelling_count", "elec_distribution_annual", "elec_laf_revenue",
+    "gas_delivery_annual", "gas_franchise_revenue",
+]
+
 
 def join_and_calculate(
     assessment: pd.DataFrame,
@@ -51,6 +61,7 @@ def join_and_calculate(
     stormwater: pd.DataFrame | None = None,
     fire: pd.DataFrame | None = None,
     water: pd.DataFrame | None = None,
+    franchise: pd.DataFrame | None = None,
 ) -> gpd.GeoDataFrame:
     """Left join boundaries → assessment, flag unmatched rows, compute value_per_acre.
 
@@ -90,6 +101,13 @@ def join_and_calculate(
     (SPEC_utilities.md Lens 2). Boundaries with no modeled connections
     default to $0 (stormwater semantics; commercial-only hoods are genuinely
     out of the residential scope) — and are flagged.
+
+    ``franchise`` (optional, from load_franchise.py) adds the MODELED
+    electricity/gas franchise columns (FRANCHISE_COLUMNS) — City-revenue
+    lines plus the collinear dwelling_count (SPEC_utilities.md Lens 3).
+    Carried on the full frame only (no per-acre, no SLIM — no display layer
+    yet). Boundaries with no modeled dwellings default to 0 (water semantics)
+    — and are flagged.
     """
     agg = assessment
 
@@ -312,6 +330,42 @@ def join_and_calculate(
             [c for c in out_cols if c != "geometry"]
             + WATER_COLUMNS + ["water_charge_per_acre", "water_fixed_per_acre"]
             + ["geometry"]
+        )
+
+    # Utility lens #3: merge the modeled electricity/gas franchise columns when
+    # supplied (SPEC_utilities.md Lens 3 — modeled, not billed; residential
+    # scope; collinear with dwelling_count, so no map layer — see the module).
+    if franchise is not None:
+        boundary_names = set(joined["neighbourhood_name"])
+        unmatched_fr = sorted(set(franchise["neighbourhood_name"]) - boundary_names)
+        if unmatched_fr:
+            logger.warning(
+                "%d franchise neighbourhood(s) with no boundary match (dropped):\n  %s",
+                len(unmatched_fr),
+                "\n  ".join(unmatched_fr),
+            )
+
+        joined = joined.merge(
+            franchise[["neighbourhood_name", *FRANCHISE_COLUMNS]],
+            on="neighbourhood_name",
+            how="left",
+        )
+
+        no_fr = joined["dwelling_count"].isna()
+        if no_fr.any():
+            logger.warning(
+                "%d boundary neighbourhood(s) with no modeled dwellings "
+                "(default 0):\n  %s",
+                int(no_fr.sum()),
+                "\n  ".join(sorted(joined.loc[no_fr, "neighbourhood_name"])),
+            )
+        # No residential roll records there -> modeled 0 (residential scope).
+        for col in FRANCHISE_COLUMNS:
+            joined[col] = joined[col].fillna(0.0)
+
+        out_cols = (
+            [c for c in out_cols if c != "geometry"]
+            + FRANCHISE_COLUMNS + ["geometry"]
         )
 
     return joined[out_cols]

@@ -179,9 +179,24 @@ _Last reconciled: 2026-07-06_
         `UNBILLED_CATEGORIES` in `src/load_stormwater.py` — log line +
         `.attrs` carry both totals; per-hood outputs unchanged
         (reporting, not modeling). 230 tests green; real-data verified.
+      - [x] ~~Lenses 3–4 (electricity/gas franchise)~~ — BUILT 2026-07-07
+        as **columns only, no display layer** (Peter's call: they're
+        collinear with dwelling count — flat per-dwelling proxy makes every
+        column `dwellings × constant`). `src/load_franchise.py` reuses
+        `load_water.build_connections` (extracted shared helper → ONE
+        551,831-dwelling model) + `data/franchise_rates.json` + join wiring
+        (`FRANCHISE_COLUMNS`, out of SLIM) + `--skip-franchise`; 8 tests
+        (238 total). Real run: **$162.6M/yr modeled City revenue** (elec LAF
+        $36.9M + gas franchise $125.7M). Modeled LAF ~⅓ low vs published
+        $8.33/mo (base schedule vs full distribution revenue — documented).
+        As-built + validation: SPEC_utilities "Lens 3+4 as built" +
+        FINDINGS_utility_validation §5. Follow-ups: (a) validate vs City
+        budget franchise line (edmonton.ca blocked); (b) commercial scope
+        needs a consumption proxy; (c) display lens if ever wanted.
       - [ ] Remaining SPEC open decisions: (3) modeled $ in the "total
         services" denominator (recommended: not yet); (4) franchise-fee
-        revenue columns only with their lenses; Lenses 3–4 unbuilt.
+        revenue columns only with their lenses — SETTLED (columns only,
+        built above).
   - [x] ~~**Use-mix view: surface each neighbourhood's zoning composition.**~~
     **SHIPPED 2026-07-03 — PR #10 merged + deployed** (run 28679596055, green
     first try); live site verified serving the Uses view + `zoning.geojson`

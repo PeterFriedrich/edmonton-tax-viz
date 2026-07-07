@@ -78,6 +78,17 @@ independently of the roll year (`WATER_RATE_YEAR` in main.py; a modeled
 forward-looking bill, unlike mill rates). Residential scope only
 (SPEC_utilities Lens 2, locked 2026-07-06).
 
+**Also in the flow (franchise lens, built 2026-07-07):** `load_franchise.py`
+reuses `load_water.build_connections` (extracted as a shared helper so the two
+lenses share ONE dwelling model — 551,831) and produces five per-hood columns
+merged in `join_and_calculate` (`FRANCHISE_COLUMNS`: `dwelling_count` plus the
+modeled electricity/gas distribution + franchise-fee revenue). Rates in
+`data/franchise_rates.json` (`FRANCHISE_RATE_YEAR`). **Columns only — no
+display layer** (they're collinear with dwelling count; SPEC_utilities Lens 3),
+so they are carried on the full frame but kept OUT of `SLIM_COLUMNS` with no
+per-acre derived. The value is the citywide City-revenue totals + per-hood
+attribution.
+
 **One metric exists ONLY in the browser:** the Ratio view's revenue per road
 metre (`revenue_per_acre / road_m_per_acre` — the acres cancel) is derived
 client-side in `web/index.html` from the two published GeoJSON columns. No

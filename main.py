@@ -37,6 +37,7 @@ from load_roads import load_roads, export_roads_web
 from load_property_info import load_property_info
 from load_stormwater import load_stormwater
 from load_water import load_water
+from load_franchise import load_franchise
 from load_fire import load_fire_events, export_fire_stations_web
 from join_and_calculate import join_and_calculate, export_geojson
 from export_value_grid import export_value_grid, check_lot_acre_bounds
@@ -55,6 +56,7 @@ FIRE_STATIONS_CSV = ROOT / "data/raw/fire_stations.csv"
 MILL_RATES_JSON = ROOT / "data/mill_rates.json"
 STORMWATER_RATES_JSON = ROOT / "data/stormwater_rates.json"
 WATER_RATES_JSON = ROOT / "data/water_rates.json"
+FRANCHISE_RATES_JSON = ROOT / "data/franchise_rates.json"
 PNG_OUT = ROOT / "output/edmonton_value_per_acre.png"
 GEOJSON_OUT = ROOT / "web/data/neighbourhood_value_per_acre.geojson"
 ROADS_WEB_OUT = ROOT / "web/data/roads.geojson"
@@ -79,6 +81,12 @@ FIRE_YEARS = (2023, 2024, 2025)
 # the legend/blurb year in web/index.html rides along.
 WATER_RATE_YEAR = 2026
 
+# Franchise lens (electricity/gas) tariff vintage — same forward-looking
+# modeled-bill stance as the water lens (current verified tariffs on the
+# current roll). 2026 = EDTI DAS-R (Jan 2025) + ATCO Gas North (Jan 2026)
+# schedules in data/franchise_rates.json. Electricity/gas rates reset Jan 1.
+FRANCHISE_RATE_YEAR = 2026
+
 # --- Canonical web-export geometry parameters ------------------------------
 # Display-only. value_per_acre is computed from true area upstream and is
 # untouched by either of these. See docs/PERFORMANCE.md / docs/ARCHITECTURE.md.
@@ -100,6 +108,8 @@ def run(
     stormwater_rates_json: Path | None = STORMWATER_RATES_JSON,
     water_rates_json: Path | None = WATER_RATES_JSON,
     water_rate_year: int = WATER_RATE_YEAR,
+    franchise_rates_json: Path | None = FRANCHISE_RATES_JSON,
+    franchise_rate_year: int = FRANCHISE_RATE_YEAR,
     fire_events_csv: Path | None = FIRE_EVENTS_CSV,
     fire_stations_csv: Path | None = FIRE_STATIONS_CSV,
     fire_years: tuple[int, ...] = FIRE_YEARS,
@@ -169,6 +179,26 @@ def run(
             property_info_csv,
         )
 
+    # Electricity/gas franchise revenue (utility lens #3, SPEC_utilities.md
+    # Lens 3 — MODELED City-revenue columns; residential scope; collinear with
+    # dwelling count, so columns only, no display layer). Shares the water
+    # lens's dwelling model, so it needs the same two CSVs.
+    franchise = None
+    if (
+        franchise_rates_json is not None
+        and property_info_csv is not None
+        and Path(property_info_csv).exists()
+    ):
+        franchise = load_franchise(
+            assessment_csv, property_info_csv, franchise_rates_json,
+            franchise_rate_year,
+        )
+    elif franchise_rates_json is not None:
+        logger.warning(
+            "Property-info file not found (%s) — skipping the franchise lens",
+            property_info_csv,
+        )
+
     # Fire demand (services lens #3, SPEC_services.md "Fire lens") — same
     # optional-refreshed-input pattern; omitting the file omits the columns.
     fire = None
@@ -179,7 +209,7 @@ def run(
 
     result = join_and_calculate(
         aggregated, boundaries, zoning=zoning, roads=roads, stormwater=stormwater,
-        fire=fire, water=water,
+        fire=fire, water=water, franchise=franchise,
     )
 
     if png_out is not None:
@@ -259,6 +289,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                    help="skip the modeled stormwater lens (SPEC_utilities.md)")
     p.add_argument("--skip-water", action="store_true",
                    help="skip the modeled water + sanitary lens (SPEC_utilities.md Lens 2)")
+    p.add_argument("--skip-franchise", action="store_true",
+                   help="skip the modeled electricity/gas franchise lens (SPEC_utilities.md Lens 3)")
     p.add_argument("--fire-events-csv", type=Path, default=FIRE_EVENTS_CSV)
     p.add_argument("--fire-stations-csv", type=Path, default=FIRE_STATIONS_CSV)
     p.add_argument("--skip-fire", action="store_true",
@@ -286,6 +318,7 @@ def main(argv: list[str] | None = None) -> None:
         property_info_csv=None if args.skip_property_info else args.property_info_csv,
         stormwater_rates_json=None if args.skip_stormwater else STORMWATER_RATES_JSON,
         water_rates_json=None if args.skip_water else WATER_RATES_JSON,
+        franchise_rates_json=None if args.skip_franchise else FRANCHISE_RATES_JSON,
         fire_events_csv=None if args.skip_fire else args.fire_events_csv,
         fire_stations_csv=None if args.skip_fire else args.fire_stations_csv,
         setback_m=args.setback_m,

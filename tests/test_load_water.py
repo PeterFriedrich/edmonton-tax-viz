@@ -180,5 +180,5 @@ def test_hood_normalized_and_corrected(tmp_path):
 
 
 def test_no_connections_raises(tmp_path):
-    with pytest.raises(ValueError, match="no water connections"):
+    with pytest.raises(ValueError, match="no residential connections"):
         _run(tmp_path, [_assessment_row(cls="COMMERCIAL")])

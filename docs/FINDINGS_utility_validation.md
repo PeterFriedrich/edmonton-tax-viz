@@ -1,7 +1,8 @@
 # Findings — Utility Lens Validation vs EPCOR Published Revenue
 
 **Date:** 2026-07-07 (Session 19). Closes the TODO validation item for
-Lens 1 (stormwater) and Lens 2 (water + sanitary).
+Lens 1 (stormwater) and Lens 2 (water + sanitary); §5 adds the Lens 3
+(electricity/gas franchise) totals + caveats (build 2026-07-07).
 **Verdict up front: order-of-magnitude PASS for both lenses.** The
 residential slice of the stormwater model lands within ~11% of what EPCOR
 actually bills; the citywide excess is localized and explained (unbilled
@@ -177,3 +178,36 @@ totals ~15%**: the web geometry carries a display setback (inward buffer)
 plus simplification (`join_and_calculate.write_slim_geojson`). Use
 `load_boundaries()` full-res `area_acres` joined by `neighbourhood_name`
 instead — that reproduces the pipeline totals exactly ($240.4M / $588.1M).
+
+## 5. Electricity/gas franchise (Lens 3) — modeled $162.6M/yr City revenue, residential
+
+Built 2026-07-07 as **columns only** (SPEC_utilities "Lens 3+4 as built").
+Modeled City-revenue lines, residential scope, on the SAME 551,831-dwelling
+model as Lens 2 (shared `build_connections`):
+
+| Line | Rate | Modeled $/yr |
+|---|---|---|
+| Electricity distribution (EDTI DAS-R) | $0.69953/day + $0.01712/kWh @ 7,200 kWh | $208.9M |
+| **Electricity Local Access Fee** | **17.65% of distribution** | **$36.9M** |
+| Gas delivery (ATCO Gas North + Riders T/L) | $0.997/day + $2.497/GJ @ 115 GJ | $359.3M |
+| **Gas franchise fee (Rider A)** | **35% of delivery** | **$125.7M** |
+| **Combined City franchise revenue** | | **$162.6M** |
+
+**Collinearity (the defining caveat):** the proxy is flat per dwelling, so
+every per-hood column is `dwellings × constant` — the map would re-plot
+dwelling density, nothing more. Hence columns only, and `dwelling_count`
+ships explicitly. This is the SPEC's Tier-3 caveat made concrete.
+
+**Known underestimate — modeled LAF ~⅓ low.** Modeled electricity LAF is
+**$5.57/mo/dwelling vs the City's published ~$8.33/mo** (2026, Methods §D).
+The 17.65% fee is levied on EDTI's FULL forecast distribution revenue
+(riders, pass-throughs, adjustments), not the base customer+energy schedule
+modeled here. A transparent underestimate; correcting it would scale the LAF
+line up ~1.5× (≈$55M residential) but not change the per-hood shape.
+
+**Not yet cross-checked against the City budget's franchise-fee line** —
+edmonton.ca is unreachable from the build box (§0 blocker; same as the water
+PBR gap). Residential $162.6M is expected UNDER the City total: commercial
+franchise fees are excluded (no consumption proxy) AND the LAF runs low, both
+pushing the true figure higher. If Peter can supply the City's budgeted
+electricity + gas franchise revenue, this section closes to a real ratio.
