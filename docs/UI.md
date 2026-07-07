@@ -25,10 +25,28 @@ Visual theming and accessibility decisions for the interactive map. Phase 1
   `applyMetric`) even though both current metrics happen to share sqrt — the roads
   ground layer uses its own linear mapping (below). Set-aside land is off the ramp
   entirely (grey, below). Height stays LINEAR for every metric.
+- **Colour Adjustment toggle (built 2026-07-07, `#coloradj` panel — top of the
+  right-hand stack, ABOVE the lens controls).** The money/glass sqrt is now a runtime
+  toggle (`state.colorAdjust`, default **on**), so `scaleT` returns sqrt only when the
+  toggle is on; off = linear+clamp (**true magnitude**). Deliberately grouped apart
+  from the lens controls (metric/palette/residential): it's about *how* colour renders,
+  not *what* you're looking at. Self-describing state line (`#coloradj-state`):
+  On → "colour spread across distribution", Off → "colour shows true magnitude". Only
+  bites in **money + glass** (the `scaleT` consumers) — greys out (disabled, same idiom
+  as the residential button) in services/ratio/uses, which drive colour through their
+  own transforms (`svcT` sqrt/linear, `ratioT` log). Height stays LINEAR either way.
+  Legend gradient follows automatically (`legendGradient` → `scaleT`); the money/glass
+  blurb's colour clause is swapped to match via `withColourClause` (honesty: prose must
+  not contradict the render). *Fire's sqrt and ratio's log are NOT wired to this toggle
+  — if Peter wants a single global "sqrt colour" switch, that's a follow-on.*
 - **deck.gl gotcha:** colour accessors that depend on runtime state need that state in
   their `updateTriggers` (the data reference is stable, so deck.gl skips the re-render
-  otherwise). `getFillColor` uses `[state.metric, state.ramp, state.residential]`;
-  the roads layer's `getLineColor` uses `state.ramp`.
+  otherwise). The money `getFillColor` uses
+  `[state.metric, state.ramp, state.residential, state.colorAdjust]` (glass grid +
+  fallback carry `state.colorAdjust` too); the roads layer's `getLineColor` uses
+  `state.ramp`. **Adding a runtime dependency to a `scaleT` accessor means adding it
+  here — the Colour Adjustment toggle was a silent no-op until `state.colorAdjust`
+  joined these triggers.**
 
 ### Maintenance banner (built 2026-07-02, deployment)
 On load the page fetches `web/data/status.json` (`cache: no-store`) and, if its
@@ -74,9 +92,10 @@ button greys out, state persists and re-applies on leaving). Two effects when on
   the fade is near-invisible; it reads at higher slider values.
 - Drives off `is_residential` (≥0.50 residential zoned area; see `DATA.md` §5);
   orthogonal to the set-aside flag by construction.
-- **Still open** (`TODO.md`): the fuller "Color Adjustment vs lens controls" hierarchy +
-  self-describing state labels; the toggle is currently a plain button. Alpha / grey /
-  clamp-percentile are easy tunables. Not yet visually verified in a browser.
+- **Done 2026-07-07:** the "Color Adjustment vs lens controls" hierarchy + self-describing
+  state labels shipped — see the Colour Adjustment toggle bullet above. Residential lens
+  alpha / grey / clamp-percentile remain easy tunables. Residential lens itself not yet
+  visually verified in a browser (no headless browser on the laptop).
 
 ### Neighbourhood labels (built 2026-07-03)
 A **"Labels" toggle** (second button in the `#lens` panel, after "Residential only")

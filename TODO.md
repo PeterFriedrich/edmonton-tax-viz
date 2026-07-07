@@ -412,24 +412,21 @@ _Last reconciled: 2026-07-06_
   option (see Visual polish → colourblind (cividis) mode below).
   *Not yet built:* scale toggle (linear+clamp / sqrt / log) for visual comparison.
 
-- [ ] **UI control hierarchy: separate "Color Adjustment" from lens controls.**
-  Two distinct categories, visually grouped apart so the distinction reads without
-  explanation:
-  - **Color Adjustment** (the sqrt scaling) sits *above*, as an on/off toggle — it's
-    about *how* colour is rendered, not *what* you're looking at. Label honestly as
-    "Color Adjustment (sqrt scaling)" — no implication either mode is the "correct"
-    one; someone who never clicks it still sees a valid map.
-    - [ ] Make sqrt a runtime toggle (currently hardcoded on via `scaleT`): Off =
-      linear+clamp (true magnitude), On = sqrt (spread across the distribution).
-      Legend gradient already recomputes per-transform (`legendGradient`), so wire it
-      to the toggle. Height stays LINEAR either way (locked).
-    - [ ] Self-describing state label that changes with the toggle:
-      Off → "Off — colour shows true magnitude";
-      On → "On — colour spread across distribution".
-  - **Lens controls** below — metric (Revenue/Value), palette (Inferno/Cividis…),
-    eventually the residential filter. These are about *what* you're looking at.
-  Pairs with the scale-toggle line above (this is its UI design); folds the residential
-  filter in as a lens once built.
+- [x] ~~**UI control hierarchy: separate "Color Adjustment" from lens controls.**~~
+  **BUILT 2026-07-07** (`web/index.html`, `#coloradj` panel at the top of the right-hand
+  stack, above the lens controls; UI.md "Colour Adjustment toggle" bullet is the as-built).
+  - [x] ~~sqrt as a runtime toggle~~ — `state.colorAdjust` (default **on**) gates the
+    money/glass sqrt in `scaleT`; off = linear+clamp (true magnitude). Legend follows via
+    `legendGradient`→`scaleT`; the money/glass blurb colour clause swaps via
+    `withColourClause` (honesty). Height stays LINEAR either way. **Scope = `scaleT`
+    consumers (money + glass) only** — greys out (disabled) in services/ratio/uses, which
+    use their own transforms (`svcT`, `ratioT`).
+  - [x] ~~Self-describing state label~~ — `#coloradj-state`: On → "colour spread across
+    distribution", Off → "colour shows true magnitude".
+  - **Not visually verified in a browser** (no headless browser on the laptop) — awaits
+    Peter's on-device eyeball. JS syntax `node --check` green.
+  - Deferred follow-on (if Peter wants it): a single GLOBAL "sqrt colour" switch that also
+    drives fire's sqrt (services) — currently fire/ratio transforms are independent.
 
 - [x] **Deployment — LIVE (2026-07-01/02)** at
   https://peterfriedrich.github.io/edmonton-tax-viz/ (merged to master, PRs #1–3).

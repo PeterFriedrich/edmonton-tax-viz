@@ -20,15 +20,36 @@
     #title { top: 20px; left: 22px; max-width: 360px; }
     #title h1 { margin: 0 0 4px; font-size: 19px; font-weight: 600; letter-spacing: 0.2px; }
     #title p  { margin: 0; font-size: 12.5px; line-height: 1.5; color: #9a9ab0; }
-    #toggle, #palette, #lens, #views, #layers {
+    #coloradj, #toggle, #palette, #lens, #views, #layers {
       right: 22px; display: flex; pointer-events: auto;
       background: rgba(12,12,20,0.7); border: 1px solid #2a2a3a;
       border-radius: 6px; overflow: hidden;
     }
-    #toggle { top: 20px; }
-    #palette { top: 58px; }
-    #lens { top: 96px; }
-    #views { top: 134px; }
+    /* Colour Adjustment sits ABOVE the lens controls (metric/palette/…): it's
+       about HOW colour is rendered, not WHAT you're looking at. It drives the
+       money/glass sqrt transform (scaleT) only, so it disables in the other
+       views — same idiom as the residential lens button. Height stays linear. */
+    #coloradj { top: 20px; align-items: stretch; }
+    #coloradj button {
+      appearance: none; border: 0; background: transparent; color: #9a9ab0;
+      font: 11.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      padding: 6px 12px; cursor: pointer; white-space: nowrap;
+      transition: background 0.12s, color 0.12s;
+    }
+    #coloradj button:hover { color: #e8e8ef; }
+    #coloradj button.active { background: #fcd278; color: #16111a; font-weight: 600; }
+    #coloradj button:disabled, #coloradj button:disabled:hover {
+      color: #4a4a5e; cursor: default; background: transparent; font-weight: 400;
+    }
+    #coloradj .cadj-state {
+      display: flex; align-items: center; padding: 0 12px 0 2px;
+      font-size: 10.5px; color: #6a6a80; white-space: nowrap;
+    }
+    #coloradj.disabled .cadj-state { color: #4a4a5e; }
+    #toggle { top: 58px; }
+    #palette { top: 96px; }
+    #lens { top: 134px; }
+    #views { top: 172px; }
     #views button {
       appearance: none; border: 0; background: transparent; color: #9a9ab0;
       font: 11.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -37,7 +58,7 @@
     #views button:hover { color: #e8e8ef; }
     #views button.active { background: #fcd278; color: #16111a; font-weight: 600; }
     #layers {
-      top: 172px; flex-direction: column; padding: 6px 12px; gap: 4px;
+      top: 210px; flex-direction: column; padding: 6px 12px; gap: 4px;
       font-size: 11.5px; color: #9a9ab0; display: none; /* ghost-prism views (ratio, glass) only */
     }
     #layers .hd { font-size: 10px; text-transform: uppercase; letter-spacing: 0.8px; color: #6a6a80; }
@@ -125,6 +146,11 @@
        bright districts generate the most city revenue per unit of land. Height is
        linear; colour is square-root–scaled to reveal the low end. Grey = set-aside
        natural/undeveloped land, excluded from the scale.</p>
+  </div>
+
+  <div id="coloradj" class="panel">
+    <button id="coloradj-btn" class="active" title="How colour is scaled — not what you're looking at. On spreads the values across the ramp (sqrt); Off shows true magnitude (linear, clamped at the top). Height stays linear either way.">Colour: sqrt scaling</button>
+    <span id="coloradj-state" class="cadj-state">On — colour spread across distribution</span>
   </div>
 
   <div id="toggle" class="panel">
@@ -450,7 +476,17 @@
               "neighbourhoods — hover for their numbers; grey = set-aside " +
               "natural/undeveloped land. The slider sets spike opacity.",
     };
-    const glassBlurb = () => GLASS_BLURBS[state.denom];
+    const glassBlurb = () => withColourClause(GLASS_BLURBS[state.denom]);
+
+    // The money/glass blurbs describe the colour transform in prose ("colour is
+    // square-root–scaled …"). When the Colour Adjustment toggle is OFF that
+    // claim is false, so swap the clause to match the live scale — this is an
+    // honesty project, the description must not contradict the render.
+    function withColourClause(blurb) {
+      if (state.colorAdjust) return blurb; // sqrt on — original prose stands
+      return blurb.replace(/colour is square-root[^.]*\./,
+        "colour is linear — true magnitude, clamped at the top.");
+    }
 
     // Glass view's spike layer: pipeline-binned 100 m cells (export_value_grid
     // — flat JSON, not GeoJSON: [lon, lat, value_per_acre, revenue_per_acre]
@@ -475,6 +511,7 @@
     // (kept pointing at a checked service by applyService). Both persist
     // across view switches, matching the denominator toggle's behaviour.
     const state = { metric: "revenue_per_acre", ramp: "current", residential: false,
+                    colorAdjust: true, // sqrt colour transform on (money/glass); off = linear+clamp
                     labels: false, view: "money", prismOpacity: 1, denom: "ground",
                     services: { roads: true, storm: false, fire: false, water: false },
                     svcDriver: "roads",
@@ -578,10 +615,13 @@
     // Colour transform of the clamped ratio, per metric (FINDINGS §6.1 / §6.3):
     // sqrt for the right-skewed money metrics (log over-corrects at the 0.90
     // set-aside threshold), linear for bounded near-symmetric road supply.
-    // Height stays LINEAR regardless.
+    // The sqrt is a runtime choice via the Colour Adjustment toggle
+    // (state.colorAdjust): off => linear+clamp (true magnitude). Height stays
+    // LINEAR regardless.
     function scaleT(value, clamp) {
       const t = Math.max(0, Math.min(1, value / clamp));
-      return METRICS[state.metric].transform === "sqrt" ? Math.sqrt(t) : t;
+      const sqrt = state.colorAdjust && METRICS[state.metric].transform === "sqrt";
+      return sqrt ? Math.sqrt(t) : t;
     }
 
     // Interpolate the active ramp at t in [0,1].
@@ -1121,7 +1161,7 @@
             pickable: false, // the plane handles tooltips
             updateTriggers: {
               getElevation: colKey,
-              getFillColor: [colKey, state.ramp],
+              getFillColor: [colKey, state.ramp, state.colorAdjust],
             },
           }), ...labelLayer()];
         }
@@ -1145,7 +1185,7 @@
           pickable: false, // the plane handles tooltips
           updateTriggers: {
             getElevation: state.metric,
-            getFillColor: [state.metric, state.ramp],
+            getFillColor: [state.metric, state.ramp, state.colorAdjust],
           },
         }), ...labelLayer()];
       }
@@ -1205,7 +1245,7 @@
         // deck.gl skips the accessor.
         updateTriggers: {
           getElevation: state.metric,
-          getFillColor: [state.metric, state.ramp, state.residential],
+          getFillColor: [state.metric, state.ramp, state.residential, state.colorAdjust],
         },
       });
 
@@ -1328,8 +1368,37 @@
       overlay.setProps({ layers: buildLayers() });
       document.getElementById("title-h").textContent = cfg.title;
       document.getElementById("title-p").textContent =
-        state.view === "glass" ? glassBlurb() : cfg.blurb;
+        state.view === "glass" ? glassBlurb() : withColourClause(cfg.blurb);
       refreshLegend(); // per-metric transform: the gradient bar changes too
+    }
+
+    // Colour Adjustment (sqrt scaling) — a runtime toggle for the money/glass
+    // colour transform. On: sqrt (values spread across the ramp). Off:
+    // linear+clamp (true magnitude). Height is unaffected either way. Only
+    // rebuilds when it bites (money/glass); in other views it just records
+    // state and re-applies on return.
+    function applyColorAdjust() {
+      state.colorAdjust = !state.colorAdjust;
+      syncColorAdjust();
+      if (state.view !== "money" && state.view !== "glass") return;
+      overlay.setProps({ layers: buildLayers() });
+      document.getElementById("title-p").textContent =
+        state.view === "glass" ? glassBlurb() : withColourClause(METRICS[state.metric].blurb);
+      refreshLegend(); // legendGradient reads the transform through scaleT
+    }
+
+    // Sync the Colour Adjustment button + state line to the toggle, and grey it
+    // out in views where it has no effect (services/ratio/uses drive colour
+    // through their own transforms, not scaleT).
+    function syncColorAdjust() {
+      const applies = state.view === "money" || state.view === "glass";
+      const btn = document.getElementById("coloradj-btn");
+      btn.classList.toggle("active", state.colorAdjust);
+      btn.disabled = !applies;
+      document.getElementById("coloradj").classList.toggle("disabled", !applies);
+      document.getElementById("coloradj-state").textContent = state.colorAdjust
+        ? "On — colour spread across distribution"
+        : "Off — colour shows true magnitude";
     }
 
     // Switch the Glass spike denominator (ground vs lot acres). Glass-only:
@@ -1593,7 +1662,8 @@
         v === "glass" ? METRICS[state.metric].title : chrome.title;
       document.getElementById("title-p").textContent =
         v === "glass" ? glassBlurb() :
-        v === "services" ? servicesBlurb() : chrome.blurb;
+        v === "services" ? servicesBlurb() : withColourClause(chrome.blurb);
+      syncColorAdjust(); // the sqrt toggle only bites in money + glass (scaleT)
       refreshLegend();
     }
 
@@ -1642,6 +1712,7 @@
       });
       map.addControl(overlay);
 
+      document.getElementById("coloradj-btn").addEventListener("click", applyColorAdjust);
       document.querySelectorAll("#toggle button").forEach(b =>
         b.addEventListener("click", () => applyMetric(b.dataset.metric)));
       document.querySelectorAll("#palette button").forEach(b =>
