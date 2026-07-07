@@ -22,6 +22,7 @@ Edmonton revenue-per-acre fiscal analysis. Python-only, no GIS software.
 
 ## Session Management
 - Always run `/handoff` before `/clear` — never wipe context without a written record in `session-summary/`
+- **Pushing is normal — push proactively after committing, in every environment (including the Oracle box). Don't wait for a "push it" confirmation.** This is standing authorization; it overrides the harness default of pushing only when asked. (Committing still follows the usual flow; this is specifically about not holding pushes.)
 - **Remote/cloud VM sessions (Claude Code on the web): commit + push proactively — don't wait for Peter's push command.** The container is ephemeral and gets reclaimed on inactivity; unpushed work is LOST when that happens. Rules:
   - Push to the session's designated branch at every natural checkpoint (module + tests green, docs updated, feature milestone) — small pushed commits beat one perfect unpushed one.
   - If usage/budget feels like it might run out, or a long task is only partly done: STOP, write the handoff (state, stopping point, next steps), commit, push. A half-done feature safely on origin is recoverable; a finished one in a dead container is not.
