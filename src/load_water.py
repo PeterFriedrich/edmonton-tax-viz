@@ -131,20 +131,24 @@ def _connection_charges(units: pd.Series, rates: dict) -> pd.DataFrame:
     }, index=units.index)
 
 
-def load_water(
+def build_connections(
     assessment_csv: str | Path,
     property_info_csv: str | Path,
-    rates_json: str | Path,
-    year: int,
 ) -> pd.DataFrame:
-    """Model the annual residential water + sanitary charge per neighbourhood.
+    """Model residential connections from the roll — the shared scope+dedupe.
 
-    Returns a DataFrame keyed by ``neighbourhood_name``:
-        water_fixed_annual   float  modeled per-connection fixed charges, $/yr
-        water_charge_annual  float  fixed + volumetric total, $/yr
+    Returns one row per modeled connection with columns ``units`` (dwellings
+    the connection serves) and ``neighbourhood_name``. Household-class rows are
+    grouped one-connection-per-exact-point (a condo tower's units are separate
+    roll records at one point); each OTHER RESIDENTIAL row is one building
+    connection whose unit count is estimated from gross floor area at
+    ``M2_GROSS_PER_UNIT``. Every excluded row (out-of-scope class, null coords,
+    null/zero floor area) is counted + reported — no silent drops.
+
+    Shared by ``load_water`` (which prices each connection) and the franchise
+    lens (``load_franchise``, which needs the same dwelling counts) so both
+    lenses rest on ONE household model — they cannot silently diverge.
     """
-    rates = load_water_rates(rates_json, year)
-
     df = pd.read_csv(
         assessment_csv,
         usecols=["Account Number", "Assessment Class 1", "Neighbourhood",
@@ -214,7 +218,25 @@ def load_water(
         )
 
     if not len(conns):
-        raise ValueError("no water connections modeled — inputs are wrong")
+        raise ValueError("no residential connections modeled — inputs are wrong")
+
+    return conns
+
+
+def load_water(
+    assessment_csv: str | Path,
+    property_info_csv: str | Path,
+    rates_json: str | Path,
+    year: int,
+) -> pd.DataFrame:
+    """Model the annual residential water + sanitary charge per neighbourhood.
+
+    Returns a DataFrame keyed by ``neighbourhood_name``:
+        water_fixed_annual   float  modeled per-connection fixed charges, $/yr
+        water_charge_annual  float  fixed + volumetric total, $/yr
+    """
+    rates = load_water_rates(rates_json, year)
+    conns = build_connections(assessment_csv, property_info_csv)
 
     charges = _connection_charges(conns["units"], rates)
     conns = pd.concat([conns, charges], axis=1)

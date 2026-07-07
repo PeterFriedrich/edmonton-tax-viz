@@ -235,6 +235,43 @@ franchise lines could ship as columns without a display layer. Methods §G's
 pitfall applies: never let a per-household cost allocation masquerade as a
 land-driven cost signal.
 
+### Lens 3+4 as built — franchise COLUMNS ONLY (2026-07-07 — decided with Peter)
+
+Built electricity + gas together as one module, **columns only, no display
+layer** (the "ship as columns" option above — Peter's call, given the
+collinearity below).
+
+- **Scope: residential only**, and the **SAME dwelling model as the water
+  lens** — `load_water.build_connections` was extracted as a shared helper so
+  the two lenses cannot disagree on the household count (551,831). Each
+  dwelling is billed as its own electricity + gas meter (per-dwelling, unlike
+  water's shared building connection). Commercial excluded (no consumption
+  proxy — same reason as water).
+- **COLLINEAR WITH DWELLING COUNT (the headline caveat):** the consumption
+  proxy is flat per dwelling (7,200 kWh/yr, 115 GJ/yr), so every per-hood
+  column is `dwellings × a constant`. As a map it re-plots dwelling density
+  and nothing more — hence no display layer. `dwelling_count` ships as its own
+  column so the collinearity is explicit, not buried in a dollar figure. The
+  distinct spatial signal (commercial load) is out of scope.
+- **Module:** `src/load_franchise.py`; rates in `data/franchise_rates.json`
+  (EDTI DAS-R Jan 2025 + ATCO Gas North Jan 2026; `FRANCHISE_RATE_YEAR` in
+  main.py). Columns carried on the full frame (`FRANCHISE_COLUMNS`) but NOT in
+  `SLIM_COLUMNS` and no per-acre derived — no display yet. `--skip-franchise`.
+- **First real run:** 551,831 dwellings → 352 hoods. **Modeled City revenue:
+  electricity LAF (17.65%) $36.9M/yr + gas franchise (35%) $125.7M/yr =
+  $162.6M/yr** (modeled distribution $208.9M, gas delivery $359.3M).
+- **Known underestimate:** modeled LAF is $5.57/mo/dwelling vs the City's
+  published ~$8.33/mo (2026) — the fee is levied on EDTI's FULL distribution
+  revenue (riders/pass-throughs), not the base customer+energy schedule
+  modeled here (~⅓ low). Documented in the rates JSON + FINDINGS §5; per-hood
+  shape unaffected (linear in dwellings). Gas franchise base follows Methods
+  §E (all riders in the delivery base × 35%); Rider B property-tax rider
+  excluded (a tax pass-through, not a franchise fee).
+- **Not yet validated against the City budget's franchise-fee line** —
+  edmonton.ca is unreachable from the build box (handoff blocker); residential
+  $162.6M is expected UNDER the City total (commercial + the LAF underestimate
+  both push it up). Left as a FINDINGS follow-up.
+
 ---
 
 ## Shared machinery (whichever lens goes first)
