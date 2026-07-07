@@ -160,11 +160,19 @@ _Last reconciled: 2026-07-06_
         Follow-ups: household count ~20% over census (floor-area→units
         assumption — sensitivity-check M2_GROSS_PER_UNIT); validation vs
         EPCOR revenue (below, now covers water too).
-      - [ ] Validation pass vs EPCOR published revenue — stormwater
-        ($240.4M/yr modeled) AND water/sanitary ($588.1M/yr modeled,
-        residential scope) (order-of-magnitude; must bracket the
-        serviced-area assumption / possibly exclude set-aside/notyet-zoned
-        parcels — Peter decision).
+      - [x] ~~Validation pass vs EPCOR published revenue~~ — DONE
+        2026-07-07 (Session 19), full numbers + sources in
+        `docs/FINDINGS_utility_validation.md`. **Order-of-magnitude PASS
+        both lenses.** Stormwater: $240.4M modeled vs $141.1M published
+        2025F (1.70×), but residential slice is 1.11× and the excess is
+        localized (notyet+never zones = $49.8M unbilled land; I=1.0 vs
+        real DIF reductions on commercial). Water/sanitary: $588.1M vs
+        ≈$440M published res+MR scope (≈1.33×); connection count 13%
+        UNDER EPCOR's (268k vs 308k accounts) — excess is per-connection.
+      - [ ] **Peter decision (bracket quantified, FINDINGS §3):** how to
+        report citywide stormwater — all-parcels $240.4M vs excl
+        set-aside hoods $207.3M vs excl notyet+never zones $190.6M
+        (recommended if picking one). Pipeline untouched pending call.
       - [ ] Remaining SPEC open decisions: (3) modeled $ in the "total
         services" denominator (recommended: not yet); (4) franchise-fee
         revenue columns only with their lenses; Lenses 3–4 unbuilt.

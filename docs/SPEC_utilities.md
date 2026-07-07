@@ -92,10 +92,13 @@ PEMBINA is #1 per-acre — the known lot-bound outlier, consistent.
   zone's R; EPCOR presumably does not bill parcels outside the drainage
   service area. The annexed/rural fringe is material — EDMONTON ENERGY AND
   TECHNOLOGY PARK alone models $11.9M/yr (5% of citywide) on 50 km² of
-  mostly-undeveloped land whose EET zones are assigned industrial R. Any
-  citywide-total validation against EPCOR published revenue must bracket
-  this. Possible refinement (a Peter decision): exclude or separately
-  report set-aside/notyet-zoned parcels.
+  mostly-undeveloped land whose EET zones are assigned industrial R.
+  **VALIDATED 2026-07-07** (`docs/FINDINGS_utility_validation.md`):
+  modeled $240.4M vs EPCOR published $141.1M forecast revenue 2025F
+  (1.70×); residential slice 1.11×; notyet+never zone categories carry
+  $49.8M of largely unbilled land ($190.6M excluding them, 1.35×).
+  Refinement decision (exclude/report notyet+never separately) still
+  Peter's — FINDINGS §3 has the options.
 - **DISPLAYED as of 2026-07-05** (`feature/services-view`, decision 2):
   `storm_charge_per_acre` joined `SLIM_COLUMNS` and rides the main hood
   GeoJSON; the Services view (the Roads view generalized to per-service
@@ -198,8 +201,12 @@ show the connection-cost signal alone.
   352 hoods, **citywide $588.1M/yr ($133.9M fixed + $454.2M volumetric)**,
   ≈ $89/household/month. The household count runs ~20% above the census
   dwelling stock — the floor-area→units estimate is the suspected
-  overcount; volumetric impact bounded (~4% of the total). Validation vs
-  EPCOR published revenue: TODO (with the stormwater validation pass).
+  overcount; volumetric impact bounded (~4% of the total).
+  **VALIDATED 2026-07-07** (`docs/FINDINGS_utility_validation.md`):
+  $588.1M vs ≈$440M published at matching res+multi-res scope (≈1.33×,
+  range 1.25–1.40 — the water utility's class split is estimated);
+  connection count 13% UNDER EPCOR accounts (268,489 vs 308,389), so the
+  excess is per-connection (households/consumption), not count.
 - **Colour: LINEAR** (FINDINGS §6.6) — clamp/median 2.2× (storm territory);
   the raw skew (+3.4) lives in the p97.5-clamped tail; sqrt over-corrects.
 
