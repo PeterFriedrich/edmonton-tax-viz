@@ -197,14 +197,15 @@ _Last reconciled: 2026-07-06_
         over (Rider T in the 35% base; excl → 1.00×), elec 0.46× under (LAF
         floor). FINDINGS §5.1; (b) commercial scope needs a consumption proxy;
         (c) display lens if ever wanted.
-      - [ ] **DECISION (Peter): exclude transmission Rider T from the gas
-        franchise base?** Validation §5.1 found modeled gas franchise
-        ($125.7M) exceeds the all-sector City actual ($95.2M) at 1.32×;
-        dropping Rider T ($1.357/GJ) from the 35% base → $95.6M ≈ 1.00×.
-        One-line change (`gas_rider_t_per_gj` already isolated in
-        `franchise_rates.json`). NOT proven — residential-only matching an
-        all-sector actual could be a compensating 115 GJ/dwelling overcount.
-        Needs Peter's call before touching the model.
+      - [ ] **DEFERRED (Peter, 2026-07-07 — revisit later): exclude
+        transmission Rider T from the gas franchise base?** Validation §5.1
+        found modeled gas franchise ($125.7M) exceeds the all-sector City
+        actual ($95.2M) at 1.32×; dropping Rider T ($1.357/GJ) from the 35%
+        base → $95.6M ≈ 1.00×. One-line change (`gas_rider_t_per_gj` already
+        isolated in `franchise_rates.json`). NOT proven — residential-only
+        matching an all-sector actual could be a compensating 115 GJ/dwelling
+        overcount. Parked as-is with the Rider-T caveat documented; no model
+        change for now.
       - [ ] Remaining SPEC open decisions: (3) modeled $ in the "total
         services" denominator (recommended: not yet); (4) franchise-fee
         revenue columns only with their lenses — SETTLED (columns only,
