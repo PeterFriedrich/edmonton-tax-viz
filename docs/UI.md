@@ -172,7 +172,16 @@ five buttons regardless of service count):
     drawn whenever the service is checked — driver or not; a
     "Fire station" row joins the legend via `#legend-cats`). Checkbox
     hides on data files without the column, same guard as stormwater.
-  **Plane sharing (2026-07-06):** the plane services (storm, fire) draw ONE
+  - **Water/sewer** (default off; utility lens #2, SPEC_utilities Lens 2,
+    2026-07-07): **MODELED residential water + sanitary charge** —
+    `water_charge_per_acre` colours the plane (**LINEAR**, FINDINGS §6.6),
+    `water_fixed_per_acre` rides along so the tooltip shows the
+    connection-vs-consumption split ("$X modeled water+sewer / acre / yr
+    (fixed $Y)"). Blurb carries three caveats: modeled-not-billed,
+    commercial-not-modeled, and consumption-tracks-household-density
+    (Methods §G). Legend label names the 2026 tariff vintage. Checkbox
+    hides on data files without the column, same guard as the others.
+  **Plane sharing (2026-07-06):** the plane services (storm, fire, water) draw ONE
   `svc-plane` layer between them — two coplanar polygon layers would
   z-fight, and a non-driving plane's "neutral" render is the same slate
   surface anyway. `servicePlaneLayer(col)` paints the driver's column, or

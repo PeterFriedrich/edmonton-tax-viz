@@ -114,6 +114,11 @@ aligned. That pull also surfaced a new `Assessment Class 1` label
 - **`lot_size` is a city-provided field, not computed** — Edmonton supplies it directly via the API. No geometry math needed.
 - **No parcel polygon geometry** — only a centroid point. Edmonton transferred parcel GIS data to AltaLIS in 2021; it's no longer freely available. Polygon boundaries require the neighbourhood boundary file (dataset `65fr-66s6`).
 - **`lot_size` units are sq metres** — divide by 4046.86 to get acres. (~0.6% null — minor, flag on load)
+- **`Total Gross Area` units are sq metres too** (confirmed 2026-07-07: the
+  RESIDENTIAL-class median is 112.7 — a ~1,200 sq ft house). The water lens
+  (`src/load_water.py`) uses it to estimate multi-res unit counts (90 m²
+  gross/unit assumption); 1,018 of 4,353 OTHER RESIDENTIAL rows have
+  null/zero values — those buildings drop from the water model, counted.
 - **Condo `lot_size` semantics are INCONSISTENT (confirmed 2026-07-04)** — at the
   3,002 lat/long points holding multiple units, `lot_size` is sometimes the parcel
   size duplicated on every unit (summing overcounts the land), sometimes per-unit

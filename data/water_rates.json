@@ -1,0 +1,28 @@
+{
+  "_provenance": [
+    "EPCOR water + wastewater-treatment + sanitary-collection tariffs (residential + multi-res).",
+    "Source: docs/utility_cost_estimation_lens_methods.md SA-SB (verified against EPCOR rate pages).",
+    "2026 rates effective 2026-04-01 (the monthly-to-daily fixed-charge transition).",
+    "Fixed daily charges keyed by meter size in mm; ONLY sizes verified for BOTH water and",
+    "sanitary are listed (15/25/100/300) - the meter-size bands in load_water.py use only these.",
+    "Public Fire Protection charge EXCLUDED from the model: only its 15mm rate is verified,",
+    "and inventing the larger-meter scaling would break the no-invented-numbers rule.",
+    "Volumetric blocks are [monthly_m3_upper_bound, rate_per_m3]; null bound = open-ended.",
+    "Residential blocks are inclining (per household); multi-res blocks are declining (per",
+    "building connection) - opposite shapes, Methods SA.",
+    "Rates reset each April 1 - re-pull before any production claim.",
+    "Everything computed from these is MODELED, not billed (SPEC_utilities.md Lens 2)."
+  ],
+  "years": {
+    "2026": {
+      "effective": "2026-04-01",
+      "water_fixed_daily": {"15": 0.5359, "25": 1.3401, "100": 13.3996, "300": 90.4715},
+      "sanitary_fixed_daily": {"15": 0.3625, "25": 1.0150, "100": 10.3248, "300": 77.3296},
+      "wastewater_fixed_daily": 0.2269,
+      "water_blocks_residential": [[10.0, 2.5258], [35.0, 2.7593], [null, 3.4873]],
+      "water_blocks_multires": [[100.0, 2.3842], [1000.0, 1.9949], [null, 1.6484]],
+      "wastewater_per_m3": 1.302,
+      "sanitary_per_m3": 1.27331
+    }
+  }
+}
