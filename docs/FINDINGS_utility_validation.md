@@ -105,8 +105,10 @@ connection, consumption proxy), not connection count.
 **Where the ~1.3× lives (all model-side inflators, direction consistent):**
 1. **Modeled households 551,831 run ~20% over census dwellings** — the
    `M2_GROSS_PER_UNIT = 90` floor-area→units estimate for OTHER
-   RESIDENTIAL (SPEC bound: ~4% of total, but the sensitivity check is
-   still open — see TODO follow-up).
+   RESIDENTIAL. **Sensitivity check DONE 2026-07-07** (see §2.1 below):
+   the assumption moves household *count* a lot but citywide *dollars*
+   very little (~±5% across a 70–120 m²/unit sweep), so it is NOT where
+   the ~1.3× gap lives.
 2. **Consumption proxy 14.3 m³/mo** vs EPCOR's actual 2023 average of
    13.8 m³/mo and a four-decade declining trend (PBR p. 63) — ~+4%.
 3. **Occupancy**: the model bills every roll household; EPCOR bills
@@ -115,6 +117,39 @@ connection, consumption proxy), not connection count.
    blending 3 months of prior rates — ~+2–3%.
 5. Meter-size band assumptions drive the $133.9M fixed component
    (unvalidated separately; no published fixed/volumetric split found).
+
+### 2.1 `M2_GROSS_PER_UNIT` sensitivity (DONE 2026-07-07)
+
+Swept the multi-res floor-area→units divisor across 70–120 m²/unit
+(baseline 90) via `tools/sensitivity_m2_per_unit.py`, on real regenerated
+data. The parameter only estimates OTHER RESIDENTIAL unit counts; nothing
+else in the model touches it.
+
+| m²/unit | connections | households | vs census* | citywide $/yr | Δ vs 90 |
+|--------:|------------:|-----------:|-----------:|--------------:|--------:|
+| 70  | 268,489 | 591,898 | 1.29× | $622.0M | +5.8% |
+| 80  | 268,489 | 569,323 | 1.24× | $602.8M | +2.5% |
+| **90** | **268,489** | **551,831** | **1.20×** | **$588.1M** | **baseline** |
+| 100 | 268,489 | 537,878 | 1.17× | $576.5M | −2.0% |
+| 110 | 268,489 | 526,466 | 1.14× | $567.4M | −3.5% |
+| 120 | 268,489 | 516,885 | 1.12× | $559.1M | −4.9% |
+
+\* census anchor ≈ 459,859 (= 551,831 / 1.20, implied by §2.1's ~20%).
+
+**Findings:**
+- **Connection count is invariant** (268,489 everywhere) — the divisor
+  never touches the 13%-under-EPCOR connection count. Confirms the gap is
+  per-connection, not count.
+- **Households are highly sensitive** (~75k / ±7% span across the sweep)
+  but **dollars are not** (~±5%). Multi-res units bill on the declining
+  volumetric block and share a building's fixed meter charge, so marginal
+  estimated units are cheap — the household overcount is mostly harmless
+  to the modeled revenue. This confirms the earlier "~4% of total" bound.
+- **Reconciling the count to census would require m²/unit well above 120**
+  (extrapolating, ~145+), and even then citywide $ falls only ~7–8% — far
+  short of closing the ~1.33× vs EPCOR. **The 90 baseline stands**; the
+  gap is per-connection (consumption proxy + occupancy + rate vintage,
+  items 2–4 above), not this assumption.
 
 ## 3. Set-aside / unbilled-land decision — DECIDED: report BOTH (Peter, 2026-07-07)
 

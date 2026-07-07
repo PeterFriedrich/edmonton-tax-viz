@@ -158,8 +158,12 @@ _Last reconciled: 2026-07-06_
         ($133.9M fixed). 229 tests green; headless-verified on real data.
         As-built numbers + caveats: SPEC_utilities "Lens 2 as built".
         Follow-ups: household count ~20% over census (floor-area→units
-        assumption — sensitivity-check M2_GROSS_PER_UNIT); validation vs
-        EPCOR revenue (below, now covers water too).
+        assumption — [x] ~~sensitivity-check M2_GROSS_PER_UNIT~~ DONE
+        2026-07-07: 70–120 m²/unit sweep moves households ±7% but citywide
+        $ only ±5% — the assumption is NOT the source of the EPCOR gap;
+        90 baseline stands. `tools/sensitivity_m2_per_unit.py` +
+        FINDINGS_utility_validation §2.1); validation vs EPCOR revenue
+        (below, now covers water too).
       - [x] ~~Validation pass vs EPCOR published revenue~~ — DONE
         2026-07-07 (Session 19), full numbers + sources in
         `docs/FINDINGS_utility_validation.md`. **Order-of-magnitude PASS
