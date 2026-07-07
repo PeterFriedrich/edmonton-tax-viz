@@ -1,8 +1,9 @@
 # Findings — Utility Lens Validation vs EPCOR Published Revenue
 
 **Date:** 2026-07-07 (Session 19). Closes the TODO validation item for
-Lens 1 (stormwater) and Lens 2 (water + sanitary); §5 adds the Lens 3
-(electricity/gas franchise) totals + caveats (build 2026-07-07).
+Lens 1 (stormwater) and Lens 2 (water + sanitary); §5 covers the Lens 3
+(electricity/gas franchise) totals + caveats (build 2026-07-07), and §5.1
+closes it against the City's audited franchise-fee line (2026-07-07).
 **Verdict up front: order-of-magnitude PASS for both lenses.** The
 residential slice of the stormwater model lands within ~11% of what EPCOR
 actually bills; the citywide excess is localized and explained (unbilled
@@ -28,6 +29,19 @@ coefficients on commercial/industrial).
    pub-edmonton.escribemeetings.com DocumentId=263222, p. 7:
    2024 **actual** revenue — In-City Water $254.9M, Wastewater Treatment
    $137.9M, Wastewater Collection $278.2M (EWS total $671.0M).
+3. **City of Edmonton 2024 Financial Annual Report** (audited consolidated
+   financial statements) — edmonton.ca `2024FinancialAnnualReport.pdf`,
+   **Note 24 "Utility Franchise Agreement Fees"** (pg 105), disclosed under
+   AR 313/2000. Franchise fee revenue by utility, in $000
+   (Budget / 2024 actual / 2023 actual):
+   - ATCO Gas and Pipelines — **Gas**: 93,713 / **95,167** / 88,759
+   - EPCOR Distribution — **Power**: 80,780 / **80,780** / 76,418
+   - EPCOR Water Services — Water: 18,993 / 21,280 / 19,237
+   - EPCOR Water Services — Drainage: 12,704 / 13,781 / 11,682
+   - EPCOR Water Services — Wastewater: 10,637 / 11,429 / 10,748
+   - **Total franchise fees: 216,827 / 222,437 / 206,844.**
+   (Fetched from edmonton.ca on Peter's laptop, 2026-07-07 — the box that
+   built Lens 3 could not reach edmonton.ca; that blocker is now cleared.)
 
 The in-city **Water** PBR application (2022–2026 term) lives on
 edmonton.ca, which this box cannot reach (curl exit 000; WebFetch 404 on
@@ -205,9 +219,39 @@ The 17.65% fee is levied on EDTI's FULL forecast distribution revenue
 modeled here. A transparent underestimate; correcting it would scale the LAF
 line up ~1.5× (≈$55M residential) but not change the per-hood shape.
 
-**Not yet cross-checked against the City budget's franchise-fee line** —
-edmonton.ca is unreachable from the build box (§0 blocker; same as the water
-PBR gap). Residential $162.6M is expected UNDER the City total: commercial
-franchise fees are excluded (no consumption proxy) AND the LAF runs low, both
-pushing the true figure higher. If Peter can supply the City's budgeted
-electricity + gas franchise revenue, this section closes to a real ratio.
+### 5.1 Cross-check vs the City's audited franchise-fee line (DONE 2026-07-07)
+
+Closed against **Note 24 of the 2024 Financial Annual Report** (§0 source 3),
+now that edmonton.ca is reachable. City actual 2024 franchise revenue:
+**Gas (ATCO) $95.2M**, **Power (EPCOR Distribution) $80.8M** → **combined
+electricity + gas $175.9M** (all-sector; residential + commercial + industrial).
+
+| Line | Modeled (residential) | City actual 2024 (all-sector) | Ratio |
+|---|---|---|---|
+| Gas franchise (Rider A 35%) | $125.7M | $95.2M | **1.32×** |
+| Electricity Local Access Fee | $36.9M | $80.8M | **0.46×** |
+| **Combined elec + gas** | **$162.6M** | **$175.9M** | **0.92×** |
+
+**The combined 0.92× is a coincidence of two offsetting errors, not a clean
+pass.** Read the two lines separately:
+
+- **Gas overshoots (1.32×) — a residential-only model should not exceed the
+  all-sector actual.** The cause is almost certainly the **transmission
+  Rider T** ($1.357/GJ, the largest variable component): our 35% is levied on
+  a delivery base that includes it. Excluding Rider T drops modeled gas to
+  **$95.6M ≈ 1.00× actual**. That near-exact landing is itself a caution —
+  residential-only matching an all-sector figure implies either residential
+  dominates Edmonton's gas-franchise base or the 115 GJ/dwelling proxy runs
+  high — so **excluding Rider T is a strong candidate correction, not proven.**
+  Flagged for a decision (see TODO); the rates JSON already isolates
+  `gas_rider_t_per_gj` so the change is one line.
+- **Electricity undershoots (0.46×) — confirms and sharpens the known "~⅓ low"
+  caveat.** Actual $80.8M ÷ 17.65% implies a real EDTI distribution base of
+  **$457.7M**, 2.19× our modeled $208.9M. The gap is the base+energy schedule
+  missing riders/pass-throughs AND commercial/industrial customers (residential
+  scope). The LAF line is a documented floor, not an estimate of the true fee.
+
+**Net:** the modeled City franchise revenue is the right order of magnitude
+(0.92× combined), but the honest read is line-by-line — gas is high (Rider T),
+electricity is a residential-only floor. Both errors are understood and point
+the same way the caveats predicted.
