@@ -110,6 +110,20 @@ drivers across all neighbourhoods.
 
 _Added 2026-07-03, out of the use-mix view build._
 
+**IN PROGRESS 2026-07-07 (Session 22), PAUSED mid-scrape.** Scope + method
+decided with Peter: full 938-page corpus, in-context (Claude) classification of
+Purpose statements. Built + tested: `scripts/scrape_dc_provisions.py` (polite,
+resumable, cached to `data/raw/dc_provisions/` — gitignored) and
+`tools/extract_dc_uses.py` (pulls each site's Purpose statement, the
+high-signal field). **Crawl stopped at 568/938 pages cached.**
+⚠️ **The scrape MUST run on Peter's laptop — `zoningbylaw.edmonton.ca` is
+edmonton.ca, unreachable from the Oracle box (curl exit 000, the Session-21
+blocker).** Resume by re-running `python scripts/scrape_dc_provisions.py` on the
+laptop (skips cached, fetches the remaining ~370). Steps AFTER the scrape
+(extract → classify → rollup → re-analyze) run offline and could move to Oracle
+only if the cached HTML corpus is copied there. See the session handoff for the
+full resume procedure.
+
 **Observation.** The `dc` category (24% of nonres area) is honest but opaque by
 construction — Direct Control means a bespoke per-site bylaw, so `load_zoning.py`
 claims no single use for it. But the zoning dataset's `url` field points at the
