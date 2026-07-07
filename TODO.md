@@ -171,8 +171,14 @@ _Last reconciled: 2026-07-06_
         2025F (1.70×), but residential slice is 1.11× and the excess is
         localized (notyet+never zones = $49.8M unbilled land; I=1.0 vs
         real DIF reductions on commercial). Water/sanitary: $588.1M vs
-        ≈$440M published res+MR scope (≈1.33×); connection count 13%
+        ≈$467M published res+MR scope (≈1.26×); connection count 13%
         UNDER EPCOR's (268k vs 308k accounts) — excess is per-connection.
+        [Refined 2026-07-07: the in-city water res+MR share was a flat ~70%
+        guess; now derived to ~80% from EPCOR's by-class customer+consumption
+        counts (EWS 2024 PBR Progress Report p.9, FINDINGS §2.2), tightening
+        the ratio 1.33×→1.26×. The raw water revenue-by-class schedule stays
+        unreachable (all edmonton.ca public-files paths dead, no Wayback), so
+        ~80% is a blend estimate, not a read-off — but a well-anchored one.]
       - [x] ~~**Peter decision (bracket quantified, FINDINGS §3)**~~ —
         DECIDED 2026-07-07: report BOTH (all-parcels $240.4M AND excl
         notyet+never zones $190.5M). Shipped same day:

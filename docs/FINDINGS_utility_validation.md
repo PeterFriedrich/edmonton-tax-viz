@@ -26,9 +26,10 @@ coefficients on commercial/industrial).
    - Table 21.3.2-2 (p. 179): stormwater rate +31.2% (2025), +6.2%/yr
      (2026–27); sanitary −7.0%/−2.0%/−2.0% (rebalancing).
 2. **EWS 2024 PBR Progress Report** (Utility Committee deck) —
-   pub-edmonton.escribemeetings.com DocumentId=263222, p. 7:
-   2024 **actual** revenue — In-City Water $254.9M, Wastewater Treatment
-   $137.9M, Wastewater Collection $278.2M (EWS total $671.0M).
+   pub-edmonton.escribemeetings.com DocumentId=263222. p. 6: 2024 **actual**
+   revenue — In-City Water $254.9M, Wastewater Treatment $137.9M, Wastewater
+   Collection $278.2M (EWS total $671.0M). p. 9: In-city water **by class**
+   (customers + consumption ML) — used in §2.2 to derive the res+MR share.
 3. **City of Edmonton 2024 Financial Annual Report** (audited consolidated
    financial statements) — edmonton.ca `2024FinancialAnnualReport.pdf`,
    **Note 24 "Utility Franchise Agreement Fees"** (pg 105), disclosed under
@@ -43,10 +44,14 @@ coefficients on commercial/industrial).
    (Fetched from edmonton.ca on Peter's laptop, 2026-07-07 — the box that
    built Lens 3 could not reach edmonton.ca; that blocker is now cleared.)
 
-The in-city **Water** PBR application (2022–2026 term) lives on
-edmonton.ca, which this box cannot reach (curl exit 000; WebFetch 404 on
-the `public-files` paths) — the water-utility class split below is
-therefore an estimate, flagged as such.
+The in-city **Water** PBR application (2022–2026 term) that would give
+water revenue **by class** directly is no longer served anywhere — every
+edmonton.ca `public-files` path 302s to page-not-found (checked from a box
+that *can* reach edmonton.ca, 2026-07-07) and there is no Wayback snapshot.
+The water res+MR share (§2.2) is therefore **derived** from EPCOR's published
+by-class customer + consumption counts (source 2, p. 9), not read off a
+revenue schedule — a tighter estimate than the earlier flat guess, but still
+an estimate.
 
 ## 1. Stormwater (Lens 1) — modeled $240.4M/yr at 2025 rates
 
@@ -106,11 +111,14 @@ Model components = water + sanitary collection + wastewater treatment
 |---|---|---|
 | Sanitary collection (2026F) | $135.4M ($106.0M res + $29.4M multi-res) | sourced (Table 20.2-1) |
 | Wastewater treatment | $108.2M in 2024 ($83.8M single-family + $24.4M multi-res); ~ $115M by 2026 | sourced 2024 (Table 12.4-1); 2026 escalated |
-| In-city water | 2024 actual $254.9M **all classes**; res+MR share est. ~70% → ~$190M at 2026 rates | share ESTIMATED (water PBR class split unreachable, §0) |
-| **Total** | **≈ $440M (range $420–470M)** | |
+| In-city water | 2024 actual $254.9M **all classes**; res+MR share **~80%** → ~$205M (2024) / ~$217M at 2026 rates | share derived from by-class counts (§2.2), not the raw revenue schedule |
+| **Total** | **≈ $467M (range $450–490M)** | |
 
-**Ratio: modeled / published ≈ 1.33× (range 1.25–1.40×).** Same
-hundred-million band → order-of-magnitude PASS.
+**Ratio: modeled / published ≈ 1.26× (range 1.17–1.30×).** Same
+hundred-million band → order-of-magnitude PASS. *(Was 1.33× when the water
+res+MR share was a flat ~70% guess; §2.2 refined that share upward to ~80%,
+which tightens the ratio downward — the model is closer to published than the
+first pass reported, not further.)*
 
 **Count cross-check:** EPCOR 2026F accounts = 304,511 residential +
 3,878 multi-res = **308,389** vs the model's **268,489 connections**
@@ -165,6 +173,40 @@ else in the model touches it.
   short of closing the ~1.33× vs EPCOR. **The 90 baseline stands**; the
   gap is per-connection (consumption proxy + occupancy + rate vintage,
   items 2–4 above), not this assumption.
+
+### 2.2 In-city water res+MR revenue share — refined ~70% → ~80% (2026-07-07)
+
+The original ~70% res+MR share was a flat guess (the raw water revenue-by-class
+schedule from the 2022-2026 Water PBR lives only on dead edmonton.ca
+`public-files` paths — 302 → page-not-found on every mirror, no Wayback
+snapshot). It is now derived from the **actual by-class counts** in the
+**EWS 2024 PBR Progress Report** (escribe DocumentId=263222, p. 9 — the same
+deck that sources the $254.9M in-city water total, p. 6):
+
+| In-city water, 2024 actual | Residential | Multi-res | Commercial | Total |
+|---|---:|---:|---:|---:|
+| Customers | 293,381 | 3,870 | 20,631 | 317,882 |
+| Consumption (ML/yr) | 51,601 | 20,048 | 24,494 | 96,143 |
+
+Water revenue = a per-customer **fixed** charge + a **volumetric** charge, so
+the res+MR revenue share is a blend of the two shares those two rows imply:
+- res+MR **customer** share = **93.5%** (governs the fixed component)
+- res+MR **consumption** share = **74.5%** (governs the volumetric component)
+
+At a realistic in-city water bill mix (~30% fixed / ~70% volumetric) the blend
+is **≈ 80%** (79–83% across a 25–45% fixed sweep; hard bounds 74.5–93.5%). So
+res+MR in-city water ≈ **$205M** (2024 actual) / **~$217M** at 2026 rates,
+vs the ~$178M/~$190M the old 70% implied. The true share is *higher* than the
+first-pass guess, so §2's ratio tightens from 1.33× to **1.26×** — the model
+sits closer to published, not further. Still an estimate (blend, not the raw
+class-revenue schedule), but now anchored to EPCOR's published class counts.
+
+**Bonus cross-checks from the same table:**
+- Residential consumption **14.7 m³/mo** (2024 actual) vs the model's 14.3 —
+  the proxy is well-calibrated (was compared to 13.8 for 2023; 2024 rose ~14%
+  on densification, EPCOR's note). Our 14.3 now reads ~3% *under* 2024, not over.
+- In-city water customers **317,882** (297,251 res+MR) vs the model's 268,489
+  connections — consistent with the ~13% under-count already flagged in §2.
 
 ## 3. Set-aside / unbilled-land decision — DECIDED: report BOTH (Peter, 2026-07-07)
 
