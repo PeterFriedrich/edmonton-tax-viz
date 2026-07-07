@@ -96,9 +96,10 @@ PEMBINA is #1 per-acre — the known lot-bound outlier, consistent.
   **VALIDATED 2026-07-07** (`docs/FINDINGS_utility_validation.md`):
   modeled $240.4M vs EPCOR published $141.1M forecast revenue 2025F
   (1.70×); residential slice 1.11×; notyet+never zone categories carry
-  $49.8M of largely unbilled land ($190.6M excluding them, 1.35×).
-  Refinement decision (exclude/report notyet+never separately) still
-  Peter's — FINDINGS §3 has the options.
+  $49.8M of largely unbilled land ($190.5M excluding them, 1.35×).
+  DECIDED (Peter, 2026-07-07): citywide claims report BOTH totals —
+  shipped as `UNBILLED_CATEGORIES` in `load_stormwater` (log line +
+  `.attrs`); per-hood outputs unchanged. FINDINGS §3.
 - **DISPLAYED as of 2026-07-05** (`feature/services-view`, decision 2):
   `storm_charge_per_acre` joined `SLIM_COLUMNS` and rides the main hood
   GeoJSON; the Services view (the Roads view generalized to per-service

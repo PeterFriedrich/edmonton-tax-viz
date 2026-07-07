@@ -109,6 +109,25 @@ def test_single_family_charge(tmp_path):
     assert out["storm_charge_annual"].iloc[0] == pytest.approx(400 * 0.55 * RATE_2026)
 
 
+def test_citywide_bracket_excludes_notyet_and_never(tmp_path):
+    # FINDINGS_utility_validation §3 (Peter 2026-07-07): the citywide total
+    # is reported all-parcels AND excluding notyet/never zone categories.
+    # Per-hood outputs must still carry every modeled point.
+    rows = [
+        _row(lat=53.50, zone="RS", lot=400.0),   # res      -> billable
+        _row(lat=53.51, zone="AG", lot=1000.0),  # notyet   -> unbilled
+        _row(lat=53.52, zone="A", lot=1000.0),   # never    -> unbilled
+    ]
+    out = load_stormwater(_write_csv(tmp_path, rows), _write_rates(tmp_path), 2026)
+    rs, ag, a = 400 * 0.55, 1000 * 0.1, 1000 * 0.2
+    assert out.attrs["storm_citywide_annual"] == pytest.approx(
+        (rs + ag + a) * RATE_2026
+    )
+    assert out.attrs["storm_billable_annual"] == pytest.approx(rs * RATE_2026)
+    # the bracket is reporting-only: hood totals keep the unbilled points
+    assert out["storm_effective_m2"].sum() == pytest.approx(rs + ag + a)
+
+
 def test_condo_shares_count_per_unit(tmp_path):
     # Repeated share-sized lot_size values are per-unit apportionment: 3 x 30 m2.
     csv = _write_csv(tmp_path, [_row(zone="RM", lot=30.0)] * 3)

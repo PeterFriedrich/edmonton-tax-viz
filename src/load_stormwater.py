@@ -41,8 +41,17 @@ import pandas as pd
 
 from export_value_grid import _point_lot_stats
 from load_assessment import NAME_CORRECTIONS
+from load_zoning import ZONE_CATEGORY
 
 logger = logging.getLogger(__name__)
+
+# Zone categories EPCOR largely does not bill (outside the drainage service
+# area / never-developed land): validated against published revenue in
+# docs/FINDINGS_utility_validation.md §1 — these carried $49.8M of the
+# $240.4M 2025 citywide total. The citywide claim is reported BOTH ways
+# (all parcels AND excluding these; Peter 2026-07-07, FINDINGS §3). Per-hood
+# outputs are unaffected — this is reporting, not modeling.
+UNBILLED_CATEGORIES = ("notyet", "never")
 
 # --- Runoff coefficients (R) ------------------------------------------------
 # Lot-size split rows: (threshold_m2, r_below, r_at_or_above), evaluated
@@ -209,6 +218,10 @@ def load_stormwater(
         storm_effective_m2   float  sum of A x I x R (rate-independent)
         storm_charge_annual  float  modeled $/year at the ``year`` rate
 
+    ``.attrs`` carries the citywide bracket (FINDINGS_utility_validation §3):
+        storm_citywide_annual  float  $/year over ALL modeled parcels
+        storm_billable_annual  float  $/year excluding UNBILLED_CATEGORIES
+
     ``zoning_geojson`` (fixa-tstc) enables the point-in-polygon fallback for
     zone-null points; when None/absent those points stay unresolved (still
     counted + reported, never silent).
@@ -299,6 +312,17 @@ def load_stormwater(
     pts = per_point.loc[modeled].copy()
     pts["effective_m2"] = pts["lot_m2"] * intensity * pts["r"]
 
+    # --- billing-boundary bracket (UNBILLED_CATEGORIES above) ---------------
+    category = pts["zone"].map(ZONE_CATEGORY)
+    if category.isna().any():
+        logger.warning(
+            "%d modeled points carry zones with no ZONE_CATEGORY entry — "
+            "counted as billable in the citywide bracket: %s",
+            int(category.isna().sum()),
+            ", ".join(sorted(pts.loc[category.isna(), "zone"].unique())),
+        )
+    unbilled = category.isin(UNBILLED_CATEGORIES).to_numpy()
+
     # --- hood per point, then aggregate --------------------------------------
     hood_of_point = (
         rows.groupby(["latitude", "longitude"], sort=False)["neighbourhood_name"].first()
@@ -314,12 +338,21 @@ def load_stormwater(
     )
     out["storm_charge_annual"] = out["storm_effective_m2"] * annual_rate
 
+    citywide_annual = float(pts["effective_m2"].sum() * annual_rate)
+    unbilled_annual = float(pts.loc[unbilled, "effective_m2"].sum() * annual_rate)
+    out.attrs["storm_citywide_annual"] = citywide_annual
+    out.attrs["storm_billable_annual"] = citywide_annual - unbilled_annual
+
     logger.info(
         "Stormwater model (year %d rate): %d points modeled (%d zone from own "
         "column, %d from spatial fallback) -> %d hoods, citywide $%.1fM/yr "
-        "on %.0f km2 eligible lot area",
+        "on %.0f km2 eligible lot area ($%.1fM/yr excluding %d points on "
+        "%s land EPCOR largely does not bill — FINDINGS_utility_validation §3)",
         year, len(pts), int(n_own), n_fallback, len(out),
-        out["storm_charge_annual"].sum() / 1e6,
+        citywide_annual / 1e6,
         out["storm_lot_m2"].sum() / 1e6,
+        (citywide_annual - unbilled_annual) / 1e6,
+        int(unbilled.sum()),
+        "/".join(UNBILLED_CATEGORIES),
     )
     return out

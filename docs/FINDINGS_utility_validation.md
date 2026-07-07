@@ -116,19 +116,23 @@ connection, consumption proxy), not connection count.
 5. Meter-size band assumptions drive the $133.9M fixed component
    (unvalidated separately; no published fixed/volumetric split found).
 
-## 3. Set-aside / unbilled-land decision (was: "Peter decision" in TODO)
+## 3. Set-aside / unbilled-land decision — DECIDED: report BOTH (Peter, 2026-07-07)
 
-The bracket is now quantified. Options for the citywide stormwater claim:
-- Keep all-parcels $240.4M labeled MODELED (current) — honest but 1.7×
-  billed reality.
-- Exclude set-aside hoods → $207.3M (hood-level cut, coarse).
-- Exclude `notyet` + `never` zone categories → **$190.6M** (zone-level
+The bracket was quantified from the options below, and Peter picked the
+recommendation: **any citywide stormwater claim states both the
+all-parcels total AND the total excluding `notyet` + `never` zones.**
+- All-parcels $240.4M labeled MODELED — honest but 1.7× billed reality.
+- Exclude set-aside hoods → $207.3M (hood-level cut, coarse; not used).
+- Exclude `notyet` + `never` zone categories → **$190.5M** (zone-level
   cut, sharper: it tracks EPCOR's actual billing boundary better and is
   computable per-point inside `load_stormwater`).
 
-Recommendation: report BOTH citywide-all-parcels and excl-notyet/never in
-any headline claim; if only one, use the zone-level exclusion. Awaiting
-Peter's call before touching the pipeline.
+Shipped same day: `UNBILLED_CATEGORIES = ("notyet", "never")` in
+`src/load_stormwater.py`; the module's log line reports both totals and
+the returned frame's `.attrs` carries `storm_citywide_annual` /
+`storm_billable_annual`. Per-hood outputs (and therefore the map) are
+unchanged — this is reporting, not modeling. Real-data run: citywide
+$240.4M / billable $190.5M, 5,601 unbilled points.
 
 ## 4. Methodological gotcha (recorded for future validators)
 
