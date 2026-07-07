@@ -156,6 +156,17 @@ from "DC = legacy industrial" — currently all invisible inside `frac_dc`.
 _Added 2026-07-03 (Peter's direction, from a design discussion). Depends on the
 use-mix pipeline (shipped — the nine `frac_*` shares are exported end-to-end)._
 
+**FIRST DECONFOUNDED PASS DONE 2026-07-07 (Session 22) — see
+`docs/FINDINGS_land_use_diversity.md`; reproducible via
+`tools/analyze_land_use_diversity.py`.** Result: (1) revenue/acre vs diversity
+holds under controls (partial r +0.27, n=293) but is secondary to density
+(+0.71); (2) **road-per-dwelling vs diversity is a null** (r ≈ −0.02, robust to
+both the record-count and `build_connections` dwelling denominators) — the
+road-per-*acre* correlation was age/density confounding, not a per-household
+servicing benefit. Remaining upgrades (open): formal regression + p-values / RF
+importance (folds into item 2); DC provision scrape (item 3) to re-admit the 14
+dropped high-`frac_dc` hoods; the `notebooks/exploration/` scatter version.
+
 **Goal.** Compute a per-neighbourhood **land-use diversity index** (normalized
 Shannon entropy over zoned-area shares) as an independent variable, then test
 two relationships **in Edmonton's own data** rather than citing other cities'
