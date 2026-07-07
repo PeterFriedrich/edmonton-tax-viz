@@ -36,6 +36,12 @@ STORM_COLUMNS = ["storm_charge_annual"]
 # the pinned window. Per-acre is computed HERE against boundary area_acres.
 FIRE_COLUMNS = ["fire_events_per_year"]
 
+# Modeled water + sanitary columns carried from load_water when supplied
+# (utility lens #2, SPEC_utilities.md — MODELED, not billed; residential
+# scope only). Total AND fixed ride along so the client can show the
+# connection-vs-consumption split; per-acre is computed HERE.
+WATER_COLUMNS = ["water_charge_annual", "water_fixed_annual"]
+
 
 def join_and_calculate(
     assessment: pd.DataFrame,
@@ -44,6 +50,7 @@ def join_and_calculate(
     roads: pd.DataFrame | None = None,
     stormwater: pd.DataFrame | None = None,
     fire: pd.DataFrame | None = None,
+    water: pd.DataFrame | None = None,
 ) -> gpd.GeoDataFrame:
     """Left join boundaries → assessment, flag unmatched rows, compute value_per_acre.
 
@@ -76,6 +83,13 @@ def join_and_calculate(
     (SPEC_services.md "Fire lens"). Boundaries with no events default to a
     true 0/yr (roads semantics: no dispatched emergency events recorded
     there in the window) — and are flagged.
+
+    ``water`` (optional, from load_water.py) adds the MODELED residential
+    water + sanitary columns (WATER_COLUMNS) and computes
+    water_charge_per_acre / water_fixed_per_acre against boundary area_acres
+    (SPEC_utilities.md Lens 2). Boundaries with no modeled connections
+    default to $0 (stormwater semantics; commercial-only hoods are genuinely
+    out of the residential scope) — and are flagged.
     """
     agg = assessment
 
@@ -261,6 +275,45 @@ def join_and_calculate(
             + FIRE_COLUMNS + ["fire_events_per_acre"] + ["geometry"]
         )
 
+    # Utility lens #2: merge the modeled water + sanitary charge when
+    # supplied (SPEC_utilities.md Lens 2 — modeled, not billed; residential
+    # scope only).
+    if water is not None:
+        boundary_names = set(joined["neighbourhood_name"])
+        unmatched_water = sorted(set(water["neighbourhood_name"]) - boundary_names)
+        if unmatched_water:
+            logger.warning(
+                "%d water neighbourhood(s) with no boundary match (dropped):\n  %s",
+                len(unmatched_water),
+                "\n  ".join(unmatched_water),
+            )
+
+        joined = joined.merge(
+            water[["neighbourhood_name", *WATER_COLUMNS]],
+            on="neighbourhood_name",
+            how="left",
+        )
+
+        no_water = joined["water_charge_annual"].isna()
+        if no_water.any():
+            logger.warning(
+                "%d boundary neighbourhood(s) with no modeled water connections "
+                "(default $0):\n  %s",
+                int(no_water.sum()),
+                "\n  ".join(sorted(joined.loc[no_water, "neighbourhood_name"])),
+            )
+        # No residential roll records there -> modeled $0 (residential scope).
+        for col in WATER_COLUMNS:
+            joined[col] = joined[col].fillna(0.0)
+        joined["water_charge_per_acre"] = joined["water_charge_annual"] / safe_area
+        joined["water_fixed_per_acre"] = joined["water_fixed_annual"] / safe_area
+
+        out_cols = (
+            [c for c in out_cols if c != "geometry"]
+            + WATER_COLUMNS + ["water_charge_per_acre", "water_fixed_per_acre"]
+            + ["geometry"]
+        )
+
     return joined[out_cols]
 
 
@@ -270,12 +323,14 @@ def join_and_calculate(
 # value↔revenue toggle reads both metrics; is_set_aside/set_aside_reason drive
 # the neutral-grey render + tooltip; is_residential drives the residential lens;
 # the frac_* composition (sums to 1) drives the use-mix view (dominant use is
-# derived client-side); road_m_per_acre, storm_charge_per_acre, and
-# fire_events_per_acre are the Services-view metrics (SPEC_services.md,
-# SPEC_utilities.md — ratios only, totals stay out of the slim file like
-# total_assessed_value does; the storm figure is MODELED, not billed, and the
-# fire figure is dispatched-event DEMAND, not coverage — the client must
-# label both as such).
+# derived client-side); road_m_per_acre, storm_charge_per_acre,
+# fire_events_per_acre, and the water_* pair are the Services-view metrics
+# (SPEC_services.md, SPEC_utilities.md — ratios only, totals stay out of the
+# slim file like total_assessed_value does; the storm and water figures are
+# MODELED, not billed — water additionally residential-scope only, with the
+# fixed column shipping alongside the total so the client can show the
+# connection-vs-consumption split — and the fire figure is dispatched-event
+# DEMAND, not coverage; the client must label all of them as such).
 SLIM_COLUMNS = [
     "neighbourhood_name", "value_per_acre", "revenue_per_acre",
     "set_aside_frac", "is_set_aside", "set_aside_reason",
@@ -283,7 +338,8 @@ SLIM_COLUMNS = [
     "frac_residential", "frac_commercial", "frac_industrial",
     "frac_mixed", "frac_dc", "frac_other",
     "is_residential", "road_m_per_acre", "storm_charge_per_acre",
-    "fire_events_per_acre", "geometry",
+    "fire_events_per_acre", "water_charge_per_acre", "water_fixed_per_acre",
+    "geometry",
 ]
 
 

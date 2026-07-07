@@ -184,6 +184,54 @@ const [url] = process.argv.slice(2);
     console.log('fire off       :', JSON.stringify(await chrome()));
   }
 
+  // --- water service (2026-07-07) — skipped on pre-water data files --------
+  const hasWater = await page.evaluate(() =>
+    state.data.features.some(f => f.properties.water_charge_per_acre != null));
+  if (!hasWater) {
+    console.log('water checks   : SKIPPED — data file has no water_charge_per_acre column');
+    console.log('water row hidden:', JSON.stringify(await page.evaluate(() =>
+      getComputedStyle(document.querySelector('#services .svc[data-service="water"]')).display === 'none')));
+  } else {
+    // Check water on + hand it the colour: still exactly ONE svc-plane,
+    // legend re-anchors to the water p97.5 (independent quantile), mid-hood
+    // fill matches the LINEAR expectation (FINDINGS §6.6 — no transform).
+    await click('#services .svc[data-service="water"] .svc-on');
+    await page.waitForTimeout(1000);
+    await click('#services .svc[data-service="water"] input[type="radio"]');
+    await page.waitForTimeout(1500);
+    const waterDrives = await page.evaluate(() => {
+      const ids = overlay._deck.props.layers.map(l => l.id);
+      const plane = overlay._deck.props.layers.find(l => l.id === 'svc-plane');
+      const kept = state.data.features.filter(f =>
+        !f.properties.is_set_aside && f.properties.water_charge_per_acre != null);
+      const vals = kept.map(f => f.properties.water_charge_per_acre).sort((a, b) => a - b);
+      const pos = (vals.length - 1) * 0.975, lo = Math.floor(pos);
+      const q = vals[lo] + (vals[Math.ceil(pos)] - vals[lo]) * (pos - lo);
+      const mid = kept[Math.floor(kept.length / 2)];
+      const scale = svcScale('water_charge_per_acre');
+      // water colour is LINEAR (FINDINGS §6.6) — re-derive independently of svcT
+      const expected = rampColorAt(
+        Math.min(1, mid.properties.water_charge_per_acre / scale.clamp));
+      return { planeCount: ids.filter(id => id === 'svc-plane').length,
+               clampMatchesP975: Math.abs(scale.clamp - q) < 1e-6,
+               midFillOk: plane.props.getFillColor(mid).join() === expected.join(),
+               legendMax: document.getElementById('legend-max').textContent };
+    });
+    console.log('water drives   :', JSON.stringify(waterDrives));
+    console.log('chrome         :', JSON.stringify(await chrome()));
+
+    // Tooltip carries the water row (total + fixed split).
+    console.log('tooltip (water):', await page.evaluate(() => {
+      const f = state.data.features.find(f => f.properties.neighbourhood_name === 'STRATHCONA');
+      return tooltipFor({ object: f }).html;
+    }));
+
+    // Uncheck water: the driver hands back to a checked service.
+    await click('#services .svc[data-service="water"] .svc-on');
+    await page.waitForTimeout(1000);
+    console.log('water off      :', JSON.stringify(await chrome()));
+  }
+
   // Uncheck roads: its layer leaves the stack, storm keeps/regains colour.
   await click('#services .svc[data-service="roads"] .svc-on');
   await page.waitForTimeout(1500);

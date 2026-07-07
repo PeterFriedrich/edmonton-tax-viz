@@ -184,6 +184,14 @@
           <input type="radio" name="svc-driver" /> colour
         </label>
       </div>
+      <div class="svc" data-service="water">
+        <label title="Each neighbourhood coloured by its modeled annual residential water + sewer charge per acre — verified 2026 tariffs applied to the assessment roll, not billed amounts; commercial properties not modeled">
+          <input type="checkbox" class="svc-on" /> Water/sewer — modeled $/acre
+        </label>
+        <label class="svc-colour" title="This service drives the colour ramp; the others render neutral">
+          <input type="radio" name="svc-driver" /> colour
+        </label>
+      </div>
     </div>
     <span class="hd" id="denom-hd">Spike denominator</span>
     <div id="denom">
@@ -381,6 +389,18 @@
                "demand concentrates heavily in the central core. Grey = " +
                "set-aside natural/undeveloped land.",
       },
+      water: {
+        label: "Water/sewer",
+        plane: { col: "water_charge_per_acre" },
+        blurb: "Each neighbourhood is coloured by its modeled annual water + " +
+               "sewer charge per acre — verified April 2026 EPCOR tariffs " +
+               "(fixed connection charges by assumed meter size + typical-" +
+               "household consumption) applied to every residential property " +
+               "on the assessment roll. Modeled, not billed; commercial " +
+               "properties are not modeled, and the consumption portion " +
+               "tracks household density more than land. Colour is linear. " +
+               "Grey = set-aside natural/undeveloped land.",
+      },
     };
 
     // Per-view chrome. money's title/blurb stay metric-driven (METRICS).
@@ -456,7 +476,8 @@
     // across view switches, matching the denominator toggle's behaviour.
     const state = { metric: "revenue_per_acre", ramp: "current", residential: false,
                     labels: false, view: "money", prismOpacity: 1, denom: "ground",
-                    services: { roads: true, storm: false, fire: false }, svcDriver: "roads",
+                    services: { roads: true, storm: false, fire: false, water: false },
+                    svcDriver: "roads",
                     data: null };
     let overlay;         // deck.gl MapboxOverlay, created on map load
     let roadsData = null;  // lazy-fetched roads FeatureCollection
@@ -730,6 +751,9 @@
     const fmtStorm = v => "$" + Math.round(v).toLocaleString() +
       " modeled stormwater / acre / yr";
     const fmtFire = v => v.toFixed(v < 1 ? 2 : 1) + " dispatched events / acre / yr";
+    const fmtWater = (v, fixed) => "$" + Math.round(v).toLocaleString() +
+      " modeled water+sewer / acre / yr" +
+      (fixed != null ? ` (fixed $${Math.round(fixed).toLocaleString()})` : "");
 
     // The shared service ground plane (services view): flat hoods coloured
     // by the colour-driving plane service's column on the active ramp,
@@ -1226,6 +1250,8 @@
           rows.push(`<span class="muted">${fmtStorm(p.storm_charge_per_acre)}</span>`);
         if (p.fire_events_per_acre != null)
           rows.push(`<span class="muted">${fmtFire(p.fire_events_per_acre)}</span>`);
+        if (p.water_charge_per_acre != null)
+          rows.push(`<span class="muted">${fmtWater(p.water_charge_per_acre, p.water_fixed_per_acre)}</span>`);
         return {
           className: "tip",
           html: rows.length
@@ -1364,6 +1390,14 @@
           const clamp = svcScale("fire_events_per_acre").clamp;
           document.getElementById("legend-max").textContent =
             clamp.toFixed(clamp < 10 ? 1 : 0) + "+";
+          label.textContent = "Set aside — natural / undeveloped land";
+          sw.style.background = "rgb(104,108,122)";
+        } else if (state.svcDriver === "water") {
+          document.getElementById("legend-label").textContent =
+            "Modeled water + sewer charge per acre / yr (2026 rates)";
+          document.getElementById("legend-min").textContent = "$0";
+          document.getElementById("legend-max").textContent =
+            "$" + Math.round(svcScale("water_charge_per_acre").clamp).toLocaleString() + "+";
           label.textContent = "Set aside — natural / undeveloped land";
           sw.style.background = "rgb(104,108,122)";
         } else {
@@ -1650,6 +1684,11 @@
       if (!state.data.features.some(f => f.properties.fire_events_per_acre != null)) {
         document.querySelector('#services .svc[data-service="fire"]').style.display = "none";
         state.services.fire = false;
+      }
+      // Same guard for the water columns (pre-2026-07-07 data files).
+      if (!state.data.features.some(f => f.properties.water_charge_per_acre != null)) {
+        document.querySelector('#services .svc[data-service="water"]').style.display = "none";
+        state.services.water = false;
       }
       syncServiceControls();
       // Same guard for the uses view: it needs the composition columns

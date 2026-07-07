@@ -512,3 +512,67 @@ def test_export_keeps_fire_events_per_acre_when_present(tmp_path):
     assert "fire_events_per_acre" in written.columns
     # the raw total stays out of the slim file, like every other total
     assert "fire_events_per_year" not in written.columns
+
+
+# --- water merge (utility lens #2 — MODELED, residential scope) ---------------
+
+def _water(rows):
+    return pd.DataFrame(rows)
+
+
+def test_water_merge_adds_columns_and_per_acre():
+    result = join_and_calculate(
+        _assessment([{"neighbourhood_name": "GRIDTOWN", "total_assessed_value": 100.0}]),
+        _boundaries([{"neighbourhood_name": "GRIDTOWN", "area_acres": 10.0}]),
+        water=_water([
+            {"neighbourhood_name": "GRIDTOWN",
+             "water_charge_annual": 1000.0, "water_fixed_annual": 400.0},
+        ]),
+    )
+    row = result.iloc[0]
+    assert row["water_charge_per_acre"] == pytest.approx(100.0)
+    assert row["water_fixed_per_acre"] == pytest.approx(40.0)
+
+
+def test_no_water_arg_omits_water_columns():
+    result = join_and_calculate(
+        _assessment([{"neighbourhood_name": "DOWNTOWN", "total_assessed_value": 100.0}]),
+        _boundaries([{"neighbourhood_name": "DOWNTOWN", "area_acres": 10.0}]),
+    )
+    assert "water_charge_per_acre" not in result.columns
+    assert "water_fixed_per_acre" not in result.columns
+
+
+def test_boundary_without_water_match_defaults_zero(caplog):
+    with caplog.at_level("WARNING"):
+        result = join_and_calculate(
+            _assessment([{"neighbourhood_name": "DOWNTOWN", "total_assessed_value": 100.0}]),
+            _boundaries([
+                {"neighbourhood_name": "DOWNTOWN", "area_acres": 10.0},
+                {"neighbourhood_name": "PARKLAND", "area_acres": 20.0},
+            ]),
+            water=_water([
+                {"neighbourhood_name": "DOWNTOWN",
+                 "water_charge_annual": 1000.0, "water_fixed_annual": 400.0},
+            ]),
+        )
+    parkland = result[result["neighbourhood_name"] == "PARKLAND"].iloc[0]
+    assert parkland["water_charge_per_acre"] == 0.0
+    assert parkland["water_fixed_per_acre"] == 0.0
+    assert "no modeled water connections" in caplog.text
+
+
+def test_export_keeps_water_per_acre_when_present(tmp_path):
+    result = join_and_calculate(
+        _assessment([{"neighbourhood_name": "DOWNTOWN", "total_assessed_value": 100.0}]),
+        _boundaries([{"neighbourhood_name": "DOWNTOWN", "area_acres": 10.0}]),
+        water=_water([
+            {"neighbourhood_name": "DOWNTOWN",
+             "water_charge_annual": 1000.0, "water_fixed_annual": 400.0},
+        ]),
+    )
+    written = export_geojson(result, str(tmp_path / "out.geojson"))
+    assert "water_charge_per_acre" in written.columns
+    assert "water_fixed_per_acre" in written.columns
+    # the raw totals stay out of the slim file, like every other total
+    assert "water_charge_annual" not in written.columns

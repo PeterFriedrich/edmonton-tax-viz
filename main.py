@@ -36,6 +36,7 @@ from load_zoning import load_zoning, export_zoning_web
 from load_roads import load_roads, export_roads_web
 from load_property_info import load_property_info
 from load_stormwater import load_stormwater
+from load_water import load_water
 from load_fire import load_fire_events, export_fire_stations_web
 from join_and_calculate import join_and_calculate, export_geojson
 from export_value_grid import export_value_grid, check_lot_acre_bounds
@@ -53,6 +54,7 @@ FIRE_EVENTS_CSV = ROOT / "data/raw/fire_response.csv"
 FIRE_STATIONS_CSV = ROOT / "data/raw/fire_stations.csv"
 MILL_RATES_JSON = ROOT / "data/mill_rates.json"
 STORMWATER_RATES_JSON = ROOT / "data/stormwater_rates.json"
+WATER_RATES_JSON = ROOT / "data/water_rates.json"
 PNG_OUT = ROOT / "output/edmonton_value_per_acre.png"
 GEOJSON_OUT = ROOT / "web/data/neighbourhood_value_per_acre.geojson"
 ROADS_WEB_OUT = ROOT / "web/data/roads.geojson"
@@ -69,6 +71,13 @@ ASSESSMENT_YEAR = 2025
 # 3, SPEC_services.md "Fire lens"). Pinned — an auto-rolling window could
 # silently average in a partial year. Bump manually each January.
 FIRE_YEARS = (2023, 2024, 2025)
+
+# Water lens tariff vintage. Unlike mill rates (which MUST match the roll
+# year), the water model is a forward-looking modeled bill: the current
+# verified tariff schedule applied to the current roll. 2026 = the Apr 1
+# 2026 schedule (data/water_rates.json). Bump when new rates are verified;
+# the legend/blurb year in web/index.html rides along.
+WATER_RATE_YEAR = 2026
 
 # --- Canonical web-export geometry parameters ------------------------------
 # Display-only. value_per_acre is computed from true area upstream and is
@@ -89,6 +98,8 @@ def run(
     roads_geojson: Path | None = ROADS_GEOJSON,
     property_info_csv: Path | None = PROPERTY_INFO_CSV,
     stormwater_rates_json: Path | None = STORMWATER_RATES_JSON,
+    water_rates_json: Path | None = WATER_RATES_JSON,
+    water_rate_year: int = WATER_RATE_YEAR,
     fire_events_csv: Path | None = FIRE_EVENTS_CSV,
     fire_stations_csv: Path | None = FIRE_STATIONS_CSV,
     fire_years: tuple[int, ...] = FIRE_YEARS,
@@ -139,6 +150,25 @@ def run(
             property_info_csv,
         )
 
+    # Water + sanitary (utility lens #2, SPEC_utilities.md — MODELED, not
+    # billed; residential scope only) rides on the assessment + property-info
+    # CSVs the pipeline already has. The tariff vintage is pinned separately
+    # from the roll year (WATER_RATE_YEAR above).
+    water = None
+    if (
+        water_rates_json is not None
+        and property_info_csv is not None
+        and Path(property_info_csv).exists()
+    ):
+        water = load_water(
+            assessment_csv, property_info_csv, water_rates_json, water_rate_year,
+        )
+    elif water_rates_json is not None:
+        logger.warning(
+            "Property-info file not found (%s) — skipping the water lens",
+            property_info_csv,
+        )
+
     # Fire demand (services lens #3, SPEC_services.md "Fire lens") — same
     # optional-refreshed-input pattern; omitting the file omits the columns.
     fire = None
@@ -149,7 +179,7 @@ def run(
 
     result = join_and_calculate(
         aggregated, boundaries, zoning=zoning, roads=roads, stormwater=stormwater,
-        fire=fire,
+        fire=fire, water=water,
     )
 
     if png_out is not None:
@@ -227,6 +257,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                         "also skips the stormwater lens, which needs the same file)")
     p.add_argument("--skip-stormwater", action="store_true",
                    help="skip the modeled stormwater lens (SPEC_utilities.md)")
+    p.add_argument("--skip-water", action="store_true",
+                   help="skip the modeled water + sanitary lens (SPEC_utilities.md Lens 2)")
     p.add_argument("--fire-events-csv", type=Path, default=FIRE_EVENTS_CSV)
     p.add_argument("--fire-stations-csv", type=Path, default=FIRE_STATIONS_CSV)
     p.add_argument("--skip-fire", action="store_true",
@@ -253,6 +285,7 @@ def main(argv: list[str] | None = None) -> None:
         roads_geojson=None if args.skip_roads else args.roads_geojson,
         property_info_csv=None if args.skip_property_info else args.property_info_csv,
         stormwater_rates_json=None if args.skip_stormwater else STORMWATER_RATES_JSON,
+        water_rates_json=None if args.skip_water else WATER_RATES_JSON,
         fire_events_csv=None if args.skip_fire else args.fire_events_csv,
         fire_stations_csv=None if args.skip_fire else args.fire_stations_csv,
         setback_m=args.setback_m,

@@ -68,6 +68,16 @@ overlay) and produces a per-hood column merged in `join_and_calculate`
 exports the 31 station points (`b4y7-zhnz`) to `web/data/fire_stations.json`
 for the Services view's context dots.
 
+**Also in the flow (water lens, built 2026-07-07):** `load_water.py` reads
+the assessment CSV (scope classes, roll points) plus the property-info CSV
+(gross floor area for multi-res unit estimates) and produces two per-hood
+columns merged in `join_and_calculate` (`water_charge_annual` +
+`water_fixed_annual`; the per-acre pair computed there). Rates come from
+`data/water_rates.json`, year-keyed — but the tariff vintage is pinned
+independently of the roll year (`WATER_RATE_YEAR` in main.py; a modeled
+forward-looking bill, unlike mill rates). Residential scope only
+(SPEC_utilities Lens 2, locked 2026-07-06).
+
 **One metric exists ONLY in the browser:** the Ratio view's revenue per road
 metre (`revenue_per_acre / road_m_per_acre` — the acres cancel) is derived
 client-side in `web/index.html` from the two published GeoJSON columns. No

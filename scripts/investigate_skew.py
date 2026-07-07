@@ -33,6 +33,12 @@ skewed metric in the project (biased raw skew +7.86; clamp/median 5.8x on the
 p97.5 scale — linear put 59% of hoods in the ramp's bottom fifth). log
 over-corrects (-1.48, mixed distribution) and is undefined for the 5 true-zero
 hoods. => SQRT colour for fire_events_per_acre. See FINDINGS §6.5.
+
+Water addendum (2026-07-07, utility lens #2): water_charge_per_acre is
+storm-shaped despite raw skew +3.4 — clamp/median only 2.2x (the skew lives
+in the p97.5-clamped tail; linear median lands at 44% of the ramp). sqrt
+over-corrects (-0.25, on-ramp median 67%). => LINEAR colour for
+water_charge_per_acre. See FINDINGS §6.6.
 """
 
 import json
@@ -42,7 +48,7 @@ import pandas as pd
 
 GEOJSON = "web/data/neighbourhood_value_per_acre.geojson"
 METRICS = ["revenue_per_acre", "value_per_acre", "road_m_per_acre",
-           "fire_events_per_acre"]
+           "fire_events_per_acre", "water_charge_per_acre"]
 
 
 def biased_skew(s) -> float:

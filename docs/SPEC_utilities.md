@@ -175,6 +175,34 @@ land-relevant signal; the volumetric component mostly re-plots household
 counts. Consider publishing the two as separate columns so the display can
 show the connection-cost signal alone.
 
+### Lens 2 as built (2026-07-07 — decisions locked with Peter 2026-07-06)
+
+- **Scope: residential + multi-res only** (locked): RESIDENTIAL and
+  MA DERELICT RESIDENTIAL rows are households, OTHER RESIDENTIAL rows are
+  multi-res buildings; COMMERCIAL/FARMLAND/rest excluded + counted (~23.5k
+  rows — verified rates exist but no consumption benchmark).
+- **Two columns, colour by TOTAL** (locked): `water_charge_per_acre` drives
+  the plane, `water_fixed_per_acre` ships alongside for the tooltip split.
+- **Module:** `src/load_water.py`; rates in `data/water_rates.json`
+  (April 2026 schedule; only the four meter sizes verified for BOTH water
+  and sanitary — 15/25/100/300 mm; Public Fire Protection charge EXCLUDED,
+  only its 15mm rate is verified). Tariff vintage pinned separately from
+  the roll year (`WATER_RATE_YEAR` in main.py — a forward-looking modeled
+  bill, unlike mill rates).
+- **Connections:** household rows grouped by exact roll point (one condo
+  tower = one connection); OTHER RESIDENTIAL units estimated from gross
+  floor area (m², confirmed) at 90 m²/unit — the lens's weakest input
+  (1,018 of 4,353 buildings lack floor area and are excluded + counted).
+  Meter size assumed from unit-count bands (`_meter_size_mm`).
+- **First real run:** 268,489 connections / 551,831 modeled households →
+  352 hoods, **citywide $588.1M/yr ($133.9M fixed + $454.2M volumetric)**,
+  ≈ $89/household/month. The household count runs ~20% above the census
+  dwelling stock — the floor-area→units estimate is the suspected
+  overcount; volumetric impact bounded (~4% of the total). Validation vs
+  EPCOR published revenue: TODO (with the stormwater validation pass).
+- **Colour: LINEAR** (FINDINGS §6.6) — clamp/median 2.2× (storm territory);
+  the raw skew (+3.4) lives in the p97.5-clamped tail; sqrt over-corrects.
+
 ## Lens 3 — Electricity distribution + Local Access Fee (Tier 3)
 
 **Metric:** modeled annual distribution charge per hood (EDTI DAS-R:

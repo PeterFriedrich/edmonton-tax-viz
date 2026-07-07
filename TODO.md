@@ -146,12 +146,28 @@ _Last reconciled: 2026-07-06_
         "modeled, not billed"; `storm_charge_per_acre` added to
         `SLIM_COLUMNS` (hood GeoJSON 0.7 MB, all 406 hoods carry it).
         Pipeline PR #13 merged first, as sequenced.
-      - [ ] Validation pass vs EPCOR published stormwater revenue
-        (order-of-magnitude; must bracket the serviced-area assumption /
-        possibly exclude set-aside/notyet-zoned parcels — Peter decision).
+      - [x] ~~Water + sanitary (Lens 2)~~ — BUILT 2026-07-07 (Session 18,
+        branch `feature/water-lens`; decisions locked with Peter
+        2026-07-06: residential+multi-res scope, two columns, colour by
+        TOTAL): `src/load_water.py` (per-connection model — roll points
+        as connections, meter-size bands, inclining/declining blocks) +
+        `data/water_rates.json` (Apr 2026 tariffs; `WATER_RATE_YEAR` pin)
+        + join/main wiring + fourth Services checkbox (LINEAR colour,
+        FINDINGS §6.6; tooltip fixed/total split). Real run: 268,489
+        connections / 551,831 modeled households, citywide $588.1M/yr
+        ($133.9M fixed). 229 tests green; headless-verified on real data.
+        As-built numbers + caveats: SPEC_utilities "Lens 2 as built".
+        Follow-ups: household count ~20% over census (floor-area→units
+        assumption — sensitivity-check M2_GROSS_PER_UNIT); validation vs
+        EPCOR revenue (below, now covers water too).
+      - [ ] Validation pass vs EPCOR published revenue — stormwater
+        ($240.4M/yr modeled) AND water/sanitary ($588.1M/yr modeled,
+        residential scope) (order-of-magnitude; must bracket the
+        serviced-area assumption / possibly exclude set-aside/notyet-zoned
+        parcels — Peter decision).
       - [ ] Remaining SPEC open decisions: (3) modeled $ in the "total
         services" denominator (recommended: not yet); (4) franchise-fee
-        revenue columns only with their lenses; Lenses 2–4 unbuilt.
+        revenue columns only with their lenses; Lenses 3–4 unbuilt.
   - [x] ~~**Use-mix view: surface each neighbourhood's zoning composition.**~~
     **SHIPPED 2026-07-03 — PR #10 merged + deployed** (run 28679596055, green
     first try); live site verified serving the Uses view + `zoning.geojson`

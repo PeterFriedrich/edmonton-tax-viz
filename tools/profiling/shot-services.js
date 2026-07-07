@@ -2,10 +2,11 @@
 // (the old Roads view look), both services with roads driving (storm plane
 // neutral below the coloured network), both with stormwater driving
 // (coloured plane, neutral network), and — when the data carries the fire
-// column — fire driving (fire plane + station dots).
+// column — fire driving (fire plane + station dots), and — when the data
+// carries the water column — water driving (modeled water+sewer plane).
 // node shot-services.js <url> <out-prefix>
 //   -> <prefix>-roads.png, <prefix>-both-roads.png, <prefix>-storm.png
-//      [, <prefix>-fire.png]
+//      [, <prefix>-fire.png] [, <prefix>-water.png]
 const { chromium } = require('playwright');
 const [url, prefix] = process.argv.slice(2);
 (async () => {
@@ -40,6 +41,18 @@ const [url, prefix] = process.argv.slice(2);
     console.log('wrote', `${prefix}-fire.png`);
   } else {
     console.log('fire shot skipped — data file has no fire_events_per_acre column');
+  }
+  const hasWater = await page.evaluate(() =>
+    state.data.features.some(f => f.properties.water_charge_per_acre != null));
+  if (hasWater) {
+    await page.$eval('#services .svc[data-service="water"] .svc-on', b => b.click());
+    await page.waitForTimeout(2000);
+    await page.$eval('#services .svc[data-service="water"] input[type="radio"]', b => b.click());
+    await page.waitForTimeout(20000);
+    await page.screenshot({ path: `${prefix}-water.png`, timeout: 90000, animations: 'disabled', caret: 'initial' });
+    console.log('wrote', `${prefix}-water.png`);
+  } else {
+    console.log('water shot skipped — data file has no water_charge_per_acre column');
   }
   await browser.close();
 })();

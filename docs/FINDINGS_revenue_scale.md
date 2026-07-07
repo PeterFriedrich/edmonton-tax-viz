@@ -286,7 +286,23 @@ true-zero hoods where log is undefined and would need an arbitrary floor.
 share to 11% — the same robust no-assumptions choice as the revenue/value
 colour. Height: still no extrusion (flat plane); tooltip stays raw.
 
-## To visualize (notebook later)
+### 6.6 Water/sewer charge is storm-shaped — DECIDED: linear colour (2026-07-07)
+
+`water_charge_per_acre` (SPEC_utilities Lens 2, first real run) through the
+same test (406 hoods, 54 true zeros — hoods with no residential roll
+records):
+
+| set | n | median | p97.5 | max | raw | sqrt | log |
+|---|---|---|---|---|---|---|---|
+| all (positive) | 352 | 4,986 | — | 43,955 | 3.40 | −0.25 | −1.59 |
+| excl set-aside | 316 | — | 12,164 | 43,955 | 3.89 | −0.24 | −2.59 |
+
+Despite the raw +3.4, this is the storm case, not the fire case:
+**clamp/median is 2.2×** (storm ~1.8×, fire 5.8×) — the skew lives entirely
+in the p97.5-clamped tail. On the shipped scale, linear puts the median
+hood at 44% of the ramp with 25% of hoods in the bottom fifth (healthy);
+sqrt statistically over-corrects (−0.25) and pushes the on-ramp median to
+67% — top-compressed. **Linear**, matching storm. Height: none (flat plane).
 
 Skew numbers here are reproducible headless via `scripts/investigate_skew.py`
 (`skew_table` / `load_metrics` / `lowest_kept` are importable). The plots below are
