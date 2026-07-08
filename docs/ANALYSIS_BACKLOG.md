@@ -309,3 +309,58 @@ it):**
 upfront capital (avoided City cost) AND inherited lifecycle/renewal + O&M —
 per the neutral-tone rule: surface the data, attribute the claims, no
 verdict language.
+
+---
+
+## 6. IIMP capital & debt figures for Decoteau / Horse Hill / Riverview — source hunt
+
+_Added 2026-07-08. The **research** half of the TODO build item "Decoteau / Horse
+Hill / Riverview capital & debt annotation" (a citation/annotation layer, NOT a
+lens). This item owns *finding + verifying the numbers*; TODO owns *surfacing
+them in the map*. Close sibling of item 5 (same three growth areas, same capital
+vs recurring-revenue question) — item 5 is the analytical ledger, this is the
+primary-source dig behind one specific published model._
+
+**Question.** The City's IIMP (Integrated Infrastructure Management Plan) ran a
+39-year capital pro forma on the three greenfield growth areas — developer
+capital + muni/provincial capital (~$369M piece) + O&M + lifecycle renewal,
+amortized vs projected tax revenue. We currently only have it **secondhand** (a
+Gemini research summary in project files + 2016 Global News coverage). We want
+the primary figures — developer capital, muni/provincial capital, build-out
+horizon, revenue-vs-cost gap — with an explicit citation + "as of" date.
+
+**Why it matters.** IIMP is the closest existing precedent to the **OIC**
+(operating-impact-of-capital) accounting the City is introducing for the
+**2027–2030 zero-based budget cycle** — a credibility anchor for the tool, and a
+concrete capital/debt data point for three named hoods where citywide
+capital-cost data at this fidelity doesn't exist.
+
+**Approach — by hand (primary supersedes secondhand):**
+- **PRIMARY target: the actual IIMP / "Fiscal Impacts of Growth" report.** Search
+  council agenda/report archives (edmonton.ca, eScribe/insite) for "IIMP",
+  "Fiscal Impacts of Growth", "Decoteau ASP", "Growth Related Analysis".
+- Off-site levy bylaw + capital financing policy — how the ~$369M
+  muni/provincial piece was financed (debt vs levy vs grant); that's the "debt"
+  component specifically.
+- City annual financial statements / debt management reports — actual
+  debt-servicing cost + interest rates for the relevant financing period, IF we
+  want real debt-service cost rather than just capital outlay.
+- Infrastructure committee **mid-2026 OIC presentation** — check whether it
+  re-presents/updates these three areas' figures under the new OIC framework; if
+  so, cite that (current) version over the 2016 analysis.
+- 2016 Global News coverage — secondary corroboration only; primary report
+  supersedes it for exact figures.
+
+**Blocker.** edmonton.ca / eScribe are **unreachable from the Oracle box** (curl
+exit 000 — the Session-21 network policy); the source dig is **laptop-only**. See
+`docs/REMOTE_VM.md` and the Session-21 handoff.
+
+**Caveat / shelf life.** 2016-vintage figures may be superseded by the OIC
+re-presentation — prefer the most current published version and date-stamp
+whichever is used. Keep framing neutral/descriptive: state the IIMP's own
+projected figures + horizon, attribute, don't editorialize.
+
+**Output:** verified figures + citations feeding the TODO annotation build; a
+short FINDINGS note if the numbers warrant one. Kept strictly separate from every
+recurring-cost lens (different unit of analysis — multi-decade capital pro forma,
+not the citywide recurring-cost map).

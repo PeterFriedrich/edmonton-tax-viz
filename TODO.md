@@ -8,9 +8,56 @@ check `git` / `pytest` directly — do not restate it here, it only goes stale.
 Session summaries (`session-summary/`) are dated *narratives* of what happened and
 why. This file owns *what's left*. When they disagree, this file wins.
 
-_Last reconciled: 2026-07-06_
+_Last reconciled: 2026-07-08_
 
 ## Open work
+
+- [ ] **Decoteau / Horse Hill / Riverview capital & debt annotation (NEW 2026-07-08).**
+  A **citation/annotation layer, NOT a new spatial cost lens**, covering the three
+  greenfield growth areas analyzed in the City's IIMP (Integrated Infrastructure
+  Management Plan) — a 39-year capital pro forma (developer capital + muni/provincial
+  capital + O&M + lifecycle renewal, amortized vs projected tax revenue). This is a
+  **fundamentally different unit of analysis** than the citywide recurring-cost map
+  (which deliberately excludes capital construction cost). Why now: IIMP is the closest
+  existing precedent to the **OIC** (operating-impact-of-capital) accounting the City is
+  introducing for the **2027–2030 zero-based budget cycle** — citing it well anchors the
+  tool's credibility without rebuilding a citywide capital/debt model we have no data for.
+  **Scope (locked — do NOT deviate without flagging):**
+  - Sidebar/annotation on **three specific named hoods only**, clearly labeled as a
+    different methodology (multi-decade capital pro forma) from the revenue-per-acre /
+    recurring-cost map.
+  - **Do NOT** merge these figures into the citywide colour layer, the roads lens, the
+    utilities lenses, or any recurring-cost calc; **do NOT** interpolate/extrapolate
+    capital-debt cost to other hoods. Only these three growth areas have a published IIMP
+    analysis — citywide capital-cost data at this fidelity doesn't exist.
+  - Neutral/descriptive framing per project convention: state the IIMP's own projected
+    figures + time horizon, don't editorialize.
+  **Build:**
+  1. Pin Decoteau, Horse Hill, Riverview boundaries in the existing hood boundary file.
+  2. Attach a data **annotation (not a computed layer)**: developer capital, muni/provincial
+     capital (~$369M piece), build-out horizon, revenue-vs-cost gap — all as stated in the
+     source, with explicit citation + "as of" date.
+  3. Surface as a click-through popup / footnote-style panel — **NOT** a toggle affecting
+     the main colour ramp.
+  **Sources to hunt (primary supersedes secondhand):**
+  - **PRIMARY: the actual IIMP / "Fiscal Impacts of Growth" report** for Decoteau/Horse
+    Hill/Riverview — referenced secondhand via a Gemini research summary in project files;
+    we don't yet have the primary City doc. Search council agenda/report archives
+    (edmonton.ca, eScribe/insite) for "IIMP", "Fiscal Impacts of Growth", "Decoteau ASP",
+    "Growth Related Analysis". (edmonton.ca is Oracle-box-unreachable — laptop-only, per
+    the Session-21 blocker.)
+  - 2016 Global News coverage (already in project research) as secondary corroboration —
+    primary report should supersede it for exact figures.
+  - Off-site levy bylaw + capital financing policy — how the ~$369M muni/provincial piece
+    was financed (debt vs levy vs grant); that's the "debt" component specifically.
+  - City annual financial statements / debt management reports — actual debt-servicing
+    cost + interest rates for the relevant financing period, IF we want real debt-service
+    cost rather than just capital outlay.
+  - Infrastructure committee **mid-2026 OIC presentation** (already in project context) —
+    check whether it re-presents/updates the three areas' figures under the new OIC
+    framework; if so, cite that instead of the 2016 analysis.
+  **Non-goals:** no citywide capital-cost-per-hood dataset this pass; no blending into any
+  recurring-cost lens.
 
 - [ ] **Services lens — road supply (SPEC'd 2026-07-01, branch `feature/services-lens`).**
   Spec: `docs/SPEC_services.md`. V1 = `road_m_per_acre` (city-maintained
