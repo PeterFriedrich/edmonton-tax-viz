@@ -364,3 +364,39 @@ projected figures + horizon, attribute, don't editorialize.
 short FINDINGS note if the numbers warrant one. Kept strictly separate from every
 recurring-cost lens (different unit of analysis — multi-decade capital pro forma,
 not the citywide recurring-cost map).
+
+
+## 7. Exempt-institutional hoods — where does exempt-land dilution bite hardest?
+
+_Added 2026-07-08, generalized out of the University of Alberta hand-analysis
+(see `docs/FINDINGS_denominator_cardinality.md` worked case). U of A: $2.242B
+taxable value on 47 accounts sitting on 147.5 of 295.2 polygon acres (50%
+parcel), $/ground-acre $7.6M → $/lot-acre $15.2M (×2.0). The lift is driven by
+tax-exempt campus/hospital land that is **absent from the taxable roll entirely**
+(`data/DATA.md` 2026-06-29). U of A is unlikely to be alone._
+
+**Question.** Which neighbourhoods are dominated by tax-exempt institutional land
+(university, hospitals, Legislature, City/provincial property, large parks), and
+therefore (a) get the biggest *honest* lift from the pending lot-acre
+neighbourhood toggle, and (b) carry the biggest **services-lens gap** — serviced
+land (roads/fire/transit) yielding zero municipal revenue?
+
+**Why it matters.** These hoods behave in a way neither revenue denominator fully
+tells: lot-acre makes their tax-paying intensity honest, but the exempt half is
+invisible to a revenue lens and only shows as free-riding on the **cost/services**
+side (`docs/SPEC_services.md`). Candidate set beyond U of A: University of Alberta
+Farm (734ac, 14 accounts — but *low-value taxable* land, a different mechanism, do
+not conflate), Legislature Grounds, the hospital-anchored hoods, downtown
+government blocks.
+
+**Approach.** No exempt boolean exists on the roll (exempt land is simply absent,
+not flagged) — so proxy exempt share as **polygon acres − deduped taxable lot
+footprint − road/ROW acres** per hood, rank hoods by low taxable-footprint
+fraction, and cross-reference zoning `AJ/PU/UI/UF` (the exempt-proxy zones,
+`data/DATA.md` line ~308). Separate genuine exempt-dilution (U of A: high value,
+low footprint) from low-value-land hoods (U of A Farm: high footprint, low value)
+and from park/river-valley (already covered in item 1 / the lot-acre findings).
+
+**Output:** a ranked list of exempt-institutional hoods + a FINDINGS note; feeds
+both the lot-acre toggle framing and the services-lens cost-vs-revenue story.
+Related: item 1 (outlier tails), the PRIORITY lot-acre toggle in `TODO.md`.
