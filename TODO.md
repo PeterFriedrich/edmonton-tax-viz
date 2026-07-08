@@ -27,6 +27,13 @@ _Last reconciled: 2026-07-08_
   Woods Golf Course ×6960; plus the `KNOWN_BOUND_OUTLIERS` >100% tail, Pembina).
   Frame honestly: ground-acre = cardinality-robust default, lot-acre = Urban3-analogous.
   Full numbers + rationale: `docs/FINDINGS_denominator_cardinality.md`.
+  **Validation/guard fixtures (worked in the findings doc, 2026-07-08):** University
+  of Alberta = a guard-PASS case (50% parcel, $7.6M→$15.2M/ac = ×2.0, exempt
+  campus/hospital land off-roll) — a new *exempt-institutional* rise category beyond
+  the park/river-valley examples; pair it with Mill Woods Golf Course (0% parcel,
+  ×6960) as the guard-FAIL case when regression-testing the ~15% floor. NB the toggle
+  makes U of A's revenue intensity honest but can't show its exempt-land service
+  free-riding — that's the services lens, not this one.
 
 - [ ] **PRE-LAUNCH AUDIT — record-to-parcel cardinality bug (WEM numerator + condo
   denominator) & lot-acre vs ground-acre methodology (NEW 2026-07-08).** Part of a

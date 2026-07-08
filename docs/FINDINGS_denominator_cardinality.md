@@ -115,6 +115,36 @@ lot-acre lens **needs a low-parcel-fraction guard** (floor the denominator or
 suppress hoods below ~15% parcel to an "n/a" grey, same spirit as set-aside), plus
 the existing `KNOWN_BOUND_OUTLIERS` handling for the >100% (Pembina) tail.
 
+## Worked case study — University of Alberta (exempt-institutional hood)
+
+The rise examples above are all park/river-valley hoods. **U of A is a distinct
+category the toggle also serves: an exempt-institutional hood**, where the lift
+comes not from parks but from tax-exempt campus/hospital land that is *absent from
+the roll entirely* (verified — the exempt health-sciences addresses 11220 & 11350
+83 Ave return 0 rows; consistent with `data/DATA.md` 2026-06-29: exempt
+institutional land is excluded from the taxable roll, not flagged/zeroed).
+
+| Metric | Value |
+|---|---|
+| Taxable accounts | 47 ($2.242B assessed; 88% non-res / 12% *Other* Residential; top-5 = 76%) |
+| Boundary polygon | 295.2 acres |
+| Taxable lot footprint (deduped, 45 eligible pts) | 147.5 acres = **50.0% parcel** |
+| $/ground-acre (polygon denom) | $7.60M |
+| $/lot-acre (taxable-footprint denom) | $15.20M (**×2.0**) |
+
+Two points this case pins down:
+
+- **Guard-PASS test.** At 50% parcel it sits well above the ~15% guard and renders
+  cleanly — the complement to the Mill Woods Golf Course 0% *fail* case above. Good
+  regression fixture for the guard when the toggle is built.
+- **The toggle is honest here but not complete.** Lot-acre correctly counts only
+  tax-paying land (exempt parcels are off-roll, so they leave the denominator
+  automatically) → the ×2.0 is a *true* intensity, not an artifact. But it still
+  cannot show the deeper U-of-A story: the exempt half of the polygon consumes
+  roads/fire/transit and yields zero municipal revenue. That free-riding is a
+  **cost/services-lens** question (see `docs/SPEC_services.md`), not something
+  either revenue denominator surfaces.
+
 ## Recommendation
 
 - **Do NOT** "fix" the first lens — there is nothing to fix; it is robust by
