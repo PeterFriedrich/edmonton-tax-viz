@@ -256,15 +256,18 @@ _Last reconciled: 2026-07-06_
       hood-hover tooltips on top; legend now shows all 8 present categories.
       +4 tests (139 green); verify-uses.js + verify-lens.js green;
       screenshot eyeballed.
-    - [ ] **NEXT after this ships — land-use diversity analysis (Peter,
-      2026-07-03):** ANALYSIS_BACKLOG item 4 (normalized entropy over the
-      composition shares → test revenue/acre vs mix and road-per-household vs
-      mix, deconfounded by age/density/lot size). Build prerequisites in order:
-      (1) `dkk9-cj3x` download step in `scripts/download_data.py` (+$limit
-      guard) for `year_built`/`lot_size`; (2) residential-record count per hood
-      (household proxy) — from the already-loaded assessment CSV; (3) the DC
-      provision scrape (ANALYSIS_BACKLOG 3) before trusting the entropy index
-      (DC = unknown use, not mixed use).
+    - [x] ~~**land-use diversity analysis (Peter, 2026-07-03)**~~ — DONE
+      2026-07-07 (Sessions 22 + 24). ANALYSIS_BACKLOG item 4, see
+      `docs/FINDINGS_land_use_diversity.md`. Result: revenue/acre vs diversity
+      holds under controls (partial r +0.27, n=299) but is secondary to density;
+      road-per-dwelling vs diversity is a **null**. Prerequisite DC provision
+      scrape (ANALYSIS_BACKLOG item 3) also DONE end-to-end (crawl→extract→
+      classify→QA→rollup): the 918 DC provisions are use-classified
+      (`data/dc_inferred_use.csv`), rolled up per hood
+      (`data/dc_use_by_hood.csv`), folded into the index, and 8 of the 14
+      previously-dropped high-`frac_dc` hoods re-admitted — both verdicts
+      unchanged. Open upgrades: formal regression + p-values (needs `scipy`);
+      `notebooks/exploration/` scatter version (deferred).
     NOTE: this is hood-level composition — it does NOT reopen the "full
     zoning polygon overlay" scope decision below; keep them decoupled.
     FINDING (for ANALYSIS_BACKLOG 1): the 8 dc-dominant hoods are the big-box
