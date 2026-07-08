@@ -19,15 +19,33 @@ CACHE = Path("data/raw/dc_provisions")
 MANIFEST = CACHE / "_manifest.csv"
 OUT = Path("data/dc_provisions_text.csv")
 
-# Purpose runs from the "Purpose" heading to the next numbered top-level section
-# (typically "2. Area of Application" / "Area of Application"). This is the
+# Purpose runs from the "Purpose" heading to the "Area of Application" section
+# that consistently follows it (present on 873/918 cached pages). This is the
 # high-signal field — DC purpose statements consistently name the intended use
 # ("convenience commercial uses", "mixed use development", "Community Commercial
 # Centre"). The pages' "Uses" region is the standard 5.x regulation TOC, not a
 # site-specific land-use list, so it is not extracted.
-PURPOSE_RE = re.compile(
-    r"\bPurpose\b\s*(.*?)(?:\b\d+\.?\s*Area of Application\b|\bArea of Application\b|\b\d+\.\s+[A-Z])",
-    re.S)
+#
+# Capture from the "Purpose" heading up to the first *real* next section, over a
+# bounded window so the match can never fail (an anchored fallback that required
+# a trailing "Appendix"/"$" silently dropped old-format DC1 pages). Three page
+# formats occur:
+#   - modern:      "1. Purpose 1.1. To … 2. Area of Application …"
+#   - old DC1:     "Purpose <use text> 2. Uses …"        (no Area of Application)
+#   - old DC1(loc):"Purpose <location> 2. Rationale <use text> …"
+# So the window must NOT stop at internal sub-numbering ("1.1.", which truncated
+# 62 provisions to a bare "1."), and must NOT stop at "Rationale" — for the
+# location-style pages the Rationale is where the land-use signal lives, so we
+# keep it in. It stops at the first heading that follows the use-bearing intro.
+PURPOSE_START_RE = re.compile(r"\bPurpose\b\s*", re.I)
+WINDOW = 900   # chars after the Purpose heading to search for a stop
+STOP_RE = re.compile(
+    r"\b\d+\.?\s*Area of Application\b|\bArea of Application\b"
+    r"|\b\d+\.\s*Uses\b|\b\d+\.\s*Development Regulations\b"
+    r"|\b\d+\.\s*General Regulations\b|\bAppendix\b",
+    re.I)
+# Leading section numbering to strip off the captured purpose ("1.1. To …").
+LEAD_NUM_RE = re.compile(r"^(?:\d+(?:\.\d+)*\.?\s*)+")
 
 
 def clean(html: str) -> str:
@@ -39,12 +57,16 @@ def clean(html: str) -> str:
 
 
 def extract(text: str) -> str:
-    pm = PURPOSE_RE.search(text)
-    if not pm:
+    sm = PURPOSE_START_RE.search(text)
+    if not sm:
         return ""
-    purpose = pm.group(1).strip().lstrip(":").strip()
+    window = text[sm.end(): sm.end() + WINDOW]
+    stop = STOP_RE.search(window)
+    purpose = window[: stop.start()] if stop else window[:600]
     purpose = purpose.replace("\xa0", " ").replace("&nbsp;", " ")
-    return re.sub(r"\s+", " ", purpose)[:600]
+    purpose = re.sub(r"\s+", " ", purpose).strip().lstrip(":").strip()
+    purpose = LEAD_NUM_RE.sub("", purpose).strip()   # drop leading "1.1. " numbering
+    return purpose[:600]
 
 
 def main() -> None:
