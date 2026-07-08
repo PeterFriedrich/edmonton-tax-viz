@@ -295,6 +295,14 @@ per neighbourhood → drives the colour-scale set-aside. See `SPEC_revenue.md`
   `DC`/`DC1`/`DC2` default to **developed** (stay on scale — conservative, won't wrongly
   hide land). Named-natural special-area codes (`NSRVES`, `A7` Hawrelak, etc.) are caught
   by their own explicit dict entry, not by the `DC` default.
+- **`url = "legacy"` sentinel (confirmed 2026-07-07).** 44 polygons (611 ha) carry the
+  literal string `legacy` in `url` instead of a bylaw-page path — pre-2024-Bylaw zones
+  (mostly bare `DC`, some special-area) never migrated to the per-provision page system.
+  There is **no page to scrape** for these, and the bare-`DC` ones also lack an
+  `agreement_no`, so they are unclassifiable from this dataset alone (distinct from the
+  ~19 unpublished provision pages that 403). The DC-use pipeline (`ANALYSIS_BACKLOG` item
+  3) rolls them up as `frac_dc_unknown`; the largest single one (id `173291`, 50 ha) is
+  West Edmonton Mall, geometrically coincident with the migrated `dc2-1198` polygon.
 - **Set-aside categories:** never = River Valley (`A`,`NA`)/Parks (`PS`,`PSN`); not-yet
   = Future (`FD`)/rural (`AG`,`RR`)/industrial reserve (`EET*`). Institutional
   (`UI`,`UF`,`AJ`,`PU`) is a proxy for where exempt-roll understatement lives.
