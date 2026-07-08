@@ -12,9 +12,42 @@ _Last reconciled: 2026-07-08_
 
 ## Open work
 
+- [ ] **PRIORITY — Lot-acre denominator TOGGLE on the neighbourhood (first) lens
+  (NEW 2026-07-08, out of the cardinality audit below).** The audit found the first
+  lens has NO bug to fix, but a parcel/lot-acre denominator is worth OFFERING: it
+  systematically boosts park/river-valley hoods (median ×2.47 $/acre for the 51 hoods
+  <55% parcel land; Rossdale ×2.8, Riverdale ×2.4) — the Urban3-analogous "value per
+  *developable* acre" view. 35 of 406 hoods move >50 ranks (Spearman 0.959). Build:
+  mirror the Glass view's "Ground acres | Lot acres" toggle on the neighbourhood
+  choropleth — add `value_per_lot_acre` / `revenue_per_lot_acre` hood columns
+  (aggregate deduped `lot_size` per hood via the shipped `SHARE_MAX_M2` /
+  `_point_lot_stats` heuristic in `export_value_grid.py`; reuse `load_property_info`),
+  a per-column scale anchor, and a **low-parcel-fraction guard** (suppress hoods
+  below ~15% parcel to an "n/a" grey — else near-zero-parcel hoods explode, e.g. Mill
+  Woods Golf Course ×6960; plus the `KNOWN_BOUND_OUTLIERS` >100% tail, Pembina).
+  Frame honestly: ground-acre = cardinality-robust default, lot-acre = Urban3-analogous.
+  Full numbers + rationale: `docs/FINDINGS_denominator_cardinality.md`.
+
 - [ ] **PRE-LAUNCH AUDIT — record-to-parcel cardinality bug (WEM numerator + condo
   denominator) & lot-acre vs ground-acre methodology (NEW 2026-07-08).** Part of a
-  broader sweep to check the main lenses before this goes public/live officially. Two
+  broader sweep to check the main lenses before this goes public/live officially.
+  **Q1/Q2/Q5 ANSWERED 2026-07-08** — `docs/FINDINGS_denominator_cardinality.md`
+  (`tools/audit_cardinality_denominators.py`): the **first lens is immune to both bugs,
+  structurally and empirically** (numerator sums the real per-account roll and never
+  joins parcel geometry; denominator is boundary area and never reads lot_size). WEM is
+  a SINGLE $1.285B account (a grid needle, not a numerator double-count — the brief's
+  premise was inverted). Condo denominator inflation is 0.1% citywide / +12% worst hood
+  and the `SHARE_MAX_M2` dedupe already handles it. Ground-acre = 74% parcel land
+  citywide (~26% roads/parks/ROW); it is NOT Urban3 lineage (Q6 — Urban3's denominator
+  is closer to lot-acre). The lot-acre neighbourhood lens that fell out is now the
+  PRIORITY item above. **Still OPEN: Q6 + Q7 — the methodology-note cleanup**
+  (correct any "ground-acre = Urban3-standard/gross-area" doc language; document condo
+  handling as an industry-wide open problem — independent Urban3 replications *excluded*
+  condos entirely, so this project's dedupe is an improvement over exclusion). Q3 (single
+  join-integrity fix) is effectively moot for the first lens — there is no bug to fix; the
+  grid already carries the only dedupe needed. Sweep the docs (`FINDINGS_lot_dedupe.md`,
+  `DATA_INTEGRITY.md`, README/UI methodology blurbs) for stale Urban3-lineage claims.
+  **Original brief for reference —** two
   known distortions share ONE root cause — a **record-to-parcel cardinality mismatch**
   (multiple assessment records → one parcel geometry) — but push in OPPOSITE directions,
   so they do NOT cancel in aggregate and summing-before-dividing at the hood level does
