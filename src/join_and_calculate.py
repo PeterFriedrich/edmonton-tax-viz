@@ -53,6 +53,23 @@ FRANCHISE_COLUMNS = [
 ]
 
 
+# Neighbourhood lot-acre denominator (the "value per developable acre" toggle,
+# docs/FINDINGS_denominator_cardinality.md). Carried from build_hood_lot_acres;
+# value_per_lot_acre / revenue_per_lot_acre are computed HERE against the deduped
+# parcel acres (not boundary acres), and parcel_frac = lot acres / boundary acres
+# ships alongside so the client can label + guard. This is an editorial
+# alternative denominator, NOT a correction to the cardinality-robust default.
+LOT_ACRE_COLUMNS = ["value_lot_eligible", "revenue_lot_eligible", "lot_acres_eligible"]
+
+# Below this parcel-land share the lot-acre denominator is near-zero and the
+# ratio explodes (Mill Woods Golf Course 0% parcel -> x6960; the park/river-
+# valley tail). Such hoods are suppressed to NaN (rendered n/a grey), not shown
+# with a meaningless multiple. parcel_frac itself still ships for the tooltip.
+# Hoods above 1.0 (lot acres > boundary acres) are a known lot_size artifact,
+# already gated by export_value_grid.check_lot_acre_bounds' KNOWN_BOUND_OUTLIERS.
+LOW_PARCEL_FRAC = 0.15
+
+
 def join_and_calculate(
     assessment: pd.DataFrame,
     boundaries: gpd.GeoDataFrame,
@@ -62,6 +79,7 @@ def join_and_calculate(
     fire: pd.DataFrame | None = None,
     water: pd.DataFrame | None = None,
     franchise: pd.DataFrame | None = None,
+    lot_acres: pd.DataFrame | None = None,
 ) -> gpd.GeoDataFrame:
     """Left join boundaries → assessment, flag unmatched rows, compute value_per_acre.
 
@@ -108,6 +126,15 @@ def join_and_calculate(
     Carried on the full frame only (no per-acre, no SLIM — no display layer
     yet). Boundaries with no modeled dwellings default to 0 (water semantics)
     — and are flagged.
+
+    ``lot_acres`` (optional, from export_value_grid.build_hood_lot_acres) adds
+    the neighbourhood lot-acre denominator toggle: value_per_lot_acre /
+    revenue_per_lot_acre (eligible dollars / deduped parcel acres) plus
+    parcel_frac (parcel land / boundary land). Hoods below LOW_PARCEL_FRAC
+    parcel land are suppressed to NaN (n/a grey) so the near-zero-denominator
+    tail doesn't explode; parcel_frac still ships for the tooltip. An editorial
+    alternative denominator (docs/FINDINGS_denominator_cardinality.md), NOT a
+    fix — the ground-acre metric stays the cardinality-robust default.
     """
     agg = assessment
 
@@ -368,6 +395,52 @@ def join_and_calculate(
             + FRANCHISE_COLUMNS + ["geometry"]
         )
 
+    # Neighbourhood lot-acre denominator toggle (the "value per developable
+    # acre" view, docs/FINDINGS_denominator_cardinality.md). Merge the eligible
+    # dollars + deduped parcel acres, divide, and guard the low-parcel tail.
+    if lot_acres is not None:
+        boundary_names = set(joined["neighbourhood_name"])
+        unmatched_lot = sorted(set(lot_acres["neighbourhood_name"]) - boundary_names)
+        if unmatched_lot:
+            logger.warning(
+                "%d lot-acre neighbourhood(s) with no boundary match (dropped):\n  %s",
+                len(unmatched_lot),
+                "\n  ".join(unmatched_lot),
+            )
+
+        merge_cols = ["neighbourhood_name"] + [
+            c for c in LOT_ACRE_COLUMNS if c in lot_acres.columns
+        ]
+        joined = joined.merge(lot_acres[merge_cols], on="neighbourhood_name", how="left")
+
+        # parcel_frac ships regardless (tooltip); the per-lot-acre ratios divide
+        # by deduped parcel acres, not boundary acres.
+        joined["parcel_frac"] = joined["lot_acres_eligible"] / safe_area
+        safe_lot = joined["lot_acres_eligible"].replace(0, float("nan"))
+        joined["value_per_lot_acre"] = joined["value_lot_eligible"] / safe_lot
+        added = ["value_per_lot_acre"]
+        if "revenue_lot_eligible" in joined.columns:
+            joined["revenue_per_lot_acre"] = joined["revenue_lot_eligible"] / safe_lot
+            added.append("revenue_per_lot_acre")
+        added.append("parcel_frac")
+
+        # Guard: hoods below the parcel-fraction floor (incl. NaN — no eligible
+        # parcels at all) get NaN per-lot-acre values so the client renders them
+        # n/a grey rather than an exploded multiple. parcel_frac is left intact.
+        suppress = ~(joined["parcel_frac"] >= LOW_PARCEL_FRAC)
+        n_sup = int(suppress.sum())
+        if n_sup:
+            logger.info(
+                "Lot-acre lens: %d hood(s) below %.0f%% parcel land suppressed to "
+                "n/a (near-zero denominator would explode):\n  %s",
+                n_sup, LOW_PARCEL_FRAC * 100,
+                "\n  ".join(sorted(joined.loc[suppress, "neighbourhood_name"])),
+            )
+        ratio_cols = [c for c in added if c != "parcel_frac"]
+        joined.loc[suppress, ratio_cols] = float("nan")
+
+        out_cols = [c for c in out_cols if c != "geometry"] + added + ["geometry"]
+
     return joined[out_cols]
 
 
@@ -393,6 +466,7 @@ SLIM_COLUMNS = [
     "frac_mixed", "frac_dc", "frac_other",
     "is_residential", "road_m_per_acre", "storm_charge_per_acre",
     "fire_events_per_acre", "water_charge_per_acre", "water_fixed_per_acre",
+    "value_per_lot_acre", "revenue_per_lot_acre", "parcel_frac",
     "geometry",
 ]
 

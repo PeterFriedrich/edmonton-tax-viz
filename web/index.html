@@ -219,10 +219,10 @@
         </label>
       </div>
     </div>
-    <span class="hd" id="denom-hd">Spike denominator</span>
+    <span class="hd" id="denom-hd">Denominator</span>
     <div id="denom">
-      <button data-denom="ground" class="active" title="Divide each cell's total by the cell's own ground area (2.47 acres) — dollars pinned to this patch of map">Ground acres</button>
-      <button data-denom="lot" title="Divide each cell's total by the parcel acres its properties own — land productivity; large lots stop needling">Lot acres</button>
+      <button data-denom="ground" class="active" title="Divide by ground area — the whole footprint, streets, parks and all. Dollars per unit of map (the cardinality-robust default)">Ground acres</button>
+      <button data-denom="lot" title="Divide by the parcel (lot) acres the properties own — land productivity; large lots and park land stop diluting the figure">Lot acres</button>
     </div>
   </div>
 
@@ -269,6 +269,13 @@
         elevationScale: 0.033,
         transform: "sqrt",
         fmt: fmtMoney,
+        lotBlurb: "Height and colour show municipal property-tax revenue divided " +
+                  "by the parcel (lot) acres a neighbourhood's properties actually " +
+                  "own — the land-productivity view, where park, river-valley and " +
+                  "large-lot land stop diluting the figure (city lot sizes, " +
+                  "deduplicated at multi-unit points). Height is linear; colour is " +
+                  "square-root–scaled to reveal the low end. Grey = set-aside land, " +
+                  "or too little parcel land for a lot-acre value.",
       },
       value_per_acre: {
         key: "value_per_acre",
@@ -285,6 +292,13 @@
         elevationScale: 0.0006,
         transform: "sqrt",
         fmt: fmtMoney,
+        lotBlurb: "Height and colour show total assessed property value divided by " +
+                  "the parcel (lot) acres a neighbourhood's properties actually own " +
+                  "— the land-productivity view, where park, river-valley and " +
+                  "large-lot land stop diluting the figure (city lot sizes, " +
+                  "deduplicated at multi-unit points). Height is linear; colour is " +
+                  "square-root–scaled to reveal the low end. Grey = set-aside land, " +
+                  "or too little parcel land for a lot-acre value.",
       },
     };
 
@@ -581,11 +595,13 @@
     // Darker than SET_ASIDE_COLOR but clearly above every ramp background.
     const GLASS_PLANE_COLOR = [50, 53, 63];
 
-    // The grid column for the active metric + denominator: the lot-acre
-    // variants ride in the same file as `*_per_lot_acre` (export_value_grid).
-    const gridColKey = () => state.denom === "lot"
-      ? state.metric.replace("_per_acre", "_per_lot_acre")
-      : state.metric;
+    // The metric's lot-acre column name (value_per_acre -> value_per_lot_acre).
+    // Both the Glass grid file and the neighbourhood GeoJSON carry the *_per_lot_acre
+    // variants; the denominator toggle (state.denom) selects between them in
+    // both the Glass and Money views.
+    const lotKey = m => m.replace("_per_acre", "_per_lot_acre");
+    const gridColKey = () => state.denom === "lot" ? lotKey(state.metric) : state.metric;
+    const moneyColKey = () => state.denom === "lot" ? lotKey(state.metric) : state.metric;
 
     // Glass grid scale anchors, per metric + denominator, computed once from
     // the fetched cells (so they track weekly refreshes, like ratioScale):
@@ -659,27 +675,77 @@
     // spreads across the full ramp instead of crushing into the low end. Cached per
     // metric; falls back to the metric's default clamp if the subset is empty.
     const _resClampCache = {};
-    function residentialClampFor(key) {
+    function residentialClampFor(key, fallback) {
       if (key in _resClampCache) return _resClampCache[key];
       const vals = state.data.features
         .filter(f => f.properties.is_residential && f.properties[key] != null)
         .map(f => f.properties[key])
         .sort((a, b) => a - b);
-      return (_resClampCache[key] = vals.length ? quantile(vals, 0.975) : METRICS[key].colorClamp);
+      // Lot-acre columns aren't in METRICS, so the caller supplies a fallback.
+      const dflt = fallback ?? (METRICS[key] && METRICS[key].colorClamp);
+      return (_resClampCache[key] = vals.length ? quantile(vals, 0.975) : dflt);
     }
+
+    // Money-view (neighbourhood prism) scale under the active denominator.
+    // Ground: the metric's fixed clamp + elevation (or the residential subset
+    // clamp when the lens is on). Lot: the *_per_lot_acre column, with a runtime
+    // p97.5 colour clamp and height parity to the ground prisms (tallest lot
+    // hood == tallest ground hood in metres) — the same self-anchoring pattern
+    // as gridScale/svcScale, so it tracks weekly refreshes. Low-parcel /
+    // no-lot hoods carry a null lot value (pipeline guard) and are excluded
+    // from these anchors AND greyed in the render. Cached per column.
+    let _moneyLotScales = null;
+    function moneyScale() {
+      const cfg = METRICS[state.metric];
+      const colKey = moneyColKey();
+      if (state.denom !== "lot") {
+        return {
+          colKey,
+          clamp: state.residential ? residentialClampFor(colKey) : cfg.colorClamp,
+          elevationScale: cfg.elevationScale,
+        };
+      }
+      _moneyLotScales ??= {};
+      if (!_moneyLotScales[colKey]) {
+        const props = state.data.features.map(f => f.properties);
+        const vals = props.filter(p => p[colKey] != null && !p.is_set_aside)
+          .map(p => p[colKey]).sort((a, b) => a - b);
+        const groundMax = Math.max(...props.map(p => p[cfg.key] || 0));
+        _moneyLotScales[colKey] = {
+          clamp: vals.length ? quantile(vals, 0.975) : cfg.colorClamp,
+          elevationScale: vals.length
+            ? (groundMax * cfg.elevationScale) / vals[vals.length - 1]
+            : cfg.elevationScale,
+        };
+      }
+      const s = _moneyLotScales[colKey];
+      return {
+        colKey,
+        clamp: state.residential ? residentialClampFor(colKey, s.clamp) : s.clamp,
+        elevationScale: s.elevationScale,
+      };
+    }
+
+    // The money blurb under the active denominator (ground = the metric's own
+    // prose, lot = its lotBlurb), with the colour-transform clause kept honest.
+    const moneyBlurb = () => withColourClause(
+      state.denom === "lot" ? METRICS[state.metric].lotBlurb : METRICS[state.metric].blurb);
 
     // Per-feature fill. Lens OFF: set-aside hoods grey, everything else the ramp colour
     // at the metric clamp. Lens ON: residential hoods take the ramp colour RE-SCALED to
     // the residential clamp; every non-residential hood (set-aside included) becomes the
     // uniform translucent light grey.
-    function fillFor(f, cfg, clamp) {
+    function fillFor(f, colKey, clamp) {
       const p = f.properties;
+      const v = p[colKey];
       if (state.residential) {
-        return p.is_residential
-          ? colorFor(p[cfg.key], clamp)
+        return (p.is_residential && v != null)
+          ? colorFor(v, clamp)
           : [LENS_FADE_COLOR[0], LENS_FADE_COLOR[1], LENS_FADE_COLOR[2], LENS_FADE_ALPHA];
       }
-      return p.is_set_aside ? SET_ASIDE_COLOR : colorFor(p[cfg.key], clamp);
+      // Null value == set-aside land OR (lot mode) a hood the parcel-fraction
+      // guard suppressed — either way it's off the scale, grey.
+      return (p.is_set_aside || v == null) ? SET_ASIDE_COLOR : colorFor(v, clamp);
     }
 
     // Legend gradient for the CURRENT ramp under the CURRENT view's transform:
@@ -724,10 +790,10 @@
     // Build the roof ring of each prism: the polygon's exterior ring lifted to
     // the prism's top elevation (z in metres = value * ELEVATION_SCALE, matching
     // the extrusion). One path per shape -> cheap, unlike wireframe (every edge).
-    function topRings(features, cfg) {
+    function topRings(features, colKey, elevationScale) {
       const out = [];
       for (const f of features) {
-        const z = f.properties[cfg.key] * cfg.elevationScale;
+        const z = (f.properties[colKey] || 0) * elevationScale;
         const res = !!f.properties.is_residential;
         const g = f.geometry;
         const polys = g.type === "MultiPolygon" ? g.coordinates : [g.coordinates];
@@ -947,8 +1013,8 @@
     const LABEL_LIFT = 60;
     function labelZ(p) {
       if (state.view === "money") {
-        const cfg = METRICS[state.metric];
-        return p[cfg.key] * cfg.elevationScale + LABEL_LIFT;
+        const sc = moneyScale();
+        return (p[sc.colKey] || 0) * sc.elevationScale + LABEL_LIFT;
       }
       if (state.view === "ratio")
         return (ratioKept(p) ? ratioOf(p) * ratioScale().elevationScale : 0) + LABEL_LIFT;
@@ -1220,9 +1286,11 @@
       }
 
       // --- money view (default): the classic metric prisms -----------------
-      const cfg = METRICS[state.metric];
-      // Colour clamp: rescaled to the residential subset when the lens is on.
-      const clamp = state.residential ? residentialClampFor(cfg.key) : cfg.colorClamp;
+      // The denominator toggle (state.denom) swaps ground acres for lot acres:
+      // moneyScale() picks the column, colour clamp and height parity; the
+      // parcel-fraction guard already nulled the exploding low-parcel hoods,
+      // and fillFor/getElevation grey + flatten those nulls.
+      const sc = moneyScale();
 
       // Filled extruded prisms. No stroke: the setback gaps already give every
       // shape a dark border at ground level, so a footprint ring is redundant.
@@ -1233,19 +1301,19 @@
         filled: true,
         stroked: false,
         wireframe: false,
-        getElevation: f => f.properties[cfg.key],
-        elevationScale: cfg.elevationScale,
-        getFillColor: f => fillFor(f, cfg, clamp),
+        getElevation: f => f.properties[sc.colKey] || 0,
+        elevationScale: sc.elevationScale,
+        getFillColor: f => fillFor(f, sc.colKey, sc.clamp),
         material: { ambient: 0.55, diffuse: 0.6, shininess: 32, specularColor: [60, 60, 70] },
         pickable: true,
         autoHighlight: true,
         highlightColor: [255, 255, 255, 60],
-        // Re-run the accessors when the metric (field), ramp (colour), or the
-        // residential lens changes; the data reference is stable, so without these
-        // deck.gl skips the accessor.
+        // Re-run the accessors when the metric (field), denominator, ramp
+        // (colour), or the residential lens changes; the data reference is
+        // stable, so without these deck.gl skips the accessor.
         updateTriggers: {
-          getElevation: state.metric,
-          getFillColor: [state.metric, state.ramp, state.residential, state.colorAdjust],
+          getElevation: [state.metric, state.denom],
+          getFillColor: [state.metric, state.denom, state.ramp, state.residential, state.colorAdjust],
         },
       });
 
@@ -1254,7 +1322,7 @@
       const edge = RAMPS[state.ramp].edge;
       const topEdges = new deck.PathLayer({
         id: "top-edges",
-        data: topRings(state.data.features, cfg),
+        data: topRings(state.data.features, sc.colKey, sc.elevationScale),
         getPath: d => d.path,
         // Neutral-grey the roof outline of non-residential hoods when the lens is on.
         getColor: d => (state.residential && !d.res) ? LENS_FADE_EDGE : edge,
@@ -1344,7 +1412,18 @@
         };
       }
       const cfg = METRICS[state.metric];
-      let html = name + `${cfg.fmt(p[cfg.key])} / acre`;
+      const lot = state.denom === "lot";
+      const colKey = lot ? lotKey(state.metric) : cfg.key;
+      const pf = p.parcel_frac != null
+        ? `<br/><span class="muted">parcel land ${Math.round(p.parcel_frac * 100)}% of area</span>` : "";
+      if (lot && p[colKey] == null) {
+        return {
+          className: "tip",
+          html: name + `<span class="muted">Too little parcel land for a lot-acre value</span>` + pf,
+        };
+      }
+      let html = name + `${cfg.fmt(p[colKey])} / ${lot ? "lot acre" : "acre"}`;
+      if (lot) html += pf;
       if (p.road_m_per_acre != null) {
         html += `<br/><span class="muted">${p.road_m_per_acre.toFixed(1)} road m / acre</span>`;
         if (p.road_m_per_acre > 0 && p.revenue_per_acre != null) {
@@ -1368,7 +1447,7 @@
       overlay.setProps({ layers: buildLayers() });
       document.getElementById("title-h").textContent = cfg.title;
       document.getElementById("title-p").textContent =
-        state.view === "glass" ? glassBlurb() : withColourClause(cfg.blurb);
+        state.view === "glass" ? glassBlurb() : moneyBlurb();
       refreshLegend(); // per-metric transform: the gradient bar changes too
     }
 
@@ -1383,7 +1462,7 @@
       if (state.view !== "money" && state.view !== "glass") return;
       overlay.setProps({ layers: buildLayers() });
       document.getElementById("title-p").textContent =
-        state.view === "glass" ? glassBlurb() : withColourClause(METRICS[state.metric].blurb);
+        state.view === "glass" ? glassBlurb() : moneyBlurb();
       refreshLegend(); // legendGradient reads the transform through scaleT
     }
 
@@ -1401,16 +1480,19 @@
         : "Off — colour shows true magnitude";
     }
 
-    // Switch the Glass spike denominator (ground vs lot acres). Glass-only:
-    // the control is hidden in every other view, so no view guard is needed
-    // beyond rebuilding — scales and legend re-anchor to the new column.
+    // Switch the denominator (ground vs lot acres). Shown in the Glass and
+    // Money views (the control is hidden elsewhere), and state persists across
+    // view switches — flip to lot in one and it stays lot in the other. Scales
+    // and legend re-anchor to the new column on rebuild.
     function applyDenom(d) {
       if (d === state.denom) return;
       state.denom = d;
       document.querySelectorAll("#denom button").forEach(b =>
         b.classList.toggle("active", b.dataset.denom === d));
+      if (state.view !== "money" && state.view !== "glass") return;
       overlay.setProps({ layers: buildLayers() });
-      document.getElementById("title-p").textContent = glassBlurb();
+      document.getElementById("title-p").textContent =
+        state.view === "glass" ? glassBlurb() : moneyBlurb();
       refreshLegend();
     }
 
@@ -1511,15 +1593,23 @@
         label.textContent = "Set aside — natural / undeveloped land";
         sw.style.background = "rgb(104,108,122)";
       } else {
-        document.getElementById("legend-label").textContent = cfg.legendLabel;
+        // Money view. The denominator toggle relabels ("per acre" -> "per lot
+        // acre") and re-anchors the legend max to the lot-acre clamp (moneyScale).
+        const sc = moneyScale();
+        const lot = state.denom === "lot";
+        document.getElementById("legend-label").textContent =
+          lot ? cfg.legendLabel.replace("per acre", "per lot acre") : cfg.legendLabel;
         document.getElementById("legend-min").textContent = cfg.legendMin;
         document.getElementById("legend-max").textContent =
-          state.residential ? cfg.fmt(residentialClampFor(cfg.key)) + "+" : cfg.legendMax;
+          lot ? cfg.fmt(sc.clamp) + "+"
+              : (state.residential ? cfg.fmt(residentialClampFor(cfg.key)) + "+" : cfg.legendMax);
         if (state.residential) {
           label.textContent = "Faded — non-residential land";
           sw.style.background = `rgb(${LENS_FADE_COLOR.join(",")})`;
         } else {
-          label.textContent = "Set aside — natural / undeveloped land";
+          label.textContent = lot
+            ? "Set aside, or too little parcel land"
+            : "Set aside — natural / undeveloped land";
           sw.style.background = "rgb(104,108,122)";
         }
       }
@@ -1590,8 +1680,11 @@
       // (ratio + glass), the service checkboxes (services), the spike
       // denominator (glass, further gated on the data below).
       const prisms = v === "ratio" || v === "glass";
+      // The Money view opens the layers panel too — but only for the denominator
+      // toggle, and only when the data carries the lot-acre columns.
+      const moneyDenom = v === "money" && state.hasHoodLot;
       document.getElementById("layers").style.display =
-        (prisms || v === "services") ? "flex" : "none";
+        (prisms || v === "services" || moneyDenom) ? "flex" : "none";
       document.getElementById("prism-hd").style.display = prisms ? "block" : "none";
       document.getElementById("prism-row").style.display = prisms ? "flex" : "none";
       document.getElementById("services-hd").style.display = v === "services" ? "block" : "none";
@@ -1648,9 +1741,13 @@
       }
       // Ghost-prism views reset the slider to their own default on entry.
       if (VIEWS[v] && VIEWS[v].opacity != null) setPrismOpacity(VIEWS[v].opacity);
-      // The spike-denominator toggle only exists in Glass, and only when the
-      // grid file carries the lot-acre columns (pipeline 2026-07-05).
-      const denomShow = v === "glass" && gridData && gridData.hasLot;
+      // The denominator toggle shows in Glass (when the grid file carries the
+      // lot-acre columns) and in Money (when the hood GeoJSON does). The header
+      // names the unit being divided in each view.
+      const denomShow = (v === "glass" && gridData && gridData.hasLot)
+                     || (v === "money" && state.hasHoodLot);
+      document.getElementById("denom-hd").textContent =
+        v === "glass" ? "Spike denominator" : "Denominator";
       document.getElementById("denom-hd").style.display = denomShow ? "block" : "none";
       document.getElementById("denom").style.display = denomShow ? "flex" : "none";
       overlay.setProps({ layers: buildLayers() });
@@ -1662,7 +1759,8 @@
         v === "glass" ? METRICS[state.metric].title : chrome.title;
       document.getElementById("title-p").textContent =
         v === "glass" ? glassBlurb() :
-        v === "services" ? servicesBlurb() : withColourClause(chrome.blurb);
+        v === "services" ? servicesBlurb() :
+        v === "money" ? moneyBlurb() : withColourClause(chrome.blurb);
       syncColorAdjust(); // the sqrt toggle only bites in money + glass (scaleT)
       refreshLegend();
     }
@@ -1762,6 +1860,20 @@
         state.services.water = false;
       }
       syncServiceControls();
+      // Neighbourhood lot-acre denominator toggle (pipeline 2026-07-08): shown
+      // in Money + Glass when the hood GeoJSON carries value_per_lot_acre. The
+      // Money view is the default, so open its denominator control now (applyView
+      // isn't called on load) — and hide the prism-slider rows, which share the
+      // layers panel and have no CSS default-hidden state.
+      state.hasHoodLot = state.data.features.some(f => f.properties.value_per_lot_acre != null);
+      if (state.hasHoodLot) {
+        document.getElementById("prism-hd").style.display = "none";
+        document.getElementById("prism-row").style.display = "none";
+        document.getElementById("layers").style.display = "flex";
+        document.getElementById("denom-hd").textContent = "Denominator";
+        document.getElementById("denom-hd").style.display = "block";
+        document.getElementById("denom").style.display = "flex";
+      }
       // Same guard for the uses view: it needs the composition columns
       // (pipeline 2026-07-03) — hide the button on older data files.
       if (!state.data.features.some(f => f.properties.frac_commercial != null)) {

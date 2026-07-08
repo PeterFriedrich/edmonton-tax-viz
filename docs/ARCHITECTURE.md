@@ -343,6 +343,17 @@ clamp (p97.5) and elevation parity from the served file at load
 (`gridScale()` in `web/index.html`, same pattern as `ratioScale()`), so they
 track weekly refreshes.
 
+**Also exports (added 2026-07-08):** `build_hood_lot_acres(df)` — the same
+lot-dedupe rollup one level up, at the NEIGHBOURHOOD unit, for the Money view's
+lot-acre denominator toggle. Takes the per-property frame
+(`neighbourhood_name`/`latitude`/`longitude`/`lot_size`/`assessed_value`,
+optional `levy`), reuses `_point_lot_stats`/`SHARE_MAX_M2`, and returns per-hood
+`lot_acres_eligible` + `value_lot_eligible` (+ `revenue_lot_eligible`), the
+eligible-point deduped acres and the dollars at those points. `main.py` builds
+it from the same `grid_input` (assessment + `load_property_info`) that feeds the
+grid, and hands it to `join_and_calculate` — which divides + guards (below).
+Ineligible points are excluded from BOTH numerator and denominator and reported.
+
 ### `src/load_stormwater.py` (utility lens #1 — added 2026-07-05)
 
 Full methodology + open decisions in `docs/SPEC_utilities.md` Lens 1; tariff
@@ -479,6 +490,16 @@ coverage/response adequacy.
   area_acres` computed here. Boundaries with no roll parcels default to a
   true modeled $0 (flagged) — roads semantics, with the exempt-land
   understatement caveat recorded in the module.
+- (optional) lot-acre DataFrame from `export_value_grid.build_hood_lot_acres`
+  (added 2026-07-08) — the neighbourhood lot-acre denominator toggle. Merged on
+  `neighbourhood_name`; `value_per_lot_acre` / `revenue_per_lot_acre` =
+  eligible dollars ÷ deduped parcel acres (NOT boundary acres), and
+  `parcel_frac = lot_acres_eligible / area_acres` ships alongside. Hoods below
+  `LOW_PARCEL_FRAC` (0.15) parcel land are suppressed to NaN (rendered n/a
+  grey) so the near-zero-denominator tail doesn't explode; `parcel_frac` still
+  ships. An editorial alternative denominator ("value per developable acre",
+  `docs/FINDINGS_denominator_cardinality.md`), NOT a correction — the
+  ground-acre `value_per_acre` stays the cardinality-robust default.
 
 **Outputs:** `gpd.GeoDataFrame` with columns:
 - `neighbourhood_name`

@@ -8,6 +8,7 @@ import pytest
 sys.path.insert(0, "src")
 from export_value_grid import (
     SQ_M_PER_ACRE,
+    build_hood_lot_acres,
     build_value_grid,
     check_lot_acre_bounds,
     export_value_grid,
@@ -260,3 +261,50 @@ def test_export_lot_columns_and_nulls(tmp_path):
     assert round(100.0 / lot_acres) in lot_vals
     assert stats["has_lot"] is True
     assert stats["n_cells_without_lot"] == 1
+
+
+# --- build_hood_lot_acres (neighbourhood lot-acre denominator) --------------
+
+def test_hood_lot_acres_basic_rollup():
+    # HoodX: one point, 1-acre lot, $1000 / $10 levy. HoodY: one point, 2-acre
+    # lot, $500 / $5. Deduped lot acres and eligible dollars roll up per hood.
+    df = _frame([
+        {**A, "neighbourhood_name": "HOODX", "lot_size": SQ_M_PER_ACRE,
+         "assessed_value": 1000.0, "levy": 10.0},
+        {**B, "neighbourhood_name": "HOODY", "lot_size": 2 * SQ_M_PER_ACRE,
+         "assessed_value": 500.0, "levy": 5.0},
+    ])
+    out = build_hood_lot_acres(df).set_index("neighbourhood_name")
+    assert out.loc["HOODX", "lot_acres_eligible"] == pytest.approx(1.0)
+    assert out.loc["HOODX", "value_lot_eligible"] == pytest.approx(1000.0)
+    assert out.loc["HOODX", "revenue_lot_eligible"] == pytest.approx(10.0)
+    assert out.loc["HOODY", "lot_acres_eligible"] == pytest.approx(2.0)
+    assert out.loc["HOODY", "value_lot_eligible"] == pytest.approx(500.0)
+
+
+def test_hood_lot_acres_dedupes_duplicated_parcel():
+    # Two condo units at ONE point sharing a duplicated 5000 m² lot (>= SHARE_MAX
+    # -> counted once), each separately assessed: land counts once, dollars sum.
+    df = _frame([
+        {**A, "neighbourhood_name": "HOODX", "lot_size": 5000.0, "assessed_value": 100.0},
+        {**A, "neighbourhood_name": "HOODX", "lot_size": 5000.0, "assessed_value": 200.0},
+    ])
+    out = build_hood_lot_acres(df).set_index("neighbourhood_name")
+    assert out.loc["HOODX", "lot_acres_eligible"] == pytest.approx(5000.0 / SQ_M_PER_ACRE)
+    assert out.loc["HOODX", "value_lot_eligible"] == pytest.approx(300.0)
+    assert "revenue_lot_eligible" not in out.columns  # no levy passed
+
+
+def test_hood_lot_acres_excludes_ineligible_points():
+    # A majority-null multi-unit point is ineligible: excluded from BOTH the
+    # denominator and the numerator (its value must not inflate value/lot-acre).
+    df = _frame([
+        {**A, "neighbourhood_name": "HOODX", "lot_size": SQ_M_PER_ACRE, "assessed_value": 100.0},
+        {**B, "neighbourhood_name": "HOODX", "lot_size": None, "assessed_value": 900.0},
+        {**B, "neighbourhood_name": "HOODX", "lot_size": None, "assessed_value": 900.0},
+        {**B, "neighbourhood_name": "HOODX", "lot_size": 300.0, "assessed_value": 900.0},
+    ])
+    out = build_hood_lot_acres(df).set_index("neighbourhood_name")
+    # Only point A (1 acre, $100) is eligible; the majority-null B point drops.
+    assert out.loc["HOODX", "lot_acres_eligible"] == pytest.approx(1.0)
+    assert out.loc["HOODX", "value_lot_eligible"] == pytest.approx(100.0)

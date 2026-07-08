@@ -40,7 +40,7 @@ from load_water import load_water
 from load_franchise import load_franchise
 from load_fire import load_fire_events, export_fire_stations_web
 from join_and_calculate import join_and_calculate, export_geojson
-from export_value_grid import export_value_grid, check_lot_acre_bounds
+from export_value_grid import export_value_grid, check_lot_acre_bounds, build_hood_lot_acres
 from plot_choropleth import plot_choropleth
 
 logger = logging.getLogger(__name__)
@@ -207,9 +207,29 @@ def run(
     elif fire_events_csv is not None:
         logger.warning("Fire events file not found (%s) — skipping the fire lens", fire_events_csv)
 
+    # Lot-size join (property-info CSV) feeds TWO consumers: the neighbourhood
+    # lot-acre denominator toggle (hood rollup, joined below) and the Glass-view
+    # grid (export block). Merge once here so both share it; without the file
+    # both degrade to ground-acre only. check_lot_acre_bounds validates the
+    # per-hood deduped acres before either uses them.
+    lot_acres_hood = None
+    grid_input = assessment
+    if property_info_csv is not None and Path(property_info_csv).exists():
+        grid_input = assessment.merge(
+            load_property_info(property_info_csv), on="account_number", how="left",
+        )
+        check_lot_acre_bounds(grid_input, boundaries)
+        lot_acres_hood = build_hood_lot_acres(grid_input)
+    elif property_info_csv is not None:
+        logger.warning(
+            "Property-info file not found (%s) — no lot-acre denominator "
+            "(grid + neighbourhood lens ground-acre only)",
+            property_info_csv,
+        )
+
     result = join_and_calculate(
         aggregated, boundaries, zoning=zoning, roads=roads, stormwater=stormwater,
-        fire=fire, water=water, franchise=franchise,
+        fire=fire, water=water, franchise=franchise, lot_acres=lot_acres_hood,
     )
 
     if png_out is not None:
@@ -236,21 +256,10 @@ def run(
                 str(zoning_geojson), boundaries, str(ZONING_WEB_OUT),
                 setback_m=setback_m,
             )
-        # Grid-cell spikes for the Glass view (Urban3-style detail). The
-        # lot_size join adds the lot-acre denominator variant (deduped per
-        # docs/FINDINGS_lot_dedupe.md); without the property-info file the
-        # grid degrades to ground-acre only.
-        grid_input = assessment
-        if property_info_csv is not None and Path(property_info_csv).exists():
-            grid_input = assessment.merge(
-                load_property_info(property_info_csv), on="account_number", how="left",
-            )
-            check_lot_acre_bounds(grid_input, boundaries)
-        elif property_info_csv is not None:
-            logger.warning(
-                "Property-info file not found (%s) — grid exports ground-acre only",
-                property_info_csv,
-            )
+        # Grid-cell spikes for the Glass view (Urban3-style detail). Reuses the
+        # grid_input (assessment + lot_size) built above; the lot-acre variant
+        # is deduped per docs/FINDINGS_lot_dedupe.md, and without the
+        # property-info file grid_input is the bare assessment (ground-acre only).
         export_value_grid(grid_input, GRID_WEB_OUT, cell_m=GRID_CELL_M)
         # Fire-station context dots for the Services view's fire layer —
         # rides with the fire lens (skipped with it).
