@@ -36,12 +36,24 @@ GEO = "web/data/neighbourhood_value_per_acre.geojson"
 BOUNDARIES = "data/raw/neighbourhoods.geojson"
 ASSESS = "data/raw/Property_Assessment_Data__Current_Calendar_Year_.csv"
 PINFO = "data/raw/Property_Info__Current_Calendar_Year_.csv"
+DC_USE = "data/dc_use_by_hood.csv"  # tools/rollup_dc_uses.py: frac_dc split by inferred use
 
 # Developed zoned-use shares the entropy is computed over. never/notyet are
-# excluded (they make river-valley hoods read as "diverse"); dc is *unknown*
-# use, not mixed — high-frac_dc hoods are flagged low-confidence and dropped.
+# excluded (they make river-valley hoods read as "diverse").
+#
+# DC (Direct Control) land was previously *unknown* use and high-frac_dc hoods
+# were dropped (DC_TRAP). ANALYSIS_BACKLOG item 3 resolved each DC provision's
+# use (Purpose-statement classification -> data/dc_use_by_hood.csv), so we now
+# FOLD the resolved DC shares into the developed categories and re-admit hoods
+# whose DC is mostly resolved. Only the still-unresolved DC share
+# (frac_dc_unknown: legacy parcels with no bylaw page + a few unlabelled) stays
+# out, and a hood is excluded when that residual is large (UNKNOWN_TRAP).
 DEV = ["frac_residential", "frac_commercial", "frac_industrial", "frac_mixed", "frac_inst"]
-DC_TRAP = 0.30  # frac_dc >= this => low-confidence, excluded from the analysis set
+# (DEV category, resolved-DC column that feeds it).
+DC_FOLD = [("frac_residential", "frac_dc_res"), ("frac_commercial", "frac_dc_com"),
+           ("frac_industrial", "frac_dc_ind"), ("frac_mixed", "frac_dc_mix"),
+           ("frac_inst", "frac_dc_inst")]
+UNKNOWN_TRAP = 0.10  # frac_dc_unknown >= this => still low-confidence, excluded
 CURRENT_YEAR = 2026
 
 
@@ -73,21 +85,40 @@ def partial_corr(df: pd.DataFrame, a: str, b: str, ctrl: list[str]) -> float:
 
 
 def build_frame() -> pd.DataFrame:
+    # Resolved DC-use shares per hood (fold into the developed categories).
+    dcu = pd.read_csv(DC_USE)
+    dcu["name"] = norm(dcu["neighbourhood_name"])
+    dc_by_name = dcu.set_index("name")
+
     gj = json.load(open(GEO))
     rows = []
     for f in gj["features"]:
         p = f["properties"]
         if p.get("is_set_aside"):
             continue
-        h = entropy_norm(p, DEV)
+        name = p["neighbourhood_name"]
+        # Base (pre-resolution) developed shares, DC excluded entirely.
+        h_base = entropy_norm(p, DEV)
+        # Augmented: fold each hood's resolved DC-use shares into DEV.
+        aug = {c: (p.get(c, 0.0) or 0.0) for c in DEV}
+        dc_unknown = 0.0
+        if name.upper() in dc_by_name.index:
+            r = dc_by_name.loc[name.upper()]
+            for dev_col, dc_col in DC_FOLD:
+                aug[dev_col] += float(r.get(dc_col, 0.0) or 0.0)
+            dc_unknown = float(r.get("frac_dc_unknown", 0.0) or 0.0)
+        h = entropy_norm(aug, DEV)
         if h is None:
             continue
-        rows.append(dict(name=p["neighbourhood_name"], H=h,
+        rows.append(dict(name=name, H=h, H_base=h_base,
                          rev_acre=p.get("revenue_per_acre"),
                          road_acre=p.get("road_m_per_acre"),
-                         dc=p.get("frac_dc", 0.0) or 0.0))
+                         dc=p.get("frac_dc", 0.0) or 0.0,
+                         dc_unknown=dc_unknown))
     g = pd.DataFrame(rows)
     print(f"developed hoods (GeoJSON, non-set-aside): {len(g)}")
+    matched = g["name"].str.upper().isin(dc_by_name.index)
+    print(f"  DC-use rollup matched: {int(matched.sum())}/{len(g)} hoods")
 
     acres = load_boundaries(BOUNDARIES)[["neighbourhood_name", "area_acres"]]
 
@@ -129,11 +160,26 @@ def main() -> None:
         raise SystemExit(f"missing {GEO} — run the pipeline / refresh first")
     df = build_frame()
 
-    c = df[df["dc"] < DC_TRAP].dropna(
-        subset=["H", "rev_acre", "road_acre", "rpd_rec", "rpd_bc",
-                "density", "dens_bc", "age", "med_lot"])
-    c = c[np.isfinite(c["rpd_rec"]) & np.isfinite(c["rpd_bc"])]
-    print(f"\nanalysis set (excl frac_dc>={DC_TRAP}, complete controls): n={len(c)}")
+    need = ["H", "rev_acre", "road_acre", "rpd_rec", "rpd_bc",
+            "density", "dens_bc", "age", "med_lot"]
+    complete = df.dropna(subset=need)
+    complete = complete[np.isfinite(complete["rpd_rec"]) & np.isfinite(complete["rpd_bc"])]
+
+    # New analysis set: fold resolved DC in, exclude only hoods whose UNRESOLVED
+    # DC share is large. Replaces the old frac_dc>=0.30 DC_TRAP.
+    c = complete[complete["dc_unknown"] < UNKNOWN_TRAP].copy()
+    # For comparison: the pre-resolution set (old DC_TRAP) with pre-resolution H.
+    old = complete[complete["dc"] < 0.30]
+    readmitted = c[c["dc"] >= 0.30]
+    newly_excluded = complete[(complete["dc"] < 0.30) & (complete["dc_unknown"] >= UNKNOWN_TRAP)]
+    print(f"\nanalysis set (fold resolved DC; excl frac_dc_unknown>={UNKNOWN_TRAP}): n={len(c)}")
+    print(f"  pre-resolution set (frac_dc<0.30): n={len(old)}")
+    print(f"  re-admitted (was frac_dc>=0.30, DC now resolved): n={len(readmitted)}: "
+          f"{', '.join(sorted(readmitted['name']))}")
+    print(f"  newly excluded (frac_dc_unknown>={UNKNOWN_TRAP}): n={len(newly_excluded)}: "
+          f"{', '.join(sorted(newly_excluded['name']))}")
+    print(f"  mean |H - H_base| over set: {(c['H'] - c['H_base']).abs().mean():.3f} "
+          f"(DC-fold shifts the index)")
     print(f"H distribution: min={c['H'].min():.2f} median={c['H'].median():.2f} max={c['H'].max():.2f}")
 
     var = ["H", "rev_acre", "road_acre", "rpd_bc", "dens_bc", "age", "med_lot"]

@@ -110,19 +110,36 @@ drivers across all neighbourhoods.
 
 _Added 2026-07-03, out of the use-mix view build._
 
-**IN PROGRESS 2026-07-07 (Session 22), PAUSED mid-scrape.** Scope + method
-decided with Peter: full 938-page corpus, in-context (Claude) classification of
-Purpose statements. Built + tested: `scripts/scrape_dc_provisions.py` (polite,
-resumable, cached to `data/raw/dc_provisions/` — gitignored) and
-`tools/extract_dc_uses.py` (pulls each site's Purpose statement, the
-high-signal field). **Crawl stopped at 568/938 pages cached.**
-⚠️ **The scrape MUST run on Peter's laptop — `zoningbylaw.edmonton.ca` is
-edmonton.ca, unreachable from the Oracle box (curl exit 000, the Session-21
-blocker).** Resume by re-running `python scripts/scrape_dc_provisions.py` on the
-laptop (skips cached, fetches the remaining ~370). Steps AFTER the scrape
-(extract → classify → rollup → re-analyze) run offline and could move to Oracle
-only if the cached HTML corpus is copied there. See the session handoff for the
-full resume procedure.
+**DONE 2026-07-07 (Sessions 22–24).** Full pipeline shipped end-to-end:
+1. **Crawl** — `scripts/scrape_dc_provisions.py` (polite, resumable, cached to
+   `data/raw/dc_provisions/`, gitignored, laptop-only). 918/938 pages cached;
+   20 failed = 19 unpublished-node 403s + 1 bad URL.
+2. **Extract** — `tools/extract_dc_uses.py` pulls each provision's Purpose
+   statement → `data/dc_provisions_text.csv` (918 rows, 898 usable purposes).
+3. **Classify** — `tools/dc_use_labels.py` holds the in-context (Claude)
+   per-slug use judgments (res/com/ind/mix/inst/unknown), joins the text CSV,
+   and emits `data/dc_inferred_use.csv` with a hard 918-slug coverage assert.
+   Distribution: res 364, com 256, mix 139, inst 73, ind 57, unknown 29.
+4. **QA** — 32-page spot-check vs the cached full pages (incl. the "Uses" list
+   absent from the labelling input) + a corpus-wide `mix`-without-residential
+   audit → 3 boundary fixes; ~2–3 % effective error, all medium/low-confidence.
+5. **Rollup** — `tools/rollup_dc_uses.py` area-weight-splits each hood's
+   authoritative `frac_dc` into `frac_dc_res/_com/_ind/_mix/_inst/_unknown`
+   (`data/dc_use_by_hood.csv`), reusing `load_zoning`'s exact overlay so the
+   reconstructed `frac_dc` matches the served value **exactly** (max|Δ|=0.0000).
+   92 % of citywide DC mass resolves to a use.
+6. **Re-analyze** — item 4's `analyze_land_use_diversity.py` folds the resolved
+   shares into the DEV categories and re-admits 8 of the 14 dropped hoods; the
+   headline correlations are unchanged (see item 4 + `FINDINGS_land_use_diversity.md`).
+
+The residual 8 % unknown is legacy DC parcels the City's open data tags
+`url = "legacy"` (no bylaw page) + the 20 failed fetches — carried as a distinct
+`frac_dc_unknown`, never folded into a use. MCCAULEY (bare "DC" legacy parcels,
+unidentifiable) and STRATHCONA JUNCTION stay excluded; SUMMERLEA's WEM `legacy`
+parcel was hand-resolved (geometrically coincident with `dc2-1198`).
+⚠️ The crawl only runs on Peter's laptop (`zoningbylaw.edmonton.ca` is
+edmonton.ca, unreachable from the Oracle box); the offline steps 2–6 run anywhere
+the gitignored HTML corpus is present.
 
 **Observation.** The `dc` category (24% of nonres area) is honest but opaque by
 construction — Direct Control means a bespoke per-site bylaw, so `load_zoning.py`
@@ -170,16 +187,18 @@ from "DC = legacy industrial" — currently all invisible inside `frac_dc`.
 _Added 2026-07-03 (Peter's direction, from a design discussion). Depends on the
 use-mix pipeline (shipped — the nine `frac_*` shares are exported end-to-end)._
 
-**FIRST DECONFOUNDED PASS DONE 2026-07-07 (Session 22) — see
-`docs/FINDINGS_land_use_diversity.md`; reproducible via
+**DONE 2026-07-07 (Session 22 first pass; Session 24 folded in the resolved DC
+land) — see `docs/FINDINGS_land_use_diversity.md`; reproducible via
 `tools/analyze_land_use_diversity.py`.** Result: (1) revenue/acre vs diversity
-holds under controls (partial r +0.27, n=293) but is secondary to density
-(+0.71); (2) **road-per-dwelling vs diversity is a null** (r ≈ −0.02, robust to
+holds under controls (partial r +0.27, n=299) but is secondary to density
+(+0.66); (2) **road-per-dwelling vs diversity is a null** (r ≈ −0.03, robust to
 both the record-count and `build_connections` dwelling denominators) — the
 road-per-*acre* correlation was age/density confounding, not a per-household
-servicing benefit. Remaining upgrades (open): formal regression + p-values / RF
-importance (folds into item 2); DC provision scrape (item 3) to re-admit the 14
-dropped high-`frac_dc` hoods; the `notebooks/exploration/` scatter version.
+servicing benefit. **Session 24:** item 3's DC classification is now folded into
+the DEV categories and 8 of the 14 dropped high-`frac_dc` hoods re-admitted (n
+293→299); both verdicts are unchanged, so the DC trap was not hiding a different
+story (FINDINGS §2.1). Remaining upgrades (open): formal regression + p-values /
+RF importance (folds into item 2); the `notebooks/exploration/` scatter version.
 
 **Goal.** Compute a per-neighbourhood **land-use diversity index** (normalized
 Shannon entropy over zoned-area shares) as an independent variable, then test

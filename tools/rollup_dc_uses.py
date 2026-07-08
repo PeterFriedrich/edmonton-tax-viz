@@ -46,6 +46,17 @@ OUT = ROOT / "data" / "dc_use_by_hood.csv"
 USES = ("res", "com", "ind", "mix", "inst", "unknown")
 DC_COLS = [f"frac_dc_{u}" for u in USES]
 
+# Hand-resolved overrides for large DC polygons that carry no scrapable bylaw
+# page (url="legacy" sentinel in the City's open-data layer) but whose use is
+# unambiguous from geometry/identity. Keyed on the polygon's unique `id`.
+# Each entry is verified individually; see the note.
+ID_USE_OVERRIDES = {
+    # 50.3 ha polygon coincident (50.29 ha overlap) with dc2-1198, centroid on
+    # West Edmonton Mall — WEM carries two DC polygons (current dc2-1198 + this
+    # legacy one). Same use as its labelled twin.
+    "173291": "mix",
+}
+
 
 def _slug(url):
     return urlparse(url).path.rstrip("/").split("/")[-1] if isinstance(url, str) and url else None
@@ -58,7 +69,14 @@ def main():
     is_dc = zoning["category"] == "dc"
     slugs = zoning.loc[is_dc, "url"].map(_slug)
     uses = slugs.map(labels).fillna("unknown")       # unlabeled DC polygons -> unknown
-    n_unlabeled = int((slugs.map(labels).isna() & is_dc).sum())
+    # Apply hand-resolved per-polygon overrides (large legacy parcels).
+    ov_ids = zoning.loc[is_dc, "id"].map(ID_USE_OVERRIDES)
+    n_override = int(ov_ids.notna().sum())
+    uses = ov_ids.fillna(uses)
+    if n_override:
+        logger.info("Applied %d hand-resolved id overrides: %s", n_override,
+                    {k: v for k, v in ID_USE_OVERRIDES.items()})
+    n_unlabeled = int((slugs.map(labels).isna() & is_dc & ov_ids.isna()).sum())
     if n_unlabeled:
         missing = sorted(set(slugs[slugs.map(labels).isna()].dropna()))
         logger.warning("%d DC polygons have no use label -> dc_unknown: %s",
