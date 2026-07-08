@@ -12,6 +12,59 @@ _Last reconciled: 2026-07-08_
 
 ## Open work
 
+- [ ] **PRE-LAUNCH AUDIT — record-to-parcel cardinality bug (WEM numerator + condo
+  denominator) & lot-acre vs ground-acre methodology (NEW 2026-07-08).** Part of a
+  broader sweep to check the main lenses before this goes public/live officially. Two
+  known distortions share ONE root cause — a **record-to-parcel cardinality mismatch**
+  (multiple assessment records → one parcel geometry) — but push in OPPOSITE directions,
+  so they do NOT cancel in aggregate and summing-before-dividing at the hood level does
+  NOT protect against either (corruption is upstream, in the raw components):
+  1. **WEM**: many assessment records join one parcel → inflates the revenue *numerator*,
+     denominator unchanged.
+  2. **Condos**: shared lot area duplicated across unit records → inflates the area
+     *denominator*.
+  Overlaps existing machinery: the lot-acre denominator work (PR #12,
+  `docs/FINDINGS_lot_dedupe.md`) already ships a repeat-aware `SHARE_MAX_M2` dedupe +
+  `*_per_lot_acre` columns and verified WEM as a single-account needle — this audit is
+  the systematic pre-launch confirmation + the ground-acre methodology cleanup, not a
+  from-scratch dig. **Anchor docs:** `FINDINGS_lot_dedupe.md`, `DATA_INTEGRITY.md`,
+  `DATA.md` §2 (condo/lot_size quirks); consider driving with the `edmonton-audit` skill.
+  **Questions to answer in code/data (numbers, not yes/no):**
+  1. **Quantify WEM's numerator inflation.** Count assessment records per underlying WEM
+     parcel geometry; compute the hood's revenue/acre with duplicate-join revenue
+     collapsed to one record/parcel vs the current summed total. Report the % distortion.
+  2. **Quantify condo denominator inflation.** Confirm whether unit-level records each
+     carry the FULL shared lot area (vs a prorated per-unit share); find the hoods with
+     the highest condo-titled-unit concentration; compute the % area overcount there
+     under current logic vs a corrected (dedup/prorated) area.
+  3. **Confirm the root cause is shared** — both bugs = multiple records → one geometry —
+     and scope a SINGLE join-integrity fix covering both, not two patches.
+  4. **Test ground-acre as a partial mitigation.** Confirm ground-acre (boundary-polygon
+     hood area) is structurally immune to the condo bug (never touches parcel/unit
+     records), and confirm it does NOT fix the WEM numerator bug (revenue is still summed
+     from assessment records regardless of denominator).
+  5. **Characterize what ground-acre actually measures.** Does the hood boundary area
+     include non-parcel land (roads, alleys, parks, ROW) alongside parcel land? If so,
+     quantify the ground-acre vs summed-lot-acre gap on a sample of hoods, so the methods
+     note can state precisely what ground-acre includes that lot-acre excludes.
+  6. **Correct any "Urban3-standard / gross land area" claim for ground-acre.** Web
+     research indicates Urban3 computes value/acre as total *parcel* value ÷ total
+     *parcel* area — i.e. their denominator is closer to this project's **lot-acre**, NOT
+     a boundary-derived gross area. No evidence Urban3 uses a gross/boundary denominator.
+     Fix any doc language implying ground-acre has Urban3 lineage: ground-acre is an
+     **independent addition here, justified on cardinality-robustness grounds**, not
+     methodological continuity with Urban3.
+  7. **Document condo handling as an industry-wide open problem**, not just an internal
+     bug: independent Urban3-method replications (e.g. the Bloomington-Normal Strong Towns
+     GIS group) reportedly EXCLUDED condo parcels entirely rather than solve the ownership
+     complexity. This project's dedupe (if it ships as the fix) is a genuine improvement
+     over exclusion — useful methods-note context.
+  **Deliverable:** a short written finding per question (with numbers) — likely a FINDINGS
+  doc; recommended scope for the single join-integrity fix (WEM + condos); and methods-note
+  language distinguishing **lot-acre (Urban3-analogous)** from **ground-acre (this
+  project's own robustness-motivated addition)**, incl. what land ground-acre includes
+  that lot-acre excludes.
+
 - [ ] **Decoteau / Horse Hill / Riverview capital & debt annotation (NEW 2026-07-08).**
   A **citation/annotation layer, NOT a new spatial cost lens**, covering the three
   greenfield growth areas analyzed in the City's IIMP (Integrated Infrastructure
