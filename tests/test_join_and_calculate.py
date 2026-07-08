@@ -576,3 +576,102 @@ def test_export_keeps_water_per_acre_when_present(tmp_path):
     assert "water_fixed_per_acre" in written.columns
     # the raw totals stay out of the slim file, like every other total
     assert "water_charge_annual" not in written.columns
+
+
+# --- neighbourhood lot-acre denominator toggle ------------------------------
+
+def _lot(rows):
+    return pd.DataFrame(rows)
+
+
+def test_lot_acre_columns_computed():
+    result = join_and_calculate(
+        _assessment([{"neighbourhood_name": "DOWNTOWN", "total_assessed_value": 1_000_000.0}]),
+        _boundaries([{"neighbourhood_name": "DOWNTOWN", "area_acres": 100.0}]),
+        lot_acres=_lot([
+            {"neighbourhood_name": "DOWNTOWN", "lot_acres_eligible": 50.0,
+             "value_lot_eligible": 900_000.0},
+        ]),
+    )
+    row = result.iloc[0]
+    assert row["parcel_frac"] == pytest.approx(0.5)          # 50 / 100
+    assert row["value_per_lot_acre"] == pytest.approx(18_000.0)  # 900k / 50
+    assert "revenue_per_lot_acre" not in result.columns      # no revenue path
+
+
+def test_lot_acre_revenue_variant():
+    result = join_and_calculate(
+        _assessment([{"neighbourhood_name": "DOWNTOWN",
+                      "total_assessed_value": 1_000_000.0, "total_revenue": 10_000.0}]),
+        _boundaries([{"neighbourhood_name": "DOWNTOWN", "area_acres": 100.0}]),
+        lot_acres=_lot([
+            {"neighbourhood_name": "DOWNTOWN", "lot_acres_eligible": 50.0,
+             "value_lot_eligible": 900_000.0, "revenue_lot_eligible": 9_000.0},
+        ]),
+    )
+    assert result.iloc[0]["revenue_per_lot_acre"] == pytest.approx(180.0)  # 9k / 50
+
+
+def test_lot_acre_low_parcel_frac_suppressed(caplog):
+    with caplog.at_level("INFO"):
+        result = join_and_calculate(
+            _assessment([
+                {"neighbourhood_name": "DOWNTOWN", "total_assessed_value": 1_000_000.0},
+                {"neighbourhood_name": "PARK", "total_assessed_value": 100_000.0},
+            ]),
+            _boundaries([
+                {"neighbourhood_name": "DOWNTOWN", "area_acres": 100.0},
+                {"neighbourhood_name": "PARK", "area_acres": 100.0},
+            ]),
+            lot_acres=_lot([
+                {"neighbourhood_name": "DOWNTOWN", "lot_acres_eligible": 50.0,
+                 "value_lot_eligible": 900_000.0},
+                {"neighbourhood_name": "PARK", "lot_acres_eligible": 5.0,   # 5% parcel
+                 "value_lot_eligible": 90_000.0},
+            ]),
+        )
+    park = result[result["neighbourhood_name"] == "PARK"].iloc[0]
+    assert pd.isna(park["value_per_lot_acre"])           # suppressed (< 15%)
+    assert park["parcel_frac"] == pytest.approx(0.05)    # but parcel_frac still ships
+    assert "below 15% parcel land suppressed" in caplog.text
+    dt = result[result["neighbourhood_name"] == "DOWNTOWN"].iloc[0]
+    assert dt["value_per_lot_acre"] == pytest.approx(18_000.0)  # unaffected
+
+
+def test_lot_acre_no_eligible_parcels_suppressed():
+    # A hood with no eligible parcels (no lot_acres row) -> NaN parcel_frac ->
+    # suppressed (the guard covers NaN, not just < floor).
+    result = join_and_calculate(
+        _assessment([{"neighbourhood_name": "DOWNTOWN", "total_assessed_value": 1_000_000.0}]),
+        _boundaries([{"neighbourhood_name": "DOWNTOWN", "area_acres": 100.0}]),
+        lot_acres=_lot([  # DOWNTOWN absent -> no eligible parcels
+            {"neighbourhood_name": "OTHER", "lot_acres_eligible": 10.0,
+             "value_lot_eligible": 50.0},
+        ]),
+    )
+    assert pd.isna(result.iloc[0]["value_per_lot_acre"])
+    assert pd.isna(result.iloc[0]["parcel_frac"])
+
+
+def test_lot_acre_columns_absent_by_default():
+    result = join_and_calculate(
+        _assessment([{"neighbourhood_name": "DOWNTOWN", "total_assessed_value": 1_000_000.0}]),
+        _boundaries([{"neighbourhood_name": "DOWNTOWN", "area_acres": 100.0}]),
+    )
+    assert "value_per_lot_acre" not in result.columns
+    assert "parcel_frac" not in result.columns
+
+
+def test_export_keeps_lot_acre_columns_when_present(tmp_path):
+    result = join_and_calculate(
+        _assessment([{"neighbourhood_name": "DOWNTOWN", "total_assessed_value": 1_000_000.0}]),
+        _boundaries([{"neighbourhood_name": "DOWNTOWN", "area_acres": 100.0}]),
+        lot_acres=_lot([
+            {"neighbourhood_name": "DOWNTOWN", "lot_acres_eligible": 50.0,
+             "value_lot_eligible": 900_000.0},
+        ]),
+    )
+    written = export_geojson(result, str(tmp_path / "out.geojson"))
+    assert "value_per_lot_acre" in written.columns
+    assert "parcel_frac" in written.columns
+    assert "lot_acres_eligible" not in written.columns  # raw total stays out of slim

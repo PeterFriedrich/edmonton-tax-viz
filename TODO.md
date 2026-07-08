@@ -12,8 +12,22 @@ _Last reconciled: 2026-07-08_
 
 ## Open work
 
-- [ ] **PRIORITY — Lot-acre denominator TOGGLE on the neighbourhood (first) lens
-  (NEW 2026-07-08, out of the cardinality audit below).** The audit found the first
+- [x] ~~**PRIORITY — Lot-acre denominator TOGGLE on the neighbourhood (first) lens
+  (NEW 2026-07-08, out of the cardinality audit below).**~~ **BUILT 2026-07-08**
+  (branch `feature/hood-lot-acre-toggle`): `export_value_grid.build_hood_lot_acres`
+  (per-hood dedupe rollup reusing `_point_lot_stats`/`SHARE_MAX_M2`) →
+  `join_and_calculate` `lot_acres=` param computes `value_per_lot_acre` /
+  `revenue_per_lot_acre` + `parcel_frac`, with a `LOW_PARCEL_FRAC = 0.15` guard
+  (7 hoods suppressed on 2025 data — 6 set-aside + MAPLE RIDGE 1.6%); `main.py`
+  builds it from the shared `grid_input`; columns in `SLIM_COLUMNS`. Frontend:
+  the Glass `#denom` control mirrored onto the Money view (shared `state.denom`,
+  `moneyScale()` with runtime p97.5 clamp + height parity, `lotBlurb`/legend/
+  tooltip follow). +9 pytest (247), headless-verified
+  (`verify-money-denom.js`, all PASS) + screenshots. Real numbers match the
+  findings: U of A ×2.0, Rossdale ×2.8, Riverdale ×2.5. **Still open:** Peter's
+  on-device eyeball + PR merge + deploy. Original brief kept below for reference.
+  <details><summary>original item</summary>
+   The audit found the first
   lens has NO bug to fix, but a parcel/lot-acre denominator is worth OFFERING: it
   systematically boosts park/river-valley hoods (median ×2.47 $/acre for the 51 hoods
   <55% parcel land; Rossdale ×2.8, Riverdale ×2.4) — the Urban3-analogous "value per
@@ -34,6 +48,7 @@ _Last reconciled: 2026-07-08_
   ×6960) as the guard-FAIL case when regression-testing the ~15% floor. NB the toggle
   makes U of A's revenue intensity honest but can't show its exempt-land service
   free-riding — that's the services lens, not this one.
+  </details>
 
 - [ ] **PRE-LAUNCH AUDIT — record-to-parcel cardinality bug (WEM numerator + condo
   denominator) & lot-acre vs ground-acre methodology (NEW 2026-07-08).** Part of a

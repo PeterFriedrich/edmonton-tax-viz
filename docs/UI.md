@@ -337,10 +337,13 @@ plane is mouseover geography. Implementation (`web/index.html`,
   collapses onto a single point → one 2.47-acre cell) reaches exactly the
   money view's tallest hood prism. Both linear (the honesty rule). Legend
   relabels "… (100 m cells)".
-- **Spike denominator toggle (added 2026-07-05)**: a "Ground acres | Lot
-  acres" control in the layers panel (`#denom`, `state.denom`,
-  `applyDenom()`), Glass-only, hidden when the grid file predates the
-  lot-acre columns (`gridData.hasLot`). **Ground** (default) divides each
+- **Spike denominator toggle (added 2026-07-05; shared with the Money view
+  2026-07-08)**: a "Ground acres | Lot acres" control in the layers panel
+  (`#denom`, `state.denom`, `applyDenom()`), hidden when the grid file
+  predates the lot-acre columns (`gridData.hasLot`). The same `state.denom`
+  drives the Money view's neighbourhood toggle (below), so it persists across
+  the two — flip to lot in Glass and Money shows lot too. **Ground** (default)
+  divides each
   cell's total by the cell's fixed 2.47 acres; **Lot** divides by the parcel
   acres the cell's properties own (`*_per_lot_acre` columns —
   `export_value_grid.py`, dedupe heuristic in
@@ -376,6 +379,41 @@ plane is mouseover geography. Implementation (`web/index.html`,
   screenshot eyeball at 60% and 100% (`tools/profiling/shot-glass.js`) and
   ground-vs-lot at 100% (`tools/profiling/shot-denom.js` — the WEM needle
   visibly collapses in lot mode; downtown becomes the sole peak).
+
+### Neighbourhood denominator toggle (Money view, built 2026-07-08)
+The Glass "Ground acres | Lot acres" control, mirrored onto the **Money view's
+neighbourhood prisms** — the "value per *developable* acre" view (Urban3-
+analogous), an editorial alternative denominator, NOT a correction (the first
+lens is cardinality-robust either way — `docs/FINDINGS_denominator_cardinality.md`).
+Implementation (`web/index.html`):
+- **Same control, shared state**: the `#denom` panel shows in Money too (the
+  layers panel opens for it; the ghost-prism slider rows hide), gated on the
+  hood GeoJSON carrying `value_per_lot_acre` (`state.hasHoodLot`, set at load).
+  The header reads "Denominator" in Money, "Spike denominator" in Glass.
+- **`moneyScale()`** (the `gridScale()`/`svcScale()` pattern, cached per
+  column): **Ground** keeps each metric's fixed clamp + elevation (or the
+  residential-subset clamp when the lens is on). **Lot** swaps to the
+  `*_per_lot_acre` column with a **runtime p97.5 colour clamp** and **height
+  parity** — the tallest lot-acre hood reaches exactly the tallest ground-acre
+  prism (both LINEAR, the honesty rule). `moneyColKey()` maps metric+denom to
+  the column; `fillFor`/`topRings`/`labelZ` take the column key.
+- **Low-parcel guard**: hoods below **15% parcel land** (and hoods with no
+  eligible parcels) carry a `null` `value_per_lot_acre` from the pipeline
+  (`join_and_calculate.LOW_PARCEL_FRAC`), so lot mode renders them the
+  set-aside grey and flat — otherwise the near-zero denominator explodes (Mill
+  Woods Golf Course 0% → ×6960). On 2025 data 7 hoods suppress (6 set-aside +
+  MAPLE RIDGE at 1.6%). `parcel_frac` still ships for the tooltip.
+- **Chrome follows the denominator**: legend relabels "… per lot acre" with a
+  runtime max ($77,714+ revenue vs $50k+ ground), the aside swatch reads "Set
+  aside, or too little parcel land", the blurb swaps to the metric's `lotBlurb`
+  (`moneyBlurb()`), and the tooltip shows "$… / lot acre" + "parcel land X% of
+  area". Verified numbers: U of A $7.6M→$15.2M/ac ×2.0 (50% parcel), Rossdale
+  ×2.8, Riverdale ×2.5 — river-valley/park/exempt-institutional hoods rise.
+- Headless-verified (`tools/profiling/verify-money-denom.js`: control shown +
+  header, column swap, clamp == independent p97.5, height parity exact,
+  MAPLE RIDGE suppressed→grey+flat, U of A coloured, tooltip prose, denom
+  persistence across a Glass round-trip — all PASS) + screenshots
+  (`tools/profiling/shot-money-denom.js`).
 
 ---
 

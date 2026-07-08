@@ -6,6 +6,13 @@ _Investigated 2026-07-08 (pre-launch lens audit). Reproduce:
 the denominator conclusions hold for `revenue_per_acre` too. Sibling of
 `FINDINGS_lot_dedupe.md` (the grid/Glass-view lot-acre work this reuses)._
 
+_**Shipped 2026-07-08** (branch `feature/hood-lot-acre-toggle`): the lot-acre
+denominator toggle proposed here is BUILT on the Money view —
+`export_value_grid.build_hood_lot_acres` → `join_and_calculate` (`lot_acres=`,
+`LOW_PARCEL_FRAC = 0.15` guard) → `SLIM_COLUMNS`; frontend mirrors the Glass
+`#denom` control (`moneyScale()`). Real-data numbers below reproduced exactly
+in the served GeoJSON. See `docs/UI.md` "Neighbourhood denominator toggle"._
+
 ## Question
 
 The launch audit asked whether the two known record-to-parcel cardinality

@@ -232,6 +232,74 @@ def _cell_lot_metrics(pts: pd.DataFrame, cells: pd.DataFrame, has_levy: bool) ->
     return out
 
 
+def build_hood_lot_acres(df: pd.DataFrame) -> pd.DataFrame:
+    """Per-hood eligible dollars + deduped lot acres for the neighbourhood
+    lot-acre denominator (the Glass grid's per-cell rollup, at the hood unit).
+
+    Mirrors ``_cell_lot_metrics`` one aggregation level up: it answers "what is
+    this neighbourhood's assessed value / levy per acre of the parcel land its
+    properties actually own", the Urban3-analogous land-productivity view that
+    ``join_and_calculate`` divides and guards.
+
+    ``df`` needs ``neighbourhood_name``/``latitude``/``longitude``/``lot_size``/
+    ``assessed_value`` and optionally ``levy``. Reuses the FINDINGS_lot_dedupe
+    heuristic (``_point_lot_stats`` / ``SHARE_MAX_M2``): a point's deduped
+    ``lot_m2`` is a POINT-level quantity, counted once per point; ineligible
+    points (majority-null multi-unit, or no usable lot size) are excluded from
+    BOTH the numerator and the denominator, and their count + value reported —
+    no silent drops.
+
+    Returns one row per hood that has any eligible point:
+        neighbourhood_name
+        lot_acres_eligible    float  Σ deduped lot acres over eligible points
+        value_lot_eligible    float  Σ assessed_value over rows at those points
+        revenue_lot_eligible  float  Σ levy — only when ``levy`` is present
+    """
+    pts = df.loc[df["latitude"].notna() & df["longitude"].notna()]
+    per_point = _point_lot_stats(pts[["latitude", "longitude", "lot_size"]])
+    hood_of_point = (
+        pts.groupby(["latitude", "longitude"], sort=False)["neighbourhood_name"].first()
+    )
+    per_point = per_point.merge(
+        hood_of_point.rename("neighbourhood_name").reset_index(),
+        on=["latitude", "longitude"],
+    )
+
+    lot_acres = (
+        per_point.loc[per_point["eligible"]]
+        .groupby("neighbourhood_name")["lot_m2"].sum() / SQ_M_PER_ACRE
+    ).rename("lot_acres_eligible")
+
+    # Eligible dollars: every row at an eligible point (a multi-unit point's
+    # units are all separately levied — sum the rows; the lot area was already
+    # deduped once per point above).
+    rows = pts.merge(
+        per_point[["latitude", "longitude", "eligible"]],
+        on=["latitude", "longitude"], how="left",
+    )
+    eligible = rows["eligible"].fillna(False)
+    agg = {"assessed_value": "sum"}
+    has_levy = "levy" in df.columns
+    if has_levy:
+        agg["levy"] = "sum"
+    dollars = rows.loc[eligible].groupby("neighbourhood_name").agg(agg)
+
+    ineligible = per_point[~per_point["eligible"]]
+    if len(ineligible):
+        dropped_value = rows.loc[~eligible, "assessed_value"].sum()
+        logger.info(
+            "Hood lot-acre: %d points (%d rows, $%.0fM assessed) lot-ineligible "
+            "— excluded from the lot-acre numerator AND denominator (ground-acre "
+            "unaffected)",
+            len(ineligible), int((~eligible).sum()), dropped_value / 1e6,
+        )
+
+    out = dollars.join(lot_acres, how="outer").reset_index()
+    return out.rename(columns={
+        "assessed_value": "value_lot_eligible", "levy": "revenue_lot_eligible",
+    })
+
+
 def check_lot_acre_bounds(
     df: pd.DataFrame,
     boundaries: pd.DataFrame,
