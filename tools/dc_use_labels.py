@@ -359,7 +359,7 @@ dc2-106	com	m	convenience commercial+personal service
 dc2-1060	mix	m	arts/entertainment/education/ltd residential/district energy
 dc2-1061	com	h	vehicle-oriented commercial
 dc2-1062	ind	m	general industrial + conversion to commercial office
-dc2-1063	com	l	single detached or small health services
+dc2-1063	res	l	single detached house + optional small health service (QA)
 dc2-1064	res	m	two high rise residential + non-residential podium
 dc2-1066	com	m	retail/general commercial/office
 dc2-1067	res	m	two high rise residential + complementary podium
@@ -482,7 +482,7 @@ dc2-1213	com	m	medical office+treatment facility+commercial
 dc2-1215	res	h	small scale housing
 dc2-1216	res	h	small scale housing
 dc2-1217	res	h	6-storey multi-family residential
-dc2-1218	mix	m	education/commercial/office/light industrial
+dc2-1218	com	m	education/commercial/office/light industrial, no residential (QA)
 dc2-1219	res	m	medium density residential + small commercial
 dc2-122	inst	m	religious assembly + related uses
 dc2-1220	mix	m	residential Multi-unit + main floor commercial + standalone commercial
@@ -505,7 +505,7 @@ dc2-1238	res	h	medium density Multi-Unit
 dc2-1240	com	m	commercial shopping centre + self-storage/office/entertainment
 dc2-1241	mix	m	high density mixed-use commercial + high rise residential
 dc2-1242	res	m	residential + ltd non-residential ground
-dc2-1243	mix	m	commercial/office/health/community/recreational/educational
+dc2-1243	com	m	commercial/office/health/rec/educational, no residential (QA)
 dc2-1244	res	h	medium density Multi-Unit
 dc2-1245	ind	m	industrial businesses + Public Education
 dc2-1247	ind	m	veterinary hospital + apt hotels + medium industrial
