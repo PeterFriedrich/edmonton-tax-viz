@@ -16,6 +16,26 @@ _Started 2026-07-01._
 
 ## 1. Do the performance tails match the land-use classification? (outlier audit)
 
+**DONE 2026-07-09 — see `docs/FINDINGS_outlier_tails.md`; reproducible via
+`tools/audit_outlier_tails.py`.** Surfaced top/bottom-15 by revenue/acre AND
+value/acre (358 hoods, 48 set-aside excluded), each annotated with composition
+(served `frac_*` + item 3's resolved DC use split), dominant base zone code +
+bylaw description, a downtown-anchored distance band, and a thin-denominator check
+(account count + largest-account share). **Verdict: the classification holds up —
+no build-side refactor of `load_zoning.py` categories warranted.** (1) The
+outskirts-high-performer surprise is real but benign — big-box DC power centres
+(resolved to commercial by item 3), genuine industrial, and *dense new-suburb
+residential* (thousands of small accounts, 1–3 % top-share → not artifacts). (2)
+The weak-non-res cluster is low-intensity heavy industrial on very large acreages
+(Clover Bar 4,765 ac, ind50) + the exempt/institutional roll gap (Yellowhead
+Corridor West, U of A Farm — item 7) + annexed-unbuilt `AG` land; all correctly
+low, none miscoded. (3) The floated **mixed-use split is rejected** — mix is a
+minority fraction everywhere. (4) Thin-denom artifacts appear only in the *bottom*
+tail, so the per-acre leaders are trustworthy at face value. The annotated tails
+are a ready feature set for item 2.
+
+<details><summary>Original item (kept for provenance)</summary>
+
 **Observation.** Some of the highest revenue/acre performers sit well out on the
 city **outskirts**, which is counterintuitive — you'd expect the core to dominate.
 Suspicion: several are **mixed-use** (currently classified `nonres`) or otherwise
@@ -64,6 +84,8 @@ statements, DATA.md §5). Two composition facts already surfaced:
   acres citywide, ~1% of nonres) — if mixed-use drives outliers it will show
   as a minority fraction, not as dominance; use `frac_mixed > 0` rather than
   a dominance test when flagging suspects.
+
+</details>
 
 ---
 
