@@ -8,9 +8,42 @@ check `git` / `pytest` directly — do not restate it here, it only goes stale.
 Session summaries (`session-summary/`) are dated *narratives* of what happened and
 why. This file owns *what's left*. When they disagree, this file wins.
 
-_Last reconciled: 2026-07-08_
+_Last reconciled: 2026-07-09_
 
 ## Open work
+
+- [ ] **PUBLIC RELEASE PREP (NEW 2026-07-09 — scope + rationale in
+  `docs/PLAN_public_release.md`; read it before working these).** An external
+  prioritization memo was intaken and reconciled: its build list (WEM/condo fix,
+  roads, set-aside, fire, stormwater) is **already shipped or closed** — see the
+  plan's reconciliation table. What remains is presentation-layer credibility +
+  ops hardening. Release scope locked: everything live stays in; transit/
+  recreation/franchise-display stay out. Items, ranked:
+  - [x] ~~P1.1 README refresh~~ — done 2026-07-09 (this PR): "Methodology
+    (Planned)"/QGIS/AltaLIS-FOIP sections replaced with as-built.
+  - [ ] **P1.2 In-app attribution/methods affordance** — the live map has NO
+    link to repo, data sources, or methodology. Small footer/info control:
+    data source + assessment year, modeled-not-billed pointer, methods link.
+  - [ ] **P1.3 Public METHODS page** — one readable methodology note distilled
+    from the FINDINGS docs (metric definitions, denominators + guard,
+    set-aside, the WEM/condo cardinality story as worked examples, utility
+    model formulas + validation ratios, fire caveats). Curation, not research.
+    Build before P1.2 (the affordance links to it).
+  - [ ] **P2.1 CI unmatched-set assertion** (= the data-integrity audit §4 item
+    below, priority-bumped: a public auto-refreshing site must fail loud on
+    name drift, not warn-silent).
+  - [ ] **P2.2 Heartbeat PAT** (= the deployment follow-on below, bumped from
+    "watch" to "do": 60-day Action auto-disable means silently stale public data).
+  - [ ] **P2.3 Security/PII checklist pass** — run `docs/security-audit.md` for
+    real once and tick/date its boxes (PII in outputs/logs, gitignore coverage,
+    dependency pins).
+  - [ ] **P3 Decoteau/HHR/Riverview IIMP annotation** (= the existing item
+    below; laptop-only) — the OIC-reconciliation credibility anchor for the
+    councillor audience; wanted before a councillor push, not gating a soft link.
+  - [ ] **OPEN QUESTION (Peter ↔ Data for Good): engineering hands or
+    hosting/promotion only?** Plan defaults to hosting-only (narrative
+    tightness, build nothing new); engineering hands would only ADD candidates
+    (transit, per-year archives, parcel-level), not change release scope.
 
 - [x] ~~**PRIORITY — Lot-acre denominator TOGGLE on the neighbourhood (first) lens
   (NEW 2026-07-08, out of the cardinality audit below).**~~ **BUILT 2026-07-08**
