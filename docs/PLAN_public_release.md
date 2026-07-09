@@ -1,8 +1,8 @@
 # Public Release Plan — prepping for an external audience
 
 _Written 2026-07-09, from an external prioritization memo Peter brought in (a
-Claude-web planning conversation about showing the tool to councillors, a public
-audience, and possibly Data for Good). This doc records the intake — the memo
+planning conversation about opening the tool to a wider public audience). This
+doc records the intake — the memo
 reconciled against the repo's actual state — and the resulting release plan.
 The memo predates Sessions 25–31; most of its build list turned out to be
 already shipped. TODO.md carries the actionable items; this doc owns the
@@ -30,19 +30,16 @@ readable methods page) lag far behind the shipped analysis, plus a handful of
 ops-hardening items already on TODO.
 
 The memo's core *editorial* principle survives intact and governs this plan:
-**fewer, bulletproof lenses beat more, shakier ones** in front of councillors
-who will reconcile our numbers against Administration's OIC figures.
+**fewer, bulletproof lenses beat more, shakier ones** in front of readers who
+will reconcile our numbers against Administration's OIC figures.
 
-## 2. The unresolved fork: what "platform this" means from Data for Good
+## 2. Platform question — RESOLVED
 
-The memo's closing question — engineering hands vs hosting/promotion only — is
-**Peter's to answer with Data for Good; it is open as of 2026-07-09.**
-
-Plan default: assume **hosting/promotion only** → optimize narrative tightness,
-build nothing new. This is the conservative branch and nothing below changes if
-it's wrong — engineering hands would *add* candidates (transit lens, per-year
-archives, parcel-level work per `PARCEL_LEVEL_OPPORTUNITIES.md`), not alter the
-release scope.
+**Decided (Peter, 2026-07-09): no new hosting, no new engineering.** The
+release ships on the existing GitHub Pages deployment, and the pre-release
+scope is narrative tightness — build nothing new. Expansion candidates
+(transit lens, per-year archives, parcel-level work per
+`PARCEL_LEVEL_OPPORTUNITIES.md`) stay Phase 2.
 
 ## 3. Release scope (proposed lock)
 
@@ -67,7 +64,7 @@ the residential slice (excess localized + explained), water at ≈1.26× with th
 gap characterized — both are honestly labeled "modeled, not billed" in-app and
 carry written validation docs. That meets the "bulletproof or defer" bar via
 *honest labeling + published validation* rather than deferral. If Peter wants a
-stricter read for the councillor audience, the cheap fallback is shipping them
+stricter read for the most skeptical readers, the cheap fallback is shipping them
 default-unchecked (they already are — roads is the default Services layer) with
 the methods page carrying the caveats. **No code change proposed.**
 
@@ -111,10 +108,10 @@ path dead-ends:
 ### P3 — Credibility anchor (laptop-only)
 
 7. **Decoteau / Horse Hill / Riverview IIMP annotation** (existing TODO item,
-   scope locked there) — the direct bridge to the OIC accounting councillors
-   will bring to the table. Blocked on a laptop session (edmonton.ca
-   unreachable from the Oracle box). Worth doing before a councillor-facing
-   push; not a blocker for a soft public link.
+   scope locked there) — the direct bridge to the OIC accounting the City is
+   introducing for the 2027–2030 budget cycle. Blocked on a laptop session
+   (edmonton.ca unreachable from the Oracle box). Worth doing before wider
+   outreach; not a blocker for a soft public link.
 
 ### P4 — Polish (nice-to-have, not gating)
 
@@ -135,5 +132,3 @@ with its caveat, per Peter 2026-07-07).
 3. P2 items — small, independent; can ride along or batch into one hardening
    session.
 4. P3 on the next laptop session.
-5. Peter answers the fork with Data for Good → revisit §2 only if engineering
-   hands materialize.

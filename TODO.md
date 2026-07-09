@@ -24,11 +24,10 @@ _Last reconciled: 2026-07-09_
   - [ ] **P1.2 In-app attribution/methods affordance** — the live map has NO
     link to repo, data sources, or methodology. Small footer/info control:
     data source + assessment year, modeled-not-billed pointer, methods link.
-  - [ ] **P1.3 Public METHODS page** — one readable methodology note distilled
-    from the FINDINGS docs (metric definitions, denominators + guard,
-    set-aside, the WEM/condo cardinality story as worked examples, utility
-    model formulas + validation ratios, fire caveats). Curation, not research.
-    Build before P1.2 (the affordance links to it).
+  - [x] ~~P1.3 Public METHODS page~~ — done 2026-07-09 (PR #32 merged):
+    `docs/METHODS.md` (metric definitions, denominators + guard, set-aside,
+    WEM/condo worked examples, model formulas + validation ratios,
+    limitations) + README Technical Docs link. P1.2 should link to it.
   - [ ] **P2.1 CI unmatched-set assertion** (= the data-integrity audit §4 item
     below, priority-bumped: a public auto-refreshing site must fail loud on
     name drift, not warn-silent).
@@ -38,12 +37,11 @@ _Last reconciled: 2026-07-09_
     real once and tick/date its boxes (PII in outputs/logs, gitignore coverage,
     dependency pins).
   - [ ] **P3 Decoteau/HHR/Riverview IIMP annotation** (= the existing item
-    below; laptop-only) — the OIC-reconciliation credibility anchor for the
-    councillor audience; wanted before a councillor push, not gating a soft link.
-  - [ ] **OPEN QUESTION (Peter ↔ Data for Good): engineering hands or
-    hosting/promotion only?** Plan defaults to hosting-only (narrative
-    tightness, build nothing new); engineering hands would only ADD candidates
-    (transit, per-year archives, parcel-level), not change release scope.
+    below; laptop-only) — the OIC-reconciliation credibility anchor; wanted
+    before wider outreach, not gating a soft link.
+  Platform question RESOLVED (Peter, 2026-07-09): **no new hosting, no new
+  engineering** — release ships on the existing Pages deployment, nothing new
+  gets built pre-release (plan §2).
 
 - [x] ~~**PRIORITY — Lot-acre denominator TOGGLE on the neighbourhood (first) lens
   (NEW 2026-07-08, out of the cardinality audit below).**~~ **BUILT 2026-07-08**
