@@ -21,6 +21,7 @@ from download_data import (
     SOURCES,
     check_not_truncated,
     csv_record_count,
+    download_with_retry,
     feature_count,
     verify_download,
 )
@@ -129,6 +130,49 @@ def test_verify_csv_source_uses_record_count(tmp_path, monkeypatch):
     monkeypatch.setattr(download_data, "server_count", lambda url: 3)
     with pytest.raises(RuntimeError, match="server reports 3"):
         verify_download("assessment", {"dest": p, "count_url": "http://x"})
+
+
+# --- retry wrapper ----------------------------------------------------------
+
+
+def test_retry_succeeds_after_transient_failures(monkeypatch):
+    """A slow-tail failure or two must not sink the download."""
+    monkeypatch.setattr(download_data.time, "sleep", lambda s: None)
+    calls = {"n": 0}
+
+    def flaky(url, dest, timeout=300):
+        calls["n"] += 1
+        if calls["n"] < 3:
+            raise ConnectionError("read timed out")
+        return 123
+
+    monkeypatch.setattr(download_data, "download", flaky)
+    assert download_with_retry("u", "d", attempts=3) == 123
+    assert calls["n"] == 3
+
+
+def test_retry_reraises_after_exhausting_attempts(monkeypatch):
+    monkeypatch.setattr(download_data.time, "sleep", lambda s: None)
+
+    def always_fail(url, dest, timeout=300):
+        raise ConnectionError("read timed out")
+
+    monkeypatch.setattr(download_data, "download", always_fail)
+    with pytest.raises(ConnectionError, match="read timed out"):
+        download_with_retry("u", "d", attempts=3)
+
+
+def test_retry_passes_timeout_through(monkeypatch):
+    monkeypatch.setattr(download_data.time, "sleep", lambda s: None)
+    seen = {}
+
+    def capture(url, dest, timeout=300):
+        seen["timeout"] = timeout
+        return 0
+
+    monkeypatch.setattr(download_data, "download", capture)
+    download_with_retry("u", "d", timeout=900)
+    assert seen["timeout"] == 900
 
 
 # --- SOURCES config invariants ----------------------------------------------

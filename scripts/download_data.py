@@ -44,6 +44,7 @@ import csv
 import json
 import logging
 import sys
+import time
 from pathlib import Path
 
 import requests
@@ -84,6 +85,10 @@ SOURCES = {
         "dest": RAW / "roads.geojson",
         "limit": 100000,  # 53,720 centrelines as of 2026-07 (SPEC_services.md)
         "count_url": _count_url("9j8t-zm52"),
+        # Socrata generates this ~54k-feature GeoJSON server-side before sending
+        # the first byte; the default 300s read timeout has failed on the tail
+        # (run 28976864116, 2026-07-08). Give the slow endpoint real headroom.
+        "timeout": 900,
     },
     "property_info": {
         # Full-export endpoint, no $limit — only the server cross-check applies.
@@ -208,6 +213,33 @@ def download(url: str, dest: Path, timeout: int = 300) -> int:
     return written
 
 
+def download_with_retry(
+    url: str, dest: Path, timeout: int = 300, attempts: int = 3, backoff: int = 10
+) -> int:
+    """``download`` with retry-on-failure, for transient portal blips.
+
+    The read timeout (server generation time) is handled by ``timeout``; this
+    wrapper covers *transient* failures — dropped connections, a one-off slow
+    tail — by re-attempting with linear backoff. A persistently slow endpoint
+    should get a larger ``timeout`` (see the roads source), not more attempts.
+    """
+    last: Exception | None = None
+    for attempt in range(1, attempts + 1):
+        try:
+            return download(url, dest, timeout=timeout)
+        except Exception as exc:  # noqa: BLE001 — retry any download failure
+            last = exc
+            if attempt < attempts:
+                wait = backoff * attempt
+                logger.warning(
+                    "download attempt %d/%d failed (%s) — retrying in %ds",
+                    attempt, attempts, exc, wait,
+                )
+                time.sleep(wait)
+    assert last is not None  # loop ran >= 1 time
+    raise last
+
+
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument(
@@ -232,7 +264,7 @@ def main(argv: list[str] | None = None) -> None:
     for name in wanted:
         src = SOURCES[name]
         try:
-            download(src["url"], src["dest"])
+            download_with_retry(src["url"], src["dest"], timeout=src.get("timeout", 300))
             verify_download(name, src)
         except Exception as exc:  # noqa: BLE001 — report every input, don't stop at the first
             logger.error("FAILED to download %s: %s", name, exc)
