@@ -99,8 +99,10 @@ drivers across all neighbourhoods.
 - **Feature matrix doesn't exist yet.** `join_and_calculate` emits only a slim column
   set; the per-category fracs + density/class features would need assembling (a small
   export step, or a notebook that re-joins from the source frames).
-- **`scikit-learn` not installed** in the `edmonton-tax` env (scipy isn't either —
-  numpy-only today). Adding it is the first setup step.
+- ~~**`scikit-learn` not installed**~~ **DONE 2026-07-09** — `scikit-learn==1.9.0`
+  + `scipy==1.18.0` installed into `.venv` and pinned in `requirements.txt` (NOT
+  `requirements-ci.txt` — the refresh pipeline doesn't use them; exploration-only).
+  The remaining blocker is the feature matrix (above).
 - Notebook lives in `notebooks/exploration/`; per global CLAUDE.md use the Jupyter MCP
   tools, not NotebookEdit.
 
