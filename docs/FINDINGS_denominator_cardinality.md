@@ -124,6 +124,11 @@ the existing `KNOWN_BOUND_OUTLIERS` handling for the >100% (Pembina) tail.
 
 ## Worked case study — University of Alberta (exempt-institutional hood)
 
+_Generalized 2026-07-09 across all hoods → `docs/FINDINGS_exempt_institutional.md`
+(`ANALYSIS_BACKLOG` item 7): U of A is the extreme high-value case of 20 hoods with
+≥10 % untaxed institutional land; its campus is 100 % provincial-crown `AJ` zoning._
+
+
 The rise examples above are all park/river-valley hoods. **U of A is a distinct
 category the toggle also serves: an exempt-institutional hood**, where the lift
 comes not from parks but from tax-exempt campus/hospital land that is *absent from

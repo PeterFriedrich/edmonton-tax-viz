@@ -368,6 +368,25 @@ not the citywide recurring-cost map).
 
 ## 7. Exempt-institutional hoods — where does exempt-land dilution bite hardest?
 
+**DONE 2026-07-09 — see `docs/FINDINGS_exempt_institutional.md`; reproducible via
+`tools/audit_exempt_institutional.py`.** Measured (not guessed) exempt-institutional
+land as institutional-proxy zoning (`UI/UF/AJ/PU`) carrying no taxable account:
+overlay institutional acres by code, spatial-join the deduped taxable footprint onto
+them, `exempt_inst_acres = inst acres − taxed footprint`. Results: (1) **20 hoods**
+have ≥10 % of their polygon as untaxed institutional land; **U of A is the extreme
+high-value case** ($15.2M/lot-ac, 145 exempt ac, ×2.0 lift) — Edmonton Northlands
+(civic expo grounds) is the clean second. (2) The exempt footprint is mostly **NOT**
+`UI` "university/hospital" zoning — citywide it's `PU` 4,774 ac + `AJ` 1,870 ac +
+`UF` 1,819 ac vs `UI` only 205 ac; U of A's campus is 100 % `AJ` (provincial crown).
+(3) The measurement cleanly separates the three look-alikes: genuine exempt-dilution
+(U of A), utility corridors (`PU` — Poundmaker tops the raw ranking but is low-value
+EPCOR land + stormwater ponds), and low-value institutional land that is ON the roll
+(U of A Farm — 726 inst ac but 85 % taxed as farmland). Park/river hoods (Riverdale,
+Cloverdale) correctly reject as ~0 % exempt despite big lot-acre boosts. Feeds the
+lot-acre toggle framing + the services-lens free-riding estimate (`SPEC_services.md`).
+
+<details><summary>Original item (kept for provenance)</summary>
+
 _Added 2026-07-08, generalized out of the University of Alberta hand-analysis
 (see `docs/FINDINGS_denominator_cardinality.md` worked case). U of A: $2.242B
 taxable value on 47 accounts sitting on 147.5 of 295.2 polygon acres (50%
@@ -400,3 +419,5 @@ and from park/river-valley (already covered in item 1 / the lot-acre findings).
 **Output:** a ranked list of exempt-institutional hoods + a FINDINGS note; feeds
 both the lot-acre toggle framing and the services-lens cost-vs-revenue story.
 Related: item 1 (outlier tails), the PRIORITY lot-acre toggle in `TODO.md`.
+
+</details>
