@@ -662,3 +662,43 @@ Phase 1 decisions that keep this viable:
 - No hardcoded paths
 - No analysis logic in `plot_choropleth.py` — rendering only, swappable
 - Clean module boundaries so GeoJSON export can be added to `join_and_calculate.py` without touching other modules
+
+---
+
+## Reconciliation notes — 2026-07-09 audit (drift flagged, NOT fixed)
+
+Doc-vs-implementation check, per the audit brief. **No behavioural drift found**:
+the implemented modules match their documented contracts everywhere spot-checked
+(`load_assessment`/`aggregate_by_neighbourhood`/`load_boundaries`/`plot_choropleth`
+read in full; interface + constant verification across the rest; the published
+GeoJSON's 24 properties are exactly `SLIM_COLUMNS`; franchise columns confirmed
+carried-but-not-slim; zero-area guard, unmapped-class hard error, and
+`GITHUB_OUTPUT` plumbing for the year-alignment hold all verified in code). The
+drift is documentation lagging the build:
+
+1. **`load_water.py` and `load_franchise.py` have no Modules-section entries** —
+   they exist only as "Also in the flow" paragraphs above, unlike stormwater and
+   fire, which got full module sections when added. The paragraphs are accurate;
+   the section depth is just inconsistent.
+2. **Testing section lists 5 test files; `tests/` has 18** — one per src module
+   plus `test_main.py`, `test_download_data.py`, `test_check_year_alignment.py`,
+   `test_generate_status.py`. The "what to test per module" lists were never
+   extended past Phase 1.
+3. **`join_and_calculate` "Outputs" block lists only the 7 core columns** — the
+   implementation also carries every documented optional-merge column
+   (`ZONING_COLUMNS`, `ROAD_COLUMNS`, `STORM_COLUMNS`, `FIRE_COLUMNS`,
+   `WATER_COLUMNS`, `FRANCHISE_COLUMNS`, `LOT_ACRE_COLUMNS` and the per-acre
+   derivatives). The Inputs bullets describe them; the Outputs block was never
+   updated to match.
+4. **`main.py` docstring says "override any input/output path" via CLI**, but the
+   web side-output paths (`ROADS_WEB_OUT`, `ZONING_WEB_OUT`, `GRID_WEB_OUT`,
+   `FIRE_STATIONS_WEB_OUT`) and the three utility rates paths are module
+   constants with no CLI flags (main.py:62-65, 328-330). Consistent with "paths
+   as constants at top"; inconsistent with the docstring's claim.
+5. **`CONTRIBUTING.md` Project Structure is Phase-1 vintage** — missing `web/`,
+   `scripts/`, `tools/`, `.github/`, nine src modules; places `SPEC_phase1.md`/
+   `ARCHITECTURE.md` at repo root; names "Claude Sonnet" as the assistant. Not
+   this doc, but flagged here for completeness.
+6. **"What's Not Here (Phase 1 Scope)" says no web output / no cost side** —
+   both now exist and are documented in the sections above it; the Phase-1 list
+   reads as current-state but is historical. Cosmetic.
