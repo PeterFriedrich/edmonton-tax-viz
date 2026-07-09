@@ -322,8 +322,12 @@ lot acres). ~34.7k cells / 1.8 MB on current data. Returns a stats dict.
 - Bin property points into `cell_m` squares in **EPSG:3400** (CRS explicit,
   per project rule); sum value (and levy) per cell
 - **Ground-acre metrics** (always): divide by the cell's fixed area —
-  consistent with the hood metrics' boundary-acre denominator. Known cost:
-  large parcels needle (one point per account — DATA.md §2, WEM).
+  consistent with the hood metrics' boundary-acre denominator. This is **this
+  project's own cardinality-robust default, NOT Urban3 lineage** (audit Q6,
+  docs/FINDINGS_denominator_cardinality.md §Q5): Urban3 divides by *parcel*
+  area, so their denominator is closer to lot-acre below. Ground-acre earns its
+  place by being immune to the record-to-parcel bugs, not by matching Urban3.
+  Known cost: large parcels needle (one point per account — DATA.md §2, WEM).
 - **Lot-acre metrics** (when `lot_size` is present): divide ELIGIBLE dollars
   by deduped parcel acres — the Urban3 land-productivity metric. Dedupe =
   the repeat-aware heuristic of docs/FINDINGS_lot_dedupe.md

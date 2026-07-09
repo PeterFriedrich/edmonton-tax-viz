@@ -166,3 +166,10 @@ Two points this case pins down:
   Urban3-standard/gross-area" claim; document condo handling as an industry-wide
   open problem (independent Urban3 replications *excluded* condos entirely — this
   project's dedupe is an improvement over exclusion).
+  **DONE 2026-07-09.** Q6: swept the docs (README, SPEC_revenue, ARCHITECTURE,
+  UI, FINDINGS_lot_dedupe, DATA_INTEGRITY, web tooltips) — no doc actually
+  asserted "ground-acre = Urban3/gross-area" (every Urban3 mention already
+  attributed the lineage to *parcel/lot*-acre); added a positive
+  not-Urban3-lineage note to `ARCHITECTURE.md`'s ground-acre bullet so the
+  distinction is durable outside this findings doc. Q7: added the
+  condo-exclusion-as-industry-norm paragraph to `FINDINGS_lot_dedupe.md` §1.

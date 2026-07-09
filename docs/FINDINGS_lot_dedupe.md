@@ -26,6 +26,17 @@ is sometimes the whole parcel duplicated onto every unit (summing overcounts),
 sometimes per-unit apportioned shares (summing is correct), sometimes null/zero
 (summing undercounts). No flag distinguishes the regimes.
 
+**This is an industry-wide open problem, not an Edmonton-only quirk** (audit
+Q7). Condos break the parcel-acre denominator everywhere: many taxable units
+share one physical lot, and open-data lot-size fields rarely encode the split
+cleanly. Independent Urban3-style value-per-acre replications have typically
+**excluded condos/multi-unit parcels entirely** rather than solve the shared-lot
+attribution — which zeroes out real, dense, high-value land from the map. The
+repeat-aware `SHARE_MAX_M2` dedupe below is a deliberate **improvement over
+exclusion**: it keeps multi-unit parcels in the denominator with a defensible
+attribution rule, dropping only the genuinely unrecoverable majority-null points
+(and reporting them), instead of discarding the whole condo stock.
+
 ## 2. Scale of the problem
 
 Grouping all 439,685 accounts by exact `(lat, lon)` gives **287,163 points**;

@@ -54,8 +54,10 @@ _Last reconciled: 2026-07-08_
   free-riding — that's the services lens, not this one.
   </details>
 
-- [ ] **PRE-LAUNCH AUDIT — record-to-parcel cardinality bug (WEM numerator + condo
-  denominator) & lot-acre vs ground-acre methodology (NEW 2026-07-08).** Part of a
+- [x] ~~**PRE-LAUNCH AUDIT — record-to-parcel cardinality bug (WEM numerator + condo
+  denominator) & lot-acre vs ground-acre methodology (NEW 2026-07-08).**~~ **CLOSED
+  2026-07-09** (Q1/Q2/Q5 answered 2026-07-08; Q6/Q7 methodology-note cleanup done
+  2026-07-09 — see below). Part of a
   broader sweep to check the main lenses before this goes public/live officially.
   **Q1/Q2/Q5 ANSWERED 2026-07-08** — `docs/FINDINGS_denominator_cardinality.md`
   (`tools/audit_cardinality_denominators.py`): the **first lens is immune to both bugs,
@@ -66,10 +68,13 @@ _Last reconciled: 2026-07-08_
   and the `SHARE_MAX_M2` dedupe already handles it. Ground-acre = 74% parcel land
   citywide (~26% roads/parks/ROW); it is NOT Urban3 lineage (Q6 — Urban3's denominator
   is closer to lot-acre). The lot-acre neighbourhood lens that fell out is now the
-  PRIORITY item above. **Still OPEN: Q6 + Q7 — the methodology-note cleanup**
-  (correct any "ground-acre = Urban3-standard/gross-area" doc language; document condo
-  handling as an industry-wide open problem — independent Urban3 replications *excluded*
-  condos entirely, so this project's dedupe is an improvement over exclusion). Q3 (single
+  PRIORITY item above. **Q6 + Q7 DONE 2026-07-09 — the methodology-note cleanup:**
+  swept the docs (README, SPEC_revenue, ARCHITECTURE, UI, FINDINGS_lot_dedupe,
+  DATA_INTEGRITY, web tooltips) and found NO doc actually asserted "ground-acre =
+  Urban3/gross-area" — every Urban3 mention already pinned the lineage to *parcel/
+  lot*-acre. Added a positive not-Urban3-lineage note to `ARCHITECTURE.md`'s
+  ground-acre bullet (so the distinction survives outside the findings doc) + the
+  condo-exclusion-as-industry-norm paragraph to `FINDINGS_lot_dedupe.md` §1. Q3 (single
   join-integrity fix) is effectively moot for the first lens — there is no bug to fix; the
   grid already carries the only dedupe needed. Sweep the docs (`FINDINGS_lot_dedupe.md`,
   `DATA_INTEGRITY.md`, README/UI methodology blurbs) for stale Urban3-lineage claims.
