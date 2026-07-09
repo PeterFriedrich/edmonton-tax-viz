@@ -33,9 +33,24 @@ _Last reconciled: 2026-07-09_
     name drift, not warn-silent).
   - [ ] **P2.2 Heartbeat PAT** (= the deployment follow-on below, bumped from
     "watch" to "do": 60-day Action auto-disable means silently stale public data).
-  - [ ] **P2.3 Security/PII checklist pass** — run `docs/security-audit.md` for
-    real once and tick/date its boxes (PII in outputs/logs, gitignore coverage,
-    dependency pins).
+  - [x] ~~P2.3 Security/PII checklist pass~~ — done 2026-07-09 (Session 33,
+    Fable audit): all boxes ticked/dated with evidence; scope updated to the
+    Phase-2 static-site + CI surface. **Findings logged, not fixed** — see
+    `docs/security-audit.md` "Findings — 2026-07-09" (S1–S6). Follow-ups:
+    - [ ] **P2.3a Apply S1** (Medium): vendor maplibre-gl@4.7.1 + deck.gl@9.0.38
+      into `web/vendor/` (or add SRI hashes) — `web/index.html:8-10`, no
+      `integrity=` today. Biggest risk-per-effort item.
+    - [ ] **P2.3b Apply S3 + S4** (Low, ~10 lines each): entity-escape helper
+      for the data-derived strings in `tooltipFor` (`web/index.html:1349`);
+      SHA-pin the four actions in `refresh.yml`.
+    - [ ] **P2.3c S5 hygiene**: bump the 5 dev-freeze pins (tornado/bleach/
+      soupsieve/jupyter-server/jupyterlab — fix versions in the findings) next
+      env touch; add a `pip-audit -r requirements-ci.txt` step to `refresh.yml`.
+    - [ ] **P2.3d S2** — owner-only content decision, see security-audit.md S2.
+  - [ ] **P2.5 Doc-drift fixes** (from the 2026-07-09 architecture
+    reconciliation — six items listed in `docs/ARCHITECTURE.md` "Reconciliation
+    notes"; no behavioural drift, docs lagging build only). Includes verifying
+    the approximate Phase-1 dates in the new `docs/DECISIONS.md` index.
   - [ ] **P3 Decoteau/HHR/Riverview IIMP annotation** (= the existing item
     below; laptop-only) — the OIC-reconciliation credibility anchor; wanted
     before wider outreach, not gating a soft link.
