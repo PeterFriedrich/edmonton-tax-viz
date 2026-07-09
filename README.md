@@ -19,35 +19,34 @@ The goal: map Edmonton's property tax revenue and estimated service costs agains
 - Edmonton has excellent open data infrastructure (~448,000 property assessment records publicly available)
 - No comparable public analysis exists for Edmonton, despite Calgary and Ottawa having attempted versions of this work
 
-## Methodology (Planned)
+## Methodology
 
-This project follows the **revenue-per-acre** framework developed by [Urban3](https://www.urbanthree.com/) and popularized by [Strong Towns](https://www.strongtowns.org/), adapted for Edmonton's data environment.
+This project is inspired by the **revenue-per-acre** framework developed by [Urban3](https://www.urbanthree.com/) and popularized by [Strong Towns](https://www.strongtowns.org/), adapted for Edmonton's data environment. (Methodological lineage note: Urban3's denominator is parcel acres — this project's **lot-acre** mode; the **ground-acre** default is this project's own robustness-motivated addition. See `docs/FINDINGS_denominator_cardinality.md`.)
 
 **Core calculation:**
 ```
-Assessed Value ÷ Parcel/Neighbourhood Area = Value per Acre
+Municipal levy (or assessed value) ÷ Neighbourhood area = Revenue (value) per acre
 ```
 
-Layering in service cost estimates (road maintenance, water/sewer, emergency services) produces a net fiscal picture per area.
+with a toggleable denominator: **ground acres** (boundary area — robust to record-to-parcel cardinality issues) or **parcel/lot acres** (deduplicated titled lot area — the Urban3-analogous "developable land" view, with a low-parcel-fraction guard). The revenue numerator is the per-account municipal levy computed from assessed value × the class mill rate.
 
-**Data sources:**
-- [Edmonton Property Assessment Data](https://data.edmonton.ca/City-Administration/Property-Assessment-Data-Current-Calendar-Year-/q7d6-ambg) (~448,000 records, updated annually)
-- Edmonton neighbourhood boundary shapefiles
-- Parcel boundary data (via AltaLIS or FOIP request — still being pursued)
-- Published infrastructure cost studies for service cost allocation
+The **cost side** layers service supply and modeled service cost per acre: road network supply, a bylaw-native stormwater charge model, fire-rescue service demand, and a per-connection water/sanitary model — each validated against published figures where possible (`docs/FINDINGS_utility_validation.md`). Modeled figures are labeled *modeled, not billed*.
 
-**Tooling:** QGIS, Python/Pandas, open data only where possible.
+**Data sources (all open data):**
+- [Property Assessment Data](https://data.edmonton.ca/City-Administration/Property-Assessment-Data-Current-Calendar-Year-/q7d6-ambg) (~440,000 records, refreshed weekly, annual roll)
+- Neighbourhood boundaries, Zoning Bylaw geometry, road centrelines, fire-rescue events & stations, and property information (lot sizes) — all from the [Edmonton Open Data Portal](https://data.edmonton.ca/)
+- Published mill rates and utility tariffs (EPCOR bylaw rates, franchise fee schedules)
 
-## The Data Challenge
+**Tooling:** Python only (pandas + geopandas + shapely; deck.gl in the browser) — no GIS desktop software. The full pipeline regenerates from open data in one command and runs weekly in CI.
 
-Edmonton transferred parcel-level GIS boundary data to AltaLIS (a provincial partnership) in November 2021 — it's no longer freely available. This is a real obstacle. The current plan is to:
+## The Data Challenge (resolved)
 
-1. Start with **neighbourhood-level aggregation** using free boundary files
-2. Pursue parcel data via University of Alberta's GEODE consortium (academic access)
-3. Submit a FOIP request to the City for parcel area data
-4. Use manual sampling for high-contrast spotlight comparisons
+Edmonton transferred parcel-level GIS *boundary* data to AltaLIS in November 2021 — it's no longer freely available. The project resolved this without AltaLIS, GEODE, or FOIP:
 
-The neighbourhood-level approach still supports analysis at this resolution — Ottawa's Hemson study and the Halifax infrastructure cost research both operated at similar levels of aggregation.
+1. **Neighbourhood-level aggregation** on the free boundary file is the primary unit — the same resolution as Ottawa's Hemson study and the Halifax cost-of-service research.
+2. **Lot areas** (not boundary geometry) turn out to be in the open [Property Information dataset](https://data.edmonton.ca/) (`dkk9-cj3x`), which — with a repeat-aware deduplication heuristic for condo/multi-unit records (`docs/FINDINGS_lot_dedupe.md`) — supports the parcel-acre denominator and a 100 m grid view at near-Urban3 detail.
+
+Work that would genuinely need parcel *geometry* is catalogued in `docs/PARCEL_LEVEL_OPPORTUNITIES.md`.
 
 ## Comparable Work
 
@@ -61,15 +60,17 @@ The neighbourhood-level approach still supports analysis at this resolution — 
 
 **Live:** interactive 3D map at **https://peterfriedrich.github.io/edmonton-tax-viz/**
 — municipal tax revenue (and assessed value) per acre by neighbourhood, with a
-land-use set-aside layer and a residential-only lens. The **cost side is now
-open** (`docs/SPEC_services.md`): a Roads view renders the city-maintained road
-network coloured by road supply per acre, and a Ratio view shows **revenue per
+land-use set-aside layer and a residential-only lens. The **cost side is
+built** (`docs/SPEC_services.md`, `docs/SPEC_utilities.md`): a Services view
+layers the city-maintained road network (road supply per acre), a **modeled
+stormwater charge** per acre, **fire-rescue service demand** per acre, and a
+**modeled water/sanitary charge** per acre; a Ratio view shows **revenue per
 road metre** — how much municipal revenue backs each metre of neighbourhood
 road. A Uses view maps the zoning bylaw's land-use categories, and a Glass
 view renders the metric in **100 m grid cells** (the Urban3-style detail
-level), with a toggle between ground acres and **parcel (lot) acres** as the
-denominator. A weekly GitHub Action regenerates the data and redeploys
-automatically (see `docs/SPEC_deployment.md`).
+level). Both the Money and Glass views toggle between ground acres and
+**parcel (lot) acres** as the denominator. A weekly GitHub Action regenerates
+the data and redeploys automatically (see `docs/SPEC_deployment.md`).
 
 See [`/research`](/research) for background findings and data source inventory.
 
