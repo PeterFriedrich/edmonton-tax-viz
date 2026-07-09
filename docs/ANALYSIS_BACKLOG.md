@@ -91,6 +91,25 @@ statements, DATA.md §5). Two composition facts already surfaced:
 
 ## 2. Machine learning — feature importance (what drives revenue/value per acre?)
 
+**DONE 2026-07-09 — see `docs/FINDINGS_feature_importance.md`; reproducible via
+`tools/ml_feature_importance.py`.** Random-forest regressions (held-out
+permutation importance, averaged over 25 train/test splits; 342 hoods, set-aside
+excluded) predict `revenue_per_acre` (held-out R²=0.57) and `value_per_acre`
+(R²=0.71). **Verdict: fiscal productivity per acre is a built-form DENSITY story,
+not a land-use MIX story.** Two density proxies — `road_m_per_acre` (perm. imp.
+0.78/0.59) and `parcels_per_acre` (0.12/0.27) — carry essentially all the signal;
+the six `frac_*` composition shares and the diversity index `H` are ≈ 0 in
+held-out importance (the full-multivariate confirmation of item 4's density≫diversity
+partial-correlation result). The only surviving composition signal is a modest
+revenue/acre lift from industrial + DC power-centre land (matches item 1). Adding
+assessment-class mix: `nonres_value_share` is a clean #2 for *revenue*/acre
+(mill-rate effect) but negligible for *value*/acre. A top-vs-bottom-tercile
+classifier separates the tails at **AUC 0.97**, quantifying item 1's "the tails
+are genuine" (and `top_acct_share` — the thin-denominator signal — is ≈ 0
+everywhere). Feeds items 1 + 4 and the services-lens cost-vs-revenue story.
+
+<details><summary>Original item (kept for provenance)</summary>
+
 **Goal.** Fit models (primarily **random forest**) to predict a neighbourhood's
 `revenue_per_acre` (and/or `value_per_acre`) from its characteristics, and extract
 **feature importance** — a data-driven ranking of what most explains fiscal
@@ -127,6 +146,8 @@ drivers across all neighbourhoods.
   The remaining blocker is the feature matrix (above).
 - Notebook lives in `notebooks/exploration/`; per global CLAUDE.md use the Jupyter MCP
   tools, not NotebookEdit.
+
+</details>
 
 ---
 
