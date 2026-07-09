@@ -24,8 +24,12 @@ _Last reconciled: 2026-07-08_
   `moneyScale()` with runtime p97.5 clamp + height parity, `lotBlurb`/legend/
   tooltip follow). +9 pytest (247), headless-verified
   (`verify-money-denom.js`, all PASS) + screenshots. Real numbers match the
-  findings: U of A ×2.0, Rossdale ×2.8, Riverdale ×2.5. **Still open:** Peter's
-  on-device eyeball + PR merge + deploy. Original brief kept below for reference.
+  findings: U of A ×2.0, Rossdale ×2.8, Riverdale ×2.5. **SHIPPED 2026-07-09 —
+  PR #23 merged + deployed** (refresh run 28987792808, green; roads download
+  fixed by PR #24's 900s timeout + retry same run). Auto-refresh commit `bb224da`
+  verified data-only: 0 geometry changes (the Session-27 additive graft matched
+  CI-canonical geometry exactly), only `parcel_frac`×233 + `storm_charge`×3 value
+  drift from the fresh roll. Original brief kept below for reference.
   <details><summary>original item</summary>
    The audit found the first
   lens has NO bug to fix, but a parcel/lot-acre denominator is worth OFFERING: it
