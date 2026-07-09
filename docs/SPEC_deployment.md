@@ -289,6 +289,7 @@ big to precompute), revisit this.
 
 ## Cross-refs
 
+- Operations (January year-roll checklist, failure triage): `docs/RUNBOOK.md`.
 - Pipeline entrypoint + canonical export params: `main.py`, `docs/PERFORMANCE.md`.
 - Data sources, dataset IDs, and the metadata-only assessment year: `data/DATA.md`.
 - Revenue phase (adds the mill-rate fetch this automation must also run):
