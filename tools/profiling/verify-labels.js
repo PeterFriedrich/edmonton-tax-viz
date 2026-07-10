@@ -92,7 +92,9 @@ const [url] = process.argv.slice(2);
   await page.waitForTimeout(3000);
 
   // Labels must survive every view; residential-lens disable rules unchanged.
-  for (const v of ['roads', 'ratio', 'uses', 'money']) {
+  // ("roads" became the generalized "services" view 2026-07-05 — this loop
+  // was stale until 2026-07-10.)
+  for (const v of ['services', 'ratio', 'uses', 'money']) {
     await page.$eval(`#views button[data-view="${v}"]`, b => b.click());
     await page.waitForTimeout(v === 'money' ? 2000 : 5000); // lazy fetches
     console.log(`${v.padEnd(5)}, labels ON :`, JSON.stringify(await snap()));

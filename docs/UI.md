@@ -209,17 +209,27 @@ five buttons regardless of service count):
   Tooltip: EVERY service's number whatever is checked (the neutral layers'
   values stay readable there). Hood hover via the invisible `hood-hover` layer,
   as before. Title "Edmonton: City Services".
-- **Ratio** (stage 3, the synthesis): ghost prisms of **revenue per road metre**
-  (`revenue_per_acre / road_m_per_acre`, client-side — no pipeline change) over
-  the network in all-neutral grey. Prism **colour is LOG** between the kept
-  subset's p2.5–p97.5 (≈ $264–$3,253; FINDINGS §6.4 — first log metric, skew
-  19.7 → 0.32), **height linear** (max kept ≈ $18k at the standard ~8.2 km peak;
-  `ratioScale()` computes anchors at runtime, cached). **Off-scale grey + flat:**
-  set-aside hoods AND hoods below `RATIO_ROAD_FLOOR = 5 m/acre` (denominator
-  artifacts — WESTVIEW VILLAGE hits $1.3M/m on a near-zero road base). Default
-  prism opacity **5%**, adjustable via the "Money plane" slider (`#layers` panel,
-  visible in this view only). Tooltip: ratio + both components, or the off-scale
-  reason. Legend: log gradient, `≤ $lo` / `$hi+`.
+- **Ratio** (stage 3, the synthesis): ghost prisms of **revenue per unit of a
+  picked levy-funded service** (client-side — no pipeline change) over the
+  network in all-neutral grey. *2026-07-10: the denominator became a PICKER*
+  ("Ratio denominator" control in the `#layers` panel, Ratio view only) —
+  **per road metre** (`revenue_per_acre / road_m_per_acre`, the original) or
+  **per fire event** (`revenue_per_acre / fire_events_per_acre`); config in
+  `RATIO_DENOMS`, state `state.ratioDenom` (persists across views like the
+  acre denominator; control hidden when the data lacks the fire column).
+  Modeled EPCOR services (storm/water) are deliberately NOT offered —
+  SPEC_utilities decision 3 (money-flow honesty). Both prism **colours are
+  LOG** between each kept subset's p2.5–p97.5 (roads ≈ $264–$3,253, FINDINGS
+  §6.4; fire ≈ $7,092–$298,901, §6.7), **height linear** (each denominator's
+  max kept hood at the standard ~8.2 km peak; `ratioScale()` computes anchors
+  at runtime, cached per denominator). **Off-scale grey + flat:** set-aside
+  hoods AND hoods below the denominator's floor (roads 5 m/acre — WESTVIEW
+  VILLAGE hits $1.3M/m; fire 0.005 events/acre/yr — four annexed-fringe hoods
+  hit $1.3–1.7M/event, plus four zero-event hoods). Title/blurb/legend/aside
+  follow the picked denominator. Default prism opacity **5%**, adjustable via
+  the "Money plane" slider (`#layers` panel, visible in this view only).
+  Tooltip: ratio + both components, or the off-scale reason naming the floor.
+  Legend: log gradient, `≤ $lo` / `$hi+`.
 
 Shared machinery:
 - **Lazy load:** `web/data/roads.geojson` (1.6 MB; ~400 dissolved features, slim
@@ -248,7 +258,12 @@ Shared machinery:
   legend row — fire checks skip cleanly on pre-fire data files. Verified
   against a mock bed with a SYNTHETIC fire column; the real-data eyeball
   waits for the first CI refresh — data.edmonton.ca was unreachable from
-  the build session's environment).
+  the build session's environment); ratio denominator picker 2026-07-10
+  (`tools/profiling/verify-ratio-denom.js` — 27 checks against the real
+  served file: visibility gating, chrome/legend swap, independent anchor
+  recomputation for both denominators + the residential subset, fire-floor
+  greying, height parity, tooltip prose, cross-view persistence;
+  screenshots `tools/profiling/shot-ratio-denom.js`).
   Translucent-prism depth-ordering quirks: same acceptance as the residential
   lens fade.
 

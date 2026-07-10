@@ -89,14 +89,18 @@ so they are carried on the full frame but kept OUT of `SLIM_COLUMNS` with no
 per-acre derived. The value is the citywide City-revenue totals + per-hood
 attribution.
 
-**One metric exists ONLY in the browser:** the Ratio view's revenue per road
-metre (`revenue_per_acre / road_m_per_acre` — the acres cancel) is derived
-client-side in `web/index.html` from the two published GeoJSON columns. No
-pipeline stage computes or exports it; its scale anchors (log-colour p2.5–p97.5,
-height parity) are computed at page load from the served data (`ratioScale()`),
-so they track weekly refreshes automatically — one anchor pair for the full kept
-subset, one for the residential lens (2026-07-03). Transform decision + the
-5 m/acre road-base artifact floor + the residential anchors: FINDINGS §6.4.
+**One metric family exists ONLY in the browser:** the Ratio view's per-service
+ratios — revenue per road metre (`revenue_per_acre / road_m_per_acre`) and,
+since 2026-07-10, revenue per fire event (`/ fire_events_per_acre`), a
+denominator picker (`RATIO_DENOMS`) — the acres cancel in both. They are
+derived client-side in `web/index.html` from published GeoJSON columns. No
+pipeline stage computes or exports them; scale anchors (log-colour p2.5–p97.5,
+height parity) are computed at page load from the served data (`ratioScale()`,
+cached per denominator), so they track weekly refreshes automatically — one
+anchor pair per denominator for the full kept subset, one for the residential
+lens (2026-07-03). Transform decisions + the artifact floors (roads 5 m/acre,
+fire 0.005 events/acre/yr) + the residential anchors: FINDINGS §6.4 / §6.7.
+Why only levy-funded denominators are offered: SPEC_utilities decision 3.
 
 ---
 
