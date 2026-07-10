@@ -315,6 +315,9 @@ _Last reconciled: 2026-07-09_
       (`verify-ratio-denom.js`, 27 checks) + regressions + screenshots.
       Also fixed in passing: `verify-labels.js` still clicked the retired
       "roads" view button (stale since the 2026-07-05 generalization).
+      **PR #33 merged (`e0da845`) + deployed 2026-07-10** (refresh run
+      29099791508 green → auto-refresh `e8f58b4`; github-pages deploy
+      success; live-verified 27/27 vs the Pages URL).
     - [ ] **V2 — combined "modeled city service cost per acre" (LAPTOP-GATED:
       budget source hunt).** One denominator = road metres × published
       roadway O&M+renewal $/m/yr + fire events × (Fire Rescue operating
