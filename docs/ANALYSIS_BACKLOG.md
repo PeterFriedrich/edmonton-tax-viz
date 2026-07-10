@@ -310,6 +310,21 @@ _Added 2026-07-05, out of the utility methods doc
 (`docs/utility_cost_estimation_lens_methods.md` §I and Stage 5). Analysis, not
 a lens build — the lens side is `docs/SPEC_utilities.md`._
 
+**AUTO HALF DONE 2026-07-10 (Session 36) — see
+`docs/FINDINGS_growth_servicing.md`; reproducible via
+`tools/analyze_growth_servicing.py`.** Two-ledger result, era-banded by median
+`year_built`: (1) road supply per dwelling *falls* with newness (mature grid
+~13.0 m/dw → post-2010 ~6.4, robust to both dwelling models and to build-out
+stage) and fire demand per dwelling falls ~3×, while levy per dwelling is
+roughly flat and levy per *developed* acre is highest in the post-1990 bands;
+(2) Heritage Valley + Windermere currently yield $211M/yr municipal levy
+(7.8% of the citywide roll) at ~16% undeveloped — but within-boundary road
+metres exclude arterials/trunks, and the documented cross-subsidy channels
+(SSTC pause, low off-site levies) sit exactly on that unmeasured layer.
+**The by-hand half stays OPEN (laptop):** SSTC-resumption tracking, reading
+the BILD study + Capital Investment Outlook primary docs, re-verifying the
+best-effort ASP hood memberships.
+
 **Question.** Development-industry material (BILD Edmonton Metro's Urban
 Growth Case Study: Heritage Valley + Windermere) argues new growth is
 fiscally net-positive because developers fund upfront capital (~$3.2B
