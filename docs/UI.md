@@ -290,8 +290,29 @@ the land IS, not what it yields; the blurb states the zoning caveat
   renders as stray filled black triangles. `export_zoning_web` therefore snaps
   to the 1e-5 grid topology-aware (`shapely.set_precision`) before writing, so
   the served file holds exactly the validated geometry (read-back all-valid).
-- Colours are static per feature: no updateTriggers. No extrusion (category is
-  identity, not magnitude) and no roads layer.
+- Colours are static per feature: no updateTriggers. No extrusion on the
+  ground layer (category is identity, not magnitude) and no roads layer.
+- **Residential prisms (built 2026-07-10, Peter's ask: "how much residential
+  is in each neighbourhood").** A layers-panel checkbox (`#uses-prisms`,
+  `state.usesPrisms`, default off — unchecked, the view is exactly the flat
+  fabric above) raises **translucent prisms over the zoning fabric: height =
+  `frac_residential`**, the hood's share of ZONED area (the frac_* columns
+  sum to 1), linear on a **fixed 0–100% scale**. The peak (`USES_PRISM_PEAK`
+  2,500 m) is deliberately BELOW the ~8.2 km cross-view parity height: that
+  parity is calibrated for extreme-skew money metrics where only outliers
+  are tall, but a bounded share clusters at 40–95% (median 61%) — at full
+  parity the city renders as a solid wall that buries the fabric (verified
+  by screenshot before lowering). No parity is owed: a share isn't
+  comparable to dollars. Fill is the Residential category's identity sand,
+  constant — magnitude lives in height alone; opacity rides the shared
+  prism slider (shows while checked; Uses entry default **35%**).
+  Zero-share hoods (40 on 2025 data) are omitted from the layer — a flat
+  translucent polygon would z-fight the coplanar fabric. Blurb gains the
+  height sentence while on (honesty: the render gains a magnitude); labels
+  ride the prism roofs (`labelZ`); state persists across views like the
+  rest of the layers panel; prisms not pickable (hood-hover still carries
+  the composition tooltip, which is where the exact % lives). Works over
+  the dominant-colour fallback path too.
 - **Palette (dark bg):** 7 chromatic hues following zoning-map convention —
   sand `#ad8a3a` Residential, red `#e05252` Commercial, violet `#8f80e0`
   Industrial, brown-orange `#a54c1f` Mixed use, magenta `#d55181` Direct
@@ -327,6 +348,11 @@ the land IS, not what it yields; the blurb states the zoning caveat
   mismatches, tooltip composition, lens disable/re-enable) + screenshot
   eyeball (`tools/profiling/shot-uses.js`); the lens × view regression matrix
   (`verify-lens.js`) re-run green after the applyView/refreshLegend changes.
+  Residential prisms verified 2026-07-10 (`verify-uses-prisms.js` — 20
+  checks: control gating, stack on/off + ordering, elevation = frac ×
+  `USES_PRISM_PEAK`, identity fill, zero-share filtering, slider wiring +
+  per-view default, label roof-z, blurb swap, cross-view persistence;
+  screenshots `shot-uses-prisms.js`), full regression suite re-run green.
 
 ### Glass view (built 2026-07-04 — fifth view button; grid cells same day)
 The revenue-per-acre-infographic composition (the Urban3 style, with this

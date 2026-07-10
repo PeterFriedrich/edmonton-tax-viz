@@ -59,7 +59,7 @@
     #views button.active { background: #fcd278; color: #16111a; font-weight: 600; }
     #layers {
       top: 210px; flex-direction: column; padding: 6px 12px; gap: 4px;
-      font-size: 11.5px; color: #9a9ab0; display: none; /* ghost-prism views (ratio, glass) only */
+      font-size: 11.5px; color: #9a9ab0; display: none; /* opened per view — applyView shows the relevant sections */
     }
     #layers .hd { font-size: 10px; text-transform: uppercase; letter-spacing: 0.8px; color: #6a6a80; }
     #layers label { display: flex; align-items: center; gap: 7px; cursor: pointer; padding: 2px 0; }
@@ -79,6 +79,9 @@
        denominator picker (#ratio-denom) shares the styling and the
        default-hidden rule. */
     #denom-hd, #denom, #ratio-denom-hd, #ratio-denom { display: none; }
+    /* Uses-view residential-prisms toggle — hidden outside the uses view
+       (the #denom default-hidden pattern). */
+    #uses-prisms-hd, #uses-prisms { display: none; }
     #denom, #ratio-denom { border: 1px solid #2a2a3a; border-radius: 5px; overflow: hidden; margin-bottom: 2px; }
     #denom button, #ratio-denom button {
       appearance: none; border: 0; background: transparent; color: #9a9ab0;
@@ -175,11 +178,17 @@
     <button data-view="money" class="active" title="Revenue/value prisms — the money plane">Money</button>
     <button data-view="services" title="City services on the ground — toggle each service on its own layer; roads coloured by metres per acre, stormwater by its modeled charge per acre">Services</button>
     <button data-view="ratio" title="Ghost prisms of revenue per road metre — or per fire event — over the neutral road network">Ratio</button>
-    <button data-view="uses" title="Each neighbourhood's dominant zoned land use — what the land is designated for, not what it yields">Uses</button>
+    <button data-view="uses" title="Each neighbourhood's dominant zoned land use — what the land is designated for, not what it yields; optional prisms show each neighbourhood's residential share">Uses</button>
     <button data-view="glass" title="Translucent metric prisms over a neutral neighbourhood plane — hover the ground for each neighbourhood's numbers">Glass</button>
   </div>
 
   <div id="layers" class="panel">
+    <span class="hd" id="uses-prisms-hd">Residential prisms</span>
+    <div id="uses-prisms">
+      <label title="Translucent prisms over the zoning fabric — each neighbourhood's height is its share of zoned land that is residential; a full-height prism would be 100% residential">
+        <input type="checkbox" id="uses-prisms-on" /> Height = share zoned residential
+      </label>
+    </div>
     <span class="hd" id="prism-hd">Money plane</span>
     <label id="prism-row" title="Prism opacity — how strongly the ratio prisms overlay the road network">
       Prisms
@@ -381,8 +390,10 @@
     };
 
     // --- uses view (use-mix, 2026-07-03) -------------------------------------
-    // Dominant zoned land use per hood — categorical, flat (no extrusion: the
-    // view shows what the land IS, not a magnitude). The nine frac_* columns
+    // Dominant zoned land use per hood — categorical, flat (no extrusion on
+    // the ground layer: it shows what the land IS, not a magnitude; the
+    // OPTIONAL residential prisms below are the deliberate exception — a
+    // single magnitude, the residential share). The nine frac_* columns
     // are shares of zoned area and sum to 1 (src/load_zoning.py). Chromatic
     // hues follow zoning-map convention (green = parks, red = commercial,
     // violet = industrial, blue = institutional…) and were VALIDATED with the
@@ -406,6 +417,23 @@
       { key: "other",  frac: "frac_other",       label: "Unclassified",         color: [ 88,  90, 102] },
     ];
     const USE_BY_KEY = Object.fromEntries(USE_CATEGORIES.map(u => [u.key, u]));
+
+    // Uses-view residential prisms (layers-panel toggle, 2026-07-10): "how
+    // much of each neighbourhood is residential" as translucent prisms over
+    // the zoning fabric. Height = frac_residential (share of the hood's
+    // ZONED area — the frac_* columns sum to 1) on a FIXED 0–100% linear
+    // scale. The peak is deliberately BELOW the other views' ~8.2 km
+    // standard: that parity height is calibrated for extreme-skew money
+    // metrics where only outliers are tall, but a bounded share clusters
+    // at 40–95% (median 61%) — at full parity the city renders as a solid
+    // wall that buries the fabric. 2.5 km keeps the prisms readable blocks
+    // over the zoning colours (a share isn't comparable to dollars, so no
+    // cross-view parity is owed). Colour is the Residential category's
+    // identity sand, constant — the magnitude lives in height alone (the
+    // categorical fabric below keeps its meaning). Zero-share hoods are
+    // omitted: a flat translucent polygon would z-fight the coplanar
+    // zoning geometry.
+    const USES_PRISM_PEAK = 2500;
 
     // The Uses ground layer: the REAL zoning geometry (11.5k bylaw polygons
     // dissolved citywide into one feature per category, simplified 10 m —
@@ -511,7 +539,7 @@
                "coloured by land-use category. Zoning describes what the land " +
                "is designated for, not necessarily what is built on it. Hover " +
                "a neighbourhood for its land-use composition.",
-        opacity: null, // flat categorical view — no prisms
+        opacity: 35, // residential-prism default; the slider shows while they're on
       },
       glass: {
         title: null, // metric-driven, like money (applyView/applyMetric)
@@ -538,6 +566,15 @@
     };
     const glassBlurb = () => withColourClause(GLASS_BLURBS[state.denom]);
 
+    // Uses blurb: the base zoning caveat, plus the height sentence while the
+    // residential prisms are on (honesty: the render gains a magnitude, so
+    // the prose must say what it is).
+    const usesBlurb = () => VIEWS.uses.blurb + (state.usesPrisms
+      ? " Translucent prisms rise with each neighbourhood's residential " +
+        "share of its zoned land — a full-height prism would be 100% " +
+        "residential (height is linear). The slider sets prism opacity."
+      : "");
+
     // The money/glass blurbs describe the colour transform in prose ("colour is
     // square-root–scaled …"). When the Colour Adjustment toggle is OFF that
     // claim is false, so swap the clause to match the live scale — this is an
@@ -561,8 +598,11 @@
     // like-to-like without the Downtown / class-rate confound. Applies in the
     // Money and Ratio views; disabled in Services (no per-hood prisms to fade).
     // `view` selects the display mode (money | services | ratio | uses | glass);
-    // `prismOpacity` is the ghost-prism strength in ratio and glass (money
-    // prisms are always opaque; services and uses have no prisms).
+    // `prismOpacity` is the ghost-prism strength in ratio, glass and the uses
+    // view's optional residential prisms (money prisms are always opaque;
+    // services has no prisms). `usesPrisms` is the Uses view's residential-
+    // prisms toggle (height = share of zoned land that is residential);
+    // persists across view switches like the other layers-panel state.
     // `denom` is the Glass spike denominator: "ground" (the cell's fixed
     // 2.47 acres) or "lot" (the parcel acres the cell's properties own —
     // FINDINGS_lot_dedupe.md). Glass-only; other views ignore it.
@@ -573,6 +613,7 @@
     const state = { metric: "revenue_per_acre", ramp: "current", residential: false,
                     colorAdjust: true, // sqrt colour transform on (money/glass); off = linear+clamp
                     labels: false, view: "money", prismOpacity: 1, denom: "ground",
+                    usesPrisms: false, // Uses-view residential prisms (off = the flat categorical view)
                     ratioDenom: "roads", // Ratio-view denominator (RATIO_DENOMS); persists like denom
                     services: { roads: true, storm: false, fire: false, water: false },
                     svcDriver: "roads",
@@ -582,6 +623,7 @@
     let roadsFetch = null; // in-flight fetch guard (single fetch, ever)
     let zoningData = null;  // lazy-fetched zoning ground layer (uses view)
     let zoningFetch = null; // in-flight fetch guard; null result => fallback
+    let usesPrismData = null; // residential-prism subset (built once from state.data)
     let gridData = null;    // lazy-fetched grid cells (glass view)
     let gridFetch = null;   // in-flight fetch guard; null result => hood-prism fallback
     let fireStationsData = null;  // lazy-fetched station dots (services view, fire on)
@@ -1065,7 +1107,9 @@
       }
       if (state.view === "ratio")
         return (ratioKept(p) ? ratioOf(p) * ratioScale().elevationScale : 0) + LABEL_LIFT;
-      return LABEL_LIFT; // services / uses / glass: label at the ground
+      if (state.view === "uses" && state.usesPrisms)
+        return (p.frac_residential || 0) * USES_PRISM_PEAK + LABEL_LIFT;
+      return LABEL_LIFT; // services / uses (flat) / glass: label at the ground
     }
 
     // Greedy screen-space decluttering: project every anchor through the live
@@ -1179,7 +1223,27 @@
         // Real zoning geometry, flat, coloured by category; the invisible
         // hood layer on top carries hover/tooltips at the neighbourhood unit
         // (the composition data's granularity). Colours are static per
-        // feature: no updateTriggers.
+        // feature: no updateTriggers. The optional residential prisms
+        // (state.usesPrisms) rise over the fabric — see USES_PRISM_PEAK.
+        const resPrisms = () => {
+          usesPrismData ??= { type: "FeatureCollection",
+            features: state.data.features.filter(
+              f => (f.properties.frac_residential || 0) > 0) };
+          return new deck.GeoJsonLayer({
+            id: "uses-res-prisms",
+            data: usesPrismData,
+            extruded: true,
+            filled: true,
+            stroked: false,
+            wireframe: false,
+            getElevation: f => f.properties.frac_residential,
+            elevationScale: USES_PRISM_PEAK,
+            getFillColor: USE_BY_KEY.res.color,
+            opacity: state.prismOpacity,
+            material: { ambient: 0.55, diffuse: 0.6, shininess: 32, specularColor: [60, 60, 70] },
+            pickable: false, // hood hover / the fallback flat layer handle tooltips
+          });
+        };
         if (zoningData) {
           return [
             new deck.GeoJsonLayer({
@@ -1191,6 +1255,7 @@
               getFillColor: f => (USE_BY_KEY[f.properties.u] || { color: [0, 0, 0, 0] }).color,
               pickable: false, // hood hover layer handles tooltips
             }),
+            ...(state.usesPrisms ? [resPrisms()] : []),
             hoodHoverLayer(),
             ...labelLayer(),
           ];
@@ -1207,7 +1272,7 @@
           pickable: true,
           autoHighlight: true,
           highlightColor: [255, 255, 255, 40],
-        }), ...labelLayer()];
+        }), ...(state.usesPrisms ? [resPrisms()] : []), ...labelLayer()];
       }
 
       if (state.view === "services") {
@@ -1726,6 +1791,17 @@
         .classList.toggle("active", state.labels);
     }
 
+    // Toggle the Uses view's residential prisms (height = share of zoned
+    // land that is residential). Only reachable inside the Uses view — the
+    // checkbox is hidden elsewhere; the opacity slider row shows while on.
+    // State persists across view switches like the rest of the layers panel.
+    function applyUsesPrisms(checked) {
+      state.usesPrisms = checked;
+      document.getElementById("prism-row").style.display = checked ? "flex" : "none";
+      overlay.setProps({ layers: buildLayers() });
+      document.getElementById("title-p").textContent = usesBlurb();
+    }
+
     // Set the ratio view's ghost-prism opacity (0–100). UI-state only — the
     // caller rebuilds the layers.
     function setPrismOpacity(pct) {
@@ -1743,8 +1819,9 @@
       state.view = v;
       document.querySelectorAll("#views button").forEach(b =>
         b.classList.toggle("active", b.dataset.view === v));
-      // The layers panel hosts four view-scoped sections: the prism slider
-      // (ratio + glass), the service checkboxes (services), the acre
+      // The layers panel hosts five view-scoped sections: the prism slider
+      // (ratio + glass, and uses while its prisms are on), the residential-
+      // prisms toggle (uses), the service checkboxes (services), the acre
       // denominator (money + glass, further gated on the data below), and
       // the ratio denominator picker (ratio, gated on the fire column).
       const prisms = v === "ratio" || v === "glass";
@@ -1752,9 +1829,12 @@
       // toggle, and only when the data carries the lot-acre columns.
       const moneyDenom = v === "money" && state.hasHoodLot;
       document.getElementById("layers").style.display =
-        (prisms || v === "services" || moneyDenom) ? "flex" : "none";
+        (prisms || v === "services" || v === "uses" || moneyDenom) ? "flex" : "none";
+      document.getElementById("uses-prisms-hd").style.display = v === "uses" ? "block" : "none";
+      document.getElementById("uses-prisms").style.display = v === "uses" ? "block" : "none";
       document.getElementById("prism-hd").style.display = prisms ? "block" : "none";
-      document.getElementById("prism-row").style.display = prisms ? "flex" : "none";
+      document.getElementById("prism-row").style.display =
+        (prisms || (v === "uses" && state.usesPrisms)) ? "flex" : "none";
       document.getElementById("services-hd").style.display = v === "services" ? "block" : "none";
       document.getElementById("services").style.display = v === "services" ? "block" : "none";
       // The lens applies in Money and Ratio. In Services the per-hood signal
@@ -1836,7 +1916,7 @@
         v === "glass" ? glassBlurb() :
         v === "services" ? servicesBlurb() :
         v === "ratio" ? ratioDenom().blurb :
-        v === "money" ? moneyBlurb() : withColourClause(chrome.blurb);
+        v === "uses" ? usesBlurb() : moneyBlurb();
       syncColorAdjust(); // the sqrt toggle only bites in money + glass (scaleT)
       refreshLegend();
     }
@@ -1897,6 +1977,8 @@
         b.addEventListener("click", () => applyDenom(b.dataset.denom)));
       document.querySelectorAll("#ratio-denom button").forEach(b =>
         b.addEventListener("click", () => applyRatioDenom(b.dataset.ratioDenom)));
+      document.getElementById("uses-prisms-on").addEventListener("change",
+        e => applyUsesPrisms(e.target.checked));
       document.querySelectorAll("#services .svc").forEach(el => {
         const k = el.dataset.service;
         el.querySelector(".svc-on").addEventListener("change",

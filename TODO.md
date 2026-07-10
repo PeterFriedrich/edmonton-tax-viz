@@ -479,6 +479,18 @@ _Last reconciled: 2026-07-09_
     - [x] ~~Tooltip mini stacked composition bar~~ — done 2026-07-03 (Peter's
       ask): 190×8 px flex bar in the category colours above the composition
       text; `.tip` max-width 300px so long compositions wrap.
+    - [x] ~~**Residential prisms over the Uses fabric** (Peter's ask
+      2026-07-10: "how much residential is in each neighbourhood
+      specifically")~~ — built 2026-07-10: layers-panel checkbox (default
+      off), translucent sand prisms with height = `frac_residential` on a
+      fixed 0–100% linear scale, peak deliberately 2.5 km NOT the 8.2 km
+      parity height (bounded share clusters 40–95% → full parity renders a
+      solid wall; screenshot-verified before lowering). Zero-share hoods
+      omitted (z-fight), opacity on the shared prism slider (Uses default
+      35%), labels ride roofs, blurb honesty line, state persists.
+      Client-side only — `frac_residential` already served. Headless-
+      verified (`verify-uses-prisms.js`, 20 checks) + full regression
+      suite green + screenshots. Display detail: UI.md "Uses view".
     - [x] ~~Real zoning geometry IN the Uses view~~ (Peter's call — the
       dominant-colour render was "meh utility"; consciously reopened the
       "zoning polygon overlay" scope item for THIS view only) — done
