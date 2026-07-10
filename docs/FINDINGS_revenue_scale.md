@@ -304,6 +304,44 @@ hood at 44% of the ramp with 25% of hoods in the bottom fifth (healthy);
 sqrt statistically over-corrects (−0.25) and pushes the on-ramp median to
 67% — top-compressed. **Linear**, matching storm. Height: none (flat plane).
 
+### 6.7 Revenue per fire event is the §6.4 case again — DECIDED: log colour + 0.005 floor (2026-07-10)
+
+The Ratio view's second denominator (`revenue_per_acre / fire_events_per_acre`
+— acres cancel: $ of municipal revenue per dispatched fire-department event;
+SPEC_utilities decision 3's per-service picker) through the same biased-skew
+test, computed from the web GeoJSON's two published columns (client-side
+derivation, no pipeline change):
+
+| set | n | median | p97.5 | max | raw | sqrt | log |
+|---|---|---|---|---|---|---|---|
+| all computable (events > 0) | 401 | $37,123 | $342,082 | $1,686,489 | 7.30 | 3.21 | −0.76 |
+| kept (excl set-aside, floor) | 350 | $39,655 | $298,901 | $472,418 | 2.78 | 1.57 | **+0.13** |
+
+The ratio-of-two-positive-quantities log-normal pattern of §6.4 holds:
+**colour is LOG**, anchored between the kept subset's p2.5 and p97.5
+(runtime `ratioScale()`, ≈ $7,092–$298,901 on 2026-07-09 data). Note the
+contrast with §6.5: the fire *supply* metric rejected log (true zeros,
+left over-correction), but the *ratio*'s floor removes the zeros by
+construction and the kept core is cleanly log-normal. Height, as always,
+stays linear (parity: the tallest kept hood matches the other views' peak).
+
+**The denominator-artifact tail is real here too and gets the §6.4 floor
+treatment:** four zero-event hoods (CROSSROADS, KENDAL, QUARRY RIDGE, RIVER
+VALLEY KENDAL — no ratio at all) plus four annexed-fringe hoods below
+0.005 events/acre/yr (MARQUIS 0.0011, MATTSON 0.0016, RIVER'S EDGE 0.0020,
+ALCES 0.0024) whose ratios explode to $1.3–1.7M/event on a near-zero event
+base. **Floor = 0.005 events/acre/yr** (≈ the kept subset's p2.5; the next
+hood up, KINGLET GARDENS at 0.0149, is a genuinely developing suburb) —
+greyed + flat ("too few fire events"), display-only and tunable
+(`RATIO_DENOMS.fire.floor`).
+
+**Residential subset (for the lens):** kept residential anchors are p2.5 ≈
+$7,406 / p97.5 ≈ $101,413 / max $403,433 (n=226) vs the full kept set's
+$7,092 / $298,901 / $472,418 (n=350). Same shape as §6.4: the floor barely
+moves, the ceiling drops ~2.9× — the high tail is non-residential
+(mill-rate mechanism, §6.2). The lens rescales the log colour anchors to
+the residential kept subset; height stays on the full-subset scale.
+
 Skew numbers here are reproducible headless via `scripts/investigate_skew.py`
 (`skew_table` / `load_metrics` / `lowest_kept` are importable). The plots below are
 the remaining visual confirmations:

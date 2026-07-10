@@ -270,8 +270,9 @@ _Last reconciled: 2026-07-09_
       2026-07-02 as the **Ratio view** (Money | Roads | Ratio buttons;
       ghost prisms of $/road-metre over the neutral network; log colour
       FINDINGS §6.4; road-base floor 5 m/acre greys artifacts; UI.md
-      "Services views"). "Total services" DEFINITION still deferred until
-      a second service exists — reopen this staging list then.
+      "Services views"). "Total services" DEFINITION: DECIDED 2026-07-10 —
+      stays per-service (denominator picker; SPEC_utilities decision 3);
+      the V2 unit-cost composite is tracked under "More service layers".
   - [x] ~~Merge `feature/services-lens` → master via PR once Peter's eyeballed
     it~~ — done 2026-07-02: PR #8 merged, refresh workflow run green, live site
     verified serving the three views + roads.geojson.
@@ -300,10 +301,29 @@ _Last reconciled: 2026-07-09_
       Roads view exactly). Headless-verified
       (`tools/profiling/verify-services.js` + regressions green) +
       screenshots (`shot-services.js`) + Peter's on-device eyeball. Display
-      detail: UI.md "Services views". Defining "total services" and reopening the ratio's
-      denominator (currently roads-only by construction) remains open —
-      SPEC_utilities decision 3: keep it physical until at least two dollar
-      services exist.
+      detail: UI.md "Services views".
+    - [x] ~~**"Total services" / Ratio-view denominator reopen**~~ — **DECIDED
+      2026-07-10 (Peter) + V1 BUILT same day** (branch
+      `feature/ratio-denominator-picker`): the ratio stays **PER-SERVICE** —
+      a "Ratio denominator" picker (revenue per road metre | per fire
+      event) in the Ratio view. Modeled EPCOR dollars (storm/water) are
+      excluded from any levy ratio by the money-flow honesty rule (they'd
+      compare unrelated flows / cancel if added to both sides) — so the
+      "two dollar services" trigger resolved to per-service, not a $ sum.
+      Fire floor 0.005 events/acre/yr + log colour: FINDINGS §6.7;
+      SPEC_utilities decision 3 holds the full design; headless-verified
+      (`verify-ratio-denom.js`, 27 checks) + regressions + screenshots.
+      Also fixed in passing: `verify-labels.js` still clicked the retired
+      "roads" view button (stale since the 2026-07-05 generalization).
+    - [ ] **V2 — combined "modeled city service cost per acre" (LAPTOP-GATED:
+      budget source hunt).** One denominator = road metres × published
+      roadway O&M+renewal $/m/yr + fire events × (Fire Rescue operating
+      budget ÷ citywide dispatches). Needs the two unit costs from City
+      budget documents (edmonton.ca unreachable from the Oracle box — same
+      bucket as the IIMP hunt); they become a manual reviewed input
+      (`city_unit_costs.json`, mill-rates pattern), labeled MODELED and
+      "roads + fire only", never "total city cost". Design already locked
+      in SPEC_utilities decision 3.
     - [x] ~~**Fire lens**~~ — **BUILT 2026-07-06** (design DECIDED 2026-07-05,
       Peter, all four recommendations: demand metric events/acre/yr as the
       Services ground plane + 31 station dots; all emergency responses minus

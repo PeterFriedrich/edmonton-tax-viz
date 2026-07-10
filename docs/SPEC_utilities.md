@@ -318,11 +318,26 @@ ANALYSIS_BACKLOG 5.
    is also settled — TODO.md) so the Services UI is designed once.
    Rejected: (b) grid-cell variant alongside Glass (bigger build, per-cell
    modeled-vs-billed labeling harder); (c) pipeline-only (lens invisible).
-3. **Does modeled utility $ enter "total services"?** The ratio view's
-   denominator is currently roads-only by construction. Mixing physical
-   units (road metres) with modeled dollars needs an explicit design —
-   recommended: keep "total services" physical until at least two DOLLAR
-   services exist, then decide.
+3. **Does modeled utility $ enter "total services"? — DECIDED 2026-07-10
+   (Peter): NO, staged design.** The trigger ("two dollar services exist")
+   fired with storm + water built — but they are the wrong dollars: both
+   are modeled **EPCOR** charges, and the Money-flow honesty rule above
+   already forbids dividing the levy by them (they are recovered from
+   ratepayers; adding them to both sides of a ratio would cancel). Only
+   LEVY-FUNDED services may sit under the levy, and the two we measure
+   (roads, fire) are physical. Staged answer:
+   - **V1 (built 2026-07-10): the Ratio view's denominator is a per-service
+     PICKER** — revenue per road metre | per fire event ("Ratio
+     denominator" control, `web/index.html` `RATIO_DENOMS`). Fire floor
+     0.005 events/acre/yr + log colour: `FINDINGS_revenue_scale.md` §6.7.
+   - **V2 (open, gated on a budget source hunt — laptop):** one combined
+     "modeled city service cost per acre" = road metres × published roadway
+     O&M+renewal $/m/yr + fire events × (Fire Rescue operating budget ÷
+     citywide annual dispatches). Unit costs become a manual, reviewed
+     input (`city_unit_costs.json`, the mill-rates pattern), labeled
+     MODELED and "roads + fire only" — never "total city cost" (police/
+     parks/transit unmeasured). The fire term is a demand *allocation* of
+     a mostly-fixed budget — carry that caveat.
 4. **Franchise-fee revenue columns:** ship with the electricity/gas lenses,
    earlier as standalone columns, or not at all? Recommended: only with
    their lenses — a modeled revenue line without its cost context invites

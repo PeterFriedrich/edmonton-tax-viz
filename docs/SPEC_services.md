@@ -85,9 +85,13 @@ linear. Set-aside hoods and hoods with `road_m_per_acre < 5`
 render grey + flat, off-scale. Road geometry lazy-loads on first non-Money
 view; a flat invisible hood layer carries tooltips + hover highlight in the
 Roads/Ratio views (roads/ratio prisms are not pickable — picking ignores
-opacity). "Total services" definition remains deferred until a second
-service exists; revenue-per-road-metre is its single-service case, now
-shipped.
+opacity). *2026-07-10: the "total services" question was DECIDED
+(SPEC_utilities decision 3) — the ratio stays PER-SERVICE, as a
+denominator picker* (revenue per road metre | per fire event; modeled
+EPCOR dollars excluded by the money-flow honesty rule; a combined
+unit-cost denominator is the V2 follow-on). Fire-ratio floor + log
+colour: `FINDINGS_revenue_scale.md` §6.7; verify:
+`tools/profiling/verify-ratio-denom.js`.
 
 This opens the **cost side** of the fiscal picture — explicitly out of scope in
 `SPEC_phase1.md` ("no service cost allocation yet — revenue only"). It is scoped

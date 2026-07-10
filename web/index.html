@@ -75,16 +75,18 @@
     #services .svc-colour { color: #6a6a80; font-size: 10.5px; display: none; }
     #services .svc-colour:hover { color: #e8e8ef; }
     /* Glass-view spike denominator (ground vs lot acres) — hidden outside
-       glass and on data files without the lot-acre columns. */
-    #denom-hd, #denom { display: none; }
-    #denom { border: 1px solid #2a2a3a; border-radius: 5px; overflow: hidden; margin-bottom: 2px; }
-    #denom button {
+       glass and on data files without the lot-acre columns. The ratio-view
+       denominator picker (#ratio-denom) shares the styling and the
+       default-hidden rule. */
+    #denom-hd, #denom, #ratio-denom-hd, #ratio-denom { display: none; }
+    #denom, #ratio-denom { border: 1px solid #2a2a3a; border-radius: 5px; overflow: hidden; margin-bottom: 2px; }
+    #denom button, #ratio-denom button {
       appearance: none; border: 0; background: transparent; color: #9a9ab0;
       font: 11px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       padding: 4px 10px; cursor: pointer; flex: 1; transition: background 0.12s, color 0.12s;
     }
-    #denom button:hover { color: #e8e8ef; }
-    #denom button.active { background: #fcd278; color: #16111a; font-weight: 600; }
+    #denom button:hover, #ratio-denom button:hover { color: #e8e8ef; }
+    #denom button.active, #ratio-denom button.active { background: #fcd278; color: #16111a; font-weight: 600; }
     #toggle button, #palette button, #lens button {
       appearance: none; border: 0; background: transparent; color: #9a9ab0;
       font: 12.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -172,7 +174,7 @@
   <div id="views" class="panel">
     <button data-view="money" class="active" title="Revenue/value prisms — the money plane">Money</button>
     <button data-view="services" title="City services on the ground — toggle each service on its own layer; roads coloured by metres per acre, stormwater by its modeled charge per acre">Services</button>
-    <button data-view="ratio" title="Ghost prisms of revenue per road metre over the neutral road network">Ratio</button>
+    <button data-view="ratio" title="Ghost prisms of revenue per road metre — or per fire event — over the neutral road network">Ratio</button>
     <button data-view="uses" title="Each neighbourhood's dominant zoned land use — what the land is designated for, not what it yields">Uses</button>
     <button data-view="glass" title="Translucent metric prisms over a neutral neighbourhood plane — hover the ground for each neighbourhood's numbers">Glass</button>
   </div>
@@ -223,6 +225,11 @@
     <div id="denom">
       <button data-denom="ground" class="active" title="Divide by ground area — the whole footprint, streets, parks and all. Dollars per unit of map (the cardinality-robust default)">Ground acres</button>
       <button data-denom="lot" title="Divide by the parcel (lot) acres the properties own — land productivity; large lots and park land stop diluting the figure">Lot acres</button>
+    </div>
+    <span class="hd" id="ratio-denom-hd">Ratio denominator</span>
+    <div id="ratio-denom">
+      <button data-ratio-denom="roads" class="active" title="Revenue per metre of city-maintained neighbourhood road (collector + local) — the levy-funded network this land's layout entails">Per road metre</button>
+      <button data-ratio-denom="fire" title="Revenue per dispatched fire-department emergency event (2023–2025 average) — levy-funded demand; most events are medical calls">Per fire event</button>
     </div>
   </div>
 
@@ -309,26 +316,69 @@
     // the active ramp — LINEAR, clamp = p97.5 (FINDINGS §6.3); arterials
     // neutral (shared infrastructure, no metric). "ratio": the stage-3
     // synthesis — ghost prisms (default 5% opacity, slider-adjustable) of
-    // REVENUE PER ROAD METRE over the network in all-neutral grey. Road
-    // geometry lazy-loads from ROADS_URL on first services/ratio view.
+    // revenue per unit of the PICKED levy-funded service (road metre |
+    // fire event — RATIO_DENOMS below) over the network in all-neutral
+    // grey. Road geometry lazy-loads from ROADS_URL on first services/ratio
+    // view.
     const ROADS_URL = "./data/roads.geojson";
     const ROAD_CLAMP = 53;
     const ARTERIAL_COLOR = [116, 120, 132, 170];
 
-    // Ratio view: revenue_per_acre / road_m_per_acre — the acres cancel, so
-    // this is $ of municipal revenue per metre of city-maintained access road.
-    // The distribution is extremely right-skewed and ~log-normal (FINDINGS
-    // §6.4: raw skew 19.7, sqrt 16.2, log 0.32) → colour is LOG-scaled between
-    // the kept subset's p2.5 and p97.5 (computed from the data, cached).
-    // Height stays linear (the honesty rule). Hoods with road_m_per_acre
-    // below RATIO_ROAD_FLOOR produce denominator artifacts (WESTVIEW VILLAGE:
-    // $1.3M/m on a near-zero road base) — greyed off-scale, height 0.
-    const RATIO_ROAD_FLOOR = 5; // m/acre; below this the ratio is an artifact
-    const ratioOf = p => p.revenue_per_acre / p.road_m_per_acre;
-    const ratioKept = p =>
-      p.road_m_per_acre != null && p.road_m_per_acre >= RATIO_ROAD_FLOOR &&
-      p.revenue_per_acre != null && !p.is_set_aside;
-    const fmtPerMetre = v => "$" + Math.round(v).toLocaleString() + " / road metre";
+    // Ratio view: revenue_per_acre / <service per acre> — the acres cancel,
+    // so each ratio is $ of municipal revenue per unit of a LEVY-FUNDED
+    // service. The denominator is a picker (SPEC_utilities decision 3,
+    // DECIDED 2026-07-10): per-service ratios only. Modeled EPCOR charges
+    // (stormwater, water) never sit under the levy — they are recovered from
+    // ratepayers, not tax money (money-flow honesty, SPEC_utilities.md); a
+    // combined city-cost denominator waits on published unit costs (V2).
+    // Both distributions are extremely right-skewed and ~log-normal (roads
+    // FINDINGS §6.4: raw skew 19.7, log 0.32; fire §6.7: raw +2.33, log
+    // +0.30) → colour is LOG-scaled between the kept subset's p2.5 and p97.5
+    // (computed from the data, cached per denominator). Height stays linear
+    // (the honesty rule). Hoods below each denominator's floor produce
+    // artifacts (roads: WESTVIEW VILLAGE, $1.3M/m on a near-zero road base;
+    // fire: four annexed-fringe hoods at $1.3–1.7M/event plus four
+    // zero-event hoods) — greyed off-scale, height 0.
+    const RATIO_DENOMS = {
+      roads: {
+        col: "road_m_per_acre",
+        floor: 5, // m/acre; below this the ratio is an artifact
+        floorText: "road base below 5 m / acre",
+        title: "Edmonton: Revenue per Road Metre",
+        legend: "Revenue per road metre (log colour)",
+        aside: "Set aside / insufficient road base",
+        fmt: v => "$" + Math.round(v).toLocaleString() + " / road metre",
+        component: p => `${p.road_m_per_acre.toFixed(1)} road m / acre`,
+        blurb: "Ghost prisms show municipal property-tax revenue per metre of " +
+               "city-maintained neighbourhood road (collector + local) — how much " +
+               "revenue backs each metre of the network below. Height is linear; " +
+               "colour is log-scaled. Grey flat = set-aside land or too little " +
+               "road base for a meaningful ratio.",
+      },
+      fire: {
+        col: "fire_events_per_acre",
+        floor: 0.005, // events/acre/yr ≈ the kept subset's p2.5
+        floorText: "fewer than 0.005 fire events / acre / yr",
+        title: "Edmonton: Revenue per Fire Event",
+        legend: "Revenue per fire event (log colour)",
+        aside: "Set aside / too few fire events",
+        fmt: v => "$" + Math.round(v).toLocaleString() + " / fire event",
+        component: p => `${p.fire_events_per_acre.toFixed(2)} fire events / acre / yr`,
+        blurb: "Ghost prisms show municipal property-tax revenue per dispatched " +
+               "fire-department emergency event (2023–2025 average) — how much " +
+               "revenue backs each call a neighbourhood's land generates. Demand, " +
+               "not response coverage, and most dispatched events are medical " +
+               "calls. Height is linear; colour is log-scaled. Grey flat = " +
+               "set-aside land or too few events for a meaningful ratio.",
+      },
+    };
+    const ratioDenom = () => RATIO_DENOMS[state.ratioDenom];
+    const ratioOf = p => p.revenue_per_acre / p[ratioDenom().col];
+    const ratioKept = p => {
+      const d = ratioDenom();
+      return p[d.col] != null && p[d.col] >= d.floor &&
+             p.revenue_per_acre != null && !p.is_set_aside;
+    };
 
     // --- uses view (use-mix, 2026-07-03) -------------------------------------
     // Dominant zoned land use per hood — categorical, flat (no extrusion: the
@@ -451,12 +501,8 @@
         opacity: null, // no prisms in this view
       },
       ratio: {
-        title: "Edmonton: Revenue per Road Metre",
-        blurb: "Ghost prisms show municipal property-tax revenue per metre of " +
-               "city-maintained neighbourhood road (collector + local) — how much " +
-               "revenue backs each metre of the network below. Height is linear; " +
-               "colour is log-scaled. Grey flat = set-aside land or too little " +
-               "road base for a meaningful ratio.",
+        title: null, // denominator-driven — ratioDenom().title
+        blurb: null, // denominator-driven — ratioDenom().blurb
         opacity: 5, // ghost prisms by default; slider adjusts
       },
       uses: {
@@ -527,6 +573,7 @@
     const state = { metric: "revenue_per_acre", ramp: "current", residential: false,
                     colorAdjust: true, // sqrt colour transform on (money/glass); off = linear+clamp
                     labels: false, view: "money", prismOpacity: 1, denom: "ground",
+                    ratioDenom: "roads", // Ratio-view denominator (RATIO_DENOMS); persists like denom
                     services: { roads: true, storm: false, fire: false, water: false },
                     svcDriver: "roads",
                     data: null };
@@ -1092,18 +1139,19 @@
       })];
     }
 
-    // Ratio-view scale anchors, computed once from the kept subset (hoods on
-    // the road floor / set-aside excluded): log-colour between p2.5 and p97.5,
-    // linear height scaled so the max kept ratio reaches the other views'
-    // ~8.2 km peak (height parity across views). With the residential lens on,
-    // the COLOUR anchors rescale to the residential kept subset — the ratio
-    // analogue of residentialClampFor (FINDINGS §6.2: the non-res mill-rate
-    // skew inflates the ratio exactly where non-residential land sits). Height
-    // stays on the full-subset scale, matching the money lens (only colour
-    // rescales).
-    let _ratioScales = null;
+    // Ratio-view scale anchors, computed once per DENOMINATOR from its kept
+    // subset (hoods under that denominator's floor / set-aside excluded):
+    // log-colour between p2.5 and p97.5, linear height scaled so the max kept
+    // ratio reaches the other views' ~8.2 km peak (height parity across views
+    // and denominators). With the residential lens on, the COLOUR anchors
+    // rescale to the residential kept subset — the ratio analogue of
+    // residentialClampFor (FINDINGS §6.2: the non-res mill-rate skew inflates
+    // the ratio exactly where non-residential land sits). Height stays on the
+    // full-subset scale, matching the money lens (only colour rescales).
+    const _ratioScales = {};
     function ratioScale() {
-      if (!_ratioScales) {
+      let s = _ratioScales[state.ratioDenom];
+      if (!s) {
         const kept = state.data.features.map(f => f.properties).filter(ratioKept);
         const anchorsOf = props => {
           const vals = props.map(ratioOf).sort((a, b) => a - b);
@@ -1111,14 +1159,14 @@
           return { lo, hi, logLo: Math.log(lo), logSpan: Math.log(hi) - Math.log(lo) };
         };
         const res = kept.filter(p => p.is_residential);
-        _ratioScales = {
+        s = _ratioScales[state.ratioDenom] = {
           all: anchorsOf(kept),
           res: res.length ? anchorsOf(res) : anchorsOf(kept),
           elevationScale: 8220 / Math.max(...kept.map(ratioOf)),
         };
       }
-      const a = state.residential ? _ratioScales.res : _ratioScales.all;
-      return { ...a, elevationScale: _ratioScales.elevationScale };
+      const a = state.residential ? s.res : s.all;
+      return { ...a, elevationScale: s.elevationScale };
     }
     const ratioT = v => {
       const s = ratioScale();
@@ -1257,7 +1305,8 @@
       }
 
       if (state.view === "ratio") {
-        // Neutral network below, ghost prisms of $/road-metre above.
+        // Neutral network below, ghost prisms of the active per-service
+        // ratio ($/road-metre or $/fire-event — state.ratioDenom) above.
         const ratioPrisms = new deck.GeoJsonLayer({
           id: "ratio-extrusion",
           data: state.data,
@@ -1280,7 +1329,8 @@
           opacity: state.prismOpacity,
           material: { ambient: 0.55, diffuse: 0.6, shininess: 32, specularColor: [60, 60, 70] },
           pickable: false, // hood hover layer handles tooltips
-          updateTriggers: { getFillColor: [state.ramp, state.residential] },
+          updateTriggers: { getFillColor: [state.ramp, state.residential, state.ratioDenom],
+                            getElevation: [state.ratioDenom] },
         });
         return [...roadLayers(true), ratioPrisms, hoodHoverLayer(), ...labelLayer()];
       }
@@ -1388,18 +1438,19 @@
       }
 
       if (state.view === "ratio") {
+        const d = ratioDenom();
         if (!ratioKept(p)) {
           const why = p.is_set_aside
             ? `Set aside — ${p.set_aside_reason}`
-            : `No meaningful ratio — road base below ${RATIO_ROAD_FLOOR} m / acre` +
-              (p.road_m_per_acre != null ? ` (${p.road_m_per_acre.toFixed(1)})` : "");
+            : `No meaningful ratio — ${d.floorText}` +
+              (p[d.col] != null ? ` (${p[d.col].toFixed(d.floor < 1 ? 3 : 1)})` : "");
           return { className: "tip", html: name + `<span class="muted">${why}</span>` };
         }
         return {
           className: "tip",
-          html: name + fmtPerMetre(ratioOf(p)) +
+          html: name + d.fmt(ratioOf(p)) +
                 `<br/><span class="muted">$${Math.round(p.revenue_per_acre).toLocaleString()} revenue / acre</span>` +
-                `<br/><span class="muted">${p.road_m_per_acre.toFixed(1)} road m / acre</span>`,
+                `<br/><span class="muted">${d.component(p)}</span>`,
         };
       }
 
@@ -1496,9 +1547,25 @@
       refreshLegend();
     }
 
+    // Switch the Ratio view's denominator (per road metre vs per fire event).
+    // State persists across view switches like the acre denominator; scales,
+    // chrome and legend re-anchor to the new service on rebuild (per-denom
+    // anchors are cached in _ratioScales).
+    function applyRatioDenom(d) {
+      if (d === state.ratioDenom || !RATIO_DENOMS[d]) return;
+      state.ratioDenom = d;
+      document.querySelectorAll("#ratio-denom button").forEach(b =>
+        b.classList.toggle("active", b.dataset.ratioDenom === d));
+      if (state.view !== "ratio") return;
+      overlay.setProps({ layers: buildLayers() });
+      document.getElementById("title-h").textContent = ratioDenom().title;
+      document.getElementById("title-p").textContent = ratioDenom().blurb;
+      refreshLegend();
+    }
+
     // Sync the whole legend to the current view. roads: the network's linear
-    // road scale. ratio: the log $/road-metre scale between its data anchors
-    // (residential anchors when the lens is on). money: the metric scale; with
+    // road scale. ratio: the active denominator's log scale between its data
+    // anchors (residential anchors when the lens is on). money: the metric scale; with
     // the lens on the colour is rescaled, so the max shows the residential
     // clamp. In money and ratio the grey swatch means "faded non-residential"
     // when the lens is on, "set aside / off-scale" otherwise.
@@ -1565,7 +1632,7 @@
         }
       } else if (state.view === "ratio") {
         const s = ratioScale();
-        document.getElementById("legend-label").textContent = "Revenue per road metre (log colour)";
+        document.getElementById("legend-label").textContent = ratioDenom().legend;
         document.getElementById("legend-min").textContent =
           "≤ $" + Math.round(s.lo).toLocaleString();
         document.getElementById("legend-max").textContent =
@@ -1574,7 +1641,7 @@
           label.textContent = "Faded — non-residential land";
           sw.style.background = `rgb(${LENS_FADE_COLOR.join(",")})`;
         } else {
-          label.textContent = "Set aside / insufficient road base";
+          label.textContent = ratioDenom().aside;
           sw.style.background = "rgb(104,108,122)";
         }
       } else if (state.view === "glass") {
@@ -1676,9 +1743,10 @@
       state.view = v;
       document.querySelectorAll("#views button").forEach(b =>
         b.classList.toggle("active", b.dataset.view === v));
-      // The layers panel hosts three view-scoped sections: the prism slider
-      // (ratio + glass), the service checkboxes (services), the spike
-      // denominator (glass, further gated on the data below).
+      // The layers panel hosts four view-scoped sections: the prism slider
+      // (ratio + glass), the service checkboxes (services), the acre
+      // denominator (money + glass, further gated on the data below), and
+      // the ratio denominator picker (ratio, gated on the fire column).
       const prisms = v === "ratio" || v === "glass";
       // The Money view opens the layers panel too — but only for the denominator
       // toggle, and only when the data carries the lot-acre columns.
@@ -1750,16 +1818,24 @@
         v === "glass" ? "Spike denominator" : "Denominator";
       document.getElementById("denom-hd").style.display = denomShow ? "block" : "none";
       document.getElementById("denom").style.display = denomShow ? "flex" : "none";
+      // The ratio denominator picker shows only in the Ratio view, and only
+      // when the data carries the fire column — roads-only data offers no
+      // choice, so the control stays hidden and the roads default applies.
+      const ratioDenomShow = v === "ratio" && state.hasFire;
+      document.getElementById("ratio-denom-hd").style.display = ratioDenomShow ? "block" : "none";
+      document.getElementById("ratio-denom").style.display = ratioDenomShow ? "flex" : "none";
       overlay.setProps({ layers: buildLayers() });
       // Glass shows the metric like Money, so its title stays metric-driven
       // and its blurb follows the spike denominator; the services blurb
       // follows the colour-driving service.
       const chrome = v === "money" ? METRICS[state.metric] : VIEWS[v];
       document.getElementById("title-h").textContent =
-        v === "glass" ? METRICS[state.metric].title : chrome.title;
+        v === "glass" ? METRICS[state.metric].title :
+        v === "ratio" ? ratioDenom().title : chrome.title;
       document.getElementById("title-p").textContent =
         v === "glass" ? glassBlurb() :
         v === "services" ? servicesBlurb() :
+        v === "ratio" ? ratioDenom().blurb :
         v === "money" ? moneyBlurb() : withColourClause(chrome.blurb);
       syncColorAdjust(); // the sqrt toggle only bites in money + glass (scaleT)
       refreshLegend();
@@ -1819,6 +1895,8 @@
       document.querySelector('#lens button[data-lens="labels"]').addEventListener("click", applyLabels);
       document.querySelectorAll("#denom button").forEach(b =>
         b.addEventListener("click", () => applyDenom(b.dataset.denom)));
+      document.querySelectorAll("#ratio-denom button").forEach(b =>
+        b.addEventListener("click", () => applyRatioDenom(b.dataset.ratioDenom)));
       document.querySelectorAll("#services .svc").forEach(el => {
         const k = el.dataset.service;
         el.querySelector(".svc-on").addEventListener("change",
@@ -1849,8 +1927,11 @@
         document.querySelector('#services .svc[data-service="storm"]').style.display = "none";
         state.services.storm = false;
       }
-      // Same guard for the fire column (pre-2026-07-06 data files).
-      if (!state.data.features.some(f => f.properties.fire_events_per_acre != null)) {
+      // Same guard for the fire column (pre-2026-07-06 data files). The flag
+      // also gates the Ratio view's denominator picker (applyView): without
+      // fire data there is no denominator choice to offer.
+      state.hasFire = state.data.features.some(f => f.properties.fire_events_per_acre != null);
+      if (!state.hasFire) {
         document.querySelector('#services .svc[data-service="fire"]').style.display = "none";
         state.services.fire = false;
       }

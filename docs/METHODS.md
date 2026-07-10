@@ -115,7 +115,12 @@ Revenue alone is half the fiscal story. Each service layer is a *supply* or
   neighbourhood edges, and alleys and provincial highways are out. This is the
   strongest cost lens methodologically — road length is the dominant driver of
   recurring surface-infrastructure cost, and it is measured, not modeled. The
-  **Ratio view** divides: revenue per road-metre. (`docs/SPEC_services.md`)
+  **Ratio view** divides: revenue per road metre, or (a picker) revenue per
+  fire event. Only these two appear under the ratio because only they are
+  services the property-tax levy actually funds — the modeled EPCOR charges
+  below are recovered from utility ratepayers, and dividing tax revenue by
+  them would compare unrelated money flows. (`docs/SPEC_services.md`,
+  `docs/SPEC_utilities.md` "Money-flow honesty")
 - **Stormwater (modeled)** — EPCOR's own bylaw formula, area × intensity ×
   runoff coefficient, applied to every roll parcel at 2025 rates. Citywide
   $240.4M as modeled — deliberately reported alongside $190.5M when land
