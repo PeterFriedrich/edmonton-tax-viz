@@ -6,8 +6,9 @@ checklist you open when the weekly run fails, the site shows a banner, or a
 new year rolls.
 
 **What runs unattended:** `.github/workflows/refresh.yml`, Mondays 08:00 UTC
-(+ manual `workflow_dispatch`): tests → download → year-alignment check →
-`main.py --skip-png` → commit `web/data/` → deploy `web/` to Pages.
+(+ manual `workflow_dispatch`): tests → download → unmatched-name check →
+year-alignment check → `main.py --skip-png` → commit `web/data/` → deploy
+`web/` to Pages.
 **Failure is safe by default** — any failed run leaves the site serving the
 last committed data. Nothing here is ever a same-day emergency.
 
@@ -74,6 +75,16 @@ Triage by which step failed, in the run log:
     raise BOTH the `$limit` in the URL and the matching `limit` field.
   - *"downloaded N but server reports M"* — incomplete download; re-run. If
     it persists, the portal itself is misbehaving — wait it out.
+- **"Check unmatched names"** (exit 5, `scripts/check_unmatched_names.py`) — a
+  NEW assessment neighbourhood name has no boundary polygon, so its assessed
+  value would silently drop off the map. The build stops *before* regen, so the
+  site keeps serving last-good data. The error names the drifted neighbourhood.
+  Fix: find where it should map (spatial containment via the assessment lat/lon
+  is the decisive test — DATA.md "Name Matching") and either add a
+  `NAME_CORRECTIONS` entry (`src/load_assessment.py`) or, if the value is truly
+  immaterial and deliberately unmapped (the OLIVER precedent), add the name to
+  `data/expected_unmatched.json` with a reason. A boundary-side hole or a
+  resolved name is only a warning (exit 0) asking for the same baseline update.
 - **"Regenerate web GeoJSON"** — read the traceback; the loaders hard-error
   deliberately on upstream schema drift rather than publishing wrong numbers.
   Usual fixes are extending an explicit mapping: `ZONE_CATEGORY`

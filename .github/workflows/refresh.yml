@@ -44,6 +44,16 @@ jobs:
       - name: Download source data
         run: python scripts/download_data.py
 
+      # Unmatched-name guard (docs/FINDINGS_data_integrity_audit.md §4 / T3c):
+      # neighbourhood name is the assessment<->boundary join key. A NEW assessment
+      # name with no boundary silently drops that neighbourhood's assessed value
+      # from the map — warn-silent in an unattended weekly run. This asserts the
+      # live money-path unmatched set equals the committed baseline
+      # (data/expected_unmatched.json) and FAILS the build (exit 5) on new drift,
+      # so no wrong-data deploy happens and the last good data keeps serving.
+      - name: Check unmatched names (guard before regenerating)
+        run: python scripts/check_unmatched_names.py
+
       # Year-alignment guard (docs/FINDINGS_data_integrity_audit.md §3, SPEC
       # "Year alignment"): the roll year lives only in Socrata metadata, so a
       # year roll would otherwise silently apply stale rates. exit 0 = aligned,

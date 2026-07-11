@@ -242,7 +242,7 @@ property_info`, `export_value_grid`, and the grown `join_and_calculate`.
 | # | Target | Verdict |
 |---|---|---|
 | NEW-1 | `join_and_calculate` positional `safe_area` reuse across 9 merges | **RESOLVED 2026-07-11** — `validate="m:1"` on all nine merges; dup right-key now raises `MergeError` (was: latent silent misalignment) |
-| T3c | Unmatched-set changes warning-only in CI | **STILL OPEN** (= TODO P2.1) — now covers SIX name-keyed joins, not one |
+| T3c | Unmatched-set changes warning-only in CI | **RESOLVED 2026-07-11 (money path)** — `check_unmatched_names.py` fails CI on new assessment↔boundary drift; service frames a possible future add |
 | NEW-2 | Fire/water/franchise vintage pins (manual January bumps) | **ACCEPTED-risk** — RUNBOOK-guarded, not CI-guarded |
 | NEW-3 | Fire hood-name drift (new dataset, same T3 channel) | CONFIRMED-immaterial — 54 of 274,127 in-window events (0.02%), warned |
 | T1 | Class → rate mapping vs live labels | CONFIRMED-correct (all 7 live labels mapped; rates 2025 == pin) |
@@ -289,13 +289,26 @@ silently fanning out. Regression-covered by `test_duplicate_assessment_key_raise
 and `test_duplicate_roads_key_raises`; pipeline reruns clean on real data (all
 nine pass validation), 277 pytest green.
 
-## T3c — the CI unmatched-set assertion matters more now [still open]
+## T3c — the CI unmatched-set assertion [RESOLVED 2026-07-11 for the money path]
 
 The first run flagged warn-only unmatched handling for ONE join. There are now
 **six name-keyed joins** (assessment, zoning, roads, stormwater, fire, transit,
 water/franchise, lot-acres) all using the same warn-and-proceed pattern in an
 unwatched weekly run. Everything checked clean this run — but the channel is
-six times wider than when TODO P2.1 was filed. Priority unchanged-or-higher.
+six times wider than when TODO P2.1 was filed.
+
+**RESOLVED 2026-07-11 (money path).** `scripts/check_unmatched_names.py` asserts
+the live assessment↔boundary unmatched sets equal a committed baseline
+(`data/expected_unmatched.json`: `assessment_not_in_boundaries` = {OLIVER};
+`boundaries_not_in_assessment` = {LEWIS FARMS}), wired into `refresh.yml` as a
+hard gate after download / before regen. A NEW assessment name with no boundary —
+the silent-dollar-loss direction — FAILS the build (exit 5), so no wrong-data
+deploy happens and the last-good data keeps serving. New boundary holes and
+resolved names are exit-0 warnings that ask for a baseline update. +8 tests.
+Scope is deliberately the **money path only** — the one join where a mismatch
+drops published dollars; the five service frames default unmatched to 0/NaN
+(a visible blank, not wrong money) and remain `join_and_calculate`-warned, so
+extending the guard to them is a possible future add.
 
 ## NEW-2 — vintage pins beyond ASSESSMENT_YEAR [accepted risk]
 
@@ -355,7 +368,9 @@ The pipeline held up under a full re-audit that included five new lens modules
 and two new denominators: **zero wrong published numbers found.** The defensive
 architecture (hard-error on unmapped vocabulary, counted exclusions,
 conservation asserts) has been applied consistently to every module added since
-the first run. Of the two highest-leverage hardenings, one is now applied:
-(1) the CI unmatched-set assertion (TODO P2.1 — now protecting six joins) remains
-open, and (2) `validate="m:1"` on the `join_and_calculate` merges (NEW-1) was
-**applied 2026-07-11**, closing the one silent-misalignment path the code left open.
+the first run. Both highest-leverage hardenings are now **applied 2026-07-11**:
+(1) the CI unmatched-set assertion (TODO P2.1 / T3c) — `check_unmatched_names.py`
+fails the weekly build on a new money-path unmatched name, and (2) `validate="m:1"`
+on the `join_and_calculate` merges (NEW-1) — closing the silent-misalignment path.
+Together they convert the two widest warn-silent channels to fail-loud before
+public release.
