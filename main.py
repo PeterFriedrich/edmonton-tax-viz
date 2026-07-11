@@ -39,7 +39,11 @@ from load_stormwater import load_stormwater
 from load_water import load_water
 from load_franchise import load_franchise
 from load_fire import load_fire_events, export_fire_stations_web
-from load_transit import load_transit, export_transit_stations_web
+from load_transit import (
+    load_transit,
+    export_transit_stations_web,
+    export_transit_lines_web,
+)
 from join_and_calculate import join_and_calculate, export_geojson
 from export_value_grid import export_value_grid, check_lot_acre_bounds, build_hood_lot_acres
 from plot_choropleth import plot_choropleth
@@ -62,6 +66,9 @@ GTFS_ROUTES_CSV = ROOT / "data/raw/gtfs_routes.csv"
 GTFS_TRIPS_CSV = ROOT / "data/raw/gtfs_trips.csv"
 GTFS_STOP_TIMES_CSV = ROOT / "data/raw/gtfs_stop_times.csv"
 GTFS_CALENDAR_DATES_CSV = ROOT / "data/raw/gtfs_calendar_dates.csv"
+# LRT track lines — a context layer under the transit lens (the station dots'
+# companion), independent of the metric; exported when present.
+LRT_ROUTES_GEOJSON = ROOT / "data/raw/lrt_routes.geojson"
 MILL_RATES_JSON = ROOT / "data/mill_rates.json"
 STORMWATER_RATES_JSON = ROOT / "data/stormwater_rates.json"
 WATER_RATES_JSON = ROOT / "data/water_rates.json"
@@ -73,6 +80,7 @@ ZONING_WEB_OUT = ROOT / "web/data/zoning.geojson"
 GRID_WEB_OUT = ROOT / "web/data/value_grid.json"
 FIRE_STATIONS_WEB_OUT = ROOT / "web/data/fire_stations.json"
 TRANSIT_STATIONS_WEB_OUT = ROOT / "web/data/transit_stations.json"
+TRANSIT_LINES_WEB_OUT = ROOT / "web/data/lrt_lines.json"
 
 # Assessment-year alignment: the local snapshot is 2025 data (the coverage year
 # lives in Socrata metadata, not the rows — see DATA.md). Mill rates MUST match.
@@ -128,6 +136,7 @@ def run(
     gtfs_trips_csv: Path | None = GTFS_TRIPS_CSV,
     gtfs_stop_times_csv: Path | None = GTFS_STOP_TIMES_CSV,
     gtfs_calendar_dates_csv: Path | None = GTFS_CALENDAR_DATES_CSV,
+    lrt_routes_geojson: Path | None = LRT_ROUTES_GEOJSON,
     setback_m: float = SETBACK_M,
     simplify_tolerance_m: float = SIMPLIFY_TOLERANCE_M,
 ) -> None:
@@ -312,6 +321,15 @@ def run(
         # the Services view's transit layer — rides with the transit lens.
         if transit is not None:
             export_transit_stations_web(gtfs_stops_csv, TRANSIT_STATIONS_WEB_OUT)
+        # LRT track lines — companion context layer, exported when the LRT
+        # routes file is present (independent of the GTFS metric inputs).
+        if transit is not None and lrt_routes_geojson is not None and Path(lrt_routes_geojson).exists():
+            export_transit_lines_web(lrt_routes_geojson, TRANSIT_LINES_WEB_OUT)
+        elif transit is not None and lrt_routes_geojson is not None:
+            logger.warning(
+                "LRT routes file not found (%s) — track lines not exported",
+                lrt_routes_geojson,
+            )
 
     logger.info("Pipeline complete.")
 
@@ -351,6 +369,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p.add_argument("--gtfs-trips-csv", type=Path, default=GTFS_TRIPS_CSV)
     p.add_argument("--gtfs-stop-times-csv", type=Path, default=GTFS_STOP_TIMES_CSV)
     p.add_argument("--gtfs-calendar-dates-csv", type=Path, default=GTFS_CALENDAR_DATES_CSV)
+    p.add_argument("--lrt-routes-geojson", type=Path, default=LRT_ROUTES_GEOJSON)
     p.add_argument("--skip-transit", action="store_true",
                    help="skip the scheduled-transit supply lens (SPEC_services.md \"Transit lens\")")
     p.add_argument("--log-level", default="INFO", help="logging level (default INFO)")
@@ -384,6 +403,7 @@ def main(argv: list[str] | None = None) -> None:
         gtfs_trips_csv=None if args.skip_transit else args.gtfs_trips_csv,
         gtfs_stop_times_csv=None if args.skip_transit else args.gtfs_stop_times_csv,
         gtfs_calendar_dates_csv=None if args.skip_transit else args.gtfs_calendar_dates_csv,
+        lrt_routes_geojson=None if args.skip_transit else args.lrt_routes_geojson,
         setback_m=args.setback_m,
         simplify_tolerance_m=args.simplify_tolerance_m,
     )

@@ -46,6 +46,13 @@ ROUTE_MODE = {
 # boundary frame from load_boundaries is already in it.
 PROJECTED_CRS = "EPSG:3400"
 
+# LRT route_ids to DROP from the track-line context layer. HER is the High
+# Level Bridge heritage streetcar (volunteer-run, seasonal) — NOT ETS LRT
+# service, so it's absent from the GTFS TRAM/LIGHT-RAIL routes the metric
+# counts. Drawing it would put track on the map the lens doesn't measure.
+# Explicit exclude set (the ROUTE_MODE philosophy): surprises are logged.
+EXCLUDED_LRT_ROUTE_IDS = {"HER"}
+
 
 def _read_calendar(calendar_dates_csv: str | Path) -> tuple[pd.DataFrame, int]:
     """Active (service_id, date) pairs on weekdays + the weekday-date count.
@@ -354,3 +361,60 @@ def export_transit_stations_web(stops_csv: str | Path, out_path: str | Path) -> 
         json.dump({"stations": stations}, f, separators=(",", ":"), ensure_ascii=False)
     logger.info("Wrote %d transit stations to %s", len(stations), out_path)
     return len(stations)
+
+
+def export_transit_lines_web(lrt_routes_geojson: str | Path, out_path: str | Path) -> int:
+    """Write the LRT track lines for the web map's transit layer.
+
+    A context layer (the LRT-station dots' companion), NOT part of the
+    stop-events metric. Reads the "LRT Routes" GeoJSON (four route
+    multilines), drops the HER heritage streetcar (``EXCLUDED_LRT_ROUTE_IDS``
+    — not ETS LRT service), and flattens each remaining route's
+    MultiLineString into individual paths. Writes a tiny committed JSON —
+    ``{"lines": [[[lon, lat], ...], ...]}`` — the station-dots pattern, lazy-
+    loaded by the Services view. Returns the path (segment) count.
+    """
+    with open(lrt_routes_geojson, encoding="utf-8") as f:
+        fc = json.load(f)
+    feats = fc.get("features", [])
+    if not feats:
+        raise ValueError(f"no features in {lrt_routes_geojson} — wrong/empty file")
+
+    lines: list[list[list[float]]] = []
+    kept, dropped = [], []
+    for feat in feats:
+        props = feat.get("properties") or {}
+        rid = props.get("lrt_route_id")
+        name = props.get("lrt_route_name") or rid
+        if rid in EXCLUDED_LRT_ROUTE_IDS:
+            dropped.append(name or rid)
+            continue
+        geom = feat.get("geometry") or {}
+        gtype = geom.get("type")
+        coords = geom.get("coordinates") or []
+        # MultiLineString -> list of paths; LineString -> single path.
+        parts = coords if gtype == "MultiLineString" else [coords]
+        if gtype not in ("MultiLineString", "LineString"):
+            logger.warning("LRT route %s has unexpected geometry %s — skipped", name, gtype)
+            continue
+        n_before = len(lines)
+        for part in parts:
+            path = [[round(float(x), 5), round(float(y), 5)] for x, y in part]
+            if len(path) >= 2:
+                lines.append(path)
+        kept.append(f"{name} ({len(lines) - n_before} segs)")
+
+    if not lines:
+        raise ValueError(f"no drawable LRT track segments in {lrt_routes_geojson}")
+
+    logger.info(
+        "LRT track lines: kept %s; dropped %s",
+        ", ".join(kept), ", ".join(dropped) or "none",
+    )
+
+    out_path = Path(out_path)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(out_path, "w", encoding="utf-8") as f:
+        json.dump({"lines": lines}, f, separators=(",", ":"), ensure_ascii=False)
+    logger.info("Wrote %d LRT track segments to %s", len(lines), out_path)
+    return len(lines)
