@@ -5,7 +5,7 @@ GitHub Actions VM has none of the raw inputs, so it must pull them before
 ``main.py`` can regenerate the map. Run locally the same way to refresh a
 snapshot.
 
-Seven inputs come from Edmonton's Socrata open-data portal:
+Twelve inputs come from Edmonton's Socrata open-data portal:
   - assessment     q7d6-ambg  (Property Assessment Data, current year)  -> CSV
   - boundaries     65fr-66s6  (Neighbourhood Boundaries)                -> GeoJSON
   - zoning         fixa-tstc  (Zoning Bylaw Geographical Data)          -> GeoJSON
@@ -14,6 +14,11 @@ Seven inputs come from Edmonton's Socrata open-data portal:
                                year built, current year)                -> CSV
   - fire_events    7hsn-idqi  (Fire Response, current + historical)     -> CSV
   - fire_stations  b4y7-zhnz  (Fire Stations: 31 points)                -> CSV
+  - gtfs_stops     4vt2-8zrq  (ETS GTFS: stops)                         -> CSV
+  - gtfs_routes    d577-xky7  (ETS GTFS: routes)                        -> CSV
+  - gtfs_trips     ctwr-tvrd  (ETS GTFS: trips, slim $select)           -> CSV
+  - gtfs_stop_times greh-g7ac (ETS GTFS: stop times, slim $select)      -> CSV
+  - gtfs_calendar_dates f2sy-bth7 (ETS GTFS: calendar dates)            -> CSV
 
 Mill rates (pwis-wc4c) are NOT fetched here — they live in the committed
 ``data/mill_rates.json`` (see DATA.md); refreshing them for a new year is a
@@ -114,6 +119,50 @@ SOURCES = {
         "dest": RAW / "fire_stations.csv",
         "limit": 500,  # 31 stations as of 2026-07
         "count_url": _count_url("b4y7-zhnz"),
+    },
+    # Transit lens (SPEC_services.md "Transit lens"): the ETS GTFS static
+    # feed, published as individual Socrata tables (the zip bundle is an
+    # href-only page). Trips and stop_times use $select to fetch only the
+    # keyed columns — trips otherwise carries a per-trip geometry_line that
+    # dominates the file, and stop_times is 1.7M rows. $select does not
+    # change the row count, so both truncation guards still apply.
+    "gtfs_stops": {
+        "url": "https://data.edmonton.ca/resource/4vt2-8zrq.csv?$limit=20000",
+        "dest": RAW / "gtfs_stops.csv",
+        "limit": 20000,  # 6,882 stops as of 2026-07
+        "count_url": _count_url("4vt2-8zrq"),
+    },
+    "gtfs_routes": {
+        "url": "https://data.edmonton.ca/resource/d577-xky7.csv?$limit=2000",
+        "dest": RAW / "gtfs_routes.csv",
+        "limit": 2000,  # 238 routes as of 2026-07
+        "count_url": _count_url("d577-xky7"),
+    },
+    "gtfs_trips": {
+        "url": (
+            "https://data.edmonton.ca/resource/ctwr-tvrd.csv"
+            "?$select=trip_id,route_id,service_id&$limit=300000"
+        ),
+        "dest": RAW / "gtfs_trips.csv",
+        "limit": 300000,  # 56,812 trips as of 2026-07
+        "count_url": _count_url("ctwr-tvrd"),
+    },
+    "gtfs_stop_times": {
+        "url": (
+            "https://data.edmonton.ca/resource/greh-g7ac.csv"
+            "?$select=trip_id,stop_id&$limit=5000000"
+        ),
+        "dest": RAW / "gtfs_stop_times.csv",
+        "limit": 5000000,  # 1,744,051 stop-time rows as of 2026-07
+        "count_url": _count_url("greh-g7ac"),
+        # Big table; give the server generation time headroom like roads.
+        "timeout": 900,
+    },
+    "gtfs_calendar_dates": {
+        "url": "https://data.edmonton.ca/resource/f2sy-bth7.csv?$limit=50000",
+        "dest": RAW / "gtfs_calendar_dates.csv",
+        "limit": 50000,  # 9,248 (service_id, date) rows as of 2026-07
+        "count_url": _count_url("f2sy-bth7"),
     },
 }
 
