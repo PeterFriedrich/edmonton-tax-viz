@@ -200,7 +200,23 @@ five buttons regardless of service count):
     commercial-not-modeled, and consumption-tracks-household-density
     (Methods §G). Legend label names the 2026 tariff vintage. Checkbox
     hides on data files without the column, same guard as the others.
-  **Plane sharing (2026-07-06):** the plane services (storm, fire, water) draw ONE
+  - **Transit** (default off; fourth service, SPEC_services "Transit lens",
+    2026-07-11): **SCHEDULED service supply** — `transit_dep_per_acre`
+    (mean-weekday GTFS stop-events ÷ boundary acres), NOT ridership (no
+    stop-level usage exists in open data) — blurb and legend say so, and
+    carry the current-signup seasonality caveat (summer schedules run
+    lighter; the metric steps at signup boundaries). Rendering: the shared
+    flat hood plane, **SQRT colour (FINDINGS §6.8, decided 2026-07-11 on
+    real data — raw skew +3.34, clamp/median 4.3×), clamp p97.5 of
+    non-set-aside hoods**, plus **58 station context dots**
+    (`transit-stations` ScatterplotLayer, blue + white stroke — the GTFS
+    location_type-1 LRT stations + transit centres; lazy
+    `web/data/transit_stations.json`, drawn whenever the service is
+    checked; an "LRT station / transit centre" row joins the legend via
+    `#legend-cats`, which now composes rows across fire + transit).
+    Checkbox hides on data files without the column, same guard as the
+    others.
+  **Plane sharing (2026-07-06):** the plane services (storm, fire, water, transit) draw ONE
   `svc-plane` layer between them — two coplanar polygon layers would
   z-fight, and a non-driving plane's "neutral" render is the same slate
   surface anyway. `servicePlaneLayer(col)` paints the driver's column, or
