@@ -718,11 +718,22 @@ _Last reconciled: 2026-07-09_
     branches from 2026-07-01: `docs/data-integrity-audit-brief`,
     `fix/name-corrections-audit`, `feature/year-alignment-guard`).
 
-- [ ] **Data-integrity audit follow-ons** (found 2026-07-01, see
-  `docs/FINDINGS_data_integrity_audit.md` §4–5; findings 1–3 fixed + deployed):
-  - [ ] **CI unmatched-set assertion (audit §4):** commit the expected unmatched
-    list (now just the OLIVER straggler) and fail the CI build when the live
-    unmatched set differs — converts name-drift from warn-silent to fail-loud.
+- [ ] **Data-integrity audit follow-ons** (first run 2026-07-01, **second run
+  2026-07-11** — see `docs/FINDINGS_data_integrity_audit.md`; second run covered
+  all post-07-01 modules: roads/storm/water/franchise/fire/transit/lot-acre/grid.
+  **No blocking findings; published numbers confirmed trustworthy.**):
+  - [ ] **CI unmatched-set assertion (audit §4 / second-run T3c):** commit the
+    expected unmatched list (now just the OLIVER straggler) and fail the CI build
+    when the live unmatched set differs — converts name-drift from warn-silent to
+    fail-loud. Second run: the same warn-only pattern now spans SIX name-keyed
+    joins (assessment/zoning/roads/storm/fire/transit/water/lot-acres), so this
+    matters more than when filed. Fire-side baseline candidates recorded
+    (second-run NEW-3: 54/274k in-window events, 0.02%).
+  - [ ] **`validate="m:1"` on the `join_and_calculate` merges (second-run
+    NEW-1):** the pre-merge `safe_area` Series is reused positionally across all
+    nine sequential merges — correct while every right frame is unique-keyed
+    (all are today), silently misaligns EVERY per-acre denominator if a duplicate
+    key ever appears. One line per merge; converts latent-silent to fail-loud.
   - [x] ~~**Socrata `$limit` truncation check (audit §5)**~~ — built 2026-07-01
     on `feature/services-lens` (`check_not_truncated()` in
     `scripts/download_data.py`, fails at count >= limit; +6 tests; roads

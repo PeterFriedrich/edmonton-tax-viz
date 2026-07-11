@@ -224,3 +224,131 @@ its eventual trigger a certainty, not a possibility.
   holding-banner step skipped). Auto-fetching new-year rates remains a
   follow-on (TODO).
 - **§4 + §5 OPEN** — tracked in `TODO.md` "Data-integrity audit follow-ons".
+
+---
+---
+
+# Findings — Second run (2026-07-11)
+
+Re-run of the `docs/DATA_INTEGRITY.md` brief against the 2026-07-06/11 raw
+snapshot (assessment 439,685 rows) and `master @ 5a76be1`. Scope = the first
+run's T1–T7 **plus everything that landed since 2026-07-01**: roads, stormwater,
+water/sanitary, franchise, fire, lot-acre denominators, Glass grid, transit,
+LRT lines — i.e. all of `load_roads/stormwater/water/franchise/fire/transit/
+property_info`, `export_value_grid`, and the grown `join_and_calculate`.
+
+## Summary table
+
+| # | Target | Verdict |
+|---|---|---|
+| NEW-1 | `join_and_calculate` positional `safe_area` reuse across 9 merges | **LATENT (hardening)** — correct today, silent if a merge key ever duplicates |
+| T3c | Unmatched-set changes warning-only in CI | **STILL OPEN** (= TODO P2.1) — now covers SIX name-keyed joins, not one |
+| NEW-2 | Fire/water/franchise vintage pins (manual January bumps) | **ACCEPTED-risk** — RUNBOOK-guarded, not CI-guarded |
+| NEW-3 | Fire hood-name drift (new dataset, same T3 channel) | CONFIRMED-immaterial — 54 of 274,127 in-window events (0.02%), warned |
+| T1 | Class → rate mapping vs live labels | CONFIRMED-correct (all 7 live labels mapped; rates 2025 == pin) |
+| T2 | Year-alignment guard | CONFIRMED-fixed (wired in `refresh.yml`, hold+banner branch) |
+| T3 | Name matching / corrections | CONFIRMED-correct (unmatched = OLIVER $500 + SPUR LINES $0, both documented) |
+| T4 | Aggregation grain / denominators | CONFIRMED-correct (0 duplicate accounts; 407 unique boundary names) |
+| T5 | CRS end to end (incl. all new modules) | CONFIRMED-correct |
+| T6 | Zoning bucketing + `ZONE_RUNOFF` coverage | CONFIRMED-correct (zero unknown codes live, in BOTH dicts) |
+| T7 | Frontend transforms (incl. fire/transit sqrt, ratio log) | CONFIRMED-correct (all monotonic; clamps cap, never hide) |
+| §5 | Socrata truncation | CONFIRMED-fixed (dual guard: `$limit` check + live `count(*)` cross-check) |
+
+**No blocking findings. The published numbers are trustworthy as of this run.**
+
+## NEW-1 — `safe_area` positional reuse across sequential merges [hardening]
+
+**Verdict: LATENT — no wrong number today; silent catastrophic misalignment if
+its assumptions ever break.**
+
+**Evidence.** `src/join_and_calculate.py:182` computes
+`safe_area = joined["area_acres"].replace(0, float("nan"))` **once**, before
+the zoning/roads/storm/fire/transit/water/franchise/lot-acre merges, and every
+later `X_per_acre = joined[col] / safe_area` aligns on the pandas index. Each
+`joined.merge(...)` resets to a fresh RangeIndex; alignment stays row-for-row
+correct **only** while (a) every right-hand frame is unique per
+`neighbourhood_name` and (b) boundary names are unique. Both hold today —
+verified: all eight merged frames are groupby outputs, and the live boundary
+file has 407/407 unique names.
+
+**Failure scenario.** If any merged frame ever carries a duplicate
+`neighbourhood_name` (an upstream groupby removed, a boundary rename collision),
+the left join fans out, the RangeIndex shifts, and **every hood after the
+duplicate silently divides by the wrong hood's area** — plausible values,
+nothing raised. This is exactly the brief's target class.
+
+**Action.** One-line-per-merge guard: pass `validate="m:1"` to each of the
+nine merges (pandas raises loudly on a duplicated right key), or recompute
+`safe_area` from the merged frame at each use. Cheap, converts the latent risk
+to fail-loud.
+
+## T3c — the CI unmatched-set assertion matters more now [still open]
+
+The first run flagged warn-only unmatched handling for ONE join. There are now
+**six name-keyed joins** (assessment, zoning, roads, stormwater, fire, transit,
+water/franchise, lot-acres) all using the same warn-and-proceed pattern in an
+unwatched weekly run. Everything checked clean this run — but the channel is
+six times wider than when TODO P2.1 was filed. Priority unchanged-or-higher.
+
+## NEW-2 — vintage pins beyond ASSESSMENT_YEAR [accepted risk]
+
+`FIRE_YEARS = (2023, 2024, 2025)`, `WATER_RATE_YEAR = 2026`,
+`FRANCHISE_RATE_YEAR = 2026` (`main.py`), plus `DATA_YEAR`/`RATE_YEAR`
+duplicated in `scripts/generate_status.py` — all manual January bumps. Unlike
+`ASSESSMENT_YEAR` (metadata-guarded in CI), nothing detects a **stale** fire
+window: `load_fire` hard-errors on a window year with zero events, but old
+years keep their events, so in 2027 an unbumped pin would silently keep
+averaging 2023–25. Mitigation exists and is adequate for now: the RUNBOOK §1
+January checklist names every one of these pins explicitly. Optional hardening:
+have `generate_status.py` import `ASSESSMENT_YEAR` from `main.py` instead of
+duplicating it.
+
+## NEW-3 — fire hood-name drift [confirmed immaterial]
+
+Live check of in-window (2023–25) fire events after `FIRE_NAME_CORRECTIONS`:
+54 of 274,127 events unmatched (0.02%) — `EDMONTON MUNICIPAL AIRPORT` (33),
+`COREYLAND` (16), `UNKNOWN` (4), `RURAL SOUTH EAST` (1). All warned + dropped
+at the join. No action; these become baseline entries if/when the CI
+unmatched-set assertion (P2.1) lands.
+
+## Confirmed-correct notes (new modules)
+
+- **Transit** (`load_transit`): the conservation hard-assert
+  (assigned + unassigned == citywide) also indirectly catches duplicate
+  `stop_id` rows (merge fan-out would inflate `assigned` and trip it). The
+  weekday weighting (per-service active-weekday share / distinct weekday
+  dates) is exactly the mean over weekday dates — holiday-Monday service
+  regimes handled correctly by construction.
+- **Stormwater** (`load_stormwater`): every exclusion path (no-coords,
+  lot-ineligible, zone-unresolved, zone-unassigned) is counted + reported;
+  rate year hard-pinned. The in-code `VERIFY` on the AG runoff row (0.1 vs
+  0.2 in the source table) remains open — laptop-gated bylaw check, low
+  impact (few billed AG parcels).
+- **Water/franchise**: one shared dwelling model (`build_connections`) so the
+  two lenses cannot diverge; every out-of-scope/null-area exclusion counted;
+  known LAF ~1/3 underestimate documented in-module and in the rates JSON.
+- **Lot-acre** (`export_value_grid`): grid dollar conservation is hard-checked;
+  `check_lot_acre_bounds` raises on any new physical-bound violation
+  (known-outlier list = PEMBINA); `load_property_info` raises on duplicate
+  account keys. The `LOW_PARCEL_FRAC` suppression correctly catches NaN.
+- **Roads**: explicit class dict fully covers the live feed; unassigned length
+  conservation-logged (warn above 5%).
+- **Frontend**: `scaleT` (sqrt), `svcT` (per-service sqrt/linear), and `ratioT`
+  (log with p2.5/p97.5 anchors) are all monotonic; clamped values cap at the
+  ramp end, never disappear.
+- **Snapshot facts this run**: 439,685 rows / 439,685 unique accounts;
+  unmatched after corrections = OLIVER ($500, deliberate) + SPUR LINES ($0 —
+  dropped by the zero-value filter on the money path; documented in DATA.md);
+  served file 406/407 (LEWIS FARMS hole, documented); `status.json` provenance
+  2025/2025/2024 correct; 275 pytest green.
+
+## Bottom line (second run)
+
+The pipeline held up under a full re-audit that included five new lens modules
+and two new denominators: **zero wrong published numbers found.** The defensive
+architecture (hard-error on unmapped vocabulary, counted exclusions,
+conservation asserts) has been applied consistently to every module added since
+the first run. The two highest-leverage hardenings are both guards, not fixes:
+(1) the CI unmatched-set assertion (TODO P2.1 — now protecting six joins), and
+(2) `validate="m:1"` on the `join_and_calculate` merges (NEW-1) to close the
+one silent-misalignment path the current code leaves open.
