@@ -68,6 +68,14 @@ overlay) and produces a per-hood column merged in `join_and_calculate`
 exports the 31 station points (`b4y7-zhnz`) to `web/data/fire_stations.json`
 for the Services view's context dots.
 
+**Also in the flow (transit lens, built 2026-07-11):** `load_transit.py`
+reads the five GTFS tables (DATA.md §9) and the boundary frame (stop
+point-in-polygon) and produces a per-hood column merged in
+`join_and_calculate` (`transit_dep_total`; `transit_dep_per_acre` computed
+there). It also exports the location_type-1 stations (LRT + transit
+centres) to `web/data/transit_stations.json` for the Services view's
+context dots. Full module section below.
+
 **Also in the flow (water lens, built 2026-07-07):** `load_water.py` reads
 the assessment CSV (scope classes, roll points) plus the property-info CSV
 (gross floor area for multi-res unit estimates) and produces two per-hood
@@ -474,6 +482,56 @@ label], ...]}`. Lat/long columns resolved like the dispatch column
 **Does not:** decode `response_code` (dispatch-priority letters, undecoded
 — never filter on it), touch geometry/boundaries, or claim
 coverage/response adequacy.
+
+---
+
+### `src/load_transit.py` (services lens #4 — added 2026-07-11)
+
+Full methodology + the two locked decisions in `docs/SPEC_services.md`
+"Transit lens"; dataset facts in `DATA.md` §9. **Scheduled service supply
+only** — ETS publishes no stop-level ridership, so never present this as
+usage, cost, or coverage.
+
+**Inputs:** the five GTFS CSVs (`data/raw/gtfs_{stops,routes,trips,
+stop_times,calendar_dates}.csv` — one logical input; main.py runs the lens
+only when all five exist); the boundary GeoDataFrame from
+`load_boundaries.py` (projected geometry for the stop point-in-polygon).
+
+**Outputs:** `pd.DataFrame` keyed by `neighbourhood_name`:
+- `transit_dep_bus` / `transit_dep_lrt` (float) — mean-weekday scheduled
+  stop-events by mode (internal, the road-class pattern)
+- `transit_dep_total` (float) — all modes, incl. any unknown `other`
+
+(`transit_dep_per_acre = transit_dep_total / area_acres` is computed
+downstream in `join_and_calculate`, boundary-acre denominator. It is in
+`SLIM_COLUMNS` and ships in the web GeoJSON; the Services view's transit
+plane reads it.)
+
+**Responsibilities:**
+- Active weekday (Mon–Fri) service days per service_id from calendar_dates
+  (calendar-dates-only feed; type-2 removals honoured generically);
+  HARD-ERROR on zero active weekday dates
+- Mode via the explicit `ROUTE_MODE` dict (bus/lrt; unknown types KEPT as
+  `other`, logged loudly)
+- Count stop-events per (trip, stop) from stop_times; weight each trip by
+  its service's active-weekday share, so no per-date loop
+- Stops → hood point-in-polygon in **EPSG:3400** (CRS explicit);
+  boundary-coincident multi-matches deduped + reported
+- **No silent drops:** referential breaks (orphan stop_times, unknown
+  stop_ids), null-coordinate stops, and out-of-boundary (regional) stops
+  all counted; their events form the reported UNASSIGNED bucket; a
+  **conservation check** requires assigned + unassigned == citywide total
+- Log the feed window + per-mode citywide totals every load (the
+  current-signup seasonality is the metric's main caveat)
+
+**Also exports:** `export_transit_stations_web(stops_csv, out_path)` — the
+location_type-1 stations (58: LRT stations + transit centres) as
+`web/data/transit_stations.json` (committed, lazy-loaded), fire-station
+pattern and shape.
+
+**Does not:** claim ridership/usage, model cost, apply the metric to
+on-demand transit (absent from GTFS), or touch assessment data. Like
+roads, a **refreshed input** with no roll-year pin (weekly CI re-pull).
 
 ---
 

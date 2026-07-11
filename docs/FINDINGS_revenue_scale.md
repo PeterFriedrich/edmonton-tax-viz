@@ -342,6 +342,28 @@ moves, the ceiling drops ~2.9× — the high tail is non-residential
 (mill-rate mechanism, §6.2). The lens rescales the log colour anchors to
 the residential kept subset; height stays on the full-subset scale.
 
+### 6.8 Transit supply is the fire case — DECIDED: sqrt colour (2026-07-11)
+
+`transit_dep_per_acre` (SPEC_services "Transit lens"; mean-weekday
+scheduled stop-events per acre, first real run — 406 hoods, 56 true zeros:
+hoods with no served stops) through the same biased-skew test:
+
+| set | n | median | p97.5 | max | raw | sqrt | log |
+|---|---|---|---|---|---|---|---|
+| all (positive) | 350 | 2.55 | — | 27.09 | 3.34 | **0.81** | −1.94 |
+| excl set-aside (positive) | 334 | 2.70 | 10.80 | 27.09 | 3.34 | **0.83** | −2.13 |
+
+The fire shape at half the intensity: raw +3.34 with **clamp/median 4.3×**
+on the shipped scale (clamp = p97.5 of non-set-aside incl. zeros = 10.66,
+median 2.45) — linear parks the median hood at 23% of the ramp, well past
+the storm/water ~2× threshold that keeps those linear. **Log is rejected**
+on the §6.5 grounds verbatim: 24 true-zero kept hoods where log is
+undefined, and it over-corrects the positive core to −2.13. **sqrt** puts
+the median at 48% of the ramp (skew +0.83) — the §6.5 choice again.
+Height: none (flat plane); tooltip stays raw. Top hoods: DOWNTOWN 27.1,
+MILL WOODS TOWN CENTRE 25.9, ERMINESKIN 17.3 stop-events/acre/weekday —
+the transit-centre + LRT-corridor geography, as expected.
+
 Skew numbers here are reproducible headless via `scripts/investigate_skew.py`
 (`skew_table` / `load_metrics` / `lowest_kept` are importable). The plots below are
 the remaining visual confirmations:

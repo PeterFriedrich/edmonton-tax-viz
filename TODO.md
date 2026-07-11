@@ -18,7 +18,9 @@ _Last reconciled: 2026-07-09_
   roads, set-aside, fire, stormwater) is **already shipped or closed** — see the
   plan's reconciliation table. What remains is presentation-layer credibility +
   ops hardening. Release scope locked: everything live stays in; transit/
-  recreation/franchise-display stay out. Items, ranked:
+  recreation/franchise-display stay out. *(AMENDED 2026-07-11, Peter: the
+  transit lens is IN — built as the fourth service; see the service-layers
+  item below. Recreation + franchise-display still out.)* Items, ranked:
   - [x] ~~P1.1 README refresh~~ — done 2026-07-09 (this PR): "Methodology
     (Planned)"/QGIS/AltaLIS-FOIP sections replaced with as-built.
   - [ ] **P1.2 In-app attribution/methods affordance** — the live map has NO
@@ -290,6 +292,13 @@ _Last reconciled: 2026-07-09_
   - [ ] **More service layers (water / drainage / transit / …).** Each needs its
     own SPEC_services section (dataset, filters, locked decisions), a
     per-hood supply column, and a slim web export.
+    - [x] ~~**Transit lens**~~ — BUILT 2026-07-11 (Peter's call, AMENDS the
+      2026-07-09 release-scope lock that kept transit out): mean-weekday
+      scheduled GTFS stop-events/acre (`transit_dep_per_acre`, sqrt colour
+      FINDINGS §6.8), Services-view checkbox + 58 LRT-station/transit-centre
+      dots, five new weekly GTFS downloads. SPEC_services "Transit lens",
+      DATA.md §9. Scheduled supply, NOT ridership (none exists stop-level);
+      current-signup seasonality is the standing caveat.
     - [x] ~~**Services-view UI generalization**~~ — **SHIPPED 2026-07-05:
       PR #14 merged + deployed + LIVE** (run 28767241818 — deploy step
       needed two transient-error reruns, "Deployment failed, try again

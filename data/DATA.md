@@ -436,6 +436,53 @@ Exported by `load_fire.export_fire_stations_web` to
 label], …]}` — context dots in the Services view, not a coverage claim.
 Column resolution uses the same explicit-candidates rule as §7.
 
+## 9. ETS GTFS Static Feed (transit lens, added 2026-07-11)
+
+**Source:** Edmonton Open Data — the GTFS static feed published as FIVE
+individual Socrata tables (the "zipped files" dataset `urjq-fvmq` is an
+href-only landing page, no machine-readable blob; the `yiem-dcbw` "GTFS
+Downloads" dataset is download-count *stats*, not the feed):
+
+| Table | Dataset | Rows (2026-07-11) | Downloaded to |
+|---|---|---|---|
+| Stops | `4vt2-8zrq` | 6,882 | `data/raw/gtfs_stops.csv` |
+| Routes | `d577-xky7` | 238 | `data/raw/gtfs_routes.csv` |
+| Trips | `ctwr-tvrd` | 56,812 | `data/raw/gtfs_trips.csv` |
+| Stop Times | `greh-g7ac` | 1,744,051 | `data/raw/gtfs_stop_times.csv` |
+| Calendar Dates | `f2sy-bth7` | 9,248 | `data/raw/gtfs_calendar_dates.csv` |
+
+**Download:** `scripts/download_data.py` (all gitignored). Trips and
+stop_times use `$select` for only the keyed columns — trips otherwise
+carries a per-trip `geometry_line` that dominates the file; stop_times
+needs only `trip_id,stop_id` (31.6 MB slimmed). `$select` doesn't change
+the row count, so both truncation guards still apply.
+**Why:** the transit lens (`docs/SPEC_services.md` "Transit lens") —
+mean-weekday scheduled stop-events per neighbourhood. Consumed by
+`src/load_transit.py`; the shipped metric is **`transit_dep_per_acre`**.
+
+### Key columns
+| Column | Notes |
+|---|---|
+| stops: `stop_id`, `stop_lat`/`stop_lon`, `location_type` | types: 0 stop/platform (6,673), 1 station (58 — LRT stations + transit centres, the context-dot export), 2 entrance (109), 3 node (42). **The feed includes REGIONAL stops** (Spruce Grove, St. Albert park-and-rides etc.) — they fall outside every hood polygon and land in the reported unassigned bucket (~5.8% of stop-events, 2026-07-11). |
+| routes: `route_id`, `route_type_descr` | "Bus" 235 / "Tram, Streetcar, Light rail" 3 — the explicit `ROUTE_MODE` dict in `load_transit.py`; unknown values kept as `other`, logged. |
+| trips: `trip_id`, `route_id`, `service_id` | plain join keys. |
+| stop_times: `trip_id`, `stop_id` | one row = one scheduled stop-event; only these two columns downloaded. |
+| calendar_dates: `service_id`, `date`, `exception_type` | **calendar-dates-only feed** — every active service day is an `exception_type` 1 row (no calendar.txt); type-2 removals honoured generically if they ever appear. |
+
+### Known Quirks
+- **The feed is a snapshot of the CURRENT signup only** — probed window
+  2026-06-18 → 2026-08-29 (the SUMMER schedule, the seasonal low).
+  Weekly refreshes will step the metric at signup boundaries. No roll-year
+  semantics; provenance = download date + the window logged every load.
+- **No ridership anywhere:** the portal's `sfwk-p9kr`/`77dh-qrp7` (on-time
+  %) and `wh9u-ef4x` (revenue vehicle hours) are citywide-monthly only
+  (probed 2026-07-11) — no stop/route/neighbourhood usage exists. The lens
+  is scheduled supply and must be labelled as such.
+- **On-demand transit zones are not in the GTFS** (238 fixed routes only) —
+  invisible to the metric; documented limitation for the on-demand fringe.
+- ~253 service_ids (~20.6k trips, 2026-07-11) are weekend/holiday-only —
+  they weigh 0 in the weekday metric by construction, logged not dropped.
+
 ## Name Matching
 
 Neighbourhood names between the two sources may not align exactly. Normalization (strip + uppercase) and the `NAME_CORRECTIONS` dict (keyed assessment name → boundary name) are applied in `load_assessment.py`, *before* aggregation — applying corrections after aggregation could collapse two summed rows onto one boundary and duplicate it. `join_and_calculate.py` then does a normalized exact match on the already-corrected names and flags whatever remains unmatched.

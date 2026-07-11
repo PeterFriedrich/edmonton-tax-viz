@@ -42,6 +42,7 @@ Status of anything still open lives in the owning SPEC doc, not here.
 | 2026-07-07 | **Franchise lens: columns only, no display layer** — modeled electricity/gas revenue is collinear with dwelling count, so a map of it would just be a dwelling map; value is citywide totals + per-hood attribution. Shares ONE dwelling model with the water lens. | `docs/SPEC_utilities.md` Lens 3 |
 | 2026-07-02/03 | **Ratio metric (revenue per road metre) is derived client-side in the browser** — the acres cancel, so no pipeline stage computes it; scale anchors computed at page load so they track refreshes. | `docs/ARCHITECTURE.md` data flow, FINDINGS §6.4 |
 | 2026-07-10 | **"Total services" stays PER-SERVICE (Ratio-view denominator picker: road metre \| fire event)** — modeled EPCOR dollars (storm/water) never sit under the levy (money-flow honesty); a combined denominator waits on published city unit costs (V2, rejected for now as a new cost model without sources in hand). | `docs/SPEC_utilities.md` decision 3, `docs/FINDINGS_revenue_scale.md` §6.7 |
+| 2026-07-11 | **Transit = scheduled supply only (mean-weekday GTFS stop-events/acre; bus + LRT combined, per-mode internal)** — no stop-level ridership exists (citywide-monthly only), so never present as usage; on-demand zones absent from GTFS (limitation); full lens incl. web display, AMENDING the 2026-07-09 release-scope lock that kept transit out (Peter's call). | `docs/SPEC_services.md` "Transit lens" (both locked decisions) |
 
 ## Display honesty
 

@@ -39,6 +39,7 @@ from load_stormwater import load_stormwater
 from load_water import load_water
 from load_franchise import load_franchise
 from load_fire import load_fire_events, export_fire_stations_web
+from load_transit import load_transit, export_transit_stations_web
 from join_and_calculate import join_and_calculate, export_geojson
 from export_value_grid import export_value_grid, check_lot_acre_bounds, build_hood_lot_acres
 from plot_choropleth import plot_choropleth
@@ -53,6 +54,14 @@ ROADS_GEOJSON = ROOT / "data/raw/roads.geojson"
 PROPERTY_INFO_CSV = ROOT / "data/raw/Property_Info__Current_Calendar_Year_.csv"
 FIRE_EVENTS_CSV = ROOT / "data/raw/fire_response.csv"
 FIRE_STATIONS_CSV = ROOT / "data/raw/fire_stations.csv"
+# Transit lens (SPEC_services.md "Transit lens"): the five GTFS tables are
+# one logical input — load_transit needs all of them, so the lens keys its
+# presence off the stops file and warns listing whichever are missing.
+GTFS_STOPS_CSV = ROOT / "data/raw/gtfs_stops.csv"
+GTFS_ROUTES_CSV = ROOT / "data/raw/gtfs_routes.csv"
+GTFS_TRIPS_CSV = ROOT / "data/raw/gtfs_trips.csv"
+GTFS_STOP_TIMES_CSV = ROOT / "data/raw/gtfs_stop_times.csv"
+GTFS_CALENDAR_DATES_CSV = ROOT / "data/raw/gtfs_calendar_dates.csv"
 MILL_RATES_JSON = ROOT / "data/mill_rates.json"
 STORMWATER_RATES_JSON = ROOT / "data/stormwater_rates.json"
 WATER_RATES_JSON = ROOT / "data/water_rates.json"
@@ -63,6 +72,7 @@ ROADS_WEB_OUT = ROOT / "web/data/roads.geojson"
 ZONING_WEB_OUT = ROOT / "web/data/zoning.geojson"
 GRID_WEB_OUT = ROOT / "web/data/value_grid.json"
 FIRE_STATIONS_WEB_OUT = ROOT / "web/data/fire_stations.json"
+TRANSIT_STATIONS_WEB_OUT = ROOT / "web/data/transit_stations.json"
 
 # Assessment-year alignment: the local snapshot is 2025 data (the coverage year
 # lives in Socrata metadata, not the rows — see DATA.md). Mill rates MUST match.
@@ -113,6 +123,11 @@ def run(
     fire_events_csv: Path | None = FIRE_EVENTS_CSV,
     fire_stations_csv: Path | None = FIRE_STATIONS_CSV,
     fire_years: tuple[int, ...] = FIRE_YEARS,
+    gtfs_stops_csv: Path | None = GTFS_STOPS_CSV,
+    gtfs_routes_csv: Path | None = GTFS_ROUTES_CSV,
+    gtfs_trips_csv: Path | None = GTFS_TRIPS_CSV,
+    gtfs_stop_times_csv: Path | None = GTFS_STOP_TIMES_CSV,
+    gtfs_calendar_dates_csv: Path | None = GTFS_CALENDAR_DATES_CSV,
     setback_m: float = SETBACK_M,
     simplify_tolerance_m: float = SIMPLIFY_TOLERANCE_M,
 ) -> None:
@@ -207,6 +222,28 @@ def run(
     elif fire_events_csv is not None:
         logger.warning("Fire events file not found (%s) — skipping the fire lens", fire_events_csv)
 
+    # Scheduled transit supply (services lens #4, SPEC_services.md "Transit
+    # lens") — five GTFS tables forming ONE logical input; the lens runs only
+    # when all five are present (missing ones listed), same optional-
+    # refreshed-input pattern as the other services.
+    transit = None
+    gtfs_paths = (
+        gtfs_stops_csv, gtfs_routes_csv, gtfs_trips_csv,
+        gtfs_stop_times_csv, gtfs_calendar_dates_csv,
+    )
+    if all(p is not None for p in gtfs_paths):
+        missing = [str(p) for p in gtfs_paths if not Path(p).exists()]
+        if not missing:
+            transit = load_transit(
+                gtfs_stops_csv, gtfs_routes_csv, gtfs_trips_csv,
+                gtfs_stop_times_csv, gtfs_calendar_dates_csv, boundaries,
+            )
+        else:
+            logger.warning(
+                "GTFS file(s) not found — skipping the transit lens: %s",
+                ", ".join(missing),
+            )
+
     # Lot-size join (property-info CSV) feeds TWO consumers: the neighbourhood
     # lot-acre denominator toggle (hood rollup, joined below) and the Glass-view
     # grid (export block). Merge once here so both share it; without the file
@@ -229,7 +266,8 @@ def run(
 
     result = join_and_calculate(
         aggregated, boundaries, zoning=zoning, roads=roads, stormwater=stormwater,
-        fire=fire, water=water, franchise=franchise, lot_acres=lot_acres_hood,
+        fire=fire, transit=transit, water=water, franchise=franchise,
+        lot_acres=lot_acres_hood,
     )
 
     if png_out is not None:
@@ -270,6 +308,10 @@ def run(
                 "Fire stations file not found (%s) — station dots not exported",
                 fire_stations_csv,
             )
+        # Transit-station context dots (LRT stations + transit centres) for
+        # the Services view's transit layer — rides with the transit lens.
+        if transit is not None:
+            export_transit_stations_web(gtfs_stops_csv, TRANSIT_STATIONS_WEB_OUT)
 
     logger.info("Pipeline complete.")
 
@@ -304,6 +346,13 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p.add_argument("--fire-stations-csv", type=Path, default=FIRE_STATIONS_CSV)
     p.add_argument("--skip-fire", action="store_true",
                    help="skip the fire demand lens (SPEC_services.md \"Fire lens\")")
+    p.add_argument("--gtfs-stops-csv", type=Path, default=GTFS_STOPS_CSV)
+    p.add_argument("--gtfs-routes-csv", type=Path, default=GTFS_ROUTES_CSV)
+    p.add_argument("--gtfs-trips-csv", type=Path, default=GTFS_TRIPS_CSV)
+    p.add_argument("--gtfs-stop-times-csv", type=Path, default=GTFS_STOP_TIMES_CSV)
+    p.add_argument("--gtfs-calendar-dates-csv", type=Path, default=GTFS_CALENDAR_DATES_CSV)
+    p.add_argument("--skip-transit", action="store_true",
+                   help="skip the scheduled-transit supply lens (SPEC_services.md \"Transit lens\")")
     p.add_argument("--log-level", default="INFO", help="logging level (default INFO)")
     return p.parse_args(argv)
 
@@ -330,6 +379,11 @@ def main(argv: list[str] | None = None) -> None:
         franchise_rates_json=None if args.skip_franchise else FRANCHISE_RATES_JSON,
         fire_events_csv=None if args.skip_fire else args.fire_events_csv,
         fire_stations_csv=None if args.skip_fire else args.fire_stations_csv,
+        gtfs_stops_csv=None if args.skip_transit else args.gtfs_stops_csv,
+        gtfs_routes_csv=None if args.skip_transit else args.gtfs_routes_csv,
+        gtfs_trips_csv=None if args.skip_transit else args.gtfs_trips_csv,
+        gtfs_stop_times_csv=None if args.skip_transit else args.gtfs_stop_times_csv,
+        gtfs_calendar_dates_csv=None if args.skip_transit else args.gtfs_calendar_dates_csv,
         setback_m=args.setback_m,
         simplify_tolerance_m=args.simplify_tolerance_m,
     )

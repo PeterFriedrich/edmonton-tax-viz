@@ -363,6 +363,110 @@ bottom fifth of the ramp; log over-corrects and is undefined for the 5
 true-zero hoods. Storm and roads stay linear (their clamp/median ratios
 don't warrant a transform). Height: no extrusion (flat plane).
 
+## Transit lens — scheduled service supply (fourth service; added 2026-07-11)
+
+**Status: design LOCKED 2026-07-11 (Peter, both decisions below); build starts
+same session.** Note: the 2026-07-09 public-release scope lock kept transit
+OUT of the release — Peter's full-lens call here AMENDS that lock (his call
+to make; recorded in DECISIONS.md).
+
+### Why
+
+Roads measure physical supply, fire measures dispatched demand; transit is
+the second *supply* service: how much scheduled transit service the city
+runs to a neighbourhood's land. Like road metres and fire events it is a
+defensible physical quantity — counted from the published schedule, no cost
+model, no allocation assumptions.
+
+**What this is NOT (locked, don't oversell):** ETS publishes NO stop- or
+neighbourhood-level ridership; the portal's ridership/performance datasets
+(`sfwk-p9kr` / `77dh-qrp7` on-time %, `wh9u-ef4x` revenue vehicle hours —
+probed 2026-07-11) are citywide-monthly only. This lens is **scheduled
+service, not usage** — a supply proxy, never a ridership or cost claim.
+On-demand transit zones are not in the GTFS (238 fixed routes only) and are
+therefore invisible to this metric — a documented limitation for the
+on-demand-served fringe hoods.
+
+### The two locked decisions (Peter, 2026-07-11)
+
+1. **Metric** — `transit_dep_per_acre`: scheduled transit stop-events
+   (departures) per boundary acre on a **mean weekday**, bus + LRT combined
+   in the metric with per-mode columns kept internal (the road-class
+   pattern). Rejected: stops/acre (frequency-blind), weekly total (mixes
+   weekday/weekend service regimes).
+2. **Scope** — full lens including the web display: pipeline module, weekly
+   refresh, Services-view checkbox (hood plane + station context dots).
+
+### Data
+
+Five Socrata tables — the GTFS static feed published as individual datasets
+(probed 2026-07-11; facts in DATA.md §9). The zip bundle (`urjq-fvmq`) is an
+href-only page, so the tables are the machine path:
+
+- **`4vt2-8zrq` Stops** — 6,882 rows; `stop_id`, lat/lon, `location_type`
+  (0 = stop/platform 6,673; 1 = station 58; 2 = entrance 109; 3 = node 42).
+- **`d577-xky7` Routes** — 238 rows; `route_type_descr`: Bus 235, "Tram,
+  Streetcar, Light rail" 3.
+- **`ctwr-tvrd` Trips** — 56,812 rows; `trip_id → (route_id, service_id)`.
+  Carries a per-trip `geometry_line` — `$select` it away at download (it
+  would dominate the file size for nothing).
+- **`greh-g7ac` Stop Times** — 1,744,051 rows; only `trip_id`, `stop_id`
+  needed (`$select`ed, ~2-column CSV). Comparable weekly-download weight to
+  the 948k-row fire feed.
+- **`f2sy-bth7` Calendar Dates** — 9,248 rows; calendar-dates-only feed
+  (every active (service_id, date) enumerated with `exception_type` 1).
+
+**Feed window semantics (the load-bearing caveat):** the feed is a daily
+snapshot of the CURRENT signup only — probed window 2026-06-18 → 2026-08-29,
+i.e. the SUMMER schedule, the seasonal service low. The metric will step at
+signup boundaries under the weekly refresh. Like roads, transit carries no
+roll-year pin; its provenance is `last_checked` plus the feed window logged
+at load. Legend/blurb carries the "scheduled service for the current
+signup" framing.
+
+### Computation
+
+```
+stop → hood:   point-in-polygon, stops × boundary polygons (EPSG:3400)
+per service:   n_dep(service_id, stop_id, mode) from stop_times ⋈ trips ⋈ routes
+active days:   weekdays(service_id) = count of Mon–Fri dates active in calendar_dates
+per stop:      dep_weekday(stop, mode) = Σ_service n_dep × weekdays(service) / n_weekday_dates
+per hood:      transit_dep_bus / transit_dep_lrt / transit_dep_total = Σ stops in hood
+               transit_dep_per_acre = transit_dep_total / area_acres   # boundary acres, in join_and_calculate
+```
+
+- Every scheduled stop-time row counts as one stop-event (the final stop of
+  a trip is an arrival-only event; counted anyway — the honest name is
+  "scheduled stop-events", displayed as scheduled service).
+- Mode via an explicit `route_type_descr → mode` dict (bus/lrt); unknown
+  route types are KEPT in the total under `other` and logged loudly (they
+  are presumably real service).
+- A hood with no stops is a true 0 (roads fill semantics at the join).
+
+**Guards (no silent drops):**
+- HARD-ERROR if calendar_dates yields zero weekday dates (wrong/empty feed).
+- Referential breaks counted + reported, never silent: stop_times rows whose
+  `trip_id` is missing from trips, trips whose `route_id` is missing from
+  routes, stop-events at `stop_id`s missing from stops.
+- Stops (with service) falling outside every hood polygon: their stop-events
+  land in a reported "unassigned" bucket; **conservation check** — assigned
+  + unassigned must equal the citywide total exactly.
+- Download truncation: both `download_data.py` guards on all five sources.
+
+### Display
+
+Fourth checkbox in the Services view (`web/index.html`): the shared hood
+plane coloured by `transit_dep_per_acre`; the 58 `location_type == 1`
+stations (LRT stations + transit centres, `web/data/transit_stations.json`,
+committed, lazy-loaded) draw as context dots whenever transit is checked —
+the fire-station pattern. Legend + blurb carry the scheduled-not-ridership
+framing and the current-signup (seasonal) caveat. Checkbox hides on data
+files without the transit column (same guard as stormwater/fire).
+
+**Colour transform — OPEN, decide empirically** on the first real numbers
+(the established skew method; fire needed sqrt, roads/storm stayed linear —
+don't assume either carries over).
+
 ## Cross-refs
 
 - **Candidate next services — the Services-view UI trigger FIRED and the

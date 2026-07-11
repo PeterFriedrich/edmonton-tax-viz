@@ -229,6 +229,14 @@
           <input type="radio" name="svc-driver" /> colour
         </label>
       </div>
+      <div class="svc" data-service="transit">
+        <label title="Each neighbourhood coloured by scheduled transit stop-events per acre on an average weekday (current ETS signup) — scheduled service, not ridership; dots mark LRT stations and transit centres">
+          <input type="checkbox" class="svc-on" /> Transit — stop-events/acre/day
+        </label>
+        <label class="svc-colour" title="This service drives the colour ramp; the others render neutral">
+          <input type="radio" name="svc-driver" /> colour
+        </label>
+      </div>
     </div>
     <span class="hd" id="denom-hd">Denominator</span>
     <div id="denom">
@@ -465,15 +473,19 @@
     // EPCOR money not city tax revenue, and the chrome must say so. Fire: a
     // flat hood plane coloured by fire_events_per_acre — dispatched-event
     // DEMAND, not response coverage (SPEC_services.md "Fire lens"), + the
-    // 31 station context dots whenever the service is checked.
+    // 31 station context dots whenever the service is checked. Transit: a
+    // flat hood plane coloured by transit_dep_per_acre — SCHEDULED service
+    // supply, not ridership (SPEC_services.md "Transit lens"), + LRT-station/
+    // transit-centre dots whenever the service is checked.
     // Plane services (`plane.col` below) share ONE hood-plane layer — two
     // coplanar polygon layers would z-fight; the colour-driving plane paints
     // it, otherwise it renders the neutral slate.
     // Colour: roads + storm LINEAR (road supply FINDINGS §6.3; storm
     // clamp/median ~1.8x), fire SQRT (FINDINGS §6.5 — raw skew +7.86,
     // clamp/median 5.8x; linear crams 59% of hoods into the bottom fifth
-    // of the ramp). Clamp: p97.5 of the non-set-aside hoods, computed
-    // from the data like ratioScale.
+    // of the ramp), transit SQRT (FINDINGS §6.8 — raw skew +3.23,
+    // clamp/median 4.3x, linear median at 23% of ramp). Clamp: p97.5 of
+    // the non-set-aside hoods, computed from the data like ratioScale.
     const SERVICES = {
       roads: {
         label: "Roads",
@@ -518,6 +530,19 @@
                "properties are not modeled, and the consumption portion " +
                "tracks household density more than land. Colour is linear. " +
                "Grey = set-aside natural/undeveloped land.",
+      },
+      transit: {
+        label: "Transit",
+        plane: { col: "transit_dep_per_acre", transform: "sqrt" },
+        blurb: "Each neighbourhood is coloured by scheduled transit " +
+               "stop-events per acre on an average weekday — every scheduled " +
+               "bus or LRT visit to a stop in the current ETS signup " +
+               "(schedules run lighter in summer). Scheduled service, not " +
+               "ridership: ETS publishes no stop-level usage, and on-demand " +
+               "transit zones are outside the schedule data. Dots mark LRT " +
+               "stations and transit centres. Colour is square-root scaled — " +
+               "service concentrates on the central corridors. Grey = " +
+               "set-aside natural/undeveloped land.",
       },
     };
 
@@ -615,7 +640,7 @@
                     labels: false, view: "money", prismOpacity: 1, denom: "ground",
                     usesPrisms: false, // Uses-view residential prisms (off = the flat categorical view)
                     ratioDenom: "roads", // Ratio-view denominator (RATIO_DENOMS); persists like denom
-                    services: { roads: true, storm: false, fire: false, water: false },
+                    services: { roads: true, storm: false, fire: false, water: false, transit: false },
                     svcDriver: "roads",
                     data: null };
     let overlay;         // deck.gl MapboxOverlay, created on map load
@@ -628,6 +653,8 @@
     let gridFetch = null;   // in-flight fetch guard; null result => hood-prism fallback
     let fireStationsData = null;  // lazy-fetched station dots (services view, fire on)
     let fireStationsFetch = null; // in-flight fetch guard; missing file => no dots
+    let transitStationsData = null;  // lazy-fetched LRT/transit-centre dots (transit on)
+    let transitStationsFetch = null; // in-flight fetch guard; missing file => no dots
 
     // Three neutral, luminance-sequential ramps to compare: dark = low, bright =
     // high, with no semantic good/bad hue (consistent with the linear-elevation
@@ -946,6 +973,8 @@
     const fmtStorm = v => "$" + Math.round(v).toLocaleString() +
       " modeled stormwater / acre / yr";
     const fmtFire = v => v.toFixed(v < 1 ? 2 : 1) + " dispatched events / acre / yr";
+    const fmtTransit = v => v.toFixed(v < 1 ? 2 : 1) +
+      " scheduled transit stop-events / acre / weekday";
     const fmtWater = (v, fixed) => "$" + Math.round(v).toLocaleString() +
       " modeled water+sewer / acre / yr" +
       (fixed != null ? ` (fixed $${Math.round(fixed).toLocaleString()})` : "");
@@ -1010,6 +1039,41 @@
         .then(d => {
           fireStationsData = d;
           if (d && state.view === "services" && state.services.fire)
+            overlay.setProps({ layers: buildLayers() });
+        })
+        .catch(() => {});
+    }
+
+    // Transit-station context dots (SPEC_services.md "Transit lens"): the
+    // GTFS location_type-1 stations — LRT stations + transit centres — drawn
+    // whenever the transit service is checked, driver or not (the fire-dot
+    // pattern: geography, not a scale). Not pickable.
+    const TRANSIT_STATION_COLOR = [70, 160, 235, 235];
+    function transitStationsLayer() {
+      if (!transitStationsData) return [];
+      return [new deck.ScatterplotLayer({
+        id: "transit-stations",
+        data: transitStationsData.stations,
+        getPosition: d => [d[0], d[1]],
+        getFillColor: TRANSIT_STATION_COLOR,
+        stroked: true,
+        getLineColor: [255, 255, 255, 220],
+        lineWidthMinPixels: 1.5,
+        radiusMinPixels: 4,
+        radiusMaxPixels: 9,
+        getRadius: 60,
+        pickable: false,
+        parameters: { depthTest: false },
+      })];
+    }
+    const TRANSIT_STATIONS_URL = "./data/transit_stations.json";
+    function ensureTransitStations() {
+      if (transitStationsData) return;
+      transitStationsFetch ??= fetch(TRANSIT_STATIONS_URL)
+        .then(r => r.ok ? r.json() : null)
+        .then(d => {
+          transitStationsData = d;
+          if (d && state.view === "services" && state.services.transit)
             overlay.setProps({ layers: buildLayers() });
         })
         .catch(() => {});
@@ -1294,6 +1358,8 @@
           layers.push(...roadLayers(state.svcDriver !== "roads"));
         if (state.services.fire)
           layers.push(...fireStationsLayer());
+        if (state.services.transit)
+          layers.push(...transitStationsLayer());
         return [...layers, hoodHoverLayer(), ...labelLayer()];
       }
 
@@ -1475,6 +1541,8 @@
           rows.push(`<span class="muted">${fmtFire(p.fire_events_per_acre)}</span>`);
         if (p.water_charge_per_acre != null)
           rows.push(`<span class="muted">${fmtWater(p.water_charge_per_acre, p.water_fixed_per_acre)}</span>`);
+        if (p.transit_dep_per_acre != null)
+          rows.push(`<span class="muted">${fmtTransit(p.transit_dep_per_acre)}</span>`);
         return {
           className: "tip",
           html: rows.length
@@ -1683,6 +1751,15 @@
             "$" + Math.round(svcScale("water_charge_per_acre").clamp).toLocaleString() + "+";
           label.textContent = "Set aside — natural / undeveloped land";
           sw.style.background = "rgb(104,108,122)";
+        } else if (state.svcDriver === "transit") {
+          document.getElementById("legend-label").textContent =
+            "Scheduled transit stop-events per acre / weekday (sqrt colour)";
+          document.getElementById("legend-min").textContent = "0";
+          const clamp = svcScale("transit_dep_per_acre").clamp;
+          document.getElementById("legend-max").textContent =
+            clamp.toFixed(clamp < 10 ? 1 : 0) + "+";
+          label.textContent = "Set aside — natural / undeveloped land";
+          sw.style.background = "rgb(104,108,122)";
         } else {
           document.getElementById("legend-label").textContent = "Road metres per acre";
           document.getElementById("legend-min").textContent = "0 m";
@@ -1690,11 +1767,17 @@
           label.textContent = "Arterial — shared infrastructure";
           sw.style.background = `rgb(${ARTERIAL_COLOR.slice(0, 3).join(",")})`;
         }
-        if (state.services.fire) {
+        // Checked dot services add legend rows (the dots show driver or not).
+        const dotRows = [];
+        if (state.services.fire)
+          dotRows.push(`<div class="cat"><span class="sw" style="background:rgb(${FIRE_STATION_COLOR.slice(0, 3).join(",")});border-radius:50%"></span><span>Fire station</span></div>`);
+        if (state.services.transit)
+          dotRows.push(`<div class="cat"><span class="sw" style="background:rgb(${TRANSIT_STATION_COLOR.slice(0, 3).join(",")});border-radius:50%"></span><span>LRT station / transit centre</span></div>`);
+        // Always written (an empty write clears a stale row after uncheck);
+        // the top of refreshLegend already set display:none for this view.
+        document.getElementById("legend-cats").innerHTML = dotRows.join("");
+        if (dotRows.length)
           document.getElementById("legend-cats").style.display = "block";
-          document.getElementById("legend-cats").innerHTML =
-            `<div class="cat"><span class="sw" style="background:rgb(${FIRE_STATION_COLOR.slice(0, 3).join(",")});border-radius:50%"></span><span>Fire station</span></div>`;
-        }
       } else if (state.view === "ratio") {
         const s = ratioScale();
         document.getElementById("legend-label").textContent = ratioDenom().legend;
@@ -1849,9 +1932,10 @@
         await roadsFetch;
         if (state.view !== v) return; // switched again while the fetch ran
       }
-      // Station dots for the fire service — non-blocking (the fetch's own
-      // resolve rebuilds the layers if the dots are still wanted).
+      // Station dots for the fire/transit services — non-blocking (the
+      // fetch's own resolve rebuilds the layers if the dots are still wanted).
       if (v === "services" && state.services.fire) ensureFireStations();
+      if (v === "services" && state.services.transit) ensureTransitStations();
       // Zoning ground layer for the uses view — fetched once; a missing file
       // resolves null and the view falls back to dominant-colour hoods.
       if (v === "uses" && !zoningData) {
@@ -1942,6 +2026,7 @@
       if (!checked && state.svcDriver === k && on.length) state.svcDriver = on[0];
       if (checked && on.length === 1) state.svcDriver = k;
       if (k === "fire" && checked) ensureFireStations();
+      if (k === "transit" && checked) ensureTransitStations();
       syncServiceControls();
       overlay.setProps({ layers: buildLayers() });
       document.getElementById("title-p").textContent = servicesBlurb();
@@ -2021,6 +2106,11 @@
       if (!state.data.features.some(f => f.properties.water_charge_per_acre != null)) {
         document.querySelector('#services .svc[data-service="water"]').style.display = "none";
         state.services.water = false;
+      }
+      // Same guard for the transit column (pre-2026-07-11 data files).
+      if (!state.data.features.some(f => f.properties.transit_dep_per_acre != null)) {
+        document.querySelector('#services .svc[data-service="transit"]').style.display = "none";
+        state.services.transit = false;
       }
       syncServiceControls();
       // Neighbourhood lot-acre denominator toggle (pipeline 2026-07-08): shown
