@@ -7,7 +7,11 @@ import pytest
 from shapely.geometry import Polygon
 
 sys.path.insert(0, "src")
-from load_transit import export_transit_stations_web, load_transit
+from load_transit import (
+    export_transit_lines_web,
+    export_transit_stations_web,
+    load_transit,
+)
 
 
 # Two square hoods in lon/lat space; the loader projects both sides to
@@ -237,3 +241,62 @@ def test_station_export_errors_when_no_stations(tmp_path):
     stops_csv = _write(tmp_path, "stops.csv", stops)
     with pytest.raises(ValueError, match="location_type"):
         export_transit_stations_web(stops_csv, tmp_path / "out.json")
+
+
+# --- export_transit_lines_web -------------------------------------------------
+
+
+def _route_feature(route_id, name, coords):
+    return {
+        "type": "Feature",
+        "properties": {"lrt_route_id": route_id, "lrt_route_name": name},
+        "geometry": {"type": "MultiLineString", "coordinates": coords},
+    }
+
+
+def _write_routes(tmp_path, features):
+    path = tmp_path / "lrt_routes.geojson"
+    path.write_text(json.dumps({"type": "FeatureCollection", "features": features}))
+    return path
+
+
+def test_lines_export_flattens_multiline_and_rounds(tmp_path):
+    feats = [
+        _route_feature("021R", "Capital Line",
+                       [[[-113.512345678, 53.501234], [-113.51, 53.50]],
+                        [[-113.50, 53.49], [-113.49, 53.48]]]),
+    ]
+    out_path = tmp_path / "web" / "lrt_lines.json"
+    n = export_transit_lines_web(_write_routes(tmp_path, feats), out_path)
+    assert n == 2  # one path per MultiLineString segment
+    data = json.loads(out_path.read_text(encoding="utf-8"))
+    assert data["lines"][0][0] == [-113.51235, 53.50123]  # rounded to 5 dp
+
+
+def test_lines_export_drops_heritage_streetcar(tmp_path):
+    feats = [
+        _route_feature("021R", "Capital Line", [[[-113.5, 53.5], [-113.4, 53.4]]]),
+        _route_feature("HER", None, [[[-113.54, 53.53], [-113.53, 53.52]]]),
+    ]
+    n = export_transit_lines_web(_write_routes(tmp_path, feats), tmp_path / "out.json")
+    assert n == 1  # HER excluded
+
+
+def test_lines_export_skips_degenerate_single_point_paths(tmp_path):
+    feats = [
+        _route_feature("021R", "Capital Line",
+                       [[[-113.5, 53.5]], [[-113.5, 53.5], [-113.4, 53.4]]]),
+    ]
+    n = export_transit_lines_web(_write_routes(tmp_path, feats), tmp_path / "out.json")
+    assert n == 1  # the 1-point segment is dropped
+
+
+def test_lines_export_errors_when_all_excluded(tmp_path):
+    feats = [_route_feature("HER", None, [[[-113.54, 53.53], [-113.53, 53.52]]])]
+    with pytest.raises(ValueError, match="drawable"):
+        export_transit_lines_web(_write_routes(tmp_path, feats), tmp_path / "out.json")
+
+
+def test_lines_export_errors_on_empty_file(tmp_path):
+    with pytest.raises(ValueError, match="no features"):
+        export_transit_lines_web(_write_routes(tmp_path, []), tmp_path / "out.json")

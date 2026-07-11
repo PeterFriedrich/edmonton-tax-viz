@@ -230,7 +230,7 @@
         </label>
       </div>
       <div class="svc" data-service="transit">
-        <label title="Each neighbourhood coloured by scheduled transit stop-events per acre on an average weekday (current ETS signup) — scheduled service, not ridership; dots mark LRT stations and transit centres">
+        <label title="Each neighbourhood coloured by scheduled transit stop-events per acre on an average weekday (current ETS signup) — scheduled service, not ridership; lines trace the LRT network, dots mark LRT stations and transit centres">
           <input type="checkbox" class="svc-on" /> Transit — stop-events/acre/day
         </label>
         <label class="svc-colour" title="This service drives the colour ramp; the others render neutral">
@@ -539,8 +539,9 @@
                "bus or LRT visit to a stop in the current ETS signup " +
                "(schedules run lighter in summer). Scheduled service, not " +
                "ridership: ETS publishes no stop-level usage, and on-demand " +
-               "transit zones are outside the schedule data. Dots mark LRT " +
-               "stations and transit centres. Colour is square-root scaled — " +
+               "transit zones are outside the schedule data. Lines trace the " +
+               "LRT network (Capital, Metro, Valley); dots mark LRT stations " +
+               "and transit centres. Colour is square-root scaled — " +
                "service concentrates on the central corridors. Grey = " +
                "set-aside natural/undeveloped land.",
       },
@@ -655,6 +656,8 @@
     let fireStationsFetch = null; // in-flight fetch guard; missing file => no dots
     let transitStationsData = null;  // lazy-fetched LRT/transit-centre dots (transit on)
     let transitStationsFetch = null; // in-flight fetch guard; missing file => no dots
+    let lrtLinesData = null;         // lazy-fetched LRT track lines (transit on)
+    let lrtLinesFetch = null;        // in-flight fetch guard; missing file => no lines
 
     // Three neutral, luminance-sequential ramps to compare: dark = low, bright =
     // high, with no semantic good/bad hue (consistent with the linear-elevation
@@ -1079,6 +1082,40 @@
         .catch(() => {});
     }
 
+    // LRT track lines (SPEC_services.md "Transit lens"): the operating LRT
+    // network (Capital / Metro / Valley; the HER heritage streetcar is dropped
+    // upstream) as a context layer under the station dots — geography, not a
+    // scale, drawn whenever transit is checked. Not pickable.
+    const TRANSIT_LINE_COLOR = [70, 160, 235, 210];
+    function lrtLinesLayer() {
+      if (!lrtLinesData) return [];
+      return [new deck.PathLayer({
+        id: "lrt-lines",
+        data: lrtLinesData.lines,
+        getPath: d => d,
+        getColor: TRANSIT_LINE_COLOR,
+        widthUnits: "pixels",
+        getWidth: 2,
+        widthMinPixels: 1.5,
+        capRounded: true,
+        jointRounded: true,
+        pickable: false,
+        parameters: { depthTest: false },
+      })];
+    }
+    const LRT_LINES_URL = "./data/lrt_lines.json";
+    function ensureLrtLines() {
+      if (lrtLinesData) return;
+      lrtLinesFetch ??= fetch(LRT_LINES_URL)
+        .then(r => r.ok ? r.json() : null)
+        .then(d => {
+          lrtLinesData = d;
+          if (d && state.view === "services" && state.services.transit)
+            overlay.setProps({ layers: buildLayers() });
+        })
+        .catch(() => {});
+    }
+
     // Services-view blurb: the colour-driving service's story, plus one line
     // naming any other service that's on screen in neutral.
     function servicesBlurb() {
@@ -1359,7 +1396,7 @@
         if (state.services.fire)
           layers.push(...fireStationsLayer());
         if (state.services.transit)
-          layers.push(...transitStationsLayer());
+          layers.push(...lrtLinesLayer(), ...transitStationsLayer());
         return [...layers, hoodHoverLayer(), ...labelLayer()];
       }
 
@@ -1771,8 +1808,10 @@
         const dotRows = [];
         if (state.services.fire)
           dotRows.push(`<div class="cat"><span class="sw" style="background:rgb(${FIRE_STATION_COLOR.slice(0, 3).join(",")});border-radius:50%"></span><span>Fire station</span></div>`);
-        if (state.services.transit)
+        if (state.services.transit) {
+          dotRows.push(`<div class="cat"><span class="sw" style="background:rgb(${TRANSIT_LINE_COLOR.slice(0, 3).join(",")});height:3px;align-self:center"></span><span>LRT line</span></div>`);
           dotRows.push(`<div class="cat"><span class="sw" style="background:rgb(${TRANSIT_STATION_COLOR.slice(0, 3).join(",")});border-radius:50%"></span><span>LRT station / transit centre</span></div>`);
+        }
         // Always written (an empty write clears a stale row after uncheck);
         // the top of refreshLegend already set display:none for this view.
         document.getElementById("legend-cats").innerHTML = dotRows.join("");
@@ -1935,7 +1974,7 @@
       // Station dots for the fire/transit services — non-blocking (the
       // fetch's own resolve rebuilds the layers if the dots are still wanted).
       if (v === "services" && state.services.fire) ensureFireStations();
-      if (v === "services" && state.services.transit) ensureTransitStations();
+      if (v === "services" && state.services.transit) { ensureTransitStations(); ensureLrtLines(); }
       // Zoning ground layer for the uses view — fetched once; a missing file
       // resolves null and the view falls back to dominant-colour hoods.
       if (v === "uses" && !zoningData) {
@@ -2026,7 +2065,7 @@
       if (!checked && state.svcDriver === k && on.length) state.svcDriver = on[0];
       if (checked && on.length === 1) state.svcDriver = k;
       if (k === "fire" && checked) ensureFireStations();
-      if (k === "transit" && checked) ensureTransitStations();
+      if (k === "transit" && checked) { ensureTransitStations(); ensureLrtLines(); }
       syncServiceControls();
       overlay.setProps({ layers: buildLayers() });
       document.getElementById("title-p").textContent = servicesBlurb();

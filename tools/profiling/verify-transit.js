@@ -61,6 +61,9 @@ function check(name, ok, detail) {
       planeCount: ids.filter(id => id === 'svc-plane').length,
       stationsPresent: ids.includes('transit-stations'),
       nStations: transitStationsData ? transitStationsData.stations.length : 0,
+      linesPresent: ids.includes('lrt-lines'),
+      nLines: lrtLinesData ? lrtLinesData.lines.length : 0,
+      linesUnderStations: ids.indexOf('lrt-lines') < ids.indexOf('transit-stations'),
       planeNeutral: plane.props.getFillColor(mid).join() === GLASS_PLANE_COLOR.join(),
       cats: document.getElementById('legend-cats').textContent,
     };
@@ -68,8 +71,12 @@ function check(name, ok, detail) {
   check('single shared svc-plane', on.planeCount === 1, `count=${on.planeCount}`);
   check('station dots layer present', on.stationsPresent);
   check('58 stations loaded', on.nStations === 58, `n=${on.nStations}`);
+  check('LRT track lines layer present', on.linesPresent);
+  check('LRT lines loaded (HER dropped)', on.nLines === 343, `n=${on.nLines}`);
+  check('lines drawn under station dots', on.linesUnderStations);
   check('plane neutral while roads drive', on.planeNeutral);
   check('legend gains station row', on.cats.includes('LRT station / transit centre'), on.cats);
+  check('legend gains LRT line row', on.cats.includes('LRT line'), on.cats);
 
   // Hand the colour to transit: legend re-anchors to the independent p97.5,
   // mid-hood fill matches the SQRT expectation (FINDINGS §6.8), set-aside
@@ -129,14 +136,16 @@ function check(name, ok, detail) {
   await page.waitForTimeout(1500);
   const off = await page.evaluate(() => ({
     stationsGone: !overlay._deck.props.layers.some(l => l.id === 'transit-stations'),
+    linesGone: !overlay._deck.props.layers.some(l => l.id === 'lrt-lines'),
     driver: state.svcDriver,
     driverChecked: state.services[state.svcDriver],
-    catsGone: !document.getElementById('legend-cats').textContent.includes('LRT station'),
+    catsGone: !document.getElementById('legend-cats').textContent.includes('LRT'),
   }));
   check('dots leave the stack on uncheck', off.stationsGone);
+  check('lines leave the stack on uncheck', off.linesGone);
   check('driver hands back to a checked service', off.driver !== 'transit' && off.driverChecked,
         `driver=${off.driver}`);
-  check('station legend row hides', off.catsGone);
+  check('station + line legend rows hide', off.catsGone);
 
   // Persistence: transit on + driving survives a money round-trip.
   await click('#services .svc[data-service="transit"] .svc-on');

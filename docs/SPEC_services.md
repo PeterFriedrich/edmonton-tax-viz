@@ -415,6 +415,11 @@ href-only page, so the tables are the machine path:
   the 948k-row fire feed.
 - **`f2sy-bth7` Calendar Dates** — 9,248 rows; calendar-dates-only feed
   (every active (service_id, date) enumerated with `exception_type` 1).
+- **`rpjw-4jft` LRT Routes** — 4 route multilines (GeoJSON); a map **context
+  layer only, not part of the metric** (added 2026-07-11). The loader drops
+  the `HER` High Level Bridge heritage streetcar (`EXCLUDED_LRT_ROUTE_IDS`
+  — volunteer-run, not ETS LRT service, absent from the GTFS routes we
+  count) and keeps 021R Capital / 022R Metro / 023R Valley.
 
 **Feed window semantics (the load-bearing caveat):** the feed is a daily
 snapshot of the CURRENT signup only — probed window 2026-06-18 → 2026-08-29,
@@ -459,9 +464,13 @@ Fourth checkbox in the Services view (`web/index.html`): the shared hood
 plane coloured by `transit_dep_per_acre`; the 58 `location_type == 1`
 stations (LRT stations + transit centres, `web/data/transit_stations.json`,
 committed, lazy-loaded) draw as context dots whenever transit is checked —
-the fire-station pattern. Legend + blurb carry the scheduled-not-ridership
-framing and the current-signup (seasonal) caveat. Checkbox hides on data
-files without the transit column (same guard as stormwater/fire).
+the fire-station pattern. The **LRT track lines** (Capital/Metro/Valley,
+`web/data/lrt_lines.json`, 343 committed path segments, lazy-loaded) draw as
+a `PathLayer` under the dots in the same accent colour — a companion context
+layer, added 2026-07-11 (SPEC/DATA §9). Legend + blurb carry the
+scheduled-not-ridership framing and the current-signup (seasonal) caveat.
+Checkbox hides on data files without the transit column (same guard as
+stormwater/fire).
 
 **Colour transform — OPEN, decide empirically** on the first real numbers
 (the established skew method; fire needed sqrt, roads/storm stayed linear —
