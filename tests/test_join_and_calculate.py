@@ -514,6 +514,79 @@ def test_export_keeps_fire_events_per_acre_when_present(tmp_path):
     assert "fire_events_per_year" not in written.columns
 
 
+# --- transit merge (services lens #4, SPEC_services.md "Transit lens") --------
+
+def _transit(rows):
+    return pd.DataFrame(rows)
+
+
+def test_transit_merge_adds_columns_and_per_acre():
+    result = join_and_calculate(
+        _assessment([{"neighbourhood_name": "GRIDTOWN", "total_assessed_value": 100.0}]),
+        _boundaries([{"neighbourhood_name": "GRIDTOWN", "area_acres": 10.0}]),
+        transit=_transit([
+            {"neighbourhood_name": "GRIDTOWN", "transit_dep_total": 500.0},
+        ]),
+    )
+    row = result.iloc[0]
+    assert row["transit_dep_total"] == pytest.approx(500.0)
+    assert row["transit_dep_per_acre"] == pytest.approx(50.0)
+
+
+def test_no_transit_arg_omits_transit_columns():
+    result = join_and_calculate(
+        _assessment([{"neighbourhood_name": "DOWNTOWN", "total_assessed_value": 100.0}]),
+        _boundaries([{"neighbourhood_name": "DOWNTOWN", "area_acres": 10.0}]),
+    )
+    assert "transit_dep_total" not in result.columns
+    assert "transit_dep_per_acre" not in result.columns
+
+
+def test_boundary_without_transit_match_defaults_zero(caplog):
+    with caplog.at_level("WARNING"):
+        result = join_and_calculate(
+            _assessment([{"neighbourhood_name": "DOWNTOWN", "total_assessed_value": 100.0}]),
+            _boundaries([
+                {"neighbourhood_name": "DOWNTOWN", "area_acres": 10.0},
+                {"neighbourhood_name": "PARKLAND", "area_acres": 20.0},
+            ]),
+            transit=_transit([
+                {"neighbourhood_name": "DOWNTOWN", "transit_dep_total": 500.0},
+            ]),
+        )
+    parkland = result[result["neighbourhood_name"] == "PARKLAND"].iloc[0]
+    assert parkland["transit_dep_total"] == 0.0
+    assert parkland["transit_dep_per_acre"] == 0.0
+    assert "no served transit stops" in caplog.text
+
+
+def test_unmatched_transit_hood_flagged(caplog):
+    with caplog.at_level("WARNING"):
+        join_and_calculate(
+            _assessment([{"neighbourhood_name": "DOWNTOWN", "total_assessed_value": 100.0}]),
+            _boundaries([{"neighbourhood_name": "DOWNTOWN", "area_acres": 10.0}]),
+            transit=_transit([
+                {"neighbourhood_name": "DOWNTOWN", "transit_dep_total": 500.0},
+                {"neighbourhood_name": "NOWHERE", "transit_dep_total": 5.0},
+            ]),
+        )
+    assert "NOWHERE" in caplog.text
+
+
+def test_export_keeps_transit_dep_per_acre_when_present(tmp_path):
+    result = join_and_calculate(
+        _assessment([{"neighbourhood_name": "DOWNTOWN", "total_assessed_value": 100.0}]),
+        _boundaries([{"neighbourhood_name": "DOWNTOWN", "area_acres": 10.0}]),
+        transit=_transit([
+            {"neighbourhood_name": "DOWNTOWN", "transit_dep_total": 500.0},
+        ]),
+    )
+    written = export_geojson(result, str(tmp_path / "out.geojson"))
+    assert "transit_dep_per_acre" in written.columns
+    # the raw total stays out of the slim file, like every other total
+    assert "transit_dep_total" not in written.columns
+
+
 # --- water merge (utility lens #2 — MODELED, residential scope) ---------------
 
 def _water(rows):

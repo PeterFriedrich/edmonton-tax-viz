@@ -36,6 +36,13 @@ STORM_COLUMNS = ["storm_charge_annual"]
 # the pinned window. Per-acre is computed HERE against boundary area_acres.
 FIRE_COLUMNS = ["fire_events_per_year"]
 
+# Transit-supply column carried from load_transit when supplied (services
+# lens #4, SPEC_services.md "Transit lens"): mean-weekday SCHEDULED transit
+# stop-events — a supply proxy from the GTFS schedule, never ridership. The
+# per-mode bus/LRT breakdown stays in load_transit (the road-class pattern).
+# Per-acre is computed HERE against boundary area_acres.
+TRANSIT_COLUMNS = ["transit_dep_total"]
+
 # Modeled water + sanitary columns carried from load_water when supplied
 # (utility lens #2, SPEC_utilities.md — MODELED, not billed; residential
 # scope only). Total AND fixed ride along so the client can show the
@@ -77,6 +84,7 @@ def join_and_calculate(
     roads: pd.DataFrame | None = None,
     stormwater: pd.DataFrame | None = None,
     fire: pd.DataFrame | None = None,
+    transit: pd.DataFrame | None = None,
     water: pd.DataFrame | None = None,
     franchise: pd.DataFrame | None = None,
     lot_acres: pd.DataFrame | None = None,
@@ -112,6 +120,12 @@ def join_and_calculate(
     (SPEC_services.md "Fire lens"). Boundaries with no events default to a
     true 0/yr (roads semantics: no dispatched emergency events recorded
     there in the window) — and are flagged.
+
+    ``transit`` (optional, from load_transit.py) adds transit_dep_total —
+    mean-weekday SCHEDULED stop-events, a supply proxy, not ridership — and
+    computes transit_dep_per_acre against boundary area_acres
+    (SPEC_services.md "Transit lens"). Boundaries with no served stops
+    default to a true 0 (roads semantics) — and are flagged.
 
     ``water`` (optional, from load_water.py) adds the MODELED residential
     water + sanitary columns (WATER_COLUMNS) and computes
@@ -320,6 +334,41 @@ def join_and_calculate(
             + FIRE_COLUMNS + ["fire_events_per_acre"] + ["geometry"]
         )
 
+    # Services lens #4: merge scheduled transit supply when supplied
+    # (SPEC_services.md "Transit lens" — scheduled stop-events from the GTFS
+    # feed, a supply proxy, never a ridership or coverage claim).
+    if transit is not None:
+        boundary_names = set(joined["neighbourhood_name"])
+        unmatched_transit = sorted(set(transit["neighbourhood_name"]) - boundary_names)
+        if unmatched_transit:
+            logger.warning(
+                "%d transit neighbourhood(s) with no boundary match (dropped):\n  %s",
+                len(unmatched_transit),
+                "\n  ".join(unmatched_transit),
+            )
+
+        joined = joined.merge(
+            transit[["neighbourhood_name", *TRANSIT_COLUMNS]],
+            on="neighbourhood_name",
+            how="left",
+        )
+
+        no_transit = joined["transit_dep_total"].isna()
+        if no_transit.any():
+            logger.warning(
+                "%d boundary neighbourhood(s) with no served transit stops (default 0):\n  %s",
+                int(no_transit.sum()),
+                "\n  ".join(sorted(joined.loc[no_transit, "neighbourhood_name"])),
+            )
+        # No served stops there -> a true 0 scheduled stop-events.
+        joined["transit_dep_total"] = joined["transit_dep_total"].fillna(0.0)
+        joined["transit_dep_per_acre"] = joined["transit_dep_total"] / safe_area
+
+        out_cols = (
+            [c for c in out_cols if c != "geometry"]
+            + TRANSIT_COLUMNS + ["transit_dep_per_acre"] + ["geometry"]
+        )
+
     # Utility lens #2: merge the modeled water + sanitary charge when
     # supplied (SPEC_utilities.md Lens 2 — modeled, not billed; residential
     # scope only).
@@ -456,8 +505,9 @@ def join_and_calculate(
 # slim file like total_assessed_value does; the storm and water figures are
 # MODELED, not billed — water additionally residential-scope only, with the
 # fixed column shipping alongside the total so the client can show the
-# connection-vs-consumption split — and the fire figure is dispatched-event
-# DEMAND, not coverage; the client must label all of them as such).
+# connection-vs-consumption split — the fire figure is dispatched-event
+# DEMAND, not coverage, and the transit figure is SCHEDULED service supply,
+# not ridership; the client must label all of them as such).
 SLIM_COLUMNS = [
     "neighbourhood_name", "value_per_acre", "revenue_per_acre",
     "set_aside_frac", "is_set_aside", "set_aside_reason",
@@ -465,7 +515,8 @@ SLIM_COLUMNS = [
     "frac_residential", "frac_commercial", "frac_industrial",
     "frac_mixed", "frac_dc", "frac_other",
     "is_residential", "road_m_per_acre", "storm_charge_per_acre",
-    "fire_events_per_acre", "water_charge_per_acre", "water_fixed_per_acre",
+    "fire_events_per_acre", "transit_dep_per_acre",
+    "water_charge_per_acre", "water_fixed_per_acre",
     "value_per_lot_acre", "revenue_per_lot_acre", "parcel_frac",
     "geometry",
 ]
