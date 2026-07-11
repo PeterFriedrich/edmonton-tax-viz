@@ -299,6 +299,11 @@ _Last reconciled: 2026-07-09_
       dots, five new weekly GTFS downloads. SPEC_services "Transit lens",
       DATA.md §9. Scheduled supply, NOT ridership (none exists stop-level);
       current-signup seasonality is the standing caveat.
+      - [x] ~~**LRT track lines** context layer~~ — added 2026-07-11: the
+        operating network (Capital/Metro/Valley) as a `PathLayer` under the
+        station dots (`rpjw-4jft` "LRT Routes" → `web/data/lrt_lines.json`,
+        343 segs); the HER heritage streetcar is excluded (not ETS LRT
+        service). Not part of the metric. DECISIONS.md 2026-07-11.
     - [x] ~~**Services-view UI generalization**~~ — **SHIPPED 2026-07-05:
       PR #14 merged + deployed + LIVE** (run 28767241818 — deploy step
       needed two transient-error reruns, "Deployment failed, try again
