@@ -95,6 +95,35 @@ def test_output_columns():
     }
 
 
+# --- merge key uniqueness (validate="m:1", FINDINGS NEW-1) -------------------
+# safe_area is computed once and reused positionally across every merge, so a
+# duplicate right-hand key would fan the join out and silently misalign every
+# downstream division. validate="m:1" must raise loudly instead.
+
+
+def test_duplicate_assessment_key_raises():
+    with pytest.raises(pd.errors.MergeError):
+        join_and_calculate(
+            _assessment([
+                {"neighbourhood_name": "DOWNTOWN", "total_assessed_value": 1_000_000.0},
+                {"neighbourhood_name": "DOWNTOWN", "total_assessed_value": 2_000_000.0},
+            ]),
+            _boundaries([{"neighbourhood_name": "DOWNTOWN", "area_acres": 100.0}]),
+        )
+
+
+def test_duplicate_roads_key_raises():
+    with pytest.raises(pd.errors.MergeError):
+        join_and_calculate(
+            _assessment([{"neighbourhood_name": "GRIDTOWN", "total_assessed_value": 100.0}]),
+            _boundaries([{"neighbourhood_name": "GRIDTOWN", "area_acres": 10.0}]),
+            roads=_roads([
+                {"neighbourhood_name": "GRIDTOWN", "road_m_total": 250.0},
+                {"neighbourhood_name": "GRIDTOWN", "road_m_total": 400.0},
+            ]),
+        )
+
+
 # --- export_geojson ---------------------------------------------------------
 
 # A small square near Edmonton, expressed in EPSG:3400 (the CRS the join result

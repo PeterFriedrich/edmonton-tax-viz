@@ -241,7 +241,7 @@ property_info`, `export_value_grid`, and the grown `join_and_calculate`.
 
 | # | Target | Verdict |
 |---|---|---|
-| NEW-1 | `join_and_calculate` positional `safe_area` reuse across 9 merges | **LATENT (hardening)** — correct today, silent if a merge key ever duplicates |
+| NEW-1 | `join_and_calculate` positional `safe_area` reuse across 9 merges | **RESOLVED 2026-07-11** — `validate="m:1"` on all nine merges; dup right-key now raises `MergeError` (was: latent silent misalignment) |
 | T3c | Unmatched-set changes warning-only in CI | **STILL OPEN** (= TODO P2.1) — now covers SIX name-keyed joins, not one |
 | NEW-2 | Fire/water/franchise vintage pins (manual January bumps) | **ACCEPTED-risk** — RUNBOOK-guarded, not CI-guarded |
 | NEW-3 | Fire hood-name drift (new dataset, same T3 channel) | CONFIRMED-immaterial — 54 of 274,127 in-window events (0.02%), warned |
@@ -281,6 +281,13 @@ nothing raised. This is exactly the brief's target class.
 nine merges (pandas raises loudly on a duplicated right key), or recompute
 `safe_area` from the merged frame at each use. Cheap, converts the latent risk
 to fail-loud.
+
+**RESOLVED 2026-07-11.** `validate="m:1"` added to all nine merges in
+`src/join_and_calculate.py` (base assessment merge + the eight optional-frame
+merges). A duplicated right-key now raises `pandas.errors.MergeError` instead of
+silently fanning out. Regression-covered by `test_duplicate_assessment_key_raises`
+and `test_duplicate_roads_key_raises`; pipeline reruns clean on real data (all
+nine pass validation), 277 pytest green.
 
 ## T3c — the CI unmatched-set assertion matters more now [still open]
 
@@ -348,7 +355,7 @@ The pipeline held up under a full re-audit that included five new lens modules
 and two new denominators: **zero wrong published numbers found.** The defensive
 architecture (hard-error on unmapped vocabulary, counted exclusions,
 conservation asserts) has been applied consistently to every module added since
-the first run. The two highest-leverage hardenings are both guards, not fixes:
-(1) the CI unmatched-set assertion (TODO P2.1 — now protecting six joins), and
-(2) `validate="m:1"` on the `join_and_calculate` merges (NEW-1) to close the
-one silent-misalignment path the current code leaves open.
+the first run. Of the two highest-leverage hardenings, one is now applied:
+(1) the CI unmatched-set assertion (TODO P2.1 — now protecting six joins) remains
+open, and (2) `validate="m:1"` on the `join_and_calculate` merges (NEW-1) was
+**applied 2026-07-11**, closing the one silent-misalignment path the code left open.
