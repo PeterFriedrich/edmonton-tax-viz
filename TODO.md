@@ -729,11 +729,14 @@ _Last reconciled: 2026-07-09_
     joins (assessment/zoning/roads/storm/fire/transit/water/lot-acres), so this
     matters more than when filed. Fire-side baseline candidates recorded
     (second-run NEW-3: 54/274k in-window events, 0.02%).
-  - [ ] **`validate="m:1"` on the `join_and_calculate` merges (second-run
-    NEW-1):** the pre-merge `safe_area` Series is reused positionally across all
-    nine sequential merges — correct while every right frame is unique-keyed
-    (all are today), silently misaligns EVERY per-acre denominator if a duplicate
-    key ever appears. One line per merge; converts latent-silent to fail-loud.
+  - [x] ~~**`validate="m:1"` on the `join_and_calculate` merges (second-run
+    NEW-1):**~~ DONE 2026-07-11 — added `validate="m:1"` to all nine merges
+    (base assessment + zoning/roads/storm/fire/transit/water/franchise/lot-acre);
+    pandas now raises `MergeError` if a duplicate right-key ever appears instead
+    of silently misaligning every per-acre denominator via the positionally-reused
+    `safe_area`. +2 tests (`test_duplicate_assessment_key_raises`,
+    `test_duplicate_roads_key_raises`). Pipeline reruns clean on real data (all
+    nine pass validation). 277 pytest green.
   - [x] ~~**Socrata `$limit` truncation check (audit §5)**~~ — built 2026-07-01
     on `feature/services-lens` (`check_not_truncated()` in
     `scripts/download_data.py`, fails at count >= limit; +6 tests; roads

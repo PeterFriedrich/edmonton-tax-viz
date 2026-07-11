@@ -161,7 +161,12 @@ def join_and_calculate(
             "\n  ".join(unmatched_assessment),
         )
 
-    joined = boundaries.merge(agg, on="neighbourhood_name", how="left")
+    # validate="m:1": the right frame (aggregated assessment) must be unique per
+    # neighbourhood_name. safe_area is computed once below and reused positionally
+    # across every subsequent merge; a duplicate right key would fan the left join
+    # out, shift the RangeIndex, and silently divide every downstream hood by the
+    # wrong area. pandas raises loudly here instead (docs/FINDINGS_data_integrity_audit.md NEW-1).
+    joined = boundaries.merge(agg, on="neighbourhood_name", how="left", validate="m:1")
 
     no_assessment = joined[joined["total_assessed_value"].isna()]
     if len(no_assessment):
@@ -214,6 +219,7 @@ def join_and_calculate(
             zoning[["neighbourhood_name", *ZONING_COLUMNS]],
             on="neighbourhood_name",
             how="left",
+            validate="m:1",
         )
 
         no_zoning = joined[joined["set_aside_frac"].isna()]
@@ -247,6 +253,7 @@ def join_and_calculate(
             roads[["neighbourhood_name", *ROAD_COLUMNS]],
             on="neighbourhood_name",
             how="left",
+            validate="m:1",
         )
 
         no_roads = joined["road_m_total"].isna()
@@ -281,6 +288,7 @@ def join_and_calculate(
             stormwater[["neighbourhood_name", *STORM_COLUMNS]],
             on="neighbourhood_name",
             how="left",
+            validate="m:1",
         )
 
         no_storm = joined["storm_charge_annual"].isna()
@@ -316,6 +324,7 @@ def join_and_calculate(
             fire[["neighbourhood_name", *FIRE_COLUMNS]],
             on="neighbourhood_name",
             how="left",
+            validate="m:1",
         )
 
         no_fire = joined["fire_events_per_year"].isna()
@@ -351,6 +360,7 @@ def join_and_calculate(
             transit[["neighbourhood_name", *TRANSIT_COLUMNS]],
             on="neighbourhood_name",
             how="left",
+            validate="m:1",
         )
 
         no_transit = joined["transit_dep_total"].isna()
@@ -386,6 +396,7 @@ def join_and_calculate(
             water[["neighbourhood_name", *WATER_COLUMNS]],
             on="neighbourhood_name",
             how="left",
+            validate="m:1",
         )
 
         no_water = joined["water_charge_annual"].isna()
@@ -425,6 +436,7 @@ def join_and_calculate(
             franchise[["neighbourhood_name", *FRANCHISE_COLUMNS]],
             on="neighbourhood_name",
             how="left",
+            validate="m:1",
         )
 
         no_fr = joined["dwelling_count"].isna()
@@ -460,7 +472,9 @@ def join_and_calculate(
         merge_cols = ["neighbourhood_name"] + [
             c for c in LOT_ACRE_COLUMNS if c in lot_acres.columns
         ]
-        joined = joined.merge(lot_acres[merge_cols], on="neighbourhood_name", how="left")
+        joined = joined.merge(
+            lot_acres[merge_cols], on="neighbourhood_name", how="left", validate="m:1"
+        )
 
         # parcel_frac ships regardless (tooltip); the per-lot-acre ratios divide
         # by deduped parcel acres, not boundary acres.
