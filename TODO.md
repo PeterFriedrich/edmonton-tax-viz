@@ -300,17 +300,22 @@ _Last reconciled: 2026-07-09_
   DECISIONS.md: (1) activity = choropleth, (2) infill = suitability×activity
   mismatch shown both ways, (3) combined cost side = city service cost (not
   permit construction_value).
-  - [ ] **Lens A — Building Activity (choropleth), PHASE 1 / first cut.**
-    `src/load_permits.py` (Socrata download discipline, DATA.md §1) → filter
-    new-construction `work_type` ∩ residential `building_type` (hand-mapped
-    dicts, warn-on-unseen) → Σ `units_added` per hood ÷ acres → `join_and_calculate`
-    column (`validate="m:1"`) → one choropleth metric (`new_units_per_acre`,
-    5-yr window) in the web lens control. **BLOCKER decision first: set-aside
-    override** — the top activity hoods (Keswick/Chappelle/Orchards/Secord/
-    Griesbach) are the greenfield hoods the set-aside mask greys out, so reusing
-    the mask hides the whole story; must invert/override. Then: name map for
-    "AREA"-suffix greenfield hoods (warn-not-fail, activity not money-path);
-    add DATA.md entry; headless-verify; ship + look.
+  - [x] **Lens A — Building Activity (choropleth), PHASE 1 / first cut. DONE
+    2026-07-12** (`feat/dev-lens-a-building-activity`). `src/load_permits.py`
+    (slim `$select` download, count cross-check hardened for the `count_1`
+    alias) → new-construction `work_type` ∩ residential `building_type`
+    (hand-enumerated dicts incl. every spelling variant, warn-on-unseen) → Σ
+    `units_added` per hood → `join_and_calculate` column (`validate="m:1"`,
+    warn-not-fail) → new **Development** web view (own view, NOT a city service;
+    `new_units_per_acre`, 2021–2025 pinned, sqrt colour). **Set-aside override
+    LOCKED = full override coloured** (empirically low-impact: 6 hoods/43 units;
+    growth hoods sit below the 0.90 threshold — the S42 "headline tension" was
+    overstated for current data). `NAME_CORRECTIONS` resolves CHAPPELLE AREA etc.
+    (only GLENORA,ROSSLYN 1-unit straggler left). DATA.md §10 added; 308 pytest +
+    `verify-development.js` 25/25 green; screenshot eyeballed. Live-data: 59,696
+    units / 236 hoods, GARNEAU tops per-acre (dense infill).
+    - **Lens A polish (next):** permit-count-per-acre sub-metric; the
+      `occupancy_granted_date` completed-builds variant (DATA.md §10).
   - [ ] **Lens B — Suitability × Activity mismatch, PHASE 2.** Signed diverging
     metric `z(suitability) − z(activity)`: two views off one scale — suitable-
     but-quiet (opportunity) AND less-suitable-but-building (Peter's flip). Base
