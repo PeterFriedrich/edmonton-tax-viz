@@ -141,6 +141,11 @@ also have to survive the pipeline's normalization, but it is a genuine
 untrusted-data → HTML sink on a public site. **Suggested fix:** one small
 escape helper (`&<>"'` entity replacement) applied to the two data-derived
 strings in `tooltipFor`.
+**RESOLVED (2026-07-12):** added an `esc()` helper (`&<>"'` → entities) just
+above `tooltipFor` in `web/index.html`; applied to both data-derived strings —
+`neighbourhood_name` (the `name` prefix) and `set_aside_reason` (its two sites).
+Every other tooltip interpolation is a formatted number or code-defined config
+label, not upstream data. Headless verify (`verify-transit.js`) 24/24 green.
 
 ### S4 (Low) — workflow actions pinned by mutable tag, not commit SHA
 `refresh.yml` pins `actions/checkout@v7`, `setup-python@v6`,
@@ -152,6 +157,13 @@ permissions block is otherwise least-privilege, concurrency is guarded, and
 the banner output is passed via `env:` (no expression-injection sink).
 **Suggested fix:** pin each action to its full commit SHA (comment the tag
 alongside); GitHub's Dependabot keeps SHA pins updated.
+**RESOLVED (2026-07-12):** all four actions in `refresh.yml` now pinned to full
+commit SHA with the release version in a trailing comment —
+`actions/checkout@9c091bb…` (v7.0.0), `setup-python@ece7cb06…` (v6.3.0),
+`upload-pages-artifact@fc324d35…` (v5.0.0), `deploy-pages@cd2ce8fc…` (v5.0.0).
+SHAs resolved via the GitHub API at pin time. A `github-actions` Dependabot
+config to auto-bump the pins was left out deliberately (it opens recurring PRs —
+owner's call); bump the pins by hand when an action releases a new version.
 
 ### S5 (Low) — known CVEs in the local dev freeze (not the publish path)
 `pip-audit -r requirements.txt --no-deps` (2026-07-09): 11 known
