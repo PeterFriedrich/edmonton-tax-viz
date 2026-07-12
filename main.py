@@ -44,6 +44,7 @@ from load_transit import (
     export_transit_stations_web,
     export_transit_lines_web,
 )
+from load_permits import load_permits
 from join_and_calculate import join_and_calculate, export_geojson
 from export_value_grid import export_value_grid, check_lot_acre_bounds, build_hood_lot_acres
 from plot_choropleth import plot_choropleth
@@ -69,6 +70,7 @@ GTFS_CALENDAR_DATES_CSV = ROOT / "data/raw/gtfs_calendar_dates.csv"
 # LRT track lines — a context layer under the transit lens (the station dots'
 # companion), independent of the metric; exported when present.
 LRT_ROUTES_GEOJSON = ROOT / "data/raw/lrt_routes.geojson"
+PERMITS_CSV = ROOT / "data/raw/building_permits.csv"
 MILL_RATES_JSON = ROOT / "data/mill_rates.json"
 STORMWATER_RATES_JSON = ROOT / "data/stormwater_rates.json"
 WATER_RATES_JSON = ROOT / "data/water_rates.json"
@@ -91,6 +93,12 @@ ASSESSMENT_YEAR = 2025
 # 3, SPEC_services.md "Fire lens"). Pinned — an auto-rolling window could
 # silently average in a partial year. Bump manually each January.
 FIRE_YEARS = (2023, 2024, 2025)
+
+# Development & Infill lens A window (SPEC_development.md, locked 2026-07-12):
+# the last 5 FULL calendar years of building-permit activity, summed. Pinned —
+# an auto-rolling window could silently sum in a partial year (fire-lens
+# precedent). Bump manually each January (see docs/RUNBOOK.md year-roll).
+PERMIT_YEARS = (2021, 2022, 2023, 2024, 2025)
 
 # Water lens tariff vintage. Unlike mill rates (which MUST match the roll
 # year), the water model is a forward-looking modeled bill: the current
@@ -131,6 +139,8 @@ def run(
     fire_events_csv: Path | None = FIRE_EVENTS_CSV,
     fire_stations_csv: Path | None = FIRE_STATIONS_CSV,
     fire_years: tuple[int, ...] = FIRE_YEARS,
+    permits_csv: Path | None = PERMITS_CSV,
+    permit_years: tuple[int, ...] = PERMIT_YEARS,
     gtfs_stops_csv: Path | None = GTFS_STOPS_CSV,
     gtfs_routes_csv: Path | None = GTFS_ROUTES_CSV,
     gtfs_trips_csv: Path | None = GTFS_TRIPS_CSV,
@@ -253,6 +263,18 @@ def run(
                 ", ".join(missing),
             )
 
+    # New residential supply (Development & Infill lens A, SPEC_development.md)
+    # — same optional-refreshed-input pattern; omitting the file omits the
+    # activity columns.
+    permits = None
+    if permits_csv is not None and Path(permits_csv).exists():
+        permits = load_permits(permits_csv, permit_years)
+    elif permits_csv is not None:
+        logger.warning(
+            "Building-permits file not found (%s) — skipping the development lens",
+            permits_csv,
+        )
+
     # Lot-size join (property-info CSV) feeds TWO consumers: the neighbourhood
     # lot-acre denominator toggle (hood rollup, joined below) and the Glass-view
     # grid (export block). Merge once here so both share it; without the file
@@ -276,7 +298,7 @@ def run(
     result = join_and_calculate(
         aggregated, boundaries, zoning=zoning, roads=roads, stormwater=stormwater,
         fire=fire, transit=transit, water=water, franchise=franchise,
-        lot_acres=lot_acres_hood,
+        permits=permits, lot_acres=lot_acres_hood,
     )
 
     if png_out is not None:
@@ -372,6 +394,9 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p.add_argument("--lrt-routes-geojson", type=Path, default=LRT_ROUTES_GEOJSON)
     p.add_argument("--skip-transit", action="store_true",
                    help="skip the scheduled-transit supply lens (SPEC_services.md \"Transit lens\")")
+    p.add_argument("--permits-csv", type=Path, default=PERMITS_CSV)
+    p.add_argument("--skip-permits", action="store_true",
+                   help="skip the development/infill activity lens (SPEC_development.md \"Lens A\")")
     p.add_argument("--log-level", default="INFO", help="logging level (default INFO)")
     return p.parse_args(argv)
 
@@ -404,6 +429,7 @@ def main(argv: list[str] | None = None) -> None:
         gtfs_stop_times_csv=None if args.skip_transit else args.gtfs_stop_times_csv,
         gtfs_calendar_dates_csv=None if args.skip_transit else args.gtfs_calendar_dates_csv,
         lrt_routes_geojson=None if args.skip_transit else args.lrt_routes_geojson,
+        permits_csv=None if args.skip_permits else args.permits_csv,
         setback_m=args.setback_m,
         simplify_tolerance_m=args.simplify_tolerance_m,
     )

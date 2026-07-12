@@ -1,7 +1,8 @@
 # Scope: Development & Infill Lens family
 
-**Status:** PLAN (2026-07-12). No code built yet. This doc specs a new lens
-family — where building is actually happening, whether it's happening in the
+**Status:** Lens A **BUILT + shipped** (2026-07-12, branch
+`feat/dev-lens-a-building-activity`); Lens B/C still PLAN. This doc specs a new
+lens family — where building is actually happening, whether it's happening in the
 *right* places, and how that lines up against the city's cost to serve. It is
 the direct, permit-based answer to the question `FINDINGS_growth_servicing.md`
 could only proxy with **median building-stock age** (a hood's `year_built`
@@ -38,9 +39,27 @@ models.
 ### Primary — General Building Permits (`24uj-dj8v`)
 
 **Source:** Edmonton Open Data (Socrata), `https://data.edmonton.ca/resource/24uj-dj8v.json`.
-**Verified 2026-07-12:** 243,324 rows, `issue_date` 2009-01-05 → 2026-07-09
+**Verified 2026-07-12:** 243,371 rows, `issue_date` 2009-01-05 → 2026-07-09
 (current, refreshed on the city's cadence). Reachable from the Oracle box
 (`data.edmonton.ca` is; `edmonton.ca` is not).
+
+**"Same data, different cuts" — verified 2026-07-12.** The portal lists eight
+building/development-permit datasets, but the `rowsUpdatedAt` timestamps prove
+there are only TWO source tables: all six building-permit views (this
+`24uj-dj8v`, plus `itki-s8y9` Map Search — identical 243,371 row count —
+`jsf3-5dv2` Commercial Final, `537d-t4az` Permitted Projects, `uep4-4w4g`
+Permits >$1M, `ramb-ihnk` Activity) share one timestamp; both development-permit
+views (`2ccn-pwtu`, `66ut-y7w2` Map Search) share another. The rest are saved
+filters/map views we can't control. **We pull `24uj-dj8v` (tabular API) and do
+our own filtering — ignore the derived views.**
+
+**`occupancy_granted_date` variant (field confirmed 2026-07-12, NOT built).**
+The schema carries `occupancy_granted_date` — a *completed-builds* cut vs. our
+*issued-permits* cut. Caveat that gates it: the city only populates it for
+residential finalized on/after Jan 1 2022 and non-residential on/after Jan 1
+2024, so it is fine for a "recently completed" leading/lagging distinction but
+**useless for historical totals** (pre-2022 completions are blank). A future
+optional Lens-A toggle, not the base metric.
 
 Columns we use (schema confirmed live):
 
@@ -67,13 +86,22 @@ predate consistent coding. Follow the project's explicit-dictionary rule
 (DECISIONS 2026-06-29): hand-map the `work_type` codes we treat as "new",
 warn on any unseen code, never prefix-match.
 
-**`building_type` vocab (top values):** `Single Detached House (110)` (148,133),
+**`building_type` vocab (top values):** `Single Detached House (110)` (148,170),
 `Detached Garage (010)` (21,140 — **exclude**, not a dwelling), `Semi-Detached
-House (210)` (19,659), `Row House (330)` (7,090), `Apartments (310)` (1,908),
+House (210)` (19,660), `Row House (330)` (7,093), `Apartments (310)` (1,908),
 plus commercial types (Office/Retail/Warehouse/Restaurant). The **residential
-dwelling set** = Single Detached + Semi-Detached + Row House + Apartments
-(+ Duplex/other residential codes if present); garages and commercial excluded.
-Hand-mapped dictionary, warn-on-unseen, same rule.
+dwelling set** = Single Detached + Semi-Detached/Duplex + Row House + Apartment
++ Mobile Home. **The live vocab (71 distinct values, 2026-07-12) carries many
+spelling variants of each** — `Apartments (310)`/`Apartment (310)`/`Apartment
+Condos (315)`/`Apartment Condo (315)`; `Row House (330)`/`Row Houses (330)`/
+`Row House Condo (335)`; `Semi-Detached House (210)`/`Semi Detached House (210)`/
+`Semi Detached House` (no code)/`Duplex (210)`/`Semi-Detached Condo (215)`;
+`Single Detached House (110)`/`Single House (110)`/`Single Detached Condo (115)`/
+`Backyard House (110)` (a new garden/secondary dwelling — counted). `Mixed Use
+(522)` is commercial-coded and ambiguous on unit count — **excluded** from the
+first cut. Every variant is enumerated explicitly in `src/load_permits.py`
+(`RESIDENTIAL_BUILDING_TYPES`), never prefix-matched on the `(NNN)` code;
+garages and commercial excluded. Hand-mapped dictionary, warn-on-unseen.
 
 ### Join & name discipline
 
@@ -100,9 +128,8 @@ Discovered 2026-07-12, catalogued here so we don't re-hunt:
 | `uz9h-ceya` | Secondary Suites (Completed Permits) | densification (garden/secondary suites) |
 | `25sf-z8zd`, `8t7s-6vwq` | Residential Building Permits 2009–2015 | historical snapshots (superseded by `24uj-dj8v`'s full range) |
 
-**DATA.md gets a full entry when the Lens A loader is built** — data details
-live here in the spec until then (the project keeps DATA.md for live-pipeline
-sources).
+**DATA.md entry added 2026-07-12** (Lens A loader built) — see DATA.md
+§"Building Permits" for the live-pipeline source record.
 
 ---
 
@@ -113,25 +140,31 @@ same look as the revenue/services lenses, least new render code. (Per-permit
 lat/long is retained in the data for a possible future point/heatmap variant,
 but not built now.)
 
-**Metric:** `new_dwelling_units_per_acre` = Σ `units_added` per hood
+**Metric (BUILT):** `new_units_per_acre` = Σ `units_added` per hood
 (filtered to new-construction `work_type` ∩ residential `building_type`) ÷
-boundary acres (EPSG:3400, the one project denominator), over a **rolling
-window**. Secondary sub-metric option: **permit count per acre** (activity
-regardless of unit count). Window default **last 5 full calendar years** —
-*open decision* (see below); pinned, not auto-rolling-with-partial-year, per the
-fire-lens precedent (DECISIONS 2026-07-05).
+boundary acres (EPSG:3400, the one project denominator), over the pinned window.
+The loader also carries `new_dwelling_units` (window total) and
+`new_dwelling_permits` (count) into the slim file for the tooltip. **Window
+LOCKED (Peter, 2026-07-12): the last 5 full calendar years (2021–2025)**,
+summed — `PERMIT_YEARS` in `main.py`, pinned (a drift guard hard-errors if a
+window year has zero permits), not auto-rolling-with-partial-year, per the
+fire-lens precedent (DECISIONS 2026-07-05). Permit-count-per-acre is a possible
+future sub-metric (the count already ships); not a toggle in the first cut.
 
-**⚠️ Set-aside mask — the headline tension (open decision, must resolve before
-build):** the top activity hoods verified 2026-07-12 (KESWICK 3,139 units,
-CHAPPELLE AREA 2,789, THE ORCHARDS 2,755, EDGEMONT, SECORD, GRIESBACH,
-ROSENTHAL) are exactly the greenfield hoods the **set-aside overlay greys out**
-on every other lens — they read near-zero *revenue* per acre because they're
-≥90% not-yet-developed land. Reusing that mask here would **grey out the entire
-story of the activity lens.** Lens A almost certainly must **override / invert
-the set-aside treatment** (show greenfield growth hoods in full colour; the
-undeveloped land IS where the units are landing). Exact handling is a locked-in
-decision to make with Peter before building — it is the single biggest design
-call in this lens.
+**✅ Set-aside mask — LOCKED (Peter, 2026-07-12): full override, coloured.** On
+Lens A the mask greys nothing — every hood is coloured by its activity value,
+greenfield included; a hood's set-aside status still shows in the tooltip.
+Implemented as a dedicated `developmentPlaneLayer` with no `is_set_aside` grey
+branch and a `devScale` clamp computed over ALL hoods (`web/index.html`).
+
+**Empirical footnote (measured on the real join, 2026-07-12):** the "headline
+tension" turned out largely moot for *current* data. The set-aside flag is
+`set_aside_frac ≥ 0.90`, and the growth hoods sit far below it (KESWICK 0.19,
+CHAPPELLE 0.27, SECORD 0.11, GRIESBACH 0.10) — they've developed enough to render
+on-scale already. Only **6 tiny set-aside hoods carry any activity, 43 units of
+59,696 citywide (0.07%)**. The override is still the correct semantic choice and
+future-proofs newly-platted greenfield (which starts ≥90% undeveloped AND high
+activity), but its present visual impact is negligible.
 
 **Computation (new module `src/load_permits.py` → column into
 `join_and_calculate`):**
@@ -215,26 +248,32 @@ Depends on Lens A shipping and (for true dollars) the V2 unit-cost work.
 3. **Combined lens cost side = modeled city service cost** (reuse service
    columns / V2 unit costs), NOT permit `construction_value`.
 
-## Methodology decisions still to settle (open — resolve at build time)
+## Methodology decisions — Lens A SETTLED (2026-07-12), Lens B/C open
 
-- **Set-aside handling for Lens A** (the headline tension above) — override /
-  invert so greenfield growth hoods show. *Highest priority; blocks the build.*
-- **Activity window** — 5 full years default? single latest year? cumulative
-  since 2009? (fire-lens precedent: pinned, not partial-year auto-roll.)
-- **Metric numerator** — `units_added` (dwellings) vs permit count vs
-  `construction_value`-weighted vs `floor_area`. Default `units_added`.
-- **Null-`work_type` rows** (~60k) — report count; decide include/exclude
-  (default exclude, warn).
+Lens A build-time decisions, now LOCKED:
+- **Set-aside handling** — ✅ full override, coloured (Peter, 2026-07-12); see
+  the Lens A section. Empirically low-impact but semantically correct.
+- **Activity window** — ✅ last 5 full years (2021–2025), pinned + drift-guarded.
+- **Metric numerator** — ✅ `units_added` (dwellings). Permit count ships
+  alongside for the tooltip; a per-acre count sub-metric is future polish.
+- **Null-`work_type` rows** — ✅ excluded, count reported (in-window ~41k of the
+  ~60k are null/blank; INFO-logged each load). Same for null `building_type`.
+- **"AREA"-suffix greenfield names** — ✅ resolved via the shared
+  `NAME_CORRECTIONS` (CHAPPELLE AREA → CHAPPELLE etc.); no permit-local map
+  needed. Warn-not-fail; the only straggler is `GLENORA, ROSSLYN` (1 unit).
+
+Still open (Lens B/C):
 - **Lens B base-suitability definition + weighting** — pick one proxy first.
-- Whether the "AREA"-suffix greenfield names get a maintained name map or are
-  accepted as a documented unmatched set.
+- **Lens A polish** — permit-count-per-acre sub-metric toggle; the
+  `occupancy_granted_date` completed-builds variant (Data note above).
 
 ## Build order
 
-1. **Lens A minimal** — `src/load_permits.py` + name map + `join_and_calculate`
-   column + one choropleth metric + set-aside override. Verify (headless), ship,
-   look. Add the DATA.md entry at this point.
-2. **Lens A polish** — window/metric toggles, sub-metrics, tooltip.
+1. **Lens A minimal** — ✅ DONE 2026-07-12 (`feat/dev-lens-a-building-activity`):
+   `src/load_permits.py` + `join_and_calculate` column + one choropleth metric +
+   set-aside override + `verify-development.js` (25/25) + DATA.md entry.
+2. **Lens A polish** — window/metric toggles, permit-count sub-metric, the
+   occupancy completed-builds variant. *(next)*
 3. **Lens B** — base suitability proxy + signed mismatch metric + two views.
 4. **Lens C** — reuse service-cost columns (or V2) against Lens A.
 

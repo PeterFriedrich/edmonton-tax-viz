@@ -60,6 +60,16 @@ FRANCHISE_COLUMNS = [
 ]
 
 
+# New-residential-supply columns carried from load_permits when supplied
+# (Development & Infill lens A, SPEC_development.md): Σ units_added on new-
+# construction ∩ residential permits over the pinned window, and the permit
+# count behind it. new_units_per_acre is computed HERE against boundary
+# area_acres — the same denominator as everything else. Both the total and the
+# count ride into the slim file for the tooltip (like the water total/fixed
+# pair); the per-acre metric drives the choropleth.
+PERMIT_COLUMNS = ["new_dwelling_units", "new_dwelling_permits"]
+
+
 # Neighbourhood lot-acre denominator (the "value per developable acre" toggle,
 # docs/FINDINGS_denominator_cardinality.md). Carried from build_hood_lot_acres;
 # value_per_lot_acre / revenue_per_lot_acre are computed HERE against the deduped
@@ -87,6 +97,7 @@ def join_and_calculate(
     transit: pd.DataFrame | None = None,
     water: pd.DataFrame | None = None,
     franchise: pd.DataFrame | None = None,
+    permits: pd.DataFrame | None = None,
     lot_acres: pd.DataFrame | None = None,
 ) -> gpd.GeoDataFrame:
     """Left join boundaries → assessment, flag unmatched rows, compute value_per_acre.
@@ -456,6 +467,49 @@ def join_and_calculate(
             + FRANCHISE_COLUMNS + ["geometry"]
         )
 
+    # Development & Infill lens A: merge new-residential-supply activity when
+    # supplied (SPEC_development.md "Lens A" — new dwelling units from issued
+    # building permits over the pinned window, an activity count, NOT a revenue
+    # or cost claim). Unlike the money path this is warn-not-fail on the join.
+    if permits is not None:
+        boundary_names = set(joined["neighbourhood_name"])
+        unmatched_permits = sorted(set(permits["neighbourhood_name"]) - boundary_names)
+        if unmatched_permits:
+            # Activity, not dollars: an unmatched permit hood is a blank hood,
+            # not a silent money loss — warn (with its stranded units), never fail.
+            stranded = permits.set_index("neighbourhood_name").loc[
+                unmatched_permits, "new_dwelling_units"
+            ]
+            logger.warning(
+                "%d permit neighbourhood(s) with no boundary match (activity "
+                "dropped, %.0f units) — warn-not-fail (activity ≠ money path):\n  %s",
+                len(unmatched_permits), stranded.sum(),
+                "\n  ".join(f"{n} ({stranded[n]:.0f}u)" for n in unmatched_permits),
+            )
+
+        joined = joined.merge(
+            permits[["neighbourhood_name", *PERMIT_COLUMNS]],
+            on="neighbourhood_name",
+            how="left",
+            validate="m:1",
+        )
+
+        no_permits = joined["new_dwelling_units"].isna()
+        if no_permits.any():
+            logger.info(
+                "%d boundary neighbourhood(s) with no new residential permits in "
+                "the window (default 0 units)", int(no_permits.sum()),
+            )
+        # No new residential permits there in the window -> a true 0 units.
+        for col in PERMIT_COLUMNS:
+            joined[col] = joined[col].fillna(0.0)
+        joined["new_units_per_acre"] = joined["new_dwelling_units"] / safe_area
+
+        out_cols = (
+            [c for c in out_cols if c != "geometry"]
+            + PERMIT_COLUMNS + ["new_units_per_acre"] + ["geometry"]
+        )
+
     # Neighbourhood lot-acre denominator toggle (the "value per developable
     # acre" view, docs/FINDINGS_denominator_cardinality.md). Merge the eligible
     # dollars + deduped parcel acres, divide, and guard the low-parcel tail.
@@ -521,7 +575,10 @@ def join_and_calculate(
 # fixed column shipping alongside the total so the client can show the
 # connection-vs-consumption split — the fire figure is dispatched-event
 # DEMAND, not coverage, and the transit figure is SCHEDULED service supply,
-# not ridership; the client must label all of them as such).
+# not ridership; the client must label all of them as such). new_units_per_acre
+# (+ the total/permit-count pair for the tooltip) is the Development lens A
+# activity metric — new dwelling units from issued permits, a change/flow signal,
+# NOT revenue or cost (SPEC_development.md).
 SLIM_COLUMNS = [
     "neighbourhood_name", "value_per_acre", "revenue_per_acre",
     "set_aside_frac", "is_set_aside", "set_aside_reason",
@@ -531,6 +588,7 @@ SLIM_COLUMNS = [
     "is_residential", "road_m_per_acre", "storm_charge_per_acre",
     "fire_events_per_acre", "transit_dep_per_acre",
     "water_charge_per_acre", "water_fixed_per_acre",
+    "new_units_per_acre", "new_dwelling_units", "new_dwelling_permits",
     "value_per_lot_acre", "revenue_per_lot_acre", "parcel_frac",
     "geometry",
 ]

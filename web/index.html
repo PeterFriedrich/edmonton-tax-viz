@@ -182,6 +182,7 @@
     <button data-view="services" title="City services on the ground — toggle each service on its own layer; roads coloured by metres per acre, stormwater by its modeled charge per acre">Services</button>
     <button data-view="ratio" title="Ghost prisms of revenue per road metre — or per fire event — over the neutral road network">Ratio</button>
     <button data-view="uses" title="Each neighbourhood's dominant zoned land use — what the land is designated for, not what it yields; optional prisms show each neighbourhood's residential share">Uses</button>
+    <button data-view="development" title="New dwelling units built per acre from issued building permits (2021–2025) — where the city is actually growing; greenfield growth land is shown in full colour here">Development</button>
     <button data-view="glass" title="Translucent metric prisms over a neutral neighbourhood plane — hover the ground for each neighbourhood's numbers">Glass</button>
   </div>
 
@@ -570,6 +571,20 @@
                "a neighbourhood for its land-use composition.",
         opacity: 35, // residential-prism default; the slider shows while they're on
       },
+      development: {
+        title: "Edmonton: New Housing Built (2021–2025)",
+        blurb: "Each neighbourhood is coloured by new dwelling units added per " +
+               "acre from issued building permits over the last five full years " +
+               "(2021–2025) — new houses, semis, row houses and apartments, " +
+               "counted where construction was permitted. New supply, not billed " +
+               "or assessed value: where the city is actually growing. Colour is " +
+               "square-root scaled — a few dense-infill neighbourhoods dominate. " +
+               "Unlike the other lenses, set-aside greenfield land is shown in " +
+               "full colour here — that undeveloped land is exactly where much " +
+               "new building lands; a neighbourhood's set-aside status still " +
+               "shows on hover.",
+        opacity: null, // no prisms in this view
+      },
       glass: {
         title: null, // metric-driven, like money (applyView/applyMetric)
         blurb: null, // denominator-driven — see glassBlurb()
@@ -884,6 +899,7 @@
           const plane = SERVICES[state.svcDriver] && SERVICES[state.svcDriver].plane;
           t = plane && plane.transform === "sqrt" ? Math.sqrt(p) : p;
         }
+        else if (state.view === "development") t = Math.sqrt(p); // sqrt colour
         else if (state.view === "ratio") {
           const s = ratioScale();
           t = ratioT(s.lo + p * (s.hi - s.lo));
@@ -1011,6 +1027,44 @@
         updateTriggers: { getFillColor: [state.ramp, col] },
       });
     }
+
+    // Development & Infill lens A (SPEC_development.md): a flat hood plane
+    // coloured by new dwelling units per acre from issued building permits over
+    // the pinned window. Its OWN view, NOT a city service — activity/supply, not
+    // cost-to-serve. The set-aside mask is OVERRIDDEN here (Peter 2026-07-12):
+    // greenfield growth land IS where the units land, so those hoods render in
+    // full colour (their set-aside status stays in the tooltip). Distribution is
+    // right-skewed (a few dense-infill hoods dominate) → sqrt colour always,
+    // independent of the colour-adjust toggle (like the fire/transit planes).
+    const DEV_COL = "new_units_per_acre";
+    let _devScale = null;
+    function devScale() {
+      if (_devScale) return _devScale;
+      const vals = state.data.features.map(f => f.properties[DEV_COL])
+        .filter(v => v != null).sort((a, b) => a - b);
+      return (_devScale = { clamp: vals.length ? quantile(vals, 0.975) : 1 });
+    }
+    function devT(v) {
+      const t = Math.max(0, Math.min(1, v / devScale().clamp));
+      return Math.sqrt(t);
+    }
+    function developmentPlaneLayer() {
+      return new deck.GeoJsonLayer({
+        id: "dev-plane",
+        data: state.data,
+        filled: true,
+        stroked: false,
+        extruded: false,
+        getFillColor: f => {
+          const v = f.properties[DEV_COL];
+          // No set-aside grey branch — the override colours greenfield too.
+          return v == null ? GLASS_PLANE_COLOR : rampColorAt(devT(v));
+        },
+        pickable: false,
+        updateTriggers: { getFillColor: [state.ramp] },
+      });
+    }
+    const fmtDev = v => v.toFixed(v < 1 ? 2 : 1) + " new homes / acre";
 
     // Fire-station context dots (SPEC_services.md "Fire lens"): 31 points,
     // drawn whenever the fire service is checked — driver or not, they are
@@ -1403,6 +1457,12 @@
         return [...layers, hoodHoverLayer(), ...labelLayer()];
       }
 
+      if (state.view === "development") {
+        // Single flat activity plane + hover + labels. No prisms, no sub-layers
+        // — the minimal "just to see it" first cut (SPEC_development.md Lens A).
+        return [developmentPlaneLayer(), hoodHoverLayer(), ...labelLayer()];
+      }
+
       if (state.view === "glass") {
         // The Urban3-infographic composition: translucent 100 m grid-cell
         // spikes over an opaque neutral hood plane. The plane carries
@@ -1634,6 +1694,25 @@
         };
       }
 
+      if (state.view === "development") {
+        const pa = p.new_units_per_acre;
+        if (pa == null)
+          return { className: "tip", html: name + `<span class="muted">no permit data</span>` };
+        const rows = [
+          fmtDev(pa),
+          `<span class="muted">${Math.round(p.new_dwelling_units).toLocaleString()} new dwelling ` +
+            `unit${p.new_dwelling_units === 1 ? "" : "s"} · ` +
+            `${Math.round(p.new_dwelling_permits).toLocaleString()} permit` +
+            `${p.new_dwelling_permits === 1 ? "" : "s"} (2021–2025)</span>`,
+        ];
+        // Set-aside status still shows here even though the hood is coloured
+        // (the override greys nothing) — Peter's tooltip decision, 2026-07-12.
+        if (p.is_set_aside)
+          rows.push(`<span class="muted">Set aside — ${esc(p.set_aside_reason)} ` +
+            `(${Math.round(p.set_aside_frac * 100)}% of area)</span>`);
+        return { className: "tip", html: name + rows.join("<br/>") };
+      }
+
       // money view
       if (p.is_set_aside) {
         const pct = Math.round(p.set_aside_frac * 100);
@@ -1827,6 +1906,16 @@
         document.getElementById("legend-cats").innerHTML = dotRows.join("");
         if (dotRows.length)
           document.getElementById("legend-cats").style.display = "block";
+      } else if (state.view === "development") {
+        document.getElementById("legend-label").textContent =
+          "New homes per acre (2021–2025, sqrt colour)";
+        document.getElementById("legend-min").textContent = "0";
+        const clamp = devScale().clamp;
+        document.getElementById("legend-max").textContent =
+          clamp.toFixed(clamp < 10 ? 1 : 0) + "+";
+        // The set-aside mask is overridden here, so there is no off-scale grey
+        // category — hide the aside swatch row entirely for this view.
+        document.querySelector("#legend .aside").style.display = "none";
       } else if (state.view === "ratio") {
         const s = ratioScale();
         document.getElementById("legend-label").textContent = ratioDenom().legend;
@@ -1975,7 +2064,7 @@
       // residential flag — the button disables in all three (state persists
       // and re-applies on leaving).
       document.querySelector("#lens button").disabled =
-        v === "services" || v === "uses" || v === "glass";
+        v === "services" || v === "uses" || v === "glass" || v === "development";
       if ((v === "services" || v === "ratio") && !roadsData) {
         roadsFetch ??= fetch(ROADS_URL).then(r => r.json()).then(d => { roadsData = d; });
         await roadsFetch;
@@ -2049,7 +2138,8 @@
         v === "glass" ? glassBlurb() :
         v === "services" ? servicesBlurb() :
         v === "ratio" ? ratioDenom().blurb :
-        v === "uses" ? usesBlurb() : moneyBlurb();
+        v === "uses" ? usesBlurb() :
+        v === "development" ? VIEWS.development.blurb : moneyBlurb();
       syncColorAdjust(); // the sqrt toggle only bites in money + glass (scaleT)
       refreshLegend();
     }
@@ -2180,6 +2270,11 @@
       // (pipeline 2026-07-03) — hide the button on older data files.
       if (!state.data.features.some(f => f.properties.frac_commercial != null)) {
         document.querySelector('#views button[data-view="uses"]').style.display = "none";
+      }
+      // Same guard for the development view: needs new_units_per_acre
+      // (pipeline 2026-07-12) — hide the button on older data files.
+      if (!state.data.features.some(f => f.properties.new_units_per_acre != null)) {
+        document.querySelector('#views button[data-view="development"]').style.display = "none";
       }
       // Sync the legend gradient to the default ramp (single source of truth).
       document.querySelector("#legend .bar").style.background = legendGradient();

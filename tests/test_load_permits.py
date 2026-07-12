@@ -1,0 +1,224 @@
+import sys
+
+import pandas as pd
+import pytest
+
+sys.path.insert(0, "src")
+from load_permits import (
+    KNOWN_BUILDING_TYPES,
+    KNOWN_WORK_TYPES,
+    NEW_WORK_TYPES,
+    RESIDENTIAL_BUILDING_TYPES,
+    load_permits,
+)
+
+YEARS = (2021, 2022, 2023, 2024, 2025)
+
+
+def _row(year=2023, work_type="(01) New",
+         building_type="Single Detached House (110)", units_added=1,
+         neighbourhood="ALPHA"):
+    return {
+        "year": year,
+        # extra columns prove the loader slims via usecols
+        "issue_date": f"{year}-06-01T00:00:00",
+        "work_type": work_type,
+        "building_type": building_type,
+        "units_added": units_added,
+        "neighbourhood": neighbourhood,
+    }
+
+
+def _write(tmp_path, rows):
+    p = tmp_path / "building_permits.csv"
+    pd.DataFrame(rows).to_csv(p, index=False)
+    return p
+
+
+def _window_rows(hood="ALPHA", units=1):
+    """One valid new-residential permit in each window year — the minimum
+    coverage that keeps the drift guard satisfied."""
+    return [_row(year=y, neighbourhood=hood, units_added=units) for y in YEARS]
+
+
+def _series(out, col="new_dwelling_units"):
+    return out.set_index("neighbourhood_name")[col]
+
+
+# --- aggregation -------------------------------------------------------------
+
+def test_sums_units_and_counts_permits(tmp_path):
+    # ALPHA: 3 permits, 5 units total, all in 2021. BETA: one/year keeps every
+    # window year non-empty (drift guard) — 5 permits, 5 units.
+    rows = [
+        _row(year=2021, neighbourhood="ALPHA", units_added=2),
+        _row(year=2021, neighbourhood="ALPHA", units_added=2),
+        _row(year=2021, neighbourhood="ALPHA", units_added=1),
+    ] + _window_rows("BETA")
+    out = load_permits(_write(tmp_path, rows), YEARS)
+    assert set(out["neighbourhood_name"]) == {"ALPHA", "BETA"}
+    assert _series(out, "new_dwelling_units")["ALPHA"] == pytest.approx(5.0)
+    assert _series(out, "new_dwelling_permits")["ALPHA"] == 3
+    assert _series(out, "new_dwelling_units")["BETA"] == pytest.approx(5.0)
+    assert _series(out, "new_dwelling_permits")["BETA"] == 5
+
+
+def test_apartment_units_exceed_permit_count(tmp_path):
+    # A single apartment permit can add many dwellings — units != permits.
+    rows = _window_rows("BETA") + [
+        _row(year=2022, neighbourhood="TOWER",
+             building_type="Apartments (310)", units_added=120),
+    ]
+    out = load_permits(_write(tmp_path, rows), YEARS)
+    assert _series(out, "new_dwelling_units")["TOWER"] == pytest.approx(120.0)
+    assert _series(out, "new_dwelling_permits")["TOWER"] == 1
+
+
+# --- filters -----------------------------------------------------------------
+
+def test_non_new_work_type_excluded(tmp_path):
+    rows = _window_rows("BETA") + [
+        _row(year=2023, neighbourhood="ADD", work_type="(02) Addition"),
+        _row(year=2023, neighbourhood="SUITE", work_type="(07) Add Suites to Single Dwelling"),
+        _row(year=2023, neighbourhood="DEMO", work_type="(99) Demolition"),
+    ]
+    out = load_permits(_write(tmp_path, rows), YEARS)
+    assert set(out["neighbourhood_name"]) == {"BETA"}
+
+
+def test_non_residential_building_type_excluded(tmp_path):
+    rows = _window_rows("BETA") + [
+        _row(year=2023, neighbourhood="GARAGE", building_type="Detached Garage (010)"),
+        _row(year=2023, neighbourhood="OFFICE", building_type="Office Buildings (520)"),
+    ]
+    out = load_permits(_write(tmp_path, rows), YEARS)
+    assert set(out["neighbourhood_name"]) == {"BETA"}
+
+
+def test_residential_spelling_variants_all_counted(tmp_path):
+    # The vocab carries many spellings of the same dwelling category; every
+    # enumerated variant must be counted, not just the canonical one.
+    variants = [
+        "Single House (110)", "Backyard House (110)", "Duplex (210)",
+        "Semi Detached House", "Row Houses (330)", "Apartment Condos (315)",
+        "Mobile Home (130)",
+    ]
+    rows = _window_rows("BETA")
+    for i, bt in enumerate(variants):
+        rows.append(_row(year=2023, neighbourhood=f"V{i}", building_type=bt))
+    out = load_permits(_write(tmp_path, rows), YEARS)
+    assert set(out["neighbourhood_name"]) == {"BETA"} | {f"V{i}" for i in range(len(variants))}
+
+
+# --- window ------------------------------------------------------------------
+
+def test_out_of_window_excluded(tmp_path):
+    rows = _window_rows("BETA") + [
+        _row(year=2015, neighbourhood="OLD"),
+        _row(year=2026, neighbourhood="PARTIAL"),
+    ]
+    out = load_permits(_write(tmp_path, rows), YEARS)
+    assert set(out["neighbourhood_name"]) == {"BETA"}
+
+
+def test_empty_window_year_raises_drift_guard(tmp_path):
+    # No permits in 2025 -> the pinned window is stale / data drifted.
+    rows = [_row(year=y, neighbourhood="BETA") for y in (2021, 2022, 2023, 2024)]
+    with pytest.raises(ValueError, match="window year 2025 has ZERO permits"):
+        load_permits(_write(tmp_path, rows), YEARS)
+
+
+def test_empty_years_raises(tmp_path):
+    with pytest.raises(ValueError, match="years window is empty"):
+        load_permits(_write(tmp_path, _window_rows()), ())
+
+
+# --- warn-on-unseen ----------------------------------------------------------
+
+def test_unseen_work_type_warns_and_excluded(tmp_path, caplog):
+    rows = _window_rows("BETA") + [
+        _row(year=2023, neighbourhood="WEIRD", work_type="(42) Teleporter"),
+    ]
+    with caplog.at_level("WARNING"):
+        out = load_permits(_write(tmp_path, rows), YEARS)
+    assert "WEIRD" not in set(out["neighbourhood_name"])
+    assert any("KNOWN_WORK_TYPES" in r.message and "(42) Teleporter" in str(r.args)
+               for r in caplog.records)
+
+
+def test_unseen_building_type_warns_and_excluded(tmp_path, caplog):
+    rows = _window_rows("BETA") + [
+        _row(year=2023, neighbourhood="WEIRD", building_type="Spaceport (777)"),
+    ]
+    with caplog.at_level("WARNING"):
+        out = load_permits(_write(tmp_path, rows), YEARS)
+    assert "WEIRD" not in set(out["neighbourhood_name"])
+    assert any("KNOWN_BUILDING_TYPES" in r.message for r in caplog.records)
+
+
+def test_known_non_new_type_does_not_warn(tmp_path, caplog):
+    # A known-but-excluded work_type is silently filtered, not warned about.
+    rows = _window_rows("BETA") + [_row(year=2023, work_type="(99) Demolition")]
+    with caplog.at_level("WARNING"):
+        load_permits(_write(tmp_path, rows), YEARS)
+    assert not any("KNOWN_WORK_TYPES" in r.message for r in caplog.records)
+
+
+# --- name handling -----------------------------------------------------------
+
+def test_name_correction_merges_area_suffix(tmp_path):
+    # CHAPPELLE AREA -> CHAPPELLE (shared NAME_CORRECTIONS) so the two collapse
+    # into one hood with summed units.
+    rows = [
+        _row(year=2021, neighbourhood="CHAPPELLE AREA", units_added=3),
+        _row(year=2022, neighbourhood="CHAPPELLE", units_added=2),
+        _row(year=2023, neighbourhood="CHAPPELLE", units_added=1),
+        _row(year=2024, neighbourhood="CHAPPELLE", units_added=1),
+        _row(year=2025, neighbourhood="CHAPPELLE", units_added=1),
+    ]
+    out = load_permits(_write(tmp_path, rows), YEARS)
+    assert set(out["neighbourhood_name"]) == {"CHAPPELLE"}
+    assert _series(out)["CHAPPELLE"] == pytest.approx(8.0)
+
+
+def test_blank_neighbourhood_excluded(tmp_path):
+    rows = _window_rows("BETA") + [_row(year=2023, neighbourhood="", units_added=9)]
+    out = load_permits(_write(tmp_path, rows), YEARS)
+    assert set(out["neighbourhood_name"]) == {"BETA"}
+
+
+# --- robustness --------------------------------------------------------------
+
+def test_non_numeric_units_treated_as_zero(tmp_path):
+    rows = _window_rows("BETA") + [
+        _row(year=2023, neighbourhood="NULLU", units_added="not a number"),
+    ]
+    out = load_permits(_write(tmp_path, rows), YEARS)
+    # NULLU is kept (new + residential) but contributes 0 units, 1 permit.
+    assert _series(out, "new_dwelling_units")["NULLU"] == pytest.approx(0.0)
+    assert _series(out, "new_dwelling_permits")["NULLU"] == 1
+
+
+def test_missing_required_column_raises(tmp_path):
+    df = pd.DataFrame(_window_rows()).drop(columns=["units_added"])
+    p = tmp_path / "building_permits.csv"
+    df.to_csv(p, index=False)
+    with pytest.raises(ValueError, match="units_added"):
+        load_permits(p, YEARS)
+
+
+def test_no_kept_rows_raises(tmp_path):
+    # Everything filtered out (all garages) -> loud failure, not empty frame.
+    rows = [_row(year=y, building_type="Detached Garage (010)") for y in YEARS]
+    with pytest.raises(ValueError, match="no new residential permits"):
+        load_permits(_write(tmp_path, rows), YEARS)
+
+
+# --- dictionary invariants ---------------------------------------------------
+
+def test_new_work_types_subset_of_known():
+    assert NEW_WORK_TYPES <= KNOWN_WORK_TYPES
+
+
+def test_residential_subset_of_known_building_types():
+    assert RESIDENTIAL_BUILDING_TYPES <= KNOWN_BUILDING_TYPES

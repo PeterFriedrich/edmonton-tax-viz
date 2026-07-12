@@ -487,6 +487,59 @@ mean-weekday scheduled stop-events per neighbourhood. Consumed by
 - ~253 service_ids (~20.6k trips, 2026-07-11) are weekend/holiday-only —
   they weigh 0 in the weekday metric by construction, logged not dropped.
 
+## 10. Building Permits (development & infill lens A, added 2026-07-12)
+
+**Source:** Edmonton Open Data — dataset ID `24uj-dj8v` ("General Building Permits")
+**Download URL:** `https://data.edmonton.ca/resource/24uj-dj8v.csv?$select=year,issue_date,work_type,building_type,units_added,neighbourhood&$limit=1000000`
+**Download:** `scripts/download_data.py` → `data/raw/building_permits.csv` (gitignored)
+**Format:** CSV via the SODA resource endpoint, **slim `$select`** — only the 6
+filter/join/numerator columns (the full schema is 34 cols; we skip
+`construction_value`, `geometry_point`, `zoning`, `floor_area`, etc.). `$select`
+does not change the row count, so both truncation guards still apply.
+**Rows:** 243,371 permits, `issue_date` 2009-01-05 → present (pulled 2026-07-12)
+**Licence:** Open Government Licence – City of Edmonton
+
+**Why:** the Development & Infill lens A (`docs/SPEC_development.md`) — new
+dwelling units built per neighbourhood, the project's first *change/flow* metric
+(everything else describes the roll as it stands today). Consumed by
+`src/load_permits.py`; the shipped metric is **`new_units_per_acre`** (Σ
+`units_added` on new-construction ∩ residential permits over the pinned
+`PERMIT_YEARS` window ÷ boundary acres). `new_dwelling_units` (window total) +
+`new_dwelling_permits` (count) ride into the slim file for the tooltip.
+
+### Key columns (live vocab confirmed 2026-07-12)
+| Column | Notes |
+|---|---|
+| `units_added` | dwelling-unit numerator. A single apartment permit adds many (GRIESBACH: 2,274 units from 349 permits); a single-detached permit adds 1. Non-numeric → 0 units, kept as a permit, warned. |
+| `work_type` | **new-construction filter.** `NEW_WORK_TYPES` = `(01) New` + `(01) Building - New` + `(01) New House`. Suite-adds/conversions (`(07)`/`(08)`/`(09)`) add dwellings but are INFILL densification — excluded from Lens A (they're the Lens B story). ~41k of ~78k in-window rows are null/blank `work_type` — excluded, count reported (most predate consistent coding). |
+| `building_type` | **residential-dwelling filter.** 71 distinct values with many spelling variants of each category — `Apartments (310)`/`Apartment (310)`/`Apartment Condos (315)`; `Row House (330)`/`Row Houses (330)`; `Semi Detached House` (no code); `Backyard House (110)` (a garden suite, counted). All enumerated in `RESIDENTIAL_BUILDING_TYPES`, never prefix-matched. Garages, commercial, `Mixed Use (522)` excluded. |
+| `year` | integer permit year — drives the pinned window filter (vs parsing `issue_date`). |
+| `neighbourhood` | **UPPERCASE, matches `neighbourhood_name`** — the join key. |
+
+### Known Quirks
+- **`count(*)` aliases as `count_1`, not `count`** on this dataset (a Socrata
+  inconsistency — roads returns `count`). `download_data.server_count` was
+  hardened 2026-07-12 to read the sole count column by value, so the truncation
+  cross-check works everywhere.
+- **"Same data, different cuts":** seven other portal datasets are saved
+  filters/map-views over the same two source tables (building permits + dev
+  permits) — proven by identical `rowsUpdatedAt`. We pull `24uj-dj8v` and filter
+  ourselves; **ignore `itki-s8y9`/`jsf3-5dv2`/`537d-t4az`/`uep4-4w4g`/`ramb-ihnk`**
+  (building) and `66ut-y7w2` (dev). See `docs/SPEC_development.md` "Data".
+- **Activity ≠ money path** — the name join is **warn-not-fail** (unlike the
+  assessment money guard, `scripts/check_unmatched_names.py`): an unmatched
+  permit hood is a blank hood, not a silent dollar loss. `CHAPPELLE AREA →
+  CHAPPELLE` etc. resolve via the shared `NAME_CORRECTIONS`; the only leftover
+  straggler is `GLENORA, ROSSLYN` (1 unit, immaterial).
+- `load_permits` HARD-ERRORS if a window year has zero permits (stale
+  `PERMIT_YEARS` pin or upstream drift), and keeps-but-warns any `work_type` /
+  `building_type` value outside the `KNOWN_*` vocab (it might be a new
+  residential variant to count) — same explicit-dictionary discipline as
+  `load_fire`. Bump `PERMIT_YEARS` each January.
+- **`occupancy_granted_date`** exists in the full schema (a completed-builds
+  variant) but is only populated for residential finalized ≥ Jan 1 2022 /
+  non-residential ≥ Jan 1 2024 — useless for historical totals, not fetched.
+
 ## Name Matching
 
 Neighbourhood names between the two sources may not align exactly. Normalization (strip + uppercase) and the `NAME_CORRECTIONS` dict (keyed assessment name → boundary name) are applied in `load_assessment.py`, *before* aggregation — applying corrections after aggregation could collapse two summed rows onto one boundary and duplicate it. `join_and_calculate.py` then does a normalized exact match on the already-corrected names and flags whatever remains unmatched.
