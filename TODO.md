@@ -286,6 +286,40 @@ _Last reconciled: 2026-07-09_
     it~~ — done 2026-07-02: PR #8 merged, refresh workflow run green, live site
     verified serving the three views + roads.geojson.
 
+- [ ] **DEVELOPMENT & INFILL LENS family (NEW 2026-07-12 — full plan in
+  `docs/SPEC_development.md`).** Permit-based "where is building actually
+  happening" lens family, the direct answer to what `FINDINGS_growth_servicing.md`
+  could only proxy with median building-stock age. Data verified live 2026-07-12:
+  General Building Permits `24uj-dj8v` (243k rows, 2009→now; has `units_added`,
+  `work_type` new-vs-reno, `building_type`, `neighbourhood` UPPERCASE-matches-ours,
+  lat/long, `construction_value`). Build one minimal cut of each lens to *see it*
+  before designing the next. Three locked decisions (Peter, 2026-07-12) →
+  DECISIONS.md: (1) activity = choropleth, (2) infill = suitability×activity
+  mismatch shown both ways, (3) combined cost side = city service cost (not
+  permit construction_value).
+  - [ ] **Lens A — Building Activity (choropleth), PHASE 1 / first cut.**
+    `src/load_permits.py` (Socrata download discipline, DATA.md §1) → filter
+    new-construction `work_type` ∩ residential `building_type` (hand-mapped
+    dicts, warn-on-unseen) → Σ `units_added` per hood ÷ acres → `join_and_calculate`
+    column (`validate="m:1"`) → one choropleth metric (`new_units_per_acre`,
+    5-yr window) in the web lens control. **BLOCKER decision first: set-aside
+    override** — the top activity hoods (Keswick/Chappelle/Orchards/Secord/
+    Griesbach) are the greenfield hoods the set-aside mask greys out, so reusing
+    the mask hides the whole story; must invert/override. Then: name map for
+    "AREA"-suffix greenfield hoods (warn-not-fail, activity not money-path);
+    add DATA.md entry; headless-verify; ship + look.
+  - [ ] **Lens B — Suitability × Activity mismatch, PHASE 2.** Signed diverging
+    metric `z(suitability) − z(activity)`: two views off one scale — suitable-
+    but-quiet (opportunity) AND less-suitable-but-building (Peter's flip). Base
+    suitability = ONE simple proxy first (mature/serviced ∨ underused ∨ zoning
+    headroom; `vd42-umu2` Mature Neighbourhood + `dkk9-cj3x` lot_size/year_built),
+    refine after eyeballing Lens A. Definition OPEN.
+  - [ ] **Lens C — Activity vs City Service Cost, PHASE 3 / future.** Where new
+    building goes vs modeled city service columns (road/storm/water/fire per acre)
+    or V2 unit-cost $/acre (laptop-gated). Two-ledger idiom of
+    FINDINGS_growth_servicing made spatial. `construction_value` NOT used here.
+    Depends on Lens A + V2 unit costs.
+
 - [ ] **Views & lenses follow-ons (Peter, 2026-07-02).** Three asks on top of the
   shipped Money | Roads | Ratio views:
   - [x] ~~**Residential-only lens in the Ratio view.**~~ — done 2026-07-03:
