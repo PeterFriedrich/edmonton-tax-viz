@@ -38,6 +38,18 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements-ci.txt
 
+      # Supply-chain audit of the publish-path deps (docs/security-audit.md S5).
+      # requirements-ci.txt is currently clean; this keeps it continuously
+      # checked. NON-BLOCKING on purpose (continue-on-error) — a newly disclosed
+      # CVE here should not halt the unattended weekly data refresh (stale-but-up
+      # beats blocked for a civic map); it surfaces as a workflow warning to
+      # prompt a pin bump. Drop continue-on-error to make it a hard deploy gate.
+      - name: Audit CI dependencies (pip-audit)
+        continue-on-error: true
+        run: |
+          pip install pip-audit
+          pip-audit -r requirements-ci.txt
+
       - name: Run tests (guard before regenerating)
         run: python -m pytest tests/ -q
 

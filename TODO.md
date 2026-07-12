@@ -52,9 +52,12 @@ _Last reconciled: 2026-07-09_
       (`web/index.html`); verify 24/24. S4 — SHA-pinned all four actions in
       `refresh.yml` (release version in trailing comment). Both → RESOLVED in
       `docs/security-audit.md`. Dependabot auto-bump left out (owner's call).
-    - [ ] **P2.3c S5 hygiene**: bump the 5 dev-freeze pins (tornado/bleach/
-      soupsieve/jupyter-server/jupyterlab — fix versions in the findings) next
-      env touch; add a `pip-audit -r requirements-ci.txt` step to `refresh.yml`.
+    - [x] **P2.3c S5 hygiene** (2026-07-12): bumped the 5 dev-freeze pins
+      (tornado→6.5.7/bleach→6.4.0/soupsieve→2.8.4/jupyter_server→2.20.0/
+      jupyterlab→4.5.9) + a 6th newer CVE found at fix time (mistune→3.3.0);
+      `pip-audit -r requirements.txt` now clean. Added a **non-blocking**
+      `pip-audit -r requirements-ci.txt` step to `refresh.yml`. → RESOLVED in
+      `docs/security-audit.md` S5.
     - [ ] **P2.3d S2** — owner-only content decision, see security-audit.md S2.
   - [ ] **P2.5 Doc-drift fixes** (from the 2026-07-09 architecture
     reconciliation — six items listed in `docs/ARCHITECTURE.md` "Reconciliation

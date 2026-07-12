@@ -186,6 +186,17 @@ clean.** **Suggested fix:** bump those five pins next time the dev env is
 touched; consider adding a `pip-audit -r requirements-ci.txt` step to
 `refresh.yml` so the publish path stays continuously checked.
 
+**RESOLVED (2026-07-12, P2.3c):** bumped all five pins in `requirements.txt`
+(`tornado→6.5.7`, `bleach→6.4.0`, `soupsieve→2.8.4`, `jupyter_server→2.20.0`,
+`jupyterlab→4.5.9`). A fresh `pip-audit` at fix time surfaced a sixth, newer
+CVE in the same dev-only toolchain — `mistune 3.2.1` (CVE-2026-49851) — bumped
+to `3.3.0` as well. `pip-audit -r requirements.txt --no-deps` now reports **no
+known vulnerabilities**. Added a **non-blocking** `pip-audit -r requirements-ci.txt`
+step to `refresh.yml` (after "Install dependencies") so the publish path stays
+continuously checked; kept `continue-on-error: true` so a future CVE surfaces as
+a workflow warning without halting the unattended data refresh (drop that flag
+to make it a hard deploy gate).
+
 ### S6 (Informational) — dev-environment details in committed docs
 Committed session summaries (`session-summary/*.md`) and `CLAUDE.md` reference
 absolute dev-box paths (`/home/opc/...`) and the hosting box's identity
