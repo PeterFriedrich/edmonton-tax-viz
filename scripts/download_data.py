@@ -19,6 +19,7 @@ Twelve inputs come from Edmonton's Socrata open-data portal:
   - gtfs_trips     ctwr-tvrd  (ETS GTFS: trips, slim $select)           -> CSV
   - gtfs_stop_times greh-g7ac (ETS GTFS: stop times, slim $select)      -> CSV
   - gtfs_calendar_dates f2sy-bth7 (ETS GTFS: calendar dates)            -> CSV
+  - permits        24uj-dj8v  (General Building Permits, slim $select)   -> CSV
 
 Mill rates (pwis-wc4c) are NOT fetched here — they live in the committed
 ``data/mill_rates.json`` (see DATA.md); refreshing them for a new year is a
@@ -164,6 +165,22 @@ SOURCES = {
         "limit": 50000,  # 9,248 (service_id, date) rows as of 2026-07
         "count_url": _count_url("f2sy-bth7"),
     },
+    "permits": {
+        # Development & Infill lens A (docs/SPEC_development.md): issued
+        # building permits, one row per permit. Slim $select — we need only
+        # the filter/join/numerator columns, not the 34-column full schema
+        # (construction_value, geometry_point, etc.). $select does NOT change
+        # the row count, so both truncation guards still apply. UPPERCASE
+        # `neighbourhood` matches our neighbourhood_name format.
+        "url": (
+            "https://data.edmonton.ca/resource/24uj-dj8v.csv"
+            "?$select=year,issue_date,work_type,building_type,units_added,neighbourhood"
+            "&$limit=1000000"
+        ),
+        "dest": RAW / "building_permits.csv",
+        "limit": 1000000,  # 243,371 permits as of 2026-07-12 (2009→present)
+        "count_url": _count_url("24uj-dj8v"),
+    },
     "lrt_routes": {
         # LRT track lines — a context layer under the transit lens (the LRT
         # station dots' companion), NOT part of the stop-events metric. Four
@@ -210,7 +227,11 @@ def server_count(count_url: str, timeout: int = 30) -> int | None:
     try:
         r = requests.get(count_url, timeout=timeout)
         r.raise_for_status()
-        return int(r.json()[0]["count"])
+        # count(*) returns one row with one column, but Socrata aliases it
+        # inconsistently across datasets ("count" on roads, "count_1" on the
+        # permits dataset 24uj-dj8v). Read the sole value rather than keying on
+        # a fixed name, so the cross-check works everywhere.
+        return int(next(iter(r.json()[0].values())))
     except Exception as exc:  # noqa: BLE001 — deliberate soft-fail, see docstring
         logger.warning("count(*) fetch failed (%s) — skipping cross-check", exc)
         return None

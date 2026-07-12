@@ -777,3 +777,86 @@ def test_export_keeps_lot_acre_columns_when_present(tmp_path):
     assert "value_per_lot_acre" in written.columns
     assert "parcel_frac" in written.columns
     assert "lot_acres_eligible" not in written.columns  # raw total stays out of slim
+
+
+# --- permits (Development & Infill lens A) -----------------------------------
+
+def _permits(rows):
+    return pd.DataFrame(rows)
+
+
+def test_permits_merge_adds_columns_and_per_acre():
+    result = join_and_calculate(
+        _assessment([{"neighbourhood_name": "GROWTOWN", "total_assessed_value": 100.0}]),
+        _boundaries([{"neighbourhood_name": "GROWTOWN", "area_acres": 10.0}]),
+        permits=_permits([
+            {"neighbourhood_name": "GROWTOWN",
+             "new_dwelling_units": 50.0, "new_dwelling_permits": 20},
+        ]),
+    )
+    row = result.iloc[0]
+    assert row["new_dwelling_units"] == pytest.approx(50.0)
+    assert row["new_dwelling_permits"] == 20
+    assert row["new_units_per_acre"] == pytest.approx(5.0)
+
+
+def test_no_permits_arg_omits_columns():
+    result = join_and_calculate(
+        _assessment([{"neighbourhood_name": "DOWNTOWN", "total_assessed_value": 100.0}]),
+        _boundaries([{"neighbourhood_name": "DOWNTOWN", "area_acres": 10.0}]),
+    )
+    assert "new_units_per_acre" not in result.columns
+    assert "new_dwelling_units" not in result.columns
+
+
+def test_boundary_without_permits_defaults_zero(caplog):
+    with caplog.at_level("INFO"):
+        result = join_and_calculate(
+            _assessment([{"neighbourhood_name": "DOWNTOWN", "total_assessed_value": 100.0}]),
+            _boundaries([
+                {"neighbourhood_name": "DOWNTOWN", "area_acres": 10.0},
+                {"neighbourhood_name": "QUIET", "area_acres": 20.0},
+            ]),
+            permits=_permits([
+                {"neighbourhood_name": "DOWNTOWN",
+                 "new_dwelling_units": 10.0, "new_dwelling_permits": 4},
+            ]),
+        )
+    quiet = result[result["neighbourhood_name"] == "QUIET"].iloc[0]
+    assert quiet["new_dwelling_units"] == 0.0
+    assert quiet["new_units_per_acre"] == 0.0
+    assert "no new residential permits" in caplog.text
+
+
+def test_unmatched_permit_hood_warns_not_fails(caplog):
+    # A permit hood with no boundary match is dropped with a warning (activity,
+    # not money) — the join must NOT raise.
+    with caplog.at_level("WARNING"):
+        result = join_and_calculate(
+            _assessment([{"neighbourhood_name": "DOWNTOWN", "total_assessed_value": 100.0}]),
+            _boundaries([{"neighbourhood_name": "DOWNTOWN", "area_acres": 10.0}]),
+            permits=_permits([
+                {"neighbourhood_name": "DOWNTOWN",
+                 "new_dwelling_units": 10.0, "new_dwelling_permits": 4},
+                {"neighbourhood_name": "GHOSTVILLE",
+                 "new_dwelling_units": 7.0, "new_dwelling_permits": 3},
+            ]),
+        )
+    assert "GHOSTVILLE" not in set(result["neighbourhood_name"])
+    assert "no boundary match" in caplog.text
+    assert "warn-not-fail" in caplog.text
+
+
+def test_export_keeps_permit_columns_when_present(tmp_path):
+    result = join_and_calculate(
+        _assessment([{"neighbourhood_name": "DOWNTOWN", "total_assessed_value": 1_000_000.0}]),
+        _boundaries([{"neighbourhood_name": "DOWNTOWN", "area_acres": 100.0}]),
+        permits=_permits([
+            {"neighbourhood_name": "DOWNTOWN",
+             "new_dwelling_units": 200.0, "new_dwelling_permits": 80},
+        ]),
+    )
+    written = export_geojson(result, str(tmp_path / "out.geojson"))
+    assert "new_units_per_acre" in written.columns
+    assert "new_dwelling_units" in written.columns  # total kept for the tooltip
+    assert "new_dwelling_permits" in written.columns
