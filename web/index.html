@@ -5,9 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Edmonton — Tax Revenue per Acre</title>
 
-  <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
-  <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
-  <script src="https://unpkg.com/deck.gl@9.0.38/dist.min.js"></script>
+  <!-- Vendored locally (no CDN runtime dependency) so a compromised CDN can't
+       silently alter the numbers this page renders. See web/vendor/README.md
+       for versions + provenance (security-audit.md S1). -->
+  <link href="vendor/maplibre-gl-4.7.1.css" rel="stylesheet" />
+  <script src="vendor/maplibre-gl-4.7.1.js"></script>
+  <script src="vendor/deck.gl-9.0.38.min.js"></script>
 
   <style>
     html, body { margin: 0; height: 100%; background: #0a0a0f; }

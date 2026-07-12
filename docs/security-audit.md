@@ -117,6 +117,16 @@ vendor the three files into `web/vendor/` (repo already commits ~5 MB of data;
 this removes the third-party runtime dependency entirely and makes the site
 fully self-contained on Pages).
 
+**RESOLVED 2026-07-12.** Vendored all three files into `web/vendor/`
+(`maplibre-gl-4.7.1.{js,css}`, `deck.gl-9.0.38.min.js`) and pointed
+`web/index.html` at the local copies — no CDN `<script src>` remains
+(`grep -cE 'unpkg|jsdelivr' web/index.html` → 0). Downloaded from unpkg and
+cross-verified byte-for-byte against jsdelivr (two independent CDNs, identical
+SHA-256); provenance + hashes recorded in `web/vendor/README.md`. The basemap
+style is `sources: {}` (a solid background, no external tiles), so the live site
+now has **zero external runtime dependencies**. Headless-verified: the map still
+renders (`verify-transit.js` 24/24 against the vendored build).
+
 ### S2 (Low) — previously-scrubbed content still present in tree + history
 Content the project owner scrubbed from the repo on 2026-07-09 (see
 `session-summary/2026-07-09.md` §B) is still present in two places: the same

@@ -40,9 +40,13 @@ _Last reconciled: 2026-07-09_
     Fable audit): all boxes ticked/dated with evidence; scope updated to the
     Phase-2 static-site + CI surface. **Findings logged, not fixed** — see
     `docs/security-audit.md` "Findings — 2026-07-09" (S1–S6). Follow-ups:
-    - [ ] **P2.3a Apply S1** (Medium): vendor maplibre-gl@4.7.1 + deck.gl@9.0.38
-      into `web/vendor/` (or add SRI hashes) — `web/index.html:8-10`, no
-      `integrity=` today. Biggest risk-per-effort item.
+    - [x] ~~**P2.3a Apply S1** (Medium): vendor maplibre-gl@4.7.1 + deck.gl@9.0.38~~
+      DONE 2026-07-12 — vendored all three files into `web/vendor/`
+      (`maplibre-gl-4.7.1.{js,css}`, `deck.gl-9.0.38.min.js`), `web/index.html`
+      points at local copies (no CDN ref remains). Cross-verified vs jsdelivr,
+      hashes in `web/vendor/README.md`; basemap is `sources:{}` so zero external
+      runtime deps. verify-transit.js 24/24 against the vendored build. See
+      security-audit.md S1 RESOLVED. (Branch `vendor/js-libs`.)
     - [ ] **P2.3b Apply S3 + S4** (Low, ~10 lines each): entity-escape helper
       for the data-derived strings in `tooltipFor` (`web/index.html:1349`);
       SHA-pin the four actions in `refresh.yml`.
