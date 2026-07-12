@@ -45,6 +45,14 @@ Status of anything still open lives in the owning SPEC doc, not here.
 | 2026-07-11 | **Transit = scheduled supply only (mean-weekday GTFS stop-events/acre; bus + LRT combined, per-mode internal)** — no stop-level ridership exists (citywide-monthly only), so never present as usage; on-demand zones absent from GTFS (limitation); full lens incl. web display, AMENDING the 2026-07-09 release-scope lock that kept transit out (Peter's call). | `docs/SPEC_services.md` "Transit lens" (both locked decisions) |
 | 2026-07-11 | **LRT track lines added as a transit context layer (Capital/Metro/Valley); HER heritage streetcar EXCLUDED** — the track lines match the measured ETS LRT service only; the volunteer-run High Level Bridge streetcar is not in the GTFS routes we count, so drawing it would show unmeasured track. Context layer, not part of the metric. | `docs/SPEC_services.md` "Transit lens" Display; DATA.md §9 |
 
+## Development & infill lens
+
+| When | Decision | Full reasoning |
+|------|----------|----------------|
+| 2026-07-12 | **Building-activity lens = neighbourhood choropleth** (new dwelling units/acre, `24uj-dj8v` permits), not a per-permit point layer — reuses the existing choropleth render; lat/long retained for a possible future point/heatmap variant. | `docs/SPEC_development.md` Lens A |
+| 2026-07-12 | **Infill lens = suitability × activity *mismatch*, shown both ways** (suitable-but-quiet AND less-suitable-but-getting-built) — a signed diverging metric, not a static suitability score; the mismatch is the story. Base-suitability definition still OPEN. | `docs/SPEC_development.md` Lens B |
+| 2026-07-12 | **Combined lens cost side = modeled city service cost** (reuse service columns / V2 unit costs), NOT permit `construction_value` — money-flow honesty (same rule as 2026-07-10); construction_value reserved for a possible separate private-capital view. | `docs/SPEC_development.md` Lens C |
+
 ## Display honesty
 
 | When | Decision | Full reasoning |
