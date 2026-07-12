@@ -1561,13 +1561,20 @@
       return [layer, topEdges, ...labelLayer()];
     }
 
+    // Entity-escape untrusted data-derived strings before they go into the
+    // `html:` tooltip sink. neighbourhood_name / set_aside_reason originate in
+    // the upstream open-data portal and reach the page via the weekly refresh,
+    // so a value carrying markup would otherwise render as HTML (S3).
+    const esc = s => String(s ?? "").replace(/[&<>"']/g, c =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
     // Tooltip content is per-view (closure over `state`). money: active
     // metric + road supply + ratio. roads: road amount only. ratio: the full
     // synthesis (ratio + its two components), or why the hood is off-scale.
     function tooltipFor({ object }) {
       if (!object) return null;
       const p = object.properties;
-      const name = `<b>${p.neighbourhood_name}</b><br/>`;
+      const name = `<b>${esc(p.neighbourhood_name)}</b><br/>`;
 
       if (state.view === "services") {
         // Every service's number, whichever layers are on — the tooltip is
@@ -1614,7 +1621,7 @@
         const d = ratioDenom();
         if (!ratioKept(p)) {
           const why = p.is_set_aside
-            ? `Set aside — ${p.set_aside_reason}`
+            ? `Set aside — ${esc(p.set_aside_reason)}`
             : `No meaningful ratio — ${d.floorText}` +
               (p[d.col] != null ? ` (${p[d.col].toFixed(d.floor < 1 ? 3 : 1)})` : "");
           return { className: "tip", html: name + `<span class="muted">${why}</span>` };
@@ -1632,7 +1639,7 @@
         const pct = Math.round(p.set_aside_frac * 100);
         return {
           className: "tip",
-          html: name + `<span class="muted">Set aside — ${p.set_aside_reason} (${pct}% of area)</span>`,
+          html: name + `<span class="muted">Set aside — ${esc(p.set_aside_reason)} (${pct}% of area)</span>`,
         };
       }
       const cfg = METRICS[state.metric];

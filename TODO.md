@@ -46,10 +46,12 @@ _Last reconciled: 2026-07-09_
       points at local copies (no CDN ref remains). Cross-verified vs jsdelivr,
       hashes in `web/vendor/README.md`; basemap is `sources:{}` so zero external
       runtime deps. verify-transit.js 24/24 against the vendored build. See
-      security-audit.md S1 RESOLVED. (Branch `vendor/js-libs`.)
-    - [ ] **P2.3b Apply S3 + S4** (Low, ~10 lines each): entity-escape helper
-      for the data-derived strings in `tooltipFor` (`web/index.html:1349`);
-      SHA-pin the four actions in `refresh.yml`.
+      security-audit.md S1 RESOLVED. (Branch `vendor/js-libs`, PR #40 merged.)
+    - [x] **P2.3b Apply S3 + S4** (2026-07-12): S3 — added `esc()` helper and
+      applied it to `neighbourhood_name` + `set_aside_reason` in `tooltipFor`
+      (`web/index.html`); verify 24/24. S4 — SHA-pinned all four actions in
+      `refresh.yml` (release version in trailing comment). Both → RESOLVED in
+      `docs/security-audit.md`. Dependabot auto-bump left out (owner's call).
     - [ ] **P2.3c S5 hygiene**: bump the 5 dev-freeze pins (tornado/bleach/
       soupsieve/jupyter-server/jupyterlab — fix versions in the findings) next
       env touch; add a `pip-audit -r requirements-ci.txt` step to `refresh.yml`.
