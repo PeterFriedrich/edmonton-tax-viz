@@ -520,4 +520,4 @@ NAME_CORRECTIONS = {
 
 ### Unresolved
 
-*None.* The only expected unmatched warning is the `OLIVER` straggler (immaterial, deliberate — see Resolved above). Any **other** name appearing in the unmatched warning is new drift and should be investigated (spatial containment via the assessment lat/lon columns is the decisive test).
+*None.* The only expected unmatched warning is the `OLIVER` straggler (immaterial, deliberate — see Resolved above). Any **other** name appearing in the unmatched warning is new drift and should be investigated (spatial containment via the assessment lat/lon columns is the decisive test). **This is now enforced in CI:** `scripts/check_unmatched_names.py` asserts the live money-path unmatched set equals the committed baseline `data/expected_unmatched.json` (`{OLIVER}` assessment-side, `{LEWIS FARMS}` boundary-side) and fails the weekly build on a new assessment-side name — see RUNBOOK §2 "Check unmatched names".

@@ -1,0 +1,9 @@
+{
+  "_description": "Expected neighbourhood-name mismatches on the assessment money path, asserted by scripts/check_unmatched_names.py so CI fails loud on name drift (data-integrity audit §4 / second-run T3c). See docs/FINDINGS_data_integrity_audit.md. NEW names appearing in assessment_not_in_boundaries mean real assessed value is being silently dropped from the map -> hard CI failure. Update this file (and the reason) only after confirming a change is intentional.",
+  "assessment_not_in_boundaries": {
+    "OLIVER": "Deliberate straggler (DATA.md 'Name Matching'): OLIVER was renamed WIHKWENTOWIN (2024). Assessment has migrated -- 12,234 rows / $4.12B are tagged WIHKWENTOWIN and match the boundary directly -- but a single straggler row still tagged OLIVER ($500) has no boundary. Left unmapped on purpose: remapping would shift $500 onto a $4.12B neighbourhood. Immaterial; kept so the drift guard stays meaningful."
+  },
+  "boundaries_not_in_assessment": {
+    "LEWIS FARMS": "Documented 406/407 hole: the LEWIS FARMS boundary polygon has no assessment rows (undeveloped/roll-absent); rendered n/a grey. DATA.md."
+  }
+}

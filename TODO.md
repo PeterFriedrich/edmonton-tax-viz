@@ -30,9 +30,10 @@ _Last reconciled: 2026-07-09_
     `docs/METHODS.md` (metric definitions, denominators + guard, set-aside,
     WEM/condo worked examples, model formulas + validation ratios,
     limitations) + README Technical Docs link. P1.2 should link to it.
-  - [ ] **P2.1 CI unmatched-set assertion** (= the data-integrity audit §4 item
-    below, priority-bumped: a public auto-refreshing site must fail loud on
-    name drift, not warn-silent).
+  - [x] ~~**P2.1 CI unmatched-set assertion**~~ — DONE 2026-07-11
+    (`scripts/check_unmatched_names.py` + `data/expected_unmatched.json`, wired
+    into `refresh.yml`; fails the build on a new money-path unmatched name). See
+    the data-integrity audit §4 item below for scope detail.
   - [ ] **P2.2 Heartbeat PAT** (= the deployment follow-on below, bumped from
     "watch" to "do": 60-day Action auto-disable means silently stale public data).
   - [x] ~~P2.3 Security/PII checklist pass~~ — done 2026-07-09 (Session 33,
@@ -722,13 +723,18 @@ _Last reconciled: 2026-07-09_
   2026-07-11** — see `docs/FINDINGS_data_integrity_audit.md`; second run covered
   all post-07-01 modules: roads/storm/water/franchise/fire/transit/lot-acre/grid.
   **No blocking findings; published numbers confirmed trustworthy.**):
-  - [ ] **CI unmatched-set assertion (audit §4 / second-run T3c):** commit the
-    expected unmatched list (now just the OLIVER straggler) and fail the CI build
-    when the live unmatched set differs — converts name-drift from warn-silent to
-    fail-loud. Second run: the same warn-only pattern now spans SIX name-keyed
-    joins (assessment/zoning/roads/storm/fire/transit/water/lot-acres), so this
-    matters more than when filed. Fire-side baseline candidates recorded
-    (second-run NEW-3: 54/274k in-window events, 0.02%).
+  - [x] ~~**CI unmatched-set assertion (audit §4 / second-run T3c):**~~ DONE
+    2026-07-11 — `scripts/check_unmatched_names.py` asserts the live money-path
+    unmatched set == committed baseline `data/expected_unmatched.json`
+    (`assessment_not_in_boundaries` = {OLIVER}, `boundaries_not_in_assessment` =
+    {LEWIS FARMS}); wired into `refresh.yml` as a hard gate after download, before
+    regen. A NEW assessment name with no boundary (silent dollar loss) FAILS the
+    build (exit 5) → no wrong-data deploy, last-good data keeps serving. New
+    boundary holes / resolved names → exit-0 warnings (update the baseline). +8
+    tests. **Scope = the money path only** (the join that drops dollars); the five
+    service frames (zoning/roads/storm/fire/transit/water) default unmatched to
+    0/NaN — less catastrophic, still `join_and_calculate`-warned — so extending
+    the guard to them is a possible future add, not done here.
   - [x] ~~**`validate="m:1"` on the `join_and_calculate` merges (second-run
     NEW-1):**~~ DONE 2026-07-11 — added `validate="m:1"` to all nine merges
     (base assessment + zoning/roads/storm/fire/transit/water/franchise/lot-acre);
