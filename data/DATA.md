@@ -119,6 +119,16 @@ aligned. That pull also surfaced a new `Assessment Class 1` label
   (`src/load_water.py`) uses it to estimate multi-res unit counts (90 m²
   gross/unit assumption); 1,018 of 4,353 OTHER RESIDENTIAL rows have
   null/zero values — those buildings drop from the water model, counted.
+- **`Total Gross Area` is now loaded by `load_property_info` (as `gross_area`)
+  for the Development Lens B FAR** (2026-07-13) — the built floor-area ratio
+  suitability proxy: `far` = Σ `gross_area` (per unit, over eligible points) ÷
+  deduped lot area per hood, computed in `build_hood_lot_acres` on the same
+  dedupe as the lot-acre denominator. 27,202 rows (~6.2%) have null/zero
+  `gross_area` (flagged on load); all 406 hoods still get a `far`. Sanity: FAR
+  ranges DOWNTOWN 3.37 / WÎHKWÊNTÔWIN 1.89 / GARNEAU 1.53 (densest) down to ≈0
+  at River Valley / Anthony Henday greenfield edges. Low FAR = underused. Ships
+  in the neighbourhood geojson (`far`, SLIM). See `docs/SPEC_development.md`
+  Lens B for the proxy decision + the low-FAR park/greenfield caveat.
 - **Condo `lot_size` semantics are INCONSISTENT (confirmed 2026-07-04)** — at the
   3,002 lat/long points holding multiple units, `lot_size` is sometimes the parcel
   size duplicated on every unit (summing overcounts the land), sometimes per-unit

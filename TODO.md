@@ -326,10 +326,19 @@ _Last reconciled: 2026-07-09_
       variant (DATA.md §10 — only populated residential ≥2022 / non-res ≥2024).
   - [ ] **Lens B — Suitability × Activity mismatch, PHASE 2.** Signed diverging
     metric `z(suitability) − z(activity)`: two views off one scale — suitable-
-    but-quiet (opportunity) AND less-suitable-but-building (Peter's flip). Base
-    suitability = ONE simple proxy first (mature/serviced ∨ underused ∨ zoning
-    headroom; `vd42-umu2` Mature Neighbourhood + `dkk9-cj3x` lot_size/year_built),
-    refine after eyeballing Lens A. Definition OPEN.
+    but-quiet (opportunity) AND less-suitable-but-building (Peter's flip).
+    - [x] **Suitability proxy LOCKED 2026-07-13 (Peter): built FAR** (`far` = Σ
+      floor area ÷ deduped lot area/hood; low FAR = underused). Backend column
+      DONE — `load_property_info` loads `gross_area`, `build_hood_lot_acres`
+      emits `far`, `join_and_calculate` carries it into geojson + SLIM
+      (unsuppressed by LOW_PARCEL_FRAC); +7 tests, 318 green. DECISIONS.md +
+      SPEC_development Lens B + DATA.md §2.
+    - [ ] **Web diverging view (REMAINING):** compute `z(−far) − z(activity)`
+      live (responds to units/permits × 5yr/3yr toggles); opportunity + pressure
+      views off one diverging scale. **Decide the low-FAR park/greenfield
+      exclusion** (River Valley / Anthony Henday read FAR≈0 but aren't infill
+      opportunities; `is_residential` is the wrong filter — drops DOWNTOWN;
+      likely `set_aside` / near-zero-FAR cut). See SPEC_development Lens B caveat.
   - [ ] **Lens C — Activity vs City Service Cost, PHASE 3 / future.** Where new
     building goes vs modeled city service columns (road/storm/water/fire per acre)
     or V2 unit-cost $/acre (laptop-gated). Two-ledger idiom of

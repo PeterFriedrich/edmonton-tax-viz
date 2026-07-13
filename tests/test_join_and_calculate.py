@@ -779,6 +779,62 @@ def test_export_keeps_lot_acre_columns_when_present(tmp_path):
     assert "lot_acres_eligible" not in written.columns  # raw total stays out of slim
 
 
+# --- FAR (Development Lens B suitability proxy) ------------------------------
+
+def test_far_passes_through_unsuppressed():
+    # far rides through the lot-acre merge and is NOT subject to the
+    # LOW_PARCEL_FRAC suppression that NaNs the per-lot-acre dollar ratios: PARK
+    # is below the 15% parcel floor (value_per_lot_acre suppressed) but keeps
+    # its far (a density ratio, independent of the denominator guard).
+    result = join_and_calculate(
+        _assessment([
+            {"neighbourhood_name": "DOWNTOWN", "total_assessed_value": 1_000_000.0},
+            {"neighbourhood_name": "PARK", "total_assessed_value": 100_000.0},
+        ]),
+        _boundaries([
+            {"neighbourhood_name": "DOWNTOWN", "area_acres": 100.0},
+            {"neighbourhood_name": "PARK", "area_acres": 100.0},
+        ]),
+        lot_acres=_lot([
+            {"neighbourhood_name": "DOWNTOWN", "lot_acres_eligible": 50.0,
+             "value_lot_eligible": 900_000.0, "far": 2.5},
+            {"neighbourhood_name": "PARK", "lot_acres_eligible": 5.0,  # 5% parcel
+             "value_lot_eligible": 90_000.0, "far": 0.02},
+        ]),
+    )
+    dt = result[result["neighbourhood_name"] == "DOWNTOWN"].iloc[0]
+    park = result[result["neighbourhood_name"] == "PARK"].iloc[0]
+    assert dt["far"] == pytest.approx(2.5)
+    assert park["far"] == pytest.approx(0.02)         # NOT suppressed
+    assert pd.isna(park["value_per_lot_acre"])        # dollar ratio IS suppressed
+
+
+def test_far_absent_when_not_in_lot_acres():
+    result = join_and_calculate(
+        _assessment([{"neighbourhood_name": "DOWNTOWN", "total_assessed_value": 1_000_000.0}]),
+        _boundaries([{"neighbourhood_name": "DOWNTOWN", "area_acres": 100.0}]),
+        lot_acres=_lot([
+            {"neighbourhood_name": "DOWNTOWN", "lot_acres_eligible": 50.0,
+             "value_lot_eligible": 900_000.0},
+        ]),
+    )
+    assert "far" not in result.columns
+
+
+def test_export_keeps_far_when_present(tmp_path):
+    result = join_and_calculate(
+        _assessment([{"neighbourhood_name": "DOWNTOWN", "total_assessed_value": 1_000_000.0}]),
+        _boundaries([{"neighbourhood_name": "DOWNTOWN", "area_acres": 100.0}]),
+        lot_acres=_lot([
+            {"neighbourhood_name": "DOWNTOWN", "lot_acres_eligible": 50.0,
+             "value_lot_eligible": 900_000.0, "far": 1.8},
+        ]),
+    )
+    written = export_geojson(result, str(tmp_path / "out.geojson"))
+    assert "far" in written.columns
+    assert written.iloc[0]["far"] == pytest.approx(1.8)
+
+
 # --- permits (Development & Infill lens A) -----------------------------------
 
 def _permits(rows):
