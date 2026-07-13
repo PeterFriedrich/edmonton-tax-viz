@@ -238,17 +238,34 @@ River Valley / Anthony Henday greenfield-fringe hoods (FAR ≈ 0 parkland/
 undeveloped, not infill opportunities) and leaves 358 in the scale. `is_residential`
 was REJECTED as the filter — it also drops DOWNTOWN, the key dense/pressure case.
 
-**Residual caveat (documented, refine later):** low FAR conflates two things —
-a *mature underused infill site* and a *brand-new empty suburb still being built
-out*. So a few non-set-aside developing/edge hoods still read too strong: at the
-extreme EVERGREEN (a mostly-vacated floodplain mobile-home park, FAR ≈ 0, zero
-activity) tops the opportunity end, and new-growth suburbs like KINGLET GARDENS
-(low FAR because new, high current activity) land in "pressure". The pressure
-extreme is the trustworthy read — DOWNTOWN (high FAR = little room, still
-building) is the #1 pressure hood, which is the genuinely useful signal. The
-blurb frames the whole view as *relative and exploratory, not a target*. A future
-refinement (a maturity gate, or zoning-headroom suitability) would clean the
-opportunity end.
+**Opportunity-end cleanup — SHIPPED as an ASYMMETRIC RESIDENTIAL GATE
+(2026-07-13, web-only).** The original worry was that low FAR conflates a *mature
+underused infill site* with a *brand-new empty suburb still being built out* — so
+a "maturity gate" (median `year_built` threshold) was planned. **A prototype
+against the live data showed that gate does NOT work:** the opportunity-end
+pollution is not new suburbs but *non-residential land* — industrial parks and
+river-valley/highway fringe whose low FAR is *structural*, not opportunity — and
+those hoods span every decade (1958–2024), so age can't separate them. Of the
+opportunity top-30, 13 were `frac_industrial > 0.5` and only 3 were residential;
+a median-year gate removed just ~2 of them. New suburbs are *not* the problem:
+their high activity already pushes them to the pressure side (KINGLET GARDENS,
+median 2023, reads as pressure, not opportunity).
+
+So the fix is a **land-use filter, applied asymmetrically:** a hood that is
+`is_residential === false` is **barred from the OPPORTUNITY (teal) end** — if its
+signed score is positive it renders off-scale grey — but is **kept on the
+PRESSURE (orange) end and in the z-scoring population.** This resolves the earlier
+`is_residential` rejection: the whole-scale filter was rejected because it drops
+DOWNTOWN, but DOWNTOWN sits on the *pressure* end (FAR 3.37 drives it), never the
+opportunity end, so the asymmetric gate keeps it. The pressure end is therefore
+**unchanged** (same z population, same clamp, DOWNTOWN still #1). The opportunity
+end now surfaces genuine mature residential infill candidates (CANOSSA,
+HOMESTEADER, STEINHAUER, MENISA, WELLINGTON, MCLEOD, ROSSLYN, CAPILANO — all
+established, low FAR, near-zero recent activity). EVERGREEN (residential-zoned,
+vacated floodplain) legitimately stays teal. `is_residential` and `far` are both
+already in the geojson, so **no new pipeline column was needed** (the planned
+`median_year_built` backend work was avoided). The blurb frames the whole view as
+*relative and exploratory, not a target*.
 
 **Build status (2026-07-13):** ✅ backend `far` column DONE — `load_property_info`
 loads `gross_area`, `build_hood_lot_acres` emits `far`, `join_and_calculate`
@@ -256,10 +273,10 @@ carries it into the geojson + SLIM (unsuppressed by the LOW_PARCEL_FRAC guard;
 `far` is a density ratio, not a per-lot-acre dollar figure); +7 tests (318
 green). ✅ **web `Infill` view DONE** — diverging mismatch plane, gated on `far`,
 reuses the units/permits × 5yr/3yr pickers for the activity side, set-aside
-excluded; `verify-infill.js` 34/34 green. ⏳ REMAINING (optional refinement):
-the maturity/zoning-headroom cleanup of the opportunity end; the one-sided
-choropleth toggles (Peter's "possibly as separate" — the single diverging map
-already shows both ends).
+excluded. ✅ **asymmetric residential opportunity gate DONE** (web-only,
+`infillOppSuppressed`); `verify-infill.js` 41/41 green. ⏳ REMAINING (optional,
+low priority): the one-sided choropleth toggles (Peter's "possibly as separate" —
+the single diverging map already shows both ends).
 
 ---
 
@@ -317,7 +334,8 @@ Lens A build-time decisions, now LOCKED:
 
 Still open (Lens C):
 - **Lens B** — ✅ COMPLETE 2026-07-13: built-FAR suitability + `Infill` diverging
-  view (set-aside excluded). Only optional refinements remain (see Lens B section).
+  view (set-aside excluded) + asymmetric residential opportunity gate. Only the
+  optional one-sided choropleth toggles remain (see Lens B section).
 - **Lens A polish** — ✅ permit-count-per-acre sub-metric toggle DONE
   (2026-07-13); ✅ window toggle DONE (2026-07-13) — a 5yr (base, 2021–2025) vs
   3yr (recent, 2023–2025) activity-window picker, both metrics; remaining: the
@@ -334,8 +352,10 @@ Still open (Lens C):
    verify-development.js 40/40); remaining: the occupancy completed-builds variant.
 3. **Lens B** — ✅ DONE 2026-07-13: suitability proxy (built FAR) + backend `far`
    column + web `Infill` diverging view (`z(suitability)−z(activity)`, set-aside
-   excluded, verify-infill.js 34/34). Optional future refinement: maturity gate
-   on the opportunity end; one-sided choropleth toggles.
+   excluded) + asymmetric residential opportunity gate (`infillOppSuppressed`;
+   non-residential land barred from the teal end, kept on pressure/orange +
+   in-population), verify-infill.js 41/41. Optional future: one-sided choropleth
+   toggles.
 4. **Lens C** — reuse service-cost columns (or V2) against Lens A.
 
 ## Cross-refs

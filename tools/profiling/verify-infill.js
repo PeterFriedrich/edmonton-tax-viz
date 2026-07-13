@@ -7,8 +7,11 @@
 // dev pickers shown); the infill-plane layer is the stack; EXCLUSION (set-aside
 // and no-far hoods render the grey sentinel, excluded from the z population);
 // the score math matches an independently-derived z-mismatch and the colour is
-// infillColorAt(infillT); SIGN semantics (max-score hood is on the teal arm,
-// min-score on the orange arm); the tooltip carries the mismatch + FAR +
+// infillColorAt(infillT); SIGN semantics (top residential opportunity is on the
+// teal arm, min-score on the orange arm); the RESIDENTIAL GATE (2026-07-13 —
+// non-residential land is barred from the teal opportunity end but kept on the
+// orange pressure end and in the z population, SPEC_development.md Lens B); the
+// tooltip carries the mismatch + FAR +
 // activity, and a set-aside hood reads "off the scale"; the legend gradient is
 // diverging (ends differ, centre near INFILL_CENTER); the units/permits +
 // 5yr/3yr pickers re-key the z-stats and relabel the legend; a round-trip back
@@ -106,26 +109,63 @@ const check = (name, cond) => { (cond ? pass++ : fail++); console.log(`${cond ? 
   check('infillScore matches independent z(suitability)−z(activity)', math.scoreOk);
   check('plane colour == infillColorAt(infillT)', math.colourOk);
 
-  // Sign semantics: max score sits on the teal (opportunity) arm, min on orange.
+  // Sign semantics: the top RESIDENTIAL opportunity sits on the teal arm, the
+  // overall min score on the orange (pressure) arm. Post-residential-gate the
+  // literal max-score hood may be a greyed non-residential one (see the gate
+  // block below), so the teal exemplar is the top-scoring residential hood.
   const sign = await page.evaluate(() => {
     const inc = state.data.features.filter(f => infillIncluded(f.properties, devCol()));
-    let hi = inc[0], lo = inc[0];
+    let lo = inc[0], hiRes = null;
     for (const f of inc) {
-      if (infillScore(f.properties) > infillScore(hi.properties)) hi = f;
       if (infillScore(f.properties) < infillScore(lo.properties)) lo = f;
+      if (f.properties.is_residential && infillScore(f.properties) > 0 &&
+          (hiRes === null || infillScore(f.properties) > infillScore(hiRes.properties))) hiRes = f;
     }
     // Teal (INFILL_POS) has more blue than red; orange (INFILL_NEG) the reverse.
-    const cHi = infillColorAt(infillT(hi.properties));
+    const cHi = infillColorAt(infillT(hiRes.properties));
     const cLo = infillColorAt(infillT(lo.properties));
-    return { hiName: hi.properties.neighbourhood_name, loName: lo.properties.neighbourhood_name,
+    return { hiName: hiRes.properties.neighbourhood_name, loName: lo.properties.neighbourhood_name,
              hiTeal: cHi[2] > cHi[0], loOrange: cLo[0] > cLo[2],
-             hiScorePos: infillScore(hi.properties) > 0, loScoreNeg: infillScore(lo.properties) < 0 };
+             hiScorePos: infillScore(hiRes.properties) > 0, loScoreNeg: infillScore(lo.properties) < 0 };
   });
   console.log('sign: opportunity=', sign.hiName, 'pressure=', sign.loName);
-  check('max-score hood is positive (opportunity)', sign.hiScorePos);
-  check('max-score hood renders teal (blue > red)', sign.hiTeal);
+  check('top residential opportunity is positive', sign.hiScorePos);
+  check('top residential opportunity renders teal (blue > red)', sign.hiTeal);
   check('min-score hood is negative (pressure)', sign.loScoreNeg);
   check('min-score hood renders orange (red > blue)', sign.loOrange);
+
+  // Residential gate: non-residential land is barred from the OPPORTUNITY (teal)
+  // end (rendered off-scale grey) but KEPT on the PRESSURE (orange) end and in
+  // the z-scoring population — so the pressure end is unchanged.
+  const gate = await page.evaluate(() => {
+    const plane = overlay._deck.props.layers.find(l => l.id === 'infill-plane');
+    const grey = SET_ASIDE_COLOR.join();
+    const col = devCol();
+    const inc = state.data.features.filter(f => infillIncluded(f.properties, col));
+    const nrOpp = inc.find(f => f.properties.is_residential === false && infillScore(f.properties) > 0);
+    const nrPress = inc.find(f => f.properties.is_residential === false && infillScore(f.properties) < 0);
+    const cPress = nrPress ? infillColorAt(infillT(nrPress.properties)) : null;
+    return {
+      popHasNonRes: inc.some(f => f.properties.is_residential === false),
+      nrOppName: nrOpp && nrOpp.properties.neighbourhood_name,
+      nrOppSuppressed: nrOpp ? infillOppSuppressed(nrOpp.properties) : null,
+      nrOppTNull: nrOpp ? infillT(nrOpp.properties) === null : null,
+      nrOppGrey: nrOpp ? plane.props.getFillColor(nrOpp).join() === grey : null,
+      nrOppScoreKept: nrOpp ? infillScore(nrOpp.properties) !== null : null,
+      nrOppTip: nrOpp ? tooltipFor({ object: nrOpp }).html : null,
+      nrPressName: nrPress && nrPress.properties.neighbourhood_name,
+      nrPressNotSuppressed: nrPress ? infillOppSuppressed(nrPress.properties) === false : null,
+      nrPressOrange: cPress ? cPress[0] > cPress[2] : null,
+    };
+  });
+  console.log('gate: nr-opportunity=', gate.nrOppName, 'nr-pressure=', gate.nrPressName);
+  check('z population still includes non-residential land', gate.popHasNonRes === true);
+  check('non-residential would-be opportunity is suppressed', gate.nrOppSuppressed === true);
+  check('suppressed hood renders off-scale grey (infillT null)', gate.nrOppGrey === true && gate.nrOppTNull === true);
+  check('suppressed hood stays in the z population (score non-null)', gate.nrOppScoreKept === true);
+  check('suppressed hood tooltip reads non-residential', /non-residential/i.test(gate.nrOppTip));
+  check('non-residential pressure hood is NOT suppressed', gate.nrPressNotSuppressed === true);
+  check('non-residential pressure hood still renders orange', gate.nrPressOrange === true);
 
   // Tooltip: mismatch + FAR + activity; set-aside hood reads off the scale.
   const tips = await page.evaluate(() => {
