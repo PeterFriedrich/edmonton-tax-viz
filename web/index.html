@@ -188,7 +188,7 @@
     <button data-view="ratio" title="Ghost prisms of revenue per road metre — or per fire event — over the neutral road network">Ratio</button>
     <button data-view="uses" title="Each neighbourhood's dominant zoned land use — what the land is designated for, not what it yields; optional prisms show each neighbourhood's residential share">Uses</button>
     <button data-view="development" title="New dwelling units built per acre from issued building permits (2021–2025) — where the city is actually growing; greenfield growth land is shown in full colour here">Development</button>
-    <button data-view="infill" title="Suitability vs activity: where building is — or isn't — happening relative to how much room each neighbourhood has for infill (low built floor-area ratio = room to add). Teal = suitable but quiet; orange = building where there's less room">Infill</button>
+    <button data-view="infill" title="Suitability vs activity: where building is — or isn't — happening relative to how much room each neighbourhood has for infill (low built floor-area ratio = room to add). Teal = suitable but quiet (residential opportunity); orange = building where there's less room">Infill</button>
     <button data-view="glass" title="Translucent metric prisms over a neutral neighbourhood plane — hover the ground for each neighbourhood's numbers">Glass</button>
   </div>
 
@@ -610,9 +610,13 @@
                "chosen window. Each neighbourhood's colour is the gap between " +
                "the two, as standardised (z-score) values: teal = suitable but " +
                "quiet (room to build, little happening — the opportunity); " +
-               "orange = building where there's less room (pressure). Grey = " +
-               "set-aside / undeveloped land, off the scale. A relative, " +
-               "exploratory lens — not a target or a recommendation.",
+               "orange = building where there's less room (pressure). The " +
+               "opportunity (teal) end is shown for residential land only — a " +
+               "low-FAR industrial park or fringe parcel is structurally " +
+               "underused, not an infill opportunity; such land can still read " +
+               "as pressure. Grey = set-aside / undeveloped land, or " +
+               "non-residential land on the opportunity side, off the scale. A " +
+               "relative, exploratory lens — not a target or a recommendation.",
         opacity: null, // no prisms in this view
       },
       glass: {
@@ -1175,7 +1179,20 @@
       const s = infillStats();
       return _infillRaw(p, col, s.fs, s.as);
     }
+    // Asymmetric residential gate (SPEC_development.md Lens B): the OPPORTUNITY
+    // (positive / teal) end is only meaningful for RESIDENTIAL land. A low-FAR
+    // industrial park or river-valley fringe is "underused" only structurally,
+    // not an infill opportunity — and these, not new suburbs, are what pollute
+    // the opportunity end (an age gate can't separate them: they span every
+    // decade, 1958–2024). Non-residential hoods STAY in the z-scoring population,
+    // so the PRESSURE (negative / orange) end is UNCHANGED — DOWNTOWN
+    // (non-residential, high FAR) still reads as pressure. They are simply barred
+    // from the teal end and render off-scale grey there. `=== false` fails open
+    // if the flag is ever missing (keeps the hood rather than greying the world).
+    const infillOppSuppressed = p =>
+      p.is_residential === false && infillScore(p) > 0;
     const infillT = p => {
+      if (infillOppSuppressed(p)) return null;
       const v = infillScore(p);
       if (v == null) return null;
       return Math.max(-1, Math.min(1, v / infillStats().clamp));
@@ -1870,6 +1887,10 @@
         const score = infillScore(p);
         if (score == null)
           return { className: "tip", html: name + `<span class="muted">no infill data</span>` };
+        if (infillOppSuppressed(p))
+          return { className: "tip", html: name +
+            `<span class="muted">Non-residential — off the opportunity scale</span><br/>` +
+            `<span class="muted">${fmtFar(p.far)} · ${fmtDev(p[devCol()])}</span>` };
         const verdict = score > 0.5
           ? "Suitable but quiet — infill opportunity"
           : score < -0.5
@@ -2121,7 +2142,7 @@
           ` (vs ${state.devMetric === "permits" ? "permits" : "homes"}, ${DEV_WINDOW_LABEL[state.devWindow]})`;
         document.getElementById("legend-min").textContent = "← less suitable, building";
         document.getElementById("legend-max").textContent = "suitable, quiet →";
-        label.textContent = "Set aside / off-scale";
+        label.textContent = "Set aside / non-residential — off-scale";
         sw.style.background = `rgb(${SET_ASIDE_COLOR.join(",")})`;
       } else if (state.view === "ratio") {
         const s = ratioScale();
