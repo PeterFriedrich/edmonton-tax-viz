@@ -63,10 +63,12 @@ FRANCHISE_COLUMNS = [
 # New-residential-supply columns carried from load_permits when supplied
 # (Development & Infill lens A, SPEC_development.md): Σ units_added on new-
 # construction ∩ residential permits over the pinned window, and the permit
-# count behind it. new_units_per_acre is computed HERE against boundary
-# area_acres — the same denominator as everything else. Both the total and the
-# count ride into the slim file for the tooltip (like the water total/fixed
-# pair); the per-acre metric drives the choropleth.
+# count behind it. new_units_per_acre AND new_permits_per_acre are computed HERE
+# against boundary area_acres — the same denominator as everything else. Both the
+# total and the count ride into the slim file for the tooltip (like the water
+# total/fixed pair); either per-acre metric can drive the choropleth (units is the
+# default; the permit-count sub-metric surfaces project density — one big
+# apartment is many units but one permit, many single houses are many permits).
 PERMIT_COLUMNS = ["new_dwelling_units", "new_dwelling_permits"]
 
 
@@ -504,10 +506,12 @@ def join_and_calculate(
         for col in PERMIT_COLUMNS:
             joined[col] = joined[col].fillna(0.0)
         joined["new_units_per_acre"] = joined["new_dwelling_units"] / safe_area
+        joined["new_permits_per_acre"] = joined["new_dwelling_permits"] / safe_area
 
         out_cols = (
             [c for c in out_cols if c != "geometry"]
-            + PERMIT_COLUMNS + ["new_units_per_acre"] + ["geometry"]
+            + PERMIT_COLUMNS + ["new_units_per_acre", "new_permits_per_acre"]
+            + ["geometry"]
         )
 
     # Neighbourhood lot-acre denominator toggle (the "value per developable
@@ -576,9 +580,9 @@ def join_and_calculate(
 # connection-vs-consumption split — the fire figure is dispatched-event
 # DEMAND, not coverage, and the transit figure is SCHEDULED service supply,
 # not ridership; the client must label all of them as such). new_units_per_acre
-# (+ the total/permit-count pair for the tooltip) is the Development lens A
-# activity metric — new dwelling units from issued permits, a change/flow signal,
-# NOT revenue or cost (SPEC_development.md).
+# and new_permits_per_acre (+ the total/permit-count pair for the tooltip) are the
+# Development lens A activity metrics — new dwelling units / new permits from
+# issued permits, a change/flow signal, NOT revenue or cost (SPEC_development.md).
 SLIM_COLUMNS = [
     "neighbourhood_name", "value_per_acre", "revenue_per_acre",
     "set_aside_frac", "is_set_aside", "set_aside_reason",
@@ -588,7 +592,8 @@ SLIM_COLUMNS = [
     "is_residential", "road_m_per_acre", "storm_charge_per_acre",
     "fire_events_per_acre", "transit_dep_per_acre",
     "water_charge_per_acre", "water_fixed_per_acre",
-    "new_units_per_acre", "new_dwelling_units", "new_dwelling_permits",
+    "new_units_per_acre", "new_permits_per_acre",
+    "new_dwelling_units", "new_dwelling_permits",
     "value_per_lot_acre", "revenue_per_lot_acre", "parcel_frac",
     "geometry",
 ]

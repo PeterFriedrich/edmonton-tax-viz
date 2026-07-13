@@ -798,6 +798,7 @@ def test_permits_merge_adds_columns_and_per_acre():
     assert row["new_dwelling_units"] == pytest.approx(50.0)
     assert row["new_dwelling_permits"] == 20
     assert row["new_units_per_acre"] == pytest.approx(5.0)
+    assert row["new_permits_per_acre"] == pytest.approx(2.0)  # 20 permits / 10 acres
 
 
 def test_no_permits_arg_omits_columns():
@@ -806,6 +807,7 @@ def test_no_permits_arg_omits_columns():
         _boundaries([{"neighbourhood_name": "DOWNTOWN", "area_acres": 10.0}]),
     )
     assert "new_units_per_acre" not in result.columns
+    assert "new_permits_per_acre" not in result.columns
     assert "new_dwelling_units" not in result.columns
 
 
@@ -825,6 +827,7 @@ def test_boundary_without_permits_defaults_zero(caplog):
     quiet = result[result["neighbourhood_name"] == "QUIET"].iloc[0]
     assert quiet["new_dwelling_units"] == 0.0
     assert quiet["new_units_per_acre"] == 0.0
+    assert quiet["new_permits_per_acre"] == 0.0
     assert "no new residential permits" in caplog.text
 
 
@@ -858,5 +861,6 @@ def test_export_keeps_permit_columns_when_present(tmp_path):
     )
     written = export_geojson(result, str(tmp_path / "out.geojson"))
     assert "new_units_per_acre" in written.columns
+    assert "new_permits_per_acre" in written.columns
     assert "new_dwelling_units" in written.columns  # total kept for the tooltip
     assert "new_dwelling_permits" in written.columns

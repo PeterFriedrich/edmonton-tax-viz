@@ -314,8 +314,12 @@ _Last reconciled: 2026-07-09_
     (only GLENORA,ROSSLYN 1-unit straggler left). DATA.md §10 added; 308 pytest +
     `verify-development.js` 25/25 green; screenshot eyeballed. Live-data: 59,696
     units / 236 hoods, GARNEAU tops per-acre (dense infill).
-    - **Lens A polish (next):** permit-count-per-acre sub-metric; the
-      `occupancy_granted_date` completed-builds variant (DATA.md §10).
+    - [x] **Lens A polish — permit-count sub-metric** (2026-07-13): pipeline
+      `new_permits_per_acre` column + web `#devmetric` units/permits picker
+      (project density vs dwelling supply); ABBOTTSFIELD 248 units / 2 permits is
+      the extreme case. 308 pytest + `verify-development.js` 31/31 green.
+    - **Lens A polish (remaining):** window toggle; the `occupancy_granted_date`
+      completed-builds variant (DATA.md §10).
   - [ ] **Lens B — Suitability × Activity mismatch, PHASE 2.** Signed diverging
     metric `z(suitability) − z(activity)`: two views off one scale — suitable-
     but-quiet (opportunity) AND less-suitable-but-building (Peter's flip). Base
