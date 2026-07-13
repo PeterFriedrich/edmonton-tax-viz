@@ -242,18 +242,27 @@ def build_hood_lot_acres(df: pd.DataFrame) -> pd.DataFrame:
     ``join_and_calculate`` divides and guards.
 
     ``df`` needs ``neighbourhood_name``/``latitude``/``longitude``/``lot_size``/
-    ``assessed_value`` and optionally ``levy``. Reuses the FINDINGS_lot_dedupe
-    heuristic (``_point_lot_stats`` / ``SHARE_MAX_M2``): a point's deduped
-    ``lot_m2`` is a POINT-level quantity, counted once per point; ineligible
-    points (majority-null multi-unit, or no usable lot size) are excluded from
-    BOTH the numerator and the denominator, and their count + value reported —
-    no silent drops.
+    ``assessed_value`` and optionally ``levy`` and ``gross_area``. Reuses the
+    FINDINGS_lot_dedupe heuristic (``_point_lot_stats`` / ``SHARE_MAX_M2``): a
+    point's deduped ``lot_m2`` is a POINT-level quantity, counted once per point;
+    ineligible points (majority-null multi-unit, or no usable lot size) are
+    excluded from BOTH the numerator and the denominator, and their count +
+    value reported — no silent drops.
 
     Returns one row per hood that has any eligible point:
         neighbourhood_name
         lot_acres_eligible    float  Σ deduped lot acres over eligible points
         value_lot_eligible    float  Σ assessed_value over rows at those points
         revenue_lot_eligible  float  Σ levy — only when ``levy`` is present
+        far                   float  built floor-area ratio (Σ gross_area over
+                                     rows at eligible points ÷ deduped lot m²) —
+                                     only when ``gross_area`` is present. The
+                                     Development Lens B "underused" suitability
+                                     proxy: low FAR = room to add. Floor area is
+                                     summed per unit (each condo unit its own
+                                     floor space); the land was already deduped
+                                     once per point (docs/SPEC_development.md
+                                     Lens B).
     """
     pts = df.loc[df["latitude"].notna() & df["longitude"].notna()]
     per_point = _point_lot_stats(pts[["latitude", "longitude", "lot_size"]])
@@ -265,14 +274,16 @@ def build_hood_lot_acres(df: pd.DataFrame) -> pd.DataFrame:
         on=["latitude", "longitude"],
     )
 
-    lot_acres = (
+    lot_m2 = (
         per_point.loc[per_point["eligible"]]
-        .groupby("neighbourhood_name")["lot_m2"].sum() / SQ_M_PER_ACRE
-    ).rename("lot_acres_eligible")
+        .groupby("neighbourhood_name")["lot_m2"].sum()
+    )
+    lot_acres = (lot_m2 / SQ_M_PER_ACRE).rename("lot_acres_eligible")
 
     # Eligible dollars: every row at an eligible point (a multi-unit point's
     # units are all separately levied — sum the rows; the lot area was already
-    # deduped once per point above).
+    # deduped once per point above). ``gross_area`` (Lens B FAR numerator) is
+    # summed the same way — per unit, over eligible-point rows.
     rows = pts.merge(
         per_point[["latitude", "longitude", "eligible"]],
         on=["latitude", "longitude"], how="left",
@@ -282,6 +293,9 @@ def build_hood_lot_acres(df: pd.DataFrame) -> pd.DataFrame:
     has_levy = "levy" in df.columns
     if has_levy:
         agg["levy"] = "sum"
+    has_gross = "gross_area" in df.columns
+    if has_gross:
+        agg["gross_area"] = "sum"
     dollars = rows.loc[eligible].groupby("neighbourhood_name").agg(agg)
 
     ineligible = per_point[~per_point["eligible"]]
@@ -294,7 +308,14 @@ def build_hood_lot_acres(df: pd.DataFrame) -> pd.DataFrame:
             len(ineligible), int((~eligible).sum()), dropped_value / 1e6,
         )
 
-    out = dollars.join(lot_acres, how="outer").reset_index()
+    out = dollars.join(lot_acres, how="outer")
+    if has_gross:
+        # FAR = Σ floor area (m²) / Σ deduped lot area (m²), dimensionless.
+        # NaN where a hood has floor area but no eligible lot m² (guarded by the
+        # outer join filling lot_m2 with NaN → ratio NaN, not a divide-by-zero).
+        out["far"] = out["gross_area"] / lot_m2.reindex(out.index)
+        out = out.drop(columns=["gross_area"])
+    out = out.reset_index()
     return out.rename(columns={
         "assessed_value": "value_lot_eligible", "levy": "revenue_lot_eligible",
     })

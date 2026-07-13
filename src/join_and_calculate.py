@@ -86,7 +86,9 @@ PERMIT_COLUMNS_3YR = [f"{c}_3yr" for c in PERMIT_COLUMNS]
 # parcel acres (not boundary acres), and parcel_frac = lot acres / boundary acres
 # ships alongside so the client can label + guard. This is an editorial
 # alternative denominator, NOT a correction to the cardinality-robust default.
-LOT_ACRE_COLUMNS = ["value_lot_eligible", "revenue_lot_eligible", "lot_acres_eligible"]
+LOT_ACRE_COLUMNS = [
+    "value_lot_eligible", "revenue_lot_eligible", "lot_acres_eligible", "far",
+]
 
 # Below this parcel-land share the lot-acre denominator is near-zero and the
 # ratio explodes (Mill Woods Golf Course 0% parcel -> x6960; the park/river-
@@ -603,6 +605,14 @@ def join_and_calculate(
         ratio_cols = [c for c in added if c != "parcel_frac"]
         joined.loc[suppress, ratio_cols] = float("nan")
 
+        # far (Development Lens B suitability proxy) rides along UNSUPPRESSED:
+        # it is a built floor-area density ratio, not a per-lot-acre dollar
+        # figure, so the LOW_PARCEL_FRAC denominator guard does not apply. The
+        # web view owns the low-FAR park/greenfield exclusion (SPEC_development
+        # Lens B). NaN only where a hood has no eligible parcels at all.
+        if "far" in joined.columns:
+            added.append("far")
+
         out_cols = [c for c in out_cols if c != "geometry"] + added + ["geometry"]
 
     return joined[out_cols]
@@ -640,6 +650,7 @@ SLIM_COLUMNS = [
     "new_units_per_acre_3yr", "new_permits_per_acre_3yr",
     "new_dwelling_units_3yr", "new_dwelling_permits_3yr",
     "value_per_lot_acre", "revenue_per_lot_acre", "parcel_frac",
+    "far",
     "geometry",
 ]
 

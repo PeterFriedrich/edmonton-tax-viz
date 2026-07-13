@@ -308,3 +308,39 @@ def test_hood_lot_acres_excludes_ineligible_points():
     # Only point A (1 acre, $100) is eligible; the majority-null B point drops.
     assert out.loc["HOODX", "lot_acres_eligible"] == pytest.approx(1.0)
     assert out.loc["HOODX", "value_lot_eligible"] == pytest.approx(100.0)
+
+
+# --- FAR (Development Lens B built floor-area ratio) ------------------------
+
+def test_hood_lot_acres_far_basic():
+    # One point, 1-acre lot, 2000 m² of floor area -> FAR = 2000 / 4046.86 m².
+    df = _frame([
+        {**A, "neighbourhood_name": "HOODX", "lot_size": SQ_M_PER_ACRE,
+         "assessed_value": 1000.0, "gross_area": 2000.0},
+    ])
+    out = build_hood_lot_acres(df).set_index("neighbourhood_name")
+    assert out.loc["HOODX", "far"] == pytest.approx(2000.0 / SQ_M_PER_ACRE)
+
+
+def test_hood_lot_acres_far_sums_floor_area_over_deduped_land():
+    # Two condo units at ONE point: land is a duplicated 5000 m² parcel (counted
+    # ONCE), but each unit carries its own floor area (summed) -> FAR uses the
+    # per-unit floor-area sum over the deduped land.
+    df = _frame([
+        {**A, "neighbourhood_name": "HOODX", "lot_size": 5000.0,
+         "assessed_value": 100.0, "gross_area": 120.0},
+        {**A, "neighbourhood_name": "HOODX", "lot_size": 5000.0,
+         "assessed_value": 200.0, "gross_area": 130.0},
+    ])
+    out = build_hood_lot_acres(df).set_index("neighbourhood_name")
+    assert out.loc["HOODX", "far"] == pytest.approx((120.0 + 130.0) / 5000.0)
+
+
+def test_hood_lot_acres_omits_far_without_gross_area():
+    # Backward-compat: no gross_area column -> no far column emitted.
+    df = _frame([
+        {**A, "neighbourhood_name": "HOODX", "lot_size": SQ_M_PER_ACRE,
+         "assessed_value": 1000.0},
+    ])
+    out = build_hood_lot_acres(df)
+    assert "far" not in out.columns

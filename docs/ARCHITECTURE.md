@@ -308,12 +308,13 @@ metrics still come from `load_roads`, computed before any thinning.
 **Inputs:** the property-info CSV (`dkk9-cj3x`,
 `data/raw/Property_Info__Current_Calendar_Year_.csv`)
 
-**Outputs:** DataFrame `account_number` / `lot_size` (m², non-positive →
-NaN, nulls counted and reported). Raises if the account key stops being
-unique. Deliberately slim — `year_built` etc. stay out until the diversity
-analysis needs them (ANALYSIS_BACKLOG 4). Does NOT resolve the condo
-`lot_size` inconsistency; that lives with its consumer
-(`export_value_grid._point_lot_stats`).
+**Outputs:** DataFrame `account_number` / `lot_size` / `gross_area` (both m²,
+non-positive → NaN, nulls counted and reported). `gross_area` (source
+`Total Gross Area`, added 2026-07-13) is the Development Lens B FAR numerator
+(built floor area). Raises if the account key stops being unique. Deliberately
+slim — `year_built` etc. stay out until the diversity analysis needs them
+(ANALYSIS_BACKLOG 4). Does NOT resolve the condo `lot_size` inconsistency; that
+lives with its consumer (`export_value_grid._point_lot_stats`).
 
 ### `src/export_value_grid.py` (Glass-view spikes — added 2026-07-04; lot-acre variant 2026-07-05)
 
@@ -363,11 +364,15 @@ track weekly refreshes.
 lot-dedupe rollup one level up, at the NEIGHBOURHOOD unit, for the Money view's
 lot-acre denominator toggle. Takes the per-property frame
 (`neighbourhood_name`/`latitude`/`longitude`/`lot_size`/`assessed_value`,
-optional `levy`), reuses `_point_lot_stats`/`SHARE_MAX_M2`, and returns per-hood
-`lot_acres_eligible` + `value_lot_eligible` (+ `revenue_lot_eligible`), the
-eligible-point deduped acres and the dollars at those points. `main.py` builds
+optional `levy` and `gross_area`), reuses `_point_lot_stats`/`SHARE_MAX_M2`, and
+returns per-hood `lot_acres_eligible` + `value_lot_eligible`
+(+ `revenue_lot_eligible`), the eligible-point deduped acres and the dollars at
+those points. When `gross_area` is present it also returns `far` (Development
+Lens B built floor-area ratio = Σ floor area over eligible-point rows ÷ deduped
+lot m²; low FAR = underused/suitable — SPEC_development Lens B). `main.py` builds
 it from the same `grid_input` (assessment + `load_property_info`) that feeds the
-grid, and hands it to `join_and_calculate` — which divides + guards (below).
+grid, and hands it to `join_and_calculate` — which divides + guards (below);
+`far` rides through UNSUPPRESSED (a density ratio, not a per-lot-acre dollar).
 Ineligible points are excluded from BOTH numerator and denominator and reported.
 
 ### `src/load_stormwater.py` (utility lens #1 — added 2026-07-05)

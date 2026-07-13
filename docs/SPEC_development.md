@@ -204,17 +204,42 @@ opportunity, negative = building-in-less-suitable), with the two views being the
 two ends of the same diverging scale — plus optionally the two one-sided
 choropleths.
 
-**Base suitability score (the open design work):** a composite of ingredients we
-can already compute, *pick ONE simple proxy for the first cut* and refine:
-- **Serviced/mature** — infrastructure already sunk (mature-area proxy: older
-  median `year_built`, or the `vd42-umu2` Mature Neighbourhood overlay).
-- **Underused** — room to add: low improvement-to-land value ratio and/or larger
-  median lot (assessment + `dkk9-cj3x` `lot_size`).
-- **Zoning headroom** — zoned density minus built density (what the bylaw already
-  permits vs what exists).
+**Base suitability score — LOCKED 2026-07-13 (Peter): built floor-area ratio
+(FAR), the "underused / room to add" proxy.** `far` = Σ building floor area
+(`Total Gross Area`, `dkk9-cj3x`) ÷ deduped lot area per hood — computed in
+`build_hood_lot_acres` on the same eligible-point dedupe as the lot-acre
+denominator (floor area summed per unit, land counted once per point). **Low FAR
+= underused = suitable.** The other candidates considered and rejected for the
+first cut:
+- **Serviced/mature** (median `year_built`, or the `vd42-umu2` overlay) — its
+  mismatch mostly re-derives the greenfield-vs-infill / median-age story this
+  lens moves beyond; `vd42-umu2` also needs a new download.
+- **Underused via value** (low value/lot-acre) — cheapest (already on the
+  geojson) but conflates "underused" with "low land value" (a high-value
+  downtown lot reads as un-suitable). *Note: the assessment roll has only a
+  single `Assessed Value` — NO land/improvement split — so the classic teardown
+  improvement-to-land ratio is unavailable.*
+- **Zoning headroom** (zoned density − built density) — needs a zoning→max-density
+  lookup table; a refinement, not a first cut.
 
-Base-suitability weighting/definition is **open** — do not lock until Lens A is
-visible and we can eyeball the activity distribution against candidate scores.
+**Architecture:** the pipeline emits the raw `far` ingredient only; the web
+computes the signed diverging mismatch `z(−far) − z(activity)` live, so it
+responds to the existing units/permits × 5yr/3yr Lens-A toggles for free.
+
+**Known first-cut caveat (the web view's job to handle):** raw low-FAR is
+polluted at the *opportunity* end by River Valley parks and Anthony Henday
+greenfield/industrial fringe (FAR ≈ 0 — parkland/undeveloped, not infill
+opportunities). `is_residential` is the WRONG filter (it also drops DOWNTOWN,
+the key dense/pressure case). The mismatch partly self-corrects (those hoods also
+have ~zero activity); the web view owns the explicit exclusion (likely a
+`set_aside` / near-zero-FAR cut), decided when it's visible on the map.
+
+**Build status (2026-07-13):** ✅ backend `far` column DONE — `load_property_info`
+loads `gross_area`, `build_hood_lot_acres` emits `far`, `join_and_calculate`
+carries it into the geojson + SLIM (unsuppressed by the LOW_PARCEL_FRAC guard;
+`far` is a density ratio, not a per-lot-acre dollar figure); +7 tests (318
+green). ⏳ REMAINING: the web diverging view (opportunity/pressure) + the low-FAR
+exclusion decision.
 
 ---
 
@@ -271,7 +296,9 @@ Lens A build-time decisions, now LOCKED:
   needed. Warn-not-fail; the only straggler is `GLENORA, ROSSLYN` (1 unit).
 
 Still open (Lens B/C):
-- **Lens B base-suitability definition + weighting** — pick one proxy first.
+- **Lens B base-suitability definition** — ✅ LOCKED 2026-07-13: built FAR (see
+  Lens B section). Backend `far` column DONE; the web diverging view + the
+  low-FAR park/greenfield exclusion are the remaining open pieces.
 - **Lens A polish** — ✅ permit-count-per-acre sub-metric toggle DONE
   (2026-07-13); ✅ window toggle DONE (2026-07-13) — a 5yr (base, 2021–2025) vs
   3yr (recent, 2023–2025) activity-window picker, both metrics; remaining: the
@@ -286,7 +313,9 @@ Still open (Lens B/C):
    (`new_permits_per_acre` + `#devmetric` control); ✅ window toggle DONE
    2026-07-13 (`_3yr` columns + `#devwindow` 5yr/3yr control,
    verify-development.js 40/40); remaining: the occupancy completed-builds variant.
-3. **Lens B** — base suitability proxy + signed mismatch metric + two views.
+3. **Lens B** — ✅ suitability proxy (built FAR) + backend `far` column DONE
+   2026-07-13; REMAINING: signed mismatch metric + web diverging view (two views)
+   + the low-FAR park/greenfield exclusion.
 4. **Lens C** — reuse service-cost columns (or V2) against Lens A.
 
 ## Cross-refs
