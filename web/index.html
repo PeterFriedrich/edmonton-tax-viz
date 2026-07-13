@@ -85,14 +85,18 @@
     /* Uses-view residential-prisms toggle — hidden outside the uses view
        (the #denom default-hidden pattern). */
     #uses-prisms-hd, #uses-prisms { display: none; }
-    #denom, #ratio-denom { border: 1px solid #2a2a3a; border-radius: 5px; overflow: hidden; margin-bottom: 2px; }
-    #denom button, #ratio-denom button {
+    /* Development-view sub-metric picker (dwelling units vs permits per acre) —
+       shares the #denom button styling + default-hidden pattern; shown only in
+       the development view and only when the data carries new_permits_per_acre. */
+    #devmetric-hd, #devmetric { display: none; }
+    #denom, #ratio-denom, #devmetric { border: 1px solid #2a2a3a; border-radius: 5px; overflow: hidden; margin-bottom: 2px; }
+    #denom button, #ratio-denom button, #devmetric button {
       appearance: none; border: 0; background: transparent; color: #9a9ab0;
       font: 11px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       padding: 4px 10px; cursor: pointer; flex: 1; transition: background 0.12s, color 0.12s;
     }
-    #denom button:hover, #ratio-denom button:hover { color: #e8e8ef; }
-    #denom button.active, #ratio-denom button.active { background: #fcd278; color: #16111a; font-weight: 600; }
+    #denom button:hover, #ratio-denom button:hover, #devmetric button:hover { color: #e8e8ef; }
+    #denom button.active, #ratio-denom button.active, #devmetric button.active { background: #fcd278; color: #16111a; font-weight: 600; }
     #toggle button, #palette button, #lens button {
       appearance: none; border: 0; background: transparent; color: #9a9ab0;
       font: 12.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -251,6 +255,11 @@
     <div id="ratio-denom">
       <button data-ratio-denom="roads" class="active" title="Revenue per metre of city-maintained neighbourhood road (collector + local) — the levy-funded network this land's layout entails">Per road metre</button>
       <button data-ratio-denom="fire" title="Revenue per dispatched fire-department emergency event (2023–2025 average) — levy-funded demand; most events are medical calls">Per fire event</button>
+    </div>
+    <span class="hd" id="devmetric-hd">Metric</span>
+    <div id="devmetric">
+      <button data-devmetric="units" class="active" title="New dwelling units per acre — housing supply added. One large apartment adds many units on a single permit">Dwelling units</button>
+      <button data-devmetric="permits" title="New residential building permits per acre — project density. Many single houses are many permits; one apartment is one permit">Permits</button>
     </div>
   </div>
 
@@ -659,6 +668,7 @@
                     labels: false, view: "money", prismOpacity: 1, denom: "ground",
                     usesPrisms: false, // Uses-view residential prisms (off = the flat categorical view)
                     ratioDenom: "roads", // Ratio-view denominator (RATIO_DENOMS); persists like denom
+                    devMetric: "units", // Development-view sub-metric: units | permits per acre
                     services: { roads: true, storm: false, fire: false, water: false, transit: false },
                     svcDriver: "roads",
                     data: null };
@@ -1036,19 +1046,26 @@
     // full colour (their set-aside status stays in the tooltip). Distribution is
     // right-skewed (a few dense-infill hoods dominate) → sqrt colour always,
     // independent of the colour-adjust toggle (like the fire/transit planes).
-    const DEV_COL = "new_units_per_acre";
-    let _devScale = null;
+    // The sub-metric picker (state.devMetric) swaps the choropleth between new
+    // dwelling units per acre (housing supply added) and new permits per acre
+    // (project density) — both from the same pinned-window permit set. Each has
+    // its own p97.5 clamp, cached per column.
+    const DEV_COLS = { units: "new_units_per_acre", permits: "new_permits_per_acre" };
+    const devCol = () => DEV_COLS[state.devMetric];
+    const _devScale = {};
     function devScale() {
-      if (_devScale) return _devScale;
-      const vals = state.data.features.map(f => f.properties[DEV_COL])
+      const col = devCol();
+      if (_devScale[col]) return _devScale[col];
+      const vals = state.data.features.map(f => f.properties[col])
         .filter(v => v != null).sort((a, b) => a - b);
-      return (_devScale = { clamp: vals.length ? quantile(vals, 0.975) : 1 });
+      return (_devScale[col] = { clamp: vals.length ? quantile(vals, 0.975) : 1 });
     }
     function devT(v) {
       const t = Math.max(0, Math.min(1, v / devScale().clamp));
       return Math.sqrt(t);
     }
     function developmentPlaneLayer() {
+      const col = devCol();
       return new deck.GeoJsonLayer({
         id: "dev-plane",
         data: state.data,
@@ -1056,15 +1073,16 @@
         stroked: false,
         extruded: false,
         getFillColor: f => {
-          const v = f.properties[DEV_COL];
+          const v = f.properties[col];
           // No set-aside grey branch — the override colours greenfield too.
           return v == null ? GLASS_PLANE_COLOR : rampColorAt(devT(v));
         },
         pickable: false,
-        updateTriggers: { getFillColor: [state.ramp] },
+        updateTriggers: { getFillColor: [state.ramp, state.devMetric] },
       });
     }
-    const fmtDev = v => v.toFixed(v < 1 ? 2 : 1) + " new homes / acre";
+    const fmtDev = v => v.toFixed(v < 1 ? 2 : 1) +
+      (state.devMetric === "permits" ? " new permits / acre" : " new homes / acre");
 
     // Fire-station context dots (SPEC_services.md "Fire lens"): 31 points,
     // drawn whenever the fire service is checked — driver or not, they are
@@ -1695,7 +1713,7 @@
       }
 
       if (state.view === "development") {
-        const pa = p.new_units_per_acre;
+        const pa = p[devCol()];
         if (pa == null)
           return { className: "tip", html: name + `<span class="muted">no permit data</span>` };
         const rows = [
@@ -1822,6 +1840,19 @@
       refreshLegend();
     }
 
+    // Development sub-metric picker (units vs permits per acre). Both share the
+    // sqrt-inferno gradient bar (only the label/anchors + colours change), so a
+    // switch just rebuilds the plane layer and re-runs the legend.
+    function applyDevMetric(m) {
+      if (m === state.devMetric || !DEV_COLS[m]) return;
+      state.devMetric = m;
+      document.querySelectorAll("#devmetric button").forEach(b =>
+        b.classList.toggle("active", b.dataset.devmetric === m));
+      if (state.view !== "development") return;
+      overlay.setProps({ layers: buildLayers() });
+      refreshLegend();
+    }
+
     // Sync the whole legend to the current view. roads: the network's linear
     // road scale. ratio: the active denominator's log scale between its data
     // anchors (residential anchors when the lens is on). money: the metric scale; with
@@ -1908,7 +1939,8 @@
           document.getElementById("legend-cats").style.display = "block";
       } else if (state.view === "development") {
         document.getElementById("legend-label").textContent =
-          "New homes per acre (2021–2025, sqrt colour)";
+          (state.devMetric === "permits" ? "New permits per acre" : "New homes per acre") +
+          " (2021–2025, sqrt colour)";
         document.getElementById("legend-min").textContent = "0";
         const clamp = devScale().clamp;
         document.getElementById("legend-max").textContent =
@@ -2049,8 +2081,11 @@
       // The Money view opens the layers panel too — but only for the denominator
       // toggle, and only when the data carries the lot-acre columns.
       const moneyDenom = v === "money" && state.hasHoodLot;
+      // The development view opens the layers panel for its unit/permit sub-metric
+      // picker — only when the data carries the permit-per-acre column.
+      const devMetricShow = v === "development" && state.hasPermitsPerAcre;
       document.getElementById("layers").style.display =
-        (prisms || v === "services" || v === "uses" || moneyDenom) ? "flex" : "none";
+        (prisms || v === "services" || v === "uses" || moneyDenom || devMetricShow) ? "flex" : "none";
       document.getElementById("uses-prisms-hd").style.display = v === "uses" ? "block" : "none";
       document.getElementById("uses-prisms").style.display = v === "uses" ? "block" : "none";
       document.getElementById("prism-hd").style.display = prisms ? "block" : "none";
@@ -2126,6 +2161,9 @@
       const ratioDenomShow = v === "ratio" && state.hasFire;
       document.getElementById("ratio-denom-hd").style.display = ratioDenomShow ? "block" : "none";
       document.getElementById("ratio-denom").style.display = ratioDenomShow ? "flex" : "none";
+      // The development sub-metric picker (units vs permits per acre).
+      document.getElementById("devmetric-hd").style.display = devMetricShow ? "block" : "none";
+      document.getElementById("devmetric").style.display = devMetricShow ? "flex" : "none";
       overlay.setProps({ layers: buildLayers() });
       // Glass shows the metric like Money, so its title stays metric-driven
       // and its blurb follows the spike denominator; the services blurb
@@ -2201,6 +2239,8 @@
         b.addEventListener("click", () => applyDenom(b.dataset.denom)));
       document.querySelectorAll("#ratio-denom button").forEach(b =>
         b.addEventListener("click", () => applyRatioDenom(b.dataset.ratioDenom)));
+      document.querySelectorAll("#devmetric button").forEach(b =>
+        b.addEventListener("click", () => applyDevMetric(b.dataset.devmetric)));
       document.getElementById("uses-prisms-on").addEventListener("change",
         e => applyUsesPrisms(e.target.checked));
       document.querySelectorAll("#services .svc").forEach(el => {
@@ -2276,6 +2316,11 @@
       if (!state.data.features.some(f => f.properties.new_units_per_acre != null)) {
         document.querySelector('#views button[data-view="development"]').style.display = "none";
       }
+      // The unit/permit sub-metric picker needs new_permits_per_acre (pipeline
+      // 2026-07-13) — older data files carry only new_units_per_acre, so the
+      // picker stays hidden and the units metric is the sole choropleth.
+      state.hasPermitsPerAcre =
+        state.data.features.some(f => f.properties.new_permits_per_acre != null);
       // Sync the legend gradient to the default ramp (single source of truth).
       document.querySelector("#legend .bar").style.background = legendGradient();
 

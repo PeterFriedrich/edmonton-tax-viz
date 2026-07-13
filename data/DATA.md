@@ -502,10 +502,13 @@ does not change the row count, so both truncation guards still apply.
 **Why:** the Development & Infill lens A (`docs/SPEC_development.md`) — new
 dwelling units built per neighbourhood, the project's first *change/flow* metric
 (everything else describes the roll as it stands today). Consumed by
-`src/load_permits.py`; the shipped metric is **`new_units_per_acre`** (Σ
+`src/load_permits.py`; the default metric is **`new_units_per_acre`** (Σ
 `units_added` on new-construction ∩ residential permits over the pinned
-`PERMIT_YEARS` window ÷ boundary acres). `new_dwelling_units` (window total) +
-`new_dwelling_permits` (count) ride into the slim file for the tooltip.
+`PERMIT_YEARS` window ÷ boundary acres). A second metric **`new_permits_per_acre`**
+(permit count ÷ boundary acres, added 2026-07-13) drives the web view's
+units/permits sub-metric picker — project density vs dwelling supply.
+`new_dwelling_units` (window total) + `new_dwelling_permits` (count) ride into the
+slim file for the tooltip.
 
 ### Key columns (live vocab confirmed 2026-07-12)
 | Column | Notes |

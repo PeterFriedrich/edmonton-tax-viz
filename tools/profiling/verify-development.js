@@ -6,8 +6,10 @@
 // grey); sqrt colour scaling matches an independently-derived clamp; a
 // zero-activity hood renders the ramp low end (not grey); the tooltip carries
 // units/acre + the count/permit line, and a set-aside hood's tooltip STILL
-// shows its set-aside status; the legend gradient is sqrt; a round-trip back to
-// money restores the aside row. Exit code = number of FAILED assertions.
+// shows its set-aside status; the legend gradient is sqrt; the units/permits
+// SUB-METRIC PICKER (2026-07-13) switches the plane/scale/legend/tooltip to the
+// new_permits_per_acre column; a round-trip back to money restores the aside
+// row. Exit code = number of FAILED assertions.
 //   node verify-development.js <url>
 const { chromium } = require('playwright');
 const [url] = process.argv.slice(2);
@@ -48,7 +50,9 @@ const check = (name, cond) => { (cond ? pass++ : fail++); console.log(`${cond ? 
     max: document.getElementById('legend-max').textContent,
     asideHidden: getComputedStyle(document.querySelector('#legend .aside')).display === 'none',
     lensDisabled: document.querySelector('#lens button').disabled,
-    panelHidden: getComputedStyle(document.getElementById('layers')).display === 'none',
+    devPickerShown: getComputedStyle(document.getElementById('devmetric')).display !== 'none',
+    unitsActive: document.querySelector('#devmetric button[data-devmetric="units"]').classList.contains('active'),
+    devMetric: state.devMetric,
     layers: overlay._deck.props.layers.map(l => l.id),
   }));
   console.log('chrome:', JSON.stringify(chrome));
@@ -60,7 +64,8 @@ const check = (name, cond) => { (cond ? pass++ : fail++); console.log(`${cond ? 
   check('legend max ends with +', /\+$/.test(chrome.max));
   check('aside (set-aside grey) row hidden', chrome.asideHidden);
   check('residential lens disabled', chrome.lensDisabled);
-  check('layers panel hidden (no sub-controls)', chrome.panelHidden);
+  check('sub-metric picker shown (data has permits column)', chrome.devPickerShown);
+  check('units sub-metric active by default', chrome.unitsActive && chrome.devMetric === 'units');
   check('dev-plane layer present', chrome.layers.includes('dev-plane'));
   check('no svc-plane leaked in', !chrome.layers.includes('svc-plane'));
 
@@ -149,6 +154,37 @@ const check = (name, cond) => { (cond ? pass++ : fail++); console.log(`${cond ? 
   });
   check('legend gradient is drawn', gradSqrt.gradientHasSqrt);
   check('sqrt transform is distinguishable from linear', gradSqrt.differs);
+
+  // Sub-metric picker: switch to permits/acre and confirm the plane, scale,
+  // legend and tooltip all follow the new column.
+  await click('#devmetric button[data-devmetric="permits"]');
+  await page.waitForTimeout(1500);
+  const permits = await page.evaluate(() => {
+    const plane = overlay._deck.props.layers.find(l => l.id === 'dev-plane');
+    const vals = state.data.features.map(f => f.properties.new_permits_per_acre)
+      .filter(v => v != null).sort((a, b) => a - b);
+    const pos = (vals.length - 1) * 0.975, lo = Math.floor(pos);
+    const q = vals[lo] + (vals[Math.ceil(pos)] - vals[lo]) * (pos - lo);
+    const active = state.data.features.filter(f => f.properties.new_permits_per_acre > 0);
+    const mid = active[Math.floor(active.length / 2)];
+    const expected = rampColorAt(Math.sqrt(Math.min(1, mid.properties.new_permits_per_acre / q))).join();
+    return {
+      devMetric: state.devMetric,
+      label: document.getElementById('legend-label').textContent,
+      clampMatches: Math.abs(devScale().clamp - q) < 1e-6,
+      midFillOk: plane.props.getFillColor(mid).join() === expected,
+      tip: tooltipFor({ object: active[0] }).html,
+    };
+  });
+  console.log('permits tip:', permits.tip);
+  check('state.devMetric is permits after switch', permits.devMetric === 'permits');
+  check('legend label mentions new permits', /new permits per acre/i.test(permits.label));
+  check('devScale clamp follows permits column p97.5', permits.clampMatches);
+  check('plane recolours by permits column (sqrt)', permits.midFillOk);
+  check('tooltip shows "new permits / acre"', /new permits \/ acre/.test(permits.tip));
+  // Switch back to units so the money round-trip starts from the default metric.
+  await click('#devmetric button[data-devmetric="units"]');
+  await page.waitForTimeout(800);
 
   // Round-trip back to money restores the aside row.
   await click('#views button[data-view="money"]');

@@ -254,8 +254,12 @@ Lens A build-time decisions, now LOCKED:
 - **Set-aside handling** — ✅ full override, coloured (Peter, 2026-07-12); see
   the Lens A section. Empirically low-impact but semantically correct.
 - **Activity window** — ✅ last 5 full years (2021–2025), pinned + drift-guarded.
-- **Metric numerator** — ✅ `units_added` (dwellings). Permit count ships
-  alongside for the tooltip; a per-acre count sub-metric is future polish.
+- **Metric numerator** — ✅ `units_added` (dwellings) is the default choropleth.
+  A **permit-count-per-acre sub-metric** now ships alongside (2026-07-13): the
+  `#devmetric` picker in the layers panel swaps the plane/scale/legend/tooltip to
+  `new_permits_per_acre` (project density — one large apartment is many units on
+  one permit; many single houses are many permits). ABBOTTSFIELD is the extreme:
+  248 units from 2 permits.
 - **Null-`work_type` rows** — ✅ excluded, count reported (in-window ~41k of the
   ~60k are null/blank; INFO-logged each load). Same for null `building_type`.
 - **"AREA"-suffix greenfield names** — ✅ resolved via the shared
@@ -264,16 +268,18 @@ Lens A build-time decisions, now LOCKED:
 
 Still open (Lens B/C):
 - **Lens B base-suitability definition + weighting** — pick one proxy first.
-- **Lens A polish** — permit-count-per-acre sub-metric toggle; the
-  `occupancy_granted_date` completed-builds variant (Data note above).
+- **Lens A polish** — ✅ permit-count-per-acre sub-metric toggle DONE
+  (2026-07-13); remaining: the `occupancy_granted_date` completed-builds variant
+  (Data note above).
 
 ## Build order
 
 1. **Lens A minimal** — ✅ DONE 2026-07-12 (`feat/dev-lens-a-building-activity`):
    `src/load_permits.py` + `join_and_calculate` column + one choropleth metric +
    set-aside override + `verify-development.js` (25/25) + DATA.md entry.
-2. **Lens A polish** — window/metric toggles, permit-count sub-metric, the
-   occupancy completed-builds variant. *(next)*
+2. **Lens A polish** — ✅ permit-count sub-metric picker DONE 2026-07-13
+   (`new_permits_per_acre` + `#devmetric` control, verify-development.js 31/31);
+   remaining: window toggle, the occupancy completed-builds variant.
 3. **Lens B** — base suitability proxy + signed mismatch metric + two views.
 4. **Lens C** — reuse service-cost columns (or V2) against Lens A.
 
