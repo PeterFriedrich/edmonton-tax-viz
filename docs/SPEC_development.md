@@ -253,7 +253,11 @@ Depends on Lens A shipping and (for true dollars) the V2 unit-cost work.
 Lens A build-time decisions, now LOCKED:
 - **Set-aside handling** — ✅ full override, coloured (Peter, 2026-07-12); see
   the Lens A section. Empirically low-impact but semantically correct.
-- **Activity window** — ✅ last 5 full years (2021–2025), pinned + drift-guarded.
+- **Activity window** — ✅ last 5 full years (2021–2025) is the pinned base,
+  drift-guarded. A **3yr recent window (2023–2025)** now ships alongside as a
+  `#devwindow` toggle (2026-07-13): a second pinned aggregation
+  (`PERMIT_YEARS_RECENT` in `main.py`) emits `_3yr`-suffixed columns; the base
+  columns stay unsuffixed. Both windows apply to both metrics (units/permits).
 - **Metric numerator** — ✅ `units_added` (dwellings) is the default choropleth.
   A **permit-count-per-acre sub-metric** now ships alongside (2026-07-13): the
   `#devmetric` picker in the layers panel swaps the plane/scale/legend/tooltip to
@@ -269,8 +273,9 @@ Lens A build-time decisions, now LOCKED:
 Still open (Lens B/C):
 - **Lens B base-suitability definition + weighting** — pick one proxy first.
 - **Lens A polish** — ✅ permit-count-per-acre sub-metric toggle DONE
-  (2026-07-13); remaining: the `occupancy_granted_date` completed-builds variant
-  (Data note above).
+  (2026-07-13); ✅ window toggle DONE (2026-07-13) — a 5yr (base, 2021–2025) vs
+  3yr (recent, 2023–2025) activity-window picker, both metrics; remaining: the
+  `occupancy_granted_date` completed-builds variant (Data note above).
 
 ## Build order
 
@@ -278,8 +283,9 @@ Still open (Lens B/C):
    `src/load_permits.py` + `join_and_calculate` column + one choropleth metric +
    set-aside override + `verify-development.js` (25/25) + DATA.md entry.
 2. **Lens A polish** — ✅ permit-count sub-metric picker DONE 2026-07-13
-   (`new_permits_per_acre` + `#devmetric` control, verify-development.js 31/31);
-   remaining: window toggle, the occupancy completed-builds variant.
+   (`new_permits_per_acre` + `#devmetric` control); ✅ window toggle DONE
+   2026-07-13 (`_3yr` columns + `#devwindow` 5yr/3yr control,
+   verify-development.js 40/40); remaining: the occupancy completed-builds variant.
 3. **Lens B** — base suitability proxy + signed mismatch metric + two views.
 4. **Lens C** — reuse service-cost columns (or V2) against Lens A.
 

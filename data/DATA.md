@@ -510,6 +510,16 @@ units/permits sub-metric picker — project density vs dwelling supply.
 `new_dwelling_units` (window total) + `new_dwelling_permits` (count) ride into the
 slim file for the tooltip.
 
+**Window toggle (added 2026-07-13).** A second, shorter pinned window
+(`PERMIT_YEARS_RECENT` in `main.py` = the last 3 full years, 2023–2025) is
+aggregated by a second `load_permits` call and emits `_3yr`-suffixed twins of all
+four columns (`new_units_per_acre_3yr`, `new_permits_per_acre_3yr`,
+`new_dwelling_units_3yr`, `new_dwelling_permits_3yr`). The base (5yr, 2021–2025)
+columns stay **unsuffixed** for backward-compat with the live geojson + web
+gates. The web `#devwindow` picker switches 5yr ↔ 3yr; it's gated on the `_3yr`
+columns being present (older data files show the 5yr base only). Both windows are
+pinned + drift-guarded and bump together each January.
+
 ### Key columns (live vocab confirmed 2026-07-12)
 | Column | Notes |
 |---|---|
@@ -538,7 +548,7 @@ slim file for the tooltip.
   `PERMIT_YEARS` pin or upstream drift), and keeps-but-warns any `work_type` /
   `building_type` value outside the `KNOWN_*` vocab (it might be a new
   residential variant to count) — same explicit-dictionary discipline as
-  `load_fire`. Bump `PERMIT_YEARS` each January.
+  `load_fire`. Bump **both** `PERMIT_YEARS` and `PERMIT_YEARS_RECENT` each January.
 - **`occupancy_granted_date`** exists in the full schema (a completed-builds
   variant) but is only populated for residential finalized ≥ Jan 1 2022 /
   non-residential ≥ Jan 1 2024 — useless for historical totals, not fetched.

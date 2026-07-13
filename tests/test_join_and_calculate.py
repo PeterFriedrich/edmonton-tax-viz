@@ -864,3 +864,85 @@ def test_export_keeps_permit_columns_when_present(tmp_path):
     assert "new_permits_per_acre" in written.columns
     assert "new_dwelling_units" in written.columns  # total kept for the tooltip
     assert "new_dwelling_permits" in written.columns
+
+
+def test_permits_recent_window_adds_suffixed_columns():
+    # The optional recent (3-year) window duplicates the four activity columns
+    # with a _3yr suffix; the base (5yr) columns are untouched and unsuffixed.
+    result = join_and_calculate(
+        _assessment([{"neighbourhood_name": "GROWTOWN", "total_assessed_value": 100.0}]),
+        _boundaries([{"neighbourhood_name": "GROWTOWN", "area_acres": 10.0}]),
+        permits=_permits([
+            {"neighbourhood_name": "GROWTOWN",
+             "new_dwelling_units": 50.0, "new_dwelling_permits": 20},
+        ]),
+        permits_recent=_permits([
+            {"neighbourhood_name": "GROWTOWN",
+             "new_dwelling_units": 30.0, "new_dwelling_permits": 12},
+        ]),
+    )
+    row = result.iloc[0]
+    # base window unchanged
+    assert row["new_units_per_acre"] == pytest.approx(5.0)
+    assert row["new_permits_per_acre"] == pytest.approx(2.0)
+    # recent window, suffixed
+    assert row["new_dwelling_units_3yr"] == pytest.approx(30.0)
+    assert row["new_dwelling_permits_3yr"] == 12
+    assert row["new_units_per_acre_3yr"] == pytest.approx(3.0)
+    assert row["new_permits_per_acre_3yr"] == pytest.approx(1.2)  # 12 / 10
+
+
+def test_permits_recent_defaults_zero_and_omitted_when_absent():
+    # A hood with no recent-window permits gets a true 0 in the _3yr columns;
+    # omitting permits_recent entirely omits every _3yr column (older data files).
+    with_recent = join_and_calculate(
+        _assessment([{"neighbourhood_name": "DOWNTOWN", "total_assessed_value": 100.0}]),
+        _boundaries([
+            {"neighbourhood_name": "DOWNTOWN", "area_acres": 10.0},
+            {"neighbourhood_name": "QUIET", "area_acres": 20.0},
+        ]),
+        permits=_permits([
+            {"neighbourhood_name": "DOWNTOWN",
+             "new_dwelling_units": 10.0, "new_dwelling_permits": 4},
+        ]),
+        permits_recent=_permits([
+            {"neighbourhood_name": "DOWNTOWN",
+             "new_dwelling_units": 6.0, "new_dwelling_permits": 3},
+        ]),
+    )
+    quiet = with_recent[with_recent["neighbourhood_name"] == "QUIET"].iloc[0]
+    assert quiet["new_dwelling_units_3yr"] == 0.0
+    assert quiet["new_units_per_acre_3yr"] == 0.0
+    assert quiet["new_permits_per_acre_3yr"] == 0.0
+
+    without_recent = join_and_calculate(
+        _assessment([{"neighbourhood_name": "DOWNTOWN", "total_assessed_value": 100.0}]),
+        _boundaries([{"neighbourhood_name": "DOWNTOWN", "area_acres": 10.0}]),
+        permits=_permits([
+            {"neighbourhood_name": "DOWNTOWN",
+             "new_dwelling_units": 10.0, "new_dwelling_permits": 4},
+        ]),
+    )
+    assert "new_units_per_acre_3yr" not in without_recent.columns
+    assert "new_dwelling_units_3yr" not in without_recent.columns
+    assert "new_units_per_acre" in without_recent.columns  # base still present
+
+
+def test_export_keeps_3yr_columns_when_present(tmp_path):
+    result = join_and_calculate(
+        _assessment([{"neighbourhood_name": "DOWNTOWN", "total_assessed_value": 1_000_000.0}]),
+        _boundaries([{"neighbourhood_name": "DOWNTOWN", "area_acres": 100.0}]),
+        permits=_permits([
+            {"neighbourhood_name": "DOWNTOWN",
+             "new_dwelling_units": 200.0, "new_dwelling_permits": 80},
+        ]),
+        permits_recent=_permits([
+            {"neighbourhood_name": "DOWNTOWN",
+             "new_dwelling_units": 120.0, "new_dwelling_permits": 50},
+        ]),
+    )
+    written = export_geojson(result, str(tmp_path / "out.geojson"))
+    assert "new_units_per_acre_3yr" in written.columns
+    assert "new_permits_per_acre_3yr" in written.columns
+    assert "new_dwelling_units_3yr" in written.columns
+    assert "new_dwelling_permits_3yr" in written.columns

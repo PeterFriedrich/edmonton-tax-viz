@@ -8,8 +8,9 @@
 // units/acre + the count/permit line, and a set-aside hood's tooltip STILL
 // shows its set-aside status; the legend gradient is sqrt; the units/permits
 // SUB-METRIC PICKER (2026-07-13) switches the plane/scale/legend/tooltip to the
-// new_permits_per_acre column; a round-trip back to money restores the aside
-// row. Exit code = number of FAILED assertions.
+// new_permits_per_acre column; the 5yr/3yr WINDOW PICKER (2026-07-13) switches
+// them to the new_units_per_acre_3yr column + the 2023–2025 label; a round-trip
+// back to money restores the aside row. Exit code = number of FAILED assertions.
 //   node verify-development.js <url>
 const { chromium } = require('playwright');
 const [url] = process.argv.slice(2);
@@ -53,6 +54,10 @@ const check = (name, cond) => { (cond ? pass++ : fail++); console.log(`${cond ? 
     devPickerShown: getComputedStyle(document.getElementById('devmetric')).display !== 'none',
     unitsActive: document.querySelector('#devmetric button[data-devmetric="units"]').classList.contains('active'),
     devMetric: state.devMetric,
+    windowPickerShown: getComputedStyle(document.getElementById('devwindow')).display !== 'none',
+    fiveYrActive: document.querySelector('#devwindow button[data-devwindow="5yr"]').classList.contains('active'),
+    devWindow: state.devWindow,
+    hasDevWindow: state.hasDevWindow,
     layers: overlay._deck.props.layers.map(l => l.id),
   }));
   console.log('chrome:', JSON.stringify(chrome));
@@ -66,6 +71,13 @@ const check = (name, cond) => { (cond ? pass++ : fail++); console.log(`${cond ? 
   check('residential lens disabled', chrome.lensDisabled);
   check('sub-metric picker shown (data has permits column)', chrome.devPickerShown);
   check('units sub-metric active by default', chrome.unitsActive && chrome.devMetric === 'units');
+  if (chrome.hasDevWindow) {
+    check('window picker shown (data has _3yr columns)', chrome.windowPickerShown);
+    check('5yr window active by default', chrome.fiveYrActive && chrome.devWindow === '5yr');
+    check('legend label shows the 5yr range (2021–2025)', /2021.2025/.test(chrome.label));
+  } else {
+    console.log('window picker: data lacks _3yr columns — picker gated off (older data file)');
+  }
   check('dev-plane layer present', chrome.layers.includes('dev-plane'));
   check('no svc-plane leaked in', !chrome.layers.includes('svc-plane'));
 
@@ -182,9 +194,45 @@ const check = (name, cond) => { (cond ? pass++ : fail++); console.log(`${cond ? 
   check('devScale clamp follows permits column p97.5', permits.clampMatches);
   check('plane recolours by permits column (sqrt)', permits.midFillOk);
   check('tooltip shows "new permits / acre"', /new permits \/ acre/.test(permits.tip));
-  // Switch back to units so the money round-trip starts from the default metric.
+  // Switch back to units so the window + money round-trips start from the default metric.
   await click('#devmetric button[data-devmetric="units"]');
   await page.waitForTimeout(800);
+
+  // Window toggle: switch to the 3yr window and confirm the plane, scale,
+  // legend and tooltip all follow the new_units_per_acre_3yr column and the
+  // 2023–2025 label (gated on the _3yr columns being present).
+  if (chrome.hasDevWindow) {
+    await click('#devwindow button[data-devwindow="3yr"]');
+    await page.waitForTimeout(1500);
+    const win = await page.evaluate(() => {
+      const plane = overlay._deck.props.layers.find(l => l.id === 'dev-plane');
+      const vals = state.data.features.map(f => f.properties.new_units_per_acre_3yr)
+        .filter(v => v != null).sort((a, b) => a - b);
+      const pos = (vals.length - 1) * 0.975, lo = Math.floor(pos);
+      const q = vals[lo] + (vals[Math.ceil(pos)] - vals[lo]) * (pos - lo);
+      const active = state.data.features.filter(f => f.properties.new_units_per_acre_3yr > 0);
+      const mid = active[Math.floor(active.length / 2)];
+      const expected = rampColorAt(Math.sqrt(Math.min(1, mid.properties.new_units_per_acre_3yr / q))).join();
+      return {
+        devWindow: state.devWindow,
+        col: devCol(),
+        label: document.getElementById('legend-label').textContent,
+        clampMatches: Math.abs(devScale().clamp - q) < 1e-6,
+        midFillOk: plane.props.getFillColor(mid).join() === expected,
+        tip: tooltipFor({ object: active[0] }).html,
+      };
+    });
+    console.log('3yr tip:', win.tip);
+    check('state.devWindow is 3yr after switch', win.devWindow === '3yr');
+    check('devCol() resolves to new_units_per_acre_3yr', win.col === 'new_units_per_acre_3yr');
+    check('legend label shows the 3yr range (2023–2025)', /2023.2025/.test(win.label));
+    check('devScale clamp follows the _3yr column p97.5', win.clampMatches);
+    check('plane recolours by the _3yr column (sqrt)', win.midFillOk);
+    check('tooltip shows the 3yr range (2023–2025)', /2023.2025/.test(win.tip));
+    // Back to the 5yr base window for the money round-trip.
+    await click('#devwindow button[data-devwindow="5yr"]');
+    await page.waitForTimeout(800);
+  }
 
   // Round-trip back to money restores the aside row.
   await click('#views button[data-view="money"]');

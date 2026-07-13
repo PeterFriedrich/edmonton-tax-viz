@@ -38,8 +38,12 @@ time.
    vocabulary bridge and known quirks).
 3. **Bump `ASSESSMENT_YEAR` in `main.py`** — the single source of truth the
    year-alignment check reads.
-4. **Bump `FIRE_YEARS` in `main.py`** — drop the oldest year, add the newest
-   *completed* calendar year (pinned so a partial year is never averaged in).
+4. **Bump the pinned activity windows in `main.py`** — `FIRE_YEARS`,
+   `PERMIT_YEARS` (5yr, Development lens A base), and `PERMIT_YEARS_RECENT` (3yr,
+   the window-toggle recent cut): drop the oldest year, add the newest
+   *completed* calendar year (pinned so a partial year is never averaged/summed
+   in; a stale pin hard-errors via the drift guard, so this can't be missed
+   silently). All three roll together.
 5. **Confirm `data/stormwater_rates.json` has the new year** — stormwater
    rates are year-keyed and must match the roll year, same rule as mill rates.
 6. **Bump `DATA_YEAR` / `RATE_YEAR` in `scripts/generate_status.py`** —

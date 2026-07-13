@@ -100,6 +100,13 @@ FIRE_YEARS = (2023, 2024, 2025)
 # precedent). Bump manually each January (see docs/RUNBOOK.md year-roll).
 PERMIT_YEARS = (2021, 2022, 2023, 2024, 2025)
 
+# Recent (3-year) sub-window for the Development-view window toggle
+# (SPEC_development.md "Lens A polish", 2026-07-13): the last 3 full years, a
+# "current activity" cut alongside the 5-year base. Same pin/drift-guard rules;
+# bump alongside PERMIT_YEARS each January. Kept as its own pinned tuple (not
+# derived from PERMIT_YEARS) so the year-roll is explicit for both windows.
+PERMIT_YEARS_RECENT = (2023, 2024, 2025)
+
 # Water lens tariff vintage. Unlike mill rates (which MUST match the roll
 # year), the water model is a forward-looking modeled bill: the current
 # verified tariff schedule applied to the current roll. 2026 = the Apr 1
@@ -141,6 +148,7 @@ def run(
     fire_years: tuple[int, ...] = FIRE_YEARS,
     permits_csv: Path | None = PERMITS_CSV,
     permit_years: tuple[int, ...] = PERMIT_YEARS,
+    permit_years_recent: tuple[int, ...] = PERMIT_YEARS_RECENT,
     gtfs_stops_csv: Path | None = GTFS_STOPS_CSV,
     gtfs_routes_csv: Path | None = GTFS_ROUTES_CSV,
     gtfs_trips_csv: Path | None = GTFS_TRIPS_CSV,
@@ -267,8 +275,12 @@ def run(
     # — same optional-refreshed-input pattern; omitting the file omits the
     # activity columns.
     permits = None
+    permits_recent = None
     if permits_csv is not None and Path(permits_csv).exists():
         permits = load_permits(permits_csv, permit_years)
+        # Second aggregation over the shorter window feeds the web window toggle
+        # (5yr base <-> 3yr recent). Same loader, different pinned window.
+        permits_recent = load_permits(permits_csv, permit_years_recent)
     elif permits_csv is not None:
         logger.warning(
             "Building-permits file not found (%s) — skipping the development lens",
@@ -298,7 +310,7 @@ def run(
     result = join_and_calculate(
         aggregated, boundaries, zoning=zoning, roads=roads, stormwater=stormwater,
         fire=fire, transit=transit, water=water, franchise=franchise,
-        permits=permits, lot_acres=lot_acres_hood,
+        permits=permits, permits_recent=permits_recent, lot_acres=lot_acres_hood,
     )
 
     if png_out is not None:

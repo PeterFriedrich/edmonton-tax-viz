@@ -71,6 +71,14 @@ FRANCHISE_COLUMNS = [
 # apartment is many units but one permit, many single houses are many permits).
 PERMIT_COLUMNS = ["new_dwelling_units", "new_dwelling_permits"]
 
+# Optional recent (3-year) window (SPEC_development.md "Lens A polish", window
+# toggle 2026-07-13). When a second, shorter permit window is supplied it
+# duplicates the four activity columns with a ``_3yr`` suffix so the web window
+# toggle can switch 5yr <-> 3yr on the same map. The base (5yr) columns stay
+# UNSUFFIXED for backward-compat with the live geojson and the existing web
+# gates (``new_units_per_acre`` / ``new_permits_per_acre``).
+PERMIT_COLUMNS_3YR = [f"{c}_3yr" for c in PERMIT_COLUMNS]
+
 
 # Neighbourhood lot-acre denominator (the "value per developable acre" toggle,
 # docs/FINDINGS_denominator_cardinality.md). Carried from build_hood_lot_acres;
@@ -89,6 +97,66 @@ LOT_ACRE_COLUMNS = ["value_lot_eligible", "revenue_lot_eligible", "lot_acres_eli
 LOW_PARCEL_FRAC = 0.15
 
 
+def _merge_permit_window(
+    joined: gpd.GeoDataFrame,
+    permits: pd.DataFrame,
+    safe_area: pd.Series,
+    suffix: str,
+) -> tuple[gpd.GeoDataFrame, list[str]]:
+    """Merge one new-supply permit-window aggregation onto the hood frame.
+
+    Warn-not-fail on unmatched permit hoods (activity ≠ the money path — an
+    unmatched hood is a visibly blank hood, not a silent dollar loss), fill the
+    true 0 for hoods with no permits in the window, and compute the two per-acre
+    activity metrics against boundary ``safe_area`` (the one project
+    denominator). The base window uses ``suffix=""`` (the canonical column
+    names); the recent window uses ``"_3yr"``. Returns the updated frame and the
+    list of columns added (two totals + two per-acre), in output order.
+    """
+    units_col = f"new_dwelling_units{suffix}"
+    permits_col = f"new_dwelling_permits{suffix}"
+    upa_col = f"new_units_per_acre{suffix}"
+    ppa_col = f"new_permits_per_acre{suffix}"
+
+    boundary_names = set(joined["neighbourhood_name"])
+    unmatched_permits = sorted(set(permits["neighbourhood_name"]) - boundary_names)
+    if unmatched_permits:
+        stranded = permits.set_index("neighbourhood_name").loc[
+            unmatched_permits, "new_dwelling_units"
+        ]
+        logger.warning(
+            "%d permit neighbourhood(s) with no boundary match (activity "
+            "dropped, %.0f units%s) — warn-not-fail (activity ≠ money path):\n  %s",
+            len(unmatched_permits), stranded.sum(),
+            f", {suffix.lstrip('_')} window" if suffix else "",
+            "\n  ".join(f"{n} ({stranded[n]:.0f}u)" for n in unmatched_permits),
+        )
+
+    frame = permits.rename(columns={
+        "new_dwelling_units": units_col, "new_dwelling_permits": permits_col,
+    })
+    joined = joined.merge(
+        frame[["neighbourhood_name", units_col, permits_col]],
+        on="neighbourhood_name",
+        how="left",
+        validate="m:1",
+    )
+
+    no_permits = joined[units_col].isna()
+    if no_permits.any():
+        logger.info(
+            "%d boundary neighbourhood(s) with no new residential permits in "
+            "the %s window (default 0 units)", int(no_permits.sum()),
+            suffix.lstrip("_") if suffix else "base",
+        )
+    # No new residential permits there in the window -> a true 0 units.
+    joined[units_col] = joined[units_col].fillna(0.0)
+    joined[permits_col] = joined[permits_col].fillna(0.0)
+    joined[upa_col] = joined[units_col] / safe_area
+    joined[ppa_col] = joined[permits_col] / safe_area
+    return joined, [units_col, permits_col, upa_col, ppa_col]
+
+
 def join_and_calculate(
     assessment: pd.DataFrame,
     boundaries: gpd.GeoDataFrame,
@@ -100,6 +168,7 @@ def join_and_calculate(
     water: pd.DataFrame | None = None,
     franchise: pd.DataFrame | None = None,
     permits: pd.DataFrame | None = None,
+    permits_recent: pd.DataFrame | None = None,
     lot_acres: pd.DataFrame | None = None,
 ) -> gpd.GeoDataFrame:
     """Left join boundaries → assessment, flag unmatched rows, compute value_per_acre.
@@ -474,44 +543,18 @@ def join_and_calculate(
     # building permits over the pinned window, an activity count, NOT a revenue
     # or cost claim). Unlike the money path this is warn-not-fail on the join.
     if permits is not None:
-        boundary_names = set(joined["neighbourhood_name"])
-        unmatched_permits = sorted(set(permits["neighbourhood_name"]) - boundary_names)
-        if unmatched_permits:
-            # Activity, not dollars: an unmatched permit hood is a blank hood,
-            # not a silent money loss — warn (with its stranded units), never fail.
-            stranded = permits.set_index("neighbourhood_name").loc[
-                unmatched_permits, "new_dwelling_units"
-            ]
-            logger.warning(
-                "%d permit neighbourhood(s) with no boundary match (activity "
-                "dropped, %.0f units) — warn-not-fail (activity ≠ money path):\n  %s",
-                len(unmatched_permits), stranded.sum(),
-                "\n  ".join(f"{n} ({stranded[n]:.0f}u)" for n in unmatched_permits),
+        joined, base_cols = _merge_permit_window(joined, permits, safe_area, "")
+        added = list(base_cols)
+        # Optional recent (3-year) window for the web window toggle — same merge,
+        # suffixed columns (SPEC_development.md "Lens A polish", 2026-07-13).
+        if permits_recent is not None:
+            joined, recent_cols = _merge_permit_window(
+                joined, permits_recent, safe_area, "_3yr"
             )
-
-        joined = joined.merge(
-            permits[["neighbourhood_name", *PERMIT_COLUMNS]],
-            on="neighbourhood_name",
-            how="left",
-            validate="m:1",
-        )
-
-        no_permits = joined["new_dwelling_units"].isna()
-        if no_permits.any():
-            logger.info(
-                "%d boundary neighbourhood(s) with no new residential permits in "
-                "the window (default 0 units)", int(no_permits.sum()),
-            )
-        # No new residential permits there in the window -> a true 0 units.
-        for col in PERMIT_COLUMNS:
-            joined[col] = joined[col].fillna(0.0)
-        joined["new_units_per_acre"] = joined["new_dwelling_units"] / safe_area
-        joined["new_permits_per_acre"] = joined["new_dwelling_permits"] / safe_area
+            added += recent_cols
 
         out_cols = (
-            [c for c in out_cols if c != "geometry"]
-            + PERMIT_COLUMNS + ["new_units_per_acre", "new_permits_per_acre"]
-            + ["geometry"]
+            [c for c in out_cols if c != "geometry"] + added + ["geometry"]
         )
 
     # Neighbourhood lot-acre denominator toggle (the "value per developable
@@ -594,6 +637,8 @@ SLIM_COLUMNS = [
     "water_charge_per_acre", "water_fixed_per_acre",
     "new_units_per_acre", "new_permits_per_acre",
     "new_dwelling_units", "new_dwelling_permits",
+    "new_units_per_acre_3yr", "new_permits_per_acre_3yr",
+    "new_dwelling_units_3yr", "new_dwelling_permits_3yr",
     "value_per_lot_acre", "revenue_per_lot_acre", "parcel_frac",
     "geometry",
 ]
