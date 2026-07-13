@@ -223,23 +223,43 @@ first cut:
   lookup table; a refinement, not a first cut.
 
 **Architecture:** the pipeline emits the raw `far` ingredient only; the web
-computes the signed diverging mismatch `z(−far) − z(activity)` live, so it
-responds to the existing units/permits × 5yr/3yr Lens-A toggles for free.
+computes the signed diverging mismatch **`z(suitability) − z(activity)` =
+`−(z(far) + z(activity))`** live in the `Infill` view, so it responds to the
+existing units/permits × 5yr/3yr Lens-A toggles for free. Both terms are
+standardised over the SAME included population; the score is clamped
+symmetrically at p95 of `|score|` and rendered on a dark-centred diverging ramp
+(teal = positive/opportunity, orange = negative/pressure, near-background centre
+= a matched/unremarkable hood). POSITIVE = suitable-but-quiet, NEGATIVE =
+building-where-less-suitable.
 
-**Known first-cut caveat (the web view's job to handle):** raw low-FAR is
-polluted at the *opportunity* end by River Valley parks and Anthony Henday
-greenfield/industrial fringe (FAR ≈ 0 — parkland/undeveloped, not infill
-opportunities). `is_residential` is the WRONG filter (it also drops DOWNTOWN,
-the key dense/pressure case). The mismatch partly self-corrects (those hoods also
-have ~zero activity); the web view owns the explicit exclusion (likely a
-`set_aside` / near-zero-FAR cut), decided when it's visible on the map.
+**Low-FAR exclusion — SHIPPED as: exclude `is_set_aside` hoods (grey, off the
+z population), consistent with every money/services view.** This removes the 48
+River Valley / Anthony Henday greenfield-fringe hoods (FAR ≈ 0 parkland/
+undeveloped, not infill opportunities) and leaves 358 in the scale. `is_residential`
+was REJECTED as the filter — it also drops DOWNTOWN, the key dense/pressure case.
+
+**Residual caveat (documented, refine later):** low FAR conflates two things —
+a *mature underused infill site* and a *brand-new empty suburb still being built
+out*. So a few non-set-aside developing/edge hoods still read too strong: at the
+extreme EVERGREEN (a mostly-vacated floodplain mobile-home park, FAR ≈ 0, zero
+activity) tops the opportunity end, and new-growth suburbs like KINGLET GARDENS
+(low FAR because new, high current activity) land in "pressure". The pressure
+extreme is the trustworthy read — DOWNTOWN (high FAR = little room, still
+building) is the #1 pressure hood, which is the genuinely useful signal. The
+blurb frames the whole view as *relative and exploratory, not a target*. A future
+refinement (a maturity gate, or zoning-headroom suitability) would clean the
+opportunity end.
 
 **Build status (2026-07-13):** ✅ backend `far` column DONE — `load_property_info`
 loads `gross_area`, `build_hood_lot_acres` emits `far`, `join_and_calculate`
 carries it into the geojson + SLIM (unsuppressed by the LOW_PARCEL_FRAC guard;
 `far` is a density ratio, not a per-lot-acre dollar figure); +7 tests (318
-green). ⏳ REMAINING: the web diverging view (opportunity/pressure) + the low-FAR
-exclusion decision.
+green). ✅ **web `Infill` view DONE** — diverging mismatch plane, gated on `far`,
+reuses the units/permits × 5yr/3yr pickers for the activity side, set-aside
+excluded; `verify-infill.js` 34/34 green. ⏳ REMAINING (optional refinement):
+the maturity/zoning-headroom cleanup of the opportunity end; the one-sided
+choropleth toggles (Peter's "possibly as separate" — the single diverging map
+already shows both ends).
 
 ---
 
@@ -295,10 +315,9 @@ Lens A build-time decisions, now LOCKED:
   `NAME_CORRECTIONS` (CHAPPELLE AREA → CHAPPELLE etc.); no permit-local map
   needed. Warn-not-fail; the only straggler is `GLENORA, ROSSLYN` (1 unit).
 
-Still open (Lens B/C):
-- **Lens B base-suitability definition** — ✅ LOCKED 2026-07-13: built FAR (see
-  Lens B section). Backend `far` column DONE; the web diverging view + the
-  low-FAR park/greenfield exclusion are the remaining open pieces.
+Still open (Lens C):
+- **Lens B** — ✅ COMPLETE 2026-07-13: built-FAR suitability + `Infill` diverging
+  view (set-aside excluded). Only optional refinements remain (see Lens B section).
 - **Lens A polish** — ✅ permit-count-per-acre sub-metric toggle DONE
   (2026-07-13); ✅ window toggle DONE (2026-07-13) — a 5yr (base, 2021–2025) vs
   3yr (recent, 2023–2025) activity-window picker, both metrics; remaining: the
@@ -313,9 +332,10 @@ Still open (Lens B/C):
    (`new_permits_per_acre` + `#devmetric` control); ✅ window toggle DONE
    2026-07-13 (`_3yr` columns + `#devwindow` 5yr/3yr control,
    verify-development.js 40/40); remaining: the occupancy completed-builds variant.
-3. **Lens B** — ✅ suitability proxy (built FAR) + backend `far` column DONE
-   2026-07-13; REMAINING: signed mismatch metric + web diverging view (two views)
-   + the low-FAR park/greenfield exclusion.
+3. **Lens B** — ✅ DONE 2026-07-13: suitability proxy (built FAR) + backend `far`
+   column + web `Infill` diverging view (`z(suitability)−z(activity)`, set-aside
+   excluded, verify-infill.js 34/34). Optional future refinement: maturity gate
+   on the opportunity end; one-sided choropleth toggles.
 4. **Lens C** — reuse service-cost columns (or V2) against Lens A.
 
 ## Cross-refs
