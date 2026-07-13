@@ -188,6 +188,7 @@
     <button data-view="ratio" title="Ghost prisms of revenue per road metre — or per fire event — over the neutral road network">Ratio</button>
     <button data-view="uses" title="Each neighbourhood's dominant zoned land use — what the land is designated for, not what it yields; optional prisms show each neighbourhood's residential share">Uses</button>
     <button data-view="development" title="New dwelling units built per acre from issued building permits (2021–2025) — where the city is actually growing; greenfield growth land is shown in full colour here">Development</button>
+    <button data-view="infill" title="Suitability vs activity: where building is — or isn't — happening relative to how much room each neighbourhood has for infill (low built floor-area ratio = room to add). Teal = suitable but quiet; orange = building where there's less room">Infill</button>
     <button data-view="glass" title="Translucent metric prisms over a neutral neighbourhood plane — hover the ground for each neighbourhood's numbers">Glass</button>
   </div>
 
@@ -600,6 +601,20 @@
                "shows on hover.",
         opacity: null, // no prisms in this view
       },
+      infill: {
+        title: "Edmonton: Infill Opportunity vs Pressure",
+        blurb: "Where building is — or isn't — happening relative to how much " +
+               "room each neighbourhood has for infill. Suitability is the " +
+               "inverse of built floor-area ratio (FAR = built floor area ÷ lot " +
+               "area; low FAR = room to add); activity is new building over the " +
+               "chosen window. Each neighbourhood's colour is the gap between " +
+               "the two, as standardised (z-score) values: teal = suitable but " +
+               "quiet (room to build, little happening — the opportunity); " +
+               "orange = building where there's less room (pressure). Grey = " +
+               "set-aside / undeveloped land, off the scale. A relative, " +
+               "exploratory lens — not a target or a recommendation.",
+        opacity: null, // no prisms in this view
+      },
       glass: {
         title: null, // metric-driven, like money (applyView/applyMetric)
         blurb: null, // denominator-driven — see glassBlurb()
@@ -909,6 +924,15 @@
     // (storm linear, fire sqrt); ratio = log $/metre.
     function legendGradient() {
       const N = 16, parts = [];
+      // Infill is a diverging scale (t from -1 at the left to +1 at the right),
+      // its own colour function — not the sequential ramp.
+      if (state.view === "infill") {
+        for (let i = 0; i <= N; i++) {
+          const c = infillColorAt(-1 + 2 * (i / N));
+          parts.push(`rgb(${c[0]},${c[1]},${c[2]}) ${Math.round((i / N) * 100)}%`);
+        }
+        return "linear-gradient(90deg," + parts.join(",") + ")";
+      }
       for (let i = 0; i <= N; i++) {
         const p = i / N;                 // fraction of the displayed range
         let t;
@@ -1101,6 +1125,88 @@
     }
     const fmtDev = v => v.toFixed(v < 1 ? 2 : 1) +
       (state.devMetric === "permits" ? " new permits / acre" : " new homes / acre");
+
+    // --- Infill lens (SPEC_development.md Lens B) -----------------------------
+    // Suitability × activity MISMATCH, one signed diverging metric shown both
+    // ways. Suitability = the inverse of built floor-area ratio (`far`, pipeline
+    // 2026-07-13: Σ floor area ÷ deduped lot area; low FAR = room to add).
+    // Activity = the active Development column (devCol(): units|permits ×
+    // 5yr|3yr — the same two pickers). Score = z(suitability) − z(activity) =
+    // −(z(far) + z(activity)); POSITIVE = suitable but quiet (opportunity),
+    // NEGATIVE = building where less suitable (pressure). Both far and activity
+    // are standardised over the SAME included population so the two z-scores are
+    // comparable. Set-aside / undeveloped hoods are EXCLUDED (off the scale,
+    // grey) — undeveloped land is a greenfield story, not infill — as is any
+    // hood missing far or the active activity column. The colour is a
+    // dark-centred diverging scale (magnitude = glow, sign = hue): teal arm for
+    // opportunity, orange arm for pressure, near-background centre for a matched
+    // (unremarkable) hood. See the Lens B low-FAR caveat in the SPEC.
+    const infillIncluded = (p, col) =>
+      !p.is_set_aside && p.far != null && p[col] != null;
+    function meanStd(vals) {
+      const n = vals.length;
+      const mean = vals.reduce((a, b) => a + b, 0) / n;
+      const varc = vals.reduce((a, b) => a + (b - mean) * (b - mean), 0) / n;
+      return { mean, std: Math.sqrt(varc) || 1 };
+    }
+    // Cached per activity column (far stats are constant, activity stats and the
+    // symmetric clamp follow the picker). tracks refreshes like every scale.
+    const _infillStats = {};
+    function infillStats() {
+      const col = devCol();
+      if (_infillStats[col]) return _infillStats[col];
+      const inc = state.data.features.filter(f => infillIncluded(f.properties, col));
+      const fs = meanStd(inc.map(f => f.properties.far));
+      const as = meanStd(inc.map(f => f.properties[col]));
+      const mags = inc
+        .map(f => Math.abs(_infillRaw(f.properties, col, fs, as)))
+        .sort((a, b) => a - b);
+      // Symmetric clamp at p95 of |score| so a few extremes saturate the ramp
+      // (the p97.5 convention's diverging sibling).
+      const clamp = mags.length ? quantile(mags, 0.95) || 1 : 1;
+      return (_infillStats[col] = { fs, as, clamp, col });
+    }
+    const _infillRaw = (p, col, fs, as) =>
+      -(((p.far - fs.mean) / fs.std) + ((p[col] - as.mean) / as.std));
+    // Signed score for a hood (null when excluded), and its clamped t in [-1,1].
+    function infillScore(p) {
+      const col = devCol();
+      if (!infillIncluded(p, col)) return null;
+      const s = infillStats();
+      return _infillRaw(p, col, s.fs, s.as);
+    }
+    const infillT = p => {
+      const v = infillScore(p);
+      if (v == null) return null;
+      return Math.max(-1, Math.min(1, v / infillStats().clamp));
+    };
+    // Dark-centred diverging ramp: t in [-1,1]. Negative arm (pressure) warms to
+    // orange, positive arm (opportunity) cools to teal; both fade to a near-bg
+    // centre at 0 so magnitude reads as glow. Teal/orange is colour-blind safe.
+    const INFILL_CENTER = [24, 26, 36];
+    const INFILL_POS = [90, 222, 224];   // opportunity — teal/cyan
+    const INFILL_NEG = [244, 150, 66];   // pressure — orange
+    function infillColorAt(t) {
+      const end = t >= 0 ? INFILL_POS : INFILL_NEG;
+      const f = Math.abs(t);
+      return [0, 1, 2].map(k => Math.round(INFILL_CENTER[k] + f * (end[k] - INFILL_CENTER[k])));
+    }
+    function infillPlaneLayer() {
+      return new deck.GeoJsonLayer({
+        id: "infill-plane",
+        data: state.data,
+        filled: true,
+        stroked: false,
+        extruded: false,
+        getFillColor: f => {
+          const t = infillT(f.properties);
+          return t == null ? SET_ASIDE_COLOR : infillColorAt(t);
+        },
+        pickable: false,
+        updateTriggers: { getFillColor: [state.devMetric, state.devWindow] },
+      });
+    }
+    const fmtFar = v => v.toFixed(2) + " FAR";
 
     // Fire-station context dots (SPEC_services.md "Fire lens"): 31 points,
     // drawn whenever the fire service is checked — driver or not, they are
@@ -1499,6 +1605,12 @@
         return [developmentPlaneLayer(), hoodHoverLayer(), ...labelLayer()];
       }
 
+      if (state.view === "infill") {
+        // Single flat diverging plane (suitability−activity mismatch) + hover +
+        // labels — the Lens B mismatch map (SPEC_development.md Lens B).
+        return [infillPlaneLayer(), hoodHoverLayer(), ...labelLayer()];
+      }
+
       if (state.view === "glass") {
         // The Urban3-infographic composition: translucent 100 m grid-cell
         // spikes over an opaque neutral hood plane. The plane carries
@@ -1751,6 +1863,26 @@
         return { className: "tip", html: name + rows.join("<br/>") };
       }
 
+      if (state.view === "infill") {
+        if (p.is_set_aside)
+          return { className: "tip", html: name +
+            `<span class="muted">Set aside — ${esc(p.set_aside_reason)} — off the scale</span>` };
+        const score = infillScore(p);
+        if (score == null)
+          return { className: "tip", html: name + `<span class="muted">no infill data</span>` };
+        const verdict = score > 0.5
+          ? "Suitable but quiet — infill opportunity"
+          : score < -0.5
+            ? "Building where less suitable — pressure"
+            : "Balanced — activity ≈ suitability";
+        const act = p[devCol()];
+        return { className: "tip", html: name +
+          `${verdict}<br/>` +
+          `<span class="muted">mismatch ${score > 0 ? "+" : ""}${score.toFixed(2)} ` +
+          `(z: suitability − activity)</span><br/>` +
+          `<span class="muted">${fmtFar(p.far)} · ${fmtDev(act)}</span>` };
+      }
+
       // money view
       if (p.is_set_aside) {
         const pct = Math.round(p.set_aside_frac * 100);
@@ -1868,7 +2000,7 @@
       state.devMetric = m;
       document.querySelectorAll("#devmetric button").forEach(b =>
         b.classList.toggle("active", b.dataset.devmetric === m));
-      if (state.view !== "development") return;
+      if (state.view !== "development" && state.view !== "infill") return;
       overlay.setProps({ layers: buildLayers() });
       refreshLegend();
     }
@@ -1880,7 +2012,7 @@
       state.devWindow = w;
       document.querySelectorAll("#devwindow button").forEach(b =>
         b.classList.toggle("active", b.dataset.devwindow === w));
-      if (state.view !== "development") return;
+      if (state.view !== "development" && state.view !== "infill") return;
       overlay.setProps({ layers: buildLayers() });
       refreshLegend();
     }
@@ -1980,6 +2112,17 @@
         // The set-aside mask is overridden here, so there is no off-scale grey
         // category — hide the aside swatch row entirely for this view.
         document.querySelector("#legend .aside").style.display = "none";
+      } else if (state.view === "infill") {
+        // Diverging: the two ends are labelled, the aside swatch means
+        // off-scale (set-aside / no data). The bar itself is set below from
+        // legendGradient() like every view.
+        document.getElementById("legend-label").textContent =
+          "Suitable but quiet ↔ building where less suitable" +
+          ` (vs ${state.devMetric === "permits" ? "permits" : "homes"}, ${DEV_WINDOW_LABEL[state.devWindow]})`;
+        document.getElementById("legend-min").textContent = "← less suitable, building";
+        document.getElementById("legend-max").textContent = "suitable, quiet →";
+        label.textContent = "Set aside / off-scale";
+        sw.style.background = `rgb(${SET_ASIDE_COLOR.join(",")})`;
       } else if (state.view === "ratio") {
         const s = ratioScale();
         document.getElementById("legend-label").textContent = ratioDenom().legend;
@@ -2113,12 +2256,14 @@
       // The Money view opens the layers panel too — but only for the denominator
       // toggle, and only when the data carries the lot-acre columns.
       const moneyDenom = v === "money" && state.hasHoodLot;
-      // The development view opens the layers panel for its unit/permit sub-metric
-      // picker — only when the data carries the permit-per-acre column.
-      const devMetricShow = v === "development" && state.hasPermitsPerAcre;
+      // The development AND infill views open the layers panel for the
+      // unit/permit sub-metric picker (in infill it drives the activity side of
+      // the mismatch) — only when the data carries the permit-per-acre column.
+      const devViewsMetric = v === "development" || v === "infill";
+      const devMetricShow = devViewsMetric && state.hasPermitsPerAcre;
       // The window toggle (5yr/3yr) needs the _3yr columns (pipeline 2026-07-13);
       // older data files carry only the base window and hide it.
-      const devWindowShow = v === "development" && state.hasDevWindow;
+      const devWindowShow = devViewsMetric && state.hasDevWindow;
       document.getElementById("layers").style.display =
         (prisms || v === "services" || v === "uses" || moneyDenom || devMetricShow || devWindowShow) ? "flex" : "none";
       document.getElementById("uses-prisms-hd").style.display = v === "uses" ? "block" : "none";
@@ -2134,7 +2279,7 @@
       // residential flag — the button disables in all three (state persists
       // and re-applies on leaving).
       document.querySelector("#lens button").disabled =
-        v === "services" || v === "uses" || v === "glass" || v === "development";
+        v === "services" || v === "uses" || v === "glass" || v === "development" || v === "infill";
       if ((v === "services" || v === "ratio") && !roadsData) {
         roadsFetch ??= fetch(ROADS_URL).then(r => r.json()).then(d => { roadsData = d; });
         await roadsFetch;
@@ -2215,7 +2360,7 @@
         v === "services" ? servicesBlurb() :
         v === "ratio" ? ratioDenom().blurb :
         v === "uses" ? usesBlurb() :
-        v === "development" ? VIEWS.development.blurb : moneyBlurb();
+        (v === "development" || v === "infill") ? VIEWS[v].blurb : moneyBlurb();
       syncColorAdjust(); // the sqrt toggle only bites in money + glass (scaleT)
       refreshLegend();
     }
@@ -2365,6 +2510,14 @@
       // older data files carry only the base 5yr window and hide the picker.
       state.hasDevWindow =
         state.data.features.some(f => f.properties.new_units_per_acre_3yr != null);
+      // The Infill view (Lens B) needs the `far` suitability column (pipeline
+      // 2026-07-13) AND the activity column — hide the button on older data.
+      state.hasInfill =
+        state.data.features.some(f => f.properties.far != null) &&
+        state.data.features.some(f => f.properties.new_units_per_acre != null);
+      if (!state.hasInfill) {
+        document.querySelector('#views button[data-view="infill"]').style.display = "none";
+      }
       // Sync the legend gradient to the default ramp (single source of truth).
       document.querySelector("#legend .bar").style.background = legendGradient();
 

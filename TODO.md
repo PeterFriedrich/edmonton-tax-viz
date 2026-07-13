@@ -333,12 +333,17 @@ _Last reconciled: 2026-07-09_
       emits `far`, `join_and_calculate` carries it into geojson + SLIM
       (unsuppressed by LOW_PARCEL_FRAC); +7 tests, 318 green. DECISIONS.md +
       SPEC_development Lens B + DATA.md §2.
-    - [ ] **Web diverging view (REMAINING):** compute `z(−far) − z(activity)`
-      live (responds to units/permits × 5yr/3yr toggles); opportunity + pressure
-      views off one diverging scale. **Decide the low-FAR park/greenfield
-      exclusion** (River Valley / Anthony Henday read FAR≈0 but aren't infill
-      opportunities; `is_residential` is the wrong filter — drops DOWNTOWN;
-      likely `set_aside` / near-zero-FAR cut). See SPEC_development Lens B caveat.
+    - [x] **Web `Infill` diverging view DONE 2026-07-13:** `z(suitability) −
+      z(activity)` = `−(z(far)+z(activity))` computed live (responds to the
+      units/permits × 5yr/3yr pickers); one dark-centred diverging plane (teal =
+      suitable-but-quiet, orange = building-where-less-suitable), set-aside
+      EXCLUDED from the z population (358 hoods kept; `is_residential` rejected —
+      drops DOWNTOWN). `verify-infill.js` 34/34 green. DECISIONS + SPEC_development.
+    - [ ] **Lens B optional refinement (future, low priority):** the low-FAR
+      opportunity end conflates mature-underused with new-empty-suburb (EVERGREEN,
+      KINGLET GARDENS over-flag); a maturity gate or zoning-headroom suitability
+      would clean it. Also: one-sided opportunity/pressure choropleth toggles
+      (the single diverging map already shows both). SPEC_development Lens B.
   - [ ] **Lens C — Activity vs City Service Cost, PHASE 3 / future.** Where new
     building goes vs modeled city service columns (road/storm/water/fire per acre)
     or V2 unit-cost $/acre (laptop-gated). Two-ledger idiom of
