@@ -85,18 +85,19 @@
     /* Uses-view residential-prisms toggle — hidden outside the uses view
        (the #denom default-hidden pattern). */
     #uses-prisms-hd, #uses-prisms { display: none; }
-    /* Development-view sub-metric picker (dwelling units vs permits per acre) —
-       shares the #denom button styling + default-hidden pattern; shown only in
-       the development view and only when the data carries new_permits_per_acre. */
-    #devmetric-hd, #devmetric { display: none; }
-    #denom, #ratio-denom, #devmetric { border: 1px solid #2a2a3a; border-radius: 5px; overflow: hidden; margin-bottom: 2px; }
-    #denom button, #ratio-denom button, #devmetric button {
+    /* Development-view sub-metric picker (dwelling units vs permits per acre)
+       and window picker (last 5 yr vs 3 yr) — share the #denom button styling +
+       default-hidden pattern; shown only in the development view (metric always,
+       window only when the data carries the _3yr columns). */
+    #devmetric-hd, #devmetric, #devwindow-hd, #devwindow { display: none; }
+    #denom, #ratio-denom, #devmetric, #devwindow { border: 1px solid #2a2a3a; border-radius: 5px; overflow: hidden; margin-bottom: 2px; }
+    #denom button, #ratio-denom button, #devmetric button, #devwindow button {
       appearance: none; border: 0; background: transparent; color: #9a9ab0;
       font: 11px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       padding: 4px 10px; cursor: pointer; flex: 1; transition: background 0.12s, color 0.12s;
     }
-    #denom button:hover, #ratio-denom button:hover, #devmetric button:hover { color: #e8e8ef; }
-    #denom button.active, #ratio-denom button.active, #devmetric button.active { background: #fcd278; color: #16111a; font-weight: 600; }
+    #denom button:hover, #ratio-denom button:hover, #devmetric button:hover, #devwindow button:hover { color: #e8e8ef; }
+    #denom button.active, #ratio-denom button.active, #devmetric button.active, #devwindow button.active { background: #fcd278; color: #16111a; font-weight: 600; }
     #toggle button, #palette button, #lens button {
       appearance: none; border: 0; background: transparent; color: #9a9ab0;
       font: 12.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -260,6 +261,11 @@
     <div id="devmetric">
       <button data-devmetric="units" class="active" title="New dwelling units per acre — housing supply added. One large apartment adds many units on a single permit">Dwelling units</button>
       <button data-devmetric="permits" title="New residential building permits per acre — project density. Many single houses are many permits; one apartment is one permit">Permits</button>
+    </div>
+    <span class="hd" id="devwindow-hd">Window</span>
+    <div id="devwindow">
+      <button data-devwindow="5yr" class="active" title="Building activity summed over the last five full calendar years (2021–2025) — the more stable, structural view">Last 5 yr</button>
+      <button data-devwindow="3yr" title="Building activity summed over the last three full calendar years (2023–2025) — the more recent, current-activity view">Last 3 yr</button>
     </div>
   </div>
 
@@ -669,6 +675,7 @@
                     usesPrisms: false, // Uses-view residential prisms (off = the flat categorical view)
                     ratioDenom: "roads", // Ratio-view denominator (RATIO_DENOMS); persists like denom
                     devMetric: "units", // Development-view sub-metric: units | permits per acre
+                    devWindow: "5yr", // Development-view activity window: 5yr (base) | 3yr (recent)
                     services: { roads: true, storm: false, fire: false, water: false, transit: false },
                     svcDriver: "roads",
                     data: null };
@@ -1046,12 +1053,23 @@
     // full colour (their set-aside status stays in the tooltip). Distribution is
     // right-skewed (a few dense-infill hoods dominate) → sqrt colour always,
     // independent of the colour-adjust toggle (like the fire/transit planes).
-    // The sub-metric picker (state.devMetric) swaps the choropleth between new
-    // dwelling units per acre (housing supply added) and new permits per acre
-    // (project density) — both from the same pinned-window permit set. Each has
-    // its own p97.5 clamp, cached per column.
-    const DEV_COLS = { units: "new_units_per_acre", permits: "new_permits_per_acre" };
-    const devCol = () => DEV_COLS[state.devMetric];
+    // Two Development-view pickers select the choropleth column together:
+    // state.devMetric (units vs permits per acre — supply added vs project
+    // density) × state.devWindow (5yr base 2021–2025 vs 3yr recent 2023–2025).
+    // The 5yr columns are the unsuffixed base; 3yr carry a _3yr suffix (pipeline
+    // 2026-07-13). Each of the four columns keeps its own p97.5 clamp, cached by
+    // column name. DEV_TOTAL_COLS gives the tooltip's (units total, permit count)
+    // pair per window; DEV_WINDOW_LABEL the year range shown in tooltip + legend.
+    const DEV_COLS = {
+      units:   { "5yr": "new_units_per_acre",   "3yr": "new_units_per_acre_3yr" },
+      permits: { "5yr": "new_permits_per_acre", "3yr": "new_permits_per_acre_3yr" },
+    };
+    const DEV_TOTAL_COLS = {
+      "5yr": { units: "new_dwelling_units",     permits: "new_dwelling_permits" },
+      "3yr": { units: "new_dwelling_units_3yr", permits: "new_dwelling_permits_3yr" },
+    };
+    const DEV_WINDOW_LABEL = { "5yr": "2021–2025", "3yr": "2023–2025" };
+    const devCol = () => DEV_COLS[state.devMetric][state.devWindow];
     const _devScale = {};
     function devScale() {
       const col = devCol();
@@ -1078,7 +1096,7 @@
           return v == null ? GLASS_PLANE_COLOR : rampColorAt(devT(v));
         },
         pickable: false,
-        updateTriggers: { getFillColor: [state.ramp, state.devMetric] },
+        updateTriggers: { getFillColor: [state.ramp, state.devMetric, state.devWindow] },
       });
     }
     const fmtDev = v => v.toFixed(v < 1 ? 2 : 1) +
@@ -1716,12 +1734,14 @@
         const pa = p[devCol()];
         if (pa == null)
           return { className: "tip", html: name + `<span class="muted">no permit data</span>` };
+        const tot = DEV_TOTAL_COLS[state.devWindow];
+        const units = p[tot.units], permits = p[tot.permits];
         const rows = [
           fmtDev(pa),
-          `<span class="muted">${Math.round(p.new_dwelling_units).toLocaleString()} new dwelling ` +
-            `unit${p.new_dwelling_units === 1 ? "" : "s"} · ` +
-            `${Math.round(p.new_dwelling_permits).toLocaleString()} permit` +
-            `${p.new_dwelling_permits === 1 ? "" : "s"} (2021–2025)</span>`,
+          `<span class="muted">${Math.round(units).toLocaleString()} new dwelling ` +
+            `unit${units === 1 ? "" : "s"} · ` +
+            `${Math.round(permits).toLocaleString()} permit` +
+            `${permits === 1 ? "" : "s"} (${DEV_WINDOW_LABEL[state.devWindow]})</span>`,
         ];
         // Set-aside status still shows here even though the hood is coloured
         // (the override greys nothing) — Peter's tooltip decision, 2026-07-12.
@@ -1853,6 +1873,18 @@
       refreshLegend();
     }
 
+    // Development-view window toggle (5yr base <-> 3yr recent). Mirrors
+    // applyDevMetric; the two pickers combine in devCol() to pick the column.
+    function applyDevWindow(w) {
+      if (w === state.devWindow || !DEV_WINDOW_LABEL[w]) return;
+      state.devWindow = w;
+      document.querySelectorAll("#devwindow button").forEach(b =>
+        b.classList.toggle("active", b.dataset.devwindow === w));
+      if (state.view !== "development") return;
+      overlay.setProps({ layers: buildLayers() });
+      refreshLegend();
+    }
+
     // Sync the whole legend to the current view. roads: the network's linear
     // road scale. ratio: the active denominator's log scale between its data
     // anchors (residential anchors when the lens is on). money: the metric scale; with
@@ -1940,7 +1972,7 @@
       } else if (state.view === "development") {
         document.getElementById("legend-label").textContent =
           (state.devMetric === "permits" ? "New permits per acre" : "New homes per acre") +
-          " (2021–2025, sqrt colour)";
+          ` (${DEV_WINDOW_LABEL[state.devWindow]}, sqrt colour)`;
         document.getElementById("legend-min").textContent = "0";
         const clamp = devScale().clamp;
         document.getElementById("legend-max").textContent =
@@ -2084,8 +2116,11 @@
       // The development view opens the layers panel for its unit/permit sub-metric
       // picker — only when the data carries the permit-per-acre column.
       const devMetricShow = v === "development" && state.hasPermitsPerAcre;
+      // The window toggle (5yr/3yr) needs the _3yr columns (pipeline 2026-07-13);
+      // older data files carry only the base window and hide it.
+      const devWindowShow = v === "development" && state.hasDevWindow;
       document.getElementById("layers").style.display =
-        (prisms || v === "services" || v === "uses" || moneyDenom || devMetricShow) ? "flex" : "none";
+        (prisms || v === "services" || v === "uses" || moneyDenom || devMetricShow || devWindowShow) ? "flex" : "none";
       document.getElementById("uses-prisms-hd").style.display = v === "uses" ? "block" : "none";
       document.getElementById("uses-prisms").style.display = v === "uses" ? "block" : "none";
       document.getElementById("prism-hd").style.display = prisms ? "block" : "none";
@@ -2164,6 +2199,9 @@
       // The development sub-metric picker (units vs permits per acre).
       document.getElementById("devmetric-hd").style.display = devMetricShow ? "block" : "none";
       document.getElementById("devmetric").style.display = devMetricShow ? "flex" : "none";
+      // The development window picker (5yr vs 3yr activity window).
+      document.getElementById("devwindow-hd").style.display = devWindowShow ? "block" : "none";
+      document.getElementById("devwindow").style.display = devWindowShow ? "flex" : "none";
       overlay.setProps({ layers: buildLayers() });
       // Glass shows the metric like Money, so its title stays metric-driven
       // and its blurb follows the spike denominator; the services blurb
@@ -2241,6 +2279,8 @@
         b.addEventListener("click", () => applyRatioDenom(b.dataset.ratioDenom)));
       document.querySelectorAll("#devmetric button").forEach(b =>
         b.addEventListener("click", () => applyDevMetric(b.dataset.devmetric)));
+      document.querySelectorAll("#devwindow button").forEach(b =>
+        b.addEventListener("click", () => applyDevWindow(b.dataset.devwindow)));
       document.getElementById("uses-prisms-on").addEventListener("change",
         e => applyUsesPrisms(e.target.checked));
       document.querySelectorAll("#services .svc").forEach(el => {
@@ -2321,6 +2361,10 @@
       // picker stays hidden and the units metric is the sole choropleth.
       state.hasPermitsPerAcre =
         state.data.features.some(f => f.properties.new_permits_per_acre != null);
+      // The 5yr/3yr window toggle needs the _3yr columns (pipeline 2026-07-13);
+      // older data files carry only the base 5yr window and hide the picker.
+      state.hasDevWindow =
+        state.data.features.some(f => f.properties.new_units_per_acre_3yr != null);
       // Sync the legend gradient to the default ramp (single source of truth).
       document.querySelector("#legend .bar").style.background = legendGradient();
 

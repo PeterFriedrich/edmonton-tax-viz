@@ -318,8 +318,12 @@ _Last reconciled: 2026-07-09_
       `new_permits_per_acre` column + web `#devmetric` units/permits picker
       (project density vs dwelling supply); ABBOTTSFIELD 248 units / 2 permits is
       the extreme case. 308 pytest + `verify-development.js` 31/31 green.
-    - **Lens A polish (remaining):** window toggle; the `occupancy_granted_date`
-      completed-builds variant (DATA.md §10).
+    - [x] **Lens A polish — window toggle** (2026-07-13): second pinned window
+      `PERMIT_YEARS_RECENT` (3yr, 2023–2025) alongside the 5yr base →
+      `_3yr`-suffixed columns + web `#devwindow` 5yr/3yr picker (both metrics),
+      gated on the `_3yr` columns. 311 pytest + `verify-development.js` 40/40 green.
+    - **Lens A polish (remaining):** the `occupancy_granted_date` completed-builds
+      variant (DATA.md §10 — only populated residential ≥2022 / non-res ≥2024).
   - [ ] **Lens B — Suitability × Activity mismatch, PHASE 2.** Signed diverging
     metric `z(suitability) − z(activity)`: two views off one scale — suitable-
     but-quiet (opportunity) AND less-suitable-but-building (Peter's flip). Base
