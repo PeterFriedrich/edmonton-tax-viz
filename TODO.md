@@ -345,6 +345,12 @@ _Last reconciled: 2026-07-09_
       hoods barred from the teal opportunity end (grey) but kept on orange/pressure
       + in the z population (keeps DOWNTOWN). Web-only, no new pipeline column
       (`infillOppSuppressed`). `verify-infill.js` 41/41. DECISIONS + SPEC_development.
+    - [ ] **Lens B per-arm colour scaling (REOPENED 2026-07-14, handed to Fable).**
+      S48 audit: the mismatch score is structurally asymmetric (suitability capped
+      +0.97, activity unbounded) so the symmetric p95 clamp leaves the teal arm
+      unable to saturate (0 teal vs 18 orange saturations) + median hood on the
+      +0.5 verdict line. Fix (web-only): clamp each arm at its own p95 + verdict
+      cut-points in `t` space. Brief: `docs/FABLE_infill_perarm_scaling.md`.
     - [ ] **Lens B optional refinement (future, low priority):** one-sided
       opportunity/pressure choropleth toggles (the single diverging map already
       shows both). SPEC_development Lens B.

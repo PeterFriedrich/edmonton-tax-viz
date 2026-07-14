@@ -227,7 +227,8 @@ computes the signed diverging mismatch **`z(suitability) − z(activity)` =
 `−(z(far) + z(activity))`** live in the `Infill` view, so it responds to the
 existing units/permits × 5yr/3yr Lens-A toggles for free. Both terms are
 standardised over the SAME included population; the score is clamped
-symmetrically at p95 of `|score|` and rendered on a dark-centred diverging ramp
+symmetrically at p95 of `|score|` (⚠️ **REOPENED 2026-07-14 → per-arm scaling** —
+see the block below) and rendered on a dark-centred diverging ramp
 (teal = positive/opportunity, orange = negative/pressure, near-background centre
 = a matched/unremarkable hood). POSITIVE = suitable-but-quiet, NEGATIVE =
 building-where-less-suitable.
@@ -277,6 +278,22 @@ excluded. ✅ **asymmetric residential opportunity gate DONE** (web-only,
 `infillOppSuppressed`); `verify-infill.js` 41/41 green. ⏳ REMAINING (optional,
 low priority): the one-sided choropleth toggles (Peter's "possibly as separate" —
 the single diverging map already shows both ends).
+
+**⚠️ REOPENED 2026-07-14 — symmetric clamp → per-arm scaling (S48 Fable audit; handed to Fable).**
+The S48 decision audit found the mismatch score is *structurally asymmetric*: the
+suitability term `−z(far)` is capped at **+0.97** (far ≥ 0, so `z(far) ≥ −0.97`),
+while the activity term `−z(activity)` is unbounded below (activity max z = +6.16).
+On the shipped `units × 5yr` data the score ranges **−12.03 … +1.51**, so the single
+**symmetric** p95 clamp of `|score|` (**3.04**) lets 18 hoods saturate the orange
+(pressure) arm but **zero** hoods reach even half-saturation on the teal (opportunity)
+arm — the legend's full-teal endpoint is *unreachable by construction*, and the
+median hood score (+0.435) sits almost exactly on the +0.5 "opportunity" verdict
+threshold. **Fix (web-only):** clamp each arm at its *own* p95 — teal at p95 of the
+positive scores, orange at p95 of `|negative scores|` — and express the tooltip
+verdict cut-points in per-arm / clamped-`t` space rather than a fixed ±0.5 on the
+raw score. Nothing else about Lens B changes. Full implementation brief:
+`docs/FABLE_infill_perarm_scaling.md`. Deploy: web-only → live only on the next
+`refresh.yml` run (Peter's trigger).
 
 ---
 
