@@ -563,6 +563,62 @@ pinned + drift-guarded and bump together each January.
   variant) but is only populated for residential finalized ≥ Jan 1 2022 /
   non-residential ≥ Jan 1 2024 — useless for historical totals, not fetched.
 
+## 11. Alberta FIR Debt Series (debt lens D5, added 2026-07-14)
+
+**Source:** Alberta Municipal Affairs — Municipal Financial and Statistical
+Data (FIR/SIR), `https://open.alberta.ca/opendata/municipal-financial-and-statistical-data`
+**Fetch:** `scripts/fetch_fir_debt.py` → committed `data/fir_debt_series.json`
+(12 KB). **Manual, reviewed input** (mill-rates pattern): NOT part of the weekly
+refresh — re-run when a new financial year publishes (~annually, watch for it
+alongside the January year-roll), eyeball the diff, commit. openpyxl/xlrd are
+dev-only deps (`requirements.txt`, not `requirements-ci.txt`); the test module
+skips itself on CI.
+**Format:** one XLSX workbook per financial year, every Alberta municipality.
+The debt schedule ("Schedule AA", 8 identical columns 2003–2025) carries FIR
+item codes `05700` Debt Limit / `05710` Total Debt / `05720` Debt Service
+Limit / `05730` Total Debt Service Costs.
+**Extracted:** EDMONTON (code `0098`), ST. ALBERT (`0292`), STRATHCONA COUNTY
+(`0302`) — the two peers the debt-lens brief benchmarks against — for
+2003–2025 (23 years; one year further than the brief expected).
+**Licence:** Open Government Licence – Alberta
+
+**Why:** debt-lens ticket D5 (`docs/fable_brief_debt_lens.md` Component 2) —
+the citywide debt context annotation (trend + peer benchmark, explicitly
+non-spatial). The display/chart is a separate, undecided design step; this is
+the data layer only.
+
+### Format eras (all verified 2026-07-14)
+| Years | Where | Debt sheet |
+|---|---|---|
+| 2017–2025 | standalone `YYYY_financial_year.xlsx` on the dataset page | `AA(1)-Debt` |
+| 2009–2016 | inside `2009-2016-municipal_financial-data-and-statistics.zip` | `AA(1)-Debt` |
+| 2004–2008 | inside `xlsx-2003-2008.zip`, per-schedule `YYYY/YYYY-AA-Debt Info.xlsx` | `Schedule AA` |
+| 2003 | same zip, legacy `2003-EA-MR/GR Debt Info.xls` (xlrd) | `GR Debt Info` |
+
+(A `xlsx-2002-1994.zip` also exists if the series is ever extended back.)
+
+### Known Quirks
+- **STRATHCONA COUNTY 2013 is reported in $000s** in the source workbook (debt
+  limit `485,926` between real-dollar neighbours 473.9M/504.2M). The fetch
+  script applies a documented ×1000 correction (`KNOWN_UNIT_CORRECTIONS`),
+  records `unit_corrected: 1000` on that year's JSON record, and a
+  neighbour-band sanity check (factor 5 vs adjacent years) hard-fails if a new
+  unit slip ever appears.
+- **The FIR "Debt Limit" is the MGA regulation limit** (Debt Limit Regulation
+  255/2000 — 2× revenue for most municipalities; Edmonton/Calgary have their
+  own), **NOT Edmonton's internal DMFP policy limits** (≤18% tax-supported /
+  ≤21% total debt servicing) that the "69% of limit" headline in the debt-lens
+  brief refers to. Don't conflate the two in any display. On FIR terms,
+  Edmonton 2025 total debt = 59.3% of its MGA debt limit.
+- **Anchor cross-checks** pin the extraction to independently published
+  figures: Edmonton 2025 total debt $4,592,150,000 (the brief's "$4.6B"
+  reported to Council 2026-03-17) and Strathcona County 2022 $133,070,148 (the
+  brief's audited peer datapoint). A mismatch on re-fetch means the province
+  restated data → human review (`--allow-anchor-drift` to accept).
+- Edmonton's series is NOT monotonic — e.g. 2017 drops to $2.91B from $3.34B
+  (2016) before climbing again; real amortization, not a data error (both
+  years pass the neighbour band).
+
 ## Name Matching
 
 Neighbourhood names between the two sources may not align exactly. Normalization (strip + uppercase) and the `NAME_CORRECTIONS` dict (keyed assessment name → boundary name) are applied in `load_assessment.py`, *before* aggregation — applying corrections after aggregation could collapse two summed rows onto one boundary and duplicate it. `join_and_calculate.py` then does a normalized exact match on the already-corrected names and flags whatever remains unmatched.
