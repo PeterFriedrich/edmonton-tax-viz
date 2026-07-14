@@ -226,9 +226,9 @@ first cut:
 computes the signed diverging mismatch **`z(suitability) − z(activity)` =
 `−(z(far) + z(activity))`** live in the `Infill` view, so it responds to the
 existing units/permits × 5yr/3yr Lens-A toggles for free. Both terms are
-standardised over the SAME included population; the score is clamped
-symmetrically at p95 of `|score|` (⚠️ **REOPENED 2026-07-14 → per-arm scaling** —
-see the block below) and rendered on a dark-centred diverging ramp
+standardised over the SAME included population; each arm of the score is
+clamped at its own p95 (per-arm scaling, 2026-07-14 — see the block below) and
+rendered on a dark-centred diverging ramp
 (teal = positive/opportunity, orange = negative/pressure, near-background centre
 = a matched/unremarkable hood). POSITIVE = suitable-but-quiet, NEGATIVE =
 building-where-less-suitable.
@@ -275,24 +275,29 @@ carries it into the geojson + SLIM (unsuppressed by the LOW_PARCEL_FRAC guard;
 green). ✅ **web `Infill` view DONE** — diverging mismatch plane, gated on `far`,
 reuses the units/permits × 5yr/3yr pickers for the activity side, set-aside
 excluded. ✅ **asymmetric residential opportunity gate DONE** (web-only,
-`infillOppSuppressed`); `verify-infill.js` 41/41 green. ⏳ REMAINING (optional,
+`infillOppSuppressed`); `verify-infill.js` 44/44 green. ⏳ REMAINING (optional,
 low priority): the one-sided choropleth toggles (Peter's "possibly as separate" —
 the single diverging map already shows both ends).
 
-**⚠️ REOPENED 2026-07-14 — symmetric clamp → per-arm scaling (S48 Fable audit; handed to Fable).**
+**✅ PER-ARM SCALING DONE (2026-07-14, Fable — closes the S48-audit reopening).**
 The S48 decision audit found the mismatch score is *structurally asymmetric*: the
 suitability term `−z(far)` is capped at **+0.97** (far ≥ 0, so `z(far) ≥ −0.97`),
 while the activity term `−z(activity)` is unbounded below (activity max z = +6.16).
-On the shipped `units × 5yr` data the score ranges **−12.03 … +1.51**, so the single
-**symmetric** p95 clamp of `|score|` (**3.04**) lets 18 hoods saturate the orange
-(pressure) arm but **zero** hoods reach even half-saturation on the teal (opportunity)
-arm — the legend's full-teal endpoint is *unreachable by construction*, and the
-median hood score (+0.435) sits almost exactly on the +0.5 "opportunity" verdict
-threshold. **Fix (web-only):** clamp each arm at its *own* p95 — teal at p95 of the
-positive scores, orange at p95 of `|negative scores|` — and express the tooltip
-verdict cut-points in per-arm / clamped-`t` space rather than a fixed ±0.5 on the
-raw score. Nothing else about Lens B changes. Full implementation brief:
-`docs/FABLE_infill_perarm_scaling.md`. Deploy: web-only → live only on the next
+On the shipped `units × 5yr` data the score ranges **−12.03 … +1.51**, so the old
+single **symmetric** p95 clamp of `|score|` (**3.04**) let 18 hoods saturate the
+orange (pressure) arm but **zero** hoods reach even half-saturation on the teal
+(opportunity) arm — the legend's full-teal endpoint was *unreachable by
+construction*, and the median hood score (+0.435) sat almost exactly on the +0.5
+"opportunity" verdict threshold. **Shipped fix (web-only):** each arm clamps at
+its *own* p95 — `clampPos` = p95 of positive scores (≈ 1.49 on units × 5yr),
+`clampNeg` = p95 of `|negative scores|` (≈ 4.34) — in `infillStats`/`infillT`;
+the tooltip verdict branches on clamped `t` at **±0.4** (`INFILL_VERDICT_T`,
+chosen off the shipped data: ~25% of the teal arm / ~31% of the orange arm read
+as verdicts on the default column, and the median hood at t ≈ 0.29 sits clear of
+the cut). The teal endpoint now saturates (EVERGREEN, WESTVIEW VILLAGE); the
+pressure ordering is unchanged (DOWNTOWN still #1). Nothing else about Lens B
+changed. Locked in `docs/DECISIONS.md` (2026-07-14); implementation brief was
+`docs/FABLE_infill_perarm_scaling.md`. Deploy: web-only → live on the next
 `refresh.yml` run (Peter's trigger).
 
 ---

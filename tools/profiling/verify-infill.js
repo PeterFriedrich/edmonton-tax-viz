@@ -10,7 +10,9 @@
 // infillColorAt(infillT); SIGN semantics (top residential opportunity is on the
 // teal arm, min-score on the orange arm); the RESIDENTIAL GATE (2026-07-13 —
 // non-residential land is barred from the teal opportunity end but kept on the
-// orange pressure end and in the z population, SPEC_development.md Lens B); the
+// orange pressure end and in the z population, SPEC_development.md Lens B);
+// PER-ARM SCALING (2026-07-14 — each arm clamps at its own p95, so the teal
+// arm saturates and the pressure ordering is unchanged); the
 // tooltip carries the mismatch + FAR +
 // activity, and a set-aside hood reads "off the scale"; the legend gradient is
 // diverging (ends differ, centre near INFILL_CENTER); the units/permits +
@@ -166,6 +168,32 @@ const check = (name, cond) => { (cond ? pass++ : fail++); console.log(`${cond ? 
   check('suppressed hood tooltip reads non-residential', /non-residential/i.test(gate.nrOppTip));
   check('non-residential pressure hood is NOT suppressed', gate.nrPressNotSuppressed === true);
   check('non-residential pressure hood still renders orange', gate.nrPressOrange === true);
+
+  // Per-arm scaling (DECISIONS 2026-07-14): each arm clamps at its OWN p95 —
+  // the score is structurally asymmetric (suitability capped, activity
+  // unbounded), so under the old symmetric clamp the teal arm could never
+  // exceed ~50% saturation. Now a teal hood near-saturates, the two clamps are
+  // independent, and the orange arm's ordering (DOWNTOWN top pressure) is
+  // untouched. Runs on the default units × 5yr column (before the picker flip).
+  const perArm = await page.evaluate(() => {
+    const s = infillStats();
+    const inc = state.data.features.filter(f => infillIncluded(f.properties, devCol()));
+    let maxTealT = -Infinity, lo = inc[0];
+    for (const f of inc) {
+      const t = infillT(f.properties);
+      if (t != null && t > maxTealT) maxTealT = t;
+      if (infillScore(f.properties) < infillScore(lo.properties)) lo = f;
+    }
+    return { clampPos: s.clampPos, clampNeg: s.clampNeg, maxTealT,
+             topPressure: lo.properties.neighbourhood_name };
+  });
+  console.log('per-arm: clampPos=', perArm.clampPos.toFixed(3),
+              'clampNeg=', perArm.clampNeg.toFixed(3),
+              'maxTealT=', perArm.maxTealT.toFixed(3),
+              'topPressure=', perArm.topPressure);
+  check('teal arm reaches near-full saturation (max t ≥ 0.95)', perArm.maxTealT >= 0.95);
+  check('per-arm clamps are independent (clampPos !== clampNeg)', perArm.clampPos !== perArm.clampNeg);
+  check('pressure ranking unchanged — DOWNTOWN still top pressure', perArm.topPressure === 'DOWNTOWN');
 
   // Tooltip: mismatch + FAR + activity; set-aside hood reads off the scale.
   const tips = await page.evaluate(() => {
