@@ -215,12 +215,15 @@ _Last reconciled: 2026-07-09_
   3. Surface as a click-through popup / footnote-style panel — **NOT** a toggle affecting
      the main colour ramp.
   **Sources to hunt (primary supersedes secondhand):**
-  - **PRIMARY: the actual IIMP / "Fiscal Impacts of Growth" report** for Decoteau/Horse
-    Hill/Riverview — referenced secondhand via a Gemini research summary in project files;
-    we don't yet have the primary City doc. Search council agenda/report archives
-    (edmonton.ca, eScribe/insite) for "IIMP", "Fiscal Impacts of Growth", "Decoteau ASP",
-    "Growth Related Analysis". (edmonton.ca is Oracle-box-unreachable — laptop-only, per
-    the Session-21 blocker.)
+  - **PRIMARY: the actual IIMP / "Fiscal Impacts of Growth" report** — **LOCATED
+    2026-07-14** (debt-lens brief research): Report CR_2705 (2016) + Attachment 1,
+    archived at doniveson.ca (`/wp-content/uploads/2018/09/IIMP.pdf` — 4-page council
+    report — and `IIMP2.pdf` — 20-page attachment, full tables). Both **reachable from
+    the Oracle box** (probed 200 same day), so this piece is NO LONGER laptop-gated.
+    Per-area figures now in `docs/fable_brief_debt_lens.md` (developer $3.806B vs
+    City/Province $1.362B, ~$1.4B 50-yr shortfall; Decoteau/Horse Hill/Riverview
+    boundary stats). The old hunt instructions (eScribe/insite search) are superseded;
+    the build itself is ticket D2 of the debt-lens item below.
   - 2016 Global News coverage (already in project research) as secondary corroboration —
     primary report should supersede it for exact figures.
   - Off-site levy bylaw + capital financing policy — how the ~$369M muni/provincial piece
@@ -233,6 +236,68 @@ _Last reconciled: 2026-07-09_
     framework; if so, cite that instead of the 2016 analysis.
   **Non-goals:** no citywide capital-cost-per-hood dataset this pass; no blending into any
   recurring-cost lens.
+
+- [ ] **GROWTH INFRASTRUCTURE FINANCING PANEL ("Debt Lens") — NEW 2026-07-14
+  (brief: `docs/fable_brief_debt_lens.md`; scoped to these tickets same day).**
+  From Peter's planning conversation; full research backing lives in claude.ai
+  project knowledge (`Edmonton_Growth_Infrastructure_Financing__Feasibility...`),
+  NOT in this repo — the brief is the authoritative in-repo doc. **Scope decision
+  LOCKED (→ DECISIONS.md 2026-07-14): NO debt-per-parcel/neighbourhood map** —
+  citywide debt isn't spatially attributable in public data. Two clearly-labelled
+  components instead: (1) spatial growth-area financing transparency panel,
+  (2) non-spatial citywide debt context. Framing = "financing transparency", NOT
+  "debt attribution" — explicit in UI copy (load-bearing methodological claim).
+  **Reachability probed 2026-07-14 (Oracle box):** doniveson.ca IIMP PDFs 200,
+  open.alberta.ca FIR page 200 — D2/D5 data is Oracle-doable; only D0's bylaw
+  map exhibit is edmonton.ca/laptop-gated. Tickets, build order:
+  - [ ] **D0 — catchment polygon acquisition (RISK, resolve before building
+    Component 1's spatial join).** The 12 fire-hall off-site levy catchments
+    (names/costs/rates tabled in the brief). Probed 2026-07-14: **NOT on
+    data.edmonton.ca** (Socrata catalog: zero hits for off-site levy/catchment)
+    **nor ArcGIS Hub** (every "off-site levy" layer there is Calgary's). Next:
+    check the off-site levy bylaw PDF/backgrounder for a map exhibit
+    (edmonton.ca — laptop-gated); fallback = trace polygons from the PDF figure,
+    or approximate by joining catchment names to existing hood/ASP boundaries
+    (most names — Horse Hill, Riverview, Big Lake, Cumberland, Walker,
+    Blatchford — look like plan-area names we may already cover). If polygons
+    prove unobtainable, Component 1 degrades to a per-catchment table +
+    named-hood join, still honest.
+  - [ ] **D1 — levy performance mini-viz.** Cumulative levy collected vs the
+    ~$26M single-facility cost, per catchment (simple bar/ratio — makes the gap
+    immediate). Figures in the brief (2022–2024 annual reports; cumulative
+    $3.83M end-2024, **zero halls levy-funded**). Use the 2024 **Table 6.1**
+    figure ($3,033,592), footnote the exec-summary discrepancy ($3,259,866).
+    Headline finding to make visually obvious: **Edmonton levies developers for
+    fire halls ONLY** — no trunk roads/water/sanitary/storm levy (vs
+    Calgary/St. Albert $170K–$270K/ha) — "1 of 5 essential services levied".
+    Small manual dataset → reviewed JSON input (mill-rates pattern).
+  - [ ] **D2 — IIMP sidebar extension** (extends the Decoteau/HHR/Riverview
+    annotation item above — primary source now located, Oracle-reachable). Add
+    the developer-vs-City split to the existing IIMP click-through sidebar:
+    developer $3.806B (drainage $2.351B + transportation $1.455B) vs
+    City/Province $1.362B, net ~$1.4B 50-yr shortfall — 2016 projections,
+    **label as projection, not actual**. Extend the existing sidebar UI
+    pattern, don't build a new one.
+  - [ ] **D3 — Blatchford contrast case study.** 4th sidebar entry, same UI
+    pattern: the infill counter-example to the 3 greenfield areas —
+    self-liquidating "debt recoverable" financing (Policy C597A), DESS
+    district energy, $23.7M federal SREPs grant, own levy catchment
+    ($32,813/ha, already in the D0/D1 table).
+  - [ ] **D4 — sanitary trunk callout** (one-line sidebar text, NOT mapped —
+    no clean basin boundaries confirmed): SSTC/EA charges paused May 2024;
+    growth trunk sanitary currently funded from the accumulated ratepayer
+    reserve, not active growth charges (figures in the brief).
+  - [ ] **D5 — Component 2: citywide debt context chart (non-spatial).**
+    Edmonton long-term debt 2003–2024 from the Alberta FIR/SIR XLSX series
+    (open.alberta.ca, reachable) + **St. Albert and Strathcona County** peer
+    series; headline 2025: $4.6B outstanding, 69% of the tax-supported
+    debt-servicing limit (DMFP ≤18%/≤21% limits in the brief). Separate
+    panel/chart, labelled "citywide, not neighbourhood-specific" — never a
+    map layer.
+  - **Out of scope (locked in the brief):** any spatial allocation of the
+    $4.6B; S&P rating detail / CCBF/MSI/LGFF; Local Improvement levies
+    (genuinely parcel-level but not open data — future phase, needs
+    FOIP/per-bylaw scraping).
 
 - [ ] **Services lens — road supply (SPEC'd 2026-07-01, branch `feature/services-lens`).**
   Spec: `docs/SPEC_services.md`. V1 = `road_m_per_acre` (city-maintained
