@@ -288,12 +288,22 @@ _Last reconciled: 2026-07-09_
     growth trunk sanitary currently funded from the accumulated ratepayer
     reserve, not active growth charges (figures in the brief).
   - [ ] **D5 — Component 2: citywide debt context chart (non-spatial).**
-    Edmonton long-term debt 2003–2024 from the Alberta FIR/SIR XLSX series
-    (open.alberta.ca, reachable) + **St. Albert and Strathcona County** peer
-    series; headline 2025: $4.6B outstanding, 69% of the tax-supported
-    debt-servicing limit (DMFP ≤18%/≤21% limits in the brief). Separate
-    panel/chart, labelled "citywide, not neighbourhood-specific" — never a
-    map layer.
+    Separate panel/chart, labelled "citywide, not neighbourhood-specific" —
+    never a map layer. Headline 2025: $4.6B outstanding, 69% of the
+    tax-supported debt-servicing limit (DMFP ≤18%/≤21% limits in the brief).
+    - [x] **Data layer DONE 2026-07-14**: `scripts/fetch_fir_debt.py` →
+      committed `data/fir_debt_series.json` — Edmonton + St. Albert +
+      Strathcona County, **2003–2025** (a year further than the brief
+      expected: the 2025 FIR is out, Edmonton total debt $4,592,150,000 =
+      the brief's "$4.6B" headline, directly sourced). All four Schedule AA
+      fields (debt + limits + servicing). Manual-reviewed-input pattern;
+      anchor cross-checks + neighbour-band sanity; Strathcona-2013 $000s
+      source quirk corrected + documented. DATA.md §11. +10 pytest (328).
+      NB the FIR limit is the MGA regulation limit — Edmonton 2025 = 59.3%
+      of it; the brief's "69%" is the DMFP servicing limit, a different
+      denominator (quirk documented in §11).
+    - [ ] **Display/chart** — undecided design (where does a non-map panel
+      live in the UI?); Peter's call before building.
   - **Out of scope (locked in the brief):** any spatial allocation of the
     $4.6B; S&P rating detail / CCBF/MSI/LGFF; Local Improvement levies
     (genuinely parcel-level but not open data — future phase, needs

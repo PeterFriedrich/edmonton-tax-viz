@@ -1,0 +1,446 @@
+{
+ "source": {
+  "dataset": "https://open.alberta.ca/opendata/municipal-financial-and-statistical-data",
+  "schedule": "Schedule AA \u2014 Debt Limit / Debt Info (item codes 05700/05710/05720/05730); 2003 from 'GR Debt Info.xls'",
+  "retrieved": "2026-07-14",
+  "years": "2003-2025",
+  "units": "dollars (as reported; see notes for corrections)"
+ },
+ "notes": [
+  "Debt Limit / Debt Service Limit here are the MGA regulation limits (Debt Limit Regulation 255/2000), NOT Edmonton's own DMFP policy limits (18%/21% servicing) \u2014 do not conflate.",
+  "STRATHCONA COUNTY 2013 is reported in $000s in the source workbook; a documented x1000 correction is applied (unit_corrected: 1000 on that year's record).",
+  "Manual, reviewed input (mill-rates pattern): re-run scripts/fetch_fir_debt.py when a new financial year publishes, review the diff, commit."
+ ],
+ "municipalities": {
+  "EDMONTON": {
+   "code": "0098",
+   "years": {
+    "2003": {
+     "debt_limit": 2125774000,
+     "total_debt": 370914000,
+     "debt_service_limit": 372010000,
+     "total_debt_service_costs": 63961000
+    },
+    "2004": {
+     "debt_limit": 2362738000,
+     "total_debt": 420914000,
+     "debt_service_limit": 413479000,
+     "total_debt_service_costs": 55036000
+    },
+    "2005": {
+     "debt_limit": 2721190000,
+     "total_debt": 473435000,
+     "debt_service_limit": 476208000,
+     "total_debt_service_costs": 55785000
+    },
+    "2006": {
+     "debt_limit": 2857110000,
+     "total_debt": 546877000,
+     "debt_service_limit": 499994000,
+     "total_debt_service_costs": 60280000
+    },
+    "2007": {
+     "debt_limit": 3157284000,
+     "total_debt": 761402000,
+     "debt_service_limit": 552525000,
+     "total_debt_service_costs": 77595000
+    },
+    "2008": {
+     "debt_limit": 3336350000,
+     "total_debt": 1043438000,
+     "debt_service_limit": 583861000,
+     "total_debt_service_costs": 103124000
+    },
+    "2009": {
+     "debt_limit": 3233906000,
+     "total_debt": 1492566000,
+     "debt_service_limit": 565934000,
+     "total_debt_service_costs": 134473000
+    },
+    "2010": {
+     "debt_limit": 3673502000,
+     "total_debt": 1840233000,
+     "debt_service_limit": 642863000,
+     "total_debt_service_costs": 172625000
+    },
+    "2011": {
+     "debt_limit": 4079000000,
+     "total_debt": 1973819000,
+     "debt_service_limit": 713825000,
+     "total_debt_service_costs": 185104000
+    },
+    "2012": {
+     "debt_limit": 4178294000,
+     "total_debt": 2232921000,
+     "debt_service_limit": 731201000,
+     "total_debt_service_costs": 223516000
+    },
+    "2013": {
+     "debt_limit": 4620040000,
+     "total_debt": 2426187000,
+     "debt_service_limit": 808507000,
+     "total_debt_service_costs": 255778000
+    },
+    "2014": {
+     "debt_limit": 5154292000,
+     "total_debt": 2823109000,
+     "debt_service_limit": 902001000,
+     "total_debt_service_costs": 379428000
+    },
+    "2015": {
+     "debt_limit": 5581462000,
+     "total_debt": 3033223000,
+     "debt_service_limit": 976756000,
+     "total_debt_service_costs": 285745000
+    },
+    "2016": {
+     "debt_limit": 5627370000,
+     "total_debt": 3338950000,
+     "debt_service_limit": 984790000,
+     "total_debt_service_costs": 341022000
+    },
+    "2017": {
+     "debt_limit": 5649404000,
+     "total_debt": 2912130000,
+     "debt_service_limit": 988646000,
+     "total_debt_service_costs": 264616000
+    },
+    "2018": {
+     "debt_limit": 5587398000,
+     "total_debt": 3046194000,
+     "debt_service_limit": 977795000,
+     "total_debt_service_costs": 284343000
+    },
+    "2019": {
+     "debt_limit": 5840630000,
+     "total_debt": 3202765000,
+     "debt_service_limit": 1022110000,
+     "total_debt_service_costs": 301097000
+    },
+    "2020": {
+     "debt_limit": 5856892000,
+     "total_debt": 3407145000,
+     "debt_service_limit": 1024956000,
+     "total_debt_service_costs": 313179000
+    },
+    "2021": {
+     "debt_limit": 5978098000,
+     "total_debt": 3546570000,
+     "debt_service_limit": 1046167000,
+     "total_debt_service_costs": 335975000
+    },
+    "2022": {
+     "debt_limit": 6146130000,
+     "total_debt": 3940329000,
+     "debt_service_limit": 1075573000,
+     "total_debt_service_costs": 416558000
+    },
+    "2023": {
+     "debt_limit": 6701780000,
+     "total_debt": 4167486000,
+     "debt_service_limit": 1172812000,
+     "total_debt_service_costs": 385462000
+    },
+    "2024": {
+     "debt_limit": 7224698000,
+     "total_debt": 4368432000,
+     "debt_service_limit": 1264322000,
+     "total_debt_service_costs": 413580000
+    },
+    "2025": {
+     "debt_limit": 7748380000,
+     "total_debt": 4592150000,
+     "debt_service_limit": 1355967000,
+     "total_debt_service_costs": 442624000
+    }
+   }
+  },
+  "ST. ALBERT": {
+   "code": "0292",
+   "years": {
+    "2003": {
+     "debt_limit": 104889000,
+     "total_debt": 22436675,
+     "debt_service_limit": 17481500,
+     "total_debt_service_costs": 5892000
+    },
+    "2004": {
+     "debt_limit": 114006000,
+     "total_debt": 18272000,
+     "debt_service_limit": 19001000,
+     "total_debt_service_costs": 5273000
+    },
+    "2005": {
+     "debt_limit": 135045000,
+     "total_debt": 24365000,
+     "debt_service_limit": 22508000,
+     "total_debt_service_costs": 5184000
+    },
+    "2006": {
+     "debt_limit": 146874652,
+     "total_debt": 46546844,
+     "debt_service_limit": 24479109,
+     "total_debt_service_costs": 6352282
+    },
+    "2007": {
+     "debt_limit": 167895612,
+     "total_debt": 68298310,
+     "debt_service_limit": 27982602,
+     "total_debt_service_costs": 7976564
+    },
+    "2008": {
+     "debt_limit": 177250737,
+     "total_debt": 71808933,
+     "debt_service_limit": 29541789,
+     "total_debt_service_costs": 8167389
+    },
+    "2009": {
+     "debt_limit": 188200775,
+     "total_debt": 70964047,
+     "debt_service_limit": 31366796,
+     "total_debt_service_costs": 8142709
+    },
+    "2010": {
+     "debt_limit": 196512000,
+     "total_debt": 66169350,
+     "debt_service_limit": 32752000,
+     "total_debt_service_costs": 8063000
+    },
+    "2011": {
+     "debt_limit": 203246468,
+     "total_debt": 61189649,
+     "debt_service_limit": 33874364,
+     "total_debt_service_costs": 7198538
+    },
+    "2012": {
+     "debt_limit": 219763827,
+     "total_debt": 56821064,
+     "debt_service_limit": 36627305,
+     "total_debt_service_costs": 6564386
+    },
+    "2013": {
+     "debt_limit": 240488000,
+     "total_debt": 52858270,
+     "debt_service_limit": 40261022,
+     "total_debt_service_costs": 6000417
+    },
+    "2014": {
+     "debt_limit": 241996158,
+     "total_debt": 49269878,
+     "debt_service_limit": 40332693,
+     "total_debt_service_costs": 6000417
+    },
+    "2015": {
+     "debt_limit": 280586515,
+     "total_debt": 45515135,
+     "debt_service_limit": 46735000,
+     "total_debt_service_costs": 6000417
+    },
+    "2016": {
+     "debt_limit": 267200660,
+     "total_debt": 41586240,
+     "debt_service_limit": 44532651,
+     "total_debt_service_costs": 6000417
+    },
+    "2017": {
+     "debt_limit": 274131000,
+     "total_debt": 37475000,
+     "debt_service_limit": 45688500,
+     "total_debt_service_costs": 6000000
+    },
+    "2018": {
+     "debt_limit": 286957914,
+     "total_debt": 42992825,
+     "debt_service_limit": 47826319,
+     "total_debt_service_costs": 6341315
+    },
+    "2019": {
+     "debt_limit": 289152751,
+     "total_debt": 40121953,
+     "debt_service_limit": 48192125,
+     "total_debt_service_costs": 6682212
+    },
+    "2020": {
+     "debt_limit": 295013970,
+     "total_debt": 46331265,
+     "debt_service_limit": 49168995,
+     "total_debt_service_costs": 6922624
+    },
+    "2021": {
+     "debt_limit": 287786563,
+     "total_debt": 75142000,
+     "debt_service_limit": 47964427,
+     "total_debt_service_costs": 7628702
+    },
+    "2022": {
+     "debt_limit": 320347004,
+     "total_debt": 91254399,
+     "debt_service_limit": 53391167,
+     "total_debt_service_costs": 10619616
+    },
+    "2023": {
+     "debt_limit": 342934520,
+     "total_debt": 90496777,
+     "debt_service_limit": 57155753,
+     "total_debt_service_costs": 13095902
+    },
+    "2024": {
+     "debt_limit": 373354000,
+     "total_debt": 97628505,
+     "debt_service_limit": 62226000,
+     "total_debt_service_costs": 12986300
+    },
+    "2025": {
+     "debt_limit": 401162488,
+     "total_debt": 109151740,
+     "debt_service_limit": 66860415,
+     "total_debt_service_costs": 12899345
+    }
+   }
+  },
+  "STRATHCONA COUNTY": {
+   "code": "0302",
+   "years": {
+    "2003": {
+     "debt_limit": 185813133,
+     "total_debt": 76339382,
+     "debt_service_limit": 30968855,
+     "total_debt_service_costs": 15914815
+    },
+    "2004": {
+     "debt_limit": 208126500,
+     "total_debt": 71457284,
+     "debt_service_limit": 34687750,
+     "total_debt_service_costs": 12886672
+    },
+    "2005": {
+     "debt_limit": 250527179,
+     "total_debt": 68963545,
+     "debt_service_limit": 41754530,
+     "total_debt_service_costs": 10407768
+    },
+    "2006": {
+     "debt_limit": 259184696,
+     "total_debt": 73488006,
+     "debt_service_limit": 43197449,
+     "total_debt_service_costs": 12204077
+    },
+    "2007": {
+     "debt_limit": 282431369,
+     "total_debt": 87611237,
+     "debt_service_limit": 47071895,
+     "total_debt_service_costs": 14482382
+    },
+    "2008": {
+     "debt_limit": 326852133,
+     "total_debt": 91624368,
+     "debt_service_limit": 54475356,
+     "total_debt_service_costs": 13530956
+    },
+    "2009": {
+     "debt_limit": 372503097,
+     "total_debt": 126792507,
+     "debt_service_limit": 62083850,
+     "total_debt_service_costs": 16571993
+    },
+    "2010": {
+     "debt_limit": 391837781,
+     "total_debt": 172802403,
+     "debt_service_limit": 65306297,
+     "total_debt_service_costs": 20190442
+    },
+    "2011": {
+     "debt_limit": 440978000,
+     "total_debt": 165766174,
+     "debt_service_limit": 73496089,
+     "total_debt_service_costs": 20098000
+    },
+    "2012": {
+     "debt_limit": 473900000,
+     "total_debt": 172933000,
+     "debt_service_limit": 78983000,
+     "total_debt_service_costs": 20109000
+    },
+    "2013": {
+     "debt_limit": 485926000,
+     "total_debt": 172506000,
+     "debt_service_limit": 80988000,
+     "total_debt_service_costs": 20441000,
+     "unit_corrected": 1000
+    },
+    "2014": {
+     "debt_limit": 504243919,
+     "total_debt": 163970480,
+     "debt_service_limit": 84040653,
+     "total_debt_service_costs": 18932412
+    },
+    "2015": {
+     "debt_limit": 511521824,
+     "total_debt": 156653521,
+     "debt_service_limit": 85253637,
+     "total_debt_service_costs": 16312167
+    },
+    "2016": {
+     "debt_limit": 545262042,
+     "total_debt": 166139938,
+     "debt_service_limit": 90877007,
+     "total_debt_service_costs": 17086070
+    },
+    "2017": {
+     "debt_limit": 534749072,
+     "total_debt": 165422932,
+     "debt_service_limit": 89124845,
+     "total_debt_service_costs": 17541655
+    },
+    "2018": {
+     "debt_limit": 550364393,
+     "total_debt": 171804915,
+     "debt_service_limit": 91727399,
+     "total_debt_service_costs": 17870707
+    },
+    "2019": {
+     "debt_limit": 560732186,
+     "total_debt": 162181578,
+     "debt_service_limit": 93455364,
+     "total_debt_service_costs": 17717855
+    },
+    "2020": {
+     "debt_limit": 534276648,
+     "total_debt": 150569044,
+     "debt_service_limit": 89046108,
+     "total_debt_service_costs": 17327006
+    },
+    "2021": {
+     "debt_limit": 523858640,
+     "total_debt": 140824074,
+     "debt_service_limit": 87309773,
+     "total_debt_service_costs": 16949353
+    },
+    "2022": {
+     "debt_limit": 589865647,
+     "total_debt": 133070148,
+     "debt_service_limit": 98310941,
+     "total_debt_service_costs": 16055334
+    },
+    "2023": {
+     "debt_limit": 650546324,
+     "total_debt": 121993837,
+     "debt_service_limit": 108424387,
+     "total_debt_service_costs": 14636898
+    },
+    "2024": {
+     "debt_limit": 707454437,
+     "total_debt": 111912965,
+     "debt_service_limit": 117909073,
+     "total_debt_service_costs": 13959975
+    },
+    "2025": {
+     "debt_limit": 736597000,
+     "total_debt": 171365000,
+     "debt_service_limit": 122766000,
+     "total_debt_service_costs": 19883000
+    }
+   }
+  }
+ }
+}
