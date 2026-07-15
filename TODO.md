@@ -250,18 +250,32 @@ _Last reconciled: 2026-07-09_
   **Reachability probed 2026-07-14 (Oracle box):** doniveson.ca IIMP PDFs 200,
   open.alberta.ca FIR page 200 — D2/D5 data is Oracle-doable; only D0's bylaw
   map exhibit is edmonton.ca/laptop-gated. Tickets, build order:
-  - [ ] **D0 — catchment polygon acquisition (RISK, resolve before building
-    Component 1's spatial join).** The 12 fire-hall off-site levy catchments
-    (names/costs/rates tabled in the brief). Probed 2026-07-14: **NOT on
-    data.edmonton.ca** (Socrata catalog: zero hits for off-site levy/catchment)
-    **nor ArcGIS Hub** (every "off-site levy" layer there is Calgary's). Next:
-    check the off-site levy bylaw PDF/backgrounder for a map exhibit
-    (edmonton.ca — laptop-gated); fallback = trace polygons from the PDF figure,
-    or approximate by joining catchment names to existing hood/ASP boundaries
-    (most names — Horse Hill, Riverview, Big Lake, Cumberland, Walker,
-    Blatchford — look like plan-area names we may already cover). If polygons
-    prove unobtainable, Component 1 degrades to a per-catchment table +
-    named-hood join, still honest.
+  - [ ] **D0 — catchment polygon acquisition (RISK — source resolved
+    2026-07-15; approach is now Peter's call).** The 12 fire-hall off-site levy
+    catchments (names/costs/rates tabled in the brief). Probed 2026-07-14:
+    **NOT on data.edmonton.ca** (Socrata catalog: zero hits) **nor ArcGIS Hub**
+    (every "off-site levy" layer there is Calgary's).
+    **RESOLVED 2026-07-15 (laptop):** the ONLY published boundaries are a raster
+    map exhibit — **Schedule A of Bylaw 19340** ("Fire Halls with Catchment
+    Boundaries"), a JPEG in the bylaw PDF. **No GIS vector layer exists anywhere.**
+    Bylaw text confirms boundaries are advisory ("subject to change… may adjust
+    and refine over time"). Source artifacts saved to
+    `data/raw/offsite_levy/` (bylaw PDF, ScheduleA JPEG, 2026 approved rates).
+    Key enabling finding: Schedule A's catchment edges **follow the neighbourhood
+    grid**, and all 12 catchments map to clusters of neighbourhoods we already
+    hold in `neighbourhoods.geojson` (e.g. Blatchford→`BLATCHFORD AREA`,
+    Walker→`WALKER`, Cumberland→`CUMBERLAND`, Big Lake→`ANTHONY HENDAY BIG LAKE`,
+    Horse Hill→`ANTHONY HENDAY HORSE HILL` + the Horse Hill district). Three
+    paths, decreasing effort / fidelity:
+    1. **Trace/digitize** the raster (georeference + hand-trace 12 polygons) —
+       highest fidelity, most manual; boundaries are advisory anyway.
+    2. **Neighbourhood-union approximation** (RECOMMENDED) — build a
+       neighbourhood→catchment assignment table by reading Schedule A, then
+       dissolve. Reproducible from data we own, honest ("approximated to
+       neighbourhood boundaries"), aligns with our neighbourhood-unit pipeline;
+       error small because edges follow hood lines.
+    3. **Table only** — per-catchment table + text list of member hoods, no map
+       layer. Lowest effort, still honest, loses the spatial punch.
   - [ ] **D1 — levy performance mini-viz.** Cumulative levy collected vs the
     ~$26M single-facility cost, per catchment (simple bar/ratio — makes the gap
     immediate). Figures in the brief (2022–2024 annual reports; cumulative

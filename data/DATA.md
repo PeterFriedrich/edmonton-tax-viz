@@ -633,6 +633,28 @@ the data layer only.
   (2016) before climbing again; real amortization, not a data error (both
   years pass the neighbour band).
 
+## 12. Off-Site Levy Fire-Hall Catchments (debt lens D0, added 2026-07-15)
+Source: **Off-Site Levy Bylaw 19340**, `edmonton.ca/business_economy/off-site-levy-bylaw`
+(laptop-reachable only). The 12 fire-hall levy catchments are the Component 1
+spatial join key in the debt-lens brief.
+- Raw artifacts in `data/raw/offsite_levy/`: `BL19340_offsite_levy_bylaw.pdf`,
+  `ScheduleA_catchment_map.jpg` (the catchment map exhibit, bylaw p.7),
+  `2026_approved_rates.pdf` (cost/area/rate table).
+- **No GIS vector layer exists** — data.edmonton.ca (0 Socrata hits), ArcGIS Hub
+  (Calgary layers only), and the bylaw page all lack one. Boundaries are
+  published **only as the Schedule A raster**. Full investigation +
+  neighbourhood-union feasibility (which catchments the 407-hood grid can/can't
+  reproduce, with per-catchment area validation) in
+  `docs/FINDINGS_offsite_levy_catchments.md`.
+### Known Quirks
+- **Boundaries are advisory** — the bylaw states the City "may adjust and refine"
+  catchment boundaries over time; the map footnote says "subject to change." Any
+  derived polygon layer must be labelled "approximated to neighbourhood
+  boundaries," not presented as authoritative.
+- **`EDMONTON ENERGY AND TECHNOLOGY PARK` (one 5,334 ha hood) spans BOTH the EETP
+  and Northeast EETP catchments** — the neighbourhood grid is too coarse in the
+  far greenfield to separate them by union (see FINDINGS §3).
+
 ## Name Matching
 
 Neighbourhood names between the two sources may not align exactly. Normalization (strip + uppercase) and the `NAME_CORRECTIONS` dict (keyed assessment name → boundary name) are applied in `load_assessment.py`, *before* aggregation — applying corrections after aggregation could collapse two summed rows onto one boundary and duplicate it. `join_and_calculate.py` then does a normalized exact match on the already-corrected names and flags whatever remains unmatched.
