@@ -540,6 +540,58 @@ roads, a **refreshed input** with no roll-year pin (weekly CI re-pull).
 
 ---
 
+### `src/load_permits.py` (Development & Infill lens A — added 2026-07-12; dev grid 2026-07-15)
+
+Full methodology + locked decisions in `docs/SPEC_development.md` "Lens A";
+dataset facts in `DATA.md` §10. **New-CONSTRUCTION activity only** — the
+project's first change/flow metric (everything else describes the roll as it
+stands). Not a money path: an unmatched permit hood is a blank hood, not a
+silent dollar loss, so the name join is warn-not-fail (unlike the assessment
+CI guard).
+
+**Inputs:** `data/raw/building_permits.csv` (`24uj-dj8v`, slim `$select`); a
+pinned window tuple (`PERMIT_YEARS` / `PERMIT_YEARS_RECENT` in `main.py`).
+
+**`load_permits(csv, years)` → `pd.DataFrame`** keyed by `neighbourhood_name`:
+- `new_dwelling_units` (float) — Σ `units_added` over new-construction ∩
+  residential permits in the window
+- `new_dwelling_permits` (int) — the permit count behind that sum
+
+(`new_units_per_acre` / `new_permits_per_acre` are computed downstream in
+`join_and_calculate`, boundary-acre denominator; both windows emit their
+columns, the 3yr twins `_3yr`-suffixed. In `SLIM_COLUMNS`, ship in the web
+GeoJSON; the Development view choropleth + Infill Lens B activity term read
+them.)
+
+**Responsibilities / no silent drops:**
+- `work_type` ∈ `NEW_WORK_TYPES` and `building_type` ∈
+  `RESIDENTIAL_BUILDING_TYPES` — **explicit hand-enumerated dicts**, every
+  spelling variant, warn-loudly-on-unseen (never prefix-match the `(NNN)`
+  code); suite-conversions `(07)/(08)/(09)` are Lens B, out here
+- Drift guard: a window year with zero permits HARD-ERRORS (stale pin /
+  upstream drift — fire-lens precedent)
+- Non-numeric `units_added` → 0 (kept as a permit), reported; null/blank
+  `neighbourhood` excluded + unit loss reported; `PERMIT_NAME_CORRECTIONS`
+  (= the shared `NAME_CORRECTIONS`) resolves `CHAPPELLE AREA` etc.
+
+**Also exports:** `export_dev_grid(csv, out_path, years, years_recent,
+cell_m)` — the Development view's **100 m detail layer** (added 2026-07-15).
+Bins GEOCODED new-construction ∩ residential permits into the **same
+EPSG:3400 100 m cells as `export_value_grid`** (Glass grid) →
+`web/data/dev_grid.json` (committed, lazy-loaded): `[lon, lat, units,
+permits, units_3yr, permits_3yr]` rows at each cell's SW corner, plus a
+per-window `coverage` block. **Geocode coverage is reported, not silent** —
+coordinates lag on the newest permits (DATA.md §10), so ungeocoded permits
+are excluded from cells but counted in `coverage` for the web blurb to
+disclose; positions are never faked. Raises if the CSV predates the
+lat/long `$select`.
+
+**Does not:** count suite conversions / additions / demolitions, join
+parcel geometry, or touch the money path. A **refreshed input** with a
+January window-pin bump (both `PERMIT_YEARS` tuples).
+
+---
+
 ### `src/join_and_calculate.py`
 
 **Inputs:**
