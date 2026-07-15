@@ -381,6 +381,14 @@ them in the map*. Close sibling of item 5 (same three growth areas, same capital
 vs recurring-revenue question) — item 5 is the analytical ledger, this is the
 primary-source dig behind one specific published model._
 
+**DONE 2026-07-15 (laptop) — `docs/FINDINGS_iimp_growth_areas.md`.** Located +
+verified the primary source (Report CR_2705, March 22 2016, + Attachment 1); every
+brief figure confirmed against the actual tables (developer $3.806B, City/Province
+$1.362B with full breakdown, ~$1.4B 50-yr shortfall — distinct from the capital
+figure, area/pop/horizon stats). 2016$, projections at build-out, received for
+information. Not superseded per-area by the 2026 CIO/OIO (citywide, not per-area).
+Figures + citations ready for the TODO D2 annotation build.
+
 **Question.** The City's IIMP (Integrated Infrastructure Management Plan) ran a
 39-year capital pro forma on the three greenfield growth areas — developer
 capital + muni/provincial capital (~$369M piece) + O&M + lifecycle renewal,

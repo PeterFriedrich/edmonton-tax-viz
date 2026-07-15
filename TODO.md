@@ -214,16 +214,20 @@ _Last reconciled: 2026-07-09_
      source, with explicit citation + "as of" date.
   3. Surface as a click-through popup / footnote-style panel — **NOT** a toggle affecting
      the main colour ramp.
-  **Sources to hunt (primary supersedes secondhand):**
-  - **PRIMARY: the actual IIMP / "Fiscal Impacts of Growth" report** — **LOCATED
-    2026-07-14** (debt-lens brief research): Report CR_2705 (2016) + Attachment 1,
-    archived at doniveson.ca (`/wp-content/uploads/2018/09/IIMP.pdf` — 4-page council
-    report — and `IIMP2.pdf` — 20-page attachment, full tables). Both **reachable from
-    the Oracle box** (probed 200 same day), so this piece is NO LONGER laptop-gated.
-    Per-area figures now in `docs/fable_brief_debt_lens.md` (developer $3.806B vs
-    City/Province $1.362B, ~$1.4B 50-yr shortfall; Decoteau/Horse Hill/Riverview
-    boundary stats). The old hunt instructions (eScribe/insite search) are superseded;
-    the build itself is ticket D2 of the debt-lens item below.
+  **Sources — VERIFIED 2026-07-15 (laptop), research half DONE.**
+  - **PRIMARY: Report CR_2705, "IIMP – Cumulative Impacts," March 22 2016** (+ 20-pg
+    Attachment 1). **Every figure verified against the primary tables** — see
+    `docs/FINDINGS_iimp_growth_areas.md`: developer $3.806B (Drainage $2.351B +
+    Transportation $1.455B); City/Province $1.362B (full 8-line Table 3 breakdown
+    confirmed); ~$1.4B 50-yr cumulative shortfall (**distinct** from the $1.362B
+    capital — do NOT conflate, both ~$1.4B by coincidence); areas Decoteau 1,960 ha/
+    74,565/39yr, Horse Hill 2,793 ha/70,038/36yr, Riverview 1,435 ha/50,422/30yr;
+    combined pop 195,025. All **2016$, projections at build-out, "received for
+    information"**. PDFs saved `data/raw/iimp/` (gitignored). doniveson.ca archive
+    reachable from Oracle too, so the BUILD (D2) is not laptop-gated.
+  - **Currency check done:** the 2016 IIMP is NOT superseded per-area — the new
+    CIO/OIO framework (2027–2030 budget) is a citywide 10-yr capital outlook, not a
+    per-growth-area pro forma. Cite 2016 IIMP, date-stamped. → build = ticket D2.
   - 2016 Global News coverage (already in project research) as secondary corroboration —
     primary report should supersede it for exact figures.
   - Off-site levy bylaw + capital financing policy — how the ~$369M muni/provincial piece
