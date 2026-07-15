@@ -172,9 +172,13 @@ SOURCES = {
         # (construction_value, geometry_point, etc.). $select does NOT change
         # the row count, so both truncation guards still apply. UPPERCASE
         # `neighbourhood` matches our neighbourhood_name format.
+        # latitude/longitude (added 2026-07-15) feed the 100 m dev-grid
+        # detail layer (load_permits.export_dev_grid); recent permits lag
+        # geocoding — nulls are reported, never silently dropped (DATA.md §10).
         "url": (
             "https://data.edmonton.ca/resource/24uj-dj8v.csv"
-            "?$select=year,issue_date,work_type,building_type,units_added,neighbourhood"
+            "?$select=year,issue_date,work_type,building_type,units_added,"
+            "neighbourhood,latitude,longitude"
             "&$limit=1000000"
         ),
         "dest": RAW / "building_permits.csv",

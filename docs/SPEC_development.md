@@ -360,8 +360,36 @@ Still open (Lens C):
   optional one-sided choropleth toggles remain (see Lens B section).
 - **Lens A polish** — ✅ permit-count-per-acre sub-metric toggle DONE
   (2026-07-13); ✅ window toggle DONE (2026-07-13) — a 5yr (base, 2021–2025) vs
-  3yr (recent, 2023–2025) activity-window picker, both metrics; remaining: the
+  3yr (recent, 2023–2025) activity-window picker, both metrics; ✅ 100 m detail
+  grid DONE (2026-07-15, "Lens A detail grid" below); remaining: the
   `occupancy_granted_date` completed-builds variant (Data note above).
+
+### Lens A detail grid (as built 2026-07-15)
+
+Peter's call: fine-grain rendering ships as a **layers-panel toggle inside the
+Development view, not a new view button** — deliberately, as the pattern probe
+for possibly migrating other lenses to this style later. Toggling "100 m grid
+(permit points)" swaps the choropleth for the **Glass composition**: a
+uniformly NEUTRAL hood plane (the set-aside override stands — nothing greys;
+hover/tooltip stay on the hood) under `GridCellLayer` spikes of geocoded
+permits binned into the same EPSG:3400 100 m cells as the Glass grid
+(`load_permits.export_dev_grid` → `web/data/dev_grid.json`, ~4.1k cells,
+0.13 MB). Height is **linear** in the active column (units|permits × 5yr|3yr —
+the two existing pickers keep driving it), peak 2,500 m at the max cell (447
+units); colour is sqrt at a per-column p97.5 clamp (the choropleth's locked
+transform). Legend flips to "per 100 m cell"; the opacity slider opens while
+the grid is up.
+
+**Geocode-lag disclosure (the honesty condition for this layer).** Cells hold
+only geocoded permits; coordinates lag on the newest permits (~1–2% missing
+2021–2023, but 994 permits in 2024 and 3,564 in 2025 at build time —
+DATA.md §10). On the 5yr window that is 47,125 of 59,697 units on the grid
+(~21% not yet mapped; 3yr ~29%). The export writes per-window `coverage` into
+the JSON and the blurb computes the percentage from the file — the disclosure
+cannot go stale against the data it describes. Ungeocoded permits still count
+in the hood choropleth/tooltips; positions are never faked (no hood-centroid
+fallback). The toggle stays hidden on older data files without
+`dev_grid.json`. `verify-development.js` 54/54.
 
 ## Build order
 
@@ -371,7 +399,10 @@ Still open (Lens C):
 2. **Lens A polish** — ✅ permit-count sub-metric picker DONE 2026-07-13
    (`new_permits_per_acre` + `#devmetric` control); ✅ window toggle DONE
    2026-07-13 (`_3yr` columns + `#devwindow` 5yr/3yr control,
-   verify-development.js 40/40); remaining: the occupancy completed-builds variant.
+   verify-development.js 40/40); ✅ 100 m detail grid DONE 2026-07-15
+   (layers-panel toggle → glass composition, geocode-coverage disclosure —
+   "Lens A detail grid" above; verify-development.js 54/54); remaining: the
+   occupancy completed-builds variant.
 3. **Lens B** — ✅ DONE 2026-07-13: suitability proxy (built FAR) + backend `far`
    column + web `Infill` diverging view (`z(suitability)−z(activity)`, set-aside
    excluded) + asymmetric residential opportunity gate (`infillOppSuppressed`;

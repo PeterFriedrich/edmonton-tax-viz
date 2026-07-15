@@ -500,7 +500,10 @@ mean-weekday scheduled stop-events per neighbourhood. Consumed by
 ## 10. Building Permits (development & infill lens A, added 2026-07-12)
 
 **Source:** Edmonton Open Data — dataset ID `24uj-dj8v` ("General Building Permits")
-**Download URL:** `https://data.edmonton.ca/resource/24uj-dj8v.csv?$select=year,issue_date,work_type,building_type,units_added,neighbourhood&$limit=1000000`
+**Download URL:** `https://data.edmonton.ca/resource/24uj-dj8v.csv?$select=year,issue_date,work_type,building_type,units_added,neighbourhood,latitude,longitude&$limit=1000000`
+*(latitude/longitude added 2026-07-15 for the 100 m detail grid —
+`load_permits.export_dev_grid` → `web/data/dev_grid.json`; see the
+geocoding-lag quirk below.)*
 **Download:** `scripts/download_data.py` → `data/raw/building_permits.csv` (gitignored)
 **Format:** CSV via the SODA resource endpoint, **slim `$select`** — only the 6
 filter/join/numerator columns (the full schema is 34 cols; we skip
@@ -562,6 +565,17 @@ pinned + drift-guarded and bump together each January.
 - **`occupancy_granted_date`** exists in the full schema (a completed-builds
   variant) but is only populated for residential finalized ≥ Jan 1 2022 /
   non-residential ≥ Jan 1 2024 — useless for historical totals, not fetched.
+- **Geocoding lags on the newest permits** (`latitude`/`longitude`, probed
+  2026-07-14): among in-window new-construction rows, nulls are ~1–2%/yr for
+  2021–2023 but 994 permits in 2024 and 3,564 in 2025 — a lag, not a
+  structural hole (nearly all null-coord rows still carry `neighbourhood`, so
+  hood aggregation is unaffected). The 100 m detail grid
+  (`export_dev_grid`) therefore bins **geocoded permits only** — 5yr window at
+  build time: 47,125 of 59,697 units (~21% not yet mapped; 3yr ~29%) — and
+  writes per-window `coverage` into `dev_grid.json` so the web blurb
+  discloses the live percentage. Never backfill with hood centroids. Expect
+  coverage to improve as the city geocodes its backlog; the weekly regen
+  picks that up automatically.
 
 ## 11. Alberta FIR Debt Series (debt lens D5, added 2026-07-14)
 

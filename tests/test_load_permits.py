@@ -222,3 +222,91 @@ def test_new_work_types_subset_of_known():
 
 def test_residential_subset_of_known_building_types():
     assert RESIDENTIAL_BUILDING_TYPES <= KNOWN_BUILDING_TYPES
+
+
+# --- export_dev_grid (100 m detail layer) -------------------------------------
+
+from load_permits import export_dev_grid  # noqa: E402
+
+# Two WGS84 points ~30 m apart (same 100 m cell) and one ~1 km away.
+LAT_A, LON_A = 53.5461, -113.4938
+LAT_B, LON_B = 53.54615, -113.4942
+LAT_FAR, LON_FAR = 53.5561, -113.4938
+
+
+def _grow(year=2023, lat=LAT_A, lon=LON_A, **kw):
+    r = _row(year=year, **kw)
+    r["latitude"] = lat
+    r["longitude"] = lon
+    return r
+
+
+def _geo_window_rows():
+    return [_grow(year=y) for y in YEARS]
+
+
+def _read(out):
+    import json
+    return json.loads(out.read_text())
+
+
+def test_dev_grid_bins_nearby_points_into_one_cell(tmp_path):
+    rows = _geo_window_rows() + [
+        _grow(year=2023, lat=LAT_B, lon=LON_B, units_added=3),
+        _grow(year=2023, lat=LAT_FAR, lon=LON_FAR, units_added=7),
+    ]
+    out = tmp_path / "dev_grid.json"
+    export_dev_grid(_write(tmp_path, rows), out, YEARS)
+    payload = _read(out)
+    assert payload["columns"] == ["lon", "lat", "units", "permits"]
+    assert payload["cell_m"] == 100.0
+    cells = {tuple(c[:2]): c[2:] for c in payload["cells"]}
+    assert len(cells) == 2  # A+B share a cell; FAR is its own
+    assert sorted(v[0] for v in cells.values()) == [7, 8]  # units: 5+3, 7
+
+
+def test_dev_grid_3yr_columns_and_window_split(tmp_path):
+    rows = _geo_window_rows()  # one unit per year 2021-2025 at the same point
+    out = tmp_path / "dev_grid.json"
+    export_dev_grid(_write(tmp_path, rows), out, YEARS, years_recent=(2023, 2024, 2025))
+    payload = _read(out)
+    assert payload["columns"] == ["lon", "lat", "units", "permits",
+                                  "units_3yr", "permits_3yr"]
+    (cell,) = payload["cells"]
+    assert cell[2:] == [5, 5, 3, 3]
+
+
+def test_dev_grid_reports_geocode_coverage(tmp_path):
+    rows = _geo_window_rows() + [
+        {**_row(year=2025, units_added=10), "latitude": None, "longitude": None},
+    ]
+    out = tmp_path / "dev_grid.json"
+    stats = export_dev_grid(_write(tmp_path, rows), out, YEARS)
+    cov = _read(out)["coverage"]["5yr"]
+    assert cov == {"units": 15, "units_geocoded": 5,
+                   "permits": 6, "permits_geocoded": 5}
+    assert stats["coverage"]["5yr"] == cov
+    # the ungeocoded permit contributes NO cell
+    assert sum(c[2] for c in _read(out)["cells"]) == 5
+
+
+def test_dev_grid_excludes_non_new_and_non_residential(tmp_path):
+    rows = _geo_window_rows() + [
+        _grow(year=2023, work_type="(03) Interior Alterations", units_added=50),
+        _grow(year=2023, building_type="Detached Garage (010)", units_added=50),
+    ]
+    out = tmp_path / "dev_grid.json"
+    export_dev_grid(_write(tmp_path, rows), out, YEARS)
+    assert sum(c[2] for c in _read(out)["cells"]) == 5
+
+
+def test_dev_grid_missing_latlong_columns_raises(tmp_path):
+    p = _write(tmp_path, _window_rows())  # no latitude/longitude columns
+    with pytest.raises(ValueError, match="lat/long"):
+        export_dev_grid(p, tmp_path / "dev_grid.json", YEARS)
+
+
+def test_dev_grid_no_kept_rows_raises(tmp_path):
+    rows = [_grow(year=2023, work_type="(03) Interior Alterations")]
+    with pytest.raises(ValueError, match="no new residential"):
+        export_dev_grid(_write(tmp_path, rows), tmp_path / "g.json", (2023,))

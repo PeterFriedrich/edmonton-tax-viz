@@ -84,7 +84,7 @@
     #denom-hd, #denom, #ratio-denom-hd, #ratio-denom { display: none; }
     /* Uses-view residential-prisms toggle — hidden outside the uses view
        (the #denom default-hidden pattern). */
-    #uses-prisms-hd, #uses-prisms { display: none; }
+    #uses-prisms-hd, #uses-prisms, #dev-grid-hd, #dev-grid { display: none; }
     /* Development-view sub-metric picker (dwelling units vs permits per acre)
        and window picker (last 5 yr vs 3 yr) — share the #denom button styling +
        default-hidden pattern; shown only in the development view (metric always,
@@ -197,6 +197,12 @@
     <div id="uses-prisms">
       <label title="Translucent prisms over the zoning fabric — each neighbourhood's height is its share of zoned land that is residential; a full-height prism would be 100% residential">
         <input type="checkbox" id="uses-prisms-on" /> Height = share zoned residential
+      </label>
+    </div>
+    <span class="hd" id="dev-grid-hd">Detail</span>
+    <div id="dev-grid">
+      <label title="Swap the neighbourhood choropleth for 100 m grid-cell spikes of geocoded permits — height and colour show new units (or permits) per cell; the flat plane underneath keeps the neighbourhood hover">
+        <input type="checkbox" id="dev-grid-on" /> 100 m grid (permit points)
       </label>
     </div>
     <span class="hd" id="prism-hd">Money plane</span>
@@ -653,6 +659,28 @@
         "residential (height is linear). The slider sets prism opacity."
       : "");
 
+    // Development blurb: the base choropleth prose, plus — when the 100 m
+    // detail grid is on — what the spikes are and the geocode-coverage
+    // disclosure read from the grid file itself (export_dev_grid "coverage").
+    // The gap is a geocoding lag on the newest permits; those permits still
+    // count in the hood totals, so the honest framing is "not on the grid yet".
+    const devBlurb = () => {
+      if (!(state.devGrid && devGridData)) return VIEWS.development.blurb;
+      const what = state.devMetric === "permits" ? "permits" : "homes";
+      const cov = devGridData.coverage && devGridData.coverage[state.devWindow];
+      const pct = cov && cov.units
+        ? Math.round(100 * (1 - cov.units_geocoded / cov.units)) : null;
+      return VIEWS.development.blurb +
+        " The 100 m grid replaces the neighbourhood colours with individual " +
+        "permit cells — height is linear in new " + what + " per cell, colour " +
+        "square-root scaled. Only geocoded permits appear" +
+        (pct != null
+          ? ": ~" + pct + "% of the window's units — mostly the newest permits, " +
+            "which lag geocoding — are not on the grid yet and count only in " +
+            "the neighbourhood view."
+          : ".");
+    };
+
     // The money/glass blurbs describe the colour transform in prose ("colour is
     // square-root–scaled …"). When the Colour Adjustment toggle is OFF that
     // claim is false, so swap the clause to match the live scale — this is an
@@ -695,6 +723,7 @@
                     ratioDenom: "roads", // Ratio-view denominator (RATIO_DENOMS); persists like denom
                     devMetric: "units", // Development-view sub-metric: units | permits per acre
                     devWindow: "5yr", // Development-view activity window: 5yr (base) | 3yr (recent)
+                    devGrid: false, // Development-view 100 m detail grid (off = the hood choropleth)
                     services: { roads: true, storm: false, fire: false, water: false, transit: false },
                     svcDriver: "roads",
                     data: null };
@@ -706,6 +735,8 @@
     let usesPrismData = null; // residential-prism subset (built once from state.data)
     let gridData = null;    // lazy-fetched grid cells (glass view)
     let gridFetch = null;   // in-flight fetch guard; null result => hood-prism fallback
+    let devGridData = null;  // lazy-fetched 100 m permit cells (development view)
+    let devGridFetch = null; // in-flight fetch guard; missing file => toggle stays hidden
     let fireStationsData = null;  // lazy-fetched station dots (services view, fire on)
     let fireStationsFetch = null; // in-flight fetch guard; missing file => no dots
     let transitStationsData = null;  // lazy-fetched LRT/transit-centre dots (transit on)
@@ -1129,6 +1160,61 @@
     }
     const fmtDev = v => v.toFixed(v < 1 ? 2 : 1) +
       (state.devMetric === "permits" ? " new permits / acre" : " new homes / acre");
+
+    // --- Development 100 m detail grid (layers-panel toggle, 2026-07-15) ----
+    // Pipeline-binned permit cells (load_permits.export_dev_grid — same
+    // EPSG:3400 binning as the Glass grid). Toggling swaps the choropleth for
+    // the Glass composition: a uniformly NEUTRAL hood plane (the set-aside
+    // override stands — nothing greys) under coloured/extruded cell spikes.
+    // The two pickers keep selecting the column (units|permits × 5yr|3yr).
+    // Cells hold only GEOCODED permits; recent permits lag geocoding, so the
+    // blurb discloses per-window coverage from the file itself (devBlurb).
+    const DEV_GRID_URL = "./data/dev_grid.json";
+    const DEV_GRID_COLS = {
+      units:   { "5yr": "units",   "3yr": "units_3yr" },
+      permits: { "5yr": "permits", "3yr": "permits_3yr" },
+    };
+    const devGridColKey = () => DEV_GRID_COLS[state.devMetric][state.devWindow];
+    const DEV_GRID_PEAK = 2500; // m at the tallest cell (USES_PRISM_PEAK kin)
+    let _devGridScales = null;
+    function devGridScale() {
+      const key = devGridColKey();
+      if (_devGridScales && _devGridScales[key]) return _devGridScales[key];
+      const col = devGridData.columns[key];
+      const vals = devGridData.cells.map(c => c[col]).filter(v => v > 0)
+        .sort((a, b) => a - b);
+      _devGridScales ??= {};
+      return (_devGridScales[key] = {
+        clamp: vals.length ? quantile(vals, 0.975) || 1 : 1,
+        // height stays LINEAR (honesty): metres per unit, peak at the max cell
+        elevationScale: vals.length ? DEV_GRID_PEAK / vals[vals.length - 1] : 1,
+      });
+    }
+    function devGridLayer() {
+      const colKey = devGridColKey();
+      const col = devGridData.columns[colKey];
+      const gs = devGridScale();
+      // Cache the non-zero subset per column so the layer's data identity is
+      // stable across rebuilds (the Glass grid's re-tessellation lesson).
+      devGridData.cellsFor ??= {};
+      const cells = (devGridData.cellsFor[colKey] ??=
+        devGridData.cells.filter(c => c[col] > 0));
+      return new deck.GridCellLayer({
+        id: "dev-grid-cells",
+        data: cells,
+        cellSize: devGridData.cell,
+        extruded: true,
+        getPosition: d => [d[0], d[1]], // cell SW corner (export_dev_grid)
+        getElevation: d => d[col],
+        elevationScale: gs.elevationScale,
+        // sqrt colour always, matching the choropleth's locked transform
+        getFillColor: d => rampColorAt(Math.sqrt(Math.min(1, d[col] / gs.clamp))),
+        opacity: state.prismOpacity,
+        material: { ambient: 0.55, diffuse: 0.6, shininess: 32, specularColor: [60, 60, 70] },
+        pickable: false, // the neutral plane keeps the hood tooltip
+        updateTriggers: { getElevation: colKey, getFillColor: [colKey, state.ramp] },
+      });
+    }
 
     // --- Infill lens (SPEC_development.md Lens B) -----------------------------
     // Suitability × activity MISMATCH, one signed diverging metric shown both
@@ -1630,8 +1716,23 @@
       }
 
       if (state.view === "development") {
-        // Single flat activity plane + hover + labels. No prisms, no sub-layers
-        // — the minimal "just to see it" first cut (SPEC_development.md Lens A).
+        // Choropleth by default; the layers-panel Detail toggle swaps in the
+        // Glass composition — a uniformly neutral hood plane (the set-aside
+        // override stands: nothing greys, geography only) under 100 m permit
+        // spikes. Hover stays on the hood either way.
+        if (state.devGrid && devGridData) {
+          return [new deck.GeoJsonLayer({
+            id: "dev-neutral-plane",
+            data: state.data,
+            filled: true,
+            stroked: false,
+            extruded: false,
+            getFillColor: GLASS_PLANE_COLOR,
+            pickable: false, // hood hover layer handles tooltips
+          }), devGridLayer(), hoodHoverLayer(), ...labelLayer()];
+        }
+        // Single flat activity plane + hover + labels — the first-cut
+        // choropleth (SPEC_development.md Lens A).
         return [developmentPlaneLayer(), hoodHoverLayer(), ...labelLayer()];
       }
 
@@ -2137,13 +2238,17 @@
         if (dotRows.length)
           document.getElementById("legend-cats").style.display = "block";
       } else if (state.view === "development") {
+        // Grid mode: the legend follows the spikes (per 100 m cell), not the
+        // per-acre choropleth it replaced.
+        const gridMode = state.devGrid && devGridData;
         document.getElementById("legend-label").textContent =
-          (state.devMetric === "permits" ? "New permits per acre" : "New homes per acre") +
+          (state.devMetric === "permits" ? "New permits" : "New homes") +
+          (gridMode ? " per 100 m cell" : " per acre") +
           ` (${DEV_WINDOW_LABEL[state.devWindow]}, sqrt colour)`;
         document.getElementById("legend-min").textContent = "0";
-        const clamp = devScale().clamp;
+        const clamp = gridMode ? devGridScale().clamp : devScale().clamp;
         document.getElementById("legend-max").textContent =
-          clamp.toFixed(clamp < 10 ? 1 : 0) + "+";
+          clamp.toFixed(clamp < 10 && !gridMode ? 1 : 0) + "+";
         // The set-aside mask is overridden here, so there is no off-scale grey
         // category — hide the aside swatch row entirely for this view.
         document.querySelector("#legend .aside").style.display = "none";
@@ -2265,6 +2370,17 @@
       document.getElementById("title-p").textContent = usesBlurb();
     }
 
+    // Development-view 100 m detail toggle (mirrors applyUsesPrisms): swaps
+    // choropleth <-> permit-cell spikes, opens the opacity slider while the
+    // spikes are up, and re-runs blurb + legend (both change with the mode).
+    function applyDevGrid(checked) {
+      state.devGrid = checked;
+      document.getElementById("prism-row").style.display = checked ? "flex" : "none";
+      overlay.setProps({ layers: buildLayers() });
+      document.getElementById("title-p").textContent = devBlurb();
+      refreshLegend();
+    }
+
     // Set the ratio view's ghost-prism opacity (0–100). UI-state only — the
     // caller rebuilds the layers.
     function setPrismOpacity(pct) {
@@ -2305,7 +2421,8 @@
       document.getElementById("uses-prisms").style.display = v === "uses" ? "block" : "none";
       document.getElementById("prism-hd").style.display = prisms ? "block" : "none";
       document.getElementById("prism-row").style.display =
-        (prisms || (v === "uses" && state.usesPrisms)) ? "flex" : "none";
+        (prisms || (v === "uses" && state.usesPrisms) ||
+         (v === "development" && state.devGrid)) ? "flex" : "none";
       document.getElementById("services-hd").style.display = v === "services" ? "block" : "none";
       document.getElementById("services").style.display = v === "services" ? "block" : "none";
       // The lens applies in Money and Ratio. In Services the per-hood signal
@@ -2359,6 +2476,30 @@
         await gridFetch;
         if (state.view !== v) return; // switched again while the fetch ran
       }
+      // Permit cells for the development view's detail toggle — fetched once;
+      // a missing file (older deploy) resolves null and the toggle stays
+      // hidden (the choropleth needs nothing from it).
+      if (v === "development" && !devGridData) {
+        devGridFetch ??= fetch(DEV_GRID_URL)
+          .then(r => r.ok ? r.json() : null)
+          .then(p => {
+            if (!p) return;
+            devGridData = {
+              cell: p.cell_m,
+              columns: {
+                units: p.columns.indexOf("units"),
+                permits: p.columns.indexOf("permits"),
+                units_3yr: p.columns.indexOf("units_3yr"),
+                permits_3yr: p.columns.indexOf("permits_3yr"),
+              },
+              cells: p.cells,
+              coverage: p.coverage,
+            };
+          })
+          .catch(() => {});
+        await devGridFetch;
+        if (state.view !== v) return; // switched again while the fetch ran
+      }
       // Ghost-prism views reset the slider to their own default on entry.
       if (VIEWS[v] && VIEWS[v].opacity != null) setPrismOpacity(VIEWS[v].opacity);
       // The denominator toggle shows in Glass (when the grid file carries the
@@ -2382,6 +2523,11 @@
       // The development window picker (5yr vs 3yr activity window).
       document.getElementById("devwindow-hd").style.display = devWindowShow ? "block" : "none";
       document.getElementById("devwindow").style.display = devWindowShow ? "flex" : "none";
+      // The development detail toggle — only where the grid file loaded
+      // (post-fetch, like the glass denominator gate above).
+      const devGridShow = v === "development" && !!devGridData;
+      document.getElementById("dev-grid-hd").style.display = devGridShow ? "block" : "none";
+      document.getElementById("dev-grid").style.display = devGridShow ? "block" : "none";
       overlay.setProps({ layers: buildLayers() });
       // Glass shows the metric like Money, so its title stays metric-driven
       // and its blurb follows the spike denominator; the services blurb
@@ -2395,7 +2541,8 @@
         v === "services" ? servicesBlurb() :
         v === "ratio" ? ratioDenom().blurb :
         v === "uses" ? usesBlurb() :
-        (v === "development" || v === "infill") ? VIEWS[v].blurb : moneyBlurb();
+        v === "development" ? devBlurb() :
+        v === "infill" ? VIEWS[v].blurb : moneyBlurb();
       syncColorAdjust(); // the sqrt toggle only bites in money + glass (scaleT)
       refreshLegend();
     }
@@ -2463,6 +2610,8 @@
         b.addEventListener("click", () => applyDevWindow(b.dataset.devwindow)));
       document.getElementById("uses-prisms-on").addEventListener("change",
         e => applyUsesPrisms(e.target.checked));
+      document.getElementById("dev-grid-on").addEventListener("change",
+        e => applyDevGrid(e.target.checked));
       document.querySelectorAll("#services .svc").forEach(el => {
         const k = el.dataset.service;
         el.querySelector(".svc-on").addEventListener("change",
