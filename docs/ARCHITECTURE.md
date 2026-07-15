@@ -613,6 +613,15 @@ January window-pin bump (both `PERMIT_YEARS` tuples).
   area_acres` computed here. Boundaries with no roll parcels default to a
   true modeled $0 (flagged) — roads semantics, with the exempt-land
   understatement caveat recorded in the module.
+- (optional) unit-costs dict from `load_unit_costs` in this module (added
+  2026-07-15; reads `data/city_unit_costs.json`, the manual reviewed input —
+  DATA.md §13) — the V2 composite `svc_cost_per_acre = road_m_per_acre ×
+  $/road-m/yr + fire_events_per_acre × (fire budget ÷ the fire frame's
+  citywide kept-event sum, PRE-join)` (`SPEC_utilities.md` decision 3).
+  Requires BOTH the roads and fire frames (either missing → warn + skip: a
+  one-term composite would be mislabeled "roads + fire"). MODELED, roads +
+  fire only, never "total city cost"; the fire term is a demand allocation
+  of a mostly-fixed budget. In `SLIM_COLUMNS`; no display layer yet.
 - (optional) lot-acre DataFrame from `export_value_grid.build_hood_lot_acres`
   (added 2026-07-08) — the neighbourhood lot-acre denominator toggle. Merged on
   `neighbourhood_name`; `value_per_lot_acre` / `revenue_per_lot_acre` =

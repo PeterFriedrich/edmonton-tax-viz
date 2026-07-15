@@ -330,7 +330,7 @@ ANALYSIS_BACKLOG 5.
      PICKER** — revenue per road metre | per fire event ("Ratio
      denominator" control, `web/index.html` `RATIO_DENOMS`). Fire floor
      0.005 events/acre/yr + log colour: `FINDINGS_revenue_scale.md` §6.7.
-   - **V2 (open, gated on a budget source hunt — laptop):** one combined
+   - **V2 (metric BUILT 2026-07-15; display open):** one combined
      "modeled city service cost per acre" = road metres × published roadway
      O&M+renewal $/m/yr + fire events × (Fire Rescue operating budget ÷
      citywide annual dispatches). Unit costs become a manual, reviewed
@@ -338,6 +338,12 @@ ANALYSIS_BACKLOG 5.
      MODELED and "roads + fire only" — never "total city cost" (police/
      parks/transit unmeasured). The fire term is a demand *allocation* of
      a mostly-fixed budget — carry that caveat.
+     As built: unit costs sourced 2026-07-15 (laptop, DATA.md §13); the
+     pipeline half landed the same day — `join_and_calculate.load_unit_costs`
+     + `unit_costs` arg → `svc_cost_per_acre` in `SLIM_COLUMNS` (per-event $
+     = budget ÷ the fire frame's citywide kept-event sum, pre-join; requires
+     BOTH roads + fire, warn+skip otherwise). **Display placement is still
+     Peter's call** — no UI reads the column yet.
 4. **Franchise-fee revenue columns:** ship with the electricity/gas lenses,
    earlier as standalone columns, or not at all? Recommended: only with
    their lenses — a modeled revenue line without its cost context invites

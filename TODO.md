@@ -548,12 +548,24 @@ _Last reconciled: 2026-07-09_
         50-yr call; 3%-of-value cross-check ≈ $45) + **Fire Rescue 2026 gross
         operating budget $276.706M** (2026 Approved Operating Budget PDF; net
         $273.598M). Provenance + caveats in the JSON.
-      - [ ] **Build the composite metric + display (Oracle-doable).** Divide
-        the fire budget by the pipeline's OWN citywide kept-event total (not a
-        hardcoded dispatch count) so numerator/denominator match; combine with
-        road_m × $50/m/yr into a per-acre $ column; wire the UI (display
-        placement undecided — Peter's call). Carry the fixed-budget-allocation
-        caveat in copy.
+      - [x] ~~**Build the composite metric (Oracle-doable).**~~ — done
+        2026-07-15: `load_unit_costs` + `unit_costs` arg in
+        `join_and_calculate` → `svc_cost_per_acre` = road_m_per_acre ×
+        $50/m/yr + fire_events_per_acre × (budget ÷ the fire frame's OWN
+        citywide kept-event total, pre-join — unmatched fire hoods stay in
+        the denominator). Requires BOTH roads + fire (warn+skip otherwise —
+        a one-term composite would be mislabeled). In `SLIM_COLUMNS`, so
+        the column ships with the next refresh run (code-only PR; the
+        local raw snapshot is older than the live auto-refreshed data,
+        so no regenerated GeoJSON was committed). +9 pytest (351).
+        Real-data run verified: **$3,142/event** ($276.706M / 88,065 kept
+        events/yr), composite on all 406 exported hoods, median
+        $3,302/acre/yr (fire-dominated downtown ~$34k, road-dominated
+        suburbs ~$3.4k — the allocation caveat is visible in the data).
+      - [ ] **Display (UI) for the composite** — placement undecided,
+        Peter's call (candidates: 4th Services checkbox / a Ratio-view
+        denominator). Carry the fixed-budget-allocation + "roads + fire
+        only, never total city cost" caveats in copy.
     - [x] ~~**Fire lens**~~ — **BUILT 2026-07-06** (design DECIDED 2026-07-05,
       Peter, all four recommendations: demand metric events/acre/yr as the
       Services ground plane + 31 station dots; all emergency responses minus

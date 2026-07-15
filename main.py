@@ -45,7 +45,7 @@ from load_transit import (
     export_transit_lines_web,
 )
 from load_permits import load_permits, export_dev_grid
-from join_and_calculate import join_and_calculate, export_geojson
+from join_and_calculate import join_and_calculate, export_geojson, load_unit_costs
 from export_value_grid import export_value_grid, check_lot_acre_bounds, build_hood_lot_acres
 from plot_choropleth import plot_choropleth
 
@@ -75,6 +75,10 @@ MILL_RATES_JSON = ROOT / "data/mill_rates.json"
 STORMWATER_RATES_JSON = ROOT / "data/stormwater_rates.json"
 WATER_RATES_JSON = ROOT / "data/water_rates.json"
 FRANCHISE_RATES_JSON = ROOT / "data/franchise_rates.json"
+# V2 service-cost composite unit costs (SPEC_utilities decision 3) — manual,
+# reviewed input like the mill rates: sourced by hand, committed, NOT part of
+# the weekly refresh. Needs both the roads and fire lenses at join time.
+UNIT_COSTS_JSON = ROOT / "data/city_unit_costs.json"
 PNG_OUT = ROOT / "output/edmonton_value_per_acre.png"
 GEOJSON_OUT = ROOT / "web/data/neighbourhood_value_per_acre.geojson"
 ROADS_WEB_OUT = ROOT / "web/data/roads.geojson"
@@ -147,6 +151,7 @@ def run(
     fire_events_csv: Path | None = FIRE_EVENTS_CSV,
     fire_stations_csv: Path | None = FIRE_STATIONS_CSV,
     fire_years: tuple[int, ...] = FIRE_YEARS,
+    unit_costs_json: Path | None = UNIT_COSTS_JSON,
     permits_csv: Path | None = PERMITS_CSV,
     permit_years: tuple[int, ...] = PERMIT_YEARS,
     permit_years_recent: tuple[int, ...] = PERMIT_YEARS_RECENT,
@@ -250,6 +255,18 @@ def run(
     elif fire_events_csv is not None:
         logger.warning("Fire events file not found (%s) — skipping the fire lens", fire_events_csv)
 
+    # V2 service-cost composite (SPEC_utilities decision 3): load the reviewed
+    # unit-cost input when present. join_and_calculate owns the roads+fire-
+    # both-required guard (it skips with a warning if either lens is off).
+    unit_costs = None
+    if unit_costs_json is not None and Path(unit_costs_json).exists():
+        unit_costs = load_unit_costs(unit_costs_json)
+    elif unit_costs_json is not None:
+        logger.warning(
+            "Unit-costs file not found (%s) — skipping the V2 service-cost composite",
+            unit_costs_json,
+        )
+
     # Scheduled transit supply (services lens #4, SPEC_services.md "Transit
     # lens") — five GTFS tables forming ONE logical input; the lens runs only
     # when all five are present (missing ones listed), same optional-
@@ -312,6 +329,7 @@ def run(
         aggregated, boundaries, zoning=zoning, roads=roads, stormwater=stormwater,
         fire=fire, transit=transit, water=water, franchise=franchise,
         permits=permits, permits_recent=permits_recent, lot_acres=lot_acres_hood,
+        unit_costs=unit_costs,
     )
 
     if png_out is not None:
@@ -411,6 +429,9 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p.add_argument("--fire-stations-csv", type=Path, default=FIRE_STATIONS_CSV)
     p.add_argument("--skip-fire", action="store_true",
                    help="skip the fire demand lens (SPEC_services.md \"Fire lens\")")
+    p.add_argument("--unit-costs-json", type=Path, default=UNIT_COSTS_JSON)
+    p.add_argument("--skip-service-cost", action="store_true",
+                   help="skip the V2 modeled service-cost composite (SPEC_utilities decision 3)")
     p.add_argument("--gtfs-stops-csv", type=Path, default=GTFS_STOPS_CSV)
     p.add_argument("--gtfs-routes-csv", type=Path, default=GTFS_ROUTES_CSV)
     p.add_argument("--gtfs-trips-csv", type=Path, default=GTFS_TRIPS_CSV)
@@ -448,6 +469,7 @@ def main(argv: list[str] | None = None) -> None:
         franchise_rates_json=None if args.skip_franchise else FRANCHISE_RATES_JSON,
         fire_events_csv=None if args.skip_fire else args.fire_events_csv,
         fire_stations_csv=None if args.skip_fire else args.fire_stations_csv,
+        unit_costs_json=None if args.skip_service_cost else args.unit_costs_json,
         gtfs_stops_csv=None if args.skip_transit else args.gtfs_stops_csv,
         gtfs_routes_csv=None if args.skip_transit else args.gtfs_routes_csv,
         gtfs_trips_csv=None if args.skip_transit else args.gtfs_trips_csv,
