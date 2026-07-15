@@ -9,8 +9,12 @@
 // shows its set-aside status; the legend gradient is sqrt; the units/permits
 // SUB-METRIC PICKER (2026-07-13) switches the plane/scale/legend/tooltip to the
 // new_permits_per_acre column; the 5yr/3yr WINDOW PICKER (2026-07-13) switches
-// them to the new_units_per_acre_3yr column + the 2023–2025 label; a round-trip
-// back to money restores the aside row. Exit code = number of FAILED assertions.
+// them to the new_units_per_acre_3yr column + the 2023–2025 label; the 100 m
+// DETAIL-GRID TOGGLE (2026-07-15) swaps choropleth <-> neutral plane +
+// dev-grid-cells spikes (linear height peak 2500 m, sqrt colour, per-cell
+// legend, geocode-coverage blurb, opacity slider, picker-follows, off restores
+// the choropleth, toggle hidden outside the view); a round-trip back to money
+// restores the aside row. Exit code = number of FAILED assertions.
 //   node verify-development.js <url>
 const { chromium } = require('playwright');
 const [url] = process.argv.slice(2);
@@ -234,12 +238,79 @@ const check = (name, cond) => { (cond ? pass++ : fail++); console.log(`${cond ? 
     await page.waitForTimeout(800);
   }
 
-  // Round-trip back to money restores the aside row.
+  // 100 m detail-grid toggle (2026-07-15): checkbox visible when dev_grid.json
+  // is served; toggling on swaps the choropleth for a NEUTRAL plane +
+  // dev-grid-cells spikes (linear height, sqrt colour, per-cell legend, blurb
+  // geocode disclosure); the pickers move the grid column; toggling off
+  // restores the choropleth exactly.
+  const gridAvail = await page.evaluate(() => !!devGridData &&
+    getComputedStyle(document.getElementById('dev-grid')).display !== 'none');
+  check('detail-grid toggle visible (dev_grid.json loaded)', gridAvail);
+  if (gridAvail) {
+    await page.$eval('#dev-grid-on', el => { el.checked = true; el.dispatchEvent(new Event('change')); });
+    await page.waitForTimeout(1500);
+    const grid = await page.evaluate(() => {
+      const ids = overlay._deck.props.layers.map(l => l.id);
+      const cellsLayer = overlay._deck.props.layers.find(l => l.id === 'dev-grid-cells');
+      const col = devGridData.columns[devGridColKey()];
+      const cells = cellsLayer.props.data;
+      const maxV = Math.max(...devGridData.cells.map(c => c[col] || 0));
+      const top = cells.reduce((a, b) => (a[col] > b[col] ? a : b));
+      return {
+        ids,
+        nCells: cells.length,
+        colKey: devGridColKey(),
+        allPositive: cells.every(c => c[col] > 0),
+        topFillSaturates: cellsLayer.props.getFillColor(top).join() === rampColorAt(1).join(),
+        elevLinear: Math.abs(cellsLayer.props.elevationScale * maxV - 2500) < 1,
+        legend: document.getElementById('legend-label').textContent,
+        blurbDiscloses: /geocod/i.test(document.getElementById('title-p').textContent),
+        planeNeutral: ids.includes('dev-neutral-plane') && !ids.includes('dev-plane'),
+        sliderShown: getComputedStyle(document.getElementById('prism-row')).display !== 'none',
+      };
+    });
+    console.log('grid:', JSON.stringify({ ...grid, ids: undefined }));
+    check('grid on: dev-grid-cells layer present', grid.ids.includes('dev-grid-cells'));
+    check('grid on: choropleth replaced by neutral plane', grid.planeNeutral);
+    check('grid on: cells non-empty, active column all > 0', grid.nCells > 0 && grid.allPositive);
+    check('grid on: top cell saturates the ramp (sqrt colour)', grid.topFillSaturates);
+    check('grid on: height linear, peak 2500 m at the max cell', grid.elevLinear);
+    check('grid on: legend flips to per-100m-cell', /per 100 m cell/.test(grid.legend));
+    check('grid on: blurb discloses geocode coverage', grid.blurbDiscloses);
+    check('grid on: opacity slider shown', grid.sliderShown);
+
+    if (chrome.hasDevWindow) {
+      await click('#devwindow button[data-devwindow="3yr"]');
+      await page.waitForTimeout(1200);
+      const w3 = await page.evaluate(() => ({
+        colKey: devGridColKey(),
+        dataLen: overlay._deck.props.layers.find(l => l.id === 'dev-grid-cells').props.data.length,
+      }));
+      check('grid follows the window picker (units_3yr)', w3.colKey === 'units_3yr');
+      check('3yr grid subset smaller than 5yr, non-empty', w3.dataLen > 0 && w3.dataLen < grid.nCells);
+      await click('#devwindow button[data-devwindow="5yr"]');
+      await page.waitForTimeout(800);
+    }
+
+    await page.$eval('#dev-grid-on', el => { el.checked = false; el.dispatchEvent(new Event('change')); });
+    await page.waitForTimeout(1200);
+    const off = await page.evaluate(() => ({
+      ids: overlay._deck.props.layers.map(l => l.id),
+      blurbBase: document.getElementById('title-p').textContent === VIEWS.development.blurb,
+    }));
+    check('grid off: choropleth restored', off.ids.includes('dev-plane') && !off.ids.includes('dev-grid-cells'));
+    check('grid off: blurb back to base', off.blurbBase);
+  }
+
+  // Round-trip back to money restores the aside row and hides the toggle.
   await click('#views button[data-view="money"]');
   await page.waitForTimeout(1500);
-  const restored = await page.evaluate(() =>
-    getComputedStyle(document.querySelector('#legend .aside')).display !== 'none');
-  check('aside row restored after leaving development', restored);
+  const restored = await page.evaluate(() => ({
+    aside: getComputedStyle(document.querySelector('#legend .aside')).display !== 'none',
+    devGridHidden: getComputedStyle(document.getElementById('dev-grid')).display === 'none',
+  }));
+  check('aside row restored after leaving development', restored.aside);
+  check('detail-grid toggle hidden outside development', restored.devGridHidden);
 
   console.log(`\n${pass} passed, ${fail} failed`);
   await browser.close();

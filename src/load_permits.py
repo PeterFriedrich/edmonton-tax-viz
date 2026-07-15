@@ -32,6 +32,7 @@ CI guard, scripts/check_unmatched_names.py). The only known straggler after
 NAME_CORRECTIONS is ``GLENORA, ROSSLYN`` (1 unit, 2026-07-12), immaterial.
 """
 
+import json
 import logging
 from pathlib import Path
 
@@ -270,3 +271,136 @@ def load_permits(
         len(out), out["new_dwelling_units"].sum(),
     )
     return out
+
+
+def export_dev_grid(
+    permits_csv: str | Path,
+    out_path: str | Path,
+    years: tuple[int, ...],
+    years_recent: tuple[int, ...] | None = None,
+    cell_m: float = 100.0,
+) -> dict:
+    """100 m grid of new residential units — the Development view's detail layer.
+
+    Bins GEOCODED new-construction ∩ residential permits into ``cell_m`` squares
+    on the same EPSG:3400 grid as ``export_value_grid`` (Glass view), so the two
+    detail layers share cell geometry. Emits compact flat JSON::
+
+        { "cell_m": 100.0,
+          "crs_note": "...",
+          "columns": ["lon", "lat", "units", "permits", "units_3yr", "permits_3yr"],
+          "cells": [[lon, lat, u, p, u3, p3], ...],   # lon/lat = cell SW corner
+          "coverage": { "5yr": {"units": ..., "units_geocoded": ...,
+                                "permits": ..., "permits_geocoded": ...},
+                        "3yr": {...} } }
+
+    The ``_3yr`` columns appear only when ``years_recent`` is given (mirroring
+    the hood columns' suffix convention). **Geocode coverage is reported, not
+    silent**: permits without latitude/longitude — a geocoding lag concentrated
+    in the newest permits (DATA.md §10) — are excluded from the cells but
+    counted in ``coverage`` so the web blurb can disclose the gap. Vocabulary
+    drift warnings (unseen work/building types) are load_permits' job — the
+    weekly pipeline runs both on the same file; this filter stays quiet.
+    """
+    from pyproj import Transformer
+
+    out_path = Path(out_path)
+    windows = {"5yr": tuple(sorted(years))}
+    if years_recent:
+        windows["3yr"] = tuple(sorted(years_recent))
+
+    header = pd.read_csv(permits_csv, nrows=0)
+    needed = set(REQUIRED_COLUMNS) | {"latitude", "longitude"}
+    missing = sorted(needed - set(header.columns))
+    if missing:
+        raise ValueError(
+            f"columns {missing} not in {permits_csv} — the permits CSV predates "
+            f"the lat/long $select (scripts/download_data.py, 2026-07-15); "
+            f"re-download before exporting the dev grid"
+        )
+
+    df = pd.read_csv(permits_csv, usecols=sorted(needed), low_memory=False)
+    df["year"] = pd.to_numeric(df["year"], errors="coerce")
+    df["units_added"] = pd.to_numeric(df["units_added"], errors="coerce").fillna(0.0)
+    is_new = df["work_type"].astype("string").str.strip().isin(NEW_WORK_TYPES)
+    is_res = df["building_type"].astype("string").str.strip().isin(
+        RESIDENTIAL_BUILDING_TYPES)
+    lat = pd.to_numeric(df["latitude"], errors="coerce")
+    lon = pd.to_numeric(df["longitude"], errors="coerce")
+    geocoded = lat.notna() & lon.notna()
+
+    all_years = sorted({y for w in windows.values() for y in w})
+    kept = df.loc[is_new & is_res & df["year"].isin(all_years)].copy()
+    if not len(kept):
+        raise ValueError(
+            f"no new residential permits in {all_years} — wrong input or "
+            f"vocabulary drift (load_permits would have warned)"
+        )
+
+    coverage = {}
+    for name, w in windows.items():
+        in_w = kept["year"].isin(w)
+        geo = in_w & geocoded.loc[kept.index]
+        coverage[name] = {
+            "units": round(float(kept.loc[in_w, "units_added"].sum())),
+            "units_geocoded": round(float(kept.loc[geo, "units_added"].sum())),
+            "permits": int(in_w.sum()),
+            "permits_geocoded": int(geo.sum()),
+        }
+        logger.info(
+            "Dev grid %s window: %d of %d permits geocoded (%.0f of %.0f units) "
+            "— the gap is the recent-permit geocoding lag, disclosed in-app",
+            name, coverage[name]["permits_geocoded"], coverage[name]["permits"],
+            coverage[name]["units_geocoded"], coverage[name]["units"],
+        )
+
+    pts = kept.loc[geocoded.loc[kept.index]].copy()
+    # Same projection + floor-binning as export_value_grid, so a dev-grid cell
+    # and a value-grid cell with equal corners are the SAME 100 m square.
+    to_alberta = Transformer.from_crs(4326, 3400, always_xy=True)
+    x, y = to_alberta.transform(pts["longitude"].values, pts["latitude"].values)
+    pts["cx"] = (x // cell_m).astype(int)
+    pts["cy"] = (y // cell_m).astype(int)
+
+    per_cell = {}
+    for name, w in windows.items():
+        g = (pts.loc[pts["year"].isin(w)]
+             .groupby(["cx", "cy"])
+             .agg(units=("units_added", "sum"), permits=("units_added", "size")))
+        per_cell[name] = g[g["units"] + g["permits"] > 0]
+    cells_idx = per_cell["5yr"].index
+    if "3yr" in per_cell:
+        cells_idx = cells_idx.union(per_cell["3yr"].index)
+
+    to_wgs84 = Transformer.from_crs(3400, 4326, always_xy=True)
+    columns = ["lon", "lat", "units", "permits"]
+    if "3yr" in windows:
+        columns += ["units_3yr", "permits_3yr"]
+    rows = []
+    for cx, cy in cells_idx:
+        lon_sw, lat_sw = to_wgs84.transform(cx * cell_m, cy * cell_m)
+        row = [round(lon_sw, 6), round(lat_sw, 6)]
+        for name in windows:
+            if (cx, cy) in per_cell[name].index:
+                rec = per_cell[name].loc[(cx, cy)]
+                row += [round(float(rec["units"])), int(rec["permits"])]
+            else:
+                row += [0, 0]
+        rows.append(row)
+
+    payload = {
+        "cell_m": cell_m,
+        "crs_note": "cells binned in EPSG:3400; SW corners reprojected to WGS84",
+        "columns": columns,
+        "cells": rows,
+        "coverage": coverage,
+    }
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(out_path, "w", encoding="utf-8") as f:
+        json.dump(payload, f, separators=(",", ":"))
+
+    stats = {"n_cells": len(rows), "cell_m": cell_m,
+             "coverage": coverage, "bytes": out_path.stat().st_size}
+    logger.info("Wrote %s: %d cells, %.2f MB",
+                out_path.name, len(rows), stats["bytes"] / 1e6)
+    return stats

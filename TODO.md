@@ -397,6 +397,16 @@ _Last reconciled: 2026-07-09_
       `PERMIT_YEARS_RECENT` (3yr, 2023–2025) alongside the 5yr base →
       `_3yr`-suffixed columns + web `#devwindow` 5yr/3yr picker (both metrics),
       gated on the `_3yr` columns. 311 pytest + `verify-development.js` 40/40 green.
+    - [x] **Lens A 100 m detail grid** (2026-07-15, Peter: "add them as a layer
+      switch this time... may want to move the others to this style later"):
+      layers-panel "Detail" toggle in the Development view swaps the choropleth
+      for the Glass composition — neutral plane + 100 m geocoded-permit spikes
+      (`load_permits.export_dev_grid` → `web/data/dev_grid.json`, 4,105 cells;
+      permits `$select` now fetches lat/long). Linear height / sqrt colour,
+      driven by the existing pickers; geocode-lag coverage (~21% of 5yr units
+      not yet mapped) written into the JSON + disclosed in the blurb.
+      DECISIONS 2026-07-15; SPEC_development "Lens A detail grid";
+      verify-development 54/54; +6 pytest (334).
     - **Lens A polish (remaining):** the `occupancy_granted_date` completed-builds
       variant (DATA.md §10 — only populated residential ≥2022 / non-res ≥2024).
   - [ ] **Lens B — Suitability × Activity mismatch, PHASE 2.** Signed diverging
@@ -432,6 +442,16 @@ _Last reconciled: 2026-07-09_
     - [ ] **Lens B optional refinement (future, low priority):** one-sided
       opportunity/pressure choropleth toggles (the single diverging map already
       shows both). SPEC_development Lens B.
+    - [ ] **Lens B fine-grain "Infill detail" (assessed 2026-07-14, not yet
+      decided):** the z-mismatch SCORE doesn't survive 100 m grain (~88% of
+      inhabited cells have zero 5yr activity — every quiet cell would read
+      "opportunity"; set-aside/residential gates are hood-level constructs).
+      The honest fine-grain version is the DECOMPOSED ingredients: a per-cell
+      FAR texture (per-point `gross_area` + `_point_lot_stats` lot dedupe —
+      `build_hood_lot_acres` keyed on cell instead of hood) under the Lens A
+      permit spikes (now shipped), verdict stays hood-level. Middle path if a
+      finer score is ever wanted: prototype 250–500 m cells first. Needs
+      Peter's call before building.
   - [ ] **Lens C — Activity vs City Service Cost, PHASE 3 / future.** Where new
     building goes vs modeled city service columns (road/storm/water/fire per acre)
     or V2 unit-cost $/acre (laptop-gated). Two-ledger idiom of

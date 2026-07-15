@@ -44,7 +44,7 @@ from load_transit import (
     export_transit_stations_web,
     export_transit_lines_web,
 )
-from load_permits import load_permits
+from load_permits import load_permits, export_dev_grid
 from join_and_calculate import join_and_calculate, export_geojson
 from export_value_grid import export_value_grid, check_lot_acre_bounds, build_hood_lot_acres
 from plot_choropleth import plot_choropleth
@@ -80,6 +80,7 @@ GEOJSON_OUT = ROOT / "web/data/neighbourhood_value_per_acre.geojson"
 ROADS_WEB_OUT = ROOT / "web/data/roads.geojson"
 ZONING_WEB_OUT = ROOT / "web/data/zoning.geojson"
 GRID_WEB_OUT = ROOT / "web/data/value_grid.json"
+DEV_GRID_WEB_OUT = ROOT / "web/data/dev_grid.json"
 FIRE_STATIONS_WEB_OUT = ROOT / "web/data/fire_stations.json"
 TRANSIT_STATIONS_WEB_OUT = ROOT / "web/data/transit_stations.json"
 TRANSIT_LINES_WEB_OUT = ROOT / "web/data/lrt_lines.json"
@@ -342,6 +343,18 @@ def run(
         # is deduped per docs/FINDINGS_lot_dedupe.md, and without the
         # property-info file grid_input is the bare assessment (ground-acre only).
         export_value_grid(grid_input, GRID_WEB_OUT, cell_m=GRID_CELL_M)
+        # 100 m new-units grid for the Development view's detail toggle —
+        # rides with the permits lens (skipped with it). Needs the lat/long
+        # columns (download_data $select, 2026-07-15); an older CSV degrades
+        # to a warning so a stale snapshot can't fail the whole pipeline.
+        if permits is not None:
+            try:
+                export_dev_grid(
+                    permits_csv, DEV_GRID_WEB_OUT,
+                    permit_years, permit_years_recent, cell_m=GRID_CELL_M,
+                )
+            except ValueError as e:
+                logger.warning("Dev grid not exported: %s", e)
         # Fire-station context dots for the Services view's fire layer —
         # rides with the fire lens (skipped with it).
         if fire is not None and fire_stations_csv is not None and Path(fire_stations_csv).exists():
