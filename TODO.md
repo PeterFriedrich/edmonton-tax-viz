@@ -250,8 +250,15 @@ _Last reconciled: 2026-07-09_
   **Reachability probed 2026-07-14 (Oracle box):** doniveson.ca IIMP PDFs 200,
   open.alberta.ca FIR page 200 — D2/D5 data is Oracle-doable; only D0's bylaw
   map exhibit is edmonton.ca/laptop-gated. Tickets, build order:
-  - [ ] **D0 — catchment polygon acquisition (RISK — source resolved
-    2026-07-15; approach is now Peter's call).** The 12 fire-hall off-site levy
+  - [x] **D0 — catchment polygons BUILT 2026-07-15** (approximate, reviewable).
+    `data/levy_catchments.geojson` (10 units) via
+    `scripts/build_levy_catchments.py`; QA overlay + area validation confirm the
+    footprints match Schedule A. Two flags for a future reviewer (editable
+    `CATCHMENT_HOODS` dict): **Blatchford under-covers** (catchment > mapped
+    hood) and **Riverview 1.65** (maybe drop `RIVER'S EDGE`). Full writeup:
+    `docs/FINDINGS_offsite_levy_catchments.md`. Detail below ↓
+  - [ ] **D0 detail — catchment polygon acquisition (RISK — source resolved
+    2026-07-15; approach was Peter's call).** The 12 fire-hall off-site levy
     catchments (names/costs/rates tabled in the brief). Probed 2026-07-14:
     **NOT on data.edmonton.ca** (Socrata catalog: zero hits) **nor ArcGIS Hub**
     (every "off-site levy" layer there is Calgary's).

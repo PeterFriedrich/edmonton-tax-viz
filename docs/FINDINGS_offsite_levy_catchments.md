@@ -76,18 +76,49 @@ In Edmonton's far growth areas the neighbourhood units are single giant
 So the neighbourhood-union is faithful for the **developed-edge catchments** and
 breaks down for the **far-greenfield catchments** where the grid is too coarse.
 
-## 4. Options for the ❌/⚠️ catchments (open — Peter's call)
+## 4. Resolution: merge-to-grid + built layer (2026-07-15)
 
-1. **Hybrid**: neighbourhood-union for the ~6–9 that resolve; hand-trace the 2–3
-   structural ones (EETP pair; NE Horse Hill) from the Schedule A raster.
-2. **Merge to the grid**: collapse catchments that share a hood into one unit
-   (EETP + Northeast EETP → a single "EETP" catchment; likewise the Horse Hill
-   pair). Honest, coarser, fewer catchments. Component 1 still shows the
-   levy-only-fire-halls asymmetry, just at merged granularity for the far NE.
-3. **Table-only for the exceptions**: map the resolvable catchments; list the
-   structural ones as a per-catchment table (cost/area/rate from the brief) with
-   no polygon.
+Decision (Peter): **merge to the grid** — collapse the catchments the union
+cannot separate into one unit each, rather than tracing the raster:
+- **EETP + Northeast EETP → "EETP"** (both inside the one 5,334 ha hood)
+- **Horse Hill + Northeast Horse Hill → "Horse Hill"** (rural hoods 2–3× each)
 
-Whatever is chosen, the join layer must be **labelled "approximated to
-neighbourhood boundaries"** and the merged/traced exceptions footnoted — no
-silent precision claims.
+The developed-edge catchments stay as their own neighbourhood unions; my
+first-pass hood-pick errors (Cumberland, Southeast, Blatchford) were re-read off
+zoomed Schedule A ↔ reference-render crops. Result: **12 catchments → 10 units.**
+
+`scripts/build_levy_catchments.py` holds the editable assignment table
+(`CATCHMENT_HOODS`), dissolves `neighbourhoods.geojson` into the 10 units,
+attaches the brief's levy attributes (summed for merged units), validates each
+unit's gross area against the brief's assessable target, and writes:
+- `data/levy_catchments.geojson` (10 features, WGS84 — committed derived product)
+- `data/levy_catchments_qa.png` (QA overlay; `--qa`)
+
+Tests: `tests/test_build_levy_catchments.py` (config invariants + dissolve).
+
+### Final area validation (gross union ÷ brief assessable)
+| Unit | Assessable ha | Union ha | Ratio | Flag |
+|---|---|---|---|---|
+| Wedgewood | 622 | 616 | 0.99 | ok |
+| Big Lake | 1,214 | 1,321 | 1.09 | ok |
+| Walker | 1,095 | 1,234 | 1.13 | ok |
+| Mistatim Industrial | 1,102 | 1,284 | 1.16 | ok |
+| Cumberland | 1,338 | 1,245 | 0.93 | ok |
+| Southeast | 1,181 | 1,656 | 1.40 | ok |
+| Riverview | 838 | 1,384 | 1.65 | over — `RIVER'S EDGE` may overreach; review |
+| EETP (merged) | 3,308 | 5,334 | 1.61 | over — hood bigger than the two catchments (structural) |
+| Horse Hill (merged) | 1,868 | 4,022 | 2.15 | over — rural hoods mostly non-assessable (structural) |
+| Blatchford | 785 | 305 | 0.39 | **under** — catchment is larger than the only mapped hood |
+
+The QA overlay confirms every unit sits in the correct place vs Schedule A. The
+`ok` band (0.85–1.5) reflects the expected gross ≥ assessable gap. Two items for
+a future reviewer (the assignment table is a plain editable dict):
+- **Blatchford under-covers**: the levy catchment (785 assessable ha) exceeds the
+  `BLATCHFORD AREA` hood (305 gross ha) — the grid does not extend to the full
+  catchment; needs the adjacent redevelopment parcels, not separable by hood.
+- **Riverview 1.65**: dropping `RIVER'S EDGE` gives a cleaner 1.16; kept for now
+  because the green Schedule A footprint appears to include it.
+
+The layer is **labelled "approximated to neighbourhood boundaries; boundaries
+advisory (Bylaw 19340 Schedule A)"** in every feature — no silent precision
+claims.

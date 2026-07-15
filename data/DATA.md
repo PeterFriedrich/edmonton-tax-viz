@@ -646,6 +646,16 @@ spatial join key in the debt-lens brief.
   neighbourhood-union feasibility (which catchments the 407-hood grid can/can't
   reproduce, with per-catchment area validation) in
   `docs/FINDINGS_offsite_levy_catchments.md`.
+- **Derived product: `data/levy_catchments.geojson`** (10 features, committed) —
+  each catchment approximated as a union of neighbourhoods via
+  `scripts/build_levy_catchments.py` (manual reviewed input, like
+  `fetch_fir_debt.py`; NOT in the weekly refresh). The editable `CATCHMENT_HOODS`
+  table maps hoods to catchments read off Schedule A. The 12 bylaw catchments
+  collapse to **10 units**: EETP + Northeast EETP and Horse Hill + Northeast
+  Horse Hill are each merged (the far-greenfield grid is one giant hood per
+  corner). Each feature carries the brief's levy attributes + a `union_ha` /
+  `area_ratio` QA field + an `approximation` label. Tests:
+  `tests/test_build_levy_catchments.py`.
 ### Known Quirks
 - **Boundaries are advisory** — the bylaw states the City "may adjust and refine"
   catchment boundaries over time; the map footnote says "subject to change." Any
