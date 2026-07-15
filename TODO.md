@@ -214,16 +214,20 @@ _Last reconciled: 2026-07-09_
      source, with explicit citation + "as of" date.
   3. Surface as a click-through popup / footnote-style panel — **NOT** a toggle affecting
      the main colour ramp.
-  **Sources to hunt (primary supersedes secondhand):**
-  - **PRIMARY: the actual IIMP / "Fiscal Impacts of Growth" report** — **LOCATED
-    2026-07-14** (debt-lens brief research): Report CR_2705 (2016) + Attachment 1,
-    archived at doniveson.ca (`/wp-content/uploads/2018/09/IIMP.pdf` — 4-page council
-    report — and `IIMP2.pdf` — 20-page attachment, full tables). Both **reachable from
-    the Oracle box** (probed 200 same day), so this piece is NO LONGER laptop-gated.
-    Per-area figures now in `docs/fable_brief_debt_lens.md` (developer $3.806B vs
-    City/Province $1.362B, ~$1.4B 50-yr shortfall; Decoteau/Horse Hill/Riverview
-    boundary stats). The old hunt instructions (eScribe/insite search) are superseded;
-    the build itself is ticket D2 of the debt-lens item below.
+  **Sources — VERIFIED 2026-07-15 (laptop), research half DONE.**
+  - **PRIMARY: Report CR_2705, "IIMP – Cumulative Impacts," March 22 2016** (+ 20-pg
+    Attachment 1). **Every figure verified against the primary tables** — see
+    `docs/FINDINGS_iimp_growth_areas.md`: developer $3.806B (Drainage $2.351B +
+    Transportation $1.455B); City/Province $1.362B (full 8-line Table 3 breakdown
+    confirmed); ~$1.4B 50-yr cumulative shortfall (**distinct** from the $1.362B
+    capital — do NOT conflate, both ~$1.4B by coincidence); areas Decoteau 1,960 ha/
+    74,565/39yr, Horse Hill 2,793 ha/70,038/36yr, Riverview 1,435 ha/50,422/30yr;
+    combined pop 195,025. All **2016$, projections at build-out, "received for
+    information"**. PDFs saved `data/raw/iimp/` (gitignored). doniveson.ca archive
+    reachable from Oracle too, so the BUILD (D2) is not laptop-gated.
+  - **Currency check done:** the 2016 IIMP is NOT superseded per-area — the new
+    CIO/OIO framework (2027–2030 budget) is a citywide 10-yr capital outlook, not a
+    per-growth-area pro forma. Cite 2016 IIMP, date-stamped. → build = ticket D2.
   - 2016 Global News coverage (already in project research) as secondary corroboration —
     primary report should supersede it for exact figures.
   - Off-site levy bylaw + capital financing policy — how the ~$369M muni/provincial piece
@@ -250,18 +254,39 @@ _Last reconciled: 2026-07-09_
   **Reachability probed 2026-07-14 (Oracle box):** doniveson.ca IIMP PDFs 200,
   open.alberta.ca FIR page 200 — D2/D5 data is Oracle-doable; only D0's bylaw
   map exhibit is edmonton.ca/laptop-gated. Tickets, build order:
-  - [ ] **D0 — catchment polygon acquisition (RISK, resolve before building
-    Component 1's spatial join).** The 12 fire-hall off-site levy catchments
-    (names/costs/rates tabled in the brief). Probed 2026-07-14: **NOT on
-    data.edmonton.ca** (Socrata catalog: zero hits for off-site levy/catchment)
-    **nor ArcGIS Hub** (every "off-site levy" layer there is Calgary's). Next:
-    check the off-site levy bylaw PDF/backgrounder for a map exhibit
-    (edmonton.ca — laptop-gated); fallback = trace polygons from the PDF figure,
-    or approximate by joining catchment names to existing hood/ASP boundaries
-    (most names — Horse Hill, Riverview, Big Lake, Cumberland, Walker,
-    Blatchford — look like plan-area names we may already cover). If polygons
-    prove unobtainable, Component 1 degrades to a per-catchment table +
-    named-hood join, still honest.
+  - [x] **D0 — catchment polygons BUILT 2026-07-15** (approximate, reviewable).
+    `data/levy_catchments.geojson` (10 units) via
+    `scripts/build_levy_catchments.py`; QA overlay + area validation confirm the
+    footprints match Schedule A. Two flags for a future reviewer (editable
+    `CATCHMENT_HOODS` dict): **Blatchford under-covers** (catchment > mapped
+    hood) and **Riverview 1.65** (maybe drop `RIVER'S EDGE`). Full writeup:
+    `docs/FINDINGS_offsite_levy_catchments.md`. Detail below ↓
+  - [ ] **D0 detail — catchment polygon acquisition (RISK — source resolved
+    2026-07-15; approach was Peter's call).** The 12 fire-hall off-site levy
+    catchments (names/costs/rates tabled in the brief). Probed 2026-07-14:
+    **NOT on data.edmonton.ca** (Socrata catalog: zero hits) **nor ArcGIS Hub**
+    (every "off-site levy" layer there is Calgary's).
+    **RESOLVED 2026-07-15 (laptop):** the ONLY published boundaries are a raster
+    map exhibit — **Schedule A of Bylaw 19340** ("Fire Halls with Catchment
+    Boundaries"), a JPEG in the bylaw PDF. **No GIS vector layer exists anywhere.**
+    Bylaw text confirms boundaries are advisory ("subject to change… may adjust
+    and refine over time"). Source artifacts saved to
+    `data/raw/offsite_levy/` (bylaw PDF, ScheduleA JPEG, 2026 approved rates).
+    Key enabling finding: Schedule A's catchment edges **follow the neighbourhood
+    grid**, and all 12 catchments map to clusters of neighbourhoods we already
+    hold in `neighbourhoods.geojson` (e.g. Blatchford→`BLATCHFORD AREA`,
+    Walker→`WALKER`, Cumberland→`CUMBERLAND`, Big Lake→`ANTHONY HENDAY BIG LAKE`,
+    Horse Hill→`ANTHONY HENDAY HORSE HILL` + the Horse Hill district). Three
+    paths, decreasing effort / fidelity:
+    1. **Trace/digitize** the raster (georeference + hand-trace 12 polygons) —
+       highest fidelity, most manual; boundaries are advisory anyway.
+    2. **Neighbourhood-union approximation** (RECOMMENDED) — build a
+       neighbourhood→catchment assignment table by reading Schedule A, then
+       dissolve. Reproducible from data we own, honest ("approximated to
+       neighbourhood boundaries"), aligns with our neighbourhood-unit pipeline;
+       error small because edges follow hood lines.
+    3. **Table only** — per-catchment table + text list of member hoods, no map
+       layer. Lowest effort, still honest, loses the spatial punch.
   - [ ] **D1 — levy performance mini-viz.** Cumulative levy collected vs the
     ~$26M single-facility cost, per catchment (simple bar/ratio — makes the gap
     immediate). Figures in the brief (2022–2024 annual reports; cumulative
@@ -511,15 +536,24 @@ _Last reconciled: 2026-07-09_
       **PR #33 merged (`e0da845`) + deployed 2026-07-10** (refresh run
       29099791508 green → auto-refresh `e8f58b4`; github-pages deploy
       success; live-verified 27/27 vs the Pages URL).
-    - [ ] **V2 — combined "modeled city service cost per acre" (LAPTOP-GATED:
-      budget source hunt).** One denominator = road metres × published
-      roadway O&M+renewal $/m/yr + fire events × (Fire Rescue operating
-      budget ÷ citywide dispatches). Needs the two unit costs from City
-      budget documents (edmonton.ca unreachable from the Oracle box — same
-      bucket as the IIMP hunt); they become a manual reviewed input
-      (`city_unit_costs.json`, mill-rates pattern), labeled MODELED and
-      "roads + fire only", never "total city cost". Design already locked
-      in SPEC_utilities decision 3.
+    - [ ] **V2 — combined "modeled city service cost per acre".** One
+      denominator = road metres × roadway O&M+renewal $/m/yr + fire events ×
+      (Fire Rescue operating budget ÷ citywide dispatches). Labeled MODELED,
+      "roads + fire only", never "total city cost". Design locked in
+      SPEC_utilities decision 3.
+      - [x] **Unit-cost source hunt DONE 2026-07-15 (laptop)** — the
+        laptop-gated half. `data/city_unit_costs.json` (reviewed input,
+        mill-rates pattern): **roadway $50/m/yr** (edmonton.ca Development
+        Impact page: $600k O&M + $1.9M renewal per km ÷ 50-yr life; Peter's
+        50-yr call; 3%-of-value cross-check ≈ $45) + **Fire Rescue 2026 gross
+        operating budget $276.706M** (2026 Approved Operating Budget PDF; net
+        $273.598M). Provenance + caveats in the JSON.
+      - [ ] **Build the composite metric + display (Oracle-doable).** Divide
+        the fire budget by the pipeline's OWN citywide kept-event total (not a
+        hardcoded dispatch count) so numerator/denominator match; combine with
+        road_m × $50/m/yr into a per-acre $ column; wire the UI (display
+        placement undecided — Peter's call). Carry the fixed-budget-allocation
+        caveat in copy.
     - [x] ~~**Fire lens**~~ — **BUILT 2026-07-06** (design DECIDED 2026-07-05,
       Peter, all four recommendations: demand metric events/acre/yr as the
       Services ground plane + 31 station dots; all emergency responses minus

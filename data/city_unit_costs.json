@@ -1,0 +1,39 @@
+{
+  "_purpose": "MODELED city service unit costs for the V2 'city service cost per acre' composite (SPEC_utilities decision 3). Manual, reviewed input (mill-rates pattern) — NOT auto-fetched, NOT part of the weekly refresh. Covers ROADS + FIRE only; never label the result 'total city cost' (police/parks/transit/drainage unmeasured). Sourced on Peter's laptop 2026-07-15 (edmonton.ca unreachable from the Oracle box).",
+  "roadway_om_renewal": {
+    "value": 50,
+    "units": "dollars per road-metre per year (MODELED)",
+    "applies_to": "the collector+local centreline metres in road_m_per_acre (arterials excluded from the metric)",
+    "source": {
+      "page": "City of Edmonton — Development Impact on Infrastructure",
+      "url": "https://www.edmonton.ca/city_government/initiatives_innovation/development-impact-on-infrastructure",
+      "retrieved": "2026-07-15",
+      "published_figures_per_km_neighbourhood_road": {
+        "operate_and_maintain": 600000,
+        "renew_and_replace": 1900000,
+        "initial_capital": 1500000,
+        "life_years": "usually 25, extended to 50 with proper maintenance",
+        "set_aside_rule": "≈3% of infrastructure value per year to operate/maintain/renew/replace"
+      }
+    },
+    "derivation": "lifecycle O&M ($600k) + renewal ($1.9M) = $2.5M per km, annualized over the 50-year (well-maintained) life -> $50,000/km/yr = $50/m/yr. Peter's call 2026-07-15 (50-yr, not 25-yr).",
+    "cross_check": "3% of the $1.5M capital value ≈ $45,000/km/yr ≈ $45/m/yr — same order, corroborates $50.",
+    "sensitivity": "25-year (unmanaged) life would double this to ~$100/m/yr. Calibrated to NEIGHBOURHOOD (local) roads; collectors cost somewhat more per metre, so this is a mild lower bound for the collector share.",
+    "caveat": "MODELED, roads-only. A published per-km lifecycle unit cost applied uniformly — not Edmonton's actual per-segment spend."
+  },
+  "fire_response": {
+    "operating_budget_gross_annual": 276706000,
+    "operating_budget_net_annual": 273598000,
+    "units": "dollars per year (2026 approved)",
+    "chosen_numerator": "gross (276706000) — total cost of running the service; net (273598000) differs only ~1% (revenue 3,108,000).",
+    "source": {
+      "document": "City of Edmonton 2026 Approved Operating Budget (April)",
+      "url": "https://www.edmonton.ca/sites/default/files/public-files/documents/2026-approved-operating-budget-april.pdf",
+      "retrieved": "2026-07-15",
+      "line_item": "Community Services — Fire Rescue Services; gross expenditure 276,706 ($000), revenue 3,108, net 273,598; 1,361 FTE. Gross−revenue=net cross-checks.",
+      "columns": "2024 Actual | 2025 Adjusted Budget | 2026 Budget; values in $000"
+    },
+    "divisor": "citywide annual kept fire events — compute from the pipeline's own event total so the unit cost's denominator matches the fire_events_per_acre numerator (do NOT hardcode). Reference: ~90,000 dispatches/yr in the 2023-2025 window (DATA.md §7) -> ~$3,075/event gross (illustrative only).",
+    "caveat": "MODELED demand ALLOCATION of a mostly-FIXED budget: a hood with 2x the events does not cost the City 2x — most fire cost is standing capacity (halls, crews). Carry this caveat in any UI copy. Fire-only; not 'total city cost'."
+  }
+}

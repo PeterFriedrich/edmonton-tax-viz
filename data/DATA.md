@@ -633,6 +633,58 @@ the data layer only.
   (2016) before climbing again; real amortization, not a data error (both
   years pass the neighbour band).
 
+## 12. Off-Site Levy Fire-Hall Catchments (debt lens D0, added 2026-07-15)
+Source: **Off-Site Levy Bylaw 19340**, `edmonton.ca/business_economy/off-site-levy-bylaw`
+(laptop-reachable only). The 12 fire-hall levy catchments are the Component 1
+spatial join key in the debt-lens brief.
+- Raw artifacts in `data/raw/offsite_levy/`: `BL19340_offsite_levy_bylaw.pdf`,
+  `ScheduleA_catchment_map.jpg` (the catchment map exhibit, bylaw p.7),
+  `2026_approved_rates.pdf` (cost/area/rate table).
+- **No GIS vector layer exists** — data.edmonton.ca (0 Socrata hits), ArcGIS Hub
+  (Calgary layers only), and the bylaw page all lack one. Boundaries are
+  published **only as the Schedule A raster**. Full investigation +
+  neighbourhood-union feasibility (which catchments the 407-hood grid can/can't
+  reproduce, with per-catchment area validation) in
+  `docs/FINDINGS_offsite_levy_catchments.md`.
+- **Derived product: `data/levy_catchments.geojson`** (10 features, committed) —
+  each catchment approximated as a union of neighbourhoods via
+  `scripts/build_levy_catchments.py` (manual reviewed input, like
+  `fetch_fir_debt.py`; NOT in the weekly refresh). The editable `CATCHMENT_HOODS`
+  table maps hoods to catchments read off Schedule A. The 12 bylaw catchments
+  collapse to **10 units**: EETP + Northeast EETP and Horse Hill + Northeast
+  Horse Hill are each merged (the far-greenfield grid is one giant hood per
+  corner). Each feature carries the brief's levy attributes + a `union_ha` /
+  `area_ratio` QA field + an `approximation` label. Tests:
+  `tests/test_build_levy_catchments.py`.
+### Known Quirks
+- **Boundaries are advisory** — the bylaw states the City "may adjust and refine"
+  catchment boundaries over time; the map footnote says "subject to change." Any
+  derived polygon layer must be labelled "approximated to neighbourhood
+  boundaries," not presented as authoritative.
+- **`EDMONTON ENERGY AND TECHNOLOGY PARK` (one 5,334 ha hood) spans BOTH the EETP
+  and Northeast EETP catchments** — the neighbourhood grid is too coarse in the
+  far greenfield to separate them by union (see FINDINGS §3).
+
+## 13. City Service Unit Costs (V2 cost-per-acre, added 2026-07-15)
+`data/city_unit_costs.json` — MODELED unit costs for the V2 "city service cost
+per acre" composite (`SPEC_utilities` decision 3). Manual reviewed input
+(mill-rates pattern; NOT auto-fetched, NOT in the weekly refresh). Sourced on
+Peter's laptop (edmonton.ca unreachable from the Oracle box). **Roads + fire
+only** — never label the derived metric "total city cost".
+- **Roadway = $50/m/yr** (O&M + renewal). Source: edmonton.ca "Development Impact
+  on Infrastructure" — neighbourhood road $600k O&M + $1.9M renewal per km,
+  annualized over a 50-yr life (Peter's call 2026-07-15); 3%-of-value rule
+  cross-checks (~$45). Applies to the collector+local `road_m_per_acre` metres.
+- **Fire = 2026 gross operating budget $276.706M** (net $273.598M, 1,361 FTE).
+  Source: City of Edmonton 2026 Approved Operating Budget PDF, Fire Rescue
+  Services line. The V2 fire term divides this by the pipeline's OWN citywide
+  kept-event total (don't hardcode dispatches), so the unit cost's denominator
+  matches the `fire_events_per_acre` numerator.
+### Known Quirks
+- **The fire term is a demand ALLOCATION of a mostly-fixed budget** — a hood with
+  2× the events does not cost the City 2× (most fire cost is standing capacity).
+  Carry that caveat in any UI copy.
+
 ## Name Matching
 
 Neighbourhood names between the two sources may not align exactly. Normalization (strip + uppercase) and the `NAME_CORRECTIONS` dict (keyed assessment name → boundary name) are applied in `load_assessment.py`, *before* aggregation — applying corrections after aggregation could collapse two summed rows onto one boundary and duplicate it. `join_and_calculate.py` then does a normalized exact match on the already-corrected names and flags whatever remains unmatched.
