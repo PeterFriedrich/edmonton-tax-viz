@@ -665,6 +665,26 @@ spatial join key in the debt-lens brief.
   and Northeast EETP catchments** — the neighbourhood grid is too coarse in the
   far greenfield to separate them by union (see FINDINGS §3).
 
+## 13. City Service Unit Costs (V2 cost-per-acre, added 2026-07-15)
+`data/city_unit_costs.json` — MODELED unit costs for the V2 "city service cost
+per acre" composite (`SPEC_utilities` decision 3). Manual reviewed input
+(mill-rates pattern; NOT auto-fetched, NOT in the weekly refresh). Sourced on
+Peter's laptop (edmonton.ca unreachable from the Oracle box). **Roads + fire
+only** — never label the derived metric "total city cost".
+- **Roadway = $50/m/yr** (O&M + renewal). Source: edmonton.ca "Development Impact
+  on Infrastructure" — neighbourhood road $600k O&M + $1.9M renewal per km,
+  annualized over a 50-yr life (Peter's call 2026-07-15); 3%-of-value rule
+  cross-checks (~$45). Applies to the collector+local `road_m_per_acre` metres.
+- **Fire = 2026 gross operating budget $276.706M** (net $273.598M, 1,361 FTE).
+  Source: City of Edmonton 2026 Approved Operating Budget PDF, Fire Rescue
+  Services line. The V2 fire term divides this by the pipeline's OWN citywide
+  kept-event total (don't hardcode dispatches), so the unit cost's denominator
+  matches the `fire_events_per_acre` numerator.
+### Known Quirks
+- **The fire term is a demand ALLOCATION of a mostly-fixed budget** — a hood with
+  2× the events does not cost the City 2× (most fire cost is standing capacity).
+  Carry that caveat in any UI copy.
+
 ## Name Matching
 
 Neighbourhood names between the two sources may not align exactly. Normalization (strip + uppercase) and the `NAME_CORRECTIONS` dict (keyed assessment name → boundary name) are applied in `load_assessment.py`, *before* aggregation — applying corrections after aggregation could collapse two summed rows onto one boundary and duplicate it. `join_and_calculate.py` then does a normalized exact match on the already-corrected names and flags whatever remains unmatched.

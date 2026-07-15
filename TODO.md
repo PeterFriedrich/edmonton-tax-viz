@@ -532,15 +532,24 @@ _Last reconciled: 2026-07-09_
       **PR #33 merged (`e0da845`) + deployed 2026-07-10** (refresh run
       29099791508 green → auto-refresh `e8f58b4`; github-pages deploy
       success; live-verified 27/27 vs the Pages URL).
-    - [ ] **V2 — combined "modeled city service cost per acre" (LAPTOP-GATED:
-      budget source hunt).** One denominator = road metres × published
-      roadway O&M+renewal $/m/yr + fire events × (Fire Rescue operating
-      budget ÷ citywide dispatches). Needs the two unit costs from City
-      budget documents (edmonton.ca unreachable from the Oracle box — same
-      bucket as the IIMP hunt); they become a manual reviewed input
-      (`city_unit_costs.json`, mill-rates pattern), labeled MODELED and
-      "roads + fire only", never "total city cost". Design already locked
-      in SPEC_utilities decision 3.
+    - [ ] **V2 — combined "modeled city service cost per acre".** One
+      denominator = road metres × roadway O&M+renewal $/m/yr + fire events ×
+      (Fire Rescue operating budget ÷ citywide dispatches). Labeled MODELED,
+      "roads + fire only", never "total city cost". Design locked in
+      SPEC_utilities decision 3.
+      - [x] **Unit-cost source hunt DONE 2026-07-15 (laptop)** — the
+        laptop-gated half. `data/city_unit_costs.json` (reviewed input,
+        mill-rates pattern): **roadway $50/m/yr** (edmonton.ca Development
+        Impact page: $600k O&M + $1.9M renewal per km ÷ 50-yr life; Peter's
+        50-yr call; 3%-of-value cross-check ≈ $45) + **Fire Rescue 2026 gross
+        operating budget $276.706M** (2026 Approved Operating Budget PDF; net
+        $273.598M). Provenance + caveats in the JSON.
+      - [ ] **Build the composite metric + display (Oracle-doable).** Divide
+        the fire budget by the pipeline's OWN citywide kept-event total (not a
+        hardcoded dispatch count) so numerator/denominator match; combine with
+        road_m × $50/m/yr into a per-acre $ column; wire the UI (display
+        placement undecided — Peter's call). Carry the fixed-budget-allocation
+        caveat in copy.
     - [x] ~~**Fire lens**~~ — **BUILT 2026-07-06** (design DECIDED 2026-07-05,
       Peter, all four recommendations: demand metric events/acre/yr as the
       Services ground plane + 31 station dots; all emergency responses minus
