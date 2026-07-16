@@ -240,23 +240,34 @@ five buttons regardless of service count):
   picked levy-funded service** (client-side — no pipeline change) over the
   network in all-neutral grey. *2026-07-10: the denominator became a PICKER*
   ("Ratio denominator" control in the `#layers` panel, Ratio view only) —
-  **per road metre** (`revenue_per_acre / road_m_per_acre`, the original) or
-  **per fire event** (`revenue_per_acre / fire_events_per_acre`); config in
+  **per road metre** (`revenue_per_acre / road_m_per_acre`, the original),
+  **per fire event** (`revenue_per_acre / fire_events_per_acre`), or — added
+  2026-07-16, SPEC_utilities decision 3(b) — **per service $**
+  (`revenue_per_acre / svc_cost_per_acre`, the V2 composite): a DIMENSIONLESS
+  coverage ratio (revenue $ per modeled roads+fire $). Config in
   `RATIO_DENOMS`, state `state.ratioDenom` (persists across views like the
-  acre denominator; control hidden when the data lacks the fire column).
-  Modeled EPCOR services (storm/water) are deliberately NOT offered —
-  SPEC_utilities decision 3 (money-flow honesty). Both prism **colours are
-  LOG** between each kept subset's p2.5–p97.5 (roads ≈ $264–$3,253, FINDINGS
-  §6.4; fire ≈ $7,092–$298,901, §6.7), **height linear** (each denominator's
-  max kept hood at the standard ~8.2 km peak; `ratioScale()` computes anchors
-  at runtime, cached per denominator). **Off-scale grey + flat:** set-aside
-  hoods AND hoods below the denominator's floor (roads 5 m/acre — WESTVIEW
-  VILLAGE hits $1.3M/m; fire 0.005 events/acre/yr — four annexed-fringe hoods
-  hit $1.3–1.7M/event, plus four zero-event hoods). Title/blurb/legend/aside
-  follow the picked denominator. Default prism opacity **5%**, adjustable via
-  the "Money plane" slider (`#layers` panel, visible in this view only).
-  Tooltip: ratio + both components, or the off-scale reason naming the floor.
-  Legend: log gradient, `≤ $lo` / `$hi+`.
+  acre denominator; picker opens on `hasFire || hasSvcCost`, and each button
+  is column-guarded — the fire/service-cost options hide when their column is
+  absent). Modeled EPCOR services (storm/water) are deliberately NOT offered —
+  SPEC_utilities decision 3 (money-flow honesty). All three prism **colours
+  are LOG** between each kept subset's p2.5–p97.5 (roads ≈ $264–$3,253,
+  FINDINGS §6.4; fire ≈ $7,092–$298,901, §6.7; service-$ ≈ 1.8×–28×, raw skew
+  2.4 → log 0.17), **height linear** (each denominator's max kept hood at the
+  standard ~8.2 km peak; `ratioScale()` computes anchors at runtime, cached
+  per denominator). The **service-$ ratio is MAGNITUDE, not break-even**
+  (Peter 2026-07-16): the same log ramp, no 1.0 marking — the numerator is
+  FULL property tax but the cost side is only two services, so it reads ≫1
+  almost everywhere (median ≈5.8×); the blurb/tooltip own that ("not a sign
+  the land pays its full way"). **Off-scale grey + flat:** set-aside hoods
+  AND hoods below the denominator's floor (roads 5 m/acre — WESTVIEW VILLAGE
+  hits $1.3M/m; fire 0.005 events/acre/yr — four annexed-fringe hoods hit
+  $1.3–1.7M/event, plus four zero-event hoods; service-$ $230/acre — the
+  near-zero-cost hoods). Title/blurb/legend/aside follow the picked
+  denominator. Default prism opacity **5%**, adjustable via the "Money plane"
+  slider (`#layers` panel, visible in this view only). Tooltip: ratio + both
+  components, or the off-scale reason naming the floor. Legend: log gradient,
+  `≤ $lo` / `$hi+` for the $/unit denominators, `≤ N×` / `N×+` for service-$
+  (`boundFmt`).
 
 Shared machinery:
 - **Lazy load:** `web/data/roads.geojson` (1.6 MB; ~400 dissolved features, slim

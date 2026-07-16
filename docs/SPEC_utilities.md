@@ -353,12 +353,19 @@ ANALYSIS_BACKLOG 5.
        so the checkbox hides on data files that predate the column (it lands
        on the first refresh after the metric PR). `verify-services.js` +
        `shot-services.js` extended.
-     - *(b) Ratio-view coverage denominator — FOLLOW-ON, not yet built.*
-       Levy revenue ÷ modeled service cost (a "does the tax cover roads+fire"
-       coverage map). Money-flow-honest here because roads+fire ARE
-       levy-funded (unlike storm/water). Reopens V1's per-service-only ratio
-       as a combined option; heavier caveat copy. Peter's staged plan is to
-       ship (a) first, then (b).
+     - *(b) Ratio-view coverage denominator — BUILT 2026-07-16.* A 3rd
+       "Ratio denominator" option, "Per service $" — `revenue_per_acre ÷
+       svc_cost_per_acre`, dimensionless (revenue $ per modeled service $).
+       **Framed as MAGNITUDE, not break-even (Peter 2026-07-16):** the SAME
+       log ramp as roads/fire, NO 1.0 marking. The numerator is FULL property
+       tax but the denominator is only two services, so the coverage reads
+       ≫1 almost everywhere (real-data median ≈ 5.8×) — the blurb/tooltip say
+       so explicitly ("not a sign the land pays its full way"), never "pays
+       its way". Legend bounds show ×-multiples (`boundFmt`), not dollars;
+       floor $230/acre (kept p2.5) greys the near-zero-cost artifacts; log
+       colour (raw skew 2.4 → log 0.17). The picker now opens on `hasFire ||
+       hasSvcCost` and the button is column-guarded. `verify-ratio-denom.js`
+       38/38 (+11), `shot-ratio-denom.js` extended.
 4. **Franchise-fee revenue columns:** ship with the electricity/gas lenses,
    earlier as standalone columns, or not at all? Recommended: only with
    their lenses — a modeled revenue line without its cost context invites

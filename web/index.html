@@ -271,6 +271,7 @@
     <div id="ratio-denom">
       <button data-ratio-denom="roads" class="active" title="Revenue per metre of city-maintained neighbourhood road (collector + local) — the levy-funded network this land's layout entails">Per road metre</button>
       <button data-ratio-denom="fire" title="Revenue per dispatched fire-department emergency event (2023–2025 average) — levy-funded demand; most events are medical calls">Per fire event</button>
+      <button data-ratio-denom="servicecost" title="Property-tax revenue as a multiple of the modeled roads + fire service cost — the two levy-funded services this project can measure, NOT the total cost of city services (police, parks, transit and the rest are not included, so most neighbourhoods read well above 1×)">Per service $</button>
     </div>
     <span class="hd" id="devmetric-hd">Metric</span>
     <div id="devmetric">
@@ -421,6 +422,35 @@
                "not response coverage, and most dispatched events are medical " +
                "calls. Height is linear; colour is log-scaled. Grey flat = " +
                "set-aside land or too few events for a meaningful ratio.",
+      },
+      // The V2 composite as a coverage denominator (2026-07-16, SPEC_utilities
+      // decision 3(b)): revenue_per_acre ÷ svc_cost_per_acre is dimensionless —
+      // revenue dollars per modeled service dollar. Treated as MAGNITUDE, not a
+      // break-even ratio (Peter 2026-07-16): the SAME log ramp as the others,
+      // no 1.0 marking. The numerator is FULL property tax but the denominator
+      // is only two services (roads+fire), so most hoods read well above 1× —
+      // the blurb/tooltip say so, never "pays its way". boundFmt shows the
+      // legend bounds as ×-multiples (dimensionless), not dollars.
+      servicecost: {
+        col: "svc_cost_per_acre",
+        floor: 230, // $/acre/yr ≈ the kept subset's p2.5; below this the ratio is an artifact
+        floorText: "modeled service cost below $230 / acre / yr",
+        title: "Edmonton: Revenue vs Modeled Service Cost",
+        legend: "Revenue ÷ modeled roads+fire cost (log colour)",
+        aside: "Set aside / insufficient service base",
+        boundFmt: v => v.toFixed(v < 10 ? 1 : 0) + "×",
+        fmt: v => v.toFixed(v < 10 ? 1 : 0) + "× the modeled roads+fire cost",
+        component: p => `$${Math.round(p.svc_cost_per_acre).toLocaleString()} modeled roads+fire cost / acre / yr`,
+        blurb: "Ghost prisms show municipal property-tax revenue as a multiple " +
+               "of the modeled roads + fire service cost a neighbourhood's land " +
+               "entails — how many dollars of revenue back each dollar of that " +
+               "cost. Roads and fire only: the two levy-funded services this " +
+               "project can measure, NOT the total cost of city services " +
+               "(police, parks, transit and the rest are unmeasured), so most " +
+               "neighbourhoods read well above 1× — this is not a sign the land " +
+               "pays its full way. Height is linear; colour is log-scaled. Grey " +
+               "flat = set-aside land or too little service base for a " +
+               "meaningful ratio.",
       },
     };
     const ratioDenom = () => RATIO_DENOMS[state.ratioDenom];
@@ -2302,11 +2332,13 @@
         sw.style.background = `rgb(${SET_ASIDE_COLOR.join(",")})`;
       } else if (state.view === "ratio") {
         const s = ratioScale();
+        // Bounds format per denominator: dollars for the $/unit denominators,
+        // ×-multiples for the dimensionless coverage denominator (boundFmt).
+        const bf = ratioDenom().boundFmt ||
+          (v => "$" + Math.round(v).toLocaleString());
         document.getElementById("legend-label").textContent = ratioDenom().legend;
-        document.getElementById("legend-min").textContent =
-          "≤ $" + Math.round(s.lo).toLocaleString();
-        document.getElementById("legend-max").textContent =
-          "$" + Math.round(s.hi).toLocaleString() + "+";
+        document.getElementById("legend-min").textContent = "≤ " + bf(s.lo);
+        document.getElementById("legend-max").textContent = bf(s.hi) + "+";
         if (state.residential) {
           label.textContent = "Faded — non-residential land";
           sw.style.background = `rgb(${LENS_FADE_COLOR.join(",")})`;
@@ -2549,9 +2581,10 @@
       document.getElementById("denom-hd").style.display = denomShow ? "block" : "none";
       document.getElementById("denom").style.display = denomShow ? "flex" : "none";
       // The ratio denominator picker shows only in the Ratio view, and only
-      // when the data carries the fire column — roads-only data offers no
-      // choice, so the control stays hidden and the roads default applies.
-      const ratioDenomShow = v === "ratio" && state.hasFire;
+      // when the data offers a real choice beyond the roads default — i.e. it
+      // carries the fire column and/or the service-cost composite. Roads-only
+      // data offers no choice, so the control stays hidden and roads applies.
+      const ratioDenomShow = v === "ratio" && (state.hasFire || state.hasSvcCost);
       document.getElementById("ratio-denom-hd").style.display = ratioDenomShow ? "block" : "none";
       document.getElementById("ratio-denom").style.display = ratioDenomShow ? "flex" : "none";
       // The development sub-metric picker (units vs permits per acre).
@@ -2700,10 +2733,14 @@
       // Same guard for the modeled service-cost composite (svc_cost_per_acre —
       // pipeline 2026-07-15, ships on the next refresh after the metric PR). A
       // data file from before that refresh keeps the view and just hides this
-      // row until the column lands.
-      if (!state.data.features.some(f => f.properties.svc_cost_per_acre != null)) {
+      // row + the matching Ratio denominator until the column lands. The flag
+      // also opens the Ratio picker (applyView): a data file with fire OR
+      // service-cost has a real denominator choice to offer.
+      state.hasSvcCost = state.data.features.some(f => f.properties.svc_cost_per_acre != null);
+      if (!state.hasSvcCost) {
         document.querySelector('#services .svc[data-service="servicecost"]').style.display = "none";
         state.services.servicecost = false;
+        document.querySelector('#ratio-denom button[data-ratio-denom="servicecost"]').style.display = "none";
       }
       syncServiceControls();
       // Neighbourhood lot-acre denominator toggle (pipeline 2026-07-08): shown

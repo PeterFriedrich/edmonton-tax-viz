@@ -573,10 +573,14 @@ _Last reconciled: 2026-07-09_
           caveats, column-guarded (hides until the column ships on the next
           refresh). `verify-services.js` + `shot-services.js` extended;
           screenshot eyeballed (fire-heavy core bright, greenfield grey).
-        - [ ] **(b) Ratio-view coverage denominator** — levy revenue ÷
-          modeled service cost ("does the tax cover roads+fire"). Money-flow-
-          honest (roads+fire are levy-funded); reopens V1's per-service-only
-          ratio as a combined option. SPEC_utilities decision 3 (b).
+        - [x] ~~**(b) Ratio-view coverage denominator**~~ — BUILT 2026-07-16
+          (`feat/v2-svc-cost-display`): 3rd "Ratio denominator" option "Per
+          service $" = revenue ÷ modeled roads+fire cost (dimensionless).
+          **Magnitude, not break-even (Peter): same log ramp, no 1.0
+          marking; median ≈5.8× so blurb/tooltip own "not a sign the land
+          pays its full way".** ×-format legend bounds, $230/acre floor,
+          picker opens on hasFire||hasSvcCost, button column-guarded.
+          verify-ratio-denom 38/38; screenshot eyeballed.
     - [x] ~~**Fire lens**~~ — **BUILT 2026-07-06** (design DECIDED 2026-07-05,
       Peter, all four recommendations: demand metric events/acre/yr as the
       Services ground plane + 31 station dots; all emergency responses minus

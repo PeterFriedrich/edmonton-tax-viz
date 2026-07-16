@@ -686,11 +686,14 @@ only** — never label the derived metric "total city cost".
   the fire frame's citywide sum PRE-join (unmatched fire hoods stay in the
   denominator). Composite requires BOTH the roads and fire lenses; either
   missing → warn + skip. `main.py --skip-service-cost` / `--unit-costs-json`.
-- **Displayed (2026-07-16)** as the Services view's "Service cost (roads+fire)"
-  checkbox (`web/index.html` SERVICES `servicecost`, sqrt colour on the shared
-  `svc-plane`; blurb/legend/tooltip carry the caveats below). The column ships
-  to the live GeoJSON on the first refresh after the metric PR #59 — until then
-  the checkbox is column-guarded off.
+- **Displayed (2026-07-16)** two ways (`web/index.html`): the Services view's
+  "Service cost (roads+fire)" checkbox (SERVICES `servicecost`, sqrt colour on
+  the shared `svc-plane`) AND the Ratio view's "Per service $" denominator
+  (`revenue_per_acre / svc_cost_per_acre` — dimensionless coverage, log colour,
+  RATIO_DENOMS `servicecost`). Both carry the caveats below; the ratio copy also
+  states it reads ≫1 because the cost side is only two services (median ≈5.8×),
+  NOT "pays its way". The column ships to the live GeoJSON on the first refresh
+  after the metric PR #59 — until then both controls are column-guarded off.
 ### Known Quirks
 - **The fire term is a demand ALLOCATION of a mostly-fixed budget** — a hood with
   2× the events does not cost the City 2× (most fire cost is standing capacity).
