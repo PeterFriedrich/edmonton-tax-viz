@@ -543,6 +543,129 @@ def test_export_keeps_fire_events_per_acre_when_present(tmp_path):
     assert "fire_events_per_year" not in written.columns
 
 
+# --- V2 service-cost composite (SPEC_utilities decision 3) --------------------
+# svc_cost_per_acre = road_m_per_acre × $/m + fire_events_per_acre ×
+# (budget ÷ the fire frame's citywide kept-event total). MODELED, roads + fire
+# only; requires both frames.
+
+# Small synthetic numbers: $2/road-metre, $300 budget over 30 events/yr
+# citywide -> $10/event.
+_UNIT_COSTS = {"road_dollars_per_m": 2.0, "fire_budget_annual": 300.0}
+
+
+def test_service_cost_composite_computed():
+    result = join_and_calculate(
+        _assessment([{"neighbourhood_name": "GRIDTOWN", "total_assessed_value": 100.0}]),
+        _boundaries([{"neighbourhood_name": "GRIDTOWN", "area_acres": 10.0}]),
+        roads=_roads([{"neighbourhood_name": "GRIDTOWN", "road_m_total": 250.0}]),
+        fire=_fire([{"neighbourhood_name": "GRIDTOWN", "fire_events_per_year": 30.0}]),
+        unit_costs=_UNIT_COSTS,
+    )
+    row = result.iloc[0]
+    # 25 m/acre × $2 + 3 events/acre × ($300/30 = $10) = 50 + 30 = 80
+    assert row["svc_cost_per_acre"] == pytest.approx(80.0)
+
+
+def test_service_cost_per_event_uses_citywide_total_incl_unmatched():
+    # An unmatched fire hood stays in the per-event denominator (the loader's
+    # citywide total), so the matched hood's fire term shrinks accordingly.
+    result = join_and_calculate(
+        _assessment([{"neighbourhood_name": "GRIDTOWN", "total_assessed_value": 100.0}]),
+        _boundaries([{"neighbourhood_name": "GRIDTOWN", "area_acres": 10.0}]),
+        roads=_roads([{"neighbourhood_name": "GRIDTOWN", "road_m_total": 0.0}]),
+        fire=_fire([
+            {"neighbourhood_name": "GRIDTOWN", "fire_events_per_year": 30.0},
+            {"neighbourhood_name": "NOWHERE", "fire_events_per_year": 30.0},
+        ]),
+        unit_costs=_UNIT_COSTS,
+    )
+    row = result.iloc[0]
+    # $300 / 60 citywide = $5/event; 3 events/acre × $5 = 15
+    assert row["svc_cost_per_acre"] == pytest.approx(15.0)
+
+
+def test_no_unit_costs_omits_composite():
+    result = join_and_calculate(
+        _assessment([{"neighbourhood_name": "GRIDTOWN", "total_assessed_value": 100.0}]),
+        _boundaries([{"neighbourhood_name": "GRIDTOWN", "area_acres": 10.0}]),
+        roads=_roads([{"neighbourhood_name": "GRIDTOWN", "road_m_total": 250.0}]),
+        fire=_fire([{"neighbourhood_name": "GRIDTOWN", "fire_events_per_year": 30.0}]),
+    )
+    assert "svc_cost_per_acre" not in result.columns
+
+
+@pytest.mark.parametrize("missing", ["roads", "fire"])
+def test_service_cost_skipped_with_warning_when_lens_missing(caplog, missing):
+    kwargs = {
+        "roads": _roads([{"neighbourhood_name": "GRIDTOWN", "road_m_total": 250.0}]),
+        "fire": _fire([{"neighbourhood_name": "GRIDTOWN", "fire_events_per_year": 30.0}]),
+    }
+    kwargs[missing] = None
+    with caplog.at_level("WARNING"):
+        result = join_and_calculate(
+            _assessment([{"neighbourhood_name": "GRIDTOWN", "total_assessed_value": 100.0}]),
+            _boundaries([{"neighbourhood_name": "GRIDTOWN", "area_acres": 10.0}]),
+            unit_costs=_UNIT_COSTS,
+            **kwargs,
+        )
+    assert "svc_cost_per_acre" not in result.columns
+    assert "composite skipped" in caplog.text
+
+
+def test_service_cost_zero_citywide_events_raises():
+    with pytest.raises(ValueError, match="per-event cost"):
+        join_and_calculate(
+            _assessment([{"neighbourhood_name": "GRIDTOWN", "total_assessed_value": 100.0}]),
+            _boundaries([{"neighbourhood_name": "GRIDTOWN", "area_acres": 10.0}]),
+            roads=_roads([{"neighbourhood_name": "GRIDTOWN", "road_m_total": 250.0}]),
+            fire=_fire([{"neighbourhood_name": "GRIDTOWN", "fire_events_per_year": 0.0}]),
+            unit_costs=_UNIT_COSTS,
+        )
+
+
+def test_export_keeps_svc_cost_per_acre_when_present(tmp_path):
+    result = join_and_calculate(
+        _assessment([{"neighbourhood_name": "DOWNTOWN", "total_assessed_value": 100.0}]),
+        _boundaries([{"neighbourhood_name": "DOWNTOWN", "area_acres": 10.0}]),
+        roads=_roads([{"neighbourhood_name": "DOWNTOWN", "road_m_total": 250.0}]),
+        fire=_fire([{"neighbourhood_name": "DOWNTOWN", "fire_events_per_year": 30.0}]),
+        unit_costs=_UNIT_COSTS,
+    )
+    written = export_geojson(result, str(tmp_path / "out.geojson"))
+    assert "svc_cost_per_acre" in written.columns
+
+
+# --- load_unit_costs (data/city_unit_costs.json, the reviewed input) ----------
+
+def test_load_unit_costs_reads_committed_file():
+    from join_and_calculate import load_unit_costs
+
+    costs = load_unit_costs("data/city_unit_costs.json")
+    assert costs["road_dollars_per_m"] == 50.0
+    assert costs["fire_budget_annual"] == 276_706_000.0
+
+
+def test_load_unit_costs_missing_field_raises(tmp_path):
+    from join_and_calculate import load_unit_costs
+
+    bad = tmp_path / "unit_costs.json"
+    bad.write_text('{"roadway_om_renewal": {"value": 50}}')
+    with pytest.raises(KeyError, match="fire_response"):
+        load_unit_costs(bad)
+
+
+def test_load_unit_costs_nonpositive_value_raises(tmp_path):
+    from join_and_calculate import load_unit_costs
+
+    bad = tmp_path / "unit_costs.json"
+    bad.write_text(
+        '{"roadway_om_renewal": {"value": 0},'
+        ' "fire_response": {"operating_budget_gross_annual": 276706000}}'
+    )
+    with pytest.raises(ValueError, match="positive"):
+        load_unit_costs(bad)
+
+
 # --- transit merge (services lens #4, SPEC_services.md "Transit lens") --------
 
 def _transit(rows):

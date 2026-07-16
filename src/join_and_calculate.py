@@ -1,4 +1,6 @@
+import json
 import logging
+from pathlib import Path
 
 import geopandas as gpd
 import pandas as pd
@@ -90,6 +92,31 @@ LOT_ACRE_COLUMNS = [
     "value_lot_eligible", "revenue_lot_eligible", "lot_acres_eligible", "far",
 ]
 
+def load_unit_costs(path: str | Path) -> dict[str, float]:
+    """Load the MODELED service unit costs for the V2 composite (data/city_unit_costs.json).
+
+    Manual, reviewed input (mill-rates pattern — SPEC_utilities decision 3,
+    DATA.md §13). Returns the two numbers the composite needs:
+
+        road_dollars_per_m   $/road-metre/yr (O&M + renewal, 50-yr life)
+        fire_budget_annual   Fire Rescue gross operating budget, $/yr
+
+    Validates loudly — a malformed hand edit must fail the pipeline, not
+    silently zero a term of the composite.
+    """
+    with open(path) as f:
+        data = json.load(f)
+    try:
+        road = data["roadway_om_renewal"]["value"]
+        fire_budget = data["fire_response"]["operating_budget_gross_annual"]
+    except KeyError as e:
+        raise KeyError(f"{path} is missing required unit-cost field {e}") from e
+    for name, val in (("roadway value", road), ("fire budget", fire_budget)):
+        if not isinstance(val, (int, float)) or val <= 0:
+            raise ValueError(f"{path}: {name} must be a positive number, got {val!r}")
+    return {"road_dollars_per_m": float(road), "fire_budget_annual": float(fire_budget)}
+
+
 # Below this parcel-land share the lot-acre denominator is near-zero and the
 # ratio explodes (Mill Woods Golf Course 0% parcel -> x6960; the park/river-
 # valley tail). Such hoods are suppressed to NaN (rendered n/a grey), not shown
@@ -172,6 +199,7 @@ def join_and_calculate(
     permits: pd.DataFrame | None = None,
     permits_recent: pd.DataFrame | None = None,
     lot_acres: pd.DataFrame | None = None,
+    unit_costs: dict[str, float] | None = None,
 ) -> gpd.GeoDataFrame:
     """Left join boundaries → assessment, flag unmatched rows, compute value_per_acre.
 
@@ -224,6 +252,16 @@ def join_and_calculate(
     Carried on the full frame only (no per-acre, no SLIM — no display layer
     yet). Boundaries with no modeled dwellings default to 0 (water semantics)
     — and are flagged.
+
+    ``unit_costs`` (optional, from load_unit_costs — data/city_unit_costs.json,
+    the manual reviewed input) adds the V2 MODELED composite
+    svc_cost_per_acre = road_m_per_acre × $/road-metre/yr
+    + fire_events_per_acre × (fire budget ÷ the pipeline's own citywide
+    kept-event total) (SPEC_utilities decision 3). Roads + fire ONLY — never
+    "total city cost" — and the fire term is a demand ALLOCATION of a mostly-
+    fixed budget, not a marginal cost; both caveats belong in any display copy.
+    Requires BOTH the roads and fire frames: with either missing the composite
+    would be a mislabeled one-term metric, so it is skipped with a warning.
 
     ``lot_acres`` (optional, from export_value_grid.build_hood_lot_acres) adds
     the neighbourhood lot-acre denominator toggle: value_per_lot_acre /
@@ -426,6 +464,45 @@ def join_and_calculate(
             [c for c in out_cols if c != "geometry"]
             + FIRE_COLUMNS + ["fire_events_per_acre"] + ["geometry"]
         )
+
+    # V2 composite: modeled city service cost per acre (SPEC_utilities
+    # decision 3 — MODELED, roads + fire only, never "total city cost").
+    # Needs both the road and fire per-acre columns computed above; the fire
+    # per-event cost divides the budget by the LOADER's citywide kept-event
+    # total (the fire frame sum, pre-join) so the unit cost's denominator
+    # matches the fire_events_per_acre numerator exactly — unmatched fire
+    # hoods still consumed budget, so they stay in the denominator.
+    if unit_costs is not None:
+        if roads is None or fire is None:
+            logger.warning(
+                "Unit costs supplied but %s frame missing — svc_cost_per_acre "
+                "needs BOTH (roads + fire only would be mislabeled); composite skipped",
+                "roads" if roads is None else "fire",
+            )
+        else:
+            citywide_events = float(fire["fire_events_per_year"].sum())
+            if citywide_events <= 0:
+                raise ValueError(
+                    "Citywide kept fire events per year is not positive "
+                    f"({citywide_events}) — cannot derive a per-event cost"
+                )
+            fire_cost_per_event = unit_costs["fire_budget_annual"] / citywide_events
+            joined["svc_cost_per_acre"] = (
+                joined["road_m_per_acre"] * unit_costs["road_dollars_per_m"]
+                + joined["fire_events_per_acre"] * fire_cost_per_event
+            )
+            logger.info(
+                "V2 service-cost composite: $%.2f/road-m/yr + $%.0f/fire-event "
+                "($%.0f budget / %.0f kept events/yr) -> svc_cost_per_acre on %d hoods "
+                "(MODELED, roads + fire only)",
+                unit_costs["road_dollars_per_m"], fire_cost_per_event,
+                unit_costs["fire_budget_annual"], citywide_events,
+                int(joined["svc_cost_per_acre"].notna().sum()),
+            )
+            out_cols = (
+                [c for c in out_cols if c != "geometry"]
+                + ["svc_cost_per_acre"] + ["geometry"]
+            )
 
     # Services lens #4: merge scheduled transit supply when supplied
     # (SPEC_services.md "Transit lens" — scheduled stop-events from the GTFS
@@ -632,7 +709,10 @@ def join_and_calculate(
 # fixed column shipping alongside the total so the client can show the
 # connection-vs-consumption split — the fire figure is dispatched-event
 # DEMAND, not coverage, and the transit figure is SCHEDULED service supply,
-# not ridership; the client must label all of them as such). new_units_per_acre
+# not ridership; the client must label all of them as such). svc_cost_per_acre
+# is the V2 composite — MODELED road $ + allocated fire $, roads + fire only,
+# never "total city cost" (SPEC_utilities decision 3; no display layer yet —
+# placement is an open call). new_units_per_acre
 # and new_permits_per_acre (+ the total/permit-count pair for the tooltip) are the
 # Development lens A activity metrics — new dwelling units / new permits from
 # issued permits, a change/flow signal, NOT revenue or cost (SPEC_development.md).
@@ -645,6 +725,7 @@ SLIM_COLUMNS = [
     "is_residential", "road_m_per_acre", "storm_charge_per_acre",
     "fire_events_per_acre", "transit_dep_per_acre",
     "water_charge_per_acre", "water_fixed_per_acre",
+    "svc_cost_per_acre",
     "new_units_per_acre", "new_permits_per_acre",
     "new_dwelling_units", "new_dwelling_permits",
     "new_units_per_acre_3yr", "new_permits_per_acre_3yr",

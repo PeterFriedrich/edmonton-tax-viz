@@ -680,6 +680,12 @@ only** — never label the derived metric "total city cost".
   Services line. The V2 fire term divides this by the pipeline's OWN citywide
   kept-event total (don't hardcode dispatches), so the unit cost's denominator
   matches the `fire_events_per_acre` numerator.
+- **Consumed (2026-07-15)** by `join_and_calculate.load_unit_costs` (validates
+  loudly — a malformed hand edit fails the pipeline) → the `unit_costs` arg
+  computes `svc_cost_per_acre` (in `SLIM_COLUMNS`). The per-event divisor is
+  the fire frame's citywide sum PRE-join (unmatched fire hoods stay in the
+  denominator). Composite requires BOTH the roads and fire lenses; either
+  missing → warn + skip. `main.py --skip-service-cost` / `--unit-costs-json`.
 ### Known Quirks
 - **The fire term is a demand ALLOCATION of a mostly-fixed budget** — a hood with
   2× the events does not cost the City 2× (most fire cost is standing capacity).
