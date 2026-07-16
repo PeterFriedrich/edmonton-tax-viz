@@ -342,8 +342,23 @@ ANALYSIS_BACKLOG 5.
      pipeline half landed the same day — `join_and_calculate.load_unit_costs`
      + `unit_costs` arg → `svc_cost_per_acre` in `SLIM_COLUMNS` (per-event $
      = budget ÷ the fire frame's citywide kept-event sum, pre-join; requires
-     BOTH roads + fire, warn+skip otherwise). **Display placement is still
-     Peter's call** — no UI reads the column yet.
+     BOTH roads + fire, warn+skip otherwise).
+     **Display — DECIDED 2026-07-16 (Peter): BOTH placements, staged.**
+     - *(a) Services-view checkbox — BUILT 2026-07-16.* A 6th per-service
+       row, "Service cost (roads+fire) — modeled $/acre", on the shared
+       `svc-plane` (SERVICES `servicecost`, sqrt colour — fire-dominated
+       skew). Its blurb + legend carry the "roads + fire only, never total
+       city cost" and fixed-budget-allocation caveats; the tooltip adds a
+       `svc_cost_per_acre` row. Column-guarded like the other service rows,
+       so the checkbox hides on data files that predate the column (it lands
+       on the first refresh after the metric PR). `verify-services.js` +
+       `shot-services.js` extended.
+     - *(b) Ratio-view coverage denominator — FOLLOW-ON, not yet built.*
+       Levy revenue ÷ modeled service cost (a "does the tax cover roads+fire"
+       coverage map). Money-flow-honest here because roads+fire ARE
+       levy-funded (unlike storm/water). Reopens V1's per-service-only ratio
+       as a combined option; heavier caveat copy. Peter's staged plan is to
+       ship (a) first, then (b).
 4. **Franchise-fee revenue columns:** ship with the electricity/gas lenses,
    earlier as standalone columns, or not at all? Recommended: only with
    their lenses — a modeled revenue line without its cost context invites

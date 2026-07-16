@@ -216,7 +216,18 @@ five buttons regardless of service count):
     `#legend-cats`, which now composes rows across fire + transit).
     Checkbox hides on data files without the column, same guard as the
     others.
-  **Plane sharing (2026-07-06):** the plane services (storm, fire, water, transit) draw ONE
+  - **Service cost (roads+fire)** (default off; fifth service — the V2
+    composite, SPEC_utilities decision 3, 2026-07-16): the one MODELED
+    "city service cost per acre" — `svc_cost_per_acre` = road metres ×
+    $50/m/yr + fire dispatches × (Fire Rescue budget ÷ citywide dispatches).
+    A composite/summary line, NOT another single service; blurb and legend
+    carry the mandatory "roads + fire only, never total city cost" and
+    fixed-budget-allocation caveats. Rendering: the shared flat hood plane,
+    **SQRT colour** (fire-dominated skew — downtown ≈90% fire, ~10× the
+    suburban median), clamp p97.5 of non-set-aside hoods. No context dots.
+    Checkbox hides on data files without the column (it ships on the first
+    refresh after the metric PR #59), same guard as the others.
+  **Plane sharing (2026-07-06):** the plane services (storm, fire, water, transit, servicecost) draw ONE
   `svc-plane` layer between them — two coplanar polygon layers would
   z-fight, and a non-driving plane's "neutral" render is the same slate
   surface anyway. `servicePlaneLayer(col)` paints the driver's column, or

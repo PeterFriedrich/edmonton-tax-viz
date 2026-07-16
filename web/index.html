@@ -253,6 +253,14 @@
           <input type="radio" name="svc-driver" /> colour
         </label>
       </div>
+      <div class="svc" data-service="servicecost">
+        <label title="Each neighbourhood coloured by one modeled city-service cost per acre — road metres × published roadway lifecycle cost + fire-dispatch demand × Fire Rescue budget per dispatch. Roads and fire only, never the total cost of city services; modeled, not a budget line">
+          <input type="checkbox" class="svc-on" /> Service cost (roads+fire) — modeled $/acre
+        </label>
+        <label class="svc-colour" title="This service drives the colour ramp; the others render neutral">
+          <input type="radio" name="svc-driver" /> colour
+        </label>
+      </div>
     </div>
     <span class="hd" id="denom-hd">Denominator</span>
     <div id="denom">
@@ -571,6 +579,23 @@
                "service concentrates on the central corridors. Grey = " +
                "set-aside natural/undeveloped land.",
       },
+      servicecost: {
+        label: "Service cost",
+        plane: { col: "svc_cost_per_acre", transform: "sqrt" },
+        blurb: "Each neighbourhood is coloured by one modeled cost to the City " +
+               "of serving its land per acre per year: road metres times a " +
+               "published roadway lifecycle cost ($50 per metre per year — " +
+               "operations plus renewal over a 50-year life) plus fire-dispatch " +
+               "demand times the Fire Rescue operating budget shared over " +
+               "citywide dispatches. Roads and fire only — the two levy-funded " +
+               "services this project can measure; police, parks, transit and " +
+               "the rest are not included, so this is not the total cost of city " +
+               "services. Modeled, not a budget line: the fire share allocates a " +
+               "mostly-fixed department budget by where the calls are, so a " +
+               "quiet neighbourhood still costs something to protect. Colour is " +
+               "square-root scaled — cost concentrates in the fire-heavy core. " +
+               "Grey = set-aside natural/undeveloped land.",
+      },
     };
 
     // Per-view chrome. money's title/blurb stay metric-driven (METRICS).
@@ -724,7 +749,7 @@
                     devMetric: "units", // Development-view sub-metric: units | permits per acre
                     devWindow: "5yr", // Development-view activity window: 5yr (base) | 3yr (recent)
                     devGrid: false, // Development-view 100 m detail grid (off = the hood choropleth)
-                    services: { roads: true, storm: false, fire: false, water: false, transit: false },
+                    services: { roads: true, storm: false, fire: false, water: false, transit: false, servicecost: false },
                     svcDriver: "roads",
                     data: null };
     let overlay;         // deck.gl MapboxOverlay, created on map load
@@ -1076,6 +1101,8 @@
     const fmtWater = (v, fixed) => "$" + Math.round(v).toLocaleString() +
       " modeled water+sewer / acre / yr" +
       (fixed != null ? ` (fixed $${Math.round(fixed).toLocaleString()})` : "");
+    const fmtSvcCost = v => "$" + Math.round(v).toLocaleString() +
+      " modeled roads+fire service cost / acre / yr";
 
     // The shared service ground plane (services view): flat hoods coloured
     // by the colour-driving plane service's column on the active ramp,
@@ -1929,6 +1956,8 @@
           rows.push(`<span class="muted">${fmtWater(p.water_charge_per_acre, p.water_fixed_per_acre)}</span>`);
         if (p.transit_dep_per_acre != null)
           rows.push(`<span class="muted">${fmtTransit(p.transit_dep_per_acre)}</span>`);
+        if (p.svc_cost_per_acre != null)
+          rows.push(`<span class="muted">${fmtSvcCost(p.svc_cost_per_acre)}</span>`);
         return {
           className: "tip",
           html: rows.length
@@ -2215,6 +2244,14 @@
           const clamp = svcScale("transit_dep_per_acre").clamp;
           document.getElementById("legend-max").textContent =
             clamp.toFixed(clamp < 10 ? 1 : 0) + "+";
+          label.textContent = "Set aside — natural / undeveloped land";
+          sw.style.background = "rgb(104,108,122)";
+        } else if (state.svcDriver === "servicecost") {
+          document.getElementById("legend-label").textContent =
+            "Modeled roads + fire cost per acre / yr (sqrt colour)";
+          document.getElementById("legend-min").textContent = "$0";
+          document.getElementById("legend-max").textContent =
+            "$" + Math.round(svcScale("svc_cost_per_acre").clamp).toLocaleString() + "+";
           label.textContent = "Set aside — natural / undeveloped land";
           sw.style.background = "rgb(104,108,122)";
         } else {
@@ -2659,6 +2696,14 @@
       if (!state.data.features.some(f => f.properties.transit_dep_per_acre != null)) {
         document.querySelector('#services .svc[data-service="transit"]').style.display = "none";
         state.services.transit = false;
+      }
+      // Same guard for the modeled service-cost composite (svc_cost_per_acre —
+      // pipeline 2026-07-15, ships on the next refresh after the metric PR). A
+      // data file from before that refresh keeps the view and just hides this
+      // row until the column lands.
+      if (!state.data.features.some(f => f.properties.svc_cost_per_acre != null)) {
+        document.querySelector('#services .svc[data-service="servicecost"]').style.display = "none";
+        state.services.servicecost = false;
       }
       syncServiceControls();
       // Neighbourhood lot-acre denominator toggle (pipeline 2026-07-08): shown

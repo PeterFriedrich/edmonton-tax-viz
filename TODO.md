@@ -562,10 +562,21 @@ _Last reconciled: 2026-07-09_
         events/yr), composite on all 406 exported hoods, median
         $3,302/acre/yr (fire-dominated downtown ~$34k, road-dominated
         suburbs ~$3.4k — the allocation caveat is visible in the data).
-      - [ ] **Display (UI) for the composite** — placement undecided,
-        Peter's call (candidates: 4th Services checkbox / a Ratio-view
-        denominator). Carry the fixed-budget-allocation + "roads + fire
-        only, never total city cost" caveats in copy.
+      - [ ] **Display (UI) for the composite** — **DECIDED 2026-07-16
+        (Peter): BOTH, staged** (Services checkbox first, then a Ratio-view
+        coverage denominator). Carry the fixed-budget-allocation + "roads +
+        fire only, never total city cost" caveats in copy.
+        - [x] ~~**(a) Services-view checkbox**~~ — BUILT 2026-07-16
+          (`feat/v2-svc-cost-display`): 6th per-service row "Service cost
+          (roads+fire) — modeled $/acre" on the shared `svc-plane` (SERVICES
+          `servicecost`, sqrt colour), blurb + legend + tooltip with both
+          caveats, column-guarded (hides until the column ships on the next
+          refresh). `verify-services.js` + `shot-services.js` extended;
+          screenshot eyeballed (fire-heavy core bright, greenfield grey).
+        - [ ] **(b) Ratio-view coverage denominator** — levy revenue ÷
+          modeled service cost ("does the tax cover roads+fire"). Money-flow-
+          honest (roads+fire are levy-funded); reopens V1's per-service-only
+          ratio as a combined option. SPEC_utilities decision 3 (b).
     - [x] ~~**Fire lens**~~ — **BUILT 2026-07-06** (design DECIDED 2026-07-05,
       Peter, all four recommendations: demand metric events/acre/yr as the
       Services ground plane + 31 station dots; all emergency responses minus
