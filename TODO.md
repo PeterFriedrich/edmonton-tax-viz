@@ -26,6 +26,14 @@ _Last reconciled: 2026-07-09_
     guarded). Adding them = extend the cell rollup + payload columns; weigh
     the grid-file size cost (PERFORMANCE.md) before doing it.
 
+- [ ] **Dev+Infill ROUND-2 delta audit (brief written 2026-07-16:
+  `docs/FABLE_AUDIT_devinfill_round2.md`; Fable session).** NOT a re-run of the
+  executed S48 decision audit (6 COND / 2 SOUND / 0 UNSOUND) — dispositions its
+  outstanding CONDITIONALs + audits post-S48 changes: D1 verify per-arm fix on
+  refreshed data, D2 the L1 denominator flip test (never run), D3 quantify the
+  suite-conversion gap (Peter's fork needs numbers), D4 verdict grammar, D5 L5
+  documentation debt, D6 per-arm impl / window toggle / dev-grid (unaudited).
+
 - [ ] **PUBLIC RELEASE PREP (NEW 2026-07-09 — scope + rationale in
   `docs/PLAN_public_release.md`; read it before working these).** An external
   prioritization memo was intaken and reconciled: its build list (WEM/condo fix,
