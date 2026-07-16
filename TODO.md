@@ -198,7 +198,8 @@ _Last reconciled: 2026-07-09_
   introducing for the **2027–2030 zero-based budget cycle** — citing it well anchors the
   tool's credibility without rebuilding a citywide capital/debt model we have no data for.
   **Scope (locked — do NOT deviate without flagging):**
-  - Sidebar/annotation on **three specific named hoods only**, clearly labeled as a
+  - Click→panel annotation (no sidebar exists — interaction TBD) on **three
+    specific named hoods only**, clearly labeled as a
     different methodology (multi-decade capital pro forma) from the revenue-per-acre /
     recurring-cost map.
   - **Do NOT** merge these figures into the citywide colour layer, the roads lens, the
@@ -253,7 +254,15 @@ _Last reconciled: 2026-07-09_
   "debt attribution" — explicit in UI copy (load-bearing methodological claim).
   **Reachability probed 2026-07-14 (Oracle box):** doniveson.ca IIMP PDFs 200,
   open.alberta.ca FIR page 200 — D2/D5 data is Oracle-doable; only D0's bylaw
-  map exhibit is edmonton.ca/laptop-gated. Tickets, build order:
+  map exhibit is edmonton.ca/laptop-gated.
+  **⚠ INTERACTION PREREQ (all display tickets D1–D5-chart):** the app has **no
+  sidebar** — there is no click→panel surface at all; interaction today is
+  hover-tooltips only (S54 learning). Every "sidebar entry / extend the existing
+  sidebar UI" phrasing below is aspirational shorthand from the brief, NOT an
+  existing surface. **A new click→panel interaction must be designed and decided
+  (Peter's call) before any D-series display work can start.** Read the phrasing
+  below as "which content goes in that panel", not "add to a panel that exists".
+  Tickets, build order:
   - [x] **D0 — catchment polygons BUILT 2026-07-15** (approximate, reviewable).
     `data/levy_catchments.geojson` (10 units) via
     `scripts/build_levy_catchments.py`; QA overlay + area validation confirm the
@@ -296,19 +305,19 @@ _Last reconciled: 2026-07-09_
     fire halls ONLY** — no trunk roads/water/sanitary/storm levy (vs
     Calgary/St. Albert $170K–$270K/ha) — "1 of 5 essential services levied".
     Small manual dataset → reviewed JSON input (mill-rates pattern).
-  - [ ] **D2 — IIMP sidebar extension** (extends the Decoteau/HHR/Riverview
+  - [ ] **D2 — IIMP financing split** (extends the Decoteau/HHR/Riverview
     annotation item above — primary source now located, Oracle-reachable). Add
-    the developer-vs-City split to the existing IIMP click-through sidebar:
+    the developer-vs-City split to the Decoteau/HHR/Riverview click→panel content:
     developer $3.806B (drainage $2.351B + transportation $1.455B) vs
     City/Province $1.362B, net ~$1.4B 50-yr shortfall — 2016 projections,
-    **label as projection, not actual**. Extend the existing sidebar UI
-    pattern, don't build a new one.
-  - [ ] **D3 — Blatchford contrast case study.** 4th sidebar entry, same UI
+    **label as projection, not actual**. **Needs the click→panel interaction
+    decided first (see INTERACTION PREREQ above) — no sidebar exists yet.**
+  - [ ] **D3 — Blatchford contrast case study.** 4th panel entry, same content
     pattern: the infill counter-example to the 3 greenfield areas —
     self-liquidating "debt recoverable" financing (Policy C597A), DESS
     district energy, $23.7M federal SREPs grant, own levy catchment
     ($32,813/ha, already in the D0/D1 table).
-  - [ ] **D4 — sanitary trunk callout** (one-line sidebar text, NOT mapped —
+  - [ ] **D4 — sanitary trunk callout** (one-line panel text, NOT mapped —
     no clean basin boundaries confirmed): SSTC/EA charges paused May 2024;
     growth trunk sanitary currently funded from the accumulated ratepayer
     reserve, not active growth charges (figures in the brief).
