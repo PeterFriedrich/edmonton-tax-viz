@@ -137,3 +137,71 @@ def test_does_not_mutate_input(rates_path):
     df = pd.DataFrame([_row()])
     apply_tax_rates(df, rates_path, 2025)
     assert "levy" not in df.columns
+    assert "res_levy" not in df.columns
+
+
+# --- res_levy: the residential-revenue decomposition -------------------------
+# res_levy = the subset of levy billed on RESIDENTIAL + OTHER RESIDENTIAL
+# slices. MA DERELICT RESIDENTIAL is excluded (billed at the punitive Non
+# Residential rate — those are non-residential-rate dollars).
+
+
+def test_res_levy_equals_levy_for_pure_residential(rates_path):
+    df = pd.DataFrame([_row()])
+    out = apply_tax_rates(df, rates_path, 2025)
+    assert out["res_levy"].iloc[0] == pytest.approx(10_000.0)
+    assert out["res_levy"].iloc[0] == out["levy"].iloc[0]
+
+
+def test_res_levy_includes_other_residential(rates_path):
+    # OTHER RESIDENTIAL (4+ unit apartments) is housing: counts as residential.
+    # $1,000,000 × 100% × (20/1000) = $20,000
+    df = pd.DataFrame([_row(
+        tax_class="Other Residential",
+        assessment_class_1="OTHER RESIDENTIAL",
+    )])
+    out = apply_tax_rates(df, rates_path, 2025)
+    assert out["res_levy"].iloc[0] == pytest.approx(20_000.0)
+
+
+def test_res_levy_zero_for_commercial(rates_path):
+    df = pd.DataFrame([_row(
+        tax_class="Non Residential",
+        assessment_class_1="COMMERCIAL",
+    )])
+    out = apply_tax_rates(df, rates_path, 2025)
+    assert out["levy"].iloc[0] == pytest.approx(30_000.0)
+    assert out["res_levy"].iloc[0] == pytest.approx(0.0)
+
+
+def test_res_levy_takes_only_residential_slice_of_split_class(rates_path):
+    # 73% COMMERCIAL + 27% RESIDENTIAL: res_levy = 1e6 × 0.27 × 0.010 = 2,700
+    # (levy = 24,600 — see test_split_class_apportionment).
+    df = pd.DataFrame([_row(
+        tax_class="Non Residential",
+        assessment_class_1="COMMERCIAL", assessment_class_pct_1=73,
+        assessment_class_2="RESIDENTIAL", assessment_class_pct_2=27,
+    )])
+    out = apply_tax_rates(df, rates_path, 2025)
+    assert out["res_levy"].iloc[0] == pytest.approx(2_700.0)
+
+
+def test_res_levy_excludes_ma_derelict_residential(rates_path):
+    # Billed at the Non Residential rate on purpose — NOT residential dollars.
+    df = pd.DataFrame([_row(
+        tax_class="Non Residential",
+        assessment_class_1="MA DERELICT RESIDENTIAL",
+    )])
+    out = apply_tax_rates(df, rates_path, 2025)
+    assert out["levy"].iloc[0] == pytest.approx(30_000.0)
+    assert out["res_levy"].iloc[0] == pytest.approx(0.0)
+
+
+def test_res_levy_zero_for_exempt(rates_path):
+    df = pd.DataFrame([_row(
+        is_exempt=True,
+        tax_class="Non Residential",
+        assessment_class_1="NONRES MUNICIPAL/RES EDUCATION",
+    )])
+    out = apply_tax_rates(df, rates_path, 2025)
+    assert out["res_levy"].iloc[0] == pytest.approx(0.0)

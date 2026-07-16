@@ -254,6 +254,8 @@ def build_hood_lot_acres(df: pd.DataFrame) -> pd.DataFrame:
         lot_acres_eligible    float  Σ deduped lot acres over eligible points
         value_lot_eligible    float  Σ assessed_value over rows at those points
         revenue_lot_eligible  float  Σ levy — only when ``levy`` is present
+        res_revenue_lot_eligible float  Σ res_levy (residential-class subset) —
+                                     only when ``res_levy`` is present
         far                   float  built floor-area ratio (Σ gross_area over
                                      rows at eligible points ÷ deduped lot m²) —
                                      only when ``gross_area`` is present. The
@@ -293,6 +295,8 @@ def build_hood_lot_acres(df: pd.DataFrame) -> pd.DataFrame:
     has_levy = "levy" in df.columns
     if has_levy:
         agg["levy"] = "sum"
+    if "res_levy" in df.columns:
+        agg["res_levy"] = "sum"
     has_gross = "gross_area" in df.columns
     if has_gross:
         agg["gross_area"] = "sum"
@@ -318,6 +322,7 @@ def build_hood_lot_acres(df: pd.DataFrame) -> pd.DataFrame:
     out = out.reset_index()
     return out.rename(columns={
         "assessed_value": "value_lot_eligible", "levy": "revenue_lot_eligible",
+        "res_levy": "res_revenue_lot_eligible",
     })
 
 

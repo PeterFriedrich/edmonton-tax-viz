@@ -103,7 +103,10 @@ where `rate[exempt] = 0`. For a single-class parcel, `pct_1 = 100` and
 
 - Value share vs. levy share by class — the value→revenue reweighting that is
   the project thesis (per-class % of total assessed value vs. % of total
-  municipal levy).
+  municipal levy). **Partially SHIPPED 2026-07-16 as the residential-revenue
+  decomposition** (`res_levy` → the "Residential $" Money metric + per-hood
+  share tooltip; residential-class = 52.6% of the citywide 2025 levy —
+  DATA.md §4). The full per-class notebook cut is still open.
 - Distribution of split-class parcels — where they are, how much value they
   carry, how much the apportionment moves their levy vs. a flat `Tax Class` rate.
 - Per-neighbourhood exempt share, to identify the exempt-heavy neighbourhoods
