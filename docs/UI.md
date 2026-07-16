@@ -494,6 +494,43 @@ Implementation (`web/index.html`):
   persistence across a Glass round-trip — all PASS) + screenshots
   (`tools/profiling/shot-money-denom.js`).
 
+### Residential revenue metric (Money view, built 2026-07-16)
+
+A third `#toggle` metric — **Revenue | Value | Residential $**
+(`res_revenue_per_acre`): the **residential-class share of the levy in
+dollars** (`RESIDENTIAL` + `OTHER RESIDENTIAL` slices — houses, condos AND
+apartment buildings; DATA.md §4 "Residential-revenue decomposition").
+**Disambiguation — this is NOT the "Residential only" lens** (§ Residential-only
+lens above): the lens *fades hoods* below the 0.50 zoned-area threshold and
+never changes the dollars; this metric *changes the numerator* to
+residential-class dollars and colours every hood by it. The two compose —
+residential dollars on majority-residential-zoned land — and the lens's
+subset re-clamp (`residentialClampFor`) is key-generic, so it just works.
+Implementation (`web/index.html`):
+- **A plain third `METRICS` entry**, so the whole Money/Glass path (clamp,
+  legend, `withColourClause` blurb, denominator toggle via the
+  `lotKey()` naming convention → `res_revenue_per_lot_acre`, low-parcel
+  suppression) applies unchanged. `elevationScale` **equals Revenue's 0.033 on
+  purpose** — residential bars read as directly comparable subsets of the
+  total-revenue bars. Clamp $30k hand-set from the real-data p97.5 (~$28.5k).
+- **Honesty line lives in the blurb**: "a subset of Revenue, not all of what
+  the land pays — commercial and industrial dollars are excluded here."
+- **Share tooltip line in ALL Money metrics**: "N% of revenue is residential",
+  derived client-side as `res_revenue_per_acre / revenue_per_acre` (identical
+  denominators cancel; no share column ships). Real-data anchors: citywide
+  52.6%, hood median ~75%, DOWNTOWN ~16%.
+- **Column-guarded** (`state.hasResRevenue`): the button hides on data files
+  predating the column; no persistence, so `state.metric` can't be stuck on it.
+- **Glass**: the 100 m grid file does NOT carry the res column (v1 scope-out) —
+  Glass falls back to hood prisms with the metric's own anchors, the
+  pre-existing older-deploy fallback path.
+- Headless-verified (`tools/profiling/verify-res-revenue.js`: guard, column
+  drive, subset invariant res ≤ rev in every hood, share line == independent
+  recompute, blurb honesty line, lens composition incl. subset re-clamp, lot
+  denominator with independent p97.5, Glass hood-prism fallback, metric
+  persistence — ALL PASS) + screenshots (`tools/profiling/shot-res-revenue.js`:
+  plain + lens-composed).
+
 ---
 
 ## Open / unresolved

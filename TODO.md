@@ -12,6 +12,20 @@ _Last reconciled: 2026-07-09_
 
 ## Open work
 
+- [x] ~~**Residential revenue metric ("Residential $", Peter 2026-07-16)**~~ —
+  **SHIPPED 2026-07-16.** The numerator decomposition Peter asked for (explicit
+  residential tax dollars, vs the zoned-area fade lens): `res_levy`
+  (RESIDENTIAL + OTHER RESIDENTIAL; MA DERELICT excluded → DECISIONS.md
+  2026-07-16) → `res_revenue_per_acre` / `_per_lot_acre` → third Money metric
+  + "N% of revenue is residential" tooltip line in all Money metrics.
+  DATA.md §4 decomposition, UI.md "Residential revenue metric",
+  `verify-res-revenue.js`. Follow-on (small, optional):
+  - [ ] **Glass grid file res columns** — the 100 m cell export
+    (`export_value_grid.py` cell payload) doesn't carry the res columns, so
+    Glass falls back to hood prisms for the Residential $ metric (honest,
+    guarded). Adding them = extend the cell rollup + payload columns; weigh
+    the grid-file size cost (PERFORMANCE.md) before doing it.
+
 - [ ] **PUBLIC RELEASE PREP (NEW 2026-07-09 — scope + rationale in
   `docs/PLAN_public_release.md`; read it before working these).** An external
   prioritization memo was intaken and reconciled: its build list (WEM/condo fix,

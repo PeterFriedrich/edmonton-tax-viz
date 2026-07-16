@@ -295,6 +295,20 @@ def test_hood_lot_acres_dedupes_duplicated_parcel():
     assert "revenue_lot_eligible" not in out.columns  # no levy passed
 
 
+def test_hood_lot_acres_res_revenue_variant():
+    # res_levy (the residential-class subset) rolls up alongside levy into
+    # res_revenue_lot_eligible; absent when res_levy isn't passed (test above).
+    df = _frame([
+        {**A, "neighbourhood_name": "HOODX", "lot_size": SQ_M_PER_ACRE,
+         "assessed_value": 1000.0, "levy": 10.0, "res_levy": 4.0},
+        {**B, "neighbourhood_name": "HOODX", "lot_size": SQ_M_PER_ACRE,
+         "assessed_value": 500.0, "levy": 5.0, "res_levy": 0.0},
+    ])
+    out = build_hood_lot_acres(df).set_index("neighbourhood_name")
+    assert out.loc["HOODX", "revenue_lot_eligible"] == pytest.approx(15.0)
+    assert out.loc["HOODX", "res_revenue_lot_eligible"] == pytest.approx(4.0)
+
+
 def test_hood_lot_acres_excludes_ineligible_points():
     # A majority-null multi-unit point is ineligible: excluded from BOTH the
     # denominator and the numerator (its value must not inflate value/lot-acre).

@@ -169,6 +169,7 @@
   <div id="toggle" class="panel">
     <button data-metric="revenue_per_acre" class="active">Revenue</button>
     <button data-metric="value_per_acre">Value</button>
+    <button data-metric="res_revenue_per_acre" title="Residential-class tax dollars only (houses, condos and apartment buildings) — a subset of Revenue. Not the 'Residential only' lens, which fades non-residential neighbourhoods without changing the dollars">Residential $</button>
   </div>
 
   <div id="palette" class="panel">
@@ -335,6 +336,39 @@
                   "deduplicated at multi-unit points). Height is linear; colour is " +
                   "square-root–scaled to reveal the low end. Grey = set-aside land, " +
                   "or too little parcel land for a lot-acre value.",
+      },
+      // Residential-revenue decomposition: the RESIDENTIAL + OTHER RESIDENTIAL
+      // class subset of the levy — a SUBSET of Revenue, never all of what the
+      // land pays (the blurb must say so). Same elevationScale as Revenue, on
+      // purpose: residential bars read as directly comparable subsets of the
+      // total-revenue bars. Distinct from the "Residential only" fade lens,
+      // which fades majority-non-residential-zoned hoods without changing the
+      // dollars — the two compose (residential dollars on residential land).
+      res_revenue_per_acre: {
+        key: "res_revenue_per_acre",
+        title: "Edmonton: Residential Tax Revenue per Acre",
+        blurb: "Height and colour show the residential-class share of municipal " +
+               "property-tax revenue — houses, condos and apartment buildings — " +
+               "divided by neighbourhood area. This is a subset of Revenue, not " +
+               "all of what the land pays: commercial and industrial dollars are " +
+               "excluded here. Height is linear; colour is square-root–scaled to " +
+               "reveal the low end. Grey = set-aside natural/undeveloped land, " +
+               "excluded from the scale.",
+        legendLabel: "Residential revenue per acre",
+        legendMin: "$0",
+        legendMax: "$30k+",
+        colorClamp: 30_000, // hand-set from the real-data p97.5 (~$28.5k), like Revenue's 50k
+        elevationScale: 0.033,
+        transform: "sqrt",
+        fmt: fmtMoney,
+        lotBlurb: "Height and colour show the residential-class share of municipal " +
+                  "property-tax revenue — houses, condos and apartment buildings, " +
+                  "a subset of Revenue, not all of what the land pays — divided " +
+                  "by the parcel (lot) acres a neighbourhood's properties actually " +
+                  "own (city lot sizes, deduplicated at multi-unit points). Height " +
+                  "is linear; colour is square-root–scaled to reveal the low end. " +
+                  "Grey = set-aside land, or too little parcel land for a " +
+                  "lot-acre value.",
       },
       value_per_acre: {
         key: "value_per_acre",
@@ -2099,6 +2133,13 @@
       }
       let html = name + `${cfg.fmt(p[colKey])} / ${lot ? "lot acre" : "acre"}`;
       if (lot) html += pf;
+      // Residential share of revenue — ground-acre pair regardless of the
+      // denominator toggle (identical denominators cancel, so the ratio equals
+      // total_res_revenue / total_revenue). Shown for every Money metric.
+      if (p.res_revenue_per_acre != null && p.revenue_per_acre > 0) {
+        const share = Math.round(100 * p.res_revenue_per_acre / p.revenue_per_acre);
+        html += `<br/><span class="muted">${share}% of revenue is residential</span>`;
+      }
       if (p.road_m_per_acre != null) {
         html += `<br/><span class="muted">${p.road_m_per_acre.toFixed(1)} road m / acre</span>`;
         if (p.road_m_per_acre > 0 && p.revenue_per_acre != null) {
@@ -2756,6 +2797,14 @@
         document.getElementById("denom-hd").textContent = "Denominator";
         document.getElementById("denom-hd").style.display = "block";
         document.getElementById("denom").style.display = "flex";
+      }
+      // Same guard for the Residential $ metric: it needs res_revenue_per_acre
+      // (pipeline 2026-07-16) — hide the button on older data files. state.metric
+      // can't be stuck on it (no persistence; the default is revenue_per_acre).
+      state.hasResRevenue =
+        state.data.features.some(f => f.properties.res_revenue_per_acre != null);
+      if (!state.hasResRevenue) {
+        document.querySelector('#toggle button[data-metric="res_revenue_per_acre"]').style.display = "none";
       }
       // Same guard for the uses view: it needs the composition columns
       // (pipeline 2026-07-03) — hide the button on older data files.

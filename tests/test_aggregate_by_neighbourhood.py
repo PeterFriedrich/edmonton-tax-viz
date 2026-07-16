@@ -47,3 +47,35 @@ def test_single_neighbourhood():
     result = aggregate_by_neighbourhood(df)
     assert len(result) == 1
     assert result.iloc[0]["total_assessed_value"] == 165000.0
+
+
+def test_levy_sums_into_total_revenue():
+    df = _make_df([
+        {"neighbourhood_name": "DOWNTOWN", "assessed_value": 100.0, "levy": 10.0, "is_exempt": False},
+        {"neighbourhood_name": "DOWNTOWN", "assessed_value": 200.0, "levy": 30.0, "is_exempt": False},
+    ])
+    result = aggregate_by_neighbourhood(df)
+    assert result.iloc[0]["total_revenue"] == 40.0
+
+
+def test_res_levy_sums_into_total_res_revenue():
+    # res_levy (the residential-class subset) aggregates alongside levy.
+    df = _make_df([
+        {"neighbourhood_name": "DOWNTOWN", "assessed_value": 100.0,
+         "levy": 10.0, "res_levy": 10.0, "is_exempt": False},
+        {"neighbourhood_name": "DOWNTOWN", "assessed_value": 200.0,
+         "levy": 30.0, "res_levy": 0.0, "is_exempt": False},
+    ])
+    result = aggregate_by_neighbourhood(df)
+    downtown = result.iloc[0]
+    assert downtown["total_revenue"] == 40.0
+    assert downtown["total_res_revenue"] == 10.0
+
+
+def test_no_res_levy_no_total_res_revenue():
+    # Without res_levy upstream the column stays absent (value-only path safe).
+    df = _make_df([
+        {"neighbourhood_name": "DOWNTOWN", "assessed_value": 100.0, "levy": 10.0, "is_exempt": False},
+    ])
+    result = aggregate_by_neighbourhood(df)
+    assert "total_res_revenue" not in result.columns

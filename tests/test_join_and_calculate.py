@@ -902,6 +902,82 @@ def test_export_keeps_lot_acre_columns_when_present(tmp_path):
     assert "lot_acres_eligible" not in written.columns  # raw total stays out of slim
 
 
+# --- residential-revenue decomposition (res_levy → res_revenue_per_acre) -----
+# The RESIDENTIAL + OTHER RESIDENTIAL class subset of the levy, same boundary
+# denominator as revenue_per_acre. The share ships nowhere — the client derives
+# it as res/revenue per acre (denominators cancel).
+
+
+def test_res_revenue_per_acre_computed():
+    result = join_and_calculate(
+        _assessment([{"neighbourhood_name": "DOWNTOWN",
+                      "total_assessed_value": 1_000_000.0,
+                      "total_revenue": 10_000.0, "total_res_revenue": 4_000.0}]),
+        _boundaries([{"neighbourhood_name": "DOWNTOWN", "area_acres": 100.0}]),
+    )
+    row = result.iloc[0]
+    assert row["res_revenue_per_acre"] == pytest.approx(40.0)   # 4k / 100
+    assert row["revenue_per_acre"] == pytest.approx(100.0)      # subset < total
+
+
+def test_res_revenue_absent_without_upstream_column():
+    result = join_and_calculate(
+        _assessment([{"neighbourhood_name": "DOWNTOWN",
+                      "total_assessed_value": 1_000_000.0, "total_revenue": 10_000.0}]),
+        _boundaries([{"neighbourhood_name": "DOWNTOWN", "area_acres": 100.0}]),
+    )
+    assert "res_revenue_per_acre" not in result.columns
+
+
+def test_res_revenue_lot_acre_variant_and_suppression():
+    # The lot variant divides by deduped parcel acres and inherits the
+    # LOW_PARCEL_FRAC suppression like the other per-lot-acre dollar ratios.
+    result = join_and_calculate(
+        _assessment([
+            {"neighbourhood_name": "DOWNTOWN", "total_assessed_value": 1_000_000.0,
+             "total_revenue": 10_000.0, "total_res_revenue": 4_000.0},
+            {"neighbourhood_name": "PARK", "total_assessed_value": 100_000.0,
+             "total_revenue": 1_000.0, "total_res_revenue": 400.0},
+        ]),
+        _boundaries([
+            {"neighbourhood_name": "DOWNTOWN", "area_acres": 100.0},
+            {"neighbourhood_name": "PARK", "area_acres": 100.0},
+        ]),
+        lot_acres=_lot([
+            {"neighbourhood_name": "DOWNTOWN", "lot_acres_eligible": 50.0,
+             "value_lot_eligible": 900_000.0, "revenue_lot_eligible": 9_000.0,
+             "res_revenue_lot_eligible": 3_600.0},
+            {"neighbourhood_name": "PARK", "lot_acres_eligible": 5.0,  # 5% parcel
+             "value_lot_eligible": 90_000.0, "revenue_lot_eligible": 900.0,
+             "res_revenue_lot_eligible": 360.0},
+        ]),
+    )
+    dt = result[result["neighbourhood_name"] == "DOWNTOWN"].iloc[0]
+    assert dt["res_revenue_per_lot_acre"] == pytest.approx(72.0)  # 3.6k / 50
+    park = result[result["neighbourhood_name"] == "PARK"].iloc[0]
+    assert pd.isna(park["res_revenue_per_lot_acre"])  # suppressed (< 15%)
+
+
+def test_export_keeps_res_revenue_columns_when_present(tmp_path):
+    result = join_and_calculate(
+        _assessment([{"neighbourhood_name": "DOWNTOWN",
+                      "total_assessed_value": 1_000_000.0,
+                      "total_revenue": 10_000.0, "total_res_revenue": 4_000.0}]),
+        _boundaries([{"neighbourhood_name": "DOWNTOWN", "area_acres": 100.0}]),
+        lot_acres=_lot([
+            {"neighbourhood_name": "DOWNTOWN", "lot_acres_eligible": 50.0,
+             "value_lot_eligible": 900_000.0, "revenue_lot_eligible": 9_000.0,
+             "res_revenue_lot_eligible": 3_600.0},
+        ]),
+    )
+    written = export_geojson(result, str(tmp_path / "out.geojson"))
+    assert "res_revenue_per_acre" in written.columns
+    assert "res_revenue_per_lot_acre" in written.columns
+    # the raw total stays out of the slim file, like every other total
+    assert "total_res_revenue" not in written.columns
+    assert "res_revenue_lot_eligible" not in written.columns
+
+
 # --- FAR (Development Lens B suitability proxy) ------------------------------
 
 def test_far_passes_through_unsuppressed():

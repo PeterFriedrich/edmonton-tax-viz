@@ -89,7 +89,8 @@ PERMIT_COLUMNS_3YR = [f"{c}_3yr" for c in PERMIT_COLUMNS]
 # ships alongside so the client can label + guard. This is an editorial
 # alternative denominator, NOT a correction to the cardinality-robust default.
 LOT_ACRE_COLUMNS = [
-    "value_lot_eligible", "revenue_lot_eligible", "lot_acres_eligible", "far",
+    "value_lot_eligible", "revenue_lot_eligible", "res_revenue_lot_eligible",
+    "lot_acres_eligible", "far",
 ]
 
 def load_unit_costs(path: str | Path) -> dict[str, float]:
@@ -324,6 +325,16 @@ def join_and_calculate(
         out_cols = [
             "neighbourhood_name", "total_assessed_value", "total_revenue",
             "area_acres", "value_per_acre", "revenue_per_acre", "geometry",
+        ]
+
+    # Residential-revenue decomposition (res_levy from apply_tax_rates):
+    # the residential-class subset of revenue_per_acre, same denominator.
+    # The client derives the residential SHARE as res/revenue per acre
+    # (denominators cancel), so no share column ships.
+    if "total_res_revenue" in joined.columns:
+        joined["res_revenue_per_acre"] = joined["total_res_revenue"] / safe_area
+        out_cols = [c for c in out_cols if c != "geometry"] + [
+            "total_res_revenue", "res_revenue_per_acre", "geometry",
         ]
 
     # Zoning phase: merge land-use set-aside composition when supplied.
@@ -665,6 +676,11 @@ def join_and_calculate(
         if "revenue_lot_eligible" in joined.columns:
             joined["revenue_per_lot_acre"] = joined["revenue_lot_eligible"] / safe_lot
             added.append("revenue_per_lot_acre")
+        if "res_revenue_lot_eligible" in joined.columns:
+            joined["res_revenue_per_lot_acre"] = (
+                joined["res_revenue_lot_eligible"] / safe_lot
+            )
+            added.append("res_revenue_per_lot_acre")
         added.append("parcel_frac")
 
         # Guard: hoods below the parcel-fraction floor (incl. NaN — no eligible
@@ -716,8 +732,14 @@ def join_and_calculate(
 # and new_permits_per_acre (+ the total/permit-count pair for the tooltip) are the
 # Development lens A activity metrics — new dwelling units / new permits from
 # issued permits, a change/flow signal, NOT revenue or cost (SPEC_development.md).
+# res_revenue_per_acre / res_revenue_per_lot_acre are the residential-revenue
+# decomposition: the RESIDENTIAL + OTHER RESIDENTIAL class subset of the levy
+# (a subset of revenue_per_acre, never all of what the land pays — the client
+# must say so); the residential SHARE is derived client-side as res/revenue
+# per acre (same denominator cancels), so no share column ships.
 SLIM_COLUMNS = [
     "neighbourhood_name", "value_per_acre", "revenue_per_acre",
+    "res_revenue_per_acre", "res_revenue_per_lot_acre",
     "set_aside_frac", "is_set_aside", "set_aside_reason",
     "frac_never", "frac_notyet", "frac_inst",
     "frac_residential", "frac_commercial", "frac_industrial",

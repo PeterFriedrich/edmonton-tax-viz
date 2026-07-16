@@ -250,6 +250,23 @@ Non-residential is ~3.2× residential — this class differential is the basis o
 - `Mature Area Derelict Residential` and `Transitional Residential` exist as rate classes but not as assessment `Tax Class` values — unused by the Tax-Class join.
 - **Two class vocabularies in the assessment CSV.** `Tax Class` (col 9) is the clean 4-value field used for the join. The `Assessment Class 1/2/3` (+ `% 1/2/3`) columns describe split-class parcels using *different* labels (`COMMERCIAL` = `Non Residential`, plus `MA DERELICT RESIDENTIAL` → Non Residential, `NONRES MUNICIPAL/RES EDUCATION` → exempt). `map(Assessment Class 1)` equals `Tax Class` in 100% of rows, so only the 2nd/3rd slices add information; split-class is rare (~0.25% of rows). Full label→rate-class map, counts, and the unified levy formula: `docs/FINDINGS_assessment_classes.md`.
 
+### Residential-revenue decomposition (added 2026-07-16)
+
+`apply_tax_rates.py` also emits **`res_levy`** — the subset of each parcel's levy
+billed on **`RESIDENTIAL` + `OTHER RESIDENTIAL`** class slices (all housing:
+houses/condos <4 units *and* 4+ unit apartment buildings; split-class parcels
+contribute only their residential slice). **`MA DERELICT RESIDENTIAL` is
+excluded** — the city deliberately bills it at the punitive Non Residential
+rate, so its dollars are non-residential-rate dollars. Flows: `res_levy` →
+`total_res_revenue` (aggregate) → **`res_revenue_per_acre`** /
+**`res_revenue_per_lot_acre`** (slim GeoJSON; the lot variant inherits the
+LOW_PARCEL_FRAC suppression). No share column ships — the client derives the
+residential share as `res_revenue_per_acre / revenue_per_acre` (identical
+denominators cancel). Real-data anchors (2025 roll): residential-class =
+**52.6% of the citywide levy**; hood median share ~75%, DOWNTOWN ~16%; ground
+p97.5 ≈ $28.5k/acre (web clamp $30k). Distinct from `is_residential`
+(§ Residential split below), which is a *zoned-area* display flag, not dollars.
+
 ---
 
 ## 5. Zoning Bylaw Geographical Data (land-use layer, added 2026-06-29)
