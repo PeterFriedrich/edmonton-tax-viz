@@ -232,6 +232,56 @@ const [url] = process.argv.slice(2);
     console.log('water off      :', JSON.stringify(await chrome()));
   }
 
+  // --- service-cost composite (2026-07-16) — skipped on data files that
+  // predate the svc_cost_per_acre refresh (the metric PR merged 2026-07-16;
+  // the column lands on the next refresh run) ------------------------------
+  const hasSvcCost = await page.evaluate(() =>
+    state.data.features.some(f => f.properties.svc_cost_per_acre != null));
+  if (!hasSvcCost) {
+    console.log('svccost checks : SKIPPED — data file has no svc_cost_per_acre column');
+    console.log('svccost hidden :', JSON.stringify(await page.evaluate(() =>
+      getComputedStyle(document.querySelector('#services .svc[data-service="servicecost"]')).display === 'none')));
+  } else {
+    // Check service-cost on + hand it the colour: still exactly ONE svc-plane,
+    // legend re-anchors to the svc_cost p97.5 (independent quantile), mid-hood
+    // fill matches the SQRT expectation (fire-dominated skew — like fire).
+    await click('#services .svc[data-service="servicecost"] .svc-on');
+    await page.waitForTimeout(1000);
+    await click('#services .svc[data-service="servicecost"] input[type="radio"]');
+    await page.waitForTimeout(1500);
+    const svcCostDrives = await page.evaluate(() => {
+      const ids = overlay._deck.props.layers.map(l => l.id);
+      const plane = overlay._deck.props.layers.find(l => l.id === 'svc-plane');
+      const kept = state.data.features.filter(f =>
+        !f.properties.is_set_aside && f.properties.svc_cost_per_acre != null);
+      const vals = kept.map(f => f.properties.svc_cost_per_acre).sort((a, b) => a - b);
+      const pos = (vals.length - 1) * 0.975, lo = Math.floor(pos);
+      const q = vals[lo] + (vals[Math.ceil(pos)] - vals[lo]) * (pos - lo);
+      const mid = kept[Math.floor(kept.length / 2)];
+      const scale = svcScale('svc_cost_per_acre');
+      // svc_cost colour is SQRT (SPEC_utilities decision 3) — re-derive here
+      const expected = rampColorAt(
+        Math.sqrt(Math.min(1, mid.properties.svc_cost_per_acre / scale.clamp)));
+      return { planeCount: ids.filter(id => id === 'svc-plane').length,
+               clampMatchesP975: Math.abs(scale.clamp - q) < 1e-6,
+               midFillOk: plane.props.getFillColor(mid).join() === expected.join(),
+               legendMax: document.getElementById('legend-max').textContent };
+    });
+    console.log('svccost drives :', JSON.stringify(svcCostDrives));
+    console.log('chrome         :', JSON.stringify(await chrome()));
+
+    // Tooltip carries the service-cost row.
+    console.log('tooltip (cost) :', await page.evaluate(() => {
+      const f = state.data.features.find(f => f.properties.neighbourhood_name === 'STRATHCONA');
+      return tooltipFor({ object: f }).html;
+    }));
+
+    // Uncheck service-cost: the driver hands back to a checked service.
+    await click('#services .svc[data-service="servicecost"] .svc-on');
+    await page.waitForTimeout(1000);
+    console.log('svccost off    :', JSON.stringify(await chrome()));
+  }
+
   // Uncheck roads: its layer leaves the stack, storm keeps/regains colour.
   await click('#services .svc[data-service="roads"] .svc-on');
   await page.waitForTimeout(1500);

@@ -342,8 +342,30 @@ ANALYSIS_BACKLOG 5.
      pipeline half landed the same day — `join_and_calculate.load_unit_costs`
      + `unit_costs` arg → `svc_cost_per_acre` in `SLIM_COLUMNS` (per-event $
      = budget ÷ the fire frame's citywide kept-event sum, pre-join; requires
-     BOTH roads + fire, warn+skip otherwise). **Display placement is still
-     Peter's call** — no UI reads the column yet.
+     BOTH roads + fire, warn+skip otherwise).
+     **Display — DECIDED 2026-07-16 (Peter): BOTH placements, staged.**
+     - *(a) Services-view checkbox — BUILT 2026-07-16.* A 6th per-service
+       row, "Service cost (roads+fire) — modeled $/acre", on the shared
+       `svc-plane` (SERVICES `servicecost`, sqrt colour — fire-dominated
+       skew). Its blurb + legend carry the "roads + fire only, never total
+       city cost" and fixed-budget-allocation caveats; the tooltip adds a
+       `svc_cost_per_acre` row. Column-guarded like the other service rows,
+       so the checkbox hides on data files that predate the column (it lands
+       on the first refresh after the metric PR). `verify-services.js` +
+       `shot-services.js` extended.
+     - *(b) Ratio-view coverage denominator — BUILT 2026-07-16.* A 3rd
+       "Ratio denominator" option, "Per service $" — `revenue_per_acre ÷
+       svc_cost_per_acre`, dimensionless (revenue $ per modeled service $).
+       **Framed as MAGNITUDE, not break-even (Peter 2026-07-16):** the SAME
+       log ramp as roads/fire, NO 1.0 marking. The numerator is FULL property
+       tax but the denominator is only two services, so the coverage reads
+       ≫1 almost everywhere (real-data median ≈ 5.8×) — the blurb/tooltip say
+       so explicitly ("not a sign the land pays its full way"), never "pays
+       its way". Legend bounds show ×-multiples (`boundFmt`), not dollars;
+       floor $230/acre (kept p2.5) greys the near-zero-cost artifacts; log
+       colour (raw skew 2.4 → log 0.17). The picker now opens on `hasFire ||
+       hasSvcCost` and the button is column-guarded. `verify-ratio-denom.js`
+       38/38 (+11), `shot-ratio-denom.js` extended.
 4. **Franchise-fee revenue columns:** ship with the electricity/gas lenses,
    earlier as standalone columns, or not at all? Recommended: only with
    their lenses — a modeled revenue line without its cost context invites

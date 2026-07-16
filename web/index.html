@@ -253,6 +253,14 @@
           <input type="radio" name="svc-driver" /> colour
         </label>
       </div>
+      <div class="svc" data-service="servicecost">
+        <label title="Each neighbourhood coloured by one modeled city-service cost per acre — road metres × published roadway lifecycle cost + fire-dispatch demand × Fire Rescue budget per dispatch. Roads and fire only, never the total cost of city services; modeled, not a budget line">
+          <input type="checkbox" class="svc-on" /> Service cost (roads+fire) — modeled $/acre
+        </label>
+        <label class="svc-colour" title="This service drives the colour ramp; the others render neutral">
+          <input type="radio" name="svc-driver" /> colour
+        </label>
+      </div>
     </div>
     <span class="hd" id="denom-hd">Denominator</span>
     <div id="denom">
@@ -263,6 +271,7 @@
     <div id="ratio-denom">
       <button data-ratio-denom="roads" class="active" title="Revenue per metre of city-maintained neighbourhood road (collector + local) — the levy-funded network this land's layout entails">Per road metre</button>
       <button data-ratio-denom="fire" title="Revenue per dispatched fire-department emergency event (2023–2025 average) — levy-funded demand; most events are medical calls">Per fire event</button>
+      <button data-ratio-denom="servicecost" title="Property-tax revenue as a multiple of the modeled roads + fire service cost — the two levy-funded services this project can measure, NOT the total cost of city services (police, parks, transit and the rest are not included, so most neighbourhoods read well above 1×)">Per service $</button>
     </div>
     <span class="hd" id="devmetric-hd">Metric</span>
     <div id="devmetric">
@@ -413,6 +422,35 @@
                "not response coverage, and most dispatched events are medical " +
                "calls. Height is linear; colour is log-scaled. Grey flat = " +
                "set-aside land or too few events for a meaningful ratio.",
+      },
+      // The V2 composite as a coverage denominator (2026-07-16, SPEC_utilities
+      // decision 3(b)): revenue_per_acre ÷ svc_cost_per_acre is dimensionless —
+      // revenue dollars per modeled service dollar. Treated as MAGNITUDE, not a
+      // break-even ratio (Peter 2026-07-16): the SAME log ramp as the others,
+      // no 1.0 marking. The numerator is FULL property tax but the denominator
+      // is only two services (roads+fire), so most hoods read well above 1× —
+      // the blurb/tooltip say so, never "pays its way". boundFmt shows the
+      // legend bounds as ×-multiples (dimensionless), not dollars.
+      servicecost: {
+        col: "svc_cost_per_acre",
+        floor: 230, // $/acre/yr ≈ the kept subset's p2.5; below this the ratio is an artifact
+        floorText: "modeled service cost below $230 / acre / yr",
+        title: "Edmonton: Revenue vs Modeled Service Cost",
+        legend: "Revenue ÷ modeled roads+fire cost (log colour)",
+        aside: "Set aside / insufficient service base",
+        boundFmt: v => v.toFixed(v < 10 ? 1 : 0) + "×",
+        fmt: v => v.toFixed(v < 10 ? 1 : 0) + "× the modeled roads+fire cost",
+        component: p => `$${Math.round(p.svc_cost_per_acre).toLocaleString()} modeled roads+fire cost / acre / yr`,
+        blurb: "Ghost prisms show municipal property-tax revenue as a multiple " +
+               "of the modeled roads + fire service cost a neighbourhood's land " +
+               "entails — how many dollars of revenue back each dollar of that " +
+               "cost. Roads and fire only: the two levy-funded services this " +
+               "project can measure, NOT the total cost of city services " +
+               "(police, parks, transit and the rest are unmeasured), so most " +
+               "neighbourhoods read well above 1× — this is not a sign the land " +
+               "pays its full way. Height is linear; colour is log-scaled. Grey " +
+               "flat = set-aside land or too little service base for a " +
+               "meaningful ratio.",
       },
     };
     const ratioDenom = () => RATIO_DENOMS[state.ratioDenom];
@@ -571,6 +609,23 @@
                "service concentrates on the central corridors. Grey = " +
                "set-aside natural/undeveloped land.",
       },
+      servicecost: {
+        label: "Service cost",
+        plane: { col: "svc_cost_per_acre", transform: "sqrt" },
+        blurb: "Each neighbourhood is coloured by one modeled cost to the City " +
+               "of serving its land per acre per year: road metres times a " +
+               "published roadway lifecycle cost ($50 per metre per year — " +
+               "operations plus renewal over a 50-year life) plus fire-dispatch " +
+               "demand times the Fire Rescue operating budget shared over " +
+               "citywide dispatches. Roads and fire only — the two levy-funded " +
+               "services this project can measure; police, parks, transit and " +
+               "the rest are not included, so this is not the total cost of city " +
+               "services. Modeled, not a budget line: the fire share allocates a " +
+               "mostly-fixed department budget by where the calls are, so a " +
+               "quiet neighbourhood still costs something to protect. Colour is " +
+               "square-root scaled — cost concentrates in the fire-heavy core. " +
+               "Grey = set-aside natural/undeveloped land.",
+      },
     };
 
     // Per-view chrome. money's title/blurb stay metric-driven (METRICS).
@@ -724,7 +779,7 @@
                     devMetric: "units", // Development-view sub-metric: units | permits per acre
                     devWindow: "5yr", // Development-view activity window: 5yr (base) | 3yr (recent)
                     devGrid: false, // Development-view 100 m detail grid (off = the hood choropleth)
-                    services: { roads: true, storm: false, fire: false, water: false, transit: false },
+                    services: { roads: true, storm: false, fire: false, water: false, transit: false, servicecost: false },
                     svcDriver: "roads",
                     data: null };
     let overlay;         // deck.gl MapboxOverlay, created on map load
@@ -1076,6 +1131,8 @@
     const fmtWater = (v, fixed) => "$" + Math.round(v).toLocaleString() +
       " modeled water+sewer / acre / yr" +
       (fixed != null ? ` (fixed $${Math.round(fixed).toLocaleString()})` : "");
+    const fmtSvcCost = v => "$" + Math.round(v).toLocaleString() +
+      " modeled roads+fire service cost / acre / yr";
 
     // The shared service ground plane (services view): flat hoods coloured
     // by the colour-driving plane service's column on the active ramp,
@@ -1929,6 +1986,8 @@
           rows.push(`<span class="muted">${fmtWater(p.water_charge_per_acre, p.water_fixed_per_acre)}</span>`);
         if (p.transit_dep_per_acre != null)
           rows.push(`<span class="muted">${fmtTransit(p.transit_dep_per_acre)}</span>`);
+        if (p.svc_cost_per_acre != null)
+          rows.push(`<span class="muted">${fmtSvcCost(p.svc_cost_per_acre)}</span>`);
         return {
           className: "tip",
           html: rows.length
@@ -2217,6 +2276,14 @@
             clamp.toFixed(clamp < 10 ? 1 : 0) + "+";
           label.textContent = "Set aside — natural / undeveloped land";
           sw.style.background = "rgb(104,108,122)";
+        } else if (state.svcDriver === "servicecost") {
+          document.getElementById("legend-label").textContent =
+            "Modeled roads + fire cost per acre / yr (sqrt colour)";
+          document.getElementById("legend-min").textContent = "$0";
+          document.getElementById("legend-max").textContent =
+            "$" + Math.round(svcScale("svc_cost_per_acre").clamp).toLocaleString() + "+";
+          label.textContent = "Set aside — natural / undeveloped land";
+          sw.style.background = "rgb(104,108,122)";
         } else {
           document.getElementById("legend-label").textContent = "Road metres per acre";
           document.getElementById("legend-min").textContent = "0 m";
@@ -2265,11 +2332,13 @@
         sw.style.background = `rgb(${SET_ASIDE_COLOR.join(",")})`;
       } else if (state.view === "ratio") {
         const s = ratioScale();
+        // Bounds format per denominator: dollars for the $/unit denominators,
+        // ×-multiples for the dimensionless coverage denominator (boundFmt).
+        const bf = ratioDenom().boundFmt ||
+          (v => "$" + Math.round(v).toLocaleString());
         document.getElementById("legend-label").textContent = ratioDenom().legend;
-        document.getElementById("legend-min").textContent =
-          "≤ $" + Math.round(s.lo).toLocaleString();
-        document.getElementById("legend-max").textContent =
-          "$" + Math.round(s.hi).toLocaleString() + "+";
+        document.getElementById("legend-min").textContent = "≤ " + bf(s.lo);
+        document.getElementById("legend-max").textContent = bf(s.hi) + "+";
         if (state.residential) {
           label.textContent = "Faded — non-residential land";
           sw.style.background = `rgb(${LENS_FADE_COLOR.join(",")})`;
@@ -2512,9 +2581,10 @@
       document.getElementById("denom-hd").style.display = denomShow ? "block" : "none";
       document.getElementById("denom").style.display = denomShow ? "flex" : "none";
       // The ratio denominator picker shows only in the Ratio view, and only
-      // when the data carries the fire column — roads-only data offers no
-      // choice, so the control stays hidden and the roads default applies.
-      const ratioDenomShow = v === "ratio" && state.hasFire;
+      // when the data offers a real choice beyond the roads default — i.e. it
+      // carries the fire column and/or the service-cost composite. Roads-only
+      // data offers no choice, so the control stays hidden and roads applies.
+      const ratioDenomShow = v === "ratio" && (state.hasFire || state.hasSvcCost);
       document.getElementById("ratio-denom-hd").style.display = ratioDenomShow ? "block" : "none";
       document.getElementById("ratio-denom").style.display = ratioDenomShow ? "flex" : "none";
       // The development sub-metric picker (units vs permits per acre).
@@ -2659,6 +2729,18 @@
       if (!state.data.features.some(f => f.properties.transit_dep_per_acre != null)) {
         document.querySelector('#services .svc[data-service="transit"]').style.display = "none";
         state.services.transit = false;
+      }
+      // Same guard for the modeled service-cost composite (svc_cost_per_acre —
+      // pipeline 2026-07-15, ships on the next refresh after the metric PR). A
+      // data file from before that refresh keeps the view and just hides this
+      // row + the matching Ratio denominator until the column lands. The flag
+      // also opens the Ratio picker (applyView): a data file with fire OR
+      // service-cost has a real denominator choice to offer.
+      state.hasSvcCost = state.data.features.some(f => f.properties.svc_cost_per_acre != null);
+      if (!state.hasSvcCost) {
+        document.querySelector('#services .svc[data-service="servicecost"]').style.display = "none";
+        state.services.servicecost = false;
+        document.querySelector('#ratio-denom button[data-ratio-denom="servicecost"]').style.display = "none";
       }
       syncServiceControls();
       // Neighbourhood lot-acre denominator toggle (pipeline 2026-07-08): shown

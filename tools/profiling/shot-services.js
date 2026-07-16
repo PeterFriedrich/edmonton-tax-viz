@@ -54,5 +54,17 @@ const [url, prefix] = process.argv.slice(2);
   } else {
     console.log('water shot skipped — data file has no water_charge_per_acre column');
   }
+  const hasSvcCost = await page.evaluate(() =>
+    state.data.features.some(f => f.properties.svc_cost_per_acre != null));
+  if (hasSvcCost) {
+    await page.$eval('#services .svc[data-service="servicecost"] .svc-on', b => b.click());
+    await page.waitForTimeout(2000);
+    await page.$eval('#services .svc[data-service="servicecost"] input[type="radio"]', b => b.click());
+    await page.waitForTimeout(20000);
+    await page.screenshot({ path: `${prefix}-servicecost.png`, timeout: 90000, animations: 'disabled', caret: 'initial' });
+    console.log('wrote', `${prefix}-servicecost.png`);
+  } else {
+    console.log('servicecost shot skipped — data file has no svc_cost_per_acre column');
+  }
   await browser.close();
 })();
