@@ -8,8 +8,9 @@
 // Revenue and Residential $ metrics and matches an independent res/rev
 // recompute; the Residential-only fade lens composes (fade fill + subset
 // re-clamp via residentialClampFor); the lot denominator swaps to
-// res_revenue_per_lot_acre with an independent p97.5 clamp; Glass falls back
-// to hood prisms (grid file has no res column) with the metric's own anchors.
+// res_revenue_per_lot_acre with an independent p97.5 clamp; Glass draws the
+// 100 m res cells when the grid file carries the res columns (pipeline
+// 2026-07-17) and falls back to hood prisms on older files — branch-checked.
 //   node verify-res-revenue.js <url>
 const { chromium } = require('playwright');
 const [url] = process.argv.slice(2);
@@ -163,7 +164,9 @@ function approx(a, b, rel = 1e-6) { return Math.abs(a - b) <= rel * Math.max(Mat
   await click('#denom button[data-denom="ground"]');
   await page.waitForTimeout(800);
 
-  // --- Glass fallback (grid file has no res column) --------------------------
+  // --- Glass: grid cells when the file carries the res columns (pipeline
+  // 2026-07-17), hood-prism fallback on older files — both are correct; the
+  // column guard decides (same idiom as the #toggle guard above).
   await click('#views button[data-view="glass"]');
   await page.waitForTimeout(2500);
   const glass = await page.evaluate(() => ({
@@ -174,12 +177,39 @@ function approx(a, b, rel = 1e-6) { return Math.abs(a - b) <= rel * Math.max(Mat
     hoodPrisms: !!overlay._deck.props.layers.find(l => l.id === 'glass-extrusion'),
     gridLayer: !!overlay._deck.props.layers.find(l => l.id === 'glass-grid'),
   }));
-  console.log('glass fallback :', JSON.stringify(glass));
-  check('grid file lacks the res column (expected, v1)', glass.gridHasCol === false);
-  check('no grid layer drawn for the res metric', glass.gridLayer === false);
-  check('hood-prism fallback drawn', glass.hoodPrisms === true);
-  check('glass legend keeps hood anchors (no "100 m cells")',
-    !/100 m cells/.test(glass.label) && glass.max === '$30k+');
+  console.log('glass          :', JSON.stringify(glass));
+  if (glass.gridHasCol) {
+    check('grid layer drawn for the res metric (no hood-prism fallback)',
+      glass.gridLayer === true && glass.hoodPrisms === false);
+    const cells = await page.evaluate(() => {
+      const layer = overlay._deck.props.layers.find(l => l.id === 'glass-grid');
+      const col = gridData.columns['res_revenue_per_acre'];
+      const rev = gridData.columns['revenue_per_acre'];
+      const vals = gridData.cells.map(c => c[col]).filter(v => v != null)
+        .sort((a, b) => a - b);
+      const q = (a, p) => { const i = (a.length - 1) * p, lo = Math.floor(i), hi = Math.ceil(i);
+        return lo === hi ? a[lo] : a[lo] + (a[hi] - a[lo]) * (i - lo); };
+      const sample = gridData.cells.find(c => c[col] > 0);
+      const bad = gridData.cells.filter(c =>
+        c[col] != null && c[rev] != null && c[col] > c[rev] + 1).length; // +1: whole-$ rounding
+      return { elev: layer.props.getElevation(sample), base: sample[col],
+               clamp: gridScale().clamp, indepClamp: q(vals, 0.975),
+               subsetViolations: bad, n: vals.length };
+    });
+    console.log('glass cells    :', JSON.stringify(cells));
+    check('cell elevation reads res_revenue_per_acre', approx(cells.elev, cells.base));
+    check('cell clamp == independent p97.5 of the res cells',
+      approx(cells.clamp, cells.indepClamp, 1e-9));
+    check('res <= revenue in every cell (subset invariant, ±$1 rounding)',
+      cells.subsetViolations === 0);
+    check('glass legend says 100 m cells with the cell clamp',
+      /100 m cells/.test(glass.label) && glass.max !== '$30k+');
+  } else {
+    check('no grid layer drawn for the res metric (fallback path)', glass.gridLayer === false);
+    check('hood-prism fallback drawn', glass.hoodPrisms === true);
+    check('glass legend keeps hood anchors (no "100 m cells")',
+      !/100 m cells/.test(glass.label) && glass.max === '$30k+');
+  }
 
   // --- back to Money ---------------------------------------------------------
   await click('#views button[data-view="money"]');

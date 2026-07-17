@@ -521,15 +521,23 @@ Implementation (`web/index.html`):
   52.6%, hood median ~75%, DOWNTOWN ~16%.
 - **Column-guarded** (`state.hasResRevenue`): the button hides on data files
   predating the column; no persistence, so `state.metric` can't be stuck on it.
-- **Glass**: the 100 m grid file does NOT carry the res column (v1 scope-out) —
-  Glass falls back to hood prisms with the metric's own anchors, the
-  pre-existing older-deploy fallback path.
+- **Glass (real cells since 2026-07-17)**: the 100 m grid file carries
+  `res_revenue_per_acre` / `res_revenue_per_lot_acre` (DATA.md §4, Glass grid
+  variant), wired into the `gridData.columns` map — the whole Glass path
+  (cell render, `gridScale()` runtime p97.5 clamp ≈ $58k, denominator toggle,
+  "(100 m cells)" legend) applies unchanged. Zero-res cells (commercial/
+  industrial) draw flat at the ramp bottom — a real $0, visually distinct from
+  no-property gaps. On older grid files the columns index to −1 and the
+  metric falls back to hood prisms with its own anchors (the pre-existing
+  older-deploy fallback path).
 - Headless-verified (`tools/profiling/verify-res-revenue.js`: guard, column
   drive, subset invariant res ≤ rev in every hood, share line == independent
   recompute, blurb honesty line, lens composition incl. subset re-clamp, lot
-  denominator with independent p97.5, Glass hood-prism fallback, metric
-  persistence — ALL PASS) + screenshots (`tools/profiling/shot-res-revenue.js`:
-  plain + lens-composed).
+  denominator with independent p97.5, Glass branch-checked — grid cells with
+  independent cell-clamp recompute + per-cell subset invariant when the
+  columns are present, hood-prism fallback when absent — metric persistence —
+  ALL PASS) + screenshots (`tools/profiling/shot-res-revenue.js`: plain +
+  lens-composed + Glass cells).
 
 ---
 

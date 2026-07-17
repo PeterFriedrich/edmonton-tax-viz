@@ -267,6 +267,16 @@ denominators cancel). Real-data anchors (2025 roll): residential-class =
 p97.5 ≈ $28.5k/acre (web clamp $30k). Distinct from `is_residential`
 (§ Residential split below), which is a *zoned-area* display flag, not dollars.
 
+**Glass grid variant (added 2026-07-17):** `export_value_grid.py` rolls the
+same `res_levy` into the 100 m cells — payload columns
+**`res_revenue_per_acre`** / **`res_revenue_per_lot_acre`** appended after the
+existing six (`value_grid.json` ~1.76 → ~2.1 MB raw; Pages gzips). A cell with
+assessed property but no residential-class levy reads a **real 0**, not null
+(distinct from "no cell" = no property); lot slots stay null where no eligible
+lot acres, exactly like value/revenue. ~79% of cells have res > 0; res ≤ rev
+per cell (±$1 whole-dollar rounding). Older files lack the columns and the
+Glass Residential $ metric falls back to hood prisms (web column guard).
+
 ---
 
 ## 5. Zoning Bylaw Geographical Data (land-use layer, added 2026-06-29)

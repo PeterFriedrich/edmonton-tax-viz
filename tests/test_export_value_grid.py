@@ -187,6 +187,49 @@ def test_lot_revenue_uses_eligible_levy():
     assert ok["revenue_per_lot_acre"] == pytest.approx(1.0 / lot_acres)
 
 
+# --- residential-revenue subset (apply_tax_rates res_levy) ------------------
+
+
+def test_res_revenue_grid_columns():
+    # res_levy sums per cell like levy; a cell with no residential-class levy
+    # reads a real 0, not null. Lot-acre variant uses the eligible subset.
+    df = _frame([
+        {**A, "assessed_value": 100.0, "levy": 1.0, "res_levy": 1.0, "lot_size": 500.0},
+        {**A2, "assessed_value": 200.0, "levy": 2.0, "res_levy": 0.5, "lot_size": 500.0},
+        {**B, "assessed_value": 400.0, "levy": 4.0, "res_levy": 0.0, "lot_size": 250.0},
+    ])
+    grid = build_value_grid(df, cell_m=100.0)
+    cell_acres = 100.0 * 100.0 / SQ_M_PER_ACRE
+    res = sorted(grid["res_revenue_per_acre"])
+    assert res == pytest.approx(sorted([1.5 / cell_acres, 0.0]))
+    cell_a = grid[grid["res_revenue_per_acre"] > 0].iloc[0]
+    lot_acres = 1000.0 / SQ_M_PER_ACRE
+    assert cell_a["res_revenue_per_lot_acre"] == pytest.approx(1.5 / lot_acres)
+
+
+def test_res_revenue_lot_uses_eligible_subset():
+    # The lot-acre res metric excludes ineligible points' dollars, exactly
+    # like value/revenue; the ground-acre res metric keeps them.
+    df = _frame([
+        {**A, "assessed_value": 100.0, "levy": 1.0, "res_levy": 1.0, "lot_size": 500.0},
+        {**B, "assessed_value": 400.0, "levy": 4.0, "res_levy": 4.0, "lot_size": None},
+    ])
+    grid = build_value_grid(df, cell_m=100.0)
+    lot_acres = 500.0 / SQ_M_PER_ACRE
+    ok = grid[grid["res_revenue_per_lot_acre"].notna()].iloc[0]
+    assert ok["res_revenue_per_lot_acre"] == pytest.approx(1.0 / lot_acres)
+    cell_acres = 100.0 * 100.0 / SQ_M_PER_ACRE
+    bad = grid[grid["res_revenue_per_lot_acre"].isna()].iloc[0]
+    assert bad["res_revenue_per_acre"] == pytest.approx(4.0 / cell_acres)
+
+
+def test_no_res_levy_omits_res_columns():
+    df = _frame([{**A, "assessed_value": 100.0, "levy": 1.0, "lot_size": 500.0}])
+    grid = build_value_grid(df)
+    assert "res_revenue_per_acre" not in grid.columns
+    assert "res_revenue_per_lot_acre" not in grid.columns
+
+
 def _bounds_frame(rows):
     return _frame([{**r, "neighbourhood_name": r.get("neighbourhood_name", "H1")} for r in rows])
 
@@ -261,6 +304,41 @@ def test_export_lot_columns_and_nulls(tmp_path):
     assert round(100.0 / lot_acres) in lot_vals
     assert stats["has_lot"] is True
     assert stats["n_cells_without_lot"] == 1
+
+
+def test_export_res_columns_appended(tmp_path):
+    # res columns append AFTER the existing six (stable prefix, old files
+    # diffable); lot slot null where the cell has no eligible lot acres.
+    df = _frame([
+        {**A, "assessed_value": 100.0, "levy": 1000.0, "res_levy": 1000.0, "lot_size": 500.0},
+        {**B, "assessed_value": 400.0, "levy": 4000.0, "res_levy": 0.0, "lot_size": None},
+    ])
+    out = tmp_path / "value_grid.json"
+    stats = export_value_grid(df, out, cell_m=100.0)
+    payload = json.loads(out.read_text())
+    assert payload["columns"] == [
+        "lon", "lat", "value_per_acre", "revenue_per_acre",
+        "value_per_lot_acre", "revenue_per_lot_acre",
+        "res_revenue_per_acre", "res_revenue_per_lot_acre",
+    ]
+    assert stats["has_res"] is True
+    lot_acres = 500.0 / SQ_M_PER_ACRE
+    res_rows = sorted(payload["cells"], key=lambda r: r[6])
+    assert res_rows[0][6] == 0 and res_rows[0][7] is None   # B: no res, no lot
+    assert res_rows[1][6] > 0
+    assert res_rows[1][7] == round(1000.0 / lot_acres)
+
+
+def test_export_res_without_lot(tmp_path):
+    # res_levy present but no lot_size: only the ground-acre res column ships.
+    df = _frame([{**A, "assessed_value": 100.0, "levy": 1.0, "res_levy": 1.0}])
+    out = tmp_path / "value_grid.json"
+    export_value_grid(df, out, cell_m=100.0)
+    payload = json.loads(out.read_text())
+    assert payload["columns"] == [
+        "lon", "lat", "value_per_acre", "revenue_per_acre", "res_revenue_per_acre",
+    ]
+    assert len(payload["cells"][0]) == 5
 
 
 # --- build_hood_lot_acres (neighbourhood lot-acre denominator) --------------
