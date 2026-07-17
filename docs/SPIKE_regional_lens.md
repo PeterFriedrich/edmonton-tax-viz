@@ -1,8 +1,10 @@
 # SPIKE — Capital-region peer-municipality comparison (St. Albert, Strathcona County)
 
 **Date:** 2026-07-17 (data pulled live this date)
-**Status:** Spike complete. Feasibility CONFIRMED for a citywide-aggregate
-comparison; no build started. Phase 2 / appendix-tier — not November scope.
+**Status:** Spike complete; item **PARKED (Peter, 2026-07-17)** on the St.
+Albert licensing question — see "Licensing" below and the un-park conditions
+at the end. Feasibility CONFIRMED for a citywide-aggregate comparison; no
+build started. Phase 2 / appendix-tier — not November scope.
 **Scope of this doc:** data-source facts + feasibility verdict only. Lens
 design (output form, copy, methodology) is NOT decided here.
 
@@ -147,12 +149,29 @@ totals 7.2770 / 15.0823). Historical table 2015–2026 is server-rendered at
   `f=json`/`f=geojson`), unlike Edmonton's Socrata — one new loader idiom
   covers both peers. St. Albert additionally supports `outStatistics`
   server-side, so the aggregate-only output may need NO bulk download for SA.
-- **Licensing (unresolved, check before committing any data):** Strathcona
-  points to `opendata-strathconacounty.hub.arcgis.com/pages/licence` (custom);
-  the St. Albert item has NO licenseInfo on the ArcGIS item — their open-data
-  terms need locating before any pulled data is committed to the public repo.
-  (Derived aggregate *statistics* are lower-risk than redistributing rows, but
-  confirm.)
+- **Licensing — the reason this item is PARKED.** The asymmetry cuts the
+  opposite way from data quality:
+  - **Strathcona is the clean case:** its yearly assessment datasets are
+    explicitly *catalogued* in the county's Open Data hub, governed by the
+    Open Government Licence – Alberta (worldwide, royalty-free, commercial
+    use fine, attribution required). No ambiguity.
+  - **St. Albert is unresolved — and likely NOT covered by its own Open Data
+    Licence.** The LandScape REST service is the backend of a one-property-
+    at-a-time public lookup tool; its bulk-query-ability is an artifact of
+    how ArcGIS REST works, not a publishing decision. St. Albert has a
+    separate, deliberate Open Data Portal (`data.stalbert.ca`, permissive
+    OGL-Alberta-clone licence) and **the assessment data is not catalogued
+    there**; the missing `licenseInfo` on the ArcGIS item is consistent with
+    "never published as open data". Bulk-pulling a lookup tool ≠ using
+    published open data, even when the underlying facts are public record.
+  - **Standing rule until resolved: do NOT commit St. Albert per-parcel data
+    to the public repo.** Treat the service as not licensed for bulk reuse.
+    Resolution path: ask St. Albert directly whether the LandScape service
+    data is intended to be publicly reusable like the catalogued portal
+    datasets, or for individual lookups only. If no / no answer, the fallback
+    is citywide-aggregate figures from the City's own published materials
+    (assessment base + levy totals from tax-rate-bylaw documents) — a much
+    smaller claim than republishing a scraped 29,366-row dataset.
 - **Comparability caveats for any output copy:** (a) Strathcona is
   residential-only + modeled levy; (b) mill-rate bundling differs (Strathcona
   Recreation Infrastructure line + Designated Industrial Requisition vs
@@ -166,8 +185,23 @@ No pipeline code, no data committed, no methodology chosen. The realistic
 scope per the brief remains **(a) a citywide aggregate comparison**; the spike
 adds that **St. Albert alone could support (b) a full parallel per-parcel
 pipeline** if ever wanted — it is the only peer with polygons + class + levy.
-Remaining open items: license terms (both), exact valuation-lag confirmation,
-the Strathcona dedup rule, and the actual output design (Peter's call).
+That option is exactly what the licensing question gates; the aggregate-chart
+scope (a) survives it cleanly either way.
+
+## Un-park conditions (Peter, 2026-07-17)
+
+1. **St. Albert licensing answered** — direct confirmation from the City on
+   whether the LandScape service data is reusable like its catalogued open
+   data (see Licensing above). Until then: no raw per-parcel use, and never
+   commit the data to the public repo.
+2. **Strathcona dedup rule solved** (whole-building value repeated per unit
+   — see the duplication hazard section). A data problem independent of the
+   licensing one; stands whenever this is revisited.
+3. **Valuation-lag convention confirmed across all three municipalities** —
+   do Edmonton / St. Albert / Strathcona "2026" figures share the same
+   valuation-date convention? Not yet checked.
+4. **Output design decided** — still open; the citywide summary chart remains
+   the safe/realistic scope regardless of how #1 resolves.
 
 ## Repro
 

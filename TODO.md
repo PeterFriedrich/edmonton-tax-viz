@@ -28,14 +28,17 @@ _Last reconciled: 2026-07-09_
     grid variant", UI.md Glass bullet; columns reach live on the next weekly
     refresh (column guard until then).
 
-- [ ] **Regional peer-municipality lens (PARKED — Phase 2, not November scope;
-  spike done 2026-07-17: `docs/SPIKE_regional_lens.md`).** Citywide-aggregate
-  value/revenue-per-acre comparison vs St. Albert + Strathcona County.
-  Feasibility CONFIRMED; St. Albert is the strong leg (parcel polygons +
-  class + actual levy, 29,366 parcels), Strathcona the weak one
-  (residential-only centroids, no levy — modeled mill rate + dedup rule
-  needed). Blocked on Peter's methodology/output-design call + license checks
-  (both sources) before any data is committed. Read the spike doc first.
+- [ ] **PARKED: Regional comparison lens (St. Albert / Strathcona; Phase 2,
+  not November scope).** Spike complete (PR #69, `docs/SPIKE_regional_lens.md`
+  — read it first). Feasible in principle but blocked on: (a) **St. Albert
+  licensing** — the LandScape REST service is not a catalogued open dataset
+  and its bulk-query-ability is likely incidental, not licensed; needs direct
+  confirmation from the City before any raw-data use; (b) Strathcona
+  multi-unit dedup rule unsolved; (c) output design undecided beyond
+  "citywide aggregate chart is the safe/realistic scope". **Do not commit
+  St. Albert per-parcel data to the public repo under any circumstances until
+  (a) is resolved.** (Strathcona licensing is clean: OGL-Alberta via
+  catalogued open-data hub datasets.)
 
 - [ ] **Dev+Infill ROUND-2 delta audit (brief written 2026-07-16:
   `docs/FABLE_AUDIT_devinfill_round2.md`; Fable session).** NOT a re-run of the
