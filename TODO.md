@@ -19,12 +19,14 @@ _Last reconciled: 2026-07-09_
   2026-07-16) → `res_revenue_per_acre` / `_per_lot_acre` → third Money metric
   + "N% of revenue is residential" tooltip line in all Money metrics.
   DATA.md §4 decomposition, UI.md "Residential revenue metric",
-  `verify-res-revenue.js`. Follow-on (small, optional):
-  - [ ] **Glass grid file res columns** — the 100 m cell export
-    (`export_value_grid.py` cell payload) doesn't carry the res columns, so
-    Glass falls back to hood prisms for the Residential $ metric (honest,
-    guarded). Adding them = extend the cell rollup + payload columns; weigh
-    the grid-file size cost (PERFORMANCE.md) before doing it.
+  `verify-res-revenue.js`. Follow-on:
+  - [x] ~~**Glass grid file res columns**~~ — **SHIPPED 2026-07-17.**
+    `export_value_grid.py` rolls `res_levy` into the 100 m cells
+    (`res_revenue_per_acre` / `_per_lot_acre` appended to the payload);
+    Glass renders real res cells instead of the hood-prism fallback. Size
+    cost weighed: ~1.76 → ~2.1 MB raw (gzipped on Pages). DATA.md §4 "Glass
+    grid variant", UI.md Glass bullet; columns reach live on the next weekly
+    refresh (column guard until then).
 
 - [ ] **Dev+Infill ROUND-2 delta audit (brief written 2026-07-16:
   `docs/FABLE_AUDIT_devinfill_round2.md`; Fable session).** NOT a re-run of the

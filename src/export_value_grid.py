@@ -34,14 +34,19 @@ square geometry don't need per-feature geometry objects):
       "cell_m": 100.0,
       "crs_note": "cells binned in EPSG:3400; corners reprojected to WGS84",
       "columns": ["lon", "lat", "value_per_acre", "revenue_per_acre",
-                  "value_per_lot_acre", "revenue_per_lot_acre"],
-      "cells": [[lon, lat, v, r, vl, rl], ...]   # lon/lat = cell SW corner
+                  "value_per_lot_acre", "revenue_per_lot_acre",
+                  "res_revenue_per_acre", "res_revenue_per_lot_acre"],
+      "cells": [[lon, lat, v, r, vl, rl, rr, rrl], ...]  # lon/lat = SW corner
     }
 
-``revenue_*`` columns are omitted on the Phase 1 value-only path and the
-``*_per_lot_acre`` columns are omitted when ``lot_size`` is absent, mirroring
-the graceful degradation everywhere else. Cells with no eligible lot acres
-carry ``null`` in the lot-acre slots.
+``revenue_*`` columns are omitted on the Phase 1 value-only path, the
+``*_per_lot_acre`` columns are omitted when ``lot_size`` is absent, and the
+``res_revenue_*`` columns (residential-class levy subset, from
+apply_tax_rates' ``res_levy``) are omitted when ``res_levy`` is absent —
+mirroring the graceful degradation everywhere else; the web columns map
+indexes by name, so the Residential $ Glass metric falls back to hood prisms
+on older files. Cells with no eligible lot acres carry ``null`` in the
+lot-acre slots.
 """
 
 import json
@@ -116,19 +121,24 @@ def build_value_grid(df: pd.DataFrame, cell_m: float = 100.0) -> pd.DataFrame:
     """Aggregate per-property values into square grid cells.
 
     Expects ``latitude``/``longitude``/``assessed_value`` (load_assessment
-    contract) and optionally ``levy`` (apply_tax_rates) and ``lot_size``
-    (load_property_info, merged upstream). Returns a DataFrame with one row
-    per occupied cell:
+    contract) and optionally ``levy``/``res_levy`` (apply_tax_rates) and
+    ``lot_size`` (load_property_info, merged upstream). Returns a DataFrame
+    with one row per occupied cell:
 
         lon, lat                float  cell SW corner, WGS84
         value_per_acre          float  sum(assessed_value) / cell ground acres
         revenue_per_acre        float  sum(levy) / cell ground acres — only
                                        when ``levy`` is present
+        res_revenue_per_acre    float  sum(res_levy) / cell ground acres —
+                                       only when ``res_levy`` is present;
+                                       0 where a cell has no residential-class
+                                       levy (a real zero, not missing data)
         value_per_lot_acre      float  eligible value / deduped lot acres —
                                        only when ``lot_size`` is present;
                                        NaN where the cell has no eligible
                                        lot acres
         revenue_per_lot_acre    float  same, from ``levy``
+        res_revenue_per_lot_acre float same, from ``res_levy``
 
     No silent drops: rows with null coordinates are counted and reported
     (0 in the current data — DATA.md §2), lot-ineligible points are counted
@@ -153,6 +163,10 @@ def build_value_grid(df: pd.DataFrame, cell_m: float = 100.0) -> pd.DataFrame:
     if has_levy:
         cells["levy"] = pts["levy"].to_numpy()
         agg_spec["levy"] = "sum"
+    has_res = "res_levy" in pts.columns
+    if has_res:
+        cells["res_levy"] = pts["res_levy"].to_numpy()
+        agg_spec["res_levy"] = "sum"
     grid = cells.groupby(["ix", "iy"], as_index=False).agg(agg_spec)
 
     # Conservation guard: binning must not create or lose a dollar.
@@ -161,7 +175,8 @@ def build_value_grid(df: pd.DataFrame, cell_m: float = 100.0) -> pd.DataFrame:
 
     if "lot_size" in pts.columns:
         grid = grid.merge(
-            _cell_lot_metrics(pts, cells, has_levy), on=["ix", "iy"], how="left"
+            _cell_lot_metrics(pts, cells, has_levy, has_res),
+            on=["ix", "iy"], how="left",
         )
 
     cell_acres = (cell_m * cell_m) / SQ_M_PER_ACRE
@@ -175,10 +190,14 @@ def build_value_grid(df: pd.DataFrame, cell_m: float = 100.0) -> pd.DataFrame:
     })
     if has_levy:
         out["revenue_per_acre"] = grid["levy"] / cell_acres
+    if has_res:
+        out["res_revenue_per_acre"] = grid["res_levy"] / cell_acres
     if "lot_acres" in grid.columns:
         out["value_per_lot_acre"] = grid["value_eligible"] / grid["lot_acres"]
         if has_levy:
             out["revenue_per_lot_acre"] = grid["levy_eligible"] / grid["lot_acres"]
+        if has_res:
+            out["res_revenue_per_lot_acre"] = grid["res_levy_eligible"] / grid["lot_acres"]
 
     logger.info(
         "Value grid: %d properties -> %d occupied %.0f m cells (%d rows without coordinates)",
@@ -187,7 +206,9 @@ def build_value_grid(df: pd.DataFrame, cell_m: float = 100.0) -> pd.DataFrame:
     return out
 
 
-def _cell_lot_metrics(pts: pd.DataFrame, cells: pd.DataFrame, has_levy: bool) -> pd.DataFrame:
+def _cell_lot_metrics(
+    pts: pd.DataFrame, cells: pd.DataFrame, has_levy: bool, has_res: bool = False
+) -> pd.DataFrame:
     """Per-cell lot acres + eligible dollar sums (FINDINGS_lot_dedupe heuristic).
 
     ``cells`` carries the already-computed ix/iy for each row of ``pts``
@@ -205,6 +226,8 @@ def _cell_lot_metrics(pts: pd.DataFrame, cells: pd.DataFrame, has_levy: bool) ->
     })
     if has_levy:
         rows["levy"] = pts["levy"].to_numpy()
+    if has_res:
+        rows["res_levy"] = pts["res_levy"].to_numpy()
     rows = rows.merge(per_point, on=["latitude", "longitude"], how="left")
 
     if len(ineligible):
@@ -225,10 +248,15 @@ def _cell_lot_metrics(pts: pd.DataFrame, cells: pd.DataFrame, has_levy: bool) ->
     agg = {"assessed_value": "sum"}
     if has_levy:
         agg["levy"] = "sum"
+    if has_res:
+        agg["res_levy"] = "sum"
     dollars = elig.groupby(["ix", "iy"]).agg(agg)
 
     out = dollars.join(lot_by_cell.rename("lot_acres")).reset_index()
-    out = out.rename(columns={"assessed_value": "value_eligible", "levy": "levy_eligible"})
+    out = out.rename(columns={
+        "assessed_value": "value_eligible", "levy": "levy_eligible",
+        "res_levy": "res_levy_eligible",
+    })
     return out
 
 
@@ -389,7 +417,11 @@ def export_value_grid(
     grid = build_value_grid(df, cell_m=cell_m)
     has_revenue = "revenue_per_acre" in grid.columns
     has_lot = "value_per_lot_acre" in grid.columns
+    has_res = "res_revenue_per_acre" in grid.columns
 
+    # New columns append at the END so existing slots keep their positions
+    # (the web reads the map by columns.indexOf — order-independent — but a
+    # stable prefix keeps old/new files diffable).
     columns = ["lon", "lat", "value_per_acre"]
     if has_revenue:
         columns.append("revenue_per_acre")
@@ -397,6 +429,10 @@ def export_value_grid(
         columns.append("value_per_lot_acre")
         if has_revenue:
             columns.append("revenue_per_lot_acre")
+    if has_res:
+        columns.append("res_revenue_per_acre")
+        if has_lot:
+            columns.append("res_revenue_per_lot_acre")
 
     def _dollars(v) -> int | None:
         return None if pd.isna(v) else round(v)
@@ -410,6 +446,10 @@ def export_value_grid(
             row.append(_dollars(t.value_per_lot_acre))
             if has_revenue:
                 row.append(_dollars(t.revenue_per_lot_acre))
+        if has_res:
+            row.append(round(t.res_revenue_per_acre))
+            if has_lot:
+                row.append(_dollars(t.res_revenue_per_lot_acre))
         rows.append(row)
 
     payload = {
@@ -428,6 +468,7 @@ def export_value_grid(
         "cell_m": cell_m,
         "has_revenue": has_revenue,
         "has_lot": has_lot,
+        "has_res": has_res,
         "bytes": out_path.stat().st_size,
     }
     if has_lot:

@@ -2575,6 +2575,11 @@
                 revenue_per_acre: p.columns.indexOf("revenue_per_acre"),
                 value_per_lot_acre: p.columns.indexOf("value_per_lot_acre"),
                 revenue_per_lot_acre: p.columns.indexOf("revenue_per_lot_acre"),
+                // Residential-class subset (pipeline 2026-07-17) — absent on
+                // older files (-1), and the Residential $ metric falls back
+                // to hood prisms via the col >= 0 guard in the render.
+                res_revenue_per_acre: p.columns.indexOf("res_revenue_per_acre"),
+                res_revenue_per_lot_acre: p.columns.indexOf("res_revenue_per_lot_acre"),
               },
               cells: p.cells,
             };

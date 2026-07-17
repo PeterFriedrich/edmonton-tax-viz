@@ -69,7 +69,7 @@ Suitability × activity **mismatch** — one signed diverging metric (teal = sui
 
 ### 7. Glass
 Translucent metric prisms over a neutral neighbourhood plane (hover the ground for numbers).
-- **Metric** (same `#toggle`): Revenue · Value · Residential $ *(Residential $ falls back to hood prisms — the grid file carries no residential column)*
+- **Metric** (same `#toggle`): Revenue · Value · Residential $ *(all three render 100 m cells since 2026-07-17; on older grid files Residential $ falls back to hood prisms)*
 - **Spike denominator**: Ground acres · Lot acres. *Shown when the grid file carries the lot-acre columns.*
 - Colour-sqrt toggle: **live**. Residential lens: **disabled**.
 
