@@ -300,6 +300,47 @@ changed. Locked in `docs/DECISIONS.md` (2026-07-14); implementation brief was
 `docs/FABLE_infill_perarm_scaling.md`. Deploy: web-only → live on the next
 `refresh.yml` run (Peter's trigger).
 
+**Round-2 audit caveats (recorded 2026-07-17; dispositions from the S56 delta
+audit — `session-summary/2026-07-16.md` §2.D, ledger row in
+`docs/AUDIT_LEDGER.md`).** Four properties of Lens B that are deliberate but
+were previously undocumented:
+
+- *Denominator mismatch (D2, was S48 L1) — disclosed, not fixed.* The two
+  z-scored terms use different land bases: FAR ÷ deduped **lot** acres
+  (parks/ravines absent from the roll don't dilute it) vs activity ÷
+  **boundary** acres (ravines fully dilute it), so a half-ravine hood leans
+  teal by boundary geometry alone. The S56 flip test (activity ÷ lot acres =
+  `act/parcel_frac`, n=358) measured the bias as immaterial: Spearman ρ
+  0.9965; top-15 overlap 15/15 (teal) and 14/15 (orange); 5/251 verdict-band
+  flips, all band-edge hoods at `parcel_frac` 0.51–0.80, none of them ravine
+  hoods (visible <50%-parcel hoods move ≤ Δt 0.08). A pipeline denominator
+  switch was rejected — it buys nothing at this materiality.
+- *z-population compression (D5, was L5) — maintainer note.* The 132
+  teal-barred non-residential hoods stay in the z-scoring population
+  (removing them would re-rank the pressure arm and drop DOWNTOWN's anchor);
+  the cost is that visible teal *intensity* is compressed ~2× (far std 0.249
+  with them vs 0.120 residential-only). Teal is therefore **ordinal, not
+  cardinal** — ranks are stable (14/15 top-15 overlap res-only), but "how
+  teal" understates the residential-only contrast. Deliberate trade.
+- *Suite conversions excluded (D3, was L6) — DISCLOSE-ONLY.* Work types
+  (07)/(08)/(09) (suite additions + non-res-to-res conversions) are outside
+  `NEW_WORK_TYPES`, so Lens B's activity term misses densify-by-suite. S56
+  measured it: 51 in-window rows / **544 units = 0.9%** of the 62,978-unit
+  Lens A numerator, 81% of it in DOWNTOWN (teal-barred anyway) + INGLEWOOD
+  (already orange; counterfactual moves it −0.45 → −0.61). **Zero hoods**
+  would flip verdict today. Adding suites to Lens B's activity (fork option
+  ii) would fork its numerator from Lens A for no visible change — rejected.
+  The blurb carries the disclosure clause. **Revisit if the suite share
+  grows** — (08)/(09) are policy-encouraged.
+- *Verdict grammar (D4, was L0) — descriptive since 2026-07-17.* The tooltip
+  verdicts no longer pronounce recommendations ("Suitable but quiet — infill
+  opportunity" → "Room to add, quiet lately"; "Building where less suitable —
+  pressure" → "More building than room suggests"; "Balanced — activity ≈
+  suitability" → "Activity ≈ room"). The thresholds were already principled
+  (clamped t ± 0.4); this closes the copy half of the S48 L0 CONDITIONAL. The
+  residual risk — the map being cited as build-here advice regardless — is
+  accepted; the blurb's "not a target or a recommendation" line stays.
+
 ---
 
 ## Lens C — Activity vs City Service Cost — PHASE 3 / FUTURE

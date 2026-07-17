@@ -702,11 +702,14 @@
                "room each neighbourhood has for infill. Suitability is the " +
                "inverse of built floor-area ratio (FAR = built floor area ÷ lot " +
                "area; low FAR = room to add); activity is new building over the " +
-               "chosen window. Each neighbourhood's colour is the gap between " +
+               "chosen window — new construction only; secondary-suite and " +
+               "non-res-to-residential conversions (~0.9% of units 2021–25) are " +
+               "excluded. Each neighbourhood's colour is the gap between " +
                "the two, as standardised (z-score) values: teal = suitable but " +
                "quiet (room to build, little happening — the opportunity); " +
                "orange = building where there's less room (pressure). The " +
-               "opportunity (teal) end is shown for residential land only — a " +
+               "opportunity (teal) end is shown for residential land only " +
+               "(majority-residential by zoned area) — a " +
                "low-FAR industrial park or fringe parcel is structurally " +
                "underused, not an infill opportunity; such land can still read " +
                "as pressure. Grey = set-aside / undeveloped land, or " +
@@ -2100,10 +2103,10 @@
             `<span class="muted">${fmtFar(p.far)} · ${fmtDev(p[devCol()])}</span>` };
         const t = infillT(p);
         const verdict = t > INFILL_VERDICT_T
-          ? "Suitable but quiet — infill opportunity"
+          ? "Room to add, quiet lately"
           : t < -INFILL_VERDICT_T
-            ? "Building where less suitable — pressure"
-            : "Balanced — activity ≈ suitability";
+            ? "More building than room suggests"
+            : "Activity ≈ room";
         const act = p[devCol()];
         return { className: "tip", html: name +
           `${verdict}<br/>` +
