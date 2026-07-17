@@ -432,6 +432,44 @@ in the hood choropleth/tooltips; positions are never faked (no hood-centroid
 fallback). The toggle stays hidden on older data files without
 `dev_grid.json`. `verify-development.js` 54/54.
 
+### Stock-age spikes on the detail grid (added 2026-07-17)
+
+Peter's call: a second spike source for the detail grid — **"Spikes" picker
+(New homes | Year built)**, shown only while the grid is up. "Year built"
+swaps the permit cells for the **median construction year of each 100 m
+cell's assessed buildings** — the whole standing stock (418k of 439k roll
+rows carry `year_built`, DATA.md § 2), not the permit window, so it answers
+"when was this fabric built" beside Lens A's "where is building happening
+now". Design decisions:
+
+- **Data rides in `value_grid.json`** (`median_year_built`, appended last),
+  not `dev_grid.json` — the age layer needs the whole-roll cell population
+  (~34.7k cells), which the permit file doesn't have. One shared fetch with
+  the Glass view (`ensureGridData`); the picker appears when the file lands
+  with the column, stays hidden on older files.
+- **Height = recency, linear in year** off the TRUE oldest cell (flat but
+  coloured — heights are never percentile-clamped, the standing honesty
+  rule), peak-parity with the permit spikes (2,500 m at the newest cell).
+- **Colour = the same sequential ramp, LINEAR in year** (year is an interval
+  scale — sqrt is meaningless, so the locked sqrt-colour transform does not
+  apply and the legend says "linear colour"). Ramp-top **yellow = newest**;
+  low anchor clamps at p2.5 (the p97.5 convention's bottom-end sibling — a
+  lone 1880s cell must not stretch the ramp). Anchors and the blurb's
+  cell-coverage counts compute from the file, so they can't go stale.
+- **Cells with no known year are ABSENT (`null`), never year-0**; the median
+  is row-weighted, which neutralizes the condo duplication regimes (repeated
+  identical years median to themselves).
+- **The Metric/Window pickers hide while the age spikes are up** — they
+  select the activity column, and a visible control that does nothing would
+  be a small lie. Verdict/gating unaffected: this is display only, distinct
+  from the REJECTED median-age *gate* for Lens B (DECISIONS 2026-07-13 —
+  age couldn't separate industrial from suburbs; here age is the signal
+  itself, not a filter).
+
+`verify-age-spikes.js` covers the guard, layer swap, linear height/colour
+recomputes, null-cell absence, picker hiding, and the shared-fetch Glass
+regression.
+
 ## Build order
 
 1. **Lens A minimal** — ✅ DONE 2026-07-12 (`feat/dev-lens-a-building-activity`):

@@ -341,6 +341,91 @@ def test_export_res_without_lot(tmp_path):
     assert len(payload["cells"][0]) == 5
 
 
+# --- stock-age column (load_property_info year_built) -----------------------
+
+
+def test_median_year_built_per_cell():
+    # Cell A: years 1950/1960/2000 -> median 1960. Cell B: single 2020.
+    df = _frame([
+        {**A, "assessed_value": 100.0, "year_built": 1950.0},
+        {**A2, "assessed_value": 100.0, "year_built": 1960.0},
+        {**A2, "assessed_value": 100.0, "year_built": 2000.0},
+        {**B, "assessed_value": 400.0, "year_built": 2020.0},
+    ])
+    grid = build_value_grid(df, cell_m=100.0)
+    assert sorted(grid["median_year_built"]) == pytest.approx([1960.0, 2020.0])
+
+
+def test_year_built_median_skips_nulls_and_all_null_cell_is_nan():
+    # Within a cell, null years are skipped (median over the known ones);
+    # a cell with NO known year carries NaN — never 0 ("year 0" is not a
+    # real zero the way $0 res levy is).
+    df = _frame([
+        {**A, "assessed_value": 100.0, "year_built": 1970.0},
+        {**A2, "assessed_value": 100.0, "year_built": None},
+        {**B, "assessed_value": 400.0, "year_built": None},
+    ])
+    grid = build_value_grid(df, cell_m=100.0)
+    years = grid["median_year_built"]
+    assert years.notna().sum() == 1
+    assert years.dropna().iloc[0] == pytest.approx(1970.0)
+    assert years.isna().sum() == 1
+
+
+def test_year_built_median_robust_to_condo_repeats():
+    # A multi-unit building repeats one year on every unit row (the DATA.md §2
+    # duplication regimes) — the median of repeated identical values is that
+    # value, so no dedupe machinery is needed for this column.
+    df = _frame(
+        [{**A, "assessed_value": 100.0, "year_built": 2005.0} for _ in range(50)]
+        + [{**A2, "assessed_value": 100.0, "year_built": 1955.0}]
+    )
+    grid = build_value_grid(df, cell_m=100.0)
+    assert grid.iloc[0]["median_year_built"] == pytest.approx(2005.0)
+
+
+def test_no_year_built_column_omitted():
+    df = _frame([{**A, "assessed_value": 100.0, "levy": 1.0}])
+    grid = build_value_grid(df)
+    assert "median_year_built" not in grid.columns
+
+
+def test_export_year_column_appended_last(tmp_path):
+    # median_year_built appends AFTER every existing column (stable prefix);
+    # whole-year ints in the payload, null where the cell has no known year.
+    df = _frame([
+        {**A, "assessed_value": 100.0, "levy": 1000.0, "res_levy": 1000.0,
+         "lot_size": 500.0, "year_built": 1975.0},
+        {**B, "assessed_value": 400.0, "levy": 4000.0, "res_levy": 0.0,
+         "lot_size": None, "year_built": None},
+    ])
+    out = tmp_path / "value_grid.json"
+    stats = export_value_grid(df, out, cell_m=100.0)
+    payload = json.loads(out.read_text())
+    assert payload["columns"] == [
+        "lon", "lat", "value_per_acre", "revenue_per_acre",
+        "value_per_lot_acre", "revenue_per_lot_acre",
+        "res_revenue_per_acre", "res_revenue_per_lot_acre",
+        "median_year_built",
+    ]
+    assert stats["has_year"] is True
+    assert stats["n_cells_without_year"] == 1
+    years = sorted((r[8] for r in payload["cells"]), key=lambda v: (v is None, v))
+    assert years[0] == 1975 and isinstance(years[0], int)
+    assert years[1] is None
+
+
+def test_export_year_without_lot_or_res(tmp_path):
+    # year_built alone (older upstream): the column still ships, right after
+    # the base columns.
+    df = _frame([{**A, "assessed_value": 100.0, "year_built": 1990.0}])
+    out = tmp_path / "value_grid.json"
+    export_value_grid(df, out, cell_m=100.0)
+    payload = json.loads(out.read_text())
+    assert payload["columns"] == ["lon", "lat", "value_per_acre", "median_year_built"]
+    assert payload["cells"][0][3] == 1990
+
+
 # --- build_hood_lot_acres (neighbourhood lot-acre denominator) --------------
 
 def test_hood_lot_acres_basic_rollup():

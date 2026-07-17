@@ -35,18 +35,23 @@ square geometry don't need per-feature geometry objects):
       "crs_note": "cells binned in EPSG:3400; corners reprojected to WGS84",
       "columns": ["lon", "lat", "value_per_acre", "revenue_per_acre",
                   "value_per_lot_acre", "revenue_per_lot_acre",
-                  "res_revenue_per_acre", "res_revenue_per_lot_acre"],
-      "cells": [[lon, lat, v, r, vl, rl, rr, rrl], ...]  # lon/lat = SW corner
+                  "res_revenue_per_acre", "res_revenue_per_lot_acre",
+                  "median_year_built"],
+      "cells": [[lon, lat, v, r, vl, rl, rr, rrl, yb], ...]  # lon/lat = SW corner
     }
 
 ``revenue_*`` columns are omitted on the Phase 1 value-only path, the
-``*_per_lot_acre`` columns are omitted when ``lot_size`` is absent, and the
+``*_per_lot_acre`` columns are omitted when ``lot_size`` is absent, the
 ``res_revenue_*`` columns (residential-class levy subset, from
-apply_tax_rates' ``res_levy``) are omitted when ``res_levy`` is absent —
-mirroring the graceful degradation everywhere else; the web columns map
-indexes by name, so the Residential $ Glass metric falls back to hood prisms
-on older files. Cells with no eligible lot acres carry ``null`` in the
-lot-acre slots.
+apply_tax_rates' ``res_levy``) are omitted when ``res_levy`` is absent, and
+``median_year_built`` (Development-view stock-age spikes, from
+load_property_info's ``year_built``) is omitted when ``year_built`` is absent
+— mirroring the graceful degradation everywhere else; the web columns map
+indexes by name, so the dependent web features fall back / stay hidden on
+older files. Cells with no eligible lot acres carry ``null`` in the lot-acre
+slots; cells where no property has a known ``year_built`` carry ``null`` in
+the year slot (age has no meaningful zero — a real-zero convention like
+``res_levy``'s would read as "year 0").
 """
 
 import json
@@ -133,6 +138,13 @@ def build_value_grid(df: pd.DataFrame, cell_m: float = 100.0) -> pd.DataFrame:
                                        only when ``res_levy`` is present;
                                        0 where a cell has no residential-class
                                        levy (a real zero, not missing data)
+        median_year_built       float  median construction year of the cell's
+                                       properties (unit-weighted; a condo
+                                       tower's repeated year IS the median, so
+                                       the multi-unit duplication regimes are
+                                       moot) — only when ``year_built`` is
+                                       present; NaN where no property in the
+                                       cell has a known year
         value_per_lot_acre      float  eligible value / deduped lot acres —
                                        only when ``lot_size`` is present;
                                        NaN where the cell has no eligible
@@ -167,6 +179,10 @@ def build_value_grid(df: pd.DataFrame, cell_m: float = 100.0) -> pd.DataFrame:
     if has_res:
         cells["res_levy"] = pts["res_levy"].to_numpy()
         agg_spec["res_levy"] = "sum"
+    has_year = "year_built" in pts.columns
+    if has_year:
+        cells["year_built"] = pts["year_built"].to_numpy()
+        agg_spec["year_built"] = "median"  # NaN-skipping; all-NaN cell -> NaN
     grid = cells.groupby(["ix", "iy"], as_index=False).agg(agg_spec)
 
     # Conservation guard: binning must not create or lose a dollar.
@@ -198,6 +214,8 @@ def build_value_grid(df: pd.DataFrame, cell_m: float = 100.0) -> pd.DataFrame:
             out["revenue_per_lot_acre"] = grid["levy_eligible"] / grid["lot_acres"]
         if has_res:
             out["res_revenue_per_lot_acre"] = grid["res_levy_eligible"] / grid["lot_acres"]
+    if has_year:
+        out["median_year_built"] = grid["year_built"]
 
     logger.info(
         "Value grid: %d properties -> %d occupied %.0f m cells (%d rows without coordinates)",
@@ -418,6 +436,7 @@ def export_value_grid(
     has_revenue = "revenue_per_acre" in grid.columns
     has_lot = "value_per_lot_acre" in grid.columns
     has_res = "res_revenue_per_acre" in grid.columns
+    has_year = "median_year_built" in grid.columns
 
     # New columns append at the END so existing slots keep their positions
     # (the web reads the map by columns.indexOf — order-independent — but a
@@ -433,8 +452,10 @@ def export_value_grid(
         columns.append("res_revenue_per_acre")
         if has_lot:
             columns.append("res_revenue_per_lot_acre")
+    if has_year:
+        columns.append("median_year_built")
 
-    def _dollars(v) -> int | None:
+    def _int(v) -> int | None:
         return None if pd.isna(v) else round(v)
 
     rows = []
@@ -443,13 +464,15 @@ def export_value_grid(
         if has_revenue:
             row.append(round(t.revenue_per_acre))
         if has_lot:
-            row.append(_dollars(t.value_per_lot_acre))
+            row.append(_int(t.value_per_lot_acre))
             if has_revenue:
-                row.append(_dollars(t.revenue_per_lot_acre))
+                row.append(_int(t.revenue_per_lot_acre))
         if has_res:
             row.append(round(t.res_revenue_per_acre))
             if has_lot:
-                row.append(_dollars(t.res_revenue_per_lot_acre))
+                row.append(_int(t.res_revenue_per_lot_acre))
+        if has_year:
+            row.append(_int(t.median_year_built))
         rows.append(row)
 
     payload = {
@@ -469,10 +492,13 @@ def export_value_grid(
         "has_revenue": has_revenue,
         "has_lot": has_lot,
         "has_res": has_res,
+        "has_year": has_year,
         "bytes": out_path.stat().st_size,
     }
     if has_lot:
         stats["n_cells_without_lot"] = int(grid["value_per_lot_acre"].isna().sum())
+    if has_year:
+        stats["n_cells_without_year"] = int(grid["median_year_built"].isna().sum())
     logger.info(
         "Wrote %s: %d cells, %.1f MB", out_path.name, stats["n_cells"], stats["bytes"] / 1e6
     )
