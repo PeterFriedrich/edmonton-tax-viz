@@ -28,6 +28,15 @@ _Last reconciled: 2026-07-09_
     grid variant", UI.md Glass bullet; columns reach live on the next weekly
     refresh (column guard until then).
 
+- [ ] **Regional peer-municipality lens (PARKED — Phase 2, not November scope;
+  spike done 2026-07-17: `docs/SPIKE_regional_lens.md`).** Citywide-aggregate
+  value/revenue-per-acre comparison vs St. Albert + Strathcona County.
+  Feasibility CONFIRMED; St. Albert is the strong leg (parcel polygons +
+  class + actual levy, 29,366 parcels), Strathcona the weak one
+  (residential-only centroids, no levy — modeled mill rate + dedup rule
+  needed). Blocked on Peter's methodology/output-design call + license checks
+  (both sources) before any data is committed. Read the spike doc first.
+
 - [ ] **Dev+Infill ROUND-2 delta audit (brief written 2026-07-16:
   `docs/FABLE_AUDIT_devinfill_round2.md`; Fable session).** NOT a re-run of the
   executed S48 decision audit (6 COND / 2 SOUND / 0 UNSOUND) — dispositions its
