@@ -28,6 +28,18 @@ _Last reconciled: 2026-07-09_
     grid variant", UI.md Glass bullet; columns reach live on the next weekly
     refresh (column guard until then).
 
+- [ ] **PARKED: Regional comparison lens (St. Albert / Strathcona; Phase 2,
+  not November scope).** Spike complete (PR #69, `docs/SPIKE_regional_lens.md`
+  — read it first). Feasible in principle but blocked on: (a) **St. Albert
+  licensing** — the LandScape REST service is not a catalogued open dataset
+  and its bulk-query-ability is likely incidental, not licensed; needs direct
+  confirmation from the City before any raw-data use; (b) Strathcona
+  multi-unit dedup rule unsolved; (c) output design undecided beyond
+  "citywide aggregate chart is the safe/realistic scope". **Do not commit
+  St. Albert per-parcel data to the public repo under any circumstances until
+  (a) is resolved.** (Strathcona licensing is clean: OGL-Alberta via
+  catalogued open-data hub datasets.)
+
 - [ ] **Dev+Infill ROUND-2 delta audit (brief written 2026-07-16:
   `docs/FABLE_AUDIT_devinfill_round2.md`; Fable session).** NOT a re-run of the
   executed S48 decision audit (6 COND / 2 SOUND / 0 UNSOUND) — dispositions its
