@@ -100,7 +100,7 @@ aligned. That pull also surfaced a new `Assessment Class 1` label
 | `zoning` | str | e.g. `RSF` — nullable |
 | `lot_size` | str (numeric) | Pre-computed by city; **not geometry-derived**. Units: sq metres (confirmed — sample value 335 m² is a typical residential lot). 2,728 nulls (~0.6%). |
 | `total_gross_area` | str | Building floor area |
-| `year_built` | str | Nullable |
+| `year_built` | str | Nullable. **Loaded since 2026-07-17** (Development stock-age spikes): 418,368 of 439,685 rows (95.2%), range 1881–2026, zero non-numeric junk; every row with a year also has coordinates. Loader nulls values outside [1850, 2100] (plausibility window, `load_property_info.YEAR_BUILT_MIN/MAX`). |
 | `garage` | str | |
 | `neighbourhood_id` | str | Numeric key |
 | `neighbourhood` | str | ALL CAPS — consistent with assessment data |
@@ -276,6 +276,19 @@ assessed property but no residential-class levy reads a **real 0**, not null
 lot acres, exactly like value/revenue. ~79% of cells have res > 0; res ≤ rev
 per cell (±$1 whole-dollar rounding). Older files lack the columns and the
 Glass Residential $ metric falls back to hood prisms (web column guard).
+
+**Stock-age grid column (added 2026-07-17):** `export_value_grid.py` also
+rolls `year_built` (property-info, § 2) into **`median_year_built`** per 100 m
+cell — appended LAST in the payload columns; whole-year ints. Median over
+ROWS (unit-weighted), which makes the multi-unit duplication regimes moot: a
+tower repeating one year on every unit row medians to that year, no dedupe
+machinery. A cell where **no property has a known year carries `null`, never
+0** — age has no meaningful zero ("year 0" would be a lie; contrast
+`res_levy`'s real $0). Consumed by the **Development view's Spikes picker**
+("Year built" — height + colour linear in year, recency bright), NOT by
+Glass; it rides in this file because the age layer needs the whole-roll cell
+population, which `dev_grid.json` (permit cells only) doesn't have. Older
+files lack the column and the picker stays hidden.
 
 ---
 

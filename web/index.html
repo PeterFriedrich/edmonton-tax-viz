@@ -89,15 +89,15 @@
        and window picker (last 5 yr vs 3 yr) — share the #denom button styling +
        default-hidden pattern; shown only in the development view (metric always,
        window only when the data carries the _3yr columns). */
-    #devmetric-hd, #devmetric, #devwindow-hd, #devwindow { display: none; }
-    #denom, #ratio-denom, #devmetric, #devwindow { border: 1px solid #2a2a3a; border-radius: 5px; overflow: hidden; margin-bottom: 2px; }
-    #denom button, #ratio-denom button, #devmetric button, #devwindow button {
+    #devmetric-hd, #devmetric, #devwindow-hd, #devwindow, #devspike-hd, #devspike { display: none; }
+    #denom, #ratio-denom, #devmetric, #devwindow, #devspike { border: 1px solid #2a2a3a; border-radius: 5px; overflow: hidden; margin-bottom: 2px; }
+    #denom button, #ratio-denom button, #devmetric button, #devwindow button, #devspike button {
       appearance: none; border: 0; background: transparent; color: #9a9ab0;
       font: 11px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       padding: 4px 10px; cursor: pointer; flex: 1; transition: background 0.12s, color 0.12s;
     }
-    #denom button:hover, #ratio-denom button:hover, #devmetric button:hover, #devwindow button:hover { color: #e8e8ef; }
-    #denom button.active, #ratio-denom button.active, #devmetric button.active, #devwindow button.active { background: #fcd278; color: #16111a; font-weight: 600; }
+    #denom button:hover, #ratio-denom button:hover, #devmetric button:hover, #devwindow button:hover, #devspike button:hover { color: #e8e8ef; }
+    #denom button.active, #ratio-denom button.active, #devmetric button.active, #devwindow button.active, #devspike button.active { background: #fcd278; color: #16111a; font-weight: 600; }
     #toggle button, #palette button, #lens button {
       appearance: none; border: 0; background: transparent; color: #9a9ab0;
       font: 12.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -205,6 +205,11 @@
       <label title="Swap the neighbourhood choropleth for 100 m grid-cell spikes of geocoded permits — height and colour show new units (or permits) per cell; the flat plane underneath keeps the neighbourhood hover">
         <input type="checkbox" id="dev-grid-on" /> 100 m grid (permit points)
       </label>
+    </div>
+    <span class="hd" id="devspike-hd">Spikes</span>
+    <div id="devspike">
+      <button data-devspike="activity" class="active" title="New building activity per cell — the permit spikes the Metric and Window pickers select">New homes</button>
+      <button data-devspike="age" title="Median construction year of each cell's assessed buildings — height and colour rise with recency (yellow = newest); the whole standing stock, not just recent permits">Year built</button>
     </div>
     <span class="hd" id="prism-hd">Money plane</span>
     <label id="prism-row" title="Prism opacity — how strongly the ratio prisms overlay the road network">
@@ -758,6 +763,18 @@
     // count in the hood totals, so the honest framing is "not on the grid yet".
     const devBlurb = () => {
       if (!(state.devGrid && devGridData)) return VIEWS.development.blurb;
+      // Age spikes: a different dataset (the whole standing stock, not the
+      // permit window), so the blurb states its own scale + coverage.
+      if (devAgeActive()) {
+        const s = ageGridScale();
+        return VIEWS.development.blurb +
+          " The 100 m grid here shows the AGE of the standing stock instead: " +
+          "each cell is the median construction year of its assessed " +
+          "buildings — height and colour are both linear in year, so taller " +
+          "and brighter (yellow) = more recently built. " +
+          s.n.toLocaleString() + " of " + s.total.toLocaleString() +
+          " cells have a known construction year; the rest stay off the grid.";
+      }
       const what = state.devMetric === "permits" ? "permits" : "homes";
       const cov = devGridData.coverage && devGridData.coverage[state.devWindow];
       const pct = cov && cov.units
@@ -788,7 +805,39 @@
     // rows at each cell's SW corner). Lazy-loaded like roads/zoning; when the
     // file is absent (older deploy) the view falls back to translucent
     // NEIGHBOURHOOD prisms — the coarse version of the same composition.
+    // TWO consumers share the one fetch: the Glass view, and the Development
+    // view's stock-age spikes (median_year_built column) — ensureGridData().
     const GRID_URL = "./data/value_grid.json";
+    function ensureGridData() {
+      gridFetch ??= fetch(GRID_URL)
+        .then(r => r.ok ? r.json() : null)
+        .then(p => {
+          if (!p) return;
+          gridData = {
+            cell: p.cell_m,
+            columns: {
+              value_per_acre: p.columns.indexOf("value_per_acre"),
+              revenue_per_acre: p.columns.indexOf("revenue_per_acre"),
+              value_per_lot_acre: p.columns.indexOf("value_per_lot_acre"),
+              revenue_per_lot_acre: p.columns.indexOf("revenue_per_lot_acre"),
+              // Residential-class subset (pipeline 2026-07-17) — absent on
+              // older files (-1), and the Residential $ metric falls back
+              // to hood prisms via the col >= 0 guard in the render.
+              res_revenue_per_acre: p.columns.indexOf("res_revenue_per_acre"),
+              res_revenue_per_lot_acre: p.columns.indexOf("res_revenue_per_lot_acre"),
+              // Stock age (pipeline 2026-07-17) — absent on older files (-1),
+              // and the development view's Spikes picker stays hidden.
+              median_year_built: p.columns.indexOf("median_year_built"),
+            },
+            cells: p.cells,
+          };
+          // The denominator toggle needs the lot-acre columns (pipeline
+          // 2026-07-05) — absent on older files, and the control stays hidden.
+          gridData.hasLot = gridData.columns.value_per_lot_acre >= 0;
+        })
+        .catch(() => {});
+      return gridFetch;
+    }
 
     // Active metric defaults to revenue (matches the static HTML chrome above).
     // `residential` is the residential-only lens (off by default): when on,
@@ -816,6 +865,7 @@
                     devMetric: "units", // Development-view sub-metric: units | permits per acre
                     devWindow: "5yr", // Development-view activity window: 5yr (base) | 3yr (recent)
                     devGrid: false, // Development-view 100 m detail grid (off = the hood choropleth)
+                    devSpikes: "activity", // Development grid spike source: activity (permit cells) | age (median year built, Glass grid file)
                     services: { roads: true, storm: false, fire: false, water: false, transit: false, servicecost: false },
                     svcDriver: "roads",
                     data: null };
@@ -1067,7 +1117,10 @@
           const plane = SERVICES[state.svcDriver] && SERVICES[state.svcDriver].plane;
           t = plane && plane.transform === "sqrt" ? Math.sqrt(p) : p;
         }
-        else if (state.view === "development") t = Math.sqrt(p); // sqrt colour
+        else if (state.view === "development")
+          // sqrt colour on the activity scales; the age spikes are linear in
+          // year (an interval scale — sqrt of a year is meaningless).
+          t = state.devGrid && devAgeActive() ? p : Math.sqrt(p);
         else if (state.view === "ratio") {
           const s = ratioScale();
           t = ratioT(s.lo + p * (s.hi - s.lo));
@@ -1307,6 +1360,59 @@
         material: { ambient: 0.55, diffuse: 0.6, shininess: 32, specularColor: [60, 60, 70] },
         pickable: false, // the neutral plane keeps the hood tooltip
         updateTriggers: { getElevation: colKey, getFillColor: [colKey, state.ramp] },
+      });
+    }
+
+    // --- Development stock-age spikes (Spikes picker, 2026-07-17) -----------
+    // Median construction year per 100 m cell, riding in on the GLASS grid
+    // file (export_value_grid `median_year_built` — the whole-roll cell
+    // population; dev_grid.json holds only permit cells). Height AND colour
+    // are LINEAR in year — recency: taller + brighter (ramp-top yellow) =
+    // newer stock. Year is an interval scale with no meaningful zero, so
+    // there is no sqrt variant, the oldest cell sits FLAT (still coloured)
+    // rather than absent, and cells with no known year are absent (null in
+    // the file — "year 0" would be a lie, unlike res_levy's real $0).
+    // The low COLOUR anchor clamps at p2.5 — the p97.5 convention's
+    // bottom-end sibling (a lone 1880s cell must not stretch the ramp) —
+    // while the HEIGHT baseline stays the true oldest cell (heights are
+    // never percentile-clamped, same honesty rule as everywhere).
+    const AGE_COLOR_LO_Q = 0.025;
+    const devAgeCol = () => gridData ? (gridData.columns.median_year_built ?? -1) : -1;
+    const devAgeActive = () => state.devSpikes === "age" && devAgeCol() >= 0;
+    let _ageScale = null;
+    function ageGridScale() {
+      if (_ageScale) return _ageScale;
+      const col = devAgeCol();
+      const years = gridData.cells.map(c => c[col]).filter(v => v != null)
+        .sort((a, b) => a - b);
+      return (_ageScale = {
+        lo: years[0], hi: years[years.length - 1],
+        colorLo: quantile(years, AGE_COLOR_LO_Q),
+        n: years.length, total: gridData.cells.length,
+      });
+    }
+    function ageGridLayer() {
+      const col = devAgeCol();
+      const s = ageGridScale();
+      gridData.cellsFor ??= {};
+      const cells = (gridData.cellsFor.median_year_built ??=
+        gridData.cells.filter(c => c[col] != null));
+      const span = Math.max(1, s.hi - s.lo);
+      const colorSpan = Math.max(1, s.hi - s.colorLo);
+      return new deck.GridCellLayer({
+        id: "dev-age-cells",
+        data: cells,
+        cellSize: gridData.cell,
+        extruded: true,
+        getPosition: d => [d[0], d[1]], // cell SW corner (export_value_grid)
+        getElevation: d => d[col] - s.lo, // linear in year; oldest cell flat
+        elevationScale: DEV_GRID_PEAK / span,
+        getFillColor: d =>
+          rampColorAt(Math.max(0, Math.min(1, (d[col] - s.colorLo) / colorSpan))),
+        opacity: state.prismOpacity,
+        material: { ambient: 0.55, diffuse: 0.6, shininess: 32, specularColor: [60, 60, 70] },
+        pickable: false, // the neutral plane keeps the hood tooltip
+        updateTriggers: { getFillColor: state.ramp },
       });
     }
 
@@ -1812,8 +1918,9 @@
       if (state.view === "development") {
         // Choropleth by default; the layers-panel Detail toggle swaps in the
         // Glass composition — a uniformly neutral hood plane (the set-aside
-        // override stands: nothing greys, geography only) under 100 m permit
-        // spikes. Hover stays on the hood either way.
+        // override stands: nothing greys, geography only) under 100 m spikes:
+        // permit cells, or — Spikes picker — the stock-age cells. Hover stays
+        // on the hood either way.
         if (state.devGrid && devGridData) {
           return [new deck.GeoJsonLayer({
             id: "dev-neutral-plane",
@@ -1823,7 +1930,8 @@
             extruded: false,
             getFillColor: GLASS_PLANE_COLOR,
             pickable: false, // hood hover layer handles tooltips
-          }), devGridLayer(), hoodHoverLayer(), ...labelLayer()];
+          }), devAgeActive() ? ageGridLayer() : devGridLayer(),
+          hoodHoverLayer(), ...labelLayer()];
         }
         // Single flat activity plane + hover + labels — the first-cut
         // choropleth (SPEC_development.md Lens A).
@@ -2350,16 +2458,27 @@
           document.getElementById("legend-cats").style.display = "block";
       } else if (state.view === "development") {
         // Grid mode: the legend follows the spikes (per 100 m cell), not the
-        // per-acre choropleth it replaced.
+        // per-acre choropleth it replaced. Age spikes label their own scale
+        // (median year, linear — the colour anchors, ≤p2.5 to the newest).
         const gridMode = state.devGrid && devGridData;
-        document.getElementById("legend-label").textContent =
-          (state.devMetric === "permits" ? "New permits" : "New homes") +
-          (gridMode ? " per 100 m cell" : " per acre") +
-          ` (${DEV_WINDOW_LABEL[state.devWindow]}, sqrt colour)`;
-        document.getElementById("legend-min").textContent = "0";
-        const clamp = gridMode ? devGridScale().clamp : devScale().clamp;
-        document.getElementById("legend-max").textContent =
-          clamp.toFixed(clamp < 10 && !gridMode ? 1 : 0) + "+";
+        if (gridMode && devAgeActive()) {
+          const s = ageGridScale();
+          document.getElementById("legend-label").textContent =
+            "Median year built (100 m cells, linear colour)";
+          document.getElementById("legend-min").textContent =
+            "≤ " + Math.round(s.colorLo);
+          document.getElementById("legend-max").textContent =
+            String(Math.round(s.hi));
+        } else {
+          document.getElementById("legend-label").textContent =
+            (state.devMetric === "permits" ? "New permits" : "New homes") +
+            (gridMode ? " per 100 m cell" : " per acre") +
+            ` (${DEV_WINDOW_LABEL[state.devWindow]}, sqrt colour)`;
+          document.getElementById("legend-min").textContent = "0";
+          const clamp = gridMode ? devGridScale().clamp : devScale().clamp;
+          document.getElementById("legend-max").textContent =
+            clamp.toFixed(clamp < 10 && !gridMode ? 1 : 0) + "+";
+        }
         // The set-aside mask is overridden here, so there is no off-scale grey
         // category — hide the aside swatch row entirely for this view.
         document.querySelector("#legend .aside").style.display = "none";
@@ -2483,12 +2602,68 @@
       document.getElementById("title-p").textContent = usesBlurb();
     }
 
+    // Sync the Development pickers' visibility to the current mode. The
+    // Spikes picker shows only in grid mode once the Glass grid file has
+    // landed WITH the year column (older files: hidden, activity only); the
+    // Metric/Window pickers hide while the AGE spikes are up — they select
+    // the ACTIVITY column, and nothing they control is on screen then (a
+    // visible control that does nothing would be a small lie). Infill and
+    // the choropleth keep them per the data-presence gates from applyView.
+    function syncDevControls() {
+      const v = state.view;
+      const devViewsMetric = v === "development" || v === "infill";
+      const ageUp = v === "development" && state.devGrid && devAgeActive();
+      const metricShow = devViewsMetric && state.hasPermitsPerAcre && !ageUp;
+      const windowShow = devViewsMetric && state.hasDevWindow && !ageUp;
+      const spikeShow = v === "development" && state.devGrid && !!devGridData
+        && devAgeCol() >= 0;
+      document.getElementById("devmetric-hd").style.display = metricShow ? "block" : "none";
+      document.getElementById("devmetric").style.display = metricShow ? "flex" : "none";
+      document.getElementById("devwindow-hd").style.display = windowShow ? "block" : "none";
+      document.getElementById("devwindow").style.display = windowShow ? "flex" : "none";
+      document.getElementById("devspike-hd").style.display = spikeShow ? "block" : "none";
+      document.getElementById("devspike").style.display = spikeShow ? "flex" : "none";
+    }
+
+    // The age spikes ride on the Glass grid file — kick its (shared, single)
+    // fetch without blocking the permit spikes; when it lands, reveal the
+    // Spikes picker and, if the age mode was already selected (persisted
+    // state), swap the spikes in with their blurb + legend.
+    function ensureAgeData() {
+      if (gridData) { syncDevControls(); return; }
+      ensureGridData().then(() => {
+        if (state.view !== "development") return;
+        syncDevControls();
+        if (state.devGrid && devAgeActive()) {
+          overlay.setProps({ layers: buildLayers() });
+          document.getElementById("title-p").textContent = devBlurb();
+          refreshLegend();
+        }
+      });
+    }
+
     // Development-view 100 m detail toggle (mirrors applyUsesPrisms): swaps
     // choropleth <-> permit-cell spikes, opens the opacity slider while the
     // spikes are up, and re-runs blurb + legend (both change with the mode).
     function applyDevGrid(checked) {
       state.devGrid = checked;
       document.getElementById("prism-row").style.display = checked ? "flex" : "none";
+      if (checked) ensureAgeData();
+      syncDevControls();
+      overlay.setProps({ layers: buildLayers() });
+      document.getElementById("title-p").textContent = devBlurb();
+      refreshLegend();
+    }
+
+    // Development grid Spikes picker (permit activity <-> stock age). Only
+    // visible once the year column is loaded, so no fetch needed here.
+    function applyDevSpikes(m) {
+      if (m === state.devSpikes || (m !== "activity" && m !== "age")) return;
+      state.devSpikes = m;
+      document.querySelectorAll("#devspike button").forEach(b =>
+        b.classList.toggle("active", b.dataset.devspike === m));
+      if (state.view !== "development") return;
+      syncDevControls();
       overlay.setProps({ layers: buildLayers() });
       document.getElementById("title-p").textContent = devBlurb();
       refreshLegend();
@@ -2564,34 +2739,11 @@
         await zoningFetch;
         if (state.view !== v) return; // switched again while the fetch ran
       }
-      // Grid cells for the glass view — fetched once; a missing file resolves
-      // null and the view falls back to translucent hood prisms.
+      // Grid cells for the glass view — fetched once (shared with the
+      // development view's age spikes via ensureGridData); a missing file
+      // resolves null and the view falls back to translucent hood prisms.
       if (v === "glass" && !gridData) {
-        gridFetch ??= fetch(GRID_URL)
-          .then(r => r.ok ? r.json() : null)
-          .then(p => {
-            if (!p) return;
-            gridData = {
-              cell: p.cell_m,
-              columns: {
-                value_per_acre: p.columns.indexOf("value_per_acre"),
-                revenue_per_acre: p.columns.indexOf("revenue_per_acre"),
-                value_per_lot_acre: p.columns.indexOf("value_per_lot_acre"),
-                revenue_per_lot_acre: p.columns.indexOf("revenue_per_lot_acre"),
-                // Residential-class subset (pipeline 2026-07-17) — absent on
-                // older files (-1), and the Residential $ metric falls back
-                // to hood prisms via the col >= 0 guard in the render.
-                res_revenue_per_acre: p.columns.indexOf("res_revenue_per_acre"),
-                res_revenue_per_lot_acre: p.columns.indexOf("res_revenue_per_lot_acre"),
-              },
-              cells: p.cells,
-            };
-            // The denominator toggle needs the lot-acre columns (pipeline
-            // 2026-07-05) — absent on older files, and the control stays hidden.
-            gridData.hasLot = gridData.columns.value_per_lot_acre >= 0;
-          })
-          .catch(() => {});
-        await gridFetch;
+        await ensureGridData();
         if (state.view !== v) return; // switched again while the fetch ran
       }
       // Permit cells for the development view's detail toggle — fetched once;
@@ -2636,17 +2788,17 @@
       const ratioDenomShow = v === "ratio" && (state.hasFire || state.hasSvcCost);
       document.getElementById("ratio-denom-hd").style.display = ratioDenomShow ? "block" : "none";
       document.getElementById("ratio-denom").style.display = ratioDenomShow ? "flex" : "none";
-      // The development sub-metric picker (units vs permits per acre).
-      document.getElementById("devmetric-hd").style.display = devMetricShow ? "block" : "none";
-      document.getElementById("devmetric").style.display = devMetricShow ? "flex" : "none";
-      // The development window picker (5yr vs 3yr activity window).
-      document.getElementById("devwindow-hd").style.display = devWindowShow ? "block" : "none";
-      document.getElementById("devwindow").style.display = devWindowShow ? "flex" : "none";
+      // The development sub-metric + window + spike pickers (mode-aware:
+      // the age spikes hide metric/window — syncDevControls).
+      syncDevControls();
       // The development detail toggle — only where the grid file loaded
       // (post-fetch, like the glass denominator gate above).
       const devGridShow = v === "development" && !!devGridData;
       document.getElementById("dev-grid-hd").style.display = devGridShow ? "block" : "none";
       document.getElementById("dev-grid").style.display = devGridShow ? "block" : "none";
+      // Re-entering the development view with the grid up: make sure the age
+      // data (Glass grid file) is on its way for the Spikes picker.
+      if (devGridShow && state.devGrid) ensureAgeData();
       overlay.setProps({ layers: buildLayers() });
       // Glass shows the metric like Money, so its title stays metric-driven
       // and its blurb follows the spike denominator; the services blurb
@@ -2727,6 +2879,8 @@
         b.addEventListener("click", () => applyDevMetric(b.dataset.devmetric)));
       document.querySelectorAll("#devwindow button").forEach(b =>
         b.addEventListener("click", () => applyDevWindow(b.dataset.devwindow)));
+      document.querySelectorAll("#devspike button").forEach(b =>
+        b.addEventListener("click", () => applyDevSpikes(b.dataset.devspike)));
       document.getElementById("uses-prisms-on").addEventListener("change",
         e => applyUsesPrisms(e.target.checked));
       document.getElementById("dev-grid-on").addEventListener("change",
