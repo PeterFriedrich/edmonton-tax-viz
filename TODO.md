@@ -40,13 +40,20 @@ _Last reconciled: 2026-07-09_
   (a) is resolved.** (Strathcona licensing is clean: OGL-Alberta via
   catalogued open-data hub datasets.)
 
-- [ ] **Dev+Infill ROUND-2 delta audit (brief written 2026-07-16:
-  `docs/FABLE_AUDIT_devinfill_round2.md`; Fable session).** NOT a re-run of the
-  executed S48 decision audit (6 COND / 2 SOUND / 0 UNSOUND) — dispositions its
-  outstanding CONDITIONALs + audits post-S48 changes: D1 verify per-arm fix on
-  refreshed data, D2 the L1 denominator flip test (never run), D3 quantify the
-  suite-conversion gap (Peter's fork needs numbers), D4 verdict grammar, D5 L5
-  documentation debt, D6 per-arm impl / window toggle / dev-grid (unaudited).
+- [x] ~~**Dev+Infill ROUND-2 delta audit**~~ — **EXECUTED 2026-07-16 (S56, same
+  session the brief was written; this line was stale until 2026-07-17).**
+  Dispositions in `session-summary/2026-07-16.md` §2.D + `docs/AUDIT_LEDGER.md`:
+  **0 DEGRADED**; D1+D2 CLOSED (L4→SOUND; denominator bias immaterial), D3
+  numbers → recommend disclose-only, D6 SOUND (WATCH: orange clamp = p95 of a
+  ~105-member arm). What's LEFT is the **post-audit copy PR** below.
+  - [ ] **Post-audit copy PR (small, any model):** apply the D4 verdict-grammar
+    copy ("Room to add, quiet lately" / "More building than room suggests" /
+    "Activity ≈ room") + the three S56-proposed caveat texts (D2 denominator
+    note, D5 z-compression + 0.50-cliff clauses, D3 suite-conversion
+    disclosure) to `web/index.html` blurb/tooltip + `docs/SPEC_development.md`
+    Lens B — pending Peter's picks on D4 grammar and the D3 fork
+    (recommendation: disclose-only). Texts: `session-summary/2026-07-16.md`
+    §2.D.
 
 - [ ] **PUBLIC RELEASE PREP (NEW 2026-07-09 — scope + rationale in
   `docs/PLAN_public_release.md`; read it before working these).** An external
