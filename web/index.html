@@ -170,6 +170,7 @@
     <button data-metric="revenue_per_acre" class="active">Revenue</button>
     <button data-metric="value_per_acre">Value</button>
     <button data-metric="res_revenue_per_acre" title="Residential-class tax dollars only (houses, condos and apartment buildings) — a subset of Revenue. Not the 'Residential only' lens, which fades non-residential neighbourhoods without changing the dollars">Residential $</button>
+    <button data-metric="nonres_revenue_per_acre" title="Tax dollars billed at the non-residential rate (commercial and industrial land) — a subset of Revenue, the complement of Residential $">Non-res $</button>
   </div>
 
   <div id="palette" class="panel">
@@ -374,6 +375,37 @@
                   "is linear; colour is square-root–scaled to reveal the low end. " +
                   "Grey = set-aside land, or too little parcel land for a " +
                   "lot-acre value.",
+      },
+      // Non-residential decomposition: the slices billed at the Non
+      // Residential rate (commercial + industrial; SPEC_industrial.md A1) —
+      // the complement of Residential $ by rate class (farmland's 509 parcels
+      // are the only other slice). Same subset conventions as Residential $:
+      // same elevationScale as Revenue so the bars read as comparable subsets.
+      nonres_revenue_per_acre: {
+        key: "nonres_revenue_per_acre",
+        title: "Edmonton: Non-Residential Tax Revenue per Acre",
+        blurb: "Height and colour show the non-residential-rate share of " +
+               "municipal property-tax revenue — commercial and industrial " +
+               "land — divided by neighbourhood area. This is a subset of " +
+               "Revenue, not all of what the land pays: residential dollars " +
+               "are excluded here. Height is linear; colour is " +
+               "square-root–scaled to reveal the low end. Grey = set-aside " +
+               "natural/undeveloped land, excluded from the scale.",
+        legendLabel: "Non-residential revenue per acre",
+        legendMin: "$0",
+        legendMax: "$50k+",
+        colorClamp: 50_000, // hand-set from the real-data p97.5 (~$48.4k), like Revenue's 50k
+        elevationScale: 0.033,
+        transform: "sqrt",
+        fmt: fmtMoney,
+        lotBlurb: "Height and colour show the non-residential-rate share of " +
+                  "municipal property-tax revenue — commercial and industrial " +
+                  "land, a subset of Revenue, not all of what the land pays — " +
+                  "divided by the parcel (lot) acres a neighbourhood's " +
+                  "properties actually own (city lot sizes, deduplicated at " +
+                  "multi-unit points). Height is linear; colour is " +
+                  "square-root–scaled to reveal the low end. Grey = set-aside " +
+                  "land, or too little parcel land for a lot-acre value.",
       },
       value_per_acre: {
         key: "value_per_acre",
@@ -828,6 +860,11 @@
               // Stock age (pipeline 2026-07-17) — absent on older files (-1),
               // and the development view's Spikes picker stays hidden.
               median_year_built: p.columns.indexOf("median_year_built"),
+              // Non-res-rate subset (pipeline 2026-07-18) — absent on older
+              // files (-1), and the Non-res $ metric falls back to hood
+              // prisms via the same col >= 0 guard.
+              nonres_revenue_per_acre: p.columns.indexOf("nonres_revenue_per_acre"),
+              nonres_revenue_per_lot_acre: p.columns.indexOf("nonres_revenue_per_lot_acre"),
             },
             cells: p.cells,
           };
@@ -2967,6 +3004,12 @@
         state.data.features.some(f => f.properties.res_revenue_per_acre != null);
       if (!state.hasResRevenue) {
         document.querySelector('#toggle button[data-metric="res_revenue_per_acre"]').style.display = "none";
+      }
+      // Same guard for the Non-res $ metric (pipeline 2026-07-18).
+      state.hasNonresRevenue =
+        state.data.features.some(f => f.properties.nonres_revenue_per_acre != null);
+      if (!state.hasNonresRevenue) {
+        document.querySelector('#toggle button[data-metric="nonres_revenue_per_acre"]').style.display = "none";
       }
       // Same guard for the uses view: it needs the composition columns
       // (pipeline 2026-07-03) — hide the button on older data files.

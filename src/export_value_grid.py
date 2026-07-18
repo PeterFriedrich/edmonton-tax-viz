@@ -36,14 +36,17 @@ square geometry don't need per-feature geometry objects):
       "columns": ["lon", "lat", "value_per_acre", "revenue_per_acre",
                   "value_per_lot_acre", "revenue_per_lot_acre",
                   "res_revenue_per_acre", "res_revenue_per_lot_acre",
-                  "median_year_built"],
-      "cells": [[lon, lat, v, r, vl, rl, rr, rrl, yb], ...]  # lon/lat = SW corner
+                  "median_year_built",
+                  "nonres_revenue_per_acre", "nonres_revenue_per_lot_acre"],
+      "cells": [[lon, lat, v, r, vl, rl, rr, rrl, yb, nr, nrl], ...]  # lon/lat = SW corner
     }
 
 ``revenue_*`` columns are omitted on the Phase 1 value-only path, the
 ``*_per_lot_acre`` columns are omitted when ``lot_size`` is absent, the
 ``res_revenue_*`` columns (residential-class levy subset, from
-apply_tax_rates' ``res_levy``) are omitted when ``res_levy`` is absent, and
+apply_tax_rates' ``res_levy``) are omitted when ``res_levy`` is absent, the
+``nonres_revenue_*`` columns (non-res-rate subset, from ``nonres_levy`` —
+SPEC_industrial.md A1) are omitted when ``nonres_levy`` is absent, and
 ``median_year_built`` (Development-view stock-age spikes, from
 load_property_info's ``year_built``) is omitted when ``year_built`` is absent
 — mirroring the graceful degradation everywhere else; the web columns map
@@ -138,6 +141,9 @@ def build_value_grid(df: pd.DataFrame, cell_m: float = 100.0) -> pd.DataFrame:
                                        only when ``res_levy`` is present;
                                        0 where a cell has no residential-class
                                        levy (a real zero, not missing data)
+        nonres_revenue_per_acre float  sum(nonres_levy) / cell ground acres —
+                                       only when ``nonres_levy`` is present;
+                                       same real-zero convention
         median_year_built       float  median construction year of the cell's
                                        properties (unit-weighted; a condo
                                        tower's repeated year IS the median, so
@@ -151,6 +157,7 @@ def build_value_grid(df: pd.DataFrame, cell_m: float = 100.0) -> pd.DataFrame:
                                        lot acres
         revenue_per_lot_acre    float  same, from ``levy``
         res_revenue_per_lot_acre float same, from ``res_levy``
+        nonres_revenue_per_lot_acre float same, from ``nonres_levy``
 
     No silent drops: rows with null coordinates are counted and reported
     (0 in the current data — DATA.md §2), lot-ineligible points are counted
@@ -179,6 +186,10 @@ def build_value_grid(df: pd.DataFrame, cell_m: float = 100.0) -> pd.DataFrame:
     if has_res:
         cells["res_levy"] = pts["res_levy"].to_numpy()
         agg_spec["res_levy"] = "sum"
+    has_nonres = "nonres_levy" in pts.columns
+    if has_nonres:
+        cells["nonres_levy"] = pts["nonres_levy"].to_numpy()
+        agg_spec["nonres_levy"] = "sum"
     has_year = "year_built" in pts.columns
     if has_year:
         cells["year_built"] = pts["year_built"].to_numpy()
@@ -191,7 +202,7 @@ def build_value_grid(df: pd.DataFrame, cell_m: float = 100.0) -> pd.DataFrame:
 
     if "lot_size" in pts.columns:
         grid = grid.merge(
-            _cell_lot_metrics(pts, cells, has_levy, has_res),
+            _cell_lot_metrics(pts, cells, has_levy, has_res, has_nonres),
             on=["ix", "iy"], how="left",
         )
 
@@ -208,12 +219,16 @@ def build_value_grid(df: pd.DataFrame, cell_m: float = 100.0) -> pd.DataFrame:
         out["revenue_per_acre"] = grid["levy"] / cell_acres
     if has_res:
         out["res_revenue_per_acre"] = grid["res_levy"] / cell_acres
+    if has_nonres:
+        out["nonres_revenue_per_acre"] = grid["nonres_levy"] / cell_acres
     if "lot_acres" in grid.columns:
         out["value_per_lot_acre"] = grid["value_eligible"] / grid["lot_acres"]
         if has_levy:
             out["revenue_per_lot_acre"] = grid["levy_eligible"] / grid["lot_acres"]
         if has_res:
             out["res_revenue_per_lot_acre"] = grid["res_levy_eligible"] / grid["lot_acres"]
+        if has_nonres:
+            out["nonres_revenue_per_lot_acre"] = grid["nonres_levy_eligible"] / grid["lot_acres"]
     if has_year:
         out["median_year_built"] = grid["year_built"]
 
@@ -225,7 +240,11 @@ def build_value_grid(df: pd.DataFrame, cell_m: float = 100.0) -> pd.DataFrame:
 
 
 def _cell_lot_metrics(
-    pts: pd.DataFrame, cells: pd.DataFrame, has_levy: bool, has_res: bool = False
+    pts: pd.DataFrame,
+    cells: pd.DataFrame,
+    has_levy: bool,
+    has_res: bool = False,
+    has_nonres: bool = False,
 ) -> pd.DataFrame:
     """Per-cell lot acres + eligible dollar sums (FINDINGS_lot_dedupe heuristic).
 
@@ -246,6 +265,8 @@ def _cell_lot_metrics(
         rows["levy"] = pts["levy"].to_numpy()
     if has_res:
         rows["res_levy"] = pts["res_levy"].to_numpy()
+    if has_nonres:
+        rows["nonres_levy"] = pts["nonres_levy"].to_numpy()
     rows = rows.merge(per_point, on=["latitude", "longitude"], how="left")
 
     if len(ineligible):
@@ -268,12 +289,15 @@ def _cell_lot_metrics(
         agg["levy"] = "sum"
     if has_res:
         agg["res_levy"] = "sum"
+    if has_nonres:
+        agg["nonres_levy"] = "sum"
     dollars = elig.groupby(["ix", "iy"]).agg(agg)
 
     out = dollars.join(lot_by_cell.rename("lot_acres")).reset_index()
     out = out.rename(columns={
         "assessed_value": "value_eligible", "levy": "levy_eligible",
         "res_levy": "res_levy_eligible",
+        "nonres_levy": "nonres_levy_eligible",
     })
     return out
 
@@ -302,6 +326,8 @@ def build_hood_lot_acres(df: pd.DataFrame) -> pd.DataFrame:
         revenue_lot_eligible  float  Σ levy — only when ``levy`` is present
         res_revenue_lot_eligible float  Σ res_levy (residential-class subset) —
                                      only when ``res_levy`` is present
+        nonres_revenue_lot_eligible float  Σ nonres_levy (non-res-rate subset) —
+                                     only when ``nonres_levy`` is present
         far                   float  built floor-area ratio (Σ gross_area over
                                      rows at eligible points ÷ deduped lot m²) —
                                      only when ``gross_area`` is present. The
@@ -343,6 +369,8 @@ def build_hood_lot_acres(df: pd.DataFrame) -> pd.DataFrame:
         agg["levy"] = "sum"
     if "res_levy" in df.columns:
         agg["res_levy"] = "sum"
+    if "nonres_levy" in df.columns:
+        agg["nonres_levy"] = "sum"
     has_gross = "gross_area" in df.columns
     if has_gross:
         agg["gross_area"] = "sum"
@@ -369,6 +397,7 @@ def build_hood_lot_acres(df: pd.DataFrame) -> pd.DataFrame:
     return out.rename(columns={
         "assessed_value": "value_lot_eligible", "levy": "revenue_lot_eligible",
         "res_levy": "res_revenue_lot_eligible",
+        "nonres_levy": "nonres_revenue_lot_eligible",
     })
 
 
@@ -436,6 +465,7 @@ def export_value_grid(
     has_revenue = "revenue_per_acre" in grid.columns
     has_lot = "value_per_lot_acre" in grid.columns
     has_res = "res_revenue_per_acre" in grid.columns
+    has_nonres = "nonres_revenue_per_acre" in grid.columns
     has_year = "median_year_built" in grid.columns
 
     # New columns append at the END so existing slots keep their positions
@@ -454,6 +484,10 @@ def export_value_grid(
             columns.append("res_revenue_per_lot_acre")
     if has_year:
         columns.append("median_year_built")
+    if has_nonres:
+        columns.append("nonres_revenue_per_acre")
+        if has_lot:
+            columns.append("nonres_revenue_per_lot_acre")
 
     def _int(v) -> int | None:
         return None if pd.isna(v) else round(v)
@@ -473,6 +507,10 @@ def export_value_grid(
                 row.append(_int(t.res_revenue_per_lot_acre))
         if has_year:
             row.append(_int(t.median_year_built))
+        if has_nonres:
+            row.append(round(t.nonres_revenue_per_acre))
+            if has_lot:
+                row.append(_int(t.nonres_revenue_per_lot_acre))
         rows.append(row)
 
     payload = {
@@ -492,6 +530,7 @@ def export_value_grid(
         "has_revenue": has_revenue,
         "has_lot": has_lot,
         "has_res": has_res,
+        "has_nonres": has_nonres,
         "has_year": has_year,
         "bytes": out_path.stat().st_size,
     }

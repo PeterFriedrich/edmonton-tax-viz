@@ -1201,3 +1201,76 @@ def test_export_keeps_3yr_columns_when_present(tmp_path):
     assert "new_permits_per_acre_3yr" in written.columns
     assert "new_dwelling_units_3yr" in written.columns
     assert "new_dwelling_permits_3yr" in written.columns
+
+
+# --- non-residential decomposition (nonres_levy → nonres_revenue_per_acre) ---
+# The non-res-rate subset (COMMERCIAL + MA DERELICT + DESIGNATED IND slices,
+# SPEC_industrial.md A1), same conventions as the residential block above.
+
+
+def test_nonres_revenue_per_acre_computed():
+    result = join_and_calculate(
+        _assessment([{"neighbourhood_name": "DOWNTOWN",
+                      "total_assessed_value": 1_000_000.0,
+                      "total_revenue": 10_000.0, "total_nonres_revenue": 6_000.0}]),
+        _boundaries([{"neighbourhood_name": "DOWNTOWN", "area_acres": 100.0}]),
+    )
+    row = result.iloc[0]
+    assert row["nonres_revenue_per_acre"] == pytest.approx(60.0)  # 6k / 100
+    assert row["revenue_per_acre"] == pytest.approx(100.0)        # subset < total
+
+
+def test_nonres_revenue_absent_without_upstream_column():
+    result = join_and_calculate(
+        _assessment([{"neighbourhood_name": "DOWNTOWN",
+                      "total_assessed_value": 1_000_000.0, "total_revenue": 10_000.0}]),
+        _boundaries([{"neighbourhood_name": "DOWNTOWN", "area_acres": 100.0}]),
+    )
+    assert "nonres_revenue_per_acre" not in result.columns
+
+
+def test_nonres_revenue_lot_acre_variant_and_suppression():
+    result = join_and_calculate(
+        _assessment([
+            {"neighbourhood_name": "DOWNTOWN", "total_assessed_value": 1_000_000.0,
+             "total_revenue": 10_000.0, "total_nonres_revenue": 6_000.0},
+            {"neighbourhood_name": "PARK", "total_assessed_value": 100_000.0,
+             "total_revenue": 1_000.0, "total_nonres_revenue": 600.0},
+        ]),
+        _boundaries([
+            {"neighbourhood_name": "DOWNTOWN", "area_acres": 100.0},
+            {"neighbourhood_name": "PARK", "area_acres": 100.0},
+        ]),
+        lot_acres=_lot([
+            {"neighbourhood_name": "DOWNTOWN", "lot_acres_eligible": 50.0,
+             "value_lot_eligible": 900_000.0, "revenue_lot_eligible": 9_000.0,
+             "nonres_revenue_lot_eligible": 5_400.0},
+            {"neighbourhood_name": "PARK", "lot_acres_eligible": 5.0,  # 5% parcel
+             "value_lot_eligible": 90_000.0, "revenue_lot_eligible": 900.0,
+             "nonres_revenue_lot_eligible": 540.0},
+        ]),
+    )
+    dt = result[result["neighbourhood_name"] == "DOWNTOWN"].iloc[0]
+    assert dt["nonres_revenue_per_lot_acre"] == pytest.approx(108.0)  # 5.4k / 50
+    park = result[result["neighbourhood_name"] == "PARK"].iloc[0]
+    assert pd.isna(park["nonres_revenue_per_lot_acre"])  # suppressed (< 15%)
+
+
+def test_export_keeps_nonres_revenue_columns_when_present(tmp_path):
+    result = join_and_calculate(
+        _assessment([{"neighbourhood_name": "DOWNTOWN",
+                      "total_assessed_value": 1_000_000.0,
+                      "total_revenue": 10_000.0, "total_nonres_revenue": 6_000.0}]),
+        _boundaries([{"neighbourhood_name": "DOWNTOWN", "area_acres": 100.0}]),
+        lot_acres=_lot([
+            {"neighbourhood_name": "DOWNTOWN", "lot_acres_eligible": 50.0,
+             "value_lot_eligible": 900_000.0, "revenue_lot_eligible": 9_000.0,
+             "nonres_revenue_lot_eligible": 5_400.0},
+        ]),
+    )
+    written = export_geojson(result, str(tmp_path / "out.geojson"))
+    assert "nonres_revenue_per_acre" in written.columns
+    assert "nonres_revenue_per_lot_acre" in written.columns
+    # the raw total stays out of the slim file, like every other total
+    assert "total_nonres_revenue" not in written.columns
+    assert "nonres_revenue_lot_eligible" not in written.columns

@@ -277,6 +277,28 @@ lot acres, exactly like value/revenue. ~79% of cells have res > 0; res ≤ rev
 per cell (±$1 whole-dollar rounding). Older files lack the columns and the
 Glass Residential $ metric falls back to hood prisms (web column guard).
 
+### Non-residential decomposition (added 2026-07-18 — SPEC_industrial.md A1)
+
+`apply_tax_rates.py` also emits **`nonres_levy`** — the subset of each parcel's
+levy billed **at the Non Residential rate**: `COMMERCIAL` + `MA DERELICT
+RESIDENTIAL` + `DESIGNATED IND PROPERTIES` slices (`NONRES_RATE_LABELS`,
+derived from the label→rate-class map so a future non-res label can't be
+missed). The complement of `res_levy` by rate class; farmland (its own rate
+class, 509 parcels) is the only slice in neither subset, so the identity
+**`levy == res_levy + nonres_levy + farmland slices`** holds exactly (tested).
+Flows mirror res: `nonres_levy` → `total_nonres_revenue` →
+**`nonres_revenue_per_acre`** / **`nonres_revenue_per_lot_acre`** (slim
+GeoJSON, LOW_PARCEL_FRAC suppression inherited) and into the 100 m cells
+(payload columns appended LAST, after `median_year_built`; real-0/null
+conventions identical to res; `value_grid.json` ~2.28 → ~2.50 MB raw). NOTE
+there is **no industrial-vs-commercial split in the roll** — `COMMERCIAL`
+covers all non-res (§ 2) — so this is the honest class-complete cut; an
+industrial-only cut would need a zoning join. Real-data anchors (2025 roll):
+non-res-rate = **47.4% of the citywide levy** ($1.281B of $2.704B; farmland
+residual ~$532K); 34% of grid cells have nonres > 0; hood ground p97.5 ≈
+$48.4k/acre (web clamp $50k). Web: fourth Money metric ("Non-res $"),
+column-guarded like Residential $.
+
 **Stock-age grid column (added 2026-07-17):** `export_value_grid.py` also
 rolls `year_built` (property-info, § 2) into **`median_year_built`** per 100 m
 cell — appended LAST in the payload columns; whole-year ints. Median over

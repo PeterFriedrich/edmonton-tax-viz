@@ -79,3 +79,25 @@ def test_no_res_levy_no_total_res_revenue():
     ])
     result = aggregate_by_neighbourhood(df)
     assert "total_res_revenue" not in result.columns
+
+
+def test_nonres_levy_sums_into_total_nonres_revenue():
+    # nonres_levy (the non-res-rate subset) aggregates alongside levy/res_levy.
+    df = _make_df([
+        {"neighbourhood_name": "DOWNTOWN", "assessed_value": 100.0,
+         "levy": 10.0, "nonres_levy": 0.0, "is_exempt": False},
+        {"neighbourhood_name": "DOWNTOWN", "assessed_value": 200.0,
+         "levy": 30.0, "nonres_levy": 30.0, "is_exempt": False},
+    ])
+    result = aggregate_by_neighbourhood(df)
+    downtown = result.iloc[0]
+    assert downtown["total_revenue"] == 40.0
+    assert downtown["total_nonres_revenue"] == 30.0
+
+
+def test_no_nonres_levy_no_total_nonres_revenue():
+    df = _make_df([
+        {"neighbourhood_name": "DOWNTOWN", "assessed_value": 100.0, "levy": 10.0, "is_exempt": False},
+    ])
+    result = aggregate_by_neighbourhood(df)
+    assert "total_nonres_revenue" not in result.columns

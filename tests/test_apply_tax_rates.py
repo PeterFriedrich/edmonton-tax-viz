@@ -205,3 +205,70 @@ def test_res_levy_zero_for_exempt(rates_path):
     )])
     out = apply_tax_rates(df, rates_path, 2025)
     assert out["res_levy"].iloc[0] == pytest.approx(0.0)
+
+
+# --- nonres_levy: the non-residential decomposition --------------------------
+# nonres_levy = the subset of levy billed at the Non Residential rate
+# (COMMERCIAL + MA DERELICT RESIDENTIAL + DESIGNATED IND PROPERTIES —
+# SPEC_industrial.md A1). Farmland has its own rate class and exempt slices
+# carry no rate, so levy == res_levy + nonres_levy + farmland slices exactly.
+
+
+def test_nonres_levy_equals_levy_for_pure_commercial(rates_path):
+    df = pd.DataFrame([_row(
+        tax_class="Non Residential",
+        assessment_class_1="COMMERCIAL",
+    )])
+    out = apply_tax_rates(df, rates_path, 2025)
+    assert out["nonres_levy"].iloc[0] == pytest.approx(30_000.0)
+    assert out["nonres_levy"].iloc[0] == out["levy"].iloc[0]
+
+
+def test_nonres_levy_zero_for_pure_residential(rates_path):
+    df = pd.DataFrame([_row()])
+    out = apply_tax_rates(df, rates_path, 2025)
+    assert out["nonres_levy"].iloc[0] == pytest.approx(0.0)
+
+
+def test_nonres_levy_includes_ma_derelict_and_designated_industrial(rates_path):
+    # Both bill at the Non Residential rate → both are non-res-rate dollars
+    # (MA DERELICT is excluded from res_levy for the same reason).
+    df = pd.DataFrame([
+        _row(tax_class="Non Residential", assessment_class_1="MA DERELICT RESIDENTIAL"),
+        _row(tax_class="Non Residential", assessment_class_1="DESIGNATED IND PROPERTIES"),
+    ])
+    out = apply_tax_rates(df, rates_path, 2025)
+    assert list(out["nonres_levy"]) == pytest.approx([30_000.0, 30_000.0])
+    assert list(out["res_levy"]) == pytest.approx([0.0, 0.0])
+
+
+def test_nonres_levy_takes_only_nonres_slice_of_split_class(rates_path):
+    # 73% COMMERCIAL + 27% RESIDENTIAL: nonres = 1e6 × 0.73 × 0.030 = 21,900;
+    # res = 2,700; identity: 21,900 + 2,700 == 24,600 == levy.
+    df = pd.DataFrame([_row(
+        tax_class="Non Residential",
+        assessment_class_1="COMMERCIAL", assessment_class_pct_1=73,
+        assessment_class_2="RESIDENTIAL", assessment_class_pct_2=27,
+    )])
+    out = apply_tax_rates(df, rates_path, 2025)
+    assert out["nonres_levy"].iloc[0] == pytest.approx(21_900.0)
+    assert (out["nonres_levy"] + out["res_levy"]).iloc[0] == pytest.approx(out["levy"].iloc[0])
+
+
+def test_levy_decomposition_identity_with_farmland(rates_path):
+    # levy == res_levy + nonres_levy + farmland slices, over a frame containing
+    # every rate class: farmland's $10k is the only levy in NEITHER subset.
+    df = pd.DataFrame([
+        _row(),                                                          # res 10k
+        _row(tax_class="Other Residential", assessment_class_1="OTHER RESIDENTIAL"),  # res 20k
+        _row(tax_class="Non Residential", assessment_class_1="COMMERCIAL"),           # nonres 30k
+        _row(tax_class="Farmland", assessment_class_1="FARMLAND"),                    # neither 10k
+        _row(is_exempt=True, tax_class="Non Residential",
+             assessment_class_1="NONRES MUNICIPAL/RES EDUCATION"),                    # $0
+    ])
+    out = apply_tax_rates(df, rates_path, 2025)
+    assert out["levy"].sum() == pytest.approx(70_000.0)
+    assert out["res_levy"].sum() == pytest.approx(30_000.0)
+    assert out["nonres_levy"].sum() == pytest.approx(30_000.0)
+    farmland = out["levy"].sum() - out["res_levy"].sum() - out["nonres_levy"].sum()
+    assert farmland == pytest.approx(10_000.0)

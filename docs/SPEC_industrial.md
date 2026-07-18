@@ -1,7 +1,8 @@
 # Scope: Industrial & non-residential lens family (Track A) + regional non-residential context (Track B)
 
-**Status:** SPEC'd 2026-07-18. Track A quick wins (A1 non-res $ cut, A3
-industrial permit velocity) greenlit same day; the rest is PLAN. This doc specs
+**Status:** SPEC'd 2026-07-18. **A1 BUILT same day** (`nonres_levy` → fourth
+Money metric + Glass grid columns; TODO.md has the as-built summary); A3
+greenlit, display pick pending; the rest is PLAN. This doc specs
 the non-residential side of the fiscal picture: where the commercial/industrial
 tax base sits, how much industrial land is shovel-ready, where non-residential
 construction is actually happening, and — Track B — how Edmonton's
@@ -70,8 +71,11 @@ the levy machinery already computes per-class slices
 - **`nonres_levy`** = the slices billed at the **Non Residential** rate class:
   `COMMERCIAL` + `MA DERELICT RESIDENTIAL` (the city deliberately bills
   derelict at the non-res rate — mirror of its exclusion from `res_levy`,
-  DECISIONS 2026-07-16) + `NONRES MUNICIPAL/RES EDUCATION` (3 rows, ≈$0).
-  **Farmland excluded** (own rate class, 509 parcels, immaterial).
+  DECISIONS 2026-07-16) + `DESIGNATED IND PROPERTIES` (as built: the set is
+  derived from the label→rate-class map, `NONRES_RATE_LABELS`, so a future
+  non-res label can't be missed; the exempt label carries no rate and
+  contributes $0 regardless). **Farmland excluded** (own rate class, 509
+  parcels, immaterial — real-data residual ~$532K of a $2.704B levy).
 - **Testable identity:** `levy == res_levy + nonres_levy + farmland_levy`
   (whole-$ tolerance) — decomposition sums to total by construction.
 - **Columns:** `nonres_revenue_per_acre` / `nonres_revenue_per_lot_acre`

@@ -90,6 +90,7 @@ PERMIT_COLUMNS_3YR = [f"{c}_3yr" for c in PERMIT_COLUMNS]
 # alternative denominator, NOT a correction to the cardinality-robust default.
 LOT_ACRE_COLUMNS = [
     "value_lot_eligible", "revenue_lot_eligible", "res_revenue_lot_eligible",
+    "nonres_revenue_lot_eligible",
     "lot_acres_eligible", "far",
 ]
 
@@ -335,6 +336,15 @@ def join_and_calculate(
         joined["res_revenue_per_acre"] = joined["total_res_revenue"] / safe_area
         out_cols = [c for c in out_cols if c != "geometry"] + [
             "total_res_revenue", "res_revenue_per_acre", "geometry",
+        ]
+
+    # Non-residential decomposition (nonres_levy from apply_tax_rates): the
+    # non-res-rate subset of revenue_per_acre, same denominator + share-derived-
+    # client-side conventions as the residential block above.
+    if "total_nonres_revenue" in joined.columns:
+        joined["nonres_revenue_per_acre"] = joined["total_nonres_revenue"] / safe_area
+        out_cols = [c for c in out_cols if c != "geometry"] + [
+            "total_nonres_revenue", "nonres_revenue_per_acre", "geometry",
         ]
 
     # Zoning phase: merge land-use set-aside composition when supplied.
@@ -681,6 +691,11 @@ def join_and_calculate(
                 joined["res_revenue_lot_eligible"] / safe_lot
             )
             added.append("res_revenue_per_lot_acre")
+        if "nonres_revenue_lot_eligible" in joined.columns:
+            joined["nonres_revenue_per_lot_acre"] = (
+                joined["nonres_revenue_lot_eligible"] / safe_lot
+            )
+            added.append("nonres_revenue_per_lot_acre")
         added.append("parcel_frac")
 
         # Guard: hoods below the parcel-fraction floor (incl. NaN — no eligible
@@ -737,9 +752,13 @@ def join_and_calculate(
 # (a subset of revenue_per_acre, never all of what the land pays — the client
 # must say so); the residential SHARE is derived client-side as res/revenue
 # per acre (same denominator cancels), so no share column ships.
+# nonres_revenue_per_acre / nonres_revenue_per_lot_acre are the complement by
+# rate class (COMMERCIAL + MA DERELICT + DESIGNATED IND PROPERTIES slices —
+# SPEC_industrial.md A1), same conventions.
 SLIM_COLUMNS = [
     "neighbourhood_name", "value_per_acre", "revenue_per_acre",
     "res_revenue_per_acre", "res_revenue_per_lot_acre",
+    "nonres_revenue_per_acre", "nonres_revenue_per_lot_acre",
     "set_aside_frac", "is_set_aside", "set_aside_reason",
     "frac_never", "frac_notyet", "frac_inst",
     "frac_residential", "frac_commercial", "frac_industrial",
