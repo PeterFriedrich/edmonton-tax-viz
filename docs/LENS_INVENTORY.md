@@ -30,11 +30,11 @@ for the *why* and methodology see the SPEC_*.md docs and `docs/UI.md`._
 
 ### 1. Money  *(default)*
 The revenue/value prisms — the money plane.
-- **Metric** (`#toggle`): **Revenue** ($/acre) · **Value** (assessed $/acre) · **Residential $** (residential-class tax $/acre — a subset of Revenue)
+- **Metric** (`#toggle`): **Revenue** ($/acre) · **Value** (assessed $/acre) · **Residential $** (residential-class tax $/acre — a subset of Revenue) · **Non-res $** (non-residential-rate tax $/acre — the complement of Residential $; commercial + industrial land). *The two decomposition metrics are column-guarded — hidden on older data files.*
 - **Denominator**: **Ground acres** (whole footprint — default) · **Lot acres** (parcel land owned — land productivity). *Shown only when the data carries the lot-acre columns.*
 - Colour-sqrt toggle: **live**. Residential fade lens: **live**.
-- Tooltip always shows "**N% of revenue is residential**" (all three metrics).
-- **Combinations:** 3 metrics × 2 denominators × (lens on/off) × (sqrt on/off) = up to **24** core states.
+- Tooltip always shows "**N% of revenue is residential**" (all four metrics).
+- **Combinations:** 4 metrics × 2 denominators × (lens on/off) × (sqrt on/off) = up to **32** core states.
 
 ### 2. Services
 City services on the ground — each service is its **own toggleable layer**; one drives the colour ramp.
@@ -56,20 +56,20 @@ Each neighbourhood's dominant **zoned land use** (what it's designated for, not 
 
 ### 5. Development
 New dwelling activity per acre from issued building permits — where the city is actually growing.
-- **Sub-metric**: **Dwelling units** (per acre — housing supply) · **Permits** (per acre — project density). *Shown when the permit-per-acre column is present.*
+- **Sub-metric**: **Dwelling units** (per acre — housing supply) · **Permits** (per acre — project density) · **Industrial** (new 400-series industrial permits per acre — count only; a hood-level choropleth, no detail grid). *Permits shown when the permit-per-acre column is present; Industrial when `ind_permits_per_acre` is present.*
 - **Window**: **Last 5 yr** (2021–2025 — structural) · **Last 3 yr** (2023–2025 — recent). *Shown when the `_3yr` columns are present.*
-- **Detail grid** toggle (on/off): 100 m detail cells. *Shown when `dev_grid.json` loaded.*
+- **Detail grid** toggle (on/off): 100 m detail cells. *Shown when `dev_grid.json` loaded; **hidden while Industrial is selected** (no industrial cells).*
 - Residential lens & sqrt: **disabled**.
 
 ### 6. Infill
 Suitability × activity **mismatch** — one signed diverging metric (teal = suitable but quiet / opportunity; orange = building where less suitable / pressure).
-- **Sub-metric** (units · permits) and **Window** (5yr · 3yr): same two pickers as Development — here they drive the *activity* side of the mismatch.
+- **Sub-metric** (units · permits) and **Window** (5yr · 3yr): same two pickers as Development — here they drive the *activity* side of the mismatch. *Industrial is NOT offered here (an industrial permit isn't residential infill — the button hides and the metric resets to a residential column on entering this view).*
 - Per-arm p95 colour clamps; opportunity (teal) end is residential-only (non-residential hoods barred from teal, kept on orange).
 - Residential lens & sqrt: **disabled**.
 
 ### 7. Glass
 Translucent metric prisms over a neutral neighbourhood plane (hover the ground for numbers).
-- **Metric** (same `#toggle`): Revenue · Value · Residential $ *(all three render 100 m cells since 2026-07-17; on older grid files Residential $ falls back to hood prisms)*
+- **Metric** (same `#toggle`): Revenue · Value · Residential $ · Non-res $ *(all render 100 m cells; the decomposition metrics fall back to hood prisms on older grid files)*
 - **Spike denominator**: Ground acres · Lot acres. *Shown when the grid file carries the lot-acre columns.*
 - Colour-sqrt toggle: **live**. Residential lens: **disabled**.
 
@@ -79,12 +79,12 @@ Translucent metric prisms over a neutral neighbourhood plane (hover the ground f
 
 | View | Metric toggle | Denominator | Ratio denom | Dev metric/window | Service layers | Res-fade lens | sqrt |
 |---|---|---|---|---|---|---|---|
-| Money | ✅ 3 | ✅ 2 | — | — | — | ✅ | ✅ |
+| Money | ✅ 4 | ✅ 2 | — | — | — | ✅ | ✅ |
 | Services | — | — | — | — | ✅ 6 | ✖ | ✖ |
 | Ratio | — | — | ✅ 3 | — | — | ✅ | ✖ |
 | Uses | — | — | — | — | — | ✖ | ✖ |
-| Development | — | — | — | ✅ 2×2 (+grid) | — | ✖ | ✖ |
+| Development | — | — | — | ✅ 3 metric × 2 win (+grid; industrial=choropleth) | — | ✖ | ✖ |
 | Infill | — | — | — | ✅ 2×2 | — | ✖ | ✖ |
-| Glass | ✅ 3 | ✅ 2 | — | — | — | ✖ | ✅ |
+| Glass | ✅ 4 | ✅ 2 | — | — | — | ✖ | ✅ |
 
 Palette (3 ramps) and Labels apply in every view. "—" = control not present; "✖" = present in UI but disabled in that view.
