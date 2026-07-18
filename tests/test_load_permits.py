@@ -5,6 +5,7 @@ import pytest
 
 sys.path.insert(0, "src")
 from load_permits import (
+    INDUSTRIAL_BUILDING_TYPES,
     KNOWN_BUILDING_TYPES,
     KNOWN_WORK_TYPES,
     NEW_WORK_TYPES,
@@ -310,3 +311,60 @@ def test_dev_grid_no_kept_rows_raises(tmp_path):
     rows = [_grow(year=2023, work_type="(03) Interior Alterations")]
     with pytest.raises(ValueError, match="no new residential"):
         export_dev_grid(_write(tmp_path, rows), tmp_path / "g.json", (2023,))
+
+
+# --- industrial permit velocity (SPEC_industrial.md A3) ----------------------
+
+def test_industrial_permits_counted_separately(tmp_path):
+    # New industrial permits land in ind_permits (count), NOT new_dwelling_units.
+    rows = _window_rows("BETA") + [
+        _row(year=2022, neighbourhood="INDPARK",
+             building_type="Storage Buildings, Warehouses (460)", units_added=0),
+        _row(year=2023, neighbourhood="INDPARK",
+             building_type="Manufacturing Buildings (430)", units_added=0),
+    ]
+    out = load_permits(_write(tmp_path, rows), YEARS)
+    ind = out.set_index("neighbourhood_name")
+    assert ind.loc["INDPARK", "ind_permits"] == 2
+    # Industrial adds no dwelling units and no residential permits.
+    assert ind.loc["INDPARK", "new_dwelling_units"] == pytest.approx(0.0)
+    assert ind.loc["INDPARK", "new_dwelling_permits"] == pytest.approx(0.0)
+    # A residential-only hood carries a true 0 industrial count.
+    assert ind.loc["BETA", "ind_permits"] == pytest.approx(0.0)
+
+
+def test_industrial_and_residential_coexist_in_one_hood(tmp_path):
+    rows = _window_rows("MIXED") + [
+        _row(year=2022, neighbourhood="MIXED",
+             building_type="Utility Buildings (480)"),
+    ]
+    out = load_permits(_write(tmp_path, rows), YEARS)
+    row = out.set_index("neighbourhood_name").loc["MIXED"]
+    assert row["new_dwelling_permits"] == 5        # the residential window rows
+    assert row["ind_permits"] == 1                 # the one industrial permit
+
+
+def test_industrial_requires_new_work_type(tmp_path):
+    # An alteration to an industrial building is not new construction.
+    rows = _window_rows("BETA") + [
+        _row(year=2023, neighbourhood="INDPARK",
+             work_type="(03) Interior Alterations",
+             building_type="Manufacturing Buildings (430)"),
+    ]
+    out = load_permits(_write(tmp_path, rows), YEARS)
+    assert "INDPARK" not in set(out["neighbourhood_name"])
+
+
+def test_parkade_490_not_industrial(tmp_path):
+    # Parkade shares code (490) with Engineering but is NOT industrial — the
+    # enumeration is by full string, so it must not be counted.
+    rows = _window_rows("BETA") + [
+        _row(year=2023, neighbourhood="PARK", building_type="Parkade (490)"),
+    ]
+    out = load_permits(_write(tmp_path, rows), YEARS)
+    assert "PARK" not in set(out["neighbourhood_name"])  # neither res nor ind
+
+
+def test_industrial_set_disjoint_from_residential():
+    assert not (INDUSTRIAL_BUILDING_TYPES & RESIDENTIAL_BUILDING_TYPES)
+    assert INDUSTRIAL_BUILDING_TYPES <= KNOWN_BUILDING_TYPES
