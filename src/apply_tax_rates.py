@@ -51,6 +51,18 @@ ASSESSMENT_CLASS_TO_RATE_CLASS = {
 # non-residential-rate dollars (see docs/DECISIONS.md 2026-07-16).
 RESIDENTIAL_RATE_LABELS = {"RESIDENTIAL", "OTHER RESIDENTIAL"}
 
+# Class labels whose levy counts as NON-RESIDENTIAL dollars for the non-res
+# decomposition (nonres_levy): everything billed at the Non Residential rate —
+# the complement of res_levy by rate class (docs/SPEC_industrial.md A1). The
+# exempt label carries no rate ($0 slices) and FARMLAND has its own rate class,
+# so the decomposition satisfies levy == res_levy + nonres_levy + farmland
+# slices exactly (tested).
+NONRES_RATE_LABELS = {
+    label
+    for label, rate_class in ASSESSMENT_CLASS_TO_RATE_CLASS.items()
+    if rate_class == "Non Residential"
+}
+
 # (label column, percentage column) for each of the up-to-3 class slices.
 CLASS_SLOTS = [
     ("assessment_class_1", "assessment_class_pct_1"),
@@ -108,14 +120,15 @@ def apply_tax_rates(
     year: int | str,
     rate_type: str = "municipal",
 ) -> pd.DataFrame:
-    """Add per-property ``levy`` and ``res_levy`` columns to the assessment frame.
+    """Add per-property ``levy``, ``res_levy`` and ``nonres_levy`` columns.
 
     Expects the class columns carried through by load_assessment.py
     (``tax_class``, ``assessment_class_1/2/3``, ``assessment_class_pct_1/2/3``).
     Returns a copy with ``levy`` (float, dollars — municipal tax across ALL
-    class slices) and ``res_levy`` (the subset of that levy billed on
-    RESIDENTIAL_RATE_LABELS slices — the residential-revenue decomposition;
-    split-class parcels contribute only their residential slice) appended.
+    class slices), ``res_levy`` (the subset billed on RESIDENTIAL_RATE_LABELS
+    slices — the residential-revenue decomposition; split-class parcels
+    contribute only their residential slice) and ``nonres_levy`` (the subset
+    billed at the Non Residential rate — NONRES_RATE_LABELS) appended.
     """
     rates = load_mill_rates(rates_path, year, rate_type)
     label_rate = _build_label_rate_lookup(df, rates, str(year))
@@ -123,6 +136,7 @@ def apply_tax_rates(
     df = df.copy()
     levy = pd.Series(0.0, index=df.index)
     res_levy = pd.Series(0.0, index=df.index)
+    nonres_levy = pd.Series(0.0, index=df.index)
     pct_total = pd.Series(0.0, index=df.index)
 
     for cls_col, pct_col in CLASS_SLOTS:
@@ -131,6 +145,7 @@ def apply_tax_rates(
         slot_levy = df["assessed_value"] * (pct / 100.0) * (slot_rate / 1000.0)
         levy += slot_levy
         res_levy += slot_levy.where(df[cls_col].isin(RESIDENTIAL_RATE_LABELS), 0.0)
+        nonres_levy += slot_levy.where(df[cls_col].isin(NONRES_RATE_LABELS), 0.0)
         pct_total += pct
 
     # Source rounding leaves a few rows whose class %s sum to <100. Bill as-stated
@@ -145,12 +160,15 @@ def apply_tax_rates(
 
     df["levy"] = levy
     df["res_levy"] = res_levy
+    df["nonres_levy"] = nonres_levy
     total = float(levy.sum())
     res_total = float(res_levy.sum())
+    nonres_total = float(nonres_levy.sum())
     logger.info(
         "Computed %s levy for %d properties (year %s); total $%s "
-        "(residential-class $%s = %.1f%%)",
+        "(residential-class $%s = %.1f%%, non-res-rate $%s = %.1f%%)",
         rate_type, len(df), year, f"{total:,.0f}",
         f"{res_total:,.0f}", 100.0 * res_total / total if total else 0.0,
+        f"{nonres_total:,.0f}", 100.0 * nonres_total / total if total else 0.0,
     )
     return df

@@ -90,6 +90,7 @@ PERMIT_COLUMNS_3YR = [f"{c}_3yr" for c in PERMIT_COLUMNS]
 # alternative denominator, NOT a correction to the cardinality-robust default.
 LOT_ACRE_COLUMNS = [
     "value_lot_eligible", "revenue_lot_eligible", "res_revenue_lot_eligible",
+    "nonres_revenue_lot_eligible",
     "lot_acres_eligible", "far",
 ]
 
@@ -140,13 +141,19 @@ def _merge_permit_window(
     true 0 for hoods with no permits in the window, and compute the two per-acre
     activity metrics against boundary ``safe_area`` (the one project
     denominator). The base window uses ``suffix=""`` (the canonical column
-    names); the recent window uses ``"_3yr"``. Returns the updated frame and the
-    list of columns added (two totals + two per-acre), in output order.
+    names); the recent window uses ``"_3yr"``. When the permit frame carries
+    ``ind_permits`` (the industrial permit-velocity count, SPEC_industrial.md
+    A3 — older frames don't), it merges + fills + divides the same way into
+    ``ind_permits{suffix}`` / ``ind_permits_per_acre{suffix}``. Returns the
+    updated frame and the list of columns added, in output order.
     """
     units_col = f"new_dwelling_units{suffix}"
     permits_col = f"new_dwelling_permits{suffix}"
     upa_col = f"new_units_per_acre{suffix}"
     ppa_col = f"new_permits_per_acre{suffix}"
+    has_ind = "ind_permits" in permits.columns
+    ind_col = f"ind_permits{suffix}"
+    ipa_col = f"ind_permits_per_acre{suffix}"
 
     boundary_names = set(joined["neighbourhood_name"])
     unmatched_permits = sorted(set(permits["neighbourhood_name"]) - boundary_names)
@@ -164,9 +171,13 @@ def _merge_permit_window(
 
     frame = permits.rename(columns={
         "new_dwelling_units": units_col, "new_dwelling_permits": permits_col,
+        "ind_permits": ind_col,
     })
+    merge_cols = ["neighbourhood_name", units_col, permits_col]
+    if has_ind:
+        merge_cols.append(ind_col)
     joined = joined.merge(
-        frame[["neighbourhood_name", units_col, permits_col]],
+        frame[merge_cols],
         on="neighbourhood_name",
         how="left",
         validate="m:1",
@@ -184,7 +195,12 @@ def _merge_permit_window(
     joined[permits_col] = joined[permits_col].fillna(0.0)
     joined[upa_col] = joined[units_col] / safe_area
     joined[ppa_col] = joined[permits_col] / safe_area
-    return joined, [units_col, permits_col, upa_col, ppa_col]
+    added = [units_col, permits_col, upa_col, ppa_col]
+    if has_ind:
+        joined[ind_col] = joined[ind_col].fillna(0.0)
+        joined[ipa_col] = joined[ind_col] / safe_area
+        added += [ind_col, ipa_col]
+    return joined, added
 
 
 def join_and_calculate(
@@ -335,6 +351,15 @@ def join_and_calculate(
         joined["res_revenue_per_acre"] = joined["total_res_revenue"] / safe_area
         out_cols = [c for c in out_cols if c != "geometry"] + [
             "total_res_revenue", "res_revenue_per_acre", "geometry",
+        ]
+
+    # Non-residential decomposition (nonres_levy from apply_tax_rates): the
+    # non-res-rate subset of revenue_per_acre, same denominator + share-derived-
+    # client-side conventions as the residential block above.
+    if "total_nonres_revenue" in joined.columns:
+        joined["nonres_revenue_per_acre"] = joined["total_nonres_revenue"] / safe_area
+        out_cols = [c for c in out_cols if c != "geometry"] + [
+            "total_nonres_revenue", "nonres_revenue_per_acre", "geometry",
         ]
 
     # Zoning phase: merge land-use set-aside composition when supplied.
@@ -681,6 +706,11 @@ def join_and_calculate(
                 joined["res_revenue_lot_eligible"] / safe_lot
             )
             added.append("res_revenue_per_lot_acre")
+        if "nonres_revenue_lot_eligible" in joined.columns:
+            joined["nonres_revenue_per_lot_acre"] = (
+                joined["nonres_revenue_lot_eligible"] / safe_lot
+            )
+            added.append("nonres_revenue_per_lot_acre")
         added.append("parcel_frac")
 
         # Guard: hoods below the parcel-fraction floor (incl. NaN — no eligible
@@ -732,14 +762,21 @@ def join_and_calculate(
 # and new_permits_per_acre (+ the total/permit-count pair for the tooltip) are the
 # Development lens A activity metrics — new dwelling units / new permits from
 # issued permits, a change/flow signal, NOT revenue or cost (SPEC_development.md).
+# ind_permits_per_acre (+ ind_permits count) is the industrial permit-velocity
+# cut — new-construction 400-series building_type permits per acre, count only
+# (units_added is meaningless for industrial), same windows (SPEC_industrial.md A3).
 # res_revenue_per_acre / res_revenue_per_lot_acre are the residential-revenue
 # decomposition: the RESIDENTIAL + OTHER RESIDENTIAL class subset of the levy
 # (a subset of revenue_per_acre, never all of what the land pays — the client
 # must say so); the residential SHARE is derived client-side as res/revenue
 # per acre (same denominator cancels), so no share column ships.
+# nonres_revenue_per_acre / nonres_revenue_per_lot_acre are the complement by
+# rate class (COMMERCIAL + MA DERELICT + DESIGNATED IND PROPERTIES slices —
+# SPEC_industrial.md A1), same conventions.
 SLIM_COLUMNS = [
     "neighbourhood_name", "value_per_acre", "revenue_per_acre",
     "res_revenue_per_acre", "res_revenue_per_lot_acre",
+    "nonres_revenue_per_acre", "nonres_revenue_per_lot_acre",
     "set_aside_frac", "is_set_aside", "set_aside_reason",
     "frac_never", "frac_notyet", "frac_inst",
     "frac_residential", "frac_commercial", "frac_industrial",
@@ -752,6 +789,8 @@ SLIM_COLUMNS = [
     "new_dwelling_units", "new_dwelling_permits",
     "new_units_per_acre_3yr", "new_permits_per_acre_3yr",
     "new_dwelling_units_3yr", "new_dwelling_permits_3yr",
+    "ind_permits_per_acre", "ind_permits",
+    "ind_permits_per_acre_3yr", "ind_permits_3yr",
     "value_per_lot_acre", "revenue_per_lot_acre", "parcel_frac",
     "far",
     "geometry",

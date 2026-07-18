@@ -521,3 +521,84 @@ def test_hood_lot_acres_omits_far_without_gross_area():
     ])
     out = build_hood_lot_acres(df)
     assert "far" not in out.columns
+
+
+# --- non-residential subset (apply_tax_rates nonres_levy) -------------------
+
+
+def test_nonres_revenue_grid_columns():
+    # nonres_levy sums per cell like res_levy; a cell with property but no
+    # non-res-rate levy reads a real 0, not null. Lot variant: eligible subset.
+    df = _frame([
+        {**A, "assessed_value": 100.0, "levy": 3.0, "nonres_levy": 2.0, "lot_size": 500.0},
+        {**A2, "assessed_value": 200.0, "levy": 1.0, "nonres_levy": 0.5, "lot_size": 500.0},
+        {**B, "assessed_value": 400.0, "levy": 4.0, "nonres_levy": 0.0, "lot_size": 250.0},
+    ])
+    grid = build_value_grid(df, cell_m=100.0)
+    cell_acres = 100.0 * 100.0 / SQ_M_PER_ACRE
+    vals = sorted(grid["nonres_revenue_per_acre"])
+    assert vals == pytest.approx(sorted([2.5 / cell_acres, 0.0]))
+    cell_a = grid[grid["nonres_revenue_per_acre"] > 0].iloc[0]
+    lot_acres = 1000.0 / SQ_M_PER_ACRE
+    assert cell_a["nonres_revenue_per_lot_acre"] == pytest.approx(2.5 / lot_acres)
+
+
+def test_no_nonres_levy_omits_nonres_columns():
+    df = _frame([{**A, "assessed_value": 100.0, "levy": 1.0, "lot_size": 500.0}])
+    grid = build_value_grid(df)
+    assert "nonres_revenue_per_acre" not in grid.columns
+    assert "nonres_revenue_per_lot_acre" not in grid.columns
+
+
+def test_export_nonres_columns_appended_last(tmp_path):
+    # nonres columns append at the very END — after median_year_built — so the
+    # existing nine slots keep their positions (stable prefix). Levy values
+    # >= 1000: whole-$ rounding on a ~2.47-acre cell zeroes tiny values.
+    df = _frame([
+        {**A, "assessed_value": 100.0, "levy": 3000.0, "res_levy": 1000.0,
+         "nonres_levy": 2000.0, "lot_size": 500.0, "year_built": 1975.0},
+        {**B, "assessed_value": 400.0, "levy": 4000.0, "res_levy": 4000.0,
+         "nonres_levy": 0.0, "lot_size": None, "year_built": None},
+    ])
+    out = tmp_path / "value_grid.json"
+    stats = export_value_grid(df, out, cell_m=100.0)
+    payload = json.loads(out.read_text())
+    assert payload["columns"] == [
+        "lon", "lat", "value_per_acre", "revenue_per_acre",
+        "value_per_lot_acre", "revenue_per_lot_acre",
+        "res_revenue_per_acre", "res_revenue_per_lot_acre",
+        "median_year_built",
+        "nonres_revenue_per_acre", "nonres_revenue_per_lot_acre",
+    ]
+    assert stats["has_nonres"] is True
+    lot_acres = 500.0 / SQ_M_PER_ACRE
+    rows = sorted(payload["cells"], key=lambda r: r[9])
+    assert rows[0][9] == 0 and rows[0][10] is None   # B: real $0 nonres, no lot
+    assert rows[1][9] == round(2000.0 / (100.0 * 100.0 / SQ_M_PER_ACRE))
+    assert rows[1][10] == round(2000.0 / lot_acres)
+
+
+def test_export_nonres_without_lot(tmp_path):
+    # nonres_levy present but no lot_size: only the ground-acre column ships.
+    df = _frame([{**A, "assessed_value": 100.0, "levy": 1000.0, "nonres_levy": 1000.0}])
+    out = tmp_path / "value_grid.json"
+    export_value_grid(df, out, cell_m=100.0)
+    payload = json.loads(out.read_text())
+    assert payload["columns"] == [
+        "lon", "lat", "value_per_acre", "revenue_per_acre", "nonres_revenue_per_acre",
+    ]
+    assert len(payload["cells"][0]) == 5
+
+
+def test_hood_lot_acres_nonres_revenue_variant():
+    # nonres_levy rolls up alongside levy into nonres_revenue_lot_eligible;
+    # absent when nonres_levy isn't passed (dedupe test above has no levy).
+    df = _frame([
+        {**A, "neighbourhood_name": "HOODX", "lot_size": SQ_M_PER_ACRE,
+         "assessed_value": 1000.0, "levy": 10.0, "nonres_levy": 6.0},
+        {**B, "neighbourhood_name": "HOODX", "lot_size": SQ_M_PER_ACRE,
+         "assessed_value": 500.0, "levy": 5.0, "nonres_levy": 0.0},
+    ])
+    out = build_hood_lot_acres(df).set_index("neighbourhood_name")
+    assert out.loc["HOODX", "revenue_lot_eligible"] == pytest.approx(15.0)
+    assert out.loc["HOODX", "nonres_revenue_lot_eligible"] == pytest.approx(6.0)

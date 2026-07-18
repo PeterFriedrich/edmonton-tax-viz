@@ -277,6 +277,28 @@ lot acres, exactly like value/revenue. ~79% of cells have res > 0; res ≤ rev
 per cell (±$1 whole-dollar rounding). Older files lack the columns and the
 Glass Residential $ metric falls back to hood prisms (web column guard).
 
+### Non-residential decomposition (added 2026-07-18 — SPEC_industrial.md A1)
+
+`apply_tax_rates.py` also emits **`nonres_levy`** — the subset of each parcel's
+levy billed **at the Non Residential rate**: `COMMERCIAL` + `MA DERELICT
+RESIDENTIAL` + `DESIGNATED IND PROPERTIES` slices (`NONRES_RATE_LABELS`,
+derived from the label→rate-class map so a future non-res label can't be
+missed). The complement of `res_levy` by rate class; farmland (its own rate
+class, 509 parcels) is the only slice in neither subset, so the identity
+**`levy == res_levy + nonres_levy + farmland slices`** holds exactly (tested).
+Flows mirror res: `nonres_levy` → `total_nonres_revenue` →
+**`nonres_revenue_per_acre`** / **`nonres_revenue_per_lot_acre`** (slim
+GeoJSON, LOW_PARCEL_FRAC suppression inherited) and into the 100 m cells
+(payload columns appended LAST, after `median_year_built`; real-0/null
+conventions identical to res; `value_grid.json` ~2.28 → ~2.50 MB raw). NOTE
+there is **no industrial-vs-commercial split in the roll** — `COMMERCIAL`
+covers all non-res (§ 2) — so this is the honest class-complete cut; an
+industrial-only cut would need a zoning join. Real-data anchors (2025 roll):
+non-res-rate = **47.4% of the citywide levy** ($1.281B of $2.704B; farmland
+residual ~$532K); 34% of grid cells have nonres > 0; hood ground p97.5 ≈
+$48.4k/acre (web clamp $50k). Web: fourth Money metric ("Non-res $"),
+column-guarded like Residential $.
+
 **Stock-age grid column (added 2026-07-17):** `export_value_grid.py` also
 rolls `year_built` (property-info, § 2) into **`median_year_built`** per 100 m
 cell — appended LAST in the payload columns; whole-year ints. Median over
@@ -578,7 +600,7 @@ pinned + drift-guarded and bump together each January.
 |---|---|
 | `units_added` | dwelling-unit numerator. A single apartment permit adds many (GRIESBACH: 2,274 units from 349 permits); a single-detached permit adds 1. Non-numeric → 0 units, kept as a permit, warned. |
 | `work_type` | **new-construction filter.** `NEW_WORK_TYPES` = `(01) New` + `(01) Building - New` + `(01) New House`. Suite-adds/conversions (`(07)`/`(08)`/`(09)`) add dwellings but are INFILL densification — excluded from Lens A (they're the Lens B story). ~41k of ~78k in-window rows are null/blank `work_type` — excluded, count reported. **Verified (S48 Fable audit, 2026-07-13): all 40,956 in-window (2021–2025) null-`work_type` rows carry `units_added` = 0 (sum exactly 0), so the exclusion loses ZERO dwelling units** — they are 0-unit sub-permit-like rows (33,669 are `building_type` = Single Detached House), NOT old miscoded new-construction. (The earlier "most predate consistent coding" rationale was wrong.) |
-| `building_type` | **residential-dwelling filter.** 71 distinct values with many spelling variants of each category — `Apartments (310)`/`Apartment (310)`/`Apartment Condos (315)`; `Row House (330)`/`Row Houses (330)`; `Semi Detached House` (no code); `Backyard House (110)` (a garden suite, counted). All enumerated in `RESIDENTIAL_BUILDING_TYPES`, never prefix-matched. Garages, commercial, `Mixed Use (522)` excluded. |
+| `building_type` | **residential-dwelling filter.** 71 distinct values with many spelling variants of each category — `Apartments (310)`/`Apartment (310)`/`Apartment Condos (315)`; `Row House (330)`/`Row Houses (330)`; `Semi Detached House` (no code); `Backyard House (110)` (a garden suite, counted). All enumerated in `RESIDENTIAL_BUILDING_TYPES`, never prefix-matched. Garages, commercial, `Mixed Use (522)` excluded. **Also `INDUSTRIAL_BUILDING_TYPES`** (400-series: Animal & Plant Services 410, Manufacturing 430, Transport Terminals 440, Maintenance/Hangars 450, Warehouses 460, Communication 470, Utility 480, Engineering 490) drives the separate industrial-permit-velocity count (§ below) — enumerated by FULL STRING because codes duplicate across unrelated types (`Parkade (490)` is NOT industrial). |
 | `year` | integer permit year — drives the pinned window filter (vs parsing `issue_date`). |
 | `neighbourhood` | **UPPERCASE, matches `neighbourhood_name`** — the join key. |
 
@@ -616,6 +638,27 @@ pinned + drift-guarded and bump together each January.
   discloses the live percentage. Never backfill with hood centroids. Expect
   coverage to improve as the city geocodes its backlog; the weekly regen
   picks that up automatically.
+
+### Industrial permit velocity (SPEC_industrial.md A3, added 2026-07-18)
+
+The same `24uj-dj8v` permits, cut for industrial construction: `load_permits`
+counts new-construction (`NEW_WORK_TYPES`) ∩ `INDUSTRIAL_BUILDING_TYPES`
+(400-series, above) permits per hood over the same pinned windows, emitting
+**`ind_permits`** (count) → `join_and_calculate` **`ind_permits_per_acre`**
+(+ the `_3yr` pair), in `SLIM_COLUMNS`. **Count only** — `units_added` is
+meaningless for industrial (no dwellings), and `construction_value` is
+reserved (consistent with the Lens C reservation). Aggregated separately from
+the residential rollup and outer-merged, so a hood with one kind of activity
+but not the other carries a true 0 in the missing column. Real data (2021–2025
+window, build time): **283 new industrial permits across 117 hoods** (3yr: 189
+across 85); top hoods are the industrial areas (SOUTHEAST INDUSTRIAL, MISTATIM,
+CLOVER BAR, WINTERBURN, EASTGATE BUSINESS PARK); per-acre is small (p97.5 ≈
+0.015/acre). Web: third `#devmetric` option "Industrial" — a Development-view
+**choropleth only** (no detail-grid cells; not an Infill activity — the roll
+has no industrial-vs-commercial split anyway, § 2). **NOTE — no
+industrial-vs-commercial split exists in the assessment roll** (§ 2), so this
+permit-based cut is the ONLY industrial-specific spatial signal the project
+has; it is construction activity, not assessment base.
 
 ## 11. Alberta FIR Debt Series (debt lens D5, added 2026-07-14)
 

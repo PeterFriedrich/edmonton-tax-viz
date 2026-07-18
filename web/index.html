@@ -170,6 +170,7 @@
     <button data-metric="revenue_per_acre" class="active">Revenue</button>
     <button data-metric="value_per_acre">Value</button>
     <button data-metric="res_revenue_per_acre" title="Residential-class tax dollars only (houses, condos and apartment buildings) — a subset of Revenue. Not the 'Residential only' lens, which fades non-residential neighbourhoods without changing the dollars">Residential $</button>
+    <button data-metric="nonres_revenue_per_acre" title="Tax dollars billed at the non-residential rate (commercial and industrial land) — a subset of Revenue, the complement of Residential $">Non-res $</button>
   </div>
 
   <div id="palette" class="panel">
@@ -283,6 +284,7 @@
     <div id="devmetric">
       <button data-devmetric="units" class="active" title="New dwelling units per acre — housing supply added. One large apartment adds many units on a single permit">Dwelling units</button>
       <button data-devmetric="permits" title="New residential building permits per acre — project density. Many single houses are many permits; one apartment is one permit">Permits</button>
+      <button data-devmetric="industrial" title="New industrial building permits per acre — warehouses, manufacturing, utilities, transport terminals (400-series). Count only; a hood-level choropleth (no detail grid, and not an infill metric)">Industrial</button>
     </div>
     <span class="hd" id="devwindow-hd">Window</span>
     <div id="devwindow">
@@ -374,6 +376,37 @@
                   "is linear; colour is square-root–scaled to reveal the low end. " +
                   "Grey = set-aside land, or too little parcel land for a " +
                   "lot-acre value.",
+      },
+      // Non-residential decomposition: the slices billed at the Non
+      // Residential rate (commercial + industrial; SPEC_industrial.md A1) —
+      // the complement of Residential $ by rate class (farmland's 509 parcels
+      // are the only other slice). Same subset conventions as Residential $:
+      // same elevationScale as Revenue so the bars read as comparable subsets.
+      nonres_revenue_per_acre: {
+        key: "nonres_revenue_per_acre",
+        title: "Edmonton: Non-Residential Tax Revenue per Acre",
+        blurb: "Height and colour show the non-residential-rate share of " +
+               "municipal property-tax revenue — commercial and industrial " +
+               "land — divided by neighbourhood area. This is a subset of " +
+               "Revenue, not all of what the land pays: residential dollars " +
+               "are excluded here. Height is linear; colour is " +
+               "square-root–scaled to reveal the low end. Grey = set-aside " +
+               "natural/undeveloped land, excluded from the scale.",
+        legendLabel: "Non-residential revenue per acre",
+        legendMin: "$0",
+        legendMax: "$50k+",
+        colorClamp: 50_000, // hand-set from the real-data p97.5 (~$48.4k), like Revenue's 50k
+        elevationScale: 0.033,
+        transform: "sqrt",
+        fmt: fmtMoney,
+        lotBlurb: "Height and colour show the non-residential-rate share of " +
+                  "municipal property-tax revenue — commercial and industrial " +
+                  "land, a subset of Revenue, not all of what the land pays — " +
+                  "divided by the parcel (lot) acres a neighbourhood's " +
+                  "properties actually own (city lot sizes, deduplicated at " +
+                  "multi-unit points). Height is linear; colour is " +
+                  "square-root–scaled to reveal the low end. Grey = set-aside " +
+                  "land, or too little parcel land for a lot-acre value.",
       },
       value_per_acre: {
         key: "value_per_acre",
@@ -699,6 +732,17 @@
                "full colour here — that undeveloped land is exactly where much " +
                "new building lands; a neighbourhood's set-aside status still " +
                "shows on hover.",
+        // Industrial permit-velocity choropleth (SPEC_industrial.md A3) — a
+        // count, not a dwelling supply; descriptive, no editorial framing.
+        indBlurb: "Each neighbourhood is coloured by new industrial building " +
+               "permits per acre over the chosen window — warehouses, " +
+               "manufacturing, utility, engineering and transport-terminal " +
+               "buildings (the City's 400-series building types), counted " +
+               "where construction was permitted. A permit count, not dwelling " +
+               "units or assessed value: where industrial construction is " +
+               "happening. Colour is square-root scaled. Set-aside land shows " +
+               "in full colour here, as in the housing view; a neighbourhood's " +
+               "set-aside status still shows on hover.",
         opacity: null, // no prisms in this view
       },
       infill: {
@@ -761,8 +805,12 @@
     // disclosure read from the grid file itself (export_dev_grid "coverage").
     // The gap is a geocoding lag on the newest permits; those permits still
     // count in the hood totals, so the honest framing is "not on the grid yet".
+    const devTitle = () => devIndustrial()
+      ? "Edmonton: New Industrial Building (2021–2025)"
+      : VIEWS.development.title;
     const devBlurb = () => {
-      if (!(state.devGrid && devGridData)) return VIEWS.development.blurb;
+      if (devIndustrial()) return VIEWS.development.indBlurb;
+      if (!devGridActive()) return VIEWS.development.blurb;
       // Age spikes: a different dataset (the whole standing stock, not the
       // permit window), so the blurb states its own scale + coverage.
       if (devAgeActive()) {
@@ -828,6 +876,11 @@
               // Stock age (pipeline 2026-07-17) — absent on older files (-1),
               // and the development view's Spikes picker stays hidden.
               median_year_built: p.columns.indexOf("median_year_built"),
+              // Non-res-rate subset (pipeline 2026-07-18) — absent on older
+              // files (-1), and the Non-res $ metric falls back to hood
+              // prisms via the same col >= 0 guard.
+              nonres_revenue_per_acre: p.columns.indexOf("nonres_revenue_per_acre"),
+              nonres_revenue_per_lot_acre: p.columns.indexOf("nonres_revenue_per_lot_acre"),
             },
             cells: p.cells,
           };
@@ -1269,11 +1322,25 @@
     const DEV_COLS = {
       units:   { "5yr": "new_units_per_acre",   "3yr": "new_units_per_acre_3yr" },
       permits: { "5yr": "new_permits_per_acre", "3yr": "new_permits_per_acre_3yr" },
+      // Industrial permit velocity (SPEC_industrial.md A3) — count only, its own
+      // per-acre column. Development-view choropleth ONLY: it is not an infill
+      // activity (an industrial permit isn't residential infill — applyView
+      // resets it away on entering Infill) and has no detail-grid cells (the
+      // Detail toggle hides while it's selected).
+      industrial: { "5yr": "ind_permits_per_acre", "3yr": "ind_permits_per_acre_3yr" },
     };
     const DEV_TOTAL_COLS = {
       "5yr": { units: "new_dwelling_units",     permits: "new_dwelling_permits" },
       "3yr": { units: "new_dwelling_units_3yr", permits: "new_dwelling_permits_3yr" },
     };
+    // Industrial permit COUNT total per window, for the tooltip (no units total).
+    const DEV_IND_TOTAL = { "5yr": "ind_permits", "3yr": "ind_permits_3yr" };
+    // Industrial is a hood-level choropleth only — no detail grid, not infill.
+    const devIndustrial = () => state.devMetric === "industrial";
+    // The 100 m detail grid applies to the residential metrics only: industrial
+    // is choropleth-only and dev_grid.json carries no industrial cells, so the
+    // Detail toggle hides and the render stays flat while industrial is up.
+    const devGridActive = () => state.devGrid && devGridData && !devIndustrial();
     const DEV_WINDOW_LABEL = { "5yr": "2021–2025", "3yr": "2023–2025" };
     const devCol = () => DEV_COLS[state.devMetric][state.devWindow];
     const _devScale = {};
@@ -1306,7 +1373,9 @@
       });
     }
     const fmtDev = v => v.toFixed(v < 1 ? 2 : 1) +
-      (state.devMetric === "permits" ? " new permits / acre" : " new homes / acre");
+      (state.devMetric === "permits" ? " new permits / acre"
+        : state.devMetric === "industrial" ? " industrial permits / acre"
+        : " new homes / acre");
 
     // --- Development 100 m detail grid (layers-panel toggle, 2026-07-15) ----
     // Pipeline-binned permit cells (load_permits.export_dev_grid — same
@@ -1921,7 +1990,7 @@
         // override stands: nothing greys, geography only) under 100 m spikes:
         // permit cells, or — Spikes picker — the stock-age cells. Hover stays
         // on the hood either way.
-        if (state.devGrid && devGridData) {
+        if (devGridActive()) {
           return [new deck.GeoJsonLayer({
             id: "dev-neutral-plane",
             data: state.data,
@@ -2181,15 +2250,26 @@
         const pa = p[devCol()];
         if (pa == null)
           return { className: "tip", html: name + `<span class="muted">no permit data</span>` };
-        const tot = DEV_TOTAL_COLS[state.devWindow];
-        const units = p[tot.units], permits = p[tot.permits];
-        const rows = [
-          fmtDev(pa),
-          `<span class="muted">${Math.round(units).toLocaleString()} new dwelling ` +
-            `unit${units === 1 ? "" : "s"} · ` +
-            `${Math.round(permits).toLocaleString()} permit` +
-            `${permits === 1 ? "" : "s"} (${DEV_WINDOW_LABEL[state.devWindow]})</span>`,
-        ];
+        let rows;
+        if (devIndustrial()) {
+          // Count only — industrial has no dwelling-unit numerator.
+          const n = p[DEV_IND_TOTAL[state.devWindow]] || 0;
+          rows = [
+            fmtDev(pa),
+            `<span class="muted">${Math.round(n).toLocaleString()} new industrial ` +
+              `permit${n === 1 ? "" : "s"} (${DEV_WINDOW_LABEL[state.devWindow]})</span>`,
+          ];
+        } else {
+          const tot = DEV_TOTAL_COLS[state.devWindow];
+          const units = p[tot.units], permits = p[tot.permits];
+          rows = [
+            fmtDev(pa),
+            `<span class="muted">${Math.round(units).toLocaleString()} new dwelling ` +
+              `unit${units === 1 ? "" : "s"} · ` +
+              `${Math.round(permits).toLocaleString()} permit` +
+              `${permits === 1 ? "" : "s"} (${DEV_WINDOW_LABEL[state.devWindow]})</span>`,
+          ];
+        }
         // Set-aside status still shows here even though the hood is coloured
         // (the override greys nothing) — Peter's tooltip decision, 2026-07-12.
         if (p.is_set_aside)
@@ -2339,15 +2419,30 @@
       refreshLegend();
     }
 
-    // Development sub-metric picker (units vs permits per acre). Both share the
-    // sqrt-inferno gradient bar (only the label/anchors + colours change), so a
-    // switch just rebuilds the plane layer and re-runs the legend.
+    // Development sub-metric picker (dwelling units | permits | industrial).
+    // Units/permits share the sqrt-inferno bar; industrial is a distinct
+    // choropleth (own title/blurb, no detail grid) so a switch to/from it also
+    // re-runs the development chrome + hides the Detail toggle / opacity slider.
+    // Industrial is not offered in Infill (the button hides there), so this
+    // only fires in development for it.
     function applyDevMetric(m) {
       if (m === state.devMetric || !DEV_COLS[m]) return;
       state.devMetric = m;
       document.querySelectorAll("#devmetric button").forEach(b =>
         b.classList.toggle("active", b.dataset.devmetric === m));
       if (state.view !== "development" && state.view !== "infill") return;
+      if (state.view === "development") {
+        // The Detail toggle + its opacity slider only apply to the residential
+        // metrics — hide both while industrial is up, restore otherwise.
+        const gridShow = !!devGridData && !devIndustrial();
+        document.getElementById("dev-grid-hd").style.display = gridShow ? "block" : "none";
+        document.getElementById("dev-grid").style.display = gridShow ? "block" : "none";
+        document.getElementById("prism-row").style.display =
+          devGridActive() ? "flex" : "none";
+        document.getElementById("title-h").textContent = devTitle();
+        document.getElementById("title-p").textContent = devBlurb();
+        syncDevControls();
+      }
       overlay.setProps({ layers: buildLayers() });
       refreshLegend();
     }
@@ -2460,7 +2555,7 @@
         // Grid mode: the legend follows the spikes (per 100 m cell), not the
         // per-acre choropleth it replaced. Age spikes label their own scale
         // (median year, linear — the colour anchors, ≤p2.5 to the newest).
-        const gridMode = state.devGrid && devGridData;
+        const gridMode = devGridActive();
         if (gridMode && devAgeActive()) {
           const s = ageGridScale();
           document.getElementById("legend-label").textContent =
@@ -2471,13 +2566,17 @@
             String(Math.round(s.hi));
         } else {
           document.getElementById("legend-label").textContent =
-            (state.devMetric === "permits" ? "New permits" : "New homes") +
+            (state.devMetric === "permits" ? "New permits"
+              : state.devMetric === "industrial" ? "Industrial permits"
+              : "New homes") +
             (gridMode ? " per 100 m cell" : " per acre") +
             ` (${DEV_WINDOW_LABEL[state.devWindow]}, sqrt colour)`;
           document.getElementById("legend-min").textContent = "0";
           const clamp = gridMode ? devGridScale().clamp : devScale().clamp;
-          document.getElementById("legend-max").textContent =
-            clamp.toFixed(clamp < 10 && !gridMode ? 1 : 0) + "+";
+          // Small per-acre clamps (industrial permits run ~0.01/acre) need more
+          // decimals than the per-100m-cell counts; match fmtDev's precision.
+          const dp = gridMode ? 0 : clamp < 1 ? 2 : clamp < 10 ? 1 : 0;
+          document.getElementById("legend-max").textContent = clamp.toFixed(dp) + "+";
         }
         // The set-aside mask is overridden here, so there is no off-scale grey
         // category — hide the aside swatch row entirely for this view.
@@ -2612,17 +2711,23 @@
     function syncDevControls() {
       const v = state.view;
       const devViewsMetric = v === "development" || v === "infill";
-      const ageUp = v === "development" && state.devGrid && devAgeActive();
+      const ageUp = v === "development" && devGridActive() && devAgeActive();
       const metricShow = devViewsMetric && state.hasPermitsPerAcre && !ageUp;
       const windowShow = devViewsMetric && state.hasDevWindow && !ageUp;
-      const spikeShow = v === "development" && state.devGrid && !!devGridData
-        && devAgeCol() >= 0;
+      const spikeShow = v === "development" && devGridActive() && devAgeCol() >= 0;
       document.getElementById("devmetric-hd").style.display = metricShow ? "block" : "none";
       document.getElementById("devmetric").style.display = metricShow ? "flex" : "none";
       document.getElementById("devwindow-hd").style.display = windowShow ? "block" : "none";
       document.getElementById("devwindow").style.display = windowShow ? "flex" : "none";
       document.getElementById("devspike-hd").style.display = spikeShow ? "block" : "none";
       document.getElementById("devspike").style.display = spikeShow ? "flex" : "none";
+      // Industrial is a development-only choropleth metric — hide its button in
+      // Infill (units/permits stay as the activity choices). Left permanently
+      // hidden by the data guard when the column is absent.
+      if (state.hasIndPermits) {
+        document.querySelector('#devmetric button[data-devmetric="industrial"]')
+          .style.display = v === "infill" ? "none" : "";
+      }
     }
 
     // The age spikes ride on the Glass grid file — kick its (shared, single)
@@ -2686,6 +2791,15 @@
       state.view = v;
       document.querySelectorAll("#views button").forEach(b =>
         b.classList.toggle("active", b.dataset.view === v));
+      // Infill's activity side is residential building only — the industrial
+      // metric is a development-choropleth cut, never an infill activity. If it
+      // was selected in Development, drop back to units on entering Infill so
+      // every infill path (score, tooltip, legend) reads a residential column.
+      if (v === "infill" && devIndustrial()) {
+        state.devMetric = "units";
+        document.querySelectorAll("#devmetric button").forEach(b =>
+          b.classList.toggle("active", b.dataset.devmetric === "units"));
+      }
       // The layers panel hosts five view-scoped sections: the prism slider
       // (ratio + glass, and uses while its prisms are on), the residential-
       // prisms toggle (uses), the service checkboxes (services), the acre
@@ -2710,7 +2824,7 @@
       document.getElementById("prism-hd").style.display = prisms ? "block" : "none";
       document.getElementById("prism-row").style.display =
         (prisms || (v === "uses" && state.usesPrisms) ||
-         (v === "development" && state.devGrid)) ? "flex" : "none";
+         (v === "development" && devGridActive())) ? "flex" : "none";
       document.getElementById("services-hd").style.display = v === "services" ? "block" : "none";
       document.getElementById("services").style.display = v === "services" ? "block" : "none";
       // The lens applies in Money and Ratio. In Services the per-hood signal
@@ -2793,7 +2907,8 @@
       syncDevControls();
       // The development detail toggle — only where the grid file loaded
       // (post-fetch, like the glass denominator gate above).
-      const devGridShow = v === "development" && !!devGridData;
+      // Industrial is choropleth-only (no cells) — the Detail toggle hides.
+      const devGridShow = v === "development" && !!devGridData && !devIndustrial();
       document.getElementById("dev-grid-hd").style.display = devGridShow ? "block" : "none";
       document.getElementById("dev-grid").style.display = devGridShow ? "block" : "none";
       // Re-entering the development view with the grid up: make sure the age
@@ -2806,7 +2921,8 @@
       const chrome = v === "money" ? METRICS[state.metric] : VIEWS[v];
       document.getElementById("title-h").textContent =
         v === "glass" ? METRICS[state.metric].title :
-        v === "ratio" ? ratioDenom().title : chrome.title;
+        v === "ratio" ? ratioDenom().title :
+        v === "development" ? devTitle() : chrome.title;
       document.getElementById("title-p").textContent =
         v === "glass" ? glassBlurb() :
         v === "services" ? servicesBlurb() :
@@ -2968,6 +3084,12 @@
       if (!state.hasResRevenue) {
         document.querySelector('#toggle button[data-metric="res_revenue_per_acre"]').style.display = "none";
       }
+      // Same guard for the Non-res $ metric (pipeline 2026-07-18).
+      state.hasNonresRevenue =
+        state.data.features.some(f => f.properties.nonres_revenue_per_acre != null);
+      if (!state.hasNonresRevenue) {
+        document.querySelector('#toggle button[data-metric="nonres_revenue_per_acre"]').style.display = "none";
+      }
       // Same guard for the uses view: it needs the composition columns
       // (pipeline 2026-07-03) — hide the button on older data files.
       if (!state.data.features.some(f => f.properties.frac_commercial != null)) {
@@ -2987,6 +3109,14 @@
       // older data files carry only the base 5yr window and hide the picker.
       state.hasDevWindow =
         state.data.features.some(f => f.properties.new_units_per_acre_3yr != null);
+      // The Industrial sub-metric needs ind_permits_per_acre (pipeline
+      // 2026-07-18) — hide the button on older files (state.devMetric can't be
+      // stuck on it: no persistence, default is units).
+      state.hasIndPermits =
+        state.data.features.some(f => f.properties.ind_permits_per_acre != null);
+      if (!state.hasIndPermits) {
+        document.querySelector('#devmetric button[data-devmetric="industrial"]').style.display = "none";
+      }
       // The Infill view (Lens B) needs the `far` suitability column (pipeline
       // 2026-07-13) AND the activity column — hide the button on older data.
       state.hasInfill =

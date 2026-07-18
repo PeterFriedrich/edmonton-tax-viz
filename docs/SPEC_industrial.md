@@ -1,7 +1,9 @@
 # Scope: Industrial & non-residential lens family (Track A) + regional non-residential context (Track B)
 
-**Status:** SPEC'd 2026-07-18. Track A quick wins (A1 non-res $ cut, A3
-industrial permit velocity) greenlit same day; the rest is PLAN. This doc specs
+**Status:** SPEC'd 2026-07-18. **A1 + A3 BUILT same day** (A1: `nonres_levy` →
+fourth Money metric + Glass grid columns; A3: `ind_permits_per_acre` → third
+`#devmetric` "Industrial" choropleth — TODO.md has both as-built summaries);
+the rest is PLAN. This doc specs
 the non-residential side of the fiscal picture: where the commercial/industrial
 tax base sits, how much industrial land is shovel-ready, where non-residential
 construction is actually happening, and — Track B — how Edmonton's
@@ -70,8 +72,11 @@ the levy machinery already computes per-class slices
 - **`nonres_levy`** = the slices billed at the **Non Residential** rate class:
   `COMMERCIAL` + `MA DERELICT RESIDENTIAL` (the city deliberately bills
   derelict at the non-res rate — mirror of its exclusion from `res_levy`,
-  DECISIONS 2026-07-16) + `NONRES MUNICIPAL/RES EDUCATION` (3 rows, ≈$0).
-  **Farmland excluded** (own rate class, 509 parcels, immaterial).
+  DECISIONS 2026-07-16) + `DESIGNATED IND PROPERTIES` (as built: the set is
+  derived from the label→rate-class map, `NONRES_RATE_LABELS`, so a future
+  non-res label can't be missed; the exempt label carries no rate and
+  contributes $0 regardless). **Farmland excluded** (own rate class, 509
+  parcels, immaterial — real-data residual ~$532K of a $2.704B levy).
 - **Testable identity:** `levy == res_levy + nonres_levy + farmland_levy`
   (whole-$ tolerance) — decomposition sums to total by construction.
 - **Columns:** `nonres_revenue_per_acre` / `nonres_revenue_per_lot_acre`
@@ -90,7 +95,17 @@ dollar cut would need a zoning-layer join (industrial zones), with the
 zoning≠assessment-class caveat attached. That is a possible later refinement,
 **not** part of A1 — A1 is the honest class-complete non-res cut.
 
-### A3 — Industrial permit velocity (greenlit)
+### A3 — Industrial permit velocity — BUILT 2026-07-18
+
+**As built** (`feat/ind-permit-velocity`): `INDUSTRIAL_BUILDING_TYPES` in
+`load_permits` (400-series, full-string) → `ind_permits` count →
+`ind_permits_per_acre` (+ `_3yr`) in `SLIM_COLUMNS`. Third `#devmetric` option
+**"Industrial"** — a Development-view choropleth only (Detail toggle hides; not
+an Infill activity: entering Infill resets the metric to a residential column
+and hides the button). Column-guarded (`state.hasIndPermits`). Real data:
+283 permits / 117 hoods (5yr), top hoods = the industrial areas. Display
+open-decision resolved to the recommendation below (Peter, 2026-07-18).
+`verify-ind-permits.js` ALL PASS. Original spec kept below.
 
 A filter on data already in the pipeline (General Building Permits
 `24uj-dj8v`, DATA.md §10). `building_type` carries a coded taxonomy (live
@@ -226,8 +241,8 @@ to the late-1940s refinery siting). No metric, no per-parcel data.
 
 ## Open decisions (Peter)
 
-1. **A3 display** — third `#devmetric` option vs pipeline-only until a better
-   surface (recommendation: third option, Infill gated to residential).
+1. ~~**A3 display**~~ — RESOLVED 2026-07-18: third `#devmetric` option,
+   choropleth only, Infill gated to residential (the recommendation, built).
 2. **A2 display** — point layer / hood rollup / table; and whether the supply
    *time series* waits for a chart surface.
 3. **B display** — all Track B outputs are charts/tables, and no non-map

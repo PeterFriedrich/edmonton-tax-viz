@@ -539,6 +539,33 @@ Implementation (`web/index.html`):
   ALL PASS) + screenshots (`tools/profiling/shot-res-revenue.js`: plain +
   lens-composed + Glass cells).
 
+### Non-residential revenue metric (Money view, built 2026-07-18)
+
+A fourth `#toggle` metric — **Revenue | Value | Residential $ | Non-res $**
+(`nonres_revenue_per_acre`): the **non-res-rate share of the levy in dollars**
+(`COMMERCIAL` + `MA DERELICT` + `DESIGNATED IND PROPERTIES` slices — the
+complement of Residential $ by rate class; DATA.md §4 "Non-residential
+decomposition"; SPEC_industrial.md A1). Same construction as Residential $ in
+every respect — a plain `METRICS` entry, so clamp/legend/blurb/denominator
+toggle/lens re-clamp all apply unchanged:
+- `elevationScale` = Revenue's 0.033 (comparable-subset bars); clamp **$50k**
+  hand-set from the real-data p97.5 (~$48.4k — coincidentally Revenue's own
+  clamp value).
+- Blurb honesty line: "a subset of Revenue, not all of what the land pays —
+  residential dollars are excluded here."
+- No new tooltip line — the existing "N% of revenue is residential" line
+  (shown for every Money metric) already implies the complement.
+- **Column-guarded** (`state.hasNonresRevenue`); Glass cells via the two grid
+  columns in `gridData.columns` (appended LAST in the payload, after
+  `median_year_built`), hood-prism fallback on older files.
+- Headless-verified (`tools/profiling/verify-nonres-revenue.js`: guard, column
+  drive, subset invariant nonres ≤ rev AND res + nonres ≤ rev per hood and per
+  cell, blurb honesty line, lot denominator with independent p97.5, Glass
+  branch-checked, metric persistence — ALL PASS) + screenshots
+  (`tools/profiling/shot-nonres-revenue.js`: plain + Glass cells; commercial
+  corridors bright, residential fabric dark real-zeros — the inverse of the
+  res pattern).
+
 ---
 
 ## Open / unresolved

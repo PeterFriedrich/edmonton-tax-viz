@@ -48,15 +48,24 @@ _Last reconciled: 2026-07-09_
   per-parcel regional lens above, which stays parked untouched). Tone rule is
   stricter here — descriptive only, see the spec. Build order A1 → A3 → A2 →
   B2 → B1 → B3:
-  - [ ] **A1 — Non-res $ cut (greenlit 2026-07-18):** `nonres_levy`
-    (COMMERCIAL + MA DERELICT + NONRES MUNICIPAL/RES EDUCATION slices;
-    farmland excluded; identity `levy == res + nonres + farmland` tested) →
-    fourth Money metric + Glass grid columns, mirroring the res_levy pattern.
-  - [ ] **A3 — Industrial permit velocity (greenlit 2026-07-18):**
-    `ind_permits_per_acre` off the 400-series `building_type` set (enumerate
-    by full string — codes duplicate: Parkade/Engineering both 490), pinned
-    Lens A windows. Display = open decision 1 in the spec (recommend third
-    `#devmetric` option, Infill gated to residential).
+  - [x] ~~**A1 — Non-res $ cut (greenlit 2026-07-18)**~~ — **SHIPPED
+    2026-07-18** (`feat/nonres-revenue-metric`): `nonres_levy` = the slices
+    billed at the Non Residential rate (COMMERCIAL + MA DERELICT + DESIGNATED
+    IND PROPERTIES via `NONRES_RATE_LABELS`; exempt is $0, farmland its own
+    class; identity `levy == res + nonres + farmland` tested) → fourth Money
+    metric "Non-res $" + Glass grid columns (appended last). Real data: 47.4%
+    of citywide levy; clamp $50k (p97.5 ≈ $48.4k); 34% of cells nonres > 0.
+    `verify-nonres-revenue.js` ALL PASS; DATA.md §4 + UI.md. Live on the next
+    weekly refresh (column guard until then).
+  - [x] ~~**A3 — Industrial permit velocity (greenlit 2026-07-18)**~~ —
+    **SHIPPED 2026-07-18** (`feat/ind-permit-velocity`, stacked on A1):
+    `INDUSTRIAL_BUILDING_TYPES` (400-series, full-string — Parkade 490 is NOT
+    industrial) → `ind_permits` count → `ind_permits_per_acre` (+ `_3yr`).
+    Third `#devmetric` option "Industrial" — Development-view choropleth only
+    (Detail toggle hides; Infill resets it to a residential metric + hides the
+    button). Real data: 283 permits / 117 hoods (5yr). `verify-ind-permits.js`
+    ALL PASS; DATA.md §10 + SPEC_development + SPEC_industrial A3. Live on the
+    next weekly refresh (column guard until then).
   - [ ] **A2 — Shovel-ready industrial land:** `stt5-pzaa` verified 2026-07-18
     (annual snapshots 2016–2023, `servicing` field, centroids); absorption
     computable from snapshot diffs; display undecided.
