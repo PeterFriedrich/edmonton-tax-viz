@@ -40,6 +40,37 @@ _Last reconciled: 2026-07-09_
   (a) is resolved.** (Strathcona licensing is clean: OGL-Alberta via
   catalogued open-data hub datasets.)
 
+- [ ] **INDUSTRIAL & NON-RESIDENTIAL LENS FAMILY (NEW 2026-07-18 — full plan in
+  `docs/SPEC_industrial.md`; read it first).** Two tracks: A = non-res
+  decomposition inside the existing hood/grid frame; B = citywide-aggregate
+  regional context from Alberta Municipal Affairs sources (OGL-Alberta,
+  established fetch pattern — extends `fetch_fir_debt.py`; NOT the parked
+  per-parcel regional lens above, which stays parked untouched). Tone rule is
+  stricter here — descriptive only, see the spec. Build order A1 → A3 → A2 →
+  B2 → B1 → B3:
+  - [ ] **A1 — Non-res $ cut (greenlit 2026-07-18):** `nonres_levy`
+    (COMMERCIAL + MA DERELICT + NONRES MUNICIPAL/RES EDUCATION slices;
+    farmland excluded; identity `levy == res + nonres + farmland` tested) →
+    fourth Money metric + Glass grid columns, mirroring the res_levy pattern.
+  - [ ] **A3 — Industrial permit velocity (greenlit 2026-07-18):**
+    `ind_permits_per_acre` off the 400-series `building_type` set (enumerate
+    by full string — codes duplicate: Parkade/Engineering both 490), pinned
+    Lens A windows. Display = open decision 1 in the spec (recommend third
+    `#devmetric` option, Infill gated to residential).
+  - [ ] **A2 — Shovel-ready industrial land:** `stt5-pzaa` verified 2026-07-18
+    (annual snapshots 2016–2023, `servicing` field, centroids); absorption
+    computable from snapshot diffs; display undecided.
+  - [ ] **A4 — Assessment-lag methods note:** Nov 29 2024 council memo
+    attachment (Table 1, permit→assessment 3–5 yr lag) — edmonton.ca fetch,
+    likely Peter/laptop.
+  - [ ] **B2 — Regional non-res mill rates:** `2026_Tax_Rates.xlsx` on the FIR
+    page (verified live) + yearly workbooks; 6 municipalities; reviewed JSON.
+  - [ ] **B1 — Regional non-res assessment share:** FIR/SIR + equalized
+    assessment XLSX (2024–26 verified on open.alberta.ca — NOT PDF-only);
+    rebuild the published-share-series discrepancy from primary data.
+  - [ ] **B3 — Industrial-areas context map:** illustrative; municipal
+    boundary layer source to verify.
+
 - [x] ~~**Dev+Infill ROUND-2 delta audit**~~ — **EXECUTED 2026-07-16 (S56, same
   session the brief was written; this line was stale until 2026-07-17).**
   Dispositions in `session-summary/2026-07-16.md` §2.D + `docs/AUDIT_LEDGER.md`:

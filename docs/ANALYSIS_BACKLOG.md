@@ -489,3 +489,36 @@ both the lot-acre toggle framing and the services-lens cost-vs-revenue story.
 Related: item 1 (outlier tails), the PRIORITY lot-acre toggle in `TODO.md`.
 
 </details>
+
+---
+
+## 8. Regional non-residential assessment share — rebuild the published series from primary data
+
+**Added 2026-07-18 (with the industrial/non-res lens family — `docs/SPEC_industrial.md` B1).**
+
+**Observation.** Two published secondary figures for Edmonton's share of the
+region's non-residential assessment base don't obviously reconcile: a 2016 city
+report cited a decline from **76% → 72%** over the prior 15 years, while a
+late-2024 industry publication cited a decline from a "record high" **72% in
+2008-09 to 60% in 2022**. Candidate explanations: different denominators (which
+municipalities count as "the region"), different valuation bases
+(equalized vs raw), different class definitions (machinery & equipment,
+linear property in or out).
+
+**Why it matters.** The share series is the headline number for the regional
+context lens (B1); citing either secondary figure without reconciliation would
+import an unexplained contradiction into public copy. The project rule is to
+rebuild from primary data and state what it shows.
+
+**Approach — auto:** pull the FIR/SIR yearly workbooks (established
+`fetch_fir_debt.py` idiom; zips back to 1994) + the equalized assessment XLSX
+(2024–2026 verified on open.alberta.ca; check FIR/SIR or older editions for
+pre-2024 equalized values) for Edmonton + Strathcona/Sturgeon/Parkland
+counties + Leduc city/county; compute the share series under each candidate
+definition (equalized vs raw, class in/out) and see which reproduces which
+published figure. **By hand:** read the two secondary sources' own
+methodology notes if recoverable; pick and document the definition the lens
+will use.
+
+**Output:** a FINDINGS note with the reconciled series + the definition
+chosen for B1; feeds SPEC_industrial B1 copy.
