@@ -1056,6 +1056,45 @@ def test_permits_merge_adds_columns_and_per_acre():
     assert row["new_permits_per_acre"] == pytest.approx(2.0)  # 20 permits / 10 acres
 
 
+def test_industrial_permits_per_acre_computed():
+    # ind_permits (SPEC_industrial A3) rides the permit merge into
+    # ind_permits_per_acre; a hood without it fills a true 0.
+    result = join_and_calculate(
+        _assessment([
+            {"neighbourhood_name": "INDPARK", "total_assessed_value": 100.0},
+            {"neighbourhood_name": "HOUSING", "total_assessed_value": 100.0},
+        ]),
+        _boundaries([
+            {"neighbourhood_name": "INDPARK", "area_acres": 10.0},
+            {"neighbourhood_name": "HOUSING", "area_acres": 10.0},
+        ]),
+        permits=_permits([
+            {"neighbourhood_name": "INDPARK", "new_dwelling_units": 0.0,
+             "new_dwelling_permits": 0, "ind_permits": 5},
+            {"neighbourhood_name": "HOUSING", "new_dwelling_units": 30.0,
+             "new_dwelling_permits": 12, "ind_permits": 0},
+        ]),
+    )
+    ind = result.set_index("neighbourhood_name")
+    assert ind.loc["INDPARK", "ind_permits"] == pytest.approx(5.0)
+    assert ind.loc["INDPARK", "ind_permits_per_acre"] == pytest.approx(0.5)
+    assert ind.loc["HOUSING", "ind_permits_per_acre"] == pytest.approx(0.0)
+
+
+def test_industrial_permits_absent_when_column_missing():
+    # A permit frame from before A3 (no ind_permits) omits the columns entirely.
+    result = join_and_calculate(
+        _assessment([{"neighbourhood_name": "GROWTOWN", "total_assessed_value": 100.0}]),
+        _boundaries([{"neighbourhood_name": "GROWTOWN", "area_acres": 10.0}]),
+        permits=_permits([
+            {"neighbourhood_name": "GROWTOWN",
+             "new_dwelling_units": 50.0, "new_dwelling_permits": 20},
+        ]),
+    )
+    assert "ind_permits_per_acre" not in result.columns
+    assert "ind_permits" not in result.columns
+
+
 def test_no_permits_arg_omits_columns():
     result = join_and_calculate(
         _assessment([{"neighbourhood_name": "DOWNTOWN", "total_assessed_value": 100.0}]),

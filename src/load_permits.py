@@ -92,32 +92,49 @@ RESIDENTIAL_BUILDING_TYPES = frozenset({
     "Mobile Home (130)",
 })
 
-# Full building_type vocabulary observed 2026-07-12 — the residential set above
-# UNION the non-residential codes below. Anything absent from this union is
-# UNSEEN: logged loudly, treated as excluded until reviewed (it could be a new
-# residential variant that should be counted).
-KNOWN_BUILDING_TYPES = RESIDENTIAL_BUILDING_TYPES | frozenset({
-    "Animal and Plant Services (410)", "Carport (090)",
-    "Clinics, Health Units (642)", "Communication Buildings (470)",
+# building_type values counted as INDUSTRIAL (SPEC_industrial.md A3) — the
+# City's 400-series codes, enumerated by FULL STRING like the residential set
+# (codes duplicate across unrelated types: Parkade shares (490) with
+# Engineering and is NOT industrial; Mixed Use / Office Complex share (522)).
+# Commercial (5xx) and institutional (6xx) stay out — this is the industrial
+# permit-velocity cut, not a non-residential catch-all.
+INDUSTRIAL_BUILDING_TYPES = frozenset({
+    "Animal and Plant Services (410)",
+    "Manufacturing Buildings (430)",
+    "Transportation Terminals (440)",
+    "Maintenance Buildings incl Hangars (450)",
+    "Storage Buildings, Warehouses (460)",
+    "Communication Buildings (470)",
+    "Utility Buildings (480)",
+    "Engineering (490)",
+})
+
+# Full building_type vocabulary observed 2026-07-12 — the residential +
+# industrial sets above UNION the remaining codes below. Anything absent from
+# this union is UNSEEN: logged loudly, treated as excluded until reviewed (it
+# could be a new residential variant that should be counted).
+KNOWN_BUILDING_TYPES = RESIDENTIAL_BUILDING_TYPES | INDUSTRIAL_BUILDING_TYPES | frozenset({
+    "Carport (090)",
+    "Clinics, Health Units (642)",
     "Convention Centres (536)", "Day Cares, Nursing Homes (650)",
     "Detached Deck (020)", "Detached Garage (010)", "Detached Greenhouse (030)",
     "Detached Misc. Structure (090)", "Detached Shed (040)",
-    "Elementary Schools (620)", "Engineering (490)", "Funeral Homes (590)",
+    "Elementary Schools (620)", "Funeral Homes (590)",
     "Gazebo (090)", "Government Legislative/Admin (610)", "Greenhouse (030)",
     "Hoarding (910)", "Hospitals (640)", "Hotels (530)",
     "Indoor Recreational Buildings (560)", "Laboratory/Research Centres (580)",
     "Law Enforcement/Emergency Svcs. (612)", "Libraries/Museums/Art Galleries (630)",
-    "Maintenance Buildings incl Hangars (450)", "Malls, Office/Retail (512)",
-    "Manufacturing Buildings (430)", "Mixed Use (522)", "Motels (532)",
+    "Malls, Office/Retail (512)",
+    "Mixed Use (522)", "Motels (532)",
     "Office Buildings (520)", "Office Complex (522)",
     "Other Accommodation (534)", "Other Accomodation (534)",
     "Outdoor Recreational Buildings (562)", "Parkade (490)", "Play Structure (090)",
     "Post-secondary Institutions (624)", "Religious Buildings (660)",
     "Restaurants and Bars (540)", "Retail and Shops (510)", "Retail - Motor Vehicle (570)",
     "Secondary Schools (622)", "Service Stations, Repair Garages (572)", "Shed (040)",
-    "Storage Buildings, Warehouses (460)", "Temporary Structure (099)",
+    "Temporary Structure (099)",
     "Temporary Structures (999)", "Theatre and Performing Arts Ctrs (550)",
-    "Transportation Terminals (440)", "Universities (626)", "Utility Buildings (480)",
+    "Universities (626)",
 })
 
 # Permit-CSV hood names → boundary names. The permit `neighbourhood` is already
@@ -141,9 +158,14 @@ def load_permits(
         neighbourhood_name    str    normalized + PERMIT_NAME_CORRECTIONS applied
         new_dwelling_units    float  Σ units_added, new-construction ∩ residential
         new_dwelling_permits  int    permit count behind that sum
+        ind_permits           int    new-construction ∩ INDUSTRIAL permit count
+                                     (SPEC_industrial.md A3 — count only;
+                                     units_added is meaningless for industrial)
 
-    A hood absent from the result had zero new residential dwellings in the
-    window — join_and_calculate fills the true 0 (roads/fire semantics).
+    A hood absent from the result had zero new residential AND industrial
+    permits in the window; a hood with one kind but not the other carries a
+    true 0 in the other column — join_and_calculate fills the true 0 for
+    absent hoods (roads/fire semantics).
     """
     if not years:
         raise ValueError("years window is empty")
@@ -223,6 +245,7 @@ def load_permits(
             "dwelling): %s", unseen_btype,
         )
     is_res = btype.isin(RESIDENTIAL_BUILDING_TYPES)
+    is_ind = btype.isin(INDUSTRIAL_BUILDING_TYPES)
 
     kept = in_window.loc[is_new & is_res].copy()
     if not len(kept):
@@ -266,6 +289,37 @@ def load_permits(
             new_dwelling_permits=("units_added", "size"),
         )
     )
+
+    # --- industrial permit velocity (SPEC_industrial.md A3) -----------------
+    # Same new-construction work_type set, industrial building types, COUNT
+    # only. Aggregated separately (the residential filter above excludes these
+    # rows) and outer-merged: a hood with one kind of activity but not the
+    # other carries a true 0 in the missing column.
+    ind = in_window.loc[is_new & is_ind].copy()
+    ind_hood = (
+        ind["neighbourhood"].astype("string").str.strip().str.upper()
+        .replace(PERMIT_NAME_CORRECTIONS)
+    )
+    ind_no_hood = ind_hood.isna() | (ind_hood == "")
+    if ind_no_hood.any():
+        logger.warning(
+            "%d kept industrial permits have no neighbourhood — excluded",
+            int(ind_no_hood.sum()),
+        )
+    ind = ind.loc[~ind_no_hood.values].copy()
+    ind["neighbourhood_name"] = ind_hood.loc[~ind_no_hood].values
+    ind_out = (
+        ind.groupby("neighbourhood_name", as_index=False)
+        .agg(ind_permits=("neighbourhood_name", "size"))
+    )
+    logger.info(
+        "Kept %d new industrial permits across %d hoods (window %s)",
+        int(ind_out["ind_permits"].sum()) if len(ind_out) else 0, len(ind_out), years,
+    )
+    out = out.merge(ind_out, on="neighbourhood_name", how="outer")
+    for col in ("new_dwelling_units", "new_dwelling_permits", "ind_permits"):
+        out[col] = out[col].fillna(0.0)
+
     logger.info(
         "New-supply activity: %d hoods, %.0f dwelling units citywide (window total)",
         len(out), out["new_dwelling_units"].sum(),

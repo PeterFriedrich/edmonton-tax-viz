@@ -388,7 +388,11 @@ Lens A build-time decisions, now LOCKED:
   `#devmetric` picker in the layers panel swaps the plane/scale/legend/tooltip to
   `new_permits_per_acre` (project density — one large apartment is many units on
   one permit; many single houses are many permits). ABBOTTSFIELD is the extreme:
-  248 units from 2 permits.
+  248 units from 2 permits. A **third `#devmetric` option "Industrial"** ships
+  (2026-07-18, SPEC_industrial.md A3): new industrial (400-series `building_type`)
+  permits per acre, count only — a Development-view **choropleth only** (no
+  detail-grid cells, and reset away on entering Infill, since an industrial
+  permit isn't residential infill). See SPEC_industrial.md A3 + DATA.md §10.
 - **Null-`work_type` rows** — ✅ excluded, count reported (in-window ~41k of the
   ~60k are null/blank; INFO-logged each load). Same for null `building_type`.
 - **"AREA"-suffix greenfield names** — ✅ resolved via the shared
