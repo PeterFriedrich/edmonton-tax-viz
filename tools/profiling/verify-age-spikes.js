@@ -5,9 +5,10 @@
 // hidden until Detail is on AND the year column has loaded (SKIP-guard on
 // older files); selecting Year built swaps the permit-cell layer for the age
 // layer, hides the (inert-in-age-mode) Metric/Window pickers, and re-drives
-// blurb + legend; height is LINEAR in year off the true oldest cell (no
-// percentile trick on heights); colour is LINEAR between the p2.5 anchor
-// (independent recompute) and the newest cell, ramp-top (yellow) = newest;
+// blurb + legend; height AND colour are LINEAR in year off a shared p2.5
+// floor (the oldest ~2.5% sit flat; top never clamped — newest hits peak),
+// between the p2.5 anchor (independent recompute) and the newest cell, ramp-
+// top (yellow) = newest;
 // null-year cells are absent from the layer (never year-0); switching back
 // restores the permit spikes + pickers; and the Glass view still draws its
 // grid off the same shared fetch.
@@ -111,7 +112,7 @@ function approx(a, b, rel = 1e-6) { return Math.abs(a - b) <= rel * Math.max(Mat
   });
   console.log('scale          :', JSON.stringify(s));
   check('colour low anchor == independent p2.5 recompute', approx(s.scale.colorLo, s.p025));
-  check('height baseline is the TRUE oldest cell (no percentile on heights)',
+  check('scale still tracks the true min/max cell (top never clamped)',
     s.scale.lo === s.yMin && s.scale.hi === s.yMax);
   check('legend anchors match', c.min === '≤ ' + Math.round(s.p025) &&
     c.max === String(Math.round(s.yMax)), `min=${c.min} max=${c.max}`);
@@ -133,6 +134,7 @@ function approx(a, b, rel = 1e-6) { return Math.abs(a - b) <= rel * Math.max(Mat
       elevNewest: layer.props.getElevation(newest),
       elevOldest: layer.props.getElevation(oldest),
       elevMid: layer.props.getElevation(mid), yMid: mid[col],
+      colorLo: sc.colorLo,
       elevationScale: layer.props.elevationScale,
       colorNewest: layer.props.getFillColor(newest),
       colorOldest: layer.props.getFillColor(oldest),
@@ -142,11 +144,11 @@ function approx(a, b, rel = 1e-6) { return Math.abs(a - b) <= rel * Math.max(Mat
   });
   check('layer data = known-year cells only (null cells absent)',
     mech.nData === s.n && mech.nulls === 0);
-  check('height linear in year off the oldest cell',
-    approx(mech.elevNewest, mech.hi - mech.lo) && mech.elevOldest === 0 &&
-    approx(mech.elevMid, mech.yMid - mech.lo));
-  check('peak parity with the permit spikes (elevationScale = PEAK / span)',
-    approx(mech.elevationScale, mech.peak / (mech.hi - mech.lo)));
+  check('height linear in year off the shared p2.5 floor (oldest 2.5% flat)',
+    approx(mech.elevNewest, mech.hi - mech.colorLo) && mech.elevOldest === 0 &&
+    approx(mech.elevMid, mech.yMid - mech.colorLo));
+  check('peak parity with the permit spikes (elevationScale = PEAK / span, p2.5 floor)',
+    approx(mech.elevationScale, mech.peak / (mech.hi - mech.colorLo)));
   check('newest cell wears the ramp top (yellow)',
     JSON.stringify(mech.colorNewest) === JSON.stringify(mech.rampTop),
     `newest=${JSON.stringify(mech.colorNewest)}`);

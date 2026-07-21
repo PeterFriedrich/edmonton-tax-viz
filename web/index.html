@@ -818,8 +818,10 @@
         return VIEWS.development.blurb +
           " The 100 m grid here shows the AGE of the standing stock instead: " +
           "each cell is the median construction year of its assessed " +
-          "buildings — height and colour are both linear in year, so taller " +
-          "and brighter (yellow) = more recently built. " +
+          "buildings — height and colour are both linear in year off a shared " +
+          "floor (the oldest ~2.5% of cells, pre-" + Math.round(s.colorLo) +
+          ", sit flat and dark), so taller and brighter (yellow) = more " +
+          "recently built. " +
           s.n.toLocaleString() + " of " + s.total.toLocaleString() +
           " cells have a known construction year; the rest stay off the grid.";
       }
@@ -1438,13 +1440,18 @@
     // population; dev_grid.json holds only permit cells). Height AND colour
     // are LINEAR in year — recency: taller + brighter (ramp-top yellow) =
     // newer stock. Year is an interval scale with no meaningful zero, so
-    // there is no sqrt variant, the oldest cell sits FLAT (still coloured)
+    // there is no sqrt variant, the bottom cells sit FLAT (still coloured)
     // rather than absent, and cells with no known year are absent (null in
     // the file — "year 0" would be a lie, unlike res_levy's real $0).
-    // The low COLOUR anchor clamps at p2.5 — the p97.5 convention's
-    // bottom-end sibling (a lone 1880s cell must not stretch the ramp) —
-    // while the HEIGHT baseline stays the true oldest cell (heights are
-    // never percentile-clamped, same honesty rule as everywhere).
+    // HEIGHT and COLOUR share ONE floor at p2.5 (`AGE_COLOR_LO_Q`) — the
+    // p97.5 convention's bottom-end sibling. This anchor exists because the
+    // true minimum is a lone pre-war outlier (2026: 1904, while p1 is already
+    // 1944), so baselining heights at the true oldest cell floated the whole
+    // stock ~40 years off the floor and read uniformly tall (FINDINGS_stock_
+    // age_spike_scaling.md). The TOP is never clamped — the newest cell still
+    // hits full peak, preserving the heights-never-percentile-*clamped* rule;
+    // only the floor moves up, so the oldest ~2.5% sit flat (and darkest)
+    // rather than each carrying the dead-band offset.
     const AGE_COLOR_LO_Q = 0.025;
     const devAgeCol = () => gridData ? (gridData.columns.median_year_built ?? -1) : -1;
     const devAgeActive = () => state.devSpikes === "age" && devAgeCol() >= 0;
@@ -1466,15 +1473,15 @@
       gridData.cellsFor ??= {};
       const cells = (gridData.cellsFor.median_year_built ??=
         gridData.cells.filter(c => c[col] != null));
-      const span = Math.max(1, s.hi - s.lo);
-      const colorSpan = Math.max(1, s.hi - s.colorLo);
+      const span = Math.max(1, s.hi - s.colorLo); // shared p2.5 floor (colour + height)
+      const colorSpan = span;
       return new deck.GridCellLayer({
         id: "dev-age-cells",
         data: cells,
         cellSize: gridData.cell,
         extruded: true,
         getPosition: d => [d[0], d[1]], // cell SW corner (export_value_grid)
-        getElevation: d => d[col] - s.lo, // linear in year; oldest cell flat
+        getElevation: d => Math.max(0, d[col] - s.colorLo), // linear off p2.5; oldest 2.5% flat
         elevationScale: DEV_GRID_PEAK / span,
         getFillColor: d =>
           rampColorAt(Math.max(0, Math.min(1, (d[col] - s.colorLo) / colorSpan))),
