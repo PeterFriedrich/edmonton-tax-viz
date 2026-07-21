@@ -112,6 +112,21 @@ PERMIT_YEARS = (2021, 2022, 2023, 2024, 2025)
 # derived from PERMIT_YEARS) so the year-roll is explicit for both windows.
 PERMIT_YEARS_RECENT = (2023, 2024, 2025)
 
+# Long "since data start" window for the Development-view window toggle
+# (SPEC_development.md "Lens A long window", 2026-07-21): the full permit record
+# from PERMIT_START_YEAR through the last full year, an ANCHORED-cumulative
+# window (start is fixed; only the end advances). This is the "density added
+# over the era" view — the inspiration lens's 2009–2023 "homes added" snapshot.
+# UNLIKE the 5yr/3yr windows, the START never slides, so the end is DERIVED from
+# PERMIT_YEARS' last full year: the same manual January bump that rolls the two
+# sliding windows extends this one automatically (no separate pin to forget).
+# The partial-year safety still holds — PERMIT_YEARS never includes a partial
+# year, so neither can this. Choropleth-only (no detail grid): early-year permit
+# geocoding is sparse, so a long-window CELL layer would under-render 2009–2015;
+# the hood rollup joins on name and is complete regardless (docs/DATA.md §9).
+PERMIT_START_YEAR = 2009
+PERMIT_YEARS_LONG = tuple(range(PERMIT_START_YEAR, PERMIT_YEARS[-1] + 1))
+
 # Water lens tariff vintage. Unlike mill rates (which MUST match the roll
 # year), the water model is a forward-looking modeled bill: the current
 # verified tariff schedule applied to the current roll. 2026 = the Apr 1
@@ -155,6 +170,7 @@ def run(
     permits_csv: Path | None = PERMITS_CSV,
     permit_years: tuple[int, ...] = PERMIT_YEARS,
     permit_years_recent: tuple[int, ...] = PERMIT_YEARS_RECENT,
+    permit_years_long: tuple[int, ...] = PERMIT_YEARS_LONG,
     gtfs_stops_csv: Path | None = GTFS_STOPS_CSV,
     gtfs_routes_csv: Path | None = GTFS_ROUTES_CSV,
     gtfs_trips_csv: Path | None = GTFS_TRIPS_CSV,
@@ -294,11 +310,16 @@ def run(
     # activity columns.
     permits = None
     permits_recent = None
+    permits_long = None
     if permits_csv is not None and Path(permits_csv).exists():
         permits = load_permits(permits_csv, permit_years)
         # Second aggregation over the shorter window feeds the web window toggle
         # (5yr base <-> 3yr recent). Same loader, different pinned window.
         permits_recent = load_permits(permits_csv, permit_years_recent)
+        # Third aggregation over the anchored "since 2009" window — the "density
+        # added over the era" cut for the window toggle. Same loader, longest
+        # pinned window (main.py PERMIT_YEARS_LONG).
+        permits_long = load_permits(permits_csv, permit_years_long)
     elif permits_csv is not None:
         logger.warning(
             "Building-permits file not found (%s) — skipping the development lens",
@@ -328,7 +349,8 @@ def run(
     result = join_and_calculate(
         aggregated, boundaries, zoning=zoning, roads=roads, stormwater=stormwater,
         fire=fire, transit=transit, water=water, franchise=franchise,
-        permits=permits, permits_recent=permits_recent, lot_acres=lot_acres_hood,
+        permits=permits, permits_recent=permits_recent, permits_long=permits_long,
+        lot_acres=lot_acres_hood,
         unit_costs=unit_costs,
     )
 

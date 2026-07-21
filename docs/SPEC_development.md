@@ -383,6 +383,17 @@ Lens A build-time decisions, now LOCKED:
   `#devwindow` toggle (2026-07-13): a second pinned aggregation
   (`PERMIT_YEARS_RECENT` in `main.py`) emits `_3yr`-suffixed columns; the base
   columns stay unsuffixed. Both windows apply to both metrics (units/permits).
+  A **long "Since 2009" window (2009–2025)** joins the toggle (2026-07-21,
+  "Lens A long window") — the cumulative *density-added-over-the-era* cut that
+  reproduces the inspiration lens's 2009–2023 "homes added" map. `PERMIT_YEARS_LONG`
+  emits `_long`-suffixed columns; it is **anchored** (start fixed at
+  `PERMIT_START_YEAR = 2009`, end DERIVED from `PERMIT_YEARS[-1]`, so the January
+  bump extends it — no separate pin). **Choropleth-only**: the 100 m detail grid
+  stays on the 5yr/3yr windows (early-year permit geocoding is sparse — a long
+  CELL layer would under-render 2009–2015; the hood rollup is complete), so the
+  "Since 2009" button hides the Detail toggle like the industrial metric. Applies
+  to all three metrics (units/permits/industrial). Citywide: ~160k units 2009–2025
+  vs ~60k (5yr) / ~39k (3yr).
 - **Metric numerator** — ✅ `units_added` (dwellings) is the default choropleth.
   A **permit-count-per-acre sub-metric** now ships alongside (2026-07-13): the
   `#devmetric` picker in the layers panel swaps the plane/scale/legend/tooltip to

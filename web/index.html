@@ -290,6 +290,7 @@
     <div id="devwindow">
       <button data-devwindow="5yr" class="active" title="Building activity summed over the last five full calendar years (2021–2025) — the more stable, structural view">Last 5 yr</button>
       <button data-devwindow="3yr" title="Building activity summed over the last three full calendar years (2023–2025) — the more recent, current-activity view">Last 3 yr</button>
+      <button data-devwindow="long" title="Building activity summed over the whole permit record (2009–2025) — density added over the era; neighbourhood-scale only (no detail grid)">Since 2009</button>
     </div>
   </div>
 
@@ -805,17 +806,34 @@
     // disclosure read from the grid file itself (export_dev_grid "coverage").
     // The gap is a geocoding lag on the newest permits; those permits still
     // count in the hood totals, so the honest framing is "not on the grid yet".
-    const devTitle = () => devIndustrial()
-      ? "Edmonton: New Industrial Building (2021–2025)"
-      : VIEWS.development.title;
+    // Window-aware chrome: title year range follows the active window, and the
+    // choropleth blurb's window phrase is swapped in (mirrors withColourClause).
+    // DEV_WINDOW_LABEL / DEV_WINDOW_PHRASE are defined with the other DEV_* maps
+    // below; both are read at call time, so definition order is irrelevant.
+    const DEV_WINDOW_PHRASE = {
+      "5yr":  "the last five full years (2021–2025)",
+      "3yr":  "the last three full years (2023–2025)",
+      "long": "the whole permit record since 2009 (2009–2025) — the density " +
+              "added over the era, at neighbourhood scale (no detail grid)",
+    };
+    const devTitle = () => {
+      const yrs = "(" + DEV_WINDOW_LABEL[state.devWindow] + ")";
+      return devIndustrial()
+        ? "Edmonton: New Industrial Building " + yrs
+        : "Edmonton: New Housing Built " + yrs;
+    };
+    // The choropleth blurb with the active window's phrase substituted for the
+    // stored 5yr default.
+    const devChoroplethBlurb = () => VIEWS.development.blurb.replace(
+      "the last five full years (2021–2025)", DEV_WINDOW_PHRASE[state.devWindow]);
     const devBlurb = () => {
       if (devIndustrial()) return VIEWS.development.indBlurb;
-      if (!devGridActive()) return VIEWS.development.blurb;
+      if (!devGridActive()) return devChoroplethBlurb();
       // Age spikes: a different dataset (the whole standing stock, not the
       // permit window), so the blurb states its own scale + coverage.
       if (devAgeActive()) {
         const s = ageGridScale();
-        return VIEWS.development.blurb +
+        return devChoroplethBlurb() +
           " The 100 m grid here shows the AGE of the standing stock instead: " +
           "each cell is the median construction year of its assessed " +
           "buildings — height and colour are both linear in year off a shared " +
@@ -829,7 +847,7 @@
       const cov = devGridData.coverage && devGridData.coverage[state.devWindow];
       const pct = cov && cov.units
         ? Math.round(100 * (1 - cov.units_geocoded / cov.units)) : null;
-      return VIEWS.development.blurb +
+      return devChoroplethBlurb() +
         " The 100 m grid replaces the neighbourhood colours with individual " +
         "permit cells — height is linear in new " + what + " per cell, colour " +
         "square-root scaled. Only geocoded permits appear" +
@@ -1322,28 +1340,38 @@
     // column name. DEV_TOTAL_COLS gives the tooltip's (units total, permit count)
     // pair per window; DEV_WINDOW_LABEL the year range shown in tooltip + legend.
     const DEV_COLS = {
-      units:   { "5yr": "new_units_per_acre",   "3yr": "new_units_per_acre_3yr" },
-      permits: { "5yr": "new_permits_per_acre", "3yr": "new_permits_per_acre_3yr" },
+      units:   { "5yr": "new_units_per_acre",   "3yr": "new_units_per_acre_3yr",   "long": "new_units_per_acre_long" },
+      permits: { "5yr": "new_permits_per_acre", "3yr": "new_permits_per_acre_3yr", "long": "new_permits_per_acre_long" },
       // Industrial permit velocity (SPEC_industrial.md A3) — count only, its own
       // per-acre column. Development-view choropleth ONLY: it is not an infill
       // activity (an industrial permit isn't residential infill — applyView
       // resets it away on entering Infill) and has no detail-grid cells (the
       // Detail toggle hides while it's selected).
-      industrial: { "5yr": "ind_permits_per_acre", "3yr": "ind_permits_per_acre_3yr" },
+      industrial: { "5yr": "ind_permits_per_acre", "3yr": "ind_permits_per_acre_3yr", "long": "ind_permits_per_acre_long" },
     };
     const DEV_TOTAL_COLS = {
-      "5yr": { units: "new_dwelling_units",     permits: "new_dwelling_permits" },
-      "3yr": { units: "new_dwelling_units_3yr", permits: "new_dwelling_permits_3yr" },
+      "5yr":  { units: "new_dwelling_units",      permits: "new_dwelling_permits" },
+      "3yr":  { units: "new_dwelling_units_3yr",  permits: "new_dwelling_permits_3yr" },
+      "long": { units: "new_dwelling_units_long", permits: "new_dwelling_permits_long" },
     };
     // Industrial permit COUNT total per window, for the tooltip (no units total).
-    const DEV_IND_TOTAL = { "5yr": "ind_permits", "3yr": "ind_permits_3yr" };
+    const DEV_IND_TOTAL = { "5yr": "ind_permits", "3yr": "ind_permits_3yr", "long": "ind_permits_long" };
+    // The long "since 2009" window is a hood-level choropleth only: the detail
+    // grid (dev_grid.json) carries no long-window cells (early-year permit
+    // geocoding is sparse — a long CELL layer would under-render 2009–2015),
+    // so the Detail toggle hides while it's selected, like industrial.
+    const devLongWindow = () => state.devWindow === "long";
     // Industrial is a hood-level choropleth only — no detail grid, not infill.
     const devIndustrial = () => state.devMetric === "industrial";
     // The 100 m detail grid applies to the residential metrics only: industrial
     // is choropleth-only and dev_grid.json carries no industrial cells, so the
     // Detail toggle hides and the render stays flat while industrial is up.
-    const devGridActive = () => state.devGrid && devGridData && !devIndustrial();
-    const DEV_WINDOW_LABEL = { "5yr": "2021–2025", "3yr": "2023–2025" };
+    const devGridActive = () => state.devGrid && devGridData && !devIndustrial() && !devLongWindow();
+    // Whether the Detail toggle + Spikes picker should be OFFERED (independent of
+    // whether it's currently checked): the grid file loaded AND the current
+    // metric/window has cells (industrial + long are choropleth-only).
+    const devGridOfferable = () => !!devGridData && !devIndustrial() && !devLongWindow();
+    const DEV_WINDOW_LABEL = { "5yr": "2021–2025", "3yr": "2023–2025", "long": "2009–2025" };
     const devCol = () => DEV_COLS[state.devMetric][state.devWindow];
     const _devScale = {};
     function devScale() {
@@ -2438,30 +2466,37 @@
       document.querySelectorAll("#devmetric button").forEach(b =>
         b.classList.toggle("active", b.dataset.devmetric === m));
       if (state.view !== "development" && state.view !== "infill") return;
-      if (state.view === "development") {
-        // The Detail toggle + its opacity slider only apply to the residential
-        // metrics — hide both while industrial is up, restore otherwise.
-        const gridShow = !!devGridData && !devIndustrial();
-        document.getElementById("dev-grid-hd").style.display = gridShow ? "block" : "none";
-        document.getElementById("dev-grid").style.display = gridShow ? "block" : "none";
-        document.getElementById("prism-row").style.display =
-          devGridActive() ? "flex" : "none";
-        document.getElementById("title-h").textContent = devTitle();
-        document.getElementById("title-p").textContent = devBlurb();
-        syncDevControls();
-      }
+      if (state.view === "development") syncDevChrome();
       overlay.setProps({ layers: buildLayers() });
       refreshLegend();
     }
 
-    // Development-view window toggle (5yr base <-> 3yr recent). Mirrors
-    // applyDevMetric; the two pickers combine in devCol() to pick the column.
+    // Shared development-view chrome refresh after a metric/window switch: the
+    // Detail toggle + opacity slider only apply where the grid has cells
+    // (residential metric AND a windowed cut — industrial + the long "since
+    // 2009" window are choropleth-only), and the title/blurb carry the window.
+    function syncDevChrome() {
+      const gridShow = devGridOfferable();
+      document.getElementById("dev-grid-hd").style.display = gridShow ? "block" : "none";
+      document.getElementById("dev-grid").style.display = gridShow ? "block" : "none";
+      document.getElementById("prism-row").style.display =
+        devGridActive() ? "flex" : "none";
+      document.getElementById("title-h").textContent = devTitle();
+      document.getElementById("title-p").textContent = devBlurb();
+      syncDevControls();
+    }
+
+    // Development-view window toggle (5yr base <-> 3yr recent <-> since 2009).
+    // Mirrors applyDevMetric; the two pickers combine in devCol() to pick the
+    // column. The long window is choropleth-only, so switching to/from it flips
+    // the Detail toggle + chrome (syncDevChrome), like industrial.
     function applyDevWindow(w) {
       if (w === state.devWindow || !DEV_WINDOW_LABEL[w]) return;
       state.devWindow = w;
       document.querySelectorAll("#devwindow button").forEach(b =>
         b.classList.toggle("active", b.dataset.devwindow === w));
       if (state.view !== "development" && state.view !== "infill") return;
+      if (state.view === "development") syncDevChrome();
       overlay.setProps({ layers: buildLayers() });
       refreshLegend();
     }
@@ -2914,8 +2949,9 @@
       syncDevControls();
       // The development detail toggle — only where the grid file loaded
       // (post-fetch, like the glass denominator gate above).
-      // Industrial is choropleth-only (no cells) — the Detail toggle hides.
-      const devGridShow = v === "development" && !!devGridData && !devIndustrial();
+      // Industrial + the long "since 2009" window are choropleth-only (no
+      // cells) — the Detail toggle hides for either (devGridOfferable).
+      const devGridShow = v === "development" && devGridOfferable();
       document.getElementById("dev-grid-hd").style.display = devGridShow ? "block" : "none";
       document.getElementById("dev-grid").style.display = devGridShow ? "block" : "none";
       // Re-entering the development view with the grid up: make sure the age
@@ -3116,6 +3152,14 @@
       // older data files carry only the base 5yr window and hide the picker.
       state.hasDevWindow =
         state.data.features.some(f => f.properties.new_units_per_acre_3yr != null);
+      // The "Since 2009" long window needs the _long columns (pipeline
+      // 2026-07-21) — hide the button on older files (state.devWindow can't be
+      // stuck on it: no persistence, default is 5yr).
+      state.hasLongWindow =
+        state.data.features.some(f => f.properties.new_units_per_acre_long != null);
+      if (!state.hasLongWindow) {
+        document.querySelector('#devwindow button[data-devwindow="long"]').style.display = "none";
+      }
       // The Industrial sub-metric needs ind_permits_per_acre (pipeline
       // 2026-07-18) — hide the button on older files (state.devMetric can't be
       // stuck on it: no persistence, default is units).
