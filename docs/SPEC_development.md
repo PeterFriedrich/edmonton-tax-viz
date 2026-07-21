@@ -451,14 +451,23 @@ now". Design decisions:
   (~34.7k cells), which the permit file doesn't have. One shared fetch with
   the Glass view (`ensureGridData`); the picker appears when the file lands
   with the column, stays hidden on older files.
-- **Height = recency, linear in year** off the TRUE oldest cell (flat but
-  coloured — heights are never percentile-clamped, the standing honesty
-  rule), peak-parity with the permit spikes (2,500 m at the newest cell).
+- **Height = recency, linear in year off the p2.5 floor** shared with colour
+  (revised 2026-07-21, DECISIONS): the true minimum is a lone pre-war outlier
+  (2026: 1904, while p1 is already 1944), so baselining at the true oldest
+  cell floated the whole stock ~40 yr off the floor and every spike read
+  uniformly tall (median cell at 68 % of peak). Baselining at p2.5 drops the
+  median to ~48 % and lets new-build tower. The **top is never clamped** —
+  the newest cell still hits full peak (heights-never-percentile-*clamped*
+  rule holds); only the floor moves up, so the oldest ~2.5 % sit flat. NOT a
+  power curve (the 2026-06-25 no-power decision stands).
+  See `FINDINGS_stock_age_spike_scaling.md`. Peak-parity with the permit
+  spikes (2,500 m at the newest cell).
 - **Colour = the same sequential ramp, LINEAR in year** (year is an interval
   scale — sqrt is meaningless, so the locked sqrt-colour transform does not
   apply and the legend says "linear colour"). Ramp-top **yellow = newest**;
   low anchor clamps at p2.5 (the p97.5 convention's bottom-end sibling — a
-  lone 1880s cell must not stretch the ramp). Anchors and the blurb's
+  lone 1880s cell must not stretch the ramp) — now **also the height floor**,
+  so height and colour share one anchor. Anchors and the blurb's
   cell-coverage counts compute from the file, so they can't go stale.
 - **Cells with no known year are ABSENT (`null`), never year-0**; the median
   is row-weighted, which neutralizes the condo duplication regimes (repeated
