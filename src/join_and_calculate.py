@@ -81,6 +81,11 @@ PERMIT_COLUMNS = ["new_dwelling_units", "new_dwelling_permits"]
 # gates (``new_units_per_acre`` / ``new_permits_per_acre``).
 PERMIT_COLUMNS_3YR = [f"{c}_3yr" for c in PERMIT_COLUMNS]
 
+# Optional long "since 2009" window (SPEC_development.md "Lens A long window",
+# 2026-07-21) — the anchored-cumulative "density added over the era" cut for the
+# web window toggle. Same duplication idiom as the 3yr window, `_long` suffix.
+PERMIT_COLUMNS_LONG = [f"{c}_long" for c in PERMIT_COLUMNS]
+
 
 # Neighbourhood lot-acre denominator (the "value per developable acre" toggle,
 # docs/FINDINGS_denominator_cardinality.md). Carried from build_hood_lot_acres;
@@ -215,6 +220,7 @@ def join_and_calculate(
     franchise: pd.DataFrame | None = None,
     permits: pd.DataFrame | None = None,
     permits_recent: pd.DataFrame | None = None,
+    permits_long: pd.DataFrame | None = None,
     lot_acres: pd.DataFrame | None = None,
     unit_costs: dict[str, float] | None = None,
 ) -> gpd.GeoDataFrame:
@@ -667,6 +673,13 @@ def join_and_calculate(
                 joined, permits_recent, safe_area, "_3yr"
             )
             added += recent_cols
+        # Optional long "since 2009" window — same merge, `_long`-suffixed columns
+        # (SPEC_development.md "Lens A long window", 2026-07-21).
+        if permits_long is not None:
+            joined, long_cols = _merge_permit_window(
+                joined, permits_long, safe_area, "_long"
+            )
+            added += long_cols
 
         out_cols = (
             [c for c in out_cols if c != "geometry"] + added + ["geometry"]
@@ -789,8 +802,11 @@ SLIM_COLUMNS = [
     "new_dwelling_units", "new_dwelling_permits",
     "new_units_per_acre_3yr", "new_permits_per_acre_3yr",
     "new_dwelling_units_3yr", "new_dwelling_permits_3yr",
+    "new_units_per_acre_long", "new_permits_per_acre_long",
+    "new_dwelling_units_long", "new_dwelling_permits_long",
     "ind_permits_per_acre", "ind_permits",
     "ind_permits_per_acre_3yr", "ind_permits_3yr",
+    "ind_permits_per_acre_long", "ind_permits_long",
     "value_per_lot_acre", "revenue_per_lot_acre", "parcel_frac",
     "far",
     "geometry",

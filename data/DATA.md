@@ -595,6 +595,21 @@ gates. The web `#devwindow` picker switches 5yr ↔ 3yr; it's gated on the `_3yr
 columns being present (older data files show the 5yr base only). Both windows are
 pinned + drift-guarded and bump together each January.
 
+**Long "since 2009" window (added 2026-07-21).** A third window `PERMIT_YEARS_LONG`
+(`main.py`) emits `_long`-suffixed twins of all four residential columns (plus
+`ind_permits_per_acre_long`) — the cumulative **"density added over the era"** cut
+that reproduces the inspiration lens's 2009–2023 "homes added" map. Unlike the two
+sliding windows it is **anchored**: the start is fixed at `PERMIT_START_YEAR = 2009`
+(the permit record's first year, DATA.md above) and only the end advances, so it is
+DERIVED as `range(2009, PERMIT_YEARS[-1] + 1)` — the annual January bump of
+`PERMIT_YEARS` extends it automatically, no separate pin to roll. Citywide it sums
+~160k units (2009–2025) vs ~60k (5yr) / ~39k (3yr). The web `#devwindow` gains a
+**"Since 2009"** button (gated on the `_long` columns); it is **choropleth-only** —
+the 100 m detail grid stays on the 5yr/3yr windows because early-year permit
+geocoding is sparse (a long-window CELL layer would under-render 2009–2015), while
+the hood rollup joins on name and is complete regardless. Selecting it hides the
+Detail toggle, like the industrial metric.
+
 ### Key columns (live vocab confirmed 2026-07-12)
 | Column | Notes |
 |---|---|

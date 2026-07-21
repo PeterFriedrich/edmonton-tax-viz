@@ -43,7 +43,10 @@ time.
    the window-toggle recent cut): drop the oldest year, add the newest
    *completed* calendar year (pinned so a partial year is never averaged/summed
    in; a stale pin hard-errors via the drift guard, so this can't be missed
-   silently). All three roll together.
+   silently). All three roll together. **`PERMIT_YEARS_LONG` (the "Since 2009"
+   window) needs NO edit** — it is DERIVED from `PERMIT_YEARS`' last year
+   (`range(2009, PERMIT_YEARS[-1] + 1)`), so bumping `PERMIT_YEARS` extends it
+   automatically; its 2009 start never moves.
 5. **Confirm `data/stormwater_rates.json` has the new year** — stormwater
    rates are year-keyed and must match the roll year, same rule as mill rates.
 6. **Bump `DATA_YEAR` / `RATE_YEAR` in `scripts/generate_status.py`** —

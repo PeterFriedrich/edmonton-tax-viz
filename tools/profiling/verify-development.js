@@ -238,6 +238,55 @@ const check = (name, cond) => { (cond ? pass++ : fail++); console.log(`${cond ? 
     await page.waitForTimeout(800);
   }
 
+  // Long "since 2009" window (2026-07-21): switches to the new_units_per_acre_long
+  // column + 2009–2025 label. Choropleth-only — the Detail toggle HIDES while it
+  // is selected (like industrial), and devGridActive() stays false. Gated on the
+  // _long columns being present.
+  const hasLong = await page.evaluate(() => state.hasLongWindow);
+  if (hasLong) {
+    // Turn Detail on first so we can confirm the long window forces it off.
+    await page.$eval('#dev-grid-on', el => { if (!el.checked) { el.checked = true; el.dispatchEvent(new Event('change')); } });
+    await page.waitForTimeout(400);
+    await click('#devwindow button[data-devwindow="long"]');
+    await page.waitForTimeout(1500);
+    const lng = await page.evaluate(() => {
+      const plane = overlay._deck.props.layers.find(l => l.id === 'dev-plane');
+      const vals = state.data.features.map(f => f.properties.new_units_per_acre_long)
+        .filter(v => v != null).sort((a, b) => a - b);
+      const pos = (vals.length - 1) * 0.975, lo = Math.floor(pos);
+      const q = vals[lo] + (vals[Math.ceil(pos)] - vals[lo]) * (pos - lo);
+      const active = state.data.features.filter(f => f.properties.new_units_per_acre_long > 0);
+      const mid = active[Math.floor(active.length / 2)];
+      const expected = rampColorAt(Math.sqrt(Math.min(1, mid.properties.new_units_per_acre_long / q))).join();
+      const layerIds = overlay._deck.props.layers.filter(Boolean).map(l => l.id);
+      return {
+        devWindow: state.devWindow,
+        col: devCol(),
+        label: document.getElementById('legend-label').textContent,
+        clampMatches: Math.abs(devScale().clamp - q) < 1e-6,
+        midFillOk: plane.props.getFillColor(mid).join() === expected,
+        tip: tooltipFor({ object: active[0] }).html,
+        gridToggleShown: getComputedStyle(document.getElementById('dev-grid')).display !== 'none',
+        gridActive: devGridActive(),
+        choroplethUp: layerIds.includes('dev-plane') && !layerIds.includes('dev-age-cells') && !layerIds.includes('dev-grid-cells'),
+      };
+    });
+    console.log('long tip:', lng.tip);
+    check('state.devWindow is long after switch', lng.devWindow === 'long');
+    check('devCol() resolves to new_units_per_acre_long', lng.col === 'new_units_per_acre_long');
+    check('legend label shows the long range (2009–2025)', /2009.2025/.test(lng.label));
+    check('devScale clamp follows the _long column p97.5', lng.clampMatches);
+    check('plane recolours by the _long column (sqrt)', lng.midFillOk);
+    check('tooltip shows the long range (2009–2025)', /2009.2025/.test(lng.tip));
+    check('Detail toggle hidden while long is up (choropleth-only)', !lng.gridToggleShown);
+    check('grid inactive + choropleth drawn (no cell layers) under long', !lng.gridActive && lng.choroplethUp);
+    // Back to 5yr base + Detail off for the rest of the suite.
+    await click('#devwindow button[data-devwindow="5yr"]');
+    await page.waitForTimeout(400);
+    await page.$eval('#dev-grid-on', el => { if (el.checked) { el.checked = false; el.dispatchEvent(new Event('change')); } });
+    await page.waitForTimeout(600);
+  }
+
   // 100 m detail-grid toggle (2026-07-15): checkbox visible when dev_grid.json
   // is served; toggling on swaps the choropleth for a NEUTRAL plane +
   // dev-grid-cells spikes (linear height, sqrt colour, per-cell legend, blurb
