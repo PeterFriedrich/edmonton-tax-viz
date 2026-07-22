@@ -12,6 +12,19 @@ _Last reconciled: 2026-07-09_
 
 ## Open work
 
+- [ ] **MOBILE USABILITY (NEW 2026-07-22 — full plan in
+  `docs/MOBILE_USABILITY.md`; read it first).** Phone rendering is unstyled for
+  small screens (zero `@media` queries today). **Confirmed problem:** the top
+  third collides — title/blurb + all six control pods stack on top of each other
+  at 390 px (screenshot-verified); wide pods clip off the left edge. Map render +
+  bottom legend are fine; tap-to-inspect tooltips work on real devices. Separation
+  seam is clean: render is shared (one WebGL canvas), but all chrome/layout is
+  isolatable behind an `@media` block with zero desktop risk. Quick-pass order:
+  (1) add the `@media (max-width:640px)` seam, (2) fix the top-third collision
+  (collapse pods + shorten the blurb), (3) stop the left-edge clip, (4) re-render
+  via `tools/profiling/shot-mobile.js` + real-device check. NOT greenlit for the
+  approach yet (single scroll column vs bottom-sheet/hamburger — decide at step 2).
+
 - [x] ~~**Residential revenue metric ("Residential $", Peter 2026-07-16)**~~ —
   **SHIPPED 2026-07-16.** The numerator decomposition Peter asked for (explicit
   residential tax dollars, vs the zoned-area fade lens): `res_levy`
