@@ -76,6 +76,12 @@ Status of anything still open lives in the owning SPEC doc, not here.
 | 2026-06-25 | **Display-geometry-only transforms: 45 m setback then 10 m simplify, in that order** — order cuts the served file 4× (9,229 vs 38,607 vertices); all metrics computed from true full-resolution area upstream, so display geometry can never change a number. | `docs/ARCHITECTURE.md`, `docs/PERFORMANCE.md` |
 | Phase 2 design | **MapLibre + deck.gl directly, not Kepler.gl** (a UI wrapper — less control); **extruded real neighbourhood polygons, not H3 hexes** (the shapes mean something to Edmonton readers); **no basemap v1**. | `docs/ARCHITECTURE.md` Phase 2 design decisions |
 
+## Controls & lens grouping ("organize the lenses" pass)
+
+| When | Decision | Full reasoning |
+|------|----------|----------------|
+| 2026-07-22 | **Glass folds into Money as a render-mode, not a top-level view** (`#views` 7→6) — Glass already reuses Money's `#toggle` metric, `#coloradj` sqrt scaling, and denominator (it IS "Money, translucent, grid-denominated"), so it becomes a grid/translucent toggle inside Money like Development's 100 m detail. Resolves combos C (`#toggle` live-but-inert), D (two denominators), G (view-vs-render-mode) at once. Public tag unchanged (Money is public). RECORDED not yet built — code edit deferred to the single "build once" pass after the full regroup is settled. | `docs/CONTROLS_MATRIX.md` §5.G, §7 |
+
 ## Deployment & operations
 
 | When | Decision | Full reasoning |

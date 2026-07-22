@@ -129,6 +129,18 @@ view or a render-mode of Money.
 
 ---
 
+## 7. Regrouping decisions (locked, not yet built)
+
+The running output of the "organize the lenses" pass. Each locks a piece of the
+regrouped structure; the code edit is deferred to ONE "build once" pass after the
+whole regroup settles (don't reflow `index.html` twice). Mirror to `DECISIONS.md`.
+
+| When | Decision | Resolves |
+|---|---|---|
+| 2026-07-22 | **Glass → a render-mode of Money, not a top-level view.** `#views` drops 7→6; Glass becomes a grid/translucent toggle inside Money (it already reuses Money's `#toggle` + `#coloradj` + denominator). | §5.C, §5.D, §5.G |
+
+---
+
 ## 6. Discrepancy found while mapping (fixed)
 
 The comment at `web/index.html` ~L2952 claimed the long "Since 2009" window is
