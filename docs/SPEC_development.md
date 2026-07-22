@@ -300,6 +300,16 @@ changed. Locked in `docs/DECISIONS.md` (2026-07-14); implementation brief was
 `docs/FABLE_infill_perarm_scaling.md`. Deploy: web-only → live on the next
 `refresh.yml` run (Peter's trigger).
 
+**Balance validation (2026-07-22) — the lens is NOT density-dominated.** A natural
+question is whether the mismatch just restates FAR (existing density). It doesn't:
+on the live data (358 included hoods, `units × 5yr`) the score correlates **+0.79
+with the suitability term (`−z(far)`) AND +0.79 with the activity term** — equally,
+because both are standardised over the same population. The two inputs are
+near-independent (corr(FAR, activity) = **+0.24**), so the score is a genuine
+two-signal gap between *how underbuilt the land is* (stock) and *how much building
+is happening* (flow), not one variable wearing two hats. Recorded in
+`ANALYSIS_BACKLOG.md` §9.
+
 **Round-2 audit caveats (recorded 2026-07-17; dispositions from the S56 delta
 audit — `session-summary/2026-07-16.md` §2.D, ledger row in
 `docs/AUDIT_LEDGER.md`).** Four properties of Lens B that are deliberate but

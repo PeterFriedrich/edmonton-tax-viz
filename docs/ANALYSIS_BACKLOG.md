@@ -522,3 +522,47 @@ will use.
 
 **Output:** a FINDINGS note with the reconciled series + the definition
 chosen for B1; feeds SPEC_industrial B1 copy.
+
+---
+
+## 9. Built-form intensity — surface it as its own map (units-per-permit and/or FAR)
+
+**Where this came from.** The Development lens has two activity metrics (2026-07):
+**Dwelling units** (homes) and **Permits** (construction events). They diverge
+sharply by built form because a single-detached house = 1 permit = ~1 unit, while
+an apartment tower = 1 permit = many units. Confirmed on the live data
+(2009–2025, `units-per-permit` by hood): single-family suburbs sit at ~1.0–1.2
+(Donsdale 1.0, Laurier Heights 1.1), apartment/tower nodes at 5–16 (Clareview
+Town Centre 15.8, Heritage Valley TC 14.4, Garneau 11.3); citywide avg 2.06. So
+the **Permits** map is essentially a single-family-lot-churn map (maxes out on the
+sprawling edges — Chappelle 3,807 permits), while **Units** weights multi-family
+more. The *ratio itself* is a built-form/intensity signal we don't surface.
+
+**Two candidate metrics (neither built yet):**
+- **units-per-permit** — a NEW column (`new_dwelling_units / new_dwelling_permits`
+  per hood/window; the counts already ship). A *flow* intensity map of recent
+  construction: low = single-family, high = multi-family. Guard the 0-permit
+  denominator; decide the window(s).
+- **FAR as a standalone view** — `far` (Σ floor area ÷ deduped lot area) is ALREADY
+  computed per hood AND per 100 m cell (Glass grid), but is only surfaced *inside*
+  the Infill lens as the suitability term — never shown raw. A *stock* intensity
+  map: low FAR = single-family/vacant, high = dense multi-family/commercial.
+  Low-effort to expose (data's there); would need its own legend/ramp + a caveat
+  that FAR mixes in commercial floor area.
+
+**FAR vs units-per-permit** are related but distinct: FAR = intensity of what's
+STANDING (all eras, incl. commercial); units-per-permit = intensity of what's
+being BUILT NOW (residential only). corr(FAR, new-unit-activity) is only +0.24 on
+the current data — largely independent signals.
+
+**Why it matters.** Both answer "how intensely is this land used/being built"
+directly, which neither the units nor the permits map does on its own. FAR is the
+cheaper win (already computed); units-per-permit is the more targeted recent-
+construction cut. Decide whether either earns a view before building.
+
+**Aside (validation, not a task):** the **Infill lens is NOT density-dominated** —
+its score `z(inverse-FAR) − z(activity)` correlates **+0.79 with EACH** term on
+the live data (358 hoods), i.e. existing-density and new-build contribute equally
+(the two z-scores are standardised over the same population). Recorded here so a
+future "is Infill just a FAR map?" question has its answer; see SPEC_development
+Lens B.
