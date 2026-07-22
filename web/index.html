@@ -290,7 +290,7 @@
     <div id="devwindow">
       <button data-devwindow="5yr" class="active" title="Building activity summed over the last five full calendar years (2021–2025) — the more stable, structural view">Last 5 yr</button>
       <button data-devwindow="3yr" title="Building activity summed over the last three full calendar years (2023–2025) — the more recent, current-activity view">Last 3 yr</button>
-      <button data-devwindow="long" title="Building activity summed over the whole permit record (2009–2025) — density added over the era; neighbourhood-scale only (no detail grid)">Since 2009</button>
+      <button data-devwindow="long" title="Building activity summed over the whole permit record (2009–2025) — the density added over the era">Since 2009</button>
     </div>
   </div>
 
@@ -814,7 +814,7 @@
       "5yr":  "the last five full years (2021–2025)",
       "3yr":  "the last three full years (2023–2025)",
       "long": "the whole permit record since 2009 (2009–2025) — the density " +
-              "added over the era, at neighbourhood scale (no detail grid)",
+              "added over the era",
     };
     const devTitle = () => {
       const yrs = "(" + DEV_WINDOW_LABEL[state.devWindow] + ")";
@@ -1356,21 +1356,17 @@
     };
     // Industrial permit COUNT total per window, for the tooltip (no units total).
     const DEV_IND_TOTAL = { "5yr": "ind_permits", "3yr": "ind_permits_3yr", "long": "ind_permits_long" };
-    // The long "since 2009" window is a hood-level choropleth only: the detail
-    // grid (dev_grid.json) carries no long-window cells (early-year permit
-    // geocoding is sparse — a long CELL layer would under-render 2009–2015),
-    // so the Detail toggle hides while it's selected, like industrial.
-    const devLongWindow = () => state.devWindow === "long";
     // Industrial is a hood-level choropleth only — no detail grid, not infill.
     const devIndustrial = () => state.devMetric === "industrial";
     // The 100 m detail grid applies to the residential metrics only: industrial
     // is choropleth-only and dev_grid.json carries no industrial cells, so the
     // Detail toggle hides and the render stays flat while industrial is up.
-    const devGridActive = () => state.devGrid && devGridData && !devIndustrial() && !devLongWindow();
+    const devGridActive = () => state.devGrid && devGridData && !devIndustrial();
     // Whether the Detail toggle + Spikes picker should be OFFERED (independent of
     // whether it's currently checked): the grid file loaded AND the current
-    // metric/window has cells (industrial + long are choropleth-only).
-    const devGridOfferable = () => !!devGridData && !devIndustrial() && !devLongWindow();
+    // metric has cells (industrial is choropleth-only; all three windows —
+    // 5yr/3yr/long — carry cells).
+    const devGridOfferable = () => !!devGridData && !devIndustrial();
     const DEV_WINDOW_LABEL = { "5yr": "2021–2025", "3yr": "2023–2025", "long": "2009–2025" };
     const devCol = () => DEV_COLS[state.devMetric][state.devWindow];
     const _devScale = {};
@@ -1412,13 +1408,15 @@
     // EPSG:3400 binning as the Glass grid). Toggling swaps the choropleth for
     // the Glass composition: a uniformly NEUTRAL hood plane (the set-aside
     // override stands — nothing greys) under coloured/extruded cell spikes.
-    // The two pickers keep selecting the column (units|permits × 5yr|3yr).
-    // Cells hold only GEOCODED permits; recent permits lag geocoding, so the
-    // blurb discloses per-window coverage from the file itself (devBlurb).
+    // The two pickers keep selecting the column (units|permits × 5yr|3yr|long).
+    // Cells hold only GEOCODED permits; the geocoding lag is on the NEWEST
+    // permits (2009–2023 sit at 95–98%, 2025 ~72%), so the long window is the
+    // best-covered of the three; the blurb discloses per-window coverage from
+    // the file itself (devBlurb).
     const DEV_GRID_URL = "./data/dev_grid.json";
     const DEV_GRID_COLS = {
-      units:   { "5yr": "units",   "3yr": "units_3yr" },
-      permits: { "5yr": "permits", "3yr": "permits_3yr" },
+      units:   { "5yr": "units",   "3yr": "units_3yr",   "long": "units_long" },
+      permits: { "5yr": "permits", "3yr": "permits_3yr", "long": "permits_long" },
     };
     const devGridColKey = () => DEV_GRID_COLS[state.devMetric][state.devWindow];
     const DEV_GRID_PEAK = 2500; // m at the tallest cell (USES_PRISM_PEAK kin)
@@ -2917,6 +2915,8 @@
                 permits: p.columns.indexOf("permits"),
                 units_3yr: p.columns.indexOf("units_3yr"),
                 permits_3yr: p.columns.indexOf("permits_3yr"),
+                units_long: p.columns.indexOf("units_long"),
+                permits_long: p.columns.indexOf("permits_long"),
               },
               cells: p.cells,
               coverage: p.coverage,

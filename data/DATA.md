@@ -604,11 +604,14 @@ sliding windows it is **anchored**: the start is fixed at `PERMIT_START_YEAR = 2
 DERIVED as `range(2009, PERMIT_YEARS[-1] + 1)` — the annual January bump of
 `PERMIT_YEARS` extends it automatically, no separate pin to roll. Citywide it sums
 ~160k units (2009–2025) vs ~60k (5yr) / ~39k (3yr). The web `#devwindow` gains a
-**"Since 2009"** button (gated on the `_long` columns); it is **choropleth-only** —
-the 100 m detail grid stays on the 5yr/3yr windows because early-year permit
-geocoding is sparse (a long-window CELL layer would under-render 2009–2015), while
-the hood rollup joins on name and is complete regardless. Selecting it hides the
-Detail toggle, like the industrial metric.
+**"Since 2009"** button (gated on the `_long` columns) — a **first-class window**:
+it drives both the hood choropleth AND its own 100 m detail grid (`export_dev_grid`
+emits `units_long`/`permits_long` cells + `coverage["long"]`, added 2026-07-22).
+The geocoding lag is on the NEWEST permits, not the oldest — **2009–2023 sit at
+95–98% geocoded, 2025 at ~72%** — so the long window is the *best*-covered of the
+three grids (84% of units on the grid, vs 79% / 71% for 5yr / 3yr). An earlier cut
+made it choropleth-only on the mistaken belief that early-year geocoding was sparse;
+the data disproved it (`.venv/bin/python` count by year).
 
 ### Key columns (live vocab confirmed 2026-07-12)
 | Column | Notes |

@@ -277,6 +277,27 @@ def test_dev_grid_3yr_columns_and_window_split(tmp_path):
     assert cell[2:] == [5, 5, 3, 3]
 
 
+def test_dev_grid_long_columns_and_window_split(tmp_path):
+    # The long window adds units_long/permits_long cells + coverage["long"], and
+    # a cell active only in the long window (a pre-2021 permit) is still emitted,
+    # carrying 0 in the shorter windows.
+    rows = _geo_window_rows() + [_grow(year=2015, units_added=4)]  # long-only
+    out = tmp_path / "dev_grid.json"
+    export_dev_grid(
+        _write(tmp_path, rows), out, YEARS,
+        years_recent=(2023, 2024, 2025), years_long=tuple(range(2009, 2026)),
+    )
+    payload = _read(out)
+    assert payload["columns"] == ["lon", "lat", "units", "permits",
+                                  "units_3yr", "permits_3yr",
+                                  "units_long", "permits_long"]
+    (cell,) = payload["cells"]  # 2015 permit shares the same point as 2021-25
+    # 5yr=5u/5p, 3yr=3u/3p, long=5+4=9u/6p
+    assert cell[2:] == [5, 5, 3, 3, 9, 6]
+    assert set(payload["coverage"]) == {"5yr", "3yr", "long"}
+    assert payload["coverage"]["long"]["units"] == 9
+
+
 def test_dev_grid_reports_geocode_coverage(tmp_path):
     rows = _geo_window_rows() + [
         {**_row(year=2025, units_added=10), "latitude": None, "longitude": None},

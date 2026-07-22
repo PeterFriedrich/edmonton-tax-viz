@@ -518,11 +518,15 @@ _Last reconciled: 2026-07-09_
       lens = cumulative "homes added 2009–2023" density-in-the-core map): third
       `#devwindow` option (2009–2025), `PERMIT_YEARS_LONG` → `_long` columns for
       all three metrics. ANCHORED (2009 start pinned, end derived from
-      `PERMIT_YEARS[-1]` → auto-extends on the January bump). CHOROPLETH-ONLY
-      (detail grid stays on 5yr/3yr; early-year geocoding sparse) → hides the
-      Detail toggle. ~160k units citywide vs 60k/39k. DECISIONS + SPEC_development
-      "Activity window" + DATA.md §9. 402 pytest + `verify-development.js` (+8
-      long-window checks) + age/ind regressions green; screenshots eyeballed.
+      `PERMIT_YEARS[-1]` → auto-extends on the January bump). ~160k units citywide
+      vs 60k/39k. **First-class window** (2026-07-22): drives the choropleth AND
+      its own 100 m detail-grid spikes (`units_long` cells) — the initial
+      choropleth-only cut was reverted once the data showed early-year geocoding
+      is fine (2009–2023 at 95–98%; the lag is the NEWEST permits, so the long
+      grid is the best-covered of the three at 84%). DECISIONS + SPEC_development
+      "Activity window" + DATA.md §9. 402 pytest + `verify-development.js` (+11
+      long-window checks incl. the long detail grid) + age/ind regressions green;
+      choropleth + spike-map screenshots eyeballed.
     - [x] **Lens A 100 m detail grid** (2026-07-15, Peter: "add them as a layer
       switch this time... may want to move the others to this style later"):
       layers-panel "Detail" toggle in the Development view swaps the choropleth
