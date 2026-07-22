@@ -62,11 +62,21 @@ builds from the same repo and same Pages site** —
 
 **Mechanism — single source, no fork.** `web/index.html` stays the only
 hand-edited file, with a `BUILD` mode flag (`public | full`); feature/detail
-visibility gates on it. The weekly workflow emits **two generated copies** into
-one Pages artifact (root = public, `/full/` = full). One source of truth, zero
+visibility gates on it. A build step emits **two generated copies** into one
+Pages artifact (root = public, `/full/` = full). One source of truth, zero
 drift. (Forking the 3,200-line file was rejected — the drift risk we spend
 sessions fighting.) The `/full/` copy's data paths resolve up one level; handled
 in the build step.
+
+**Where the two-copy emit lives (2026-07-22):** it's a *code-shaping* step — no
+data download or regen — so its home is the **code deploy path**, not the data
+pipeline. Deploy is now split into two workflows (`docs/SPEC_deployment.md`
+"Two deploy paths"): `deploy.yml` (push-triggered code deploy, ~seconds) and
+`refresh.yml` (weekly data). The two-copy generate step must run before
+`upload-pages-artifact` in **both** (each uploads the `web/` artifact), so factor
+it as a shared step/script rather than inlining it twice. Building this two-build
+is therefore a natural extension of `deploy.yml`, gated on the "organize the
+lenses" pass that produces the `public | full` tags.
 
 **The mechanism is locked; the CONTENT split is not — it's coupled to the
 control-regrouping work.** "Which lenses are public" and "how the lenses are

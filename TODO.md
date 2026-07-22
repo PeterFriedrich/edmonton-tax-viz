@@ -41,9 +41,19 @@ _Last reconciled: 2026-07-09_
       data-detail. Don't tag separately from grouping.
   - [ ] **Two-build deploy plumbing (mechanism LOCKED, grouping-agnostic —
     `PLAN_public_release.md` §2a).** Single-source `BUILD` mode flag + two
-    generated copies in `refresh.yml` (root = public, `/full/` = full, unlisted,
-    no auth). Buildable any time; only *useful* once the tags above exist. Wrinkle:
-    `/full/` copy's data paths resolve up one level.
+    generated copies (root = public, `/full/` = full, unlisted, no auth).
+    Buildable any time; only *useful* once the tags above exist. Wrinkle:
+    `/full/` copy's data paths resolve up one level. **Home = the code deploy
+    path** (`deploy.yml`, added 2026-07-22): the two-copy emit is a shared
+    code-shaping step run before `upload-pages-artifact` in *both* `deploy.yml`
+    and `refresh.yml` — factor it once, don't inline twice.
+  - [ ] **Selective/partial data regen (DEFERRED — `SPEC_deployment.md`
+    "Two deploy paths").** Teach the *data* run which datasets a change needs so
+    even a refresh skips untouched sources. Signal exists (`rowsUpdatedAt` per
+    dataset; roads static 2+ mo while permits/fire change daily) but needs
+    raw-file caching across CI runs, and the weekly cron sits right on GitHub's
+    7-day cache eviction. Real payoff on slow static layers (roads/zoning), real
+    fragility — separate project, not started.
 
 - [x] ~~**Residential revenue metric ("Residential $", Peter 2026-07-16)**~~ —
   **SHIPPED 2026-07-16.** The numerator decomposition Peter asked for (explicit
