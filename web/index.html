@@ -2949,8 +2949,9 @@
       syncDevControls();
       // The development detail toggle — only where the grid file loaded
       // (post-fetch, like the glass denominator gate above).
-      // Industrial + the long "since 2009" window are choropleth-only (no
-      // cells) — the Detail toggle hides for either (devGridOfferable).
+      // Industrial is the only choropleth-only metric — the Detail toggle hides
+      // for it (devGridOfferable). The long "since 2009" window is first-class
+      // with its own grid (PR #80), so it IS offerable.
       const devGridShow = v === "development" && devGridOfferable();
       document.getElementById("dev-grid-hd").style.display = devGridShow ? "block" : "none";
       document.getElementById("dev-grid").style.display = devGridShow ? "block" : "none";

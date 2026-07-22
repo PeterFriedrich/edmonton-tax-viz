@@ -4,6 +4,11 @@ Visual theming and accessibility decisions for the interactive map. Phase 1
 (static PNG) is out of scope. Render/performance tradeoffs live in
 `PERFORMANCE.md`; data-shape decisions in `ARCHITECTURE.md`.
 
+This file is the chronological **build log** (why each feature was built). For a
+current-state **snapshot of every view × control combination** (what shows when,
+what gates what, flagged awkward couplings), see `docs/CONTROLS_MATRIX.md`.
+Mobile/small-screen layout: `docs/MOBILE_USABILITY.md`.
+
 ---
 
 ## Current state (updated 2026-07-01)

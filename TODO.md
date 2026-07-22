@@ -24,6 +24,17 @@ _Last reconciled: 2026-07-09_
   (collapse pods + shorten the blurb), (3) stop the left-edge clip, (4) re-render
   via `tools/profiling/shot-mobile.js` + real-device check. NOT greenlit for the
   approach yet (single scroll column vs bottom-sheet/hamburger — decide at step 2).
+  - [ ] **DECIDE FIRST: control regrouping (shared DOM → drives desktop AND
+    mobile).** Full current state mapped in `docs/CONTROLS_MATRIX.md`. Grouping is
+    currently tier-scrambled (Tier-1 view switcher sits 5th, below Tier-3
+    modifiers) with flagged "weird combos" to unpack/move (matrix §5): (A)
+    New-homes/Year-built buried under the "100 m grid" checkbox [Peter flagged];
+    (B) Year-built morphs the panel (hides Metric+Window); (C) Revenue/Value pod
+    stays live-but-inert in 5 of 7 views (unlike coloradj, which greys out); (D)
+    two separate denominator controls; (E) "Residential $" metric vs "Residential
+    only" lens name clash; (F) Industrial as a Dev-only sub-metric that self-resets
+    in Infill; (G) Glass double-duties Money's controls. Decide the target grouping
+    before any mobile CSS — redoing it later means touching both layouts twice.
 
 - [x] ~~**Residential revenue metric ("Residential $", Peter 2026-07-16)**~~ —
   **SHIPPED 2026-07-16.** The numerator decomposition Peter asked for (explicit
