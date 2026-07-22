@@ -41,6 +41,40 @@ scope is narrative tightness — build nothing new. Expansion candidates
 (transit lens, per-year archives, parcel-level work per
 `PARCEL_LEVEL_OPPORTUNITIES.md`) stay Phase 2.
 
+### 2a. Two-build split — public + specialist (revised 2026-07-22)
+
+The 2026-07-09 note assumed **one** site serving everyone. Revised: ship **two
+builds from the same repo and same Pages site** —
+
+- **Public build** at the site root (`…/edmonton-tax-viz/`): a **curated
+  subset** — the audited lenses with clean copy, WIP/experimental lenses and
+  deep data-detail stripped.
+- **Specialist build** at `…/edmonton-tax-viz/full/`: **everything**, with the
+  full data-detail. **Unlisted, not access-controlled** — the repo is already
+  public, so nothing here is secret; the URL is simply un-advertised. (No auth →
+  stays on free Pages; still "no new hosting.")
+
+**Mechanism — single source, no fork.** `web/index.html` stays the only
+hand-edited file, with a `BUILD` mode flag (`public | full`); feature/detail
+visibility gates on it. The weekly workflow emits **two generated copies** into
+one Pages artifact (root = public, `/full/` = full). One source of truth, zero
+drift. (Forking the 3,200-line file was rejected — the drift risk we spend
+sessions fighting.) The `/full/` copy's data paths resolve up one level; handled
+in the build step.
+
+**The mechanism is locked; the CONTENT split is not — it's coupled to the
+control-regrouping work.** "Which lenses are public" and "how the lenses are
+grouped" are the same surface (`docs/CONTROLS_MATRIX.md`): each lens/control
+carries a `public | full` tag right next to its group, decided in **one**
+"organize the lenses" pass, not as a separate deployment exercise. The plumbing
+is grouping-agnostic and reads whatever tags that pass produces.
+
+**Current split (provisional — finalized in the regroup pass):**
+- **Public:** Money · Services · Ratio · Uses · Glass · **Development**
+  (Development moved to public, Peter 2026-07-22).
+- **Full-only:** Infill · deep data-detail (validation ratios, modeling quirks,
+  methodology-heavy blurbs).
+
 ## 3. Release scope (proposed lock)
 
 **IN — everything currently live:**

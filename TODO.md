@@ -35,6 +35,15 @@ _Last reconciled: 2026-07-09_
     only" lens name clash; (F) Industrial as a Dev-only sub-metric that self-resets
     in Infill; (G) Glass double-duties Money's controls. Decide the target grouping
     before any mobile CSS — redoing it later means touching both layouts twice.
+    - [ ] **Same pass also sets the `public | full` build tags** (coupled surface —
+      DECISIONS 2026-07-22, `CONTROLS_MATRIX.md` §2). Provisional: public =
+      Money/Services/Ratio/Uses/Glass/Development, full-only = Infill + deep
+      data-detail. Don't tag separately from grouping.
+  - [ ] **Two-build deploy plumbing (mechanism LOCKED, grouping-agnostic —
+    `PLAN_public_release.md` §2a).** Single-source `BUILD` mode flag + two
+    generated copies in `refresh.yml` (root = public, `/full/` = full, unlisted,
+    no auth). Buildable any time; only *useful* once the tags above exist. Wrinkle:
+    `/full/` copy's data paths resolve up one level.
 
 - [x] ~~**Residential revenue metric ("Residential $", Peter 2026-07-16)**~~ —
   **SHIPPED 2026-07-16.** The numerator decomposition Peter asked for (explicit

@@ -29,6 +29,21 @@ follow this order (see §5.A):
 
 `Money · Services · Ratio · Uses · Development · Infill · Glass`
 
+**Build visibility (public vs specialist).** The two-build split (DECISIONS
+2026-07-22; `docs/PLAN_public_release.md` §2a) tags each lens `public | full`.
+This is the **same decision surface as regrouping** — finalize both in the
+"organize the lenses" pass, not separately. Provisional tags:
+
+| View | Public build | Specialist (`/full/`) |
+|---|:---:|:---:|
+| Money · Services · Ratio · Uses · Glass | ✅ | ✅ |
+| **Development** | ✅ (moved public, Peter 2026-07-22) | ✅ |
+| **Infill** | ❌ | ✅ |
+| Deep data-detail (validation ratios, modeling quirks, methods-heavy blurbs) | trimmed to honest labels | ✅ full |
+
+Sub-metrics inherit their view's tag unless split out during regrouping (e.g. if
+Industrial leaves Development, it gets its own tag then).
+
 ---
 
 ## 3. Tier 3 — modifier pods (rendered "always visible" at the top)
