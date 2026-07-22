@@ -53,6 +53,12 @@ builds from the same repo and same Pages site** —
   full data-detail. **Unlisted, not access-controlled** — the repo is already
   public, so nothing here is secret; the URL is simply un-advertised. (No auth →
   stays on free Pages; still "no new hosting.")
+  - **Labelling is the mitigation, not optional.** Because `/full/` is
+    discoverable rather than gated, the build MUST carry a visible "work in
+    progress — experimental lenses, figures not final, don't cite" label. That
+    label does the load-bearing work auth otherwise would; a stray visitor must
+    not mistake a WIP lens for a published claim. Reuse the attribution/status
+    footer machinery (§4 P1 #2), don't invent a separate banner.
 
 **Mechanism — single source, no fork.** `web/index.html` stays the only
 hand-edited file, with a `BUILD` mode flag (`public | full`); feature/detail
