@@ -1,0 +1,65 @@
+name: Deploy site (code only)
+
+# Fast path for CODE/UI changes, decoupled from the weekly DATA refresh.
+#
+# The map's data (web/data/*.geojson) is committed to the repo — the data-bot
+# commits it on every refresh.yml run. So when a push only changes the site's
+# code (index.html, JS, CSS), the last-good data is already on disk: there is
+# nothing to download and nothing to regenerate. This workflow just re-uploads
+# the current web/ tree to Pages. Seconds, not the 30-minute pipeline.
+#
+# refresh.yml still owns the data path (download -> regenerate web/data ->
+# deploy) on the weekly cron. This is purely the "I moved some buttons" path.
+# Building a lens on top of ALREADY-COMMITTED data ships through here too; only
+# a lens that needs a brand-new dataset still requires a data run (refresh.yml
+# dispatch, or download_data.py --only <source> + that loader + commit).
+
+on:
+  push:
+    branches: [master]
+    # Deploy when the site's code changes, but NOT when only the bot's data
+    # commit lands: web/data/** is already deployed inside the refresh run, so
+    # excluding it here avoids a redundant second deploy. A push that touches
+    # both code and data still matches (the code path is not excluded).
+    # Non-web changes (docs/, src/, main.py, session-summary/) don't alter the
+    # served artifact, so they correctly don't trigger a deploy.
+    paths:
+      - 'web/**'
+      - '!web/data/**'
+      - '.github/workflows/deploy.yml'   # redeploy if this workflow itself changes
+  workflow_dispatch: {}                    # manual "redeploy current web/ as-is"
+
+# Deploy-only: no repo writes needed (we don't commit anything here).
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Shared with refresh.yml so a code deploy and a data deploy never race on
+# Pages. cancel-in-progress:false = queue behind an in-flight refresh rather
+# than aborting it mid-pipeline.
+concurrency:
+  group: refresh-map-data
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: web
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5.0.0

@@ -12,6 +12,15 @@ year-alignment check → `main.py --skip-png` → commit `web/data/` → deploy
 **Failure is safe by default** — any failed run leaves the site serving the
 last committed data. Nothing here is ever a same-day emergency.
 
+**Two deploy paths (don't confuse them):** `refresh.yml` is the DATA path above.
+`.github/workflows/deploy.yml` is the CODE path — it fires on any push to
+`master` that touches site code (`web/**`, minus `web/data/**`) and just
+re-uploads the committed `web/` tree to Pages (no download, no regen; ~seconds).
+So a UI/button edit ships on push; a data change ships on the weekly run. Both
+share the `refresh-map-data` concurrency group, so they never deploy at once.
+If a code push didn't update the site, first check the deploy.yml run (not
+refresh.yml); if only data is stale, that's refresh.yml.
+
 - Live site: https://peterfriedrich.github.io/edmonton-tax-viz/
 - Runs: https://github.com/PeterFriedrich/edmonton-tax-viz/actions
 - What's being served right now: `web/data/status.json` (`data_year`,

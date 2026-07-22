@@ -42,6 +42,37 @@ With the commit-and-publish model:
   already a committed file. We're only automating *who* regenerates and commits
   it, and *when*.
 
+## Two deploy paths: data vs. code (2026-07-22)
+
+The pipeline was originally the *only* way anything reached the live site — so a
+pure code change (moving a button, restyling, building a lens on
+already-committed data) could only ship by running the full weekly pipeline
+(download all ~750 MB + regenerate). That fused two unrelated triggers.
+
+They're now split:
+
+| Workflow | Fires on | Does | Cost |
+|---|---|---|---|
+| `refresh.yml` (DATA) | weekly cron + `workflow_dispatch` | download → regen `web/data/` → commit → deploy | full pipeline (~min) |
+| `deploy.yml` (CODE) | push to `master` touching `web/**` (excl. `web/data/**`) + `workflow_dispatch` | re-upload committed `web/` to Pages | ~seconds |
+
+**Why this is safe and needs no data step:** `web/data/*.geojson` is *committed*
+(the data-bot commits it each refresh), so the last-good data is already on disk
+for any code deploy — nothing to fetch, nothing to regenerate. The path filter
+excludes `web/data/**` so the bot's data commit doesn't double-deploy (its own
+refresh run already deployed it). Both workflows share the `refresh-map-data`
+concurrency group (`cancel-in-progress: false`), so a code deploy queues behind
+an in-flight refresh instead of racing it on Pages.
+
+**What still needs a data run:** only a lens that requires a *brand-new* dataset.
+Even then it's `download_data.py --only <source>` + that one loader + commit —
+not all 15. **Selective/partial regen** (teaching `main.py` which datasets a
+given change actually needs, so even data runs skip untouched sources) is a
+harder, separate refinement and is explicitly **deferred** — the cheap
+change-signal exists (`rowsUpdatedAt` per dataset in Socrata view metadata; e.g.
+roads was static 2+ months while permits/fire change daily), but acting on it
+needs raw-file caching across CI runs. Not built.
+
 ## Backend: a scheduled GitHub Action (primary)
 
 **DECIDED: the backend is a scheduled GitHub Action, not a dedicated server.**
