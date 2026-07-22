@@ -332,6 +332,7 @@ def export_dev_grid(
     out_path: str | Path,
     years: tuple[int, ...],
     years_recent: tuple[int, ...] | None = None,
+    years_long: tuple[int, ...] | None = None,
     cell_m: float = 100.0,
 ) -> dict:
     """100 m grid of new residential units — the Development view's detail layer.
@@ -348,11 +349,14 @@ def export_dev_grid(
                                 "permits": ..., "permits_geocoded": ...},
                         "3yr": {...} } }
 
-    The ``_3yr`` columns appear only when ``years_recent`` is given (mirroring
-    the hood columns' suffix convention). **Geocode coverage is reported, not
-    silent**: permits without latitude/longitude — a geocoding lag concentrated
-    in the newest permits (DATA.md §10) — are excluded from the cells but
-    counted in ``coverage`` so the web blurb can disclose the gap. Vocabulary
+    The ``_3yr`` / ``_long`` columns appear only when ``years_recent`` /
+    ``years_long`` are given (mirroring the hood columns' suffix convention).
+    **Geocode coverage is reported, not silent**: permits without
+    latitude/longitude — a geocoding lag concentrated in the NEWEST permits
+    (DATA.md §10: 2009–2023 sit at 95–98% geocoded, 2025 at ~72%) — are excluded
+    from the cells but counted in ``coverage`` so the web blurb can disclose the
+    gap. The long window is therefore BETTER-geocoded on average than 3yr (which
+    is dominated by the newest, laggiest years). Vocabulary
     drift warnings (unseen work/building types) are load_permits' job — the
     weekly pipeline runs both on the same file; this filter stays quiet.
     """
@@ -362,6 +366,8 @@ def export_dev_grid(
     windows = {"5yr": tuple(sorted(years))}
     if years_recent:
         windows["3yr"] = tuple(sorted(years_recent))
+    if years_long:
+        windows["long"] = tuple(sorted(years_long))
 
     header = pd.read_csv(permits_csv, nrows=0)
     needed = set(REQUIRED_COLUMNS) | {"latitude", "longitude"}
@@ -422,14 +428,20 @@ def export_dev_grid(
              .groupby(["cx", "cy"])
              .agg(units=("units_added", "sum"), permits=("units_added", "size")))
         per_cell[name] = g[g["units"] + g["permits"] > 0]
+    # A cell is emitted if ANY window has activity there (long-only cells —
+    # active 2009–2020 but not in the 5yr window — carry 0 in the shorter
+    # windows, which the client's `c[col] > 0` filter drops when they're viewed).
     cells_idx = per_cell["5yr"].index
-    if "3yr" in per_cell:
-        cells_idx = cells_idx.union(per_cell["3yr"].index)
+    for name in ("3yr", "long"):
+        if name in per_cell:
+            cells_idx = cells_idx.union(per_cell[name].index)
 
     to_wgs84 = Transformer.from_crs(3400, 4326, always_xy=True)
     columns = ["lon", "lat", "units", "permits"]
     if "3yr" in windows:
         columns += ["units_3yr", "permits_3yr"]
+    if "long" in windows:
+        columns += ["units_long", "permits_long"]
     rows = []
     for cx, cy in cells_idx:
         lon_sw, lat_sw = to_wgs84.transform(cx * cell_m, cy * cell_m)

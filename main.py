@@ -121,9 +121,11 @@ PERMIT_YEARS_RECENT = (2023, 2024, 2025)
 # PERMIT_YEARS' last full year: the same manual January bump that rolls the two
 # sliding windows extends this one automatically (no separate pin to forget).
 # The partial-year safety still holds — PERMIT_YEARS never includes a partial
-# year, so neither can this. Choropleth-only (no detail grid): early-year permit
-# geocoding is sparse, so a long-window CELL layer would under-render 2009–2015;
-# the hood rollup joins on name and is complete regardless (docs/DATA.md §9).
+# year, so neither can this. Drives BOTH the hood choropleth (join_and_calculate
+# `_long` columns) and the 100 m detail grid (export_dev_grid `_long` cells):
+# early-year permit geocoding is EXCELLENT (2009–2023 at 95–98%; the lag is on
+# the newest permits, 2025 ~72%), so the long-window grid is if anything better-
+# geocoded than the 3yr grid (docs/DATA.md §9).
 PERMIT_START_YEAR = 2009
 PERMIT_YEARS_LONG = tuple(range(PERMIT_START_YEAR, PERMIT_YEARS[-1] + 1))
 
@@ -391,7 +393,8 @@ def run(
             try:
                 export_dev_grid(
                     permits_csv, DEV_GRID_WEB_OUT,
-                    permit_years, permit_years_recent, cell_m=GRID_CELL_M,
+                    permit_years, permit_years_recent, permit_years_long,
+                    cell_m=GRID_CELL_M,
                 )
             except ValueError as e:
                 logger.warning("Dev grid not exported: %s", e)
