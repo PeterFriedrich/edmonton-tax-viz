@@ -139,6 +139,7 @@ whole regroup settles (don't reflow `index.html` twice). Mirror to `DECISIONS.md
 |---|---|---|
 | 2026-07-22 | **Glass → a render-mode of Money, not a top-level view.** `#views` drops 7→6; Glass becomes a grid/translucent toggle inside Money (it already reuses Money's `#toggle` + `#coloradj` + denominator). | §5.C, §5.D, §5.G |
 | 2026-07-23 | **Infill → a full-only mode of Development, not a top-level view.** `#views` drops 6→5 (Money · Services · Ratio · Uses · Development). Shares `#devmetric`/`#devwindow` already. Unlike Glass, Infill does NOT share Development's build tag: Development is public, Infill is full-only → the Infill toggle appears ONLY in the `/full/` build (`BUILD`-flag-gated at the control level). Public build's Development = activity only; specialist's = activity + Infill toggle. | §5.F-adjacent, two-build tag surface (§2) |
+| 2026-07-23 | **`#palette` (Inferno · Glow · Cividis) moves off the always-visible top chrome into an accessibility menu/button** — NOT deleted (Cividis is the colour-vision-deficiency-safe ramp; deleting it = an a11y regression). Default stays **Inferno**, applied without opening the menu; the picker is one tap away for those who need it. Drops one T3 pod off the top stack. The a11y menu is the natural future home for other display-aid toggles (e.g. `Labels`, any high-contrast option). | §3 (`#palette` row) |
 
 ---
 
