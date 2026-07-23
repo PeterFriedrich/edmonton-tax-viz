@@ -92,6 +92,13 @@ Ordered; each step is independently shippable and desktop-safe.
 tuning, touch-target resizing, landscape. Confirm they're actually problems on a
 real device before building.
 
+**Handled structurally, not by CSS:** the Development **grid checkbox → spike
+picker** nesting is a weak small-screen affordance (Peter flagged, 2026-07-23).
+Rather than restyle it for phone, the regroup pass collapses it into one 3-way
+"Detail" selector (Neighbourhood / 100 m grid — activity / Stock age) — see
+`docs/CONTROLS_MATRIX.md` §7 + `DECISIONS.md`. Structure-before-mobile: the CSS
+pass inherits the flattened control, no phone-specific reveal logic needed.
+
 ---
 
 ## 4. Tooling
