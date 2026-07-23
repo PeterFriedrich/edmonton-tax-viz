@@ -53,8 +53,11 @@ They're now split:
 
 | Workflow | Fires on | Does | Cost |
 |---|---|---|---|
-| `refresh.yml` (DATA) | weekly cron + `workflow_dispatch` | download → regen `web/data/` → commit → deploy | full pipeline (~min) |
-| `deploy.yml` (CODE) | push to `master` touching `web/**` (excl. `web/data/**`) + `workflow_dispatch` | re-upload committed `web/` to Pages | ~seconds |
+| `refresh.yml` (DATA) | weekly cron + `workflow_dispatch` | download → regen `web/data/` → commit → **`build_site` → deploy** | full pipeline (~min) |
+| `deploy.yml` (CODE) | push to `master` touching `web/**` (excl. `web/data/**`) + `workflow_dispatch` | **`build_site` → re-upload** committed `web/` to Pages | ~seconds |
+
+(Both paths run `scripts/build_site.py` before the Pages upload — see the
+**Two-build emit** section below.)
 
 **Why this is safe and needs no data step:** `web/data/*.geojson` is *committed*
 (the data-bot commits it each refresh), so the last-good data is already on disk
@@ -72,6 +75,52 @@ harder, separate refinement and is explicitly **deferred** — the cheap
 change-signal exists (`rowsUpdatedAt` per dataset in Socrata view metadata; e.g.
 roads was static 2+ months while permits/fire change daily), but acting on it
 needs raw-file caching across CI runs. Not built.
+
+## Two-build emit: public root + /full/ specialist (2026-07-23)
+
+Neither workflow uploads `web/` directly any more. Both run
+`scripts/build_site.py --src web --out _site` immediately before
+`upload-pages-artifact` (factored once, not inlined twice), and upload `_site/`.
+That one step fans the site out into **two builds inside a single Pages
+artifact**:
+
+| Path in artifact | Build | Contents |
+|---|---|---|
+| `_site/` (root) | **PUBLIC** (curated) | whole `web/` tree, shared `data/` + `vendor/`, `DEFAULT_BUILD` rewritten to `"public"`. The advertised URL. |
+| `_site/full/` | **SPECIALIST** (everything) | `index.html` only, `DEFAULT_BUILD` `"full"`, `<base href="../">` so its relative asset URLs resolve to the root's shared `data/` + `vendor/`, plus an injected WIP badge. Discoverable-but-unlisted; linked from the README. |
+
+**One source of truth.** There is one hand-edited file, `web/index.html`, carrying
+a single `const DEFAULT_BUILD = "public|full";` literal. The public and full
+outputs are byte-identical *except* that literal (plus the `<base>` tag and WIP
+badge injected into full). So:
+
+- **Both builds regenerate on every deploy, from the same source** — code push or
+  weekly data refresh, doesn't matter. They *cannot* drift: any change to
+  `web/index.html` lands in both automatically.
+- **Data is shared, not duplicated.** `/full/` reaches the root's `data/` +
+  `vendor/` via `<base href="../">` — one copy of the multi-MB GeoJSON on disk, so
+  the two builds can never disagree about data.
+
+**The flag discipline (the thing that bites you if you forget).** To make a control
+specialist-only, gate it on `BUILD === "full"` (`FULL_BUILD`) in `web/index.html`.
+Public then hides it; `/full/` shows it. **The default is *public*:** anything you
+add and *don't* explicitly gate on `FULL_BUILD` appears on the public root. The
+failure mode is therefore **"a specialist control leaked to public,"** not "the
+builds drifted." When adding a control, the one question to ask is *does this
+belong in public?* — if not, flag it `full`.
+
+**Guardrails** (these catch the *other* class of mistake):
+
+- `set_default_build` (`build_site.py`) fails the build loudly if the
+  `DEFAULT_BUILD` literal isn't found *exactly once* — a refactor that renames or
+  removes it breaks the deploy instead of silently shipping the wrong default.
+- `tests/test_build_site.py` runs in `refresh.yml`'s pytest gate and guards the
+  emitted shape (root hides full-only controls, `/full/` carries them, no GeoJSON
+  duplication, the source literal exists).
+
+Rationale for the split (curated public root vs. discoverable `/full/`) and the
+per-control tag table live in `docs/PLAN_public_release.md` §2a and
+`docs/CONTROLS_MATRIX.md` §2; this section is the *operational* how-it-deploys view.
 
 ## Backend: a scheduled GitHub Action (primary)
 
