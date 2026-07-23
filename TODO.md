@@ -24,21 +24,21 @@ _Last reconciled: 2026-07-09_
   (collapse pods + shorten the blurb), (3) stop the left-edge clip, (4) re-render
   via `tools/profiling/shot-mobile.js` + real-device check. NOT greenlit for the
   approach yet (single scroll column vs bottom-sheet/hamburger — decide at step 2).
-  - [ ] **DECIDE FIRST: control regrouping (shared DOM → drives desktop AND
-    mobile).** Full current state mapped in `docs/CONTROLS_MATRIX.md`. Grouping is
-    currently tier-scrambled (Tier-1 view switcher sits 5th, below Tier-3
-    modifiers) with flagged "weird combos" to unpack/move (matrix §5): (A)
-    New-homes/Year-built buried under the "100 m grid" checkbox [Peter flagged];
-    (B) Year-built morphs the panel (hides Metric+Window); (C) Revenue/Value pod
-    stays live-but-inert in 5 of 7 views (unlike coloradj, which greys out); (D)
-    two separate denominator controls; (E) "Residential $" metric vs "Residential
-    only" lens name clash; (F) Industrial as a Dev-only sub-metric that self-resets
-    in Infill; (G) Glass double-duties Money's controls. Decide the target grouping
-    before any mobile CSS — redoing it later means touching both layouts twice.
-    - [ ] **Same pass also sets the `public | full` build tags** (coupled surface —
-      DECISIONS 2026-07-22, `CONTROLS_MATRIX.md` §2). Provisional: public =
-      Money/Services/Ratio/Uses/Glass/Development, full-only = Infill + deep
-      data-detail. Don't tag separately from grouping.
+  - [x] ~~**DECIDE FIRST: control regrouping**~~ — **DECIDED 2026-07-23** (8
+    decisions, `CONTROLS_MATRIX.md` §7 + `DECISIONS.md` "Controls & lens grouping").
+    All 7 §5 combos closed. Final shape: `#views` = 5 (Money · Services · Ratio ·
+    Uses · Development); Glass → mode of Money; Infill + Industrial → full-only Dev
+    extras; palette + Labels → an accessibility menu; stack reordered
+    View→Variant→Presentation; "Residential only" → "Highlight residential"; Dev
+    grid+spike → one 3-way Detail selector. `public|full` tags all resolved in the
+    same pass (public = Money/Services/Ratio/Uses/Development-activity; `/full/`
+    adds Infill + Industrial + deep data-detail). **Nothing built yet.**
+  - [ ] **BUILD ONCE (now unblocked): implement the 8 regroup decisions in
+    `web/index.html`.** One pass, so the layout is only reflowed once. Includes the
+    `BUILD` mode flag gating (Infill/Industrial full-only), the accessibility menu,
+    the reordered tiered stack, the Detail selector, and the rename. Re-verify with
+    the `verify-*.js` suite after (selectors are mostly `data-*` — keep IDs to
+    minimize breakage). THEN mobile CSS (below) reflows the *final* grouping.
   - [ ] **Two-build deploy plumbing (mechanism LOCKED, grouping-agnostic —
     `PLAN_public_release.md` §2a).** Single-source `BUILD` mode flag + two
     generated copies (root = public, `/full/` = full, unlisted, no auth).
