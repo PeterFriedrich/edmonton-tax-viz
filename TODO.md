@@ -43,24 +43,26 @@ _Last reconciled: 2026-07-09_
     → `Highlight residential`. `BUILD` flag (`public|full`, `?build=public` override)
     gates the two full-only controls. Full verify-`*`.js suite green in **both**
     builds; verify + shot scripts updated to the new controls.
-    - [ ] **⚠️ DO NOT merge to master until the two-build deploy plumbing (below)
-      lands.** A master push deploys `web/**` to the public root, and `BUILD` defaults
-      to `full` — so merging now would ship the specialist controls (Infill +
-      Industrial) to the public site. The deploy step must rewrite `BUILD → public`
-      for the root copy first. Branch is safe (feature-branch push doesn't deploy).
+    - [x] ~~**⚠️ merge gate: two-build deploy plumbing**~~ — **RESOLVED 2026-07-23**
+      (same branch): the emit now rewrites `DEFAULT_BUILD → public` for the root
+      copy, so merging `regroup-build-s65` to master ships the *public* controls to
+      the site root. **Branch is now safe to merge** (review + merge is Peter's call).
     - [ ] **THEN mobile CSS** (below) reflows the *final* grouping (inherits the flex
       column + Detail selectors — the structure-before-mobile payoff).
-    - [ ] **Regenerate `docs/LENS_INVENTORY.md`** from the rebuilt wiring.
-  - [ ] **Two-build deploy plumbing (mechanism LOCKED, grouping-agnostic —
-    `PLAN_public_release.md` §2a). NOW THE GATING NEXT STEP — the `BUILD` flag it
-    rewrites already exists (S65).** Single-source `BUILD` mode flag + two
-    generated copies (root = public, `/full/` = full, unlisted, no auth).
-    The generate step must set `BUILD=public` in the root copy and `BUILD=full` in
-    `/full/`. Wrinkle:
-    `/full/` copy's data paths resolve up one level. **Home = the code deploy
-    path** (`deploy.yml`, added 2026-07-22): the two-copy emit is a shared
-    code-shaping step run before `upload-pages-artifact` in *both* `deploy.yml`
-    and `refresh.yml` — factor it once, don't inline twice.
+    - [ ] **Regenerate `docs/LENS_INVENTORY.md`** from the rebuilt wiring (after merge).
+  - [x] ~~**Two-build deploy plumbing (`PLAN_public_release.md` §2a).**~~ **BUILT
+    2026-07-23 (branch `regroup-build-s65`).** `scripts/build_site.py` fans `web/`
+    into one Pages artifact: `_site/` = public root (whole tree, `DEFAULT_BUILD` →
+    `public`) + `_site/full/` = specialist (`index.html` only, `<base href="../">`
+    so its `./data`/`vendor` resolve to the ROOT's shared copies — no GeoJSON
+    duplication — `DEFAULT_BUILD` `full`, + a fixed work-in-progress badge). Wired
+    into BOTH `deploy.yml` (system `python3`, stdlib-only → stays the fast code path)
+    and `refresh.yml` (before `upload-pages-artifact`, `path → _site`), factored once
+    as the shared script. `tests/test_build_site.py` guards the emit + that the
+    source `DEFAULT_BUILD` literal exists (a drift fails `refresh.yml`'s pytest gate
+    before deploy). Verified locally: both URLs smoke-clean. **`/full/` is unlisted,
+    NOT access-controlled** (repo is public → nothing secret; the WIP badge is the
+    mitigation).
   - [ ] **Selective/partial data regen (DEFERRED — `SPEC_deployment.md`
     "Two deploy paths").** Teach the *data* run which datasets a change needs so
     even a refresh skips untouched sources. Signal exists (`rowsUpdatedAt` per
