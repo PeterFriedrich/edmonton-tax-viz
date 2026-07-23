@@ -110,10 +110,18 @@ jobs:
           git commit -m "Auto-refresh map data ($(date -u +%Y-%m-%d))" || echo "Nothing to commit."
           git push || echo "Nothing to push."
 
+      # Two-build emit (docs/PLAN_public_release.md §2a): fan web/ out into
+      # _site/ = public root + _site/full/ = specialist, sharing the just-
+      # regenerated data/. Same shared script as deploy.yml — factor once. Runs
+      # regardless of the hold state (we still deploy the committed tree in a
+      # year-mismatch hold).
+      - name: Build two-build site tree (public root + /full/ specialist)
+        run: python scripts/build_site.py --src web --out _site
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
-          path: web
+          path: _site
 
   deploy:
     needs: build

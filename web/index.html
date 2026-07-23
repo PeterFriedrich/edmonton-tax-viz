@@ -367,13 +367,14 @@
     const CENTER = [-113.50, 53.52]; // Edmonton, from the data centroid
 
     // Build mode: "public" (curated) | "full" (specialist). ONE hand-edited
-    // source; the deploy step emits two copies, rewriting this constant (root =
-    // public, /full/ = full). Full-only controls gate on BUILD === "full" at the
-    // control level, so a full-only mode/metric can live inside a public view
-    // (Infill mode + Industrial metric on Development). `?build=public` overrides
-    // for local spot-checking of the public shape without editing the file.
-    const BUILD = (new URLSearchParams(location.search).get("build") === "public")
-      ? "public" : "full";
+    // source; the deploy step (scripts/build_site.py) emits two copies and
+    // rewrites the DEFAULT_BUILD literal per copy (root = "public", /full/ =
+    // "full"). Full-only controls gate on BUILD === "full" at the control level,
+    // so a full-only mode/metric lives inside a public view (Infill mode +
+    // Industrial metric on Development). `?build=public|full` overrides locally.
+    const DEFAULT_BUILD = "full";   // deploy step rewrites this literal per copy
+    const _buildQS = new URLSearchParams(location.search).get("build");
+    const BUILD = (_buildQS === "public" || _buildQS === "full") ? _buildQS : DEFAULT_BUILD;
     const FULL_BUILD = BUILD === "full";
 
     // Per-metric display config. The clamp (colour saturation) sits at the same
