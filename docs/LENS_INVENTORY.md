@@ -1,5 +1,12 @@
 # Lens Inventory — everything that currently exists in the map
 
+> **Regroup decided 2026-07-23, not yet built (`docs/CONTROLS_MATRIX.md` §7).**
+> This catalogue still matches the *built* app (7 views). The decided target is
+> **5 views** (Glass → a mode of Money; Infill → a full-only mode of Development),
+> palette + Labels move into an accessibility menu, and Development's grid+spike
+> collapse into a 3-way Detail selector. Regenerate this doc after the "build once"
+> pass.
+
 _Generated 2026-07-16 from the live control wiring in `web/index.html`
 (`#views`, `#toggle`, `#lens`, `#palette`, `#coloradj`, and the per-view
 `#layers` sections). This is the "what can the user actually do" catalogue —

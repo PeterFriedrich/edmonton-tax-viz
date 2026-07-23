@@ -25,24 +25,30 @@ follow this order (see §5.A):
 
 ---
 
-## 2. Tier 1 — the seven views (`#views`)
+## 2. Tier 1 — the views (`#views`)
 
-`Money · Services · Ratio · Uses · Development · Infill · Glass`
+**Built today (7):** `Money · Services · Ratio · Uses · Development · Infill · Glass`
+**Decided target (5, §7):** `Money · Services · Ratio · Uses · Development`
+— Glass → a mode of Money; Infill → a full-only mode of Development. §3–§5 below
+still describe the **built** 7-view state (this doc is a current-state snapshot);
+§7 holds the decided-but-unbuilt regroup.
 
-**Build visibility (public vs specialist).** The two-build split (DECISIONS
-2026-07-22; `docs/PLAN_public_release.md` §2a) tags each lens `public | full`.
-This is the **same decision surface as regrouping** — finalize both in the
-"organize the lenses" pass, not separately. Provisional tags:
+**Build visibility (public vs specialist) — FINALIZED 2026-07-23 (§7 +
+`DECISIONS.md`).** The two-build split tags each lens `public | full`; this was
+the same decision surface as regrouping, resolved together in the "organize the
+lenses" pass.
 
-| View | Public build | Specialist (`/full/`) |
+| Lens / control | Public build | Specialist (`/full/`) |
 |---|:---:|:---:|
-| Money · Services · Ratio · Uses · Glass | ✅ | ✅ |
-| **Development** | ✅ (moved public, Peter 2026-07-22) | ✅ |
-| **Infill** | ❌ | ✅ |
+| Money (incl. Glass grid mode) · Services · Ratio · Uses | ✅ | ✅ |
+| **Development** — units + permits, Detail selector | ✅ | ✅ |
+| **Infill** mode on Development | ❌ | ✅ |
+| **Industrial** metric on Development | ❌ | ✅ |
 | Deep data-detail (validation ratios, modeling quirks, methods-heavy blurbs) | trimmed to honest labels | ✅ full |
 
-Sub-metrics inherit their view's tag unless split out during regrouping (e.g. if
-Industrial leaves Development, it gets its own tag then).
+Full-only *modes/metrics inside a public view* (Infill, Industrial on the public
+Development view) are `BUILD`-flag-gated at the control level — the two-build
+mechanism handles exactly this.
 
 ---
 

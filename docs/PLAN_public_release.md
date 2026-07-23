@@ -85,18 +85,24 @@ carries a `public | full` tag right next to its group, decided in **one**
 "organize the lenses" pass, not as a separate deployment exercise. The plumbing
 is grouping-agnostic and reads whatever tags that pass produces.
 
-**Current split (provisional — finalized in the regroup pass):**
-- **Public:** Money · Services · Ratio · Uses · Glass · **Development**
-  (Development moved to public, Peter 2026-07-22).
-- **Full-only:** Infill · deep data-detail (validation ratios, modeling quirks,
-  methodology-heavy blurbs).
+**FINALIZED split (regroup pass, 2026-07-23 — `CONTROLS_MATRIX.md` §7 +
+`DECISIONS.md`):** `#views` collapses to **5** (Glass → a mode of Money; Infill →
+a full-only mode of Development).
+- **Public:** Money (incl. the Glass grid mode) · Services · Ratio · Uses ·
+  **Development** (units + permits only).
+- **Full-only:** the **Infill** mode + the **Industrial** metric on Development ·
+  deep data-detail (validation ratios, modeling quirks, methodology-heavy blurbs).
+- Full-only controls are `BUILD`-flag-gated at the control level, so a full-only
+  *mode/metric inside a public view* (Infill/Industrial on Development) is exactly
+  what the mechanism supports.
 
 ## 3. Release scope (proposed lock)
 
 **IN — everything currently live:**
 - **Money view** (revenue/value per acre, ground + lot-acre denominator toggle,
   residential lens, colour-adjust toggle)
-- **Glass view** (100 m grid, both denominators)
+- **Glass** (100 m grid, both denominators) — post-regroup a *mode of Money*,
+  not a separate view (still ships public)
 - **Services view** (roads; stormwater MODELED; fire demand; water MODELED)
 - **Ratio view** (revenue per road metre)
 - **Uses view** (zoning composition, real bylaw geometry)
