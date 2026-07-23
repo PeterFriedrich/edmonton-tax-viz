@@ -13,7 +13,7 @@ const [url, prefix] = process.argv.slice(2);
   page.on('pageerror', e => console.log('PAGE EXCEPTION:', e.message));
   await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 });
   await page.waitForTimeout(4000);
-  await page.$eval('#views button[data-view="glass"]', b => b.click());
+  await page.$eval('#moneydetail button[data-moneydetail="grid"]', b => b.click());
   await page.waitForTimeout(8000);
   await page.evaluate(() => {
     const el = document.getElementById('prism-opacity');

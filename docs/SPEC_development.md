@@ -1,13 +1,13 @@
 # Scope: Development & Infill Lens family
 
-> **UI regroup decided 2026-07-23 (not yet built) — `docs/CONTROLS_MATRIX.md` §7,
-> `DECISIONS.md`.** The presentation of this family changes at the next "build
-> once" pass: **Infill** becomes a *full-only mode of Development* (not a separate
-> `#views` button); **Industrial** becomes a *full-only metric*; and the **grid
-> checkbox + "Spikes" picker** collapse into **one 3-way "Detail" selector**
-> (Neighbourhood / 100 m grid — activity / Stock age). The UI descriptions below
-> (§ "Spikes" picker, Metric/Window hiding, etc.) still describe the *built* state.
-> The underlying analysis/columns are unchanged — only the chrome moves.
+> **UI regroup BUILT 2026-07-23 (branch `regroup-build-s65`, not yet on master) —
+> `docs/CONTROLS_MATRIX.md` §7, `DECISIONS.md`.** This family's *chrome* changed:
+> **Infill** is now a *full-only mode of Development* (the `#devmode` Housing/Infill
+> toggle, not a `#views` button); **Industrial** is a *full-only `#devmetric`*; and
+> the grid checkbox + "Spikes" picker are now **one 3-way `#devdetail` "Detail"
+> selector** (Neighbourhood / 100 m grid — activity / Stock age). Some UI prose
+> below (§ "Spikes" picker naming, etc.) still describes the pre-regroup wording —
+> the underlying analysis/columns are unchanged, only the controls moved.
 
 **Status:** Lens A **BUILT + shipped** (2026-07-12, branch
 `feat/dev-lens-a-building-activity`); Lens B/C still PLAN. This doc specs a new

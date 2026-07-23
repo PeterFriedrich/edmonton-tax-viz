@@ -118,7 +118,7 @@ function approx(a, b, rel = 1e-6) { return Math.abs(a - b) <= rel * Math.max(Mat
   check('lot tooltip shows parcel land %', /parcel land \d+% of area/.test(tip), tip.replace(/<[^>]+>/g, ' '));
 
   // --- persistence across a Glass round-trip -------------------------------
-  await click('#views button[data-view="glass"]');
+  await click('#moneydetail button[data-moneydetail="grid"]');
   await page.waitForTimeout(2500);
   const g = await page.evaluate(() => ({ view: state.view, denom: state.denom,
     denomHd: document.getElementById('denom-hd').textContent }));

@@ -135,11 +135,17 @@ view or a render-mode of Money.
 
 ---
 
-## 7. Regrouping decisions (locked, not yet built)
+## 7. Regrouping decisions (locked — BUILT 2026-07-23, branch `regroup-build-s65`)
 
-The running output of the "organize the lenses" pass. Each locks a piece of the
-regrouped structure; the code edit is deferred to ONE "build once" pass after the
-whole regroup settles (don't reflow `index.html` twice). Mirror to `DECISIONS.md`.
+The running output of the "organize the lenses" pass. Each locked a piece of the
+regrouped structure; **all eight were built in one reflow on 2026-07-23** (branch
+`regroup-build-s65`, not yet on master — merge gated on the two-build deploy
+plumbing so the public root isn't shipped the `full` default). The as-built map:
+`#views` = 5; Glass = Money `#moneydetail` toggle (internal view unchanged);
+Infill = full-only `#devmode` on Development; Industrial = full-only `#devmetric`;
+palette + Labels = the `#a11y` "Display" popover; grid+spike = the `#devdetail`
+3-way selector; `Highlight residential` = the collapsed `#lens`. Table kept as the
+decision record. Mirror to `DECISIONS.md`.
 
 | When | Decision | Resolves |
 |---|---|---|

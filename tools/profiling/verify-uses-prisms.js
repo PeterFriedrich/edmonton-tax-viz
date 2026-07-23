@@ -124,7 +124,7 @@ function check(name, ok, detail) {
   check('slider: opacity 80% applied live', slid);
 
   // 6. Labels ride the prism roofs while prisms are on.
-  await click('#lens button[data-lens="labels"]');
+  await page.$eval('#labels-on', el => { el.checked = !el.checked; el.dispatchEvent(new Event('change')); });
   await page.waitForTimeout(1500);
   const roofZ = await page.evaluate(() => {
     const top = state.data.features.map(f => f.properties)
@@ -133,7 +133,7 @@ function check(name, ok, detail) {
   });
   check('labels: roof-z = frac × peak + lift',
     Math.abs(roofZ.z - roofZ.expect) < 1e-6, `${roofZ.z.toFixed(1)} vs ${roofZ.expect.toFixed(1)}`);
-  await click('#lens button[data-lens="labels"]'); // labels off again
+  await page.$eval('#labels-on', el => { el.checked = !el.checked; el.dispatchEvent(new Event('change')); }); // labels off again
   await page.waitForTimeout(1000);
 
   // 7. Persistence: leave to Money (control hides, layer gone), return

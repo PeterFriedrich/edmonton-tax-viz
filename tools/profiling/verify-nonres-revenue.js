@@ -128,7 +128,7 @@ function approx(a, b, rel = 1e-6) { return Math.abs(a - b) <= rel * Math.max(Mat
 
   // --- Glass: grid cells when the file carries the nonres columns, hood-prism
   // fallback on older files — both correct; the column guard decides.
-  await click('#views button[data-view="glass"]');
+  await click('#moneydetail button[data-moneydetail="grid"]');
   await page.waitForTimeout(2500);
   const glass = await page.evaluate(() => ({
     view: state.view, metric: state.metric,

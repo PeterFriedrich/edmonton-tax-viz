@@ -33,20 +33,36 @@ _Last reconciled: 2026-07-09_
     grid+spike → one 3-way Detail selector. `public|full` tags all resolved in the
     same pass (public = Money/Services/Ratio/Uses/Development-activity; `/full/`
     adds Infill + Industrial + deep data-detail). **Nothing built yet.**
-  - [ ] **BUILD ONCE (now unblocked): implement the 8 regroup decisions in
-    `web/index.html`.** One pass, so the layout is only reflowed once. Includes the
-    `BUILD` mode flag gating (Infill/Industrial full-only), the accessibility menu,
-    the reordered tiered stack, the Detail selector, and the rename. Re-verify with
-    the `verify-*.js` suite after (selectors are mostly `data-*` — keep IDs to
-    minimize breakage). THEN mobile CSS (below) reflows the *final* grouping.
-  - [ ] **Two-build deploy plumbing (mechanism LOCKED, grouping-agnostic —
-    `PLAN_public_release.md` §2a).** Single-source `BUILD` mode flag + two
-    generated copies (root = public, `/full/` = full, unlisted, no auth).
-    Buildable any time; only *useful* once the tags above exist. Wrinkle:
-    `/full/` copy's data paths resolve up one level. **Home = the code deploy
-    path** (`deploy.yml`, added 2026-07-22): the two-copy emit is a shared
-    code-shaping step run before `upload-pages-artifact` in *both* `deploy.yml`
-    and `refresh.yml` — factor it once, don't inline twice.
+  - [x] ~~**BUILD ONCE: implement the 8 regroup decisions in `web/index.html`.**~~
+    **BUILT 2026-07-23 (branch `regroup-build-s65`, NOT yet on master).** One reflow:
+    the top stack is now a `#controls` flex column (tier order via `order:`), Glass
+    is a 2-way Money "Detail" toggle (internal view unchanged), Dev grid+spike is one
+    3-way Detail selector (Neighbourhood / 100 m grid — activity / Stock age), Infill
+    is a full-only Dev *mode* (`#devmode`), Industrial is a full-only `#devmetric`,
+    palette + Labels moved into a "Display" accessibility popover, `Residential only`
+    → `Highlight residential`. `BUILD` flag (`public|full`, `?build=public` override)
+    gates the two full-only controls. Full verify-`*`.js suite green in **both**
+    builds; verify + shot scripts updated to the new controls.
+    - [x] ~~**⚠️ merge gate: two-build deploy plumbing**~~ — **RESOLVED 2026-07-23**
+      (same branch): the emit now rewrites `DEFAULT_BUILD → public` for the root
+      copy, so merging `regroup-build-s65` to master ships the *public* controls to
+      the site root. **Branch is now safe to merge** (review + merge is Peter's call).
+    - [ ] **THEN mobile CSS** (below) reflows the *final* grouping (inherits the flex
+      column + Detail selectors — the structure-before-mobile payoff).
+    - [ ] **Regenerate `docs/LENS_INVENTORY.md`** from the rebuilt wiring (after merge).
+  - [x] ~~**Two-build deploy plumbing (`PLAN_public_release.md` §2a).**~~ **BUILT
+    2026-07-23 (branch `regroup-build-s65`).** `scripts/build_site.py` fans `web/`
+    into one Pages artifact: `_site/` = public root (whole tree, `DEFAULT_BUILD` →
+    `public`) + `_site/full/` = specialist (`index.html` only, `<base href="../">`
+    so its `./data`/`vendor` resolve to the ROOT's shared copies — no GeoJSON
+    duplication — `DEFAULT_BUILD` `full`, + a fixed work-in-progress badge). Wired
+    into BOTH `deploy.yml` (system `python3`, stdlib-only → stays the fast code path)
+    and `refresh.yml` (before `upload-pages-artifact`, `path → _site`), factored once
+    as the shared script. `tests/test_build_site.py` guards the emit + that the
+    source `DEFAULT_BUILD` literal exists (a drift fails `refresh.yml`'s pytest gate
+    before deploy). Verified locally: both URLs smoke-clean. **`/full/` is unlisted,
+    NOT access-controlled** (repo is public → nothing secret; the WIP badge is the
+    mitigation).
   - [ ] **Selective/partial data regen (DEFERRED — `SPEC_deployment.md`
     "Two deploy paths").** Teach the *data* run which datasets a change needs so
     even a refresh skips untouched sources. Signal exists (`rowsUpdatedAt` per
