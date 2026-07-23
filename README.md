@@ -60,7 +60,14 @@ Work that would genuinely need parcel *geometry* is catalogued in `docs/PARCEL_L
 
 **Live:** interactive 3D map at **https://peterfriedrich.github.io/edmonton-tax-viz/**
 — municipal tax revenue (and assessed value) per acre by neighbourhood, with a
-land-use set-aside layer and a residential-only lens. The **cost side is
+land-use set-aside layer and a residential-only lens.
+
+**Full / specialist build:** **https://peterfriedrich.github.io/edmonton-tax-viz/full/**
+— the same map with additional specialist controls (Infill mode, Industrial
+metric, deeper data-detail) exposed. This is the build for anyone visiting the
+repo directly; the public root above is the streamlined view.
+
+The **cost side is
 built** (`docs/SPEC_services.md`, `docs/SPEC_utilities.md`): a Services view
 layers the city-maintained road network (road supply per acre), a **modeled
 stormwater charge** per acre, **fire-rescue service demand** per acre, and a
