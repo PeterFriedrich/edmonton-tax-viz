@@ -28,7 +28,7 @@ const [url] = process.argv.slice(2);
   console.log('wrote res-revenue-lens.png');
 
   await click('#lens button[data-lens="residential"]'); // lens off (disabled in Glass anyway)
-  await click('#views button[data-view="glass"]');
+  await click('#moneydetail button[data-moneydetail="grid"]');
   await page.waitForTimeout(3500);
   await page.screenshot({ path: 'res-revenue-glass.png' });
   console.log('wrote res-revenue-glass.png');

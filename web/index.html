@@ -23,8 +23,24 @@
     #title { top: 20px; left: 22px; max-width: 360px; }
     #title h1 { margin: 0 0 4px; font-size: 19px; font-weight: 600; letter-spacing: 0.2px; }
     #title p  { margin: 0; font-size: 12.5px; line-height: 1.5; color: #9a9ab0; }
-    #coloradj, #toggle, #palette, #lens, #views, #layers {
-      right: 22px; display: flex; pointer-events: auto;
+    /* Right-side control stack: a single flex column, so pods can show/hide per
+       view without leaving gaps. Tier order (View → Variant → Presentation →
+       accessibility) is set with `order:` rather than DOM order. The map stays
+       clickable through the wrapper — pointer-events flip back on each pod. */
+    #controls {
+      position: absolute; top: 20px; right: 22px; z-index: 1;
+      display: flex; flex-direction: column; align-items: flex-end; gap: 8px;
+      pointer-events: none;
+    }
+    #controls > div { position: static; right: auto; top: auto; }
+    #views  { order: 1; } /* ① view (T1) */
+    #toggle { order: 2; } /* ② variant (T2) — Money metric, money/glass only */
+    #layers { order: 3; } /* ② variant (T2) — per-view sections */
+    #coloradj { order: 4; } /* ③ presentation (T3) — money/glass, greys elsewhere */
+    #lens   { order: 5; } /* ③ presentation (T3) — Highlight residential */
+    #a11y   { order: 6; } /* ④ accessibility button (out of the tier flow) */
+    #coloradj, #toggle, #lens, #views, #layers, #a11y, #a11y-menu {
+      display: flex; pointer-events: auto;
       background: rgba(12,12,20,0.7); border: 1px solid #2a2a3a;
       border-radius: 6px; overflow: hidden;
     }
@@ -32,7 +48,7 @@
        about HOW colour is rendered, not WHAT you're looking at. It drives the
        money/glass sqrt transform (scaleT) only, so it disables in the other
        views — same idiom as the residential lens button. Height stays linear. */
-    #coloradj { top: 20px; align-items: stretch; }
+    #coloradj { align-items: stretch; }
     #coloradj button {
       appearance: none; border: 0; background: transparent; color: #9a9ab0;
       font: 11.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -49,10 +65,6 @@
       font-size: 10.5px; color: #6a6a80; white-space: nowrap;
     }
     #coloradj.disabled .cadj-state { color: #4a4a5e; }
-    #toggle { top: 58px; }
-    #palette { top: 96px; }
-    #lens { top: 134px; }
-    #views { top: 172px; }
     #views button {
       appearance: none; border: 0; background: transparent; color: #9a9ab0;
       font: 11.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -61,7 +73,7 @@
     #views button:hover { color: #e8e8ef; }
     #views button.active { background: #fcd278; color: #16111a; font-weight: 600; }
     #layers {
-      top: 210px; flex-direction: column; padding: 6px 12px; gap: 4px;
+      flex-direction: column; padding: 6px 12px; gap: 4px;
       font-size: 11.5px; color: #9a9ab0; display: none; /* opened per view — applyView shows the relevant sections */
     }
     #layers .hd { font-size: 10px; text-transform: uppercase; letter-spacing: 0.8px; color: #6a6a80; }
@@ -84,20 +96,25 @@
     #denom-hd, #denom, #ratio-denom-hd, #ratio-denom { display: none; }
     /* Uses-view residential-prisms toggle — hidden outside the uses view
        (the #denom default-hidden pattern). */
-    #uses-prisms-hd, #uses-prisms, #dev-grid-hd, #dev-grid { display: none; }
+    #uses-prisms-hd, #uses-prisms { display: none; }
     /* Development-view sub-metric picker (dwelling units vs permits per acre)
        and window picker (last 5 yr vs 3 yr) — share the #denom button styling +
        default-hidden pattern; shown only in the development view (metric always,
-       window only when the data carries the _3yr columns). */
-    #devmetric-hd, #devmetric, #devwindow-hd, #devwindow, #devspike-hd, #devspike { display: none; }
-    #denom, #ratio-denom, #devmetric, #devwindow, #devspike { border: 1px solid #2a2a3a; border-radius: 5px; overflow: hidden; margin-bottom: 2px; }
-    #denom button, #ratio-denom button, #devmetric button, #devwindow button, #devspike button {
+       window only when the data carries the _3yr columns).
+       #moneydetail: Money's Neighbourhood/100 m-grid (glass) render toggle.
+       #devdetail: Development's 3-way Neighbourhood/grid/stock-age selector.
+       #devmode: Development's Housing/Infill lens toggle (full build only). */
+    #devmetric-hd, #devmetric, #devwindow-hd, #devwindow,
+    #moneydetail-hd, #moneydetail, #devdetail-hd, #devdetail,
+    #devmode-hd, #devmode { display: none; }
+    #denom, #ratio-denom, #devmetric, #devwindow, #moneydetail, #devdetail, #devmode { border: 1px solid #2a2a3a; border-radius: 5px; overflow: hidden; margin-bottom: 2px; }
+    #denom button, #ratio-denom button, #devmetric button, #devwindow button, #moneydetail button, #devdetail button, #devmode button {
       appearance: none; border: 0; background: transparent; color: #9a9ab0;
       font: 11px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       padding: 4px 10px; cursor: pointer; flex: 1; transition: background 0.12s, color 0.12s;
     }
-    #denom button:hover, #ratio-denom button:hover, #devmetric button:hover, #devwindow button:hover, #devspike button:hover { color: #e8e8ef; }
-    #denom button.active, #ratio-denom button.active, #devmetric button.active, #devwindow button.active, #devspike button.active { background: #fcd278; color: #16111a; font-weight: 600; }
+    #denom button:hover, #ratio-denom button:hover, #devmetric button:hover, #devwindow button:hover, #moneydetail button:hover, #devdetail button:hover, #devmode button:hover { color: #e8e8ef; }
+    #denom button.active, #ratio-denom button.active, #devmetric button.active, #devwindow button.active, #moneydetail button.active, #devdetail button.active, #devmode button.active { background: #fcd278; color: #16111a; font-weight: 600; }
     #toggle button, #palette button, #lens button {
       appearance: none; border: 0; background: transparent; color: #9a9ab0;
       font: 12.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -108,6 +125,31 @@
     #lens button:disabled, #lens button:disabled:hover { color: #4a4a5e; cursor: default; }
     #lens button.active:disabled { background: #6b5c34; color: #2a2430; }
     #toggle button.active, #palette button.active, #lens button.active { background: #fcd278; color: #16111a; font-weight: 600; }
+    /* Accessibility menu: a "Display" button that opens a small popover holding
+       the colour-ramp picker (Inferno default; Cividis is the CVD-safe ramp) and
+       the neighbourhood-labels toggle. Kept off the always-visible chrome — one
+       tap away for those who need it. Anchored to its button; overflow visible so
+       the popover isn't clipped by the pod. */
+    #a11y { position: relative; overflow: visible; }
+    #a11y-btn {
+      appearance: none; border: 0; background: transparent; color: #9a9ab0;
+      font: 11.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      padding: 6px 12px; cursor: pointer; transition: background 0.12s, color 0.12s;
+    }
+    #a11y-btn:hover { color: #e8e8ef; }
+    #a11y.open #a11y-btn { background: #fcd278; color: #16111a; font-weight: 600; }
+    #a11y-menu {
+      display: none; position: absolute; top: calc(100% + 6px); right: 0;
+      flex-direction: column; padding: 6px 12px; gap: 4px;
+      font-size: 11.5px; color: #9a9ab0; min-width: 150px;
+    }
+    #a11y.open #a11y-menu { display: flex; }
+    #a11y-menu .hd { font-size: 10px; text-transform: uppercase; letter-spacing: 0.8px; color: #6a6a80; }
+    #palette { border: 1px solid #2a2a3a; border-radius: 5px; overflow: hidden; margin-bottom: 2px; }
+    #palette button { flex: 1; padding: 4px 8px; font-size: 11px; }
+    #a11y-menu label { display: flex; align-items: center; gap: 7px; cursor: pointer; padding: 2px 0; }
+    #a11y-menu label:hover { color: #e8e8ef; }
+    #a11y-menu input { accent-color: #fcd278; margin: 0; }
     #legend { bottom: 22px; left: 22px; font-size: 11.5px; color: #b8b8c8; }
     #legend .bar {
       width: 200px; height: 10px; border-radius: 2px; margin: 6px 0 4px;
@@ -161,6 +203,7 @@
        natural/undeveloped land, excluded from the scale.</p>
   </div>
 
+  <div id="controls">
   <div id="coloradj" class="panel">
     <button id="coloradj-btn" class="active" title="How colour is scaled — not what you're looking at. On spreads the values across the ramp (sqrt); Off shows true magnitude (linear, clamped at the top). Height stays linear either way.">Colour: sqrt scaling</button>
     <span id="coloradj-state" class="cadj-state">On — colour spread across distribution</span>
@@ -173,15 +216,8 @@
     <button data-metric="nonres_revenue_per_acre" title="Tax dollars billed at the non-residential rate (commercial and industrial land) — a subset of Revenue, the complement of Residential $">Non-res $</button>
   </div>
 
-  <div id="palette" class="panel">
-    <button data-ramp="current" class="active">Inferno</button>
-    <button data-ramp="glow">Glow</button>
-    <button data-ramp="cividis">Cividis</button>
-  </div>
-
   <div id="lens" class="panel">
-    <button data-lens="residential" title="Fade non-residential neighbourhoods so residential land compares like-to-like">Residential only</button>
-    <button data-lens="labels" title="Show neighbourhood names on the map — labels declutter automatically and more appear as you zoom in">Labels</button>
+    <button data-lens="residential" title="Fade non-residential neighbourhoods so residential land compares like-to-like">Highlight residential</button>
   </div>
 
   <div id="views" class="panel">
@@ -190,27 +226,42 @@
     <button data-view="ratio" title="Ghost prisms of revenue per road metre — or per fire event — over the neutral road network">Ratio</button>
     <button data-view="uses" title="Each neighbourhood's dominant zoned land use — what the land is designated for, not what it yields; optional prisms show each neighbourhood's residential share">Uses</button>
     <button data-view="development" title="New dwelling units built per acre from issued building permits (2021–2025) — where the city is actually growing; greenfield growth land is shown in full colour here">Development</button>
-    <button data-view="infill" title="Suitability vs activity: where building is — or isn't — happening relative to how much room each neighbourhood has for infill (low built floor-area ratio = room to add). Teal = suitable but quiet (residential opportunity); orange = building where there's less room">Infill</button>
-    <button data-view="glass" title="Translucent metric prisms over a neutral neighbourhood plane — hover the ground for each neighbourhood's numbers">Glass</button>
   </div>
 
   <div id="layers" class="panel">
+    <span class="hd" id="moneydetail-hd">Detail</span>
+    <div id="moneydetail">
+      <button data-moneydetail="hood" class="active" title="Solid neighbourhood prisms — each hood's metric per acre (the default view)">Neighbourhood</button>
+      <button data-moneydetail="grid" title="Translucent 100 m grid-cell spikes over a neutral neighbourhood plane — the metric binned to squares; hover the plane for each neighbourhood's numbers">100 m grid</button>
+    </div>
     <span class="hd" id="uses-prisms-hd">Residential prisms</span>
     <div id="uses-prisms">
       <label title="Translucent prisms over the zoning fabric — each neighbourhood's height is its share of zoned land that is residential; a full-height prism would be 100% residential">
         <input type="checkbox" id="uses-prisms-on" /> Height = share zoned residential
       </label>
     </div>
-    <span class="hd" id="dev-grid-hd">Detail</span>
-    <div id="dev-grid">
-      <label title="Swap the neighbourhood choropleth for 100 m grid-cell spikes of geocoded permits — height and colour show new units (or permits) per cell; the flat plane underneath keeps the neighbourhood hover">
-        <input type="checkbox" id="dev-grid-on" /> 100 m grid (permit points)
-      </label>
+    <span class="hd" id="devmode-hd">Lens</span>
+    <div id="devmode">
+      <button data-devmode="development" class="active" title="New dwelling units / permits built per acre — where the city is actually growing">Housing built</button>
+      <button data-devmode="infill" title="Suitability vs activity: where building is — or isn't — happening relative to how much room each neighbourhood has for infill (low built floor-area ratio = room to add). Teal = suitable but quiet (opportunity); orange = building where there's less room">Infill opportunity</button>
     </div>
-    <span class="hd" id="devspike-hd">Spikes</span>
-    <div id="devspike">
-      <button data-devspike="activity" class="active" title="New building activity per cell — the permit spikes the Metric and Window pickers select">New homes</button>
-      <button data-devspike="age" title="Median construction year of each cell's assessed buildings — height and colour rise with recency (yellow = newest); the whole standing stock, not just recent permits">Year built</button>
+    <span class="hd" id="devmetric-hd">Metric</span>
+    <div id="devmetric">
+      <button data-devmetric="units" class="active" title="New dwelling units per acre — housing supply added. One large apartment adds many units on a single permit">Dwelling units</button>
+      <button data-devmetric="permits" title="New residential building permits per acre — project density. Many single houses are many permits; one apartment is one permit">Permits</button>
+      <button data-devmetric="industrial" title="New industrial building permits per acre — warehouses, manufacturing, utilities, transport terminals (400-series). Count only; a hood-level choropleth (no detail grid, and not an infill metric)">Industrial</button>
+    </div>
+    <span class="hd" id="devwindow-hd">Window</span>
+    <div id="devwindow">
+      <button data-devwindow="5yr" class="active" title="Building activity summed over the last five full calendar years (2021–2025) — the more stable, structural view">Last 5 yr</button>
+      <button data-devwindow="3yr" title="Building activity summed over the last three full calendar years (2023–2025) — the more recent, current-activity view">Last 3 yr</button>
+      <button data-devwindow="long" title="Building activity summed over the whole permit record (2009–2025) — the density added over the era">Since 2009</button>
+    </div>
+    <span class="hd" id="devdetail-hd">Detail</span>
+    <div id="devdetail">
+      <button data-devdetail="hood" class="active" title="Neighbourhood choropleth — each hood coloured by the metric per acre (the default)">Neighbourhood</button>
+      <button data-devdetail="grid" title="100 m grid-cell spikes of geocoded permits — height and colour show new units (or permits) per cell; the flat plane underneath keeps the neighbourhood hover">100 m grid — activity</button>
+      <button data-devdetail="age" title="Median construction year of each 100 m cell's assessed buildings — height and colour rise with recency (yellow = newest); the whole standing stock, not just recent permits. Hides Metric + Window.">Stock age</button>
     </div>
     <span class="hd" id="prism-hd">Money plane</span>
     <label id="prism-row" title="Prism opacity — how strongly the ratio prisms overlay the road network">
@@ -280,18 +331,23 @@
       <button data-ratio-denom="fire" title="Revenue per dispatched fire-department emergency event (2023–2025 average) — levy-funded demand; most events are medical calls">Per fire event</button>
       <button data-ratio-denom="servicecost" title="Property-tax revenue as a multiple of the modeled roads + fire service cost — the two levy-funded services this project can measure, NOT the total cost of city services (police, parks, transit and the rest are not included, so most neighbourhoods read well above 1×)">Per service $</button>
     </div>
-    <span class="hd" id="devmetric-hd">Metric</span>
-    <div id="devmetric">
-      <button data-devmetric="units" class="active" title="New dwelling units per acre — housing supply added. One large apartment adds many units on a single permit">Dwelling units</button>
-      <button data-devmetric="permits" title="New residential building permits per acre — project density. Many single houses are many permits; one apartment is one permit">Permits</button>
-      <button data-devmetric="industrial" title="New industrial building permits per acre — warehouses, manufacturing, utilities, transport terminals (400-series). Count only; a hood-level choropleth (no detail grid, and not an infill metric)">Industrial</button>
+  </div>
+
+  <div id="a11y" class="panel">
+    <button id="a11y-btn" title="Display &amp; accessibility — colour ramp and neighbourhood labels">Display</button>
+    <div id="a11y-menu">
+      <span class="hd">Colour ramp</span>
+      <div id="palette">
+        <button data-ramp="current" class="active">Inferno</button>
+        <button data-ramp="glow">Glow</button>
+        <button data-ramp="cividis" title="Colour-vision-deficiency-safe ramp">Cividis</button>
+      </div>
+      <span class="hd">Map</span>
+      <label title="Show neighbourhood names on the map — labels declutter automatically and more appear as you zoom in">
+        <input type="checkbox" id="labels-on" /> Neighbourhood labels
+      </label>
     </div>
-    <span class="hd" id="devwindow-hd">Window</span>
-    <div id="devwindow">
-      <button data-devwindow="5yr" class="active" title="Building activity summed over the last five full calendar years (2021–2025) — the more stable, structural view">Last 5 yr</button>
-      <button data-devwindow="3yr" title="Building activity summed over the last three full calendar years (2023–2025) — the more recent, current-activity view">Last 3 yr</button>
-      <button data-devwindow="long" title="Building activity summed over the whole permit record (2009–2025) — the density added over the era">Since 2009</button>
-    </div>
+  </div>
   </div>
 
   <div id="legend" class="panel">
@@ -309,6 +365,16 @@
     // banner the backend sets is picked up without waiting out CDN caching.
     const STATUS_URL = "./data/status.json";
     const CENTER = [-113.50, 53.52]; // Edmonton, from the data centroid
+
+    // Build mode: "public" (curated) | "full" (specialist). ONE hand-edited
+    // source; the deploy step emits two copies, rewriting this constant (root =
+    // public, /full/ = full). Full-only controls gate on BUILD === "full" at the
+    // control level, so a full-only mode/metric can live inside a public view
+    // (Infill mode + Industrial metric on Development). `?build=public` overrides
+    // for local spot-checking of the public shape without editing the file.
+    const BUILD = (new URLSearchParams(location.search).get("build") === "public")
+      ? "public" : "full";
+    const FULL_BUILD = BUILD === "full";
 
     // Per-metric display config. The clamp (colour saturation) sits at the same
     // percentile (~p97.5) for every metric, and the elevation scale is set so the
@@ -2475,8 +2541,8 @@
     // 2009" window are choropleth-only), and the title/blurb carry the window.
     function syncDevChrome() {
       const gridShow = devGridOfferable();
-      document.getElementById("dev-grid-hd").style.display = gridShow ? "block" : "none";
-      document.getElementById("dev-grid").style.display = gridShow ? "block" : "none";
+      document.getElementById("devdetail-hd").style.display = gridShow ? "block" : "none";
+      document.getElementById("devdetail").style.display = gridShow ? "flex" : "none";
       document.getElementById("prism-row").style.display =
         devGridActive() ? "flex" : "none";
       document.getElementById("title-h").textContent = devTitle();
@@ -2721,13 +2787,13 @@
       refreshLegend();
     }
 
-    // Toggle the neighbourhood-name labels. View-independent: the layer
-    // builder appends the labels in every view when the state flag is on.
-    function applyLabels() {
-      state.labels = !state.labels;
+    // Toggle the neighbourhood-name labels (accessibility-menu checkbox).
+    // View-independent: the layer builder appends the labels in every view when
+    // the state flag is on.
+    function applyLabels(checked) {
+      state.labels = checked;
       overlay.setProps({ layers: buildLayers() });
-      document.querySelector('#lens button[data-lens="labels"]')
-        .classList.toggle("active", state.labels);
+      document.getElementById("labels-on").checked = checked;
     }
 
     // Toggle the Uses view's residential prisms (height = share of zoned
@@ -2754,20 +2820,33 @@
       const ageUp = v === "development" && devGridActive() && devAgeActive();
       const metricShow = devViewsMetric && state.hasPermitsPerAcre && !ageUp;
       const windowShow = devViewsMetric && state.hasDevWindow && !ageUp;
-      const spikeShow = v === "development" && devGridActive() && devAgeCol() >= 0;
       document.getElementById("devmetric-hd").style.display = metricShow ? "block" : "none";
       document.getElementById("devmetric").style.display = metricShow ? "flex" : "none";
       document.getElementById("devwindow-hd").style.display = windowShow ? "block" : "none";
       document.getElementById("devwindow").style.display = windowShow ? "flex" : "none";
-      document.getElementById("devspike-hd").style.display = spikeShow ? "block" : "none";
-      document.getElementById("devspike").style.display = spikeShow ? "flex" : "none";
+      // The Detail selector's Stock-age option rides on the Glass grid file's
+      // year column — hide the option until that lands (older files: activity
+      // only). Reflect the current render mode on the 3-way selector.
+      const ageBtn = document.querySelector('#devdetail button[data-devdetail="age"]');
+      if (ageBtn) ageBtn.style.display = devAgeCol() >= 0 ? "" : "none";
+      const mode = !state.devGrid ? "hood" : (state.devSpikes === "age" ? "age" : "grid");
+      document.querySelectorAll("#devdetail button").forEach(b =>
+        b.classList.toggle("active", b.dataset.devdetail === mode));
       // Industrial is a development-only choropleth metric — hide its button in
-      // Infill (units/permits stay as the activity choices). Left permanently
-      // hidden by the data guard when the column is absent.
-      if (state.hasIndPermits) {
+      // Infill (units/permits stay as the activity choices). Full build only;
+      // also left permanently hidden by the data guard when the column is absent.
+      if (state.hasIndPermits && FULL_BUILD) {
         document.querySelector('#devmetric button[data-devmetric="industrial"]')
           .style.display = v === "infill" ? "none" : "";
       }
+      // The Infill/Housing lens toggle: full build only, and only where the
+      // infill data exists. Shown in both development and infill (to toggle
+      // back). Active state reflects the current view.
+      const devmodeShow = devViewsMetric && FULL_BUILD && state.hasInfill;
+      document.getElementById("devmode-hd").style.display = devmodeShow ? "block" : "none";
+      document.getElementById("devmode").style.display = devmodeShow ? "flex" : "none";
+      document.querySelectorAll("#devmode button").forEach(b =>
+        b.classList.toggle("active", b.dataset.devmode === (v === "infill" ? "infill" : "development")));
     }
 
     // The age spikes ride on the Glass grid file — kick its (shared, single)
@@ -2787,31 +2866,41 @@
       });
     }
 
-    // Development-view 100 m detail toggle (mirrors applyUsesPrisms): swaps
-    // choropleth <-> permit-cell spikes, opens the opacity slider while the
-    // spikes are up, and re-runs blurb + legend (both change with the mode).
-    function applyDevGrid(checked) {
-      state.devGrid = checked;
-      document.getElementById("prism-row").style.display = checked ? "flex" : "none";
-      if (checked) ensureAgeData();
+    // Development-view 3-way Detail selector: Neighbourhood choropleth /
+    // 100 m grid — activity (permit-cell spikes) / Stock age (median year-built
+    // spikes). Replaces the old grid checkbox + spike picker with one flat
+    // radio row. Maps to state.devGrid + state.devSpikes; Stock age hides the
+    // Metric + Window pickers (syncDevControls) as an explicit mode choice.
+    function applyDevDetail(mode) {
+      const curMode = !state.devGrid ? "hood" : (state.devSpikes === "age" ? "age" : "grid");
+      if (mode === curMode) return;
+      state.devGrid = mode !== "hood";
+      state.devSpikes = mode === "age" ? "age" : "activity";
+      document.getElementById("prism-row").style.display = state.devGrid ? "flex" : "none";
+      if (state.devGrid) ensureAgeData();
       syncDevControls();
+      if (state.view !== "development") return;
       overlay.setProps({ layers: buildLayers() });
       document.getElementById("title-p").textContent = devBlurb();
       refreshLegend();
     }
 
-    // Development grid Spikes picker (permit activity <-> stock age). Only
-    // visible once the year column is loaded, so no fetch needed here.
-    function applyDevSpikes(m) {
-      if (m === state.devSpikes || (m !== "activity" && m !== "age")) return;
-      state.devSpikes = m;
-      document.querySelectorAll("#devspike button").forEach(b =>
-        b.classList.toggle("active", b.dataset.devspike === m));
-      if (state.view !== "development") return;
-      syncDevControls();
-      overlay.setProps({ layers: buildLayers() });
-      document.getElementById("title-p").textContent = devBlurb();
-      refreshLegend();
+    // Money's render toggle: Neighbourhood prisms (view "money") vs the
+    // translucent 100 m grid "glass" (internal view "glass"). Glass reuses
+    // Money's metric / colour / denominator, so it is a render-mode here rather
+    // than a top-level view; applyView keeps the Money #views button active.
+    function applyMoneyDetail(mode) {
+      const target = mode === "grid" ? "glass" : "money";
+      if (target !== state.view) applyView(target);
+    }
+
+    // Development's Housing/Infill lens toggle (full build only). Infill is a
+    // full-only mode of Development — it shares the sub-metric/window pickers but
+    // renders the suitability-vs-activity mismatch. applyView keeps the
+    // Development #views button active in both.
+    function applyDevMode(mode) {
+      const target = mode === "infill" ? "infill" : "development";
+      if (target !== state.view) applyView(target);
     }
 
     // Set the ratio view's ghost-prism opacity (0–100). UI-state only — the
@@ -2829,8 +2918,16 @@
     async function applyView(v) {
       if (v === state.view || (v !== "money" && !VIEWS[v])) return;
       state.view = v;
+      // Glass and Infill are render-modes of Money and Development (no #views
+      // button of their own) — the parent view's button stays active in each.
+      const viewBtn = v === "glass" ? "money" : v === "infill" ? "development" : v;
       document.querySelectorAll("#views button").forEach(b =>
-        b.classList.toggle("active", b.dataset.view === v));
+        b.classList.toggle("active", b.dataset.view === viewBtn));
+      // The metric picker (#toggle) is Money-scoped: shown only in Money/Glass,
+      // where it drives the render. Hidden elsewhere (stops floating live-but-
+      // inert over views it doesn't affect).
+      document.getElementById("toggle").style.display =
+        (v === "money" || v === "glass") ? "flex" : "none";
       // Infill's activity side is residential building only — the industrial
       // metric is a development-choropleth cut, never an infill activity. If it
       // was selected in Development, drop back to units on entering Infill so
@@ -2846,8 +2943,12 @@
       // denominator (money + glass, further gated on the data below), and
       // the ratio denominator picker (ratio, gated on the fire column).
       const prisms = v === "ratio" || v === "glass";
-      // The Money view opens the layers panel too — but only for the denominator
-      // toggle, and only when the data carries the lot-acre columns.
+      // Money/Glass open the layers panel for the Detail (Neighbourhood / 100 m
+      // grid) toggle, always — glass has a graceful fallback if the grid file is
+      // absent, so the toggle is safe to offer unconditionally.
+      const moneyDetailShow = v === "money" || v === "glass";
+      // The Money view also carries the acre denominator toggle when the data
+      // carries the lot-acre columns.
       const moneyDenom = v === "money" && state.hasHoodLot;
       // The development AND infill views open the layers panel for the
       // unit/permit sub-metric picker (in infill it drives the activity side of
@@ -2858,7 +2959,12 @@
       // older data files carry only the base window and hide it.
       const devWindowShow = devViewsMetric && state.hasDevWindow;
       document.getElementById("layers").style.display =
-        (prisms || v === "services" || v === "uses" || moneyDenom || devMetricShow || devWindowShow) ? "flex" : "none";
+        (prisms || v === "services" || v === "uses" || moneyDetailShow || moneyDenom || devMetricShow || devWindowShow) ? "flex" : "none";
+      // Money's render toggle (Neighbourhood prisms vs 100 m glass grid).
+      document.getElementById("moneydetail-hd").style.display = moneyDetailShow ? "block" : "none";
+      document.getElementById("moneydetail").style.display = moneyDetailShow ? "flex" : "none";
+      document.querySelectorAll("#moneydetail button").forEach(b =>
+        b.classList.toggle("active", b.dataset.moneydetail === (v === "glass" ? "grid" : "hood")));
       document.getElementById("uses-prisms-hd").style.display = v === "uses" ? "block" : "none";
       document.getElementById("uses-prisms").style.display = v === "uses" ? "block" : "none";
       document.getElementById("prism-hd").style.display = prisms ? "block" : "none";
@@ -2953,11 +3059,13 @@
       // for it (devGridOfferable). The long "since 2009" window is first-class
       // with its own grid (PR #80), so it IS offerable.
       const devGridShow = v === "development" && devGridOfferable();
-      document.getElementById("dev-grid-hd").style.display = devGridShow ? "block" : "none";
-      document.getElementById("dev-grid").style.display = devGridShow ? "block" : "none";
-      // Re-entering the development view with the grid up: make sure the age
-      // data (Glass grid file) is on its way for the Spikes picker.
-      if (devGridShow && state.devGrid) ensureAgeData();
+      document.getElementById("devdetail-hd").style.display = devGridShow ? "block" : "none";
+      document.getElementById("devdetail").style.display = devGridShow ? "flex" : "none";
+      // Entering the development view: kick the age data (Glass grid file, a
+      // single shared non-blocking fetch) so the Detail selector's Stock-age
+      // option is offered up front rather than only after toggling into grid
+      // mode — decision #7 makes stock age a first-class Detail choice.
+      if (devGridShow) ensureAgeData();
       overlay.setProps({ layers: buildLayers() });
       // Glass shows the metric like Money, so its title stays metric-driven
       // and its blurb follows the spike denominator; the services blurb
@@ -3030,7 +3138,18 @@
       document.querySelectorAll("#palette button").forEach(b =>
         b.addEventListener("click", () => applyPalette(b.dataset.ramp)));
       document.querySelector("#lens button").addEventListener("click", applyLens);
-      document.querySelector('#lens button[data-lens="labels"]').addEventListener("click", applyLabels);
+      document.getElementById("labels-on").addEventListener("change",
+        e => applyLabels(e.target.checked));
+      // Accessibility menu open/close (button toggles; a click outside closes).
+      document.getElementById("a11y-btn").addEventListener("click", e => {
+        e.stopPropagation();
+        document.getElementById("a11y").classList.toggle("open");
+      });
+      document.addEventListener("click", e => {
+        const a11y = document.getElementById("a11y");
+        if (a11y.classList.contains("open") && !a11y.contains(e.target))
+          a11y.classList.remove("open");
+      });
       document.querySelectorAll("#denom button").forEach(b =>
         b.addEventListener("click", () => applyDenom(b.dataset.denom)));
       document.querySelectorAll("#ratio-denom button").forEach(b =>
@@ -3039,12 +3158,14 @@
         b.addEventListener("click", () => applyDevMetric(b.dataset.devmetric)));
       document.querySelectorAll("#devwindow button").forEach(b =>
         b.addEventListener("click", () => applyDevWindow(b.dataset.devwindow)));
-      document.querySelectorAll("#devspike button").forEach(b =>
-        b.addEventListener("click", () => applyDevSpikes(b.dataset.devspike)));
+      document.querySelectorAll("#moneydetail button").forEach(b =>
+        b.addEventListener("click", () => applyMoneyDetail(b.dataset.moneydetail)));
+      document.querySelectorAll("#devdetail button").forEach(b =>
+        b.addEventListener("click", () => applyDevDetail(b.dataset.devdetail)));
+      document.querySelectorAll("#devmode button").forEach(b =>
+        b.addEventListener("click", () => applyDevMode(b.dataset.devmode)));
       document.getElementById("uses-prisms-on").addEventListener("change",
         e => applyUsesPrisms(e.target.checked));
-      document.getElementById("dev-grid-on").addEventListener("change",
-        e => applyDevGrid(e.target.checked));
       document.querySelectorAll("#services .svc").forEach(el => {
         const k = el.dataset.service;
         el.querySelector(".svc-on").addEventListener("change",
@@ -3106,16 +3227,19 @@
         document.querySelector('#ratio-denom button[data-ratio-denom="servicecost"]').style.display = "none";
       }
       syncServiceControls();
-      // Neighbourhood lot-acre denominator toggle (pipeline 2026-07-08): shown
-      // in Money + Glass when the hood GeoJSON carries value_per_lot_acre. The
-      // Money view is the default, so open its denominator control now (applyView
-      // isn't called on load) — and hide the prism-slider rows, which share the
-      // layers panel and have no CSS default-hidden state.
+      // Money is the default view — open its layers panel now (applyView isn't
+      // called on load) for the Detail (Neighbourhood / 100 m grid) render
+      // toggle, and hide the prism-slider rows, which share the panel and have
+      // no CSS default-hidden state. The lot-acre denominator toggle (pipeline
+      // 2026-07-08) additionally shows when the hood GeoJSON carries
+      // value_per_lot_acre.
       state.hasHoodLot = state.data.features.some(f => f.properties.value_per_lot_acre != null);
+      document.getElementById("layers").style.display = "flex";
+      document.getElementById("prism-hd").style.display = "none";
+      document.getElementById("prism-row").style.display = "none";
+      document.getElementById("moneydetail-hd").style.display = "block";
+      document.getElementById("moneydetail").style.display = "flex";
       if (state.hasHoodLot) {
-        document.getElementById("prism-hd").style.display = "none";
-        document.getElementById("prism-row").style.display = "none";
-        document.getElementById("layers").style.display = "flex";
         document.getElementById("denom-hd").textContent = "Denominator";
         document.getElementById("denom-hd").style.display = "block";
         document.getElementById("denom").style.display = "flex";
@@ -3164,19 +3288,22 @@
       // The Industrial sub-metric needs ind_permits_per_acre (pipeline
       // 2026-07-18) — hide the button on older files (state.devMetric can't be
       // stuck on it: no persistence, default is units).
+      // Industrial is also a FULL-only metric (decision: public Development =
+      // units + permits, both grid-capable, so the Detail selector never has a
+      // dead option) — hidden in the public build as well as on older data.
       state.hasIndPermits =
         state.data.features.some(f => f.properties.ind_permits_per_acre != null);
-      if (!state.hasIndPermits) {
+      if (!state.hasIndPermits || !FULL_BUILD) {
         document.querySelector('#devmetric button[data-devmetric="industrial"]').style.display = "none";
       }
-      // The Infill view (Lens B) needs the `far` suitability column (pipeline
-      // 2026-07-13) AND the activity column — hide the button on older data.
+      // Infill (Lens B) needs the `far` suitability column (pipeline 2026-07-13)
+      // AND the activity column. It is a FULL-only mode of Development now (no
+      // #views button of its own) — the Housing/Infill lens toggle is gated in
+      // syncDevControls on FULL_BUILD && state.hasInfill, so there is nothing to
+      // hide here.
       state.hasInfill =
         state.data.features.some(f => f.properties.far != null) &&
         state.data.features.some(f => f.properties.new_units_per_acre != null);
-      if (!state.hasInfill) {
-        document.querySelector('#views button[data-view="infill"]').style.display = "none";
-      }
       // Sync the legend gradient to the default ramp (single source of truth).
       document.querySelector("#legend .bar").style.background = legendGradient();
 

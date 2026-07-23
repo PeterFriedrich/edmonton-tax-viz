@@ -25,7 +25,7 @@ const [url] = process.argv.slice(2);
       view: state.view,
       labels: state.labels,
       layerPresent: !!layer,
-      labelsBtnActive: document.querySelector('#lens button[data-lens="labels"]').classList.contains('active'),
+      labelsBtnActive: document.getElementById('labels-on').checked,
       resBtnDisabled: document.querySelector('#lens button[data-lens="residential"]').disabled,
       shown: layer ? layer.props.data.length : 0,
     };
@@ -33,7 +33,7 @@ const [url] = process.argv.slice(2);
 
   console.log('money, labels off:', JSON.stringify(await snap()));
 
-  await page.$eval('#lens button[data-lens="labels"]', b => b.click());
+  await page.$eval('#labels-on', el => { el.checked = !el.checked; el.dispatchEvent(new Event('change')); });
   await page.waitForTimeout(2500); // font atlas build
   console.log('money, labels ON :', JSON.stringify(await snap()));
 
@@ -116,7 +116,7 @@ const [url] = process.argv.slice(2);
 
   await page.$eval('#views button[data-view="money"]', b => b.click());
   await page.waitForTimeout(1500);
-  await page.$eval('#lens button[data-lens="labels"]', b => b.click());
+  await page.$eval('#labels-on', el => { el.checked = !el.checked; el.dispatchEvent(new Event('change')); });
   await page.waitForTimeout(1000);
   console.log('money, labels off:', JSON.stringify(await snap()));
 

@@ -13,7 +13,7 @@ const [url, prefix] = process.argv.slice(2);
   page.on('pageerror', e => console.log('PAGE EXCEPTION:', e.message));
   await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 });
   await page.waitForTimeout(4000);
-  await page.$eval('#lens button[data-lens="labels"]', b => b.click());
+  await page.$eval('#labels-on', el => { el.checked = true; el.dispatchEvent(new Event('change')); });
   await page.waitForTimeout(45000); // swiftshader render + font atlas settle
   await page.screenshot({ path: `${prefix}-city.png`, timeout: 90000, animations: 'disabled', caret: 'initial' });
   console.log('wrote', `${prefix}-city.png`);

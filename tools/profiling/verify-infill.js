@@ -42,11 +42,21 @@ const check = (name, cond) => { (cond ? pass++ : fail++); console.log(`${cond ? 
   check('data carries the far column', hasFar);
   if (!hasFar) { await browser.close(); process.exit(fail); }
 
+  // Infill is a full-only MODE of Development now (no top-level view button) —
+  // enter Development and confirm the Housing/Infill lens toggle is offered
+  // (full build; gated on the far column). Reachable via that toggle.
+  const enterInfill = async () => {
+    await click('#views button[data-view="development"]');
+    await page.waitForTimeout(500);
+    await click('#devmode button[data-devmode="infill"]');
+  };
+  await click('#views button[data-view="development"]');
+  await page.waitForTimeout(2000);
   const btnVisible = await page.evaluate(() =>
-    getComputedStyle(document.querySelector('#views button[data-view="infill"]')).display !== 'none');
-  check('Infill view button is visible', btnVisible);
+    getComputedStyle(document.querySelector('#devmode button[data-devmode="infill"]')).display !== 'none');
+  check('Infill lens toggle is visible (full build)', btnVisible);
 
-  await click('#views button[data-view="infill"]');
+  await click('#devmode button[data-devmode="infill"]');
   await page.waitForTimeout(2500);
 
   const chrome = await page.evaluate(() => ({
@@ -252,7 +262,7 @@ const check = (name, cond) => { (cond ? pass++ : fail++); console.log(`${cond ? 
   // Round-trip: back to money, then infill again — the view still builds.
   await click('#views button[data-view="money"]');
   await page.waitForTimeout(800);
-  await click('#views button[data-view="infill"]');
+  await enterInfill();
   await page.waitForTimeout(1500);
   const back = await page.evaluate(() => ({
     view: state.view,

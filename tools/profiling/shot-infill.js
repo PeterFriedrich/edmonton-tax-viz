@@ -11,7 +11,7 @@ const [url, out] = process.argv.slice(2);
   page.on('pageerror', e => console.log('PAGE EXCEPTION:', e.message));
   await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 });
   await page.waitForTimeout(4000);
-  await page.click('#views button[data-view="infill"]');
+  await page.click('#views button[data-view="development"]'); await page.waitForTimeout(500); await page.click('#devmode button[data-devmode="infill"]');
   await page.waitForTimeout(45000); // swiftshader render settle
   await page.screenshot({ path: out, timeout: 90000, animations: 'disabled', caret: 'initial' });
   console.log('wrote', out);

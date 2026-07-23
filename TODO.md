@@ -33,16 +33,30 @@ _Last reconciled: 2026-07-09_
     grid+spike → one 3-way Detail selector. `public|full` tags all resolved in the
     same pass (public = Money/Services/Ratio/Uses/Development-activity; `/full/`
     adds Infill + Industrial + deep data-detail). **Nothing built yet.**
-  - [ ] **BUILD ONCE (now unblocked): implement the 8 regroup decisions in
-    `web/index.html`.** One pass, so the layout is only reflowed once. Includes the
-    `BUILD` mode flag gating (Infill/Industrial full-only), the accessibility menu,
-    the reordered tiered stack, the Detail selector, and the rename. Re-verify with
-    the `verify-*.js` suite after (selectors are mostly `data-*` — keep IDs to
-    minimize breakage). THEN mobile CSS (below) reflows the *final* grouping.
+  - [x] ~~**BUILD ONCE: implement the 8 regroup decisions in `web/index.html`.**~~
+    **BUILT 2026-07-23 (branch `regroup-build-s65`, NOT yet on master).** One reflow:
+    the top stack is now a `#controls` flex column (tier order via `order:`), Glass
+    is a 2-way Money "Detail" toggle (internal view unchanged), Dev grid+spike is one
+    3-way Detail selector (Neighbourhood / 100 m grid — activity / Stock age), Infill
+    is a full-only Dev *mode* (`#devmode`), Industrial is a full-only `#devmetric`,
+    palette + Labels moved into a "Display" accessibility popover, `Residential only`
+    → `Highlight residential`. `BUILD` flag (`public|full`, `?build=public` override)
+    gates the two full-only controls. Full verify-`*`.js suite green in **both**
+    builds; verify + shot scripts updated to the new controls.
+    - [ ] **⚠️ DO NOT merge to master until the two-build deploy plumbing (below)
+      lands.** A master push deploys `web/**` to the public root, and `BUILD` defaults
+      to `full` — so merging now would ship the specialist controls (Infill +
+      Industrial) to the public site. The deploy step must rewrite `BUILD → public`
+      for the root copy first. Branch is safe (feature-branch push doesn't deploy).
+    - [ ] **THEN mobile CSS** (below) reflows the *final* grouping (inherits the flex
+      column + Detail selectors — the structure-before-mobile payoff).
+    - [ ] **Regenerate `docs/LENS_INVENTORY.md`** from the rebuilt wiring.
   - [ ] **Two-build deploy plumbing (mechanism LOCKED, grouping-agnostic —
-    `PLAN_public_release.md` §2a).** Single-source `BUILD` mode flag + two
+    `PLAN_public_release.md` §2a). NOW THE GATING NEXT STEP — the `BUILD` flag it
+    rewrites already exists (S65).** Single-source `BUILD` mode flag + two
     generated copies (root = public, `/full/` = full, unlisted, no auth).
-    Buildable any time; only *useful* once the tags above exist. Wrinkle:
+    The generate step must set `BUILD=public` in the root copy and `BUILD=full` in
+    `/full/`. Wrinkle:
     `/full/` copy's data paths resolve up one level. **Home = the code deploy
     path** (`deploy.yml`, added 2026-07-22): the two-copy emit is a shared
     code-shaping step run before `upload-pages-artifact` in *both* `deploy.yml`

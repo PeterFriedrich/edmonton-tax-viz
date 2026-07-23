@@ -1,11 +1,11 @@
 # Lens Inventory — everything that currently exists in the map
 
-> **Regroup decided 2026-07-23, not yet built (`docs/CONTROLS_MATRIX.md` §7).**
-> This catalogue still matches the *built* app (7 views). The decided target is
-> **5 views** (Glass → a mode of Money; Infill → a full-only mode of Development),
-> palette + Labels move into an accessibility menu, and Development's grid+spike
-> collapse into a 3-way Detail selector. Regenerate this doc after the "build once"
-> pass.
+> **Regroup BUILT 2026-07-23 (branch `regroup-build-s65`, not yet on master —
+> `docs/CONTROLS_MATRIX.md` §7). This catalogue is now STALE** — it describes the
+> pre-regroup app (7 views). The built app has **5 views** (Glass → a Money
+> `#moneydetail` mode; Infill → a full-only Development `#devmode` mode), palette +
+> Labels in the `#a11y` "Display" popover, and Development's grid+spike as one
+> `#devdetail` 3-way selector. **Regenerate this doc once the branch merges.**
 
 _Generated 2026-07-16 from the live control wiring in `web/index.html`
 (`#views`, `#toggle`, `#lens`, `#palette`, `#coloradj`, and the per-view

@@ -70,8 +70,8 @@ function approx(a, b, rel = 1e-6) { return Math.abs(a - b) <= rel * Math.max(Mat
       fillIsColour: !!layer && layer.props.getFillColor(f).join() !== '',
       clamp: (typeof devScale === 'function') ? null : null, // devScale not in scope; use internal
       indepClamp: q(vals, 0.975),
-      detailShown: getComputedStyle(document.getElementById('dev-grid')).display !== 'none',
-      detailHdShown: getComputedStyle(document.getElementById('dev-grid-hd')).display !== 'none',
+      detailShown: getComputedStyle(document.getElementById('devdetail')).display !== 'none',
+      detailHdShown: getComputedStyle(document.getElementById('devdetail-hd')).display !== 'none',
     };
   });
   console.log('industrial     :', JSON.stringify({ metric: c.metric, title: c.title, label: c.label }));
@@ -114,7 +114,7 @@ function approx(a, b, rel = 1e-6) { return Math.abs(a - b) <= rel * Math.max(Mat
     tip ? tip.replace(/<[^>]+>/g, ' ') : 'no ind hood');
 
   // --- Infill isolation ------------------------------------------------------
-  await click('#views button[data-view="infill"]');
+  await click('#devmode button[data-devmode="infill"]');
   await page.waitForTimeout(1500);
   const infill = await page.evaluate(() => ({
     metric: state.devMetric,

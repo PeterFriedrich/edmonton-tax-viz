@@ -262,7 +262,7 @@ const check = (name, cond) => { (cond ? pass++ : fail++); console.log(`${cond ? 
         clampMatches: Math.abs(devScale().clamp - q) < 1e-6,
         midFillOk: plane.props.getFillColor(mid).join() === expected,
         tip: tooltipFor({ object: active[0] }).html,
-        gridToggleShown: getComputedStyle(document.getElementById('dev-grid')).display !== 'none',
+        gridToggleShown: getComputedStyle(document.getElementById('devdetail')).display !== 'none',
       };
     });
     console.log('long tip:', lng.tip);
@@ -275,7 +275,7 @@ const check = (name, cond) => { (cond ? pass++ : fail++); console.log(`${cond ? 
     check('Detail toggle OFFERED under long (first-class window, not choropleth-only)', lng.gridToggleShown);
 
     // Detail grid under the long window: cells drive off the units_long column.
-    await page.$eval('#dev-grid-on', el => { if (!el.checked) { el.checked = true; el.dispatchEvent(new Event('change')); } });
+    await click('#devdetail button[data-devdetail="grid"]');
     await page.waitForTimeout(1500);
     const lgrid = await page.evaluate(() => {
       const layerIds = overlay._deck.props.layers.filter(Boolean).map(l => l.id);
@@ -293,7 +293,7 @@ const check = (name, cond) => { (cond ? pass++ : fail++); console.log(`${cond ? 
     check('long grid: cells non-empty, all units_long > 0', lgrid.nCells > 0 && lgrid.allPos);
     check('long grid: coverage.long present for the blurb disclosure', lgrid.cov);
     // Back to 5yr base + Detail off for the rest of the suite.
-    await page.$eval('#dev-grid-on', el => { if (el.checked) { el.checked = false; el.dispatchEvent(new Event('change')); } });
+    await click('#devdetail button[data-devdetail="hood"]');
     await page.waitForTimeout(400);
     await click('#devwindow button[data-devwindow="5yr"]');
     await page.waitForTimeout(600);
@@ -305,10 +305,10 @@ const check = (name, cond) => { (cond ? pass++ : fail++); console.log(`${cond ? 
   // geocode disclosure); the pickers move the grid column; toggling off
   // restores the choropleth exactly.
   const gridAvail = await page.evaluate(() => !!devGridData &&
-    getComputedStyle(document.getElementById('dev-grid')).display !== 'none');
+    getComputedStyle(document.getElementById('devdetail')).display !== 'none');
   check('detail-grid toggle visible (dev_grid.json loaded)', gridAvail);
   if (gridAvail) {
-    await page.$eval('#dev-grid-on', el => { el.checked = true; el.dispatchEvent(new Event('change')); });
+    await click('#devdetail button[data-devdetail="grid"]');
     await page.waitForTimeout(1500);
     const grid = await page.evaluate(() => {
       const ids = overlay._deck.props.layers.map(l => l.id);
@@ -353,7 +353,7 @@ const check = (name, cond) => { (cond ? pass++ : fail++); console.log(`${cond ? 
       await page.waitForTimeout(800);
     }
 
-    await page.$eval('#dev-grid-on', el => { el.checked = false; el.dispatchEvent(new Event('change')); });
+    await click('#devdetail button[data-devdetail="hood"]');
     await page.waitForTimeout(1200);
     const off = await page.evaluate(() => ({
       ids: overlay._deck.props.layers.map(l => l.id),
@@ -368,7 +368,7 @@ const check = (name, cond) => { (cond ? pass++ : fail++); console.log(`${cond ? 
   await page.waitForTimeout(1500);
   const restored = await page.evaluate(() => ({
     aside: getComputedStyle(document.querySelector('#legend .aside')).display !== 'none',
-    devGridHidden: getComputedStyle(document.getElementById('dev-grid')).display === 'none',
+    devGridHidden: getComputedStyle(document.getElementById('devdetail')).display === 'none',
   }));
   check('aside row restored after leaving development', restored.aside);
   check('detail-grid toggle hidden outside development', restored.devGridHidden);

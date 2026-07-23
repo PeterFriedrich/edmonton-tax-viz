@@ -20,7 +20,7 @@ const [url] = process.argv.slice(2);
   await page.screenshot({ path: 'nonres-revenue.png' });
   console.log('wrote nonres-revenue.png');
 
-  await click('#views button[data-view="glass"]');
+  await click('#moneydetail button[data-moneydetail="grid"]');
   await page.waitForTimeout(3500);
   await page.screenshot({ path: 'nonres-revenue-glass.png' });
   console.log('wrote nonres-revenue-glass.png');

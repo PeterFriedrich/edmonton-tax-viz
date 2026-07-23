@@ -24,6 +24,16 @@ const [url] = process.argv.slice(2);
   // swiftshader can hang page.click while the render loop is busy — dispatch
   // the click from inside the page instead (same workaround as verify-labels).
   const click = sel => page.$eval(sel, b => b.click());
+  // Glass is now Money's "100 m grid" render mode (no top-level view button) —
+  // reach it by going to Money then flipping the Detail toggle; works from any
+  // starting view. Labels moved to the accessibility-menu checkbox.
+  const enterGlass = async () => {
+    await click('#views button[data-view="money"]');
+    await page.waitForTimeout(300);
+    await click('#moneydetail button[data-moneydetail="grid"]');
+  };
+  const toggleLabels = () => page.$eval('#labels-on',
+    el => { el.checked = !el.checked; el.dispatchEvent(new Event('change')); });
 
   const chrome = () => page.evaluate(() => ({
     view: state.view,
@@ -41,7 +51,7 @@ const [url] = process.argv.slice(2);
 
   console.log('money default  :', JSON.stringify(await chrome()));
 
-  await click('#views button[data-view="glass"]');
+  await enterGlass();
   await page.waitForTimeout(3000);
   console.log('glass          :', JSON.stringify(await chrome()));
 
@@ -140,7 +150,7 @@ const [url] = process.argv.slice(2);
   await click('#views button[data-view="money"]');
   await page.waitForTimeout(1000);
   console.log('money (denom?) :', JSON.stringify(await chrome()));
-  await click('#views button[data-view="glass"]');
+  await enterGlass();
   await page.waitForTimeout(1000);
   console.log('glass (denom?) :', JSON.stringify(await chrome()));
   await click('#denom button[data-denom="ground"]');
@@ -148,7 +158,7 @@ const [url] = process.argv.slice(2);
   console.log('denom -> ground:', JSON.stringify(await chrome()));
 
   // Labels sit at the ground in glass (no hood prisms to ride).
-  await click('#lens button[data-lens="labels"]');
+  await toggleLabels();
   await page.waitForTimeout(1500);
   const labels = await page.evaluate(() => {
     const present = overlay._deck.props.layers.some(l => l.id === 'hood-labels');
@@ -156,7 +166,7 @@ const [url] = process.argv.slice(2);
     return { present, groundZ: labelZ(f) };
   });
   console.log('labels         :', JSON.stringify(labels));
-  await click('#lens button[data-lens="labels"]');
+  await toggleLabels();
   await page.waitForTimeout(500);
 
   // Tooltip falls through to the money branch (metric + road lines).
@@ -174,7 +184,7 @@ const [url] = process.argv.slice(2);
   await click('#views button[data-view="ratio"]');
   await page.waitForTimeout(2500);
   console.log('ratio slider   :', JSON.stringify(await chrome()));
-  await click('#views button[data-view="glass"]');
+  await enterGlass();
   await page.waitForTimeout(1500);
   console.log('glass again    :', JSON.stringify(await chrome()));
 

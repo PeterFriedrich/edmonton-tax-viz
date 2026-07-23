@@ -37,44 +37,44 @@ function approx(a, b, rel = 1e-6) { return Math.abs(a - b) <= rel * Math.max(Mat
     if (!cond) fail++;
   };
 
-  // --- enter the development view; picker hidden before Detail --------------
+  // --- enter development; entering kicks the value_grid fetch so the Detail
+  //     selector's Stock-age option can appear (decision #7: first-class) ------
   await click('#views button[data-view="development"]');
   await page.waitForTimeout(2500);
-  const pre = await page.evaluate(() => ({
-    hasDevGrid: !!devGridData,
-    spikeShown: getComputedStyle(document.getElementById('devspike')).display !== 'none',
-  }));
-  if (!pre.hasDevGrid) {
-    console.log('SKIP  dev_grid.json missing — no Detail grid to hang the picker on');
+  const pre = await page.evaluate(() => !!devGridData);
+  if (!pre) {
+    console.log('SKIP  dev_grid.json missing — no Detail grid to hang the option on');
     await browser.close();
     process.exit(fail ? 1 : 0);
   }
-  check('Spikes picker hidden before Detail is on', !pre.spikeShown);
 
-  // --- Detail on: value_grid fetch kicks; guard on the year column ----------
-  await page.$eval('#dev-grid-on', el => { el.checked = true; el.dispatchEvent(new Event('change')); });
+  // --- the Stock-age Detail option gates on the year column ------------------
   await page.waitForFunction(() => gridData !== null || gridFetch === null, { timeout: 15000 })
     .catch(() => {});
   await page.waitForTimeout(1000);
   const guard = await page.evaluate(() => ({
     gotGrid: !!gridData,
     col: typeof devAgeCol === 'function' ? devAgeCol() : -1,
-    spikeShown: getComputedStyle(document.getElementById('devspike')).display !== 'none',
+    ageOptShown: getComputedStyle(document.querySelector('#devdetail button[data-devdetail="age"]')).display !== 'none',
   }));
   if (guard.col < 0) {
-    check('picker stays hidden when the year column is absent (guard)', !guard.spikeShown);
+    check('Stock-age option stays hidden when the year column is absent (guard)', !guard.ageOptShown);
     console.log('SKIP  value_grid.json predates median_year_built — nothing more to verify');
     await browser.close();
     process.exit(fail ? 1 : 0);
   }
-  check('Spikes picker shown once the year column loaded', guard.spikeShown);
+  check('Stock-age Detail option shown once the year column loaded', guard.ageOptShown);
   const layerIds = () => page.evaluate(() =>
     overlay._deck.props.layers.filter(Boolean).map(l => l.id));
-  let ids = await layerIds();
-  check('permit spikes up by default', ids.includes('dev-grid-cells') && !ids.includes('dev-age-cells'));
 
-  // --- switch to Year built --------------------------------------------------
-  await click('#devspike button[data-devspike="age"]');
+  // --- 100 m grid — activity: permit spikes up ------------------------------
+  await click('#devdetail button[data-devdetail="grid"]');
+  await page.waitForTimeout(1500);
+  let ids = await layerIds();
+  check('permit spikes up under 100 m grid — activity', ids.includes('dev-grid-cells') && !ids.includes('dev-age-cells'));
+
+  // --- switch to Stock age ---------------------------------------------------
+  await click('#devdetail button[data-devdetail="age"]');
   await page.waitForTimeout(1500);
   ids = await layerIds();
   check('age layer swapped in', ids.includes('dev-age-cells') && !ids.includes('dev-grid-cells'));
@@ -156,7 +156,7 @@ function approx(a, b, rel = 1e-6) { return Math.abs(a - b) <= rel * Math.max(Mat
     JSON.stringify(mech.colorOldest) === JSON.stringify(mech.rampBottom));
 
   // --- back to activity: pickers + permit layer restored ---------------------
-  await click('#devspike button[data-devspike="activity"]');
+  await click('#devdetail button[data-devdetail="grid"]');
   await page.waitForTimeout(1000);
   ids = await layerIds();
   const back = await page.evaluate(() => ({
@@ -167,7 +167,7 @@ function approx(a, b, rel = 1e-6) { return Math.abs(a - b) <= rel * Math.max(Mat
   check('Metric/Window pickers restored', back.metricShown && back.windowShown);
 
   // --- regression: Glass still draws off the shared fetch --------------------
-  await click('#views button[data-view="glass"]');
+  await click('#views button[data-view="money"]'); await page.waitForTimeout(300); await click('#moneydetail button[data-moneydetail="grid"]');
   await page.waitForTimeout(2500);
   ids = await layerIds();
   check('Glass grid still renders (shared ensureGridData)', ids.includes('glass-grid'));
