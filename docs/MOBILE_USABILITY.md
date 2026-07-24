@@ -109,6 +109,18 @@ Ordered; each step is independently shippable and desktop-safe.
    a real-device check for the touch-behaviour items in §2b (harness can't judge
    those).
 
+**Open UX concern — the `#views` bar under-reads as the primary control** (Peter,
+2026-07-24, looking at the move-1 render). `#views` (Money · Services · Ratio ·
+Development) is *the* top-level control — the thing users act on first — but it
+renders (a) too small relative to the secondary pods below it (same font/weight as
+a metric toggle), and (b) "far away" up at the very top, so it doesn't read as the
+primary switch. This is the hierarchy question the **move-2 fork feeds into**: a
+bottom-sheet would let the view-picker sit prominently on the always-visible
+collapsed bar (native pattern) rather than as a small strip at the top. Likely
+applies to desktop too, not just phone. NOT yet actioned — recorded for the move-2
+decision. (Interacts with: Uses pulled to full-only 2026-07-24, so public `#views`
+is now 4 buttons, `DECISIONS.md`.)
+
 **Not in the quick pass** (needs its own decision): tap-to-dismiss tooltip
 tuning, touch-target resizing, landscape. Confirm they're actually problems on a
 real device before building.
