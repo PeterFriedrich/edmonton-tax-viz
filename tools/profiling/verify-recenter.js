@@ -1,9 +1,9 @@
 // Verify for the "Center 3D" recenter button (#recenter, bottom-left next to
-// the flip button, added 2026-07-24). It eases the whole camera back to the
-// default framing HOME (center, zoom, pitch 52, bearing -18). Checks: the
-// button is really clickable; from a panned/zoomed/rotated/flattened camera it
-// restores all four axes to HOME; and it leaves the flip button in its 3D
-// state (label "Flip to 2D", not gold) since the tilt is back up.
+// "Center 2D", added 2026-07-24). It eases the whole camera back to the default
+// framing HOME (center, zoom, pitch 52, bearing -18). Checks: the button is
+// really clickable; from a panned/zoomed/rotated/flattened camera it restores
+// all four axes to HOME; and it clears the Center 2D gold state (the tilt is
+// back up, so the camera is no longer flat).
 //   node verify-recenter.js <url>
 const { chromium } = require('playwright');
 const [url] = process.argv.slice(2);
@@ -28,8 +28,7 @@ const [url] = process.argv.slice(2);
     lng: +map.getCenter().lng.toFixed(3), lat: +map.getCenter().lat.toFixed(3),
     zoom: +map.getZoom().toFixed(2), pitch: +map.getPitch().toFixed(1), bearing: +map.getBearing().toFixed(1),
     home: window.HOME || null,
-    flipLabel: document.getElementById('flip2d').textContent,
-    flipFlat: document.getElementById('flip2d').classList.contains('flat'),
+    c2dFlat: document.getElementById('center2d').classList.contains('flat'),
     hit: (() => { const el = document.getElementById('recenter'), r = el.getBoundingClientRect();
       return document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2) === el; })(),
   }));
@@ -53,7 +52,7 @@ const [url] = process.argv.slice(2);
   const moved = await cam();
   console.log('moved off :', JSON.stringify({ lng: moved.lng, lat: moved.lat, zoom: moved.zoom, pitch: moved.pitch, bearing: moved.bearing }));
   check('camera actually moved off HOME', moved.pitch < 1 && Math.abs(moved.zoom - home.zoom) > 1 && moved.bearing !== home.bearing);
-  check('flip label reflects the flattened camera', moved.flipLabel === 'Flip to 3D' && moved.flipFlat === true);
+  check('Center 2D gold reflects the flattened camera', moved.c2dFlat === true);
 
   // Recenter.
   await page.click('#recenter');
@@ -64,7 +63,7 @@ const [url] = process.argv.slice(2);
   check('zoom restored', Math.abs(c.zoom - home.zoom) < 0.05);
   check('pitch restored (3D tilt)', Math.abs(c.pitch - home.pitch) < 1);
   check('bearing restored', Math.abs(c.bearing - home.bearing) < 0.5);
-  check('flip button reset to 3D state', c.flipLabel === 'Flip to 2D' && c.flipFlat === false);
+  check('Center 2D gold cleared (back in 3D)', c.c2dFlat === false);
 
   console.log(fail ? `\n${fail} CHECK(S) FAILED` : '\nALL CHECKS PASSED');
   await browser.close();
