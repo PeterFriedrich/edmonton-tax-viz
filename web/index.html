@@ -185,14 +185,15 @@
       position: absolute; bottom: 22px; left: 22px; z-index: 1;
       display: flex; flex-direction: column; align-items: flex-start; gap: 10px;
     }
-    #flip2d {
+    #viewbtns { display: flex; gap: 8px; } /* Flip + Center, side by side */
+    #flip2d, #recenter {
       appearance: none; pointer-events: auto; cursor: pointer;
       background: rgba(12,12,20,0.7); border: 1px solid #2a2a3a; border-radius: 6px;
       color: #9a9ab0; padding: 6px 12px;
       font: 11.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       transition: background 0.12s, color 0.12s;
     }
-    #flip2d:hover { color: #e8e8ef; }
+    #flip2d:hover, #recenter:hover { color: #e8e8ef; }
     #flip2d.flat { background: #fcd278; color: #16111a; font-weight: 600; } /* gold = 2D engaged */
     #legend { position: static; font-size: 11.5px; color: #b8b8c8; }
     #legend .bar {
@@ -437,7 +438,10 @@
   </div>
 
   <div id="botleft">
-    <button id="flip2d" title="Flip to a straight-down 2D plan view (removes the tilt so height reads as a flat map); click again to return to the 3D tilt">Flip to 2D</button>
+    <div id="viewbtns">
+      <button id="flip2d" title="Flip to a straight-down 2D plan view (removes the tilt so height reads as a flat map); click again to return to the 3D tilt">Flip to 2D</button>
+      <button id="recenter" title="Recenter and reset the map to the default 3D framing (position, zoom, tilt and rotation)">Center 3D</button>
+    </div>
     <div id="legend" class="panel">
       <div id="legend-label">Revenue per acre</div>
       <div class="bar"></div>
@@ -454,6 +458,9 @@
     // banner the backend sets is picked up without waiting out CDN caching.
     const STATUS_URL = "./data/status.json";
     const CENTER = [-113.50, 53.52]; // Edmonton, from the data centroid
+    // The default framing — single source for the map constructor, the "Center 3D"
+    // recenter button, and the flip button's fallback tilt.
+    const HOME = { center: CENTER, zoom: 10.2, pitch: 52, bearing: -18 };
 
     // Build mode: "public" (curated) | "full" (specialist). ONE hand-edited
     // source; the deploy step (scripts/build_site.py) emits two copies and
@@ -1368,10 +1375,10 @@
         sources: {},
         layers: [{ id: "bg", type: "background", paint: { "background-color": "#0a0a0f" } }],
       },
-      center: CENTER,
-      zoom: 10.2,
-      pitch: 52,
-      bearing: -18,
+      center: HOME.center,
+      zoom: HOME.zoom,
+      pitch: HOME.pitch,
+      bearing: HOME.bearing,
       antialias: true,
     });
 
@@ -3257,18 +3264,25 @@
       // if the user tilts by drag; bearing is left alone (2D-ness is only pitch).
       // The tilt to return to is remembered, so a custom pitch survives a round-trip.
       const flip2d = document.getElementById("flip2d");
-      let pitch3d = map.getPitch() || 52;
+      let pitch3d = map.getPitch() || HOME.pitch;
       const isFlat = () => map.getPitch() < 1;
       const syncFlip = () => {
         flip2d.textContent = isFlat() ? "Flip to 3D" : "Flip to 2D";
         flip2d.classList.toggle("flat", isFlat());
       };
       flip2d.addEventListener("click", () => {
-        if (isFlat()) { map.easeTo({ pitch: pitch3d || 52, duration: 600 }); }
+        if (isFlat()) { map.easeTo({ pitch: pitch3d || HOME.pitch, duration: 600 }); }
         else { pitch3d = map.getPitch(); map.easeTo({ pitch: 0, duration: 600 }); }
       });
       map.on("pitch", syncFlip);
       syncFlip();
+      // "Center 3D": recenter and reset the whole camera to the default framing
+      // (position, zoom, tilt, rotation). Also restores the flip button's return
+      // tilt to HOME (the pitch event syncs its label as the tilt eases back up).
+      document.getElementById("recenter").addEventListener("click", () => {
+        pitch3d = HOME.pitch;
+        map.easeTo({ ...HOME, duration: 700 });
+      });
       document.querySelectorAll("#denom button").forEach(b =>
         b.addEventListener("click", () => applyDenom(b.dataset.denom)));
       document.querySelectorAll("#ratio-denom button").forEach(b =>
