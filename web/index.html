@@ -66,9 +66,11 @@
     }
     #opt-pres { display: flex; flex-direction: column; gap: 6px; }
     #optpanel #layers { padding: 0; }
-    /* The inner pods carry class="panel" (position:absolute); they're no longer
-       direct #controls children, so re-static them to flow inside #opt-body. */
-    #optpanel .panel { position: static; right: auto; top: auto; }
+    /* The inner pods carry class="panel" (position:absolute; pointer-events:none);
+       they're no longer direct #controls children, so re-static them to flow inside
+       #opt-body and restore pointer-events (else #layers' Detail/Denominator buttons
+       are unclickable — the flip list at the top only covers #coloradj/#lens). */
+    #optpanel .panel { position: static; right: auto; top: auto; pointer-events: auto; }
     /* Colour Adjustment sits ABOVE the lens controls (metric/palette/…): it's
        about HOW colour is rendered, not WHAT you're looking at. It drives the
        money/glass sqrt transform (scaleT) only, so it disables in the other
