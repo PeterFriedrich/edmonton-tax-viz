@@ -31,7 +31,12 @@ const { chromium } = require('playwright');
   // Which UI panels overflow the 390px-wide viewport?
   const overflow = await page.evaluate(() => {
     const W = window.innerWidth, H = window.innerHeight;
-    const ids = ['title','coloradj','toggle','palette','lens','views','layers','legend','banner'];
+    // Post-regroup (S65) control structure: #controls is a flex column holding
+    // the pods; per-view sub-groups live inside #layers; #a11y is the Display
+    // popover (palette + labels). #views is now 5 (Money·Services·Ratio·Uses·Dev).
+    const ids = ['title','banner','controls','views','layers','coloradj','toggle',
+                 'lens','moneydetail','devdetail','devmode','devmetric','devwindow',
+                 'a11y','palette','legend'];
     return ids.map(id => {
       const el = document.getElementById(id);
       if (!el) return { id, present: false };

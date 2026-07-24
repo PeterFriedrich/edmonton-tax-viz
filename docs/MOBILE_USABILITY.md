@@ -30,23 +30,39 @@ with near-zero risk to the tuned desktop experience.
 
 ## 2. Current state — CONFIRMED (render pass, iPhone-13-class 390×844, touch)
 
-Ran `tools/profiling/shot-mobile.js` (Playwright, 390×844, `isMobile`+`hasTouch`).
+Re-run **2026-07-24 against the merged S65 regroup** (5-view `#controls` flex
+column) via `tools/profiling/shot-mobile.js` (Playwright, 390×844, `isMobile`+
+`hasTouch`), default **Money** view. The prior 7-view observations are superseded
+(the pod ids + geometry changed). Screenshot `mobile-default.png` inspected.
 
-- **THE problem: the top third is an unreadable pile-up.** The title + multi-line
-  blurb (left-anchored, `#title` spans top 20→196 px, right edge 382) and all six
-  right-anchored control pods (`#coloradj` t20, `#toggle` t58, `#palette` t96,
-  `#lens` t134, `#views` t172, `#layers` t210) occupy the same narrow band and
-  render on top of each other. On desktop these clear each other because the
-  window is wide; at 390 px they collide. This is the headline fix.
-- **Wide pods clip off the LEFT edge** (not the right — they're `right:22px`
-  anchored, so content grows leftward past 0): `#views` left = −107, `#coloradj`
-  left = −51. The view-picker row (Ratio/Uses/Development/Infill/Glass) is the
-  widest.
-- **What's FINE:** the map itself renders correctly; the bottom-left `#legend`
-  (top 751→822) is readable and clear of everything; MapLibre attribution sits
-  clean bottom-right.
+- **What the regroup fixed for free: the pods no longer overlap *each other*.**
+  The old desktop absolute-offset stack is gone; `#controls` is now a flex column,
+  so the visible pods lay out in vertical sequence with no mutual collision:
+  `#views` t20–48, `#toggle` t56–87, `#layers`(+`#moneydetail`) t95–206,
+  `#coloradj` t214–242, `#lens` t250–278, `#a11y` t286–314. Structure-before-mobile
+  paid off here.
+- **THE remaining problem: the control column sits ON TOP of the title blurb.**
+  `#title` (h1 + multi-line blurb) spans left 22→right 382, **top 20→196** — i.e.
+  the full width of the top third. `#controls` occupies **top 20→314** over the
+  same band. So in the render the blurb text shows *through* the gaps between the
+  control buttons — the top third reads as an unreadable pile-up, just
+  title-vs-controls now instead of pod-vs-pod. **The blurb is the space hog;
+  collapsing it to just the `<h1>` on mobile (details on tap) clears most of this.**
+  This is the headline fix.
+- **Left-edge clip persists on the widest pods** (`right:`-anchored, content grows
+  leftward past 0): `#controls` and `#coloradj` render at **left −51**, `#toggle`
+  at **−10** — visible as the clipped "…r: sqrt scaling" label. *Improvement:*
+  `#views` now fits (left 17) — the 7→5 view reduction fixed the worst offender,
+  which used to sit at −107.
+- **What's FINE:** the map renders correctly; `#legend` (bottom-left, left 22→304,
+  top 751→822) is clear of everything; MapLibre attribution clean bottom-right;
+  the per-view groups correctly hide in Money (`#devdetail`/`#devmode`/`#devmetric`/
+  `#devwindow` `display:none`, `#palette` popover closed, `#banner` none).
+- **Tap probe still returns no tooltip element** — unchanged; the emulator remains
+  a weak oracle for touch (§2b). Real-device tap-to-inspect is authoritative.
 
-Screenshots: `mobile-default.png` (git-ignored artifact; regenerate via the tool).
+Screenshots: `mobile-default.png` / `mobile-after-tap.png` (git-ignored artifacts;
+regenerate via the tool). Probe id list updated to the merged control structure.
 
 ## 2b. Current state — NEEDS CONFIRMATION
 
@@ -75,15 +91,20 @@ Ordered; each step is independently shippable and desktop-safe.
 
 1. **Establish the seam.** Append one `@media (max-width: 640px) { … }` block at
    the end of `<style>`. Nothing above it changes. All mobile rules live here.
-2. **Fix the top-third collision (the headline).** Inside the media block, give
-   the control pods a coherent small-screen layout instead of the desktop
-   absolute-offset stack. Candidate approaches (decide when we get there):
-   - collapse the pods into a single scrollable/stacked column, OR
-   - a bottom sheet / hamburger that holds the controls, keeping the map clear.
-   Also shrink/relocate the `#title` blurb (it's the biggest space hog) — likely
-   collapse the long blurb to just the `<h1>` on mobile, with details on tap.
-3. **Stop the left-edge clip** on `#views` / `#coloradj` (wrap or shrink the
-   widest rows so nothing renders at negative left).
+2. **Collapse the title blurb (the headline — biggest single win).** Post-regroup
+   the pods already stack cleanly among themselves (§2); the remaining top-third
+   mess is the full-width `#title` blurb (top 20→196) *under* the `#controls`
+   column. Inside the media block, collapse the long blurb to just the `<h1>` on
+   mobile (details on tap/expand). This alone clears most of the pile-up because
+   the controls no longer need to fight the blurb for the top third.
+   - **Still open (decide here):** whether the flex column is enough as-is, or the
+     controls should move into a bottom sheet / hamburger to free the map. The
+     regroup's clean vertical stack makes "column is fine" more viable than the old
+     7-view pile-up did — but the column still runs top 20→314, so a collapsed/
+     scrollable container may still be worth it. Decide against the refreshed render.
+3. **Stop the left-edge clip.** `#controls`/`#coloradj` render at left −51, `#toggle`
+   at −10 (`#views` now fits). Wrap or shrink the widest rows so nothing renders at
+   negative left.
 4. **Re-render + eyeball** with `shot-mobile.js` after each step; then hand Peter
    a real-device check for the touch-behaviour items in §2b (harness can't judge
    those).
