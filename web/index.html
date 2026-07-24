@@ -3261,7 +3261,11 @@
       }
       // Same guard for the uses view: it needs the composition columns
       // (pipeline 2026-07-03) — hide the button on older data files.
-      if (!state.data.features.some(f => f.properties.frac_commercial != null)) {
+      // Uses is also a FULL-only view now (2026-07-24, Peter — provisional
+      // "for now"): hidden in the public build as well as on older data, so
+      // public #views = Money · Services · Ratio · Development. Same idiom as
+      // Industrial below (`|| !FULL_BUILD`).
+      if (!state.data.features.some(f => f.properties.frac_commercial != null) || !FULL_BUILD) {
         document.querySelector('#views button[data-view="uses"]').style.display = "none";
       }
       // Same guard for the development view: needs new_units_per_acre

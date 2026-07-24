@@ -40,8 +40,9 @@ lenses" pass.
 
 | Lens / control | Public build | Specialist (`/full/`) |
 |---|:---:|:---:|
-| Money (incl. Glass grid mode) · Services · Ratio · Uses | ✅ | ✅ |
+| Money (incl. Glass grid mode) · Services · Ratio | ✅ | ✅ |
 | **Development** — units + permits, Detail selector | ✅ | ✅ |
+| **Uses** view (dominant zoned land use) | ❌ _(provisional, 2026-07-24)_ | ✅ |
 | **Infill** mode on Development | ❌ | ✅ |
 | **Industrial** metric on Development | ❌ | ✅ |
 | Deep data-detail (validation ratios, modeling quirks, methods-heavy blurbs) | trimmed to honest labels | ✅ full |

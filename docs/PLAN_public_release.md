@@ -88,10 +88,12 @@ is grouping-agnostic and reads whatever tags that pass produces.
 **FINALIZED split (regroup pass, 2026-07-23 — `CONTROLS_MATRIX.md` §7 +
 `DECISIONS.md`):** `#views` collapses to **5** (Glass → a mode of Money; Infill →
 a full-only mode of Development).
-- **Public:** Money (incl. the Glass grid mode) · Services · Ratio · Uses ·
-  **Development** (units + permits only).
-- **Full-only:** the **Infill** mode + the **Industrial** metric on Development ·
-  deep data-detail (validation ratios, modeling quirks, methodology-heavy blurbs).
+- **Public:** Money (incl. the Glass grid mode) · Services · Ratio ·
+  **Development** (units + permits only). _(Uses pulled to full-only 2026-07-24,
+  provisional — see below.)_
+- **Full-only:** the **Uses** view · the **Infill** mode + the **Industrial**
+  metric on Development · deep data-detail (validation ratios, modeling quirks,
+  methodology-heavy blurbs).
 - Full-only controls are `BUILD`-flag-gated at the control level, so a full-only
   *mode/metric inside a public view* (Infill/Industrial on Development) is exactly
   what the mechanism supports.
