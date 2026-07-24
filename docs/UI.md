@@ -571,6 +571,43 @@ toggle/lens re-clamp all apply unchanged:
   corridors bright, residential fabric dark real-zeros — the inverse of the
   res pattern).
 
+### Camera framing buttons: Center 2D / Center 3D (built 2026-07-24)
+
+Two bottom-left buttons (`#viewbtns` row, stacked above the legend in the new
+`#botleft` wrapper) that reframe the camera in one tap. The app is a 3D
+extrusion viz, so these are core UX, not a nicety (see "Interaction &
+navigation" below).
+
+- **Center 3D** → the tilted default framing (`HOME`: `CENTER` / zoom 10.2 /
+  pitch 52 / bearing −18). A whole-camera reset for after panning, zooming,
+  rotating, or flattening.
+- **Center 2D** → a straight-down, **north-up** plan (`HOME_2D`: same
+  centre/zoom, pitch 0, **bearing 0**). Flattening while keeping the −18°
+  tilt-era bearing read as a skew; 2D snaps north-aligned so the map squares to
+  the frame. Shows gold while the camera is flat (`pitch < 1`), keyed off the
+  live pitch so it stays right even if the user tilts by drag.
+- **One source of framing truth:** `HOME` / `HOME_2D` constants drive the map
+  constructor AND both buttons — no scattered pitch/bearing literals.
+- **History:** shipped first as a single toggle "Flip to 2D/3D" (kept the
+  bearing, which skewed), then split into the two framing presets above. The
+  bottom-left placement was Peter's call.
+- **Verified:** `tools/profiling/verify-center2d.js` (pitch 0 + bearing 0 +
+  recenter, incl. from a rotated start) and `verify-recenter.js` (all four axes
+  back to `HOME`, gold cleared). Both real-hit-test the buttons.
+
+### Control clickability regression + hit-test guard (fixed 2026-07-24)
+
+The S65 foldable-Options refactor dropped `#layers` from the `pointer-events:
+auto` flip list; since `#layers` carries `class="panel"` (`pointer-events:
+none`), its Detail / Denominator / dev / services controls fell through to
+`#opt-body` and were **unclickable on the live site**. Fix: restore
+`pointer-events: auto` on the `#optpanel .panel` re-normalization rule (one
+line, covers `#layers` uniformly). The functional `verify-*.js` suite missed it
+because they actuate controls with `page.$eval(sel, b => b.click())` — a direct
+JS `.click()` that bypasses `pointer-events` and z-order. Added
+`tools/profiling/verify-controls-clickable.js`, which real-hit-tests every
+visible control per view; **run it after any control-chrome / CSS refactor.**
+
 ---
 
 ## Open / unresolved
@@ -599,13 +636,15 @@ interaction handlers):
 | Zoom | scroll | pinch |
 | Pan | drag | one-finger drag |
 
-**Gaps (as of 2026-06-26):**
-- **No reset / compass control.** No `NavigationControl` is added, so there's no
-  affordance to snap bearing back to north or reset pitch. A user who rotates into
-  an awkward angle — easy to do on a phone — has no obvious way back.
+**Gaps (as of 2026-06-26; partly closed 2026-07-24):**
+- **~~No reset control.~~ CLOSED 2026-07-24** by the Center 2D / Center 3D
+  framing buttons (see the build-log entry above) — one tap returns to the
+  tilted default or a north-up plan. A `NavigationControl` compass (in-place
+  bearing-to-north without recentering) is still not added.
 - **Rotation is undiscoverable.** Both the desktop modifier (Ctrl) and the mobile
   two-finger twist are hidden; first-time users often don't realize the view spins
-  at all, and the twist competes with pinch-zoom.
+  at all, and the twist competes with pinch-zoom. (The Center buttons give a way
+  *back* from an awkward angle, but don't advertise that rotation exists.)
 
 **Proposed fix:** add the standard control —
 ```js
@@ -616,9 +655,11 @@ compass also doubles as a visible hint that the map rotates. Cheap, idiomatic, a
 helps desktop and mobile alike. Not yet added — flagged here for a UX pass.
 
 **Wishlist (later — to design as a UX pass):**
-- **Recenter / reset-view button.** Distinct from the compass: snaps the *whole*
-  camera back to the default `CENTER` / zoom / pitch / bearing in one tap, not just
-  bearing-to-north. Needs a custom control (store the initial camera, `flyTo` it).
+- **~~Recenter / reset-view button.~~ BUILT 2026-07-24** as Center 3D (whole
+  camera → `HOME`) + Center 2D (→ north-up `HOME_2D`). See the build-log entry.
+- **Compass / `NavigationControl`** — still open. Would reset bearing-to-north
+  *in place* (without recentering) and advertise that the map rotates; the Center
+  buttons don't cover the discoverability gap.
 - Other camera/UX niceties to gather here as they come up (e.g. preset viewpoints,
   a "what am I looking at" intro hint, keyboard shortcuts list).
 
