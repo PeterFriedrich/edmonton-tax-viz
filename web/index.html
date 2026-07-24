@@ -175,7 +175,24 @@
     #a11y-menu label { display: flex; align-items: center; gap: 7px; cursor: pointer; padding: 2px 0; }
     #a11y-menu label:hover { color: #e8e8ef; }
     #a11y-menu input { accent-color: #fcd278; margin: 0; }
-    #legend { bottom: 22px; left: 22px; font-size: 11.5px; color: #b8b8c8; }
+    /* Bottom-left cluster: the 2D/3D flip button stacked above the legend. The
+       wrapper is the anchored element (bottom-left); the legend goes static so
+       the button sits above it and the legend's variable height (category rows
+       in some views) just pushes the button up — no manual offsets. */
+    #botleft {
+      position: absolute; bottom: 22px; left: 22px; z-index: 1;
+      display: flex; flex-direction: column; align-items: flex-start; gap: 10px;
+    }
+    #flip2d {
+      appearance: none; pointer-events: auto; cursor: pointer;
+      background: rgba(12,12,20,0.7); border: 1px solid #2a2a3a; border-radius: 6px;
+      color: #9a9ab0; padding: 6px 12px;
+      font: 11.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      transition: background 0.12s, color 0.12s;
+    }
+    #flip2d:hover { color: #e8e8ef; }
+    #flip2d.flat { background: #fcd278; color: #16111a; font-weight: 600; } /* gold = 2D engaged */
+    #legend { position: static; font-size: 11.5px; color: #b8b8c8; }
     #legend .bar {
       width: 200px; height: 10px; border-radius: 2px; margin: 6px 0 4px;
       background: linear-gradient(90deg,
@@ -417,12 +434,15 @@
     </div>
   </div>
 
-  <div id="legend" class="panel">
-    <div id="legend-label">Revenue per acre</div>
-    <div class="bar"></div>
-    <div class="scale"><span id="legend-min">$0</span><span id="legend-max">$50k+</span></div>
-    <div class="aside"><span class="sw"></span><span>Set aside — natural / undeveloped land</span></div>
-    <div id="legend-cats"></div>
+  <div id="botleft">
+    <button id="flip2d" title="Flip to a straight-down 2D plan view (removes the tilt so height reads as a flat map); click again to return to the 3D tilt">Flip to 2D</button>
+    <div id="legend" class="panel">
+      <div id="legend-label">Revenue per acre</div>
+      <div class="bar"></div>
+      <div class="scale"><span id="legend-min">$0</span><span id="legend-max">$50k+</span></div>
+      <div class="aside"><span class="sw"></span><span>Set aside — natural / undeveloped land</span></div>
+      <div id="legend-cats"></div>
+    </div>
   </div>
 
   <script>
@@ -3230,6 +3250,23 @@
       if (window.matchMedia("(max-width: 640px)").matches) optpanel.classList.add("folded");
       document.getElementById("opt-fold").addEventListener("click", () =>
         optpanel.classList.toggle("folded"));
+      // 2D/3D flip: ease the camera between the tilted 3D default and a straight-
+      // down 2D plan (pitch 0). Keyed off the LIVE pitch so it stays correct even
+      // if the user tilts by drag; bearing is left alone (2D-ness is only pitch).
+      // The tilt to return to is remembered, so a custom pitch survives a round-trip.
+      const flip2d = document.getElementById("flip2d");
+      let pitch3d = map.getPitch() || 52;
+      const isFlat = () => map.getPitch() < 1;
+      const syncFlip = () => {
+        flip2d.textContent = isFlat() ? "Flip to 3D" : "Flip to 2D";
+        flip2d.classList.toggle("flat", isFlat());
+      };
+      flip2d.addEventListener("click", () => {
+        if (isFlat()) { map.easeTo({ pitch: pitch3d || 52, duration: 600 }); }
+        else { pitch3d = map.getPitch(); map.easeTo({ pitch: 0, duration: 600 }); }
+      });
+      map.on("pitch", syncFlip);
+      syncFlip();
       document.querySelectorAll("#denom button").forEach(b =>
         b.addEventListener("click", () => applyDenom(b.dataset.denom)));
       document.querySelectorAll("#ratio-denom button").forEach(b =>
