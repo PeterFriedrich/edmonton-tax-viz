@@ -33,17 +33,42 @@
       pointer-events: none;
     }
     #controls > div { position: static; right: auto; top: auto; }
-    #views  { order: 1; } /* ① view (T1) */
-    #toggle { order: 2; } /* ② variant (T2) — Money metric, money/glass only */
-    #layers { order: 3; } /* ② variant (T2) — per-view sections */
-    #coloradj { order: 4; } /* ③ presentation (T3) — money/glass, greys elsewhere */
-    #lens   { order: 5; } /* ③ presentation (T3) — Highlight residential */
-    #a11y   { order: 6; } /* ④ accessibility button (out of the tier flow) */
-    #coloradj, #toggle, #lens, #views, #layers, #a11y, #a11y-menu {
+    #views    { order: 1; } /* ① view (T1) */
+    #toggle   { order: 2; } /* ② variant (T2) — Money metric, money/glass only */
+    #optpanel { order: 3; } /* ③ foldable Options panel (variant + presentation) */
+    /* display:flex + interactivity on all real pods; border/bg chrome only on the
+       top-level ones + the a11y popover. The inner coloradj/lens/layers read as
+       borderless sections of the one #optpanel. */
+    #toggle, #views, #optpanel, #coloradj, #lens, #a11y, #a11y-menu {
       display: flex; pointer-events: auto;
+    }
+    #toggle, #views, #optpanel, #a11y, #a11y-menu {
       background: rgba(12,12,20,0.7); border: 1px solid #2a2a3a;
       border-radius: 6px; overflow: hidden;
     }
+    /* The foldable Options panel: a header button (#opt-fold) toggles #opt-body,
+       which holds the presentation controls (colour scaling + residential lens,
+       left) beside the per-view detail/denominator sections (#layers, right). */
+    #optpanel { flex-direction: column; align-items: stretch; }
+    #opt-fold {
+      appearance: none; border: 0; background: transparent; color: #9a9ab0;
+      font: 11.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      padding: 6px 12px; cursor: pointer; display: flex; align-items: center;
+      justify-content: space-between; gap: 12px; transition: background 0.12s, color 0.12s;
+    }
+    #opt-fold:hover { color: #e8e8ef; }
+    #opt-caret { font-size: 11px; color: #6a6a80; display: inline-block; transition: transform 0.15s; }
+    #optpanel.folded #opt-caret { transform: rotate(-90deg); }
+    #optpanel.folded #opt-body { display: none; }
+    #opt-body {
+      display: flex; flex-direction: row; align-items: flex-start;
+      gap: 12px; padding: 2px 10px 8px; border-top: 1px solid #22222e;
+    }
+    #opt-pres { display: flex; flex-direction: column; gap: 6px; }
+    #optpanel #layers { padding: 0; }
+    /* The inner pods carry class="panel" (position:absolute); they're no longer
+       direct #controls children, so re-static them to flow inside #opt-body. */
+    #optpanel .panel { position: static; right: auto; top: auto; }
     /* Colour Adjustment sits ABOVE the lens controls (metric/palette/…): it's
        about HOW colour is rendered, not WHAT you're looking at. It drives the
        money/glass sqrt transform (scaleT) only, so it disables in the other
@@ -130,7 +155,7 @@
        the neighbourhood-labels toggle. Kept off the always-visible chrome — one
        tap away for those who need it. Anchored to its button; overflow visible so
        the popover isn't clipped by the pod. */
-    #a11y { position: relative; overflow: visible; }
+    #a11y { position: absolute; right: 22px; bottom: 40px; z-index: 1; overflow: visible; } /* clears the MapLibre attribution */
     #a11y-btn {
       appearance: none; border: 0; background: transparent; color: #9a9ab0;
       font: 11.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -139,7 +164,7 @@
     #a11y-btn:hover { color: #e8e8ef; }
     #a11y.open #a11y-btn { background: #fcd278; color: #16111a; font-weight: 600; }
     #a11y-menu {
-      display: none; position: absolute; top: calc(100% + 6px); right: 0;
+      display: none; position: absolute; bottom: calc(100% + 6px); right: 0;
       flex-direction: column; padding: 6px 12px; gap: 4px;
       font-size: 11.5px; color: #9a9ab0; min-width: 150px;
     }
@@ -218,6 +243,11 @@
       #controls > div { max-width: 100%; }
       #coloradj .cadj-state { display: none; }
       #toggle, #views { flex-wrap: wrap; justify-content: flex-end; }
+      /* The Options panel stacks its two groups vertically on a phone (presentation
+         above the detail/denominator sections). It defaults folded on mobile (set
+         in JS) so the map is clear until the user opens it. */
+      #opt-body { flex-direction: column; gap: 8px; }
+      #opt-fold { font-size: 12px; }
     }
   </style>
 </head>
@@ -236,20 +266,11 @@
   </div>
 
   <div id="controls">
-  <div id="coloradj" class="panel">
-    <button id="coloradj-btn" class="active" title="How colour is scaled — not what you're looking at. On spreads the values across the ramp (sqrt); Off shows true magnitude (linear, clamped at the top). Height stays linear either way.">Colour: sqrt scaling</button>
-    <span id="coloradj-state" class="cadj-state">On — colour spread across distribution</span>
-  </div>
-
   <div id="toggle" class="panel">
     <button data-metric="revenue_per_acre" class="active">Revenue</button>
     <button data-metric="value_per_acre">Value</button>
     <button data-metric="res_revenue_per_acre" title="Residential-class tax dollars only (houses, condos and apartment buildings) — a subset of Revenue. Not the 'Residential only' lens, which fades non-residential neighbourhoods without changing the dollars">Residential $</button>
     <button data-metric="nonres_revenue_per_acre" title="Tax dollars billed at the non-residential rate (commercial and industrial land) — a subset of Revenue, the complement of Residential $">Non-res $</button>
-  </div>
-
-  <div id="lens" class="panel">
-    <button data-lens="residential" title="Fade non-residential neighbourhoods so residential land compares like-to-like">Highlight residential</button>
   </div>
 
   <div id="views" class="panel">
@@ -260,6 +281,18 @@
     <button data-view="development" title="New dwelling units built per acre from issued building permits (2021–2025) — where the city is actually growing; greenfield growth land is shown in full colour here">Development</button>
   </div>
 
+  <div id="optpanel">
+    <button id="opt-fold" title="Show or hide the detail, denominator, colour-scaling and residential-lens controls">Options<span id="opt-caret">▾</span></button>
+    <div id="opt-body">
+    <div id="opt-pres">
+  <div id="coloradj" class="panel">
+    <button id="coloradj-btn" class="active" title="How colour is scaled — not what you're looking at. On spreads the values across the ramp (sqrt); Off shows true magnitude (linear, clamped at the top). Height stays linear either way.">Colour: sqrt scaling</button>
+    <span id="coloradj-state" class="cadj-state">On — colour spread across distribution</span>
+  </div>
+  <div id="lens" class="panel">
+    <button data-lens="residential" title="Fade non-residential neighbourhoods so residential land compares like-to-like">Highlight residential</button>
+  </div>
+    </div>
   <div id="layers" class="panel">
     <span class="hd" id="moneydetail-hd">Detail</span>
     <div id="moneydetail">
@@ -364,6 +397,9 @@
       <button data-ratio-denom="servicecost" title="Property-tax revenue as a multiple of the modeled roads + fire service cost — the two levy-funded services this project can measure, NOT the total cost of city services (police, parks, transit and the rest are not included, so most neighbourhoods read well above 1×)">Per service $</button>
     </div>
   </div>
+    </div>
+  </div>
+  </div>
 
   <div id="a11y" class="panel">
     <button id="a11y-btn" title="Display &amp; accessibility — colour ramp and neighbourhood labels">Display</button>
@@ -379,7 +415,6 @@
         <input type="checkbox" id="labels-on" /> Neighbourhood labels
       </label>
     </div>
-  </div>
   </div>
 
   <div id="legend" class="panel">
@@ -3189,6 +3224,12 @@
       document.getElementById("title").addEventListener("click", () => {
         document.getElementById("title").classList.toggle("expanded");
       });
+      // Foldable Options panel: the header toggles #opt-body. Default folded on
+      // small screens (keep the map clear); unfolded on desktop.
+      const optpanel = document.getElementById("optpanel");
+      if (window.matchMedia("(max-width: 640px)").matches) optpanel.classList.add("folded");
+      document.getElementById("opt-fold").addEventListener("click", () =>
+        optpanel.classList.toggle("folded"));
       document.querySelectorAll("#denom button").forEach(b =>
         b.addEventListener("click", () => applyDenom(b.dataset.denom)));
       document.querySelectorAll("#ratio-denom button").forEach(b =>
