@@ -187,6 +187,38 @@
        proportional to their share; the 2px gaps read as the tooltip surface. */
     .tip .mixbar { display: flex; gap: 2px; width: 190px; height: 8px; margin: 6px 0 5px; border-radius: 2px; overflow: hidden; }
     .tip .mixbar span { border-radius: 1px; }
+
+    /* ===================================================================
+       MOBILE CHROME SEAM (docs/MOBILE_USABILITY.md §3). Everything ABOVE is
+       the untouched desktop baseline; every rule below fires only ≤640px, so
+       it cannot affect desktop. Move 1: collapse the title blurb + stop the
+       left-edge clip of the right-anchored control pods.
+       =================================================================== */
+    @media (max-width: 640px) {
+      /* Title: show only the headline by default; tap it to reveal the blurb
+         as a readable card (the blurb is the top-third space hog). The tap is
+         wired in JS but only reachable here — .panel is pointer-events:none on
+         desktop, so the handler is inert there and the blurb stays always-on. */
+      #title { max-width: calc(100vw - 44px); pointer-events: auto; cursor: pointer; }
+      #title h1 { font-size: 16px; }
+      #title h1::after { content: " \25BE"; color: #7a7a90; font-weight: 400; font-size: 13px; } /* ▾ expand affordance */
+      #title.expanded h1::after { content: " \25B4"; } /* ▴ when open */
+      #title p { display: none; margin-top: 6px; }
+      #title.expanded {
+        z-index: 3; background: rgba(12,12,20,0.92);
+        border: 1px solid #2a2a3a; border-radius: 6px; padding: 8px 12px;
+      }
+      #title.expanded p { display: block; }
+
+      /* Drop the control column below the now one-line title, and bound it to
+         the viewport (left+right) so the right-anchored pods can't grow off the
+         left edge. The two widest offenders: coloradj's long state caption is
+         dropped; the metric + view rows wrap instead of overflowing. */
+      #controls { top: 58px; left: 8px; right: 8px; align-items: flex-end; }
+      #controls > div { max-width: 100%; }
+      #coloradj .cadj-state { display: none; }
+      #toggle, #views { flex-wrap: wrap; justify-content: flex-end; }
+    }
   </style>
 </head>
 <body>
@@ -3150,6 +3182,12 @@
         const a11y = document.getElementById("a11y");
         if (a11y.classList.contains("open") && !a11y.contains(e.target))
           a11y.classList.remove("open");
+      });
+      // Mobile: tap the title to expand/collapse the blurb card. Inert on
+      // desktop — #title is pointer-events:none there (only the ≤640px seam
+      // flips it to auto), so this never fires and the blurb stays always-on.
+      document.getElementById("title").addEventListener("click", () => {
+        document.getElementById("title").classList.toggle("expanded");
       });
       document.querySelectorAll("#denom button").forEach(b =>
         b.addEventListener("click", () => applyDenom(b.dataset.denom)));
