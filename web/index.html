@@ -185,16 +185,16 @@
       position: absolute; bottom: 22px; left: 22px; z-index: 1;
       display: flex; flex-direction: column; align-items: flex-start; gap: 10px;
     }
-    #viewbtns { display: flex; gap: 8px; } /* Flip + Center, side by side */
-    #flip2d, #recenter {
+    #viewbtns { display: flex; gap: 8px; } /* Center 2D + Center 3D, side by side */
+    #center2d, #recenter {
       appearance: none; pointer-events: auto; cursor: pointer;
       background: rgba(12,12,20,0.7); border: 1px solid #2a2a3a; border-radius: 6px;
       color: #9a9ab0; padding: 6px 12px;
       font: 11.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       transition: background 0.12s, color 0.12s;
     }
-    #flip2d:hover, #recenter:hover { color: #e8e8ef; }
-    #flip2d.flat { background: #fcd278; color: #16111a; font-weight: 600; } /* gold = 2D engaged */
+    #center2d:hover, #recenter:hover { color: #e8e8ef; }
+    #center2d.flat { background: #fcd278; color: #16111a; font-weight: 600; } /* gold = 2D engaged */
     #legend { position: static; font-size: 11.5px; color: #b8b8c8; }
     #legend .bar {
       width: 200px; height: 10px; border-radius: 2px; margin: 6px 0 4px;
@@ -439,8 +439,8 @@
 
   <div id="botleft">
     <div id="viewbtns">
-      <button id="flip2d" title="Flip to a straight-down 2D plan view (removes the tilt so height reads as a flat map); click again to return to the 3D tilt">Flip to 2D</button>
-      <button id="recenter" title="Recenter and reset the map to the default 3D framing (position, zoom, tilt and rotation)">Center 3D</button>
+      <button id="center2d" title="Recenter to a straight-down, north-up 2D plan view (no tilt, no rotation) — height flattens to a clean map">Center 2D</button>
+      <button id="recenter" title="Recenter to the default 3D framing (position, zoom, tilt and rotation)">Center 3D</button>
     </div>
     <div id="legend" class="panel">
       <div id="legend-label">Revenue per acre</div>
@@ -458,9 +458,12 @@
     // banner the backend sets is picked up without waiting out CDN caching.
     const STATUS_URL = "./data/status.json";
     const CENTER = [-113.50, 53.52]; // Edmonton, from the data centroid
-    // The default framing — single source for the map constructor, the "Center 3D"
-    // recenter button, and the flip button's fallback tilt.
+    // The default framing — single source for the map constructor and the two
+    // bottom-left framing buttons. HOME is the tilted 3D default; HOME_2D is the
+    // straight-down, north-up plan (bearing 0 — flat at the -18° tilt-rotation
+    // looks skewed, so 2D snaps north-aligned).
     const HOME = { center: CENTER, zoom: 10.2, pitch: 52, bearing: -18 };
+    const HOME_2D = { center: CENTER, zoom: 10.2, pitch: 0, bearing: 0 };
 
     // Build mode: "public" (curated) | "full" (specialist). ONE hand-edited
     // source; the deploy step (scripts/build_site.py) emits two copies and
@@ -3259,30 +3262,18 @@
       if (window.matchMedia("(max-width: 640px)").matches) optpanel.classList.add("folded");
       document.getElementById("opt-fold").addEventListener("click", () =>
         optpanel.classList.toggle("folded"));
-      // 2D/3D flip: ease the camera between the tilted 3D default and a straight-
-      // down 2D plan (pitch 0). Keyed off the LIVE pitch so it stays correct even
-      // if the user tilts by drag; bearing is left alone (2D-ness is only pitch).
-      // The tilt to return to is remembered, so a custom pitch survives a round-trip.
-      const flip2d = document.getElementById("flip2d");
-      let pitch3d = map.getPitch() || HOME.pitch;
-      const isFlat = () => map.getPitch() < 1;
-      const syncFlip = () => {
-        flip2d.textContent = isFlat() ? "Flip to 3D" : "Flip to 2D";
-        flip2d.classList.toggle("flat", isFlat());
-      };
-      flip2d.addEventListener("click", () => {
-        if (isFlat()) { map.easeTo({ pitch: pitch3d || HOME.pitch, duration: 600 }); }
-        else { pitch3d = map.getPitch(); map.easeTo({ pitch: 0, duration: 600 }); }
-      });
-      map.on("pitch", syncFlip);
-      syncFlip();
-      // "Center 3D": recenter and reset the whole camera to the default framing
-      // (position, zoom, tilt, rotation). Also restores the flip button's return
-      // tilt to HOME (the pitch event syncs its label as the tilt eases back up).
-      document.getElementById("recenter").addEventListener("click", () => {
-        pitch3d = HOME.pitch;
-        map.easeTo({ ...HOME, duration: 700 });
-      });
+      // Two bottom-left framing presets. "Center 2D" recenters to a north-up,
+      // straight-down plan (HOME_2D); "Center 3D" recenters to the tilted default
+      // (HOME). Both frame the whole city — only the tilt/rotation differ. Center
+      // 2D shows gold while the camera is flat, keyed off the LIVE pitch so it
+      // stays correct even if the user tilts by drag.
+      const center2d = document.getElementById("center2d");
+      const syncMode = () => center2d.classList.toggle("flat", map.getPitch() < 1); // gold = 2D
+      center2d.addEventListener("click", () => map.easeTo({ ...HOME_2D, duration: 700 }));
+      document.getElementById("recenter").addEventListener("click", () =>
+        map.easeTo({ ...HOME, duration: 700 }));
+      map.on("pitch", syncMode);
+      syncMode();
       document.querySelectorAll("#denom button").forEach(b =>
         b.addEventListener("click", () => applyDenom(b.dataset.denom)));
       document.querySelectorAll("#ratio-denom button").forEach(b =>
