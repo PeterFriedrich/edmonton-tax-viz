@@ -2,8 +2,11 @@
 // repo, the data sources or the methodology).
 //
 // The load-bearing claims:
-//   1. The CREDIT is visible without interacting — the Open Government Licence
-//      asks for attribution, and a link behind a click doesn't attribute.
+//   1. The pod is a short, always-visible entry point ("Data & Methods") that
+//      does NOT overlap the bottom-left legend cluster at phone widths — the
+//      long credit label it used to carry was 294px wide and sat straight on
+//      top of the legend (Peter, 2026-07-25). The attribution itself now lives
+//      one tap in, alongside the licence.
 //   2. The vintages come from status.json, not a hardcoded literal that goes
 //      stale each January (docs/RUNBOOK.md year-roll).
 //   3. The caveat the project must not bury: revenue and the utility layers are
@@ -54,11 +57,12 @@ const [url] = process.argv.slice(2);
     };
   });
 
-  // --- 1. the credit reads before any click -------------------------------
+  // --- 1. the entry point reads before any click --------------------------
   let p = await probe();
-  check('credit pod is visible on load', p.btnShown);
-  check('credit names the data owner without a click',
-        /City of Edmonton Open Data/.test(p.btnText), JSON.stringify(p.btnText));
+  check('pod is visible on load', p.btnShown);
+  check('button label is the short form', p.btnText === 'Data & Methods',
+        JSON.stringify(p.btnText));
+  check('label carries no year (it would go stale)', !/\d{4}/.test(p.btnText));
   check('menu starts closed', !p.menuOpen);
 
   // --- 2. vintages come from status.json ----------------------------------
@@ -67,11 +71,6 @@ const [url] = process.argv.slice(2);
     return r.ok ? r.json() : null;
   });
   check('status.json reachable', !!status);
-  if (status) {
-    check('button year matches status.data_year',
-          p.btnText.includes(String(status.data_year)),
-          `data_year=${status.data_year}`);
-  }
 
   await page.click('#about-btn');
   await page.waitForTimeout(400);
@@ -97,8 +96,13 @@ const [url] = process.argv.slice(2);
           stray ? `found: ${[...new Set(stray)].join(', ')}` : '');
   }
 
-  // --- 3. the caveats are present -----------------------------------------
+  // --- 3. the attribution + caveats are present ---------------------------
+  // The credit moved off the button, so the panel is now the ONLY place it
+  // lives — it has to be there.
+  check('panel credits the City of Edmonton', /City of Edmonton/.test(p.menuText));
   check('licence is named', /Open Government Licence/i.test(p.menuText));
+  check('caveats heading reads "Important caveats"',
+        /Important caveats/i.test(p.menuText));
   check('says revenue is modelled, not billed',
         /modelled, not billed|modeled, not billed/i.test(p.menuText));
   check('flags the utility layers as modelled',
@@ -144,6 +148,30 @@ const [url] = process.argv.slice(2);
   await page.waitForTimeout(300);
   p = await probe();
   check('clicking the map closes it', !p.menuOpen && !p.a11yOpen);
+
+  // --- 5b. the button must not sit on the bottom-left cluster --------------
+  // This is the reported bug: the old 294px credit label ran from x=73 to x=367
+  // at 390px while #legend reached x=304, so the button was painted straight on
+  // top of the legend text. Geometry, at the two common phone widths plus
+  // desktop — a screenshot is not the oracle here, boxes are.
+  for (const vp of [{ width: 390, height: 844 }, { width: 360, height: 800 },
+                    { width: 1440, height: 900 }]) {
+    const pg = await browser.newPage({ viewport: vp });
+    await pg.goto(url, { waitUntil: 'networkidle', timeout: 60000 });
+    await pg.waitForTimeout(4000);
+    const g = await pg.evaluate(() => {
+      const box = id => { const b = document.getElementById(id).getBoundingClientRect();
+                          return { l: b.left, r: b.right, t: b.top, b: b.bottom }; };
+      const hit = (a, b) => a.l < b.r && b.l < a.r && a.t < b.b && b.t < a.b;
+      const btn = box('about-btn'), bl = box('botleft'), a11y = box('a11y');
+      return { btnW: Math.round(btn.r - btn.l), btnL: Math.round(btn.l),
+               blR: Math.round(bl.r), onBotleft: hit(btn, bl), onA11y: hit(btn, a11y) };
+    });
+    check(`${vp.width}px: button clear of the bottom-left cluster`, !g.onBotleft,
+          `button ${g.btnL}..${g.btnL + g.btnW}, cluster ends ${g.blR}`);
+    check(`${vp.width}px: button clear of the Display pod`, !g.onA11y);
+    await pg.close();
+  }
 
   // --- 6. phone: the panel must not overflow the viewport ------------------
   const phone = await browser.newPage({ viewport: { width: 390, height: 844 } });
@@ -196,8 +224,7 @@ const [url] = process.argv.slice(2);
     vintage: document.getElementById('about-vintage').textContent,
     shown: document.getElementById('about-btn').offsetParent !== null,
   }));
-  check('no status.json: credit still reads', b.shown && /City of Edmonton Open Data/.test(b.btn), b.btn);
-  check('no status.json: no dangling year separator', !/·\s*$/.test(b.btn), JSON.stringify(b.btn));
+  check('no status.json: pod still reachable', b.shown && b.btn === 'Data & Methods', b.btn);
   check('no status.json: vintage line stays empty', b.vintage === '', JSON.stringify(b.vintage));
   await blind.close();
 

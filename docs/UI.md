@@ -687,11 +687,23 @@ the highest credibility-per-effort gap on the public-release list, and an
 outstanding licence obligation (every dataset rendered is City of Edmonton open
 data under the Open Government Licence, which asks for visible attribution).
 
-- **The credit is the button label, not something behind the click** —
-  `Data: City of Edmonton Open Data · 2025`. A link you have to find first
-  doesn't attribute anything, so the licence-facing half is readable at rest and
-  the popover carries only what a label can't. Same "the label is the readout"
-  idiom as `#coloradj` (2026-07-25).
+- **The button is a short entry point: `Data & Methods`.** It shipped as the full
+  credit (`Data: City of Edmonton Open Data · 2025`) on the theory that a link
+  you have to find first attributes nothing — **reverted within the hour, on
+  geometry.** That label measured **294px**; at 390px `#legend` reaches x=304, so
+  the button was painted straight on top of the legend text (Peter: "it's still
+  overlapping"). The short label clears it (246..367 against a cluster ending at
+  237) at both 390 and 360px. Attribution isn't weakened — the City of Edmonton
+  credit and the Open Government Licence are the first thing in the panel, and
+  the map's own MapLibre attribution uses the same collapsed pattern. **The
+  lesson: a label carrying prose has to be measured against the other anchored
+  chrome before it's called a design.**
+- **Phones also bound `#botleft`** (`max-width: calc(100vw - 175px)`) so
+  `#legend`'s longest line ("Set aside — natural / undeveloped land") wraps
+  instead of running under the right-hand column. The bar and scale are a fixed
+  200px, so only the aside moves.
+- Panel heading is **"Important caveats"** (was "Read the numbers carefully" —
+  Peter, same pass).
 - **Every year comes from `status.json`, never a literal.** The manifest the
   pipeline already writes (`data_year` / `rate_year` / `zoning_year` /
   `generated`) is already fetched for the maintenance banner, so the pod rides

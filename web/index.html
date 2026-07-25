@@ -360,6 +360,14 @@
          viewport instead. The button label keeps the full credit — it fits at
          this size, and shortening it would be shortening the attribution. */
       #about-menu { width: calc(100vw - 44px); max-width: 310px; }
+      /* Keep the bottom-left cluster out of the bottom-right column. #legend's
+         width is set by its widest line ("Set aside — natural / undeveloped
+         land", ~282px), which at 390px runs clear under the Data & Methods and
+         Display pods — they were sitting ON the legend text. Bounding the
+         wrapper lets that line wrap to two rows instead; the gradient bar and
+         its scale are a fixed 200px, so they are unaffected. 175px reserves the
+         right column plus both gutters. */
+      #botleft { max-width: calc(100vw - 175px); }
     }
   </style>
 </head>
@@ -529,8 +537,7 @@
   </div>
 
   <div id="about" class="panel">
-    <button id="about-btn" title="Data sources, licence, caveats and methodology">
-      Data: City of Edmonton Open Data<span id="about-year"></span></button>
+    <button id="about-btn" title="Data sources, licence, caveats and methodology — City of Edmonton open data">Data &amp; Methods</button>
     <div id="about-menu">
       <span class="hd">Sources</span>
       <p>Property assessment, tax rates, zoning, building permits, the road
@@ -538,7 +545,7 @@
          City of Edmonton under the <b>Open Government Licence – City of
          Edmonton</b>. Rebuilt weekly from the open data portal.</p>
       <p id="about-vintage" class="muted"></p>
-      <span class="hd">Read the numbers carefully</span>
+      <span class="hd">Important caveats</span>
       <p><b>Revenue is modelled, not billed.</b> It applies Edmonton's
          class-differential mill rates to assessed value — what the land
          <i>generates</i> at those rates, not what any owner was charged.</p>
@@ -3650,14 +3657,13 @@
             el.style.display = "block";
           }
           // Data vintages for the Sources pod come from the SAME manifest the
-          // pipeline writes, so the year on screen rolls with the data instead
-          // of being a literal that quietly goes stale every January
+          // pipeline writes, so the years on screen roll with the data instead
+          // of being literals that quietly go stale every January
           // (docs/RUNBOOK.md year-roll). Every line degrades independently: a
           // missing manifest, or a manifest missing a field, just leaves that
-          // text empty and the credit itself still reads.
+          // text empty and the rest of the panel still reads.
           if (!s) return;
           const txt = (id, v) => { if (v) document.getElementById(id).textContent = v; };
-          txt("about-year", s.data_year ? ` · ${s.data_year}` : "");
           const vintages = [
             s.data_year   && `assessment ${s.data_year}`,
             s.rate_year   && `tax rates ${s.rate_year}`,
