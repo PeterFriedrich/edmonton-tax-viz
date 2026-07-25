@@ -87,11 +87,10 @@
     #coloradj button:disabled, #coloradj button:disabled:hover {
       color: #4a4a5e; cursor: default; background: transparent; font-weight: 400;
     }
-    #coloradj .cadj-state {
-      display: flex; align-items: center; padding: 0 12px 0 2px;
-      font-size: 10.5px; color: #6a6a80; white-space: nowrap;
-    }
-    #coloradj.disabled .cadj-state { color: #4a4a5e; }
+    /* No state caption: the button LABEL is the readout ("sqrt scaling" /
+       "linear"). The caption said the same thing at twice the width and made the
+       pod stick out; the full explanation lives in the button's title, and the
+       title blurb already calls out the linear case. */
     #views button {
       appearance: none; border: 0; background: transparent; color: #9a9ab0;
       font: 11.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -149,8 +148,11 @@
     }
     #palette button, #lens button { padding: 6px 12px; font-size: 11.5px; }
     #toggle button:hover, #palette button:hover, #lens button:hover { color: #e8e8ef; }
+    /* The lens hides in views where it doesn't apply (applyView), so these
+       disabled styles are a fallback only — nothing should show a dead lens
+       button. The former gold-dimmed `.active:disabled` variant ("on, but
+       unavailable here") is gone with it. */
     #lens button:disabled, #lens button:disabled:hover { color: #4a4a5e; cursor: default; }
-    #lens button.active:disabled { background: #6b5c34; color: #2a2430; }
     #toggle button.active, #palette button.active, #lens button.active { background: #fcd278; color: #16111a; font-weight: 600; }
     /* Accessibility menu: a "Display" button that opens a small popover holding
        the colour-ramp picker (Inferno default; Cividis is the CVD-safe ramp) and
@@ -279,11 +281,11 @@
 
       /* Drop the control column below the now one-line title, and bound it to
          the viewport (left+right) so the right-anchored pods can't grow off the
-         left edge. The two widest offenders: coloradj's long state caption is
-         dropped; the metric + view rows wrap instead of overflowing. */
+         left edge. The metric + view rows wrap instead of overflowing.
+         (coloradj's long state caption used to be dropped here too — it's now
+         gone from every breakpoint, folded into the button label.) */
       #controls { top: 58px; left: 8px; right: 8px; align-items: flex-end; }
       #controls > div { max-width: 100%; }
-      #coloradj .cadj-state { display: none; }
       #toggle, #views { flex-wrap: wrap; justify-content: flex-end; }
       /* The Options panel stacks its two groups vertically on a phone (presentation
          above the detail/denominator sections). It defaults folded on mobile (set
@@ -328,8 +330,7 @@
     <div id="opt-body">
     <div id="opt-pres">
   <div id="coloradj" class="panel">
-    <button id="coloradj-btn" class="active" title="How colour is scaled — not what you're looking at. On spreads the values across the ramp (sqrt); Off shows true magnitude (linear, clamped at the top). Height stays linear either way.">Colour: sqrt scaling</button>
-    <span id="coloradj-state" class="cadj-state">On — colour spread across distribution</span>
+    <button id="coloradj-btn" class="active" title="How colour is scaled — not what you're looking at. Click to switch: sqrt scaling spreads the values across the ramp; linear shows true magnitude (clamped at the top). Height stays linear either way.">Colour: sqrt scaling</button>
   </div>
   <div id="lens" class="panel">
     <button data-lens="residential" title="Fade non-residential neighbourhoods so residential land compares like-to-like">Highlight residential</button>
@@ -2619,18 +2620,17 @@
       refreshLegend(); // legendGradient reads the transform through scaleT
     }
 
-    // Sync the Colour Adjustment button + state line to the toggle, and grey it
-    // out in views where it has no effect (services/ratio/uses drive colour
-    // through their own transforms, not scaleT).
+    // Sync the Colour Adjustment button to the toggle, and grey it out in views
+    // where it has no effect (services/ratio/uses drive colour through their own
+    // transforms, not scaleT). The label IS the state readout — it names the
+    // scaling currently in effect, so no separate caption is needed.
     function syncColorAdjust() {
       const applies = state.view === "money" || state.view === "glass";
       const btn = document.getElementById("coloradj-btn");
       btn.classList.toggle("active", state.colorAdjust);
       btn.disabled = !applies;
+      btn.textContent = state.colorAdjust ? "Colour: sqrt scaling" : "Colour: linear";
       document.getElementById("coloradj").classList.toggle("disabled", !applies);
-      document.getElementById("coloradj-state").textContent = state.colorAdjust
-        ? "On — colour spread across distribution"
-        : "Off — colour shows true magnitude";
     }
 
     // Switch the denominator (ground vs lot acres). Shown in the Glass and
@@ -3122,11 +3122,16 @@
       document.getElementById("services").style.display = v === "services" ? "block" : "none";
       // The lens applies in Money and Ratio. In Services the per-hood signal
       // is service supply, not the money metric, in Uses residential land is
-      // already an explicit category, and in Glass the grid cells carry no
-      // residential flag — the button disables in all three (state persists
-      // and re-applies on leaving).
-      document.querySelector("#lens button").disabled =
-        v === "services" || v === "uses" || v === "glass" || v === "development" || v === "infill";
+      // already an explicit category, and in Glass (Money's 100 m grid) the grid
+      // cells carry no residential flag. Elsewhere the button is HIDDEN, not
+      // greyed: greyed-out read as broken rather than unavailable (it was
+      // reported as "the highlight residential button doesn't work"), and every
+      // other per-view control hides. `disabled` stays in sync so the control
+      // can't be actuated while out of view. State persists and re-applies on
+      // returning to a view where it bites.
+      const lensApplies = v === "money" || v === "ratio";
+      document.getElementById("lens").style.display = lensApplies ? "flex" : "none";
+      document.querySelector("#lens button").disabled = !lensApplies;
       if ((v === "services" || v === "ratio") && !roadsData) {
         roadsFetch ??= fetch(ROADS_URL).then(r => r.json()).then(d => { roadsData = d; });
         await roadsFetch;
