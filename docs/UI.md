@@ -685,12 +685,14 @@ visible control per view; **run it after any control-chrome / CSS refactor.**
 The live map had **no** link to the repo, the data sources or the methodology —
 the highest credibility-per-effort gap on the public-release list, and an
 outstanding licence obligation (every dataset rendered is City of Edmonton open
-data under the Open Government Licence, which asks for visible attribution).
+data under the Open Government Licence, which asks for an attribution
+statement — see "What other maps actually do" below for what that does and
+doesn't require about placement).
 
 - **The button is a short entry point: `Data & Methods`.** It shipped as the full
   credit (`Data: City of Edmonton Open Data · 2025`) on the theory that a link
-  you have to find first attributes nothing — **reverted within the hour, on
-  geometry.** That label measured **294px**; at 390px `#legend` reaches x=304, so
+  you have to find first attributes nothing — **reverted within the hour**, on
+  geometry *and* on convention (below). That label measured **294px**; at 390px `#legend` reaches x=304, so
   the button was painted straight on top of the legend text (Peter: "it's still
   overlapping"). The short label clears it (246..367 against a cluster ending at
   237) at both 390 and 360px. Attribution isn't weakened — the City of Edmonton
@@ -704,6 +706,40 @@ data under the Open Government Licence, which asks for visible attribution).
   200px, so only the aside moves.
 - Panel heading is **"Important caveats"** (was "Read the numbers carefully" —
   Peter, same pass).
+
+#### What other maps actually do (2026-07-25)
+
+Peter asked the right question after the reversal — *what does everyone else
+use?* The answer settles whether "behind one tap" is a compromise or the norm.
+**It's the norm.**
+
+| Pattern | Who | Notes |
+|---|---|---|
+| **A bare ⓘ glyph, bottom-right, expanding inline on tap** | Leaflet, MapLibre, Mapbox — the library default | Their attribution controls **auto-collapse to ⓘ on narrow screens** (`compact: true`). This is the single most common mobile map-attribution pattern. |
+| **Tiny always-on credit text** | OSM-based sites ("© OpenStreetMap contributors") | Works while the string is short; it's exactly what failed here at 294px. |
+| **A word button** | civic dashboards | Almost always *About* / *Sources* / *Data* / *About this data* / *Legal* — **essentially never the word "Attribution"**, which is jargon nobody scans for. |
+
+Two conclusions this locks in:
+
+1. **`Data & Methods` is squarely conventional.** No reason to revisit the label.
+2. **The claim that drove the original design was overstated.** "A link behind a
+   click attributes nothing" is not how the field treats it — the collapsed-ⓘ
+   pattern exists *precisely* so attribution survives small screens, and the
+   major providers accept it (OSM's guidance allows credit behind an interactive
+   element on constrained displays as long as it's discoverable in-page).
+
+**A wrinkle specific to this map: there is no basemap.** The style is
+`sources: {}` — every pixel is drawn from our own GeoJSON, no tile provider. So
+the MapLibre ⓘ in the corner credits the *library*, not any tiles, and the
+OSM/Mapbox attribution regimes don't apply at all. **The only obligation in play
+is the Open Government Licence – City of Edmonton on the data**, which the panel
+carries.
+
+**Not yet verified:** nobody has read the OGL – City of Edmonton text directly.
+The reasoning above generalises from the OGL family (attribution statement
+required; placement not specified). If that licence turns out to mandate
+placement, the surfaced-credit design comes back — it's the only thing that
+would argue for it. Tracked in `TODO.md`.
 - **Every year comes from `status.json`, never a literal.** The manifest the
   pipeline already writes (`data_year` / `rate_year` / `zoning_year` /
   `generated`) is already fetched for the maintenance banner, so the pod rides

@@ -209,16 +209,26 @@ _Last reconciled: 2026-07-25_
   - [x] ~~P1.1 README refresh~~ — done 2026-07-09 (this PR): "Methodology
     (Planned)"/QGIS/AltaLIS-FOIP sections replaced with as-built.
   - [x] ~~**P1.2 In-app attribution/methods affordance**~~ — **DONE 2026-07-25**
-    (branch `about-sources-panel`). Bottom-right `#about` pod above Display: the
-    **credit is the button label** (`Data: City of Edmonton Open Data · <year>`,
-    visible at rest — the Open Government Licence wants attribution, and a link
-    behind a click isn't one); the popover carries the licence, the
-    modelled-not-billed caveat for revenue *and* the utility layers, and links to
-    METHODS.md + the repo. **All years/dates come from `status.json`**, so the
-    January year-roll can't strand a stale literal. `verify-about.js` (32 checks,
-    incl. 390px geometry + a status.json-blocked run). Fixed two latent bugs on
-    the way: `#botleft` swallowing pointer events, and the z-index:1 paint-order
-    collision — see `DECISIONS.md` 2026-07-25.
+    (PRs #94 + #95, both merged & live). Bottom-right `#about` pod above Display,
+    labelled **`Data & Methods`**; the popover carries the City of Edmonton
+    credit + Open Government Licence, the vintages, the modelled-not-billed
+    caveat for revenue *and* the utility layers, and links to METHODS.md + the
+    repo. **All years/dates come from `status.json`**, so the January year-roll
+    can't strand a stale literal. `verify-about.js` (390/360/1440 overlap
+    geometry, paint order, link resolution, a status.json-blocked run). It first
+    shipped with the full credit AS the label; **reverted the same day** — 294px
+    wide, it sat on the legend — and the collapsed-behind-a-button form turns out
+    to be the map convention anyway (`UI.md` "What other maps actually do").
+    Fixed three latent bugs on the way: `#botleft` swallowing pointer events, the
+    z-index:1 paint-order collision, and `#legend` running under the right-hand
+    column on phones. See `DECISIONS.md` 2026-07-25.
+    - [ ] **Read the actual OGL – City of Edmonton text** (small, ~15 min, not
+      urgent). The shipped design assumes the licence wants an *attribution
+      statement* but doesn't dictate placement — generalised from the OGL family,
+      **never verified against the Edmonton text itself**. If it does mandate
+      surfaced placement, the credit returns to the map surface and
+      `Data & Methods` alone stops being sufficient. Only open question left on
+      P1.2. `docs/UI.md` "What other maps actually do".
   - [x] ~~P1.3 Public METHODS page~~ — done 2026-07-09 (PR #32 merged):
     `docs/METHODS.md` (metric definitions, denominators + guard, set-aside,
     WEM/condo worked examples, model formulas + validation ratios,

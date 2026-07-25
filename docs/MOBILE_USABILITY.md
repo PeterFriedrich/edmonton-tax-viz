@@ -70,6 +70,17 @@ column) via `tools/profiling/shot-mobile.js` (Playwright, 390×844, `isMobile`+
   this doc: "no collision" claims need a hit test (`page.click()` /
   `elementFromPoint`), not a screenshot** — overlap you can't see is still
   overlap.
+- **⚠️ SECOND CORRECTION (same day): the bottom band is genuinely tight — treat
+  any new anchored pod as a width budget, not a label.** A `Data: City of
+  Edmonton Open Data · 2025` button measured **294px** and landed on top of
+  `#legend` (which reaches x=304 at 390px, set by its longest line, *not* by the
+  200px gradient bar). Fixed by shortening the label **and** bounding `#botleft`
+  to `calc(100vw - 175px)` so that line wraps — either alone was insufficient.
+  Current clearance is **9px** at 390 and 360px, asserted by geometry in
+  `verify-about.js`. **Anything else added to either bottom corner has to be
+  measured against that 9px, at both widths.** Related: on phones the mobile
+  convention for this kind of chrome is a *short* label or a bare ⓘ that expands
+  — see `docs/UI.md` "What other maps actually do".
 - **What's FINE:** the map renders correctly; the bottom-left `#botleft` cluster
   (three stacked rows: the `#compass` arrows+needle added 2026-07-25, the Center
   2D / Center 3D `#viewbtns` row added 2026-07-24, then `#legend`) is clear of
