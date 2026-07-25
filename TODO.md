@@ -71,13 +71,19 @@ _Last reconciled: 2026-07-25_
       is fixed 2026-07-25. **Still open: the `#views` POSITION question** — it's
       still a thin strip at the very top; that's the move-2 / bottom-sheet fork
       (`MOBILE_USABILITY.md` §3 + the top-bar note). Decide against the live render.
-    - [ ] **Regenerate `docs/LENS_INVENTORY.md`** from the rebuilt wiring (after merge).
-      **Now well past stale** — still the pre-regroup 7-view catalogue, and since
-      then: foldable Options panel, Uses full-only, `Highlight residential` HIDES
-      instead of greying, `Colour:` button label carries its own state, Glass lost
-      the prism slider, camera buttons + compass added. Rewrite from the code, don't
-      patch it. Same for `CONTROLS_MATRIX.md` §3–§5 (§1/§3/§4 rows were kept current
-      as changes landed; the §5 "weird combos" analysis is pre-regroup).
+    - [x] ~~**Regenerate `docs/LENS_INVENTORY.md`** from the rebuilt wiring.~~
+      **DONE 2026-07-25.** Rewritten from the code (not patched): two-build table,
+      4/5 views with Glass as Money's `#moneydetail` mode and Infill as
+      Development's `#devmode` lens, the three different "doesn't apply here"
+      behaviours (`#toggle` hides / `#lens` hides / `#coloradj` greys), per-view
+      data gates, combination counts, and a code-anchor table. Every row of the
+      matrix was **probed against the live site** in both builds, not inferred.
+    - [ ] **`CONTROLS_MATRIX.md` §2–§5 still stale.** §2 says "Built today (7)";
+      §4 still lists the retired `#dev-grid` checkbox + `#devspike` picker (now the
+      one 3-way `#devdetail`) and Ratio's `#prism-row` as if Glass still had one;
+      §5's "weird combos" analysis is pre-regroup (C and G are resolved; A/B were
+      resolved by the Detail selector). Rewrite those; `LENS_INVENTORY.md` is now
+      the current-state reference to lean on.
   - [x] ~~**Two-build deploy plumbing (`PLAN_public_release.md` §2a).**~~ **BUILT
     2026-07-23 (branch `regroup-build-s65`).** `scripts/build_site.py` fans `web/`
     into one Pages artifact: `_site/` = public root (whole tree, `DEFAULT_BUILD` →
