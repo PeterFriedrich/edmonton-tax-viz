@@ -58,6 +58,18 @@ column) via `tools/profiling/shot-mobile.js` (Playwright, 390×844, `isMobile`+
   left −51 to **left 177**, fully on screen at 390px — measured, not inferred.
   The `@media` rule that used to hide the caption on phones went with it. The
   `#controls` −51 figure predates that change; re-shoot before acting on it.
+- **⚠️ CORRECTION (2026-07-25, later the same day): `#botleft` was NOT "clear of
+  everything" — its invisible hit box was not.** The "no collision" note below
+  was screenshot-confirmed, and a screenshot can only see *paint*. The wrapper
+  carried no `pointer-events: none`, so its box — as wide as the `#legend` inside
+  it — reached across a 390px screen to the bottom-right pods and **intercepted
+  clicks meant for them** (it blocked the new Sources credit button outright),
+  besides stealing map drags in that corner at every viewport. Separately,
+  everything on the map sits at `z-index: 1`, so `#botleft` *painted through* a
+  tall bottom-right popover. Both fixed 2026-07-25 (`DECISIONS.md`). **Lesson for
+  this doc: "no collision" claims need a hit test (`page.click()` /
+  `elementFromPoint`), not a screenshot** — overlap you can't see is still
+  overlap.
 - **What's FINE:** the map renders correctly; the bottom-left `#botleft` cluster
   (three stacked rows: the `#compass` arrows+needle added 2026-07-25, the Center
   2D / Center 3D `#viewbtns` row added 2026-07-24, then `#legend`) is clear of

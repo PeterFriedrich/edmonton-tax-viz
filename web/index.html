@@ -39,10 +39,10 @@
     /* display:flex + interactivity on all real pods; border/bg chrome only on the
        top-level ones + the a11y popover. The inner coloradj/lens/layers read as
        borderless sections of the one #optpanel. */
-    #toggle, #views, #optpanel, #coloradj, #lens, #a11y, #a11y-menu {
+    #toggle, #views, #optpanel, #coloradj, #lens, #a11y, #a11y-menu, #about, #about-menu {
       display: flex; pointer-events: auto;
     }
-    #toggle, #views, #optpanel, #a11y, #a11y-menu {
+    #toggle, #views, #optpanel, #a11y, #a11y-menu, #about, #about-menu {
       background: rgba(12,12,20,0.7); border: 1px solid #2a2a3a;
       border-radius: 6px; overflow: hidden;
     }
@@ -188,6 +188,47 @@
     #a11y-menu label { display: flex; align-items: center; gap: 7px; cursor: pointer; padding: 2px 0; }
     #a11y-menu label:hover { color: #e8e8ef; }
     #a11y-menu input { accent-color: #fcd278; margin: 0; }
+    /* Sources & attribution pod, stacked directly above the Display pod in the
+       same bottom-right column. The button LABEL carries the credit rather than
+       hiding it behind the click: every dataset the map renders is City of
+       Edmonton open data under the Open Government Licence, which asks for
+       visible attribution — a link you have to find first doesn't attribute
+       anything. (Same "the label is the readout" idiom as #coloradj.) The
+       popover behind it holds what the label can't: the modeled-not-billed
+       caveat, the vintages, and the methods/source links. Same open/close
+       mechanics as #a11y; opening either closes the other, since both menus
+       expand upward into the same space. */
+    #about { position: absolute; right: 22px; bottom: 68px; z-index: 1; overflow: visible; }
+    /* While open, lift the pod above the rest of the chrome. Everything on the
+       map sits at z-index 1, so paint order falls back to DOM order and #botleft
+       (compass, Center 2D/3D, legend) drew straight THROUGH the panel on a phone,
+       where the panel is tall enough to reach the bottom-left cluster. */
+    #about.open { z-index: 5; }
+    #about-btn {
+      appearance: none; border: 0; background: transparent; color: #9a9ab0;
+      font: 11.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      padding: 6px 12px; cursor: pointer; transition: background 0.12s, color 0.12s;
+    }
+    #about-btn:hover { color: #e8e8ef; }
+    #about.open #about-btn { background: #fcd278; color: #16111a; font-weight: 600; }
+    #about-menu {
+      display: none; position: absolute; bottom: calc(100% + 6px); right: 0;
+      flex-direction: column; padding: 9px 13px; gap: 7px;
+      font-size: 11.5px; line-height: 1.5; color: #9a9ab0; width: 310px;
+      text-align: left;
+      /* Denser than the 0.7 the control pods share: this is a paragraph of prose
+         to READ, not a strip of buttons, and at 0.7 the map (and the chrome
+         behind it on a phone) shows through the text. Matches .tip / #banner,
+         the other two text surfaces. */
+      background: rgba(12,12,20,0.92);
+    }
+    #about.open #about-menu { display: flex; }
+    #about-menu .hd { font-size: 10px; text-transform: uppercase; letter-spacing: 0.8px; color: #6a6a80; }
+    #about-menu p { margin: 0; }
+    #about-menu b { color: #e8e8ef; font-weight: 600; }
+    #about-menu .muted { color: #6a6a80; }
+    #about-menu a { color: #fcd278; text-decoration: none; }
+    #about-menu a:hover { text-decoration: underline; }
     /* Bottom-left cluster: the compass row and the framing-preset buttons
        stacked above the legend. The wrapper is the anchored element
        (bottom-left); the legend goes static so the buttons sit above it and the
@@ -196,6 +237,14 @@
     #botleft {
       position: absolute; bottom: 22px; left: 22px; z-index: 1;
       display: flex; flex-direction: column; align-items: flex-start; gap: 10px;
+      /* The WRAPPER must not eat pointer events: its box spans the legend's full
+         width plus the gaps, and on a narrow screen it reaches across to the
+         bottom-right pods — it was intercepting clicks meant for the Sources
+         credit at 390px, and swallowing map drags in the bottom-left corner at
+         every size. Every interactive child (the compass buttons, Center 2D/3D)
+         already sets pointer-events:auto for itself, and the legend is inert, so
+         nothing needs it here. Same idiom as .panel / #controls. */
+      pointer-events: none;
     }
     #viewbtns { display: flex; gap: 8px; } /* Center 2D + Center 3D, side by side */
     #center2d, #recenter {
@@ -306,6 +355,11 @@
          in JS) so the map is clear until the user opens it. */
       #opt-body { flex-direction: column; gap: 8px; }
       #opt-fold { font-size: 12px; }
+      /* Sources pod: the popover is a fixed 310px on desktop, which overflows a
+         390px screen once the 22px right anchor is counted. Bound it to the
+         viewport instead. The button label keeps the full credit — it fits at
+         this size, and shortening it would be shortening the attribution. */
+      #about-menu { width: calc(100vw - 44px); max-width: 310px; }
     }
   </style>
 </head>
@@ -471,6 +525,34 @@
       <label title="Show neighbourhood names on the map — labels declutter automatically and more appear as you zoom in">
         <input type="checkbox" id="labels-on" /> Neighbourhood labels
       </label>
+    </div>
+  </div>
+
+  <div id="about" class="panel">
+    <button id="about-btn" title="Data sources, licence, caveats and methodology">
+      Data: City of Edmonton Open Data<span id="about-year"></span></button>
+    <div id="about-menu">
+      <span class="hd">Sources</span>
+      <p>Property assessment, tax rates, zoning, building permits, the road
+         network, fire dispatch and the transit schedule — all published by the
+         City of Edmonton under the <b>Open Government Licence – City of
+         Edmonton</b>. Rebuilt weekly from the open data portal.</p>
+      <p id="about-vintage" class="muted"></p>
+      <span class="hd">Read the numbers carefully</span>
+      <p><b>Revenue is modelled, not billed.</b> It applies Edmonton's
+         class-differential mill rates to assessed value — what the land
+         <i>generates</i> at those rates, not what any owner was charged.</p>
+      <p>The <b>service cost, stormwater and water/sewer</b> layers are modelled
+         too: estimates from published rates, lot characteristics and zoning —
+         not utility records. They cover only the services this project can
+         measure, never the full cost of running the city.</p>
+      <span class="hd">More</span>
+      <p><a href="https://github.com/PeterFriedrich/edmonton-tax-viz/blob/master/docs/METHODS.md"
+            target="_blank" rel="noopener">Methods &amp; definitions</a> —
+         how every metric is built, with worked examples and limitations.<br />
+         <a href="https://github.com/PeterFriedrich/edmonton-tax-viz"
+            target="_blank" rel="noopener">Source code &amp; data pipeline</a></p>
+      <p id="about-updated" class="muted"></p>
     </div>
   </div>
 
@@ -3320,15 +3402,24 @@
       document.querySelector("#lens button").addEventListener("click", applyLens);
       document.getElementById("labels-on").addEventListener("change",
         e => applyLabels(e.target.checked));
-      // Accessibility menu open/close (button toggles; a click outside closes).
-      document.getElementById("a11y-btn").addEventListener("click", e => {
-        e.stopPropagation();
-        document.getElementById("a11y").classList.toggle("open");
-      });
+      // The two bottom-right popovers (Display, Sources) open/close the same
+      // way: the button toggles, a click outside closes, and opening one closes
+      // the other — both menus expand upward into the same strip of screen, so
+      // leaving both open would overlap them.
+      [["a11y-btn", "a11y", "about"], ["about-btn", "about", "a11y"]].forEach(
+        ([btn, pod, other]) => {
+          document.getElementById(btn).addEventListener("click", e => {
+            e.stopPropagation();
+            document.getElementById(other).classList.remove("open");
+            document.getElementById(pod).classList.toggle("open");
+          });
+        });
       document.addEventListener("click", e => {
-        const a11y = document.getElementById("a11y");
-        if (a11y.classList.contains("open") && !a11y.contains(e.target))
-          a11y.classList.remove("open");
+        ["a11y", "about"].forEach(id => {
+          const pod = document.getElementById(id);
+          if (pod.classList.contains("open") && !pod.contains(e.target))
+            pod.classList.remove("open");
+        });
       });
       // Mobile: tap the title to expand/collapse the blurb card. Inert on
       // desktop — #title is pointer-events:none there (only the ≤640px seam
@@ -3558,6 +3649,23 @@
             el.textContent = s.banner;
             el.style.display = "block";
           }
+          // Data vintages for the Sources pod come from the SAME manifest the
+          // pipeline writes, so the year on screen rolls with the data instead
+          // of being a literal that quietly goes stale every January
+          // (docs/RUNBOOK.md year-roll). Every line degrades independently: a
+          // missing manifest, or a manifest missing a field, just leaves that
+          // text empty and the credit itself still reads.
+          if (!s) return;
+          const txt = (id, v) => { if (v) document.getElementById(id).textContent = v; };
+          txt("about-year", s.data_year ? ` · ${s.data_year}` : "");
+          const vintages = [
+            s.data_year   && `assessment ${s.data_year}`,
+            s.rate_year   && `tax rates ${s.rate_year}`,
+            s.zoning_year && `zoning ${s.zoning_year}`,
+          ].filter(Boolean);
+          txt("about-vintage", vintages.length
+            ? `Vintages: ${vintages.join(" · ")}.` : "");
+          txt("about-updated", s.generated ? `Data rebuilt ${s.generated}.` : "");
         })
         .catch(() => {});
     });
