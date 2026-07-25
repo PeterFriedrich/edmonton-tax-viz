@@ -8,9 +8,26 @@ check `git` / `pytest` directly — do not restate it here, it only goes stale.
 Session summaries (`session-summary/`) are dated *narratives* of what happened and
 why. This file owns *what's left*. When they disagree, this file wins.
 
-_Last reconciled: 2026-07-09_
+_Last reconciled: 2026-07-25_
 
 ## Open work
+
+- [ ] **SMALL OPEN UI DECISIONS (2026-07-25).** Each is a one-liner to build; they
+  need Peter's call, not design work.
+  - [ ] **Does `#coloradj` hide when it doesn't apply, like `#lens` now does?**
+    `Highlight residential` hides outside Money/Ratio (2026-07-25) because greyed
+    read as *broken* — but `Colour: sqrt scaling` still greys out in
+    Services/Ratio/Uses, so the two pods in the same column behave differently
+    (in Development you get a lone dim button). Decide as a pair.
+    `DECISIONS.md` 2026-07-25 + `CONTROLS_MATRIX.md` §3.
+  - [ ] **Should `#views` keep its bigger 14px type on phones?** Currently scaled
+    back to 12.5px in the `@media` block — at 14px the four public views don't fit
+    one 390px row. Alternative: keep 14px and accept two rows.
+  - [ ] **Center 2D: reframe vs flatten-in-place.** It recenters the whole camera
+    (frames the city). *Partly answered* by the compass needle, which now does
+    in-place north-up — so what's left is only whether *pitch* should flatten in
+    place too (swap `HOME_2D` for `{pitch:0, bearing:0}` in the `#center2d`
+    handler, dropping center/zoom).
 
 - [ ] **MOBILE USABILITY (NEW 2026-07-22 — full plan in
   `docs/MOBILE_USABILITY.md`; read it first).** Phone rendering is unstyled for
@@ -48,8 +65,19 @@ _Last reconciled: 2026-07-09_
       copy, so merging `regroup-build-s65` to master ships the *public* controls to
       the site root. **Branch is now safe to merge** (review + merge is Peter's call).
     - [ ] **THEN mobile CSS** (below) reflows the *final* grouping (inherits the flex
-      column + Detail selectors — the structure-before-mobile payoff).
+      column + Detail selectors — the structure-before-mobile payoff). *Partly done:*
+      move-1 shipped 2026-07-24 (`@media` seam, collapsing title, bounded control
+      column) and the `#views` **size** half of the "under-reads as primary" concern
+      is fixed 2026-07-25. **Still open: the `#views` POSITION question** — it's
+      still a thin strip at the very top; that's the move-2 / bottom-sheet fork
+      (`MOBILE_USABILITY.md` §3 + the top-bar note). Decide against the live render.
     - [ ] **Regenerate `docs/LENS_INVENTORY.md`** from the rebuilt wiring (after merge).
+      **Now well past stale** — still the pre-regroup 7-view catalogue, and since
+      then: foldable Options panel, Uses full-only, `Highlight residential` HIDES
+      instead of greying, `Colour:` button label carries its own state, Glass lost
+      the prism slider, camera buttons + compass added. Rewrite from the code, don't
+      patch it. Same for `CONTROLS_MATRIX.md` §3–§5 (§1/§3/§4 rows were kept current
+      as changes landed; the §5 "weird combos" analysis is pre-regroup).
   - [x] ~~**Two-build deploy plumbing (`PLAN_public_release.md` §2a).**~~ **BUILT
     2026-07-23 (branch `regroup-build-s65`).** `scripts/build_site.py` fans `web/`
     into one Pages artifact: `_site/` = public root (whole tree, `DEFAULT_BUILD` →
