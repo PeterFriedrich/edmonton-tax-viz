@@ -1,14 +1,18 @@
 # Controls & Lens Combinations — current state
 
 Authoritative **snapshot** of every view × control combination as the app
-actually behaves today (verified against `web/index.html`, 2026-07-22). This is
-the map to reason about **regrouping** the controls (desktop grouping is shared
-DOM → it drives the mobile layout too; see `docs/MOBILE_USABILITY.md`).
+actually behaves today (rewritten 2026-07-25 against `web/index.html`, with every
+row **probed on the live site in both builds** — not inferred from reading). This
+is the map to reason about **regrouping** the controls (desktop grouping is
+shared DOM → it drives the mobile layout too; see `docs/MOBILE_USABILITY.md`).
 
-- This doc = the current *state space* (what shows when, what gates what).
+- This doc = the current *state space* (what shows when, what gates what, what's
+  still odd).
+- `docs/LENS_INVENTORY.md` = the user-facing *catalogue* (what each lens is, what
+  it offers, combination counts). Same source, different question.
 - `docs/UI.md` = the chronological *build log* (why each feature was built).
-- The flagged "weird combos" in §5 are the **unpack/move candidates** — not yet
-  decided; they feed the regrouping decision.
+- §5 holds what's still weird **after** the regroup; §7 is the locked decision
+  record for the regroup itself.
 
 ---
 
@@ -22,26 +26,42 @@ DOM → it drives the mobile layout too; see `docs/MOBILE_USABILITY.md`).
 
 ## 1. The three tiers
 
-Every control is one of three tiers. The current on-screen stack does **not**
-follow this order (see §5.A):
+Every control is one of three tiers, and since the regroup the **on-screen stack
+follows that order** — set with CSS `order:` on `#controls`, not DOM order
+(`web/index.html` L36–38):
 
-- **Tier 1 — WHAT am I looking at** (the view/mode): `#views`. Since 2026-07-25 it
-  is also the largest type on screen (14px, vs 12.5px `#toggle` and 11.5px
+- **Tier 1 — WHAT am I looking at** (the view): `#views`, `order: 1`. Also the
+  largest type on screen since 2026-07-25 (14px, vs 12.5px `#toggle` and 11.5px
   modifiers) so the rendering matches the tier — it previously tied for smallest.
-- **Tier 2 — WHICH variant** of the current view (view-scoped sub-metrics):
-  live in `#layers`, plus the special-cased `#toggle`.
-- **Tier 3 — HOW it's drawn** (presentation modifiers): `#coloradj`, `#palette`,
-  `#lens`.
+- **Tier 2 — WHICH variant** of the current view: `#toggle` (`order: 2`, Money's
+  metric picker) plus everything in `#layers`.
+- **Tier 3 — HOW it's drawn** (presentation modifiers): `#coloradj`, `#lens`.
+- **Out of the tier flow:** the `#a11y` **Display** popover (colour ramp +
+  neighbourhood labels), bottom-right.
+
+**Tiers 2 and 3 both live inside the foldable Options panel** (`#optpanel`,
+`order: 3`): a header button `#opt-fold` toggles `#opt-body`, which holds
+`#opt-pres` (the T3 pods) beside `#layers` (the T2 sections). It **defaults
+folded on ≤640px** and unfolded on desktop (set in JS, L3341). So on a phone the
+whole of T2/T3 is one tap away and only `#views` + `#toggle` are on the map.
 
 ---
 
 ## 2. Tier 1 — the views (`#views`)
 
-**Built today (7):** `Money · Services · Ratio · Uses · Development · Infill · Glass`
-**Decided target (5, §7):** `Money · Services · Ratio · Uses · Development`
-— Glass → a mode of Money; Infill → a full-only mode of Development. §3–§5 below
-still describe the **built** 7-view state (this doc is a current-state snapshot);
-§7 holds the decided-but-unbuilt regroup.
+**The decided 5-view target is what's built and live.** Two of the original
+seven became modes of another view rather than top-level entries:
+
+| `#views` button | Internal view name(s) | Notes |
+|---|---|---|
+| **Money** *(default)* | `money`, **`glass`** | `glass` = the "100 m grid" `#moneydetail` mode. The Money button stays active in it. |
+| **Services** | `services` | |
+| **Ratio** | `ratio` | |
+| **Uses** 🔒 | `uses` | Full build only (2026-07-24, provisional). |
+| **Development** | `development`, **`infill`** | `infill` = the full-only "Infill opportunity" `#devmode` lens. The Development button stays active in it. |
+
+So **public `#views` = 4 buttons** (Money · Services · Ratio · Development);
+**`/full/` = 5**. Verified live in both builds 2026-07-25.
 
 **Build visibility (public vs specialist) — FINALIZED 2026-07-23 (§7 +
 `DECISIONS.md`).** The two-build split tags each lens `public | full`; this was
@@ -50,37 +70,38 @@ lenses" pass.
 
 | Lens / control | Public build | Specialist (`/full/`) |
 |---|:---:|:---:|
-| Money (incl. Glass grid mode) · Services · Ratio | ✅ | ✅ |
+| Money (incl. the 100 m grid mode) · Services · Ratio | ✅ | ✅ |
 | **Development** — units + permits, Detail selector | ✅ | ✅ |
 | **Uses** view (dominant zoned land use) | ❌ _(provisional, 2026-07-24)_ | ✅ |
-| **Infill** mode on Development | ❌ | ✅ |
+| **Infill** lens on Development | ❌ | ✅ |
 | **Industrial** metric on Development | ❌ | ✅ |
 | Deep data-detail (validation ratios, modeling quirks, methods-heavy blurbs) | trimmed to honest labels | ✅ full |
+| Money's **Residential $ / Non-res $** metrics | ✅ *(data-gated only)* | ✅ |
 
-Full-only *modes/metrics inside a public view* (Infill, Industrial on the public
-Development view) are `BUILD`-flag-gated at the control level — the two-build
-mechanism handles exactly this.
+Full-only *modes/metrics inside a public view* (Infill, Industrial) are
+`BUILD`-flag-gated at the control level — `|| !FULL_BUILD` sits next to their
+data guard, so nothing is stripped from the file.
 
 ---
 
-## 3. Tier 3 — modifier pods (rendered "always visible" at the top)
+## 3. Tier 3 — modifier pods
 
-| Pod | Buttons | Actually bites in | In every other view |
+| Pod | Buttons | Actually bites in | Everywhere else |
 |---|---|---|---|
-| `#coloradj` | `Colour: sqrt scaling` / `Colour: linear` (the label is the state) | **Money, Glass** | **greyed/disabled** (`.disabled`) |
-| `#toggle` | `Revenue · Value · Residential $ · Non-res $` | **Money, Glass** | **stays fully live but silently inert** — records state, changes nothing visible (early-return in `applyMetric`) |
-| `#palette` | `Inferno · Glow · Cividis` | all gradient views | applies (n/a in Uses' categorical legend) |
-| `#lens` → `Residential only` | fade non-res hoods | **Money, Ratio** | **HIDDEN** (`display:none`, 2026-07-25 — was greyed) |
-| `#lens` → `Labels` | hood name labels | **all views** | applies |
+| `#coloradj` | `Colour: sqrt scaling` / `Colour: linear` (the label **is** the state) | **Money** — both detail modes | **greyed/disabled** (`.disabled`) |
+| `#lens` | `Highlight residential` | **Money → Neighbourhood, Ratio** | **HIDDEN** (`display:none`, 2026-07-25 — was greyed) |
+| `#toggle` (T2, listed here for the comparison) | `Revenue · Value · Residential $ · Non-res $` | **Money** — both detail modes | **HIDDEN** (regroup, 2026-07-23 — was live-but-inert) |
+| `#palette`, `Labels` | 3 ramps; hood names on/off | — | moved into the `#a11y` **Display** popover; apply everywhere (palette is n/a in Uses' categorical legend) |
 
-Note the inconsistency already visible here: three of these are Money/Glass- or
-Money/Ratio-only, and they resolve it three different ways — `Residential only`
-**hides**, `#coloradj` **greys out**, `#toggle` stays live but inert. See §5.C.
+**Two of the three inconsistencies in this table are now fixed; one remains.**
+`#toggle` used to stay live but inert outside Money (resolved by the regroup —
+old combo C), and `#lens` used to grey out (resolved 2026-07-25). **`#coloradj`
+is the last pod that greys where its neighbours hide** — see §5.1.
+
 The hide came from a live bug report ("the highlight residential button doesn't
 work"): greyed `#4a4a5e` on a dark panel reads as *broken*, not *unavailable*,
-and Money's **100 m grid** mode disables it without leaving the Money view, so
-the control looked dead in place. **`#coloradj` is the remaining greyed pod — the
-open question is whether it should hide too** (`DECISIONS.md` 2026-07-25).
+and Money's **100 m grid** mode drops the lens *without leaving the Money view*,
+so the control looked dead in place.
 
 ---
 
@@ -90,96 +111,135 @@ Each row shows only in its view(s), and only when the underlying data columns
 exist (the data-gate flags). `#layers` itself is hidden unless the current view
 has at least one section to show.
 
-| View | Controls shown | Data-gate | Dynamic rules |
+| View / mode | Controls shown | Data-gate | Dynamic rules |
 |---|---|---|---|
-| **Money** | `#denom` (Ground / Lot acres) | `hasHoodLot` | — |
-| **Services** | `#services` — 6 rows: Roads · Stormwater · Fire · Water/sewer · Transit · Service cost. Each = on/off checkbox + a "colour" driver radio that appears only when **≥2** services are on | rows self-gate on their columns | exactly one service drives the ramp; others render neutral |
-| **Ratio** | `#ratio-denom` (Per road metre / Per fire event / Per service $); `#prism-row` opacity slider | `hasFire \|\| hasSvcCost` (else roads-only, control hidden) | — |
-| **Uses** | `#uses-prisms` (Height = share zoned residential); `#prism-row` when prisms on | — | legend swaps to categorical |
-| **Development** | `#devmetric` (Dwelling units / Permits / Industrial); `#devwindow` (Last 5 yr / Last 3 yr / Since 2009); `#dev-grid` **Detail = 100 m grid**; `#devspike` (New homes / Year built); `#prism-row` when grid active | `hasPermitsPerAcre`, `hasDevWindow`, `hasIndPermits`, `devGridData`, `devAgeCol` | **see §5.A/B — the gnarly one** |
-| **Infill** | `#devmetric` (Dwelling units / Permits — **Industrial hidden**); `#devwindow` | same as Dev | entering Infill with Industrial selected **silently resets to units** |
-| **Glass** | `#denom` relabelled **"Spike denominator"** (Ground / Lot); **no `#prism-row`** — opacity fixed at 60% since 2026-07-25; **also uses `#toggle` metric + `#coloradj`** | `gridData.hasLot` | Glass = "Money, translucent, grid-denominated" |
+| **Money → Neighbourhood** | `#moneydetail` (Neighbourhood / 100 m grid); `#denom` headed **"Denominator"** | `#moneydetail` unconditional; `#denom` on `hasHoodLot` | `#lens` + `#coloradj` both live |
+| **Money → 100 m grid** (`glass`) | same `#moneydetail`; `#denom` **relabelled "Spike denominator"** | `gridData.hasLot` | **no `#prism-row`** — opacity fixed at 60%, re-applied on entry (2026-07-25); `#lens` hides, `#coloradj` stays live |
+| **Services** | `#services` — 6 rows: Roads · Stormwater · Fire · Water/sewer · Transit · Service cost. Each = on/off checkbox + a "colour" driver radio | rows self-gate on their columns | radios appear only when **≥2** are checked; the driver always names a *checked* service (unchecking it hands the ramp on); fire/transit draw their dots whenever checked, driver or not |
+| **Ratio** | `#ratio-denom` (Per road metre / Per fire event / Per service $); `#prism-row` opacity slider, default 5% | `hasFire \|\| hasSvcCost` (else roads-only, control hidden) | **the only view that also shows the `#prism-hd` "Money plane" header** |
+| **Uses** 🔒 | `#uses-prisms` (Height = share zoned residential); `#prism-row` while prisms on, default 35% | — | legend swaps to categorical |
+| **Development → Housing built** | `#devmode` 🔒 (Housing built / Infill opportunity); `#devmetric` (Dwelling units / Permits / Industrial 🔒); `#devwindow` (Last 5 yr / Last 3 yr / Since 2009); `#devdetail` (Neighbourhood / 100 m grid — activity / Stock age); `#prism-row` while the grid is active | `FULL_BUILD && hasInfill`; `hasPermitsPerAcre`; `hasDevWindow`, `hasLongWindow`; `devGridOfferable()`, `devAgeCol()` | **see below** |
+| **Development → Infill** 🔒 | `#devmode`; `#devmetric` (**Industrial hidden**); `#devwindow` | same as Development | **no `#devdetail`** (no infill grid), no slider; entering with Industrial selected **silently resets to units** |
 
-### Development's dynamic gating (the tangle)
+🔒 = full build only.
 
-- `#dev-grid` (Detail / 100 m grid) is **offerable** whenever the grid file
-  loaded **and** the metric isn't Industrial (`devGridOfferable = !!devGridData
-  && !devIndustrial()`). The long "Since 2009" window **is** offerable (it has
-  its own grid — PR #80). Industrial is the only choropleth-only metric.
-- `#devspike` (New homes / Year built) shows **only when the 100 m grid is ON**
-  (`devGridActive()`) and the age column loaded → **§5.A**.
-- Selecting **Year built** sets `ageUp`, which **hides `#devmetric` and
-  `#devwindow`** (a stock snapshot has no permit metric/window) → **§5.B**.
+### Development's dynamic gating
 
----
-
-## 5. Weird combos — unpack/move candidates
-
-The reason for this doc. None decided; these feed the regrouping pass.
-
-**A. "Year built" is buried under the Detail checkbox.** The New-homes-vs-Year-
-built picker (`#devspike`) only appears *after* you tick "100 m grid". So the
-entire stock-age lens is invisible until you find an unrelated checkbox. And
-"New homes" (the default) just re-labels what the choropleth already shows — the
-picker's real payload is "reveal Year built." **This is the one Peter flagged.**
-
-**B. Choosing "Year built" morphs the panel** — Metric + Window pickers vanish.
-Combined with A, the Development panel reshuffles a lot as you poke it.
-
-**C. `#toggle` stays live but inert in 5 of 7 views.** Revenue/Value/Residential
-$/Non-res $ only bite in Money + Glass, yet the pod stays fully interactive in
-Services/Ratio/Uses/Development/Infill — flipping it there changes nothing
-visible. `#coloradj` (same Money/Glass scope) greys out; `#toggle` doesn't.
-Inconsistent + misleading.
-
-**D. Two separate "what do I divide by?" controls.** `#denom` (acres; Money +
-Glass) and `#ratio-denom` (Ratio) are conceptually siblings but live apart, and
-`#denom` even relabels itself ("Denominator" ↔ "Spike denominator") by view.
-
-**E. "Residential" means two different things in two pods.** `Residential $`
-(a metric in `#toggle`) vs `Residential only` (a fade lens in `#lens`) — similar
-names, unrelated mechanics; the metric's tooltip already has to disclaim the
-confusion.
-
-**F. Industrial is a Development-only metric hidden inside `#devmetric`** and
-silently self-resets on entering Infill. It's arguably a different lens wearing
-a sub-metric costume.
-
-**G. Glass double-duties Money's controls** (`#toggle` metric + `#coloradj` +
-denominator) while being its own top-level view — worth asking whether it's a
-view or a render-mode of Money.
+- `#devdetail` — the **one 3-way Detail selector** that replaced the old
+  `#dev-grid` checkbox + `#devspike` picker (decision #7, §7). Offered whenever
+  the grid file loaded **and** the metric isn't Industrial (`devGridOfferable =
+  !!devGridData && !devIndustrial()`). The long "Since 2009" window **is**
+  offerable (its own grid, PR #80). Industrial is the only choropleth-only metric.
+- The **Stock age** option additionally needs the year column (`devAgeCol() >= 0`);
+  older grid files hide just that button and keep the other two.
+- Selecting **Stock age** hides `#devmetric` and `#devwindow` (a stock snapshot
+  has no permit metric or window) — now an **explicit mode choice** rather than
+  the old surprise morph. See §5.3.
 
 ---
 
-## 7. Regrouping decisions (locked — BUILT 2026-07-23, branch `regroup-build-s65`)
+## 5. Weird combos — what's still open after the regroup
 
-The running output of the "organize the lenses" pass. Each locked a piece of the
-regrouped structure; **all eight were built in one reflow on 2026-07-23** (branch
-`regroup-build-s65`, not yet on master — merge gated on the two-build deploy
-plumbing so the public root isn't shipped the `full` default). The as-built map:
-`#views` = 5; Glass = Money `#moneydetail` toggle (internal view unchanged);
-Infill = full-only `#devmode` on Development; Industrial = full-only `#devmetric`;
-palette + Labels = the `#a11y` "Display" popover; grid+spike = the `#devdetail`
-3-way selector; `Highlight residential` = the collapsed `#lens`. Table kept as the
-decision record. Mirror to `DECISIONS.md`.
+The regroup (§7) closed most of the original list; the resolved ones are kept at
+the bottom as a record, **still under their original letters** — older references
+elsewhere (`DECISIONS.md` says "§5.G", "§5.A/B", "§5.F") point at those. The
+still-open items below are **numbered** so the two sets can't be confused.
 
-| When | Decision | Resolves |
+**1. `#coloradj` greys where its two neighbours hide.** `Highlight residential`
+hides outside Money/Ratio, `#toggle` hides outside Money — but `Colour: sqrt
+scaling` still greys out. In Development you get a lone dim button in an
+otherwise-empty presentation column, which is exactly the read ("broken, not
+unavailable") that the lens fix was meant to kill. **The open decision Peter
+still owns; decide as a pair with the lens.** `DECISIONS.md` 2026-07-25, `TODO.md`.
+
+**2. Money → 100 m grid now has a hole in the Options panel.** Dropping the
+opacity slider (2026-07-25) left the left-hand presentation column holding only
+the greyed-or-live `#coloradj` while Detail + Spike denominator fill the right —
+visible dead space. Resolving A one way or the other changes what this looks
+like, so they're the same decision surface.
+
+**3. Stock age still morphs the Development panel** — choosing it hides Metric +
+Window. Now *chosen* rather than stumbled into (old B was worse: the picker
+only appeared after ticking an unrelated checkbox), and the option's tooltip says
+"Hides Metric + Window". Kept on the list because the panel still reshuffles;
+downgraded from a defect to a known cost.
+
+**4. Two separate "what do I divide by?" controls.** `#denom` (acres; Money, both
+modes) and `#ratio-denom` (Ratio) are conceptually siblings but live apart, and
+`#denom` still relabels itself ("Denominator" ↔ "Spike denominator") by mode.
+**Untouched by the regroup.**
+
+**5. Industrial silently self-resets.** In `/full/`, entering Infill with
+Industrial selected drops the metric back to units without saying so. The public
+build can't hit this (Industrial isn't there), which is why it survived — but a
+silent state change is still a silent state change.
+
+**6. Stock age is arguably a lens wearing a Detail costume.** It's the assessed
+standing stock's median construction year — not permit activity at all, and it
+ignores Metric and Window. It sits inside Development's Detail selector because
+that's where the 100 m grid machinery is. Same shape as the old Industrial
+complaint (old F, below), and worth revisiting if Development ever gets crowded.
+
+**7. `#views` position on mobile** — a thin strip at the very top, which is the
+other half of the "under-reads as the primary control" concern. The *size* half
+was fixed 2026-07-25; the position fork (move-2 / bottom-sheet) is
+`MOBILE_USABILITY.md` §3.
+
+### Resolved by the regroup (record)
+
+| Old | Was | Resolved by |
 |---|---|---|
-| 2026-07-22 | **Glass → a render-mode of Money, not a top-level view.** `#views` drops 7→6; Glass becomes a grid/translucent toggle inside Money (it already reuses Money's `#toggle` + `#coloradj` + denominator). | §5.C, §5.D, §5.G |
-| 2026-07-23 | **Infill → a full-only mode of Development, not a top-level view.** `#views` drops 6→5 (Money · Services · Ratio · Uses · Development). Shares `#devmetric`/`#devwindow` already. Unlike Glass, Infill does NOT share Development's build tag: Development is public, Infill is full-only → the Infill toggle appears ONLY in the `/full/` build (`BUILD`-flag-gated at the control level). Public build's Development = activity only; specialist's = activity + Infill toggle. | §5.F-adjacent, two-build tag surface (§2) |
-| 2026-07-23 | **`#palette` (Inferno · Glow · Cividis) moves off the always-visible top chrome into an accessibility menu/button** — NOT deleted (Cividis is the colour-vision-deficiency-safe ramp; deleting it = an a11y regression). Default stays **Inferno**, applied without opening the menu; the picker is one tap away for those who need it. Drops one T3 pod off the top stack. The a11y menu is the natural future home for other display-aid toggles (e.g. `Labels`, any high-contrast option). | §3 (`#palette` row) |
-| 2026-07-23 | **`Labels` (hood-name labels) also moves into the accessibility menu** — a display/legibility aid, same home as palette. Leaves `#lens` holding only `Residential only` (a Money/Ratio-scoped fade), so `#lens` collapses from a multi-option pod to a single toggle. | §3 (`#lens` rows) |
-| 2026-07-23 | **Top stack reorders to tier order: View → Variant → Presentation** (fixes §5.A tier scramble). Top→bottom: ① `#views` (T1); ② per-view variants (T2) — `#layers` + `#toggle` (now Money's metric picker); ③ presentation (T3) — `#coloradj` + `Residential only`; ④ accessibility button (palette, labels), out of the tier flow. Two consequences: **`#toggle` becomes Money-scoped** (lives in Money's variant group → stops floating live-but-inert over other views = **combo C resolved**); **`#coloradj`** likewise Money-only in ③ (already greys today). | §5.A, §5.C |
-| 2026-07-23 | **`Residential only` fade lens renamed → "Highlight residential"** — kills the §5.E name clash with the `Residential $` metric (both now Money-scoped and adjacent). Intent-first label; the control fades non-residential hoods. **Label-only — no mechanics, no scope change.** `Residential $` metric keeps its name (the `$` disambiguates; pairs with `Non-res $`). | §5.E |
-| 2026-07-23 | **Development's `#dev-grid` checkbox + `#devspike` picker collapse into ONE 3-way "Detail" selector** — siblings, no progressive-disclosure-by-checkbox: **① Neighbourhood** (choropleth, default) · **② 100 m grid — activity** (today's "New homes" spikes) · **③ Stock age** (today's buried "Year built"). Metric + Window apply to ①/②; ③ hides Metric+Window as an EXPLICIT mode choice (defuses the surprise morph). Motivated by phone usability — the nested checkbox reveal is a weak tap target on small screens; flattening to one radio row is what mobile wants (structure-before-mobile: fix the shape here, mobile CSS inherits it). Resolves combos **A** (Year built no longer buried) + **B** (morph is now chosen, not surprising). | §5.A, §5.B; `docs/MOBILE_USABILITY.md` |
-| 2026-07-23 | **Industrial (`#devmetric`) tagged full-only** — pulled out of the *public* Development panel (joins Infill as a `/full/`-only Dev extra). Rationale: Industrial is choropleth-only (no 100 m grid, no stock age), so in public it would leave the new 3-way Detail selector (decision #7) with two dead options; removing it makes **public Development airtight — units + permits only, both grid-capable, Detail selector never has a dead option.** `/full/` keeps Industrial as a metric (pinning Detail to Neighbourhood is fine in the specialist build). Resolves combo **F**. | §5.F, two-build tag surface (§2) |
+| **A** | "Year built" buried under the Detail checkbox — the whole stock-age lens invisible until you found an unrelated tick-box | The 3-way `#devdetail` (decision #7) |
+| **B** | Choosing "Year built" morphed the panel unannounced | Same — now an explicit mode choice (residue → §5.3) |
+| **C** | `#toggle` stayed live but inert in 5 of 7 views | `#toggle` is Money-scoped and **hides** (decision #5) |
+| **E** | "Residential" meant two things in two pods (`Residential $` vs `Residential only`) | Renamed → **Highlight residential** (decision #6); both now Money-scoped and adjacent |
+| **F** | Industrial, a Development-only choropleth metric, hidden inside `#devmetric` | Tagged full-only (decision #8) — public Development is units + permits, both grid-capable (residue → §5.5) |
+| **G** | Glass double-duty'd Money's controls while being its own top-level view | Glass → Money's `#moneydetail` mode (decision #1) |
 
 ---
 
-## 6. Discrepancy found while mapping (fixed)
+## 6. Discrepancy found while mapping (partly fixed — 2 comments still stale)
 
-The comment at `web/index.html` ~L2952 claimed the long "Since 2009" window is
-choropleth-only ("the Detail toggle hides for either"). That's **stale** — PR #80
-made the long window first-class with its own grid; `devGridOfferable` excludes
-only Industrial. Comment corrected 2026-07-22 to match the code. (No behaviour
-change — the code was already correct.)
+A comment claimed the long "Since 2009" window is choropleth-only ("the Detail
+toggle hides for either"). That's **stale** — PR #80 made the long window
+first-class with its own grid; `devGridOfferable = !!devGridData &&
+!devIndustrial()` excludes **only** Industrial. One comment was corrected
+2026-07-22.
+
+**Re-checked 2026-07-25: the fix caught one of three siblings.** Two still carry
+the wrong claim, and now contradict the corrected one a few hundred lines up:
+
+| Line | Says | Truth |
+|---|---|---|
+| L1601–1602 ✅ | "all three windows — 5yr/3yr/long — carry cells" | correct (this is the one that got fixed) |
+| L2707–2708 ❌ | "industrial + the long 'since 2009' window are choropleth-only" | only Industrial is |
+| L2722–2723 ❌ | "The long window is choropleth-only, so switching to/from it flips the Detail toggle" | it doesn't — `devGridOfferable` ignores the window |
+
+**Comments only; behaviour is correct in all three cases** (`syncDevChrome` still
+needs to run on a window switch, just for the title/blurb/legend, not to flip the
+Detail toggle). Fixing them touches `web/**`, so it needs a branch + PR rather
+than a docs push — tracked in `TODO.md`.
+
+---
+
+## 7. Regrouping decisions (locked — BUILT 2026-07-23, MERGED & LIVE)
+
+The running output of the "organize the lenses" pass. All eight were built in one
+reflow on 2026-07-23 (branch `regroup-build-s65`) and are **now on master and
+live** on both builds. The as-built map: `#views` = 5 (4 public); Glass = Money
+`#moneydetail` mode (internal view unchanged); Infill = full-only `#devmode` on
+Development; Industrial = full-only `#devmetric`; palette + Labels = the `#a11y`
+"Display" popover; grid+spike = the `#devdetail` 3-way selector; `Highlight
+residential` = the collapsed `#lens`. Table kept as the decision record; §2–§5
+above describe the result. Mirrored in `DECISIONS.md`.
+
+| When | Decision | Resolved |
+|---|---|---|
+| 2026-07-22 | **Glass → a render-mode of Money, not a top-level view.** `#views` drops 7→6; Glass becomes a grid/translucent toggle inside Money (it already reuses Money's `#toggle` + `#coloradj` + denominator). | old §5.C, §5.D, §5.G |
+| 2026-07-23 | **Infill → a full-only mode of Development, not a top-level view.** `#views` drops 6→5. Shares `#devmetric`/`#devwindow` already. Unlike Glass, Infill does NOT share Development's build tag: Development is public, Infill is full-only → the toggle appears ONLY in `/full/` (`BUILD`-gated at the control level). | old §5.F-adjacent, §2 |
+| 2026-07-23 | **`#palette` moves off the always-visible top chrome into an accessibility menu** — NOT deleted (Cividis is the CVD-safe ramp; deleting it = an a11y regression). Default stays **Inferno**, applied without opening the menu. Drops one T3 pod off the top stack. | old §3 |
+| 2026-07-23 | **`Labels` also moves into the accessibility menu** — a display aid, same home. Leaves `#lens` holding only the Money/Ratio-scoped fade, so it collapses to a single toggle. | old §3 |
+| 2026-07-23 | **Top stack reorders to tier order: View → Variant → Presentation.** ① `#views` (T1); ② `#toggle` (T2, Money's metric picker); ③ `#optpanel` (T2 `#layers` + T3 `#coloradj`/`#lens`); ④ accessibility button, out of the tier flow. Consequence: **`#toggle` becomes Money-scoped** and stops floating live-but-inert. | old §5.A, §5.C |
+| 2026-07-23 | **`Residential only` → "Highlight residential"** — kills the name clash with the `Residential $` metric. Intent-first label. **Label-only — no mechanics, no scope change.** | old §5.E |
+| 2026-07-23 | **Development's `#dev-grid` checkbox + `#devspike` picker collapse into ONE 3-way "Detail" selector**: **① Neighbourhood** · **② 100 m grid — activity** · **③ Stock age**. Metric + Window apply to ①/②; ③ hides them as an EXPLICIT mode choice. Motivated by phone usability — a nested checkbox reveal is a weak tap target (structure-before-mobile). | old §5.A, §5.B |
+| 2026-07-23 | **Industrial tagged full-only** — it's choropleth-only, so in public it would leave the new Detail selector with two dead options. **Public Development is airtight: units + permits, both grid-capable.** | old §5.F, §2 |
