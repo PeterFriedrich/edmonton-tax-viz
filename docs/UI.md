@@ -680,6 +680,45 @@ JS `.click()` that bypasses `pointer-events` and z-order. Added
 `tools/profiling/verify-controls-clickable.js`, which real-hit-tests every
 visible control per view; **run it after any control-chrome / CSS refactor.**
 
+### Sources & attribution pod (2026-07-25, P1.2)
+
+The live map had **no** link to the repo, the data sources or the methodology —
+the highest credibility-per-effort gap on the public-release list, and an
+outstanding licence obligation (every dataset rendered is City of Edmonton open
+data under the Open Government Licence, which asks for visible attribution).
+
+- **The credit is the button label, not something behind the click** —
+  `Data: City of Edmonton Open Data · 2025`. A link you have to find first
+  doesn't attribute anything, so the licence-facing half is readable at rest and
+  the popover carries only what a label can't. Same "the label is the readout"
+  idiom as `#coloradj` (2026-07-25).
+- **Every year comes from `status.json`, never a literal.** The manifest the
+  pipeline already writes (`data_year` / `rate_year` / `zoning_year` /
+  `generated`) is already fetched for the maintenance banner, so the pod rides
+  that same request. This is deliberate: a hardcoded "2025" silently goes wrong
+  every January (`RUNBOOK.md` year-roll). Each line degrades independently — a
+  missing manifest leaves the vintages blank and the **credit still reads**,
+  which the verify asserts by aborting the `status.json` route.
+- **The panel says the thing the project must not bury:** revenue is *modelled,
+  not billed* (mill rates applied to assessed value, not anyone's tax bill), the
+  utility/service layers are modelled too, and they cover only the services this
+  project can measure — never the full cost of running the city.
+- **Denser background than the control pods** (0.92 vs the shared 0.7): it's a
+  paragraph to read, not a strip of buttons. Matches `.tip` and `#banner`.
+- **Two bugs the build surfaced, both in existing code:**
+  1. **`#botleft` was eating pointer events across its whole box.** The wrapper
+     (compass + Center 2D/3D + legend) had no `pointer-events: none`, so its
+     rectangle — as wide as the legend — swallowed clicks. At 390px it reached
+     the bottom-right pods and made the new credit button **unclickable**; at
+     every size it was quietly stealing map drags in that corner. Every
+     interactive child already sets `pointer-events: auto` for itself, so the
+     wrapper just needed the `.panel`/`#controls` treatment. **Caught only
+     because this verify uses a real `page.click()`** — the JS-`.click()` suites
+     would have sailed past it (same lesson as the 2026-07-23 entry above).
+  2. **Everything on the map shares `z-index: 1`,** so paint order fell back to
+     DOM order and `#botleft` drew *through* the panel on a phone. `#about.open`
+     now lifts to 5. Regression-tested with `elementFromPoint` over the overlap.
+
 ---
 
 ## Open / unresolved

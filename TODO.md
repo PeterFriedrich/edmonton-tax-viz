@@ -208,9 +208,17 @@ _Last reconciled: 2026-07-25_
   item below. Recreation + franchise-display still out.)* Items, ranked:
   - [x] ~~P1.1 README refresh~~ — done 2026-07-09 (this PR): "Methodology
     (Planned)"/QGIS/AltaLIS-FOIP sections replaced with as-built.
-  - [ ] **P1.2 In-app attribution/methods affordance** — the live map has NO
-    link to repo, data sources, or methodology. Small footer/info control:
-    data source + assessment year, modeled-not-billed pointer, methods link.
+  - [x] ~~**P1.2 In-app attribution/methods affordance**~~ — **DONE 2026-07-25**
+    (branch `about-sources-panel`). Bottom-right `#about` pod above Display: the
+    **credit is the button label** (`Data: City of Edmonton Open Data · <year>`,
+    visible at rest — the Open Government Licence wants attribution, and a link
+    behind a click isn't one); the popover carries the licence, the
+    modelled-not-billed caveat for revenue *and* the utility layers, and links to
+    METHODS.md + the repo. **All years/dates come from `status.json`**, so the
+    January year-roll can't strand a stale literal. `verify-about.js` (32 checks,
+    incl. 390px geometry + a status.json-blocked run). Fixed two latent bugs on
+    the way: `#botleft` swallowing pointer events, and the z-index:1 paint-order
+    collision — see `DECISIONS.md` 2026-07-25.
   - [x] ~~P1.3 Public METHODS page~~ — done 2026-07-09 (PR #32 merged):
     `docs/METHODS.md` (metric definitions, denominators + guard, set-aside,
     WEM/condo worked examples, model formulas + validation ratios,
