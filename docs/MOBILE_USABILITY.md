@@ -51,9 +51,13 @@ column) via `tools/profiling/shot-mobile.js` (Playwright, 390×844, `isMobile`+
   This is the headline fix.
 - **Left-edge clip persists on the widest pods** (`right:`-anchored, content grows
   leftward past 0): `#controls` and `#coloradj` render at **left −51**, `#toggle`
-  at **−10** — visible as the clipped "…r: sqrt scaling" label. *Improvement:*
+  at **−10** — visible as the clipped "…r: sqrt scaling" label. *Improvements:*
   `#views` now fits (left 17) — the 7→5 view reduction fixed the worst offender,
-  which used to sit at −107.
+  which used to sit at −107. **`#coloradj` is FIXED as of 2026-07-25**: dropping
+  its state caption (folded into the button label, 417px → 169px) moved it from
+  left −51 to **left 177**, fully on screen at 390px — measured, not inferred.
+  The `@media` rule that used to hide the caption on phones went with it. The
+  `#controls` −51 figure predates that change; re-shoot before acting on it.
 - **What's FINE:** the map renders correctly; the bottom-left `#botleft` cluster
   (three stacked rows: the `#compass` arrows+needle added 2026-07-25, the Center
   2D / Center 3D `#viewbtns` row added 2026-07-24, then `#legend`) is clear of

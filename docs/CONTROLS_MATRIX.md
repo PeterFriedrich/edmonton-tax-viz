@@ -65,15 +65,20 @@ mechanism handles exactly this.
 
 | Pod | Buttons | Actually bites in | In every other view |
 |---|---|---|---|
-| `#coloradj` | `Colour: sqrt scaling` (on/off) | **Money, Glass** | **greyed/disabled** (`.disabled`) |
+| `#coloradj` | `Colour: sqrt scaling` / `Colour: linear` (the label is the state) | **Money, Glass** | **greyed/disabled** (`.disabled`) |
 | `#toggle` | `Revenue · Value · Residential $ · Non-res $` | **Money, Glass** | **stays fully live but silently inert** — records state, changes nothing visible (early-return in `applyMetric`) |
 | `#palette` | `Inferno · Glow · Cividis` | all gradient views | applies (n/a in Uses' categorical legend) |
-| `#lens` → `Residential only` | fade non-res hoods | **Money, Ratio** | **disabled** |
+| `#lens` → `Residential only` | fade non-res hoods | **Money, Ratio** | **HIDDEN** (`display:none`, 2026-07-25 — was greyed) |
 | `#lens` → `Labels` | hood name labels | **all views** | applies |
 
 Note the inconsistency already visible here: three of these are Money/Glass- or
-Money/Ratio-only, but only `#coloradj` and `Residential only` **grey out** when
-they don't apply — `#toggle` does not. See §5.C.
+Money/Ratio-only, and they resolve it three different ways — `Residential only`
+**hides**, `#coloradj` **greys out**, `#toggle` stays live but inert. See §5.C.
+The hide came from a live bug report ("the highlight residential button doesn't
+work"): greyed `#4a4a5e` on a dark panel reads as *broken*, not *unavailable*,
+and Money's **100 m grid** mode disables it without leaving the Money view, so
+the control looked dead in place. **`#coloradj` is the remaining greyed pod — the
+open question is whether it should hide too** (`DECISIONS.md` 2026-07-25).
 
 ---
 

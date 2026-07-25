@@ -35,10 +35,15 @@ Mobile/small-screen layout: `docs/MOBILE_USABILITY.md`.
   toggle (`state.colorAdjust`, default **on**), so `scaleT` returns sqrt only when the
   toggle is on; off = linear+clamp (**true magnitude**). Deliberately grouped apart
   from the lens controls (metric/palette/residential): it's about *how* colour renders,
-  not *what* you're looking at. Self-describing state line (`#coloradj-state`):
-  On → "colour spread across distribution", Off → "colour shows true magnitude". Only
-  bites in **money + glass** (the `scaleT` consumers) — greys out (disabled, same idiom
-  as the residential button) in services/ratio/uses, which drive colour through their
+  not *what* you're looking at. **The button label IS the state readout** — "Colour:
+  sqrt scaling" / "Colour: linear" (2026-07-25). It previously carried a separate
+  caption (`#coloradj-state`: "On — colour spread across distribution" / "Off — colour
+  shows true magnitude"); that said the same thing at 2.5× the width and made the pod
+  stick out (`#coloradj` 417px → **169px**, `#optpanel` 645px → 398px), so it was
+  dropped at every breakpoint. The long form survives in the button's `title`, and the
+  blurb's colour clause already spells out the linear case. Only
+  bites in **money + glass** (the `scaleT` consumers) — greys out (disabled) in
+  services/ratio/uses, which drive colour through their
   own transforms (`svcT` sqrt/linear, `ratioT` log). Height stays LINEAR either way.
   Legend gradient follows automatically (`legendGradient` → `scaleT`); the money/glass
   blurb's colour clause is swapped to match via `withColourClause` (honesty: prose must
