@@ -25,7 +25,9 @@ DOM → it drives the mobile layout too; see `docs/MOBILE_USABILITY.md`).
 Every control is one of three tiers. The current on-screen stack does **not**
 follow this order (see §5.A):
 
-- **Tier 1 — WHAT am I looking at** (the view/mode): `#views`.
+- **Tier 1 — WHAT am I looking at** (the view/mode): `#views`. Since 2026-07-25 it
+  is also the largest type on screen (14px, vs 12.5px `#toggle` and 11.5px
+  modifiers) so the rendering matches the tier — it previously tied for smallest.
 - **Tier 2 — WHICH variant** of the current view (view-scoped sub-metrics):
   live in `#layers`, plus the special-cased `#toggle`.
 - **Tier 3 — HOW it's drawn** (presentation modifiers): `#coloradj`, `#palette`,

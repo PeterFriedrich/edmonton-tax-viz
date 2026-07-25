@@ -119,16 +119,25 @@ Ordered; each step is independently shippable and desktop-safe.
    a real-device check for the touch-behaviour items in §2b (harness can't judge
    those).
 
-**Open UX concern — the `#views` bar under-reads as the primary control** (Peter,
+**UX concern — the `#views` bar under-reads as the primary control** (Peter,
 2026-07-24, looking at the move-1 render). `#views` (Money · Services · Ratio ·
 Development) is *the* top-level control — the thing users act on first — but it
-renders (a) too small relative to the secondary pods below it (same font/weight as
-a metric toggle), and (b) "far away" up at the very top, so it doesn't read as the
-primary switch. This is the hierarchy question the **move-2 fork feeds into**: a
-bottom-sheet would let the view-picker sit prominently on the always-visible
-collapsed bar (native pattern) rather than as a small strip at the top. Likely
-applies to desktop too, not just phone. NOT yet actioned — recorded for the move-2
-decision. (Interacts with: Uses pulled to full-only 2026-07-24, so public `#views`
+rendered (a) too small relative to the secondary pods below it (same font/weight as
+a metric toggle), and (b) "far away" up at the very top, so it didn't read as the
+primary switch.
+
+- **(a) SIZE — fixed 2026-07-25.** `#views` is now the largest type in the stack
+  (**14px / 9px 18px**, up from 11.5px / 6px 12px — the metric bar is 12.5px and
+  the modifiers 11.5px), so the visual weight matches the tier. Phones scale it
+  back to **12.5px / 7px 11px** in the `@media` block: at 14px the four public
+  views no longer fit one 390px row, and wrapping the primary control costs more
+  than the extra size buys. Measured after: one row at 390px for both the 4-view
+  public and 5-view full builds, no left clip.
+- **(b) POSITION — still open.** It's still a strip at the very top; that's the
+  hierarchy question the **move-2 fork feeds into** (a bottom-sheet would let the
+  view-picker sit on the always-visible collapsed bar). Applies to desktop too.
+
+(Interacts with: Uses pulled to full-only 2026-07-24, so public `#views`
 is now 4 buttons, `DECISIONS.md`.)
 
 **Not in the quick pass** (needs its own decision): tap-to-dismiss tooltip

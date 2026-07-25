@@ -50,10 +50,14 @@
        which holds the presentation controls (colour scaling + residential lens,
        left) beside the per-view detail/denominator sections (#layers, right). */
     #optpanel { flex-direction: column; align-items: stretch; }
+    /* min-width widens the FOLDED header leftward (the pod is right-anchored, so
+       extra width grows to the left) — a bigger target that reaches away from the
+       corner while its right edge stays flush with the bars above. No effect when
+       open: the body is wider than the minimum. */
     #opt-fold {
       appearance: none; border: 0; background: transparent; color: #9a9ab0;
-      font: 11.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      padding: 6px 12px; cursor: pointer; display: flex; align-items: center;
+      font: 13px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      padding: 8px 14px; min-width: 180px; cursor: pointer; display: flex; align-items: center;
       justify-content: space-between; gap: 12px; transition: background 0.12s, color 0.12s;
     }
     #opt-fold:hover { color: #e8e8ef; }
@@ -91,10 +95,15 @@
        "linear"). The caption said the same thing at twice the width and made the
        pod stick out; the full explanation lives in the button's title, and the
        title blurb already calls out the linear case. */
+    /* #views is Tier 1 — the primary control — so it is deliberately the LARGEST
+       type in the stack (14px vs the metric bar's 12.5px and the modifiers'
+       11.5px). It used to be the smallest, which is why it under-read as chrome
+       rather than as the main navigation. Phones scale it back down in the
+       @media block so the row still fits without wrapping. */
     #views button {
       appearance: none; border: 0; background: transparent; color: #9a9ab0;
-      font: 11.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      padding: 6px 12px; cursor: pointer; transition: background 0.12s, color 0.12s;
+      font: 14px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      padding: 9px 18px; cursor: pointer; transition: background 0.12s, color 0.12s;
     }
     #views button:hover { color: #e8e8ef; }
     #views button.active { background: #fcd278; color: #16111a; font-weight: 600; }
@@ -287,6 +296,11 @@
       #controls { top: 58px; left: 8px; right: 8px; align-items: flex-end; }
       #controls > div { max-width: 100%; }
       #toggle, #views { flex-wrap: wrap; justify-content: flex-end; }
+      /* Desktop grows #views to 14px/9px-18px as the primary control; a phone
+         can't spend that much width — at 14px the four public views no longer fit
+         one 390px row. Scale back to just above the old size (still the largest
+         thing in the stack) so the row holds without wrapping. */
+      #views button { font-size: 12.5px; padding: 7px 11px; }
       /* The Options panel stacks its two groups vertically on a phone (presentation
          above the detail/denominator sections). It defaults folded on mobile (set
          in JS) so the map is clear until the user opens it. */
