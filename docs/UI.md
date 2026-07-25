@@ -600,6 +600,30 @@ navigation" below).
   recenter, incl. from a rotated start) and `verify-recenter.js` (all four axes
   back to `HOME`, gold cleared). Both real-hit-test the buttons.
 
+### Control hierarchy sizing: views bar, Options header (2026-07-25)
+
+The stack now renders its tiers at the right relative weight. Previously `#views`
+— Tier 1, the primary control — tied for the *smallest* type on screen, which is
+why it under-read as chrome (`MOBILE_USABILITY.md`).
+
+| Control | Tier | Before | After |
+| --- | --- | --- | --- |
+| `#views` | 1 (primary) | 11.5px / 6px 12px | **14px / 9px 18px** |
+| `#toggle` (metric) | 2 | 12.5px / 7px 15px | unchanged |
+| `#opt-fold` (Options) | — (header) | 11.5px / 6px 12px | **13px / 8px 14px** |
+| `#coloradj`, `#lens` | 3 | 11.5px | unchanged |
+
+- **Phones scale `#views` back** to 12.5px / 7px 11px in the `@media` block: at
+  14px the four public views no longer fit one 390px row, and wrapping the primary
+  control costs more than the size buys. Verified one row at 390px for both the
+  4-view public and 5-view full builds.
+- **`#opt-fold` gets `min-width: 180px`**, which widens the FOLDED header
+  *leftward* — the pod is right-anchored, so extra width grows left. Bigger target,
+  further from the corner, and the right edge stays flush with the bars above
+  (measured: `#views` / `#toggle` / `#optpanel` all end at the same x). No effect
+  when open, where the body is wider than the minimum. Chosen over shifting the
+  pod left, which would have broken that flush edge when open.
+
 ### Compass with rotation arrows (built 2026-07-25)
 
 A third bottom-left row (`#compass`, above `#viewbtns`): **rotate
