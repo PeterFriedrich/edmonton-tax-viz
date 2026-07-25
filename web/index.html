@@ -998,25 +998,30 @@
       glass: {
         title: null, // metric-driven, like money (applyView/applyMetric)
         blurb: null, // denominator-driven — see glassBlurb()
-        opacity: 60, // translucent by default; slider adjusts
+        opacity: 60, // FIXED translucency — the slider is hidden in Glass (2026-07-25)
       },
     };
 
-    // Glass blurb follows the spike denominator (the layers-panel toggle).
+    // Glass blurb follows the spike denominator (the layers-panel toggle). It no
+    // longer promises a slider — Glass dropped that control 2026-07-25 and the
+    // translucency is fixed, so the prose must not point at a control that isn't
+    // there. (Uses/Development still say "slider" because theirs still exists.)
     const GLASS_BLURBS = {
       ground: "The active metric in 100 m grid cells — property points " +
               "binned to squares, each cell's total divided by its ground " +
               "acres. Height is linear; colour is square-root–scaled to " +
               "the cell distribution. The neutral plane below is the " +
               "neighbourhoods — hover for their numbers; grey = set-aside " +
-              "natural/undeveloped land. The slider sets spike opacity.",
+              "natural/undeveloped land. The spikes are translucent so it " +
+              "reads through.",
       lot:    "The active metric in 100 m grid cells, divided by the parcel " +
               "acres the cell's properties own (city lot sizes, deduplicated " +
               "at multi-unit points; cells with no usable lot size are " +
               "omitted). Height is linear; colour is square-root–scaled to " +
               "the cell distribution. The neutral plane below is the " +
               "neighbourhoods — hover for their numbers; grey = set-aside " +
-              "natural/undeveloped land. The slider sets spike opacity.",
+              "natural/undeveloped land. The spikes are translucent so it " +
+              "reads through.",
     };
     const glassBlurb = () => withColourClause(GLASS_BLURBS[state.denom]);
 
@@ -1148,7 +1153,8 @@
     // `view` selects the display mode (money | services | ratio | uses | glass);
     // `prismOpacity` is the ghost-prism strength in ratio, glass and the uses
     // view's optional residential prisms (money prisms are always opaque;
-    // services has no prisms). `usesPrisms` is the Uses view's residential-
+    // services has no prisms). Glass still USES it — at a fixed 60%, re-applied
+    // on entry — but no longer exposes the slider. `usesPrisms` is the Uses view's residential-
     // prisms toggle (height = share of zoned land that is residential);
     // persists across view switches like the other layers-panel state.
     // `denom` is the Glass spike denominator: "ground" (the cell's fixed
@@ -3074,7 +3080,8 @@
 
     // Switch view (money | services | ratio | uses | glass). Road geometry
     // lazy-loads on the first services/ratio view; entering a ghost-prism view
-    // (ratio, glass) resets the slider to that view's default. Title/blurb
+    // (ratio, glass) re-applies that view's default opacity — which is what makes
+    // Glass safe to ship without the slider. Title/blurb
     // follow the view (money's and glass's titles stay metric-driven).
     async function applyView(v) {
       if (v === state.view || (v !== "money" && !VIEWS[v])) return;
@@ -3128,10 +3135,17 @@
         b.classList.toggle("active", b.dataset.moneydetail === (v === "glass" ? "grid" : "hood")));
       document.getElementById("uses-prisms-hd").style.display = v === "uses" ? "block" : "none";
       document.getElementById("uses-prisms").style.display = v === "uses" ? "block" : "none";
-      document.getElementById("prism-hd").style.display = prisms ? "block" : "none";
-      document.getElementById("prism-row").style.display =
-        (prisms || (v === "uses" && state.usesPrisms) ||
-         (v === "development" && devGridActive())) ? "flex" : "none";
+      // The prism-opacity slider: Ratio (ghost prisms over the road network),
+      // Uses with its residential prisms on, and Development's activity grid.
+      // NOT Glass any more (2026-07-25): 60% is the translucency that defines the
+      // view — it never needed tuning — and entry always re-applies
+      // VIEWS.glass.opacity, so dropping the control leaves the render identical.
+      // Kept separate from `prisms` on purpose: that flag still opens #layers for
+      // Ratio, which has no other reason to open it.
+      const prismSlider = v === "ratio" || (v === "uses" && state.usesPrisms) ||
+                          (v === "development" && devGridActive());
+      document.getElementById("prism-hd").style.display = v === "ratio" ? "block" : "none";
+      document.getElementById("prism-row").style.display = prismSlider ? "flex" : "none";
       document.getElementById("services-hd").style.display = v === "services" ? "block" : "none";
       document.getElementById("services").style.display = v === "services" ? "block" : "none";
       // The lens applies in Money and Ratio. In Services the per-hood signal
