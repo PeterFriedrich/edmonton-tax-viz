@@ -14,9 +14,11 @@ DOM → it drives the mobile layout too; see `docs/MOBILE_USABILITY.md`).
 
 > **Out of scope for this matrix — view-independent camera chrome.** The
 > bottom-left **Center 2D / Center 3D** framing buttons (`#botleft`/`#viewbtns`,
-> added 2026-07-24) reframe the *camera*, not the data — they show in every view
-> and gate nothing, so they sit outside the tier system below. See
-> `docs/UI.md` "Camera framing buttons" + `DECISIONS.md` 2026-07-24.
+> added 2026-07-24) and the **compass row** above them (`#compass`: `#rot-ccw` /
+> `#tonorth` / `#rot-cw`, added 2026-07-25) move the *camera*, not the data — they
+> show in every view and gate nothing, so they sit outside the tier system below.
+> See `docs/UI.md` "Camera framing buttons" + "Compass with rotation arrows" and
+> `DECISIONS.md` 2026-07-24 / 2026-07-25.
 
 ## 1. The three tiers
 

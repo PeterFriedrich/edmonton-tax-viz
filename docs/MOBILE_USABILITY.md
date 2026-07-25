@@ -55,10 +55,13 @@ column) via `tools/profiling/shot-mobile.js` (Playwright, 390×844, `isMobile`+
   `#views` now fits (left 17) — the 7→5 view reduction fixed the worst offender,
   which used to sit at −107.
 - **What's FINE:** the map renders correctly; the bottom-left `#botleft` cluster
-  (Center 2D / Center 3D camera buttons in a `#viewbtns` row, stacked above
-  `#legend`; added 2026-07-24) is clear of everything — the button row + legend
-  fit within a 390px phone with no clip and no collision with the bottom-right
-  Display popover or attribution (screenshot-confirmed); MapLibre attribution clean bottom-right;
+  (three stacked rows: the `#compass` arrows+needle added 2026-07-25, the Center
+  2D / Center 3D `#viewbtns` row added 2026-07-24, then `#legend`) is clear of
+  everything — all three rows fit within a 390px phone with no clip and no
+  collision with the bottom-right Display popover or attribution
+  (screenshot-confirmed 2026-07-25). The compass arrows also give phones a
+  **one-finger way to rotate**, which the two-finger twist (competing with
+  pinch-zoom) did not; MapLibre attribution clean bottom-right;
   the per-view groups correctly hide in Money (`#devdetail`/`#devmode`/`#devmetric`/
   `#devwindow` `display:none`, `#palette` popover closed, `#banner` none).
 - **Tap probe still returns no tooltip element** — unchanged; the emulator remains
