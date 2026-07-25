@@ -595,6 +595,41 @@ navigation" below).
   recenter, incl. from a rotated start) and `verify-recenter.js` (all four axes
   back to `HOME`, gold cleared). Both real-hit-test the buttons.
 
+### Compass with rotation arrows (built 2026-07-25)
+
+A third bottom-left row (`#compass`, above `#viewbtns`): **rotate
+counter-clockwise · needle · rotate clockwise**. This closes the two gaps the
+Center buttons left open — rotation *discoverability* and an **in-place**
+bearing-to-north.
+
+- **Explicit arrow buttons, not a drag target.** The whole point is to advertise
+  that the map rotates at all; drag-rotate (Ctrl+drag / two-finger twist) is
+  invisible. Each arrow walks the bearing to the next **`ROT_STEP` = 30°** detent
+  in its own direction (12 presses = a full turn), so presses land on a clean 30°
+  grid and *re-align* it after a free drag-rotate.
+- **The arrow you press is the direction the map turns.** Both the world and the
+  needle rotate that way, so the mapping is self-evident. (Note MapLibre's
+  bearing runs the other way — clockwise on screen means bearing *decreasing*.)
+- **Rapid presses chain off the previous target, not the live bearing.**
+  Mid-ease `getBearing()` returns an intermediate value that hasn't passed the
+  last detent yet, so recomputing from it made the 2nd click a no-op. A press is
+  chained only while its ease could still be running (`ROT_MS` = 300ms window),
+  which is also what stops the target going stale after a drag.
+- **The needle (`#tonorth`) snaps north IN PLACE** — bearing only, keeping
+  position / zoom / tilt. This is the deliberate contrast with **Center 2D**,
+  which reframes the whole city. The needle counter-rotates
+  (`rotate(-bearing)`) so it holds true north, and the button takes a gold ring
+  (`.north`) when already north-up.
+- **Icons are inline SVG, not glyphs.** The headless font lacks the curved-arrow
+  codepoints (same tofu class as U+24D8), and `◀`/`▶` would read as pan /
+  prev-next rather than rotate. `currentColor` keeps them on the hover
+  transition.
+- **Verified:** `tools/profiling/verify-compass.js` — real hit-test on all three
+  buttons, detent walk in both directions, the rapid-press chain (3 presses =
+  90°), off-grid re-alignment, needle angle tracking, and `#tonorth` changing
+  bearing *only*. Screenshot-checked at 1280px and 390px (the `#botleft` stack of
+  compass + framing pair + legend fits a phone without collision).
+
 ### Control clickability regression + hit-test guard (fixed 2026-07-24)
 
 The S65 foldable-Options refactor dropped `#layers` from the `pointer-events:
@@ -636,30 +671,32 @@ interaction handlers):
 | Zoom | scroll | pinch |
 | Pan | drag | one-finger drag |
 
-**Gaps (as of 2026-06-26; partly closed 2026-07-24):**
+Rotation and tilt are also reachable without a modifier: the **compass arrows**
+(bottom-left) step the bearing in 30° detents, and the Center buttons set tilt.
+
+**Gaps (as of 2026-06-26; closed 2026-07-24 / 2026-07-25):**
 - **~~No reset control.~~ CLOSED 2026-07-24** by the Center 2D / Center 3D
   framing buttons (see the build-log entry above) — one tap returns to the
-  tilted default or a north-up plan. A `NavigationControl` compass (in-place
-  bearing-to-north without recentering) is still not added.
-- **Rotation is undiscoverable.** Both the desktop modifier (Ctrl) and the mobile
-  two-finger twist are hidden; first-time users often don't realize the view spins
-  at all, and the twist competes with pinch-zoom. (The Center buttons give a way
-  *back* from an awkward angle, but don't advertise that rotation exists.)
+  tilted default or a north-up plan.
+- **~~Rotation is undiscoverable.~~ CLOSED 2026-07-25** by the compass row: the
+  two arrow buttons make rotation visible and clickable (no Ctrl, no twist), and
+  the needle both shows the current bearing and snaps north *in place*. The
+  hidden gestures still work; they're no longer the only way. (The twist still
+  competes with pinch-zoom on mobile — the arrows are the way around that.)
 
-**Proposed fix:** add the standard control —
-```js
-map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }));
-```
-Gives a compass (tap to reset bearing), zoom buttons, and a pitch indicator. The
-compass also doubles as a visible hint that the map rotates. Cheap, idiomatic, and
-helps desktop and mobile alike. Not yet added — flagged here for a UX pass.
+**Rejected: `NavigationControl`.** The idiomatic
+`map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }))` was
+the standing proposal, but a custom `#compass` won: it matches the app's chrome
+(the stock control is light-themed and fights the dark palette), it gives
+*explicit arrow buttons* instead of a drag-to-rotate target, and it drops the
+zoom +/− buttons we don't want (scroll/pinch already cover zoom). See
+`DECISIONS.md`.
 
 **Wishlist (later — to design as a UX pass):**
 - **~~Recenter / reset-view button.~~ BUILT 2026-07-24** as Center 3D (whole
   camera → `HOME`) + Center 2D (→ north-up `HOME_2D`). See the build-log entry.
-- **Compass / `NavigationControl`** — still open. Would reset bearing-to-north
-  *in place* (without recentering) and advertise that the map rotates; the Center
-  buttons don't cover the discoverability gap.
+- **~~Compass~~ BUILT 2026-07-25** as the custom `#compass` row (arrows + needle;
+  in-place north-up). See the build-log entry.
 - Other camera/UX niceties to gather here as they come up (e.g. preset viewpoints,
   a "what am I looking at" intro hint, keyboard shortcuts list).
 

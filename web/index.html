@@ -177,10 +177,11 @@
     #a11y-menu label { display: flex; align-items: center; gap: 7px; cursor: pointer; padding: 2px 0; }
     #a11y-menu label:hover { color: #e8e8ef; }
     #a11y-menu input { accent-color: #fcd278; margin: 0; }
-    /* Bottom-left cluster: the 2D/3D flip button stacked above the legend. The
-       wrapper is the anchored element (bottom-left); the legend goes static so
-       the button sits above it and the legend's variable height (category rows
-       in some views) just pushes the button up — no manual offsets. */
+    /* Bottom-left cluster: the compass row and the framing-preset buttons
+       stacked above the legend. The wrapper is the anchored element
+       (bottom-left); the legend goes static so the buttons sit above it and the
+       legend's variable height (category rows in some views) just pushes them
+       up — no manual offsets. */
     #botleft {
       position: absolute; bottom: 22px; left: 22px; z-index: 1;
       display: flex; flex-direction: column; align-items: flex-start; gap: 10px;
@@ -195,6 +196,27 @@
     }
     #center2d:hover, #recenter:hover { color: #e8e8ef; }
     #center2d.flat { background: #fcd278; color: #16111a; font-weight: 600; } /* gold = 2D engaged */
+    /* Compass: the rotation cluster. It exists mostly to ADVERTISE that the map
+       rotates at all (drag-rotate is undiscoverable), so the arrows are explicit
+       buttons rather than a drag target. Icons are inline SVG, not glyphs — the
+       headless font lacks the curved-arrow codepoints, and ◀/▶ would read as
+       pan/next rather than rotate. */
+    #compass { display: flex; align-items: center; gap: 6px; }
+    #rot-ccw, #rot-cw, #tonorth {
+      appearance: none; pointer-events: auto; cursor: pointer; padding: 0;
+      background: rgba(12,12,20,0.7); border: 1px solid #2a2a3a;
+      color: #9a9ab0; display: grid; place-items: center;
+      transition: background 0.12s, color 0.12s, border-color 0.12s;
+    }
+    #rot-ccw, #rot-cw { width: 30px; height: 30px; border-radius: 6px; }
+    #tonorth { width: 30px; height: 30px; border-radius: 50%; }
+    #rot-ccw:hover, #rot-cw:hover, #tonorth:hover { color: #e8e8ef; background: rgba(22,22,34,0.85); }
+    #rot-ccw svg, #rot-cw svg { display: block; width: 16px; height: 16px; }
+    /* The needle counter-rotates with the camera, so north on screen is north on
+       the needle. transform-origin is set explicitly: an SVG root's default
+       origin is not reliably its centre across engines. */
+    #needle { display: block; width: 19px; height: 19px; transform-origin: 50% 50%; }
+    #tonorth.north { border-color: #6a5a34; } /* already north-up — nothing to snap */
     #legend { position: static; font-size: 11.5px; color: #b8b8c8; }
     #legend .bar {
       width: 200px; height: 10px; border-radius: 2px; margin: 6px 0 4px;
@@ -438,6 +460,29 @@
   </div>
 
   <div id="botleft">
+    <div id="compass">
+      <button id="rot-ccw" aria-label="Rotate the map counter-clockwise"
+              title="Rotate counter-clockwise — the map turns the way the arrow points">
+        <svg viewBox="0 0 16 16" aria-hidden="true">
+          <path d="M13 8A5 5 0 0 0 3 8" fill="none" stroke="currentColor" stroke-width="1.6"/>
+          <path d="M0.9 7.4H5.1L3 11.2Z" fill="currentColor"/>
+        </svg>
+      </button>
+      <button id="tonorth" aria-label="Snap the map north-up without moving it"
+              title="Snap north-up in place — keeps your position, zoom and tilt (Center 2D reframes the whole city)">
+        <svg id="needle" viewBox="0 0 20 20" aria-hidden="true">
+          <path d="M10 2L13.4 11L10 9.1L6.6 11Z" fill="#fcd278"/>
+          <path d="M10 18L6.6 11L10 12.9L13.4 11Z" fill="#8a8aa0"/>
+        </svg>
+      </button>
+      <button id="rot-cw" aria-label="Rotate the map clockwise"
+              title="Rotate clockwise — the map turns the way the arrow points">
+        <svg viewBox="0 0 16 16" aria-hidden="true">
+          <path d="M3 8A5 5 0 0 1 13 8" fill="none" stroke="currentColor" stroke-width="1.6"/>
+          <path d="M10.9 7.4H15.1L13 11.2Z" fill="currentColor"/>
+        </svg>
+      </button>
+    </div>
     <div id="viewbtns">
       <button id="center2d" title="Recenter to a straight-down, north-up 2D plan view (no tilt, no rotation) — height flattens to a clean map">Center 2D</button>
       <button id="recenter" title="Recenter to the default 3D framing (position, zoom, tilt and rotation)">Center 3D</button>
@@ -464,6 +509,8 @@
     // looks skewed, so 2D snaps north-aligned).
     const HOME = { center: CENTER, zoom: 10.2, pitch: 52, bearing: -18 };
     const HOME_2D = { center: CENTER, zoom: 10.2, pitch: 0, bearing: 0 };
+    const ROT_STEP = 30;  // degrees per compass-arrow press (12 presses = full turn)
+    const ROT_MS = 300;   // arrow-press ease duration; also the press-chaining window
 
     // Build mode: "public" (curated) | "full" (specialist). ONE hand-edited
     // source; the deploy step (scripts/build_site.py) emits two copies and
@@ -3274,6 +3321,38 @@
         map.easeTo({ ...HOME, duration: 700 }));
       map.on("pitch", syncMode);
       syncMode();
+      // Compass. Each arrow walks bearing to the next ROT_STEP detent in its
+      // direction, so presses land on a clean 30° grid and re-align it after a
+      // free drag-rotate. Rapid presses chain off the PREVIOUS target, not the
+      // live bearing: mid-ease getBearing() is an intermediate value that hasn't
+      // passed the last detent yet, so reading it would make the 2nd click a
+      // no-op. The target only counts while its ease could still be running,
+      // which is also what keeps it from going stale after a drag.
+      const needle = document.getElementById("needle");
+      const tonorth = document.getElementById("tonorth");
+      let spin = 0, spinAt = -Infinity;
+      const rotate = dir => {
+        const from = performance.now() - spinAt < ROT_MS ? spin : map.getBearing();
+        spin = dir > 0
+          ? (Math.floor(from / ROT_STEP) + 1) * ROT_STEP   // counter-clockwise
+          : (Math.ceil(from / ROT_STEP) - 1) * ROT_STEP;   // clockwise
+        spinAt = performance.now();
+        map.easeTo({ bearing: spin, duration: ROT_MS });
+      };
+      // The needle counter-rotates so it keeps pointing at true north.
+      const syncNeedle = () => {
+        const b = map.getBearing();
+        needle.style.transform = `rotate(${-b}deg)`;
+        tonorth.classList.toggle("north", Math.abs(b) < 0.5);
+      };
+      document.getElementById("rot-ccw").addEventListener("click", () => rotate(1));
+      document.getElementById("rot-cw").addEventListener("click", () => rotate(-1));
+      tonorth.addEventListener("click", () => {
+        spinAt = -Infinity; // drop any in-flight arrow target — this is the new truth
+        map.easeTo({ bearing: 0, duration: 400 });
+      });
+      map.on("rotate", syncNeedle);
+      syncNeedle();
       document.querySelectorAll("#denom button").forEach(b =>
         b.addEventListener("click", () => applyDenom(b.dataset.denom)));
       document.querySelectorAll("#ratio-denom button").forEach(b =>
