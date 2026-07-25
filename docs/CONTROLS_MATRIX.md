@@ -98,7 +98,7 @@ has at least one section to show.
 | **Uses** | `#uses-prisms` (Height = share zoned residential); `#prism-row` when prisms on | — | legend swaps to categorical |
 | **Development** | `#devmetric` (Dwelling units / Permits / Industrial); `#devwindow` (Last 5 yr / Last 3 yr / Since 2009); `#dev-grid` **Detail = 100 m grid**; `#devspike` (New homes / Year built); `#prism-row` when grid active | `hasPermitsPerAcre`, `hasDevWindow`, `hasIndPermits`, `devGridData`, `devAgeCol` | **see §5.A/B — the gnarly one** |
 | **Infill** | `#devmetric` (Dwelling units / Permits — **Industrial hidden**); `#devwindow` | same as Dev | entering Infill with Industrial selected **silently resets to units** |
-| **Glass** | `#denom` relabelled **"Spike denominator"** (Ground / Lot); `#prism-row` opacity; **also uses `#toggle` metric + `#coloradj`** | `gridData.hasLot` | Glass = "Money, translucent, grid-denominated" |
+| **Glass** | `#denom` relabelled **"Spike denominator"** (Ground / Lot); **no `#prism-row`** — opacity fixed at 60% since 2026-07-25; **also uses `#toggle` metric + `#coloradj`** | `gridData.hasLot` | Glass = "Money, translucent, grid-denominated" |
 
 ### Development's dynamic gating (the tangle)
 

@@ -42,8 +42,12 @@ const [url] = process.argv.slice(2);
     label: document.getElementById('legend-label').textContent,
     max: document.getElementById('legend-max').textContent,
     aside: document.querySelector('#legend .aside span:last-child').textContent,
-    sliderShown: getComputedStyle(document.getElementById('layers')).display !== 'none',
-    sliderPct: document.getElementById('prism-opacity').value,
+    // NB: this reads #layers (the whole panel), which is why it stays true in
+    // Glass even though Glass dropped the slider 2026-07-25. The prism row itself
+    // is reported separately — see verify-glass-no-slider.js for the assertions.
+    layersShown: getComputedStyle(document.getElementById('layers')).display !== 'none',
+    prismRowShown: document.getElementById('prism-row').offsetParent !== null,
+    prismPct: document.getElementById('prism-opacity').value,
     lensDisabled: document.querySelector('#lens button').disabled,
     denomShown: getComputedStyle(document.getElementById('denom')).display !== 'none',
     denom: state.denom,

@@ -447,13 +447,21 @@ plane is mouseover geography. Implementation (`web/index.html`,
   ~$144k ground); the blurb follows the denominator (`GLASS_BLURBS`). The
   denominator persists across view round-trips; the control hides outside
   Glass.
-- **Spike opacity**: the ratio view's slider panel shows here too; entering
-  Glass resets it to the view's own default (**60%**; Ratio stays 5%).
+- **Spike opacity — FIXED at 60%, no slider (2026-07-25).** Glass used to share
+  the ratio view's slider, resetting to its own 60% default on entry. Peter: the
+  slider is "no longer necessary in this lens" — 60% *is* the translucency that
+  makes the composition legible, and nobody was tuning it. The control (and its
+  "Money plane" header) now hides in Glass; `state.prismOpacity` is still what
+  drives the grid layer, and entry still re-applies `VIEWS.glass.opacity`, so the
+  render is byte-identical and a detour through Ratio (5%) can't strand a stale
+  value. The blurb's "The slider sets spike opacity." sentence went with it —
+  prose must not point at a control that isn't there. Ratio (5%), Uses' residential
+  prisms (35%) and Development's activity grid keep their sliders.
 - **Metric-driven like Money**: the Revenue/Value toggle renders live
   (title follows the metric; the blurb stays the Glass one); the tooltip is
-  the Money tooltip (plane-picked). The **residential lens disables** (grid
-  cells carry no residential flag). Labels sit at the ground (like
-  Roads/Uses).
+  the Money tooltip (plane-picked). The **residential lens hides** (grid
+  cells carry no residential flag; it greyed out until 2026-07-25). Labels sit
+  at the ground (like Roads/Uses).
 - **Fallback**: when `value_grid.json` is absent (older deploy), the view
   renders translucent NEIGHBOURHOOD prisms — the coarse version of the same
   composition (no lens handling; the button is disabled here anyway).
