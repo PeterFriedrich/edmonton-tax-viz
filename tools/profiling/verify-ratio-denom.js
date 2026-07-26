@@ -224,17 +224,6 @@ function check(name, ok, detail) {
     await page.waitForTimeout(1500);
   }
 
-  // 7. Residential lens re-anchors the fire colour scale.
-  await click('#lens button');
-  await page.waitForTimeout(1500);
-  c = await chrome();
-  const fireRes = await independent('fire_events_per_acre', 0.005, true);
-  check('fire + lens: aside = faded non-res', c.aside === 'Faded — non-residential land', c.aside);
-  check('fire + lens: anchors rescale to res subset',
-    c.max === '$' + Math.round(fireRes.hi).toLocaleString() + '+', `${c.max} vs ${Math.round(fireRes.hi)}`);
-  await click('#lens button'); // lens off again
-  await page.waitForTimeout(1000);
-
   // 8. Persistence: leave to Money (picker hides), return (fire still active).
   await click('#views button[data-view="money"]');
   await page.waitForTimeout(1500);

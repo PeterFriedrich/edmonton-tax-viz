@@ -23,7 +23,6 @@ const [url] = process.argv.slice(2);
     label: document.getElementById('legend-label').textContent,
     barShown: document.querySelector('#legend .bar').style.display !== 'none',
     catRows: [...document.querySelectorAll('#legend .cat span:last-child')].map(s => s.textContent),
-    lensDisabled: document.querySelector('#lens button').disabled,
   }));
 
   console.log('money default  :', JSON.stringify(await chrome()));

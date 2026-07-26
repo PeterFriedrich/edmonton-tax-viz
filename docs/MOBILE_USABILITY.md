@@ -39,7 +39,8 @@ column) via `tools/profiling/shot-mobile.js` (Playwright, 390×844, `isMobile`+
   The old desktop absolute-offset stack is gone; `#controls` is now a flex column,
   so the visible pods lay out in vertical sequence with no mutual collision:
   `#views` t20–48, `#toggle` t56–87, `#layers`(+`#moneydetail`) t95–206,
-  `#coloradj` t214–242, `#lens` t250–278, `#a11y` t286–314. Structure-before-mobile
+  `#coloradj` t214–242, `#lens` t250–278 (`#lens` removed 2026-07-26),
+  `#a11y` t286–314. Structure-before-mobile
   paid off here.
 - **THE remaining problem: the control column sits ON TOP of the title blurb.**
   `#title` (h1 + multi-line blurb) spans left 22→right 382, **top 20→196** — i.e.

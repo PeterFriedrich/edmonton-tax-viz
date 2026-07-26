@@ -48,7 +48,6 @@ const [url] = process.argv.slice(2);
     layersShown: getComputedStyle(document.getElementById('layers')).display !== 'none',
     prismRowShown: document.getElementById('prism-row').offsetParent !== null,
     prismPct: document.getElementById('prism-opacity').value,
-    lensDisabled: document.querySelector('#lens button').disabled,
     denomShown: getComputedStyle(document.getElementById('denom')).display !== 'none',
     denom: state.denom,
   }));

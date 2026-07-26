@@ -101,8 +101,10 @@ a full-only mode of Development).
 ## 3. Release scope (proposed lock)
 
 **IN — everything currently live:**
-- **Money view** (revenue/value per acre, ground + lot-acre denominator toggle,
-  residential lens, colour-adjust toggle)
+- **Money view** (revenue/value per acre with the revenue class cuts, ground +
+  lot-acre denominator toggle, colour-adjust toggle). _The residential fade lens
+  was removed 2026-07-26 — superseded by the Residential revenue cut and the
+  tooltip's "% of revenue is residential"._
 - **Glass** (100 m grid, both denominators) — post-regroup a *mode of Money*,
   not a separate view (still ships public)
 - **Services view** (roads; stormwater MODELED; fire demand; water MODELED)

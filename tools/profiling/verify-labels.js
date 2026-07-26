@@ -26,7 +26,6 @@ const [url] = process.argv.slice(2);
       labels: state.labels,
       layerPresent: !!layer,
       labelsBtnActive: document.getElementById('labels-on').checked,
-      resBtnDisabled: document.querySelector('#lens button[data-lens="residential"]').disabled,
       shown: layer ? layer.props.data.length : 0,
     };
   });

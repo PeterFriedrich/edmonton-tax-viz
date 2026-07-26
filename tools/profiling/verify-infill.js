@@ -68,7 +68,6 @@ const check = (name, cond) => { (cond ? pass++ : fail++); console.log(`${cond ? 
     max: document.getElementById('legend-max').textContent,
     asideShown: getComputedStyle(document.querySelector('#legend .aside')).display !== 'none',
     asideLabel: document.querySelector('#legend .aside span:last-child').textContent,
-    lensDisabled: document.querySelector('#lens button').disabled,
     devPickerShown: getComputedStyle(document.getElementById('devmetric')).display !== 'none',
     layers: overlay._deck.props.layers.map(l => l.id),
   }));
@@ -80,7 +79,6 @@ const check = (name, cond) => { (cond ? pass++ : fail++); console.log(`${cond ? 
   check('legend ends are the two diverging labels', /suitable/i.test(chrome.min) && /suitable/i.test(chrome.max));
   check('aside (off-scale grey) row shown', chrome.asideShown);
   check('aside labelled off-scale', /off-scale|set aside/i.test(chrome.asideLabel));
-  check('residential lens disabled', chrome.lensDisabled);
   check('dev sub-metric picker shown (drives activity side)', chrome.devPickerShown);
   check('infill-plane layer present', chrome.layers.includes('infill-plane'));
   check('no dev-plane leaked in', !chrome.layers.includes('dev-plane'));

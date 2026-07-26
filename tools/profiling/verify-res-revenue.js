@@ -7,7 +7,7 @@
 // the tooltip share line ("N% of revenue is residential") appears in BOTH the
 // Revenue and Residential $ metrics and matches an independent res/rev
 // recompute; the Residential-only fade lens composes (fade fill + subset
-// re-clamp via residentialClampFor); the lot denominator swaps to
+// the lot denominator swaps to
 // res_revenue_per_lot_acre with an independent p97.5 clamp; Glass draws the
 // 100 m res cells when the grid file carries the res columns (pipeline
 // 2026-07-17) and falls back to hood prisms on older files — branch-checked.
@@ -108,37 +108,6 @@ function approx(a, b, rel = 1e-6) { return Math.abs(a - b) <= rel * Math.max(Mat
   });
   check('res tooltip main line is the res figure', resTip.html.includes(resTip.fmt + ' / acre'));
   check('res tooltip keeps the share line', /% of revenue is residential/.test(resTip.html));
-
-  // --- Residential-only fade lens composes ----------------------------------
-  await click('#lens button[data-lens="residential"]');
-  await page.waitForTimeout(1500);
-  const lens = await page.evaluate(() => {
-    const layer = overlay._deck.props.layers.find(l => l.id === 'metric-extrusion');
-    const faded = state.data.features.find(x =>
-      !x.properties.is_residential && !x.properties.is_set_aside &&
-      x.properties.res_revenue_per_acre != null);
-    const kept = state.data.features.find(x =>
-      x.properties.is_residential && x.properties.res_revenue_per_acre != null);
-    return {
-      on: state.residential,
-      // getFillColor appends the fade's alpha — compare the RGB triple only.
-      fadedFill: layer.props.getFillColor(faded).slice(0, 3).join(),
-      fade: LENS_FADE_COLOR.slice(0, 3).join(),
-      keptColoured: layer.props.getFillColor(kept).slice(0, 3).join() !==
-        LENS_FADE_COLOR.slice(0, 3).join(),
-      max: document.getElementById('legend-max').textContent,
-      indepMax: METRICS[state.metric].fmt(residentialClampFor('res_revenue_per_acre')) + '+',
-      aside: document.querySelector('#legend .aside span:last-child').textContent,
-    };
-  });
-  console.log('lens composed  :', JSON.stringify(lens));
-  check('lens on', lens.on === true);
-  check('non-residential hood fades', lens.fadedFill === lens.fade);
-  check('residential hood stays coloured', lens.keptColoured === true);
-  check('legend re-clamps to the residential subset', lens.max === lens.indepMax);
-  check('aside labels the fade', /non-residential/i.test(lens.aside));
-  await click('#lens button[data-lens="residential"]'); // off again
-  await page.waitForTimeout(800);
 
   // --- lot denominator -------------------------------------------------------
   await click('#denom button[data-denom="lot"]');
