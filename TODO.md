@@ -218,13 +218,16 @@ _Last reconciled: 2026-07-26_
     Fixed three latent bugs on the way: `#botleft` swallowing pointer events, the
     z-index:1 paint-order collision, and `#legend` running under the right-hand
     column on phones. See `DECISIONS.md` 2026-07-25.
-    - [ ] **Read the actual OGL – City of Edmonton text** (small, ~15 min, not
-      urgent). The shipped design assumes the licence wants an *attribution
-      statement* but doesn't dictate placement — generalised from the OGL family,
-      **never verified against the Edmonton text itself**. If it does mandate
-      surfaced placement, the credit returns to the map surface and
-      `Data & Methods` alone stops being sufficient. Only open question left on
-      P1.2. `docs/UI.md` "What other maps actually do".
+    - [x] ~~**Read the actual OGL – City of Edmonton text**~~ — DONE 2026-07-26
+      (v1.0 July 2022, an adaptation of OGL–Canada 2.0). **Placement assumption
+      confirmed: the licence says nothing about where attribution appears**, so
+      the collapsed pod stands and the credit does NOT return to the map surface.
+      But it caught two real gaps, both fixed the same day: (1) no link to the
+      licence, which it asks for "where possible", and (2) the prescribed
+      attribution sentence was paraphrased rather than verbatim. Added a
+      non-endorsement line too (not required; the licence forbids implying
+      official status). `docs/UI.md` "What other maps actually do",
+      `DECISIONS.md` 2026-07-26. **P1.2 now has no open questions.**
   - [x] ~~P1.3 Public METHODS page~~ — done 2026-07-09 (PR #32 merged):
     `docs/METHODS.md` (metric definitions, denominators + guard, set-aside,
     WEM/condo worked examples, model formulas + validation ratios,
