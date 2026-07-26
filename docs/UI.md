@@ -685,9 +685,10 @@ visible control per view; **run it after any control-chrome / CSS refactor.**
 The live map had **no** link to the repo, the data sources or the methodology —
 the highest credibility-per-effort gap on the public-release list, and an
 outstanding licence obligation (every dataset rendered is City of Edmonton open
-data under the Open Government Licence, which asks for an attribution
-statement — see "What other maps actually do" below for what that does and
-doesn't require about placement).
+data under the Open Government Licence, which asks for an attribution statement
+plus a link to the licence — **verified against the licence text 2026-07-26**;
+see "What other maps actually do" below for what it does and doesn't require
+about placement, and for the two gaps that verification caught).
 
 - **The button is a short entry point: `Data & Methods`.** It shipped as the full
   credit (`Data: City of Edmonton Open Data · 2025`) on the theory that a link
@@ -735,11 +736,33 @@ OSM/Mapbox attribution regimes don't apply at all. **The only obligation in play
 is the Open Government Licence – City of Edmonton on the data**, which the panel
 carries.
 
-**Not yet verified:** nobody has read the OGL – City of Edmonton text directly.
-The reasoning above generalises from the OGL family (attribution statement
-required; placement not specified). If that licence turns out to mandate
-placement, the surfaced-credit design comes back — it's the only thing that
-would argue for it. Tracked in `TODO.md`.
+**VERIFIED 2026-07-26 — read directly, and the placement assumption holds.**
+The Open Government Licence – City of Edmonton (v1.0, July 2022; a near-verbatim
+adaptation of OGL–Canada 2.0) requires only:
+
+> Acknowledge the source of the Information by including any attribution
+> statement specified by the Information Provider(s) and, where possible,
+> provide a link to this licence.
+
+**Nothing about placement.** So the collapsed pod stands and the surfaced-credit
+design does not come back — the one thing that would have argued for it is
+absent. Text: `data.edmonton.ca/stories/s/City-of-Edmonton-Open-Data-Terms-of-Use/msh8-if28/`.
+
+Reading it did surface **two gaps in what shipped**, both fixed the same day:
+
+1. **No link to the licence** — "where possible" plainly applied (the pod
+   already linked two other things). This was the one unambiguous miss.
+2. **The prescribed statement was paraphrased.** Where the provider specifies no
+   statement of its own, the licence mandates exact wording: *"Contains
+   information licensed under the Open Government Licence – City of Edmonton."*
+   Socrata carries only `attribution: "City of Edmonton"` (a "data provided by"
+   field, not a statement) across seven datasets, so the fallback wording
+   governs. It is now present **verbatim** and asserted as such by
+   `verify-about.js` — a reworded version is not compliance.
+
+Also added, **not required by the licence**: a non-endorsement line. The licence
+grants no right to imply official status or endorsement, and a civic map built
+from City data is precisely what a reader might mistake for official.
 - **Every year comes from `status.json`, never a literal.** The manifest the
   pipeline already writes (`data_year` / `rate_year` / `zoning_year` /
   `generated`) is already fetched for the maintenance banner, so the pod rides

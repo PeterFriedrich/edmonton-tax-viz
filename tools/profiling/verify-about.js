@@ -91,7 +91,12 @@ const [url] = process.argv.slice(2);
     const block = src.slice(src.indexOf('<div id="about"'), src.indexOf('<div id="botleft"'));
     check('found the pod markup to inspect', block.length > 200 && block.length < 4000,
           `${block.length} chars`);
-    const stray = block.match(/\b(19|20)\d\d\b/g);
+    // Strip HTML comments first. The rule being enforced is "no year a READER
+    // can see is a literal" — a comment renders nothing, so a year in one
+    // (the licence's "v1.0, July 2022", a dated DECISIONS.md pointer) can never
+    // go stale on screen. Leaving them in scope would only pressure the next
+    // person to delete the explanation to get the suite green.
+    const stray = block.replace(/<!--[\s\S]*?-->/g, ' ').match(/\b(19|20)\d\d\b/g);
     check('no year literal in the pod markup', !stray,
           stray ? `found: ${[...new Set(stray)].join(', ')}` : '');
   }
@@ -101,6 +106,21 @@ const [url] = process.argv.slice(2);
   // lives — it has to be there.
   check('panel credits the City of Edmonton', /City of Edmonton/.test(p.menuText));
   check('licence is named', /Open Government Licence/i.test(p.menuText));
+  // The OGL – City of Edmonton (v1.0, July 2022) prescribes this EXACT sentence
+  // where the Information Provider specifies no attribution statement of its
+  // own. Asserted verbatim, whitespace-normalised, because a reworded version
+  // is not compliance — read the licence before touching this string.
+  check('OGL prescribed attribution statement, VERBATIM',
+        p.menuText.replace(/\s+/g, ' ')
+         .includes('Contains information licensed under the Open Government Licence – City of Edmonton.'));
+  // "...and, where possible, provide a link to this licence." Plainly possible
+  // here, so its absence would be the one unambiguous gap.
+  check('links to the licence itself',
+        p.links.some(l => /data\.edmonton\.ca\/stories\/s\/.*msh8-if28/.test(l.href)),
+        p.links.map(l => l.href).join(' | '));
+  // The licence grants no right to imply official status or endorsement.
+  check('disclaims affiliation/endorsement',
+        /not affiliated with, nor endorsed by, the City/i.test(p.menuText));
   check('caveats heading reads "Important caveats"',
         /Important caveats/i.test(p.menuText));
   check('says revenue is modelled, not billed',
