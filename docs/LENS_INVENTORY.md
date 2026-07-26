@@ -89,8 +89,9 @@ The revenue/value prisms — the money plane.
   60% and re-applied on every entry, so a detour through Ratio (5%) can't strand
   it. The blurb no longer mentions a slider.
 - Tooltip always shows "**N% of revenue is residential**" (all four metrics).
-- **Combinations:** 32 in Neighbourhood (4 metrics × 2 denom × lens × sqrt) + 16
-  in 100 m grid (no lens) = **48**.
+- **Combinations:** 16 in Neighbourhood (4 metrics × 2 denom × sqrt) + 16 in
+  100 m grid (same three) = **32**. _Was 48 until 2026-07-26; removing the
+  residential lens dropped a ×2 factor from the Neighbourhood mode._
 
 ### 2. Services
 City services on the ground — each service is its own toggleable layer; one
@@ -115,7 +116,8 @@ Ghost prisms of revenue-per-unit over the neutral road network.
 - **Prism-opacity slider** (`#prism-row`, default 5%) — this is the one view that
   also shows the "Money plane" header.
 - `#toggle` and `#coloradj` hidden — the Options panel holds only `#layers`.
-- **Combinations:** 3 denominators × lens = **6** core (× slider, continuous).
+- **Combinations:** **3** denominators (× slider, continuous). _Was 6 until
+  2026-07-26 — the residential lens was the other factor._
 
 ### 4. Development
 New building activity per acre from issued permits.
@@ -182,18 +184,26 @@ the control was removed the same day.
 
 ## Where to look in the code
 
-| Thing | Anchor in `web/index.html` |
-|---|---|
-| Build flag | `DEFAULT_BUILD` / `BUILD` / `FULL_BUILD` ~L532–539 |
-| Per-view chrome + defaults | `VIEWS` L933–~1002 (`opacity` is the per-view slider default) |
-| Control DOM | `#toggle` (`#metric-row` + `#revcut`), `#views`, `#layers` sections, then `#coloradj` LAST inside `#opt-body`, `#a11y`, `#botleft` |
-| Visibility gating | `applyView` L3086–~3245 (`prisms`, `moneyDetailShow`, `prismSlider`, `lensApplies`, `denomShow`, `ratioDenomShow`, `devGridShow`) |
-| Development gating | `syncDevControls` ~L2984–3020 (`ageUp` hides metric+window; `devmodeShow`) |
-| Colour-scaling pod | `syncColorAdjust` ~L2647 |
-| Services driver rule | `syncServiceControls` ~L3274 |
-| Data-column guards | ~L3470–3548 (each `state.hasX` + the button it hides) |
+**Grep for the symbol, not the line number.** These anchors carried line numbers
+until 2026-07-26, when they went stale twice in a single day (the metric regroup
+and the lens removal both shifted `web/index.html` by ~200 lines). Symbols are
+greppable and cannot rot silently, so that is all this table records now.
 
-Verify coverage: `tools/profiling/verify-lens-visibility.js` (lens + colour pod
-per view), `verify-glass-no-slider.js` (Money → 100 m grid), `verify-compass.js`
-(camera chrome), `verify-controls-clickable.js` (run after any control CSS
-change). All from the repo root.
+| Thing | Anchor in `web/index.html` (grep it) |
+|---|---|
+| Build flag | `DEFAULT_BUILD` / `BUILD` / `FULL_BUILD` |
+| Per-view chrome + defaults | `const VIEWS` (`opacity` is the per-view slider default) |
+| Control DOM | `#toggle` (`#metric-row` + `#revcut`), `#views`, `#layers` sections, then `#coloradj` LAST inside `#opt-body`, `#a11y`, `#botleft` |
+| Visibility gating | `function applyView` — `prisms`, `moneyDetailShow`, `prismSlider`, `denomShow`, `ratioDenomShow`, `devGridShow` (`lensApplies` is GONE — lens removed 2026-07-26) |
+| Metric picker (2 levels) | `REV_CUTS`, `isRevenue`, `lastRevCut`, `syncMetricButtons` |
+| Development gating | `syncDevControls` (`ageUp` hides metric+window; `devmodeShow`) |
+| Colour-scaling pod | `syncColorAdjust` |
+| Services driver rule | `syncServiceControls` |
+| Data-column guards | `state.hasResRevenue` / `hasNonresRevenue` / `hasHoodLot` / … (each paired with the button it hides) |
+
+Verify coverage: `tools/profiling/verify-coloradj.js` (the colour pod per view;
+replaced `verify-lens-visibility.js` when the lens was removed),
+`verify-money-metric-group.js` (the two-level metric picker),
+`verify-glass-no-slider.js` (Money → 100 m grid), `verify-compass.js` (camera
+chrome), `verify-controls-clickable.js` (run after any control CSS change). All
+from the repo root.

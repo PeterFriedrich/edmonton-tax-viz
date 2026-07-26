@@ -85,7 +85,7 @@ lenses" pass.
 | **Infill** lens on Development | ❌ | ✅ |
 | **Industrial** metric on Development | ❌ | ✅ |
 | Deep data-detail (validation ratios, modeling quirks, methods-heavy blurbs) | trimmed to honest labels | ✅ full |
-| Money's **Residential $ / Non-res $** metrics | ✅ *(data-gated only)* | ✅ |
+| Money's **Residential / Non-residential** revenue cuts | ✅ *(data-gated only)* | ✅ |
 
 Full-only *modes/metrics inside a public view* (Infill, Industrial) are
 `BUILD`-flag-gated at the control level — `|| !FULL_BUILD` sits next to their
@@ -216,7 +216,7 @@ first-class with its own grid; `devGridOfferable = !!devGridData &&
 The claim appeared in **three** sibling comments. The 2026-07-22 fix caught one
 and was recorded here as done, which is how the other two survived another four
 days — a reminder to grep for the *claim*, not fix the line you happened to
-open. All three now agree (`devGridOfferable` at ~L1700, `syncDevChrome` and
+open. All three now agree (`devGridOfferable`, `syncDevChrome` and
 `applyDevWindow`, corrected 2026-07-26 in PR #96).
 
 **Behaviour was correct throughout — these were comments only.** The substantive
