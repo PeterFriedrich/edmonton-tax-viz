@@ -198,27 +198,23 @@ was fixed 2026-07-25; the position fork (move-2 / bottom-sheet) is
 
 ---
 
-## 6. Discrepancy found while mapping (partly fixed — 2 comments still stale)
+## 6. Discrepancy found while mapping (RESOLVED 2026-07-26)
 
 A comment claimed the long "Since 2009" window is choropleth-only ("the Detail
-toggle hides for either"). That's **stale** — PR #80 made the long window
+toggle hides for either"). That was **stale** — PR #80 made the long window
 first-class with its own grid; `devGridOfferable = !!devGridData &&
-!devIndustrial()` excludes **only** Industrial. One comment was corrected
-2026-07-22.
+!devIndustrial()` excludes **only** Industrial.
 
-**Re-checked 2026-07-25: the fix caught one of three siblings.** Two still carry
-the wrong claim, and now contradict the corrected one a few hundred lines up:
+The claim appeared in **three** sibling comments. The 2026-07-22 fix caught one
+and was recorded here as done, which is how the other two survived another four
+days — a reminder to grep for the *claim*, not fix the line you happened to
+open. All three now agree (`devGridOfferable` at ~L1700, `syncDevChrome` and
+`applyDevWindow`, corrected 2026-07-26 in PR #96).
 
-| Line | Says | Truth |
-|---|---|---|
-| L1601–1602 ✅ | "all three windows — 5yr/3yr/long — carry cells" | correct (this is the one that got fixed) |
-| L2707–2708 ❌ | "industrial + the long 'since 2009' window are choropleth-only" | only Industrial is |
-| L2722–2723 ❌ | "The long window is choropleth-only, so switching to/from it flips the Detail toggle" | it doesn't — `devGridOfferable` ignores the window |
-
-**Comments only; behaviour is correct in all three cases** (`syncDevChrome` still
-needs to run on a window switch, just for the title/blurb/legend, not to flip the
-Detail toggle). Fixing them touches `web/**`, so it needs a branch + PR rather
-than a docs push — tracked in `TODO.md`.
+**Behaviour was correct throughout — these were comments only.** The substantive
+point they obscured is worth keeping: `syncDevChrome` still has to run on a
+window switch, just for the title/blurb/legend and the per-window scale, *not* to
+flip the Detail toggle.
 
 ---
 

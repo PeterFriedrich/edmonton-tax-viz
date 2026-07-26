@@ -218,6 +218,31 @@ to reset the inactivity timer (GitHub suppresses some automation-triggered
 events). If that proves true in practice, make the heartbeat commit with a small
 repo-scoped **PAT** instead, or just re-enable the workflow if it ever sleeps.
 
+**As built (2026-07-26) — belt and braces, because prevention alone can't be
+trusted.** The wrinkle above was taken as a given rather than waited on:
+
+1. **Prevention.** `refresh.yml` checks out with
+   `${{ secrets.HEARTBEAT_TOKEN || github.token }}` — a fine-grained,
+   contents:write, this-repo-only PAT when present, silently the old behaviour
+   when not (forks, or a revoked token, still work). A PAT push *does* trigger
+   workflows, unlike `GITHUB_TOKEN`; that is safe only because the commit step
+   stages `web/data` **only** and `deploy.yml` excludes `web/data/**`. Widening
+   what gets staged would start a deploy loop.
+2. **Detection.** Prevention has its own silent failure — the PAT expires (366
+   days max), and so does any other assumption about why the pipeline is alive.
+   So the frontend ages `last_checked` itself and raises the banner past
+   `STALE_DAYS = 14` (two missed weekly runs). This needs no server, no secret
+   and nothing to renew, and it covers *every* cause of stoppage rather than the
+   one the PAT addresses. A backend-set banner outranks it.
+3. **No green-but-broken.** The commit step's `git push || echo "Nothing to
+   push."` was replaced with an explicit `git diff --cached --quiet` test. The
+   `||` form swallowed auth failures as well as no-ops, which would have let an
+   expired PAT report success while the heartbeat stopped — the exact failure
+   this section exists to prevent.
+
+The design principle worth keeping: **the thing that detects the outage must not
+be the thing that can go out.** That is why detection lives in the browser.
+
 ## Year alignment
 
 The assessment year lives only in the dataset metadata (see `DATA.md`), and mill
