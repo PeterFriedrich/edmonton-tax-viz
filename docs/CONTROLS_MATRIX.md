@@ -88,15 +88,16 @@ data guard, so nothing is stripped from the file.
 
 | Pod | Buttons | Actually bites in | Everywhere else |
 |---|---|---|---|
-| `#coloradj` | `Colour: sqrt scaling` / `Colour: linear` (the label **is** the state) | **Money** — both detail modes | **greyed/disabled** (`.disabled`) |
+| `#coloradj` | `Colour: sqrt scaling` / `Colour: linear` (the label **is** the state) | **Money** — both detail modes | **HIDDEN** (`display:none`, 2026-07-26 — was greyed) |
 | `#lens` | `Highlight residential` | **Money → Neighbourhood, Ratio** | **HIDDEN** (`display:none`, 2026-07-25 — was greyed) |
 | `#toggle` (T2, listed here for the comparison) | `Revenue · Value · Residential $ · Non-res $` | **Money** — both detail modes | **HIDDEN** (regroup, 2026-07-23 — was live-but-inert) |
 | `#palette`, `Labels` | 3 ramps; hood names on/off | — | moved into the `#a11y` **Display** popover; apply everywhere (palette is n/a in Uses' categorical legend) |
 
-**Two of the three inconsistencies in this table are now fixed; one remains.**
-`#toggle` used to stay live but inert outside Money (resolved by the regroup —
-old combo C), and `#lens` used to grey out (resolved 2026-07-25). **`#coloradj`
-is the last pod that greys where its neighbours hide** — see §5.1.
+**All three inconsistencies in this table are now fixed.** `#toggle` used to stay
+live but inert outside Money (resolved by the regroup — old combo C), `#lens`
+used to grey out (resolved 2026-07-25), and `#coloradj` followed it on
+2026-07-26. **Nothing in this column greys any more**, and when *both* T3 pods
+hide the column itself (`#opt-pres`) collapses — see §5.1/§5.2.
 
 The hide came from a live bug report ("the highlight residential button doesn't
 work"): greyed `#4a4a5e` on a dark panel reads as *broken*, not *unavailable*,
@@ -145,18 +146,19 @@ the bottom as a record, **still under their original letters** — older referen
 elsewhere (`DECISIONS.md` says "§5.G", "§5.A/B", "§5.F") point at those. The
 still-open items below are **numbered** so the two sets can't be confused.
 
-**1. `#coloradj` greys where its two neighbours hide.** `Highlight residential`
-hides outside Money/Ratio, `#toggle` hides outside Money — but `Colour: sqrt
-scaling` still greys out. In Development you get a lone dim button in an
-otherwise-empty presentation column, which is exactly the read ("broken, not
-unavailable") that the lens fix was meant to kill. **The open decision Peter
-still owns; decide as a pair with the lens.** `DECISIONS.md` 2026-07-25, `TODO.md`.
+**1. ~~`#coloradj` greys where its two neighbours hide.~~ RESOLVED 2026-07-26 —
+it hides too.** `Colour: sqrt scaling` was the last pod in the column still
+greying; Peter's call was to hide it and match `#lens`. All three T3/T2 pods now
+hide where they don't bite, so "greyed = broken" has no remaining instance.
 
-**2. Money → 100 m grid now has a hole in the Options panel.** Dropping the
-opacity slider (2026-07-25) left the left-hand presentation column holding only
-the greyed-or-live `#coloradj` while Detail + Spike denominator fill the right —
-visible dead space. Resolving A one way or the other changes what this looks
-like, so they're the same decision surface.
+**2. ~~Money → 100 m grid has a hole in the Options panel.~~ RESOLVED 2026-07-26
+by the same change.** With both pods able to hide, the **whole T3 column
+(`#opt-pres`) collapses** when neither applies — services, uses, development and
+infill. It was the same decision surface as 1, and resolving 1 closed it: no
+empty column, no lone dim button. `syncPresColumn` reads the pods' own computed
+display rather than re-deriving the view rules, so it can't drift out of step.
+Note the column still shows in Ratio (lens applies) and in Money → 100 m grid
+(`#coloradj` applies) — those were never empty.
 
 **3. Stock age still morphs the Development panel** — choosing it hides Metric +
 Window. Now *chosen* rather than stumbled into (old B was worse: the picker

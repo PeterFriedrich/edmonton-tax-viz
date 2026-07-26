@@ -12,22 +12,18 @@ _Last reconciled: 2026-07-26_
 
 ## Open work
 
-- [ ] **SMALL OPEN UI DECISIONS (2026-07-25).** Each is a one-liner to build; they
-  need Peter's call, not design work.
-  - [ ] **Does `#coloradj` hide when it doesn't apply, like `#lens` now does?**
-    `Highlight residential` hides outside Money/Ratio (2026-07-25) because greyed
-    read as *broken* — but `Colour: sqrt scaling` still greys out in
-    Services/Ratio/Uses, so the two pods in the same column behave differently
-    (in Development you get a lone dim button). Decide as a pair.
-    `DECISIONS.md` 2026-07-25 + `CONTROLS_MATRIX.md` §3.
-  - [ ] **Should `#views` keep its bigger 14px type on phones?** Currently scaled
-    back to 12.5px in the `@media` block — at 14px the four public views don't fit
-    one 390px row. Alternative: keep 14px and accept two rows.
-  - [ ] **Center 2D: reframe vs flatten-in-place.** It recenters the whole camera
-    (frames the city). *Partly answered* by the compass needle, which now does
-    in-place north-up — so what's left is only whether *pitch* should flatten in
-    place too (swap `HOME_2D` for `{pitch:0, bearing:0}` in the `#center2d`
-    handler, dropping center/zoom).
+- [x] ~~**SMALL OPEN UI DECISIONS (2026-07-25).**~~ **ALL THREE CLOSED 2026-07-26**
+  (Peter decided; see `DECISIONS.md` 2026-07-26 for the reasoning on each).
+  - [x] ~~Does `#coloradj` hide when it doesn't apply?~~ **Yes — built.** It hides
+    like `#lens`, and because both pods can now be hidden the whole T3 column
+    (`#opt-pres`) collapses with them, which also closed the Options-panel hole
+    left by the Glass slider removal (`CONTROLS_MATRIX.md` §5.1/§5.2).
+  - [x] ~~Should `#views` keep 14px on phones?~~ **No — stays 12.5px, one row.**
+    Deliberate no-op, not an oversight: wrapping the primary control costs more
+    than 1.5px buys, and 12.5px still out-ranks the 11.5px modifiers.
+  - [x] ~~Center 2D: reframe vs flatten-in-place?~~ **Keeps reframing.** Deliberate
+    no-op: the compass needle already does in-place north-up, and both Center
+    buttons reframing preserves the only "put the camera back" recovery.
 
 - [ ] **MOBILE USABILITY (NEW 2026-07-22 — full plan in
   `docs/MOBILE_USABILITY.md`; read it first).** Phone rendering is unstyled for
