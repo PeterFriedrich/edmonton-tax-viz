@@ -881,3 +881,49 @@ zoom +/− buttons we don't want (scroll/pinch already cover zoom). See
   a contrast check; a screenshot under normal vision proves nothing about CVD.
 - **One source of palette truth.** As modes land, all colours flow from the theme
   object so dark/light/CVD stay in sync.
+
+---
+
+## Removing the residential fade lens; colour scaling moves to the bottom (2026-07-26)
+
+Peter: *"remove Highlight residential as an option — it feels redundant / not as
+good as our %residential."*
+
+**Why it was redundant, specifically.** The lens faded every neighbourhood below
+50% residential *zoned area*. That is a **binary** cut, and both of the things
+that now answer the same question are **continuous**:
+
+1. The **Residential** revenue cut in `#toggle` (shipped hours earlier the same
+   day) shows residential dollars directly, per neighbourhood, on the real scale.
+2. Every Money tooltip already carries `X% of revenue is residential`.
+
+The lens could only say "mostly residential: yes/no". Both successors give the
+magnitude. It was also the source of a genuine confusion the docs had to keep
+disambiguating — "Highlight residential" (a fade on zoned area) vs "Residential
+$" (tax dollars) — and that footgun disappears with it.
+
+**What came out:** `state.residential`, `applyLens`, `residentialClampFor` and its
+cache, the `LENS_FADE_*` constants, the fade branches in `fillFor` / the ratio
+extrusion fill / the roof edges, the residential anchor set in `ratioScale`, and
+both legend fade branches.
+
+**What deliberately stayed: `is_residential`.** It is load-bearing for Infill's
+opportunity gate (`p.is_residential === false && infillScore(p) > 0`). Removing a
+control is not licence to remove the column it happened to read — that was worth
+checking before deleting, and it was the one thing that would have broken quietly.
+
+### The knock-on: the Options panel is now one column
+
+`#opt-pres` existed to stack two presentation pods. With the lens gone it held
+one, so the wrapper and its `syncPresColumn` helper were deleted and `#coloradj`
+became a direct child of `#opt-body` — which also means hiding it now takes its
+own row with it, needing no collapse step at all.
+
+Peter asked for it at the **bottom**, and the reason generalises: `#coloradj` is
+the only control in the panel that changes how the data is *drawn* rather than
+*which data is shown*, so it belongs after the sections it modifies.
+
+**Measured:** the panel went two-column → one and **398px → 216px** wide at
+1440px. Worth recording that "Ground acres" wrapping to two lines is
+**pre-existing** — measured against master before the change, precisely so the
+narrower panel didn't get blamed for it.

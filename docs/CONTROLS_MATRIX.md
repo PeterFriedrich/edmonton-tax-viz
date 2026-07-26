@@ -39,15 +39,20 @@ follows that order** — set with CSS `order:` on `#controls`, not DOM order
   (Total | Residential | Non-residential) nested under it. It is the only control
   that nests *within* a tier; the nesting mirrors the data (`levy == res + nonres
   + farmland`), so it is not a new tier.
-- **Tier 3 — HOW it's drawn** (presentation modifiers): `#coloradj`, `#lens`.
+- **Tier 3 — HOW it's drawn** (presentation modifiers): `#coloradj` — the only
+  one left since `#lens` was removed 2026-07-26.
 - **Out of the tier flow:** the `#a11y` **Display** popover (colour ramp +
   neighbourhood labels), bottom-right.
 
 **Tiers 2 and 3 both live inside the foldable Options panel** (`#optpanel`,
-`order: 3`): a header button `#opt-fold` toggles `#opt-body`, which holds
-`#opt-pres` (the T3 pods) beside `#layers` (the T2 sections). It **defaults
-folded on ≤640px** and unfolded on desktop (set in JS, L3341). So on a phone the
-whole of T2/T3 is one tap away and only `#views` + `#toggle` are on the map.
+`order: 3`): a header button `#opt-fold` toggles `#opt-body`, which **stacks**
+`#layers` (the T2 sections) above `#coloradj` (the sole T3 pod). It was a
+two-column row until 2026-07-26 — removing `#lens` emptied the T3 column, so the
+`#opt-pres` wrapper went with it and `#coloradj` moved to the panel's BOTTOM
+(presentation reads last, after the data controls it modifies). The panel got
+much narrower as a result: **398px → 216px at 1440px.** It **defaults folded on
+≤640px** and unfolded on desktop. So on a phone the whole of T2/T3 is one tap
+away and only `#views` + `#toggle` are on the map.
 
 ---
 
@@ -93,15 +98,15 @@ data guard, so nothing is stripped from the file.
 | Pod | Buttons | Actually bites in | Everywhere else |
 |---|---|---|---|
 | `#coloradj` | `Colour: sqrt scaling` / `Colour: linear` (the label **is** the state) | **Money** — both detail modes | **HIDDEN** (`display:none`, 2026-07-26 — was greyed) |
-| `#lens` | `Highlight residential` | **Money → Neighbourhood, Ratio** | **HIDDEN** (`display:none`, 2026-07-25 — was greyed) |
 | `#toggle` (T2, listed here for the comparison) | **two rows**: `Revenue \| Value` over `Total \| Residential \| Non-residential` (2026-07-26) | **Money** — both detail modes | **HIDDEN** (regroup, 2026-07-23 — was live-but-inert) |
 | `#palette`, `Labels` | 3 ramps; hood names on/off | — | moved into the `#a11y` **Display** popover; apply everywhere (palette is n/a in Uses' categorical legend) |
 
-**All three inconsistencies in this table are now fixed.** `#toggle` used to stay
+**All the inconsistencies in this table are now fixed.** `#toggle` used to stay
 live but inert outside Money (resolved by the regroup — old combo C), `#lens`
-used to grey out (resolved 2026-07-25), and `#coloradj` followed it on
-2026-07-26. **Nothing in this column greys any more**, and when *both* T3 pods
-hide the column itself (`#opt-pres`) collapses — see §5.1/§5.2.
+used to grey out (resolved 2026-07-25, then the control was **removed entirely**
+2026-07-26), and `#coloradj` stopped greying on 2026-07-26. **Nothing greys any
+more.** With `#lens` gone, `#coloradj` is a direct child of `#opt-body`, so
+hiding it takes its own row with it — no column-collapse step is needed.
 
 The hide came from a live bug report ("the highlight residential button doesn't
 work"): greyed `#4a4a5e` on a dark panel reads as *broken*, not *unavailable*,
@@ -118,8 +123,8 @@ has at least one section to show.
 
 | View / mode | Controls shown | Data-gate | Dynamic rules |
 |---|---|---|---|
-| **Money → Neighbourhood** | `#moneydetail` (Neighbourhood / 100 m grid); `#denom` headed **"Denominator"** | `#moneydetail` unconditional; `#denom` on `hasHoodLot` | `#lens` + `#coloradj` both live; `#revcut` (in `#toggle`, on the map) offers the 3 revenue cuts |
-| **Money → 100 m grid** (`glass`) | same `#moneydetail`; `#denom` **relabelled "Spike denominator"** | `gridData.hasLot` | **no `#prism-row`** — opacity fixed at 60%, re-applied on entry (2026-07-25); `#lens` hides, `#coloradj` stays live; `#revcut` still offered (the grid carries the cut columns, `col >= 0` fallback) |
+| **Money → Neighbourhood** | `#moneydetail` (Neighbourhood / 100 m grid); `#denom` headed **"Denominator"** | `#moneydetail` unconditional; `#denom` on `hasHoodLot` | `#coloradj` live (bottom of the panel); `#revcut` (in `#toggle`, on the map) offers the 3 revenue cuts |
+| **Money → 100 m grid** (`glass`) | same `#moneydetail`; `#denom` **relabelled "Spike denominator"** | `gridData.hasLot` | **no `#prism-row`** — opacity fixed at 60%, re-applied on entry (2026-07-25); `#coloradj` stays live; `#revcut` still offered (the grid carries the cut columns, `col >= 0` fallback) |
 | **Services** | `#services` — 6 rows: Roads · Stormwater · Fire · Water/sewer · Transit · Service cost. Each = on/off checkbox + a "colour" driver radio | rows self-gate on their columns | radios appear only when **≥2** are checked; the driver always names a *checked* service (unchecking it hands the ramp on); fire/transit draw their dots whenever checked, driver or not |
 | **Ratio** | `#ratio-denom` (Per road metre / Per fire event / Per service $); `#prism-row` opacity slider, default 5% | `hasFire \|\| hasSvcCost` (else roads-only, control hidden) | **the only view that also shows the `#prism-hd` "Money plane" header** |
 | **Uses** 🔒 | `#uses-prisms` (Height = share zoned residential); `#prism-row` while prisms on, default 35% | — | legend swaps to categorical |
@@ -151,18 +156,15 @@ elsewhere (`DECISIONS.md` says "§5.G", "§5.A/B", "§5.F") point at those. The
 still-open items below are **numbered** so the two sets can't be confused.
 
 **1. ~~`#coloradj` greys where its two neighbours hide.~~ RESOLVED 2026-07-26 —
-it hides too.** `Colour: sqrt scaling` was the last pod in the column still
-greying; Peter's call was to hide it and match `#lens`. All three T3/T2 pods now
-hide where they don't bite, so "greyed = broken" has no remaining instance.
+it hides too.** `Colour: sqrt scaling` was the last pod still greying. Nothing in
+the panel greys any more.
 
-**2. ~~Money → 100 m grid has a hole in the Options panel.~~ RESOLVED 2026-07-26
-by the same change.** With both pods able to hide, the **whole T3 column
-(`#opt-pres`) collapses** when neither applies — services, uses, development and
-infill. It was the same decision surface as 1, and resolving 1 closed it: no
-empty column, no lone dim button. `syncPresColumn` reads the pods' own computed
-display rather than re-deriving the view rules, so it can't drift out of step.
-Note the column still shows in Ratio (lens applies) and in Money → 100 m grid
-(`#coloradj` applies) — those were never empty.
+**2. ~~Money → 100 m grid has a hole in the Options panel.~~ RESOLVED 2026-07-26,
+then made moot the same day.** The hole was first closed by collapsing the T3
+column; hours later `#lens` was removed outright, which emptied that column
+permanently. `#opt-pres` and its `syncPresColumn` helper are both **gone** —
+`#coloradj` is now a direct child of `#opt-body` and takes its own row when it
+hides. The two-column Options layout is gone with them.
 
 **3. Stock age still morphs the Development panel** — choosing it hides Metric +
 Window. Now *chosen* rather than stumbled into (old B was worse: the picker

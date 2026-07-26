@@ -14,10 +14,10 @@ _Last reconciled: 2026-07-26_
 
 - [x] ~~**SMALL OPEN UI DECISIONS (2026-07-25).**~~ **ALL THREE CLOSED 2026-07-26**
   (Peter decided; see `DECISIONS.md` 2026-07-26 for the reasoning on each).
-  - [x] ~~Does `#coloradj` hide when it doesn't apply?~~ **Yes — built.** It hides
-    like `#lens`, and because both pods can now be hidden the whole T3 column
-    (`#opt-pres`) collapses with them, which also closed the Options-panel hole
-    left by the Glass slider removal (`CONTROLS_MATRIX.md` §5.1/§5.2).
+  - [x] ~~Does `#coloradj` hide when it doesn't apply?~~ **Yes — built.** _Later
+    the same day `#lens` was removed outright, which emptied that column for good:
+    `#opt-pres` and `syncPresColumn` are gone and `#coloradj` moved to the BOTTOM
+    of the Options panel (`CONTROLS_MATRIX.md` §5.1/§5.2)._
   - [x] ~~Should `#views` keep 14px on phones?~~ **No — stays 12.5px, one row.**
     Deliberate no-op, not an oversight: wrapping the primary control costs more
     than 1.5px buys, and 12.5px still out-ranks the 11.5px modifiers.

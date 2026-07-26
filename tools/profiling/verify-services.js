@@ -44,7 +44,6 @@ const [url] = process.argv.slice(2);
     servicesShown: getComputedStyle(document.getElementById('services')).display !== 'none',
     prismRowShown: getComputedStyle(document.getElementById('prism-row')).display !== 'none',
     denomShown: getComputedStyle(document.getElementById('denom')).display !== 'none',
-    lensDisabled: document.querySelector('#lens button').disabled,
     services: { ...state.services },
     driver: state.svcDriver,
     radiosShown: [...document.querySelectorAll('#services .svc-colour')]

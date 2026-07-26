@@ -119,10 +119,10 @@ assumptions.
   needs a day-one answer for set-aside / near-zero-revenue hoods (river-valley
   parkways divided by ~$0 revenue) that the supply metric doesn't.
 
-This is a **new metric, not a display filter**. The residential lens and the
-set-aside treatment subset/re-colour the *existing* revenue/value data; road
-supply is a new quantity and joins the Revenue/Value metric toggle as a third
-option.
+This is a **new metric, not a display filter**. The set-aside treatment (and,
+until it was removed on 2026-07-26, the residential fade lens) subsets or
+re-colours the *existing* revenue/value data; road supply is a new quantity and
+joins the Revenue/Value metric toggle as a third option.
 
 ## Data
 

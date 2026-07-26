@@ -1,7 +1,7 @@
 # Lens Inventory — everything that currently exists in the map
 
 _Regenerated 2026-07-25 from the control wiring in `web/index.html` — `#views`,
-`#toggle`, `#layers` and its per-view sections, `#coloradj`, `#lens`, the `#a11y`
+`#toggle`, `#layers` and its per-view sections, `#coloradj`, the `#a11y`
 "Display" popover, and the `applyView`/`syncDevControls`/`syncColorAdjust`
 visibility gates. This is the "what can the user actually do" catalogue; for the
 *why* see `SPEC_*.md` + `docs/UI.md`, and for the control **state space** (tiers,
@@ -44,20 +44,18 @@ system in `CONTROLS_MATRIX.md`.
 | Pod | Bites in | Everywhere else |
 |---|---|---|
 | `#toggle` — **two rows**: Revenue \| Value, with Total \| Residential \| Non-residential nested under Revenue (2026-07-26) | Money (both detail modes) | **HIDDEN** (`display:none`) — Money-scoped since the regroup |
-| `#lens` — **Highlight residential** | Money → Neighbourhood, Ratio | **HIDDEN** + `disabled` (2026-07-25; greyed read as *broken*) |
-| `#coloradj` — `Colour: sqrt scaling` / `Colour: linear` | Money (both detail modes) | **HIDDEN** + `disabled` (2026-07-26; same reason as `#lens`) |
+| `#coloradj` — `Colour: sqrt scaling` / `Colour: linear` | Money (both detail modes) | **HIDDEN** + `disabled` (2026-07-26; greyed read as *broken*) |
 
 The button label **is** the state readout for `#coloradj` (no caption since
-2026-07-25). **Nothing in this column greys any more** — `#coloradj` joined
-`#lens` in hiding on 2026-07-26, closing the last "greyed reads as broken"
-instance. Because both pods can now be hidden, the column that holds them
-(`#opt-pres`) **collapses when neither applies** — Services, Uses, Development
-and Infill show no presentation column at all. `DECISIONS.md` 2026-07-26.
+2026-07-25), and **nothing greys any more** — it hides where it doesn't apply.
 
-> ⚠️ **Highlight residential** (a *fade lens* on ≥50% residential zoned area) is
-> **not** the **Residential $** metric (residential-class tax dollars). Different
-> features; they compose in Money. The rename killed the older "Residential only"
-> name clash but the two still sit adjacent.
+> **`#lens` (Highlight residential) was REMOVED 2026-07-26.** It faded
+> neighbourhoods below 50% residential zoned area — a *binary* cut, which the
+> continuous alternatives now do better: the **Residential** revenue cut in
+> `#toggle` shows residential dollars directly, and every tooltip already carries
+> `X% of revenue is residential`. Its removal also emptied `#opt-pres`, so that
+> wrapper is gone and `#coloradj` moved to the bottom of the Options panel.
+> `DECISIONS.md` 2026-07-26.
 
 ---
 
@@ -86,10 +84,7 @@ The revenue/value prisms — the money plane.
 - **Denominator** (`#denom`): **Ground acres** (whole footprint, default) · **Lot
   acres** (parcel land owned). Header relabels to **"Spike denominator"** in the
   100 m grid mode. Gated on `hasHoodLot` (hood) / `gridData.hasLot` (grid).
-- `#coloradj` **live in both** detail modes. `#lens` **live in Neighbourhood
-  only** — grid cells carry no residential flag, so it hides when you switch to
-  100 m grid *without leaving Money*. (That in-place disappearance is exactly the
-  case that made greying-out read as broken.)
+- `#coloradj` **live in both** detail modes.
 - **100 m grid has NO opacity slider** (2026-07-25) — translucency is fixed at
   60% and re-applied on every entry, so a detour through Ratio (5%) can't strand
   it. The blurb no longer mentions a slider.
@@ -108,7 +103,7 @@ drives the colour ramp.
   choice has to be real). Invariant: the driver always names a *checked* service;
   unchecking it hands the ramp to the next one.
 - Fire and Transit draw station dots / LRT lines whenever checked, driver or not.
-- `#toggle`, `#lens`, `#coloradj` all hidden — so the whole T3 column collapses.
+- `#toggle` and `#coloradj` both hidden — the Options panel holds only `#layers`.
 - **Combinations:** 63 non-empty checkbox subsets × the driver choice within each.
 
 ### 3. Ratio
@@ -119,7 +114,7 @@ Ghost prisms of revenue-per-unit over the neutral road network.
   (`hasFire || hasSvcCost`); roads-only data hides it.
 - **Prism-opacity slider** (`#prism-row`, default 5%) — this is the one view that
   also shows the "Money plane" header.
-- `#lens` **live** (so the T3 column stays). `#toggle` and `#coloradj` hidden.
+- `#toggle` and `#coloradj` hidden — the Options panel holds only `#layers`.
 - **Combinations:** 3 denominators × lens = **6** core (× slider, continuous).
 
 ### 4. Development
@@ -141,7 +136,7 @@ New building activity per acre from issued permits.
 - The prism slider shows while the 100 m grid is active.
 - Set-aside greenfield land renders in **full colour** here, unlike every other
   lens — that undeveloped land is where much new building lands.
-- `#toggle`, `#lens`, `#coloradj` all hidden — so the whole T3 column collapses.
+- `#toggle` and `#coloradj` both hidden — the Options panel holds only `#layers`.
 - **Combinations:** full = **22** (Housing 16 + Infill 6); public = **13**.
 
 #### Infill opportunity (Development's second lens, full only)
@@ -160,28 +155,28 @@ what it yields), over the 2024 Zoning Bylaw geometry.
 - **Residential prisms** toggle: height = share of zoned land that is
   residential. The opacity slider (default 35%) appears while they're on.
 - Categorical colour legend, not a gradient — the palette ramp is n/a here.
-- `#toggle`, `#lens`, `#coloradj` all hidden — so the whole T3 column collapses.
+- `#toggle` and `#coloradj` both hidden — the Options panel holds only `#layers`.
 - **Combinations:** prisms on/off = **2**.
 
 ---
 
 ## Quick "what combines with what" matrix
 
-| View | `#toggle` metric | Acre denom | Detail | Ratio denom | Dev metric/window | Service layers | Opacity slider | `#lens` | `#coloradj` |
-|---|---|---|---|---|---|---|---|---|---|
-| **Money** — Neighbourhood | ✅ 4 | ✅ 2 | ✅ 2 | — | — | — | — | ✅ | ✅ |
-| **Money** — 100 m grid | ✅ 4 | ✅ 2 | ✅ 2 | — | — | — | ✖ fixed 60% | ✖ | ✅ |
-| **Services** | ✖ | — | — | — | — | ✅ 6 | — | ✖ | ✖ |
-| **Ratio** | ✖ | — | — | ✅ 3 | — | — | ✅ 5% | ✅ | ✖ |
-| **Development** — Housing | ✖ | — | ✅ 3 | — | ✅ 3 × 3 | — | ✅ in grid | ✖ | ✖ |
-| **Development** — Infill 🔒 | ✖ | — | — | — | ✅ 2 × 3 | — | — | ✖ | ✖ |
-| **Uses** 🔒 | ✖ | — | — | — | — | — | ✅ 35% w/ prisms | ✖ | ✖ |
+| View | `#toggle` metric | Acre denom | Detail | Ratio denom | Dev metric/window | Service layers | Opacity slider | `#coloradj` |
+|---|---|---|---|---|---|---|---|---|
+| **Money** — Neighbourhood | ✅ 4 | ✅ 2 | ✅ 2 | — | — | — | — | ✅ |
+| **Money** — 100 m grid | ✅ 4 | ✅ 2 | ✅ 2 | — | — | — | ✖ fixed 60% | ✅ |
+| **Services** | ✖ | — | — | — | — | ✅ 6 | — | ✖ |
+| **Ratio** | ✖ | — | — | ✅ 3 | — | — | ✅ 5% | ✖ |
+| **Development** — Housing | ✖ | — | ✅ 3 | — | ✅ 3 × 3 | — | ✅ in grid | ✖ |
+| **Development** — Infill 🔒 | ✖ | — | — | — | ✅ 2 × 3 | — | — | ✖ |
+| **Uses** 🔒 | ✖ | — | — | — | — | — | ✅ 35% w/ prisms | ✖ |
 
 ✅ present and live · ✖ **hidden** · — not applicable · 🔒 full build only.
 Display popover (3 ramps + labels) and the camera chrome apply in every view.
 **There is no "present but greyed" state left** — the last one (`#coloradj`)
-became a hide on 2026-07-26. Where BOTH `#lens` and `#coloradj` are ✖ (Services,
-Development, Infill, Uses) the T3 column collapses entirely.
+became a hide on 2026-07-26. The `#lens` column is gone from this table because
+the control was removed the same day.
 
 ---
 
@@ -191,7 +186,7 @@ Development, Infill, Uses) the T3 column collapses entirely.
 |---|---|
 | Build flag | `DEFAULT_BUILD` / `BUILD` / `FULL_BUILD` ~L532–539 |
 | Per-view chrome + defaults | `VIEWS` L933–~1002 (`opacity` is the per-view slider default) |
-| Control DOM | `#toggle` L327, `#views` L334, `#coloradj` L346 / `#lens` L349, `#layers` sections L353–459, `#a11y` L461, `#botleft` L477 |
+| Control DOM | `#toggle` (`#metric-row` + `#revcut`), `#views`, `#layers` sections, then `#coloradj` LAST inside `#opt-body`, `#a11y`, `#botleft` |
 | Visibility gating | `applyView` L3086–~3245 (`prisms`, `moneyDetailShow`, `prismSlider`, `lensApplies`, `denomShow`, `ratioDenomShow`, `devGridShow`) |
 | Development gating | `syncDevControls` ~L2984–3020 (`ageUp` hides metric+window; `devmodeShow`) |
 | Colour-scaling pod | `syncColorAdjust` ~L2647 |

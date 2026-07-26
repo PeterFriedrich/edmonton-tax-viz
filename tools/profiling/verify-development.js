@@ -54,7 +54,6 @@ const check = (name, cond) => { (cond ? pass++ : fail++); console.log(`${cond ? 
     min: document.getElementById('legend-min').textContent,
     max: document.getElementById('legend-max').textContent,
     asideHidden: getComputedStyle(document.querySelector('#legend .aside')).display === 'none',
-    lensDisabled: document.querySelector('#lens button').disabled,
     devPickerShown: getComputedStyle(document.getElementById('devmetric')).display !== 'none',
     unitsActive: document.querySelector('#devmetric button[data-devmetric="units"]').classList.contains('active'),
     devMetric: state.devMetric,
@@ -72,7 +71,6 @@ const check = (name, cond) => { (cond ? pass++ : fail++); console.log(`${cond ? 
   check('legend min is 0', chrome.min === '0');
   check('legend max ends with +', /\+$/.test(chrome.max));
   check('aside (set-aside grey) row hidden', chrome.asideHidden);
-  check('residential lens disabled', chrome.lensDisabled);
   check('sub-metric picker shown (data has permits column)', chrome.devPickerShown);
   check('units sub-metric active by default', chrome.unitsActive && chrome.devMetric === 'units');
   if (chrome.hasDevWindow) {

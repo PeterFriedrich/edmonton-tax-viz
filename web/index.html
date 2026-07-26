@@ -39,7 +39,7 @@
     /* display:flex + interactivity on all real pods; border/bg chrome only on the
        top-level ones + the a11y popover. The inner coloradj/lens/layers read as
        borderless sections of the one #optpanel. */
-    #toggle, #views, #optpanel, #coloradj, #lens, #a11y, #a11y-menu, #about, #about-menu {
+    #toggle, #views, #optpanel, #coloradj, #a11y, #a11y-menu, #about, #about-menu {
       display: flex; pointer-events: auto;
     }
     #toggle, #views, #optpanel, #a11y, #a11y-menu, #about, #about-menu {
@@ -47,8 +47,9 @@
       border-radius: 6px; overflow: hidden;
     }
     /* The foldable Options panel: a header button (#opt-fold) toggles #opt-body,
-       which holds the presentation controls (colour scaling + residential lens,
-       left) beside the per-view detail/denominator sections (#layers, right). */
+       which stacks the per-view detail/denominator sections (#layers) above the
+       colour-scaling pod. Was a two-column row until 2026-07-26, when the
+       residential lens was removed and #coloradj moved to the bottom. */
     #optpanel { flex-direction: column; align-items: stretch; }
     /* min-width widens the FOLDED header leftward (the pod is right-anchored, so
        extra width grows to the left) — a bigger target that reaches away from the
@@ -65,22 +66,19 @@
     #optpanel.folded #opt-caret { transform: rotate(-90deg); }
     #optpanel.folded #opt-body { display: none; }
     #opt-body {
-      display: flex; flex-direction: row; align-items: flex-start;
-      gap: 12px; padding: 2px 10px 8px; border-top: 1px solid #22222e;
+      display: flex; flex-direction: column; align-items: stretch;
+      gap: 8px; padding: 2px 10px 8px; border-top: 1px solid #22222e;
     }
-    #opt-pres { display: flex; flex-direction: column; gap: 6px; }
     #optpanel #layers { padding: 0; }
     /* The inner pods carry class="panel" (position:absolute; pointer-events:none);
        they're no longer direct #controls children, so re-static them to flow inside
        #opt-body and restore pointer-events (else #layers' Detail/Denominator buttons
-       are unclickable — the flip list at the top only covers #coloradj/#lens). */
+       are unclickable — the flip list at the top only covers #coloradj). */
     #optpanel .panel { position: static; right: auto; top: auto; pointer-events: auto; }
-    /* Colour Adjustment sits ABOVE the lens controls (metric/palette/…): it's
-       about HOW colour is rendered, not WHAT you're looking at. It drives the
-       money/glass sqrt transform (scaleT) only, so it HIDES in the other views
-       — same idiom as the residential lens button, which stopped greying on
-       2026-07-25 for the same reason (greyed reads as broken). Height stays
-       linear. When both pods hide, #opt-pres collapses with them. */
+    /* Colour Adjustment: about HOW colour is RENDERED, not what you're looking
+       at, which is why it sits last in the panel. It drives the money/glass sqrt
+       transform (scaleT) only and HIDES in the other views (greyed reads as
+       broken — 2026-07-25). Height stays linear either way. */
     #coloradj { align-items: stretch; }
     #coloradj button {
       appearance: none; border: 0; background: transparent; color: #9a9ab0;
@@ -90,8 +88,8 @@
     }
     #coloradj button:hover { color: #e8e8ef; }
     #coloradj button.active { background: #fcd278; color: #16111a; font-weight: 600; }
-    /* Fallback only, same as #lens: the pod hides where it doesn't apply
-       (syncColorAdjust), so a dead-but-visible button should never paint. */
+    /* Fallback only: the pod hides where it doesn't apply (syncColorAdjust),
+       so a dead-but-visible button should never paint. */
     #coloradj button:disabled, #coloradj button:disabled:hover {
       color: #4a4a5e; cursor: default; background: transparent; font-weight: 400;
     }
@@ -154,7 +152,7 @@
     }
     #denom button:hover, #ratio-denom button:hover, #devmetric button:hover, #devwindow button:hover, #moneydetail button:hover, #devdetail button:hover, #devmode button:hover { color: #e8e8ef; }
     #denom button.active, #ratio-denom button.active, #devmetric button.active, #devwindow button.active, #moneydetail button.active, #devdetail button.active, #devmode button.active { background: #fcd278; color: #16111a; font-weight: 600; }
-    #toggle button, #palette button, #lens button {
+    #toggle button, #palette button {
       appearance: none; border: 0; background: transparent; color: #9a9ab0;
       font: 12.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       padding: 7px 15px; cursor: pointer; transition: background 0.12s, color 0.12s;
@@ -176,14 +174,9 @@
       font-size: 11px; padding: 5px 12px; flex: 1; color: #8a8a9e;
       white-space: nowrap;
     }
-    #palette button, #lens button { padding: 6px 12px; font-size: 11.5px; }
-    #toggle button:hover, #palette button:hover, #lens button:hover { color: #e8e8ef; }
-    /* The lens hides in views where it doesn't apply (applyView), so these
-       disabled styles are a fallback only — nothing should show a dead lens
-       button. The former gold-dimmed `.active:disabled` variant ("on, but
-       unavailable here") is gone with it. */
-    #lens button:disabled, #lens button:disabled:hover { color: #4a4a5e; cursor: default; }
-    #toggle button.active, #palette button.active, #lens button.active { background: #fcd278; color: #16111a; font-weight: 600; }
+    #palette button { padding: 6px 12px; font-size: 11.5px; }
+    #toggle button:hover, #palette button:hover { color: #e8e8ef; }
+    #toggle button.active, #palette button.active { background: #fcd278; color: #16111a; font-weight: 600; }
     /* Accessibility menu: a "Display" button that opens a small popover holding
        the colour-ramp picker (Inferno default; Cividis is the CVD-safe ramp) and
        the neighbourhood-labels toggle. Kept off the always-visible chrome — one
@@ -421,7 +414,7 @@
     </div>
     <div id="revcut">
       <button data-revcut="revenue_per_acre" class="active" title="Every property class — the full municipal levy the land generates">Total</button>
-      <button data-revcut="res_revenue_per_acre" title="Residential-class dollars only: houses, condos and apartment buildings. A subset of Total, not all of what the land pays. Distinct from the 'Highlight residential' lens, which fades neighbourhoods without changing the dollars">Residential</button>
+      <button data-revcut="res_revenue_per_acre" title="Residential-class dollars only: houses, condos and apartment buildings. A subset of Total, not all of what the land pays">Residential</button>
       <button data-revcut="nonres_revenue_per_acre" title="Dollars billed at the non-residential rate — commercial and industrial land. A subset of Total. Residential and Non-residential are nearly the whole levy but do not sum to it exactly: farmland is a small separate class">Non-residential</button>
     </div>
   </div>
@@ -435,16 +428,8 @@
   </div>
 
   <div id="optpanel">
-    <button id="opt-fold" title="Show or hide the detail, denominator, colour-scaling and residential-lens controls">Options<span id="opt-caret">▾</span></button>
+    <button id="opt-fold" title="Show or hide the detail, denominator and colour-scaling controls">Options<span id="opt-caret">▾</span></button>
     <div id="opt-body">
-    <div id="opt-pres">
-  <div id="coloradj" class="panel">
-    <button id="coloradj-btn" class="active" title="How colour is scaled — not what you're looking at. Click to switch: sqrt scaling spreads the values across the ramp; linear shows true magnitude (clamped at the top). Height stays linear either way.">Colour: sqrt scaling</button>
-  </div>
-  <div id="lens" class="panel">
-    <button data-lens="residential" title="Fade non-residential neighbourhoods so residential land compares like-to-like">Highlight residential</button>
-  </div>
-    </div>
   <div id="layers" class="panel">
     <span class="hd" id="moneydetail-hd">Detail</span>
     <div id="moneydetail">
@@ -549,6 +534,13 @@
       <button data-ratio-denom="servicecost" title="Property-tax revenue as a multiple of the modeled roads + fire service cost — the two levy-funded services this project can measure, NOT the total cost of city services (police, parks, transit and the rest are not included, so most neighbourhoods read well above 1×)">Per service $</button>
     </div>
   </div>
+    <!-- Colour scaling sits at the BOTTOM of the panel (Peter, 2026-07-26). It
+         is the only control here that changes how the data is DRAWN rather than
+         which data is shown, so it reads last, after the detail/denominator
+         sections it modifies. -->
+    <div id="coloradj" class="panel">
+      <button id="coloradj-btn" class="active" title="How colour is scaled — not what you're looking at. Click to switch: sqrt scaling spreads the values across the ramp; linear shows true magnitude (clamped at the top). Height stays linear either way.">Colour: sqrt scaling</button>
+    </div>
     </div>
   </div>
   </div>
@@ -1311,7 +1303,7 @@
     // `svcDriver` names the checked service that drives the colour ramp
     // (kept pointing at a checked service by applyService). Both persist
     // across view switches, matching the denominator toggle's behaviour.
-    const state = { metric: "revenue_per_acre", ramp: "current", residential: false,
+    const state = { metric: "revenue_per_acre", ramp: "current",
                     colorAdjust: true, // sqrt colour transform on (money/glass); off = linear+clamp
                     labels: false, view: "money", prismOpacity: 1, denom: "ground",
                     usesPrisms: false, // Uses-view residential prisms (off = the flat categorical view)
@@ -1459,9 +1451,6 @@
     // translucent light grey (no ramp hue — the differing colours were the visual
     // interference), so only the residential hoods carry colour. Visible but
     // see-through, so the rest of the city still reads as spatial context.
-    const LENS_FADE_COLOR = [180, 183, 190]; // uniform light grey for faded hoods
-    const LENS_FADE_ALPHA = 90;              // see-through but still readable
-    const LENS_FADE_EDGE = [150, 153, 162, 45]; // neutral roof outline for faded hoods
 
     // Linear-interpolated quantile of a pre-sorted array.
     function quantile(sorted, q) {
@@ -1474,17 +1463,6 @@
     // `key` (matches the fixed clamps' percentile), so the residential distribution
     // spreads across the full ramp instead of crushing into the low end. Cached per
     // metric; falls back to the metric's default clamp if the subset is empty.
-    const _resClampCache = {};
-    function residentialClampFor(key, fallback) {
-      if (key in _resClampCache) return _resClampCache[key];
-      const vals = state.data.features
-        .filter(f => f.properties.is_residential && f.properties[key] != null)
-        .map(f => f.properties[key])
-        .sort((a, b) => a - b);
-      // Lot-acre columns aren't in METRICS, so the caller supplies a fallback.
-      const dflt = fallback ?? (METRICS[key] && METRICS[key].colorClamp);
-      return (_resClampCache[key] = vals.length ? quantile(vals, 0.975) : dflt);
-    }
 
     // Money-view (neighbourhood prism) scale under the active denominator.
     // Ground: the metric's fixed clamp + elevation (or the residential subset
@@ -1501,7 +1479,7 @@
       if (state.denom !== "lot") {
         return {
           colKey,
-          clamp: state.residential ? residentialClampFor(colKey) : cfg.colorClamp,
+          clamp: cfg.colorClamp,
           elevationScale: cfg.elevationScale,
         };
       }
@@ -1521,7 +1499,7 @@
       const s = _moneyLotScales[colKey];
       return {
         colKey,
-        clamp: state.residential ? residentialClampFor(colKey, s.clamp) : s.clamp,
+        clamp: s.clamp,
         elevationScale: s.elevationScale,
       };
     }
@@ -1531,18 +1509,11 @@
     const moneyBlurb = () => withColourClause(
       state.denom === "lot" ? METRICS[state.metric].lotBlurb : METRICS[state.metric].blurb);
 
-    // Per-feature fill. Lens OFF: set-aside hoods grey, everything else the ramp colour
-    // at the metric clamp. Lens ON: residential hoods take the ramp colour RE-SCALED to
-    // the residential clamp; every non-residential hood (set-aside included) becomes the
-    // uniform translucent light grey.
+    // Per-feature fill: set-aside hoods grey, everything else the ramp colour at
+    // the metric clamp.
     function fillFor(f, colKey, clamp) {
       const p = f.properties;
       const v = p[colKey];
-      if (state.residential) {
-        return (p.is_residential && v != null)
-          ? colorFor(v, clamp)
-          : [LENS_FADE_COLOR[0], LENS_FADE_COLOR[1], LENS_FADE_COLOR[2], LENS_FADE_ALPHA];
-      }
       // Null value == set-aside land OR (lot mode) a hood the parcel-fraction
       // guard suppressed — either way it's off the scale, grey.
       return (p.is_set_aside || v == null) ? SET_ASIDE_COLOR : colorFor(v, clamp);
@@ -1607,12 +1578,10 @@
       const out = [];
       for (const f of features) {
         const z = (f.properties[colKey] || 0) * elevationScale;
-        const res = !!f.properties.is_residential;
         const g = f.geometry;
         const polys = g.type === "MultiPolygon" ? g.coordinates : [g.coordinates];
         for (const poly of polys) {
-          // exterior ring only; carry is_residential so the lens can dim the edge.
-          out.push({ path: poly[0].map(([x, y]) => [x, y, z]), res });
+          out.push({ path: poly[0].map(([x, y]) => [x, y, z]) }); // exterior ring only
         }
       }
       return out;
@@ -2286,11 +2255,7 @@
     // subset (hoods under that denominator's floor / set-aside excluded):
     // log-colour between p2.5 and p97.5, linear height scaled so the max kept
     // ratio reaches the other views' ~8.2 km peak (height parity across views
-    // and denominators). With the residential lens on, the COLOUR anchors
-    // rescale to the residential kept subset — the ratio analogue of
-    // residentialClampFor (FINDINGS §6.2: the non-res mill-rate skew inflates
-    // the ratio exactly where non-residential land sits). Height stays on the
-    // full-subset scale, matching the money lens (only colour rescales).
+    // and denominators).
     const _ratioScales = {};
     function ratioScale() {
       let s = _ratioScales[state.ratioDenom];
@@ -2301,15 +2266,12 @@
           const lo = quantile(vals, 0.025), hi = quantile(vals, 0.975);
           return { lo, hi, logLo: Math.log(lo), logSpan: Math.log(hi) - Math.log(lo) };
         };
-        const res = kept.filter(p => p.is_residential);
         s = _ratioScales[state.ratioDenom] = {
           all: anchorsOf(kept),
-          res: res.length ? anchorsOf(res) : anchorsOf(kept),
           elevationScale: 8220 / Math.max(...kept.map(ratioOf)),
         };
       }
-      const a = state.residential ? s.res : s.all;
-      return { ...a, elevationScale: s.elevationScale };
+      return { ...s.all, elevationScale: s.elevationScale };
     }
     const ratioT = v => {
       const s = ratioScale();
@@ -2517,14 +2479,12 @@
           elevationScale: ratioScale().elevationScale,
           getFillColor: f => {
             const p = f.properties;
-            if (state.residential && !p.is_residential)
-              return [LENS_FADE_COLOR[0], LENS_FADE_COLOR[1], LENS_FADE_COLOR[2], LENS_FADE_ALPHA];
             return ratioKept(p) ? rampColorAt(ratioT(ratioOf(p))) : SET_ASIDE_COLOR;
           },
           opacity: state.prismOpacity,
           material: { ambient: 0.55, diffuse: 0.6, shininess: 32, specularColor: [60, 60, 70] },
           pickable: false, // hood hover layer handles tooltips
-          updateTriggers: { getFillColor: [state.ramp, state.residential, state.ratioDenom],
+          updateTriggers: { getFillColor: [state.ramp, state.ratioDenom],
                             getElevation: [state.ratioDenom] },
         });
         return [...roadLayers(true), ratioPrisms, hoodHoverLayer(), ...labelLayer()];
@@ -2558,7 +2518,7 @@
         // stable, so without these deck.gl skips the accessor.
         updateTriggers: {
           getElevation: [state.metric, state.denom],
-          getFillColor: [state.metric, state.denom, state.ramp, state.residential, state.colorAdjust],
+          getFillColor: [state.metric, state.denom, state.ramp, state.colorAdjust],
         },
       });
 
@@ -2569,8 +2529,7 @@
         id: "top-edges",
         data: topRings(state.data.features, sc.colKey, sc.elevationScale),
         getPath: d => d.path,
-        // Neutral-grey the roof outline of non-residential hoods when the lens is on.
-        getColor: d => (state.residential && !d.res) ? LENS_FADE_EDGE : edge,
+        getColor: edge,
         getWidth: 1.4,
         widthUnits: "pixels",
         widthMinPixels: 1,
@@ -2579,7 +2538,7 @@
         capRounded: false,
         jointRounded: false,
         parameters: { depthTest: true },
-        updateTriggers: { getColor: [state.ramp, state.residential] },
+        updateTriggers: { getColor: [state.ramp] },
       });
 
       return [layer, topEdges, ...labelLayer()];
@@ -2777,7 +2736,7 @@
     // nothing to offer: under Value (no decomposition exists in the pipeline)
     // and on data files carrying neither cut column. Reads the buttons' own
     // computed display for the second case, so it can't drift from the data
-    // gates that hid them — same idiom as syncPresColumn.
+    // gates that hid them.
     function syncMetricButtons() {
       const rev = isRevenue(state.metric);
       document.querySelectorAll("#metric-row button").forEach(b =>
@@ -2823,13 +2782,16 @@
 
     // Sync the Colour Adjustment button to the toggle, and HIDE it in views
     // where it has no effect (services/ratio/uses/development drive colour
-    // through their own transforms, not scaleT). Hiding rather than greying
-    // matches #lens (2026-07-25): greyed #4a4a5e on a dark panel reads as
-    // *broken*, not *unavailable* — that misread produced an actual bug report.
-    // #coloradj was the last pod in this column still greying, so the two now
-    // behave identically. The label IS the state readout, so no caption.
-    // `disabled` stays in sync so the control can't be actuated while hidden,
-    // and state persists — returning to Money restores the chosen scaling.
+    // through their own transforms, not scaleT). Hiding rather than greying:
+    // greyed #4a4a5e on a dark panel reads as *broken*, not *unavailable* — that
+    // misread produced an actual bug report (2026-07-25). The label IS the state
+    // readout, so no caption. `disabled` stays in sync so the control can't be
+    // actuated while hidden, and state persists — returning to Money restores
+    // the chosen scaling.
+    //
+    // It is now the panel's ONLY presentation pod (the residential lens was
+    // removed 2026-07-26), so hiding it needs no separate column-collapse step:
+    // it is a direct child of #opt-body and takes its own row with it.
     function syncColorAdjust() {
       const applies = state.view === "money" || state.view === "glass";
       const btn = document.getElementById("coloradj-btn");
@@ -2837,20 +2799,6 @@
       btn.disabled = !applies;
       btn.textContent = state.colorAdjust ? "Colour: sqrt scaling" : "Colour: linear";
       document.getElementById("coloradj").style.display = applies ? "flex" : "none";
-      syncPresColumn();
-    }
-
-    // Collapse the whole Tier-3 column when BOTH of its pods are hidden.
-    // #coloradj bites in money/glass and #lens in money/ratio, so the column is
-    // empty in services, uses, development and infill — without this it stays in
-    // the flex row as an empty gap, which is what the Glass opacity-slider
-    // removal already left behind in Money → 100 m grid. Reads the pods' own
-    // computed display rather than re-deriving the view rules, so it cannot
-    // drift out of step with the two gates above.
-    function syncPresColumn() {
-      const shown = ["coloradj", "lens"].some(
-        id => getComputedStyle(document.getElementById(id)).display !== "none");
-      document.getElementById("opt-pres").style.display = shown ? "flex" : "none";
     }
 
     // Switch the denominator (ground vs lot acres). Shown in the Glass and
@@ -3076,13 +3024,8 @@
         document.getElementById("legend-label").textContent = ratioDenom().legend;
         document.getElementById("legend-min").textContent = "≤ " + bf(s.lo);
         document.getElementById("legend-max").textContent = bf(s.hi) + "+";
-        if (state.residential) {
-          label.textContent = "Faded — non-residential land";
-          sw.style.background = `rgb(${LENS_FADE_COLOR.join(",")})`;
-        } else {
-          label.textContent = ratioDenom().aside;
-          sw.style.background = "rgb(104,108,122)";
-        }
+        label.textContent = ratioDenom().aside;
+        sw.style.background = "rgb(104,108,122)";
       } else if (state.view === "glass") {
         // Cell-scale anchors when the grid is present; the hood-prism
         // fallback keeps the metric's hood anchors. The lens never applies
@@ -3108,16 +3051,11 @@
         document.getElementById("legend-min").textContent = cfg.legendMin;
         document.getElementById("legend-max").textContent =
           lot ? cfg.fmt(sc.clamp) + "+"
-              : (state.residential ? cfg.fmt(residentialClampFor(cfg.key)) + "+" : cfg.legendMax);
-        if (state.residential) {
-          label.textContent = "Faded — non-residential land";
-          sw.style.background = `rgb(${LENS_FADE_COLOR.join(",")})`;
-        } else {
-          label.textContent = lot
-            ? "Set aside, or too little parcel land"
-            : "Set aside — natural / undeveloped land";
-          sw.style.background = "rgb(104,108,122)";
-        }
+              : cfg.legendMax;
+        label.textContent = lot
+          ? "Set aside, or too little parcel land"
+          : "Set aside — natural / undeveloped land";
+        sw.style.background = "rgb(104,108,122)";
       }
       document.querySelector("#legend .bar").style.background = legendGradient();
     }
@@ -3146,14 +3084,6 @@
       document.querySelector("#legend .bar").style.background = legendGradient();
       document.querySelectorAll("#palette button").forEach(b =>
         b.classList.toggle("active", b.dataset.ramp === name));
-    }
-
-    // Toggle the residential-only lens: fade non-residential hoods translucent.
-    function applyLens() {
-      state.residential = !state.residential;
-      overlay.setProps({ layers: buildLayers() });
-      document.querySelector("#lens button").classList.toggle("active", state.residential);
-      refreshLegend();
     }
 
     // Toggle the neighbourhood-name labels (accessibility-menu checkbox).
@@ -3350,18 +3280,6 @@
       document.getElementById("prism-row").style.display = prismSlider ? "flex" : "none";
       document.getElementById("services-hd").style.display = v === "services" ? "block" : "none";
       document.getElementById("services").style.display = v === "services" ? "block" : "none";
-      // The lens applies in Money and Ratio. In Services the per-hood signal
-      // is service supply, not the money metric, in Uses residential land is
-      // already an explicit category, and in Glass (Money's 100 m grid) the grid
-      // cells carry no residential flag. Elsewhere the button is HIDDEN, not
-      // greyed: greyed-out read as broken rather than unavailable (it was
-      // reported as "the highlight residential button doesn't work"), and every
-      // other per-view control hides. `disabled` stays in sync so the control
-      // can't be actuated while out of view. State persists and re-applies on
-      // returning to a view where it bites.
-      const lensApplies = v === "money" || v === "ratio";
-      document.getElementById("lens").style.display = lensApplies ? "flex" : "none";
-      document.querySelector("#lens button").disabled = !lensApplies;
       if ((v === "services" || v === "ratio") && !roadsData) {
         roadsFetch ??= fetch(ROADS_URL).then(r => r.json()).then(d => { roadsData = d; });
         await roadsFetch;
@@ -3525,7 +3443,6 @@
         b.addEventListener("click", () => applyMetric(b.dataset.revcut)));
       document.querySelectorAll("#palette button").forEach(b =>
         b.addEventListener("click", () => applyPalette(b.dataset.ramp)));
-      document.querySelector("#lens button").addEventListener("click", applyLens);
       document.getElementById("labels-on").addEventListener("change",
         e => applyLabels(e.target.checked));
       // The two bottom-right popovers (Display, Sources) open/close the same
