@@ -34,7 +34,11 @@ follows that order** — set with CSS `order:` on `#controls`, not DOM order
   largest type on screen since 2026-07-25 (14px, vs 12.5px `#toggle` and 11.5px
   modifiers) so the rendering matches the tier — it previously tied for smallest.
 - **Tier 2 — WHICH variant** of the current view: `#toggle` (`order: 2`, Money's
-  metric picker) plus everything in `#layers`.
+  metric picker) plus everything in `#layers`. **`#toggle` is itself two-level
+  since 2026-07-26** — a quantity row (Revenue | Value) with a revenue-cut row
+  (Total | Residential | Non-residential) nested under it. It is the only control
+  that nests *within* a tier; the nesting mirrors the data (`levy == res + nonres
+  + farmland`), so it is not a new tier.
 - **Tier 3 — HOW it's drawn** (presentation modifiers): `#coloradj`, `#lens`.
 - **Out of the tier flow:** the `#a11y` **Display** popover (colour ramp +
   neighbourhood labels), bottom-right.
@@ -90,7 +94,7 @@ data guard, so nothing is stripped from the file.
 |---|---|---|---|
 | `#coloradj` | `Colour: sqrt scaling` / `Colour: linear` (the label **is** the state) | **Money** — both detail modes | **HIDDEN** (`display:none`, 2026-07-26 — was greyed) |
 | `#lens` | `Highlight residential` | **Money → Neighbourhood, Ratio** | **HIDDEN** (`display:none`, 2026-07-25 — was greyed) |
-| `#toggle` (T2, listed here for the comparison) | `Revenue · Value · Residential $ · Non-res $` | **Money** — both detail modes | **HIDDEN** (regroup, 2026-07-23 — was live-but-inert) |
+| `#toggle` (T2, listed here for the comparison) | **two rows**: `Revenue \| Value` over `Total \| Residential \| Non-residential` (2026-07-26) | **Money** — both detail modes | **HIDDEN** (regroup, 2026-07-23 — was live-but-inert) |
 | `#palette`, `Labels` | 3 ramps; hood names on/off | — | moved into the `#a11y` **Display** popover; apply everywhere (palette is n/a in Uses' categorical legend) |
 
 **All three inconsistencies in this table are now fixed.** `#toggle` used to stay
@@ -114,8 +118,8 @@ has at least one section to show.
 
 | View / mode | Controls shown | Data-gate | Dynamic rules |
 |---|---|---|---|
-| **Money → Neighbourhood** | `#moneydetail` (Neighbourhood / 100 m grid); `#denom` headed **"Denominator"** | `#moneydetail` unconditional; `#denom` on `hasHoodLot` | `#lens` + `#coloradj` both live |
-| **Money → 100 m grid** (`glass`) | same `#moneydetail`; `#denom` **relabelled "Spike denominator"** | `gridData.hasLot` | **no `#prism-row`** — opacity fixed at 60%, re-applied on entry (2026-07-25); `#lens` hides, `#coloradj` stays live |
+| **Money → Neighbourhood** | `#moneydetail` (Neighbourhood / 100 m grid); `#denom` headed **"Denominator"** | `#moneydetail` unconditional; `#denom` on `hasHoodLot` | `#lens` + `#coloradj` both live; `#revcut` (in `#toggle`, on the map) offers the 3 revenue cuts |
+| **Money → 100 m grid** (`glass`) | same `#moneydetail`; `#denom` **relabelled "Spike denominator"** | `gridData.hasLot` | **no `#prism-row`** — opacity fixed at 60%, re-applied on entry (2026-07-25); `#lens` hides, `#coloradj` stays live; `#revcut` still offered (the grid carries the cut columns, `col >= 0` fallback) |
 | **Services** | `#services` — 6 rows: Roads · Stormwater · Fire · Water/sewer · Transit · Service cost. Each = on/off checkbox + a "colour" driver radio | rows self-gate on their columns | radios appear only when **≥2** are checked; the driver always names a *checked* service (unchecking it hands the ramp on); fire/transit draw their dots whenever checked, driver or not |
 | **Ratio** | `#ratio-denom` (Per road metre / Per fire event / Per service $); `#prism-row` opacity slider, default 5% | `hasFire \|\| hasSvcCost` (else roads-only, control hidden) | **the only view that also shows the `#prism-hd` "Money plane" header** |
 | **Uses** 🔒 | `#uses-prisms` (Height = share zoned residential); `#prism-row` while prisms on, default 35% | — | legend swaps to categorical |

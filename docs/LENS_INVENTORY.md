@@ -43,7 +43,7 @@ system in `CONTROLS_MATRIX.md`.
 
 | Pod | Bites in | Everywhere else |
 |---|---|---|
-| `#toggle` — Revenue · Value · Residential $ · Non-res $ | Money (both detail modes) | **HIDDEN** (`display:none`) — Money-scoped since the regroup |
+| `#toggle` — **two rows**: Revenue \| Value, with Total \| Residential \| Non-residential nested under Revenue (2026-07-26) | Money (both detail modes) | **HIDDEN** (`display:none`) — Money-scoped since the regroup |
 | `#lens` — **Highlight residential** | Money → Neighbourhood, Ratio | **HIDDEN** + `disabled` (2026-07-25; greyed read as *broken*) |
 | `#coloradj` — `Colour: sqrt scaling` / `Colour: linear` | Money (both detail modes) | **HIDDEN** + `disabled` (2026-07-26; same reason as `#lens`) |
 
@@ -65,11 +65,20 @@ and Infill show no presentation column at all. `DECISIONS.md` 2026-07-26.
 
 ### 1. Money *(default)*
 The revenue/value prisms — the money plane.
-- **Metric** (`#toggle`): **Revenue** ($/acre) · **Value** (assessed $/acre) ·
-  **Residential $** (residential-class tax $/acre — a subset of Revenue) ·
-  **Non-res $** (non-residential-rate tax $/acre — the complement). The last two
-  are column-guarded (hidden on older data), **not** build-gated: public gets all
-  four.
+- **Metric** (`#toggle`) — **two levels since 2026-07-26.** Row 1 is the
+  *quantity*: **Revenue** ($/acre) · **Value** (assessed $/acre). Row 2, shown
+  only under Revenue, is *which classes*: **Total** (default) · **Residential**
+  (houses, condos, apartments) · **Non-residential** (commercial + industrial
+  rate slices).
+  - The nesting is the data's own shape: `levy == res + nonres + farmland`
+    (`DECISIONS.md` 2026-07-18), so the cuts are genuine subsets of Total. They
+    do **not** sum to it exactly — farmland is a small separate class.
+  - **Value is a leaf** and the row hides under it: the pipeline emits no
+    res/nonres decomposition of assessed value.
+  - The two cuts stay column-guarded (hidden on older data files, and the whole
+    row collapses if neither exists), **not** build-gated: public gets all four
+    combinations. Still 4 reachable metrics — this regrouped them, it did not
+    add or remove any.
 - **Detail** (`#moneydetail`): **Neighbourhood** (solid hood prisms, default) ·
   **100 m grid** — internally the `glass` view: translucent grid-cell spikes over
   a neutral hood plane. Offered unconditionally (graceful fallback if the grid

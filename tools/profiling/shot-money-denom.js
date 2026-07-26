@@ -23,7 +23,7 @@ const [url] = process.argv.slice(2);
   console.log('wrote money-lot.png');
 
   // value metric, lot mode — the biggest reshuffle (Downtown vs river valley)
-  await click('#toggle button[data-metric="value_per_acre"]');
+  await click('#metric-row button[data-metric="value"]');
   await page.waitForTimeout(2500);
   await page.screenshot({ path: 'money-lot-value.png' });
   console.log('wrote money-lot-value.png');
