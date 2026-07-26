@@ -27,7 +27,20 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
+      # HEARTBEAT_TOKEN (repo secret, contents:write on this repo only) is the
+      # credential the heartbeat commit pushes with — see SPEC_deployment
+      # "Staying awake". GitHub auto-disables cron workflows after 60 days of
+      # repo inactivity, and commits pushed with the default GITHUB_TOKEN are
+      # not reliably counted as activity; a PAT push is. FALLS BACK to
+      # github.token when the secret is absent, so the workflow behaves exactly
+      # as before on a fork, or if the token is revoked/never set.
+      #
+      # Unlike GITHUB_TOKEN, a PAT push DOES trigger workflows — safe here
+      # because the commit step stages `web/data` only, and deploy.yml excludes
+      # `web/data/**`. Widening what gets staged would start a deploy loop.
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          token: ${{ secrets.HEARTBEAT_TOKEN || github.token }}
 
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
         with:
@@ -103,12 +116,23 @@ jobs:
         run: |
           git config user.name  "data-bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # Stage ONLY web/data — deploy.yml excludes web/data/**, so this is
+          # what keeps a PAT-authenticated push from triggering a second deploy.
           git add web/data
-          # git is the change detector: status.json's last_checked bumps daily
-          # (the heartbeat), so this normally commits; on a same-day re-run with
-          # no change, commit/push no-op gracefully.
-          git commit -m "Auto-refresh map data ($(date -u +%Y-%m-%d))" || echo "Nothing to commit."
-          git push || echo "Nothing to push."
+          # git is the change detector: status.json's last_checked bumps every
+          # run (the heartbeat), so this normally has something to commit; a
+          # same-day re-run with identical output legitimately has nothing.
+          # Tested explicitly rather than with `|| echo`, because that form also
+          # swallows REAL failures — an expired HEARTBEAT_TOKEN would fail the
+          # push, report green, and take the heartbeat down silently. That is
+          # the exact failure mode this heartbeat exists to prevent, so both
+          # commit and push are allowed to fail the run.
+          if git diff --cached --quiet; then
+            echo "No changes to commit (same-day re-run with identical output)."
+          else
+            git commit -m "Auto-refresh map data ($(date -u +%Y-%m-%d))"
+            git push
+          fi
 
       # Two-build emit (docs/PLAN_public_release.md §2a): fan web/ out into
       # _site/ = public root + _site/full/ = specialist, sharing the just-

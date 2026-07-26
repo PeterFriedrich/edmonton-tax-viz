@@ -118,10 +118,40 @@ failed; fine once, investigate if it repeats).
 ## 3. The schedule went to sleep
 
 GitHub auto-disables cron workflows after 60 days without repo activity. The
-heartbeat commit normally prevents this, but `GITHUB_TOKEN` commits don't
-always reset the timer (SPEC_deployment "Staying awake"). If `last_checked`
-in status.json goes stale > 1 week: Actions tab → "Refresh map data" →
-Enable workflow → Run workflow.
+heartbeat commit is what normally prevents this, but commits pushed with the
+default `GITHUB_TOKEN` don't reliably reset the timer (SPEC_deployment
+"Staying awake").
+
+**How you find out (2026-07-26).** You no longer have to notice. The site
+raises its own banner when `status.json`'s `last_checked` is more than
+**14 days** old — two missed weekly runs. That check runs in the browser off
+the manifest's age, so it fires no matter *why* the pipeline stopped: disabled
+schedule, expired token, broken workflow, or a run that never got to the commit
+step. A banner the backend set (e.g. the year-alignment hold) always wins over
+it.
+
+**Recovery:** Actions tab → "Refresh map data" → Enable workflow → Run
+workflow. The banner clears itself on the next successful run — there is no
+`--clear-banner` to remember, because nothing ever wrote it down.
+
+### The heartbeat token (`HEARTBEAT_TOKEN`)
+
+`refresh.yml` checks out with `secrets.HEARTBEAT_TOKEN` when it exists and
+falls back to `github.token` when it doesn't, so the workflow runs either way —
+the secret is an *upgrade*, not a dependency. A push authenticated by a PAT
+counts as repo activity; one by `GITHUB_TOKEN` may not.
+
+To create or rotate it: GitHub → Settings → Developer settings →
+**Fine-grained tokens** → repo access limited to `edmonton-tax-viz`, repository
+permission **Contents: Read and write** (nothing else). Add it at repo →
+Settings → Secrets and variables → Actions → `HEARTBEAT_TOKEN`.
+
+**Fine-grained tokens expire (366 days max), and that is fine here.** When it
+lapses the push fails and the whole run goes red — GitHub emails you about a
+failed scheduled workflow, and the staleness banner appears within 14 days as
+the backstop. The failure is loud by construction: the commit step deliberately
+does *not* use `git push || true`, because that form reports green while the
+heartbeat quietly dies.
 
 ## 4. Wrong numbers suspected on the live site
 

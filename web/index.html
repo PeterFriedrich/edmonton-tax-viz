@@ -606,6 +606,16 @@
     // Status manifest (provenance + optional maintenance banner). no-store so a
     // banner the backend sets is picked up without waiting out CDN caching.
     const STATUS_URL = "./data/status.json";
+    // Staleness fallback (docs/RUNBOOK.md §3). The backend banner only ever
+    // appears if a run SET it — but the failure we most need to surface is the
+    // pipeline not running AT ALL (GitHub auto-disables cron workflows after 60
+    // idle days; an expired heartbeat PAT does the same). In that world there is
+    // nothing left server-side to raise a flag, so the page raises it from the
+    // manifest's own age. last_checked bumps on EVERY run (generated only bumps
+    // when the data content changes), so a stale last_checked means no run
+    // happened — which is exactly the question. Threshold is two missed weekly
+    // runs: one flaky run should not put a warning in front of every visitor.
+    const STALE_DAYS = 14;
     const CENTER = [-113.50, 53.52]; // Edmonton, from the data centroid
     // The default framing — single source for the map constructor and the two
     // bottom-left framing buttons. HOME is the tilted 3D default; HOME_2D is the
@@ -3645,15 +3655,32 @@
       // Sync the legend gradient to the default ramp (single source of truth).
       document.querySelector("#legend .bar").style.background = legendGradient();
 
+      // Returns banner text when the manifest has gone stale, else null. Every
+      // way of being unsure returns null — a missing/garbled last_checked, or a
+      // date in the future (the visitor's clock is behind the build, which is
+      // not staleness) must not manufacture a warning about data that is fine.
+      const stalenessBanner = s => {
+        const t = Date.parse(`${s.last_checked}T00:00:00Z`);
+        if (!Number.isFinite(t)) return null;
+        const days = Math.floor((Date.now() - t) / 86400000);
+        if (days < STALE_DAYS) return null;
+        return `Automatic updates may have stopped — data last checked `
+             + `${s.last_checked} (${days} days ago). The map still works; the `
+             + `figures are as of that date.`;
+      };
+
       // Optional maintenance banner from the status manifest. Fetched defensively
       // and separately from the map data — a missing/broken status.json must never
       // blank the map.
       fetch(STATUS_URL, { cache: "no-store" })
         .then(r => r.ok ? r.json() : null)
         .then(s => {
-          if (s && s.banner) {
+          // A backend banner (e.g. the year-alignment hold) is the more specific
+          // message and always wins; staleness is the fallback below it.
+          const msg = s && (s.banner || stalenessBanner(s));
+          if (msg) {
             const el = document.getElementById("banner");
-            el.textContent = s.banner;
+            el.textContent = msg;
             el.style.display = "block";
           }
           // Data vintages for the Sources pod come from the SAME manifest the

@@ -8,7 +8,7 @@ check `git` / `pytest` directly — do not restate it here, it only goes stale.
 Session summaries (`session-summary/`) are dated *narratives* of what happened and
 why. This file owns *what's left*. When they disagree, this file wins.
 
-_Last reconciled: 2026-07-25_
+_Last reconciled: 2026-07-26_
 
 ## Open work
 
@@ -237,8 +237,18 @@ _Last reconciled: 2026-07-25_
     (`scripts/check_unmatched_names.py` + `data/expected_unmatched.json`, wired
     into `refresh.yml`; fails the build on a new money-path unmatched name). See
     the data-integrity audit §4 item below for scope detail.
-  - [ ] **P2.2 Heartbeat PAT** (= the deployment follow-on below, bumped from
-    "watch" to "do": 60-day Action auto-disable means silently stale public data).
+  - [x] ~~**P2.2 Heartbeat PAT**~~ — DONE 2026-07-26, built as *two* halves
+    because the PAT alone leaves the failure invisible when the PAT itself
+    expires: (a) `refresh.yml` checks out with
+    `${{ secrets.HEARTBEAT_TOKEN || github.token }}`, (b) the frontend ages
+    `status.json`'s `last_checked` and raises the banner past `STALE_DAYS = 14`,
+    (c) the commit step no longer swallows push failures green.
+    `verify-staleness-banner.js`, `DECISIONS.md` 2026-07-26, `RUNBOOK.md` §3.
+    - [ ] **Peter — one manual step left: create `HEARTBEAT_TOKEN`.** Fine-grained
+      PAT, repo access `edmonton-tax-viz` only, Contents: Read and write, nothing
+      else → repo Settings → Secrets and variables → Actions. Until it exists the
+      workflow runs exactly as before (the fallback), so nothing is broken
+      meanwhile — only the prevention half is dormant. Steps in `RUNBOOK.md` §3.
   - [x] ~~P2.3 Security/PII checklist pass~~ — done 2026-07-09 (Session 33,
     Fable audit): all boxes ticked/dated with evidence; scope updated to the
     Phase-2 static-site + CI surface. **Findings logged, not fixed** — see
@@ -1176,8 +1186,9 @@ _Last reconciled: 2026-07-25_
     `--clear-banner`.
   - [ ] Per-year archive filenames (`web/data/YYYY.geojson`, keep-not-overwrite) for
     the future UI year selector.
-  - [ ] **Heartbeat watch:** if the schedule auto-disables after 60 days idle, add a
-    repo-scoped PAT for the heartbeat commit (SPEC "Staying awake").
+  - [x] ~~**Heartbeat watch:**~~ DONE 2026-07-26 — didn't wait for it to sleep;
+    added the repo-scoped PAT (with fallback) *plus* a client-side staleness
+    banner. Same item as P2.2 above; see there for the remaining manual step.
   - [ ] Optional tidy: delete merged branches on origin (`feature/phase2-web`,
     `feature/deployment`, `chore/node24-actions`, and the three audit-session
     branches from 2026-07-01: `docs/data-integrity-audit-brief`,
