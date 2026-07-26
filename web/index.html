@@ -77,8 +77,10 @@
     #optpanel .panel { position: static; right: auto; top: auto; pointer-events: auto; }
     /* Colour Adjustment sits ABOVE the lens controls (metric/palette/…): it's
        about HOW colour is rendered, not WHAT you're looking at. It drives the
-       money/glass sqrt transform (scaleT) only, so it disables in the other
-       views — same idiom as the residential lens button. Height stays linear. */
+       money/glass sqrt transform (scaleT) only, so it HIDES in the other views
+       — same idiom as the residential lens button, which stopped greying on
+       2026-07-25 for the same reason (greyed reads as broken). Height stays
+       linear. When both pods hide, #opt-pres collapses with them. */
     #coloradj { align-items: stretch; }
     #coloradj button {
       appearance: none; border: 0; background: transparent; color: #9a9ab0;
@@ -88,6 +90,8 @@
     }
     #coloradj button:hover { color: #e8e8ef; }
     #coloradj button.active { background: #fcd278; color: #16111a; font-weight: 600; }
+    /* Fallback only, same as #lens: the pod hides where it doesn't apply
+       (syncColorAdjust), so a dead-but-visible button should never paint. */
     #coloradj button:disabled, #coloradj button:disabled:hover {
       color: #4a4a5e; cursor: default; background: transparent; font-weight: 400;
     }
@@ -2754,17 +2758,36 @@
       refreshLegend(); // legendGradient reads the transform through scaleT
     }
 
-    // Sync the Colour Adjustment button to the toggle, and grey it out in views
-    // where it has no effect (services/ratio/uses drive colour through their own
-    // transforms, not scaleT). The label IS the state readout — it names the
-    // scaling currently in effect, so no separate caption is needed.
+    // Sync the Colour Adjustment button to the toggle, and HIDE it in views
+    // where it has no effect (services/ratio/uses/development drive colour
+    // through their own transforms, not scaleT). Hiding rather than greying
+    // matches #lens (2026-07-25): greyed #4a4a5e on a dark panel reads as
+    // *broken*, not *unavailable* — that misread produced an actual bug report.
+    // #coloradj was the last pod in this column still greying, so the two now
+    // behave identically. The label IS the state readout, so no caption.
+    // `disabled` stays in sync so the control can't be actuated while hidden,
+    // and state persists — returning to Money restores the chosen scaling.
     function syncColorAdjust() {
       const applies = state.view === "money" || state.view === "glass";
       const btn = document.getElementById("coloradj-btn");
       btn.classList.toggle("active", state.colorAdjust);
       btn.disabled = !applies;
       btn.textContent = state.colorAdjust ? "Colour: sqrt scaling" : "Colour: linear";
-      document.getElementById("coloradj").classList.toggle("disabled", !applies);
+      document.getElementById("coloradj").style.display = applies ? "flex" : "none";
+      syncPresColumn();
+    }
+
+    // Collapse the whole Tier-3 column when BOTH of its pods are hidden.
+    // #coloradj bites in money/glass and #lens in money/ratio, so the column is
+    // empty in services, uses, development and infill — without this it stays in
+    // the flex row as an empty gap, which is what the Glass opacity-slider
+    // removal already left behind in Money → 100 m grid. Reads the pods' own
+    // computed display rather than re-deriving the view rules, so it cannot
+    // drift out of step with the two gates above.
+    function syncPresColumn() {
+      const shown = ["coloradj", "lens"].some(
+        id => getComputedStyle(document.getElementById(id)).display !== "none");
+      document.getElementById("opt-pres").style.display = shown ? "flex" : "none";
     }
 
     // Switch the denominator (ground vs lot acres). Shown in the Glass and

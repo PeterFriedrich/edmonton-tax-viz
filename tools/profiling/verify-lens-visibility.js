@@ -1,11 +1,14 @@
-// Verify for the residential-lens visibility rule + the Colour-scaling label
-// (2026-07-25). The lens now HIDES in views where it has no effect instead of
-// greying out (greyed read as broken — it was reported as "the highlight
-// residential button doesn't work"). Checks: the lens shows ONLY in Money
-// (neighbourhood) and Ratio, is really clickable and toggles there, is absent in
-// Services / Development / Money's 100 m grid, and that lens state survives a
-// hide/show round-trip. Also asserts the Colour button's label carries its own
-// state (no separate caption element) and that the pod stopped sticking out.
+// Verify for the Tier-3 modifier pods (#lens + #coloradj) and the column that
+// holds them. Both now HIDE in views where they have no effect rather than
+// greying out — greyed #4a4a5e on a dark panel reads as *broken*, which
+// produced a real bug report ("the highlight residential button doesn't work").
+// #lens stopped greying 2026-07-25; #coloradj followed 2026-07-26, and because
+// the column can now be entirely empty it collapses too (it was left as a
+// visible gap by the Glass opacity-slider removal).
+// Checks: #lens shows only in Money(neighbourhood)+Ratio, #coloradj only in
+// Money+100m grid, each really clickable where shown, #opt-pres collapses where
+// both hide, #layers still fills the panel there, and both pods' state survives
+// a hide/show round-trip. Also the Colour label carries its own state.
 //   node verify-lens-visibility.js <url>
 const { chromium } = require('playwright');
 const [url] = process.argv.slice(2);
@@ -26,14 +29,24 @@ const [url] = process.argv.slice(2);
     console.log(`${cond ? 'PASS' : 'FAIL'}  ${name}${extra ? '  ' + extra : ''}`);
     if (!cond) fail++;
   };
-  const lens = () => page.evaluate(() => {
-    const pod = document.getElementById('lens'), b = pod.querySelector('button');
-    const r = b.getBoundingClientRect();
-    const at = r.width ? document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2) : null;
-    return { shown: pod.offsetParent !== null, disabled: b.disabled,
-             active: b.classList.contains('active'), hitIsBtn: at === b,
-             res: state.residential, view: state.view };
+  // Both Tier-3 pods plus the column that holds them. #coloradj joined #lens in
+  // hiding on 2026-07-26, so the column can now be entirely empty and has to
+  // collapse with them — probed here rather than in a second script that could
+  // drift out of step with this one.
+  const pods = () => page.evaluate(() => {
+    const info = id => {
+      const pod = document.getElementById(id), b = pod.querySelector('button');
+      const r = b.getBoundingClientRect();
+      const at = r.width ? document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2) : null;
+      return { shown: pod.offsetParent !== null, disabled: b.disabled,
+               active: b.classList.contains('active'), hitIsBtn: at === b };
+    };
+    return { ...info('lens'), coloradj: info('coloradj'),
+             presShown: document.getElementById('opt-pres').offsetParent !== null,
+             layersShown: document.getElementById('layers').offsetParent !== null,
+             res: state.residential, sqrt: state.colorAdjust, view: state.view };
   });
+  const lens = pods;   // the pre-existing lens checks read the spread-in lens fields
   const goView = async v => {
     await page.click(`#views button[data-view="${v}"]`);
     await page.waitForTimeout(2500);
@@ -88,6 +101,8 @@ const [url] = process.argv.slice(2);
         back.shown === true && back.res === true && back.active === true);
 
   // --- hidden in every other visible view; shown in ratio
+  // Expected per view: #lens bites in money+ratio, #coloradj in money+glass, so
+  // the T3 column is EMPTY in services/uses/development and must collapse.
   const views = await page.evaluate(() =>
     [...document.querySelectorAll('#views button')].filter(b => b.offsetParent !== null)
       .map(b => b.dataset.view));
@@ -101,9 +116,35 @@ const [url] = process.argv.slice(2);
     } else {
       check(`[${v}] lens hidden, not greyed`, s.shown === false && s.disabled === true);
     }
+    // #coloradj drives the money/glass sqrt transform only.
+    check(`[${v}] coloradj hidden, not greyed`,
+          s.coloradj.shown === false && s.coloradj.disabled === true);
+    const wantPres = v === 'ratio';
+    check(`[${v}] T3 column ${wantPres ? 'stays open' : 'collapses (both pods hidden)'}`,
+          s.presShown === wantPres);
+    // Why #optpanel itself needs no collapse logic: every view with an empty T3
+    // column still has a #layers section, so the panel is never wholly empty.
+    // If this ever fails, #optpanel needs the same treatment as #opt-pres.
+    if (!wantPres) check(`[${v}] Options panel still has content (#layers)`, s.layersShown === true);
   }
   await goView('money');
-  check('[money] still live after the tour', (await lens()).disabled === false);
+  const tour = await lens();
+  check('[money] still live after the tour', tour.disabled === false);
+  check('[money] coloradj live again after the tour', tour.coloradj.shown === true
+        && tour.coloradj.disabled === false && tour.coloradj.hitIsBtn === true);
+  check('[money] T3 column reopens', tour.presShown === true);
+
+  // --- coloradj state survives the hide/show round-trip, like the lens does
+  await page.click('#coloradj-btn');            // -> linear
+  await page.waitForTimeout(1200);
+  check('[money] switched to linear', (await lens()).sqrt === false);
+  await goView('services');
+  check('[services] coloradj hidden while linear is set', (await lens()).coloradj.shown === false);
+  await goView('money');
+  const rt = await lens();
+  check('[money] linear survived the hide/show round-trip', rt.sqrt === false);
+  check('[money] label still reads the restored state',
+        (await page.textContent('#coloradj-btn')).trim() === 'Colour: linear');
 
   console.log(fail ? `\n${fail} CHECK(S) FAILED` : '\nALL CHECKS PASSED');
   await browser.close();
