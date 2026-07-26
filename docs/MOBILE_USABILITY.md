@@ -155,7 +155,10 @@ primary switch.
   back to **12.5px / 7px 11px** in the `@media` block: at 14px the four public
   views no longer fit one 390px row, and wrapping the primary control costs more
   than the extra size buys. Measured after: one row at 390px for both the 4-view
-  public and 5-view full builds, no left clip.
+  public and 5-view full builds, no left clip. **The phone scale-back was
+  reviewed and LOCKED 2026-07-26** (Peter) — it is a deliberate choice, not an
+  unfinished edge: 12.5px still out-ranks the 11.5px modifiers, so Tier-1
+  primacy still reads on a phone. `DECISIONS.md` 2026-07-26.
 - **(b) POSITION — still open.** It's still a strip at the very top; that's the
   hierarchy question the **move-2 fork feeds into** (a bottom-sheet would let the
   view-picker sit on the always-visible collapsed bar). Applies to desktop too.

@@ -128,7 +128,15 @@ the methods page carrying the caveats. **No code change proposed.**
 
 ## 4. The actual gap list (ranked)
 
-### P1 — Public front door (NEW work; the real Tier 0 now)
+> **STATUS 2026-07-26 — P1 and P2 are COMPLETE. The plan is done except P3
+> (blocked) and P4 (optional).** Per-item status is marked inline below. What
+> remains: **P3** is laptop-only (edmonton.ca is unreachable from the Oracle box
+> — re-confirmed 2026-07-26) and **P4** is polish, of which the colour-blind
+> half is *already shipped* (the `cividis` ramp has been selectable in the
+> Display popover all along; this doc was stale in listing it as to-do). So
+> nothing on this plan gates a public link any more.
+
+### P1 — Public front door (NEW work; the real Tier 0 now) — ✅ ALL DONE
 
 The analysis is audited; the *storefront* isn't. A skeptical reviewer's path is
 site → "where do these numbers come from?" → README/methods, and today that
@@ -138,12 +146,12 @@ path dead-ends:
    "Tooling: QGIS", and "parcel data via AltaLIS or FOIP — still being pursued".
    All pre-build and wrong (the pipeline is Python-only; the parcel question was
    resolved via `dkk9-cj3x` lot sizes + the dedupe). **Done in this PR.**
-2. **In-app attribution/methods affordance** — the live map has **no link to
+2. ✅ **DONE 2026-07-25/26 (PRs #94, #95, #97).** **In-app attribution/methods affordance** — the live map had **no link to
    the repo, data sources, or methodology** (verified: nothing in
    `web/index.html`). Add a small footer/info control: data source + assessment
    year, "modeled, not billed" pointer for utility layers, link to the repo /
    methods page. Highest credibility-per-effort item on the list.
-3. **A single readable METHODS page** — distill the FINDINGS docs into one
+3. ✅ **DONE 2026-07-09 (PR #32).** **A single readable METHODS page** — distill the FINDINGS docs into one
    public-facing methodology note: metric definitions; ground vs lot-acre
    denominators + the 15% guard; the set-aside layer; the WEM/condo cardinality
    story (this is where the memo's Tier-0 worry gets answered *proactively* —
@@ -151,15 +159,15 @@ path dead-ends:
    vulnerabilities); utility model formulas + validation ratios; fire caveats.
    Nearly all content exists across `FINDINGS_*.md`; the work is curation.
 
-### P2 — Ops/correctness hardening (existing TODO items, priority-bumped by the release)
+### P2 — Ops/correctness hardening — ✅ ALL DONE
 
-4. **CI unmatched-set assertion** (audit §4) — fail-loud on hood-name drift
+4. ✅ **DONE 2026-07-11.** **CI unmatched-set assertion** (audit §4) — fail-loud on hood-name drift
    instead of warn-silent. A public site auto-refreshing weekly should not be
    able to silently drop a neighbourhood.
-5. **Heartbeat PAT** (SPEC_deployment "Staying awake") — the scheduled Action
+5. ✅ **DONE 2026-07-26 (PR #96)** — built as prevention *plus* detection, since the PAT alone fails silently when the PAT itself expires: the workflow uses `secrets.HEARTBEAT_TOKEN || github.token`, AND the frontend ages `last_checked` to raise its own staleness banner past 14 days. One manual step outstanding: Peter creating the secret (`RUNBOOK.md` §3). **Heartbeat PAT** (SPEC_deployment "Staying awake") — the scheduled Action
    auto-disables after 60 idle days; on a public site that means silently
    stale data. Bumped from "watch" to "do before release".
-6. **Security/PII checklist pass** — `docs/security-audit.md` exists but its
+6. ✅ **DONE 2026-07-09.** **Security/PII checklist pass** — `docs/security-audit.md` exists but its
    boxes are unchecked. Run it once for real (PII in processed outputs/logs,
    gitignore coverage, dependency pins) and tick/date it.
 
@@ -173,7 +181,7 @@ path dead-ends:
 
 ### P4 — Polish (nice-to-have, not gating)
 
-8. Colourblind (cividis) mode + light mode; top-cap edge colour; the
+8. ~~Colourblind (cividis) mode~~ **already shipped** — the `cividis` ramp is selectable in the Display popover and labelled colour-vision-deficiency-safe; this line was stale. Still open: light mode; top-cap edge colour; the
    colour-scale (post-exempt-split) decision item; deferred zoom bundle.
 
 ### Explicitly NOT doing pre-release

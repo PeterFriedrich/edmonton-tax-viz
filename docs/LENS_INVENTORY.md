@@ -45,13 +45,14 @@ system in `CONTROLS_MATRIX.md`.
 |---|---|---|
 | `#toggle` — Revenue · Value · Residential $ · Non-res $ | Money (both detail modes) | **HIDDEN** (`display:none`) — Money-scoped since the regroup |
 | `#lens` — **Highlight residential** | Money → Neighbourhood, Ratio | **HIDDEN** + `disabled` (2026-07-25; greyed read as *broken*) |
-| `#coloradj` — `Colour: sqrt scaling` / `Colour: linear` | Money (both detail modes) | **GREYED** (`.disabled`) — the remaining inconsistency; see below |
+| `#coloradj` — `Colour: sqrt scaling` / `Colour: linear` | Money (both detail modes) | **HIDDEN** + `disabled` (2026-07-26; same reason as `#lens`) |
 
 The button label **is** the state readout for `#coloradj` (no caption since
-2026-07-25). ⚠️ **Open decision:** `#coloradj` still greys where `#lens` now
-hides, so the two pods in the same column behave differently — in Development you
-get a lone dim "Colour: sqrt scaling". Tracked in `TODO.md` + `DECISIONS.md`
-2026-07-25; decide as a pair.
+2026-07-25). **Nothing in this column greys any more** — `#coloradj` joined
+`#lens` in hiding on 2026-07-26, closing the last "greyed reads as broken"
+instance. Because both pods can now be hidden, the column that holds them
+(`#opt-pres`) **collapses when neither applies** — Services, Uses, Development
+and Infill show no presentation column at all. `DECISIONS.md` 2026-07-26.
 
 > ⚠️ **Highlight residential** (a *fade lens* on ≥50% residential zoned area) is
 > **not** the **Residential $** metric (residential-class tax dollars). Different
@@ -98,7 +99,7 @@ drives the colour ramp.
   choice has to be real). Invariant: the driver always names a *checked* service;
   unchecking it hands the ramp to the next one.
 - Fire and Transit draw station dots / LRT lines whenever checked, driver or not.
-- `#toggle`, `#lens` hidden; `#coloradj` greyed.
+- `#toggle`, `#lens`, `#coloradj` all hidden — so the whole T3 column collapses.
 - **Combinations:** 63 non-empty checkbox subsets × the driver choice within each.
 
 ### 3. Ratio
@@ -109,7 +110,7 @@ Ghost prisms of revenue-per-unit over the neutral road network.
   (`hasFire || hasSvcCost`); roads-only data hides it.
 - **Prism-opacity slider** (`#prism-row`, default 5%) — this is the one view that
   also shows the "Money plane" header.
-- `#lens` **live**. `#toggle` hidden, `#coloradj` greyed.
+- `#lens` **live** (so the T3 column stays). `#toggle` and `#coloradj` hidden.
 - **Combinations:** 3 denominators × lens = **6** core (× slider, continuous).
 
 ### 4. Development
@@ -131,7 +132,7 @@ New building activity per acre from issued permits.
 - The prism slider shows while the 100 m grid is active.
 - Set-aside greenfield land renders in **full colour** here, unlike every other
   lens — that undeveloped land is where much new building lands.
-- `#toggle`, `#lens` hidden; `#coloradj` greyed.
+- `#toggle`, `#lens`, `#coloradj` all hidden — so the whole T3 column collapses.
 - **Combinations:** full = **22** (Housing 16 + Infill 6); public = **13**.
 
 #### Infill opportunity (Development's second lens, full only)
@@ -150,7 +151,7 @@ what it yields), over the 2024 Zoning Bylaw geometry.
 - **Residential prisms** toggle: height = share of zoned land that is
   residential. The opacity slider (default 35%) appears while they're on.
 - Categorical colour legend, not a gradient — the palette ramp is n/a here.
-- `#toggle`, `#lens` hidden; `#coloradj` greyed.
+- `#toggle`, `#lens`, `#coloradj` all hidden — so the whole T3 column collapses.
 - **Combinations:** prisms on/off = **2**.
 
 ---
@@ -161,15 +162,17 @@ what it yields), over the 2024 Zoning Bylaw geometry.
 |---|---|---|---|---|---|---|---|---|---|
 | **Money** — Neighbourhood | ✅ 4 | ✅ 2 | ✅ 2 | — | — | — | — | ✅ | ✅ |
 | **Money** — 100 m grid | ✅ 4 | ✅ 2 | ✅ 2 | — | — | — | ✖ fixed 60% | ✖ | ✅ |
-| **Services** | ✖ | — | — | — | — | ✅ 6 | — | ✖ | ⊘ |
-| **Ratio** | ✖ | — | — | ✅ 3 | — | — | ✅ 5% | ✅ | ⊘ |
-| **Development** — Housing | ✖ | — | ✅ 3 | — | ✅ 3 × 3 | — | ✅ in grid | ✖ | ⊘ |
-| **Development** — Infill 🔒 | ✖ | — | — | — | ✅ 2 × 3 | — | — | ✖ | ⊘ |
-| **Uses** 🔒 | ✖ | — | — | — | — | — | ✅ 35% w/ prisms | ✖ | ⊘ |
+| **Services** | ✖ | — | — | — | — | ✅ 6 | — | ✖ | ✖ |
+| **Ratio** | ✖ | — | — | ✅ 3 | — | — | ✅ 5% | ✅ | ✖ |
+| **Development** — Housing | ✖ | — | ✅ 3 | — | ✅ 3 × 3 | — | ✅ in grid | ✖ | ✖ |
+| **Development** — Infill 🔒 | ✖ | — | — | — | ✅ 2 × 3 | — | — | ✖ | ✖ |
+| **Uses** 🔒 | ✖ | — | — | — | — | — | ✅ 35% w/ prisms | ✖ | ✖ |
 
-✅ present and live · ✖ **hidden** · ⊘ **present but greyed** · — not applicable ·
-🔒 full build only. Display popover (3 ramps + labels) and the camera chrome apply
-in every view.
+✅ present and live · ✖ **hidden** · — not applicable · 🔒 full build only.
+Display popover (3 ramps + labels) and the camera chrome apply in every view.
+**There is no "present but greyed" state left** — the last one (`#coloradj`)
+became a hide on 2026-07-26. Where BOTH `#lens` and `#coloradj` are ✖ (Services,
+Development, Infill, Uses) the T3 column collapses entirely.
 
 ---
 
