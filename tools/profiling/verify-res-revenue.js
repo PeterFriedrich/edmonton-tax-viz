@@ -39,7 +39,7 @@ function approx(a, b, rel = 1e-6) { return Math.abs(a - b) <= rel * Math.max(Mat
   const guard = await page.evaluate(() => ({
     has: state.hasResRevenue,
     btnShown: getComputedStyle(
-      document.querySelector('#toggle button[data-metric="res_revenue_per_acre"]')
+      document.querySelector('#revcut button[data-revcut="res_revenue_per_acre"]')
     ).display !== 'none',
   }));
   if (!guard.has) {
@@ -66,7 +66,7 @@ function approx(a, b, rel = 1e-6) { return Math.abs(a - b) <= rel * Math.max(Mat
     revTip.html.replace(/<[^>]+>/g, ' '));
 
   // --- switch to Residential $ -----------------------------------------------
-  await click('#toggle button[data-metric="res_revenue_per_acre"]');
+  await click('#revcut button[data-revcut="res_revenue_per_acre"]');
   await page.waitForTimeout(1500);
   const c = await page.evaluate(() => ({
     metric: state.metric,

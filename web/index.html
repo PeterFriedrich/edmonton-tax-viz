@@ -159,6 +159,23 @@
       font: 12.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       padding: 7px 15px; cursor: pointer; transition: background 0.12s, color 0.12s;
     }
+    /* Two-level metric picker: #toggle stacks its two rows instead of being one
+       flat row of buttons. The cut row reads as SUBORDINATE to the metric row —
+       a hairline separator plus smaller, dimmer type — so "Total / Residential /
+       Non-residential" is visibly *inside* Revenue rather than a peer of it.
+       That subordination is the whole point of the regroup; keep it if these
+       rules are ever restyled. */
+    #toggle { flex-direction: column; align-items: stretch; }
+    #metric-row, #revcut { display: flex; }
+    /* Both rows share the pod's width (it is set by whichever row is wider —
+       the 3-up cut row). Without flex:1 the 2-up metric row left ~127px of dead
+       space beside Revenue, which read as an empty cell rather than a heading. */
+    #metric-row button { flex: 1; }
+    #revcut { border-top: 1px solid #2a2a3a; }
+    #revcut button {
+      font-size: 11px; padding: 5px 12px; flex: 1; color: #8a8a9e;
+      white-space: nowrap;
+    }
     #palette button, #lens button { padding: 6px 12px; font-size: 11.5px; }
     #toggle button:hover, #palette button:hover, #lens button:hover { color: #e8e8ef; }
     /* The lens hides in views where it doesn't apply (applyView), so these
@@ -348,7 +365,9 @@
          gone from every breakpoint, folded into the button label.) */
       #controls { top: 58px; left: 8px; right: 8px; align-items: flex-end; }
       #controls > div { max-width: 100%; }
-      #toggle, #views { flex-wrap: wrap; justify-content: flex-end; }
+      /* Wrap the ROWS, not #toggle itself — #toggle is a column since the
+         two-level regroup, so wrapping it would stack the rows sideways. */
+      #metric-row, #revcut, #views { flex-wrap: wrap; justify-content: flex-end; }
       /* Desktop grows #views to 14px/9px-18px as the primary control; a phone
          can't spend that much width — at 14px the four public views no longer fit
          one 390px row. Scale back to just above the old size (still the largest
@@ -390,11 +409,21 @@
   </div>
 
   <div id="controls">
+  <!-- Two-level metric picker. Row 1 = WHICH QUANTITY (Revenue | Value); row 2 =
+       for revenue only, WHICH CLASSES. The nesting is the data's own shape, not
+       decoration: levy == res + nonres + farmland (DECISIONS 2026-07-18), so the
+       cuts are genuinely subsets of Total. Value has no such decomposition in
+       the pipeline, so it is a leaf and row 2 hides under it. -->
   <div id="toggle" class="panel">
-    <button data-metric="revenue_per_acre" class="active">Revenue</button>
-    <button data-metric="value_per_acre">Value</button>
-    <button data-metric="res_revenue_per_acre" title="Residential-class tax dollars only (houses, condos and apartment buildings) — a subset of Revenue. Not the 'Residential only' lens, which fades non-residential neighbourhoods without changing the dollars">Residential $</button>
-    <button data-metric="nonres_revenue_per_acre" title="Tax dollars billed at the non-residential rate (commercial and industrial land) — a subset of Revenue, the complement of Residential $">Non-res $</button>
+    <div id="metric-row">
+      <button data-metric="revenue" class="active" title="Municipal property-tax revenue per acre — what the land generates at Edmonton's class-differential mill rates. Pick which classes to count below.">Revenue</button>
+      <button data-metric="value" title="Total assessed property value per acre — what the land is worth, not what it pays">Value</button>
+    </div>
+    <div id="revcut">
+      <button data-revcut="revenue_per_acre" class="active" title="Every property class — the full municipal levy the land generates">Total</button>
+      <button data-revcut="res_revenue_per_acre" title="Residential-class dollars only: houses, condos and apartment buildings. A subset of Total, not all of what the land pays. Distinct from the 'Highlight residential' lens, which fades neighbourhoods without changing the dollars">Residential</button>
+      <button data-revcut="nonres_revenue_per_acre" title="Dollars billed at the non-residential rate — commercial and industrial land. A subset of Total. Residential and Non-residential are nearly the whole levy but do not sum to it exactly: farmland is a small separate class">Non-residential</button>
+    </div>
   </div>
 
   <div id="views" class="panel">
@@ -2729,11 +2758,45 @@
     // Switch metric: rebuild layers and update the title/legend/toggle chrome.
     // Renders live in the Money and Glass views (both draw the metric); in
     // services/ratio/uses it only marks state and takes effect on returning.
+    // The three revenue keys, in row order. METRICS stays FLAT — each of the
+    // four keys keeps its own title/blurb/clamp/lotBlurb, `state.metric` stays
+    // the single source of truth, and applyMetric stays the single entry point.
+    // ONLY THE CHROME IS HIERARCHICAL. Resist promoting this to a real
+    // two-field state (metric + cut): it would duplicate the column-key logic
+    // that lotKey()/moneyColKey()/buildLayers already derive from state.metric.
+    const REV_CUTS = ["revenue_per_acre", "res_revenue_per_acre", "nonres_revenue_per_acre"];
+    const isRevenue = m => REV_CUTS.includes(m);
+
+    // Which revenue cut to restore when Revenue is re-selected from Value.
+    // Sticky within the session, Total on load (Peter, 2026-07-26): returning to
+    // Revenue and silently landing on a different cut than you left would be a
+    // worse surprise than remembering.
+    let lastRevCut = "revenue_per_acre";
+
+    // Paint both rows from state.metric, and hide the cut row where it has
+    // nothing to offer: under Value (no decomposition exists in the pipeline)
+    // and on data files carrying neither cut column. Reads the buttons' own
+    // computed display for the second case, so it can't drift from the data
+    // gates that hid them — same idiom as syncPresColumn.
+    function syncMetricButtons() {
+      const rev = isRevenue(state.metric);
+      document.querySelectorAll("#metric-row button").forEach(b =>
+        b.classList.toggle("active", b.dataset.metric === (rev ? "revenue" : "value")));
+      const anyCut = REV_CUTS.slice(1).some(k => {
+        const b = document.querySelector(`#revcut button[data-revcut="${k}"]`);
+        return b && getComputedStyle(b).display !== "none";
+      });
+      document.getElementById("revcut").style.display = rev && anyCut ? "flex" : "none";
+      document.querySelectorAll("#revcut button").forEach(b =>
+        b.classList.toggle("active", b.dataset.revcut === state.metric));
+    }
+
     function applyMetric(metric) {
-      if (metric === state.metric || !METRICS[metric]) return;
+      if (!METRICS[metric]) return;
+      if (isRevenue(metric)) lastRevCut = metric;
+      if (metric === state.metric) { syncMetricButtons(); return; }
       state.metric = metric;
-      document.querySelectorAll("#toggle button").forEach(b =>
-        b.classList.toggle("active", b.dataset.metric === metric));
+      syncMetricButtons();
       if (state.view !== "money" && state.view !== "glass") return;
       const cfg = METRICS[metric];
       overlay.setProps({ layers: buildLayers() });
@@ -3452,8 +3515,14 @@
       map.addControl(overlay);
 
       document.getElementById("coloradj-btn").addEventListener("click", applyColorAdjust);
-      document.querySelectorAll("#toggle button").forEach(b =>
-        b.addEventListener("click", () => applyMetric(b.dataset.metric)));
+      // Row 1 picks the QUANTITY: "revenue" restores the cut you last had (Total
+      // on load), "value" leaves the revenue family entirely. Row 2 picks the
+      // CUT and is what actually names a column.
+      document.querySelectorAll("#metric-row button").forEach(b =>
+        b.addEventListener("click", () => applyMetric(
+          b.dataset.metric === "revenue" ? lastRevCut : "value_per_acre")));
+      document.querySelectorAll("#revcut button").forEach(b =>
+        b.addEventListener("click", () => applyMetric(b.dataset.revcut)));
       document.querySelectorAll("#palette button").forEach(b =>
         b.addEventListener("click", () => applyPalette(b.dataset.ramp)));
       document.querySelector("#lens button").addEventListener("click", applyLens);
@@ -3628,20 +3697,23 @@
         document.getElementById("denom-hd").style.display = "block";
         document.getElementById("denom").style.display = "flex";
       }
-      // Same guard for the Residential $ metric: it needs res_revenue_per_acre
+      // Same guard for the Residential cut: it needs res_revenue_per_acre
       // (pipeline 2026-07-16) — hide the button on older data files. state.metric
       // can't be stuck on it (no persistence; the default is revenue_per_acre).
       state.hasResRevenue =
         state.data.features.some(f => f.properties.res_revenue_per_acre != null);
       if (!state.hasResRevenue) {
-        document.querySelector('#toggle button[data-metric="res_revenue_per_acre"]').style.display = "none";
+        document.querySelector('#revcut button[data-revcut="res_revenue_per_acre"]').style.display = "none";
       }
-      // Same guard for the Non-res $ metric (pipeline 2026-07-18).
+      // Same guard for the Non-residential cut (pipeline 2026-07-18).
       state.hasNonresRevenue =
         state.data.features.some(f => f.properties.nonres_revenue_per_acre != null);
       if (!state.hasNonresRevenue) {
-        document.querySelector('#toggle button[data-metric="nonres_revenue_per_acre"]').style.display = "none";
+        document.querySelector('#revcut button[data-revcut="nonres_revenue_per_acre"]').style.display = "none";
       }
+      // On a data file with NEITHER cut, Revenue is a leaf and a row holding
+      // only "Total" is noise — syncMetricButtons collapses it.
+      syncMetricButtons();
       // Same guard for the uses view: it needs the composition columns
       // (pipeline 2026-07-03) — hide the button on older data files.
       // Uses is also a FULL-only view now (2026-07-24, Peter — provisional

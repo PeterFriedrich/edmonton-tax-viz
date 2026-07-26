@@ -17,7 +17,7 @@ const [url] = process.argv.slice(2);
   await page.waitForTimeout(4500);
   const click = sel => page.$eval(sel, b => b.click());
 
-  await click('#toggle button[data-metric="res_revenue_per_acre"]');
+  await click('#revcut button[data-revcut="res_revenue_per_acre"]');
   await page.waitForTimeout(2500);
   await page.screenshot({ path: 'res-revenue.png' });
   console.log('wrote res-revenue.png');

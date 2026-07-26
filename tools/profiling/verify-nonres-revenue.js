@@ -38,7 +38,7 @@ function approx(a, b, rel = 1e-6) { return Math.abs(a - b) <= rel * Math.max(Mat
   const guard = await page.evaluate(() => ({
     has: state.hasNonresRevenue,
     btnShown: getComputedStyle(
-      document.querySelector('#toggle button[data-metric="nonres_revenue_per_acre"]')
+      document.querySelector('#revcut button[data-revcut="nonres_revenue_per_acre"]')
     ).display !== 'none',
   }));
   if (!guard.has) {
@@ -50,7 +50,7 @@ function approx(a, b, rel = 1e-6) { return Math.abs(a - b) <= rel * Math.max(Mat
   check('button shown when column present', guard.btnShown);
 
   // --- switch to Non-res $ ---------------------------------------------------
-  await click('#toggle button[data-metric="nonres_revenue_per_acre"]');
+  await click('#revcut button[data-revcut="nonres_revenue_per_acre"]');
   await page.waitForTimeout(1500);
   const c = await page.evaluate(() => ({
     metric: state.metric,

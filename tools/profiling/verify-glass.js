@@ -107,10 +107,10 @@ const [url] = process.argv.slice(2);
   console.log('slider -> 90   :', JSON.stringify({ gridOpacity: after }));
 
   // Metric toggle renders live: metric title, glass blurb kept, cell legend.
-  await click('#toggle button[data-metric="value_per_acre"]');
+  await click('#metric-row button[data-metric="value"]');
   await page.waitForTimeout(1000);
   console.log('glass + value  :', JSON.stringify(await chrome()));
-  await click('#toggle button[data-metric="revenue_per_acre"]');
+  await click('#revcut button[data-revcut="revenue_per_acre"]');
   await page.waitForTimeout(1000);
 
   // Spike denominator toggle (lot-acre variant, 2026-07-05): legend + scale
@@ -143,10 +143,10 @@ const [url] = process.argv.slice(2);
   console.log('denom -> lot   :', JSON.stringify(lot));
 
   // Metric toggle keeps the lot denominator (label follows both).
-  await click('#toggle button[data-metric="value_per_acre"]');
+  await click('#metric-row button[data-metric="value"]');
   await page.waitForTimeout(1000);
   console.log('lot + value    :', JSON.stringify(await chrome()));
-  await click('#toggle button[data-metric="revenue_per_acre"]');
+  await click('#revcut button[data-revcut="revenue_per_acre"]');
   await page.waitForTimeout(1000);
 
   // Denominator state persists across a view round-trip; the control hides
