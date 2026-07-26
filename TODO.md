@@ -85,14 +85,10 @@ _Last reconciled: 2026-07-26_
       into **still-open (numbered 1–7)** vs **resolved-by-the-regroup (original
       letters kept, because `DECISIONS.md` cites "§5.G"/"§5.A/B"/"§5.F")**.
       §7 reframed from "not yet on master" to merged & live.
-    - [ ] **Two stale code comments in `web/index.html` (needs a branch + PR —
-      touches `web/**`).** `CONTROLS_MATRIX.md` §6 recorded this fixed on
-      2026-07-22, but the fix caught only one of three siblings: **L2707–2708**
-      and **L2722–2723** still claim the long "Since 2009" window is
-      choropleth-only, contradicting the corrected comment at L1601–1602.
-      `devGridOfferable` excludes **only** Industrial — all three windows carry
-      grid cells (PR #80). **Comments only; behaviour is correct**, so this is
-      readability, not a bug. Full table in `CONTROLS_MATRIX.md` §6.
+    - [x] ~~**Two stale code comments in `web/index.html`**~~ — DONE 2026-07-26,
+      folded into PR #96 rather than spending a deploy on a comment-only diff.
+      All three siblings now agree that `devGridOfferable` excludes **only**
+      Industrial. `CONTROLS_MATRIX.md` §6 closed out.
   - [x] ~~**Two-build deploy plumbing (`PLAN_public_release.md` §2a).**~~ **BUILT
     2026-07-23 (branch `regroup-build-s65`).** `scripts/build_site.py` fans `web/`
     into one Pages artifact: `_site/` = public root (whole tree, `DEFAULT_BUILD` →

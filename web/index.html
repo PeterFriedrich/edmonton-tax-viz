@@ -2802,9 +2802,10 @@
     }
 
     // Shared development-view chrome refresh after a metric/window switch: the
-    // Detail toggle + opacity slider only apply where the grid has cells
-    // (residential metric AND a windowed cut — industrial + the long "since
-    // 2009" window are choropleth-only), and the title/blurb carry the window.
+    // Detail toggle + opacity slider only apply where the grid has cells —
+    // industrial is the ONLY choropleth-only cut, and all three windows
+    // (5yr/3yr/long) carry cells (see devGridOfferable). The title/blurb carry
+    // the window.
     function syncDevChrome() {
       const gridShow = devGridOfferable();
       document.getElementById("devdetail-hd").style.display = gridShow ? "block" : "none";
@@ -2818,8 +2819,9 @@
 
     // Development-view window toggle (5yr base <-> 3yr recent <-> since 2009).
     // Mirrors applyDevMetric; the two pickers combine in devCol() to pick the
-    // column. The long window is choropleth-only, so switching to/from it flips
-    // the Detail toggle + chrome (syncDevChrome), like industrial.
+    // column. All three windows carry grid cells, so switching between them does
+    // NOT change whether the Detail toggle is offered — syncDevChrome still runs
+    // because the title/blurb and the per-window scale have to follow.
     function applyDevWindow(w) {
       if (w === state.devWindow || !DEV_WINDOW_LABEL[w]) return;
       state.devWindow = w;
