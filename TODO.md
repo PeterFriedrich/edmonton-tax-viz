@@ -12,25 +12,18 @@ _Last reconciled: 2026-07-27_
 
 ## Open work
 
-- [ ] **▶ NEEDS A PHONE, NOT A BOX: confirm the double-tap-zoom fix (shipped
-  2026-07-27, PR #107).** Peter reported accidental page zoom — "for sure
-  common with the rotation buttons, but also just by accident on this UI".
-  Cause: iOS Safari keeps double-tap-to-zoom even on a `width=device-width`
-  viewport, and nothing set `touch-action`. Fixed with
-  `touch-action: manipulation` on the chrome roots **and** the controls; the
-  map canvas deliberately keeps the gesture (standard on every map).
-  - **Headless Chromium cannot reproduce the iOS gesture**, so
-    `verify-controls-clickable.js` asserts the *mechanism* (55/55 controls
-    carry the property, `#map` does not) and **NOT the outcome**. Per the
-    tooltip precedent, the real device is authoritative.
-  - **Two checks on a phone:** (a) double-tap a compass button — it should
-    rotate twice, not zoom the page; (b) pinch zoom still works everywhere
-    (the fix deliberately avoids `user-scalable=no`, which would fail WCAG
-    1.4.4).
-  - If it is still zooming, the next suspect is the ancestor-intersection
-    assumption — but the element-level rule was added precisely so the fix
-    does not depend on it. See `DECISIONS.md` 2026-07-27,
-    `docs/MOBILE_USABILITY.md` §2b.
+- [x] ~~**NEEDS A PHONE, NOT A BOX: confirm the double-tap-zoom fix (PR #107).**~~
+  **CONFIRMED ON DEVICE 2026-07-27** — Peter, on a phone: *"double tap on phone
+  no longer zooms in for the buttons, only the map."* Both halves of the design
+  hold: the chrome no longer hijacks the gesture, and the map deliberately still
+  does. Headless asserts the *mechanism* only (55/55 controls carry
+  `touch-action: manipulation`, `#map` does not); the device check is what
+  settled the *outcome*, per the tooltip precedent. See `DECISIONS.md`
+  2026-07-27, `docs/MOBILE_USABILITY.md` §2b.
+  - [ ] **Still open, one gesture:** nobody has actually **pinch-zoomed**. The
+    fix deliberately avoids `user-scalable=no` (which would fail WCAG 1.4.4), so
+    pinch should be unaffected — but that is reasoning, not a check. Fold it
+    into the next phone session rather than making a trip for it.
 
 - [x] ~~**LABEL SWEEP IS BLIND TO DOM CHROME.**~~ **DONE 2026-07-27.**
   `visibleLabels()` now culls labels landing under the HTML chrome, skipping
