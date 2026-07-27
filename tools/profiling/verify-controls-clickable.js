@@ -90,6 +90,37 @@ const [url] = process.argv.slice(2);
       blocked.length ? '\n    ' + blocked.map(b => JSON.stringify(b)).join('\n    ') : '');
   }
 
+  // --- double-tap zoom on the controls --------------------------------------
+  // iOS Safari keeps double-tap-to-zoom on a device-width viewport, so tapping
+  // a control twice quickly — the natural way to rotate further — zoomed the
+  // page. `touch-action: manipulation` on the chrome roots kills only that
+  // gesture. Headless Chromium cannot reproduce the iOS behaviour, so what is
+  // asserted here is the mechanism: the property actually lands on every
+  // control (touch-action resolves against ancestors, so a control outside all
+  // three roots would silently miss out), and the MAP does NOT inherit it,
+  // since double-tap zoom is the standard gesture there and must survive.
+  const ta = await page.evaluate(() => {
+    // Every control, not just the ones visible in the current view — a pod
+    // that is hidden here shows in another, and would carry the bug with it.
+    const ctrls = [...document.querySelectorAll('button, input')];
+    const bad = ctrls.filter(el => {
+      const v = getComputedStyle(el).touchAction;
+      return v !== 'manipulation' && v !== 'none';
+    }).map(el => (el.id || el.tagName) + ' “' +
+                 (el.textContent || '').trim().slice(0, 20) + '”');
+    const canvas = document.querySelector('#map canvas');
+    return {
+      total: ctrls.length, bad,
+      map: getComputedStyle(document.getElementById('map')).touchAction,
+      canvas: canvas ? getComputedStyle(canvas).touchAction : null,
+    };
+  });
+  check('every control suppresses double-tap zoom (hidden ones too)',
+        ta.bad.length === 0, `${ta.total - ta.bad.length}/${ta.total}` +
+        (ta.bad.length ? ' — ' + JSON.stringify(ta.bad) : ''));
+  check('the map keeps its own double-tap zoom gesture',
+        ta.map !== 'manipulation', `#map touch-action: ${ta.map}`);
+
   console.log(fail ? `\n${fail} CHECK(S) FAILED` : '\nALL CHECKS PASSED');
   await browser.close();
   process.exit(fail ? 1 : 0);
