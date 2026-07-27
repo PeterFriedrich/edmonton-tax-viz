@@ -936,22 +936,35 @@ viewer had no way to tell which part of the city a prism sat in. Two shapes fix
 that: the North Saskatchewan River and the ring road. Flat greys, unlabelled,
 not pickable, no metric attached.
 
-**The layer-order finding, which was the whole design.** The instinct is to put
+**The layer-order finding — and it splits by feature.** The instinct is to put
 reference geography *underneath* the data, the way a basemap sits under a
-choropleth. Measured, that was wrong here: Edmonton's hood polygons tile the
-entire city, so composed first the layer changed **0.38% of screen pixels** —
-99.6% occluded, visible only in the gaps outside the city. Composed last it
-changes **1.22%** and the ring reads clearly around the perimeter. With no
-basemap and opaque data fills, "reference" has to mean *annotation over*, not
-*basemap under*.
+choropleth. For the **ring road** that is wrong here: Edmonton's hood polygons
+tile straight across it, so composed first it changed **0.38% of screen
+pixels** — 99.6% occluded. Composed last it changes **1.22%** and reads clearly
+around the perimeter.
 
-**But over is not the same as in front.** With `depthTest: false` (copied from
-the fire-dot / LRT-line context layers) the river painted straight across the
-faces of the downtown towers — a river in mid-air. Those layers are billboarded
-*markers* that should always be legible; this is *ground*. Depth testing is ON,
-so prisms standing on the river hide it, and being composed last gives it deck's
-per-layer polygon offset, which is what keeps it from z-fighting the coplanar
-hood fills without lifting it off the terrain.
+For the **river** the opposite holds, which only became clear once it shipped.
+Drawn on top it cut into the neighbourhood geometry and glitched along the
+shared edges. The reason: the hood fabric **already traces the river** — the
+valley is set-aside parkland, so there is a river-shaped seam through the
+choropleth — and painting the water over it fought a shape that was already
+there. Underneath, the river shows *through* that seam and runs on past the
+city limit where nothing occludes it, which is the better read anyway: a city
+sitting on a river that comes from and goes somewhere.
+
+So the two **bracket** the view's own layers rather than sitting together, and
+`depthTest` splits with them: ON for the ring road, because with it off the road
+cut across the faces of the downtown towers (it is *ground*, not a billboarded
+marker like the fire dots and LRT lines); OFF for the river, which is the
+backdrop — drawn before everything, so it neither occludes nor z-fights.
+
+**The river runs 60 km past the city**, sized against the default camera rather
+than guessed: at HOME zoom 10.2 and latitude 53.5 the scale is ~79 m/px, so a
+1440px viewport spans ~114 km flat and the 52° pitch pushes the horizon further,
+against a city half-width of only ~15 km. Those tails land on the bare `#0a0a0f`
+backdrop, where the original `[26,34,48]` was effectively invisible — extending a
+river nobody can see achieves nothing — so the fill lifted to `[50,66,94]`, still
+~5× the backdrop luminance and far below the set-aside grey.
 
 **Composed around, not inside.** `buildLayers()` now wraps `buildViewLayers()`
 and appends the reference layer once. `buildViewLayers` has one `return` per

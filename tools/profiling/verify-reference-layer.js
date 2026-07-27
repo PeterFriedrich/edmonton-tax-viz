@@ -6,14 +6,19 @@
 // the only thing telling a first-time viewer where they are. Three properties
 // carry the whole feature and each was a real bug during the build:
 //
-//   1. DRAWN LAST, not first. The hood polygons tile the entire city, so a
-//      reference layer composed underneath them was 99.6% occluded — measured
-//      at 0.38% of pixels changed, versus 1.22% on top.
-//   2. depthTest ON. With it off, the river painted straight across the faces
-//      of the downtown towers — a river in mid-air. It is ground: prisms
-//      standing on it must hide it.
-//   3. Present in EVERY view. It is composed in buildLayers() around
-//      buildViewLayers(), so a new view cannot ship without it.
+//   1. THE TWO SIT AT OPPOSITE ENDS OF THE STACK, and must stay there.
+//      The ring road is drawn LAST: the hood polygons tile the whole city, so
+//      underneath it was 99.6% occluded (0.38% of pixels changed, vs 1.22% on
+//      top). The river is drawn FIRST: the hood fabric already carries a
+//      river-shaped seam (the valley is set-aside parkland), so painting the
+//      water over it cut into the geometry and glitched along the shared
+//      edges — underneath, it shows through the seam and runs on past the
+//      city limit.
+//   2. depthTest ON for the ring road. With it off it cut across the faces of
+//      the downtown towers. The river needs none — it is the backdrop, drawn
+//      before everything, so it neither occludes nor z-fights.
+//   3. Present in EVERY view. Both are composed in buildLayers() around
+//      buildViewLayers(), so a new view cannot ship without them.
 //
 //   node tools/profiling/verify-reference-layer.js <url>     (from REPO ROOT)
 const { chromium } = require('playwright');
@@ -42,16 +47,19 @@ const VIEWS = ['money', 'services', 'ratio', 'uses', 'development'];
   const probe = () => page.evaluate(() => {
     const layers = (overlay._deck && overlay._deck.props.layers) || [];
     const ids = layers.filter(Boolean).map(l => l.id);
-    const ref = layers.filter(Boolean).find(l => l.id === 'reference-geo');
+    const river = layers.filter(Boolean).find(l => l.id === 'reference-river');
+    const henday = layers.filter(Boolean).find(l => l.id === 'reference-henday');
     let data = null;
     try { data = referenceData; } catch (e) { /* not yet fetched */ }
     return {
       ids,
-      present: !!ref,
-      lastIndex: ids.indexOf('reference-geo'),
+      present: !!river && !!henday,
+      riverIndex: ids.indexOf('reference-river'),
+      hendayIndex: ids.indexOf('reference-henday'),
       count: ids.length,
-      depthTest: ref ? ref.props.parameters.depthTest : null,
-      pickable: ref ? ref.props.pickable : null,
+      depthTest: henday ? henday.props.parameters.depthTest : null,
+      riverDepthTest: river ? river.props.parameters.depthTest : null,
+      pickable: river ? (river.props.pickable || henday.props.pickable) : null,
       stateOn: state.reference,
       checkbox: document.getElementById('reference-on').checked,
       types: data ? data.features.map(f => f.properties.t).sort() : null,
@@ -64,8 +72,12 @@ const VIEWS = ['money', 'services', 'ratio', 'uses', 'development'];
   check('reference.geojson fetched', s0.types !== null);
   check('carries exactly the two Tier-1 shapes', JSON.stringify(s0.types) === '["henday","river"]',
         JSON.stringify(s0.types));
-  check('river is a polygon, ring road is lines',
-        JSON.stringify(s0.geoms) === '["MultiLineString","Polygon"]', JSON.stringify(s0.geoms));
+  // The river is Multi at the shipped 60 km clip — that wide an extent picks up
+  // disjoint stretches up- and downstream — but a narrow clip yields a single
+  // Polygon, so accept either rather than pinning the margin into the suite.
+  check('river is polygonal, ring road is lines',
+        /^\["MultiLineString","(Multi)?Polygon"\]$/.test(JSON.stringify(s0.geoms)),
+        JSON.stringify(s0.geoms));
 
   // The ring must be CLOSED. A hole in the east leg (Highway 216 runs
   // concurrent with Highway 14 there, and the feed names only Highway 14)
@@ -98,13 +110,17 @@ const VIEWS = ['money', 'services', 'ratio', 'uses', 'development'];
         `${ring.km} km`);
 
   // --- layer composition ---------------------------------------------------
-  check('layer is built', s0.present);
+  check('both layers are built', s0.present);
   check('on by default (no basemap — orientation should not need hunting)', s0.stateOn === true);
   check('checkbox agrees with state', s0.checkbox === true);
   check('not pickable (never steals a hood tooltip)', s0.pickable === false);
-  check('depthTest ON so prisms occlude it', s0.depthTest === true);
-  check('composed LAST, over the data layers', s0.lastIndex === s0.count - 1,
-        `index ${s0.lastIndex} of ${s0.count}`);
+  check('ring road depthTest ON so prisms occlude it', s0.depthTest === true);
+  check('river depthTest OFF (it is the backdrop, not an occluder)',
+        s0.riverDepthTest === false);
+  check('river composed FIRST, under the data', s0.riverIndex === 0,
+        `index ${s0.riverIndex} of ${s0.count}`);
+  check('ring road composed LAST, over the data', s0.hendayIndex === s0.count - 1,
+        `index ${s0.hendayIndex} of ${s0.count}`);
 
   // --- present in every view ----------------------------------------------
   for (const v of VIEWS) {
@@ -113,9 +129,10 @@ const VIEWS = ['money', 'services', 'ratio', 'uses', 'development'];
     await page.evaluate(vv => applyView(vv), v);
     await page.waitForTimeout(1600);
     const s = await probe();
-    check(`[${v}] reference layer present`, s.present);
-    check(`[${v}] still composed last`, s.lastIndex === s.count - 1,
-          `index ${s.lastIndex} of ${s.count}`);
+    check(`[${v}] both reference layers present`, s.present);
+    check(`[${v}] river still first, ring road still last`,
+          s.riverIndex === 0 && s.hendayIndex === s.count - 1,
+          `river ${s.riverIndex}, henday ${s.hendayIndex} of ${s.count}`);
   }
   await page.evaluate(() => applyView('money'));
   await page.waitForTimeout(1200);
@@ -133,12 +150,14 @@ const VIEWS = ['money', 'services', 'ratio', 'uses', 'development'];
   await box.click();
   await page.waitForTimeout(900);
   const off = await probe();
-  check('unticking removes the layer entirely', off.present === false && off.stateOn === false);
+  check('unticking removes both layers entirely',
+        off.riverIndex === -1 && off.hendayIndex === -1 && off.stateOn === false);
   await box.click();
   await page.waitForTimeout(900);
   const on = await probe();
   check('re-ticking restores it', on.present === true && on.stateOn === true);
-  check('still last after the round-trip', on.lastIndex === on.count - 1);
+  check('bracketing survives the round-trip',
+        on.riverIndex === 0 && on.hendayIndex === on.count - 1);
 
   // --- it must actually be VISIBLE, not merely present ---------------------
   // The whole defect that motivated drawing it last was a layer that existed,

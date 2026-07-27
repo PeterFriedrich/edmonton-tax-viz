@@ -63,10 +63,17 @@ RIVER_URL = (
 )
 RIVER_NAME = "North Saskatchewan River"
 
-# How far past the city bounding box to keep the river. The river should run
-# OFF the edge of the view rather than stopping dead at the city limit — that
-# reads as a river, not as a lake with square ends.
-MARGIN_M = 3000.0
+# How far past the city bounding box to keep the river. It should run clean OFF
+# the edge of the view in both directions rather than stopping dead — the city
+# sits ON a river that comes from and goes somewhere, and a river with two
+# square ends just inside the frame reads as a lake.
+#
+# Sized against the default camera, not guessed: at HOME zoom 10.2 and latitude
+# 53.5 the scale is ~79 m/px, so a 1440px viewport spans ~114 km flat (~57 km
+# from centre) and the 52 degree pitch pushes the horizon much further. The city
+# half-width is only ~15 km. 60 km clears the flat view with room for the
+# pitched one and for moderate zoom-out; the whole file is still only ~54 kB.
+MARGIN_M = 60000.0
 
 # Anthony Henday Drive carries two names in the centreline feed: the road name
 # on most of the ring, and its provincial designation on the north-east leg.
