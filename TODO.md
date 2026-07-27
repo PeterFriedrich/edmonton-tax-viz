@@ -15,8 +15,13 @@ _Last reconciled: 2026-07-26_
 - [ ] **GEOGRAPHIC REFERENCE LAYERS — TIERS 2 & 3 (Tier 1 shipped 2026-07-27).**
   Tier 1 (North Saskatchewan River + Anthony Henday ring road) is live and on by
   default; see `DECISIONS.md` 2026-07-27 (×2) and `data/DATA.md` §14. The render
-  seam is proven: `referenceLayers()` composed last by `buildLayers()`, one
-  Display-menu toggle, `verify-reference-layer.js`. What's left:
+  seam is proven: `buildLayers()` BRACKETS `buildViewLayers()` —
+  `referenceUnderLayers()` (river, bottom) before it, `referenceOverLayers()`
+  (ring road, top) after — one Display-menu toggle, `verify-reference-layer.js`.
+  **Which end a new reference shape belongs at is a real question, not a
+  default:** the river went underneath because the hood fabric already traces
+  it (set-aside valley = a river-shaped seam), so painting over glitched; the
+  ring road has no such seam and is invisible underneath. What's left:
   - [ ] **Tier 2 — Edmonton internal reference.** District labels (West
     Edmonton, Mill Woods, Castle Downs, Terwillegar, Southeast) + Downtown and
     Old Strathcona/Whyte Ave; major arterials as thin unlabeled lines
