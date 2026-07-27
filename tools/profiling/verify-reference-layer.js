@@ -307,6 +307,36 @@ const PLACE_COUNT = 7;
           occ.length === 0, JSON.stringify(occ));
   }
 
+  // The two checks above re-run visibleLabels(), which re-reads chromeBoxes()
+  // in the same tick — so they can only ever agree with themselves. What ships
+  // is the DRAWN layer, and that goes stale whenever the chrome CHANGES SIZE
+  // after the sweep. Entering Development grows #title from bottom 196 to 462
+  // at 1440x900 (its blurb is far longer), and the blurb used to be written
+  // AFTER buildLayers — leaving SPRUCE GROVE painted into the new text until
+  // some later rebuild. Same shape as the frozen-sweep bug: compare DRAWN
+  // against live chrome, never a fresh sweep against itself.
+  const drawnOcc = () => page.evaluate(() => {
+    const boxes = chromeBoxes();
+    const dv = overlay._deck.getViewports()[0];
+    const l = overlay._deck.props.layers.flat().find(x => x && x.id === 'hood-labels');
+    return (l ? l.props.data : []).filter(d => {
+      const [px, py] = dv.project([d.position[0], d.position[1], labelZ(d.p)]);
+      const w = d.em * d.size * LABEL_DRAW_SCALE, h = d.size * LABEL_DRAW_SCALE;
+      return boxes.some(c => px + w / 2 > c.x0 && px - w / 2 < c.x1 &&
+                             py + h / 2 > c.y0 && py - h / 2 < c.y1);
+    }).map(d => d.name);
+  });
+  await setToggles(true, true);   // hood labels on: more labels, more chances
+  for (const view of VIEWS) {
+    await page.$eval(`#views button[data-view="${view}"]`, b => b.click());
+    await page.waitForTimeout(1600);
+    const occ = await drawnOcc();
+    check(`[${view}] drawn labels dodge chrome immediately after the switch`,
+          occ.length === 0, JSON.stringify(occ));
+  }
+  await page.$eval('#views button[data-view="money"]', b => b.click());
+  await page.waitForTimeout(1200);
+
   // CHROME_IDS is a closed hand-written list. That is the house habit, but a
   // closed list silently rots when a panel is added and nobody updates it —
   // which is precisely how this bug would come back. So assert the list COVERS

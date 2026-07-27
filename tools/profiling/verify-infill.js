@@ -106,7 +106,15 @@ const check = (name, cond) => { (cond ? pass++ : fail++); console.log(`${cond ? 
     const ms = a => { const m = mean(a); return { m, s: Math.sqrt(mean(a.map(v => (v - m) ** 2))) || 1 }; };
     const fs = ms(inc.map(f => f.properties.far));
     const as = ms(inc.map(f => f.properties[col]));
-    const sample = inc[Math.floor(inc.length / 2)];
+    // NOT just the middle of `inc`. infillIncluded() is the Z-SCORING
+    // population, which deliberately keeps non-residential hoods so the
+    // pressure arm is unchanged — but those render OFF-SCALE grey at the
+    // opportunity end (infillOppSuppressed). The colour assertion below only
+    // holds for a hood actually on the scale, so say so. The old
+    // middle-of-the-list pick silently relied on the active window making that
+    // hood residential, and broke when the default window moved to `long`.
+    const onScale = inc.filter(f => !infillOppSuppressed(f.properties));
+    const sample = onScale[Math.floor(onScale.length / 2)];
     const p = sample.properties;
     const indep = -(((p.far - fs.m) / fs.s) + ((p[col] - as.m) / as.s));
     const got = infillScore(p);
@@ -205,7 +213,11 @@ const check = (name, cond) => { (cond ? pass++ : fail++); console.log(`${cond ? 
 
   // Tooltip: mismatch + FAR + activity; set-aside hood reads off the scale.
   const tips = await page.evaluate(() => {
-    const inc = state.data.features.filter(f => infillIncluded(f.properties, devCol()));
+    // On-scale, for the same reason as the math sample above — a suppressed
+    // hood's tooltip correctly reads "off the opportunity scale" and carries
+    // no mismatch line.
+    const inc = state.data.features.filter(f =>
+      infillIncluded(f.properties, devCol()) && !infillOppSuppressed(f.properties));
     const sample = inc[Math.floor(inc.length / 2)];
     const sa = state.data.features.find(f => f.properties.is_set_aside);
     return { sample: tooltipFor({ object: sample }).html,

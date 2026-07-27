@@ -448,10 +448,10 @@
 
   <div id="views" class="panel">
     <button data-view="money" class="active" title="Revenue/value prisms — the money plane">Money</button>
+    <button data-view="development" title="New dwelling units built per acre from issued building permits — where the city is actually growing; greenfield growth land is shown in full colour here">Development</button>
     <button data-view="services" title="City services on the ground — toggle each service on its own layer; roads coloured by metres per acre, stormwater by its modeled charge per acre">Services</button>
     <button data-view="ratio" title="Ghost prisms of revenue per road metre — or per fire event — over the neutral road network">Ratio</button>
     <button data-view="uses" title="Each neighbourhood's dominant zoned land use — what the land is designated for, not what it yields; optional prisms show each neighbourhood's residential share">Uses</button>
-    <button data-view="development" title="New dwelling units built per acre from issued building permits (2021–2025) — where the city is actually growing; greenfield growth land is shown in full colour here">Development</button>
   </div>
 
   <div id="optpanel">
@@ -482,14 +482,14 @@
     </div>
     <span class="hd" id="devwindow-hd">Window</span>
     <div id="devwindow">
-      <button data-devwindow="5yr" class="active" title="Building activity summed over the last five full calendar years (2021–2025) — the more stable, structural view">Last 5 yr</button>
       <button data-devwindow="3yr" title="Building activity summed over the last three full calendar years (2023–2025) — the more recent, current-activity view">Last 3 yr</button>
-      <button data-devwindow="long" title="Building activity summed over the whole permit record (2009–2025) — the density added over the era">Since 2009</button>
+      <button data-devwindow="5yr" title="Building activity summed over the last five full calendar years (2021–2025) — the more stable, structural view">Last 5 yr</button>
+      <button data-devwindow="long" class="active" title="Building activity summed over the whole permit record (2009–2025) — the density added over the era">Since 2009</button>
     </div>
     <span class="hd" id="devdetail-hd">Detail</span>
     <div id="devdetail">
-      <button data-devdetail="hood" class="active" title="Neighbourhood choropleth — each hood coloured by the metric per acre (the default)">Neighbourhood</button>
-      <button data-devdetail="grid" title="100 m grid-cell spikes of geocoded permits — height and colour show new units (or permits) per cell; the flat plane underneath keeps the neighbourhood hover">100 m grid — activity</button>
+      <button data-devdetail="hood" title="Neighbourhood choropleth — each hood coloured by the metric per acre">Neighbourhood</button>
+      <button data-devdetail="grid" class="active" title="100 m grid-cell spikes of geocoded permits — height and colour show new units (or permits) per cell; the flat plane underneath keeps the neighbourhood hover (the default)">100 m grid — activity</button>
     </div>
     <span class="hd" id="prism-hd">Money plane</span>
     <label id="prism-row" title="Prism opacity — how strongly the ratio prisms overlay the road network">
@@ -1332,8 +1332,8 @@
                     usesPrisms: false, // Uses-view residential prisms (off = the flat categorical view)
                     ratioDenom: "roads", // Ratio-view denominator (RATIO_DENOMS); persists like denom
                     devMetric: "units", // Development-view sub-metric: units | permits per acre
-                    devWindow: "5yr", // Development-view activity window: 5yr (base) | 3yr (recent)
-                    devGrid: false, // Development-view 100 m detail grid (off = the hood choropleth)
+                    devWindow: "long", // Development-view activity window: 3yr (recent) | 5yr | long (2009–2025, the default)
+                    devGrid: true, // Development-view 100 m detail grid (the default; off = the hood choropleth)
                     services: { roads: true, storm: false, fire: false, water: false, transit: false, servicecost: false },
                     svcDriver: "roads",
                     data: null };
@@ -3312,8 +3312,9 @@
     function applyUsesPrisms(checked) {
       state.usesPrisms = checked;
       document.getElementById("prism-row").style.display = checked ? "flex" : "none";
-      overlay.setProps({ layers: buildLayers() });
+      // Blurb before layers — the label sweep measures the title's live rect.
       document.getElementById("title-p").textContent = usesBlurb();
+      overlay.setProps({ layers: buildLayers() });
     }
 
     // Sync the Development pickers' visibility to the current mode. The
@@ -3361,6 +3362,22 @@
     // option shipped 2026-07-17 and was withdrawn 2026-07-27 — see
     // DECISIONS.md; it was the only reason this view touched the 2.5 MB Glass
     // grid file, which it no longer fetches.)
+    // The prism-opacity slider: Ratio (ghost prisms over the road network), Uses
+    // with its residential prisms on, and Development's activity grid.
+    //
+    // Its own function because it has to run TWICE in applyView: Development's
+    // arm depends on devGridActive(), which needs devGridData, which is fetched
+    // partway DOWN that function — so the first call runs before the file has
+    // landed. That was invisible while the grid was opt-in (entering the view
+    // never had it active), and became a visible bug the moment the grid became
+    // the default: spikes rendered with no opacity control until you left and
+    // came back. Called again after the fetch settles.
+    function syncPrismRow(v) {
+      const show = v === "ratio" || (v === "uses" && state.usesPrisms) ||
+                   (v === "development" && devGridActive());
+      document.getElementById("prism-row").style.display = show ? "flex" : "none";
+    }
+
     function applyDevDetail(mode) {
       const curMode = state.devGrid ? "grid" : "hood";
       if (mode === curMode) return;
@@ -3368,8 +3385,10 @@
       document.getElementById("prism-row").style.display = state.devGrid ? "flex" : "none";
       syncDevControls();
       if (state.view !== "development") return;
-      overlay.setProps({ layers: buildLayers() });
+      // Blurb before layers — the label sweep measures the title's live rect,
+      // and the grid blurb is materially longer than the choropleth one.
       document.getElementById("title-p").textContent = devBlurb();
+      overlay.setProps({ layers: buildLayers() });
       refreshLegend();
     }
 
@@ -3463,10 +3482,8 @@
       // VIEWS.glass.opacity, so dropping the control leaves the render identical.
       // Kept separate from `prisms` on purpose: that flag still opens #layers for
       // Ratio, which has no other reason to open it.
-      const prismSlider = v === "ratio" || (v === "uses" && state.usesPrisms) ||
-                          (v === "development" && devGridActive());
       document.getElementById("prism-hd").style.display = v === "ratio" ? "block" : "none";
-      document.getElementById("prism-row").style.display = prismSlider ? "flex" : "none";
+      syncPrismRow(v);
       document.getElementById("services-hd").style.display = v === "services" ? "block" : "none";
       document.getElementById("services").style.display = v === "services" ? "block" : "none";
       if ((v === "services" || v === "ratio") && !roadsData) {
@@ -3520,6 +3537,9 @@
           .catch(() => {});
         await devGridFetch;
         if (state.view !== v) return; // switched again while the fetch ran
+        // devGridActive() only became answerable just now — re-sync the control
+        // that depends on it (see syncPrismRow).
+        syncPrismRow(v);
       }
       // Ghost-prism views reset the slider to their own default on entry.
       if (VIEWS[v] && VIEWS[v].opacity != null) setPrismOpacity(VIEWS[v].opacity);
@@ -3550,10 +3570,16 @@
       const devGridShow = v === "development" && devGridOfferable();
       document.getElementById("devdetail-hd").style.display = devGridShow ? "block" : "none";
       document.getElementById("devdetail").style.display = devGridShow ? "flex" : "none";
-      overlay.setProps({ layers: buildLayers() });
       // Glass shows the metric like Money, so its title stays metric-driven
       // and its blurb follows the spike denominator; the services blurb
       // follows the colour-driving service.
+      //
+      // WRITTEN BEFORE buildLayers(), not after: the label sweep measures the
+      // title block's live bounding rect to cull labels it would hide, so the
+      // chrome has to be in its final state before the sweep reads it. Building
+      // first left the sweep working off the OUTGOING view's blurb — entering
+      // Development grows #title from bottom 196 to 462 at 1440x900, and
+      // SPRUCE GROVE stayed painted in the new text until some later rebuild.
       const chrome = v === "money" ? METRICS[state.metric] : VIEWS[v];
       document.getElementById("title-h").textContent =
         v === "glass" ? METRICS[state.metric].title :
@@ -3566,6 +3592,7 @@
         v === "uses" ? usesBlurb() :
         v === "development" ? devBlurb() :
         v === "infill" ? VIEWS[v].blurb : moneyBlurb();
+      overlay.setProps({ layers: buildLayers() });
       syncColorAdjust(); // the sqrt toggle only bites in money + glass (scaleT)
       refreshLegend();
     }
@@ -3593,16 +3620,18 @@
       if (k === "fire" && checked) ensureFireStations();
       if (k === "transit" && checked) { ensureTransitStations(); ensureLrtLines(); }
       syncServiceControls();
-      overlay.setProps({ layers: buildLayers() });
+      // Blurb before layers — the label sweep measures the title's live rect.
       document.getElementById("title-p").textContent = servicesBlurb();
+      overlay.setProps({ layers: buildLayers() });
       refreshLegend();
     }
     function applySvcDriver(k) {
       if (k === state.svcDriver || !state.services[k]) return;
       state.svcDriver = k;
       syncServiceControls();
-      overlay.setProps({ layers: buildLayers() });
+      // Blurb before layers — the label sweep measures the title's live rect.
       document.getElementById("title-p").textContent = servicesBlurb();
+      overlay.setProps({ layers: buildLayers() });
       refreshLegend();
     }
 
