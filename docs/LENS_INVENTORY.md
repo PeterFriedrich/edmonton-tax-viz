@@ -32,7 +32,7 @@ Everything else is identical. Full-only pieces are hidden at the control level
 
 | Control | Options | Notes |
 |---|---|---|
-| **Display** popover (`#a11y`) | **Colour ramp**: Inferno · Glow · Cividis · **Neighbourhood labels** on/off | Off the top stack since the regroup. Cividis is the CVD-safe ramp; default Inferno applies without opening the menu. Labels auto-declutter and multiply on zoom. |
+| **Display** popover (`#a11y`) | **Colour ramp**: Inferno · Glow · Cividis · **Neighbourhood labels** on/off · **River & ring road** on/off (2026-07-27) | Off the top stack since the regroup. Cividis is the CVD-safe ramp; default Inferno applies without opening the menu. Labels auto-declutter and multiply on zoom. The reference layer (North Saskatchewan River + Anthony Henday) defaults **ON** — with no basemap tiles it is the map's only orientation cue. |
 | **Compass** (`#compass`) | rotate ccw · needle · rotate cw | Camera only. Arrows walk to the next 30° detent; the needle snaps north-up **in place** (bearing only). |
 | **Center 2D / Center 3D** | — | Camera only. Reframes the whole city (contrast with the needle). |
 
@@ -175,7 +175,8 @@ what it yields), over the 2024 Zoning Bylaw geometry.
 | **Uses** 🔒 | ✖ | — | — | — | — | — | ✅ 35% w/ prisms | ✖ |
 
 ✅ present and live · ✖ **hidden** · — not applicable · 🔒 full build only.
-Display popover (3 ramps + labels) and the camera chrome apply in every view.
+Display popover (3 ramps + labels + the river/ring-road reference layer) and
+the camera chrome apply in every view.
 **There is no "present but greyed" state left** — the last one (`#coloradj`)
 became a hide on 2026-07-26. The `#lens` column is gone from this table because
 the control was removed the same day.
