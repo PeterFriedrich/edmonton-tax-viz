@@ -1,5 +1,11 @@
 # Findings — Stock-age spike heights read uniformly tall (baseline fix)
 
+> **The feature this scaling work drove was withdrawn from the UI on
+> 2026-07-27** (`DECISIONS.md`). The finding below stands on its own —
+> the p2.5-floor reasoning applies to any linear-in-year spike scale —
+> and `median_year_built` is still in `value_grid.json`, so this is a
+> starting point rather than a dead end if stock age returns.
+
 **Date:** 2026-07-21. Context: the Development view's **Spikes → Year built**
 map (`median_year_built` per 100 m cell, `export_value_grid`; shipped
 2026-07-17, DECISIONS). Observation from Peter: *every* spike reads tall, and

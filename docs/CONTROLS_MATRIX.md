@@ -142,23 +142,21 @@ has at least one section to show.
 | **Services** | `#services` — 6 rows: Roads · Stormwater · Fire · Water/sewer · Transit · Service cost. Each = on/off checkbox + a "colour" driver radio | rows self-gate on their columns | radios appear only when **≥2** are checked; the driver always names a *checked* service (unchecking it hands the ramp on); fire/transit draw their dots whenever checked, driver or not |
 | **Ratio** | `#ratio-denom` (Per road metre / Per fire event / Per service $); `#prism-row` opacity slider, default 5% | `hasFire \|\| hasSvcCost` (else roads-only, control hidden) | **the only view that also shows the `#prism-hd` "Money plane" header** |
 | **Uses** 🔒 | `#uses-prisms` (Height = share zoned residential); `#prism-row` while prisms on, default 35% | — | legend swaps to categorical |
-| **Development → Housing built** | `#devmode` 🔒 (Housing built / Infill opportunity); `#devmetric` (Dwelling units / Permits / Industrial 🔒); `#devwindow` (Last 5 yr / Last 3 yr / Since 2009); `#devdetail` (Neighbourhood / 100 m grid — activity / Stock age); `#prism-row` while the grid is active | `FULL_BUILD && hasInfill`; `hasPermitsPerAcre`; `hasDevWindow`, `hasLongWindow`; `devGridOfferable()`, `devAgeCol()` | **see below** |
+| **Development → Housing built** | `#devmode` 🔒 (Housing built / Infill opportunity); `#devmetric` (Dwelling units / Permits / Industrial 🔒); `#devwindow` (Last 5 yr / Last 3 yr / Since 2009); `#devdetail` (Neighbourhood / 100 m grid — activity); `#prism-row` while the grid is active | `FULL_BUILD && hasInfill`; `hasPermitsPerAcre`; `hasDevWindow`, `hasLongWindow`; `devGridOfferable()` | **see below** |
 | **Development → Infill** 🔒 | `#devmode`; `#devmetric` (**Industrial hidden**); `#devwindow` | same as Development | **no `#devdetail`** (no infill grid), no slider; entering with Industrial selected **silently resets to units** |
 
 🔒 = full build only.
 
 ### Development's dynamic gating
 
-- `#devdetail` — the **one 3-way Detail selector** that replaced the old
-  `#dev-grid` checkbox + `#devspike` picker (decision #7, §7). Offered whenever
+- `#devdetail` — the **2-way Detail selector**. Shipped 3-way (decision #7,
+  §7) replacing the old `#dev-grid` checkbox + `#devspike` picker; the third
+  option, Stock age, was **withdrawn 2026-07-27** (`DECISIONS.md`). Offered whenever
   the grid file loaded **and** the metric isn't Industrial (`devGridOfferable =
   !!devGridData && !devIndustrial()`). The long "Since 2009" window **is**
   offerable (its own grid, PR #80). Industrial is the only choropleth-only metric.
-- The **Stock age** option additionally needs the year column (`devAgeCol() >= 0`);
-  older grid files hide just that button and keep the other two.
-- Selecting **Stock age** hides `#devmetric` and `#devwindow` (a stock snapshot
-  has no permit metric or window) — now an **explicit mode choice** rather than
-  the old surprise morph. See §5.3.
+- **Metric and Window now apply in both Detail modes.** They were suppressed
+  only while Stock age was up; with it gone, nothing in this view hides them.
 
 ---
 
@@ -180,11 +178,9 @@ permanently. `#opt-pres` and its `syncPresColumn` helper are both **gone** —
 `#coloradj` is now a direct child of `#opt-body` and takes its own row when it
 hides. The two-column Options layout is gone with them.
 
-**3. Stock age still morphs the Development panel** — choosing it hides Metric +
-Window. Now *chosen* rather than stumbled into (old B was worse: the picker
-only appeared after ticking an unrelated checkbox), and the option's tooltip says
-"Hides Metric + Window". Kept on the list because the panel still reshuffles;
-downgraded from a defect to a known cost.
+**3. ~~Stock age still morphs the Development panel~~ — CLOSED 2026-07-27.**
+The option was withdrawn, so nothing in Development hides Metric + Window any
+more. The panel no longer reshuffles on a Detail change.
 
 **4. Two separate "what do I divide by?" controls.** `#denom` (acres; Money, both
 modes) and `#ratio-denom` (Ratio) are conceptually siblings but live apart, and
@@ -196,11 +192,14 @@ Industrial selected drops the metric back to units without saying so. The public
 build can't hit this (Industrial isn't there), which is why it survived — but a
 silent state change is still a silent state change.
 
-**6. Stock age is arguably a lens wearing a Detail costume.** It's the assessed
-standing stock's median construction year — not permit activity at all, and it
-ignores Metric and Window. It sits inside Development's Detail selector because
-that's where the 100 m grid machinery is. Same shape as the old Industrial
-complaint (old F, below), and worth revisiting if Development ever gets crowded.
+**6. ~~Stock age is arguably a lens wearing a Detail costume~~ — CLOSED
+2026-07-27,** by removal rather than by relocation. It was the assessed standing
+stock's median construction year — not permit activity at all — sitting in
+Development's Detail selector only because that is where the 100 m grid
+machinery lives. **The complaint was right, and worth remembering in the same
+shape it was written:** if a control ignores the pickers around it, it is
+probably a lens, not a detail mode. Industrial (old F, below) is the surviving
+instance.
 
 **7. `#views` position on mobile** — a thin strip at the very top, which is the
 other half of the "under-reads as the primary control" concern. The *size* half

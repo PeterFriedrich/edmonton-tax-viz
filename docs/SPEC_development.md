@@ -4,8 +4,11 @@
 > `docs/CONTROLS_MATRIX.md` §7, `DECISIONS.md`.** This family's *chrome* changed:
 > **Infill** is now a *full-only mode of Development* (the `#devmode` Housing/Infill
 > toggle, not a `#views` button); **Industrial** is a *full-only `#devmetric`*; and
-> the grid checkbox + "Spikes" picker are now **one 3-way `#devdetail` "Detail"
-> selector** (Neighbourhood / 100 m grid — activity / Stock age). Some UI prose
+> the grid checkbox + "Spikes" picker became **one `#devdetail` "Detail"
+> selector** (Neighbourhood / 100 m grid — activity). It shipped 3-way; the
+> third option, **Stock age, was withdrawn 2026-07-27** — the whole
+> "Stock-age spikes" section below is retained as a record of what was built
+> and why, but describes a feature that is **no longer in the UI**. Some UI prose
 > below (§ "Spikes" picker naming, etc.) still describes the pre-regroup wording —
 > the underlying analysis/columns are unchanged, only the controls moved.
 
@@ -468,7 +471,14 @@ in the hood choropleth/tooltips; positions are never faked (no hood-centroid
 fallback). The toggle stays hidden on older data files without
 `dev_grid.json`. `verify-development.js` 54/54.
 
-### Stock-age spikes on the detail grid (added 2026-07-17)
+### Stock-age spikes on the detail grid (added 2026-07-17, **WITHDRAWN 2026-07-27**)
+
+> **This feature is no longer in the UI.** Peter's call — it "wasn't
+> working well as an option" — see `DECISIONS.md` 2026-07-27. The
+> `median_year_built` column is still produced by `export_value_grid.py`
+> and still ships in `value_grid.json`, so the analysis below is
+> reusable; only the presentation was removed. Kept because the scaling
+> work (`FINDINGS_stock_age_spike_scaling.md`) is the durable part.
 
 Peter's call: a second spike source for the detail grid — **"Spikes" picker
 (New homes | Year built)**, shown only while the grid is up. "Year built"
@@ -511,7 +521,7 @@ now". Design decisions:
   age couldn't separate industrial from suburbs; here age is the signal
   itself, not a filter).
 
-`verify-age-spikes.js` covers the guard, layer swap, linear height/colour
+~~`verify-age-spikes.js`~~ (deleted 2026-07-27 with the feature) covered the guard, layer swap, linear height/colour
 recomputes, null-cell absence, picker hiding, and the shared-fetch Glass
 regression.
 
