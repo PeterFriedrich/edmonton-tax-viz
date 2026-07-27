@@ -116,6 +116,18 @@ problem**, so revisit it only after the blurb collapse lands.
 
 ## 2b. Current state — NEEDS CONFIRMATION
 
+- **Double-tap zoom on the chrome (fix shipped 2026-07-27, outcome unconfirmed):**
+  Peter reported accidental page zoom, "for sure common with the rotation
+  buttons, but also just by accident on this UI". Mechanism: iOS Safari keeps
+  double-tap-to-zoom even on a `width=device-width` viewport, and nothing set
+  `touch-action`. Fixed with `touch-action: manipulation` on the chrome roots
+  **and** the controls (`DECISIONS.md` 2026-07-27); the map canvas deliberately
+  keeps the gesture. **Headless Chromium cannot reproduce the iOS behaviour**,
+  so `verify-controls-clickable.js` asserts the *mechanism* (55/55 controls
+  carry the property, `#map` does not) and NOT the outcome. Per the tooltip
+  precedent below, the real device is authoritative — **needs a phone check**:
+  double-tap a compass button (should rotate twice, not zoom the page), and
+  confirm pinch zoom still works everywhere.
 - **Tap-to-inspect (tooltips):** Peter observes on a **real device** that tapping
   a neighbourhood shows the tooltip — consistent with the mechanism (`getTooltip:
   tooltipFor`, deck.gl hover-pick; a tap produces a pick). **Treat as working.**
