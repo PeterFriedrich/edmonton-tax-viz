@@ -20,6 +20,33 @@
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       pointer-events: none;
     }
+    /* A second quick tap on a CONTROL is a second press, not a zoom gesture.
+       iOS Safari keeps double-tap-to-zoom even on a device-width viewport, so
+       tapping "rotate" twice in a row — the natural way to rotate further —
+       zoomed the whole page instead. Reported by Peter for the compass buttons
+       specifically, and it applies to every control.
+       `manipulation` disables ONLY double-tap zoom on these elements; pinch
+       zoom is untouched everywhere, so the page stays zoomable and this is not
+       the `user-scalable=no` accessibility trap (WCAG 1.4.4). It also drops the
+       legacy ~300ms tap delay, so the controls feel quicker.
+       Set at BOTH levels on purpose, and the redundancy is the point:
+       - the chrome ROOTS catch double-taps on non-interactive text, which iOS
+         also zooms — the title blurb and the legend are the ones you actually
+         hit by accident. (`#controls` is not redundant with `.panel`: #optpanel
+         and its fold button are not panels.)
+       - the CONTROLS themselves, because the roots alone would rely on
+         touch-action resolving against ancestors. That is what the spec says
+         and what browsers do, but it is not an inherited property, so nothing
+         reachable from this box can confirm it — and a control that silently
+         missed out is exactly the reported bug. Stating it on the element is
+         both checkable here and independent of that resolution.
+       The MAP is deliberately excluded — double-tap to zoom is the standard
+       gesture there (Google/Apple Maps, Mapbox, MapLibre's default), and #map
+       is a sibling of all of these, so it keeps it. */
+    .panel, #controls, #botleft { touch-action: manipulation; }
+    .panel button, .panel input, .panel label,
+    #controls button, #controls input, #controls label,
+    #botleft button, #botleft input { touch-action: manipulation; }
     #title { top: 20px; left: 22px; max-width: 360px; }
     #title h1 { margin: 0 0 4px; font-size: 19px; font-weight: 600; letter-spacing: 0.2px; }
     #title p  { margin: 0; font-size: 12.5px; line-height: 1.5; color: #9a9ab0; }
