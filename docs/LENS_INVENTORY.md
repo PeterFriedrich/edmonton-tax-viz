@@ -32,7 +32,7 @@ Everything else is identical. Full-only pieces are hidden at the control level
 
 | Control | Options | Notes |
 |---|---|---|
-| **Display** popover (`#a11y`) | **Colour ramp**: Inferno · Glow · Cividis · **Neighbourhood labels** on/off · **River & ring road** on/off (2026-07-27) | Off the top stack since the regroup. Cividis is the CVD-safe ramp; default Inferno applies without opening the menu. Labels auto-declutter and multiply on zoom. The reference layer (North Saskatchewan River + Anthony Henday) defaults **ON** — with no basemap tiles it is the map's only orientation cue. One checkbox, two layers at opposite ends of the stack: river under the data, ring road over it. |
+| **Display** popover (`#a11y`) | **Colour ramp**: Inferno · Glow · Cividis · **Neighbourhood labels** on/off · **Landmarks & nearby places** on/off (2026-07-27) | Off the top stack since the regroup. Cividis is the CVD-safe ramp; default Inferno applies without opening the menu. Labels auto-declutter and multiply on zoom. The reference set (North Saskatchewan River + Anthony Henday + 7 regional place names) defaults **ON** — with no basemap tiles it is the map's only orientation cue. One checkbox, three things: river under the data, ring road over it, and the place names inside the shared label layer — which the **Neighbourhood labels** box co-owns, each gating its own class, so either can be on alone. |
 | **Compass** (`#compass`) | rotate ccw · needle · rotate cw | Camera only. Arrows walk to the next 30° detent; the needle snaps north-up **in place** (bearing only). |
 | **Center 2D / Center 3D** | — | Camera only. Reframes the whole city (contrast with the needle). |
 

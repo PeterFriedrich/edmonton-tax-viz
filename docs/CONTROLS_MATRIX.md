@@ -103,7 +103,17 @@ data guard, so nothing is stripped from the file.
 | `#coloradj` | `Colour: sqrt scaling` / `Colour: linear` (the label **is** the state) | **Money** — both detail modes | **HIDDEN** (`display:none`, 2026-07-26 — was greyed) |
 | `#toggle` (T2, listed here for the comparison) | **two rows**: `Revenue \| Value` over `Total \| Residential \| Non-residential` (2026-07-26) | **Money** — both detail modes | **HIDDEN** (regroup, 2026-07-23 — was live-but-inert) |
 | `#palette`, `Labels` | 3 ramps; hood names on/off | — | moved into the `#a11y` **Display** popover; apply everywhere (palette is n/a in Uses' categorical legend) |
-| `#reference-on` (2026-07-27) | `River & ring road` on/off | **every view** — `buildLayers()` BRACKETS `buildViewLayers()` (river under, ring road over), so no view can miss it | never hidden. **Default ON**, unlike `Labels` — with no basemap tiles it is the only orientation cue, so it should not need hunting for |
+| `#reference-on` (2026-07-27) | `Landmarks & nearby places` on/off — river, ring road, **and the 7 regional place names** | **every view** — `buildLayers()` BRACKETS `buildViewLayers()` (river under, ring road over), so no view can miss it; the place names go into the shared label pool, which every view already composes | never hidden. **Default ON**, unlike `Labels` — with no basemap tiles it is the only orientation cue, so it should not need hunting for |
+
+**The one control that gates part of another control's layer** (2026-07-27):
+`#reference-on` and `Labels` both feed the single `hood-labels` TextLayer, each
+gating its own class of anchor via `labelPool()`. This is deliberate — one
+layer means one declutter sweep, so a place name and a hood name can never
+overlap — but it is the only place in the app where two checkboxes co-own a
+layer, and the layer is now gated on **the pool being non-empty** rather than
+on `state.labels`. Anything that reasons "labels off ⇒ no text layer" is wrong
+as of this date. Regional names win collisions via an explicit `prio`, because
+the sweep's existing priority key is polygon area and a Point has none.
 
 **All the inconsistencies in this table are now fixed.** `#toggle` used to stay
 live but inert outside Money (resolved by the regroup — old combo C), `#lens`

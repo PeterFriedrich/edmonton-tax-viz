@@ -800,18 +800,30 @@ only** — never label the derived metric "total city cost".
   2× the events does not cost the City 2× (most fire cost is standing capacity).
   Carry that caveat in any UI copy.
 
-## 14. Geographic Reference Layers (Tier 1 orientation, added 2026-07-27)
-`web/data/reference.geojson` (15 kB, 2 features, committed) — the North
-Saskatchewan River and the Anthony Henday ring road, drawn as plain grey
-landmarks so a first-time viewer can orient before reading the fiscal data.
-The map has **no basemap tiles** (just a dark backdrop), so without these there
-is no geographic context at all. Purely cartographic: no metric, no tooltip.
+## 14. Geographic Reference Layers (orientation, added 2026-07-27)
+`web/data/reference.geojson` (55 kB, 9 features, committed) — the North
+Saskatchewan River, the Anthony Henday ring road, and the names of seven
+neighbouring municipalities, so a first-time viewer can orient before reading
+the fiscal data. The map has **no basemap tiles** (just a dark backdrop), so
+without these there is no geographic context at all. Purely cartographic: no
+metric, no tooltip.
 
 Built by `scripts/build_reference_layers.py`. **NOT in the weekly refresh** —
 static geography, same posture as `build_levy_catchments.py`; the Alberta
-endpoint is queried once at build time, never at runtime. Re-run only if the
-reference geography itself changes. Features carry one property, `t`
-(`"river"` | `"henday"`), matching `roads.geojson`'s convention.
+endpoints are queried once at build time, never at runtime. Re-run only if the
+reference geography itself changes. Features carry `t`
+(`"river"` | `"henday"` | `"place"`), matching `roads.geojson`'s convention;
+`place` features additionally carry `name`.
+
+**Size note (audited 2026-07-27):** the river is **95% of the file** (2,316
+vertices, 50.7 kB) and is the one part never trimmed — `RIVER_SIMPLIFY_M = 25`
+against ~79 m/px at HOME zoom, i.e. ~3× finer than a pixel, and its main
+polygon carries **104 interior rings (islands) = 35% of its whole vertex
+budget**, 99 of them out on the bare tails rather than hidden under the city
+fabric. Re-simplifying at 100 m would halve the file. Left alone deliberately:
+54 kB is 0.7% of the 7.7 MB payload, so there is no performance argument, and
+the only open question is whether the sub-pixel islands (smallest are 52–95 m
+wide, ~1 px) read as speckle on the tails. Not yet looked at.
 
 - **River** — Alberta `base_water_feature` MapServer **layer 72**
   (`Lake/River (20K)`, the most detailed polygon tier),
@@ -831,6 +843,16 @@ reference geography itself changes. Features carry one property, `t`
   `Province of Alberta` rows; `load_roads` filters those out (it measures
   City-maintained supply), which is why the ring never appears on the services
   map.
+- **Places** — Alberta `urban_and_rural_municipality` MapServer,
+  `geospatial.alberta.ca/titan/rest/services/base/urban_and_rural_municipality`.
+  Seven names (`PLACES` in the build script): St. Albert, Sherwood Park, Spruce
+  Grove, Fort Saskatchewan, Leduc, Beaumont, Devon. One `Point` each, at the
+  centroid of the place's largest polygon (representative point as a fallback
+  if that centroid lands outside) — the **same rule `labelAnchors()` uses for
+  neighbourhoods** in `web/index.html`, so a regional name and a hood name are
+  positioned by one convention rather than two. All seven resolve to single
+  clean polygons, 1.8–12.7 km from the city edge, 13.6–29.3 km from centre.
+  Service is natively **EPSG:3400**.
 
 ### Known Quirks
 - **Name-matching alone pulls 275.7 km, not the ~75 km ring** — every entrance
@@ -855,6 +877,33 @@ reference geography itself changes. Features carry one property, `t`
 - The builder **verifies the ring closes** (no arc end without a matching end)
   rather than trusting a length total: 149 km looks perfectly plausible for a
   75 km ring drawn twice, which is exactly how the Highway 14 hole hid.
+- **The municipality service models legal STATUS, not size, so the seven places
+  need THREE sublayers** — and the obvious single-layer implementation silently
+  finds nothing for two of them:
+  | Sublayer | Name | Field | Places |
+  |---|---|---|---|
+  | **78** | City | `CITY_NAME` | St. Albert, Spruce Grove, Fort Saskatchewan, Leduc, Beaumont |
+  | **56** | Town | `TOWN_NAME` | Devon |
+  | **66** | Urban Service Area | `USA_NAME` | Sherwood Park |
+  **Sherwood Park is the trap:** it is not a town or a city but an urban
+  service area of Strathcona County, so it is in neither 78 nor 56. (Distinct
+  again from **104**, `Specialized Municipality`, which holds *Strathcona
+  County itself* — see the Tier 3 boundary note.) **Beaumont has been a city
+  since 2019**, so it is in 78 rather than 56.
+- **Sublayer 66 also holds `Sherwood Park (Bremner)`**, a separate
+  future-growth polygon ~10 km east. The query matches on **equality**, not a
+  prefix or `LIKE` — a pattern match would pull Bremner in and drag the label
+  anchor off the real town.
+- **`PLACES` is a closed hand-written list, not a radius query.** Which names
+  belong on the map is a cartographic judgement (how populated should the frame
+  feel?), so it is stated rather than derived: a bbox sweep would silently gain
+  and lose names as the province edits boundaries, and the map's composition
+  would drift with it. A name that stops resolving **raises** rather than
+  quietly shipping a map with a hole in its orientation.
+- **Leduc is off the bottom edge at the default camera** (projects to y≈1102 in
+  a 900px viewport at HOME zoom + 52° pitch) and is culled by the label
+  declutterer. That is correct behaviour, not a missing label — it appears on
+  pan or zoom-out. Anything asserting "all seven visible" will fail.
 
 ## Name Matching
 

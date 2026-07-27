@@ -558,12 +558,13 @@
       <label title="Show neighbourhood names on the map — labels declutter automatically and more appear as you zoom in">
         <input type="checkbox" id="labels-on" /> Neighbourhood labels
       </label>
-      <!-- Default ON, unlike the labels above: this map has no basemap, so the
-           river and ring road are the only things telling a first-time viewer
-           where they are. Still a checkbox, so the data can be read on a clean
-           backdrop. -->
-      <label title="Show the North Saskatchewan River and the Anthony Henday ring road — plain grey landmarks for orientation, no data attached">
-        <input type="checkbox" id="reference-on" checked /> River &amp; ring road
+      <!-- Default ON, unlike the labels above: this map has no basemap, so
+           these are the only things telling a first-time viewer where they
+           are. Still a checkbox, so the data can be read on a clean backdrop.
+           The regional names ride THIS toggle, not the neighbourhood one
+           above: they answer "where is this?", not "which hood is that?". -->
+      <label title="Show the North Saskatchewan River, the Anthony Henday ring road, and the names of neighbouring places — plain grey landmarks for orientation, no data attached">
+        <input type="checkbox" id="reference-on" checked /> Landmarks &amp; nearby places
       </label>
     </div>
   </div>
@@ -2137,7 +2138,11 @@
       if (_refSplit || !referenceData) return _refSplit;
       const of = t => ({ type: "FeatureCollection",
                          features: referenceData.features.filter(f => f.properties.t === t) });
-      return (_refSplit = { river: of("river"), henday: of("henday") });
+      // Places are consumed as plain anchors by the label pool, not as a
+      // GeoJsonLayer — they are the only reference feature that renders as text.
+      return (_refSplit = { river: of("river"), henday: of("henday"),
+                            places: referenceData.features
+                                      .filter(f => f.properties.t === "place") });
     }
 
     // Bottom of the stack: the water, under everything the map draws.
@@ -2269,15 +2274,62 @@
         }
         return { name: f.properties.neighbourhood_name, position: best,
                  em: _measureEm(f.properties.neighbourhood_name),
-                 area: bestArea, p: f.properties };
+                 area: bestArea, p: f.properties,
+                 size: LABEL_SIZE, prio: PRIO_HOOD };
       });
       return _labelAnchors;
+    }
+
+    // Regional place names (St. Albert, Sherwood Park, …). Orientation, not
+    // data: they say where the frame IS, the way the river and the ring road
+    // do, so they ride the reference toggle rather than the hood-label one and
+    // are therefore ON for a first-time viewer who has touched no control.
+    //
+    // They share ONE TextLayer and ONE declutter sweep with the hood labels
+    // (the 2026-07-27 decision) because a second, independent layer cannot see
+    // the first one's boxes — "ST. ALBERT" would sit on top of a hood name the
+    // moment both are shown. Sharing the sweep is also why they need an
+    // explicit priority: the sweep's existing key is polygon area, which a
+    // Point has none of.
+    const PRIO_HOOD = 0;
+    const PRIO_PLACE = 1;   // higher wins the spot when boxes overlap
+    // Smaller and dimmer than a hood name, and drawn in the same font: these
+    // are context at the edge of the frame, so they should be legible without
+    // competing with the data for the eye.
+    const PLACE_SIZE = 12;
+    const PLACE_COLOR = [150, 160, 178, 235];
+    const HOOD_COLOR = [240, 240, 246, 250];   // hoisted: the colour accessor
+                                               // runs per label, per rebuild.
+    let _placeAnchors = null;
+    function placeAnchors() {
+      if (_placeAnchors) return _placeAnchors;
+      const split = referenceSplit();
+      if (!split) return [];   // reference.geojson not fetched yet
+      return (_placeAnchors = split.places.map(f => {
+        const name = f.properties.name.toUpperCase();
+        return { name, position: f.geometry.coordinates,
+                 em: _measureEm(name),
+                 // No polygon, so no area — prio is what orders these.
+                 area: 0, p: null,
+                 size: PLACE_SIZE, prio: PRIO_PLACE };
+      }));
+    }
+
+    // The pool the declutterer sweeps: each class gated by its OWN toggle, so
+    // turning hood labels off leaves the regional names (and vice versa).
+    function labelPool() {
+      return [...(state.reference ? placeAnchors() : []),
+              ...(state.labels ? labelAnchors() : [])];
     }
 
     // Label elevation: the prism roof in the extruded views (a label sits on
     // the tower it names), the ground in the flat ones. +60 m clears the roof.
     const LABEL_LIFT = 60;
     function labelZ(p) {
+      // Regional places carry no hood properties (p === null) and stand
+      // outside the city where nothing is extruded — they sit on the ground in
+      // every view. Guard first: the branches below all index into p.
+      if (!p) return LABEL_LIFT;
       if (state.view === "money") {
         const sc = moneyScale();
         return (p[sc.colKey] || 0) * sc.elevationScale + LABEL_LIFT;
@@ -2309,7 +2361,7 @@
     const LABEL_DRAW_SCALE = 1.35;
     const LABEL_PAD = 8;         // px of breathing room around each label box
     function visibleLabels() {
-      const anchors = labelAnchors();
+      const anchors = labelPool();
       if (!overlay || !overlay._deck) return anchors; // pre-init: never hit with labels off
       const vp = overlay._deck.getViewports()[0];
       if (!vp) return anchors;
@@ -2318,11 +2370,15 @@
         const [px, py] = vp.project([d.position[0], d.position[1], labelZ(d.p)]);
         // Offscreen anchors can neither render nor block others — skip.
         if (px < -80 || px > vp.width + 80 || py < -40 || py > vp.height + 40) continue;
+        // d.size, not LABEL_SIZE: the pool now holds two text sizes, and a box
+        // measured at the wrong one either overlaps or over-reserves.
         boxes.push({ d, px, py,
-                     w: d.em * LABEL_SIZE * LABEL_DRAW_SCALE + 2 * LABEL_PAD,
-                     h: LABEL_SIZE * LABEL_DRAW_SCALE + 2 * LABEL_PAD });
+                     w: d.em * d.size * LABEL_DRAW_SCALE + 2 * LABEL_PAD,
+                     h: d.size * LABEL_DRAW_SCALE + 2 * LABEL_PAD });
       }
-      boxes.sort((a, b) => b.d.area - a.d.area); // bigger hoods win the spot
+      // Regional names win the spot first — they orient the whole frame, and
+      // there are seven of them against 400 hoods. Then bigger hoods, as before.
+      boxes.sort((a, b) => (b.d.prio - a.d.prio) || (b.d.area - a.d.area));
       const kept = [];
       for (const b of boxes) {
         if (kept.every(k => Math.abs(k.px - b.px) * 2 > k.w + b.w ||
@@ -2336,15 +2392,22 @@
     // names, decluttered by visibleLabels(); depthTest off so towers in front
     // never swallow labels behind.
     function labelLayer() {
-      if (!state.labels) return [];
+      // Gated on the POOL, not on state.labels: the layer now carries two
+      // classes with independent toggles, so "no hood labels" no longer means
+      // "no labels". Empty pool still returns [] rather than an empty layer.
+      const data = visibleLabels();
+      if (!data.length) return [];
       return [new deck.TextLayer({
         id: "hood-labels",
-        data: visibleLabels(),
+        data,
+        // Size and colour are per-datum accessors now rather than constants.
+        // No updateTriggers needed: visibleLabels() returns a fresh array on
+        // every call, so deck sees a new `data` reference and re-runs them.
         getPosition: d => [d.position[0], d.position[1], labelZ(d.p)],
         getText: d => d.name,
-        getSize: LABEL_SIZE,
+        getSize: d => d.size,
         sizeUnits: "pixels",
-        getColor: [240, 240, 246, 250],
+        getColor: d => (d.prio === PRIO_PLACE ? PLACE_COLOR : HOOD_COLOR),
         outlineWidth: 3,
         outlineColor: [0, 0, 0, 255],
         fontFamily: LABEL_FONT_FAMILY,
@@ -3213,9 +3276,9 @@
       document.getElementById("labels-on").checked = checked;
     }
 
-    // Toggle the river + ring-road orientation layer (accessibility-menu
-    // checkbox). View-independent, exactly like the labels above: buildLayers
-    // composes it under every view.
+    // Toggle the orientation set: river, ring road, and the regional place
+    // names. View-independent, exactly like the labels above: buildLayers
+    // composes the shapes around every view and the names into the label pool.
     function applyReference(checked) {
       state.reference = checked;
       if (checked) ensureReference();   // first tick may precede the fetch

@@ -981,3 +981,50 @@ only thing telling a newcomer where they are.
 already in the repo, not a new source, but naming alone gives 275.7 km of ramps
 and interchange lanes and a 2.9 km hole where Highway 216 runs concurrent with
 Highway 14. See `DECISIONS.md` 2026-07-27 and `data/DATA.md` §14.
+
+## Regional place names (2026-07-27)
+
+The river and the ring road say *where the shapes are*; they do not say *what
+is next door*. Seven neighbouring municipalities now float as names on the
+backdrop — St. Albert, Sherwood Park, Spruce Grove, Fort Saskatchewan, Leduc,
+Beaumont, Devon — which is the rest of what a first-time viewer needs to place
+the frame.
+
+**Two toggles now co-own one layer, and that is the whole design.** The
+locked Tier-2 decision said district and place names must feed the *existing*
+`visibleLabels()` declutterer rather than get a second label layer, because a
+second layer cannot see the first one's boxes and the names would stack. That
+still holds. But it silently implied something else that does not: hood labels
+are gated on `state.labels`, which **ships `false`**. Routing orientation names
+through that flag would have hidden the thing a newcomer most needs behind a
+checkbox they never flip — while the river and ring road are deliberately on.
+
+So the two concerns got separated. `labelPool()` gates each class on its own
+flag and concatenates; `labelLayer()` gates on **the pool being non-empty**
+rather than on `state.labels`; one TextLayer, one sweep, two independent
+switches. Anything reasoning "labels off ⇒ no text layer" is now wrong.
+
+**The sweep needed a priority it did not have.** It ordered by polygon area —
+bigger hoods win the spot — and a place is a `Point`, which has no area. An
+explicit `prio` now sorts first (places win), area second. Faking a huge area
+would have worked and would have been the kind of thing that drifts.
+
+**Two smaller things that were real.** `labelZ(p)` indexes into hood
+properties to find the prism roof a label sits on; places carry none and stand
+outside the city where nothing is extruded, so it guards on `!p` and returns
+ground. And the box math multiplied by the `LABEL_SIZE` constant — with two
+text sizes in one pool that either overlaps or over-reserves, so it reads
+`d.size`.
+
+**Sizing and register.** 12 px against the hood labels' 15, `[150,160,178]`
+against their near-white, uppercase like them. Context at the edge of the
+frame: legible without competing with the data for the eye.
+
+**Leduc does not show at the default camera** — it projects to y≈1102 in a
+900px viewport under HOME zoom and 52° pitch, so the sweep culls it as
+offscreen, correctly. It appears on pan or zoom-out. The verify suite asserts
+a healthy majority rather than all seven for exactly this reason.
+
+**Known gap:** the sweep has no knowledge of DOM chrome, so a name can land
+under the Options panel (Fort Saskatchewan does, at 1440×900). Pre-existing for
+hood labels; logged in `TODO.md`.
