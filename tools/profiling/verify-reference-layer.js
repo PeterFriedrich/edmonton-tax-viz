@@ -244,6 +244,42 @@ const PLACE_COUNT = 7;
   const neither = await setToggles(false, false);
   check('both off removes the text layer entirely', neither.layer === false);
 
+  // --- the sweep must track the camera, in the DEFAULT toggle state ----------
+  // Regression: the moveend re-cull was gated on state.labels, which ships
+  // false, so with hood labels off the sweep ran once at load and froze. The
+  // names never re-culled or resized until an unrelated rebuild unstuck them,
+  // and the visible symptom (nearly all of them gone after a zoom-out) looked
+  // like a data bug. Comparing DRAWN against a FRESH sweep is what catches it:
+  // both were individually plausible, only the mismatch was wrong.
+  await setToggles(true, false);
+  const atZoom = async z => {
+    await page.evaluate(zz => map.easeTo({ zoom: zz, duration: 200 }), z);
+    await page.waitForTimeout(1400);
+    return page.evaluate(() => {
+      const l = overlay._deck.props.layers.flat()
+        .find(x => x && x.id === 'hood-labels');
+      const drawn = (l ? l.props.data : []).filter(x => x.prio === PRIO_PLACE);
+      return {
+        drawn: drawn.length,
+        fresh: visibleLabels().filter(x => x.prio === PRIO_PLACE).length,
+        size: drawn.length ? drawn[0].size : null,
+        cached: placeAnchors()[0].size,
+      };
+    });
+  };
+  const near = await atZoom(10.2), far = await atZoom(8);
+  check('re-cull fires on camera move with hood labels off (near)',
+        near.drawn === near.fresh, `drawn ${near.drawn} vs fresh ${near.fresh}`);
+  check('re-cull fires on camera move with hood labels off (far)',
+        far.drawn === far.fresh, `drawn ${far.drawn} vs fresh ${far.fresh}`);
+  check('place labels shrink as the camera pulls back',
+        far.size < near.size, `${near.size} -> ${far.size}`);
+  // The scaled size rides on a copy; the memoized anchors are shared across
+  // every sweep, so a write-back would leak one camera's zoom into the next.
+  check('scaling does not mutate the memoized anchors',
+        far.cached === near.cached, `${near.cached} -> ${far.cached}`);
+
+  await page.evaluate(() => map.easeTo({ zoom: 10.2, duration: 200 }));
   await setToggles(true, false);   // leave it at the shipped default
 
   console.log(fail ? `\n${fail} CHECK(S) FAILED` : '\nALL CHECKS PASSED');

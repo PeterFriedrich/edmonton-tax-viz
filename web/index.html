@@ -2225,6 +2225,21 @@
     // are context at the edge of the frame, so they should be legible without
     // competing with the data for the eye.
     const PLACE_SIZE = 12;
+    // …and unlike a hood name, a place name has to survive being zoomed away
+    // from. Text in pixel units does not shrink with the map, so zooming out
+    // left the seven names both oversized against a shrinking city AND swollen
+    // in collision-box terms until the sweep dropped all but one (2 of 7 at
+    // z=7, and which two fell out of file order — every place ties on prio and
+    // carries area 0). Scaling with the camera fixes the look and the loss
+    // together. Floored so they stay legible rather than fading to specks.
+    const PLACE_MIN_SIZE = 7;
+    const PLACE_FULL_ZOOM = 10;   // at/above: full size (HOME is 10.2)
+    const PLACE_MIN_ZOOM = 7;     // at/below: the floor
+    function placeSize(zoom) {
+      const t = (zoom - PLACE_MIN_ZOOM) / (PLACE_FULL_ZOOM - PLACE_MIN_ZOOM);
+      return PLACE_MIN_SIZE +
+             (PLACE_SIZE - PLACE_MIN_SIZE) * Math.min(1, Math.max(0, t));
+    }
     const PLACE_COLOR = [150, 160, 178, 235];
     const HOOD_COLOR = [240, 240, 246, 250];   // hoisted: the colour accessor
                                                // runs per label, per rebuild.
@@ -2298,11 +2313,15 @@
         const [px, py] = vp.project([d.position[0], d.position[1], labelZ(d.p)]);
         // Offscreen anchors can neither render nor block others — skip.
         if (px < -80 || px > vp.width + 80 || py < -40 || py > vp.height + 40) continue;
-        // d.size, not LABEL_SIZE: the pool now holds two text sizes, and a box
-        // measured at the wrong one either overlaps or over-reserves.
-        boxes.push({ d, px, py,
-                     w: d.em * d.size * LABEL_DRAW_SCALE + 2 * LABEL_PAD,
-                     h: d.size * LABEL_DRAW_SCALE + 2 * LABEL_PAD });
+        // The EFFECTIVE size, not d.size: places scale with the camera while
+        // hoods do not. Resolved once, here, so the box and the glyphs it
+        // reserves room for can never disagree — getSize reads it back off the
+        // datum below. (Measuring at the wrong size either overlaps or
+        // over-reserves; that is why d.size replaced the LABEL_SIZE constant.)
+        const size = d.prio === PRIO_PLACE ? placeSize(vp.zoom) : d.size;
+        boxes.push({ d, px, py, size,
+                     w: d.em * size * LABEL_DRAW_SCALE + 2 * LABEL_PAD,
+                     h: size * LABEL_DRAW_SCALE + 2 * LABEL_PAD });
       }
       // Regional names win the spot first — they orient the whole frame, and
       // there are seven of them against 400 hoods. Then bigger hoods, as before.
@@ -2313,7 +2332,10 @@
                             Math.abs(k.py - b.py) * 2 > k.h + b.h))
           kept.push(b);
       }
-      return kept.map(b => b.d);
+      // Carry the effective size out on a COPY. The anchor arrays are memoized
+      // and shared across every sweep, so writing the scaled size back onto an
+      // anchor would leak one camera's zoom into the next one's box math.
+      return kept.map(b => (b.size === b.d.size ? b.d : { ...b.d, size: b.size }));
     }
 
     // The labels layer (all views, toggled from the lens panel). Billboarded
@@ -3637,9 +3659,14 @@
         overlay.setProps({ layers: buildLayers() });
       });
       // Re-cull the labels once the camera settles — zooming in reveals more
-      // names. Unchanged layers diff to no-ops, so the rebuild is cheap.
+      // names, and place labels resize with the camera. Unchanged layers diff
+      // to no-ops, so the rebuild is cheap.
+      // Gated on the POOL, not on state.labels: hood labels ship OFF, so that
+      // test froze the sweep at its load-time result for the default view —
+      // the regional names then never re-culled or resized, and only a toggle
+      // (which rebuilds for its own reasons) unstuck them.
       map.on("moveend", () => {
-        if (state.labels) overlay.setProps({ layers: buildLayers() });
+        if (labelPool().length) overlay.setProps({ layers: buildLayers() });
       });
       // A data file from before the services lens can't drive the services/
       // ratio views — hide those buttons rather than offer views that can't
