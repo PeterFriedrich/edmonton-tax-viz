@@ -42,7 +42,10 @@ follows that order** — set with CSS `order:` on `#controls`, not DOM order
 - **Tier 3 — HOW it's drawn** (presentation modifiers): `#coloradj` — the only
   one left since `#lens` was removed 2026-07-26.
 - **Out of the tier flow:** the `#a11y` **Display** popover (colour ramp +
-  neighbourhood labels), bottom-right.
+  neighbourhood labels + the river/ring-road reference layer), bottom-right.
+  This popover is where **view-independent map furniture** lives — controls that
+  apply identically in every view. That is the test for putting something here
+  rather than in the Options panel, whose contents are per-view.
 
 **Tiers 2 and 3 both live inside the foldable Options panel** (`#optpanel`,
 `order: 3`): a header button `#opt-fold` toggles `#opt-body`, which **stacks**
@@ -100,6 +103,7 @@ data guard, so nothing is stripped from the file.
 | `#coloradj` | `Colour: sqrt scaling` / `Colour: linear` (the label **is** the state) | **Money** — both detail modes | **HIDDEN** (`display:none`, 2026-07-26 — was greyed) |
 | `#toggle` (T2, listed here for the comparison) | **two rows**: `Revenue \| Value` over `Total \| Residential \| Non-residential` (2026-07-26) | **Money** — both detail modes | **HIDDEN** (regroup, 2026-07-23 — was live-but-inert) |
 | `#palette`, `Labels` | 3 ramps; hood names on/off | — | moved into the `#a11y` **Display** popover; apply everywhere (palette is n/a in Uses' categorical legend) |
+| `#reference-on` (2026-07-27) | `River & ring road` on/off | **every view** — composed by `buildLayers()` around `buildViewLayers()`, so it cannot miss one | never hidden. **Default ON**, unlike `Labels` — with no basemap tiles it is the only orientation cue, so it should not need hunting for |
 
 **All the inconsistencies in this table are now fixed.** `#toggle` used to stay
 live but inert outside Money (resolved by the regroup — old combo C), `#lens`

@@ -12,6 +12,46 @@ _Last reconciled: 2026-07-26_
 
 ## Open work
 
+- [ ] **GEOGRAPHIC REFERENCE LAYERS — TIERS 2 & 3 (Tier 1 shipped 2026-07-27).**
+  Tier 1 (North Saskatchewan River + Anthony Henday ring road) is live and on by
+  default; see `DECISIONS.md` 2026-07-27 (×2) and `data/DATA.md` §14. The render
+  seam is proven: `referenceLayers()` composed last by `buildLayers()`, one
+  Display-menu toggle, `verify-reference-layer.js`. What's left:
+  - [ ] **Tier 2 — Edmonton internal reference.** District labels (West
+    Edmonton, Mill Woods, Castle Downs, Terwillegar, Southeast) + Downtown and
+    Old Strathcona/Whyte Ave; major arterials as thin unlabeled lines
+    (Whitemud, Yellowhead, Gateway/Calgary Trail) from the existing road feed,
+    same allowlist technique as the Henday. **Label collision is DECIDED
+    (2026-07-27, Peter):** feed district labels into the existing
+    `visibleLabels()` declutterer with districts winning priority — do NOT add
+    a second, independent label layer, or "MILL WOODS" will stack on "MILL
+    WOODS TOWN CENTRE". Districts have no dataset; coordinates are hardcoded
+    and placement is a design call, not a data-fidelity one.
+  - [ ] **Tier 3 — neighbouring municipalities.** St. Albert, Strathcona
+    County, Leduc: thin grey boundary, small greyed label, no fill. Alberta
+    `urban_and_rural_municipality` MapServer, natively **EPSG:3400**.
+    **Sublayer IDs confirmed 2026-07-26:** Edmonton / St. Albert / Leduc are all
+    in **78 (`City`, field `CITY_NAME`)**; **Strathcona County is in 104
+    (`Specialized Municipality`, `SPMUN_NAME`) — NOT 114
+    (`Municipal District and County`)**, which holds Leduc/Sturgeon/Parkland
+    *County*. Ids 67/95/105 are group layers and return no fields.
+  - [ ] **Zoom-gating does not exist yet** — nothing in `index.html` gates on
+    zoom today, so Tier 2/3 introduce the concept. Tier 1 deliberately renders
+    at all zooms.
+  - **Explicitly out of scope (decided 2026-07-27):** the Edmonton river
+    valley/ravine overlay (`gis.edmonton.ca` Common_Layers 115). It is a
+    regulatory development-setback polygon, not the river — drawing it near the
+    water would read as "the river is this wide."
+
+- [ ] **FLAKY TEST: `verify-uses-prisms.js` "money: control hidden again, state
+  kept" (found 2026-07-27, PRE-EXISTING).** Fails ~3 runs in 4 on master with
+  the reference-layer change reverted, so it is NOT a regression from that work
+  — but it will waste a future session's time. Cause: the check reads
+  `overlay._deck.layerManager.layers`, the flattened *managed* list, which still
+  holds `uses-res-prisms` mid-finalization for a beat after a view switch;
+  `overlay._deck.props.layers` (what was actually composed) is already clean.
+  Fix is to probe `props.layers`, or wait for the layer manager to settle.
+
 - [x] ~~**SMALL OPEN UI DECISIONS (2026-07-25).**~~ **ALL THREE CLOSED 2026-07-26**
   (Peter decided; see `DECISIONS.md` 2026-07-26 for the reasoning on each).
   - [x] ~~Does `#coloradj` hide when it doesn't apply?~~ **Yes — built.** _Later

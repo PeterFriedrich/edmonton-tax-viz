@@ -927,3 +927,44 @@ the only control in the panel that changes how the data is *drawn* rather than
 1440px. Worth recording that "Ground acres" wrapping to two lines is
 **pre-existing** — measured against master before the change, precisely so the
 narrower panel didn't get blamed for it.
+
+## Geographic reference layer — river + Anthony Henday ring (2026-07-27)
+
+Tier 1 of the reference-geography brief. The map has **no basemap tiles** —
+`web/index.html` has said "just a dark backdrop" since v1 — so a first-time
+viewer had no way to tell which part of the city a prism sat in. Two shapes fix
+that: the North Saskatchewan River and the ring road. Flat greys, unlabelled,
+not pickable, no metric attached.
+
+**The layer-order finding, which was the whole design.** The instinct is to put
+reference geography *underneath* the data, the way a basemap sits under a
+choropleth. Measured, that was wrong here: Edmonton's hood polygons tile the
+entire city, so composed first the layer changed **0.38% of screen pixels** —
+99.6% occluded, visible only in the gaps outside the city. Composed last it
+changes **1.22%** and the ring reads clearly around the perimeter. With no
+basemap and opaque data fills, "reference" has to mean *annotation over*, not
+*basemap under*.
+
+**But over is not the same as in front.** With `depthTest: false` (copied from
+the fire-dot / LRT-line context layers) the river painted straight across the
+faces of the downtown towers — a river in mid-air. Those layers are billboarded
+*markers* that should always be legible; this is *ground*. Depth testing is ON,
+so prisms standing on the river hide it, and being composed last gives it deck's
+per-layer polygon offset, which is what keeps it from z-fighting the coplanar
+hood fills without lifting it off the terrain.
+
+**Composed around, not inside.** `buildLayers()` now wraps `buildViewLayers()`
+and appends the reference layer once. `buildViewLayers` has one `return` per
+view; prepending in each branch would have left a future view silently shipping
+without orientation.
+
+**Toggle placement.** It sits in the `#a11y` **Display** popover next to
+`Neighbourhood labels`, not in the Options panel — Display is where
+view-independent map furniture lives, whereas `#layers` content is per-view. It
+defaults **ON** where labels default off: labels are an enhancement, this is the
+only thing telling a newcomer where they are.
+
+**Data-side note worth carrying:** the ring is extracted from the road feed
+already in the repo, not a new source, but naming alone gives 275.7 km of ramps
+and interchange lanes and a 2.9 km hole where Highway 216 runs concurrent with
+Highway 14. See `DECISIONS.md` 2026-07-27 and `data/DATA.md` §14.

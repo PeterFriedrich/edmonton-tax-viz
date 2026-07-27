@@ -800,6 +800,54 @@ only** — never label the derived metric "total city cost".
   2× the events does not cost the City 2× (most fire cost is standing capacity).
   Carry that caveat in any UI copy.
 
+## 14. Geographic Reference Layers (Tier 1 orientation, added 2026-07-27)
+`web/data/reference.geojson` (15 kB, 2 features, committed) — the North
+Saskatchewan River and the Anthony Henday ring road, drawn as plain grey
+landmarks so a first-time viewer can orient before reading the fiscal data.
+The map has **no basemap tiles** (just a dark backdrop), so without these there
+is no geographic context at all. Purely cartographic: no metric, no tooltip.
+
+Built by `scripts/build_reference_layers.py`. **NOT in the weekly refresh** —
+static geography, same posture as `build_levy_catchments.py`; the Alberta
+endpoint is queried once at build time, never at runtime. Re-run only if the
+reference geography itself changes. Features carry one property, `t`
+(`"river"` | `"henday"`), matching `roads.geojson`'s convention.
+
+- **River** — Alberta `base_water_feature` MapServer **layer 72**
+  (`Lake/River (20K)`, the most detailed polygon tier),
+  `geospatial.alberta.ca/titan/rest/services/environment/base_water_feature`.
+  `NAME='North Saskatchewan River'` isolates it cleanly (7 polygons
+  province-wide, all genuinely the river; only the main channel reaches
+  Edmonton). Clipped to the city bbox + a 3 km margin so it runs off the edge
+  of the view rather than stopping dead at the city limit. Service is natively
+  **EPSG:3400**, the pipeline's working CRS.
+- **Ring road** — no new source: extracted from the **existing**
+  `data/raw/roads.geojson`. The Henday is in the City centreline feed as ~518
+  `Province of Alberta` rows; `load_roads` filters those out (it measures
+  City-maintained supply), which is why the ring never appears on the services
+  map.
+
+### Known Quirks
+- **Name-matching alone pulls 275.7 km, not the ~75 km ring** — every entrance
+  ramp, exit ramp, right-turn cutoff and collector-distributor lane is *named*
+  for the highway it serves. An explicit `road_segment_type_description`
+  allowlist (`Roadway (Standard)` + the two `Structure -` types, which carry
+  the mainline over crossings) cuts it to 149 km = the ring drawn as its two
+  carriageways.
+- **Highway 216 runs CONCURRENT with Highway 14 on the east leg, and the feed
+  names that stretch for Highway 14 only** — so a name-only extract leaves a
+  2.9 km hole in the ring (73 screen pixels at the default zoom; it reads as a
+  rendering bug, not as missing data). Only `HIGHWAY 14 NORTHBOUND`/`SOUTHBOUND`
+  are the concurrency — `EASTBOUND`/`WESTBOUND` is Highway 14 genuinely heading
+  east, and including it grows a 5 km spur that has to be pruned.
+- **Both carriageways are kept** (~156 km total). The ring is a divided
+  highway; picking one direction leaves gaps where the feed names a segment
+  without a direction. The two lines are ~28 m apart — coincident at 1 px, they
+  only separate when zoomed well in.
+- The builder **verifies the ring closes** (no arc end without a matching end)
+  rather than trusting a length total: 149 km looks perfectly plausible for a
+  75 km ring drawn twice, which is exactly how the Highway 14 hole hid.
+
 ## Name Matching
 
 Neighbourhood names between the two sources may not align exactly. Normalization (strip + uppercase) and the `NAME_CORRECTIONS` dict (keyed assessment name → boundary name) are applied in `load_assessment.py`, *before* aggregation — applying corrections after aggregation could collapse two summed rows onto one boundary and duplicate it. `join_and_calculate.py` then does a normalized exact match on the already-corrected names and flags whatever remains unmatched.
