@@ -818,9 +818,14 @@ reference geography itself changes. Features carry one property, `t`
   `geospatial.alberta.ca/titan/rest/services/environment/base_water_feature`.
   `NAME='North Saskatchewan River'` isolates it cleanly (7 polygons
   province-wide, all genuinely the river; only the main channel reaches
-  Edmonton). Clipped to the city bbox + a 3 km margin so it runs off the edge
-  of the view rather than stopping dead at the city limit. Service is natively
-  **EPSG:3400**, the pipeline's working CRS.
+  Edmonton). Clipped to the city bbox + a **60 km** margin so it runs clean off
+  the edge of the view in both directions rather than stopping dead — the city
+  sits *on* a river that comes from and goes somewhere, and two square ends
+  just inside the frame read as a lake. The margin is sized against the default
+  camera, not guessed: at HOME zoom 10.2 and latitude 53.5 the scale is
+  ~79 m/px, so a 1440px viewport spans ~114 km flat (~57 km from centre) and
+  the 52° pitch pushes the horizon further; the city half-width is only ~15 km.
+  Costs 54 kB. Service is natively **EPSG:3400**, the pipeline's working CRS.
 - **Ring road** — no new source: extracted from the **existing**
   `data/raw/roads.geojson`. The Henday is in the City centreline feed as ~518
   `Province of Alberta` rows; `load_roads` filters those out (it measures
@@ -844,6 +849,9 @@ reference geography itself changes. Features carry one property, `t`
   highway; picking one direction leaves gaps where the feed names a segment
   without a direction. The two lines are ~28 m apart — coincident at 1 px, they
   only separate when zoomed well in.
+- **At the 60 km clip the river is a MultiPolygon** (disjoint stretches up- and
+  downstream), where a narrow clip yields a single Polygon. Anything asserting
+  its geometry type must accept both.
 - The builder **verifies the ring closes** (no arc end without a matching end)
   rather than trusting a length total: 149 km looks perfectly plausible for a
   75 km ring drawn twice, which is exactly how the Highway 14 hole hid.
