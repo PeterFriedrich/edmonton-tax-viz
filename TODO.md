@@ -8,9 +8,35 @@ check `git` / `pytest` directly — do not restate it here, it only goes stale.
 Session summaries (`session-summary/`) are dated *narratives* of what happened and
 why. This file owns *what's left*. When they disagree, this file wins.
 
-_Last reconciled: 2026-07-26_
+_Last reconciled: 2026-07-27_
 
 ## Open work
+
+- [ ] **▶ NEXT UP (Peter, 2026-07-27): LABEL SWEEP IS BLIND TO DOM CHROME.**
+  *Agreed as the next piece of work — "we'll do it next time".*
+  `visibleLabels()` declutters labels against *each other* in screen space but
+  knows nothing about the HTML panels sitting over the canvas, so a label can
+  be kept and then be completely hidden behind one. **Confirmed twice on a
+  1440×900 screenshot:** FORT SASKATCHEWAN projects to (1259, 269), squarely
+  under the Options panel's DETAIL header; SPRUCE GROVE lands in the
+  left-hand blurb text. Affects hood labels identically — it is **not** new
+  with the regional names, just newly visible because there are only seven of
+  them and losing one is a seventh of the feature.
+  - **Fix:** subtract the panels' bounding rects in the sweep — they are
+    queryable via `getBoundingClientRect()`. Treat an occluded box the same
+    way the existing offscreen cull does (skip it: it can neither render nor
+    block another label), rather than dropping the label outright, so a name
+    hidden behind a panel frees its spot for a name that isn't.
+  - **The panels to subtract are the ones already tracked as chrome:**
+    `#opt-body`/Options, the title+blurb block, `#legend`, `#a11y`, and the
+    bottom-left camera buttons. Enumerate them explicitly (the closed-list
+    habit) rather than sweeping all positioned DOM.
+  - **Read `docs/MOBILE_USABILITY.md` FIRST** — on a phone the panels cover
+    much more of the canvas, so this likely matters more there than on
+    desktop, and the desktop↔mobile seam is documented there.
+  - **Verify with `verify-reference-layer.js`** (it already probes the label
+    pool and place anchors) plus `verify-labels.js`; the screenshot-diff
+    pattern is the one that catches "kept but invisible".
 
 - [ ] **GEOGRAPHIC REFERENCE LAYERS — TIERS 2 & 3 (Tier 1 shipped 2026-07-27).**
   Tier 1 (North Saskatchewan River + Anthony Henday ring road) is live and on by
@@ -63,19 +89,6 @@ _Last reconciled: 2026-07-26_
     valley/ravine overlay (`gis.edmonton.ca` Common_Layers 115). It is a
     regulatory development-setback polygon, not the river — drawing it near the
     water would read as "the river is this wide."
-
-- [ ] **LABEL SWEEP IS BLIND TO DOM CHROME (found 2026-07-27, PRE-EXISTING).**
-  `visibleLabels()` declutters labels against *each other* in screen space but
-  knows nothing about the HTML panels sitting over the canvas, so a label can
-  be kept and then be completely hidden behind one. Confirmed: **FORT
-  SASKATCHEWAN projects to (1259, 269) at 1440×900, squarely under the Options
-  panel.** Affects hood labels identically — it is not new with the regional
-  names, just newly visible because there are only seven of them and losing one
-  is a seventh of the feature. Fix would be to subtract the panels' bounding
-  rects in the sweep (they are queryable via `getBoundingClientRect`), which
-  also improves the hood-label case on narrow viewports. Check
-  `docs/MOBILE_USABILITY.md` first — on a phone the panels cover much more of
-  the canvas, so this may matter more there than on desktop.
 
 - [ ] **RIVER GEOMETRY IS UNTRIMMED AND UNCHECKED (audited 2026-07-27, NOT a
   bug).** The river is 95% of `reference.geojson` (2,316 verts, 50.7 kB);
@@ -694,6 +707,13 @@ _Last reconciled: 2026-07-26_
     verified serving the three views + roads.geojson.
 
 - [ ] **DEVELOPMENT & INFILL LENS family (NEW 2026-07-12 — full plan in
+  **⚠️ Stock age was WITHDRAWN from this lens 2026-07-27** (Peter: not
+  working well as an option) — see `DECISIONS.md`. The UI and render path
+  are gone and `verify-age-spikes.js` is deleted, but `median_year_built`
+  still ships in `value_grid.json` and
+  `FINDINGS_stock_age_spike_scaling.md` still holds the scaling work, so
+  a different presentation would not start from zero. Anything below that
+  assumes a 3-way Detail selector is stale.
   `docs/SPEC_development.md`).** Permit-based "where is building actually
   happening" lens family, the direct answer to what `FINDINGS_growth_servicing.md`
   could only proxy with median building-stock age. Data verified live 2026-07-12:
