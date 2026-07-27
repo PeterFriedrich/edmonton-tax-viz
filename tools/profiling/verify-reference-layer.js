@@ -279,7 +279,63 @@ const PLACE_COUNT = 7;
   check('scaling does not mutate the memoized anchors',
         far.cached === near.cached, `${near.cached} -> ${far.cached}`);
 
+  // --- labels must dodge the HTML chrome ------------------------------------
+  // The sweep declutters labels against each other but the panels sit over the
+  // same canvas, so a label could be KEPT and then painted under the Options
+  // panel (FORT SASKATCHEWAN was) or into the title blurb. The invariant is
+  // simply that nothing kept overlaps chrome — checked with both label classes
+  // on, since hood labels are far more numerous and hit more panels.
   await page.evaluate(() => map.easeTo({ zoom: 10.2, duration: 200 }));
+  await page.waitForTimeout(1200);
+  for (const lab of [false, true]) {
+    await setToggles(true, lab);
+    const occ = await page.evaluate(() => {
+      const boxes = chromeBoxes();
+      const dv = overlay._deck.getViewports()[0];
+      return visibleLabels().filter(d => {
+        const [px, py] = dv.project([d.position[0], d.position[1], labelZ(d.p)]);
+        // Unpadded, matching the cull: LABEL_PAD is label-vs-label breathing
+        // room, and charging it against a panel edge culls names whose glyphs
+        // are entirely clear of it.
+        const w = d.em * d.size * LABEL_DRAW_SCALE;
+        const h = d.size * LABEL_DRAW_SCALE;
+        return boxes.some(c => px + w / 2 > c.x0 && px - w / 2 < c.x1 &&
+                               py + h / 2 > c.y0 && py - h / 2 < c.y1);
+      }).map(d => d.name);
+    });
+    check(`no kept label sits under chrome (hood labels ${lab ? 'on' : 'off'})`,
+          occ.length === 0, JSON.stringify(occ));
+  }
+
+  // CHROME_IDS is a closed hand-written list. That is the house habit, but a
+  // closed list silently rots when a panel is added and nobody updates it —
+  // which is precisely how this bug would come back. So assert the list COVERS
+  // every .panel in the document: either the panel is named, or an ancestor of
+  // it is (#layers/#coloradj are borderless sections inside #optpanel, which is
+  // the box that actually paints). A new panel now FAILS here rather than
+  // quietly going un-dodged.
+  const uncovered = await page.evaluate(() => {
+    const named = new Set(CHROME_IDS);
+    return [...document.querySelectorAll('.panel')]
+      .filter(el => {
+        for (let n = el; n; n = n.parentElement) if (named.has(n.id)) return false;
+        return true;
+      })
+      .map(el => el.id || '(no id)');
+  });
+  check('CHROME_IDS covers every .panel in the document',
+        uncovered.length === 0, JSON.stringify(uncovered));
+
+  // Chrome boxes are read live, so a panel that is hidden in this view must not
+  // still be culling labels behind it.
+  const chromeVisible = await page.evaluate(() => {
+    const cv = document.querySelector('#map canvas').getBoundingClientRect();
+    return chromeBoxes().every(c => c.x1 > c.x0 && c.y1 > c.y0 &&
+                                    c.x1 > 0 && c.y1 > 0 &&
+                                    c.x0 < cv.width && c.y0 < cv.height);
+  });
+  check('chrome boxes are all real, on-canvas rects', chromeVisible);
+
   await setToggles(true, false);   // leave it at the shipped default
 
   console.log(fail ? `\n${fail} CHECK(S) FAILED` : '\nALL CHECKS PASSED');

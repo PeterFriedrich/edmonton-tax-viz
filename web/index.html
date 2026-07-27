@@ -2303,11 +2303,53 @@
     // slightly tight: worst case a label too few, never an overlap.
     const LABEL_DRAW_SCALE = 1.35;
     const LABEL_PAD = 8;         // px of breathing room around each label box
+
+    // The HTML chrome the labels have to dodge. The sweep declutters labels
+    // against each OTHER, but the panels sit over the same canvas, so a label
+    // could win its spot and then be painted under the Options panel (FORT
+    // SASKATCHEWAN did, at 1440x900) or straight into the title blurb (SPRUCE
+    // GROVE did). Pre-existing for hood labels; it only became obvious with
+    // seven place names, where losing one costs a seventh of the feature.
+    //
+    // An explicit closed list, not a sweep of positioned DOM — but the verify
+    // suite asserts it COVERS every .panel in the document, so adding a panel
+    // and forgetting this list fails loudly instead of quietly reopening the
+    // bug. Two membership calls worth knowing:
+    //   - #layers and #coloradj are deliberately ABSENT. They are borderless
+    //     sections inside #optpanel, which paints the background for all of
+    //     them; its box is the real obstacle, and theirs would leave the gaps
+    //     between them uncovered.
+    //   - #title and #legend paint NO background and are here anyway. Chrome
+    //     that makes a label unreadable is the test, not opacity — text over
+    //     text is the case actually reported.
+    const CHROME_IDS = ["banner", "title", "views", "toggle", "optpanel",
+                        "a11y", "a11y-menu", "about", "about-menu",
+                        "legend", "compass", "viewbtns"];
+    function chromeBoxes() {
+      // The sweep works in deck-viewport pixels; getBoundingClientRect returns
+      // CSS-viewport pixels. The canvas is the full window at 0,0 today so the
+      // two coincide — subtract its origin anyway rather than bake that in.
+      const cv = document.querySelector("#map canvas");
+      const o = cv ? cv.getBoundingClientRect() : { left: 0, top: 0 };
+      const out = [];
+      for (const id of CHROME_IDS) {
+        const el = document.getElementById(id);
+        if (!el) continue;
+        const r = el.getBoundingClientRect();
+        // display:none and the empty banner both measure 0 — nothing to dodge.
+        if (r.width <= 0 || r.height <= 0) continue;
+        out.push({ x0: r.left - o.left, y0: r.top - o.top,
+                   x1: r.right - o.left, y1: r.bottom - o.top });
+      }
+      return out;
+    }
+
     function visibleLabels() {
       const anchors = labelPool();
       if (!overlay || !overlay._deck) return anchors; // pre-init: never hit with labels off
       const vp = overlay._deck.getViewports()[0];
       if (!vp) return anchors;
+      const chrome = chromeBoxes();   // once per sweep, not once per label
       const boxes = [];
       for (const d of anchors) {
         const [px, py] = vp.project([d.position[0], d.position[1], labelZ(d.p)]);
@@ -2319,9 +2361,21 @@
         // datum below. (Measuring at the wrong size either overlaps or
         // over-reserves; that is why d.size replaced the LABEL_SIZE constant.)
         const size = d.prio === PRIO_PLACE ? placeSize(vp.zoom) : d.size;
+        const gw = d.em * size * LABEL_DRAW_SCALE;   // the glyphs themselves
+        const gh = size * LABEL_DRAW_SCALE;
+        // Under a panel it can neither be read nor sensibly block a label that
+        // ISN'T under one — so skip it, exactly like the offscreen cull above,
+        // rather than keeping it and spending the spot on something invisible.
+        //
+        // Tested UNPADDED, unlike the label-vs-label sweep below. LABEL_PAD is
+        // breathing room between two labels; a panel edge is not another label,
+        // and charging it that clearance cost DOWNTOWN on a phone — its padding
+        // clipped the Options panel by 3px while its glyphs cleared it by 5.
+        // Against chrome the question is literally: do the glyphs land on it.
+        if (chrome.some(c => px + gw / 2 > c.x0 && px - gw / 2 < c.x1 &&
+                             py + gh / 2 > c.y0 && py - gh / 2 < c.y1)) continue;
         boxes.push({ d, px, py, size,
-                     w: d.em * size * LABEL_DRAW_SCALE + 2 * LABEL_PAD,
-                     h: size * LABEL_DRAW_SCALE + 2 * LABEL_PAD });
+                     w: gw + 2 * LABEL_PAD, h: gh + 2 * LABEL_PAD });
       }
       // Regional names win the spot first — they orient the whole frame, and
       // there are seven of them against 400 hoods. Then bigger hoods, as before.
