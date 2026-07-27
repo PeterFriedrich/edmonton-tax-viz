@@ -117,3 +117,94 @@ def test_closure_tolerance_is_below_the_defect_scale():
     The Highway 14 hole was 2.9 km; the tolerance is metres.
     """
     assert 0 < b.RING_CLOSURE_TOLERANCE_M < 500
+
+
+# --- regional place labels -------------------------------------------------
+#
+# The places are an explicit list, not a query result, so the failure mode is
+# not "wrong geometry" but "wrong list": a name that no longer resolves, or a
+# name looked for in the wrong sublayer. Both would silently cost the map a
+# label. These pin the enumeration itself; _fetch_places raising on an empty
+# result is what covers the live service.
+
+def test_places_are_a_closed_explicit_list():
+    """Composition is a cartographic judgement, so it is stated, not derived.
+
+    A bbox/radius sweep would gain and lose names as the province edits
+    boundaries, and the map's composition would drift with it.
+    """
+    names = [name for name, _, _ in b.PLACES]
+    assert len(names) == len(set(names)), "duplicate place name"
+    assert "Edmonton" not in names, "the subject city must not label itself"
+
+
+def test_sherwood_park_is_an_urban_service_area():
+    """The one that breaks a naive implementation.
+
+    Sherwood Park is not a town or a city — it is an urban service area of
+    Strathcona County, so it lives in neither the City (78) nor the Town (56)
+    sublayer. Looking for it in the obvious place finds nothing at all.
+    """
+    entry = next(e for e in b.PLACES if e[0] == "Sherwood Park")
+    assert entry[1] == 66 and entry[2] == "USA_NAME"
+
+
+def test_each_place_is_queried_in_a_sublayer_that_matches_its_field():
+    """Layer id and field name travel together; a mismatch returns no features."""
+    expected = {78: "CITY_NAME", 56: "TOWN_NAME", 66: "USA_NAME"}
+    for name, layer, field in b.PLACES:
+        assert expected[layer] == field, f"{name}: layer {layer} does not carry {field}"
+
+
+def test_devon_is_a_town_not_a_city():
+    """Devon is the only non-city in the list; grouping it with the rest
+    silently drops it."""
+    assert next(e for e in b.PLACES if e[0] == "Devon")[1] == 56
+
+
+def test_place_query_matches_on_equality_not_a_pattern(monkeypatch):
+    """Sublayer 66 also holds 'Sherwood Park (Bremner)', a future-growth polygon
+    ~10 km east. A LIKE/prefix query would pull it in and drag the anchor off
+    the real town, so the WHERE clause must be an equality test.
+    """
+    seen = []
+
+    class _Resp:
+        status_code = 200
+        def raise_for_status(self): pass
+        def json(self):
+            return {"features": [{
+                "type": "Feature", "properties": {},
+                "geometry": {"type": "Polygon",
+                             "coordinates": [[[-113.3, 53.5], [-113.2, 53.5],
+                                              [-113.2, 53.6], [-113.3, 53.6],
+                                              [-113.3, 53.5]]]}}]}
+
+    def _fake_get(url, params=None, timeout=None):
+        seen.append(params["where"])
+        return _Resp()
+
+    monkeypatch.setattr(b.requests, "get", _fake_get)
+    out = b._fetch_places()
+
+    assert len(out) == len(b.PLACES), "one anchor per listed place"
+    assert list(out["name"]) == [name for name, _, _ in b.PLACES]
+    for where in seen:
+        assert "LIKE" not in where.upper(), f"pattern match would over-select: {where}"
+        assert "=" in where and where.endswith("'")
+    assert "USA_NAME='Sherwood Park'" in seen
+
+
+def test_missing_place_raises_rather_than_silently_dropping(monkeypatch):
+    """A renamed or re-designated place must fail the build loudly.
+
+    Returning nothing would leave a hole in the map's orientation with nothing
+    to signal it — the same no-silent-drops rule the road extract follows.
+    """
+    class _Empty:
+        def raise_for_status(self): pass
+        def json(self): return {"features": []}
+
+    monkeypatch.setattr(b.requests, "get", lambda *a, **k: _Empty())
+    with pytest.raises(RuntimeError, match="No geometry returned"):
+        b._fetch_places()

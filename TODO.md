@@ -32,14 +32,30 @@ _Last reconciled: 2026-07-26_
     a second, independent label layer, or "MILL WOODS" will stack on "MILL
     WOODS TOWN CENTRE". Districts have no dataset; coordinates are hardcoded
     and placement is a design call, not a data-fidelity one.
-  - [ ] **Tier 3 — neighbouring municipalities.** St. Albert, Strathcona
-    County, Leduc: thin grey boundary, small greyed label, no fill. Alberta
+  - [x] ~~**Tier 3 — the NAMES half.**~~ **DONE 2026-07-27.** Seven regional
+    place names ship on by default (St. Albert, Sherwood Park, Spruce Grove,
+    Fort Saskatchewan, Leduc, Beaumont, Devon). Split out from the boundaries
+    deliberately: the names needed no polygon fetch, and bundling them was what
+    made Tier 3 look expensive. See `DECISIONS.md` 2026-07-27 (×2),
+    `data/DATA.md` §14, `docs/UI.md`.
+  - [ ] **Tier 3 — the BOUNDARIES half (still open).** Thin grey outline, no
+    fill, for St. Albert / Strathcona County / Leduc. Now a standalone call on
+    its own merits: the orientation payoff was mostly the names, so this is
+    worth doing only if the *shape* of the neighbours adds something. Alberta
     `urban_and_rural_municipality` MapServer, natively **EPSG:3400**.
-    **Sublayer IDs confirmed 2026-07-26:** Edmonton / St. Albert / Leduc are all
-    in **78 (`City`, field `CITY_NAME`)**; **Strathcona County is in 104
+    **Sublayer IDs confirmed:** Edmonton / St. Albert / Leduc are all in
+    **78 (`City`, field `CITY_NAME`)**; **Strathcona County is in 104
     (`Specialized Municipality`, `SPMUN_NAME`) — NOT 114
     (`Municipal District and County`)**, which holds Leduc/Sturgeon/Parkland
-    *County*. Ids 67/95/105 are group layers and return no fields.
+    *County*. Ids 67/95/105 are group layers and return no fields. Note the
+    names half needed a *third* sublayer, **66 `Urban Service Area`**, for
+    Sherwood Park — the hamlet-like service area of Strathcona County, which is
+    a different thing from the County polygon in 104.
+  - [ ] **Which end of the stack do boundaries belong at?** Same real question
+    Tier 1 answered per-feature. Unlike the river there is no seam in the hood
+    fabric to show through, and unlike the ring road they sit entirely
+    *outside* the city where nothing occludes them — so both arguments that
+    settled Tier 1 are silent here. Measure before assuming.
   - [ ] **Zoom-gating does not exist yet** — nothing in `index.html` gates on
     zoom today, so Tier 2/3 introduce the concept. Tier 1 deliberately renders
     at all zooms.
@@ -47,6 +63,32 @@ _Last reconciled: 2026-07-26_
     valley/ravine overlay (`gis.edmonton.ca` Common_Layers 115). It is a
     regulatory development-setback polygon, not the river — drawing it near the
     water would read as "the river is this wide."
+
+- [ ] **LABEL SWEEP IS BLIND TO DOM CHROME (found 2026-07-27, PRE-EXISTING).**
+  `visibleLabels()` declutters labels against *each other* in screen space but
+  knows nothing about the HTML panels sitting over the canvas, so a label can
+  be kept and then be completely hidden behind one. Confirmed: **FORT
+  SASKATCHEWAN projects to (1259, 269) at 1440×900, squarely under the Options
+  panel.** Affects hood labels identically — it is not new with the regional
+  names, just newly visible because there are only seven of them and losing one
+  is a seventh of the feature. Fix would be to subtract the panels' bounding
+  rects in the sweep (they are queryable via `getBoundingClientRect`), which
+  also improves the hood-label case on narrow viewports. Check
+  `docs/MOBILE_USABILITY.md` first — on a phone the panels cover much more of
+  the canvas, so this may matter more there than on desktop.
+
+- [ ] **RIVER GEOMETRY IS UNTRIMMED AND UNCHECKED (audited 2026-07-27, NOT a
+  bug).** The river is 95% of `reference.geojson` (2,316 verts, 50.7 kB);
+  `RIVER_SIMPLIFY_M = 25` is ~3× finer than a pixel at HOME zoom, and its main
+  polygon carries **104 islands = 35% of its vertex budget**, 99 of them on the
+  bare tails. Re-simplifying at 100 m halves the file. **Deliberately left
+  alone** — 54 kB is 0.7% of a 7.7 MB payload, so there is no performance
+  argument. The one open question is *visual*: the smallest islands are 52–95 m
+  wide ≈ 1 px, which is the mechanism for speckle on the tails where nothing is
+  drawn over them. **Nobody has looked yet.** If it does speckle, the fix is to
+  drop interior rings below a width threshold (plus the 3 sub-km crumbs
+  detached 0–200 m from the channel), NOT to coarsen the tolerance — the main
+  channel outline is fine as it is.
 
 - [ ] **FLAKY TEST: `verify-uses-prisms.js` "money: control hidden again, state
   kept" (found 2026-07-27, PRE-EXISTING).** Fails ~3 runs in 4 on master with

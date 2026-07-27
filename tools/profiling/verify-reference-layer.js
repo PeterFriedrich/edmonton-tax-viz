@@ -27,6 +27,14 @@ const [url] = process.argv.slice(2);
 // Every view the public and specialist builds can show.
 const VIEWS = ['money', 'services', 'ratio', 'uses', 'development'];
 
+// The regional place names (PLACES in scripts/build_reference_layers.py). They
+// are a fourth property of the feature and the odd one out: they render as
+// TEXT, sharing one TextLayer and one declutter sweep with the neighbourhood
+// labels, while riding the REFERENCE toggle rather than the label one. That
+// split is the thing worth pinning — it is what puts a place name on screen
+// for a viewer who has touched no control, and it is invisible in the DOM.
+const PLACE_COUNT = 7;
+
 (async () => {
   const browser = await chromium.launch({
     args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader',
@@ -70,13 +78,27 @@ const VIEWS = ['money', 'services', 'ratio', 'uses', 'development'];
   // --- the data file -------------------------------------------------------
   const s0 = await probe();
   check('reference.geojson fetched', s0.types !== null);
-  check('carries exactly the two Tier-1 shapes', JSON.stringify(s0.types) === '["henday","river"]',
-        JSON.stringify(s0.types));
+  // One river, one ring road, and one point per named place. Asserted as a
+  // CLOSED set rather than a minimum: an unexpected `t` means the build script
+  // emitted something the renderer has no branch for, which would draw nothing
+  // and look exactly like success.
+  const kinds = (s0.types || []).reduce((m, t) => (m[t] = (m[t] || 0) + 1, m), {});
+  check('carries one river and one ring road',
+        kinds.river === 1 && kinds.henday === 1, JSON.stringify(kinds));
+  check('carries the regional place points', kinds.place === PLACE_COUNT,
+        `${kinds.place} of ${PLACE_COUNT}`);
+  check('no unexpected feature kinds',
+        Object.keys(kinds).every(t => ['river', 'henday', 'place'].includes(t)),
+        JSON.stringify(Object.keys(kinds).sort()));
   // The river is Multi at the shipped 60 km clip — that wide an extent picks up
   // disjoint stretches up- and downstream — but a narrow clip yields a single
   // Polygon, so accept either rather than pinning the margin into the suite.
+  const shapeGeoms = (s0.geoms || []).filter(g => g !== 'Point');
   check('river is polygonal, ring road is lines',
-        /^\["MultiLineString","(Multi)?Polygon"\]$/.test(JSON.stringify(s0.geoms)),
+        /^\["MultiLineString","(Multi)?Polygon"\]$/.test(JSON.stringify(shapeGeoms)),
+        JSON.stringify(shapeGeoms));
+  check('every place is a Point',
+        (s0.geoms || []).filter(g => g === 'Point').length === PLACE_COUNT,
         JSON.stringify(s0.geoms));
 
   // The ring must be CLOSED. A hole in the east leg (Highway 216 runs
@@ -173,6 +195,56 @@ const VIEWS = ['money', 'services', 'ratio', 'uses', 'development'];
   const onBuf = await shot(true), offBuf = await shot(false);
   await page.evaluate(() => applyReference(true));
   check('rendering actually differs with it on', !onBuf.equals(offBuf));
+
+  // --- the regional place names --------------------------------------------
+  // Two classes now share one TextLayer under independent toggles. Each state
+  // below broke at some point while wiring it, and none is visible in the DOM.
+  const labels = () => page.evaluate(() => {
+    const l = overlay._deck.props.layers.find(x => x && x.id === 'hood-labels');
+    if (!l) return { layer: false, places: 0, hoods: 0, sizes: [] };
+    const d = l.props.data;
+    return {
+      layer: true,
+      places: d.filter(x => x.prio === PRIO_PLACE).length,
+      hoods: d.filter(x => x.prio === PRIO_HOOD).length,
+      sizes: [...new Set(d.map(x => x.size))].sort((a, b) => a - b),
+      anchored: placeAnchors().length,
+    };
+  });
+  const setToggles = async (ref, lab) => {
+    await page.evaluate(x => applyReference(x), ref);
+    await page.evaluate(x => applyLabels(x), lab);
+    await page.waitForTimeout(900);
+    return labels();
+  };
+
+  const def = await setToggles(true, false);
+  check('all place anchors built from the data file',
+        def.anchored === PLACE_COUNT, `${def.anchored} of ${PLACE_COUNT}`);
+  // The point of the feature: names on screen with no control touched. Not
+  // all 7 — Leduc sits below the bottom edge at the default pitched camera and
+  // the sweep correctly culls it — so assert a healthy majority, not equality.
+  check('places show with hood labels OFF (the default)',
+        def.places >= 5 && def.hoods === 0, `${def.places} places, ${def.hoods} hoods`);
+  check('places render smaller than hood labels',
+        def.sizes.length === 1 && def.sizes[0] < 15, JSON.stringify(def.sizes));
+
+  const both = await setToggles(true, true);
+  check('turning hood labels on does not evict the places',
+        both.places === def.places && both.hoods > 0,
+        `${both.places} places, ${both.hoods} hoods`);
+  check('both text sizes present when both classes show',
+        both.sizes.length === 2, JSON.stringify(both.sizes));
+
+  const hoodsOnly = await setToggles(false, true);
+  check('reference off drops the places but keeps the hoods',
+        hoodsOnly.places === 0 && hoodsOnly.hoods > 0,
+        `${hoodsOnly.places} places, ${hoodsOnly.hoods} hoods`);
+
+  const neither = await setToggles(false, false);
+  check('both off removes the text layer entirely', neither.layer === false);
+
+  await setToggles(true, false);   // leave it at the shipped default
 
   console.log(fail ? `\n${fail} CHECK(S) FAILED` : '\nALL CHECKS PASSED');
   await browser.close();

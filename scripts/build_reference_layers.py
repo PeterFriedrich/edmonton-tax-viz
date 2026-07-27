@@ -8,6 +8,7 @@ recognizable at a glance:
 
   t="river"   the North Saskatchewan River water body, clipped to the map extent
   t="henday"  Anthony Henday Drive (Highway 216), the ring road
+  t="place"   one Point per neighbouring municipality, carrying its name
 
 Purely cartographic: no metric, no colour semantics, no tooltip. Both are
 STATIC geography, so this is NOT part of the weekly refresh (same posture as
@@ -25,6 +26,11 @@ Sources:
            in the City's centreline feed as 518 `Province of Alberta` rows.
            load_roads filters those out (it measures City-maintained road
            supply), which is why the ring never appears on the services map.
+  places — Alberta urban_and_rural_municipality MapServer. Each name is fetched
+           from the sublayer matching its LEGAL STATUS, which is why there are
+           three: Sherwood Park is not a town but an urban service area of
+           Strathcona County, and Devon is a town where the other five are
+           cities. Verified 2026-07-27.
 
 CRS: geometry work happens in EPSG:3400 so simplify tolerances are honest
 metres — the pipeline's working CRS. Output is WGS84, because that is what
@@ -44,7 +50,7 @@ from pathlib import Path
 import geopandas as gpd
 import pandas as pd
 import requests
-from shapely.geometry import MultiLineString, Point, box
+from shapely.geometry import MultiLineString, Point, box, shape
 from shapely.ops import linemerge, unary_union
 
 logger = logging.getLogger(__name__)
@@ -115,6 +121,37 @@ HENDAY_MAINLINE_TYPES = frozenset({
     "Structure - Bridge",     #   1.5 km — mainline over the river
 })
 
+PLACE_URL = (
+    "https://geospatial.alberta.ca/titan/rest/services/base"
+    "/urban_and_rural_municipality/MapServer/{layer}/query"
+)
+
+# The neighbouring places named on the map, as a closed enumeration with the
+# sublayer each one legally lives in — NOT a bbox sweep of every municipality
+# near Edmonton. Which names belong on the map is a cartographic judgement
+# (how populated should the frame feel?), so it is stated, not derived: a
+# radius query would silently gain and lose names as the province edits
+# boundaries, and the map's composition would drift with it.
+#
+# Three sublayers because Alberta models municipal STATUS, not size:
+#   78 City               St. Albert, Spruce Grove, Fort Saskatchewan,
+#                         Leduc, Beaumont (a city since 2019)
+#   56 Town               Devon
+#   66 Urban Service Area Sherwood Park — a hamlet-like urban service area of
+#                         Strathcona County, so it is in NEITHER the City nor
+#                         the Town layer. Looking for it there finds nothing.
+# Note layer 66 also holds "Sherwood Park (Bremner)", a separate future-growth
+# polygon ~10 km east; the exact-name match excludes it deliberately.
+PLACES = (
+    ("St. Albert", 78, "CITY_NAME"),
+    ("Sherwood Park", 66, "USA_NAME"),
+    ("Spruce Grove", 78, "CITY_NAME"),
+    ("Fort Saskatchewan", 78, "CITY_NAME"),
+    ("Leduc", 78, "CITY_NAME"),
+    ("Beaumont", 78, "CITY_NAME"),
+    ("Devon", 56, "TOWN_NAME"),
+)
+
 # Simplify tolerances (metres). Both layers are unlabelled background context
 # drawn 1-2 px wide, so they can be far coarser than the road network's 20/40 m
 # — at city zoom one pixel is ~50 m and none of this detail survives anyway.
@@ -175,6 +212,63 @@ def _fetch_river(bounds_4326: tuple[float, float, float, float]) -> gpd.GeoDataF
     gdf = gpd.GeoDataFrame.from_features(feats, crs=f"EPSG:{OUT_EPSG}")
     logger.info("  %d river polygon(s) returned", len(gdf))
     return gdf.to_crs(epsg=WORKING_EPSG)
+
+
+def _fetch_places() -> gpd.GeoDataFrame:
+    """One label anchor per entry in PLACES, from the Alberta municipality service.
+
+    The anchor is the centroid of the place's largest polygon — the same rule
+    labelAnchors() uses for neighbourhoods in web/index.html, so a regional
+    name and a hood name are positioned by one convention rather than two.
+    Falls back to a representative point for any shape whose centroid lands
+    outside it (a crescent-shaped boundary would otherwise label the hole).
+    """
+    logger.info("Fetching %d regional place anchors…", len(PLACES))
+    names, points = [], []
+    for name, layer, field in PLACES:
+        resp = requests.get(
+            PLACE_URL.format(layer=layer),
+            params={
+                # Doubling is the SQL escape for a literal quote. None of the
+                # current names contain one; this keeps that from becoming a
+                # silent failure if a "St. Paul'"-style name is ever added.
+                "where": f"{field}='{name.replace(chr(39), chr(39) * 2)}'",
+                "outFields": field,
+                "returnGeometry": "true",
+                "outSR": OUT_EPSG,
+                "f": "geojson",
+            },
+            timeout=180,
+        )
+        resp.raise_for_status()
+        payload = resp.json()
+        if "error" in payload:
+            raise RuntimeError(f"ArcGIS query failed for {name!r}: {payload['error']}")
+        feats = payload.get("features") or []
+        if not feats:
+            raise RuntimeError(
+                f"No geometry returned for {name!r} in sublayer {layer} "
+                f"({field}) — the name or its municipal status may have changed. "
+                "A place that silently vanishes leaves a hole in the map's "
+                "orientation with nothing to signal it."
+            )
+
+        geom = gpd.GeoSeries(
+            [shape(f["geometry"]) for f in feats], crs=f"EPSG:{OUT_EPSG}"
+        ).to_crs(epsg=WORKING_EPSG).union_all()
+        biggest = max(getattr(geom, "geoms", [geom]), key=lambda p: p.area)
+        anchor = biggest.centroid
+        if not biggest.contains(anchor):
+            anchor = biggest.representative_point()
+        logger.info(
+            "  %-20s %5.1f km² from sublayer %d", name, biggest.area / 1e6, layer
+        )
+        names.append(name)
+        points.append(anchor)
+
+    return gpd.GeoDataFrame(
+        {"name": names}, geometry=points, crs=f"EPSG:{WORKING_EPSG}"
+    )
 
 
 def _load_henday(roads_path: Path) -> gpd.GeoDataFrame:
@@ -352,18 +446,32 @@ def build(
         raise RuntimeError("Henday ring still has loose ends after pruning.")
     logger.info("Henday ring closure: no loose ends across %d arc(s)", parts)
 
+    # --- places: one named point per neighbouring municipality --------------
+    places = _fetch_places()
+
     out_gdf = gpd.GeoDataFrame(
-        {"t": ["river", "henday"]},
-        geometry=[river_geom, henday_geom],
+        {
+            "t": ["river", "henday"] + ["place"] * len(places),
+            # Only places carry a name; river/henday are unlabelled shapes.
+            "name": [None, None] + list(places["name"]),
+        },
+        geometry=[river_geom, henday_geom] + list(places.geometry),
         crs=f"EPSG:{WORKING_EPSG}",
     ).to_crs(epsg=OUT_EPSG)
 
     features = []
     for row in out_gdf.itertuples():
         geom = row.geometry.__geo_interface__
+        props = {"t": row.t}
+        # isinstance, not `is not None`: pandas coerces the river/henday Nones
+        # to float nan in this mixed column, and nan passes an `is not None`
+        # test — which would emit a bare NaN token that is invalid JSON and
+        # fails JSON.parse in the browser for the whole file.
+        if isinstance(row.name, str):
+            props["name"] = row.name
         features.append({
             "type": "Feature",
-            "properties": {"t": row.t},
+            "properties": props,
             "geometry": {
                 "type": geom["type"],
                 "coordinates": _round_coords(geom["coordinates"], precision),
