@@ -98,6 +98,22 @@ column) via `tools/profiling/shot-mobile.js` (Playwright, 390×844, `isMobile`+
 Screenshots: `mobile-default.png` / `mobile-after-tap.png` (git-ignored artifacts;
 regenerate via the tool). Probe id list updated to the merged control structure.
 
+**Chrome coverage, measured 2026-07-27** (sum of the visible chrome rects over
+the viewport area, ignoring mutual overlap, default Money view):
+**45.1% at 390×844** against **27.3% at 1440×900**. This is the first hard
+number behind "the panels cover much more of a phone screen" and it confirms
+the §3 priority order: the blurb collapse is worth more on mobile than any
+amount of tuning downstream of it.
+
+Consequence found while fixing the label sweep to dodge that chrome
+(`docs/UI.md` "Labels dodge the chrome"): with ~45% of the canvas spoken for,
+map labels on a phone are **genuinely scarce** — the cull is correct, but the
+labels it removes were unreadable, not surplus. Two real collisions in the
+before-shot: THE ORCHARDS AT ELLERSLIE painted across the compass buttons, and
+EDMONTON SOUTH EAST straight through the legend, obscuring the `$50k+` scale
+label. **Label density on mobile is not a label problem — it is the panel-size
+problem**, so revisit it only after the blurb collapse lands.
+
 ## 2b. Current state — NEEDS CONFIRMATION
 
 - **Tap-to-inspect (tooltips):** Peter observes on a **real device** that tapping

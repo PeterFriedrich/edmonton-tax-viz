@@ -12,31 +12,23 @@ _Last reconciled: 2026-07-27_
 
 ## Open work
 
-- [ ] **▶ NEXT UP (Peter, 2026-07-27): LABEL SWEEP IS BLIND TO DOM CHROME.**
-  *Agreed as the next piece of work — "we'll do it next time".*
-  `visibleLabels()` declutters labels against *each other* in screen space but
-  knows nothing about the HTML panels sitting over the canvas, so a label can
-  be kept and then be completely hidden behind one. **Confirmed twice on a
-  1440×900 screenshot:** FORT SASKATCHEWAN projects to (1259, 269), squarely
-  under the Options panel's DETAIL header; SPRUCE GROVE lands in the
-  left-hand blurb text. Affects hood labels identically — it is **not** new
-  with the regional names, just newly visible because there are only seven of
-  them and losing one is a seventh of the feature.
-  - **Fix:** subtract the panels' bounding rects in the sweep — they are
-    queryable via `getBoundingClientRect()`. Treat an occluded box the same
-    way the existing offscreen cull does (skip it: it can neither render nor
-    block another label), rather than dropping the label outright, so a name
-    hidden behind a panel frees its spot for a name that isn't.
-  - **The panels to subtract are the ones already tracked as chrome:**
-    `#opt-body`/Options, the title+blurb block, `#legend`, `#a11y`, and the
-    bottom-left camera buttons. Enumerate them explicitly (the closed-list
-    habit) rather than sweeping all positioned DOM.
-  - **Read `docs/MOBILE_USABILITY.md` FIRST** — on a phone the panels cover
-    much more of the canvas, so this likely matters more there than on
-    desktop, and the desktop↔mobile seam is documented there.
-  - **Verify with `verify-reference-layer.js`** (it already probes the label
-    pool and place anchors) plus `verify-labels.js`; the screenshot-diff
-    pattern is the one that catches "kept but invisible".
+- [x] ~~**LABEL SWEEP IS BLIND TO DOM CHROME.**~~ **DONE 2026-07-27.**
+  `visibleLabels()` now culls labels landing under the HTML chrome, skipping
+  them like the existing offscreen cull. Two calls worth knowing before
+  touching it: `CHROME_IDS` omits `#layers`/`#coloradj` (borderless sections
+  inside `#optpanel`, which is the box that actually paints) and *includes*
+  `#title`/`#legend` (no background, but text-over-text is the reported case);
+  and the chrome test is **unpadded**, unlike the label-vs-label sweep, because
+  `LABEL_PAD` is inter-label breathing room and charging it against a panel
+  edge cost DOWNTOWN on a phone. A verify check asserts `CHROME_IDS` covers
+  every `.panel` in the document, so a future panel fails loudly. Measured cost
+  none: readable-label counts identical (32/32 desktop, 25/25 at 390x844).
+  See `DECISIONS.md` 2026-07-27, `docs/UI.md` "Labels dodge the chrome".
+  - [ ] **Follow-on, unresolved:** on a phone the chrome covers ~45% of the
+    screen, so labels are genuinely scarce there — the cull is correct but the
+    underlying problem is that the panels are too big, which is
+    `MOBILE_USABILITY.md`'s headline fix (collapse the blurb), not a label
+    problem. Worth revisiting label density on mobile only after that lands.
 
 - [ ] **GEOGRAPHIC REFERENCE LAYERS — TIERS 2 & 3 (Tier 1 shipped 2026-07-27).**
   Tier 1 (North Saskatchewan River + Anthony Henday ring road) is live and on by

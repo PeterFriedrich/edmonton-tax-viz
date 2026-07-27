@@ -1025,9 +1025,8 @@ frame: legible without competing with the data for the eye.
 offscreen, correctly. It appears on pan or zoom-out. The verify suite asserts
 a healthy majority rather than all seven for exactly this reason.
 
-**Known gap:** the sweep has no knowledge of DOM chrome, so a name can land
-under the Options panel (Fort Saskatchewan does, at 1440×900). Pre-existing for
-hood labels; logged in `TODO.md`.
+**~~Known gap:~~ CLOSED 2026-07-27** — the sweep had no knowledge of DOM chrome,
+so a name could land under the Options panel. See "Labels dodge the chrome".
 
 ## The frozen sweep, and place labels that scale (2026-07-27)
 
@@ -1073,6 +1072,53 @@ the next one's box math.
 This is the app's first zoom-dependent render behaviour — Tier 1's river and
 ring road remain deliberately zoom-independent. Sizes update when the camera
 **settles**, not per frame, consistent with how the cull has always worked.
+
+## Labels dodge the chrome (2026-07-27)
+
+The third of the three label bugs, and the one that had been logged longest.
+`visibleLabels()` declutters labels against *each other* in screen space, but
+the HTML panels sit over the same canvas — so a label could win its spot and
+then be painted underneath one. FORT SASKATCHEWAN did, under the Options panel
+at 1440×900.
+
+An occluded label is now **skipped**, exactly like the existing offscreen cull,
+rather than kept and then lost: it can neither be read nor sensibly block a
+label that *isn't* occluded.
+
+**Which boxes count, and why it isn't just "the opaque ones".** `CHROME_IDS` is
+an explicit closed list. Two membership calls are load-bearing:
+
+- `#layers` and `#coloradj` are **absent**. They are borderless sections inside
+  `#optpanel`, which paints the background for all of them — so `#optpanel`'s
+  box is the real obstacle, and using the children would leave the gaps between
+  them uncovered.
+- `#title` and `#legend` paint **no background at all** and are included anyway.
+  The test is whether the chrome makes a label unreadable, not whether it is
+  opaque, and text-over-text is the case actually reported.
+
+**A closed list that can rot is worse than no list**, since the failure is
+silent and looks exactly like the original bug. So the verify suite asserts
+`CHROME_IDS` **covers every `.panel` in the document** — each panel is either
+named or has a named ancestor. Add a panel and forget this list, and the suite
+fails.
+
+**The chrome test is UNPADDED, unlike the label-vs-label sweep.** `LABEL_PAD`
+is breathing room between two labels; a panel edge is not another label.
+Charging it that clearance cost **DOWNTOWN** on a phone — its padding clipped
+the Options panel by 3px while its glyphs cleared it by 5. Against chrome the
+question is literally: do the glyphs land on it.
+
+**Measured cost: none.** Readable-label counts are identical before and after —
+32/32 at 1440×900, 25/25 at 390×844 — because only labels that were already
+invisible are removed. Worth being honest that the "frees its spot for a name
+that isn't occluded" rationale, while architecturally right, yielded **no
+measurable gain**: a spot under a panel has nothing else competing for it.
+
+**It matters far more on a phone**, as `MOBILE_USABILITY.md` predicted. Chrome
+covers ~45% of a 390×844 screen against ~27% at 1440×900, and the mobile
+before-shot had THE ORCHARDS AT ELLERSLIE painted across the compass buttons
+and EDMONTON SOUTH EAST straight through the legend, obscuring the `$50k+`
+scale label.
 
 ## Stock age withdrawn from Development; grid spikes default to 50% (2026-07-27)
 
