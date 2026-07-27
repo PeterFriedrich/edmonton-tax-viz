@@ -49,7 +49,6 @@ const check = (name, cond) => { (cond ? pass++ : fail++); console.log(`${cond ? 
   const chrome = await page.evaluate(() => ({
     view: state.view,
     title: document.getElementById('title-h').textContent,
-    blurbMatches: document.getElementById('title-p').textContent === VIEWS.development.blurb,
     label: document.getElementById('legend-label').textContent,
     min: document.getElementById('legend-min').textContent,
     max: document.getElementById('legend-max').textContent,
@@ -58,16 +57,37 @@ const check = (name, cond) => { (cond ? pass++ : fail++); console.log(`${cond ? 
     unitsActive: document.querySelector('#devmetric button[data-devmetric="units"]').classList.contains('active'),
     devMetric: state.devMetric,
     windowPickerShown: getComputedStyle(document.getElementById('devwindow')).display !== 'none',
-    fiveYrActive: document.querySelector('#devwindow button[data-devwindow="5yr"]').classList.contains('active'),
+    longActive: document.querySelector('#devwindow button[data-devwindow="long"]').classList.contains('active'),
     devWindow: state.devWindow,
     hasDevWindow: state.hasDevWindow,
+    gridActive: document.querySelector('#devdetail button[data-devdetail="grid"]').classList.contains('active'),
+    devGrid: state.devGrid,
+    // The opacity slider depends on devGridActive(), which depends on a file
+    // fetched partway down applyView — it was hidden on FIRST entry only.
+    prismRowShown: getComputedStyle(document.getElementById('prism-row')).display !== 'none',
+    windowOrder: [...document.querySelectorAll('#devwindow button')]
+      .map(b => b.dataset.devwindow),
+    viewOrder: [...document.querySelectorAll('#views button')].map(b => b.dataset.view),
     layers: overlay._deck.props.layers.map(l => l.id),
   }));
   console.log('chrome:', JSON.stringify(chrome));
   check('view is development', chrome.view === 'development');
   check('title is set', /New Housing/.test(chrome.title));
-  check('blurb matches VIEWS.development.blurb', chrome.blurbMatches);
-  check('legend label mentions new homes', /new homes per acre/i.test(chrome.label));
+  // Defaults changed 2026-07-27 (Peter): the view opens on the 100 m grid over
+  // the whole permit record, not the 5yr choropleth, and sits second in #views.
+  check('Development sits second, next to Money',
+        chrome.viewOrder[0] === 'money' && chrome.viewOrder[1] === 'development',
+        chrome.viewOrder.join(' > '));
+  check('window buttons run shortest to longest',
+        chrome.windowOrder.join() === '3yr,5yr,long', chrome.windowOrder.join(' | '));
+  check('100 m grid active by default', chrome.gridActive && chrome.devGrid === true);
+  // Regression: applyView computed this BEFORE awaiting dev_grid.json, so with
+  // the grid as the default the spikes rendered with no opacity control until
+  // you left the view and came back.
+  check('opacity slider shown on FIRST entry (not just re-entry)',
+        chrome.prismRowShown);
+  check('legend label mentions new homes',
+        /new homes per (100 m cell|acre)/i.test(chrome.label), chrome.label);
   check('legend min is 0', chrome.min === '0');
   check('legend max ends with +', /\+$/.test(chrome.max));
   check('aside (set-aside grey) row hidden', chrome.asideHidden);
@@ -75,13 +95,42 @@ const check = (name, cond) => { (cond ? pass++ : fail++); console.log(`${cond ? 
   check('units sub-metric active by default', chrome.unitsActive && chrome.devMetric === 'units');
   if (chrome.hasDevWindow) {
     check('window picker shown (data has _3yr columns)', chrome.windowPickerShown);
-    check('5yr window active by default', chrome.fiveYrActive && chrome.devWindow === '5yr');
-    check('legend label shows the 5yr range (2021–2025)', /2021.2025/.test(chrome.label));
+    check('long window active by default', chrome.longActive && chrome.devWindow === 'long');
+    check('legend label shows the long range (2009–2025)', /2009.2025/.test(chrome.label));
   } else {
     console.log('window picker: data lacks _3yr columns — picker gated off (older data file)');
   }
-  check('dev-plane layer present', chrome.layers.includes('dev-plane'));
+  check('grid cells up on entry, choropleth replaced',
+        chrome.layers.includes('dev-grid-cells') && !chrome.layers.includes('dev-plane'),
+        chrome.layers.join(','));
   check('no svc-plane leaked in', !chrome.layers.includes('svc-plane'));
+
+  // Everything below tests the CHOROPLETH over the 5yr window, which is no
+  // longer what the view opens on (grid + `long` since 2026-07-27). Select both
+  // explicitly rather than relying on the entry defaults — those assertions are
+  // written against the new_units_per_acre / new_permits_per_acre columns, and
+  // the implicit dependency on the default is exactly what broke this suite
+  // when the default moved. Being explicit means the next change cannot.
+  await click('#devdetail button[data-devdetail="hood"]');
+  await page.waitForTimeout(1200);
+  const longBlurb = await page.evaluate(() =>
+    document.getElementById('title-p').textContent);
+  await click('#devwindow button[data-devwindow="5yr"]');
+  await page.waitForTimeout(1200);
+  const hoodMode = await page.evaluate(() => ({
+    devGrid: state.devGrid,
+    layers: overlay._deck.props.layers.map(l => l.id),
+    label: document.getElementById('legend-label').textContent,
+  }));
+  check('switching to Neighbourhood restores the choropleth',
+        hoodMode.devGrid === false && hoodMode.layers.includes('dev-plane'));
+  check('choropleth legend label mentions new homes per acre',
+        /new homes per acre/i.test(hoodMode.label), hoodMode.label);
+  // The blurb substitutes the ACTIVE window's phrase over the stored 5yr one,
+  // so with `long` the default it must name the permit record, not five years.
+  // Sampled before the 5yr click above.
+  check('choropleth blurb reflects the active window, not the stored 5yr text',
+        /since 2009/i.test(longBlurb) && !/last five full years/i.test(longBlurb));
 
   // Set-aside override: a set-aside hood WITH activity must render coloured,
   // NOT the set-aside grey.

@@ -557,3 +557,30 @@ regression.
   permit join extends (warn-not-fail, activity side).
 - `docs/PARCEL_LEVEL_OPPORTUNITIES.md` — permits are point-located; a parcel-
   level activity map is the finer-grained future once parcel geometry is available.
+
+## Entry defaults changed (2026-07-27, Peter)
+
+The view **sits second in `#views`, next to Money**, and opens on:
+
+| Control | Was | Now |
+|---|---|---|
+| `#devmetric` | Dwelling units | Dwelling units *(unchanged)* |
+| `#devwindow` | Last 5 yr (2021–2025) | **Since 2009** (2009–2025) |
+| `#devdetail` | Neighbourhood choropleth | **100 m grid — activity** |
+| `#prism-row` | inherited (100% fresh, 5% via Ratio) | 50% *(set 2026-07-26)* |
+
+`#devwindow` button order also changed from `5yr, 3yr, long` to **`3yr, 5yr,
+long`** — shortest to longest, which is what it always should have read as.
+
+**What this means for anyone reading the code:** the choropleth is no longer
+what the view opens on. `verify-development.js` now selects
+Neighbourhood + 5yr **explicitly** before its choropleth assertions rather than
+relying on the entry defaults — the implicit dependency is exactly what broke
+that suite when the defaults moved, and being explicit means the next change
+cannot break it the same way. Same reasoning applies to any new test here.
+
+Two latent ordering bugs surfaced with the grid as the default; both are fixed,
+and both were of the shape *chrome read before it was final* — see
+`DECISIONS.md` 2026-07-27. The durable one: `applyView` wrote the title/blurb
+**after** `buildLayers()`, and the label sweep measures the title's live
+bounding rect, so it culled against the outgoing view's (shorter) blurb.

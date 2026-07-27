@@ -67,12 +67,12 @@ seven became modes of another view rather than top-level entries:
 | `#views` button | Internal view name(s) | Notes |
 |---|---|---|
 | **Money** *(default)* | `money`, **`glass`** | `glass` = the "100 m grid" `#moneydetail` mode. The Money button stays active in it. |
+| **Development** | `development`, **`infill`** | Moved to **second, next to Money** (2026-07-27, Peter). `infill` = the full-only "Infill opportunity" `#devmode` lens; the Development button stays active in it. |
 | **Services** | `services` | |
 | **Ratio** | `ratio` | |
 | **Uses** 🔒 | `uses` | Full build only (2026-07-24, provisional). |
-| **Development** | `development`, **`infill`** | `infill` = the full-only "Infill opportunity" `#devmode` lens. The Development button stays active in it. |
 
-So **public `#views` = 4 buttons** (Money · Services · Ratio · Development);
+So **public `#views` = 4 buttons** (Money · Development · Services · Ratio);
 **`/full/` = 5**. Verified live in both builds 2026-07-25.
 
 **Build visibility (public vs specialist) — FINALIZED 2026-07-23 (§7 +
@@ -142,7 +142,7 @@ has at least one section to show.
 | **Services** | `#services` — 6 rows: Roads · Stormwater · Fire · Water/sewer · Transit · Service cost. Each = on/off checkbox + a "colour" driver radio | rows self-gate on their columns | radios appear only when **≥2** are checked; the driver always names a *checked* service (unchecking it hands the ramp on); fire/transit draw their dots whenever checked, driver or not |
 | **Ratio** | `#ratio-denom` (Per road metre / Per fire event / Per service $); `#prism-row` opacity slider, default 5% | `hasFire \|\| hasSvcCost` (else roads-only, control hidden) | **the only view that also shows the `#prism-hd` "Money plane" header** |
 | **Uses** 🔒 | `#uses-prisms` (Height = share zoned residential); `#prism-row` while prisms on, default 35% | — | legend swaps to categorical |
-| **Development → Housing built** | `#devmode` 🔒 (Housing built / Infill opportunity); `#devmetric` (Dwelling units / Permits / Industrial 🔒); `#devwindow` (Last 5 yr / Last 3 yr / Since 2009); `#devdetail` (Neighbourhood / 100 m grid — activity); `#prism-row` while the grid is active | `FULL_BUILD && hasInfill`; `hasPermitsPerAcre`; `hasDevWindow`, `hasLongWindow`; `devGridOfferable()` | **see below** |
+| **Development → Housing built** | `#devmode` 🔒 (Housing built / Infill opportunity); `#devmetric` (Dwelling units / Permits / Industrial 🔒); `#devwindow` (**Last 3 yr / Last 5 yr / Since 2009** — shortest to longest, **`Since 2009` is the default**); `#devdetail` (Neighbourhood / **100 m grid — activity, the default**); `#prism-row` while the grid is active (50%) | `FULL_BUILD && hasInfill`; `hasPermitsPerAcre`; `hasDevWindow`, `hasLongWindow`; `devGridOfferable()` | **see below** |
 | **Development → Infill** 🔒 | `#devmode`; `#devmetric` (**Industrial hidden**); `#devwindow` | same as Development | **no `#devdetail`** (no infill grid), no slider; entering with Industrial selected **silently resets to units** |
 
 🔒 = full build only.
