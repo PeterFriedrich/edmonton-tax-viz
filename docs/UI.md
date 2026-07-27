@@ -1028,3 +1028,46 @@ a healthy majority rather than all seven for exactly this reason.
 **Known gap:** the sweep has no knowledge of DOM chrome, so a name can land
 under the Options panel (Fort Saskatchewan does, at 1440×900). Pre-existing for
 hood labels; logged in `TODO.md`.
+
+## Stock age withdrawn from Development; grid spikes default to 50% (2026-07-27)
+
+Peter's call on the Stock-age Detail option: *"it's just not working well as an
+option."* Removed. The Detail selector goes back to two choices, Neighbourhood
+and 100 m grid — activity.
+
+**Removed at the UI and render layer only.** `median_year_built` is still
+produced by `export_value_grid.py` and still ships in `value_grid.json`
+(173 kB, 6.9% of that file, 2.2% of total payload). The data is the expensive
+half; a better presentation later should not need a pipeline regen. The
+scaling analysis in `FINDINGS_stock_age_spike_scaling.md` stands on its own.
+
+**The unplanned win: Development no longer fetches `value_grid.json` at all.**
+`ensureAgeData()` kicked that 2.5 MB file on *every* entry to the view — not on
+demand, deliberately up front, so the Stock-age button could be offered before
+you toggled into grid mode. Development's own spikes come from `dev_grid.json`
+(362 kB), and `gridData` has no consumer outside Glass. So a view that never
+needed the big file was pulling it every time.
+
+**Three things folded away with it**, each of which existed only for the age
+mode and each of which was a special case in shared code:
+
+- the sqrt exemption in `devT` — year is an interval scale, so it alone
+  skipped the locked sqrt colour transform;
+- the Metric/Window suppression in `syncDevControls` — a stock snapshot has no
+  permit metric or window, so it hid two pickers the other modes show;
+- the age branch of the Development legend.
+
+**It also closed two of the flagged "weird combos"** in `CONTROLS_MATRIX.md`
+§5: #3 (*"Stock age still morphs the Development panel"*) and #6 (*"Stock age
+is arguably a lens wearing a Detail costume"*). #6 is worth keeping in mind in
+the shape it was written — **if a control ignores the pickers around it, it is
+probably a lens, not a detail mode.** Industrial is the surviving instance.
+
+**Separately: the activity spikes now default to 50% opacity.**
+`VIEWS.development.opacity` was `null`, commented *"no prisms in this view"* —
+which was untrue once the Detail grid shipped. Because no default was ever
+applied on entry, the spikes inherited whatever `state.prismOpacity` last held:
+100% on a fresh load, or **5% if the viewer had passed through Ratio**. Setting
+it to 50 makes entry deterministic and lets the neutral hood plane read through
+the spikes. The slider still shows in grid mode, so it is a starting point, not
+a fixed value like Glass's 60%.

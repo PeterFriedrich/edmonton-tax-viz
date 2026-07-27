@@ -132,10 +132,12 @@ New building activity per acre from issued permits.
   (2023–2025) · **Since 2009** (whole record). Each gated on its columns.
 - **Detail** (`#devdetail`, Housing-built only, needs the dev-grid file and a
   non-Industrial metric): **Neighbourhood** (choropleth, default) · **100 m grid
-  — activity** (geocoded permit spikes) · **Stock age** (median construction year
-  per cell; gated on the year column). **Stock age hides Metric + Window** — an
-  explicit mode choice, not a surprise morph.
-- The prism slider shows while the 100 m grid is active.
+  — activity** (geocoded permit spikes). A third option, **Stock age**, shipped
+  2026-07-17 and was **withdrawn 2026-07-27** (`DECISIONS.md`); Metric and
+  Window now apply in both modes.
+- The prism slider shows while the 100 m grid is active; the spikes **default to
+  50%** (`VIEWS.development.opacity`, 2026-07-27) so the hood plane reads
+  through them.
 - Set-aside greenfield land renders in **full colour** here, unlike every other
   lens — that undeveloped land is where much new building lands.
 - `#toggle` and `#coloradj` both hidden — the Options panel holds only `#layers`.
