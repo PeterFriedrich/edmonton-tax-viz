@@ -1029,6 +1029,51 @@ a healthy majority rather than all seven for exactly this reason.
 under the Options panel (Fort Saskatchewan does, at 1440×900). Pre-existing for
 hood labels; logged in `TODO.md`.
 
+## The frozen sweep, and place labels that scale (2026-07-27)
+
+Peter, on the shipped names: *"Currently only see St. Albert, until I turn the
+names on and off. Also they a bit too big on zoom out."* One symptom, two
+causes, both fallout from the two-toggle split above.
+
+**The re-cull was gated on the wrong flag.** The `moveend` hook read
+`if (state.labels)` — the last place still reasoning "labels off ⇒ no text
+layer", which the split had just made wrong. Hood labels ship **off**, so in the
+default state the sweep ran once at load and then never again. Measured: the
+drawn set stayed the same 6 names from zoom 10.2 down to 6.0, while a fresh
+sweep at those cameras would have returned 7, 5, 4 and 2. Toggling the reference
+checkbox rebuilds the layers for its own reasons, which is the only thing that
+unstuck it — hence "until I turn the names on and off". Now gated on
+`labelPool().length`.
+
+**Comparing DRAWN against a FRESH sweep is what catches this**, and it is the
+check the suite gained. Either number alone looks entirely plausible; only the
+mismatch is wrong. A screenshot would not have caught it either — the frame
+shows *names*, just the previous camera's names.
+
+**The names did not shrink with the map.** `sizeUnits: "pixels"` is right for a
+label you want legible at any zoom, but pulling back leaves the text at a fixed
+size against a shrinking city — oversized, and worse, the collision boxes stay
+just as wide while the anchors converge, so the sweep starts dropping names
+exactly when orientation matters most. `placeSize()` now interpolates 12 px →
+7 px between zoom 10 and 7, floored so they stay legible. All seven survive at
+z=8 where five did.
+
+**Which names survived a collapse was arbitrary.** Every place ties on `prio`
+and carries `area: 0`, so the stable sort fell through to **file order** — St.
+Albert is simply first in `PLACES`. Scaling makes the collapse rare rather than
+principled; if it ever needs a real tie-break, that is the seam.
+
+**Two implementation notes.** The effective size is resolved **once**, in the
+sweep, so the collision box and the glyphs it reserves room for cannot
+disagree — `getSize` reads it back off the datum. And it rides out on a
+**copy**: the anchor arrays are memoized and shared across every sweep, so
+writing the scaled size back onto an anchor would leak one camera's zoom into
+the next one's box math.
+
+This is the app's first zoom-dependent render behaviour — Tier 1's river and
+ring road remain deliberately zoom-independent. Sizes update when the camera
+**settles**, not per frame, consistent with how the cull has always worked.
+
 ## Stock age withdrawn from Development; grid spikes default to 50% (2026-07-27)
 
 Peter's call on the Stock-age Detail option: *"it's just not working well as an
