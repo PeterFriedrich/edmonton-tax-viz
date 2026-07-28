@@ -89,7 +89,10 @@
       justify-content: space-between; gap: 12px; transition: background 0.12s, color 0.12s;
     }
     #opt-fold:hover { color: #e8e8ef; }
-    #opt-caret { font-size: 11px; color: #6a6a80; display: inline-block; transition: transform 0.15s; }
+    /* Caret sized for legibility, not hit area — the whole #opt-fold button is
+       the target. 19px ≈ √3 × 11px, i.e. ~3× the glyph area (Peter's ask).
+       line-height:1 keeps the taller glyph from growing the button row. */
+    #opt-caret { font-size: 19px; line-height: 1; color: #6a6a80; display: inline-block; transition: transform 0.15s; }
     #optpanel.folded #opt-caret { transform: rotate(-90deg); }
     #optpanel.folded #opt-body { display: none; }
     #opt-body {
@@ -369,7 +372,10 @@
          desktop, so the handler is inert there and the blurb stays always-on. */
       #title { max-width: calc(100vw - 44px); pointer-events: auto; cursor: pointer; }
       #title h1 { font-size: 16px; }
-      #title h1::after { content: " \25BE"; color: #7a7a90; font-weight: 400; font-size: 13px; } /* ▾ expand affordance */
+      /* 22px ≈ √3 × 13px — ~3× glyph area, matching the #opt-caret bump.
+         line-height:0 so the taller glyph does not grow the h1's line box
+         (#title's height feeds chromeBoxes() and the label cull). */
+      #title h1::after { content: " \25BE"; color: #7a7a90; font-weight: 400; font-size: 22px; line-height: 0; } /* ▾ expand affordance */
       #title.expanded h1::after { content: " \25B4"; } /* ▴ when open */
       #title p { display: none; margin-top: 6px; }
       #title.expanded {
