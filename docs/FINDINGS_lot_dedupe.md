@@ -113,6 +113,17 @@ than the WEM artifact the metric exists to remove. Lesson recorded: a
 citywide-aggregate error bound says nothing about a per-cell display metric;
 validate at the display grain.
 
+**Re-confirmed 2026-07-28 while building the anchor guard, with a new instance
+of the same lesson.** At *point* grain the top $/lot-acre in the roll is not the
+Downtown tower at all: a WESTMOUNT point carries **$0.9M on a sub-milliacre lot
+= $3,478M/lot-acre**, 5.7× the tower. It is invisible on the map — at 100 m
+cells it pools with its neighbours, and the exported grid's top cells are
+612.3 / 149.3 / 143.0, i.e. exactly the §4.2 numbers. So it is **not a live
+defect**, but it is a standing trap for any check written at point grain: the
+first draft of `scripts/check_value_anchors.py` pinned that maximum and would
+have failed the weekly build over an artifact no viewer can see. Anything
+validating this metric must read the **exported cells**, not the points.
+
 Rule-variant comparison (per-hood bound + worst townhouse-hood cell +
 citywide top-3):
 

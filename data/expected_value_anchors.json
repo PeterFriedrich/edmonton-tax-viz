@@ -1,0 +1,27 @@
+{
+  "_note": "Regime anchors for the record-to-parcel cardinality guard (scripts/check_value_anchors.py). Bands, not equalities: assessed values move every reassessment. See docs/FINDINGS_lot_dedupe.md and docs/FINDINGS_denominator_cardinality.md.",
+  "dup_parcel_points": {
+    "min": 16.5,
+    "max": 49.5
+  },
+  "dup_parcel_value_frac": {
+    "min": 0.001554,
+    "max": 0.004661
+  },
+  "dedupe_effect_pct": {
+    "min": 0.020398,
+    "max": 0.061193
+  },
+  "ineligible_points": {
+    "min": 28.0,
+    "max": 84.0
+  },
+  "ineligible_value_frac": {
+    "min": 0.002593,
+    "max": 0.007779
+  },
+  "lot_needle_ratio": {
+    "min": 6.410983,
+    "max": 19.232948
+  }
+}
