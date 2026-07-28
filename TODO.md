@@ -36,10 +36,44 @@ _Last reconciled: 2026-07-28_
     Money tooltip already carries 3–4 rows. Likely answer: **sparkline in the
     hover tooltip** (cheap, glanceable, honest at that size) **plus a
     click-to-pin panel** for the labelled, readable version. Peter's call.
+  - [x] ~~**Where it gets built**~~ — **`/full/` (specialist build), 2026-07-28,
+    Peter: "we'd prototype this in full for now."** Natural home: it already
+    carries the work-in-progress badge, so an unfinished lens is labelled as
+    one. Gate it the established way (`|| !FULL_BUILD` beside the data guard);
+    `CONTROLS_MATRIX.md` §2 notes the three places a lens leaks if it is ever
+    promoted to public.
   - [ ] **Decide the metric: assessed value, or revenue.** Value is available
     2012–2025 directly. *Revenue* needs historical mill rates — we already have
     them (`pwis-wc4c`, "2014 onward"), so a revenue series is possible but starts
     **2014**, not 2012, and inherits every class-differential caveat.
+  - [ ] **⚠️ NORMALIZE AGAINST THE CITYWIDE BASE — this is not a polish item, it
+    decides whether the graph means anything (Peter asked "does inflation matter
+    for people doing this?", 2026-07-28).** The answer is that **inflation is the
+    *second*-order problem**. The first-order one: the **mill rate is a
+    residual** — council sets a budget, rate = levy ÷ total assessed base — so a
+    citywide revaluation is *fiscally neutral* (the rate absorbs it) and a hood's
+    tax burden moves **only when its assessment moves differently from the city
+    average**. A nominal per-hood series conflates those two. **CPI-deflating
+    does not separate them** — it answers a purchasing-power question, not a
+    tax-share one. The normalizer that does is the **citywide base itself**
+    (share of base, or hood indexed to city): unit-free, no deflator, no vintage
+    to maintain.
+    - **This changes how the Downtown finding must be read** (see
+      `ANALYSIS_BACKLOG.md`): −31% nominal is uninterpretable until set against
+      what the citywide base did over the same years. Same query, minus the hood
+      dimension.
+    - **Where inflation genuinely does bite:** dollars-per-acre *levels* compared
+      across years; and the services lens if it ever gets a time axis — revenue
+      and modeled cost must share a year's dollars, and city input costs track a
+      **Municipal Price Index**, not CPI (asphalt/equipment/wages). CPI on the
+      cost side would be the wrong index, not merely imprecise.
+    - **Trap:** assessed values embed **house-price** inflation, which has
+      diverged sharply from CPI. Deflating asset prices with a consumer index
+      reads rigorous and is apples/oranges.
+    - **Vintage, affects axis labelling:** Alberta assessments are market value
+      as of **July 1 of the preceding year** (MGA) — the 2025 column reflects
+      mid-2024 conditions. **Stated from domain knowledge; confirm against
+      Edmonton's own published wording before it reaches user-facing copy.**
   - [ ] **Per-acre or total?** The whole project is per-acre, but hood boundaries
     and the account count both move over 14 years (Downtown gained ~1,600
     accounts). A per-acre series divides by a *current* area — state whether that
