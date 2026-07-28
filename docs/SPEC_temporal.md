@@ -1,6 +1,8 @@
 # SPEC — Temporal lens: assessment over time, per neighbourhood
 
-**Status 2026-07-28: SPEC'd, nothing built. Phase 0 is a hard gate.**
+**Status 2026-07-28: SPEC'd and fully DECIDED, nothing built. Phase 0 is a hard
+gate, and what is left in it is work rather than decisions — the splice and the
+guard (§0.3). All of §7's open questions are closed and now sit in §6.**
 Peter, 2026-07-28: *"what I actually want is pop up graphs for the assessment of
 each neighborhood… you mouse over and get a line graph of the assessment value
 over time, for that hood."*
@@ -95,28 +97,44 @@ and reports the union:
 - **2024 is the only irreparable year.** There is no current-roll equivalent for
   it, and the 2,322 missing accounts have no recoverable 2024 value.
 
-**Options for 2024 — Peter's call:**
+**2024 IS OMITTED — decided 2026-07-28 (Peter).** The series is 2012–2023 from
+the historical file plus 2025 spliced from the current roll, with an honest gap
+at 2024 and the reason stated on hover. **Do not interpolate** — smoothing a
+known hole is the failure this project's guard culture exists to prevent.
 
-1. **Omit it** — an honest gap in the line, reason stated on hover.
-2. **Flag it** — plotted but visually marked known-incomplete.
-3. **Exclude the ~2,450 known-bad accounts from EVERY year** (a balanced panel).
-   Makes year-over-year comparison honest at the cost of the level: citywide the
-   exclusion is 0.57% of accounts, but it is concentrated — Downtown holds 53% of
-   them, ~$2.93B.
-4. **Plot 2024 with an explicit uncertainty band**, bounded by the missing
-   accounts' known 2023 and current values.
+**This reverses the recommendation this section carried when it was written**
+(balanced panel), and the reversal is the reasoning worth keeping:
 
-**Recommended: 3 for a share-of-base metric** (consistent denominator across all
-14 years, which is the whole point of that normalization), or **1** if the level
-matters more than the shape. **Do not interpolate** — smoothing a known hole is
-the failure this project's guard culture exists to prevent.
+- **Share-of-base is self-normalizing per year.** Numerator and denominator come
+  from the *same* slice, so "what share of Edmonton's base was hood X in year N"
+  is well-defined on each year's own complete roll. A constant account universe
+  is not what the metric needs — a *complete* one per year is. New towers
+  entering Downtown genuinely raise its share; that is the story, not an
+  artifact, and a fixed panel would answer the stranger question "what share
+  would Downtown be if we pretended these 2,448 properties never existed."
+- **The panel trades twelve good years for one broken one.** It would punch the
+  same $2.93B hole (53% of it Downtown) into twelve slices that are clean.
+- **Flag and uncertainty-band both fail at the display grain** (§8, trap 1). A
+  known-incomplete marker or a band is invisible at sparkline size, so the glance
+  shows a wrong number regardless of how the pinned panel is annotated. That is
+  the same class of error as pinning a per-point maximum that never reaches a
+  100 m cell.
+
+Rejected, for the record: **flag** (2), **balanced panel** (3), **uncertainty
+band** (4).
 
 ### 0.3 Exit criteria
 
 Phase 0 is done when: ~~the defect map exists for all 14 years~~ ✅ **done
-2026-07-28**; the splice is implemented and tested; 2024 has a decided treatment
-(§0.2, Peter's call); and a guard refuses to publish a year that fails its
+2026-07-28**; ~~2024 has a decided treatment~~ ✅ **done 2026-07-28 — omitted,
+§0.2**; the splice is implemented and tested (historical 2012–2023 + the current
+roll for the live year); and a guard refuses to publish a year that fails its
 control.
+
+**The splice must not quietly become a 14-year loop.** 2024 is omitted by
+decision, so the year list it emits is deliberately non-contiguous — the guard
+should assert that absence rather than treat it as a failure, or Phase 0's own
+gate will red on the thing Phase 0 decided.
 
 ---
 
@@ -141,20 +159,20 @@ control.
 | **Framing is descriptive only** | Share-of-base line + the sourced driver (office vacancy). No "downtown is dying", no "the rest of the city subsidizes downtown". The reader draws the conclusion. |
 | **`/full/` only, for now** | See §1. |
 | **Do NOT use the `NONRES MUNICIPAL` class** | 1–2 accounts; its share swings 30–53% on noise. |
+| **The metric is ASSESSED VALUE, not revenue** (2026-07-28) | Value reaches **2012**; revenue needs historical mill rates (`pwis-wc4c`, 2014 onward) so it would start 2014 *and* inherit every class-differential caveat. Two years of series and a whole caveat class, for a number that moves with the same shape — the mill rate is a residual, so revenue is value times a factor council chose. Revenue as a second panel line stays available later. |
+| **The SPARKLINE plots share of the TOTAL base; the pinned panel ALSO states the commercial-base share** (2026-07-28) | Satisfies "name the denominator" above without putting two lines in a 14-point sparkline, which is past what that form carries. The commercial figure is what public reporting quotes (CBC/council ~5.2%), so it has to be reachable — but as a labelled number, not a second series. |
+| **No `$/acre` line — share only** (2026-07-28) | The one place a deflator would be legitimate (row 2 of this table), deliberately not taken yet. It would cost a CPI series *and* a stated justification for dividing 14 years of moving boundaries by a **current** area. Share-of-base needs no deflator, no area assumption, no vintage — so Phase 0 is the only thing in front of the build. |
+| **2024 is OMITTED** (2026-07-28) | Full reasoning in §0.2, including why this reversed the balanced-panel recommendation. |
 
-## 7. Open decisions (Peter's)
+## 7. Open decisions
 
-1. **Metric — assessed value or revenue?** Value reaches 2012; revenue needs
-   historical mill rates (`pwis-wc4c`, "2014 onward") so it starts **2014** and
-   inherits every class-differential caveat.
-2. **Denominator — share of total base, or of the commercial base?** Or both.
-3. **Per-acre or total?** The project is per-acre throughout, but 14 years of
-   moving boundaries divided by a *current* area needs a stated justification.
-4. **2024 treatment** — see §4.2.
+**None — all four closed 2026-07-28 (Peter).** Metric, denominator, per-acre and
+the 2024 treatment are now rows in §6. The settled first cut is exactly the one
+§7 suggested: **share of citywide base · value not revenue · total not per-acre ·
+2024 omitted.**
 
-**Suggested first cut: share of citywide base · value not revenue · total not
-per-acre.** It is the only combination needing no deflator, no area assumption
-and no rate table — so Phase 0 is the only thing in front of it.
+What remains before Phase 1 is *work*, not decisions: the splice and the guard
+(§0.3).
 
 ## 8. Traps already paid for
 

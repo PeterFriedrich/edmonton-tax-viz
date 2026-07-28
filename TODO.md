@@ -8,7 +8,7 @@ check `git` / `pytest` directly — do not restate it here, it only goes stale.
 Session summaries (`session-summary/`) are dated *narratives* of what happened and
 why. This file owns *what's left*. When they disagree, this file wins.
 
-_Last reconciled: 2026-07-28 (S75)_
+_Last reconciled: 2026-07-28 (S76 — temporal decisions settled)_
 
 ## Open work
 
@@ -30,14 +30,20 @@ _Last reconciled: 2026-07-28 (S75)_
     **$10.28B peak (2016)** → **$7.09B (2025)** — down ~31% from peak — while its
     account count *rose* 8,716 → 10,307. A revenue-per-acre project that cannot
     show that is leaving its best material on the table.
-  - [ ] **Decide the home for it — a hover tooltip is probably the WRONG one.**
-    Peter asked "can that go in the pop ups?" Mechanically yes: `tooltipFor`
-    returns an HTML string, and a 14-point sparkline is one inline `<svg>`
-    `<polyline>` — no library, no dependency. But a hover tooltip **vanishes on
+  - [x] ~~**The home for it**~~ — **sparkline in the hover tooltip PLUS a
+    click-to-pin panel.** Peter asked "can that go in the pop ups?" Mechanically
+    yes: `tooltipFor` returns an HTML string and a 14-point sparkline is one
+    inline `<svg><polyline>` — no library, no dependency. But hover **vanishes on
     mouse-out, cannot be studied, and does not exist on touch at all**, and the
-    Money tooltip already carries 3–4 rows. Likely answer: **sparkline in the
-    hover tooltip** (cheap, glanceable, honest at that size) **plus a
-    click-to-pin panel** for the labelled, readable version. Peter's call.
+    Money tooltip already carries 3–4 rows — so the sparkline is the teaser and
+    the panel is the home. ⚠️ **Attribution, so nobody re-litigates it as
+    settled-by-Peter: this was decided on the merits in `SPEC_temporal.md` §2,
+    NOT asked.** The touch argument makes it close to forced, and it is cheap to
+    reverse, but it is mine. Say so if it comes up.
+  - [ ] **Genuinely still open: the pinned panel's DESIGN** — §2 settles the
+    split, not what the panel looks like or how it dismisses. Decide against the
+    current render, and add its chrome to `CHROME_IDS` or the label sweep will
+    paint hood names underneath it.
   - [x] ~~**Where it gets built**~~ — **`/full/` (specialist build), 2026-07-28,
     Peter: "we'd prototype this in full for now."** Natural home: it already
     carries the work-in-progress badge, so an unfinished lens is labelled as
@@ -50,15 +56,27 @@ _Last reconciled: 2026-07-28 (S75)_
     (0–14 accounts/yr = 0.00%); 2024 = 2,322, 2025 = 131 incremental (~2,448
     cumulative). **2012–2023 usable, 2025 repairable via the current roll, 2024
     irreparable.** Full read-out: `docs/SPEC_temporal.md` §0.1.
-  - [ ] **▶ THE ONE DECISION LEFT IN PHASE 0 — how to treat 2024.** Peter's
-    call; four options in `SPEC_temporal.md` §0.2 (omit / flag / balanced panel
-    excluding the ~2,450 known-bad accounts from every year / uncertainty band).
-    **Recommended: balanced panel for a share-of-base metric** (consistent
-    denominator across all 14 years is the point of that normalization), or omit
-    if level matters more than shape. **Interpolation is ruled out.**
-  - [ ] **Then: the splice + the guard.** Historical 2012–2023 + current roll for
-    the live year; a guard that refuses to publish a year failing its control.
-    That closes Phase 0 (`SPEC_temporal.md` §0.3).
+  - [x] ~~**How to treat 2024**~~ — **OMITTED. Decided 2026-07-28 (Peter).** An
+    honest gap in the line, reason stated on hover. **This reversed the balanced
+    panel §0.2 originally recommended**: share-of-base is self-normalizing per
+    year, so the metric needs each year's roll *complete*, not the account
+    universe *constant* — a fixed panel would punch the same $2.93B hole into
+    twelve clean years to rescue one broken one. Flag and uncertainty-band lose
+    on display grain (invisible at sparkline size). Interpolation stays ruled
+    out. Full reasoning: `SPEC_temporal.md` §0.2.
+  - [x] ~~**Metric, denominator, per-acre**~~ — **ALL THREE DECIDED 2026-07-28
+    (Peter); `SPEC_temporal.md` §7 is now empty and the rows live in §6.** The
+    settled cut is **share of the TOTAL citywide base · assessed VALUE · TOTAL
+    not per-acre**, the only combination needing no deflator, no area assumption
+    and no mill-rate table. Value over revenue (reaches 2012 vs 2014, and skips
+    the class-differential caveats); **commercial-base share appears as a
+    labelled number in the pinned panel, not a second sparkline**.
+  - [ ] **▶ ALL THAT'S LEFT IN PHASE 0 — the splice + the guard. No decisions in
+    front of it.** Historical 2012–2023 + current roll for the live year; a guard
+    that refuses to publish a year failing its control. **The splice must not
+    quietly become a 14-year loop** — 2024 is omitted by decision, so the year
+    list is deliberately non-contiguous and the guard must assert that absence
+    rather than red on it. Closes Phase 0 (`SPEC_temporal.md` §0.3).
   - **Context — the 2024/2025 slices of `qi6a-xuwt` are PROVEN INCOMPLETE** (2026-07-28; evidence in `data/DATA.md` §0). For assessment year
     2025, same year, the current roll has **11,216 Downtown accounts / $7.81B**
     and the historical file has **10,307 / $7.09B** — a **909-account, ~$720M
@@ -72,9 +90,11 @@ _Last reconciled: 2026-07-28 (S75)_
       account count + total against a control, and refuse to publish a year that
       does not. **Likely shape: historical for 2012–2023, the current roll for
       the live year.**
-    - [ ] **Quantify how far the defect reaches.** Only 2024/2025 are proven bad.
-      Historical 2025 is ~8,000 accounts short citywide; 909 of those are
-      Downtown alone, so the shortfall is not evenly spread.
+    - [x] ~~**Quantify how far the defect reaches**~~ — **DONE 2026-07-28**, all
+      14 years. Confined to 2024–2025, one dropout event; 2012–2023 clean.
+      ~~"~8,000 accounts short citywide"~~ **was wrong** — inferred from row
+      counts of different vintages, and most of that gap is new construction.
+      The measured figure is **2,448**. See §0.1 of `SPEC_temporal.md`.
     - [ ] **BUG REPORT to Edmonton Open Data — worth doing (Peter, 2026-07-28),
       gated on Peter reviewing it by hand first.** Notebook written for exactly
       that: **`notebooks/exploration/03_historical_roll_gap.ipynb`** — hits the
@@ -93,23 +113,29 @@ _Last reconciled: 2026-07-28 (S75)_
         buildings absent together, citywide — and let the City diagnose. Do not
         speculate about leasehold/condo record handling or ETL join logic in the
         report, however tempting the address clustering makes it.
-      - [ ] Still to pin down: whether the gap reaches years **before 2024**
-        (only 2024/2025 are proven bad — the year-N−1/N+1 detector in
-        `SPEC_temporal.md` §4.1 settles it), and spot-check a few missing
-        accounts against the City's public assessment lookup so the report cites
-        something a human can open.
+      - [x] ~~Whether the gap reaches years **before 2024**~~ — **SETTLED
+        2026-07-28: it does not.** 2012–2023 are clean (0–14 accounts/yr).
+        ⚠️ **The N−1/N+1 detector this item originally pointed at cannot answer
+        the question** — it is blind to dropouts that never return, and reported
+        **5** for 2024 against a true 2,321. The answer came from the
+        current-roll control detector. `SPEC_temporal.md` §0.1 (not §4.1 — that
+        section number no longer exists).
+      - [ ] Still to do before filing: spot-check a few missing accounts against
+        the City's public assessment lookup, so the report cites something a
+        human can open.
       - **Strongest single exhibit: Stantec Tower** (10310 102 ST NW):
         Edmonton's tallest building, 309 accounts in the 2023 slice, **zero rows
         in 2024 and 2025**, and 310 accounts / $105.7M in the current roll.
-  - [ ] **⚠️ NAME THE DENOMINATOR IN THE UI — Downtown is 3.22% of the total base
-    but 9.30% of the COMMERCIAL base (2025), and public reporting quotes the
-    second kind.** Measured 2026-07-28; full table in `ANALYSIS_BACKLOG.md`. An
-    incoming claim that the publicly-quoted ~5.2% "matches the project's
-    figures" does **not** hold against total-value share. Publish 3.22% next to
-    a news article saying 5.2% and the project looks wrong when it is not.
-    Showing the commercial share alongside is probably worth it — that is the
-    series public discourse actually uses. **Recompute both from the current
-    roll before publishing**, per the blocker above.
+  - [x] ~~**⚠️ NAME THE DENOMINATOR IN THE UI**~~ — **DECIDED 2026-07-28: the
+    sparkline plots share of the TOTAL base; the pinned panel ALSO states the
+    commercial-base share as a labelled number** (not a second line — two series
+    is past what a 14-point sparkline carries). Downtown is **3.22% of the total
+    base but 9.30% of the COMMERCIAL base** (2025); public reporting (CBC/council
+    ~5.2%) quotes the second kind, so an incoming claim that those figures
+    "match the project's" does **not** hold against total-value share, and
+    publishing 3.22% beside an article saying 5.2% makes the project look wrong
+    when it is not. Full table in `ANALYSIS_BACKLOG.md`. **Still binding on the
+    build: recompute BOTH from the current roll before publishing.**
   - **RESOLVED 2026-07-28: the office-devaluation story survives, at ~2/3 the
     headline size.** Commercial fell **$6.32B → $4.85B (−23%) on a near-stable
     account count** (822 → 723) — the same buildings reassessed lower, confirmed

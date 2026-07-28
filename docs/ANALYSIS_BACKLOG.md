@@ -625,11 +625,17 @@ Using the historical dataset for 2023 and the **current roll** for 2025:
 
 ### Still open
 
-1. **How far back does the defect go?** Only 2024/2025 are proven bad. Every year
-   needs a control total before the series is drawn.
-2. **Is the shortfall citywide or Downtown-shaped?** Historical 2025 is ~8,000
-   accounts short of the current roll citywide, and 909 of those are Downtown
-   alone -- disproportionate, but unquantified elsewhere.
+1. ~~**How far back does the defect go?**~~ **ANSWERED 2026-07-28: not far.**
+   2012-2023 are clean (0-14 accounts/yr); the defect is one dropout event in
+   2024 plus 131 stragglers in 2025. `docs/SPEC_temporal.md` §0.1. The "every
+   year needs a control total" instinct was right and became the guard.
+2. ~~**Is the shortfall citywide or Downtown-shaped?**~~ **ANSWERED: both, and
+   the ~8,000 was WRONG.** That figure was inferred from row counts of different
+   vintages; most of the gap is new construction. Measured account-by-account:
+   **2,448 accounts / $2.93B / 188 neighbourhoods.** Downtown holds 1,292 (53%)
+   -- so it is genuinely Downtown-shaped -- but Magrath Heights loses 17% of its
+   accounts and Glenora 15%, so it is not Downtown-only. **Cite 2,448, never
+   8,000.**
 3. **Worth reporting to Edmonton Open Data.** Two named towers missing from a
    published dataset is a concrete, reproducible bug report.
 4. **Does any of this change a published claim?** Still unchecked -- the
