@@ -109,6 +109,18 @@ jobs:
         if: steps.yearcheck.outputs.result != 'hold'
         run: python scripts/check_value_anchors.py
 
+      # Temporal lens Phase 0 gate (docs/SPEC_temporal.md §0.3). Watches the
+      # historical assessment file for the failure that produced the 2024/2025
+      # defect: a settled year quietly losing accounts. Like every guard here it
+      # sits BEFORE the status manifest, so a failure leaves last_checked
+      # unbumped and the site keeps serving last-good data.
+      #
+      # SKIPS cleanly when data/raw/assessment_historical_by_hood.csv is absent,
+      # so it is a no-op until the aggregate is part of the fetch step.
+      - name: Check temporal years (guard before regenerating)
+        if: steps.yearcheck.outputs.result != 'hold'
+        run: python scripts/check_temporal_years.py
+
       - name: Update status manifest (provenance + heartbeat)
         if: steps.yearcheck.outputs.result != 'hold'
         run: python scripts/generate_status.py

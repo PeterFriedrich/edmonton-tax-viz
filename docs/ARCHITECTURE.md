@@ -601,6 +601,56 @@ January window-pin bump (both `PERMIT_YEARS` tuples).
 
 ---
 
+### `src/load_temporal.py` (temporal lens — added 2026-07-28)
+
+Full methodology + locked decisions in `docs/SPEC_temporal.md`; the source's
+defect in `DATA.md` §0. **A side branch that never touches the hood join** — it
+produces its own table and does not enter `join_and_calculate`.
+
+**Inputs:** `data/raw/assessment_historical_by_hood.csv` (the year × hood × class
+server-side aggregate, ~14,800 rows — NOT the 5.5M-row raw dataset); the
+per-property frame from `load_assessment.py`; the live assessment year
+(`main.ASSESSMENT_YEAR`); optionally the boundary names from `load_boundaries.py`.
+
+**Outputs:** `(DataFrame, stats)` — one row per (hood, year), `TEMPORAL_COLUMNS`:
+`neighbourhood_name` / `year` / `source` / `n_accounts` / `total_assessed_value` /
+`commercial_*` twins / `share_of_total_base` / `share_of_commercial_base` /
+`matched_boundary`.
+
+**Responsibilities:**
+- **The splice:** history from the historical file, the **live year from the
+  current roll**, and any year no complete source covers is **omitted**.
+  `publishable_years()` owns that rule — today 2012–2023 + 2025, with **2024
+  absent by decision**. The published year list is deliberately non-contiguous.
+- **`HISTORICAL_DEFECT_YEARS` is not the same as the omitted years**, and the
+  difference is load-bearing: a defective year is publishable *iff* a complete
+  source covers it, and the roll covers exactly one. So 2025 is published today
+  and **drops out when the roll advances to 2026** — closing the trap where a
+  plain "omit 2024" rule would silently re-acquire the defect next January.
+- **Hood identity across 14 years:** `TEMPORAL_NAME_CORRECTIONS` on top of the
+  shared `NAME_CORRECTIONS`. **OLIVER → WÎHKWÊNTÔWIN is the consequential one** —
+  a 12,000-account rename that otherwise reads as one hood dying and another
+  appearing. Applied BEFORE aggregation (the `load_assessment` rule) and
+  re-applied inside `build_temporal_table`, because it is the one invariant that
+  fails silently when skipped.
+- **No silent drops:** 24 historical names have no current boundary. They are
+  flagged `matched_boundary=False`, counted, and **kept in the denominator** —
+  the metric is share of the *citywide* base, so an unrenderable hood is still
+  real value. Dropping them from the base would inflate every other hood's share.
+
+**Does not:** render, export a web file, or compute per-acre anything (the lens
+is share-of-base by decision — `SPEC_temporal.md` §6). Phases 1–4 in that spec.
+
+**Guarded by:** `scripts/check_temporal_years.py` — structural invariants (the
+year set including the deliberate gap, share conservation, splice direction) plus
+per-year account/value bands in `data/expected_temporal_years.json`. Historical
+years are pinned tight and a **drop** is the dangerous direction; the **live year
+is deliberately unpinned** (a live snapshot moves weekly). Runs in `refresh.yml`
+before the status-manifest step. The exact account-level control stays
+`tools/audit_historical_roll_gaps.py` (~20 min); this is the cheap weekly sentry.
+
+---
+
 ### `src/join_and_calculate.py`
 
 **Inputs:**

@@ -1,0 +1,343 @@
+"""Neighbourhood assessment over time — the spliced hood x year table.
+
+Phase 0 of docs/SPEC_temporal.md. Produces one row per (neighbourhood, year)
+carrying assessed value, account count, and the two share-of-base metrics the
+lens plots.
+
+THE SPLICE, and why there is one
+--------------------------------
+Two sources, because neither alone is publishable:
+
+  * ``qi6a-xuwt`` (Property Assessment Data - Historical) covers 2012-2025, but
+    its **2024 and 2025 slices are missing 2,448 accounts worth $2.93B** across
+    188 neighbourhoods (audited 2026-07-28; data/DATA.md section 0).
+  * ``q7d6-ambg`` (the current roll) is complete and is what the shipped site is
+    built from, but it is a single year with no history.
+
+So: **history from the historical file, the live year from the current roll, and
+any year that neither source covers completely is OMITTED** (decided 2026-07-28 --
+interpolating a known hole is exactly the failure this project's guard culture
+exists to prevent). Today that means 2012-2023 + 2025, with **2024 absent**. The
+published year list is therefore **deliberately non-contiguous**; see
+``publishable_years``, and do not "fix" the gap.
+
+Two traps this module exists to handle
+--------------------------------------
+1. **Hood names are not stable across 14 years.** OLIVER carried ~12,000
+   accounts from 2012 through 2024 and appears as WIHKWENTOWIN from 2025 -- a
+   rename, not a collapse. Naively keyed by name, the series shows one
+   neighbourhood dying and another appearing from nothing. 32 historical names
+   have no current boundary at all.
+2. **An unmatched name is not a dropped dollar.** The metric is *share of the
+   citywide base*, so every row belongs in the DENOMINATOR whether or not it has
+   a polygon to render. Unmatched hoods are counted, reported, and kept in the
+   base; only the numerator is restricted to hoods that render. Dropping them
+   from both would silently inflate every other hood's share.
+
+Vintage caveat (real, and not fixable here)
+-------------------------------------------
+The current roll is a *live* snapshot of the live assessment year, while the
+historical file is that year as published at the time. The current roll
+therefore carries titles created since (~8,200 accounts as of 2026-07-28, mostly
+new construction). The live year's account count is consequently not
+vintage-comparable with the historical years' -- it is the same year measured
+later. Value shares are far less sensitive to this than counts, which is another
+reason the plotted metric is a share rather than a level.
+"""
+
+import logging
+from pathlib import Path
+
+import pandas as pd
+
+from src.load_assessment import NAME_CORRECTIONS
+
+logger = logging.getLogger(__name__)
+
+# First year in the historical file. 2012 is also the first year the audit could
+# not test (no prior year to compare against) -- see SPEC_temporal.md section 0.1.
+FIRST_YEAR = 2012
+
+# Years PROVEN incomplete in the historical file (audited 2026-07-28, all 14
+# years -- SPEC_temporal.md section 0.1). 2024 lost 2,322 accounts and 2025 a
+# further 131; every other year is clean at 0.00%.
+#
+# NOT the same thing as the omitted years, and the difference is the subtle part.
+# A defective year is publishable if and only if a complete source covers it, and
+# the only such source is the current roll, which covers exactly ONE year: the
+# live one. So 2025 is publishable *while it is the live year* and becomes
+# unpublishable the moment the roll advances past it -- see publishable_years.
+#
+# The trap this exists to close: with a plain "omit 2024" rule, next January's
+# roll-forward would make 2026 live, quietly drop 2025 back to the historical
+# file, and re-acquire the defect on a year that renders fine today. Nothing else
+# in the pipeline would notice.
+HISTORICAL_DEFECT_YEARS = (2024, 2025)
+
+# The "commercial base" denominator (SPEC_temporal.md section 6). Deliberately
+# just COMMERCIAL: this is the series public reporting quotes, and the
+# neighbouring classes are noise -- NONRES MUNICIPAL/RES EDUCATION is 19 rows
+# across all 14 years and DESIGNATED IND PROPERTIES is 1, so their shares swing
+# on single accounts. Explicit tuple rather than a "not residential" rule, same
+# philosophy as ZONE_CATEGORY / ROUTE_MODE: every class hand-assigned.
+COMMERCIAL_CLASSES = ("COMMERCIAL",)
+
+# Historical hood name -> current boundary name, applied ON TOP of the pipeline's
+# shared NAME_CORRECTIONS. Every entry is a name that appears in the historical
+# file and resolves to exactly one present-day boundary.
+#
+# OLIVER is a genuine municipal RENAME (to Wihkwentowin, effective in the 2025
+# roll) and is the single most consequential entry here: without it a
+# 12,000-account central neighbourhood reads as vanishing in 2025.
+#
+# The " AREA" entries are the same pattern as the shared NAME_CORRECTIONS'
+# "CHAPPELLE AREA" -> "CHAPPELLE": a staging name used while land developed,
+# later replaced by the settled neighbourhood name. Each was confirmed to match
+# a current boundary exactly after the suffix; names that merely LOOK like the
+# pattern but have no exact match (GLENRIDDING AREA, MEADOWS AREA, TERWILLEGAR
+# AREA) are deliberately NOT guessed at -- they stay unmatched and reported.
+TEMPORAL_NAME_CORRECTIONS = {
+    "OLIVER":               "WÎHKWÊNTÔWIN",
+    "KESWICK AREA":         "KESWICK",
+    "MACTAGGART AREA":      "MACTAGGART",
+    "MAGRATH HEIGHTS AREA": "MAGRATH HEIGHTS",
+    "MCCONACHIE AREA":      "MCCONACHIE",
+    "WINDERMERE AREA":      "WINDERMERE",
+}
+
+# Column order of the emitted table.
+TEMPORAL_COLUMNS = [
+    "neighbourhood_name", "year", "source",
+    "n_accounts", "total_assessed_value",
+    "commercial_n_accounts", "commercial_assessed_value",
+    "share_of_total_base", "share_of_commercial_base",
+    "matched_boundary",
+]
+
+
+def publishable_years(live_year: int, defect_years=HISTORICAL_DEFECT_YEARS,
+                      first_year=FIRST_YEAR) -> tuple[int, ...]:
+    """The year list the lens should publish, gaps and all.
+
+    A year is publishable when a COMPLETE source covers it: either the historical
+    file is clean for it, or it is the live year (the current roll). The result is
+    deliberately non-contiguous -- a caller that wants an unbroken range is asking
+    the wrong question (see the module docstring).
+
+    Today (live 2025): 2012-2023 + 2025, with 2024 missing.
+    Next January (live 2026): 2012-2023 + 2026 -- 2025 drops out, because the
+    roll no longer covers it and the historical file never did.
+    """
+    defect = set(defect_years)
+    return tuple(
+        y for y in range(first_year, live_year + 1)
+        if y == live_year or y not in defect
+    )
+
+
+def omitted_years(live_year: int, defect_years=HISTORICAL_DEFECT_YEARS,
+                  first_year=FIRST_YEAR) -> tuple[int, ...]:
+    """The inverse of publishable_years, for reporting."""
+    published = set(publishable_years(live_year, defect_years, first_year))
+    return tuple(y for y in range(first_year, live_year + 1) if y not in published)
+
+
+def normalize_hood(names: pd.Series) -> pd.Series:
+    """Strip + uppercase + both correction layers, in the pipeline's usual order.
+
+    Corrections are applied BEFORE any aggregation, for the same reason
+    load_assessment does it: correcting after the sum collapses two summed rows
+    onto one boundary and duplicates it.
+    """
+    out = names.fillna("").str.strip().str.upper()
+    return out.replace(NAME_CORRECTIONS).replace(TEMPORAL_NAME_CORRECTIONS)
+
+
+def load_historical_aggregate(csv_path: str | Path) -> pd.DataFrame:
+    """Read the pre-aggregated historical extract into the internal long shape.
+
+    The file is the year x hood x class aggregate written by
+    ``scripts/download_data.py`` (~14,800 rows), NOT the 5.5M-row raw dataset --
+    the whole dataset never has to be downloaded, which is what makes this lens
+    cheap (SPEC_temporal.md section 3).
+    """
+    df = pd.read_csv(csv_path)
+    missing = {"assessment_year", "neighbourhood_name", "mill_class_1",
+               "n_accounts", "total_assessed_value"} - set(df.columns)
+    if missing:
+        raise ValueError(
+            f"{Path(csv_path).name}: missing expected column(s) {sorted(missing)}. "
+            "Re-fetch with scripts/download_data.py --only assessment_historical."
+        )
+    return pd.DataFrame({
+        "year": df["assessment_year"].astype(int),
+        "neighbourhood_name": normalize_hood(df["neighbourhood_name"]),
+        "mill_class": df["mill_class_1"].fillna("").str.strip().str.upper(),
+        "n_accounts": df["n_accounts"].astype(int),
+        "assessed_value": df["total_assessed_value"].astype(float),
+    })
+
+
+def current_roll_aggregate(assessment: pd.DataFrame, year: int) -> pd.DataFrame:
+    """Aggregate the per-property current roll into the same long shape.
+
+    ``assessment`` is the frame from ``load_assessment.load_assessment`` -- its
+    hood names already carry NAME_CORRECTIONS, but not the temporal layer, so it
+    is re-normalized here (both correction maps are idempotent on already-clean
+    names).
+    """
+    df = pd.DataFrame({
+        "year": year,
+        "neighbourhood_name": normalize_hood(assessment["neighbourhood_name"]),
+        "mill_class": assessment["assessment_class_1"].fillna("").str.strip().str.upper(),
+        "assessed_value": assessment["assessed_value"].astype(float),
+    })
+    return (
+        df.groupby(["year", "neighbourhood_name", "mill_class"], as_index=False)
+          .agg(n_accounts=("assessed_value", "size"), assessed_value=("assessed_value", "sum"))
+    )
+
+
+def _collapse_classes(long: pd.DataFrame) -> pd.DataFrame:
+    """Class-grained long form -> one row per (hood, year), with a commercial cut."""
+    is_com = long["mill_class"].isin(COMMERCIAL_CLASSES)
+    base = (
+        long.groupby(["neighbourhood_name", "year"], as_index=False)
+            .agg(n_accounts=("n_accounts", "sum"), total_assessed_value=("assessed_value", "sum"))
+    )
+    com = (
+        long[is_com].groupby(["neighbourhood_name", "year"], as_index=False)
+            .agg(commercial_n_accounts=("n_accounts", "sum"),
+                 commercial_assessed_value=("assessed_value", "sum"))
+    )
+    out = base.merge(com, on=["neighbourhood_name", "year"], how="left")
+    out["commercial_n_accounts"] = out["commercial_n_accounts"].fillna(0).astype(int)
+    out["commercial_assessed_value"] = out["commercial_assessed_value"].fillna(0.0)
+    return out
+
+
+def build_temporal_table(
+    historical: pd.DataFrame,
+    current: pd.DataFrame,
+    live_year: int,
+    boundary_names=None,
+    defect_years=HISTORICAL_DEFECT_YEARS,
+) -> tuple[pd.DataFrame, dict]:
+    """Splice the two sources into the hood x year table. Returns (table, stats).
+
+    ``historical`` / ``current`` are the long frames from the two loaders above.
+    ``boundary_names`` is the set of renderable hood names (from
+    ``load_boundaries``); when given, rows outside it are flagged
+    ``matched_boundary=False`` -- kept in the denominator, excluded from nothing
+    else. See the module docstring on why they are not dropped.
+
+    The live year is taken from the CURRENT ROLL and the historical file's own
+    copy of that year is discarded, because the historical copy is the incomplete
+    one. That discard is the splice.
+    """
+    # Re-normalize both inputs. The loaders already did this, so it is a no-op on
+    # the pipeline path -- but the hood-rename merge is the one invariant that
+    # fails SILENTLY when it is skipped (OLIVER and WÎHKWÊNTÔWIN would survive as
+    # two half-length series), so it is enforced here rather than assumed of the
+    # caller. Both correction maps are idempotent.
+    historical = historical.assign(neighbourhood_name=normalize_hood(historical["neighbourhood_name"]))
+    current = current.assign(neighbourhood_name=normalize_hood(current["neighbourhood_name"]))
+
+    # The historical file supplies every publishable year EXCEPT the live one,
+    # whose complete copy comes from the roll below.
+    keep_years = set(publishable_years(live_year, defect_years)) - {live_year}
+    hist = historical[historical["year"].isin(keep_years)]
+
+    cur = current[current["year"] == live_year]
+    if cur.empty:
+        raise ValueError(
+            f"current roll frame carries no rows for live_year={live_year} "
+            f"(has {sorted(current['year'].unique())}). The live year cannot be spliced."
+        )
+
+    table = pd.concat([
+        _collapse_classes(hist).assign(source="historical"),
+        _collapse_classes(cur).assign(source="current_roll"),
+    ], ignore_index=True)
+
+    # Citywide base per year = EVERY row of that year, matched or not.
+    totals = table.groupby("year").agg(
+        base=("total_assessed_value", "sum"),
+        com_base=("commercial_assessed_value", "sum"),
+    )
+    table["share_of_total_base"] = (
+        table["total_assessed_value"] / table["year"].map(totals["base"])
+    )
+    com_base = table["year"].map(totals["com_base"])
+    table["share_of_commercial_base"] = (
+        table["commercial_assessed_value"] / com_base
+    ).where(com_base > 0)
+
+    if boundary_names is None:
+        table["matched_boundary"] = True
+    else:
+        table["matched_boundary"] = table["neighbourhood_name"].isin(set(boundary_names))
+
+    table = table.sort_values(["neighbourhood_name", "year"]).reset_index(drop=True)
+
+    unmatched = table[~table["matched_boundary"]]
+    stats = {
+        "years": tuple(int(y) for y in sorted(table["year"].unique())),
+        "omitted_years": omitted_years(live_year, defect_years),
+        "live_year": live_year,
+        "hoods": int(table["neighbourhood_name"].nunique()),
+        "rows": len(table),
+        "unmatched_hoods": sorted(unmatched["neighbourhood_name"].unique()),
+        "unmatched_value_frac": (
+            float(unmatched["total_assessed_value"].sum() / table["total_assessed_value"].sum())
+            if len(table) else 0.0
+        ),
+    }
+
+    # No silent drops: an unmatched name is a hood that will not render, and the
+    # reader deserves to know how much of the base is behind that.
+    if stats["unmatched_hoods"]:
+        logger.warning(
+            "%d historical hood name(s) have no current boundary and will not render "
+            "(kept in the citywide base; %.2f%% of all hood-years' value): %s",
+            len(stats["unmatched_hoods"]), stats["unmatched_value_frac"] * 100,
+            ", ".join(stats["unmatched_hoods"][:8])
+            + ("..." if len(stats["unmatched_hoods"]) > 8 else ""),
+        )
+    logger.info(
+        "Temporal table: %d rows, %d hoods, years %s (omitted %s; %d from the current roll)",
+        stats["rows"], stats["hoods"], _year_summary(stats["years"]),
+        ", ".join(str(y) for y in stats["omitted_years"]) or "none",
+        int((table["source"] == "current_roll").sum()),
+    )
+    return table[TEMPORAL_COLUMNS], stats
+
+
+def _year_summary(years) -> str:
+    """"2012-2023, 2025" -- so the deliberate gap is visible in the log line."""
+    years = sorted(years)
+    if not years:
+        return "none"
+    runs, start, prev = [], years[0], years[0]
+    for y in years[1:]:
+        if y != prev + 1:
+            runs.append((start, prev))
+            start = y
+        prev = y
+    runs.append((start, prev))
+    return ", ".join(str(a) if a == b else f"{a}-{b}" for a, b in runs)
+
+
+def load_temporal(
+    historical_csv: str | Path,
+    assessment: pd.DataFrame,
+    live_year: int,
+    boundary_names=None,
+) -> tuple[pd.DataFrame, dict]:
+    """Convenience entry point: both loaders + the splice, in one call."""
+    return build_temporal_table(
+        load_historical_aggregate(historical_csv),
+        current_roll_aggregate(assessment, live_year),
+        live_year,
+        boundary_names=boundary_names,
+    )

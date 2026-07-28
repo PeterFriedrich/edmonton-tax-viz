@@ -90,6 +90,27 @@ time graph (`TODO.md`). Numbers below are from the API on 2026-07-28.
 > **Splice: historical for 2012–2023, the current roll for the live year.**
 > **2024 has no such fix** — there is no current-roll equivalent for it.
 >
+> ✅ **BOTH ARE BUILT (2026-07-28):** the splice is `src/load_temporal.py` and the
+> guard is `scripts/check_temporal_years.py` (wired into `refresh.yml` before the
+> status-manifest step). **This dataset is no longer "not yet used" — but note
+> what IS used: `scripts/download_data.py --only assessment_historical` fetches a
+> ~14,800-row SERVER-SIDE AGGREGATE** (`$group` by year × hood × mill class) into
+> `data/raw/assessment_historical_by_hood.csv`, never the 5.5M raw rows.
+>
+> ⚠️ **The generic truncation check does not apply to an aggregate.** A `$group`
+> download's row count is the number of GROUPS, so it can never equal the
+> dataset's `count(*)`. The source declares `sum_column: n_accounts` instead and
+> `download_data.verify_download` checks that the per-group counts **sum** to the
+> live row count (5,501,958 as of 2026-07-28) — strictly stronger, since it also
+> catches a whole group vanishing.
+>
+> ⚠️ **2025 IS ONLY REPAIRABLE WHILE IT IS THE LIVE YEAR.** The current roll
+> covers exactly one year. When the roll advances to 2026, 2025 loses its only
+> complete source and **drops out of the published series** — `publishable_years`
+> handles this, and the guard fails if it is ever republished from the historical
+> file. Preserving 2025's repaired numbers past that point needs an archived
+> artifact that does not exist yet (`TODO.md`).
+>
 > **Do not silently smooth this.** A 909-account hole in the headline
 > neighbourhood produced an apparent $2.07B collapse where the real decline is
 > $1.35B — see `docs/ANALYSIS_BACKLOG.md`.
