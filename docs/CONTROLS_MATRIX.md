@@ -68,12 +68,13 @@ seven became modes of another view rather than top-level entries:
 |---|---|---|
 | **Money** *(default)* | `money`, **`glass`** | `glass` = the "100 m grid" `#moneydetail` mode. The Money button stays active in it. |
 | **Development** | `development`, **`infill`** | Moved to **second, next to Money** (2026-07-27, Peter). `infill` = the full-only "Infill opportunity" `#devmode` lens; the Development button stays active in it. |
-| **Services** | `services` | |
-| **Ratio** | `ratio` | |
+| **Services** 🔒 | `services` | Full build only (2026-07-28, provisional). |
+| **Ratio** 🔒 | `ratio` | Full build only (2026-07-28, provisional). |
 | **Uses** 🔒 | `uses` | Full build only (2026-07-24, provisional). |
 
-So **public `#views` = 4 buttons** (Money · Development · Services · Ratio);
-**`/full/` = 5**. Verified live in both builds 2026-07-25.
+So **public `#views` = 2 buttons** (Money · Development); **`/full/` = 5**.
+Verified in both builds 2026-07-28 (was 4 public / 5 full, verified live
+2026-07-25, before the Services + Ratio pull).
 
 **Build visibility (public vs specialist) — FINALIZED 2026-07-23 (§7 +
 `DECISIONS.md`).** The two-build split tags each lens `public | full`; this was
@@ -82,17 +83,28 @@ lenses" pass.
 
 | Lens / control | Public build | Specialist (`/full/`) |
 |---|:---:|:---:|
-| Money (incl. the 100 m grid mode) · Services · Ratio | ✅ | ✅ |
+| Money (incl. the 100 m grid mode) | ✅ | ✅ |
 | **Development** — units + permits, Detail selector | ✅ | ✅ |
+| **Services** view | ❌ _(provisional, 2026-07-28)_ | ✅ |
+| **Ratio** view | ❌ _(provisional, 2026-07-28)_ | ✅ |
 | **Uses** view (dominant zoned land use) | ❌ _(provisional, 2026-07-24)_ | ✅ |
 | **Infill** lens on Development | ❌ | ✅ |
 | **Industrial** metric on Development | ❌ | ✅ |
+| Money tooltip's **road m/acre + $/road metre** rows | ❌ _(went with Ratio, 2026-07-28)_ | ✅ |
+| Data & Methods: modelled-services caveat, road/fire/transit source credits | ❌ _(went with Services, 2026-07-28)_ | ✅ |
 | Deep data-detail (validation ratios, modeling quirks, methods-heavy blurbs) | trimmed to honest labels | ✅ full |
 | Money's **Residential / Non-residential** revenue cuts | ✅ *(data-gated only)* | ✅ |
 
 Full-only *modes/metrics inside a public view* (Infill, Industrial) are
 `BUILD`-flag-gated at the control level — `|| !FULL_BUILD` sits next to their
 data guard, so nothing is stripped from the file.
+
+**Pulling a view is not finished when its button is hidden.** The 2026-07-28
+Services/Ratio pull had to chase two residues: Ratio's headline number was on the
+*default* view's tooltip, and the Data & Methods pod warned about layers only
+those views carried. Before tagging a lens full-only, grep for its columns
+outside its own view arm — `tooltipFor`, the about copy, and the legend are the
+three places a lens leaks.
 
 ---
 

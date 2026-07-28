@@ -88,12 +88,22 @@ is grouping-agnostic and reads whatever tags that pass produces.
 **FINALIZED split (regroup pass, 2026-07-23 — `CONTROLS_MATRIX.md` §7 +
 `DECISIONS.md`):** `#views` collapses to **5** (Glass → a mode of Money; Infill →
 a full-only mode of Development).
-- **Public:** Money (incl. the Glass grid mode) · Services · Ratio ·
-  **Development** (units + permits only). _(Uses pulled to full-only 2026-07-24,
-  provisional — see below.)_
-- **Full-only:** the **Uses** view · the **Infill** mode + the **Industrial**
-  metric on Development · deep data-detail (validation ratios, modeling quirks,
-  methodology-heavy blurbs).
+- **Public:** Money (incl. the Glass grid mode) · **Development** (units +
+  permits only). _(Uses pulled to full-only 2026-07-24; **Services and Ratio
+  pulled 2026-07-28** — both provisional, see below.)_
+- **Full-only:** the **Services**, **Ratio** and **Uses** views · the **Infill**
+  mode + the **Industrial** metric on Development · deep data-detail (validation
+  ratios, modeling quirks, methodology-heavy blurbs).
+
+**Superseded 2026-07-28 — the public build is now 2 views, not 4.** Peter pulled
+**Services and Ratio** to full-only while prepping the release, provisional "for
+now" (same framing as the Uses pull). Two residues went with them, decided at the
+same time: the Money tooltip's `road m/acre` + `$/road metre` rows (Ratio's
+headline metric was being published on the *default public view*), and the Data &
+Methods pod's modelled-services caveat + its road/fire/transit source credits.
+See `DECISIONS.md` 2026-07-28 and `CONTROLS_MATRIX.md` §2. **§3 below still lists
+Services/Ratio/Uses as release scope — that is now the FULL build's scope; the
+lenses ship, just not at the root URL.**
 - Full-only controls are `BUILD`-flag-gated at the control level, so a full-only
   *mode/metric inside a public view* (Infill/Industrial on Development) is exactly
   what the mechanism supports.
