@@ -569,85 +569,106 @@ Lens B.
 
 ---
 
-## Downtown's assessed value peaked in 2016 and has fallen ~31% since (NEW 2026-07-28)
+## Downtown's assessed value: real decline, but ~a third of the headline drop was a DATA DEFECT (NEW 2026-07-28, RESOLVED)
 
 Surfaced while checking whether a per-neighbourhood assessment time series was
-feasible (`TODO.md`; dataset catalogued at `data/DATA.md` §0). Not investigated —
-recorded so it is not re-discovered.
+feasible. **Resolved the same day at the data layer.** Two intermediate readings
+were recorded and both were wrong; the trail is kept because the *method* that
+settled it is the reusable part.
 
-Downtown, total assessed value by year: **$7.30B (2012) → $10.28B (2016 peak) →
-$7.09B (2025)**. So the 2025 figure is **below where it started in 2012**, and
-~31% off the peak — while the account count *rose* over the same span, 8,716 →
-10,307. Value fell as the number of assessed properties grew.
+### What it looked like, and why that was wrong
 
-**Why it matters here.** Every revenue-per-acre number this project publishes is
-a **single-year snapshot**, and Downtown is the project's headline cell (the
-tower at $612M/lot-acre, `FINDINGS_lot_dedupe.md` §4.2). If the densest,
-highest-revenue district's base has been falling for nine years, the snapshot is
-a frame of a moving picture, and "Downtown generates the most revenue per acre"
-and "Downtown's base is eroding" are both true and belong together.
+`qi6a-xuwt` alone says Downtown ran $7.30B (2012) -> **$10.28B (2016 peak)** ->
+$7.09B (2025), with a violent $9.16B -> $7.30B single-year drop into 2024.
 
-**RESOLVED 2026-07-28 — the cliff is ~80% real, ~20% unexplained, and the
-series must be annotated rather than smoothed.** Decomposed by `mill_class_1`
-against the citywide base (both from `qi6a-xuwt`, server-side aggregates):
+- **First reading (wrong):** split by `mill_class_1`, commercial fell 24% on
+  only -60 accounts, so "~80% genuine revaluation, ~20% unexplained."
+- **Second reading (also wrong):** the 1,359 accounts that vanished were worth
+  $1.822B in 2023 -- ~98% of the drop -- so "almost all of it is the vanishing."
+- **What settled it:** tracing the individual account numbers, then checking the
+  same buildings against the **current roll**. Neither aggregate could have
+  answered it; only the account-level join did.
 
-| class | 2023 | 2024 | delta value | delta accounts |
-|---|---|---|---|---|
-| COMMERCIAL | $6.32B / 822 | $4.81B / 762 | **-$1.51B (-24%)** | -60 |
-| RESIDENTIAL | $1.63B / 10,739 | $1.25B / 9,459 | -$0.38B | **-1,280** |
-| OTHER RESIDENTIAL | $1.20B / 101 | $1.24B / 96 | +$0.04B | -5 |
+### The finding
 
-- **The commercial drop is a genuine revaluation, not an artifact.** Value fell
-  24% while the account count moved only -60 — the same buildings reassessed far
-  lower. Per-account commercial value $7.69M -> $6.31M. This is the
-  office-devaluation story, and it is now confirmed **in the data**, not only in
-  press coverage.
-- **The residential drop is NOT market** — 1,280 accounts left Downtown in a
-  single year. **Still unexplained.** Citywide account count *rose* that year
-  (425,728 -> 426,913) and no other hood absorbed a comparable block (largest
-  gainer: +480). Not a citywide event either: the citywide base was flat,
-  $205.3B -> $204.3B.
-- **A classification change DID happen in 2024** — a new mill class `MA DERELICT`
-  first appears, and the dataset carries a batch of neighbourhood renames that
-  year (`RAPPERSWIL`->`RAPPERSWILL`, `CHAPPELLE AREA`->`CHAPPELLE`, `PLACE LA
-  RUE`->`PLACE LARUE`, and others), plus three hoods that vanish without an
-  obvious twin (`SPUR LINES`, `BATTERY OIL FIELDS`, `MILL WOODS GOLF COURSE`).
-  So the suspicion was well-founded; it is simply not the main driver.
-- **Verdict for the lens:** annotate 2024 as a discontinuity, do not smooth or
-  interpolate. The trend either side of it is real.
+**The historical dataset's 2024 and 2025 slices are incomplete** (full evidence
+in `data/DATA.md` §0). For assessment year **2025**, same year, same city:
 
-### The share figure depends entirely on WHICH base — state the denominator
+| Downtown, 2025 | accounts | value |
+|---|---|---|
+| `q7d6-ambg` current roll (what we ship) | **11,216** | **$7.81B** |
+| `qi6a-xuwt` historical 2025 slice | 10,307 | $7.09B |
 
-**This corrects an incoming claim that the ~5.2% / 7.7% / 10.1% public figures
-"match the project's existing figures." They do not match share of TOTAL
-assessed base.** Two different series, both computed here:
+Two ICE District towers (Stantec Tower and 10360 102 St, 571 accounts, ~$308M)
+are present in 2023, **absent from both 2024 and 2025**, and **present again in
+the current roll**. They were not demolished.
 
-| year | Downtown share of TOTAL base | Downtown share of COMMERCIAL base |
+### The corrected trend -- still a real story, ~a third smaller
+
+Using the historical dataset for 2023 and the **current roll** for 2025:
+
+| | 2023 (hist) | 2025 (current roll) | change |
+|---|---|---|---|
+| COMMERCIAL | $6.32B / 822 | **$4.85B / 723** | **-$1.47B (-23%)** |
+| RESIDENTIAL | $1.63B / 10,739 | $1.49B / 10,393 | -$0.14B (-9%) |
+| OTHER RESIDENTIAL | $1.20B / 101 | **$1.46B / 97** | **+$0.26B (+22%)** |
+| **total** | **$9.16B / 11,663** | **$7.81B / 11,216** | **-$1.35B (-14.7%)** |
+
+- **The office-devaluation story SURVIVES and is essentially the whole story.**
+  Commercial fell 23% on a near-stable account count -- the same buildings
+  reassessed lower. That is now confirmed against the roll we ship, not just
+  against the suspect historical file or press coverage.
+- **But the magnitude was overstated.** Peak-to-2025 is **-24%**, not -31%; the
+  2023->2025 fall is **-$1.35B**, not -$2.07B. Roughly a third of the apparent
+  collapse was the 909-account hole.
+- **`OTHER RESIDENTIAL` rose 22%** and was invisible in every earlier reading.
+
+### Still open
+
+1. **How far back does the defect go?** Only 2024/2025 are proven bad. Every year
+   needs a control total before the series is drawn.
+2. **Is the shortfall citywide or Downtown-shaped?** Historical 2025 is ~8,000
+   accounts short of the current roll citywide, and 909 of those are Downtown
+   alone -- disproportionate, but unquantified elsewhere.
+3. **Worth reporting to Edmonton Open Data.** Two named towers missing from a
+   published dataset is a concrete, reproducible bug report.
+4. **Does any of this change a published claim?** Still unchecked -- the
+   revenue-per-acre *ranking* may be perfectly stable regardless.
+5. **Framing stays descriptive** (locked 2026-07-28): share-of-base line plus the
+   sourced driver. No "downtown is dying", no "the rest of the city subsidizes
+   downtown."
+
+### The reusable lesson
+
+**Two aggregate-level readings both looked convincing and both were wrong.** A
+class-level split and a value-of-vanished-accounts sum each produced a coherent
+story; the account-level join produced the opposite one. When a series has a
+cliff, **join at the entity level and check a second source for the same period**
+before interpreting the shape. This is `FINDINGS_lot_dedupe.md` §4.3's
+"validate at the display grain" lesson wearing different clothes.
+
+### The share-of-base denominator -- state it in the UI
+
+Independent of the defect, and **it corrects an incoming claim** that the
+publicly-quoted ~5.2% / 7.7% / 10.1% Downtown share figures "match the project's
+existing figures." They do not match share of **total** assessed base:
+
+| year | share of TOTAL base | share of COMMERCIAL base |
 |---|---|---|
 | 2021 | 5.08% | 13.32% |
-| 2022 | 4.74% | 12.78% |
 | 2023 | 4.46% | 12.11% |
-| 2024 | 3.58% | 9.78% |
 | 2025 | **3.22%** | **9.30%** |
 
-The publicly-quoted figures are in the *commercial* range, so they are almost
-certainly a **non-residential or levy** share — the levy is non-res-weighted by
-the class differential, which is exactly what this project already models. **If
-the lens publishes 3.22% beside a news article saying 5.2%, the project looks
-wrong when it is not.** Whichever is shown, the denominator must be named in the
-UI, and showing the commercial share alongside is probably worth it since that
-is the one public discourse uses.
+_(both from the historical file, so both inherit the 2025 defect above -- the
+ratio is less affected than the level, but recompute from the current roll
+before publishing either.)_
 
-**Do NOT use the `NONRES MUNI` class for anything** — it is 1-2 accounts and its
-share swings 30-53% on noise.
+The public figures sit in the **commercial** range, so they are almost certainly
+a non-residential or levy share -- the levy is non-res-weighted by the class
+differential this project already models. **Publish 3.22% beside an article
+saying 5.2% and the project looks wrong when it is not.** Name the denominator in
+the UI; showing the commercial share alongside is probably worth it, since that
+is the series public discourse uses.
 
-**Still open:**
-1. **Where did the 1,280 residential accounts go?** The one real gap. Check
-   whether a downtown-adjacent hood was carved out or renamed, and whether the
-   `(blank)` neighbourhood bucket grew in 2024.
-2. **Does any of this change a published claim?** Still unchecked. The
-   revenue-per-acre *ranking* could be perfectly stable even with the base
-   moving this much.
-3. **Framing is descriptive only** (locked 2026-07-28): show the share-of-base
-   line plus the sourced driver (office vacancy). No "downtown is dying", no
-   "the rest of the city subsidizes downtown" — the reader draws that.
+**Do NOT use the `NONRES MUNICIPAL` class for anything** -- it is 1-2 accounts and
+its share swings 30-53% on noise.

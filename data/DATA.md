@@ -22,6 +22,41 @@ warns — the guard must not add fragility). Verified against all four sources
 shape was measured live and it unblocks the per-neighbourhood assessment-over-
 time graph (`TODO.md`). Numbers below are from the API on 2026-07-28.
 
+> ### 🛑 THE RECENT SLICES ARE INCOMPLETE — DO NOT USE 2024/2025 AS-IS
+>
+> **Proven 2026-07-28 against the current roll (§1), same assessment year:**
+>
+> | Downtown, assessment year 2025 | accounts | value |
+> |---|---|---|
+> | **`q7d6-ambg` current roll (what we ship)** | **11,216** | **$7.81B** |
+> | `qi6a-xuwt` historical, 2025 slice | 10,307 | $7.09B |
+> | **missing from historical** | **909** | **~$720M** |
+>
+> Two entire ICE District towers are absent from the historical dataset's 2024
+> **and** 2025 slices while present in the current roll:
+> **10310 102 STREET NW** (Stantec Tower — 309 accounts / $144.5M in the 2023
+> historical slice, **gone** in 2024–25, but **310 accounts / $105.7M in the
+> current roll**) and **10360 102 STREET NW** (261 accounts / $206.0M → gone →
+> **261 / $202.1M in the current roll**). Buildings that appear in 2023, vanish
+> in 2024–25, and reappear in the current roll were not demolished.
+>
+> **Mechanism, measured:** 1,359 Downtown accounts present in the 2023 slice are
+> absent from the 2024 slice. Traced individually across the whole 2024 roll —
+> **1,358 of 1,359 do not exist anywhere in it**; exactly one moved (to OLIVER).
+> They did not change neighbourhood, they were not recoded into another hood, and
+> only 2 reappear in 2025. Predominantly `RESIDENTIAL` (1,280 of 1,359), which is
+> exactly the class the current roll shows ~935 more of.
+>
+> **Before ANY series ships:** validate each historical year against a control
+> total, and treat the most recent year(s) as suspect until they reconcile with
+> the current roll. The same guard idiom as `check_year_alignment.py` /
+> `check_value_anchors.py`. Consider splicing: historical for 2012–2023, the
+> **current roll** for the live year.
+>
+> **Do not silently smooth this.** A 909-account hole in the headline
+> neighbourhood produced an apparent $2.07B collapse where the real decline is
+> $1.35B — see `docs/ANALYSIS_BACKLOG.md`.
+
 **Source:** Edmonton Open Data — dataset ID `qi6a-xuwt` ("Property Assessment
 Data (Historical)")
 **Coverage:** **14 years, 2012–2025**, 5,501,958 rows total (337k in 2012 rising

@@ -42,6 +42,26 @@ _Last reconciled: 2026-07-28_
     one. Gate it the established way (`|| !FULL_BUILD` beside the data guard);
     `CONTROLS_MATRIX.md` §2 notes the three places a lens leaks if it is ever
     promoted to public.
+  - [ ] **🛑 BLOCKER — VALIDATE EVERY HISTORICAL YEAR AGAINST A CONTROL TOTAL
+    BEFORE DRAWING ANYTHING. The 2024/2025 slices of `qi6a-xuwt` are PROVEN
+    INCOMPLETE** (2026-07-28; evidence in `data/DATA.md` §0). For assessment year
+    2025, same year, the current roll has **11,216 Downtown accounts / $7.81B**
+    and the historical file has **10,307 / $7.09B** — a **909-account, ~$720M
+    hole**, including two entire ICE District towers that are present in 2023,
+    absent 2024–25, and present again in the current roll.
+    - **This is not a curiosity, it changes the headline number.** The apparent
+      Downtown collapse was $2.07B; the real one is **$1.35B**. Peak-to-2025 is
+      **−24%, not −31%**. Roughly a third of the story was the hole.
+    - **Build the guard first, the graph second.** Same idiom as
+      `check_year_alignment.py` / `check_value_anchors.py`: reconcile each year's
+      account count + total against a control, and refuse to publish a year that
+      does not. **Likely shape: historical for 2012–2023, the current roll for
+      the live year.**
+    - [ ] **Quantify how far the defect reaches.** Only 2024/2025 are proven bad.
+      Historical 2025 is ~8,000 accounts short citywide; 909 of those are
+      Downtown alone, so the shortfall is not evenly spread.
+    - [ ] **Worth reporting upstream to Edmonton Open Data** — two named towers
+      missing from a published dataset is a concrete, reproducible bug report.
   - [ ] **⚠️ NAME THE DENOMINATOR IN THE UI — Downtown is 3.22% of the total base
     but 9.30% of the COMMERCIAL base (2025), and public reporting quotes the
     second kind.** Measured 2026-07-28; full table in `ANALYSIS_BACKLOG.md`. An
@@ -49,19 +69,18 @@ _Last reconciled: 2026-07-28_
     figures" does **not** hold against total-value share. Publish 3.22% next to
     a news article saying 5.2% and the project looks wrong when it is not.
     Showing the commercial share alongside is probably worth it — that is the
-    series public discourse actually uses.
-  - [ ] **Annotate 2024 as a discontinuity; do not smooth it.** The cliff is
-    ~80% genuine commercial revaluation (value −24% on only −60 accounts — the
-    office story, confirmed in the data) and ~20% an unexplained exodus of
-    **1,280 residential accounts** in one year. A new `MA DERELICT` mill class
-    and a batch of hood renames also land in 2024. Trend either side is real.
-  - [ ] **Open: where did those 1,280 residential accounts go?** Citywide count
-    *rose* that year and no other hood absorbed a comparable block. Check for a
-    downtown-adjacent carve-out/rename and whether the `(blank)` neighbourhood
-    bucket grew in 2024.
-  - **Framing locked 2026-07-28: descriptive only.** Share-of-base line + the
-    sourced driver (office vacancy). No "downtown is dying", no "the rest of the
-    city subsidizes downtown" — the reader draws that conclusion.
+    series public discourse actually uses. **Recompute both from the current
+    roll before publishing**, per the blocker above.
+  - **RESOLVED 2026-07-28: the office-devaluation story survives, at ~2/3 the
+    headline size.** Commercial fell **$6.32B → $4.85B (−23%) on a near-stable
+    account count** (822 → 723) — the same buildings reassessed lower, confirmed
+    against the roll we ship rather than the suspect historical file. Annotating
+    2024 as a "discontinuity" is no longer the plan: it was mostly a data hole,
+    so the fix is to **use good data**, not to annotate bad data.
+  - **RESOLVED 2026-07-28: the 1,280 missing residential accounts are the
+    defect, not an event.** Traced individually — 1,358 of 1,359 exist nowhere in
+    the 2024 roll, exactly one moved (to OLIVER), only 2 return in 2025. Not a
+    reclassification, not a boundary redraw, not condo-to-rental consolidation.
   - [ ] **Decide the metric: assessed value, or revenue.** Value is available
     2012–2025 directly. *Revenue* needs historical mill rates — we already have
     them (`pwis-wc4c`, "2014 onward"), so a revenue series is possible but starts
