@@ -647,8 +647,30 @@ per-property frame from `load_assessment.py`; the live assessment year
   the metric is share of the *citywide* base, so an unrenderable hood is still
   real value. Dropping them from the base would inflate every other hood's share.
 
-**Does not:** render, export a web file, or compute per-acre anything (the lens
-is share-of-base by decision — `SPEC_temporal.md` §6). Phases 1–4 in that spec.
+**Also exports (added 2026-07-28):** `export_temporal_web(table, out_path)` —
+the lens's served file (`web/data/temporal.json`, committed): `years` +
+`share_scale` + `value_unit` + one entry per hood holding **three
+index-aligned integer arrays** (share of total base, assessed value, share of
+commercial base). **406 hoods × 13 years, 89.2 kB** — inside the spec's 100 kB
+pre-gzip budget, ~41 kB gzipped.
+
+- **Integers, not floats, and the scales were measured not guessed.** Verbose
+  floats are 129 kB (over budget). Shares ship in **ppm** (100× finer than the
+  2-dp-of-a-percent the UI shows). Values ship in **$1k units**: the obvious
+  $0.1M is 10 kB smaller but puts the smallest hood ($57.5k) out by **74%**, and
+  $10k is still out by 7.7%; $1k holds the worst case to 0.87%.
+- **The 2024 gap rides in the `years` array, not as nulls.** Consecutive entries
+  are NOT consecutive years — the renderer must plot against the year values,
+  never the array index.
+- **Only renderable hoods are written**, but their shares remain shares of the
+  **whole city** (the unmatched 24 were already counted into the base upstream).
+  So the file's shares deliberately do **not** sum to 1.
+- A hood missing a year is **padded**, not shifted — a short series would slide
+  left against the shared axis.
+
+**Does not:** render, or compute per-acre anything (the lens is share-of-base by
+decision — `SPEC_temporal.md` §6). Phase 3 (the sparkline + pinned panel) is the
+remaining work; the panel's design is still open.
 
 **Guarded by:** `scripts/check_temporal_years.py` — structural invariants (the
 year set including the deliberate gap, share conservation, splice direction) plus

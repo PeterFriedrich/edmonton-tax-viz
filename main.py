@@ -47,6 +47,7 @@ from load_transit import (
 from load_permits import load_permits, export_dev_grid
 from join_and_calculate import join_and_calculate, export_geojson, load_unit_costs
 from export_value_grid import export_value_grid, check_lot_acre_bounds, build_hood_lot_acres
+from load_temporal import load_temporal, export_temporal_web
 from plot_choropleth import plot_choropleth
 
 logger = logging.getLogger(__name__)
@@ -71,6 +72,9 @@ GTFS_CALENDAR_DATES_CSV = ROOT / "data/raw/gtfs_calendar_dates.csv"
 # companion), independent of the metric; exported when present.
 LRT_ROUTES_GEOJSON = ROOT / "data/raw/lrt_routes.geojson"
 PERMITS_CSV = ROOT / "data/raw/building_permits.csv"
+# Temporal lens (SPEC_temporal.md): the year x hood x class SERVER-SIDE
+# aggregate, ~14.8k rows — never the 5.5M-row raw dataset.
+HISTORICAL_CSV = ROOT / "data/raw/assessment_historical_by_hood.csv"
 MILL_RATES_JSON = ROOT / "data/mill_rates.json"
 STORMWATER_RATES_JSON = ROOT / "data/stormwater_rates.json"
 WATER_RATES_JSON = ROOT / "data/water_rates.json"
@@ -88,6 +92,9 @@ DEV_GRID_WEB_OUT = ROOT / "web/data/dev_grid.json"
 FIRE_STATIONS_WEB_OUT = ROOT / "web/data/fire_stations.json"
 TRANSIT_STATIONS_WEB_OUT = ROOT / "web/data/transit_stations.json"
 TRANSIT_LINES_WEB_OUT = ROOT / "web/data/lrt_lines.json"
+TEMPORAL_WEB_OUT = ROOT / "web/data/temporal.json"
+# Committed, not under web/ — see src/load_temporal.write_archive.
+TEMPORAL_ARCHIVE = ROOT / "data/temporal_archive.json"
 
 # Assessment-year alignment: the local snapshot is 2025 data (the coverage year
 # lives in Socrata metadata, not the rows — see DATA.md). Mill rates MUST match.
@@ -170,6 +177,7 @@ def run(
     fire_years: tuple[int, ...] = FIRE_YEARS,
     unit_costs_json: Path | None = UNIT_COSTS_JSON,
     permits_csv: Path | None = PERMITS_CSV,
+    historical_csv: Path | None = HISTORICAL_CSV,
     permit_years: tuple[int, ...] = PERMIT_YEARS,
     permit_years_recent: tuple[int, ...] = PERMIT_YEARS_RECENT,
     permit_years_long: tuple[int, ...] = PERMIT_YEARS_LONG,
@@ -385,6 +393,22 @@ def run(
         # is deduped per docs/FINDINGS_lot_dedupe.md, and without the
         # property-info file grid_input is the bare assessment (ground-acre only).
         export_value_grid(grid_input, GRID_WEB_OUT, cell_m=GRID_CELL_M)
+        # Per-neighbourhood assessment over time (docs/SPEC_temporal.md). A side
+        # branch: it never enters the hood join, it just writes its own compact
+        # file. Needs the historical aggregate, which download_data.py fetches;
+        # without it the lens is simply absent, like every other optional input.
+        if historical_csv is not None and Path(historical_csv).exists():
+            temporal, temporal_stats = load_temporal(
+                historical_csv, assessment, assessment_year,
+                boundary_names=set(boundaries["neighbourhood_name"]),
+                archive_path=TEMPORAL_ARCHIVE,
+            )
+            export_temporal_web(temporal, TEMPORAL_WEB_OUT)
+        else:
+            logger.warning(
+                "Temporal lens skipped — %s not found (download_data.py --only "
+                "assessment_historical)", historical_csv,
+            )
         # 100 m new-units grid for the Development view's detail toggle —
         # rides with the permits lens (skipped with it). Needs the lat/long
         # columns (download_data $select, 2026-07-15); an older CSV degrades
@@ -466,6 +490,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p.add_argument("--skip-transit", action="store_true",
                    help="skip the scheduled-transit supply lens (SPEC_services.md \"Transit lens\")")
     p.add_argument("--permits-csv", type=Path, default=PERMITS_CSV)
+    p.add_argument("--historical-csv", type=Path, default=HISTORICAL_CSV)
     p.add_argument("--skip-permits", action="store_true",
                    help="skip the development/infill activity lens (SPEC_development.md \"Lens A\")")
     p.add_argument("--log-level", default="INFO", help="logging level (default INFO)")
@@ -502,6 +527,7 @@ def main(argv: list[str] | None = None) -> None:
         gtfs_calendar_dates_csv=None if args.skip_transit else args.gtfs_calendar_dates_csv,
         lrt_routes_geojson=None if args.skip_transit else args.lrt_routes_geojson,
         permits_csv=None if args.skip_permits else args.permits_csv,
+        historical_csv=args.historical_csv,
         setback_m=args.setback_m,
         simplify_tolerance_m=args.simplify_tolerance_m,
     )

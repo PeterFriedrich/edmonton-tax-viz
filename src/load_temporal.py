@@ -115,6 +115,20 @@ TEMPORAL_COLUMNS = [
     "matched_boundary",
 ]
 
+# Web-file scaling. Both series ship as INTEGERS -- JSON floats cost roughly
+# their digit count in bytes, and 406 hoods x 13 years x 3 series makes that the
+# difference between fitting the budget and not (129 kB verbose vs 88 kB scaled).
+#
+# SHARE_SCALE: parts per million. The UI shows a share to 2 dp of a percent, i.e.
+# 1e-4; ppm is 100x finer, so the worst rounding error is 0.00005 pp -- invisible.
+#
+# VALUE_UNIT: dollars per stored unit. $1k, chosen by measurement, NOT by taste.
+# The obvious $0.1M is 10 kB smaller and puts the smallest hood ($57.5k) out by
+# **74%**; $10k is still out by 7.7%. $1k holds the worst case to 0.87% and still
+# lands inside the budget, so the tail of small hoods stays honest.
+SHARE_SCALE = 1_000_000
+VALUE_UNIT = 1_000
+
 
 def publishable_years(live_year: int, defect_years=HISTORICAL_DEFECT_YEARS,
                       first_year=FIRST_YEAR, archived_years=()) -> tuple[int, ...]:
@@ -445,3 +459,70 @@ def load_temporal(
         boundary_names=boundary_names,
         archive=load_archive(archive_path) if archive_path else None,
     )
+
+
+def export_temporal_web(table: pd.DataFrame, out_path: str | Path) -> dict:
+    """Write the lens's compact web file. Returns a stats dict.
+
+    Shape (SPEC_temporal.md phase 2 -- arrays, not verbose objects)::
+
+        {"years": [2012, ..., 2023, 2025],
+         "share_scale": 1000000, "value_unit": 1000,
+         "hoods": {"DOWNTOWN": [[share...], [value...], [commercial share...]]}}
+
+    One array per series, index-aligned to ``years`` -- so the sparkline reads a
+    hood's whole series without walking objects, and the deliberate 2024 gap is
+    carried by the ``years`` array rather than by nulls the renderer would have
+    to special-case. **The gap is real: consecutive entries are not necessarily
+    consecutive years, so plot against the year values, never the index.**
+
+    ONLY HOODS THAT RENDER ARE WRITTEN. Unmatched names have no polygon to hover,
+    but they were already counted in the citywide base upstream, so the shares
+    here remain shares of the whole city -- they simply do not sum to 1 across
+    the file. That is correct and deliberate; see build_temporal_table.
+
+    A hood with no commercial assessment gets 0, not null: the commercial share
+    of a hood with no commercial property IS zero, and null would force the
+    reader to distinguish "none" from "missing" where no such distinction exists.
+    """
+    rendered = table[table["matched_boundary"]]
+    years = [int(y) for y in sorted(rendered["year"].unique())]
+
+    hoods: dict[str, list[list[int]]] = {}
+    for name, grp in rendered.groupby("neighbourhood_name"):
+        grp = grp.sort_values("year")
+        if len(grp) != len(years):
+            # A hood missing a year would silently shift its whole series left
+            # against the shared year axis. Pad explicitly instead.
+            grp = grp.set_index("year").reindex(years).reset_index()
+        hoods[str(name)] = [
+            [_scaled(v, SHARE_SCALE) for v in grp["share_of_total_base"]],
+            [_scaled(v, 1.0 / VALUE_UNIT) for v in grp["total_assessed_value"]],
+            [_scaled(v, SHARE_SCALE) for v in grp["share_of_commercial_base"]],
+        ]
+
+    payload = {
+        "years": years,
+        "share_scale": SHARE_SCALE,
+        "value_unit": VALUE_UNIT,
+        "hoods": hoods,
+    }
+    out_path = Path(out_path)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    text = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
+    out_path.write_text(text + "\n")
+
+    stats = {"hoods": len(hoods), "years": tuple(years), "bytes": len(text) + 1}
+    logger.info(
+        "Wrote %s: %d hoods x %d years, %.1f kB (%s)",
+        out_path.name, len(hoods), len(years), stats["bytes"] / 1024,
+        _year_summary(years),
+    )
+    return stats
+
+
+def _scaled(value, scale: float) -> int:
+    """Scale to an integer; NaN -> 0. See export_temporal_web on why 0, not null."""
+    if value is None or value != value:
+        return 0
+    return int(round(float(value) * scale))
