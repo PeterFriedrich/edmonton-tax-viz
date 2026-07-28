@@ -155,9 +155,21 @@ problem**, so revisit it only after the blurb collapse lands.
 
 Ordered; each step is independently shippable and desktop-safe.
 
-1. **Establish the seam.** Append one `@media (max-width: 640px) { … }` block at
-   the end of `<style>`. Nothing above it changes. All mobile rules live here.
-2. **Collapse the title blurb (the headline — biggest single win).** Post-regroup
+> **STATUS 2026-07-28 — steps 1 and 2 are SHIPPED** (commit `0089eba`, "mobile
+> chrome move 1"), and Peter confirmed the collapse works on device. **Do not
+> re-plan them.** What is actually left is **step 3** (the left-edge clip) and
+> the *open question* inside step 2 (bottom sheet or not), which should now be
+> decided against the current render rather than the pre-collapse one. This note
+> exists because the list below reads as a forward plan and a session mistook it
+> for one.
+
+1. ~~**Establish the seam.**~~ **DONE.** One `@media (max-width: 640px) { … }`
+   block at the end of `<style>`. Nothing above it changes; all mobile rules
+   live there.
+2. ~~**Collapse the title blurb (the headline — biggest single win).**~~
+   **DONE** — `#title` shows only the `<h1>` on mobile and taps open the blurb
+   as a card (`#title.expanded`). Original reasoning kept below; the *open
+   question* at the end is still open. Post-regroup
    the pods already stack cleanly among themselves (§2); the remaining top-third
    mess is the full-width `#title` blurb (top 20→196) *under* the `#controls`
    column. Inside the media block, collapse the long blurb to just the `<h1>` on

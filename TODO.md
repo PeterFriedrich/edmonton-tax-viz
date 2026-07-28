@@ -8,9 +8,42 @@ check `git` / `pytest` directly — do not restate it here, it only goes stale.
 Session summaries (`session-summary/`) are dated *narratives* of what happened and
 why. This file owns *what's left*. When they disagree, this file wins.
 
-_Last reconciled: 2026-07-27_
+_Last reconciled: 2026-07-28_
 
 ## Open work
+
+- [ ] **▶ NEXT UP: mobile chrome, and it is NOT the blurb collapse — that already
+  shipped** (commit `0089eba`, "mobile chrome move 1"). Confirmed good on device
+  by Peter 2026-07-28. **Read `docs/MOBILE_USABILITY.md` §3 before starting; two
+  of its four steps are done.** What actually remains:
+  - [ ] **Step 3 — the left-edge clip.** `#controls`/`#coloradj` render at
+    left **-51**, `#toggle` at **-10**, i.e. off the left edge of a 390px screen.
+    Wrap or shrink the widest rows so nothing renders at negative left.
+    Mechanical and concrete; the obvious next piece of work.
+  - [ ] **The open question inside step 2 — bottom sheet or not.** Whether the
+    control column is fine as a stack or wants a bottom sheet / hamburger.
+    **Decide against the CURRENT render**, now that the blurb is collapsed: the
+    old reasoning was written when the blurb still ate the top third. Peter's
+    call, not a build item.
+  - Context that makes this the priority: chrome covers **45.1%** of a 390x844
+    screen vs 27.3% at 1440x900 (measured S73). Label scarcity on phones is a
+    *panel-size* problem, not a cull problem.
+
+- [ ] **CARDINALITY GUARD — two small follow-ons (guard shipped 2026-07-28, PR #110).**
+  `scripts/check_value_anchors.py` now pins the record-to-parcel *regime* in
+  bands and runs in `refresh.yml` after regeneration. Both known bugs were
+  re-verified as non-issues (see `AUDIT_LEDGER.md` 2026-07-28); this is
+  maintenance, not a defect.
+  - [ ] **Tighten the bands once there is variance data.** They are +/-50%
+    off a SINGLE snapshot — a guess biased toward not crying wolf. After a few
+    weekly refreshes, re-pin against observed spread with
+    `--write-baseline --tolerance`.
+  - [ ] **Optional, Peter's call: lower `STALE_DAYS`.** Currently 14 against a
+    weekly cron = one missed run tolerated, two consecutive misses warn. A
+    drift failure is therefore viewer-silent for 14 days. If that is too long
+    for a public audience, the knob is global (`web/index.html`) and should
+    move for ALL failure types at once — deliberately NOT a per-guard banner
+    (`DECISIONS.md` 2026-07-28).
 
 - [x] ~~**NEEDS A PHONE, NOT A BOX: confirm the double-tap-zoom fix (PR #107).**~~
   **CONFIRMED ON DEVICE 2026-07-27** — Peter, on a phone: *"double tap on phone
