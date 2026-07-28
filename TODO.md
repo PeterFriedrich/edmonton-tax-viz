@@ -81,8 +81,16 @@ _Last reconciled: 2026-07-28 (S76 — temporal decisions settled)_
     by `check_temporal_years.py --write-archive`. Freeze rule: only the live
     year is ever written. The archive wins only for `HISTORICAL_DEFECT_YEARS` —
     using it for a clean year would mix vintages. `SPEC_temporal.md` §0.4.
-  - [ ] **Then Phases 1–4** (`SPEC_temporal.md` §5): the compact web JSON, the
-    sparkline + pinned panel in `/full/`, and the panel design (still open).
+  - [x] ~~**Phases 1, 2 and 4**~~ — **DONE 2026-07-28.** The hood × year module,
+    the served file (`web/data/temporal.json`, 406 hoods × 13 years, **89.2 kB**
+    of a 100 kB budget), and the guard. Wired into `main.py`.
+  - [ ] **▶ NEXT — Phase 3: render it in `/full/`.** Sparkline in `tooltipFor`
+    + click-to-pin panel. **Blocked on one decision: the panel's design**
+    (Peter's — decide against the current render). Two build notes that will
+    bite otherwise: the panel's chrome must go into `CHROME_IDS` or the label
+    sweep paints hood names under it, and **the 2024 gap means consecutive
+    array entries are not consecutive years — plot against `years[i]`, never
+    the index.**
   - **Context — the 2024/2025 slices of `qi6a-xuwt` are PROVEN INCOMPLETE** (2026-07-28; evidence in `data/DATA.md` §0). For assessment year
     2025, same year, the current roll has **11,216 Downtown accounts / $7.81B**
     and the historical file has **10,307 / $7.09B** — a **909-account, ~$720M

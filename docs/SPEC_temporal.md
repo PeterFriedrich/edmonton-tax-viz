@@ -188,10 +188,10 @@ historical file instead.
 
 | phase | deliverable | notes |
 |---|---|---|
-| **1** | `src/` module → hood × year table | `ARCHITECTURE.md` conventions: independently runnable, configurable paths, structured output. **No silent drops** — 443 historical hood names will not align cleanly with today's boundaries; route through the `check_unmatched_names.py` policy. |
-| **2** | compact JSON → `web/data/` | array-of-arrays, not verbose objects. Budget: under 100 kB pre-gzip. |
-| **3** | render in `/full/` | sparkline in `tooltipFor`; click-to-pin panel. Chrome must be added to `CHROME_IDS` or the label sweep will paint names under it. |
-| **4** | guard + `refresh.yml` wiring | the anchor-band idiom of `check_value_anchors.py`: bands not equalities, direction-aware, missing inputs skip. Must sit **before** the status-manifest step, or a failure bumps the heartbeat and goes invisible. |
+| ~~**1**~~ ✅ | ~~`src/` module → hood × year table~~ **DONE 2026-07-28** — `src/load_temporal.py`. Unmatched names are flagged + reported and **kept in the denominator** (share-of-base means an unrenderable hood is still real value). | `ARCHITECTURE.md` conventions: independently runnable, configurable paths, structured output. **No silent drops** — 443 historical hood names will not align cleanly with today's boundaries; route through the `check_unmatched_names.py` policy. |
+| ~~**2**~~ ✅ | ~~compact JSON → `web/data/`~~ **DONE 2026-07-28** — `export_temporal_web` → `web/data/temporal.json`, **406 hoods × 13 years, 89.2 kB** (budget 100 kB; ~41 kB gzipped). Integer-scaled: shares in ppm, values in **$1k units** — measured, not chosen by taste ($0.1M would put the smallest hood out by 74%). **The 2024 gap rides in the `years` array, so plot against year values, never the array index.** |
+| **3** ◀ NEXT | render in `/full/` | sparkline in `tooltipFor`; click-to-pin panel — **the panel's design is still open (Peter's)**. Chrome must be added to `CHROME_IDS` or the label sweep will paint names under it. |
+| ~~**4**~~ ✅ | ~~guard + `refresh.yml` wiring~~ **DONE 2026-07-28** (landed early, with Phase 0) — `scripts/check_temporal_years.py`. | the anchor-band idiom of `check_value_anchors.py`: bands not equalities, direction-aware, missing inputs skip. Must sit **before** the status-manifest step, or a failure bumps the heartbeat and goes invisible. |
 
 ---
 

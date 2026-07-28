@@ -9,6 +9,7 @@ walks into) and the name/denominator handling.
 All fixtures synthetic, per the project's testing convention.
 """
 
+import json
 import sys
 from pathlib import Path
 
@@ -20,6 +21,8 @@ sys.path.insert(0, str(ROOT))
 
 from src.load_temporal import (  # noqa: E402
     COMMERCIAL_CLASSES,
+    VALUE_UNIT,
+    export_temporal_web,
     HISTORICAL_DEFECT_YEARS,
     TEMPORAL_NAME_CORRECTIONS,
     build_temporal_table,
@@ -279,3 +282,85 @@ def test_archive_round_trips_hood_names_with_diacritics(tmp_path):
     p = tmp_path / "arch.json"
     write_archive(p, _long([(2025, "WÎHKWÊNTÔWIN", "RESIDENTIAL", 12, 1200.0)]), 2025)
     assert load_archive(p)["neighbourhood_name"].iloc[0] == "WÎHKWÊNTÔWIN"
+
+
+# --- the web export ----------------------------------------------------------
+
+def _exported(tmp_path, **kw):
+    hist, cur = _two_source_fixture()
+    table, _ = build_temporal_table(hist, cur, 2025, **kw)
+    p = tmp_path / "temporal.json"
+    stats = export_temporal_web(table, p)
+    return json.loads(p.read_text()), stats
+
+
+def test_export_carries_the_year_axis_including_the_gap(tmp_path):
+    payload, _ = _exported(tmp_path)
+    assert payload["years"] == [2022, 2023, 2025]
+    # The renderer must plot against these values, not array indices.
+    assert 2024 not in payload["years"]
+
+
+def test_export_series_are_index_aligned_to_years(tmp_path):
+    payload, _ = _exported(tmp_path)
+    for series in payload["hoods"]["ALPHA"]:
+        assert len(series) == len(payload["years"])
+
+
+def test_export_scales_shares_and_values_to_integers(tmp_path):
+    payload, _ = _exported(tmp_path)
+    shares, values, _ = payload["hoods"]["ALPHA"]
+    assert all(isinstance(v, int) for v in shares + values)
+    # ALPHA is 1000 of 4000 in 2022 -> 0.25 -> 250000 ppm.
+    assert shares[0] == 250_000
+    assert values[0] == 1000 // VALUE_UNIT or values[0] == round(1000 / VALUE_UNIT)
+
+
+def test_export_omits_hoods_that_cannot_be_rendered(tmp_path):
+    payload, stats = _exported(tmp_path, boundary_names={"ALPHA"})
+    assert set(payload["hoods"]) == {"ALPHA"}
+    assert stats["hoods"] == 1
+
+
+def test_exported_shares_stay_shares_of_the_WHOLE_city(tmp_path):
+    """Dropping unrenderable hoods must not renormalize the remainder."""
+    payload, _ = _exported(tmp_path, boundary_names={"ALPHA"})
+    shares = payload["hoods"]["ALPHA"][0]
+    # Still 0.25 of the citywide base, not 1.0 of the surviving hoods.
+    assert shares[0] == 250_000
+
+
+def test_export_writes_zero_not_null_for_a_missing_commercial_base(tmp_path):
+    hist = _long([(y, "ALPHA", "RESIDENTIAL", 10, 1000.0) for y in (2022, 2023)])
+    cur = _long([(2025, "ALPHA", "RESIDENTIAL", 11, 1100.0)])
+    table, _ = build_temporal_table(hist, cur, 2025)
+    p = tmp_path / "t.json"
+    export_temporal_web(table, p)
+    assert json.loads(p.read_text())["hoods"]["ALPHA"][2] == [0, 0, 0]
+
+
+def test_export_pads_a_hood_missing_a_year_rather_than_shifting_its_series(tmp_path):
+    """A short series would silently slide left against the shared year axis."""
+    hist = _long([
+        (2022, "ALPHA", "RESIDENTIAL", 10, 1000.0),
+        (2023, "ALPHA", "RESIDENTIAL", 10, 1000.0),
+        (2023, "BETA", "RESIDENTIAL", 10, 1000.0),   # BETA has no 2022
+    ])
+    cur = _long([
+        (2025, "ALPHA", "RESIDENTIAL", 11, 1100.0),
+        (2025, "BETA", "RESIDENTIAL", 11, 1100.0),
+    ])
+    table, _ = build_temporal_table(hist, cur, 2025)
+    p = tmp_path / "t.json"
+    export_temporal_web(table, p)
+    payload = json.loads(p.read_text())
+    assert payload["years"] == [2022, 2023, 2025]
+    assert len(payload["hoods"]["BETA"][0]) == 3
+    assert payload["hoods"]["BETA"][0][0] == 0        # padded, not shifted
+    assert payload["hoods"]["BETA"][0][1] > 0
+
+
+def test_export_stays_inside_the_spec_budget(tmp_path):
+    """SPEC_temporal.md phase 2: under 100 kB pre-gzip."""
+    payload, stats = _exported(tmp_path)
+    assert stats["bytes"] < 100 * 1024
