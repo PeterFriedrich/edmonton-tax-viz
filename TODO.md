@@ -8,7 +8,7 @@ check `git` / `pytest` directly — do not restate it here, it only goes stale.
 Session summaries (`session-summary/`) are dated *narratives* of what happened and
 why. This file owns *what's left*. When they disagree, this file wins.
 
-_Last reconciled: 2026-07-28_
+_Last reconciled: 2026-07-28 (S75)_
 
 ## Open work
 
@@ -44,9 +44,22 @@ _Last reconciled: 2026-07-28_
     one. Gate it the established way (`|| !FULL_BUILD` beside the data guard);
     `CONTROLS_MATRIX.md` §2 notes the three places a lens leaks if it is ever
     promoted to public.
-  - [ ] **🛑 BLOCKER — VALIDATE EVERY HISTORICAL YEAR AGAINST A CONTROL TOTAL
-    BEFORE DRAWING ANYTHING. The 2024/2025 slices of `qi6a-xuwt` are PROVEN
-    INCOMPLETE** (2026-07-28; evidence in `data/DATA.md` §0). For assessment year
+  - [x] ~~**Map the defect across all 14 years**~~ — **DONE 2026-07-28**,
+    `tools/audit_historical_roll_gaps.py`, map in `output/historical_roll_gaps.json`.
+    **Confined to 2024–2025; one dropout event, not systemic.** 2013–2023 clean
+    (0–14 accounts/yr = 0.00%); 2024 = 2,322, 2025 = 131 incremental (~2,448
+    cumulative). **2012–2023 usable, 2025 repairable via the current roll, 2024
+    irreparable.** Full read-out: `docs/SPEC_temporal.md` §0.1.
+  - [ ] **▶ THE ONE DECISION LEFT IN PHASE 0 — how to treat 2024.** Peter's
+    call; four options in `SPEC_temporal.md` §0.2 (omit / flag / balanced panel
+    excluding the ~2,450 known-bad accounts from every year / uncertainty band).
+    **Recommended: balanced panel for a share-of-base metric** (consistent
+    denominator across all 14 years is the point of that normalization), or omit
+    if level matters more than shape. **Interpolation is ruled out.**
+  - [ ] **Then: the splice + the guard.** Historical 2012–2023 + current roll for
+    the live year; a guard that refuses to publish a year failing its control.
+    That closes Phase 0 (`SPEC_temporal.md` §0.3).
+  - **Context — the 2024/2025 slices of `qi6a-xuwt` are PROVEN INCOMPLETE** (2026-07-28; evidence in `data/DATA.md` §0). For assessment year
     2025, same year, the current roll has **11,216 Downtown accounts / $7.81B**
     and the historical file has **10,307 / $7.09B** — a **909-account, ~$720M
     hole**, including two entire ICE District towers that are present in 2023,
