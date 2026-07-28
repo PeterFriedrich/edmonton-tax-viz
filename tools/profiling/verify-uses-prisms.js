@@ -36,7 +36,7 @@ function check(name, ok, detail) {
     sliderVal: document.getElementById('prism-opacity').value,
     checked: document.getElementById('uses-prisms-on').checked,
     usesPrisms: state.usesPrisms,
-    layers: overlay._deck.layerManager.layers.map(l => l.id),
+    layers: overlay._deck.props.layers.filter(Boolean).map(l => l.id),
     view: state.view,
   }));
 
@@ -75,12 +75,12 @@ function check(name, ok, detail) {
   //    static prop first — deck applies new layers on its own frame cadence.
   let applied = true;
   await page.waitForFunction(() => {
-    const l = overlay._deck.layerManager.layers.find(x => x.id === 'uses-res-prisms');
+    const l = overlay._deck.props.layers.find(x => x && x.id === 'uses-res-prisms');
     return l && l.props.elevationScale === USES_PRISM_PEAK;
   }, { timeout: 20000 }).catch(() => { applied = false; });
   check('on: elevationScale = USES_PRISM_PEAK applied', applied);
   const facts = await page.evaluate(() => {
-    const l = overlay._deck.layerManager.layers.find(x => x.id === 'uses-res-prisms');
+    const l = overlay._deck.props.layers.find(x => x && x.id === 'uses-res-prisms');
     const feats = state.data.features;
     const top = feats.map(f => f.properties)
       .reduce((a, p) => (p.frac_residential || 0) > (a.frac_residential || 0) ? p : a);
@@ -118,7 +118,7 @@ function check(name, ok, detail) {
   });
   let slid = true;
   await page.waitForFunction(() => {
-    const l = overlay._deck.layerManager.layers.find(x => x.id === 'uses-res-prisms');
+    const l = overlay._deck.props.layers.find(x => x && x.id === 'uses-res-prisms');
     return l && Math.abs(l.props.opacity - 0.8) < 1e-9;
   }, { timeout: 20000 }).catch(() => { slid = false; });
   check('slider: opacity 80% applied live', slid);

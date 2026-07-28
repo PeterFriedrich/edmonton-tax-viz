@@ -106,14 +106,28 @@ _Last reconciled: 2026-07-27_
   With the only open question answered no, the trim buys nothing. Reopen only
   if speckle shows up at some zoom nobody has tried.
 
-- [ ] **FLAKY TEST: `verify-uses-prisms.js` "money: control hidden again, state
-  kept" (found 2026-07-27, PRE-EXISTING).** Fails ~3 runs in 4 on master with
-  the reference-layer change reverted, so it is NOT a regression from that work
-  — but it will waste a future session's time. Cause: the check reads
-  `overlay._deck.layerManager.layers`, the flattened *managed* list, which still
-  holds `uses-res-prisms` mid-finalization for a beat after a view switch;
-  `overlay._deck.props.layers` (what was actually composed) is already clean.
-  Fix is to probe `props.layers`, or wait for the layer manager to settle.
+- [x] ~~**FLAKY TEST: `verify-uses-prisms.js` "money: control hidden again, state
+  kept" (found 2026-07-27).**~~ **CLOSED 2026-07-28 — NO LONGER REPRODUCIBLE.**
+  S71 measured it failing ~3 runs in 4; on 2026-07-28 the **unmodified master
+  version passed 4/4**, and a scratch harness replaying the exact check at its
+  own 1500 ms sample point passed **8/8**. Most likely already fixed by S73's
+  PR #108, which repaired two "chrome read before it was final" ordering bugs in
+  `applyView` — the same class that would make this check's `boxShown` /
+  `sliderShown` conjuncts race. **Nobody proved that link**; the honest statement
+  is only that it does not reproduce.
+  - **The inherited diagnosis was wrong in a checkable way, and this is the
+    reusable part.** It blamed `layerManager.layers` holding `uses-res-prisms`
+    "for a beat" after a view switch. Measured: the managed list is stale only at
+    **0 ms** (4 of 30 samples, all at delay 0); by **50 ms** it agrees with
+    `props.layers`, and the check samples at **1500 ms**. So that mechanism is
+    real but **cannot** explain a failure at the suite's sample point — and the
+    check has four conjuncts, not just the layer one. A confident cause named in
+    a handoff is still a hypothesis.
+  - The probe was switched to `props.layers` anyway (2026-07-28) as **consistency,
+    not a bugfix** — it was the only one of nine verify scripts reading deck's
+    internal managed list, which also carries sublayers
+    (`hood-labels-characters`, `…-polygons-fill`) and is genuinely stale at 0 ms.
+    That makes it a latent trap if any delay in the suite is ever shortened.
 
 - [x] ~~**SMALL OPEN UI DECISIONS (2026-07-25).**~~ **ALL THREE CLOSED 2026-07-26**
   (Peter decided; see `DECISIONS.md` 2026-07-26 for the reasoning on each).
