@@ -566,3 +566,37 @@ the live data (358 hoods), i.e. existing-density and new-build contribute equall
 (the two z-scores are standardised over the same population). Recorded here so a
 future "is Infill just a FAR map?" question has its answer; see SPEC_development
 Lens B.
+
+---
+
+## Downtown's assessed value peaked in 2016 and has fallen ~31% since (NEW 2026-07-28)
+
+Surfaced while checking whether a per-neighbourhood assessment time series was
+feasible (`TODO.md`; dataset catalogued at `data/DATA.md` §0). Not investigated —
+recorded so it is not re-discovered.
+
+Downtown, total assessed value by year: **$7.30B (2012) → $10.28B (2016 peak) →
+$7.09B (2025)**. So the 2025 figure is **below where it started in 2012**, and
+~31% off the peak — while the account count *rose* over the same span, 8,716 →
+10,307. Value fell as the number of assessed properties grew.
+
+**Why it matters here.** Every revenue-per-acre number this project publishes is
+a **single-year snapshot**, and Downtown is the project's headline cell (the
+tower at $612M/lot-acre, `FINDINGS_lot_dedupe.md` §4.2). If the densest,
+highest-revenue district's base has been falling for nine years, the snapshot is
+a frame of a moving picture, and "Downtown generates the most revenue per acre"
+and "Downtown's base is eroding" are both true and belong together.
+
+**Questions, in order:**
+1. Is the fall Downtown-specific or citywide? Compute the same series for all
+   443 hoods and rank by peak-to-2025 change — one query, already proven.
+2. Is it **price** or **composition**? Account count rose 8,716 → 10,307 while
+   total value fell; per-account value therefore fell much harder than 31%.
+   Splitting by `mill_class_1` would show whether it is commercial/office
+   revaluation (the obvious hypothesis given post-2020 office vacancy) or
+   something broader.
+3. **Does it change any published claim?** Check before assuming it does — the
+   revenue-per-acre ranking could be entirely stable even with the base moving.
+4. Watch for an artifact first: 2024 drops $9.16B → $7.30B in one year, which is
+   large enough to suspect a **classification or boundary change** rather than a
+   revaluation. Rule that out before interpreting anything.

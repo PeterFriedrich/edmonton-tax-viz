@@ -16,6 +16,50 @@ warns — the guard must not add fragility). Verified against all four sources
 
 ---
 
+## 0. Property Assessment Data (Historical) — CATALOGUED 2026-07-28, NOT YET USED
+
+**Not in `download_data.py` and not in `data/raw/`.** Catalogued because the
+shape was measured live and it unblocks the per-neighbourhood assessment-over-
+time graph (`TODO.md`). Numbers below are from the API on 2026-07-28.
+
+**Source:** Edmonton Open Data — dataset ID `qi6a-xuwt` ("Property Assessment
+Data (Historical)")
+**Coverage:** **14 years, 2012–2025**, 5,501,958 rows total (337k in 2012 rising
+to 432k in 2025 — the roll grows with the city).
+**Columns:** same shape as the current roll (§1) — `account_number`,
+`assessment_year`, `neighbourhood_name`, `assessed_value`, `mill_class_1`,
+`tax_class_pct_1`, `lot_size`, `zoning`, `year_built`, `latitude`/`longitude`,
+`point_location`.
+
+**⚠️ Do NOT download this whole dataset — aggregate server-side.** It carries
+`neighbourhood_name`, so Socrata can do the grouping:
+
+```
+https://data.edmonton.ca/resource/qi6a-xuwt.json
+  ?$select=neighbourhood_name,assessment_year,sum(assessed_value) as total,count(1) as n
+  &$group=neighbourhood_name,assessment_year
+  &$limit=50000
+```
+
+**Measured:** 5,577 rows / **443 neighbourhoods** in **~3 s, 534 kB** of verbose
+JSON. Re-shaped as array-of-arrays that is well under 100 kB before gzip.
+Note `$limit=50000` is required — the default page size is 1,000, and 443×14
+would silently truncate. (See §head for the historical 50,000-row server cap.)
+
+**Known quirks:**
+- **443 hoods here vs the current roll's count** — expect names that have since
+  been renamed, merged, or annexed. Any join to the neighbourhood boundary file
+  MUST go through the same normalization + `check_unmatched_names.py` policy as
+  everything else; no silent drops.
+- Some rows carry a null/blank `neighbourhood_name` (filtered in the count
+  above) — they are not free to ignore, they need the same explicit flagging.
+- **`mill_class_1` alone does not reconstruct revenue** — the current pipeline
+  uses the full class/percentage split. Historical *rates* live in `pwis-wc4c`
+  (§"Property and Education Tax Rates"), which starts **2014**, so a revenue
+  series cannot reach back to 2012 even though value does.
+
+---
+
 ## 1. Property Assessment Data
 
 **File:** `data/raw/Property_Assessment_Data__Current_Calendar_Year_.csv` *(filename as delivered by the API)*

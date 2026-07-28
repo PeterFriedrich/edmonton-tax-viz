@@ -12,6 +12,60 @@ _Last reconciled: 2026-07-28_
 
 ## Open work
 
+- [ ] **ASSESSMENT-OVER-TIME GRAPH PER NEIGHBOURHOOD (Peter, 2026-07-28 — "you
+  mouse over and get a line graph of the assessment value over time, for that
+  hood"). FEASIBILITY PROVEN 2026-07-28; nothing built.** The data exists and the
+  aggregate is cheap — see `data/DATA.md` §"Property Assessment Data
+  (Historical)". Measured, not assumed:
+  - **`qi6a-xuwt` "Property Assessment Data (Historical)" — 14 years, 2012–2025,
+    5.5M rows**, and it carries `neighbourhood_name`, so it never has to be
+    downloaded whole. One server-side `$group=neighbourhood_name,assessment_year`
+    returns **5,577 rows / 443 hoods in ~3 s, 534 kB raw** — and that is verbose
+    JSON; as array-of-arrays it is well under 100 kB before gzip, i.e. ~1% of the
+    current 7.7 MB payload. **This is the cheapest new lens the project has ever
+    had available.**
+  - **The series is a real story, not decoration.** Downtown: $7.30B (2012) →
+    **$10.28B peak (2016)** → **$7.09B (2025)** — down ~31% from peak — while its
+    account count *rose* 8,716 → 10,307. A revenue-per-acre project that cannot
+    show that is leaving its best material on the table.
+  - [ ] **Decide the home for it — a hover tooltip is probably the WRONG one.**
+    Peter asked "can that go in the pop ups?" Mechanically yes: `tooltipFor`
+    returns an HTML string, and a 14-point sparkline is one inline `<svg>`
+    `<polyline>` — no library, no dependency. But a hover tooltip **vanishes on
+    mouse-out, cannot be studied, and does not exist on touch at all**, and the
+    Money tooltip already carries 3–4 rows. Likely answer: **sparkline in the
+    hover tooltip** (cheap, glanceable, honest at that size) **plus a
+    click-to-pin panel** for the labelled, readable version. Peter's call.
+  - [ ] **Decide the metric: assessed value, or revenue.** Value is available
+    2012–2025 directly. *Revenue* needs historical mill rates — we already have
+    them (`pwis-wc4c`, "2014 onward"), so a revenue series is possible but starts
+    **2014**, not 2012, and inherits every class-differential caveat.
+  - [ ] **Per-acre or total?** The whole project is per-acre, but hood boundaries
+    and the account count both move over 14 years (Downtown gained ~1,600
+    accounts). A per-acre series divides by a *current* area — state whether that
+    is honest before shipping it.
+  - ⚠️ **Do not skip the year-alignment question.** `scripts/check_year_alignment.py`
+    and the year-roll machinery exist because the current roll's year moves. A
+    historical series that silently ends one year early each January is exactly
+    the failure this project already guards against elsewhere.
+
+- [ ] **UI BUG: the Display popover paints OVER the Data & Methods pod
+  (Peter, 2026-07-28).** Bottom-right: opening **Display** covers the
+  **Data & Methods** button sitting above it.
+  - **Suspected cause — UNVERIFIED, reproduce before fixing.** `#about.open`
+    gets a `z-index: 5` bump (`web/index.html:250`); `#a11y` has **no
+    equivalent `.open` rule** and stays at the base `z-index: 1` — so when the
+    Display menu opens it has no way to win the stacking contest, and equal
+    z-index falls back to DOM order. An asymmetry that looks like an oversight
+    when `#about` was added. **But that is a hypothesis from reading the CSS,
+    not a reproduction** — confirm the actual overlap first.
+  - Both pods are `right: 22px`, `#a11y` at `bottom: 40px` and `#about` at
+    `bottom: 68px`, and opening either closes the other (`web/index.html:243`),
+    so the overlap is the open Display menu over the *closed* About button.
+  - `verify-about.js` already asserts paint order at 390/360/1440
+    (`topmost=about-menu`) — extend it to the Display menu rather than writing
+    a new script.
+
 - [ ] **▶ NEXT UP: mobile chrome, and it is NOT the blurb collapse — that already
   shipped** (commit `0089eba`, "mobile chrome move 1"). Confirmed good on device
   by Peter 2026-07-28. **Read `docs/MOBILE_USABILITY.md` §3 before starting; two
