@@ -820,10 +820,12 @@ vertices, 50.7 kB) and is the one part never trimmed — `RIVER_SIMPLIFY_M = 25`
 against ~79 m/px at HOME zoom, i.e. ~3× finer than a pixel, and its main
 polygon carries **104 interior rings (islands) = 35% of its whole vertex
 budget**, 99 of them out on the bare tails rather than hidden under the city
-fabric. Re-simplifying at 100 m would halve the file. Left alone deliberately:
-54 kB is 0.7% of the 7.7 MB payload, so there is no performance argument, and
-the only open question is whether the sub-pixel islands (smallest are 52–95 m
-wide, ~1 px) read as speckle on the tails. Not yet looked at.
+fabric. Re-simplifying at 100 m would halve the file. Left alone deliberately, and now
+**settled (2026-07-27): keep it as-is.** 54 kB is 0.7% of the 7.7 MB payload,
+so there was never a performance argument; the only open question was whether
+the sub-pixel islands (smallest 52–95 m wide, ~1 px) read as speckle on the
+tails, and **Peter checked on device — they do not.** Do not re-simplify
+without a fresh visual reason.
 
 - **River** — Alberta `base_water_feature` MapServer **layer 72**
   (`Lake/River (20K)`, the most detailed polygon tier),

@@ -95,18 +95,16 @@ _Last reconciled: 2026-07-27_
     regulatory development-setback polygon, not the river — drawing it near the
     water would read as "the river is this wide."
 
-- [ ] **RIVER GEOMETRY IS UNTRIMMED AND UNCHECKED (audited 2026-07-27, NOT a
-  bug).** The river is 95% of `reference.geojson` (2,316 verts, 50.7 kB);
-  `RIVER_SIMPLIFY_M = 25` is ~3× finer than a pixel at HOME zoom, and its main
-  polygon carries **104 islands = 35% of its vertex budget**, 99 of them on the
-  bare tails. Re-simplifying at 100 m halves the file. **Deliberately left
-  alone** — 54 kB is 0.7% of a 7.7 MB payload, so there is no performance
-  argument. The one open question is *visual*: the smallest islands are 52–95 m
-  wide ≈ 1 px, which is the mechanism for speckle on the tails where nothing is
-  drawn over them. **Nobody has looked yet.** If it does speckle, the fix is to
-  drop interior rings below a width threshold (plus the 3 sub-km crumbs
-  detached 0–200 m from the channel), NOT to coarsen the tolerance — the main
-  channel outline is fine as it is.
+- [x] ~~**RIVER GEOMETRY IS UNTRIMMED AND UNCHECKED (audited 2026-07-27).**~~
+  **CLOSED 2026-07-27 — NO ACTION.** The river is 95% of `reference.geojson`
+  (2,316 verts, 50.7 kB) and `RIVER_SIMPLIFY_M = 25` is ~3× finer than a pixel
+  at HOME zoom, with 104 islands = 35% of its vertex budget, 99 on the bare
+  tails. Re-simplifying at 100 m would halve the file. The item was scoped as
+  *one look decides it*, because there was never a performance argument (54 kB
+  = 0.7% of a 7.7 MB payload) — only the visual question of whether the 52–95 m
+  islands (~1 px) speckle the tails. **Peter looked on device: they do not.**
+  With the only open question answered no, the trim buys nothing. Reopen only
+  if speckle shows up at some zoom nobody has tried.
 
 - [ ] **FLAKY TEST: `verify-uses-prisms.js` "money: control hidden again, state
   kept" (found 2026-07-27, PRE-EXISTING).** Fails ~3 runs in 4 on master with
