@@ -42,6 +42,26 @@ _Last reconciled: 2026-07-28_
     one. Gate it the established way (`|| !FULL_BUILD` beside the data guard);
     `CONTROLS_MATRIX.md` §2 notes the three places a lens leaks if it is ever
     promoted to public.
+  - [ ] **⚠️ NAME THE DENOMINATOR IN THE UI — Downtown is 3.22% of the total base
+    but 9.30% of the COMMERCIAL base (2025), and public reporting quotes the
+    second kind.** Measured 2026-07-28; full table in `ANALYSIS_BACKLOG.md`. An
+    incoming claim that the publicly-quoted ~5.2% "matches the project's
+    figures" does **not** hold against total-value share. Publish 3.22% next to
+    a news article saying 5.2% and the project looks wrong when it is not.
+    Showing the commercial share alongside is probably worth it — that is the
+    series public discourse actually uses.
+  - [ ] **Annotate 2024 as a discontinuity; do not smooth it.** The cliff is
+    ~80% genuine commercial revaluation (value −24% on only −60 accounts — the
+    office story, confirmed in the data) and ~20% an unexplained exodus of
+    **1,280 residential accounts** in one year. A new `MA DERELICT` mill class
+    and a batch of hood renames also land in 2024. Trend either side is real.
+  - [ ] **Open: where did those 1,280 residential accounts go?** Citywide count
+    *rose* that year and no other hood absorbed a comparable block. Check for a
+    downtown-adjacent carve-out/rename and whether the `(blank)` neighbourhood
+    bucket grew in 2024.
+  - **Framing locked 2026-07-28: descriptive only.** Share-of-base line + the
+    sourced driver (office vacancy). No "downtown is dying", no "the rest of the
+    city subsidizes downtown" — the reader draws that conclusion.
   - [ ] **Decide the metric: assessed value, or revenue.** Value is available
     2012–2025 directly. *Revenue* needs historical mill rates — we already have
     them (`pwis-wc4c`, "2014 onward"), so a revenue series is possible but starts

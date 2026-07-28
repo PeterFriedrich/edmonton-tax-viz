@@ -587,16 +587,67 @@ highest-revenue district's base has been falling for nine years, the snapshot is
 a frame of a moving picture, and "Downtown generates the most revenue per acre"
 and "Downtown's base is eroding" are both true and belong together.
 
-**Questions, in order:**
-1. Is the fall Downtown-specific or citywide? Compute the same series for all
-   443 hoods and rank by peak-to-2025 change — one query, already proven.
-2. Is it **price** or **composition**? Account count rose 8,716 → 10,307 while
-   total value fell; per-account value therefore fell much harder than 31%.
-   Splitting by `mill_class_1` would show whether it is commercial/office
-   revaluation (the obvious hypothesis given post-2020 office vacancy) or
-   something broader.
-3. **Does it change any published claim?** Check before assuming it does — the
-   revenue-per-acre ranking could be entirely stable even with the base moving.
-4. Watch for an artifact first: 2024 drops $9.16B → $7.30B in one year, which is
-   large enough to suspect a **classification or boundary change** rather than a
-   revaluation. Rule that out before interpreting anything.
+**RESOLVED 2026-07-28 — the cliff is ~80% real, ~20% unexplained, and the
+series must be annotated rather than smoothed.** Decomposed by `mill_class_1`
+against the citywide base (both from `qi6a-xuwt`, server-side aggregates):
+
+| class | 2023 | 2024 | delta value | delta accounts |
+|---|---|---|---|---|
+| COMMERCIAL | $6.32B / 822 | $4.81B / 762 | **-$1.51B (-24%)** | -60 |
+| RESIDENTIAL | $1.63B / 10,739 | $1.25B / 9,459 | -$0.38B | **-1,280** |
+| OTHER RESIDENTIAL | $1.20B / 101 | $1.24B / 96 | +$0.04B | -5 |
+
+- **The commercial drop is a genuine revaluation, not an artifact.** Value fell
+  24% while the account count moved only -60 — the same buildings reassessed far
+  lower. Per-account commercial value $7.69M -> $6.31M. This is the
+  office-devaluation story, and it is now confirmed **in the data**, not only in
+  press coverage.
+- **The residential drop is NOT market** — 1,280 accounts left Downtown in a
+  single year. **Still unexplained.** Citywide account count *rose* that year
+  (425,728 -> 426,913) and no other hood absorbed a comparable block (largest
+  gainer: +480). Not a citywide event either: the citywide base was flat,
+  $205.3B -> $204.3B.
+- **A classification change DID happen in 2024** — a new mill class `MA DERELICT`
+  first appears, and the dataset carries a batch of neighbourhood renames that
+  year (`RAPPERSWIL`->`RAPPERSWILL`, `CHAPPELLE AREA`->`CHAPPELLE`, `PLACE LA
+  RUE`->`PLACE LARUE`, and others), plus three hoods that vanish without an
+  obvious twin (`SPUR LINES`, `BATTERY OIL FIELDS`, `MILL WOODS GOLF COURSE`).
+  So the suspicion was well-founded; it is simply not the main driver.
+- **Verdict for the lens:** annotate 2024 as a discontinuity, do not smooth or
+  interpolate. The trend either side of it is real.
+
+### The share figure depends entirely on WHICH base — state the denominator
+
+**This corrects an incoming claim that the ~5.2% / 7.7% / 10.1% public figures
+"match the project's existing figures." They do not match share of TOTAL
+assessed base.** Two different series, both computed here:
+
+| year | Downtown share of TOTAL base | Downtown share of COMMERCIAL base |
+|---|---|---|
+| 2021 | 5.08% | 13.32% |
+| 2022 | 4.74% | 12.78% |
+| 2023 | 4.46% | 12.11% |
+| 2024 | 3.58% | 9.78% |
+| 2025 | **3.22%** | **9.30%** |
+
+The publicly-quoted figures are in the *commercial* range, so they are almost
+certainly a **non-residential or levy** share — the levy is non-res-weighted by
+the class differential, which is exactly what this project already models. **If
+the lens publishes 3.22% beside a news article saying 5.2%, the project looks
+wrong when it is not.** Whichever is shown, the denominator must be named in the
+UI, and showing the commercial share alongside is probably worth it since that
+is the one public discourse uses.
+
+**Do NOT use the `NONRES MUNI` class for anything** — it is 1-2 accounts and its
+share swings 30-53% on noise.
+
+**Still open:**
+1. **Where did the 1,280 residential accounts go?** The one real gap. Check
+   whether a downtown-adjacent hood was carved out or renamed, and whether the
+   `(blank)` neighbourhood bucket grew in 2024.
+2. **Does any of this change a published claim?** Still unchecked. The
+   revenue-per-acre *ranking* could be perfectly stable even with the base
+   moving this much.
+3. **Framing is descriptive only** (locked 2026-07-28): show the share-of-base
+   line plus the sourced driver (office vacancy). No "downtown is dying", no
+   "the rest of the city subsidizes downtown" — the reader draws that.
