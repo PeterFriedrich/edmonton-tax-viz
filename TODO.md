@@ -60,8 +60,24 @@ _Last reconciled: 2026-07-28_
     - [ ] **Quantify how far the defect reaches.** Only 2024/2025 are proven bad.
       Historical 2025 is ~8,000 accounts short citywide; 909 of those are
       Downtown alone, so the shortfall is not evenly spread.
-    - [ ] **Worth reporting upstream to Edmonton Open Data** — two named towers
-      missing from a published dataset is a concrete, reproducible bug report.
+    - [ ] **BUG REPORT to Edmonton Open Data — worth doing (Peter, 2026-07-28),
+      gated on Peter reviewing it by hand first.** Notebook written for exactly
+      that: **`notebooks/exploration/03_historical_roll_gap.ipynb`** — hits the
+      live API only, no local data, runs top to bottom, re-derives every claim.
+      - **Before filing, §5 of the notebook lists what is NOT yet verified.** The
+        citywide ~8,000 figure was *inferred* from row counts of different
+        vintages and has not been confirmed account-by-account; the notebook's
+        last cell establishes it properly. A bug report must not carry an
+        unverified number.
+      - Also pin down first: whether the gap reaches years before 2024 (only
+        2024/2025 are proven bad); whether it is concentrated in unit-titled
+        condo buildings (the Downtown evidence suggests yes, which would point at
+        how multi-unit properties are exported); and spot-check a few missing
+        accounts against the City's public assessment lookup so the report cites
+        something a human can open.
+      - **The strongest single exhibit is Stantec Tower** (10310 102 ST NW):
+        Edmonton's tallest building, 309 accounts in the 2023 slice, **zero rows
+        in 2024 and 2025**, and 310 accounts / $105.7M in the current roll.
   - [ ] **⚠️ NAME THE DENOMINATOR IN THE UI — Downtown is 3.22% of the total base
     but 9.30% of the COMMERCIAL base (2025), and public reporting quotes the
     second kind.** Measured 2026-07-28; full table in `ANALYSIS_BACKLOG.md`. An
