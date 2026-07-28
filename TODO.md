@@ -76,6 +76,23 @@ _Last reconciled: 2026-07-28_
     `MOBILE_USABILITY.md`'s headline fix (collapse the blurb), not a label
     problem. Worth revisiting label density on mobile only after that lands.
 
+- [ ] **PUBLIC BUILD IS NOW 2 VIEWS — decide whether that's the release shape
+  (Services + Ratio pulled full-only 2026-07-28, PR pending).** Peter's call
+  while prepping the release, tagged **provisional "for now"** like the
+  2026-07-24 Uses pull. Public `#views` = Money · Development; `/full/` still
+  carries all 5. Two residues went with them: the Money tooltip's `road m/acre` +
+  `$/road metre` rows, and the Data & Methods modelled-services caveat + its
+  road/fire/transit source credits. See `DECISIONS.md` 2026-07-28,
+  `CONTROLS_MATRIX.md` §2.
+  - [ ] **Peter's call: is 2 views the shipped public build, or a staging step?**
+    Three views are now provisionally pulled and none has been un-pulled. If the
+    answer is "this is the release", the provisional tags should be settled and
+    `PLAN_public_release.md` §3's release scope rewritten to say so — it still
+    reads as the *root* URL's scope when it is now the `/full/` scope.
+  - [ ] **If any of the three comes back, the residues come back with it** —
+    ungating is not just the `#views` line. `CONTROLS_MATRIX.md` §2 names the
+    three places a lens leaks (`tooltipFor`, the about copy, the legend).
+
 - [ ] **GEOGRAPHIC REFERENCE LAYERS — TIERS 2 & 3 (Tier 1 shipped 2026-07-27).**
   Tier 1 (North Saskatchewan River + Anthony Henday ring road) is live and on by
   default; see `DECISIONS.md` 2026-07-27 (×2) and `data/DATA.md` §14. The render

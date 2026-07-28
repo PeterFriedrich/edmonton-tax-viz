@@ -605,9 +605,16 @@
     <button id="about-btn" title="Data sources, licence, caveats and methodology — City of Edmonton open data">Data &amp; Methods</button>
     <div id="about-menu">
       <span class="hd">Sources</span>
-      <p>Property assessment, tax rates, zoning, building permits, the road
-         network, fire dispatch and the transit schedule — all published by the
-         City of Edmonton. Rebuilt weekly from the open data portal.</p>
+      <!-- The road/fire/transit sources feed ONLY the Services and Ratio views,
+           which are full-only (2026-07-28) — so the span holding them is hidden
+           in the public build. The list stays grammatical either way: the "all"
+           does the summarizing work, so no "and" is needed before the dash.
+           Zoning is deliberately NOT in the span: it also classifies the
+           set-aside land the public build greys out. -->
+      <p>Property assessment, tax rates, zoning, building permits<span
+         id="about-src-services">, the road network, fire dispatch and the
+         transit schedule</span> — all published by the City of Edmonton.
+         Rebuilt weekly from the open data portal.</p>
       <!-- The licence's PRESCRIBED attribution statement, verbatim. The OGL –
            City of Edmonton (v1.0, July 2022) mandates this exact sentence where
            the Information Provider specifies no statement of its own, and asks
@@ -629,10 +636,13 @@
       <p><b>Revenue is modelled, not billed.</b> It applies Edmonton's
          class-differential mill rates to assessed value — what the land
          <i>generates</i> at those rates, not what any owner was charged.</p>
-      <p>The <b>service cost, stormwater and water/sewer</b> layers are modelled
-         too: estimates from published rates, lot characteristics and zoning —
-         not utility records. They cover only the services this project can
-         measure, never the full cost of running the city.</p>
+      <!-- Full-only: every layer this caveat describes lives in Services/Ratio,
+           so in the public build it would warn about things nobody can reach. -->
+      <p id="about-modelled">The <b>service cost, stormwater and water/sewer</b>
+         layers are modelled too: estimates from published rates, lot
+         characteristics and zoning — not utility records. They cover only the
+         services this project can measure, never the full cost of running the
+         city.</p>
       <span class="hd">More</span>
       <p><a href="https://github.com/PeterFriedrich/edmonton-tax-viz/blob/master/docs/METHODS.md"
             target="_blank" rel="noopener">Methods &amp; definitions</a> —
@@ -716,6 +726,18 @@
     const _buildQS = new URLSearchParams(location.search).get("build");
     const BUILD = (_buildQS === "public" || _buildQS === "full") ? _buildQS : DEFAULT_BUILD;
     const FULL_BUILD = BUILD === "full";
+
+    // The two Data & Methods passages that describe ONLY full-only layers
+    // (road/fire/transit sources; the modelled service-cost, stormwater and
+    // water/sewer caveat). Static markup with no data dependency, so this runs
+    // here rather than in the load-time data guards below. Both elements are
+    // visible in the source, and this is the only thing that hides them — the
+    // full build never touches them.
+    if (!FULL_BUILD) {
+      ["about-src-services", "about-modelled"].forEach(id => {
+        document.getElementById(id).style.display = "none";
+      });
+    }
 
     // Per-metric display config. The clamp (colour saturation) sits at the same
     // percentile (~p97.5) for every metric, and the elevation scale is set so the
@@ -2921,7 +2943,13 @@
         const share = Math.round(100 * p.res_revenue_per_acre / p.revenue_per_acre);
         html += `<br/><span class="muted">${share}% of revenue is residential</span>`;
       }
-      if (p.road_m_per_acre != null) {
+      // Road supply and revenue-per-road-metre: FULL-only (2026-07-28). The
+      // second row IS the Ratio view's headline metric, and Ratio is full-only
+      // now — leaving it on the default view's hover would publish the number
+      // while hiding the lens that explains it. The supply row goes with it:
+      // on its own it is an unexplained figure from a lens the public build no
+      // longer has. Both return with `?build=full`.
+      if (p.road_m_per_acre != null && FULL_BUILD) {
         html += `<br/><span class="muted">${p.road_m_per_acre.toFixed(1)} road m / acre</span>`;
         if (p.road_m_per_acre > 0 && p.revenue_per_acre != null) {
           const perM = p.revenue_per_acre / p.road_m_per_acre;
@@ -3788,7 +3816,12 @@
       // ratio views — hide those buttons rather than offer views that can't
       // render. A file with roads but no stormwater column (pre-2026-07-05)
       // keeps the view and just hides the stormwater row.
-      if (!state.data.features.some(f => f.properties.road_m_per_acre != null)) {
+      // Both are also FULL-only views now (2026-07-28, Peter — provisional
+      // "for now", same framing as the Uses pull below): hidden in the public
+      // build as well as on older data, so public #views = Money · Development.
+      // Same idiom as Uses/Industrial (`|| !FULL_BUILD`); nothing is stripped
+      // from the file, and `?build=full` still reaches them locally.
+      if (!state.data.features.some(f => f.properties.road_m_per_acre != null) || !FULL_BUILD) {
         document.querySelectorAll('#views button[data-view="services"], #views button[data-view="ratio"]')
           .forEach(b => { b.style.display = "none"; });
       }
