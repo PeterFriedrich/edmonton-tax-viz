@@ -72,6 +72,18 @@ time graph (`TODO.md`). Numbers below are from the API on 2026-07-28.
 > one moved (to OLIVER). They did not change neighbourhood, were not recoded into
 > another hood, and only 2 reappear in 2025.
 >
+> **EXTENT — MAPPED 2026-07-28** (`tools/audit_historical_roll_gaps.py`, all 14
+> years): **the defect is confined to 2024–2025.** 2013–2023 show 0–14 defect
+> accounts per year against rolls of 346k–426k (0.00%); 2024 shows **2,322** and
+> 2025 a further **131** incremental, ~2,448 cumulative. **One event, two
+> slices** — not systemic decay. So **2012–2023 are usable**, 2025 is repairable
+> by splicing the current roll, and **2024 is the only irreparable year**.
+>
+> ⚠️ **The obvious detector does not work here.** "Present in N−1 and N+1, absent
+> from N" is blind to a dropout that never returns — it reported **5** for 2024
+> where the truth is 2,321. Any check of this dataset must also test against the
+> **current roll**, which is independent and complete.
+>
 > **Before ANY series ships:** validate each historical year against a control,
 > and treat recent years as suspect until they reconcile with the current roll.
 > Same guard idiom as `check_year_alignment.py` / `check_value_anchors.py`.

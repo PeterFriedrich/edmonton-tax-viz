@@ -54,36 +54,69 @@ Downtown holds 53%, but Magrath Heights is missing 17% of its accounts and
 Glenora 15%. **The series cannot be drawn until this is handled.** Full evidence:
 `data/DATA.md` §0.
 
-### 0.1 Map the defect's full extent
+### 0.1 The defect map — ✅ DONE 2026-07-28
 
-**The dataset can audit itself — no external control needed for most of it.** An
-account present in year N−1 **and** N+1 but absent in N is definitionally a
-defect: buildings do not blink. Run that across all 14 years to get a per-year,
-per-hood defect map. Only 2024/2025 are proven bad so far; **nobody has looked at
-2012–2023.**
+`tools/audit_historical_roll_gaps.py`, run against all 14 years. **The defect is
+a single event beginning in 2024, not systemic decay. Twelve of fourteen years
+are sound.**
 
-For the newest year the check is stronger still — reconcile against the **current
-roll** (`q7d6-ambg`), which is independent and complete.
+| year | roll | defect | rate |
+|---|---|---|---|
+| 2012 | 337,298 | *untestable* | — |
+| 2013–2017 | 346k–389k | 0–2 each | 0.00% |
+| **2018** | 396,159 | **14** | 0.00% |
+| 2019–2023 | 402k–426k | 0–8 each | 0.00% |
+| **2024** | 426,913 | **2,322** | **0.54%** |
+| **2025** | 431,706 | **131** *(incremental)* | 0.03% |
 
-### 0.2 The 2024 hole has no fix — decide what to do about it
+**Read the last two rows carefully.** Each year is tested against **N−1**, so the
+figures are **incremental, not cumulative**: an account already missing in 2024
+cannot be flagged again in 2025. Cumulatively, **~2,448 accounts are missing from
+the 2025 slice** — 2,317 of them dropped in 2024 and never returned, plus 131
+new. One event, two slices.
 
-The splice (historical 2012–2023 + current roll for the live year) repairs 2025
-because the current roll *is* 2025. **There is no current-roll equivalent for
-2024.** So 2024 is defective with no replacement. Options, Peter's call:
+**Two detectors, and the first one alone would have lied.** The tool runs both
+and reports the union:
 
-- **omit 2024** — an honest gap in the line, with the reason stated on hover
-- **show it flagged** — plotted but visually marked as known-incomplete
-- **do not ship a 14-point series at all** — show 2012–2023 plus a separately
-  labelled "current" point
+- **A — self-audit:** present in N−1 *and* N+1, absent from N. No external source
+  needed; catches properties demolished since. **Blind to any dropout that never
+  returns.** It reported **5** defects for 2024 where the true figure is 2,321 —
+  exactly the failure mode this dataset has. *A run showing ~0 for recent years
+  has not shown them clean.*
+- **B — current-roll control:** present in N−1 *and* in `q7d6-ambg`, absent from
+  N. A property that existed before and exists today cannot legitimately be
+  missing in between. Blind to since-demolished properties, which is why A stays.
 
-**Do not interpolate across it.** Smoothing a known hole is the failure this
-project's whole guard culture exists to prevent.
+### 0.2 What this means for the build
+
+- **2012–2023 are usable.** Now tested with the detector that can actually see
+  this failure mode, not just the self-audit.
+- **2025 is repairable** — splice the current roll, which is complete.
+- **2024 is the only irreparable year.** There is no current-roll equivalent for
+  it, and the 2,322 missing accounts have no recoverable 2024 value.
+
+**Options for 2024 — Peter's call:**
+
+1. **Omit it** — an honest gap in the line, reason stated on hover.
+2. **Flag it** — plotted but visually marked known-incomplete.
+3. **Exclude the ~2,450 known-bad accounts from EVERY year** (a balanced panel).
+   Makes year-over-year comparison honest at the cost of the level: citywide the
+   exclusion is 0.57% of accounts, but it is concentrated — Downtown holds 53% of
+   them, ~$2.93B.
+4. **Plot 2024 with an explicit uncertainty band**, bounded by the missing
+   accounts' known 2023 and current values.
+
+**Recommended: 3 for a share-of-base metric** (consistent denominator across all
+14 years, which is the whole point of that normalization), or **1** if the level
+matters more than the shape. **Do not interpolate** — smoothing a known hole is
+the failure this project's guard culture exists to prevent.
 
 ### 0.3 Exit criteria
 
-Phase 0 is done when: the defect map exists for all 14 years; the splice is
-implemented and tested; 2024 has a decided treatment; and a guard refuses to
-publish a year that fails its control.
+Phase 0 is done when: ~~the defect map exists for all 14 years~~ ✅ **done
+2026-07-28**; the splice is implemented and tested; 2024 has a decided treatment
+(§0.2, Peter's call); and a guard refuses to publish a year that fails its
+control.
 
 ---
 
