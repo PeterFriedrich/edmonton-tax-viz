@@ -45,6 +45,7 @@ later. Value shares are far less sensitive to this than counts, which is another
 reason the plotted metric is a share rather than a level.
 """
 
+import json
 import logging
 from pathlib import Path
 
@@ -116,30 +117,104 @@ TEMPORAL_COLUMNS = [
 
 
 def publishable_years(live_year: int, defect_years=HISTORICAL_DEFECT_YEARS,
-                      first_year=FIRST_YEAR) -> tuple[int, ...]:
+                      first_year=FIRST_YEAR, archived_years=()) -> tuple[int, ...]:
     """The year list the lens should publish, gaps and all.
 
-    A year is publishable when a COMPLETE source covers it: either the historical
-    file is clean for it, or it is the live year (the current roll). The result is
-    deliberately non-contiguous -- a caller that wants an unbroken range is asking
-    the wrong question (see the module docstring).
+    A year is publishable when a COMPLETE source covers it, in precedence order:
+    the current roll (the live year), then the archive (a year captured while it
+    WAS live), then the historical file when it is clean for that year. The result
+    is deliberately non-contiguous -- a caller that wants an unbroken range is
+    asking the wrong question (see the module docstring).
 
-    Today (live 2025): 2012-2023 + 2025, with 2024 missing.
-    Next January (live 2026): 2012-2023 + 2026 -- 2025 drops out, because the
-    roll no longer covers it and the historical file never did.
+    Live 2025, nothing archived:  2012-2023 + 2025, with 2024 missing.
+    Live 2026, 2025 archived:     2012-2023 + 2025 + 2026 -- 2025 survives the
+                                  roll-forward because it was captured in time.
+    Live 2026, nothing archived:  2012-2023 + 2026 -- 2025 is lost for good.
     """
-    defect = set(defect_years)
+    defect, archived = set(defect_years), set(archived_years)
     return tuple(
         y for y in range(first_year, live_year + 1)
-        if y == live_year or y not in defect
+        if y == live_year or y in archived or y not in defect
     )
 
 
 def omitted_years(live_year: int, defect_years=HISTORICAL_DEFECT_YEARS,
-                  first_year=FIRST_YEAR) -> tuple[int, ...]:
+                  first_year=FIRST_YEAR, archived_years=()) -> tuple[int, ...]:
     """The inverse of publishable_years, for reporting."""
-    published = set(publishable_years(live_year, defect_years, first_year))
+    published = set(publishable_years(live_year, defect_years, first_year, archived_years))
     return tuple(y for y in range(first_year, live_year + 1) if y not in published)
+
+
+def load_archive(path: str | Path) -> pd.DataFrame:
+    """Read the committed archive of previously-live years into the long shape.
+
+    Returns an empty frame (correct columns) when the file is absent, so the
+    archive is optional everywhere and its absence is never an error.
+    """
+    cols = ["year", "neighbourhood_name", "mill_class", "n_accounts", "assessed_value"]
+    path = Path(path)
+    if not path.exists():
+        return pd.DataFrame(columns=cols)
+    payload = json.loads(path.read_text())
+    rows = [
+        (int(year), hood, cls, int(n), float(v))
+        for year, hoods in payload.get("years", {}).items()
+        for hood, classes in hoods.items()
+        for cls, (n, v) in classes.items()
+    ]
+    return pd.DataFrame(rows, columns=cols)
+
+
+def write_archive(path: str | Path, current: pd.DataFrame, live_year: int) -> dict:
+    """Capture the live year into the archive. Returns a summary dict.
+
+    THE FREEZE RULE, and it is the whole safety story: only the LIVE year is ever
+    written. A year already archived is never rewritten, because once the roll
+    advances past it we no longer hold a complete source for it -- any rewrite
+    could only be a downgrade, and a silent one.
+
+    Called every pipeline run, so the live year's entry tracks the roll while it
+    is still live (each run captures a slightly more complete snapshot) and then
+    freezes by itself when the roll moves on. Nobody has to remember to do this
+    in January, which is the point -- a step that must be performed exactly once,
+    at a date months away, is a step that does not happen.
+    """
+    path = Path(path)
+    payload = json.loads(path.read_text()) if path.exists() else {}
+    years = payload.setdefault("years", {})
+
+    frozen = sorted(int(y) for y in years if int(y) != live_year)
+    live = current[current["year"] == live_year]
+    if live.empty:
+        raise ValueError(f"nothing to archive: the frame carries no rows for {live_year}")
+
+    entry: dict[str, dict[str, list]] = {}
+    for row in live.itertuples():
+        entry.setdefault(row.neighbourhood_name, {})[row.mill_class] = [
+            int(row.n_accounts), round(float(row.assessed_value), 2)
+        ]
+    years[str(live_year)] = entry
+
+    payload["_note"] = (
+        "Assessment years captured from the CURRENT ROLL while each was the live "
+        "year. The roll covers exactly one year, so a year not captured here "
+        "before the roll advances is unrecoverable. Years other than the live one "
+        "are FROZEN and must never be rewritten -- see src/load_temporal."
+        "write_archive. Generated; do not hand-edit."
+    )
+    path.write_text(json.dumps(payload, ensure_ascii=False, indent=1, sort_keys=True) + "\n")
+
+    summary = {
+        "archived_year": live_year,
+        "hoods": len(entry),
+        "frozen_years": tuple(frozen),
+        "bytes": path.stat().st_size,
+    }
+    logger.info(
+        "Archived %d (%d hoods) -> %s; %d frozen year(s) left untouched %s",
+        live_year, len(entry), path.name, len(frozen), list(frozen),
+    )
+    return summary
 
 
 def normalize_hood(names: pd.Series) -> pd.Series:
@@ -222,6 +297,7 @@ def build_temporal_table(
     live_year: int,
     boundary_names=None,
     defect_years=HISTORICAL_DEFECT_YEARS,
+    archive: pd.DataFrame | None = None,
 ) -> tuple[pd.DataFrame, dict]:
     """Splice the two sources into the hood x year table. Returns (table, stats).
 
@@ -242,11 +318,33 @@ def build_temporal_table(
     # caller. Both correction maps are idempotent.
     historical = historical.assign(neighbourhood_name=normalize_hood(historical["neighbourhood_name"]))
     current = current.assign(neighbourhood_name=normalize_hood(current["neighbourhood_name"]))
+    if archive is None or archive.empty:
+        archive = pd.DataFrame(columns=historical.columns)
+    else:
+        archive = archive.assign(neighbourhood_name=normalize_hood(archive["neighbourhood_name"]))
 
-    # The historical file supplies every publishable year EXCEPT the live one,
-    # whose complete copy comes from the roll below.
-    keep_years = set(publishable_years(live_year, defect_years)) - {live_year}
-    hist = historical[historical["year"].isin(keep_years)]
+    # Source precedence: the roll owns the live year; the archive owns any
+    # previously-live year it captured THAT THE HISTORICAL FILE GETS WRONG; the
+    # historical file supplies the rest. Archived years are subtracted from the
+    # historical set rather than merged, so a defective slice cannot dilute a
+    # captured one.
+    #
+    # The archive deliberately does NOT win for a year the historical file covers
+    # correctly, even though a capture exists. The two sources have different
+    # vintages -- the roll carries titles created after publication (~8,200
+    # accounts today) -- so preferring a capture for a clean year would make that
+    # one year measured-later than its neighbours and put a step in the series
+    # that is an artifact of sourcing, not of Edmonton. Captures are taken for
+    # EVERY live year regardless, because which years turn out defective is not
+    # knowable in advance; that is the whole lesson of this dataset.
+    archived = {
+        int(y) for y in archive["year"].unique()
+        if int(y) != live_year and int(y) in set(defect_years)
+    }
+    keep_years = set(publishable_years(live_year, defect_years, archived_years=archived))
+    hist_years = keep_years - {live_year} - archived
+    hist = historical[historical["year"].isin(hist_years)]
+    arch = archive[archive["year"].isin(archived)]
 
     cur = current[current["year"] == live_year]
     if cur.empty:
@@ -255,10 +353,13 @@ def build_temporal_table(
             f"(has {sorted(current['year'].unique())}). The live year cannot be spliced."
         )
 
-    table = pd.concat([
+    parts = [
         _collapse_classes(hist).assign(source="historical"),
         _collapse_classes(cur).assign(source="current_roll"),
-    ], ignore_index=True)
+    ]
+    if not arch.empty:
+        parts.append(_collapse_classes(arch).assign(source="archive"))
+    table = pd.concat(parts, ignore_index=True)
 
     # Citywide base per year = EVERY row of that year, matched or not.
     totals = table.groupby("year").agg(
@@ -283,7 +384,8 @@ def build_temporal_table(
     unmatched = table[~table["matched_boundary"]]
     stats = {
         "years": tuple(int(y) for y in sorted(table["year"].unique())),
-        "omitted_years": omitted_years(live_year, defect_years),
+        "omitted_years": omitted_years(live_year, defect_years, archived_years=archived),
+        "archived_years": tuple(sorted(archived)),
         "live_year": live_year,
         "hoods": int(table["neighbourhood_name"].nunique()),
         "rows": len(table),
@@ -333,11 +435,13 @@ def load_temporal(
     assessment: pd.DataFrame,
     live_year: int,
     boundary_names=None,
+    archive_path: str | Path | None = None,
 ) -> tuple[pd.DataFrame, dict]:
-    """Convenience entry point: both loaders + the splice, in one call."""
+    """Convenience entry point: every loader + the splice, in one call."""
     return build_temporal_table(
         load_historical_aggregate(historical_csv),
         current_roll_aggregate(assessment, live_year),
         live_year,
         boundary_names=boundary_names,
+        archive=load_archive(archive_path) if archive_path else None,
     )

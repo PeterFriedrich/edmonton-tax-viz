@@ -156,11 +156,31 @@ A plain "omit 2024" rule is **not sufficient**, and the reason is worth keeping:
   omitted set (derived per live year). Today 2024 is omitted; from January, 2024
   **and 2025** are.
 
-**Open consequence, and it is a real cost:** 2025's repaired numbers are
-recomputed from the live roll on every run and **kept nowhere**. Preserving them
-past the roll-forward needs a committed year-by-year archive that does not exist.
-Without it the series permanently loses 2025 next January. In `TODO.md`; it wants
-deciding before then, not after.
+**✅ CLOSED 2026-07-28 — the archive.** `data/temporal_archive.json`, written by
+`load_temporal.write_archive`, captures the live year on **every** pipeline run
+and is committed by `refresh.yml`. ~74 kB/year against a 7.7 MB payload.
+
+Three rules make it safe:
+
+1. **Freeze.** Only the live year is ever written. A year already captured is
+   never rewritten, because once the roll advances we no longer hold a complete
+   source for it — any rewrite could only be a silent downgrade.
+2. **Capture everything, use it selectively.** Every live year is captured
+   (which years turn out defective is not knowable in advance — the whole lesson
+   of this dataset), but the archive only **wins** for years in
+   `HISTORICAL_DEFECT_YEARS`. Preferring a capture for a year the historical file
+   gets right would mix vintages: the roll carries titles created after
+   publication (~8,200 accounts today), so that year would read measured-later
+   than its neighbours and put a step in the series that is an artifact of
+   sourcing, not of Edmonton.
+3. **Automatic.** It runs on ordinary weekly runs, not as a January chore — a
+   step that must be performed once, at a date months away, is a step that does
+   not happen.
+
+Verified by simulating the roll-forward: with the archive, live-2026 publishes
+2012–2023 + **2025** + 2026 and 2025 is served `source="archive"`; without it,
+2025 is gone. The guard fails if an archived year is ever served from the
+historical file instead.
 
 ---
 

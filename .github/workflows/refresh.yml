@@ -117,9 +117,17 @@ jobs:
       #
       # SKIPS cleanly when data/raw/assessment_historical_by_hood.csv is absent,
       # so it is a no-op until the aggregate is part of the fetch step.
+      # --write-archive captures the LIVE year into data/temporal_archive.json.
+      # The current roll covers exactly one year, so a year not captured before
+      # the roll advances is unrecoverable — and the capture has to happen on
+      # ordinary runs, because a step that must be performed once, at a date
+      # months away, is a step that does not happen. Previously-archived years
+      # are frozen and never rewritten (src/load_temporal.write_archive).
+      # ~74 kB per year; the commit step below picks it up like any other
+      # regenerated file.
       - name: Check temporal years (guard before regenerating)
         if: steps.yearcheck.outputs.result != 'hold'
-        run: python scripts/check_temporal_years.py
+        run: python scripts/check_temporal_years.py --write-archive
 
       - name: Update status manifest (provenance + heartbeat)
         if: steps.yearcheck.outputs.result != 'hold'
@@ -135,9 +143,15 @@ jobs:
         run: |
           git config user.name  "data-bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          # Stage ONLY web/data — deploy.yml excludes web/data/**, so this is
-          # what keeps a PAT-authenticated push from triggering a second deploy.
+          # Stage web/data — deploy.yml excludes web/data/**, so this is what
+          # keeps a PAT-authenticated push from triggering a second deploy.
           git add web/data
+          # ...and the temporal archive, which is NOT under web/. It has to be
+          # committed or the capture dies with the runner and the live year is
+          # lost at the next roll-forward — the exact loss the archive exists to
+          # prevent, and it would fail silently. Safe for the same reason:
+          # deploy.yml triggers on 'web/**' only, so data/** never fires it.
+          git add data/temporal_archive.json
           # git is the change detector: status.json's last_checked bumps every
           # run (the heartbeat), so this normally has something to commit; a
           # same-day re-run with identical output legitimately has nothing.

@@ -24,7 +24,9 @@ from src.load_temporal import (  # noqa: E402
     TEMPORAL_NAME_CORRECTIONS,
     build_temporal_table,
     current_roll_aggregate,
+    load_archive,
     load_historical_aggregate,
+    write_archive,
     normalize_hood,
     omitted_years,
     publishable_years,
@@ -211,3 +213,69 @@ def test_current_roll_aggregate_sums_per_property_rows():
 def test_year_summary_makes_the_gap_visible():
     assert _year_summary([2012, 2013, 2014, 2025]) == "2012-2014, 2025"
     assert _year_summary([2020]) == "2020"
+
+
+# --- the archive: surviving the roll-forward ---------------------------------
+
+def test_archive_lets_a_defect_year_survive_the_roll_forward():
+    """THE POINT OF THE ARCHIVE. Without it, 2025 is lost each January."""
+    hist = _long([(y, "ALPHA", "RESIDENTIAL", 10, 1000.0) for y in (2023, 2025, 2026)])
+    cur = _long([(2026, "ALPHA", "RESIDENTIAL", 14, 1400.0)])
+    captured = _long([(2025, "ALPHA", "RESIDENTIAL", 12, 1200.0)])
+
+    lost, _ = build_temporal_table(hist, cur, 2026, archive=None)
+    assert 2025 not in set(lost["year"])
+
+    kept, stats = build_temporal_table(hist, cur, 2026, archive=captured)
+    assert 2025 in set(kept["year"])
+    assert stats["archived_years"] == (2025,)
+    row = kept[kept["year"] == 2025].iloc[0]
+    assert row["source"] == "archive"
+    # The captured 12, not the defective historical slice's 10.
+    assert int(row["n_accounts"]) == 12
+
+
+def test_archive_does_not_override_a_year_the_historical_file_gets_right():
+    """Mixing vintages would put an artifact step in the series."""
+    hist = _long([(y, "ALPHA", "RESIDENTIAL", 10, 1000.0) for y in (2022, 2023, 2026)])
+    cur = _long([(2026, "ALPHA", "RESIDENTIAL", 14, 1400.0)])
+    captured = _long([(2022, "ALPHA", "RESIDENTIAL", 99, 9900.0)])  # a clean year
+    table, stats = build_temporal_table(hist, cur, 2026, archive=captured)
+    assert stats["archived_years"] == ()
+    row = table[table["year"] == 2022].iloc[0]
+    assert row["source"] == "historical" and int(row["n_accounts"]) == 10
+
+
+def test_write_archive_freezes_years_that_are_no_longer_live(tmp_path):
+    """A frozen year must never be rewritten — we no longer hold a full source."""
+    p = tmp_path / "arch.json"
+    write_archive(p, _long([(2025, "ALPHA", "RESIDENTIAL", 12, 1200.0)]), 2025)
+    # The roll moves on; 2025 must survive untouched.
+    summary = write_archive(p, _long([(2026, "ALPHA", "RESIDENTIAL", 20, 2000.0)]), 2026)
+    assert summary["frozen_years"] == (2025,)
+    back = load_archive(p)
+    assert int(back[back["year"] == 2025]["n_accounts"].iloc[0]) == 12
+    assert int(back[back["year"] == 2026]["n_accounts"].iloc[0]) == 20
+
+
+def test_write_archive_refreshes_the_year_while_it_is_still_live(tmp_path):
+    p = tmp_path / "arch.json"
+    write_archive(p, _long([(2025, "ALPHA", "RESIDENTIAL", 12, 1200.0)]), 2025)
+    write_archive(p, _long([(2025, "ALPHA", "RESIDENTIAL", 13, 1300.0)]), 2025)
+    back = load_archive(p)
+    assert int(back[back["year"] == 2025]["n_accounts"].iloc[0]) == 13
+
+
+def test_write_archive_refuses_when_there_is_nothing_to_capture(tmp_path):
+    with pytest.raises(ValueError, match="nothing to archive"):
+        write_archive(tmp_path / "a.json", _long([(2024, "A", "RESIDENTIAL", 1, 1.0)]), 2025)
+
+
+def test_missing_archive_file_is_not_an_error(tmp_path):
+    assert load_archive(tmp_path / "absent.json").empty
+
+
+def test_archive_round_trips_hood_names_with_diacritics(tmp_path):
+    p = tmp_path / "arch.json"
+    write_archive(p, _long([(2025, "WÎHKWÊNTÔWIN", "RESIDENTIAL", 12, 1200.0)]), 2025)
+    assert load_archive(p)["neighbourhood_name"].iloc[0] == "WÎHKWÊNTÔWIN"

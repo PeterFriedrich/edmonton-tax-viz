@@ -76,15 +76,11 @@ _Last reconciled: 2026-07-28 (S76 — temporal decisions settled)_
     wired into `refresh.yml` before the status-manifest step) + the year × hood ×
     class aggregate added to `download_data.py`. 33 new tests. Read
     `SPEC_temporal.md` §0.3–§0.4 and `ARCHITECTURE.md` before touching either.
-  - [ ] **▶ DECIDE BEFORE JANUARY — archive the live year, or lose 2025.**
-    Surfaced by building the guard (`SPEC_temporal.md` §0.4). The current roll
-    covers exactly ONE year, so **2025 is publishable only while it is the live
-    year**. When the roll advances to 2026, 2025 loses its only complete source
-    and drops out of the series — correctly (the historical copy is short 131
-    accounts), but permanently, because its repaired numbers are recomputed each
-    run and **kept nowhere**. Fixing it means a committed year-by-year archive
-    artifact. **Cheap to build now, impossible to build retroactively** once the
-    roll turns over. Not urgent, but it has a deadline nothing else here has.
+  - [x] ~~**Archive the live year, or lose 2025**~~ — **DONE 2026-07-28.**
+    `data/temporal_archive.json` (~74 kB/yr, committed), captured on every run
+    by `check_temporal_years.py --write-archive`. Freeze rule: only the live
+    year is ever written. The archive wins only for `HISTORICAL_DEFECT_YEARS` —
+    using it for a clean year would mix vintages. `SPEC_temporal.md` §0.4.
   - [ ] **Then Phases 1–4** (`SPEC_temporal.md` §5): the compact web JSON, the
     sparkline + pinned panel in `/full/`, and the panel design (still open).
   - **Context — the 2024/2025 slices of `qi6a-xuwt` are PROVEN INCOMPLETE** (2026-07-28; evidence in `data/DATA.md` §0). For assessment year

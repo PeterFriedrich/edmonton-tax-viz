@@ -633,6 +633,15 @@ per-property frame from `load_assessment.py`; the live assessment year
   appearing. Applied BEFORE aggregation (the `load_assessment` rule) and
   re-applied inside `build_temporal_table`, because it is the one invariant that
   fails silently when skipped.
+- **The archive (`data/temporal_archive.json`, committed, ~74 kB/yr).** The roll
+  covers exactly one year, so a defective year is only repairable *while it is
+  live*. `write_archive()` captures the live year on **every** run; `load_archive()`
+  feeds it back. **Freeze rule: only the live year is ever written** — a captured
+  year is never rewritten, since we no longer hold a complete source for it.
+  Every live year is captured, but the archive only **wins** for
+  `HISTORICAL_DEFECT_YEARS`; using a capture for a clean year would mix vintages
+  (the roll carries post-publication titles) and put a sourcing artifact in the
+  series. `refresh.yml` stages it explicitly — it is not under `web/`.
 - **No silent drops:** 24 historical names have no current boundary. They are
   flagged `matched_boundary=False`, counted, and **kept in the denominator** —
   the metric is share of the *citywide* base, so an unrenderable hood is still
