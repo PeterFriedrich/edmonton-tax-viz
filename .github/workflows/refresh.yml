@@ -102,6 +102,13 @@ jobs:
         if: steps.yearcheck.outputs.result != 'hold'
         run: python main.py --skip-png    # PNG is a Phase-1 local artifact, not served
 
+      # Guard AFTER regeneration: it reads the freshly written value_grid.json,
+      # so it judges the artifact the site is about to serve. A hard failure here
+      # stops the commit, and the last good data keeps serving.
+      - name: Check cardinality value anchors (guard after regenerating)
+        if: steps.yearcheck.outputs.result != 'hold'
+        run: python scripts/check_value_anchors.py
+
       - name: Update status manifest (provenance + heartbeat)
         if: steps.yearcheck.outputs.result != 'hold'
         run: python scripts/generate_status.py

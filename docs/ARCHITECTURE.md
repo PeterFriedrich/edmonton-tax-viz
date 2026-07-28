@@ -350,7 +350,16 @@ lot acres). ~34.7k cells / 1.8 MB on current data. Returns a stats dict.
 - `check_lot_acre_bounds(df, boundaries)`: physical-bound validation —
   per-hood deduped lot acres ≤ boundary acres, `KNOWN_BOUND_OUTLIERS`
   (PEMBINA) exempt; RAISES on any new violation. `main.py` runs it before
-  every lot-acre export.
+  every lot-acre export. It catches *gross* breakage (lot acres exceeding the
+  hood) — not a needle returning or the condo regime arriving, which is what
+  `scripts/check_value_anchors.py` adds below.
+- `scripts/check_value_anchors.py`: regime validation, run from `refresh.yml`
+  **after** regeneration (so it reads the freshly exported grid). Pins the
+  record-to-parcel cardinality regime in **bands** — duplicated-parcel points,
+  dedupe effect, lot-acre-ineligible value, and a needle ratio measured at
+  **cell** grain against `web/data/value_grid.json`. Dollar figures are
+  deliberately NOT pinned (reassessment moves them yearly). Baseline:
+  `data/expected_value_anchors.json`. See `DECISIONS.md` 2026-07-28.
 - No silent drops: null-coordinate rows counted and reported; lot-ineligible
   points reported with their value; a conservation guard errors if cell sums
   don't reproduce the input totals

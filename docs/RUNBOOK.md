@@ -101,6 +101,22 @@ Triage by which step failed, in the run log:
   immaterial and deliberately unmapped (the OLIVER precedent), add the name to
   `data/expected_unmatched.json` with a reason. A boundary-side hole or a
   resolved name is only a warning (exit 0) asking for the same baseline update.
+- **"Check cardinality value anchors"** (exit 5, `scripts/check_value_anchors.py`)
+  — the record-to-parcel *regime* moved: a duplicated-parcel condo regime
+  appearing, more value dropping out as lot-acre-ineligible, or a needle
+  returning to the top of the exported grid. This runs **after** regen and stops
+  the commit, so the site keeps serving last-good data. The error names which
+  anchors moved. **Do not just re-pin the baseline** — that silences the alarm
+  without answering it. Diagnose first: re-run
+  `tools/audit_cardinality_denominators.py` (needs the real roll) and check the
+  new numbers against `docs/FINDINGS_lot_dedupe.md` §3–§5; `SHARE_MAX_M2` was
+  calibrated on a regime where the dedupe is a no-op, so if
+  `dup_parcel_points` grew, the threshold itself needs re-validating. Once the
+  move is understood and intentional, re-pin with
+  `python scripts/check_value_anchors.py --write-baseline` and commit
+  `data/expected_value_anchors.json`. Moves in the benign direction (fewer
+  ineligible points, a flatter distribution) only warn. **The January year-roll
+  is the most likely trigger** — see §1.
 - **"Regenerate web GeoJSON"** — read the traceback; the loaders hard-error
   deliberately on upstream schema drift rather than publishing wrong numbers.
   Usual fixes are extending an explicit mapping: `ZONE_CATEGORY`
