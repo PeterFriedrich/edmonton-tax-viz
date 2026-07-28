@@ -125,16 +125,42 @@ band** (4).
 
 ### 0.3 Exit criteria
 
-Phase 0 is done when: ~~the defect map exists for all 14 years~~ ✅ **done
-2026-07-28**; ~~2024 has a decided treatment~~ ✅ **done 2026-07-28 — omitted,
-§0.2**; the splice is implemented and tested (historical 2012–2023 + the current
-roll for the live year); and a guard refuses to publish a year that fails its
-control.
+**✅ PHASE 0 IS CLOSED (2026-07-28).** All four criteria met:
+
+| criterion | status |
+|---|---|
+| defect map across all 14 years | ✅ `tools/audit_historical_roll_gaps.py`, §0.1 |
+| 2024 has a decided treatment | ✅ omitted, §0.2 |
+| the splice is implemented and tested | ✅ `src/load_temporal.py`, 21 tests |
+| a guard refuses to publish a failing year | ✅ `scripts/check_temporal_years.py`, 12 tests, wired into `refresh.yml` |
 
 **The splice must not quietly become a 14-year loop.** 2024 is omitted by
-decision, so the year list it emits is deliberately non-contiguous — the guard
-should assert that absence rather than treat it as a failure, or Phase 0's own
-gate will red on the thing Phase 0 decided.
+decision, so the year list is deliberately non-contiguous — the guard asserts
+that absence rather than treating it as a failure. `publishable_years()` owns the
+rule and `structural_checks` enforces it in both directions: a missing year fails,
+**and so does an unexpectedly present one**.
+
+### 0.4 The January trap — found while building the guard, and closed
+
+A plain "omit 2024" rule is **not sufficient**, and the reason is worth keeping:
+
+- The current roll covers exactly **one** year. 2025 is publishable *because* it
+  is the live year, not because its historical slice is sound — that slice is
+  missing 131 accounts.
+- So when the roll advances to 2026, **2025 loses its only complete source** and
+  a naive splice would quietly fall back to the defective historical copy —
+  re-acquiring the defect on a year that renders correctly today, with nothing in
+  the pipeline saying a word. Exactly how the original defect survived two
+  publication cycles.
+- Closed by separating `HISTORICAL_DEFECT_YEARS` (measured: 2024, 2025) from the
+  omitted set (derived per live year). Today 2024 is omitted; from January, 2024
+  **and 2025** are.
+
+**Open consequence, and it is a real cost:** 2025's repaired numbers are
+recomputed from the live roll on every run and **kept nowhere**. Preserving them
+past the roll-forward needs a committed year-by-year archive that does not exist.
+Without it the series permanently loses 2025 next January. In `TODO.md`; it wants
+deciding before then, not after.
 
 ---
 

@@ -185,6 +185,35 @@ SOURCES = {
         "limit": 1000000,  # 243,371 permits as of 2026-07-12 (2009→present)
         "count_url": _count_url("24uj-dj8v"),
     },
+    "assessment_historical": {
+        # Temporal lens (docs/SPEC_temporal.md): assessed value per
+        # neighbourhood per year, 2012-present. The raw dataset is 5.5M rows, so
+        # this fetches the SERVER-SIDE AGGREGATE instead -- ~14,800 rows keyed
+        # (year, hood, mill class), which is the whole reason this lens is cheap.
+        # The class dimension is what makes the commercial-base denominator
+        # available (SPEC_temporal.md section 6); it costs ~9,300 extra rows.
+        #
+        # $order is not optional decoration: Socrata's paging is undefined
+        # without it, and a grouped query is exactly where a silently reordered
+        # page would lose members.
+        "url": (
+            "https://data.edmonton.ca/resource/qi6a-xuwt.csv"
+            "?$select=assessment_year,neighbourhood_name,mill_class_1,"
+            "count(*) as n_accounts,sum(assessed_value) as total_assessed_value"
+            "&$group=assessment_year,neighbourhood_name,mill_class_1"
+            "&$order=assessment_year,neighbourhood_name,mill_class_1"
+            "&$limit=200000"
+        ),
+        "dest": RAW / "assessment_historical_by_hood.csv",
+        "limit": 200000,  # 14,842 groups as of 2026-07-28
+        # The generic count(*) cross-check compares ROW counts, which is
+        # meaningless for an aggregate (14,842 groups vs 5.5M rows). This
+        # stronger check replaces it: every source row lands in exactly one
+        # group, so the n_accounts column must sum to the dataset's live row
+        # count. That catches a dropped GROUP, which a row count never would.
+        "sum_column": "n_accounts",
+        "count_url": _count_url("qi6a-xuwt"),
+    },
     "lrt_routes": {
         # LRT track lines — a context layer under the transit lens (the LRT
         # station dots' companion), NOT part of the stop-events metric. Four
@@ -220,6 +249,25 @@ def local_count(path: Path) -> int:
     if path.suffix == ".geojson":
         return feature_count(path)
     return csv_record_count(path)
+
+
+def csv_column_sum(path: Path, column: str) -> int:
+    """Sum an integer column across a CSV — the aggregate sources' row-conservation check.
+
+    For a ``$group`` download the file's row count is the number of GROUPS, so it
+    can never equal the dataset's count(*). What must hold instead is that every
+    source row landed in exactly one group: the per-group counts sum to the live
+    row count. That is a strictly stronger check than the row comparison it
+    replaces — it also catches a whole group going missing.
+    """
+    with open(path, newline="", encoding="utf-8") as f:
+        rows = csv.DictReader(f)
+        if column not in (rows.fieldnames or []):
+            raise RuntimeError(
+                f"{path.name}: no '{column}' column to sum (has {rows.fieldnames}) "
+                "— the $select in SOURCES and this source's 'sum_column' disagree."
+            )
+        return sum(int(float(r[column])) for r in rows if r[column])
 
 
 def server_count(count_url: str, timeout: int = 30) -> int | None:
@@ -266,15 +314,22 @@ def verify_download(name: str, src: dict) -> None:
         check_not_truncated(name, n, src["limit"])
     if "count_url" in src:
         expected = server_count(src["count_url"])
+        # Aggregate sources compare a SUM of per-group counts, not the row count
+        # (see csv_column_sum); everything else compares rows directly.
+        if "sum_column" in src:
+            got, unit = csv_column_sum(src["dest"], src["sum_column"]), \
+                f"source rows across {n} groups"
+        else:
+            got, unit = n, "records"
         if expected is None:
             logger.warning("%s: server count unavailable — local count %d unverified", name, n)
-        elif n != expected:
+        elif got != expected:
             raise RuntimeError(
-                f"{name}: downloaded {n} records but the server reports {expected} "
+                f"{name}: downloaded {got} {unit} but the server reports {expected} "
                 f"— incomplete download (server-side limit or interrupted export)."
             )
         else:
-            logger.info("%s: %d records == server count(*) — complete", name, n)
+            logger.info("%s: %d %s == server count(*) — complete", name, got, unit)
 
 
 def download(url: str, dest: Path, timeout: int = 300) -> int:

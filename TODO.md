@@ -71,12 +71,22 @@ _Last reconciled: 2026-07-28 (S76 — temporal decisions settled)_
     and no mill-rate table. Value over revenue (reaches 2012 vs 2014, and skips
     the class-differential caveats); **commercial-base share appears as a
     labelled number in the pinned panel, not a second sparkline**.
-  - [ ] **▶ ALL THAT'S LEFT IN PHASE 0 — the splice + the guard. No decisions in
-    front of it.** Historical 2012–2023 + current roll for the live year; a guard
-    that refuses to publish a year failing its control. **The splice must not
-    quietly become a 14-year loop** — 2024 is omitted by decision, so the year
-    list is deliberately non-contiguous and the guard must assert that absence
-    rather than red on it. Closes Phase 0 (`SPEC_temporal.md` §0.3).
+  - [x] ~~**The splice + the guard**~~ — **DONE 2026-07-28. PHASE 0 IS CLOSED.**
+    `src/load_temporal.py` (splice) + `scripts/check_temporal_years.py` (guard,
+    wired into `refresh.yml` before the status-manifest step) + the year × hood ×
+    class aggregate added to `download_data.py`. 33 new tests. Read
+    `SPEC_temporal.md` §0.3–§0.4 and `ARCHITECTURE.md` before touching either.
+  - [ ] **▶ DECIDE BEFORE JANUARY — archive the live year, or lose 2025.**
+    Surfaced by building the guard (`SPEC_temporal.md` §0.4). The current roll
+    covers exactly ONE year, so **2025 is publishable only while it is the live
+    year**. When the roll advances to 2026, 2025 loses its only complete source
+    and drops out of the series — correctly (the historical copy is short 131
+    accounts), but permanently, because its repaired numbers are recomputed each
+    run and **kept nowhere**. Fixing it means a committed year-by-year archive
+    artifact. **Cheap to build now, impossible to build retroactively** once the
+    roll turns over. Not urgent, but it has a deadline nothing else here has.
+  - [ ] **Then Phases 1–4** (`SPEC_temporal.md` §5): the compact web JSON, the
+    sparkline + pinned panel in `/full/`, and the panel design (still open).
   - **Context — the 2024/2025 slices of `qi6a-xuwt` are PROVEN INCOMPLETE** (2026-07-28; evidence in `data/DATA.md` §0). For assessment year
     2025, same year, the current roll has **11,216 Downtown accounts / $7.81B**
     and the historical file has **10,307 / $7.09B** — a **909-account, ~$720M
