@@ -89,21 +89,24 @@ is grouping-agnostic and reads whatever tags that pass produces.
 `DECISIONS.md`):** `#views` collapses to **5** (Glass → a mode of Money; Infill →
 a full-only mode of Development).
 - **Public:** Money (incl. the Glass grid mode) · **Development** (units +
-  permits only). _(Uses pulled to full-only 2026-07-24; **Services and Ratio
-  pulled 2026-07-28** — both provisional, see below.)_
+  permits only). **LOCKED as the release shape 2026-07-28.**
 - **Full-only:** the **Services**, **Ratio** and **Uses** views · the **Infill**
   mode + the **Industrial** metric on Development · deep data-detail (validation
   ratios, modeling quirks, methodology-heavy blurbs).
 
-**Superseded 2026-07-28 — the public build is now 2 views, not 4.** Peter pulled
-**Services and Ratio** to full-only while prepping the release, provisional "for
-now" (same framing as the Uses pull). Two residues went with them, decided at the
-same time: the Money tooltip's `road m/acre` + `$/road metre` rows (Ratio's
+**Superseded 2026-07-28 — the public build is 2 views, not 4, and this is
+LOCKED.** Peter: *"2 views is fine for release, lock it in. We'll add the other
+stuff later, like one lens at a time."* Services and Ratio were pulled to
+full-only during release prep; Uses had gone on 07-24. All three provisional tags
+are now settled. **Post-launch the lenses return ONE AT A TIME**, each its own
+release — not a batch un-pull. Two residues went with them, decided at the same
+time: the Money tooltip's `road m/acre` + `$/road metre` rows (Ratio's
 headline metric was being published on the *default public view*), and the Data &
 Methods pod's modelled-services caveat + its road/fire/transit source credits.
-See `DECISIONS.md` 2026-07-28 and `CONTROLS_MATRIX.md` §2. **§3 below still lists
-Services/Ratio/Uses as release scope — that is now the FULL build's scope; the
-lenses ship, just not at the root URL.**
+See `DECISIONS.md` 2026-07-28 and `CONTROLS_MATRIX.md` §2. **§3 below lists
+Services/Ratio/Uses as release scope — read that as the FULL build's scope. The
+lenses ship, just not at the root URL, and they arrive at the root one at a time
+after launch.**
 - Full-only controls are `BUILD`-flag-gated at the control level, so a full-only
   *mode/metric inside a public view* (Infill/Industrial on Development) is exactly
   what the mechanism supports.

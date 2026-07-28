@@ -68,13 +68,18 @@ seven became modes of another view rather than top-level entries:
 |---|---|---|
 | **Money** *(default)* | `money`, **`glass`** | `glass` = the "100 m grid" `#moneydetail` mode. The Money button stays active in it. |
 | **Development** | `development`, **`infill`** | Moved to **second, next to Money** (2026-07-27, Peter). `infill` = the full-only "Infill opportunity" `#devmode` lens; the Development button stays active in it. |
-| **Services** 🔒 | `services` | Full build only (2026-07-28, provisional). |
-| **Ratio** 🔒 | `ratio` | Full build only (2026-07-28, provisional). |
-| **Uses** 🔒 | `uses` | Full build only (2026-07-24, provisional). |
+| **Services** 🔒 | `services` | Full build only — **LOCKED for release 2026-07-28**. |
+| **Ratio** 🔒 | `ratio` | Full build only — **LOCKED for release 2026-07-28**. |
+| **Uses** 🔒 | `uses` | Full build only — **LOCKED for release 2026-07-28** (was provisional 07-24). |
 
 So **public `#views` = 2 buttons** (Money · Development); **`/full/` = 5**.
-Verified in both builds 2026-07-28 (was 4 public / 5 full, verified live
-2026-07-25, before the Services + Ratio pull).
+Verified in both builds 2026-07-28.
+
+**This is the release shape (Peter, 2026-07-28): "2 views is fine for release,
+lock it in. We'll add the other stuff later, like one lens at a time."** The
+three provisional tags are settled — none is pending a re-decision. Post-launch
+the pulled lenses come back **one at a time**, each as its own deliberate
+release, not as a batch un-pull.
 
 **Build visibility (public vs specialist) — FINALIZED 2026-07-23 (§7 +
 `DECISIONS.md`).** The two-build split tags each lens `public | full`; this was
@@ -85,9 +90,9 @@ lenses" pass.
 |---|:---:|:---:|
 | Money (incl. the 100 m grid mode) | ✅ | ✅ |
 | **Development** — units + permits, Detail selector | ✅ | ✅ |
-| **Services** view | ❌ _(provisional, 2026-07-28)_ | ✅ |
-| **Ratio** view | ❌ _(provisional, 2026-07-28)_ | ✅ |
-| **Uses** view (dominant zoned land use) | ❌ _(provisional, 2026-07-24)_ | ✅ |
+| **Services** view | ❌ _(locked 2026-07-28)_ | ✅ |
+| **Ratio** view | ❌ _(locked 2026-07-28)_ | ✅ |
+| **Uses** view (dominant zoned land use) | ❌ _(locked 2026-07-28)_ | ✅ |
 | **Infill** lens on Development | ❌ | ✅ |
 | **Industrial** metric on Development | ❌ | ✅ |
 | Money tooltip's **road m/acre + $/road metre** rows | ❌ _(went with Ratio, 2026-07-28)_ | ✅ |
