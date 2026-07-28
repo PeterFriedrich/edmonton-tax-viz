@@ -73,10 +73,12 @@ sys.path.insert(0, str(ROOT))
 from src.load_assessment import load_assessment  # noqa: E402
 from src.load_temporal import (  # noqa: E402
     FIRST_YEAR,
-    current_roll_aggregate,
-    load_historical_aggregate,
     build_temporal_table,
+    current_roll_aggregate,
+    load_archive,
+    load_historical_aggregate,
     publishable_years,
+    write_archive,
 )
 
 logger = logging.getLogger(__name__)
@@ -84,6 +86,7 @@ logger = logging.getLogger(__name__)
 DEFAULT_HISTORICAL_CSV = ROOT / "data" / "raw" / "assessment_historical_by_hood.csv"
 DEFAULT_ASSESSMENT_CSV = ROOT / "data" / "raw" / "Property_Assessment_Data__Current_Calendar_Year_.csv"
 DEFAULT_BASELINE = ROOT / "data" / "expected_temporal_years.json"
+DEFAULT_ARCHIVE = ROOT / "data" / "temporal_archive.json"
 
 EXIT_OK = 0
 EXIT_DRIFT = 5
@@ -107,12 +110,13 @@ HISTORICAL_TOLERANCE = 0.005
 
 
 def structural_checks(
-    table: pd.DataFrame, historical: pd.DataFrame, live_year: int, first_year: int = FIRST_YEAR
+    table: pd.DataFrame, historical: pd.DataFrame, live_year: int,
+    first_year: int = FIRST_YEAR, archived_years=(),
 ) -> list[str]:
     """Invariants that hold regardless of any baseline. Returns a list of failures."""
     failures = []
 
-    expected = publishable_years(live_year, first_year=first_year)
+    expected = publishable_years(live_year, first_year=first_year, archived_years=archived_years)
     actual = tuple(int(y) for y in sorted(table["year"].unique()))
     if actual != expected:
         missing, extra = set(expected) - set(actual), set(actual) - set(expected)
@@ -148,10 +152,20 @@ def structural_checks(
             f"{sorted(live_rows['source'].unique())} — it must come from the current roll"
         )
     past = table[table["year"] != live_year]
-    if not past.empty and set(past["source"].unique()) != {"historical"}:
+    if not past.empty and not set(past["source"].unique()) <= {"historical", "archive"}:
         failures.append(
             f"splice: non-live years carry source(s) {sorted(past['source'].unique())}"
         )
+    # An archived year must be served FROM the archive. If one falls back to the
+    # historical file the capture was lost, which is the January trap arriving.
+    for year in sorted(set(archived_years)):
+        rows = table[table["year"] == year]
+        if not rows.empty and set(rows["source"].unique()) != {"archive"}:
+            failures.append(
+                f"archive: {year} is archived but is being served from "
+                f"{sorted(rows['source'].unique())} — the captured copy is not being used, "
+                f"so a defective historical slice may have replaced it"
+            )
 
     hist_live = historical[historical["year"] == live_year]
     if not hist_live.empty and not live_rows.empty:
@@ -265,7 +279,12 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--live-year", type=int, default=None,
         help="assessment year of the current roll (default: main.ASSESSMENT_YEAR)",
     )
+    p.add_argument("--archive", type=Path, default=DEFAULT_ARCHIVE)
     p.add_argument("--write-baseline", action="store_true")
+    p.add_argument(
+        "--write-archive", action="store_true",
+        help="capture the live year into the archive (previously-archived years are frozen)",
+    )
     p.add_argument(
         "--tolerance", type=float, default=HISTORICAL_TOLERANCE,
         help=f"band half-width for historical years (default {HISTORICAL_TOLERANCE})",
@@ -302,7 +321,12 @@ def main(argv: list[str] | None = None) -> int:
 
     historical = load_historical_aggregate(args.historical_csv)
     current = current_roll_aggregate(load_assessment(args.assessment_csv), live_year)
-    table, stats = build_temporal_table(historical, current, live_year)
+
+    if args.write_archive:
+        write_archive(args.archive, current, live_year)
+
+    archive = load_archive(args.archive)
+    table, stats = build_temporal_table(historical, current, live_year, archive=archive)
 
     live = year_anchors(table)
 
@@ -329,7 +353,9 @@ def main(argv: list[str] | None = None) -> int:
         )
         return EXIT_OK
 
-    failures = structural_checks(table, historical, live_year)
+    failures = structural_checks(
+        table, historical, live_year, archived_years=stats["archived_years"]
+    )
     failures += check_live_growth(table, live_year)
 
     if args.baseline.exists():
@@ -357,8 +383,11 @@ def main(argv: list[str] | None = None) -> int:
         return EXIT_DRIFT
 
     logger.info(
-        "Temporal-year guard OK: %d year(s) %s, %d hoods, live year %d from the current roll.",
+        "Temporal-year guard OK: %d year(s) %s, %d hoods, live year %d from the current roll"
+        "%s.",
         len(stats["years"]), list(stats["years"]), stats["hoods"], live_year,
+        f", {len(stats['archived_years'])} from the archive {list(stats['archived_years'])}"
+        if stats["archived_years"] else "",
     )
     _write_github_output(result="ok")
     return EXIT_OK
