@@ -12,9 +12,11 @@ _Last reconciled: 2026-07-28_
 
 ## Open work
 
-- [ ] **ASSESSMENT-OVER-TIME GRAPH PER NEIGHBOURHOOD (Peter, 2026-07-28 — "you
-  mouse over and get a line graph of the assessment value over time, for that
-  hood"). FEASIBILITY PROVEN 2026-07-28; nothing built.** The data exists and the
+- [ ] **ASSESSMENT-OVER-TIME GRAPH PER NEIGHBOURHOOD — full spec in
+  `docs/SPEC_temporal.md` (2026-07-28). Read that first; below is the backlog view.**
+  Original ask (Peter, 2026-07-28): *"you mouse over and get a line graph of the
+  assessment value over time, for that hood."* **Feasibility proven; nothing
+  built, and Phase 0 is a hard gate.** The data exists and the
   aggregate is cheap — see `data/DATA.md` §"Property Assessment Data
   (Historical)". Measured, not assumed:
   - **`qi6a-xuwt` "Property Assessment Data (Historical)" — 14 years, 2012–2025,
@@ -64,18 +66,26 @@ _Last reconciled: 2026-07-28_
       gated on Peter reviewing it by hand first.** Notebook written for exactly
       that: **`notebooks/exploration/03_historical_roll_gap.ipynb`** — hits the
       live API only, no local data, runs top to bottom, re-derives every claim.
-      - **Before filing, §5 of the notebook lists what is NOT yet verified.** The
-        citywide ~8,000 figure was *inferred* from row counts of different
-        vintages and has not been confirmed account-by-account; the notebook's
-        last cell establishes it properly. A bug report must not carry an
-        unverified number.
-      - Also pin down first: whether the gap reaches years before 2024 (only
-        2024/2025 are proven bad); whether it is concentrated in unit-titled
-        condo buildings (the Downtown evidence suggests yes, which would point at
-        how multi-unit properties are exported); and spot-check a few missing
+      - ✅ **SCOPE NOW MEASURED (2026-07-28) — it is CITYWIDE, and the earlier
+        "~8,000" was wrong.** That figure was inferred from row counts; most of
+        the gap is new construction. Verified account-by-account: **2,448
+        accounts / $2.93B / 188 neighbourhoods** existed in 2023 *and* exist in
+        the current roll but are absent from historical 2025. Downtown holds
+        1,292 (53%); Magrath Heights 430 (17% of the hood), Glenora 269 (15%).
+        **Report the 2,448, never the 8,000.**
+      - ✅ **Cite dataset IDs and query params, not prose.** `qi6a-xuwt`
+        (Historical) and `q7d6-ambg` (Current Calendar Year); City data staff
+        will want exact resource IDs + the SoQL used. The notebook prints both.
+      - ⚠️ **LEAVE THE CAUSE UNSTATED.** Describe the symptom — whole multi-unit
+        buildings absent together, citywide — and let the City diagnose. Do not
+        speculate about leasehold/condo record handling or ETL join logic in the
+        report, however tempting the address clustering makes it.
+      - [ ] Still to pin down: whether the gap reaches years **before 2024**
+        (only 2024/2025 are proven bad — the year-N−1/N+1 detector in
+        `SPEC_temporal.md` §4.1 settles it), and spot-check a few missing
         accounts against the City's public assessment lookup so the report cites
         something a human can open.
-      - **The strongest single exhibit is Stantec Tower** (10310 102 ST NW):
+      - **Strongest single exhibit: Stantec Tower** (10310 102 ST NW):
         Edmonton's tallest building, 309 accounts in the 2023 slice, **zero rows
         in 2024 and 2025**, and 310 accounts / $105.7M in the current roll.
   - [ ] **⚠️ NAME THE DENOMINATOR IN THE UI — Downtown is 3.22% of the total base

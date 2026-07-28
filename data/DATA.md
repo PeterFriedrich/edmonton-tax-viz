@@ -40,18 +40,43 @@ time graph (`TODO.md`). Numbers below are from the API on 2026-07-28.
 > **261 / $202.1M in the current roll**). Buildings that appear in 2023, vanish
 > in 2024–25, and reappear in the current roll were not demolished.
 >
-> **Mechanism, measured:** 1,359 Downtown accounts present in the 2023 slice are
-> absent from the 2024 slice. Traced individually across the whole 2024 roll —
-> **1,358 of 1,359 do not exist anywhere in it**; exactly one moved (to OLIVER).
-> They did not change neighbourhood, they were not recoded into another hood, and
-> only 2 reappear in 2025. Predominantly `RESIDENTIAL` (1,280 of 1,359), which is
-> exactly the class the current roll shows ~935 more of.
+> **SCOPE — CITYWIDE, measured account-by-account 2026-07-28.** An earlier
+> "~8,000 accounts citywide" figure was **inferred from row counts and was
+> misleading** — most of that gap is new construction, not defect. The honest
+> decomposition of the 7,929-account net gap:
 >
-> **Before ANY series ships:** validate each historical year against a control
-> total, and treat the most recent year(s) as suspect until they reconcile with
-> the current roll. The same guard idiom as `check_year_alignment.py` /
-> `check_value_anchors.py`. Consider splicing: historical for 2012–2023, the
-> **current roll** for the live year.
+> | | accounts | what it is |
+> |---|---|---|
+> | in current roll, **absent from historical 2025, and not in 2023 either** | 8,171 | almost certainly new titles/construction — a snapshot-vintage difference, benign |
+> | in historical 2025 but not the current roll | ~2,690 | demolitions/consolidations between snapshots, benign |
+> | **in historical 2023 AND in the current roll, but ABSENT from historical 2025** | **2,448** | **the genuine defect — a property that existed then and exists now cannot legitimately be missing in between** |
+>
+> **The 2,448 carry $2.93B of current assessed value and span 188
+> neighbourhoods** — so this is citywide, not a Downtown curiosity, though
+> Downtown holds **1,292 of them (53%)**. Next worst: MAGRATH HEIGHTS 430,
+> GLENORA 269, WÎHKWÊNTÔWIN 124. By class: 2,056 residential, 373 commercial.
+>
+> **They cluster at individual multi-unit addresses — whole buildings vanish
+> together**, and not only downtown towers: 10310 102 ST NW (310), 10360 102 ST
+> NW (261), **7463 MAY COMMON NW (162, Magrath Heights)**, 10155 116 ST NW (123,
+> Wîhkwêntôwin), 14105 WEST BLOCK DRIVE NW (60, Glenora). *Stated as a symptom
+> only — the cause is not ours to diagnose.*
+>
+> **Practical effect per hood:** Magrath Heights is missing 17% of its accounts
+> and Glenora 15%, so the 2025 slice is unusable at hood level well beyond
+> Downtown.
+>
+> **Mechanism of the disappearance, measured:** 1,359 Downtown accounts present
+> in the 2023 slice are absent from the 2024 slice. Traced individually across
+> the whole 2024 roll — **1,358 of 1,359 do not exist anywhere in it**; exactly
+> one moved (to OLIVER). They did not change neighbourhood, were not recoded into
+> another hood, and only 2 reappear in 2025.
+>
+> **Before ANY series ships:** validate each historical year against a control,
+> and treat recent years as suspect until they reconcile with the current roll.
+> Same guard idiom as `check_year_alignment.py` / `check_value_anchors.py`.
+> **Splice: historical for 2012–2023, the current roll for the live year.**
+> **2024 has no such fix** — there is no current-roll equivalent for it.
 >
 > **Do not silently smooth this.** A 909-account hole in the headline
 > neighbourhood produced an apparent $2.07B collapse where the real decline is
