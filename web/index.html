@@ -28,6 +28,18 @@
        natural/undeveloped land, excluded from the scale.</p>
   </div>
 
+  <!-- Temporal lens (SPEC_temporal.md phase 3): the pinned readable version of
+       the hover sparkline. Left column under the title — the one region no other
+       chrome claims, so pinning a panel never buries a control. Hidden until a
+       hood is clicked, and full-build only (the fetch that fills it is gated). -->
+  <div id="temporal" class="panel">
+    <button id="temporal-close" aria-label="Close the assessment-history panel">&times;</button>
+    <div id="temporal-name"></div>
+    <div id="temporal-chart"></div>
+    <div id="temporal-read"></div>
+    <p id="temporal-note"></p>
+  </div>
+
   <div id="controls">
   <!-- Two-level metric picker. Row 1 = WHICH QUANTITY (Revenue | Value); row 2 =
        for revenue only, WHICH CLASSES. The nesting is the data's own shape, not
@@ -290,6 +302,12 @@
     // Status manifest (provenance + optional maintenance banner). no-store so a
     // banner the backend sets is picked up without waiting out CDN caching.
     const STATUS_URL = "./data/status.json";
+    // Temporal lens: hood x year assessment history (SPEC_temporal.md). The file
+    // ships to the PUBLIC root even though the public build never fetches it —
+    // /full/ is index.html alone under `<base href="../" />`, so this path
+    // resolves to the root copy. It is not dead weight there; it is the copy the
+    // full build reads. (89 kB against a 7.7 MB payload.)
+    const TEMPORAL_URL = "./data/temporal.json";
     // Staleness fallback (docs/RUNBOOK.md §3). The backend banner only ever
     // appears if a run SET it — but the failure we most need to surface is the
     // pipeline not running AT ALL (GitHub auto-disables cron workflows after 60
@@ -977,6 +995,8 @@
     let transitStationsFetch = null; // in-flight fetch guard; missing file => no dots
     let lrtLinesData = null;         // lazy-fetched LRT track lines (transit on)
     let lrtLinesFetch = null;        // in-flight fetch guard; missing file => no lines
+    let temporalData = null;   // hood x year assessment history; missing file => lens absent
+    let pinnedHood = null;     // hood name shown in the pinned history panel, or null
 
     // Three neutral, luminance-sequential ramps to compare: dark = low, bright =
     // high, with no semantic good/bad hue (consistent with the linear-elevation
@@ -1973,7 +1993,7 @@
     //     text is the case actually reported.
     const CHROME_IDS = ["banner", "title", "views", "toggle", "optpanel",
                         "a11y", "a11y-menu", "about", "about-menu",
-                        "legend", "compass", "viewbtns"];
+                        "legend", "compass", "viewbtns", "temporal"];
     function chromeBoxes() {
       // The sweep works in deck-viewport pixels; getBoundingClientRect returns
       // CSS-viewport pixels. The canvas is the full window at 0,0 today so the
@@ -2384,10 +2404,207 @@
     const esc = s => String(s ?? "").replace(/[&<>"']/g, c =>
       ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
+    // --- temporal lens (SPEC_temporal.md phase 3) ----------------------------
+    // Assessed-value history per neighbourhood, 2012-2025: a sparkline in the
+    // hover tooltip as the glance, a click-to-pin panel as the readable version.
+    //
+    // TWO INVARIANTS THIS CODE EXISTS TO HOLD, both of which fail silently:
+    //   1. **2024 IS ABSENT AND MUST LOOK ABSENT.** The published year list is
+    //      deliberately non-contiguous (SPEC_temporal.md §0.2 — the City's
+    //      historical file is missing 2,448 accounts for 2024, and interpolating
+    //      a known hole is the exact failure this project guards against). So x
+    //      is scaled from the YEAR VALUE, never the array index, and the line is
+    //      drawn as SEGMENTS split at every gap rather than one polyline. Index
+    //      positioning would draw 2023->2025 as an ordinary step and hide the
+    //      hole; one polyline would bridge it.
+    //   2. **The y axis does NOT start at zero, so both ends are labelled.**
+    //      Most hoods are well under 1% of the city base — zero-basing would
+    //      flatten 406 of these to a straight line at the bottom and show
+    //      nothing. Scaling to the series' own range is what makes the shape
+    //      legible, and printing the min and max is what keeps that honest.
+    //      The sparkline can't carry labels at its size, so the muted row under
+    //      it prints first -> last instead.
+    //
+    // Integer-scaled on the wire (shares in ppm, values in $1k) — decode through
+    // `share_scale` / `value_unit` from the file, never hard-coded literals.
+    const TEMPORAL_SERIES = { share: 0, value: 1, commercial: 2 }; // row order in the file
+    const SPARK_W = 150, SPARK_H = 28;    // hover teaser, no axes
+    const TCHART_W = 300, TCHART_H = 96;  // pinned panel plot box (labels sit outside)
+
+    const fmtPct = v => v.toFixed(2) + "%";
+    // Assessment totals run $10M-$10B across hoods, so the unit has to follow
+    // the magnitude — "$0.06B" for a small hood reads as noise.
+    const fmtBig = v => v >= 1e9 ? "$" + (v / 1e9).toFixed(2) + "B"
+                      : v >= 1e6 ? "$" + (v / 1e6).toFixed(0) + "M"
+                                 : "$" + Math.round(v).toLocaleString();
+
+    // Decoded series for one hood, or null when the lens can't speak for it
+    // (no file, public build, or a name with no history row).
+    function temporalFor(name) {
+      if (!temporalData) return null;
+      const rows = temporalData.hoods[name];
+      if (!rows) return null;
+      const ss = temporalData.share_scale, vu = temporalData.value_unit;
+      return {
+        years: temporalData.years,
+        share: rows[TEMPORAL_SERIES.share].map(v => 100 * v / ss),
+        value: rows[TEMPORAL_SERIES.value].map(v => v * vu),
+        commercial: rows[TEMPORAL_SERIES.commercial].map(v => 100 * v / ss),
+      };
+    }
+
+    // Point coordinates plus the run boundaries, shared by both renderers so the
+    // teaser and the panel can never disagree about where the gap is. A run
+    // breaks wherever the year step exceeds the smallest step in the series —
+    // derived, not a hard-coded "2024", so the January roll-forward (which adds
+    // 2025 to the omitted set) needs no edit here.
+    function temporalGeom(t, w, h, pad) {
+      const ys = t.years, vals = t.share;
+      const x0 = ys[0], x1 = ys[ys.length - 1];
+      const lo = Math.min(...vals), hi = Math.max(...vals);
+      // A dead-flat series has no range to scale into; centre it instead of
+      // dividing by zero.
+      const span = hi - lo || 1;
+      const px = y => pad + (w - 2 * pad) * (x1 === x0 ? 0.5 : (y - x0) / (x1 - x0));
+      const py = v => pad + (h - 2 * pad) * (1 - (hi === lo ? 0.5 : (v - lo) / span));
+      const pts = ys.map((y, i) => [px(y), py(vals[i])]);
+      const step = ys.length > 1
+        ? Math.min(...ys.slice(1).map((y, i) => y - ys[i])) : 1;
+      const runs = [];
+      let run = [pts[0]];
+      for (let i = 1; i < ys.length; i++) {
+        if (ys[i] - ys[i - 1] > step) { runs.push(run); run = []; }
+        run.push(pts[i]);
+      }
+      runs.push(run);
+      // The skipped spans, for the panel's "no data" bands. Bounded at the
+      // half-step, so the band covers the MISSING years only: shading the whole
+      // 2023->2025 run would imply 2023 and 2025 are missing too, when they are
+      // the two years that bracket the hole.
+      const gaps = [];
+      for (let i = 1; i < ys.length; i++) {
+        if (ys[i] - ys[i - 1] > step)
+          gaps.push({ x0: px(ys[i - 1] + step / 2), x1: px(ys[i] - step / 2),
+                      years: ys[i] - ys[i - 1] - 1 });
+      }
+      return { pts, runs, gaps, lo, hi, px, py };
+    }
+
+    const runPath = r => "M" + r.map(p => `${p[0].toFixed(1)},${p[1].toFixed(1)}`).join("L");
+
+    // The hover teaser: line + a dot on the latest point. No axes, no band —
+    // at 26px tall a marker or an uncertainty band is invisible, which is the
+    // display-grain trap SPEC_temporal.md §8 records. The break in the line is
+    // the only gap signal the form can carry, and the row beneath names it.
+    function sparklineSvg(t) {
+      const g = temporalGeom(t, SPARK_W, SPARK_H, 3);
+      const last = g.pts[g.pts.length - 1];
+      return `<svg class="spark" width="${SPARK_W}" height="${SPARK_H}" `
+           + `viewBox="0 0 ${SPARK_W} ${SPARK_H}" aria-hidden="true">`
+           + g.runs.map(r => r.length === 1
+               ? `<circle cx="${r[0][0].toFixed(1)}" cy="${r[0][1].toFixed(1)}" r="1.6" fill="#fcd278"/>`
+               : `<path d="${runPath(r)}" fill="none" stroke="#fcd278" stroke-width="1.5" `
+                 + `stroke-linecap="round" stroke-linejoin="round"/>`).join("")
+           + `<circle cx="${last[0].toFixed(1)}" cy="${last[1].toFixed(1)}" r="2.2" fill="#fcd278"/>`
+           + `</svg>`;
+    }
+
+    // The pinned chart: same geometry, plus the things only a 300px box can
+    // hold — labelled y endpoints, first/last year ticks, and a shaded band
+    // over each omitted span.
+    function temporalChartSvg(t) {
+      // The y labels get their own left gutter rather than sitting over the plot:
+      // 2012 is near this series' maximum, so a label at x=0 landed straight on
+      // the line's first segment. The plot is computed at the narrower width and
+      // translated right by the gutter.
+      const W = TCHART_W, H = TCHART_H, GUT = 34;
+      const g = temporalGeom(t, W - GUT, H, 6);
+      const ys = t.years;
+      const bands = g.gaps.map(gp =>
+        `<rect x="${gp.x0.toFixed(1)}" y="0" width="${(gp.x1 - gp.x0).toFixed(1)}" `
+        + `height="${H}" fill="rgba(232,232,239,0.05)"/>`
+        // Rotated, because the band is only one year wide (~20px here) and
+        // "no data" set horizontally spilled out of it and onto the adjacent
+        // year's label. Turned on its side it fits the band's height instead,
+        // which is the usual way a narrow annotation band is labelled.
+        + `<text transform="rotate(-90 ${((gp.x0 + gp.x1) / 2).toFixed(1)} ${H / 2}) `
+        + `translate(0 3)" x="${((gp.x0 + gp.x1) / 2).toFixed(1)}" y="${H / 2}" `
+        + `fill="#6a6a80" font-size="9" text-anchor="middle">no data</text>`).join("");
+      const line = g.runs.map(r => r.length === 1
+        ? `<circle cx="${r[0][0].toFixed(1)}" cy="${r[0][1].toFixed(1)}" r="2" fill="#fcd278"/>`
+        : `<path d="${runPath(r)}" fill="none" stroke="#fcd278" stroke-width="1.75" `
+          + `stroke-linecap="round" stroke-linejoin="round"/>`).join("");
+      const last = g.pts[g.pts.length - 1];
+      // Both y labels, always — see invariant 2 above. Anchored to the plot's
+      // own top/bottom edge, so they read as the axis extent rather than as
+      // annotations on the two points that happen to sit there.
+      const ylab = [[9, g.hi], [H - 1, g.lo]].map(([y, v]) =>
+        `<text x="${GUT - 5}" y="${y}" fill="#6a6a80" font-size="9.5" `
+        + `text-anchor="end">${fmtPct(v)}</text>`).join("");
+      const xlab = `<text x="${GUT}" y="${H + 12}" fill="#6a6a80" font-size="9.5">${ys[0]}</text>`
+                 + `<text x="${W}" y="${H + 12}" fill="#6a6a80" font-size="9.5" `
+                 + `text-anchor="end">${ys[ys.length - 1]}</text>`;
+      return `<svg width="${W}" height="${H + 15}" viewBox="0 0 ${W} ${H + 15}" `
+           + `role="img" aria-label="Share of Edmonton's assessment base, `
+           + `${ys[0]} to ${ys[ys.length - 1]}">`
+           + ylab + xlab
+           + `<g transform="translate(${GUT},0)">${bands}${line}`
+           + `<circle cx="${last[0].toFixed(1)}" cy="${last[1].toFixed(1)}" `
+           + `r="2.6" fill="#fcd278"/></g></svg>`;
+    }
+
+    function openTemporal(name) {
+      const t = temporalFor(name);
+      if (!t) return;
+      pinnedHood = name;
+      const i = t.years.length - 1;
+      document.getElementById("temporal-name").textContent = name;
+      document.getElementById("temporal-chart").innerHTML = temporalChartSvg(t);
+      const peak = t.share.indexOf(Math.max(...t.share));
+      // Both denominators, named — a locked decision (SPEC_temporal.md §6):
+      // public reporting quotes the commercial share, so publishing only the
+      // total-base figure makes a correct number look wrong beside an article.
+      document.getElementById("temporal-read").innerHTML =
+        `<b>${t.years[i]}: ${fmtPct(t.share[i])}</b> of Edmonton's total assessment `
+        + `base · ${fmtBig(t.value[i])} assessed<br/>`
+        + `<b>${fmtPct(t.commercial[i])}</b> of the commercial base<br/>`
+        + `<span class="muted">peak share ${fmtPct(t.share[peak])} in ${t.years[peak]} · `
+        + `${t.years[0]} ${fmtPct(t.share[0])}</span>`;
+      // States the reason for the hole rather than leaving a mystery gap, and
+      // says outright that nothing was smoothed over it.
+      const contiguous = t.years[i] - t.years[0] + 1 === t.years.length;
+      document.getElementById("temporal-note").textContent = !contiguous
+        ? "2024 is omitted: the City's historical assessment file is missing "
+          + "2,448 accounts for that year. The gap is left as a gap — not interpolated."
+        : "";
+      document.getElementById("temporal").classList.add("open");
+      // The panel is a new obstacle for the label sweep, so re-cull now —
+      // otherwise hood names sit under it until the next camera move.
+      if (labelPool().length) overlay.setProps({ layers: buildLayers() });
+    }
+
+    function closeTemporal() {
+      if (!pinnedHood) return;
+      pinnedHood = null;
+      document.getElementById("temporal").classList.remove("open");
+      if (labelPool().length) overlay.setProps({ layers: buildLayers() });
+    }
+
+    // Click a hood to pin its history; click the pinned one again to unpin.
+    // Clicking ANOTHER hood re-pins rather than closing — pin-then-browse is the
+    // point of the panel. Empty-map clicks are deliberately inert: a pinned
+    // panel should take a deliberate dismissal (the x, Escape, or a second click
+    // on the same hood), not vanish on a stray click or the tail of a drag.
+    function temporalClick({ object }) {
+      const name = object && object.properties && object.properties.neighbourhood_name;
+      if (!name) return;
+      if (name === pinnedHood) closeTemporal(); else openTemporal(name);
+    }
+
     // Tooltip content is per-view (closure over `state`). money: active
     // metric + road supply + ratio. roads: road amount only. ratio: the full
     // synthesis (ratio + its two components), or why the hood is off-scale.
-    function tooltipFor({ object }) {
+    function viewTooltip({ object }) {
       if (!object) return null;
       const p = object.properties;
       const name = `<b>${esc(p.neighbourhood_name)}</b><br/>`;
@@ -2551,6 +2768,28 @@
         }
       }
       return { className: "tip", html };
+    }
+
+    // The sparkline rides on EVERY view's tooltip, appended here rather than in
+    // the six branches above. A hood's assessment history is a fact about the
+    // neighbourhood, not about the lens you happen to be in, and one wrapper is
+    // a smaller change than six edits that must then stay in step.
+    //
+    // It also carries the only hint that clicking does anything — click-to-pin
+    // is undiscoverable otherwise, the same reason the compass exists as visible
+    // buttons rather than relying on drag-rotate.
+    function tooltipFor(info) {
+      const tip = viewTooltip(info);
+      if (!tip) return null;
+      const t = temporalFor(info.object.properties.neighbourhood_name);
+      if (!t) return tip;   // no file, public build, or a hood with no history
+      const i = t.years.length - 1;
+      const gap = t.years.length > 1
+        && t.years[i] - t.years[0] + 1 > t.years.length;
+      return { ...tip, html: tip.html + sparklineSvg(t)
+        + `<span class="muted">${fmtPct(t.share[0])} → ${fmtPct(t.share[i])} `
+        + `of city base, ${t.years[0]}–${t.years[i]}`
+        + (gap ? " (2024 n/a)" : "") + ` · click to pin</span>` };
     }
 
     // Switch metric: rebuild layers and update the title/legend/toggle chrome.
@@ -3270,6 +3509,7 @@
         interleaved: true,
         layers: buildLayers(),
         getTooltip: tooltipFor,
+        onClick: temporalClick,
       });
       map.addControl(overlay);
 
@@ -3292,6 +3532,22 @@
       // orientation is most useful to someone who has just arrived. Async: the
       // map draws without waiting, and the layer appears when it lands.
       ensureReference();
+      // Temporal lens: FULL-only for now (SPEC_temporal.md §1 — it prototypes
+      // behind the work-in-progress badge). Fetched defensively and separately,
+      // like status.json: a missing or broken file leaves temporalData null, so
+      // the sparkline and the panel simply never appear and every other view
+      // still works. Not awaited — the map draws without it.
+      if (FULL_BUILD) {
+        fetch(TEMPORAL_URL)
+          .then(r => r.ok ? r.json() : null)
+          .then(d => { if (d && d.hoods && d.years) temporalData = d; })
+          .catch(() => {});
+      }
+      document.getElementById("temporal-close").addEventListener("click", closeTemporal);
+      // Escape closes the pinned panel. Keyboard dismissal matters more here than
+      // for the popovers: this one is opened by clicking the MAP, so a user who
+      // pinned it by accident has no obvious button to un-press.
+      document.addEventListener("keydown", e => { if (e.key === "Escape") closeTemporal(); });
       // The two bottom-right popovers (Display, Sources) open/close the same
       // way: the button toggles, a click outside closes, and opening one closes
       // the other — both menus expand upward into the same strip of screen, so

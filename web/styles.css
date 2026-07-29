@@ -346,6 +346,45 @@ html, body { margin: 0; height: 100%; background: #0a0a0f; }
    proportional to their share; the 2px gaps read as the tooltip surface. */
 .tip .mixbar { display: flex; gap: 2px; width: 190px; height: 8px; margin: 6px 0 5px; border-radius: 2px; overflow: hidden; }
 .tip .mixbar span { border-radius: 1px; }
+/* Hover sparkline (temporal lens teaser). No axes, no labels — the muted row
+   beneath it carries first→last, which is what makes an unlabelled line
+   readable at all. `display:block` so the SVG's inline-baseline gap doesn't
+   open a ragged space above the row. */
+.tip .spark { display: block; margin: 5px 0 3px; }
+/* ===================================================================
+   TEMPORAL LENS — the pinned assessment-history panel (SPEC_temporal.md §5).
+   A READING surface, not a control strip: 0.92 opacity like .tip / #banner /
+   #about-menu, and pointer-events restored (.panel turns them off) because it
+   owns a close button. Anchored top-left under #title: the title's box was
+   MEASURED at 1440x900 across all five views and runs 176-179px tall (the blurb
+   wraps to ~8 lines at 360px), so 210px clears the tallest with air to spare.
+   The panel is ~265px tall and #botleft is bottom-anchored, so the two cannot
+   meet on a desktop viewport. A much longer blurb would break the clearance —
+   verify-temporal.js asserts both, so it fails loudly rather than overlapping.
+   =================================================================== */
+#temporal {
+  display: none; top: 210px; left: 22px; width: 300px; pointer-events: auto;
+  background: rgba(12,12,20,0.92); border: 1px solid #2a2a3a; border-radius: 6px;
+  padding: 10px 13px 9px; font-size: 11.5px; line-height: 1.5; color: #9a9ab0;
+}
+#temporal.open { display: block; }
+/* Absolute, not a flex row with the name: the name wraps on long hood names
+   (WÎHKWÊNTÔWIN, and the two-line ones), and a flex sibling would then either
+   ride down with it or squeeze it. */
+#temporal-close {
+  position: absolute; top: 4px; right: 6px; appearance: none; cursor: pointer;
+  background: none; border: 0; padding: 2px 5px; color: #6a6a80;
+  font: 17px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+#temporal-close:hover { color: #e8e8ef; }
+#temporal-name {
+  color: #fcd278; font-size: 12.5px; font-weight: 600; letter-spacing: 0.2px;
+  padding-right: 18px; /* clears the close button */
+}
+#temporal-chart { margin: 7px 0 6px; }
+#temporal-read b { color: #e8e8ef; font-weight: 600; }
+#temporal-read .muted { color: #6a6a80; }
+#temporal-note { margin: 7px 0 0; font-size: 10.5px; color: #6a6a80; }
 
 /* ===================================================================
    MOBILE CHROME SEAM (docs/MOBILE_USABILITY.md §3). Everything ABOVE is
@@ -405,4 +444,20 @@ html, body { margin: 0; height: 100%; background: #0a0a0f; }
      its scale are a fixed 200px, so they are unaffected. 175px reserves the
      right column plus both gutters. */
   #botleft { max-width: calc(100vw - 175px); }
+  /* The history panel becomes a bottom sheet. Its desktop home (under the
+     title) is where the control column lives on a phone, so keeping it there
+     would bury #views. It covers the legend and the compass while open, which
+     is acceptable in a way covering a control is not: the panel is opened by a
+     deliberate tap and closed by one, so nothing is hidden from someone who
+     didn't ask for it. z-index 4 sits above #title.expanded (3) and below the
+     open Sources pod (5). */
+  /* Near-opaque, unlike the 0.92 it uses on desktop. As a bottom sheet it sits
+     over the legend and BOTH bottom-right pods, and at 0.92 their labels
+     ("Data & Methods", "$50k+", the attribution) read straight through this
+     panel's own text. Same lesson as #about-menu, one step further: 0.92 is
+     enough over the map, not over other chrome. */
+  #temporal {
+    top: auto; bottom: 8px; left: 8px; right: 8px; width: auto; z-index: 4;
+    background: rgba(10,10,16,0.985);
+  }
 }
