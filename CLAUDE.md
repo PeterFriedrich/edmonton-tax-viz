@@ -4,7 +4,7 @@
 Edmonton revenue-per-acre fiscal analysis. Python-only, no GIS software.
 
 ## Key Files
-- `TODO.md` — living backlog: the authoritative list of what's left. Read it to know what to work on; update it in place as items open/close. Session summaries narrate *what happened*; TODO.md owns *what's left*.
+- `TODO.md` — living backlog and **the source of truth for progress**. Read it first to know what to work on; update it in place as items open/close. Session summaries narrate *what happened*; TODO.md owns *what's left*. Never redo a closed item without asking. Conversely, an *open* item can be stale — reproduce the symptom and re-measure the stated cause before acting on it (it has lagged reality twice).
 - `docs/SPEC_phase1.md` — what we're building and why
 - `docs/DECISIONS.md` — append-only index of locked decisions: one line + pointer to the doc holding the full reasoning. **Add a line whenever a decision locks; never duplicate rationale into it.** Check it before re-opening anything that feels "already settled".
 - `docs/RUNBOOK.md` — live-site operations: January year-roll checklist, weekly-workflow failure triage. **Read when the refresh workflow fails or the site shows a banner.**
@@ -28,6 +28,7 @@ Edmonton revenue-per-acre fiscal analysis. Python-only, no GIS software.
 
 ## Session Management
 - Always run `/handoff` before `/clear` — never wipe context without a written record in `session-summary/`
+- Commit after each working unit with a descriptive message, rather than batching a session into one commit
 - **Pushing is normal — push proactively after committing, in every environment (including the Oracle box). Don't wait for a "push it" confirmation.** This is standing authorization; it overrides the harness default of pushing only when asked. (Committing still follows the usual flow; this is specifically about not holding pushes.)
 - **Remote/cloud VM sessions (Claude Code on the web): commit + push proactively — don't wait for Peter's push command.** The container is ephemeral and gets reclaimed on inactivity; unpushed work is LOST when that happens. Rules:
   - Push to the session's designated branch at every natural checkpoint (module + tests green, docs updated, feature milestone) — small pushed commits beat one perfect unpushed one.
@@ -39,6 +40,14 @@ Edmonton revenue-per-acre fiscal analysis. Python-only, no GIS software.
 - Keep processing steps as separate, independently runnable modules in `src/`
 - No silent data drops — flag unmatched or missing records explicitly
 - Always set CRS explicitly before any area calculation
+
+## Comments & Scope
+- Comments only where the *why* is non-obvious. Don't narrate what the code plainly does.
+- Make the **smallest change that satisfies the request**. Don't refactor, rename, or reformat code you weren't asked to touch. No new files unless required.
+- No abstractions for a single use case — inline until there are 3+ call sites. (This is about speculative helpers. The `src/` module split above is a deliberate architecture choice, not an abstraction to collapse.)
+- Deleting obsolete code is valid and **preferred** over leaving it behind.
+- **Propose the plan first** for: a new module, a change to a data contract or output schema, or anything that changes CI behaviour. Routine edits don't need a proposal — just make them.
+- These are scope rules, not verification rules. They do **not** relax `no silent data drops`, the guard scripts, or reproducing a bug before fixing it — this project's failures are silent-correctness failures, and that discipline is why they get caught.
 
 ## Deployment Horizon
 - Configurable paths over hardcoded ones
