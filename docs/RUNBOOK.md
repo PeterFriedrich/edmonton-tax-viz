@@ -67,9 +67,30 @@ time.
    `data/franchise_rates.json` — these are forward-looking modeled bills,
    deliberately independent of the roll year. When they do bump, the
    legend/blurb year in `web/index.html` rides along (see main.py comments).
-8. **Run `pytest tests/ -q`, commit, push**, then trigger the workflow
+8. **Re-pin the temporal baseline: `python scripts/check_temporal_years.py
+   --write-baseline`** (`docs/SPEC_temporal.md` §0.3). The baseline pins settled
+   historical years and deliberately **excludes whatever year was live when it
+   was written**. After the roll, last year is no longer live, is not in the
+   baseline, and the guard reports it `not pinned` — a **warning, not a
+   failure**, by design. Re-pinning closes it. ⚠️ **Read the guard's output
+   BEFORE re-pinning, never after**: `--write-baseline` overwrites the bands
+   with whatever the data now says, so re-pinning first would erase the very
+   drift the guard exists to show you.
+   - **The archive needs NO action.** `refresh.yml` captures the live year on
+     every run and freezes it automatically once the roll moves on
+     (`src/load_temporal.write_archive`) — deliberately, because a step
+     performed once at a date months away is a step that does not happen. **Do
+     confirm `data/temporal_archive.json` gained last year's entry** before the
+     roll: the current roll covers exactly one year, so a year not captured in
+     time is unrecoverable.
+   - **If the guard HARD-FAILS (exit 5) on a settled year losing accounts, do
+     NOT re-pin.** That is the 2024 defect recurring. Re-run
+     `tools/audit_historical_roll_gaps.py`, and if confirmed add the year to
+     `HISTORICAL_DEFECT_YEARS` in `src/load_temporal.py` — which drops it from
+     the published series unless the archive already holds it.
+9. **Run `pytest tests/ -q`, commit, push**, then trigger the workflow
    ("Run workflow" on refresh.yml) and confirm it regenerates + deploys.
-9. **Clear the banner:** `python scripts/generate_status.py --clear-banner`,
+10. **Clear the banner:** `python scripts/generate_status.py --clear-banner`,
    commit, push. ⚠️ The banner is *preserved* across runs unless explicitly
    cleared (by design, so a manual notice isn't wiped by the heartbeat) — the
    realigned weekly run will NOT clear it for you. Note: the banner change
@@ -117,6 +138,26 @@ Triage by which step failed, in the run log:
   `data/expected_value_anchors.json`. Moves in the benign direction (fewer
   ineligible points, a flatter distribution) only warn. **The January year-roll
   is the most likely trigger** — see §1.
+- **"Check temporal years"** (exit 5, `scripts/check_temporal_years.py`) — the
+  assessment *time series* failed a control. Like the guards above it runs before
+  the status manifest, so the heartbeat stays unbumped and the site serves
+  last-good data. The error lists every failed check by name; the three that
+  matter:
+  - **`years: UNEXPECTEDLY PRESENT [2024]`** — a year we omit *by decision*
+    (`DECISIONS.md` 2026-07-28) reached the series. Something republished a slice
+    known to be missing 2,322 accounts. Do not "fix" the gap; find what changed.
+  - **`<year>.n_accounts … a settled year LOST …`** — the 2024 defect recurring
+    on a different year. **Do NOT re-pin.** Re-run
+    `tools/audit_historical_roll_gaps.py` (~20 min, the exact account-level
+    control), and if confirmed add the year to `HISTORICAL_DEFECT_YEARS` in
+    `src/load_temporal.py`.
+  - **`archive: <year> … the captured copy is not being used`** — the archive
+    holds a year but the defective historical slice is being served instead.
+    Check `data/temporal_archive.json` is present and committed.
+
+  Benign moves (a settled year *gaining*, an unpinned year) only warn. **The
+  January year-roll is the expected trigger for the "not pinned" warning** — §1
+  step 8.
 - **"Regenerate web GeoJSON"** — read the traceback; the loaders hard-error
   deliberately on upstream schema drift rather than publishing wrong numbers.
   Usual fixes are extending an explicit mapping: `ZONE_CATEGORY`
