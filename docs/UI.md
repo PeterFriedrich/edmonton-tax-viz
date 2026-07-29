@@ -1162,3 +1162,92 @@ applied on entry, the spikes inherited whatever `state.prismOpacity` last held:
 it to 50 makes entry deterministic and lets the neutral hood plane read through
 the spikes. The slider still shows in grid mode, so it is a starting point, not
 a fixed value like Glass's 60%.
+
+## The temporal lens lands: sparkline + pinned history panel (2026-07-29)
+
+Phase 3 of `SPEC_temporal.md`, and the last piece of that lens — the data side
+shipped 2026-07-28. Two surfaces: a **sparkline on the hover tooltip** as the
+glance, and **`#temporal`**, a click-to-pin panel, as the readable version. The
+split was already decided; **the panel's design was the open item**, and it is
+settled in `SPEC_temporal.md` §2 (a table of six choices with their reasons).
+The short version of the layout:
+
+- **Left column under `#title`, `top: 210px`.** The only region no other chrome
+  claims, so pinning cannot bury a control. The offset was **measured, not
+  estimated** — the title's box runs 176–179px across all five views because the
+  blurb wraps to ~8 lines at 360px, and the first pass at 128px overlapped it.
+  `verify-temporal.js` asserts clearance against `#title`, `#botleft` and
+  `#controls`, so a future longer blurb fails a check instead of overlapping.
+- **Three dismissals: the ×, Escape, a second click on the pinned hood.**
+  Clicking *another* hood re-pins — pin-then-browse is the point — and an
+  **empty-map click is deliberately inert**, so the panel can't vanish on the
+  tail of a drag. Escape earns its place here more than on the popovers: this
+  panel is opened by clicking the *map*, so there is no button to un-press.
+- **Phone: a bottom sheet.** Its desktop home is where the control column lives
+  at ≤640px. It covers the legend and both bottom-right pods, which is fine in a
+  way covering a *control* is not — a deliberate tap opens it and a deliberate
+  tap closes it.
+
+### The sparkline goes on every view's tooltip, in one wrapper
+
+`tooltipFor` is now a thin wrapper over the old per-view body (renamed
+`viewTooltip`) that appends the sparkline and one muted row. A hood's assessment
+history is a fact about the **neighbourhood**, not about the lens you happen to
+be in, and a teaser nobody sees in the view they're in is not a teaser. One
+wrapper is also a smaller change than six branch edits that must then stay in
+step. The row carries **`click to pin`** — the panel is undiscoverable otherwise,
+the same argument that made the compass visible buttons instead of relying on
+drag-rotate.
+
+### Two rendering invariants, both silent, both measured rather than eyeballed
+
+**1. 2024 must LOOK absent.** x is scaled from the **year value**, never the
+array index, and the line is drawn as **runs split at every gap** — so 2023→2025
+spans twice an ordinary step and no stroke bridges the hole. The shaded band
+covers the **missing year only** (half-step bounds); shading the whole 2023→2025
+run would claim 2023 and 2025 are missing too. The break is **derived from the
+year steps**, not from a hard-coded `2024`, so January's roll-forward needs no
+edit here.
+
+The reason this is a *verify* concern and not a *look at it* concern: on a
+13-point series, index positioning and a bridging polyline are **both invisible
+to the eye**. So the script measures — the 2023→2025 x-distance must be 2.00×
+an ordinary step, and no path may have points on both sides of the band.
+
+**2. The y axis is not zero-based, so both endpoints are labelled.** Most hoods
+are well under 1% of the citywide base; zero-basing would flatten 406 series to
+a flat line at the bottom and show nothing. Scaling to each series' own range is
+what makes the shape legible, and printing the min and max is what keeps that
+honest. The labels needed **their own left gutter**: at `x=0` the max label
+landed on the line, because 2012 is near Downtown's maximum.
+
+### Three things caught by looking at it, after the checks were green
+
+Worth recording because none of them were logic bugs, and all three were only
+visible in a screenshot:
+
+- **"no data" spilled out of the band.** The band was one year wide (~20px) and
+  the label set horizontally ran onto the adjacent year's tick. Rotated −90° it
+  fits the band's *height* instead — the usual way a narrow annotation band is
+  labelled.
+- **The band label collided with the last point.** Bottom-anchored text sat
+  exactly where Downtown's 2025 dot lands, because 2025 is that series' minimum
+  *and* the gap is the most recent span. Now vertically centred.
+- **The phone sheet was too transparent.** At the desktop `0.92` the legend and
+  both bottom-right pods read straight through the panel's text. `0.985` in the
+  media block. Recorded in `MOBILE_USABILITY.md` §1: **0.92 is enough over the
+  map, not over other chrome** — and on a phone almost anything full-width lands
+  on other chrome.
+
+### Gating
+
+`|| !FULL_BUILD` beside a defensive fetch, the established idiom: no file or a
+broken one leaves the lens simply absent and every other view working.
+**`web/data/temporal.json` still ships to the public root**, which looks like 89
+kB of dead weight and is not — `/full/` is `index.html` alone under
+`<base href="../" />`, so `./data/temporal.json` resolves to the root copy.
+Verified in the **built** tree (public root: zero requests for it; `/full/`: 200,
+no 4xx anywhere), because that is the same failure shape as the `styles.css` 404
+risk from the CSS extraction. `#temporal` is in `CHROME_IDS`, so the label sweep
+dodges it — and the panel re-runs the sweep on open and close rather than waiting
+for the next camera move.

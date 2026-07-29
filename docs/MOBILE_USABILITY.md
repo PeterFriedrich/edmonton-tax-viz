@@ -16,8 +16,18 @@ now)**, one deck.gl / MapLibre canvas. The viewport meta is already correct
 (`width=device-width, initial-scale=1`).
 
 **The phone seam is `@media (max-width: 640px)` at the END of `web/styles.css`**
-(one block; steps 1–2 of §3 shipped into it). It was inline in `index.html`
-until the CSS extraction — anything below that says `<style>` means that file.
+(one block; steps 1–2 of §3 shipped into it, plus the temporal bottom sheet).
+It was inline in `index.html` until the CSS extraction — anything below that says
+`<style>` means that file.
+
+**One measured lesson from the seam, worth having before the next rule
+(2026-07-29):** the history panel's desktop background is `rgba(12,12,20,0.92)`,
+the value every reading surface here shares. As a **bottom sheet** it sits over
+the legend and both bottom-right pods, and at 0.92 their labels ("Data &
+Methods", "$50k+", the MapLibre attribution) read straight *through* its own
+text — it needed 0.985. **0.92 is enough over the map; it is not enough over
+other chrome**, and on a phone almost anything full-width lands on other chrome.
+`#about-menu`'s comment records the first half of this lesson; this is the second.
 
 **Two layers, opposite answers to "can I separate mobile from desktop?":**
 
