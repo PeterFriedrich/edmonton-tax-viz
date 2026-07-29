@@ -59,9 +59,16 @@ git ls-files | grep -vE '\.(geojson|png|csv)$' | xargs wc -l | sort -n | tail -3
 - `session-summary/` — growing every `/handoff`; archive policy above keeps it bounded.
 - `docs/` — largest doc category; fine today, but if any single doc passes ~400 lines
   consider whether it should be sectioned or split.
-- `web/index.html` — a single self-contained file (HTML+CSS+JS). Comfortable now; if
-  it grows well past ~600 lines, splitting the `<script>` into a separate `.js` would
-  keep edits from re-reading the whole thing.
+- `web/index.html` (~3,600 lines, markup + JS) + `web/styles.css` (~400 lines). The
+  CSS was extracted 2026-07-29; the remaining JS block is ~3,300 lines.
+  **⚠️ Splitting it further is NOT a token lever — this was measured, and the
+  intuition here was wrong.** The whole file is ~57k tokens, but it is read in
+  grep-located windows of 100–400 lines (~2–6k), not end-to-end, so a split saves
+  almost nothing. Worse, the common change touches CSS + DOM node + JS handler
+  *together* (see almost any `DECISIONS.md` row), which post-split is three **file**
+  opens instead of three offsets into one file — marginally *more* expensive.
+  Split it for navigability, grep precision and blast radius if you like; do not
+  expect context savings. (`DECISIONS.md` 2026-07-29.)
 
 ## Going forward
 

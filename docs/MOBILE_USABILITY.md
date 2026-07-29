@@ -10,16 +10,21 @@ the split as items get verified.
 
 ## 1. Architecture: what can be separated, what can't
 
-The app is a single `web/index.html` (~3,200 lines), all inline CSS + JS, one
-deck.gl / MapLibre canvas. There are **zero `@media` queries today** and the
-viewport meta is already correct (`width=device-width, initial-scale=1`).
+The app is `web/index.html` (~3,600 lines of markup + JS) plus
+**`web/styles.css` (~400 lines — extracted 2026-07-29, all CSS lives there
+now)**, one deck.gl / MapLibre canvas. The viewport meta is already correct
+(`width=device-width, initial-scale=1`).
+
+**The phone seam is `@media (max-width: 640px)` at the END of `web/styles.css`**
+(one block; steps 1–2 of §3 shipped into it). It was inline in `index.html`
+until the CSS extraction — anything below that says `<style>` means that file.
 
 **Two layers, opposite answers to "can I separate mobile from desktop?":**
 
 | Layer | Separable? | Seam |
 |---|---|---|
 | The map render (deck.gl layers, colours, heights, spike grid, data logic) | **No — shared** | none; it's one WebGL canvas. Touch pan/zoom/pitch already work via deck.gl. Anything about *what's drawn* hits both platforms by construction. |
-| UI chrome (panels, control pods, legend, title, sizing, positioning) | **Yes — clean** | a `@media (max-width: …)` block appended to the END of `<style>`. Every rule inside fires only on small screens; the whole existing stylesheet stays the desktop baseline, untouched. Nothing in the media block can affect desktop. |
+| UI chrome (panels, control pods, legend, title, sizing, positioning) | **Yes — clean** | the `@media (max-width: 640px)` block at the END of `web/styles.css`. Every rule inside fires only on small screens; the whole existing stylesheet stays the desktop baseline, untouched. Nothing in the media block can affect desktop. |
 | Touch-specific interaction (tap/dismiss/gesture tuning) | **Yes — clean** | a JS branch guarded by `matchMedia('(pointer: coarse)')` — additive, desktop untouched. |
 
 **Takeaway:** the rendering is genuinely shared, but ~all real mobile-usability

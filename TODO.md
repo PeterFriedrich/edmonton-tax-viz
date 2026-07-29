@@ -1611,6 +1611,46 @@ _Last reconciled: 2026-07-28 (S76 — temporal decisions settled)_
   per-neighbourhood exempt share). Notebooks go in `notebooks/exploration/`; per
   global CLAUDE.md, use the Jupyter MCP server tools, not NotebookEdit.
 
+- [ ] **TWO PRE-EXISTING VERIFY FAILURES — found while verifying the CSS
+  extraction (2026-07-29), NOT caused by it.** Both reproduce identically on an
+  unmodified master build, and both assert values rather than layout, so neither
+  is a CSS/chrome problem. Nobody has triaged them; they may be stale
+  expectations rather than real bugs — **reproduce and re-measure the stated
+  cause before fixing** (`TODO.md` items go stale, and these are second-hand).
+  - [ ] `verify-ind-permits.js` — two failures: `plane colour matches
+    sqrt(ind_permits_per_acre / p97.5)` **want `148,39,97` got `140,37,97`**
+    (small, smells like a scale/percentile drift or a stale literal), and
+    `infill activity column is a residential metric` got
+    `new_units_per_acre_long`.
+  - [ ] `verify-glass-no-slider.js` — `[development] no slider on the
+    neighbourhood choropleth` fails. Note the 2026-07-25 decision removed the
+    Glass prism-opacity slider and the 2026-07-26 one moved `#coloradj`; the
+    assertion may simply predate them.
+  - ⚠️ **21 of 23 verify scripts are clean, so the suite is NOT green today** —
+    don't read a green run as proof; these two need to be either fixed or
+    explicitly waived.
+
+- [ ] **STAGE 2 of the `web/index.html` split — the JS into ES modules (NOT
+  started, and deliberately deferred).** Stage 1 (CSS → `web/styles.css`) shipped
+  2026-07-29, PR #116; see `DECISIONS.md` that date for the full reasoning.
+  Remaining: ~3,300 lines of JS in one block with **nine existing section
+  banners** (tunables, services lens, uses view, services view, base map,
+  development detail grid, infill lens, reference layers, money view) — the
+  structure is already latent, it just isn't expressed as files. Native ESM
+  (`<script type="module">` + relative imports) needs no bundler and works on
+  Pages.
+  - ⚠️ **Do NOT justify this on token savings — that was measured and is false.**
+    See `docs/TOKEN_EFFICIENCY.md` "Files to watch". Justify it on navigability,
+    grep precision and blast radius, or not at all.
+  - ⚠️ **`DEFAULT_BUILD` must stay in `index.html`** — `scripts/build_site.py`
+    regexes it there and hard-fails on anything but exactly one match. If the JS
+    moves, that literal stays behind or `build_site.py` moves with it.
+  - ⚠️ **11 verify scripts reference `index.html` directly** — that is where the
+    risk lives, and why this is a separate stage.
+  - **Gate: wait until stage 1 has actually helped** (the mobile-chrome work in
+    `MOBILE_USABILITY.md` §3 is the first real test of it). Don't do stage 2
+    speculatively.
+
 ## Done
 
 - [x] Revenue phase backend — per-property municipal levy + `revenue_per_acre`
