@@ -61,11 +61,20 @@ git ls-files | grep -vE '\.(geojson|png|csv)$' | xargs wc -l | sort -n | tail -3
    Look the symbol up, then read that range. **Regenerate rather than citing its
    line numbers** (they drift within a session; an `infillColorAt` citation
    drifted 16 lines in one day).
-   `tests/test_codemap.py` guards both silent failure modes — a **stale** map
-   (line numbers no longer matching) and a **blind** one (the extractor is a
-   regex, not a JS parser, so a function in an unmatched style would vanish from
-   the map with no warning). If the coverage test fails, fix the `SYMBOL`
-   pattern; do not delete the assertion — completeness is the map's whole value.
+   **Run `python tools/codemap.py` when you start, and again after editing
+   `web/index.html`.** It takes 40 ms. That — not a test — is how freshness is
+   handled: a stale map degrades *gracefully* (line numbers shift by the size of
+   the edit, and a 20-line drift inside a 178-line range still lands you in the
+   right function), so it is not worth a build failure.
+   ⚠️ **A staleness test was written and REMOVED the same day (2026-07-30).**
+   `pytest` is `refresh.yml`'s *"guard before regenerating"* step, so a red test
+   stops the weekly data refresh — no download, no regen, no deploy. **A
+   documentation artifact must never be able to halt the data pipeline.**
+   `tests/test_codemap.py` therefore tests the **extractor against current
+   source**, never the committed file: it guards the failure that actually
+   matters, the regex going **blind** (a function in an unmatched style vanishes
+   from the map with no warning). If that fails, fix the `SYMBOL` pattern; do not
+   delete the assertion — completeness is the map's whole value.
    Prior art, for the record: this is a hand-rolled **repo map** — the same idea
    as Aider's tree-sitter repo map, LSP `documentSymbol`, and `ctags`. Exuberant
    Ctags 5.8 *is* installed on the box but produces junk on this file (it
