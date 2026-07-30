@@ -1,5 +1,16 @@
 {
   "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.file_path // .tool_response.filePath // empty' | { read -r f; case \"$f\" in */web/index.html) cd \"${f%/web/index.html}\" && { [ -x .venv/bin/python ] && .venv/bin/python tools/codemap.py || python3 tools/codemap.py; } >/dev/null;; esac; } 2>/dev/null || true"
+          }
+        ]
+      }
+    ],
     "PreCompact": [
       {
         "hooks": [

@@ -61,11 +61,17 @@ git ls-files | grep -vE '\.(geojson|png|csv)$' | xargs wc -l | sort -n | tail -3
    Look the symbol up, then read that range. **Regenerate rather than citing its
    line numbers** (they drift within a session; an `infillColorAt` citation
    drifted 16 lines in one day).
-   **Run `python tools/codemap.py` when you start, and again after editing
-   `web/index.html`.** It takes 40 ms. That — not a test — is how freshness is
-   handled: a stale map degrades *gracefully* (line numbers shift by the size of
-   the edit, and a 20-line drift inside a 178-line range still lands you in the
-   right function), so it is not worth a build failure.
+   **Regeneration is AUTOMATIC** — a `PostToolUse` hook in `.claude/settings.json`
+   re-runs `tools/codemap.py` (40 ms) whenever `Edit`/`Write` touches
+   `web/index.html`, so the map is fresh without anyone remembering. It derives
+   the repo root from the edited file's path (no hardcoded checkout location, so
+   it works in the cloud VM too) and can never fail a tool call. Run
+   `python tools/codemap.py` by hand if you edit the file outside the tools, or
+   if `/hooks` is disabled.
+   Freshness is handled *there*, not by a test: a stale map degrades
+   *gracefully* (line numbers shift by the size of the edit, and a 20-line drift
+   inside a 178-line range still lands you in the right function), so it is not
+   worth a build failure.
    ⚠️ **A staleness test was written and REMOVED the same day (2026-07-30).**
    `pytest` is `refresh.yml`'s *"guard before regenerating"* step, so a red test
    stops the weekly data refresh — no download, no regen, no deploy. **A
