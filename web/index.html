@@ -304,9 +304,14 @@
     const STATUS_URL = "./data/status.json";
     // Temporal lens: hood x year assessment history (SPEC_temporal.md). The file
     // ships to the PUBLIC root even though the public build never fetches it —
-    // /full/ is index.html alone under `<base href="../" />`, so this path
-    // resolves to the root copy. It is not dead weight there; it is the copy the
-    // full build reads. (89 kB against a 7.7 MB payload.)
+    // /full/ is index.html alone, and the base-href tag build_site.py injects
+    // into it makes this path resolve to the root copy. It is not dead weight
+    // there; it is the copy the full build reads. (89 kB of a 7.7 MB payload.)
+    //
+    // Do NOT spell that tag out literally anywhere in this file: build_site.py
+    // guards against a pre-existing one with a plain substring test over the
+    // whole source, so the words in a COMMENT trip it and the deploy dies at the
+    // build step. That is what broke the deploy of 86dc681.
     const TEMPORAL_URL = "./data/temporal.json";
     // Staleness fallback (docs/RUNBOOK.md §3). The backend banner only ever
     // appears if a run SET it — but the failure we most need to surface is the
