@@ -132,14 +132,27 @@ on `state.labels`. Anything that reasons "labels off ⇒ no text layer" is wrong
 as of this date. Regional names win collisions via an explicit `prio`, because
 the sweep's existing priority key is polygon area and a Point has none.
 
-**A surface that is NOT in any tier — `#temporal`, the assessment-history panel
-(2026-07-29).** It belongs in this doc anyway, because it changes *what shows
-when*: it appears in **every view**, is **full-build only**, and — uniquely — is
-opened by clicking **the map itself** rather than by any control. Nothing in the
-three tiers gates it and it gates nothing; the only coupling is that it is in
-`CHROME_IDS`, so the label sweep dodges it while open. **If a fourth tier ever
-gets drawn, this is the first member: map-surface chrome.** Design and the two
-rendering invariants: `SPEC_temporal.md` §2.
+**`#hoodmode` — where a hood's detail appears (2026-07-30).** Tier 3, and the
+newest pod: `Readout: popup` / `Readout: panel`, label-is-the-state like
+`#coloradj` and sitting directly beneath it. Applies in **every view**;
+**full-build only**, and **hidden until `web/data/temporal.json` loads** — with no
+panel to switch to, the control would offer a mode that does not exist.
+
+It is the one control that changes **what the tooltip contains**: in panel mode
+every view's hover collapses to its **headline number only**, and the temporal
+sparkline + "click to pin" hint drop out. ⚠️ **That reduction is per-view
+explicit, NOT "row 0" of the tooltip** — services' rows lead with road metres
+whenever roads are present regardless of which service drives the ramp, so a
+positional rule would print road supply under a stormwater-coloured map.
+Services' headline reads `state.svcDriver`.
+
+**`#temporal`, the assessment-history panel (2026-07-29), is the surface it
+governs** — and it is no longer tier-less. It appears in every view, full-build
+only, and is still the only surface openable by clicking **the map itself**. It is
+in `CHROME_IDS`, so the label sweep dodges it while open. Three dismissals with
+deliberately different scopes: the **×** clears the pinned hood (content),
+**Escape** and **`#hoodmode`** leave the mode. Design and the two rendering
+invariants: `SPEC_temporal.md` §2.
 
 **All the inconsistencies in this table are now fixed.** `#toggle` used to stay
 live but inert outside Money (resolved by the regroup — old combo C), `#lens`

@@ -251,21 +251,29 @@ _Last reconciled: 2026-07-29 (S78 — temporal lens COMPLETE, all four phases sh
     average would be 0."* He is right, and the measurement turned up three things
     that outrank the hump. **Two recommendations this item previously carried were
     WRONG and are struck below.**
-  - ⚠️ **BLOCKER-SHAPED DECISION 1 — the measure that separates hoods is undefined
-    for the growth hoods. Peter's call.** ~~Recommend relative as the headline~~
-    — **struck.** `last/first` does not exist for **45 of 406 hoods (11%)** whose
-    2012 share is zero: Blatchford, Decoteau, Keswick, Glenridding Ravine,
-    Graydon Hill, Rosenthal, Stillwater, the Anthony Henday segments. **Those are
-    exactly the hoods a change map most needs to show.** But percentage-point
-    change, which *is* defined everywhere, **does not separate**: median hood
-    −0.032 pp vs Downtown −1.791 pp (**56×**), and **15% of hoods move under 0.01
-    pp in thirteen years** — so a pp choropleth is Downtown blazing over ~380
-    identical ones. Three paths, none free: (a) relative, with the 45 in the
-    established off-scale grey; (b) pp with a sqrt/rank transform — note that
-    rescales an unseparated metric rather than fixing it, and sits near the
-    linear-elevation honesty choice; (c) relative from each hood's first non-zero
-    year — defensible, but silently puts a 3-year and a 13-year change on one
-    ramp, **the comparability trap this project keeps meeting.**
+  - [x] ~~**DECISION 1 — which measure**~~ — **DECIDED 2026-07-30 (Peter):
+    RELATIVE change, with the 45 undefined hoods rendered in the established
+    off-scale grey and the reason stated.** Chosen over pp-with-a-sqrt-transform
+    because that would rescale a metric which genuinely does not separate rather
+    than fixing it — presentation papering over distribution, next door to the
+    linear-elevation honesty choice. Cost accepted: **45 grey holes, and they are
+    the new-growth areas** — visible absence rather than a wrong number. The
+    measured basis is `ANALYSIS_BACKLOG.md` §10; the short version of the bind:
+    - `last/first` **does not exist for 45 of 406 hoods (11%)** whose 2012 share
+      is zero — Blatchford, Decoteau, Keswick, Glenridding Ravine, Graydon Hill,
+      Rosenthal, Stillwater, the Anthony Henday segments. **Exactly the hoods a
+      change map most needs to show.**
+    - But percentage-point change, which *is* defined everywhere, **does not
+      separate**: median hood **−0.032 pp** vs Downtown **−1.791 pp** (**56×**),
+      and **15% of hoods move under 0.01 pp in thirteen years**. A pp choropleth
+      is Downtown blazing over ~380 visually identical hoods.
+    - **Rejected, for the record:** (b) pp with a sqrt/rank transform — see the
+      reason above; and (c) relative from each hood's first non-zero year, which
+      is defensible but silently puts a 3-year and a 13-year change on one ramp,
+      **the comparability trap this project keeps meeting.**
+    - ⚠️ **Still to settle when it is built: what the 45 grey hoods say on hover.**
+      "No 2012 baseline" is the honest phrasing; they are not set-aside land and
+      must not read as if they were.
   - **DECISION 2 — endpoints, and the hump needs a SECOND NUMBER, not a different
     one.** ~~Recommend measuring whether endpoints and OLS slope disagree~~ —
     **measured: rho +0.959 over all 406**, so they are near-duplicates; **+0.719
@@ -283,14 +291,25 @@ _Last reconciled: 2026-07-29 (S78 — temporal lens COMPLETE, all four phases sh
     Development view's window-picker idiom (`#devwindow`: 3yr/5yr/long)** — direct
     in-repo precedent for exactly this control — rather than a free year picker.
 
-- [ ] **UI: the pinned panel and the hover popup must not both be up — add an
-  explicit MODE toggle (Peter, 2026-07-30).** *"I don't want both the panel and
-  pop up appearing at the same time. So basically like a button that will convert
-  you to panel mode, or back to pop up mode (you could technically click dif
-  hoods in panel mode still, just obviously harder)."*
-  - **Popup mode** (today's default): the full hover tooltip, sparkline included.
-    **Panel mode**: a **reduced** tooltip + the panel. Clicking different hoods
-    still works in panel mode — Peter has already accepted that it is harder.
+- [x] ~~**UI: the pinned panel and the hover popup must not both be up — add an
+  explicit MODE toggle**~~ — **✅ DONE 2026-07-30** (Peter: *"I don't want both the
+  panel and pop up appearing at the same time… a button that will convert you to
+  panel mode, or back to pop up mode"*). `#hoodmode` in `#opt-body` beside
+  `#coloradj`, label-is-the-state (`Readout: popup` / `Readout: panel`), hidden
+  until `temporal.json` loads so it can never offer a mode that does not exist.
+  Regression net: **`tools/profiling/verify-hoodmode.js`, 31 checks.**
+  - **Three gestures, three distinct effects — the layering is the design:** the
+    **×** clears the pinned hood and stays in panel mode on its prompt; **Escape**
+    and **the button** leave the mode. A click in **popup** mode enters panel mode
+    *and* pins, which keeps the tooltip's own "click to pin" hint truthful.
+  - ⚠️ **This CHANGED `verify-temporal.js`'s contract** and the script caught it:
+    a second click on the pinned hood no longer *closes* the panel, it unpins and
+    leaves the prompt. Two expectations were rewritten deliberately (and made
+    stricter — inertness is now "state unchanged", not "stays closed").
+  - **Popup mode** (default): the full hover tooltip, sparkline included.
+    **Panel mode**: the tooltip reduced to the headline number + the panel.
+    Clicking different hoods still works in panel mode — Peter accepted that it
+    is harder.
   - [x] ~~**What happens to the readout in panel mode**~~ — **DECIDED (Peter,
     2026-07-30): the popup is NOT suppressed, it is REDUCED to just the primary
     metric.** *"reduce the popup to just the primary metric once you go panel."*
@@ -313,14 +332,15 @@ _Last reconciled: 2026-07-29 (S78 — temporal lens COMPLETE, all four phases sh
       `state.svcDriver`'s number.**
     - The set-aside and no-data branches already return a single muted line, so
       they pass through the reduction unchanged.
-  - **Where the button goes:** it is a Tier 3 modifier (applies in every view,
-    presentation not data), so its home is `#opt-body` beside `#coloradj` —
-    **not** the Display popover, which is accessibility. Note
-    `CONTROLS_MATRIX.md` §3 currently records `#temporal` as belonging to **no
-    tier**; this toggle is what gives it one, so update that entry.
-  - **Smaller open ends:** what panel mode shows before anything is pinned (a
-    "click a neighbourhood" hint, presumably); and whether the panel's `×` exits
-    panel mode or only clears the pin — pick one and make it consistent.
+  - [x] ~~**Where the button goes**~~ — `#opt-body` beside `#coloradj` (Tier 3:
+    applies in every view, presentation not data), **not** the Display popover,
+    which is accessibility. `CONTROLS_MATRIX.md` §3 updated: `#temporal` is no
+    longer tier-less, `#hoodmode` is its control.
+  - [x] ~~**The two smaller open ends**~~ — panel mode with nothing pinned shows
+    a **prompt** ("Click a neighbourhood to see its assessment history"), because
+    a button that appears to do nothing reads as broken; and the **× clears the
+    pin only**, since the button that put you in the mode is the one that takes
+    you out.
 
 - [ ] **UI BUG: the Display popover paints OVER the Data & Methods pod
   (Peter, 2026-07-28).** Bottom-right: opening **Display** covers the
