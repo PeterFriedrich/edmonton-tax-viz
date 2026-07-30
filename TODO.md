@@ -274,17 +274,31 @@ _Last reconciled: 2026-07-29 (S78 — temporal lens COMPLETE, all four phases sh
   pop up appearing at the same time. So basically like a button that will convert
   you to panel mode, or back to pop up mode (you could technically click dif
   hoods in panel mode still, just obviously harder)."*
-  - **Popup mode** (today's default): hover tooltips, sparkline included.
-    **Panel mode**: no tooltip at all; clicking a hood pins/re-pins the panel.
-    Clicking different hoods still works in panel mode — Peter has already
-    accepted that it is harder.
-  - ⚠️ **THE ONE REAL QUESTION: panel mode currently throws away the view's own
-    readout.** The tooltip is what carries `$248,462 / acre`, the residential
-    share, road metres — so suppressing it makes panel mode a *downgrade* in
-    every view, not a mode. **Recommend the panel also carry the current view's
-    metric row**, which makes it the readout surface and the mode a genuine
-    trade rather than a loss. Needs Peter's call; it is the difference between a
-    toggle and a feature.
+  - **Popup mode** (today's default): the full hover tooltip, sparkline included.
+    **Panel mode**: a **reduced** tooltip + the panel. Clicking different hoods
+    still works in panel mode — Peter has already accepted that it is harder.
+  - [x] ~~**What happens to the readout in panel mode**~~ — **DECIDED (Peter,
+    2026-07-30): the popup is NOT suppressed, it is REDUCED to just the primary
+    metric.** *"reduce the popup to just the primary metric once you go panel."*
+    So panel mode = a one-line hover (hood name + the view's headline number),
+    with the panel carrying the history. Better than either option that was put
+    to him: hovering stays useful while browsing hoods, and the objection was
+    never "two surfaces at once", it was **two dense blocks competing**.
+    - **The sparkline and the `click to pin` hint drop out entirely in panel
+      mode** — the panel already draws the chart, so the teaser would duplicate
+      it, and the hint is pointless once you are in the mode. Clean shape:
+      `tooltipFor` = `viewTooltip` (reduced when in panel mode) **plus** the
+      temporal block **only in popup mode**.
+    - ⚠️ **DO NOT implement the reduction as "keep row 1".** It happens to be
+      right for five of the six views — money, ratio, development, infill, and
+      uses (whose primary is the dominant-use label, the mixbar and composition
+      being the detail) — but **services is the exception**: its rows lead with
+      `road_m_per_acre` whenever roads are present, *regardless of which service
+      is driving the ramp*. A naive first-row rule would print road metres while
+      the colour is driven by stormwater. **Services' primary is
+      `state.svcDriver`'s number.**
+    - The set-aside and no-data branches already return a single muted line, so
+      they pass through the reduction unchanged.
   - **Where the button goes:** it is a Tier 3 modifier (applies in every view,
     presentation not data), so its home is `#opt-body` beside `#coloradj` —
     **not** the Display popover, which is accessibility. Note
