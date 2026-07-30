@@ -66,7 +66,7 @@ seven became modes of another view rather than top-level entries:
 
 | `#views` button | Internal view name(s) | Notes |
 |---|---|---|
-| **Money** *(default)* | `money`, **`glass`** | `glass` = the "100 m grid" `#moneydetail` mode. The Money button stays active in it. |
+| **Money** *(default)* | `money`, **`glass`**, **`change`** | `glass` = the "100 m grid" `#moneydetail` mode. **`change`** (2026-07-30) = the full-only "Change over time" `#moneymode` lens — share-of-base movement, a flat diverging choropleth. The Money button stays active in both. |
 | **Development** | `development`, **`infill`** | Moved to **second, next to Money** (2026-07-27, Peter). `infill` = the full-only "Infill opportunity" `#devmode` lens; the Development button stays active in it. |
 | **Services** 🔒 | `services` | Full build only — **LOCKED for release 2026-07-28**. |
 | **Ratio** 🔒 | `ratio` | Full build only — **LOCKED for release 2026-07-28**. |
@@ -176,8 +176,9 @@ has at least one section to show.
 
 | View / mode | Controls shown | Data-gate | Dynamic rules |
 |---|---|---|---|
-| **Money → Neighbourhood** | `#moneydetail` (Neighbourhood / 100 m grid); `#denom` headed **"Denominator"** | `#moneydetail` unconditional; `#denom` on `hasHoodLot` | `#coloradj` live (bottom of the panel); `#revcut` (in `#toggle`, on the map) offers the 3 revenue cuts |
-| **Money → 100 m grid** (`glass`) | same `#moneydetail`; `#denom` **relabelled "Spike denominator"** | `gridData.hasLot` | **no `#prism-row`** — opacity fixed at 60%, re-applied on entry (2026-07-25); `#coloradj` stays live; `#revcut` still offered (the grid carries the cut columns, `col >= 0` fallback) |
+| **Money → Neighbourhood** | `#moneymode` 🔒 (Current / Change over time); `#moneydetail` (Neighbourhood / 100 m grid); `#denom` headed **"Denominator"** | `#moneymode` on `FULL_BUILD && temporalData`; `#moneydetail` unconditional; `#denom` on `hasHoodLot` | `#coloradj` live (bottom of the panel); `#revcut` (in `#toggle`, on the map) offers the 3 revenue cuts |
+| **Money → 100 m grid** (`glass`) | same `#moneydetail`; `#denom` **relabelled "Spike denominator"** | `gridData.hasLot` | **no `#prism-row`** — opacity fixed at 60%, re-applied on entry (2026-07-25); `#coloradj` stays live; `#revcut` still offered (the grid carries the cut columns, `col >= 0` fallback); **no `#moneymode`** — it is a Detail choice, and the lens toggle returns to the prisms, never here |
+| **Money → Change over time** (`change`) 🔒 | `#moneymode`; `#chgwindow` (**Since 2012 / Since 2019**) | `FULL_BUILD && temporalData` — **doubly gated**, so the toggle can never offer a lens whose data is absent | **no `#moneydetail`** (no change grid), **no `#denom`**, **no `#toggle`** (the metric is share-of-base, not a money column), **`#coloradj` inert** (its own per-arm diverging clamp, like Infill). Leaving via `Current` lands on the **prisms**, never Glass |
 | **Services** | `#services` — 6 rows: Roads · Stormwater · Fire · Water/sewer · Transit · Service cost. Each = on/off checkbox + a "colour" driver radio | rows self-gate on their columns | radios appear only when **≥2** are checked; the driver always names a *checked* service (unchecking it hands the ramp on); fire/transit draw their dots whenever checked, driver or not |
 | **Ratio** | `#ratio-denom` (Per road metre / Per fire event / Per service $); `#prism-row` opacity slider, default 5% | `hasFire \|\| hasSvcCost` (else roads-only, control hidden) | **the only view that also shows the `#prism-hd` "Money plane" header** |
 | **Uses** 🔒 | `#uses-prisms` (Height = share zoned residential); `#prism-row` while prisms on, default 35% | — | legend swaps to categorical |
