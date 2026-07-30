@@ -216,6 +216,84 @@ _Last reconciled: 2026-07-29 (S78 — temporal lens COMPLETE, all four phases sh
     historical series that silently ends one year early each January is exactly
     the failure this project already guards against elsewhere.
 
+- [ ] **▶ TEMPORAL, ROUND 2 — "HOW MUCH HAS EACH HOOD CHANGED?" AS A MAP METRIC,
+  WITH SELECTABLE WINDOWS (Peter, 2026-07-30).** *"what I want is like, timelines
+  options, for how much each hood has changed on average over time… and spike
+  chloro map eventually. Like half the time going back, and all the way back in
+  the dataset."* The shipped lens answers **one hood at a time**; this asks the
+  same data for **all 406 at once**, which is where the fiscal story actually
+  reads off the map.
+  - **✅ NO PIPELINE WORK, NO NEW COLUMNS.** `web/data/temporal.json` (406 hoods
+    × 13 years, already in the browser in `/full/`) has everything. Derive the
+    change per hood **client-side** and join it onto `state.data.features` at
+    load. Consequence: switching windows recomputes instantly with no refetch —
+    and the whole family is **`/full/`-only**, like the lens it reads.
+  - ⚠️ **A SPIKE MAP AND A SIGNED METRIC CONTRADICT EACH OTHER — this is the main
+    design tension in the ask.** A prism cannot have negative height, and hoods
+    moved **both** directions. **In-repo prior art settled this once already:**
+    the Infill lens is a signed z-score and renders as a **flat plane with a
+    dark-centred diverging ramp**, not spikes (`infillColorAt`, teal =
+    opportunity / orange = pressure, `web/index.html:1564-1574`). Two honest
+    options: (a) **choropleth only**, reusing `infillColorAt` — cheapest, and
+    consistent with the one precedent; or (b) **height = |change|, colour =
+    direction**, which is legitimate but has to be *said*, because a tall spike
+    would then mean "moved a lot" in either direction. **Do not invent a third
+    ramp, and do not force a sequential one** — the existing ramps are
+    luminance-sequential by decision and cannot show a sign.
+  - ⚠️ **THE 2024 GAP BITES AGAIN, IN A NEW PLACE — likely the feature's one
+    silent bug.** "Average annual change" must divide by **years elapsed (13)**,
+    never by **observed intervals (12)**. The gap means those differ, so dividing
+    by intervals inflates every hood's annual rate by ~8%. Same class as
+    index-vs-year positioning in the chart, so **make it the first verify check.**
+  - **DECISION 1 — what "changed" means.** Share is already a percentage, so "%
+    change of a %" reads badly. Candidates: **percentage-point** change (Downtown
+    5.09% → 3.30% = **−1.79 pp**) — the fiscally literal statement, but a hood at
+    0.05% can never move more than 0.05 pp, so it structurally ranks by size; vs
+    **relative** change (**−35%**) — comparable across hood sizes, and what "how
+    much has it changed" usually means. **Recommend: relative as the headline,
+    pp as a second stated number** — the same both-numbers pattern already locked
+    for the total/commercial denominators.
+  - **DECISION 2 — endpoints or a fitted trend.** Endpoint-to-endpoint is one
+    subtraction and trivially explainable; an OLS slope is robust to a freak
+    start year, which endpoint arithmetic lets set the entire answer.
+    **Recommend endpoints (explainable beats clever here) — but MEASURE whether
+    the two disagree on rank before locking.** That is a measurable question, not
+    a taste one.
+  - **DECISION 3 — the windows.** "All the way back" = 2012→2025 (13 yrs). "Half
+    the time" ≈ 2019→2025 (the midpoint of 2012–2025 is 2018.5, so 2018 or 2019
+    — pick one and say why). **Use the Development view's window-picker idiom
+    (`#devwindow`: 3yr/5yr/long) — direct in-repo precedent for exactly this
+    control**, rather than a free year picker.
+  - **Gate: measure before building.** Compute the distribution first and check
+    the metric actually *separates* hoods instead of putting 400 of them inside
+    noise. Cheap, and it decides whether the map is worth drawing.
+    `ANALYSIS_BACKLOG.md` carries the question.
+
+- [ ] **UI: the pinned panel and the hover popup must not both be up — add an
+  explicit MODE toggle (Peter, 2026-07-30).** *"I don't want both the panel and
+  pop up appearing at the same time. So basically like a button that will convert
+  you to panel mode, or back to pop up mode (you could technically click dif
+  hoods in panel mode still, just obviously harder)."*
+  - **Popup mode** (today's default): hover tooltips, sparkline included.
+    **Panel mode**: no tooltip at all; clicking a hood pins/re-pins the panel.
+    Clicking different hoods still works in panel mode — Peter has already
+    accepted that it is harder.
+  - ⚠️ **THE ONE REAL QUESTION: panel mode currently throws away the view's own
+    readout.** The tooltip is what carries `$248,462 / acre`, the residential
+    share, road metres — so suppressing it makes panel mode a *downgrade* in
+    every view, not a mode. **Recommend the panel also carry the current view's
+    metric row**, which makes it the readout surface and the mode a genuine
+    trade rather than a loss. Needs Peter's call; it is the difference between a
+    toggle and a feature.
+  - **Where the button goes:** it is a Tier 3 modifier (applies in every view,
+    presentation not data), so its home is `#opt-body` beside `#coloradj` —
+    **not** the Display popover, which is accessibility. Note
+    `CONTROLS_MATRIX.md` §3 currently records `#temporal` as belonging to **no
+    tier**; this toggle is what gives it one, so update that entry.
+  - **Smaller open ends:** what panel mode shows before anything is pinned (a
+    "click a neighbourhood" hint, presumably); and whether the panel's `×` exits
+    panel mode or only clears the pin — pick one and make it consistent.
+
 - [ ] **UI BUG: the Display popover paints OVER the Data & Methods pod
   (Peter, 2026-07-28).** Bottom-right: opening **Display** covers the
   **Data & Methods** button sitting above it.

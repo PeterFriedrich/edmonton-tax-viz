@@ -569,6 +569,43 @@ Lens B.
 
 ---
 
+## 10. Does per-hood CHANGE in share-of-base actually separate the 406 hoods? (gate on a build — NEW 2026-07-30)
+
+**The question.** Peter wants "how much each hood has changed on average over
+time" as a **map metric** with selectable windows (`TODO.md`). Before drawing
+that map, answer the cheap prerequisite: **does the metric spread the hoods, or
+does it put ~400 of them inside noise with a handful of Downtown-scale outliers
+carrying the whole ramp?** A choropleth of a metric that doesn't separate is a
+uniform map with three bright cells.
+
+**Why it is cheap.** No new data. `web/data/temporal.json` is 406 hoods × 13
+years, already built; this is a pandas histogram, not a pipeline.
+
+**What to report, in this order:**
+1. Distribution of **relative** change (2012→2025) and of **percentage-point**
+   change. How many hoods fall inside ±1 pp? Inside ±10% relative?
+2. **Do the two rank hoods differently?** Spearman between them. The pp measure
+   structurally ranks by hood size (a hood at 0.05% cannot move 1 pp), so a high
+   correlation would be the surprise, not the expectation.
+3. **Endpoint vs OLS slope over the same window — Spearman.** If they agree,
+   endpoint arithmetic is safe and far easier to explain; if they disagree, some
+   hood's freak start year is setting its whole answer.
+4. Same three for the **short window** (2019→2025), and whether short and long
+   windows tell *different* stories — because if they don't, one picker option is
+   enough and the "timeline options" ask collapses to a simpler feature.
+
+⚠️ **Divide by YEARS ELAPSED (13), not observed intervals (12).** 2024 is omitted,
+so the two differ and using intervals inflates every annual rate by ~8%. Same
+trap as index-vs-year positioning in the sparkline; see `SPEC_temporal.md` §2.
+
+⚠️ **Watch the renamed hood.** OLIVER → WÎHKWÊNTÔWIN carries ~12,000 accounts. It
+is handled inside `build_temporal_table`, so the served file is already correct —
+but any *fresh* analysis that re-derives from the raw historical file must apply
+`TEMPORAL_NAME_CORRECTIONS` or it will report one hood collapsing to nothing and
+another appearing from nowhere.
+
+---
+
 ## Downtown's assessed value: real decline, but ~a third of the headline drop was a DATA DEFECT (NEW 2026-07-28, RESOLVED)
 
 Surfaced while checking whether a per-neighbourhood assessment time series was
