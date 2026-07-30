@@ -8,7 +8,9 @@ check `git` / `pytest` directly — do not restate it here, it only goes stale.
 Session summaries (`session-summary/`) are dated *narratives* of what happened and
 why. This file owns *what's left*. When they disagree, this file wins.
 
-_Last reconciled: 2026-07-29 (S78 — temporal lens COMPLETE, all four phases shipped)_
+_Last reconciled: 2026-07-30 (S78 — temporal lens COMPLETE and LIVE, readout-mode
+toggle shipped, change-metric measure decided. **One `▶` in this file, and it is
+the change-metric map.**)_
 
 ## Open work
 
@@ -232,8 +234,9 @@ _Last reconciled: 2026-07-29 (S78 — temporal lens COMPLETE, all four phases sh
     design tension in the ask.** A prism cannot have negative height, and hoods
     moved **both** directions. **In-repo prior art settled this once already:**
     the Infill lens is a signed z-score and renders as a **flat plane with a
-    dark-centred diverging ramp**, not spikes (`infillColorAt`, teal =
-    opportunity / orange = pressure, `web/index.html:1564-1574`). Two honest
+    dark-centred diverging ramp**, not spikes (`infillColorAt` / `INFILL_CENTER`
+    / `INFILL_POS` / `INFILL_NEG` in `web/index.html` — symbols, not line
+    numbers: those had already drifted 16 lines by the next day). Two honest
     options: (a) **choropleth only**, reusing `infillColorAt` — cheapest, and
     consistent with the one precedent; or (b) **height = |change|, colour =
     direction**, which is legitimate but has to be *said*, because a tall spike
@@ -359,10 +362,13 @@ _Last reconciled: 2026-07-29 (S78 — temporal lens COMPLETE, all four phases sh
     (`topmost=about-menu`) — extend it to the Display menu rather than writing
     a new script.
 
-- [ ] **▶ NEXT UP: mobile chrome, and it is NOT the blurb collapse — that already
-  shipped** (commit `0089eba`, "mobile chrome move 1"). Confirmed good on device
-  by Peter 2026-07-28. **Read `docs/MOBILE_USABILITY.md` §3 before starting; two
-  of its four steps are done.** What actually remains:
+- [ ] **Mobile chrome — and it is NOT the blurb collapse, that already shipped**
+  (commit `0089eba`, "mobile chrome move 1"). Confirmed good on device by Peter
+  2026-07-28. **Read `docs/MOBILE_USABILITY.md` §3 before starting; two of its
+  four steps are done.** (Was marked "▶ NEXT UP" through S74–S78 without ever
+  being started — it lost the slot to the temporal lens twice. Kept honest here:
+  the single **▶** now sits on the change-metric map, which is what Peter asked
+  for by value. This one is *ready*, not *next*.) What actually remains:
   - [ ] **Step 3 — the left-edge clip.** `#controls`/`#coloradj` render at
     left **-51**, `#toggle` at **-10**, i.e. off the left edge of a 390px screen.
     Wrap or shrink the widest rows so nothing renders at negative left.
