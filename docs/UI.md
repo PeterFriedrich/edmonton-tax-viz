@@ -1251,3 +1251,75 @@ no 4xx anywhere), because that is the same failure shape as the `styles.css` 404
 risk from the CSS extraction. `#temporal` is in `CHROME_IDS`, so the label sweep
 dodges it — and the panel re-runs the sweep on open and close rather than waiting
 for the next camera move.
+
+## Popup or panel: a readout mode, and why the popup shrinks instead of vanishing (2026-07-30)
+
+Peter, having used the shipped temporal lens: *"I don't want both the panel and
+pop up appearing at the same time. So basically like a button that will convert
+you to panel mode, or back to pop up mode."* Then, on being shown the cost:
+*"reduce the popup to just the primary metric once you go panel."*
+
+`#hoodmode` sits in `#opt-body` directly under `#coloradj`, shares all of its
+styling, and follows the same **label-is-the-state** idiom: `Readout: popup` /
+`Readout: panel`, gold when panel mode is engaged. Tier 3 — it applies in every
+view and is about presentation, not which data is shown. It is **hidden until
+`web/data/temporal.json` loads**, so it never appears in the public build: with no
+panel to switch to, the control would offer a mode that does not exist.
+
+### The decision that mattered was reduce, not suppress
+
+The obvious reading of "don't show both" is *suppress the tooltip in panel mode*.
+That would have been wrong, and the reason generalises: **the tooltip is the only
+thing carrying the view's own number** — `$248,462 / acre`, the residential share,
+road metres. Suppress it and panel mode goes blind in every view, so browsing
+hood to hood (the exact thing the panel is for) gets worse, not better. Peter's
+answer was better than either option put to him: keep the popup, **shrink it to
+the headline number**. The objection was never "two surfaces at once", it was
+**two dense blocks competing**.
+
+The sparkline and the `click to pin` hint also drop out in panel mode — the panel
+already draws the chart, and the hint would be advertising a mode you are in.
+
+### ⚠️ The reduction is per-view explicit, NOT "row 0"
+
+`primaryRow(p)` names each view's headline itself. The tempting one-liner — take
+the tooltip's first row — is right for money, ratio, uses, development and infill,
+and **wrong for services**, whose rows lead with `road_m_per_acre` whenever roads
+are present *regardless of which service is driving the ramp*. A positional rule
+would print road supply under a stormwater-coloured map. Services reads
+`state.svcDriver`.
+
+`verify-hoodmode.js` asserts **both halves** of that: that the services rows
+really do lead with roads (so the trap is real, not hypothetical), and that the
+headline nonetheless follows the driver. A check that only asserted the second
+half would still pass if someone quietly reordered the rows.
+
+### Three gestures, three scopes
+
+Deliberately layered, so none of them surprises:
+
+| gesture | effect |
+|---|---|
+| the panel's **×** | clears the pinned hood; **stays** in panel mode, showing its prompt |
+| **Escape** | leaves the mode entirely |
+| **`#hoodmode`** | leaves the mode entirely |
+| a **map click in popup mode** | enters panel mode *and* pins |
+
+That last row is what keeps the tooltip's own "click to pin" hint truthful, and
+makes the panel reachable without first finding the control. The button is then
+the way back — and the way in for someone who would rather not click the map.
+
+Panel mode with nothing pinned shows a **prompt** ("Click a neighbourhood to see
+its assessment history"), with the chart, read-out and the × all hidden. Entering
+a mode has to look like it did something, and an × that closes nothing is worse
+than no ×.
+
+### The verify script caught its own contract changing
+
+`verify-temporal.js` went red on exactly two checks, both intended: a second
+click on the pinned hood no longer *closes* the panel, it unpins and leaves the
+prompt. Both expectations were rewritten **deliberately, and one was made
+stricter** — inertness of an empty-map click is now asserted as "no part of the
+state moved" rather than "stays closed", which no longer depends on whatever state
+the preceding click happened to leave behind. Worth noting as the good case: the
+script did its job by disagreeing with the change, and the change was still right.

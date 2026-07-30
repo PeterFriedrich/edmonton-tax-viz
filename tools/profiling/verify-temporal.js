@@ -177,9 +177,16 @@ const [url] = process.argv.slice(2);
   await page.click('#center2d');
   await page.waitForTimeout(1500);
   const clicked = await page.evaluate(async () => {
+    // `empty` (panel open, nothing pinned) matters as much as `open` since the
+    // readout-mode toggle landed: clicking through no longer CLOSES the panel,
+    // it clears the pin and leaves the mode's prompt up. `mode` is read off the
+    // button label because state.hoodMode is a plain property of a top-level
+    // const, reachable here, but the label is what the user actually sees.
     const st = () => ({
       open: document.getElementById('temporal').classList.contains('open'),
+      empty: document.getElementById('temporal').classList.contains('empty'),
       name: document.getElementById('temporal-name').textContent,
+      mode: state.hoodMode,
     });
     // Pick a hood off the live viewport rather than guessing a pixel.
     const vp = overlay._deck.getViewports()[0];
@@ -218,12 +225,26 @@ const [url] = process.argv.slice(2);
   });
   check('deck picking reaches the hood layer', clicked.picked);
   if (clicked.picked) {
-    check('a map click pins that hood',
-      clicked.first.open && clicked.first.name === clicked.wantA, clicked.first.name);
+    check('a map click pins that hood, and enters panel mode',
+      clicked.first.open && !clicked.first.empty &&
+      clicked.first.name === clicked.wantA && clicked.first.mode === 'panel',
+      `${clicked.first.name} / ${clicked.first.mode}`);
     check('clicking ANOTHER hood re-pins instead of closing',
-      clicked.second.open && clicked.second.name === clicked.wantB, clicked.second.name);
-    check('a second click on the pinned hood unpins', !clicked.third.open);
-    check('an empty-map click is inert (no crash, stays closed)', !clicked.fourth.open);
+      clicked.second.open && !clicked.second.empty &&
+      clicked.second.name === clicked.wantB, clicked.second.name);
+    // CONTRACT CHANGED with the readout-mode toggle (2026-07-30): a second click
+    // still UNPINS, but it no longer closes the panel — the mode was not what was
+    // dismissed, so the prompt stays up. Tested as "unpinned AND still in the
+    // mode", which is a stricter claim than the old `!open`.
+    check('a second click on the pinned hood unpins but keeps panel mode',
+      clicked.third.open && clicked.third.empty && clicked.third.mode === 'panel',
+      `open=${clicked.third.open} empty=${clicked.third.empty} mode=${clicked.third.mode}`);
+    // Inertness stated as "nothing about the state moved", rather than the old
+    // "stays closed" — same claim, and it no longer depends on which state the
+    // preceding click happened to leave behind.
+    check('an empty-map click is inert (no crash, state unchanged)',
+      JSON.stringify(clicked.fourth) === JSON.stringify(clicked.third),
+      JSON.stringify(clicked.fourth));
   }
 
   // ---- mobile: the bottom sheet -------------------------------------------

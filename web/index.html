@@ -38,6 +38,10 @@
     <div id="temporal-chart"></div>
     <div id="temporal-read"></div>
     <p id="temporal-note"></p>
+    <!-- Shown instead of the chart while panel mode is on but nothing is pinned.
+         Entering the mode has to LOOK like it did something, or the button reads
+         as broken. -->
+    <p id="temporal-hint">Click a neighbourhood to see its assessment history.</p>
   </div>
 
   <div id="controls">
@@ -178,6 +182,14 @@
          sections it modifies. -->
     <div id="coloradj" class="panel">
       <button id="coloradj-btn" class="active" title="How colour is scaled — not what you're looking at. Click to switch: sqrt scaling spreads the values across the ramp; linear shows true magnitude (clamped at the top). Height stays linear either way.">Colour: sqrt scaling</button>
+    </div>
+    <!-- Where a neighbourhood's detail appears. Same "the label IS the state"
+         idiom as #coloradj above, and it sits beside it for the same reason:
+         both are about PRESENTATION, not which data is shown. Hidden until the
+         assessment history has loaded (full build only) — with no panel to
+         switch to, the control would offer a mode that does not exist. -->
+    <div id="hoodmode" class="panel">
+      <button id="hoodmode-btn" title="Where a neighbourhood's detail appears. Popup: hover for the full read-out plus an assessment-history sparkline. Panel: hover shows only the headline number, and clicking a neighbourhood pins its full assessment history in a panel you can read without holding the mouse still.">Readout: popup</button>
     </div>
     </div>
   </div>
@@ -981,6 +993,7 @@
                     devGrid: true, // Development-view 100 m detail grid (the default; off = the hood choropleth)
                     services: { roads: true, storm: false, fire: false, water: false, transit: false, servicecost: false },
                     svcDriver: "roads",
+                    hoodMode: "popup", // where a hood's detail appears: popup | panel
                     data: null };
     let overlay;         // deck.gl MapboxOverlay, created on map load
     let roadsData = null;  // lazy-fetched roads FeatureCollection
@@ -2562,6 +2575,7 @@
       const t = temporalFor(name);
       if (!t) return;
       pinnedHood = name;
+      document.getElementById("temporal").classList.remove("empty");
       const i = t.years.length - 1;
       document.getElementById("temporal-name").textContent = name;
       document.getElementById("temporal-chart").innerHTML = temporalChartSvg(t);
@@ -2588,10 +2602,36 @@
       if (labelPool().length) overlay.setProps({ layers: buildLayers() });
     }
 
+    // Un-pin. In PANEL mode the panel stays up showing its prompt, because the
+    // mode is not what was dismissed — the three gestures are deliberately
+    // layered: the x clears the CONTENT, the button and Escape leave the MODE.
     function closeTemporal() {
       if (!pinnedHood) return;
       pinnedHood = null;
-      document.getElementById("temporal").classList.remove("open");
+      const el = document.getElementById("temporal");
+      if (state.hoodMode === "panel") el.classList.add("empty");
+      else el.classList.remove("open");
+      if (labelPool().length) overlay.setProps({ layers: buildLayers() });
+    }
+
+    // Where a hood's detail appears. Leaving panel mode takes the panel with it;
+    // entering it opens the panel immediately — on its prompt if nothing is
+    // pinned, since a button that appears to do nothing reads as broken.
+    function applyHoodMode(mode) {
+      if (mode === state.hoodMode) return;
+      state.hoodMode = mode;
+      const panel = mode === "panel";
+      const btn = document.getElementById("hoodmode-btn");
+      btn.textContent = `Readout: ${panel ? "panel" : "popup"}`;
+      btn.classList.toggle("active", panel);
+      const el = document.getElementById("temporal");
+      if (panel) {
+        el.classList.add("open");
+        el.classList.toggle("empty", !pinnedHood);
+      } else {
+        pinnedHood = null;
+        el.classList.remove("open");
+      }
       if (labelPool().length) overlay.setProps({ layers: buildLayers() });
     }
 
@@ -2600,10 +2640,72 @@
     // point of the panel. Empty-map clicks are deliberately inert: a pinned
     // panel should take a deliberate dismissal (the x, Escape, or a second click
     // on the same hood), not vanish on a stray click or the tail of a drag.
+    //
+    // A click in POPUP mode switches modes as well as pinning. That keeps the
+    // tooltip's own "click to pin" hint truthful and makes the panel reachable
+    // without first finding the control — the button is then the way back out,
+    // and the way in for someone who would rather not click the map.
     function temporalClick({ object }) {
       const name = object && object.properties && object.properties.neighbourhood_name;
-      if (!name) return;
-      if (name === pinnedHood) closeTemporal(); else openTemporal(name);
+      if (!name || !temporalFor(name)) return;
+      if (name === pinnedHood) { closeTemporal(); return; }
+      applyHoodMode("panel");
+      openTemporal(name);
+    }
+
+    // Panel mode's one-line hover: the view's HEADLINE number and nothing else,
+    // so the panel is the only dense surface on screen (Peter, 2026-07-30 —
+    // "reduce the popup to just the primary metric once you go panel").
+    //
+    // ⚠️ NOT "row 0 of viewTooltip". That is right for five views but wrong for
+    // SERVICES, whose rows lead with road metres whenever roads are present
+    // regardless of which service drives the ramp — a positional rule would
+    // print road supply under a stormwater-coloured map. Each view names its own
+    // headline here explicitly, and services reads state.svcDriver.
+    function primaryRow(p) {
+      if (state.view === "services") {
+        const svc = {
+          roads:       [p.road_m_per_acre, v => `${v.toFixed(1)} road m / acre`],
+          storm:       [p.storm_charge_per_acre, fmtStorm],
+          fire:        [p.fire_events_per_acre, fmtFire],
+          water:       [p.water_charge_per_acre, v => fmtWater(v, p.water_fixed_per_acre)],
+          transit:     [p.transit_dep_per_acre, fmtTransit],
+          servicecost: [p.svc_cost_per_acre, fmtSvcCost],
+        }[state.svcDriver] || [];
+        return svc[0] == null
+          ? `<span class="muted">no ${SERVICES[state.svcDriver].label.toLowerCase()} data</span>`
+          : svc[1](svc[0]);
+      }
+      if (state.view === "uses") {
+        const c = dominantUse(p);
+        return c ? c.label : `<span class="muted">no zoning data</span>`;
+      }
+      if (state.view === "ratio") {
+        if (!ratioKept(p)) return `<span class="muted">no meaningful ratio</span>`;
+        return ratioDenom().fmt(ratioOf(p));
+      }
+      if (state.view === "development") {
+        const pa = p[devCol()];
+        return pa == null ? `<span class="muted">no permit data</span>` : fmtDev(pa);
+      }
+      if (state.view === "infill") {
+        if (p.is_set_aside)
+          return `<span class="muted">Set aside — off the scale</span>`;
+        const t = infillT(p);
+        if (t == null) return `<span class="muted">off the opportunity scale</span>`;
+        return t > INFILL_VERDICT_T ? "Room to add, quiet lately"
+             : t < -INFILL_VERDICT_T ? "More building than room suggests"
+             : "Activity ≈ room";
+      }
+      // money
+      if (p.is_set_aside)
+        return `<span class="muted">Set aside — ${esc(p.set_aside_reason)}</span>`;
+      const cfg = METRICS[state.metric];
+      const lot = state.denom === "lot";
+      const v = p[lot ? lotKey(state.metric) : cfg.key];
+      return v == null
+        ? `<span class="muted">too little parcel land for a lot-acre value</span>`
+        : `${cfg.fmt(v)} / ${lot ? "lot acre" : "acre"}`;
     }
 
     // Tooltip content is per-view (closure over `state`). money: active
@@ -2783,10 +2885,20 @@
     // It also carries the only hint that clicking does anything — click-to-pin
     // is undiscoverable otherwise, the same reason the compass exists as visible
     // buttons rather than relying on drag-rotate.
+    // In PANEL mode neither of those applies: the panel already draws the chart,
+    // so a sparkline would duplicate it and the hint would advertise a mode you
+    // are already in. The hover collapses to the headline number instead, which
+    // is what keeps hood-to-hood browsing useful while the panel stays the one
+    // dense surface.
     function tooltipFor(info) {
+      if (!info.object) return null;
+      const p = info.object.properties;
+      if (state.hoodMode === "panel")
+        return { className: "tip",
+                 html: `<b>${esc(p.neighbourhood_name)}</b><br/>` + primaryRow(p) };
       const tip = viewTooltip(info);
       if (!tip) return null;
-      const t = temporalFor(info.object.properties.neighbourhood_name);
+      const t = temporalFor(p.neighbourhood_name);
       if (!t) return tip;   // no file, public build, or a hood with no history
       const i = t.years.length - 1;
       const gap = t.years.length > 1
@@ -3542,17 +3654,31 @@
       // like status.json: a missing or broken file leaves temporalData null, so
       // the sparkline and the panel simply never appear and every other view
       // still works. Not awaited — the map draws without it.
+      // The mode control has nothing to switch to until this lands, so it ships
+      // hidden (in CSS) and is revealed inside the .then — not at load.
       if (FULL_BUILD) {
         fetch(TEMPORAL_URL)
           .then(r => r.ok ? r.json() : null)
-          .then(d => { if (d && d.hoods && d.years) temporalData = d; })
+          .then(d => {
+            if (!d || !d.hoods || !d.years) return;
+            temporalData = d;
+            document.getElementById("hoodmode").style.display = "flex";
+          })
           .catch(() => {});
       }
+      document.getElementById("hoodmode-btn").addEventListener("click", () =>
+        applyHoodMode(state.hoodMode === "panel" ? "popup" : "panel"));
+      // The x clears the PINNED HOOD; Escape leaves the MODE. Two gestures for
+      // two different things, so neither surprises: after the x you are still in
+      // panel mode looking at the prompt, and Escape is the one that gets you all
+      // the way out. Escape matters more here than for the popovers because panel
+      // mode can be entered by clicking the MAP, so someone who arrived by
+      // accident may never have seen the button.
       document.getElementById("temporal-close").addEventListener("click", closeTemporal);
-      // Escape closes the pinned panel. Keyboard dismissal matters more here than
-      // for the popovers: this one is opened by clicking the MAP, so a user who
-      // pinned it by accident has no obvious button to un-press.
-      document.addEventListener("keydown", e => { if (e.key === "Escape") closeTemporal(); });
+      document.addEventListener("keydown", e => {
+        if (e.key !== "Escape") return;
+        if (state.hoodMode === "panel") applyHoodMode("popup"); else closeTemporal();
+      });
       // The two bottom-right popovers (Display, Sources) open/close the same
       // way: the button toggles, a click outside closes, and opening one closes
       // the other — both menus expand upward into the same strip of screen, so

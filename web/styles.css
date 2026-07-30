@@ -54,7 +54,7 @@ html, body { margin: 0; height: 100%; background: #0a0a0f; }
 /* display:flex + interactivity on all real pods; border/bg chrome only on the
    top-level ones + the a11y popover. The inner coloradj/lens/layers read as
    borderless sections of the one #optpanel. */
-#toggle, #views, #optpanel, #coloradj, #a11y, #a11y-menu, #about, #about-menu {
+#toggle, #views, #optpanel, #coloradj, #hoodmode, #a11y, #a11y-menu, #about, #about-menu {
   display: flex; pointer-events: auto;
 }
 #toggle, #views, #optpanel, #a11y, #a11y-menu, #about, #about-menu {
@@ -98,14 +98,20 @@ html, body { margin: 0; height: 100%; background: #0a0a0f; }
    transform (scaleT) only and HIDES in the other views (greyed reads as
    broken — 2026-07-25). Height stays linear either way. */
 #coloradj { align-items: stretch; }
-#coloradj button {
+/* #hoodmode shares every rule below: same "the label IS the state" pod, one row
+   down. Hidden HERE rather than from JS — the shared display:flex above would
+   otherwise paint it for the moment before map load runs, and in the public
+   build (where the history is never fetched) it must never appear at all. JS
+   reveals it with an inline style once temporal.json lands. */
+#hoodmode { align-items: stretch; display: none; }
+#coloradj button, #hoodmode button {
   appearance: none; border: 0; background: transparent; color: #9a9ab0;
   font: 11.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   padding: 6px 12px; cursor: pointer; white-space: nowrap;
   transition: background 0.12s, color 0.12s;
 }
-#coloradj button:hover { color: #e8e8ef; }
-#coloradj button.active { background: #fcd278; color: #16111a; font-weight: 600; }
+#coloradj button:hover, #hoodmode button:hover { color: #e8e8ef; }
+#coloradj button.active, #hoodmode button.active { background: #fcd278; color: #16111a; font-weight: 600; }
 /* Fallback only: the pod hides where it doesn't apply (syncColorAdjust),
    so a dead-but-visible button should never paint. */
 #coloradj button:disabled, #coloradj button:disabled:hover {
@@ -384,7 +390,18 @@ html, body { margin: 0; height: 100%; background: #0a0a0f; }
 #temporal-chart { margin: 7px 0 6px; }
 #temporal-read b { color: #e8e8ef; font-weight: 600; }
 #temporal-read .muted { color: #6a6a80; }
-#temporal-note { margin: 7px 0 0; font-size: 10.5px; color: #6a6a80; }
+#temporal-note, #temporal-hint { margin: 7px 0 0; font-size: 10.5px; color: #6a6a80; }
+/* Panel mode is ON but nothing is pinned: the panel is a prompt, not a read-out.
+   The close button hides too — there is nothing to close, and an x that does
+   nothing is worse than no x. */
+#temporal-hint { display: none; }
+/* No top margin in the empty state: that 7px separates the note from the chart
+   above it, and with nothing above it is just dead space in a one-sentence box. */
+#temporal.empty #temporal-hint { display: block; margin-top: 0; }
+#temporal.empty #temporal-chart,
+#temporal.empty #temporal-read,
+#temporal.empty #temporal-note,
+#temporal.empty #temporal-close { display: none; }
 
 /* ===================================================================
    MOBILE CHROME SEAM (docs/MOBILE_USABILITY.md §3). Everything ABOVE is
