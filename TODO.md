@@ -18,8 +18,12 @@ archive and leave a `## Done` line.
 
 _Last reconciled: 2026-07-30 (S79 — the change-metric map is **BUILT, merged
 (#120) and LIVE**; measurement reversed two of its build notes mid-flight.
-**The `▶` moves to mobile chrome step 3**, carried unstarted since S74. Closed
-items archived the same day: 1,839 → 1,133 lines.)_
+**The `▶` moves to mobile chrome step 3**, carried unstarted since S74. Second
+half of the session was a context-cost pass: closed items archived here
+(1,839 → 1,141 lines), plus `docs/CODEMAP.md`, `tools/profiling/verify.js` and
+`TOKEN_EFFICIENCY.md` rules 5–9. The two pre-existing verify failures were
+**re-reproduced and their values confirmed current** — only the triage decision
+is left.)_
 
 ## Open work
 
@@ -1078,6 +1082,13 @@ items archived the same day: 1,839 → 1,133 lines.)_
   - ⚠️ **21 of 23 verify scripts are clean, so the suite is NOT green today** —
     don't read a green run as proof; these two need to be either fixed or
     explicitly waived.
+  - **✅ RE-REPRODUCED 2026-07-30 (S79), still failing identically** with the
+    change lens merged — so they are neither stale-and-self-healed nor caused by
+    anything since. The measured values above are CONFIRMED current, not
+    second-hand any more: `want 148,39,97 got 140,37,97`, and
+    `new_units_per_acre_long`. **The re-measure step this item asks for is DONE;
+    what remains is the triage decision (fix or waive).** Reproduce in one line:
+    `node tools/profiling/verify.js <url> glass-no-slider ind-permits`
 
 - [ ] **STAGE 2 of the `web/index.html` split — the JS into ES modules (NOT
   started, and deliberately deferred).** Stage 1 (CSS → `web/styles.css`) shipped
