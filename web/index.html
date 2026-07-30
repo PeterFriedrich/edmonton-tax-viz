@@ -74,6 +74,16 @@
     <button id="opt-fold" title="Show or hide the detail, denominator and colour-scaling controls">Options<span id="opt-caret">▾</span></button>
     <div id="opt-body">
   <div id="layers" class="panel">
+    <span class="hd" id="moneymode-hd">Lens</span>
+    <div id="moneymode">
+      <button data-moneymode="current" class="active" title="The current assessment roll — each neighbourhood's revenue or value per acre today">Current</button>
+      <button data-moneymode="change" title="How fast each neighbourhood's share of Edmonton's total assessment base moved over the chosen window — teal gained share, orange lost it. Grey neighbourhoods held no share in the first year, so there is nothing to measure against">Change over time</button>
+    </div>
+    <span class="hd" id="chgwindow-hd">Window</span>
+    <div id="chgwindow">
+      <button data-chgwindow="long" class="active" title="The whole assessment history (2012–2025) — the structural, era-long shift">Since 2012</button>
+      <button data-chgwindow="short" title="The recent half (2019–2025) — where the change is happening now. A seventh of neighbourhoods changed DIRECTION between the two windows">Since 2019</button>
+    </div>
     <span class="hd" id="moneydetail-hd">Detail</span>
     <div id="moneydetail">
       <button data-moneydetail="hood" class="active" title="Solid neighbourhood prisms — each hood's metric per acre (the default view)">Neighbourhood</button>
@@ -834,7 +844,30 @@
         blurb: null, // denominator-driven — see glassBlurb()
         opacity: 60, // FIXED translucency — the slider is hidden in Glass (2026-07-25)
       },
+      change: {
+        title: "Edmonton: Who Gained and Lost Assessment Share",
+        blurb: null, // window-driven — see changeBlurb()
+        opacity: null, // no prisms in this view
+      },
     };
+
+    // Change-lens blurb follows the window picker, so the years named in the
+    // text can never disagree with the years being measured.
+    function changeBlurb() {
+      const w = CHG_WINDOW_LABEL[state.chgWindow];
+      const y0 = CHG_WINDOWS[state.chgWindow];
+      return "Each neighbourhood is coloured by how fast its share of " +
+        "Edmonton's total assessment base moved over " + w + " — the average " +
+        "annual change relative to where it started, so a small hood doubling " +
+        "reads as strongly as a large one doubling. Teal = gaining share; " +
+        "orange = losing it. This is a SHARE of a growing pie, not a dollar " +
+        "value: a hood can lose share while its assessed value rises, which " +
+        "simply means the rest of the city rose faster. Colour saturates at " +
+        "each arm's 95th percentile. Grey = no " + y0 + " baseline — the " +
+        "neighbourhood held none of the assessment base that year, so there is " +
+        "nothing to measure change against; these are the new-growth areas, " +
+        "NOT set-aside land. Click any neighbourhood for its full history.";
+    }
 
     // Glass blurb follows the spike denominator (the layers-panel toggle). It no
     // longer promises a slider — Glass dropped that control 2026-07-25 and the
@@ -994,6 +1027,7 @@
                     services: { roads: true, storm: false, fire: false, water: false, transit: false, servicecost: false },
                     svcDriver: "roads",
                     hoodMode: "popup", // where a hood's detail appears: popup | panel
+                    chgWindow: "long", // change-lens window: long (2012–2025) | short (2019–2025)
                     data: null };
     let overlay;         // deck.gl MapboxOverlay, created on map load
     let roadsData = null;  // lazy-fetched roads FeatureCollection
@@ -1210,9 +1244,9 @@
     // (storm linear, fire sqrt); ratio = log $/metre.
     function legendGradient() {
       const N = 16, parts = [];
-      // Infill is a diverging scale (t from -1 at the left to +1 at the right),
-      // its own colour function — not the sequential ramp.
-      if (state.view === "infill") {
+      // Infill and Change are diverging scales (t from -1 at the left to +1 at
+      // the right) on their own colour function — not the sequential ramp.
+      if (state.view === "infill" || state.view === "change") {
         for (let i = 0; i <= N; i++) {
           const c = infillColorAt(-1 + 2 * (i / N));
           parts.push(`rgb(${c[0]},${c[1]},${c[2]}) ${Math.round((i / N) * 100)}%`);
@@ -1601,6 +1635,133 @@
       });
     }
     const fmtFar = v => v.toFixed(2) + " FAR";
+
+    // --- change lens: how each hood's share of the assessment base moved -----
+    // (SPEC_temporal.md round 2.) Derived ENTIRELY client-side from the
+    // already-loaded temporal.json — no pipeline work and no new columns — so
+    // switching windows recomputes from memory and never refetches.
+    //
+    // The metric is AVERAGE ANNUAL RELATIVE CHANGE in share-of-base, as a
+    // COMPOUND (geometric) rate:
+    //   (share_last / share_first) ** (1 / yearsElapsed) - 1
+    //
+    // ⚠️ GEOMETRIC, NOT ARITHMETIC — measured, not assumed. The arithmetic form
+    // ((last/first - 1) / years) is unusable on this data for two reasons:
+    //   1. It is UNBOUNDED above and bounded below. A share can fall at most
+    //      100% (-7.7%/yr over 13 years) but a hood emerging from a near-zero
+    //      2012 base rises without limit — the observed max is +2,076%/yr. The
+    //      p95 of the gaining arm is +485%/yr against 4.5%/yr losing: the two
+    //      arms of a DIVERGING ramp would differ by 108x, so teal would be
+    //      owned by a handful of new subdivisions and every ordinary hood would
+    //      sit invisibly at the centre.
+    //   2. It is asymmetric in the wrong direction: a doubling and a halving
+    //      should be equal and opposite on a diverging map, and arithmetically
+    //      they are +7.7%/yr vs -3.8%/yr.
+    // The compound form fixes both — it is bounded (max +54%/yr observed, arms
+    // 6x apart rather than 108x) and near-symmetric under doubling/halving. It
+    // is also simply what "average annual change" MEANS for a quantity that
+    // compounds, which a share of a growing base does.
+    //
+    // RELATIVE, not percentage-point, because pp does not separate: the median
+    // hood moves -0.032 pp against Downtown's -1.791 pp (56x) and 15% of hoods
+    // move under 0.01 pp in thirteen years, so a pp choropleth is Downtown
+    // blazing over ~380 identical hoods (ANALYSIS_BACKLOG.md §10). The accepted
+    // cost is that 45 of 406 hoods have a ZERO first-year share and no relative
+    // change exists for them at all — they render off-scale grey and say why on
+    // hover. Endpoints rather than a fitted slope: the two rank hoods almost
+    // identically (rho +0.959) and endpoints are the explainable pair. A hood
+    // that peaked mid-window needs a SECOND number, not a cleverer single one —
+    // the pinned panel already gives it peak value + peak year.
+    //
+    // ⚠️ ANNUALISE OVER YEARS ELAPSED, NEVER OVER OBSERVED INTERVALS. The 2024
+    // gap makes them differ: the long window spans 13 years but holds only 12
+    // intervals, so annualising over intervals inflates every hood's rate ~8%.
+    // Same class of silent bug as index-vs-year positioning in the chart, and
+    // verify-change.js asserts it first.
+    const CHG_WINDOWS = { long: 2012, short: 2019 };
+    const CHG_WINDOW_LABEL = { long: "2012–2025", short: "2019–2025" };
+
+    // Endpoint pair + elapsed years for one hood over the active window, or
+    // null when the lens can't speak for it at all. `rate` is null — NOT zero —
+    // whenever either endpoint is zero, and `reason` says which end failed:
+    // zeroing it would print "no change" over a hood that went from nothing to
+    // a subdivision. Both degenerate ends are treated the same way on purpose:
+    //   - first === 0: no baseline to measure against (45 hoods, the new-growth
+    //     areas) — a ratio needs a denominator.
+    //   - last === 0: no endpoint to measure to (1 hood, MILL WOODS GOLF
+    //     COURSE). A compound rate into zero evaluates to exactly -1 and would
+    //     print "-100.00% / yr", which is not what happened — the hood did not
+    //     shed 100% every year, it fell out of the base once. An off-scale hole
+    //     with the reason stated beats a number that is arithmetically true and
+    //     descriptively false.
+    function changeFor(name) {
+      const t = temporalFor(name);
+      if (!t) return null;
+      const i = t.years.findIndex(y => y >= CHG_WINDOWS[state.chgWindow]);
+      const j = t.years.length - 1;
+      if (i < 0 || i >= j) return null;
+      const first = t.share[i], last = t.share[j];
+      // Elapsed span, not (j - i) intervals — see the warning above.
+      const years = t.years[j] - t.years[i];
+      const out = { first, last, years, from: t.years[i], to: t.years[j], rate: null, reason: null };
+      if (!(first > 0)) out.reason = "no-baseline";
+      else if (!(last > 0)) out.reason = "no-endpoint";
+      else out.rate = Math.pow(last / first, 1 / years) - 1;
+      return out;
+    }
+
+    // Per-arm p95 clamps, cached per window. Per-arm for the same structural
+    // reason as infill: even compounded the arms are ~6x apart (p95 +37.7%/yr
+    // gaining against 6.5%/yr losing over the long window), because a hood can
+    // grow its share far faster than any hood can shed one. A single symmetric
+    // clamp of |rate| would leave the losing arm unable to saturate.
+    const _chgStats = {};
+    function chgStats() {
+      const w = state.chgWindow;
+      if (_chgStats[w]) return _chgStats[w];
+      const rates = state.data.features
+        .map(f => changeFor(f.properties.neighbourhood_name))
+        .map(c => c && c.rate)
+        .filter(v => v != null);
+      const pos = rates.filter(v => v > 0).sort((a, b) => a - b);
+      const neg = rates.filter(v => v < 0).map(v => -v).sort((a, b) => a - b);
+      return (_chgStats[w] = {
+        clampPos: pos.length ? quantile(pos, 0.95) || 1 : 1,
+        clampNeg: neg.length ? quantile(neg, 0.95) || 1 : 1,
+      });
+    }
+    // Clamped t in [-1,1]; null = off the scale (no baseline, or no history).
+    const chgT = p => {
+      const c = changeFor(p.neighbourhood_name);
+      if (!c || c.rate == null) return null;
+      const s = chgStats();
+      return c.rate > 0 ? Math.min(1, c.rate / s.clampPos)
+           : c.rate < 0 ? Math.max(-1, c.rate / s.clampNeg)
+           : 0;
+    };
+    // Two decimals: the median hood's rate is well under 1%/yr, and one decimal
+    // collapses most of the city onto the same printed number.
+    const fmtChg = r => (r > 0 ? "+" : "") + (100 * r).toFixed(2) + "% / yr";
+
+    // Flat plane — EXTRUDED IS FALSE BY DECISION, not by omission. A prism
+    // cannot have negative height and hoods moved both directions; the in-repo
+    // precedent for a signed metric is the infill plane, whose dark-centred
+    // diverging ramp this reuses (teal = gained share, orange = lost).
+    function changePlaneLayer() {
+      return new deck.GeoJsonLayer({
+        id: "change-plane",
+        data: state.data,
+        filled: true,
+        stroked: false,
+        extruded: false,
+        getFillColor: f => {
+          const t = chgT(f.properties);
+          return t == null ? SET_ASIDE_COLOR : infillColorAt(t);
+        },
+        pickable: false, // hood hover layer handles tooltips
+        updateTriggers: { getFillColor: [state.chgWindow] },
+      });
+    }
 
     // Fire-station context dots (SPEC_services.md "Fire lens"): 31 points,
     // drawn whenever the fire service is checked — driver or not, they are
@@ -2260,6 +2421,12 @@
         return [infillPlaneLayer(), hoodHoverLayer(), ...labelLayer()];
       }
 
+      if (state.view === "change") {
+        // Single flat diverging plane (share-of-base movement) + hover + labels,
+        // the same shape as Infill — the other signed lens.
+        return [changePlaneLayer(), hoodHoverLayer(), ...labelLayer()];
+      }
+
       if (state.view === "glass") {
         // The Urban3-infographic composition: translucent 100 m grid-cell
         // spikes over an opaque neutral hood plane. The plane carries
@@ -2697,6 +2864,15 @@
              : t < -INFILL_VERDICT_T ? "More building than room suggests"
              : "Activity ≈ room";
       }
+      if (state.view === "change") {
+        const c = changeFor(p.neighbourhood_name);
+        if (!c) return `<span class="muted">no assessment history</span>`;
+        if (c.reason === "no-baseline")
+          return `<span class="muted">No ${c.from} baseline</span>`;
+        if (c.reason === "no-endpoint")
+          return `<span class="muted">No ${c.to} share</span>`;
+        return fmtChg(c.rate) + " of share";
+      }
       // money
       if (p.is_set_aside)
         return `<span class="muted">Set aside — ${esc(p.set_aside_reason)}</span>`;
@@ -2831,6 +3007,33 @@
           `<span class="muted">mismatch ${score > 0 ? "+" : ""}${score.toFixed(2)} ` +
           `(z: suitability − activity)</span><br/>` +
           `<span class="muted">${fmtFar(p.far)} · ${fmtDev(act)}</span>` };
+      }
+
+      if (state.view === "change") {
+        const c = changeFor(p.neighbourhood_name);
+        if (!c)
+          return { className: "tip", html: name +
+            `<span class="muted">no assessment history</span>` };
+        // ONE LINE ONLY. tooltipFor appends the sparkline and its own
+        // "first% -> last% of city base, 2012–2025" footer to every view, so a
+        // second endpoint row here would print the same numbers twice — the
+        // duplication the panel-mode reduction exists to avoid.
+        //
+        // ⚠️ THE GREY HOODS MUST NOT READ AS SET-ASIDE LAND. The no-baseline
+        // ones are its opposite: new-growth areas that held none of the
+        // assessable base in the first year, which is exactly why no relative
+        // change exists for them. Naming the YEAR makes the absence checkable
+        // against the sparkline underneath rather than mysterious.
+        if (c.reason === "no-baseline")
+          return { className: "tip", html: name +
+            `<span class="muted">No ${c.from} baseline — held none of the ` +
+            `assessment base that year</span>` };
+        if (c.reason === "no-endpoint")
+          return { className: "tip", html: name +
+            `<span class="muted">Holds none of the assessment base in ` +
+            `${c.to} — off the scale</span>` };
+        return { className: "tip", html: name +
+          `${fmtChg(c.rate)} of its share <span class="muted">(${c.years} yr)</span>` };
       }
 
       // money view
@@ -3199,6 +3402,20 @@
         document.getElementById("legend-max").textContent = "suitable, quiet →";
         label.textContent = "Set aside / non-residential — off-scale";
         sw.style.background = `rgb(${SET_ASIDE_COLOR.join(",")})`;
+      } else if (state.view === "change") {
+        // Diverging, like infill. The bounds are the per-arm p95 clamps, printed
+        // as rates so the ramp's ends mean something concrete rather than
+        // "more"/"less". The aside swatch says NO BASELINE, never "set aside":
+        // these 45 hoods are new-growth areas that held no assessment base in
+        // the first year, and reading them as protected land would invert the
+        // story the map is told to carry.
+        const s = chgStats();
+        document.getElementById("legend-label").textContent =
+          `Average annual change in share of Edmonton's assessment base (${CHG_WINDOW_LABEL[state.chgWindow]})`;
+        document.getElementById("legend-min").textContent = "← " + fmtChg(-s.clampNeg);
+        document.getElementById("legend-max").textContent = fmtChg(s.clampPos) + " →";
+        label.textContent = `No ${CHG_WINDOWS[state.chgWindow]} baseline — off-scale`;
+        sw.style.background = `rgb(${SET_ASIDE_COLOR.join(",")})`;
       } else if (state.view === "ratio") {
         const s = ratioScale();
         // Bounds format per denominator: dollars for the $/unit denominators,
@@ -3385,6 +3602,49 @@
       if (target !== state.view) applyView(target);
     }
 
+    // Money's Current/Change lens toggle. Change is a full-only render-mode of
+    // Money (like Infill under Development): same #views button, different
+    // metric entirely. Returning to Current lands on the prisms, never Glass —
+    // Glass is a Detail choice and the Detail selector is hidden in Change, so
+    // restoring it would drop you somewhere you can't see you are.
+    function applyMoneyMode(mode) {
+      const target = mode === "change" ? "change" : "money";
+      if (target !== state.view) applyView(target);
+    }
+
+    // Switch the change lens's window. State-only when the lens isn't on screen,
+    // like every other picker; the per-window clamp cache means no recompute of
+    // a window already visited and never a refetch.
+    function applyChgWindow(w) {
+      if (w === state.chgWindow) return;
+      state.chgWindow = w;
+      document.querySelectorAll("#chgwindow button").forEach(b =>
+        b.classList.toggle("active", b.dataset.chgwindow === w));
+      if (state.view !== "change") return;
+      // Blurb before layers — the label sweep measures the title's live rect.
+      document.getElementById("title-p").textContent = changeBlurb();
+      overlay.setProps({ layers: buildLayers() });
+      refreshLegend();
+    }
+
+    // Reveal the Money lens toggle and the change window picker. Called from
+    // applyView AND from the temporal fetch's .then, because the file lands
+    // after the first applyView: without the second call the toggle would stay
+    // hidden until you left Money and came back (the same late-fetch trap
+    // syncPrismRow documents). The toggle is never shown before the data
+    // exists, so it can't offer a lens that isn't there.
+    function syncChangeControls() {
+      const v = state.view;
+      const show = (v === "money" || v === "change") && FULL_BUILD && temporalData != null;
+      document.getElementById("moneymode-hd").style.display = show ? "block" : "none";
+      document.getElementById("moneymode").style.display = show ? "flex" : "none";
+      document.querySelectorAll("#moneymode button").forEach(b =>
+        b.classList.toggle("active", b.dataset.moneymode === (v === "change" ? "change" : "current")));
+      const winShow = v === "change" && FULL_BUILD && temporalData != null;
+      document.getElementById("chgwindow-hd").style.display = winShow ? "block" : "none";
+      document.getElementById("chgwindow").style.display = winShow ? "flex" : "none";
+    }
+
     // Development's Housing/Infill lens toggle (full build only). Infill is a
     // full-only mode of Development — it shares the sub-metric/window pickers but
     // renders the suitability-vs-activity mismatch. applyView keeps the
@@ -3412,7 +3672,8 @@
       state.view = v;
       // Glass and Infill are render-modes of Money and Development (no #views
       // button of their own) — the parent view's button stays active in each.
-      const viewBtn = v === "glass" ? "money" : v === "infill" ? "development" : v;
+      const viewBtn = (v === "glass" || v === "change") ? "money"
+                    : v === "infill" ? "development" : v;
       document.querySelectorAll("#views button").forEach(b =>
         b.classList.toggle("active", b.dataset.view === viewBtn));
       // The metric picker (#toggle) is Money-scoped: shown only in Money/Glass,
@@ -3450,8 +3711,11 @@
       // The window toggle (5yr/3yr) needs the _3yr columns (pipeline 2026-07-13);
       // older data files carry only the base window and hide it.
       const devWindowShow = devViewsMetric && state.hasDevWindow;
+      // Change opens the panel for its own window picker (and for the lens
+      // toggle that gets you back out of it).
+      const changeShow = v === "change";
       document.getElementById("layers").style.display =
-        (prisms || v === "services" || v === "uses" || moneyDetailShow || moneyDenom || devMetricShow || devWindowShow) ? "flex" : "none";
+        (prisms || v === "services" || v === "uses" || moneyDetailShow || moneyDenom || devMetricShow || devWindowShow || changeShow) ? "flex" : "none";
       // Money's render toggle (Neighbourhood prisms vs 100 m glass grid).
       document.getElementById("moneydetail-hd").style.display = moneyDetailShow ? "block" : "none";
       document.getElementById("moneydetail").style.display = moneyDetailShow ? "flex" : "none";
@@ -3546,6 +3810,7 @@
       // The development sub-metric + window + spike pickers (mode-aware:
       // the age spikes hide metric/window — syncDevControls).
       syncDevControls();
+      syncChangeControls();
       // The development detail toggle — only where the grid file loaded
       // (post-fetch, like the glass denominator gate above).
       // Industrial is the only choropleth-only metric — the Detail toggle hides
@@ -3575,6 +3840,7 @@
         v === "ratio" ? ratioDenom().blurb :
         v === "uses" ? usesBlurb() :
         v === "development" ? devBlurb() :
+        v === "change" ? changeBlurb() :
         v === "infill" ? VIEWS[v].blurb : moneyBlurb();
       overlay.setProps({ layers: buildLayers() });
       syncColorAdjust(); // the sqrt toggle only bites in money + glass (scaleT)
@@ -3663,6 +3929,7 @@
             if (!d || !d.hoods || !d.years) return;
             temporalData = d;
             document.getElementById("hoodmode").style.display = "flex";
+            syncChangeControls(); // the file lands after the first applyView
           })
           .catch(() => {});
       }
@@ -3768,6 +4035,10 @@
         b.addEventListener("click", () => applyDevDetail(b.dataset.devdetail)));
       document.querySelectorAll("#devmode button").forEach(b =>
         b.addEventListener("click", () => applyDevMode(b.dataset.devmode)));
+      document.querySelectorAll("#moneymode button").forEach(b =>
+        b.addEventListener("click", () => applyMoneyMode(b.dataset.moneymode)));
+      document.querySelectorAll("#chgwindow button").forEach(b =>
+        b.addEventListener("click", () => applyChgWindow(b.dataset.chgwindow)));
       document.getElementById("uses-prisms-on").addEventListener("change",
         e => applyUsesPrisms(e.target.checked));
       document.querySelectorAll("#services .svc").forEach(el => {
