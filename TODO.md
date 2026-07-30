@@ -8,15 +8,19 @@ check `git` / `pytest` directly — do not restate it here, it only goes stale.
 Session summaries (`session-summary/`) are dated *narratives* of what happened and
 why. This file owns *what's left*. When they disagree, this file wins.
 
-_Last reconciled: 2026-07-28 (S76 — temporal decisions settled)_
+_Last reconciled: 2026-07-29 (S78 — temporal lens COMPLETE, all four phases shipped)_
 
 ## Open work
 
-- [ ] **ASSESSMENT-OVER-TIME GRAPH PER NEIGHBOURHOOD — full spec in
-  `docs/SPEC_temporal.md` (2026-07-28). Read that first; below is the backlog view.**
+- [x] ~~**ASSESSMENT-OVER-TIME GRAPH PER NEIGHBOURHOOD**~~ — **✅ COMPLETE
+  2026-07-29, live in `/full/`. All four phases shipped; `SPEC_temporal.md` has
+  nothing pending.** Read that spec before editing the lens: **§2** for the
+  panel's design and the two silent-failure rendering invariants, **§0** before
+  touching anything that reads the historical file. Regression net:
+  `tools/profiling/verify-temporal.js` (38 checks). The sub-items below are kept
+  as the record of how it was decided, not as work.
   Original ask (Peter, 2026-07-28): *"you mouse over and get a line graph of the
-  assessment value over time, for that hood."* **Feasibility proven; nothing
-  built, and Phase 0 is a hard gate.** The data exists and the
+  assessment value over time, for that hood."* The data exists and the
   aggregate is cheap — see `data/DATA.md` §"Property Assessment Data
   (Historical)". Measured, not assumed:
   - **`qi6a-xuwt` "Property Assessment Data (Historical)" — 14 years, 2012–2025,
@@ -40,10 +44,14 @@ _Last reconciled: 2026-07-28 (S76 — temporal decisions settled)_
     settled-by-Peter: this was decided on the merits in `SPEC_temporal.md` §2,
     NOT asked.** The touch argument makes it close to forced, and it is cheap to
     reverse, but it is mine. Say so if it comes up.
-  - [ ] **Genuinely still open: the pinned panel's DESIGN** — §2 settles the
-    split, not what the panel looks like or how it dismisses. Decide against the
-    current render, and add its chrome to `CHROME_IDS` or the label sweep will
-    paint hood names underneath it.
+  - [x] ~~**The pinned panel's DESIGN**~~ — **SETTLED 2026-07-29. Full table in
+    `SPEC_temporal.md` §2.** Left column under the title (`top: 210px`, measured
+    against a 176–179px title box, not estimated); dismisses three ways (×,
+    Escape, a second click on the pinned hood); clicking **another** hood re-pins
+    and an empty-map click is **inert**; the sparkline rides **every** view's
+    tooltip via one wrapper; phone = a near-opaque bottom sheet. ⚠️ **Attribution:
+    decided ON THE MERITS BY ME, not asked** (Peter's instruction was "just pick
+    the panel design"). Cheap to reverse.
   - [x] ~~**Where it gets built**~~ — **`/full/` (specialist build), 2026-07-28,
     Peter: "we'd prototype this in full for now."** Natural home: it already
     carries the work-in-progress badge, so an unfinished lens is labelled as
@@ -84,13 +92,20 @@ _Last reconciled: 2026-07-28 (S76 — temporal decisions settled)_
   - [x] ~~**Phases 1, 2 and 4**~~ — **DONE 2026-07-28.** The hood × year module,
     the served file (`web/data/temporal.json`, 406 hoods × 13 years, **89.2 kB**
     of a 100 kB budget), and the guard. Wired into `main.py`.
-  - [ ] **▶ NEXT — Phase 3: render it in `/full/`.** Sparkline in `tooltipFor`
-    + click-to-pin panel. **Blocked on one decision: the panel's design**
-    (Peter's — decide against the current render). Two build notes that will
-    bite otherwise: the panel's chrome must go into `CHROME_IDS` or the label
-    sweep paints hood names under it, and **the 2024 gap means consecutive
-    array entries are not consecutive years — plot against `years[i]`, never
-    the index.**
+  - [x] ~~**Phase 3: render it in `/full/`**~~ — **DONE 2026-07-29. THE LENS IS
+    COMPLETE; all four phases are shipped.** Sparkline in the tooltip +
+    `#temporal` click-to-pin panel; `#temporal` is in `CHROME_IDS`; gated
+    `|| !FULL_BUILD` beside a defensive fetch. Regression net:
+    **`tools/profiling/verify-temporal.js`, 38 checks.** ⚠️ **Two invariants that
+    fail SILENTLY — read `SPEC_temporal.md` §2 before editing the chart:**
+    x is scaled from the **year value** and the line is drawn as **runs split at
+    every gap** (index positioning or one polyline would hide the 2024 hole, and
+    neither is visible to the eye — the verify script *measures* the 2× ratio);
+    and the **y axis is not zero-based**, so both endpoints are labelled (most
+    hoods are under 1% of the base, so zero-basing flattens 406 series).
+    The verify script also earned its keep on the way in: it caught a title
+    overlap at the first `top` offset, and the `OLIVER`→`WÎHKWÊNTÔWIN` rename
+    crashing its own hood lookup.
   - **Context — the 2024/2025 slices of `qi6a-xuwt` are PROVEN INCOMPLETE** (2026-07-28; evidence in `data/DATA.md` §0). For assessment year
     2025, same year, the current roll has **11,216 Downtown accounts / $7.81B**
     and the historical file has **10,307 / $7.09B** — a **909-account, ~$720M

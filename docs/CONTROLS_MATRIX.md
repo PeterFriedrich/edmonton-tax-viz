@@ -132,6 +132,15 @@ on `state.labels`. Anything that reasons "labels off ⇒ no text layer" is wrong
 as of this date. Regional names win collisions via an explicit `prio`, because
 the sweep's existing priority key is polygon area and a Point has none.
 
+**A surface that is NOT in any tier — `#temporal`, the assessment-history panel
+(2026-07-29).** It belongs in this doc anyway, because it changes *what shows
+when*: it appears in **every view**, is **full-build only**, and — uniquely — is
+opened by clicking **the map itself** rather than by any control. Nothing in the
+three tiers gates it and it gates nothing; the only coupling is that it is in
+`CHROME_IDS`, so the label sweep dodges it while open. **If a fourth tier ever
+gets drawn, this is the first member: map-surface chrome.** Design and the two
+rendering invariants: `SPEC_temporal.md` §2.
+
 **All the inconsistencies in this table are now fixed.** `#toggle` used to stay
 live but inert outside Money (resolved by the regroup — old combo C), `#lens`
 used to grey out (resolved 2026-07-25, then the control was **removed entirely**

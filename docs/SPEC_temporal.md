@@ -1,8 +1,10 @@
 # SPEC — Temporal lens: assessment over time, per neighbourhood
 
-**Status 2026-07-28: SPEC'd and fully DECIDED, nothing built. Phase 0 is a hard
-gate, and what is left in it is work rather than decisions — the splice and the
-guard (§0.3). All of §7's open questions are closed and now sit in §6.**
+**Status 2026-07-29: ✅ COMPLETE AND SHIPPED IN `/full/`. All four phases done.**
+The last open item — the pinned panel's design — was settled 2026-07-29 (§2), so
+§7 is empty and nothing in this spec is pending. `tools/profiling/verify-temporal.js`
+(38 checks) is the regression net; read §2 before changing the panel and §0
+before touching anything that reads the historical file.
 Peter, 2026-07-28: *"what I actually want is pop up graphs for the assessment of
 each neighborhood… you mouse over and get a line graph of the assessment value
 over time, for that hood."*
@@ -33,8 +35,41 @@ and 14 points is one inline `<svg><polyline>` — no library, no dependency.
 
 But a hover tooltip **vanishes on mouse-out, cannot be studied, and does not
 exist on touch at all**, and the Money tooltip already carries 3–4 rows. So the
-sparkline is the teaser and the pinned panel is the home. That split is decided;
-the panel's design is not.
+sparkline is the teaser and the pinned panel is the home.
+
+### The panel's design — SETTLED 2026-07-29
+
+⚠️ **Decided on the merits, not asked** — like the split above. Cheap to reverse;
+say so if it is re-opened.
+
+| choice | why |
+|---|---|
+| **Home: the left column under `#title`** (`top: 210px`) | The one region no chrome claims, so pinning a panel can never bury a control. The title's box was **measured** at 176–179px across all five views (the blurb wraps to ~8 lines at 360px), not estimated — a first pass at 128px overlapped it. `verify-temporal.js` asserts the clearance against `#title`, `#botleft` and `#controls`, so a longer blurb fails loudly instead of overlapping. |
+| **Three dismissals: the ×, Escape, or a second click on the pinned hood** | Touch needs a visible target; a keyboard user needs Escape *more* than for the popovers, because this panel is opened by clicking the **map** and so has no button to un-press. |
+| **Clicking ANOTHER hood re-pins; an empty-map click is INERT** | Pin-then-browse is the point of the panel. And a *pinned* surface should take a deliberate dismissal — closing on empty-space clicks would let it vanish on the tail of a map drag. |
+| **The sparkline rides EVERY view's tooltip**, appended in one wrapper rather than in the six per-view branches | A hood's assessment history is a fact about the neighbourhood, not about the lens you happen to be in — a teaser nobody sees in the view they are in is not a teaser. One wrapper is also a smaller change than six edits that must then stay in step. |
+| **The tooltip row carries `click to pin`** | Click-to-pin is undiscoverable otherwise — the same reason the compass exists as visible buttons instead of relying on drag-rotate. |
+| **Phone: a bottom sheet, near-opaque (0.985)** | Its desktop home is where the control column lives at ≤640px, so staying there would bury `#views`. It covers the legend and both bottom-right pods, which is acceptable in a way covering a *control* is not: it is opened by a deliberate tap and closed by one. **The opacity is not cosmetic** — at the desktop 0.92 those pods' labels read straight *through* the panel's own text. Same lesson as `#about-menu`, one step further: 0.92 is enough over the map, not over other chrome. |
+
+**Two rendering invariants, both of which fail silently** (this is the part worth
+re-reading before any edit):
+
+1. **2024 is absent and must LOOK absent.** x is scaled from the **year value**,
+   never the array index, and the line is drawn as **runs split at every gap** —
+   so 2023→2025 spans twice an ordinary step and no stroke bridges the hole.
+   Index positioning would draw it as a normal step; one polyline would bridge
+   it; **neither is visible to the eye** on a 13-point series, which is why
+   `verify-temporal.js` *measures* the ratio. The band covers the **missing year
+   only** (half-step bounds) — shading the whole 2023→2025 run would claim 2023
+   and 2025 are missing too. The break is **derived from the year steps**, not
+   from a hard-coded `2024`, so January's roll-forward (§0.4) needs no edit here.
+2. **The y axis does NOT start at zero, so both endpoints are labelled.** Most
+   hoods are well under 1% of the base; zero-basing would flatten 406 of these
+   to a straight line and show nothing. Scaling to the series' own range is what
+   makes the shape legible, and printing the min and max is what keeps that
+   honest. The labels get their **own left gutter** — at `x=0` the max label
+   landed on the line, because 2012 is near Downtown's maximum. The sparkline
+   cannot carry labels at 28px, so its muted row prints first → last instead.
 
 ## 3. Data source
 
@@ -190,7 +225,7 @@ historical file instead.
 |---|---|---|
 | ~~**1**~~ ✅ | ~~`src/` module → hood × year table~~ **DONE 2026-07-28** — `src/load_temporal.py`. Unmatched names are flagged + reported and **kept in the denominator** (share-of-base means an unrenderable hood is still real value). | `ARCHITECTURE.md` conventions: independently runnable, configurable paths, structured output. **No silent drops** — 443 historical hood names will not align cleanly with today's boundaries; route through the `check_unmatched_names.py` policy. |
 | ~~**2**~~ ✅ | ~~compact JSON → `web/data/`~~ **DONE 2026-07-28** — `export_temporal_web` → `web/data/temporal.json`, **406 hoods × 13 years, 89.2 kB** (budget 100 kB; ~41 kB gzipped). Integer-scaled: shares in ppm, values in **$1k units** — measured, not chosen by taste ($0.1M would put the smallest hood out by 74%). **The 2024 gap rides in the `years` array, so plot against year values, never the array index.** |
-| **3** ◀ NEXT | render in `/full/` | sparkline in `tooltipFor`; click-to-pin panel — **the panel's design is still open (Peter's)**. Chrome must be added to `CHROME_IDS` or the label sweep will paint names under it. |
+| ~~**3**~~ ✅ | ~~render in `/full/`~~ **DONE 2026-07-29** — sparkline in `tooltipFor` (via a wrapper over the per-view `viewTooltip`), plus the `#temporal` click-to-pin panel. Design settled in §2. `#temporal` is in `CHROME_IDS`, so the label sweep dodges it. Gated `\|\| !FULL_BUILD` beside a defensive fetch: no file ⇒ no lens, everything else still works. | **`web/data/temporal.json` ships to the PUBLIC root even though the public build never fetches it** — `/full/` is `index.html` alone under `<base href="../" />`, so `./data/temporal.json` resolves to the root copy. Verified in the *built* tree (public root: zero requests; `/full/`: 200, no 4xx), not assumed — the same failure shape as the `styles.css` 404 risk. |
 | ~~**4**~~ ✅ | ~~guard + `refresh.yml` wiring~~ **DONE 2026-07-28** (landed early, with Phase 0) — `scripts/check_temporal_years.py`. | the anchor-band idiom of `check_value_anchors.py`: bands not equalities, direction-aware, missing inputs skip. Must sit **before** the status-manifest step, or a failure bumps the heartbeat and goes invisible. |
 
 ---
