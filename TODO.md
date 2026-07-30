@@ -8,9 +8,9 @@ check `git` / `pytest` directly — do not restate it here, it only goes stale.
 Session summaries (`session-summary/`) are dated *narratives* of what happened and
 why. This file owns *what's left*. When they disagree, this file wins.
 
-_Last reconciled: 2026-07-30 (S78 — temporal lens COMPLETE and LIVE, readout-mode
-toggle shipped, change-metric measure decided. **One `▶` in this file, and it is
-the change-metric map.**)_
+_Last reconciled: 2026-07-30 (S79 — **the change-metric map is BUILT** and on
+`change-metric-map` / PR; measurement reversed two of its build notes mid-flight.
+**The `▶` moves to mobile chrome step 3**, carried unstarted since S74.)_
 
 ## Open work
 
@@ -218,8 +218,25 @@ the change-metric map.**)_
     historical series that silently ends one year early each January is exactly
     the failure this project already guards against elsewhere.
 
-- [ ] **▶ TEMPORAL, ROUND 2 — "HOW MUCH HAS EACH HOOD CHANGED?" AS A MAP METRIC,
-  WITH SELECTABLE WINDOWS (Peter, 2026-07-30).** *"what I want is like, timelines
+- [x] ~~**TEMPORAL, ROUND 2 — "HOW MUCH HAS EACH HOOD CHANGED?" AS A MAP METRIC,
+  WITH SELECTABLE WINDOWS (Peter, 2026-07-30).**~~ — **✅ BUILT 2026-07-30
+  (S79), branch `change-metric-map`.** Money sub-mode `#moneymode` (Current /
+  Change over time) + `#chgwindow` (Since 2012 / Since 2019), flat diverging
+  choropleth, `/full/`-only, no pipeline work. **`verify-change.js`, 36 checks.**
+  Full record in `SPEC_temporal.md` **§6b**; three rows in `DECISIONS.md`.
+  ⚠️ **TWO OF THE BUILD NOTES BELOW WERE WRONG AND MEASUREMENT CAUGHT THEM** —
+  read §6b before touching the metric:
+  - **The rate had to become COMPOUND, not arithmetic.** `(last/first - 1)/years`
+    is unbounded above (observed max **+2,076%/yr**) and gave the diverging ramp
+    arms **108× apart**, so teal was owned by a few new subdivisions. Geometric:
+    max +54%/yr, arms 6× apart.
+  - **A SECOND degenerate endpoint existed.** The 45 no-baseline hoods were
+    known; one hood *ends* at zero share and printed **`-100.00% / yr`**. Both
+    ends are off-scale holes with distinct reasons now.
+  - The years-elapsed trap flagged below was real and is avoided (13, not 12);
+    it is `verify-change.js`'s first check, recomputed from the raw file.
+  The sub-items below are kept as the record of how it was decided, not as work.
+  Original ask: *"what I want is like, timelines
   options, for how much each hood has changed on average over time… and spike
   chloro map eventually. Like half the time going back, and all the way back in
   the dataset."* The shipped lens answers **one hood at a time**; this asks the
@@ -274,9 +291,13 @@ the change-metric map.**)_
       reason above; and (c) relative from each hood's first non-zero year, which
       is defensible but silently puts a 3-year and a 13-year change on one ramp,
       **the comparability trap this project keeps meeting.**
-    - ⚠️ **Still to settle when it is built: what the 45 grey hoods say on hover.**
-      "No 2012 baseline" is the honest phrasing; they are not set-aside land and
-      must not read as if they were.
+    - [x] ~~⚠️ **Still to settle when it is built: what the 45 grey hoods say on
+      hover.**~~ — **✅ DECIDED 2026-07-30, and the honest phrasing was the right
+      one.** Hover reads `No 2012 baseline — held none of the assessment base
+      that year`; the legend swatch says `No 2012 baseline — off-scale`. Both
+      name the YEAR so the absence is checkable against the sparkline
+      underneath, and `verify-change.js` asserts the string never contains "set
+      aside". The window picker rewrites both to 2019 in the short window.
   - **DECISION 2 — endpoints, and the hump needs a SECOND NUMBER, not a different
     one.** ~~Recommend measuring whether endpoints and OLS slope disagree~~ —
     **measured: rho +0.959 over all 406**, so they are near-duplicates; **+0.719
@@ -362,13 +383,15 @@ the change-metric map.**)_
     (`topmost=about-menu`) — extend it to the Display menu rather than writing
     a new script.
 
-- [ ] **Mobile chrome — and it is NOT the blurb collapse, that already shipped**
+- [ ] **▶ Mobile chrome — and it is NOT the blurb collapse, that already shipped**
   (commit `0089eba`, "mobile chrome move 1"). Confirmed good on device by Peter
   2026-07-28. **Read `docs/MOBILE_USABILITY.md` §3 before starting; two of its
   four steps are done.** (Was marked "▶ NEXT UP" through S74–S78 without ever
-  being started — it lost the slot to the temporal lens twice. Kept honest here:
-  the single **▶** now sits on the change-metric map, which is what Peter asked
-  for by value. This one is *ready*, not *next*.) What actually remains:
+  being started — it lost the slot to the temporal lens twice, then to the
+  change-metric map. **It finally holds the `▶` as of S79**, the change lens
+  being built. ⚠️ Note the change lens ADDED two control rows to `#layers`
+  (`#moneymode`, `#chgwindow`), so re-measure the left-edge offsets below rather
+  than trusting the S74 numbers.) What actually remains:
   - [ ] **Step 3 — the left-edge clip.** `#controls`/`#coloradj` render at
     left **-51**, `#toggle` at **-10**, i.e. off the left edge of a 390px screen.
     Wrap or shrink the widest rows so nothing renders at negative left.

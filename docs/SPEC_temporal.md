@@ -246,6 +246,60 @@ historical file instead.
 | **No `$/acre` line — share only** (2026-07-28) | The one place a deflator would be legitimate (row 2 of this table), deliberately not taken yet. It would cost a CPI series *and* a stated justification for dividing 14 years of moving boundaries by a **current** area. Share-of-base needs no deflator, no area assumption, no vintage — so Phase 0 is the only thing in front of the build. |
 | **2024 is OMITTED** (2026-07-28) | Full reasoning in §0.2, including why this reversed the balanced-panel recommendation. |
 
+## 6b. Round 2 — the change lens (SHIPPED 2026-07-30)
+
+The lens in §1–§6 answers **one hood at a time**. Round 2 asks the same data for
+**all 406 at once**: *how fast did each neighbourhood's share of the assessment
+base move?* Peter, 2026-07-30: *"what I want is like, timelines options, for how
+much each hood has changed on average over time… and spike chloro map
+eventually."*
+
+**Where it lives.** A **sub-mode of the Money view** (`#moneymode`: Current /
+Change over time), not a sixth `#views` button — Peter's call. Internally it is
+the view `"change"`, exactly the shape `glass` and `infill` already use: a
+render-mode whose parent's `#views` button stays active. Its window picker
+(`#chgwindow`: Since 2012 / Since 2019) follows the `#devwindow` idiom.
+`/full/`-only, and doubly gated — the controls need `FULL_BUILD` **and** a
+loaded `temporal.json`, so they can never offer a lens whose data is absent.
+
+**No pipeline work.** Derived client-side from the already-loaded
+`temporal.json`. Switching windows recomputes from a per-window clamp cache and
+**never refetches**.
+
+### The metric, and the two things measurement changed
+
+| decision | rationale |
+|---|---|
+| **Relative change in share-of-base** (Peter, from the §10 gate) | pp change is defined everywhere but does not separate — median hood −0.032 pp against Downtown −1.791 pp. See `DECISIONS.md` 2026-07-30. |
+| ⚠️ **COMPOUND, not arithmetic** — `(last/first)**(1/years) - 1` | **Measured during the build, and it reversed the obvious implementation.** The arithmetic form `(last/first - 1)/years` is **unbounded above** (observed max **+2,076%/yr**, from hoods emerging off a near-zero 2012 base) while bounded below at −7.7%/yr. Its p95 arms come out **108× apart** (+485%/yr gaining vs 4.5%/yr losing), so a diverging ramp would be owned by a handful of new subdivisions and every ordinary hood would sit invisibly at the dark centre. Compounding bounds it (max **+54%/yr**, arms **6×** apart) and is near-symmetric under doubling/halving, which is what a diverging map needs. It is also simply what *"average annual change"* **means** for a quantity that compounds. |
+| ⚠️ **BOTH degenerate endpoints are holes, not numbers** | The 45 no-2012-baseline hoods were known from the gate. **The mirror case was not**: one hood (`MILL WOODS GOLF COURSE`) *ends* at zero share, where the compound rate evaluates to exactly −1 and printed **`-100.00% / yr`** — arithmetically true, descriptively false (it did not shed 100% every year; it fell out of the base once). Both ends are now off-scale grey with distinct reasons. |
+| **Flat choropleth, never spikes** (Peter's call) | A prism cannot have negative height and hoods moved both ways. Reuses `infillColorAt` — the in-repo precedent for a signed metric — teal = gained share, orange = lost. Per-arm p95 clamps, like `infillStats`, because even compounded the arms are ~6× apart. |
+| **Endpoints, not a fitted slope** | rho **+0.959** over all 406 (`ANALYSIS_BACKLOG.md` §10). A hump needs a *second* number — peak value + peak year, which the pinned panel already gives. |
+
+### ⚠️ Two invariants that fail silently here
+
+1. **ANNUALISE OVER YEARS ELAPSED, NEVER OBSERVED INTERVALS.** The 2024 gap
+   makes them differ — the long window spans **13 years** but holds only **12
+   intervals** — so annualising over intervals inflates every hood's rate ~8%
+   (Downtown −3.28%/yr vs −3.55%/yr) with **nothing on screen looking wrong**.
+   Same class as index-vs-year positioning in the chart (§2). `verify-change.js`
+   asserts it **first**, and recomputes from the raw served file so the app
+   cannot satisfy the check by agreeing with itself.
+2. **The grey hoods must never read as set-aside land.** They are its opposite:
+   new-growth areas that held none of the assessable base in the first year,
+   which is *why* no relative change exists for them. The hover names the year
+   (`No 2012 baseline — held none of the assessment base that year`) and the
+   legend swatch says the same. Reading them as protected land inverts the story
+   the map exists to carry.
+
+**Also caught in build, and worth keeping:** the change tooltip originally
+printed the endpoint pair itself, which `tooltipFor` then printed *again* in the
+shared sparkline footer — the same "two dense blocks competing" objection that
+produced the panel-mode reduction. The change hover is now **one line**; the
+footer carries the endpoints.
+
+Regression net: **`tools/profiling/verify-change.js`, 36 checks.**
+
 ## 7. Open decisions
 
 **None — all four closed 2026-07-28 (Peter).** Metric, denominator, per-acre and
