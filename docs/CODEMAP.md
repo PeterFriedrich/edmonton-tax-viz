@@ -6,6 +6,10 @@
 
 ## Symbols (171 indexed)
 
+Grouped by the file's own `// --- section ---` banners, in file order.
+
+### tunables
+
 | symbol | lines | what it does |
 |---|---|---|
 | `CENTER` | 348–352 |  |
@@ -13,14 +17,29 @@
 | `HOME_2D` | 354–389 |  |
 | `fmtMoney` | 390–391 | Per-metric display config. The clamp (colour saturation) sits at the same |
 | `METRICS` | 392–517 |  |
+
+### services lens views (SPEC_services.md display architecture)
+
+| symbol | lines | what it does |
+|---|---|---|
 | `ARTERIAL_COLOR` | 518–534 |  |
 | `RATIO_DENOMS` | 535–596 | Ratio view: revenue_per_acre / <service per acre> — the acres cancel, |
 | `ratioDenom` | 597–597 |  |
 | `ratioOf` | 598–598 |  |
 | `ratioKept` | 599–620 |  |
+
+### uses view (use-mix, 2026-07-03)
+
+| symbol | lines | what it does |
+|---|---|---|
 | `USE_CATEGORIES` | 621–631 | uses view (use-mix, 2026-07-03) |
 | `USE_BY_KEY` | 632–659 |  |
 | `dominantUse` | 660–693 | Largest composition share wins (ties: first in USE_CATEGORIES order). |
+
+### services view (SPEC_services.md UI generalization, 2026-07-05)
+
+| symbol | lines | what it does |
+|---|---|---|
 | `SERVICES` | 694–772 | services view (SPEC_services.md UI generalization, 2026-07-05) |
 | `VIEWS` | 773–855 | Per-view chrome. money's title/blurb stay metric-driven (METRICS). |
 | `changeBlurb` | 856–875 | Change-lens blurb follows the window picker, so the years named in the |
@@ -49,6 +68,11 @@
 | `moneyBlurb` | 1227–1231 | The money blurb under the active denominator (ground = the metric's own |
 | `fillFor` | 1232–1244 | Per-feature fill: set-aside hoods grey, everything else the ramp colour at |
 | `legendGradient` | 1245–1294 | Legend gradient for the CURRENT ramp under the CURRENT view's transform: |
+
+### base map (no basemap tiles for v1 — just a dark backdrop)
+
+| symbol | lines | what it does |
+|---|---|---|
 | `topRings` | 1295–1311 | Build the roof ring of each prism: the polygon's exterior ring lifted to |
 | `roadLayers` | 1312–1337 | The roads ground layer (services + ratio views). When roads drive the |
 | `_svcScales` | 1338–1338 | Per-column service scale anchors, computed once from the data (tracks |
@@ -73,10 +97,20 @@
 | `devT` | 1448–1451 |  |
 | `developmentPlaneLayer` | 1452–1468 |  |
 | `fmtDev` | 1469–1484 |  |
+
+### Development 100 m detail grid (layers-panel toggle, 2026-07-15)
+
+| symbol | lines | what it does |
+|---|---|---|
 | `DEV_GRID_COLS` | 1485–1488 |  |
 | `devGridColKey` | 1489–1491 |  |
 | `devGridScale` | 1492–1504 |  |
 | `devGridLayer` | 1505–1545 |  |
+
+### Infill lens (SPEC_development.md Lens B)
+
+| symbol | lines | what it does |
+|---|---|---|
 | `infillIncluded` | 1546–1547 | Infill lens (SPEC_development.md Lens B) |
 | `meanStd` | 1548–1555 |  |
 | `_infillStats` | 1556–1556 | Cached per activity column (far stats are constant, activity stats and the |
@@ -91,6 +125,11 @@
 | `infillColorAt` | 1617–1621 |  |
 | `infillPlaneLayer` | 1622–1636 |  |
 | `fmtFar` | 1637–1680 |  |
+
+### change lens: how each hood's share of the assessment base moved
+
+| symbol | lines | what it does |
+|---|---|---|
 | `CHG_WINDOWS` | 1681–1681 | change lens: how each hood's share of the assessment base moved |
 | `CHG_WINDOW_LABEL` | 1682–1696 |  |
 | `changeFor` | 1697–1717 | Endpoint pair + elapsed years for one hood over the active window, or |
@@ -108,6 +147,11 @@
 | `TRANSIT_LINE_COLOR` | 1843–1843 | LRT track lines (SPEC_services.md "Transit lens"): the operating LRT |
 | `lrtLinesLayer` | 1844–1860 |  |
 | `ensureLrtLines` | 1861–1907 |  |
+
+### geographic reference layers (all views)
+
+| symbol | lines | what it does |
+|---|---|---|
 | `RIVER_COLOR` | 1908–1908 | Barely-there greys against the #0a0a0f backdrop: enough to read as |
 | `HENDAY_COLOR` | 1909–1912 |  |
 | `referenceSplit` | 1913–1924 |  |
@@ -133,7 +177,17 @@
 | `ratioT` | 2300–2310 |  |
 | `buildLayers` | 2311–2314 | Build the layer stack for the current view. Rebuilt on any toggle. |
 | `buildViewLayers` | 2315–2588 |  |
+
+### money view (default): the classic metric prisms
+
+| symbol | lines | what it does |
+|---|---|---|
 | `esc` | 2589–2614 | Entity-escape untrusted data-derived strings before they go into the |
+
+### temporal lens (SPEC_temporal.md phase 3)
+
+| symbol | lines | what it does |
+|---|---|---|
 | `TEMPORAL_SERIES` | 2615–2618 | temporal lens (SPEC_temporal.md phase 3) |
 | `fmtPct` | 2619–2621 |  |
 | `fmtBig` | 2622–2627 | Assessment totals run $10M-$10B across hoods, so the unit has to follow |

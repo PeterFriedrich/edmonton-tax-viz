@@ -29,6 +29,9 @@ SYMBOL = re.compile(
     r"|const\s+(?P<const>[A-Za-z_]\w*)\s*=\s*(?P<rhs>.*))"
 )
 ID_ATTR = re.compile(r'\bid="([\w-]+)"')
+# The file's own section banners: `// --- title -------`. Grouping by them beats
+# one flat 250-row table — you usually know the AREA before the symbol.
+BANNER = re.compile(r"^\s*//\s*-{2,}\s*(?P<title>.+?)\s*-{3,}\s*$")
 
 
 def leading_comment(lines, i):
@@ -63,7 +66,12 @@ def interesting_const(rhs):
 def collect(path):
     lines = path.read_text(encoding="utf-8").splitlines()
     hits = []
+    section = "(top)"
     for i, line in enumerate(lines):
+        b = BANNER.match(line)
+        if b:
+            section = b.group("title").strip()
+            continue
         m = SYMBOL.match(line)
         if not m:
             continue
@@ -78,7 +86,8 @@ def collect(path):
             name = m.group("const")
             if not interesting_const(m.group("rhs") or ""):
                 continue
-        hits.append({"name": name, "line": i + 1, "why": leading_comment(lines, i)})
+        hits.append({"name": name, "line": i + 1, "section": section,
+                     "why": leading_comment(lines, i)})
     # End of each symbol = the line before the next one starts.
     for a, b in zip(hits, hits[1:]):
         a["end"] = b["line"] - 1
@@ -117,10 +126,14 @@ def render():
         "",
         "## Symbols ({} indexed)".format(len(hits)),
         "",
-        "| symbol | lines | what it does |",
-        "|---|---|---|",
+        "Grouped by the file's own `// --- section ---` banners, in file order.",
     ]
+    last = None
     for h in hits:
+        if h["section"] != last:
+            last = h["section"]
+            L += ["", "### {}".format(last), "",
+                  "| symbol | lines | what it does |", "|---|---|---|"]
         why = h["why"].replace("|", "\\|")
         L.append("| `{}` | {}–{} | {} |".format(h["name"], h["line"], h["end"], why))
     L += [
