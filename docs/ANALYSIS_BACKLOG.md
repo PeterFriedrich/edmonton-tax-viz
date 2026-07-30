@@ -569,7 +569,107 @@ Lens B.
 
 ---
 
-## 10. Does per-hood CHANGE in share-of-base actually separate the 406 hoods? (gate on a build — NEW 2026-07-30)
+## 10. Does per-hood CHANGE in share-of-base actually separate the 406 hoods? — ✅ RUN 2026-07-30. **THE GATE PARTLY FAILS, and the fix is a decision for Peter.**
+
+**Executed against `web/data/temporal.json` (406 hoods × 13 years), 2026-07-30,
+prompted by Peter: *"I've already seen some graphs that have like, a peak in the
+middle. So straight average would be 0."* He is right, and measuring it turned up
+three things that outrank the hump itself.**
+
+### Finding 1 — ⚠️ A RELATIVE-CHANGE MAP IS UNDEFINED FOR 45 HOODS (11%), AND THEY ARE THE GROWTH AREAS
+
+45 of 406 hoods have a **zero 2012 share**, so `last/first` does not exist for
+them: Blatchford, Decoteau, Keswick, Glenridding Ravine, Graydon Hill, Rosenthal,
+Stillwater, The Uplands, Edgemont, Cavanagh, the Anthony Henday ring segments and
+several river-valley slivers. **These are precisely the neighbourhoods a
+"how much has it changed" map most needs to show** — they went from nothing to
+something, which is the largest change possible.
+
+This **reverses the recommendation `TODO.md` carried** (relative as the headline).
+Percentage-point change is defined for all 406.
+
+Options, none free: (a) relative change, with the 45 drawn in the established
+off-scale grey (`SET_ASIDE_COLOR` / the `infillOppSuppressed` idiom) and
+explained; (b) percentage-point change, defined everywhere — but see Finding 3;
+(c) relative change measured from each hood's **first non-zero year**, which is
+defensible but silently puts a 3-year change and a 13-year change on the same
+ramp. **(c) is the comparability trap this project keeps meeting; if it is taken,
+the window must be stated per hood.**
+
+### Finding 2 — the hump is REAL but NARROW, and drawdown does not fix it
+
+Measuring the hump as how far the peak rises above the *higher* of the two
+endpoints:
+
+| hump | hoods | share |
+|---|---|---|
+| ~0 (monotone — the peak **is** an endpoint) | 257 | 71% |
+| 1–5% (negligible) | 40 | 11% |
+| 5–15% (visible arc) | 45 | 12% |
+| **>15% (a real hump)** | **34** | **8%** |
+
+So endpoint arithmetic describes ~71% of hoods honestly. For the 34 real humps it
+does not — biggest are **RIVER VALLEY LAURIER** (+243% hump), **HERITAGE VALLEY
+AREA** (+185%), **UNIVERSITY OF ALBERTA** (peak 2023, −44% to 2025), **SOUTH
+EDMONTON COMMON** (peak 2019, −36%), **MAPLE RIDGE INDUSTRIAL** (net **+24%** yet
+**−23%** off its 2020 peak).
+
+**Spearman, all in pp so the comparison isn't confounded:**
+
+| pair | rho | reading |
+|---|---|---|
+| net vs OLS slope, all 406 | **+0.959** | near-duplicates in aggregate |
+| net vs OLS slope, **the 34 humps only** | **+0.719** | this is exactly Peter's point, quantified |
+| net vs **peak drawdown** | **+0.919** | ⚠️ **drawdown is NOT a different ranking** — it does not solve the hump |
+| net **relative** vs net **pp** | **+0.581** | genuinely different orderings; the pp/relative choice matters more than endpoint/slope |
+
+**So the fix for a peaked series is NOT swapping in drawdown or a slope.** Both
+rank almost identically to net change. A peaked hood needs a **second number**
+(peak value + peak year), not a different single number — and the panel already
+computes and shows exactly that (`peak share 5.55% in 2016`).
+
+### Finding 3 — ⚠️ THE GATE FAILS FOR PERCENTAGE-POINT CHANGE: IT DOES NOT SEPARATE HOODS
+
+| metric | p1 | p25 | median | p75 | p99 |
+|---|---|---|---|---|---|
+| net **pp** | −0.255 | −0.062 | **−0.032** | +0.001 | +0.835 |
+| net **relative %** | — | −27.0 | **−20.7** | −10.2 | +253.3 |
+
+The median hood moves **−0.032 pp**. Downtown moves **−1.791 pp** — about **56×**
+the median. **15% of hoods (61 of 406) move less than 0.01 pp in thirteen years.**
+A pp choropleth is therefore Downtown plus a handful of others blazing over ~380
+hoods that are visually identical — **the exact failure this gate was written to
+catch.** Relative change *does* spread (p25 −27%, median −21%, p95 +253%), which
+is the tension with Finding 1: the measure that separates is the one that is
+undefined for the growth hoods.
+
+**A sqrt or rank/percentile transform of pp is the obvious third path** and is
+already an in-repo idiom (`state.colorAdjust`, the locked sqrt colour scaling) —
+but note it would be **presentation** rescaling of an unseparated metric, not a
+fix to the metric, and the project's linear-elevation honesty choice is nearby.
+
+### Finding 4 — two windows earn their keep
+
+Long (2012→2025) vs short (2019→2025), both pp: **rho +0.734**, and the sign
+**flips for 55 of 406 hoods (14%)**. So the short and long windows genuinely tell
+different stories for a seventh of the city, and Peter's "timeline options" ask is
+justified rather than decorative.
+
+### Methodology note — two errors in the first pass, corrected
+
+Recorded because both are easy to repeat: the first run compared a **relative**
+net change against a **pp/year** slope and read the low correlation (+0.574) as
+"endpoint and slope differ", when it was mostly the relative/pp difference — the
+clean comparison is **+0.959**. And the script **pre-labelled its expected
+conclusions** in the print statements, so the output asserted "near-duplicates"
+and "genuinely different" beside numbers that said the opposite. Also 45 hoods
+divided by zero and quietly produced `nan`, which poisoned every correlation in
+the first run. **Compare like units, and don't print a conclusion you haven't
+measured yet.**
+
+---
+
+## 10-original. The question as first framed (kept for the record)
 
 **The question.** Peter wants "how much each hood has changed on average over
 time" as a **map metric** with selectable windows (`TODO.md`). Before drawing

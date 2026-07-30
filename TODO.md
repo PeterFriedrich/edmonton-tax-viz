@@ -245,29 +245,43 @@ _Last reconciled: 2026-07-29 (S78 — temporal lens COMPLETE, all four phases sh
     never by **observed intervals (12)**. The gap means those differ, so dividing
     by intervals inflates every hood's annual rate by ~8%. Same class as
     index-vs-year positioning in the chart, so **make it the first verify check.**
-  - **DECISION 1 — what "changed" means.** Share is already a percentage, so "%
-    change of a %" reads badly. Candidates: **percentage-point** change (Downtown
-    5.09% → 3.30% = **−1.79 pp**) — the fiscally literal statement, but a hood at
-    0.05% can never move more than 0.05 pp, so it structurally ranks by size; vs
-    **relative** change (**−35%**) — comparable across hood sizes, and what "how
-    much has it changed" usually means. **Recommend: relative as the headline,
-    pp as a second stated number** — the same both-numbers pattern already locked
-    for the total/commercial denominators.
-  - **DECISION 2 — endpoints or a fitted trend.** Endpoint-to-endpoint is one
-    subtraction and trivially explainable; an OLS slope is robust to a freak
-    start year, which endpoint arithmetic lets set the entire answer.
-    **Recommend endpoints (explainable beats clever here) — but MEASURE whether
-    the two disagree on rank before locking.** That is a measurable question, not
-    a taste one.
-  - **DECISION 3 — the windows.** "All the way back" = 2012→2025 (13 yrs). "Half
-    the time" ≈ 2019→2025 (the midpoint of 2012–2025 is 2018.5, so 2018 or 2019
-    — pick one and say why). **Use the Development view's window-picker idiom
-    (`#devwindow`: 3yr/5yr/long) — direct in-repo precedent for exactly this
-    control**, rather than a free year picker.
-  - **Gate: measure before building.** Compute the distribution first and check
-    the metric actually *separates* hoods instead of putting 400 of them inside
-    noise. Cheap, and it decides whether the map is worth drawing.
-    `ANALYSIS_BACKLOG.md` carries the question.
+  - **✅ THE GATE HAS BEEN RUN — `ANALYSIS_BACKLOG.md` §10, 2026-07-30. IT PARTLY
+    FAILS, so read it before building anything here.** Prompted by Peter: *"I've
+    already seen some graphs that have like, a peak in the middle. So straight
+    average would be 0."* He is right, and the measurement turned up three things
+    that outrank the hump. **Two recommendations this item previously carried were
+    WRONG and are struck below.**
+  - ⚠️ **BLOCKER-SHAPED DECISION 1 — the measure that separates hoods is undefined
+    for the growth hoods. Peter's call.** ~~Recommend relative as the headline~~
+    — **struck.** `last/first` does not exist for **45 of 406 hoods (11%)** whose
+    2012 share is zero: Blatchford, Decoteau, Keswick, Glenridding Ravine,
+    Graydon Hill, Rosenthal, Stillwater, the Anthony Henday segments. **Those are
+    exactly the hoods a change map most needs to show.** But percentage-point
+    change, which *is* defined everywhere, **does not separate**: median hood
+    −0.032 pp vs Downtown −1.791 pp (**56×**), and **15% of hoods move under 0.01
+    pp in thirteen years** — so a pp choropleth is Downtown blazing over ~380
+    identical ones. Three paths, none free: (a) relative, with the 45 in the
+    established off-scale grey; (b) pp with a sqrt/rank transform — note that
+    rescales an unseparated metric rather than fixing it, and sits near the
+    linear-elevation honesty choice; (c) relative from each hood's first non-zero
+    year — defensible, but silently puts a 3-year and a 13-year change on one
+    ramp, **the comparability trap this project keeps meeting.**
+  - **DECISION 2 — endpoints, and the hump needs a SECOND NUMBER, not a different
+    one.** ~~Recommend measuring whether endpoints and OLS slope disagree~~ —
+    **measured: rho +0.959 over all 406**, so they are near-duplicates; **+0.719
+    restricted to the 34 real humps**, which is Peter's point quantified. ⚠️ **And
+    peak-drawdown does NOT fix it either — rho +0.919 against net change**, i.e.
+    almost the same ranking. **So use endpoints (explainable, and no worse), and
+    give a peaked hood its peak value + peak year as a second reading rather than
+    hunting for a cleverer single number.** The panel already computes and shows
+    exactly that (`peak share 5.55% in 2016`). Humps are **34 hoods (8%)**;
+    71% of hoods are monotone and endpoint arithmetic describes them honestly.
+  - **DECISION 3 — the windows. ✅ CONFIRMED WORTH HAVING.** Long (2012→2025) vs
+    short (2019→2025): rho **+0.734**, and the sign **flips for 55 of 406 hoods
+    (14%)** — so the two windows genuinely tell different stories for a seventh
+    of the city, and the "timeline options" ask is not decorative. **Use the
+    Development view's window-picker idiom (`#devwindow`: 3yr/5yr/long)** — direct
+    in-repo precedent for exactly this control — rather than a free year picker.
 
 - [ ] **UI: the pinned panel and the hover popup must not both be up — add an
   explicit MODE toggle (Peter, 2026-07-30).** *"I don't want both the panel and
