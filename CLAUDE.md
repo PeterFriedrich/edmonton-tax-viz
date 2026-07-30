@@ -4,7 +4,7 @@
 Edmonton revenue-per-acre fiscal analysis. Python-only, no GIS software.
 
 ## Key Files
-- `TODO.md` — living backlog and **the source of truth for progress**. Read it first to know what to work on; update it in place as items open/close. Session summaries narrate *what happened*; TODO.md owns *what's left*. Never redo a closed item without asking. Conversely, an *open* item can be stale — reproduce the symptom and re-measure the stated cause before acting on it (it has lagged reality twice).
+- `TODO.md` — living backlog and **the source of truth for progress**. Read it first to know what to work on; update it in place as items open/close. Session summaries narrate *what happened*; TODO.md owns *what's left*. Never redo a closed item without asking — its `## Done` section lists every closed item in one line each. Conversely, an *open* item can be stale — reproduce the symptom and re-measure the stated cause before acting on it (it has lagged reality twice). **When an item closes, move its body to `docs/TODO_archive.md` and leave a `## Done` line** (`python tools/todo_archive.py` does it in bulk) — this file is read every session, so it must hold live work, not history.
 - `docs/SPEC_phase1.md` — what we're building and why
 - `docs/DECISIONS.md` — append-only index of locked decisions: one line + pointer to the doc holding the full reasoning. **Add a line whenever a decision locks; never duplicate rationale into it.** Check it before re-opening anything that feels "already settled".
 - `docs/RUNBOOK.md` — live-site operations: January year-roll checklist, weekly-workflow failure triage. **Read when the refresh workflow fails or the site shows a banner.**
