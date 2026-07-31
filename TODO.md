@@ -16,14 +16,14 @@ is read at the start of every session, so it should hold what is still true, not
 the whole history. Keep it that way: when an item closes, move its body to the
 archive and leave a `## Done` line.
 
-_Last reconciled: 2026-07-30 (S79 — the change-metric map is **BUILT, merged
-(#120) and LIVE**; measurement reversed two of its build notes mid-flight.
-**The `▶` moves to mobile chrome step 3**, carried unstarted since S74. Second
-half of the session was a context-cost pass: closed items archived here
-(1,839 → 1,141 lines), plus `docs/CODEMAP.md`, `tools/profiling/verify.js` and
-`TOKEN_EFFICIENCY.md` rules 5–9. The two pre-existing verify failures were
-**re-reproduced and their values confirmed current** — only the triage decision
-is left.)_
+_Last reconciled: 2026-07-31 (S80 — **mobile chrome step 3 CLOSED as NOT
+REPRODUCIBLE, no code change.** Carried as the `▶` since S74 and never started;
+re-measuring found the symptom already gone, in both builds and every view. The
+**third** time an open item's stated cause proved stale — reproduce before
+building. **The `▶` moves to promoting the temporal + change lenses to the
+public build** (Peter's call this session). Prior S79 state still current: the
+change map is live (#120); the two pre-existing verify failures are
+re-reproduced with values confirmed, only the triage decision left.)_
 
 ## Open work
 
@@ -44,19 +44,70 @@ is left.)_
     (`topmost=about-menu`) — extend it to the Display menu rather than writing
     a new script.
 
-- [ ] **▶ Mobile chrome — and it is NOT the blurb collapse, that already shipped**
+- [ ] **▶ PROMOTE the temporal + change lenses to the PUBLIC build** (Peter,
+  2026-07-31: *"can we actually move those value change over time features to
+  the public build"* → **both**, sequenced after the mobile check, which is now
+  closed). This is a **content-split tag change, not a re-opened lock** —
+  `DECISIONS.md` 2026-07-22 locks the two-build *mechanism* but states the
+  content split is per-control and revisable (precedent: Uses → full-only marked
+  *"provisional… may return to public"*; Transit **amended** an earlier
+  release-scope lock).
+  - **No pipeline, no build plumbing, no new columns.** `web/data/temporal.json`
+    (90K raw / **42 kB gzipped**) **already ships to the public root** —
+    `DECISIONS.md` 2026-07-29; the public build simply never fetches it. The
+    full-only controls are **hidden, not stripped** (verified 07-31).
+  - **The gate is three conjuncts**, cleanly layered so the two halves are
+    independently promotable:
+    | Feature | Gate | Symbol |
+    |---|---|---|
+    | sparkline + pinned panel + `#hoodmode` | the **fetch** `if (FULL_BUILD)` | near `TEMPORAL_URL` |
+    | change choropleth | `… && FULL_BUILD && temporalData != null` (×2) | `syncChangeControls` |
+    (cite by symbol, not line — use `docs/CODEMAP.md`.)
+  - ⚠️ **BLOCKER TO CLOSE FIRST — what the 45 no-baseline hoods say on hover.**
+    Open since S78. On `/full/` a specialist tolerates unexplained grey; public,
+    45 grey hoods incl. Blatchford/Keswick/Glenridding Ravine read as broken
+    data or — expressly forbidden by `DECISIONS.md` 2026-07-30 — as set-aside
+    land. *"No 2012 baseline"* is the honest phrasing.
+  - ⚠️ **Editorial, not a build blocker: the deliberately NON-CONTIGUOUS year
+    list.** A visible 2024 hole invites *"your data is wrong"* when the truth is
+    the inverse (omitted **because** the upstream roll is wrong). Told well it is
+    the project's strongest integrity story; told not at all it is a bug report.
+  - **Mobile risk was measured away**, not assumed: the two rows this adds to
+    public Money (`#moneymode`, `#chgwindow`) render at left **177 → 371** on
+    390px in the full build — inside bounds, same CSS the public build will use.
+  - `web/**` → branch + PR (quirk g); check `gh run list` after merge — a failed
+    deploy is **silent**.
+
+- [ ] **Mobile chrome — and it is NOT the blurb collapse, that already shipped**
   (commit `0089eba`, "mobile chrome move 1"). Confirmed good on device by Peter
-  2026-07-28. **Read `docs/MOBILE_USABILITY.md` §3 before starting; two of its
-  four steps are done.** (Was marked "▶ NEXT UP" through S74–S78 without ever
-  being started — it lost the slot to the temporal lens twice, then to the
-  change-metric map. **It finally holds the `▶` as of S79**, the change lens
-  being built. ⚠️ Note the change lens ADDED two control rows to `#layers`
-  (`#moneymode`, `#chgwindow`), so re-measure the left-edge offsets below rather
-  than trusting the S74 numbers.) What actually remains:
-  - [ ] **Step 3 — the left-edge clip.** `#controls`/`#coloradj` render at
-    left **-51**, `#toggle` at **-10**, i.e. off the left edge of a 390px screen.
-    Wrap or shrink the widest rows so nothing renders at negative left.
-    Mechanical and concrete; the obvious next piece of work.
+  2026-07-28. **Read `docs/MOBILE_USABILITY.md` §3 before starting.** **Steps
+  1, 2 and 3 are now all done** — step 3 closed 2026-07-31 as not reproducible
+  (see below). What actually remains is one **decision**, not a build item:
+  - [x] **Step 3 — the left-edge clip. CLOSED 2026-07-31 AS NOT REPRODUCIBLE —
+    no code change.** The S74 symptom (`#controls`/`#coloradj` at left **−51**,
+    `#toggle` at **−10**) does **not** occur on current master. Re-measured at
+    390×844 with `hasTouch`/`isMobile`, in **both builds**, across **every
+    visible view**, with the Options pod **unfolded** — nothing renders at
+    negative left and nothing overflows right:
+
+    | | left | right |
+    |---|---|---|
+    | `#controls` | 8 | 382 |
+    | `#views` | 22 | 382 |
+    | `#toggle` | 103 | 382 |
+    | `#coloradj` / `#layers` / `#moneymode` / `#chgwindow` | 177 | 371 |
+
+    Two things had to be got right to measure it at all, both worth keeping:
+    **(1)** `#optpanel` is `.folded` by default at ≤640px, so the pod's rows
+    have **no layout box** and report `0,0` — the folded state cannot show the
+    clip, and a naive pass reads as "fixed" for the wrong reason. Unfold first.
+    **(2)** The public build keeps full-only controls in the DOM but **hidden**,
+    so selecting by presence hangs Playwright's `click()`; filter on visibility.
+    Headless Chromium also measures text **wider** than the real font stack
+    (quirk y), so a no-clip result there errs safe.
+    ⚠️ **`tools/profiling/shot-mobile.js`'s id list is STALE** — no `moneymode`
+    /`chgwindow`, and its comment still claims 5 public views. Fix before
+    trusting it for the next mobile pass.
   - [ ] **The open question inside step 2 — bottom sheet or not.** Whether the
     control column is fine as a stack or wants a bottom sheet / hamburger.
     **Decide against the CURRENT render**, now that the blurb is collapsed: the
