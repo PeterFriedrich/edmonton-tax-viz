@@ -99,10 +99,27 @@ re-reproduced with values confirmed, only the triage decision left.)_
     control column is fine as a stack or wants a bottom sheet / hamburger.
     **Decide against the CURRENT render**, now that the blurb is collapsed: the
     old reasoning was written when the blurb still ate the top third. Peter's
-    call, not a build item.
+    call, not a build item. ⚠️ **The render is quieter still as of 2026-07-31** —
+    it now also predates the peek card (bottom strip on touch) and the
+    suppression of the hover tooltip on touch. Re-look before deciding.
   - Context that makes this the priority: chrome covers **45.1%** of a 390x844
     screen vs 27.3% at 1440x900 (measured S73). Label scarcity on phones is a
     *panel-size* problem, not a cull problem.
+
+- [ ] **Peter's call, one line either way: should `#hoodmode-btn` CONFIRM
+  rather than TOGGLE when the panel was opened by the peek card?** (Raised
+  2026-07-31 while building `panelByChoice`; flagged to Peter, not yet ruled on.)
+  - **The situation:** arriving via the card sets panel mode with
+    `panelByChoice = false`, so the button already reads *"Readout: panel"*.
+    Pressing it therefore turns panel mode **off**; opting in to sticky one-tap
+    pinning costs **two** presses.
+  - **Left as an honest toggle deliberately** — a button whose label already says
+    "panel" and which appears to do nothing when pressed is worse than one that
+    does what it says. And the state is transient now (any new hood closes the
+    panel), so the button reads "popup" almost always, making this a narrow path.
+  - **If it should confirm instead:** set `panelByChoice = true` when the button
+    is pressed while already in card-opened panel mode, rather than toggling to
+    popup. Needs a label change to stay honest (`Readout: panel ✓`, or similar).
 
 - [ ] **CARDINALITY GUARD — two small follow-ons (guard shipped 2026-07-28, PR #110).**
   `scripts/check_value_anchors.py` now pins the record-to-parcel *regime* in
