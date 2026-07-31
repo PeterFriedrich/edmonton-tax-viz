@@ -1127,6 +1127,7 @@ Closed items moved out of `## Open work` on 2026-07-30 live in **`docs/TODO_arch
 
 - [x] **PROMOTED the temporal + change lenses to the PUBLIC build — DONE 2026-07-31 (PR #121, merged `828bb5a`, deploy green, LIVE).** — DONE 2026-07-31 · `docs/TODO_archive.md`
 - [x] **ALL THREE PRE-EXISTING VERIFY FAILURES ARE FIXED (2026-07-31). THE SUITE IS GREEN: 26 scripts, 0 failures.** — 2026-07-31 · `docs/TODO_archive.md`
+- [x] **TOUCH: the history panel now takes TWO gestures (tap → peek card → tap the card), and the panel's × is doubled to 44px — DONE 2026-07-31.** Peter: *"the panel on mobile [should be] harder to activate"* + *"the x on the panel needs to be twice as big"*. Measured first: on touch the tooltip node never exists, so hover-then-click collapsed to one tap. Gated on `(hover: none)`, entry only, all touch paths idempotent (a tap can fire the handler twice). `verify-peek.js`, 21 checks — **the first script in the suite that drives a real pointer at the map.** — `docs/DECISIONS.md` 2026-07-31, `docs/SPEC_temporal.md` §2
 
 
 Closed items moved out of `## Open work` on 2026-07-30 live in **`docs/TODO_archive.md`** — one line each below, reasoning there.

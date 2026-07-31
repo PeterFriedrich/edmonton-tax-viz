@@ -20,6 +20,15 @@ now)**, one deck.gl / MapLibre canvas. The viewport meta is already correct
 It was inline in `index.html` until the CSS extraction — anything below that says
 `<style>` means that file.
 
+⚠️ **There are now TWO seams, and they answer different questions (2026-07-31).**
+The block above is about **how much screen there is**; a second
+`@media (hover: none)` block immediately before it is about **what is pointing at
+the screen**. Put a rule in the hover seam when the reason is the *finger*: the
+touch-only peek card (`#peek`) exists because a finger cannot hover, and the
+enlarged 44px `#temporal-close` is needed on an 800px touch tablet and wrong for
+a mouse in a 400px-wide desktop window. Width is the wrong test for both. The JS
+side uses the matching `noHover()` helper, not a width check.
+
 **One measured lesson from the seam, worth having before the next rule
 (2026-07-29):** the history panel's desktop background is `rgba(12,12,20,0.92)`,
 the value every reading surface here shares. As a **bottom sheet** it sits over
@@ -261,3 +270,25 @@ pass inherits the flattened control, no phone-specific reveal logic needed.
   report + tap probe. Run against a local server (`python3 -m http.server 8931`
   from `web/`), then `node tools/profiling/shot-mobile.js`. **Layout oracle only
   — not authoritative for touch interaction** (see §2b).
+- `tools/profiling/verify-peek.js` — the touch gesture net (21 checks, desktop +
+  390×844). ⚠️ **The only script in the suite that drives a REAL pointer at the
+  map**; the other 26 call `temporalClick()`/`openTemporal()` directly in JS,
+  which is why single-tap-opens-everything went unnoticed through the whole
+  temporal lens build. If you are testing a *gesture*, a JS call proves nothing —
+  the gate lives between the gesture and those functions.
+
+⚠️ **Driving real taps has three traps, all measured 2026-07-31, and each one
+looks exactly like the feature being broken:**
+1. **Deck renders its picking buffer on demand, and under headless SwiftShader
+   that pass is too slow for a click's synchronous pick** — bare taps registered
+   **2 of 4**, versus **4 of 4** when a `pickObject` was issued first to warm it.
+   Warm before every map gesture. This is a software-GL artifact of the harness,
+   **not** something a device with hardware GL does — do not "fix" the app for it.
+2. **A pixel must pick the same hood across a ring around it, not merely pick
+   something.** Click-time picking rounds device pixels differently from a manual
+   `pickObject`, so a pixel on a polygon *edge* reports hood A and delivers hood
+   B. The west edge at the default zoom is river-valley slivers with no safe
+   interior — start from the middle of the map.
+3. **A touch tap can deliver the handler TWICE** (touch event + compatibility
+   mouse event), so any toggle driven by a tap fires at random. Make touch paths
+   idempotent instead of counting events.
