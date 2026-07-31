@@ -220,9 +220,13 @@ Ordered; each step is independently shippable and desktop-safe.
    so selecting by presence hangs Playwright's `click()`; filter on visibility.
    Headless Chromium also measures text **wider** than the real `-apple-system`
    stack, so a no-clip verdict there **errs safe**.
-   ⚠️ **`tools/profiling/shot-mobile.js` is STALE for this job** — its id list
-   predates `#moneymode`/`#chgwindow` and its comment still claims 5 public
-   views. Fix it before trusting it for the next mobile pass.
+   ✅ **`tools/profiling/shot-mobile.js` was fixed for this job (2026-07-31).**
+   Its id list is now the page's own `CHROME_IDS` (read live from the page, so
+   chrome added later is picked up) plus the rows `CHROME_IDS` deliberately
+   omits; it honours its URL argument; and the tap probe looks for `#peek`.
+   ⚠️ **An id list can only ever see chrome that HAS an id** — the worst
+   overflow on the page is `div.tip`, which has none, so the script now also
+   sweeps for overflow generically. Read that section, not just the id table.
 4. **Re-render + eyeball** with `shot-mobile.js` after each step; then hand Peter
    a real-device check for the touch-behaviour items in §2b (harness can't judge
    those).
@@ -267,9 +271,12 @@ pass inherits the flattened control, no phone-specific reveal logic needed.
 ## 4. Tooling
 
 - `tools/profiling/shot-mobile.js` — mobile-emulation render + panel-overflow
-  report + tap probe. Run against a local server (`python3 -m http.server 8931`
-  from `web/`), then `node tools/profiling/shot-mobile.js`. **Layout oracle only
-  — not authoritative for touch interaction** (see §2b).
+  report + tap probe. Serve `web/` (quirk q), then
+  `node tools/profiling/shot-mobile.js [url]` — **the URL argument works as of
+  2026-07-31; before that it was accepted and silently ignored** in favour of a
+  hardcoded port 8931. **Layout oracle only — not authoritative for touch
+  interaction** (see §2b). Reports the id table, the post-tap `#peek` box, and
+  a generic overflow sweep that catches unidentified chrome like `div.tip`.
 - `tools/profiling/verify-peek.js` — the touch gesture net (21 checks, desktop +
   390×844). ⚠️ **The only script in the suite that drives a REAL pointer at the
   map**; the other 26 call `temporalClick()`/`openTemporal()` directly in JS,
