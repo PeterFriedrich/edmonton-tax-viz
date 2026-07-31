@@ -86,11 +86,18 @@ function approx(a, b, rel = 1e-6) { return Math.abs(a - b) <= rel * Math.max(Mat
     !c.detailShown && !c.detailHdShown);
 
   // Plane drives off the industrial column, clamp == independent p97.5.
+  // ⚠️ THE COLUMN IS WINDOW-SUFFIXED. `state.devWindow` defaults to "long", so
+  // the live column is `ind_permits_per_acre_long`, NOT the bare name. This
+  // block hardcoded the bare one and therefore recomputed the clamp over a
+  // DIFFERENT distribution — p97.5 differed and the check failed on a small
+  // colour delta (want 148,39,97 got 140,37,97) that read like ramp drift for
+  // two sessions. Take the column from the app's own mapping; the p97.5 and the
+  // ramp evaluation stay independent, which is where this check's value lies.
   const drive = await page.evaluate(() => {
     const layer = overlay._deck.props.layers.find(l => l.id === 'dev-plane');
-    const f = state.data.features.find(x => x.properties.ind_permits_per_acre > 0);
     // devT/devScale are closures — read the colour and compare to a hand rampColorAt.
-    const col = 'ind_permits_per_acre';
+    const col = devCol();
+    const f = state.data.features.find(x => x.properties[col] > 0);
     const vals = state.data.features.map(x => x.properties[col]).filter(v => v != null)
       .sort((a, b) => a - b);
     const q = (a, p) => { const i = (a.length - 1) * p, lo = Math.floor(i), hi = Math.ceil(i);
@@ -99,10 +106,15 @@ function approx(a, b, rel = 1e-6) { return Math.abs(a - b) <= rel * Math.max(Mat
     const t = Math.sqrt(Math.max(0, Math.min(1, f.properties[col] / clamp)));
     const want = rampColorAt(t).join();
     const got = layer.props.getFillColor(f).slice(0, 3).join();
-    return { want, got };
+    return { want, got, col, window: state.devWindow };
   });
-  check('plane colour matches sqrt(ind_permits_per_acre / p97.5)', drive.want === drive.got,
-    `want ${drive.want} got ${drive.got}`);
+  // Guard the guard: taking the column from the app means the check must still
+  // prove it is an INDUSTRIAL one, or it would verify the ramp against whatever
+  // else happened to be selected.
+  check('the plane is driven by an industrial column',
+    /^ind_permits_per_acre/.test(drive.col), `${drive.col} (window=${drive.window})`);
+  check('plane colour matches sqrt(industrial permits per acre / p97.5)',
+    drive.want === drive.got, `want ${drive.want} got ${drive.got} [${drive.col}]`);
 
   // Tooltip: count line, not dwelling units.
   const tip = await page.evaluate(() => {
@@ -126,9 +138,20 @@ function approx(a, b, rel = 1e-6) { return Math.abs(a - b) <= rel * Math.max(Mat
   }));
   check('entering Infill resets devMetric off industrial', infill.metric !== 'industrial');
   check('Industrial button hidden in Infill', !infill.btnShown);
+  // ⚠️ Same window-suffix trap as the colour check above: this listed only the
+  // BARE column names, so it failed the moment a suffixed window became the
+  // default (`new_units_per_acre_long`). Derive the acceptable set from the
+  // app's own DEV_COLS instead of restating it — a new window must not be able
+  // to break this again — and assert the complement explicitly, so the check
+  // still fails if Infill ever reads an INDUSTRIAL column.
+  const cols = await page.evaluate(() => ({
+    residential: [...Object.values(DEV_COLS.units), ...Object.values(DEV_COLS.permits)],
+    industrial: Object.values(DEV_COLS.industrial),
+  }));
   check('infill activity column is a residential metric',
-    infill.scoreCol === 'new_units_per_acre' || infill.scoreCol === 'new_permits_per_acre',
-    infill.scoreCol);
+    cols.residential.includes(infill.scoreCol), infill.scoreCol);
+  check('infill activity column is never an industrial one',
+    !cols.industrial.includes(infill.scoreCol), infill.scoreCol);
 
   // --- back to Development restores the button -------------------------------
   await click('#views button[data-view="development"]');

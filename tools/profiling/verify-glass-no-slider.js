@@ -106,10 +106,24 @@ const [url] = process.argv.slice(2);
     console.log('SKIP  uses view not in this build');
   }
 
-  // --- Development's activity grid keeps its slider
+  // --- Development: the slider follows the DETAIL mode, not the view
+  // ⚠️ The 100 m grid is Development's DEFAULT (`devGrid: true`), so entering
+  // the view lands on the grid, where the slider is correct. This block used to
+  // probe straight after `view('development')` and call the result "the
+  // neighbourhood choropleth" — true when the grid was still opt-in, stale ever
+  // since, and it failed for two sessions while looking like a render bug.
+  // Select the choropleth EXPLICITLY rather than trusting the view default.
   await view('development');
-  const devHood = await probe();
-  check('[development] no slider on the neighbourhood choropleth', devHood.sliderShown === false);
+  const devHoodBtn = await page.$('#devdetail button[data-devdetail="hood"]');
+  if (devHoodBtn && await devHoodBtn.isVisible()) {
+    await devHoodBtn.click();
+    await page.waitForTimeout(4000);
+    const devHood = await probe();
+    check('[development] no slider on the neighbourhood choropleth',
+      devHood.sliderShown === false, `devGrid=${devHood.ghostLayer}`);
+  } else {
+    console.log('SKIP  development neighbourhood choropleth not offerable');
+  }
   const devGrid = await page.$('#devdetail button[data-devdetail="grid"]');
   if (devGrid && await devGrid.isVisible()) {
     await devGrid.click();

@@ -1118,44 +1118,45 @@ re-reproduced with values confirmed, only the triage decision left.)_
   per-neighbourhood exempt share). Notebooks go in `notebooks/exploration/`; per
   global CLAUDE.md, use the Jupyter MCP server tools, not NotebookEdit.
 
-- [ ] **TWO PRE-EXISTING VERIFY FAILURES — found while verifying the CSS
-  extraction (2026-07-29), NOT caused by it.** Both reproduce identically on an
-  unmodified master build, and both assert values rather than layout, so neither
-  is a CSS/chrome problem. Nobody has triaged them; they may be stale
-  expectations rather than real bugs — **reproduce and re-measure the stated
-  cause before fixing** (`TODO.md` items go stale, and these are second-hand).
-  - [ ] `verify-ind-permits.js` — two failures: `plane colour matches
-    sqrt(ind_permits_per_acre / p97.5)` **want `148,39,97` got `140,37,97`**
-    (small, smells like a scale/percentile drift or a stale literal), and
-    `infill activity column is a residential metric` got
-    `new_units_per_acre_long`.
-  - [ ] `verify-glass-no-slider.js` — `[development] no slider on the
-    neighbourhood choropleth` fails. Note the 2026-07-25 decision removed the
-    Glass prism-opacity slider and the 2026-07-26 one moved `#coloradj`; the
-    assertion may simply predate them.
-  - [ ] ⚠️ **`verify-coloradj.js` — a THIRD pre-existing failure, found
-    2026-07-31 and NOT previously listed.** Three checks fail: `#coloradj is the
-    last child of #opt-body`, `[100 m grid] still the last child`, `[money]
-    still the last child after the tour` — all reporting
-    `layers > coloradj > hoodmode`. **Confirmed pre-existing** by re-running on
-    master, so it is not the promotion's doing. Cause is structural and dates to
-    **S78 (#119)**: `#hoodmode` was added to `#opt-body` *after* `#coloradj`
-    (markup order), and the script asserts `#coloradj` is the panel's bottom
-    control. **It went unnoticed because S79's gate ran only 3 of the 26
-    scripts** — the cost of a targeted gate, worth remembering. The fix is a
-    design call, not a mechanical one: does the readout-mode pod belong above or
-    below the colour control? ⚠️ **Now public-facing** — the promotion makes
-    `#hoodmode` visible in the public build too.
-  - ⚠️ **THREE scripts fail, not two, so the suite is NOT green today** —
-    don't read a green run as proof; these need to be either fixed or
-    explicitly waived.
-  - **✅ RE-REPRODUCED 2026-07-30 (S79), still failing identically** with the
-    change lens merged — so they are neither stale-and-self-healed nor caused by
-    anything since. The measured values above are CONFIRMED current, not
-    second-hand any more: `want 148,39,97 got 140,37,97`, and
-    `new_units_per_acre_long`. **The re-measure step this item asks for is DONE;
-    what remains is the triage decision (fix or waive).** Reproduce in one line:
-    `node tools/profiling/verify.js <url> glass-no-slider ind-permits`
+- [x] **ALL THREE PRE-EXISTING VERIFY FAILURES ARE FIXED (2026-07-31). THE
+  SUITE IS GREEN: 26 scripts, 0 failures.** First found 2026-07-29 while
+  verifying the CSS extraction (not caused by it), carried through S79 as "fix
+  or waive". **All three were STALE TEST EXPECTATIONS, not app bugs** — the app
+  was right every time, which is why nothing looked broken on screen.
+  - [x] `verify-ind-permits.js` — **both failures were ONE root cause: the
+    window suffix.** `state.devWindow` defaults to `"long"`, so the live columns
+    are `ind_permits_per_acre_long` / `new_units_per_acre_long`, while the
+    script hardcoded the BARE names. The colour check therefore recomputed p97.5
+    over a *different distribution* and failed on a small delta
+    (`want 148,39,97 got 140,37,97`) that read like ramp drift; the infill check
+    listed only the bare names. Both now derive the column from the app's own
+    `devCol()`/`DEV_COLS`, so **a future window cannot break them again**. Two
+    checks ADDED to keep them honest once the column is app-supplied: the plane
+    must be driven by an `ind_permits_per_acre*` column, and infill must never
+    read an industrial one.
+  - [x] `verify-glass-no-slider.js` — **the 100 m grid is Development's DEFAULT
+    (`devGrid: true`), so entering the view lands on the grid, where the slider
+    is CORRECT.** The script probed straight after switching view and called the
+    result "the neighbourhood choropleth". True when the grid was opt-in, stale
+    since. It now selects the choropleth EXPLICITLY rather than trusting the
+    view default. (The suspected causes recorded here — the removed Glass slider
+    and the moved `#coloradj` — were both wrong.)
+  - [x] `verify-coloradj.js` — a THIRD failure, found 2026-07-31 and not
+    previously listed. `#coloradj is the last child of #opt-body` and two
+    re-checks, all reporting `layers > coloradj > hoodmode`. Confirmed
+    pre-existing on master; cause dated to **S78 (#119)**, where `#hoodmode` was
+    added to `#opt-body` *after* `#coloradj`. **Unnoticed because S79's gate ran
+    3 of the 26 scripts** — the standing cost of a targeted gate. Fixed by
+    Peter's call: `#hoodmode` moved ABOVE `#coloradj`, restoring the 2026-07-26
+    intent that colour scaling reads last. No CSS `order:` on these pods, so
+    markup order is visual order.
+  - **Generalisable:** all three failed because a test restated a value the app
+    owns (a column name, a default mode, a markup position) instead of reading
+    it. ⚠️ **And all three were invisible on screen** — the standing rule is
+    that a red verify script is evidence about the *test* as often as the app,
+    so diagnose before "fixing" either.
+  - **Full-suite baseline, 2026-07-31: 26 scripts / 0 failures.** Run it in
+    batches (quirk t): `node tools/profiling/verify.js <url> <names...>`
 
 - [ ] **STAGE 2 of the `web/index.html` split — the JS into ES modules (NOT
   started, and deliberately deferred).** Stage 1 (CSS → `web/styles.css`) shipped
