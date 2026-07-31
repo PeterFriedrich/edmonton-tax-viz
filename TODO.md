@@ -46,6 +46,27 @@ re-reproduced with values confirmed, only the triage decision left.)_
 ## Open work
 
 
+- [ ] **UI BUG (NEW, 2026-07-31): the hover tooltip `div.tip` renders on TOUCH
+  and runs 127px off the right edge at 390px.** Found by eye in
+  `shot-mobile.js`'s post-tap screenshot — the numeric checks all passed, and
+  the id-based overflow table structurally could not see it (`.tip` has no id).
+  - **Measured, emulated:** tapping the map centre at 390×844 shows the peek
+    card **and** `div.tip` at left 195 → right **517** on a 390px viewport.
+    Text is cut mid-word ("0% of revenue is residenti…").
+  - **Cause is a missing gate, and it is a one-liner —** `tooltipFor`
+    (`web/index.html`, symbol) has **no `noHover()` check**, unlike
+    `temporalClick`. deck's `getTooltip` is hover-pick driven, and on touch a
+    compatibility mouse event produces a hover pick.
+  - ⚠️ **DO NOT FIX ON THIS EVIDENCE — Playwright is not a phone.** This is the
+    exact limit S81 recorded ("could not determine whether real iOS doubles the
+    same way", quirk mm). Emulated `isMobile` may synthesise a mouse event real
+    iOS Safari would not. **Needs Peter's real-device check first:** on a phone,
+    does tapping a neighbourhood show a tooltip box as well as the peek card?
+  - **If it reproduces on device it undercuts an S81 premise** — the peek card
+    was built because "on a phone the `.deck-tooltip` node never exists at all,
+    so there was no preview stage to gate". That is true of deck's *built-in*
+    tooltip; the app renders its **own** `.tip`, which was never checked.
+
 - [ ] **UI BUG: the Display popover paints OVER the Data & Methods pod
   (Peter, 2026-07-28).** Bottom-right: opening **Display** covers the
   **Data & Methods** button sitting above it.
@@ -90,9 +111,10 @@ re-reproduced with values confirmed, only the triage decision left.)_
     so selecting by presence hangs Playwright's `click()`; filter on visibility.
     Headless Chromium also measures text **wider** than the real font stack
     (quirk y), so a no-clip result there errs safe.
-    ⚠️ **`tools/profiling/shot-mobile.js`'s id list is STALE** — no `moneymode`
-    /`chgwindow`, and its comment still claims 5 public views. Fix before
-    trusting it for the next mobile pass.
+    ✅ **`tools/profiling/shot-mobile.js` fixed 2026-07-31** (id list now reads
+    the page's own `CHROME_IDS`, URL argument honoured, tap probe looks for
+    `#peek`, plus a generic overflow sweep). It is trustworthy for the next
+    mobile pass.
   - [ ] **▶ The open question inside step 2 — bottom sheet or not.** Whether the
     control column is fine as a stack or wants a bottom sheet / hamburger.
     **Decide against the CURRENT render**, now that the blurb is collapsed: the
