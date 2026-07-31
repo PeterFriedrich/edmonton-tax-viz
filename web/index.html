@@ -44,6 +44,23 @@
     <p id="temporal-hint">Click a neighbourhood to see its assessment history.</p>
   </div>
 
+  <!-- TOUCH-ONLY first stage of opening the history panel. A finger cannot
+       hover, so on a phone the desktop gesture (hover to preview, click to
+       commit) collapsed into ONE tap that opened the whole panel — trivially
+       easy to trigger by accident, and measured: tap a hood and the panel is up.
+       This card is the missing first stage. A tap peeks; the panel then takes a
+       second, deliberate tap on a card that is big, rather than a second tap on
+       a map polygon that is small and easy to miss. Same shape as Google Maps,
+       Apple Maps and Zillow, which all go pin → small card → full sheet.
+       It is a <button> so the commit is keyboard- and screen-reader-reachable
+       for free. Hidden wherever hover exists: there the tooltip already IS the
+       preview, and a card would just duplicate it. -->
+  <button id="peek" class="panel">
+    <span id="peek-name"></span>
+    <span id="peek-read"></span>
+    <span id="peek-go">See assessment history &rsaquo;</span>
+  </button>
+
   <div id="controls">
   <!-- Two-level metric picker. Row 1 = WHICH QUANTITY (Revenue | Value); row 2 =
        for revenue only, WHICH CLASSES. The nesting is the data's own shape, not
@@ -1055,6 +1072,7 @@
     let lrtLinesFetch = null;        // in-flight fetch guard; missing file => no lines
     let temporalData = null;   // hood x year assessment history; missing file => lens absent
     let pinnedHood = null;     // hood name shown in the pinned history panel, or null
+    let peekHood = null;       // hood shown in the touch-only peek card, or null
 
     // Three neutral, luminance-sequential ramps to compare: dark = low, bright =
     // high, with no semantic good/bad hue (consistent with the linear-elevation
@@ -2178,7 +2196,7 @@
     //     text is the case actually reported.
     const CHROME_IDS = ["banner", "title", "views", "toggle", "optpanel",
                         "a11y", "a11y-menu", "about", "about-menu",
-                        "legend", "compass", "viewbtns", "temporal"];
+                        "legend", "compass", "viewbtns", "temporal", "peek"];
     function chromeBoxes() {
       // The sweep works in deck-viewport pixels; getBoundingClientRect returns
       // CSS-viewport pixels. The canvas is the full window at 0,0 today so the
@@ -2799,12 +2817,51 @@
       btn.classList.toggle("active", panel);
       const el = document.getElementById("temporal");
       if (panel) {
+        // The card is only ever the way IN to the panel, so it never survives
+        // one opening — including when the mode is entered from the button
+        // rather than from the card itself.
+        closePeek();
         el.classList.add("open");
         el.classList.toggle("empty", !pinnedHood);
       } else {
         pinnedHood = null;
         el.classList.remove("open");
       }
+      if (labelPool().length) overlay.setProps({ layers: buildLayers() });
+    }
+
+    // A finger cannot hover, so touch needs a stage the mouse gets for free.
+    // Keyed on hover rather than screen width on purpose: the missing stage is a
+    // property of the POINTER, so this must be true on a touch tablet and false
+    // in a narrow desktop window. Read live rather than cached at load — a
+    // hybrid laptop can switch pointers without a reload.
+    const noHover = () => window.matchMedia("(hover: none)").matches;
+
+    // The touch-only preview: the view's headline number for one hood, and an
+    // invitation to open the panel. Deliberately the SAME line panel mode
+    // reduces the hover to — one definition of "this hood's headline", so the
+    // card and the panel-mode tooltip cannot drift apart.
+    function openPeek(p) {
+      // Idempotent on purpose. A touch tap can deliver this handler TWICE (the
+      // touch event plus the compatibility mouse event), measured here as a
+      // close-then-open pair that made a toggle behave at random. Re-peeking the
+      // hood already shown is therefore a no-op, so the card's state does not
+      // depend on how many times one tap fires.
+      if (peekHood === p.neighbourhood_name) return;
+      peekHood = p.neighbourhood_name;
+      document.getElementById("peek-name").textContent = p.neighbourhood_name;
+      document.getElementById("peek-read").innerHTML = primaryRow(p);
+      document.getElementById("peek").classList.add("open");
+      // Same reason as the panel: the card is a new obstacle for the label
+      // sweep, so re-cull now instead of leaving names under it until the next
+      // camera move.
+      if (labelPool().length) overlay.setProps({ layers: buildLayers() });
+    }
+
+    function closePeek() {
+      if (!peekHood) return;
+      peekHood = null;
+      document.getElementById("peek").classList.remove("open");
       if (labelPool().length) overlay.setProps({ layers: buildLayers() });
     }
 
@@ -2820,8 +2877,29 @@
     // and the way in for someone who would rather not click the map.
     function temporalClick({ object }) {
       const name = object && object.properties && object.properties.neighbourhood_name;
+      // TOUCH, and only on the way IN. Without hover the tap below was both the
+      // preview and the commit, so the panel opened on any stray tap (Peter,
+      // 2026-07-31). Peek instead and let the card commit.
+      //
+      // Once panel mode is deliberately ON, taps pin directly again: pin-then-
+      // browse is the whole point of the panel, gating it would cost two taps
+      // per hood, and the panel's prompt says outright to tap a neighbourhood.
+      if (noHover() && state.hoodMode !== "panel") {
+        // A tap on empty map dismisses the CARD -- the opposite of the pinned
+        // panel's rule below, and deliberately so: that rule protects a surface
+        // you asked for from a stray tap, while this is a cheap preview you can
+        // reopen with one tap. Tapping away is also how the same card is
+        // dismissed on Google and Apple Maps.
+        if (!name || !temporalFor(name)) closePeek();
+        else openPeek(object.properties);
+        return;
+      }
       if (!name || !temporalFor(name)) return;
-      if (name === pinnedHood) { closeTemporal(); return; }
+      closePeek();
+      // Retap-to-unpin is a POINTER gesture: on touch the doubled event noted in
+      // openPeek would make it toggle at random, and the x (44px on touch) and
+      // Escape are the dismissals there.
+      if (!noHover() && name === pinnedHood) { closeTemporal(); return; }
       applyHoodMode("panel");
       openTemporal(name);
     }
@@ -3949,6 +4027,15 @@
       // mode can be entered by clicking the MAP, so someone who arrived by
       // accident may never have seen the button.
       document.getElementById("temporal-close").addEventListener("click", closeTemporal);
+      // The card IS the commit gesture, so stage two lands on something big
+      // instead of on the same small polygon that opened the peek.
+      document.getElementById("peek").addEventListener("click", () => {
+        if (!peekHood) return;
+        const name = peekHood;
+        closePeek();
+        applyHoodMode("panel");
+        openTemporal(name);
+      });
       document.addEventListener("keydown", e => {
         if (e.key !== "Escape") return;
         if (state.hoodMode === "panel") applyHoodMode("popup"); else closeTemporal();

@@ -407,6 +407,43 @@ html, body { margin: 0; height: 100%; background: #0a0a0f; }
 #temporal.empty #temporal-note,
 #temporal.empty #temporal-close { display: none; }
 
+/* The touch-only peek card (see its markup in index.html). Bottom-anchored in
+   the same slot the panel itself takes on a phone, so committing does not move
+   the eye — the card is replaced in place by what it was previewing. Capped in
+   width so it stays a card on a tablet instead of stretching edge to edge. */
+#peek {
+  display: none; pointer-events: auto; left: 8px; right: 8px; bottom: 8px;
+  max-width: 420px; z-index: 4; text-align: left; cursor: pointer;
+  appearance: none; background: rgba(10,10,16,0.985);
+  border: 1px solid #2a2a3a; border-radius: 6px; padding: 11px 13px;
+  font-family: inherit; font-size: 11.5px; line-height: 1.5; color: #9a9ab0;
+}
+#peek-name {
+  display: block; color: #fcd278; font-size: 12.5px; font-weight: 600;
+  letter-spacing: 0.2px;
+}
+#peek-read { display: block; color: #e8e8ef; margin-top: 2px; }
+#peek-read .muted { color: #6a6a80; }
+#peek-go { display: block; margin-top: 5px; font-size: 10.5px; color: #6a6a80; }
+
+/* ===================================================================
+   TOUCH SEAM — keyed on (hover: none), NOT on width. This is the second
+   of the two seams in this file and they answer different questions:
+   the ≤640px block below is about how much SCREEN there is, this one is
+   about what is POINTING at it. A finger needs a 44px target on an
+   800px tablet, and a mouse does not need one in a 400px-wide desktop
+   window, so width is the wrong test for both rules here.
+   =================================================================== */
+@media (hover: none) {
+  #peek.open { display: block; }
+  /* 20x21 is comfortable for a cursor and less than half the 44px minimum for
+     a finger (Apple HIG; Material asks 48). Doubling it clears the standard —
+     and the panel is opened by a deliberate gesture now, so its dismissal has
+     to be at least as easy as its opening. */
+  #temporal-close { top: 0; right: 0; padding: 10px 15px; font-size: 24px; }
+  #temporal-name { padding-right: 46px; } /* clears the enlarged close button */
+}
+
 /* ===================================================================
    MOBILE CHROME SEAM (docs/MOBILE_USABILITY.md §3). Everything ABOVE is
    the untouched desktop baseline; every rule below fires only ≤640px, so
