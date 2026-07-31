@@ -259,8 +259,11 @@ Change over time), not a sixth `#views` button — Peter's call. Internally it i
 the view `"change"`, exactly the shape `glass` and `infill` already use: a
 render-mode whose parent's `#views` button stays active. Its window picker
 (`#chgwindow`: Since 2012 / Since 2019) follows the `#devwindow` idiom.
-`/full/`-only, and doubly gated — the controls need `FULL_BUILD` **and** a
-loaded `temporal.json`, so they can never offer a lens whose data is absent.
+**PUBLIC as of 2026-07-31** (promoted from `/full/`-only — `DECISIONS.md`
+2026-07-31). It was *doubly* gated on `FULL_BUILD` **and** a loaded
+`temporal.json`; the build flag is gone and **the data gate remains**, which is
+the half that actually matters — the controls still cannot offer a lens whose
+data is absent, and both builds now degrade identically if the file is missing.
 
 **No pipeline work.** Derived client-side from the already-loaded
 `temporal.json`. Switching windows recomputes from a per-window clamp cache and

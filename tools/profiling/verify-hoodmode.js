@@ -16,8 +16,10 @@
 //      pin" hint stays truthful.
 //   5. Entering panel mode with nothing pinned shows a prompt, not an empty box
 //      (a button that appears to do nothing reads as broken).
-//   6. The pod is absent until the history loads, and absent entirely in the
-//      public build -- it must never offer a mode that does not exist.
+//   6. The pod is absent until the history loads -- it must never offer a mode
+//      that does not exist. It is PRESENT in BOTH builds as of 2026-07-31
+//      (promoted from full-only); the data-driven reveal is what gates it now,
+//      not the build flag.
 //   node verify-hoodmode.js <url>
 const { chromium } = require('playwright');
 const [url] = process.argv.slice(2);
@@ -153,23 +155,34 @@ const [url] = process.argv.slice(2);
     clicked.c.mode === 'panel' && clicked.c.empty);
   await page.close();
 
-  // ---- public build: no pod, no panel mode -------------------------------
+  // ---- public build: the pod IS offered (promoted 2026-07-31) -------------
+  // Was "no pod, no panel mode". DECISIONS.md 2026-07-31 promoted the lens, so
+  // the public build now gets the same readout-mode choice as /full/.
   const pub = await open(url + (url.includes('?') ? '&' : '?') + 'build=public');
   const p = await pub.evaluate(() => {
     const el = document.getElementById('hoodmode');
     const before = state.hoodMode;
-    applyHoodMode('panel');   // must not open a panel with no data behind it
-    const opened = document.getElementById('temporal').classList.contains('open');
-    return { podShown: el.offsetParent !== null, before, opened };
+    return { podShown: el.offsetParent !== null, before };
   });
-  check('public build: the mode pod never appears', !p.podShown);
-  check('public build: defaults to popup', p.before === 'popup');
+  check('public build: the mode pod appears', p.podShown);
+  check('public build: still defaults to popup', p.before === 'popup');
+
+  // The primaryRow trap is build-independent: reducing the tooltip must keep
+  // the view's own headline number, or panel mode is a downgrade in public too.
   const pubTip = await pub.evaluate(() => {
     const f = state.data.features.find(x => x.properties.neighbourhood_name === 'DOWNTOWN');
-    return tooltipFor({ object: f }).html;
+    const full = tooltipFor({ object: f }).html;
+    applyHoodMode('panel');
+    const reduced = tooltipFor({ object: f }).html;
+    return { full, reduced, mode: state.hoodMode };
   });
-  check('public build: tooltip still full and sparkline-free',
-    /\/ acre/.test(pubTip) && !/class="spark"/.test(pubTip));
+  check('public build: popup-mode tooltip is full and carries the sparkline',
+    /\/ acre/.test(pubTip.full) && /class="spark"/.test(pubTip.full));
+  check('public build: panel mode engages', pubTip.mode === 'panel');
+  check('public build: panel-mode tooltip reduces but keeps the headline',
+    /\/ acre/.test(pubTip.reduced)
+    && pubTip.reduced.length < pubTip.full.length
+    && !/class="spark"/.test(pubTip.reduced));
   await pub.close();
 
   await browser.close();

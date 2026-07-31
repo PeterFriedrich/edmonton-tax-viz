@@ -17,7 +17,9 @@
 //      and clicking ANOTHER hood re-pins rather than closing.
 //   6. The panel is in CHROME_IDS, so the label sweep dodges it — otherwise hood
 //      names paint underneath it.
-//   7. It is FULL-only: `?build=public` gets no sparkline and cannot pin.
+//   7. It is PUBLIC as of 2026-07-31 (promoted from full-only): `?build=public`
+//      fetches the history, carries the sparkline, pins the panel, and STATES
+//      the 2024 omission — a public gap with no explanation reads as broken.
 //   8. It collides with nothing on desktop, and becomes a bottom sheet that
 //      spares the control column at 390px.
 //   node verify-temporal.js <url>
@@ -266,22 +268,38 @@ const [url] = process.argv.slice(2);
   check('phone: panel does not cover the control column', !overlap(m.rect, m.controls));
   await phone.close();
 
-  // ---- public build: the lens is absent -----------------------------------
+  // ---- public build: the lens is PRESENT (promoted 2026-07-31) ------------
+  // These three checks previously asserted the lens was ABSENT here. The
+  // promotion (DECISIONS.md 2026-07-31) inverted the contract, and this script
+  // went red on exactly those three — the intended behaviour of a regression
+  // net, so they are rewritten deliberately rather than deleted.
+  //
+  // Asserting "the panel opens" is STRICTER than the old "it cannot open":
+  // a build that failed to load temporal.json at all would have satisfied the
+  // old assertion, so the absence check could not distinguish "correctly
+  // withheld" from "silently broken". The presence check can only pass if the
+  // fetch, the join and the render all work.
   const pub = await open(url + (url.includes('?') ? '&' : '?') + 'build=public',
                          { width: 1440, height: 900 });
   const p = await pub.evaluate(() => {
     const f = state.data.features.find(
       x => x.properties.neighbourhood_name === 'DOWNTOWN');
-    openTemporal('DOWNTOWN');   // must be a no-op, not a crash
+    openTemporal('DOWNTOWN');
     return {
       series: temporalFor('DOWNTOWN'),
       tipHasSpark: /class="spark"/.test(tooltipFor({ object: f }).html),
       open: document.getElementById('temporal').classList.contains('open'),
+      noteShown: document.getElementById('temporal-note').textContent,
     };
   });
-  check('public build never fetches the history', p.series === null);
-  check('public build has no sparkline', !p.tipHasSpark);
-  check('public build cannot pin the panel', !p.open);
+  check('public build fetches the history', p.series !== null
+        && Array.isArray(p.series.years) && p.series.years.length > 0);
+  check('public build has the sparkline', p.tipHasSpark);
+  check('public build can pin the panel', p.open);
+  // The 2024 omission must be STATED publicly, not merely rendered as a hole —
+  // a visible gap with no explanation reads as broken data (SPEC_temporal §0).
+  check('public build states the 2024 omission', /2024 is omitted/.test(p.noteShown)
+        && /not interpolated/.test(p.noteShown));
   await pub.close();
 
   await page.close();
