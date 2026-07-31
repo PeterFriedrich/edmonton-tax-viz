@@ -98,8 +98,30 @@ def main():
         "---",
         "",
     ]
+    # ⚠️ APPEND TO THE EXISTING ARCHIVE, NEVER REPLACE IT. This function built
+    # `arch` from the header alone and then wrote it, which was harmless on the
+    # FIRST run (S79, empty file) and destroyed every previously-archived item
+    # on any run after it — 757 lines -> 81 when it was caught on 2026-07-31.
+    # The archive is the only copy of that reasoning; TODO.md keeps one-line
+    # stubs. Newest-moved first, matching the header's own claim.
+    prior = []
+    if ARCHIVE.exists():
+        old_lines = ARCHIVE.read_text(encoding="utf-8").splitlines()
+        # Everything after the header's closing `---` is prior archived content.
+        for i, l in enumerate(old_lines):
+            if l.strip() == "---":
+                prior = old_lines[i + 1:]
+                break
+        else:
+            # No recognisable header: keep the whole file rather than guess.
+            prior = old_lines
+        while prior and not prior[0].strip():
+            prior.pop(0)
+
     for b in closed:
         arch += b + [""]
+    if prior:
+        arch += prior + [""]
 
     # --- one-line entries for TODO.md's ## Done ---
     stubs = []
@@ -122,6 +144,15 @@ def main():
     kept = sum(len(b) for b in still_open)
     if moved + len(stubs) < 1:
         print("todo_archive: refusing to write, nothing accounted for")
+        return 1
+    # The archive only ever grows. This is the guard that would have caught the
+    # overwrite bug above on its first destructive run, so it checks the SIZE of
+    # what is about to be written rather than trusting the append logic.
+    prior_len = len(ARCHIVE.read_text(encoding="utf-8").splitlines()) if ARCHIVE.exists() else 0
+    if len(arch) < prior_len:
+        print(f"todo_archive: REFUSING TO WRITE — the archive would SHRINK "
+              f"({prior_len} -> {len(arch)} lines). It is append-only and holds "
+              f"the only copy of closed items' reasoning.")
         return 1
     print(f"closed items      {len(closed):3d}  ({moved} lines) -> docs/TODO_archive.md")
     print(f"open items        {len(still_open):3d}  ({kept} lines) stay")

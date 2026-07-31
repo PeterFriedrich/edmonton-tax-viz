@@ -8,6 +8,72 @@ Items are verbatim as they were closed, newest-moved first in the order they app
 
 ---
 
+- [x] **PROMOTED the temporal + change lenses to the PUBLIC build — DONE
+  2026-07-31 (PR #121, merged `828bb5a`, deploy green, LIVE).** Peter: *"can we
+  actually move those value change over time features to the public build"* →
+  **both**. A **content-split tag change, not a re-opened lock**.
+  - **Cost: three `FULL_BUILD` conjuncts.** No pipeline, no new columns, no
+    build plumbing — `temporal.json` (42 kB gzipped) **already shipped to the
+    public root** and the controls were **hidden, not stripped**. The **data**
+    gate survives, which is the half that matters.
+  - **The verify scripts caught the contract change** — five "the public build
+    does NOT have this" assertions. Two made **stricter**: "panel opens" beats
+    "cannot open" (a build that failed to load `temporal.json` SATISFIED the old
+    absence check, so it could not tell *correctly withheld* from *silently
+    broken*), and the change-window check now runs AFTER entering change mode
+    (`#chgwindow` is hidden in Money/current in BOTH builds, so the old
+    assertion passed for the wrong reason).
+  - **A caveat must travel with the lens it qualifies** — new check that the
+    public build STATES the 2024 omission.
+  - **Verified in the BUILT tree**, not just `?build=public` on source.
+  - ⚠️ **`#hoodmode` moved ABOVE `#coloradj`** (Peter), which also fixed
+    `verify-coloradj.js`. **That commit was STRANDED** — #121 merged the
+    previous commit only, in the gap between the PR-state check and the push
+    landing; recovered by cherry-pick into #122. **Re-measuring on the new
+    branch is what caught it.**
+
+
+- [x] **ALL THREE PRE-EXISTING VERIFY FAILURES ARE FIXED (2026-07-31). THE
+  SUITE IS GREEN: 26 scripts, 0 failures.** First found 2026-07-29 while
+  verifying the CSS extraction (not caused by it), carried through S79 as "fix
+  or waive". **All three were STALE TEST EXPECTATIONS, not app bugs** — the app
+  was right every time, which is why nothing looked broken on screen.
+  - [x] `verify-ind-permits.js` — **both failures were ONE root cause: the
+    window suffix.** `state.devWindow` defaults to `"long"`, so the live columns
+    are `ind_permits_per_acre_long` / `new_units_per_acre_long`, while the
+    script hardcoded the BARE names. The colour check therefore recomputed p97.5
+    over a *different distribution* and failed on a small delta
+    (`want 148,39,97 got 140,37,97`) that read like ramp drift; the infill check
+    listed only the bare names. Both now derive the column from the app's own
+    `devCol()`/`DEV_COLS`, so **a future window cannot break them again**. Two
+    checks ADDED to keep them honest once the column is app-supplied: the plane
+    must be driven by an `ind_permits_per_acre*` column, and infill must never
+    read an industrial one.
+  - [x] `verify-glass-no-slider.js` — **the 100 m grid is Development's DEFAULT
+    (`devGrid: true`), so entering the view lands on the grid, where the slider
+    is CORRECT.** The script probed straight after switching view and called the
+    result "the neighbourhood choropleth". True when the grid was opt-in, stale
+    since. It now selects the choropleth EXPLICITLY rather than trusting the
+    view default. (The suspected causes recorded here — the removed Glass slider
+    and the moved `#coloradj` — were both wrong.)
+  - [x] `verify-coloradj.js` — a THIRD failure, found 2026-07-31 and not
+    previously listed. `#coloradj is the last child of #opt-body` and two
+    re-checks, all reporting `layers > coloradj > hoodmode`. Confirmed
+    pre-existing on master; cause dated to **S78 (#119)**, where `#hoodmode` was
+    added to `#opt-body` *after* `#coloradj`. **Unnoticed because S79's gate ran
+    3 of the 26 scripts** — the standing cost of a targeted gate. Fixed by
+    Peter's call: `#hoodmode` moved ABOVE `#coloradj`, restoring the 2026-07-26
+    intent that colour scaling reads last. No CSS `order:` on these pods, so
+    markup order is visual order.
+  - **Generalisable:** all three failed because a test restated a value the app
+    owns (a column name, a default mode, a markup position) instead of reading
+    it. ⚠️ **And all three were invisible on screen** — the standing rule is
+    that a red verify script is evidence about the *test* as often as the app,
+    so diagnose before "fixing" either.
+  - **Full-suite baseline, 2026-07-31: 26 scripts / 0 failures.** Run it in
+    batches (quirk t): `node tools/profiling/verify.js <url> <names...>`
+
+
 - [x] ~~**ASSESSMENT-OVER-TIME GRAPH PER NEIGHBOURHOOD**~~ — **✅ COMPLETE
   2026-07-29, live in `/full/`. All four phases shipped; `SPEC_temporal.md` has
   nothing pending.** Read that spec before editing the lens: **§2** for the

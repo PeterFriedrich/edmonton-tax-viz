@@ -66,7 +66,7 @@ seven became modes of another view rather than top-level entries:
 
 | `#views` button | Internal view name(s) | Notes |
 |---|---|---|
-| **Money** *(default)* | `money`, **`glass`**, **`change`** | `glass` = the "100 m grid" `#moneydetail` mode. **`change`** (2026-07-30) = the full-only "Change over time" `#moneymode` lens — share-of-base movement, a flat diverging choropleth. The Money button stays active in both. |
+| **Money** *(default)* | `money`, **`glass`**, **`change`** | `glass` = the "100 m grid" `#moneydetail` mode. **`change`** (2026-07-30) = the "Change over time" `#moneymode` lens — share-of-base movement, a flat diverging choropleth; **public as of 2026-07-31**. The Money button stays active in both. |
 | **Development** | `development`, **`infill`** | Moved to **second, next to Money** (2026-07-27, Peter). `infill` = the full-only "Infill opportunity" `#devmode` lens; the Development button stays active in it. |
 | **Services** 🔒 | `services` | Full build only — **LOCKED for release 2026-07-28**. |
 | **Ratio** 🔒 | `ratio` | Full build only — **LOCKED for release 2026-07-28**. |
@@ -94,6 +94,8 @@ lenses" pass.
 | **Ratio** view | ❌ _(locked 2026-07-28)_ | ✅ |
 | **Uses** view (dominant zoned land use) | ❌ _(locked 2026-07-28)_ | ✅ |
 | **Infill** lens on Development | ❌ | ✅ |
+| **Assessment-history panel + hover sparkline + `#hoodmode`** | ✅ _(promoted 2026-07-31)_ | ✅ |
+| **Change over time** lens on Money (`#moneymode` / `#chgwindow`) | ✅ _(promoted 2026-07-31)_ | ✅ |
 | **Industrial** metric on Development | ❌ | ✅ |
 | Money tooltip's **road m/acre + $/road metre** rows | ❌ _(went with Ratio, 2026-07-28)_ | ✅ |
 | Data & Methods: modelled-services caveat, road/fire/transit source credits | ❌ _(went with Services, 2026-07-28)_ | ✅ |
@@ -103,6 +105,19 @@ lenses" pass.
 Full-only *modes/metrics inside a public view* (Infill, Industrial) are
 `BUILD`-flag-gated at the control level — `|| !FULL_BUILD` sits next to their
 data guard, so nothing is stripped from the file.
+
+**The split moves in BOTH directions, and the 2026-07-31 promotion is the
+worked example.** `DECISIONS.md` 2026-07-22 locks the two-build *mechanism*; the
+*content* split is a per-control tag decided here and revisable (Uses was tagged
+full-only "provisional… may return to public"; Transit **amended** an earlier
+release-scope lock). Promoting the temporal + change lenses cost three
+`FULL_BUILD` conjuncts and no pipeline work, because nothing is stripped —
+`temporal.json` already shipped to the public root and the controls were only
+hidden. ⚠️ **Promoting has a mirror of the pull-residue problem below:** the
+lens's *caveats* must travel with it. The 2024 omission note and the
+"NOT set-aside land" legend copy were already written, and
+`verify-temporal.js` now asserts the public build **states** the omission — a
+visible gap with no explanation reads as broken data.
 
 **Pulling a view is not finished when its button is hidden.** The 2026-07-28
 Services/Ratio pull had to chase two residues: Ratio's headline number was on the
@@ -134,9 +149,13 @@ the sweep's existing priority key is polygon area and a Point has none.
 
 **`#hoodmode` — where a hood's detail appears (2026-07-30).** Tier 3, and the
 newest pod: `Readout: popup` / `Readout: panel`, label-is-the-state like
-`#coloradj` and sitting directly beneath it. Applies in **every view**;
-**full-build only**, and **hidden until `web/data/temporal.json` loads** — with no
-panel to switch to, the control would offer a mode that does not exist.
+`#coloradj` and sitting directly **above** it (moved 2026-07-31 — `#coloradj`
+must stay the panel's last child; `verify-coloradj.js` asserts it, and adding a
+pod after it went unnoticed for two sessions). Applies in **every view**;
+**PUBLIC as of 2026-07-31** (was full-build only), and **hidden until
+`web/data/temporal.json` loads** — with no panel to switch to, the control would
+offer a mode that does not exist. **The data gate is now the only gate**, which
+is the half that mattered: both builds degrade identically if the file is gone.
 
 It is the one control that changes **what the tooltip contains**: in panel mode
 every view's hover collapses to its **headline number only**, and the temporal
@@ -147,8 +166,9 @@ positional rule would print road supply under a stormwater-coloured map.
 Services' headline reads `state.svcDriver`.
 
 **`#temporal`, the assessment-history panel (2026-07-29), is the surface it
-governs** — and it is no longer tier-less. It appears in every view, full-build
-only, and is still the only surface openable by clicking **the map itself**. It is
+governs** — and it is no longer tier-less. It appears in every view, in **both
+builds** (public as of 2026-07-31), and is still the only surface openable by
+clicking **the map itself**. It is
 in `CHROME_IDS`, so the label sweep dodges it while open. Three dismissals with
 deliberately different scopes: the **×** clears the pinned hood (content),
 **Escape** and **`#hoodmode`** leave the mode. Design and the two rendering
@@ -176,9 +196,9 @@ has at least one section to show.
 
 | View / mode | Controls shown | Data-gate | Dynamic rules |
 |---|---|---|---|
-| **Money → Neighbourhood** | `#moneymode` 🔒 (Current / Change over time); `#moneydetail` (Neighbourhood / 100 m grid); `#denom` headed **"Denominator"** | `#moneymode` on `FULL_BUILD && temporalData`; `#moneydetail` unconditional; `#denom` on `hasHoodLot` | `#coloradj` live (bottom of the panel); `#revcut` (in `#toggle`, on the map) offers the 3 revenue cuts |
+| **Money → Neighbourhood** | `#moneymode` 🔒 (Current / Change over time); `#moneydetail` (Neighbourhood / 100 m grid); `#denom` headed **"Denominator"** | `#moneymode` on `temporalData` (the `FULL_BUILD` half dropped 2026-07-31); `#moneydetail` unconditional; `#denom` on `hasHoodLot` | `#coloradj` live (bottom of the panel); `#revcut` (in `#toggle`, on the map) offers the 3 revenue cuts |
 | **Money → 100 m grid** (`glass`) | same `#moneydetail`; `#denom` **relabelled "Spike denominator"** | `gridData.hasLot` | **no `#prism-row`** — opacity fixed at 60%, re-applied on entry (2026-07-25); `#coloradj` stays live; `#revcut` still offered (the grid carries the cut columns, `col >= 0` fallback); **no `#moneymode`** — it is a Detail choice, and the lens toggle returns to the prisms, never here |
-| **Money → Change over time** (`change`) 🔒 | `#moneymode`; `#chgwindow` (**Since 2012 / Since 2019**) | `FULL_BUILD && temporalData` — **doubly gated**, so the toggle can never offer a lens whose data is absent | **no `#moneydetail`** (no change grid), **no `#denom`**, **no `#toggle`** (the metric is share-of-base, not a money column), **`#coloradj` inert** (its own per-arm diverging clamp, like Infill). Leaving via `Current` lands on the **prisms**, never Glass |
+| **Money → Change over time** (`change`) | `#moneymode`; `#chgwindow` (**Since 2012 / Since 2019**) | `temporalData` — **public as of 2026-07-31**; was doubly gated, and the surviving data gate is the one that matters: the toggle can never offer a lens whose data is absent | **no `#moneydetail`** (no change grid), **no `#denom`**, **no `#toggle`** (the metric is share-of-base, not a money column), **`#coloradj` inert** (its own per-arm diverging clamp, like Infill). Leaving via `Current` lands on the **prisms**, never Glass |
 | **Services** | `#services` — 6 rows: Roads · Stormwater · Fire · Water/sewer · Transit · Service cost. Each = on/off checkbox + a "colour" driver radio | rows self-gate on their columns | radios appear only when **≥2** are checked; the driver always names a *checked* service (unchecking it hands the ramp on); fire/transit draw their dots whenever checked, driver or not |
 | **Ratio** | `#ratio-denom` (Per road metre / Per fire event / Per service $); `#prism-row` opacity slider, default 5% | `hasFire \|\| hasSvcCost` (else roads-only, control hidden) | **the only view that also shows the `#prism-hd` "Money plane" header** |
 | **Uses** 🔒 | `#uses-prisms` (Height = share zoned residential); `#prism-row` while prisms on, default 35% | — | legend swaps to categorical |

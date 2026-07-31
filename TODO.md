@@ -16,6 +16,24 @@ is read at the start of every session, so it should hold what is still true, not
 the whole history. Keep it that way: when an item closes, move its body to the
 archive and leave a `## Done` line.
 
+_Last reconciled: 2026-07-31 (S80 — **the temporal + change lenses are PUBLIC**
+(#121, merged + deployed) and **the verify suite is GREEN for the first time on
+record: 26 scripts, 0 failures** (#122). Three things closed by *measurement
+rather than building*: mobile chrome step 3 was not reproducible; the
+45-grey-hoods "blocker" had shipped in S79; and all three verify failures were
+stale TEST expectations, not app bugs. Also found and fixed a **data-loss bug in
+`tools/todo_archive.py`** — it OVERWROTE the archive instead of appending, and
+had destroyed 747 lines of S79 history before it was caught. **The `▶` moves to
+the bottom-sheet decision** — the last open piece of the mobile work, and
+Peter's call, not a build item.)_
+
+## Open work` carries only live work; `## Done` keeps a one-line entry for every
+closed item, so **the *never redo a closed item without asking* rule still works
+by grepping `## Done`** — the reasoning is one hop away in the archive. This file
+is read at the start of every session, so it should hold what is still true, not
+the whole history. Keep it that way: when an item closes, move its body to the
+archive and leave a `## Done` line.
+
 _Last reconciled: 2026-07-31 (S80 — **mobile chrome step 3 CLOSED as NOT
 REPRODUCIBLE, no code change.** Carried as the `▶` since S74 and never started;
 re-measuring found the symptom already gone, in both builds and every view. The
@@ -26,6 +44,7 @@ change map is live (#120); the two pre-existing verify failures are
 re-reproduced with values confirmed, only the triage decision left.)_
 
 ## Open work
+
 
 - [ ] **UI BUG: the Display popover paints OVER the Data & Methods pod
   (Peter, 2026-07-28).** Bottom-right: opening **Display** covers the
@@ -43,43 +62,6 @@ re-reproduced with values confirmed, only the triage decision left.)_
   - `verify-about.js` already asserts paint order at 390/360/1440
     (`topmost=about-menu`) — extend it to the Display menu rather than writing
     a new script.
-
-- [ ] **▶ PROMOTE the temporal + change lenses to the PUBLIC build** (Peter,
-  2026-07-31: *"can we actually move those value change over time features to
-  the public build"* → **both**, sequenced after the mobile check, which is now
-  closed). This is a **content-split tag change, not a re-opened lock** —
-  `DECISIONS.md` 2026-07-22 locks the two-build *mechanism* but states the
-  content split is per-control and revisable (precedent: Uses → full-only marked
-  *"provisional… may return to public"*; Transit **amended** an earlier
-  release-scope lock).
-  - **No pipeline, no build plumbing, no new columns.** `web/data/temporal.json`
-    (90K raw / **42 kB gzipped**) **already ships to the public root** —
-    `DECISIONS.md` 2026-07-29; the public build simply never fetches it. The
-    full-only controls are **hidden, not stripped** (verified 07-31).
-  - **The gate is three conjuncts**, cleanly layered so the two halves are
-    independently promotable:
-    | Feature | Gate | Symbol |
-    |---|---|---|
-    | sparkline + pinned panel + `#hoodmode` | the **fetch** `if (FULL_BUILD)` | near `TEMPORAL_URL` |
-    | change choropleth | `… && FULL_BUILD && temporalData != null` (×2) | `syncChangeControls` |
-    (cite by symbol, not line — use `docs/CODEMAP.md`.)
-  - ✅ **NOT a blocker — the 45-grey-hoods copy was already written in S79 and
-    is live in `/full/`.** Carried as open from S78, answered during the change
-    lens's own build, and re-flagged as open here on 07-31 before anyone read
-    the code — **the fourth stale carried item in this lineage.** Shipped copy:
-    tooltip `No 2012 baseline`; panel `No 2012 baseline — held none of the
-    assessment base that year`; the mirror case `No 2025 share`; and the legend
-    names them *"the new-growth areas, NOT set-aside land"*, satisfying the
-    `DECISIONS.md` 2026-07-30 prohibition. **Nothing gates the promotion.**
-  - ⚠️ **Editorial, not a build blocker: the deliberately NON-CONTIGUOUS year
-    list.** A visible 2024 hole invites *"your data is wrong"* when the truth is
-    the inverse (omitted **because** the upstream roll is wrong). Told well it is
-    the project's strongest integrity story; told not at all it is a bug report.
-  - **Mobile risk was measured away**, not assumed: the two rows this adds to
-    public Money (`#moneymode`, `#chgwindow`) render at left **177 → 371** on
-    390px in the full build — inside bounds, same CSS the public build will use.
-  - `web/**` → branch + PR (quirk g); check `gh run list` after merge — a failed
-    deploy is **silent**.
 
 - [ ] **Mobile chrome — and it is NOT the blurb collapse, that already shipped**
   (commit `0089eba`, "mobile chrome move 1"). Confirmed good on device by Peter
@@ -111,7 +93,7 @@ re-reproduced with values confirmed, only the triage decision left.)_
     ⚠️ **`tools/profiling/shot-mobile.js`'s id list is STALE** — no `moneymode`
     /`chgwindow`, and its comment still claims 5 public views. Fix before
     trusting it for the next mobile pass.
-  - [ ] **The open question inside step 2 — bottom sheet or not.** Whether the
+  - [ ] **▶ The open question inside step 2 — bottom sheet or not.** Whether the
     control column is fine as a stack or wants a bottom sheet / hamburger.
     **Decide against the CURRENT render**, now that the blurb is collapsed: the
     old reasoning was written when the blurb still ate the top third. Peter's
@@ -1118,46 +1100,6 @@ re-reproduced with values confirmed, only the triage decision left.)_
   per-neighbourhood exempt share). Notebooks go in `notebooks/exploration/`; per
   global CLAUDE.md, use the Jupyter MCP server tools, not NotebookEdit.
 
-- [x] **ALL THREE PRE-EXISTING VERIFY FAILURES ARE FIXED (2026-07-31). THE
-  SUITE IS GREEN: 26 scripts, 0 failures.** First found 2026-07-29 while
-  verifying the CSS extraction (not caused by it), carried through S79 as "fix
-  or waive". **All three were STALE TEST EXPECTATIONS, not app bugs** — the app
-  was right every time, which is why nothing looked broken on screen.
-  - [x] `verify-ind-permits.js` — **both failures were ONE root cause: the
-    window suffix.** `state.devWindow` defaults to `"long"`, so the live columns
-    are `ind_permits_per_acre_long` / `new_units_per_acre_long`, while the
-    script hardcoded the BARE names. The colour check therefore recomputed p97.5
-    over a *different distribution* and failed on a small delta
-    (`want 148,39,97 got 140,37,97`) that read like ramp drift; the infill check
-    listed only the bare names. Both now derive the column from the app's own
-    `devCol()`/`DEV_COLS`, so **a future window cannot break them again**. Two
-    checks ADDED to keep them honest once the column is app-supplied: the plane
-    must be driven by an `ind_permits_per_acre*` column, and infill must never
-    read an industrial one.
-  - [x] `verify-glass-no-slider.js` — **the 100 m grid is Development's DEFAULT
-    (`devGrid: true`), so entering the view lands on the grid, where the slider
-    is CORRECT.** The script probed straight after switching view and called the
-    result "the neighbourhood choropleth". True when the grid was opt-in, stale
-    since. It now selects the choropleth EXPLICITLY rather than trusting the
-    view default. (The suspected causes recorded here — the removed Glass slider
-    and the moved `#coloradj` — were both wrong.)
-  - [x] `verify-coloradj.js` — a THIRD failure, found 2026-07-31 and not
-    previously listed. `#coloradj is the last child of #opt-body` and two
-    re-checks, all reporting `layers > coloradj > hoodmode`. Confirmed
-    pre-existing on master; cause dated to **S78 (#119)**, where `#hoodmode` was
-    added to `#opt-body` *after* `#coloradj`. **Unnoticed because S79's gate ran
-    3 of the 26 scripts** — the standing cost of a targeted gate. Fixed by
-    Peter's call: `#hoodmode` moved ABOVE `#coloradj`, restoring the 2026-07-26
-    intent that colour scaling reads last. No CSS `order:` on these pods, so
-    markup order is visual order.
-  - **Generalisable:** all three failed because a test restated a value the app
-    owns (a column name, a default mode, a markup position) instead of reading
-    it. ⚠️ **And all three were invisible on screen** — the standing rule is
-    that a red verify script is evidence about the *test* as often as the app,
-    so diagnose before "fixing" either.
-  - **Full-suite baseline, 2026-07-31: 26 scripts / 0 failures.** Run it in
-    batches (quirk t): `node tools/profiling/verify.js <url> <names...>`
-
 - [ ] **STAGE 2 of the `web/index.html` split — the JS into ES modules (NOT
   started, and deliberately deferred).** Stage 1 (CSS → `web/styles.css`) shipped
   2026-07-29, PR #116; see `DECISIONS.md` that date for the full reasoning.
@@ -1180,6 +1122,12 @@ re-reproduced with values confirmed, only the triage decision left.)_
     speculatively.
 
 ## Done
+
+Closed items moved out of `## Open work` on 2026-07-30 live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
+
+- [x] **PROMOTED the temporal + change lenses to the PUBLIC build — DONE 2026-07-31 (PR #121, merged `828bb5a`, deploy green, LIVE).** — DONE 2026-07-31 · `docs/TODO_archive.md`
+- [x] **ALL THREE PRE-EXISTING VERIFY FAILURES ARE FIXED (2026-07-31). THE SUITE IS GREEN: 26 scripts, 0 failures.** — 2026-07-31 · `docs/TODO_archive.md`
+
 
 Closed items moved out of `## Open work` on 2026-07-30 live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
 

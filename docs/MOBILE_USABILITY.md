@@ -170,13 +170,14 @@ problem**, so revisit it only after the blurb collapse lands.
 
 Ordered; each step is independently shippable and desktop-safe.
 
-> **STATUS 2026-07-28 — steps 1 and 2 are SHIPPED** (commit `0089eba`, "mobile
-> chrome move 1"), and Peter confirmed the collapse works on device. **Do not
-> re-plan them.** What is actually left is **step 3** (the left-edge clip) and
-> the *open question* inside step 2 (bottom sheet or not), which should now be
-> decided against the current render rather than the pre-collapse one. This note
-> exists because the list below reads as a forward plan and a session mistook it
-> for one.
+> **STATUS 2026-07-31 — steps 1, 2 AND 3 are all closed. Do not re-plan them.**
+> Steps 1-2 shipped in `0089eba` ("mobile chrome move 1") and Peter confirmed
+> the collapse on device. **Step 3 (the left-edge clip) was closed as NOT
+> REPRODUCIBLE, with no code change** — see the step itself. The only thing left
+> in this section is the *open question* inside step 2 (bottom sheet or not),
+> which is a decision for Peter against the CURRENT render, not a build item.
+> This note exists because the list below reads as a forward plan and a session
+> mistook it for one.
 
 1. ~~**Establish the seam.**~~ **DONE.** One `@media (max-width: 640px) { … }`
    block at the end of `<style>`. Nothing above it changes; all mobile rules
@@ -195,9 +196,24 @@ Ordered; each step is independently shippable and desktop-safe.
      regroup's clean vertical stack makes "column is fine" more viable than the old
      7-view pile-up did — but the column still runs top 20→314, so a collapsed/
      scrollable container may still be worth it. Decide against the refreshed render.
-3. **Stop the left-edge clip.** `#controls`/`#coloradj` render at left −51, `#toggle`
-   at −10 (`#views` now fits). Wrap or shrink the widest rows so nothing renders at
-   negative left.
+3. ~~**Stop the left-edge clip.**~~ **CLOSED 2026-07-31 as NOT REPRODUCIBLE —
+   no code change.** The S74 symptom (`#controls`/`#coloradj` at left −51,
+   `#toggle` at −10) does not occur on current master. Re-measured at 390×844
+   with `hasTouch`/`isMobile`, in **both builds**, across **every visible view**,
+   with the Options pod **unfolded**: `#controls` 8→382, `#views` 22→382,
+   `#toggle` 103→382, and the pod rows (`#coloradj`/`#layers`/`#moneymode`/
+   `#chgwindow`) 177→371. Nothing at negative left, nothing off the right.
+   ⚠️ **Two traps make a naive pass lie, and both are worth keeping:**
+   **(a)** `#optpanel` is `.folded` by default at ≤640px, so its rows have **no
+   layout box** and report `0,0` — the folded state *cannot* show the clip, and
+   reads as "fixed" for the wrong reason. Unfold first.
+   **(b)** The public build keeps full-only controls in the DOM but **hidden**,
+   so selecting by presence hangs Playwright's `click()`; filter on visibility.
+   Headless Chromium also measures text **wider** than the real `-apple-system`
+   stack, so a no-clip verdict there **errs safe**.
+   ⚠️ **`tools/profiling/shot-mobile.js` is STALE for this job** — its id list
+   predates `#moneymode`/`#chgwindow` and its comment still claims 5 public
+   views. Fix it before trusting it for the next mobile pass.
 4. **Re-render + eyeball** with `shot-mobile.js` after each step; then hand Peter
    a real-device check for the touch-behaviour items in §2b (harness can't judge
    those).
