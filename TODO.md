@@ -1133,22 +1133,23 @@ re-reproduced with values confirmed, only the triage decision left.)_
     neighbourhood choropleth` fails. Note the 2026-07-25 decision removed the
     Glass prism-opacity slider and the 2026-07-26 one moved `#coloradj`; the
     assertion may simply predate them.
-  - [ ] ⚠️ **`verify-coloradj.js` — a THIRD pre-existing failure, found
-    2026-07-31 and NOT previously listed.** Three checks fail: `#coloradj is the
-    last child of #opt-body`, `[100 m grid] still the last child`, `[money]
-    still the last child after the tour` — all reporting
+  - [x] **`verify-coloradj.js` — a THIRD pre-existing failure, found AND
+    FIXED 2026-07-31.** Three checks failed (`#coloradj is the last child of
+    #opt-body`, and the two re-checks after a view tour), all reporting
     `layers > coloradj > hoodmode`. **Confirmed pre-existing** by re-running on
-    master, so it is not the promotion's doing. Cause is structural and dates to
-    **S78 (#119)**: `#hoodmode` was added to `#opt-body` *after* `#coloradj`
-    (markup order), and the script asserts `#coloradj` is the panel's bottom
-    control. **It went unnoticed because S79's gate ran only 3 of the 26
-    scripts** — the cost of a targeted gate, worth remembering. The fix is a
-    design call, not a mechanical one: does the readout-mode pod belong above or
-    below the colour control? ⚠️ **Now public-facing** — the promotion makes
-    `#hoodmode` visible in the public build too.
-  - ⚠️ **THREE scripts fail, not two, so the suite is NOT green today** —
-    don't read a green run as proof; these need to be either fixed or
-    explicitly waived.
+    master. Cause dated to **S78 (#119)**: `#hoodmode` was added to `#opt-body`
+    *after* `#coloradj`, and the script asserts `#coloradj` is the panel's
+    bottom control. **It went unnoticed because S79's gate ran only 3 of the 26
+    scripts** — the standing cost of a targeted gate, worth remembering.
+    **Fixed by Peter's call (2026-07-31): `#hoodmode` moved ABOVE `#coloradj`**,
+    which restores the 2026-07-26 intent that colour scaling reads last — it
+    is the only control that changes how the data is DRAWN, whereas `#hoodmode`
+    chooses WHERE a read-out appears. There is no CSS `order:` on these pods, so
+    markup order is visual order.
+  - ⚠️ **TWO scripts still fail, so the suite is NOT green today** —
+    don't read a green run as proof; these two need to be either fixed or
+    explicitly waived. (A third, `verify-coloradj.js`, was found and fixed
+    2026-07-31 — see above.)
   - **✅ RE-REPRODUCED 2026-07-30 (S79), still failing identically** with the
     change lens merged — so they are neither stale-and-self-healed nor caused by
     anything since. The measured values above are CONFIRMED current, not

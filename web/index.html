@@ -186,20 +186,26 @@
       <button data-ratio-denom="servicecost" title="Property-tax revenue as a multiple of the modeled roads + fire service cost — the two levy-funded services this project can measure, NOT the total cost of city services (police, parks, transit and the rest are not included, so most neighbourhoods read well above 1×)">Per service $</button>
     </div>
   </div>
-    <!-- Colour scaling sits at the BOTTOM of the panel (Peter, 2026-07-26). It
-         is the only control here that changes how the data is DRAWN rather than
-         which data is shown, so it reads last, after the detail/denominator
-         sections it modifies. -->
-    <div id="coloradj" class="panel">
-      <button id="coloradj-btn" class="active" title="How colour is scaled — not what you're looking at. Click to switch: sqrt scaling spreads the values across the ramp; linear shows true magnitude (clamped at the top). Height stays linear either way.">Colour: sqrt scaling</button>
-    </div>
     <!-- Where a neighbourhood's detail appears. Same "the label IS the state"
-         idiom as #coloradj above, and it sits beside it for the same reason:
+         idiom as #coloradj below, and it sits beside it for the same reason:
          both are about PRESENTATION, not which data is shown. Hidden until the
-         assessment history has loaded (full build only) — with no panel to
-         switch to, the control would offer a mode that does not exist. -->
+         assessment history has loaded — with no panel to switch to, the control
+         would offer a mode that does not exist. -->
     <div id="hoodmode" class="panel">
       <button id="hoodmode-btn" title="Where a neighbourhood's detail appears. Popup: hover for the full read-out plus an assessment-history sparkline. Panel: hover shows only the headline number, and clicking a neighbourhood pins its full assessment history in a panel you can read without holding the mouse still.">Readout: popup</button>
+    </div>
+    <!-- Colour scaling sits at the BOTTOM of the panel (Peter, 2026-07-26; the
+         position was RE-CONFIRMED 2026-07-31 when #hoodmode was moved ABOVE it
+         rather than below). It is the only control here that changes how the
+         data is DRAWN rather than which data is shown, so it reads last, after
+         the detail/denominator sections it modifies — and #hoodmode chooses
+         WHERE a read-out appears, which is still a question about the data
+         rather than about how it is painted.
+         ⚠️ Markup order IS the contract here: `verify-coloradj.js` asserts
+         #coloradj is the LAST child of #opt-body. Adding a pod after it fails
+         that check — which is exactly what went unnoticed from S78 to S79. -->
+    <div id="coloradj" class="panel">
+      <button id="coloradj-btn" class="active" title="How colour is scaled — not what you're looking at. Click to switch: sqrt scaling spreads the values across the ramp; linear shows true magnitude (clamped at the top). Height stays linear either way.">Colour: sqrt scaling</button>
     </div>
     </div>
   </div>
