@@ -63,11 +63,14 @@ re-reproduced with values confirmed, only the triage decision left.)_
     | sparkline + pinned panel + `#hoodmode` | the **fetch** `if (FULL_BUILD)` | near `TEMPORAL_URL` |
     | change choropleth | `… && FULL_BUILD && temporalData != null` (×2) | `syncChangeControls` |
     (cite by symbol, not line — use `docs/CODEMAP.md`.)
-  - ⚠️ **BLOCKER TO CLOSE FIRST — what the 45 no-baseline hoods say on hover.**
-    Open since S78. On `/full/` a specialist tolerates unexplained grey; public,
-    45 grey hoods incl. Blatchford/Keswick/Glenridding Ravine read as broken
-    data or — expressly forbidden by `DECISIONS.md` 2026-07-30 — as set-aside
-    land. *"No 2012 baseline"* is the honest phrasing.
+  - ✅ **NOT a blocker — the 45-grey-hoods copy was already written in S79 and
+    is live in `/full/`.** Carried as open from S78, answered during the change
+    lens's own build, and re-flagged as open here on 07-31 before anyone read
+    the code — **the fourth stale carried item in this lineage.** Shipped copy:
+    tooltip `No 2012 baseline`; panel `No 2012 baseline — held none of the
+    assessment base that year`; the mirror case `No 2025 share`; and the legend
+    names them *"the new-growth areas, NOT set-aside land"*, satisfying the
+    `DECISIONS.md` 2026-07-30 prohibition. **Nothing gates the promotion.**
   - ⚠️ **Editorial, not a build blocker: the deliberately NON-CONTIGUOUS year
     list.** A visible 2024 hole invites *"your data is wrong"* when the truth is
     the inverse (omitted **because** the upstream roll is wrong). Told well it is
