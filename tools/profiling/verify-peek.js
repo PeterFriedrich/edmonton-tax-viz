@@ -17,8 +17,15 @@
 //      and a tap on empty map dismisses. The no-op matters: a touch tap can
 //      deliver temporalClick twice (touch event + compatibility mouse event),
 //      measured on 2026-07-31, so any toggle here would fire at random.
-//   5. The gate is on the way IN only: with panel mode already on, a tap pins
-//      directly, so pin-then-browse still costs one tap per hood.
+//   5. TWO GESTURES PER HOOD, EVERY TIME -- not just on the way in (Peter,
+//      2026-07-31, revising S81). With the panel already open, tapping a
+//      DIFFERENT hood closes the panel and peeks; only pressing #hoodmode-btn
+//      deliberately buys one-tap pinning. S81 keyed this off hoodMode, but
+//      committing a card SETS hoodMode to panel, so one commit silently bought
+//      permanent one-tap pinning and the stray-tap problem returned.
+//   5b. NO HOVER TOOLTIP ON TOUCH AT ALL. deck's getTooltip is hover-pick
+//      driven and a tap synthesises one, so the full `.tip` box rendered on top
+//      of the peek card, clipped off the right edge. Confirmed on a real phone.
 //   6. The card's headline is the SAME string panel mode reduces the hover to,
 //      so the two cannot drift apart.
 //   7. The close button clears the 44px touch minimum on touch, and is NOT
@@ -202,6 +209,22 @@ const closeBox = page => page.evaluate(() => {
       `"${s.peekName}" vs "${t[0].name}"`);
     check('touch: mode is still popup after a peek', s.mode === 'popup', s.mode);
 
+    // ⚠️ NO `.tip` ON TOUCH. deck's getTooltip runs off a hover pick and the tap
+    // above synthesises one via the compatibility mouse event, so before the
+    // noHover() gate in tooltipFor this box rendered ON TOP of the card, at the
+    // finger, running 127px off the right edge of a 390px screen. Confirmed on a
+    // real phone. Asserting the CLASS, not the width: a `.tip` that happened to
+    // fit would still be a second readout competing with the card.
+    const tipBox = await page.evaluate(() => {
+      const t = document.querySelector('.tip');
+      if (!t) return null;
+      const r = t.getBoundingClientRect();
+      return { left: Math.round(r.left), right: Math.round(r.right),
+               overflows: r.right > window.innerWidth };
+    });
+    check('touch: the hover tooltip never renders', tipBox === null,
+      JSON.stringify(tipBox));
+
     // The card's headline must be the same string panel mode reduces the hover
     // to -- one definition of "this hood's headline".
     const reduced = await page.evaluate((n) => {
@@ -250,12 +273,35 @@ const closeBox = page => page.evaluate(() => {
       s.panelOpen && s.pinned === t[0].name, `pinned=${s.pinned} mode=${s.mode}`);
     check('touch: the card is gone once the panel is up', !s.peekShown);
 
-    // The gate is on the way IN only.
+    // ⚠️ THE INVERSION OF THE S81 RULE. The panel is open, but it was reached
+    // by committing a card, so the gate is still armed: another hood peeks and
+    // the panel closes behind it.
     await gesture(page, t[1].x, t[1].y, true);
     s = await snap(page);
-    check('touch: with the panel open, a tap pins DIRECTLY (browse costs 1 tap)',
-      s.panelOpen && s.pinned === t[1].name && !s.peekShown,
-      `pinned=${s.pinned} peek=${s.peekShown}`);
+    check('touch: panel open via CARD -- another hood peeks, panel closes',
+      s.peekShown && s.peekName === t[1].name && !s.panelOpen && s.pinned === null,
+      `peek=${s.peekName} panel=${s.panelOpen} pinned=${s.pinned} mode=${s.mode}`);
+
+    // The deliberate route is the ONE that buys one-tap pinning. Press the mode
+    // button (a real tap on the control, not applyHoodMode in JS -- the whole
+    // point of this script), then a single tap must pin.
+    await page.evaluate(() => document.getElementById('optpanel').classList.remove('folded'));
+    const modeBtn = await page.evaluate(() => {
+      const r = document.getElementById('hoodmode-btn').getBoundingClientRect();
+      return r.width > 0 ? { x: r.left + r.width / 2, y: r.top + r.height / 2 } : null;
+    });
+    check('touch: the mode button is reachable to tap', !!modeBtn, JSON.stringify(modeBtn));
+    if (modeBtn) {
+      await page.touchscreen.tap(modeBtn.x, modeBtn.y);
+      await page.waitForTimeout(800);
+      check('touch: the button turns panel mode ON',
+        (await snap(page)).mode === 'panel', (await snap(page)).mode);
+      await gesture(page, t[0].x, t[0].y, true);
+      s = await snap(page);
+      check('touch: after the DELIBERATE opt-in, one tap pins directly',
+        s.panelOpen && s.pinned === t[0].name && !s.peekShown,
+        `pinned=${s.pinned} peek=${s.peekShown}`);
+    }
 
     // The x: twice the size, and clearing the 44px minimum.
     const b = await closeBox(page);

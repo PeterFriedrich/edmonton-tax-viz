@@ -46,26 +46,6 @@ re-reproduced with values confirmed, only the triage decision left.)_
 ## Open work
 
 
-- [ ] **UI BUG (NEW, 2026-07-31): the hover tooltip `div.tip` renders on TOUCH
-  and runs 127px off the right edge at 390px.** Found by eye in
-  `shot-mobile.js`'s post-tap screenshot — the numeric checks all passed, and
-  the id-based overflow table structurally could not see it (`.tip` has no id).
-  - **Measured, emulated:** tapping the map centre at 390×844 shows the peek
-    card **and** `div.tip` at left 195 → right **517** on a 390px viewport.
-    Text is cut mid-word ("0% of revenue is residenti…").
-  - **Cause is a missing gate, and it is a one-liner —** `tooltipFor`
-    (`web/index.html`, symbol) has **no `noHover()` check**, unlike
-    `temporalClick`. deck's `getTooltip` is hover-pick driven, and on touch a
-    compatibility mouse event produces a hover pick.
-  - ⚠️ **DO NOT FIX ON THIS EVIDENCE — Playwright is not a phone.** This is the
-    exact limit S81 recorded ("could not determine whether real iOS doubles the
-    same way", quirk mm). Emulated `isMobile` may synthesise a mouse event real
-    iOS Safari would not. **Needs Peter's real-device check first:** on a phone,
-    does tapping a neighbourhood show a tooltip box as well as the peek card?
-  - **If it reproduces on device it undercuts an S81 premise** — the peek card
-    was built because "on a phone the `.deck-tooltip` node never exists at all,
-    so there was no preview stage to gate". That is true of deck's *built-in*
-    tooltip; the app renders its **own** `.tip`, which was never checked.
 
 - [ ] **UI BUG: the Display popover paints OVER the Data & Methods pod
   (Peter, 2026-07-28).** Bottom-right: opening **Display** covers the
@@ -1147,12 +1127,15 @@ re-reproduced with values confirmed, only the triage decision left.)_
 
 Closed items moved out of `## Open work` on 2026-07-30 live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
 
+- [x] **UI BUG: the hover tooltip `div.tip` rendered on TOUCH, 127px off the right edge. CONFIRMED ON DEVICE and FIXED 2026-07-31.** — 2026-07-31 · `docs/TODO_archive.md`
+
+
+
 - [x] **PROMOTED the temporal + change lenses to the PUBLIC build — DONE 2026-07-31 (PR #121, merged `828bb5a`, deploy green, LIVE).** — DONE 2026-07-31 · `docs/TODO_archive.md`
 - [x] **ALL THREE PRE-EXISTING VERIFY FAILURES ARE FIXED (2026-07-31). THE SUITE IS GREEN: 26 scripts, 0 failures.** — 2026-07-31 · `docs/TODO_archive.md`
-- [x] **TOUCH: the history panel now takes TWO gestures (tap → peek card → tap the card), and the panel's × is doubled to 44px — DONE 2026-07-31.** Peter: *"the panel on mobile [should be] harder to activate"* + *"the x on the panel needs to be twice as big"*. Measured first: on touch the tooltip node never exists, so hover-then-click collapsed to one tap. Gated on `(hover: none)`, entry only, all touch paths idempotent (a tap can fire the handler twice). `verify-peek.js`, 21 checks — **the first script in the suite that drives a real pointer at the map.** — `docs/DECISIONS.md` 2026-07-31, `docs/SPEC_temporal.md` §2
+- [x] **TOUCH: the history panel now takes TWO gestures (tap → peek card → tap the card), and the panel's × is doubled to 44px — DONE 2026-07-31.** Peter: *"the panel on mobile [should be] harder to activate"* + *"the x on the panel needs to be twice as big"*. Gated on `(hover: none)`, all touch paths idempotent (a tap can fire the handler twice). ⚠️ **Two claims here were REVISED the same day:** the gate is armed on EVERY tap (only `#hoodmode-btn` disarms it — committing the card was itself what set panel mode), and *"on touch the tooltip node never exists"* was true of deck's built-in `.deck-tooltip` but NOT of the app's own `.tip`, which did render on a finger. `verify-peek.js`, 25 checks — **the first script in the suite that drives a real pointer at the map.** — `docs/DECISIONS.md` 2026-07-31, `docs/SPEC_temporal.md` §2
 
 
-Closed items moved out of `## Open work` on 2026-07-30 live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
 
 - [x] **ASSESSMENT-OVER-TIME GRAPH PER NEIGHBOURHOOD** — COMPLETE 2026-07-29 · `docs/TODO_archive.md`
 - [x] **TEMPORAL, ROUND 2 — "HOW MUCH HAS EACH HOOD CHANGED?" AS A MAP METRIC, WITH SELECTABLE WINDOWS (Peter, 2026-07-30).** — BUILT 2026-07-30 · `docs/TODO_archive.md`
