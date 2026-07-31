@@ -2,7 +2,7 @@
 
 **Generated — do not hand-edit.** `python tools/codemap.py`
 
-`web/index.html` is a single ~4,251-line file holding the whole front end. This is the lookup table for it: jump to a symbol's range instead of scanning. **Line numbers go stale on the next edit — regenerate rather than citing them.** Prose should still name symbols, not lines.
+`web/index.html` is a single ~4,252-line file holding the whole front end. This is the lookup table for it: jump to a symbol's range instead of scanning. **Line numbers go stale on the next edit — regenerate rather than citing them.** Prose should still name symbols, not lines.
 
 ## Symbols (171 indexed)
 
@@ -232,7 +232,7 @@ Grouped by the file's own `// --- section ---` banners, in file order.
 | `applyView` | 3670–3854 | Switch view (money \| services \| ratio \| uses \| glass). Road geometry |
 | `syncServiceControls` | 3855–3864 | Services-view controls. `applyService` flips a service on/off; |
 | `applyService` | 3865–3877 |  |
-| `applySvcDriver` | 3878–4251 |  |
+| `applySvcDriver` | 3878–4252 |  |
 
 ## Element ids (80) — the control surface
 

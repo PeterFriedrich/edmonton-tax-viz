@@ -20,7 +20,10 @@
 //   4. It is a FLAT diverging plane. A prism cannot have negative height, and
 //      hoods moved both ways; the in-repo precedent is the infill plane.
 //   5. The two windows really do differ, and switching them NEVER refetches.
-//   6. It is FULL-only: `?build=public` has no lens toggle and no window picker.
+//   6. It is PUBLIC as of 2026-07-31 (promoted from full-only): `?build=public`
+//      offers the lens toggle, and reveals the window picker ON ENTERING change
+//      mode — the picker is hidden in Money/current in BOTH builds, so checking
+//      it before the switch tests nothing.
 //   7. Panel mode's reduced one-liner follows the change lens (the primaryRow
 //      trap — a positional "row 0" rule is wrong for services and would be
 //      wrong here too).
@@ -234,18 +237,35 @@ const [url] = process.argv.slice(2);
   check('the Money view button stays active throughout the lens', back.moneyBtnActive);
   await page.close();
 
-  // ---- 6. FULL-only -------------------------------------------------------
+  // ---- 6. PUBLIC build carries the lens (promoted 2026-07-31) -------------
+  // Was "FULL-only". DECISIONS.md 2026-07-31 promoted the change sub-mode to
+  // the public build, so both checks are inverted deliberately.
+  //
+  // ⚠️ The window picker is checked AFTER entering change mode. The old
+  // negative assertion passed for the wrong reason: #chgwindow is hidden in
+  // Money/current regardless of build, so `!win` was true even in the full
+  // build and the check never exercised the gate it claimed to.
   const pub = await open(url + '?build=public', { width: 1440, height: 900 });
-  const p = await pub.evaluate(() => {
-    const shown = i => {
-      const el = document.getElementById(i);
-      return !!el && getComputedStyle(el).display !== 'none';
-    };
+  const shownIn = i => {
+    const el = document.getElementById(i);
+    return !!el && getComputedStyle(el).display !== 'none';
+  };
+  const p = await pub.evaluate((src) => {
+    const shown = eval('(' + src + ')');
     return { mode: shown('moneymode'), win: shown('chgwindow'),
              hasFn: typeof changeFor === 'function' };
-  });
-  check('public build offers no Money lens toggle', !p.mode);
-  check('public build offers no change window picker', !p.win);
+  }, shownIn.toString());
+  check('public build offers the Money lens toggle', p.mode);
+  check('public build has the change fn', p.hasFn);
+  check('public build hides the window picker until change mode', !p.win);
+
+  const p2 = await pub.evaluate((src) => {
+    const shown = eval('(' + src + ')');
+    applyMoneyMode('change');
+    return { win: shown('chgwindow'), view: state.view };
+  }, shownIn.toString());
+  check('public build enters change mode', p2.view === 'change');
+  check('public build reveals the window picker in change mode', p2.win);
   await pub.close();
 
   await browser.close();

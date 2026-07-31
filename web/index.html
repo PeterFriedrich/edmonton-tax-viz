@@ -3635,12 +3635,12 @@
     // exists, so it can't offer a lens that isn't there.
     function syncChangeControls() {
       const v = state.view;
-      const show = (v === "money" || v === "change") && FULL_BUILD && temporalData != null;
+      const show = (v === "money" || v === "change") && temporalData != null;
       document.getElementById("moneymode-hd").style.display = show ? "block" : "none";
       document.getElementById("moneymode").style.display = show ? "flex" : "none";
       document.querySelectorAll("#moneymode button").forEach(b =>
         b.classList.toggle("active", b.dataset.moneymode === (v === "change" ? "change" : "current")));
-      const winShow = v === "change" && FULL_BUILD && temporalData != null;
+      const winShow = v === "change" && temporalData != null;
       document.getElementById("chgwindow-hd").style.display = winShow ? "block" : "none";
       document.getElementById("chgwindow").style.display = winShow ? "flex" : "none";
     }
@@ -3915,24 +3915,25 @@
       // orientation is most useful to someone who has just arrived. Async: the
       // map draws without waiting, and the layer appears when it lands.
       ensureReference();
-      // Temporal lens: FULL-only for now (SPEC_temporal.md §1 — it prototypes
-      // behind the work-in-progress badge). Fetched defensively and separately,
-      // like status.json: a missing or broken file leaves temporalData null, so
-      // the sparkline and the panel simply never appear and every other view
-      // still works. Not awaited — the map draws without it.
+      // Temporal lens: PUBLIC as of 2026-07-31 (was full-only through S79 —
+      // DECISIONS.md 2026-07-31 promotes both it and the change sub-mode, a
+      // content-split tag change). Fetched defensively and separately, like
+      // status.json: a missing or broken file leaves temporalData null, so the
+      // sparkline and the panel simply never appear and every other view still
+      // works. Not awaited — the map draws without it. That defensive shape is
+      // what makes the promotion safe in one line: the fetch is now
+      // unconditional, and BOTH builds degrade identically if the file is gone.
       // The mode control has nothing to switch to until this lands, so it ships
       // hidden (in CSS) and is revealed inside the .then — not at load.
-      if (FULL_BUILD) {
-        fetch(TEMPORAL_URL)
-          .then(r => r.ok ? r.json() : null)
-          .then(d => {
-            if (!d || !d.hoods || !d.years) return;
-            temporalData = d;
-            document.getElementById("hoodmode").style.display = "flex";
-            syncChangeControls(); // the file lands after the first applyView
-          })
-          .catch(() => {});
-      }
+      fetch(TEMPORAL_URL)
+        .then(r => r.ok ? r.json() : null)
+        .then(d => {
+          if (!d || !d.hoods || !d.years) return;
+          temporalData = d;
+          document.getElementById("hoodmode").style.display = "flex";
+          syncChangeControls(); // the file lands after the first applyView
+        })
+        .catch(() => {});
       document.getElementById("hoodmode-btn").addEventListener("click", () =>
         applyHoodMode(state.hoodMode === "panel" ? "popup" : "panel"));
       // The x clears the PINNED HOOD; Escape leaves the MODE. Two gestures for

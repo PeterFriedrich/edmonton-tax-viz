@@ -1133,8 +1133,21 @@ re-reproduced with values confirmed, only the triage decision left.)_
     neighbourhood choropleth` fails. Note the 2026-07-25 decision removed the
     Glass prism-opacity slider and the 2026-07-26 one moved `#coloradj`; the
     assertion may simply predate them.
-  - ⚠️ **21 of 23 verify scripts are clean, so the suite is NOT green today** —
-    don't read a green run as proof; these two need to be either fixed or
+  - [ ] ⚠️ **`verify-coloradj.js` — a THIRD pre-existing failure, found
+    2026-07-31 and NOT previously listed.** Three checks fail: `#coloradj is the
+    last child of #opt-body`, `[100 m grid] still the last child`, `[money]
+    still the last child after the tour` — all reporting
+    `layers > coloradj > hoodmode`. **Confirmed pre-existing** by re-running on
+    master, so it is not the promotion's doing. Cause is structural and dates to
+    **S78 (#119)**: `#hoodmode` was added to `#opt-body` *after* `#coloradj`
+    (markup order), and the script asserts `#coloradj` is the panel's bottom
+    control. **It went unnoticed because S79's gate ran only 3 of the 26
+    scripts** — the cost of a targeted gate, worth remembering. The fix is a
+    design call, not a mechanical one: does the readout-mode pod belong above or
+    below the colour control? ⚠️ **Now public-facing** — the promotion makes
+    `#hoodmode` visible in the public build too.
+  - ⚠️ **THREE scripts fail, not two, so the suite is NOT green today** —
+    don't read a green run as proof; these need to be either fixed or
     explicitly waived.
   - **✅ RE-REPRODUCED 2026-07-30 (S79), still failing identically** with the
     change lens merged — so they are neither stale-and-self-healed nor caused by
