@@ -96,6 +96,7 @@ lenses" pass.
 | **Infill** lens on Development | ❌ | ✅ |
 | **Assessment-history panel + hover sparkline + `#hoodmode`** | ✅ _(promoted 2026-07-31)_ | ✅ |
 | **Change over time** lens on Money (`#moneymode` / `#chgwindow`) | ✅ _(promoted 2026-07-31)_ | ✅ |
+| **`#peek`, the touch-only peek card** | ✅ | ✅ | _(gated on `(hover: none)`, not on build — invisible to every mouse in both)_ |
 | **Industrial** metric on Development | ❌ | ✅ |
 | Money tooltip's **road m/acre + $/road metre** rows | ❌ _(went with Ratio, 2026-07-28)_ | ✅ |
 | Data & Methods: modelled-services caveat, road/fire/transit source credits | ❌ _(went with Services, 2026-07-28)_ | ✅ |
@@ -173,6 +174,18 @@ in `CHROME_IDS`, so the label sweep dodges it while open. Three dismissals with
 deliberately different scopes: the **×** clears the pinned hood (content),
 **Escape** and **`#hoodmode`** leave the mode. Design and the two rendering
 invariants: `SPEC_temporal.md` §2.
+
+**`#peek`, the touch-only peek card (2026-07-31), is the stage BEFORE it.** Not
+a control and not a tier — a readout, and the only surface in the app whose
+existence is decided by the **pointer** rather than by the view, the build or the
+data. On `(hover: none)` a map tap opens this card instead of the panel, and the
+card's own tap commits; everywhere else it never displays. It is in `CHROME_IDS`
+alongside `#temporal`. ⚠️ **Two of its rules deliberately invert `#temporal`'s**
+and should not be "made consistent": an empty-map tap **dismisses** the card
+(the panel is inert there — that rule protects a surface you asked for), and
+re-tapping the shown hood is a **no-op** rather than a toggle, because a touch
+tap can fire the handler twice. `#temporal`'s **×** is also enlarged to 44px on
+the same seam. Full reasoning: `SPEC_temporal.md` §2, `MOBILE_USABILITY.md` §1.
 
 **All the inconsistencies in this table are now fixed.** `#toggle` used to stay
 live but inert outside Money (resolved by the regroup — old combo C), `#lens`
