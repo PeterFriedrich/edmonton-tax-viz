@@ -20,6 +20,9 @@ import sys
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 TODO = ROOT / "TODO.md"
 ARCHIVE = ROOT / "docs" / "TODO_archive.md"
+# Matched to find and strip prior copies, so it must stay stable across edits to
+# the banner's wording.
+BANNER_PREFIX = "Closed items moved out of `## Open work`"
 
 ITEM = re.compile(r"^- \[([ x])\] ")
 
@@ -131,11 +134,17 @@ def main():
         stubs.append(f"- [x] **{t}**" + (f" — {d}" if d else "") +
                      " · `docs/TODO_archive.md`")
 
-    new_done = ([done_tail[0], ""]
-                + [f"Closed items moved out of `## Open work` on 2026-07-30 live in "
-                   f"**`docs/TODO_archive.md`** — one line each below, reasoning there.",
-                   ""]
-                + stubs + [""] + done_tail[1:])
+    # Exactly ONE banner, always. This used to be prepended unconditionally while
+    # done_tail still carried the previous run's copy, so TODO.md accumulated one
+    # duplicate line per archive pass -- three by 2026-07-31, in a file every
+    # session reads. Stripping by prefix also cleans up the copies already there,
+    # and drops the hardcoded 2026-07-30, which described the FIRST run and was
+    # wrong on every run after it. (Same shape as the overwrite bug guarded
+    # below: the second and later runs are a different program from the first.)
+    banner = (BANNER_PREFIX + " live in **`docs/TODO_archive.md`** — "
+              "one line each below, reasoning there.")
+    tail = [l for l in done_tail[1:] if not l.startswith(BANNER_PREFIX)]
+    new_done = [done_tail[0], "", banner, ""] + stubs + [""] + tail
 
     new_todo = preamble + [""] + [l for b in still_open for l in b] + new_done
 

@@ -1073,6 +1073,10 @@
     let temporalData = null;   // hood x year assessment history; missing file => lens absent
     let pinnedHood = null;     // hood name shown in the pinned history panel, or null
     let peekHood = null;       // hood shown in the touch-only peek card, or null
+    // Panel mode reached by DELIBERATELY pressing #hoodmode-btn, as opposed to
+    // falling into it by committing a peek card. Only the deliberate route earns
+    // one-tap pinning on touch; see temporalClick.
+    let panelByChoice = false;
 
     // Three neutral, luminance-sequential ramps to compare: dark = low, bright =
     // high, with no semantic good/bad hue (consistent with the linear-elevation
@@ -2808,10 +2812,14 @@
     // Where a hood's detail appears. Leaving panel mode takes the panel with it;
     // entering it opens the panel immediately — on its prompt if nothing is
     // pinned, since a button that appears to do nothing reads as broken.
-    function applyHoodMode(mode) {
+    // byChoice: the caller is the mode BUTTON, not the map or the peek card.
+    // Leaving panel mode always clears it, so the flag can never outlive the
+    // mode it describes.
+    function applyHoodMode(mode, byChoice = false) {
       if (mode === state.hoodMode) return;
       state.hoodMode = mode;
       const panel = mode === "panel";
+      panelByChoice = panel && byChoice;
       const btn = document.getElementById("hoodmode-btn");
       btn.textContent = `Readout: ${panel ? "panel" : "popup"}`;
       btn.classList.toggle("active", panel);
@@ -2877,21 +2885,31 @@
     // and the way in for someone who would rather not click the map.
     function temporalClick({ object }) {
       const name = object && object.properties && object.properties.neighbourhood_name;
-      // TOUCH, and only on the way IN. Without hover the tap below was both the
-      // preview and the commit, so the panel opened on any stray tap (Peter,
-      // 2026-07-31). Peek instead and let the card commit.
+      // TOUCH: two gestures per hood, EVERY time -- not just on the way in.
+      // Without hover a single tap was both the preview and the commit, so the
+      // panel opened on any stray tap (Peter, 2026-07-31).
       //
-      // Once panel mode is deliberately ON, taps pin directly again: pin-then-
-      // browse is the whole point of the panel, gating it would cost two taps
-      // per hood, and the panel's prompt says outright to tap a neighbourhood.
-      if (noHover() && state.hoodMode !== "panel") {
-        // A tap on empty map dismisses the CARD -- the opposite of the pinned
-        // panel's rule below, and deliberately so: that rule protects a surface
-        // you asked for from a stray tap, while this is a cheap preview you can
-        // reopen with one tap. Tapping away is also how the same card is
+      // ⚠️ The test is `panelByChoice`, NOT `state.hoodMode !== "panel"`.
+      // S81 gated the way IN only, reasoning that once panel mode was on the
+      // user had asked for pin-then-browse. But committing a peek card TURNS
+      // panel mode on, so one card commit silently bought permanent one-tap
+      // pinning -- the stray-tap problem came back after the first hood. The
+      // deliberate route (#hoodmode-btn) is the only one that earns it now
+      // (Peter, 2026-07-31: "unless they go and explicitly find that option").
+      if (noHover() && !panelByChoice) {
+        // A tap on empty map dismisses the CARD and leaves any open panel
+        // alone -- the opposite of the pinned panel's rule below, and
+        // deliberately so: that rule protects a surface you asked for from a
+        // stray tap or the tail of a drag, while this is a cheap preview you
+        // can reopen with one tap. Tapping away is also how the same card is
         // dismissed on Google and Apple Maps.
-        if (!name || !temporalFor(name)) closePeek();
-        else openPeek(object.properties);
+        if (!name || !temporalFor(name)) { closePeek(); return; }
+        // A DIFFERENT hood closes the panel rather than swapping its contents
+        // (Peter's call, 2026-07-31): the card is then the only readout on
+        // screen, so the preview is never competing with a stale panel above
+        // it. Committing the card is what re-opens the panel, on the new hood.
+        if (state.hoodMode === "panel") applyHoodMode("popup");
+        openPeek(object.properties);
         return;
       }
       if (!name || !temporalFor(name)) return;
@@ -3179,6 +3197,18 @@
     // dense surface.
     function tooltipFor(info) {
       if (!info.object) return null;
+      // TOUCH HAS NO HOVER, so nothing here should fire on a finger. deck calls
+      // getTooltip off a hover pick, and a tap synthesises one via the
+      // compatibility mouse event -- so before this gate a tap rendered the full
+      // `.tip` box ON TOP of the peek card, positioned at the finger and running
+      // 127px off the right edge of a 390px screen. Found by EYE in
+      // shot-mobile.js's screenshot (no assertion caught it, and the id-based
+      // overflow table structurally could not -- `.tip` has no id), then
+      // CONFIRMED on a real phone by Peter, 2026-07-31.
+      //
+      // The peek card is the touch preview and carries the same primaryRow line
+      // this would, so suppressing the box outright loses nothing.
+      if (noHover()) return null;
       const p = info.object.properties;
       if (state.hoodMode === "panel")
         return { className: "tip",
@@ -4018,8 +4048,10 @@
           syncChangeControls(); // the file lands after the first applyView
         })
         .catch(() => {});
+      // The ONLY caller that passes byChoice -- this is the deliberate route
+      // that earns one-tap pinning on touch (see temporalClick).
       document.getElementById("hoodmode-btn").addEventListener("click", () =>
-        applyHoodMode(state.hoodMode === "panel" ? "popup" : "panel"));
+        applyHoodMode(state.hoodMode === "panel" ? "popup" : "panel", true));
       // The x clears the PINNED HOOD; Escape leaves the MODE. Two gestures for
       // two different things, so neither surprises: after the x you are still in
       // panel mode looking at the prompt, and Escape is the one that gets you all

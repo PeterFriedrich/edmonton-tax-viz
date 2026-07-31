@@ -8,6 +8,12 @@ Items are verbatim as they were closed, newest-moved first in the order they app
 
 ---
 
+- [x] **UI BUG: the hover tooltip `div.tip` rendered on TOUCH, 127px off the
+  right edge. CONFIRMED ON DEVICE and FIXED 2026-07-31.** `tooltipFor` now
+  returns null under `noHover()`. Full reasoning in `DECISIONS.md` and
+  `SPEC_temporal.md` §2; regression net in `verify-peek.js`.
+
+
 - [x] **PROMOTED the temporal + change lenses to the PUBLIC build — DONE
   2026-07-31 (PR #121, merged `828bb5a`, deploy green, LIVE).** Peter: *"can we
   actually move those value change over time features to the public build"* →

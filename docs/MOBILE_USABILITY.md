@@ -140,6 +140,24 @@ problem**, so revisit it only after the blurb collapse lands.
 
 ## 2b. Current state — NEEDS CONFIRMATION
 
+- **The hover tooltip fired on TOUCH and ran off the right edge — CONFIRMED ON
+  DEVICE 2026-07-31, fixed same day.** Peter, asked whether a tooltip box
+  appeared as well as the peek card: **yes, both.** deck's `getTooltip` is
+  driven by a **hover pick**, and a tap synthesises one through the
+  compatibility mouse event, so the full `.tip` box drew on top of the peek
+  card, positioned at the finger, **left 195 → right 517 on a 390px viewport**
+  (127px off-screen, text cut mid-word). Fixed by returning `null` from
+  `tooltipFor` under `noHover()`; the card carries the same `primaryRow` line,
+  so nothing is lost. Regression net: `verify-peek.js` asserts no `.tip` exists
+  after a touch tap.
+  - ⚠️ **Two lessons, both about how it was missed for a whole session.**
+    **(1)** The S81 claim "on a phone the `.deck-tooltip` node never exists at
+    all" was *true and too narrow* — the app renders its **own** `.tip` via
+    `className`, and only deck's built-in was checked. **(2)** It was found by
+    **eye, in a screenshot**. Every assertion passed, and `shot-mobile.js`'s
+    id-based overflow table **structurally could not** see it, because `.tip`
+    has no id. That script now sweeps for overflow generically.
+
 - **Double-tap zoom on the chrome (fix shipped 2026-07-27) — CONFIRMED ON DEVICE
   2026-07-27.** Peter, on a phone: *"double tap on phone no longer zooms in for
   the buttons, only the map."* That confirms **both halves** of the design — the
@@ -277,8 +295,13 @@ pass inherits the flattened control, no phone-specific reveal logic needed.
   hardcoded port 8931. **Layout oracle only — not authoritative for touch
   interaction** (see §2b). Reports the id table, the post-tap `#peek` box, and
   a generic overflow sweep that catches unidentified chrome like `div.tip`.
-- `tools/profiling/verify-peek.js` — the touch gesture net (21 checks, desktop +
-  390×844). ⚠️ **The only script in the suite that drives a REAL pointer at the
+- `tools/profiling/verify-peek.js` — the touch gesture net (**25 checks**,
+  desktop + 390×844). ⚠️ **Budget 900s, not 400.** Measured **419s** standalone
+  on 2026-07-31, up from the ~150s recorded at S81; a `timeout 420` killed it
+  mid-gesture and the crash (`Target page … has been closed`) reads exactly like
+  a logic failure. **The cause was not isolated** — 4 checks were added the same
+  day, so do not assume it is the box. ⚠️ **The only script in the suite that
+  drives a REAL pointer at the
   map**; the other 26 call `temporalClick()`/`openTemporal()` directly in JS,
   which is why single-tap-opens-everything went unnoticed through the whole
   temporal lens build. If you are testing a *gesture*, a JS call proves nothing —
