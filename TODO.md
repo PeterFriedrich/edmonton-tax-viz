@@ -71,6 +71,22 @@ Also removed a duplicated preamble block left in this file by the
     `ResizeObserver` on `#title` are the pattern to copy, and
     `verify-millrates.js` asserts the clearance per cut.
 
+- [ ] **PROPOSE: cache-bust `styles.css` at build time.** Peter, 2026-08-01, on a
+  phone after a successful deploy: *"i'm still not seeing the mill rates on
+  mobile… i can see it when i open it in a private window on my phone. but it's
+  refusing to show on normal safari."* The change was live and correct; his
+  Safari held the old stylesheet. **This is new since 2026-07-29**, when
+  `styles.css` was extracted out of `index.html` — a CSS-only change now ships in
+  a separate file with its own cache lifetime, so a stale stylesheet renders
+  against a fresh page and the feature looks half-deployed.
+  - Both files serve `cache-control: max-age=600` with matching `last-modified`,
+    so the intended window is 10 minutes; observed Safari behaviour was longer.
+  - **Fix:** inject a version query on the `<link>` in `scripts/build_site.py`
+    (content hash or commit sha). ⚠️ **Changes CI behaviour → propose, do not
+    smuggle**, and ⚠️ that script's base-tag guard does a plain substring test
+    over the whole source, which has already killed one deploy — anything near
+    the `<head>` needs the guard re-run. Triage order: `RUNBOOK.md` §3c.
+
 - [ ] **`verify-temporal.js` HAS BEEN RED SINCE THE 2026-08-01 AUTO-REFRESH, and
   nothing reported it.** 5 of 42 checks fail on **clean master** (reproduced in a
   worktree, so it is not a working-tree artifact): Downtown's share reads

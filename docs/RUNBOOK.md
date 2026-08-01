@@ -238,6 +238,36 @@ banner and nothing in `status.json` to say so.
   in that window (the house pattern for optional data).
 - `git status --short web/data/` before committing is the cheap check.
 
+## 3c. "The change didn't ship" — check the browser cache BEFORE the deploy
+(added 2026-08-01)
+
+Peter, on the phone after a deploy: *"i'm still not seeing the mill rates on
+mobile… i can see it when i open it in a private window on my phone. but it's
+refusing to show on normal safari."*
+
+**A private window rendering the change while the normal one does not is a cache
+result, full stop** — it is the fastest disambiguation available and worth asking
+for first. `web/styles.css` was extracted from `index.html` in 2026-07-29, so a
+CSS-only change now ships in a **separate file with its own cache lifetime**, and
+a phone can hold a stale stylesheet against a fresh page. That is exactly the
+shape that makes a change look half-deployed.
+
+**Triage order, cheapest first:**
+1. `gh run list --workflow=deploy.yml --limit 3` — did it deploy at all? ⚠️ A
+   data-only change produces **no run** (`deploy.yml` excludes `web/data/**`).
+2. `curl -s <site>/styles.css | grep <your new rule>` — is the change actually
+   served? This distinguishes "not deployed" from "not seen" in one command.
+3. Private/incognito window on the affected device.
+4. Only then look for a device-specific bug.
+
+Headers as of 2026-08-01: `index.html` and `styles.css` both come back
+`cache-control: max-age=600` with matching `last-modified`, so the intended
+window is 10 minutes — the observed Safari behaviour was longer.
+⚠️ **There is no cache-busting on the stylesheet link.** Adding a version query
+(`styles.css?v=…`) at build time would remove this class of report entirely; it
+changes CI behaviour, so it is a **proposal, not a silent fix** — tracked in
+`TODO.md`.
+
 ## 4. Wrong numbers suspected on the live site
 
 1. Check `web/data/status.json` — vintage + `generated` date + GeoJSON hash
