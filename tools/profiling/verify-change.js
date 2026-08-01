@@ -63,11 +63,33 @@ const [url] = process.argv.slice(2);
     const el = document.getElementById(i);
     return !!el && getComputedStyle(el).display !== 'none';
   }, id);
-  check('Money lens toggle is revealed once temporal.json lands', await vis('moneymode'));
+
+  // ---- 0. THE LENS TOGGLE IS VALUE'S ROW 2 (moved 2026-08-01) -------------
+  // It used to be a "Lens" section in the Options panel, offered under either
+  // quantity. It is now #toggle's second row under VALUE, exclusive with the
+  // revenue cuts — the change lens reads share of the assessment BASE, which
+  // Revenue does not own. Load lands on Revenue, so it starts hidden.
+  check('the lens toggle is HIDDEN under Revenue', !(await vis('moneymode')));
+  check('the revenue cuts show under Revenue', await vis('revcut'));
+  check('the lens toggle lives in #toggle, not the Options panel',
+    await page.evaluate(() => document.getElementById('moneymode').parentElement.id === 'toggle'));
+  check('the orphaned "Lens" header is gone from the Options panel',
+    await page.evaluate(() => !document.getElementById('moneymode-hd')));
+
+  await page.click('#metric-row button[data-metric="value"]');
+  await page.waitForTimeout(600);
+  check('*** the lens toggle is revealed under Value ***', await vis('moneymode'));
+  check('the revenue cuts hide under Value — exactly one row 2 at a time',
+    !(await vis('revcut')));
   check('window picker stays hidden outside the change lens', !(await vis('chgwindow')));
 
   await page.click('#moneymode button[data-moneymode="change"]');
   await page.waitForTimeout(1200);
+
+  // Hiding #toggle in the change view would strand you there: the only way
+  // back to Current is the row the pod now hosts.
+  check('*** #toggle survives into the change view ***', await vis('toggle'));
+  check('the lens toggle is reachable inside the change view', await vis('moneymode'));
 
   // ---- 1. THE YEARS-ELAPSED TRAP -----------------------------------------
   // Recomputed from the RAW served file, so this cannot be satisfied by the
@@ -235,6 +257,25 @@ const [url] = process.argv.slice(2);
   check('leaving the lens returns to the Money prisms', back.view === 'money', back.view);
   check('the window picker hides again outside the lens', !back.winShown);
   check('the Money view button stays active throughout the lens', back.moneyBtnActive);
+
+  // Picking Revenue while the change lens is up must LEAVE it. Revenue owns no
+  // change lens, so without this the pod would show Revenue lit over a map
+  // still drawing share-of-base movement.
+  await page.click('#moneymode button[data-moneymode="change"]');
+  await page.waitForTimeout(1000);
+  await page.click('#metric-row button[data-metric="revenue"]');
+  await page.waitForTimeout(1000);
+  const viaRev = await page.evaluate(() => ({
+    view: state.view,
+    metric: state.metric,
+    title: document.getElementById('title-h').textContent,
+    cuts: getComputedStyle(document.getElementById('revcut')).display !== 'none',
+    mode: getComputedStyle(document.getElementById('moneymode')).display !== 'none',
+  }));
+  check('*** picking Revenue leaves the change view ***', viaRev.view === 'money', viaRev.view);
+  check('Revenue restores the last cut', viaRev.metric === 'revenue_per_acre', viaRev.metric);
+  check('the title follows the metric out of the lens', /revenue/i.test(viaRev.title), viaRev.title);
+  check('the cut row is back and the lens row is gone', viaRev.cuts && !viaRev.mode);
   await page.close();
 
   // ---- 6. PUBLIC build carries the lens (promoted 2026-07-31) -------------
@@ -252,10 +293,13 @@ const [url] = process.argv.slice(2);
   };
   const p = await pub.evaluate((src) => {
     const shown = eval('(' + src + ')');
-    return { mode: shown('moneymode'), win: shown('chgwindow'),
+    const hiddenUnderRevenue = !shown('moneymode');
+    applyMetric('value_per_acre');
+    return { hiddenUnderRevenue, mode: shown('moneymode'), win: shown('chgwindow'),
              hasFn: typeof changeFor === 'function' };
   }, shownIn.toString());
-  check('public build offers the Money lens toggle', p.mode);
+  check('public build hides the lens toggle under Revenue', p.hiddenUnderRevenue);
+  check('public build offers the Money lens toggle under Value', p.mode);
   check('public build has the change fn', p.hasFn);
   check('public build hides the window picker until change mode', !p.win);
 

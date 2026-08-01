@@ -1418,3 +1418,63 @@ separate file since 2026-07-29, so a **CSS-only change now has its own cache
 lifetime** and can render stale against a fresh page — a failure that looks
 exactly like a half-deployed feature. `RUNBOOK.md` §3c has the triage order;
 cache-busting the stylesheet is proposed in `TODO.md`, not smuggled in.
+
+---
+
+## The change lens moves under Value (2026-08-01)
+
+Peter: *"move the current/change over time buttons to just be under Value. But I
+want them popped out in the same way the total/residential/non-residential
+buttons options are for revenue."*
+
+`#moneymode` (Current | Change over time) had lived in the Options panel since
+2026-07-30 as a section headed **Lens**. It is now `#toggle`'s second row under
+**Value**, exclusive with `#revcut`.
+
+### The old placement was the defect, not just the location
+
+In `#layers` the toggle showed whenever the view was Money — under **Revenue**
+as much as Value. But the change lens measures movement in each hood's share of
+Edmonton's **assessment base**: the value side. Offering it under Revenue was
+offering a lens that reads a column Revenue does not own. Moving it under Value
+is not decoration; it stops the pod claiming something untrue.
+
+### Two rows, two different kinds of nesting
+
+The 2026-07-26 regroup nested `#revcut` under Revenue because the cuts are
+genuine **subsets** — `levy == res + nonres + farmland`. `#moneymode` is *not* a
+decomposition: it is two **lenses** on one quantity. Both are subordinate to the
+row above them and both are styled that way (hairline separator, 11px, dimmer),
+but the relationship differs, and `#toggle`'s comment now says so rather than
+letting a future reader infer that everything in row 2 sums to its parent.
+
+`syncMetricButtons` owns both rows and shows exactly one. `#moneymode` defaults
+**hidden** in CSS where `#revcut` defaults visible — it is gated on
+`temporal.json`, which lands after first paint, so a `display: flex` default
+would flash a lens that may not exist.
+
+### The consequence that had to be handled
+
+⚠️ **`#toggle` had been hidden in the change view since the 2026-07-23
+Money-scoping pass** — correct when the pod was only a metric picker, wrong the
+moment it hosts the only way back to `Current`. Hiding it would have stranded the
+user in the lens. It now survives into `change`, where **Value reads lit**, which
+is honest: the metric on screen *is* movement in the assessment base.
+
+⚠️ **And picking Revenue while the lens is up has to leave it.** Revenue owns no
+change lens, so without that the pod would show Revenue lit over a map still
+drawing share-of-base movement — the same class of mismatch the move was made to
+fix. `applyMetric` only marks state outside money/glass, so the handler calls
+`applyView("money")` after it, in that order, and the title follows the metric
+out.
+
+### What stayed put
+
+`#chgwindow` (Since 2012 | Since 2019) **remains in the Options panel** (Peter's
+call). `#toggle` stays strictly two-level; a third row would have broken the rule
+the 2026-07-26 regroup rests on, for a control that only ever shows in one state.
+The "Window" header now stands alone in that section.
+
+**Mobile gained a tap and lost a hunt.** Reaching the lens on a phone was: unfold
+Options → find "Lens" → tap. It is now Value → Change over time, both on the map
+surface, and the pod still fits one row at 390px (measured 180,97 202x55).

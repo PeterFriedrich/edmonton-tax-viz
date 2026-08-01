@@ -165,40 +165,46 @@ html, body { margin: 0; height: 100%; background: #0a0a0f; }
    #moneydetail: Money's Neighbourhood/100 m-grid (glass) render toggle.
    #devdetail: Development's Neighbourhood/100 m-grid render toggle.
    #devmode: Development's Housing/Infill lens toggle (full build only).
-   #moneymode: Money's Current/Change lens toggle (full build only, and only
-   once temporal.json lands — syncChangeControls).
-   #chgwindow: the change lens's 2012/2019 window picker. */
+   #chgwindow: the change lens's 2012/2019 window picker. Its Current/Change
+   sibling used to live here as #moneymode; it moved into #toggle as Value's
+   second row (2026-08-01), so the window picker is the section's only member
+   and the "Window" header now stands alone. */
 #devmetric-hd, #devmetric, #devwindow-hd, #devwindow,
 #moneydetail-hd, #moneydetail, #devdetail-hd, #devdetail,
-#devmode-hd, #devmode, #moneymode-hd, #moneymode,
+#devmode-hd, #devmode,
 #chgwindow-hd, #chgwindow { display: none; }
-#denom, #ratio-denom, #devmetric, #devwindow, #moneydetail, #devdetail, #devmode, #moneymode, #chgwindow { border: 1px solid #2a2a3a; border-radius: 5px; overflow: hidden; margin-bottom: 2px; }
-#denom button, #ratio-denom button, #devmetric button, #devwindow button, #moneydetail button, #devdetail button, #devmode button, #moneymode button, #chgwindow button {
+#denom, #ratio-denom, #devmetric, #devwindow, #moneydetail, #devdetail, #devmode, #chgwindow { border: 1px solid #2a2a3a; border-radius: 5px; overflow: hidden; margin-bottom: 2px; }
+#denom button, #ratio-denom button, #devmetric button, #devwindow button, #moneydetail button, #devdetail button, #devmode button, #chgwindow button {
   appearance: none; border: 0; background: transparent; color: #9a9ab0;
   font: 11px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   padding: 4px 10px; cursor: pointer; flex: 1; transition: background 0.12s, color 0.12s;
 }
-#denom button:hover, #ratio-denom button:hover, #devmetric button:hover, #devwindow button:hover, #moneydetail button:hover, #devdetail button:hover, #devmode button:hover, #moneymode button:hover, #chgwindow button:hover { color: #e8e8ef; }
-#denom button.active, #ratio-denom button.active, #devmetric button.active, #devwindow button.active, #moneydetail button.active, #devdetail button.active, #devmode button.active, #moneymode button.active, #chgwindow button.active { background: #fcd278; color: #16111a; font-weight: 600; }
+#denom button:hover, #ratio-denom button:hover, #devmetric button:hover, #devwindow button:hover, #moneydetail button:hover, #devdetail button:hover, #devmode button:hover, #chgwindow button:hover { color: #e8e8ef; }
+#denom button.active, #ratio-denom button.active, #devmetric button.active, #devwindow button.active, #moneydetail button.active, #devdetail button.active, #devmode button.active, #chgwindow button.active { background: #fcd278; color: #16111a; font-weight: 600; }
 #toggle button, #palette button {
   appearance: none; border: 0; background: transparent; color: #9a9ab0;
   font: 12.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   padding: 7px 15px; cursor: pointer; transition: background 0.12s, color 0.12s;
 }
 /* Two-level metric picker: #toggle stacks its two rows instead of being one
-   flat row of buttons. The cut row reads as SUBORDINATE to the metric row —
+   flat row of buttons. The row-2 rows read as SUBORDINATE to the metric row —
    a hairline separator plus smaller, dimmer type — so "Total / Residential /
-   Non-residential" is visibly *inside* Revenue rather than a peer of it.
+   Non-residential" is visibly *inside* Revenue rather than a peer of it, and
+   "Current / Change over time" the same way inside Value.
    That subordination is the whole point of the regroup; keep it if these
-   rules are ever restyled. */
+   rules are ever restyled.
+   #moneymode starts HIDDEN, unlike #revcut: it is gated on temporal.json,
+   which lands after first paint, so a `display: flex` default would flash a
+   lens that may not exist. syncMetricButtons reveals it. */
 #toggle { flex-direction: column; align-items: stretch; }
 #metric-row, #revcut { display: flex; }
+#moneymode { display: none; }
 /* Both rows share the pod's width (it is set by whichever row is wider —
    the 3-up cut row). Without flex:1 the 2-up metric row left ~127px of dead
    space beside Revenue, which read as an empty cell rather than a heading. */
 #metric-row button { flex: 1; }
-#revcut { border-top: 1px solid #2a2a3a; }
-#revcut button {
+#revcut, #moneymode { border-top: 1px solid #2a2a3a; }
+#revcut button, #moneymode button {
   font-size: 11px; padding: 5px 12px; flex: 1; color: #8a8a9e;
   white-space: nowrap;
 }
@@ -530,7 +536,7 @@ body.mills #millrates { display: block; }
   #controls > div { max-width: 100%; }
   /* Wrap the ROWS, not #toggle itself — #toggle is a column since the
      two-level regroup, so wrapping it would stack the rows sideways. */
-  #metric-row, #revcut, #views { flex-wrap: wrap; justify-content: flex-end; }
+  #metric-row, #revcut, #moneymode, #views { flex-wrap: wrap; justify-content: flex-end; }
   /* Desktop grows #views to 14px/9px-18px as the primary control; a phone
      can't spend that much width — at 14px the four public views no longer fit
      one 390px row. Scale back to just above the old size (still the largest

@@ -35,10 +35,20 @@ follows that order** — set with CSS `order:` on `#controls`, not DOM order
   modifiers) so the rendering matches the tier — it previously tied for smallest.
 - **Tier 2 — WHICH variant** of the current view: `#toggle` (`order: 2`, Money's
   metric picker) plus everything in `#layers`. **`#toggle` is itself two-level
-  since 2026-07-26** — a quantity row (Revenue | Value) with a revenue-cut row
-  (Total | Residential | Non-residential) nested under it. It is the only control
-  that nests *within* a tier; the nesting mirrors the data (`levy == res + nonres
-  + farmland`), so it is not a new tier.
+  since 2026-07-26** — a quantity row (Revenue | Value) with a second row nested
+  under whichever quantity is selected. It is the only control that nests
+  *within* a tier, and it is not a new tier.
+  **Since 2026-08-01 BOTH quantities have a row 2, and they are different kinds
+  of thing:**
+  - **Revenue → `#revcut`** (Total | Residential | Non-residential): genuine
+    *subsets*, mirroring the data (`levy == res + nonres + farmland`).
+  - **Value → `#moneymode`** (Current | Change over time): two *lenses* on the
+    same quantity, not a decomposition. It sits here because the change lens
+    measures movement in each hood's share of the **assessment base** — the
+    value side. In the Options panel it was offered under Revenue too, where it
+    read a column Revenue does not own.
+
+  Exactly one row 2 is visible at a time; `syncMetricButtons` owns both.
 - **Tier 3 — HOW it's drawn** (presentation modifiers): `#coloradj` — the only
   one left since `#lens` was removed 2026-07-26.
 - **Out of the tier flow:** the `#a11y` **Display** popover (colour ramp +
@@ -134,7 +144,7 @@ three places a lens leaks.
 | Pod | Buttons | Actually bites in | Everywhere else |
 |---|---|---|---|
 | `#coloradj` | `Colour: sqrt scaling` / `Colour: linear` (the label **is** the state) | **Money** — both detail modes | **HIDDEN** (`display:none`, 2026-07-26 — was greyed) |
-| `#toggle` (T2, listed here for the comparison) | **two rows**: `Revenue \| Value` over `Total \| Residential \| Non-residential` (2026-07-26) | **Money** — both detail modes | **HIDDEN** (regroup, 2026-07-23 — was live-but-inert) |
+| `#toggle` (T2, listed here for the comparison) | **two rows**: `Revenue \| Value` over either `Total \| Residential \| Non-residential` (under Revenue) or `Current \| Change over time` (under Value, 2026-08-01) | **Money** — both detail modes, **and the Change lens**, which it hosts the way out of | **HIDDEN** (regroup, 2026-07-23 — was live-but-inert) |
 | `#palette`, `Labels` | 3 ramps; hood names on/off | — | moved into the `#a11y` **Display** popover; apply everywhere (palette is n/a in Uses' categorical legend) |
 | `#reference-on` (2026-07-27) | `Landmarks & nearby places` on/off — river, ring road, **and the 7 regional place names** | **every view** — `buildLayers()` BRACKETS `buildViewLayers()` (river under, ring road over), so no view can miss it; the place names go into the shared label pool, which every view already composes | never hidden. **Default ON**, unlike `Labels` — with no basemap tiles it is the only orientation cue, so it should not need hunting for |
 
@@ -247,9 +257,9 @@ has at least one section to show.
 
 | View / mode | Controls shown | Data-gate | Dynamic rules |
 |---|---|---|---|
-| **Money → Neighbourhood** | `#moneymode` 🔒 (Current / Change over time); `#moneydetail` (Neighbourhood / 100 m grid); `#denom` headed **"Denominator"** | `#moneymode` on `temporalData` (the `FULL_BUILD` half dropped 2026-07-31); `#moneydetail` unconditional; `#denom` on `hasHoodLot` | `#coloradj` live (bottom of the panel); `#revcut` (in `#toggle`, on the map) offers the 3 revenue cuts |
-| **Money → 100 m grid** (`glass`) | same `#moneydetail`; `#denom` **relabelled "Spike denominator"** | `gridData.hasLot` | **no `#prism-row`** — opacity fixed at 60%, re-applied on entry (2026-07-25); `#coloradj` stays live; `#revcut` still offered (the grid carries the cut columns, `col >= 0` fallback); **no `#moneymode`** — it is a Detail choice, and the lens toggle returns to the prisms, never here |
-| **Money → Change over time** (`change`) | `#moneymode`; `#chgwindow` (**Since 2012 / Since 2019**) | `temporalData` — **public as of 2026-07-31**; was doubly gated, and the surviving data gate is the one that matters: the toggle can never offer a lens whose data is absent | **no `#moneydetail`** (no change grid), **no `#denom`**, **no `#toggle`** (the metric is share-of-base, not a money column), **`#coloradj` inert** (its own per-arm diverging clamp, like Infill). Leaving via `Current` lands on the **prisms**, never Glass |
+| **Money → Neighbourhood** | `#moneydetail` (Neighbourhood / 100 m grid); `#denom` headed **"Denominator"** | `#moneydetail` unconditional; `#denom` on `hasHoodLot` | `#coloradj` live (bottom of the panel); **`#toggle` shows exactly one row 2** — `#revcut`'s 3 cuts under Revenue, `#moneymode`'s Current / Change over time under Value (moved out of this panel 2026-08-01), the latter gated on `temporalData` |
+| **Money → 100 m grid** (`glass`) | same `#moneydetail`; `#denom` **relabelled "Spike denominator"** | `gridData.hasLot` | **no `#prism-row`** — opacity fixed at 60%, re-applied on entry (2026-07-25); `#coloradj` stays live; `#revcut` still offered (the grid carries the cut columns, `col >= 0` fallback). `#moneymode` still appears under Value, but the lens toggle returns to the **prisms**, never here — Glass is a Detail choice |
+| **Money → Change over time** (`change`) | `#chgwindow` (**Since 2012 / Since 2019**) — the section's only member since `#moneymode` left, so the "Window" header now stands alone | `temporalData` — **public as of 2026-07-31**; was doubly gated, and the surviving data gate is the one that matters: the toggle can never offer a lens whose data is absent | **no `#moneydetail`** (no change grid), **no `#denom`**, **`#coloradj` inert** (its own per-arm diverging clamp, like Infill). ⚠️ **`#toggle` STAYS VISIBLE here** (changed 2026-08-01) — it hosts the lens toggle, so hiding it would strand you in the lens. Value reads lit because the metric *is* share of the assessment base. Picking **Revenue** leaves the lens (Revenue owns no change lens); leaving via `Current` lands on the **prisms**, never Glass |
 | **Services** | `#services` — 6 rows: Roads · Stormwater · Fire · Water/sewer · Transit · Service cost. Each = on/off checkbox + a "colour" driver radio | rows self-gate on their columns | radios appear only when **≥2** are checked; the driver always names a *checked* service (unchecking it hands the ramp on); fire/transit draw their dots whenever checked, driver or not |
 | **Ratio** | `#ratio-denom` (Per road metre / Per fire event / Per service $); `#prism-row` opacity slider, default 5% | `hasFire \|\| hasSvcCost` (else roads-only, control hidden) | **the only view that also shows the `#prism-hd` "Money plane" header** |
 | **Uses** 🔒 | `#uses-prisms` (Height = share zoned residential); `#prism-row` while prisms on, default 35% | — | legend swaps to categorical |

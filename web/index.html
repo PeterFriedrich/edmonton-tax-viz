@@ -80,20 +80,31 @@
   </button>
 
   <div id="controls">
-  <!-- Two-level metric picker. Row 1 = WHICH QUANTITY (Revenue | Value); row 2 =
-       for revenue only, WHICH CLASSES. The nesting is the data's own shape, not
-       decoration: levy == res + nonres + farmland (DECISIONS 2026-07-18), so the
-       cuts are genuinely subsets of Total. Value has no such decomposition in
-       the pipeline, so it is a leaf and row 2 hides under it. -->
+  <!-- Two-level metric picker. Row 1 = WHICH QUANTITY (Revenue | Value); row 2
+       belongs to whichever quantity is selected, and the two rows are NOT the
+       same kind of thing:
+         Revenue -> #revcut, WHICH CLASSES. Genuinely subsets — levy == res +
+           nonres + farmland (DECISIONS 2026-07-18), so the cuts sum to Total.
+         Value   -> #moneymode, WHICH LENS (Current | Change over time). Not a
+           decomposition: two readings of the same quantity. It sits here
+           because the change lens measures movement in each hood's share of
+           Edmonton's ASSESSMENT BASE, which is the value side — under Revenue
+           it was offering a lens that reads a column Revenue doesn't own
+           (moved out of the Options panel 2026-08-01).
+       Exactly one row 2 shows at a time; syncMetricButtons owns both. -->
   <div id="toggle" class="panel">
     <div id="metric-row">
       <button data-metric="revenue" class="active" title="Municipal property-tax revenue per acre — what the land generates at Edmonton's class-differential mill rates. Pick which classes to count below.">Revenue</button>
-      <button data-metric="value" title="Total assessed property value per acre — what the land is worth, not what it pays">Value</button>
+      <button data-metric="value" title="Total assessed property value per acre — what the land is worth, not what it pays. Pick current or change-over-time below.">Value</button>
     </div>
     <div id="revcut">
       <button data-revcut="revenue_per_acre" class="active" title="Every property class — the full municipal levy the land generates">Total</button>
       <button data-revcut="res_revenue_per_acre" title="Residential-class dollars only: houses, condos and apartment buildings. A subset of Total, not all of what the land pays">Residential</button>
       <button data-revcut="nonres_revenue_per_acre" title="Dollars billed at the non-residential rate — commercial and industrial land. A subset of Total. Residential and Non-residential are nearly the whole levy but do not sum to it exactly: farmland is a small separate class">Non-residential</button>
+    </div>
+    <div id="moneymode">
+      <button data-moneymode="current" class="active" title="The current assessment roll — each neighbourhood's value per acre today">Current</button>
+      <button data-moneymode="change" title="How fast each neighbourhood's share of Edmonton's total assessment base moved over the chosen window — teal gained share, orange lost it. Grey neighbourhoods held no share in the first year, so there is nothing to measure against. Pick the window in Options">Change over time</button>
     </div>
   </div>
 
@@ -109,11 +120,6 @@
     <button id="opt-fold" title="Show or hide the detail, denominator and colour-scaling controls">Options<span id="opt-caret">▾</span></button>
     <div id="opt-body">
   <div id="layers" class="panel">
-    <span class="hd" id="moneymode-hd">Lens</span>
-    <div id="moneymode">
-      <button data-moneymode="current" class="active" title="The current assessment roll — each neighbourhood's revenue or value per acre today">Current</button>
-      <button data-moneymode="change" title="How fast each neighbourhood's share of Edmonton's total assessment base moved over the chosen window — teal gained share, orange lost it. Grey neighbourhoods held no share in the first year, so there is nothing to measure against">Change over time</button>
-    </div>
     <span class="hd" id="chgwindow-hd">Window</span>
     <div id="chgwindow">
       <button data-chgwindow="long" class="active" title="The whole assessment history (2012–2025) — the structural, era-long shift">Since 2012</button>
@@ -3308,11 +3314,17 @@
     // worse surprise than remembering.
     let lastRevCut = "revenue_per_acre";
 
-    // Paint both rows from state.metric, and hide the cut row where it has
-    // nothing to offer: under Value (no decomposition exists in the pipeline)
-    // and on data files carrying neither cut column. Reads the buttons' own
-    // computed display for the second case, so it can't drift from the data
-    // gates that hid them.
+    // Paint the metric row and whichever row 2 belongs to it — the cuts under
+    // Revenue, the Current/Change lens pair under Value. Exactly one row 2 is
+    // ever visible, and each has its own data gate:
+    //   #revcut hides on data files carrying neither cut column. Reads the
+    //     buttons' own computed display, so it can't drift from the gates that
+    //     hid them.
+    //   #moneymode hides until temporal.json lands — with no history there is
+    //     no change lens to offer. The late fetch calls back in through
+    //     syncChangeControls.
+    // Change is a VIEW, not a metric (state.view === "change"), so its active
+    // state is read off the view rather than stored twice.
     function syncMetricButtons() {
       const rev = isRevenue(state.metric);
       document.querySelectorAll("#metric-row button").forEach(b =>
@@ -3324,6 +3336,11 @@
       document.getElementById("revcut").style.display = rev && anyCut ? "flex" : "none";
       document.querySelectorAll("#revcut button").forEach(b =>
         b.classList.toggle("active", b.dataset.revcut === state.metric));
+      document.getElementById("moneymode").style.display =
+        !rev && temporalData != null ? "flex" : "none";
+      document.querySelectorAll("#moneymode button").forEach(b =>
+        b.classList.toggle("active",
+          b.dataset.moneymode === (state.view === "change" ? "change" : "current")));
       syncMillRates();
     }
 
@@ -3870,20 +3887,16 @@
       refreshLegend();
     }
 
-    // Reveal the Money lens toggle and the change window picker. Called from
-    // applyView AND from the temporal fetch's .then, because the file lands
-    // after the first applyView: without the second call the toggle would stay
-    // hidden until you left Money and came back (the same late-fetch trap
-    // syncPrismRow documents). The toggle is never shown before the data
-    // exists, so it can't offer a lens that isn't there.
+    // Reveal the change window picker, and re-run the metric rows that host the
+    // lens toggle itself. Called from applyView AND from the temporal fetch's
+    // .then, because the file lands after the first applyView: without the
+    // second call the toggle would stay hidden until you left Money and came
+    // back (the same late-fetch trap syncPrismRow documents). Nothing is ever
+    // shown before the data exists, so neither control can offer a lens that
+    // isn't there.
     function syncChangeControls() {
-      const v = state.view;
-      const show = (v === "money" || v === "change") && temporalData != null;
-      document.getElementById("moneymode-hd").style.display = show ? "block" : "none";
-      document.getElementById("moneymode").style.display = show ? "flex" : "none";
-      document.querySelectorAll("#moneymode button").forEach(b =>
-        b.classList.toggle("active", b.dataset.moneymode === (v === "change" ? "change" : "current")));
-      const winShow = v === "change" && temporalData != null;
+      syncMetricButtons(); // #moneymode is Value's row 2 in #toggle since 2026-08-01
+      const winShow = state.view === "change" && temporalData != null;
       document.getElementById("chgwindow-hd").style.display = winShow ? "block" : "none";
       document.getElementById("chgwindow").style.display = winShow ? "flex" : "none";
     }
@@ -3919,11 +3932,13 @@
                     : v === "infill" ? "development" : v;
       document.querySelectorAll("#views button").forEach(b =>
         b.classList.toggle("active", b.dataset.view === viewBtn));
-      // The metric picker (#toggle) is Money-scoped: shown only in Money/Glass,
-      // where it drives the render. Hidden elsewhere (stops floating live-but-
-      // inert over views it doesn't affect).
+      // The metric picker (#toggle) is Money-scoped: shown in Money/Glass, where
+      // it drives the render, and in Change, which since 2026-08-01 hosts its
+      // OWN lens toggle as Value's row 2 — hiding the pod there would strand
+      // you in the change view with no way back to Current. Hidden elsewhere
+      // (stops floating live-but-inert over views it doesn't affect).
       document.getElementById("toggle").style.display =
-        (v === "money" || v === "glass") ? "flex" : "none";
+        (v === "money" || v === "glass" || v === "change") ? "flex" : "none";
       syncMillRates();  // money-scoped like #toggle, but narrower: revenue cuts only
       // Infill's activity side is residential building only — the industrial
       // metric is a development-choropleth cut, never an infill activity. If it
@@ -4143,10 +4158,17 @@
       document.getElementById("coloradj-btn").addEventListener("click", applyColorAdjust);
       // Row 1 picks the QUANTITY: "revenue" restores the cut you last had (Total
       // on load), "value" leaves the revenue family entirely. Row 2 picks the
-      // CUT and is what actually names a column.
+      // CUT (revenue) — what actually names a column — or the LENS (value).
       document.querySelectorAll("#metric-row button").forEach(b =>
-        b.addEventListener("click", () => applyMetric(
-          b.dataset.metric === "revenue" ? lastRevCut : "value_per_acre")));
+        b.addEventListener("click", () => {
+          const rev = b.dataset.metric === "revenue";
+          applyMetric(rev ? lastRevCut : "value_per_acre");
+          // Revenue owns no change lens, so picking it has to leave the change
+          // view the way applyMoneyMode("current") would. Order matters:
+          // applyMetric only marks state outside money/glass, so applyView is
+          // what renders — and it reads the metric we just set for the title.
+          if (rev && state.view === "change") applyView("money");
+        }));
       document.querySelectorAll("#revcut button").forEach(b =>
         b.addEventListener("click", () => applyMetric(b.dataset.revcut)));
       document.querySelectorAll("#palette button").forEach(b =>
