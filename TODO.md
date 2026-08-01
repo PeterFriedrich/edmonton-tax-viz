@@ -122,9 +122,10 @@ Also removed a duplicated preamble block left in this file by the
     ⚠️ **`#temporal` is the ASSESSMENT-HISTORY panel** and its whole spec
     (`SPEC_temporal.md` §2) assumes that; making its content lens-dependent is a
     real change to that contract, not a content tweak.
-  - [x] **(b) Mill rates, top left. DONE 2026-08-01** (`#millrates`,
-    `verify-millrates.js`, 31 checks). Three things the brief got wrong, all
-    found by measuring:
+  - [x] **(b) Mill rates. DONE 2026-08-01** (`#millrates`,
+    `verify-millrates.js`, **54 checks**; PRs #131 / #132 / #133, **production
+    verified in both builds**). Three things the brief got wrong, all found by
+    measuring:
     - **"~500px of left column is free" was measured with the panel CLOSED.**
       `#temporal` owns that column: it is **308px** tall (its own CSS comment
       says ~265), leaving 211px of slack at 1440x900 but **79px at 1366x768** and
@@ -141,14 +142,24 @@ Also removed a duplicated preamble block left in this file by the
     - Rates ship in `status.json` as `municipal_rates`, derived from
       `data/mill_rates.json` — never typed into the page. `assumed` is data, so
       the Farmland caveat stops printing by itself when a real row is published.
-    - **Phone form added the same day** after Peter saw the desktop-only build
-      (*"stacked, like bullet points almost, top left, where the description
-      bubble would be, then folded in when you open the bubble"*): the pod hangs
-      off **`#controls`**, not `#title` — on a phone that band is the control
-      stack's — renders one rate per row, carries a card background (bare text is
-      unreadable on the downtown prisms), and is **re-parented into `#title`**
-      when the description card opens. `MOBILE_USABILITY.md` §2 has the two
-      generalisable rules.
+    - **The PHONE FORM took two goes, and the second deleted the first.** Peter
+      saw the desktop-only build (*"no rates show on mobile"*), described a
+      standalone stack, then rejected it on sight: ***"i don't like the
+      independent mill rates panel. folding it into the tax revenue blurb is
+      fine."*** Final: `#millrates` is **re-parented into `#title`** below 640px,
+      so the rates open and close with the description blurb and add nothing to
+      the default render. Only the stacking (one rate per row) survives from the
+      standalone version. ⚠️ **Every problem that version had to solve — an
+      anchor clear of `#controls`, its own card background, the inherited
+      panel-yield — was an artifact of it being a separate surface.**
+      `MOBILE_USABILITY.md` §2 and `DECISIONS.md` have it.
+    - ⚠️ **One bug shipped and was fixed inside the day:** the desktop yield
+      `#temporal.open ~ #millrates` went out **ungated**, so switching the phone
+      readout to **panel mode** blanked the rates with nothing contending (the
+      panel is a bottom sheet there). The comment said "desktop-only in effect" —
+      reasoning about the LAYOUT, not the SELECTOR. **A media gate was written,
+      then falsified as redundant** (a child of `#title` is not `#temporal`'s
+      sibling) and dropped. `verify-millrates.js` asserts the behaviour instead.
   - **Available columns** (shipped by phase 1): `total_revenue`,
     `revenue_share_city`, and `rev_frac_{never,notyet,inst,residential,
     commercial,industrial,mixed,dc,other,unzoned}`.
