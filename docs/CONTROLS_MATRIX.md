@@ -149,7 +149,12 @@ as of this date. Regional names win collisions via an explicit `prio`, because
 the sweep's existing priority key is polygon area and a Point has none.
 
 **`#hoodmode` — where a hood's detail appears (2026-07-30).** Tier 3, and the
-newest pod: `Readout: popup` / `Readout: panel`, label-is-the-state like
+newest pod: `Readout: popup` / `Readout: panel` / `Readout: panel ✓`
+(**three** states as of 2026-08-01 — the tick means the panel was *asked for*
+rather than fallen into via a peek card, and it is the only state that earns
+one-tap pinning on touch, so the button is **not** a plain toggle there:
+a fallen-into panel takes one press to KEEP and a second to leave),
+label-is-the-state like
 `#coloradj` and sitting directly **above** it (moved 2026-07-31 — `#coloradj`
 must stay the panel's last child; `verify-coloradj.js` asserts it, and adding a
 pod after it went unnoticed for two sessions). Applies in **every view**;

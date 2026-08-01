@@ -72,8 +72,10 @@ const [url] = process.argv.slice(2);
   // ---- switch to panel mode ----------------------------------------------
   await page.click('#hoodmode-btn');
   s = await cls();
+  // ✓ because the BUTTON is what entered the mode — a panel the user asked for,
+  // not one they fell into via a peek card (2026-08-01).
   check('button label flips and goes active',
-    s.label === 'Readout: panel' && s.active, s.label);
+    s.label === 'Readout: panel ✓' && s.active, s.label);
   check('panel opens immediately on its PROMPT (nothing pinned yet)',
     s.open && s.empty);
   check('the prompt is visible', await vis('temporal-hint'));
@@ -125,8 +127,9 @@ const [url] = process.argv.slice(2);
   check('pinning fills the panel', s.open && !s.empty);
   await page.click('#temporal-close');
   s = await cls();
+  // Still ✓: clearing the PIN must not downgrade a panel the user confirmed.
   check('the x clears the pin but STAYS in panel mode',
-    s.open && s.empty && s.label === 'Readout: panel');
+    s.open && s.empty && s.label === 'Readout: panel ✓');
 
   await page.evaluate(() => openTemporal('DOWNTOWN'));
   await page.keyboard.press('Escape');
@@ -153,6 +156,27 @@ const [url] = process.argv.slice(2);
     clicked.b.name);
   check('clicking the pinned hood again unpins but stays in panel mode',
     clicked.c.mode === 'panel' && clicked.c.empty);
+
+  // ---- the button CONFIRMS a panel you fell into (2026-08-01) -------------
+  // We are in panel mode reached by a map click, i.e. panelByChoice === false —
+  // the same state a phone reaches by committing a peek card. The button's
+  // label already reads "panel", so a plain toggle turned it straight OFF and
+  // opting in cost two presses. The first press must now make it STICK.
+  s = await cls();
+  check('fell into panel mode: label has NO tick yet',
+    s.label === 'Readout: panel' && !(await page.evaluate(() => panelByChoice)),
+    s.label);
+  await page.click('#hoodmode-btn');
+  s = await cls();
+  check('the first press CONFIRMS rather than toggling off',
+    s.label === 'Readout: panel ✓' && s.open
+      && (await page.evaluate(() => state.hoodMode === 'panel' && panelByChoice)),
+    s.label);
+  // ...and only THEN does it toggle back off, so the button is still honest.
+  await page.click('#hoodmode-btn');
+  s = await cls();
+  check('a second press leaves panel mode',
+    s.label === 'Readout: popup' && !s.open && !s.active, s.label);
   await page.close();
 
   // ---- public build: the pod IS offered (promoted 2026-07-31) -------------

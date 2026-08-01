@@ -122,12 +122,30 @@ column) via `tools/profiling/shot-mobile.js` (Playwright, 390×844, `isMobile`+
 Screenshots: `mobile-default.png` / `mobile-after-tap.png` (git-ignored artifacts;
 regenerate via the tool). Probe id list updated to the merged control structure.
 
-**Chrome coverage, measured 2026-07-27** (sum of the visible chrome rects over
-the viewport area, ignoring mutual overlap, default Money view):
-**45.1% at 390×844** against **27.3% at 1440×900**. This is the first hard
-number behind "the panels cover much more of a phone screen" and it confirms
-the §3 priority order: the blurb collapse is worth more on mobile than any
-amount of tuning downstream of it.
+**Chrome coverage — RE-MEASURED 2026-08-01. ⚠️ THE 45.1% FIGURE WAS INFLATED AND
+DROVE THE BACKLOG FOR SIX SESSIONS.** The 2026-07-27 method summed the visible
+chrome rects *ignoring mutual overlap*, and the chrome **nests**: `#controls`
+contains `#views`, `#toggle`, `#optpanel` and `#layers`, and `#botleft` contains
+`#legend`, so containers were counted two and three times. Both numbers below,
+default Money view — `sum` is the old comparable method, `union` counts each
+pixel once (2px grid sample):
+
+| state | 390×844 | 1440×900 |
+|---|---|---|
+| **default** (Options folded on phone) | sum **37.9%** · **union 27.9%** | sum 31.6% · **union 20.9%** |
+| **Options UNFOLDED** | sum 94.9% · **union 54.3%** | 31.6% · 20.9% (never folds) |
+| default + peek card open | sum 53.2% · **union 34.5%** | n/a (touch-only) |
+
+**What this changes.** The honest phone-vs-desktop gap in the default state is
+**27.9% vs 20.9% — about 7 points, not the ~18 the old pair implied.** Part of
+the drop 45.1 → 37.9 is real (the blurb collapse); the rest of the way to 27.9
+is the method correcting its own double counting. **The default phone render is
+not the problem.**
+
+⚠️ **The problem is the UNFOLDED Options pod: 54.3% of the screen, over half.**
+That is the state a bottom sheet / hamburger would actually address, and it is
+the state the old aggregate hid by averaging it away. Any future coverage claim
+should quote the union and name the state it was taken in.
 
 Consequence found while fixing the label sweep to dodge that chrome
 (`docs/UI.md` "Labels dodge the chrome"): with ~45% of the canvas spoken for,

@@ -116,34 +116,26 @@ Also removed a duplicated preamble block left in this file by the
     the page's own `CHROME_IDS`, URL argument honoured, tap probe looks for
     `#peek`, plus a generic overflow sweep). It is trustworthy for the next
     mobile pass.
-  - [ ] **The open question inside step 2 — bottom sheet or not.** (Held the `▶`
-    S80→S82; **demoted 2026-08-01**, not closed — still Peter's call, but the
-    readout work he actually asked for now leads. It also predates one more
-    change again: the card is taller in every lens as of today.) Whether the
-    control column is fine as a stack or wants a bottom sheet / hamburger.
-    **Decide against the CURRENT render**, now that the blurb is collapsed: the
-    old reasoning was written when the blurb still ate the top third. Peter's
-    call, not a build item. ⚠️ **The render is quieter still as of 2026-07-31** —
-    it now also predates the peek card (bottom strip on touch) and the
-    suppression of the hover tooltip on touch. Re-look before deciding.
-  - Context that makes this the priority: chrome covers **45.1%** of a 390x844
-    screen vs 27.3% at 1440x900 (measured S73). Label scarcity on phones is a
-    *panel-size* problem, not a cull problem.
-
-- [ ] **Peter's call, one line either way: should `#hoodmode-btn` CONFIRM
-  rather than TOGGLE when the panel was opened by the peek card?** (Raised
-  2026-07-31 while building `panelByChoice`; flagged to Peter, not yet ruled on.)
-  - **The situation:** arriving via the card sets panel mode with
-    `panelByChoice = false`, so the button already reads *"Readout: panel"*.
-    Pressing it therefore turns panel mode **off**; opting in to sticky one-tap
-    pinning costs **two** presses.
-  - **Left as an honest toggle deliberately** — a button whose label already says
-    "panel" and which appears to do nothing when pressed is worse than one that
-    does what it says. And the state is transient now (any new hood closes the
-    panel), so the button reads "popup" almost always, making this a narrow path.
-  - **If it should confirm instead:** set `panelByChoice = true` when the button
-    is pressed while already in card-opened panel mode, rather than toggling to
-    popup. Needs a label change to stay honest (`Readout: panel ✓`, or similar).
+  - [ ] **The open question inside step 2 — bottom sheet or not. RE-MEASURED
+    2026-08-01 at Peter's request; the question is now MUCH narrower.** Whether
+    the control column is fine as a stack or wants a bottom sheet / hamburger.
+    Peter's call, not a build item.
+    - ⚠️ **THE 45.1% THAT MADE THIS A PRIORITY WAS INFLATED.** That method summed
+      chrome rects ignoring mutual overlap, and the chrome **nests** —
+      `#controls` contains `#views`/`#toggle`/`#optpanel`/`#layers`, `#botleft`
+      contains `#legend` — so containers were counted two and three times.
+    - **Default state, counting each pixel once: 27.9% on a phone vs 20.9% on
+      desktop.** A ~7-point gap, not the ~18 the old pair implied. **The default
+      phone render is not the problem** (screenshot-confirmed: the map has the
+      screen).
+    - ⚠️ **The problem is the UNFOLDED Options pod — 54.3%, over half the
+      screen.** That is the only state a bottom sheet would actually fix, and
+      the old aggregate hid it by averaging. **If this gets built, build it for
+      the unfolded state**; the folded default needs nothing.
+    - With the peek card open the default rises to 34.5%, still well under the
+      unfolded pod. Full table + method: `docs/MOBILE_USABILITY.md` §2.
+    - Label scarcity on phones is a *panel-size* problem, not a cull problem —
+      that part stands, and it points at the unfolded state too.
 
 - [ ] **CARDINALITY GUARD — two small follow-ons (guard shipped 2026-07-28, PR #110).**
   `scripts/check_value_anchors.py` now pins the record-to-parcel *regime* in
@@ -1169,6 +1161,8 @@ Also removed a duplicated preamble block left in this file by the
 Closed items moved out of `## Open work` on 2026-07-30 live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
 
 - [x] **UI BUG: the hover tooltip `div.tip` rendered on TOUCH, 127px off the right edge. CONFIRMED ON DEVICE and FIXED 2026-07-31.** — 2026-07-31 · `docs/TODO_archive.md`
+- [x] **`#hoodmode-btn` CONFIRMS instead of toggling off when the panel was opened by a peek card — RULED and BUILT 2026-08-01.** Peter: *"change button name and first press to mean yes, keep it open."* Three label states now (`popup` / `panel` / `panel ✓`); the tick marks the only one that earns one-tap pinning. — 2026-08-01 · `docs/DECISIONS.md`
+- [x] **Should the change lens's card carry its `% of city base` endpoints? RULED 2026-08-01: LEAVE IT.** Peter's call; the panel is one tap away and special-casing would put wrapper content in the card for one view only. — 2026-08-01 · `docs/SPEC_temporal.md` §2
 - [x] **REGRESSION from that fix: suppressing `.tip` left every lens with a ONE-LINE readout on touch. Reported by Peter and FIXED 2026-08-01** — the peek card now borrows `viewTooltip(info, false)`, so it carries the lens's full rows; Money's readout also split so revenue facts no longer print under the Value map. — 2026-08-01 · `docs/DECISIONS.md`, `docs/MOBILE_USABILITY.md` §2b
 
 
