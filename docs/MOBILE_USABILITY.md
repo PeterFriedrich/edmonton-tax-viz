@@ -54,6 +54,27 @@ with near-zero risk to the tuned desktop experience.
 
 ## 2. Current state — CONFIRMED (render pass, iPhone-13-class 390×844, touch)
 
+> **2026-08-01 — the mill-rate pod added a phone form, and two of its rules are
+> the generalisable part.** Peter shipped it desktop-first, saw *"no rates show
+> on mobile"*, and asked for *"stacked, like bullet points almost, top left,
+> where the description bubble would be, then folded in when you open the
+> bubble."* Measured layout at 390×844: `#title` collapsed is 20–43, `#controls`
+> owns **58–197**, `#botleft` starts at **659**. So:
+> - ⚠️ **"Under the title" is not a phone location.** That band is the control
+>   stack's — the same fact that made `#temporal` a bottom sheet here. Anything
+>   anchored to `#title` on desktop needs a *different anchor* on a phone, not a
+>   different offset. The pod hangs off `#controls` at ≤640px.
+> - ⚠️ **Bare text over the map does not survive the phone.** Desktop chrome sits
+>   in a corner over dark map; a phone's map fills the screen, so the pod lands on
+>   the downtown prisms and 10.5px muted text on bright yellow is unreadable
+>   (seen in `p-collapsed.png`, then fixed). The phone form carries the same card
+>   background `#title.expanded` earned for the same reason. **`#title`'s own
+>   collapsed h1 is the exception only because it is 16px and near-white.**
+> - **"Folded in" is a re-parent, not a hide.** Expanding the title moves the pod
+>   into `#title` so the rates flow inside the card; the card is opaque and
+>   z-index 3, so leaving the pod outside would have buried it.
+
+
 Re-run **2026-07-24 against the merged S65 regroup** (5-view `#controls` flex
 column) via `tools/profiling/shot-mobile.js` (Playwright, 390×844, `isMobile`+
 `hasTouch`), default **Money** view. The prior 7-view observations are superseded

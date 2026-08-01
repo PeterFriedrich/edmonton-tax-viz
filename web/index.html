@@ -3344,33 +3344,61 @@
     };
     let millRates = null;  // status.json's municipal_rates; null until it lands
 
-    // Paint the pod, gate it to the money view's revenue cuts, and sit it under
-    // the title. The offset is MEASURED, not a constant: #title's height swings
-    // 140-499px across views and cuts (the money cuts alone go 196 -> 256), and
-    // the one constant already parked in this column — #temporal's top: 210px —
-    // is wrong in five states because it was pinned from a sweep that missed
-    // them. Reading the box each time is the same cost and cannot go stale.
+    // Paint the pod, gate it to the money view's revenue cuts, and place it.
+    //
+    // The offset is MEASURED, not a constant, because the box it hangs off is
+    // not a fixed height: #title swings 140-499px across views and cuts (the
+    // money cuts alone go 196 -> 256), and #controls grows a row when the view
+    // buttons wrap. The one constant already parked in this column —
+    // #temporal's top: 210px — is wrong in five states because it was pinned
+    // from a sweep that missed them. Reading the box each time cannot go stale.
+    //
+    // WHICH box differs by seam, and that is the whole mobile story: on desktop
+    // the left column under the title is free, but on a phone that region is
+    // where the CONTROL stack lives (the same reason #temporal becomes a bottom
+    // sheet there), so the pod hangs off #controls instead. Expanding the title
+    // card RE-PARENTS the pod into it, so the rates fold into the bubble rather
+    // than being covered by it — the card is the "what am I looking at" surface
+    // and the rates are part of that answer.
     function syncMillRates() {
       const show = !!millRates && state.view === "money" && isRevenue(state.metric);
       document.body.classList.toggle("mills", show);
       if (!show) return;
       const pod = document.getElementById("millrates");
-      pod.style.top = Math.round(
-        document.getElementById("title").getBoundingClientRect().bottom + 10) + "px";
+      const title = document.getElementById("title");
+      const mobile = window.matchMedia("(max-width: 640px)").matches;
+      const folded = mobile && title.classList.contains("expanded");
+      const host = folded ? title : document.body;
+      if (pod.parentNode !== host) host.appendChild(pod);
+      // Folded in, the pod is static and flows under the blurb — no offset to
+      // compute, and none must be left behind from the free-floating state.
+      pod.style.top = folded ? ""
+        : Math.round((mobile ? document.getElementById("controls") : title)
+            .getBoundingClientRect().bottom + 10) + "px";
       const billed = MILL_CUT_CLASSES[state.metric];
+      // No separator in the markup: the rates are one line on desktop and a
+      // stacked list on a phone, and a literal " · " between them would print as
+      // a stray character on every row of the stacked form. CSS supplies it.
       document.getElementById("mill-rows").innerHTML = millRates.classes.map(c =>
         `<span class="${!billed || billed.includes(c.name) ? "on" : "off"}">`
-        + `${MILL_LABELS[c.name] || c.name} <b>${c.rate}</b></span>`).join(" · ");
+        + `${MILL_LABELS[c.name] || c.name} <b>${c.rate}</b></span>`).join("");
       // The pod is in CHROME_IDS, but the sweep only reruns on a camera move or
       // an explicit rebuild — and this runs AFTER applyMetric's, so the pod
       // appearing or moving would leave a hood name printed under it until the
       // next pan. Same one-liner openTemporal uses for the same reason.
       if (labelPool().length) overlay.setProps({ layers: buildLayers() });
     }
-    // The blurb is written AFTER syncMetricButtons runs, so repositioning purely
-    // from call sites would measure the PREVIOUS view's title. Observing the box
-    // covers every path that changes it, including ones added later.
-    new ResizeObserver(syncMillRates).observe(document.getElementById("title"));
+    // Both anchors, because both move and neither move is announced: the blurb
+    // is written AFTER syncMetricButtons runs (so repositioning purely from call
+    // sites would measure the PREVIOUS view's title), and #controls grows a row
+    // whenever the view buttons wrap, which is a function of width and label
+    // text rather than of anything the app decides. Observing the boxes covers
+    // every path that changes them, including ones added later.
+    {
+      const ro = new ResizeObserver(syncMillRates);
+      ro.observe(document.getElementById("title"));
+      ro.observe(document.getElementById("controls"));
+    }
 
     function applyMetric(metric) {
       if (!METRICS[metric]) return;
@@ -4210,6 +4238,7 @@
       // flips it to auto), so this never fires and the blurb stays always-on.
       document.getElementById("title").addEventListener("click", () => {
         document.getElementById("title").classList.toggle("expanded");
+        syncMillRates();  // the rate pod folds into the card when it opens
       });
       // Foldable Options panel: the header toggles #opt-body. Default folded on
       // small screens (keep the map clear); unfolded on desktop.

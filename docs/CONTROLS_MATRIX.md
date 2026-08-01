@@ -209,8 +209,20 @@ rates is lit. It is in `CHROME_IDS`. Two rules make it unlike every other pod:
 - **It yields.** With `#temporal` open the column cannot hold both at laptop
   heights, so the pod hides — via a CSS sibling selector rather than a JS toggle,
   so the two cannot both think they own the slot. This is the reverse of `#peek`,
-  which the panel *replaces*; here the panel simply wins.
-Desktop only (>640px): on a phone the control stack already fills this column.
+  which the panel *replaces*; here the panel simply wins. **Desktop-only in
+  effect:** on a phone the panel is a bottom sheet, so the two never contend.
+
+⚠️ **It is the only surface with a different ANCHOR on each seam, and the only
+one that changes PARENT at runtime.** On desktop it hangs off `#title`; on a
+phone that region is the control stack's (the same reason `#temporal` becomes a
+bottom sheet), so it hangs off `#controls` instead. Two more phone-only rules:
+the rates render **stacked, one per row** (the desktop one-liner wraps at 360px
+and breaks between a class and its number), and the pod carries a **card
+background** the desktop form does not need — a phone's map fills the screen, so
+the pod lands on the downtown prisms where 10.5px muted text is unreadable.
+**Expanding the title re-parents the pod into it**, so the rates fold into the
+description card instead of being buried by it (the card is opaque, z-index 3).
+`verify-millrates.js` covers all of this at 390 and 360.
 
 **All the inconsistencies in this table are now fixed.** `#toggle` used to stay
 live but inert outside Money (resolved by the regroup — old combo C), `#lens`

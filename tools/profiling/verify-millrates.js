@@ -170,10 +170,84 @@ const [url] = process.argv.slice(2);
     }));
   await page.close();
 
-  // ---- phone: the column is full, the pod does not belong there -------------
-  const phone = await open(url, { width: 390, height: 844 }, { hasTouch: true, isMobile: true });
-  check('pod is absent on a phone', !(await box(phone, 'millrates')).vis);
-  await phone.close();
+  // ---- phone: a different anchor, a different shape -------------------------
+  // The pod hangs off #controls here, not #title — on a phone the region under
+  // the title is the control stack's. Both boxes move (the view buttons wrap at
+  // 360px, adding a row), so the checks below run at two widths.
+  for (const vp of [{ width: 390, height: 844 }, { width: 360, height: 740 }]) {
+    const w = vp.width;
+    const phone = await open(url, vp, { hasTouch: true, isMobile: true });
+    await phone.evaluate(() => applyMetric('revenue_per_acre'));
+    await settle(phone);
+    const pod = await box(phone, 'millrates');
+    const controls = await box(phone, 'controls');
+    const botleft = await box(phone, 'botleft');
+    check(`${w}: pod shows on a phone`, pod.vis);
+    check(`${w}: pod clears the control stack`, !overlap(pod, controls),
+      `controls.bottom=${controls.bottom} pod.top=${pod.top}`);
+    check(`${w}: pod hangs off the control stack`,
+      pod.top - controls.bottom >= 0 && pod.top - controls.bottom <= 20,
+      `gap=${pod.top - controls.bottom}`);
+    check(`${w}: pod clears the bottom-left cluster`, !overlap(pod, botleft));
+
+    // Stacked, one rate per row: the desktop one-liner wraps at phone widths and
+    // breaks between a class and its number.
+    const rows = await phone.evaluate(() =>
+      [...document.querySelectorAll('#mill-rows span')].map(e => ({
+        text: e.textContent, block: getComputedStyle(e).display === 'block',
+        top: Math.round(e.getBoundingClientRect().top),
+      })));
+    check(`${w}: rates are stacked one per row`,
+      rows.length === 3 && rows.every(r => r.block) &&
+      new Set(rows.map(r => r.top)).size === 3,
+      rows.map(r => `${r.text}@${r.top}`).join(' | '));
+    // The separator is CSS-only precisely so it does not print here.
+    check(`${w}: no stray separator in the stacked form`,
+      !(await phone.evaluate(() => document.getElementById('mill-rows').textContent)).includes('·'));
+
+    // The pod lands on the downtown prisms on a phone; bare text at 10.5px is
+    // unreadable on bright yellow, so the free-floating form carries a card.
+    const bg = await phone.evaluate(() =>
+      getComputedStyle(document.getElementById('millrates')).backgroundColor);
+    check(`${w}: free-floating pod has a readable background`,
+      bg !== 'rgba(0, 0, 0, 0)' && bg !== 'transparent', bg);
+
+    // Opening the description card folds the pod INTO it, rather than the card
+    // burying the pod (it is opaque and z-index 3).
+    await phone.evaluate(() => document.getElementById('title').click());
+    await settle(phone);
+    const folded = await box(phone, 'millrates');
+    const card = await box(phone, 'title');
+    check(`${w}: expanding the title folds the pod into the card`,
+      await phone.evaluate(() =>
+        document.getElementById('millrates').parentNode.id === 'title'));
+    check(`${w}: folded pod renders inside the card's box`,
+      folded.top >= card.top && folded.bottom <= card.bottom,
+      `card=${card.top}-${card.bottom} pod=${folded.top}-${folded.bottom}`);
+    check(`${w}: folded pod drops its own card background`,
+      await phone.evaluate(() =>
+        getComputedStyle(document.getElementById('millrates')).backgroundColor
+          === 'rgba(0, 0, 0, 0)'));
+    await phone.evaluate(() => document.getElementById('title').click());
+    await settle(phone);
+    check(`${w}: collapsing puts it back below the controls`,
+      await phone.evaluate(() =>
+        document.getElementById('millrates').parentNode === document.body) &&
+      (await box(phone, 'millrates')).top === pod.top);
+
+    // The lit/muted split is the only cue for which rate the cut is billed at,
+    // and it has a whole row to itself here — it must survive the re-parenting.
+    await phone.evaluate(() => applyMetric('nonres_revenue_per_acre'));
+    await settle(phone);
+    const litPhone = await phone.evaluate(() => ({
+      on: [...document.querySelectorAll('#mill-rows .on')].map(e => e.textContent),
+      off: [...document.querySelectorAll('#mill-rows .off')].map(e => e.textContent),
+    }));
+    check(`${w}: per-cut highlighting survives on a phone`,
+      litPhone.on.length === 1 && /Non-res/.test(litPhone.on[0]) && litPhone.off.length === 2,
+      `on=${litPhone.on.join('|')} off=${litPhone.off.join('|')}`);
+    await phone.close();
+  }
 
   await browser.close();
   console.log(fail ? `\n${fail} CHECK(S) FAILED` : '\nALL CHECKS PASSED');
