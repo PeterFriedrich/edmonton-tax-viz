@@ -61,6 +61,18 @@ FRANCHISE_COLUMNS = [
     "gas_delivery_annual", "gas_franchise_revenue",
 ]
 
+# Revenue-lens readout (2026-08-01): a hood's share of the CITYWIDE levy, and
+# where that levy comes from by zoning category. Both are produced upstream by
+# OPTIONAL steps (revenue_share_city in main.py, rev_frac_* by revenue_by_zone,
+# which needs the zoning file), so they are carried only when present — the
+# value-only and no-zoning paths must keep working.
+REVENUE_READOUT_COLUMNS = [
+    "revenue_share_city",
+    "rev_frac_never", "rev_frac_notyet", "rev_frac_inst",
+    "rev_frac_residential", "rev_frac_commercial", "rev_frac_industrial",
+    "rev_frac_mixed", "rev_frac_dc", "rev_frac_other", "rev_frac_unzoned",
+]
+
 
 # New-residential-supply columns carried from load_permits when supplied
 # (Development & Infill lens A, SPEC_development.md): Σ units_added on new-
@@ -348,6 +360,12 @@ def join_and_calculate(
             "neighbourhood_name", "total_assessed_value", "total_revenue",
             "area_acres", "value_per_acre", "revenue_per_acre", "geometry",
         ]
+        # Revenue-lens readout columns, carried only if the caller computed them
+        # (revenue_share_city in main.py, rev_frac_* from revenue_by_zone) —
+        # both are optional upstream steps, so this must not require them.
+        carried = [c for c in REVENUE_READOUT_COLUMNS if c in joined.columns]
+        if carried:
+            out_cols = [c for c in out_cols if c != "geometry"] + carried + ["geometry"]
 
     # Residential-revenue decomposition (res_levy from apply_tax_rates):
     # the residential-class subset of revenue_per_acre, same denominator.
@@ -809,6 +827,16 @@ SLIM_COLUMNS = [
     "ind_permits_per_acre_long", "ind_permits_long",
     "value_per_lot_acre", "revenue_per_lot_acre", "parcel_frac",
     "far",
+    # Revenue-lens readout (2026-08-01): the absolute levy, its share of the
+    # CITYWIDE levy (computed in main.py against the full roll, NOT renormalised
+    # over whatever survives the boundary join), and where that revenue comes
+    # from by zoning category — the Uses lens's own polygons weighted by levy
+    # instead of by area. `rev_frac_unzoned` rides along rather than being
+    # hidden: it is ~0.002% citywide today and must not be able to grow silently.
+    "total_revenue", "revenue_share_city",
+    "rev_frac_never", "rev_frac_notyet", "rev_frac_inst",
+    "rev_frac_residential", "rev_frac_commercial", "rev_frac_industrial",
+    "rev_frac_mixed", "rev_frac_dc", "rev_frac_other", "rev_frac_unzoned",
     "geometry",
 ]
 

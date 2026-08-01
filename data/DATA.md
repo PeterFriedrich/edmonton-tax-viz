@@ -1078,3 +1078,48 @@ NAME_CORRECTIONS = {
 ### Unresolved
 
 *None.* The only expected unmatched warning is the `OLIVER` straggler (immaterial, deliberate — see Resolved above). Any **other** name appearing in the unmatched warning is new drift and should be investigated (spatial containment via the assessment lat/lon columns is the decisive test). **This is now enforced in CI:** `scripts/check_unmatched_names.py` asserts the live money-path unmatched set equals the committed baseline `data/expected_unmatched.json` (`{OLIVER}` assessment-side, `{LEWIS FARMS}` boundary-side) and fails the weekly build on a new assessment-side name — see RUNBOOK §2 "Check unmatched names".
+
+---
+
+## Per-property zoning: use the POLYGONS, not `dkk9-cj3x`'s `zoning` field (2026-08-01)
+
+Measured while building the revenue-lens readout (`src/revenue_by_zone.py`).
+
+`dkk9-cj3x` ("Property Info") carries a `zoning` string per account, and joining
+it to the assessment roll on `account_number` is clean — 1:1, no duplicates, every
+tax class matched. **It is still the wrong source here.**
+
+| | |
+|---|---|
+| properties with **null** `zoning` | **35.7%** (157,030 / 439,685) |
+| **revenue** with null `zoning` | **16.0%** ($433M of $2.70B) |
+| **DOWNTOWN**'s revenue with null `zoning` | **42%** |
+
+The nulls are **condo units** — Downtown is 95% unzoned by property count. A
+"top 3 zones by revenue" built on this field showed *unzoned* as Downtown's
+largest single entry.
+
+**The fix, and why it is better than a workaround:** every one of those
+properties has coordinates (`latitude`/`longitude`, 100% non-null in the cleaned
+assessment frame), and a point-in-polygon against `data/raw/zoning.geojson`
+placed **11,022 / 11,022** of Downtown's unzoned properties. Citywide the
+unplaced share falls from 16.0% to **0.002%** (8 properties, $9,034). Because
+those are the *same* polygons the Uses lens colours by area, revenue-by-zone and
+the Uses composition become one map read two ways and cannot disagree.
+
+**Two traps found doing this, both silent:**
+- `.str.split().str[0]` on an empty string yields **NaN, not `""`** — a
+  "code is present but unmatched" filter written the obvious way silently
+  swallows every null-zoning row, and reported 16.04% of revenue as sitting in
+  three rare zone codes. It is 0.003%.
+- `gpd.sjoin` where **both** frames carry a `zoning` column suffixes them to
+  `zoning_left`/`zoning_right`, and the later lookup fails or silently reads the
+  wrong side. Drop the left one first.
+
+**Coverage of the category map:** 75 of the 78 codes present resolve through
+`load_zoning.ZONE_CATEGORY`; the three that do not (`CSC`, `RSL`, `US`) carry
+**0.003%** of revenue and fall to `other`, flagged.
+
+⚠️ **1,585 properties sit exactly on a zone boundary** and match two polygons.
+`sjoin` emits a row per match, so they must be de-duplicated or their levy is
+double-counted and the per-hood fractions stop summing to 1.

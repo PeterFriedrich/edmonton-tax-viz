@@ -28,7 +28,11 @@ had destroyed 747 lines of S79 history before it was caught.)_
 _Last reconciled: 2026-08-01 (S83 — the touch readout regression is closed: the
 peek card now carries **each lens's full rows**, not just its headline, and
 Money's readout is split so revenue facts stop printing under the Value map.
-**The `▶` moves to the two new numbers Peter asked for** (% of city revenue,
+**Later the same day: phase 1 of those two numbers is BUILT** — `revenue_by_zone`
+ships `revenue_share_city` + 10 `rev_frac_*` columns, and the zoning source
+decision reversed on measurement (polygons, not the per-property field). **The
+`▶` is now phase 2, the UI.** Original note: the `▶` moved to the two new
+numbers Peter asked for (% of city revenue,
 top 3 revenue by zone) — both need new columns, so they are proposed rather than
 built, and the bottom-sheet decision is demoted (not closed) behind them.
 Also removed a duplicated preamble block left in this file by the
@@ -36,37 +40,55 @@ Also removed a duplicated preamble block left in this file by the
 
 ## Open work
 
-- [ ] **▶ Two new readout numbers, both needing NEW COLUMNS — propose before
-  building** (Peter, 2026-08-01: *"I want the revenue lens to show amount, but
-  also percent of city revenue, and top 3 revenue by zones"*). The readout
-  plumbing landed the same day (the peek card now carries each lens's full rows);
-  this is the data half, deliberately split off because it changes the output
-  schema.
-  - **(a) % of city revenue.** The geojson ships only per-acre *rates* — no
-    totals, no acreage — so a hood's share of the citywide levy cannot be
-    computed in the browser. Needs a total (or an acreage) column carried
-    through from the pipeline, where the CRS is already set explicitly.
-    ⚠️ **Do NOT compute area in JS from lat/lon geometry** — that is exactly the
-    silent-correctness failure `CLAUDE.md`'s CRS rule exists to prevent.
-  - **(b) Top 3 revenue by zone.** ⚠️ **CHECKED: this is NOT blocked on parcel
-    geometry**, which is the assumption that would have parked it. The
-    per-property `zoning` lives in `dkk9-cj3x` with `account_number`, which
-    joins to the assessment roll `q7d6-ambg`, and **both raw files are already
-    in `data/raw/`** — so revenue-by-zone per neighbourhood is computable today
-    without the ~$300 parcel-polygon blocker in
-    `docs/PARCEL_LEVEL_OPPORTUNITIES.md`.
-    - ⚠️ **Two known distortions to state, not discover.** Tax-exempt
-      institutional land is **absent from the roll entirely**
-      (`docs/FINDINGS_revenue_scale.md` §4–5), so zone totals understate wherever
-      it sits; and `zoning` is nullable.
-    - ⚠️ **Category mapping is a real decision, not a detail.** The Uses lens's
-      `frac_*` are **area** shares from the zoning *polygons*; this would be a
-      **revenue** share from a per-property zoning *string*. Two different
-      sources — if they are not mapped onto one category set deliberately, the
-      two lenses will quietly disagree about the same neighbourhood.
-  - **Value's side is thin until this lands** and that is why: we ship a
-    res/nonres split of *revenue* but none of *assessed value*, so Value's public
-    readout is currently one line (see `DECISIONS.md`, 2026-08-01).
+- [ ] **▶ REVENUE-LENS READOUT — phase 2 of 2: the UI.** Phase 1 (the pipeline)
+  is DONE and merged; the columns ship. Peter, 2026-08-01: *"I actually want this
+  in the popup panel, instead of the assessment graph, on the revenue lens. also
+  can we have the current relevant mill rates in the top left on this lens?"*
+  - **Decisions already RULED by Peter (do not re-open):** top 3 by **category**,
+    not raw zone code; on Money/Revenue the panel shows the breakdown **instead
+    of** the assessment graph, with history staying reachable via the
+    Change-over-time lens; pipeline before UI.
+  - **(a) The panel.** On Money + a revenue metric, `#temporal` shows: the hood's
+    revenue, `revenue_share_city`, and the top 3 `rev_frac_*` categories. The
+    peek card's *"See assessment history ›"* copy must change on this lens — it
+    would be advertising a panel that no longer shows history.
+    ⚠️ **`#temporal` is the ASSESSMENT-HISTORY panel** and its whole spec
+    (`SPEC_temporal.md` §2) assumes that; making its content lens-dependent is a
+    real change to that contract, not a content tweak.
+  - **(b) Mill rates, top left.** Confirmed OPEN on desktop: the blurb ends at
+    y≈196 and the next chrome starts at y≈729, so ~500px of left column is free
+    at 1440x900. ⚠️ **NOT open on a phone** — the stack fills it, so this is
+    desktop-only or it needs its own answer at ≤640px.
+    - Data is already in `data/mill_rates.json` (2025 municipal: Residential
+      **7.6254**, Other Residential **8.3116**, Non-residential **24.2229**).
+    - "Relevant" = follow the sub-metric: Total shows all, Residential shows the
+      two residential rates, Non-residential shows the one.
+    - ⚠️ **Two caveats must be visible, not buried**: this is the **municipal
+      levy only** (education is provincial and excluded from every number on the
+      site), and **2025 Farmland is an ASSUMPTION** — the source published no
+      Farmland row that year (`mill_rates.json` notes).
+  - **Available columns** (shipped by phase 1): `total_revenue`,
+    `revenue_share_city`, and `rev_frac_{never,notyet,inst,residential,
+    commercial,industrial,mixed,dc,other,unzoned}`.
+  - ⚠️ **`rev_frac_unzoned` is the honesty column** — 0.002% citywide today. If
+    it ever grows, the top-3 is quietly describing less than the whole hood. Do
+    not hide it; `src/revenue_by_zone.top_zones()` already excludes it from the
+    ranking by default rather than letting it take a slot.
+
+- [ ] **⚠️ DATA VINTAGE: a local `python main.py` REGENERATES THE MAP FROM STALE
+  RAW DATA — do not commit the result** (found 2026-08-01). `data/raw/` on the
+  Oracle box is from **2026-07-06**; the committed `web/data/*.geojson` is built
+  by the `refresh.yml` auto-refresh from data downloaded that day (last:
+  **2026-07-27**). Regenerating locally and committing silently ROLLS THE SITE
+  BACK — measured: **1,896 pre-existing values changed** across 406 features on a
+  run that was only supposed to ADD columns.
+  - **What to do instead:** commit pipeline code only and let the weekly refresh
+    add the columns, or run `scripts/download_data.py` first if the data really
+    should roll. For local UI work, regenerate to a temp path
+    (`--geojson-out /tmp/x.geojson`).
+  - **Consequence to watch:** phase 2's UI columns are ABSENT from the served
+    geojson until the next auto-refresh runs. The UI must degrade cleanly when
+    they are missing (the house pattern), or the site breaks in the gap.
 
 - [ ] **UI BUG: the Display popover paints OVER the Data & Methods pod
   (Peter, 2026-07-28).** Bottom-right: opening **Display** covers the
@@ -1161,6 +1183,7 @@ Also removed a duplicated preamble block left in this file by the
 Closed items moved out of `## Open work` on 2026-07-30 live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
 
 - [x] **UI BUG: the hover tooltip `div.tip` rendered on TOUCH, 127px off the right edge. CONFIRMED ON DEVICE and FIXED 2026-07-31.** — 2026-07-31 · `docs/TODO_archive.md`
+- [x] **REVENUE-LENS READOUT phase 1 (pipeline) — BUILT 2026-08-01.** `src/revenue_by_zone.py` + 11 tests; ships `total_revenue`, `revenue_share_city` and 10 `rev_frac_*` columns. Zoning source reversed on measurement: the polygons, not `dkk9-cj3x`'s per-property field (null for 42% of Downtown's revenue). Phase 2 (UI) is the open `▶`. — 2026-08-01 · `docs/DECISIONS.md`, `data/DATA.md`
 - [x] **`#hoodmode-btn` CONFIRMS instead of toggling off when the panel was opened by a peek card — RULED and BUILT 2026-08-01.** Peter: *"change button name and first press to mean yes, keep it open."* Three label states now (`popup` / `panel` / `panel ✓`); the tick marks the only one that earns one-tap pinning. — 2026-08-01 · `docs/DECISIONS.md`
 - [x] **Should the change lens's card carry its `% of city base` endpoints? RULED 2026-08-01: LEAVE IT.** Peter's call; the panel is one tap away and special-casing would put wrapper content in the card for one view only. — 2026-08-01 · `docs/SPEC_temporal.md` §2
 - [x] **REGRESSION from that fix: suppressing `.tip` left every lens with a ONE-LINE readout on touch. Reported by Peter and FIXED 2026-08-01** — the peek card now borrows `viewTooltip(info, false)`, so it carries the lens's full rows; Money's readout also split so revenue facts no longer print under the Value map. — 2026-08-01 · `docs/DECISIONS.md`, `docs/MOBILE_USABILITY.md` §2b
