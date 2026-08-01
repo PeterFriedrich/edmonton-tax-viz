@@ -54,25 +54,40 @@ with near-zero risk to the tuned desktop experience.
 
 ## 2. Current state — CONFIRMED (render pass, iPhone-13-class 390×844, touch)
 
-> **2026-08-01 — the mill-rate pod added a phone form, and two of its rules are
-> the generalisable part.** Peter shipped it desktop-first, saw *"no rates show
-> on mobile"*, and asked for *"stacked, like bullet points almost, top left,
-> where the description bubble would be, then folded in when you open the
-> bubble."* Measured layout at 390×844: `#title` collapsed is 20–43, `#controls`
-> owns **58–197**, `#botleft` starts at **659**. So:
-> - ⚠️ **"Under the title" is not a phone location.** That band is the control
->   stack's — the same fact that made `#temporal` a bottom sheet here. Anything
->   anchored to `#title` on desktop needs a *different anchor* on a phone, not a
->   different offset. The pod hangs off `#controls` at ≤640px.
+> **2026-08-01 — the mill-rate pod's phone form: the answer was NOT to place a
+> pod, it was not to have one.** Shipped desktop-first, then Peter: *"no rates
+> show on mobile"* → *"stacked, like bullet points almost, top left, where the
+> description bubble would be, then folded in when you open the bubble"* → after
+> seeing a standalone card built to that description: ***"i don't like the
+> independent mill rates panel. folding it into the tax revenue blurb is fine."***
+> The rates are now **re-parented into `#title`** at this seam: they open and
+> close with the description card and add **nothing** to the default render.
+>
+> The intermediate build is worth keeping because everything it had to solve
+> **stopped being a question** once the pod lived in the blurb:
+> - ⚠️ **"Under the title" is not a phone location.** Measured at 390×844,
+>   `#title` collapsed is 20–43 but `#controls` owns **58–197** — the same fact
+>   that made `#temporal` a bottom sheet here. A desktop anchor needs a
+>   *different anchor* on a phone, not a different offset. The standalone form
+>   hung off `#controls`; the folded form needs no anchor at all.
 > - ⚠️ **Bare text over the map does not survive the phone.** Desktop chrome sits
->   in a corner over dark map; a phone's map fills the screen, so the pod lands on
->   the downtown prisms and 10.5px muted text on bright yellow is unreadable
->   (seen in `p-collapsed.png`, then fixed). The phone form carries the same card
->   background `#title.expanded` earned for the same reason. **`#title`'s own
->   collapsed h1 is the exception only because it is 16px and near-white.**
-> - **"Folded in" is a re-parent, not a hide.** Expanding the title moves the pod
->   into `#title` so the rates flow inside the card; the card is opaque and
->   z-index 3, so leaving the pod outside would have buried it.
+>   in a corner over dark map; a phone's map fills the screen, so the standalone
+>   pod landed on the downtown prisms and 10.5px muted text on bright yellow was
+>   unreadable (seen in a screenshot, not predicted). It needed its own card
+>   background. Inside the blurb there already is one.
+> - ⚠️ **A yield must be scoped to where the contention is.**
+>   `#temporal.open ~ #millrates` shipped ungated with a comment saying it was
+>   "desktop-only in effect" — reasoning about the LAYOUT (the panel is a bottom
+>   sheet on a phone, so they never overlap) and not about the SELECTOR, which
+>   matched everywhere. Switching the readout to **panel mode** blanked the rates
+>   on a phone with nothing contending. It is desktop-only by construction now
+>   (a child of `#title` is not `#temporal`'s sibling), and
+>   `verify-millrates.js` asserts the property directly so it holds however a
+>   future form achieves it.
+>
+> **The general shape:** on a phone, ask whether the thing needs to be its own
+> surface before asking where to put it. Three separate problems here were all
+> artifacts of it being one.
 
 
 Re-run **2026-07-24 against the merged S65 regroup** (5-view `#controls` flex

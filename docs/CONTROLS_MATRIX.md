@@ -212,17 +212,18 @@ rates is lit. It is in `CHROME_IDS`. Two rules make it unlike every other pod:
   which the panel *replaces*; here the panel simply wins. **Desktop-only in
   effect:** on a phone the panel is a bottom sheet, so the two never contend.
 
-⚠️ **It is the only surface with a different ANCHOR on each seam, and the only
-one that changes PARENT at runtime.** On desktop it hangs off `#title`; on a
-phone that region is the control stack's (the same reason `#temporal` becomes a
-bottom sheet), so it hangs off `#controls` instead. Two more phone-only rules:
-the rates render **stacked, one per row** (the desktop one-liner wraps at 360px
-and breaks between a class and its number), and the pod carries a **card
-background** the desktop form does not need — a phone's map fills the screen, so
-the pod lands on the downtown prisms where 10.5px muted text is unreadable.
-**Expanding the title re-parents the pod into it**, so the rates fold into the
-description card instead of being buried by it (the card is opaque, z-index 3).
-`verify-millrates.js` covers all of this at 390 and 360.
+⚠️ **It is the only surface that changes PARENT across the two seams, and on a
+phone it is not a surface at all.** On desktop it floats in the free left column
+under `#title`. At ≤640px it is **re-parented into `#title`** and becomes part of
+the description blurb — it opens and closes with that card and adds nothing to
+the default render (Peter, 2026-08-01: *"i don't like the independent mill rates
+panel. folding it into the tax revenue blurb is fine"*). One phone-only rendering
+rule survives: the rates render **stacked, one per row**, because the desktop
+one-liner wraps at 360px and breaks between a class and its number.
+⚠️ **The desktop yield is desktop-only BY CONSTRUCTION** — a child of `#title` is
+not `#temporal`'s sibling — not by media query; it shipped ungated once and
+blanked the rates in phone panel mode. `verify-millrates.js` covers all of this
+at 390 and 360, including that the rates survive panel mode.
 
 **All the inconsistencies in this table are now fixed.** `#toggle` used to stay
 live but inert outside Money (resolved by the regroup — old combo C), `#lens`

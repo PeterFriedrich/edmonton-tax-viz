@@ -385,9 +385,16 @@ html, body { margin: 0; height: 100%; background: #0a0a0f; }
    control stack at x~958, so the extra 40px is free. */
 #millrates { display: none; top: 206px; left: 22px; width: 400px; }
 body.mills #millrates { display: block; }
-/* Needs #millrates AFTER #temporal in the DOM — see the markup comment. The
-   yield is desktop-only in effect: on a phone the panel is a bottom sheet and
-   the two never contend for the same region. */
+/* Needs #millrates AFTER #temporal in the DOM — see the markup comment.
+   Desktop-only BY CONSTRUCTION, not by media query: below 640px the pod is a
+   CHILD of #title, so it is not #temporal's sibling and this cannot match.
+   ⚠️ That distinction was worth a bug. In the standalone phone form the pod WAS
+   a sibling, so this rule matched there too and switching the readout to panel
+   mode blanked the rates — pod at y≈207, bottom sheet at y≈799, nothing
+   contended, and they vanished anyway. The comment then said "desktop-only in
+   effect", which reasoned about the LAYOUT and not about the SELECTOR.
+   verify-millrates.js now asserts the rates survive panel mode on a phone, so
+   the property is checked however a future form happens to achieve it. */
 #temporal.open ~ #millrates { display: none; }
 #mill-head { font-size: 10.5px; color: #6a6a80; letter-spacing: 0.2px; }
 #mill-rows { font-size: 11.5px; line-height: 1.4; margin: 2px 0 3px; }
@@ -564,42 +571,32 @@ body.mills #millrates { display: block; }
     background: rgba(10,10,16,0.985);
   }
 
-  /* Mill rates, phone form (Peter, 2026-08-01: "stacked, like bullet points
-     almost, top left, where the description bubble would be, then folded in
-     when you open the bubble").
+  /* Mill rates, phone form: PART OF THE BLURB, not a pod of its own (Peter,
+     2026-08-01: "i don't like the independent mill rates panel. folding it into
+     the tax revenue blurb is fine"). JS re-parents #millrates into #title at
+     this seam, so the rates open and close with the description card and add
+     nothing to the default render. Same tap, same card, one surface.
+
+     That is why there is no background here: inside the card there already is
+     one. The standalone form needed its own, because a phone's map fills the
+     screen and the pod landed on the downtown prisms where 10.5px muted text is
+     unreadable — a problem the blurb never has. It also removes the anchor
+     question entirely: nothing has to clear #controls if nothing floats.
 
      STACKED rather than the desktop one-liner because the phone has a third of
      the width: "Res. 7.6254 · Other res. 8.3116 · Non-res. 24.2229" wraps at
      360px, and a wrapped rate list breaks in the wrong places — between a class
      and its number. One rate per row also gives the muted/lit contrast a whole
-     line to read on, which is the only cue for which rate the cut is billed at.
-
-     It hangs off #controls, not #title: on a phone the region under the title
-     is where the control stack lives, which is the same reason #temporal
-     becomes a bottom sheet here. Free width, not the desktop's fixed 400px.
-
-     CARD, not bare text, and this is the one rule that does NOT match the
-     desktop pod. Desktop keeps it bare because it sits in the top-left corner
-     over dark map; a phone's map fills the screen, so the pod lands squarely on
-     the downtown prisms — MEASURED there, the 10.5px muted head and caveat are
-     unreadable on bright yellow. Same background as #title.expanded, which
-     earned it for the same reason. */
-  body.mills #millrates {
-    left: 22px; right: 22px; width: auto;
-    background: rgba(12,12,20,0.92); border: 1px solid #2a2a3a;
-    border-radius: 6px; padding: 8px 12px;
-  }
+     line to read on, which is the only cue for which rate the cut is billed at. */
   #mill-rows span { display: block; }
   #mill-rows span + span::before { content: none; }
-  /* Folded into the description card: JS re-parents the pod into #title when it
-     expands, so it flows under the blurb inside the card's own background
-     instead of being buried by it (the card is z-index 3 and opaque).
-     Static positioning has to be forced (.panel sets position:absolute), and the
-     card's own background/border are dropped — a second box inside the card
-     would read as a nested pod. A rule above the rates keeps them from running
-     into the last line of the blurb. */
-  #title.expanded #millrates {
-    position: static; background: none; border: 0; border-radius: 0;
+  /* Collapsed, the rates hide with the blurb — same rule #title p follows, and
+     it must out-specify `body.mills #millrates { display: block }`. */
+  #title:not(.expanded) #millrates { display: none; }
+  /* Static positioning has to be forced (.panel sets position:absolute). The
+     rule above the rates keeps them off the blurb's last line. */
+  #title #millrates {
+    position: static; width: auto;
     margin-top: 8px; padding: 7px 0 0; border-top: 1px solid #2a2a3a;
   }
 }
