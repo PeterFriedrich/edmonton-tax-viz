@@ -22,6 +22,8 @@ import logging
 import sys
 from pathlib import Path
 
+import geopandas as gpd
+
 # The src/ modules are runnable in isolation and import each other by bare name,
 # so put src/ on the path before importing them (matches the test suite + the
 # regen snippet in session-summary).
@@ -48,6 +50,7 @@ from load_permits import load_permits, export_dev_grid
 from join_and_calculate import join_and_calculate, export_geojson, load_unit_costs
 from export_value_grid import export_value_grid, check_lot_acre_bounds, build_hood_lot_acres
 from load_temporal import load_temporal, export_temporal_web
+from revenue_by_zone import FRACTION_DECIMALS, revenue_by_zone
 from plot_choropleth import plot_choropleth
 
 logger = logging.getLogger(__name__)
@@ -195,6 +198,28 @@ def run(
         load_assessment(assessment_csv), mill_rates_json, assessment_year,
     )
     aggregated = aggregate_by_neighbourhood(assessment)
+
+    # Share of the CITYWIDE levy, computed here against the full roll — before
+    # the boundary join, which can drop a neighbourhood the roll knows about.
+    # Deriving it downstream (or in the browser, by summing the served features)
+    # would renormalise over whatever survived, so a hood's "% of city revenue"
+    # would silently depend on who else made it onto the map.
+    if "total_revenue" in aggregated.columns:
+        city_revenue = aggregated["total_revenue"].sum()
+        # Rounded for the same reason as the zone fractions (revenue_by_zone
+        # FRACTION_DECIMALS): 1e-6 here is 0.0001% of the citywide levy.
+        aggregated["revenue_share_city"] = (
+            aggregated["total_revenue"] / city_revenue
+        ).round(FRACTION_DECIMALS)
+        logger.info(
+            "Citywide municipal levy $%.0f over %d neighbourhood(s); "
+            "largest share %.2f%% (%s)",
+            city_revenue,
+            len(aggregated),
+            100 * aggregated["revenue_share_city"].max(),
+            aggregated.loc[aggregated["revenue_share_city"].idxmax(), "neighbourhood_name"],
+        )
+
     boundaries = load_boundaries(str(boundaries_geojson))
 
     # Zoning is an optional refreshed input — degrade gracefully if the file is
@@ -202,6 +227,16 @@ def run(
     zoning = None
     if zoning_geojson is not None and Path(zoning_geojson).exists():
         zoning = load_zoning(str(zoning_geojson), boundaries)
+        # Revenue by zoning category, over the SAME polygons the Uses lens
+        # colours by area — one map read two ways, so the two lenses cannot
+        # disagree about what "commercial" means. Needs the levy, so it is
+        # skipped on the value-only path along with everything else revenue.
+        if "levy" in assessment.columns:
+            aggregated = aggregated.merge(
+                revenue_by_zone(assessment, gpd.read_file(str(zoning_geojson))),
+                on="neighbourhood_name",
+                how="left",
+            )
     elif zoning_geojson is not None:
         logger.warning("Zoning file not found (%s) — skipping set-aside layer", zoning_geojson)
 

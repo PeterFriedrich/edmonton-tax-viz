@@ -682,6 +682,36 @@ before the status-manifest step. The exact account-level control stays
 
 ---
 
+### `src/revenue_by_zone.py` (revenue lens readout — added 2026-08-01)
+
+**Inputs:** the assessment DataFrame **after** `apply_tax_rates` (needs `levy`,
+`neighbourhood_name`, `latitude`, `longitude`); the zoning GeoDataFrame read
+from the same file `load_zoning` uses
+
+**Outputs:** one row per neighbourhood — `rev_frac_*` per land-use category
+(summing to 1.0), plus `rev_zone_matched_frac`
+
+**Responsibilities:**
+- Place each property in a zoning polygon by point-in-polygon (CRS stated on
+  both sides, never inferred), and apportion its **levy** to that polygon's
+  category — the Uses lens's own polygons weighted by money instead of by area
+- Reuse `load_zoning.ZONE_CATEGORY`, so the two lenses cannot drift on what a
+  category means
+- Flag rather than drop: unknown codes → `other`, no polygon → `unzoned`, no
+  coordinates → `unzoned` but still in the denominator, boundary-straddling
+  points counted once
+- Round fractions to `FRACTION_DECIMALS` (payload — see the module docstring)
+
+**Does not:** aggregate anything else, touch boundaries, or know about acres.
+
+⚠️ **Uses the zoning POLYGONS, not `dkk9-cj3x`'s per-property `zoning` string.**
+That field is null for 35.7% of properties — **16.0% of citywide revenue, 42% of
+DOWNTOWN's**, because condo units carry no zoning — so a "top 3 zones" built on
+it showed a hole as Downtown's largest entry. The polygon route measured 0.002%
+unplaced. See `data/DATA.md`.
+
+---
+
 ### `src/join_and_calculate.py`
 
 **Inputs:**
