@@ -384,11 +384,17 @@ html, body { margin: 0; height: 100%; background: #0a0a0f; }
    wraps to two at 380. Nothing sits to the right of this column until the
    control stack at x~958, so the extra 40px is free. */
 #millrates { display: none; top: 206px; left: 22px; width: 400px; }
-@media (min-width: 641px) { body.mills #millrates { display: block; } }
-/* Needs #millrates AFTER #temporal in the DOM — see the markup comment. */
+body.mills #millrates { display: block; }
+/* Needs #millrates AFTER #temporal in the DOM — see the markup comment. The
+   yield is desktop-only in effect: on a phone the panel is a bottom sheet and
+   the two never contend for the same region. */
 #temporal.open ~ #millrates { display: none; }
 #mill-head { font-size: 10.5px; color: #6a6a80; letter-spacing: 0.2px; }
 #mill-rows { font-size: 11.5px; line-height: 1.4; margin: 2px 0 3px; }
+/* The separator lives here, not in the markup, because the rates are one line
+   on desktop and a stacked list on a phone — a literal " · " in the HTML would
+   print as a stray character on every row of the stacked form. */
+#mill-rows span + span::before { content: " · "; color: #55556a; }
 /* The cut you are looking at is billed at the lit classes; the muted ones stay
    on screen so the differential is readable, but must not compete with them. */
 #mill-rows .on { color: #9a9ab0; }
@@ -556,5 +562,44 @@ html, body { margin: 0; height: 100%; background: #0a0a0f; }
   #temporal {
     top: auto; bottom: 8px; left: 8px; right: 8px; width: auto; z-index: 4;
     background: rgba(10,10,16,0.985);
+  }
+
+  /* Mill rates, phone form (Peter, 2026-08-01: "stacked, like bullet points
+     almost, top left, where the description bubble would be, then folded in
+     when you open the bubble").
+
+     STACKED rather than the desktop one-liner because the phone has a third of
+     the width: "Res. 7.6254 · Other res. 8.3116 · Non-res. 24.2229" wraps at
+     360px, and a wrapped rate list breaks in the wrong places — between a class
+     and its number. One rate per row also gives the muted/lit contrast a whole
+     line to read on, which is the only cue for which rate the cut is billed at.
+
+     It hangs off #controls, not #title: on a phone the region under the title
+     is where the control stack lives, which is the same reason #temporal
+     becomes a bottom sheet here. Free width, not the desktop's fixed 400px.
+
+     CARD, not bare text, and this is the one rule that does NOT match the
+     desktop pod. Desktop keeps it bare because it sits in the top-left corner
+     over dark map; a phone's map fills the screen, so the pod lands squarely on
+     the downtown prisms — MEASURED there, the 10.5px muted head and caveat are
+     unreadable on bright yellow. Same background as #title.expanded, which
+     earned it for the same reason. */
+  body.mills #millrates {
+    left: 22px; right: 22px; width: auto;
+    background: rgba(12,12,20,0.92); border: 1px solid #2a2a3a;
+    border-radius: 6px; padding: 8px 12px;
+  }
+  #mill-rows span { display: block; }
+  #mill-rows span + span::before { content: none; }
+  /* Folded into the description card: JS re-parents the pod into #title when it
+     expands, so it flows under the blurb inside the card's own background
+     instead of being buried by it (the card is z-index 3 and opaque).
+     Static positioning has to be forced (.panel sets position:absolute), and the
+     card's own background/border are dropped — a second box inside the card
+     would read as a nested pod. A rule above the rates keeps them from running
+     into the last line of the blurb. */
+  #title.expanded #millrates {
+    position: static; background: none; border: 0; border-radius: 0;
+    margin-top: 8px; padding: 7px 0 0; border-top: 1px solid #2a2a3a;
   }
 }

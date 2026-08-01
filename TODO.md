@@ -125,6 +125,14 @@ Also removed a duplicated preamble block left in this file by the
     - Rates ship in `status.json` as `municipal_rates`, derived from
       `data/mill_rates.json` — never typed into the page. `assumed` is data, so
       the Farmland caveat stops printing by itself when a real row is published.
+    - **Phone form added the same day** after Peter saw the desktop-only build
+      (*"stacked, like bullet points almost, top left, where the description
+      bubble would be, then folded in when you open the bubble"*): the pod hangs
+      off **`#controls`**, not `#title` — on a phone that band is the control
+      stack's — renders one rate per row, carries a card background (bare text is
+      unreadable on the downtown prisms), and is **re-parented into `#title`**
+      when the description card opens. `MOBILE_USABILITY.md` §2 has the two
+      generalisable rules.
   - **Available columns** (shipped by phase 1): `total_revenue`,
     `revenue_share_city`, and `rev_frac_{never,notyet,inst,residential,
     commercial,industrial,mixed,dc,other,unzoned}`.

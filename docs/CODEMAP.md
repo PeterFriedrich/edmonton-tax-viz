@@ -2,7 +2,7 @@
 
 **Generated — do not hand-edit.** `python tools/codemap.py`
 
-`web/index.html` is a single ~4,505-line file holding the whole front end. This is the lookup table for it: jump to a symbol's range instead of scanning. **Line numbers go stale on the next edit — regenerate rather than citing them.** Prose should still name symbols, not lines.
+`web/index.html` is a single ~4,534-line file holding the whole front end. This is the lookup table for it: jump to a symbol's range instead of scanning. **Line numbers go stale on the next edit — regenerate rather than citing them.** Prose should still name symbols, not lines.
 
 ## Symbols (177 indexed)
 
@@ -210,35 +210,35 @@ Grouped by the file's own `// --- section ---` banners, in file order.
 | `isRevenue` | 3303–3315 |  |
 | `syncMetricButtons` | 3316–3334 | Paint both rows from state.metric, and hide the cut row where it has |
 | `MILL_CUT_CLASSES` | 3335–3341 | Which classes each revenue cut is actually billed at |
-| `MILL_LABELS` | 3342–3352 | Abbreviated so all three rates fit ONE line at the title's width. Every |
-| `syncMillRates` | 3353–3374 | Paint the pod, gate it to the money view's revenue cuts, and sit it under |
-| `applyMetric` | 3375–3394 |  |
-| `applyColorAdjust` | 3395–3416 | Colour Adjustment (sqrt scaling) — a runtime toggle for the money/glass |
-| `syncColorAdjust` | 3417–3429 | Sync the Colour Adjustment button to the toggle, and HIDE it in views |
-| `applyDenom` | 3430–3445 | Switch the denominator (ground vs lot acres). Shown in the Glass and |
-| `applyRatioDenom` | 3446–3463 | Switch the Ratio view's denominator (per road metre vs per fire event). |
-| `applyDevMetric` | 3464–3479 | Development sub-metric picker (dwelling units \| permits \| industrial). |
-| `syncDevChrome` | 3480–3495 | Shared development-view chrome refresh after a metric/window switch: the |
-| `applyDevWindow` | 3496–3512 | Development-view window toggle (5yr base <-> 3yr recent <-> since 2009). |
-| `refreshLegend` | 3513–3691 | Sync the whole legend to the current view. roads: the network's linear |
-| `usesLegendCats` | 3692–3702 | Legend rows for the uses view: the categories actually on screen |
-| `applyPalette` | 3703–3716 | Switch colour ramp: rebuild layers, restyle the background + legend gradient. |
-| `applyLabels` | 3717–3725 | Toggle the neighbourhood-name labels (accessibility-menu checkbox). |
-| `applyReference` | 3726–3736 | Toggle the orientation set: river, ring road, and the regional place |
-| `applyUsesPrisms` | 3737–3751 | Toggle the Uses view's residential prisms (height = share of zoned |
-| `syncDevControls` | 3752–3799 | Sync the Development pickers' visibility to the current mode. The |
-| `syncPrismRow` | 3800–3805 | The age spikes ride on the Glass grid file — kick its (shared, single) |
-| `applyDevDetail` | 3806–3823 |  |
-| `applyMoneyDetail` | 3824–3833 | Money's render toggle: Neighbourhood prisms (view "money") vs the |
-| `applyMoneyMode` | 3834–3841 | Money's Current/Change lens toggle. Change is a full-only render-mode of |
-| `applyChgWindow` | 3842–3859 | Switch the change lens's window. State-only when the lens isn't on screen, |
-| `syncChangeControls` | 3860–3875 | Reveal the Money lens toggle and the change window picker. Called from |
-| `applyDevMode` | 3876–3882 | Development's Housing/Infill lens toggle (full build only). Infill is a |
-| `setPrismOpacity` | 3883–3893 | Set the ratio view's ghost-prism opacity (0–100). UI-state only — the |
-| `applyView` | 3894–4079 | Switch view (money \| services \| ratio \| uses \| glass). Road geometry |
-| `syncServiceControls` | 4080–4089 | Services-view controls. `applyService` flips a service on/off; |
-| `applyService` | 4090–4102 |  |
-| `applySvcDriver` | 4103–4505 |  |
+| `MILL_LABELS` | 3342–3362 | Abbreviated so all three rates fit ONE line at the title's width. Every |
+| `syncMillRates` | 3363–3402 | Paint the pod, gate it to the money view's revenue cuts, and place it. |
+| `applyMetric` | 3403–3422 |  |
+| `applyColorAdjust` | 3423–3444 | Colour Adjustment (sqrt scaling) — a runtime toggle for the money/glass |
+| `syncColorAdjust` | 3445–3457 | Sync the Colour Adjustment button to the toggle, and HIDE it in views |
+| `applyDenom` | 3458–3473 | Switch the denominator (ground vs lot acres). Shown in the Glass and |
+| `applyRatioDenom` | 3474–3491 | Switch the Ratio view's denominator (per road metre vs per fire event). |
+| `applyDevMetric` | 3492–3507 | Development sub-metric picker (dwelling units \| permits \| industrial). |
+| `syncDevChrome` | 3508–3523 | Shared development-view chrome refresh after a metric/window switch: the |
+| `applyDevWindow` | 3524–3540 | Development-view window toggle (5yr base <-> 3yr recent <-> since 2009). |
+| `refreshLegend` | 3541–3719 | Sync the whole legend to the current view. roads: the network's linear |
+| `usesLegendCats` | 3720–3730 | Legend rows for the uses view: the categories actually on screen |
+| `applyPalette` | 3731–3744 | Switch colour ramp: rebuild layers, restyle the background + legend gradient. |
+| `applyLabels` | 3745–3753 | Toggle the neighbourhood-name labels (accessibility-menu checkbox). |
+| `applyReference` | 3754–3764 | Toggle the orientation set: river, ring road, and the regional place |
+| `applyUsesPrisms` | 3765–3779 | Toggle the Uses view's residential prisms (height = share of zoned |
+| `syncDevControls` | 3780–3827 | Sync the Development pickers' visibility to the current mode. The |
+| `syncPrismRow` | 3828–3833 | The age spikes ride on the Glass grid file — kick its (shared, single) |
+| `applyDevDetail` | 3834–3851 |  |
+| `applyMoneyDetail` | 3852–3861 | Money's render toggle: Neighbourhood prisms (view "money") vs the |
+| `applyMoneyMode` | 3862–3869 | Money's Current/Change lens toggle. Change is a full-only render-mode of |
+| `applyChgWindow` | 3870–3887 | Switch the change lens's window. State-only when the lens isn't on screen, |
+| `syncChangeControls` | 3888–3903 | Reveal the Money lens toggle and the change window picker. Called from |
+| `applyDevMode` | 3904–3910 | Development's Housing/Infill lens toggle (full build only). Infill is a |
+| `setPrismOpacity` | 3911–3921 | Set the ratio view's ghost-prism opacity (0–100). UI-state only — the |
+| `applyView` | 3922–4107 | Switch view (money \| services \| ratio \| uses \| glass). Road geometry |
+| `syncServiceControls` | 4108–4117 | Services-view controls. `applyService` flips a service on/off; |
+| `applyService` | 4118–4130 |  |
+| `applySvcDriver` | 4131–4534 |  |
 
 ## Element ids (88) — the control surface
 
