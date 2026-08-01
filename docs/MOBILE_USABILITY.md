@@ -305,8 +305,26 @@ pass inherits the flattened control, no phone-specific reveal logic needed.
   hardcoded port 8931. **Layout oracle only — not authoritative for touch
   interaction** (see §2b). Reports the id table, the post-tap `#peek` box, and
   a generic overflow sweep that catches unidentified chrome like `div.tip`.
-- `tools/profiling/verify-peek.js` — the touch gesture net (**25 checks**,
-  desktop + 390×844). ⚠️ **Budget 900s, not 400.** Measured **419s** standalone
+- ⚠️ **SPLIT THE GESTURE FROM THE CONTENT — it is the difference between 7
+  minutes and 40 seconds.** `verify-peek.js` is slow because a real tap needs the
+  picking dance (warm-up, ±8px ring-stable targets, an empty-pixel scan). When
+  the question is *what does the card SAY in each lens*, that machinery buys
+  nothing: switch the view and call `openPeek(f.properties)` directly, then read
+  `#peek-read` and screenshot. Used on 2026-08-01 to check five lenses plus the
+  public build in one pass. **This is not a licence to test gestures that way** —
+  §3's standing finding is that calling the handler directly proves nothing about
+  the gesture, and `verify-peek.js` remains the only script that drives a real
+  pointer at the map. Use the direct call for *rendering*, the real pointer for
+  *behaviour*.
+- ⚠️ **A throwaway script in `/tmp` needs
+  `NODE_PATH=…/tools/profiling/node_modules`** — Playwright is installed there,
+  not at the repo root, and `require('playwright')` fails from anywhere else.
+  And use a bare `state`, never `window.state`: a top-level `const` lives in the
+  global lexical environment and is not a property of `window` (quirk ss). Both
+  cost a cycle each on 2026-08-01.
+- `tools/profiling/verify-peek.js` — the touch gesture net (**27 checks
+  measured** 2026-08-01, up from 25, desktop + 390×844). ⚠️ **Budget 900s, not
+  400.** Measured **419s** standalone
   on 2026-07-31, up from the ~150s recorded at S81; a `timeout 420` killed it
   mid-gesture and the crash (`Target page … has been closed`) reads exactly like
   a logic failure. **The cause was not isolated** — 4 checks were added the same
