@@ -1323,3 +1323,98 @@ stricter** — inertness of an empty-map click is now asserted as "no part of th
 state moved" rather than "stays closed", which no longer depends on whatever state
 the preceding click happened to leave behind. Worth noting as the good case: the
 script did its job by disagreeing with the change, and the change was still right.
+
+## Mill rates on the revenue lens: a pod on desktop, a paragraph on a phone (2026-08-01)
+
+Peter: *"can we have the current relevant mill rates in the top left on this
+lens? since thats an open spot anyway"*. It isn't an open spot, and both halves
+of that sentence turned out to be wrong in ways only measurement showed.
+
+**The column is the history panel's.** The "~500px free at 1440×900" in the brief
+was measured with `#temporal` **closed**. Open, it is **308px** tall — its own CSS
+comment says ~265 — and the slack between its bottom and the bottom-left cluster
+is 211px at 1440×900 but **79px at 1366×768** and **31px at 1280×720**. There is
+no room for a pod *and* a panel on a laptop.
+
+**And "top left" is only empty on one of the three cuts.** `#title` runs
+**140–499px** across the app; the residential and non-residential blurbs alone
+push it from 196 to **256**. So the pod's `top` is read from the measured title
+box on every sync, never a constant — a `ResizeObserver` on `#title` covers the
+paths that write the blurb *after* the sync runs.
+
+That measurement also exposed a **pre-existing bug**: `#temporal`'s own
+`top: 210px` was pinned from a sweep that covered the five views on the default
+metric only, and it paints over the blurb in **five** states — by 46px on the
+money cuts, 158px in Change, 252px in Development, **289px in Infill**. Left
+unfixed on purpose (in Infill the title ends at 499, the panel is 308 and the
+legend starts at 729 — it does not fit anywhere), and written up in `TODO.md`.
+
+### All three rates, always, with the billed ones lit
+
+Peter's ruling, against the brief's "show only the relevant rate". Dropping rows
+would hide the **7.6254-vs-24.2229 differential**, which is the fact the whole
+revenue map rests on; and a fixed row count keeps the pod's height stable, which
+the crowded column needs. `MILL_CUT_CLASSES` maps each cut to the classes it is
+actually billed at — Total has **no entry on purpose**, so "no entry" reads as
+"all" and a fourth class arriving in the manifest lights up under Total without a
+matching line in the front end.
+
+Both caveats are on the pod, visible rather than buried: **municipal levy only**
+(the education levy is provincial), and **Farmland's 2025 rate is assumed**. The
+second is driven by an `assumed` list in the manifest rather than typed into the
+page, so it stops printing by itself the year the source publishes a real row.
+
+### The phone form took two goes, and the second deleted the first
+
+Shipped desktop-only first. Peter: *"no rates show on mobile"*, then a
+description — *"stacked, like bullet points almost, top left, where the
+description bubble would be, then folded in when you open the bubble"* — and then,
+on seeing exactly that built: ***"i don't like the independent mill rates panel.
+folding it into the tax revenue blurb is fine."***
+
+The standalone version is worth recording because **everything it had to solve was
+an artifact of it being a separate surface**:
+
+| it needed | why | folded into the blurb |
+|---|---|---|
+| an anchor | "under the title" is not a phone location — `#title` collapsed is 20–43, but `#controls` owns **58–197** | nothing floats, so nothing must clear anything |
+| its own card background | the map fills a phone screen; the pod sat on the downtown prisms, where 10.5px muted text is unreadable | the card already has one |
+| to inherit the desktop yield | `#temporal.open ~ #millrates` | desktop-only *by construction* — a child of `#title` is not `#temporal`'s sibling |
+
+`#millrates` is now re-parented into `#title` below 640px: the rates open and
+close with the blurb and add **nothing** to the default render. Only the stacking
+survives — one rate per row, because the desktop one-liner wraps at 360px and
+breaks between a class and its number.
+
+### The yield that reasoned about the wrong thing
+
+That third row cost a shipped bug. `#temporal.open ~ #millrates` went out
+**ungated**, under a comment claiming it was "desktop-only in effect" — which
+reasoned about the **layout** (the panel is a bottom sheet on a phone, so they
+never overlap) and not about the **selector**, which matched everywhere.
+Switching the phone readout to **panel mode** blanked the rates with the sheet at
+y≈799 and the pod at y≈207, nothing contending.
+
+⚠️ **The fix was written, then falsified.** A media gate looked right and passed;
+removing it *also* passed, because re-parenting had already made the selector
+unmatchable on a phone. The gate was redundant and was dropped rather than shipped
+under a comment calling it load-bearing. `verify-millrates.js` asserts the
+**behaviour** — rates survive panel mode, rates hide with the blurb — so the
+property holds however a future form achieves it.
+
+### Rates are data, not copy
+
+They ship in `status.json` as `municipal_rates`, derived by
+`generate_status.py` from `data/mill_rates.json` (the manual, reviewed input), so
+the January roll has one source and the page has none. `verify-millrates.js`
+asserts every rate on screen against the served manifest, so a hand-edit to the
+markup cannot put a wrong mill rate in front of a reader and still pass.
+
+### Postscript: the report that was a cache
+
+*"i'm still not seeing the mill rates on mobile… i can see it when i open it in a
+private window on my phone."* The deploy was fine. `styles.css` has been a
+separate file since 2026-07-29, so a **CSS-only change now has its own cache
+lifetime** and can render stale against a fresh page — a failure that looks
+exactly like a half-deployed feature. `RUNBOOK.md` §3c has the triage order;
+cache-busting the stylesheet is proposed in `TODO.md`, not smuggled in.

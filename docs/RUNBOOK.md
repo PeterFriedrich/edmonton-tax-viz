@@ -45,6 +45,15 @@ time.
 2. **Add the new year's block to `data/mill_rates.json`** — a manual,
    *reviewed* step (deliberately never auto-fetched; see DATA.md §4 for the
    vocabulary bridge and known quirks).
+   - ⚠️ **Since 2026-08-01 this file is also what the site DISPLAYS.**
+     `generate_status.py` copies the year's municipal rates into
+     `status.json` → the mill-rate pod. Two consequences: the three display
+     classes (`DISPLAY_RATE_CLASSES`) must all be present or the generator
+     **raises** rather than shipping a pod short one rate; and if the new year
+     publishes a real **Farmland** row, add it **without** an `_assumed` key —
+     that retires the "Farmland rate assumed" caveat on screen automatically.
+     `tests/test_generate_status.py` fails if the committed manifest and this
+     file disagree.
 3. **Bump `ASSESSMENT_YEAR` in `main.py`** — the single source of truth the
    year-alignment check reads.
 4. **Bump the pinned activity windows in `main.py`** — `FIRE_YEARS`,
