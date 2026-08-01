@@ -365,6 +365,38 @@ html, body { margin: 0; height: 100%; background: #0a0a0f; }
    open a ragged space above the row. */
 .tip .spark { display: block; margin: 5px 0 3px; }
 /* ===================================================================
+   MILL-RATE POD — the revenue map's own conversion factor, under #title.
+   Bare text like #title rather than a bordered box: it sits in the same column,
+   directly under it, and reads as a continuation of the caption instead of a
+   second kind of object.
+
+   THE POD YIELDS TO THE PANEL, and the rule is a sibling selector rather than a
+   JS toggle so the two can never both think they own the slot. It has to yield
+   to something: the column is genuinely full at laptop heights — MEASURED
+   2026-08-01, the open #temporal is 308px tall and clears the bottom-left
+   cluster by 211px at 1440x900 but only 79px at 1366x768 and 31px at 1280x720 —
+   and the money view's residential/non-residential cuts push #title 60px taller
+   than the Total cut it was sized against, which is what ruled out shifting the
+   panel down instead. `top` is set from the measured title box in JS for the
+   same reason (see syncMillRates); the value here is only the pre-paint start.
+   =================================================================== */
+/* 400px, wider than #title's 360: the caveat line fits on ONE line at 400 and
+   wraps to two at 380. Nothing sits to the right of this column until the
+   control stack at x~958, so the extra 40px is free. */
+#millrates { display: none; top: 206px; left: 22px; width: 400px; }
+@media (min-width: 641px) { body.mills #millrates { display: block; } }
+/* Needs #millrates AFTER #temporal in the DOM — see the markup comment. */
+#temporal.open ~ #millrates { display: none; }
+#mill-head { font-size: 10.5px; color: #6a6a80; letter-spacing: 0.2px; }
+#mill-rows { font-size: 11.5px; line-height: 1.4; margin: 2px 0 3px; }
+/* The cut you are looking at is billed at the lit classes; the muted ones stay
+   on screen so the differential is readable, but must not compete with them. */
+#mill-rows .on { color: #9a9ab0; }
+#mill-rows .on b { color: #e8e8ef; font-weight: 600; }
+#mill-rows .off { color: #55556a; }
+#mill-note { font-size: 10.5px; color: #6a6a80; }
+
+/* ===================================================================
    TEMPORAL LENS — the pinned assessment-history panel (SPEC_temporal.md §5).
    A READING surface, not a control strip: 0.92 opacity like .tip / #banner /
    #about-menu, and pointer-events restored (.panel turns them off) because it

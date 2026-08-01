@@ -40,6 +40,57 @@ Also removed a duplicated preamble block left in this file by the
 
 ## Open work
 
+- [ ] **▶ THE HISTORY PANEL PAINTS OVER THE TITLE BLURB IN FIVE STATES —
+  MEASURED ON CLEAN MASTER, 2026-08-01, not a hypothesis.** `#temporal` is pinned
+  at `top: 210px` on the strength of a CSS comment (`web/styles.css`) claiming
+  `#title` "was MEASURED at 1440x900 across all five views and runs 176-179px
+  tall, so 210px clears the tallest with air to spare". `#title` actually runs
+  **140-499px**, and the panel is an opaque 0.92 box, so it buries the blurb:
+
+  | state | title bottom | overlap |
+  |---|---|---|
+  | money / **residential** | 256 | **46px** |
+  | money / **non-residential** | 256 | **46px** |
+  | **change** | 368 | **158px** |
+  | **development** | 462 | **252px** |
+  | **infill** | 499 | **289px** |
+
+  - **Why it survived:** the original sweep covered the five **views** on the
+    default metric and never money's **cuts**; Development/Change/Infill blurbs
+    have grown since. `verify-temporal.js`'s `panel clears the title` check
+    passes because it only ever runs the default money/revenue state — the same
+    narrow case the comment was written from. ⚠️ **Widen that check to the cuts
+    and the long-blurb views as part of the fix**, or the next pin repeats this.
+  - ⚠️ **NOT a one-line nudge.** In Infill the title ends at 499, the panel is
+    308px tall and `#botleft` starts at 729 — moving the panel below the blurb
+    does not fit. Real options: cap/scroll the blurb when the panel is open,
+    shorten the long blurbs, or give the panel a different anchor. **Propose
+    before building.**
+  - The mill-rate pod (2026-08-01) already solves its own half of this by
+    positioning from the measured title box — `syncMillRates` + the
+    `ResizeObserver` on `#title` are the pattern to copy, and
+    `verify-millrates.js` asserts the clearance per cut.
+
+- [ ] **`verify-temporal.js` HAS BEEN RED SINCE THE 2026-08-01 AUTO-REFRESH, and
+  nothing reported it.** 5 of 42 checks fail on **clean master** (reproduced in a
+  worktree, so it is not a working-tree artifact): Downtown's share reads
+  **3.28%** where the script pins **3.30%**, and the commercial-base and
+  current-value literals moved with it. The 2026-08-01 refresh (`ab8bac7`)
+  rewrote `temporal.json` + `temporal_archive.json`.
+  - **Decide which it is before re-pinning** — a fresh roll moving Downtown 0.02
+    points is unremarkable, but that is a hypothesis, not a reading. The archive
+    is a splice of a historical file with known gaps (`SPEC_temporal.md` §0), so
+    "the data moved" and "the splice moved" are different problems.
+  - ⚠️ **The gap that let it through is the reportable part:** a data-only
+    refresh triggers **no deploy** (`deploy.yml` is scoped to `web/**` minus
+    `web/data/**`) and the refresh workflow does not run the verify suite, so a
+    data change can red-line the front end with nothing on fire. `refresh.yml`
+    already runs `check_value_anchors.py` for the geojson — the temporal file has
+    no equivalent.
+  - **Pin bands, not equalities** when re-pinning — the standing rule from
+    `check_value_anchors.py` (DECISIONS 2026-07-28), and these five literals are
+    exactly the failure it was written about.
+
 - [ ] **▶ REVENUE-LENS READOUT — phase 2 of 2: the UI.** Phase 1 (the pipeline)
   is DONE and merged; the columns ship. Peter, 2026-08-01: *"I actually want this
   in the popup panel, instead of the assessment graph, on the revenue lens. also
@@ -55,18 +106,25 @@ Also removed a duplicated preamble block left in this file by the
     ⚠️ **`#temporal` is the ASSESSMENT-HISTORY panel** and its whole spec
     (`SPEC_temporal.md` §2) assumes that; making its content lens-dependent is a
     real change to that contract, not a content tweak.
-  - **(b) Mill rates, top left.** Confirmed OPEN on desktop: the blurb ends at
-    y≈196 and the next chrome starts at y≈729, so ~500px of left column is free
-    at 1440x900. ⚠️ **NOT open on a phone** — the stack fills it, so this is
-    desktop-only or it needs its own answer at ≤640px.
-    - Data is already in `data/mill_rates.json` (2025 municipal: Residential
-      **7.6254**, Other Residential **8.3116**, Non-residential **24.2229**).
-    - "Relevant" = follow the sub-metric: Total shows all, Residential shows the
-      two residential rates, Non-residential shows the one.
-    - ⚠️ **Two caveats must be visible, not buried**: this is the **municipal
-      levy only** (education is provincial and excluded from every number on the
-      site), and **2025 Farmland is an ASSUMPTION** — the source published no
-      Farmland row that year (`mill_rates.json` notes).
+  - [x] **(b) Mill rates, top left. DONE 2026-08-01** (`#millrates`,
+    `verify-millrates.js`, 31 checks). Three things the brief got wrong, all
+    found by measuring:
+    - **"~500px of left column is free" was measured with the panel CLOSED.**
+      `#temporal` owns that column: it is **308px** tall (its own CSS comment
+      says ~265), leaving 211px of slack at 1440x900 but **79px at 1366x768** and
+      **31px at 1280x720**. There is no room for pod *and* panel on a laptop, so
+      **the pod yields while a hood is pinned** (Peter, after re-measurement,
+      reversing his first call to push the panel down).
+    - **"Top left is an open spot" is false on two of the three cuts** —
+      residential and non-residential blurbs push `#title` to 256, not 196. The
+      pod is positioned from the **measured** title box, never a constant.
+      This is the same defect the panel has, unfixed — see the item above.
+    - **"Relevant = follow the sub-metric" became: show all three, light the
+      active ones** (Peter's ruling). Dropping rows would hide the 7.6254-vs-
+      24.2229 differential, which is the fact the map rests on.
+    - Rates ship in `status.json` as `municipal_rates`, derived from
+      `data/mill_rates.json` — never typed into the page. `assumed` is data, so
+      the Farmland caveat stops printing by itself when a real row is published.
   - **Available columns** (shipped by phase 1): `total_revenue`,
     `revenue_share_city`, and `rev_frac_{never,notyet,inst,residential,
     commercial,industrial,mixed,dc,other,unzoned}`.

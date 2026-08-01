@@ -318,6 +318,27 @@ archive + heartbeat.)
 - `status.json` carries a `_geojson_sha256` field (not in the example above) as the
   content-change detector so `generated` bumps only on real data change,
   independent of git.
+- **`municipal_rates` added 2026-08-01** — the mill rates the revenue map is
+  billed at, for the frontend's mill-rate pod:
+
+  ```json
+  "municipal_rates": {
+    "unit": "per $1,000 assessed",
+    "classes": [{"name": "Residential", "rate": 7.6254}, …],
+    "assumed": ["Farmland"]
+  }
+  ```
+
+  Municipal rate only — every figure on the site is the municipal levy, and the
+  education levy is provincial. Derived from `data/mill_rates.json` (the manual,
+  reviewed input) rather than restated, so the year-roll has one source. `assumed`
+  names classes whose rate that year was **inferred, not published** (2025
+  Farmland), which is what lets the UI's caveat stop printing on its own the year
+  a real row appears instead of becoming a stale literal. Degrades to `null` if
+  the rates file is unreadable; the pod simply never shows. ⚠️ Because
+  `generate_status.py` only runs during a refresh, a rate change committed by
+  hand must be written into **both** files — `tests/test_generate_status.py`
+  asserts the committed manifest equals what the generator would produce.
 - **Year-alignment GUARD built 2026-07-01** (`scripts/check_year_alignment.py`,
   wired into `refresh.yml` between download and regen; see
   `docs/FINDINGS_data_integrity_audit.md` §3). It detects the roll year from

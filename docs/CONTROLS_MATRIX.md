@@ -196,6 +196,22 @@ re-tapping the shown hood is a **no-op** rather than a toggle, because a touch
 tap can fire the handler twice. `#temporal`'s **×** is also enlarged to 44px on
 the same seam. Full reasoning: `SPEC_temporal.md` §2, `MOBILE_USABILITY.md` §1.
 
+**`#millrates`, the mill-rate pod (2026-08-01), is a READ-ONLY surface with the
+narrowest gate in the app** — Money **and** a revenue cut, i.e. it is the only
+chrome keyed on the `#revcut` row's *existence* rather than on a view. It is not
+a control: nothing in it is clickable, and it changes only which of its three
+rates is lit. It is in `CHROME_IDS`. Two rules make it unlike every other pod:
+- **It has no fixed position.** `top` is read from `#title`'s measured box each
+  time, because the blurb is 60px taller on the residential and non-residential
+  cuts (196 → 256) and 140-499px across the app as a whole. Every other pod in
+  this column uses a constant, and ⚠️ **`#temporal`'s constant is wrong in five
+  states because of it** (TODO.md).
+- **It yields.** With `#temporal` open the column cannot hold both at laptop
+  heights, so the pod hides — via a CSS sibling selector rather than a JS toggle,
+  so the two cannot both think they own the slot. This is the reverse of `#peek`,
+  which the panel *replaces*; here the panel simply wins.
+Desktop only (>640px): on a phone the control stack already fills this column.
+
 **All the inconsistencies in this table are now fixed.** `#toggle` used to stay
 live but inert outside Money (resolved by the regroup — old combo C), `#lens`
 used to grey out (resolved 2026-07-25, then the control was **removed entirely**

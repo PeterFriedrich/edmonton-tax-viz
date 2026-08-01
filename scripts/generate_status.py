@@ -35,8 +35,20 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT))
+
+from src.apply_tax_rates import load_mill_rates  # noqa: E402
+
 GEOJSON = ROOT / "web/data/neighbourhood_value_per_acre.geojson"
 STATUS = ROOT / "web/data/status.json"
+MILL_RATES = ROOT / "data/mill_rates.json"
+
+# The rate classes the map's three revenue cuts are billed at, in display order:
+# Total spans all three, Residential is the two housing classes, Non-residential
+# is the third (apply_tax_rates.RESIDENTIAL_RATE_LABELS / NONRES_RATE_LABELS).
+# Farmland is deliberately absent — no revenue cut isolates it, and its 2025 rate
+# is an assumption; it is reported via ``assumed`` instead.
+DISPLAY_RATE_CLASSES = ["Residential", "Other Residential", "Non Residential"]
 
 # Vintages the manifest reports. Assessment + rate year are pinned to the local
 # snapshot (single source of truth: main.py ASSESSMENT_YEAR); zoning is the 2024
@@ -69,6 +81,34 @@ def load_prior(path: Path) -> dict:
         return {}
 
 
+def municipal_rates(rates_path: Path, year: int) -> dict | None:
+    """Return the mill rates the revenue map is billed at, for the frontend pod.
+
+    Publishes the MUNICIPAL rate only — every dollar on the site is the municipal
+    levy, and the education levy is provincial (mill_rates.json notes). ``assumed``
+    names the classes whose rate that year was inferred rather than published, so
+    the caveat the UI prints is data-driven and stops appearing on its own the
+    year the source publishes a real row. Returns None if the file is unreadable:
+    a manifest without rates just means the pod never shows.
+    """
+    try:
+        rates = load_mill_rates(rates_path, year)
+        published = json.loads(Path(rates_path).read_text())["rates"][str(year)]
+    except (OSError, json.JSONDecodeError, KeyError) as exc:
+        logger.warning("No municipal rates for %s (%s) — omitting from manifest", year, exc)
+        return None
+
+    missing = [c for c in DISPLAY_RATE_CLASSES if c not in rates]
+    if missing:
+        raise KeyError(f"{year} mill rates missing display class(es) {missing} in {rates_path}")
+
+    return {
+        "unit": "per $1,000 assessed",
+        "classes": [{"name": c, "rate": rates[c]} for c in DISPLAY_RATE_CLASSES],
+        "assumed": sorted(c for c, vals in published.items() if "_assumed" in vals),
+    }
+
+
 def build_status(
     *,
     geojson: Path,
@@ -77,6 +117,7 @@ def build_status(
     data_year: int,
     rate_year: int,
     zoning_year: int,
+    rates_path: Path = MILL_RATES,
     banner=_SENTINEL,
 ) -> dict:
     """Compute the new manifest from the prior one + the current GeoJSON."""
@@ -99,6 +140,7 @@ def build_status(
         "generated": generated,
         "last_checked": today,
         "banner": banner_value,
+        "municipal_rates": municipal_rates(rates_path, rate_year),
         "_geojson_sha256": new_hash,
     }
 
