@@ -37,7 +37,7 @@
    "ALBERTA AVENUE": {
     "COMMERCIAL": [
      191,
-     93867500.0
+     93552000.0
     ],
     "MA DERELICT RESIDENTIAL": [
      25,
@@ -45,7 +45,7 @@
     ],
     "OTHER RESIDENTIAL": [
      90,
-     123689000.0
+     126245500.0
     ],
     "RESIDENTIAL": [
      2289,
@@ -55,7 +55,7 @@
    "ALBERTA PARK INDUSTRIAL": {
     "COMMERCIAL": [
      66,
-     265589000.0
+     264946000.0
     ]
    },
    "ALCES": {
@@ -69,7 +69,7 @@
     ],
     "RESIDENTIAL": [
      1178,
-     507468000.0
+     573131000.0
     ]
    },
    "ALDERGROVE": {
@@ -96,14 +96,14 @@
      124148500.0
     ],
     "RESIDENTIAL": [
-     3140,
-     1319073000.0
+     3150,
+     1320889500.0
     ]
    },
    "ALLENDALE": {
     "COMMERCIAL": [
      54,
-     89576000.0
+     89304000.0
     ],
     "MA DERELICT RESIDENTIAL": [
      2,
@@ -111,11 +111,11 @@
     ],
     "OTHER RESIDENTIAL": [
      42,
-     54929000.0
+     55825000.0
     ],
     "RESIDENTIAL": [
      954,
-     487592000.0
+     487996000.0
     ]
    },
    "AMBLESIDE": {
@@ -324,8 +324,8 @@
      35500.0
     ],
     "RESIDENTIAL": [
-     9,
-     1820000.0
+     10,
+     1858000.0
     ]
    },
    "ARGYLL": {
@@ -335,7 +335,7 @@
     ],
     "RESIDENTIAL": [
      335,
-     171685500.0
+     172109000.0
     ]
    },
    "ARMSTRONG INDUSTRIAL": {
@@ -350,8 +350,8 @@
      13452000.0
     ],
     "RESIDENTIAL": [
-     683,
-     429775500.0
+     682,
+     434039500.0
     ]
    },
    "ASTER": {
@@ -369,13 +369,13 @@
     ],
     "RESIDENTIAL": [
      1141,
-     538062000.0
+     555551000.0
     ]
    },
    "ATHLONE": {
     "COMMERCIAL": [
      48,
-     29242500.0
+     29179000.0
     ],
     "MA DERELICT RESIDENTIAL": [
      1,
@@ -383,7 +383,7 @@
     ],
     "OTHER RESIDENTIAL": [
      7,
-     22981500.0
+     23409500.0
     ],
     "RESIDENTIAL": [
      1140,
@@ -410,8 +410,8 @@
    },
    "BALWIN": {
     "COMMERCIAL": [
-     53,
-     74233500.0
+     52,
+     74225500.0
     ],
     "MA DERELICT RESIDENTIAL": [
      1,
@@ -419,11 +419,11 @@
     ],
     "OTHER RESIDENTIAL": [
      47,
-     80442000.0
+     81752000.0
     ],
     "RESIDENTIAL": [
-     1238,
-     380668000.0
+     1239,
+     380676000.0
     ]
    },
    "BANNERMAN": {
@@ -457,7 +457,7 @@
    "BATURYN": {
     "COMMERCIAL": [
      35,
-     21851000.0
+     18859500.0
     ],
     "OTHER RESIDENTIAL": [
      2,
@@ -482,8 +482,8 @@
      34209000.0
     ],
     "RESIDENTIAL": [
-     1131,
-     340747000.0
+     1132,
+     341044500.0
     ]
    },
    "BEARSPAW": {
@@ -496,8 +496,8 @@
      10008000.0
     ],
     "RESIDENTIAL": [
-     846,
-     410362000.0
+     845,
+     410119000.0
     ]
    },
    "BEAUMARIS": {
@@ -525,11 +525,11 @@
     ],
     "OTHER RESIDENTIAL": [
      15,
-     19524000.0
+     20172000.0
     ],
     "RESIDENTIAL": [
-     1205,
-     798336000.0
+     1204,
+     798635000.0
     ]
    },
    "BELLE RIVE": {
@@ -548,12 +548,12 @@
      22256500.0
     ],
     "OTHER RESIDENTIAL": [
-     1,
-     2240000.0
+     2,
+     3398500.0
     ],
     "RESIDENTIAL": [
-     470,
-     180301000.0
+     469,
+     179601000.0
     ]
    },
    "BELMEAD": {
@@ -586,8 +586,8 @@
    },
    "BELVEDERE": {
     "COMMERCIAL": [
-     129,
-     194369500.0
+     130,
+     194862000.0
     ],
     "MA DERELICT RESIDENTIAL": [
      2,
@@ -595,7 +595,7 @@
     ],
     "OTHER RESIDENTIAL": [
      46,
-     156149000.0
+     156615500.0
     ],
     "RESIDENTIAL": [
      1870,
@@ -661,7 +661,7 @@
    "BLACKMUD CREEK": {
     "COMMERCIAL": [
      13,
-     46315500.0
+     46082500.0
     ],
     "OTHER RESIDENTIAL": [
      1,
@@ -689,17 +689,17 @@
     ],
     "OTHER RESIDENTIAL": [
      12,
-     20061500.0
+     22913000.0
     ],
     "RESIDENTIAL": [
      415,
-     158124000.0
+     161708000.0
     ]
    },
    "BLUE QUILL": {
     "COMMERCIAL": [
      22,
-     24053000.0
+     20660500.0
     ],
     "OTHER RESIDENTIAL": [
      7,
@@ -721,13 +721,13 @@
     ],
     "RESIDENTIAL": [
      361,
-     220216500.0
+     220210000.0
     ]
    },
    "BONAVENTURE INDUSTRIAL": {
     "COMMERCIAL": [
      161,
-     483175000.0
+     481785500.0
     ]
    },
    "BONNIE DOON": {
@@ -740,18 +740,18 @@
      459500.0
     ],
     "OTHER RESIDENTIAL": [
-     73,
-     167733000.0
+     74,
+     170107000.0
     ],
     "RESIDENTIAL": [
-     1859,
-     901712000.0
+     1858,
+     901910500.0
     ]
    },
    "BOYLE STREET": {
     "COMMERCIAL": [
      299,
-     226142000.0
+     224074500.0
     ],
     "MA DERELICT RESIDENTIAL": [
      3,
@@ -763,7 +763,7 @@
     ],
     "RESIDENTIAL": [
      1565,
-     195270000.0
+     195192000.0
     ]
    },
    "BRANDER GARDENS": {
@@ -777,7 +777,7 @@
     ],
     "RESIDENTIAL": [
      924,
-     369860000.0
+     370499500.0
     ]
    },
    "BRECKENRIDGE GREENS": {
@@ -807,11 +807,11 @@
    "BRITANNIA YOUNGSTOWN": {
     "COMMERCIAL": [
      53,
-     185772500.0
+     185521000.0
     ],
     "OTHER RESIDENTIAL": [
      58,
-     140328500.0
+     142815500.0
     ],
     "RESIDENTIAL": [
      1477,
@@ -872,18 +872,18 @@
      570000.0
     ],
     "OTHER RESIDENTIAL": [
-     42,
-     53524000.0
+     43,
+     54371500.0
     ],
     "RESIDENTIAL": [
-     1401,
-     460085500.0
+     1402,
+     462465500.0
     ]
    },
    "CALGARY TRAIL NORTH": {
     "COMMERCIAL": [
      149,
-     381965000.0
+     381776500.0
     ]
    },
    "CALGARY TRAIL SOUTH": {
@@ -903,7 +903,7 @@
     ],
     "RESIDENTIAL": [
      1163,
-     590457000.0
+     590311500.0
     ]
    },
    "CALLINGWOOD NORTH": {
@@ -937,7 +937,7 @@
    "CAMERON HEIGHTS": {
     "COMMERCIAL": [
      33,
-     9767000.0
+     9600500.0
     ],
     "OTHER RESIDENTIAL": [
      2,
@@ -945,7 +945,7 @@
     ],
     "RESIDENTIAL": [
      797,
-     728961500.0
+     728997000.0
     ]
    },
    "CANON RIDGE": {
@@ -955,7 +955,7 @@
     ],
     "OTHER RESIDENTIAL": [
      4,
-     33799000.0
+     41859500.0
     ],
     "RESIDENTIAL": [
      1635,
@@ -965,7 +965,7 @@
    "CANORA": {
     "COMMERCIAL": [
      106,
-     70773000.0
+     70315000.0
     ],
     "MA DERELICT RESIDENTIAL": [
      1,
@@ -973,11 +973,11 @@
     ],
     "OTHER RESIDENTIAL": [
      64,
-     92736500.0
+     94265500.0
     ],
     "RESIDENTIAL": [
-     1110,
-     308175000.0
+     1098,
+     307232500.0
     ]
    },
    "CANOSSA": {
@@ -1055,7 +1055,7 @@
    "CASHMAN": {
     "COMMERCIAL": [
      25,
-     135861500.0
+     135762000.0
     ],
     "OTHER RESIDENTIAL": [
      2,
@@ -1065,7 +1065,7 @@
    "CASSELMAN": {
     "COMMERCIAL": [
      28,
-     13648500.0
+     13589500.0
     ],
     "OTHER RESIDENTIAL": [
      5,
@@ -1073,7 +1073,7 @@
     ],
     "RESIDENTIAL": [
      1245,
-     338898000.0
+     338882000.0
     ]
    },
    "CAVANAGH": {
@@ -1087,13 +1087,13 @@
     ],
     "RESIDENTIAL": [
      1258,
-     696632500.0
+     701028000.0
     ]
    },
    "CENTRAL MCDOUGALL": {
     "COMMERCIAL": [
      201,
-     673345500.0
+     672907000.0
     ],
     "MA DERELICT RESIDENTIAL": [
      3,
@@ -1101,7 +1101,7 @@
     ],
     "OTHER RESIDENTIAL": [
      143,
-     285754000.0
+     286161500.0
     ],
     "RESIDENTIAL": [
      1034,
@@ -1125,15 +1125,15 @@
    "CHAPPELLE": {
     "COMMERCIAL": [
      178,
-     235189000.0
+     235173500.0
     ],
     "OTHER RESIDENTIAL": [
-     16,
-     302958000.0
+     15,
+     317067000.0
     ],
     "RESIDENTIAL": [
      5696,
-     2670335500.0
+     2710666000.0
     ]
    },
    "CHARLESWORTH": {
@@ -1151,17 +1151,17 @@
     ],
     "RESIDENTIAL": [
      3017,
-     1334853500.0
+     1335072000.0
     ]
    },
    "CLAREVIEW TOWN CENTRE": {
     "COMMERCIAL": [
      23,
-     207228500.0
+     206774000.0
     ],
     "OTHER RESIDENTIAL": [
      15,
-     97153500.0
+     112562000.0
     ],
     "RESIDENTIAL": [
      2438,
@@ -1171,7 +1171,7 @@
    "CLOVER BAR AREA": {
     "COMMERCIAL": [
      207,
-     735909146.0
+     718717151.0
     ],
     "FARMLAND": [
      17,
@@ -1197,25 +1197,25 @@
     ],
     "RESIDENTIAL": [
      789,
-     245983000.0
+     246906000.0
     ]
    },
    "CORONET ADDITION INDUSTRIAL": {
     "COMMERCIAL": [
      103,
-     165044000.0
+     164970500.0
     ]
    },
    "CORONET INDUSTRIAL": {
     "COMMERCIAL": [
      463,
-     566744500.0
+     566340500.0
     ]
    },
    "CPR IRVINE": {
     "COMMERCIAL": [
      76,
-     115614500.0
+     115378000.0
     ],
     "OTHER RESIDENTIAL": [
      1,
@@ -1239,25 +1239,25 @@
    "CRESTWOOD": {
     "COMMERCIAL": [
      32,
-     42722000.0
+     40278500.0
     ],
     "MA DERELICT RESIDENTIAL": [
      1,
      385500.0
     ],
     "OTHER RESIDENTIAL": [
-     5,
-     12834000.0
+     6,
+     15198000.0
     ],
     "RESIDENTIAL": [
      958,
-     957574500.0
+     963030000.0
     ]
    },
    "CROMDALE": {
     "COMMERCIAL": [
-     45,
-     50354500.0
+     28,
+     50127500.0
     ],
     "MA DERELICT RESIDENTIAL": [
      3,
@@ -1265,17 +1265,17 @@
     ],
     "OTHER RESIDENTIAL": [
      38,
-     61199500.0
+     62035500.0
     ],
     "RESIDENTIAL": [
-     819,
-     149328000.0
+     817,
+     149004000.0
     ]
    },
    "CROSSROADS": {
     "COMMERCIAL": [
      104,
-     335348500.0
+     340899000.0
     ],
     "FARMLAND": [
      3,
@@ -1297,7 +1297,7 @@
     ],
     "RESIDENTIAL": [
      758,
-     345031000.0
+     366946500.0
     ]
    },
    "CRYSTALLINA NERA WEST": {
@@ -1311,7 +1311,7 @@
     ],
     "RESIDENTIAL": [
      1584,
-     667229500.0
+     668683500.0
     ]
    },
    "CUMBERLAND": {
@@ -1321,11 +1321,11 @@
     ],
     "OTHER RESIDENTIAL": [
      3,
-     45544000.0
+     43266500.0
     ],
     "RESIDENTIAL": [
      2267,
-     850276000.0
+     850244500.0
     ]
    },
    "CY BECKER": {
@@ -1339,7 +1339,7 @@
     ],
     "RESIDENTIAL": [
      1563,
-     767383500.0
+     771288000.0
     ]
    },
    "DALY GROVE": {
@@ -1352,14 +1352,14 @@
      31097000.0
     ],
     "RESIDENTIAL": [
-     1084,
-     408052500.0
+     1063,
+     406552000.0
     ]
    },
    "DAVIES INDUSTRIAL EAST": {
     "COMMERCIAL": [
      171,
-     511994500.0
+     511829000.0
     ]
    },
    "DAVIES INDUSTRIAL WEST": {
@@ -1431,7 +1431,7 @@
    "DESROCHERS AREA": {
     "COMMERCIAL": [
      71,
-     66866000.0
+     66732000.0
     ],
     "OTHER RESIDENTIAL": [
      9,
@@ -1439,13 +1439,13 @@
     ],
     "RESIDENTIAL": [
      1308,
-     669075500.0
+     670726500.0
     ]
    },
    "DOMINION INDUSTRIAL": {
     "COMMERCIAL": [
      138,
-     364014500.0
+     363862500.0
     ]
    },
    "DONSDALE": {
@@ -1459,7 +1459,7 @@
     ],
     "RESIDENTIAL": [
      607,
-     499162500.0
+     499062000.0
     ]
    },
    "DOVERCOURT": {
@@ -1469,17 +1469,17 @@
     ],
     "OTHER RESIDENTIAL": [
      15,
-     23508000.0
+     25429000.0
     ],
     "RESIDENTIAL": [
-     763,
-     296028500.0
+     764,
+     296029000.0
     ]
    },
    "DOWNTOWN": {
     "COMMERCIAL": [
-     729,
-     4854283500.0
+     723,
+     4853061500.0
     ],
     "MA DERELICT RESIDENTIAL": [
      2,
@@ -1494,8 +1494,8 @@
      1460413500.0
     ],
     "RESIDENTIAL": [
-     10734,
-     1513059500.0
+     10393,
+     1488978000.0
     ]
    },
    "DUGGAN": {
@@ -1509,7 +1509,7 @@
     ],
     "RESIDENTIAL": [
      1202,
-     529220000.0
+     529307000.0
     ]
    },
    "DUNLUCE": {
@@ -1523,19 +1523,19 @@
     ],
     "RESIDENTIAL": [
      1940,
-     629516000.0
+     629432500.0
     ]
    },
    "EASTGATE BUSINESS PARK": {
     "COMMERCIAL": [
      110,
-     374253500.0
+     373730500.0
     ]
    },
    "EASTWOOD": {
     "COMMERCIAL": [
      72,
-     72603000.0
+     72602500.0
     ],
     "MA DERELICT RESIDENTIAL": [
      49,
@@ -1546,8 +1546,8 @@
      142989500.0
     ],
     "RESIDENTIAL": [
-     1050,
-     297041500.0
+     1048,
+     297774500.0
     ]
    },
    "EAUX CLAIRES": {
@@ -1567,7 +1567,7 @@
    "EBBERS": {
     "COMMERCIAL": [
      44,
-     42436000.0
+     42733000.0
     ],
     "OTHER RESIDENTIAL": [
      1,
@@ -1581,21 +1581,21 @@
    "EDGEMONT": {
     "COMMERCIAL": [
      75,
-     81868000.0
+     81954500.0
     ],
     "OTHER RESIDENTIAL": [
      5,
      201819000.0
     ],
     "RESIDENTIAL": [
-     3717,
-     1762265000.0
+     3718,
+     1815016000.0
     ]
    },
    "EDMISTON INDUSTRIAL": {
     "COMMERCIAL": [
      83,
-     378431500.0
+     378135000.0
     ]
    },
    "EDMONTON ENERGY AND TECHNOLOGY PARK": {
@@ -1614,16 +1614,12 @@
    },
    "EDMONTON NORTHLANDS": {
     "COMMERCIAL": [
-     34,
-     205674000.0
+     33,
+     205167500.0
     ],
     "OTHER RESIDENTIAL": [
      14,
      2349000.0
-    ],
-    "RESIDENTIAL": [
-     11,
-     1308500.0
     ]
    },
    "EDMONTON RESEARCH AND DEVELOPMENT PARK": {
@@ -1675,7 +1671,7 @@
     ],
     "RESIDENTIAL": [
      75,
-     50064000.0
+     49974000.0
     ]
    },
    "EDMONTON SOUTH WEST": {
@@ -1723,7 +1719,7 @@
    "ELLERSLIE INDUSTRIAL": {
     "COMMERCIAL": [
      495,
-     1026524500.0
+     1026323500.0
     ],
     "FARMLAND": [
      5,
@@ -1754,8 +1750,8 @@
    },
    "ELMWOOD PARK": {
     "COMMERCIAL": [
-     10,
-     1415000.0
+     11,
+     2255500.0
     ],
     "MA DERELICT RESIDENTIAL": [
      2,
@@ -1781,7 +1777,7 @@
     ],
     "RESIDENTIAL": [
      940,
-     456290000.0
+     458632000.0
     ]
    },
    "EMPIRE PARK": {
@@ -1805,7 +1801,7 @@
     ],
     "OTHER RESIDENTIAL": [
      22,
-     542285500.0
+     552872500.0
     ],
     "RESIDENTIAL": [
      2850,
@@ -1815,7 +1811,7 @@
    "EVANSDALE": {
     "COMMERCIAL": [
      33,
-     41071500.0
+     37839500.0
     ],
     "OTHER RESIDENTIAL": [
      9,
@@ -1847,21 +1843,21 @@
     ],
     "RESIDENTIAL": [
      679,
-     346441500.0
+     346400000.0
     ]
    },
    "FOREST HEIGHTS": {
     "COMMERCIAL": [
      79,
-     92184000.0
+     89318000.0
     ],
     "OTHER RESIDENTIAL": [
      48,
      76386000.0
     ],
     "RESIDENTIAL": [
-     1569,
-     775997000.0
+     1568,
+     776943500.0
     ]
    },
    "FRASER": {
@@ -1875,7 +1871,7 @@
     ],
     "RESIDENTIAL": [
      1648,
-     682562500.0
+     683955000.0
     ]
    },
    "FULTON PLACE": {
@@ -1888,14 +1884,14 @@
      5317500.0
     ],
     "RESIDENTIAL": [
-     930,
-     418492000.0
+     932,
+     419900000.0
     ]
    },
    "GAGNON ESTATE INDUSTRIAL": {
     "COMMERCIAL": [
      32,
-     148128000.0
+     147920000.0
     ]
    },
    "GAINER INDUSTRIAL": {
@@ -1935,7 +1931,7 @@
    "GARSIDE INDUSTRIAL": {
     "COMMERCIAL": [
      160,
-     242304500.0
+     241876000.0
     ]
    },
    "GIRARD INDUSTRIAL": {
@@ -1955,7 +1951,7 @@
     ],
     "RESIDENTIAL": [
      2978,
-     1057508500.0
+     1058870000.0
     ]
    },
    "GLENGARRY": {
@@ -1969,25 +1965,25 @@
     ],
     "RESIDENTIAL": [
      1157,
-     362291000.0
+     362286500.0
     ]
    },
    "GLENORA": {
     "COMMERCIAL": [
      84,
-     60752000.0
+     60658500.0
     ],
     "MA DERELICT RESIDENTIAL": [
      2,
      1227000.0
     ],
     "OTHER RESIDENTIAL": [
-     17,
-     25978000.0
+     18,
+     27197000.0
     ],
     "RESIDENTIAL": [
-     1724,
-     1305950000.0
+     1723,
+     1309452500.0
     ]
    },
    "GLENRIDDING HEIGHTS": {
@@ -2000,8 +1996,8 @@
      11033500.0
     ],
     "RESIDENTIAL": [
-     1837,
-     943198000.0
+     1849,
+     946678000.0
     ]
    },
    "GLENRIDDING RAVINE": {
@@ -2019,7 +2015,7 @@
     ],
     "RESIDENTIAL": [
      1738,
-     1039537000.0
+     1050480000.0
     ]
    },
    "GLENWOOD": {
@@ -2032,12 +2028,12 @@
      981500.0
     ],
     "OTHER RESIDENTIAL": [
-     65,
-     202076000.0
+     66,
+     205660500.0
     ],
     "RESIDENTIAL": [
-     2110,
-     525591500.0
+     2109,
+     526414500.0
     ]
    },
    "GOLD BAR": {
@@ -2069,7 +2065,7 @@
     ],
     "RESIDENTIAL": [
      120,
-     40844500.0
+     41728500.0
     ]
    },
    "GORMAN": {
@@ -2087,7 +2083,7 @@
     ],
     "RESIDENTIAL": [
      145,
-     71643000.0
+     74017500.0
     ]
    },
    "GRANDVIEW HEIGHTS": {
@@ -2101,7 +2097,7 @@
     ],
     "RESIDENTIAL": [
      386,
-     397754500.0
+     397801000.0
     ]
    },
    "GRANVILLE": {
@@ -2115,7 +2111,7 @@
     ],
     "RESIDENTIAL": [
      1238,
-     572596500.0
+     575203500.0
     ]
    },
    "GRAYDON HILL": {
@@ -2125,7 +2121,7 @@
     ],
     "RESIDENTIAL": [
      504,
-     252471500.0
+     252361000.0
     ]
    },
    "GREENFIELD": {
@@ -2159,15 +2155,15 @@
    "GRIESBACH": {
     "COMMERCIAL": [
      75,
-     127014500.0
+     127782000.0
     ],
     "OTHER RESIDENTIAL": [
      18,
-     480203500.0
+     476770500.0
     ],
     "RESIDENTIAL": [
      2879,
-     1248527500.0
+     1270851500.0
     ]
    },
    "GROVENOR": {
@@ -2185,7 +2181,7 @@
     ],
     "RESIDENTIAL": [
      1081,
-     539859500.0
+     541162500.0
     ]
    },
    "HADDOW": {
@@ -2199,7 +2195,7 @@
     ],
     "RESIDENTIAL": [
      1791,
-     872378000.0
+     872352000.0
     ]
    },
    "HAGMANN ESTATE INDUSTRIAL": {
@@ -2233,7 +2229,7 @@
    "HAWIN PARK ESTATE INDUSTRIAL": {
     "COMMERCIAL": [
      44,
-     170433000.0
+     170368500.0
     ]
    },
    "HAWKS RIDGE": {
@@ -2247,7 +2243,7 @@
     ],
     "RESIDENTIAL": [
      697,
-     361607500.0
+     368872500.0
     ]
    },
    "HAYS RIDGE AREA": {
@@ -2261,7 +2257,7 @@
     ],
     "RESIDENTIAL": [
      464,
-     488076500.0
+     494185500.0
     ]
    },
    "HAZELDEAN": {
@@ -2274,12 +2270,12 @@
      1138000.0
     ],
     "OTHER RESIDENTIAL": [
-     14,
-     56725000.0
+     15,
+     58185000.0
     ],
     "RESIDENTIAL": [
-     1098,
-     557821000.0
+     1097,
+     558511500.0
     ]
    },
    "HENDERSON ESTATES": {
@@ -2313,7 +2309,7 @@
     ],
     "RESIDENTIAL": [
      918,
-     161305500.0
+     167716000.0
     ]
    },
    "HIGH PARK": {
@@ -2322,12 +2318,12 @@
      35531000.0
     ],
     "OTHER RESIDENTIAL": [
-     16,
-     21419000.0
+     17,
+     22361000.0
     ],
     "RESIDENTIAL": [
-     635,
-     255753000.0
+     636,
+     256168000.0
     ]
    },
    "HIGH PARK INDUSTRIAL": {
@@ -2351,7 +2347,7 @@
     ],
     "RESIDENTIAL": [
      1142,
-     566787000.0
+     568095500.0
     ]
    },
    "HILLVIEW": {
@@ -2375,7 +2371,7 @@
     ],
     "RESIDENTIAL": [
      1446,
-     585873500.0
+     585844000.0
     ]
    },
    "HOLLICK-KENYON": {
@@ -2407,13 +2403,13 @@
     ],
     "RESIDENTIAL": [
      1091,
-     572140500.0
+     572535000.0
     ]
    },
    "HOMESTEADER": {
     "COMMERCIAL": [
      34,
-     47511500.0
+     47163000.0
     ],
     "OTHER RESIDENTIAL": [
      5,
@@ -2421,7 +2417,7 @@
     ],
     "RESIDENTIAL": [
      1016,
-     314117500.0
+     315950500.0
     ]
    },
    "HUDSON": {
@@ -2437,13 +2433,13 @@
    "HUFF BREMNER ESTATE INDUSTRIAL": {
     "COMMERCIAL": [
      138,
-     368156000.0
+     367758000.0
     ]
    },
    "IDYLWYLDE": {
     "COMMERCIAL": [
      17,
-     37282500.0
+     37216000.0
     ],
     "MA DERELICT RESIDENTIAL": [
      2,
@@ -2455,13 +2451,13 @@
     ],
     "RESIDENTIAL": [
      798,
-     277387500.0
+     278260000.0
     ]
    },
    "INDUSTRIAL HEIGHTS": {
     "COMMERCIAL": [
      111,
-     162208500.0
+     159318000.0
     ],
     "OTHER RESIDENTIAL": [
      1,
@@ -2483,11 +2479,11 @@
     ],
     "OTHER RESIDENTIAL": [
      134,
-     482098500.0
+     483313000.0
     ],
     "RESIDENTIAL": [
-     1514,
-     575634000.0
+     1493,
+     574411000.0
     ]
    },
    "JACKSON HEIGHTS": {
@@ -2525,7 +2521,7 @@
     ],
     "OTHER RESIDENTIAL": [
      34,
-     48151000.0
+     51902000.0
     ],
     "RESIDENTIAL": [
      713,
@@ -2577,11 +2573,11 @@
     ],
     "OTHER RESIDENTIAL": [
      8,
-     15125500.0
+     16659500.0
     ],
     "RESIDENTIAL": [
      995,
-     432481000.0
+     433213000.0
     ]
    },
    "KENNEDALE INDUSTRIAL": {
@@ -2619,7 +2615,7 @@
    "KERNOHAN": {
     "COMMERCIAL": [
      27,
-     10522500.0
+     10375000.0
     ],
     "OTHER RESIDENTIAL": [
      1,
@@ -2636,12 +2632,12 @@
      116278000.0
     ],
     "OTHER RESIDENTIAL": [
-     12,
-     104313000.0
+     13,
+     105749500.0
     ],
     "RESIDENTIAL": [
-     4042,
-     2397879000.0
+     4050,
+     2439573500.0
     ]
    },
    "KILDARE": {
@@ -2683,7 +2679,7 @@
     ],
     "OTHER RESIDENTIAL": [
      55,
-     105048000.0
+     105395000.0
     ],
     "RESIDENTIAL": [
      860,
@@ -2704,8 +2700,8 @@
      93290000.0
     ],
     "RESIDENTIAL": [
-     2359,
-     820153000.0
+     2361,
+     821573500.0
     ]
    },
    "KINGLET GARDENS": {
@@ -2715,7 +2711,7 @@
     ],
     "RESIDENTIAL": [
      1207,
-     540689000.0
+     557867500.0
     ]
    },
    "KINISKI GARDENS": {
@@ -2761,7 +2757,7 @@
     ],
     "RESIDENTIAL": [
      1291,
-     432323000.0
+     432610000.0
     ]
    },
    "KLARVATTEN": {
@@ -2775,7 +2771,7 @@
     ],
     "RESIDENTIAL": [
      2272,
-     1055238500.0
+     1069370500.0
     ]
    },
    "LA PERLE": {
@@ -2803,7 +2799,7 @@
     ],
     "RESIDENTIAL": [
      1374,
-     535100500.0
+     535449000.0
     ]
    },
    "LAMBTON INDUSTRIAL": {
@@ -2841,7 +2837,7 @@
     ],
     "RESIDENTIAL": [
      2618,
-     778742500.0
+     778726000.0
     ]
    },
    "LAUDERDALE": {
@@ -2891,7 +2887,7 @@
     ],
     "RESIDENTIAL": [
      1019,
-     844727000.0
+     845196500.0
     ]
    },
    "LEE RIDGE": {
@@ -2915,13 +2911,13 @@
     ],
     "RESIDENTIAL": [
      926,
-     501018000.0
+     500935500.0
     ]
    },
    "LENDRUM PLACE": {
     "COMMERCIAL": [
      32,
-     39799000.0
+     36853000.0
     ],
     "OTHER RESIDENTIAL": [
      11,
@@ -2929,7 +2925,7 @@
     ],
     "RESIDENTIAL": [
      645,
-     345448500.0
+     345807000.0
     ]
    },
    "LEWIS FARMS BUSINESS EMPLOYMENT": {
@@ -2967,7 +2963,7 @@
     ],
     "RESIDENTIAL": [
      2072,
-     725337000.0
+     725305500.0
     ]
    },
    "LYNNWOOD": {
@@ -2981,7 +2977,7 @@
     ],
     "RESIDENTIAL": [
      781,
-     360362000.0
+     360328500.0
     ]
    },
    "MACEWAN": {
@@ -3022,8 +3018,8 @@
      2396000.0
     ],
     "RESIDENTIAL": [
-     2317,
-     1190788500.0
+     2540,
+     1232987500.0
     ]
    },
    "MALMO PLAINS": {
@@ -3033,7 +3029,7 @@
     ],
     "OTHER RESIDENTIAL": [
      13,
-     95674500.0
+     103091000.0
     ],
     "RESIDENTIAL": [
      865,
@@ -3051,7 +3047,7 @@
     ],
     "RESIDENTIAL": [
      1655,
-     878912000.0
+     880772500.0
     ]
    },
    "MAPLE RIDGE": {
@@ -3060,8 +3056,8 @@
      317500.0
     ],
     "RESIDENTIAL": [
-     843,
-     71108000.0
+     845,
+     71388000.0
     ]
    },
    "MAPLE RIDGE INDUSTRIAL": {
@@ -3093,7 +3089,7 @@
     ],
     "RESIDENTIAL": [
      800,
-     329783000.0
+     353958500.0
     ]
    },
    "MATT BERRY": {
@@ -3107,7 +3103,7 @@
     ],
     "RESIDENTIAL": [
      1453,
-     616688000.0
+     616685000.0
     ]
    },
    "MATTSON": {
@@ -3121,7 +3117,7 @@
     ],
     "RESIDENTIAL": [
      389,
-     162171500.0
+     176865500.0
     ]
    },
    "MAYFIELD": {
@@ -3138,8 +3134,8 @@
      1662000.0
     ],
     "RESIDENTIAL": [
-     876,
-     284713000.0
+     874,
+     284218000.0
     ]
    },
    "MAYLIEWAN": {
@@ -3165,19 +3161,19 @@
    "MCCAULEY": {
     "COMMERCIAL": [
      385,
-     254174500.0
+     254167000.0
     ],
     "MA DERELICT RESIDENTIAL": [
      15,
      1721000.0
     ],
     "OTHER RESIDENTIAL": [
-     159,
-     202663500.0
+     160,
+     203368500.0
     ],
     "RESIDENTIAL": [
-     817,
-     232059000.0
+     816,
+     231899000.0
     ]
    },
    "MCCONACHIE": {
@@ -3195,13 +3191,13 @@
     ],
     "RESIDENTIAL": [
      4111,
-     1790947000.0
+     1800284500.0
     ]
    },
    "MCINTYRE INDUSTRIAL": {
     "COMMERCIAL": [
      100,
-     518307000.0
+     518203500.0
     ]
    },
    "MCKERNAN": {
@@ -3215,11 +3211,11 @@
     ],
     "OTHER RESIDENTIAL": [
      52,
-     160310500.0
+     161307500.0
     ],
     "RESIDENTIAL": [
      919,
-     630656000.0
+     632544000.0
     ]
    },
    "MCLEOD": {
@@ -3229,7 +3225,7 @@
     ],
     "RESIDENTIAL": [
      881,
-     351497500.0
+     351473500.0
     ]
    },
    "MCNAMARA INDUSTRIAL": {
@@ -3241,7 +3237,7 @@
    "MCQUEEN": {
     "COMMERCIAL": [
      25,
-     70250500.0
+     66976000.0
     ],
     "MA DERELICT RESIDENTIAL": [
      1,
@@ -3270,8 +3266,8 @@
      3943000.0
     ],
     "RESIDENTIAL": [
-     1508,
-     447364500.0
+     1507,
+     446918500.0
     ]
    },
    "MELTWATER": {
@@ -3285,7 +3281,7 @@
     ],
     "RESIDENTIAL": [
      136,
-     79907000.0
+     86832000.0
     ]
    },
    "MENISA": {
@@ -3299,7 +3295,7 @@
     ],
     "RESIDENTIAL": [
      870,
-     370623000.0
+     370603500.0
     ]
    },
    "MEYOKUMIN": {
@@ -3319,7 +3315,7 @@
    "MEYONOHK": {
     "COMMERCIAL": [
      14,
-     16461000.0
+     16398000.0
     ],
     "OTHER RESIDENTIAL": [
      2,
@@ -3415,13 +3411,13 @@
     ],
     "RESIDENTIAL": [
      999,
-     394163000.0
+     394367500.0
     ]
    },
    "MISTATIM INDUSTRIAL": {
     "COMMERCIAL": [
-     428,
-     1511996500.0
+     429,
+     1514573500.0
     ],
     "DESIGNATED IND PROPERTIES": [
      1,
@@ -3439,31 +3435,31 @@
    "MITCHELL INDUSTRIAL": {
     "COMMERCIAL": [
      75,
-     193984500.0
+     193925500.0
     ]
    },
    "MONTROSE": {
     "COMMERCIAL": [
-     148,
-     133071000.0
+     149,
+     134142000.0
     ],
     "MA DERELICT RESIDENTIAL": [
      4,
      606000.0
     ],
     "OTHER RESIDENTIAL": [
-     42,
-     40054500.0
+     41,
+     39560500.0
     ],
     "RESIDENTIAL": [
      1154,
-     327724500.0
+     328039000.0
     ]
    },
    "MORIN INDUSTRIAL": {
     "COMMERCIAL": [
      50,
-     204633500.0
+     204724500.0
     ]
    },
    "MORRIS INDUSTRIAL": {
@@ -3483,7 +3479,7 @@
     ],
     "OTHER RESIDENTIAL": [
      16,
-     14464500.0
+     14758500.0
     ],
     "RESIDENTIAL": [
      1153,
@@ -3504,14 +3500,14 @@
      40169000.0
     ],
     "RESIDENTIAL": [
-     735,
-     363544500.0
+     737,
+     365421500.0
     ]
    },
    "NORTHMOUNT": {
     "COMMERCIAL": [
      21,
-     115079500.0
+     112093000.0
     ],
     "OTHER RESIDENTIAL": [
      2,
@@ -3549,7 +3545,7 @@
     ],
     "RESIDENTIAL": [
      1082,
-     944929000.0
+     944830500.0
     ]
    },
    "ORMSBY PLACE": {
@@ -3569,15 +3565,15 @@
    "OTTEWELL": {
     "COMMERCIAL": [
      64,
-     164220000.0
+     163934000.0
     ],
     "OTHER RESIDENTIAL": [
      13,
      71514000.0
     ],
     "RESIDENTIAL": [
-     2355,
-     1007949500.0
+     2356,
+     1007954000.0
     ]
    },
    "OVERLANDERS": {
@@ -3629,13 +3625,13 @@
     ],
     "RESIDENTIAL": [
      1067,
-     525534000.0
+     528950500.0
     ]
    },
    "PAPASCHASE INDUSTRIAL": {
     "COMMERCIAL": [
      115,
-     433170000.0
+     432661500.0
     ]
    },
    "PARKALLEN": {
@@ -3644,8 +3640,8 @@
      20649000.0
     ],
     "OTHER RESIDENTIAL": [
-     21,
-     27106500.0
+     20,
+     25320500.0
     ],
     "RESIDENTIAL": [
      969,
@@ -3667,7 +3663,7 @@
     ],
     "RESIDENTIAL": [
      1431,
-     354559000.0
+     355387500.0
     ]
    },
    "PARKVIEW": {
@@ -3681,13 +3677,13 @@
     ],
     "RESIDENTIAL": [
      1427,
-     1222571000.0
+     1229179500.0
     ]
    },
    "PARSONS INDUSTRIAL": {
     "COMMERCIAL": [
      308,
-     654460000.0
+     660124500.0
     ],
     "FARMLAND": [
      1,
@@ -3697,7 +3693,7 @@
    "PATRICIA HEIGHTS": {
     "COMMERCIAL": [
      7,
-     9252500.0
+     9180000.0
     ],
     "MA DERELICT RESIDENTIAL": [
      1,
@@ -3709,7 +3705,7 @@
     ],
     "RESIDENTIAL": [
      443,
-     263760000.0
+     264613500.0
     ]
    },
    "PEMBINA": {
@@ -3749,7 +3745,7 @@
    "PLEASANTVIEW": {
     "COMMERCIAL": [
      47,
-     97033500.0
+     96911500.0
     ],
     "MA DERELICT RESIDENTIAL": [
      2,
@@ -3761,7 +3757,7 @@
     ],
     "RESIDENTIAL": [
      1753,
-     714588500.0
+     717831500.0
     ]
    },
    "POLLARD MEADOWS": {
@@ -3771,11 +3767,11 @@
     ],
     "OTHER RESIDENTIAL": [
      8,
-     61811500.0
+     62544000.0
     ],
     "RESIDENTIAL": [
-     1364,
-     439127000.0
+     1363,
+     438753000.0
     ]
    },
    "POTTER GREENS": {
@@ -3813,7 +3809,7 @@
     ],
     "RESIDENTIAL": [
      591,
-     229915000.0
+     230663500.0
     ]
    },
    "PRINCE RUPERT": {
@@ -3847,43 +3843,43 @@
     ],
     "RESIDENTIAL": [
      497,
-     304865000.0
+     314378000.0
     ]
    },
    "QUEEN ALEXANDRA": {
     "COMMERCIAL": [
      254,
-     227004500.0
+     224029000.0
     ],
     "MA DERELICT RESIDENTIAL": [
      5,
      3889000.0
     ],
     "OTHER RESIDENTIAL": [
-     138,
-     335758500.0
+     139,
+     337125000.0
     ],
     "RESIDENTIAL": [
-     1746,
-     570002000.0
+     1745,
+     569272000.0
     ]
    },
    "QUEEN MARY PARK": {
     "COMMERCIAL": [
-     197,
-     312533500.0
+     194,
+     308507000.0
     ],
     "MA DERELICT RESIDENTIAL": [
      2,
      743500.0
     ],
     "OTHER RESIDENTIAL": [
-     156,
-     493521000.0
+     155,
+     493773000.0
     ],
     "RESIDENTIAL": [
-     2941,
-     460144000.0
+     2926,
+     459084500.0
     ]
    },
    "QUESNELL HEIGHTS": {
@@ -3937,11 +3933,11 @@
    "RHATIGAN RIDGE": {
     "COMMERCIAL": [
      21,
-     19300500.0
+     18829000.0
     ],
     "RESIDENTIAL": [
-     1131,
-     808055000.0
+     1127,
+     806264000.0
     ]
    },
    "RICHFIELD": {
@@ -3993,13 +3989,13 @@
     ],
     "RESIDENTIAL": [
      517,
-     362962000.0
+     364598000.0
     ]
    },
    "RITCHIE": {
     "COMMERCIAL": [
      194,
-     189954000.0
+     189841000.0
     ],
     "MA DERELICT RESIDENTIAL": [
      7,
@@ -4010,8 +4006,8 @@
      129728000.0
     ],
     "RESIDENTIAL": [
-     2348,
-     859049500.0
+     2345,
+     860534000.0
     ]
    },
    "RIVER VALLEY CAMERON": {
@@ -4211,7 +4207,7 @@
     ],
     "RESIDENTIAL": [
      971,
-     386463500.0
+     399772000.0
     ]
    },
    "RIVERDALE": {
@@ -4229,7 +4225,7 @@
     ],
     "RESIDENTIAL": [
      1049,
-     467475000.0
+     467623000.0
     ]
    },
    "RIVERVIEW AREA": {
@@ -4259,7 +4255,7 @@
    "ROSEDALE INDUSTRIAL": {
     "COMMERCIAL": [
      96,
-     171972500.0
+     171945000.0
     ]
    },
    "ROSENTHAL": {
@@ -4273,7 +4269,7 @@
     ],
     "RESIDENTIAL": [
      3009,
-     1410503000.0
+     1436165000.0
     ]
    },
    "ROSSDALE": {
@@ -4315,7 +4311,7 @@
    "ROYAL GARDENS": {
     "COMMERCIAL": [
      31,
-     65954000.0
+     62929000.0
     ],
     "OTHER RESIDENTIAL": [
      8,
@@ -4369,7 +4365,7 @@
     ],
     "RESIDENTIAL": [
      53,
-     45293500.0
+     45320500.0
     ]
    },
    "RUTHERFORD": {
@@ -4383,7 +4379,7 @@
     ],
     "RESIDENTIAL": [
      5479,
-     1805968000.0
+     1805881500.0
     ]
    },
    "SAKAW": {
@@ -4425,21 +4421,21 @@
     ],
     "RESIDENTIAL": [
      2286,
-     890121500.0
+     890997000.0
     ]
    },
    "SECORD": {
     "COMMERCIAL": [
      30,
-     120740000.0
+     119932000.0
     ],
     "OTHER RESIDENTIAL": [
      9,
      289394000.0
     ],
     "RESIDENTIAL": [
-     4305,
-     1964110000.0
+     4307,
+     1971156500.0
     ]
    },
    "SHEFFIELD INDUSTRIAL": {
@@ -4476,12 +4472,12 @@
      624500.0
     ],
     "OTHER RESIDENTIAL": [
-     34,
-     52544500.0
+     35,
+     55781000.0
     ],
     "RESIDENTIAL": [
-     460,
-     174642000.0
+     459,
+     174312000.0
     ]
    },
    "SIFTON PARK": {
@@ -4501,7 +4497,7 @@
    "SILVER BERRY": {
     "COMMERCIAL": [
      38,
-     180797500.0
+     180677000.0
     ],
     "RESIDENTIAL": [
      2557,
@@ -4525,7 +4521,7 @@
    "SOUTH EDMONTON COMMON": {
     "COMMERCIAL": [
      65,
-     719204000.0
+     719760000.0
     ],
     "RESIDENTIAL": [
      2,
@@ -4543,13 +4539,13 @@
     ],
     "RESIDENTIAL": [
      5115,
-     1501191000.0
+     1501169500.0
     ]
    },
    "SOUTHEAST INDUSTRIAL": {
     "COMMERCIAL": [
      307,
-     1141765000.0
+     1141577000.0
     ],
     "RESIDENTIAL": [
      2,
@@ -4559,7 +4555,7 @@
    "SPRUCE AVENUE": {
     "COMMERCIAL": [
      51,
-     781648000.0
+     778830000.0
     ],
     "MA DERELICT RESIDENTIAL": [
      5,
@@ -4585,7 +4581,7 @@
     ],
     "RESIDENTIAL": [
      948,
-     506251500.0
+     508593000.0
     ]
    },
    "STEINHAUER": {
@@ -4623,37 +4619,37 @@
     ],
     "RESIDENTIAL": [
      1486,
-     576787000.0
+     594144000.0
     ]
    },
    "STONE INDUSTRIAL": {
     "COMMERCIAL": [
      82,
-     254008500.0
+     253863500.0
     ]
    },
    "STRATHCONA": {
     "COMMERCIAL": [
-     321,
-     250694000.0
+     320,
+     249234500.0
     ],
     "MA DERELICT RESIDENTIAL": [
      4,
      1884000.0
     ],
     "OTHER RESIDENTIAL": [
-     161,
-     472729500.0
+     162,
+     478896000.0
     ],
     "RESIDENTIAL": [
      3852,
-     1176952500.0
+     1176323500.0
     ]
    },
    "STRATHCONA INDUSTRIAL PARK": {
     "COMMERCIAL": [
      662,
-     978674000.0
+     976921500.0
     ],
     "RESIDENTIAL": [
      1,
@@ -4663,7 +4659,7 @@
    "STRATHCONA JUNCTION": {
     "COMMERCIAL": [
      172,
-     289474500.0
+     288675000.0
     ],
     "OTHER RESIDENTIAL": [
      1,
@@ -4689,7 +4685,7 @@
     ],
     "RESIDENTIAL": [
      667,
-     383071500.0
+     383270000.0
     ]
    },
    "SUDER GREENS": {
@@ -4731,7 +4727,7 @@
     ],
     "RESIDENTIAL": [
      5221,
-     2812210000.0
+     2812181000.0
     ]
    },
    "SUNWAPTA INDUSTRIAL": {
@@ -4761,7 +4757,7 @@
    "TAMARACK": {
     "COMMERCIAL": [
      21,
-     206930000.0
+     205686000.0
     ],
     "FARMLAND": [
      1,
@@ -4793,7 +4789,7 @@
    "TERRA LOSA": {
     "COMMERCIAL": [
      17,
-     204945500.0
+     204831000.0
     ],
     "OTHER RESIDENTIAL": [
      3,
@@ -4829,7 +4825,7 @@
     ],
     "RESIDENTIAL": [
      2409,
-     1187812000.0
+     1187747500.0
     ]
    },
    "THE HAMPTONS": {
@@ -4861,7 +4857,7 @@
     ],
     "RESIDENTIAL": [
      4150,
-     2046116500.0
+     2076107000.0
     ]
    },
    "THE UPLANDS": {
@@ -4874,12 +4870,12 @@
      41500.0
     ],
     "OTHER RESIDENTIAL": [
-     3,
-     67151000.0
+     4,
+     70447000.0
     ],
     "RESIDENTIAL": [
-     2044,
-     965243500.0
+     2043,
+     998669500.0
     ]
    },
    "THORNCLIFF": {
@@ -4907,7 +4903,7 @@
     ],
     "RESIDENTIAL": [
      812,
-     259158500.0
+     259078500.0
     ]
    },
    "TRUMPETER AREA": {
@@ -4920,8 +4916,8 @@
      14579500.0
     ],
     "RESIDENTIAL": [
-     1278,
-     667640000.0
+     1293,
+     679486500.0
     ]
    },
    "TWEDDLE PLACE": {
@@ -4935,7 +4931,7 @@
     ],
     "RESIDENTIAL": [
      747,
-     282574500.0
+     283353500.0
     ]
    },
    "TWIN BROOKS": {
@@ -4949,7 +4945,7 @@
     ],
     "RESIDENTIAL": [
      2325,
-     1379366500.0
+     1379315500.0
     ]
    },
    "UNIVERSITY OF ALBERTA": {
@@ -5049,7 +5045,7 @@
    "WEIR INDUSTRIAL": {
     "COMMERCIAL": [
      174,
-     490096500.0
+     490281000.0
     ],
     "OTHER RESIDENTIAL": [
      1,
@@ -5081,19 +5077,19 @@
    "WEST JASPER PLACE": {
     "COMMERCIAL": [
      59,
-     95446500.0
+     95411500.0
     ],
     "MA DERELICT RESIDENTIAL": [
-     1,
-     305500.0
+     2,
+     1424000.0
     ],
     "OTHER RESIDENTIAL": [
-     80,
-     134120500.0
+     79,
+     133002000.0
     ],
     "RESIDENTIAL": [
      762,
-     282212000.0
+     282792000.0
     ]
    },
    "WEST MEADOWLARK PARK": {
@@ -5130,14 +5126,14 @@
      26075500.0
     ],
     "RESIDENTIAL": [
-     339,
-     519087500.0
+     338,
+     519380000.0
     ]
    },
    "WESTMOUNT": {
     "COMMERCIAL": [
      266,
-     289316500.0
+     289260500.0
     ],
     "MA DERELICT RESIDENTIAL": [
      3,
@@ -5145,11 +5141,11 @@
     ],
     "OTHER RESIDENTIAL": [
      81,
-     359072500.0
+     360596000.0
     ],
     "RESIDENTIAL": [
-     3365,
-     1144940500.0
+     3371,
+     1151254000.0
     ]
    },
    "WESTRIDGE": {
@@ -5245,7 +5241,7 @@
    "WINDERMERE": {
     "COMMERCIAL": [
      384,
-     229240500.0
+     229200000.0
     ],
     "OTHER RESIDENTIAL": [
      6,
@@ -5253,7 +5249,7 @@
     ],
     "RESIDENTIAL": [
      6114,
-     3399392000.0
+     3402062500.0
     ]
    },
    "WINDSOR PARK": {
@@ -5267,17 +5263,17 @@
     ],
     "OTHER RESIDENTIAL": [
      11,
-     77051500.0
+     77486500.0
     ],
     "RESIDENTIAL": [
      594,
-     733660000.0
+     735335500.0
     ]
    },
    "WINTERBURN INDUSTRIAL AREA EAST": {
     "COMMERCIAL": [
      330,
-     521788000.0
+     521716500.0
     ],
     "FARMLAND": [
      3,
@@ -5291,7 +5287,7 @@
    "WINTERBURN INDUSTRIAL AREA WEST": {
     "COMMERCIAL": [
      157,
-     273400000.0
+     272795500.0
     ],
     "FARMLAND": [
      1,
@@ -5326,8 +5322,8 @@
    },
    "WÎHKWÊNTÔWIN": {
     "COMMERCIAL": [
-     489,
-     675874500.0
+     490,
+     675495500.0
     ],
     "MA DERELICT RESIDENTIAL": [
      2,
@@ -5335,11 +5331,11 @@
     ],
     "OTHER RESIDENTIAL": [
      213,
-     1840192500.0
+     1846591000.0
     ],
     "RESIDENTIAL": [
-     11532,
-     1660182000.0
+     11654,
+     1674546500.0
     ]
    },
    "YELLOWHEAD CORRIDOR EAST": {
