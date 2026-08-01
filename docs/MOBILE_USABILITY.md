@@ -147,9 +147,19 @@ problem**, so revisit it only after the blurb collapse lands.
   compatibility mouse event, so the full `.tip` box drew on top of the peek
   card, positioned at the finger, **left 195 → right 517 on a 390px viewport**
   (127px off-screen, text cut mid-word). Fixed by returning `null` from
-  `tooltipFor` under `noHover()`; the card carries the same `primaryRow` line,
-  so nothing is lost. Regression net: `verify-peek.js` asserts no `.tip` exists
-  after a touch tap.
+  `tooltipFor` under `noHover()`. Regression net: `verify-peek.js` asserts no
+  `.tip` exists after a touch tap.
+  - ⚠️ **"the card carries the same `primaryRow` line, so nothing is lost" was
+    WRONG, and this entry said it for one day.** `.tip` was the only *multi-row*
+    readout a phone had, so suppressing it left every lens showing a single
+    line — Services dropped from six rows to one, Uses lost its composition bar
+    outright. Reported by Peter the next morning (*"when I click on stuff on
+    mobile now the pop up doesn't appear"* — the *popup*, i.e. the readout, not
+    the card, which he confirmed he could still see). Fixed 2026-08-01 by having
+    `openPeek` borrow `viewTooltip(info, false)` instead of `primaryRow`.
+    **The suppression was right; the replacement was too thin.** A fix that
+    removes a surface has to account for everything that surface carried, not
+    just the row you were looking at when you removed it.
   - ⚠️ **Two lessons, both about how it was missed for a whole session.**
     **(1)** The S81 claim "on a phone the `.deck-tooltip` node never exists at
     all" was *true and too narrow* — the app renders its **own** `.tip` via

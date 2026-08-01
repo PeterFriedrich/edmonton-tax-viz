@@ -23,29 +23,50 @@ rather than building*: mobile chrome step 3 was not reproducible; the
 45-grey-hoods "blocker" had shipped in S79; and all three verify failures were
 stale TEST expectations, not app bugs. Also found and fixed a **data-loss bug in
 `tools/todo_archive.py`** — it OVERWROTE the archive instead of appending, and
-had destroyed 747 lines of S79 history before it was caught. **The `▶` moves to
-the bottom-sheet decision** — the last open piece of the mobile work, and
-Peter's call, not a build item.)_
+had destroyed 747 lines of S79 history before it was caught.)_
 
-## Open work` carries only live work; `## Done` keeps a one-line entry for every
-closed item, so **the *never redo a closed item without asking* rule still works
-by grepping `## Done`** — the reasoning is one hop away in the archive. This file
-is read at the start of every session, so it should hold what is still true, not
-the whole history. Keep it that way: when an item closes, move its body to the
-archive and leave a `## Done` line.
-
-_Last reconciled: 2026-07-31 (S80 — **mobile chrome step 3 CLOSED as NOT
-REPRODUCIBLE, no code change.** Carried as the `▶` since S74 and never started;
-re-measuring found the symptom already gone, in both builds and every view. The
-**third** time an open item's stated cause proved stale — reproduce before
-building. **The `▶` moves to promoting the temporal + change lenses to the
-public build** (Peter's call this session). Prior S79 state still current: the
-change map is live (#120); the two pre-existing verify failures are
-re-reproduced with values confirmed, only the triage decision left.)_
+_Last reconciled: 2026-08-01 (S83 — the touch readout regression is closed: the
+peek card now carries **each lens's full rows**, not just its headline, and
+Money's readout is split so revenue facts stop printing under the Value map.
+**The `▶` moves to the two new numbers Peter asked for** (% of city revenue,
+top 3 revenue by zone) — both need new columns, so they are proposed rather than
+built, and the bottom-sheet decision is demoted (not closed) behind them.
+Also removed a duplicated preamble block left in this file by the
+`todo_archive.py` banner bug fixed in S82.)_
 
 ## Open work
 
-
+- [ ] **▶ Two new readout numbers, both needing NEW COLUMNS — propose before
+  building** (Peter, 2026-08-01: *"I want the revenue lens to show amount, but
+  also percent of city revenue, and top 3 revenue by zones"*). The readout
+  plumbing landed the same day (the peek card now carries each lens's full rows);
+  this is the data half, deliberately split off because it changes the output
+  schema.
+  - **(a) % of city revenue.** The geojson ships only per-acre *rates* — no
+    totals, no acreage — so a hood's share of the citywide levy cannot be
+    computed in the browser. Needs a total (or an acreage) column carried
+    through from the pipeline, where the CRS is already set explicitly.
+    ⚠️ **Do NOT compute area in JS from lat/lon geometry** — that is exactly the
+    silent-correctness failure `CLAUDE.md`'s CRS rule exists to prevent.
+  - **(b) Top 3 revenue by zone.** ⚠️ **CHECKED: this is NOT blocked on parcel
+    geometry**, which is the assumption that would have parked it. The
+    per-property `zoning` lives in `dkk9-cj3x` with `account_number`, which
+    joins to the assessment roll `q7d6-ambg`, and **both raw files are already
+    in `data/raw/`** — so revenue-by-zone per neighbourhood is computable today
+    without the ~$300 parcel-polygon blocker in
+    `docs/PARCEL_LEVEL_OPPORTUNITIES.md`.
+    - ⚠️ **Two known distortions to state, not discover.** Tax-exempt
+      institutional land is **absent from the roll entirely**
+      (`docs/FINDINGS_revenue_scale.md` §4–5), so zone totals understate wherever
+      it sits; and `zoning` is nullable.
+    - ⚠️ **Category mapping is a real decision, not a detail.** The Uses lens's
+      `frac_*` are **area** shares from the zoning *polygons*; this would be a
+      **revenue** share from a per-property zoning *string*. Two different
+      sources — if they are not mapped onto one category set deliberately, the
+      two lenses will quietly disagree about the same neighbourhood.
+  - **Value's side is thin until this lands** and that is why: we ship a
+    res/nonres split of *revenue* but none of *assessed value*, so Value's public
+    readout is currently one line (see `DECISIONS.md`, 2026-08-01).
 
 - [ ] **UI BUG: the Display popover paints OVER the Data & Methods pod
   (Peter, 2026-07-28).** Bottom-right: opening **Display** covers the
@@ -95,7 +116,10 @@ re-reproduced with values confirmed, only the triage decision left.)_
     the page's own `CHROME_IDS`, URL argument honoured, tap probe looks for
     `#peek`, plus a generic overflow sweep). It is trustworthy for the next
     mobile pass.
-  - [ ] **▶ The open question inside step 2 — bottom sheet or not.** Whether the
+  - [ ] **The open question inside step 2 — bottom sheet or not.** (Held the `▶`
+    S80→S82; **demoted 2026-08-01**, not closed — still Peter's call, but the
+    readout work he actually asked for now leads. It also predates one more
+    change again: the card is taller in every lens as of today.) Whether the
     control column is fine as a stack or wants a bottom sheet / hamburger.
     **Decide against the CURRENT render**, now that the blurb is collapsed: the
     old reasoning was written when the blurb still ate the top third. Peter's
@@ -1145,6 +1169,7 @@ re-reproduced with values confirmed, only the triage decision left.)_
 Closed items moved out of `## Open work` on 2026-07-30 live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
 
 - [x] **UI BUG: the hover tooltip `div.tip` rendered on TOUCH, 127px off the right edge. CONFIRMED ON DEVICE and FIXED 2026-07-31.** — 2026-07-31 · `docs/TODO_archive.md`
+- [x] **REGRESSION from that fix: suppressing `.tip` left every lens with a ONE-LINE readout on touch. Reported by Peter and FIXED 2026-08-01** — the peek card now borrows `viewTooltip(info, false)`, so it carries the lens's full rows; Money's readout also split so revenue facts no longer print under the Value map. — 2026-08-01 · `docs/DECISIONS.md`, `docs/MOBILE_USABILITY.md` §2b
 
 
 

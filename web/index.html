@@ -2858,7 +2858,20 @@
       if (peekHood === p.neighbourhood_name) return;
       peekHood = p.neighbourhood_name;
       document.getElementById("peek-name").textContent = p.neighbourhood_name;
-      document.getElementById("peek-read").innerHTML = primaryRow(p);
+      // The LENS'S FULL READOUT, not just its headline. Touch has no hover, so
+      // this card is the only place a phone can read the rows the mouse gets
+      // for free -- S82 suppressed the `.tip` box on touch (it drew on top of
+      // this card, 127px off-screen) and that left a phone with one line in
+      // every lens (Peter, 2026-08-01: "the pop up doesn't appear").
+      //
+      // The sparkline and the "click to pin" hint that `tooltipFor` appends are
+      // deliberately NOT borrowed: `#peek-go` already invites the panel, and the
+      // panel draws the same chart at full size once opened.
+      // The fallback is not dead code by accident: throwing HERE would leave
+      // `peekHood` set with the card never opened, and the idempotent guard
+      // above would then swallow every retry — the card would wedge shut.
+      const tip = viewTooltip({ object: { properties: p } }, false);
+      document.getElementById("peek-read").innerHTML = tip ? tip.html : primaryRow(p);
       document.getElementById("peek").classList.add("open");
       // Same reason as the panel: the card is a new obstacle for the label
       // sweep, so re-cull now instead of leaving names under it until the next
@@ -2986,13 +2999,18 @@
         : `${cfg.fmt(v)} / ${lot ? "lot acre" : "acre"}`;
     }
 
-    // Tooltip content is per-view (closure over `state`). money: active
-    // metric + road supply + ratio. roads: road amount only. ratio: the full
+    // Tooltip content is per-view (closure over `state`) and, inside money,
+    // per-METRIC: the revenue cuts carry the residential share and the road
+    // pair, Value carries FAR, because a revenue fact under an assessed-value
+    // map is the wrong category. roads: road amount only. ratio: the full
     // synthesis (ratio + its two components), or why the hood is off-scale.
-    function viewTooltip({ object }) {
+    // withName=false yields the same rows WITHOUT the hood heading, for the peek
+    // card — it prints the name in its own `#peek-name`, so the borrowed body
+    // must not repeat it. One definition of a lens's readout, two surfaces.
+    function viewTooltip({ object }, withName = true) {
       if (!object) return null;
       const p = object.properties;
-      const name = `<b>${esc(p.neighbourhood_name)}</b><br/>`;
+      const name = withName ? `<b>${esc(p.neighbourhood_name)}</b><br/>` : "";
 
       if (state.view === "services") {
         // Every service's number, whichever layers are on — the tooltip is
@@ -3161,8 +3179,14 @@
       if (lot) html += pf;
       // Residential share of revenue — ground-acre pair regardless of the
       // denominator toggle (identical denominators cancel, so the ratio equals
-      // total_res_revenue / total_revenue). Shown for every Money metric.
-      if (p.res_revenue_per_acre != null && p.revenue_per_acre > 0) {
+      // total_res_revenue / total_revenue).
+      //
+      // REVENUE CUTS ONLY (Peter, 2026-08-01: "segregated to each lens"). Under
+      // Value this printed a revenue fact beneath a map of assessed value —
+      // the same category error as the road rows below. We ship no res/nonres
+      // VALUE split, so there is no value-side equivalent to swap in; Value's
+      // own rows wait on the totals work.
+      if (isRevenue(state.metric) && p.res_revenue_per_acre != null && p.revenue_per_acre > 0) {
         const share = Math.round(100 * p.res_revenue_per_acre / p.revenue_per_acre);
         html += `<br/><span class="muted">${share}% of revenue is residential</span>`;
       }
@@ -3172,13 +3196,24 @@
       // while hiding the lens that explains it. The supply row goes with it:
       // on its own it is an unexplained figure from a lens the public build no
       // longer has. Both return with `?build=full`.
-      if (p.road_m_per_acre != null && FULL_BUILD) {
+      //
+      // Also revenue-only, for the same reason as the residential share: the
+      // second row divides REVENUE by road metres, so it does not belong under
+      // an assessed-value map. The supply row goes with it rather than standing
+      // alone (it already only ships full).
+      if (isRevenue(state.metric) && p.road_m_per_acre != null && FULL_BUILD) {
         html += `<br/><span class="muted">${p.road_m_per_acre.toFixed(1)} road m / acre</span>`;
         if (p.road_m_per_acre > 0 && p.revenue_per_acre != null) {
           const perM = p.revenue_per_acre / p.road_m_per_acre;
           html += `<br/><span class="muted">$${Math.round(perM).toLocaleString()} revenue / road metre</span>`;
         }
       }
+      // Value's own row: the built floor-area ratio behind a value-per-acre
+      // figure. FULL-only on the road rows' precedent — the lens that explains
+      // FAR (Infill) is a full-only mode of Development, so publishing it here
+      // would again ship a number while hiding its explanation.
+      if (!isRevenue(state.metric) && p.far != null && FULL_BUILD)
+        html += `<br/><span class="muted">${fmtFar(p.far)}</span>`;
       return { className: "tip", html };
     }
 

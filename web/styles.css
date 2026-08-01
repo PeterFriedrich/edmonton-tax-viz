@@ -353,9 +353,12 @@ html, body { margin: 0; height: 100%; background: #0a0a0f; }
 .tip b { color: #fcd278; }
 .tip .muted { color: #b8b8c8; }
 /* Mini stacked composition bar (uses-view tooltip). Segments flex-grow
-   proportional to their share; the 2px gaps read as the tooltip surface. */
-.tip .mixbar { display: flex; gap: 2px; width: 190px; height: 8px; margin: 6px 0 5px; border-radius: 2px; overflow: hidden; }
-.tip .mixbar span { border-radius: 1px; }
+   proportional to their share; the 2px gaps read as the tooltip surface.
+   Also selected inside `#peek-read`: the peek card borrows this same markup
+   from viewTooltip, and scoped under `.tip` alone the bar loses `display:flex`
+   and collapses to nothing visible on a phone. */
+.tip .mixbar, #peek-read .mixbar { display: flex; gap: 2px; width: 190px; height: 8px; margin: 6px 0 5px; border-radius: 2px; overflow: hidden; }
+.tip .mixbar span, #peek-read .mixbar span { border-radius: 1px; }
 /* Hover sparkline (temporal lens teaser). No axes, no labels — the muted row
    beneath it carries first→last, which is what makes an unlabelled line
    readable at all. `display:block` so the SVG's inline-baseline gap doesn't
@@ -423,7 +426,11 @@ html, body { margin: 0; height: 100%; background: #0a0a0f; }
   letter-spacing: 0.2px;
 }
 #peek-read { display: block; color: #e8e8ef; margin-top: 2px; }
-#peek-read .muted { color: #6a6a80; }
+/* Matches `.tip .muted`, NOT the dimmer chrome muted. The card now carries a
+   lens's full readout, most of which is muted rows — at #6a6a80 that is most of
+   the card's content sitting at the contrast floor, on the one device likely to
+   be read in daylight. */
+#peek-read .muted { color: #b8b8c8; }
 #peek-go { display: block; margin-top: 5px; font-size: 10.5px; color: #6a6a80; }
 
 /* ===================================================================

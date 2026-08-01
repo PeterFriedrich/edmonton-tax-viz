@@ -180,7 +180,11 @@ a control and not a tier — a readout, and the only surface in the app whose
 existence is decided by the **pointer** rather than by the view, the build or the
 data. On `(hover: none)` a map tap opens this card instead of the panel, and the
 card's own tap commits; everywhere else it never displays. It is in `CHROME_IDS`
-alongside `#temporal`. ⚠️ **Two of its rules deliberately invert `#temporal`'s**
+alongside `#temporal`. **It shows the view's FULL readout** (2026-08-01) — the
+same rows `viewTooltip` gives a mouse, minus the heading it prints itself — so
+the view × sub-metric state space above governs the card's contents exactly as it
+governs the hover's. Before that it showed the headline only, which on touch
+(where `.tip` is suppressed) left a phone one line per lens. ⚠️ **Two of its rules deliberately invert `#temporal`'s**
 and should not be "made consistent": an empty-map tap **dismisses** the card
 (the panel is inert there — that rule protects a surface you asked for), and
 re-tapping the shown hood is a **no-op** rather than a toggle, because a touch
