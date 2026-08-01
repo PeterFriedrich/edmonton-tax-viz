@@ -225,13 +225,33 @@ const closeBox = page => page.evaluate(() => {
     check('touch: the hover tooltip never renders', tipBox === null,
       JSON.stringify(tipBox));
 
-    // The card's headline must be the same string panel mode reduces the hover
-    // to -- one definition of "this hood's headline".
-    const reduced = await page.evaluate((n) => {
+    // The card's body must be the LENS'S OWN readout -- the same rows the mouse
+    // gets on hover, minus the heading the card prints separately. One
+    // definition of a lens's readout, so the two surfaces cannot drift apart.
+    const body = await page.evaluate((n) => {
+      const f = state.data.features.find(x => x.properties.neighbourhood_name === n);
+      return viewTooltip({ object: f }, false).html;
+    }, t[0].name);
+    // ⚠️ NORMALISE `<br/>` -> `<br>` on both sides. viewTooltip emits the XHTML
+    // form, but reading it back through `innerHTML` returns the browser's
+    // serialisation, so a raw === compares MARKUP DIALECT, not content, and
+    // fails on identical text.
+    const br = h => h.replace(/<br\s*\/?>/gi, '<br>');
+    check('touch: card body == the lens readout, nameless', br(s.peekRead) === br(body),
+      `card="${s.peekRead}" lens="${body}"`);
+    // ...and it must be MORE than the one headline line, which is the whole
+    // defect: S82's touch suppression left a phone with a single row per lens.
+    const headline = await page.evaluate((n) => {
       const f = state.data.features.find(x => x.properties.neighbourhood_name === n);
       return primaryRow(f.properties);
     }, t[0].name);
-    check('touch: card headline == panel-mode reduced hover', s.peekRead === reduced,
+    check('touch: the card is richer than the bare headline',
+      s.peekRead !== headline && s.peekRead.includes('<br'),
+      `card="${s.peekRead}"`);
+    // The heading must appear EXACTLY ONCE -- in #peek-name. A borrowed body
+    // that kept viewTooltip's own <b>name</b> would print it twice.
+    check('touch: the card body does not repeat the hood name',
+      !s.peekRead.includes(t[0].name),
       `card="${s.peekRead}"`);
 
     // Tapping a DIFFERENT hood re-peeks rather than committing.
