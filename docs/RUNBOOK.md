@@ -210,6 +210,34 @@ the backstop. The failure is loud by construction: the commit step deliberately
 does *not* use `git push || true`, because that form reports green while the
 heartbeat quietly dies.
 
+## 3b. ⚠️ NEVER commit a locally regenerated `web/data` (added 2026-08-01)
+
+**`python main.py` on a dev box rebuilds the map from whatever is in
+`data/raw/` — which is almost certainly older than what the site is serving.**
+The committed `web/data/*.geojson` comes from the `refresh.yml` auto-refresh,
+which **downloads fresh data on every run**. A local box does not.
+
+Measured 2026-08-01 on the Oracle server: local `data/raw/` dated **2026-07-06**
+against a committed geojson from the **2026-07-27** refresh. A run intended only
+to ADD columns changed **1,896 pre-existing values** across 406 features —
+`revenue_per_acre`, `value_per_lot_acre` and friends all shifted ~0.2%. Committing
+that would have silently rolled the published numbers back three weeks, with no
+banner and nothing in `status.json` to say so.
+
+**Rules:**
+- Pipeline code changes ship as **code only**. The columns/values appear on the
+  site when `refresh.yml` next runs, which is the only thing that should ever
+  write `web/data`.
+- To see your change locally, regenerate to a throwaway path:
+  `python main.py --skip-png --geojson-out /tmp/x.geojson`.
+- If the data genuinely *should* roll, run `scripts/download_data.py` first and
+  say so explicitly in the commit — don't let a vintage change ride along inside
+  a feature PR.
+- **After a pipeline change merges, expect the new columns to be ABSENT from the
+  served file until the next refresh.** Any UI reading them must degrade cleanly
+  in that window (the house pattern for optional data).
+- `git status --short web/data/` before committing is the cheap check.
+
 ## 4. Wrong numbers suspected on the live site
 
 1. Check `web/data/status.json` — vintage + `generated` date + GeoJSON hash
