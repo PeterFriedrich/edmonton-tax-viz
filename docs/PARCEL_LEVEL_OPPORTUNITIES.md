@@ -51,6 +51,16 @@ Everything downstream in this doc (P1–P5) inherits this blocker: without parce
 geometry, the parcel-level map and the analyses that fall out of it cannot begin. The
 neighbourhood-level pipeline remains the approximation in the meantime.
 
+⚠️ **"Parcel-level" is not the same test as "needs parcel geometry", and this doc's
+framing can park work that is not actually blocked.** The blocker is *polygons*.
+Anything that only needs per-property **attributes aggregated to a neighbourhood**
+is available today: `q7d6-ambg` (value, class) joins to `dkk9-cj3x` (`zoning`,
+`lot_size`, `year_built`) on `account_number`, and both carry a neighbourhood field.
+Worked example, 2026-08-01: **revenue by zoning category per neighbourhood** —
+asked for as a readout row, assumed to be gated here, and found not to be. The
+Glass view's lot-acre metric is the same shape and already ships. **Ask which of
+the two you need before parking something against this page.**
+
 ---
 
 ## Opportunities

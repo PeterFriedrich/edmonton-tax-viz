@@ -2,7 +2,7 @@
 
 **Generated — do not hand-edit.** `python tools/codemap.py`
 
-`web/index.html` is a single ~4,412-line file holding the whole front end. This is the lookup table for it: jump to a symbol's range instead of scanning. **Line numbers go stale on the next edit — regenerate rather than citing them.** Prose should still name symbols, not lines.
+`web/index.html` is a single ~4,425-line file holding the whole front end. This is the lookup table for it: jump to a symbol's range instead of scanning. **Line numbers go stale on the next edit — regenerate rather than citing them.** Prose should still name symbols, not lines.
 
 ## Symbols (174 indexed)
 
@@ -198,44 +198,44 @@ Grouped by the file's own `// --- section ---` banners, in file order.
 | `temporalChartSvg` | 2728–2768 | The pinned chart: same geometry, plus the things only a 300px box can |
 | `openTemporal` | 2769–2802 |  |
 | `closeTemporal` | 2803–2817 | Un-pin. In PANEL mode the panel stays up showing its prompt, because the |
-| `applyHoodMode` | 2818–2845 | Where a hood's detail appears. Leaving panel mode takes the panel with it; |
-| `noHover` | 2846–2851 | A finger cannot hover, so touch needs a stage the mouse gets for free. |
-| `openPeek` | 2852–2881 | The touch-only preview: the view's headline number for one hood, and an |
-| `closePeek` | 2882–2898 |  |
-| `temporalClick` | 2899–2946 | Click a hood to pin its history; click the pinned one again to unpin. |
-| `primaryRow` | 2947–3009 | Panel mode's one-line hover: the view's HEADLINE number and nothing else, |
-| `viewTooltip` | 3010–3232 | Tooltip content is per-view (closure over `state`) and, inside money, |
-| `tooltipFor` | 3233–3272 | The sparkline rides on EVERY view's tooltip, appended here rather than in |
-| `REV_CUTS` | 3273–3273 | Switch metric: rebuild layers and update the title/legend/toggle chrome. |
-| `isRevenue` | 3274–3286 |  |
-| `syncMetricButtons` | 3287–3299 | Paint both rows from state.metric, and hide the cut row where it has |
-| `applyMetric` | 3300–3319 |  |
-| `applyColorAdjust` | 3320–3341 | Colour Adjustment (sqrt scaling) — a runtime toggle for the money/glass |
-| `syncColorAdjust` | 3342–3354 | Sync the Colour Adjustment button to the toggle, and HIDE it in views |
-| `applyDenom` | 3355–3370 | Switch the denominator (ground vs lot acres). Shown in the Glass and |
-| `applyRatioDenom` | 3371–3388 | Switch the Ratio view's denominator (per road metre vs per fire event). |
-| `applyDevMetric` | 3389–3404 | Development sub-metric picker (dwelling units \| permits \| industrial). |
-| `syncDevChrome` | 3405–3420 | Shared development-view chrome refresh after a metric/window switch: the |
-| `applyDevWindow` | 3421–3437 | Development-view window toggle (5yr base <-> 3yr recent <-> since 2009). |
-| `refreshLegend` | 3438–3616 | Sync the whole legend to the current view. roads: the network's linear |
-| `usesLegendCats` | 3617–3627 | Legend rows for the uses view: the categories actually on screen |
-| `applyPalette` | 3628–3641 | Switch colour ramp: rebuild layers, restyle the background + legend gradient. |
-| `applyLabels` | 3642–3650 | Toggle the neighbourhood-name labels (accessibility-menu checkbox). |
-| `applyReference` | 3651–3661 | Toggle the orientation set: river, ring road, and the regional place |
-| `applyUsesPrisms` | 3662–3676 | Toggle the Uses view's residential prisms (height = share of zoned |
-| `syncDevControls` | 3677–3724 | Sync the Development pickers' visibility to the current mode. The |
-| `syncPrismRow` | 3725–3730 | The age spikes ride on the Glass grid file — kick its (shared, single) |
-| `applyDevDetail` | 3731–3748 |  |
-| `applyMoneyDetail` | 3749–3758 | Money's render toggle: Neighbourhood prisms (view "money") vs the |
-| `applyMoneyMode` | 3759–3766 | Money's Current/Change lens toggle. Change is a full-only render-mode of |
-| `applyChgWindow` | 3767–3784 | Switch the change lens's window. State-only when the lens isn't on screen, |
-| `syncChangeControls` | 3785–3800 | Reveal the Money lens toggle and the change window picker. Called from |
-| `applyDevMode` | 3801–3807 | Development's Housing/Infill lens toggle (full build only). Infill is a |
-| `setPrismOpacity` | 3808–3818 | Set the ratio view's ghost-prism opacity (0–100). UI-state only — the |
-| `applyView` | 3819–4003 | Switch view (money \| services \| ratio \| uses \| glass). Road geometry |
-| `syncServiceControls` | 4004–4013 | Services-view controls. `applyService` flips a service on/off; |
-| `applyService` | 4014–4026 |  |
-| `applySvcDriver` | 4027–4412 |  |
+| `applyHoodMode` | 2818–2855 | Where a hood's detail appears. Leaving panel mode takes the panel with it; |
+| `noHover` | 2856–2861 | A finger cannot hover, so touch needs a stage the mouse gets for free. |
+| `openPeek` | 2862–2891 | The touch-only preview: the view's headline number for one hood, and an |
+| `closePeek` | 2892–2908 |  |
+| `temporalClick` | 2909–2956 | Click a hood to pin its history; click the pinned one again to unpin. |
+| `primaryRow` | 2957–3019 | Panel mode's one-line hover: the view's HEADLINE number and nothing else, |
+| `viewTooltip` | 3020–3242 | Tooltip content is per-view (closure over `state`) and, inside money, |
+| `tooltipFor` | 3243–3282 | The sparkline rides on EVERY view's tooltip, appended here rather than in |
+| `REV_CUTS` | 3283–3283 | Switch metric: rebuild layers and update the title/legend/toggle chrome. |
+| `isRevenue` | 3284–3296 |  |
+| `syncMetricButtons` | 3297–3309 | Paint both rows from state.metric, and hide the cut row where it has |
+| `applyMetric` | 3310–3329 |  |
+| `applyColorAdjust` | 3330–3351 | Colour Adjustment (sqrt scaling) — a runtime toggle for the money/glass |
+| `syncColorAdjust` | 3352–3364 | Sync the Colour Adjustment button to the toggle, and HIDE it in views |
+| `applyDenom` | 3365–3380 | Switch the denominator (ground vs lot acres). Shown in the Glass and |
+| `applyRatioDenom` | 3381–3398 | Switch the Ratio view's denominator (per road metre vs per fire event). |
+| `applyDevMetric` | 3399–3414 | Development sub-metric picker (dwelling units \| permits \| industrial). |
+| `syncDevChrome` | 3415–3430 | Shared development-view chrome refresh after a metric/window switch: the |
+| `applyDevWindow` | 3431–3447 | Development-view window toggle (5yr base <-> 3yr recent <-> since 2009). |
+| `refreshLegend` | 3448–3626 | Sync the whole legend to the current view. roads: the network's linear |
+| `usesLegendCats` | 3627–3637 | Legend rows for the uses view: the categories actually on screen |
+| `applyPalette` | 3638–3651 | Switch colour ramp: rebuild layers, restyle the background + legend gradient. |
+| `applyLabels` | 3652–3660 | Toggle the neighbourhood-name labels (accessibility-menu checkbox). |
+| `applyReference` | 3661–3671 | Toggle the orientation set: river, ring road, and the regional place |
+| `applyUsesPrisms` | 3672–3686 | Toggle the Uses view's residential prisms (height = share of zoned |
+| `syncDevControls` | 3687–3734 | Sync the Development pickers' visibility to the current mode. The |
+| `syncPrismRow` | 3735–3740 | The age spikes ride on the Glass grid file — kick its (shared, single) |
+| `applyDevDetail` | 3741–3758 |  |
+| `applyMoneyDetail` | 3759–3768 | Money's render toggle: Neighbourhood prisms (view "money") vs the |
+| `applyMoneyMode` | 3769–3776 | Money's Current/Change lens toggle. Change is a full-only render-mode of |
+| `applyChgWindow` | 3777–3794 | Switch the change lens's window. State-only when the lens isn't on screen, |
+| `syncChangeControls` | 3795–3810 | Reveal the Money lens toggle and the change window picker. Called from |
+| `applyDevMode` | 3811–3817 | Development's Housing/Infill lens toggle (full build only). Infill is a |
+| `setPrismOpacity` | 3818–3828 | Set the ratio view's ghost-prism opacity (0–100). UI-state only — the |
+| `applyView` | 3829–4013 | Switch view (money \| services \| ratio \| uses \| glass). Road geometry |
+| `syncServiceControls` | 4014–4023 | Services-view controls. `applyService` flips a service on/off; |
+| `applyService` | 4024–4036 |  |
+| `applySvcDriver` | 4037–4425 |  |
 
 ## Element ids (84) — the control surface
 
