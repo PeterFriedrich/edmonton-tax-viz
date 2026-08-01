@@ -6,10 +6,22 @@ the banner preserve/set/clear rules. Everything keys off a content hash of the
 GeoJSON, so tests write a small temp file and vary its bytes.
 """
 
+import json
 import sys
 
+import pytest
+
 sys.path.insert(0, "scripts")
-from generate_status import _SENTINEL, build_status, content_hash, load_prior
+from generate_status import (
+    _SENTINEL,
+    DISPLAY_RATE_CLASSES,
+    MILL_RATES,
+    ROOT,
+    build_status,
+    content_hash,
+    load_prior,
+    municipal_rates,
+)
 
 
 def _geojson(tmp_path, text="{}"):
@@ -83,3 +95,66 @@ def test_load_prior_missing_and_corrupt(tmp_path):
     bad = tmp_path / "bad.json"
     bad.write_text("{not json")
     assert load_prior(bad) == {}
+
+
+# ---- municipal_rates: the frontend's mill-rate pod ---------------------------
+
+def _rates_file(tmp_path, year="2025", extra=None):
+    rates = {
+        "Residential": {"municipal": 7.0, "education": 2.0},
+        "Other Residential": {"municipal": 8.0, "education": 2.0},
+        "Non Residential": {"municipal": 24.0, "education": 4.0},
+    }
+    rates.update(extra or {})
+    p = tmp_path / "mill_rates.json"
+    p.write_text(json.dumps({"rates": {year: rates}}))
+    return p
+
+
+def test_municipal_rates_publishes_the_three_display_classes(tmp_path):
+    """Municipal rate only, in display order — education is provincial, excluded."""
+    r = municipal_rates(_rates_file(tmp_path), 2025)
+    assert [c["name"] for c in r["classes"]] == DISPLAY_RATE_CLASSES
+    assert [c["rate"] for c in r["classes"]] == [7.0, 8.0, 24.0]
+    assert r["assumed"] == []
+
+
+def test_municipal_rates_reports_assumed_classes(tmp_path):
+    """An _assumed marker in the source surfaces as data, not as UI copy.
+
+    2025 Farmland is inferred (no row published), and the caveat the pod prints
+    must disappear on its own the year a real row appears.
+    """
+    p = _rates_file(tmp_path, extra={"Farmland": {"municipal": 7.0, "_assumed": "why"}})
+    assert municipal_rates(p, 2025)["assumed"] == ["Farmland"]
+
+
+def test_municipal_rates_missing_display_class_raises(tmp_path):
+    """A dropped class must fail loudly — a pod short one rate reads as fact."""
+    p = _rates_file(tmp_path)
+    data = json.loads(p.read_text())
+    del data["rates"]["2025"]["Non Residential"]
+    p.write_text(json.dumps(data))
+    with pytest.raises(KeyError, match="Non Residential"):
+        municipal_rates(p, 2025)
+
+
+def test_municipal_rates_absent_year_degrades_to_none(tmp_path):
+    """No rates for the year → None, so the pod simply never shows."""
+    assert municipal_rates(_rates_file(tmp_path), 2099) is None
+    assert municipal_rates(tmp_path / "nope.json", 2025) is None
+
+
+def test_build_status_carries_the_rates(tmp_path):
+    s = _build(_geojson(tmp_path), prior={}, rates_path=_rates_file(tmp_path))
+    assert s["municipal_rates"]["classes"][0]["rate"] == 7.0
+
+
+def test_committed_status_matches_the_rate_source():
+    """web/data/status.json is hand-maintained between refreshes — keep it honest.
+
+    The pod ships before the next auto-refresh regenerates the manifest, so the
+    committed copy must already equal what the generator would write.
+    """
+    committed = json.loads((ROOT / "web/data/status.json").read_text())
+    assert committed["municipal_rates"] == municipal_rates(MILL_RATES, committed["rate_year"])

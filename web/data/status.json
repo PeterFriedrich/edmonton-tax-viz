@@ -5,5 +5,25 @@
   "generated": "2026-08-01",
   "last_checked": "2026-08-01",
   "banner": null,
+  "municipal_rates": {
+    "unit": "per $1,000 assessed",
+    "classes": [
+      {
+        "name": "Residential",
+        "rate": 7.6254
+      },
+      {
+        "name": "Other Residential",
+        "rate": 8.3116
+      },
+      {
+        "name": "Non Residential",
+        "rate": 24.2229
+      }
+    ],
+    "assumed": [
+      "Farmland"
+    ]
+  },
   "_geojson_sha256": "cd456571631122bc2b88c3dac18e02fca2b084f1c668d799a3abff4d73f4d4e4"
 }

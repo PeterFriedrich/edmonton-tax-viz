@@ -44,6 +44,24 @@
     <p id="temporal-hint">Click a neighbourhood to see its assessment history.</p>
   </div>
 
+  <!-- The mill rates the revenue map is billed at (Peter, 2026-08-01), in the
+       left column under the title. Every class is listed under every revenue
+       cut, with the ones the active cut is NOT billed at muted rather than
+       removed: the 7.6254-vs-24.2229 differential is the fact the whole revenue
+       map rests on, and dropping two rows would hide the comparison. Content
+       comes from status.json, so the year and both caveats roll with the data
+       instead of being literals that go stale each January.
+
+       DELIBERATELY AFTER #temporal in the DOM, which is otherwise arbitrary for
+       two absolutely-positioned boxes: it lets the panel hide this pod with a
+       sibling selector (styles.css), so "the pod is up" and "the panel is up"
+       cannot disagree the way they would if JS toggled both. -->
+  <div id="millrates" class="panel">
+    <div id="mill-head"></div>
+    <div id="mill-rows"></div>
+    <div id="mill-note"></div>
+  </div>
+
   <!-- TOUCH-ONLY first stage of opening the history panel. A finger cannot
        hover, so on a phone the desktop gesture (hover to preview, click to
        commit) collapsed into ONE tap that opened the whole panel — trivially
@@ -2200,7 +2218,8 @@
     //     text is the case actually reported.
     const CHROME_IDS = ["banner", "title", "views", "toggle", "optpanel",
                         "a11y", "a11y-menu", "about", "about-menu",
-                        "legend", "compass", "viewbtns", "temporal", "peek"];
+                        "legend", "compass", "viewbtns", "temporal", "peek",
+                        "millrates"];
     function chromeBoxes() {
       // The sweep works in deck-viewport pixels; getBoundingClientRect returns
       // CSS-viewport pixels. The canvas is the full window at 0,0 today so the
@@ -3305,7 +3324,53 @@
       document.getElementById("revcut").style.display = rev && anyCut ? "flex" : "none";
       document.querySelectorAll("#revcut button").forEach(b =>
         b.classList.toggle("active", b.dataset.revcut === state.metric));
+      syncMillRates();
     }
+
+    // Which classes each revenue cut is actually billed at
+    // (apply_tax_rates.RESIDENTIAL_RATE_LABELS / NONRES_RATE_LABELS). Total has
+    // no entry on purpose — it spans all three, and "no entry" reads as "all"
+    // below, so a fourth class arriving in the manifest lights up under Total
+    // without needing a matching line here.
+    const MILL_CUT_CLASSES = {
+      res_revenue_per_acre: ["Residential", "Other Residential"],
+      nonres_revenue_per_acre: ["Non Residential"],
+    };
+    // Abbreviated so all three rates fit ONE line at the title's width. Every
+    // line this pod wraps to costs the panel below it ~16px of the 79px it has
+    // to spare at 1366x768 (styles.css), so the short forms are load-bearing.
+    const MILL_LABELS = {
+      "Residential": "Res.", "Other Residential": "Other res.", "Non Residential": "Non-res.",
+    };
+    let millRates = null;  // status.json's municipal_rates; null until it lands
+
+    // Paint the pod, gate it to the money view's revenue cuts, and sit it under
+    // the title. The offset is MEASURED, not a constant: #title's height swings
+    // 140-499px across views and cuts (the money cuts alone go 196 -> 256), and
+    // the one constant already parked in this column — #temporal's top: 210px —
+    // is wrong in five states because it was pinned from a sweep that missed
+    // them. Reading the box each time is the same cost and cannot go stale.
+    function syncMillRates() {
+      const show = !!millRates && state.view === "money" && isRevenue(state.metric);
+      document.body.classList.toggle("mills", show);
+      if (!show) return;
+      const pod = document.getElementById("millrates");
+      pod.style.top = Math.round(
+        document.getElementById("title").getBoundingClientRect().bottom + 10) + "px";
+      const billed = MILL_CUT_CLASSES[state.metric];
+      document.getElementById("mill-rows").innerHTML = millRates.classes.map(c =>
+        `<span class="${!billed || billed.includes(c.name) ? "on" : "off"}">`
+        + `${MILL_LABELS[c.name] || c.name} <b>${c.rate}</b></span>`).join(" · ");
+      // The pod is in CHROME_IDS, but the sweep only reruns on a camera move or
+      // an explicit rebuild — and this runs AFTER applyMetric's, so the pod
+      // appearing or moving would leave a hood name printed under it until the
+      // next pan. Same one-liner openTemporal uses for the same reason.
+      if (labelPool().length) overlay.setProps({ layers: buildLayers() });
+    }
+    // The blurb is written AFTER syncMetricButtons runs, so repositioning purely
+    // from call sites would measure the PREVIOUS view's title. Observing the box
+    // covers every path that changes it, including ones added later.
+    new ResizeObserver(syncMillRates).observe(document.getElementById("title"));
 
     function applyMetric(metric) {
       if (!METRICS[metric]) return;
@@ -3840,6 +3905,7 @@
       // inert over views it doesn't affect).
       document.getElementById("toggle").style.display =
         (v === "money" || v === "glass") ? "flex" : "none";
+      syncMillRates();  // money-scoped like #toggle, but narrower: revenue cuts only
       // Infill's activity side is residential building only — the industrial
       // metric is a development-choropleth cut, never an infill activity. If it
       // was selected in Development, drop back to units on entering Infill so
@@ -4417,6 +4483,20 @@
           txt("about-vintage", vintages.length
             ? `Vintages: ${vintages.join(" · ")}.` : "");
           txt("about-updated", s.generated ? `Data rebuilt ${s.generated}.` : "");
+          // The mill-rate pod's fixed text. Both caveats are on the pod itself,
+          // not in this panel: the education exclusion applies to every figure on
+          // the site, and `assumed` names the classes whose rate was inferred
+          // rather than published — so the Farmland note stops printing by itself
+          // the year the source publishes a real row.
+          const mr = s.municipal_rates;
+          if (mr && mr.classes && mr.classes.length) {
+            millRates = mr;
+            txt("mill-head", `${s.rate_year} municipal mill rates · ${mr.unit}`);
+            const assumed = mr.assumed || [];
+            txt("mill-note", "Municipal levy only; education excluded"
+              + (assumed.length ? ` · ${assumed.join(", ")} rate assumed` : ""));
+            syncMillRates();  // the manifest lands after the first applyView
+          }
         })
         .catch(() => {});
     });
