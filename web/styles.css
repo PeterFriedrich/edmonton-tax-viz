@@ -437,19 +437,36 @@ body.mills #millrates { display: block; }
    TEMPORAL LENS — the pinned assessment-history panel (SPEC_temporal.md §5).
    A READING surface, not a control strip: 0.92 opacity like .tip / #banner /
    #about-menu, and pointer-events restored (.panel turns them off) because it
-   owns a close button. Anchored top-left under #title: the title's box was
-   MEASURED at 1440x900 across all five views and runs 176-179px tall (the blurb
-   wraps to ~8 lines at 360px), so 210px clears the tallest with air to spare.
-   The panel is ~265px tall and #botleft is bottom-anchored, so the two cannot
-   meet on a desktop viewport. A much longer blurb would break the clearance —
-   verify-temporal.js asserts both, so it fails loudly rather than overlapping.
+   owns a close button.
+
+   ⚠️ NO `top` HERE — syncTemporalPos MEASURES IT (2026-08-02). This block used
+   to pin `top: 210px` on the strength of a sweep across the five views on their
+   DEFAULT metric, which found #title 176-179px tall. The real state space runs
+   140-499px: money's residential and non-residential cuts, the change lens,
+   Development and Infill all overflow it, and the panel buried the blurb in
+   those five states by up to 289px. Re-measured 2026-08-02, unchanged.
+
+   `max-height` is set from the same measurement, because below the blurb is not
+   always somewhere the panel fits — clearing it lands Development 26px into
+   #botleft and Infill 100px at 1440x900. The PANEL scrolls rather than the
+   blurb: the blurb is the content explaining the map, and #title is .panel and
+   so pointer-events:none, meaning a capped blurb could not be scrolled to.
    =================================================================== */
 #temporal {
-  display: none; top: 210px; left: 22px; width: 300px; pointer-events: auto;
+  /* ⚠️ border-box so the JS max-height means the box you can SEE. Under the
+     default content-box it excluded the 21px of vertical padding + border, and
+     the panel overshot #botleft by exactly that much minus the gap — 11px, in
+     every state that capped. Width carries the same 28px horizontally, hence
+     328 rather than 300; the content box is unchanged. */
+  box-sizing: border-box;
+  display: none; left: 22px; width: 328px; pointer-events: auto;
   background: rgba(12,12,20,0.92); border: 1px solid #2a2a3a; border-radius: 6px;
   padding: 10px 13px 9px; font-size: 11.5px; line-height: 1.5; color: #9a9ab0;
 }
-#temporal.open { display: block; }
+/* Column, so #temporal-body absorbs the cap and scrolls while the name and the
+   close button stay put. */
+#temporal.open { display: flex; flex-direction: column; }
+#temporal-body { overflow-y: auto; min-height: 0; }
 /* Absolute, not a flex row with the name: the name wraps on long hood names
    (WÎHKWÊNTÔWIN, and the two-line ones), and a flex sibling would then either
    ride down with it or squeeze it. */

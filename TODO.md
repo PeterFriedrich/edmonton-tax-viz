@@ -42,36 +42,21 @@ Also removed a duplicated preamble block left in this file by the
 
 
 
-- [ ] **▶ THE HISTORY PANEL PAINTS OVER THE TITLE BLURB IN FIVE STATES —
-  MEASURED ON CLEAN MASTER, 2026-08-01, not a hypothesis.** `#temporal` is pinned
-  at `top: 210px` on the strength of a CSS comment (`web/styles.css`) claiming
-  `#title` "was MEASURED at 1440x900 across all five views and runs 176-179px
-  tall, so 210px clears the tallest with air to spare". `#title` actually runs
-  **140-499px**, and the panel is an opaque 0.92 box, so it buries the blurb:
-
-  | state | title bottom | overlap |
-  |---|---|---|
-  | money / **residential** | 256 | **46px** |
-  | money / **non-residential** | 256 | **46px** |
-  | **change** | 368 | **158px** |
-  | **development** | 462 | **252px** |
-  | **infill** | 499 | **289px** |
-
-  - **Why it survived:** the original sweep covered the five **views** on the
-    default metric and never money's **cuts**; Development/Change/Infill blurbs
-    have grown since. `verify-temporal.js`'s `panel clears the title` check
-    passes because it only ever runs the default money/revenue state — the same
-    narrow case the comment was written from. ⚠️ **Widen that check to the cuts
-    and the long-blurb views as part of the fix**, or the next pin repeats this.
-  - ⚠️ **NOT a one-line nudge.** In Infill the title ends at 499, the panel is
-    308px tall and `#botleft` starts at 729 — moving the panel below the blurb
-    does not fit. Real options: cap/scroll the blurb when the panel is open,
-    shorten the long blurbs, or give the panel a different anchor. **Propose
-    before building.**
-  - The mill-rate pod (2026-08-01) already solves its own half of this by
-    positioning from the measured title box — `syncMillRates` + the
-    `ResizeObserver` on `#title` are the pattern to copy, and
-    `verify-millrates.js` asserts the clearance per cut.
+- [ ] **RESIDUAL from the panel/blurb fix (2026-08-02): below ~768px tall,
+  Development and Infill have no left column left to give.** The placement fix
+  clears the blurb in all ten states at 1440x900 and clears `#botleft` too. At
+  1366x768 and 1280x720 the two longest blurbs hit `TEMPORAL_MIN_H` and the
+  panel reaches into `#botleft` — Development 2px/50px, Infill **76px/124px**.
+  - **No placement rule can fix it, and that is measured, not assumed:** at
+    1280x720 Infill's `#title` ends at 499 and `#botleft` starts at 535, so the
+    column has **36px** free. The blurb is **479px of a 720px screen**.
+  - **The only remaining lever is blurb length** — Development's title box is
+    442px and Infill's 479px against a **~179px median** across the other eight
+    states. That was an option when this was ruled on and was not the one taken;
+    it is now the *only* one that helps here. **Content decision, so it needs
+    Peter.**
+  - Not obviously worth doing: 1440x900 is clean, and the failure mode is the
+    panel overlapping bottom-anchored chrome rather than burying content.
 
 - [ ] **PROPOSE: cache-bust `styles.css` at build time.** Peter, 2026-08-01, on a
   phone after a successful deploy: *"i'm still not seeing the mill rates on
@@ -1195,6 +1180,8 @@ Also removed a duplicated preamble block left in this file by the
 ## Done
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
+
+- [x] **The pinned panel painted over the title blurb in five states — FIXED 2026-08-02.** `#temporal`'s `top: 210px` constant replaced by `syncTemporalPos`, which measures `#title` and `#botleft`; where clearing the blurb leaves no room the **panel** scrolls, not the blurb (`#title` is `.panel`, so pointer-events:none — a capped blurb could not be scrolled to). Two defects found by measuring the fix: content-box `max-height` overshot `#botleft` by 11px, and an absolute close button scrolled away. `verify-temporal.js` 43 → 67 checks, sweeping six states. — 2026-08-02 · `docs/TODO_archive.md`, `docs/DECISIONS.md`
 
 - [x] **`verify-temporal.js` red since the 2026-08-01 refresh — DIAGNOSED AND FIXED 2026-08-02.** The data moved, the splice did not: 839 changed cells, **every one in 2025**, 2012–2023 bit-identical across all 406 hoods. The defect was in the script, which pinned the live year the pipeline guard deliberately refuses to band. Live-year assertions now derived from the loaded series; historical anchors stay pinned. 42 → 43 checks, green. — 2026-08-02 · `docs/TODO_archive.md`, `docs/DECISIONS.md`
 

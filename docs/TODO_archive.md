@@ -8,6 +8,55 @@ Items are verbatim as they were closed, newest-moved first in the order they app
 
 ---
 
+- [x] **▶ THE HISTORY PANEL PAINTS OVER THE TITLE BLURB IN FIVE STATES.
+  FIXED 2026-08-02** (`verify-temporal.js` **43 → 67 checks**). Measured on clean
+  master 2026-08-01; **re-measured 2026-08-02 before anything was touched and
+  found identical** — 46 / 46 / 158 / 252 / 289px — despite three PRs having
+  landed on this area since. A rare case of a carried item whose numbers were
+  *not* stale.
+  - ⚠️ **Two things in the item WERE stale, and the re-measurement caught both.**
+    Its title says *"the history panel"*, but two of the five states now show the
+    **revenue-mix** panel, which did not exist when it was written — and the two
+    modes are **different heights** (293 vs 308px), so a fix assuming one height
+    is wrong in the other. And it asserted that moving the panel below the blurb
+    "does not fit", generalising from Infill: it fits in **3 of the 5** (money's
+    cuts with 172px spare, the change lens with 45px) and fails only in
+    Development (by 26px) and Infill (by 100px).
+  - **Ruled (Peter): track the measured title, and cap.** `syncTemporalPos`
+    measures `#title` and `#botleft` and places the panel between them —
+    `syncMillRates` + its `ResizeObserver` was the pattern, and observers now
+    watch **both** boxes, since `#botleft`'s legend changes height per view.
+  - ⚠️ **WHICH ELEMENT YIELDS REVERSED DURING IMPLEMENTATION, on a finding.**
+    The ruling was *cap the blurb*; `#title` is `class="panel"` and `.panel` sets
+    **`pointer-events: none`**, so a capped, scrollable blurb **cannot be
+    scrolled to** — it would hide text with no way to reach it. Giving `#title p`
+    pointer-events:auto would steal a ~360×380px region from map dragging, the
+    failure `#botleft`'s own comment records having caused. `#temporal` is
+    already pointer-events:auto, so the **panel** yields instead. Re-ruled by
+    Peter on that evidence.
+  - ⚠️ **TWO DEFECTS THE FIRST IMPLEMENTATION SHIPPED, BOTH FOUND BY MEASURING
+    THE FIX RATHER THAN ASSUMING IT:**
+    - `max-height` is **content-box** by default, so it excluded the 21px of
+      vertical padding + border and the panel overshot `#botleft` by exactly
+      that minus the gap — **11px, in every state that capped**, including two
+      that did not even scroll. `#temporal` is `box-sizing: border-box` now
+      (width 300 → 328 keeps the content box identical).
+    - **An absolutely-positioned close button inside a scroll container scrolls
+      away with the content.** The x *and* the hood name both left the box in
+      Infill — the two things you need in order to use a scrolled panel. New
+      `#temporal-body` wrapper holds the scrolling region.
+  - **Result at 1440×900: all ten states clear both the blurb and `#botleft`.**
+    Two scroll (Development −38px, Infill −112px). Below ~768px tall the two
+    longest blurbs hit the min-height floor and reach into `#botleft` — left
+    open in `TODO.md`, because at 1280×720 Infill's blurb is 479px of a 720px
+    screen and the column has **36px** free, so no placement rule can fix it.
+  - ⚠️ **The CHECK was the other half of the bug.** `panel clears the title`
+    passed throughout, because it only ever ran on money/value — the same narrow
+    case the original 210px sweep was written from. It now sweeps **six states**,
+    and also asserts the name and the x survive a scroll. **Falsified both:**
+    restoring the constant `top` fails exactly the five original states; moving
+    the name back into the scrolling region fails the two that scroll.
+
 - [x] **`verify-temporal.js` HAD BEEN RED SINCE THE 2026-08-01 AUTO-REFRESH, and
   nothing reported it. DIAGNOSED AND FIXED 2026-08-02** (42 → 43 checks, green).
   5 of 42 checks failed on clean master: Downtown's share read **3.28%** where
