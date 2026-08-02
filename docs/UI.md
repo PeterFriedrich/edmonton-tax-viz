@@ -1567,3 +1567,56 @@ checks worth keeping honest were **falsified** before being trusted: removing th
 occurrence. Scoped `.tip .mixbar, #peek-read .mixbar`, it would have lost
 `display:flex` and collapsed the bar to nothing visible, which no id-based
 assertion would have seen.
+
+---
+
+## The Display menu clears the Data & Methods pod (2026-08-02)
+
+Carried from 2026-07-28. Small fix; the value is in what reproduction overturned.
+
+### The report's direction was backwards
+
+The item read *"opening Display covers the Data & Methods button"*. Measured, it
+is the reverse: both pods sit at `z-index: 1`, so paint order falls back to DOM
+order, `#about` is later, and the **button paints over the menu** — truncating
+*"Landmarks & nearby pla⌷es"*. Found by looking at a screenshot;
+`elementFromPoint` at the button's centre confirmed it returned `about-btn`.
+
+### The recorded cause was wrong too
+
+The item had flagged a z-index asymmetry (`#about.open` lifts to 5, `#a11y` has
+no equivalent) for six sessions. That is real, and irrelevant. The actual cause:
+`#a11y` and `#about` are a **stack** in one column — `bottom: 40px` and `68px`,
+both buttons 26px tall — while `#a11y-menu` was anchored to its **own** button's
+top (`calc(100% + 6px)`), which ignores the sibling above it. Both offsets are
+fixed, so the ~23px collision was identical at 1440×900, 390×844 and 360×780.
+
+`bottom: calc(200% + 8px)` clears the stack: the pod's own height counted twice
+(itself plus `#about`'s button, which shares its font and padding), plus the 2px
+inter-pod gap and the 6px the menu already wanted. That tracks the shared button
+styling instead of hardcoding 60px.
+
+### ⚠️ The suspected fix would have been worse than the bug
+
+Applying `#a11y.open { z-index: 5 }` is how that was established, rather than
+argued. It paints the menu over the button, and `verify-about.js` then **times
+out**: the *"Landmarks & nearby places"* label **intercepts pointer events**, so
+the Data & Methods button becomes **unclickable**. A visual defect would have
+been traded for a dead control.
+
+It surfaced only because `verify-about.js` drives a real `page.click()`. **A JS
+`.click()` bypasses `pointer-events` and would have passed** — the standing
+warning about this repo's other verify scripts, paid out.
+
+**So the new checks assert GEOMETRY, not paint order.** "The menu is on top"
+passes for the z-index version, which is exactly the outcome to reject; only
+*they do not overlap at all* rejects both failures. `verify-about.js`, 44 → 50
+checks across three viewports, falsified in both directions.
+
+### The generalisable part
+
+Fifth time a carried item's stated cause did not survive reproduction — and the
+first where **the recorded fix would have caused a worse bug than the one it
+described**. The rule has been "reproduce the symptom before fixing"; this
+extends it: **the hypothesis in the ticket is not evidence either, and applying
+it is a cheap way to find out.**
