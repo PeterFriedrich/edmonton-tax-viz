@@ -58,23 +58,6 @@ Also removed a duplicated preamble block left in this file by the
   - Not obviously worth doing: 1440x900 is clean, and the failure mode is the
     panel overlapping bottom-anchored chrome rather than burying content.
 
-- [ ] **PROPOSE: a data-only refresh runs no front-end check at all.** The
-  narrow symptom is closed (see `## Done`, 2026-08-02) but the structural gap it
-  exposed is not. `deploy.yml` is scoped to `web/**` minus `web/data/**`, so a
-  refresh that rewrites `web/data/` triggers **no deploy**, and `refresh.yml`
-  runs no verify script — a data change can therefore alter what the site
-  renders with nothing on fire.
-  - ⚠️ **Correcting this item's own former claim:** it used to say the temporal
-    file "has no equivalent" of `check_value_anchors.py`. **False** —
-    `scripts/check_temporal_years.py` exists, runs in `refresh.yml` before the
-    status-manifest step, and **passed on the 2026-08-01 refresh**. The data
-    side is guarded. What is unguarded is the *render*.
-  - **Open question, not an obvious build:** the verify suite needs a browser
-    and ~1 min/script, and the pipeline guards already cover data correctness —
-    so a full suite on every refresh may cost more than it catches. A single
-    smoke script over the panels that read refreshed data is the cheaper shape.
-    ⚠️ **Changes CI behaviour → propose, do not smuggle.**
-
 - [ ] **⚠️ DATA VINTAGE: a local `python main.py` REGENERATES THE MAP FROM STALE
   RAW DATA — do not commit the result** (found 2026-08-01). `data/raw/` on the
   Oracle box is from **2026-07-06**; the committed `web/data/*.geojson` is built
@@ -1164,6 +1147,8 @@ Also removed a duplicated preamble block left in this file by the
 ## Done
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
+
+- [x] **A data refresh published with no check on the RENDER — FIXED 2026-08-02.** `verify-smoke.js` gates `refresh.yml` before `upload-pages-artifact`, so a red check leaves the live site on the previous good render. Invariant-only by design (a pinned value would cry wolf weekly — #139). ⚠️ The item's premise was wrong: `refresh.yml` **deploys itself**, so the gap was an *unchecked* deploy, not a missing one. Falsification found the check's own hole (a dropped column is *omitted*, not printed as NaN → `B6`); the inverse test caught it crying wolf on absent mill rates. — 2026-08-02 · `docs/TODO_archive.md`, `docs/DECISIONS.md`
 
 - [x] **`styles.css` had no cache-busting, so a CSS-only deploy could render stale — FIXED 2026-08-02.** `scripts/build_site.py` stamps `styles.css?v=<8 hex of the file's content hash>` into both builds; content hash not commit sha, so an unrelated deploy keeps the cached copy. Drift fails the build loudly. ⚠️ Scope is stale-CSS-under-fresh-HTML only — a stale `index.html` carries the old query with it, so RUNBOOK §3c keeps its private-window step. — 2026-08-02 · `docs/TODO_archive.md`, `docs/DECISIONS.md`
 

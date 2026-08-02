@@ -174,6 +174,35 @@ Triage by which step failed, in the run log:
   (load_stormwater), `DISPATCH_COLUMN_CANDIDATES` (load_fire), the class
   bridge in apply_tax_rates. Never switch these to prefix/keyword matching
   (locked decision — see DECISIONS.md).
+- **"Smoke-check the built render"** (exit 1, `tools/profiling/verify-smoke.js`,
+  added 2026-08-02) — the regenerated data reaches the page, but the page does
+  something wrong with it. ⚠️ **This is the only step that looks at the RENDER**;
+  every guard above it checks the data. It runs **after** the data commit and
+  **before** `upload-pages-artifact`, so the commit has landed but **the live
+  site keeps serving the previous good render** — the failure direction is safe.
+  Read the failing check's letter:
+  - **A*** (4xx, failed request, console error, page exception) — a served file
+    is missing or the page threw. Usually a file that regen did not write.
+  - **B*** (shape) — a column the page reads is **absent**. `B6` names the
+    column and how many features lack it; `B4` does the same for the land-use
+    fractions. This is the *silent* one: `viewTooltip` guards each row with
+    `!= null`, so a dropped column **omits the row** rather than printing NaN,
+    and nothing else in the suite would see it.
+  - **C*** (garbage) — `NaN` / `undefined` reached rendered text, or a lens
+    rendered no readout at all. The check names the offending neighbourhoods.
+  - **D*** (provenance) — the mill-rate pod disagrees with `status.json`, or
+    the banner does not match the manifest.
+  ⚠️ **Do not "fix" this by relaxing the check.** Nothing in it is pinned to a
+  data value — every assertion is an invariant or is derived from the served
+  file — so it **cannot** go red merely because the numbers moved. A red here
+  means the render and the data genuinely disagree. Reproduce locally against
+  the built tree:
+  ```bash
+  python scripts/build_site.py --src web --out /tmp/_site
+  .venv/bin/python -m http.server 8931 --directory /tmp/_site &
+  node tools/profiling/verify-smoke.js http://localhost:8931/index.html
+  node tools/profiling/verify-smoke.js http://localhost:8931/full/index.html
+  ```
 - **Commit/deploy steps** — transient GitHub issues; re-run.
 
 **Loud warnings worth a look even on green runs:** unknown zone / road-class

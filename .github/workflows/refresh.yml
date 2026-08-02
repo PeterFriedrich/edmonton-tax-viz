@@ -175,6 +175,44 @@ jobs:
       - name: Build two-build site tree (public root + /full/ specialist)
         run: python scripts/build_site.py --src web --out _site
 
+      # ⚠️ THE ONLY FRONT-END CHECK ON THE DATA PATH. Every guard above this line
+      # checks the DATA (unmatched names, year alignment, value anchors, temporal
+      # years); none of them looks at the rendered page, and this workflow
+      # regenerates, commits AND deploys in a single run — so until this step, a
+      # data change could alter what the site renders with nothing on fire.
+      #
+      # ⚠️ PLACED BEFORE upload-pages-artifact ON PURPOSE. A red gate here leaves
+      # the live site serving the PREVIOUS good data instead of publishing a
+      # broken render. The data commit has already landed by this point, which is
+      # fine — it is in git and the data-side guards passed.
+      #
+      # ⚠️ verify-smoke.js asserts INVARIANTS ONLY, never a data value. That is
+      # what makes it safe to run weekly: a pinned number here would go red on
+      # every legitimate refresh (verify-temporal.js did exactly that on
+      # 2026-08-01), and a check that cries wolf gets ignored. See its header.
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '20'
+
+      - name: Install the verify harness
+        working-directory: tools/profiling
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      # ⚠️ BOTH BUILDS. The public root hides the full-only controls, so a check
+      # run only against /full/ passes on states the public site does not have —
+      # the failure PR #141 existed to fix.
+      - name: Smoke-check the built render (gate before publish)
+        run: |
+          python -m http.server 8931 --directory _site &
+          for _ in $(seq 30); do
+            curl -sf http://localhost:8931/index.html >/dev/null && break
+            sleep 1
+          done
+          node tools/profiling/verify-smoke.js http://localhost:8931/index.html
+          node tools/profiling/verify-smoke.js http://localhost:8931/full/index.html
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
