@@ -8,6 +8,90 @@ Items are verbatim as they were closed, newest-moved first in the order they app
 
 ---
 
+- [x] **▶ REVENUE-LENS READOUT — phase 2 of 2: the UI. DONE 2026-08-01 (both
+  halves).** Phase 1 (the pipeline) shipped the columns earlier the same day.
+  Peter: *"I actually want this in the popup panel, instead of the assessment
+  graph, on the revenue lens. also can we have the current relevant mill rates in
+  the top left on this lens?"*
+  - **Decisions RULED by Peter:** top by **category**, not raw zone code; on
+    Money/Revenue the panel shows the breakdown **instead of** the assessment
+    graph, with history staying reachable via the Change-over-time lens;
+    pipeline before UI.
+  - [x] **(a) The panel. DONE 2026-08-01** (`renderRevenueMix`,
+    `verify-revenue-panel.js`, **37 checks**). `#temporal` gained a MODE rather
+    than a sibling — it already owned the three dismissals, the `CHROME_IDS`
+    exemption, the phone bottom-sheet form, `#hoodmode` and the peek card's
+    commit path. Three rulings taken at build time, all revising the brief:
+    - **ALL non-zero categories, ranked — not top 3.** The panel has the room a
+      tooltip doesn't, so the rows sum to 100% with no unstated remainder
+      (Downtown's top 3 is only 90%).
+    - **Shown on the Residential/Non-residential cuts too, with the denominator
+      NAMED.** `rev_frac_*` are shares of the hood's TOTAL levy while those cuts
+      colour one class of it — so panel and map divide by different things, and
+      §6's rule applies: an unnamed denominator is how a correct number reads as
+      wrong.
+    - **The header keeps `total_revenue` + `revenue_share_city`.**
+    - ⚠️ **The categories are `USE_CATEGORIES`' OWN**, column derived as
+      `"rev_" + u.frac` rather than listed again — that is what stops the Uses
+      lens's area shares and this panel's revenue shares drifting apart.
+    - ⚠️ **Three surfaces advertise the panel and all three follow the lens**
+      (`#peek-go`, `#temporal-hint`, the tooltip's invite). A pinned panel also
+      re-renders on any lens change (`syncPinnedPanel`) — a revenue breakdown
+      left under a value map is a silent-correctness failure.
+    - ⚠️ **`fmtBig` could NOT be reused for the levy:** calibrated for
+      assessment totals ($10M–$10B), it rounds megas whole and printed a
+      $1,876,137 levy as **"$2M"** — a 7% error on a fiscal headline. `fmtLevy`
+      keeps two decimals. Caught by reading the rendered output, not by a test.
+    - `SPEC_temporal.md` §2 now opens with the warning that the panel is the
+      history surface **only under Value**; `verify-temporal.js` selects Value
+      on every page it opens.
+  - [x] **(b) Mill rates. DONE 2026-08-01** (`#millrates`,
+    `verify-millrates.js`, **54 checks**; PRs #131 / #132 / #133, **production
+    verified in both builds**). Three things the brief got wrong, all found by
+    measuring:
+    - **"~500px of left column is free" was measured with the panel CLOSED.**
+      `#temporal` owns that column: it is **308px** tall (its own CSS comment
+      says ~265), leaving 211px of slack at 1440x900 but **79px at 1366x768** and
+      **31px at 1280x720**. There is no room for pod *and* panel on a laptop, so
+      **the pod yields while a hood is pinned** (Peter, after re-measurement,
+      reversing his first call to push the panel down).
+    - **"Top left is an open spot" is false on two of the three cuts** —
+      residential and non-residential blurbs push `#title` to 256, not 196. The
+      pod is positioned from the **measured** title box, never a constant.
+      This is the same defect the panel has, unfixed — see the item above.
+    - **"Relevant = follow the sub-metric" became: show all three, light the
+      active ones** (Peter's ruling). Dropping rows would hide the 7.6254-vs-
+      24.2229 differential, which is the fact the map rests on.
+    - Rates ship in `status.json` as `municipal_rates`, derived from
+      `data/mill_rates.json` — never typed into the page. `assumed` is data, so
+      the Farmland caveat stops printing by itself when a real row is published.
+    - **The PHONE FORM took two goes, and the second deleted the first.** Peter
+      saw the desktop-only build (*"no rates show on mobile"*), described a
+      standalone stack, then rejected it on sight: ***"i don't like the
+      independent mill rates panel. folding it into the tax revenue blurb is
+      fine."*** Final: `#millrates` is **re-parented into `#title`** below 640px,
+      so the rates open and close with the description blurb and add nothing to
+      the default render. Only the stacking (one rate per row) survives from the
+      standalone version. ⚠️ **Every problem that version had to solve — an
+      anchor clear of `#controls`, its own card background, the inherited
+      panel-yield — was an artifact of it being a separate surface.**
+      `MOBILE_USABILITY.md` §2 and `DECISIONS.md` have it.
+    - ⚠️ **One bug shipped and was fixed inside the day:** the desktop yield
+      `#temporal.open ~ #millrates` went out **ungated**, so switching the phone
+      readout to **panel mode** blanked the rates with nothing contending (the
+      panel is a bottom sheet there). The comment said "desktop-only in effect" —
+      reasoning about the LAYOUT, not the SELECTOR. **A media gate was written,
+      then falsified as redundant** (a child of `#title` is not `#temporal`'s
+      sibling) and dropped. `verify-millrates.js` asserts the behaviour instead.
+  - **Available columns** (shipped by phase 1): `total_revenue`,
+    `revenue_share_city`, and `rev_frac_{never,notyet,inst,residential,
+    commercial,industrial,mixed,dc,other,unzoned}`.
+  - ⚠️ **`rev_frac_unzoned` is the honesty column** — 0.002% citywide today. If
+    it ever grows, the top-3 is quietly describing less than the whole hood. Do
+    not hide it; `src/revenue_by_zone.top_zones()` already excludes it from the
+    ranking by default rather than letting it take a slot.
+
+
 - [x] **UI BUG: the hover tooltip `div.tip` rendered on TOUCH, 127px off the
   right edge. CONFIRMED ON DEVICE and FIXED 2026-07-31.** `tooltipFor` now
   returns null under `noHover()`. Full reasoning in `DECISIONS.md` and

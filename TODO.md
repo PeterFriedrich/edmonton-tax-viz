@@ -40,6 +40,7 @@ Also removed a duplicated preamble block left in this file by the
 
 ## Open work
 
+
 - [ ] **▶ THE HISTORY PANEL PAINTS OVER THE TITLE BLURB IN FIVE STATES —
   MEASURED ON CLEAN MASTER, 2026-08-01, not a hypothesis.** `#temporal` is pinned
   at `top: 210px` on the strength of a CSS comment (`web/styles.css`) claiming
@@ -106,67 +107,6 @@ Also removed a duplicated preamble block left in this file by the
   - **Pin bands, not equalities** when re-pinning — the standing rule from
     `check_value_anchors.py` (DECISIONS 2026-07-28), and these five literals are
     exactly the failure it was written about.
-
-- [ ] **▶ REVENUE-LENS READOUT — phase 2 of 2: the UI.** Phase 1 (the pipeline)
-  is DONE and merged; the columns ship. Peter, 2026-08-01: *"I actually want this
-  in the popup panel, instead of the assessment graph, on the revenue lens. also
-  can we have the current relevant mill rates in the top left on this lens?"*
-  - **Decisions already RULED by Peter (do not re-open):** top 3 by **category**,
-    not raw zone code; on Money/Revenue the panel shows the breakdown **instead
-    of** the assessment graph, with history staying reachable via the
-    Change-over-time lens; pipeline before UI.
-  - **(a) The panel.** On Money + a revenue metric, `#temporal` shows: the hood's
-    revenue, `revenue_share_city`, and the top 3 `rev_frac_*` categories. The
-    peek card's *"See assessment history ›"* copy must change on this lens — it
-    would be advertising a panel that no longer shows history.
-    ⚠️ **`#temporal` is the ASSESSMENT-HISTORY panel** and its whole spec
-    (`SPEC_temporal.md` §2) assumes that; making its content lens-dependent is a
-    real change to that contract, not a content tweak.
-  - [x] **(b) Mill rates. DONE 2026-08-01** (`#millrates`,
-    `verify-millrates.js`, **54 checks**; PRs #131 / #132 / #133, **production
-    verified in both builds**). Three things the brief got wrong, all found by
-    measuring:
-    - **"~500px of left column is free" was measured with the panel CLOSED.**
-      `#temporal` owns that column: it is **308px** tall (its own CSS comment
-      says ~265), leaving 211px of slack at 1440x900 but **79px at 1366x768** and
-      **31px at 1280x720**. There is no room for pod *and* panel on a laptop, so
-      **the pod yields while a hood is pinned** (Peter, after re-measurement,
-      reversing his first call to push the panel down).
-    - **"Top left is an open spot" is false on two of the three cuts** —
-      residential and non-residential blurbs push `#title` to 256, not 196. The
-      pod is positioned from the **measured** title box, never a constant.
-      This is the same defect the panel has, unfixed — see the item above.
-    - **"Relevant = follow the sub-metric" became: show all three, light the
-      active ones** (Peter's ruling). Dropping rows would hide the 7.6254-vs-
-      24.2229 differential, which is the fact the map rests on.
-    - Rates ship in `status.json` as `municipal_rates`, derived from
-      `data/mill_rates.json` — never typed into the page. `assumed` is data, so
-      the Farmland caveat stops printing by itself when a real row is published.
-    - **The PHONE FORM took two goes, and the second deleted the first.** Peter
-      saw the desktop-only build (*"no rates show on mobile"*), described a
-      standalone stack, then rejected it on sight: ***"i don't like the
-      independent mill rates panel. folding it into the tax revenue blurb is
-      fine."*** Final: `#millrates` is **re-parented into `#title`** below 640px,
-      so the rates open and close with the description blurb and add nothing to
-      the default render. Only the stacking (one rate per row) survives from the
-      standalone version. ⚠️ **Every problem that version had to solve — an
-      anchor clear of `#controls`, its own card background, the inherited
-      panel-yield — was an artifact of it being a separate surface.**
-      `MOBILE_USABILITY.md` §2 and `DECISIONS.md` have it.
-    - ⚠️ **One bug shipped and was fixed inside the day:** the desktop yield
-      `#temporal.open ~ #millrates` went out **ungated**, so switching the phone
-      readout to **panel mode** blanked the rates with nothing contending (the
-      panel is a bottom sheet there). The comment said "desktop-only in effect" —
-      reasoning about the LAYOUT, not the SELECTOR. **A media gate was written,
-      then falsified as redundant** (a child of `#title` is not `#temporal`'s
-      sibling) and dropped. `verify-millrates.js` asserts the behaviour instead.
-  - **Available columns** (shipped by phase 1): `total_revenue`,
-    `revenue_share_city`, and `rev_frac_{never,notyet,inst,residential,
-    commercial,industrial,mixed,dc,other,unzoned}`.
-  - ⚠️ **`rev_frac_unzoned` is the honesty column** — 0.002% citywide today. If
-    it ever grows, the top-3 is quietly describing less than the whole hood. Do
-    not hide it; `src/revenue_by_zone.top_zones()` already excludes it from the
-    ranking by default rather than letting it take a slot.
 
 - [ ] **⚠️ DATA VINTAGE: a local `python main.py` REGENERATES THE MAP FROM STALE
   RAW DATA — do not commit the result** (found 2026-08-01). `data/raw/` on the
@@ -1273,10 +1213,14 @@ Also removed a duplicated preamble block left in this file by the
 
 ## Done
 
-Closed items moved out of `## Open work` on 2026-07-30 live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
+Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
+
+- [x] **▶ REVENUE-LENS READOUT — phase 2 of 2: the UI. DONE 2026-08-01 (both halves).** — DONE 2026-08-01 · `docs/TODO_archive.md`
+
+
 
 - [x] **UI BUG: the hover tooltip `div.tip` rendered on TOUCH, 127px off the right edge. CONFIRMED ON DEVICE and FIXED 2026-07-31.** — 2026-07-31 · `docs/TODO_archive.md`
-- [x] **REVENUE-LENS READOUT phase 1 (pipeline) — BUILT 2026-08-01.** `src/revenue_by_zone.py` + 11 tests; ships `total_revenue`, `revenue_share_city` and 10 `rev_frac_*` columns. Zoning source reversed on measurement: the polygons, not `dkk9-cj3x`'s per-property field (null for 42% of Downtown's revenue). Phase 2 (UI) is the open `▶`. — 2026-08-01 · `docs/DECISIONS.md`, `data/DATA.md`
+- [x] **REVENUE-LENS READOUT phase 1 (pipeline) — BUILT 2026-08-01.** `src/revenue_by_zone.py` + 11 tests; ships `total_revenue`, `revenue_share_city` and 10 `rev_frac_*` columns. Zoning source reversed on measurement: the polygons, not `dkk9-cj3x`'s per-property field (null for 42% of Downtown's revenue). Phase 2 (the UI) closed later the same day. — 2026-08-01 · `docs/DECISIONS.md`, `data/DATA.md`
 - [x] **`#hoodmode-btn` CONFIRMS instead of toggling off when the panel was opened by a peek card — RULED and BUILT 2026-08-01.** Peter: *"change button name and first press to mean yes, keep it open."* Three label states now (`popup` / `panel` / `panel ✓`); the tick marks the only one that earns one-tap pinning. — 2026-08-01 · `docs/DECISIONS.md`
 - [x] **Should the change lens's card carry its `% of city base` endpoints? RULED 2026-08-01: LEAVE IT.** Peter's call; the panel is one tap away and special-casing would put wrapper content in the card for one view only. — 2026-08-01 · `docs/SPEC_temporal.md` §2
 - [x] **REGRESSION from that fix: suppressing `.tip` left every lens with a ONE-LINE readout on touch. Reported by Peter and FIXED 2026-08-01** — the peek card now borrows `viewTooltip(info, false)`, so it carries the lens's full rows; Money's readout also split so revenue facts no longer print under the Value map. — 2026-08-01 · `docs/DECISIONS.md`, `docs/MOBILE_USABILITY.md` §2b

@@ -1478,3 +1478,92 @@ The "Window" header now stands alone in that section.
 **Mobile gained a tap and lost a hunt.** Reaching the lens on a phone was: unfold
 Options → find "Lens" → tap. It is now Value → Change over time, both on the map
 surface, and the pod still fits one row at 390px (measured 180,97 202x55).
+
+---
+
+## The revenue panel: where a hood's levy comes from (2026-08-01)
+
+Peter, on the lens regroup shipped hours earlier: *"under revenue, the panel
+still pops up with the assessment over time graph. For revenue I want the panel
+to just be the top contributing zones by percent of hood revenue."*
+
+Phase 2 of the revenue-lens readout. Phase 1 shipped the columns that morning
+(`total_revenue`, `revenue_share_city`, ten `rev_frac_*`).
+
+### One element, two modes — not a second panel
+
+`#temporal` already owns the three dismissals (×, Escape, re-click), the
+`CHROME_IDS` label-sweep exemption, the phone bottom-sheet form, `#hoodmode` and
+the peek card's commit path. A sibling panel would have had to duplicate all of
+it and then stay in step. So `openTemporal` branches to `renderHistory` or
+`renderRevenueMix`, and everything around the content is shared.
+
+The split follows the `#toggle` regroup made the same day: **the panel follows
+the quantity, exactly as row 2 does.** Revenue gets the breakdown; Value keeps
+the history, which is what it actually describes.
+
+### Three rulings, all of which revised the brief
+
+The recorded brief said "top 3". Building it changed all three answers:
+
+- **All non-zero categories, ranked — not top 3.** The panel has room a tooltip
+  does not, so the rows sum to 100% with no unstated remainder. Downtown's top 3
+  is 90%; the missing 10% would have been invisible.
+- **Shown on the Residential and Non-residential cuts too, with the denominator
+  NAMED.** ⚠️ `rev_frac_*` are shares of the hood's **total** levy, while those
+  cuts colour one class of it — panel and map divide by different things. The
+  house rule from `SPEC_temporal.md` §6 applies: an unnamed denominator is how a
+  correct number reads as wrong.
+- **The header keeps the levy and the city share.** They give the percentages
+  something to be a share *of*.
+
+### The categories are the Uses lens's own
+
+`revenue_by_zone.py`'s `OUTPUT_NAMES` mirror `USE_CATEGORIES`' keys deliberately,
+so the column is **derived** as `"rev_" + u.frac` rather than listed again. That
+is what stops the Uses lens's *area* shares and this panel's *revenue* shares
+drifting onto two category sets — and it means a category added to one lens
+cannot go missing from the other. The swatches are the same identity colours the
+Uses lens paints, so the two lenses read as one map.
+
+`unzoned` is the exception, with no area counterpart: area always lands in some
+polygon, but a property's point can miss every one. It stays visible when
+non-zero rather than folding into "other", so a growing gap can't quietly inflate
+every real category.
+
+### Three surfaces were advertising the wrong panel
+
+`#peek-go` ("See assessment history ›"), `#temporal-hint`, and the tooltip's
+`click to pin` all promise history. On revenue they'd be teasers for a panel that
+shows something else, so all three follow the lens now. The tooltip's sparkline
+**stays** — a hood's assessment history is still a true fact about it — but its
+invite reads *click for the revenue mix*.
+
+⚠️ **And a pinned panel has to re-render when the lens changes.**
+`syncPinnedPanel` runs from `applyMetric`, `applyView`, `applyHoodMode` and once
+at init. Leaving a revenue breakdown sitting under a value map is a
+silent-correctness failure, not a cosmetic one, so the branch that cannot render
+**closes** the panel rather than leaving it.
+
+### `fmtBig` was the wrong formatter, and only the rendered output showed it
+
+The history panel's `fmtBig` is calibrated for assessment totals ($10M–$10B) and
+rounds the mega band to whole numbers. Reused for a levy it printed
+**$1,876,137 as "$2M"** — a 7% error on the headline number of a fiscal tool.
+`fmtLevy` keeps two decimals. The same pass caught `revenue_share_city` rendering
+0.069% as "0.1%": the city share spans 0.0007%–5.2%, so it takes `fmtPct`'s two
+decimals while the category shares take one. **Two different ranges, two
+precisions** — neither was visible in a passing test, only in the output.
+
+### Verification
+
+`verify-revenue-panel.js`, 37 checks. Every share is recomputed from the **served
+geojson**, so nothing can be satisfied by the app agreeing with itself. The two
+checks worth keeping honest were **falsified** before being trusted: removing the
+`#temporal-chart .mixbar` selector turns the bar `block` and fails, and removing
+`syncPinnedPanel` from `applyMetric` fails the lens swap.
+
+⚠️ The borrowed `.mixbar` needed its borrowed CSS — the S83 lesson, second
+occurrence. Scoped `.tip .mixbar, #peek-read .mixbar`, it would have lost
+`display:flex` and collapsed the bar to nothing visible, which no id-based
+assertion would have seen.

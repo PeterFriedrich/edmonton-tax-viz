@@ -363,8 +363,12 @@ html, body { margin: 0; height: 100%; background: #0a0a0f; }
    Also selected inside `#peek-read`: the peek card borrows this same markup
    from viewTooltip, and scoped under `.tip` alone the bar loses `display:flex`
    and collapses to nothing visible on a phone. */
-.tip .mixbar, #peek-read .mixbar { display: flex; gap: 2px; width: 190px; height: 8px; margin: 6px 0 5px; border-radius: 2px; overflow: hidden; }
-.tip .mixbar span, #peek-read .mixbar span { border-radius: 1px; }
+.tip .mixbar, #peek-read .mixbar, #temporal-chart .mixbar { display: flex; gap: 2px; width: 190px; height: 8px; margin: 6px 0 5px; border-radius: 2px; overflow: hidden; }
+.tip .mixbar span, #peek-read .mixbar span, #temporal-chart .mixbar span { border-radius: 1px; }
+/* The panel has 274px of content width where a tooltip has ~190, and the bar is
+   the panel's chart rather than a inline glyph — so it takes the full width and
+   the height the SVG chart it replaces would have had a share of. */
+#temporal-chart .mixbar { width: 100%; height: 11px; margin: 8px 0 9px; }
 /* Hover sparkline (temporal lens teaser). No axes, no labels — the muted row
    beneath it carries first→last, which is what makes an unlabelled line
    readable at all. `display:block` so the SVG's inline-baseline gap doesn't
@@ -448,6 +452,16 @@ body.mills #millrates { display: block; }
 #temporal-chart { margin: 7px 0 6px; }
 #temporal-read b { color: #e8e8ef; font-weight: 600; }
 #temporal-read .muted { color: #6a6a80; }
+/* Money's revenue breakdown. A three-part row — identity swatch, category,
+   share — with the percentage right-aligned in its own column so the numbers
+   form a scannable stack instead of ragging after labels of different widths.
+   The swatch is the same colour the Uses lens paints that category, which is
+   what makes the two lenses read as one map. */
+#revmix { margin-top: 7px; }
+.revrow { display: flex; align-items: center; gap: 7px; line-height: 1.65; }
+.revrow i { flex: none; width: 9px; height: 9px; border-radius: 2px; }
+.revrow span { flex: 1; min-width: 0; }
+.revrow b { color: #e8e8ef; font-weight: 600; font-variant-numeric: tabular-nums; }
 #temporal-note, #temporal-hint { margin: 7px 0 0; font-size: 10.5px; color: #6a6a80; }
 /* Panel mode is ON but nothing is pinned: the panel is a prompt, not a read-out.
    The close button hides too — there is nothing to close, and an x that does

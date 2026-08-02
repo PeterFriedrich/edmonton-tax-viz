@@ -2676,6 +2676,65 @@
                       : v >= 1e6 ? "$" + (v / 1e6).toFixed(0) + "M"
                                  : "$" + Math.round(v).toLocaleString();
 
+    // --- Money's revenue panel: where a hood's levy comes from ---------------
+    // On the revenue metrics the pinned panel shows the hood's zone-category
+    // breakdown INSTEAD of the assessment chart (Peter, 2026-08-01: "for
+    // revenue I want the panel to just be the top contributing zones by percent
+    // of hood revenue"). The history is not lost — it belongs to Value, which is
+    // what it actually describes, and the Change lens still reads it.
+    //
+    // The categories are USE_CATEGORIES' OWN. revenue_by_zone.py's OUTPUT_NAMES
+    // mirror its keys deliberately, so the Uses lens's AREA shares and this
+    // panel's REVENUE shares are one category set read two ways. The column is
+    // DERIVED as "rev_" + u.frac rather than listed again — that is what stops
+    // the two lenses drifting when a category is added to one of them.
+    //
+    // `unzoned` is the one entry with no area counterpart: area always falls in
+    // some polygon, but a property's point can miss every one (0.002% of
+    // citywide revenue today). It is the HONESTY column — shown when non-zero
+    // rather than folded into "other", so a growing gap stays visible instead of
+    // quietly inflating every real category.
+    const REV_CATEGORIES = USE_CATEGORIES
+      .map(u => ({ label: u.label, color: u.color, col: "rev_" + u.frac }))
+      .concat([{ label: "Outside any zone", color: [70, 72, 84], col: "rev_frac_unzoned" }]);
+
+    // Sub-0.1% shares print as "<0.1%", never a rounded "0.0%" — a category that
+    // earned a row should not then claim to contribute nothing.
+    const fmtMix = v => v * 100 < 0.05 ? "<0.1%" : (v * 100).toFixed(1) + "%";
+
+    // ⚠️ NOT fmtBig, which is calibrated for ASSESSMENT totals ($10M-$10B) and
+    // rounds megas to whole numbers — a $1,876,137 levy printed as "$2M" is a 7%
+    // error on the headline of a fiscal tool. Levies span ~$200k to $142M, so
+    // the mega band keeps two decimals.
+    const fmtLevy = v => v >= 1e9 ? "$" + (v / 1e9).toFixed(2) + "B"
+                       : v >= 1e6 ? "$" + (v / 1e6).toFixed(2) + "M"
+                                  : "$" + Math.round(v).toLocaleString();
+
+    // Every non-zero category, largest first. Nothing is dropped as noise here:
+    // the Uses TOOLTIP filters below 0.5% because a tooltip has no room, but the
+    // panel does, so these rows sum to 100% and carry no unstated remainder
+    // (Peter, 2026-08-01 — "all non-zero, ranked").
+    const revenueMix = p => REV_CATEGORIES
+      .filter(c => p[c.col] > 0)
+      .map(c => ({ ...c, share: p[c.col] }))
+      .sort((a, b) => b.share - a.share);
+
+    const hoodProps = name => {
+      const f = state.data && state.data.features.find(
+        x => x.properties.neighbourhood_name === name);
+      return f ? f.properties : null;
+    };
+
+    // Where the panel shows the breakdown instead of the history. Two tests,
+    // deliberately separate: the LENS alone answers copy that has no hood yet
+    // (the empty-panel prompt), while the per-hood test also gates on the
+    // COLUMNS — they arrived in the 2026-08-01 refresh, so a stale geojson falls
+    // back to the history panel rather than an empty box.
+    const revenueLens = () => isRevenue(state.metric)
+      && (state.view === "money" || state.view === "glass");
+    const revenuePanelFor = p => revenueLens()
+      && !!p && p.total_revenue != null && revenueMix(p).length > 0;
+
     // Decoded series for one hood, or null when the lens can't speak for it
     // (no file, public build, or a name with no history row).
     function temporalFor(name) {
@@ -2791,13 +2850,71 @@
            + `r="2.6" fill="#fcd278"/></g></svg>`;
     }
 
+    // The panel has TWO modes since 2026-08-01 — the assessment history it was
+    // built for, and Money's revenue breakdown. One element, not two: #temporal
+    // already owns the three dismissals, the CHROME_IDS label-sweep exemption,
+    // the phone bottom-sheet form, #hoodmode and the peek card's commit path,
+    // and a sibling panel would have had to duplicate all of it.
+    //
+    // ⚠️ SPEC_temporal.md §2 describes this panel as the assessment-history
+    // surface throughout. That is now true only under Value.
     function openTemporal(name) {
-      const t = temporalFor(name);
-      if (!t) return;
+      const p = hoodProps(name);
+      const revenue = revenuePanelFor(p);
+      const t = revenue ? null : temporalFor(name);
+      if (!revenue && !t) return;
       pinnedHood = name;
       document.getElementById("temporal").classList.remove("empty");
-      const i = t.years.length - 1;
       document.getElementById("temporal-name").textContent = name;
+      if (revenue) renderRevenueMix(p); else renderHistory(t);
+      document.getElementById("temporal").classList.add("open");
+      // The panel is a new obstacle for the label sweep, so re-cull now —
+      // otherwise hood names sit under it until the next camera move.
+      if (labelPool().length) overlay.setProps({ layers: buildLayers() });
+    }
+
+    // Where the hood's levy comes from, by the zoning of each property. The
+    // colour bar reuses `.mixbar` from the Uses tooltip, so a category is the
+    // same colour in both lenses — but ⚠️ that CSS was scoped `.tip .mixbar,
+    // #peek-read .mixbar`, so borrowing the markup meant adding the selector
+    // (the S83 lesson: a borrowed body needs its borrowed CSS, or it silently
+    // loses `display:flex` and collapses to nothing).
+    function renderRevenueMix(p) {
+      const mix = revenueMix(p);
+      document.getElementById("temporal-chart").innerHTML =
+        `<div class="mixbar">` + mix.map(c =>
+          `<span style="flex:${c.share.toFixed(4)} ${c.share.toFixed(4)} 0%;`
+          + `background:rgb(${c.color.join(",")})"></span>`).join("") + `</div>`;
+      const rows = mix.map(c =>
+        `<div class="revrow"><i style="background:rgb(${c.color.join(",")})"></i>`
+        + `<span>${esc(c.label)}</span><b>${fmtMix(c.share)}</b></div>`).join("");
+      // The city share gets fmtPct's two decimals, not fmtMix's one: it spans
+      // 0.0007% to 5.2% across hoods, so one decimal collapses most of the city
+      // to "0.0%" or "0.1%". The category shares span 0-100% and read better at
+      // one — different ranges, different precision.
+      document.getElementById("temporal-read").innerHTML =
+        `<b>${fmtLevy(p.total_revenue)}</b> municipal levy`
+        + (p.revenue_share_city != null
+            ? `<br/><b>${fmtPct(p.revenue_share_city * 100)}</b> of Edmonton's `
+              + `municipal revenue`
+            : "")
+        + `<div id="revmix">${rows}</div>`;
+      // ⚠️ THE DENOMINATOR IS NAMED BECAUSE IT IS NOT THE CUT ON SCREEN. These
+      // shares are of the hood's TOTAL levy, while the Residential and
+      // Non-residential cuts colour one class of it — so on those cuts the panel
+      // and the map divide by different things. Same rule as the history panel's
+      // two bases (SPEC_temporal.md §6): an unnamed denominator is how a correct
+      // number reads as wrong. The exemption caveat is the other half —
+      // FINDINGS_revenue_scale.md §4-5: exempt institutional land is absent from
+      // the roll entirely, so every zone total understates it.
+      document.getElementById("temporal-note").textContent =
+        "Share of this neighbourhood's total municipal levy, by the zoning of "
+        + "each property. Tax-exempt land is not on the roll, so it is absent "
+        + "from every share above.";
+    }
+
+    function renderHistory(t) {
+      const i = t.years.length - 1;
       document.getElementById("temporal-chart").innerHTML = temporalChartSvg(t);
       const peak = t.share.indexOf(Math.max(...t.share));
       // Both denominators, named — a locked decision (SPEC_temporal.md §6):
@@ -2816,10 +2933,22 @@
         ? "2024 is omitted: the City's historical assessment file is missing "
           + "2,448 accounts for that year. The gap is left as a gap — not interpolated."
         : "";
-      document.getElementById("temporal").classList.add("open");
-      // The panel is a new obstacle for the label sweep, so re-cull now —
-      // otherwise hood names sit under it until the next camera move.
-      if (labelPool().length) overlay.setProps({ layers: buildLayers() });
+    }
+
+    // The panel's CONTENT is lens-dependent now, so a metric or view switch
+    // while a hood is pinned has to re-render it. ⚠️ Closing is the safe branch
+    // when neither mode can speak: a revenue breakdown left sitting under a
+    // value map is a silent-correctness failure, not a cosmetic one.
+    function syncPinnedPanel() {
+      // The empty-state prompt names the panel it is a prompt FOR, so entering
+      // panel mode on the revenue map does not promise history.
+      document.getElementById("temporal-hint").textContent = revenueLens()
+        ? "Click a neighbourhood to see where its revenue comes from."
+        : "Click a neighbourhood to see its assessment history.";
+      if (!pinnedHood) return;
+      const name = pinnedHood;
+      if (revenuePanelFor(hoodProps(name)) || temporalFor(name)) openTemporal(name);
+      else closeTemporal();
     }
 
     // Un-pin. In PANEL mode the panel stays up showing its prompt, because the
@@ -2850,6 +2979,7 @@
       const confirming = mode === "panel" && byChoice && !panelByChoice;
       if (mode === state.hoodMode && !confirming) return;
       state.hoodMode = mode;
+      syncPinnedPanel(); // the empty-state prompt names the lens's own panel
       const panel = mode === "panel";
       panelByChoice = panel && byChoice;
       const btn = document.getElementById("hoodmode-btn");
@@ -2907,6 +3037,10 @@
       // above would then swallow every retry — the card would wedge shut.
       const tip = viewTooltip({ object: { properties: p } }, false);
       document.getElementById("peek-read").innerHTML = tip ? tip.html : primaryRow(p);
+      // The card's invitation has to name the panel it actually opens — on the
+      // revenue metrics that is the zone breakdown, not the history.
+      document.getElementById("peek-go").textContent =
+        revenuePanelFor(p) ? "See revenue breakdown ›" : "See assessment history ›";
       document.getElementById("peek").classList.add("open");
       // Same reason as the panel: the card is a new obstacle for the label
       // sweep, so re-cull now instead of leaving names under it until the next
@@ -3290,10 +3424,15 @@
       const i = t.years.length - 1;
       const gap = t.years.length > 1
         && t.years[i] - t.years[0] + 1 > t.years.length;
+      // The hint names WHAT pinning gives, because since 2026-08-01 that is not
+      // always this sparkline's subject: on the revenue metrics the panel shows
+      // the zone breakdown, so a bare "click to pin" directly under a history
+      // line would read as a promise of more history.
+      const invite = revenuePanelFor(p) ? "click for the revenue mix" : "click to pin";
       return { ...tip, html: tip.html + sparklineSvg(t)
         + `<span class="muted">${fmtPct(t.share[0])} → ${fmtPct(t.share[i])} `
         + `of city base, ${t.years[0]}–${t.years[i]}`
-        + (gap ? " (2024 n/a)" : "") + ` · click to pin</span>` };
+        + (gap ? " (2024 n/a)" : "") + ` · ${invite}</span>` };
     }
 
     // Switch metric: rebuild layers and update the title/legend/toggle chrome.
@@ -3414,6 +3553,7 @@
       if (metric === state.metric) { syncMetricButtons(); return; }
       state.metric = metric;
       syncMetricButtons();
+      syncPinnedPanel(); // Revenue <-> Value swaps the panel's whole content
       if (state.view !== "money" && state.view !== "glass") return;
       const cfg = METRICS[metric];
       overlay.setProps({ layers: buildLayers() });
@@ -4104,6 +4244,7 @@
       overlay.setProps({ layers: buildLayers() });
       syncColorAdjust(); // the sqrt toggle only bites in money + glass (scaleT)
       refreshLegend();
+      syncPinnedPanel(); // leaving Money takes the revenue breakdown with it
     }
 
     // Services-view controls. `applyService` flips a service on/off;
@@ -4154,6 +4295,13 @@
         onClick: temporalClick,
       });
       map.addControl(overlay);
+
+      // The panel's empty-state prompt names the lens's own panel, and the app
+      // loads on Revenue — so it has to be set once here rather than only on the
+      // first metric/view/mode change. It is not visible yet (the panel is not
+      // in panel mode), but every path that reveals it must not be the path that
+      // first makes it true.
+      syncPinnedPanel();
 
       document.getElementById("coloradj-btn").addEventListener("click", applyColorAdjust);
       // Row 1 picks the QUANTITY: "revenue" restores the cut you last had (Total

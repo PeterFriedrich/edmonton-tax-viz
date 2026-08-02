@@ -30,6 +30,33 @@ candidate for that queue until Phase 0 closes.
 
 ## 2. Why a hover tooltip is not the whole answer
 
+> ⚠️ **READ FIRST — `#temporal` IS NO LONGER THE ASSESSMENT-HISTORY PANEL IN
+> EVERY LENS (changed 2026-08-01).** Everything in this section describes what
+> the panel shows **under Value** — Current and Change over time. On Money's
+> **revenue** metrics the same element shows the hood's **zone-revenue
+> breakdown** instead (Peter: *"for revenue I want the panel to just be the top
+> contributing zones by percent of hood revenue"*). The history is not lost: it
+> moved to Value, which is what it actually describes.
+>
+> One element, two modes — `openTemporal` branches to `renderHistory` or
+> `renderRevenueMix`. A sibling panel was rejected because `#temporal` already
+> owns the three dismissals, the `CHROME_IDS` label-sweep exemption, the phone
+> bottom-sheet form, `#hoodmode` and the peek card's commit path.
+>
+> **Consequences for anyone editing this section:**
+> - The **three surfaces that advertise the panel** are lens-dependent now and
+>   must stay in step: `#peek-go`, `#temporal-hint`, and the tooltip's invite
+>   (`click to pin` ⇄ `click for the revenue mix`). A teaser for the wrong panel
+>   is the failure mode.
+> - **A pinned panel must re-render when the lens changes** — `syncPinnedPanel`,
+>   called from `applyMetric`, `applyView`, `applyHoodMode` and once at init. A
+>   revenue breakdown left under a value map is a silent-correctness failure.
+> - `verify-temporal.js` **selects Value on every page it opens.** That is a
+>   change of lens, not a relaxation; `verify-revenue-panel.js` owns the other
+>   mode.
+> - **The two rendering invariants below still apply in full** — they govern the
+>   history chart, which is untouched.
+
 Mechanically a sparkline is trivial: `tooltipFor` already returns an HTML string,
 and 14 points is one inline `<svg><polyline>` — no library, no dependency.
 

@@ -67,7 +67,15 @@ const [url] = process.argv.slice(2);
   check('popup mode: full tooltip (metric + residential share)',
     /\/ acre/.test(tip) && /% of revenue is residential/.test(tip));
   check('popup mode: sparkline present', /class="spark"/.test(tip));
-  check('popup mode: click-to-pin hint present', /click to pin/.test(tip));
+  // ⚠️ The invite's WORDING became lens-dependent on 2026-08-01, and this runs
+  // on the default money/revenue state — where clicking opens the zone-revenue
+  // breakdown, not the history, so the hint says so. What this check defends is
+  // that SOME invite is present: click-to-open is undiscoverable without one.
+  // The per-lens wording is asserted in verify-revenue-panel.js. Note this is
+  // NOT a loosening to "anything goes" — an absent hint still fails.
+  check('popup mode: an invite to click is present',
+    /click (to pin|for the revenue mix)/.test(tip),
+    (tip.match(/click [^<]*/) || ['NONE'])[0]);
 
   // ---- switch to panel mode ----------------------------------------------
   await page.click('#hoodmode-btn');
