@@ -56,6 +56,18 @@ candidate for that queue until Phase 0 closes.
 >   mode.
 > - **The two rendering invariants below still apply in full** — they govern the
 >   history chart, which is untouched.
+> - ⚠️ **NEVER PIN A LIVE-YEAR NUMBER AS A LITERAL IN A CHECK** (2026-08-02).
+>   `verify-temporal.js` used to assert Downtown's current share, commercial
+>   share and assessed value as equalities; the 2026-08-01 refresh moved the
+>   live slice and reddened 5 checks with nothing wrong. The live year is
+>   sourced from the current roll and **genuinely moves week to week** — §0.3's
+>   guard refuses to band it for exactly that reason, so a literal here
+>   contradicts the guard. Live-year assertions are **derived from the loaded
+>   series and compared against the rendered strings**; only the frozen
+>   historical anchors (2012 5.09%, peak 5.55% in 2016) stay pinned, and those
+>   are what prove the archive half of the splice held. Compare parsed numbers
+>   with a one-display-ulp tolerance — building the expectation with the page's
+>   own formatter would hide a formatter bug.
 
 Mechanically a sparkline is trivial: `tooltipFor` already returns an HTML string,
 and 14 points is one inline `<svg><polyline>` — no library, no dependency.
