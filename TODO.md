@@ -58,22 +58,6 @@ Also removed a duplicated preamble block left in this file by the
   - Not obviously worth doing: 1440x900 is clean, and the failure mode is the
     panel overlapping bottom-anchored chrome rather than burying content.
 
-- [ ] **PROPOSE: cache-bust `styles.css` at build time.** Peter, 2026-08-01, on a
-  phone after a successful deploy: *"i'm still not seeing the mill rates on
-  mobile… i can see it when i open it in a private window on my phone. but it's
-  refusing to show on normal safari."* The change was live and correct; his
-  Safari held the old stylesheet. **This is new since 2026-07-29**, when
-  `styles.css` was extracted out of `index.html` — a CSS-only change now ships in
-  a separate file with its own cache lifetime, so a stale stylesheet renders
-  against a fresh page and the feature looks half-deployed.
-  - Both files serve `cache-control: max-age=600` with matching `last-modified`,
-    so the intended window is 10 minutes; observed Safari behaviour was longer.
-  - **Fix:** inject a version query on the `<link>` in `scripts/build_site.py`
-    (content hash or commit sha). ⚠️ **Changes CI behaviour → propose, do not
-    smuggle**, and ⚠️ that script's base-tag guard does a plain substring test
-    over the whole source, which has already killed one deploy — anything near
-    the `<head>` needs the guard re-run. Triage order: `RUNBOOK.md` §3c.
-
 - [ ] **PROPOSE: a data-only refresh runs no front-end check at all.** The
   narrow symptom is closed (see `## Done`, 2026-08-02) but the structural gap it
   exposed is not. `deploy.yml` is scoped to `web/**` minus `web/data/**`, so a
@@ -1180,6 +1164,8 @@ Also removed a duplicated preamble block left in this file by the
 ## Done
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
+
+- [x] **`styles.css` had no cache-busting, so a CSS-only deploy could render stale — FIXED 2026-08-02.** `scripts/build_site.py` stamps `styles.css?v=<8 hex of the file's content hash>` into both builds; content hash not commit sha, so an unrelated deploy keeps the cached copy. Drift fails the build loudly. ⚠️ Scope is stale-CSS-under-fresh-HTML only — a stale `index.html` carries the old query with it, so RUNBOOK §3c keeps its private-window step. — 2026-08-02 · `docs/TODO_archive.md`, `docs/DECISIONS.md`
 
 - [x] **The pinned panel painted over the title blurb in five states — FIXED 2026-08-02.** `#temporal`'s `top: 210px` constant replaced by `syncTemporalPos`, which measures `#title` and `#botleft`; where clearing the blurb leaves no room the **panel** scrolls, not the blurb (`#title` is `.panel`, so pointer-events:none — a capped blurb could not be scrolled to). Two defects found by measuring the fix: content-box `max-height` overshot `#botleft` by 11px, and an absolute close button scrolled away. `verify-temporal.js` 43 → 67 checks, sweeping six states. — 2026-08-02 · `docs/TODO_archive.md`, `docs/DECISIONS.md`
 

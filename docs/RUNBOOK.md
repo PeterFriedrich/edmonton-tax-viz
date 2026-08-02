@@ -272,10 +272,22 @@ shape that makes a change look half-deployed.
 Headers as of 2026-08-01: `index.html` and `styles.css` both come back
 `cache-control: max-age=600` with matching `last-modified`, so the intended
 window is 10 minutes — the observed Safari behaviour was longer.
-⚠️ **There is no cache-busting on the stylesheet link.** Adding a version query
-(`styles.css?v=…`) at build time would remove this class of report entirely; it
-changes CI behaviour, so it is a **proposal, not a silent fix** — tracked in
-`TODO.md`.
+
+**The stylesheet link is cache-busted since 2026-08-02.** `scripts/build_site.py`
+stamps it `styles.css?v=<8 hex of the file's content hash>` in both builds, so a
+CSS change lands under a URL the browser has never seen. The token is a **content
+hash, not the commit sha** — an unrelated deploy leaves it alone and the cached
+copy stays good.
+⚠️ **This does NOT make every "didn't ship" report a non-cache report.** It covers
+stale CSS under *fresh* HTML — the shape above. A browser holding `index.html`
+itself stale holds the old query string with it and sees the old CSS by
+construction, and `index.html` cannot bust itself. **So step 3 still earns its
+place**; what changed is that a *correctly reloaded page* can no longer pair with
+an old stylesheet.
+
+To read the token being served: `curl -s <site>/index.html | grep -o 'styles.css?v=[a-f0-9]*'`.
+If it matches your local `python -c "import hashlib;print(hashlib.sha256(open('web/styles.css','rb').read()).hexdigest()[:8])"`,
+the deployed CSS is your CSS.
 
 ## 4. Wrong numbers suspected on the live site
 

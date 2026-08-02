@@ -24,6 +24,7 @@ BOTH deploy.yml and refresh.yml (factor once, don't inline twice), uploading
   python scripts/build_site.py --src web --out _site
 """
 import argparse
+import hashlib
 import re
 import shutil
 from pathlib import Path
@@ -41,6 +42,7 @@ WIP_BADGE = (
 )
 
 BUILD_RE = re.compile(r'const DEFAULT_BUILD = "(?:public|full)";')
+STYLES_RE = re.compile(r'href="styles\.css"')
 
 
 def set_default_build(html: str, mode: str) -> str:
@@ -56,21 +58,59 @@ def set_default_build(html: str, mode: str) -> str:
     return html2
 
 
+def css_token(css: Path) -> str:
+    """Version token for the stylesheet link: 8 hex of its content hash.
+
+    Content hash rather than the commit sha deliberately — a sha changes on every
+    deploy, including ones that never touched the CSS, so it would discard a
+    working browser cache for nothing. It also needs no git at build time.
+    """
+    return hashlib.sha256(css.read_bytes()).hexdigest()[:8]
+
+
+def cache_bust(html: str, token: str) -> str:
+    """Stamp the stylesheet link with ?v=<token>; fail loudly if it drifted.
+
+    ``styles.css`` split out of ``index.html`` on 2026-07-29, so a CSS-only change
+    now ships in a file with its own cache lifetime and can render stale against a
+    fresh page — a deploy that looks half-shipped (RUNBOOK.md §3c). Note this only
+    covers stale CSS under fresh HTML: a browser holding index.html itself stale
+    holds this query with it.
+    """
+    html2, n = STYLES_RE.subn(f'href="styles.css?v={token}"', html)
+    if n != 1:
+        raise SystemExit(
+            f'build_site: expected exactly 1 `href="styles.css"` link in '
+            f"index.html, found {n} — did the source change?"
+        )
+    return html2
+
+
 def build(src: Path, out: Path) -> None:
     if not (src / "index.html").is_file():
         raise SystemExit(f"build_site: {src}/index.html not found")
+    if not (src / "styles.css").is_file():
+        raise SystemExit(f"build_site: {src}/styles.css not found")
     if out.exists():
         shutil.rmtree(out)
+
+    # Both builds get the SAME token — /full/ resolves styles.css through its
+    # <base href="../" />, so it reads the root's copy of the very file hashed.
+    token = css_token(src / "styles.css")
 
     # Root = PUBLIC: copy the whole tree, then flip index.html's default.
     shutil.copytree(src, out)
     root_index = out / "index.html"
-    root_index.write_text(set_default_build(root_index.read_text(), "public"))
+    root_index.write_text(
+        cache_bust(set_default_build(root_index.read_text(), "public"), token)
+    )
 
     # /full/ = SPECIALIST: index.html only, sharing the root's data/ + vendor/
     # via <base>. The base MUST precede the vendor <link>/<script> it rewrites,
     # so inject it immediately after <head>.
-    full_html = set_default_build((src / "index.html").read_text(), "full")
+    full_html = cache_bust(
+        set_default_build((src / "index.html").read_text(), "full"), token
+    )
     if "<base " in full_html:
         raise SystemExit("build_site: source already carries a <base> tag — "
                          "the /full/ share-root injection assumes none")
