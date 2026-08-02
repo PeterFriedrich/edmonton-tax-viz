@@ -1058,3 +1058,29 @@ in `docs/DECISIONS.md`. Original item as it stood:
     smuggle**, and ⚠️ that script's base-tag guard does a plain substring test
     over the whole source, which has already killed one deploy — anything near
     the `<head>` needs the guard re-run. Triage order: `RUNBOOK.md` §3c.
+
+## A data-only refresh runs no front-end check — CLOSED 2026-08-02
+
+Closed by `tools/profiling/verify-smoke.js`, gated into `refresh.yml` before
+`upload-pages-artifact`. Full reasoning (why the existing suite was refused,
+what the falsification and inverse tests found, and the two checks whose scope
+is narrower than it looks) is the 2026-08-02 row in `docs/DECISIONS.md`.
+⚠️ The item's premise that a refresh 'triggers no deploy' was FALSE — refresh.yml
+deploys itself; the gap was an unchecked deploy, not a missing one. Original item:
+
+- [ ] **PROPOSE: a data-only refresh runs no front-end check at all.** The
+  narrow symptom is closed (see `## Done`, 2026-08-02) but the structural gap it
+  exposed is not. `deploy.yml` is scoped to `web/**` minus `web/data/**`, so a
+  refresh that rewrites `web/data/` triggers **no deploy**, and `refresh.yml`
+  runs no verify script — a data change can therefore alter what the site
+  renders with nothing on fire.
+  - ⚠️ **Correcting this item's own former claim:** it used to say the temporal
+    file "has no equivalent" of `check_value_anchors.py`. **False** —
+    `scripts/check_temporal_years.py` exists, runs in `refresh.yml` before the
+    status-manifest step, and **passed on the 2026-08-01 refresh**. The data
+    side is guarded. What is unguarded is the *render*.
+  - **Open question, not an obvious build:** the verify suite needs a browser
+    and ~1 min/script, and the pipeline guards already cover data correctness —
+    so a full suite on every refresh may cost more than it catches. A single
+    smoke script over the panels that read refreshed data is the cheaper shape.
+    ⚠️ **Changes CI behaviour → propose, do not smuggle.**
