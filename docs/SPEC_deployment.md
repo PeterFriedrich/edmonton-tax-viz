@@ -196,10 +196,23 @@ That is the entire backend.
 2. **Commit if changed.** `git add web/data && git commit || true && git push`.
    The commit only lands if output actually changed, so **git is the change
    detector** — a redundant run pushes nothing.
-3. **Deploy.** Publish `web/` to Pages via the official Pages actions
-   (`upload-pages-artifact` + `deploy-pages`). This serves `web/` directly and
-   removes any "Pages can't serve a subfolder" problem — no `gh-pages` branch or
-   `/docs` move needed.
+3. **Emit the two builds.** `scripts/build_site.py --src web --out _site` — the
+   shared code-shaping step (`deploy.yml` runs the same one). It also stamps the
+   stylesheet link with a content-hash cache-buster (2026-08-02, `RUNBOOK.md` §3c).
+4. **Gate on the RENDER** (added 2026-08-02). `tools/profiling/verify-smoke.js`
+   drives the built tree in headless Chromium, **both builds**, and fails the run
+   *before* the artifact is uploaded — so a red check leaves the live site
+   serving the previous good render. ⚠️ **This is the only step on this path that
+   looks at the rendered page.** Every other guard checks the DATA, and this
+   workflow regenerates *and* deploys in one run, so without it a data change
+   could alter what the site shows with nothing on fire. ⚠️ **Every assertion in
+   it is an invariant or is derived from the served file, never a pinned data
+   value** — a literal would go red on each legitimate refresh
+   (`verify-temporal.js` did exactly that on 2026-08-01), and a check that cries
+   wolf gets ignored. Triage: `RUNBOOK.md` §2.
+5. **Deploy.** Publish the emitted tree to Pages via the official Pages actions
+   (`upload-pages-artifact` + `deploy-pages`). This removes any "Pages can't
+   serve a subfolder" problem — no `gh-pages` branch or `/docs` move needed.
 
 **Auth:** the workflow's built-in `GITHUB_TOKEN` (via `permissions:` above)
 covers both committing to this repo and deploying Pages — **no deploy key or PAT
