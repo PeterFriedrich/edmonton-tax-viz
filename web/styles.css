@@ -150,6 +150,12 @@ html, body { margin: 0; height: 100%; background: #0a0a0f; }
 #services .svc { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 #services .svc-colour { color: #6a6a80; font-size: 10.5px; display: none; }
 #services .svc-colour:hover { color: #e8e8ef; }
+/* Group captions (Transportation / Other services). Labels only — they gate
+   nothing and carry no control; they just stop the six rows reading as one
+   undifferentiated list. First one needs no top margin. */
+#services .svc-group { color: #6a6a80; font-size: 10px; letter-spacing: .06em;
+  text-transform: uppercase; margin: 7px 0 1px; }
+#services .svc-group:first-child { margin-top: 0; }
 /* Glass-view spike denominator (ground vs lot acres) — hidden outside
    glass and on data files without the lot-acre columns. The ratio-view
    denominator picker (#ratio-denom) shares the styling and the
