@@ -5,11 +5,12 @@ GitHub Actions VM has none of the raw inputs, so it must pull them before
 ``main.py`` can regenerate the map. Run locally the same way to refresh a
 snapshot.
 
-Twelve inputs come from Edmonton's Socrata open-data portal:
+Most inputs come from Edmonton's Socrata open-data portal:
   - assessment     q7d6-ambg  (Property Assessment Data, current year)  -> CSV
   - boundaries     65fr-66s6  (Neighbourhood Boundaries)                -> GeoJSON
   - zoning         fixa-tstc  (Zoning Bylaw Geographical Data)          -> GeoJSON
   - roads          9j8t-zm52  (Road Network centrelines)                -> GeoJSON
+  - bike_routes    vd4b-a4iv  (Bike Routes: on- and off-road)           -> GeoJSON
   - property_info  dkk9-cj3x  (Property Info: lot size / zoning /
                                year built, current year)                -> CSV
   - fire_events    7hsn-idqi  (Fire Response, current + historical)     -> CSV
@@ -95,6 +96,12 @@ SOURCES = {
         # the first byte; the default 300s read timeout has failed on the tail
         # (run 28976864116, 2026-07-08). Give the slow endpoint real headroom.
         "timeout": 900,
+    },
+    "bike_routes": {
+        "url": "https://data.edmonton.ca/resource/vd4b-a4iv.geojson?$limit=20000",
+        "dest": RAW / "bike_routes.geojson",
+        "limit": 20000,  # 10,417 segments as of 2026-08 (SPEC_services.md)
+        "count_url": _count_url("vd4b-a4iv"),
     },
     "property_info": {
         # Full-export endpoint, no $limit — only the server cross-check applies.
