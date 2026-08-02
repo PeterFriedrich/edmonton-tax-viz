@@ -234,6 +234,41 @@ const [url] = process.argv.slice(2);
   }
   await phone.close();
 
+  // --- 6b. THE DISPLAY MENU MUST CLEAR THE DATA & METHODS BUTTON -----------
+  // The two pods are a STACK in one column (#a11y bottom:40px, #about
+  // bottom:68px, both buttons 26px). #a11y-menu opens upward, and anchoring it
+  // to its OWN button's top (`calc(100% + 6px)`) put its bottom 23px inside the
+  // Data & Methods button — measured identically at 1440x900, 390x844 and
+  // 360x780, because both offsets are fixed. Reported by Peter 2026-07-28;
+  // reproduced 2026-08-02.
+  //
+  // ⚠️ ASSERTS GEOMETRY (no overlap), NOT PAINT ORDER, and that is the point.
+  // The standing hypothesis was a z-index asymmetry (#about.open lifts to 5,
+  // #a11y has no equivalent), whose fix would paint the MENU over the BUTTON —
+  // that passes a "menu is on top" check while burying a control. Only "they do
+  // not overlap at all" rejects both failures.
+  for (const [w, h] of [[1440, 900], [390, 844], [360, 780]]) {
+    const p = await browser.newPage({ viewport: { width: w, height: h } });
+    await p.goto(url, { waitUntil: 'networkidle', timeout: 60000 });
+    await p.waitForTimeout(4000);
+    await p.click('#a11y-btn');
+    await p.waitForTimeout(400);
+    const g = await p.evaluate(() => {
+      const m = document.getElementById('a11y-menu').getBoundingClientRect();
+      const a = document.getElementById('about-btn').getBoundingClientRect();
+      return { mTop: Math.round(m.top), mBottom: Math.round(m.bottom),
+               aTop: Math.round(a.top), aBottom: Math.round(a.bottom),
+               overlap: m.right > a.left && m.left < a.right &&
+                        m.bottom > a.top && m.top < a.bottom,
+               menuOnScreen: m.top >= 0 && m.left >= 0 && m.right <= window.innerWidth };
+    });
+    check(`${w}x${h}: Display menu clears the Data & Methods button`,
+      !g.overlap, `menu ${g.mTop}-${g.mBottom} vs button ${g.aTop}-${g.aBottom}`);
+    check(`${w}x${h}: Display menu is still fully on screen`, g.menuOnScreen,
+      `top=${g.mTop}`);
+    await p.close();
+  }
+
   // --- 7. a broken status.json must not break the credit -------------------
   const blind = await browser.newPage({ viewport: { width: 1440, height: 900 } });
   await blind.route('**/status.json*', r => r.abort());

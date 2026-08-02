@@ -8,6 +8,38 @@ Items are verbatim as they were closed, newest-moved first in the order they app
 
 ---
 
+- [x] **UI BUG: the Display popover and the Data & Methods pod overlap.
+  FIXED 2026-08-02** (`#a11y-menu { bottom: calc(200% + 8px) }`;
+  `verify-about.js` **44 → 50 checks**). Reported by Peter 2026-07-28.
+  **Both the reported DIRECTION and the suspected CAUSE failed to survive
+  reproduction — the fifth time an open item's stated cause proved wrong.**
+  - **The direction was backwards.** The item said Display "covers" the
+    Data & Methods button. Measured, it is the reverse: equal `z-index` falls
+    back to DOM order and `#about` is later, so the **button paints over the
+    menu**, truncating *"Landmarks & nearby pla⌷es"*. Found in a screenshot;
+    the `elementFromPoint` probe agreed.
+  - **The cause was not the z-index asymmetry.** It is that the two pods form a
+    **stack** in one column (`#a11y` `bottom:40px`, `#about` `bottom:68px`,
+    both buttons 26px tall) while `#a11y-menu` was anchored to its **own**
+    button's top (`calc(100% + 6px)`), ignoring the sibling above it. Both
+    offsets are fixed, so the ~23px collision was identical at 1440x900,
+    390x844 and 360x780.
+  - ⚠️ **THE SUSPECTED FIX WOULD HAVE BEEN WORSE THAN THE BUG.** The
+    hypothesised `#a11y.open { z-index: 5 }` was **falsified by applying it**:
+    it paints the menu over the button, and `verify-about.js` then **times
+    out** because the *"Landmarks & nearby places"* label **intercepts pointer
+    events** — the Data & Methods button becomes **unclickable**. A visual
+    defect would have been traded for a dead control. (Caught only because
+    `verify-about.js` uses a real `page.click()`; a JS `.click()` bypasses
+    `pointer-events` and would have passed.)
+  - ⚠️ **The new checks assert GEOMETRY (no overlap), not paint order.** A
+    "menu is on top" assertion passes for the z-index version — the very
+    outcome to reject. Only *they do not overlap at all* rejects both failures.
+  - `calc(200% + 8px)` tracks the shared button styling (the pod's own height
+    counted twice, plus the 2px inter-pod gap and the 6px the menu already
+    wanted) instead of hardcoding 60px.
+
+
 - [x] **▶ REVENUE-LENS READOUT — phase 2 of 2: the UI. DONE 2026-08-01 (both
   halves).** Phase 1 (the pipeline) shipped the columns earlier the same day.
   Peter: *"I actually want this in the popup panel, instead of the assessment
