@@ -834,6 +834,30 @@ tests/
 
 Tests use `pytest`. All fixtures are synthetic — small inline DataFrames/GeoDataFrames. No real data files required, since raw data is not committed.
 
+### The three tiers, and which failures each can see
+
+`pytest` covers the pipeline modules. It cannot see a *render* failure, so two
+browser-driven tiers sit above it in `tools/profiling/`:
+
+| tier | what it can catch | when it runs |
+|---|---|---|
+| `pytest` | pipeline logic, schema contracts | every CI run |
+| `verify-*.js` (29 scripts) | UI behaviour, layout, per-feature contracts. **Carry literals calibrated to a data snapshot**, so they are for the CODE path | locally + before merging |
+| `verify-smoke.js` | the render surviving a DATA change. **Invariant-only — nothing pinned to a value** | **`refresh.yml`, gating the weekly publish** |
+
+⚠️ **The split is the point, not duplication.** The suite's pinned literals are
+what makes it useful against code changes and *unusable* weekly — one went red on
+a legitimate refresh (2026-08-01) because it pinned a live-year value the pipeline
+guard deliberately refuses to band. `verify-smoke.js` exists because the weekly
+path needs assertions that cannot cry wolf: counts derived from the served files,
+required columns derived from `METRICS`/`USE_CATEGORIES`' own keys, and a
+garbage sweep over every hood × lens.
+
+⚠️ **A garbage sweep cannot see a dropped column** — `viewTooltip` guards each row
+with `!= null`, so a missing property **omits the row** rather than printing NaN.
+That is why the column-presence checks exist; falsification found this hole in the
+sweep itself.
+
 ### What to test per module
 
 **`test_load_assessment.py`**
