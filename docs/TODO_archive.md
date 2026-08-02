@@ -8,6 +8,49 @@ Items are verbatim as they were closed, newest-moved first in the order they app
 
 ---
 
+- [x] **`verify-temporal.js` HAD BEEN RED SINCE THE 2026-08-01 AUTO-REFRESH, and
+  nothing reported it. DIAGNOSED AND FIXED 2026-08-02** (42 → 43 checks, green).
+  5 of 42 checks failed on clean master: Downtown's share read **3.28%** where
+  the script pinned **3.30%**, with the commercial-base and current-value
+  literals moved with it.
+  - **The item asked: did the data move, or did the splice move? Answer: the
+    data, and only its live year.** Diffing the served `temporal.json` at
+    `ab8bac7` against `4466fbf` across all 406 hoods and all three series:
+    **839 cells changed and every single one is in the 2025 column.**
+    2012–2023 are **bit-identical**, the hood set is unchanged (nonzero counts
+    404 / 406 / 402 both sides), and the shares still conserve to 100%
+    (999,993 → 1,000,008 ppm). Citywide 2025 value rose 0.296%
+    ($237.50B → $238.20B) while Downtown's own fell 0.32%, which is exactly why
+    its share fell 3.2991% → 3.2788%. The archive half of the splice never moved.
+  - ⚠️ **THE DEFECT WAS IN THE SCRIPT, AND IT CONTRADICTED A GUARD THAT WAS
+    ALREADY RIGHT.** `scripts/check_temporal_years.py` ran on that refresh and
+    **passed**; its docstring pre-registers this exact movement — *"The live
+    year is NOT pinned to a band. It is a live snapshot that genuinely moves
+    week to week … so a pinned band would cry wolf continuously."*
+    `verify-temporal.js` pinned that same quantity to **equalities**. This was
+    not a near-miss the guard failed to catch; it was cry-wolf by construction,
+    and it would have gone red after essentially every roll update.
+  - ⚠️ **The item's own premise was false and is corrected in place:** it claimed
+    the temporal file "has no equivalent" of `check_value_anchors.py`. The guard
+    exists and runs in `refresh.yml` before the status-manifest step. **Sixth
+    time an open item's stated cause did not survive reproduction.**
+  - **Fix: derive, don't band** (Peter's call over the standing *pin bands*
+    rule). Live-year numbers are read from the loaded series via `temporalFor`
+    and compared against the rendered strings; historical anchors (2012 5.09%,
+    peak 5.55% in 2016) stay pinned tight, because those are what prove the
+    archive half held. A band would still have needed a width guess and would
+    still drift; deriving cannot cry wolf and additionally catches the panel
+    rendering the wrong hood, series or index.
+  - ⚠️ **Compare PARSED NUMBERS, never a string built with the page's own
+    formatter** — that would have made S85's `fmtBig` bug invisible. Tolerance
+    is one display ulp (0.006; both formatters carry two decimals).
+  - **Falsified all three, per the standing rule:** an off-by-one live index
+    (`length - 2`) fails 3 checks; the commercial slot rendering `share` instead
+    of `commercial` fails 1; `fmtBig` dropping a decimal (**"$8B"** — the S85
+    bug shape exactly) fails 1.
+  - **Left open as a proposal:** a data-only refresh still triggers no deploy and
+    runs no front-end check at all. The data side is guarded; the *render* is not.
+
 - [x] **UI BUG: the Display popover and the Data & Methods pod overlap.
   FIXED 2026-08-02** (`#a11y-menu { bottom: calc(200% + 8px) }`;
   `verify-about.js` **44 → 50 checks**). Reported by Peter 2026-07-28.

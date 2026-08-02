@@ -89,25 +89,22 @@ Also removed a duplicated preamble block left in this file by the
     over the whole source, which has already killed one deploy — anything near
     the `<head>` needs the guard re-run. Triage order: `RUNBOOK.md` §3c.
 
-- [ ] **`verify-temporal.js` HAS BEEN RED SINCE THE 2026-08-01 AUTO-REFRESH, and
-  nothing reported it.** 5 of 42 checks fail on **clean master** (reproduced in a
-  worktree, so it is not a working-tree artifact): Downtown's share reads
-  **3.28%** where the script pins **3.30%**, and the commercial-base and
-  current-value literals moved with it. The 2026-08-01 refresh (`ab8bac7`)
-  rewrote `temporal.json` + `temporal_archive.json`.
-  - **Decide which it is before re-pinning** — a fresh roll moving Downtown 0.02
-    points is unremarkable, but that is a hypothesis, not a reading. The archive
-    is a splice of a historical file with known gaps (`SPEC_temporal.md` §0), so
-    "the data moved" and "the splice moved" are different problems.
-  - ⚠️ **The gap that let it through is the reportable part:** a data-only
-    refresh triggers **no deploy** (`deploy.yml` is scoped to `web/**` minus
-    `web/data/**`) and the refresh workflow does not run the verify suite, so a
-    data change can red-line the front end with nothing on fire. `refresh.yml`
-    already runs `check_value_anchors.py` for the geojson — the temporal file has
-    no equivalent.
-  - **Pin bands, not equalities** when re-pinning — the standing rule from
-    `check_value_anchors.py` (DECISIONS 2026-07-28), and these five literals are
-    exactly the failure it was written about.
+- [ ] **PROPOSE: a data-only refresh runs no front-end check at all.** The
+  narrow symptom is closed (see `## Done`, 2026-08-02) but the structural gap it
+  exposed is not. `deploy.yml` is scoped to `web/**` minus `web/data/**`, so a
+  refresh that rewrites `web/data/` triggers **no deploy**, and `refresh.yml`
+  runs no verify script — a data change can therefore alter what the site
+  renders with nothing on fire.
+  - ⚠️ **Correcting this item's own former claim:** it used to say the temporal
+    file "has no equivalent" of `check_value_anchors.py`. **False** —
+    `scripts/check_temporal_years.py` exists, runs in `refresh.yml` before the
+    status-manifest step, and **passed on the 2026-08-01 refresh**. The data
+    side is guarded. What is unguarded is the *render*.
+  - **Open question, not an obvious build:** the verify suite needs a browser
+    and ~1 min/script, and the pipeline guards already cover data correctness —
+    so a full suite on every refresh may cost more than it catches. A single
+    smoke script over the panels that read refreshed data is the cheaper shape.
+    ⚠️ **Changes CI behaviour → propose, do not smuggle.**
 
 - [ ] **⚠️ DATA VINTAGE: a local `python main.py` REGENERATES THE MAP FROM STALE
   RAW DATA — do not commit the result** (found 2026-08-01). `data/raw/` on the
@@ -1198,6 +1195,8 @@ Also removed a duplicated preamble block left in this file by the
 ## Done
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
+
+- [x] **`verify-temporal.js` red since the 2026-08-01 refresh — DIAGNOSED AND FIXED 2026-08-02.** The data moved, the splice did not: 839 changed cells, **every one in 2025**, 2012–2023 bit-identical across all 406 hoods. The defect was in the script, which pinned the live year the pipeline guard deliberately refuses to band. Live-year assertions now derived from the loaded series; historical anchors stay pinned. 42 → 43 checks, green. — 2026-08-02 · `docs/TODO_archive.md`, `docs/DECISIONS.md`
 
 - [x] **UI BUG: the Display popover and the Data & Methods pod overlap. FIXED 2026-08-02** — 2026-08-02 · `docs/TODO_archive.md`
 
