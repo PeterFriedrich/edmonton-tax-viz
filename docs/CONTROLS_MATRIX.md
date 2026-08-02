@@ -181,10 +181,16 @@ whenever roads are present regardless of which service drives the ramp, so a
 positional rule would print road supply under a stormwater-coloured map.
 Services' headline reads `state.svcDriver`.
 
-**`#temporal`, the assessment-history panel (2026-07-29), is the surface it
-governs** — and it is no longer tier-less. It appears in every view, in **both
-builds** (public as of 2026-07-31), and is still the only surface openable by
-clicking **the map itself**. It is
+**`#temporal`, the pinned hood panel (2026-07-29), is the surface it governs** —
+and it is no longer tier-less. ⚠️ **It is no longer the assessment-history panel
+in every lens (2026-08-01): on Money's REVENUE metrics it shows the hood's
+zone-revenue breakdown instead**, and the history belongs to Value, which is what
+it describes. One element, two modes (`renderHistory` / `renderRevenueMix`), so
+the three dismissals and the phone bottom-sheet form are shared rather than
+duplicated. **Three surfaces advertise it and all three follow the lens:**
+`#peek-go`, `#temporal-hint`, and the tooltip's invite. It appears in every view,
+in **both builds** (public as of 2026-07-31), and is still the only surface
+openable by clicking **the map itself**. It is
 in `CHROME_IDS`, so the label sweep dodges it while open. Three dismissals with
 deliberately different scopes: the **×** clears the pinned hood (content),
 **Escape** and **`#hoodmode`** leave the mode. Design and the two rendering

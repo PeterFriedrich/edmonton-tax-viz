@@ -691,6 +691,14 @@ from the same file `load_zoning` uses
 **Outputs:** one row per neighbourhood — `rev_frac_*` per land-use category
 (summing to 1.0), plus `rev_zone_matched_frac`
 
+**Consumer (added 2026-08-01):** the front end's `renderRevenueMix` — on Money's
+revenue metrics `#temporal` shows these shares instead of the assessment history.
+⚠️ **The category labels and colours are NOT redeclared there**: the panel derives
+its column as `"rev_" + u.frac` over `USE_CATEGORIES`, which is the front-end
+mirror of `ZONE_CATEGORY`. So the "cannot drift" property below holds end to end,
+not just inside the pipeline — but it depends on `OUTPUT_NAMES`' keys continuing
+to match `USE_CATEGORIES`' keys. Change one and change the other.
+
 **Responsibilities:**
 - Place each property in a zoning polygon by point-in-polygon (CRS stated on
   both sides, never inferred), and apportion its **levy** to that polygon's

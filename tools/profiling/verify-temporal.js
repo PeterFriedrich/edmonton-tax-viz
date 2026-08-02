@@ -36,11 +36,20 @@ const [url] = process.argv.slice(2);
     console.log(`${cond ? 'PASS' : 'FAIL'}  ${name}${extra ? '  ' + extra : ''}`);
     if (!cond) fail++;
   };
+  // ⚠️ THE HISTORY PANEL LIVES UNDER **VALUE** SINCE 2026-08-01. The app loads
+  // on Revenue, where #temporal now shows the zone-revenue breakdown instead
+  // (DECISIONS.md, and `verify-revenue-panel.js` owns that side). Every page
+  // this script opens therefore selects Value first — otherwise the whole file
+  // would be asserting the history contract against a panel deliberately
+  // showing something else. This is a change of LENS, not of behaviour: nothing
+  // below was relaxed.
   const open = async (u, vp) => {
     const page = await browser.newPage({ viewport: vp });
     page.on('pageerror', e => console.log('PAGE EXCEPTION:', e.message));
     await page.goto(u, { waitUntil: 'networkidle', timeout: 60000 });
     await page.waitForTimeout(4000);
+    await page.evaluate(() => applyMetric('value_per_acre'));
+    await page.waitForTimeout(600);
     return page;
   };
   const overlap = (a, b) => a.right > b.left && a.left < b.right &&
