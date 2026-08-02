@@ -239,6 +239,12 @@ const [url] = process.argv.slice(2);
   // 289px while `panel clears the title` stayed green — it only ever ran on
   // money/value. The state list below is the fix for the CHECK; syncTemporalPos
   // is the fix for the panel.
+  // ⚠️ Infill and Uses are FULL-BUILD ONLY — their controls are hidden on the
+  // public root, so a sweep that assumes them fails there for the wrong reason
+  // (caught running this against production). Gated, not dropped: the states
+  // still run wherever they exist, and the gate is read from the page rather
+  // than inferred from the URL.
+  const fullBuild = await page.evaluate(() => BUILD === 'full');
   const STATES = [
     // ⚠️ Revenue first: this file opens every page on Value (see `open`), which
     // hides #revcut and shows #moneymode in its place — the two row-2s are
@@ -251,10 +257,21 @@ const [url] = process.argv.slice(2);
     ['money / change lens',   ['#metric-row button[data-metric="value"]',
                                '#moneymode button[data-moneymode="change"]']],
     ['development',           ['#views button[data-view="development"]']],
-    ['development / infill',  ['#devmode button[data-devmode="infill"]']],
-    ['uses',                  ['#views button[data-view="uses"]']],
+    ['development / infill',  ['#devmode button[data-devmode="infill"]'], 'full'],
+    ['uses',                  ['#views button[data-view="uses"]'], 'full'],
   ];
-  for (const [label, clicks] of STATES) {
+  for (const [label, clicks, needs] of STATES) {
+    if (needs === 'full' && !fullBuild) {
+      // Rendered-box test, not `display:none` on the button: Uses hides the
+      // button itself, while Infill hides its CONTAINER (#devmode), so a
+      // property check on the button passes for one and fails for the other.
+      check(`${label}: full-only, correctly absent from this build`,
+        await page.evaluate(sel => {
+          const b = document.querySelector(sel);
+          return !b || b.getClientRects().length === 0;
+        }, clicks[0]));
+      continue;
+    }
     for (const sel of clicks) {
       try { await page.click(sel, { timeout: 4000 }); await page.waitForTimeout(350); }
       catch (e) { check(`${label}: control ${sel} is clickable`, false, e.message.split('\n')[0]); }
