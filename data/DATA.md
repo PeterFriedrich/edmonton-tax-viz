@@ -1125,3 +1125,68 @@ the Uses composition become one map read two ways and cannot disagree.
 ⚠️ **1,585 properties sit exactly on a zone boundary** and match two polygons.
 `sjoin` emits a row per match, so they must be de-duplicated or their levy is
 double-counted and the per-hood fractions stop summing to 1.
+
+## 15. Bike Routes (transportation lens, added 2026-08-02)
+`vd4b-a4iv` ("Bike Routes") — on- and off-road cycling routes as
+MultiLineStrings, EPSG:4326 via Socrata GeoJSON. **10,417 segments** on first
+pull (2026-08-02); 8.0 MB raw. Feed is live and City-maintained (`updatedAt`
+2026-07-27). Downloaded by `scripts/download_data.py` (`bike_routes`), both
+truncation guards active (`$limit=20000`, server `count(*)` cross-check).
+**Consumed by `src/load_bike.py`** → `bike_m_per_acre` (SPEC_services.md
+"Transportation lens"). Carries no roll-year pin — like roads and transit its
+provenance is `last_checked`.
+
+### Key columns
+- `classification` — the 12-value closed enumeration that decides what counts;
+  see the table below. Mapped by an EXPLICIT dict (`CLASSIFICATION_GROUP`).
+- `route_coming_soon` — real bool. **651 rows are `True`**: planned, not built.
+- `type` — `ON ROAD` / `OFF ROAD`. Orthogonal to `classification` (Shared
+  Pathway appears as both), so it is kept only as the internal
+  `bike_m_onroad` / `bike_m_offroad` split, never as the classifier.
+- `network_classification`, `road_segment_type`, `construction_year`,
+  `street_name_full`, `duration`, `line_weight` — unused.
+
+### What counts, and the two traps
+Measured 2026-08-02, kilometres of built (not coming-soon) route:
+
+| classification | km | group |
+|---|---|---|
+| Shared Pathway | 806.4 | **dedicated** |
+| Shared Trail | 74.7 | **dedicated** |
+| Protected Bike Lane | 56.7 | **dedicated** |
+| Painted Bike Lane | 27.9 | **dedicated** |
+| Local Street Bikeway | 7.9 | **dedicated** |
+| Contra-Flow Bike Lane | 7.4 | **dedicated** |
+| Shared Roadway - Lower Traffic | 194.7 | shared_roadway (excluded) |
+| Shared Roadway - Higher Traffic | 76.4 | shared_roadway (excluded) |
+| Bus / Bike / Taxi Lane | 9.0 | shared_roadway (excluded) |
+| Walkway / Breezeway | 238.7 | pedestrian (excluded) |
+| Maintenance Access | 1.9 | pedestrian (excluded) |
+| Unclassified | — | unclassified (excluded; 100% coming-soon) |
+
+⚠️ **TRAP 1 — "Shared Roadway" IS A ROAD, AND IT IS ALREADY COUNTED.** Those
+280 km are ordinary streets carrying a bike-route designation. They add no
+asset, and `load_roads` already counts their metres in `road_m_total`, so
+including them double-counts the road network against itself. This is why the
+two supply columns are safe to read side by side.
+
+⚠️ **TRAP 2 — "Walkway / Breezeway" IS 3,031 ROWS OF PEDESTRIAN PATH**, the
+second-largest classification in the whole feed. A naive "sum the bike routes"
+metric is ~50% not-bike by length.
+
+### Known Quirks
+- **Unmatched classifications default to EXCLUDED**, the opposite of
+  `load_roads`' default-to-local. The feed is mostly *not* bike infrastructure,
+  so an unrecognised value is more likely another non-asset; defaulting in would
+  let upstream drift silently inflate a supply metric. Warned loudly either way.
+- **981 km kept, 1.17% falls outside every neighbourhood polygon** (conservation
+  guard, well under the 5% warn threshold). **335 of 407 hoods** have any
+  dedicated route; the other 72 are true zeros at the join.
+- ⚠️ **The metric is 82% off-road pathway, much of it river-valley and ravine
+  trail** — so `bike_m_per_acre` peaks in exactly the set-aside hoods that
+  generate almost no revenue (top 4: MILL CREEK RAVINE NORTH/SOUTH, RIVER VALLEY
+  WALTERDALE/GLENORA, all set-aside). Same shape as the `RATIO_ROAD_FLOOR`
+  denominator artifact. The UI blurb says so.
+- **`web/data/bike_routes.json`** (committed, lazy-loaded, 0.24 MB, 4,049 welded
+  path segments) is the map's context layer — the LRT-lines format
+  (`{"lines": [...]}`), geometry only, no per-feature value.

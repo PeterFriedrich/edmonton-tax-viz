@@ -364,6 +364,35 @@ Height: none (flat plane); tooltip stays raw. Top hoods: DOWNTOWN 27.1,
 MILL WOODS TOWN CENTRE 25.9, ERMINESKIN 17.3 stop-events/acre/weekday —
 the transit-centre + LRT-corridor geography, as expected.
 
+### 6.9 Bike supply is the transit case again — DECIDED: sqrt colour (2026-08-02)
+
+`bike_m_per_acre` (SPEC_services "Transportation lens"; metres of DEDICATED
+cycling infrastructure per boundary acre, first real run — 407 hoods, 72 true
+zeros: hoods with no dedicated route) through the same biased-skew test:
+
+| set | n | median | p97.5 | max | raw | sqrt | log |
+|---|---|---|---|---|---|---|---|
+| all (positive) | 335 | 7.19 | 23.69 | 42.23 | 1.40 | **0.11** | -5.14 |
+| excl set-aside (positive) | 298 | 7.07 | 22.13 | 25.56 | 0.78 | **-0.13** | -5.53 |
+
+**clamp/median = 4.0x** on the shipped scale (clamp = p97.5 of non-set-aside
+incl. zeros = 21.68, median 5.47), so linear parks the median hood at **25%** of
+the ramp — past the storm/water ~2x threshold that keeps those linear. **Log is
+rejected** on the §6.5 grounds: **61 non-set-aside hoods are true zeros** where
+log is undefined, and it over-corrects the positive core to -5.53, by far the
+worst over-correction in this file. **sqrt** puts the median at **50%** of the
+ramp (skew +0.11, the closest to zero of any lens so far).
+
+⚠️ **The top of this distribution is NOT a cycling-investment ranking.** The
+four highest hoods are MILL CREEK RAVINE NORTH (42.2), MILL CREEK RAVINE SOUTH
+(41.5), RIVER VALLEY WALTERDALE (38.4) and RIVER VALLEY GLENORA (32.4) — **all
+four set-aside**, i.e. rendered grey and off-scale. 82% of the metric's length
+is off-road shared pathway, much of it river-valley trail. The highest hoods
+still ON the scale are CLOVERDALE (25.6) and GRAYDON HILL (24.9). The UI blurb
+carries this; a reader who skips it will misread the map.
+
+Height: none (flat plane); tooltip stays raw.
+
 Skew numbers here are reproducible headless via `scripts/investigate_skew.py`
 (`skew_table` / `load_metrics` / `lowest_kept` are importable). The plots below are
 the remaining visual confirmations:

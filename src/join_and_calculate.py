@@ -27,6 +27,14 @@ ZONING_COLUMNS = [
 # HERE against boundary area_acres — the same denominator as value/revenue.
 ROAD_COLUMNS = ["road_m_total"]
 
+# Bike-supply column carried from load_bike when a bike frame is supplied
+# (services lens, SPEC_services.md "Transportation lens"). bike_m_total =
+# DEDICATED cycling assets only — shared roadways are excluded there precisely
+# because those metres are already in road_m_total above. The on/off-road split
+# stays in load_bike; bike_m_per_acre is computed HERE against boundary
+# area_acres, the same denominator as everything else.
+BIKE_COLUMNS = ["bike_m_total"]
+
 # Modeled stormwater column carried from load_stormwater when supplied
 # (utility lens #1, SPEC_utilities.md — MODELED, not billed). The rate-
 # independent lot/effective areas stay in load_stormwater; per-acre is
@@ -225,6 +233,7 @@ def join_and_calculate(
     boundaries: gpd.GeoDataFrame,
     zoning: pd.DataFrame | None = None,
     roads: pd.DataFrame | None = None,
+    bike: pd.DataFrame | None = None,
     stormwater: pd.DataFrame | None = None,
     fire: pd.DataFrame | None = None,
     transit: pd.DataFrame | None = None,
@@ -254,6 +263,13 @@ def join_and_calculate(
     road_m_per_acre against boundary area_acres (SPEC_services.md). Boundaries
     with no roads overlay default to 0 — genuinely zero city-maintained
     collector/local road, unlike the zoning NaNs — and are flagged.
+
+    ``bike`` (optional, from load_bike.py) adds bike_m_total and computes
+    bike_m_per_acre the same way (SPEC_services.md "Transportation lens").
+    DEDICATED cycling assets only — shared roadways are excluded upstream
+    because their metres are already in road_m_total, so the two supply
+    columns are disjoint and may be read together. Boundaries with no
+    dedicated route default to a true 0.
 
     ``stormwater`` (optional, from load_stormwater.py) adds the MODELED
     storm_charge_annual and computes storm_charge_per_acre against boundary
@@ -452,6 +468,41 @@ def join_and_calculate(
         out_cols = (
             [c for c in out_cols if c != "geometry"]
             + ROAD_COLUMNS + ["road_m_per_acre"] + ["geometry"]
+        )
+
+    # Services lens: dedicated cycling supply (SPEC_services.md "Transportation
+    # lens"). Same shape as roads — an unmatched bike hood is a reported drop,
+    # and a boundary with no overlay is a true zero (no dedicated bike route
+    # there), not missing data.
+    if bike is not None:
+        boundary_names = set(joined["neighbourhood_name"])
+        unmatched_bike = sorted(set(bike["neighbourhood_name"]) - boundary_names)
+        if unmatched_bike:
+            logger.warning(
+                "%d bike neighbourhood(s) with no boundary match (dropped):\n  %s",
+                len(unmatched_bike),
+                "\n  ".join(unmatched_bike),
+            )
+
+        joined = joined.merge(
+            bike[["neighbourhood_name", *BIKE_COLUMNS]],
+            on="neighbourhood_name",
+            how="left",
+            validate="m:1",
+        )
+
+        no_bike = joined["bike_m_total"].isna()
+        if no_bike.any():
+            logger.info(
+                "%d boundary neighbourhood(s) with no dedicated bike route (default 0 m)",
+                int(no_bike.sum()),
+            )
+        joined["bike_m_total"] = joined["bike_m_total"].fillna(0.0)
+        joined["bike_m_per_acre"] = joined["bike_m_total"] / safe_area
+
+        out_cols = (
+            [c for c in out_cols if c != "geometry"]
+            + BIKE_COLUMNS + ["bike_m_per_acre"] + ["geometry"]
         )
 
     # Utility lens #1: merge the modeled stormwater charge when supplied
@@ -812,7 +863,8 @@ SLIM_COLUMNS = [
     "frac_never", "frac_notyet", "frac_inst",
     "frac_residential", "frac_commercial", "frac_industrial",
     "frac_mixed", "frac_dc", "frac_other",
-    "is_residential", "road_m_per_acre", "storm_charge_per_acre",
+    "is_residential", "road_m_per_acre", "bike_m_per_acre",
+    "storm_charge_per_acre",
     "fire_events_per_acre", "transit_dep_per_acre",
     "water_charge_per_acre", "water_fixed_per_acre",
     "svc_cost_per_acre",

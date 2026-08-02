@@ -174,6 +174,11 @@
     </label>
     <span class="hd" id="services-hd">Services</span>
     <div id="services">
+      <!-- Grouped 2026-08-02 (SPEC_services.md "Transportation lens"). The
+           groups are LABELS ONLY: every row is still an independent checkbox
+           feeding state.services, and the colour radio still ranges over all
+           of them. Nothing here gates anything — see CONTROLS_MATRIX.md. -->
+      <div class="svc-group">Transportation</div>
       <div class="svc" data-service="roads">
         <label title="The road network: collector + local roads coloured by their neighbourhood's road metres per acre; arterials neutral">
           <input type="checkbox" class="svc-on" checked /> Roads — m/acre
@@ -182,6 +187,23 @@
           <input type="radio" name="svc-driver" checked /> colour
         </label>
       </div>
+      <div class="svc" data-service="transit">
+        <label title="Each neighbourhood coloured by scheduled transit stop-events per acre on an average weekday (current ETS signup) — scheduled service, not ridership; lines trace the LRT network, dots mark LRT stations and transit centres">
+          <input type="checkbox" class="svc-on" /> Transit — stop-events/acre/day
+        </label>
+        <label class="svc-colour" title="This service drives the colour ramp; the others render neutral">
+          <input type="radio" name="svc-driver" /> colour
+        </label>
+      </div>
+      <div class="svc" data-service="bike">
+        <label title="Each neighbourhood coloured by metres of dedicated cycling infrastructure per acre — bike lanes, bikeways and off-road pathways; streets merely signed as bike routes are excluded (already counted as roads), as are walkways and routes marked coming soon">
+          <input type="checkbox" class="svc-on" /> Bike — m/acre
+        </label>
+        <label class="svc-colour" title="This service drives the colour ramp; the others render neutral">
+          <input type="radio" name="svc-driver" /> colour
+        </label>
+      </div>
+      <div class="svc-group">Other services</div>
       <div class="svc" data-service="storm">
         <label title="Each neighbourhood coloured by its modeled annual stormwater utility charge per acre — estimated from lot sizes and zoning, not billed amounts">
           <input type="checkbox" class="svc-on" /> Stormwater — modeled $/acre
@@ -201,14 +223,6 @@
       <div class="svc" data-service="water">
         <label title="Each neighbourhood coloured by its modeled annual residential water + sewer charge per acre — verified 2026 tariffs applied to the assessment roll, not billed amounts; commercial properties not modeled">
           <input type="checkbox" class="svc-on" /> Water/sewer — modeled $/acre
-        </label>
-        <label class="svc-colour" title="This service drives the colour ramp; the others render neutral">
-          <input type="radio" name="svc-driver" /> colour
-        </label>
-      </div>
-      <div class="svc" data-service="transit">
-        <label title="Each neighbourhood coloured by scheduled transit stop-events per acre on an average weekday (current ETS signup) — scheduled service, not ridership; lines trace the LRT network, dots mark LRT stations and transit centres">
-          <input type="checkbox" class="svc-on" /> Transit — stop-events/acre/day
         </label>
         <label class="svc-colour" title="This service drives the colour ramp; the others render neutral">
           <input type="radio" name="svc-driver" /> colour
@@ -805,6 +819,23 @@
                "service concentrates on the central corridors. Grey = " +
                "set-aside natural/undeveloped land.",
       },
+      bike: {
+        label: "Bike",
+        plane: { col: "bike_m_per_acre", transform: "sqrt" },
+        blurb: "Each neighbourhood is coloured by metres of dedicated cycling " +
+               "infrastructure per acre — protected, painted and contra-flow " +
+               "bike lanes, local street bikeways, and off-road shared " +
+               "pathways and trails; lines trace that network. Dedicated " +
+               "only: streets merely signed as bike routes are left out, " +
+               "because they are already counted as roads, and walkways and " +
+               "breezeways are pedestrian rather than cycling assets. Routes " +
+               "marked coming soon are excluded — this is what is built, not " +
+               "what is planned. Most of the length is off-road pathway, much " +
+               "of it in the river valley and ravines, so the highest values " +
+               "fall in set-aside parkland that generates almost no revenue. " +
+               "Colour is square-root scaled. Grey = set-aside natural/" +
+               "undeveloped land.",
+      },
       servicecost: {
         label: "Service cost",
         plane: { col: "svc_cost_per_acre", transform: "sqrt" },
@@ -1079,7 +1110,7 @@
                     devMetric: "units", // Development-view sub-metric: units | permits per acre
                     devWindow: "long", // Development-view activity window: 3yr (recent) | 5yr | long (2009–2025, the default)
                     devGrid: true, // Development-view 100 m detail grid (the default; off = the hood choropleth)
-                    services: { roads: true, storm: false, fire: false, water: false, transit: false, servicecost: false },
+                    services: { roads: true, storm: false, fire: false, water: false, transit: false, bike: false, servicecost: false },
                     svcDriver: "roads",
                     hoodMode: "popup", // where a hood's detail appears: popup | panel
                     chgWindow: "long", // change-lens window: long (2012–2025) | short (2019–2025)
@@ -1102,6 +1133,8 @@
     let transitStationsFetch = null; // in-flight fetch guard; missing file => no dots
     let lrtLinesData = null;         // lazy-fetched LRT track lines (transit on)
     let lrtLinesFetch = null;        // in-flight fetch guard; missing file => no lines
+    let bikeLinesData = null;        // lazy-fetched bike network (bike on)
+    let bikeLinesFetch = null;       // in-flight fetch guard; missing file => no lines
     let temporalData = null;   // hood x year assessment history; missing file => lens absent
     let pinnedHood = null;     // hood name shown in the pinned history panel, or null
     let peekHood = null;       // hood shown in the touch-only peek card, or null
@@ -1419,6 +1452,7 @@
     const fmtFire = v => v.toFixed(v < 1 ? 2 : 1) + " dispatched events / acre / yr";
     const fmtTransit = v => v.toFixed(v < 1 ? 2 : 1) +
       " scheduled transit stop-events / acre / weekday";
+    const fmtBike = v => v.toFixed(v < 1 ? 2 : 1) + " dedicated bike route m / acre";
     const fmtWater = (v, fixed) => "$" + Math.round(v).toLocaleString() +
       " modeled water+sewer / acre / yr" +
       (fixed != null ? ` (fixed $${Math.round(fixed).toLocaleString()})` : "");
@@ -1925,6 +1959,41 @@
         .then(d => {
           lrtLinesData = d;
           if (d && state.view === "services" && state.services.transit)
+            overlay.setProps({ layers: buildLayers() });
+        })
+        .catch(() => {});
+    }
+
+    // The dedicated bike network (SPEC_services.md "Transportation lens"): a
+    // CONTEXT layer in the LRT-lines mould — geometry only, carrying no value.
+    // The metric lives on the hood plane (bike_m_per_acre), so this just shows
+    // WHERE the counted infrastructure runs. Shared roadways and walkways are
+    // excluded upstream, so what draws here is exactly what the metric counts.
+    const BIKE_LINE_COLOR = [120, 210, 140, 200];
+    function bikeLinesLayer() {
+      if (!bikeLinesData) return [];
+      return [new deck.PathLayer({
+        id: "bike-lines",
+        data: bikeLinesData.lines,
+        getPath: d => d,
+        getColor: BIKE_LINE_COLOR,
+        widthUnits: "pixels",
+        getWidth: 1.5,
+        widthMinPixels: 1,
+        capRounded: true,
+        jointRounded: true,
+        pickable: false,
+        parameters: { depthTest: false },
+      })];
+    }
+    const BIKE_LINES_URL = "./data/bike_routes.json";
+    function ensureBikeLines() {
+      if (bikeLinesData) return;
+      bikeLinesFetch ??= fetch(BIKE_LINES_URL)
+        .then(r => r.ok ? r.json() : null)
+        .then(d => {
+          bikeLinesData = d;
+          if (d && state.view === "services" && state.services.bike)
             overlay.setProps({ layers: buildLayers() });
         })
         .catch(() => {});
@@ -2449,6 +2518,8 @@
           layers.push(...roadLayers(state.svcDriver !== "roads"));
         if (state.services.fire)
           layers.push(...fireStationsLayer());
+        if (state.services.bike)
+          layers.push(...bikeLinesLayer());
         if (state.services.transit)
           layers.push(...lrtLinesLayer(), ...transitStationsLayer());
         return [...layers, hoodHoverLayer(), ...labelLayer()];
@@ -3188,6 +3259,7 @@
           fire:        [p.fire_events_per_acre, fmtFire],
           water:       [p.water_charge_per_acre, v => fmtWater(v, p.water_fixed_per_acre)],
           transit:     [p.transit_dep_per_acre, fmtTransit],
+          bike:        [p.bike_m_per_acre, fmtBike],
           servicecost: [p.svc_cost_per_acre, fmtSvcCost],
         }[state.svcDriver] || [];
         return svc[0] == null
@@ -3811,6 +3883,15 @@
             clamp.toFixed(clamp < 10 ? 1 : 0) + "+";
           label.textContent = "Set aside — natural / undeveloped land";
           sw.style.background = "rgb(104,108,122)";
+        } else if (state.svcDriver === "bike") {
+          document.getElementById("legend-label").textContent =
+            "Dedicated bike route metres per acre (sqrt colour)";
+          document.getElementById("legend-min").textContent = "0 m";
+          const clamp = svcScale("bike_m_per_acre").clamp;
+          document.getElementById("legend-max").textContent =
+            Math.round(clamp).toLocaleString() + " m+";
+          label.textContent = "Set aside — natural / undeveloped land";
+          sw.style.background = "rgb(104,108,122)";
         } else if (state.svcDriver === "servicecost") {
           document.getElementById("legend-label").textContent =
             "Modeled roads + fire cost per acre / yr (sqrt colour)";
@@ -4209,6 +4290,7 @@
       // fetch's own resolve rebuilds the layers if the dots are still wanted).
       if (v === "services" && state.services.fire) ensureFireStations();
       if (v === "services" && state.services.transit) { ensureTransitStations(); ensureLrtLines(); }
+      if (v === "services" && state.services.bike) ensureBikeLines();
       // Zoning ground layer for the uses view — fetched once; a missing file
       // resolves null and the view falls back to dominant-colour hoods.
       if (v === "uses" && !zoningData) {
@@ -4336,6 +4418,7 @@
       if (checked && on.length === 1) state.svcDriver = k;
       if (k === "fire" && checked) ensureFireStations();
       if (k === "transit" && checked) { ensureTransitStations(); ensureLrtLines(); }
+      if (k === "bike" && checked) ensureBikeLines();
       syncServiceControls();
       // Blurb before layers — the label sweep measures the title's live rect.
       document.getElementById("title-p").textContent = servicesBlurb();
@@ -4595,6 +4678,12 @@
         document.querySelector('#services .svc[data-service="transit"]').style.display = "none";
         state.services.transit = false;
       }
+      // Same guard for the bike column (pre-2026-08-02 data files). Ships on
+      // the first weekly refresh after this merge; until then the row hides.
+      if (!state.data.features.some(f => f.properties.bike_m_per_acre != null)) {
+        document.querySelector('#services .svc[data-service="bike"]').style.display = "none";
+        state.services.bike = false;
+      }
       // Same guard for the modeled service-cost composite (svc_cost_per_acre —
       // pipeline 2026-07-15, ships on the next refresh after the metric PR). A
       // data file from before that refresh keeps the view and just hides this
@@ -4607,6 +4696,17 @@
         state.services.servicecost = false;
         document.querySelector('#ratio-denom button[data-ratio-denom="servicecost"]').style.display = "none";
       }
+      // A group caption with every row under it hidden is a heading over
+      // nothing — hide it too. Walks siblings to the next caption, so it stays
+      // correct however the rows are grouped.
+      document.querySelectorAll("#services .svc-group").forEach(cap => {
+        let anyVisible = false;
+        for (let el = cap.nextElementSibling; el && !el.classList.contains("svc-group");
+             el = el.nextElementSibling) {
+          if (el.style.display !== "none") { anyVisible = true; break; }
+        }
+        if (!anyVisible) cap.style.display = "none";
+      });
       syncServiceControls();
       // Money is the default view — open its layers panel now (applyView isn't
       // called on load) for the Detail (Neighbourhood / 100 m grid) render

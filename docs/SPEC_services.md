@@ -476,6 +476,93 @@ stormwater/fire).
 (the established skew method; fire needed sqrt, roads/storm stayed linear —
 don't assume either carries over).
 
+## Transportation lens — grouping the transport services (2026-08-02)
+
+**Status: STAGE 1 BUILT 2026-08-02** (bike supply + the panel grouping);
+**STAGE 2 BLOCKED on two reviewed unit-cost numbers** (below).
+
+Peter's ask: *"a transportation lens in full... gather all the transport costs
+for people to see. so roads will go in there. transit. but also bike lanes?"*
+
+### The three decisions (Peter, 2026-08-02)
+
+1. **Modelled dollars per acre**, not a supply grouping — the lens is about
+   cost. (Stage 2; Stage 1 ships the missing supply input it needs.)
+2. **A group INSIDE the Services view**, not a new top-level view. Services
+   already owns the plane, the checkboxes and the colour-driver radio; a new
+   view would duplicate all of it and add a row to the CONTROLS_MATRIX state
+   space for nothing.
+3. **Dedicated bike assets only** — see DATA.md §15 for the vocabulary and the
+   two traps.
+
+**Services stays FULL-only** (the 2026-07-28 lock); this changes nothing there.
+
+### Why roads and transit were already here
+
+Both existed as Services rows before this lens. The change is that they now
+read as *one thing* — and that bike, the missing third, exists at all.
+
+### Stage 1 (BUILT): bike supply
+
+`src/load_bike.py` → `bike_m_per_acre`. Modelled on `load_roads`: explicit
+classification dict, EPSG:3400 overlay, conservation guard, slim web export.
+Metric = **dedicated** cycling assets only. Colour **sqrt**
+(`FINDINGS_revenue_scale.md` §6.9 — decided empirically, not assumed).
+Display: the shared hood plane + the network as a **context PathLayer** (the
+LRT-lines pattern — the plane carries the metric, the lines just show where).
+
+⚠️ **The exclusions ARE the metric.** Shared roadways are already in
+`road_m_total`; walkways are pedestrian; coming-soon routes are not built. Get
+any of the three wrong and the number is not what its label says. DATA.md §15.
+
+**Panel grouping:** `#services` splits into **Transportation** (Roads · Transit
+· Bike) and **Other services** (Stormwater · Fire · Water/sewer · Service
+cost). Captions are labels — they gate nothing, carry no controls, and a
+caption whose rows are all data-gated away hides itself.
+
+⚠️ **THE SERVICES LEGEND IS AN IF/ELSE CHAIN WHOSE `else` PRINTS THE ROAD
+LEGEND.** A new service without its own branch renders a confident, wrong
+legend rather than a blank one — bike shipped "Road metres per acre, 0..53 m+"
+over a bike-coloured map until the rendered output was read. **Any future
+service must add a legend branch AND a `primaryRow` entry** (the tooltip has
+the same shape: a missing key falls to `|| []` and prints "no X data" over a
+hood that has data). `verify-bike.js` asserts both, and asserts the legend is
+not the road fallback specifically.
+
+### Stage 2 (BLOCKED): the transportation cost composite
+
+**Publish disjoint per-term cost columns rather than a second overlapping
+composite** — `svc_cost_per_acre` already contains roads, so a
+`transport_cost_per_acre` containing roads too would leave two cost columns
+that cannot be read together:
+
+```
+cost_roads_per_acre    = road_m_per_acre      x road_dollars_per_m
+cost_transit_per_acre  = transit_dep_per_acre x (ETS budget / citywide weekday departures)
+cost_bike_per_acre     = bike_m_per_acre      x bikeway_dollars_per_m
+cost_fire_per_acre     = fire_events_per_acre x (fire budget / citywide events)
+
+transport_cost_per_acre = roads + transit + bike
+svc_cost_per_acre       = roads + fire        # UNCHANGED value and definition
+```
+
+The transit term is the **fire pattern exactly**: allocate the annual budget by
+each hood's share of citywide scheduled departures, dividing by the pipeline's
+OWN citywide total so numerator and denominator match. It is a **demand
+ALLOCATION of a mostly-fixed budget** — a hood with twice the service does not
+cost ETS twice — and that caveat belongs in the UI copy the way fire's does.
+
+⚠️ **BLOCKED ON PETER: two manual reviewed inputs** (the mill-rates pattern,
+`data/city_unit_costs.json`; DATA.md §13 records that edmonton.ca is unreachable
+from the Oracle box):
+- **ETS gross annual operating budget** — 2026 Approved Operating Budget PDF,
+  the same document the fire figure came from.
+- **Bikeway lifecycle $/metre/year** — the roadway figure's analogue.
+
+Both keys stay OPTIONAL in `load_unit_costs`, and `transport_cost_per_acre` is
+**all-or-nothing** across its three terms: a two-term metric labelled
+"transportation" would be mislabeled, the same rule the existing composite uses.
+
 ## Cross-refs
 
 - **Candidate next services — the Services-view UI trigger FIRED and the

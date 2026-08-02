@@ -36,6 +36,7 @@ from aggregate_by_neighbourhood import aggregate_by_neighbourhood
 from load_boundaries import load_boundaries
 from load_zoning import load_zoning, export_zoning_web
 from load_roads import load_roads, export_roads_web
+from load_bike import load_bike, export_bike_web
 from load_property_info import load_property_info
 from load_stormwater import load_stormwater
 from load_water import load_water
@@ -60,6 +61,7 @@ ASSESSMENT_CSV = ROOT / "data/raw/Property_Assessment_Data__Current_Calendar_Yea
 BOUNDARIES_GEOJSON = ROOT / "data/raw/neighbourhoods.geojson"
 ZONING_GEOJSON = ROOT / "data/raw/zoning.geojson"
 ROADS_GEOJSON = ROOT / "data/raw/roads.geojson"
+BIKE_GEOJSON = ROOT / "data/raw/bike_routes.geojson"
 PROPERTY_INFO_CSV = ROOT / "data/raw/Property_Info__Current_Calendar_Year_.csv"
 FIRE_EVENTS_CSV = ROOT / "data/raw/fire_response.csv"
 FIRE_STATIONS_CSV = ROOT / "data/raw/fire_stations.csv"
@@ -89,6 +91,9 @@ UNIT_COSTS_JSON = ROOT / "data/city_unit_costs.json"
 PNG_OUT = ROOT / "output/edmonton_value_per_acre.png"
 GEOJSON_OUT = ROOT / "web/data/neighbourhood_value_per_acre.geojson"
 ROADS_WEB_OUT = ROOT / "web/data/roads.geojson"
+# Bike network context layer (SPEC_services.md "Transportation lens") — the
+# LRT-lines pattern: geometry only, no metric (the hood plane carries it).
+BIKE_WEB_OUT = ROOT / "web/data/bike_routes.json"
 ZONING_WEB_OUT = ROOT / "web/data/zoning.geojson"
 GRID_WEB_OUT = ROOT / "web/data/value_grid.json"
 DEV_GRID_WEB_OUT = ROOT / "web/data/dev_grid.json"
@@ -169,6 +174,7 @@ def run(
     assessment_year: int = ASSESSMENT_YEAR,
     zoning_geojson: Path | None = ZONING_GEOJSON,
     roads_geojson: Path | None = ROADS_GEOJSON,
+    bike_geojson: Path | None = BIKE_GEOJSON,
     property_info_csv: Path | None = PROPERTY_INFO_CSV,
     stormwater_rates_json: Path | None = STORMWATER_RATES_JSON,
     water_rates_json: Path | None = WATER_RATES_JSON,
@@ -247,6 +253,13 @@ def run(
         roads = load_roads(str(roads_geojson), boundaries)
     elif roads_geojson is not None:
         logger.warning("Roads file not found (%s) — skipping road-supply layer", roads_geojson)
+
+    # Bike routes, same optional shape (SPEC_services.md "Transportation lens").
+    bike = None
+    if bike_geojson is not None and Path(bike_geojson).exists():
+        bike = load_bike(str(bike_geojson), boundaries)
+    elif bike_geojson is not None:
+        logger.warning("Bike routes file not found (%s) — skipping bike-supply layer", bike_geojson)
 
     # Stormwater (utility lens #1, SPEC_utilities.md — MODELED, not billed)
     # rides on inputs the pipeline already has: the property-info CSV and the
@@ -392,7 +405,7 @@ def run(
         )
 
     result = join_and_calculate(
-        aggregated, boundaries, zoning=zoning, roads=roads, stormwater=stormwater,
+        aggregated, boundaries, zoning=zoning, roads=roads, bike=bike, stormwater=stormwater,
         fire=fire, transit=transit, water=water, franchise=franchise,
         permits=permits, permits_recent=permits_recent, permits_long=permits_long,
         lot_acres=lot_acres_hood,
@@ -415,6 +428,9 @@ def run(
         # display architecture, SPEC_services.md) — skipped with the roads layer.
         if roads is not None:
             export_roads_web(str(roads_geojson), boundaries, str(ROADS_WEB_OUT))
+        # Bike network context layer — skipped with the bike layer.
+        if bike is not None:
+            export_bike_web(str(bike_geojson), boundaries, str(BIKE_WEB_OUT))
         # Ground-layer zoning geometry for the Uses view (dissolved by
         # category, clipped to the same setback gaps as the prisms; display
         # only) — skipped with the zoning layer.
@@ -500,6 +516,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p.add_argument("--skip-geojson", action="store_true", help="skip the Phase 2 web GeoJSON")
     p.add_argument("--skip-zoning", action="store_true", help="skip the land-use set-aside layer")
     p.add_argument("--skip-roads", action="store_true", help="skip the road-supply layer")
+    p.add_argument("--bike-geojson", type=Path, default=BIKE_GEOJSON)
+    p.add_argument("--skip-bike", action="store_true", help="skip the bike-supply layer")
     p.add_argument("--skip-property-info", action="store_true",
                    help="skip the lot_size join (grid exports ground-acre only; "
                         "also skips the stormwater lens, which needs the same file)")
@@ -548,6 +566,7 @@ def main(argv: list[str] | None = None) -> None:
         assessment_year=args.assessment_year,
         zoning_geojson=None if args.skip_zoning else args.zoning_geojson,
         roads_geojson=None if args.skip_roads else args.roads_geojson,
+        bike_geojson=None if args.skip_bike else args.bike_geojson,
         property_info_csv=None if args.skip_property_info else args.property_info_csv,
         stormwater_rates_json=None if args.skip_stormwater else STORMWATER_RATES_JSON,
         water_rates_json=None if args.skip_water else WATER_RATES_JSON,
