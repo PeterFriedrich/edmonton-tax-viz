@@ -62,16 +62,50 @@ const [url] = process.argv.slice(2);
     // temporalData is a top-level `let` and so NOT on window; probe it through
     // temporalFor, which IS (function declarations become window properties).
     const t = temporalFor('DOWNTOWN');
-    return t && { years: t.years, first: t.share[0], last: t.share[t.share.length - 1] };
+    const i = t && t.years.length - 1;
+    return t && {
+      years: t.years, first: t.share[0], last: t.share[i],
+      // The live year's rendered numbers are checked against THESE, not against
+      // literals — see the note on `near` below.
+      liveYear: t.years[i], liveValue: t.value[i], liveComm: t.commercial[i],
+      lo: Math.min(...t.share), hi: Math.max(...t.share),
+      peak: Math.max(...t.share), peakYear: t.years[t.share.indexOf(Math.max(...t.share))],
+    };
   });
   check('temporal.json loaded and decodes', !!loaded);
   check('2024 is absent from the year list',
     loaded && !loaded.years.includes(2024) && loaded.years.includes(2023) &&
     loaded.years.includes(2025), loaded ? `n=${loaded.years.length}` : '');
-  // Anchors from the served file (S76 audit): Downtown 5.09% (2012) -> 3.30% (2025).
-  check('Downtown decodes to the audited shares',
-    loaded && Math.abs(loaded.first - 5.09) < 0.01 && Math.abs(loaded.last - 3.30) < 0.01,
-    loaded ? `${loaded.first.toFixed(2)}% -> ${loaded.last.toFixed(2)}%` : '');
+  // ⚠️ THE LIVE YEAR IS NOT PINNABLE, AND PINNING IT HERE CRIED WOLF (S86).
+  // This file used to assert Downtown 5.09% (2012) -> 3.30% (2025) as equalities.
+  // The 2026-08-01 refresh moved the 2025 slice and reddened 5 checks with
+  // nothing wrong: the diff was 839 changed cells, EVERY ONE of them in 2025,
+  // with 2012-2023 bit-identical across all 406 hoods and the shares still
+  // conserving to 100%. That is the pipeline working as designed —
+  // `scripts/check_temporal_years.py` deliberately refuses to band the live year
+  // ("a live snapshot that genuinely moves week to week"), so a front-end
+  // equality on it contradicts the guard and goes red after every roll update.
+  //
+  // The split below is the fix: HISTORICAL years are frozen by decision and stay
+  // pinned tight (they are the anchor that proves the splice didn't shift),
+  // while every live-year number is DERIVED from the loaded series and compared
+  // to the rendered string. Deriving beats banding here because it still fails
+  // on the bug a band would wave through — the panel rendering the wrong hood,
+  // the wrong series, or the wrong index.
+  check('Downtown decodes to the audited 2012 share (frozen)',
+    loaded && Math.abs(loaded.first - 5.09) < 0.01,
+    loaded ? `${loaded.first.toFixed(2)}%` : '');
+  check('the live year decodes to a plausible share',
+    loaded && loaded.last > 0 && loaded.last < 100,
+    loaded ? `${loaded.liveYear}: ${loaded.last.toFixed(2)}%` : '');
+
+  // ⚠️ Compare PARSED NUMBERS, never a formatted string built with the page's own
+  // formatter — that would make a formatter bug invisible, and S85 shipped one
+  // (`fmtBig` printed a $1,876,137 levy as "$2M"). Tolerance is one display ulp:
+  // fmtPct and fmtBig both carry two decimals, so half of the last place is
+  // 0.005 and anything coarser than the display claims fails.
+  const near = (a, b) => a !== null && a !== undefined && Math.abs(a - b) < 0.006;
+  const num = (s, re) => { const m = re.exec(s); return m ? parseFloat(m[1]) : null; };
 
   // ---- the hover teaser ---------------------------------------------------
   const tip = await page.evaluate(() => {
@@ -99,8 +133,13 @@ const [url] = process.argv.slice(2);
     tip.runs.length === 2 && tip.runs[0] === 12 && tip.runs[1] === 1 &&
     tip.gaps.length === 1 && tip.gaps[0] === 1,
     `runs=[${tip.runs}] gaps=[${tip.gaps}]`);
+  // Endpoints derived: the 2012 end is frozen, the live end tracks the roll.
+  const tipRow = /([\d.]+)% → ([\d.]+)% of city base, (\d{4})–(\d{4})/.exec(tip.html);
   check('tooltip row names the denominator + endpoints',
-    /5\.09% → 3\.30% of city base, 2012–2025/.test(tip.html));
+    !!tipRow && near(parseFloat(tipRow[1]), loaded.first) &&
+    near(parseFloat(tipRow[2]), loaded.last) &&
+    +tipRow[3] === loaded.years[0] && +tipRow[4] === loaded.liveYear,
+    tipRow ? tipRow[0] : 'row absent');
   check('tooltip row flags the 2024 hole', /\(2024 n\/a\)/.test(tip.html));
   check('tooltip advertises click-to-pin', /click to pin/.test(tip.html));
   check('sparkline also rides a set-aside tooltip', tip.onSetAside === 1);
@@ -157,14 +196,32 @@ const [url] = process.argv.slice(2);
     `band=${panel.band.w.toFixed(1)} step=${panel.stepW.toFixed(1)}`);
   check('the gap is shaded and labelled "no data"',
     panel.svgText.includes('no data'));
+  // The endpoints are the series MIN and MAX, derived — not the first and last
+  // year, and not literals. §2's invariant is that BOTH carry a label, because
+  // the axis does not start at zero.
+  const pctLabels = panel.svgText.map(s => num(s, /^([\d.]+)%$/)).filter(v => v !== null);
   check('both y endpoints are labelled (axis is not zero-based)',
-    panel.svgText.includes('5.55%') && panel.svgText.includes('3.30%'),
+    pctLabels.some(v => near(v, loaded.lo)) && pctLabels.some(v => near(v, loaded.hi)),
     panel.svgText.join(' | '));
   check('x axis names the first and last year',
     panel.svgText.includes('2012') && panel.svgText.includes('2025'));
-  check('read-out names the TOTAL base', /of Edmonton's total assessment base/.test(panel.read));
-  check('read-out names the COMMERCIAL base', /9\.24% of the commercial base/.test(panel.read));
-  check('read-out gives the current value', /\$7\.84B assessed/.test(panel.read));
+  // Headline, commercial share and value are all the LIVE year — derived. The
+  // year is asserted alongside the number so an off-by-one on the last index
+  // cannot pass by landing on a neighbouring year's share.
+  const headline = new RegExp(`${loaded.liveYear}: ([\\d.]+)% of Edmonton's total assessment base`)
+    .exec(panel.read);
+  check('read-out names the TOTAL base', !!headline && near(parseFloat(headline[1]), loaded.last),
+    headline ? headline[0] : panel.read);
+  check('read-out names the COMMERCIAL base',
+    near(num(panel.read, /([\d.]+)% of the commercial base/), loaded.liveComm),
+    panel.read);
+  // Downtown's base is billions, so fmtBig's B branch is the one in play; if the
+  // unit ever changes this fails loudly rather than silently matching nothing.
+  check('read-out gives the current value',
+    near(num(panel.read, /\$([\d.]+)B assessed/), loaded.liveValue / 1e9),
+    panel.read);
+  // Frozen anchor, deliberately still an equality: 2016 is a settled historical
+  // year, so this is what proves the archive half of the splice did not shift.
   check('read-out gives the peak', /peak share 5\.55% in 2016/.test(panel.read));
   check('note states the 2024 reason', /missing 2,448 accounts/.test(panel.note));
   check('note says the gap is not interpolated', /not interpolated/.test(panel.note));
