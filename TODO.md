@@ -42,6 +42,26 @@ Also removed a duplicated preamble block left in this file by the
 
 
 
+- [ ] **▶ PETER: two unit-cost numbers unblock the transportation COST lens
+  (Stage 2).** Stage 1 (bike supply + the Services grouping) shipped
+  2026-08-02; the dollars half needs two manual reviewed inputs added to
+  `data/city_unit_costs.json` — the **mill-rates pattern**, sourced by hand
+  because DATA.md §13 records edmonton.ca as unreachable from the Oracle box:
+  - **ETS gross annual operating budget** — City of Edmonton 2026 Approved
+    Operating Budget PDF, the same document the Fire Rescue figure came from
+    (`fire_response.operating_budget_gross_annual` is the shape to copy).
+  - **Bikeway lifecycle $/metre/year** — the analogue of the $50/m/yr roadway
+    figure, ideally with the same O&M + renewal derivation so the two are
+    comparable.
+  - **Design is already locked and written up** (`SPEC_services.md`
+    "Transportation lens" Stage 2, `DECISIONS.md` 2026-08-02): disjoint
+    per-term cost columns, `transport_cost_per_acre` = roads+transit+bike,
+    `svc_cost_per_acre` keeps its exact current value. Nothing to re-decide —
+    it is the numbers that are missing.
+  - ⚠️ **All-or-nothing across the three terms** by decision: a two-term metric
+    labelled "transportation" would be mislabeled, so with either number
+    missing the composite is skipped with a warning and the row stays hidden.
+
 - [ ] **RESIDUAL from the panel/blurb fix (2026-08-02): below ~768px tall,
   Development and Infill have no left column left to give.** The placement fix
   clears the blurb in all ten states at 1440x900 and clears `#botleft` too. At

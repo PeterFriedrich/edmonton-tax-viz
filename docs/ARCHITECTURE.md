@@ -499,6 +499,44 @@ coverage/response adequacy.
 
 ---
 
+### `src/load_bike.py` (services lens #5 — added 2026-08-02)
+
+Full methodology in `docs/SPEC_services.md` "Transportation lens"; dataset
+facts + the classification table in `DATA.md` §15. **Dedicated cycling
+infrastructure only** — the exclusions are the metric, not a tidy-up.
+
+**Inputs:** `data/raw/bike_routes.geojson` (`vd4b-a4iv`); the boundary
+GeoDataFrame from `load_boundaries.py` (projected EPSG:3400 — asserted, not
+assumed).
+
+**Outputs** (`pd.DataFrame` keyed by `neighbourhood_name`):
+- `bike_m_onroad` / `bike_m_offroad` (float) — internal split, the road-class
+  and transit-per-mode pattern
+- `bike_m_total` (float) — the metric basis
+
+`bike_m_per_acre = bike_m_total / area_acres` is computed in
+`join_and_calculate` against boundary acres, the one project denominator; it
+joins `SLIM_COLUMNS` and ships in the web GeoJSON.
+
+⚠️ **`CLASSIFICATION_GROUP` is the load-bearing part.** Explicit full-string
+dict over the feed's 12 values (never prefix/keyword matching — the
+`load_zoning.ZONE_CATEGORY` philosophy). **Shared roadways map to an excluded
+group specifically because `load_roads` already counts those metres**, which is
+what keeps `road_m_per_acre` and `bike_m_per_acre` disjoint and safe to read
+together. Unmatched values default to EXCLUDED — the opposite of
+`load_roads.DEFAULT_GROUP`, and the module comment says why.
+
+**Also exports:** `export_bike_web(bike_path, boundaries, out_path)` — the
+dedicated network welded, thinned and simplified to
+`web/data/bike_routes.json` (`{"lines": [...]}`, committed, lazy-loaded, 4,049
+segments / 0.24 MB). A **context layer in the LRT-lines mould**: geometry only,
+no per-feature value, because the hood plane carries the metric. Display
+geometry only — every published number comes from the full-resolution overlay.
+
+**Does not** touch assessment data, model any cost, or count planned routes.
+
+---
+
 ### `src/load_transit.py` (services lens #4 — added 2026-07-11)
 
 Full methodology + the two locked decisions in `docs/SPEC_services.md`
