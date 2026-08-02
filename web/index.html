@@ -35,13 +35,21 @@
   <div id="temporal" class="panel">
     <button id="temporal-close" aria-label="Close the assessment-history panel">&times;</button>
     <div id="temporal-name"></div>
-    <div id="temporal-chart"></div>
-    <div id="temporal-read"></div>
-    <p id="temporal-note"></p>
-    <!-- Shown instead of the chart while panel mode is on but nothing is pinned.
-         Entering the mode has to LOOK like it did something, or the button reads
-         as broken. -->
-    <p id="temporal-hint">Click a neighbourhood to see its assessment history.</p>
+    <!-- The SCROLLING region, and it excludes the name and the close button on
+         purpose: syncTemporalPos caps the panel where the blurb leaves it no
+         room, and an absolutely-positioned x inside a scroll container scrolls
+         away with the content — measured, the x and the hood name both left the
+         box in Infill. Which hood you are reading and how to dismiss it are the
+         two things that must survive a scroll. -->
+    <div id="temporal-body">
+      <div id="temporal-chart"></div>
+      <div id="temporal-read"></div>
+      <p id="temporal-note"></p>
+      <!-- Shown instead of the chart while panel mode is on but nothing is pinned.
+           Entering the mode has to LOOK like it did something, or the button reads
+           as broken. -->
+      <p id="temporal-hint">Click a neighbourhood to see its assessment history.</p>
+    </div>
   </div>
 
   <!-- The mill rates the revenue map is billed at (Peter, 2026-08-01), in the
@@ -2858,6 +2866,53 @@
     //
     // ⚠️ SPEC_temporal.md §2 describes this panel as the assessment-history
     // surface throughout. That is now true only under Value.
+    // ⚠️ #temporal's top USED TO BE THE CONSTANT 210px, pinned from a sweep that
+    // covered the five views on their DEFAULT metric only. Across the real state
+    // space #title runs 140-499px tall, so the panel buried the blurb in five
+    // states by up to 289px (measured 2026-08-01, re-measured unchanged
+    // 2026-08-02 after three PRs landed here). It is measured now, the way the
+    // mill-rate pod already does it — another constant would just re-run the bug.
+    //
+    // ⚠️ THE MAX-HEIGHT IS THE OTHER HALF, and it is what lets one rule cover
+    // every state: below the blurb is not always somewhere the panel FITS. At
+    // 1440x900 clearing the blurb lands Development 26px into #botleft and
+    // Infill 100px. So the PANEL yields rather than the blurb — the blurb is the
+    // content explaining the map, `#title` is `.panel` and therefore
+    // pointer-events:none, so a capped blurb could not be scrolled to at all,
+    // while #temporal is pointer-events:auto and was opened deliberately.
+    const TEMPORAL_GAP = 10;
+    // Floor: below this the panel is not worth showing, so on a short viewport
+    // it keeps this much and reaches into #botleft instead. Burying the blurb is
+    // the failure being fixed; overlapping bottom-anchored chrome is the lesser
+    // one, and it only arises under ~768px tall on the longest blurbs.
+    const TEMPORAL_MIN_H = 150;
+    function syncTemporalPos() {
+      const panel = document.getElementById("temporal");
+      // The phone form is a bottom sheet (top:auto): an inline top would beat
+      // the media query and strand it mid-screen.
+      if (window.matchMedia("(max-width: 640px)").matches ||
+          !panel.classList.contains("open")) {
+        panel.style.top = panel.style.maxHeight = "";
+        return;
+      }
+      panel.style.maxHeight = "";   // measure the panel's NATURAL height
+      const top = document.getElementById("title").getBoundingClientRect().bottom
+                + TEMPORAL_GAP;
+      const room = document.getElementById("botleft").getBoundingClientRect().top
+                 - TEMPORAL_GAP - top;
+      panel.style.top = Math.round(top) + "px";
+      // #temporal is box-sizing:border-box, so this is the box that gets drawn.
+      panel.style.maxHeight = panel.getBoundingClientRect().height > room
+        ? Math.round(Math.max(room, TEMPORAL_MIN_H)) + "px" : "";
+    }
+    // #title is rewritten AFTER syncMetricButtons runs and #botleft's legend
+    // changes height per view, so both boxes move without this function being
+    // called. Observing them covers every path, including ones added later —
+    // the same reasoning as the mill-rate pod's observer. Neither observer can
+    // loop: this writes only to #temporal.
+    new ResizeObserver(syncTemporalPos).observe(document.getElementById("title"));
+    new ResizeObserver(syncTemporalPos).observe(document.getElementById("botleft"));
+
     function openTemporal(name) {
       const p = hoodProps(name);
       const revenue = revenuePanelFor(p);
@@ -2868,6 +2923,11 @@
       document.getElementById("temporal-name").textContent = name;
       if (revenue) renderRevenueMix(p); else renderHistory(t);
       document.getElementById("temporal").classList.add("open");
+      // AFTER .open and after the content is written: the panel has no height
+      // while display:none, and the two modes are different heights (the
+      // revenue mix is ~15px shorter), so the max-height must be computed
+      // against what is actually about to be shown.
+      syncTemporalPos();
       // The panel is a new obstacle for the label sweep, so re-cull now —
       // otherwise hood names sit under it until the next camera move.
       if (labelPool().length) overlay.setProps({ layers: buildLayers() });
@@ -2960,6 +3020,9 @@
       const el = document.getElementById("temporal");
       if (state.hoodMode === "panel") el.classList.add("empty");
       else el.classList.remove("open");
+      // The empty prompt is a fraction of the chart's height, so it must be
+      // re-placed rather than left sitting at the pinned panel's max-height.
+      syncTemporalPos();
       if (labelPool().length) overlay.setProps({ layers: buildLayers() });
     }
 
@@ -3000,6 +3063,10 @@
         pinnedHood = null;
         el.classList.remove("open");
       }
+      // This path opens the panel WITHOUT going through openTemporal, so it has
+      // to place it too — otherwise entering panel mode from the button renders
+      // it unpositioned.
+      syncTemporalPos();
       if (labelPool().length) overlay.setProps({ layers: buildLayers() });
     }
 

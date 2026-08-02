@@ -230,6 +230,71 @@ const [url] = process.argv.slice(2);
   check('panel clears the bottom-left cluster', !overlap(panel.rect, panel.botleft));
   check('panel clears the control column', !overlap(panel.rect, panel.controls));
 
+  // ---- the clearance sweep, ACROSS STATES ---------------------------------
+  // ⚠️ THE THREE CHECKS ABOVE RAN IN ONE STATE, AND THAT IS HOW THE BUG THEY
+  // GUARD SHIPPED. `#temporal` was pinned at a constant `top: 210px` from a
+  // sweep over the five views on their DEFAULT metric, where #title is
+  // 176-179px tall. Money's cuts, the change lens, Development and Infill push
+  // it to 256/368/462/499, and the panel buried the blurb in all five by up to
+  // 289px while `panel clears the title` stayed green — it only ever ran on
+  // money/value. The state list below is the fix for the CHECK; syncTemporalPos
+  // is the fix for the panel.
+  const STATES = [
+    // ⚠️ Revenue first: this file opens every page on Value (see `open`), which
+    // hides #revcut and shows #moneymode in its place — the two row-2s are
+    // exclusive. These two states also show the REVENUE-MIX panel, not the
+    // history, and it is ~15px shorter; the clearance has to hold for both
+    // modes, which is exactly why they are in this sweep.
+    ['money / residential',   ['#metric-row button[data-metric="revenue"]',
+                               '#revcut button[data-revcut="res_revenue_per_acre"]']],
+    ['money / non-residential', ['#revcut button[data-revcut="nonres_revenue_per_acre"]']],
+    ['money / change lens',   ['#metric-row button[data-metric="value"]',
+                               '#moneymode button[data-moneymode="change"]']],
+    ['development',           ['#views button[data-view="development"]']],
+    ['development / infill',  ['#devmode button[data-devmode="infill"]']],
+    ['uses',                  ['#views button[data-view="uses"]']],
+  ];
+  for (const [label, clicks] of STATES) {
+    for (const sel of clicks) {
+      try { await page.click(sel, { timeout: 4000 }); await page.waitForTimeout(350); }
+      catch (e) { check(`${label}: control ${sel} is clickable`, false, e.message.split('\n')[0]); }
+    }
+    await page.waitForTimeout(450);
+    const s = await page.evaluate(() => {
+      openTemporal('DOWNTOWN');
+      const r = id => document.getElementById(id).getBoundingClientRect().toJSON();
+      const body = document.getElementById('temporal-body');
+      const p = r('temporal');
+      const inBox = id => {
+        const c = document.getElementById(id).getBoundingClientRect();
+        return c.top >= p.top - 1 && c.bottom <= p.bottom + 1;
+      };
+      body.scrollTop = body.scrollHeight;      // worst case for the sticky bits
+      const survives = inBox('temporal-close') && inBox('temporal-name');
+      body.scrollTop = 0;
+      return { panel: p, title: r('title'), botleft: r('botleft'), survives,
+               open: document.getElementById('temporal').classList.contains('open') };
+    });
+    check(`${label}: panel opens`, s.open);
+    // The load-bearing one: the blurb is the content that explains the map, and
+    // burying it is the failure this sweep exists for.
+    check(`${label}: panel clears the title blurb`, !overlap(s.panel, s.title),
+      `title ${Math.round(s.title.bottom)} vs panel ${Math.round(s.panel.top)}`);
+    check(`${label}: panel clears the bottom-left cluster`, !overlap(s.panel, s.botleft),
+      `panel ${Math.round(s.panel.bottom)} vs botleft ${Math.round(s.botleft.top)}`);
+    // ⚠️ Scrolling is how the panel yields, so the two things you need in order
+    // to USE a scrolled panel — which hood it is, and how to close it — must
+    // stay out of the scrolling region. Both left the box before #temporal-body
+    // existed.
+    check(`${label}: the name and the x survive a scroll`, s.survives);
+  }
+  // Back to the state the rest of the file assumes.
+  await page.click('#views button[data-view="money"]');
+  await page.waitForTimeout(350);
+  await page.evaluate(() => applyMetric('value_per_acre'));
+  await page.waitForTimeout(450);
+  await page.evaluate(() => openTemporal('DOWNTOWN'));
+
   // ---- dismissal ----------------------------------------------------------
   await page.click('#temporal-close');
   check('the x closes it',
