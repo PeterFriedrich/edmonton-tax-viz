@@ -224,8 +224,22 @@ html, body { margin: 0; height: 100%; background: #0a0a0f; }
 }
 #a11y-btn:hover { color: #e8e8ef; }
 #a11y.open #a11y-btn { background: #fcd278; color: #16111a; font-weight: 600; }
+/* ⚠️ CLEARS THE **STACK**, NOT JUST ITS OWN BUTTON. #about sits directly above
+   this pod in the same column (bottom: 68px vs 40px, both buttons 26px tall),
+   so the obvious `calc(100% + 6px)` — 6px above #a11y's own top — put the
+   menu's bottom 23px INSIDE the Data & Methods button. Measured 2026-08-02 at
+   1440x900, 390x844 and 360x780: identical overlap at all three, because both
+   offsets are fixed.
+   The two buttons share their font and padding, so `200%` is the pod's own
+   height counted twice (itself + #about's button) and the 8px is the 2px
+   inter-pod gap plus the 6px the menu already wanted. That tracks the shared
+   button styling instead of hardcoding 60px.
+   ⚠️ NOT fixed with a z-index bump like `#about.open`, though the asymmetry
+   looks like the cause: that paints the menu OVER the Data & Methods button,
+   which buries a control rather than clearing it — the opposite of the rule
+   #temporal's left-column home was chosen for. */
 #a11y-menu {
-  display: none; position: absolute; bottom: calc(100% + 6px); right: 0;
+  display: none; position: absolute; bottom: calc(200% + 8px); right: 0;
   flex-direction: column; padding: 6px 12px; gap: 4px;
   font-size: 11.5px; color: #9a9ab0; min-width: 150px;
 }

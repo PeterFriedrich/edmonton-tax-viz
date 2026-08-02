@@ -41,6 +41,7 @@ Also removed a duplicated preamble block left in this file by the
 ## Open work
 
 
+
 - [ ] **▶ THE HISTORY PANEL PAINTS OVER THE TITLE BLURB IN FIVE STATES —
   MEASURED ON CLEAN MASTER, 2026-08-01, not a hypothesis.** `#temporal` is pinned
   at `top: 210px` on the strength of a CSS comment (`web/styles.css`) claiming
@@ -122,23 +123,6 @@ Also removed a duplicated preamble block left in this file by the
   - **Consequence to watch:** phase 2's UI columns are ABSENT from the served
     geojson until the next auto-refresh runs. The UI must degrade cleanly when
     they are missing (the house pattern), or the site breaks in the gap.
-
-- [ ] **UI BUG: the Display popover paints OVER the Data & Methods pod
-  (Peter, 2026-07-28).** Bottom-right: opening **Display** covers the
-  **Data & Methods** button sitting above it.
-  - **Suspected cause — UNVERIFIED, reproduce before fixing.** `#about.open`
-    gets a `z-index: 5` bump (`web/index.html:250`); `#a11y` has **no
-    equivalent `.open` rule** and stays at the base `z-index: 1` — so when the
-    Display menu opens it has no way to win the stacking contest, and equal
-    z-index falls back to DOM order. An asymmetry that looks like an oversight
-    when `#about` was added. **But that is a hypothesis from reading the CSS,
-    not a reproduction** — confirm the actual overlap first.
-  - Both pods are `right: 22px`, `#a11y` at `bottom: 40px` and `#about` at
-    `bottom: 68px`, and opening either closes the other (`web/index.html:243`),
-    so the overlap is the open Display menu over the *closed* About button.
-  - `verify-about.js` already asserts paint order at 390/360/1440
-    (`topmost=about-menu`) — extend it to the Display menu rather than writing
-    a new script.
 
 - [ ] **Mobile chrome — and it is NOT the blurb collapse, that already shipped**
   (commit `0089eba`, "mobile chrome move 1"). Confirmed good on device by Peter
@@ -1214,6 +1198,10 @@ Also removed a duplicated preamble block left in this file by the
 ## Done
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
+
+- [x] **UI BUG: the Display popover and the Data & Methods pod overlap. FIXED 2026-08-02** — 2026-08-02 · `docs/TODO_archive.md`
+
+
 
 - [x] **▶ REVENUE-LENS READOUT — phase 2 of 2: the UI. DONE 2026-08-01 (both halves).** — DONE 2026-08-01 · `docs/TODO_archive.md`
 
