@@ -32,13 +32,26 @@ def test_set_default_build_fails_on_drift():
         build_site.set_default_build("no literal here", "public")
 
 
+def test_source_has_exactly_one_bustable_stylesheet_link():
+    """The real web/index.html must carry the link the deploy step stamps."""
+    html = (REPO / "web" / "index.html").read_text()
+    assert len(build_site.STYLES_RE.findall(html)) == 1
+
+
+def test_cache_bust_fails_on_drift():
+    with pytest.raises(SystemExit):
+        build_site.cache_bust('<link href="other.css" rel="stylesheet" />', "abc12345")
+
+
 def test_build_emits_both_copies(tmp_path):
     src = tmp_path / "web"
     (src / "data").mkdir(parents=True)
     (src / "vendor").mkdir()
     (src / "data" / "x.json").write_text("{}")
+    (src / "styles.css").write_text("#map { color: red }")
     (src / "index.html").write_text(
-        '<head>\n<script src="vendor/a.js"></script>\n</head>\n'
+        '<head>\n<script src="vendor/a.js"></script>\n'
+        '<link href="styles.css" rel="stylesheet" />\n</head>\n'
         '<body><script>const DEFAULT_BUILD = "full";</script></body>'
     )
     out = tmp_path / "_site"
@@ -55,13 +68,32 @@ def test_build_emits_both_copies(tmp_path):
     assert "work in progress" in full.lower()
     assert not (out / "full" / "data").exists()
 
+    # Both copies carry the SAME token, and it is the source CSS's own hash —
+    # /full/ reads the root's styles.css through its <base>, so a divergent
+    # token there would point at a file that never gets that name.
+    token = build_site.css_token(src / "styles.css")
+    assert f'href="styles.css?v={token}"' in root
+    assert f'href="styles.css?v={token}"' in full
+
+
+def test_css_token_tracks_content_not_the_deploy(tmp_path):
+    """Same bytes ⇒ same token, so an unrelated deploy keeps the cached CSS."""
+    a, b = tmp_path / "a.css", tmp_path / "b.css"
+    a.write_text("#map { color: red }")
+    b.write_text("#map { color: red }")
+    assert build_site.css_token(a) == build_site.css_token(b)
+    b.write_text("#map { color: blue }")
+    assert build_site.css_token(a) != build_site.css_token(b)
+
 
 def test_build_rejects_source_with_existing_base(tmp_path):
     src = tmp_path / "web"
     src.mkdir()
+    # styles.css must exist or this raises for the wrong reason and passes vacuously.
+    (src / "styles.css").write_text("#map { color: red }")
     (src / "index.html").write_text(
-        '<head><base href="/"></head><body>'
-        '<script>const DEFAULT_BUILD = "full";</script></body>'
+        '<head><base href="/"><link href="styles.css" rel="stylesheet" /></head>'
+        '<body><script>const DEFAULT_BUILD = "full";</script></body>'
     )
     with pytest.raises(SystemExit):
         build_site.build(src, tmp_path / "_site")

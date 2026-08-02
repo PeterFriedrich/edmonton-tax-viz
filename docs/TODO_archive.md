@@ -1035,3 +1035,26 @@ Items are verbatim as they were closed, newest-moved first in the order they app
   `build_type: workflow`; first run + node24-bump run both green in production.
   Decisions settled: rerun+git-diff / weekly / `GITHUB_TOKEN`. See `docs/SPEC_deployment.md`.
   **Deferred follow-ons still open (below).**
+
+## Cache-bust `styles.css` at build time — CLOSED 2026-08-02
+
+Closed by stamping `styles.css?v=<content hash>` in `scripts/build_site.py`.
+Full reasoning (why a content hash and not the commit sha, why a query and not
+a hashed filename, and the limitation it does NOT cover) is the 2026-08-02 row
+in `docs/DECISIONS.md`. Original item as it stood:
+
+- [ ] **PROPOSE: cache-bust `styles.css` at build time.** Peter, 2026-08-01, on a
+  phone after a successful deploy: *"i'm still not seeing the mill rates on
+  mobile… i can see it when i open it in a private window on my phone. but it's
+  refusing to show on normal safari."* The change was live and correct; his
+  Safari held the old stylesheet. **This is new since 2026-07-29**, when
+  `styles.css` was extracted out of `index.html` — a CSS-only change now ships in
+  a separate file with its own cache lifetime, so a stale stylesheet renders
+  against a fresh page and the feature looks half-deployed.
+  - Both files serve `cache-control: max-age=600` with matching `last-modified`,
+    so the intended window is 10 minutes; observed Safari behaviour was longer.
+  - **Fix:** inject a version query on the `<link>` in `scripts/build_site.py`
+    (content hash or commit sha). ⚠️ **Changes CI behaviour → propose, do not
+    smuggle**, and ⚠️ that script's base-tag guard does a plain substring test
+    over the whole source, which has already killed one deploy — anything near
+    the `<head>` needs the guard re-run. Triage order: `RUNBOOK.md` §3c.
