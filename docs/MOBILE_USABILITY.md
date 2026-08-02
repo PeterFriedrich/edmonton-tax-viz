@@ -54,6 +54,29 @@ with near-zero risk to the tuned desktop experience.
 
 ## 2. Current state — CONFIRMED (render pass, iPhone-13-class 390×844, touch)
 
+> **2026-08-02 — two changes that landed on the phone without needing a phone
+> form, and one that was a phone bug all along.**
+> - **The change lens moved onto the map surface.** `#moneymode` (Current |
+>   Change over time) left the Options panel to become `#toggle`'s row 2 under
+>   **Value**. Reaching it on a phone was *unfold Options → find "Lens" → tap*;
+>   it is now *Value → Change*, both on the map. The pod still fits **one row at
+>   390px** (measured `180,97 202x55`). **Nothing was added to the default
+>   render** — row 2 is exclusive with the revenue cuts.
+> - **The revenue panel reuses the existing bottom sheet.** On Money's revenue
+>   metrics `#temporal` shows the zone-revenue breakdown instead of the
+>   assessment chart. Because it is the *same element*, the phone form,
+>   dismissals and `#hoodmode` behaviour came for free — measured at 390×844 the
+>   sheet renders 6 rows, bar `display:flex`, `8..382` of 390, bottom 836/844.
+>   ⚠️ The colour bar reuses `.mixbar`, whose rule was scoped `.tip`/`#peek-read`
+>   — **borrowing markup without its CSS collapses it to nothing visible**, the
+>   second occurrence of that trap.
+> - ⚠️ **The Display-popover overlap was NOT desktop-only**, though it was
+>   reported and carried as a generic UI bug. Measured identically at **1440×900,
+>   390×844 AND 360×780** (22px), because both pod offsets are fixed pixels. The
+>   bottom-right column is one of the few places where **a fixed-offset stack
+>   behaves the same at every width** — so a phone measurement adds nothing there,
+>   unlike everywhere else in this document.
+
 > **2026-08-01 — the mill-rate pod's phone form: the answer was NOT to place a
 > pod, it was not to have one.** Shipped desktop-first, then Peter: *"no rates
 > show on mobile"* → *"stacked, like bullet points almost, top left, where the

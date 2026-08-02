@@ -56,6 +56,14 @@ follows that order** — set with CSS `order:` on `#controls`, not DOM order
   This popover is where **view-independent map furniture** lives — controls that
   apply identically in every view. That is the test for putting something here
   rather than in the Options panel, whose contents are per-view.
+  ⚠️ **`#a11y` and `#about` are a STACK in one bottom-right column** (`bottom:
+  40px` and `68px`, both buttons 26px), and both menus open **upward into the
+  same strip** — which is why opening either closes the other. `#a11y-menu`'s
+  offset is `calc(200% + 8px)`, clearing **the pod above it**, not just its own
+  button: anchored to its own top it sat 23px inside the Data & Methods button
+  (fixed 2026-08-02). **Anything added to this column has to clear the whole
+  stack**, and a z-index bump is the wrong tool — it buries a control instead of
+  clearing it, and made the button unclickable when tried.
 
 **Tiers 2 and 3 both live inside the foldable Options panel** (`#optpanel`,
 `order: 3`): a header button `#opt-fold` toggles `#opt-body`, which **stacks**
