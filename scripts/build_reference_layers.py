@@ -3,14 +3,17 @@
 
 The map has no basemap tiles — just a dark backdrop (web/index.html, "base
 map") — so a first-time viewer has nothing to orient against before engaging
-with the fiscal data. This writes the two shapes that make Edmonton
-recognizable at a glance:
+with the fiscal data. This writes the shapes that make Edmonton recognizable
+at a glance:
 
-  t="river"   the North Saskatchewan River water body, clipped to the map extent
-  t="henday"  Anthony Henday Drive (Highway 216), the ring road
-  t="place"   one Point per neighbouring municipality, carrying its name
+  t="river"     the North Saskatchewan River water body, clipped to the extent
+  t="highway"   the motorway/trunk network, clipped to the SAME extent so it
+                runs off the edge of the view rather than stopping at the city
+                limit (2026-08-03; replaces the hand-extracted t="henday")
+  t="boundary"  one Polygon per neighbouring municipality, drawn as an outline
+  t="place"     one Point per neighbouring municipality, carrying its name
 
-Purely cartographic: no metric, no colour semantics, no tooltip. Both are
+Purely cartographic: no metric, no colour semantics, no tooltip. All are
 STATIC geography, so this is NOT part of the weekly refresh (same posture as
 scripts/build_levy_catchments.py) — the output is committed and re-run only
 when the reference geography itself changes. That also honours the rule that
@@ -22,10 +25,16 @@ Sources:
            isolates it cleanly: 7 polygons province-wide, all genuinely the
            river, of which only the main channel reaches Edmonton. Verified
            2026-07-26.
-  henday — the EXISTING data/raw/roads.geojson. No new source: the Henday is
-           in the City's centreline feed as 518 `Province of Alberta` rows.
-           load_roads filters those out (it measures City-maintained road
-           supply), which is why the ring never appears on the services map.
+  highways — OpenStreetMap via Overpass (ODbL; credited in Data & Methods).
+           Two other sources were tried and rejected 2026-08-03: the City
+           centreline feed carries the highways but only INSIDE the city limit,
+           so they stop dead at the boundary; and Alberta's
+           transportation/highways_public MapServer has ideal attributes but
+           returns NULL GEOMETRY on every feature in every format. See the
+           HIGHWAY_URL comment.
+  boundaries — the same municipality query as the places below: the outline is
+           the very polygon the label anchor is derived from, so a name and the
+           shape it names cannot disagree.
   places — Alberta urban_and_rural_municipality MapServer. Each name is fetched
            from the sublayer matching its LEGAL STATUS, which is why there are
            three: Sherwood Park is not a town but an urban service area of
@@ -50,14 +59,13 @@ from pathlib import Path
 import geopandas as gpd
 import pandas as pd
 import requests
-from shapely.geometry import MultiLineString, Point, box, shape
+from shapely.geometry import LineString, MultiLineString, Point, box, shape
 from shapely.ops import linemerge, unary_union
 
 logger = logging.getLogger(__name__)
 
 ROOT = Path(__file__).resolve().parents[1]
 BOUNDARIES = ROOT / "data/raw/neighbourhoods.geojson"
-ROADS = ROOT / "data/raw/roads.geojson"
 OUT = ROOT / "web/data/reference.geojson"
 
 WORKING_EPSG = 3400  # metres; matches the rest of the pipeline
@@ -81,45 +89,50 @@ RIVER_NAME = "North Saskatchewan River"
 # pitched one and for moderate zoom-out; the whole file is still only ~54 kB.
 MARGIN_M = 60000.0
 
-# Anthony Henday Drive carries two names in the centreline feed: the road name
-# on most of the ring, and its provincial designation on the north-east leg.
-# Matched as full substrings, deliberately: a bare "216" also hits
-# "216 STREET NW", and a bare "ANTHONY" hits "ANTHONY CRESCENT SW".
-HENDAY_PATTERNS = ("ANTHONY HENDAY", "HIGHWAY 216")
+# --- highways -------------------------------------------------------------
+# OpenStreetMap via Overpass, NOT the City centreline feed and NOT Alberta's
+# highways_public service. Both were tried (2026-08-03):
+#   - the City feed carries the highways, but only inside the city limit, so
+#     they stop dead at the boundary — the same "two square ends read as a
+#     lake" failure MARGIN_M exists to prevent for the river;
+#   - Alberta's transportation/highways_public MapServer has ideal attributes
+#     (510 in-service segments with ROAD_NUMBER over this extent) but returns
+#     NULL GEOMETRY on every feature, in geojson and Esri JSON, with and
+#     without an envelope. It answers 200 with features and no shapes, so a
+#     naive reader would emit an empty highway layer and call it success.
+# Overpass is queried once at build time like the Alberta services; this script
+# is not part of the weekly refresh. OSM data is ODbL — the credit line in
+# web/index.html's Data & Methods names it.
+HIGHWAY_URL = "https://overpass-api.de/api/interpreter"
 
-# CONCURRENCY. Name-matching alone leaves a 2.9 km hole in the east leg — 73
-# screen pixels at the default zoom, which reads as a broken ring rather than
-# as missing data. The road is there; for that stretch Highway 216 runs
-# concurrent with Highway 14, and the feed labels the shared carriageway for
-# Highway 14 only. (Confirmed by probing the hole: every sample point sits
-# 1-35 m from a HIGHWAY 14 centreline.)
-#
-# Only the north/southbound carriageways are the concurrency — the ring runs
-# north-south here. HIGHWAY 14 EASTBOUND/WESTBOUND is Highway 14 genuinely
-# heading east away from the ring, and including it would grow a 5 km spur.
-# Hence exact full names, not a "HIGHWAY 14" substring.
-HENDAY_CONCURRENT_NAMES = frozenset({
-    "HIGHWAY 14 NORTHBOUND",
-    "HIGHWAY 14 SOUTHBOUND",
-})
+# The public Overpass instance rejects anonymous clients with 406. Identify the
+# project, as its usage policy asks.
+OVERPASS_USER_AGENT = "edmonton-tax-viz/1.0 (reference-layer build script)"
 
-# Mainline-only, as an EXPLICIT segment-type allowlist (the load_roads
-# philosophy: a closed enumeration, never a keyword/prefix heuristic).
-#
-# Name-matching alone pulls 275.7 km across 590 segments — every entrance and
-# exit ramp, right-turn cutoff and collector-distributor lane is *named* for
-# the highway it serves. Drawn thin at city zoom that renders as a tangle of
-# spurs at each interchange rather than a ring. The three types below are
-# 149.2 km, which is the ~75 km ring times its two carriageways.
-#
-# The two Structure types are IN, not out: they are the mainline where it
-# bridges the river or flies over a cross street. Dropping them would open a
-# gap in the ring at every crossing.
-HENDAY_MAINLINE_TYPES = frozenset({
-    "Roadway (Standard)",     # 144.9 km — the ring itself
-    "Structure - Overpass",   #   2.8 km — mainline over a cross street
-    "Structure - Bridge",     #   1.5 km — mainline over the river
-})
+# The two OSM classes that mean "highway" in the orientation sense: grade-
+# separated freeways (motorway) and the major intercity routes (trunk).
+# `primary` is deliberately OUT — it would add 1,591 ways and 1,786 km of
+# in-city arterials, tripling the file to compete with the fiscal data on a map
+# that has no basemap precisely so the data reads first.
+HIGHWAY_CLASSES = ("motorway", "trunk")
+
+# Coarser than the river: these are long, near-straight runs drawn 1-2 px wide.
+HIGHWAY_SIMPLIFY_M = 30.0
+
+# Floor for the welded highway network over the clip extent. Measured 999 km
+# across 1,194 ways (2026-08-03: Hwy 16 337 km, Hwy 2 213 km, Hwy 216 156 km,
+# Hwy 43 131 km, then 63/28/15/16A). Set well below that — enough slack for OSM
+# edits, tight enough that losing a major route trips it.
+HIGHWAY_MIN_KM = 700.0
+
+# Cross-check on the replacement: the retired City-feed extraction yielded
+# 149 km for the ring's two carriageways, and OSM's Highway 216 is 156 km.
+# Agreement within ~5% is what justified dropping the hand-tuned extractor.
+HIGHWAY_RING_REF_KM = 156.0
+
+# Municipal outlines are background context at ~1 px; 100 m costs 169 vertices
+# for all seven (~3.6 kB) and nothing visible.
+BOUNDARY_SIMPLIFY_M = 100.0
 
 PLACE_URL = (
     "https://geospatial.alberta.ca/titan/rest/services/base"
@@ -156,19 +169,9 @@ PLACES = (
 # drawn 1-2 px wide, so they can be far coarser than the road network's 20/40 m
 # — at city zoom one pixel is ~50 m and none of this detail survives anyway.
 RIVER_SIMPLIFY_M = 25.0
-HENDAY_SIMPLIFY_M = 30.0
 
 # Coordinate decimals (~1 m at Edmonton's latitude) — matches load_roads.
 PRECISION = 5
-
-# The mainline extract is ~149 km: a ~75 km ring drawn as two carriageways.
-# Warn well below that — enough slack for a feed revision, tight enough that a
-# missing leg of the ring (~30 km) trips it.
-HENDAY_MIN_KM = 120.0
-
-# Welded endpoints closer than this count as the same node (the feed's
-# coordinates are sub-metre, so this is slack for the simplify pass).
-RING_CLOSURE_TOLERANCE_M = 50.0
 
 
 def _fetch_river(bounds_4326: tuple[float, float, float, float]) -> gpd.GeoDataFrame:
@@ -214,6 +217,81 @@ def _fetch_river(bounds_4326: tuple[float, float, float, float]) -> gpd.GeoDataF
     return gdf.to_crs(epsg=WORKING_EPSG)
 
 
+def _fetch_highways(bounds_4326: tuple[float, float, float, float]) -> gpd.GeoDataFrame:
+    """Query Overpass for motorway/trunk ways within `bounds_4326`.
+
+    Returns the ways in WORKING_EPSG with their `ref` (road number, e.g. "216")
+    for reporting only — the emitted layer carries no per-feature attributes,
+    the same posture as the river.
+    """
+    minx, miny, maxx, maxy = bounds_4326
+    classes = "|".join(HIGHWAY_CLASSES)
+    query = (
+        f"[out:json][timeout:180];"
+        f'(way["highway"~"^({classes})$"]'
+        f"({miny:.4f},{minx:.4f},{maxy:.4f},{maxx:.4f}););"
+        f"out geom;"
+    )
+    logger.info("Fetching %s ways from Overpass…", "/".join(HIGHWAY_CLASSES))
+    # Form-encoded `data=`, with a named User-Agent: a raw body or an anonymous
+    # client gets 406 Not Acceptable from the public instance.
+    resp = requests.post(
+        HIGHWAY_URL,
+        data={"data": query},
+        headers={"User-Agent": OVERPASS_USER_AGENT},
+        timeout=300,
+    )
+    resp.raise_for_status()
+    payload = resp.json()
+
+    elements = payload.get("elements") or []
+    if not elements:
+        raise RuntimeError(
+            "Overpass returned no highway ways for the Edmonton extent — the "
+            "query or the tagging may have changed. An empty highway layer "
+            "would look like a successful build."
+        )
+
+    rows, refs, skipped = [], [], 0
+    for el in elements:
+        geom = el.get("geometry")
+        # `out geom` omits geometry for ways the server could not resolve.
+        # Count them rather than letting them vanish (no silent drops).
+        if not geom or len(geom) < 2:
+            skipped += 1
+            continue
+        rows.append(LineString([(p["lon"], p["lat"]) for p in geom]))
+        refs.append((el.get("tags") or {}).get("ref"))
+    if skipped:
+        logger.warning("Overpass returned %d way(s) without usable geometry", skipped)
+    if not rows:
+        raise RuntimeError("Every Overpass way lacked geometry — nothing to draw.")
+
+    gdf = gpd.GeoDataFrame(
+        {"ref": refs}, geometry=rows, crs=f"EPSG:{OUT_EPSG}"
+    ).to_crs(epsg=WORKING_EPSG)
+    by_ref = (gdf.assign(km=gdf.geometry.length / 1000)
+                 .groupby("ref", dropna=False)["km"].sum().sort_values(ascending=False))
+    logger.info(
+        "Highways: %d ways, %.1f km; top routes %s",
+        len(gdf), by_ref.sum(),
+        ", ".join(f"{r if isinstance(r, str) else 'unnumbered'} {k:.0f}km"
+                  for r, k in by_ref.head(5).items()),
+    )
+
+    # The retired City-feed extractor produced 149 km for the ring. If OSM's
+    # 216 has drifted far from that, the replacement is no longer the same road
+    # and the discrepancy should be looked at, not averaged away.
+    ring_km = float(by_ref.get("216", 0.0))
+    if abs(ring_km - HIGHWAY_RING_REF_KM) > 0.25 * HIGHWAY_RING_REF_KM:
+        logger.warning(
+            "Highway 216 is %.1f km, vs the %.0f km the retired City-feed "
+            "extraction measured — check the ring is intact.",
+            ring_km, HIGHWAY_RING_REF_KM,
+        )
+    return gdf
+
+
 def _fetch_places() -> gpd.GeoDataFrame:
     """One label anchor per entry in PLACES, from the Alberta municipality service.
 
@@ -224,7 +302,7 @@ def _fetch_places() -> gpd.GeoDataFrame:
     outside it (a crescent-shaped boundary would otherwise label the hole).
     """
     logger.info("Fetching %d regional place anchors…", len(PLACES))
-    names, points = [], []
+    names, points, outlines = [], [], []
     for name, layer, field in PLACES:
         resp = requests.get(
             PLACE_URL.format(layer=layer),
@@ -265,57 +343,14 @@ def _fetch_places() -> gpd.GeoDataFrame:
         )
         names.append(name)
         points.append(anchor)
+        # The same largest polygon the anchor came from, kept as the drawn
+        # outline — so the label and the shape it names can never disagree.
+        outlines.append(biggest.simplify(BOUNDARY_SIMPLIFY_M, preserve_topology=True))
 
     return gpd.GeoDataFrame(
-        {"name": names}, geometry=points, crs=f"EPSG:{WORKING_EPSG}"
+        {"name": names, "outline": outlines},
+        geometry=points, crs=f"EPSG:{WORKING_EPSG}",
     )
-
-
-def _load_henday(roads_path: Path) -> gpd.GeoDataFrame:
-    """Extract the Anthony Henday / Highway 216 centrelines from the road feed."""
-    logger.info("Reading the road centreline feed (%s)…", roads_path.name)
-    roads = gpd.read_file(roads_path)
-    if roads.crs is None:
-        logger.warning("Roads CRS missing — assuming EPSG:4326")
-        roads = roads.set_crs(epsg=4326)
-
-    name = roads["street_name_full"].fillna("")
-    match = pd.Series(False, index=roads.index)
-    for pat in HENDAY_PATTERNS:
-        hits = name.str.contains(pat, case=False, regex=False)
-        logger.info("  %-22s %d segments", pat, int(hits.sum()))
-        match |= hits
-    concurrent = name.isin(HENDAY_CONCURRENT_NAMES)
-    logger.info("  %-22s %d segments (Hwy 216/14 concurrency)",
-                "HIGHWAY 14 N/S", int(concurrent.sum()))
-    match |= concurrent
-
-    named = roads.loc[match & (roads["centerline_type"] == "Road")]
-    if named.empty:
-        raise RuntimeError(
-            "No Anthony Henday segments matched — street_name_full values may "
-            "have changed in the road feed."
-        )
-
-    seg_type = named["road_segment_type_description"].fillna("(null)")
-    henday = named.loc[seg_type.isin(HENDAY_MAINLINE_TYPES)]
-    if henday.empty:
-        raise RuntimeError(
-            "Henday name-match found rows but none carry a mainline segment "
-            f"type. Types present: {sorted(seg_type.unique())}"
-        )
-
-    # No silent drops: say what the allowlist removed and what it kept.
-    excluded = seg_type[~seg_type.isin(HENDAY_MAINLINE_TYPES)].value_counts()
-    logger.info(
-        "  mainline allowlist kept %d of %d named segments; excluded %s",
-        len(henday), len(named), dict(excluded),
-    )
-    unknown = set(seg_type.unique()) - HENDAY_MAINLINE_TYPES - set(excluded.index)
-    if unknown:
-        logger.warning("  unrecognised segment types (dropped): %s", sorted(unknown))
-
-    return henday.to_crs(epsg=WORKING_EPSG)
 
 
 def _weld(geoms) -> "gpd.base.BaseGeometry":
@@ -324,56 +359,6 @@ def _weld(geoms) -> "gpd.base.BaseGeometry":
     if merged.geom_type == "MultiLineString":
         merged = linemerge(merged)
     return merged
-
-
-def _dangling_flags(parts, tol: float) -> list[bool]:
-    """Per-arc: does either end touch no other arc's end?"""
-    ends = []
-    for part in parts:
-        coords = list(part.coords)
-        ends.extend([Point(coords[0]), Point(coords[-1])])
-    out = []
-    for i in range(len(parts)):
-        loose = False
-        for slot in (2 * i, 2 * i + 1):
-            e = ends[slot]
-            if not any(e.distance(o) <= tol
-                       for j, o in enumerate(ends) if j != slot):
-                loose = True
-        out.append(loose)
-    return out
-
-
-def _prune_spurs(geom, tol: float = RING_CLOSURE_TOLERANCE_M):
-    """Drop arcs with a loose end — the Henday is a ring, so it has none.
-
-    Bringing in the Highway 14 concurrency closes the hole in the east leg but
-    overshoots it: the shared carriageways continue ~1.7 km and ~1.3 km south
-    past the junction, where Highway 14 turns east and leaves the ring. Those
-    stubs would render as two lines trailing off the ring into nothing.
-
-    Pruning by TOPOLOGY rather than by a coordinate cutoff or a length
-    threshold: "part of the ring" is exactly "both ends meet another arc", so
-    the rule states the intent and cannot drift if the feed's segmentation
-    changes. Iterated, because removing one stub can expose the next.
-    """
-    parts = list(getattr(geom, "geoms", [geom]))
-    while True:
-        flags = _dangling_flags(parts, tol)
-        if not any(flags):
-            return parts
-        kept = [p for p, loose in zip(parts, flags) if not loose]
-        dropped = [p for p, loose in zip(parts, flags) if loose]
-        # No silent drops: name what came off and how long it was.
-        logger.info(
-            "  pruned %d spur arc(s) with loose ends: %s",
-            len(dropped), [f"{p.length:.0f} m" for p in dropped],
-        )
-        if not kept:
-            raise RuntimeError(
-                "Pruning removed every arc — the extract has no closed ring."
-            )
-        parts = kept
 
 
 def _round_coords(obj, precision: int):
@@ -386,7 +371,6 @@ def _round_coords(obj, precision: int):
 
 def build(
     boundaries_path: Path = BOUNDARIES,
-    roads_path: Path = ROADS,
     out_path: Path = OUT,
     margin_m: float = MARGIN_M,
     precision: int = PRECISION,
@@ -416,46 +400,44 @@ def build(
         len(getattr(river_geom, "geoms", [river_geom])),
     )
 
-    # --- henday: weld the carriageways, then simplify ------------------------
-    henday = _load_henday(roads_path)
-    raw_km = henday.geometry.length.sum() / 1000
-    welded = _weld(henday.geometry).simplify(
-        HENDAY_SIMPLIFY_M, preserve_topology=True
+    # --- highways: clip to the same extent as the river, weld, simplify ------
+    # Clipped to clip_box, not just the query bbox, so the highways END WHERE
+    # THE RIVER ENDS. Both run off the edge of the view rather than stopping at
+    # the city limit — the whole point of using OSM over the City feed.
+    highways = _fetch_highways(tuple(clip_4326))
+    raw_km = highways.geometry.length.sum() / 1000
+    clipped = highways.geometry.intersection(clip_box)
+    clipped = clipped[~clipped.is_empty & clipped.notna()]
+    welded = _weld(clipped).simplify(HIGHWAY_SIMPLIFY_M, preserve_topology=True)
+    highway_geom = (
+        welded if welded.geom_type == "MultiLineString" else MultiLineString([welded])
     )
-    henday_geom = MultiLineString(_prune_spurs(welded))
-    parts = len(henday_geom.geoms)
-    welded_km = henday_geom.length / 1000
+    highway_km = highway_geom.length / 1000
     logger.info(
-        "Henday: %d segments, %.1f km raw -> %.1f km welded in %d part(s)",
-        len(henday), raw_km, welded_km, parts,
+        "Highways: %.1f km raw -> %.1f km welded in %d part(s) after clip+simplify",
+        raw_km, highway_km, len(highway_geom.geoms),
     )
-    # Both carriageways are kept: the ring is a divided highway, and picking one
-    # direction leaves gaps where the feed names a segment without a direction.
-    # At 1 px the two lines coincide; they only separate when zoomed well in.
-    if welded_km < HENDAY_MIN_KM:
+    if highway_km < HIGHWAY_MIN_KM:
         logger.warning(
-            "Henday welded length %.1f km is below the %.0f km floor — the "
-            "extract may be missing a leg of the ring.",
-            welded_km, HENDAY_MIN_KM,
+            "Welded highway length %.1f km is below the %.0f km floor — a major "
+            "route may be missing.",
+            highway_km, HIGHWAY_MIN_KM,
         )
 
-    # _prune_spurs guarantees no loose ends; assert it rather than trust it,
-    # since a silent break here is exactly the defect that is hard to see in a
-    # 15 kB file and obvious to a viewer on the map.
-    if any(_dangling_flags(list(henday_geom.geoms), RING_CLOSURE_TOLERANCE_M)):
-        raise RuntimeError("Henday ring still has loose ends after pruning.")
-    logger.info("Henday ring closure: no loose ends across %d arc(s)", parts)
-
-    # --- places: one named point per neighbouring municipality --------------
+    # --- places: a named point AND an outline per neighbouring municipality --
     places = _fetch_places()
+    outlines = list(places["outline"])
 
     out_gdf = gpd.GeoDataFrame(
         {
-            "t": ["river", "henday"] + ["place"] * len(places),
-            # Only places carry a name; river/henday are unlabelled shapes.
-            "name": [None, None] + list(places["name"]),
+            "t": (["river", "highway"] + ["boundary"] * len(outlines)
+                  + ["place"] * len(places)),
+            # Only places carry a name. Boundaries are deliberately unlabelled:
+            # the place point already sits inside its own outline, so naming
+            # both would print every regional name twice.
+            "name": ([None, None] + [None] * len(outlines) + list(places["name"])),
         },
-        geometry=[river_geom, henday_geom] + list(places.geometry),
+        geometry=[river_geom, highway_geom] + outlines + list(places.geometry),
         crs=f"EPSG:{WORKING_EPSG}",
     ).to_crs(epsg=OUT_EPSG)
 
@@ -492,14 +474,13 @@ def build(
 def main() -> None:
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--boundaries", type=Path, default=BOUNDARIES)
-    p.add_argument("--roads", type=Path, default=ROADS)
     p.add_argument("--out", type=Path, default=OUT)
     p.add_argument("--margin-m", type=float, default=MARGIN_M,
                    help="how far past the city bbox to keep the river")
     args = p.parse_args()
 
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
-    build(args.boundaries, args.roads, args.out, args.margin_m)
+    build(args.boundaries, args.out, args.margin_m)
 
 
 if __name__ == "__main__":

@@ -328,6 +328,15 @@
             target="_blank" rel="noopener">Open Government Licence – City of
          Edmonton</a>. An independent project — not affiliated with, nor endorsed
          by, the City of Edmonton.</p>
+      <!-- ODbL attribution for the highway reference layer (2026-08-03). It is
+           the only non-City source drawn on the map, and the licence requires
+           the credit wherever the data is used — so this sits in BOTH builds,
+           unlike the services span above. The river and municipal outlines come
+           from Alberta's open geospatial services, credited alongside. -->
+      <p class="muted">Orientation geography: highways &copy;
+         <a href="https://www.openstreetmap.org/copyright" target="_blank"
+            rel="noopener">OpenStreetMap contributors</a> (ODbL); river and
+         municipal boundaries from the Government of Alberta.</p>
       <p id="about-vintage" class="muted"></p>
       <span class="hd">Important caveats</span>
       <p><b>Revenue is modelled, not billed.</b> It applies Edmonton's
@@ -2016,7 +2025,12 @@
     //            the seam and runs on past the city limit, which is the read
     //            we want — the city sitting on a river that comes from and
     //            goes somewhere.
-    //   henday — composed LAST, over the data. It has no such seam to show
+    //   boundary — composed FIRST with the river, under the data. The seven
+    //            municipalities sit OUTSIDE Edmonton, where there is no hood
+    //            fabric to hide them (measured: 0-0.7% of each outline overlaps
+    //            the city), so underneath they are fully visible AND they can
+    //            never cut across a prism the way an over-composed line would.
+    //   highway — composed LAST, over the data. It has no such seam to show
     //            through: the hood polygons tile straight across it, so
     //            underneath it was simply invisible (measured: 0.38% of pixels
     //            versus 1.22% on top).
@@ -2035,7 +2049,11 @@
     // until the tail reads: still only ~5x the backdrop's luminance and far
     // below the set-aside grey, so it stays landform rather than data.
     const RIVER_COLOR = [50, 66, 94, 255];
-    const HENDAY_COLOR = [72, 78, 92, 255];
+    const HIGHWAY_COLOR = [72, 78, 92, 255];
+    // Municipal outlines: dimmer than the highways and unfilled. They are the
+    // faintest thing on the map by intent — they say "the city ends here and
+    // that is Leduc", and nothing more.
+    const BOUNDARY_COLOR = [58, 62, 74, 255];
     // Split once per load, not per frame: two layers need two datasets, and
     // buildLayers runs on every camera settle and every control change.
     let _refSplit = null;
@@ -2045,7 +2063,8 @@
                          features: referenceData.features.filter(f => f.properties.t === t) });
       // Places are consumed as plain anchors by the label pool, not as a
       // GeoJsonLayer — they are the only reference feature that renders as text.
-      return (_refSplit = { river: of("river"), henday: of("henday"),
+      return (_refSplit = { river: of("river"), highway: of("highway"),
+                            boundary: of("boundary"),
                             places: referenceData.features
                                       .filter(f => f.properties.t === "place") });
     }
@@ -2067,20 +2086,35 @@
         // nor z-fights — which is exactly what the depth-tested version got
         // wrong along the hood edges it shares with the valley polygons.
         parameters: { depthTest: false },
+      }), new deck.GeoJsonLayer({
+        id: "reference-boundary",
+        data: split.boundary,
+        // Outline only. A fill would put seven grey slabs around the city
+        // competing with the choropleth for the eye; the edge is the whole
+        // message.
+        filled: false,
+        stroked: true,
+        extruded: false,
+        getLineColor: BOUNDARY_COLOR,
+        getLineWidth: 1,
+        lineWidthUnits: "pixels",
+        lineWidthMinPixels: 1,
+        pickable: false,
+        parameters: { depthTest: false },
       })];
     }
 
-    // Top of the stack: the ring road, over the data it helps locate.
+    // Top of the stack: the highways, over the data they help locate.
     function referenceOverLayers() {
       const split = state.reference ? referenceSplit() : null;
       if (!split) return [];
       return [new deck.GeoJsonLayer({
-        id: "reference-henday",
-        data: split.henday,
+        id: "reference-highway",
+        data: split.highway,
         filled: false,
         stroked: true,
         extruded: false,
-        getLineColor: HENDAY_COLOR,
+        getLineColor: HIGHWAY_COLOR,
         getLineWidth: 1.4,
         lineWidthUnits: "pixels",
         lineWidthMinPixels: 1,

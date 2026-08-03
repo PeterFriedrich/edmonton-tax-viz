@@ -940,84 +940,90 @@ only** — never label the derived metric "total city cost".
   Carry that caveat in any UI copy.
 
 ## 14. Geographic Reference Layers (orientation, added 2026-07-27)
-`web/data/reference.geojson` (55 kB, 9 features, committed) — the North
-Saskatchewan River, the Anthony Henday ring road, and the names of seven
-neighbouring municipalities, so a first-time viewer can orient before reading
-the fiscal data. The map has **no basemap tiles** (just a dark backdrop), so
-without these there is no geographic context at all. Purely cartographic: no
-metric, no tooltip.
+`web/data/reference.geojson` (**70 kB, 16 features**, committed) — the North
+Saskatchewan River, the regional **highway network**, and the seven
+neighbouring municipalities as both an **outline** and a name, so a first-time
+viewer can orient before reading the fiscal data. The map has **no basemap
+tiles** (just a dark backdrop), so without these there is no geographic context
+at all. Purely cartographic: no metric, no tooltip.
 
 Built by `scripts/build_reference_layers.py`. **NOT in the weekly refresh** —
-static geography, same posture as `build_levy_catchments.py`; the Alberta
-endpoints are queried once at build time, never at runtime. Re-run only if the
-reference geography itself changes. Features carry `t`
-(`"river"` | `"henday"` | `"place"`), matching `roads.geojson`'s convention;
-`place` features additionally carry `name`.
+static geography, same posture as `build_levy_catchments.py`; the endpoints are
+queried once at build time, never at runtime. Features carry `t`
+(`"river"` | `"highway"` | `"boundary"` | `"place"`), matching
+`roads.geojson`'s convention; `place` features additionally carry `name`.
 
-**Size note (audited 2026-07-27):** the river is **95% of the file** (2,316
-vertices, 50.7 kB) and is the one part never trimmed — `RIVER_SIMPLIFY_M = 25`
-against ~79 m/px at HOME zoom, i.e. ~3× finer than a pixel, and its main
-polygon carries **104 interior rings (islands) = 35% of its whole vertex
-budget**, 99 of them out on the bare tails rather than hidden under the city
-fabric. Re-simplifying at 100 m would halve the file. Left alone deliberately, and now
-**settled (2026-07-27): keep it as-is.** 54 kB is 0.7% of the 7.7 MB payload,
-so there was never a performance argument; the only open question was whether
-the sub-pixel islands (smallest 52–95 m wide, ~1 px) read as speckle on the
-tails, and **Peter checked on device — they do not.** Do not re-simplify
-without a fresh visual reason.
+⚠️ **REVISED 2026-08-03 — `t="henday"` IS GONE, replaced by `t="highway"`.**
+The old layer was the Anthony Henday alone, hand-extracted from the City
+centreline feed, and it **stopped at the city limit**. Peter's ask was for the
+main highways to run off the edge of the frame the way the river does. See
+"Why OSM" below; the retired extraction's quirks are in `TODO_archive.md`.
 
 - **River** — Alberta `base_water_feature` MapServer **layer 72**
-  (`Lake/River (20K)`, the most detailed polygon tier),
-  `geospatial.alberta.ca/titan/rest/services/environment/base_water_feature`.
-  `NAME='North Saskatchewan River'` isolates it cleanly (7 polygons
-  province-wide, all genuinely the river; only the main channel reaches
-  Edmonton). Clipped to the city bbox + a **60 km** margin so it runs clean off
-  the edge of the view in both directions rather than stopping dead — the city
-  sits *on* a river that comes from and goes somewhere, and two square ends
-  just inside the frame read as a lake. The margin is sized against the default
-  camera, not guessed: at HOME zoom 10.2 and latitude 53.5 the scale is
-  ~79 m/px, so a 1440px viewport spans ~114 km flat (~57 km from centre) and
-  the 52° pitch pushes the horizon further; the city half-width is only ~15 km.
-  Costs 54 kB. Service is natively **EPSG:3400**, the pipeline's working CRS.
-- **Ring road** — no new source: extracted from the **existing**
-  `data/raw/roads.geojson`. The Henday is in the City centreline feed as ~518
-  `Province of Alberta` rows; `load_roads` filters those out (it measures
-  City-maintained supply), which is why the ring never appears on the services
-  map.
-- **Places** — Alberta `urban_and_rural_municipality` MapServer,
-  `geospatial.alberta.ca/titan/rest/services/base/urban_and_rural_municipality`.
+  (`Lake/River (20K)`), `NAME='North Saskatchewan River'` (7 polygons
+  province-wide, all genuinely the river). Clipped to the city bbox + a **60 km**
+  margin so it runs clean off the edge of the view rather than stopping dead —
+  the city sits *on* a river that comes from and goes somewhere, and two square
+  ends just inside the frame read as a lake. The margin is sized against the
+  default camera: at HOME zoom 10.2 and latitude 53.5 the scale is ~79 m/px, so
+  a 1440px viewport spans ~114 km flat and the 52° pitch pushes the horizon
+  further; the city half-width is only ~15 km. Natively **EPSG:3400**.
+  **95% of the file** and deliberately never re-simplified (settled 2026-07-27:
+  Peter checked the sub-pixel islands on device — they do not read as speckle).
+- **Highways** — **OpenStreetMap via Overpass** (`overpass-api.de`), classes
+  **`motorway` + `trunk`**, clipped to the *same* 60 km box as the river.
+  Measured 2026-08-03: 1,194 ways / 999 km raw → **871 km welded in 89 parts**,
+  of which **68% lies outside the city** and the extent exceeds the city bbox on
+  all four sides. Top routes: Hwy 16 (Yellowhead) 337 km, Hwy 2 (QEII) 213 km,
+  Hwy 216 (Henday) 156 km, Hwy 43 131 km, then 63/28/15/16A.
+- **Boundaries + places** — Alberta `urban_and_rural_municipality` MapServer.
   Seven names (`PLACES` in the build script): St. Albert, Sherwood Park, Spruce
-  Grove, Fort Saskatchewan, Leduc, Beaumont, Devon. One `Point` each, at the
-  centroid of the place's largest polygon (representative point as a fallback
-  if that centroid lands outside) — the **same rule `labelAnchors()` uses for
-  neighbourhoods** in `web/index.html`, so a regional name and a hood name are
-  positioned by one convention rather than two. All seven resolve to single
-  clean polygons, 1.8–12.7 km from the city edge, 13.6–29.3 km from centre.
-  Service is natively **EPSG:3400**.
+  Grove, Fort Saskatchewan, Leduc, Beaumont, Devon. Each yields **one Polygon**
+  (the largest, simplified at 100 m — 169 vertices for all seven, ~3.6 kB) and
+  **one Point** at that same polygon's centroid, so a label and the shape it
+  names cannot disagree. Natively **EPSG:3400**.
+
+### Why OSM, and the trap in the obvious alternative
+Two sources were tried and rejected on 2026-08-03:
+- **The City centreline feed** (`data/raw/roads.geojson`) carries every main
+  highway — Yellowhead, Calgary Trail, Manning, Sherwood Park Fwy, Hwy 14/15/216
+  — as `Province of Alberta` rows that `load_roads` filters out. But it is a
+  *City* feed: the highways **stop at the municipal boundary**, which is exactly
+  the amputated look `MARGIN_M` exists to prevent for the river.
+- ⚠️ **Alberta's `transportation/highways_public` MapServer RETURNS NULL
+  GEOMETRY.** It has ideal attributes (510 `IN SERVICE` segments with
+  `ROAD_NUMBER` over this extent) and answers **HTTP 200 with all 510 features
+  and no shapes** — in `f=geojson` and `f=json`, with and without `outSR`, with
+  and without an envelope, on the simplest possible `where`. Its
+  `capabilities` still advertise `Query`. **A reader that trusts the feature
+  count would emit an empty highway layer and log success.**
 
 ### Known Quirks
-- **Name-matching alone pulls 275.7 km, not the ~75 km ring** — every entrance
-  ramp, exit ramp, right-turn cutoff and collector-distributor lane is *named*
-  for the highway it serves. An explicit `road_segment_type_description`
-  allowlist (`Roadway (Standard)` + the two `Structure -` types, which carry
-  the mainline over crossings) cuts it to 149 km = the ring drawn as its two
-  carriageways.
-- **Highway 216 runs CONCURRENT with Highway 14 on the east leg, and the feed
-  names that stretch for Highway 14 only** — so a name-only extract leaves a
-  2.9 km hole in the ring (73 screen pixels at the default zoom; it reads as a
-  rendering bug, not as missing data). Only `HIGHWAY 14 NORTHBOUND`/`SOUTHBOUND`
-  are the concurrency — `EASTBOUND`/`WESTBOUND` is Highway 14 genuinely heading
-  east, and including it grows a 5 km spur that has to be pruned.
-- **Both carriageways are kept** (~156 km total). The ring is a divided
-  highway; picking one direction leaves gaps where the feed names a segment
-  without a direction. The two lines are ~28 m apart — coincident at 1 px, they
-  only separate when zoomed well in.
+- ⚠️ **Overpass answers `406 Not Acceptable` to a raw POST body or an anonymous
+  client.** The query must be **form-encoded as `data=`** with a **named
+  `User-Agent`** (`OVERPASS_USER_AGENT`), as its usage policy asks.
+- **OSM is ODbL**, so the credit is required *wherever the data is used*. The
+  Data & Methods pod carries it in **both** builds — unlike the City
+  road/fire/transit credits, which are full-only because those lenses are.
+- **`primary` is deliberately NOT in `HIGHWAY_CLASSES`** — it would add ~1,591
+  ways and ~1,786 km of in-city arterials, tripling the file and competing with
+  the choropleth on a map that has no basemap precisely so the data reads first.
+- **The highway layer is many OPEN-ENDED corridors** (89 parts), by design: they
+  run off the clip edge. Anything asserting closure — as the retired Henday ring
+  check did — is asserting the wrong invariant. The live assertion is that the
+  network **extends past the city on all four sides**
+  (`verify-reference-layer.js`), falsified by clipping it to the city limit.
+- **Hwy 216 measures 156 km in OSM vs the 149 km** the retired City-feed
+  extraction produced for the ring's two carriageways. Agreement within ~5% is
+  what justified dropping the hand-tuned extractor; `HIGHWAY_RING_REF_KM` warns
+  if that drifts past 25%.
 - **At the 60 km clip the river is a MultiPolygon** (disjoint stretches up- and
   downstream), where a narrow clip yields a single Polygon. Anything asserting
   its geometry type must accept both.
-- The builder **verifies the ring closes** (no arc end without a matching end)
-  rather than trusting a length total: 149 km looks perfectly plausible for a
-  75 km ring drawn twice, which is exactly how the Highway 14 hole hid.
+- **Municipal outlines are drawn UNDER the data**, with the river. The seven
+  places sit outside Edmonton, so no hood polygon hides them (measured: 0–0.7%
+  of each outline overlaps the city fabric) — and underneath they can never cut
+  across a prism the way an over-composed line would.
 - **The municipality service models legal STATUS, not size, so the seven places
   need THREE sublayers** — and the obvious single-layer implementation silently
   finds nothing for two of them:
