@@ -96,11 +96,20 @@ git ls-files | grep -vE '\.(geojson|png|csv)$' | xargs wc -l | sort -n | tail -3
    **Decide what you need up front (rule 5 makes this possible), then read it in
    a few large slices.** Batch independent reads into one turn.
 
-7. **Run the verify suite through `tools/profiling/verify.js`.** It wraps the 26
-   scripts and prints one line each plus any FAIL lines: a 3-script gate goes
-   from ~110 lines to 4. It classifies on `/^FAIL/` **and the exit code**, never
-   the `ALL CHECKS PASSED` banner (five scripts never print it — RUNBOOK quirk
-   (u)). It also runs 3-up, which shortens wall-clock — see rule 9.
+7. **Run the verify suite through `tools/profiling/verify.js`.** It wraps the
+   scripts (31 as of 2026-08-03, auto-discovered) and prints one line each plus
+   any FAIL lines: a 3-script gate goes from ~110 lines to 4. It classifies on
+   `/^FAIL/` **and the exit code**, never the `ALL CHECKS PASSED` banner (five
+   scripts never print it — RUNBOOK quirk (u)).
+   ⚠️ **It runs SERIALLY on this box, and that is deliberate — do not "speed it
+   up" with `--jobs 3`.** The default is now `floor(cores / 3)`, which is 1 here:
+   one script alone draws **~275% CPU** (headless Chromium on SwiftShader, so
+   rasterisation and deck.gl picking are software), and 3-up pegged all four
+   cores at load 8.2 and **failed 2 of 3 scripts** that pass alone. Concurrency
+   bought only ~17% of wall time, because one script (`verify-peek`, ~437s)
+   dominates regardless. **Budget wall-clock accordingly** — the full suite is
+   well past the 10-minute Bash cap (quirk (t)), so filter to the scripts you
+   need or run it in the background. See `DECISIONS.md` 2026-08-03.
 
 8. **Never let raw markup, SVG or JSON blobs into the transcript.** Dumping a
    tooltip's `innerHTML` prints full `<svg>` path coordinate strings; dumping a
