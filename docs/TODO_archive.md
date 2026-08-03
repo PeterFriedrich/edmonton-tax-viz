@@ -1084,3 +1084,50 @@ deploys itself; the gap was an unchecked deploy, not a missing one. Original ite
     so a full suite on every refresh may cost more than it catches. A single
     smoke script over the panels that read refreshed data is the cheaper shape.
     ⚠️ **Changes CI behaviour → propose, do not smuggle.**
+
+## `verify-smoke.js` guards the METRICS columns but not the SERVICES ones — CLOSED 2026-08-03
+
+Closed by `verify-smoke.js` `B7`/`B8` **plus** `scripts/check_served_columns.py`
++ `data/expected_columns.json`. Full reasoning is the 2026-08-03 row in
+`docs/DECISIONS.md`.
+
+⚠️ **The item's prescribed fix does not catch the failure the item names**, and
+that is the whole finding. It asked for *"present on every feature OR absent from
+every feature, never partially"* — but a refresh that silently drops a service
+column drops it from **all 406** features, which is "absent from every feature",
+which that rule tolerates. Falsification F2 confirmed it: with `bike_m_per_acre`
+deleted from every feature, B7 passes green. The tolerance is not removable
+either — `bike_m_per_acre` was legitimately absent for exactly this reason
+between the 2026-08-02 merge and the refresh that followed it, and failing on
+absence would have redded the weekly publish over a column that was not supposed
+to exist yet. Telling the two apart needs **memory of last week's schema**, which
+no check derived from the served file can have; hence the committed baseline.
+
+Two corrections to the item's own text, both found by reading the config:
+`SERVICES` is **not** the whole list (Roads is a ground layer with no
+`plane.col`, so `road_m_per_acre` appears only in `RATIO_DENOMS`), and the
+service columns carry **no nulls at all** — set-aside is its own `is_set_aside`
+flag, so the null-vs-undefined care B6 needs does not arise here, though the
+check reads `undefined` anyway to keep the two families asking one question.
+
+Original item:
+
+- [ ] **`verify-smoke.js` GUARDS THE METRICS COLUMNS BUT NOT THE SERVICES ONES
+  — a dropped service column is invisible by design.** Found 2026-08-02 while
+  adding the bike lens. `B6` asserts every `METRICS` column is present on every
+  feature, derived from the config; `B4` does the same for `USE_CATEGORIES`.
+  **Nothing derives from `SERVICES`**, so the 7 service plane columns
+  (`road_m_per_acre`, `bike_m_per_acre`, `transit_dep_per_acre`,
+  `storm_charge_per_acre`, `water_charge_per_acre`, `fire_events_per_acre`,
+  `svc_cost_per_acre`) are unguarded.
+  - ⚠️ **The failure is SILENT BY CONSTRUCTION:** every services row
+    self-gates on its own column, so a refresh that silently dropped one would
+    simply hide the row. No error, no NaN, no banner — the exact "a dropped
+    fact is this project's cardinal failure" case B6 exists for, on a surface
+    that just grew from 6 rows to 7.
+  - **Fix is cheap and mirrors B6:** derive the required column list from
+    `SERVICES`' own `plane.col` values rather than listing them.
+  - ⚠️ Must stay tolerant of legitimately-absent columns (an old data file, or
+    a lens whose reviewed input has not landed) — the S87 cry-wolf lesson.
+    Probably "present on every feature OR absent from every feature", never
+    partially.

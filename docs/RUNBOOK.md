@@ -147,6 +147,28 @@ Triage by which step failed, in the run log:
   `data/expected_value_anchors.json`. Moves in the benign direction (fewer
   ineligible points, a flatter distribution) only warn. **The January year-roll
   is the most likely trigger** — see §1.
+- **"Check served columns"** (exit 5, `scripts/check_served_columns.py`) — a
+  column the site serves **disappeared**, or landed on only some neighbourhoods.
+  Runs after regen, before the commit, so the site keeps serving last-good data.
+  The error names each column as `MISSING` (gone from every feature) or
+  `PARTIAL` (on *n* of 406 — that additionally means a join dropped rows).
+  ⚠️ **This is the one guard whose failure you would otherwise never see.**
+  Every lens self-gates on its own column, so the affected row, view or tooltip
+  line just *isn't there* — no error, no NaN, no banner, and the publish looks
+  clean. That is why it fails hard on something as undramatic as a missing key.
+  **Do not re-pin to make it pass.** ⚠️ **Check the "Download source data" step
+  first — it is the most likely cause.** Every lens in `main.py` skips with a
+  `logger.warning` when its raw file is absent (roads, bike, fire, transit,
+  permits, zoning, property-info, unit costs), and the run then continues and
+  publishes *without* that lens. So one dataset failing to download silently
+  removes a whole layer from the site, and this guard is what turns that back
+  into a red build. Otherwise: a renamed source field, a loader returning early,
+  a join losing rows, or a `main.py` flag that stopped being passed. Only once
+  the removal is understood
+  **and** intended, re-pin with
+  `python scripts/check_served_columns.py --write-baseline` and commit
+  `data/expected_columns.json`. A **new** column only warns, so adding a metric
+  never blocks the publish — re-pin at your convenience.
 - **"Check temporal years"** (exit 5, `scripts/check_temporal_years.py`) — the
   assessment *time series* failed a control. Like the guards above it runs before
   the status manifest, so the heartbeat stays unbumped and the site serves

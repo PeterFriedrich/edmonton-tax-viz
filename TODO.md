@@ -42,26 +42,6 @@ Also removed a duplicated preamble block left in this file by the
 
 
 
-- [ ] **`verify-smoke.js` GUARDS THE METRICS COLUMNS BUT NOT THE SERVICES ONES
-  — a dropped service column is invisible by design.** Found 2026-08-02 while
-  adding the bike lens. `B6` asserts every `METRICS` column is present on every
-  feature, derived from the config; `B4` does the same for `USE_CATEGORIES`.
-  **Nothing derives from `SERVICES`**, so the 7 service plane columns
-  (`road_m_per_acre`, `bike_m_per_acre`, `transit_dep_per_acre`,
-  `storm_charge_per_acre`, `water_charge_per_acre`, `fire_events_per_acre`,
-  `svc_cost_per_acre`) are unguarded.
-  - ⚠️ **The failure is SILENT BY CONSTRUCTION:** every services row
-    self-gates on its own column, so a refresh that silently dropped one would
-    simply hide the row. No error, no NaN, no banner — the exact "a dropped
-    fact is this project's cardinal failure" case B6 exists for, on a surface
-    that just grew from 6 rows to 7.
-  - **Fix is cheap and mirrors B6:** derive the required column list from
-    `SERVICES`' own `plane.col` values rather than listing them.
-  - ⚠️ Must stay tolerant of legitimately-absent columns (an old data file, or
-    a lens whose reviewed input has not landed) — the S87 cry-wolf lesson.
-    Probably "present on every feature OR absent from every feature", never
-    partially.
-
 - [ ] **The Services panel grouping was never checked on a phone.** Shipped
   2026-08-02 (PR #145). It added 2 group captions + 1 row, so the panel grew by
   3 lines of shared DOM — and `CONTROLS_MATRIX.md` records that grouping drives
@@ -1198,6 +1178,8 @@ Also removed a duplicated preamble block left in this file by the
 ## Done
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
+
+- [x] **A dropped SERVICES column was invisible to every guard — FIXED 2026-08-03.** Two halves, because the item's own prescribed fix could not catch the failure it named: `verify-smoke.js` gains `B7` (all-or-nothing presence, columns derived from the **union** of `SERVICES[].plane.col` and `RATIO_DENOMS[].col` — Roads is a ground layer, so `road_m_per_acre` lives only in the latter) and `B8` (a services row is offered exactly when its column is present). ⚠️ **B7 provably CANNOT catch a full drop** — falsification F2 shows it passing green — because nothing derived from the served file alone can tell "dropped" from "not shipped yet". That needs memory, so `scripts/check_served_columns.py` + `data/expected_columns.json` (62 columns) hold a committed baseline and fail the refresh on a removal; a new column only warns. — 2026-08-03 · `docs/TODO_archive.md`, `docs/DECISIONS.md`
 
 - [x] **A data refresh published with no check on the RENDER — FIXED 2026-08-02.** `verify-smoke.js` gates `refresh.yml` before `upload-pages-artifact`, so a red check leaves the live site on the previous good render. Invariant-only by design (a pinned value would cry wolf weekly — #139). ⚠️ The item's premise was wrong: `refresh.yml` **deploys itself**, so the gap was an *unchecked* deploy, not a missing one. Falsification found the check's own hole (a dropped column is *omitted*, not printed as NaN → `B6`); the inverse test caught it crying wolf on absent mill rates. — 2026-08-02 · `docs/TODO_archive.md`, `docs/DECISIONS.md`
 
