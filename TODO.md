@@ -42,6 +42,26 @@ Also removed a duplicated preamble block left in this file by the
 
 
 
+- [ ] **`verify-peek.js` IS 71% OF THE SUITE'S WALL TIME — ~437s for 27 checks.**
+  Measured 2026-08-03 while fixing the runner concurrency default (see `## Done`).
+  Now that the suite runs serially on this box, its runtime *is* the suite's
+  runtime, and this one script dominates: 437s of a 615s three-script serial run.
+  - **The cost is software-GL picking, not sleeps.** Fixed `waitForTimeout` calls
+    total only **10.9s across 6 calls**, and there is one page load. The time goes
+    into `findTappableHoods`, which sweeps a pixel grid (y from 55%→25% of height
+    step 9, x from 30%→80% of width step 9 ≈ **2,400 candidate points**) calling
+    `overlay._deck.pickObject` at each, **plus 8 more picks per candidate** for its
+    8-neighbour "solid" test. Every one of those is a picking-buffer readback under
+    SwiftShader, where rasterisation is on the CPU.
+  - ⚠️ **The sweep exists for a real reason — do not just delete it.** It is
+    looking for hoods big enough to tap reliably, and its comment records why it
+    starts mid-map (the west edge is river valley, all narrow slivers). Any fix has
+    to keep "find genuinely tappable hoods" true.
+  - **Cheapest lever first:** coarsen the grid step (9px → 18px quarters the
+    candidates), or derive candidates from `state.data` geometry — hood centroids
+    projected to screen — instead of scanning blind, picking only to confirm.
+    ⚠️ Re-measure after: the 8-neighbour test may dominate, not the scan.
+
 - [ ] **The Services panel grouping was never checked on a phone.** Shipped
   2026-08-02 (PR #145). It added 2 group captions + 1 row, so the panel grew by
   3 lines of shared DOM — and `CONTROLS_MATRIX.md` records that grouping drives
@@ -1178,6 +1198,8 @@ Also removed a duplicated preamble block left in this file by the
 ## Done
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
+
+- [x] **The verify runner's own default was manufacturing quirk (mmm) — FIXED 2026-08-03.** `verify.js` hardcoded `--jobs 3`, but a **single** verify script draws **~275% CPU** on this 4-core box (headless Chromium on SwiftShader — software rasterisation and software deck.gl picking), so 3-up demanded ~8 cores from 4: `cpu_sum` 385–400%, load 8.2. Measured on three scripts: jobs=3 ~509s **2 failed**, jobs=2 ~505s **1 failed**, jobs=1 615s **all green** — parallelism was buying ~17% wall time for a suite whose red results had to be re-run alone to mean anything (three scripts went red on PR #148, which touched none of them). Default now `floor(cores / 3)` → 1 here, 2 on an 8-core; `--jobs N` still forces. ⚠️ `verify-temporal`'s hand-set 4000ms click timeout deliberately left alone — it passes at the new default, and raising it would treat the symptom of a fixed cause. Not a CI change (`refresh.yml` runs `verify-smoke.js` directly). — 2026-08-03 · `docs/DECISIONS.md`
 
 - [x] **A dropped SERVICES column was invisible to every guard — FIXED 2026-08-03.** Two halves, because the item's own prescribed fix could not catch the failure it named: `verify-smoke.js` gains `B7` (all-or-nothing presence, columns derived from the **union** of `SERVICES[].plane.col` and `RATIO_DENOMS[].col` — Roads is a ground layer, so `road_m_per_acre` lives only in the latter) and `B8` (a services row is offered exactly when its column is present). ⚠️ **B7 provably CANNOT catch a full drop** — falsification F2 shows it passing green — because nothing derived from the served file alone can tell "dropped" from "not shipped yet". That needs memory, so `scripts/check_served_columns.py` + `data/expected_columns.json` (62 columns) hold a committed baseline and fail the refresh on a removal; a new column only warns. — 2026-08-03 · `docs/TODO_archive.md`, `docs/DECISIONS.md`
 
