@@ -42,6 +42,37 @@ Also removed a duplicated preamble block left in this file by the
 
 
 
+- [ ] **`verify-smoke.js` GUARDS THE METRICS COLUMNS BUT NOT THE SERVICES ONES
+  — a dropped service column is invisible by design.** Found 2026-08-02 while
+  adding the bike lens. `B6` asserts every `METRICS` column is present on every
+  feature, derived from the config; `B4` does the same for `USE_CATEGORIES`.
+  **Nothing derives from `SERVICES`**, so the 7 service plane columns
+  (`road_m_per_acre`, `bike_m_per_acre`, `transit_dep_per_acre`,
+  `storm_charge_per_acre`, `water_charge_per_acre`, `fire_events_per_acre`,
+  `svc_cost_per_acre`) are unguarded.
+  - ⚠️ **The failure is SILENT BY CONSTRUCTION:** every services row
+    self-gates on its own column, so a refresh that silently dropped one would
+    simply hide the row. No error, no NaN, no banner — the exact "a dropped
+    fact is this project's cardinal failure" case B6 exists for, on a surface
+    that just grew from 6 rows to 7.
+  - **Fix is cheap and mirrors B6:** derive the required column list from
+    `SERVICES`' own `plane.col` values rather than listing them.
+  - ⚠️ Must stay tolerant of legitimately-absent columns (an old data file, or
+    a lens whose reviewed input has not landed) — the S87 cry-wolf lesson.
+    Probably "present on every feature OR absent from every feature", never
+    partially.
+
+- [ ] **The Services panel grouping was never checked on a phone.** Shipped
+  2026-08-02 (PR #145). It added 2 group captions + 1 row, so the panel grew by
+  3 lines of shared DOM — and `CONTROLS_MATRIX.md` records that grouping drives
+  desktop AND mobile. Verified at 1280x800 and 1440x900 only.
+  - A probe at 390/360/320 px returned **all zeros** for the layers panel
+    (height 0) — inconclusive, not a pass: `#optpanel` is the element that
+    folds on mobile, `#layers` is not, so the zero has some other cause that
+    was not chased down. **Do not read the zeros as "no overflow".**
+  - Read `docs/MOBILE_USABILITY.md` first; keep the CONFIRMED /
+    NEEDS-CONFIRMATION split honest.
+
 - [ ] **▶ PETER: two unit-cost numbers unblock the transportation COST lens
   (Stage 2).** Stage 1 (bike supply + the Services grouping) shipped
   2026-08-02; the dollars half needs two manual reviewed inputs added to

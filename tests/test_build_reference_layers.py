@@ -2,12 +2,22 @@
 
 The reference layers are static cartographic furniture, so the risk is not a
 wrong number — it is a wrong SHAPE that nobody notices in a 15 kB file and
-every viewer notices on the map. These tests exercise the two pieces of logic
-that produced real defects during the build, on synthetic geometry (no network,
-no real data):
+every viewer notices on the map. These tests exercise the logic that produced real defects during the build, on
+synthetic geometry (no network, no real data):
 
-  - the mainline/concurrency selection rules are a closed enumeration, and
-  - spur pruning leaves a closed ring and removes anything with a loose end.
+  - the highway query asks for a closed set of OSM classes and reports, rather
+    than silently drops, ways the server returns without geometry, and
+  - the place list is a closed enumeration queried in the sublayer matching
+    each place's legal status.
+
+⚠️ The Anthony Henday extraction this file used to test at length (mainline
+allowlists, Highway 14 concurrency, spur pruning, ring closure) was RETIRED
+2026-08-03 along with its tests: the highway layer now comes from OSM, which
+needs none of it. The ring-closure invariant did not survive either — the new
+layer is deliberately many open-ended corridors running off the clip edge.
+What replaced it is a rendered-geometry assertion in
+tools/profiling/verify-reference-layer.js: the highways must extend past the
+city on all four sides.
 """
 import sys
 from pathlib import Path
@@ -22,110 +32,82 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
 import build_reference_layers as b  # noqa: E402
 
 
-# --- selection rules -------------------------------------------------------
+# --- highway query --------------------------------------------------------
 
-def test_mainline_allowlist_keeps_structures():
-    """Bridges and overpasses ARE the mainline where it crosses something.
+def test_highway_classes_are_a_closed_pair():
+    """motorway + trunk only.
 
-    Dropping them as "structures" would open a gap in the ring at every river
-    crossing and cross-street flyover.
+    `primary` is excluded on purpose: it would add ~1,786 km of in-city
+    arterials to a map that has no basemap precisely so the data reads first.
     """
-    assert "Structure - Bridge" in b.HENDAY_MAINLINE_TYPES
-    assert "Structure - Overpass" in b.HENDAY_MAINLINE_TYPES
-    assert "Roadway (Standard)" in b.HENDAY_MAINLINE_TYPES
+    assert b.HIGHWAY_CLASSES == ("motorway", "trunk")
 
 
-def test_mainline_allowlist_excludes_interchange_furniture():
-    """Ramps and cutoffs are named for the highway they serve, but are not it."""
-    for junk in ("Entrance Ramp", "Exit Ramp", "Right Turn Cutoff",
-                 "Left Turn Cutoff", "Collector-Distributor", "Service Road"):
-        assert junk not in b.HENDAY_MAINLINE_TYPES
+def test_highway_query_uses_the_class_list_not_a_literal(monkeypatch):
+    """A hardcoded regex would drift from HIGHWAY_CLASSES silently."""
+    captured = {}
+
+    class _Resp:
+        def raise_for_status(self): pass
+        def json(self): return {"elements": [
+            {"tags": {"ref": "216"}, "geometry": [{"lon": -113.5, "lat": 53.5},
+                                                  {"lon": -113.4, "lat": 53.6}]}]}
+
+    def fake_post(url, data=None, headers=None, timeout=None):
+        captured["query"] = data["data"]
+        captured["ua"] = (headers or {}).get("User-Agent")
+        return _Resp()
+
+    monkeypatch.setattr(b.requests, "post", fake_post)
+    b._fetch_highways((-114.0, 53.0, -113.0, 54.0))
+    for cls in b.HIGHWAY_CLASSES:
+        assert cls in captured["query"]
+    # The public instance answers 406 without one.
+    assert captured["ua"]
 
 
-def test_concurrency_is_north_south_only():
-    """Hwy 216 shares Hwy 14's north/south carriageways, not its east/west ones.
+def test_ways_without_geometry_are_reported_not_silently_dropped(monkeypatch, caplog):
+    """`out geom` omits geometry for ways the server cannot resolve."""
+    class _Resp:
+        def raise_for_status(self): pass
+        def json(self): return {"elements": [
+            {"tags": {"ref": "2"}, "geometry": [{"lon": -113.5, "lat": 53.5},
+                                                {"lon": -113.4, "lat": 53.6}]},
+            {"tags": {"ref": "16"}},                       # no geometry at all
+            {"tags": {"ref": "16"}, "geometry": [{"lon": -113.5, "lat": 53.5}]},
+        ]}
 
-    The ring runs north-south through the concurrency; HIGHWAY 14
-    EASTBOUND/WESTBOUND is Highway 14 leaving the ring, and pulling it in grows
-    a ~5 km spur. A "HIGHWAY 14" substring match would do exactly that.
+    monkeypatch.setattr(b.requests, "post", lambda *a, **k: _Resp())
+    with caplog.at_level("WARNING"):
+        out = b._fetch_highways((-114.0, 53.0, -113.0, 54.0))
+    assert len(out) == 1
+    assert "without usable geometry" in caplog.text
+
+
+def test_empty_highway_response_raises_rather_than_drawing_nothing(monkeypatch):
+    """An empty highway layer would look exactly like a successful build.
+
+    This is not hypothetical: Alberta's highways_public MapServer answers 200
+    with 510 features and NULL geometry on every one of them.
     """
-    assert b.HENDAY_CONCURRENT_NAMES == {"HIGHWAY 14 NORTHBOUND",
-                                         "HIGHWAY 14 SOUTHBOUND"}
-    assert not any("HIGHWAY 14" in p for p in b.HENDAY_PATTERNS)
+    class _Resp:
+        def raise_for_status(self): pass
+        def json(self): return {"elements": []}
+
+    monkeypatch.setattr(b.requests, "post", lambda *a, **k: _Resp())
+    with pytest.raises(RuntimeError, match="no highway ways"):
+        b._fetch_highways((-114.0, 53.0, -113.0, 54.0))
 
 
-def test_name_patterns_do_not_catch_lookalikes():
-    """The two substrings must not match '216 STREET NW' or 'ANTHONY CRESCENT'."""
-    for decoy in ("216 STREET NW", "ANTHONY CRESCENT SW"):
-        assert not any(pat in decoy for pat in b.HENDAY_PATTERNS)
+def test_all_ways_lacking_geometry_raises(monkeypatch):
+    class _Resp:
+        def raise_for_status(self): pass
+        def json(self): return {"elements": [{"tags": {}}, {"tags": {}}]}
 
+    monkeypatch.setattr(b.requests, "post", lambda *a, **k: _Resp())
+    with pytest.raises(RuntimeError, match="lacked geometry"):
+        b._fetch_highways((-114.0, 53.0, -113.0, 54.0))
 
-# --- topology --------------------------------------------------------------
-
-def _square_ring():
-    """A closed square, split into two arcs the way linemerge leaves them."""
-    return [
-        LineString([(0, 0), (0, 100), (100, 100)]),
-        LineString([(100, 100), (100, 0), (0, 0)]),
-    ]
-
-
-def test_closed_ring_has_no_dangles():
-    flags = b._dangling_flags(_square_ring(), b.RING_CLOSURE_TOLERANCE_M)
-    assert flags == [False, False]
-
-
-def test_open_ring_reports_dangles():
-    """A hole in the ring shows up as a matched pair of loose ends.
-
-    This is the shape of the Highway 14 defect: two arcs, ends far apart.
-    """
-    arcs = [
-        LineString([(0, 0), (0, 100), (100, 100)]),
-        LineString([(100, 100), (100, 0), (5000, 0)]),  # never returns
-    ]
-    assert b._dangling_flags(arcs, b.RING_CLOSURE_TOLERANCE_M) == [True, True]
-
-
-def test_prune_spurs_drops_the_spur_and_keeps_the_ring():
-    arcs = _square_ring() + [LineString([(100, 100), (900, 900)])]  # spur
-    kept = b._prune_spurs(MultiLineString(arcs), b.RING_CLOSURE_TOLERANCE_M)
-    assert len(kept) == 2
-    assert not any(f for f in b._dangling_flags(kept, b.RING_CLOSURE_TOLERANCE_M))
-
-
-def test_prune_spurs_iterates_to_remove_a_chain():
-    """Removing one stub can expose the next — pruning must repeat, not run once."""
-    arcs = _square_ring() + [
-        LineString([(100, 100), (400, 400)]),   # stub off the ring
-        LineString([(400, 400), (800, 800)]),   # stub off the stub
-    ]
-    kept = b._prune_spurs(MultiLineString(arcs), b.RING_CLOSURE_TOLERANCE_M)
-    assert len(kept) == 2
-
-
-def test_prune_spurs_refuses_to_empty_the_layer():
-    """An all-spur input is a broken extract, not a silently empty ring road."""
-    arcs = MultiLineString([LineString([(0, 0), (100, 100)])])
-    with pytest.raises(RuntimeError, match="no closed ring"):
-        b._prune_spurs(arcs, b.RING_CLOSURE_TOLERANCE_M)
-
-
-def test_closure_tolerance_is_below_the_defect_scale():
-    """The tolerance must not be loose enough to swallow a real break.
-
-    The Highway 14 hole was 2.9 km; the tolerance is metres.
-    """
-    assert 0 < b.RING_CLOSURE_TOLERANCE_M < 500
-
-
-# --- regional place labels -------------------------------------------------
-#
-# The places are an explicit list, not a query result, so the failure mode is
-# not "wrong geometry" but "wrong list": a name that no longer resolves, or a
-# name looked for in the wrong sublayer. Both would silently cost the map a
-# label. These pin the enumeration itself; _fetch_places raising on an empty
-# result is what covers the live service.
 
 def test_places_are_a_closed_explicit_list():
     """Composition is a cartographic judgement, so it is stated, not derived.

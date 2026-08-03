@@ -56,18 +56,18 @@ const PLACE_COUNT = 7;
     const layers = (overlay._deck && overlay._deck.props.layers) || [];
     const ids = layers.filter(Boolean).map(l => l.id);
     const river = layers.filter(Boolean).find(l => l.id === 'reference-river');
-    const henday = layers.filter(Boolean).find(l => l.id === 'reference-henday');
+    const highway = layers.filter(Boolean).find(l => l.id === 'reference-highway');
     let data = null;
     try { data = referenceData; } catch (e) { /* not yet fetched */ }
     return {
       ids,
-      present: !!river && !!henday,
+      present: !!river && !!highway,
       riverIndex: ids.indexOf('reference-river'),
-      hendayIndex: ids.indexOf('reference-henday'),
+      highwayIndex: ids.indexOf('reference-highway'),
       count: ids.length,
-      depthTest: henday ? henday.props.parameters.depthTest : null,
+      depthTest: highway ? highway.props.parameters.depthTest : null,
       riverDepthTest: river ? river.props.parameters.depthTest : null,
-      pickable: river ? (river.props.pickable || henday.props.pickable) : null,
+      pickable: river ? (river.props.pickable || highway.props.pickable) : null,
       stateOn: state.reference,
       checkbox: document.getElementById('reference-on').checked,
       types: data ? data.features.map(f => f.properties.t).sort() : null,
@@ -83,66 +83,86 @@ const PLACE_COUNT = 7;
   // emitted something the renderer has no branch for, which would draw nothing
   // and look exactly like success.
   const kinds = (s0.types || []).reduce((m, t) => (m[t] = (m[t] || 0) + 1, m), {});
-  check('carries one river and one ring road',
-        kinds.river === 1 && kinds.henday === 1, JSON.stringify(kinds));
+  check('carries one river and one highway network',
+        kinds.river === 1 && kinds.highway === 1, JSON.stringify(kinds));
+  check('carries one boundary outline per named place',
+        kinds.boundary === PLACE_COUNT, `${kinds.boundary} of ${PLACE_COUNT}`);
   check('carries the regional place points', kinds.place === PLACE_COUNT,
         `${kinds.place} of ${PLACE_COUNT}`);
   check('no unexpected feature kinds',
-        Object.keys(kinds).every(t => ['river', 'henday', 'place'].includes(t)),
+        Object.keys(kinds).every(t => ['river', 'highway', 'boundary', 'place'].includes(t)),
         JSON.stringify(Object.keys(kinds).sort()));
   // The river is Multi at the shipped 60 km clip — that wide an extent picks up
   // disjoint stretches up- and downstream — but a narrow clip yields a single
   // Polygon, so accept either rather than pinning the margin into the suite.
   const shapeGeoms = (s0.geoms || []).filter(g => g !== 'Point');
-  check('river is polygonal, ring road is lines',
-        /^\["MultiLineString","(Multi)?Polygon"\]$/.test(JSON.stringify(shapeGeoms)),
+  check('river + boundaries are polygonal, highways are lines',
+        shapeGeoms.filter(g => g === 'MultiLineString').length === 1 &&
+        shapeGeoms.filter(g => /Polygon$/.test(g)).length === PLACE_COUNT + 1,
         JSON.stringify(shapeGeoms));
   check('every place is a Point',
         (s0.geoms || []).filter(g => g === 'Point').length === PLACE_COUNT,
         JSON.stringify(s0.geoms));
 
-  // The ring must be CLOSED. A hole in the east leg (Highway 216 runs
-  // concurrent with Highway 14 there, and the feed names only Highway 14)
-  // left a 2.9 km break — 73 screen pixels, which reads as a rendering bug.
-  // Re-checked here so a future rebuild cannot quietly reintroduce it.
-  const ring = await page.evaluate(() => {
-    const f = referenceData.features.find(x => x.properties.t === 'henday');
-    const parts = f.geometry.coordinates;
-    const ends = [];
-    for (const p of parts) { ends.push(p[0], p[p.length - 1]); }
-    // ~50 m in degrees at Edmonton's latitude, matching the builder's tolerance.
-    const TOL = 50 / 111000;
-    const near = (a, b) => Math.abs(a[0] - b[0]) < TOL / Math.cos(53.5 * Math.PI / 180)
-                        && Math.abs(a[1] - b[1]) < TOL;
-    const loose = ends.filter((e, i) => !ends.some((o, j) => j !== i && near(e, o)));
-    // Rough length in km, for the "did a leg go missing" guard.
+  // THE HIGHWAYS MUST RUN OFF THE EDGE OF THE VIEW, not stop at the city
+  // limit. That is the whole reason this layer moved off the City centreline
+  // feed (2026-08-03): the City feed's highways end at the boundary and read
+  // as amputated, the same failure the river's 60 km margin exists to prevent.
+  // A regression here draws a plausible-looking map, so it is asserted on
+  // GEOMETRY rather than on the source.
+  const reach = await page.evaluate(() => {
+    const hw = referenceData.features.find(x => x.properties.t === 'highway');
+    const parts = hw.geometry.coordinates;
+    let hb = [Infinity, Infinity, -Infinity, -Infinity];
     let km = 0;
     for (const p of parts) {
-      for (let i = 1; i < p.length; i++) {
-        const dx = (p[i][0] - p[i - 1][0]) * 111 * Math.cos(53.5 * Math.PI / 180);
-        const dy = (p[i][1] - p[i - 1][1]) * 111;
-        km += Math.hypot(dx, dy);
+      for (let i = 0; i < p.length; i++) {
+        hb[0] = Math.min(hb[0], p[i][0]); hb[1] = Math.min(hb[1], p[i][1]);
+        hb[2] = Math.max(hb[2], p[i][0]); hb[3] = Math.max(hb[3], p[i][1]);
+        if (i) {
+          const dx = (p[i][0] - p[i - 1][0]) * 111 * Math.cos(53.5 * Math.PI / 180);
+          const dy = (p[i][1] - p[i - 1][1]) * 111;
+          km += Math.hypot(dx, dy);
+        }
       }
     }
-    return { loose: loose.length, parts: parts.length, km: Math.round(km) };
+    // The city's own extent, from the hood polygons the map is actually drawn from.
+    let cb = [Infinity, Infinity, -Infinity, -Infinity];
+    const walk = c => {
+      if (typeof c[0] === 'number') {
+        cb[0] = Math.min(cb[0], c[0]); cb[1] = Math.min(cb[1], c[1]);
+        cb[2] = Math.max(cb[2], c[0]); cb[3] = Math.max(cb[3], c[1]);
+      } else c.forEach(walk);
+    };
+    state.data.features.forEach(f => walk(f.geometry.coordinates));
+    return { hb, cb, km: Math.round(km), parts: parts.length };
   });
-  check('ring road has no loose ends (no visible break, no spur)', ring.loose === 0,
-        `${ring.loose} dangling of ${ring.parts} arcs`);
-  check('ring road length is a double ring (~150 km)', ring.km > 120 && ring.km < 200,
-        `${ring.km} km`);
+  const [hw0, hw1, hw2, hw3] = reach.hb, [c0, c1, c2, c3] = reach.cb;
+  check('highways extend past the city on ALL FOUR sides',
+        hw0 < c0 && hw1 < c1 && hw2 > c2 && hw3 > c3,
+        `hw [${reach.hb.map(v => v.toFixed(2))}] vs city [${reach.cb.map(v => v.toFixed(2))}]`);
+  // ~873 km welded over the 60 km clip (2026-08-03). A band, not an equality:
+  // OSM is edited continuously, and this is a cartographic layer, not a metric.
+  check('highway network is the whole regional net, not one road',
+        reach.km > 600 && reach.km < 1300, `${reach.km} km in ${reach.parts} parts`);
+  // Highway 216 is the ring; if the network collapsed to a single corridor the
+  // part count would crater. Open ends are EXPECTED here (they run off the
+  // clip), which is exactly why the old ring-closure assertion was retired
+  // rather than adapted.
+  check('network is many disjoint corridors', reach.parts > 20, `${reach.parts} parts`);
 
   // --- layer composition ---------------------------------------------------
-  check('both layers are built', s0.present);
+  check('the reference layers are built', s0.present);
   check('on by default (no basemap — orientation should not need hunting)', s0.stateOn === true);
   check('checkbox agrees with state', s0.checkbox === true);
   check('not pickable (never steals a hood tooltip)', s0.pickable === false);
-  check('ring road depthTest ON so prisms occlude it', s0.depthTest === true);
+  check('highway depthTest ON so prisms occlude it', s0.depthTest === true);
   check('river depthTest OFF (it is the backdrop, not an occluder)',
         s0.riverDepthTest === false);
   check('river composed FIRST, under the data', s0.riverIndex === 0,
         `index ${s0.riverIndex} of ${s0.count}`);
-  check('ring road composed LAST, over the data', s0.hendayIndex === s0.count - 1,
-        `index ${s0.hendayIndex} of ${s0.count}`);
+  check('highways composed LAST, over the data', s0.highwayIndex === s0.count - 1,
+        `index ${s0.highwayIndex} of ${s0.count}`);
 
   // --- present in every view ----------------------------------------------
   for (const v of VIEWS) {
@@ -152,9 +172,9 @@ const PLACE_COUNT = 7;
     await page.waitForTimeout(1600);
     const s = await probe();
     check(`[${v}] both reference layers present`, s.present);
-    check(`[${v}] river still first, ring road still last`,
-          s.riverIndex === 0 && s.hendayIndex === s.count - 1,
-          `river ${s.riverIndex}, henday ${s.hendayIndex} of ${s.count}`);
+    check(`[${v}] river still first, highways still last`,
+          s.riverIndex === 0 && s.highwayIndex === s.count - 1,
+          `river ${s.riverIndex}, highway ${s.highwayIndex} of ${s.count}`);
   }
   await page.evaluate(() => applyView('money'));
   await page.waitForTimeout(1200);
@@ -173,13 +193,13 @@ const PLACE_COUNT = 7;
   await page.waitForTimeout(900);
   const off = await probe();
   check('unticking removes both layers entirely',
-        off.riverIndex === -1 && off.hendayIndex === -1 && off.stateOn === false);
+        off.riverIndex === -1 && off.highwayIndex === -1 && off.stateOn === false);
   await box.click();
   await page.waitForTimeout(900);
   const on = await probe();
   check('re-ticking restores it', on.present === true && on.stateOn === true);
   check('bracketing survives the round-trip',
-        on.riverIndex === 0 && on.hendayIndex === on.count - 1);
+        on.riverIndex === 0 && on.highwayIndex === on.count - 1);
 
   // --- it must actually be VISIBLE, not merely present ---------------------
   // The whole defect that motivated drawing it last was a layer that existed,
