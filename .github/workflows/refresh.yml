@@ -109,6 +109,17 @@ jobs:
         if: steps.yearcheck.outputs.result != 'hold'
         run: python scripts/check_value_anchors.py
 
+      # Schema half of the same "did the artifact survive regeneration" question.
+      # The anchors above pin what the NUMBERS look like; this pins WHICH COLUMNS
+      # EXIST, against a committed baseline. It needs that memory because every
+      # lens self-gates on its own column: a dropped one hides its own row and
+      # publishes clean, so nothing derived from the served file alone — including
+      # verify-smoke.js's B7 below — can tell a drop from a metric that has not
+      # shipped yet. Adding a column only warns; losing one fails.
+      - name: Check served columns (guard after regenerating)
+        if: steps.yearcheck.outputs.result != 'hold'
+        run: python scripts/check_served_columns.py
+
       # Temporal lens Phase 0 gate (docs/SPEC_temporal.md §0.3). Watches the
       # historical assessment file for the failure that produced the 2024/2025
       # defect: a settled year quietly losing accounts. Like every guard here it

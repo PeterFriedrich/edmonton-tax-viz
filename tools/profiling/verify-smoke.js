@@ -106,6 +106,18 @@ const GARBAGE = /\bNaN\b|\bundefined\b|\bnull\b|\bInfinity\b|\$NaN|\$undefined/;
     const geo = await fetch('./data/neighbourhood_value_per_acre.geojson').then(r => r.json());
     const temporal = await fetch('./data/temporal.json').then(r => r.json());
     const status = await fetch('./data/status.json').then(r => r.json());
+
+    // ⚠️ THE SERVICE PLANE COLUMNS — B6's coupling applied to the surface B6
+    // does not reach. `SERVICES` alone is NOT the whole list: Roads is a ground
+    // layer rather than a plane service and carries no `plane.col`, so
+    // `road_m_per_acre` appears only in RATIO_DENOMS. Taking the union means
+    // neither the services view nor the ratio picker can grow a column these
+    // checks do not know about.
+    const svcCols = [...new Set([
+      ...Object.values(SERVICES).map(s => s.plane && s.plane.col),
+      ...Object.values(RATIO_DENOMS).map(d => d.col),
+    ].filter(Boolean))].sort();
+
     return {
       served: geo.features.length,
       loaded: state.data ? state.data.features.length : -1,
@@ -133,6 +145,26 @@ const GARBAGE = /\bNaN\b|\bundefined\b|\bnull\b|\bInfinity\b|\$NaN|\$undefined/;
         });
         return out;
       })(),
+      svcCols,
+      // Absence per service column, ABSENT (undefined) only — same rule as B6.
+      // Unlike the money metrics these columns carry no nulls at all today
+      // (set-aside is its own `is_set_aside` flag, and only the four
+      // `_per_lot_acre` columns are ever null), but reading `undefined` keeps
+      // the two families answering the same question.
+      svcColAbsent: Object.fromEntries(
+        svcCols.map(col => [col, geo.features.filter(f => f.properties[col] === undefined).length])),
+      // The flag the data gate actually writes: each services row is
+      // `style.display = "none"`d when its column is missing. Read the row's
+      // OWN inline display, never computed visibility — the services view is
+      // full-only, so in the public build every row is hidden by an ancestor
+      // and a visibility test would report all six as gated off.
+      svcRowHidden: Object.fromEntries(
+        Object.entries(SERVICES)
+          .filter(([, s]) => s.plane && s.plane.col)
+          .map(([key, s]) => {
+            const row = document.querySelector(`#services .svc[data-service="${key}"]`);
+            return [s.plane.col, row ? row.style.display === 'none' : null];
+          })),
     };
   });
 
@@ -151,6 +183,42 @@ const GARBAGE = /\bNaN\b|\bundefined\b|\bnull\b|\bInfinity\b|\$NaN|\$undefined/;
   check('B6: every METRICS column is present on every feature',
     missingMetric.length === 0,
     missingMetric.map(([k, n]) => `${k} absent on ${n}`).join('; '));
+
+  // ⚠️ WHAT B7 CATCHES AND, MORE IMPORTANTLY, WHAT IT DOES NOT.
+  // It catches a service column present for some hoods and missing for others —
+  // the per-hood failure family C exists for, seen at the schema level.
+  //
+  // It does NOT catch a service column dropped from EVERY feature, and that is
+  // structural, not an oversight: a dropped column has to be tolerated here
+  // because a legitimately-not-yet-shipped one looks identical from inside the
+  // browser (bike_m_per_acre was exactly this between the 2026-08-02 merge and
+  // the refresh that followed it). Failing on absence would red the weekly
+  // publish over a column that was never supposed to be there yet — the
+  // cry-wolf failure this whole file is built to avoid.
+  //
+  // The full drop is `scripts/check_served_columns.py`'s job. That guard holds a
+  // COMMITTED baseline, so it can tell "not shipped yet" from "was here last
+  // week and is gone now"; nothing derived from the served file alone can, since
+  // data and check move together (the same limit B5 documents for temporal.json).
+  const svcAbsent = Object.entries(shape.svcColAbsent);
+  const svcPartial = svcAbsent.filter(([, n]) => n > 0 && n < shape.served);
+  const svcGone = svcAbsent.filter(([, n]) => n === shape.served).map(([k]) => k);
+  check('B7: every SERVICES/RATIO_DENOMS column is present on every feature or on none',
+    svcPartial.length === 0,
+    svcPartial.length
+      ? svcPartial.map(([k, n]) => `${k} absent on ${n} of ${shape.served}`).join('; ')
+      : `${shape.svcCols.length} columns${svcGone.length ? `, not yet shipped: ${svcGone.join(', ')}` : ''}`);
+
+  // The other direction, and the one B7 cannot see from the data alone: every
+  // services row self-gates on its own column, so a gate that disagrees with the
+  // data is silent both ways — a row offered over a column that is not there
+  // renders "no X data" over hoods that have it, and a row hidden over a column
+  // that IS there simply loses a lens with no error anywhere.
+  const svcGateBad = Object.entries(shape.svcRowHidden)
+    .filter(([col, hidden]) => hidden !== null && hidden !== (shape.svcColAbsent[col] === shape.served))
+    .map(([col, hidden]) => `${col} ${hidden ? 'gated off but present' : 'offered but absent'}`);
+  check('B8: each services row is offered exactly when its column is present',
+    svcGateBad.length === 0, svcGateBad.join('; '));
 
   // The panel's chart must plot one point per PUBLISHED year. The year list is
   // deliberately non-contiguous (2024 omitted by decision), so this compares

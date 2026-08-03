@@ -360,6 +360,19 @@ lot acres). ~34.7k cells / 1.8 MB on current data. Returns a stats dict.
   **cell** grain against `web/data/value_grid.json`. Dollar figures are
   deliberately NOT pinned (reassessment moves them yearly). Baseline:
   `data/expected_value_anchors.json`. See `DECISIONS.md` 2026-07-28.
+- `scripts/check_served_columns.py`: **schema** validation, run from
+  `refresh.yml` beside the anchors above. Where they pin what the numbers look
+  like, this pins **which columns exist** in the served neighbourhood GeoJSON,
+  against `data/expected_columns.json`. A baselined column gone from every
+  feature, or present on only some, FAILS; a new column only warns (columns get
+  added constantly here, and a guard that blocks the publish on every new metric
+  gets switched off). ⚠️ **It exists because `verify-smoke.js` structurally
+  cannot do it** — every lens self-gates on its own column, so a drop hides its
+  own row and publishes clean, and nothing derived from the served file alone can
+  tell a drop from a metric that has not shipped yet. That needs the committed
+  baseline. ⚠️ Unlike `check_value_anchors.py` it does **not** skip in the
+  degraded ground-acre-only mode: that mode is legitimate for a local run but not
+  for a publish. See `DECISIONS.md` 2026-08-03.
 - No silent drops: null-coordinate rows counted and reported; lot-ineligible
   points reported with their value; a conservation guard errors if cell sums
   don't reproduce the input totals
