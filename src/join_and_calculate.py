@@ -128,6 +128,18 @@ def load_unit_costs(path: str | Path) -> dict[str, float]:
         road_dollars_per_m   $/road-metre/yr (O&M + renewal, 50-yr life)
         fire_budget_annual   Fire Rescue gross operating budget, $/yr
 
+    plus, when present, the OPERATING-basis transportation trio:
+
+        road_ops_dollars_per_m   $/road-metre/yr    (maintenance + snow, NO capital)
+        bike_ops_dollars_per_m   $/bikeway-metre/yr (maintenance + snow, NO capital)
+        transit_budget_annual    ETS bus+LRT gross operating budget, $/yr
+
+    ⚠️ The two road numbers are DIFFERENT BASES, not a duplicate — $50/m/yr
+    lifecycle vs $4.635/m/yr operating, ~10.8x apart on the same metres. They
+    feed different columns and must never be summed (city_unit_costs.json
+    "_two_bases"). The operating trio is OPTIONAL: absent keys simply omit the
+    transportation composite, so the file stays valid mid-sourcing.
+
     Validates loudly — a malformed hand edit must fail the pipeline, not
     silently zero a term of the composite.
     """
@@ -138,10 +150,31 @@ def load_unit_costs(path: str | Path) -> dict[str, float]:
         fire_budget = data["fire_response"]["operating_budget_gross_annual"]
     except KeyError as e:
         raise KeyError(f"{path} is missing required unit-cost field {e}") from e
+    costs = {"road_dollars_per_m": float(road), "fire_budget_annual": float(fire_budget)}
+
+    for out_key, block, field in (
+        ("road_ops_dollars_per_m", "roadway_ops", "value"),
+        ("bike_ops_dollars_per_m", "bikeway_ops", "value"),
+        ("transit_budget_annual", "transit_ets", "operating_budget_gross_annual"),
+    ):
+        if block in data:
+            # Present-but-malformed is a hand-edit error, not an absent key —
+            # fail rather than silently dropping a term of the composite.
+            try:
+                costs[out_key] = float(data[block][field])
+            except (KeyError, TypeError, ValueError) as e:
+                raise ValueError(
+                    f"{path}: {block}.{field} is missing or not a number ({e})"
+                ) from e
+
     for name, val in (("roadway value", road), ("fire budget", fire_budget)):
         if not isinstance(val, (int, float)) or val <= 0:
             raise ValueError(f"{path}: {name} must be a positive number, got {val!r}")
-    return {"road_dollars_per_m": float(road), "fire_budget_annual": float(fire_budget)}
+    for key in ("road_ops_dollars_per_m", "bike_ops_dollars_per_m",
+                "transit_budget_annual"):
+        if key in costs and costs[key] <= 0:
+            raise ValueError(f"{path}: {key} must be positive, got {costs[key]!r}")
+    return costs
 
 
 # Below this parcel-land share the lot-acre denominator is near-zero and the
@@ -651,6 +684,87 @@ def join_and_calculate(
             + TRANSIT_COLUMNS + ["transit_dep_per_acre"] + ["geometry"]
         )
 
+    # Transportation lens Stage 2: the OPERATING-basis cost terms
+    # (SPEC_services.md "Transportation lens"). Runs HERE, after the transit
+    # merge, because transit_dep_per_acre does not exist at the svc_cost_per_acre
+    # block above.
+    #
+    # ⚠️ OPERATING basis: maintenance + snow clearing, NO capital replacement.
+    # The roads term here is NOT the roads term inside svc_cost_per_acre — same
+    # metres, $4.635/m/yr vs $50/m/yr lifecycle, ~10.8x apart. That is why every
+    # column below carries _ops. Never sum the two (city_unit_costs "_two_bases").
+    if unit_costs is not None:
+        transport_terms: dict[str, pd.Series] = {}
+        if roads is not None and "road_ops_dollars_per_m" in unit_costs:
+            transport_terms["cost_roads_ops_per_acre"] = (
+                joined["road_m_per_acre"] * unit_costs["road_ops_dollars_per_m"]
+            )
+        if bike is not None and "bike_ops_dollars_per_m" in unit_costs:
+            transport_terms["cost_bike_ops_per_acre"] = (
+                joined["bike_m_per_acre"] * unit_costs["bike_ops_dollars_per_m"]
+            )
+        if transit is not None and "transit_budget_annual" in unit_costs:
+            # Denominator is the transit frame's OWN citywide total (pre-join),
+            # so numerator and denominator describe the same population — the
+            # fire pattern exactly. Unmatched hoods still consumed budget.
+            citywide_dep = float(transit["transit_dep_total"].sum())
+            if citywide_dep <= 0:
+                raise ValueError(
+                    "Citywide scheduled stop-events is not positive "
+                    f"({citywide_dep}) — cannot derive a per-departure cost"
+                )
+            # ⚠️ THIS IS A SHARE ALLOCATION, NOT A RATE. transit_dep_total is a
+            # MEAN-WEEKDAY count and the budget is ANNUAL, so this intermediate
+            # ("annual dollars per mean-weekday stop-event") is meaningless on its
+            # own — but hood_dep/citywide_dep is a valid share, and the terms
+            # sum back to the budget. Do NOT "fix" the units by scaling to ~250
+            # weekdays: that would multiply every hood's cost by 250.
+            transit_cost_per_dep = unit_costs["transit_budget_annual"] / citywide_dep
+            transport_terms["cost_transit_ops_per_acre"] = (
+                joined["transit_dep_per_acre"] * transit_cost_per_dep
+            )
+
+        for col, series in transport_terms.items():
+            joined[col] = series
+        added_transport = list(transport_terms)
+
+        # All-or-nothing across the three terms: a two-term metric labelled
+        # "transportation" would be mislabeled (same rule svc_cost_per_acre uses).
+        wanted = {"cost_roads_ops_per_acre", "cost_bike_ops_per_acre",
+                  "cost_transit_ops_per_acre"}
+        missing = sorted(wanted - set(transport_terms))
+        if not missing:
+            joined["transport_cost_ops_per_acre"] = (
+                joined["cost_roads_ops_per_acre"]
+                + joined["cost_bike_ops_per_acre"]
+                + joined["cost_transit_ops_per_acre"]
+            )
+            added_transport.append("transport_cost_ops_per_acre")
+            logger.info(
+                "Transportation OPERATING composite: $%.3f/road-m/yr + "
+                "$%.3f/bike-m/yr + $%.2f/weekday-departure ($%.0f ETS bus+LRT "
+                "budget / %.0f citywide stop-events) -> transport_cost_ops_per_acre "
+                "on %d hoods (MODELED, ops only — no capital)",
+                unit_costs["road_ops_dollars_per_m"],
+                unit_costs["bike_ops_dollars_per_m"],
+                transit_cost_per_dep, unit_costs["transit_budget_annual"],
+                citywide_dep,
+                int(joined["transport_cost_ops_per_acre"].notna().sum()),
+            )
+        elif transport_terms:
+            logger.warning(
+                "Transportation OPERATING composite SKIPPED — missing term(s): %s. "
+                "The per-term columns that ARE available still ship (%s); only the "
+                "labelled composite is withheld.",
+                ", ".join(missing), ", ".join(added_transport) or "none",
+            )
+
+        if added_transport:
+            out_cols = (
+                [c for c in out_cols if c != "geometry"]
+                + added_transport + ["geometry"]
+            )
+
     # Utility lens #2: merge the modeled water + sanitary charge when
     # supplied (SPEC_utilities.md Lens 2 — modeled, not billed; residential
     # scope only).
@@ -840,7 +954,12 @@ def join_and_calculate(
 # not ridership; the client must label all of them as such). svc_cost_per_acre
 # is the V2 composite — MODELED road $ + allocated fire $, roads + fire only,
 # never "total city cost" (SPEC_utilities decision 3; no display layer yet —
-# placement is an open call). new_units_per_acre
+# placement is an open call). The cost_*_ops_per_acre trio and
+# transport_cost_ops_per_acre are the Transportation lens Stage 2 composite on a
+# strictly OPERATING basis (maintenance + snow, NO capital replacement) —
+# ⚠️ cost_roads_ops_per_acre and the roads term inside svc_cost_per_acre are the
+# SAME METRES ON DIFFERENT BASES, ~10.8x apart; the client must never sum or
+# compare them, which is what the _ops suffix exists to signal. new_units_per_acre
 # and new_permits_per_acre (+ the total/permit-count pair for the tooltip) are the
 # Development lens A activity metrics — new dwelling units / new permits from
 # issued permits, a change/flow signal, NOT revenue or cost (SPEC_development.md).
@@ -868,6 +987,8 @@ SLIM_COLUMNS = [
     "fire_events_per_acre", "transit_dep_per_acre",
     "water_charge_per_acre", "water_fixed_per_acre",
     "svc_cost_per_acre",
+    "cost_roads_ops_per_acre", "cost_bike_ops_per_acre",
+    "cost_transit_ops_per_acre", "transport_cost_ops_per_acre",
     "new_units_per_acre", "new_permits_per_acre",
     "new_dwelling_units", "new_dwelling_permits",
     "new_units_per_acre_3yr", "new_permits_per_acre_3yr",

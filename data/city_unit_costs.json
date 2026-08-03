@@ -1,5 +1,7 @@
 {
-  "_purpose": "MODELED city service unit costs for the V2 'city service cost per acre' composite (SPEC_utilities decision 3). Manual, reviewed input (mill-rates pattern) — NOT auto-fetched, NOT part of the weekly refresh. Covers ROADS + FIRE only; never label the result 'total city cost' (police/parks/transit/drainage unmeasured). Sourced on Peter's laptop 2026-07-15 (edmonton.ca unreachable from the Oracle box).",
+  "_purpose": "MODELED city service unit costs. Manual, reviewed input (mill-rates pattern) — NOT auto-fetched, NOT part of the weekly refresh. Never label any result here 'total city cost' (police/parks/drainage unmeasured). Sourced on Peter's laptop 2026-07-15 (edmonton.ca unreachable from the Oracle box); the transportation-ops block added 2026-08-03.",
+
+  "_two_bases": "⚠️ THIS FILE CARRIES TWO INCOMPATIBLE COST BASES AND THEY MUST NEVER BE SUMMED OR COMPARED. (1) LIFECYCLE — roadway_om_renewal, $50/road-m/yr, O&M + capital renewal annualized over a 50-year life; feeds svc_cost_per_acre. (2) OPERATING — the three *_ops blocks below, annual maintenance + snow clearing with NO capital replacement; feeds transport_cost_ops_per_acre. The SAME road metres cost $50/m/yr on basis (1) and $4.635/m/yr on basis (2) — a 10.8x gap, both shipping in the same served GeoJSON. That is why every operating column carries the _ops suffix. A bikeway LIFECYCLE figure analogous to roadway_om_renewal DOES NOT EXIST YET and is a separate open item: $178/km/yr is an operating-maintenance line, NOT an all-in rate (at 50 years it totals $8,900/km for build + all replacement, and the same source puts snow clearing on that network at 113x the rate — see bikeway_ops.rejected_lifecycle_reading).",
   "roadway_om_renewal": {
     "value": 50,
     "units": "dollars per road-metre per year (MODELED)",
@@ -35,5 +37,59 @@
     },
     "divisor": "citywide annual kept fire events — compute from the pipeline's own event total so the unit cost's denominator matches the fire_events_per_acre numerator (do NOT hardcode). Reference: ~90,000 dispatches/yr in the 2023-2025 window (DATA.md §7) -> ~$3,075/event gross (illustrative only).",
     "caveat": "MODELED demand ALLOCATION of a mostly-FIXED budget: a hood with 2x the events does not cost the City 2x — most fire cost is standing capacity (halls, crews). Carry this caveat in any UI copy. Fire-only; not 'total city cost'."
+  },
+
+  "roadway_ops": {
+    "value": 4.635,
+    "units": "dollars per road-metre per year (OPERATING ONLY — no capital)",
+    "applies_to": "the collector+local centreline metres in road_m_per_acre (arterials excluded from the metric)",
+    "components_per_km_per_year": {
+      "maintenance": 1285,
+      "snow_and_ice_control": 3350
+    },
+    "source": {
+      "publication": "Taproot Edmonton, 'Why it costs so much more to clear snow from sidewalks, bike lanes than roads' (2026-08-29 reporting date as supplied), quoting City of Edmonton infrastructure field operations staff directly",
+      "retrieved": "2026-08-03 (relayed, not fetched from the Oracle box)",
+      "snow_derivation": "~$36.85M annual road snow-clearing / ~11,000 km citywide road network = $3,350/km/yr"
+    },
+    "derivation": "($1,285 maintenance + $3,350 snow) / km / yr = $4,635/km/yr = $4.635/m/yr.",
+    "caveat": "OPERATING ONLY. The City frames the $1,285 rate as 'maintain'; capital reconstruction is carried separately (40-year full-reconstruction cycle, neighbourhood lump sums) and is NOT in this number. Do NOT compare this to bikeway_ops as if either were all-in, and do NOT sum it with roadway_om_renewal — see _two_bases.",
+    "denominator_mismatch": "⚠️ The $3,350/km snow rate is a citywide BLEND over ~11,000 km that INCLUDES arterials. Arterials are priority-cleared (more passes per event) and cost more per km than locals, so applying the blend to the collector+local metres almost certainly OVERSTATES the local-road snow term. The 11,000 km denominator itself is deliberately NOT imported anywhere in the spatial pipeline — only the per-km rate is used."
+  },
+
+  "bikeway_ops": {
+    "value": 20.278,
+    "units": "dollars per bikeway-metre per year (OPERATING ONLY — no capital)",
+    "applies_to": "the dedicated cycling assets in bike_m_per_acre (DATA.md §15 — shared roadways, walkways and coming-soon routes all excluded)",
+    "components_per_km_per_year": {
+      "maintenance": 178,
+      "snow_and_ice_control": 20100
+    },
+    "source": {
+      "publication": "Taproot Edmonton, as above, quoting City of Edmonton infrastructure field operations staff",
+      "retrieved": "2026-08-03 (relayed, not fetched from the Oracle box)",
+      "snow_derivation": "~$30.15M annual active-pathway snow clearing / ~1,500 km cleared network = $20,100/km/yr"
+    },
+    "derivation": "($178 maintenance + $20,100 snow) / km / yr = $20,278/km/yr = $20.278/m/yr. Bikeway costs 4.4x roads PER METRE on this basis — cheap to maintain, expensive to clear (a 24-hour bare-pavement service standard).",
+    "rejected_lifecycle_reading": "⚠️ A relayed brief proposed reading $178/km/yr as an ALL-IN lifecycle rate (from the phrasing 'replace, repair, and maintain') and hardcoding it as the bikeway analogue of roadway_om_renewal's $50/m/yr. REJECTED 2026-08-03 on arithmetic: (a) it derives from ~$0.27M/yr spread over ~1,500 km, which cannot be replacing that network; (b) the same source puts snow clearing on the same network at $20,100/km/yr — 113x the supposed all-in build-and-replace rate; (c) at a 50-year life it totals $8,900/km for construction plus all replacement; (d) against the City's own set-aside rule of ~3%/yr of asset value (see roadway_om_renewal.source), it is ~0.09%/yr, ~33x low. It is an operating-maintenance line. A TRUE bikeway lifecycle figure remains an OPEN item and needs a primary edmonton.ca capital-cost-per-km + service life, derived the way roadway_om_renewal was.",
+    "denominator_mismatch": "⚠️ The $20,100/km snow rate is a BLEND over a ~1,500 km cleared network that the source defines as 'bike lanes, multi-use paths, public pedestrian squares, bus stops, LRT platforms, and staircases' — substantially NOT dedicated bikeway. Our numerator (bike_m_per_acre, ~981 km) is dedicated cycling assets only. Rate and numerator therefore do not describe the same network, and the direction of the resulting error is NOT knowable from the source. This is DATA.md §15's 'the exclusions are the metric' resurfacing on the cost side.",
+    "not_sidewalks": "Sidewalks are a separate, non-overlapping category (~5,776 km, ~$5.9M/yr ops) and are NOT in this metric or in the 1,500 km snow denominator."
+  },
+
+  "transit_ets": {
+    "operating_budget_gross_annual": 436605000,
+    "units": "dollars per year (2025 budget, $000s in source: 436,605)",
+    "scope": "ETS Bus and LRT combined. DATS EXCLUDED.",
+    "source": {
+      "document": "ETS 2024/2025 Annual Service Plan, Appendix A Financial Summary",
+      "retrieved": "2026-08-03 (relayed, not fetched from the Oracle box)",
+      "line_items": "Bus and LRT: 436,605 gross expense / (156,200) revenue / 280,405 net. DATS: 31,966 / (86) / 31,880. Total ETS: 468,571 / (156,286) / 312,285. All $000s.",
+      "farebox_recovery": "~36% (156,200 / 436,605)"
+    },
+    "chosen_numerator": "GROSS bus+LRT (436,605), matching fire_response's gross choice. ⚠️ DATS ($31,966K) is DELIBERATELY EXCLUDED: it is door-to-door paratransit and generates NO scheduled stop-events, so allocating it by transit_dep_total would charge paratransit cost to hoods purely for having bus/LRT service.",
+    "divisor": "citywide mean-weekday scheduled stop-events — compute from the pipeline's OWN transit frame total so numerator and denominator match the transit_dep_per_acre numerator (do NOT hardcode). Same rule as fire_response.divisor.",
+    "no_mode_split_needed": "Bus and LRT are one budget line in every public Edmonton document, and this allocation does not need them separated: a combined budget over combined departures is exactly right. load_transit.py does expose transit_dep_bus / transit_dep_lrt, but the composite uses transit_dep_total only. Do NOT introduce a peer-benchmark LRT-vs-bus cost ratio to 'fix' this — there is nothing to fix.",
+    "caveat": "MODELED demand ALLOCATION of a mostly-FIXED budget, exactly like fire_response: a hood with twice the scheduled service does not cost ETS twice — most transit cost is standing network capacity. Carry this caveat in UI copy. Scheduled supply is NOT ridership.",
+    "vintage_mismatch": "⚠️ This is a 2025 figure while fire_response is 2026 Approved. Accepted 2026-08-03 as documented rather than blocking. The two never enter the same composite (fire feeds svc_cost_per_acre, transit feeds transport_cost_ops_per_acre), so the mismatch is across columns, not inside one number."
   }
 }

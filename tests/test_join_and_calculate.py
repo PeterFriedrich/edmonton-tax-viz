@@ -1378,3 +1378,214 @@ def test_export_keeps_nonres_revenue_columns_when_present(tmp_path):
     # the raw total stays out of the slim file, like every other total
     assert "total_nonres_revenue" not in written.columns
     assert "nonres_revenue_lot_eligible" not in written.columns
+
+
+# --- Transportation lens Stage 2: the OPERATING-basis cost composite ----------
+# cost_roads_ops_per_acre = road_m_per_acre × $/road-m/yr (maintenance + snow)
+# cost_bike_ops_per_acre  = bike_m_per_acre × $/bike-m/yr (maintenance + snow)
+# cost_transit_ops_per_acre = transit_dep_per_acre × (ETS budget ÷ the transit
+#   frame's OWN citywide stop-event total)
+# transport_cost_ops_per_acre = the three, ALL-OR-NOTHING.
+#
+# ⚠️ OPERATING basis — no capital replacement. cost_roads_ops_per_acre is NOT
+# the roads term inside svc_cost_per_acre (same metres, different basis).
+
+def _bike(rows):
+    return pd.DataFrame(rows)
+
+
+# $2/road-m ops, $8/bike-m ops, $400 ETS budget over 40 citywide stop-events.
+_TRANSPORT_COSTS = {
+    **_UNIT_COSTS,
+    "road_ops_dollars_per_m": 2.0,
+    "bike_ops_dollars_per_m": 8.0,
+    "transit_budget_annual": 400.0,
+}
+
+
+def _transport_kwargs():
+    return {
+        "roads": _roads([{"neighbourhood_name": "GRIDTOWN", "road_m_total": 250.0}]),
+        "bike": _bike([{"neighbourhood_name": "GRIDTOWN", "bike_m_total": 100.0}]),
+        "transit": _transit([{"neighbourhood_name": "GRIDTOWN",
+                              "transit_dep_total": 40.0}]),
+        "fire": _fire([{"neighbourhood_name": "GRIDTOWN",
+                        "fire_events_per_year": 30.0}]),
+    }
+
+
+def test_transport_ops_terms_and_composite():
+    result = join_and_calculate(
+        _assessment([{"neighbourhood_name": "GRIDTOWN", "total_assessed_value": 100.0}]),
+        _boundaries([{"neighbourhood_name": "GRIDTOWN", "area_acres": 10.0}]),
+        unit_costs=_TRANSPORT_COSTS,
+        **_transport_kwargs(),
+    )
+    row = result.iloc[0]
+    # 25 road-m/acre × $2 = 50 ; 10 bike-m/acre × $8 = 80
+    assert row["cost_roads_ops_per_acre"] == pytest.approx(50.0)
+    assert row["cost_bike_ops_per_acre"] == pytest.approx(80.0)
+    # $400 / 40 citywide stop-events = $10 ; 4 dep/acre × $10 = 40
+    assert row["cost_transit_ops_per_acre"] == pytest.approx(40.0)
+    assert row["transport_cost_ops_per_acre"] == pytest.approx(170.0)
+
+
+def test_transport_ops_roads_term_differs_from_lifecycle_roads_term():
+    """The two road terms are different bases and must not coincide.
+
+    Guards the _ops suffix's whole reason for existing: svc_cost_per_acre's
+    roads term uses the $50/m lifecycle rate, cost_roads_ops_per_acre the
+    $4.635/m operating rate. If a future edit ever wires one rate into both,
+    this fails.
+    """
+    result = join_and_calculate(
+        _assessment([{"neighbourhood_name": "GRIDTOWN", "total_assessed_value": 100.0}]),
+        _boundaries([{"neighbourhood_name": "GRIDTOWN", "area_acres": 10.0}]),
+        unit_costs=_TRANSPORT_COSTS,
+        **_transport_kwargs(),
+    )
+    row = result.iloc[0]
+    roads_lifecycle = 25.0 * _TRANSPORT_COSTS["road_dollars_per_m"]   # $50
+    assert row["cost_roads_ops_per_acre"] == pytest.approx(25.0 * 2.0)
+    # svc_cost_per_acre still carries the LIFECYCLE roads term, untouched.
+    assert row["svc_cost_per_acre"] == pytest.approx(roads_lifecycle + 30.0)
+
+
+def test_transit_ops_is_a_share_allocation_summing_to_the_budget():
+    """⚠️ The per-departure figure is a SHARE, not a rate.
+
+    transit_dep_total is a MEAN-WEEKDAY count while the budget is ANNUAL, so
+    the intermediate unit is meaningless alone — but the terms must sum back to
+    exactly the budget. Pins the identity against a future "unit fix" that
+    scales by ~250 weekdays.
+    """
+    acres = {"GRIDTOWN": 10.0, "RIVERBEND": 40.0}
+    result = join_and_calculate(
+        _assessment([{"neighbourhood_name": n, "total_assessed_value": 100.0}
+                     for n in acres]),
+        _boundaries([{"neighbourhood_name": n, "area_acres": a}
+                     for n, a in acres.items()]),
+        roads=_roads([{"neighbourhood_name": n, "road_m_total": 0.0} for n in acres]),
+        bike=_bike([{"neighbourhood_name": n, "bike_m_total": 0.0} for n in acres]),
+        transit=_transit([
+            {"neighbourhood_name": "GRIDTOWN", "transit_dep_total": 30.0},
+            {"neighbourhood_name": "RIVERBEND", "transit_dep_total": 10.0},
+        ]),
+        fire=_fire([{"neighbourhood_name": "GRIDTOWN", "fire_events_per_year": 30.0}]),
+        unit_costs=_TRANSPORT_COSTS,
+    )
+    total_dollars = float(
+        (result["cost_transit_ops_per_acre"]
+         * result["neighbourhood_name"].map(acres)).sum()
+    )
+    assert total_dollars == pytest.approx(_TRANSPORT_COSTS["transit_budget_annual"])
+
+
+def test_transit_ops_denominator_includes_unmatched_hoods():
+    # Same rule as fire: a hood with no boundary match still consumed budget,
+    # so it stays in the citywide denominator and shrinks the matched share.
+    result = join_and_calculate(
+        _assessment([{"neighbourhood_name": "GRIDTOWN", "total_assessed_value": 100.0}]),
+        _boundaries([{"neighbourhood_name": "GRIDTOWN", "area_acres": 10.0}]),
+        roads=_roads([{"neighbourhood_name": "GRIDTOWN", "road_m_total": 0.0}]),
+        bike=_bike([{"neighbourhood_name": "GRIDTOWN", "bike_m_total": 0.0}]),
+        transit=_transit([
+            {"neighbourhood_name": "GRIDTOWN", "transit_dep_total": 40.0},
+            {"neighbourhood_name": "NOWHERE", "transit_dep_total": 40.0},
+        ]),
+        fire=_fire([{"neighbourhood_name": "GRIDTOWN", "fire_events_per_year": 30.0}]),
+        unit_costs=_TRANSPORT_COSTS,
+    )
+    # $400 / 80 = $5/dep ; 4 dep/acre × $5 = 20 (half of the matched-only case)
+    assert result.iloc[0]["cost_transit_ops_per_acre"] == pytest.approx(20.0)
+
+
+@pytest.mark.parametrize("missing", ["roads", "bike", "transit"])
+def test_transport_composite_is_all_or_nothing(caplog, missing):
+    kwargs = _transport_kwargs()
+    kwargs[missing] = None
+    with caplog.at_level("WARNING"):
+        result = join_and_calculate(
+            _assessment([{"neighbourhood_name": "GRIDTOWN",
+                          "total_assessed_value": 100.0}]),
+            _boundaries([{"neighbourhood_name": "GRIDTOWN", "area_acres": 10.0}]),
+            unit_costs=_TRANSPORT_COSTS,
+            **kwargs,
+        )
+    assert "transport_cost_ops_per_acre" not in result.columns
+    assert f"cost_{missing}_ops_per_acre" not in result.columns
+    assert "composite SKIPPED" in caplog.text
+    # the surviving per-term columns still ship (disjoint by design)
+    for other in {"roads", "bike", "transit"} - {missing}:
+        assert f"cost_{other}_ops_per_acre" in result.columns
+
+
+@pytest.mark.parametrize("key", ["road_ops_dollars_per_m", "bike_ops_dollars_per_m",
+                                 "transit_budget_annual"])
+def test_transport_composite_omitted_when_a_unit_cost_key_is_absent(key):
+    costs = {k: v for k, v in _TRANSPORT_COSTS.items() if k != key}
+    result = join_and_calculate(
+        _assessment([{"neighbourhood_name": "GRIDTOWN", "total_assessed_value": 100.0}]),
+        _boundaries([{"neighbourhood_name": "GRIDTOWN", "area_acres": 10.0}]),
+        unit_costs=costs,
+        **_transport_kwargs(),
+    )
+    assert "transport_cost_ops_per_acre" not in result.columns
+    # svc_cost_per_acre is unaffected by the operating trio being incomplete
+    assert "svc_cost_per_acre" in result.columns
+
+
+def test_transport_ops_columns_survive_the_slim_export(tmp_path):
+    result = join_and_calculate(
+        _assessment([{"neighbourhood_name": "DOWNTOWN", "total_assessed_value": 100.0}]),
+        _boundaries([{"neighbourhood_name": "DOWNTOWN", "area_acres": 10.0}]),
+        unit_costs=_TRANSPORT_COSTS,
+        **{**_transport_kwargs(),
+           "roads": _roads([{"neighbourhood_name": "DOWNTOWN", "road_m_total": 250.0}]),
+           "bike": _bike([{"neighbourhood_name": "DOWNTOWN", "bike_m_total": 100.0}]),
+           "transit": _transit([{"neighbourhood_name": "DOWNTOWN",
+                                 "transit_dep_total": 40.0}]),
+           "fire": _fire([{"neighbourhood_name": "DOWNTOWN",
+                           "fire_events_per_year": 30.0}])},
+    )
+    written = export_geojson(result, str(tmp_path / "out.geojson"))
+    for col in ("cost_roads_ops_per_acre", "cost_bike_ops_per_acre",
+                "cost_transit_ops_per_acre", "transport_cost_ops_per_acre"):
+        assert col in written.columns
+
+
+def test_load_unit_costs_reads_the_committed_operating_trio():
+    from join_and_calculate import load_unit_costs
+
+    costs = load_unit_costs("data/city_unit_costs.json")
+    assert costs["road_ops_dollars_per_m"] == pytest.approx(4.635)
+    assert costs["bike_ops_dollars_per_m"] == pytest.approx(20.278)
+    assert costs["transit_budget_annual"] == 436_605_000.0
+    # ⚠️ the two road bases must stay distinct in the committed file
+    assert costs["road_dollars_per_m"] != costs["road_ops_dollars_per_m"]
+
+
+def test_load_unit_costs_operating_trio_is_optional(tmp_path):
+    from join_and_calculate import load_unit_costs
+
+    minimal = tmp_path / "unit_costs.json"
+    minimal.write_text(
+        '{"roadway_om_renewal": {"value": 50},'
+        ' "fire_response": {"operating_budget_gross_annual": 276706000}}'
+    )
+    costs = load_unit_costs(minimal)
+    assert "road_ops_dollars_per_m" not in costs
+
+
+def test_load_unit_costs_malformed_operating_block_raises(tmp_path):
+    """Present-but-broken is a hand-edit error — must fail, not silently skip."""
+    from join_and_calculate import load_unit_costs
+
+    bad = tmp_path / "unit_costs.json"
+    bad.write_text(
+        '{"roadway_om_renewal": {"value": 50},'
+        ' "fire_response": {"operating_budget_gross_annual": 276706000},'
+        ' "bikeway_ops": {"units": "dollars per metre"}}'
+    )
+    with pytest.raises(ValueError, match="bikeway_ops"):
+        load_unit_costs(bad)
