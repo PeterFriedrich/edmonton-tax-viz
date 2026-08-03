@@ -445,10 +445,11 @@ def build(
     for row in out_gdf.itertuples():
         geom = row.geometry.__geo_interface__
         props = {"t": row.t}
-        # isinstance, not `is not None`: pandas coerces the river/henday Nones
-        # to float nan in this mixed column, and nan passes an `is not None`
-        # test — which would emit a bare NaN token that is invalid JSON and
-        # fails JSON.parse in the browser for the whole file.
+        # isinstance, not `is not None`: pandas coerces the unnamed features'
+        # Nones (river, highway, every boundary) to float nan in this mixed
+        # column, and nan passes an `is not None` test — which would emit a
+        # bare NaN token that is invalid JSON and fails JSON.parse in the
+        # browser for the whole file.
         if isinstance(row.name, str):
             props["name"] = row.name
         features.append({
