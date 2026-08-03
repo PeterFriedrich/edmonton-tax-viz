@@ -1,7 +1,7 @@
 // Quiet runner for the verify suite.
 //
 // Why a RUNNER rather than a --quiet flag in each script: the verify scripts
-// (31 as of 2026-08-03, auto-discovered below) all work and all differ slightly
+// (32 as of 2026-08-03, auto-discovered below) all work and all differ slightly
 // in how they print. Editing every one of them to add a flag is one chance per
 // script to break a passing test to save output. This wraps them instead —
 // nothing existing changes, and a gate run goes from ~120 lines of PASS to one

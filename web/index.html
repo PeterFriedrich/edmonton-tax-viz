@@ -203,6 +203,36 @@
           <input type="radio" name="svc-driver" /> colour
         </label>
       </div>
+      <!-- Stage 2 (2026-08-03). Its OWN caption, not folded into Transportation
+           above: these are dollars on an OPERATING basis while the rows above
+           are supply, and Roads cost here is the SAME METRES as Service cost's
+           roads term on a different basis (~11x apart). The caption is where
+           that distinction is visible in the panel. -->
+      <div class="svc-group">Transportation cost — operating</div>
+      <div class="svc" data-service="roadscost">
+        <label title="Modeled annual operating cost of collector + local roads per acre — maintenance plus snow clearing, no capital reconstruction; not the lifecycle roads figure used by Service cost">
+          <input type="checkbox" class="svc-on" /> Roads cost — $/acre/yr
+        </label>
+        <label class="svc-colour" title="This service drives the colour ramp; the others render neutral">
+          <input type="radio" name="svc-driver" /> colour
+        </label>
+      </div>
+      <div class="svc" data-service="transitcost">
+        <label title="Each neighbourhood's share of the annual ETS bus + LRT operating budget per acre, allocated by scheduled stop-events — DATS excluded; a mostly-fixed budget shared out, not a bill">
+          <input type="checkbox" class="svc-on" /> Transit cost — $/acre/yr
+        </label>
+        <label class="svc-colour" title="This service drives the colour ramp; the others render neutral">
+          <input type="radio" name="svc-driver" /> colour
+        </label>
+      </div>
+      <div class="svc" data-service="bikecost">
+        <label title="Modeled annual operating cost of dedicated cycling infrastructure per acre — maintenance plus snow clearing, which dominates it; no capital replacement">
+          <input type="checkbox" class="svc-on" /> Bike cost — $/acre/yr
+        </label>
+        <label class="svc-colour" title="This service drives the colour ramp; the others render neutral">
+          <input type="radio" name="svc-driver" /> colour
+        </label>
+      </div>
       <div class="svc-group">Other services</div>
       <div class="svc" data-service="storm">
         <label title="Each neighbourhood coloured by its modeled annual stormwater utility charge per acre — estimated from lot sizes and zoning, not billed amounts">
@@ -845,6 +875,65 @@
                "Colour is square-root scaled. Grey = set-aside natural/" +
                "undeveloped land.",
       },
+      // Transportation cost, OPERATING basis (SPEC_services.md "Transportation
+      // lens" Stage 2). Each is its own column and its own row — deliberately
+      // NOT summed into one "Transportation" number, which would be 91% transit
+      // at the median and bury the per-mode finding (decided 2026-08-03).
+      // ⚠️ Colour transforms INHERIT from the supply column each one scales:
+      // a positive scalar multiple leaves skew unchanged (measured identical to
+      // 3 dp), so roads stays linear and bike/transit stay sqrt. Do not re-derive.
+      roadscost: {
+        label: "Roads cost",
+        plane: { col: "cost_roads_ops_per_acre" },
+        blurb: "Each neighbourhood is coloured by the modeled annual operating " +
+               "cost of its collector and local roads per acre — $1,285 per " +
+               "kilometre to maintain plus $3,350 per kilometre for snow and " +
+               "ice control. Operating only: capital reconstruction is a " +
+               "separate and much larger budget, so this is not what a road " +
+               "costs over its life. It is also not the roads figure inside " +
+               "Service cost, which uses a lifecycle rate roughly eleven times " +
+               "higher for the same metres. The snow rate is a citywide average " +
+               "over a network that includes arterials, which are cleared first " +
+               "and cost more per kilometre, so the local-road figure is likely " +
+               "a little high. Colour is linear. Grey = set-aside natural/" +
+               "undeveloped land.",
+      },
+      transitcost: {
+        label: "Transit cost",
+        plane: { col: "cost_transit_ops_per_acre", transform: "sqrt" },
+        blurb: "Each neighbourhood is coloured by its share of the annual ETS " +
+               "bus and LRT operating budget per acre — $436.6 million (2025, " +
+               "gross) divided by citywide scheduled stop-events, then charged " +
+               "to each neighbourhood by the service scheduled there. " +
+               "Door-to-door DATS paratransit is excluded, because it runs no " +
+               "scheduled stops and would otherwise be charged to any " +
+               "neighbourhood that happens to have a bus. Modeled, not a budget " +
+               "line: this shares out a mostly-fixed budget by where the service " +
+               "runs, so twice the service does not mean twice the cost to ETS. " +
+               "Operating only: new trains, garages and line extensions are " +
+               "separate capital budgets and are not counted here. " +
+               "Scheduled service, not ridership. Unlike roads and bike, this " +
+               "figure pays to run the service itself, not just to keep the " +
+               "asset up — which is why it is so much the largest of the three. " +
+               "Colour is square-root scaled. Grey = set-aside natural/" +
+               "undeveloped land.",
+      },
+      bikecost: {
+        label: "Bike cost",
+        plane: { col: "cost_bike_ops_per_acre", transform: "sqrt" },
+        blurb: "Each neighbourhood is coloured by the modeled annual operating " +
+               "cost of its dedicated cycling infrastructure per acre — $178 per " +
+               "kilometre to maintain plus $20,100 per kilometre for snow and " +
+               "ice control, which carries a 24-hour bare-pavement standard. " +
+               "That makes a bikeway metre cost about four times a road metre " +
+               "to operate: cheap to keep up, expensive to clear. Operating " +
+               "only — no capital replacement, and no published lifecycle rate " +
+               "for bikeways exists to add. The clearing rate is an average " +
+               "over a wider network than this map measures, one that also " +
+               "covers pedestrian squares, bus stops, LRT platforms and " +
+               "staircases, so it does not describe bikeways alone. Colour is " +
+               "square-root scaled. Grey = set-aside natural/undeveloped land.",
+      },
       servicecost: {
         label: "Service cost",
         plane: { col: "svc_cost_per_acre", transform: "sqrt" },
@@ -1119,7 +1208,8 @@
                     devMetric: "units", // Development-view sub-metric: units | permits per acre
                     devWindow: "long", // Development-view activity window: 3yr (recent) | 5yr | long (2009–2025, the default)
                     devGrid: true, // Development-view 100 m detail grid (the default; off = the hood choropleth)
-                    services: { roads: true, storm: false, fire: false, water: false, transit: false, bike: false, servicecost: false },
+                    services: { roads: true, storm: false, fire: false, water: false, transit: false, bike: false, servicecost: false,
+                                roadscost: false, transitcost: false, bikecost: false },
                     svcDriver: "roads",
                     hoodMode: "popup", // where a hood's detail appears: popup | panel
                     chgWindow: "long", // change-lens window: long (2012–2025) | short (2019–2025)
@@ -1467,6 +1557,15 @@
       (fixed != null ? ` (fixed $${Math.round(fixed).toLocaleString()})` : "");
     const fmtSvcCost = v => "$" + Math.round(v).toLocaleString() +
       " modeled roads+fire service cost / acre / yr";
+    // Stage 2 operating-cost readouts. Each says "operating" in the readout
+    // itself: the number is meaningless without its basis, and the tooltip is
+    // the one place a reader meets it with no legend or blurb alongside.
+    const fmtRoadsCost = v => "$" + Math.round(v).toLocaleString() +
+      " modeled road operating cost / acre / yr";
+    const fmtTransitCost = v => "$" + Math.round(v).toLocaleString() +
+      " ETS operating budget share / acre / yr";
+    const fmtBikeCost = v => "$" + Math.round(v).toLocaleString() +
+      " modeled bikeway operating cost / acre / yr";
 
     // The shared service ground plane (services view): flat hoods coloured
     // by the colour-driving plane service's column on the active ramp,
@@ -3295,6 +3394,9 @@
           transit:     [p.transit_dep_per_acre, fmtTransit],
           bike:        [p.bike_m_per_acre, fmtBike],
           servicecost: [p.svc_cost_per_acre, fmtSvcCost],
+          roadscost:   [p.cost_roads_ops_per_acre, fmtRoadsCost],
+          transitcost: [p.cost_transit_ops_per_acre, fmtTransitCost],
+          bikecost:    [p.cost_bike_ops_per_acre, fmtBikeCost],
         }[state.svcDriver] || [];
         return svc[0] == null
           ? `<span class="muted">no ${SERVICES[state.svcDriver].label.toLowerCase()} data</span>`
@@ -3924,6 +4026,30 @@
           const clamp = svcScale("bike_m_per_acre").clamp;
           document.getElementById("legend-max").textContent =
             Math.round(clamp).toLocaleString() + " m+";
+          label.textContent = "Set aside — natural / undeveloped land";
+          sw.style.background = "rgb(104,108,122)";
+        } else if (state.svcDriver === "roadscost") {
+          document.getElementById("legend-label").textContent =
+            "Modeled road operating cost per acre / yr — no capital";
+          document.getElementById("legend-min").textContent = "$0";
+          document.getElementById("legend-max").textContent =
+            "$" + Math.round(svcScale("cost_roads_ops_per_acre").clamp).toLocaleString() + "+";
+          label.textContent = "Set aside — natural / undeveloped land";
+          sw.style.background = "rgb(104,108,122)";
+        } else if (state.svcDriver === "transitcost") {
+          document.getElementById("legend-label").textContent =
+            "ETS bus + LRT budget share per acre / yr (sqrt colour)";
+          document.getElementById("legend-min").textContent = "$0";
+          document.getElementById("legend-max").textContent =
+            "$" + Math.round(svcScale("cost_transit_ops_per_acre").clamp).toLocaleString() + "+";
+          label.textContent = "Set aside — natural / undeveloped land";
+          sw.style.background = "rgb(104,108,122)";
+        } else if (state.svcDriver === "bikecost") {
+          document.getElementById("legend-label").textContent =
+            "Modeled bikeway operating cost per acre / yr (sqrt colour)";
+          document.getElementById("legend-min").textContent = "$0";
+          document.getElementById("legend-max").textContent =
+            "$" + Math.round(svcScale("cost_bike_ops_per_acre").clamp).toLocaleString() + "+";
           label.textContent = "Set aside — natural / undeveloped land";
           sw.style.background = "rgb(104,108,122)";
         } else if (state.svcDriver === "servicecost") {
@@ -4718,6 +4844,17 @@
         document.querySelector('#services .svc[data-service="bike"]').style.display = "none";
         state.services.bike = false;
       }
+      // Same guard for the three Stage 2 operating-cost columns (pipeline
+      // 2026-08-03; they ship on the first weekly refresh after this merge, so
+      // every row below hides on today's published data and appears on its own).
+      [["roadscost", "cost_roads_ops_per_acre"],
+       ["transitcost", "cost_transit_ops_per_acre"],
+       ["bikecost", "cost_bike_ops_per_acre"]].forEach(([svc, col]) => {
+        if (!state.data.features.some(f => f.properties[col] != null)) {
+          document.querySelector(`#services .svc[data-service="${svc}"]`).style.display = "none";
+          state.services[svc] = false;
+        }
+      });
       // Same guard for the modeled service-cost composite (svc_cost_per_acre —
       // pipeline 2026-07-15, ships on the next refresh after the metric PR). A
       // data file from before that refresh keeps the view and just hides this
