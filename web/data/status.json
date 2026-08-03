@@ -2,8 +2,8 @@
   "data_year": 2025,
   "rate_year": 2025,
   "zoning_year": 2024,
-  "generated": "2026-08-01",
-  "last_checked": "2026-08-02",
+  "generated": "2026-08-03",
+  "last_checked": "2026-08-03",
   "banner": null,
   "municipal_rates": {
     "unit": "per $1,000 assessed",
@@ -25,5 +25,5 @@
       "Farmland"
     ]
   },
-  "_geojson_sha256": "cd456571631122bc2b88c3dac18e02fca2b084f1c668d799a3abff4d73f4d4e4"
+  "_geojson_sha256": "4e69da490331590dbf3d9218c2910b315408c63e697db6aa38548f7e446428ff"
 }
