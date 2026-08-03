@@ -66,32 +66,73 @@ Also removed a duplicated preamble block left in this file by the
   2026-08-02 (PR #145). It added 2 group captions + 1 row, so the panel grew by
   3 lines of shared DOM — and `CONTROLS_MATRIX.md` records that grouping drives
   desktop AND mobile. Verified at 1280x800 and 1440x900 only.
-  - A probe at 390/360/320 px returned **all zeros** for the layers panel
-    (height 0) — inconclusive, not a pass: `#optpanel` is the element that
-    folds on mobile, `#layers` is not, so the zero has some other cause that
-    was not chased down. **Do not read the zeros as "no overflow".**
+  - ~~A probe at 390/360/320 px returned **all zeros**~~ — **the zeros were the
+    probe's fault, resolved 2026-08-03.** `#optpanel` carries `.folded` by
+    default at ≤640px, so its rows have no layout box; remove the class first
+    and everything measures. (The item already recorded this cause for the
+    S74 left-edge work — it just wasn't applied here.)
+  - ✅ **NO OVERFLOW, measured 2026-08-03** at 390/360/320 px with
+    `hasTouch`/`isMobile`, Services active, the pod **unfolded**, and the panel
+    at its **worst case — 10 visible rows and 3 captions**, i.e. after Stage 2
+    added a caption and three more rows:
+
+    | width | `#controls` | `#services` h | clearance to `#botleft` |
+    |---|---|---|---|
+    | 390 | l=8 r=382 | 230 | 235px |
+    | 360 | l=8 r=352 | 230 | 206px |
+    | 320 | l=8 r=312 | 244 | 178px |
+
+    Nothing clips left, nothing overflows right, nothing falls below the fold.
+    Headless Chromium measures text **wider** than the real font stack (quirk
+    y), so a no-clip result there errs safe.
+  - **STILL NEEDS CONFIRMATION:** real device, actual touch interaction with the
+    rows (the probe drives `.click()`, which bypasses `pointer-events` — the
+    standing verify-script caveat), and the **folded default** state, which is
+    what a phone user actually meets first.
   - Read `docs/MOBILE_USABILITY.md` first; keep the CONFIRMED /
     NEEDS-CONFIRMATION split honest.
 
-- [ ] **▶ PETER: two unit-cost numbers unblock the transportation COST lens
-  (Stage 2).** Stage 1 (bike supply + the Services grouping) shipped
-  2026-08-02; the dollars half needs two manual reviewed inputs added to
-  `data/city_unit_costs.json` — the **mill-rates pattern**, sourced by hand
-  because DATA.md §13 records edmonton.ca as unreachable from the Oracle box:
-  - **ETS gross annual operating budget** — City of Edmonton 2026 Approved
-    Operating Budget PDF, the same document the Fire Rescue figure came from
-    (`fire_response.operating_budget_gross_annual` is the shape to copy).
-  - **Bikeway lifecycle $/metre/year** — the analogue of the $50/m/yr roadway
-    figure, ideally with the same O&M + renewal derivation so the two are
-    comparable.
-  - **Design is already locked and written up** (`SPEC_services.md`
-    "Transportation lens" Stage 2, `DECISIONS.md` 2026-08-02): disjoint
-    per-term cost columns, `transport_cost_per_acre` = roads+transit+bike,
-    `svc_cost_per_acre` keeps its exact current value. Nothing to re-decide —
-    it is the numbers that are missing.
-  - ⚠️ **All-or-nothing across the three terms** by decision: a two-term metric
-    labelled "transportation" would be mislabeled, so with either number
-    missing the composite is skipped with a warning and the row stays hidden.
+- [ ] **A TRUE BIKEWAY LIFECYCLE $/m/yr STILL DOES NOT EXIST** — the residue of
+  Stage 2, which shipped 2026-08-03 on an **operating** basis instead. All three
+  cost terms are maintenance + snow with **no capital replacement**, because the
+  figure offered as a lifecycle rate was not one.
+  - ⚠️ **Do not re-propose $178/km/yr.** It is an operating-maintenance line.
+    Falsified four ways in `DECISIONS.md` 2026-08-03 and recorded in
+    `city_unit_costs.json` → `bikeway_ops.rejected_lifecycle_reading`; the
+    shortest version is that the same source puts snow clearing on the same
+    network at **113× it**.
+  - **What would close this:** a primary edmonton.ca **capital $/km for a
+    multi-use path or bikeway, plus a service life**, derived exactly the way
+    `roadway_om_renewal` was ($600k O&M + $1.9M renewal per km over a 50-year
+    life → $50/m/yr). Peter/laptop — DATA.md §13 records edmonton.ca as
+    unreachable from the Oracle box.
+  - **Only then** can a lifecycle bikeway term sit beside `svc_cost_per_acre`'s
+    lifecycle roads term. Until then the two bases stay separated by the `_ops`
+    suffix, and that separation is load-bearing (~10.8× on the same metres).
+
+- [ ] **RE-PIN `data/expected_columns.json` ONCE the four Stage 2 columns ship**
+  (`cost_roads_ops_per_acre`, `cost_transit_ops_per_acre`,
+  `cost_bike_ops_per_acre`, `transport_cost_ops_per_acre`).
+  - ⚠️ **Do NOT re-pin before the refresh carries them.** They do not exist in
+    the published GeoJSON yet, so baselining them now would make
+    `check_served_columns.py` read them as a **removal** and fail the weekly
+    publish. Measured 2026-08-03: against real Stage 2 output the guard warns on
+    all four and exits 0 — that is the correct interim state, not a problem.
+  - After the first refresh that carries them:
+    `python scripts/check_served_columns.py --write-baseline`, then confirm the
+    count moves 62 → 66.
+
+- [ ] **⚠️ `--geojson-out /tmp/x.geojson` DOES NOT MAKE A LOCAL `main.py` RUN
+  SAFE — the DATA VINTAGE item below says it does, and that advice is wrong.**
+  The flag redirects only the main GeoJSON. A full run on 2026-08-03 still wrote
+  `roads.geojson`, `zoning.geojson`, `value_grid.json`, `dev_grid.json` and
+  `temporal.json` into `web/data/` from 2026-07-06 raw data — the exact rollback
+  that item exists to prevent. Caught by `git status` immediately after and
+  restored from HEAD; **nothing was committed**.
+  - **Fix:** give the auxiliary web exports their own out-dir, or one `--out-dir`
+    they all honour. Until then the real mitigation is
+    **`git checkout -- web/data/` after any local `main.py`**, and the DATA
+    VINTAGE item below should say so instead of what it currently says.
 
 - [ ] **RESIDUAL from the panel/blurb fix (2026-08-02): below ~768px tall,
   Development and Infill have no left column left to give.** The placement fix

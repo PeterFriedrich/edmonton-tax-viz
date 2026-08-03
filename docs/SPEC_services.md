@@ -529,7 +529,83 @@ the same shape: a missing key falls to `|| []` and prints "no X data" over a
 hood that has data). `verify-bike.js` asserts both, and asserts the legend is
 not the road fallback specifically.
 
-### Stage 2 (BLOCKED): the transportation cost composite
+### Stage 2 (BUILT 2026-08-03): the transportation OPERATING cost terms
+
+**Status: BUILT.** The basis and the display both moved at build time, on
+evidence — read this subsection before the originally-locked design below it.
+
+#### What changed at build time (2026-08-03)
+
+**1. The basis is OPERATING, not lifecycle.** A relayed brief supplied
+$178/km/yr as the bikeway lifecycle rate, reading the City's phrase *"replace,
+repair, and maintain"* as all-in. **Rejected on arithmetic** (full record in
+`data/city_unit_costs.json` → `bikeway_ops.rejected_lifecycle_reading`): it
+derives from ~$0.27M/yr spread over ~1,500 km; the same source puts snow
+clearing on that network at **113× it**; at a 50-year life it totals
+**$8,900/km** for construction plus all replacement; and against the City's own
+~3%/yr set-aside rule it is **~33× low**. It is an operating-maintenance line.
+
+All three terms therefore ship on a stated operating basis (maintenance + snow,
+**no capital**), and **a true bikeway lifecycle figure remains OPEN** — it needs
+a primary edmonton.ca capital-$/km + service life, derived the way
+`roadway_om_renewal` was.
+
+⚠️ **This puts TWO road-cost numbers in the same served file.**
+`cost_roads_ops_per_acre` is **$4.635/m/yr**; the roads term inside
+`svc_cost_per_acre` is **$50/m/yr** lifecycle — the same metres, **~10.8×
+apart**. That is what the `_ops` suffix exists to signal, and a test pins them
+apart.
+
+**2. Per-term rows, and NO composite row.** Driving the real pipeline showed
+`transport_cost_ops_per_acre` is **90.8% transit at the median**:
+
+| term | median $/acre/yr | median share | citywide ops |
+|---|---|---|---|
+| roads | $151 | 4.5% | ~$16.9M |
+| bike | $109 | 3.6% | ~$19.7M |
+| **transit** | **$2,808** | **90.8%** | **$436.6M** |
+
+⚠️ **The three are not like-for-like even within "operating".** ETS's budget
+pays to **run a service** (drivers, fuel, vehicles); the roads and bike figures
+only **maintain an asset** — the City never pays for the cars. Both are true
+statements about City spending, but a map coloured by the sum is a bus-service
+density map, and a row labelled "Transportation" would be mislabeled in exactly
+the way the all-or-nothing rule guards against. **Peter's call 2026-08-03: ship
+three rows, one per term; the composite ships as a COLUMN only, no UI row.**
+The per-mode finding it was burying — **a bikeway metre costs 4.4× a road metre
+to operate** — is the point of the lens.
+
+**3. Colour transforms INHERIT, not re-derived.** Each cost column is a positive
+scalar multiple of its supply column, so skew is unchanged (measured identical
+to 3 dp): roads **linear**, transit and bike **sqrt**. Do not re-run the
+FINDINGS §6.9 procedure for these.
+
+**4. DATS is excluded** ($31,966K of the $468,571K ETS total). It is door-to-door
+and generates no scheduled stop-events, so allocating it by `transit_dep_total`
+would charge paratransit cost to any hood that merely has a bus.
+
+⚠️ **The per-departure figure is a SHARE, not a rate.** `transit_dep_total` is a
+**mean-weekday** count and the budget is **annual**, so the intermediate unit is
+meaningless alone — but the terms sum back to the budget exactly. **Do not "fix"
+the units by scaling to ~250 weekdays**; a test pins the identity.
+
+**5. No mode split is needed or wanted.** A combined budget over combined
+departures is exactly right. `load_transit.py` does expose `transit_dep_bus` /
+`transit_dep_lrt`, but the cost term uses `transit_dep_total` only. Do **not**
+introduce a peer-benchmark LRT-vs-bus cost ratio to "fix" this.
+
+**Two rate/denominator mismatches are recorded, not absorbed** (both in
+`city_unit_costs.json`): the bike snow rate blends over a 1,500 km network that
+also covers pedestrian squares, bus stops, LRT platforms and staircases, while
+our numerator is ~981 km of dedicated bikeway; and the road snow rate blends
+over 11,000 km **including priority-cleared arterials**, so the local-road term
+is likely a little high.
+
+**Verification:** `verify-transport-cost.js` — **41 checks** driven against a
+build serving real Stage-2 output, plus a **6-check pre-Stage-2 path** against
+today's published data where all three rows correctly hide themselves.
+
+#### The originally locked design (for the record)
 
 **Publish disjoint per-term cost columns rather than a second overlapping
 composite** — `svc_cost_per_acre` already contains roads, so a
@@ -552,16 +628,24 @@ OWN citywide total so numerator and denominator match. It is a **demand
 ALLOCATION of a mostly-fixed budget** — a hood with twice the service does not
 cost ETS twice — and that caveat belongs in the UI copy the way fire's does.
 
-⚠️ **BLOCKED ON PETER: two manual reviewed inputs** (the mill-rates pattern,
-`data/city_unit_costs.json`; DATA.md §13 records that edmonton.ca is unreachable
-from the Oracle box):
-- **ETS gross annual operating budget** — 2026 Approved Operating Budget PDF,
-  the same document the fire figure came from.
-- **Bikeway lifecycle $/metre/year** — the roadway figure's analogue.
+~~BLOCKED ON PETER: two manual reviewed inputs.~~ **RESOLVED 2026-08-03** — but
+not as written. The ETS budget arrived (2025 Annual Service Plan, not the 2026
+Operating Budget PDF; vintage mismatch documented and accepted). The bikeway
+**lifecycle** figure did **not** arrive — what arrived was an operating rate,
+which is why the whole composite moved to an operating basis. See "What changed
+at build time" above.
 
-Both keys stay OPTIONAL in `load_unit_costs`, and `transport_cost_per_acre` is
-**all-or-nothing** across its three terms: a two-term metric labelled
-"transportation" would be mislabeled, the same rule the existing composite uses.
+⚠️ **Names as shipped differ from this block**: every column gained an `_ops`
+suffix (`cost_roads_ops_per_acre`, …, `transport_cost_ops_per_acre`) once the
+basis changed, because `cost_roads_per_acre` and the roads term inside
+`svc_cost_per_acre` would otherwise be indistinguishable at ~10.8× apart. There
+is no `cost_fire_per_acre` — fire stayed inside `svc_cost_per_acre`.
+
+All three keys stay OPTIONAL in `load_unit_costs`, and
+`transport_cost_ops_per_acre` is **all-or-nothing** across its three terms: a
+two-term metric labelled "transportation" would be mislabeled, the same rule the
+existing composite uses. (Present-but-malformed still raises — only *absent* is
+tolerated.)
 
 ## Cross-refs
 

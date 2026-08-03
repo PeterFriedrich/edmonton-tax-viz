@@ -97,7 +97,7 @@ git ls-files | grep -vE '\.(geojson|png|csv)$' | xargs wc -l | sort -n | tail -3
    a few large slices.** Batch independent reads into one turn.
 
 7. **Run the verify suite through `tools/profiling/verify.js`.** It wraps the
-   scripts (31 as of 2026-08-03, auto-discovered) and prints one line each plus
+   scripts (32 as of 2026-08-03, auto-discovered) and prints one line each plus
    any FAIL lines: a 3-script gate goes from ~110 lines to 4. It classifies on
    `/^FAIL/` **and the exit code**, never the `ALL CHECKS PASSED` banner (five
    scripts never print it — RUNBOOK quirk (u)).

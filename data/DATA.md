@@ -934,10 +934,48 @@ only** — never label the derived metric "total city cost".
   states it reads ≫1 because the cost side is only two services (median ≈5.8×),
   NOT "pays its way". The column ships to the live GeoJSON on the first refresh
   after the metric PR #59 — until then both controls are column-guarded off.
+### The OPERATING trio (added 2026-08-03, transportation lens Stage 2)
+The same file also carries `roadway_ops`, `bikeway_ops` and `transit_ets`, on a
+**strictly operating basis** — maintenance + snow clearing, **no capital**.
+- **Roadway ops = $4.635/m/yr** ($1,285/km maintain + $3,350/km snow).
+- **Bikeway ops = $20.278/m/yr** ($178/km maintain + $20,100/km snow) — a
+  bikeway metre costs **4.4× a road metre** to operate: cheap to keep up,
+  expensive to clear (24-hour bare-pavement standard).
+- **Transit = ETS bus+LRT gross $436.605M (2025)**; **DATS excluded** ($31.966M
+  of the $468.571M total) because it is door-to-door and generates no scheduled
+  stop-events. Divided by the pipeline's OWN citywide stop-event total, like fire.
+- Source for the two rates: Taproot Edmonton reporting quoting City infrastructure
+  field operations staff; ETS from the 2024/2025 Annual Service Plan Appendix A.
+  Both **relayed**, not fetched from the Oracle box.
 ### Known Quirks
 - **The fire term is a demand ALLOCATION of a mostly-fixed budget** — a hood with
   2× the events does not cost the City 2× (most fire cost is standing capacity).
-  Carry that caveat in any UI copy.
+  Carry that caveat in any UI copy. **The transit term has the identical shape.**
+- ⚠️ **THIS FILE HOLDS TWO INCOMPATIBLE BASES.** `roadway_om_renewal` is
+  **$50/m/yr lifecycle**; `roadway_ops` is **$4.635/m/yr operating** — the SAME
+  metres, **~10.8× apart**, and both ship to the served GeoJSON. Never sum or
+  compare them. The `_ops` column suffix exists solely to keep them apart; a
+  test pins them distinct. See the file's own `_two_bases` field.
+- ⚠️ **$178/km/yr IS NOT A LIFECYCLE RATE**, though it was proposed as one on the
+  phrasing "replace, repair, and maintain". It derives from ~$0.27M/yr over
+  ~1,500 km; the same source puts snow clearing on that network at **113× it**;
+  at a 50-yr life it totals **$8,900/km** for build plus all replacement; and
+  against the City's own ~3%/yr set-aside rule it is **~33× low**. Full record in
+  `bikeway_ops.rejected_lifecycle_reading`. **No bikeway lifecycle figure exists
+  yet** — that is an open TODO item.
+- ⚠️ **Two rate/denominator mismatches, recorded not absorbed.** The bike snow
+  rate blends over a ~1,500 km network the source defines as *"bike lanes,
+  multi-use paths, public pedestrian squares, bus stops, LRT platforms, and
+  staircases"* — substantially **not** dedicated bikeway, while our numerator
+  (~981 km) is. The road snow rate blends over ~11,000 km **including arterials**,
+  which are priority-cleared and cost more per km, so the local-road term is
+  likely a little high. **The 11,000 km denominator is never imported into the
+  spatial pipeline** — only the per-km rate is.
+- ⚠️ **Vintage mismatch, accepted:** ETS is 2025 while fire is 2026 Approved.
+  They never enter the same composite (fire → `svc_cost_per_acre`, transit →
+  `transport_cost_ops_per_acre`), so it is across columns, not inside a number.
+- **Sidewalks are a separate, non-overlapping category** (~5,776 km, ~$5.9M/yr
+  ops) and are in neither the bike metric nor the 1,500 km snow denominator.
 
 ## 14. Geographic Reference Layers (orientation, added 2026-07-27)
 `web/data/reference.geojson` (**70 kB, 16 features**, committed) — the North
