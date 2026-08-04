@@ -7,6 +7,7 @@ GeoJSON, so tests write a small temp file and vary its bytes.
 """
 
 import json
+from pathlib import Path
 import sys
 
 import pytest
@@ -158,3 +159,97 @@ def test_committed_status_matches_the_rate_source():
     """
     committed = json.loads((ROOT / "web/data/status.json").read_text())
     assert committed["municipal_rates"] == municipal_rates(MILL_RATES, committed["rate_year"])
+
+
+# ---- budget_context: the Data & Methods pod's citywide scale section ---------
+# Mirrors municipal_rates: values only, degrades to None, validates loudly.
+
+def _budget_file(tmp_path, total=1000, cats=None):
+    p = tmp_path / "budget.json"
+    p.write_text(json.dumps({
+        "total_operating_budget": {"value": total, "year": 2025},
+        "categories": cats if cats is not None else [
+            {"key": "transit", "label": "Transit", "value": 120},
+            {"key": "roads", "label": "Roads", "value": 30, "derived_component": "maintenance"},
+        ],
+    }))
+    return p
+
+
+def test_budget_context_publishes_values_and_total():
+    from generate_status import budget_context
+
+    b = budget_context()
+    assert b["total"] == 3_845_555_000
+    keys = [c["key"] for c in b["categories"]]
+    assert keys == ["transit", "roads", "active_transport", "sidewalks"]
+
+
+def test_budget_context_publishes_no_share_or_ratio(tmp_path):
+    """⚠️ The manifest must carry dollars only.
+
+    A precomputed share can drift out of agreement with the value it came from —
+    which is exactly how the source research shipped 'transit is ~15x roads'
+    when it is 9.2x. The UI divides by total itself.
+    """
+    from generate_status import budget_context
+
+    b = budget_context(_budget_file(tmp_path))
+    for c in b["categories"]:
+        assert set(c) == {"key", "label", "value", "derived"}
+    assert not any(k in b for k in ("shares", "ratios", "percentages"))
+
+
+def test_budget_context_flags_the_derived_category(tmp_path):
+    from generate_status import budget_context
+
+    b = budget_context(_budget_file(tmp_path))
+    assert {c["key"]: c["derived"] for c in b["categories"]} == {"transit": False, "roads": True}
+
+
+def test_budget_context_missing_file_degrades_to_none(tmp_path):
+    from generate_status import budget_context
+
+    assert budget_context(tmp_path / "nope.json") is None
+
+
+def test_budget_context_malformed_degrades_to_none(tmp_path):
+    from generate_status import budget_context
+
+    bad = tmp_path / "budget.json"
+    bad.write_text("{not json")
+    assert budget_context(bad) is None
+
+
+def test_budget_context_category_exceeding_total_raises(tmp_path):
+    """A category bigger than the whole budget is a decimal-place slip."""
+    from generate_status import budget_context
+
+    p = _budget_file(tmp_path, total=100, cats=[{"key": "transit", "label": "T", "value": 200}])
+    with pytest.raises(ValueError, match="exceed"):
+        budget_context(p)
+
+
+def test_budget_context_nonpositive_value_raises(tmp_path):
+    from generate_status import budget_context
+
+    p = _budget_file(tmp_path, cats=[{"key": "transit", "label": "T", "value": 0}])
+    with pytest.raises(ValueError, match="bad value"):
+        budget_context(p)
+
+
+def test_committed_budget_file_components_reconcile():
+    """Each category's components must sum to the value the pod prints."""
+    data = json.loads(Path("data/city_budget_context.json").read_text())
+    for c in data["categories"]:
+        if "components" in c:
+            assert sum(c["components"].values()) == c["value"], c["key"]
+
+
+def test_committed_budget_file_shares_are_what_we_claim():
+    """Pins the four shares the pod renders, so a hand edit to the JSON that
+    changes the story fails here rather than shipping quietly."""
+    data = json.loads(Path("data/city_budget_context.json").read_text())
+    total = data["total_operating_budget"]["value"]
+    got = {c["key"]: round(100 * c["value"] / total, 2) for c in data["categories"]}
+    assert got == {"transit": 12.18, "roads": 1.33, "active_transport": 0.79, "sidewalks": 0.15}

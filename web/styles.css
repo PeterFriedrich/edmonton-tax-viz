@@ -289,6 +289,17 @@ html, body { margin: 0; height: 100%; background: #0a0a0f; }
      behind it on a phone) shows through the text. Matches .tip / #banner,
      the other two text surfaces. */
   background: rgba(12,12,20,0.92);
+  /* The pod grows with its content and is anchored to its button at the BOTTOM,
+     so anything added to it runs off the TOP of the screen rather than the
+     bottom — silently, because there is no scrollbar to notice. It was already
+     within ~112px of that at 720px tall before the budget section existed.
+     Cap it against the viewport and let it scroll instead. box-sizing is
+     load-bearing: max-height is content-box by default, so without this the
+     padding sits outside the cap and the pod overshoots by exactly 18px (the
+     #temporal lesson, DECISIONS.md 2026-08-02). */
+  box-sizing: border-box;
+  max-height: calc(100vh - 110px);
+  overflow-y: auto;
 }
 #about.open #about-menu { display: flex; }
 #about-menu .hd { font-size: 10px; text-transform: uppercase; letter-spacing: 0.8px; color: #6a6a80; }

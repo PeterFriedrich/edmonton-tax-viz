@@ -1,0 +1,70 @@
+{
+  "_purpose": "Citywide OPERATING budget context for the Data & Methods popover — how big the transportation spending categories are against the whole City operating budget. Manual, reviewed input (mill-rates pattern): NOT auto-fetched, NOT part of the weekly refresh. Reaches the frontend through status.json via generate_status.budget_context(), and the pod simply never shows if this file is unreadable.",
+  "_scope": "⚠️ THIS IS A CITYWIDE HEADLINE STAT AND IS DELIBERATELY NOT WIRED TO THE SPATIAL PIPELINE. It answers 'how much does the City spend on this in total', not 'what does this neighbourhood cost'. Its road figures are derived over the ~11,000 km CITYWIDE network, which INCLUDES arterials — the neighbourhood lens excludes arterials by decision, so the two use different denominators and MUST NOT share a constant. Nothing here is imported by src/ or main.py.",
+  "_basis": "⚠️ EVERY LINE IS OPERATING ONLY — maintenance, snow clearing and service delivery. Capital is excluded throughout: road reconstruction, asphalt overlay and the Neighbourhood Renewal Program on the roads side; new trains, garages and line extensions on the transit side. The categories are therefore comparable TO EACH OTHER but none of them is a total cost. Never let this table be read as 'what transportation costs Edmonton'.",
+  "total_operating_budget": {
+    "value": 3845555000,
+    "year": 2025,
+    "units": "dollars per year",
+    "source": {
+      "document": "City of Edmonton Budget FAQ / Open Budget — 2025 expenditure breakdown",
+      "retrieved": "2026-08-03 (relayed, not fetched from the Oracle box)",
+      "note": "Quoted publicly as '$3.8 billion'; the precise figure is $3,845,555 thousand."
+    }
+  },
+  "categories": [
+    {
+      "key": "transit",
+      "label": "Transit (incl. DATS)",
+      "value": 468571000,
+      "components": {
+        "bus_and_lrt_gross": 436605000,
+        "dats_gross": 31966000
+      },
+      "source": "ETS 2024/2025 Annual Service Plan, Appendix A Financial Summary (2025 budget, $000s)",
+      "note": "Gross operating expense before the ~$156.3M of fare and other revenue. ⚠️ Includes DATS here, unlike the per-acre transit cost column, which excludes it because DATS runs no scheduled stops — see city_unit_costs.json transit_ets.chosen_numerator. The two numbers are for different questions and are SUPPOSED to differ.",
+      "label_long": "Transit (bus, LRT and DATS)"
+    },
+    {
+      "key": "roads",
+      "label": "Roads",
+      "value": 50985000,
+      "components": {
+        "maintenance": 14135000,
+        "snow_and_ice_control": 36850000
+      },
+      "source": "Taproot Edmonton reporting quoting City infrastructure field operations staff",
+      "derived_component": "maintenance",
+      "note": "⚠️ The $14.135M maintenance component is DERIVED, not published: $1,285/km x ~11,000 km. The 11,000 km figure is the SNOW-CLEARING network being reused as a maintenance denominator, so this component is doubly inferred and should be replaced with a published roads-maintenance operating line when one is sourced. The $36.85M snow figure is quoted directly.",
+      "label_long": "Roads (maintenance and snow clearing)"
+    },
+    {
+      "key": "active_transport",
+      "label": "Bike lanes & pathways",
+      "value": 30420000,
+      "components": {
+        "maintenance": 270000,
+        "snow_and_ice_control": 30150000
+      },
+      "source": "Taproot Edmonton, as above",
+      "note": "Snow clearing is 99% of it — a 24-hour bare-pavement service standard over ~1,500 km. That network also covers pedestrian squares, bus stops, LRT platforms and staircases, so it is broader than bikeways alone.",
+      "label_long": "Bike lanes and shared pathways"
+    },
+    {
+      "key": "sidewalks",
+      "label": "Sidewalks",
+      "value": 5900000,
+      "source": "Taproot Edmonton, quoting the City: 'the city is responsible for almost 5,776 linear kilometres of sidewalks and spends $5.9 million on their maintenance each year'",
+      "note": "Confirmed a SEPARATE, non-overlapping category from the active-transport line above — sidewalks are not in the 1,500 km snow-clearing network, which the source enumerates explicitly. The two lines are safely additive.",
+      "label_long": "Sidewalks"
+    }
+  ],
+  "excluded_from_the_table": [
+    {
+      "label": "Active Transportation Acceleration project",
+      "value": 4300000,
+      "reason": "⚠️ NOT ADDITIVE with the bike-lane line above and therefore left out of the comparison rather than shown beside it. It is capital debt service plus incremental maintenance for NEW build-out; the $30.42M line is the cost of running what already exists. Adding them answers no question. Kept here so the figure is not lost (City's own stated number, Budget FAQ)."
+    }
+  ],
+  "_ratios_are_derived_not_pinned": "⚠️ DO NOT hardcode the comparison ratios. They are computed from the values above so they cannot drift out of agreement with them. This matters: the research brief this table came from claimed 'transit is roughly 15x the road ops budget and roughly 90x the entire active-transportation network' — both wrong, because the ratios had slid one row. Actual: transit is 9.2x roads, 15.4x active transport and 79.4x sidewalks. Bike lanes plus sidewalks together are 0.94% of the operating budget, which is the one claim that held."
+}

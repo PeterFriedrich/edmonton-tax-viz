@@ -110,6 +110,20 @@ Also removed a duplicated preamble block left in this file by the
     lifecycle roads term. Until then the two bases stay separated by the `_ops`
     suffix, and that separation is load-bearing (~10.8× on the same metres).
 
+- [ ] **REPLACE THE DERIVED $14.135M ROADS-MAINTENANCE FIGURE** in
+  `data/city_budget_context.json` with a published City operating line. It is
+  currently `$1,285/km × ~11,000 km`, and that 11,000 km is the **snow-clearing**
+  network reused as a maintenance denominator — doubly inferred. Flagged
+  `derived` in the data and asterisked in the pod, so it is honest on screen,
+  but it is the one soft number in that table; the other three are quoted
+  directly. A single value swap plus dropping `derived_component`.
+  - ⚠️ **The budget figures reach the frontend only when `refresh.yml` reruns
+    `generate_status.py`** (next Monday 08:00 UTC, or a manual dispatch). Until
+    then `status.json` carries no `budget_context` and the section correctly
+    hides — verified. A hand-run `generate_status.py` was deliberately **not**
+    committed, because it would stamp `last_checked` with a freshness check that
+    never happened.
+
 - [ ] **RE-PIN `data/expected_columns.json` ONCE the four Stage 2 columns ship**
   (`cost_roads_ops_per_acre`, `cost_transit_ops_per_acre`,
   `cost_bike_ops_per_acre`, `transport_cost_ops_per_acre`).
