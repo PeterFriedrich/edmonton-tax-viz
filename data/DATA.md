@@ -1234,3 +1234,52 @@ metric is ~50% not-bike by length.
 - **`web/data/bike_routes.json`** (committed, lazy-loaded, 0.24 MB, 4,049 welded
   path segments) is the map's context layer — the LRT-lines format
   (`{"lines": [...]}`), geometry only, no per-feature value.
+
+## 16. Citywide Operating Budget Context (Data & Methods pod, added 2026-08-03)
+`data/city_budget_context.json` — the four-row "how big is this against the
+whole City budget" comparison in the Data & Methods popover. Manual reviewed
+input (mill-rates pattern; NOT auto-fetched, NOT in the weekly refresh).
+Reaches the frontend through `status.json` via
+`generate_status.budget_context()`; the section hides itself if the file or the
+manifest field is missing.
+
+| line | $/yr | share of $3.8B |
+|---|---|---|
+| Transit (bus + LRT + DATS, gross operating) | $468.571M | 12.18% |
+| Roads (maintenance + snow) | $50.985M | 1.33% |
+| Bike lanes & shared pathways (maintenance + snow) | $30.420M | 0.79% |
+| Sidewalks (ops) | $5.900M | 0.15% |
+
+Total City operating budget **$3,845,555,000 (2025)** — publicly quoted as
+"$3.8 billion".
+
+### Known Quirks
+- ⚠️ **OPERATING ONLY, every line.** No capital anywhere: road reconstruction,
+  asphalt overlay and the Neighbourhood Renewal Program on one side; new trains,
+  garages and line extensions on the other. The rows are comparable **to each
+  other** and none is a total cost. **Never let this read as "what
+  transportation costs Edmonton."**
+- ⚠️ **CITYWIDE — DO NOT WIRE TO THE SPATIAL PIPELINE.** The road figures span
+  the ~11,000 km network **including arterials**; the neighbourhood lens
+  excludes arterials by decision, so the two use different denominators and
+  **must not share a constant**. Nothing in `src/` or `main.py` reads this file.
+- ⚠️ **The $14.135M roads-maintenance component is DERIVED, not published** —
+  `$1,285/km × ~11,000 km`, where the 11,000 km is the *snow-clearing* network
+  reused as a maintenance denominator. Doubly inferred; flagged `derived` in the
+  data and asterisked in the pod. **Replace it with a published roads-maintenance
+  operating line when one is sourced.**
+- ⚠️ **Transit here INCLUDES DATS ($31.966M); the per-acre transit cost column
+  EXCLUDES it.** Different questions, and they are *supposed* to differ — §13's
+  `transit_ets` allocates by scheduled stop-events, which DATS does not generate.
+- ⚠️ **The Active Transportation Acceleration project ($4.3M) is deliberately
+  NOT a row.** It is capital debt service + incremental maintenance for *new*
+  build-out, while the bike line is the cost of running what exists — not
+  additive. Kept in `excluded_from_the_table` so the figure is not lost.
+- **Sidewalks and active transport are separate, non-overlapping categories** —
+  sidewalks (~5,776 km) are not in the 1,500 km snow-clearing network, which the
+  source enumerates. The two lines are safely additive.
+- ⚠️ **NO SHARE OR RATIO IS EVER PUBLISHED** — the manifest carries dollars and a
+  total, and the UI divides. The research this table came from shipped ratios
+  that had slid one row (*"transit is roughly 15× the road ops budget"* — it is
+  **9.2×**; 15.4× is active transport, and sidewalks are 79.4×, not the claimed
+  ~90×). Deriving makes that class of error unrepresentable.
