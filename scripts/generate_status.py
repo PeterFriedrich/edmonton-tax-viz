@@ -42,6 +42,7 @@ from src.apply_tax_rates import load_mill_rates  # noqa: E402
 GEOJSON = ROOT / "web/data/neighbourhood_value_per_acre.geojson"
 STATUS = ROOT / "web/data/status.json"
 MILL_RATES = ROOT / "data/mill_rates.json"
+BUDGET_CONTEXT = ROOT / "data/city_budget_context.json"
 
 # The rate classes the map's three revenue cuts are billed at, in display order:
 # Total spans all three, Residential is the two housing classes, Non-residential
@@ -109,6 +110,52 @@ def municipal_rates(rates_path: Path, year: int) -> dict | None:
     }
 
 
+def budget_context(path: Path = BUDGET_CONTEXT) -> dict | None:
+    """Return the citywide operating-budget comparison for the Data & Methods pod.
+
+    Mirrors ``municipal_rates``: a manual reviewed input reaching the frontend
+    through the manifest, degrading to None if the file is unreadable so the
+    section simply never renders rather than the pod breaking.
+
+    ⚠️ Publishes the VALUES ONLY — never a precomputed share or ratio. The UI
+    divides by ``total`` itself, so the printed percentages cannot drift out of
+    agreement with the dollars they came from. The brief this table was built
+    from shipped ratios that had slid one row (claiming transit was ~15x roads
+    when it is 9.2x), which is exactly the failure a pinned ratio invites.
+
+    ⚠️ CITYWIDE ONLY. The road figures here span the ~11,000 km network
+    INCLUDING arterials; the neighbourhood lens excludes arterials. Nothing in
+    src/ or main.py reads this file, and nothing should.
+    """
+    try:
+        data = json.loads(Path(path).read_text())
+        total = data["total_operating_budget"]
+        cats = data["categories"]
+    except (OSError, json.JSONDecodeError, KeyError) as exc:
+        logger.warning("No city budget context (%s) — omitting from manifest", exc)
+        return None
+
+    for c in cats:
+        if not isinstance(c.get("value"), (int, float)) or c["value"] <= 0:
+            raise ValueError(f"{path}: category {c.get('key')!r} has a bad value {c.get('value')!r}")
+    if total["value"] <= 0:
+        raise ValueError(f"{path}: total_operating_budget must be positive")
+    over = [c["key"] for c in cats if c["value"] > total["value"]]
+    if over:
+        raise ValueError(f"{path}: category/ies {over} exceed the total operating budget")
+
+    return {
+        "total": total["value"],
+        "year": total["year"],
+        "basis": "operating",
+        "categories": [
+            {"key": c["key"], "label": c["label"], "value": c["value"],
+             "derived": c.get("derived_component") is not None}
+            for c in cats
+        ],
+    }
+
+
 def build_status(
     *,
     geojson: Path,
@@ -141,6 +188,7 @@ def build_status(
         "last_checked": today,
         "banner": banner_value,
         "municipal_rates": municipal_rates(rates_path, rate_year),
+        "budget_context": budget_context(),
         "_geojson_sha256": new_hash,
     }
 

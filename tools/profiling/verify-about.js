@@ -89,7 +89,9 @@ const [url] = process.argv.slice(2);
     // false positives.
     const src = await (await page.request.get(url)).text();
     const block = src.slice(src.indexOf('<div id="about"'), src.indexOf('<div id="botleft"'));
-    check('found the pod markup to inspect', block.length > 200 && block.length < 4000,
+    // The upper bound only asserts the slice didn't run away past the pod; it
+    // moved 4000 -> 6000 when the budget-scale section landed (2026-08-03).
+    check('found the pod markup to inspect', block.length > 200 && block.length < 6000,
           `${block.length} chars`);
     // Strip HTML comments first. The rule being enforced is "no year a READER
     // can see is a literal" — a comment renders nothing, so a year in one
@@ -281,7 +283,72 @@ const [url] = process.argv.slice(2);
   }));
   check('no status.json: pod still reachable', b.shown && b.btn === 'Data & Methods', b.btn);
   check('no status.json: vintage line stays empty', b.vintage === '', JSON.stringify(b.vintage));
+  const noBudget = await blind.evaluate(() =>
+    getComputedStyle(document.getElementById('about-budget')).display === 'none');
+  check('no status.json: budget section hides itself', noBudget);
   await blind.close();
+
+  // --- 8. the citywide budget-scale section (2026-08-03) -------------------
+  // ⚠️ Its shares are DERIVED in the page from the manifest's dollars, never
+  // read from the manifest — so the check recomputes them independently and
+  // compares against what is printed. A pinned share is exactly how the source
+  // research shipped "transit is ~15x roads" when it is 9.2x.
+  const bp = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+  await bp.goto(url, { waitUntil: 'networkidle', timeout: 60000 });
+  await bp.waitForTimeout(4000);
+  await bp.$eval('#about button', e => e.click());
+  await bp.waitForTimeout(500);
+  const bx = await bp.evaluate(async () => {
+    const s = await fetch('./data/status.json').then(r => r.json()).catch(() => null);
+    const rows = [...document.querySelectorAll('#about-budget-rows .revrow')].map(r => ({
+      label: r.querySelector('span').textContent.trim(),
+      printed: r.querySelector('b').textContent.trim(),
+    }));
+    return {
+      manifest: s && s.budget_context,
+      shown: getComputedStyle(document.getElementById('about-budget')).display !== 'none',
+      lead: document.getElementById('about-budget-lead').textContent,
+      note: document.getElementById('about-budget-note').textContent,
+      rows,
+    };
+  });
+  if (!bx.manifest) {
+    // Pre-budget manifest: the only correct behaviour is a hidden section.
+    check('pre-budget manifest: section hidden', !bx.shown);
+  } else {
+    check('budget section renders', bx.shown);
+    check('one row per manifest category',
+          bx.rows.length === bx.manifest.categories.length,
+          `${bx.rows.length} vs ${bx.manifest.categories.length}`);
+    // The manifest must carry no share of its own — deriving is the whole point.
+    const carriesShare = bx.manifest.categories.some(c =>
+      'share' in c || 'pct' in c || 'percent' in c);
+    check('manifest publishes dollars only, no precomputed share', !carriesShare);
+    for (let i = 0; i < bx.rows.length; i++) {
+      const c = bx.manifest.categories[i];
+      const want = (c.value / bx.manifest.total) * 100;
+      const wantStr = want >= 1 ? want.toFixed(1) + '%' : want.toFixed(2) + '%';
+      check(`${c.key}: printed share matches the dollars`,
+            bx.rows[i].printed.endsWith(wantStr),
+            `${bx.rows[i].printed} expected to end ${wantStr}`);
+    }
+    check('lead names the operating basis', /no capital/i.test(bx.lead), bx.lead);
+    check('note separates citywide from the map\'s road measures',
+          /citywide/i.test(bx.note) && /arterial/i.test(bx.note), bx.note);
+    // ⚠️ The pod is anchored bottom and grows upward, so extra content runs off
+    // the TOP of the screen with no scrollbar to notice. Capped in CSS.
+    for (const h of [900, 800, 768, 720]) {
+      await bp.setViewportSize({ width: 1440, height: h });
+      await bp.waitForTimeout(300);
+      const geo = await bp.evaluate(() => {
+        const r = document.getElementById('about-menu').getBoundingClientRect();
+        return { top: Math.round(r.top), bottom: Math.round(r.bottom), vh: window.innerHeight };
+      });
+      check(`pod fits the viewport at ${h}px tall`,
+            geo.top >= 0 && geo.bottom <= geo.vh, `top=${geo.top} bottom=${geo.bottom}`);
+    }
+  }
+  await bp.close();
 
   await browser.close();
   console.log(fail ? `\n${fail} CHECK(S) FAILED` : '\nALL CHECKS PASSED');

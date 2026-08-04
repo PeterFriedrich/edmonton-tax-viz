@@ -379,6 +379,17 @@
          characteristics and zoning — not utility records. They cover only the
          services this project can measure, never the full cost of running the
          city.</p>
+      <!-- Citywide operating-budget context (2026-08-03). Renders only when
+           status.json carries budget_context; the whole block hides otherwise,
+           the same degrade the mill-rate pod uses. Percentages are computed
+           here from the dollars — the manifest publishes no share or ratio, so
+           the two can never disagree. -->
+      <div id="about-budget" style="display:none">
+        <span class="hd">In the city budget</span>
+        <p id="about-budget-lead" class="muted"></p>
+        <div id="about-budget-rows"></div>
+        <p id="about-budget-note" class="muted"></p>
+      </div>
       <span class="hd">More</span>
       <p><a href="https://github.com/PeterFriedrich/edmonton-tax-viz/blob/master/docs/METHODS.md"
             target="_blank" rel="noopener">Methods &amp; definitions</a> —
@@ -3775,6 +3786,43 @@
     };
     let millRates = null;  // status.json's municipal_rates; null until it lands
 
+    // The Data & Methods pod's citywide budget-scale section (2026-08-03).
+    // ⚠️ SHARES ARE DERIVED HERE, NEVER READ FROM THE MANIFEST — the manifest
+    // publishes dollars and a total only, so a printed percentage cannot drift
+    // out of agreement with the figure it came from. The research this table
+    // came from shipped ratios that had slid one row (transit called ~15x roads
+    // when it is 9.2x); deriving makes that class of error unrepresentable.
+    // ⚠️ CITYWIDE and OPERATING-ONLY. These road figures span the whole network
+    // INCLUDING arterials, which the neighbourhood lens excludes — the two must
+    // never share a constant, and the copy says "citywide" for that reason.
+    function renderBudgetContext(bc) {
+      const box = document.getElementById("about-budget");
+      if (!bc || !bc.total || !Array.isArray(bc.categories) || !bc.categories.length) {
+        box.style.display = "none";
+        return;
+      }
+      const pct = v => (v / bc.total) * 100;
+      const fmtShare = v => v >= 1 ? v.toFixed(1) + "%" : v.toFixed(2) + "%";
+      const fmtM = v => "$" + (v / 1e6).toFixed(v >= 1e8 ? 0 : 1) + "M";
+      // ⚠️ NO BAR. The first version drew one by repurposing .revrow's 9px
+      // swatch, which squeezed the label column and wrapped every row — the
+      // section came to 348px and pushed the whole pod off the top of the
+      // screen at every height down to 720. This is a compact text popover with
+      // no vertical room to spare; four percentages carry the comparison on
+      // their own.
+      document.getElementById("about-budget-lead").textContent =
+        `Share of the City's $${(bc.total / 1e9).toFixed(1)}B ${bc.year} `
+        + `operating budget (no capital):`;
+      document.getElementById("about-budget-rows").innerHTML = bc.categories.map(c =>
+        `<div class="revrow"><span>${esc(c.label)}${c.derived ? " *" : ""}</span>`
+        + `<b>${fmtM(c.value)} · ${fmtShare(pct(c.value))}</b></div>`).join("");
+      const derived = bc.categories.filter(c => c.derived);
+      document.getElementById("about-budget-note").innerHTML =
+        "Citywide, including arterial roads — the map's road measures exclude them."
+        + (derived.length ? " * partly derived from a per-kilometre rate." : "");
+      box.style.display = "";
+    }
+
     // Paint the pod, gate it to the money view's revenue cuts, and place it.
     //
     // TWO DIFFERENT SURFACES, not one surface with two offsets. On desktop the
@@ -5024,6 +5072,7 @@
               + (assumed.length ? ` · ${assumed.join(", ")} rate assumed` : ""));
             syncMillRates();  // the manifest lands after the first applyView
           }
+          renderBudgetContext(s.budget_context);
         })
         .catch(() => {});
     });
