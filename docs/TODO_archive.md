@@ -8,6 +8,42 @@ Items are verbatim as they were closed, newest-moved first in the order they app
 
 ---
 
+- [x] **`verify-peek.js` WAS 71% OF THE SUITE'S WALL TIME — FIXED 2026-08-04,
+  437s → 94s, all 27 checks still green.** The item was right that the script
+  dominated the suite and right that the cost was software-GL picking. ⚠️ **It
+  named the wrong loop, and both of its proposed levers were wrong** — which is
+  why the first thing done was to re-measure rather than act on it.
+  - **The item blamed `findTappableHoods` (the `targets` grid sweep). Measured
+    2026-08-04, that sweep is 46s of 408s.** It exits as soon as it has `n`
+    hoods, so it never approaches its 2,400-candidate worst case: **1 candidate
+    / 9 picks** on desktop, **22 candidates / 57 picks** on touch. The real cost
+    was the **empty-map-pixel scan** — **346s, 85% of the total** — a blind 7px
+    sweep making **~2,470 picks** before it found a pixel that picks nothing.
+  - ⚠️ **A PICK COSTS ~137ms AND NEITHER `radius` NOR `deviceScaleFactor`
+    CHANGES THAT** (measured: r0 vs r6 identical; dsf3 vs dsf1 identical). The
+    cost is deck **re-rendering the whole picking buffer** on the CPU under
+    SwiftShader on *every* `pickObject` call, not the buffer readback. So the
+    only lever that works is **making fewer picks**. Separately, the **first**
+    pick burst in a context carries a **one-off ~20s** of shader warm-up, which
+    is what `targets`' remaining 46s almost entirely is — it is already at the
+    floor and was deliberately left alone.
+  - ⚠️ **"Coarsen the grid" was measured and is a TRAP.** Step 7 → 25 still
+    costs 30s, and **step 40 finds no empty pixel at all** and would fail the
+    check. Empty pixels are genuinely scarce here: only **17 of the 4,400**
+    points on the 7px grid are clear.
+  - **The fix is the item's *other* lever, applied to the loop that actually
+    cost the time: derive the pixel from geometry, pick only to confirm.**
+    `metric-extrusion` is the **only pickable layer**, so "no hood polygon
+    covers this pixel" and "`pickObject` returns nothing" are the same
+    statement — and `boot()` has already flattened the map, so a prism's screen
+    footprint is just its projected polygon. Project all 406 hoods' rings to
+    screen (**9,236 vertices, 14ms**), ray-cast point-in-polygon with a bbox
+    pre-filter, require an 8-point ring at 7px to be clear as well, then confirm
+    the first candidate with **one** real pick. **2,474 picks → 1**, landing on
+    the *same* pixel (382,425) the blind sweep found. Falls back to a 3px grid
+    if the 7px one yields nothing, since geometry tests are free where picks are
+    not. — 2026-08-04 · `tools/profiling/verify-peek.js`
+
 - [x] **▶ THE HISTORY PANEL PAINTS OVER THE TITLE BLURB IN FIVE STATES.
   FIXED 2026-08-02** (`verify-temporal.js` **43 → 67 checks**). Measured on clean
   master 2026-08-01; **re-measured 2026-08-02 before anything was touched and

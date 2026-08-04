@@ -181,14 +181,73 @@ const closeBox = page => page.evaluate(() => {
 
     // The city fills the middle of the map at this zoom, so an unpicked pixel
     // only exists out near the corners -- scan the whole canvas, not the centre.
+    //
+    // ⚠️ DERIVED FROM GEOMETRY, THEN CONFIRMED WITH ONE PICK -- do not go back
+    // to hunting for it with picks. `metric-extrusion` is the ONLY pickable
+    // layer, so "no hood polygon covers this pixel" and "pickObject returns
+    // nothing" are the same statement, and the first is free: boot() has
+    // already flattened the map, so a prism's screen footprint is just its
+    // projected polygon. The blind 7px sweep this replaces spent 346s of the
+    // script's 408s on ~2,470 picks (measured 2026-08-04) to land on the very
+    // same pixel this finds with one. A pick costs ~137ms because it re-renders
+    // the whole picking buffer on the CPU under SwiftShader -- the cost is the
+    // render, so neither `radius` nor `deviceScaleFactor` moves it, and only
+    // making FEWER picks does.
     const empty = await page.evaluate(() => {
-      for (let y = innerHeight - 90; y > 200; y -= 7) {
-        for (let x = 4; x < innerWidth - 4; x += 7) {
-          const top = document.elementFromPoint(x, y);
-          if (!top || top.tagName !== 'CANVAS') continue;
-          if (!overlay._deck.pickObject({ x, y, radius: 6 })) return { x, y };
-        }
+      const vp = overlay._deck.getViewports()[0];
+      const polys = [];
+      for (const f of state.data.features) {
+        const rings = [];
+        let minx = Infinity, miny = Infinity, maxx = -Infinity, maxy = -Infinity;
+        const walk = (c) => {
+          if (typeof c[0][0] !== 'number') { c.forEach(walk); return; }
+          const r = new Float64Array(c.length * 2);
+          for (let i = 0; i < c.length; i++) {
+            const p = vp.project(c[i]);
+            r[i * 2] = p[0]; r[i * 2 + 1] = p[1];
+            if (p[0] < minx) minx = p[0];
+            if (p[0] > maxx) maxx = p[0];
+            if (p[1] < miny) miny = p[1];
+            if (p[1] > maxy) maxy = p[1];
+          }
+          rings.push(r);
+        };
+        walk(f.geometry.coordinates);
+        if (rings.length) polys.push({ minx, miny, maxx, maxy, rings });
       }
+      const inside = (x, y) => polys.some(p => {
+        if (x < p.minx || x > p.maxx || y < p.miny || y > p.maxy) return false;
+        return p.rings.some(r => {
+          let hit = false;
+          for (let i = 0, j = r.length - 2; i < r.length; j = i, i += 2) {
+            const yi = r[i + 1], yj = r[j + 1];
+            if ((yi > y) !== (yj > y) &&
+                x < (r[j] - r[i]) * (y - yi) / (yj - yi) + r[i]) hit = !hit;
+          }
+          return hit;
+        });
+      });
+      // Clear by more than the 6px the confirming pick reaches, tested as a
+      // ring so a pixel in a narrow gap between two hoods is rejected.
+      const clear = (x, y) => !inside(x, y) &&
+        [[7, 0], [-7, 0], [0, 7], [0, -7], [5, 5], [-5, 5], [5, -5], [-5, -5]]
+          .every(([dx, dy]) => !inside(x + dx, y + dy));
+      const sweep = (step) => {
+        const out = [];
+        for (let y = innerHeight - 90; y > 200 && out.length < 5; y -= step) {
+          for (let x = 4; x < innerWidth - 4 && out.length < 5; x += step) {
+            const top = document.elementFromPoint(x, y);
+            if (top && top.tagName === 'CANVAS' && clear(x, y)) out.push({ x, y });
+          }
+        }
+        return out;
+      };
+      // Only 17 of the 4,400 points on the 7px grid are clear at this zoom, so
+      // drop to a finer one rather than report nothing -- geometry is free.
+      const coarse = sweep(7);
+      const cands = coarse.length ? coarse : sweep(3);
+      for (const c of cands)
+        if (!overlay._deck.pickObject({ x: c.x, y: c.y, radius: 6 })) return c;
       return null;
     });
     check('touch: found an empty-map pixel', !!empty, JSON.stringify(empty));
