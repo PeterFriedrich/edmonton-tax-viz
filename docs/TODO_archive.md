@@ -8,6 +8,45 @@ Items are verbatim as they were closed, newest-moved first in the order they app
 
 ---
 
+- [x] **RE-PIN `data/expected_columns.json` ONCE the four Stage 2 columns ship
+  — CLOSED 2026-08-04, 62 → 66.** (`cost_roads_ops_per_acre`,
+  `cost_transit_ops_per_acre`, `cost_bike_ops_per_acre`,
+  `transport_cost_ops_per_acre`.)
+  - The item's gate was *"do NOT re-pin before the refresh carries them"*, and
+    the weekly cron was 6 days out (Monday 2026-08-10). Peter chose to
+    **dispatch `refresh.yml` by hand** instead of waiting — run
+    `30909649645`, success, data commit `024ecc6`.
+  - ⚠️ **The item's prediction held exactly, which is worth recording because
+    the previous two closed items' predictions did NOT.** Against the freshly
+    published GeoJSON the guard warned on all four columns as NEW and exited
+    **0** — the correct interim state, not a problem. It took that same path in
+    CI on the same run.
+  - Verified before re-pinning: all four columns present on all **406**
+    features, 66 columns total, and the composite sums exactly
+    (`88.92 + 13820.65 + 129.59 = 14039.16`). Re-pin diff is a pure four-line
+    addition — no column silently changed name or vanished. Clean re-run
+    afterwards: *"all 66 baselined columns present on all 406 features"*.
+  - ⚠️ **`python` on this box is the SYSTEM interpreter and cannot run this
+    script** — `dict[str, int]` raises `TypeError: 'type' object is not
+    subscriptable`. Use `.venv/bin/python`. The restoration procedures write
+    bare `python` after a `source .venv/bin/activate` that is easy to skip.
+
+- [x] **THE SERVED-COLUMN GUARD HAD NEVER RUN IN CI — CLOSED 2026-08-04 on the
+  same run.** Carried S89 → S91 as a next-step, never as a `TODO.md` item.
+  Step *"Check served columns (guard after regenerating)"* executed and
+  reported success on run `30909649645`. It is no longer an untested code path
+  in the weekly publish.
+  - Also closed on that run: both S90 features' **data** finally shipped. The
+    three transport cost rows and the budget-context pod had been correctly
+    hidden since 2026-08-03 because those were code-only deploys.
+  - Verified against **production**, not a local build:
+    `verify-transport-cost.js` went **6 → 41 passed / 0 failed** against
+    `/full/` — including the load-bearing two-bases assertion, roads operating
+    **$89** vs lifecycle svc **$7,527** on the same metres — and
+    `verify-about.js` returned **ALL CHECKS PASSED** against the public root,
+    recomputing all four budget shares independently from the published dollars
+    (12.2% / 1.3% / 0.79% / 0.15%) and fitting the pod at 720px tall.
+
 - [x] **`verify-peek.js` WAS 71% OF THE SUITE'S WALL TIME — FIXED 2026-08-04,
   437s → 94s, all 27 checks still green.** The item was right that the script
   dominated the suite and right that the cost was software-GL picking. ⚠️ **It
