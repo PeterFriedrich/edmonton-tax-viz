@@ -1094,6 +1094,8 @@ in `docs/DECISIONS.md`. Original item as it stood:
     smuggle**, and ⚠️ that script's base-tag guard does a plain substring test
     over the whole source, which has already killed one deploy — anything near
     the `<head>` needs the guard re-run. Triage order: `RUNBOOK.md` §3c.
+    *(The guard was scoped to the `<head>` slice on 2026-08-04, so the
+    whole-source substring test described here no longer exists.)*
 
 ## A data-only refresh runs no front-end check — CLOSED 2026-08-02
 
