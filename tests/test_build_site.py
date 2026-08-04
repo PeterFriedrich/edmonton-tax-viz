@@ -97,3 +97,34 @@ def test_build_rejects_source_with_existing_base(tmp_path):
     )
     with pytest.raises(SystemExit):
         build_site.build(src, tmp_path / "_site")
+
+
+def test_build_ignores_head_markup_quoted_below_the_head(tmp_path):
+    """A COMMENT is not a tag. This shape failed a green deploy on PR #117.
+
+    The guards above are about the <head> the injection targets, but they used
+    to substring-search the whole 290KB file — where ~4,200 of 4,250 lines are
+    script. A `<base ` or `</body>` mentioned in a comment or a JS string down
+    there is not markup, and must not fail the build.
+    """
+    src = tmp_path / "web"
+    src.mkdir()
+    (src / "styles.css").write_text("#map { color: red }")
+    (src / "index.html").write_text(
+        '<head><link href="styles.css" rel="stylesheet" /></head>\n'
+        '<body><script>const DEFAULT_BUILD = "full";\n'
+        '// /full/ gets a <base href="../"> injected after <head> at build time\n'
+        'const tpl = "</body>";\n'
+        "</script></body>"
+    )
+    out = tmp_path / "_site"
+    build_site.build(src, out)
+
+    full = (out / "full" / "index.html").read_text()
+    head, _, body = full.partition("</head>")
+    # Injected into the real head, exactly once, and the prose left alone.
+    assert '<base href="../" />' in head
+    assert full.count('<base href="../" />') == 1
+    assert '<base href="../">' in body
+    # The badge goes before the document's own </body>, not the quoted one.
+    assert body.index("work in progress") > body.index('const tpl = "</body>"')

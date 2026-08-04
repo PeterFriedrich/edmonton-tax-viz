@@ -111,13 +111,29 @@ def build(src: Path, out: Path) -> None:
     full_html = cache_bust(
         set_default_build((src / "index.html").read_text(), "full"), token
     )
-    if "<base " in full_html:
+    # ⚠️ THESE CHECKS ARE SCOPED TO THE <head> SLICE ON PURPOSE — an unscoped
+    # `"<base " in full_html` failed a green deploy on PR #117, because a single
+    # COMMENT mentioning the tag, ~289,000 characters below </head>, reads
+    # identically to a competing <base> element. web/index.html is ~4,250 lines
+    # and nearly all of it is script below the head, so any whole-file substring
+    # test here is a false-positive generator, not a guard.
+    head_end = full_html.find("</head>")
+    if head_end < 0:
+        raise SystemExit("build_site: no </head> in the source")
+    head = full_html[:head_end]
+    if "<base " in head:
         raise SystemExit("build_site: source already carries a <base> tag — "
                          "the /full/ share-root injection assumes none")
-    if full_html.count("<head>") != 1 or full_html.count("</body>") != 1:
-        raise SystemExit("build_site: expected exactly one <head> and one </body>")
+    if head.count("<head>") != 1:
+        raise SystemExit("build_site: expected exactly one <head>")
     full_html = full_html.replace("<head>", '<head>\n  <base href="../" />', 1)
-    full_html = full_html.replace("</body>", f"  {WIP_BADGE}\n</body>", 1)
+    # The badge goes before the LAST </body>, which is the document's own; the
+    # first is only the same tag when nothing below quotes it in a string.
+    body_end = full_html.rfind("</body>")
+    if body_end < 0:
+        raise SystemExit("build_site: no </body> in the source")
+    full_html = (full_html[:body_end] + f"  {WIP_BADGE}\n"
+                 + full_html[body_end:])
     full_dir = out / "full"
     full_dir.mkdir()
     (full_dir / "index.html").write_text(full_html)
