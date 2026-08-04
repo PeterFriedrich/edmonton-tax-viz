@@ -295,7 +295,8 @@ banner and nothing in `status.json` to say so.
   a feature PR.
 - **After a pipeline change merges, expect the new columns to be ABSENT from the
   served file until the next refresh.** Any UI reading them must degrade cleanly
-  in that window (the house pattern for optional data).
+  in that window (the house pattern for optional data). To end that window
+  early instead of waiting out the weekly cron, see **§3d**.
 - `git status --short web/data/` before committing is the cheap check.
 
 ## 3c. "The change didn't ship" — check the browser cache BEFORE the deploy
@@ -339,6 +340,58 @@ an old stylesheet.
 To read the token being served: `curl -s <site>/index.html | grep -o 'styles.css?v=[a-f0-9]*'`.
 If it matches your local `python -c "import hashlib;print(hashlib.sha256(open('web/styles.css','rb').read()).hexdigest()[:8])"`,
 the deployed CSS is your CSS.
+
+## 3d. Publishing a data-side feature WITHOUT waiting for Monday
+(added 2026-08-04)
+
+§3b's last bullet says the new columns are absent "until the next refresh" —
+which is true, but the cron is weekly and that wait can be up to **six days**.
+**Dispatching `refresh.yml` by hand is the supported way to close it**, and is
+the right call when work is *gated on the data existing* rather than on the
+calendar.
+
+```bash
+gh workflow run refresh.yml --ref master
+gh run list --workflow=refresh.yml --limit 1
+```
+
+Done 2026-08-04 (run `30909649645`): three items carried **S89 → S91** behind
+the Monday cron closed in one run, and the served-column guard got its
+**first-ever CI execution** as a side effect.
+
+**Why this is safe, and what would make it unsafe:**
+- `refresh.yml` **downloads fresh data every run** and **commits only if the
+  data actually changed** — git is the change detector. Re-running it is
+  idempotent, not destructive.
+- ⚠️ It is safe *because it runs the whole guard chain*. This is **not** a
+  licence to hand-run the pieces. In particular, **never hand-run
+  `generate_status.py` and commit it** — it stamps `last_checked` with a
+  freshness check that never happened, and the staleness banner reads that
+  field.
+- ⚠️ It **deploys to the live site.** Confirm the code it will publish is
+  already merged and verified.
+
+**Expect ~20 minutes, not ~9.** The 2026-08-04 dispatch took **20m00s** against
+the scheduled runs' ~9m30s; the difference is *"Install the verify harness"*
+(npm + Playwright Chromium) before the pre-publish smoke gate. **A run sitting
+at that step is downloading a browser, not hung** — the data steps are already
+green by then. Step-level progress:
+
+```bash
+gh api repos/PeterFriedrich/edmonton-tax-viz/actions/runs/<id>/jobs \
+  -q '.jobs[] | .steps[] | "\(.number). \(.name) — \(.status)/\(.conclusion // "-")"'
+```
+
+That view is worth knowing: it showed *"Commit regenerated data + heartbeat"*
+already green while the run still had eight steps to go, so the data was
+confirmed published well before the run finished.
+
+**Afterwards**, if the run shipped new columns:
+`.venv/bin/python scripts/check_served_columns.py --write-baseline`.
+⚠️ **Bare `python` on the Oracle box is the system interpreter and cannot run
+that script** (`dict[str, int]` → `TypeError: 'type' object is not
+subscriptable`). The procedures write bare `python` after a `source
+.venv/bin/activate` that is easy to skip.
 
 ## 4. Wrong numbers suspected on the live site
 
