@@ -97,24 +97,16 @@ Also removed a duplicated preamble block left in this file by the
   `derived` in the data and asterisked in the pod, so it is honest on screen,
   but it is the one soft number in that table; the other three are quoted
   directly. A single value swap plus dropping `derived_component`.
+  - ✅ **The pod is now LIVE** — `refresh.yml` was dispatched by hand 2026-08-04
+    (run `30909649645`), so `status.json` carries `budget_context` and
+    `verify-about.js` passes against production. The asterisk on this cell is
+    therefore visible to the public now; the swap is a live-data correction, not
+    a pre-launch cleanup.
   - ⚠️ **The budget figures reach the frontend only when `refresh.yml` reruns
-    `generate_status.py`** (next Monday 08:00 UTC, or a manual dispatch). Until
-    then `status.json` carries no `budget_context` and the section correctly
-    hides — verified. A hand-run `generate_status.py` was deliberately **not**
-    committed, because it would stamp `last_checked` with a freshness check that
-    never happened.
-
-- [ ] **RE-PIN `data/expected_columns.json` ONCE the four Stage 2 columns ship**
-  (`cost_roads_ops_per_acre`, `cost_transit_ops_per_acre`,
-  `cost_bike_ops_per_acre`, `transport_cost_ops_per_acre`).
-  - ⚠️ **Do NOT re-pin before the refresh carries them.** They do not exist in
-    the published GeoJSON yet, so baselining them now would make
-    `check_served_columns.py` read them as a **removal** and fail the weekly
-    publish. Measured 2026-08-03: against real Stage 2 output the guard warns on
-    all four and exits 0 — that is the correct interim state, not a problem.
-  - After the first refresh that carries them:
-    `python scripts/check_served_columns.py --write-baseline`, then confirm the
-    count moves 62 → 66.
+    `generate_status.py`**, so a value swap here does nothing until the next
+    weekly run or another manual dispatch. Never hand-run `generate_status.py`
+    and commit it — it stamps `last_checked` with a freshness check that never
+    happened, and the staleness banner reads that field.
 
 - [ ] **⚠️ `--geojson-out /tmp/x.geojson` DOES NOT MAKE A LOCAL `main.py` RUN
   SAFE — the DATA VINTAGE item below says it does, and that advice is wrong.**
@@ -1233,6 +1225,8 @@ Also removed a duplicated preamble block left in this file by the
 ## Done
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
+
+- [x] **The four Stage 2 cost columns shipped and `expected_columns.json` is re-pinned 62 → 66 — DONE 2026-08-04, on a manually dispatched refresh.** The weekly cron was 6 days out, so `refresh.yml` was dispatched by hand (run `30909649645`, success, commit `024ecc6`). All four `cost_*_ops_per_acre` columns are present on all **406** features and the composite sums exactly (`88.92 + 13820.65 + 129.59 = 14039.16`). ⚠️ **The pre-repin guard behaved exactly as the item predicted** — warned on all four as NEW, exit 0 — and that is also the path it took **in CI**. ⚠️ **The served-column guard has now RUN IN CI for the first time** (step *"Check served columns (guard after regenerating)"*, success), closing an item carried S89 → S91. Re-pin diff is a pure 4-line addition; the re-run is clean at 66. `status.json` carries `budget_context`, so both S90 features' data is live. Verified against **production**: `verify-transport-cost.js` **6 → 41 passed / 0 failed** against `/full/` (including the load-bearing two-bases check, roads ops **$89** vs svc **$7,527**), `verify-about.js` **ALL CHECKS PASSED** against the public root (all four shares recomputed independently from dollars, pod fits at 720px). — 2026-08-04 · `docs/TODO_archive.md`
 
 - [x] **`verify-peek.js` was 71% of the suite's wall time — FIXED 2026-08-04, 437s → 94s, 27/27 still green.** ⚠️ **The item named the wrong loop.** `findTappableHoods` (which it blamed) is 46s of 408s — it exits at `n` hoods and never nears its worst case. The cost was the **empty-map-pixel scan: 346s, 85%**, blind-sweeping ~2,470 picks. ⚠️ **A pick costs ~137ms and neither `radius` nor `deviceScaleFactor` changes it** — deck re-renders the whole picking buffer on the CPU per call, so the only lever is *fewer picks*; the first burst also carries a one-off ~20s shader warm-up, which is what `targets`' residual 46s is (left alone, it is at the floor). ⚠️ **Its "coarsen the grid" lever is a measured trap**: step 25 still costs 30s and **step 40 finds nothing** and fails the check — only 17 of 4,400 grid points are clear. Fixed with its *other* lever: `metric-extrusion` is the only pickable layer, so the pixel is derived from projected geometry (9,236 vertices, 14ms) and confirmed with **one** pick instead of 2,474, landing on the same pixel. — 2026-08-04 · `docs/TODO_archive.md`
 

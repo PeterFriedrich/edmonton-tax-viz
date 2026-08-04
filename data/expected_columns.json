@@ -2,6 +2,9 @@
   "_note": "Columns the served neighbourhood GeoJSON must carry (scripts/check_served_columns.py). A list, not a measurement: it changes only when the pipeline changes on purpose. Removing an entry is how you retire a column deliberately.",
   "columns": [
     "bike_m_per_acre",
+    "cost_bike_ops_per_acre",
+    "cost_roads_ops_per_acre",
+    "cost_transit_ops_per_acre",
     "far",
     "fire_events_per_acre",
     "frac_commercial",
@@ -59,6 +62,7 @@
     "svc_cost_per_acre",
     "total_revenue",
     "transit_dep_per_acre",
+    "transport_cost_ops_per_acre",
     "value_per_acre",
     "value_per_lot_acre",
     "water_charge_per_acre",
