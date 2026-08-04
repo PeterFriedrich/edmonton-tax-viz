@@ -1620,3 +1620,77 @@ first where **the recorded fix would have caused a worse bug than the one it
 described**. The rule has been "reproduce the symptom before fixing"; this
 extends it: **the hypothesis in the ticket is not evidence either, and applying
 it is a cheap way to find out.**
+
+## Transportation cost: three rows, not one number (2026-08-03)
+
+Stage 2 of the transportation lens put dollars on the map. The panel gained a
+third caption — **Transportation cost — operating** — holding Roads cost,
+Transit cost and Bike cost, so `#services` is now **10 rows in 3 groups**.
+
+**Why a separate caption rather than folding into Transportation.** The group
+above is *supply* (metres, stop-events); these are *dollars*. And Roads cost is
+the same road metres as Other services' Service cost on a different basis —
+**$4.635/m/yr operating vs $50/m/yr lifecycle, ~10.8× apart, both in the same
+served file**. The caption is the one place in the panel where that shows.
+Every column carries an `_ops` suffix for the same reason.
+
+**Why there is no "Transportation" row.** The composite exists as a column and
+was built as one, then measured: it is **90.8% transit at the median** (transit
+$2,808/acre/yr, roads $151, bike $109). ETS's budget pays to *run a service* —
+drivers, fuel, vehicles — while the roads and bike figures only *maintain an
+asset*; the City never pays for the cars. A row labelled "Transportation" would
+therefore be 91% one term, mislabeled in exactly the way the all-or-nothing rule
+already guards against, and it would bury the finding that makes the lens worth
+having: **a bikeway metre costs 4.4× a road metre to operate**, cheap to keep up
+and expensive to clear, so bike lands at a cost per acre comparable to roads on
+about a sixth of the length. Peter's call: three rows, no composite row.
+
+**Colour transforms inherit rather than being re-derived.** Each cost column is
+a positive scalar multiple of its supply column, so skew is unchanged (measured
+identical to 3 dp): roads linear, transit and bike sqrt.
+
+⚠️ **The legend `else` still prints the ROAD legend**, and the tooltip's missing
+key still prints "no X data" over a hood that has data. Both were re-paid here —
+three legend branches, three `primaryRow` entries — and `verify-transport-cost.js`
+(41 checks) asserts each row's legend is its own *and* is specifically not the
+roads fallback. It earned its keep immediately: the transit blurb had never said
+*operating only*, though ETS capital is excluded.
+
+**Mobile:** measured at 390/360/320 px with all 10 rows visible and the Options
+pod unfolded — no clip, no overflow, 178–235px clearance to `#botleft`. The
+earlier "all zeros" probe result was the probe's own fault: `#optpanel` carries
+`.folded` by default at ≤640px, so its rows have no layout box until you remove
+the class.
+
+## The budget pod: how big is this, really (2026-08-03)
+
+The Data & Methods popover gained a fourth section, **In the city budget** —
+four rows putting transit, roads, bike lanes and sidewalks against the City's
+$3.8B 2025 operating budget (12.18% / 1.33% / 0.79% / 0.15%).
+
+**Why here and not a new pod.** It is context for reading the map, not a finding
+of its own; `#about` already carries vintages, licence and caveats, is collapsed
+by default so it costs no screen space, and adding a third pod to the
+bottom-right stack means re-opening a collision that took two sessions to
+diagnose. It also answers the standing *"where does a non-map panel live?"*
+question with an existing surface.
+
+**No bar.** The first version drew one by reusing `.revrow`'s 9px swatch as a
+proportional fill. That squeezed the label column, wrapped every row, and took
+the section to **348px** — which pushed the whole pod off the **top** of the
+screen at every height from 900 down to 720. In a compact text popover four
+percentages carry the comparison on their own.
+
+⚠️ **The pod is anchored bottom and grows upward, so it overflows upward with no
+scrollbar to notice** — and it was already within **~112px** of doing so at
+720px tall *before* any of this. Now capped with `max-height: calc(100vh -
+110px)` + `overflow-y: auto`, with `box-sizing: border-box` because `max-height`
+is content-box by default and the padding would otherwise sit outside the cap
+(the `#temporal` lesson, 2026-08-02). That latent overflow is the more useful of
+the two finds.
+
+⚠️ **The shares are derived in the page, never published.** The manifest carries
+dollars and a total; `renderBudgetContext` divides. The research this table came
+from shipped ratios that had slid one row — *"transit is roughly 15× the road
+ops budget"* when it is **9.2×** — and deriving makes that class of error
+unrepresentable. `verify-about.js` recomputes all four independently.
