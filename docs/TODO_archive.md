@@ -1208,3 +1208,64 @@ Original item:
     a lens whose reviewed input has not landed) — the S87 cry-wolf lesson.
     Probably "present on every feature OR absent from every feature", never
     partially.
+
+## Mobile chrome — the bottom-sheet question — CLOSED 2026-08-04 (no code change)
+
+The last open piece of the mobile-chrome quick pass (`docs/MOBILE_USABILITY.md`
+§3). Steps 1 and 2 shipped in `0089eba` and Peter confirmed the blurb collapse
+on device; step 3 (the left-edge clip) closed 2026-07-31 as not reproducible.
+What remained was **a decision, not a build item** — whether the flex control
+column is enough on a phone or the controls should move into a bottom sheet /
+hamburger.
+
+⚠️ **The item was re-measured before being decided, and the basis had moved.**
+The union coverage method reproduced the default state **to the decimal
+(27.9%)**, so the deltas below are real movement and not method drift:
+
+| state | recorded 2026-08-01 | measured 2026-08-04 |
+|---|---|---|
+| default (Money, folded) | 27.9% | **27.9%** ✅ |
+| **Money UNFOLDED** | **54.3%** | **47.9%** ⬇ |
+| Services unfolded *(full only)* | never measured | **53.1%** |
+| Development unfolded | never measured | **52.7%** (public 44.7%) |
+| Ratio / Uses unfolded *(full only)* | never measured | 37.4% / 31.6% |
+| worst **public** state (Dev unfolded + peek) | never measured | **52.3%** |
+
+⚠️ **THE ">HALF THE SCREEN" CLAIM WAS ATTACHED TO THE WRONG STATE.** The doc
+named Money unfolded at 54.3%; it is now **47.9%, under half**, because
+`#moneymode` left the Options panel for `#toggle` row 2 on **2026-08-02 — one
+day after the measurement was taken**. The states that *are* over half
+(Services, Development) had never been measured at all: the 08-01 pass took one
+view and generalised from it.
+
+⚠️ **A SECOND STALE LINE, FOUND ON THE WAY.** §3 claimed *"public `#views` is
+now 4 buttons"*. It is **two — Money · Development**. Services and Ratio were
+pulled to full-only on 2026-07-28 (`|| !FULL_BUILD`, the `applyView`
+data-presence gate). This is load-bearing for the decision: **the public build
+cannot reach the 53.1% state at all.**
+
+**Peter's call: the column stays as-is.** The reasoning, recorded so it is not
+re-opened on the old numbers:
+- The >50% states are **transient and user-initiated** — reachable only by
+  deliberately unfolding Options, and they fold away again. The **default**
+  render, which is what a phone user meets first, is **27.9%** vs desktop's
+  20.3% — about 7 points.
+- The worst *public* state (52.3%) needs an unfold **and** a neighbourhood tap,
+  and the peek card is the answer to that tap. Rendered and eyeballed: nothing
+  clips, nothing overlaps, the middle ~40% of the map stays clear.
+- A bottom sheet is a refactor of **shared desktop+mobile DOM**
+  (`CONTROLS_MATRIX.md`: grouping drives both) — real desktop regression risk
+  for a state the user can dismiss.
+
+⚠️ **`#views` POSITION (the "too far from the map" hierarchy question) LOSES ITS
+VEHICLE.** It had been parked pending "the move-2 fork", which this refuses. It
+now needs its own proposal if it is ever revisited.
+
+**Still genuinely open and NOT closed by this** (own item): the Services panel
+grouping has never been touched on a **real phone** — the geometry is measured
+clean at 390/360/320, but real-device touch and the **folded default** state are
+unconfirmed, and the verify scripts drive `.click()`, which bypasses
+`pointer-events`.
+
+⚠️ **Tenth time a carried item's stated basis did not survive re-measurement —
+and the first where re-measuring CLOSED the item instead of redirecting it.**

@@ -338,7 +338,9 @@ instance.
 
 **7. `#views` position on mobile** — a thin strip at the very top, which is the
 other half of the "under-reads as the primary control" concern. The *size* half
-was fixed 2026-07-25; the position fork (move-2 / bottom-sheet) is
+was fixed 2026-07-25. ⚠️ **The position fork it was waiting on (move-2 /
+bottom-sheet) was REFUSED 2026-08-04** — the control column stays a stack — so
+this has no vehicle and needs its own proposal if revisited.
 `MOBILE_USABILITY.md` §3.
 
 ### Resolved by the regroup (record)

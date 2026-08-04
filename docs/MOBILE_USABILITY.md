@@ -189,22 +189,43 @@ contains `#views`, `#toggle`, `#optpanel` and `#layers`, and `#botleft` contains
 default Money view — `sum` is the old comparable method, `union` counts each
 pixel once (2px grid sample):
 
+> **RE-MEASURED AGAIN 2026-08-04, per view.** The default reproduced to the
+> decimal (**27.9%**), so the method is stable and the movement below is real.
+> ⚠️ **But the 54.3% was attached to a state that has since shrunk, and the
+> ">half the screen" state was never the one the doc named.** `#moneymode` left
+> the Options panel for `#toggle` row 2 on **2026-08-02 — one day after the
+> 08-01 measurement** — so Money unfolded lost a row and is now **47.9%, under
+> half.** The only >50% states are **Services** and **Development**, which had
+> never been measured.
+
 | state | 390×844 | 1440×900 |
 |---|---|---|
-| **default** (Options folded on phone) | sum **37.9%** · **union 27.9%** | sum 31.6% · **union 20.9%** |
-| **Options UNFOLDED** | sum 94.9% · **union 54.3%** | 31.6% · 20.9% (never folds) |
+| **default** (Options folded on phone) | sum 37.9% · **union 27.9%** | sum 28.5% · **union 20.3%** |
+| **Money UNFOLDED** | sum 78.5% · **union 47.9%** | 20.3% (never folds) |
+| **Services UNFOLDED** *(full only)* | sum 112.7% · **union 53.1%** | **20.0%** |
+| **Development UNFOLDED** | sum 114.1% · **union 52.7%** | **27.4%** |
+| **Ratio UNFOLDED** *(full only)* | **union 37.4%** | 15.2% |
+| **Uses UNFOLDED** *(full only)* | **union 31.6%** | 12.1% |
 | default + peek card open | sum 53.2% · **union 34.5%** | n/a (touch-only) |
+| ⚠️ **worst PUBLIC state** — Development unfolded **+ peek open** | **union 52.3%** | n/a |
 
 **What this changes.** The honest phone-vs-desktop gap in the default state is
-**27.9% vs 20.9% — about 7 points, not the ~18 the old pair implied.** Part of
+**27.9% vs 20.3% — about 7 points, not the ~18 the old pair implied.** Part of
 the drop 45.1 → 37.9 is real (the blurb collapse); the rest of the way to 27.9
 is the method correcting its own double counting. **The default phone render is
 not the problem.**
 
-⚠️ **The problem is the UNFOLDED Options pod: 54.3% of the screen, over half.**
-That is the state a bottom sheet / hamburger would actually address, and it is
-the state the old aggregate hid by averaging it away. Any future coverage claim
-should quote the union and name the state it was taken in.
+⚠️ **THE PUBLIC BUILD CANNOT REACH THE WORST STATE AT ALL.** Services and Ratio
+are full-only since 2026-07-28 (`|| !FULL_BUILD`, `web/index.html` — the
+`applyView` data-presence gate), so **public `#views` = Money · Development**.
+A public phone user's worst reachable state is **52.3%**, and only by unfolding
+Options *and* tapping a neighbourhood — both deliberate acts, and the peek card
+is the answer to the tap. Rendered and eyeballed at that state: nothing clips,
+nothing overlaps, the middle ~40% of the map stays clear.
+
+**This is what closed the bottom-sheet question — see §3.** Any future coverage
+claim should quote the union, name the state **and name the view**; a
+single-view figure is what let the wrong state carry the backlog.
 
 Consequence found while fixing the label sweep to dodge that chrome
 (`docs/UI.md` "Labels dodge the chrome"): with ~45% of the canvas spoken for,
@@ -284,14 +305,15 @@ problem**, so revisit it only after the blurb collapse lands.
 
 Ordered; each step is independently shippable and desktop-safe.
 
-> **STATUS 2026-07-31 — steps 1, 2 AND 3 are all closed. Do not re-plan them.**
+> **STATUS 2026-08-04 — THIS WHOLE SECTION IS CLOSED. Do not re-plan it.**
 > Steps 1-2 shipped in `0089eba` ("mobile chrome move 1") and Peter confirmed
 > the collapse on device. **Step 3 (the left-edge clip) was closed as NOT
-> REPRODUCIBLE, with no code change** — see the step itself. The only thing left
-> in this section is the *open question* inside step 2 (bottom sheet or not),
-> which is a decision for Peter against the CURRENT render, not a build item.
+> REPRODUCIBLE, with no code change** — see the step itself. **The last open
+> item, the bottom-sheet question in step 2, was CLOSED 2026-08-04: the control
+> column stays as-is, no bottom sheet, no hamburger** (Peter, against the
+> re-measured §2 table; `DECISIONS.md`).
 > This note exists because the list below reads as a forward plan and a session
-> mistook it for one.
+> mistook it for one — **it is a record, not a queue.**
 
 1. ~~**Establish the seam.**~~ **DONE.** One `@media (max-width: 640px) { … }`
    block at the end of `<style>`. Nothing above it changes; all mobile rules
@@ -305,11 +327,22 @@ Ordered; each step is independently shippable and desktop-safe.
    column. Inside the media block, collapse the long blurb to just the `<h1>` on
    mobile (details on tap/expand). This alone clears most of the pile-up because
    the controls no longer need to fight the blurb for the top third.
-   - **Still open (decide here):** whether the flex column is enough as-is, or the
-     controls should move into a bottom sheet / hamburger to free the map. The
-     regroup's clean vertical stack makes "column is fine" more viable than the old
-     7-view pile-up did — but the column still runs top 20→314, so a collapsed/
-     scrollable container may still be worth it. Decide against the refreshed render.
+   - ~~**Still open (decide here):** whether the flex column is enough as-is, or
+     the controls should move into a bottom sheet / hamburger to free the map.~~
+     ✅ **CLOSED 2026-08-04 — THE COLUMN IS FINE AS-IS. No bottom sheet, no
+     hamburger, no code change** (Peter, against the re-measured §2 table).
+     The reasoning, so it is not re-opened on the old numbers:
+     - The state that made this a priority, **Money unfolded at 54.3%, is now
+       47.9%** — `#moneymode` moved to `#toggle` on 2026-08-02.
+     - The remaining >50% states (**Services 53.1%, Development 52.7%**) are
+       **transient and user-initiated** — you reach them only by unfolding
+       Options, and they fold away again. The **default** render, which is what
+       a phone user actually meets, is **27.9%**.
+     - **The public build cannot reach the worst state** (Services/Ratio are
+       full-only); its ceiling is 52.3%, rendered clean.
+     - Against that, a bottom sheet is a refactor of **shared desktop+mobile
+       DOM** (`CONTROLS_MATRIX.md`: grouping drives both), i.e. real desktop
+       regression risk to fix a state the user can dismiss.
 3. ~~**Stop the left-edge clip.**~~ **CLOSED 2026-07-31 as NOT REPRODUCIBLE —
    no code change.** The S74 symptom (`#controls`/`#coloradj` at left −51,
    `#toggle` at −10) does not occur on current master. Re-measured at 390×844
@@ -353,12 +386,18 @@ primary switch.
   reviewed and LOCKED 2026-07-26** (Peter) — it is a deliberate choice, not an
   unfinished edge: 12.5px still out-ranks the 11.5px modifiers, so Tier-1
   primacy still reads on a phone. `DECISIONS.md` 2026-07-26.
-- **(b) POSITION — still open.** It's still a strip at the very top; that's the
-  hierarchy question the **move-2 fork feeds into** (a bottom-sheet would let the
-  view-picker sit on the always-visible collapsed bar). Applies to desktop too.
+- **(b) POSITION — still open, but it no longer has a vehicle.** It's still a
+  strip at the very top. ⚠️ **This used to say the "move-2 fork feeds into" it —
+  a bottom sheet would have let the view-picker sit on an always-visible
+  collapsed bar. That fork was refused 2026-08-04**, so if position is ever
+  worth changing it now needs its own proposal. Applies to desktop too, and
+  nobody has reported it since 2026-07-24.
 
-(Interacts with: Uses pulled to full-only 2026-07-24, so public `#views`
-is now 4 buttons, `DECISIONS.md`.)
+(Interacts with: Uses pulled to full-only 2026-07-24, then **Services and Ratio
+pulled too on 2026-07-28** — so ⚠️ **public `#views` is TWO buttons, Money ·
+Development**, not the four this line used to claim. Corrected 2026-08-04 after
+measuring the live build; the gate is `|| !FULL_BUILD` in `applyView`.
+`DECISIONS.md`.)
 
 **Not in the quick pass** (needs its own decision): tap-to-dismiss tooltip
 tuning, touch-target resizing, landscape. Confirm they're actually problems on a

@@ -35,6 +35,8 @@ decision reversed on measurement (polygons, not the per-property field). **The
 numbers Peter asked for (% of city revenue,
 top 3 revenue by zone) — both need new columns, so they are proposed rather than
 built, and the bottom-sheet decision is demoted (not closed) behind them.
+**(That bottom-sheet decision is now CLOSED — refused 2026-08-04, no bottom
+sheet; `docs/TODO_archive.md`.)**
 Also removed a duplicated preamble block left in this file by the
 `todo_archive.py` banner bug fixed in S82.)_
 
@@ -151,58 +153,6 @@ Also removed a duplicated preamble block left in this file by the
     geojson until the next auto-refresh runs. The UI must degrade cleanly when
     they are missing (the house pattern), or the site breaks in the gap.
 
-- [ ] **Mobile chrome — and it is NOT the blurb collapse, that already shipped**
-  (commit `0089eba`, "mobile chrome move 1"). Confirmed good on device by Peter
-  2026-07-28. **Read `docs/MOBILE_USABILITY.md` §3 before starting.** **Steps
-  1, 2 and 3 are now all done** — step 3 closed 2026-07-31 as not reproducible
-  (see below). What actually remains is one **decision**, not a build item:
-  - [x] **Step 3 — the left-edge clip. CLOSED 2026-07-31 AS NOT REPRODUCIBLE —
-    no code change.** The S74 symptom (`#controls`/`#coloradj` at left **−51**,
-    `#toggle` at **−10**) does **not** occur on current master. Re-measured at
-    390×844 with `hasTouch`/`isMobile`, in **both builds**, across **every
-    visible view**, with the Options pod **unfolded** — nothing renders at
-    negative left and nothing overflows right:
-
-    | | left | right |
-    |---|---|---|
-    | `#controls` | 8 | 382 |
-    | `#views` | 22 | 382 |
-    | `#toggle` | 103 | 382 |
-    | `#coloradj` / `#layers` / `#moneymode` / `#chgwindow` | 177 | 371 |
-
-    Two things had to be got right to measure it at all, both worth keeping:
-    **(1)** `#optpanel` is `.folded` by default at ≤640px, so the pod's rows
-    have **no layout box** and report `0,0` — the folded state cannot show the
-    clip, and a naive pass reads as "fixed" for the wrong reason. Unfold first.
-    **(2)** The public build keeps full-only controls in the DOM but **hidden**,
-    so selecting by presence hangs Playwright's `click()`; filter on visibility.
-    Headless Chromium also measures text **wider** than the real font stack
-    (quirk y), so a no-clip result there errs safe.
-    ✅ **`tools/profiling/shot-mobile.js` fixed 2026-07-31** (id list now reads
-    the page's own `CHROME_IDS`, URL argument honoured, tap probe looks for
-    `#peek`, plus a generic overflow sweep). It is trustworthy for the next
-    mobile pass.
-  - [ ] **The open question inside step 2 — bottom sheet or not. RE-MEASURED
-    2026-08-01 at Peter's request; the question is now MUCH narrower.** Whether
-    the control column is fine as a stack or wants a bottom sheet / hamburger.
-    Peter's call, not a build item.
-    - ⚠️ **THE 45.1% THAT MADE THIS A PRIORITY WAS INFLATED.** That method summed
-      chrome rects ignoring mutual overlap, and the chrome **nests** —
-      `#controls` contains `#views`/`#toggle`/`#optpanel`/`#layers`, `#botleft`
-      contains `#legend` — so containers were counted two and three times.
-    - **Default state, counting each pixel once: 27.9% on a phone vs 20.9% on
-      desktop.** A ~7-point gap, not the ~18 the old pair implied. **The default
-      phone render is not the problem** (screenshot-confirmed: the map has the
-      screen).
-    - ⚠️ **The problem is the UNFOLDED Options pod — 54.3%, over half the
-      screen.** That is the only state a bottom sheet would actually fix, and
-      the old aggregate hid it by averaging. **If this gets built, build it for
-      the unfolded state**; the folded default needs nothing.
-    - With the peek card open the default rises to 34.5%, still well under the
-      unfolded pod. Full table + method: `docs/MOBILE_USABILITY.md` §2.
-    - Label scarcity on phones is a *panel-size* problem, not a cull problem —
-      that part stands, and it points at the unfolded state too.
-
 - [ ] **CARDINALITY GUARD — two small follow-ons (guard shipped 2026-07-28, PR #110).**
   `scripts/check_value_anchors.py` now pins the record-to-parcel *regime* in
   bands and runs in `refresh.yml` after regeneration. Both known bugs were
@@ -281,8 +231,11 @@ Also removed a duplicated preamble block left in this file by the
   isolatable behind an `@media` block with zero desktop risk. Quick-pass order:
   (1) add the `@media (max-width:640px)` seam, (2) fix the top-third collision
   (collapse pods + shorten the blurb), (3) stop the left-edge clip, (4) re-render
-  via `tools/profiling/shot-mobile.js` + real-device check. NOT greenlit for the
-  approach yet (single scroll column vs bottom-sheet/hamburger — decide at step 2).
+  via `tools/profiling/shot-mobile.js` + real-device check. ~~NOT greenlit for the
+  approach yet (single scroll column vs bottom-sheet/hamburger — decide at step 2).~~
+  ✅ **APPROACH DECIDED 2026-08-04: the single scroll column, no bottom sheet and
+  no hamburger** — steps 1-4 are all closed, so this quick-pass list is a record,
+  not a queue (`docs/TODO_archive.md`).
   - [x] ~~**DECIDE FIRST: control regrouping**~~ — **DECIDED 2026-07-23** (8
     decisions, `CONTROLS_MATRIX.md` §7 + `DECISIONS.md` "Controls & lens grouping").
     All 7 §5 combos closed. Final shape: `#views` = 5 (Money · Services · Ratio ·
@@ -311,8 +264,9 @@ Also removed a duplicated preamble block left in this file by the
       move-1 shipped 2026-07-24 (`@media` seam, collapsing title, bounded control
       column) and the `#views` **size** half of the "under-reads as primary" concern
       is fixed 2026-07-25. **Still open: the `#views` POSITION question** — it's
-      still a thin strip at the very top; that's the move-2 / bottom-sheet fork
-      (`MOBILE_USABILITY.md` §3 + the top-bar note). Decide against the live render.
+      still a thin strip at the very top. ⚠️ **It used to ride on the move-2 /
+      bottom-sheet fork; that fork was REFUSED 2026-08-04**, so position now needs
+      its own proposal if it is ever revisited (`MOBILE_USABILITY.md` §3).
     - [x] ~~**Regenerate `docs/LENS_INVENTORY.md`** from the rebuilt wiring.~~
       **DONE 2026-07-25.** Rewritten from the code (not patched): two-build table,
       4/5 views with Glass as Money's `#moneydetail` mode and Infill as
@@ -1225,6 +1179,8 @@ Also removed a duplicated preamble block left in this file by the
 ## Done
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
+
+- [x] **Mobile chrome — the bottom-sheet question — CLOSED 2026-08-04, NO code change: the control column stays a stack.** The quick pass's last open piece was a *decision*, not a build item (steps 1-2 shipped `0089eba`; step 3 closed 2026-07-31 as not reproducible). ⚠️ **Re-measured before deciding, and the basis had moved.** The union method reproduced the default to the decimal (**27.9%**), but **Money unfolded is 47.9%, not the recorded 54.3%** — `#moneymode` left the Options panel on **2026-08-02, one day after that measurement**. ⚠️ **The ">half the screen" claim was attached to the wrong state**: the only >50% states are **Services 53.1%** and **Development 52.7%**, neither ever measured — the 08-01 pass took one view and generalised. ⚠️ **The public build cannot reach the worst state**: Services and Ratio are full-only since 2026-07-28, so **public `#views` is TWO buttons (Money · Development)**, correcting a doc line that claimed four. Worst public state is **52.3%** (Development unfolded + peek), rendered clean. Peter's call: the >50% states are transient and user-initiated, a bottom sheet is a **shared desktop+mobile DOM** refactor, and the default a phone user meets is 27.9% vs desktop 20.3%. ⚠️ **`#views` position loses its vehicle** — it was parked pending this fork. **Tenth time a stated basis did not survive re-measurement; the first where that CLOSED the item.** — 2026-08-04 · `docs/TODO_archive.md`
 
 - [x] **The four Stage 2 cost columns shipped and `expected_columns.json` is re-pinned 62 → 66 — DONE 2026-08-04, on a manually dispatched refresh.** The weekly cron was 6 days out, so `refresh.yml` was dispatched by hand (run `30909649645`, success, commit `024ecc6`). All four `cost_*_ops_per_acre` columns are present on all **406** features and the composite sums exactly (`88.92 + 13820.65 + 129.59 = 14039.16`). ⚠️ **The pre-repin guard behaved exactly as the item predicted** — warned on all four as NEW, exit 0 — and that is also the path it took **in CI**. ⚠️ **The served-column guard has now RUN IN CI for the first time** (step *"Check served columns (guard after regenerating)"*, success), closing an item carried S89 → S91. Re-pin diff is a pure 4-line addition; the re-run is clean at 66. `status.json` carries `budget_context`, so both S90 features' data is live. Verified against **production**: `verify-transport-cost.js` **6 → 41 passed / 0 failed** against `/full/` (including the load-bearing two-bases check, roads ops **$89** vs svc **$7,527**), `verify-about.js` **ALL CHECKS PASSED** against the public root (all four shares recomputed independently from dollars, pod fits at 720px). — 2026-08-04 · `docs/TODO_archive.md`
 
