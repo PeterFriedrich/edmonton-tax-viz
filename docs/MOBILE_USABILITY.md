@@ -400,12 +400,13 @@ pass inherits the flattened control, no phone-specific reveal logic needed.
   global lexical environment and is not a property of `window` (quirk ss). Both
   cost a cycle each on 2026-08-01.
 - `tools/profiling/verify-peek.js` — the touch gesture net (**27 checks
-  measured** 2026-08-01, up from 25, desktop + 390×844). ⚠️ **Budget 900s, not
-  400.** Measured **419s** standalone
-  on 2026-07-31, up from the ~150s recorded at S81; a `timeout 420` killed it
-  mid-gesture and the crash (`Target page … has been closed`) reads exactly like
-  a logic failure. **The cause was not isolated** — 4 checks were added the same
-  day, so do not assume it is the box. ⚠️ **The only script in the suite that
+  measured** 2026-08-01, up from 25, desktop + 390×844). **Budget ~150s.**
+  It ran **437s** until 2026-08-04, when its empty-map-pixel scan stopped hunting
+  with `pickObject` and started deriving the pixel from projected geometry
+  (**2,474 picks → 1**); it is now **94s**. ⚠️ **A timeout that fires mid-gesture
+  crashes it with `Target page … has been closed`, which reads exactly like a
+  logic failure** — that is what a `timeout 420` did on 2026-07-31, back when
+  900s was the honest budget. ⚠️ **The only script in the suite that
   drives a REAL pointer at the
   map**; the other 26 call `temporalClick()`/`openTemporal()` directly in JS,
   which is why single-tap-opens-everything went unnoticed through the whole

@@ -106,8 +106,9 @@ git ls-files | grep -vE '\.(geojson|png|csv)$' | xargs wc -l | sort -n | tail -3
    one script alone draws **~275% CPU** (headless Chromium on SwiftShader, so
    rasterisation and deck.gl picking are software), and 3-up pegged all four
    cores at load 8.2 and **failed 2 of 3 scripts** that pass alone. Concurrency
-   bought only ~17% of wall time, because one script (`verify-peek`, ~437s)
-   dominates regardless. **Budget wall-clock accordingly** — the full suite is
+   bought only ~17% of wall time, because one script (`verify-peek`, then ~437s)
+   dominated regardless — **that script is now 94s** (2026-08-04), so the serial
+   default costs much less than it did. **Budget wall-clock accordingly** — the full suite is
    well past the 10-minute Bash cap (quirk (t)), so filter to the scripts you
    need or run it in the background. See `DECISIONS.md` 2026-08-03.
 

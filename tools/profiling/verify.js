@@ -46,8 +46,9 @@ const jobsIx = args.indexOf("--jobs");
 // meant anything (quirk (mmm)). The scripts had already accreted workarounds
 // for this in their own code (see verify-peek.js's picking-buffer re-send,
 // which names "the 3-up runner" explicitly) — the runner default was the cause
-// nobody went back to. The wall time is dominated by ONE script regardless:
-// verify-peek spends ~437s of the 615s software-picking a pixel grid.
+// nobody went back to. The wall time was dominated by ONE script regardless:
+// verify-peek spent ~437s of the 615s software-picking a pixel grid, until its
+// empty-pixel scan was derived from geometry instead on 2026-08-04 (437s → 94s).
 //
 // Divisor is 3, not 2.75, so the estimate stays conservative on a box whose
 // cores are slower than this one's. `--jobs N` still forces any value.
