@@ -1,16 +1,20 @@
 {
   "_note": "Regime anchors for the record-to-parcel cardinality guard (scripts/check_value_anchors.py). Bands, not equalities: assessed values move every reassessment. See docs/FINDINGS_lot_dedupe.md and docs/FINDINGS_denominator_cardinality.md.",
+  "_bands_are_per_anchor": "⚠️ THESE BANDS ARE NO LONGER UNIFORM AND `--write-baseline` WOULD FLATTEN THEM. That flag applies ONE global --tolerance (default 0.5) to every anchor, which is exactly what this file stopped doing on 2026-08-05. If you re-pin with it, re-apply the split below by hand or the drift guard silently loosens back to ±50%.",
+  "_why_two_widths": "Set 2026-08-05 from the first real variance data: every anchor value the guard has logged in CI since it shipped (5 runs, but only 3 INDEPENDENT data changes — 2026-08-02 and 2026-08-05 committed status.json only, so their readings re-measure unchanged input). FOUR anchors were effectively frozen across that window (dup_parcel_points constant at 33; dedupe_effect_pct 0.01% spread; dup_parcel_value_frac 0.11%; lot_needle_ratio 0.00%) and were tightened 2x, to ±25% of the latest reading. TWO were NOT tightened because they are not noisy, they are TRENDING — see _ineligible_pair_is_drifting.",
+  "_why_only_25_percent": "⚠️ NOT tightened to the observed spread (~0.1%), deliberately. The guard exists mainly for the January year-roll (docs/RUNBOOK.md), and NO OBSERVATION ACROSS A YEAR-ROLL EXISTS YET — the guard shipped 2026-07-28. Three weekly observations say nothing about how these move on reassessment, so ±25% buys a real 2x tightening while leaving room for the event the guard was built for. Revisit after the first January roll, which is the observation that would justify going tighter.",
+  "_ineligible_pair_is_drifting": "⚠️ ineligible_points AND ineligible_value_frac WERE LEFT AT ±50% ON PURPOSE — DO NOT 'FINISH THE JOB' BY TIGHTENING THEM. They moved on EVERY independent data change, monotonically upward, with no reversal: ineligible_points 56 -> 58 -> 60 and ineligible_value_frac 0.00517 -> 0.00575 -> 0.00633 across 2026-08-01 / 08-03 / 08-04. That is the DANGEROUS direction by this guard's own definition (DANGER['ineligible_*'] == 'high': growth means more value silently leaving the lot-acre denominator). ineligible_value_frac has already consumed ~72% of its band and would breach in roughly 2-3 more moves of the observed size. Tightening it would red the weekly publish on the next real data change and read as a false alarm; the band is left wide so that when it does fire, it fires on a genuine regime shift. The cause is an OPEN TODO item.",
   "dup_parcel_points": {
-    "min": 16.5,
-    "max": 49.5
+    "min": 24.75,
+    "max": 41.25
   },
   "dup_parcel_value_frac": {
-    "min": 0.001554,
-    "max": 0.004661
+    "min": 0.00232,
+    "max": 0.003867
   },
   "dedupe_effect_pct": {
-    "min": 0.020398,
-    "max": 0.061193
+    "min": 0.030613,
+    "max": 0.051021
   },
   "ineligible_points": {
     "min": 28.0,
@@ -21,7 +25,7 @@
     "max": 0.007779
   },
   "lot_needle_ratio": {
-    "min": 6.410983,
-    "max": 19.232948
+    "min": 9.616125,
+    "max": 16.026875
   }
 }

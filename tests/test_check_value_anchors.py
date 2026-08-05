@@ -7,6 +7,7 @@ needle (the WEM bug arriving for real) must both push their anchor out of band
 in the dangerous direction. A guard that only ever passes is decoration.
 """
 
+import json
 import sys
 from pathlib import Path
 
@@ -159,3 +160,72 @@ def test_every_anchor_the_guard_computes_has_a_declared_danger_direction():
     df = _frame([(1.0, 1.0, 10.0, 500.0)])
     computed = set(compute_anchors(df)) | {"lot_needle_ratio"}
     assert computed == set(DANGER)
+
+
+# --- the COMMITTED baseline itself -------------------------------------------
+# Nothing above pins data/expected_value_anchors.json; these do. The readings
+# below are the values the guard actually logged in CI, harvested 2026-08-05
+# from the refresh runs' job logs (5 runs, 3 independent data changes -- the
+# 08-02 and 08-05 runs committed status.json only, so they re-measure unchanged
+# input rather than adding an observation).
+OBSERVED_IN_CI = {
+    "2026-08-01": {"dedupe_effect_pct": 0.0408139, "dup_parcel_points": 33,
+                   "dup_parcel_value_frac": 0.00309689, "ineligible_points": 56,
+                   "ineligible_value_frac": 0.00517178, "lot_needle_ratio": 12.822},
+    "2026-08-03": {"dedupe_effect_pct": 0.0408152, "dup_parcel_points": 33,
+                   "dup_parcel_value_frac": 0.00309543, "ineligible_points": 58,
+                   "ineligible_value_frac": 0.00575, "lot_needle_ratio": 12.82175},
+    "2026-08-04": {"dedupe_effect_pct": 0.0408168, "dup_parcel_points": 33,
+                   "dup_parcel_value_frac": 0.00309363, "ineligible_points": 60,
+                   "ineligible_value_frac": 0.00632732, "lot_needle_ratio": 12.8215},
+}
+
+
+def _committed_baseline():
+    return json.loads((ROOT / "data" / "expected_value_anchors.json").read_text())
+
+
+def test_committed_bands_accept_every_reading_the_guard_has_logged():
+    """The bands were tightened 2026-08-05; no past CI reading may fall outside.
+
+    A band that rejects a value the pipeline has already produced is a band that
+    would have failed the weekly publish retroactively.
+    """
+    base = _committed_baseline()
+    for date, live in OBSERVED_IN_CI.items():
+        result, detail = compare_to_baseline(live, base)
+        assert result == "ok", f"{date} would fail: {detail}"
+
+
+def test_the_drifting_ineligible_pair_was_left_wide_on_purpose():
+    """⚠️ Pins the deliberate asymmetry, so 'finishing the job' fails here.
+
+    ineligible_points and ineligible_value_frac moved monotonically upward on
+    every independent data change (56->58->60; 0.00517->0.00575->0.00633) in the
+    DANGEROUS direction. Their bands are intentionally NOT tightened: doing so
+    would red the weekly publish on the next real data change and read as a
+    false alarm rather than the regime signal the guard exists to give.
+    """
+    base = _committed_baseline()
+    for key, wide in (("ineligible_points", (28.0, 84.0)),
+                      ("ineligible_value_frac", (0.002593, 0.007779))):
+        assert (base[key]["min"], base[key]["max"]) == wide, (
+            f"{key} was tightened -- see _ineligible_pair_is_drifting in the baseline"
+        )
+
+
+def test_tightened_anchors_are_actually_tighter_than_the_old_uniform_band():
+    """The four frozen anchors must stay at +/-25%, not drift back to +/-50%.
+
+    ``--write-baseline`` applies ONE global --tolerance to every anchor and
+    would silently flatten the split this file now encodes.
+    """
+    base = _committed_baseline()
+    for key in ("dup_parcel_points", "dup_parcel_value_frac",
+                "dedupe_effect_pct", "lot_needle_ratio"):
+        b = base[key]
+        centre = (b["min"] + b["max"]) / 2
+        half_width = (b["max"] - b["min"]) / 2 / centre
+        assert half_width == pytest.approx(0.25, abs=0.01), (
+            f"{key} half-width is {half_width:.3f}, expected 0.25"
+        )
