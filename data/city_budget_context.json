@@ -28,14 +28,16 @@
     {
       "key": "roads",
       "label": "Roads",
-      "value": 50985000,
+      "value": 102521000,
       "components": {
-        "maintenance": 14135000,
+        "maintenance": 65671000,
         "snow_and_ice_control": 36850000
       },
-      "source": "Taproot Edmonton reporting quoting City infrastructure field operations staff",
-      "derived_component": "maintenance",
-      "note": "⚠️ The $14.135M maintenance component is DERIVED, not published: $1,285/km x ~11,000 km. The 11,000 km figure is the SNOW-CLEARING network being reused as a maintenance denominator, so this component is doubly inferred and should be replaced with a published roads-maintenance operating line when one is sourced. The $36.85M snow figure is quoted directly.",
+      "source": "Maintenance: City of Edmonton Open Budget portal (budget.edmonton.ca/api/operating_budget.csv), branch 'Parks & Roads Services', program 'Roadway Maintenance', FY2017 — $65,671,000, tax-supported expenses. Snow: Taproot Edmonton reporting quoting City infrastructure field operations staff.",
+      "maintenance_replaced_a_derived_figure": "⚠️ THIS COMPONENT WAS $14,135,000 UNTIL 2026-08-04 AND THAT FIGURE WAS ABOUT 5x TOO LOW. It was derived as $1,285/km x ~11,000 km — a narrow unit rate multiplied across the whole network and labelled 'roads maintenance'. The published program implies roughly $5,900/km. The error was in OUR derivation, not in the Taproot source: that source's TOTALS reconcile (see snow_cross_check), only the rate-times-network product did not. Replaced with the published program line above.",
+      "why_the_2017_vintage": "⚠️ 2017 IS THE ONLY YEAR EDMONTON EVER PUBLISHED A ROADS-ONLY MAINTENANCE PROGRAM, so a stale vintage is the price of a clean scope. The program tree was re-cut in 2018 (roads maintenance folded into 'OPS/PARS - Infrastructure Maintenance', which also covers sidewalks, pathways and bridges) and re-cut again in 2026 (folded into 'OPS/PARS - Mobility Infrastructure Services'). Using the 2018-2025 line would DOUBLE-COUNT against this table's own sidewalks and bike-lane rows. Peter's call 2026-08-04: roads-only scope beats matching vintage, documented rather than silently mixed — the same call already made for ETS 2025 vs fire 2026 in city_unit_costs.json. ⚠️ Being 2017 dollars, this is if anything a LOWER bound on today's spend: the branch grew ~34% (244.9 -> 327.1 $M) between 2017 and 2025.",
+      "snow_cross_check": "✅ The snow figures are INDEPENDENTLY CORROBORATED by the same Open Budget portal: this row's $36.85M roads snow plus the active-transport row's $30.15M path snow = $67.0M, against the published 'Snow and Ice Control' program at $67,553,815 (FY2025) — 99.2%. That agreement is why the snow components were left untouched, and the contrast with the maintenance component is what exposed it.",
+      "portal_vs_pdf": "⚠️ The Open Budget portal and the Approved Operating Budget PDF do not tie exactly: the portal's FY2026 branch total for Parks and Roads Services is $307,325,053 against the PDF's $303,361,000 gross, +1.31%. Small, but do not present portal and PDF figures as the same series. The PDF is branch-level only and bundles parks with roads, which is why it cannot source this row at all.",
       "label_long": "Roads (maintenance and snow clearing)"
     },
     {
@@ -66,5 +68,5 @@
       "reason": "⚠️ NOT ADDITIVE with the bike-lane line above and therefore left out of the comparison rather than shown beside it. It is capital debt service plus incremental maintenance for NEW build-out; the $30.42M line is the cost of running what already exists. Adding them answers no question. Kept here so the figure is not lost (City's own stated number, Budget FAQ)."
     }
   ],
-  "_ratios_are_derived_not_pinned": "⚠️ DO NOT hardcode the comparison ratios. They are computed from the values above so they cannot drift out of agreement with them. This matters: the research brief this table came from claimed 'transit is roughly 15x the road ops budget and roughly 90x the entire active-transportation network' — both wrong, because the ratios had slid one row. Actual: transit is 9.2x roads, 15.4x active transport and 79.4x sidewalks. Bike lanes plus sidewalks together are 0.94% of the operating budget, which is the one claim that held."
+  "_ratios_are_derived_not_pinned": "⚠️ DO NOT hardcode the comparison ratios. They are computed from the values above so they cannot drift out of agreement with them. This matters: the research brief this table came from claimed 'transit is roughly 15x the road ops budget and roughly 90x the entire active-transportation network' — both wrong, because the ratios had slid one row. Actual: transit is 4.6x roads, 15.4x active transport and 79.4x sidewalks. Bike lanes plus sidewalks together are 0.94% of the operating budget, which is the one claim that held. ⚠️ THE ROADS RATIO ITSELF HAS NOW MOVED ONCE — it read 9.2x from 2026-08-03 to 2026-08-04, on a roads-maintenance component that was ~5x too low (see the roads category). That is the second time a number in this table changed after publication, and the reason nothing here is pinned: because the UI divides, both corrections propagated by editing one dollar value."
 }

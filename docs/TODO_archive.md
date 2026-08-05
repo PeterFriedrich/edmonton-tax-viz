@@ -1269,3 +1269,70 @@ unconfirmed, and the verify scripts drive `.click()`, which bypasses
 
 ⚠️ **Tenth time a carried item's stated basis did not survive re-measurement —
 and the first where re-measuring CLOSED the item instead of redirecting it.**
+
+---
+
+## Replace the derived $14.135M roads-maintenance figure — CLOSED 2026-08-04
+
+**Closed by correcting it, not by confirming it.** The item read *"it is the one
+soft number in that table; the other three are quoted directly"* and framed the
+work as *"a single value swap plus dropping `derived_component`"*. The swap was
+indeed a single value — but the figure being replaced was **about 5× too low**,
+and it had been **live on a public page since the 2026-08-04 manual refresh**.
+
+### The original figure and why it failed
+`$1,285/km × ~11,000 km = $14,135,000`. Two inferences stacked: a narrow unit
+rate from Taproot reporting, multiplied across the citywide network, with the
+**snow-clearing** network reused as a maintenance denominator. Against the
+City's own published program the implied rate is **~$5,900/km**, not $1,285/km.
+
+⚠️ **The error was in the repo's derivation, not in the source.** Taproot's
+*totals* hold up; only the rate×network product did not. That distinction is
+what the cross-check below establishes, and it matters — the instinct on finding
+a bad number is to distrust the source.
+
+### What was found
+`https://budget.edmonton.ca/api/operating_budget.csv` — the City's Open Budget
+portal, **program-level, machine-readable, FY2017–FY2026**, 7,283 rows. Now
+`DATA.md` **§17**. The Approved Operating Budget PDF stops at branch level
+(`Parks and Roads Services`, FY2026 gross $303.361M) where roads are bundled
+with parks — 6× the whole roads row, and unusable for this.
+
+### The cross-check that exposed it
+| | |
+|---|---|
+| Published `Snow and Ice Control` program, FY2025 | **$67,553,815** |
+| Pod's roads snow $36.85M + path snow $30.15M | **$67,000,000** |
+| | **99.2%** |
+
+Same source, two numbers: the snow figures reconcile almost exactly, the
+maintenance figure was out by 5×. **The asymmetry is the finding.**
+
+### Why FY2017, a stale vintage
+**It is the only year Edmonton ever published a roads-only maintenance
+program** (`Roadway Maintenance`, **$65,671,000**; alongside `Snow and Ice
+Control` $63,709,000 — a 1.03 ratio, where the pod's derived figure implied
+0.38× its own snow, **4.9× apart**). The tree was **re-cut in 2018** into
+`OPS/PARS - Infrastructure Maintenance`, which also covers sidewalks, pathways
+and bridges — using it would **double-count against this table's own sidewalks
+and bike-lane rows** — and **re-cut again in 2026** into `Mobility
+Infrastructure Services`. Peter's call: **roads-only scope beats matching
+vintage, documented rather than silently mixed**, the same call already made for
+ETS 2025 vs fire 2026. Being 2017 dollars it is if anything a **lower bound** —
+the branch grew ~34% ($244.9M → $327.1M) by 2025.
+
+### Effect
+Roads **$50.985M → $102.521M**, i.e. **1.33% → 2.67%** of the operating budget;
+transit:roads **9.2× → 4.6×**. `derived_component` dropped, so the pod's public
+asterisk is gone. Transit, bike and sidewalk rows unaffected.
+
+⚠️ **Because nothing downstream pins a share, this was a one-value edit** — the
+UI divides. That is the second time a number in this table has been corrected
+after publication, and the standing argument for the no-pinned-ratios rule.
+
+### Guarding it
+`test_committed_budget_file_shares_are_what_we_claim` **failed on the change, as
+designed**, and was updated with a warning that moving it is correct only
+alongside a sourced value change. A new
+`test_committed_budget_roads_maintenance_is_no_longer_derived` pins the value
+and the absence of `derived_component` against a revert.

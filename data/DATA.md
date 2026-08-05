@@ -1246,7 +1246,7 @@ manifest field is missing.
 | line | $/yr | share of $3.8B |
 |---|---|---|
 | Transit (bus + LRT + DATS, gross operating) | $468.571M | 12.18% |
-| Roads (maintenance + snow) | $50.985M | 1.33% |
+| Roads (maintenance + snow) | $102.521M | 2.67% |
 | Bike lanes & shared pathways (maintenance + snow) | $30.420M | 0.79% |
 | Sidewalks (ops) | $5.900M | 0.15% |
 
@@ -1263,11 +1263,28 @@ Total City operating budget **$3,845,555,000 (2025)** — publicly quoted as
   the ~11,000 km network **including arterials**; the neighbourhood lens
   excludes arterials by decision, so the two use different denominators and
   **must not share a constant**. Nothing in `src/` or `main.py` reads this file.
-- ⚠️ **The $14.135M roads-maintenance component is DERIVED, not published** —
-  `$1,285/km × ~11,000 km`, where the 11,000 km is the *snow-clearing* network
-  reused as a maintenance denominator. Doubly inferred; flagged `derived` in the
-  data and asterisked in the pod. **Replace it with a published roads-maintenance
-  operating line when one is sourced.**
+- ✅ **The roads-maintenance component is now PUBLISHED — and the derived figure
+  it replaced was ~5× too low.** It was `$1,285/km × ~11,000 km = $14.135M`
+  (a narrow unit rate multiplied across the whole network, with the
+  *snow-clearing* network reused as the maintenance denominator). Now
+  **$65,671,000**, the Open Budget portal's `Roadway Maintenance` program
+  (FY2017) — see §17. `derived_component` is gone, so the pod's asterisk is gone.
+  ⚠️ **The error was in OUR derivation, not the Taproot source** — that source's
+  *totals* reconcile to 99.2% (below); only the rate×network product did not.
+  The published program implies ~**$5,900/km**, not $1,285/km.
+- ⚠️ **2017 IS THE ONLY YEAR WITH A ROADS-ONLY MAINTENANCE PROGRAM**, so a stale
+  vintage is the price of a clean scope. The tree was re-cut in 2018 (folded into
+  `Infrastructure Maintenance`, which *also* covers sidewalks, pathways and
+  bridges — using it here would **double-count** against this table's own
+  sidewalks and bike rows) and again in 2026 (`Mobility Infrastructure
+  Services`). Peter's call 2026-08-04, documented rather than silently mixed, as
+  with ETS 2025 vs fire 2026. Being 2017 dollars it is if anything a **lower
+  bound**: the branch grew ~34% ($244.9M → $327.1M) by 2025.
+- ✅ **THE SNOW FIGURES ARE INDEPENDENTLY CORROBORATED.** Roads snow $36.85M +
+  path snow $30.15M = **$67.0M** against the portal's published `Snow and Ice
+  Control` program at **$67,553,815 (FY2025) — 99.2%**. That is why the snow
+  components were left untouched, and **the contrast with maintenance is what
+  exposed it**: same source, one number reconciling and one not.
 - ⚠️ **Transit here INCLUDES DATS ($31.966M); the per-acre transit cost column
   EXCLUDES it.** Different questions, and they are *supposed* to differ — §13's
   `transit_ets` allocates by scheduled stop-events, which DATS does not generate.
@@ -1280,6 +1297,56 @@ Total City operating budget **$3,845,555,000 (2025)** — publicly quoted as
   source enumerates. The two lines are safely additive.
 - ⚠️ **NO SHARE OR RATIO IS EVER PUBLISHED** — the manifest carries dollars and a
   total, and the UI divides. The research this table came from shipped ratios
-  that had slid one row (*"transit is roughly 15× the road ops budget"* — it is
-  **9.2×**; 15.4× is active transport, and sidewalks are 79.4×, not the claimed
-  ~90×). Deriving makes that class of error unrepresentable.
+  that had slid one row (*"transit is roughly 15× the road ops budget"*; 15.4× is
+  active transport, and sidewalks are 79.4×, not the claimed ~90×). Deriving
+  makes that class of error unrepresentable. ⚠️ **The roads ratio has since moved
+  on its own merits: 9.2× → 4.6×** on 2026-08-04, when the maintenance component
+  was corrected. Because nothing pins a share, that was a **one-value edit** —
+  which is the whole argument for the rule.
+
+## 17. Open Budget Portal — program-level operating budgets (added 2026-08-04)
+`https://budget.edmonton.ca/api/operating_budget.csv` — the City's Open Budget
+portal, **machine-readable and primary**. **7,283 rows, FY2017–FY2026**, one row
+per `budget_year, fund_type, department, branch, program, category, account_type,
+budget`. Fetched by hand on Peter's laptop 2026-08-04 (edmonton.ca is unreachable
+from the Oracle box, §13). **NOT downloaded by `download_data.py`, NOT in the
+weekly refresh, NOT read by `src/` or `main.py`** — it is a sourcing tool for the
+manual reviewed inputs (§13, §16), not a pipeline input.
+
+### Why it matters
+It is the **only public source with sub-branch operating detail**. The Approved
+Operating Budget PDF stops at branch level, where roads are bundled with parks
+(`Parks and Roads Services`, FY2026 gross **$303.361M**; gross − revenue = net
+cross-checks) — far too coarse to source a roads line. The portal resolves that
+branch into programs: `Roadway Maintenance`, `Snow and Ice Control`,
+`Parks Operations`, `Traffic Operations, Signals and Street Lighting`, and more.
+
+### Known Quirks
+- ⚠️ **THE PROGRAM TREE WAS RE-CUT TWICE AND PROGRAM NAMES DO NOT SURVIVE IT** —
+  a "format eras" problem exactly like §11's FIR debt series. **2017:** roads-only
+  programs (`Roadway Maintenance` **$65.671M**, `Snow and Ice Control` $63.709M).
+  **2018–2025:** renamed and re-scoped to `OPS/PARS - Infrastructure Maintenance`
+  ($49.7M–$56.9M), which **also covers sidewalks, pathways and bridges**.
+  **2026:** re-cut again into `OPS/PARS - Mobility Infrastructure Services`
+  ($76.95M). **Never build a time series by program name without checking which
+  era each year is in** — a naive `groupby(program)` shows most programs
+  abruptly hitting zero, which is a rename, not a cut.
+- ⚠️ **`account_type` IS `Expenses` ONLY** — there is no revenue side here, so
+  every figure is **gross**, never net. `fund_type` is `Tax Supported` for this
+  branch.
+- ⚠️ **THE PORTAL AND THE PDF DO NOT TIE EXACTLY.** Portal FY2026 Parks and Roads
+  Services totals **$307,325,053** against the PDF's **$303,361,000** gross,
+  **+1.31%**. Small, but they are different publications — do not present them as
+  one series.
+- **`category` is expense TYPE, not service** (Personnel, Fleet Services,
+  Materials, External Services, Intra-municipal Charges…), and **intra-municipal
+  lines are negative**, so category sums net out. Fine for totals; useless for
+  splitting a program by what it maintains.
+- **`/api/services.csv` does not exist** — it returns a 404 page. Only
+  `operating_budget.csv` and `capital_projects.csv` were confirmed live.
+
+### What it has already settled
+- **§16's roads-maintenance component**, $14.135M (derived, ~5× low) →
+  **$65.671M** published.
+- **Corroborated §16's snow figures to 99.2%** — roads $36.85M + paths $30.15M =
+  $67.0M vs the published `Snow and Ice Control` program $67,553,815 (FY2025).
