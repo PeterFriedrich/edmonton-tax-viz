@@ -1336,3 +1336,69 @@ designed**, and was updated with a warning that moving it is correct only
 alongside a sourced value change. A new
 `test_committed_budget_roads_maintenance_is_no_longer_derived` pins the value
 and the absence of `derived_component` against a revert.
+
+---
+
+## Tighten the cardinality-guard bands — CLOSED 2026-08-05 (four of six)
+
+**The item said "tighten the bands once there is variance data." The variance
+data existed, and it said two different things about the six anchors.**
+
+### Where the variance data was
+Not in git, and not in the baseline file — **the guard prints every anchor value
+in CI on every run**, and those logs are retrievable. Harvested from the
+`refresh.yml` runs' job logs.
+
+⚠️ **`gh run view --log` returns nothing even for a COMPLETED run here; the jobs
+API works.** Quirk (qqqq) had recorded the in-progress half of this; the
+completed half is new:
+```bash
+JOB=$(gh api repos/PeterFriedrich/edmonton-tax-viz/actions/runs/<id>/jobs -q '.jobs[0].id')
+gh api "repos/PeterFriedrich/edmonton-tax-viz/actions/jobs/$JOB/logs"
+```
+
+⚠️ **Five runs, but only THREE independent observations.** The 2026-08-02 and
+2026-08-05 runs committed `status.json` only, so their anchors re-measure
+unchanged input. Checking *what each auto-refresh commit actually touched* is
+what separates a real observation from a re-reading.
+
+### What it showed
+| anchor | observed spread | action |
+|---|---|---|
+| `dup_parcel_points` | 0.00% (constant 33) | tightened 2× |
+| `lot_needle_ratio` | 0.00% | tightened 2× |
+| `dedupe_effect_pct` | 0.01% | tightened 2× |
+| `dup_parcel_value_frac` | 0.11% | tightened 2× |
+| `ineligible_points` | 7.1% | ⚠️ **left wide** |
+| `ineligible_value_frac` | 22.3% | ⚠️ **left wide** |
+
+**The last two are not noisy — they are trending**, monotonically upward on
+every independent data change, with no reversal:
+```
+ineligible_points      56 -> 58 -> 60
+ineligible_value_frac  0.00517 -> 0.00575 -> 0.00633
+```
+That is the **dangerous** direction by the guard's own `DANGER` map. Tightening
+them to observed spread would have red the weekly publish on the next real data
+change and read as a false alarm rather than the regime signal the guard exists
+to give. `ineligible_value_frac` has consumed ~72% of its band already.
+
+### Two things the item got wrong
+1. **Its prescribed mechanism cannot express the result.**
+   `--write-baseline --tolerance` applies ONE global tolerance to every anchor.
+   The bands are now hand-set per anchor — which needs **no code change**, since
+   the comparator reads `min`/`max` per key and ignores `_`-prefixed notes — and
+   that flag would silently flatten them back. Recorded in the baseline's own
+   `_bands_are_per_anchor` field and pinned by a test.
+2. **"Observed spread" is the wrong target anyway.** The guard exists mainly for
+   the **January year-roll**, and **no observation across a year-roll exists** —
+   it shipped 2026-07-28. Three weekly readings say nothing about reassessment,
+   so ±25% buys a real 2× tightening while leaving room for the event the guard
+   was built for. Going tighter is a decision for after the first January roll.
+
+### Guarding it
+Three tests, none of which existed before (nothing pinned the committed baseline
+at all): every CI reading must stay in band; the drifting pair must stay wide;
+the four tightened anchors must stay at ±25%. ⚠️ **The tightening test was
+falsified against the old baseline first** — it fails there and passes here, so
+it pins the change rather than merely describing it.

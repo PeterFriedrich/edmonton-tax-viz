@@ -175,10 +175,33 @@ Also removed a duplicated preamble block left in this file by the
   bands and runs in `refresh.yml` after regeneration. Both known bugs were
   re-verified as non-issues (see `AUDIT_LEDGER.md` 2026-07-28); this is
   maintenance, not a defect.
-  - [ ] **Tighten the bands once there is variance data.** They are +/-50%
-    off a SINGLE snapshot — a guess biased toward not crying wolf. After a few
-    weekly refreshes, re-pin against observed spread with
-    `--write-baseline --tolerance`.
+  - [x] **Tighten the bands — DONE 2026-08-05, but only FOUR of six.** See the
+    `## Done` line; the split and its reasoning live in
+    `data/expected_value_anchors.json`'s own `_why_two_widths` /
+    `_ineligible_pair_is_drifting` fields.
+  - [ ] **▶ WHY IS VALUE LEAVING THE LOT-ACRE DENOMINATOR? (NEW 2026-08-05, out
+    of the band work.)** `ineligible_points` and `ineligible_value_frac` moved
+    **monotonically upward on every independent data change** — 56 → 58 → 60 and
+    0.00517 → 0.00575 → 0.00633 across 2026-08-01 / 08-03 / 08-04, no reversal.
+    That is the **dangerous** direction by the guard's own `DANGER` map: growth
+    means more assessed value silently dropping out of the lot-acre metric.
+    - **This is the guard doing its job**, not a nuisance. `check_value_anchors`
+      calls these points *"majority-null multi-unit"* — they leave the lot-acre
+      numerator AND denominator while staying in ground-acre, so the two lenses
+      quietly diverge as the count grows.
+    - ⚠️ **`ineligible_value_frac` has used ~72% of its band** and would breach
+      in roughly **2–3 more moves of the observed size**. Its band was left wide
+      deliberately so that when it fires it fires on something real — **do not
+      widen it further to buy silence, and do not tighten it to "finish" the
+      band work.** A test pins both against exactly that.
+    - **What would answer it:** which points became ineligible between two
+      refreshes, and why — a new majority-null pattern in `Property_Info`, a
+      condo/multi-unit regime change, or upstream nulls. ⚠️ **Needs two dated
+      raw snapshots to diff**; `data/raw/` holds only the current pull, so this
+      likely means capturing the next one or two refreshes before diffing.
+    - ⚠️ **Only 3 independent observations exist** (the 2026-08-02 and 08-05
+      runs committed `status.json` only, so their anchors re-measure unchanged
+      input). Confirm the trend continues before treating the slope as real.
   - [ ] **Optional, Peter's call: lower `STALE_DAYS`.** Currently 14 against a
     weekly cron = one missed run tolerated, two consecutive misses warn. A
     drift failure is therefore viewer-silent for 14 days. If that is too long
@@ -1196,6 +1219,8 @@ Also removed a duplicated preamble block left in this file by the
 ## Done
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
+
+- [x] **Tighten the cardinality-guard bands — DONE 2026-08-05, and the item's premise was half wrong, so only FOUR of the six moved.** The variance data turned out to exist in a place nobody had looked: **the guard logs every anchor value in CI**, harvested from the refresh runs' job logs. ⚠️ **Five runs but only THREE independent data changes** — the 2026-08-02 and 08-05 runs committed `status.json` only, so their readings re-measure unchanged input. **Four anchors were effectively frozen** (`dup_parcel_points` constant at 33, `lot_needle_ratio` 0.00%, `dedupe_effect_pct` 0.01%, `dup_parcel_value_frac` 0.11%) and were tightened **2×**, to ±25%. ⚠️ **The other two are not noisy, they are TRENDING** — `ineligible_points` 56→58→60 and `ineligible_value_frac` 0.00517→0.00575→0.00633, monotonic, in the guard's own **dangerous** direction — and were **left wide on purpose**: tightening them would red the weekly publish on the next real data change and read as a false alarm. ⚠️ **The item's prescribed mechanism could not express this** — `--write-baseline --tolerance` applies ONE global tolerance to every anchor, so the bands are now hand-set per anchor and that flag would flatten them; the baseline says so in `_bands_are_per_anchor`. **Not tightened further than ±25% because no observation across a January year-roll exists yet**, which is the event the guard was built for. Three new tests pin all of it, and the tightening test was **falsified against the old baseline first**. The drift became its own open item. — 2026-08-05 · `docs/TODO_archive.md`
 
 - [x] **Source the derived $14.135M roads-maintenance figure — CLOSED 2026-08-04, and the derived figure was ~5× TOO LOW, live on a public page.** Replaced with **$65,671,000**, the Open Budget portal's `Roadway Maintenance` program (FY2017). ⚠️ **The item said "the one soft number in that table"; it was a wrong one.** The derived value was `$1,285/km × ~11,000 km` — a narrow unit rate multiplied across the whole network; the published program implies **~$5,900/km**. Roads moves **1.33% → 2.67%** of the operating budget and transit:roads **9.2× → 4.6×**. ⚠️ **The error was in OUR derivation, not the Taproot source** — that source's *totals* reconcile: roads snow $36.85M + path snow $30.15M = **99.2%** of the portal's published `Snow and Ice Control` program, and **that contrast is what exposed the maintenance line**. **2017 is the only year Edmonton ever published a roads-only maintenance program** (re-cut in 2018 into a line that also covers sidewalks and pathways — using it would double-count this table's own rows — and again in 2026), so Peter chose clean scope over matching vintage. New **`DATA.md` §17** documents the portal, including its **two rename eras** and a **+1.31% portal-vs-PDF** gap. ⚠️ **Not yet on the live site** — budget figures ship only when `refresh.yml` reruns `generate_status.py`; see the open publish item. — 2026-08-04 · `docs/TODO_archive.md`
 
