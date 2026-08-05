@@ -169,6 +169,18 @@ Triage by which step failed, in the run log:
   `python scripts/check_served_columns.py --write-baseline` and commit
   `data/expected_columns.json`. A **new** column only warns, so adding a metric
   never blocks the publish — re-pin at your convenience.
+- **"Run verified notebooks"** (exit 1, `tools/run_verified_notebooks.py`,
+  added 2026-08-05) — an invariant inside `notebooks/verified/01_money_lens.py`
+  failed: the pipeline, re-run independently in notebook form, disagrees with
+  itself. Runs after regen, before the commit, so the site (and the last
+  published `web/verified/01_money_lens.html`, `docs/VERIFICATION.md`) keeps
+  serving last-good. Take this one seriously — unlike the UI-facing guards
+  below, it's a second, differently-shaped recomputation of the exact numbers
+  the site is about to publish, not a rendering check. The log names which
+  check failed (`tools/run_verified_notebooks.py` tails it on failure);
+  cross-reference against the assertion in the notebook source. Reproduce
+  locally: `.venv/bin/python tools/run_verified_notebooks.py --out-dir
+  /tmp/_verified` and open the HTML.
 - **"Check temporal years"** (exit 5, `scripts/check_temporal_years.py`) — the
   assessment *time series* failed a control. Like the guards above it runs before
   the status manifest, so the heartbeat stays unbumped and the site serves
