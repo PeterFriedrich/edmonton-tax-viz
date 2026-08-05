@@ -84,6 +84,7 @@ See [`/research`](/research) for background findings and data source inventory.
 ## Technical Docs
 
 - [`docs/METHODS.md`](docs/METHODS.md) — how the numbers are made: metric definitions, denominators, models, validation, limitations
+- [`docs/VERIFICATION.md`](docs/VERIFICATION.md) — how to check the pipeline actually ran correctly, not just read about how it's supposed to work
 - [`CONTRIBUTING.md`](CONTRIBUTING.md) — dev pipeline, setup, coding conventions, AI-assisted workflow
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — module contracts and data flow
 - [`docs/SPEC_phase1.md`](docs/SPEC_phase1.md) — Phase 1 deliverable and acceptance criteria
