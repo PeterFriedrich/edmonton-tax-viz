@@ -120,8 +120,12 @@ def budget_context(path: Path = BUDGET_CONTEXT) -> dict | None:
     ⚠️ Publishes the VALUES ONLY — never a precomputed share or ratio. The UI
     divides by ``total`` itself, so the printed percentages cannot drift out of
     agreement with the dollars they came from. The brief this table was built
-    from shipped ratios that had slid one row (claiming transit was ~15x roads
-    when it is 9.2x), which is exactly the failure a pinned ratio invites.
+    from shipped ratios that had slid one row (claiming transit was ~15x roads),
+    which is exactly the failure a pinned ratio invites. ⚠️ The roads ratio has
+    since moved on its own merits too — 9.2x to 4.6x on 2026-08-04, when the
+    roads-maintenance component was replaced with a published program line after
+    the derived one measured ~5x low. Both corrections were one-value edits
+    precisely because nothing downstream pins a share.
 
     ⚠️ CITYWIDE ONLY. The road figures here span the ~11,000 km network
     INCLUDING arterials; the neighbourhood lens excludes arterials. Nothing in

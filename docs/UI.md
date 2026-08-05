@@ -1668,6 +1668,11 @@ The Data & Methods popover gained a fourth section, **In the city budget** —
 four rows putting transit, roads, bike lanes and sidewalks against the City's
 $3.8B 2025 operating budget (12.18% / 1.33% / 0.79% / 0.15%).
 
+> ⚠️ **Historical — the roads share is now 2.67%, not 1.33%.** Corrected
+> 2026-08-04 when the roads-maintenance component was replaced with a published
+> program line (the derived one measured ~5× low). The build-log entry below is
+> left as written; `data/DATA.md` §16 carries the current figures.
+
 **Why here and not a new pod.** It is context for reading the map, not a finding
 of its own; `#about` already carries vintages, licence and caveats, is collapsed
 by default so it costs no screen space, and adding a third pod to the
@@ -1692,5 +1697,8 @@ the two finds.
 ⚠️ **The shares are derived in the page, never published.** The manifest carries
 dollars and a total; `renderBudgetContext` divides. The research this table came
 from shipped ratios that had slid one row — *"transit is roughly 15× the road
-ops budget"* when it is **9.2×** — and deriving makes that class of error
+ops budget"* when it was then **9.2×** — and deriving makes that class of error
 unrepresentable. `verify-about.js` recomputes all four independently.
+⚠️ **That 9.2× is now 4.6×** (roads corrected 2026-08-04), which is the rule
+paying for itself: the fix was one dollar value, with nothing downstream to
+re-pin.

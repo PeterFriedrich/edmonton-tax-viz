@@ -113,23 +113,19 @@ Also removed a duplicated preamble block left in this file by the
     lifecycle roads term. Until then the two bases stay separated by the `_ops`
     suffix, and that separation is load-bearing (~10.8× on the same metres).
 
-- [ ] **REPLACE THE DERIVED $14.135M ROADS-MAINTENANCE FIGURE** in
-  `data/city_budget_context.json` with a published City operating line. It is
-  currently `$1,285/km × ~11,000 km`, and that 11,000 km is the **snow-clearing**
-  network reused as a maintenance denominator — doubly inferred. Flagged
-  `derived` in the data and asterisked in the pod, so it is honest on screen,
-  but it is the one soft number in that table; the other three are quoted
-  directly. A single value swap plus dropping `derived_component`.
-  - ✅ **The pod is now LIVE** — `refresh.yml` was dispatched by hand 2026-08-04
-    (run `30909649645`), so `status.json` carries `budget_context` and
-    `verify-about.js` passes against production. The asterisk on this cell is
-    therefore visible to the public now; the swap is a live-data correction, not
-    a pre-launch cleanup.
-  - ⚠️ **The budget figures reach the frontend only when `refresh.yml` reruns
-    `generate_status.py`**, so a value swap here does nothing until the next
-    weekly run or another manual dispatch. Never hand-run `generate_status.py`
-    and commit it — it stamps `last_checked` with a freshness check that never
-    happened, and the staleness banner reads that field.
+- [ ] **▶ PUBLISH THE ROADS-MAINTENANCE CORRECTION** — the value is fixed in
+  `data/city_budget_context.json` (2026-08-04) but **the live site still shows
+  the old, ~5×-low figure**. Budget figures reach the frontend only when
+  `refresh.yml` reruns `generate_status.py`.
+  - **After the PR merges:** either wait for the Monday run or dispatch by hand
+    per **`docs/RUNBOOK.md` §3d** (`gh workflow run refresh.yml --ref master`,
+    ~20 min — quirk pppp).
+  - **Then verify against production:** `verify-about.js` recomputes all four
+    shares from the published dollars, so it should print roads at **2.67%**,
+    not 1.33%, and show **no asterisk** on the maintenance cell.
+  - ⚠️ **Never hand-run `generate_status.py` and commit it** — it stamps
+    `last_checked` with a freshness check that never happened, and the staleness
+    banner reads that field.
 
 - [ ] **⚠️ `--geojson-out /tmp/x.geojson` DOES NOT MAKE A LOCAL `main.py` RUN
   SAFE — the DATA VINTAGE item below says it does, and that advice is wrong.**
@@ -1200,6 +1196,8 @@ Also removed a duplicated preamble block left in this file by the
 ## Done
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
+
+- [x] **Source the derived $14.135M roads-maintenance figure — CLOSED 2026-08-04, and the derived figure was ~5× TOO LOW, live on a public page.** Replaced with **$65,671,000**, the Open Budget portal's `Roadway Maintenance` program (FY2017). ⚠️ **The item said "the one soft number in that table"; it was a wrong one.** The derived value was `$1,285/km × ~11,000 km` — a narrow unit rate multiplied across the whole network; the published program implies **~$5,900/km**. Roads moves **1.33% → 2.67%** of the operating budget and transit:roads **9.2× → 4.6×**. ⚠️ **The error was in OUR derivation, not the Taproot source** — that source's *totals* reconcile: roads snow $36.85M + path snow $30.15M = **99.2%** of the portal's published `Snow and Ice Control` program, and **that contrast is what exposed the maintenance line**. **2017 is the only year Edmonton ever published a roads-only maintenance program** (re-cut in 2018 into a line that also covers sidewalks and pathways — using it would double-count this table's own rows — and again in 2026), so Peter chose clean scope over matching vintage. New **`DATA.md` §17** documents the portal, including its **two rename eras** and a **+1.31% portal-vs-PDF** gap. ⚠️ **Not yet on the live site** — budget figures ship only when `refresh.yml` reruns `generate_status.py`; see the open publish item. — 2026-08-04 · `docs/TODO_archive.md`
 
 - [x] **Mobile chrome — the bottom-sheet question — CLOSED 2026-08-04, NO code change: the control column stays a stack.** The quick pass's last open piece was a *decision*, not a build item (steps 1-2 shipped `0089eba`; step 3 closed 2026-07-31 as not reproducible). ⚠️ **Re-measured before deciding, and the basis had moved.** The union method reproduced the default to the decimal (**27.9%**), but **Money unfolded is 47.9%, not the recorded 54.3%** — `#moneymode` left the Options panel on **2026-08-02, one day after that measurement**. ⚠️ **The ">half the screen" claim was attached to the wrong state**: the only >50% states are **Services 53.1%** and **Development 52.7%**, neither ever measured — the 08-01 pass took one view and generalised. ⚠️ **The public build cannot reach the worst state**: Services and Ratio are full-only since 2026-07-28, so **public `#views` is TWO buttons (Money · Development)**, correcting a doc line that claimed four. Worst public state is **52.3%** (Development unfolded + peek), rendered clean. Peter's call: the >50% states are transient and user-initiated, a bottom sheet is a **shared desktop+mobile DOM** refactor, and the default a phone user meets is 27.9% vs desktop 20.3%. ⚠️ **`#views` position loses its vehicle** — it was parked pending this fork. **Tenth time a stated basis did not survive re-measurement; the first where that CLOSED the item.** — 2026-08-04 · `docs/TODO_archive.md`
 

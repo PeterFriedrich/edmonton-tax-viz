@@ -189,8 +189,9 @@ def test_budget_context_publishes_no_share_or_ratio(tmp_path):
     """⚠️ The manifest must carry dollars only.
 
     A precomputed share can drift out of agreement with the value it came from —
-    which is exactly how the source research shipped 'transit is ~15x roads'
-    when it is 9.2x. The UI divides by total itself.
+    which is exactly how the source research shipped 'transit is ~15x roads'.
+    The UI divides by total itself, which is also why the 2026-08-04 roads
+    correction (9.2x -> 4.6x) was a single dollar-value edit.
     """
     from generate_status import budget_context
 
@@ -248,8 +249,28 @@ def test_committed_budget_file_components_reconcile():
 
 def test_committed_budget_file_shares_are_what_we_claim():
     """Pins the four shares the pod renders, so a hand edit to the JSON that
-    changes the story fails here rather than shipping quietly."""
+    changes the story fails here rather than shipping quietly.
+
+    ⚠️ roads moved 1.33 -> 2.67 on 2026-08-04, and this test is how that landed
+    deliberately rather than quietly: the roads-maintenance component had been
+    DERIVED as $1,285/km x ~11,000 km and measured ~5x low against the City's
+    published 'Roadway Maintenance' program. Updating this number is correct
+    ONLY alongside a sourced value change — never to make a red test green.
+    """
     data = json.loads(Path("data/city_budget_context.json").read_text())
     total = data["total_operating_budget"]["value"]
     got = {c["key"]: round(100 * c["value"] / total, 2) for c in data["categories"]}
-    assert got == {"transit": 12.18, "roads": 1.33, "active_transport": 0.79, "sidewalks": 0.15}
+    assert got == {"transit": 12.18, "roads": 2.67, "active_transport": 0.79, "sidewalks": 0.15}
+
+
+def test_committed_budget_roads_maintenance_is_no_longer_derived():
+    """The roads row must carry no ``derived_component``, so the pod drops its
+    public asterisk — ``budget_context`` sets ``derived`` from exactly that key.
+
+    Pins the 2026-08-04 correction against a revert to the old derived figure.
+    """
+    data = json.loads(Path("data/city_budget_context.json").read_text())
+    roads = next(c for c in data["categories"] if c["key"] == "roads")
+    assert "derived_component" not in roads
+    assert roads["components"]["maintenance"] == 65671000
+    assert roads["components"]["maintenance"] != 14135000, "the ~5x-low derived figure is back"
