@@ -371,11 +371,13 @@ the Monday cron closed in one run, and the served-column guard got its
 - ⚠️ It **deploys to the live site.** Confirm the code it will publish is
   already merged and verified.
 
-**Expect ~20 minutes, not ~9.** The 2026-08-04 dispatch took **20m00s** against
-the scheduled runs' ~9m30s; the difference is *"Install the verify harness"*
-(npm + Playwright Chromium) before the pre-publish smoke gate. **A run sitting
-at that step is downloading a browser, not hung** — the data steps are already
-green by then. Step-level progress:
+**Expect 10–20 minutes, not ~9.** The 2026-08-04 dispatch took **20m00s** and
+the 2026-08-05 one **13m10s**, against the scheduled runs' ~9m30s; the variable
+part is *"Install the verify harness"* (npm + Playwright Chromium) before the
+pre-publish smoke gate, which is cache-dependent and so swings by ~7 minutes
+between runs. **A run sitting at that step is downloading a browser, not hung**
+— the data steps are already green by then. **Budget a monitor for 25 minutes
+regardless**; finishing early is the good case. Step-level progress:
 
 ```bash
 gh api repos/PeterFriedrich/edmonton-tax-viz/actions/runs/<id>/jobs \
