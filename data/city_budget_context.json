@@ -9,8 +9,10 @@
     "source": {
       "document": "City of Edmonton Budget FAQ / Open Budget — 2025 expenditure breakdown",
       "retrieved": "2026-08-03 (relayed, not fetched from the Oracle box)",
-      "note": "Quoted publicly as '$3.8 billion'; the precise figure is $3,845,555 thousand."
-    }
+      "note": "Quoted publicly as '$3.8 billion'; the precise figure is $3,845,555 thousand.",
+      "corroborated": "✅ CHECKED 2026-08-04 against the Open Budget portal (DATA.md §17), because every share in this table divides by it and it had been relayed: the portal's FY2025 TAX-SUPPORTED expenses total $3,855,881,010 — this value is 99.73% of that, a $10.3M gap. Independently confirmed, not merely restated."
+    },
+    "scope_is_tax_supported": "⚠️ THIS IS THE TAX-SUPPORTED OPERATING BUDGET, NOT ALL FUNDS, and that is the CORRECT denominator here rather than a limitation. The portal's FY2025 all-funds total is $4,203,648,909 — the difference is Utilities ($235,789,773) and Enterprise/CRL ($111,978,126). All four numerators in this table (transit, roads, bike lanes, sidewalks) are tax-supported, so dividing them by an all-funds total would understate every share (transit would read 11.15% instead of 12.18%, roads 2.44% instead of 2.67%). ⚠️ The pod's lead line says \"the City's $3.8B 2025 operating budget\" — if that copy is ever reworded, do NOT let it imply all funds."
   },
   "categories": [
     {

@@ -1251,7 +1251,18 @@ manifest field is missing.
 | Sidewalks (ops) | $5.900M | 0.15% |
 
 Total City operating budget **$3,845,555,000 (2025)** — publicly quoted as
-"$3.8 billion".
+"$3.8 billion". ✅ **Corroborated 2026-08-04** against the Open Budget portal
+(§17): FY2025 **tax-supported** expenses total **$3,855,881,010**, so this value
+is **99.73%** of it. Every share in the table divides by this number and it had
+been relayed, so it was worth checking.
+
+⚠️ **IT IS THE TAX-SUPPORTED BUDGET, NOT ALL FUNDS — and that is the RIGHT
+denominator, not a limitation.** All-funds FY2025 is **$4,203,648,909**; the
+difference is Utilities ($235.8M) and Enterprise/CRL ($112.0M). All four
+numerators here are tax-supported, so an all-funds denominator would understate
+every share (transit 11.15% instead of 12.18%, roads 2.44% instead of 2.67%).
+**If the pod's "$3.8B operating budget" copy is ever reworded, do not let it
+imply all funds.**
 
 ### Known Quirks
 - ⚠️ **OPERATING ONLY, every line.** No capital anywhere: road reconstruction,
