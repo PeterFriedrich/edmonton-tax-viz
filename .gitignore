@@ -26,6 +26,9 @@ ENV/
 # Jupyter
 .ipynb_checkpoints/
 
+# Rendered output of notebooks/verified/ (tools/run_verified_notebooks.py) — regenerated, not source
+/_verified/
+
 # Data files (scoped to raw inputs and outputs — track dirs via .gitkeep)
 data/raw/*
 !data/raw/.gitkeep
