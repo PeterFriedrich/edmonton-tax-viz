@@ -943,10 +943,13 @@ sweep itself.
 ```
 notebooks/
 ├── exploration/    # scratch — understanding the data
-└── analysis/       # deeper dives, feature work, model experiments
+├── analysis/       # deeper dives, feature work, model experiments
+└── verified/       # executable documentation — see below
 ```
 
-Notebooks are for exploration and visualization only. They call `src/` modules rather than reimplementing logic. Notebook outputs (cell results, plots) are not committed — use `nbstripout` or strip manually before committing.
+Notebooks in `exploration/` and `analysis/` are for exploration and visualization only. They call `src/` modules rather than reimplementing logic. Notebook outputs (cell results, plots) are not committed — use `nbstripout` or strip manually before committing.
+
+`verified/` is a different contract: each `.py` file there is a jupytext percent-format notebook that imports the real `src/` modules (via `main`, so input paths and the rate year are never restated), runs them in production order, and **asserts invariants rather than pinning values** — a hand-typed count like `dropped == 50` goes stale within a week, but "aggregation preserves total assessed value" holds forever. `tools/run_verified_notebooks.py` converts each to `.ipynb`, executes it, and renders HTML to `_verified/` (gitignored, regenerated) — a failing invariant fails the run, so the notebook cannot silently drift from the pipeline it documents the way `notebooks/exploration/02_pipeline_walkthrough.ipynb` did (removed once `01_money_lens.py` replaced it — it hardcoded a relative CSV path and stopped after aggregation, well before mill rates, the boundary join, or the published metric). Run it with `python tools/run_verified_notebooks.py`.
 
 ---
 
