@@ -1361,3 +1361,26 @@ branch into programs: `Roadway Maintenance`, `Snow and Ice Control`,
   **$65.671M** published.
 - **Corroborated §16's snow figures to 99.2%** — roads $36.85M + paths $30.15M =
   $67.0M vs the published `Snow and Ice Control` program $67,553,815 (FY2025).
+
+### Cross-checks it enabled on the OTHER manual reviewed inputs
+Run 2026-08-04. **None changed a committed value**; all are recorded so the
+inputs are corroborated rather than merely relayed.
+
+| repo figure | committed | portal | agreement |
+|---|---|---|---|
+| §16 total operating budget (2025) | $3,845,555,000 | $3,855,881,010 *(tax-supported)* | **99.7%** |
+| §13 `fire_response` gross (2026) | $276,706,000 | $279,264,931 *(Fire Rescue Services branch)* | **99.1%** |
+| §16 transit incl. DATS (2025) | $468,571,000 | $482,556,115 *(Edmonton Transit Service branch)* | **97.1%** |
+
+- **Fire's 0.9% gap is the portal-vs-PDF gap**, same direction and size as the
+  +1.31% seen on Parks and Roads — the repo figure is from the Approved
+  Operating Budget PDF. Not an error in either.
+- ⚠️ **Transit differs by ~3% and it is a SOURCE difference, not a mistake.**
+  The repo takes bus+LRT **$436.605M** and DATS **$31.966M** from the ETS
+  2024/2025 Annual Service Plan; the portal shows **$449.11M** and **$33.45M**
+  for the same year. **Immaterial to the map**: `cost_transit_ops_per_acre`
+  divides the budget by the pipeline's own citywide stop-event total, so a
+  uniform ~3% scales every neighbourhood identically and moves no relative
+  pattern. **Do not "fix" one source to the other** — the Annual Service Plan is
+  the one that separates bus+LRT from DATS, which is what
+  `transit_ets.chosen_numerator` requires.
