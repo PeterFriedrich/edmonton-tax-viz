@@ -962,7 +962,41 @@ The same file also carries `roadway_ops`, `bikeway_ops` and `transit_ets`, on a
   at a 50-yr life it totals **$8,900/km** for build plus all replacement; and
   against the City's own ~3%/yr set-aside rule it is **~33× low**. Full record in
   `bikeway_ops.rejected_lifecycle_reading`. **No bikeway lifecycle figure exists
-  yet** — that is an open TODO item.
+  yet** — that is an open TODO item, now blocked on ONE missing input (below).
+- **Bikeway CAPITAL = $452,065/km, sourced and verified 2026-08-04** on Peter's
+  laptop → `bikeway_capital`. Source: **Bike Plan Implementation Guide §1.2,
+  Table 3** (678 km / $306.5M; bands $365k–$790k/km by urban form),
+  construction-only and explicitly excluding maintenance. Checked, not relayed:
+  every row's implied $/km lands inside its own stated band and the $190.8M
+  City-borne subtotal reconciles. ⚠️ **This is $/km of ASSET VALUE, not a rate —
+  it is INERT**, read by nothing (`load_unit_costs` still returns its same 5
+  keys; a test-equivalent assertion is that adding the block left all 560 tests
+  passing).
+- ⚠️ **THE ONLY THING STILL MISSING IS A SERVICE LIFE, AND EDMONTON DOES NOT
+  PUBLISH ONE** for bikeways or shared pathways. Searched 2026-08-04: the
+  Development Impact page (roads + fire stations only), both Bike Plan PDFs, the
+  2025 Infrastructure Report, the Infrastructure State-and-Condition / Inventory
+  / Tools pages, the 2023 Capital Asset Management Audit. The Bike Plan's own
+  action **9.6.2(a) is to *"establish"* a bikeway asset-management program** —
+  the City flagged it as not yet existing. ⚠️ **Do NOT press the sidewalk
+  figure into service:** *"amortized for 20 years"* on the sidewalk-
+  reconstruction page is a **local-improvement tax levy term, not an asset
+  life** — the same category error as the $178/km reading.
+- ⚠️ **THE 3% SET-ASIDE RULE DOES NOT TRANSFER TO BIKEWAYS** — it is tempting as
+  a way around the missing life, and this project's own numbers falsify it. At
+  roads' implied 3.33%/yr, $452,065/km allows **$15,069/km/yr** for all O&M plus
+  renewal, but measured `bikeway_ops` is **$20,278/km/yr — 1.35× that entire
+  allowance** before any capital renewal. Bikeway cost tracks a winter **service
+  standard**, not asset value. (The rule is asset-specific in the source anyway:
+  fire stations get *"at least 6%"*.)
+- ⚠️ **A THIRD numerator/denominator mismatch, direction KNOWABLE this time.**
+  Table 3 blends the **future** facility mix; `bike_m_per_acre` measures the
+  **existing** stock, which is **82.2% Shared Pathway and 89.8% off-road**, with
+  only **0.8% Local Street Bikeway** — the cheap on-street types the blend leans
+  on. So $452,065/km most likely **understates** our network's replacement
+  value. Cross-check, not a competing value: the $100M Active Transportation
+  Network Expansion over 68 km is **~$1.47M/km**, but that is a whole-program
+  budget (design, contingency, land) in the dearer inside-Henday contexts.
 - ⚠️ **Two rate/denominator mismatches, recorded not absorbed.** The bike snow
   rate blends over a ~1,500 km network the source defines as *"bike lanes,
   multi-use paths, public pedestrian squares, bus stops, LRT platforms, and
