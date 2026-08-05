@@ -4,7 +4,9 @@ How the numbers on [the map](https://peterfriedrich.github.io/edmonton-tax-viz/)
 are made — in one place, written for a reader checking the work rather than
 building it. Every figure here is reproducible from open data with the code in
 this repository; deeper detail lives in the linked `FINDINGS_*` documents, each
-of which names the script that regenerates its numbers.
+of which names the script that regenerates its numbers. To see the pipeline
+actually run against this week's data, rather than read about it, see
+[`docs/VERIFICATION.md`](VERIFICATION.md).
 
 ## 1. The core metric: municipal revenue (or assessed value) per acre
 

@@ -11,7 +11,7 @@
 //      stale each January (docs/RUNBOOK.md year-roll).
 //   3. The caveat the project must not bury: revenue and the utility layers are
 //      MODELLED, not billed.
-//   4. Methods + repo links are real, absolute and target=_blank.
+//   4. Methods + verification + repo links are real, absolute and target=_blank.
 //   5. The two bottom-right popovers never sit open at once (they'd overlap).
 //   6. It survives a missing/broken status.json — the credit still reads.
 //   node verify-about.js <url>
@@ -134,8 +134,10 @@ const [url] = process.argv.slice(2);
 
   // --- 4. links ------------------------------------------------------------
   const methods = p.links.find(l => /METHODS\.md$/.test(l.href || ''));
+  const verification = p.links.find(l => /VERIFICATION\.md$/.test(l.href || ''));
   const repo = p.links.find(l => /edmonton-tax-viz\/?$/.test(l.href || ''));
   check('methods link present', !!methods, methods && methods.href);
+  check('verification link present', !!verification, verification && verification.href);
   check('repo link present', !!repo, repo && repo.href);
   check('all links absolute https', p.links.every(l => /^https:\/\//.test(l.href)));
   check('all links open in a new tab with noopener',

@@ -120,6 +120,18 @@ jobs:
         if: steps.yearcheck.outputs.result != 'hold'
         run: python scripts/check_served_columns.py
 
+      # notebooks/verified/ (docs/VERIFICATION.md) re-runs the real src/ pipeline
+      # independently, narrated for a human reader, and asserts invariants against
+      # THIS run's data — a second, differently-shaped recomputation of the numbers
+      # the site is about to publish. A failing invariant here means the pipeline
+      # disagrees with itself, so like the guards above it blocks the commit rather
+      # than shipping a page nobody checked. Renders to web/verified/, which is DATA
+      # (regenerated every run, same as web/data) rather than CODE — see deploy.yml's
+      # path exclusion, which exists for exactly this reason.
+      - name: Run verified notebooks (guard before publish)
+        if: steps.yearcheck.outputs.result != 'hold'
+        run: python tools/run_verified_notebooks.py --out-dir web/verified
+
       # Temporal lens Phase 0 gate (docs/SPEC_temporal.md §0.3). Watches the
       # historical assessment file for the failure that produced the 2024/2025
       # defect: a settled year quietly losing accounts. Like every guard here it
@@ -157,6 +169,10 @@ jobs:
           # Stage web/data — deploy.yml excludes web/data/**, so this is what
           # keeps a PAT-authenticated push from triggering a second deploy.
           git add web/data
+          # ...and the rendered verified notebooks — DATA in the same sense as
+          # web/data, just excluded from deploy.yml's trigger under its own path
+          # (web/verified/**) rather than living outside web/ entirely.
+          git add web/verified
           # ...and the temporal archive, which is NOT under web/. It has to be
           # committed or the capture dies with the runner and the live year is
           # lost at the next roll-forward — the exact loss the archive exists to

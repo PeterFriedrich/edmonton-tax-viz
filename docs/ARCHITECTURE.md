@@ -885,16 +885,18 @@ tests/
 
 Tests use `pytest`. All fixtures are synthetic — small inline DataFrames/GeoDataFrames. No real data files required, since raw data is not committed.
 
-### The three tiers, and which failures each can see
+### The four tiers, and which failures each can see
 
 `pytest` covers the pipeline modules. It cannot see a *render* failure, so two
-browser-driven tiers sit above it in `tools/profiling/`:
+browser-driven tiers sit above it in `tools/profiling/`; a fourth, non-browser
+tier sits alongside them for a human reader rather than CI:
 
 | tier | what it can catch | when it runs |
 |---|---|---|
 | `pytest` | pipeline logic, schema contracts | every CI run |
 | `verify-*.js` (29 scripts) | UI behaviour, layout, per-feature contracts. **Carry literals calibrated to a data snapshot**, so they are for the CODE path | locally + before merging |
 | `verify-smoke.js` | the render surviving a DATA change. **Invariant-only — nothing pinned to a value** | **`refresh.yml`, gating the weekly publish** |
+| `notebooks/verified/*.py` (via `tools/run_verified_notebooks.py`) | the pipeline producing correct numbers on real data, narrated for a human to read rather than a machine to gate on. **Invariant-only, same discipline as `verify-smoke.js`** — but rendered to HTML, not pass/fail | locally, on demand, **and `refresh.yml`**, gating the weekly publish alongside `verify-smoke.js` (renders to `web/verified/`, published per `docs/VERIFICATION.md`) |
 
 ⚠️ **The split is the point, not duplication.** The suite's pinned literals are
 what makes it useful against code changes and *unusable* weekly — one went red on
