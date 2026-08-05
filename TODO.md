@@ -113,20 +113,6 @@ Also removed a duplicated preamble block left in this file by the
     lifecycle roads term. Until then the two bases stay separated by the `_ops`
     suffix, and that separation is load-bearing (~10.8× on the same metres).
 
-- [ ] **▶ PUBLISH THE ROADS-MAINTENANCE CORRECTION** — the value is fixed in
-  `data/city_budget_context.json` (2026-08-04) but **the live site still shows
-  the old, ~5×-low figure**. Budget figures reach the frontend only when
-  `refresh.yml` reruns `generate_status.py`.
-  - **After the PR merges:** either wait for the Monday run or dispatch by hand
-    per **`docs/RUNBOOK.md` §3d** (`gh workflow run refresh.yml --ref master`,
-    ~20 min — quirk pppp).
-  - **Then verify against production:** `verify-about.js` recomputes all four
-    shares from the published dollars, so it should print roads at **2.67%**,
-    not 1.33%, and show **no asterisk** on the maintenance cell.
-  - ⚠️ **Never hand-run `generate_status.py` and commit it** — it stamps
-    `last_checked` with a freshness check that never happened, and the staleness
-    banner reads that field.
-
 - [ ] **⚠️ `--geojson-out /tmp/x.geojson` DOES NOT MAKE A LOCAL `main.py` RUN
   SAFE — the DATA VINTAGE item below says it does, and that advice is wrong.**
   The flag redirects only the main GeoJSON. A full run on 2026-08-03 still wrote
@@ -1221,6 +1207,8 @@ Also removed a duplicated preamble block left in this file by the
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
 
 - [x] **Tighten the cardinality-guard bands — DONE 2026-08-05, and the item's premise was half wrong, so only FOUR of the six moved.** The variance data turned out to exist in a place nobody had looked: **the guard logs every anchor value in CI**, harvested from the refresh runs' job logs. ⚠️ **Five runs but only THREE independent data changes** — the 2026-08-02 and 08-05 runs committed `status.json` only, so their readings re-measure unchanged input. **Four anchors were effectively frozen** (`dup_parcel_points` constant at 33, `lot_needle_ratio` 0.00%, `dedupe_effect_pct` 0.01%, `dup_parcel_value_frac` 0.11%) and were tightened **2×**, to ±25%. ⚠️ **The other two are not noisy, they are TRENDING** — `ineligible_points` 56→58→60 and `ineligible_value_frac` 0.00517→0.00575→0.00633, monotonic, in the guard's own **dangerous** direction — and were **left wide on purpose**: tightening them would red the weekly publish on the next real data change and read as a false alarm. ⚠️ **The item's prescribed mechanism could not express this** — `--write-baseline --tolerance` applies ONE global tolerance to every anchor, so the bands are now hand-set per anchor and that flag would flatten them; the baseline says so in `_bands_are_per_anchor`. **Not tightened further than ±25% because no observation across a January year-roll exists yet**, which is the event the guard was built for. Three new tests pin all of it, and the tightening test was **falsified against the old baseline first**. The drift became its own open item. — 2026-08-05 · `docs/TODO_archive.md`
+
+- [x] **Publish the roads-maintenance correction — DONE 2026-08-05, verified against PRODUCTION.** `refresh.yml` dispatched by hand per RUNBOOK §3d (run `30966755798`, success). The live pod now prints roads at **$103M · 2.7%** with **no asterisk**, was $50.985M · 1.33% with one; `transit:roads` reads **4.6×**. `verify-about.js` against the public root: **ALL CHECKS PASSED** — all four shares recomputed independently from the published dollars, pod still fits at 900/800/768/720px. ⚠️ **The refresh committed `status.json` ONLY** (`8ca6e8f`), i.e. no source data changed on this run — which is what made it a clean publish of the manifest edit and nothing else. — 2026-08-05 · `docs/TODO_archive.md`
 
 - [x] **Source the derived $14.135M roads-maintenance figure — CLOSED 2026-08-04, and the derived figure was ~5× TOO LOW, live on a public page.** Replaced with **$65,671,000**, the Open Budget portal's `Roadway Maintenance` program (FY2017). ⚠️ **The item said "the one soft number in that table"; it was a wrong one.** The derived value was `$1,285/km × ~11,000 km` — a narrow unit rate multiplied across the whole network; the published program implies **~$5,900/km**. Roads moves **1.33% → 2.67%** of the operating budget and transit:roads **9.2× → 4.6×**. ⚠️ **The error was in OUR derivation, not the Taproot source** — that source's *totals* reconcile: roads snow $36.85M + path snow $30.15M = **99.2%** of the portal's published `Snow and Ice Control` program, and **that contrast is what exposed the maintenance line**. **2017 is the only year Edmonton ever published a roads-only maintenance program** (re-cut in 2018 into a line that also covers sidewalks and pathways — using it would double-count this table's own rows — and again in 2026), so Peter chose clean scope over matching vintage. New **`DATA.md` §17** documents the portal, including its **two rename eras** and a **+1.31% portal-vs-PDF** gap. ⚠️ **Not yet on the live site** — budget figures ship only when `refresh.yml` reruns `generate_status.py`; see the open publish item. — 2026-08-04 · `docs/TODO_archive.md`
 
