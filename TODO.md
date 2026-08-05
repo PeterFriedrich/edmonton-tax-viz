@@ -83,11 +83,32 @@ Also removed a duplicated preamble block left in this file by the
     `city_unit_costs.json` → `bikeway_ops.rejected_lifecycle_reading`; the
     shortest version is that the same source puts snow clearing on the same
     network at **113× it**.
-  - **What would close this:** a primary edmonton.ca **capital $/km for a
-    multi-use path or bikeway, plus a service life**, derived exactly the way
-    `roadway_om_renewal` was ($600k O&M + $1.9M renewal per km over a 50-year
-    life → $50/m/yr). Peter/laptop — DATA.md §13 records edmonton.ca as
-    unreachable from the Oracle box.
+  - ✅ **THE CAPITAL HALF IS DONE (2026-08-04, on the laptop).** Bike Plan
+    Implementation Guide §1.2 **Table 3** → **$452,065/km** blended
+    (bands $365k–$790k by urban form), construction-only. Verified rather than
+    relayed — every row's implied $/km sits inside its own stated band and the
+    $190.8M City-borne subtotal reconciles. Recorded as `bikeway_capital` in
+    `city_unit_costs.json`, **deliberately INERT** (nothing reads it; it is $/km
+    of asset value, not a rate). **Do not re-hunt this source.**
+  - ⚠️ **WHAT IS ACTUALLY BLOCKING: A SERVICE LIFE, AND EDMONTON PUBLISHES
+    NONE.** Searched 2026-08-04 across the Development Impact page, both Bike
+    Plan PDFs, the 2025 Infrastructure Report, the Infrastructure
+    State-and-Condition / Inventory / Tools pages and the 2023 Capital Asset
+    Management Audit. The Bike Plan's action **9.6.2(a) is to *"establish"* a
+    bikeway asset-management program** — the City says outright it does not have
+    one. **This is not a search that was done badly; it is a number that does
+    not exist publicly.** Reopening it means a FOIP/direct-contact route, or
+    Peter choosing a life by decision the way he chose 50 years for roads.
+  - ⚠️ **Two shortcuts around the missing life are already closed off.** (a) The
+    sidewalk page's *"amortized for 20 years"* is a **local-improvement levy
+    term, not an asset life.** (b) The **~3% set-aside rule does not transfer**
+    — at roads' implied 3.33%/yr the allowance is $15,069/km/yr, but measured
+    `bikeway_ops` is **$20,278/km/yr, 1.35× the whole allowance** before any
+    renewal. Both recorded in `bikeway_capital`.
+  - **For scale, if it is ever derived:** across a 20–50 yr life the answer is
+    **$29–43/m/yr, i.e. 0.6–0.9× roads' $50** — the result is insensitive to the
+    life because the $20.278/m/yr ops floor dominates. Compare the rejected
+    reading's **1/281×**. ⚠️ These are illustrative, **not a shipped number**.
   - **Only then** can a lifecycle bikeway term sit beside `svc_cost_per_acre`'s
     lifecycle roads term. Until then the two bases stay separated by the `_ops`
     suffix, and that separation is load-bearing (~10.8× on the same metres).
