@@ -12,6 +12,10 @@ year-alignment check → `main.py --skip-png` → commit `web/data/` → deploy
 **Failure is safe by default** — any failed run leaves the site serving the
 last committed data. Nothing here is ever a same-day emergency.
 
+**Also unattended:** `.github/workflows/vintage-digest.yml`, 1st of the month
+14:00 UTC — files a GitHub issue answering *"what needs my attention?"* (§0
+below). Report-only; it changes nothing and can't break the site.
+
 **Two deploy paths (don't confuse them):** `refresh.yml` is the DATA path above.
 `.github/workflows/deploy.yml` is the CODE path — it fires on any push to
 `master` that touches site code (`web/**`, minus `web/data/**`) and just
@@ -27,6 +31,44 @@ refresh.yml); if only data is stale, that's refresh.yml.
   `generated`, `banner`, GeoJSON SHA-256)
 
 ---
+
+## 0. The monthly digest (the one that reaches you first)
+
+**What it is:** on the 1st of each month, `.github/workflows/vintage-digest.yml`
+runs `scripts/vintage_report.py` and files a GitHub issue titled
+`✅ Vintage & pin digest — YYYY-MM-DD` (or `⚠️` if something needs doing).
+GitHub's own notification is the email — **no SMTP credential in this repo**,
+which keeps `HEARTBEAT_TOKEN` the only secret.
+
+**Read the title.** ⚠️ means at least one row needs a human; action rows sort to
+the top of the table and each names the RUNBOOK step that resolves it. Close the
+issue when you've acted, or immediately if it's green.
+
+**An issue is filed every month even when all-green, on purpose** — a digest
+that only speaks up when something is wrong is indistinguishable from one that
+has silently stopped running. Green months are the proof of life.
+
+**What it checks** (all report-only; it never writes data or gates anything):
+
+| Check | Fires when | Fix |
+|---|---|---|
+| Assessment roll year | Socrata's roll year has moved past `ASSESSMENT_YEAR` | §1, whole checklist |
+| Mill rates | a year ≥ the pin is published upstream but absent from `mill_rates.json` | §1 step 2 |
+| Year constants | `DATA_YEAR`/`RATE_YEAR` disagree with `ASSESSMENT_YEAR` | §1 step 6 |
+| Stormwater rates | no entry for the pinned year | §1 step 5 |
+| Pinned activity windows | a calendar year completed and `FIRE_YEARS`/`PERMIT_YEARS`/`PERMIT_YEARS_RECENT` still end before it | §1 step 4 |
+| Temporal archive | the live year was never captured | §1 step 8 |
+| Site banner | a banner is up in `status.json` | §1 step 10 |
+
+⚠️ **A network failure reports `❓ UNKNOWN`, never `⚠️ ACTION`** — same rule as
+`check_year_alignment.py`: a guard must not manufacture an alarm out of an
+unreachable source. A `❓` row means *go look by hand*, not *something is wrong*.
+
+**Why it exists:** every other guard here fires on the weekly refresh and gates
+work already in flight. Nothing told anyone, unprompted, that an upstream year
+had moved — so the 2026 mill rates sat published from **2026-04-29 to
+2026-08-06** before someone thought to look. Run it any time with
+`python scripts/vintage_report.py` (or the "Run workflow" button).
 
 ## 1. The January year roll (the recurring one)
 
