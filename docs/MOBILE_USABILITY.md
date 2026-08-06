@@ -54,6 +54,28 @@ with near-zero risk to the tuned desktop experience.
 
 ## 2. Current state — CONFIRMED (render pass, iPhone-13-class 390×844, touch)
 
+> **⚠️ 2026-08-06 — THE FIRST TOUCH-ONLY REGRESSION TO REACH PRODUCTION, and
+> the lesson is about where a view rule gets written, not about layout.**
+> Gating the assessment-history panel out of the Services lens was written into
+> `temporalFor()`, the shared **data** accessor. **The peek card gates on the
+> same function**, and because §2b's confirmed fix suppresses `.tip` on touch,
+> that card is **the only per-hood readout a phone has** — so Services went to
+> *no tooltip and no card*: tapping a neighbourhood returned nothing at all.
+> Desktop was completely unaffected, which is why it read as fine.
+> - **Nothing in the verify suite caught it.** The suite covers the card
+>   (`verify-peek.js`) and covers Services (`verify-services.js`), but had no
+>   case for **the card in a view with no panel** — a per-view × per-surface
+>   combination, which is exactly the gap `CONTROLS_MATRIX.md` exists to make
+>   visible. `verify-peek.js` now owns that case and is falsified against the
+>   broken build.
+> - **The standing rule this produces:** any change that can stop `#peek`
+>   opening is a **mobile-outage** change, not a cosmetic one. Desktop keeps its
+>   tooltip and shows nothing wrong. Test it on `hasTouch` before believing it.
+> - ⚠️ **The harder half was the deliberate opt-in** (`panelByChoice`): it
+>   routes a tap *past* the card straight to pinning, so a fix verified from a
+>   fresh load still left the tap dead once the user had opted in. A touch check
+>   that only ever runs from a clean state is not covering touch.
+
 > **2026-08-02 — two changes that landed on the phone without needing a phone
 > form, and one that was a phone bug all along.**
 > - **The change lens moved onto the map surface.** `#moneymode` (Current |
