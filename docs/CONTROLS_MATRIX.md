@@ -112,7 +112,7 @@ lenses" pass.
 | **Ratio** view | ❌ _(locked 2026-07-28)_ | ✅ |
 | **Uses** view (dominant zoned land use) | ❌ _(locked 2026-07-28)_ | ✅ |
 | **Infill** lens on Development | ❌ | ✅ |
-| **Assessment-history panel + hover sparkline + `#hoodmode`** | ✅ _(promoted 2026-07-31)_ | ✅ |
+| **Assessment-history panel + hover sparkline + `#hoodmode`** | ✅ _(promoted 2026-07-31)_ | ✅ | _(⚠️ all three absent in **Services** as of 2026-08-06 — no panel there yet)_ |
 | **Change over time** lens on Money (`#moneymode` / `#chgwindow`) | ✅ _(promoted 2026-07-31)_ | ✅ |
 | **`#peek`, the touch-only peek card** | ✅ | ✅ | _(gated on `(hover: none)`, not on build — invisible to every mouse in both)_ |
 | **Industrial** metric on Development | ❌ | ✅ |
@@ -175,19 +175,31 @@ a fallen-into panel takes one press to KEEP and a second to leave),
 label-is-the-state like
 `#coloradj` and sitting directly **above** it (moved 2026-07-31 — `#coloradj`
 must stay the panel's last child; `verify-coloradj.js` asserts it, and adding a
-pod after it went unnoticed for two sessions). Applies in **every view**;
-**PUBLIC as of 2026-07-31** (was full-build only), and **hidden until
-`web/data/temporal.json` loads** — with no panel to switch to, the control would
-offer a mode that does not exist. **The data gate is now the only gate**, which
-is the half that mattered: both builds degrade identically if the file is gone.
+pod after it went unnoticed for two sessions). **PUBLIC as of 2026-07-31** (was
+full-build only), and **hidden until `web/data/temporal.json` loads** — with no
+panel to switch to, the control would offer a mode that does not exist.
+
+⚠️ **NO LONGER "every view" (2026-08-06): hidden in SERVICES**, which has no
+hood panel. The data gate is therefore no longer the only gate — both
+conditions live in `syncHoodModePod()` (`temporalData && hoodPanelLens()`) so
+the reveal and the per-view rule cannot drift apart. The same view test makes
+`applyHoodMode` refuse panel mode outright there, so the pod's absence is an
+invariant rather than a hidden-but-reachable state. Rationale and the
+regression that forced it: `DECISIONS.md` 2026-08-06.
 
 It is the one control that changes **what the tooltip contains**: in panel mode
-every view's hover collapses to its **headline number only**, and the temporal
+a view's hover collapses to its **headline number only**, and the temporal
 sparkline + "click to pin" hint drop out. ⚠️ **That reduction is per-view
 explicit, NOT "row 0" of the tooltip** — services' rows lead with road metres
 whenever roads are present regardless of which service drives the ramp, so a
 positional rule would print road supply under a stormwater-coloured map.
-Services' headline reads `state.svcDriver`.
+Services' headline reads `state.svcDriver` (still true wherever `primaryRow` is
+used — the peek card uses it too).
+
+⚠️ **The reduction is itself gated on the view having a panel (2026-08-06).**
+It is a TRADE — tooltip detail for a panel that carries it — so where no panel
+opens it is not a reduction, it is a deletion. In Services the hover stays full
+even when `state.hoodMode` is still `"panel"` from another view.
 
 **`#temporal`, the pinned hood panel (2026-07-29), is the surface it governs** —
 and it is no longer tier-less. ⚠️ **It is no longer the assessment-history panel
@@ -196,9 +208,15 @@ zone-revenue breakdown instead**, and the history belongs to Value, which is wha
 it describes. One element, two modes (`renderHistory` / `renderRevenueMix`), so
 the three dismissals and the phone bottom-sheet form are shared rather than
 duplicated. **Three surfaces advertise it and all three follow the lens:**
-`#peek-go`, `#temporal-hint`, and the tooltip's invite. It appears in every view,
-in **both builds** (public as of 2026-07-31), and is still the only surface
-openable by clicking **the map itself**. It is
+`#peek-go`, `#temporal-hint`, and the tooltip's invite. ⚠️ **It no longer
+appears in every view (2026-08-06): SERVICES has no panel** — it is getting a
+service-specific one — so there it is taken off screen entirely rather than
+left on its empty prompt, and all three advertisements go with it (`#peek-go`
+hides; the map click and the card's commit are inert). An empty panel whose
+prompt still says *"click a neighbourhood to see its assessment history"* over a
+lens where clicking does nothing is the same class of lie the per-lens prompt
+text exists to prevent. It is in **both builds** (public as of 2026-07-31), and
+is still the only surface openable by clicking **the map itself**. It is
 in `CHROME_IDS`, so the label sweep dodges it while open. Three dismissals with
 deliberately different scopes: the **×** clears the pinned hood (content),
 **Escape** and **`#hoodmode`** leave the mode. Design and the two rendering
@@ -213,7 +231,22 @@ alongside `#temporal`. **It shows the view's FULL readout** (2026-08-01) — the
 same rows `viewTooltip` gives a mouse, minus the heading it prints itself — so
 the view × sub-metric state space above governs the card's contents exactly as it
 governs the hover's. Before that it showed the headline only, which on touch
-(where `.tip` is suppressed) left a phone one line per lens. ⚠️ **Two of its rules deliberately invert `#temporal`'s**
+(where `.tip` is suppressed) left a phone one line per lens.
+
+⚠️ **IT MUST OPEN IN EVERY VIEW, INCLUDING THE ONES WITH NO PANEL BEHIND IT.**
+Because `.tip` is suppressed on touch, this card is the **only per-hood readout
+a phone has** — so anything that stops it opening does not degrade the lens, it
+*deletes* it. That shipped to production on 2026-08-06: the Services history-panel
+gate was written into `temporalFor()`, the shared **data** accessor, which the
+card also tests, and tapping a neighbourhood in Services returned nothing at all.
+**Panel-ness is a property of the VIEW (`hoodPanelLens()`); having history is a
+property of the DATA (`temporalFor()`) — never conflate them.** Where there is
+no panel the card still opens, `#peek-go` hides, and its own tap is a plain
+dismissal. ⚠️ Note the harder half: the **deliberate opt-in** (`panelByChoice`)
+normally routes a tap past the card straight to pinning, so views with no panel
+must take the card path *regardless of the opt-in* or the tap dies on an inert
+pointer path. `verify-peek.js` covers the whole case and is falsified against
+the broken build. ⚠️ **Two of its rules deliberately invert `#temporal`'s**
 and should not be "made consistent": an empty-map tap **dismisses** the card
 (the panel is inert there — that rule protects a surface you asked for), and
 re-tapping the shown hood is a **no-op** rather than a toggle, because a touch
