@@ -2962,8 +2962,14 @@
       && !!p && p.total_revenue != null && revenueMix(p).length > 0;
 
     // Decoded series for one hood, or null when the lens can't speak for it
-    // (no file, public build, or a name with no history row).
+    // (no file, public build, a name with no history row, or a view this
+    // panel doesn't apply to). Services is excluded on purpose (Peter,
+    // 2026-08-05): it wants its own service-specific panel later, and until
+    // that exists a hood click here must not steal the tooltip/panel into
+    // the assessment-history reading — every caller (temporalClick,
+    // syncPinnedPanel, the tooltip sparkline) gates on this one function.
     function temporalFor(name) {
+      if (state.view === "services") return null;
       if (!temporalData) return null;
       const rows = temporalData.hoods[name];
       if (!rows) return null;
@@ -3675,10 +3681,11 @@
       return { className: "tip", html };
     }
 
-    // The sparkline rides on EVERY view's tooltip, appended here rather than in
-    // the six branches above. A hood's assessment history is a fact about the
-    // neighbourhood, not about the lens you happen to be in, and one wrapper is
-    // a smaller change than six edits that must then stay in step.
+    // The sparkline rides on every OTHER view's tooltip (Services excepted —
+    // see temporalFor), appended here rather than in the branches above. A
+    // hood's assessment history is a fact about the neighbourhood, not about
+    // the lens you happen to be in, and one wrapper is a smaller change than
+    // separate edits that must then stay in step.
     //
     // It also carries the only hint that clicking does anything — click-to-pin
     // is undiscoverable otherwise, the same reason the compass exists as visible
