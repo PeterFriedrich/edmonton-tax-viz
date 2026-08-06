@@ -399,6 +399,66 @@ const closeBox = page => page.evaluate(() => {
     s = await snap(page);
     check('touch: tapping the x un-pins', s.pinned === null, `pinned=${s.pinned}`);
 
+    // ---- A VIEW WITH NO PANEL (Services) ---------------------------------
+    // ⚠️ THE REGRESSION THIS BLOCK EXISTS FOR SHIPPED TO PRODUCTION (2026-08-06)
+    // AND EVERY OTHER SCRIPT IN THE SUITE PASSED THROUGH IT. Gating the history
+    // panel out of Services was done inside temporalFor(), the shared data
+    // accessor -- which also gates the card. On touch there is no tooltip at all
+    // (claim 5b above), so the card is the ONLY per-hood readout, and the lens
+    // became unreadable on a phone: tap a neighbourhood, get nothing.
+    //
+    // Note the deliberate opt-in is STILL ARMED here (the block above pressed
+    // #hoodmode-btn). That is the harder half: with panelByChoice set, the tap
+    // skips the card branch entirely and falls through to a pointer path that
+    // has no panel to open -- so "it works from a fresh load" is not enough.
+    await page.evaluate(async () => { await applyView('services'); });
+    await page.waitForTimeout(1200);
+    const svc = await page.evaluate(() => ({
+      podShown: document.getElementById('hoodmode').offsetParent !== null,
+      panelOpen: document.getElementById('temporal').classList.contains('open'),
+      optedIn: panelByChoice,
+    }));
+    check('services: the readout-mode pod is hidden (no panel to choose)',
+      !svc.podShown);
+    check('services: the history panel is off screen, not left on its prompt',
+      !svc.panelOpen);
+    check('services: the deliberate opt-in is still armed (the hard case)',
+      svc.optedIn === true, `panelByChoice=${svc.optedIn}`);
+
+    await gesture(page, t[0].x, t[0].y, true);
+    s = await snap(page);
+    check('*** services: a tap STILL opens the card (the only readout on touch) ***',
+      s.peekShown && s.peekName === t[0].name,
+      `peek=${s.peekShown} name=${s.peekName}`);
+    check('services: the card carries the SERVICE rows, not the money lens\'s',
+      /road m \/ acre/.test(s.peekRead) && !/revenue is residential/.test(s.peekRead),
+      s.peekRead.replace(/<[^>]*>/g, '').slice(0, 60));
+    check('services: no panel was opened behind it', !s.panelOpen && s.pinned === null,
+      `panel=${s.panelOpen} pinned=${s.pinned}`);
+    check('services: the card hides its "see the panel" invitation',
+      await page.evaluate(() =>
+        document.getElementById('peek-go').offsetParent === null));
+
+    // Tapping the card must not strand the phone: no panel exists to commit to,
+    // so the tap is a plain dismissal rather than a trip to an empty box.
+    const svcCard = await page.evaluate(() => {
+      const r = document.getElementById('peek').getBoundingClientRect();
+      return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+    });
+    await page.touchscreen.tap(svcCard.x, svcCard.y);
+    await page.waitForTimeout(1000);
+    s = await snap(page);
+    check('services: tapping the card dismisses it and opens NO empty panel',
+      !s.peekShown && !s.panelOpen, `peek=${s.peekShown} panel=${s.panelOpen}`);
+
+    // Leaving the lens must not leave the previous lens's numbers on screen.
+    await gesture(page, t[0].x, t[0].y, true);
+    await page.evaluate(async () => { await applyView('money'); });
+    await page.waitForTimeout(1000);
+    s = await snap(page);
+    check('*** the card does not survive a lens change with stale numbers ***',
+      !s.peekShown, `peek=${s.peekShown}`);
+
     await ctx.close();
   }
 

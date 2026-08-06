@@ -2961,15 +2961,21 @@
     const revenuePanelFor = p => revenueLens()
       && !!p && p.total_revenue != null && revenueMix(p).length > 0;
 
+    // Whether the pinned-hood PANEL (assessment history / revenue mix) applies
+    // to the current view. Services has none yet — it is getting a
+    // service-specific one (Peter, 2026-08-05) — so nothing may open it there.
+    //
+    // ⚠️ DELIBERATELY NOT FOLDED INTO temporalFor, which was the first attempt
+    // and shipped a live regression: gating the ACCESSOR also killed the touch
+    // PEEK CARD, and on a phone that card is the only per-hood readout there is
+    // (tooltipFor returns null when noHover()), so Services became unreadable —
+    // no tooltip AND no card. Panel-ness is a property of the VIEW; having
+    // history is a property of the DATA. They must stay separate tests.
+    const hoodPanelLens = () => state.view !== "services";
+
     // Decoded series for one hood, or null when the lens can't speak for it
-    // (no file, public build, a name with no history row, or a view this
-    // panel doesn't apply to). Services is excluded on purpose (Peter,
-    // 2026-08-05): it wants its own service-specific panel later, and until
-    // that exists a hood click here must not steal the tooltip/panel into
-    // the assessment-history reading — every caller (temporalClick,
-    // syncPinnedPanel, the tooltip sparkline) gates on this one function.
+    // (no file, public build, or a name with no history row).
     function temporalFor(name) {
-      if (state.view === "services") return null;
       if (!temporalData) return null;
       const rows = temporalData.hoods[name];
       if (!rows) return null;
@@ -3224,6 +3230,15 @@
     // when neither mode can speak: a revenue breakdown left sitting under a
     // value map is a silent-correctness failure, not a cosmetic one.
     function syncPinnedPanel() {
+      // Views with no panel take it off screen entirely rather than leaving the
+      // empty prompt up. The prompt invites a click, and in Services that click
+      // now does nothing — a standing invitation the app cannot honour is the
+      // same class of lie the per-lens prompt text below exists to prevent.
+      if (!hoodPanelLens()) {
+        pinnedHood = null;
+        document.getElementById("temporal").classList.remove("open", "empty");
+        return;
+      }
       // The empty-state prompt names the panel it is a prompt FOR, so entering
       // panel mode on the revenue map does not promise history.
       document.getElementById("temporal-hint").textContent = revenueLens()
@@ -3250,6 +3265,15 @@
       if (labelPool().length) overlay.setProps({ layers: buildLayers() });
     }
 
+    // The readout-mode pod is offered only where BOTH destinations exist: the
+    // history file has to have loaded (that is what reveals it at all) AND the
+    // view has to have a panel. Two conditions, one place, so the reveal and
+    // the per-view rule cannot drift apart.
+    function syncHoodModePod() {
+      document.getElementById("hoodmode").style.display =
+        (temporalData && hoodPanelLens()) ? "flex" : "none";
+    }
+
     // Where a hood's detail appears. Leaving panel mode takes the panel with it;
     // entering it opens the panel immediately — on its prompt if nothing is
     // pinned, since a button that appears to do nothing reads as broken.
@@ -3257,6 +3281,11 @@
     // Leaving panel mode always clears it, so the flag can never outlive the
     // mode it describes.
     function applyHoodMode(mode, byChoice = false) {
+      // Panel mode needs a panel. Every caller is already gated for the views
+      // that have none, and the pod that reaches this is hidden there — but the
+      // invariant belongs at the source, so no future caller can reopen the
+      // empty box (and the stale prompt inside it) by accident.
+      if (mode === "panel" && !hoodPanelLens()) return;
       // Re-entering the mode you are already in is a no-op — EXCEPT when the
       // button is CONFIRMING a panel you fell into via the peek card. Arriving
       // that way leaves the label already reading "panel", so a plain toggle
@@ -3329,8 +3358,13 @@
       const tip = viewTooltip({ object: { properties: p } }, false);
       document.getElementById("peek-read").innerHTML = tip ? tip.html : primaryRow(p);
       // The card's invitation has to name the panel it actually opens — on the
-      // revenue metrics that is the zone breakdown, not the history.
-      document.getElementById("peek-go").textContent =
+      // revenue metrics that is the zone breakdown, not the history. Where no
+      // panel exists at all (Services), the invitation is hidden rather than
+      // reworded: an affordance that opens nothing is worse than none, and the
+      // card is still a complete readout without it.
+      const go = document.getElementById("peek-go");
+      go.style.display = hoodPanelLens() ? "" : "none";
+      go.textContent =
         revenuePanelFor(p) ? "See revenue breakdown ›" : "See assessment history ›";
       document.getElementById("peek").classList.add("open");
       // Same reason as the panel: the card is a new obstacle for the label
@@ -3369,14 +3403,22 @@
       // pinning -- the stray-tap problem came back after the first hood. The
       // deliberate route (#hoodmode-btn) is the only one that earns it now
       // (Peter, 2026-07-31: "unless they go and explicitly find that option").
-      if (noHover() && !panelByChoice) {
+      // ⚠️ `|| !hoodPanelLens()`: the one-tap-pin shortcut the opt-in buys is a
+      // shortcut TO THE PANEL, so in a view that has none it is not a shortcut,
+      // it is a dead end — the tap would fall through to the pointer branch and
+      // do nothing at all, leaving a phone with no readout. Views without a
+      // panel always take the card path, opted in or not.
+      if (noHover() && (!panelByChoice || !hoodPanelLens())) {
         // A tap on empty map dismisses the CARD and leaves any open panel
         // alone -- the opposite of the pinned panel's rule below, and
         // deliberately so: that rule protects a surface you asked for from a
         // stray tap or the tail of a drag, while this is a cheap preview you
         // can reopen with one tap. Tapping away is also how the same card is
         // dismissed on Google and Apple Maps.
-        if (!name || !temporalFor(name)) { closePeek(); return; }
+        // ⚠️ The card must open in views with NO panel behind it too. It is the
+        // only per-hood readout a phone has, so requiring history here is what
+        // made Services unreadable on touch.
+        if (!name || (hoodPanelLens() && !temporalFor(name))) { closePeek(); return; }
         // A DIFFERENT hood closes the panel rather than swapping its contents
         // (Peter's call, 2026-07-31): the card is then the only readout on
         // screen, so the preview is never competing with a stale panel above
@@ -3385,7 +3427,9 @@
         openPeek(object.properties);
         return;
       }
-      if (!name || !temporalFor(name)) return;
+      // Pointer: this gesture exists to PIN a panel, so it is inert where there
+      // is none to pin.
+      if (!name || !hoodPanelLens() || !temporalFor(name)) return;
       closePeek();
       // Retap-to-unpin is a POINTER gesture: on touch the doubled event noted in
       // openPeek would make it toggle at random, and the x (44px on touch) and
@@ -3722,13 +3766,16 @@
       // this would, so suppressing the box outright loses nothing.
       if (noHover()) return null;
       const p = info.object.properties;
-      if (state.hoodMode === "panel")
+      // The reduction is the PANEL's other half — it trades tooltip detail for a
+      // panel that carries it. Where no panel opens (Services), reducing would
+      // just delete the readout, so the full tooltip stays.
+      if (state.hoodMode === "panel" && hoodPanelLens())
         return { className: "tip",
                  html: `<b>${esc(p.neighbourhood_name)}</b><br/>` + primaryRow(p) };
       const tip = viewTooltip(info);
       if (!tip) return null;
-      const t = temporalFor(p.neighbourhood_name);
-      if (!t) return tip;   // no file, public build, or a hood with no history
+      const t = hoodPanelLens() ? temporalFor(p.neighbourhood_name) : null;
+      if (!t) return tip;   // no file, public build, no history, or no panel here
       const i = t.years.length - 1;
       const gap = t.years.length > 1
         && t.years[i] - t.years[0] + 1 > t.years.length;
@@ -3899,6 +3946,7 @@
       state.metric = metric;
       syncMetricButtons();
       syncPinnedPanel(); // Revenue <-> Value swaps the panel's whole content
+      closePeek();       // ...and so does the card; see applyView's note
       if (state.view !== "money" && state.view !== "glass") return;
       const cfg = METRICS[metric];
       overlay.setProps({ layers: buildLayers() });
@@ -4457,6 +4505,11 @@
       // (stops floating live-but-inert over views it doesn't affect).
       document.getElementById("toggle").style.display =
         (v === "money" || v === "glass" || v === "change") ? "flex" : "none";
+      // Same rule for the readout-mode pod: it picks WHERE a hood's detail
+      // lands, so it is meaningless in a view with only one destination. Still
+      // gated on the history file having loaded — that is what reveals it at
+      // all (see the fetch below), and this must not resurrect it early.
+      syncHoodModePod();
       syncMillRates();  // money-scoped like #toggle, but narrower: revenue cuts only
       // Infill's activity side is residential building only — the industrial
       // metric is a development-choropleth cut, never an infill activity. If it
@@ -4624,6 +4677,13 @@
       syncColorAdjust(); // the sqrt toggle only bites in money + glass (scaleT)
       refreshLegend();
       syncPinnedPanel(); // leaving Money takes the revenue breakdown with it
+      // ...and the peek card goes with it, for the SAME reason the panel does.
+      // Nothing re-renders an open card, and openPeek is idempotent per hood,
+      // so a card opened in Money kept printing Money's $/acre under whatever
+      // lens you switched to — the wrong lens's number on screen, which this
+      // project treats as a correctness failure rather than a cosmetic one.
+      // Touch-only in practice (the card never opens where hover exists).
+      closePeek();
     }
 
     // Services-view controls. `applyService` flips a service on/off;
@@ -4724,7 +4784,7 @@
         .then(d => {
           if (!d || !d.hoods || !d.years) return;
           temporalData = d;
-          document.getElementById("hoodmode").style.display = "flex";
+          syncHoodModePod(); // reveals it, unless the view we landed in has no panel
           syncChangeControls(); // the file lands after the first applyView
         })
         .catch(() => {});
@@ -4748,6 +4808,10 @@
         if (!peekHood) return;
         const name = peekHood;
         closePeek();
+        // No panel in this view (Services): the card's own tap is then just a
+        // dismissal. Committing would enter panel mode and open nothing,
+        // stranding a phone with neither card nor panel.
+        if (!hoodPanelLens()) return;
         applyHoodMode("panel");
         openTemporal(name);
       });
