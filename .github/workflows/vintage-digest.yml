@@ -1,0 +1,71 @@
+name: Vintage & pin digest
+
+# Monthly "what needs my attention?" report (scripts/vintage_report.py), filed as
+# a GitHub issue so the notification email arrives without this repo holding an
+# SMTP credential. It currently holds exactly ONE secret (HEARTBEAT_TOKEN) and
+# docs/PROJECT_AUDIT.md treats that as a property worth keeping.
+#
+# WHY THIS EXISTS: every other guard here fires on the weekly refresh and gates
+# work already in flight. Nothing told Peter, unprompted, that an upstream year
+# had moved or a January pin was due — so the 2026 mill rates sat published from
+# 2026-04-29 to 2026-08-06 before anyone thought to look.
+#
+# REPORT-ONLY. It reads the repo and two Socrata endpoints, writes no data,
+# touches no branch, and cannot fail the pipeline. An issue is filed EVERY month
+# even when all-green: a digest that only speaks up when something is wrong is
+# indistinguishable from a digest that has silently broken.
+
+on:
+  schedule:
+    - cron: '0 14 1 * *'      # 1st of the month, 14:00 UTC (~8am Edmonton MDT / 7am MST)
+  workflow_dispatch: {}        # manual "Run workflow" button
+
+# Least-privilege: read the code, file the issue. No contents:write, no Pages.
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: vintage-digest
+  cancel-in-progress: false
+
+jobs:
+  digest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: requirements-ci.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements-ci.txt
+
+      # The script exits 0 even when it finds action items — the ISSUE is the
+      # output, not the exit code. A non-zero exit here would mean a crash.
+      - name: Build the digest
+        id: digest
+        run: python scripts/vintage_report.py | tee digest.md
+
+      # Idempotent: `gh label create` fails loudly if the label already exists,
+      # which is the normal case from month two onward.
+      - name: Ensure the label exists
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh label create vintage-digest \
+            --description "Monthly vintage & pin report" \
+            --color 0E8A16 || true
+
+      - name: File the digest as an issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue create \
+            --title "${{ steps.digest.outputs.title }}" \
+            --body-file digest.md \
+            --label vintage-digest

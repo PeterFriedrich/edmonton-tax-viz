@@ -42,6 +42,35 @@ Also removed a duplicated preamble block left in this file by the
 
 ## Open work
 
+- [ ] **BUG REPORT to Edmonton Open Data — the `qi6a-xuwt` 2024/25 dropout.
+  Gated on Peter reviewing the notebook by hand; everything else is done.**
+  ⚠️ **Re-promoted 2026-08-06 from `docs/TODO_archive.md`, where it had been
+  invisible since 2026-07-31** — it was a sub-item of the temporal-graph item,
+  which closed and took this, still unchecked, into the archive with it. The
+  archive's own header says *"Nothing here is a to-do"*, so nobody would have
+  looked. `tools/todo_archive.py` now refuses to archive a closed parent with
+  unchecked children (same date). Nothing about the finding changed while it sat
+  there.
+  - **The artifact is written and ready:**
+    `notebooks/exploration/03_historical_roll_gap.ipynb` — hits the live API
+    only, no local data, runs top to bottom, re-derives every claim.
+  - **Report 2,448 accounts / $2.93B / 188 neighbourhoods** (2023 ∧ current roll,
+    absent from historical 2025). Downtown 1,292 = 53%; Magrath Heights 430 =
+    17% of the hood; Glenora 269 = 15%. ⚠️ **NEVER the earlier inferred
+    "~8,000"** — that was read off row counts of different vintages and most of
+    that gap is new construction.
+  - **Cite dataset IDs + the SoQL, not prose:** `qi6a-xuwt` (Historical) and
+    `q7d6-ambg` (Current Calendar Year). The notebook prints both. City data
+    staff will want exact resource IDs.
+  - ⚠️ **LEAVE THE CAUSE UNSTATED.** Describe the symptom — whole multi-unit
+    buildings absent together, citywide — and let the City diagnose. No
+    speculation about leasehold/condo handling or ETL join logic, however
+    tempting the address clustering makes it.
+  - **The shipped site is UNAFFECTED** (built from `q7d6-ambg`, the complete
+    roll). This is a good-citizen report, not a fix we need. Full evidence:
+    `data/DATA.md` §0, `docs/SPEC_temporal.md` §0.1, `docs/AUDIT_LEDGER.md`
+    (2026-07-28 row).
+
 - [ ] **The Services lens has no hood panel — build the service-specific one.**
   Opened 2026-08-06. Clicking a hood in Services now does nothing by design
   (`hoodPanelLens()`; `DECISIONS.md` 2026-08-06): the assessment-history panel

@@ -476,7 +476,14 @@ Items are verbatim as they were closed, newest-moved first in the order they app
       counts of different vintages, and most of that gap is new construction.
       The measured figure is **2,448**. See §0.1 of `SPEC_temporal.md`.
     - [ ] **BUG REPORT to Edmonton Open Data — worth doing (Peter, 2026-07-28),
-      gated on Peter reviewing it by hand first.** Notebook written for exactly
+      gated on Peter reviewing it by hand first.**
+      - ⚠️ **THIS SUB-ITEM IS LIVE WORK AND WAS RE-PROMOTED TO `TODO.md` ON
+        2026-08-06** — it rode its closed parent into the archive on 2026-07-31
+        and was invisible for six days. **Track it in `TODO.md`, not here**;
+        the copy below is kept only because this file is verbatim history.
+        `tools/todo_archive.py` now refuses to archive a closed parent that
+        still has unchecked children.
+      Notebook written for exactly
       that: **`notebooks/exploration/03_historical_roll_gap.ipynb`** — hits the
       live API only, no local data, runs top to bottom, re-derives every claim.
       - ✅ **SCOPE NOW MEASURED (2026-07-28) — it is CITYWIDE, and the earlier
