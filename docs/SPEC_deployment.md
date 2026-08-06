@@ -59,6 +59,21 @@ They're now split:
 (Both paths run `scripts/build_site.py` before the Pages upload — see the
 **Two-build emit** section below.)
 
+A third workflow exists but is **not a deploy path** — it publishes nothing and
+is listed here only so the set is complete:
+
+| Workflow | Fires on | Does | Cost |
+|---|---|---|---|
+| `vintage-digest.yml` (REPORT) | monthly cron (1st, 14:00 UTC) + `workflow_dispatch` | `scripts/vintage_report.py` → file a GitHub issue | ~1 min |
+
+**Report-only, and deliberately outside the concurrency group** — it takes no
+Pages lock, writes no data, and touches no branch, so it cannot race or block a
+deploy. `permissions: contents:read, issues:write` (no `contents:write`, no
+Pages). It answers *"what needs a human this month?"* — the roll year, the mill
+rates, the January pins, a banner left up. **Its delivery is a GitHub issue
+rather than SMTP specifically to keep `HEARTBEAT_TOKEN` the only secret in this
+repo.** Design, checks and the failure-vs-unknown rule: `docs/RUNBOOK.md` §0.
+
 **Why this is safe and needs no data step:** `web/data/*.geojson` is *committed*
 (the data-bot commits it each refresh), so the last-good data is already on disk
 for any code deploy — nothing to fetch, nothing to regenerate. The path filter

@@ -373,6 +373,16 @@ lot acres). ~34.7k cells / 1.8 MB on current data. Returns a stats dict.
   baseline. ⚠️ Unlike `check_value_anchors.py` it does **not** skip in the
   degraded ground-acre-only mode: that mode is legitimate for a local run but not
   for a publish. See `DECISIONS.md` 2026-08-03.
+- `scripts/vintage_report.py`: ⚠️ **not a guard — a REPORT, and the only thing
+  here that runs on its own schedule rather than inside `refresh.yml`.** Every
+  script above gates work already in flight; this one runs monthly
+  (`vintage-digest.yml`) and asks *what needs a human?* — the roll year vs the
+  pin, mill rates published upstream but not held locally, `generate_status.py`'s
+  separate `DATA_YEAR`/`RATE_YEAR` drifting from `ASSESSMENT_YEAR`, the January
+  activity pins, the temporal archive, a banner left up. It **exits 0 even when
+  it finds work** (the filed issue is the output, not the exit code) and reports
+  `UNKNOWN` rather than `ACTION` on a network failure, so an unreachable source
+  never manufactures an alarm. Checks table and rationale: `docs/RUNBOOK.md` §0.
 - No silent drops: null-coordinate rows counted and reported; lot-ineligible
   points reported with their value; a conservation guard errors if cell sums
   don't reproduce the input totals
@@ -1016,10 +1026,11 @@ drift is documentation lagging the build:
    they exist only as "Also in the flow" paragraphs above, unlike stormwater and
    fire, which got full module sections when added. The paragraphs are accurate;
    the section depth is just inconsistent.
-2. **Testing section lists 5 test files; `tests/` has 18** — one per src module
+2. **Testing section lists 5 test files; `tests/` has 33** — one per src module
    plus `test_main.py`, `test_download_data.py`, `test_check_year_alignment.py`,
-   `test_generate_status.py`. The "what to test per module" lists were never
-   extended past Phase 1.
+   `test_generate_status.py`, `test_vintage_report.py` and others. The "what to
+   test per module" lists were never extended past Phase 1. (Count re-measured
+   2026-08-06; the stated 18 was itself stale.)
 3. **`join_and_calculate` "Outputs" block lists only the 7 core columns** — the
    implementation also carries every documented optional-merge column
    (`ZONING_COLUMNS`, `ROAD_COLUMNS`, `STORM_COLUMNS`, `FIRE_COLUMNS`,
