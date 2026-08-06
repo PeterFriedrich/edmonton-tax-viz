@@ -3477,26 +3477,38 @@
       const name = withName ? `<b>${esc(p.neighbourhood_name)}</b><br/>` : "";
 
       if (state.view === "services") {
-        // Every service's number, whichever layers are on — the tooltip is
-        // the place the neutral layers' values stay readable.
+        // Only the CHECKED services get a row now (Peter, 2026-08-06) — the
+        // tooltip mirrors the layers panel instead of printing every service's
+        // number regardless of what's toggled on. Roads still leads unmuted
+        // when it's checked (the base layer); every other checked service
+        // renders as muted context, same hierarchy as before.
         const rows = [];
-        if (p.road_m_per_acre != null)
+        if (state.services.roads && p.road_m_per_acre != null)
           rows.push(`${p.road_m_per_acre.toFixed(1)} road m / acre <span class="muted">(collector + local)</span>`);
-        if (p.storm_charge_per_acre != null)
+        if (state.services.storm && p.storm_charge_per_acre != null)
           rows.push(`<span class="muted">${fmtStorm(p.storm_charge_per_acre)}</span>`);
-        if (p.fire_events_per_acre != null)
+        if (state.services.fire && p.fire_events_per_acre != null)
           rows.push(`<span class="muted">${fmtFire(p.fire_events_per_acre)}</span>`);
-        if (p.water_charge_per_acre != null)
+        if (state.services.water && p.water_charge_per_acre != null)
           rows.push(`<span class="muted">${fmtWater(p.water_charge_per_acre, p.water_fixed_per_acre)}</span>`);
-        if (p.transit_dep_per_acre != null)
+        if (state.services.transit && p.transit_dep_per_acre != null)
           rows.push(`<span class="muted">${fmtTransit(p.transit_dep_per_acre)}</span>`);
-        if (p.svc_cost_per_acre != null)
+        if (state.services.bike && p.bike_m_per_acre != null)
+          rows.push(`<span class="muted">${fmtBike(p.bike_m_per_acre)}</span>`);
+        if (state.services.servicecost && p.svc_cost_per_acre != null)
           rows.push(`<span class="muted">${fmtSvcCost(p.svc_cost_per_acre)}</span>`);
+        if (state.services.roadscost && p.cost_roads_ops_per_acre != null)
+          rows.push(`<span class="muted">${fmtRoadsCost(p.cost_roads_ops_per_acre)}</span>`);
+        if (state.services.transitcost && p.cost_transit_ops_per_acre != null)
+          rows.push(`<span class="muted">${fmtTransitCost(p.cost_transit_ops_per_acre)}</span>`);
+        if (state.services.bikecost && p.cost_bike_ops_per_acre != null)
+          rows.push(`<span class="muted">${fmtBikeCost(p.cost_bike_ops_per_acre)}</span>`);
+        const anyChecked = Object.values(state.services).some(Boolean);
         return {
           className: "tip",
           html: rows.length
             ? name + rows.join("<br/>")
-            : name + `<span class="muted">no service data</span>`,
+            : name + `<span class="muted">${anyChecked ? "no service data" : "no service selected"}</span>`,
         };
       }
 
