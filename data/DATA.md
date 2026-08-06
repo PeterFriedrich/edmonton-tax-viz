@@ -362,7 +362,7 @@ For Phase 1 (neighbourhood-level choropleth), two approaches are viable:
 
 **File:** `data/mill_rates.json` *(curated extract — see provenance inside)*
 **Source:** [Edmonton Open Data](https://data.edmonton.ca/resource/pwis-wc4c.json) — dataset ID `pwis-wc4c` ("Property and Education Tax Rates (2014 onward)")
-**Format:** Socrata JSON/SODA API (live; updated annually — 2026 rates already present, last update 2026-04-29)
+**Format:** Socrata JSON/SODA API (live; updated annually — 2026 rates published 2026-04-29, and **PRE-STAGED in `mill_rates.json` since 2026-08-06**, inert until `ASSESSMENT_YEAR` rolls)
 **Units:** amount per **$1,000** of assessed value (mills); also published per-dollar
 **Licence:** Open Government Licence – City of Edmonton
 

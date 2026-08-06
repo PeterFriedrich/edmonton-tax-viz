@@ -3,7 +3,7 @@
     "dataset": "City of Edmonton Open Data — Property and Education Tax Rates (2014 onward)",
     "dataset_id": "pwis-wc4c",
     "url": "https://data.edmonton.ca/resource/pwis-wc4c.json",
-    "retrieved": "2026-06-28",
+    "retrieved": "2026-08-06",
     "units": "amount per $1,000 of assessed value (mills)",
     "rate_types_available": ["Municipal", "Education", "Education Requisition Allowance"]
   },
@@ -11,7 +11,8 @@
     "Revenue phase uses the MUNICIPAL rate only (City fiscal framing; education levy is provincial). Education rates are stored here for provenance/transparency, not used in the computation.",
     "Join key is the assessment `Tax Class` field (Residential / Non Residential / Other Residential / Farmland). Source class names use spaces ('Non Residential'); some historical years use a hyphenated 'Non-Residential' variant — normalize on load.",
     "FARMLAND 2025 is an ASSUMPTION, not published: the source dropped a separate Farmland class in 2025. Municipal Farmland == Municipal Residential in every year 2014-2024, so 2025 Farmland municipal is set = Residential (7.6254). Flag, do not treat as authoritative. Low impact (509 farmland parcels).",
-    "'Mature Area Derelict Residential' and 'Transitional Residential' are source rate classes that do not appear in the assessment `Tax Class` field; retained for fidelity but unused by the Tax-Class join."
+    "'Mature Area Derelict Residential' and 'Transitional Residential' are source rate classes that do not appear in the assessment `Tax Class` field; retained for fidelity but unused by the Tax-Class join.",
+    "2026 is PRE-STAGED, NOT IN USE. Rates are year-keyed and the pipeline reads only main.py's ASSESSMENT_YEAR (2025), so this block is inert until the assessment roll rolls. It is here because the City published 2026 rates on 2026-04-29 — BEFORE the matching roll, inverting RUNBOOK §1's 'wait for the rates, the hold can last months' assumption. Verified against the live source 2026-08-06."
   ],
   "rates": {
     "2025": {
@@ -21,6 +22,14 @@
       "Mature Area Derelict Residential": { "municipal": 24.2229, "education": 2.4366, "education_requisition_allowance": 0.0771 },
       "Transitional Residential":         { "municipal": 7.6254,  "education": 2.4366, "education_requisition_allowance": 0.0771 },
       "Farmland":                         { "municipal": 7.6254,  "_assumed": "no 2025 Farmland row published; set = Residential municipal (Farmland==Residential every year 2014-2024)" }
+    },
+    "2026": {
+      "Residential":                      { "municipal": 7.7419,  "education": 2.5409, "education_requisition_allowance": 0.0809 },
+      "Other Residential":                { "municipal": 8.2064,  "education": 2.5409, "education_requisition_allowance": 0.0809 },
+      "Non Residential":                  { "municipal": 25.2216, "education": 3.9677, "education_requisition_allowance": 0.0770 },
+      "Mature Area Derelict Residential": { "municipal": 25.2216, "education": 2.5409, "education_requisition_allowance": 0.0809 },
+      "Transitional Residential":         { "municipal": 7.7419,  "education": 2.5409, "education_requisition_allowance": 0.0809 },
+      "Farmland":                         { "municipal": 7.7419,  "_assumed": "no 2026 Farmland row published either (the class has been absent since 2025); set = Residential municipal (Farmland==Residential every year 2014-2024)" }
     }
   }
 }

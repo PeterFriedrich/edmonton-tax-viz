@@ -42,9 +42,17 @@ time.
 1. **Wait for the City to publish the new year's municipal mill rates**
    (`pwis-wc4c`) — typically spring, after the budget. The hold can last
    months by design.
+   - ⚠️ **That ordering is NOT guaranteed, and for 2026 it inverted:** the City
+     published 2026 rates on **2026-04-29**, months *before* the 2026 roll.
+     **Check `data/mill_rates.json` before assuming you have to wait** —
+     **2026 is already pre-staged there** (added 2026-08-06, every published
+     value verified against the live API), so the 2027-January roll should be a
+     same-day clear, not a months-long banner. Pre-staging is safe: rates are
+     year-keyed and nothing reads a year that isn't pinned.
 2. **Add the new year's block to `data/mill_rates.json`** — a manual,
    *reviewed* step (deliberately never auto-fetched; see DATA.md §4 for the
-   vocabulary bridge and known quirks).
+   vocabulary bridge and known quirks). **Skip if already pre-staged** — just
+   re-verify the block against the live source before relying on it.
    - ⚠️ **Since 2026-08-01 this file is also what the site DISPLAYS.**
      `generate_status.py` copies the year's municipal rates into
      `status.json` → the mill-rate pod. Two consequences: the three display

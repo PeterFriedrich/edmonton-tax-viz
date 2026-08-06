@@ -11,7 +11,9 @@ in TODO.md's existing `## Done` section. The no-redo rule still works by
 grepping `## Done`; the reasoning is one hop away. Same shape as
 `session-summary/archive/` and the one-line-plus-pointer rule for DECISIONS.md.
 
-Verifies that no line is lost before writing anything.
+Verifies that no line is lost before writing anything, and REFUSES to archive a
+closed item that still has unchecked children (`--allow-open-children` to
+override) — those are live work, and the archive is where nobody looks for it.
 """
 import pathlib
 import re
@@ -25,6 +27,8 @@ ARCHIVE = ROOT / "docs" / "TODO_archive.md"
 BANNER_PREFIX = "Closed items moved out of `## Open work`"
 
 ITEM = re.compile(r"^- \[([ x])\] ")
+# An UNCHECKED box nested inside a closed top-level item (any indent depth).
+CHILD_OPEN = re.compile(r"^\s+- \[ \] ")
 
 
 def title_of(block):
@@ -52,7 +56,7 @@ def done_marker(block):
     return m.group(1) if m else ""
 
 
-def main():
+def main(allow_open_children=False):
     lines = TODO.read_text(encoding="utf-8").splitlines()
     try:
         open_ix = lines.index("## Open work")
@@ -82,6 +86,24 @@ def main():
     if not closed:
         print("todo_archive: nothing closed to move")
         return 0
+
+    # A closed parent can still carry UNCHECKED children, and archiving it takes
+    # them out of the live backlog silently — the archive's own header says
+    # "Nothing here is a to-do", so nobody looks. Found on 2026-08-06: the
+    # upstream Edmonton Open Data bug report, still open, had ridden the closed
+    # temporal-graph item into the archive on 2026-07-31 and sat there 6 days.
+    # Same failure shape as the two bugs guarded below — refuse, name the lines,
+    # let a human decide (promote to top level, or pass the flag to accept).
+    orphans = [(ITEM.sub("", b[0]).strip()[:60], l.strip()[:90])
+               for b in closed for l in b[1:] if CHILD_OPEN.match(l)]
+    if orphans and not allow_open_children:
+        print(f"todo_archive: REFUSING TO WRITE — {len(orphans)} unchecked item(s) "
+              f"nested under closed parent(s) would be archived out of sight:")
+        for parent, child in orphans:
+            print(f"    under {parent!r}\n        {child}")
+        print("  Promote each to its own top-level item in TODO.md, close it, or "
+              "re-run with --allow-open-children if it is genuinely abandoned.")
+        return 1
 
     # --- build the archive ---
     arch = [
@@ -173,4 +195,4 @@ def main():
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(main(allow_open_children="--allow-open-children" in sys.argv[1:]))
