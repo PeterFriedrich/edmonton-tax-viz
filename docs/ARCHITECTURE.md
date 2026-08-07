@@ -785,6 +785,21 @@ is deliberately unpinned** (a live snapshot moves weekly). Runs in `refresh.yml`
 before the status-manifest step. The exact account-level control stays
 `tools/audit_historical_roll_gaps.py` (~20 min); this is the cheap weekly sentry.
 
+**Companion — `tools/audit_roll_continuity.py` (added 2026-08-07).** Answers the
+inverse question: not *which years are missing from the historical roll*, but
+**which properties have fallen out of the CURRENT one**. ⚠️ **It uses no
+identifier**, because every identifier in these datasets churns — accounts get
+renumbered (routine: 0.15–0.37%/yr), addresses get re-addressed, neighbourhoods
+get renamed (OLIVER → WÎHKWÊNTÔWIN moved 12,237 parcels and reads as −100% on
+any per-hood comparison). It matches **spatially** instead (`sjoin_nearest`, 5 m,
+EPSG:3400), which is sound because coordinates drift under 2 m across a
+renumbering. ⚠️ Output is **candidates, not verdicts** — demolitions and
+subdivisions legitimately have no successor, and one run cannot separate a
+transient renumber gap from a permanent removal. Motivating case: Misericordia
+Hospital, continuously assessed since 2012, absent from the published current
+roll during its renumbering, which silently **understated** its neighbourhood by
+~$250M until the gap closed. See `data/DATA.md` "Tax-exempt flag".
+
 ---
 
 ### `src/revenue_by_zone.py` (revenue lens readout — added 2026-08-01)
