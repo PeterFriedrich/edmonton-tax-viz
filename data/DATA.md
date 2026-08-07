@@ -956,6 +956,19 @@ The same file also carries `roadway_ops`, `bikeway_ops` and `transit_ets`, on a
   metres, **~10.8× apart**, and both ship to the served GeoJSON. Never sum or
   compare them. The `_ops` column suffix exists solely to keep them apart; a
   test pins them distinct. See the file's own `_two_bases` field.
+- **`roadway_renewal` = $38/m/yr is the RENEWAL HALF of basis (1), not a third
+  basis** (added 2026-08-07). The $50 decomposes into its two published
+  components over the same 50-yr life: **$12/m/yr O&M + $38/m/yr renewal**.
+  ⚠️ **Never sum `roadway_renewal` with `roadway_om_renewal`** — that
+  double-counts renewal; exactly one of the two may appear in any figure.
+  ⚠️ **The $12 O&M half is deliberately NOT published**: it would sit beside
+  `roadway_ops`' $4.635/m/yr as a *second* recurring road number, ~2.6× apart
+  from it and from a different source. Renewal was chosen precisely because it
+  does not collide. **Inert to the served pipeline** — `load_unit_costs` still
+  returns its same 5 keys, the `bikeway_capital` pattern; only
+  `tools/ward_rollup.py` reads it. ⚠️ Anything built on it is an annual
+  **REQUIREMENT, not a funding gap**, and **collector+local only** (arterials
+  excluded), so it understates the network. `DECISIONS.md` 2026-08-07.
 - ⚠️ **$178/km/yr IS NOT A LIFECYCLE RATE**, though it was proposed as one on the
   phrasing "replace, repair, and maintain". It derives from ~$0.27M/yr over
   ~1,500 km; the same source puts snow clearing on that network at **113× it**;
