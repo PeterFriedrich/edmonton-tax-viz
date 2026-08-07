@@ -53,7 +53,15 @@ Also removed a duplicated preamble block left in this file by the
   there.
   - **The artifact is written and ready:**
     `notebooks/exploration/03_historical_roll_gap.ipynb` — hits the live API
-    only, no local data, runs top to bottom, re-derives every claim.
+    only, no local data, runs top to bottom, re-derives every claim. 13 cells,
+    five sections; **all outputs are cleared, so it has never been run with
+    results saved.** Quick except the last cell, which pages the full account
+    lists of both datasets — a few minutes. Section 5 is the one to watch land:
+    it is where 2,448 / $2.93B / 188 comes from and where the old "~8,000" is
+    decomposed and discarded.
+  - **Deferred by Peter 2026-08-07** — offered a pre-run (rendered outputs to
+    read instead of driving it himself), declined for now. Still open, still his;
+    nothing about it changed.
   - **Report 2,448 accounts / $2.93B / 188 neighbourhoods** (2023 ∧ current roll,
     absent from historical 2025). Downtown 1,292 = 53%; Magrath Heights 430 =
     17% of the hood; Glenora 269 = 15%. ⚠️ **NEVER the earlier inferred
