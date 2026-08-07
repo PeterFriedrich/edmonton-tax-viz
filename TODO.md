@@ -40,6 +40,17 @@ sheet; `docs/TODO_archive.md`.)**
 Also removed a duplicated preamble block left in this file by the
 `todo_archive.py` banner bug fixed in S82.)_
 
+_Last reconciled: 2026-08-07 (S101 — reconciliation pass only, nothing built.
+**The `## Done` line and archive entry for West Meadowlark still held the FIRST,
+later-inverted answer** ("one new $247.8M parcel"), with no mention of the
+renumbering or that the map had been understating the hood — so the settled
+record disagreed with the open item that superseded it. Both corrected. Also
+fixed a **live contradiction between two open items**: the DATA VINTAGE item
+recommended `--geojson-out /tmp/x.geojson` as the safe local-run path while the
+item directly above it exists to say that is wrong. And added the
+roll-continuity-as-second-guard question, which existed only in a session
+summary.)_
+
 ## Open work
 
 
@@ -211,8 +222,13 @@ Also removed a duplicated preamble block left in this file by the
   run that was only supposed to ADD columns.
   - **What to do instead:** commit pipeline code only and let the weekly refresh
     add the columns, or run `scripts/download_data.py` first if the data really
-    should roll. For local UI work, regenerate to a temp path
-    (`--geojson-out /tmp/x.geojson`).
+    should roll. ⚠️ **For local UI work, `--geojson-out /tmp/x.geojson` is NOT
+    enough** — corrected 2026-08-07; this line used to recommend it on its own.
+    The flag redirects only the main GeoJSON, and a full run still writes
+    `roads.geojson`, `zoning.geojson`, `value_grid.json`, `dev_grid.json` and
+    `temporal.json` into `web/data/` (measured 2026-08-03 — see the
+    `--geojson-out` item above, which exists to say so). **The mitigation that
+    actually works is `git checkout -- web/data/` after any local `main.py`.**
   - **Consequence to watch:** phase 2's UI columns are ABSENT from the served
     geojson until the next auto-refresh runs. The UI must degrade cleanly when
     they are missing (the house pattern), or the site breaks in the gap.
@@ -319,6 +335,25 @@ Also removed a duplicated preamble block left in this file by the
   - **Not an Open Data bug report.** Nothing here suggests the City's roll is
     wrong — the earlier framing assumed a defect and the evidence does not
     support one. Keep this separate from the `qi6a-xuwt` item.
+
+- [ ] **PETER'S CALL: wire roll-continuity into `refresh.yml` as a SECOND
+  guard?** Opened 2026-08-07 (S101 — it existed only in S100's session summary
+  and would have evaporated on the next `/clear`).
+  - **What it would catch that nothing else does:** `check_revenue_deltas.py`
+    only fires when a missing property **returns** (the +130% correction).
+    Nothing fires while a hood is understated, which is the whole window in
+    which the map is wrong. A roll-continuity step would catch the *departure*.
+  - **What changed in its favour:** the churn baseline now exists — accounts
+    vanish at **0.15–0.37%/yr**, spiking to **0.91% (3,893 accounts)** in
+    2023→24 — so this is a measured standing property of the data, not a hunch.
+    That makes it more defensible than when it was first floated.
+  - **What argues against:** it adds a **second issue-filing channel** on top of
+    `revenue-delta`, and ⚠️ **the audit itself cannot separate a transient
+    renumber gap from a permanent removal in one run** — so a CI version would
+    file issues it cannot adjudicate. **Settle the 1,534-parcel item above
+    first**; its second run is what tells us the base rate.
+  - If built, it must follow the existing guard's shape: **warn-not-fail, always
+    exit 0, run BEFORE the commit step** or its baseline becomes the new data.
 
 - [ ] **CARDINALITY GUARD — two small follow-ons (guard shipped 2026-07-28, PR #110).**
   `scripts/check_value_anchors.py` now pins the record-to-parcel *regime* in
@@ -1370,7 +1405,7 @@ Also removed a duplicated preamble block left in this file by the
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
 
-- [x] **`WEST MEADOWLARK PARK`'s revenue MORE THAN DOUBLED in one auto-refresh — EXPLAINED 2026-08-07: ONE new $247.8M parcel, and the pipeline was right.** — 2026-08-07 · `docs/TODO_archive.md`
+- [x] **`WEST MEADOWLARK PARK`'s revenue MORE THAN DOUBLED in one auto-refresh — EXPLAINED 2026-08-07: a RENUMBERING GAP CLOSING, so the +130% was the CORRECTION, not the defect.** Misericordia was continuously assessed 2012–2025 and merely absent from the published current roll during a renumber; the map had been UNDERSTATING the hood by ~$250M assessed / ~$6M/yr. ⚠️ **Two earlier answers are WRONG and are recorded in commits** — *"one new $247.8M parcel arrived"* (true but shallow) and *"is a hospital supposed to be taxable?"* (the wrong question; it always was). Read the archive entry before citing either. — 2026-08-07 · `docs/TODO_archive.md`
 
 
 
