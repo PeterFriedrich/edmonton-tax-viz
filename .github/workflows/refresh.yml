@@ -12,10 +12,15 @@ on:
   workflow_dispatch: {}       # manual "Run workflow" button (also the first-run bootstrap)
 
 # Least-privilege: write repo contents (commit regenerated data) + deploy Pages.
+# `issues: write` is the notification channel, NOT a publish capability — the
+# revenue-delta guard below only ever warns, and a warning in a green run
+# reaches nobody. Filing an issue is what makes the email arrive; same pattern,
+# and the same reason, as vintage-digest.yml.
 permissions:
   contents: write
   pages: write
   id-token: write
+  issues: write
 
 # Never let two refreshes race on the push/deploy.
 concurrency:
@@ -120,6 +125,21 @@ jobs:
         if: steps.yearcheck.outputs.result != 'hold'
         run: python scripts/check_served_columns.py
 
+      # Magnitude half, and the only guard that looks at ONE neighbourhood.
+      # Every check above is a citywide aggregate or a schema list, which is how
+      # WEST MEADOWLARK PARK's revenue doubled on a GREEN run (2026-08-03) and
+      # served wrong-looking for four days: citywide that event was +0.22%.
+      # ⚠️ MUST run BEFORE the commit step — its baseline is `git show HEAD:` of
+      # the served file, i.e. the version currently published. After the commit
+      # that baseline becomes the new data and the diff is always empty.
+      # Warns only, ALWAYS exit 0: a hood's revenue can legitimately double when
+      # a large parcel completes, and a guard that reds the weekly publish on
+      # good data gets switched off.
+      - name: Check per-neighbourhood revenue deltas (guard after regenerating)
+        id: revdelta
+        if: steps.yearcheck.outputs.result != 'hold'
+        run: python scripts/check_revenue_deltas.py --report revenue-delta.md
+
       # notebooks/verified/ (docs/VERIFICATION.md) re-runs the real src/ pipeline
       # independently, narrated for a human reader, and asserts invariants against
       # THIS run's data — a second, differently-shaped recomputation of the numbers
@@ -193,6 +213,22 @@ jobs:
             git commit -m "Auto-refresh map data ($(date -u +%Y-%m-%d))"
             git push
           fi
+
+      # Deliberately AFTER the commit: the guard ran before it (it had to — see
+      # its step), but an issue should only exist for data that actually landed.
+      # `|| true` on the label, idempotent from the second firing onward.
+      - name: Report a big revenue delta as an issue (notification email)
+        if: steps.revdelta.outputs.flagged != '0' && steps.revdelta.outputs.flagged != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh label create revenue-delta \
+            --description "A neighbourhood's revenue moved a lot in one refresh" \
+            --color D93F0B || true
+          gh issue create \
+            --title "${{ steps.revdelta.outputs.title }}" \
+            --body-file revenue-delta.md \
+            --label revenue-delta
 
       # Two-build emit (docs/PLAN_public_release.md §2a): fan web/ out into
       # _site/ = public root + _site/full/ = specialist, sharing the just-
