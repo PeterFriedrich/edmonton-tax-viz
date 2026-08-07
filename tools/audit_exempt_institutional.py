@@ -3,8 +3,17 @@ dilute the neighbourhood revenue/value lens hardest?
 
 Generalizes the University of Alberta hand-case (FINDINGS_denominator_cardinality.md):
 U of A carries $2.242B taxable value on ~half its polygon, the other half being
-tax-exempt campus/hospital land that is ABSENT from the taxable roll entirely
-(DATA.md 2026-06-29 — exempt land is not flagged/zeroed, it simply never appears).
+institutional land that carries no taxable account.
+
+⚠️ This docstring used to say that exempt land is "ABSENT from the taxable roll
+entirely (DATA.md 2026-06-29)". That claim is RETRACTED — hospitals and the U of A
+campus ARE on the roll; $5.6B of assessed value sits on UI/UF/AJ/PU zoning (see
+DATA.md "Tax-exempt flag", corrected 2026-08-07). ⚠️ **The measurement below is
+unaffected and its outputs are unchanged** (re-run 2026-08-07, every figure in
+FINDINGS_exempt_institutional.md reproduced exactly) — because it MEASURES the
+taxable footprint rather than assuming there is none, land that is taxed gets
+counted as taxed. Do not "fix" the method on account of the retraction.
+
 No exempt boolean exists, so we MEASURE exempt-institutional land as institutional-
 proxy zoning that carries NO taxable account:
 

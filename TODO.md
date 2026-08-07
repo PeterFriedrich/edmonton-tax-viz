@@ -217,34 +217,108 @@ Also removed a duplicated preamble block left in this file by the
     geojson until the next auto-refresh runs. The UI must degrade cleanly when
     they are missing (the house pattern), or the site breaks in the gap.
 
-- [ ] **IS THE `WEST MEADOWLARK PARK` HOSPITAL PARCEL SUPPOSED TO BE TAXABLE?**
-  Opened 2026-08-07 out of the item above. Account `11495573` is **UF — Urban
-  Facilities** zoned (confirmed by point-in-polygon against `zoning.geojson`),
-  at **16940 87 AVENUE NW**, assessed **$247,780,500** — almost certainly the
-  **Misericordia Community Hospital** site.
-  - ⚠️ **`data/DATA.md:207` says land of exactly this kind should not be on the
-    taxable roll at all:** *"tax-exempt institutional land (Legislature, schools,
+- [ ] **▶ `data/DATA.md:207` IS FALSE AND ANALYSIS DEPENDS ON IT — exempt
+  institutional land IS on the taxable roll, ~$5.6B of it.** Opened 2026-08-07.
+  The West Meadowlark investigation asked whether its hospital parcel was
+  anomalous. **It is not** — and answering that exposed a much larger stale
+  premise.
+  - ⚠️ **SUPERSEDED FRAMING, 2026-08-07 (later the same day): "is it supposed to
+    be taxable?" WAS THE WRONG QUESTION — it always was.** Misericordia has been
+    continuously assessed **2012–2025** as account `10095840` (~$200–260M, always
+    WEST MEADOWLARK PARK, always COMMERCIAL). It was **renumbered** to
+    `11495573` and was simply **absent from the published current roll** during
+    the changeover. ⚠️ **So the map UNDERSTATED West Meadowlark before 2026-08-03
+    by ~$250M of assessed value / ~$6M/yr — the +130% was the CORRECTION, not
+    the defect.** `$4.63M` was the wrong number; `$10.63M` is right. See
+    `data/DATA.md` "Tax-exempt flag" and `tools/audit_roll_continuity.py`.
+  - **DATA.md:207 says:** *"tax-exempt institutional land (Legislature, schools,
     hospitals, City property) is **absent from the taxable roll entirely**, not
-    flagged or zeroed"* — and lists `AJ/PU/UI/UF` as the exempt-proxy zones.
-  - **So one of three things is true, and they have different consequences:**
-    (a) the site genuinely became taxable — the map is right and DATA.md §207
-    needs a caveat; (b) an upstream roll error — the map is publishing **$6.0M/yr
-    of municipal levy that the City does not collect**, and West Meadowlark's
-    revenue-per-acre is ~2× too high; (c) a partial/phased assessment we are
-    reading as whole. **Nothing in our data distinguishes these.**
-  - **First checks, cheapest first:** whether the account carries a tax-exempt
-    status in any City-published source; whether other UF-zoned hospital sites
-    (Royal Alexandra, Grey Nuns, U of A) are on `q7d6-ambg` too, or whether this
-    one is alone — **if it is alone, that is the tell**; and whether the parcel
-    appears in the 2023/2024 historical roll `qi6a-xuwt`.
-  - **Fold into the Open Data bug report if it turns out to be (b).** Same
-    dataset, same "we found something odd in your roll" framing as the
-    `qi6a-xuwt` item — and the same discipline applies: **report the symptom,
-    leave the cause unstated.**
-  - ⚠️ **Do NOT "fix" this locally by dropping the parcel.** We apply published
-    rates to the published roll; that is the contract, and silently excluding a
-    record the City published would be the exact silent-correctness failure the
-    guards exist to prevent. If it is wrong, it gets fixed upstream.
+    flagged or zeroed"*, listing `AJ/PU/UI/UF` as exempt-proxy zones. **Measured
+    against the roll, that is wrong.** Every major hospital is on it and was
+    already there in the Jul-6 snapshot:
+
+    | account | site | assessed | zone |
+    |---|---|---|---|
+    | `11495590` | Royal Alexandra (10520 Kingsway) | $273,762,000 | UF |
+    | `11495573` | **Misericordia (16940 87 Ave)** — **the ONLY one absent on Jul-6** | $247,780,500 | UF |
+    | `11495606` | Grey Nuns (1100 Youville W) | $196,900,000 | UF |
+    | `11495587` | Cross Cancer (11560 University) | $68,062,000 | AJ |
+    | `11495614` / `11495565` / `9996778` | U of A campus | $577M / $438M / $431M | AJ |
+
+  - **Full spatial join of the roll against `zoning.geojson`: 2,254 parcels on
+    AJ/PU/UI/UF zoning carry $5,622,058,000 of assessed value, which our
+    pipeline turns into ~$125.4M/yr of modelled levy — 4.6% of the $2.71B
+    citywide served total.** Concentrated: UNIVERSITY OF ALBERTA alone is
+    $45.5M/yr across 36 parcels, then SPRUCE AVENUE $9.1M, CENTRAL MCDOUGALL
+    $8.5M, DOWNTOWN $7.5M.
+  - ⚠️ **So West Meadowlark's $6.0M was never the story — it is 5% of a
+    pre-existing exposure that has been in every published number all along.**
+    The +130% simply moved one hood into a state ~40 others were already in.
+  - ⚠️ **What is NOT established, and must not be asserted either way:** being on
+    the assessment roll with an assessed value is **not** the same as being
+    levied. This dataset publishes assessments and a `Tax Class`; it does not
+    state exemption status, and Alberta assesses some exempt property. Our
+    pipeline applies mill rates to every record on the roll. **The open question
+    is whether that is the right thing to do for these 2,254 parcels** — not
+    whether the data is corrupt.
+  - ✅ **(1) `DATA.md` CORRECTED 2026-08-07** — the "Tax-exempt flag" note now
+    carries the measured split (present: hospitals, U of A campus; absent: the
+    Legislature, 0 rows at 10800 97 AVENUE NW) and the per-zone table. The old
+    claim is quoted and marked retracted rather than deleted, and the Known
+    Quirks bullet that repeated it is fixed.
+  - ✅ **(2) THE TWO ARTIFACTS SURVIVE — re-run 2026-08-07, numbers UNCHANGED,
+    and this is the useful part.** `tools/audit_exempt_institutional.py`
+    *measures* the taxable footprint on institutional zoning and subtracts it,
+    rather than assuming there is none — so land that IS taxed is counted as
+    taxed and correctly excluded from `exempt_inst_acres`. **The method never
+    used the false premise; only the docstring's motivating sentence did.** The
+    fresh run reproduces every published figure exactly (U of A: 145 exempt acres
+    of 253 institutional, ×2.0 lift, $15.2M/lot-acre, $2.242B on 47 accounts).
+    Premise sentences corrected in both files; ⚠️ **both now say DO NOT "fix" the
+    method on account of the retraction.** `ANALYSIS_BACKLOG.md` §7's conclusions
+    ride on those same numbers and therefore also stand.
+  - ⚠️ **(3) OPEN AND IT IS THE ONLY THING LEFT: should the revenue model treat
+    AJ/PU/UI/UF differently at all?** We apply mill rates to every record on the
+    roll, which produces the ~$125.4M/yr above. Whether the City actually levies
+    those parcels is **not answerable from this dataset** — it publishes
+    assessments and a `Tax Class`, not exemption status. ⚠️ **This is a
+    public-number change and Peter's call, not a cleanup.** Needs an external
+    source on exemption status before it is even decidable.
+  - ⚠️ **`docs/FINDINGS_revenue_scale.md` §4–5 was written under the old premise
+    and has NOT been re-checked.** Lower priority than the two above (it is
+    narrative, not a computation others cite), but it is the last known place
+    the retracted claim may still be load-bearing.
+
+- [ ] **▶ WHO IS MISSING FROM THE CURRENT ROLL RIGHT NOW? — 1,534 parcels /
+  $1.62B with no current-roll match.** Opened 2026-08-07 from
+  `tools/audit_roll_continuity.py` (historical 2024 vs the live roll, matched by
+  **position** within 5 m so renumbering / re-addressing / hood renames do not
+  register). 216 of them are over $1M, totalling **$1.40B**. Largest: MILL WOODS
+  TOWN CENTRE `9980213` $69.0M, YELLOWHEAD CORRIDOR WEST `10275721` $60.5M,
+  SOUTHEAST INDUSTRIAL `9985679` $53.5M.
+  - **Why it matters:** every one of these is a potential Misericordia — a
+    property still assessed but absent from the published current roll, whose
+    neighbourhood is **understated on the live map** for as long as the gap
+    lasts. That is a silent revenue-side error with no guard behind it before
+    the fact (`check_revenue_deltas.py` only catches the *return*).
+  - ⚠️ **CANDIDATES, NOT VERDICTS.** Demolitions, subdivisions and
+    consolidations legitimately have no 1:1 successor and are in this list. The
+    audit cannot tell those apart, and **one run cannot distinguish a transient
+    renumber gap from a permanent removal** — that needs a second run later.
+  - **Next step is cheap and decisive: RE-RUN IT and diff.** Anything that
+    reappears was a transient gap (and its hood was understated meanwhile);
+    anything still absent months later is a real removal. Nothing else about
+    this item can be settled without that second observation.
+  - ⚠️ **Do not report this upstream yet.** 0.36% of parcels is within the range
+    ordinary demolition/subdivision could explain, and we have **no baseline for
+    how much of it is normal** — unlike the `qi6a-xuwt` gap, which was measured
+    against a control. Get the second run first.
+  - ⚠️ **Do NOT "fix" this by dropping the parcels.** We apply published rates to
+    the published roll; silently excluding records the City published is the
+    exact silent-correctness failure the guards exist to prevent.
+  - **Not an Open Data bug report.** Nothing here suggests the City's roll is
+    wrong — the earlier framing assumed a defect and the evidence does not
+    support one. Keep this separate from the `qi6a-xuwt` item.
 
 - [ ] **CARDINALITY GUARD — two small follow-ons (guard shipped 2026-07-28, PR #110).**
   `scripts/check_value_anchors.py` now pins the record-to-parcel *regime* in

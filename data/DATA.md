@@ -204,14 +204,47 @@ aligned. That pull also surfaced a new `Assessment Class 1` label
 
 **Assessment Class 1 values:** RESIDENTIAL (411,563), COMMERCIAL (23,054), OTHER RESIDENTIAL (4,356), FARMLAND (509), MA DERELICT RESIDENTIAL (284), NONRES MUNICIPAL/RES EDUCATION (3)
 
-**Tax-exempt flag:** No explicit exempt boolean. Best proxy is `Assessment Class 1 == 'NONRES MUNICIPAL/RES EDUCATION'` (3 rows). Flag these on load as `is_exempt`. **Note (2026-06-29):** this proxy catches almost nothing — tax-exempt institutional land (Legislature, schools, hospitals, City property) is **absent from the taxable roll entirely**, not flagged or zeroed. So `is_exempt` cannot identify exempt-heavy neighbourhoods, and revenue/acre silently understates any neighbourhood holding large exempt institutions. See `docs/FINDINGS_revenue_scale.md` §4–5.
+**Tax-exempt flag:** No explicit exempt boolean. Best proxy is `Assessment Class 1 == 'NONRES MUNICIPAL/RES EDUCATION'` (3 rows). Flag these on load as `is_exempt`. So `is_exempt` cannot identify exempt-heavy neighbourhoods.
+
+⚠️ **CORRECTED 2026-08-07 — institutional land is NOT uniformly absent from this roll, and the previous version of this line said it was.** It read: *"tax-exempt institutional land (Legislature, schools, hospitals, City property) is **absent from the taxable roll entirely**, not flagged or zeroed"* (noted 2026-06-29). Measured against the roll, that is **half right and half wrong**, and the wrong half is load-bearing:
+
+- **Present.** Every major hospital is on the roll, and was before the Jul-6 snapshot: Royal Alexandra `11495590` $273.8M, Misericordia `11495573` $247.8M, Grey Nuns `11495606` $196.9M, Cross Cancer `11495587` $68.1M. The U of A campus is on it too — `11495614` $577.1M, `11495565` $437.7M, `9996778` $430.8M.
+- **Absent.** The Alberta Legislature is genuinely not there (0 rows at 10800 97 AVENUE NW; no `LEGISLATURE` neighbourhood), so the original observation was true of provincial Crown land and got generalised.
+
+**Sized by spatial join of all 439,685 parcels against `zoning.geojson`** (2026-08-07; 8 parcels matched no polygon). Parcels sitting on the four exempt-proxy zones:
+
+| zone | | parcels | assessed | modelled levy |
+|---|---|---|---|---|
+| `AJ` | Alternative Jurisdiction | 340 | $2,599,819,500 | $60.3M/yr |
+| `UF` | Urban Facilities | 768 | $1,951,061,000 | $41.4M/yr |
+| `UI` | Urban Institution | 39 | $690,542,500 | $15.7M/yr |
+| `PU` | Public Utility | 1,107 | $380,635,000 | $8.0M/yr |
+| | **total** | **2,254** | **$5,622,058,000** | **$125.4M/yr — 4.6% of the $2.71B citywide served total** |
+
+⚠️ **What this does NOT establish.** Being on the assessment roll with an assessed value is **not** the same as being levied: this dataset publishes assessments and a `Tax Class`, it does not publish exemption status, and Alberta assesses some exempt property. The pipeline applies mill rates to every record here, so **whether that is correct for these 2,254 parcels is an open question** (`TODO.md`), not a settled defect. ⚠️ **Zoning is also not ownership** — `UF` and `PU` include privately-owned facilities.
+
+⚠️ **AND ABSENCE FROM THIS ROLL IS OFTEN TRANSIENT, NOT STRUCTURAL** (established 2026-08-07, and it is why the "absent entirely" claim above looked true). **Every identifier in these datasets churns:**
+
+| identifier | churns how | worked example |
+|---|---|---|
+| `Account Number` | **renumbered** | all four major hospitals moved into a new `114955xx` block at the 2025 roll; the old numbers vanish from the current roll and the new ones appear in **no year** of `qi6a-xuwt` |
+| address | **re-addressed** | `WESTMOUNT SHOPPING CENTRE NW` no longer exists as a street name |
+| `Neighbourhood` | **renamed** | OLIVER → WÎHKWÊNTÔWIN moved 12,237 parcels; a per-hood value comparison reads that as **−100%** |
+
+**A property can therefore be missing from the published current roll while still existing and still being assessed.** Misericordia Community Hospital was continuously assessed 2012–2025 as account `10095840` (~$200–260M, always WEST MEADOWLARK PARK), was renumbered to `11495573`, and was **absent from `q7d6-ambg` until 2026-08-03** — during which the map understated that neighbourhood by ~$250M of assessed value. ⚠️ **The two datasets disagree about account numbers for the SAME assessment year 2025** (historical still says `10095840`, current says `11495573`), so **cross-dataset account-number joins are unreliable for renumbered parcels.**
+
+⚠️ **Renumbering is ROUTINE.** Year-over-year in the historical roll, accounts vanish at **0.15%–0.37%/yr** (2023→2024 spikes to **0.91%, 3,893 accounts**). A vanished account number is not by itself a finding.
+
+**What is stable is POSITION** — across the hospital renumbering the coordinates moved **under 2 m**. `tools/audit_roll_continuity.py` uses that to find dropouts independently of all three churning identifiers; run 2026-08-07 against historical 2024, **1,534 of 426,913 parcels (0.36%) had no current match, $1.62B assessed**. ⚠️ Those are candidates, not verdicts — demolitions, subdivisions and consolidations legitimately have no 1:1 successor. (`legal_description` — plan/block/lot — would be a better key and is immutable, but exists **only** in the historical roll, so it cannot join the two.)
+
+⚠️ **Two artifacts rest on the retracted claim and are UNVERIFIED against this correction:** `docs/FINDINGS_exempt_institutional.md` and `tools/audit_exempt_institutional.py` proxy exempt land as *polygon acres − taxable lot acres*, which under-counts by exactly the parcels above; `docs/ANALYSIS_BACKLOG.md` §7 (closed 2026-07-09) rests on the same premise. The direction of the original concern still holds — revenue/acre understates neighbourhoods holding large exempt institutions — but its **magnitude is not what those documents state**. See also `docs/FINDINGS_revenue_scale.md` §4–5, written under the old premise.
 
 ### Known Quirks
 
 - Condo units: multiple rows share one land parcel — this is expected and correct for this analysis
 - `Suite` column has mixed types — always load with `low_memory=False`
 - 46 rows have `Assessed Value == 0` — drop and flag count on load
-- No explicit tax-exempt column; proxy is `Assessment Class 1 == 'NONRES MUNICIPAL/RES EDUCATION'` — but exempt institutional land is absent from the roll, so the proxy is near-empty (3 rows). The near-zero-revenue tail is **low-coverage** land (river valley / undeveloped), not exempt. See `docs/FINDINGS_revenue_scale.md`.
+- No explicit tax-exempt column; proxy is `Assessment Class 1 == 'NONRES MUNICIPAL/RES EDUCATION'`, which is near-empty (3 rows). ⚠️ **This bullet used to add "because exempt institutional land is absent from the roll" — that reason is RETRACTED, see the Tax-exempt flag note above.** The proxy is near-empty regardless, but hospitals and the U of A campus *are* on the roll and $5.6B of assessed value sits on exempt-proxy zoning. The near-zero-revenue tail is **low-coverage** land (river valley / undeveloped), not exempt. See `docs/FINDINGS_revenue_scale.md`.
 - Assessment year is metadata-only, not in the rows (year = 2025; see Format note above) — pin it against the mill-rate year for the revenue phase
 
 ---

@@ -9,15 +9,30 @@ Value-based — the exemptions distort the value roll and the levy roll identica
 
 ## The question
 
-Tax-exempt institutional land (university, hospital, government, utility, large
-civic facilities) is **absent from the taxable roll entirely** — not flagged, not
-zeroed, simply never appears (`data/DATA.md`, 2026-06-29). So revenue/acre and
-value/acre silently understate any neighbourhood that holds a big exempt
-institution: the numerator sees only the taxable slice, the denominator (polygon
-acres) sees the whole thing. U of A was the worked example — $2.242B taxable on
-~half its polygon, the other half exempt campus/hospital land. **Which other
-hoods have this shape, and how do we tell genuine exempt-dilution apart from the
-things it looks like** (low-value taxable land; park/river-valley)?
+Some institutional land is on the taxable roll and some is not, so revenue/acre
+and value/acre understate any neighbourhood holding a big exempt institution:
+the numerator sees only the taxable slice, the denominator (polygon acres) sees
+the whole thing. U of A was the worked example — $2.242B taxable on ~half its
+polygon, the other half untaxed campus land. **Which other hoods have this
+shape, and how do we tell genuine exempt-dilution apart from the things it looks
+like** (low-value taxable land; park/river-valley)?
+
+⚠️ **PREMISE CORRECTED 2026-08-07 — THE NUMBERS BELOW ARE UNAFFECTED; RE-RUN AND
+CONFIRMED.** This section used to open with *"is **absent from the taxable roll
+entirely** — not flagged, not zeroed, simply never appears (`data/DATA.md`,
+2026-06-29)"*. That is **false as a blanket claim**: every major hospital is on
+the roll (Royal Alexandra $273.8M, Misericordia $247.8M, Grey Nuns $196.9M) and
+so is the U of A campus, while the Alberta Legislature genuinely is not. In
+total **2,254 parcels on UI/UF/AJ/PU zoning carry $5.6B of assessed value** — see
+`data/DATA.md` "Tax-exempt flag".
+
+**The findings survive because the method never used that premise.** §"Method"
+*measures* the taxable footprint sitting on institutional zoning and subtracts
+it, rather than assuming institutional land is absent — so land that IS taxed is
+counted as taxed and correctly excluded from `exempt_inst_acres`. Re-run
+2026-08-07 against the same inputs reproduces every published figure exactly
+(U of A: 145 exempt acres of 253 institutional, ×2.0 lift, $15.2M/lot-acre,
+$2.242B taxable on 47 accounts). **Only the motivating sentence was wrong.**
 
 ## Method — measure exempt land, don't guess it
 
