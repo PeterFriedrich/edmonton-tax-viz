@@ -252,17 +252,33 @@ Also removed a duplicated preamble block left in this file by the
     pipeline applies mill rates to every record on the roll. **The open question
     is whether that is the right thing to do for these 2,254 parcels** — not
     whether the data is corrupt.
-  - **What depends on the false premise (check each before trusting it):**
-    `docs/FINDINGS_exempt_institutional.md` and `tools/audit_exempt_institutional.py`
-    proxy exempt land as *polygon acres − taxable lot acres* **on the stated
-    premise that exempt land is absent from the roll**; `ANALYSIS_BACKLOG.md` §7
-    (closed 2026-07-09) rests on the same. If exempt land is partly ON the roll,
-    that proxy under-counts by exactly the parcels found here.
-  - **Order of work:** (1) correct `DATA.md:207` to what the roll actually shows
-    — it is read before touching any data file, so a false line there propagates;
-    (2) re-check the two artifacts above against the corrected premise; (3) only
-    then decide whether the revenue model should treat AJ/PU/UI/UF differently.
-    ⚠️ **(3) is a public-number change and is Peter's call, not a cleanup.**
+  - ✅ **(1) `DATA.md` CORRECTED 2026-08-07** — the "Tax-exempt flag" note now
+    carries the measured split (present: hospitals, U of A campus; absent: the
+    Legislature, 0 rows at 10800 97 AVENUE NW) and the per-zone table. The old
+    claim is quoted and marked retracted rather than deleted, and the Known
+    Quirks bullet that repeated it is fixed.
+  - ✅ **(2) THE TWO ARTIFACTS SURVIVE — re-run 2026-08-07, numbers UNCHANGED,
+    and this is the useful part.** `tools/audit_exempt_institutional.py`
+    *measures* the taxable footprint on institutional zoning and subtracts it,
+    rather than assuming there is none — so land that IS taxed is counted as
+    taxed and correctly excluded from `exempt_inst_acres`. **The method never
+    used the false premise; only the docstring's motivating sentence did.** The
+    fresh run reproduces every published figure exactly (U of A: 145 exempt acres
+    of 253 institutional, ×2.0 lift, $15.2M/lot-acre, $2.242B on 47 accounts).
+    Premise sentences corrected in both files; ⚠️ **both now say DO NOT "fix" the
+    method on account of the retraction.** `ANALYSIS_BACKLOG.md` §7's conclusions
+    ride on those same numbers and therefore also stand.
+  - ⚠️ **(3) OPEN AND IT IS THE ONLY THING LEFT: should the revenue model treat
+    AJ/PU/UI/UF differently at all?** We apply mill rates to every record on the
+    roll, which produces the ~$125.4M/yr above. Whether the City actually levies
+    those parcels is **not answerable from this dataset** — it publishes
+    assessments and a `Tax Class`, not exemption status. ⚠️ **This is a
+    public-number change and Peter's call, not a cleanup.** Needs an external
+    source on exemption status before it is even decidable.
+  - ⚠️ **`docs/FINDINGS_revenue_scale.md` §4–5 was written under the old premise
+    and has NOT been re-checked.** Lower priority than the two above (it is
+    narrative, not a computation others cite), but it is the last known place
+    the retracted claim may still be load-bearing.
   - ⚠️ **Do NOT "fix" this by dropping the parcels.** We apply published rates to
     the published roll; silently excluding records the City published is the
     exact silent-correctness failure the guards exist to prevent.
