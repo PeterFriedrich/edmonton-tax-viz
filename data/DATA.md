@@ -223,6 +223,20 @@ aligned. That pull also surfaced a new `Assessment Class 1` label
 
 ⚠️ **What this does NOT establish.** Being on the assessment roll with an assessed value is **not** the same as being levied: this dataset publishes assessments and a `Tax Class`, it does not publish exemption status, and Alberta assesses some exempt property. The pipeline applies mill rates to every record here, so **whether that is correct for these 2,254 parcels is an open question** (`TODO.md`), not a settled defect. ⚠️ **Zoning is also not ownership** — `UF` and `PU` include privately-owned facilities.
 
+⚠️ **AND ABSENCE FROM THIS ROLL IS OFTEN TRANSIENT, NOT STRUCTURAL** (established 2026-08-07, and it is why the "absent entirely" claim above looked true). **Every identifier in these datasets churns:**
+
+| identifier | churns how | worked example |
+|---|---|---|
+| `Account Number` | **renumbered** | all four major hospitals moved into a new `114955xx` block at the 2025 roll; the old numbers vanish from the current roll and the new ones appear in **no year** of `qi6a-xuwt` |
+| address | **re-addressed** | `WESTMOUNT SHOPPING CENTRE NW` no longer exists as a street name |
+| `Neighbourhood` | **renamed** | OLIVER → WÎHKWÊNTÔWIN moved 12,237 parcels; a per-hood value comparison reads that as **−100%** |
+
+**A property can therefore be missing from the published current roll while still existing and still being assessed.** Misericordia Community Hospital was continuously assessed 2012–2025 as account `10095840` (~$200–260M, always WEST MEADOWLARK PARK), was renumbered to `11495573`, and was **absent from `q7d6-ambg` until 2026-08-03** — during which the map understated that neighbourhood by ~$250M of assessed value. ⚠️ **The two datasets disagree about account numbers for the SAME assessment year 2025** (historical still says `10095840`, current says `11495573`), so **cross-dataset account-number joins are unreliable for renumbered parcels.**
+
+⚠️ **Renumbering is ROUTINE.** Year-over-year in the historical roll, accounts vanish at **0.15%–0.37%/yr** (2023→2024 spikes to **0.91%, 3,893 accounts**). A vanished account number is not by itself a finding.
+
+**What is stable is POSITION** — across the hospital renumbering the coordinates moved **under 2 m**. `tools/audit_roll_continuity.py` uses that to find dropouts independently of all three churning identifiers; run 2026-08-07 against historical 2024, **1,534 of 426,913 parcels (0.36%) had no current match, $1.62B assessed**. ⚠️ Those are candidates, not verdicts — demolitions, subdivisions and consolidations legitimately have no 1:1 successor. (`legal_description` — plan/block/lot — would be a better key and is immutable, but exists **only** in the historical roll, so it cannot join the two.)
+
 ⚠️ **Two artifacts rest on the retracted claim and are UNVERIFIED against this correction:** `docs/FINDINGS_exempt_institutional.md` and `tools/audit_exempt_institutional.py` proxy exempt land as *polygon acres − taxable lot acres*, which under-counts by exactly the parcels above; `docs/ANALYSIS_BACKLOG.md` §7 (closed 2026-07-09) rests on the same premise. The direction of the original concern still holds — revenue/acre understates neighbourhoods holding large exempt institutions — but its **magnitude is not what those documents state**. See also `docs/FINDINGS_revenue_scale.md` §4–5, written under the old premise.
 
 ### Known Quirks
