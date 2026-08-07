@@ -316,6 +316,35 @@ slim — `year_built` etc. stay out until the diversity analysis needs them
 (ANALYSIS_BACKLOG 4). Does NOT resolve the condo `lot_size` inconsistency; that
 lives with its consumer (`export_value_grid._point_lot_stats`).
 
+### `src/load_wards.py` (ward rollup — added 2026-08-07)
+
+**Inputs:** the same property-info CSV as `load_property_info.py`
+(`data/raw/Property_Info__Current_Calendar_Year_.csv`)
+
+**Outputs:** DataFrame `neighbourhood_name` / `ward`, **one row per
+neighbourhood** — a different grain from `load_property_info`'s account rows,
+which is why it is a separate module rather than more columns on that one.
+
+**Responsibilities:**
+- Read the `Ward` attribute column and reduce it to a per-neighbourhood lookup
+- **Raise if any neighbourhood spans more than one ward**
+- Report neighbourhoods with no ward (NaN, kept) and compound ward values
+
+**Why there is no boundary layer:** ward is an **attribute on the property roll**,
+not geography we ingest — no polygon, no spatial join. Names are the post-2021
+redistricting set, so this cannot be joined to any pre-2021 ward geography.
+
+**The 1:1 invariant is load-bearing.** Measured across 439,685 parcels, all 398
+ward-tagged neighbourhoods sit in exactly one ward, which is what makes a ward
+figure a **regroup of neighbourhood-level results** rather than a
+re-aggregation from parcels. If that ever breaks, every ward total downstream
+becomes a double count — hence raise, not a silent mode.
+
+**Does not:** cost anything, touch geometry, or feed the served pipeline. Its
+only consumer is `tools/ward_rollup.py`; no served column changed.
+
+---
+
 ### `src/export_value_grid.py` (Glass-view spikes — added 2026-07-04; lot-acre variant 2026-07-05)
 
 **Inputs:** the per-property DataFrame from `load_assessment.py` (needs

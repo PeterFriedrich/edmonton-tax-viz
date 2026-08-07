@@ -216,6 +216,26 @@ Also removed a duplicated preamble block left in this file by the
     geojson until the next auto-refresh runs. The UI must degrade cleanly when
     they are missing (the house pattern), or the site breaks in the gap.
 
+- [ ] **`WEST MEADOWLARK PARK`'s revenue MORE THAN DOUBLED in one auto-refresh —
+  unexplained** (found 2026-08-07 while settling the ward-rollup vintage question).
+  `total_revenue` went **$4.63M → $10.63M (+130%)** across the 2026-08-03 → 08-04
+  refresh. It is **not noise in a crowd**: 77 of 406 hoods moved, but citywide the
+  net change is **+$5.9M and this hood is +$6.0M** — the other 76 essentially
+  cancel, and no other hood moved more than $0.1M.
+  - **Why it matters:** it is the only mover big enough to shift a ward — 
+    **sipiwiyiniwak +2.8%**, against ≤0.06% for every other ward. A revenue-side
+    number on the live map roughly doubled without anyone noticing.
+  - **Reproduce:** diff `total_revenue` between `f464bdf^` and HEAD for
+    `web/data/neighbourhood_value_per_acre.geojson`.
+  - **Candidates to check, in order:** a genuine reassessment (large commercial
+    parcel(s) reassessed or newly completed); a parcel/hood reassignment that
+    moved value *in* from a neighbour (check whether any adjacent hood lost a
+    matching ~$6M — the cancelling 76 make this plausible); or the `qi6a-xuwt`
+    account-id defect touching this hood. **The cardinality guard did not fire**,
+    so whatever it is, it is inside the bands.
+  - ⚠️ Revenue side only — **touches no renewal/road figure** (`road_m_per_acre`
+    changed in 0 of 406 hoods across the same refresh).
+
 - [ ] **CARDINALITY GUARD — two small follow-ons (guard shipped 2026-07-28, PR #110).**
   `scripts/check_value_anchors.py` now pins the record-to-parcel *regime* in
   bands and runs in `refresh.yml` after regeneration. Both known bugs were
