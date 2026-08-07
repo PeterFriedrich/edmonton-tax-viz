@@ -42,6 +42,7 @@ Also removed a duplicated preamble block left in this file by the
 
 ## Open work
 
+
 - [ ] **BUG REPORT to Edmonton Open Data — the `qi6a-xuwt` 2024/25 dropout.
   Gated on Peter reviewing the notebook by hand; everything else is done.**
   ⚠️ **Re-promoted 2026-08-06 from `docs/TODO_archive.md`, where it had been
@@ -216,25 +217,34 @@ Also removed a duplicated preamble block left in this file by the
     geojson until the next auto-refresh runs. The UI must degrade cleanly when
     they are missing (the house pattern), or the site breaks in the gap.
 
-- [ ] **`WEST MEADOWLARK PARK`'s revenue MORE THAN DOUBLED in one auto-refresh —
-  unexplained** (found 2026-08-07 while settling the ward-rollup vintage question).
-  `total_revenue` went **$4.63M → $10.63M (+130%)** across the 2026-08-03 → 08-04
-  refresh. It is **not noise in a crowd**: 77 of 406 hoods moved, but citywide the
-  net change is **+$5.9M and this hood is +$6.0M** — the other 76 essentially
-  cancel, and no other hood moved more than $0.1M.
-  - **Why it matters:** it is the only mover big enough to shift a ward — 
-    **sipiwiyiniwak +2.8%**, against ≤0.06% for every other ward. A revenue-side
-    number on the live map roughly doubled without anyone noticing.
-  - **Reproduce:** diff `total_revenue` between `f464bdf^` and HEAD for
-    `web/data/neighbourhood_value_per_acre.geojson`.
-  - **Candidates to check, in order:** a genuine reassessment (large commercial
-    parcel(s) reassessed or newly completed); a parcel/hood reassignment that
-    moved value *in* from a neighbour (check whether any adjacent hood lost a
-    matching ~$6M — the cancelling 76 make this plausible); or the `qi6a-xuwt`
-    account-id defect touching this hood. **The cardinality guard did not fire**,
-    so whatever it is, it is inside the bands.
-  - ⚠️ Revenue side only — **touches no renewal/road figure** (`road_m_per_acre`
-    changed in 0 of 406 hoods across the same refresh).
+- [ ] **IS THE `WEST MEADOWLARK PARK` HOSPITAL PARCEL SUPPOSED TO BE TAXABLE?**
+  Opened 2026-08-07 out of the item above. Account `11495573` is **UF — Urban
+  Facilities** zoned (confirmed by point-in-polygon against `zoning.geojson`),
+  at **16940 87 AVENUE NW**, assessed **$247,780,500** — almost certainly the
+  **Misericordia Community Hospital** site.
+  - ⚠️ **`data/DATA.md:207` says land of exactly this kind should not be on the
+    taxable roll at all:** *"tax-exempt institutional land (Legislature, schools,
+    hospitals, City property) is **absent from the taxable roll entirely**, not
+    flagged or zeroed"* — and lists `AJ/PU/UI/UF` as the exempt-proxy zones.
+  - **So one of three things is true, and they have different consequences:**
+    (a) the site genuinely became taxable — the map is right and DATA.md §207
+    needs a caveat; (b) an upstream roll error — the map is publishing **$6.0M/yr
+    of municipal levy that the City does not collect**, and West Meadowlark's
+    revenue-per-acre is ~2× too high; (c) a partial/phased assessment we are
+    reading as whole. **Nothing in our data distinguishes these.**
+  - **First checks, cheapest first:** whether the account carries a tax-exempt
+    status in any City-published source; whether other UF-zoned hospital sites
+    (Royal Alexandra, Grey Nuns, U of A) are on `q7d6-ambg` too, or whether this
+    one is alone — **if it is alone, that is the tell**; and whether the parcel
+    appears in the 2023/2024 historical roll `qi6a-xuwt`.
+  - **Fold into the Open Data bug report if it turns out to be (b).** Same
+    dataset, same "we found something odd in your roll" framing as the
+    `qi6a-xuwt` item — and the same discipline applies: **report the symptom,
+    leave the cause unstated.**
+  - ⚠️ **Do NOT "fix" this locally by dropping the parcel.** We apply published
+    rates to the published roll; that is the contract, and silently excluding a
+    record the City published would be the exact silent-correctness failure the
+    guards exist to prevent. If it is wrong, it gets fixed upstream.
 
 - [ ] **CARDINALITY GUARD — two small follow-ons (guard shipped 2026-07-28, PR #110).**
   `scripts/check_value_anchors.py` now pins the record-to-parcel *regime* in
@@ -1285,6 +1295,10 @@ Also removed a duplicated preamble block left in this file by the
 ## Done
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
+
+- [x] **`WEST MEADOWLARK PARK`'s revenue MORE THAN DOUBLED in one auto-refresh — EXPLAINED 2026-08-07: ONE new $247.8M parcel, and the pipeline was right.** — 2026-08-07 · `docs/TODO_archive.md`
+
+
 
 - [x] **Tighten the cardinality-guard bands — DONE 2026-08-05, and the item's premise was half wrong, so only FOUR of the six moved.** The variance data turned out to exist in a place nobody had looked: **the guard logs every anchor value in CI**, harvested from the refresh runs' job logs. ⚠️ **Five runs but only THREE independent data changes** — the 2026-08-02 and 08-05 runs committed `status.json` only, so their readings re-measure unchanged input. **Four anchors were effectively frozen** (`dup_parcel_points` constant at 33, `lot_needle_ratio` 0.00%, `dedupe_effect_pct` 0.01%, `dup_parcel_value_frac` 0.11%) and were tightened **2×**, to ±25%. ⚠️ **The other two are not noisy, they are TRENDING** — `ineligible_points` 56→58→60 and `ineligible_value_frac` 0.00517→0.00575→0.00633, monotonic, in the guard's own **dangerous** direction — and were **left wide on purpose**: tightening them would red the weekly publish on the next real data change and read as a false alarm. ⚠️ **The item's prescribed mechanism could not express this** — `--write-baseline --tolerance` applies ONE global tolerance to every anchor, so the bands are now hand-set per anchor and that flag would flatten them; the baseline says so in `_bands_are_per_anchor`. **Not tightened further than ±25% because no observation across a January year-roll exists yet**, which is the event the guard was built for. Three new tests pin all of it, and the tightening test was **falsified against the old baseline first**. The drift became its own open item. — 2026-08-05 · `docs/TODO_archive.md`
 
