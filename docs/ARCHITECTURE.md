@@ -402,6 +402,21 @@ lot acres). ~34.7k cells / 1.8 MB on current data. Returns a stats dict.
   baseline. ⚠️ Unlike `check_value_anchors.py` it does **not** skip in the
   degraded ground-acre-only mode: that mode is legitimate for a local run but not
   for a publish. See `DECISIONS.md` 2026-08-03.
+- `scripts/check_revenue_deltas.py`: **magnitude** validation, and the only
+  check in this family that looks at **one neighbourhood** rather than a citywide
+  aggregate or a schema list. Compares per-hood `total_revenue` against
+  `git show HEAD:` of the served file — the version currently published — and
+  reports any hood moving **≥10% AND ≥$1M**, plus any hood appearing or
+  disappearing. ⚠️ **It WARNS and always exits 0**, unlike every other guard
+  here: a hood's revenue can legitimately double when a large parcel completes,
+  so failing the publish would red the weekly refresh on good data. The output is
+  a filed GitHub issue (`refresh.yml` → `issues: write`), because a warning
+  inside a green run reaches nobody. ⚠️ **It must run BEFORE the commit step** —
+  after the commit its own baseline becomes the new data and the diff is always
+  empty. ⚠️ **Both threshold conditions are load-bearing**: percentage alone
+  fires on small edge hoods where a few completed houses clear 10%. It exists
+  because `WEST MEADOWLARK PARK` doubled on a green run and nothing noticed for
+  four days. See `DECISIONS.md` 2026-08-07 and `RUNBOOK.md` §0b.
 - `scripts/vintage_report.py`: ⚠️ **not a guard — a REPORT, and the only thing
   here that runs on its own schedule rather than inside `refresh.yml`.** Every
   script above gates work already in flight; this one runs monthly

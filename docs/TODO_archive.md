@@ -8,6 +8,33 @@ Items are verbatim as they were closed, newest-moved first in the order they app
 
 ---
 
+- [x] **`WEST MEADOWLARK PARK`'s revenue MORE THAN DOUBLED in one auto-refresh —
+  EXPLAINED 2026-08-07: ONE new $247.8M parcel, and the pipeline was right.**
+  `total_revenue` $4.63M → $10.63M (+130%). Account **`11495573`, 16940 87 AVENUE
+  NW**, `tax_class = Non Residential`, absent from the Jul-6 roll by **both**
+  account number and address. Parcel count 1079 → 1080 and
+  `$438,858,000 + $247,780,500 = $686,638,500` **exactly**.
+  - **The pipeline did the right thing.** Implied rate on the new parcel is
+    **2.4223%** = **24.223 mills** = exactly the 2025 Non Residential municipal
+    rate in `data/mill_rates.json` (24.2229). Value rose 56.5% while revenue rose
+    129.7% purely because the parcel is taxed at 3.2× the residential rate.
+  - **The other two candidates are ruled out.** Not a hood reassignment — the
+    largest value *drop* anywhere was QUEEN MARY PARK at ≈$6.6M, nothing lost
+    $247M. Not `qi6a-xuwt` — that defect is accounts *missing* from the
+    historical roll; this is one *arriving* in the current one. Not a code
+    change — `git log f76fc7d..f464bdf` is the single data-bot commit.
+  - ⚠️ **The item's own reproduce line was off by one refresh.** The jump landed
+    at **`f464bdf`, the SECOND 2026-08-03 refresh**, not the 08-03 → 08-04
+    boundary. Eleventh time a stated basis did not survive re-measurement.
+  - ⚠️ **This is the event that exposed the guard hole, and that is the durable
+    outcome.** The run was **green** — all five guards passed, no email, four
+    days on the live map, found only by diffing git revisions for an unrelated
+    reason. `scripts/check_revenue_deltas.py` now exists because of it.
+  - **The residual question is upstream and is its own open item** (the UF /
+    exempt-status question below). Revenue side only — `road_m_per_acre` changed
+    in 0 of 406 hoods, so no renewal figure moved.
+
+
 - [x] **RE-PIN `data/expected_columns.json` ONCE the four Stage 2 columns ship
   — CLOSED 2026-08-04, 62 → 66.** (`cost_roads_ops_per_acre`,
   `cost_transit_ops_per_acre`, `cost_bike_ops_per_acre`,

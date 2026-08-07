@@ -70,6 +70,53 @@ had moved — so the 2026 mill rates sat published from **2026-04-29 to
 2026-08-06** before someone thought to look. Run it any time with
 `python scripts/vintage_report.py` (or the "Run workflow" button).
 
+## 0b. `⚠️ Big revenue delta` issue (the refresh found a hood that moved a lot)
+
+**What it is:** the weekly refresh ran `scripts/check_revenue_deltas.py`, which
+compares the regenerated GeoJSON against the currently-published one and found a
+neighbourhood whose `total_revenue` moved **≥10% AND ≥$1,000,000**. It files an
+issue labelled `revenue-delta`; GitHub's notification is the email.
+
+⚠️ **NOTHING IS BROKEN AND NOTHING IS BLOCKED.** This guard always exits 0. The
+refresh committed and deployed normally, and the new number is live. A hood's
+revenue genuinely can double when a large parcel completes — the guard cannot
+tell that from a defect, which is exactly why it asks a human instead of failing.
+Do not treat it like a §2 red X.
+
+**Unlike §0's digest, this one is filed ONLY when it fires** — the weekly refresh
+is itself the proof of life, so silence here is good news.
+
+**Work the issue in this order:**
+
+1. **Read the `revenue mix` column in the issue table.** A shift in
+   `rev_frac_inst` / `rev_frac_commercial` means value of that class arrived or
+   left; `unchanged (scaled uniformly)` means the hood scaled as a whole, which
+   reads as a rate change rather than a parcel event.
+2. **Look at the roll for that hood, largest parcels first** — the issue body
+   carries the exact `q7d6-ambg` query. A single new large account explains most
+   of these.
+3. **Rule out a transfer from a neighbour:** if another hood lost a matching
+   amount in the same refresh, this is a boundary/assignment change, not new
+   value. `git diff HEAD~1 -- web/data/neighbourhood_value_per_acre.geojson`.
+4. **Decide and record.** Legitimate → close the issue with the parcel named.
+   Upstream-looking → open a TODO item and consider folding it into the Open
+   Data bug report (`data/DATA.md` §0); **report the symptom, leave the cause
+   unstated.** ⚠️ **Never "fix" it by dropping the record locally** — we apply
+   published rates to the published roll, and silently excluding a record the
+   City published is the silent-correctness failure the guards exist to prevent.
+
+**Why it exists:** `WEST MEADOWLARK PARK` went **$4.63M → $10.63M (+130%)** on
+2026-08-03 on a **fully green** run — all five other guards passed, no email —
+and served for four days before being found by accident. Every other guard is a
+citywide aggregate or a schema list, and citywide that event was **+0.22%**. The
+cause was one new $247.8M Non-Residential account; the pipeline had applied the
+correct mill rate throughout. Full reasoning: `docs/DECISIONS.md` 2026-08-07.
+
+**Tuning:** thresholds are `MIN_PCT` / `MIN_ABS_DOLLARS` in the script. ⚠️
+**Widen before narrowing** — they were measured against every refresh that has
+ever changed the file and fire on exactly one event in that history, so a
+tightening that starts producing weekly issues will get the guard ignored.
+
 ## 1. The January year roll (the recurring one)
 
 **Symptom:** the site shows a "Showing 2025 data —…" banner, and the weekly
