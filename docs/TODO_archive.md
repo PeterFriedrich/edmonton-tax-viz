@@ -9,30 +9,57 @@ Items are verbatim as they were closed, newest-moved first in the order they app
 ---
 
 - [x] **`WEST MEADOWLARK PARK`'s revenue MORE THAN DOUBLED in one auto-refresh —
-  EXPLAINED 2026-08-07: ONE new $247.8M parcel, and the pipeline was right.**
-  `total_revenue` $4.63M → $10.63M (+130%). Account **`11495573`, 16940 87 AVENUE
-  NW**, `tax_class = Non Residential`, absent from the Jul-6 roll by **both**
-  account number and address. Parcel count 1079 → 1080 and
-  `$438,858,000 + $247,780,500 = $686,638,500` **exactly**.
-  - **The pipeline did the right thing.** Implied rate on the new parcel is
+  EXPLAINED 2026-08-07: a RENUMBERING GAP CLOSING, so the +130% was the
+  CORRECTION, not the defect.**
+  `total_revenue` $4.63M → $10.63M (+130%). ⚠️ **`$4.63M` was the wrong number;
+  `$10.63M` is right — the map had been UNDERSTATING this hood by ~$250M of
+  assessed value / ~$6M/yr for as long as the gap lasted.**
+  - ⚠️ **THE ANSWER MOVED THREE TIMES AND THE FIRST TWO ARE IN THE COMMIT
+    HISTORY. Do not cite them.**
+    1. *"One new $247.8M parcel arrived."* **True but shallow** — every figure
+       below still holds, it just is not what happened.
+    2. *"Is a hospital supposed to be taxable?"* **THE WRONG QUESTION.** It
+       always was taxable and always was on the roll.
+    3. ✅ **A RENUMBERING GAP.** Misericordia has been continuously assessed
+       **2012–2025** as account **`10095840`** (~$200–260M, always WEST
+       MEADOWLARK PARK, always COMMERCIAL). It was renumbered to `11495573` and
+       was simply **absent from the published current roll** during the
+       changeover. Nothing arrived; something came back.
+  - **The pipeline did the right thing throughout.** Account **`11495573`, 16940
+    87 AVENUE NW**, `tax_class = Non Residential`. Parcel count 1079 → 1080 and
+    `$438,858,000 + $247,780,500 = $686,638,500` **exactly**. Implied rate
     **2.4223%** = **24.223 mills** = exactly the 2025 Non Residential municipal
     rate in `data/mill_rates.json` (24.2229). Value rose 56.5% while revenue rose
     129.7% purely because the parcel is taxed at 3.2× the residential rate.
-  - **The other two candidates are ruled out.** Not a hood reassignment — the
-    largest value *drop* anywhere was QUEEN MARY PARK at ≈$6.6M, nothing lost
-    $247M. Not `qi6a-xuwt` — that defect is accounts *missing* from the
-    historical roll; this is one *arriving* in the current one. Not a code
-    change — `git log f76fc7d..f464bdf` is the single data-bot commit.
+  - **The other candidates are ruled out by measurement.** Not a hood
+    reassignment — the largest value *drop* anywhere was QUEEN MARY PARK at
+    ≈$6.6M, nothing lost $247M. Not `qi6a-xuwt` — that defect is accounts
+    *missing* from the historical roll; this is one *arriving* in the current
+    one. Not a code change — `git log f76fc7d..f464bdf` is the single data-bot
+    commit.
   - ⚠️ **The item's own reproduce line was off by one refresh.** The jump landed
     at **`f464bdf`, the SECOND 2026-08-03 refresh**, not the 08-03 → 08-04
     boundary. Eleventh time a stated basis did not survive re-measurement.
-  - ⚠️ **This is the event that exposed the guard hole, and that is the durable
+  - ⚠️ **This is the event that exposed the guard hole, and that is one durable
     outcome.** The run was **green** — all five guards passed, no email, four
     days on the live map, found only by diffing git revisions for an unrelated
-    reason. `scripts/check_revenue_deltas.py` now exists because of it.
-  - **The residual question is upstream and is its own open item** (the UF /
-    exempt-status question below). Revenue side only — `road_m_per_acre` changed
-    in 0 of 406 hoods, so no renewal figure moved.
+    reason. `scripts/check_revenue_deltas.py` now exists because of it, and
+    **warn-not-fail turned out to be right for a reason only visible at the
+    end**: the event it catches is a correction, so failing the publish on it
+    would have been exactly backwards.
+  - ⚠️ **The other durable outcome is the general lesson:** every identifier in
+    the assessment data churns independently (account renumbered, address
+    re-addressed, neighbourhood renamed), so a check built on any one of them
+    reports churn as loss. `tools/audit_roll_continuity.py` matches by
+    **position** because of this. See `docs/DECISIONS.md` 2026-08-07 (×2) and
+    the session-summary for S100.
+  - **The residual question is upstream and is its own open item** (whether the
+    revenue model should treat `AJ/PU/UI/UF` differently at all — ~$125.4M/yr of
+    modelled levy, Peter's call, not decidable from this dataset). ⚠️ Note that
+    this is **no longer** framed as "was West Meadowlark's parcel anomalous" —
+    it was not; it is 5% of a pre-existing exposure present in every published
+    number all along. Revenue side only — `road_m_per_acre` changed in 0 of 406
+    hoods, so no renewal figure moved.
 
 
 - [x] **RE-PIN `data/expected_columns.json` ONCE the four Stage 2 columns ship
