@@ -2159,9 +2159,15 @@
     // The river runs 60 km past the city, well out onto the bare #0a0a0f
     // backdrop, and at the original [26,34,48] those tails were all but
     // invisible — extending a river nobody can see achieves nothing. Lifted
-    // until the tail reads: still only ~5x the backdrop's luminance and far
+    // until the tail reads: still only ~7x the backdrop's luminance and far
     // below the set-aside grey, so it stays landform rather than data.
-    const RIVER_COLOR = [50, 66, 94, 255];
+    // ⚠️ The lever here is CHROMA, not brightness. Going bluer means widening
+    // the R→B spread, not lifting all three channels — the luminance band is
+    // what keeps the river under the data, and the set-aside grey (relative
+    // luminance ~108) is the ceiling it must stay well beneath. Widened
+    // 2026-08-08 from [50,66,94] (spread 44) to nearly double the chroma at
+    // roughly the same lightness: ~71 vs the old ~65, ceiling untouched.
+    const RIVER_COLOR = [42, 74, 128, 255];
     const HIGHWAY_COLOR = [72, 78, 92, 255];
     // Municipal outlines: dimmer than the highways and unfilled. They are the
     // faintest thing on the map by intent — they say "the city ends here and
