@@ -1094,6 +1094,14 @@ as the city's edge was only where the neighbourhood polygons stop. See §3.
   does bear on any future *citywide-per-acre* figure — dividing by 672.4 and by
   782.1 km² are different questions, and the right denominator depends on which
   is being asked.
+- ⚠️ **782.1 km² INCLUDES WATER, and that is why it will not match a published
+  figure** (measured 2026-08-08). Commonly cited areas for Edmonton are ~765–768
+  km², which are **land** areas. Subtracting the North Saskatchewan where it
+  runs inside the city (**10.9 km²**, from this layer's own river geometry)
+  gives **~771 km²**, and other water bodies close most of the remaining ~3 km².
+  **So there are three denominators, not two** — hood fabric 672.4, legal total
+  782.1, legal land ~771 — and a citywide figure must say which. A reader
+  checking our number against Wikipedia or StatCan will hit this first.
 
 Built by `scripts/build_reference_layers.py`. **NOT in the weekly refresh** —
 static geography, same posture as `build_levy_catchments.py`; the endpoints are
