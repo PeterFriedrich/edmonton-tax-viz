@@ -10,7 +10,9 @@ at a glance:
   t="highway"   the motorway/trunk network, clipped to the SAME extent so it
                 runs off the edge of the view rather than stopping at the city
                 limit (2026-08-03; replaces the hand-extracted t="henday")
-  t="boundary"  one Polygon per neighbouring municipality, drawn as an outline
+  t="boundary"  one Polygon per neighbouring municipality (PLACES) AND per
+                region (REGIONS: Edmonton's own legal limit plus the four
+                counties it abuts), all drawn as unfilled outlines
   t="place"     one Point per neighbouring municipality, carrying its name
 
 Purely cartographic: no metric, no colour semantics, no tooltip. All are
@@ -131,7 +133,10 @@ HIGHWAY_MIN_KM = 700.0
 HIGHWAY_RING_REF_KM = 156.0
 
 # Municipal outlines are background context at ~1 px; 100 m costs 169 vertices
-# for all seven (~3.6 kB) and nothing visible.
+# for the seven places (~3.6 kB) and nothing visible. The five REGIONS below are
+# far larger shapes and cost ~35 kB at the same tolerance — still cheap for a
+# static committed file, and 100 m is ~2 px at city zoom, so coarsening further
+# would start to show on a border.
 BOUNDARY_SIMPLIFY_M = 100.0
 
 PLACE_URL = (
@@ -163,6 +168,42 @@ PLACES = (
     ("Leduc", 78, "CITY_NAME"),
     ("Beaumont", 78, "CITY_NAME"),
     ("Devon", 56, "TOWN_NAME"),
+)
+
+# Outlines drawn WITHOUT a label, unlike PLACES above — two different jobs:
+#   PLACES  a named town, where the point and the outline describe the same
+#           small polygon and the NAME is the payload.
+#   REGIONS the city's own legal limit and the rural municipalities it abuts,
+#           where the EDGE is the payload. These are far too large to label
+#           sensibly at city zoom (Parkland County alone is 2,755 km², 3.5x
+#           Edmonton), and a county name is not what the outline is saying —
+#           the message is "the city ends here, and there is more past it".
+#
+# Edmonton is in this list because the map has never drawn its own limit: what
+# reads as the city edge is only where the neighbourhood polygons stop.
+# Measured 2026-08-08 — the legal boundary is 782.1 km² against 672.4 km² of
+# hood fabric, so 109.6 km² (14.0% of Edmonton) lies inside the city and is
+# absent from the map: annexed and undeveloped land carrying no neighbourhood.
+# Nothing is drawn OUTSIDE the legal limit (0.0 km²), so the fabric is strictly
+# contained and the map understates the city's extent rather than overstating
+# it. Drawing the limit is what makes that 14% visible as empty space instead of
+# reading as background.
+#
+# Sublayers follow legal STATUS again, not size — and the trap is different from
+# the PLACES one:
+#   78  City                     Edmonton
+#   104 Specialized Municipality Strathcona County — NOT 114. Alberta models
+#                                specialized municipalities separately, so the
+#                                obvious county layer does not contain it.
+#   114 Municipal District/County Sturgeon, Parkland, Leduc County
+# Note Leduc appears twice across the two lists and they are different polygons:
+# the CITY of Leduc (PLACES, layer 78) sits inside LEDUC COUNTY (here, 114).
+REGIONS = (
+    ("Edmonton", 78, "CITY_NAME"),
+    ("Strathcona County", 104, "SPMUN_NAME"),
+    ("Sturgeon County", 114, "MD_NAME"),
+    ("Parkland County", 114, "MD_NAME"),
+    ("Leduc County", 114, "MD_NAME"),
 )
 
 # Simplify tolerances (metres). Both layers are unlabelled background context
@@ -292,6 +333,66 @@ def _fetch_highways(bounds_4326: tuple[float, float, float, float]) -> gpd.GeoDa
     return gdf
 
 
+def _largest_polygon(name: str, layer: int, field: str):
+    """The largest polygon of one municipality, in WORKING_EPSG.
+
+    Shared by PLACES and REGIONS: both ask this service the same way and differ
+    only in what they do with the shape afterwards.
+    """
+    resp = requests.get(
+        PLACE_URL.format(layer=layer),
+        params={
+            # Doubling is the SQL escape for a literal quote. None of the
+            # current names contain one; this keeps that from becoming a
+            # silent failure if a "St. Paul'"-style name is ever added.
+            "where": f"{field}='{name.replace(chr(39), chr(39) * 2)}'",
+            "outFields": field,
+            "returnGeometry": "true",
+            "outSR": OUT_EPSG,
+            "f": "geojson",
+        },
+        timeout=180,
+    )
+    resp.raise_for_status()
+    payload = resp.json()
+    if "error" in payload:
+        raise RuntimeError(f"ArcGIS query failed for {name!r}: {payload['error']}")
+    feats = payload.get("features") or []
+    if not feats:
+        raise RuntimeError(
+            f"No geometry returned for {name!r} in sublayer {layer} "
+            f"({field}) — the name or its municipal status may have changed. "
+            "A shape that silently vanishes leaves a hole in the map's "
+            "orientation with nothing to signal it."
+        )
+    geom = gpd.GeoSeries(
+        [shape(f["geometry"]) for f in feats], crs=f"EPSG:{OUT_EPSG}"
+    ).to_crs(epsg=WORKING_EPSG).union_all()
+    return max(getattr(geom, "geoms", [geom]), key=lambda p: p.area)
+
+
+def _fetch_regions() -> list:
+    """One unlabelled outline per entry in REGIONS.
+
+    NOT clipped to the view extent, unlike the river and the highways. Those are
+    clipped because they are open shapes that would otherwise stop dead in the
+    middle of the frame. A municipality is a closed ring, and clipping one would
+    replace its far side with a straight run along the clip box that draws as if
+    it were a real border. Parkland County is the only one that leaves the
+    extent (66.7% inside, measured 2026-08-08); letting it run off the edge is
+    the same effect MARGIN_M buys for the river.
+    """
+    logger.info("Fetching %d regional outlines…", len(REGIONS))
+    outlines = []
+    for name, layer, field in REGIONS:
+        biggest = _largest_polygon(name, layer, field)
+        logger.info(
+            "  %-20s %6.0f km² from sublayer %d", name, biggest.area / 1e6, layer
+        )
+        outlines.append(biggest.simplify(BOUNDARY_SIMPLIFY_M, preserve_topology=True))
+    return outlines
+
+
 def _fetch_places() -> gpd.GeoDataFrame:
     """One label anchor per entry in PLACES, from the Alberta municipality service.
 
@@ -304,37 +405,7 @@ def _fetch_places() -> gpd.GeoDataFrame:
     logger.info("Fetching %d regional place anchors…", len(PLACES))
     names, points, outlines = [], [], []
     for name, layer, field in PLACES:
-        resp = requests.get(
-            PLACE_URL.format(layer=layer),
-            params={
-                # Doubling is the SQL escape for a literal quote. None of the
-                # current names contain one; this keeps that from becoming a
-                # silent failure if a "St. Paul'"-style name is ever added.
-                "where": f"{field}='{name.replace(chr(39), chr(39) * 2)}'",
-                "outFields": field,
-                "returnGeometry": "true",
-                "outSR": OUT_EPSG,
-                "f": "geojson",
-            },
-            timeout=180,
-        )
-        resp.raise_for_status()
-        payload = resp.json()
-        if "error" in payload:
-            raise RuntimeError(f"ArcGIS query failed for {name!r}: {payload['error']}")
-        feats = payload.get("features") or []
-        if not feats:
-            raise RuntimeError(
-                f"No geometry returned for {name!r} in sublayer {layer} "
-                f"({field}) — the name or its municipal status may have changed. "
-                "A place that silently vanishes leaves a hole in the map's "
-                "orientation with nothing to signal it."
-            )
-
-        geom = gpd.GeoSeries(
-            [shape(f["geometry"]) for f in feats], crs=f"EPSG:{OUT_EPSG}"
-        ).to_crs(epsg=WORKING_EPSG).union_all()
-        biggest = max(getattr(geom, "geoms", [geom]), key=lambda p: p.area)
+        biggest = _largest_polygon(name, layer, field)
         anchor = biggest.centroid
         if not biggest.contains(anchor):
             anchor = biggest.representative_point()
@@ -426,7 +497,11 @@ def build(
 
     # --- places: a named point AND an outline per neighbouring municipality --
     places = _fetch_places()
-    outlines = list(places["outline"])
+    # --- regions: Edmonton's own limit + the counties it abuts, unlabelled ----
+    # Emitted as the same t="boundary" kind: identical treatment on the map (a
+    # faint unfilled line under the data), so splitting the type would buy a
+    # second render path for one colour they already share.
+    outlines = list(places["outline"]) + _fetch_regions()
 
     out_gdf = gpd.GeoDataFrame(
         {

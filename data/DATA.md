@@ -388,6 +388,7 @@ For Phase 1 (neighbourhood-level choropleth), two approaches are viable:
 
 - `name` is already ALL CAPS — matches our `neighbourhood_name` normalization convention
 - 407 boundary features. Join outcome (after the 2026-07-01 audit corrections): 1 assessment neighbourhood with no boundary match (the immaterial `OLIVER` straggler, $500 — deliberately unmapped) and 1 boundary neighbourhood with no assessment data (`LEWIS FARMS`) → 406 of 407 boundaries rendered. See "Name Matching" below; flagged in `join_and_calculate.py`.
+- ⚠️ **THIS FILE DOES NOT TILE THE CITY** (measured 2026-08-08). The 406 rendered polygons cover **672.4 km²** against Edmonton's **782.1 km²** legal boundary — **109.6 km², 14.0% of the city, has no neighbourhood at all** (annexed and undeveloped land). The gap is one-directional: 0.0 km² of hood fabric falls outside the legal limit. It is easy to assume the hood polygons *are* the city, and they are not — §14 draws the legal limit so the difference is visible rather than reading as background.
 
 ---
 
@@ -1058,12 +1059,28 @@ The same file also carries `roadway_ops`, `bikeway_ops` and `transit_ets`, on a
   ops) and are in neither the bike metric nor the 1,500 km snow denominator.
 
 ## 14. Geographic Reference Layers (orientation, added 2026-07-27)
-`web/data/reference.geojson` (**70 kB, 16 features**, committed) — the North
-Saskatchewan River, the regional **highway network**, and the seven
-neighbouring municipalities as both an **outline** and a name, so a first-time
-viewer can orient before reading the fiscal data. The map has **no basemap
-tiles** (just a dark backdrop), so without these there is no geographic context
-at all. Purely cartographic: no metric, no tooltip.
+`web/data/reference.geojson` (**89 kB, 21 features**, committed) — the North
+Saskatchewan River, the regional **highway network**, the seven neighbouring
+municipalities as both an **outline** and a name, and (**added 2026-08-08**)
+five unlabelled **regional outlines**: Edmonton's own legal limit plus the four
+rural municipalities it abuts. So a first-time viewer can orient before reading
+the fiscal data. The map has **no basemap tiles** (just a dark backdrop), so
+without these there is no geographic context at all. Purely cartographic: no
+metric, no tooltip.
+
+⚠️ **THE HOOD FABRIC IS NOT THE CITY — 14% of Edmonton is missing from it**
+(measured 2026-08-08). Edmonton's legal boundary is **782.1 km²**; the 406
+rendered neighbourhood polygons cover **672.4 km²**. The **109.6 km² difference
+is inside the city limits and absent from the map** — annexed and undeveloped
+land carrying no neighbourhood. Nothing is drawn *outside* the legal limit
+(0.0 km²), so the fabric is strictly contained: **the map understates the
+city's extent and never overstates it.** Before this layer existed, what read
+as the city's edge was only where the neighbourhood polygons stop. See §3.
+- **No metric is affected.** Every metric is per-neighbourhood, so land with no
+  neighbourhood contributes to neither a numerator nor a denominator. ⚠️ This
+  does bear on any future *citywide-per-acre* figure — dividing by 672.4 and by
+  782.1 km² are different questions, and the right denominator depends on which
+  is being asked.
 
 Built by `scripts/build_reference_layers.py`. **NOT in the weekly refresh** —
 static geography, same posture as `build_levy_catchments.py`; the endpoints are
@@ -1138,6 +1155,26 @@ Two sources were tried and rejected on 2026-08-03:
 - **At the 60 km clip the river is a MultiPolygon** (disjoint stretches up- and
   downstream), where a narrow clip yields a single Polygon. Anything asserting
   its geometry type must accept both.
+- ⚠️ **`REGIONS` outlines are deliberately NOT clipped to the view extent**,
+  unlike the river and the highways. Those are open shapes that would stop dead
+  mid-frame without a clip; a municipality is a **closed ring**, so clipping one
+  replaces its far side with a straight run along the clip box that **draws as
+  if it were a real border**. Parkland County is the only one that leaves the
+  extent (66.7% inside) and it simply runs off the edge.
+- ⚠️ **Strathcona County is in sublayer 104 (`Specialized Municipality`,
+  `SPMUN_NAME`), NOT 114** (`Municipal District and County`) with the other
+  three. Alberta models specialized municipalities separately, so looking in the
+  obvious county layer returns nothing. This is the `REGIONS` equivalent of the
+  Sherwood Park / layer-66 trap above.
+- ⚠️ **"Leduc" names two different polygons across the two lists** — the CITY of
+  Leduc (`PLACES`, layer 78) sits INSIDE **Leduc County** (`REGIONS`, layer
+  114). Querying one where the other is meant returns a shape of the wrong
+  scale with no error.
+- **`boundary` features are no longer 1:1 with `place` features** (12 vs 7).
+  That used to be an asserted invariant in `verify-reference-layer.js`; it was
+  retired deliberately, not broken — `REGIONS` outlines carry no name because
+  these shapes are far too large to label at city zoom (Parkland County alone
+  is 3.5× Edmonton).
 - **Municipal outlines are drawn UNDER the data**, with the river. The seven
   places sit outside Edmonton, so no hood polygon hides them (measured: 0–0.7%
   of each outline overlaps the city fabric) — and underneath they can never cut

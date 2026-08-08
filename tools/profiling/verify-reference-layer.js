@@ -35,6 +35,15 @@ const VIEWS = ['money', 'services', 'ratio', 'uses', 'development'];
 // for a viewer who has touched no control, and it is invisible in the DOM.
 const PLACE_COUNT = 7;
 
+// The unlabelled outlines (REGIONS in scripts/build_reference_layers.py):
+// Edmonton's own legal limit plus the four counties it abuts. They share the
+// t="boundary" kind with the places' outlines, so boundaries are NO LONGER 1:1
+// with place names — that used to be the invariant here, and it was retired
+// deliberately on 2026-08-08 rather than broken. Kept as its own constant so a
+// region silently vanishing from the build still trips the count.
+const REGION_COUNT = 5;
+const BOUNDARY_COUNT = PLACE_COUNT + REGION_COUNT;
+
 (async () => {
   const browser = await chromium.launch({
     args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader',
@@ -85,8 +94,9 @@ const PLACE_COUNT = 7;
   const kinds = (s0.types || []).reduce((m, t) => (m[t] = (m[t] || 0) + 1, m), {});
   check('carries one river and one highway network',
         kinds.river === 1 && kinds.highway === 1, JSON.stringify(kinds));
-  check('carries one boundary outline per named place',
-        kinds.boundary === PLACE_COUNT, `${kinds.boundary} of ${PLACE_COUNT}`);
+  check('carries an outline per named place AND per unlabelled region',
+        kinds.boundary === BOUNDARY_COUNT,
+        `${kinds.boundary} of ${BOUNDARY_COUNT}`);
   check('carries the regional place points', kinds.place === PLACE_COUNT,
         `${kinds.place} of ${PLACE_COUNT}`);
   check('no unexpected feature kinds',
@@ -98,7 +108,7 @@ const PLACE_COUNT = 7;
   const shapeGeoms = (s0.geoms || []).filter(g => g !== 'Point');
   check('river + boundaries are polygonal, highways are lines',
         shapeGeoms.filter(g => g === 'MultiLineString').length === 1 &&
-        shapeGeoms.filter(g => /Polygon$/.test(g)).length === PLACE_COUNT + 1,
+        shapeGeoms.filter(g => /Polygon$/.test(g)).length === BOUNDARY_COUNT + 1,
         JSON.stringify(shapeGeoms));
   check('every place is a Point',
         (s0.geoms || []).filter(g => g === 'Point').length === PLACE_COUNT,
