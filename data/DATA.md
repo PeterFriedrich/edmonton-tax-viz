@@ -223,6 +223,19 @@ aligned. That pull also surfaced a new `Assessment Class 1` label
 
 ⚠️ **What this does NOT establish.** Being on the assessment roll with an assessed value is **not** the same as being levied: this dataset publishes assessments and a `Tax Class`, it does not publish exemption status, and Alberta assesses some exempt property. The pipeline applies mill rates to every record here, so **whether that is correct for these 2,254 parcels is an open question** (`TODO.md`), not a settled defect. ⚠️ **Zoning is also not ownership** — `UF` and `PU` include privately-owned facilities.
 
+⚠️ **HOW THE $125.4M/yr MUST BE DESCRIBED, whenever it is quoted (locked 2026-08-08).** It is a **gross modelled figure, not a revenue loss and not a foregone-revenue estimate**:
+
+> **Gross modelled tax if every institutional/public-zoned parcel were fully taxable.** Alberta law exempts many of these properties (hospitals, universities, government land); the actual taxable share is not publicly known.
+
+The failure mode this guards against is quoting it as "$125.4M the City doesn't collect", which asserts an exemption status **no public source states** and which our own data cannot support either way. ⚠️ **The direction of the error is unknown, not merely unquantified** — if the City levies these parcels the modelled figure is right, and if it exempts them the model *overstates* the hoods holding them. `docs/FINDINGS_revenue_scale.md` §5 states this and used to state the reverse.
+
+**The one nearby external reference point, and its limits.** Alberta's **Grants in Place of Taxes (GIPOT)** program pays municipalities for **Government of Alberta** property, which is exempt from municipal taxation; the federal PILT equivalent covers correctional, RCMP and military property. ⚠️ **Three cautions before this is used as an anchor for the figure above:**
+- ⚠️ **No dollar amount is verified.** The City's own GIPOT page publishes **no figure at all** — only the percentage history. A "$15.7M for 2021-22" figure has been circulated to this project; secondary reporting puts Edmonton's GIPOT "at $15 million per year", consistent in magnitude but **not a confirmation of that number, that year, or that scope**. Do not publish it until a primary source is in hand.
+- ⚠️ **Any 2020–2024 receipt is a HALF payment.** Alberta cut GIPOT to **75% of the calculated amount in 2019, then 50% for 2020–2024**, restored to 75% in 2025 and **100% in 2026**. So a 2021-22 receipt is roughly **half** the assessed-tax equivalent, and reading it as one understates by ~2×.
+- ⚠️ **Coverage is narrower than the four zones.** GIPOT is a Government of Alberta program; **universities, hospitals and non-profits are not the Government of Alberta** and appear to fall outside it — but the program page does not enumerate exclusions, so *that* is inference, not a sourced statement. GIPOT therefore cannot net off the $125.4M even if the dollar figure were confirmed.
+
+Sources checked 2026-08-08: [City of Edmonton — Grants in Lieu of Taxes](https://www.edmonton.ca/residential_neighbourhoods/property_tax_assessment/tax_exemptions_relief/grants-in-lieu-taxes), [Alberta — Grants in Place of Taxes program](https://www.alberta.ca/grants-in-place-of-taxes-program).
+
 ⚠️ **AND ABSENCE FROM THIS ROLL IS OFTEN TRANSIENT, NOT STRUCTURAL** (established 2026-08-07, and it is why the "absent entirely" claim above looked true). **Every identifier in these datasets churns:**
 
 | identifier | churns how | worked example |

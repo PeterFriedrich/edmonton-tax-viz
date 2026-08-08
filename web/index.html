@@ -3200,13 +3200,22 @@
       // Non-residential cuts colour one class of it — so on those cuts the panel
       // and the map divide by different things. Same rule as the history panel's
       // two bases (SPEC_temporal.md §6): an unnamed denominator is how a correct
-      // number reads as wrong. The exemption caveat is the other half —
-      // FINDINGS_revenue_scale.md §4-5: exempt institutional land is absent from
-      // the roll entirely, so every zone total understates it.
+      // number reads as wrong. The exemption caveat is the other half — and it
+      // ⚠️ POINTED THE WRONG WAY until 2026-08-08. It said exempt institutional
+      // land is absent from the roll, so every zone total UNDERSTATES. Measured,
+      // the opposite is true: hospitals and the U of A campus ARE on the roll
+      // (2,254 parcels on AJ/UF/UI/PU, $5.62B assessed), and this pipeline
+      // applies mill rates to all of them. If the City in fact exempts some,
+      // these shares OVERSTATE those hoods. Which way it actually falls is not
+      // publicly knowable — the roll publishes assessments and a Tax Class, not
+      // exemption status — so the note now claims a direction no further than
+      // the evidence goes. data/DATA.md "Tax-exempt flag",
+      // FINDINGS_revenue_scale.md §4-5.
       document.getElementById("temporal-note").textContent =
         "Share of this neighbourhood's total municipal levy, by the zoning of "
-        + "each property. Tax-exempt land is not on the roll, so it is absent "
-        + "from every share above.";
+        + "each property. Institutional and public land is on the roll and is "
+        + "counted above at published rates; the City does not publish which of "
+        + "it is tax-exempt.";
     }
 
     function renderHistory(t) {

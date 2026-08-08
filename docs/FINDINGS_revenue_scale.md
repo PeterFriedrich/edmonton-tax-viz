@@ -86,9 +86,22 @@ boundary area with a $0 exempt numerator. **The data does not support this.**
 - The 46 rows dropped on load for $0/null assessed value are all
   RESIDENTIAL/COMMERCIAL/FARMLAND — no institutional land hiding there.
 
-**Tax-exempt institutional land is absent from the taxable assessment roll
-entirely** — not flagged, not zeroed, not dropped. It contributes nothing to the
-numerator while its area still sits inside a neighbourhood's boundary denominator.
+> ⚠️ **RETRACTED 2026-08-08.** This paragraph used to read: *"Tax-exempt
+> institutional land is absent from the taxable assessment roll entirely — not
+> flagged, not zeroed, not dropped. It contributes nothing to the numerator
+> while its area still sits inside a neighbourhood's boundary denominator."*
+> **That is false.** Every major hospital and the U of A campus are ON the roll;
+> a full spatial join puts **2,254 parcels on `AJ`/`UF`/`UI`/`PU` zoning
+> carrying $5,622,058,000 of assessed value**. Only the Alberta Legislature is
+> genuinely absent (0 rows at 10800 97 AVENUE NW). See `data/DATA.md`
+> "Tax-exempt flag".
+>
+> ⚠️ **The measurements above are UNAFFECTED and §4's conclusion STANDS.** They
+> were arrived at by measuring the roll, not by assuming what is on it: the
+> near-zero spike is **low taxable coverage**, and that is established by the
+> parcel counts and land uses below, not by the retracted sentence. Do NOT
+> "fix" §4 on account of this retraction — the false premise was only ever the
+> stated *reason*, never the evidence.
 
 The spike is instead **low taxable coverage** — few taxable parcels over a large
 boundary polygon:
@@ -103,9 +116,26 @@ land** — separable by land-use/coverage, *not* by exempt status.
 
 ## 5. Methodology caveat (record regardless of downstream choices)
 
-Because exempt institutional land is absent from the roll, revenue/acre
-**understates** any neighbourhood that contains large exempt institutions. This is a
-limitation of the source, not a modelling choice, and should be disclosed.
+⚠️ **THIS SECTION'S DIRECTION WAS INVERTED, CORRECTED 2026-08-08.** It used to
+read: *"Because exempt institutional land is absent from the roll, revenue/acre
+**understates** any neighbourhood that contains large exempt institutions."*
+The premise was retracted (see §4) and the conclusion flips with it.
+
+**What is actually true.** Institutional land is on the roll, and this pipeline
+applies mill rates to every record on it — about **$125.4M/yr of modelled levy
+across the 2,254 `AJ`/`UF`/`UI`/`PU` parcels, 4.6% of the $2.71B citywide
+total**. So if the City in fact exempts some of those properties, revenue/acre
+**OVERSTATES** the neighbourhoods holding them — the opposite of what this
+section claimed, and the error runs toward flattering those hoods rather than
+penalising them.
+
+⚠️ **Do not restate that as settled either.** Being on the assessment roll with
+an assessed value is **not** the same as being levied: the dataset publishes
+assessments and a `Tax Class`, not exemption status, and Alberta assesses some
+exempt property. **The honest statement is that the direction of the error is
+unknown and bounded by ~$125.4M/yr**, concentrated (UNIVERSITY OF ALBERTA alone
+is $45.5M/yr across 36 parcels). Whether the model should treat these zones
+differently is an open decision, not a defect — `TODO.md`.
 
 The tax roll itself gives no way to detect which neighbourhoods those are. The
 zoning layer (`src/load_zoning.py`) now provides a **partial** proxy: its
