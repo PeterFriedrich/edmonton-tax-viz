@@ -300,10 +300,63 @@ summary.)_
     assessments and a `Tax Class`, not exemption status. ⚠️ **This is a
     public-number change and Peter's call, not a cleanup.** Needs an external
     source on exemption status before it is even decidable.
-  - ⚠️ **`docs/FINDINGS_revenue_scale.md` §4–5 was written under the old premise
-    and has NOT been re-checked.** Lower priority than the two above (it is
-    narrative, not a computation others cite), but it is the last known place
-    the retracted claim may still be load-bearing.
+  - ✅ **(4) `docs/FINDINGS_revenue_scale.md` §4–5 RE-CHECKED AND CORRECTED
+    2026-08-08 — and it was NOT "narrative, not a computation others cite".**
+    This item said so, and ranked it lowest. ⚠️ **It was cited by a
+    USER-FACING STRING that had been LIVE on the site**: the revenue-mix panel
+    printed *"Tax-exempt land is not on the roll, so it is absent from every
+    share above"*, with a code comment pointing at §4-5 as its authority. The
+    retracted premise was **published**, not merely written down, and it
+    **pointed the wrong way** — it promised an understatement where the model
+    may be overstating. Fixed (PR #184, merged, **confirmed live in
+    production**: new string present, old string returns 0 hits). §4's
+    conclusion SURVIVED its own premise (measured, not assumed — same as
+    `audit_exempt_institutional.py`) and both files now warn against "fixing"
+    it; §5's direction was inverted. **The lesson worth keeping: "narrative"
+    was the wrong triage — nothing had checked whether prose was quoted by
+    code.**
+  - ✅ **(5) HOW THE $125.4M/yr MUST BE DESCRIBED — locked 2026-08-08.** It is
+    a **gross modelled** figure ("if every institutional/public-zoned parcel
+    were fully taxable"), **never** "revenue lost" or "foregone". ⚠️ The
+    direction of the error is **unknown, not merely unquantified**. Text in
+    `data/DATA.md`; `DECISIONS.md` 2026-08-08.
+  - ⚠️ **(6) GIPOT IS NOT A USABLE ANCHOR YET — three specific blockers.**
+    Offered as the one hard reference point ("$15.7M for 2021-22") and **not
+    written in**, because: (a) **the City publishes no dollar figure at all**,
+    only a percentage history — the $15.7M is unsourced and secondary
+    reporting says only "$15 million per year"; (b) **2021-22 sits inside the
+    2020–2024 window when Alberta paid 50%**, so any receipt from it reads
+    ~2× low as a tax equivalent (75% in 2019 and 2025, 100% from 2026); (c)
+    **GIPOT covers Government of Alberta property** — that universities and
+    hospitals fall outside it is *inference*, since the program page
+    enumerates no exclusions. All three recorded in `data/DATA.md`. **Drop the
+    number in once a primary source exists; do not publish it before.**
+
+- [ ] **OPEN-DATA REQUEST (DRAFTED, NOT SENT): ask Edmonton to publish the
+  taxable/exempt liability code on `q7d6-ambg`.** Opened 2026-08-08.
+  `docs/DRAFT_open_data_request_exemption_status.md`. **This is the only route
+  that resolves the AJ/UF/UI/PU question** — no public per-parcel exemption
+  source exists, confirmed.
+  - ⚠️ **One claim in the brief it came from is FALSE and is corrected in the
+    draft: Calgary does NOT publish exemption status as open data.** Verified
+    against the live schema of Calgary's `4bsw-nn7w` — 22 fields, **no
+    exempt/taxable flag**. Calgary discloses it on the **assessment notice**
+    only (*"Tax exemption status is noted on your assessment notice"*, verified
+    verbatim). Sending the stronger claim would be trivially checkable and
+    wrong.
+  - ⚠️ **Confirm the ASSET / liability-code paragraph before sending.** The
+    term is real (ASSET = Assessment Shared Services Environment, described as
+    a database of liability codes; exempt property reported and excluded from
+    equalized assessment) but the Municipal Affairs manual PDF returned **HTTP
+    520** on 2026-08-08, so it is search-result text, **not read in the
+    source**. The draft carries a fallback paragraph if it cannot be confirmed.
+  - **Keep separate from the `qi6a-xuwt` bug report** — that one asserts a
+    defect, this one requests a field. **Do not put the $125.4M in the
+    message**; it depends on the very question being asked.
+  - ⚠️ **Do NOT hand-flag individual parcels as exempt meanwhile** (Peter,
+    2026-08-08). No verified per-parcel source exists, and the worked examples
+    circulated for exactly that purpose were **all wrong** — see the `## Done`
+    line for the 2026-08-08 verification.
 
 - [ ] **▶ WHO IS MISSING FROM THE CURRENT ROLL RIGHT NOW? — 1,534 parcels /
   $1.62B with no current-roll match.** Opened 2026-08-07 from
