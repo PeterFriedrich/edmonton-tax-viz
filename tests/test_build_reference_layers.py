@@ -120,6 +120,49 @@ def test_places_are_a_closed_explicit_list():
     assert "Edmonton" not in names, "the subject city must not label itself"
 
 
+def test_regions_are_unlabelled_and_include_the_subject_city():
+    """REGIONS is the mirror image of PLACES: the edge is the payload, not a name.
+
+    Edmonton belongs here and NOT in PLACES — the map had never drawn its own
+    legal limit, so what read as the city edge was only where the neighbourhood
+    polygons stop. Nothing in REGIONS may be labelled: these shapes are far too
+    large to name sensibly at city zoom.
+    """
+    names = [name for name, _, _ in b.REGIONS]
+    assert len(names) == len(set(names)), "duplicate region name"
+    assert "Edmonton" in names, "the city's own legal limit is the point of REGIONS"
+    assert not set(names) & {n for n, _, _ in b.PLACES}, (
+        "a name in both lists would draw two outlines and label one of them"
+    )
+
+
+def test_strathcona_county_is_a_specialized_municipality():
+    """The REGIONS equivalent of the Sherwood Park trap.
+
+    Alberta models specialized municipalities in their own sublayer, so
+    Strathcona County is NOT in 114 with the other counties. Looking for it
+    there — the obvious place — returns nothing.
+    """
+    entry = next(e for e in b.REGIONS if e[0] == "Strathcona County")
+    assert entry[1] == 104 and entry[2] == "SPMUN_NAME"
+
+
+def test_each_region_is_queried_in_a_sublayer_that_matches_its_field():
+    expected = {78: "CITY_NAME", 104: "SPMUN_NAME", 114: "MD_NAME"}
+    for name, layer, field in b.REGIONS:
+        assert expected[layer] == field, f"{name}: layer {layer} does not carry {field}"
+
+
+def test_leduc_the_city_and_leduc_county_are_different_shapes():
+    """Both lists carry a 'Leduc'-ish entry and they are not the same polygon —
+    the CITY of Leduc sits INSIDE Leduc County. Querying one where the other is
+    expected returns a shape of the wrong scale with no error."""
+    city = next(e for e in b.PLACES if e[0] == "Leduc")
+    county = next(e for e in b.REGIONS if e[0] == "Leduc County")
+    assert (city[1], city[2]) == (78, "CITY_NAME")
+    assert (county[1], county[2]) == (114, "MD_NAME")
+
+
 def test_sherwood_park_is_an_urban_service_area():
     """The one that breaks a naive implementation.
 

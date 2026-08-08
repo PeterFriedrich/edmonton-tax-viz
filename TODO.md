@@ -420,11 +420,23 @@ summary.)_
     deliberately: the names needed no polygon fetch, and bundling them was what
     made Tier 3 look expensive. See `DECISIONS.md` 2026-07-27 (×2),
     `data/DATA.md` §14, `docs/UI.md`.
-  - [ ] **Tier 3 — the BOUNDARIES half (still open).** Thin grey outline, no
-    fill, for St. Albert / Strathcona County / Leduc. Now a standalone call on
-    its own merits: the orientation payoff was mostly the names, so this is
-    worth doing only if the *shape* of the neighbours adds something. Alberta
-    `urban_and_rural_municipality` MapServer, natively **EPSG:3400**.
+  - [x] ~~**Tier 3 — the BOUNDARIES half (still open).**~~ **DONE 2026-08-08 —
+    and this item was ALREADY HALF-STALE when it was worked.** The neighbouring
+    municipalities' outlines had shipped with the *names* half back on
+    2026-07-27 (`reference-boundary`, seven polygons); what was genuinely
+    missing was **Edmonton's own legal limit and the rural municipalities**,
+    which this item never asked for. Both now ship as `REGIONS` in
+    `scripts/build_reference_layers.py`: Edmonton + Strathcona / Sturgeon /
+    Parkland / Leduc County, unlabelled, unfilled, under the data.
+    ⚠️ **What it exposed is the durable part: the hood fabric is not the city.**
+    Legal boundary **782.1 km²** vs **672.4 km²** of rendered hoods → **109.6
+    km², 14.0% of Edmonton, has no neighbourhood at all** and had been reading
+    as background. One-directional (0.0 km² of fabric outside the limit), so
+    the map understates the city and never overstates it. **No metric moves**
+    (all are per-hood), but a future *citywide-per-acre* figure must state which
+    denominator it means. `DECISIONS.md` 2026-08-08, `data/DATA.md` §3 + §14.
+    Original notes below, kept because the sublayer traps are still live:
+    Alberta `urban_and_rural_municipality` MapServer, natively **EPSG:3400**.
     **Sublayer IDs confirmed:** Edmonton / St. Albert / Leduc are all in
     **78 (`City`, field `CITY_NAME`)**; **Strathcona County is in 104
     (`Specialized Municipality`, `SPMUN_NAME`) — NOT 114
@@ -433,11 +445,17 @@ summary.)_
     names half needed a *third* sublayer, **66 `Urban Service Area`**, for
     Sherwood Park — the hamlet-like service area of Strathcona County, which is
     a different thing from the County polygon in 104.
-  - [ ] **Which end of the stack do boundaries belong at?** Same real question
-    Tier 1 answered per-feature. Unlike the river there is no seam in the hood
-    fabric to show through, and unlike the ring road they sit entirely
-    *outside* the city where nothing occludes them — so both arguments that
-    settled Tier 1 are silent here. Measure before assuming.
+  - [x] ~~**Which end of the stack do boundaries belong at?**~~ **ANSWERED
+    2026-07-27 for the neighbours, and 2026-08-08 for the regions: UNDER the
+    data, with the river.** The neighbours sit outside Edmonton where there is
+    no hood fabric to hide them (measured: 0–0.7% of each outline overlaps the
+    city), so underneath they are fully visible AND can never cut across a
+    prism. ⚠️ **Edmonton's own limit is the one case that argument does NOT
+    cover** — it is the only outline that runs *through* the fabric rather than
+    outside it. Under the data is still right (an over-composed line would
+    slice the prisms it crosses), but it means the limit is partly hidden where
+    hoods meet it, and fully visible exactly along the 14% that has no hood —
+    which is the read we want.
   - [ ] **Zoom-gating does not exist yet** — nothing in `index.html` gates on
     zoom today, so Tier 2/3 introduce the concept. Tier 1 deliberately renders
     at all zooms.
