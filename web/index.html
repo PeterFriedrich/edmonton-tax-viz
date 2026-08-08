@@ -2173,6 +2173,33 @@
     // faintest thing on the map by intent — they say "the city ends here and
     // that is Leduc", and nothing more.
     const BOUNDARY_COLOR = [58, 62, 74, 255];
+    // …with ONE exception, and it is the point of the tier split: Edmonton's own
+    // legal limit is the only boundary the map is making a claim WITH, not just
+    // drawing for context. 14% of the city (109.6 km²) has no neighbourhood
+    // polygon, so this line is the only thing that shows the fabric stops short
+    // of the city. It gets a lighter, wider stroke; the neighbours keep the
+    // faint one. The industrial zone sits between: named, but not a jurisdiction
+    // — a dimmer warm line so it does not read as another municipality.
+    const CITY_LIMIT_COLOR = [122, 132, 152, 255];
+    const ZONE_LINE_COLOR = [118, 96, 74, 235];
+    const BOUNDARY_STYLE = {
+      city:   { color: CITY_LIMIT_COLOR, width: 1.8 },
+      region: { color: BOUNDARY_COLOR,   width: 1 },
+      place:  { color: BOUNDARY_COLOR,   width: 1 },
+      zone:   { color: ZONE_LINE_COLOR,  width: 1.2 },
+    };
+    // ⚠️ HOISTED, and it is not style — it is a 10x. These were inline arrows
+    // in the layer literal, which makes a NEW function identity on every
+    // buildLayers() call; deck.gl compares accessors by reference, so it took
+    // each rebuild for a changed accessor and recomputed the colour attribute
+    // over every vertex of the boundary set. Measured: a metric switch went from
+    // 488 ms to 5,284 ms under SwiftShader. The constant this replaced
+    // (`getLineColor: BOUNDARY_COLOR`) had no such cost, so the regression
+    // arrived with the accessor, not the geometry. Same reason HOOD_COLOR is.
+    const boundaryLineColor = f =>
+      BOUNDARY_STYLE[f.properties.kind]?.color || BOUNDARY_COLOR;
+    const boundaryLineWidth = f =>
+      BOUNDARY_STYLE[f.properties.kind]?.width || 1;
     // Split once per load, not per frame: two layers need two datasets, and
     // buildLayers runs on every camera settle and every control change.
     let _refSplit = null;
@@ -2214,8 +2241,13 @@
         filled: false,
         stroked: true,
         extruded: false,
-        getLineColor: BOUNDARY_COLOR,
-        getLineWidth: 1,
+        // ⚠️ Per-feature since 2026-08-08. Every outline used to draw in one
+        // colour at one width, so Edmonton's own legal limit was
+        // indistinguishable from Devon's town outline — the one line the map
+        // most needs to assert read as just another jurisdiction. `kind` comes
+        // from the builder; see its module docstring for the tiers.
+        getLineColor: boundaryLineColor,
+        getLineWidth: boundaryLineWidth,
         lineWidthUnits: "pixels",
         lineWidthMinPixels: 1,
         pickable: false,
@@ -2351,6 +2383,23 @@
     // Point has none of.
     const PRIO_HOOD = 0;
     const PRIO_PLACE = 1;   // higher wins the spot when boxes overlap
+    // The regional tiers, added 2026-08-08. Ordering is a claim about what
+    // orients a viewer FIRST: a county name frames the whole quadrant, a town
+    // name frames a corner of it, and the airport/Nisku are the finest grain —
+    // so they yield rather than push a county name off the map.
+    const PRIO_ECON = 1;    // ties with a town on purpose: same visual weight
+    const PRIO_ZONE = 2;
+    const PRIO_REGION = 3;
+    // Per-tier text style. `base` feeds placeSize(), which scales it with the
+    // camera; `col` is the draw colour. Counties read larger and cooler than a
+    // town (they are areas, not points), the zone borrows its outline's warmth,
+    // and the econ names sit quietest.
+    const REF_TIERS = {
+      region: { prio: PRIO_REGION, base: 14, col: [138, 150, 172, 235] },
+      zone:   { prio: PRIO_ZONE,   base: 12, col: [166, 140, 108, 230] },
+      place:  { prio: PRIO_PLACE,  base: 12, col: [150, 160, 178, 235] },
+      econ:   { prio: PRIO_ECON,   base: 11, col: [132, 142, 158, 225] },
+    };
     // Smaller and dimmer than a hood name, and drawn in the same font: these
     // are context at the edge of the frame, so they should be legible without
     // competing with the data for the eye.
@@ -2365,12 +2414,16 @@
     const PLACE_MIN_SIZE = 7;
     const PLACE_FULL_ZOOM = 10;   // at/above: full size (HOME is 10.2)
     const PLACE_MIN_ZOOM = 7;     // at/below: the floor
-    function placeSize(zoom) {
+    // `base` is the tier's full size (REF_TIERS), defaulted to PLACE_SIZE so the
+    // original single-tier call still reads the same.
+    function placeSize(zoom, base = PLACE_SIZE) {
       const t = (zoom - PLACE_MIN_ZOOM) / (PLACE_FULL_ZOOM - PLACE_MIN_ZOOM);
       return PLACE_MIN_SIZE +
-             (PLACE_SIZE - PLACE_MIN_SIZE) * Math.min(1, Math.max(0, t));
+             (base - PLACE_MIN_SIZE) * Math.min(1, Math.max(0, t));
     }
-    const PLACE_COLOR = [150, 160, 178, 235];
+    // Retained as the tier default only — REF_TIERS carries the per-tier colours
+    // the labels actually draw in, and each anchor now ships its own `col`.
+    const PLACE_COLOR = REF_TIERS.place.col;
     const HOOD_COLOR = [240, 240, 246, 250];   // hoisted: the colour accessor
                                                // runs per label, per rebuild.
     let _placeAnchors = null;
@@ -2380,11 +2433,19 @@
       if (!split) return [];   // reference.geojson not fetched yet
       return (_placeAnchors = split.places.map(f => {
         const name = f.properties.name.toUpperCase();
+        const tier = REF_TIERS[f.properties.kind] || REF_TIERS.place;
         return { name, position: f.geometry.coordinates,
                  em: _measureEm(name),
-                 // No polygon, so no area — prio is what orders these.
-                 area: 0, p: null,
-                 size: PLACE_SIZE, prio: PRIO_PLACE };
+                 // ⚠️ `area` is the km² of the shape this label NAMES, from the
+                 // builder — not 0 as it was through 2026-08-08. The sweep sorts
+                 // (prio, area), so a whole tier at area 0 tied and got cut in
+                 // FILE ORDER: that is why 5 of 7 places vanished at z=7. With
+                 // 16 reference names now sharing the sweep, the tie-break had
+                 // to mean something. Econ points name no shape and keep 0 —
+                 // there are two of them and they tie only with each other.
+                 area: f.properties.km2 || 0, p: null, ref: true,
+                 tier: f.properties.kind,
+                 size: tier.base, prio: tier.prio, col: tier.col };
       }));
     }
 
@@ -2491,7 +2552,10 @@
         // reserves room for can never disagree — getSize reads it back off the
         // datum below. (Measuring at the wrong size either overlaps or
         // over-reserves; that is why d.size replaced the LABEL_SIZE constant.)
-        const size = d.prio === PRIO_PLACE ? placeSize(vp.zoom) : d.size;
+        // `d.ref`, not a prio test: PRIO_PLACE is no longer the only reference
+        // tier, and PRIO_ECON deliberately shares its value — so asking about
+        // priority would have silently stopped scaling half the regional names.
+        const size = d.ref ? placeSize(vp.zoom, d.size) : d.size;
         const gw = d.em * size * LABEL_DRAW_SCALE;   // the glyphs themselves
         const gh = size * LABEL_DRAW_SCALE;
         // Under a panel it can neither be read nor sensibly block a label that
@@ -2509,7 +2573,8 @@
                      w: gw + 2 * LABEL_PAD, h: gh + 2 * LABEL_PAD });
       }
       // Regional names win the spot first — they orient the whole frame, and
-      // there are seven of them against 400 hoods. Then bigger hoods, as before.
+      // there are 16 of them against 400 hoods. Within a tier the bigger shape
+      // wins (see the `area` note in placeAnchors); hoods sort by area as before.
       boxes.sort((a, b) => (b.d.prio - a.d.prio) || (b.d.area - a.d.area));
       const kept = [];
       for (const b of boxes) {
@@ -2542,7 +2607,7 @@
         getText: d => d.name,
         getSize: d => d.size,
         sizeUnits: "pixels",
-        getColor: d => (d.prio === PRIO_PLACE ? PLACE_COLOR : HOOD_COLOR),
+        getColor: d => d.col || HOOD_COLOR,
         outlineWidth: 3,
         outlineColor: [0, 0, 0, 255],
         fontFamily: LABEL_FONT_FAMILY,
@@ -4692,9 +4757,21 @@
         v === "development" ? devBlurb() :
         v === "change" ? changeBlurb() :
         v === "infill" ? VIEWS[v].blurb : moneyBlurb();
+      // ⚠️ THE LEGEND MOVED UP HERE TOO, 2026-08-08, for the reason the title
+      // block already had: it is chrome the sweep measures, so it must be final
+      // BEFORE buildLayers(). Only #title was fixed when this was first found,
+      // and the legend kept the bug — entering Uses swaps the gradient for nine
+      // categorical rows and grows #legend from 71 to 166 px UPWARD (top 807 ->
+      // 712, bottom pinned), so the sweep kept DEVON at y=700 against the short
+      // legend and the tall one then painted over it.
+      // ⚠️ It survived because the suite's own camera had drifted by the time it
+      // checked; pinning the camera to HOME is what surfaced it. PRE-EXISTING —
+      // reproduced on unmodified master before this branch touched anything.
+      // Safe to run first: refreshLegend reads state and the scale helpers,
+      // never anything buildLayers produces.
+      refreshLegend();
       overlay.setProps({ layers: buildLayers() });
       syncColorAdjust(); // the sqrt toggle only bites in money + glass (scaleT)
-      refreshLegend();
       syncPinnedPanel(); // leaving Money takes the revenue breakdown with it
       // ...and the peek card goes with it, for the SAME reason the panel does.
       // Nothing re-renders an open card, and openPeek is idempotent per hood,

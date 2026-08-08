@@ -10,10 +10,24 @@ at a glance:
   t="highway"   the motorway/trunk network, clipped to the SAME extent so it
                 runs off the edge of the view rather than stopping at the city
                 limit (2026-08-03; replaces the hand-extracted t="henday")
-  t="boundary"  one Polygon per neighbouring municipality (PLACES) AND per
-                region (REGIONS: Edmonton's own legal limit plus the four
-                counties it abuts), all drawn as unfilled outlines
-  t="place"     one Point per neighbouring municipality, carrying its name
+  t="boundary"  one Polygon per neighbouring municipality (PLACES), per region
+                (REGIONS: Edmonton's own legal limit plus the four counties it
+                abuts), and for the industrial zone — all unfilled outlines
+  t="place"     one Point per named thing, carrying the text to draw
+
+⚠️ EVERY feature now carries `kind`, and `t="boundary"` features carry `name`
+(2026-08-08). Before that, all 13 outlines shipped as a bare {"t":"boundary"}
+and the front end could not tell Edmonton's own legal limit from Devon's town
+outline — they drew in one colour because nothing distinguished them. `kind` is
+the tier the map styles on, NOT a restatement of `t`:
+
+  kind="city"    Edmonton's own limit. Its own stroke; deliberately NOT labelled
+                 (the page title already says Edmonton, and a name in the middle
+                 of the choropleth is clutter, not orientation).
+  kind="region"  the four counties. Labelled since 2026-08-08 — see REGIONS.
+  kind="place"   the neighbouring municipalities: outline + name.
+  kind="zone"    Alberta's Industrial Heartland: outline + name.
+  kind="econ"    the airport and Nisku: name only, no outline. See ECON below.
 
 Purely cartographic: no metric, no colour semantics, no tooltip. All are
 STATIC geography, so this is NOT part of the weekly refresh (same posture as
@@ -168,16 +182,72 @@ PLACES = (
     ("Leduc", 78, "CITY_NAME"),
     ("Beaumont", 78, "CITY_NAME"),
     ("Devon", 56, "TOWN_NAME"),
+    # Added 2026-08-08 with the regional-narrative pass: the two incorporated
+    # towns that were missing from the neighbour set. Both are Towns, so they
+    # share Devon's sublayer.
+    ("Morinville", 56, "TOWN_NAME"),
+    ("Stony Plain", 56, "TOWN_NAME"),
 )
 
-# Outlines drawn WITHOUT a label, unlike PLACES above — two different jobs:
-#   PLACES  a named town, where the point and the outline describe the same
-#           small polygon and the NAME is the payload.
-#   REGIONS the city's own legal limit and the rural municipalities it abuts,
-#           where the EDGE is the payload. These are far too large to label
-#           sensibly at city zoom (Parkland County alone is 2,755 km², 3.5x
-#           Edmonton), and a county name is not what the outline is saying —
-#           the message is "the city ends here, and there is more past it".
+# Economic geography, added 2026-08-08 — NOT municipalities, and that is the
+# point of them: the airport and the Nisku industrial park are regional
+# infrastructure sitting in LEDUC COUNTY, so Edmonton does not tax them. They
+# are drawn as bare labels with no outline, which is both simpler and more
+# honest than it looks:
+#   Nisku is a HAMLET. Alberta publishes hamlets as points only (sublayer 7,
+#     CULPT_NAME) — it has no legal polygon to draw, so a point is the whole
+#     of what exists.
+#   The airport HAS a polygon in OSM, but it is a ~28 km² shape 40 km south of
+#     the city drawn at 1 px. Naming it locates it; tracing it does not, and an
+#     outline in the municipal grey would read as one more jurisdiction.
+# Fetched by IATA code rather than by name: `name` gets edited in OSM, `iata`
+# does not.
+NISKU = ("Nisku", 7, "CULPT_NAME")
+AIRPORT_IATA = "YEG"
+AIRPORT_LABEL = "Edmonton Int'l Airport"
+# Where to look for it. Tight on purpose — a province-wide aerodrome query
+# times out on the public Overpass instance (observed 504, 2026-08-08).
+AIRPORT_BBOX = (53.24, -113.68, 53.36, -113.50)  # S, W, N, E
+
+# Alberta's Industrial Heartland, as the province actually publishes it.
+#
+# ⚠️ THE SERVICE DOES NOT CARRY THE NAME. It is a single unnamed 590.7 km²
+# MultiPolygon in a layer called `resource_designated_industrial_zone`, with no
+# name field at all — so the identification is OURS and was made by measuring
+# who it overlaps, not by reading a label off the source:
+#   Sturgeon County 171.8 · Strathcona County 134.3 · EDMONTON 53.2 ·
+#   Fort Saskatchewan 29.5 km², remainder ≈ Lamont County (not in this layer).
+# That is exactly the Heartland's member set, and 590.7 km² matches the ~582 km²
+# the association publishes. Recorded in data/DATA.md §14 so the inference is
+# visible rather than implied by the label.
+#
+# ⚠️ **53.2 km² of it is inside Edmonton's own boundary**, so this is NOT a
+# clean "regional infrastructure Edmonton doesn't tax" shape the way the airport
+# and Nisku are. Do not narrate it as one.
+ZONE_URL = (
+    "https://geospatial.alberta.ca/titan/rest/services/boundaries"
+    "/resource_designated_industrial_zone/MapServer/0/query"
+)
+ZONE_LABEL = "Industrial Heartland"
+ZONE_MIN_KM2 = 400.0   # measured 590.7; trips loudly if the layer is repointed
+
+# The city's own legal limit and the rural municipalities it abuts, where the
+# EDGE is the payload rather than the small-polygon-plus-name of PLACES.
+#
+# ⚠️ **REGIONS ARE LABELLED AS OF 2026-08-08, REVERSING THE ORIGINAL DECISION.**
+# This comment used to argue they should not be: "far too large to label
+# sensibly at city zoom (Parkland County alone is 2,755 km², 3.5x Edmonton), and
+# a county name is not what the outline is saying — the message is 'the city
+# ends here, and there is more past it'." That reasoning holds for an
+# ORIENTATION map and fails for a REGIONAL one (Peter, 2026-08-08): once the
+# question is fiscal — who else levies here, and what does Edmonton not tax —
+# an unnamed edge cannot answer it. See docs/DECISIONS.md 2026-08-08.
+#
+# ⚠️ The old objection was still half right, and the anchor is where it gets
+# paid: a county CENTROID sits 27–58 km from Edmonton's centre and would put
+# every name off-screen at the default camera. `_region_anchor` places the label
+# on the county's visible strip near the city instead. Do not "simplify" it back
+# to a centroid.
 #
 # Edmonton is in this list because the map has never drawn its own limit: what
 # reads as the city edge is only where the neighbourhood polygons stop.
@@ -213,6 +283,13 @@ RIVER_SIMPLIFY_M = 25.0
 
 # Coordinate decimals (~1 m at Edmonton's latitude) — matches load_roads.
 PRECISION = 5
+
+# How wide a band around the city a county label may sit in (see _region_anchor).
+# Much tighter than MARGIN_M: that one sizes the RIVER so it runs off the frame,
+# this one keeps a name near the edge it belongs to. At 12 km every county gets
+# an anchor in the band a viewer is looking at, without pushing Parkland's name
+# 58 km west to its true centroid.
+REGION_ANCHOR_MARGIN_M = 12000.0
 
 
 def _fetch_river(bounds_4326: tuple[float, float, float, float]) -> gpd.GeoDataFrame:
@@ -371,6 +448,132 @@ def _largest_polygon(name: str, layer: int, field: str):
     return max(getattr(geom, "geoms", [geom]), key=lambda p: p.area)
 
 
+def _fetch_point(name: str, layer: int, field: str):
+    """One named POINT from the Alberta municipality service, in WORKING_EPSG.
+
+    The point-layer sibling of `_largest_polygon`, for the entries that have no
+    polygon to take a centroid from — Alberta publishes hamlets as points.
+    """
+    resp = requests.get(
+        PLACE_URL.format(layer=layer),
+        params={
+            "where": f"{field}='{name.replace(chr(39), chr(39) * 2)}'",
+            "outFields": field,
+            "returnGeometry": "true",
+            "outSR": OUT_EPSG,
+            "f": "geojson",
+        },
+        timeout=180,
+    )
+    resp.raise_for_status()
+    payload = resp.json()
+    if "error" in payload:
+        raise RuntimeError(f"ArcGIS query failed for {name!r}: {payload['error']}")
+    feats = payload.get("features") or []
+    if not feats:
+        raise RuntimeError(
+            f"No point returned for {name!r} in sublayer {layer} ({field}) — "
+            "the name or its status may have changed."
+        )
+    return (
+        gpd.GeoSeries([shape(feats[0]["geometry"])], crs=f"EPSG:{OUT_EPSG}")
+        .to_crs(epsg=WORKING_EPSG).iloc[0]
+    )
+
+
+def _fetch_airport() -> Point:
+    """The airport's centre from OSM, by IATA code, as a bare label anchor.
+
+    `out center;` rather than `out geom;` on purpose: the aerodrome is an OSM
+    RELATION, so a real outline would mean assembling its member ways, and the
+    outline is not wanted anyway (see the ECON note above). The centre is the
+    whole payload.
+    """
+    south, west, north, east = AIRPORT_BBOX
+    query = (
+        f"[out:json][timeout:90];"
+        f'(way["aeroway"="aerodrome"]["iata"="{AIRPORT_IATA}"]'
+        f"({south},{west},{north},{east});"
+        f'relation["aeroway"="aerodrome"]["iata"="{AIRPORT_IATA}"]'
+        f"({south},{west},{north},{east}););"
+        f"out tags center;"
+    )
+    logger.info("Fetching %s from Overpass…", AIRPORT_IATA)
+    resp = requests.post(
+        HIGHWAY_URL,
+        data={"data": query},
+        headers={"User-Agent": OVERPASS_USER_AGENT},
+        timeout=300,
+    )
+    resp.raise_for_status()
+    for el in resp.json().get("elements") or []:
+        centre = el.get("center") or {}
+        if "lat" in centre and "lon" in centre:
+            return (
+                gpd.GeoSeries(
+                    [Point(centre["lon"], centre["lat"])], crs=f"EPSG:{OUT_EPSG}"
+                ).to_crs(epsg=WORKING_EPSG).iloc[0]
+            )
+    raise RuntimeError(
+        f"Overpass returned no aerodrome with iata={AIRPORT_IATA} in the "
+        "airport bbox. A missing label would look like a successful build."
+    )
+
+
+def _fetch_zone():
+    """Alberta's Industrial Heartland outline, in WORKING_EPSG.
+
+    One unnamed feature in the whole layer, so `where=1=1` IS the query. The
+    area check is the guard: this service carries no name to assert against, so
+    size is the only handle on "did the layer get repointed at something else".
+    """
+    resp = requests.get(
+        ZONE_URL,
+        params={"where": "1=1", "returnGeometry": "true",
+                "outSR": OUT_EPSG, "f": "geojson"},
+        timeout=180,
+    )
+    resp.raise_for_status()
+    payload = resp.json()
+    if "error" in payload:
+        raise RuntimeError(f"ArcGIS query failed for the industrial zone: {payload['error']}")
+    feats = payload.get("features") or []
+    if not feats:
+        raise RuntimeError("The designated-industrial-zone layer returned nothing.")
+    geom = gpd.GeoSeries(
+        [shape(f["geometry"]) for f in feats], crs=f"EPSG:{OUT_EPSG}"
+    ).to_crs(epsg=WORKING_EPSG).union_all()
+    km2 = geom.area / 1e6
+    if km2 < ZONE_MIN_KM2:
+        raise RuntimeError(
+            f"The designated industrial zone came back as {km2:.1f} km², under "
+            f"the {ZONE_MIN_KM2:.0f} km² floor (measured 590.7). The layer may "
+            "no longer be the shape we identified as the Heartland."
+        )
+    logger.info("  %-20s %6.0f km²", ZONE_LABEL, km2)
+    return geom.simplify(BOUNDARY_SIMPLIFY_M, preserve_topology=True)
+
+
+def _region_anchor(region, anchor_box):
+    """Where a county's name goes: on the strip of it nearest the city.
+
+    ⚠️ NOT the centroid — that is the whole reason this function exists. The
+    county centroids sit 27-58 km from Edmonton's centre (Parkland's is 58 km
+    west), so centroid labels land off the edge of the default camera and the
+    names simply never appear. Clipping to a band around the city first puts the
+    label on the part a viewer is actually looking at.
+
+    Falls back to the region's own representative point if the clip is empty —
+    a region that does not reach the band at all still gets a label rather than
+    silently losing one.
+    """
+    visible = region.intersection(anchor_box)
+    if visible.is_empty:
+        return region.representative_point()
+    biggest = max(getattr(visible, "geoms", [visible]), key=lambda p: p.area)
+    return biggest.representative_point()
+
+
 def _fetch_regions() -> list:
     """One unlabelled outline per entry in REGIONS.
 
@@ -383,14 +586,14 @@ def _fetch_regions() -> list:
     the same effect MARGIN_M buys for the river.
     """
     logger.info("Fetching %d regional outlines…", len(REGIONS))
-    outlines = []
+    out = []
     for name, layer, field in REGIONS:
         biggest = _largest_polygon(name, layer, field)
         logger.info(
             "  %-20s %6.0f km² from sublayer %d", name, biggest.area / 1e6, layer
         )
-        outlines.append(biggest.simplify(BOUNDARY_SIMPLIFY_M, preserve_topology=True))
-    return outlines
+        out.append((name, biggest.simplify(BOUNDARY_SIMPLIFY_M, preserve_topology=True)))
+    return out
 
 
 def _fetch_places() -> gpd.GeoDataFrame:
@@ -495,38 +698,77 @@ def build(
             highway_km, HIGHWAY_MIN_KM,
         )
 
-    # --- places: a named point AND an outline per neighbouring municipality --
+    # --- the named things ----------------------------------------------------
+    # Assembled as (t, kind, name, geometry) rows so every feature declares its
+    # own tier. Before 2026-08-08 the outlines were emitted as one anonymous
+    # block and the map could not tell them apart — see the schema note in the
+    # module docstring.
     places = _fetch_places()
-    # --- regions: Edmonton's own limit + the counties it abuts, unlabelled ----
-    # Emitted as the same t="boundary" kind: identical treatment on the map (a
-    # faint unfilled line under the data), so splitting the type would buy a
-    # second render path for one colour they already share.
-    outlines = list(places["outline"]) + _fetch_regions()
+    regions = _fetch_regions()
+    zone = _fetch_zone()
+
+    anchor_box = box(minx - REGION_ANCHOR_MARGIN_M, miny - REGION_ANCHOR_MARGIN_M,
+                     maxx + REGION_ANCHOR_MARGIN_M, maxy + REGION_ANCHOR_MARGIN_M)
+
+    # km² rides along on every label anchor that names a shape. ⚠️ This is not
+    # decoration: the front end's declutter sweep sorts by (priority, area), and
+    # every reference label used to carry area 0 — so same-tier names tied and
+    # fell out IN FILE ORDER, which is how 5 of 7 places silently vanished at
+    # z=7 (the note beside PLACE_MIN_SIZE in web/index.html). Adding nine more
+    # names would have made an arbitrary rule arbitrary more often. Points with
+    # no shape (econ) legitimately have none.
+    rows: list[tuple[str, str, str | None, float | None, object]] = [
+        ("river", "river", None, None, river_geom),
+        ("highway", "highway", None, None, highway_geom),
+    ]
+
+    for name, outline in zip(places["name"], places["outline"]):
+        rows.append(("boundary", "place", name, None, outline))
+    for point, name, outline in zip(places.geometry, places["name"], places["outline"]):
+        rows.append(("place", "place", name, outline.area / 1e6, point))
+
+    for name, outline in regions:
+        # Edmonton is the one region drawn but not named: the page title says
+        # Edmonton already, and a label at the centre would sit on top of the
+        # choropleth it exists to frame. Its EDGE is the payload — 14% of the
+        # city has no neighbourhood polygon, and this is the line that shows it.
+        is_city = name == "Edmonton"
+        rows.append(("boundary", "city" if is_city else "region", name, None, outline))
+        if not is_city:
+            rows.append(("place", "region", name, outline.area / 1e6,
+                         _region_anchor(outline, anchor_box)))
+
+    rows.append(("boundary", "zone", ZONE_LABEL, None, zone))
+    rows.append(("place", "zone", ZONE_LABEL, zone.area / 1e6,
+                 _region_anchor(zone, anchor_box)))
+
+    # Label-only, no outline (see the ECON note above).
+    rows.append(("place", "econ", NISKU[0], None, _fetch_point(*NISKU)))
+    rows.append(("place", "econ", AIRPORT_LABEL, None, _fetch_airport()))
 
     out_gdf = gpd.GeoDataFrame(
-        {
-            "t": (["river", "highway"] + ["boundary"] * len(outlines)
-                  + ["place"] * len(places)),
-            # Only places carry a name. Boundaries are deliberately unlabelled:
-            # the place point already sits inside its own outline, so naming
-            # both would print every regional name twice.
-            "name": ([None, None] + [None] * len(outlines) + list(places["name"])),
-        },
-        geometry=[river_geom, highway_geom] + outlines + list(places.geometry),
+        {"t": [r[0] for r in rows],
+         "kind": [r[1] for r in rows],
+         "nm": [r[2] for r in rows],
+         "km2": [r[3] for r in rows]},
+        geometry=[r[4] for r in rows],
         crs=f"EPSG:{WORKING_EPSG}",
     ).to_crs(epsg=OUT_EPSG)
 
     features = []
     for row in out_gdf.itertuples():
         geom = row.geometry.__geo_interface__
-        props = {"t": row.t}
-        # isinstance, not `is not None`: pandas coerces the unnamed features'
-        # Nones (river, highway, every boundary) to float nan in this mixed
-        # column, and nan passes an `is not None` test — which would emit a
-        # bare NaN token that is invalid JSON and fails JSON.parse in the
-        # browser for the whole file.
-        if isinstance(row.name, str):
-            props["name"] = row.name
+        props = {"t": row.t, "kind": row.kind}
+        if row.km2 == row.km2 and row.km2 is not None:   # nan-safe
+            props["km2"] = round(float(row.km2), 1)
+        # `nm`, not `name`: itertuples exposes the row INDEX as `.name`, so a
+        # column actually called `name` is shadowed and every label silently
+        # becomes an integer. Also isinstance rather than `is not None` —
+        # pandas coerces the unnamed features' Nones to float nan in this mixed
+        # column, and nan passes an `is not None` test, which would emit a bare
+        # NaN token: invalid JSON, and JSON.parse then drops the WHOLE file.
+        if isinstance(row.nm, str):
+            props["name"] = row.nm
         features.append({
             "type": "Feature",
             "properties": props,
