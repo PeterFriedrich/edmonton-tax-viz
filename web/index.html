@@ -647,8 +647,8 @@
     // ratepayers, not tax money (money-flow honesty, SPEC_utilities.md); a
     // combined city-cost denominator waits on published unit costs (V2).
     // Both distributions are extremely right-skewed and ~log-normal (roads
-    // FINDINGS §6.4: raw skew 19.7, log 0.32; fire §6.7: raw +2.33, log
-    // +0.30) → colour is LOG-scaled between the kept subset's p2.5 and p97.5
+    // FINDINGS §6.4: raw skew 19.7, log 0.32; fire §6.7 kept set: raw +2.78,
+    // log +0.13) → colour is LOG-scaled between the kept subset's p2.5 and p97.5
     // (computed from the data, cached per denominator). Height stays linear
     // (the honesty rule). Hoods below each denominator's floor produce
     // artifacts (roads: WESTVIEW VILLAGE, $1.3M/m on a near-zero road base;
@@ -810,7 +810,7 @@
     // Colour: roads + storm LINEAR (road supply FINDINGS §6.3; storm
     // clamp/median ~1.8x), fire SQRT (FINDINGS §6.5 — raw skew +7.86,
     // clamp/median 5.8x; linear crams 59% of hoods into the bottom fifth
-    // of the ramp), transit SQRT (FINDINGS §6.8 — raw skew +3.23,
+    // of the ramp), transit SQRT (FINDINGS §6.8 — raw skew +3.34,
     // clamp/median 4.3x, linear median at 23% of ramp). Clamp: p97.5 of
     // the non-set-aside hoods, computed from the data like ratioScale.
     const SERVICES = {
@@ -2881,8 +2881,12 @@
     // TWO INVARIANTS THIS CODE EXISTS TO HOLD, both of which fail silently:
     //   1. **2024 IS ABSENT AND MUST LOOK ABSENT.** The published year list is
     //      deliberately non-contiguous (SPEC_temporal.md §0.2 — the City's
-    //      historical file is missing 2,448 accounts for 2024, and interpolating
-    //      a known hole is the exact failure this project guards against). So x
+    //      historical file is missing 2,322 accounts for 2024, and interpolating
+    //      a known hole is the exact failure this project guards against). ⚠️ Do
+    //      NOT write 2,448 here: that is the CUMULATIVE count missing from the
+    //      2025 slice (2,322 dropped in 2024 + 131 new), and 2025 is published —
+    //      spliced from the current roll, which repairs it. Both numbers were on
+    //      2024 until 2026-08-08, one of them in the note users read. So x
     //      is scaled from the YEAR VALUE, never the array index, and the line is
     //      drawn as SEGMENTS split at every gap rather than one polyline. Index
     //      positioning would draw 2023->2025 as an ordinary step and hide the
@@ -3236,7 +3240,7 @@
       const contiguous = t.years[i] - t.years[0] + 1 === t.years.length;
       document.getElementById("temporal-note").textContent = !contiguous
         ? "2024 is omitted: the City's historical assessment file is missing "
-          + "2,448 accounts for that year. The gap is left as a gap — not interpolated."
+          + "2,322 accounts for that year. The gap is left as a gap — not interpolated."
         : "";
     }
 

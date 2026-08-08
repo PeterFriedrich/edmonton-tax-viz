@@ -54,6 +54,22 @@ summary.)_
 ## Open work
 
 
+- [ ] **Finish the doc-citation sweep: `src/`, `scripts/`, `tools/` were not
+  checked.** 2026-08-08 (S102) swept only `web/index.html` — 40 sites, 14 docs —
+  and found a **wrong number live on the site** (the 2024 gap note said 2,448;
+  2024's figure is 2,322, and 2,448 belongs to the 2025 slice). Same grep,
+  other trees: `grep -rn 'FINDINGS_\|DATA.md\|SPEC_\|DECISIONS\|RUNBOOK' src/
+  scripts/ tools/`, then read each comment against the section it names.
+  ⚠️ **Re-derive the numbers from the shipped data, don't just compare the two
+  texts** — the site's figure and `tests/test_load_temporal.py`'s figure had
+  disagreed for weeks and nothing compared them. Full result:
+  `docs/AUDIT_LEDGER.md` 2026-08-08 (S102).
+  - **Sub-item, cheap:** `SPEC_temporal.md` §2 is **stale and known to be** —
+    `web/index.html` (`renderRevenueMix` region) carries a ⚠️ comment saying so:
+    §2 describes the panel as the assessment-history surface *throughout*, which
+    has been true only under Value since the revenue-mix lens landed. The
+    comment was written honestly; the doc was never updated.
+
 - [ ] **BUG REPORT to Edmonton Open Data — the `qi6a-xuwt` 2024/25 dropout.
   Gated on Peter reviewing the notebook by hand; everything else is done.**
   ⚠️ **Re-promoted 2026-08-06 from `docs/TODO_archive.md`, where it had been
