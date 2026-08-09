@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+# Refuse to push to a branch whose PR is already MERGED.
+#
+# Peter merges PRs mid-session, often within minutes. Commits pushed to the
+# branch AFTER that merge land on a dead branch: they are on origin, they look
+# pushed, `gh pr view` still says MERGED, and they are NOT on master. This has
+# stranded work 7+ times, including twice in one session (2026-08-09: a whole
+# guard + its tests sat on a merged branch for 40 minutes).
+#
+# ⚠️ THE RULE THIS REPLACES ALREADY EXISTED and kept failing, which is the point.
+# "Check the PR before committing" fires once, at the start; the danger is every
+# push AFTER the merge. A hook fires at the only moment that matters.
+#
+# Fails OPEN — no gh, no auth, no network, no PR: push proceeds. This guards a
+# known footgun; it must never be the reason work cannot be saved (see CLAUDE.md
+# on ephemeral remote VMs, where an unpushed commit is a lost commit).
+#
+# Escape hatch: git push --no-verify
+set -uo pipefail
+
+command -v gh >/dev/null 2>&1 || exit 0
+
+branch="$(git symbolic-ref --short HEAD 2>/dev/null)" || exit 0
+[ -n "$branch" ] || exit 0
+
+# Never guard the trunk, and never guard a branch delete.
+case "$branch" in master|main) exit 0 ;; esac
+
+state="$(gh pr view "$branch" --json state --jq .state 2>/dev/null)" || exit 0
+[ "$state" = "MERGED" ] || exit 0
+
+# The PR is merged. Only complain if this push would actually add commits that
+# are not already on the trunk -- re-pushing something already merged is inert.
+git fetch -q origin master 2>/dev/null || true
+unmerged="$(git rev-list --count origin/master..HEAD 2>/dev/null || echo 0)"
+[ "$unmerged" -gt 0 ] || exit 0
+
+cat >&2 <<EOF
+
+BLOCKED: '$branch' has a MERGED pull request.
+
+  $unmerged commit(s) on this branch are NOT on origin/master. Pushing them here
+  strands them: they reach origin, the branch looks up to date, and they never
+  reach the trunk.
+
+  Move them to a fresh branch instead (oldest first; an A..HEAD range would
+  silently drop A):
+
+    git checkout -B <new-branch> origin/master
+    git cherry-pick $(git rev-list --reverse origin/master..HEAD | tr '\n' ' ')
+
+  Then verify they landed, after the new PR merges:
+
+    git merge-base --is-ancestor <sha> origin/master
+
+  Push anyway (rarely right): git push --no-verify
+
+EOF
+exit 1
