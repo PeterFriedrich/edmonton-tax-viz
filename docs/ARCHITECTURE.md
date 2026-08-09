@@ -768,10 +768,20 @@ per-property frame from `load_assessment.py`; the live assessment year
 
 **Also exports (added 2026-07-28):** `export_temporal_web(table, out_path)` —
 the lens's served file (`web/data/temporal.json`, committed): `years` +
-`share_scale` + `value_unit` + one entry per hood holding **three
-index-aligned integer arrays** (share of total base, assessed value, share of
-commercial base). **406 hoods × 13 years, 89.2 kB** — inside the spec's 100 kB
-pre-gzip budget, ~41 kB gzipped.
+`share_scale` + `value_unit` + `defect_accounts` + one entry per hood holding
+**three index-aligned integer arrays** (share of total base, assessed value,
+share of commercial base). **406 hoods × 13 years, 89.3 kB** — inside the spec's
+100 kB pre-gzip budget, ~41 kB gzipped.
+
+- **`defect_accounts` exists so the gap note is not a literal** (added
+  2026-08-09): `{"2024": 2322, "2025": 131}`, from `HISTORICAL_DEFECT_ACCOUNTS`,
+  the one place those counts are written. The panel's note renders the omitted
+  year AND its count from this field, and `verify-temporal.js` asserts against
+  the same field. ⚠️ **They used to hold separate copies and disagreed for weeks
+  with every check green** — the published note said 2,322 while the check pinned
+  2,448 (the cumulative figure for the 2025 slice). A guard carrying its own copy
+  of the number it guards validates itself, not the site. See `DECISIONS.md`
+  2026-08-09.
 
 - **Integers, not floats, and the scales were measured not guessed.** Verbose
   floats are 129 kB (over budget). Shares ship in **ppm** (100× finer than the

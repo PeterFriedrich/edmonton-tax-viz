@@ -3323,11 +3323,36 @@
         + `${t.years[0]} ${fmtPct(t.share[0])}</span>`;
       // States the reason for the hole rather than leaving a mystery gap, and
       // says outright that nothing was smoothed over it.
-      const contiguous = t.years[i] - t.years[0] + 1 === t.years.length;
-      document.getElementById("temporal-note").textContent = !contiguous
-        ? "2024 is omitted: the City's historical assessment file is missing "
-          + "2,322 accounts for that year. The gap is left as a gap — not interpolated."
-        : "";
+      //
+      // ⚠️ NEITHER THE YEAR NOR THE COUNT IS A LITERAL HERE, deliberately. Both
+      // come from temporal.json (`defect_accounts`, written by load_temporal),
+      // so this note and verify-temporal.js read the SAME field. They used to
+      // hold separate copies and disagreed for weeks — 2,322 published against
+      // 2,448 pinned in the check — with everything green. The hardcoded "2024"
+      // was the other half of the trap: the omitted year moves at the January
+      // roll-forward, and copy that names it would quietly go stale.
+      const gaps = [];
+      for (let y = t.years[0]; y <= t.years[i]; y++) {
+        if (!t.years.includes(y)) gaps.push(y);
+      }
+      // ⚠️ THE COUNTS ARE INCREMENTAL AND DO NOT ADD UP. Each year is tested
+      // against N−1, so 2024's 2,322 and 2025's 131 sum to 2,453 — but the true
+      // cumulative shortfall in the 2025 slice is 2,448, because 5 of 2024's
+      // missing accounts came back (SPEC_temporal.md §0.1). A naive sum would
+      // publish a number that is wrong by exactly the returning accounts. So the
+      // count is stated only for a SINGLE gap year, where it needs no arithmetic;
+      // a multi-year gap gets the honest vaguer sentence instead of a fabricated
+      // total. Today's gap is exactly {2024}.
+      const one = gaps.length === 1 ? temporalData.defect_accounts?.[String(gaps[0])] : null;
+      const plural = gaps.length > 1;
+      document.getElementById("temporal-note").textContent = !gaps.length ? ""
+        : `${gaps.join(" and ")} ${plural ? "are" : "is"} omitted: the City's `
+          + "historical assessment file is "
+          + (one != null
+              ? `missing ${one.toLocaleString()} accounts for `
+              : "incomplete for ")
+          + `${plural ? "those years" : "that year"}. `
+          + "The gap is left as a gap — not interpolated.";
     }
 
     // The panel's CONTENT is lens-dependent now, so a metric or view switch

@@ -23,6 +23,7 @@ from src.load_temporal import (  # noqa: E402
     COMMERCIAL_CLASSES,
     VALUE_UNIT,
     export_temporal_web,
+    HISTORICAL_DEFECT_ACCOUNTS,
     HISTORICAL_DEFECT_YEARS,
     TEMPORAL_NAME_CORRECTIONS,
     build_temporal_table,
@@ -299,6 +300,45 @@ def test_export_carries_the_year_axis_including_the_gap(tmp_path):
     assert payload["years"] == [2022, 2023, 2025]
     # The renderer must plot against these values, not array indices.
     assert 2024 not in payload["years"]
+
+
+def test_export_ships_the_defect_counts_so_the_note_is_not_a_literal(tmp_path):
+    """The load-bearing test for the single-source rule.
+
+    The published note and `verify-temporal.js` each used to carry their own copy
+    of this figure (2,322 against 2,448) and disagreed for weeks with every check
+    green. Both now read this field, so it has to be here and it has to cover
+    every defective year -- an omitted year with no entry renders as the vaguer
+    "incomplete for that year" fallback instead of the count.
+    """
+    payload, _ = _exported(tmp_path)
+    assert payload["defect_accounts"] == {
+        str(y): n for y, n in sorted(HISTORICAL_DEFECT_ACCOUNTS.items())
+    }
+    for year in HISTORICAL_DEFECT_YEARS:
+        assert str(year) in payload["defect_accounts"]
+    # The gap in `years` is what the note looks up, so every gap must resolve.
+    gaps = [
+        y for y in range(payload["years"][0], payload["years"][-1] + 1)
+        if y not in payload["years"]
+    ]
+    assert gaps, "fixture must exercise a gap year"
+    assert all(str(y) in payload["defect_accounts"] for y in gaps)
+
+
+def test_defect_counts_are_incremental_and_must_not_be_summed():
+    """Pins the trap: 2,322 + 131 = 2,453, but the real shortfall is 2,448.
+
+    The counts are per-year increments against N-1, and 5 of 2024's missing
+    accounts returned in 2025 (SPEC_temporal.md section 0.1). Both consumers --
+    the panel note and verify-temporal.js -- state a SINGLE year's count or fall
+    back to wording with no number, precisely so neither can publish this sum.
+    If someone later "simplifies" that to a total, this test says why not.
+    """
+    assert sum(HISTORICAL_DEFECT_ACCOUNTS.values()) == 2453
+    assert HISTORICAL_DEFECT_ACCOUNTS[2024] == 2322
+    # The documented cumulative figure is NOT the sum, and that is the point.
+    assert sum(HISTORICAL_DEFECT_ACCOUNTS.values()) != 2448
 
 
 def test_export_series_are_index_aligned_to_years(tmp_path):
