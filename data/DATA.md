@@ -401,7 +401,7 @@ For Phase 1 (neighbourhood-level choropleth), two approaches are viable:
 
 - `name` is already ALL CAPS — matches our `neighbourhood_name` normalization convention
 - 407 boundary features. Join outcome (after the 2026-07-01 audit corrections): 1 assessment neighbourhood with no boundary match (the immaterial `OLIVER` straggler, $500 — deliberately unmapped) and 1 boundary neighbourhood with no assessment data (`LEWIS FARMS`) → 406 of 407 boundaries rendered. See "Name Matching" below; flagged in `join_and_calculate.py`.
-- ⚠️ **THIS FILE DOES NOT TILE THE CITY** (measured 2026-08-08). The 406 rendered polygons cover **672.4 km²** against Edmonton's **782.1 km²** legal boundary — **109.6 km², 14.0% of the city, has no neighbourhood at all** (annexed and undeveloped land). The gap is one-directional: 0.0 km² of hood fabric falls outside the legal limit. It is easy to assume the hood polygons *are* the city, and they are not — §14 draws the legal limit so the difference is visible rather than reading as background.
+- ⚠️ **THIS FILE DOES TILE THE CITY — the earlier "14% has no neighbourhood" reading was a DISPLAY ARTIFACT, corrected 2026-08-09.** Measured in `EPSG:3400`: the 406 rendered hoods cover **782.0 km²** in this raw file (all 407 = **782.11**), against a legal boundary polygon of **782.38 km²**. They agree to **1.4 km²** — the raw fabric tiles Edmonton. What the 2026-08-08 note measured as a "109.6 km² gap" was `main.py`'s **`SETBACK_M = 45.0`** inward display buffer: **all 406** hoods shrink (median **18.3%**, min 2.7%, max 65.9%), and `buffer(-45)` + `simplify(10)` reproduces the shipped file's **672.42 km²** exactly. See §14.
 
 ---
 
@@ -1118,27 +1118,44 @@ County. That is exactly the Heartland's member set, and 590.7 km² matches the
 and Nisku it is *not* a clean "regional infrastructure Edmonton doesn't tax"
 shape. Do not narrate it as one.
 
-⚠️ **THE HOOD FABRIC IS NOT THE CITY — 14% of Edmonton is missing from it**
-(measured 2026-08-08). Edmonton's legal boundary is **782.1 km²**; the 406
-rendered neighbourhood polygons cover **672.4 km²**. The **109.6 km² difference
-is inside the city limits and absent from the map** — annexed and undeveloped
-land carrying no neighbourhood. Nothing is drawn *outside* the legal limit
-(0.0 km²), so the fabric is strictly contained: **the map understates the
-city's extent and never overstates it.** Before this layer existed, what read
-as the city's edge was only where the neighbourhood polygons stop. See §3.
-- **No metric is affected.** Every metric is per-neighbourhood, so land with no
-  neighbourhood contributes to neither a numerator nor a denominator. ⚠️ This
-  does bear on any future *citywide-per-acre* figure — dividing by 672.4 and by
-  782.1 km² are different questions, and the right denominator depends on which
-  is being asked.
+⚠️ **RETRACTED 2026-08-09 — "14% of Edmonton is missing from the hood fabric"
+WAS WRONG, and the error was one of CAUSE, not arithmetic.** The 2026-08-08 note
+read the drawn map's **672.4 km²** against a **782.1 km²** city and concluded
+that **109.6 km² (14.0%) was annexed and undeveloped land carrying no
+neighbourhood**. Re-measured in `EPSG:3400` from `data/raw/neighbourhoods.geojson`:
+
+| what | km² |
+|---|---|
+| raw boundary file, all 407 features | **782.11** |
+| the 406 hoods that render, raw geometry | **782.00** |
+| legal boundary polygon (`reference.geojson`, simplified 100 m) | **782.38** |
+| shipped `neighbourhood_value_per_acre.geojson` | **672.42** |
+
+**The raw fabric tiles the city** — 1.4 km² of legal boundary is uncovered and
+1.1 km² of fabric sits outside it, both inside the 100 m simplification noise on
+that outline. **The 109.6 km² is `main.py`'s `SETBACK_M = 45.0`**, the inward
+buffer that opens "city block" gaps between prisms: **every one of the 406 hoods
+loses area** (median **18.3%**, min 2.7%, max 65.9% — the signature of a
+perimeter-proportional shrink, not of missing land), and `buffer(-45)` then
+`simplify(10)` reproduces **672.42 km²** to the decimal. The only hood in the
+file that truly carries no data is `LEWIS FARMS`, **0.11 km²**.
+- **No metric is affected** — and this is now true for a stronger reason than
+  the original note gave. Metrics are per-neighbourhood over *upstream* areas;
+  `setback_m` and `simplify_tolerance_m` are documented DISPLAY-only in
+  `join_and_calculate.py`. ⚠️ **For a citywide-per-acre figure there are TWO
+  denominators, not three: ~782 km² total and ~771 km² land.** `672.4` is not a
+  candidate at all — it is drawn geometry and has no analytical meaning. The
+  retracted note listed it as one, which is the trap this entry now exists to
+  close.
 - ⚠️ **782.1 km² INCLUDES WATER, and that is why it will not match a published
   figure** (measured 2026-08-08). Commonly cited areas for Edmonton are ~765–768
   km², which are **land** areas. Subtracting the North Saskatchewan where it
   runs inside the city (**10.9 km²**, from this layer's own river geometry)
   gives **~771 km²**, and other water bodies close most of the remaining ~3 km².
-  **So there are three denominators, not two** — hood fabric 672.4, legal total
-  782.1, legal land ~771 — and a citywide figure must say which. A reader
-  checking our number against Wikipedia or StatCan will hit this first.
+  **So there are two denominators** — legal total ~782, legal land ~771 — and a
+  citywide figure must say which. A reader checking our number against Wikipedia
+  or StatCan will hit this first. (The retracted note above made this a list of
+  *three* by counting the drawn 672.4; it is not a denominator.)
 
 Built by `scripts/build_reference_layers.py`. **NOT in the weekly refresh** —
 static geography, same posture as `build_levy_catchments.py`; the endpoints are

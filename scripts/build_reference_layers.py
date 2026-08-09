@@ -251,13 +251,17 @@ ZONE_MIN_KM2 = 400.0   # measured 590.7; trips loudly if the layer is repointed
 #
 # Edmonton is in this list because the map has never drawn its own limit: what
 # reads as the city edge is only where the neighbourhood polygons stop.
-# Measured 2026-08-08 — the legal boundary is 782.1 km² against 672.4 km² of
-# hood fabric, so 109.6 km² (14.0% of Edmonton) lies inside the city and is
-# absent from the map: annexed and undeveloped land carrying no neighbourhood.
-# Nothing is drawn OUTSIDE the legal limit (0.0 km²), so the fabric is strictly
-# contained and the map understates the city's extent rather than overstating
-# it. Drawing the limit is what makes that 14% visible as empty space instead of
-# reading as background.
+# ⚠️ The 2026-08-08 measurement here was WRONG IN ITS CAUSE and is corrected
+# (2026-08-09, DATA.md §14). It read 782.1 km² of city against 672.4 km² of
+# drawn hood fabric and called the 109.6 km² difference annexed land with no
+# neighbourhood. It is not: the RAW boundary file tiles the city (782.0 km² over
+# the same 406 hoods, against a 782.4 km² limit). The 109.6 km² is main.py's
+# SETBACK_M = 45.0 display buffer — every hood shrinks, median 18.3%.
+#
+# Drawing the limit is still worth it, for the reason underneath the bad number:
+# the map had never shown where Edmonton ends, so what read as the city's edge
+# was only where the prisms stop. The empty margin is the setback's own gap, not
+# unmapped land — do not annotate it as missing coverage.
 #
 # Sublayers follow legal STATUS again, not size — and the trap is different from
 # the PLACES one:

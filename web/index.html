@@ -2175,9 +2175,11 @@
     const BOUNDARY_COLOR = [58, 62, 74, 255];
     // …with ONE exception, and it is the point of the tier split: Edmonton's own
     // legal limit is the only boundary the map is making a claim WITH, not just
-    // drawing for context. 14% of the city (109.6 km²) has no neighbourhood
-    // polygon, so this line is the only thing that shows the fabric stops short
-    // of the city. It gets a lighter, wider stroke; the neighbours keep the
+    // drawing for context — it is the only thing showing where Edmonton actually
+    // ends, rather than where the prisms stop. ⚠️ It does NOT mean 14% of the
+    // city is unmapped: that claim was retracted 2026-08-09 (DATA.md §14) — the
+    // margin inside this line is the 45 m display setback, not missing hoods.
+    // It gets a lighter, wider stroke; the neighbours keep the
     // faint one. The industrial zone sits between: named, but not a jurisdiction
     // — a dimmer warm line so it does not read as another municipality.
     const CITY_LIMIT_COLOR = [122, 132, 152, 255];

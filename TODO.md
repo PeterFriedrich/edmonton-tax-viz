@@ -70,11 +70,16 @@ summary.)_
   already swept `docs/` clean. **What is left is the judgement half**: whether
   the prose the citation points at still supports the claim. Don't spend the
   sweep re-checking pointers the guard holds.
-  ⚠️ **Two known warnings are real and unfixed** (the guard warns, never fails):
-  `TODO.md:965` cites `UI.md "Roads ground layer"`, a section title that does not
-  exist, and `docs/FABLE_AUDIT_BRIEF.md` tells its reader to open `docs/SPEC.md`,
-  `docs/security-audit.md` and `CONTRIBUTING.md` — **none of which exist**, so
-  that brief has been sending models to three missing files.
+  ⚠️ **Both known warnings are FIXED 2026-08-09, and S103's description of the
+  second one was overstated** — it said `docs/FABLE_AUDIT_BRIEF.md` sends its
+  reader to three files that do not exist. **Two of the three have existed since
+  `a614597` (2026-05-16)**: `docs/security-audit.md` and `CONTRIBUTING.md` (root,
+  not `docs/`) — and the 2026-07-09 ledger row proves the brief was *executed*
+  against `security-audit.md`. Only the bare `docs/SPEC` pointer was missing, and
+  no such file **ever existed in history**, so that citation was never right;
+  re-pointed at `docs/SPEC_phase1.md`. The `UI.md "Roads ground layer"` citation went to
+  "Services views", which is where the arterials/clamp-53 detail it describes
+  actually lives.
   Full result: `docs/AUDIT_LEDGER.md` 2026-08-09 (S103).
 
 - [ ] **BUG REPORT to Edmonton Open Data — the `qi6a-xuwt` 2024/25 dropout.
@@ -970,7 +975,7 @@ summary.)_
       - [x] ~~frontend: layers panel, lazy-loaded ground layer; arterials
         neutral, access roads coloured by hood `road_m_per_acre` (linear,
         clamp 53); remove Roads from metric toggle~~ — done 2026-07-02
-        (headless-verified; details in UI.md "Roads ground layer").
+        (headless-verified; details in UI.md "Services views").
     - [x] ~~(2) Prism transparency control (money plane overlays service
       plane)~~ — done 2026-07-02, landed with stage 1: opacity slider in the
       layers panel (prisms + roof edges) + 45% auto-nudge on first Roads
