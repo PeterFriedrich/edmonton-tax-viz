@@ -480,7 +480,8 @@ government blocks.
 not flagged) — so proxy exempt share as **polygon acres − deduped taxable lot
 footprint − road/ROW acres** per hood, rank hoods by low taxable-footprint
 fraction, and cross-reference zoning `AJ/PU/UI/UF` (the exempt-proxy zones,
-`data/DATA.md` line ~308). Separate genuine exempt-dilution (U of A: high value,
+`data/DATA.md` §5, "Set-aside categories"). Separate genuine exempt-dilution
+(U of A: high value,
 low footprint) from low-value-land hoods (U of A Farm: high footprint, low value)
 and from park/river-valley (already covered in item 1 / the lot-acre findings).
 
