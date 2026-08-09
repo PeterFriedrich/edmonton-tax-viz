@@ -33,16 +33,25 @@ const VIEWS = ['money', 'services', 'ratio', 'uses', 'development'];
 // labels, while riding the REFERENCE toggle rather than the label one. That
 // split is the thing worth pinning — it is what puts a place name on screen
 // for a viewer who has touched no control, and it is invisible in the DOM.
-const PLACE_COUNT = 7;
+const TOWN_COUNT = 9;          // PLACES: 7 + Morinville, Stony Plain (2026-08-08)
 
-// The unlabelled outlines (REGIONS in scripts/build_reference_layers.py):
-// Edmonton's own legal limit plus the four counties it abuts. They share the
-// t="boundary" kind with the places' outlines, so boundaries are NO LONGER 1:1
-// with place names — that used to be the invariant here, and it was retired
-// deliberately on 2026-08-08 rather than broken. Kept as its own constant so a
-// region silently vanishing from the build still trips the count.
+// The outlines (REGIONS in scripts/build_reference_layers.py): Edmonton's own
+// legal limit plus the four counties it abuts. They share the t="boundary" kind
+// with the towns' outlines, so boundaries are NO LONGER 1:1 with place names —
+// that used to be the invariant here, and it was retired deliberately on
+// 2026-08-08 rather than broken. Kept as its own constant so a region silently
+// vanishing from the build still trips the count.
 const REGION_COUNT = 5;
-const BOUNDARY_COUNT = PLACE_COUNT + REGION_COUNT;
+const ZONE_COUNT = 1;          // Alberta's Industrial Heartland
+const HOOD_LABEL_SIZE = 15;    // LABEL_SIZE in web/index.html
+const BOUNDARY_COUNT = TOWN_COUNT + REGION_COUNT + ZONE_COUNT;
+
+// Label anchors, which is NOT the boundary count: Edmonton is drawn but
+// deliberately unnamed (the title already says it), and the two econ points
+// (Nisku, the airport) are named but have no outline to draw. Both asymmetries
+// are decisions, so they are spelled out rather than folded into one number —
+// a build that starts labelling Edmonton should trip this, not pass quietly.
+const PLACE_COUNT = TOWN_COUNT + (REGION_COUNT - 1) + ZONE_COUNT + 2;
 
 (async () => {
   const browser = await chromium.launch({
@@ -233,9 +242,18 @@ const BOUNDARY_COUNT = PLACE_COUNT + REGION_COUNT;
     const l = overlay._deck.props.layers.find(x => x && x.id === 'hood-labels');
     if (!l) return { layer: false, places: 0, hoods: 0, sizes: [] };
     const d = l.props.data;
+    // ⚠️ `x.ref`, not `x.prio === PRIO_PLACE`. Counting by that priority meant
+    // "towns", and since 2026-08-08 most regional names are NOT towns — the
+    // four counties and the industrial zone sort above it. Left as-is, this
+    // counter would have reported every new tier as absent and still passed,
+    // which is the coverage hole the tiering was most likely to fall into.
+    // `byTier` is what makes a single tier vanishing visible.
+    const tiers = {};
+    for (const x of d) if (x.ref) tiers[x.tier] = (tiers[x.tier] || 0) + 1;
     return {
       layer: true,
-      places: d.filter(x => x.prio === PRIO_PLACE).length,
+      places: d.filter(x => x.ref).length,
+      byTier: tiers,
       hoods: d.filter(x => x.prio === PRIO_HOOD).length,
       sizes: [...new Set(d.map(x => x.size))].sort((a, b) => a - b),
       anchored: placeAnchors().length,
@@ -248,6 +266,14 @@ const BOUNDARY_COUNT = PLACE_COUNT + REGION_COUNT;
     return labels();
   };
 
+  // ⚠️ Back to HOME first. The checks above leave the camera wherever the
+  // highway-extent and view-switch probes put it, and how many names survive the
+  // declutter sweep is a function of the camera — so a per-tier count taken
+  // here would be asserting against an accident of test order. The tier checks
+  // below are the ones that care; the toggle checks never did.
+  await page.evaluate(() => map.easeTo({ ...HOME, duration: 0 }));
+  await page.waitForTimeout(1200);
+
   const def = await setToggles(true, false);
   check('all place anchors built from the data file',
         def.anchored === PLACE_COUNT, `${def.anchored} of ${PLACE_COUNT}`);
@@ -256,15 +282,40 @@ const BOUNDARY_COUNT = PLACE_COUNT + REGION_COUNT;
   // the sweep correctly culls it — so assert a healthy majority, not equality.
   check('places show with hood labels OFF (the default)',
         def.places >= 5 && def.hoods === 0, `${def.places} places, ${def.hoods} hoods`);
-  check('places render smaller than hood labels',
-        def.sizes.length === 1 && def.sizes[0] < 15, JSON.stringify(def.sizes));
+  // The regional-narrative tiers, added 2026-08-08. Counties are the tier that
+  // most needs pinning: they are the only names placed by _region_anchor rather
+  // than by a centroid, so a regression there (an anchor pushed back out to the
+  // true centroid, 27-58 km away) shows up as them silently going missing at the
+  // default camera while every other name still draws.
+  // 3 of 4, NOT 4: Leduc County's anchor projects to py≈1040 in a 900px
+  // viewport at the default pitched camera, so the sweep culls it as offscreen
+  // — measured, and the same reason the TOWN of Leduc is culled a few lines up.
+  // Asserted as a floor with an explicit exemption rather than loosened to
+  // ">= 1", which would pass with three counties silently gone.
+  check('every on-screen county is named at the default camera',
+        def.byTier.region === REGION_COUNT - 2,
+        `${def.byTier.region || 0} of ${REGION_COUNT - 2}: ${JSON.stringify(def.byTier)}`);
+  check('the town and econ tiers both draw too',
+        def.byTier.place >= 5 && def.byTier.econ === 2, JSON.stringify(def.byTier));
+  // ⚠️ WAS `def.sizes.length === 1` — one reference size, because there was one
+  // reference tier. Since 2026-08-08 there are four (region/zone/place/econ,
+  // REF_TIERS in web/index.html), so equality-to-1 was pinning the old design
+  // rather than the invariant. The invariant is the ORDERING, and it survives:
+  // regional text is context and must never outweigh a hood name.
+  check('every regional name renders smaller than a hood name',
+        def.sizes.length >= 1 && def.sizes.length <= 4 &&
+        def.sizes.every(s => s < HOOD_LABEL_SIZE), JSON.stringify(def.sizes));
 
   const both = await setToggles(true, true);
   check('turning hood labels on does not evict the places',
         both.places === def.places && both.hoods > 0,
         `${both.places} places, ${both.hoods} hoods`);
-  check('both text sizes present when both classes show',
-        both.sizes.length === 2, JSON.stringify(both.sizes));
+  // Same retirement as above: "exactly 2 sizes" meant "1 reference tier + 1 hood
+  // size". What must hold is that BOTH CLASSES are actually on screen — the hood
+  // size present, and at least one smaller regional size beside it.
+  check('both classes are on screen, hood text the largest',
+        both.sizes.includes(HOOD_LABEL_SIZE) &&
+        both.sizes.some(s => s < HOOD_LABEL_SIZE), JSON.stringify(both.sizes));
 
   const hoodsOnly = await setToggles(false, true);
   check('reference off drops the places but keeps the hoods',

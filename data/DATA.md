@@ -1072,14 +1072,51 @@ The same file also carries `roadway_ops`, `bikeway_ops` and `transit_ets`, on a
   ops) and are in neither the bike metric nor the 1,500 km snow denominator.
 
 ## 14. Geographic Reference Layers (orientation, added 2026-07-27)
-`web/data/reference.geojson` (**89 kB, 21 features**, committed) — the North
-Saskatchewan River, the regional **highway network**, the seven neighbouring
-municipalities as both an **outline** and a name, and (**added 2026-08-08**)
-five unlabelled **regional outlines**: Edmonton's own legal limit plus the four
-rural municipalities it abuts. So a first-time viewer can orient before reading
-the fiscal data. The map has **no basemap tiles** (just a dark backdrop), so
-without these there is no geographic context at all. Purely cartographic: no
-metric, no tooltip.
+`web/data/reference.geojson` (**94 kB, 33 features**, committed) — the North
+Saskatchewan River, the regional **highway network**, and the named regional
+geography. So a first-time viewer can orient before reading the fiscal data. The
+map has **no basemap tiles** (just a dark backdrop), so without these there is
+no geographic context at all. Purely cartographic: no metric, no tooltip.
+
+**Every feature carries `kind`, and boundaries carry `name` (2026-08-08).**
+Before that all 13 outlines shipped as a bare `{"t":"boundary"}` and the front
+end **could not tell Edmonton's own legal limit from Devon's town outline** —
+they drew in one colour because nothing distinguished them. The tiers:
+
+| `kind` | what | drawn | named |
+|---|---|---|---|
+| `city` | Edmonton's legal limit | lighter, wider stroke | **no** — the page title already says Edmonton, and a label at the centre sits on the choropleth |
+| `region` | the four counties it abuts | faint outline | yes (**reversal** — see below) |
+| `place` | 9 neighbouring municipalities | faint outline | yes |
+| `zone` | Alberta's Industrial Heartland | dim warm outline | yes |
+| `econ` | Nisku, Edmonton Int'l Airport | **none** | yes |
+
+⚠️ **Regions were deliberately UNLABELLED until 2026-08-08 and that reversed**
+(Peter). The original reasoning — a county is too large to label at city zoom,
+and the edge, not the name, is the message — holds for an *orientation* map and
+fails for a *regional* one: once the question is "who else levies here, and what
+does Edmonton not tax", an unnamed edge cannot answer it. ⚠️ The old objection
+survives in the ANCHOR: a county centroid sits **27–58 km** from Edmonton's
+centre, so centroid labels land off the default camera entirely. Labels are
+placed on the county's visible strip near the city (`_region_anchor`).
+
+⚠️ **`econ` names have no outline on purpose.** Nisku is a *hamlet* — Alberta
+publishes hamlets as points only, so no legal polygon exists to draw. The
+airport has an OSM polygon, but it is a ~28 km² shape 40 km south rendered at
+1 px: naming it locates it, tracing it does not, and a municipal-grey outline
+would read as another jurisdiction.
+
+⚠️ **The Industrial Heartland's identification is OURS, not the source's.**
+Alberta publishes it as one unnamed 590.7 km² MultiPolygon in
+`boundaries/resource_designated_industrial_zone` — **no name field at all**. It
+was identified by measuring who it overlaps: Sturgeon County 171.8, Strathcona
+County 134.3, **Edmonton 53.2**, Fort Saskatchewan 29.5 km², remainder ≈ Lamont
+County. That is exactly the Heartland's member set, and 590.7 km² matches the
+~582 km² the association publishes. The builder guards it with an area floor
+(`ZONE_MIN_KM2`) because there is no name to assert against.
+⚠️ **53.2 km² of it is inside Edmonton's own boundary**, so unlike the airport
+and Nisku it is *not* a clean "regional infrastructure Edmonton doesn't tax"
+shape. Do not narrate it as one.
 
 ⚠️ **THE HOOD FABRIC IS NOT THE CITY — 14% of Edmonton is missing from it**
 (measured 2026-08-08). Edmonton's legal boundary is **782.1 km²**; the 406
@@ -1094,6 +1131,14 @@ as the city's edge was only where the neighbourhood polygons stop. See §3.
   does bear on any future *citywide-per-acre* figure — dividing by 672.4 and by
   782.1 km² are different questions, and the right denominator depends on which
   is being asked.
+- ⚠️ **782.1 km² INCLUDES WATER, and that is why it will not match a published
+  figure** (measured 2026-08-08). Commonly cited areas for Edmonton are ~765–768
+  km², which are **land** areas. Subtracting the North Saskatchewan where it
+  runs inside the city (**10.9 km²**, from this layer's own river geometry)
+  gives **~771 km²**, and other water bodies close most of the remaining ~3 km².
+  **So there are three denominators, not two** — hood fabric 672.4, legal total
+  782.1, legal land ~771 — and a citywide figure must say which. A reader
+  checking our number against Wikipedia or StatCan will hit this first.
 
 Built by `scripts/build_reference_layers.py`. **NOT in the weekly refresh** —
 static geography, same posture as `build_levy_catchments.py`; the endpoints are
