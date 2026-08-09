@@ -159,6 +159,16 @@ cannot be flagged again in 2025. Cumulatively, **~2,448 accounts are missing fro
 the 2025 slice** — 2,317 of them dropped in 2024 and never returned, plus 131
 new. One event, two slices.
 
+⚠️ **THE PER-YEAR COUNTS DO NOT ADD UP, AND THAT IS LOAD-BEARING.** 2,322 + 131 =
+**2,453**, not 2,448 — the 5-account difference is 2024 accounts that came back.
+Anything consuming these must state **one year's** count or say nothing; summing
+publishes a figure wrong by exactly the returning accounts. The counts now live
+once, in `load_temporal.py`'s `HISTORICAL_DEFECT_ACCOUNTS`, and ship in
+`temporal.json` as `defect_accounts` so the panel's gap note and
+`verify-temporal.js` read the **same** field — they previously held separate
+copies and disagreed for weeks with every check green (`DECISIONS.md`
+2026-08-09).
+
 **Two detectors, and the first one alone would have lied.** The tool runs both
 and reports the union:
 

@@ -73,6 +73,19 @@ const [url] = process.argv.slice(2);
     };
   });
   check('temporal.json loaded and decodes', !!loaded);
+
+  // The payload-level fields (`defect_accounts`) are not reachable through
+  // temporalFor, which returns one hood's series. Fetch the file itself — the
+  // same thing verify-smoke.js does — rather than adding a probe hook to the
+  // page just for the test.
+  const payload = await page.evaluate(async () => {
+    const r = await fetch('./data/temporal.json');
+    return r.ok ? await r.json() : null;
+  });
+  check('temporal.json ships defect_accounts',
+    !!(payload && payload.defect_accounts &&
+       Object.keys(payload.defect_accounts).length),
+    payload ? JSON.stringify(payload.defect_accounts) : 'no payload');
   check('2024 is absent from the year list',
     loaded && !loaded.years.includes(2024) && loaded.years.includes(2023) &&
     loaded.years.includes(2025), loaded ? `n=${loaded.years.length}` : '');
@@ -223,10 +236,35 @@ const [url] = process.argv.slice(2);
   // Frozen anchor, deliberately still an equality: 2016 is a settled historical
   // year, so this is what proves the archive half of the splice did not shift.
   check('read-out gives the peak', /peak share 5\.55% in 2016/.test(panel.read));
-  // 2,322 is 2024's own defect count (DATA.md §0). 2,448 is the CUMULATIVE
-  // figure for the 2025 slice — this check pinned that wrong number until
-  // 2026-08-08, so it held the published note wrong rather than catching it.
-  check('note states the 2024 reason', /missing 2,322 accounts/.test(panel.note));
+  // ⚠️ THE NUMBER IS READ FROM temporal.json, NEVER PINNED HERE. This check used
+  // to assert /missing 2,448 accounts/ while the published note said 2,322 —
+  // 2,448 is the CUMULATIVE figure for the 2025 slice, 2,322 is 2024's own — and
+  // the two disagreed for weeks with every check green, because each side held
+  // its own copy of the figure. A guard with a private copy of the number it is
+  // guarding validates itself, not the site. Both now read `defect_accounts`.
+  //
+  // Formatted by hand rather than with toLocaleString: this runs in node while
+  // the note was rendered in the browser, and a locale difference would be a
+  // false failure with a very confusing message.
+  const gapYears = [];
+  for (let y = loaded.years[0]; y <= loaded.years[loaded.years.length - 1]; y++) {
+    if (!loaded.years.includes(y)) gapYears.push(y);
+  }
+  // ⚠️ Mirrors the renderer's refusal to add the counts up: they are INCREMENTAL
+  // (2,322 + 131 = 2,453, but the real cumulative shortfall is 2,448 — 5 accounts
+  // returned; SPEC_temporal.md §0.1). Single gap year -> assert the count; more
+  // than one -> assert only the fallback wording, never a computed total.
+  const expected = gapYears.length === 1 && payload && payload.defect_accounts
+    ? payload.defect_accounts[String(gapYears[0])] : null;
+  const commas = n => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  check('note states the gap year, from the year list',
+    gapYears.length > 0 && gapYears.every(y => panel.note.includes(String(y))),
+    `gaps=[${gapYears}]`);
+  check('note states the missing-account count, from temporal.json',
+    expected != null
+      ? panel.note.includes(`missing ${commas(expected)} accounts`)
+      : /incomplete for those years/.test(panel.note),
+    `gaps=[${gapYears}] expected=${expected == null ? 'fallback' : commas(expected)} | note: ${panel.note}`);
   check('note says the gap is not interpolated', /not interpolated/.test(panel.note));
   check('panel is in CHROME_IDS (label sweep dodges it)', panel.chromeHitsPanel);
   check('panel clears the title', !overlap(panel.rect, panel.title));

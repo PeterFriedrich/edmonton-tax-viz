@@ -77,6 +77,24 @@ FIRST_YEAR = 2012
 # in the pipeline would notice.
 HISTORICAL_DEFECT_YEARS = (2024, 2025)
 
+# How many accounts each defective year is missing (same 2026-07-28 audit).
+#
+# ⚠️ INCREMENTAL, AND THEY DO NOT ADD UP. Each year is tested against N-1, so
+# 2024 lost 2,322 and 2025 a further 131 -- but the cumulative shortfall in the
+# 2025 slice is 2,448, NOT 2,453, because 5 of 2024's missing accounts came back
+# (SPEC_temporal.md section 0.1). Anything consuming this must state a single
+# year's count or say nothing; summing fabricates a figure wrong by exactly the
+# returning accounts. Two views of one event, which is why they get confused.
+#
+# ⚠️ THIS IS THE ONLY PLACE THESE COUNTS ARE WRITTEN AS LITERALS, and it is a
+# rule, not a convenience. They ship in temporal.json so the panel's note renders
+# FROM the data and `verify-temporal.js` asserts against the SAME field. Before
+# 2026-08-09 each side carried its own copy: the published note said 2,322 while
+# the verify script pinned 2,448, and they disagreed for weeks with every check
+# green -- the guard held the wrong number rather than catching it. A second copy
+# of a figure is a second thing that can be right on its own and wrong together.
+HISTORICAL_DEFECT_ACCOUNTS = {2024: 2322, 2025: 131}
+
 # The "commercial base" denominator (SPEC_temporal.md section 6). Deliberately
 # just COMMERCIAL: this is the series public reporting quotes, and the
 # neighbouring classes are noise -- NONRES MUNICIPAL/RES EDUCATION is 19
@@ -470,6 +488,7 @@ def export_temporal_web(table: pd.DataFrame, out_path: str | Path) -> dict:
 
         {"years": [2012, ..., 2023, 2025],
          "share_scale": 1000000, "value_unit": 1000,
+         "defect_accounts": {"2024": 2322, "2025": 131},
          "hoods": {"DOWNTOWN": [[share...], [value...], [commercial share...]]}}
 
     One array per series, index-aligned to ``years`` -- so the sparkline reads a
@@ -507,6 +526,12 @@ def export_temporal_web(table: pd.DataFrame, out_path: str | Path) -> dict:
         "years": years,
         "share_scale": SHARE_SCALE,
         "value_unit": VALUE_UNIT,
+        # Ships so the panel's gap note reads its number from data instead of a
+        # literal in the copy -- see HISTORICAL_DEFECT_ACCOUNTS. Keyed by year as
+        # a string because JSON has no integer keys. Written for EVERY defective
+        # year, not just the omitted one: which years are omitted depends on the
+        # live year, and the January roll-forward changes it.
+        "defect_accounts": {str(y): n for y, n in sorted(HISTORICAL_DEFECT_ACCOUNTS.items())},
         "hoods": hoods,
     }
     out_path = Path(out_path)
