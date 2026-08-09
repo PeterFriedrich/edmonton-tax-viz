@@ -417,6 +417,20 @@ lot acres). ~34.7k cells / 1.8 MB on current data. Returns a stats dict.
   fires on small edge hoods where a few completed houses clear 10%. It exists
   because `WEST MEADOWLARK PARK` doubled on a green run and nothing noticed for
   four days. See `DECISIONS.md` 2026-08-07 and `RUNBOOK.md` §0b.
+- `scripts/check_doc_citations.py`: the odd one out — **a STATIC REPO check with
+  no data dependency**, so it runs as a test (`tests/test_check_doc_citations.py`)
+  and **deliberately NOT as a `refresh.yml` step**: a docs typo must never red a
+  good weekly data refresh and block a deploy of correct data. Fails on a
+  citation naming a **line number** (banned outright — see below) or a `§N` with
+  no such heading in the cited doc; **warns** on a missing doc or a reworded
+  section title, because a section legitimately gets renamed. ⚠️ **Line numbers
+  are BANNED, not validated** — validating one against the doc's current length
+  would encode the bug. A line number fails *silently and plausibly*: it lands on
+  other real content rather than erroring, so no reader can tell. It covers only
+  the mechanical third of what the 2026-08-08/09 citation sweeps found; a figure
+  duplicated across code and docs drifting apart, and prose that no longer
+  supports the claim citing it, are **not** checkable here and stay a periodic
+  sweep. See `DECISIONS.md` 2026-08-09 and `AUDIT_LEDGER.md` 2026-08-09.
 - `scripts/vintage_report.py`: ⚠️ **not a guard — a REPORT, and the only thing
   here that runs on its own schedule rather than inside `refresh.yml`.** Every
   script above gates work already in flight; this one runs monthly
