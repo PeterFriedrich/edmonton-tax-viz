@@ -426,11 +426,19 @@ lot acres). ~34.7k cells / 1.8 MB on current data. Returns a stats dict.
   section title, because a section legitimately gets renamed. ⚠️ **Line numbers
   are BANNED, not validated** — validating one against the doc's current length
   would encode the bug. A line number fails *silently and plausibly*: it lands on
-  other real content rather than erroring, so no reader can tell. It covers only
-  the mechanical third of what the 2026-08-08/09 citation sweeps found; a figure
-  duplicated across code and docs drifting apart, and prose that no longer
-  supports the claim citing it, are **not** checkable here and stay a periodic
-  sweep. See `DECISIONS.md` 2026-08-09 and `AUDIT_LEDGER.md` 2026-08-09.
+  other real content rather than erroring, so no reader can tell. ⚠️ **BOTH
+  SPELLINGS are banned** (2026-08-09): the wordy "DATA.md line ~308" *and*
+  "DATA.md:207" / "DATA.md#L207". The first cut required the literal word "line"
+  and so missed the colon form — the one the terminal renders clickable, and
+  therefore the one people type; two such citations sat unflagged in `TODO.md`
+  from the hour the guard shipped. A bare `#anchor` stays legal. It covers only
+  the mechanical third of what the 2026-08-08/09 citation sweeps found. ⚠️ **The
+  duplicated-figure third is now closed by DE-DUPLICATION, not by a checker** —
+  `temporal.json` ships `defect_accounts` so the site's copy and
+  `verify-temporal.js` read one field (`DECISIONS.md` 2026-08-09). Prose that no
+  longer supports the claim citing it is **not** checkable here and stays a
+  periodic sweep — that is the third that found the retracted 14%-of-Edmonton
+  measurement. See `DECISIONS.md` 2026-08-09 and `AUDIT_LEDGER.md` 2026-08-09.
 - `scripts/vintage_report.py`: ⚠️ **not a guard — a REPORT, and the only thing
   here that runs on its own schedule rather than inside `refresh.yml`.** Every
   script above gates work already in flight; this one runs monthly
@@ -823,6 +831,21 @@ transient renumber gap from a permanent removal. Motivating case: Misericordia
 Hospital, continuously assessed since 2012, absent from the published current
 roll during its renumbering, which silently **understated** its neighbourhood by
 ~$250M until the gap closed. See `data/DATA.md` "Tax-exempt flag".
+
+⚠️ **IT FETCHES FROM SOCRATA, NOT FROM `data/raw/`, AND IT CACHES.** Two traps,
+both hit on 2026-08-09:
+- **A warm `--cache-dir` (default `/tmp/roll_continuity`) makes a "re-run" a
+  REPLAY** — and this tool's entire value is the *second* observation. The
+  re-run reproduced 1,534 parcels / $1.62B off 45-hour-old files and read as a
+  real null result. A cache hit now logs at **WARNING with the file's age**;
+  pass a fresh `--cache-dir` regardless.
+- **Refreshing `data/raw/` does nothing for it.** It pages the live API, so
+  `download_data.py` is not a prerequisite and running it is wasted time.
+
+**The gate on a second observation is the CITY REPUBLISHING the roll, not
+elapsed time.** Baseline as of 2026-08-09: **439,631** rows, md5
+`8bd57af7fe4a63268fe538d91d6b9d5a` — byte-identical to 2026-08-07. Compare
+against that before spending a run.
 
 ---
 
