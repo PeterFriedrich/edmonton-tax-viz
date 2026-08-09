@@ -8,6 +8,50 @@ Items are verbatim as they were closed, newest-moved first in the order they app
 
 ---
 
+- [x] **Sweep the doc-to-doc citations — DONE 2026-08-09 (S104). ONE REAL
+  DEFECT, and it was a locked decision built on a display artifact.** The
+  mechanical half was already automated (`scripts/check_doc_citations.py`,
+  S103); this ran the judgement half — whether the prose a citation points at
+  still supports the claim — over the 168 doc-to-doc citation sites that carry a
+  falsifiable figure, re-deriving from `data/raw/` rather than comparing texts.
+  ⚠️ **RETRACTED: "14% of Edmonton has no neighbourhood polygon" (2026-08-08).**
+  It read **672.4 km²** of drawn hood fabric against a **782.1 km²** city and
+  called the **109.6 km²** difference annexed land carrying no neighbourhood, in
+  `DATA.md` §3 + §14, `DECISIONS.md`, `build_reference_layers.py` and a
+  `web/index.html` comment. Measured in `EPSG:3400`, the same 406 hoods cover
+  **782.0 km² in the RAW boundary file** against a **782.4 km²** legal outline —
+  agreeing to **1.4 km²**, inside that outline's own 100 m simplification noise.
+  **The raw fabric tiles the city.** The 109.6 km² is `main.py`'s
+  **`SETBACK_M = 45.0`** display buffer: **all 406 hoods lose area** (median
+  **18.3%**, min 2.7%, max 65.9% — perimeter-proportional, the signature of a
+  shrink, not of missing land), and `buffer(-45)` + `simplify(10)` reproduces
+  the shipped **672.42 km²** to the decimal. **No wrong number reached the
+  public page** — code comments and docs only. The 2026-08-08 decision to draw
+  the limit **survives**; its stated evidence did not.
+  ⚠️ **The generalisable lesson: a number read off a SHIPPED DISPLAY FILE is not
+  a fact about the world.** `neighbourhood_value_per_acre.geojson` is
+  post-setback, post-simplify geometry, and `join_and_calculate.py` already
+  documented both as display-only — the doc that got it wrong never opened it.
+  **Also fixed:** both outstanding guard warnings (`UI.md "Roads ground layer"`
+  → `"Services views"`; the audit brief's `docs/SPEC` → `docs/SPEC_phase1.md`,
+  a file that **never existed in history**), an overstatement in S103's own
+  record (it called three cited files missing; **two have existed since
+  2026-05-16** and the ledger's 2026-07-09 row records the brief being executed
+  against one of them), a `FINDINGS_lot_dedupe.md` pointer, and an external
+  "project knowledge" reference now marked as unverifiable-in-repo. Citation
+  guard: **0 warnings, down from 5**. — 2026-08-09 · `docs/TODO_archive.md`
+  **Verified correct and left alone** (re-derived, not compared): the `$50k` /
+  `$4M` colour clamps still sit at **p97.0 / p97.5** on live data; roads
+  `$264–$3,253` and fire `$7,092–$298,901` anchors; `rho +0.959` over all 406;
+  the served grid's top three lot-acre cells **612.3 / 149.3 / 143.0** (exact);
+  the whole Open-Budget corroboration table (**99.7% / 99.1% / 97.1%**, snow to
+  **99.2%**, roads **4.6×**); the census anchor **459,859**. Two dated
+  measurements have drifted with the weekly refresh and were left as dated:
+  the stock-age grid (**34,675** cells → 34,671) and the 5yr geocode coverage
+  (**47,125/59,697** → 47,052/59,687) — both still support their conclusions.
+  Full result: `docs/AUDIT_LEDGER.md` 2026-08-09 (S104).
+
+
 - [x] **`WEST MEADOWLARK PARK`'s revenue MORE THAN DOUBLED in one auto-refresh —
   EXPLAINED 2026-08-07: a RENUMBERING GAP CLOSING, so the +130% was the
   CORRECTION, not the defect.**

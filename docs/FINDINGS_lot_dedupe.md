@@ -118,7 +118,9 @@ of the same lesson.** At *point* grain the top $/lot-acre in the roll is not the
 Downtown tower at all: a WESTMOUNT point carries **$0.9M on a sub-milliacre lot
 = $3,478M/lot-acre**, 5.7× the tower. It is invisible on the map — at 100 m
 cells it pools with its neighbours, and the exported grid's top cells are
-612.3 / 149.3 / 143.0, i.e. exactly the §4.2 numbers. So it is **not a live
+612.3 / 149.3 / 143.0 — the repeat-aware row's citywide top 3 in the
+rule-variant table below, unchanged. (§4.2 records only the first of the three;
+re-pointed 2026-08-09.) So it is **not a live
 defect**, but it is a standing trap for any check written at point grain: the
 first draft of `scripts/check_value_anchors.py` pinned that maximum and would
 have failed the weekly build over an artifact no viewer can see. Anything
