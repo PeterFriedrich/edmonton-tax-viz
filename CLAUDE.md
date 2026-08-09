@@ -36,6 +36,9 @@ Edmonton revenue-per-acre fiscal analysis. Python-only, no GIS software.
   - If usage/budget feels like it might run out, or a long task is only partly done: STOP, write the handoff (state, stopping point, next steps), commit, push. A half-done feature safely on origin is recoverable; a finished one in a dead container is not.
   - Peter may be away — never hold work hostage waiting for a "push it" confirmation in these environments. (This overrides the usual only-push-when-asked default.)
   - Environment quirks (network policy, setup, headless verify): `docs/REMOTE_VM.md`.
+- **⚠️ Peter merges PRs MID-SESSION, often within minutes. Re-check before EVERY push to an existing branch — not once per session.** Commits pushed to a branch after its PR merged land on a dead branch: they reach origin, the branch looks up to date, and they are **not on master**. This has stranded work 7+ times, twice in one session. Checking once at the start does not help — the danger is every push *after* the merge.
+  - Enforced by a `pre-push` hook (`.githooks/pre-push`) that blocks a push to a branch whose PR is `MERGED`. **A fresh clone must enable it: `git config core.hooksPath .githooks`** (hooks are not cloned). It fails OPEN — no `gh`, no auth, no network, no PR — so it can never be the reason work goes unsaved. Escape hatch: `git push --no-verify`.
+  - The hook cannot catch everything. After any merge, confirm the work actually landed: `git merge-base --is-ancestor <sha> origin/master`. A merged PR is necessary, not sufficient.
 
 ## Code Style
 - Keep processing steps as separate, independently runnable modules in `src/`
