@@ -2182,24 +2182,15 @@
     // — a dimmer warm line so it does not read as another municipality.
     const CITY_LIMIT_COLOR = [122, 132, 152, 255];
     const ZONE_LINE_COLOR = [118, 96, 74, 235];
-    const BOUNDARY_STYLE = {
-      city:   { color: CITY_LIMIT_COLOR, width: 1.8 },
-      region: { color: BOUNDARY_COLOR,   width: 1 },
-      place:  { color: BOUNDARY_COLOR,   width: 1 },
-      zone:   { color: ZONE_LINE_COLOR,  width: 1.2 },
-    };
-    // ⚠️ HOISTED, and it is not style — it is a 10x. These were inline arrows
-    // in the layer literal, which makes a NEW function identity on every
-    // buildLayers() call; deck.gl compares accessors by reference, so it took
-    // each rebuild for a changed accessor and recomputed the colour attribute
-    // over every vertex of the boundary set. Measured: a metric switch went from
-    // 488 ms to 5,284 ms under SwiftShader. The constant this replaced
-    // (`getLineColor: BOUNDARY_COLOR`) had no such cost, so the regression
-    // arrived with the accessor, not the geometry. Same reason HOOD_COLOR is.
-    const boundaryLineColor = f =>
-      BOUNDARY_STYLE[f.properties.kind]?.color || BOUNDARY_COLOR;
-    const boundaryLineWidth = f =>
-      BOUNDARY_STYLE[f.properties.kind]?.width || 1;
+    // ⚠️ DO NOT collapse these back into one layer with a per-feature accessor.
+    // That was tried on 2026-08-08 and reverted: `getLineColor: f => …` makes
+    // deck.gl build a per-vertex attribute buffer across every boundary vertex
+    // instead of compiling a constant to a uniform, and the counties are large.
+    // Hoisting the arrow out of the layer literal (so its identity is stable)
+    // fixed only half of it — the attribute buffer is the other half, and it is
+    // paid on every layer update. Bisected: master 5/5 green, per-feature
+    // accessor 3/3 red on verify-temporal's 4 s click timeout under SwiftShader,
+    // constants back to green. It is a style table read at SPLIT time now.
     // Split once per load, not per frame: two layers need two datasets, and
     // buildLayers runs on every camera settle and every control change.
     let _refSplit = null;
@@ -2209,8 +2200,23 @@
                          features: referenceData.features.filter(f => f.properties.t === t) });
       // Places are consumed as plain anchors by the label pool, not as a
       // GeoJsonLayer — they are the only reference feature that renders as text.
+      // ⚠️ Boundaries split BY STYLE, not kept as one collection, and this is a
+      // performance contract rather than tidiness. deck.gl compiles a CONSTANT
+      // accessor to a uniform; a FUNCTION accessor makes it build a per-vertex
+      // attribute buffer over the whole layer instead — and the counties are
+      // tens of thousands of vertices. Styling one collection with
+      // `getLineColor: f => …` cost enough per layer update to blow
+      // verify-temporal's 4 s click timeout under SwiftShader (measured: master
+      // 5/5 green, per-feature accessor 3/3 red, constants back to 2/2 green).
+      // Three collections, three constant-styled layers, no attribute buffers.
+      // `region` and `place` share one because they share a style.
+      const ofKind = ks => ({ type: "FeatureCollection",
+        features: referenceData.features.filter(
+          f => f.properties.t === "boundary" && ks.includes(f.properties.kind)) });
       return (_refSplit = { river: of("river"), highway: of("highway"),
-                            boundary: of("boundary"),
+                            boundary: ofKind(["region", "place"]),
+                            cityLimit: ofKind(["city"]),
+                            zone: ofKind(["zone"]),
                             places: referenceData.features
                                       .filter(f => f.properties.t === "place") });
     }
@@ -2232,22 +2238,34 @@
         // nor z-fights — which is exactly what the depth-tested version got
         // wrong along the hood edges it shares with the valley polygons.
         parameters: { depthTest: false },
-      }), new deck.GeoJsonLayer({
-        id: "reference-boundary",
-        data: split.boundary,
-        // Outline only. A fill would put seven grey slabs around the city
-        // competing with the choropleth for the eye; the edge is the whole
-        // message.
+      }),
+      // Outline only. A fill would put grey slabs around the city competing
+      // with the choropleth for the eye; the edge is the whole message.
+      //
+      // Three layers, one per stroke, each with CONSTANT accessors — see the
+      // note in referenceSplit for why this is not one layer with a per-feature
+      // accessor. Order is deliberate: the neighbours first, then the zone, then
+      // Edmonton's own limit LAST so it draws over anything it touches. That
+      // matters where the Industrial Heartland crosses into the city (53.2 km²
+      // of it is inside Edmonton) and along the shared county edges.
+      ...boundaryLayer("reference-boundary", split.boundary, BOUNDARY_COLOR, 1),
+      ...boundaryLayer("reference-zone", split.zone, ZONE_LINE_COLOR, 1.2),
+      ...boundaryLayer("reference-city-limit", split.cityLimit, CITY_LIMIT_COLOR, 1.8),
+      ];
+    }
+
+    // One constant-styled outline layer. Returns [] for an empty collection so
+    // an older reference.geojson (no `kind`, hence no city/zone features) simply
+    // draws fewer layers instead of adding empty ones.
+    function boundaryLayer(id, data, color, width) {
+      if (!data || !data.features.length) return [];
+      return [new deck.GeoJsonLayer({
+        id, data,
         filled: false,
         stroked: true,
         extruded: false,
-        // ⚠️ Per-feature since 2026-08-08. Every outline used to draw in one
-        // colour at one width, so Edmonton's own legal limit was
-        // indistinguishable from Devon's town outline — the one line the map
-        // most needs to assert read as just another jurisdiction. `kind` comes
-        // from the builder; see its module docstring for the tiers.
-        getLineColor: boundaryLineColor,
-        getLineWidth: boundaryLineWidth,
+        getLineColor: color,
+        getLineWidth: width,
         lineWidthUnits: "pixels",
         lineWidthMinPixels: 1,
         pickable: false,
