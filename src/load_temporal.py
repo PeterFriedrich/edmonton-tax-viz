@@ -26,8 +26,10 @@ Two traps this module exists to handle
 1. **Hood names are not stable across 14 years.** OLIVER carried ~12,000
    accounts from 2012 through 2024 and appears as WIHKWENTOWIN from 2025 -- a
    rename, not a collapse. Naively keyed by name, the series shows one
-   neighbourhood dying and another appearing from nothing. 32 historical names
-   have no current boundary at all.
+   neighbourhood dying and another appearing from nothing. 41 historical names
+   have no current boundary at all; after both correction layers below, 25 still
+   do not -- those are trap 2's problem, not this one. (State the stage when
+   quoting this: the count is 31 after the shared ``NAME_CORRECTIONS`` alone.)
 2. **An unmatched name is not a dropped dollar.** The metric is *share of the
    citywide base*, so every row belongs in the DENOMINATOR whether or not it has
    a polygon to render. Unmatched hoods are counted, reported, and kept in the
@@ -77,9 +79,9 @@ HISTORICAL_DEFECT_YEARS = (2024, 2025)
 
 # The "commercial base" denominator (SPEC_temporal.md section 6). Deliberately
 # just COMMERCIAL: this is the series public reporting quotes, and the
-# neighbouring classes are noise -- NONRES MUNICIPAL/RES EDUCATION is 19 rows
-# across all 14 years and DESIGNATED IND PROPERTIES is 1, so their shares swing
-# on single accounts. Explicit tuple rather than a "not residential" rule, same
+# neighbouring classes are noise -- NONRES MUNICIPAL/RES EDUCATION is 19
+# ACCOUNTS across all 14 years (16 hood-year rows) and DESIGNATED IND PROPERTIES
+# is 1 of each, so their shares swing on single accounts. Explicit tuple rather than a "not residential" rule, same
 # philosophy as ZONE_CATEGORY / ROUTE_MODE: every class hand-assigned.
 COMMERCIAL_CLASSES = ("COMMERCIAL",)
 
