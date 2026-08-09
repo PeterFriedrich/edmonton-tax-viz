@@ -2,7 +2,7 @@
 
 **For:** Fable
 **From:** Planning conversation w/ Claude, [date: 2026-07-14]
-**Status:** Ready to scope into tickets. Full research backing: `Edmonton_Growth_Infrastructure_Financing__Feasibility_of_a_Neighbourhood_Debt_Lens.md` (project knowledge).
+**Status:** Ready to scope into tickets. Full research backing: *"Edmonton Growth Infrastructure Financing — Feasibility of a Neighbourhood Debt Lens"*. ⚠️ **NOT IN THIS REPO** — it lives in the Claude project knowledge, so nothing here can check it; treat any figure traced back to it as unsourced until it is copied in.
 
 ---
 

@@ -54,28 +54,6 @@ summary.)_
 ## Open work
 
 
-- [ ] **Sweep the doc-to-doc citations — `docs/` and `data/DATA.md` cite each
-  other constantly and have never been checked.** The code trees are now both
-  done (`web/index.html` 2026-08-08 S102; `src/`+`scripts/`+`tools/` 2026-08-09
-  S103) and each found real defects, so the remaining unswept surface is the
-  docs themselves. ⚠️ **Use the S103 method, which is what makes it worth
-  running:** re-derive every number from `data/raw/` rather than comparing the
-  two texts, and pair `git log -S '<figure>'` with `git show <commit>:<doc>` —
-  the first alone only tells you a figure moved, the second tells you whether
-  the citation was **ever** right, and only a citation that was right and
-  drifted is a different bug from one that was never right.
-  ⚠️ **The MECHANICAL half is now automated and does not need re-doing** —
-  `scripts/check_doc_citations.py` (2026-08-09, runs in the test suite) fails the
-  build on a missing doc, an absent `§N`, or a line-number citation, and it
-  already swept `docs/` clean. **What is left is the judgement half**: whether
-  the prose the citation points at still supports the claim. Don't spend the
-  sweep re-checking pointers the guard holds.
-  ⚠️ **Two known warnings are real and unfixed** (the guard warns, never fails):
-  `TODO.md:965` cites `UI.md "Roads ground layer"`, a section title that does not
-  exist, and `docs/FABLE_AUDIT_BRIEF.md` tells its reader to open `docs/SPEC.md`,
-  `docs/security-audit.md` and `CONTRIBUTING.md` — **none of which exist**, so
-  that brief has been sending models to three missing files.
-  Full result: `docs/AUDIT_LEDGER.md` 2026-08-09 (S103).
 
 - [ ] **BUG REPORT to Edmonton Open Data — the `qi6a-xuwt` 2024/25 dropout.
   Gated on Peter reviewing the notebook by hand; everything else is done.**
@@ -970,7 +948,7 @@ summary.)_
       - [x] ~~frontend: layers panel, lazy-loaded ground layer; arterials
         neutral, access roads coloured by hood `road_m_per_acre` (linear,
         clamp 53); remove Roads from metric toggle~~ — done 2026-07-02
-        (headless-verified; details in UI.md "Roads ground layer").
+        (headless-verified; details in UI.md "Services views").
     - [x] ~~(2) Prism transparency control (money plane overlays service
       plane)~~ — done 2026-07-02, landed with stage 1: opacity slider in the
       layers panel (prisms + roof edges) + 45% auto-nudge on first Roads
@@ -1509,6 +1487,10 @@ summary.)_
 ## Done
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
+
+- [x] **Sweep the doc-to-doc citations — DONE 2026-08-09 (S104). ONE REAL DEFECT, and it was a locked decision built on a display artifact.** — DONE 2026-08-09 · `docs/TODO_archive.md`
+
+
 
 - [x] **Doc-citation sweep of `src/`, `scripts/`, `tools/` — DONE 2026-08-09, no wrong number reached shipped data.** 216 sites / 51 files, ~20 with a falsifiable number, every one re-derived from `data/raw/`. Three comment-level defects: a **line-number citation that drifted** (`audit_exempt_institutional.py`'s "DATA.md line ~308" — right on 2026-07-09, now ~240 lines off), a **unit mislabel** (`load_temporal.py`'s "19 rows" is 19 *accounts*, 16 rows), and ⚠️ **S102's own follow-up note retracted** — it said `SPEC_temporal.md` §2 "was never updated", but `git log -S` shows the §2 banner and the comment flagging it landed in the SAME commit (`7e065ef`). — 2026-08-09 · `docs/TODO_archive.md`
 

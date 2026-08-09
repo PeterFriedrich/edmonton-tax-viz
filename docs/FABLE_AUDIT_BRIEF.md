@@ -6,7 +6,7 @@ context that's already written down in the repo.
 
 ## 0. Ground yourself first (do this before anything else)
 
-Read, in order: `CLAUDE.md`, `docs/SPEC.md`, `docs/ARCHITECTURE.md`,
+Read, in order: `CLAUDE.md`, `docs/SPEC_phase1.md`, `docs/ARCHITECTURE.md`,
 `docs/security-audit.md`, `CONTRIBUTING.md`.
 
 Then confirm one specific thing and state it back before proceeding:
@@ -32,7 +32,7 @@ Two tasks, in order:
 
 Out of scope this session: refactoring, style cleanup, new features. If you find
 something that clearly needs fixing, log it as a finding with a suggested fix —
-don't make the change. `docs/SPEC.md` is frozen; don't propose edits to it, only
+don't make the change. `docs/SPEC_phase1.md` is frozen; don't propose edits to it, only
 note if reality has diverged from it.
 
 ## 2. What actually matters for this repo
