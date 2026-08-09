@@ -48,6 +48,7 @@ import json
 import logging
 import pathlib
 import sys
+import time
 
 import geopandas as gpd
 import pandas as pd
@@ -71,10 +72,26 @@ PAGE = 50_000
 
 def fetch(url: str, select: str, where: str | None = None,
           cache_dir: pathlib.Path | None = None, tag: str = "") -> pd.DataFrame:
-    """Page a Socrata resource. Cached on disk — these are 400k-row pulls."""
+    """Page a Socrata resource. Cached on disk — these are 400k-row pulls.
+
+    ⚠️ **A CACHE HIT MAKES A "RE-RUN" A REPLAY, AND THIS TOOL'S WHOLE POINT IS
+    THE SECOND OBSERVATION.** The backlog item's prescribed next step is *re-run
+    it and diff* — which, against a warm `--cache-dir`, reproduces the first
+    run's answer exactly and looks like a meaningful null result. That happened
+    on 2026-08-09: the default cache was still warm from 2026-08-07 and the
+    "re-run" returned an identical 1,534 parcels / $1.62B off two-day-old files.
+    So a cache hit is now logged at WARNING with the file's age. Pass a fresh
+    ``--cache-dir`` (or delete it) for a genuine second observation.
+    """
     if cache_dir:
         cached = cache_dir / f"{tag}.json"
         if cached.exists():
+            age_h = (time.time() - cached.stat().st_mtime) / 3600
+            logger.warning(
+                "CACHE HIT %s — served from %s, written %.1f h ago. This is a "
+                "REPLAY, not a fresh observation; use a new --cache-dir to re-fetch.",
+                tag, cached, age_h,
+            )
             return pd.DataFrame(json.loads(cached.read_text()))
     rows: list[dict] = []
     offset = 0
