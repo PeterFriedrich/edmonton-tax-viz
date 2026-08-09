@@ -403,6 +403,27 @@ For Phase 1 (neighbourhood-level choropleth), two approaches are viable:
 - 407 boundary features. Join outcome (after the 2026-07-01 audit corrections): 1 assessment neighbourhood with no boundary match (the immaterial `OLIVER` straggler, $500 — deliberately unmapped) and 1 boundary neighbourhood with no assessment data (`LEWIS FARMS`) → 406 of 407 boundaries rendered. See "Name Matching" below; flagged in `join_and_calculate.py`.
 - ⚠️ **THIS FILE DOES TILE THE CITY — the earlier "14% has no neighbourhood" reading was a DISPLAY ARTIFACT, corrected 2026-08-09.** Measured in `EPSG:3400`: the 406 rendered hoods cover **782.0 km²** in this raw file (all 407 = **782.11**), against a legal boundary polygon of **782.38 km²**. They agree to **1.4 km²** — the raw fabric tiles Edmonton. What the 2026-08-08 note measured as a "109.6 km² gap" was `main.py`'s **`SETBACK_M = 45.0`** inward display buffer: **all 406** hoods shrink (median **18.3%**, min 2.7%, max 65.9%), and `buffer(-45)` + `simplify(10)` reproduces the shipped file's **672.42 km²** exactly. See §14.
 
+### Served precision of `neighbourhood_value_per_acre.geojson` (2026-08-09)
+
+⚠️ **The served file is rounded to 5 dp of coordinate and 6 significant figures
+of attribute** (`WEB_PRECISION` / `WEB_SIGNIFICANT_FIGURES` in
+`join_and_calculate.py`, applied as GDAL `COORDINATE_PRECISION` /
+`SIGNIFICANT_FIGURES` at write time). **This is a served-payload decision, not a
+computation change**: `export_geojson` returns the full-precision frame, and every
+number is computed at full precision upstream.
+
+Why it is a data-contract fact and not a formatting detail: **this file is fetched
+at boot, before the map can draw data, by every visitor whatever lens they use** —
+it is the one payload whose size grows with the number of lenses, because each
+lens adds per-hood columns here. At 66 columns the attributes had already grown
+larger than the geometry (176 KB vs 138 KB gzipped). GDAL's 15-digit default was
+**half the gzipped payload**: 340 KB → 166 KB.
+
+⚠️ **Anything reading this file for ANALYSIS now sees 6 significant figures** —
+`tools/ward_rollup.py`, `ml_feature_importance.py`, `audit_outlier_tails.py` and
+four others do. Six figures is far past what any of them need, but a *figure about
+the world* should still come from `data/raw/`, for the reason §14 records.
+
 ---
 
 ## 4. Property and Education Tax Rates (revenue phase)
