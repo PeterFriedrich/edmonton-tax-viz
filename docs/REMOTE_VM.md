@@ -47,10 +47,20 @@ probing, no CDN scripts** unless the policy is changed.
 
 ```bash
 pip install -r requirements-ci.txt   # geopandas etc.; there is NO conda here
+git config core.hooksPath .githooks  # ⚠️ HOOKS ARE NOT CLONED — see below
 python3 -m pytest tests/ -q          # from repo root; all-synthetic, no data needed
 # data/raw/ is EMPTY. scripts/download_data.py only works if the network
 # policy allows data.edmonton.ca (see above).
 ```
+
+⚠️ **`core.hooksPath` matters MOST here.** `.githooks/pre-push` blocks a push to
+a branch whose PR is already merged — the failure that has stranded work 9×. Git
+does not clone hooks, so in a fresh container it is **OFF until you set it**, and
+this is exactly the environment where a stranded commit is unrecoverable (the box
+gets reclaimed). The hook **fails open** — no `gh`, no auth, no network → the
+push proceeds — so it can never be the reason work goes unsaved. It is a
+backstop, not a substitute for `git merge-base --is-ancestor <sha> origin/master`
+after any merge.
 
 ## Headless browser verification (verify-*.js / shot-*.js)
 
