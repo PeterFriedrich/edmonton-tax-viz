@@ -64,9 +64,17 @@ summary.)_
   the first alone only tells you a figure moved, the second tells you whether
   the citation was **ever** right, and only a citation that was right and
   drifted is a different bug from one that was never right.
-  ⚠️ **Line-number citations into docs are the highest-yield target** — S103
-  found `audit_exempt_institutional.py`'s "DATA.md line ~308" was correct on
-  2026-07-09 and drifted ~240 lines since. `grep -rn 'line ~\|line [0-9]' docs/`.
+  ⚠️ **The MECHANICAL half is now automated and does not need re-doing** —
+  `scripts/check_doc_citations.py` (2026-08-09, runs in the test suite) fails the
+  build on a missing doc, an absent `§N`, or a line-number citation, and it
+  already swept `docs/` clean. **What is left is the judgement half**: whether
+  the prose the citation points at still supports the claim. Don't spend the
+  sweep re-checking pointers the guard holds.
+  ⚠️ **Two known warnings are real and unfixed** (the guard warns, never fails):
+  `TODO.md:965` cites `UI.md "Roads ground layer"`, a section title that does not
+  exist, and `docs/FABLE_AUDIT_BRIEF.md` tells its reader to open `docs/SPEC.md`,
+  `docs/security-audit.md` and `CONTRIBUTING.md` — **none of which exist**, so
+  that brief has been sending models to three missing files.
   Full result: `docs/AUDIT_LEDGER.md` 2026-08-09 (S103).
 
 - [ ] **BUG REPORT to Edmonton Open Data — the `qi6a-xuwt` 2024/25 dropout.
