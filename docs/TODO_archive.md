@@ -1463,3 +1463,71 @@ at all): every CI reading must stay in band; the drifting pair must stay wide;
 the four tightened anchors must stay at ±25%. ⚠️ **The tightening test was
 falsified against the old baseline first** — it fails there and passes here, so
 it pins the change rather than merely describing it.
+
+## Finish the doc-citation sweep: `src/`, `scripts/`, `tools/` — CLOSED 2026-08-09 (S103)
+
+Opened 2026-08-08 by S102, which swept only `web/index.html` (40 sites, 14 docs)
+and found a **wrong number live on the site**. The other three trees cite docs
+too and had never been checked. Closed by sweeping them: **216 citation sites
+across 51 files**, triaged to the ~20 that back a falsifiable number or a data
+contract — the rest are bare "see `SPEC_x.md`" pointers with nothing to be wrong
+about.
+
+**Method (the part worth reusing):** every numeric claim re-derived from
+`data/raw/` rather than compared against the doc text — point-in-polygon for the
+containment counts, a chunked scan of the 363 MB fire feed, feature counts on
+the road/bike GeoJSONs, groupby on the historical aggregate. Then
+`git log -S '<figure>'` **paired with** `git show <commit>:data/DATA.md` to
+separate a citation that *drifted* from one that was *never right* — S102 used
+only the first half, and only the pairing distinguishes the two.
+
+**Three defects, all comment-level; nothing wrong reached shipped data.**
+
+1. ⚠️ **A line-number citation drifted.** `tools/audit_exempt_institutional.py`
+   cited the institutional zone codes as *"DATA.md line ~308"*. `git show` at the
+   authoring commit proves it was **right on 2026-07-09**; DATA.md has grown
+   ~240 lines since, so line 308 now lands on `Total Gross Area`/FAR. Re-pointed
+   at **§5 "Set-aside categories"**. The project already bans line-number
+   citations for `CODEMAP.md`; this was the same failure one file over.
+2. **A unit mislabel.** `src/load_temporal.py` justified `COMMERCIAL_CLASSES`
+   with *"NONRES MUNICIPAL/RES EDUCATION is 19 rows across all 14 years"*. **19
+   is the account count; rows are 16.** The locked decision is unaffected (still
+   noise on single accounts) but the stated evidence was not what it claimed.
+3. ⚠️ **S102's own follow-up note was FALSE and is retracted.** It recorded that
+   `web/index.html` self-flags `SPEC_temporal.md` §2 as stale and *"the doc was
+   never updated"*. `git log -S` shows §2's **READ FIRST banner and that very
+   comment landed in the same commit, `7e065ef`** — the doc was updated the day
+   the comment was written. The comment was **obsolete on arrival**, pointing
+   readers at a §2 that already opens with the correction. Rewritten to send
+   them to the banner.
+
+**One imprecision, stage now stated.** `load_temporal.py`'s *"32 historical names
+have no current boundary"* reproduces **only** at the shared-`NAME_CORRECTIONS`
+stage while counting the `""` null bucket (3 null rows) as a name: 31 + 1. Raw
+is **41**; after both correction layers, **25**. The nulls are *not* a silent
+drop — `normalize_hood` does `fillna("")`, so they survive into the denominator
+and get reported, which is what trap 2 requires.
+
+**Verified correct and left alone** (re-derived, not compared): roads **53,720**
+and bike **10,417** features (exact); fire noise `TRAINING/MAINTENANCE`
+**18,144** / `COMMUNITY EVENT` **2,491** / `PRE-INCIDENT PLANNING` **515**
+(exact); `ZONE_CATEGORY` **95** base codes; `gross_area` null/zero **6.19%**
+(DATA.md's own 27,202 / ~6.2% exact); the historical aggregate at **14,842**
+rows with the class dimension costing **9,265** ("~14,800" / "~9,300"); spatial
+containment **945/946** and **100/103** (exact); **0** null coordinates in the
+current roll; permit geocoding **94.8–98.0%** for 2009–2023 and **71.6%** for
+2025; OLIVER's straggler at exactly **1 row / $500**; the census anchor
+**459,859**; and every DATA.md section number cited (§2/§5/§10/§11/§13/§14/§15)
+plus `SPEC_temporal` §0.1–§0.4.
+
+**Two left deliberately unchanged.** `SPUR LINES` is a second unmatched name
+($0, 1 row), so `load_assessment.py`'s *"the lone remaining unmatched name"* is
+**correct only in scope** — the zero-value drop runs first, so SPUR LINES never
+reaches that join — and it is documented in three places; the two texts
+reconcile only if you know the ordering. And `load_stormwater.py`'s **$49.8M**
+unbilled is a difference the cited doc never states (§3 gives $240.4M and
+$190.5M, rounded difference **$49.9M**) — within rounding of the unrounded
+inputs, but a derived figure with no source.
+
+**Successor:** the `docs/` tree itself is still unswept, and docs cite each
+other constantly. See `## Open work`.

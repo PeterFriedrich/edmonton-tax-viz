@@ -67,7 +67,9 @@ PINFO = "data/raw/Property_Info__Current_Calendar_Year_.csv"
 BOUND = "data/raw/neighbourhoods.geojson"
 ZONING = "data/raw/zoning.geojson"
 
-# Institutional-proxy base zone codes (DATA.md line ~308) + on-the-ground meaning.
+# Institutional-proxy base zone codes (DATA.md §5, "Set-aside categories") +
+# on-the-ground meaning. Cite the SECTION, not a line number: this comment said
+# "line ~308", which was right when written (2026-07-09) and now lands in §2.
 INST_CODES = {
     "UI": "university / school / hospital",
     "AJ": "federal / provincial jurisdiction",

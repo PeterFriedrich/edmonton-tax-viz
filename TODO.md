@@ -54,21 +54,20 @@ summary.)_
 ## Open work
 
 
-- [ ] **Finish the doc-citation sweep: `src/`, `scripts/`, `tools/` were not
-  checked.** 2026-08-08 (S102) swept only `web/index.html` — 40 sites, 14 docs —
-  and found a **wrong number live on the site** (the 2024 gap note said 2,448;
-  2024's figure is 2,322, and 2,448 belongs to the 2025 slice). Same grep,
-  other trees: `grep -rn 'FINDINGS_\|DATA.md\|SPEC_\|DECISIONS\|RUNBOOK' src/
-  scripts/ tools/`, then read each comment against the section it names.
-  ⚠️ **Re-derive the numbers from the shipped data, don't just compare the two
-  texts** — the site's figure and `tests/test_load_temporal.py`'s figure had
-  disagreed for weeks and nothing compared them. Full result:
-  `docs/AUDIT_LEDGER.md` 2026-08-08 (S102).
-  - **Sub-item, cheap:** `SPEC_temporal.md` §2 is **stale and known to be** —
-    `web/index.html` (`renderRevenueMix` region) carries a ⚠️ comment saying so:
-    §2 describes the panel as the assessment-history surface *throughout*, which
-    has been true only under Value since the revenue-mix lens landed. The
-    comment was written honestly; the doc was never updated.
+- [ ] **Sweep the doc-to-doc citations — `docs/` and `data/DATA.md` cite each
+  other constantly and have never been checked.** The code trees are now both
+  done (`web/index.html` 2026-08-08 S102; `src/`+`scripts/`+`tools/` 2026-08-09
+  S103) and each found real defects, so the remaining unswept surface is the
+  docs themselves. ⚠️ **Use the S103 method, which is what makes it worth
+  running:** re-derive every number from `data/raw/` rather than comparing the
+  two texts, and pair `git log -S '<figure>'` with `git show <commit>:<doc>` —
+  the first alone only tells you a figure moved, the second tells you whether
+  the citation was **ever** right, and only a citation that was right and
+  drifted is a different bug from one that was never right.
+  ⚠️ **Line-number citations into docs are the highest-yield target** — S103
+  found `audit_exempt_institutional.py`'s "DATA.md line ~308" was correct on
+  2026-07-09 and drifted ~240 lines since. `grep -rn 'line ~\|line [0-9]' docs/`.
+  Full result: `docs/AUDIT_LEDGER.md` 2026-08-09 (S103).
 
 - [ ] **BUG REPORT to Edmonton Open Data — the `qi6a-xuwt` 2024/25 dropout.
   Gated on Peter reviewing the notebook by hand; everything else is done.**
@@ -1502,6 +1501,8 @@ summary.)_
 ## Done
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
+
+- [x] **Doc-citation sweep of `src/`, `scripts/`, `tools/` — DONE 2026-08-09, no wrong number reached shipped data.** 216 sites / 51 files, ~20 with a falsifiable number, every one re-derived from `data/raw/`. Three comment-level defects: a **line-number citation that drifted** (`audit_exempt_institutional.py`'s "DATA.md line ~308" — right on 2026-07-09, now ~240 lines off), a **unit mislabel** (`load_temporal.py`'s "19 rows" is 19 *accounts*, 16 rows), and ⚠️ **S102's own follow-up note retracted** — it said `SPEC_temporal.md` §2 "was never updated", but `git log -S` shows the §2 banner and the comment flagging it landed in the SAME commit (`7e065ef`). — 2026-08-09 · `docs/TODO_archive.md`
 
 - [x] **`WEST MEADOWLARK PARK`'s revenue MORE THAN DOUBLED in one auto-refresh — EXPLAINED 2026-08-07: a RENUMBERING GAP CLOSING, so the +130% was the CORRECTION, not the defect.** Misericordia was continuously assessed 2012–2025 and merely absent from the published current roll during a renumber; the map had been UNDERSTATING the hood by ~$250M assessed / ~$6M/yr. ⚠️ **Two earlier answers are WRONG and are recorded in commits** — *"one new $247.8M parcel arrived"* (true but shallow) and *"is a hospital supposed to be taxable?"* (the wrong question; it always was). Read the archive entry before citing either. — 2026-08-07 · `docs/TODO_archive.md`
 
