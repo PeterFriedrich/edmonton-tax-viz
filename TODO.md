@@ -473,6 +473,17 @@ summary.)_
   default:** the river went underneath because the hood fabric already traces
   it (set-aside valley = a river-shaped seam), so painting over glitched; the
   ring road has no such seam and is invisible underneath. What's left:
+  - [x] ~~**Tier 3b — the REGIONAL NAMES, beyond the seven towns.**~~ **DONE
+    2026-08-08 (PR #187), live in production.** The four counties, the
+    Industrial Heartland, Nisku and the airport are named; Morinville and Stony
+    Plain joined the towns (16 names, 33 features). Edmonton's limit is drawn
+    with its own stroke but **deliberately unnamed**. ⚠️ **This reversed the
+    2026-07-27 "regions are unlabelled" decision** — see `DECISIONS.md`
+    2026-08-08 and `DATA.md` §14 before re-opening it. ⚠️ **Tier 2 below
+    inherits a hard-won constraint from it:** outlines are split into one layer
+    per stroke with CONSTANT accessors, because a per-feature `getLineColor`
+    builds a per-vertex attribute buffer and blew the verify's click timeout.
+    Style a new Tier-2 shape by adding a layer, never by adding an accessor.
   - [ ] **Tier 2 — Edmonton internal reference.** District labels (West
     Edmonton, Mill Woods, Castle Downs, Terwillegar, Southeast) + Downtown and
     Old Strathcona/Whyte Ave; major arterials as thin unlabeled lines
