@@ -380,6 +380,27 @@ summary.)_
     reappears was a transient gap (and its hood was understated meanwhile);
     anything still absent months later is a real removal. Nothing else about
     this item can be settled without that second observation.
+  - ⚠️ **ATTEMPTED 2026-08-09 — NO SECOND OBSERVATION EXISTS YET, and the gate is
+    NOT elapsed time.** `q7d6-ambg`'s published roll is **byte-identical**
+    between 2026-08-07 and 2026-08-09 (md5 `8bd57af7fe4a63268fe538d91d6b9d5a`,
+    **439,631** rows). The City has not republished it, so the audit is
+    guaranteed to return the same 1,534 / $1.62B no matter how often it runs.
+    **The gate is the CITY REPUBLISHING THE ROLL, not the calendar.**
+    - **Readiness test before spending a run:** fetch the current roll and
+      compare its row count and md5 to the baseline above. Same hash → do not
+      bother; the answer cannot have changed.
+    - ⚠️ **`--cache-dir` DEFAULTS TO `/tmp/roll_continuity` AND A WARM CACHE
+      MAKES THE "RE-RUN" A REPLAY.** The first 2026-08-09 attempt reproduced
+      1,534 / $1.62B off 45-hour-old files and read as a real null result. The
+      tool now logs `CACHE HIT` at WARNING with the file's age — **but pass a
+      fresh `--cache-dir` anyway.** A prescribed "just re-run it" that silently
+      replays its own first answer is the third time this item's stated next
+      step has not survived contact.
+    - **Also measured, and not what the audit uses:** the local
+      `data/raw/` snapshot was **439,685** rows (2026-07-06) against the API's
+      **439,631** — the roll *shrank* by 54 accounts. Irrelevant to this tool,
+      which fetches from Socrata directly, but it means a local
+      `download_data.py` does **nothing** for this item. Do not repeat that.
   - ⚠️ **Do not report this upstream yet.** 0.36% of parcels is within the range
     ordinary demolition/subdivision could explain, and we have **no baseline for
     how much of it is normal** — unlike the `qi6a-xuwt` gap, which was measured
