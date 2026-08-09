@@ -234,8 +234,9 @@ summary.)_
     geojson until the next auto-refresh runs. The UI must degrade cleanly when
     they are missing (the house pattern), or the site breaks in the gap.
 
-- [ ] **▶ `data/DATA.md:207` IS FALSE AND ANALYSIS DEPENDS ON IT — exempt
-  institutional land IS on the taxable roll, ~$5.6B of it.** Opened 2026-08-07.
+- [ ] **▶ `data/DATA.md` §1 "Tax-exempt flag" WAS FALSE — exempt institutional
+  land IS on the taxable roll, ~$5.6B of it. CORRECTED 2026-08-07; only sub-item
+  (3) is still open.** Opened 2026-08-07.
   The West Meadowlark investigation asked whether its hospital parcel was
   anomalous. **It is not** — and answering that exposed a much larger stale
   premise.
@@ -248,7 +249,7 @@ summary.)_
     by ~$250M of assessed value / ~$6M/yr — the +130% was the CORRECTION, not
     the defect.** `$4.63M` was the wrong number; `$10.63M` is right. See
     `data/DATA.md` "Tax-exempt flag" and `tools/audit_roll_continuity.py`.
-  - **DATA.md:207 says:** *"tax-exempt institutional land (Legislature, schools,
+  - **`DATA.md` §1's "Tax-exempt flag" note used to say:** *"tax-exempt institutional land (Legislature, schools,
     hospitals, City property) is **absent from the taxable roll entirely**, not
     flagged or zeroed"*, listing `AJ/PU/UI/UF` as exempt-proxy zones. **Measured
     against the roll, that is wrong.** Every major hospital is on it and was

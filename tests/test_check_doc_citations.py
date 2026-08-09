@@ -10,6 +10,8 @@ not evidence of anything.
 import sys
 from pathlib import Path
 
+import pytest
+
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
 
 from check_doc_citations import (  # noqa: E402
@@ -58,6 +60,36 @@ def test_line_number_banned_regardless_of_doc_length(tmp_path):
     failures, _ = check_citations(root)
     assert len(failures) == 1
     assert "LINE NUMBER" in failures[0]
+
+
+@pytest.mark.parametrize("cited", [
+    "data/DATA.md:207",   # the form the terminal makes clickable — MISSED until 2026-08-09
+    "DATA.md:207",
+    "DATA.md: 207",
+    "DATA.md:207-210",    # a range is still a line number
+    "DATA.md#L207",       # GitHub's spelling
+])
+def test_catches_the_colon_line_form(tmp_path, cited):
+    """The spelling people actually type, and the one the ban missed for a day.
+
+    `check_doc_citations.py` originally required the literal word "line", so
+    `DATA.md line ~308` failed while `DATA.md:207` sailed through — and two such
+    citations had been sitting in TODO.md unflagged the whole time. A guard that
+    bans only the wordy spelling of a mistake bans the spelling nobody uses.
+    """
+    failures, _ = check_citations(_tree(tmp_path, cited))
+    assert len(failures) == 1, failures
+    assert "LINE NUMBER" in failures[0]
+
+
+def test_a_bare_anchor_is_not_a_line_number(tmp_path):
+    """`#section-name` is a real markdown fragment and must stay legal.
+
+    Only `#L<digits>` is GitHub's line anchor. Banning every `#` would make the
+    normal way to link a heading unusable, which is the form the guard WANTS.
+    """
+    failures, _ = check_citations(_tree(tmp_path, "DATA.md#set-aside-categories"))
+    assert failures == []
 
 
 # --- section resolution ------------------------------------------------------

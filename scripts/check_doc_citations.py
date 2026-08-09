@@ -28,6 +28,16 @@ lands on some other real content rather than erroring. The project already bans
 them for ``CODEMAP.md``; this generalizes that rule. Cite ``§N`` or a section
 title instead.
 
+⚠️ **BOTH SPELLINGS, and the second one is the one that matters.** The first cut
+of this guard required the literal word "line", so it caught "DATA.md line ~308"
+and missed "DATA.md:207" — which is the form the terminal renders as a clickable
+link, so it is what anyone actually types. Two such citations sat unflagged in
+``TODO.md`` from the day this guard shipped until 2026-08-09, both pointing at a
+line that had since become the *correction* of the claim citing it: plausible,
+wrong, silent, exactly as the ban predicts. A guard that bans only the wordy
+spelling of a mistake bans the spelling nobody uses. ``#L207`` (GitHub's) is
+banned too; a bare ``#anchor`` is a real fragment and stays legal.
+
 History files are deliberately NOT scanned: ``session-summary/`` is frozen by
 definition, and ``TODO_archive.md`` / ``AUDIT_LEDGER.md`` are append-only records
 that *quote* the banned form in order to document it. A citation wrapped in
@@ -156,7 +166,15 @@ def check_citations(root: Path = ROOT) -> tuple[list[str], list[str]]:
                     continue
                 tail = m.group(2)
 
-                if re.match(r"[^0-9]{0,12}lines?\s*~?\d+", tail):
+                # Both spellings of the banned form. The `:NNN` one was MISSED
+                # until 2026-08-09 and it is the one people actually type: the
+                # terminal renders `file.md:207` as a clickable link, so it is the
+                # path of least resistance, and two live citations had been sitting
+                # in TODO.md unflagged. A guard that bans only the wordy spelling
+                # of a mistake bans the spelling nobody uses. `#LNNN` is GitHub's;
+                # a bare `#anchor` is a real fragment and stays legal.
+                if (re.match(r"[^0-9]{0,12}lines?\s*~?\d+", tail)
+                        or re.match(r"(?::|#L)\s*\d+", tail)):
                     failures.append(
                         f"{where}  cites {name} by LINE NUMBER — banned, it drifts "
                         f"silently as the doc grows. Cite §N or a section title."
