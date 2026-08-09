@@ -40,7 +40,7 @@ No exempt boolean exists, so exempt-institutional land is **measured** as
 institutional-proxy zoning that carries no taxable account:
 
 1. **Institutional zoning acres by code.** Overlay the four institutional-proxy
-   base zone codes (`data/DATA.md` line ~308) on the neighbourhood boundaries,
+   base zone codes (`data/DATA.md` §5, "Set-aside categories") on the boundaries,
    kept split by code because the code *is* the mechanism:
    - `UI` — Urban Institution (university / school / hospital)
    - `AJ` — Alternative Jurisdiction (federal / provincial crown land)
