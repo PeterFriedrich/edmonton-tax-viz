@@ -510,6 +510,21 @@ body.mills #millrates { display: block; }
 .revrow i { flex: none; width: 9px; height: 9px; border-radius: 2px; }
 .revrow span { flex: 1; min-width: 0; }
 .revrow b { color: #e8e8ef; font-weight: 600; font-variant-numeric: tabular-nums; }
+/* Services panel: cost against revenue, grouped by basis. The group heading is
+   load-bearing, not decoration — it is what stops the eye adding two rows that
+   measure the same road metre on scales ~11x apart (see SVC_COST_BASES). */
+#svccost { margin-top: 7px; }
+.svcbasis { margin: 6px 0 2px; font-size: 10.5px; color: #9a9ab0; }
+.svcbasis:first-child { margin-top: 0; }
+.svcbasis .muted { color: #6a6a80; }
+.svcrow { display: flex; align-items: center; gap: 7px; line-height: 1.9; }
+.svcrow span { flex: none; width: 82px; white-space: nowrap; }
+.svcrow i { flex: 1; height: 7px; border-radius: 2px; background: #2a2a3a; overflow: hidden; }
+.svcrow i b { display: block; height: 100%; border-radius: 2px; }
+.svcrow em { flex: none; width: 40px; text-align: right; font-style: normal;
+             color: #e8e8ef; font-weight: 600; font-variant-numeric: tabular-nums; }
+/* Over 100% the bar has run out of room to say so. */
+.svcrow em.over { color: #fcd278; }
 #temporal-note, #temporal-hint { margin: 7px 0 0; font-size: 10.5px; color: #6a6a80; }
 /* Panel mode is ON but nothing is pinned: the panel is a prompt, not a read-out.
    The close button hides too — there is nothing to close, and an x that does

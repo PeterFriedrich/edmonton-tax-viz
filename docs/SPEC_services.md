@@ -647,6 +647,44 @@ two-term metric labelled "transportation" would be mislabeled, the same rule the
 existing composite uses. (Present-but-malformed still raises — only *absent* is
 tolerated.)
 
+## Hood panel — cost against revenue (BUILT 2026-08-10)
+
+Clicking a hood in Services opens a panel confronting its **revenue per acre**
+with what the City spends serving it. Until this, Services was the only lens with
+no panel: the assessment history was the wrong content there, so it was gated out
+(`DECISIONS.md` 2026-08-06) and the lens was hover/card-only.
+
+⚠️ **THERE IS NO SINGLE COST NUMBER IN THE PANEL AND THERE CANNOT BE.** Two
+separate locked rules forbid one, and either would turn a headline "cost" into a
+figure that is arithmetically true and descriptively false:
+
+1. **`svc_cost_per_acre` is a LIFECYCLE basis** ($50/road-m/yr) while the three
+   transport costs are **OPERATING** ($4.635/road-m/yr) — the same metres,
+   **~10.8× apart** (`data/DATA.md` §13, the unit-cost file's own `_two_bases`).
+2. **Even within the operating basis the three are not summed** (2026-08-03,
+   "Transportation lens" above): the total is 91% transit at the median and
+   buries the per-mode finding.
+
+So each cost keeps **its own row and its own ratio against revenue**, and the
+rows are **grouped by basis** — the incompatibility lives in the layout, not only
+in the caption, because a reader who skips prose still cannot add across a
+heading. The note says outright that there is no total.
+
+**Revenue is the reference and every bar is a fraction OF IT**, rather than the
+bars sharing a scale with each other: the question is whether the hood's levy
+covers each service, and a common scale across the two bases is precisely the
+visual invitation to add them. Over 100% the bar saturates and the percentage
+carries the magnitude.
+
+⚠️ **The touch invariant is "a tap produces a readout", not "a tap opens the
+card".** `verify-peek.js`'s Services block encodes a regression that reached
+production — gating the panel inside `temporalFor()` also killed the peek card,
+and on a phone that card was the only per-hood readout, so the lens went blank.
+With a panel now present, the armed-opt-in tap opens the **panel** instead of
+falling through to nothing. The checks were rewritten from asserting the panel's
+*absence* to exercising **both** readout paths; each must land on something
+readable carrying service content.
+
 ## Cross-refs
 
 - **Candidate next services — the Services-view UI trigger FIRED and the

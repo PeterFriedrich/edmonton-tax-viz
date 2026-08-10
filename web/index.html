@@ -3056,9 +3056,45 @@
     const revenuePanelFor = p => revenueLens()
       && !!p && p.total_revenue != null && revenueMix(p).length > 0;
 
-    // Whether the pinned-hood PANEL (assessment history / revenue mix) applies
-    // to the current view. Services has none yet — it is getting a
-    // service-specific one (Peter, 2026-08-05) — so nothing may open it there.
+    // The Services panel: this hood's revenue per acre set against what the City
+    // spends serving it.
+    //
+    // ⚠️ THERE IS NO SINGLE COST NUMBER HERE AND THERE CANNOT BE. Two separate
+    // locked rules forbid one, and a panel that produced a headline "cost" would
+    // be arithmetically true and descriptively false:
+    //   1. svc_cost_per_acre is a LIFECYCLE basis ($50/road-m/yr) while the three
+    //      transport costs are OPERATING ($4.635/road-m/yr) — the SAME metres,
+    //      ~10.8x apart (DATA.md §13, the file's own `_two_bases`).
+    //   2. Even within the operating basis the three are deliberately NOT summed
+    //      (2026-08-03, see SERVICES above): the total is 91% transit at the
+    //      median and buries the per-mode finding.
+    // So each cost keeps its own row and its own ratio, and the rows are GROUPED
+    // BY BASIS — the incompatibility is in the layout, not only in the caption,
+    // because a reader who skips prose can still not add across a heading.
+    const SVC_COST_BASES = [
+      { basis: "lifecycle", note: "roads at a 50-year lifecycle rate, plus fire",
+        rows: [{ col: "svc_cost_per_acre", label: "Roads + fire" }] },
+      { basis: "operating", note: "maintenance and snow clearing only, no capital",
+        rows: [{ col: "cost_roads_ops_per_acre", label: "Roads" },
+               { col: "cost_transit_ops_per_acre", label: "Transit" },
+               { col: "cost_bike_ops_per_acre", label: "Bike" }] },
+    ];
+
+    // Lens test and per-hood test kept separate, the same split revenueLens /
+    // revenuePanelFor uses: the lens answers the empty-panel prompt (which has no
+    // hood yet), the per-hood test also gates on the COLUMNS so a stale geojson
+    // degrades to no panel rather than to an empty box.
+    const serviceLens = () => state.view === "services";
+    const svcCostRows = p => SVC_COST_BASES
+      .map(g => ({ ...g, rows: g.rows.filter(r => p[r.col] != null) }))
+      .filter(g => g.rows.length);
+    const servicePanelFor = p => serviceLens() && !!p
+      && p.revenue_per_acre != null && svcCostRows(p).length > 0;
+
+    // Whether the pinned-hood PANEL applies to the current view. Services now has
+    // its own (Peter, 2026-08-10) — but only when the cost columns actually
+    // shipped, so an older geojson keeps the pre-2026-08-10 behaviour (card and
+    // hover only) instead of advertising a panel that would open empty.
     //
     // ⚠️ DELIBERATELY NOT FOLDED INTO temporalFor, which was the first attempt
     // and shipped a live regression: gating the ACCESSOR also killed the touch
@@ -3066,7 +3102,7 @@
     // (tooltipFor returns null when noHover()), so Services became unreadable —
     // no tooltip AND no card. Panel-ness is a property of the VIEW; having
     // history is a property of the DATA. They must stay separate tests.
-    const hoodPanelLens = () => state.view !== "services";
+    const hoodPanelLens = () => !serviceLens() || state.hasSvcCost;
 
     // Decoded series for one hood, or null when the lens can't speak for it
     // (no file, public build, or a name with no history row).
@@ -3241,13 +3277,16 @@
 
     function openTemporal(name) {
       const p = hoodProps(name);
-      const revenue = revenuePanelFor(p);
-      const t = revenue ? null : temporalFor(name);
-      if (!revenue && !t) return;
+      const service = servicePanelFor(p);
+      const revenue = !service && revenuePanelFor(p);
+      const t = (service || revenue) ? null : temporalFor(name);
+      if (!service && !revenue && !t) return;
       pinnedHood = name;
       document.getElementById("temporal").classList.remove("empty");
       document.getElementById("temporal-name").textContent = name;
-      if (revenue) renderRevenueMix(p); else renderHistory(t);
+      if (service) renderServiceCost(p);
+      else if (revenue) renderRevenueMix(p);
+      else renderHistory(t);
       document.getElementById("temporal").classList.add("open");
       // AFTER .open and after the content is written: the panel has no height
       // while display:none, and the two modes are different heights (the
@@ -3307,6 +3346,49 @@
         + "counted above at published rates; the City does not publish which of "
         + "it is tax-exempt.";
     }
+
+    // Revenue is the reference and every bar is a fraction OF IT, rather than the
+    // bars sharing a scale with each other. The question the panel answers is
+    // whether this hood's levy covers each service — and a common bar scale
+    // across the two bases is exactly the visual invitation to add them that
+    // SVC_COST_BASES exists to refuse. Over 100% the bar saturates and the
+    // percentage carries the magnitude.
+    function renderServiceCost(p) {
+      const rev = p.revenue_per_acre;
+      const groups = svcCostRows(p);
+      const bar = col => {
+        const frac = rev > 0 ? p[col] / rev : 0;
+        const over = frac > 1;
+        return `<div class="svcrow"><span>${esc(SVC_LABEL[col])}</span>`
+          + `<i><b style="width:${(Math.min(1, frac) * 100).toFixed(1)}%;`
+          + `background:${over ? "#fcd278" : "#55556a"}"></b></i>`
+          + `<em${over ? ' class="over"' : ""}>${fmtSvcRatio(frac)}</em></div>`;
+      };
+      document.getElementById("temporal-chart").innerHTML = "";
+      document.getElementById("temporal-read").innerHTML =
+        `<b>$${Math.round(rev).toLocaleString()}</b> municipal levy / acre / yr`
+        + `<div id="svccost">` + groups.map(g =>
+            `<div class="svcbasis">${esc(g.basis)} basis `
+            + `<span class="muted">— ${esc(g.note)}</span></div>`
+            + g.rows.map(r => bar(r.col)).join("")).join("") + `</div>`;
+      // ⚠️ The note has to say BOTH things. "Different bases" alone reads as a
+      // caveat about precision, when the actual instruction is that no total
+      // exists — including within the operating group, where the bases DO match
+      // and the temptation to add is strongest.
+      document.getElementById("temporal-note").textContent =
+        "Each cost is modelled and shown against this neighbourhood's own levy. "
+        + "The two bases measure different things — the same road metre costs "
+        + "about eleven times more at the lifecycle rate than to operate — so "
+        + "they are never added, and the operating three are not added to each "
+        + "other either. There is no total.";
+    }
+
+    const SVC_LABEL = Object.fromEntries(
+      SVC_COST_BASES.flatMap(g => g.rows.map(r => [r.col, r.label])));
+    // Under 10% the ratio rounds to "0%" for three of the four services, which
+    // reads as free rather than small.
+    const fmtSvcRatio = f => f >= 0.1 ? Math.round(f * 100) + "%"
+                                      : (f * 100).toFixed(1) + "%";
 
     function renderHistory(t) {
       const i = t.years.length - 1;
@@ -3371,12 +3453,15 @@
       }
       // The empty-state prompt names the panel it is a prompt FOR, so entering
       // panel mode on the revenue map does not promise history.
-      document.getElementById("temporal-hint").textContent = revenueLens()
+      document.getElementById("temporal-hint").textContent = serviceLens()
+        ? "Click a neighbourhood to compare its revenue with what it costs to serve."
+        : revenueLens()
         ? "Click a neighbourhood to see where its revenue comes from."
         : "Click a neighbourhood to see its assessment history.";
       if (!pinnedHood) return;
       const name = pinnedHood;
-      if (revenuePanelFor(hoodProps(name)) || temporalFor(name)) openTemporal(name);
+      const p = hoodProps(name);
+      if (servicePanelFor(p) || revenuePanelFor(p) || temporalFor(name)) openTemporal(name);
       else closeTemporal();
     }
 
@@ -3488,14 +3573,15 @@
       const tip = viewTooltip({ object: { properties: p } }, false);
       document.getElementById("peek-read").innerHTML = tip ? tip.html : primaryRow(p);
       // The card's invitation has to name the panel it actually opens — on the
-      // revenue metrics that is the zone breakdown, not the history. Where no
-      // panel exists at all (Services), the invitation is hidden rather than
-      // reworded: an affordance that opens nothing is worse than none, and the
-      // card is still a complete readout without it.
+      // revenue metrics that is the zone breakdown, not the history, and in
+      // Services the cost-against-revenue panel. Where no panel exists at all
+      // (Services on a geojson predating the cost columns), the invitation is
+      // hidden rather than reworded: an affordance that opens nothing is worse
+      // than none, and the card is still a complete readout without it.
       const go = document.getElementById("peek-go");
       go.style.display = hoodPanelLens() ? "" : "none";
-      go.textContent =
-        revenuePanelFor(p) ? "See revenue breakdown ›" : "See assessment history ›";
+      go.textContent = servicePanelFor(p) ? "See cost against revenue ›"
+        : revenuePanelFor(p) ? "See revenue breakdown ›" : "See assessment history ›";
       document.getElementById("peek").classList.add("open");
       // Same reason as the panel: the card is a new obstacle for the label
       // sweep, so re-cull now instead of leaving names under it until the next
