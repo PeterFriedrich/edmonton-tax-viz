@@ -92,31 +92,6 @@ summary.)_
     `data/DATA.md` §0, `docs/SPEC_temporal.md` §0.1, `docs/AUDIT_LEDGER.md`
     (2026-07-28 row).
 
-- [ ] **The Services lens has no hood panel — build the service-specific one.**
-  Opened 2026-08-06. Clicking a hood in Services now does nothing by design
-  (`hoodPanelLens()`; `DECISIONS.md` 2026-08-06): the assessment-history panel
-  was the wrong content there, so it was gated out, and Peter's stated intent is
-  *"we'll probably have something service specific"*. Until that exists the lens
-  is hover/card-only, which is a **complete** readout — this is a feature gap,
-  not a defect, and nothing is currently broken by leaving it.
-  - **What the panel would hold (undecided — this is the actual open question,
-    not the plumbing):** the per-service rows already exist in the tooltip, so a
-    panel that only repeats them earns nothing. The candidate that would justify
-    it is the **cost-vs-revenue confrontation** the Ratio view gestures at —
-    this hood's modelled service cost per acre beside its revenue per acre — but
-    ⚠️ the cost terms carry incompatible bases (`DATA.md` §13: `roadway_om_renewal`
-    lifecycle vs `roadway_ops` operating, ~10.8× apart, never to be summed or
-    compared), so any such panel needs its basis named on screen or it becomes
-    a headline number that is arithmetically true and descriptively false.
-  - **The plumbing is already in place and is the cheap half:** flip
-    `hoodPanelLens()` for services, give `#temporal` a third render mode beside
-    `renderHistory` / `renderRevenueMix`, and point `#peek-go` / `#temporal-hint`
-    at it — all three advertisements already follow the lens.
-  - ⚠️ **Re-read the `verify-peek.js` Services block before touching any of
-    this.** It encodes a regression that reached production (the card is the
-    ONLY per-hood readout on touch); the checks there are what stop it
-    recurring, and they must keep passing in whatever the panel becomes.
-
 - [ ] **The Services panel grouping was never checked on a phone.** Shipped
   2026-08-02 (PR #145). It added 2 group captions + 1 row, so the panel grew by
   3 lines of shared DOM — and `CONTROLS_MATRIX.md` records that grouping drives
@@ -1510,6 +1485,7 @@ summary.)_
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
 
+- [x] **The Services lens has no hood panel — BUILT 2026-08-10. Revenue vs each service cost, grouped by basis, NO total (two no-sum rules).** — DONE 2026-08-10 · `docs/TODO_archive.md`
 - [x] **Sweep the doc-to-doc citations — DONE 2026-08-09 (S104). ONE REAL DEFECT, and it was a locked decision built on a display artifact.** — DONE 2026-08-09 · `docs/TODO_archive.md`
 
 

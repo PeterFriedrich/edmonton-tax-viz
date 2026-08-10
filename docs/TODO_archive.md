@@ -1575,3 +1575,36 @@ inputs, but a derived figure with no source.
 
 **Successor:** the `docs/` tree itself is still unswept, and docs cite each
 other constantly. See `## Open work`.
+
+## The Services lens has no hood panel — BUILT 2026-08-10
+
+Closed 2026-08-10. The panel confronts revenue per acre with each service
+cost, grouped by basis, with **no total** — forced by the two no-sum rules
+(`DECISIONS.md` 2026-08-10, `docs/SPEC_services.md` "Hood panel").
+`verify-peek.js`'s Services block was rewritten: the invariant is "a tap
+produces a readout", not "a tap opens the card".
+
+- [x] **The Services lens has no hood panel — build the service-specific one.**
+  Opened 2026-08-06. Clicking a hood in Services now does nothing by design
+  (`hoodPanelLens()`; `DECISIONS.md` 2026-08-06): the assessment-history panel
+  was the wrong content there, so it was gated out, and Peter's stated intent is
+  *"we'll probably have something service specific"*. Until that exists the lens
+  is hover/card-only, which is a **complete** readout — this is a feature gap,
+  not a defect, and nothing is currently broken by leaving it.
+  - **What the panel would hold (undecided — this is the actual open question,
+    not the plumbing):** the per-service rows already exist in the tooltip, so a
+    panel that only repeats them earns nothing. The candidate that would justify
+    it is the **cost-vs-revenue confrontation** the Ratio view gestures at —
+    this hood's modelled service cost per acre beside its revenue per acre — but
+    ⚠️ the cost terms carry incompatible bases (`DATA.md` §13: `roadway_om_renewal`
+    lifecycle vs `roadway_ops` operating, ~10.8× apart, never to be summed or
+    compared), so any such panel needs its basis named on screen or it becomes
+    a headline number that is arithmetically true and descriptively false.
+  - **The plumbing is already in place and is the cheap half:** flip
+    `hoodPanelLens()` for services, give `#temporal` a third render mode beside
+    `renderHistory` / `renderRevenueMix`, and point `#peek-go` / `#temporal-hint`
+    at it — all three advertisements already follow the lens.
+  - ⚠️ **Re-read the `verify-peek.js` Services block before touching any of
+    this.** It encodes a regression that reached production (the card is the
+    ONLY per-hood readout on touch); the checks there are what stop it
+    recurring, and they must keep passing in whatever the panel becomes.
