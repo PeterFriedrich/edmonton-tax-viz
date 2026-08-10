@@ -1018,6 +1018,21 @@ SLIM_COLUMNS = [
 # Matches load_boundaries: NAD83 / Alberta 10-TM (Forest).
 SETBACK_CRS = "EPSG:3400"
 
+# Served precision. This file is fetched at BOOT, before the map can draw data,
+# by every visitor whatever lens they use — so its size is the one cost that
+# grows with the number of lenses (each adds per-hood columns here). GDAL
+# defaults to 15 digits on both, which was half the gzipped payload.
+#
+# 5 dp matches WEB_PRECISION in load_roads/load_bike and the load_zoning default
+# — ~1 m at Edmonton's latitude, on geometry already simplified to 10 m and
+# buffered inward 45 m.
+WEB_PRECISION = 5
+# Significant figures, not decimal places: scale-invariant, so dollars-per-acre
+# keep ~1 dp and fractions keep 6 without a per-column table. 6 is above two
+# floors that 3 would break — the 0.01 mix-shift comparison in
+# check_revenue_deltas, and figures re-derived in the audit record.
+WEB_SIGNIFICANT_FIGURES = 6
+
 
 def export_geojson(
     result: gpd.GeoDataFrame,
@@ -1074,10 +1089,18 @@ def export_geojson(
 
     slim = slim.to_crs(crs)
 
-    slim.to_file(output_path, driver="GeoJSON")
+    # Rounding happens at WRITE time, so the returned frame stays full-precision
+    # for any caller that computes from it.
+    slim.to_file(
+        output_path, driver="GeoJSON",
+        COORDINATE_PRECISION=WEB_PRECISION,
+        SIGNIFICANT_FIGURES=WEB_SIGNIFICANT_FIGURES,
+    )
     logger.info(
-        "Wrote slim GeoJSON (%d features, %s, simplify=%sm, setback=%sm) to %s",
-        len(slim), crs, simplify_tolerance_m, setback_m, output_path,
+        "Wrote slim GeoJSON (%d features, %s, simplify=%sm, setback=%sm, "
+        "%sdp/%ssf) to %s",
+        len(slim), crs, simplify_tolerance_m, setback_m,
+        WEB_PRECISION, WEB_SIGNIFICANT_FIGURES, output_path,
     )
 
     return slim

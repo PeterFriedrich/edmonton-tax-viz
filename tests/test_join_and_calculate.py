@@ -1,3 +1,4 @@
+import json
 import sys
 
 import geopandas as gpd
@@ -6,7 +7,7 @@ import pytest
 from shapely.geometry import Point, Polygon
 
 sys.path.insert(0, "src")
-from join_and_calculate import export_geojson, join_and_calculate
+from join_and_calculate import WEB_PRECISION, export_geojson, join_and_calculate
 
 
 def _assessment(rows):
@@ -163,6 +164,41 @@ def test_export_keeps_storm_charge_per_acre_when_present(tmp_path):
     assert "storm_charge_per_acre" in written.columns
     # the per-acre ratio ships; the raw total stays out of the slim file
     assert "storm_charge_annual" not in written.columns
+
+
+def test_export_rounds_served_precision(tmp_path):
+    # This file is fetched at boot by every visitor, so its precision is a served
+    # cost, not a formatting detail. Read the raw text: parsing back to float
+    # would not show what actually went over the wire.
+    out = tmp_path / "slim.geojson"
+    export_geojson(
+        _result([{"neighbourhood_name": "DOWNTOWN", "total_assessed_value": 1e6,
+                  "area_acres": 100.0,
+                  "value_per_acre": 18556.499688325515}]),
+        str(out),
+    )
+    payload = json.loads(out.read_text())
+    props = payload["features"][0]["properties"]
+    assert props["value_per_acre"] == 18556.5
+
+    coords = payload["features"][0]["geometry"]["coordinates"][0]
+    for lon, lat in coords:
+        for v in (lon, lat):
+            _, _, frac = repr(float(v)).partition(".")
+            assert len(frac) <= 5, f"{v} exceeds {WEB_PRECISION} dp"
+
+
+def test_export_returns_unrounded_frame(tmp_path):
+    # Only the file is rounded. Callers computing from the return value (main.py
+    # passes it on) must still see full precision.
+    out = tmp_path / "slim.geojson"
+    slim = export_geojson(
+        _result([{"neighbourhood_name": "DOWNTOWN", "total_assessed_value": 1e6,
+                  "area_acres": 100.0,
+                  "value_per_acre": 18556.499688325515}]),
+        str(out),
+    )
+    assert slim["value_per_acre"].iloc[0] == 18556.499688325515
 
 
 def test_export_reprojects_to_wgs84(tmp_path):
