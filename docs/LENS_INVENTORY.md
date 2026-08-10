@@ -105,6 +105,10 @@ drives the colour ramp.
   unchecking it hands the ramp to the next one.
 - Fire and Transit draw station dots / LRT lines whenever checked, driver or not.
 - `#toggle` and `#coloradj` both hidden — the Options panel holds only `#layers`.
+- **Hood panel (2026-08-10):** clicking a hood shows its revenue per acre against
+  each service cost, **grouped by basis and with no total** — two locked no-sum
+  rules make a single cost figure impossible (`SPEC_services.md` "Hood panel").
+  This is the lens's own panel, not the assessment history, which stays gated out.
 - **Combinations:** 63 non-empty checkbox subsets × the driver choice within each.
 
 ### 3. Ratio

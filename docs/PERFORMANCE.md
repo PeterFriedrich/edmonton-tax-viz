@@ -86,6 +86,47 @@ at city zoom. Reducing vertex count speeds up *everything* at once.
 
 ---
 
+## Payload, as distinct from render cost (2026-08-10)
+
+Everything above is about **frames**. This section is about **bytes**, which is a
+separate budget with a separate audience: render cost is paid by whoever opens a
+heavy lens, payload is paid by everyone who loads the page.
+
+**Adding a lens does NOT slow the site down.** Two mechanisms, both verified:
+
+- **Fetches are lazily memoized per lens** (`??=` guards, `web/index.html`) — an
+  unopened lens is never downloaded.
+- **`buildViewLayers()` early-returns on `state.view`** — only the active lens
+  constructs layers, so inactive lenses cost nothing per frame. The Services
+  block comments on why an opacity-0 layer is not acceptable ("would still
+  tessellate, draw, pick, and highlight").
+
+Measured over the wire (GitHub Pages gzips everything, `.geojson` included;
+`cache-control: max-age=600`, so repeat visitors re-pay the boot set):
+
+| when | payload | gzip |
+|---|---|---|
+| **boot, always** | deck.gl + maplibre + `index.html` + css | ~680 KB |
+| **boot, always** | `neighbourhood_value_per_acre.geojson` (awaited, blocks the data draw) | **~185 KB** |
+| **boot, always** | reference + temporal + status | ~69 KB |
+| Glass | `value_grid.json` | 930 KB |
+| Uses | `zoning.geojson` | ~444 KB |
+| Services / Ratio | `roads.geojson` (+ bike 52, lrt 4.5, transit 1.1, fire 0.4) | ~264 KB |
+| Development | `dev_grid.json` | ~92 KB |
+| Money / Value / Infill / Change | reads `state.data` | **0** |
+
+⚠️ **THE ONE COST THAT SCALES WITH LENS COUNT is the served hood GeoJSON**, because
+each lens adds per-hood columns to it and every visitor fetches it at boot. At 66
+columns its attributes (176 KB gzip) had already outgrown its geometry (138 KB).
+Precision was the fix — see `DECISIONS.md` 2026-08-09 and `DATA.md` §3: **340 KB
+→ 166 KB**, from two kwargs. Before adding a lens's columns there, check what the
+boot payload is at.
+
+⚠️ **`value_grid.json` is measured and deliberately left alone** — only 16%
+available, nobody pays it at boot, and `median_year_built` is a column where
+scale-invariant rounding is actively wrong. Do not re-open without reading the
+2026-08-09 decision.
+
 ## Rules of thumb
 
 1. **No `wireframe: true`** on extruded layers at this polygon count.

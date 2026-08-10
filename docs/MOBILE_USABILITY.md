@@ -75,6 +75,16 @@ with near-zero risk to the tuned desktop experience.
 >   routes a tap *past* the card straight to pinning, so a fix verified from a
 >   fresh load still left the tap dead once the user had opted in. A touch check
 >   that only ever runs from a clean state is not covering touch.
+> - **UPDATE 2026-08-10 — Services got its own panel, so the opt-in tap now
+>   lands somewhere.** The invariant was restated rather than dropped: it is
+>   **"a tap produces a readout"**, not "a tap opens the card". Five checks in
+>   `verify-peek.js` had asserted the panel's *absence*; they now exercise BOTH
+>   touch paths (opt-in armed → panel, unarmed → card) and each must land on
+>   something readable carrying service content. ⚠️ **The standing rule above is
+>   unchanged and now covers two routes, not one** — a change that can stop
+>   `#peek` opening *or* leave the armed path with nothing to open is still a
+>   mobile-outage change. The panel itself has **not been checked on a real
+>   phone** (same gap as the Services grouping below).
 
 > **2026-08-02 — two changes that landed on the phone without needing a phone
 > form, and one that was a phone bug all along.**

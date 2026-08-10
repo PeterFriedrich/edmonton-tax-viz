@@ -112,7 +112,7 @@ lenses" pass.
 | **Ratio** view | ❌ _(locked 2026-07-28)_ | ✅ |
 | **Uses** view (dominant zoned land use) | ❌ _(locked 2026-07-28)_ | ✅ |
 | **Infill** lens on Development | ❌ | ✅ |
-| **Assessment-history panel + hover sparkline + `#hoodmode`** | ✅ _(promoted 2026-07-31)_ | ✅ | _(⚠️ all three absent in **Services** as of 2026-08-06 — no panel there yet)_ |
+| **Assessment-history panel + hover sparkline + `#hoodmode`** | ✅ _(promoted 2026-07-31)_ | ✅ | _(⚠️ **Services has its own panel as of 2026-08-10** — cost against revenue, not history. `#hoodmode` is offered there again; the sparkline is not, it belongs to the history data)_ |
 | **Change over time** lens on Money (`#moneymode` / `#chgwindow`) | ✅ _(promoted 2026-07-31)_ | ✅ |
 | **`#peek`, the touch-only peek card** | ✅ | ✅ | _(gated on `(hover: none)`, not on build — invisible to every mouse in both)_ |
 | **Industrial** metric on Development | ❌ | ✅ |
@@ -179,13 +179,19 @@ pod after it went unnoticed for two sessions). **PUBLIC as of 2026-07-31** (was
 full-build only), and **hidden until `web/data/temporal.json` loads** — with no
 panel to switch to, the control would offer a mode that does not exist.
 
-⚠️ **NO LONGER "every view" (2026-08-06): hidden in SERVICES**, which has no
-hood panel. The data gate is therefore no longer the only gate — both
-conditions live in `syncHoodModePod()` (`temporalData && hoodPanelLens()`) so
-the reveal and the per-view rule cannot drift apart. The same view test makes
-`applyHoodMode` refuse panel mode outright there, so the pod's absence is an
-invariant rather than a hidden-but-reachable state. Rationale and the
-regression that forced it: `DECISIONS.md` 2026-08-06.
+⚠️ **Hidden in SERVICES 2026-08-06, OFFERED AGAIN 2026-08-10** — the lens now has
+its own panel (cost against revenue, `SPEC_services.md` "Hood panel"). The data
+gate was never the only gate and still is not: both conditions live in
+`syncHoodModePod()` (`temporalData && hoodPanelLens()`), so the reveal and the
+per-view rule cannot drift apart, and `applyHoodMode` refuses panel mode wherever
+`hoodPanelLens()` is false. **What changed is the view test, not the structure**:
+`hoodPanelLens()` is now `!serviceLens() || state.hasSvcCost`, so Services keeps
+the 2026-08-06 behaviour on a geojson predating the cost columns rather than
+advertising a panel that would open empty. Rationale for both moves:
+`DECISIONS.md` 2026-08-06 and 2026-08-10.
+
+⚠️ **The panel's CONTENT is now three-way, not two** (`openTemporal`): service
+cost, revenue mix, assessment history — tested in that order, first match wins.
 
 It is the one control that changes **what the tooltip contains**: in panel mode
 a view's hover collapses to its **headline number only**, and the temporal
