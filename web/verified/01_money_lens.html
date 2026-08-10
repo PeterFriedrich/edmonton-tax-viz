@@ -7796,7 +7796,7 @@ a.anchor-link {
 <!-- End of mermaid configuration --></head>
 <body class="jp-Notebook" data-jp-theme-light="true" data-jp-theme-name="JupyterLab Light">
 <main>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=9da137fc">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=9aa31509">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7823,7 +7823,7 @@ not hide the rest.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=145fc5af">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=be3416b9">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7900,18 +7900,18 @@ not hide the rest.</p>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>repo root:        /home/opc/edmonton-tax-viz
+<pre>repo root:        /home/runner/work/edmonton-tax-viz/edmonton-tax-viz
 assessment roll:  Property_Assessment_Data__Current_Calendar_Year_.csv
-data vintage:     2026-07-06 22:06 UTC  (file mtime)
+data vintage:     2026-08-10 09:18 UTC  (file mtime)
 mill-rate year:   2025  (from main.ASSESSMENT_YEAR)
-executed:         2026-08-05 18:32 UTC
+executed:         2026-08-10 09:23 UTC
 </pre>
 </div>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=4ea7e410">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=29449f45">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7930,7 +7930,7 @@ as a flag.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=f7a8ea95">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=4b5fc6f3">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7970,7 +7970,7 @@ as a flag.</p>
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>
-rows: 439,635   columns: 13
+rows: 439,581   columns: 13
 </pre>
 </div>
 </div>
@@ -8099,7 +8099,7 @@ rows: 439,635   columns: 13
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=2d35079b">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=c4cd15c5">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8118,7 +8118,7 @@ relationship is the invariant worth pinning.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=95cb2e8f">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=ee144215">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8172,10 +8172,10 @@ relationship is the invariant worth pinning.</p>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>mill_rates.json publishes: ['2025']
+<pre>mill_rates.json publishes: ['2025', '2026']
 pipeline asks for:         2025
 
-  [PASS] the rate year main.py asks for exists in mill_rates.json  — 2025 in ['2025'] — the January year-roll breaks this first
+  [PASS] the rate year main.py asks for exists in mill_rates.json  — 2025 in ['2025', '2026'] — the January year-roll breaks this first
 </pre>
 </div>
 </div>
@@ -8189,7 +8189,7 @@ pipeline asks for:         2025
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>apply_tax_rates: Computed municipal levy for 439635 properties (year 2025); total $2,704,416,617 (residential-class $1,422,752,471 = 52.6%, non-res-rate $1,281,132,579 = 47.4%)
+<pre>apply_tax_rates: Computed municipal levy for 439581 properties (year 2025); total $2,714,729,701 (residential-class $1,428,735,662 = 52.6%, non-res-rate $1,285,462,479 = 47.4%)
 </pre>
 </div>
 </div>
@@ -8197,11 +8197,11 @@ pipeline asks for:         2025
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>
-citywide municipal levy: $2,704,416,617
-  residential slices:    $1,422,752,471  (52.6%)
-  non-residential:       $1,281,132,579  (47.4%)
-  other classes:         $531,568
-  [PASS] res + nonres levy never exceeds total levy  — $2,703,885,049 &lt;= $2,704,416,617
+citywide municipal levy: $2,714,729,701
+  residential slices:    $1,428,735,662  (52.6%)
+  non-residential:       $1,285,462,479  (47.4%)
+  other classes:         $531,561
+  [PASS] res + nonres levy never exceeds total levy  — $2,714,198,140 &lt;= $2,714,729,701
   [PASS] citywide levy is positive
   [PASS] no property carries a negative levy
 </pre>
@@ -8210,7 +8210,7 @@ citywide municipal levy: $2,704,416,617
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=c424d4d4">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=1e40bf2a">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8225,7 +8225,7 @@ invariant ever fails, a neighbourhood is being dropped or double-counted.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=ac9dcc7b">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=0cc6d89b">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8272,7 +8272,7 @@ invariant ever fails, a neighbourhood is being dropped or double-counted.</p>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>aggregate_by_neighbourhood: Aggregated 439635 properties into 407 neighbourhoods
+<pre>aggregate_by_neighbourhood: Aggregated 439581 properties into 407 neighbourhoods
 </pre>
 </div>
 </div>
@@ -8281,7 +8281,7 @@ invariant ever fails, a neighbourhood is being dropped or double-counted.</p>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>
 neighbourhoods: 407
-assessed value  before $237,495,377,953  after $237,495,377,953
+assessed value  before $238,448,551,458  after $238,448,551,458
   [PASS] aggregation preserves total assessed value  — delta $0.0000
   [PASS] aggregation preserves total levy  — delta $0.0000
   [PASS] one row per neighbourhood after aggregation
@@ -8320,50 +8320,50 @@ assessed value  before $237,495,377,953  after $237,495,377,953
 <tr>
 <th>109</th>
 <td>DOWNTOWN</td>
-<td>7.835224e+09</td>
-<td>1.419944e+08</td>
-<td>2.330798e+07</td>
-<td>1.186864e+08</td>
+<td>7.809050e+09</td>
+<td>1.417730e+08</td>
+<td>2.311761e+07</td>
+<td>1.186554e+08</td>
 </tr>
 <tr>
 <th>402</th>
 <td>WÎHKWÊNTÔWIN</td>
-<td>4.177370e+09</td>
-<td>4.510186e+07</td>
-<td>2.756460e+07</td>
-<td>1.753726e+07</td>
+<td>4.197732e+09</td>
+<td>4.525513e+07</td>
+<td>2.772720e+07</td>
+<td>1.752793e+07</td>
 </tr>
 <tr>
 <th>397</th>
 <td>WINDERMERE</td>
-<td>3.707454e+09</td>
-<td>3.212924e+07</td>
-<td>2.656866e+07</td>
-<td>5.552870e+06</td>
-</tr>
-<tr>
-<th>358</th>
-<td>SUMMERSIDE</td>
-<td>3.255502e+09</td>
-<td>2.957155e+07</td>
-<td>2.280786e+07</td>
-<td>6.763688e+06</td>
+<td>3.709848e+09</td>
+<td>3.216022e+07</td>
+<td>2.658106e+07</td>
+<td>5.571449e+06</td>
 </tr>
 <tr>
 <th>82</th>
 <td>CHAPPELLE</td>
-<td>3.208482e+09</td>
-<td>2.858016e+07</td>
-<td>2.287858e+07</td>
-<td>5.700988e+06</td>
+<td>3.263274e+09</td>
+<td>2.900739e+07</td>
+<td>2.330619e+07</td>
+<td>5.700613e+06</td>
+</tr>
+<tr>
+<th>358</th>
+<td>SUMMERSIDE</td>
+<td>3.255472e+09</td>
+<td>2.957133e+07</td>
+<td>2.280764e+07</td>
+<td>6.763688e+06</td>
 </tr>
 <tr>
 <th>194</th>
 <td>KESWICK</td>
-<td>2.618470e+09</td>
-<td>2.205433e+07</td>
-<td>1.911210e+07</td>
-<td>2.942018e+06</td>
+<td>2.662244e+09</td>
+<td>2.238868e+07</td>
+<td>1.944708e+07</td>
+<td>2.941388e+06</td>
 </tr>
 <tr>
 <th>210</th>
@@ -8376,26 +8376,26 @@ assessed value  before $237,495,377,953  after $237,495,377,953
 <tr>
 <th>336</th>
 <td>SECORD</td>
-<td>2.374244e+09</td>
-<td>2.030712e+07</td>
-<td>1.738245e+07</td>
-<td>2.924673e+06</td>
+<td>2.380891e+09</td>
+<td>2.034440e+07</td>
+<td>1.743930e+07</td>
+<td>2.905101e+06</td>
 </tr>
 <tr>
 <th>377</th>
 <td>WALKER</td>
-<td>2.371359e+09</td>
+<td>2.371358e+09</td>
 <td>2.121595e+07</td>
-<td>1.671065e+07</td>
+<td>1.671064e+07</td>
 <td>4.505302e+06</td>
 </tr>
 <tr>
-<th>374</th>
-<td>UNIVERSITY OF ALBERTA</td>
-<td>2.242118e+09</td>
-<td>5.067457e+07</td>
-<td>1.899351e+06</td>
-<td>4.877522e+07</td>
+<th>367</th>
+<td>THE ORCHARDS AT ELLERSLIE</td>
+<td>2.252498e+09</td>
+<td>1.879080e+07</td>
+<td>1.651519e+07</td>
+<td>2.273203e+06</td>
 </tr>
 </tbody>
 </table>
@@ -8405,7 +8405,7 @@ assessed value  before $237,495,377,953  after $237,495,377,953
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=b8d8c20c">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=b44bef98">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8421,7 +8421,7 @@ map</strong>. Computing it here means the denominator is the real city.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=bdba282a">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=e7283b69">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8454,10 +8454,10 @@ map</strong>. Computing it here means the denominator is the real city.</p>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>citywide revenue denominator: $2,704,416,617
+<pre>citywide revenue denominator: $2,714,729,701
 shares sum to: 100.00%
 
-  [PASS] revenue shares sum to 100% across the full roll  — 100.0004%
+  [PASS] revenue shares sum to 100% across the full roll  — 100.0007%
 </pre>
 </div>
 </div>
@@ -8490,27 +8490,27 @@ shares sum to: 100.00%
 <tr>
 <th>109</th>
 <td>DOWNTOWN</td>
-<td>5.2505</td>
+<td>5.2224</td>
 </tr>
 <tr>
 <th>374</th>
 <td>UNIVERSITY OF ALBERTA</td>
-<td>1.8738</td>
+<td>1.8667</td>
 </tr>
 <tr>
 <th>402</th>
 <td>WÎHKWÊNTÔWIN</td>
-<td>1.6677</td>
+<td>1.6670</td>
 </tr>
 <tr>
 <th>252</th>
 <td>MISTATIM INDUSTRIAL</td>
-<td>1.3726</td>
+<td>1.3697</td>
 </tr>
 <tr>
 <th>357</th>
 <td>SUMMERLEA</td>
-<td>1.2900</td>
+<td>1.2851</td>
 </tr>
 </tbody>
 </table>
@@ -8520,7 +8520,7 @@ shares sum to: 100.00%
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=d494fe5b">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=a8b182fc">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8533,7 +8533,7 @@ up front rather than trusting a file's declared CRS.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=8daefb5d">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=e0a7d54f">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8646,7 +8646,7 @@ total area: 193,263 acres
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=ca35442f">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=4224ed7b">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8662,7 +8662,7 @@ for the warning about the known straggler documented in <code>data/DATA.md</code
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=0efca1f2">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=ca078180">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8748,7 +8748,7 @@ on the map but not in the roll (1): 1 names
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=f50cabb0">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=08bce033">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8761,7 +8761,7 @@ actually has.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=64df7a3a">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=8311e629">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8842,26 +8842,26 @@ actually has.</p>
 <tr>
 <th>109</th>
 <td>DOWNTOWN</td>
-<td>7.835224e+09</td>
+<td>7.809050e+09</td>
 <td>570.634403</td>
-<td>1.373072e+07</td>
-<td>248835.965575</td>
+<td>1.368486e+07</td>
+<td>248447.995274</td>
 </tr>
 <tr>
 <th>402</th>
 <td>WÎHKWÊNTÔWIN</td>
-<td>4.177370e+09</td>
+<td>4.197732e+09</td>
 <td>421.511381</td>
-<td>9.910455e+06</td>
-<td>107000.346769</td>
+<td>9.958762e+06</td>
+<td>107363.957009</td>
 </tr>
 <tr>
 <th>142</th>
 <td>GARNEAU</td>
-<td>1.807722e+09</td>
+<td>1.816121e+09</td>
 <td>204.606492</td>
-<td>8.835118e+06</td>
-<td>85289.667967</td>
+<td>8.876165e+06</td>
+<td>85630.834916</td>
 </tr>
 <tr>
 <th>374</th>
@@ -8882,34 +8882,34 @@ actually has.</p>
 <tr>
 <th>53</th>
 <td>BOYLE STREET</td>
-<td>1.135474e+09</td>
+<td>1.133090e+09</td>
 <td>217.675919</td>
-<td>5.216353e+06</td>
-<td>59972.154962</td>
+<td>5.205397e+06</td>
+<td>59726.734880</td>
 </tr>
 <tr>
 <th>352</th>
 <td>STRATHCONA</td>
-<td>1.902260e+09</td>
+<td>1.906338e+09</td>
 <td>385.835534</td>
-<td>4.930235e+06</td>
-<td>49296.944636</td>
+<td>4.940805e+06</td>
+<td>49317.184723</td>
 </tr>
 <tr>
 <th>398</th>
 <td>WINDSOR PARK</td>
-<td>8.245960e+08</td>
+<td>8.266905e+08</td>
 <td>187.086054</td>
-<td>4.407576e+06</td>
-<td>35211.313373</td>
+<td>4.418771e+06</td>
+<td>35298.278152</td>
 </tr>
 <tr>
 <th>222</th>
 <td>MAGRATH HEIGHTS</td>
-<td>1.233875e+09</td>
+<td>1.276074e+09</td>
 <td>303.520292</td>
-<td>4.065214e+06</td>
-<td>33229.393214</td>
+<td>4.204246e+06</td>
+<td>34289.566991</td>
 </tr>
 <tr>
 <th>221</th>
@@ -8927,7 +8927,7 @@ actually has.</p>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=fbebebe5">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=d88a7702">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8945,7 +8945,7 @@ contract, which <code>scripts/check_served_columns.py</code> already guards.</li
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=290c56a5">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=4d28a28d">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8978,14 +8978,14 @@ contract, which <code>scripts/check_served_columns.py</code> already guards.</li
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>15/15 invariants held
 
-  [PASS] the rate year main.py asks for exists in mill_rates.json  — 2025 in ['2025'] — the January year-roll breaks this first
-  [PASS] res + nonres levy never exceeds total levy  — $2,703,885,049 &lt;= $2,704,416,617
+  [PASS] the rate year main.py asks for exists in mill_rates.json  — 2025 in ['2025', '2026'] — the January year-roll breaks this first
+  [PASS] res + nonres levy never exceeds total levy  — $2,714,198,140 &lt;= $2,714,729,701
   [PASS] citywide levy is positive
   [PASS] no property carries a negative levy
   [PASS] aggregation preserves total assessed value  — delta $0.0000
   [PASS] aggregation preserves total levy  — delta $0.0000
   [PASS] one row per neighbourhood after aggregation
-  [PASS] revenue shares sum to 100% across the full roll  — 100.0004%
+  [PASS] revenue shares sum to 100% across the full roll  — 100.0007%
   [PASS] boundaries carry an explicit CRS
   [PASS] every boundary has positive area  — a zero would make value_per_acre infinite
   [PASS] the join is boundary-preserving (left join, no row multiplication)  — 407 == 407
