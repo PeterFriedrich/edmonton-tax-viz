@@ -131,6 +131,30 @@ summary.)_
   - Read `docs/MOBILE_USABILITY.md` first; keep the CONFIRMED /
     NEEDS-CONFIRMATION split honest.
 
+- [ ] **THE DEVIATION LENS ("vs city average") IS EXPERIMENTAL AND FULL-ONLY —
+  two things are open on it.** Built 2026-08-11 (`DECISIONS.md` same date;
+  `verify-deviation.js`, 26 checks green). It re-centres the revenue map on the
+  citywide average and extrudes the deficit half BELOW the ground plane.
+  ⚠️ **Read the decision before touching it** — the sub-lens it ships without
+  (rate-adjusted revenue per acre) was refused *on measurement*, not on taste,
+  and the numbers to re-supply if anyone asks for it again are recorded there.
+  - [ ] **NEVER CHECKED ON A PHONE, and it added a control row where there was
+    none.** `#moneymode` used to be hidden under Revenue entirely; it now shows
+    there in the full build carrying one button, so the Revenue control stack
+    is **one row taller than it has ever been** at every width. Grouping is
+    shared DOM (`CONTROLS_MATRIX.md`), so this lands on desktop AND mobile.
+    Verified at 1400x900 / 1366x768 / 1280x720 only — title box 217px against
+    Money's 176px, clearance to `#botleft` 312px at the worst of the three, so
+    the *vertical* side is fine. ⚠️ **The untested axis is WIDTH**: the button
+    label plus its `beta` tag is the longest string in that row, and the row is
+    `flex: 1` per button with `white-space: nowrap`. Remove `.folded` from
+    `#optpanel` before measuring — otherwise every probe returns zeros (the
+    trap this file already records twice).
+  - [ ] **Peter's call: does it stay full-only?** It is marked `beta` precisely
+    because it is rank-identical to the Money map — the only new information in
+    it is which side of the average a hood falls on. That is a real thing to
+    show and a thin thing to promote. No opinion recorded yet.
+
 - [ ] **A TRUE BIKEWAY LIFECYCLE $/m/yr STILL DOES NOT EXIST** — the residue of
   Stage 2, which shipped 2026-08-03 on an **operating** basis instead. All three
   cost terms are maintenance + snow with **no capital replacement**, because the

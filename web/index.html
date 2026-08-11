@@ -111,8 +111,9 @@
       <button data-revcut="nonres_revenue_per_acre" title="Dollars billed at the non-residential rate — commercial and industrial land. A subset of Total. Residential and Non-residential are nearly the whole levy but do not sum to it exactly: farmland is a small separate class">Non-residential</button>
     </div>
     <div id="moneymode">
-      <button data-moneymode="current" class="active" title="The current assessment roll — each neighbourhood's value per acre today">Current</button>
+      <button data-moneymode="current" class="active" title="The map as it stands — each neighbourhood's own per-acre figure, not set against anything else">Current</button>
       <button data-moneymode="change" title="How fast each neighbourhood's share of Edmonton's total assessment base moved over the chosen window — teal gained share, orange lost it. Grey neighbourhoods held no share in the first year, so there is nothing to measure against. Pick the window in Options">Change over time</button>
+      <button data-moneymode="deviation" title="EXPERIMENTAL. Each neighbourhood's revenue per acre set against Edmonton's citywide average: bars rise above the average and sink below it. Not a cost-of-service comparison — it says nothing about what serving each neighbourhood costs">vs city average<span class="beta">beta</span></button>
     </div>
   </div>
 
@@ -1047,7 +1048,23 @@
         blurb: null, // window-driven — see changeBlurb()
         opacity: null, // no prisms in this view
       },
+      // Experimental, full build only. Title and blurb are BOTH runtime —
+      // the title follows the active revenue cut and the blurb prints the
+      // citywide average, which moves with every refresh.
+      deviation: {
+        title: null, // cut-driven — see deviationTitle()
+        blurb: null, // average-driven — see deviationBlurb()
+        opacity: null, // solid prisms, no ghosting
+      },
     };
+
+    const DEVIATION_TITLES = {
+      revenue_per_acre: "Edmonton: Revenue per Acre vs the Citywide Average",
+      res_revenue_per_acre: "Edmonton: Residential Revenue per Acre vs the Citywide Average",
+      nonres_revenue_per_acre: "Edmonton: Non-Residential Revenue per Acre vs the Citywide Average",
+    };
+    const deviationTitle = () =>
+      DEVIATION_TITLES[state.metric] || DEVIATION_TITLES.revenue_per_acre;
 
     // Change-lens blurb follows the window picker, so the years named in the
     // text can never disagree with the years being measured.
@@ -1452,7 +1469,7 @@
       const N = 16, parts = [];
       // Infill and Change are diverging scales (t from -1 at the left to +1 at
       // the right) on their own colour function — not the sequential ramp.
-      if (state.view === "infill" || state.view === "change") {
+      if (state.view === "infill" || state.view === "change" || state.view === "deviation") {
         for (let i = 0; i <= N; i++) {
           const c = infillColorAt(-1 + 2 * (i / N));
           parts.push(`rgb(${c[0]},${c[1]},${c[2]}) ${Math.round((i / N) * 100)}%`);
@@ -1959,10 +1976,18 @@
     // collapses most of the city onto the same printed number.
     const fmtChg = r => (r > 0 ? "+" : "") + (100 * r).toFixed(2) + "% / yr";
 
-    // Flat plane — EXTRUDED IS FALSE BY DECISION, not by omission. A prism
-    // cannot have negative height and hoods moved both directions; the in-repo
-    // precedent for a signed metric is the infill plane, whose dark-centred
-    // diverging ramp this reuses (teal = gained share, orange = lost).
+    // Flat plane — EXTRUDED IS FALSE BY DECISION, not by omission. Hoods moved
+    // both directions and the in-repo precedent for a signed metric is the
+    // infill plane, whose dark-centred diverging ramp this reuses (teal =
+    // gained share, orange = lost).
+    // ⚠️ THE REASON RECORDED HERE USED TO BE "a prism cannot have negative
+    // height", AND THAT IS FALSE — measured 2026-08-11, deck.gl 9.0.38 renders
+    // a negative getElevation as a prism below the ground plane
+    // (tools/profiling/probe-negative-elevation.html; the deviation lens ships
+    // on it). The DECISION stands on its own: a share-of-base rate is a
+    // percentage, and extruding percentages into signed towers reads as
+    // magnitude when the metric is deliberately size-independent. Do not
+    // re-open this on the strength of the retracted technical claim.
     function changePlaneLayer() {
       return new deck.GeoJsonLayer({
         id: "change-plane",
@@ -1977,6 +2002,137 @@
         pickable: false, // hood hover layer handles tooltips
         updateTriggers: { getFillColor: [state.chgWindow] },
       });
+    }
+
+    // --- deviation lens: revenue per acre against the citywide average -------
+    // EXPERIMENTAL, full build only. This is a RE-CENTRED REVENUE MAP and
+    // nothing else: it is rank-identical to the Money map, and the only new
+    // information in it is which side of the citywide average a hood falls on.
+    // ⚠️ It is NOT a cost-of-service comparison and must never be named as one
+    // — it does not model, estimate or contain what serving a neighbourhood
+    // costs. The cost side of this project is the Services view.
+    //
+    // ⚠️ THE AVERAGE IS COMPUTED FROM THE SERVED FEATURES, never from an
+    // external levy total, so numerator and denominator come from the same
+    // universe as every bar on screen and the zero line cannot drift from the
+    // map. Substituting the City's budgeted municipal levy ($2.32B) for this
+    // pipeline's modelled one ($2.71B) moves the line from $14,049 to $11,995
+    // and reclassifies 30 hoods across it — a difference of premises, not of
+    // arithmetic, and it would be invisible on the map.
+    //
+    // Acres are recovered as total_revenue / revenue_per_acre: the pipeline
+    // divides by boundary acres but does not serve the denominator itself.
+    // Every hood carries a non-zero revenue_per_acre today; the guard is there
+    // because a future refresh could publish one that doesn't.
+    //
+    // Set-aside hoods ARE in the average (it is a citywide figure, over all
+    // ~193k acres) but stay off the colour scale and flat, as everywhere else.
+    const _devStats = {};
+    function deviationStats() {
+      const colKey = state.metric;
+      if (_devStats[colKey]) return _devStats[colKey];
+      const props = state.data.features.map(f => f.properties);
+      let num = 0, acres = 0;
+      for (const p of props) {
+        if (!p.revenue_per_acre || p.total_revenue == null) continue;
+        const a = p.total_revenue / p.revenue_per_acre;
+        acres += a;
+        num += (p[colKey] || 0) * a;
+      }
+      const avg = acres ? num / acres : 0;
+      // Per-arm p95 clamps, for COLOUR ONLY — the chgStats/infill precedent,
+      // and here the asymmetry is structural rather than merely empirical:
+      // revenue per acre cannot be negative, so the deficit arm is floored at
+      // -avg while the surplus arm is unbounded (measured on Total: -$14.0k
+      // against +$234.4k, 17x). One symmetric clamp would leave every hood on
+      // the deficit side unable to saturate.
+      const devs = props
+        .filter(p => !p.is_set_aside && p[colKey] != null)
+        .map(p => p[colKey] - avg);
+      const pos = devs.filter(v => v > 0).sort((a, b) => a - b);
+      const neg = devs.filter(v => v < 0).map(v => -v).sort((a, b) => a - b);
+      return (_devStats[colKey] = {
+        avg,
+        clampPos: pos.length ? quantile(pos, 0.95) || 1 : 1,
+        clampNeg: neg.length ? quantile(neg, 0.95) || 1 : 1,
+        floor: -avg,
+        peak: pos.length ? pos[pos.length - 1] : 0,
+        above: pos.length,
+        scored: devs.length,
+      });
+    }
+    const deviationOf = p => (p.is_set_aside || p[state.metric] == null)
+      ? null : p[state.metric] - deviationStats().avg;
+    const deviationT = p => {
+      const d = deviationOf(p);
+      if (d == null) return null;
+      const s = deviationStats();
+      return d > 0 ? Math.min(1, d / s.clampPos)
+           : d < 0 ? Math.max(-1, d / s.clampNeg)
+           : 0;
+    };
+    // Signed money, minus sign carried OUTSIDE the dollar sign ("−$4,120", not
+    // "$-4,120") — the deficit reading is the point of the lens and a sign
+    // buried after the $ is easy to miss at tooltip size.
+    const fmtDeviation = d =>
+      (d < 0 ? "−$" : "+$") + Math.abs(Math.round(d)).toLocaleString();
+
+    // ⚠️ EXTRUDED, AND THE DEFICIT HALF EXTRUDES DOWNWARD. deck.gl 9.0.38
+    // renders a negative getElevation as a prism BELOW the ground plane —
+    // measured, not assumed (tools/profiling/probe-negative-elevation.html).
+    // This is the only lens that uses it; Change stays flat by its own
+    // decision, which this does not disturb.
+    //
+    // ⚠️ HEIGHT IS TRUE TO SCALE, on Money's own elevationScale, so a bar here
+    // is directly comparable to the same hood's bar on the Revenue map. The
+    // deficit bars are therefore SHALLOW — the drop is floored at −$14,049
+    // against a +$234,399 peak — and that shallowness IS the finding. It is
+    // not a scaling artefact and must not be "fixed" by giving the arms
+    // separate elevation scales: two arms at different scales would draw a
+    // deficit and a surplus of visibly equal size on unequal numbers.
+    function deviationLayer() {
+      const cfg = METRICS[state.metric];
+      return new deck.GeoJsonLayer({
+        id: "deviation-extrusion",
+        data: state.data,
+        extruded: true,
+        filled: true,
+        stroked: false,
+        wireframe: false,
+        getElevation: f => deviationOf(f.properties) || 0,
+        elevationScale: cfg.elevationScale,
+        getFillColor: f => {
+          const t = deviationT(f.properties);
+          return t == null ? SET_ASIDE_COLOR : infillColorAt(t);
+        },
+        material: { ambient: 0.55, diffuse: 0.6, shininess: 32, specularColor: [60, 60, 70] },
+        pickable: true,
+        autoHighlight: true,
+        highlightColor: [255, 255, 255, 60],
+        updateTriggers: {
+          getElevation: [state.metric],
+          getFillColor: [state.metric],
+        },
+      });
+    }
+
+    // ⚠️ KEEP THIS SHORT. Development's and Infill's blurbs are 442px and 479px
+    // against a ~179px median across the other states, and below ~768px tall
+    // they push the title block into #botleft (TODO.md, open). Three sentences
+    // measured at 253px/1400x900; every addition here costs vertical space in
+    // the one column that has none to give. The average and the two bounds are
+    // printed rather than described because all three move with every refresh.
+    function deviationBlurb() {
+      const s = deviationStats();
+      return "Experimental. Each neighbourhood's " +
+        (state.metric === "res_revenue_per_acre" ? "residential " :
+         state.metric === "nonres_revenue_per_acre" ? "non-residential " : "") +
+        "tax revenue per acre against Edmonton's citywide average of " +
+        fmtMoney(s.avg) + " — teal rises above it, orange sinks below. " +
+        "Height is true to scale, so the deficits are shallow: revenue per acre " +
+        "cannot fall below zero, flooring the drop at " + fmtDeviation(s.floor) +
+        " against a " + fmtDeviation(s.peak) + " peak. Not a cost-of-service " +
+        "comparison — it says nothing about what serving a neighbourhood costs.";
     }
 
     // Fire-station context dots (SPEC_services.md "Fire lens"): 31 points,
@@ -2795,6 +2951,15 @@
         // Single flat diverging plane (share-of-base movement) + hover + labels,
         // the same shape as Infill — the other signed lens.
         return [changePlaneLayer(), hoodHoverLayer(), ...labelLayer()];
+      }
+
+      if (state.view === "deviation") {
+        // The third signed lens, and the only EXTRUDED one — surplus rises,
+        // deficit sinks below the plane. No roof rings: topRings() lifts a ring
+        // to properties[colKey] * scale and the height here is a derived
+        // difference, not a column, so it would draw every ring at the wrong z.
+        // The prisms are pickable themselves (like Money's), so no hover layer.
+        return [deviationLayer(), ...labelLayer()];
       }
 
       if (state.view === "glass") {
@@ -3712,6 +3877,12 @@
           return `<span class="muted">No ${c.to} share</span>`;
         return fmtChg(c.rate) + " of share";
       }
+      if (state.view === "deviation") {
+        const d = deviationOf(p);
+        if (d == null)
+          return `<span class="muted">Set aside — off the scale</span>`;
+        return fmtDeviation(d) + " / acre vs city average";
+      }
       // money
       if (p.is_set_aside)
         return `<span class="muted">Set aside — ${esc(p.set_aside_reason)}</span>`;
@@ -3863,6 +4034,23 @@
           `<span class="muted">mismatch ${score > 0 ? "+" : ""}${score.toFixed(2)} ` +
           `(z: suitability − activity)</span><br/>` +
           `<span class="muted">${fmtFar(p.far)} · ${fmtDev(act)}</span>` };
+      }
+
+      if (state.view === "deviation") {
+        const s = deviationStats();
+        const d = deviationOf(p);
+        if (d == null)
+          return { className: "tip", html: name +
+            `<span class="muted">Set aside — ${esc(p.set_aside_reason)}</span><br/>` +
+            `<span class="muted">off the scale; still inside the city average</span>` };
+        // Both terms printed, not just the difference: a hood's own $/acre and
+        // the average it is measured against are what make the signed number
+        // checkable rather than something the page asserts.
+        return { className: "tip", html: name +
+          `<b>${fmtDeviation(d)}</b> / acre vs city average<br/>` +
+          `<span class="muted">${fmtMoney(p[state.metric])} here · ` +
+          `${fmtMoney(s.avg)} citywide</span><br/>` +
+          `<span class="muted">re-centred revenue — not a cost comparison</span>` };
       }
 
       if (state.view === "change") {
@@ -4046,11 +4234,25 @@
       document.getElementById("revcut").style.display = rev && anyCut ? "flex" : "none";
       document.querySelectorAll("#revcut button").forEach(b =>
         b.classList.toggle("active", b.dataset.revcut === state.metric));
+      // #moneymode is row 2 for BOTH quantities now, carrying a different lens
+      // under each: Change over time under Value (gated on temporal.json, which
+      // lands after first paint), and the experimental deviation lens under
+      // Revenue (gated on the full build). The row shows when the quantity in
+      // hand actually has a lens to offer, and each button is hidden under the
+      // quantity it does not belong to — so Revenue never offers a lens that
+      // reads an assessment-history file, and Value never offers one that
+      // re-centres a revenue column.
+      const changeShow = !rev && temporalData != null;
+      const devShow = rev && FULL_BUILD;
       document.getElementById("moneymode").style.display =
-        !rev && temporalData != null ? "flex" : "none";
-      document.querySelectorAll("#moneymode button").forEach(b =>
-        b.classList.toggle("active",
-          b.dataset.moneymode === (state.view === "change" ? "change" : "current")));
+        changeShow || devShow ? "flex" : "none";
+      const modeShown = { current: true, change: changeShow, deviation: devShow };
+      const activeMode = state.view === "change" ? "change"
+                       : state.view === "deviation" ? "deviation" : "current";
+      document.querySelectorAll("#moneymode button").forEach(b => {
+        b.style.display = modeShown[b.dataset.moneymode] ? "" : "none";
+        b.classList.toggle("active", b.dataset.moneymode === activeMode);
+      });
       syncMillRates();
     }
 
@@ -4163,6 +4365,17 @@
       syncMetricButtons();
       syncPinnedPanel(); // Revenue <-> Value swaps the panel's whole content
       closePeek();       // ...and so does the card; see applyView's note
+      // The deviation lens reads the active revenue cut too, so a #revcut click
+      // has to re-render it — its average, clamps, title and blurb are all
+      // per-column. Without this the cut buttons would repaint while the map
+      // kept showing the previous column's deviations.
+      if (state.view === "deviation") {
+        document.getElementById("title-h").textContent = deviationTitle();
+        document.getElementById("title-p").textContent = deviationBlurb();
+        refreshLegend();
+        overlay.setProps({ layers: buildLayers() });
+        return;
+      }
       if (state.view !== "money" && state.view !== "glass") return;
       const cfg = METRICS[metric];
       overlay.setProps({ layers: buildLayers() });
@@ -4458,6 +4671,18 @@
         document.getElementById("legend-max").textContent = fmtChg(s.clampPos) + " →";
         label.textContent = `No ${CHG_WINDOWS[state.chgWindow]} baseline — off-scale`;
         sw.style.background = `rgb(${SET_ASIDE_COLOR.join(",")})`;
+      } else if (state.view === "deviation") {
+        // Diverging, like infill and change. The ends print the per-arm p95
+        // clamps as signed dollars, and the label names the average the whole
+        // lens is measured against — without it the bar means "more" and
+        // "less" against an unstated zero.
+        const s = deviationStats();
+        document.getElementById("legend-label").textContent =
+          `Revenue per acre vs the citywide average (${fmtMoney(s.avg)} / acre)`;
+        document.getElementById("legend-min").textContent = "← " + fmtDeviation(-s.clampNeg);
+        document.getElementById("legend-max").textContent = fmtDeviation(s.clampPos) + " →";
+        label.textContent = "Set aside — off-scale (still in the average)";
+        sw.style.background = `rgb(${SET_ASIDE_COLOR.join(",")})`;
       } else if (state.view === "ratio") {
         const s = ratioScale();
         // Bounds format per denominator: dollars for the $/unit denominators,
@@ -4650,7 +4875,8 @@
     // Glass is a Detail choice and the Detail selector is hidden in Change, so
     // restoring it would drop you somewhere you can't see you are.
     function applyMoneyMode(mode) {
-      const target = mode === "change" ? "change" : "money";
+      const target = mode === "change" ? "change"
+                   : mode === "deviation" ? "deviation" : "money";
       if (target !== state.view) applyView(target);
     }
 
@@ -4710,7 +4936,7 @@
       state.view = v;
       // Glass and Infill are render-modes of Money and Development (no #views
       // button of their own) — the parent view's button stays active in each.
-      const viewBtn = (v === "glass" || v === "change") ? "money"
+      const viewBtn = (v === "glass" || v === "change" || v === "deviation") ? "money"
                     : v === "infill" ? "development" : v;
       document.querySelectorAll("#views button").forEach(b =>
         b.classList.toggle("active", b.dataset.view === viewBtn));
@@ -4720,7 +4946,7 @@
       // you in the change view with no way back to Current. Hidden elsewhere
       // (stops floating live-but-inert over views it doesn't affect).
       document.getElementById("toggle").style.display =
-        (v === "money" || v === "glass" || v === "change") ? "flex" : "none";
+        (v === "money" || v === "glass" || v === "change" || v === "deviation") ? "flex" : "none";
       // Same rule for the readout-mode pod: it picks WHERE a hood's detail
       // lands, so it is meaningless in a view with only one destination. Still
       // gated on the history file having loaded — that is what reveals it at
@@ -4880,6 +5106,7 @@
       document.getElementById("title-h").textContent =
         v === "glass" ? METRICS[state.metric].title :
         v === "ratio" ? ratioDenom().title :
+        v === "deviation" ? deviationTitle() :
         v === "development" ? devTitle() : chrome.title;
       document.getElementById("title-p").textContent =
         v === "glass" ? glassBlurb() :
@@ -4888,6 +5115,7 @@
         v === "uses" ? usesBlurb() :
         v === "development" ? devBlurb() :
         v === "change" ? changeBlurb() :
+        v === "deviation" ? deviationBlurb() :
         v === "infill" ? VIEWS[v].blurb : moneyBlurb();
       // ⚠️ THE LEGEND MOVED UP HERE TOO, 2026-08-08, for the reason the title
       // block already had: it is chrome the sweep measures, so it must be final
@@ -4984,6 +5212,9 @@
           // applyMetric only marks state outside money/glass, so applyView is
           // what renders — and it reads the metric we just set for the title.
           if (rev && state.view === "change") applyView("money");
+          // The mirror: Value owns no deviation lens, so leaving Revenue has to
+          // leave that view the same way. Same ordering reason as above.
+          if (!rev && state.view === "deviation") applyView("money");
         }));
       document.querySelectorAll("#revcut button").forEach(b =>
         b.addEventListener("click", () => applyMetric(b.dataset.revcut)));
