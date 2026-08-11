@@ -96,6 +96,15 @@ summary.)_
   2026-08-02 (PR #145). It added 2 group captions + 1 row, so the panel grew by
   3 lines of shared DOM — and `CONTROLS_MATRIX.md` records that grouping drives
   desktop AND mobile. Verified at 1280x800 and 1440x900 only.
+  - ⚠️ **A SECOND, LARGER thing now needs the same check: the Services HOOD
+    PANEL** (built 2026-08-10, `SPEC_services.md` "Hood panel"). It is up to 4
+    bar rows + 2 basis captions + a 4-line note, and the bar row is a **3-column
+    flex** (82px label / flexible track / 40px percentage) — the first control in
+    this lens whose layout can be squeezed rather than merely stacked. Verified
+    at 1400x900 only. ⚠️ Its narrow-width failure mode is **not overflow**: the
+    track collapses toward zero width while the row still fits, so a width probe
+    that only asks "does it overflow" will pass on a panel whose bars have
+    stopped saying anything. Measure the TRACK, not the row.
   - ~~A probe at 390/360/320 px returned **all zeros**~~ — **the zeros were the
     probe's fault, resolved 2026-08-03.** `#optpanel` carries `.folded` by
     default at ≤640px, so its rows have no layout box; remove the class first
