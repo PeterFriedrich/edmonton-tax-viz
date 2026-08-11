@@ -104,6 +104,64 @@ improves as categories land, which is the metric of progress for this project.
 
 ---
 
+## 2b. ⚠️ RULE: every driver declares SITE-BOUND or NETWORK-SHARED
+
+**A cost may only be distributed by a local count when the service is consumed
+where it is supplied.** Register entries carry `driver_scope`:
+`site_bound` | `network_shared`, and **only `site_bound` terms are allocated per
+hood**. `network_shared` terms go to the §2a residual, or to a separate
+citywide-shared layer — never to a local count.
+
+The reasoning generalises a defect that shows up first in *functional
+population*, the standard technique for splitting shared costs between
+residential and non-residential. It assumes the service-consuming population is
+bounded by the unit that pays. That is true of a municipality and **false of a
+neighbourhood**: an office worker downtown consumes road, transit and water
+infrastructure across every hood they transit, so charging their weight to the
+destination hood overstates it and understates everywhere they came from.
+
+⚠️ **But the fix is NOT "exclude the non-residential share."** That prescription
+is over-broad, and applying it would corrupt terms that are already correct.
+The distinction is not residential vs non-residential — it is whether the
+driver is bound to the site:
+
+| term | driver | scope | verdict |
+|---|---|---|---|
+| fire | dispatches at the address | `site_bound` | correct as-is — the fire *is* there |
+| stormwater | impervious area | `site_bound` | correct as-is — physically bound |
+| roads | local + collector metres in the hood | `site_bound` | correct as-is; **arterials already excluded as shared infrastructure** (`DECISIONS.md` 2026-07-01) — the same rule, found empirically before it was named |
+| **transit** | **scheduled departures at stops in the hood** | **`network_shared`** | ⚠️ **fails the test — see below** |
+
+The arterial exclusion is this rule discovered early and by instinct. Naming it
+is what makes it apply to categories nobody has built yet.
+
+### ⚠️ 2b-i. The rule's first casualty is a term ALREADY SHIPPING
+
+`cost_transit_ops_per_acre` allocates the ETS operating budget by **scheduled
+stop-events in each hood**. A downtown stop's departures are charged to
+downtown, but they are consumed by people boarding from every hood in the city.
+By the test above that driver is `network_shared`, and the term is currently
+distributed as if it were site-bound.
+
+This matters out of proportion to its size: transit is **90.8% of
+`transport_cost_ops_per_acre`** (`DECISIONS.md` 2026-08-03).
+
+⚠️ **Do NOT "fix" it by deleting the term.** Two things are already recorded
+against a hasty read: the figure is a **share, not a rate** (an annual budget
+over a mean-weekday count — meaningless as a unit, exact as an allocation), and
+the locked framing is **demand-allocation-of-a-fixed-budget**, which is a
+defensible thing to publish *as such*. The open question is narrower and should
+be written down before it is answered: **is "where service is supplied" an
+honest proxy for "who consumes it" at neighbourhood grain?** Supply-side
+allocation is the only thing the data supports — no stop-level ridership exists
+(citywide-monthly only, `DECISIONS.md` 2026-07-11) — so the realistic outcomes
+are relabelling it, moving it to the residual for break-even purposes while it
+stays as-is in the Services lens, or leaving it and stating the limit.
+
+**Its own item in `TODO.md`. It does not block the register.**
+
+---
+
 ## 3. ⚠️ ONE BASIS, AND THIS IS THE TRAP THAT WILL EAT THIS LENS
 
 `svc_cost_per_acre` is **lifecycle** ($50/road-m/yr). `cost_roads_ops_per_acre`
@@ -151,6 +209,26 @@ revenue side), and **the portal and the PDF do not tie** (+1.31% on Parks and
 Roads Services). Also: **edmonton.ca is unreachable from the Oracle box**, so
 this is a laptop fetch or a CI-side fetch, like every other manual reviewed
 input.
+
+**Task 1b — ⚠️ A DWELLING-OR-POPULATION COUNT PER HOOD DOES NOT EXIST, AND
+SEVERAL OBVIOUS ALLOCATIONS NEED ONE.** Checked, not assumed: nothing in `src/`
+or the served GeoJSON carries population or employment. `new_dwelling_units` is
+a **flow from permits, not a stock**; "employment" appears only as a *zoning
+category label*; and the dwelling model the water and franchise lenses share is
+internal — never emitted per neighbourhood.
+
+So any per-capita or per-household allocation — including the residential half
+of a functional-population split (§2b) and the §2a residual if it is smeared
+per capita rather than per acre — is **blocked on an input we have not
+ingested**. ⚠️ Note this also means the method §2b rules *out* (per-hood
+employment) is not available either, so nothing is lost by the rule today; the
+cost is entirely on the allocations we would want to add.
+
+Cheapest route first: the water/franchise dwelling model already exists and
+could be emitted as a column, which needs no new source and inherits its
+documented assumptions. Census population is the alternative and is a new
+ingest with its own boundary-matching problem (census tracts are not
+neighbourhoods).
 
 **Task 2 — order the register by control total, then build downward.** Expect
 transit, police, fire and parks to dominate. Fire and transit already have
@@ -220,11 +298,40 @@ actually place.*
 1. **Basis** — operating first (recommended, §3), lifecycle first, or both in
    parallel?
 2. **Name** — "net position"? It must not imply a cost-of-service study.
-3. **The publication gate** — at what modelled coverage is the number worth
-   showing even to specialists? ⚠️ **Recommend deciding this NOW, before the
-   number exists**, because deciding it afterwards means deciding it while
-   looking at an answer you like.
+3. ~~**The publication gate** — at what modelled coverage is the number worth
+   showing?~~ **SETTLED 2026-08-11 (Peter): there is no separate gate.** The
+   Lab is full-build-only and `beta`-marked — *"the specialist lens is literally
+   built for this"* — so the audience is already the one that can read caveats.
+   The gate collapses into a requirement §6 already carries: **coverage must
+   render wherever the number does.** Dropping that is what would make it
+   dishonest, not the coverage level.
 4. **Unallocated residual** (§2a) — in from the start, or omit and accept a
-   known upward bias until coverage is high?
+   known upward bias until coverage is high? If in: smeared **per acre** (works
+   today) or **per capita** (blocked on Task 1b)?
 5. **Revenue scope** (§5) — municipal levy only, or widen to the other
    tax-supported revenue that funds the same budget?
+6. **Transit** (§2b-i) — relabel, move to the residual for break-even while the
+   Services lens keeps it, or leave it and state the limit?
+
+---
+
+## 9. ⚠️ A confound that applies to the lenses ALREADY SHIPPING
+
+Raised in review of this spec, and it is not confined to it: **a revenue-per-acre
+gap between two neighbourhoods can be an income gap wearing a density costume.**
+Edmonton's density gradient plausibly tracks its income gradient, so "denser
+land pays more per acre" and "wealthier land pays more per acre" are not
+separated by anything in this pipeline.
+
+⚠️ **This bites the deviation lens that is live in `/full/` today**, whose whole
+framing is who sits above and below the citywide average — precisely the reading
+that a density/income confound would corrupt.
+
+**We cannot currently test it: no income or demographic data is ingested.** So
+the honest position is the one the project already takes elsewhere — descriptive
+framing only, and never a causal claim like *"infill pays for itself"* — plus a
+`TODO.md` item to decide whether an income variable is worth ingesting to
+measure the confound rather than merely disclaim it. ⚠️ Ingesting one is not
+free of hazard: a map that pairs neighbourhood income with fiscal performance
+invites exactly the editorial framing this project refuses. **Measuring the
+confound and publishing the variable are different decisions.**

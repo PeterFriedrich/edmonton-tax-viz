@@ -166,6 +166,45 @@ summary.)_
     by luck for the same reason** — fix all four together or the pass becomes
     as meaningless as the failures.
 
+- [ ] **▶ THE DENSITY/INCOME CONFOUND — it applies to a lens that is ALREADY
+  LIVE, and we cannot currently measure it.** Opened 2026-08-11 from the
+  break-even spec review (`docs/SPEC_breakeven.md` §9).
+  - **The problem:** a revenue-per-acre gap between two hoods can be an **income
+    gap wearing a density costume**. Edmonton's density gradient plausibly
+    tracks its income gradient, and nothing in this pipeline separates them.
+  - ⚠️ **It bites the deviation lens in `/full/` NOW**, not just future work —
+    that lens is *entirely* a statement about who sits above and below the
+    citywide average, which is the exact reading the confound corrupts.
+  - **No income or demographic data is ingested**, so today this can only be
+    disclaimed, not measured. Current mitigation is the standing one: purely
+    descriptive framing, never a causal claim (*"infill pays for itself"* is the
+    sentence to keep out).
+  - [ ] **Peter's call: ingest an income variable to MEASURE it?** ⚠️ Not free
+    of hazard — a map pairing neighbourhood income with fiscal performance
+    invites exactly the editorial framing this project refuses. **Measuring the
+    confound and publishing the variable are separate decisions**, and the
+    second one should not ride in on the first.
+
+- [ ] **▶ IS THE TRANSIT COST TERM ALLOCATED BY THE WRONG KIND OF DRIVER?**
+  Opened 2026-08-11 (`docs/SPEC_breakeven.md` §2b-i). `cost_transit_ops_per_acre`
+  distributes the ETS operating budget by **scheduled stop-events in each hood**
+  — but a downtown stop's departures are consumed by people boarding from
+  everywhere, so the driver is **network-shared being allocated as if it were
+  site-bound**. Matters out of proportion: transit is **90.8% of
+  `transport_cost_ops_per_acre`**.
+  - ⚠️ **DO NOT "FIX" IT BY DELETING THE TERM.** Two things are already recorded
+    against a hasty read: the figure is a **share, not a rate** (annual budget ÷
+    mean-weekday count — meaningless as a unit, exact as an allocation), and the
+    locked framing is **demand-allocation-of-a-fixed-budget**, defensible when
+    published as such (`DECISIONS.md` 2026-08-03).
+  - **The narrow question:** is *where service is supplied* an honest proxy for
+    *who consumes it* at neighbourhood grain? Supply-side is all the data
+    supports — **no stop-level ridership exists**, citywide-monthly only
+    (`DECISIONS.md` 2026-07-11) — so the live options are relabel, move to the
+    break-even residual while the Services lens keeps it as-is, or leave it and
+    state the limit.
+  - **Does not block the cost register.** Its own decision.
+
 - [ ] **▶ BREAK-EVEN LENS — PROPOSED, NOT STARTED. `docs/SPEC_breakeven.md`;
   five decisions in its §8 block all code.** Opened 2026-08-11 (Peter: pipelines
   per cost category, improved one at a time, composing into a per-hood
