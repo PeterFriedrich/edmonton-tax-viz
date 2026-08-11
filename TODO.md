@@ -166,6 +166,33 @@ summary.)_
     by luck for the same reason** — fix all four together or the pass becomes
     as meaningless as the failures.
 
+- [ ] **▶ BREAK-EVEN LENS — PROPOSED, NOT STARTED. `docs/SPEC_breakeven.md`;
+  five decisions in its §8 block all code.** Opened 2026-08-11 (Peter: pipelines
+  per cost category, improved one at a time, composing into a per-hood
+  break-even that stays in the Lab and might one day reach specialists).
+  - ⚠️ **THE NUMBER IS COMPUTABLE TODAY AND WOULD BE WRONG IN A KNOWN
+    DIRECTION.** Revenue modelled $2,715M against $473M of cost on the
+    operating basis — **12.3% of the City's $3,846M tax-supported operating
+    budget** — so the lens would report **every hood running a 5.7× surplus**,
+    by roughly the same factor everywhere, which is exactly what makes it look
+    plausible. **Coverage is therefore the product, not a caveat**, and must be
+    computed and printed wherever the number is.
+  - **FIRST TASK IS MEASUREMENT, NOT CODE: ingest the Open Budget portal**
+    (`budget.edmonton.ca/api/operating_budget.csv`, `data/DATA.md` §17) to rank
+    categories by control total. The cost work so far grew from what was
+    *measurable*, not what is *expensive*, so the register would start lopsided.
+    ⚠️ Three documented quirks all bite: program names do not survive two
+    re-cuts, every figure is gross, portal and PDF differ by 1.31%. Laptop or
+    CI fetch — edmonton.ca is unreachable from the Oracle box.
+  - ⚠️ **THE SILENT KILLER IS BASIS MIXING.** Lifecycle $50/road-m/yr vs
+    operating $4.635 — same metres, 10.8× apart. The composite must HARD-ERROR
+    across bases, not warn.
+  - ⚠️ **The revenue half is not the solid half either** — $2,715M modelled vs
+    $2,318M budgeted (17%), the ~$125.4M institutional question is open with
+    unknown direction, and levy is not all the revenue funding that budget.
+  - **Decide the publication gate BEFORE the number exists** (§8.3). Deciding it
+    afterwards means deciding it while looking at an answer you like.
+
 - [ ] **THE LAB IS OPEN AS A CONTAINER — one experiment in it, one thing left
   to check.** Built 2026-08-11 (`DECISIONS.md` ×2 same date;
   `verify-deviation.js`, 33 checks green). A full-build-only top-level `#views`
