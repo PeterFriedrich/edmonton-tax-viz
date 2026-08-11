@@ -131,6 +131,41 @@ summary.)_
   - Read `docs/MOBILE_USABILITY.md` first; keep the CONFIRMED /
     NEEDS-CONFIRMATION split honest.
 
+- [ ] **TWO VERIFY SCRIPTS FAIL ON UNMODIFIED `origin/master`, AND BOTH ARE
+  STALE EXPECTATIONS RATHER THAN BUGS — diagnosed 2026-08-11, NOT fixed.**
+  Found by running the full 33-script suite while building the deviation lens.
+  ⚠️ **Both were reproduced on a clean `origin/master` worktree before being
+  called pre-existing** — the suite was last recorded green on 2026-07-31, so
+  something has drifted since. **Neither is touched here on purpose: both fixes
+  are loosening a guard, and this project's rule is that a guard's tolerance is
+  a decision, not a cleanup** (the cardinality-guard item's *"do not widen it
+  further to buy silence"*). Peter's call on both.
+  - [ ] **`verify-nonres-revenue.js` — "res + nonres ≤ revenue in every hood".
+    127 of 406 hoods breach it, and the cause is the SERVED ROUNDING, not the
+    pipeline.** Max absolute excess **$0.42**, max relative **6.15e-6**; the
+    worst is STARLING (res 11,611.6 + nonres 424.374 = 12,035.974 against a
+    served revenue of 12,035.9). Each column is rounded to **6 significant
+    figures independently** at write time (`DECISIONS.md` 2026-08-09), so the
+    parts can round up past the rounded whole. The test's epsilon is
+    **`1 + 1e-9`**, ~3 orders of magnitude tighter than the rounding it now has
+    to tolerate — **it was calibrated before that decision shipped and was
+    never re-set.** ⚠️ **Check the invariant against the UNROUNDED pipeline
+    output before picking a new epsilon**, so this closes on evidence the
+    decomposition is exact rather than on a tolerance wide enough to hide a
+    real breach.
+  - [ ] **`verify-revenue-panel.js` — 3 failures, all the same cause: it counts
+    `.revrow` ELEMENTS instead of VISIBLE ones.** Measured on master with a
+    visibility probe: under Revenue there are **8 `.revrow` in the DOM but only
+    4 visible**, because the panel and the touch peek card each hold their own
+    copy. Switching to Value or leaving for Development removes `#revmix`
+    **entirely** (`getComputedStyle` → element absent) and **0 rows remain
+    visible** — i.e. **the app does exactly what the test's own comment says it
+    should**; the 4 the test still counts are the other surface's copy, which
+    no user sees. Fix is to scope the selector to `#revmix` or filter on
+    `offsetParent !== null`. ⚠️ **The `mix > 0` check in the same script passes
+    by luck for the same reason** — fix all four together or the pass becomes
+    as meaningless as the failures.
+
 - [ ] **THE DEVIATION LENS ("vs city average") IS EXPERIMENTAL AND FULL-ONLY —
   two things are open on it.** Built 2026-08-11 (`DECISIONS.md` same date;
   `verify-deviation.js`, 26 checks green). It re-centres the revenue map on the
