@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<!-- Throwaway probe: does deck.gl 9.0.38 render a NEGATIVE getElevation as a
+     prism below the ground plane, or does it clamp at 0? `changePlaneLayer`
+     in web/index.html asserts "a prism cannot have negative height" and the
+     deviation lens rides on that being wrong. Measure, don't assume. -->
+<html>
+<head><meta charset="utf-8" /><style>html,body,#c{margin:0;width:100%;height:100%;background:#0a0a0f}</style></head>
+<body>
+<div id="c"></div>
+<script src="../../web/vendor/deck.gl-9.0.38.min.js"></script>
+<script>
+  // Two identical squares side by side at the equator, one extruded UP and one
+  // DOWN by the same magnitude. Camera pitched so both are visible in profile.
+  const square = (lon, lat, d) => [[
+    [lon - d, lat - d], [lon + d, lat - d], [lon + d, lat + d], [lon - d, lat + d], [lon - d, lat - d],
+  ]];
+  const data = [
+    { polygon: square(-0.02, 0, 0.01), elev:  20000, color: [80, 200, 180] },  // up
+    { polygon: square( 0.02, 0, 0.01), elev: -20000, color: [230, 130, 70] },  // down
+  ];
+  new deck.Deck({
+    parent: document.getElementById('c'),
+    initialViewState: { longitude: 0, latitude: 0, zoom: 9, pitch: 60, bearing: 0 },
+    controller: false,
+    layers: [new deck.PolygonLayer({
+      id: 'probe',
+      data,
+      extruded: true,
+      filled: true,
+      stroked: false,
+      wireframe: true,
+      getPolygon: d => d.polygon,
+      getElevation: d => d.elev,
+      getFillColor: d => d.color,
+      getLineColor: [255, 255, 255],
+      material: { ambient: 0.6, diffuse: 0.6 },
+    })],
+    onAfterRender: () => { window.__rendered = true; },
+  });
+</script>
+</body>
+</html>

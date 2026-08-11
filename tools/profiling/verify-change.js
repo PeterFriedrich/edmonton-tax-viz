@@ -17,8 +17,11 @@
 //      compound rate. They must render off-scale grey and say WHY — and must
 //      NOT read as set-aside land, which is the opposite story (these are the
 //      new-growth areas).
-//   4. It is a FLAT diverging plane. A prism cannot have negative height, and
-//      hoods moved both ways; the in-repo precedent is the infill plane.
+//   4. It is a FLAT diverging plane, by decision — hoods moved both ways and
+//      the in-repo precedent is the infill plane. ⚠️ NOT because "a prism
+//      cannot have negative height", which this header used to say and which
+//      is false: deck.gl renders negative elevation below the plane (measured
+//      2026-08-11, and the deviation lens ships on it).
 //   5. The two windows really do differ, and switching them NEVER refetches.
 //   6. It is PUBLIC as of 2026-07-31 (promoted from full-only): `?build=public`
 //      offers the lens toggle, and reveals the window picker ON ENTERING change

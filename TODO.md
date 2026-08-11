@@ -131,6 +131,71 @@ summary.)_
   - Read `docs/MOBILE_USABILITY.md` first; keep the CONFIRMED /
     NEEDS-CONFIRMATION split honest.
 
+- [ ] **TWO VERIFY SCRIPTS FAIL ON UNMODIFIED `origin/master`, AND BOTH ARE
+  STALE EXPECTATIONS RATHER THAN BUGS — diagnosed 2026-08-11, NOT fixed.**
+  Found by running the full 33-script suite while building the deviation lens.
+  ⚠️ **Both were reproduced on a clean `origin/master` worktree before being
+  called pre-existing** — the suite was last recorded green on 2026-07-31, so
+  something has drifted since. **Neither is touched here on purpose: both fixes
+  are loosening a guard, and this project's rule is that a guard's tolerance is
+  a decision, not a cleanup** (the cardinality-guard item's *"do not widen it
+  further to buy silence"*). Peter's call on both.
+  - [ ] **`verify-nonres-revenue.js` — "res + nonres ≤ revenue in every hood".
+    127 of 406 hoods breach it, and the cause is the SERVED ROUNDING, not the
+    pipeline.** Max absolute excess **$0.42**, max relative **6.15e-6**; the
+    worst is STARLING (res 11,611.6 + nonres 424.374 = 12,035.974 against a
+    served revenue of 12,035.9). Each column is rounded to **6 significant
+    figures independently** at write time (`DECISIONS.md` 2026-08-09), so the
+    parts can round up past the rounded whole. The test's epsilon is
+    **`1 + 1e-9`**, ~3 orders of magnitude tighter than the rounding it now has
+    to tolerate — **it was calibrated before that decision shipped and was
+    never re-set.** ⚠️ **Check the invariant against the UNROUNDED pipeline
+    output before picking a new epsilon**, so this closes on evidence the
+    decomposition is exact rather than on a tolerance wide enough to hide a
+    real breach.
+  - [ ] **`verify-revenue-panel.js` — 3 failures, all the same cause: it counts
+    `.revrow` ELEMENTS instead of VISIBLE ones.** Measured on master with a
+    visibility probe: under Revenue there are **8 `.revrow` in the DOM but only
+    4 visible**, because the panel and the touch peek card each hold their own
+    copy. Switching to Value or leaving for Development removes `#revmix`
+    **entirely** (`getComputedStyle` → element absent) and **0 rows remain
+    visible** — i.e. **the app does exactly what the test's own comment says it
+    should**; the 4 the test still counts are the other surface's copy, which
+    no user sees. Fix is to scope the selector to `#revmix` or filter on
+    `offsetParent !== null`. ⚠️ **The `mix > 0` check in the same script passes
+    by luck for the same reason** — fix all four together or the pass becomes
+    as meaningless as the failures.
+
+- [ ] **THE LAB IS OPEN AS A CONTAINER — one experiment in it, one thing left
+  to check.** Built 2026-08-11 (`DECISIONS.md` ×2 same date;
+  `verify-deviation.js`, 33 checks green). A full-build-only top-level `#views`
+  button holding unfinished lenses, currently just the deviation lens ("vs city
+  average"), which re-centres the revenue map on the citywide average and
+  extrudes the deficit half BELOW the ground plane.
+  - ⚠️ **Read both decisions before touching it.** The sub-lens it ships
+    without (rate-adjusted revenue per acre) was refused *on measurement*, not
+    on taste, and the numbers to re-supply if anyone asks again are recorded.
+    The second decision is why an experiment must keep its own state.
+  - **ADDING AN EXPERIMENT IS ONE LINE** in `LAB_EXPERIMENTS` plus its view
+    (a branch in `buildViewLayers` / `primaryRow` / `viewTooltip` /
+    `refreshLegend` and a `VIEWS` entry). The picker renders from the registry
+    and reveals itself at 2+, so the second one costs no chrome work.
+    ⚠️ **Give it its OWN state, never Money's** — that is the whole reason the
+    container exists, and the failure it prevents is silent.
+  - [ ] **NEVER CHECKED ON A PHONE, and the `#views` row is now SIX buttons.**
+    That row is the one piece of chrome every view shares, it wraps at
+    `max-width: 640px` (`#views { flex-wrap: wrap }`), and "Lab" carries a
+    `beta` tag that makes it wider than its four characters suggest. Verified
+    at 1440x900 / 1400x900 / 1366x768 / 1280x720 only — the title box is 217px
+    against Money's 176px and clears `#botleft` by 312px at the worst, so the
+    *vertical* side is fine and the untested axis is **WIDTH**. Remove
+    `.folded` from `#optpanel` before measuring the Options rows — otherwise
+    every probe returns zeros (the trap this file already records twice).
+  - [ ] **Peter's call, unchanged: does the deviation lens ever leave the Lab?**
+    It is marked `beta` precisely because it is rank-identical to the Money map
+    — the only new information in it is which side of the average a hood falls
+    on. A real thing to show and a thin thing to promote. No opinion recorded.
+
 - [ ] **A TRUE BIKEWAY LIFECYCLE $/m/yr STILL DOES NOT EXIST** — the residue of
   Stage 2, which shipped 2026-08-03 on an **operating** basis instead. All three
   cost terms are maintenance + snow with **no capital replacement**, because the
