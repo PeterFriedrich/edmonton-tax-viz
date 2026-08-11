@@ -166,29 +166,35 @@ summary.)_
     by luck for the same reason** — fix all four together or the pass becomes
     as meaningless as the failures.
 
-- [ ] **THE DEVIATION LENS ("vs city average") IS EXPERIMENTAL AND FULL-ONLY —
-  two things are open on it.** Built 2026-08-11 (`DECISIONS.md` same date;
-  `verify-deviation.js`, 26 checks green). It re-centres the revenue map on the
-  citywide average and extrudes the deficit half BELOW the ground plane.
-  ⚠️ **Read the decision before touching it** — the sub-lens it ships without
-  (rate-adjusted revenue per acre) was refused *on measurement*, not on taste,
-  and the numbers to re-supply if anyone asks for it again are recorded there.
-  - [ ] **NEVER CHECKED ON A PHONE, and it added a control row where there was
-    none.** `#moneymode` used to be hidden under Revenue entirely; it now shows
-    there in the full build carrying one button, so the Revenue control stack
-    is **one row taller than it has ever been** at every width. Grouping is
-    shared DOM (`CONTROLS_MATRIX.md`), so this lands on desktop AND mobile.
-    Verified at 1400x900 / 1366x768 / 1280x720 only — title box 217px against
-    Money's 176px, clearance to `#botleft` 312px at the worst of the three, so
-    the *vertical* side is fine. ⚠️ **The untested axis is WIDTH**: the button
-    label plus its `beta` tag is the longest string in that row, and the row is
-    `flex: 1` per button with `white-space: nowrap`. Remove `.folded` from
-    `#optpanel` before measuring — otherwise every probe returns zeros (the
-    trap this file already records twice).
-  - [ ] **Peter's call: does it stay full-only?** It is marked `beta` precisely
-    because it is rank-identical to the Money map — the only new information in
-    it is which side of the average a hood falls on. That is a real thing to
-    show and a thin thing to promote. No opinion recorded yet.
+- [ ] **THE LAB IS OPEN AS A CONTAINER — one experiment in it, one thing left
+  to check.** Built 2026-08-11 (`DECISIONS.md` ×2 same date;
+  `verify-deviation.js`, 33 checks green). A full-build-only top-level `#views`
+  button holding unfinished lenses, currently just the deviation lens ("vs city
+  average"), which re-centres the revenue map on the citywide average and
+  extrudes the deficit half BELOW the ground plane.
+  - ⚠️ **Read both decisions before touching it.** The sub-lens it ships
+    without (rate-adjusted revenue per acre) was refused *on measurement*, not
+    on taste, and the numbers to re-supply if anyone asks again are recorded.
+    The second decision is why an experiment must keep its own state.
+  - **ADDING AN EXPERIMENT IS ONE LINE** in `LAB_EXPERIMENTS` plus its view
+    (a branch in `buildViewLayers` / `primaryRow` / `viewTooltip` /
+    `refreshLegend` and a `VIEWS` entry). The picker renders from the registry
+    and reveals itself at 2+, so the second one costs no chrome work.
+    ⚠️ **Give it its OWN state, never Money's** — that is the whole reason the
+    container exists, and the failure it prevents is silent.
+  - [ ] **NEVER CHECKED ON A PHONE, and the `#views` row is now SIX buttons.**
+    That row is the one piece of chrome every view shares, it wraps at
+    `max-width: 640px` (`#views { flex-wrap: wrap }`), and "Lab" carries a
+    `beta` tag that makes it wider than its four characters suggest. Verified
+    at 1440x900 / 1400x900 / 1366x768 / 1280x720 only — the title box is 217px
+    against Money's 176px and clears `#botleft` by 312px at the worst, so the
+    *vertical* side is fine and the untested axis is **WIDTH**. Remove
+    `.folded` from `#optpanel` before measuring the Options rows — otherwise
+    every probe returns zeros (the trap this file already records twice).
+  - [ ] **Peter's call, unchanged: does the deviation lens ever leave the Lab?**
+    It is marked `beta` precisely because it is rank-identical to the Money map
+    — the only new information in it is which side of the average a hood falls
+    on. A real thing to show and a thin thing to promote. No opinion recorded.
 
 - [ ] **A TRUE BIKEWAY LIFECYCLE $/m/yr STILL DOES NOT EXIST** — the residue of
   Stage 2, which shipped 2026-08-03 on an **operating** basis instead. All three

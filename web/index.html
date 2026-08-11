@@ -113,7 +113,6 @@
     <div id="moneymode">
       <button data-moneymode="current" class="active" title="The map as it stands — each neighbourhood's own per-acre figure, not set against anything else">Current</button>
       <button data-moneymode="change" title="How fast each neighbourhood's share of Edmonton's total assessment base moved over the chosen window — teal gained share, orange lost it. Grey neighbourhoods held no share in the first year, so there is nothing to measure against. Pick the window in Options">Change over time</button>
-      <button data-moneymode="deviation" title="EXPERIMENTAL. Each neighbourhood's revenue per acre set against Edmonton's citywide average: bars rise above the average and sink below it. Not a cost-of-service comparison — it says nothing about what serving each neighbourhood costs">vs city average<span class="beta">beta</span></button>
     </div>
   </div>
 
@@ -123,6 +122,12 @@
     <button data-view="services" title="City services on the ground — toggle each service on its own layer; roads coloured by metres per acre, stormwater by its modeled charge per acre">Services</button>
     <button data-view="ratio" title="Ghost prisms of revenue per road metre — or per fire event — over the neutral road network">Ratio</button>
     <button data-view="uses" title="Each neighbourhood's dominant zoned land use — what the land is designated for, not what it yields; optional prisms show each neighbourhood's residential share">Uses</button>
+    <!-- The Lab: a full-build-only container for experiments that are NOT
+         finished work and are not lenses of anything above. Deliberately its
+         own top-level button rather than a mode of Money — a mode reads as a
+         variant of a published lens, and nothing in here has earned that.
+         Hidden entirely in the public build (see the FULL_BUILD gate below). -->
+    <button data-view="lab" title="EXPERIMENTAL, unfinished work. Exploratory lenses kept apart from the published ones — nothing here is a conclusion, and the numbers may change or be withdrawn">Lab<span class="beta">beta</span></button>
   </div>
 
   <div id="optpanel">
@@ -133,6 +138,19 @@
     <div id="chgwindow">
       <button data-chgwindow="long" class="active" title="The whole assessment history (2012–2025) — the structural, era-long shift">Since 2012</button>
       <button data-chgwindow="short" title="The recent half (2019–2025) — where the change is happening now. A seventh of neighbourhoods changed DIRECTION between the two windows">Since 2019</button>
+    </div>
+    <!-- The Lab's own controls. #labpick is rendered from LAB_EXPERIMENTS and
+         stays hidden while there is only one — a chooser with one option is
+         not a choice (the services-radio precedent). #labcut is the deviation
+         experiment's revenue cut; it is the Lab's OWN copy on purpose, so the
+         Lab never reaches into Money's #toggle for state. -->
+    <span class="hd" id="labpick-hd">Experiment</span>
+    <div id="labpick"></div>
+    <span class="hd" id="labcut-hd">Revenue</span>
+    <div id="labcut">
+      <button data-labcut="revenue_per_acre" class="active" title="Every property class — the full municipal levy the land generates">Total</button>
+      <button data-labcut="res_revenue_per_acre" title="Residential-class dollars only: houses, condos and apartment buildings. A subset of Total">Residential</button>
+      <button data-labcut="nonres_revenue_per_acre" title="Dollars billed at the non-residential rate — commercial and industrial land. A subset of Total">Non-residential</button>
     </div>
     <span class="hd" id="moneydetail-hd">Detail</span>
     <div id="moneydetail">
@@ -499,6 +517,11 @@
       ["about-src-services", "about-modelled"].forEach(id => {
         document.getElementById(id).style.display = "none";
       });
+      // The Lab is unfinished work by definition — it never ships to the public
+      // root. Hidden HERE rather than in a data guard because it has no data
+      // dependency: the experiments read columns the public build also carries,
+      // so nothing else would keep the button off the published page.
+      document.querySelector('#views button[data-view="lab"]').style.display = "none";
     }
 
     // Per-metric display config. The clamp (colour saturation) sits at the same
@@ -1058,13 +1081,36 @@
       },
     };
 
+    // --- the Lab: a container for unfinished lenses ---------------------------
+    // FULL BUILD ONLY, and separate from the published views on purpose. Nothing
+    // in here is a conclusion; the numbers may change or be withdrawn, and the
+    // chrome says so (a `beta` tag on the #views button, "Experimental." leading
+    // every blurb).
+    //
+    // TO ADD AN EXPERIMENT: write its view the way any other view is written
+    // (a branch in buildViewLayers, primaryRow, viewTooltip, refreshLegend, and
+    // a VIEWS entry), then add one line here. The picker below appears on its
+    // own once there are two — a chooser with one option is not a choice, the
+    // same rule syncServiceControls applies to the service radios.
+    //
+    // ⚠️ An experiment must keep its OWN state, not borrow Money's. The
+    // deviation lens reads `state.labCut`, not `state.metric`, so that entering
+    // the Lab from the Value map cannot silently compute a "citywide average"
+    // over assessed value and label it revenue.
+    const LAB_EXPERIMENTS = {
+      deviation: { label: "vs city average" },
+    };
+    const LAB_VIEWS = Object.keys(LAB_EXPERIMENTS);
+    const DEFAULT_LAB = LAB_VIEWS[0];
+    const inLab = () => LAB_VIEWS.includes(state.view);
+
     const DEVIATION_TITLES = {
       revenue_per_acre: "Edmonton: Revenue per Acre vs the Citywide Average",
       res_revenue_per_acre: "Edmonton: Residential Revenue per Acre vs the Citywide Average",
       nonres_revenue_per_acre: "Edmonton: Non-Residential Revenue per Acre vs the Citywide Average",
     };
     const deviationTitle = () =>
-      DEVIATION_TITLES[state.metric] || DEVIATION_TITLES.revenue_per_acre;
+      DEVIATION_TITLES[state.labCut] || DEVIATION_TITLES.revenue_per_acre;
 
     // Change-lens blurb follows the window picker, so the years named in the
     // text can never disagree with the years being measured.
@@ -1244,6 +1290,8 @@
                     svcDriver: "roads",
                     hoodMode: "popup", // where a hood's detail appears: popup | panel
                     chgWindow: "long", // change-lens window: long (2012–2025) | short (2019–2025)
+                    lab: DEFAULT_LAB,  // which Lab experiment was last open (full build only)
+                    labCut: "revenue_per_acre", // the Lab's OWN revenue cut — never Money's state.metric
                     data: null };
     let overlay;         // deck.gl MapboxOverlay, created on map load
     let roadsData = null;  // lazy-fetched roads FeatureCollection
@@ -2029,7 +2077,7 @@
     // ~193k acres) but stay off the colour scale and flat, as everywhere else.
     const _devStats = {};
     function deviationStats() {
-      const colKey = state.metric;
+      const colKey = state.labCut;
       if (_devStats[colKey]) return _devStats[colKey];
       const props = state.data.features.map(f => f.properties);
       let num = 0, acres = 0;
@@ -2061,8 +2109,8 @@
         scored: devs.length,
       });
     }
-    const deviationOf = p => (p.is_set_aside || p[state.metric] == null)
-      ? null : p[state.metric] - deviationStats().avg;
+    const deviationOf = p => (p.is_set_aside || p[state.labCut] == null)
+      ? null : p[state.labCut] - deviationStats().avg;
     const deviationT = p => {
       const d = deviationOf(p);
       if (d == null) return null;
@@ -2091,7 +2139,7 @@
     // separate elevation scales: two arms at different scales would draw a
     // deficit and a surplus of visibly equal size on unequal numbers.
     function deviationLayer() {
-      const cfg = METRICS[state.metric];
+      const cfg = METRICS[state.labCut];
       return new deck.GeoJsonLayer({
         id: "deviation-extrusion",
         data: state.data,
@@ -2110,8 +2158,8 @@
         autoHighlight: true,
         highlightColor: [255, 255, 255, 60],
         updateTriggers: {
-          getElevation: [state.metric],
-          getFillColor: [state.metric],
+          getElevation: [state.labCut],
+          getFillColor: [state.labCut],
         },
       });
     }
@@ -2125,8 +2173,8 @@
     function deviationBlurb() {
       const s = deviationStats();
       return "Experimental. Each neighbourhood's " +
-        (state.metric === "res_revenue_per_acre" ? "residential " :
-         state.metric === "nonres_revenue_per_acre" ? "non-residential " : "") +
+        (state.labCut === "res_revenue_per_acre" ? "residential " :
+         state.labCut === "nonres_revenue_per_acre" ? "non-residential " : "") +
         "tax revenue per acre against Edmonton's citywide average of " +
         fmtMoney(s.avg) + " — teal rises above it, orange sinks below. " +
         "Height is true to scale, so the deficits are shallow: revenue per acre " +
@@ -4048,7 +4096,7 @@
         // checkable rather than something the page asserts.
         return { className: "tip", html: name +
           `<b>${fmtDeviation(d)}</b> / acre vs city average<br/>` +
-          `<span class="muted">${fmtMoney(p[state.metric])} here · ` +
+          `<span class="muted">${fmtMoney(p[state.labCut])} here · ` +
           `${fmtMoney(s.avg)} citywide</span><br/>` +
           `<span class="muted">re-centred revenue — not a cost comparison</span>` };
       }
@@ -4234,25 +4282,11 @@
       document.getElementById("revcut").style.display = rev && anyCut ? "flex" : "none";
       document.querySelectorAll("#revcut button").forEach(b =>
         b.classList.toggle("active", b.dataset.revcut === state.metric));
-      // #moneymode is row 2 for BOTH quantities now, carrying a different lens
-      // under each: Change over time under Value (gated on temporal.json, which
-      // lands after first paint), and the experimental deviation lens under
-      // Revenue (gated on the full build). The row shows when the quantity in
-      // hand actually has a lens to offer, and each button is hidden under the
-      // quantity it does not belong to — so Revenue never offers a lens that
-      // reads an assessment-history file, and Value never offers one that
-      // re-centres a revenue column.
-      const changeShow = !rev && temporalData != null;
-      const devShow = rev && FULL_BUILD;
       document.getElementById("moneymode").style.display =
-        changeShow || devShow ? "flex" : "none";
-      const modeShown = { current: true, change: changeShow, deviation: devShow };
-      const activeMode = state.view === "change" ? "change"
-                       : state.view === "deviation" ? "deviation" : "current";
-      document.querySelectorAll("#moneymode button").forEach(b => {
-        b.style.display = modeShown[b.dataset.moneymode] ? "" : "none";
-        b.classList.toggle("active", b.dataset.moneymode === activeMode);
-      });
+        !rev && temporalData != null ? "flex" : "none";
+      document.querySelectorAll("#moneymode button").forEach(b =>
+        b.classList.toggle("active",
+          b.dataset.moneymode === (state.view === "change" ? "change" : "current")));
       syncMillRates();
     }
 
@@ -4365,17 +4399,6 @@
       syncMetricButtons();
       syncPinnedPanel(); // Revenue <-> Value swaps the panel's whole content
       closePeek();       // ...and so does the card; see applyView's note
-      // The deviation lens reads the active revenue cut too, so a #revcut click
-      // has to re-render it — its average, clamps, title and blurb are all
-      // per-column. Without this the cut buttons would repaint while the map
-      // kept showing the previous column's deviations.
-      if (state.view === "deviation") {
-        document.getElementById("title-h").textContent = deviationTitle();
-        document.getElementById("title-p").textContent = deviationBlurb();
-        refreshLegend();
-        overlay.setProps({ layers: buildLayers() });
-        return;
-      }
       if (state.view !== "money" && state.view !== "glass") return;
       const cfg = METRICS[metric];
       overlay.setProps({ layers: buildLayers() });
@@ -4875,8 +4898,7 @@
     // Glass is a Detail choice and the Detail selector is hidden in Change, so
     // restoring it would drop you somewhere you can't see you are.
     function applyMoneyMode(mode) {
-      const target = mode === "change" ? "change"
-                   : mode === "deviation" ? "deviation" : "money";
+      const target = mode === "change" ? "change" : "money";
       if (target !== state.view) applyView(target);
     }
 
@@ -4918,6 +4940,38 @@
       if (target !== state.view) applyView(target);
     }
 
+    // The Lab's controls: the experiment picker (only once there are two — see
+    // LAB_EXPERIMENTS) and, for the deviation experiment, its own revenue cut.
+    // Both hide outside the Lab like every other view-scoped section.
+    function syncLabControls(v) {
+      const on = LAB_VIEWS.includes(v);
+      const pickShow = on && LAB_VIEWS.length > 1;
+      document.getElementById("labpick-hd").style.display = pickShow ? "block" : "none";
+      document.getElementById("labpick").style.display = pickShow ? "flex" : "none";
+      const cutShow = on && v === "deviation";
+      document.getElementById("labcut-hd").style.display = cutShow ? "block" : "none";
+      document.getElementById("labcut").style.display = cutShow ? "flex" : "none";
+      document.querySelectorAll("#labcut button").forEach(b =>
+        b.classList.toggle("active", b.dataset.labcut === state.labCut));
+      document.querySelectorAll("#labpick button").forEach(b =>
+        b.classList.toggle("active", b.dataset.lab === v));
+    }
+
+    // Switch the deviation experiment's revenue cut. Its average, per-arm
+    // clamps, title and blurb are ALL per-column, so this re-renders rather
+    // than repainting buttons — the trap the equivalent Money path documents.
+    function applyLabCut(col) {
+      if (col === state.labCut || !METRICS[col]) return;
+      state.labCut = col;
+      document.querySelectorAll("#labcut button").forEach(b =>
+        b.classList.toggle("active", b.dataset.labcut === col));
+      if (state.view !== "deviation") return;
+      document.getElementById("title-h").textContent = deviationTitle();
+      document.getElementById("title-p").textContent = deviationBlurb();
+      refreshLegend();
+      overlay.setProps({ layers: buildLayers() });
+    }
+
     // Set the ratio view's ghost-prism opacity (0–100). UI-state only — the
     // caller rebuilds the layers.
     function setPrismOpacity(pct) {
@@ -4936,8 +4990,9 @@
       state.view = v;
       // Glass and Infill are render-modes of Money and Development (no #views
       // button of their own) — the parent view's button stays active in each.
-      const viewBtn = (v === "glass" || v === "change" || v === "deviation") ? "money"
-                    : v === "infill" ? "development" : v;
+      const viewBtn = (v === "glass" || v === "change") ? "money"
+                    : v === "infill" ? "development"
+                    : LAB_VIEWS.includes(v) ? "lab" : v;
       document.querySelectorAll("#views button").forEach(b =>
         b.classList.toggle("active", b.dataset.view === viewBtn));
       // The metric picker (#toggle) is Money-scoped: shown in Money/Glass, where
@@ -4946,7 +5001,7 @@
       // you in the change view with no way back to Current. Hidden elsewhere
       // (stops floating live-but-inert over views it doesn't affect).
       document.getElementById("toggle").style.display =
-        (v === "money" || v === "glass" || v === "change" || v === "deviation") ? "flex" : "none";
+        (v === "money" || v === "glass" || v === "change") ? "flex" : "none";
       // Same rule for the readout-mode pod: it picks WHERE a hood's detail
       // lands, so it is meaningless in a view with only one destination. Still
       // gated on the history file having loaded — that is what reveals it at
@@ -4986,8 +5041,13 @@
       // Change opens the panel for its own window picker (and for the lens
       // toggle that gets you back out of it).
       const changeShow = v === "change";
+      // The Lab opens the panel for its own controls, and remembers which
+      // experiment you were in so the #views button returns you there.
+      const labShow = LAB_VIEWS.includes(v);
+      if (labShow) state.lab = v;
+      syncLabControls(v);
       document.getElementById("layers").style.display =
-        (prisms || v === "services" || v === "uses" || moneyDetailShow || moneyDenom || devMetricShow || devWindowShow || changeShow) ? "flex" : "none";
+        (prisms || v === "services" || v === "uses" || moneyDetailShow || moneyDenom || devMetricShow || devWindowShow || changeShow || labShow) ? "flex" : "none";
       // Money's render toggle (Neighbourhood prisms vs 100 m glass grid).
       document.getElementById("moneydetail-hd").style.display = moneyDetailShow ? "block" : "none";
       document.getElementById("moneydetail").style.display = moneyDetailShow ? "flex" : "none";
@@ -5212,9 +5272,6 @@
           // applyMetric only marks state outside money/glass, so applyView is
           // what renders — and it reads the metric we just set for the title.
           if (rev && state.view === "change") applyView("money");
-          // The mirror: Value owns no deviation lens, so leaving Revenue has to
-          // leave that view the same way. Same ordering reason as above.
-          if (!rev && state.view === "deviation") applyView("money");
         }));
       document.querySelectorAll("#revcut button").forEach(b =>
         b.addEventListener("click", () => applyMetric(b.dataset.revcut)));
@@ -5380,8 +5437,19 @@
         el.querySelector('input[type="radio"]').addEventListener("change",
           () => applySvcDriver(k));
       });
+      // "lab" is a CONTAINER, not a view: the button opens whichever experiment
+      // was last active (LAB_EXPERIMENTS' first on a cold start).
       document.querySelectorAll("#views button").forEach(b =>
-        b.addEventListener("click", () => applyView(b.dataset.view)));
+        b.addEventListener("click", () =>
+          applyView(b.dataset.view === "lab" ? state.lab : b.dataset.view)));
+      document.querySelectorAll("#labcut button").forEach(b =>
+        b.addEventListener("click", () => applyLabCut(b.dataset.labcut)));
+      // #labpick is built from the registry so adding an experiment needs no
+      // markup. It stays hidden until there are two of them (syncLabControls).
+      document.getElementById("labpick").innerHTML = LAB_VIEWS.map(k =>
+        `<button data-lab="${k}">${esc(LAB_EXPERIMENTS[k].label)}</button>`).join("");
+      document.querySelectorAll("#labpick button").forEach(b =>
+        b.addEventListener("click", () => applyView(b.dataset.lab)));
       document.getElementById("prism-opacity").addEventListener("input", e => {
         setPrismOpacity(+e.target.value);
         overlay.setProps({ layers: buildLayers() });

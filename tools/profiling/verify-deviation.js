@@ -1,12 +1,16 @@
-// Verify the experimental deviation lens ("vs city average", full build only).
+// Verify the Lab and its first experiment, the deviation lens ("vs city
+// average"). Full build only.
 //
-// The three things that fail SILENTLY here, in order of how badly:
+// The four things that fail SILENTLY here, in order of how badly:
 //   1. the citywide average is recomputed from an external levy total instead
 //      of the served features, moving the zero line and reclassifying hoods;
-//   2. the deficit prisms do not actually extrude downward (deck.gl clamping a
+//   2. the Lab borrows Money's state.metric instead of its own state.labCut —
+//      entering from the Value map would then average ASSESSED VALUE and label
+//      the result revenue, with nothing on screen to give it away;
+//   3. the deficit prisms do not actually extrude downward (deck.gl clamping a
 //      negative getElevation at 0 would leave a map that looks fine and says
 //      nothing);
-//   3. the lens leaks into the public build.
+//   4. the Lab leaks into the public build.
 // Each gets an assertion against numbers re-derived in the page, not pinned.
 const { chromium } = require('playwright');
 
@@ -31,14 +35,16 @@ const check = (name, ok, detail = '') => {
   await page.goto('http://localhost:8777/index.html?build=full', { waitUntil: 'networkidle' });
   await page.waitForTimeout(3500);
 
-  // Enter the lens: Revenue is the default metric, so #moneymode is already
-  // showing its deviation button.
-  const btn = page.locator('#moneymode button[data-moneymode="deviation"]');
-  check('deviation button exists in full build', await btn.count() === 1);
-  check('deviation button is visible under Revenue', await btn.isVisible());
-  check('change button is HIDDEN under Revenue',
-    !(await page.locator('#moneymode button[data-moneymode="change"]').isVisible()));
-  check('button carries a beta tag', (await btn.innerText()).toLowerCase().includes('beta'));
+  // The Lab is its own top-level #views button, NOT a mode of Money — that
+  // separation is the whole point of the container and is asserted, not assumed.
+  const btn = page.locator('#views button[data-view="lab"]');
+  check('Lab is a top-level #views button', await btn.count() === 1);
+  check('Lab button is visible in the full build', await btn.isVisible());
+  check('Lab button carries a beta tag', (await btn.innerText()).toLowerCase().includes('beta'));
+  check('Lab is NOT a mode of Money',
+    await page.locator('#moneymode button[data-moneymode="deviation"]').count() === 0);
+  check('#moneymode is untouched: hidden under Revenue as before',
+    !(await page.locator('#moneymode').isVisible()));
 
   await btn.click();
   await page.waitForTimeout(1200);
@@ -57,6 +63,12 @@ const check = (name, ok, detail = '') => {
       legendMin: document.getElementById('legend-min').textContent,
       legendMax: document.getElementById('legend-max').textContent,
       moneyBtnActive: document.querySelector('#views button[data-view="money"]').classList.contains('active'),
+      labBtnActive: document.querySelector('#views button[data-view="lab"]').classList.contains('active'),
+      toggleShown: getComputedStyle(document.getElementById('toggle')).display !== 'none',
+      pickShown: getComputedStyle(document.getElementById('labpick')).display !== 'none',
+      labVariants: LAB_VIEWS.length,
+      labCut: state.labCut,
+      moneyMetric: state.metric,
       stats: deviationStats(),
       // Re-derive the average here, independently of the page's own helper.
       indep: (() => {
@@ -89,8 +101,13 @@ const check = (name, ok, detail = '') => {
     };
   });
 
-  check('view switched to deviation', st.view === 'deviation', st.view);
-  check('Money #views button stays active', st.moneyBtnActive);
+  check('Lab opens its first experiment', st.view === 'deviation', st.view);
+  check('the Lab #views button is the active one', st.labBtnActive);
+  check('Money is NOT left active', !st.moneyBtnActive);
+  check('the metric pod is hidden in the Lab', !st.toggleShown);
+  check('the experiment picker stays hidden while there is only one',
+    st.labVariants === 1 ? !st.pickShown : st.pickShown,
+    `${st.labVariants} experiment(s), picker ${st.pickShown ? 'shown' : 'hidden'}`);
   check('title names the comparison', /vs the Citywide Average/i.test(st.title), st.title);
 
   // 1 — the average comes from the served features.
@@ -145,30 +162,57 @@ const check = (name, ok, detail = '') => {
   check('tooltip prints the hood value AND the citywide average',
     /here/.test(tip) && /citywide/.test(tip), tip.replace(/<[^>]+>/g, ' ').slice(0, 110));
 
+  // 2 — the Lab keeps its OWN cut. Money's metric must be untouched by it.
+  check('the Lab reads state.labCut, not state.metric',
+    st.labCut === 'revenue_per_acre' && st.moneyMetric === 'revenue_per_acre',
+    `labCut ${st.labCut}, metric ${st.moneyMetric}`);
+
   // Switching the revenue cut must re-render, not just repaint the buttons.
   const before = st.stats.avg;
-  await page.locator('#revcut button[data-revcut="res_revenue_per_acre"]').click();
+  await page.locator('#labcut button[data-labcut="res_revenue_per_acre"]').click();
   await page.waitForTimeout(900);
   const after = await page.evaluate(() => ({
     avg: deviationStats().avg,
     title: document.getElementById('title-h').textContent,
     view: state.view,
+    metric: state.metric,
   }));
   check('revenue cut re-renders the lens', Math.abs(after.avg - before) > 1 && after.view === 'deviation',
     `total ${before.toFixed(0)} -> residential ${after.avg.toFixed(0)}`);
   check('title follows the cut', /Residential/i.test(after.title), after.title);
+  check("the Lab's cut does NOT move Money's metric",
+    after.metric === 'revenue_per_acre', after.metric);
 
-  // Leaving Revenue for Value must leave the lens (it reads a revenue column).
-  await page.locator('#metric-row button[data-metric="value"]').click();
-  await page.waitForTimeout(900);
-  check('switching to Value exits the deviation view',
-    await page.evaluate(() => state.view) === 'money');
+  // ⚠️ THE ONE THAT WOULD BE INVISIBLE: enter the Lab from the Value map. If
+  // the lens read state.metric it would average value_per_acre (~$1.8M/acre)
+  // and print it under a title saying "Revenue". The average must not move.
+  const viaValue = await page.evaluate(async () => {
+    await applyView('money');
+    applyMetric('value_per_acre');
+    await applyView('deviation');
+    return { avg: deviationStats().avg, title: document.getElementById('title-h').textContent,
+             cut: state.labCut, metric: state.metric };
+  });
+  check('*** entering the Lab from the Value map still averages REVENUE ***',
+    Math.abs(viaValue.avg - after.avg) < EPS && viaValue.cut === 'res_revenue_per_acre',
+    `avg ${viaValue.avg.toFixed(2)} on cut ${viaValue.cut} while Money holds ${viaValue.metric}`);
+  check('the title does not claim a quantity it is not showing',
+    /Revenue/i.test(viaValue.title) && !/Assessed Value/i.test(viaValue.title), viaValue.title);
 
   // --- public build ------------------------------------------------------
   await page.goto('http://localhost:8777/index.html?build=public', { waitUntil: 'networkidle' });
   await page.waitForTimeout(3000);
-  check('deviation button HIDDEN in public build',
-    !(await page.locator('#moneymode button[data-moneymode="deviation"]').isVisible()));
+  check('the Lab button is HIDDEN in the public build',
+    !(await page.locator('#views button[data-view="lab"]').isVisible()));
+  // ...and adding it changed nothing else about that row. Measured, not
+  // assumed: the public build already hid services/ratio/uses on its own
+  // (their own FULL_BUILD gates further down), so the published set is these
+  // two — if a future gate moves, this catches it here rather than in
+  // production.
+  check('the public #views row is otherwise unchanged',
+    await page.evaluate(() => [...document.querySelectorAll('#views button')]
+      .filter(b => getComputedStyle(b).display !== 'none')
+      .map(b => b.dataset.view).join(',')) === 'money,development');
 
   check('no page errors', errs.length === 0, errs.slice(0, 3).join(' | '));
 

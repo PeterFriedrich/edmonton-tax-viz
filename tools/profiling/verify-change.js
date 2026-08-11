@@ -72,18 +72,7 @@ const [url] = process.argv.slice(2);
   // quantity. It is now #toggle's second row under VALUE, exclusive with the
   // revenue cuts — the change lens reads share of the assessment BASE, which
   // Revenue does not own. Load lands on Revenue, so it starts hidden.
-  //
-  // ⚠️ AMENDED 2026-08-11: the ROW is no longer exclusive to Value — the
-  // experimental deviation lens took the same row under Revenue in the full
-  // build. The invariant this check exists to protect is unchanged and is now
-  // asserted where it actually lives, on the BUTTON: Revenue must never offer
-  // the change lens. Asserting the row is hidden would now fail for a reason
-  // that has nothing to do with the change lens.
-  const btnVis = m => page.evaluate(sel => {
-    const el = document.querySelector(sel);
-    return !!el && getComputedStyle(el).display !== 'none';
-  }, `#moneymode button[data-moneymode="${m}"]`);
-  check('the CHANGE lens is HIDDEN under Revenue', !(await btnVis('change')));
+  check('the lens toggle is HIDDEN under Revenue', !(await vis('moneymode')));
   check('the revenue cuts show under Revenue', await vis('revcut'));
   check('the lens toggle lives in #toggle, not the Options panel',
     await page.evaluate(() => document.getElementById('moneymode').parentElement.id === 'toggle'));
@@ -289,11 +278,7 @@ const [url] = process.argv.slice(2);
   check('*** picking Revenue leaves the change view ***', viaRev.view === 'money', viaRev.view);
   check('Revenue restores the last cut', viaRev.metric === 'revenue_per_acre', viaRev.metric);
   check('the title follows the metric out of the lens', /revenue/i.test(viaRev.title), viaRev.title);
-  // Same amendment as check 0: the row survives under Revenue (it carries the
-  // deviation lens in the full build), so what must be gone is the change
-  // BUTTON, not the row.
-  check('the cut row is back and the change lens is gone',
-    viaRev.cuts && !(await btnVis('change')));
+  check('the cut row is back and the lens row is gone', viaRev.cuts && !viaRev.mode);
   await page.close();
 
   // ---- 6. PUBLIC build carries the lens (promoted 2026-07-31) -------------

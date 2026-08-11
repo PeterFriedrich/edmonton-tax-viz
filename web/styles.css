@@ -178,15 +178,20 @@ html, body { margin: 0; height: 100%; background: #0a0a0f; }
 #devmetric-hd, #devmetric, #devwindow-hd, #devwindow,
 #moneydetail-hd, #moneydetail, #devdetail-hd, #devdetail,
 #devmode-hd, #devmode,
-#chgwindow-hd, #chgwindow { display: none; }
-#denom, #ratio-denom, #devmetric, #devwindow, #moneydetail, #devdetail, #devmode, #chgwindow { border: 1px solid #2a2a3a; border-radius: 5px; overflow: hidden; margin-bottom: 2px; }
-#denom button, #ratio-denom button, #devmetric button, #devwindow button, #moneydetail button, #devdetail button, #devmode button, #chgwindow button {
+#chgwindow-hd, #chgwindow,
+/* The Lab's sections start hidden for the same reason #moneymode does: #layers
+   is already open in the default Money view, so a `flex` default would flash
+   the Lab's controls under a lens they do not belong to. syncLabControls
+   reveals them. */
+#labpick-hd, #labpick, #labcut-hd, #labcut { display: none; }
+#denom, #ratio-denom, #devmetric, #devwindow, #moneydetail, #devdetail, #devmode, #chgwindow, #labpick, #labcut { border: 1px solid #2a2a3a; border-radius: 5px; overflow: hidden; margin-bottom: 2px; }
+#denom button, #ratio-denom button, #devmetric button, #devwindow button, #moneydetail button, #devdetail button, #devmode button, #chgwindow button, #labpick button, #labcut button {
   appearance: none; border: 0; background: transparent; color: #9a9ab0;
   font: 11px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   padding: 4px 10px; cursor: pointer; flex: 1; transition: background 0.12s, color 0.12s;
 }
-#denom button:hover, #ratio-denom button:hover, #devmetric button:hover, #devwindow button:hover, #moneydetail button:hover, #devdetail button:hover, #devmode button:hover, #chgwindow button:hover { color: #e8e8ef; }
-#denom button.active, #ratio-denom button.active, #devmetric button.active, #devwindow button.active, #moneydetail button.active, #devdetail button.active, #devmode button.active, #chgwindow button.active { background: #fcd278; color: #16111a; font-weight: 600; }
+#denom button:hover, #ratio-denom button:hover, #devmetric button:hover, #devwindow button:hover, #moneydetail button:hover, #devdetail button:hover, #devmode button:hover, #chgwindow button:hover, #labpick button:hover, #labcut button:hover { color: #e8e8ef; }
+#denom button.active, #ratio-denom button.active, #devmetric button.active, #devwindow button.active, #moneydetail button.active, #devdetail button.active, #devmode button.active, #chgwindow button.active, #labpick button.active, #labcut button.active { background: #fcd278; color: #16111a; font-weight: 600; }
 #toggle button, #palette button {
   appearance: none; border: 0; background: transparent; color: #9a9ab0;
   font: 12.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -214,13 +219,13 @@ html, body { margin: 0; height: 100%; background: #0a0a0f; }
   font-size: 11px; padding: 5px 12px; flex: 1; color: #8a8a9e;
   white-space: nowrap;
 }
-/* "beta" tag on the experimental deviation lens. The public build never shows
-   the button at all (syncMetricButtons gates it on FULL_BUILD), so this marks
-   it as unfinished for the specialist audience that CAN reach it — the point
-   is that it should not read as a peer of the lenses beside it. Inherits the
+/* "beta" tag on the Lab button. The public build never renders that button at
+   all (the FULL_BUILD gate hides it), so this marks the work as unfinished for
+   the specialist audience that CAN reach it — the point is that Lab must not
+   read as a peer of the five published views beside it. Inherits the
    active-state colours rather than fixing its own, so it stays legible on the
    amber highlight. */
-#moneymode .beta {
+.beta {
   margin-left: 5px; padding: 1px 4px; border-radius: 3px;
   border: 1px solid currentColor; font-size: 8.5px; letter-spacing: 0.04em;
   text-transform: uppercase; vertical-align: 1px; opacity: 0.75;
