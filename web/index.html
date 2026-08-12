@@ -2138,12 +2138,65 @@
     // (dollars = rate x acres; acres x (1 - sf) is the new denominator), so
     // this needs no acre lookup — but the AVERAGE below still weights by acres.
     const deviationRate = p => p[state.labCut] / devAcreFrac(p);
+
+    // --- the institutional uncertainty band ---------------------------------
+    // ⚠️ THE BAND IS NOT AN ERROR BAR AND ITS DIRECTION IS UNKNOWN. The roll
+    // publishes assessments and a tax class, NOT exemption status, and this
+    // pipeline levies every record on it. So for a hood built on AJ/UF/UI/PU
+    // land there are two coherent worlds and no public source picks between
+    // them: the City levies those parcels (our modelled figure is right), or
+    // it exempts them (we are OVERSTATING that hood). ⚠️ It must never be
+    // drawn or described as revenue the City fails to collect — that asserts
+    // an exemption status nothing establishes (DECISIONS.md 2026-08-08).
+    //
+    // Hence: both endpoints render as bare OUTLINES in one colour, with no
+    // solid prism and no arrow. A banded hood asserts no value at all — which
+    // is the honest rendering when the answer is unknown rather than merely
+    // imprecise. Measured: U of A runs +$144,839 to -$8,013, a $152,852 band
+    // that crosses the plane, so it is either the second-strongest hood in
+    // Edmonton or a slightly below-average one.
+    //
+    // ⚠️ BOTH SIDES MOVE TOGETHER. The low endpoint is scored against the
+    // EXEMPT-scenario average ($25,535 on Total, not $26,838), because in the
+    // world where that revenue is not levied the citywide average is lower
+    // too. Mixing a hood's exempt rate with the levied average would be the
+    // same cross-universe error the budgeted-levy substitution makes.
+    //
+    // filled:false + wireframe:true draws outline only, and the outline
+    // renders below the plane, and two prisms on one footprint do not z-fight
+    // — all three MEASURED in probe-uncertainty-band.html, not assumed.
+    const INST_UNCERTAIN_MIN = 0.25;   // 15 hoods on Total; 2 on Residential
+    const UNCERTAIN_COLOR = [225, 190, 90];
+    const instFrac = p => p.rev_frac_inst || 0;
+    const isUncertain = p => inDeviationPop(p) && instFrac(p) >= INST_UNCERTAIN_MIN;
+    // The rate with institutional revenue removed — the other coherent world.
+    const deviationRateExempt = p =>
+      p[state.labCut] * (1 - instFrac(p)) / devAcreFrac(p);
+    // Both endpoints as deviations, each against ITS OWN scenario average.
+    //
+    // ⚠️ `exempt` IS NOT ALWAYS THE LOWER END, and the naming says so on
+    // purpose. Removing institutional revenue drops the citywide average by
+    // $1,303/acre on Total, so a hood that loses LESS than that in absolute
+    // dollars ends up better off relative to its peers: EVERGREEN loses
+    // $1,215/acre and gains $87, RIVER VALLEY CAMERON loses $461 and gains
+    // $842. Both are near-floor hoods whose institutional SHARE is high while
+    // the dollars behind it are small. Anything that assumes exempt < levied
+    // renders these two backwards — a first version of the verify script
+    // asserted exactly that and was wrong, not the code.
+    const deviationBand = p => {
+      if (!isUncertain(p)) return null;
+      const s = deviationStats();
+      return { levied: deviationRate(p) - s.avg, exempt: deviationRateExempt(p) - s.avgExempt };
+    };
+    // Ordered for display, so a printed range never reads high-to-low.
+    const deviationBandSpan = b => b && (b.exempt <= b.levied
+      ? { lo: b.exempt, hi: b.levied } : { lo: b.levied, hi: b.exempt });
     const _devStats = {};
     function deviationStats() {
       const colKey = state.labCut;
       if (_devStats[colKey]) return _devStats[colKey];
       const props = state.data.features.map(f => f.properties);
-      let num = 0, acres = 0, devAcres = 0;
+      let num = 0, numExempt = 0, acres = 0, devAcres = 0, banded = 0;
       for (const p of props) {
         if (!p.revenue_per_acre || p.total_revenue == null) continue;
         if (!inDeviationPop(p)) continue;
@@ -2151,8 +2204,15 @@
         acres += a;
         devAcres += a * devAcreFrac(p);
         num += (p[colKey] || 0) * a;
+        // The same average in the world where institutional land is exempt.
+        // Banded hoods stay IN it — they are real revenue on the real roll,
+        // and dropping them would move everyone else's benchmark on the
+        // strength of a question nobody has answered.
+        numExempt += (p[colKey] || 0) * (1 - instFrac(p)) * a;
+        if (instFrac(p) >= INST_UNCERTAIN_MIN) banded++;
       }
       const avg = devAcres ? num / devAcres : 0;
+      const avgExempt = devAcres ? numExempt / devAcres : 0;
       // Per-arm p95 clamps, for COLOUR ONLY — the chgStats/infill precedent,
       // and here the asymmetry is structural rather than merely empirical:
       // revenue per acre cannot be negative, so the deficit arm is floored at
@@ -2166,6 +2226,8 @@
       const neg = devs.filter(v => v < 0).map(v => -v).sort((a, b) => a - b);
       return (_devStats[colKey] = {
         avg,
+        avgExempt,
+        banded,
         clampPos: pos.length ? quantile(pos, 0.95) || 1 : 1,
         clampNeg: neg.length ? quantile(neg, 0.95) || 1 : 1,
         floor: -avg,
@@ -2199,13 +2261,19 @@
     // This is the only lens that uses it; Change stays flat by its own
     // decision, which this does not disturb.
     //
-    // ⚠️ HEIGHT IS TRUE TO SCALE, on Money's own elevationScale, so a bar here
-    // is directly comparable to the same hood's bar on the Revenue map. The
-    // deficit bars are therefore SHALLOW — the drop is floored at −$14,049
-    // against a +$234,399 peak — and that shallowness IS the finding. It is
-    // not a scaling artefact and must not be "fixed" by giving the arms
-    // separate elevation scales: two arms at different scales would draw a
-    // deficit and a surplus of visibly equal size on unequal numbers.
+    // ⚠️ HEIGHT IS TRUE TO SCALE on Money's own elevationScale, but a bar here
+    // is NOT comparable to the same hood's bar on the Revenue map — that map
+    // divides by boundary acres and this one by developed acres, so a
+    // half-set-aside hood's bar roughly doubles. The deficit arm is floored at
+    // −$26,838 against a +$232,019 peak, and that asymmetry IS the finding: it
+    // is not a scaling artefact and must not be "fixed" by giving the arms
+    // separate elevation scales, which would draw a deficit and a surplus of
+    // visibly equal size on unequal numbers.
+    //
+    // ⚠️ BANDED HOODS DRAW NO PRISM HERE — they are flattened to 0 and take a
+    // dim outline colour, because their value is unknown rather than merely
+    // uncertain (see deviationBand). Their two endpoints are drawn as bare
+    // outlines by deviationBandLayers() instead.
     function deviationLayer() {
       const cfg = METRICS[state.labCut];
       return new deck.GeoJsonLayer({
@@ -2215,10 +2283,12 @@
         filled: true,
         stroked: false,
         wireframe: false,
-        getElevation: f => deviationOf(f.properties) || 0,
+        getElevation: f => isUncertain(f.properties) ? 0 : (deviationOf(f.properties) || 0),
         elevationScale: cfg.elevationScale,
         getFillColor: f => {
-          const t = deviationT(f.properties);
+          const p = f.properties;
+          if (isUncertain(p)) return UNCERTAIN_COLOR.concat([90]);
+          const t = deviationT(p);
           return t == null ? SET_ASIDE_COLOR : infillColorAt(t);
         },
         material: { ambient: 0.55, diffuse: 0.6, shininess: 32, specularColor: [60, 60, 70] },
@@ -2230,6 +2300,41 @@
           getFillColor: [state.labCut],
         },
       });
+    }
+
+    // The two endpoints of every banded hood, as bare OUTLINES — one layer per
+    // endpoint, because deck.gl extrudes from the ground plane to getElevation
+    // and cannot draw a prism floating between two heights. Where the band
+    // crosses zero (U of A) the two layers read as one bar spanning the plane,
+    // which is the whole point; where it does not (Central McDougall) the near
+    // endpoint reads as a tick inside the far one.
+    //
+    // ⚠️ NO SOLID FILL ON EITHER, deliberately. A solid endpoint would give one
+    // of the two worlds visual primacy, and nothing in the data picks between
+    // them. filled:false + wireframe:true draws outline only — measured in
+    // probe-uncertainty-band.html, along with the fact that two prisms on one
+    // footprint do not z-fight.
+    function deviationBandLayers() {
+      const cfg = METRICS[state.labCut];
+      const mk = (id, pick) => new deck.GeoJsonLayer({
+        id,
+        data: state.data,
+        extruded: true,
+        filled: false,
+        stroked: false,
+        wireframe: true,
+        getElevation: f => {
+          const b = deviationBand(f.properties);
+          return b ? pick(b) : 0;
+        },
+        elevationScale: cfg.elevationScale,
+        getLineColor: UNCERTAIN_COLOR.concat([230]),
+        getLineWidth: 12,
+        lineWidthMinPixels: 1,
+        pickable: false,
+        updateTriggers: { getElevation: [state.labCut] },
+      });
+      return [mk("deviation-band-levied", b => b.levied), mk("deviation-band-exempt", b => b.exempt)];
     }
 
     // ⚠️ KEEP THIS SHORT. Development's and Infill's blurbs are 442px and 479px
@@ -2246,7 +2351,13 @@
         deviationPeers() + "' average of " + fmtMoney(s.avg) + ". Teal rises " +
         "above it, orange sinks below; " + s.below + " fall below. Height is " +
         "true to scale, floored at " + fmtDeviation(s.floor) + " against a " +
-        fmtDeviation(s.peak) + " peak. Not a cost-of-service comparison — it " +
+        fmtDeviation(s.peak) + " peak. " +
+        (s.banded
+          ? s.banded + " institutional neighbourhood" + (s.banded === 1 ? "" : "s") +
+            " show an outlined range, not a bar — the roll does not say whether " +
+            "that land is levied. "
+          : "") +
+        "Not a cost-of-service comparison — it " +
         "says nothing about what serving a neighbourhood costs.";
     }
 
@@ -3074,7 +3185,9 @@
         // to properties[colKey] * scale and the height here is a derived
         // difference, not a column, so it would draw every ring at the wrong z.
         // The prisms are pickable themselves (like Money's), so no hover layer.
-        return [deviationLayer(), ...labelLayer()];
+        // Bands draw AFTER the prisms so their outlines are not hidden inside
+        // a neighbour's solid geometry.
+        return [deviationLayer(), ...deviationBandLayers(), ...labelLayer()];
       }
 
       if (state.view === "glass") {
@@ -3993,6 +4106,12 @@
         return fmtChg(c.rate) + " of share";
       }
       if (state.view === "deviation") {
+        const b = deviationBand(p);
+        if (b) {
+          const sp = deviationBandSpan(b);
+          return `<span class="muted">${fmtDeviation(sp.lo)} to ` +
+            `${fmtDeviation(sp.hi)} — institutional, unknown</span>`;
+        }
         const d = deviationOf(p);
         if (d == null)
           return `<span class="muted">` + (p.is_set_aside ? "Set aside" :
@@ -4154,6 +4273,21 @@
 
       if (state.view === "deviation") {
         const s = deviationStats();
+        const band = deviationBand(p);
+        // ⚠️ A BANDED HOOD PRINTS NO SINGLE VALUE — the range IS the answer,
+        // and the copy must not imply the low end is the true one. "Alberta
+        // law exempts many of these; the roll does not say which" states the
+        // ignorance without asserting a direction (DECISIONS.md 2026-08-08).
+        if (band) {
+          const sp = deviationBandSpan(band);
+          return { className: "tip", html: name +
+            `<b>${fmtDeviation(sp.lo)} to ${fmtDeviation(sp.hi)}</b>` +
+            ` / developed acre<br/>` +
+            `<span class="muted">${Math.round(instFrac(p) * 100)}% of its revenue ` +
+            `is institutional land</span><br/>` +
+            `<span class="muted">Alberta law exempts many such properties; the ` +
+            `roll does not say which — so this hood's value is unknown</span>` };
+        }
         const d = deviationOf(p);
         // ⚠️ TWO REASONS a hood is null now, and they must not read as one:
         // set aside (no comparable land) versus the wrong side of the
@@ -4788,7 +4922,10 @@
         document.getElementById("legend-max").textContent = fmtDeviation(s.clampPos) + " →";
         // Covers both exclusions without enumerating them — set aside, or the
         // wrong side of the residential split. Neither is in the average now.
-        label.textContent = "Off the scale — and out of the average";
+        // The banded hoods get a clause rather than a second swatch row: the
+        // legend has one aside slot, and the blurb already explains them.
+        label.textContent = "Off the scale — and out of the average" +
+          (s.banded ? " · outlined = value unknown" : "");
         sw.style.background = `rgb(${SET_ASIDE_COLOR.join(",")})`;
       } else if (state.view === "ratio") {
         const s = ratioScale();

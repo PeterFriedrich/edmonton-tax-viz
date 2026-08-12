@@ -218,6 +218,33 @@ it is **63%**. Hoods outside the active population — set aside, or the wrong
 side of the residential split — are **null: off the scale, flat, AND out of the
 average.**
 
+⚠️ **INSTITUTIONAL UNCERTAINTY BANDS (2026-08-12).** A hood whose revenue is
+**≥25% institutional** (`rev_frac_inst`) draws **no prism at all** — it is
+replaced by two bare outlines in amber, one per scenario, and asserts no value.
+15 such hoods on Total, 2 on Residential, 13 on Non-residential.
+
+The reason is that the roll publishes assessments and a tax class but **not
+exemption status**, and this pipeline levies every record on it. So there are
+two coherent worlds and no public source picks between them. ⚠️ **The band must
+never be drawn or described as revenue the City fails to collect** — that
+asserts an exemption status nothing establishes (`DECISIONS.md` 2026-08-08).
+`verify-deviation.js` greps the rendered copy for direction words.
+
+⚠️ **BOTH SIDES MOVE TOGETHER**: the exempt endpoint is scored against the
+**exempt-scenario average** ($25,535 on Total, not $26,838), because in that
+world the citywide average is lower too.
+
+⚠️ **`exempt` IS NOT ALWAYS THE LOWER END.** Removing institutional revenue
+drops the citywide average by $1,303/acre, so a hood losing less than that in
+absolute dollars *gains* ground: **EVERGREEN +$87, RIVER VALLEY CAMERON +$842**.
+Both are near-floor hoods with a high institutional *share* but few dollars
+behind it. Display sorts via `deviationBandSpan`; a first verify check asserted
+`exempt < levied` and was wrong.
+
+Widest band: **UNIVERSITY OF ALBERTA, +$144,839 to −$8,013** ($152,852, crosses
+the plane). **5 of the 15 bands cross zero**, so those hoods have no determinate
+side of the average.
+
 ⚠️ **A bar is NO LONGER comparable to the same hood's bar on the Revenue map**,
 which divides by boundary acres. The 2026-08-11 claim that it was is retired.
 The lens is also no longer rank-identical to Money: **Spearman 0.900, 242 of

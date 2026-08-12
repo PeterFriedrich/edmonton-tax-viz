@@ -1,7 +1,11 @@
-// Verify the Lab and its first experiment, the deviation lens ("vs city
-// average"). Full build only.
+// Verify the Lab and its first experiment, the deviation lens ("vs peer
+// average" — revenue per DEVELOPED acre, population per cut). Full build only.
 //
-// The four things that fail SILENTLY here, in order of how badly:
+// The six things that fail SILENTLY here, in order of how badly:
+//   0. the denominator slips back to BOUNDARY acres, which does not crash but
+//      moves the zero line ~47% and reclassifies 127 hoods from below-average
+//      to above; or a banded hood draws a solid prism and so asserts a value
+//      the roll cannot support;
 //   1. the citywide average is recomputed from an external levy total instead
 //      of the served features, moving the zero line and reclassifying hoods;
 //   2. the Lab borrows Money's state.metric instead of its own state.labCut —
@@ -167,6 +171,70 @@ const check = (name, ok, detail = '') => {
   check('set-aside hoods are OUT of the average, not merely off the scale',
     st.indep.n <= st.indep.notSetAside && st.indep.setAside > 0,
     `${st.indep.n} scored, ${st.indep.setAside} set aside`);
+
+  // --- the institutional uncertainty band --------------------------------
+  // ⚠️ The band exists because the roll does not publish exemption status, so
+  // the FAILURE MODE IS EDITORIAL as much as numeric: a banded hood must not
+  // assert a value, and the copy must not imply the low end is the true one.
+  const band = await page.evaluate(() => {
+    const hi = overlay._props.layers.find(l => l.id === 'deviation-band-levied');
+    const lo = overlay._props.layers.find(l => l.id === 'deviation-band-exempt');
+    const main = overlay._props.layers.find(l => l.id === 'deviation-extrusion');
+    if (!hi || !lo) return { missing: true };
+    let drawn = 0, crossZero = 0, stillExtruded = 0, wrongOrder = 0, unbandedDrawn = 0, inverted = 0;
+    for (const f of state.data.features) {
+      const b = deviationBand(f.properties);
+      const a = hi.props.getElevation(f), c = lo.props.getElevation(f);
+      if (b) {
+        drawn++;
+        if (a > 0 && c < 0) crossZero++;
+        if (main.props.getElevation(f) !== 0) stillExtruded++;
+        // ⚠️ NOT "exempt <= levied" — that is FALSE and an earlier version of
+        // this check asserted it. Removing institutional revenue also drops
+        // the citywide average, so a hood losing less than the city gains
+        // ground (EVERGREEN +$87, RIVER VALLEY CAMERON +$842). The real
+        // invariant is on REVENUE, not on the deviation: the exempt rate can
+        // never exceed the levied rate for the same hood.
+        if (deviationRateExempt(f.properties) > deviationRate(f.properties) + 1e-6) wrongOrder++;
+        if (c > a) inverted++;
+      } else if (a !== 0 || c !== 0) unbandedDrawn++;
+    }
+    const s = deviationStats();
+    const ua = state.data.features.find(f =>
+      f.properties.neighbourhood_name === 'UNIVERSITY OF ALBERTA');
+    return { drawn, crossZero, stillExtruded, wrongOrder, unbandedDrawn, inverted,
+             banded: s.banded, avg: s.avg, avgExempt: s.avgExempt,
+             hiFilled: hi.props.filled, hiWireframe: hi.props.wireframe,
+             tip: ua ? viewTooltip({ object: ua }).html : '' };
+  });
+  check('the band layers exist', !band.missing);
+  check('every banded hood draws a band', band.drawn === band.banded && band.drawn > 0,
+    `${band.drawn} drawn, ${band.banded} banded`);
+  check('NO un-banded hood draws a band', band.unbandedDrawn === 0, `${band.unbandedDrawn}`);
+  // ⚠️ THE "REPLACED, NOT ANNOTATED" RULE. A banded hood that still extrudes a
+  // solid prism would assert the modelled value and contradict its own band.
+  check('*** a banded hood draws NO solid prism ***', band.stillExtruded === 0,
+    `${band.stillExtruded} banded hoods still extruded`);
+  check('the exempt RATE never exceeds the levied rate', band.wrongOrder === 0,
+    `${band.wrongOrder} inverted`);
+  check('at least one band inverts, so the display cannot assume an order',
+    band.inverted > 0, `${band.inverted} of ${band.drawn} invert`);
+  check('some bands cross the ground plane', band.crossZero > 0, `${band.crossZero}`);
+  // Outline only: a solid endpoint gives one of two unknowable worlds primacy.
+  check('band endpoints are OUTLINE ONLY (filled:false, wireframe:true)',
+    band.hiFilled === false && band.hiWireframe === true,
+    `filled=${band.hiFilled} wireframe=${band.hiWireframe}`);
+  // Both sides move together — the low endpoint is scored against the exempt
+  // average, not the levied one. Mixing them is the cross-universe error.
+  check('the exempt-scenario average is lower than the levied one',
+    band.avgExempt < band.avg && band.avgExempt > 0,
+    `exempt ${band.avgExempt.toFixed(0)} vs levied ${band.avg.toFixed(0)}`);
+  const tipText = band.tip.replace(/<[^>]+>/g, ' ');
+  check('a banded tooltip prints a RANGE, not a single value', / to /.test(tipText), tipText.slice(0, 90));
+  // ⚠️ The locked wording rule: never "revenue lost" / "uncollected", and no
+  // claim about which end is true (DECISIONS.md 2026-08-08).
+  check('*** the band copy asserts NO direction ***',
+    !/lost|uncollect|foregone|should be|really|actually/i.test(tipText), tipText.slice(0, 120));
 
   // 2 — the deficit half really extrudes below the plane.
   check('some hoods extrude BELOW the ground plane', st.elev.negative > 0,
