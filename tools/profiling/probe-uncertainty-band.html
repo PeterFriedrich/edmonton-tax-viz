@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<!-- Throwaway probe for the deviation lens's institutional uncertainty band.
+     Three questions the design rides on, none of them assumed:
+       1. Does `filled:false, wireframe:true` draw ONLY the outline of an
+          extruded prism, or does it still fill the faces?
+       2. Does a wireframe render on a NEGATIVE elevation? (Negative extrusion
+          itself is already proven — probe-negative-elevation.html.)
+       3. Do two prisms on the SAME footprint at different elevations z-fight
+          on their shared side walls, or does the shorter one read cleanly
+          inside the taller one?
+     Measure, don't assume: this lens has had two false rendering premises. -->
+<html>
+<head><meta charset="utf-8" /><style>html,body,#c{margin:0;width:100%;height:100%;background:#0a0a0f}</style></head>
+<body>
+<div id="c"></div>
+<script src="../../web/vendor/deck.gl-9.0.38.min.js"></script>
+<script>
+  const square = (lon, lat, d) => [[
+    [lon - d, lat - d], [lon + d, lat - d], [lon + d, lat + d], [lon - d, lat + d], [lon - d, lat - d],
+  ]];
+  // A: band crossing zero (the U of A case: +144.8k levied, -8.0k exempt).
+  // B: band entirely above zero (Central McDougall: +51.6k / +19.2k) — the
+  //    nesting case, where z-fighting would show if it happens.
+  const A = square(-0.02, 0, 0.01);
+  const B = square( 0.02, 0, 0.01);
+  const UNC = [225, 190, 90];
+
+  const layer = (id, data, filled, wireframe) => new deck.PolygonLayer({
+    id, data, extruded: true, filled, stroked: false, wireframe,
+    getPolygon: d => d.polygon,
+    getElevation: d => d.elev,
+    getFillColor: UNC.concat([70]),
+    getLineColor: UNC.concat([255]),
+    getLineWidth: 30,
+    material: { ambient: 0.6, diffuse: 0.6 },
+  });
+
+  new deck.Deck({
+    parent: document.getElementById('c'),
+    initialViewState: { longitude: 0, latitude: 0, zoom: 9, pitch: 60, bearing: 0 },
+    controller: false,
+    layers: [
+      // Both endpoints of each band, as OUTLINE ONLY (filled:false).
+      layer('far',  [{ polygon: A, elev:  28000 }, { polygon: B, elev:  28000 }], false, true),
+      layer('near', [{ polygon: A, elev:  -8000 }, { polygon: B, elev:  10000 }], false, true),
+    ],
+    onAfterRender: () => { window.__rendered = true; },
+  });
+</script>
+</body>
+</html>
