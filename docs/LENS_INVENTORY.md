@@ -22,8 +22,17 @@ override for testing.
 
 | | Public root | Specialist `/full/` |
 |---|---|---|
-| Views | Money · Services · Ratio · **Development** | + **Uses** |
+| Views | Money · **Development** | + **Services · Ratio · Uses · Lab** `beta` |
 | Development extras | — | **Infill opportunity** lens · **Industrial** metric |
+| Lab experiments | — | **vs city average** (`deviation`) |
+
+⚠️ **The Views row was STALE and is corrected 2026-08-11 (measured, not
+inferred):** it listed Services and Ratio as public, but both were pulled to
+full-only on **2026-07-28** (`CONTROLS_MATRIX.md` §2, `DECISIONS.md`), three
+days after this file was last regenerated. Probed in the running public build:
+`#views` offers exactly `money, development`. ⚠️ **The rest of this file has
+NOT been re-probed since 2026-07-25** — treat per-view detail below as
+possibly-stale and re-generate from the code before relying on it.
 
 Everything else is identical. Full-only pieces are hidden at the control level
 (`|| !FULL_BUILD` next to their data guard), not stripped from the file.
@@ -59,7 +68,7 @@ The button label **is** the state readout for `#coloradj` (no caption since
 
 ---
 
-## The 4 (public) / 5 (full) views
+## The 2 (public) / 6 (full) views
 
 ### 1. Money *(default)*
 The revenue/value prisms — the money plane.
@@ -167,6 +176,39 @@ what it yields), over the 2024 Zoning Bylaw geometry.
 - **Combinations:** prisms on/off = **2**.
 
 ---
+
+### 6. Lab *(full build only, `beta` — NEW 2026-08-11)*
+
+**A container, not a lens.** The `#views` button opens whichever experiment was
+last active (`state.lab`); `LAB_EXPERIMENTS` is the registry. Hidden entirely in
+the public build by the one-time `if (!FULL_BUILD)` block, which is a *different*
+gate from the `|| !FULL_BUILD` pattern the other full-only pieces use — the Lab
+has no data dependency, so nothing else would keep it off the published page.
+
+| Control | Options | Notes |
+|---|---|---|
+| `#labpick` | one button per experiment | **Hidden while there is only one** — a chooser with one option is not a choice (the `syncServiceControls` rule). Rendered from the registry, so adding an experiment needs no markup. |
+| `#labcut` | Total · Residential · Non-residential | The **Lab's own** copy of Money's revenue cuts, driving `state.labCut`. ⚠️ **Deliberately not shared with `#revcut`** — see below. |
+
+`#toggle` (Money's metric pod) is **hidden** in the Lab, unlike `change` and
+`glass` which keep it.
+
+#### vs city average (`deviation`)
+
+Each hood's revenue per acre re-centred on the citywide average
+(**$14,049/acre**, Σ`total_revenue` ÷ Σ acres from the served features — never
+an external total). **Extruded, and the deficit half extrudes BELOW the ground
+plane** — the only lens that does; height is true to scale on Money's own
+`elevationScale`, so a bar is comparable to the same hood's bar on the Revenue
+map. Colour is the diverging `infillColorAt` ramp at a per-arm p95 clamp.
+
+⚠️ **Not a cost-of-service comparison, and must never be named as one** (no
+"COSA", no "cost of service" in code, columns, filenames or copy).
+`verify-deviation.js` greps the rendered copy for both.
+
+⚠️ **It reads `state.labCut`, NEVER `state.metric`.** It first shipped as a
+`#moneymode` button where those were one variable; entering from the Value map
+would have averaged assessed value and printed it under a "Revenue" title.
 
 ## Quick "what combines with what" matrix
 

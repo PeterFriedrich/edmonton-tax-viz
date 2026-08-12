@@ -89,9 +89,26 @@ seven became modes of another view rather than top-level entries:
 | **Services** 🔒 | `services` | Full build only — **LOCKED for release 2026-07-28**. |
 | **Ratio** 🔒 | `ratio` | Full build only — **LOCKED for release 2026-07-28**. |
 | **Uses** 🔒 | `uses` | Full build only — **LOCKED for release 2026-07-28** (was provisional 07-24). |
+| **Lab** 🔒 `beta` | `deviation` *(+ future experiments)* | **NEW 2026-08-11.** Full build only, and it is a **CONTAINER, not a lens** — the `#views` button opens whichever experiment was last active (`state.lab`), and the registry `LAB_EXPERIMENTS` is the list. Carries a `beta` tag in the button itself. First and only experiment today: `deviation` ("vs city average"). |
 
-So **public `#views` = 2 buttons** (Money · Development); **`/full/` = 5**.
-Verified in both builds 2026-07-28.
+So **public `#views` = 2 buttons** (Money · Development); **`/full/` = 6**.
+Verified in both builds 2026-07-28; the Lab re-verified 2026-08-11
+(`verify-deviation.js` asserts the public row is still exactly
+`money,development`).
+
+⚠️ **The Lab is the first `#views` entry that is not a lens**, and that
+distinction is load-bearing rather than pedantic:
+- **Its experiments keep their OWN state.** `deviation` reads `state.labCut`,
+  never Money's `state.metric`. It first shipped as a `#moneymode` button where
+  those were one variable, and entering from the Value map would have averaged
+  **assessed value** and printed it under a title saying *Revenue*
+  (`DECISIONS.md` 2026-08-11, second entry).
+- **Its own `#layers` sections**: `#labpick` (the experiment picker, hidden
+  until there are 2+ — the services-radio rule) and `#labcut` (the deviation
+  experiment's revenue cut, the Lab's own copy of Money's three cuts).
+- **`#toggle` is HIDDEN in the Lab**, unlike `change`/`glass` which keep it.
+- **Adding an experiment is one line** in `LAB_EXPERIMENTS` plus its view
+  branches; no chrome work for the second one.
 
 **This is the release shape (Peter, 2026-07-28): "2 views is fine for release,
 lock it in. We'll add the other stuff later, like one lens at a time."** The
@@ -114,6 +131,7 @@ lenses" pass.
 | **Infill** lens on Development | ❌ | ✅ |
 | **Assessment-history panel + hover sparkline + `#hoodmode`** | ✅ _(promoted 2026-07-31)_ | ✅ | _(⚠️ **Services has its own panel as of 2026-08-10** — cost against revenue, not history. `#hoodmode` is offered there again; the sparkline is not, it belongs to the history data)_ |
 | **Change over time** lens on Money (`#moneymode` / `#chgwindow`) | ✅ _(promoted 2026-07-31)_ | ✅ |
+| **Lab** view + every experiment in it (`#labpick` / `#labcut`) | ❌ _(2026-08-11 — unfinished by definition)_ | ✅ `beta` |
 | **`#peek`, the touch-only peek card** | ✅ | ✅ | _(gated on `(hover: none)`, not on build — invisible to every mouse in both)_ |
 | **Industrial** metric on Development | ❌ | ✅ |
 | Money tooltip's **road m/acre + $/road metre** rows | ❌ _(went with Ratio, 2026-07-28)_ | ✅ |
@@ -124,6 +142,14 @@ lenses" pass.
 Full-only *modes/metrics inside a public view* (Infill, Industrial) are
 `BUILD`-flag-gated at the control level — `|| !FULL_BUILD` sits next to their
 data guard, so nothing is stripped from the file.
+
+⚠️ **The Lab gates DIFFERENTLY, and on purpose: at the `#views` button, in the
+one-time `if (!FULL_BUILD)` block near the top of the script — not beside a data
+guard.** It has no data dependency (its experiments read columns the public
+build also carries), so there is nothing else that would keep the button off
+the published page. **A future experiment that needs its own data still gates
+its data the usual way; the container gate is separate from and additional to
+that.**
 
 **The split moves in BOTH directions, and the 2026-07-31 promotion is the
 worked example.** `DECISIONS.md` 2026-07-22 locks the two-build *mechanism*; the

@@ -1702,3 +1702,54 @@ unrepresentable. `verify-about.js` recomputes all four independently.
 ⚠️ **That 9.2× is now 4.6×** (roads corrected 2026-08-04), which is the rule
 paying for itself: the fix was one dollar value, with nothing downstream to
 re-pin.
+
+## The Lab: a sixth button that is not a lens (2026-08-11)
+
+Asked for as an experimental family with more to come — *"a whole separate
+button outside of revenue or money… I may add other experiments to that lens."*
+It shipped **twice in one day**, and the difference between the two versions is
+the part worth keeping.
+
+**Version 1 was a third `#moneymode` button** under Revenue, beside Current and
+Change over time. It worked, it verified, and it was wrong on the thing that
+matters: **a mode reads as a variant of the lens hosting it.** An experiment
+parked under Money inherits Money's credibility, and the entire reason this work
+is separate is that it has not earned it. `#moneymode` also had to grow a
+per-quantity gate (Change under Value, deviation under Revenue) — chrome
+complexity bought purely to host something that did not belong there.
+
+**Version 2 is its own `#views` button with a `beta` tag**, hidden outright in
+the public build, and `#moneymode` went back to exactly what it was.
+
+⚠️ **Moving it exposed a real defect, which is the argument for the separation
+rather than a bonus.** As a `#moneymode` button the lens read `state.metric` —
+the same variable Money uses. `#moneymode` shows under **Value**. So entering
+the lens from the Value map would have computed a "citywide average" over
+**assessed value** (~$1.8M/acre) and printed it under a title reading
+*Revenue*: internally consistent arithmetic, labelled wrong, with nothing on
+screen to give it away. The container fixed it structurally — an experiment
+keeps its own state (`state.labCut`) — rather than by adding a guard.
+`verify-deviation.js` now drives that exact path and asserts the average does
+not move.
+
+**Built as a container from the first commit, not retrofitted later.**
+`LAB_EXPERIMENTS` is a registry; `#labpick` renders from it and **stays hidden
+while there is only one entry** — a chooser with one option is not a choice,
+the same rule `syncServiceControls` applies to the service radios. So the
+container costs no dead chrome today, and the second experiment costs no chrome
+work.
+
+**Three smaller calls:**
+- **`.beta` is a generic class, not `#moneymode .beta`.** It inherits
+  `currentColor` so it stays legible on the amber active state.
+- **The Lab gates at the `#views` button in the one-time `if (!FULL_BUILD)`
+  block**, not beside a data guard like Infill and Industrial — it has no data
+  dependency, so nothing else would keep it off the published page.
+- **`#labcut` is the Lab's OWN copy of Money's three revenue cuts.** Duplicating
+  three buttons was preferred over either reaching into `#toggle` for state or
+  pinning the lens to Total and losing the cuts.
+
+**Naming:** "Lab" over "Experiments" because `#views` is now six buttons and
+that row wraps at ≤640px — the shortest label that still reads as unfinished.
+⚠️ **That row is the one piece of chrome every view shares, and it has not been
+checked on a phone** (`TODO.md`).
