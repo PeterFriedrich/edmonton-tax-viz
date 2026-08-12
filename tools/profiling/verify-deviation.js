@@ -205,6 +205,11 @@ const check = (name, ok, detail = '') => {
     return { drawn, crossZero, stillExtruded, wrongOrder, unbandedDrawn, inverted,
              banded: s.banded, avg: s.avg, avgExempt: s.avgExempt,
              hiFilled: hi.props.filled, hiWireframe: hi.props.wireframe,
+             bandColor: hi.props.getLineColor,
+             bandedFill: (() => {
+               const f = state.data.features.find(x => deviationBand(x.properties));
+               return f ? main.props.getFillColor(f) : null;
+             })(),
              tip: ua ? viewTooltip({ object: ua }).html : '' };
   });
   check('the band layers exist', !band.missing);
@@ -229,6 +234,18 @@ const check = (name, ok, detail = '') => {
   check('the exempt-scenario average is lower than the levied one',
     band.avgExempt < band.avg && band.avgExempt > 0,
     `exempt ${band.avgExempt.toFixed(0)} vs levied ${band.avg.toFixed(0)}`);
+  // ⚠️ THE WORDING RULE MADE VISUAL. A tinted band leans toward a pole and so
+  // asserts the direction the copy is forbidden to assert. Amber shipped first
+  // and measured ΔE 9.5 against the deficit orange under NORMAL vision (floor
+  // 15), i.e. the "unknown" hoods read as "below average" to everyone.
+  check('*** the band colour is ACHROMATIC (cannot imply a pole) ***',
+    band.bandColor && band.bandColor[0] === band.bandColor[1] &&
+    band.bandColor[1] === band.bandColor[2],
+    `rgb(${(band.bandColor || []).slice(0, 3).join(',')})`);
+  // A filled floor under a hollow prism reads as a value the hood does not have.
+  check('a banded hood has NO fill under it', band.bandedFill && band.bandedFill[3] === 0,
+    `alpha ${(band.bandedFill || [])[3]}`);
+
   const tipText = band.tip.replace(/<[^>]+>/g, ' ');
   check('a banded tooltip prints a RANGE, not a single value', / to /.test(tipText), tipText.slice(0, 90));
   // ⚠️ The locked wording rule: never "revenue lost" / "uncollected", and no

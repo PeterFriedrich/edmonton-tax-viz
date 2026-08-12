@@ -2166,7 +2166,16 @@
     // renders below the plane, and two prisms on one footprint do not z-fight
     // — all three MEASURED in probe-uncertainty-band.html, not assumed.
     const INST_UNCERTAIN_MIN = 0.25;   // 15 hoods on Total; 2 on Residential
-    const UNCERTAIN_COLOR = [225, 190, 90];
+    // ⚠️ ACHROMATIC ON PURPOSE, and it is the wording rule made visual: a band
+    // that asserts no direction must not be tinted toward either pole. This
+    // shipped amber first and that was wrong twice over — measured against the
+    // ramp, #e1be5a vs the deficit #f49642 is ΔE 5.3 under deuteranopia and
+    // 9.5 under NORMAL vision, below the hard floor of 15, so the "unknown"
+    // hoods read as "below average" to everyone. White clears it at 13.0 CVD /
+    // 20.6 normal — the best of white/near-white/blue/violet — and blue was
+    // rejected on meaning as much as numbers: a cool hue leans toward the teal
+    // surplus pole. verify-deviation.js pins R === G === B.
+    const UNCERTAIN_COLOR = [255, 255, 255];
     const instFrac = p => p.rev_frac_inst || 0;
     const isUncertain = p => inDeviationPop(p) && instFrac(p) >= INST_UNCERTAIN_MIN;
     // The rate with institutional revenue removed — the other coherent world.
@@ -2287,7 +2296,11 @@
         elevationScale: cfg.elevationScale,
         getFillColor: f => {
           const p = f.properties;
-          if (isUncertain(p)) return UNCERTAIN_COLOR.concat([90]);
+          // ⚠️ FULLY TRANSPARENT, not a dim slab. A filled floor under a hollow
+          // prism reads as a value the hood does not have, and at low alpha
+          // over the dark surface it just muddies the outline. The wireframe
+          // draws its own base ring at 0, so the footprint is still marked.
+          if (isUncertain(p)) return [0, 0, 0, 0];
           const t = deviationT(p);
           return t == null ? SET_ASIDE_COLOR : infillColorAt(t);
         },
@@ -2328,9 +2341,9 @@
           return b ? pick(b) : 0;
         },
         elevationScale: cfg.elevationScale,
-        getLineColor: UNCERTAIN_COLOR.concat([230]),
-        getLineWidth: 12,
-        lineWidthMinPixels: 1,
+        getLineColor: UNCERTAIN_COLOR.concat([255]),
+        getLineWidth: 30,
+        lineWidthMinPixels: 2,
         pickable: false,
         updateTriggers: { getElevation: [state.labCut] },
       });
