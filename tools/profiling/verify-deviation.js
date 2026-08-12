@@ -71,14 +71,41 @@ const check = (name, ok, detail = '') => {
       moneyMetric: state.metric,
       stats: deviationStats(),
       // Re-derive the average here, independently of the page's own helper.
+      // ⚠️ DEVELOPED acres, area x (1 - set_aside_frac), over the CUT'S OWN
+      // population — set-aside hoods and the wrong side of the residential
+      // split are out of both sides. Written out longhand rather than calling
+      // inDeviationPop/deviationRate so this stays an independent oracle and
+      // not a restatement of the code it checks.
       indep: (() => {
+        const cut = state.labCut;
+        const pop = p => cut === 'res_revenue_per_acre' ? p.is_residential === true
+          : cut === 'nonres_revenue_per_acre' ? p.is_residential === false : true;
+        let rev = 0, acres = 0, devAcres = 0, n = 0;
+        for (const p of feats) {
+          if (!p.revenue_per_acre || p.total_revenue == null) continue;
+          const frac = 1 - (p.set_aside_frac || 0);
+          if (p.is_set_aside || frac <= 0 || p[cut] == null || !pop(p)) continue;
+          const a = p.total_revenue / p.revenue_per_acre;
+          rev += p[cut] * a;
+          acres += a;
+          devAcres += a * frac;
+          n++;
+        }
+        return { avg: rev / devAcres, acres, devAcres, rev, n,
+                 setAside: feats.filter(p => p.is_set_aside).length,
+                 notSetAside: feats.filter(p => !p.is_set_aside).length };
+      })(),
+      // The boundary-acre average the lens used before 2026-08-12, kept as the
+      // specific wrong answer to guard against: it is what the page reports if
+      // the denominator ever slips back to area_acres.
+      boundaryAvg: (() => {
         let rev = 0, acres = 0;
         for (const p of feats) {
           if (!p.revenue_per_acre || p.total_revenue == null) continue;
           rev += p.total_revenue;
           acres += p.total_revenue / p.revenue_per_acre;
         }
-        return { avg: rev / acres, acres, rev };
+        return rev / acres;
       })(),
       // Elevation is read off the LIVE LAYER's accessor, not recomputed here —
       // that is what makes "the deficit really extrudes downward" a claim about
@@ -108,10 +135,13 @@ const check = (name, ok, detail = '') => {
   check('the experiment picker stays hidden while there is only one',
     st.labVariants === 1 ? !st.pickShown : st.pickShown,
     `${st.labVariants} experiment(s), picker ${st.pickShown ? 'shown' : 'hidden'}`);
-  check('title names the comparison', /vs the Citywide Average/i.test(st.title), st.title);
+  check('title names the comparison',
+    /vs the City Average|vs Residential Peers|vs Non-Residential Peers/i.test(st.title), st.title);
+  check('title names the DEVELOPED-acre denominator',
+    /per Developed Acre/i.test(st.title), st.title);
 
   // 1 — the average comes from the served features.
-  check('citywide average == sum(total_revenue) / sum(derived acres)',
+  check('peer average == sum(dollars) / sum(DEVELOPED acres) over the cut population',
     Math.abs(st.stats.avg - st.indep.avg) < EPS,
     `page ${st.stats.avg.toFixed(6)} vs independent ${st.indep.avg.toFixed(6)}`);
   // Guards the specific wrong answer: the City's budgeted levy over the same
@@ -120,6 +150,23 @@ const check = (name, ok, detail = '') => {
   check('average is NOT the external budgeted-levy figure',
     Math.abs(st.stats.avg - budgetAvg) > 1,
     `modelled ${st.stats.avg.toFixed(0)} vs budgeted-levy ${budgetAvg.toFixed(0)}`);
+  // ⚠️ The regression this change exists to prevent. Held-out land is 33% of
+  // Edmonton's acreage and 0.65% of its revenue, so a denominator that slips
+  // back to boundary acres does not crash — it quietly moves the zero line
+  // down ~47% and reclassifies 127 hoods from below-average to above.
+  check('average is NOT the old boundary-acre figure',
+    st.stats.avg - st.boundaryAvg > 1000,
+    `developed ${st.stats.avg.toFixed(0)} vs boundary ${st.boundaryAvg.toFixed(0)}`);
+  check('developed acres are a strict subset of boundary acres',
+    st.indep.devAcres > 0 && st.indep.devAcres < st.indep.acres,
+    `${st.indep.devAcres.toFixed(0)} developed of ${st.indep.acres.toFixed(0)} boundary`);
+  // The population is the cut's own, not the whole city: Total scores every
+  // developed hood, the two split cuts score only their own half.
+  check('the scored population matches the independent count',
+    st.stats.scored === st.indep.n, `page ${st.stats.scored} vs independent ${st.indep.n}`);
+  check('set-aside hoods are OUT of the average, not merely off the scale',
+    st.indep.n <= st.indep.notSetAside && st.indep.setAside > 0,
+    `${st.indep.n} scored, ${st.indep.setAside} set aside`);
 
   // 2 — the deficit half really extrudes below the plane.
   check('some hoods extrude BELOW the ground plane', st.elev.negative > 0,
@@ -150,17 +197,39 @@ const check = (name, ok, detail = '') => {
   check('no "cost of service" / "COSA" naming of the lens itself',
     !/\bcosa\b/.test(copy) && !/cost of service/.test(copy), copy.slice(0, 120));
   check('legend names the average it measures against',
-    /citywide average/i.test(st.legend) && /\$/.test(st.legend), st.legend);
+    /peer average/i.test(st.legend) && /\$/.test(st.legend), st.legend);
+  check('legend names the DEVELOPED-acre denominator',
+    /developed acre/i.test(st.legend), st.legend);
   check('legend ends are signed', st.legendMin.includes('−$') && st.legendMax.includes('+$'),
     `${st.legendMin} | ${st.legendMax}`);
 
-  // Tooltip prints both terms, so the signed number is checkable.
+  // Tooltip prints both terms, so the signed number is checkable — and the
+  // check is that the two printed terms ACTUALLY RECONCILE to the bold one.
+  // ⚠️ The failure this exists for is silent: the served column is per
+  // BOUNDARY acre while the average is per DEVELOPED acre, so printing
+  // p[state.labCut] beside it renders two numbers whose difference is not the
+  // bold number, on every hood with any held-out land.
   const tip = await page.evaluate(() => {
-    const f = state.data.features.find(x => !x.properties.is_set_aside);
-    return viewTooltip({ object: f }).html;
+    const f = state.data.features.find(x => !x.properties.is_set_aside &&
+      (x.properties.set_aside_frac || 0) > 0.05);
+    const p = f.properties;
+    const html = viewTooltip({ object: f }).html;
+    // Sign-aware: fmtDeviation carries the minus OUTSIDE the dollar sign
+    // ("−$4,120"), and it is the U+2212 minus, not a hyphen.
+    const nums = [...html.matchAll(/([+−-]?)\$([\d,]+)/g)]
+      .map(m => (m[1] === '−' || m[1] === '-' ? -1 : 1) * +m[2].replace(/,/g, ''));
+    return { html, nums, rate: deviationRate(p), avg: deviationStats().avg,
+             d: deviationOf(p), raw: p[state.labCut] };
   });
-  check('tooltip prints the hood value AND the citywide average',
-    /here/.test(tip) && /citywide/.test(tip), tip.replace(/<[^>]+>/g, ' ').slice(0, 110));
+  check('tooltip prints the hood value AND the peer average',
+    /here/.test(tip.html) && /across/.test(tip.html),
+    tip.html.replace(/<[^>]+>/g, ' ').slice(0, 110));
+  check('the two printed terms reconcile to the signed number',
+    tip.nums.length === 3 && Math.abs((tip.nums[1] - tip.nums[2]) - tip.nums[0]) <= 2,
+    `${tip.nums[1]} − ${tip.nums[2]} vs ${tip.nums[0]}`);
+  check('tooltip shows the DEVELOPED rate, not the served boundary rate',
+    Math.abs(tip.nums[1] - tip.rate) < 1 && tip.rate > tip.raw,
+    `printed ${tip.nums[1]}, developed ${tip.rate.toFixed(0)}, served ${tip.raw.toFixed(0)}`);
 
   // 2 — the Lab keeps its OWN cut. Money's metric must be untouched by it.
   check('the Lab reads state.labCut, not state.metric',
@@ -182,6 +251,33 @@ const check = (name, ok, detail = '') => {
   check('title follows the cut', /Residential/i.test(after.title), after.title);
   check("the Lab's cut does NOT move Money's metric",
     after.metric === 'revenue_per_acre', after.metric);
+
+  // ⚠️ THE POPULATION FOLLOWS THE CUT. On the residential cut a NON-residential
+  // hood must be null — off the scale, flat, and out of the average — because
+  // a citywide residential average is diluted by industrial land that levies
+  // almost no residential tax, which let nearly every residential hood clear a
+  // bar that was never about it. Asserted on the live elevation accessor, so
+  // it is a claim about what deck.gl was handed.
+  const pop = await page.evaluate(() => {
+    const layer = overlay._props.layers.find(l => l.id === 'deviation-extrusion');
+    const get = layer.props.getElevation;
+    let resScored = 0, nonresScored = 0, nonresFlat = 0;
+    for (const f of state.data.features) {
+      const p = f.properties;
+      if (p.is_set_aside) continue;
+      const z = get(f);
+      if (p.is_residential === true) { if (z !== 0) resScored++; }
+      else if (z !== 0) nonresScored++; else nonresFlat++;
+    }
+    return { resScored, nonresScored, nonresFlat, scored: deviationStats().scored };
+  });
+  check('the residential cut scores ONLY residential hoods',
+    pop.nonresScored === 0 && pop.resScored > 0,
+    `${pop.resScored} residential scored, ${pop.nonresScored} non-residential scored`);
+  check('non-residential hoods are flat under the residential cut',
+    pop.nonresFlat > 0, `${pop.nonresFlat} flat`);
+  check('the residential population is smaller than the total one',
+    pop.scored < st.stats.scored, `${pop.scored} residential vs ${st.stats.scored} total`);
 
   // ⚠️ THE ONE THAT WOULD BE INVISIBLE: enter the Lab from the Value map. If
   // the lens read state.metric it would average value_per_acre (~$1.8M/acre)

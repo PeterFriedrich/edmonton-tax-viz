@@ -166,12 +166,79 @@ summary.)_
     by luck for the same reason** — fix all four together or the pass becomes
     as meaningless as the failures.
 
+- [ ] **▶ THE DENSITY/INCOME CONFOUND — it applies to a lens that is ALREADY
+  LIVE, and we cannot currently measure it.** Opened 2026-08-11 from the
+  break-even spec review (`docs/SPEC_breakeven.md` §9).
+  - **The problem:** a revenue-per-acre gap between two hoods can be an **income
+    gap wearing a density costume**. Edmonton's density gradient plausibly
+    tracks its income gradient, and nothing in this pipeline separates them.
+  - ⚠️ **It bites the deviation lens in `/full/` NOW**, not just future work —
+    that lens is *entirely* a statement about who sits above and below the
+    citywide average, which is the exact reading the confound corrupts.
+  - **No income or demographic data is ingested**, so today this can only be
+    disclaimed, not measured. Current mitigation is the standing one: purely
+    descriptive framing, never a causal claim (*"infill pays for itself"* is the
+    sentence to keep out).
+  - [ ] **Peter's call: ingest an income variable to MEASURE it?** ⚠️ Not free
+    of hazard — a map pairing neighbourhood income with fiscal performance
+    invites exactly the editorial framing this project refuses. **Measuring the
+    confound and publishing the variable are separate decisions**, and the
+    second one should not ride in on the first.
+
+- [ ] **▶ IS THE TRANSIT COST TERM ALLOCATED BY THE WRONG KIND OF DRIVER?**
+  Opened 2026-08-11 (`docs/SPEC_breakeven.md` §2b-i). `cost_transit_ops_per_acre`
+  distributes the ETS operating budget by **scheduled stop-events in each hood**
+  — but a downtown stop's departures are consumed by people boarding from
+  everywhere, so the driver is **network-shared being allocated as if it were
+  site-bound**. Matters out of proportion: transit is **90.8% of
+  `transport_cost_ops_per_acre`**.
+  - ⚠️ **DO NOT "FIX" IT BY DELETING THE TERM.** Two things are already recorded
+    against a hasty read: the figure is a **share, not a rate** (annual budget ÷
+    mean-weekday count — meaningless as a unit, exact as an allocation), and the
+    locked framing is **demand-allocation-of-a-fixed-budget**, defensible when
+    published as such (`DECISIONS.md` 2026-08-03).
+  - **The narrow question:** is *where service is supplied* an honest proxy for
+    *who consumes it* at neighbourhood grain? Supply-side is all the data
+    supports — **no stop-level ridership exists**, citywide-monthly only
+    (`DECISIONS.md` 2026-07-11) — so the live options are relabel, move to the
+    break-even residual while the Services lens keeps it as-is, or leave it and
+    state the limit.
+  - **Does not block the cost register.** Its own decision.
+
+- [ ] **▶ BREAK-EVEN LENS — PROPOSED, NOT STARTED. `docs/SPEC_breakeven.md`;
+  five decisions in its §8 block all code.** Opened 2026-08-11 (Peter: pipelines
+  per cost category, improved one at a time, composing into a per-hood
+  break-even that stays in the Lab and might one day reach specialists).
+  - ⚠️ **THE NUMBER IS COMPUTABLE TODAY AND WOULD BE WRONG IN A KNOWN
+    DIRECTION.** Revenue modelled $2,715M against $473M of cost on the
+    operating basis — **12.3% of the City's $3,846M tax-supported operating
+    budget** — so the lens would report **every hood running a 5.7× surplus**,
+    by roughly the same factor everywhere, which is exactly what makes it look
+    plausible. **Coverage is therefore the product, not a caveat**, and must be
+    computed and printed wherever the number is.
+  - **FIRST TASK IS MEASUREMENT, NOT CODE: ingest the Open Budget portal**
+    (`budget.edmonton.ca/api/operating_budget.csv`, `data/DATA.md` §17) to rank
+    categories by control total. The cost work so far grew from what was
+    *measurable*, not what is *expensive*, so the register would start lopsided.
+    ⚠️ Three documented quirks all bite: program names do not survive two
+    re-cuts, every figure is gross, portal and PDF differ by 1.31%. Laptop or
+    CI fetch — edmonton.ca is unreachable from the Oracle box.
+  - ⚠️ **THE SILENT KILLER IS BASIS MIXING.** Lifecycle $50/road-m/yr vs
+    operating $4.635 — same metres, 10.8× apart. The composite must HARD-ERROR
+    across bases, not warn.
+  - ⚠️ **The revenue half is not the solid half either** — $2,715M modelled vs
+    $2,318M budgeted (17%), the ~$125.4M institutional question is open with
+    unknown direction, and levy is not all the revenue funding that budget.
+  - **Decide the publication gate BEFORE the number exists** (§8.3). Deciding it
+    afterwards means deciding it while looking at an answer you like.
+
 - [ ] **THE LAB IS OPEN AS A CONTAINER — one experiment in it, one thing left
   to check.** Built 2026-08-11 (`DECISIONS.md` ×2 same date;
-  `verify-deviation.js`, 33 checks green). A full-build-only top-level `#views`
-  button holding unfinished lenses, currently just the deviation lens ("vs city
-  average"), which re-centres the revenue map on the citywide average and
-  extrudes the deficit half BELOW the ground plane.
+  `verify-deviation.js`, **45 checks green** since 2026-08-12). A full-build-only
+  top-level `#views` button holding unfinished lenses, currently just the
+  deviation lens ("vs peer average"), which re-centres the revenue map on its
+  peer group's average **per developed acre** and extrudes the deficit half
+  BELOW the ground plane.
   - ⚠️ **Read both decisions before touching it.** The sub-lens it ships
     without (rate-adjusted revenue per acre) was refused *on measurement*, not
     on taste, and the numbers to re-supply if anyone asks again are recorded.
@@ -186,15 +253,22 @@ summary.)_
     That row is the one piece of chrome every view shares, it wraps at
     `max-width: 640px` (`#views { flex-wrap: wrap }`), and "Lab" carries a
     `beta` tag that makes it wider than its four characters suggest. Verified
-    at 1440x900 / 1400x900 / 1366x768 / 1280x720 only — the title box is 217px
-    against Money's 176px and clears `#botleft` by 312px at the worst, so the
-    *vertical* side is fine and the untested axis is **WIDTH**. Remove
+    at 1440x900 / 1400x900 / 1366x768 / 1280x720 / 1024x768 only — the title box
+    is **258px** against Money's 176px (was 217px before the 2026-08-12
+    denominator change lengthened the titles and blurb) and clears `#botleft` by
+    **272px** at the worst, so the *vertical* side is fine and the untested axis
+    is **WIDTH**. Remove
     `.folded` from `#optpanel` before measuring the Options rows — otherwise
     every probe returns zeros (the trap this file already records twice).
-  - [ ] **Peter's call, unchanged: does the deviation lens ever leave the Lab?**
-    It is marked `beta` precisely because it is rank-identical to the Money map
-    — the only new information in it is which side of the average a hood falls
-    on. A real thing to show and a thin thing to promote. No opinion recorded.
+  - [ ] **Peter's call: does the deviation lens ever leave the Lab? THE CASE
+    FOR IT GOT STRONGER 2026-08-12 and the old reason to doubt it is GONE.**
+    It was marked `beta` partly because it was rank-identical to the Money map.
+    On the developed-acre denominator it is **not**: Spearman 0.900, 242 of 358
+    hoods moving >10 rank places. It now carries information Money does not.
+    ⚠️ **It also changed what it says** — 21% of hoods below average became
+    **63%** — so the question is no longer "is this thin?" but "is this the
+    headline?". Still no opinion recorded; `beta` and full-only until Peter
+    calls it.
 
 - [ ] **A TRUE BIKEWAY LIFECYCLE $/m/yr STILL DOES NOT EXIST** — the residue of
   Stage 2, which shipped 2026-08-03 on an **operating** basis instead. All three
