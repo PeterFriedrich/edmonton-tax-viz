@@ -234,11 +234,20 @@ summary.)_
 
 - [ ] **THE LAB IS OPEN AS A CONTAINER — one experiment in it, one thing left
   to check.** Built 2026-08-11 (`DECISIONS.md` ×2 same date;
-  `verify-deviation.js`, **45 checks green** since 2026-08-12). A full-build-only
+  `verify-deviation.js`, **59 checks green** as of 2026-08-12). A full-build-only
   top-level `#views` button holding unfinished lenses, currently just the
   deviation lens ("vs peer average"), which re-centres the revenue map on its
   peer group's average **per developed acre** and extrudes the deficit half
   BELOW the ground plane.
+  - ⚠️ **15 institutional hoods draw NO PRISM** — they are replaced by two white
+    outlines, one per scenario (levied / exempt), and assert no value. The
+    outline colour is **achromatic by rule, not by taste**: amber shipped first
+    and measured **ΔE 9.5 against the deficit orange under NORMAL vision**
+    (hard floor 15), so the *unknown* hoods read as *below average*. Blue was
+    rejected too — a cool hue leans toward the teal surplus pole. Verify pins
+    `R === G === B`, not a hex. ⚠️ **`exempt` is NOT always the lower end**
+    (EVERGREEN +$87, RIVER VALLEY CAMERON +$842); a first verify check assumed
+    it was and was wrong, the code was right.
   - ⚠️ **Read both decisions before touching it.** The sub-lens it ships
     without (rate-adjusted revenue per acre) was refused *on measurement*, not
     on taste, and the numbers to re-supply if anyone asks again are recorded.
@@ -254,10 +263,11 @@ summary.)_
     `max-width: 640px` (`#views { flex-wrap: wrap }`), and "Lab" carries a
     `beta` tag that makes it wider than its four characters suggest. Verified
     at 1440x900 / 1400x900 / 1366x768 / 1280x720 / 1024x768 only — the title box
-    is **258px** against Money's 176px (was 217px before the 2026-08-12
-    denominator change lengthened the titles and blurb) and clears `#botleft` by
-    **272px** at the worst, so the *vertical* side is fine and the untested axis
-    is **WIDTH**. Remove
+    is **314px** against Money's 176px and clears `#botleft` by **215px** at the
+    worst (1280x720), so the *vertical* side is still fine and the untested axis
+    is **WIDTH**. ⚠️ **It grew twice in one day — 217 → 258 → 314px** — and
+    Development's 442px blurb is what collides below 768px tall, so the next
+    addition to that blurb needs re-measuring, not assuming. Remove
     `.folded` from `#optpanel` before measuring the Options rows — otherwise
     every probe returns zeros (the trap this file already records twice).
   - [ ] **Peter's call: does the deviation lens ever leave the Lab? THE CASE
