@@ -270,6 +270,27 @@ summary.)_
     headline?". Still no opinion recorded; `beta` and full-only until Peter
     calls it.
 
+- [ ] **`verify-peek.js` IS FLAKY UNDER PARALLEL LOAD — reproduce before acting on a red.**
+  Found 2026-08-12 running the 33-script sweep: it reported
+  `touch: panel open via CARD -- another hood peeks, panel closes`. Re-run while
+  the sweep was still competing for CPU it failed **differently**
+  (`first tap PEEKS, panel stays shut`, `peek=null`); run three times on an idle
+  box it passes **3/3 with zero failures**. Two distinct failure modes under load
+  and none without it — the touch-interaction timings are the suspect, not the
+  app. ⚠️ **Cost about an hour of diagnosis** (a worktree at the pre-change commit
+  and a second server on :8778) before the load hypothesis was confirmed, so the
+  cheap first move is to re-run it alone.
+  - ⚠️ **The sweep HARNESS produced three separate wrong answers the same day**,
+    and all three read as green or as a real failure: a grep pattern that matched
+    neither of two crash signatures (reporting ~31 crashed scripts as PASSING);
+    a `grep -c green` tail that discarded every RED line; and a URL-fallback that
+    triggered on `expected string, got undefined` but not on `verify-smoke.js`'s
+    `usage:` message, so that script silently ran without its URL and was scored
+    RED with an empty reason. **Nearly every verify script REQUIRES a bare URL
+    argument** — `verify-deviation.js` is the exception, it defaults its own.
+  - Not a blocker, and not the two known-red scripts (`verify-nonres-revenue.js`,
+    `verify-revenue-panel.js`), which are separate and still open above.
+
 - [ ] **A TRUE BIKEWAY LIFECYCLE $/m/yr STILL DOES NOT EXIST** — the residue of
   Stage 2, which shipped 2026-08-03 on an **operating** basis instead. All three
   cost terms are maintenance + snow with **no capital replacement**, because the
