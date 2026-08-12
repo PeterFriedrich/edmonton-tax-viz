@@ -223,6 +223,14 @@ average.**
 replaced by two bare outlines in amber, one per scenario, and asserts no value.
 15 such hoods on Total, 2 on Residential, 13 on Non-residential.
 
+⚠️ **The outline is WHITE and achromatic, and that is a rule rather than a
+taste** — only an achromatic mark cannot lean toward a pole. It shipped amber
+first, which measured **ΔE 9.5 against the deficit orange under normal vision**
+(hard floor 15): the *unknown* hoods read as *below average*. Blue was rejected
+too — a cool hue leans toward the teal surplus pole. `verify-deviation.js` pins
+`R === G === B`, not a hex. The banded hood carries **no fill** (alpha 0); the
+wireframe's own base ring marks the footprint.
+
 The reason is that the roll publishes assessments and a tax class but **not
 exemption status**, and this pipeline levies every record on it. So there are
 two coherent worlds and no public source picks between them. ⚠️ **The band must
