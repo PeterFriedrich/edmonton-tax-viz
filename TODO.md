@@ -500,12 +500,25 @@ summary.)_
     only (*"Tax exemption status is noted on your assessment notice"*, verified
     verbatim). Sending the stronger claim would be trivially checkable and
     wrong.
-  - ⚠️ **Confirm the ASSET / liability-code paragraph before sending.** The
-    term is real (ASSET = Assessment Shared Services Environment, described as
-    a database of liability codes; exempt property reported and excluded from
-    equalized assessment) but the Municipal Affairs manual PDF returned **HTTP
-    520** on 2026-08-08, so it is search-result text, **not read in the
-    source**. The draft carries a fallback paragraph if it cannot be confirmed.
+  - ✅ **THE ASSET / LIABILITY-CODE PARAGRAPH IS CONFIRMED — 2026-08-12, read in
+    the primary source, and it came back STRONGER than the draft claimed.** The
+    HTTP 520 was transient. *2025 Recording and Reporting Information for
+    Assessment Audit and Equalized Assessment Manual*, **Ministerial Order No.
+    MAG:016/25** (open.alberta.ca dataset `1718-1771`). The liability code's
+    seven components include a **Tax Code** already separating `T` taxable from
+    `E` *"assessable but exempt from taxation"*, and a **Tax Exemption Code**
+    that is *"mandatory in ASSET"* for **every** property *including taxable
+    ones* (`NAA`) — so there is no coverage gap to argue about. Appendix G names
+    our parcels by statute: `MGA362(1)(d)` university boards of governors,
+    `MGA362(1)(e)` hospital boards. Fallback paragraph retired; draft and
+    `DECISIONS.md` updated. ⚠️ **It does NOT tell us what Edmonton coded for any
+    parcel** — the $125.4M question is untouched, direction still unknown.
+  - ⚠️ **THE ONLY THING LEFT IS WHERE TO SEND IT, and this box cannot look it
+    up.** No submission channel is recorded in the repo, and `edmonton.ca` is
+    **unreachable from the Oracle box** (`000` on 2026-08-12; `data.edmonton.ca`,
+    `alberta.ca` and `open.alberta.ca` all resolve fine). Needs a machine that
+    can reach `edmonton.ca` — Open Data portal contact vs. Assessment & Taxation
+    Branch vs. 311.
   - **Keep separate from the `qi6a-xuwt` bug report** — that one asserts a
     defect, this one requests a field. **Do not put the $125.4M in the
     message**; it depends on the very question being asked.
