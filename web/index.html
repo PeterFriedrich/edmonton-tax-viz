@@ -1073,7 +1073,7 @@
       },
       // Experimental, full build only. Title and blurb are BOTH runtime —
       // the title follows the active revenue cut and the blurb prints the
-      // citywide average, which moves with every refresh.
+      // peer average, which moves with every refresh.
       deviation: {
         title: null, // cut-driven — see deviationTitle()
         blurb: null, // average-driven — see deviationBlurb()
@@ -1098,19 +1098,29 @@
     // the Lab from the Value map cannot silently compute a "citywide average"
     // over assessed value and label it revenue.
     const LAB_EXPERIMENTS = {
-      deviation: { label: "vs city average" },
+      deviation: { label: "vs peer average" },
     };
     const LAB_VIEWS = Object.keys(LAB_EXPERIMENTS);
     const DEFAULT_LAB = LAB_VIEWS[0];
     const inLab = () => LAB_VIEWS.includes(state.view);
 
     const DEVIATION_TITLES = {
-      revenue_per_acre: "Edmonton: Revenue per Acre vs the Citywide Average",
-      res_revenue_per_acre: "Edmonton: Residential Revenue per Acre vs the Citywide Average",
-      nonres_revenue_per_acre: "Edmonton: Non-Residential Revenue per Acre vs the Citywide Average",
+      revenue_per_acre: "Edmonton: Revenue per Developed Acre vs the City Average",
+      res_revenue_per_acre: "Edmonton: Residential Revenue per Developed Acre vs Residential Peers",
+      nonres_revenue_per_acre: "Edmonton: Non-Residential Revenue per Developed Acre vs Non-Residential Peers",
     };
     const deviationTitle = () =>
       DEVIATION_TITLES[state.labCut] || DEVIATION_TITLES.revenue_per_acre;
+    // "Peers", not "the Citywide Average", on the two split cuts: they are
+    // scored against their own half of the city (DEVIATION_POP), and a title
+    // saying citywide over an average that is not would be the exact failure
+    // the Lab's own state.labCut exists to prevent one level up.
+    const deviationKind = () =>
+      state.labCut === "res_revenue_per_acre" ? "residential " :
+      state.labCut === "nonres_revenue_per_acre" ? "non-residential " : "";
+    const deviationPeers = () =>
+      state.labCut === "revenue_per_acre" ? "developed neighbourhoods"
+        : deviationKind() + "neighbourhoods";
 
     // Change-lens blurb follows the window picker, so the years named in the
     // text can never disagree with the years being measured.
@@ -2052,10 +2062,17 @@
       });
     }
 
-    // --- deviation lens: revenue per acre against the citywide average -------
+    // --- deviation lens: revenue per developed acre against peer average ----
     // EXPERIMENTAL, full build only. This is a RE-CENTRED REVENUE MAP and
-    // nothing else: it is rank-identical to the Money map, and the only new
-    // information in it is which side of the citywide average a hood falls on.
+    // nothing else: the only new information in it is which side of its peer
+    // group's average a hood falls on. ⚠️ It is no longer rank-identical to
+    // the Money map — the developed-acre denominator re-orders hoods by how
+    // much held-out land each carries: Spearman 0.900 against the served
+    // revenue_per_acre, 242 of 358 hoods moving more than 10 rank places, max
+    // move 318. That is the same test sub-lens A was REFUSED on (Spearman
+    // 0.99983, 2 hoods moving >10 — DECISIONS.md 2026-08-11), run the same
+    // way and passed, which is the reason this denominator earns a lens and
+    // that one did not.
     // ⚠️ It is NOT a cost-of-service comparison and must never be named as one
     // — it does not model, estimate or contain what serving a neighbourhood
     // costs. The cost side of this project is the Services view.
@@ -2073,30 +2090,78 @@
     // Every hood carries a non-zero revenue_per_acre today; the guard is there
     // because a future refresh could publish one that doesn't.
     //
-    // Set-aside hoods ARE in the average (it is a citywide figure, over all
-    // ~193k acres) but stay off the colour scale and flat, as everywhere else.
+    // ⚠️ THE DENOMINATOR IS DEVELOPED ACRES, area x (1 - set_aside_frac), NOT
+    // boundary acres — and both sides move together, so a hood's rate and the
+    // average it is scored against always share a basis. Held-out land is a
+    // third of Edmonton (48 wholly set-aside hoods carry 63,434 acres, 33% of
+    // the city, against 0.65% of its revenue) and the median hood is 12.4%
+    // set-aside, so dividing by boundary acres charged every hood for river
+    // valley and rural reserve it cannot levy on. On boundary acres the lens
+    // reported 21% of hoods below average; on developed acres it is 63%, and
+    // that is the finding, not a rescaling. ⚠️ A BAR HERE IS THEREFORE NO
+    // LONGER COMPARABLE TO THE SAME HOOD'S BAR ON THE REVENUE MAP, which
+    // divides by boundary acres — the 2026-08-11 claim that it was is retired,
+    // not merely stale. elevationScale is unchanged, so the visual scale is.
+    //
+    // ⚠️ THE POPULATION IS A PROPERTY OF THE CUT (DEVIATION_POP): Residential
+    // scores a hood against other residential hoods, because a citywide
+    // residential average is diluted by industrial land that levies almost no
+    // residential tax — which made nearly every residential hood clear a bar
+    // that was never about them. Non-residential is the mirror of it. Leaving
+    // one cut citywide while the others are not is the silent inconsistency
+    // this whole change exists to remove.
+    //
+    // Hoods outside the active population — set aside, or the wrong side of
+    // the residential split — are null: off the colour scale, flat, AND out of
+    // the average. They are not "still inside the city average" any more.
+    // ⚠️ is_residential is frac_residential >= 0.50 (RESIDENTIAL_THRESHOLD,
+    // share of ZONED area), so "non-residential peers" means UNDER half
+    // residential — not "no housing". A hood at 45% residential is in that
+    // group. The two flags are mutually exclusive with is_set_aside by
+    // construction (0.90 + 0.50 > 1), so the !is_set_aside test below is a
+    // guard against a future threshold change, not a live filter.
+    const DEVIATION_POP = {
+      revenue_per_acre: () => true,
+      res_revenue_per_acre: p => p.is_residential === true,
+      nonres_revenue_per_acre: p => p.is_residential === false,
+    };
+    // Guard sf >= 1: two hoods are 100% set-aside, and both are already
+    // is_set_aside, but the division below is the one place that would return
+    // Infinity rather than fail if a refresh ever separated the two.
+    const devAcreFrac = p => 1 - (p.set_aside_frac || 0);
+    const inDeviationPop = p => {
+      const cut = state.labCut;
+      return !p.is_set_aside && devAcreFrac(p) > 0 && p[cut] != null &&
+        (DEVIATION_POP[cut] || DEVIATION_POP.revenue_per_acre)(p);
+    };
+    // The hood's own rate on the developed base. The boundary acreage cancels
+    // (dollars = rate x acres; acres x (1 - sf) is the new denominator), so
+    // this needs no acre lookup — but the AVERAGE below still weights by acres.
+    const deviationRate = p => p[state.labCut] / devAcreFrac(p);
     const _devStats = {};
     function deviationStats() {
       const colKey = state.labCut;
       if (_devStats[colKey]) return _devStats[colKey];
       const props = state.data.features.map(f => f.properties);
-      let num = 0, acres = 0;
+      let num = 0, acres = 0, devAcres = 0;
       for (const p of props) {
         if (!p.revenue_per_acre || p.total_revenue == null) continue;
+        if (!inDeviationPop(p)) continue;
         const a = p.total_revenue / p.revenue_per_acre;
         acres += a;
+        devAcres += a * devAcreFrac(p);
         num += (p[colKey] || 0) * a;
       }
-      const avg = acres ? num / acres : 0;
+      const avg = devAcres ? num / devAcres : 0;
       // Per-arm p95 clamps, for COLOUR ONLY — the chgStats/infill precedent,
       // and here the asymmetry is structural rather than merely empirical:
       // revenue per acre cannot be negative, so the deficit arm is floored at
-      // -avg while the surplus arm is unbounded (measured on Total: -$14.0k
-      // against +$234.4k, 17x). One symmetric clamp would leave every hood on
-      // the deficit side unable to saturate.
-      const devs = props
-        .filter(p => !p.is_set_aside && p[colKey] != null)
-        .map(p => p[colKey] - avg);
+      // -avg while the surplus arm is unbounded (measured on Total: -$26.8k
+      // against +$232.0k, 8.6x). One symmetric clamp would leave every hood on
+      // the deficit side unable to saturate. ⚠️ The arms were 17x apart on the
+      // old boundary-acre average — the developed denominator did not flatten
+      // the surplus peak, it raised the floor the deficits are measured from.
+      const devs = props.filter(inDeviationPop).map(p => deviationRate(p) - avg);
       const pos = devs.filter(v => v > 0).sort((a, b) => a - b);
       const neg = devs.filter(v => v < 0).map(v => -v).sort((a, b) => a - b);
       return (_devStats[colKey] = {
@@ -2106,11 +2171,14 @@
         floor: -avg,
         peak: pos.length ? pos[pos.length - 1] : 0,
         above: pos.length,
+        below: neg.length,
         scored: devs.length,
+        acres,
+        devAcres,
       });
     }
-    const deviationOf = p => (p.is_set_aside || p[state.labCut] == null)
-      ? null : p[state.labCut] - deviationStats().avg;
+    const deviationOf = p =>
+      inDeviationPop(p) ? deviationRate(p) - deviationStats().avg : null;
     const deviationT = p => {
       const d = deviationOf(p);
       if (d == null) return null;
@@ -2172,15 +2240,14 @@
     // printed rather than described because all three move with every refresh.
     function deviationBlurb() {
       const s = deviationStats();
-      return "Experimental. Each neighbourhood's " +
-        (state.labCut === "res_revenue_per_acre" ? "residential " :
-         state.labCut === "nonres_revenue_per_acre" ? "non-residential " : "") +
-        "tax revenue per acre against Edmonton's citywide average of " +
-        fmtMoney(s.avg) + " — teal rises above it, orange sinks below. " +
-        "Height is true to scale, so the deficits are shallow: revenue per acre " +
-        "cannot fall below zero, flooring the drop at " + fmtDeviation(s.floor) +
-        " against a " + fmtDeviation(s.peak) + " peak. Not a cost-of-service " +
-        "comparison — it says nothing about what serving a neighbourhood costs.";
+      return "Experimental. Each neighbourhood's " + deviationKind() +
+        "tax revenue per developed acre — river valley and rural reserve are " +
+        "out of the denominator — against the " + s.scored + " " +
+        deviationPeers() + "' average of " + fmtMoney(s.avg) + ". Teal rises " +
+        "above it, orange sinks below; " + s.below + " fall below. Height is " +
+        "true to scale, floored at " + fmtDeviation(s.floor) + " against a " +
+        fmtDeviation(s.peak) + " peak. Not a cost-of-service comparison — it " +
+        "says nothing about what serving a neighbourhood costs.";
     }
 
     // Fire-station context dots (SPEC_services.md "Fire lens"): 31 points,
@@ -3928,8 +3995,9 @@
       if (state.view === "deviation") {
         const d = deviationOf(p);
         if (d == null)
-          return `<span class="muted">Set aside — off the scale</span>`;
-        return fmtDeviation(d) + " / acre vs city average";
+          return `<span class="muted">` + (p.is_set_aside ? "Set aside" :
+            `Not ${deviationKind()}`) + ` — off the scale</span>`;
+        return fmtDeviation(d) + " / developed acre";
       }
       // money
       if (p.is_set_aside)
@@ -4087,17 +4155,29 @@
       if (state.view === "deviation") {
         const s = deviationStats();
         const d = deviationOf(p);
-        if (d == null)
+        // ⚠️ TWO REASONS a hood is null now, and they must not read as one:
+        // set aside (no comparable land) versus the wrong side of the
+        // residential split (comparable land, different comparison).
+        if (d == null) {
+          const why = p.is_set_aside
+            ? `Set aside — ${esc(p.set_aside_reason)}`
+            : deviationKind()
+              ? `Not a ${deviationKind().trim()} neighbourhood`
+              : "No data";
           return { className: "tip", html: name +
-            `<span class="muted">Set aside — ${esc(p.set_aside_reason)}</span><br/>` +
-            `<span class="muted">off the scale; still inside the city average</span>` };
+            `<span class="muted">${why}</span><br/>` +
+            `<span class="muted">off the scale, and out of this average</span>` };
+        }
         // Both terms printed, not just the difference: a hood's own $/acre and
         // the average it is measured against are what make the signed number
-        // checkable rather than something the page asserts.
+        // checkable rather than something the page asserts. ⚠️ The rate shown
+        // is deviationRate, NOT p[state.labCut] — the served column is per
+        // boundary acre, and printing it beside a developed-acre average would
+        // give a reader two numbers whose difference is not the bold one.
         return { className: "tip", html: name +
-          `<b>${fmtDeviation(d)}</b> / acre vs city average<br/>` +
-          `<span class="muted">${fmtMoney(p[state.labCut])} here · ` +
-          `${fmtMoney(s.avg)} citywide</span><br/>` +
+          `<b>${fmtDeviation(d)}</b> / developed acre<br/>` +
+          `<span class="muted">${fmtMoney(deviationRate(p))} here · ` +
+          `${fmtMoney(s.avg)} across ${s.scored} ${deviationPeers()}</span><br/>` +
           `<span class="muted">re-centred revenue — not a cost comparison</span>` };
       }
 
@@ -4700,11 +4780,15 @@
         // lens is measured against — without it the bar means "more" and
         // "less" against an unstated zero.
         const s = deviationStats();
+        const kind = deviationKind();
         document.getElementById("legend-label").textContent =
-          `Revenue per acre vs the citywide average (${fmtMoney(s.avg)} / acre)`;
+          (kind ? kind[0].toUpperCase() + kind.slice(1) : "") +
+          `revenue per developed acre vs peer average (${fmtMoney(s.avg)})`;
         document.getElementById("legend-min").textContent = "← " + fmtDeviation(-s.clampNeg);
         document.getElementById("legend-max").textContent = fmtDeviation(s.clampPos) + " →";
-        label.textContent = "Set aside — off-scale (still in the average)";
+        // Covers both exclusions without enumerating them — set aside, or the
+        // wrong side of the residential split. Neither is in the average now.
+        label.textContent = "Off the scale — and out of the average";
         sw.style.background = `rgb(${SET_ASIDE_COLOR.join(",")})`;
       } else if (state.view === "ratio") {
         const s = ratioScale();

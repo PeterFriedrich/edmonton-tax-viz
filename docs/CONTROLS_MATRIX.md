@@ -89,7 +89,7 @@ seven became modes of another view rather than top-level entries:
 | **Services** 🔒 | `services` | Full build only — **LOCKED for release 2026-07-28**. |
 | **Ratio** 🔒 | `ratio` | Full build only — **LOCKED for release 2026-07-28**. |
 | **Uses** 🔒 | `uses` | Full build only — **LOCKED for release 2026-07-28** (was provisional 07-24). |
-| **Lab** 🔒 `beta` | `deviation` *(+ future experiments)* | **NEW 2026-08-11.** Full build only, and it is a **CONTAINER, not a lens** — the `#views` button opens whichever experiment was last active (`state.lab`), and the registry `LAB_EXPERIMENTS` is the list. Carries a `beta` tag in the button itself. First and only experiment today: `deviation` ("vs city average"). |
+| **Lab** 🔒 `beta` | `deviation` *(+ future experiments)* | **NEW 2026-08-11.** Full build only, and it is a **CONTAINER, not a lens** — the `#views` button opens whichever experiment was last active (`state.lab`), and the registry `LAB_EXPERIMENTS` is the list. Carries a `beta` tag in the button itself. First and only experiment today: `deviation` ("vs peer average" — per **developed** acre, and its population follows the cut: Total scores all 358 developed hoods, Residential only the 226 residential ones, Non-residential only the 132 others. 2026-08-12). |
 
 So **public `#views` = 2 buttons** (Money · Development); **`/full/` = 6**.
 Verified in both builds 2026-07-28; the Lab re-verified 2026-08-11

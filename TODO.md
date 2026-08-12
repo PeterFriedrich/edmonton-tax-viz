@@ -234,10 +234,11 @@ summary.)_
 
 - [ ] **THE LAB IS OPEN AS A CONTAINER — one experiment in it, one thing left
   to check.** Built 2026-08-11 (`DECISIONS.md` ×2 same date;
-  `verify-deviation.js`, 33 checks green). A full-build-only top-level `#views`
-  button holding unfinished lenses, currently just the deviation lens ("vs city
-  average"), which re-centres the revenue map on the citywide average and
-  extrudes the deficit half BELOW the ground plane.
+  `verify-deviation.js`, **45 checks green** since 2026-08-12). A full-build-only
+  top-level `#views` button holding unfinished lenses, currently just the
+  deviation lens ("vs peer average"), which re-centres the revenue map on its
+  peer group's average **per developed acre** and extrudes the deficit half
+  BELOW the ground plane.
   - ⚠️ **Read both decisions before touching it.** The sub-lens it ships
     without (rate-adjusted revenue per acre) was refused *on measurement*, not
     on taste, and the numbers to re-supply if anyone asks again are recorded.
@@ -252,15 +253,22 @@ summary.)_
     That row is the one piece of chrome every view shares, it wraps at
     `max-width: 640px` (`#views { flex-wrap: wrap }`), and "Lab" carries a
     `beta` tag that makes it wider than its four characters suggest. Verified
-    at 1440x900 / 1400x900 / 1366x768 / 1280x720 only — the title box is 217px
-    against Money's 176px and clears `#botleft` by 312px at the worst, so the
-    *vertical* side is fine and the untested axis is **WIDTH**. Remove
+    at 1440x900 / 1400x900 / 1366x768 / 1280x720 / 1024x768 only — the title box
+    is **258px** against Money's 176px (was 217px before the 2026-08-12
+    denominator change lengthened the titles and blurb) and clears `#botleft` by
+    **272px** at the worst, so the *vertical* side is fine and the untested axis
+    is **WIDTH**. Remove
     `.folded` from `#optpanel` before measuring the Options rows — otherwise
     every probe returns zeros (the trap this file already records twice).
-  - [ ] **Peter's call, unchanged: does the deviation lens ever leave the Lab?**
-    It is marked `beta` precisely because it is rank-identical to the Money map
-    — the only new information in it is which side of the average a hood falls
-    on. A real thing to show and a thin thing to promote. No opinion recorded.
+  - [ ] **Peter's call: does the deviation lens ever leave the Lab? THE CASE
+    FOR IT GOT STRONGER 2026-08-12 and the old reason to doubt it is GONE.**
+    It was marked `beta` partly because it was rank-identical to the Money map.
+    On the developed-acre denominator it is **not**: Spearman 0.900, 242 of 358
+    hoods moving >10 rank places. It now carries information Money does not.
+    ⚠️ **It also changed what it says** — 21% of hoods below average became
+    **63%** — so the question is no longer "is this thin?" but "is this the
+    headline?". Still no opinion recorded; `beta` and full-only until Peter
+    calls it.
 
 - [ ] **A TRUE BIKEWAY LIFECYCLE $/m/yr STILL DOES NOT EXIST** — the residue of
   Stage 2, which shipped 2026-08-03 on an **operating** basis instead. All three

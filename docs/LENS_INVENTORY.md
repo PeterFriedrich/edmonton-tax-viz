@@ -24,7 +24,7 @@ override for testing.
 |---|---|---|
 | Views | Money · **Development** | + **Services · Ratio · Uses · Lab** `beta` |
 | Development extras | — | **Infill opportunity** lens · **Industrial** metric |
-| Lab experiments | — | **vs city average** (`deviation`) |
+| Lab experiments | — | **vs peer average** (`deviation`) |
 
 ⚠️ **The Views row was STALE and is corrected 2026-08-11 (measured, not
 inferred):** it listed Services and Ratio as public, but both were pulled to
@@ -193,14 +193,36 @@ has no data dependency, so nothing else would keep it off the published page.
 `#toggle` (Money's metric pod) is **hidden** in the Lab, unlike `change` and
 `glass` which keep it.
 
-#### vs city average (`deviation`)
+#### vs peer average (`deviation`)
 
-Each hood's revenue per acre re-centred on the citywide average
-(**$14,049/acre**, Σ`total_revenue` ÷ Σ acres from the served features — never
-an external total). **Extruded, and the deficit half extrudes BELOW the ground
-plane** — the only lens that does; height is true to scale on Money's own
-`elevationScale`, so a bar is comparable to the same hood's bar on the Revenue
-map. Colour is the diverging `infillColorAt` ramp at a per-arm p95 clamp.
+Each hood's revenue **per developed acre** re-centred on its peer group's
+average — Σdollars ÷ Σ(acres × (1 − `set_aside_frac`)) from the served
+features, never an external total. **Extruded, and the deficit half extrudes
+BELOW the ground plane** — the only lens that does; height is true to scale on
+Money's own `elevationScale`. Colour is the diverging `infillColorAt` ramp at a
+per-arm p95 clamp.
+
+⚠️ **THE DENOMINATOR IS DEVELOPED ACRES AND THE POPULATION FOLLOWS THE CUT**
+(2026-08-12). Held-out land is **33% of Edmonton's acreage against 0.65% of its
+revenue**, so the old boundary-acre denominator charged every hood for river
+valley and rural reserve it cannot levy on:
+
+| cut | population | average | below average |
+|---|---|---|---|
+| Total | 358 developed hoods | **$26,838** | **227 (63%)** |
+| Residential | 226 residential | **$19,729** | 138 (61%) |
+| Non-residential | 132 non-residential | **$23,691** | 73 (55%) |
+
+On boundary acres the lens reported **21% below average**; on developed acres
+it is **63%**. Hoods outside the active population — set aside, or the wrong
+side of the residential split — are **null: off the scale, flat, AND out of the
+average.**
+
+⚠️ **A bar is NO LONGER comparable to the same hood's bar on the Revenue map**,
+which divides by boundary acres. The 2026-08-11 claim that it was is retired.
+The lens is also no longer rank-identical to Money: **Spearman 0.900, 242 of
+358 hoods moving >10 rank places** — the same test sub-lens A was refused on
+(0.99983, 2 hoods), run the same way and passed.
 
 ⚠️ **Not a cost-of-service comparison, and must never be named as one** (no
 "COSA", no "cost of service" in code, columns, filenames or copy).
