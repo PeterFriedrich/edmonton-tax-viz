@@ -206,9 +206,18 @@ of *what actually costs money*, and the denominator for coverage.
 do not survive two re-cuts** (2017 / 2018–2025 / 2026 — never `groupby(program)`
 across eras), **every figure is gross** (`account_type` is `Expenses` only, no
 revenue side), and **the portal and the PDF do not tie** (+1.31% on Parks and
-Roads Services). Also: **edmonton.ca is unreachable from the Oracle box**, so
-this is a laptop fetch or a CI-side fetch, like every other manual reviewed
-input.
+Roads Services).
+
+✅ **CORRECTED 2026-08-13: this is NOT a laptop-only fetch.** This section used to
+say *"edmonton.ca is unreachable from the Oracle box, so this is a laptop fetch
+or a CI-side fetch"*. **`budget.edmonton.ca` is a different host from
+`www.edmonton.ca` and it resolves fine from the Oracle box** — measured
+2026-08-13, `HTTP 200`, 1,037,656 bytes, 7,283 rows, against `www.edmonton.ca`'s
+connection failure (`000`) in the same sweep. `data.edmonton.ca`, `alberta.ca`
+and `open.alberta.ca` also resolve. **Task 1 is executable here and has been
+executed — see §4a.** ⚠️ The §13 blanket claim *"edmonton.ca is unreachable"* is
+true only of `www.`; do not re-derive a blocker from it without testing the
+specific host.
 
 **Task 1b — ⚠️ A DWELLING-OR-POPULATION COUNT PER HOOD DOES NOT EXIST, AND
 SEVERAL OBVIOUS ALLOCATIONS NEED ONE.** Checked, not assumed: nothing in `src/`
@@ -239,6 +248,83 @@ where the plan will first hit §2a.
 justification, its own reconciliation test, and its own `AUDIT_LEDGER.md` row.
 This is the "one at a time" property Peter asked for, and it is what keeps the
 lens reviewable as it grows.
+
+---
+
+## 4a. Task 2 EXECUTED — the register, measured (2026-08-13)
+
+**Pinned to FY2025** to match `ASSESSMENT_YEAR = 2025` on the revenue side, and
+to sit inside the 2018–2025 program-naming era rather than straddling the 2026
+re-cut. `fund_type == 'Tax Supported'`. **Total $3,855.9M across 656 rows and
+144 programs** (the $3,846M quoted in §0 is the PDF; the 0.26% gap is the same
+portal-vs-PDF seam as the +1.31% above — **do not present them as one series**).
+
+**144 programs, but the head is short: the top 25 are 76.5% of the budget.** The
+register is tractable. Top 12:
+
+| $M | % | cum | program | branch |
+|---|---|---|---|---|
+| 597.2 | 15.5% | 15.5% | Police Service | Police Service |
+| 449.1 | 11.6% | 27.1% | OPS/ETS - Bus and LRT | Edmonton Transit Service |
+| 221.0 | 5.7% | 32.9% | Tax-supported Debt Charges | Capital Project Financing |
+| 208.2 | 5.4% | 38.3% | CS/FRS - Operations and Training | Fire Rescue Services |
+| 174.4 | 4.5% | 42.8% | Alley Renewal | Neighbourhood Renewal |
+| 142.9 | 3.7% | 46.5% | Pay As You Go Funding | Capital Project Financing |
+| 134.0 | 3.5% | 50.0% | CS/CRC - Facility Operations | Community Recreation |
+| 128.2 | 3.3% | 53.3% | OPS/PARS - Infrastructure Operations | Parks and Roads |
+| 91.7 | 2.4% | 55.7% | BAC/EXP - Explore Edmonton | Explore Edmonton |
+| 80.6 | 2.1% | 57.8% | CS/SD - Affordable Housing and Homelessness | Social Development |
+| 74.6 | 1.9% | 59.7% | OPS/FFS - Facility Maintenance Services | Fleet and Facility |
+| 73.2 | 1.9% | 61.6% | BAC/LIB - Edmonton Public Library | Public Library |
+
+**§4 Task 2's prediction was right on three of four.** Transit, police and fire
+do dominate, and **police is the largest line in the budget with no driver in
+hand** — it is bigger than everything the pipeline currently models put together
+($597.2M vs $473M). **Parks does not appear as its own top line**; it is inside
+`OPS/PARS - Infrastructure Operations`, bundled with roads, which is the §17
+bundling problem in a different place.
+
+⚠️ **Police is also where the register meets its hardest editorial problem, not
+just its hardest data problem.** Allocating $597.2M by any spatial driver
+produces a per-neighbourhood policing-cost map. That is a far more charged
+artifact than a roads-cost map, and **the driver choice would be doing the
+arguing.** Flagging it here so the decision is taken deliberately rather than
+arrived at by working down a ranked list.
+
+### ⚠️ THE FINDING THAT CHANGES §0: 20.8% OF THE DENOMINATOR IS NOT OPERATING SPEND
+
+**$800.7M of the $3,855.9M "tax-supported operating budget" is capital
+financing** — debt charges, pay-as-you-go, reserve transfers and renewal:
+
+| $M | line |
+|---|---|
+| 221.0 | Tax-supported Debt Charges |
+| 174.4 | Neighbourhood Renewal / Alley Renewal |
+| 142.9 | Pay As You Go Funding |
+| 57.1 | Valley Line LRT dedicated funding |
+| 51.5 | External Debt Charges |
+| 44.4 | SLRT Debt Charges |
+| 38.4 | Valley Line LRT Debt Charges |
+| 70.9 | 9 smaller lines (reserve transfers, Downtown Arena, local improvements) |
+
+⚠️ **So §1's `coverage` formula divides an operating-basis numerator by a
+denominator that is 20.8% capital — the §3 basis-mixing failure, hiding in the
+coverage ratio itself rather than in the composite.** It is the more dangerous
+location of the two, because §6 requires coverage to render wherever the number
+does: a mixed-basis denominator would be **published on the face of the lens**.
+
+Operating-only, the denominator is **$3,055.2M**, and the current cost side
+covers **15.5%, not 12.3%**. Neither number is wrong; they answer different
+questions, and the lens must state which one it is answering. **New decision,
+§8.7.**
+
+⚠️ **But capital financing is NOT uniformly unallocatable, and the build order
+should not treat it as a block to skip.** `Alley Renewal` at **$174.4M** is
+plausibly the single most spatially-allocatable line in the entire budget — it
+is per-neighbourhood infrastructure renewal, on the **lifecycle** basis the
+roads term already uses, and it would be a larger register entry than anything
+currently shipped except transit. **Debt charges (~$400M) are the genuinely hard
+part**, being service on capital already built; renewal is not.
 
 ---
 
@@ -312,6 +398,18 @@ actually place.*
    tax-supported revenue that funds the same budget?
 6. **Transit** (§2b-i) — relabel, move to the residual for break-even while the
    Services lens keeps it, or leave it and state the limit?
+7. **⚠️ NEW 2026-08-13 — the COVERAGE DENOMINATOR (§4a).** Is coverage measured
+   against the full **$3,855.9M** tax-supported budget, or the **$3,055.2M**
+   operating-only remainder after capital financing? Same numerator, **12.3% vs
+   15.5%**. Not cosmetic: §6 puts coverage on screen wherever the number is, so
+   this decision is *published*. The case for the full budget is that the revenue
+   side is the full levy, and the levy funds debt service too — matching scopes.
+   The case for operating-only is §3: an operating numerator over a 20.8%-capital
+   denominator is basis mixing, and it is the one place the composite's hard
+   error would not catch it. ⚠️ **Whichever is chosen, the split should be
+   disclosed rather than silently folded in** — and if the full budget wins, note
+   that `Alley Renewal` ($174.4M) is allocatable lifecycle spend sitting inside
+   the capital block, so "capital" is not a synonym for "unallocatable".
 
 ---
 
