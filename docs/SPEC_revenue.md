@@ -195,9 +195,64 @@ on the set-aside-excluded taxable set: if ≈ log-normal (likely), use **log** f
 colour; **sqrt** is the fallback. **Height stays LINEAR** (the standing honesty
 choice) regardless.
 
-**Permanent caveat:** revenue/acre understates any neighbourhood holding large
-exempt institutions (absent from the roll); zoning (`UI`/`UF`/`AJ`/`PU`) now lets us
-*flag* where, though zoning ≠ tax status (proxy only).
+**Permanent caveat — ⚠️ CORRECTED 2026-08-15, this used to point the wrong way.**
+It read *"revenue/acre understates any neighbourhood holding large exempt
+institutions (absent from the roll)"*. Measured, the premise is false: the U of A
+campus and the hospitals **are** on the roll (2,254 parcels on `AJ`/`UF`/`UI`/`PU`,
+$5.62B assessed) and this pipeline levies all of them, so if the City in fact
+exempts some we **overstate** those hoods. The roll publishes assessments and a
+Tax Class, not exemption status, so **the direction is unknown**
+(`FINDINGS_revenue_scale.md` §4–5, `DECISIONS.md` 2026-08-08). Zoning
+(`UI`/`UF`/`AJ`/`PU`) still lets us flag *where*, though zoning ≠ tax status.
+
+## The institutional caveat on the Money tooltip (2026-08-15)
+
+The Lab's deviation lens bands a ≥25%-institutional hood into a range and draws
+no prism. The default Money view kept a solid, confident prism — so the same
+neighbourhood said two different things depending on which lens you were in, and
+the confident version was the public one.
+
+**Measured on `revenue_per_acre`:** 15 of 358 live hoods cross `INST_UNCERTAIN_MIN`
+— the *same 15* the Lab bands. Four sit in the top 11:
+
+| rank | hood | levied | if exempt | rank then |
+|---:|---|---:|---:|---:|
+| 2 | University of Alberta | $171,670 | $17,522 | **206** |
+| 6 | Spruce Avenue | $72,898 | $42,588 | 18 |
+| 7 | Central McDougall | $66,673 | $38,038 | 27 |
+| 11 | Tawa | $51,472 | $21,949 | 138 |
+| 92 | Edmonton Northlands | $26,849 | $675 | 354 |
+
+Citywide, **$131.2M of the $2,714.7M levy (4.8%)** sits on institutionally-zoned
+land and **71% of it falls inside those 15 hoods** — so flagging 15 of 358
+localizes nearly the whole question rather than smearing doubt across the map.
+The headline claim survives untouched: Downtown (#1, 5% institutional),
+Summerlea, Wîhkwêntôwin, Garneau and Boyle Street are all clean.
+
+**DECIDED — the tooltip says it; the prism does not change.** Two muted rows on
+the ≥25% hoods, gated on `isRevenue(state.metric)`. The prism stays solid and
+coloured.
+
+- ⚠️ **Not under Value**, and *not* for the road rows' reason. Exemption changes
+  whether a levy is collected, not what a parcel is assessed at — Alberta
+  assesses exempt property too — so `value_per_acre` is not uncertain in this way
+  and a caveat there would claim a doubt the data does not carry. (This is also
+  why there is no `value_frac_inst` to build one from.)
+- ⚠️ **"Zoned" is load-bearing in the copy.** The row above it is an assessment
+  **class** share and this is a **zoning** share; they do not partition the same
+  thing, and without the word they read as contradictory — EVERGREEN is 89%
+  residential and 41% institutional, summing to 130%.
+- Both surfaces read `INST_UNCERTAIN_MIN` itself rather than a copied 0.25, so
+  the Lab and the map can never disagree about which hoods are uncertain;
+  `verify-inst-caveat.js` pins set-equality, not a hard-coded list.
+- The revenue-mix panel behind the click already carried this caveat in its
+  footer note — the tooltip was the one silent surface.
+
+**NOT decided — should the prisms go hollow on Money too?** That is the Lab's
+full treatment on the default view, and it costs the colour of 4 of the top 11
+(a hole in the central core, since Money's top-down choropleth read is primary).
+It also reaches only one of Money's three modes: grid cells carry no
+institutional share, so `glass` and `change` could not follow. Open in `TODO.md`.
 
 ## Cross-refs
 

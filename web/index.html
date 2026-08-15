@@ -4389,6 +4389,35 @@
         const share = Math.round(100 * p.res_revenue_per_acre / p.revenue_per_acre);
         html += `<br/><span class="muted">${share}% of revenue is residential</span>`;
       }
+      // ⚠️ The institutional caveat, on the SAME threshold the Lab bands at —
+      // one constant, two surfaces, so they can never disagree about which
+      // hoods are uncertain. The Lab replaces those 15 prisms with a range;
+      // here the prism stays solid and only the tooltip speaks, because Money
+      // is the default view and hollowing 4 of its top 11 (U of A rank 2,
+      // Spruce Ave 6, Central McDougall 7, Tawa 11) is a separate decision.
+      // Until then this was the one silent surface: the revenue-mix panel
+      // behind the click already carries the caveat in its footer note, and
+      // the Lab's tooltip says the value is unknown outright, while the
+      // default map printed $171,670/acre for a 90%-institutional hood with no
+      // hint attached. ⚠️ It must never read as revenue the City fails to
+      // collect (DECISIONS.md 2026-08-08).
+      //
+      // ⚠️ REVENUE CUTS ONLY, and the reason is NOT the road rows' reason.
+      // Exemption changes whether a levy is collected, not what a parcel is
+      // assessed at — Alberta assesses exempt property too — so value_per_acre
+      // is not uncertain in this way and a caveat under it would claim a doubt
+      // the data does not carry.
+      //
+      // ⚠️ "ZONED" IS LOAD-BEARING. The row above is an assessment-CLASS share
+      // and this is a ZONING share; without the word they read as
+      // contradictory, because they do not partition the same thing —
+      // EVERGREEN is 89% residential and 41% institutional, summing to 130%.
+      if (isRevenue(state.metric) && instFrac(p) >= INST_UNCERTAIN_MIN) {
+        html += `<br/><span class="muted">${Math.round(instFrac(p) * 100)}% of `
+              + `revenue is on institutionally-zoned land</span>`
+              + `<br/><span class="muted">the City does not publish which of `
+              + `it is tax-exempt</span>`;
+      }
       // Road supply and revenue-per-road-metre: FULL-only (2026-07-28). The
       // second row IS the Ratio view's headline metric, and Ratio is full-only
       // now — leaving it on the default view's hover would publish the number
