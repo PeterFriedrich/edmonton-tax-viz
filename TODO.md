@@ -258,18 +258,21 @@ summary.)_
     and reveals itself at 2+, so the second one costs no chrome work.
     ⚠️ **Give it its OWN state, never Money's** — that is the whole reason the
     container exists, and the failure it prevents is silent.
-  - [ ] **NEVER CHECKED ON A PHONE, and the `#views` row is now SIX buttons.**
-    That row is the one piece of chrome every view shares, it wraps at
-    `max-width: 640px` (`#views { flex-wrap: wrap }`), and "Lab" carries a
-    `beta` tag that makes it wider than its four characters suggest. Verified
-    at 1440x900 / 1400x900 / 1366x768 / 1280x720 / 1024x768 only — the title box
-    is **314px** against Money's 176px and clears `#botleft` by **215px** at the
-    worst (1280x720), so the *vertical* side is still fine and the untested axis
-    is **WIDTH**. ⚠️ **It grew twice in one day — 217 → 258 → 314px** — and
-    Development's 442px blurb is what collides below 768px tall, so the next
-    addition to that blurb needs re-measuring, not assuming. Remove
-    `.folded` from `#optpanel` before measuring the Options rows — otherwise
-    every probe returns zeros (the trap this file already records twice).
+  - [x] **CHECKED ON A PHONE — Peter, 2026-08-12: "lab on phone is fine."**
+    ⚠️ **This is an EYES-ON confirmation on a real device, which is the thing a
+    probe could not give us** (the standing caveat: verify scripts drive
+    `.click()` and bypass `pointer-events`). It is **not** a measurement — no
+    width numbers were captured, so if the `#views` row or the title box grows
+    again, this closure does not cover it. The untested axis was **WIDTH**: six
+    buttons wrapping at `max-width: 640px`, "Lab" widened by its `beta` tag, and
+    a title box that went **217 → 258 → 314px in one day** against Money's 176px.
+    Desktop verified at 1440x900 / 1400x900 / 1366x768 / 1280x720 / 1024x768;
+    worst `#botleft` clearance 215px at 1280x720, so vertical was never the
+    worry. ⚠️ **Still live for the NEXT change:** Development's 442px blurb is
+    what collides below 768px tall, so an addition to that blurb needs
+    re-measuring rather than assuming, and remove `.folded` from `#optpanel`
+    before measuring Options rows or every probe returns zeros (the trap this
+    file records three times now).
   - [ ] **Peter's call: does the deviation lens ever leave the Lab? THE CASE
     FOR IT GOT STRONGER 2026-08-12 and the old reason to doubt it is GONE.**
     It was marked `beta` partly because it was rank-identical to the Money map.

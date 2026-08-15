@@ -1532,10 +1532,21 @@ imply all funds.**
 `https://budget.edmonton.ca/api/operating_budget.csv` — the City's Open Budget
 portal, **machine-readable and primary**. **7,283 rows, FY2017–FY2026**, one row
 per `budget_year, fund_type, department, branch, program, category, account_type,
-budget`. Fetched by hand on Peter's laptop 2026-08-04 (edmonton.ca is unreachable
-from the Oracle box, §13). **NOT downloaded by `download_data.py`, NOT in the
-weekly refresh, NOT read by `src/` or `main.py`** — it is a sourcing tool for the
-manual reviewed inputs (§13, §16), not a pipeline input.
+budget`. First fetched by hand on Peter's laptop 2026-08-04. **NOT downloaded by
+`download_data.py`, NOT in the weekly refresh, NOT read by `src/` or `main.py`**
+— it is a sourcing tool for the manual reviewed inputs (§13, §16), not a pipeline
+input.
+
+✅ **CORRECTED 2026-08-13 — IT IS REACHABLE FROM THE ORACLE BOX.** This line used
+to add *"(edmonton.ca is unreachable from the Oracle box, §13)"* as the reason for
+the laptop fetch. **`budget.edmonton.ca` is a different host from
+`www.edmonton.ca`**: measured 2026-08-13 it returns `HTTP 200`, 1,037,656 bytes,
+7,283 rows, while `www.edmonton.ca` fails to connect (`000`) in the same sweep.
+`data.edmonton.ca`, `alberta.ca` and `open.alberta.ca` also resolve. ⚠️ **§13's
+blanket "edmonton.ca is unreachable" is true only of `www.` — test the specific
+host before recording a blocker from it.** (Two pieces of work were parked on the
+generalised version: this fetch, and the ASSET manual on open.alberta.ca, which
+turned out to be a transient 520 rather than a network policy.)
 
 ### Why it matters
 It is the **only public source with sub-branch operating detail**. The Approved
