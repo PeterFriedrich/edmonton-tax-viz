@@ -51,6 +51,21 @@ item directly above it exists to say that is wrong. And added the
 roll-continuity-as-second-guard question, which existed only in a session
 summary.)_
 
+_Last reconciled: 2026-08-15 (S108 — **two stale BLOCKERS fell in one session,
+and both had parked real work for days.** The open-data request's ASSET
+paragraph was unverified because the Alberta manual "returned HTTP 520" — it was
+transient, and reading it verified the claim *more strongly* than the draft dared
+assert (a Tax Code separating `T` from `E`, a Tax Exemption Code mandatory for
+every property *including taxable* ones, and Appendix G naming our exact hospital
+and university parcels by MGA section). The break-even lens's first task was
+recorded as needing a laptop because "edmonton.ca is unreachable from the Oracle
+box" — true of `www.`, **false of `budget.edmonton.ca`**, which returns HTTP 200;
+Task 2 then executed here in minutes. ⚠️ **A stale blocker is worse than a stale
+bug: nobody reproduces it, because its whole claim is that trying is pointless.
+Test the exact host, never the domain, and re-test 5xx before recording it as an
+environmental fact.** Nothing was built this session — it was all measurement and
+docs.)_
+
 ## Open work
 
 
@@ -205,10 +220,12 @@ summary.)_
     state the limit.
   - **Does not block the cost register.** Its own decision.
 
-- [ ] **▶ BREAK-EVEN LENS — PROPOSED, NOT STARTED. `docs/SPEC_breakeven.md`;
-  five decisions in its §8 block all code.** Opened 2026-08-11 (Peter: pipelines
-  per cost category, improved one at a time, composing into a per-hood
-  break-even that stays in the Lab and might one day reach specialists).
+- [ ] **▶ BREAK-EVEN LENS — STILL NO CODE, BUT THE MEASUREMENT IS DONE.
+  `docs/SPEC_breakeven.md`; SIX decisions in its §8 now block all code.** Opened
+  2026-08-11 (Peter: pipelines per cost category, improved one at a time,
+  composing into a per-hood break-even that stays in the Lab and might one day
+  reach specialists). **§4 Tasks 1 and 2 executed 2026-08-13 (PR #208, merged) —
+  §4a holds the result.**
   - ⚠️ **THE NUMBER IS COMPUTABLE TODAY AND WOULD BE WRONG IN A KNOWN
     DIRECTION.** Revenue modelled $2,715M against $473M of cost on the
     operating basis — **12.3% of the City's $3,846M tax-supported operating
@@ -216,24 +233,58 @@ summary.)_
     by roughly the same factor everywhere, which is exactly what makes it look
     plausible. **Coverage is therefore the product, not a caveat**, and must be
     computed and printed wherever the number is.
-  - **FIRST TASK IS MEASUREMENT, NOT CODE: ingest the Open Budget portal**
-    (`budget.edmonton.ca/api/operating_budget.csv`, `data/DATA.md` §17) to rank
-    categories by control total. The cost work so far grew from what was
-    *measurable*, not what is *expensive*, so the register would start lopsided.
-    ⚠️ Three documented quirks all bite: program names do not survive two
-    re-cuts, every figure is gross, portal and PDF differ by 1.31%. Laptop or
-    CI fetch — edmonton.ca is unreachable from the Oracle box.
+  - ✅ **TASK 1 + TASK 2 DONE 2026-08-13 — the register is measured and the head
+    is SHORT.** FY2025 tax-supported (pinned to match `ASSESSMENT_YEAR` and to
+    stay inside the 2018–2025 naming era): **$3,855.9M, 656 rows, 144 programs —
+    and the top 25 programs are 76.5% of it.** Order: **Police $597.2M (15.5%)**,
+    Transit `OPS/ETS - Bus and LRT` $449.1M, Tax-supported Debt Charges $221.0M,
+    Fire `CS/FRS - Operations and Training` $208.2M, **Alley Renewal $174.4M**.
+    Full table in `SPEC_breakeven.md` §4a. ⚠️ **Parks is NOT its own line** — it
+    is bundled with roads inside `OPS/PARS - Infrastructure Operations`.
+  - ⚠️ **▶ POLICE IS THE TOP LINE, HAS NO DRIVER, AND IS BIGGER THAN EVERYTHING
+    CURRENTLY MODELLED PUT TOGETHER** ($597.2M vs $473M). **Do not reach it by
+    working down the ranked list.** Allocating it by any spatial driver produces
+    a per-neighbourhood policing-cost map, and **the driver choice would be doing
+    the arguing** — a far more charged artifact than a roads-cost map. Its own
+    decision, and an editorial one before it is a data one.
+  - ⚠️ **▶ NEW DECISION §8.7 — THE COVERAGE DENOMINATOR IS 20.8% CAPITAL, AND
+    THIS ONE GETS PUBLISHED.** **$800.7M of the $3,855.9M is capital financing**
+    (debt charges $221.0M + pay-as-you-go $142.9M + external/SLRT/Valley Line
+    debt + reserve transfers + Alley Renewal), so §1's `coverage` divides an
+    **operating** numerator by a one-fifth-**capital** denominator. That is the
+    §3 basis-mixing failure sitting **in the coverage ratio rather than the
+    composite** — the worse location, because §6 puts coverage on screen wherever
+    the number is, so the mixed basis would be *printed on the face of the lens*
+    and the composite's hard error would never see it. Operating-only the
+    denominator is **$3,055.2M and the same cost side covers 15.5%, not 12.3%**.
+    Neither is wrong; the lens must say which question it answers.
+    - ⚠️ **CAPITAL IS NOT A SYNONYM FOR UNALLOCATABLE.** `Alley Renewal`
+      **$174.4M** is per-neighbourhood infrastructure renewal on the **lifecycle**
+      basis the roads term already uses — plausibly the most spatially-allocatable
+      line in the whole budget, and a larger register entry than anything shipped
+      except transit. **The genuinely hard part is the ~$400M of debt service**,
+      not "capital".
   - ⚠️ **THE SILENT KILLER IS BASIS MIXING.** Lifecycle $50/road-m/yr vs
     operating $4.635 — same metres, 10.8× apart. The composite must HARD-ERROR
     across bases, not warn.
   - ⚠️ **The revenue half is not the solid half either** — $2,715M modelled vs
     $2,318M budgeted (17%), the ~$125.4M institutional question is open with
     unknown direction, and levy is not all the revenue funding that budget.
-  - **Decide the publication gate BEFORE the number exists** (§8.3). Deciding it
-    afterwards means deciding it while looking at an answer you like.
+  - ~~Decide the publication gate before the number exists (§8.3).~~ **SETTLED
+    2026-08-11** — no separate gate; the Lab is full-build-only and `beta`, so
+    the requirement collapses into §6's *coverage renders wherever the number
+    does*. ⚠️ **Do not re-open** (`SPEC_breakeven.md` §8.3).
+  - ⚠️ **THE FETCH IS NOT LAPTOP-ONLY — that blocker was false and had parked
+    this task since 2026-08-04.** `budget.edmonton.ca` returns **HTTP 200 from
+    the Oracle box**; only `www.edmonton.ca` is blocked. Corrected in
+    `data/DATA.md` §17 and `SPEC_breakeven.md` §4. The three real quirks still
+    bite: program names do not survive two re-cuts, every figure is gross
+    (`account_type` is `Expenses` only), portal and PDF differ (+1.31% on Parks
+    and Roads; 0.26% on the tax-supported total).
 
-- [ ] **THE LAB IS OPEN AS A CONTAINER — one experiment in it, one thing left
-  to check.** Built 2026-08-11 (`DECISIONS.md` ×2 same date;
+- [ ] **THE LAB IS OPEN AS A CONTAINER — one experiment in it, and the only
+  thing left is PETER'S CALL on whether it graduates.** The phone check closed
+  2026-08-15 (eyes-on, PR #207). Built 2026-08-11 (`DECISIONS.md` ×2 same date;
   `verify-deviation.js`, **59 checks green** as of 2026-08-12). A full-build-only
   top-level `#views` button holding unfinished lenses, currently just the
   deviation lens ("vs peer average"), which re-centres the revenue map on its
