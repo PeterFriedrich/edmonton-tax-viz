@@ -55,7 +55,12 @@ function approx(a, b, rel = 1e-6) { return Math.abs(a - b) <= rel * Math.max(Mat
   const groundCol = await page.evaluate(() => {
     const sc = moneyScale();
     const layer = overlay._deck.props.layers.find(l => l.id === 'metric-extrusion');
-    const f = state.data.features.find(x => x.properties.neighbourhood_name === 'UNIVERSITY OF ALBERTA');
+    // ⚠️ DOWNTOWN, not U of A. This probed U of A until 2026-08-15, when it
+    // became the flagship CONSEQUENCE-tier hood: hollow in both denominators,
+    // so getElevation is 0 and getFillColor is transparent by design. The
+    // colour check then passed only because transparent != grey, which tests
+    // nothing. Downtown is rank 1 and 5% institutional — never hollow.
+    const f = state.data.features.find(x => x.properties.neighbourhood_name === 'DOWNTOWN');
     return { colKey: sc.colKey, elev: layer.props.getElevation(f), base: f.properties[sc.colKey] };
   });
   check('ground column is the base metric', groundCol.colKey === 'revenue_per_acre' || groundCol.colKey === 'value_per_acre');
@@ -88,7 +93,7 @@ function approx(a, b, rel = 1e-6) { return Math.abs(a - b) <= rel * Math.max(Mat
     const lotTop = lotVals[lotVals.length - 1] * sc.elevationScale;
     // suppressed (null) hood must grey + flatten
     const mr = state.data.features.find(f => f.properties.neighbourhood_name === 'MAPLE RIDGE');
-    const ua = state.data.features.find(f => f.properties.neighbourhood_name === 'UNIVERSITY OF ALBERTA');
+    const ua = state.data.features.find(f => f.properties.neighbourhood_name === 'DOWNTOWN'); // see above: U of A is hollow now
     return {
       colKey: sc.colKey, clamp: sc.clamp, indepClamp: q(lotVals, 0.975),
       groundTop, lotTop,
@@ -107,11 +112,11 @@ function approx(a, b, rel = 1e-6) { return Math.abs(a - b) <= rel * Math.max(Mat
   check('MAPLE RIDGE suppressed (null lot value)', lot.mrNull === true);
   check('suppressed hood renders set-aside grey', lot.mrFill === lot.aside);
   check('suppressed hood flattened (elev 0)', lot.mrElev === 0);
-  check('U of A renders coloured (not grey)', lot.uaColored === true && lot.uaVal != null);
+  check('DOWNTOWN renders coloured (not grey)', lot.uaColored === true && lot.uaVal != null);
 
   // Tooltip in lot mode: names "lot acre" + parcel land %.
   const tip = await page.evaluate(() => {
-    const f = state.data.features.find(x => x.properties.neighbourhood_name === 'UNIVERSITY OF ALBERTA');
+    const f = state.data.features.find(x => x.properties.neighbourhood_name === 'DOWNTOWN');
     return tooltipFor({ object: f }).html;
   });
   check('lot tooltip says "/ lot acre"', /\/ lot acre/.test(tip));

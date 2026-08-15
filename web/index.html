@@ -2177,7 +2177,154 @@
     // surplus pole. verify-deviation.js pins R === G === B.
     const UNCERTAIN_COLOR = [255, 255, 255];
     const instFrac = p => p.rev_frac_inst || 0;
-    const isUncertain = p => inDeviationPop(p) && instFrac(p) >= INST_UNCERTAIN_MIN;
+
+    // --- two tiers, answering two different questions ------------------------
+    // ⚠️ SHARE DECIDES THE WORDS, CONSEQUENCE DECIDES THE GEOMETRY, and until
+    // 2026-08-15 share decided both — which over-selected badly at the floor. A
+    // hood can be half institutional and render identically in both worlds:
+    // RIVER VALLEY CAMERON moves 0 rank places and 0.02 of the colour ramp,
+    // EVERGREEN moves $87 against a ±$21–48k clamp, and UNIVERSITY OF ALBERTA
+    // FARM's two endpoints both clamp past the deficit floor so they draw the
+    // same prism. Banding those asserts "unknown" about a reading nothing
+    // disturbs. So `INST_UNCERTAIN_MIN` (provenance — part of this rests on
+    // land whose tax status is unpublished) gates the tooltip caveat, and
+    // `INST_CONSEQUENCE_MIN` (consequence — the two worlds do not draw the same
+    // thing) gates the outlined range.
+    //
+    // ⚠️ MEASURED ON THE RAMP, NEVER IN DOLLARS — the two disagree exactly
+    // where the decision is made. SPRUCE AVENUE has the second-largest dollar
+    // drop in the city ($30,310/acre) and moves 12 rank places and 0.08 of the
+    // ramp, because the top of the distribution is sparse and a big drop there
+    // changes nothing a reader would read. EDMONTON NORTHLANDS drops fewer
+    // dollars and swings 0.62. A dollar ranking hollows the wrong hoods.
+    //
+    // The consequence set is a strict SUBSET of the caveat set on today's data
+    // (nearest outsider: BARANOW at 0.11), so an outlined hood always has the
+    // words explaining it. That is data-dependent, not structural — both verify
+    // scripts assert it.
+    const INST_CONSEQUENCE_MIN = 0.25;
+    // Ordered so `deviationStats` can run without touching `isUncertain` — it
+    // counts nothing institutional itself now, which is what keeps the
+    // stats -> shift -> uncertain chain from closing into a loop.
+    const deviationBandRaw = p => {
+      const s = deviationStats();
+      return { levied: deviationRate(p) - s.avg, exempt: deviationRateExempt(p) - s.avgExempt };
+    };
+    // Distance between the two worlds on the LEVIED world's ramp — the one
+    // actually on screen. Both endpoints are already scored against their own
+    // scenario average, so this compares two numbers each correct in its world.
+    const instShiftDeviation = p => {
+      const s = deviationStats();
+      const t = d => d > 0 ? Math.min(1, d / s.clampPos)
+                   : d < 0 ? Math.max(-1, d / s.clampNeg) : 0;
+      const b = deviationBandRaw(p);
+      return Math.abs(t(b.levied) - t(b.exempt));
+    };
+    // ⚠️ This selection contains every band that CROSSES ZERO on today's data
+    // (5 of 15 on Total), so there is no separate sign-flip rule. A crossing
+    // band with both endpoints near zero would flip the lens's above/below
+    // claim while moving nothing visible; none exists, and verify-deviation.js
+    // asserts crossers ⊆ selected so the day one appears is loud, not silent.
+    const isUncertain = p => inDeviationPop(p) && instFrac(p) >= INST_UNCERTAIN_MIN
+      && instShiftDeviation(p) >= INST_CONSEQUENCE_MIN;
+    // Caveat without the range: ≥25% institutional, but the two worlds draw the
+    // same prism. These keep a solid bar and say so in words only.
+    const instCaveatOnly = p => inDeviationPop(p) && instFrac(p) >= INST_UNCERTAIN_MIN
+      && !isUncertain(p);
+    // Counted out here rather than inside deviationStats, which the shift now
+    // depends on. Cheap: the blurb rebuilds on a view or cut change, not per
+    // frame.
+    const deviationBandedCount = () =>
+      state.data.features.filter(f => isUncertain(f.properties)).length;
+
+    // The same question on the Money ramp. ⚠️ FIXED TRANSFORM, deliberately NOT
+    // `state.colorAdjust`: which prisms are hollow is a claim about the data,
+    // so it must not change when a display preference flips. Under the linear
+    // setting the set silently loses UNIVERSITY OF ALBERTA FARM, and a prism
+    // that appears because someone toggled a colour control is indefensible.
+    // ⚠️ The DENOMINATOR toggle is the opposite case and IS followed —
+    // lot acres are a different number, not a different rendering of the same
+    // one, so a hood may be materially uncertain on one and not the other.
+    const instShiftMoney = p => {
+      const sc = moneyScale();
+      const v = p[sc.colKey];
+      if (v == null) return 0;
+      const sqrt = METRICS[state.metric].transform === "sqrt";
+      const t = x => {
+        const r = Math.max(0, Math.min(1, x / sc.clamp));
+        return sqrt ? Math.sqrt(r) : r;
+      };
+      return t(v) - t(v * (1 - instFrac(p)));
+    };
+    // Money's outlined hoods: the caveat tier, narrowed to the ones whose two
+    // worlds do not draw the same prism. Six on Total today, and only TWO of
+    // them are top-11 (U of A 2, Tawa 11) — Downtown, Wîhkwêntôwin, Garneau,
+    // Spruce Ave, Central McDougall and Boyle Street keep their colour, which
+    // is what makes this affordable on the default view at all.
+    const instHollowMoney = p =>
+      isRevenue(state.metric) && !p.is_set_aside
+      && instFrac(p) >= INST_UNCERTAIN_MIN
+      && instShiftMoney(p) >= INST_CONSEQUENCE_MIN;
+
+    // ⚠️ NOT the Lab's white, and the difference is measured, not stylistic.
+    // White was validated against the deviation lens's DIVERGING teal↔orange
+    // ramp; Money runs three SEQUENTIAL ramps that occupy the whole lightness
+    // axis, and two of them peak near white — `glow` at #fff6e4 by design ("the
+    // tallest towers glow"). White against that peak is **ΔE 3.5 normal / 3.4
+    // deutan**, so the outline would vanish into exactly the tall hoods it is
+    // drawn on. No achromatic value clears the floor of 15: greys collide with
+    // cividis's #7c7b78 mid (mid-grey 8.6) and with the set-aside grey, and
+    // magenta/violet collide with the warm ramps' #a52c60/#581563 midtones.
+    // **There is no single colour that clears all four ramps** — so FORM
+    // carries the shared identity (bare wireframe, two endpoints, no fill, no
+    // arrow) and colour is per-lens because the ramps are.
+    //
+    // #2ec4ff: worst pair **ΔE 21.5 normal / 19.5 CVD** across all 15 ramp
+    // stops and 3 backgrounds; 27.1 vs the set-aside grey; 32.0/32.3/46.5 vs
+    // the three roof-edge colours. Chosen by brute-force search through the
+    // dataviz validator, not eyeballed (the palette lesson of 2026-08-12).
+    // ⚠️ The Lab's "no cool hue" rule does NOT apply here and its reason says
+    // why: a cool hue there leans toward the TEAL SURPLUS POLE. Money's ramps
+    // are sequential magnitude — they have no poles — so azure asserts no
+    // direction. Cividis's blue low end is the one place it has any pull, and
+    // #2ec4ff is far brighter than any of its steps (ΔE 51.7 vs #00224e).
+    const INST_OUTLINE_COLOR = [46, 196, 255];
+
+    // The two endpoints of every hollow hood, as bare outlines — one layer per
+    // endpoint, because deck.gl extrudes from the ground plane and cannot draw
+    // a prism floating between two heights.
+    //
+    // ⚠️ `exempt` IS ALWAYS THE LOWER ENDPOINT HERE, unlike the Lab, and the
+    // reason is structural: an absolute rate has no peer average to move, so
+    // the cross-universe inversion that makes EVERGREEN GAIN ground on the
+    // deviation lens cannot occur. Reads as an outer outline at the levied
+    // height with an inner tick at the exempt one.
+    //
+    // ⚠️ Filtered to the hollow hoods rather than returning 0 for the rest —
+    // a zero-height wireframe would ring all 406 footprints in azure.
+    function instBandLayers(sc) {
+      const banded = state.data.features.filter(f => instHollowMoney(f.properties));
+      const mk = (id, exempt) => new deck.GeoJsonLayer({
+        id,
+        data: banded,
+        extruded: true,
+        filled: false,
+        stroked: false,
+        wireframe: true,
+        getElevation: f => {
+          const p = f.properties;
+          const v = p[sc.colKey] || 0;
+          return exempt ? v * (1 - instFrac(p)) : v;
+        },
+        elevationScale: sc.elevationScale,
+        getLineColor: INST_OUTLINE_COLOR.concat([255]),
+        getLineWidth: 30,
+        lineWidthMinPixels: 2,
+        pickable: false,
+        updateTriggers: { getElevation: [state.metric, state.denom] },
+      });
+      return [mk("inst-band-levied", false), mk("inst-band-exempt", true)];
+    }
     // The rate with institutional revenue removed — the other coherent world.
     const deviationRateExempt = p =>
       p[state.labCut] * (1 - instFrac(p)) / devAcreFrac(p);
@@ -2192,11 +2339,7 @@
     // the dollars behind it are small. Anything that assumes exempt < levied
     // renders these two backwards — a first version of the verify script
     // asserted exactly that and was wrong, not the code.
-    const deviationBand = p => {
-      if (!isUncertain(p)) return null;
-      const s = deviationStats();
-      return { levied: deviationRate(p) - s.avg, exempt: deviationRateExempt(p) - s.avgExempt };
-    };
+    const deviationBand = p => isUncertain(p) ? deviationBandRaw(p) : null;
     // Ordered for display, so a printed range never reads high-to-low.
     const deviationBandSpan = b => b && (b.exempt <= b.levied
       ? { lo: b.exempt, hi: b.levied } : { lo: b.levied, hi: b.exempt });
@@ -2205,7 +2348,7 @@
       const colKey = state.labCut;
       if (_devStats[colKey]) return _devStats[colKey];
       const props = state.data.features.map(f => f.properties);
-      let num = 0, numExempt = 0, acres = 0, devAcres = 0, banded = 0;
+      let num = 0, numExempt = 0, acres = 0, devAcres = 0;
       for (const p of props) {
         if (!p.revenue_per_acre || p.total_revenue == null) continue;
         if (!inDeviationPop(p)) continue;
@@ -2218,7 +2361,6 @@
         // and dropping them would move everyone else's benchmark on the
         // strength of a question nobody has answered.
         numExempt += (p[colKey] || 0) * (1 - instFrac(p)) * a;
-        if (instFrac(p) >= INST_UNCERTAIN_MIN) banded++;
       }
       const avg = devAcres ? num / devAcres : 0;
       const avgExempt = devAcres ? numExempt / devAcres : 0;
@@ -2236,7 +2378,6 @@
       return (_devStats[colKey] = {
         avg,
         avgExempt,
-        banded,
         clampPos: pos.length ? quantile(pos, 0.95) || 1 : 1,
         clampNeg: neg.length ? quantile(neg, 0.95) || 1 : 1,
         floor: -avg,
@@ -2358,6 +2499,7 @@
     // printed rather than described because all three move with every refresh.
     function deviationBlurb() {
       const s = deviationStats();
+      const banded = deviationBandedCount();
       return "Experimental. Each neighbourhood's " + deviationKind() +
         "tax revenue per developed acre — river valley and rural reserve are " +
         "out of the denominator — against the " + s.scored + " " +
@@ -2365,8 +2507,8 @@
         "above it, orange sinks below; " + s.below + " fall below. Height is " +
         "true to scale, floored at " + fmtDeviation(s.floor) + " against a " +
         fmtDeviation(s.peak) + " peak. " +
-        (s.banded
-          ? s.banded + " institutional neighbourhood" + (s.banded === 1 ? "" : "s") +
+        (banded
+          ? banded + " institutional neighbourhood" + (banded === 1 ? "" : "s") +
             " show an outlined range, not a bar — the roll does not say whether " +
             "that land is levied. "
           : "") +
@@ -3313,6 +3455,11 @@
 
       // Filled extruded prisms. No stroke: the setback gaps already give every
       // shape a dark border at ground level, so a footprint ring is redundant.
+      // ⚠️ The consequence tier flattens and empties its hoods here, and the
+      // white outlines below carry them instead — same construction as the Lab
+      // (fully transparent, NOT a dim slab: a filled floor under a hollow prism
+      // reads as a value the hood does not have). Six hoods on Total.
+      const hollow = f => instHollowMoney(f.properties);
       const layer = new deck.GeoJsonLayer({
         id: "metric-extrusion",
         data: state.data,
@@ -3320,9 +3467,9 @@
         filled: true,
         stroked: false,
         wireframe: false,
-        getElevation: f => f.properties[sc.colKey] || 0,
+        getElevation: f => hollow(f) ? 0 : (f.properties[sc.colKey] || 0),
         elevationScale: sc.elevationScale,
-        getFillColor: f => fillFor(f, sc.colKey, sc.clamp),
+        getFillColor: f => hollow(f) ? [0, 0, 0, 0] : fillFor(f, sc.colKey, sc.clamp),
         material: { ambient: 0.55, diffuse: 0.6, shininess: 32, specularColor: [60, 60, 70] },
         pickable: true,
         autoHighlight: true,
@@ -3338,10 +3485,14 @@
 
       // Crisp roof outline drawn on top of the prisms (depthTest so towers in
       // front still occlude rings behind them).
+      // ⚠️ Hollow hoods are excluded from the roof ring. Drawn, it would sit at
+      // the LEVIED height in the ramp's edge colour — a crisp bright lid on one
+      // of two unknowable worlds, which is the primacy the outlines exist to
+      // refuse. Their own rings come from instBandLayers().
       const edge = RAMPS[state.ramp].edge;
       const topEdges = new deck.PathLayer({
         id: "top-edges",
-        data: topRings(state.data.features, sc.colKey, sc.elevationScale),
+        data: topRings(state.data.features.filter(f => !hollow(f)), sc.colKey, sc.elevationScale),
         getPath: d => d.path,
         getColor: edge,
         getWidth: 1.4,
@@ -3355,7 +3506,7 @@
         updateTriggers: { getColor: [state.ramp] },
       });
 
-      return [layer, topEdges, ...labelLayer()];
+      return [layer, topEdges, ...instBandLayers(sc), ...labelLayer()];
     }
 
     // Entity-escape untrusted data-derived strings before they go into the
@@ -4321,10 +4472,22 @@
         // is deviationRate, NOT p[state.labCut] — the served column is per
         // boundary acre, and printing it beside a developed-acre average would
         // give a reader two numbers whose difference is not the bold one.
+        // ⚠️ The provenance tier still speaks even though the bar is solid.
+        // Narrowing the RANGE to the consequence set must not silently drop the
+        // CAVEAT from the other six — EVERGREEN is 41% institutional whether or
+        // not its two worlds draw the same prism. Same two rows as Money, word
+        // for word, so the concept reads identically across lenses.
+        const caveat = instCaveatOnly(p)
+          ? `<span class="muted">${Math.round(instFrac(p) * 100)}% of revenue is `
+            + `on institutionally-zoned land</span><br/>`
+            + `<span class="muted">the City does not publish which of it is `
+            + `tax-exempt</span><br/>`
+          : "";
         return { className: "tip", html: name +
           `<b>${fmtDeviation(d)}</b> / developed acre<br/>` +
           `<span class="muted">${fmtMoney(deviationRate(p))} here · ` +
           `${fmtMoney(s.avg)} across ${s.scored} ${deviationPeers()}</span><br/>` +
+          caveat +
           `<span class="muted">re-centred revenue — not a cost comparison</span>` };
       }
 
@@ -4374,7 +4537,15 @@
           html: name + `<span class="muted">Too little parcel land for a lot-acre value</span>` + pf,
         };
       }
-      let html = name + `${cfg.fmt(p[colKey])} / ${lot ? "lot acre" : "acre"}`;
+      // ⚠️ A HOLLOW PRISM MUST NOT PRINT A SINGLE NUMBER. The outlines say the
+      // value is a range and the headline would say it is one figure; the range
+      // IS the answer for these six. Low end first, so it never reads
+      // high-to-low (deviationBandSpan's rule — here the order is structural
+      // rather than sorted, since exempt is always the lower endpoint).
+      let html = name + (instHollowMoney(p)
+        ? `<b>${cfg.fmt(p[colKey] * (1 - instFrac(p)))} to ${cfg.fmt(p[colKey])}</b>`
+          + ` / ${lot ? "lot acre" : "acre"}`
+        : `${cfg.fmt(p[colKey])} / ${lot ? "lot acre" : "acre"}`);
       if (lot) html += pf;
       // Residential share of revenue — ground-acre pair regardless of the
       // denominator toggle (identical denominators cancel, so the ratio equals

@@ -68,29 +68,24 @@ docs.)_
 
 ## Open work
 
-- [ ] **PETER'S CALL: do the ≥25%-institutional prisms go HOLLOW on Money, or is
-  the tooltip caveat enough?** The words shipped 2026-08-15; the geometry did
-  not. The Lab draws those 15 hoods as a levied/exempt range with no prism and
-  says the value is unknown; Money now says the same thing in two muted tooltip
-  rows while keeping the prism solid and coloured.
-  - **The cost of going further is COLOUR, not height.** Four of the 15 are
-    top-11 (U of A rank 2, Spruce Ave 6, Central McDougall 7, Tawa 11), so
-    hollowing them punches a visible hole in the central core — and Money's
-    top-down choropleth read is primary in a way the Lab's is not.
-  - **It reaches only 1 of Money's 3 modes.** Grid cells carry no institutional
-    share, so `glass` could not follow, and `change` is share-of-base movement.
-    Banding the prism mode alone leaves the view internally inconsistent.
-  - **Easier here than in the Lab, though:** with no peer average to move,
-    `exempt` is *always* the lower endpoint, so the EVERGREEN / RIVER VALLEY
-    CAMERON inversion trap that broke the first deviation verify script cannot
-    occur. It would render as an outer outline at the levied height with an
-    inner tick at the exempt one.
+- [ ] **`glass` and `change` do not carry the institutional treatment, and today
+  they cannot.** The consequence tier shipped 2026-08-15 on Money's prism mode
+  and the Lab; Money's other two modes are untouched, so the same neighbourhood
+  is outlined-and-uncertain on one mode of a view and confident on another.
+  - **Blocked on data, not on design.** `rev_frac_inst` is a NEIGHBOURHOOD
+    column; the 100 m grid cells carry no institutional share, so `glass` has
+    nothing to threshold on. A cell-level share would come out of
+    `export_value_grid.py` the way `revenue_by_zone.py` derives the hood one.
+  - `change` is share-of-base movement over time, a different quantity again —
+    it may need its own answer rather than this one.
+  - ⚠️ **Re-measure before building.** The 6-hood set is `revenue_per_acre` on
+    today's refresh; it moves with the roll.
   - ⚠️ **`value_per_acre` is NOT a candidate and never will be** — exemption
     changes whether a levy is collected, not what a parcel is assessed at.
     Don't "finish the job" by adding a `value_frac_inst`.
-  - Measurements, both endpoints and the 130% class-vs-zoning trap:
-    `docs/SPEC_revenue.md` "The institutional caveat on the Money tooltip";
-    decision line `docs/DECISIONS.md` 2026-08-15.
+  - Full reasoning, both thresholds and the colour measurement:
+    `docs/SPEC_revenue.md` "The consequence tier"; `docs/DECISIONS.md`
+    2026-08-15 (the second entry, which amends the 2026-08-12 band decision).
 
 - [ ] **BUG REPORT to Edmonton Open Data — the `qi6a-xuwt` 2024/25 dropout.
   Gated on Peter reviewing the notebook by hand; everything else is done.**
@@ -312,15 +307,22 @@ docs.)_
   deviation lens ("vs peer average"), which re-centres the revenue map on its
   peer group's average **per developed acre** and extrudes the deficit half
   BELOW the ground plane.
-  - ⚠️ **15 institutional hoods draw NO PRISM** — they are replaced by two white
-    outlines, one per scenario (levied / exempt), and assert no value. The
-    outline colour is **achromatic by rule, not by taste**: amber shipped first
-    and measured **ΔE 9.5 against the deficit orange under NORMAL vision**
-    (hard floor 15), so the *unknown* hoods read as *below average*. Blue was
-    rejected too — a cool hue leans toward the teal surplus pole. Verify pins
-    `R === G === B`, not a hex. ⚠️ **`exempt` is NOT always the lower end**
-    (EVERGREEN +$87, RIVER VALLEY CAMERON +$842); a first verify check assumed
-    it was and was wrong, the code was right.
+  - ⚠️ **9 institutional hoods draw NO PRISM** (15 until 2026-08-15, when share
+    stopped deciding the geometry) — replaced by two white outlines, one per
+    scenario (levied / exempt), asserting no value. The outline colour is
+    **achromatic by rule, not by taste**: amber shipped first and measured
+    **ΔE 9.5 against the deficit orange under NORMAL vision** (hard floor 15),
+    so the *unknown* hoods read as *below average*. Blue was rejected too — a
+    cool hue leans toward the teal surplus pole. Verify pins `R === G === B`,
+    not a hex. ⚠️ **The rule is local to this lens** — Money uses azure
+    `#2ec4ff` against its near-white sequential peaks.
+  - ⚠️ **`exempt` is NOT always the lower end** (EVERGREEN +$87, RIVER VALLEY
+    CAMERON +$842); a first verify check assumed it was and was wrong, the code
+    was right. **Since 2026-08-15 no inverted band is ever DRAWN, and that is
+    structural**: inversion needs the hood to lose less than the average's
+    $1,303/acre, so its span is under $1,303 against $21,470/$48,047 clamps —
+    Δt < 0.061, never the 0.25 required. Both facts are asserted separately, so
+    the inversion cannot quietly disappear from the data.
   - ⚠️ **Read both decisions before touching it.** The sub-lens it ships
     without (rate-adjusted revenue per acre) was refused *on measurement*, not
     on taste, and the numbers to re-supply if anyone asks again are recorded.

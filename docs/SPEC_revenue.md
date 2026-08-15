@@ -248,11 +248,82 @@ coloured.
 - The revenue-mix panel behind the click already carried this caveat in its
   footer note — the tooltip was the one silent surface.
 
-**NOT decided — should the prisms go hollow on Money too?** That is the Lab's
-full treatment on the default view, and it costs the colour of 4 of the top 11
-(a hole in the central core, since Money's top-down choropleth read is primary).
-It also reaches only one of Money's three modes: grid cells carry no
-institutional share, so `glass` and `change` could not follow. Open in `TODO.md`.
+## The consequence tier — hollow prisms, both lenses (2026-08-15)
+
+The share threshold decided *both* the words and the geometry, and it
+over-selected badly at the floor. **RIVER VALLEY CAMERON moves 0 rank places and
+0.02 of the colour ramp; EVERGREEN moves $87 against a ±$21–48k clamp; UNIVERSITY
+OF ALBERTA FARM's two endpoints both clamp past the deficit floor and draw the
+same prism.** Half of River Valley Cameron's revenue is in question and nothing
+about its reading changes. Outlining those asserts "unknown" about a conclusion
+nothing disturbs.
+
+**DECIDED — two tiers, one rule, both lenses.** Share (`INST_UNCERTAIN_MIN`,
+0.25) decides the **words**; consequence (`INST_CONSEQUENCE_MIN`, 0.25 of
+movement on the lens's own colour ramp) decides the **geometry**.
+
+- **Money: 15 hoods keep the caveat, 6 go hollow** — Edmonton Northlands,
+  U of A, Tawa, West Meadowlark Park, U of A Farm, Virginia Park. Only **two are
+  top-11** (U of A 2, Tawa 11); Downtown, Wîhkwêntôwin, Garneau, Spruce Avenue,
+  Central McDougall and Boyle Street keep their colour. That is what makes it
+  affordable on the default view at all. Same six under both denominators.
+- **Lab: 15 → 9 banded on Total** (13 → 8 Non-residential, 2 → 1 Residential).
+  The six it drops keep the caveat rows in their tooltip — narrowing the range
+  must not silently drop the warning.
+- A hollow prism prints a **range**, never a single figure: a lone confident
+  number beside an outline contradicts it.
+
+⚠️ **MEASURE ON THE RAMP, NEVER IN DOLLARS.** The two disagree exactly where the
+decision is made. **SPRUCE AVENUE has the second-largest dollar drop in the city
+($30,310/acre) and moves 12 rank places and 0.08 of the ramp** — the top of the
+distribution is sparse, so a big drop there changes nothing a reader would read.
+**EDMONTON NORTHLANDS drops fewer dollars and swings 0.62.** A dollar ranking
+hollows the wrong hoods.
+
+⚠️ **FIXED TRANSFORM, not `state.colorAdjust`.** Which prisms are hollow is a
+claim about the data and must not change when a display preference flips — under
+the linear setting the set silently loses U of A Farm. The *denominator* toggle
+is the opposite case and **is** followed: lot acres are a different number, not
+a different rendering of the same one.
+
+**Structural results, both asserted in the verify scripts:**
+- The consequence set is a **strict subset** of the caveat set (nearest outsider:
+  BARANOW at 0.11), so an outlined hood always has words explaining it.
+- **An inverted band can never be drawn.** A band inverts only when the hood
+  loses less than the $1,303/acre the citywide average loses, so its span is
+  under $1,303 against clamps of $21,470/$48,047 — Δt < 0.061, never the 0.25
+  required. The inversion still exists in the data (EVERGREEN +$87, RIVER VALLEY
+  CAMERON +$842) and `verify-deviation.js` asserts it is never rendered.
+- Δt ≥ 0.25 contains **every zero-crossing band** (5 of 15 on Total), so no
+  separate sign-flip rule is needed; a crossing band with both endpoints near
+  zero would flip the lens's above/below claim while moving nothing visible.
+  None exists, and the verify fails loudly the day one does.
+
+### ⚠️ The outline colour is NOT the Lab's white, and that is measured
+
+White was validated against the deviation lens's **diverging** teal↔orange ramp.
+Money runs **three sequential** ramps that occupy the whole lightness axis, and
+two peak near white — `glow` at `#fff6e4` *by design* ("the tallest towers
+glow"). **White against that peak is ΔE 3.5 normal / 3.4 deutan**, so the outline
+would vanish into exactly the tall hoods it is drawn on.
+
+**No achromatic value clears the floor of 15**: mid-greys collide with cividis's
+`#7c7b78` mid (8.6) and with the set-aside grey; magenta/violet collide with the
+warm ramps' `#a52c60`/`#581563` midtones. **There is no single colour that clears
+all four ramps** — so **form** carries the shared identity (bare wireframe, two
+endpoints, no fill, no arrow) and **colour is per-lens because the ramps are**.
+
+`#2ec4ff`: worst pair **ΔE 21.5 normal / 19.5 CVD** across all 15 ramp stops and
+3 backgrounds; 27.1 vs set-aside grey; 32.0/32.3/46.5 vs the three roof-edge
+colours. Brute-forced through the dataviz validator, not eyeballed.
+
+⚠️ **The Lab's "no cool hue" rule does not apply here, and its own reason says
+why**: a cool hue there leans toward the **teal surplus pole**. Money's ramps are
+sequential magnitude — no poles — so azure asserts no direction.
+
+**Still open:** `glass` and `change` cannot follow — grid cells carry no
+institutional share — so Money's prism mode is treated and its two other modes
+are not. Tracked in `TODO.md`.
 
 ## Cross-refs
 
