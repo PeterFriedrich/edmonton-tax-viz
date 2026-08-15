@@ -202,8 +202,28 @@ const check = (name, ok, detail = '') => {
     const s = deviationStats();
     const ua = state.data.features.find(f =>
       f.properties.neighbourhood_name === 'UNIVERSITY OF ALBERTA');
+    // Every hood that would have been banded on SHARE alone, split by whether
+    // the consequence cut kept it — the 2026-08-15 narrowing.
+    const shareTier = state.data.features.filter(f =>
+      inDeviationPop(f.properties) && instFrac(f.properties) >= INST_UNCERTAIN_MIN);
+    const invertedAnywhere = shareTier.filter(f => {
+      const b = deviationBandRaw(f.properties);
+      return b.exempt > b.levied;
+    });
     return { drawn, crossZero, stillExtruded, wrongOrder, unbandedDrawn, inverted,
-             banded: s.banded, avg: s.avg, avgExempt: s.avgExempt,
+             banded: deviationBandedCount(), avg: s.avg, avgExempt: s.avgExempt,
+             shareTier: shareTier.length,
+             caveatOnly: shareTier.filter(f => instCaveatOnly(f.properties)).length,
+             invertedAnywhere: invertedAnywhere.length,
+             invertedAndBanded: invertedAnywhere.filter(f => isUncertain(f.properties)).length,
+             crossersNotBanded: shareTier.filter(f => {
+               const b = deviationBandRaw(f.properties);
+               return (b.levied > 0) !== (b.exempt > 0) && !isUncertain(f.properties);
+             }).length,
+             caveatTip: (() => {
+               const f = shareTier.find(x => instCaveatOnly(x.properties));
+               return f ? viewTooltip({ object: f }).html : '';
+             })(),
              hiFilled: hi.props.filled, hiWireframe: hi.props.wireframe,
              bandColor: hi.props.getLineColor,
              bandedFill: (() => {
@@ -222,8 +242,33 @@ const check = (name, ok, detail = '') => {
     `${band.stillExtruded} banded hoods still extruded`);
   check('the exempt RATE never exceeds the levied rate', band.wrongOrder === 0,
     `${band.wrongOrder} inverted`);
-  check('at least one band inverts, so the display cannot assume an order',
-    band.inverted > 0, `${band.inverted} of ${band.drawn} invert`);
+  // ⚠️ THE INVERSION MOVED, IT DID NOT GO AWAY. Until 2026-08-15 this asserted
+  // that at least one DRAWN band inverts (EVERGREEN +$87, RIVER VALLEY CAMERON
+  // +$842), which justified deviationBandSpan sorting for display. The
+  // consequence cut drops exactly those hoods, and that is structural, not
+  // luck: a band inverts only when the hood loses LESS than the $1,303/acre the
+  // citywide average loses, so its span is under $1,303 against clamps of
+  // $21,470/$48,047 — Δt < 0.061, never the 0.25 required to draw. So the
+  // inversion still exists in the DATA and must never be drawn.
+  check('inverted bands still exist in the share tier', band.invertedAnywhere > 0,
+    `${band.invertedAnywhere} invert`);
+  check('*** no INVERTED band is ever drawn (Δt < 0.061 < 0.25) ***',
+    band.invertedAndBanded === 0, `${band.invertedAndBanded} drawn`);
+  check('no drawn band inverts', band.inverted === 0, `${band.inverted} of ${band.drawn}`);
+  // The consequence cut narrows the set; the caveat must not narrow with it.
+  check('the consequence cut is a strict subset of the share tier',
+    band.drawn < band.shareTier && band.drawn > 0, `${band.drawn} of ${band.shareTier}`);
+  check('every share-tier hood it drops still gets the WORDS',
+    band.caveatOnly === band.shareTier - band.drawn, `${band.caveatOnly} caveat-only`);
+  check('a caveat-only hood names the zoning share and the unpublished status',
+    /institutionally-zoned land/.test(band.caveatTip)
+    && /does not publish which of it is tax-exempt/.test(band.caveatTip));
+  // Δt >= 0.25 contains every zero-crossing band today. A crossing band with
+  // both endpoints near zero would flip the lens's above/below claim while
+  // moving nothing visible; none exists, and this is how we hear about the
+  // first one instead of shipping it silently.
+  check('no zero-crossing band is dropped by the consequence cut',
+    band.crossersNotBanded === 0, `${band.crossersNotBanded} dropped`);
   check('some bands cross the ground plane', band.crossZero > 0, `${band.crossZero}`);
   // Outline only: a solid endpoint gives one of two unknowable worlds primacy.
   check('band endpoints are OUTLINE ONLY (filled:false, wireframe:true)',
