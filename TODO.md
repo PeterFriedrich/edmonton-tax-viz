@@ -68,7 +68,29 @@ docs.)_
 
 ## Open work
 
-
+- [ ] **PETER'S CALL: do the ≥25%-institutional prisms go HOLLOW on Money, or is
+  the tooltip caveat enough?** The words shipped 2026-08-15; the geometry did
+  not. The Lab draws those 15 hoods as a levied/exempt range with no prism and
+  says the value is unknown; Money now says the same thing in two muted tooltip
+  rows while keeping the prism solid and coloured.
+  - **The cost of going further is COLOUR, not height.** Four of the 15 are
+    top-11 (U of A rank 2, Spruce Ave 6, Central McDougall 7, Tawa 11), so
+    hollowing them punches a visible hole in the central core — and Money's
+    top-down choropleth read is primary in a way the Lab's is not.
+  - **It reaches only 1 of Money's 3 modes.** Grid cells carry no institutional
+    share, so `glass` could not follow, and `change` is share-of-base movement.
+    Banding the prism mode alone leaves the view internally inconsistent.
+  - **Easier here than in the Lab, though:** with no peer average to move,
+    `exempt` is *always* the lower endpoint, so the EVERGREEN / RIVER VALLEY
+    CAMERON inversion trap that broke the first deviation verify script cannot
+    occur. It would render as an outer outline at the levied height with an
+    inner tick at the exempt one.
+  - ⚠️ **`value_per_acre` is NOT a candidate and never will be** — exemption
+    changes whether a levy is collected, not what a parcel is assessed at.
+    Don't "finish the job" by adding a `value_frac_inst`.
+  - Measurements, both endpoints and the 130% class-vs-zoning trap:
+    `docs/SPEC_revenue.md` "The institutional caveat on the Money tooltip";
+    decision line `docs/DECISIONS.md` 2026-08-15.
 
 - [ ] **BUG REPORT to Edmonton Open Data — the `qi6a-xuwt` 2024/25 dropout.
   Gated on Peter reviewing the notebook by hand; everything else is done.**
