@@ -2238,7 +2238,7 @@
       state.data.features.filter(f => isUncertain(f.properties)).length;
 
     // The same question on the Money ramp. ⚠️ FIXED TRANSFORM, deliberately NOT
-    // `state.colorAdjust`: which prisms are hollow is a claim about the data,
+    // `state.colorAdjust`: which prisms are banded is a claim about the data,
     // so it must not change when a display preference flips. Under the linear
     // setting the set silently loses UNIVERSITY OF ALBERTA FARM, and a prism
     // that appears because someone toggled a colour control is indefensible.
@@ -2261,7 +2261,7 @@
     // them are top-11 (U of A 2, Tawa 11) — Downtown, Wîhkwêntôwin, Garneau,
     // Spruce Ave, Central McDougall and Boyle Street keep their colour, which
     // is what makes this affordable on the default view at all.
-    const instHollowMoney = p =>
+    const instBandedMoney = p =>
       isRevenue(state.metric) && !p.is_set_aside
       && instFrac(p) >= INST_UNCERTAIN_MIN
       && instShiftMoney(p) >= INST_CONSEQUENCE_MIN;
@@ -2290,25 +2290,42 @@
     // #2ec4ff is far brighter than any of its steps (ΔE 51.7 vs #00224e).
     const INST_OUTLINE_COLOR = [46, 196, 255];
 
-    // The two endpoints of every hollow hood, as bare outlines — one layer per
-    // endpoint, because deck.gl extrudes from the ground plane and cannot draw
-    // a prism floating between two heights.
+    // The two endpoints of every banded hood, as TRANSLUCENT PRISMS with opaque
+    // edges — one layer per endpoint, because deck.gl extrudes from the ground
+    // plane and cannot draw a prism floating between two heights.
     //
-    // ⚠️ `exempt` IS ALWAYS THE LOWER ENDPOINT HERE, unlike the Lab, and the
-    // reason is structural: an absolute rate has no peer average to move, so
-    // the cross-universe inversion that makes EVERGREEN GAIN ground on the
-    // deviation lens cannot occur. Reads as an outer outline at the levied
-    // height with an inner tick at the exempt one.
+    // ⚠️ FILLED, unlike the Lab, and the 2026-08-12 "neither endpoint is solid"
+    // rule is satisfied rather than broken: BOTH endpoints carry the SAME alpha,
+    // so neither unknowable world gets primacy. That rule exists to stop one
+    // world being asserted, not to mandate wireframes — and bare wireframes were
+    // already the weak point of the Lab's version ("that hollow prism is super
+    // hard to see", 2026-08-12).
     //
-    // ⚠️ Filtered to the hollow hoods rather than returning 0 for the rest —
-    // a zero-height wireframe would ring all 406 footprints in azure.
+    // ⚠️ THE DENSER BASE IS FREE, AND IT IS THE RIGHT SEMANTICS. The two prisms
+    // overlap from the ground to the exempt height, so that section composites
+    // to ~75% while the cap above it stays at 50%. On an absolute rate the lower
+    // endpoint is NOT one of two unknowable worlds — it is the revenue levied in
+    // both of them — so a denser floor under a fainter cap says exactly the true
+    // thing: this much regardless, that much depending on an unpublished status.
+    // (The Lab cannot borrow this: both its averages move, so neither of its
+    // endpoints is the certain one.)
+    //
+    // ⚠️ THE OPAQUE EDGES ARE LOAD-BEARING, NOT DECORATION. A translucent fill
+    // composites with whatever is behind it, so the measured ΔE 21.5/19.5 for
+    // #2ec4ff stops holding pointwise the moment it goes see-through. The
+    // wireframe stays at full alpha and carries the contrast guarantee; the fill
+    // only has to make the mass legible at a glance.
+    //
+    // ⚠️ Filtered to the banded hoods rather than returning 0 for the rest — a
+    // zero-height prism would tint all 406 footprints azure.
+    const INST_BAND_ALPHA = 128;
     function instBandLayers(sc) {
-      const banded = state.data.features.filter(f => instHollowMoney(f.properties));
+      const banded = state.data.features.filter(f => instBandedMoney(f.properties));
       const mk = (id, exempt) => new deck.GeoJsonLayer({
         id,
         data: banded,
         extruded: true,
-        filled: false,
+        filled: true,
         stroked: false,
         wireframe: true,
         getElevation: f => {
@@ -2317,13 +2334,16 @@
           return exempt ? v * (1 - instFrac(p)) : v;
         },
         elevationScale: sc.elevationScale,
+        getFillColor: INST_OUTLINE_COLOR.concat([INST_BAND_ALPHA]),
         getLineColor: INST_OUTLINE_COLOR.concat([255]),
         getLineWidth: 30,
         lineWidthMinPixels: 2,
+        material: { ambient: 0.55, diffuse: 0.6, shininess: 32, specularColor: [60, 60, 70] },
         pickable: false,
         updateTriggers: { getElevation: [state.metric, state.denom] },
       });
-      return [mk("inst-band-levied", false), mk("inst-band-exempt", true)];
+      // Exempt first so the taller levied prism blends OVER the certain base.
+      return [mk("inst-band-exempt", true), mk("inst-band-levied", false)];
     }
     // The rate with institutional revenue removed — the other coherent world.
     const deviationRateExempt = p =>
@@ -3455,11 +3475,11 @@
 
       // Filled extruded prisms. No stroke: the setback gaps already give every
       // shape a dark border at ground level, so a footprint ring is redundant.
-      // ⚠️ The consequence tier flattens and empties its hoods here, and the
-      // white outlines below carry them instead — same construction as the Lab
-      // (fully transparent, NOT a dim slab: a filled floor under a hollow prism
-      // reads as a value the hood does not have). Six hoods on Total.
-      const hollow = f => instHollowMoney(f.properties);
+      // ⚠️ The consequence tier flattens and empties its hoods HERE, and the
+      // azure band prisms below carry them instead. Fully transparent, NOT a
+      // dim slab — a ramp-coloured floor under the band would assert the very
+      // value the band exists to withhold. Six hoods on Total.
+      const banded = f => instBandedMoney(f.properties);
       const layer = new deck.GeoJsonLayer({
         id: "metric-extrusion",
         data: state.data,
@@ -3467,9 +3487,9 @@
         filled: true,
         stroked: false,
         wireframe: false,
-        getElevation: f => hollow(f) ? 0 : (f.properties[sc.colKey] || 0),
+        getElevation: f => banded(f) ? 0 : (f.properties[sc.colKey] || 0),
         elevationScale: sc.elevationScale,
-        getFillColor: f => hollow(f) ? [0, 0, 0, 0] : fillFor(f, sc.colKey, sc.clamp),
+        getFillColor: f => banded(f) ? [0, 0, 0, 0] : fillFor(f, sc.colKey, sc.clamp),
         material: { ambient: 0.55, diffuse: 0.6, shininess: 32, specularColor: [60, 60, 70] },
         pickable: true,
         autoHighlight: true,
@@ -3485,14 +3505,14 @@
 
       // Crisp roof outline drawn on top of the prisms (depthTest so towers in
       // front still occlude rings behind them).
-      // ⚠️ Hollow hoods are excluded from the roof ring. Drawn, it would sit at
+      // ⚠️ Banded hoods are excluded from the roof ring. Drawn, it would sit at
       // the LEVIED height in the ramp's edge colour — a crisp bright lid on one
-      // of two unknowable worlds, which is the primacy the outlines exist to
-      // refuse. Their own rings come from instBandLayers().
+      // of two unknowable worlds, which is the primacy the band exists to
+      // refuse. Their own edges come from instBandLayers().
       const edge = RAMPS[state.ramp].edge;
       const topEdges = new deck.PathLayer({
         id: "top-edges",
-        data: topRings(state.data.features.filter(f => !hollow(f)), sc.colKey, sc.elevationScale),
+        data: topRings(state.data.features.filter(f => !banded(f)), sc.colKey, sc.elevationScale),
         getPath: d => d.path,
         getColor: edge,
         getWidth: 1.4,
@@ -4537,12 +4557,12 @@
           html: name + `<span class="muted">Too little parcel land for a lot-acre value</span>` + pf,
         };
       }
-      // ⚠️ A HOLLOW PRISM MUST NOT PRINT A SINGLE NUMBER. The outlines say the
+      // ⚠️ A BANDED PRISM MUST NOT PRINT A SINGLE NUMBER. The two prisms say the
       // value is a range and the headline would say it is one figure; the range
       // IS the answer for these six. Low end first, so it never reads
       // high-to-low (deviationBandSpan's rule — here the order is structural
       // rather than sorted, since exempt is always the lower endpoint).
-      let html = name + (instHollowMoney(p)
+      let html = name + (instBandedMoney(p)
         ? `<b>${cfg.fmt(p[colKey] * (1 - instFrac(p)))} to ${cfg.fmt(p[colKey])}</b>`
           + ` / ${lot ? "lot acre" : "acre"}`
         : `${cfg.fmt(p[colKey])} / ${lot ? "lot acre" : "acre"}`);
@@ -4560,17 +4580,17 @@
         const share = Math.round(100 * p.res_revenue_per_acre / p.revenue_per_acre);
         html += `<br/><span class="muted">${share}% of revenue is residential</span>`;
       }
-      // ⚠️ The institutional caveat, on the SAME threshold the Lab bands at —
-      // one constant, two surfaces, so they can never disagree about which
-      // hoods are uncertain. The Lab replaces those 15 prisms with a range;
-      // here the prism stays solid and only the tooltip speaks, because Money
-      // is the default view and hollowing 4 of its top 11 (U of A rank 2,
-      // Spruce Ave 6, Central McDougall 7, Tawa 11) is a separate decision.
-      // Until then this was the one silent surface: the revenue-mix panel
-      // behind the click already carries the caveat in its footer note, and
-      // the Lab's tooltip says the value is unknown outright, while the
-      // default map printed $171,670/acre for a 90%-institutional hood with no
-      // hint attached. ⚠️ It must never read as revenue the City fails to
+      // ⚠️ The PROVENANCE tier — the 15 hoods, wider than the 6 that get band
+      // prisms. Both surfaces read INST_UNCERTAIN_MIN itself, so the words can
+      // never disagree with the geometry about which hoods are in question.
+      // SPRUCE AVENUE and CENTRAL MCDOUGALL live here: 42%/43% institutional,
+      // rank 6 and 7, and their two worlds draw the same prism, so they keep
+      // their colour and say it in words instead. Before 2026-08-15 this was
+      // the one silent surface — the revenue-mix panel behind the click
+      // already carried the caveat in its footer note and the Lab's tooltip
+      // said the value was unknown outright, while the default map printed
+      // $171,670/acre for a 90%-institutional hood with nothing attached.
+      // ⚠️ It must never read as revenue the City fails to
       // collect (DECISIONS.md 2026-08-08).
       //
       // ⚠️ REVENUE CUTS ONLY, and the reason is NOT the road rows' reason.

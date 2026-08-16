@@ -248,7 +248,7 @@ coloured.
 - The revenue-mix panel behind the click already carried this caveat in its
   footer note — the tooltip was the one silent surface.
 
-## The consequence tier — hollow prisms, both lenses (2026-08-15)
+## The consequence tier — banded prisms, both lenses (2026-08-15)
 
 The share threshold decided *both* the words and the geometry, and it
 over-selected badly at the floor. **RIVER VALLEY CAMERON moves 0 rank places and
@@ -262,7 +262,7 @@ nothing disturbs.
 0.25) decides the **words**; consequence (`INST_CONSEQUENCE_MIN`, 0.25 of
 movement on the lens's own colour ramp) decides the **geometry**.
 
-- **Money: 15 hoods keep the caveat, 6 go hollow** — Edmonton Northlands,
+- **Money: 15 hoods keep the caveat, 6 get band prisms** — Edmonton Northlands,
   U of A, Tawa, West Meadowlark Park, U of A Farm, Virginia Park. Only **two are
   top-11** (U of A 2, Tawa 11); Downtown, Wîhkwêntôwin, Garneau, Spruce Avenue,
   Central McDougall and Boyle Street keep their colour. That is what makes it
@@ -270,8 +270,8 @@ movement on the lens's own colour ramp) decides the **geometry**.
 - **Lab: 15 → 9 banded on Total** (13 → 8 Non-residential, 2 → 1 Residential).
   The six it drops keep the caveat rows in their tooltip — narrowing the range
   must not silently drop the warning.
-- A hollow prism prints a **range**, never a single figure: a lone confident
-  number beside an outline contradicts it.
+- A banded prism prints a **range**, never a single figure: a lone confident
+  number beside a range contradicts it.
 
 ⚠️ **MEASURE ON THE RAMP, NEVER IN DOLLARS.** The two disagree exactly where the
 decision is made. **SPRUCE AVENUE has the second-largest dollar drop in the city
@@ -280,7 +280,7 @@ distribution is sparse, so a big drop there changes nothing a reader would read.
 **EDMONTON NORTHLANDS drops fewer dollars and swings 0.62.** A dollar ranking
 hollows the wrong hoods.
 
-⚠️ **FIXED TRANSFORM, not `state.colorAdjust`.** Which prisms are hollow is a
+⚠️ **FIXED TRANSFORM, not `state.colorAdjust`.** Which prisms are banded is a
 claim about the data and must not change when a display preference flips — under
 the linear setting the set silently loses U of A Farm. The *denominator* toggle
 is the opposite case and **is** followed: lot acres are a different number, not
@@ -299,7 +299,38 @@ a different rendering of the same one.
   zero would flip the lens's above/below claim while moving nothing visible.
   None exists, and the verify fails loudly the day one does.
 
-### ⚠️ The outline colour is NOT the Lab's white, and that is measured
+### Translucent prisms, not wireframes (2026-08-16)
+
+Peter: *"given that this lens has no transparent prisms, can't we just make
+these into 50 percent transparent blue prisms"*. **The premise checks out** —
+there is no `money` entry in `VIEWS`, so its prisms are fully opaque and the
+prism-opacity slider is hidden there; translucency is an unused channel on this
+view. (Elsewhere it means "ghost / context": `ratio` 5%, `uses` 35%,
+`development` 50%, `glass` 60%.)
+
+**DECIDED — both endpoints render as prisms at alpha 128 (50%) with opaque
+edges.** Bare wireframes were the Lab's own weak point (*"that hollow prism is
+super hard to see"*, 2026-08-12), and on the default view legibility matters
+more than it does in the Lab.
+
+- ⚠️ **The 2026-08-12 "neither endpoint is solid" rule is KEPT, not broken.**
+  That rule exists to stop one unknowable world being asserted over the other —
+  so **both endpoints carry the same alpha**. It never mandated wireframes.
+  `verify-inst-caveat.js` pins the two alphas equal.
+- ⚠️ **The denser base is free, and it is the right semantics.** The two prisms
+  overlap from the ground to the exempt height, so that section composites to
+  ~75% while the cap above stays at 50%. On an **absolute rate** the lower
+  endpoint is not one of two unknowable worlds — it is the revenue levied in
+  both — so a denser floor under a fainter cap says the true thing: *this much
+  regardless, that much depending on an unpublished status.* **The Lab cannot
+  borrow this**: both its averages move, so neither of its endpoints is certain.
+  Layer order is asserted (exempt before levied) because it is what produces it.
+- ⚠️ **The opaque edges are load-bearing, not decoration.** A translucent fill
+  composites with whatever is behind it, so the measured ΔE below stops holding
+  pointwise once it goes see-through. The wireframe stays at full alpha and
+  carries the contrast guarantee; the fill only has to make the mass legible.
+
+### ⚠️ The band colour is NOT the Lab's white, and that is measured
 
 White was validated against the deviation lens's **diverging** teal↔orange ramp.
 Money runs **three sequential** ramps that occupy the whole lightness axis, and
