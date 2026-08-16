@@ -1,0 +1,213 @@
+{
+  "_purpose": "Ranked branch-level operating budget for the /full/ budget panel. Citywide totals, NOT wired to the spatial pipeline \u2014 this answers 'what does the City spend the most on', not 'what does this neighbourhood cost'. Nothing here is imported by src/ or main.py.",
+  "_basis": "Gross OPERATING expense, operating only \u2014 no capital programme, and no revenue offset, so no line here is a net cost. Branch totals are net of intra-municipal recoveries (negative lines), which is what makes them safe to sum without double-counting internal charges.",
+  "_split": "'services' are branches that spend on people/materials/contractors/fleet/space; 'other' are branches that spend on none of those - debt service, pay-as-you-go capital, renewal, corporate overhead, tax adjustments. DERIVED from the category mix, never a branch-name list, so a re-cut of the budget tree cannot silently misclassify.",
+  "source": {
+    "dataset_id": "da9s-v9j8",
+    "dataset_name": "Approved Operating Budget - Expenses",
+    "host": "https://data.edmonton.ca",
+    "rows_updated_at": "2026-06-05",
+    "retrieved": "2026-08-16"
+  },
+  "budget_year": 2026,
+  "fund_type": "Tax Supported",
+  "total": 4044711032.0,
+  "services_total": 2991446443.0,
+  "other_total": 1053264589.0,
+  "services": [
+    {
+      "branch": "Police Service",
+      "budget": 629664945.0
+    },
+    {
+      "branch": "Edmonton Transit Service",
+      "budget": 500239724.0
+    },
+    {
+      "branch": "Parks and Roads Services",
+      "budget": 307325053.0
+    },
+    {
+      "branch": "Fire Rescue Services",
+      "budget": 279264931.0
+    },
+    {
+      "branch": "Community Recreation and Culture",
+      "budget": 194570453.0
+    },
+    {
+      "branch": "Development Services",
+      "budget": 125537830.0
+    },
+    {
+      "branch": "Social Development",
+      "budget": 118490265.0
+    },
+    {
+      "branch": "Fleet and Facility Services",
+      "budget": 99001343.0
+    },
+    {
+      "branch": "Explore Edmonton",
+      "budget": 98802000.0
+    },
+    {
+      "branch": "Planning and Environment Services",
+      "budget": 82165663.0
+    },
+    {
+      "branch": "Public Library",
+      "budget": 75494384.0
+    },
+    {
+      "branch": "Community Standards",
+      "budget": 69910883.0
+    },
+    {
+      "branch": "Open City and Technology",
+      "budget": 56833226.0
+    },
+    {
+      "branch": "Real Estate",
+      "budget": 45477649.0
+    },
+    {
+      "branch": "Service Innovation and Performance",
+      "budget": 29942018.0
+    },
+    {
+      "branch": "Economic Investment Services",
+      "budget": 29029846.0
+    },
+    {
+      "branch": "Financial Services",
+      "budget": 24852442.0
+    },
+    {
+      "branch": "Assessment and Taxation",
+      "budget": 22456377.0
+    },
+    {
+      "branch": "Office of the City Clerk",
+      "budget": 21015996.0
+    },
+    {
+      "branch": "Arts Council",
+      "budget": 17965408.0
+    },
+    {
+      "branch": "Infrastructure Planning and Design",
+      "budget": 17928948.0
+    },
+    {
+      "branch": "Corporate Procurement and Supply Services",
+      "budget": 16395958.0
+    },
+    {
+      "branch": "Corporate HR Programs and Services",
+      "budget": 15989550.0
+    },
+    {
+      "branch": "Legal Services",
+      "budget": 15709566.0
+    },
+    {
+      "branch": "HR Client Services",
+      "budget": 12155845.0
+    },
+    {
+      "branch": "REACH Edmonton",
+      "budget": 10146641.0
+    },
+    {
+      "branch": "Chief Communications Office",
+      "budget": 9277967.0
+    },
+    {
+      "branch": "Infrastructure Delivery",
+      "budget": 8535953.0
+    },
+    {
+      "branch": "Mayor and Councillor Offices",
+      "budget": 8095484.0
+    },
+    {
+      "branch": "Edmonton Unlimited",
+      "budget": 7794000.0
+    },
+    {
+      "branch": "Federation of Community Leagues",
+      "budget": 7448865.0
+    },
+    {
+      "branch": "City Manager",
+      "budget": 6679129.0
+    },
+    {
+      "branch": "Workforce Safety and Employee Health",
+      "budget": 6146256.0
+    },
+    {
+      "branch": "GEF Seniors Housing",
+      "budget": 4900000.0
+    },
+    {
+      "branch": "Enterprise Commons",
+      "budget": 3448179.0
+    },
+    {
+      "branch": "Office of the City Auditor",
+      "budget": 3229717.0
+    },
+    {
+      "branch": "TELUS World of Science",
+      "budget": 2839950.0
+    },
+    {
+      "branch": "Heritage Council",
+      "budget": 2759402.0
+    },
+    {
+      "branch": "Building Great Neighbourhoods",
+      "budget": 2240404.0
+    },
+    {
+      "branch": "LRT Expansion and Renewal",
+      "budget": 1311943.0
+    },
+    {
+      "branch": "Blatchford Redevelopment Office",
+      "budget": 228250.0
+    },
+    {
+      "branch": "Corporate Revenues",
+      "budget": 99000.0
+    },
+    {
+      "branch": "Combative Sports Commission",
+      "budget": 45000.0
+    }
+  ],
+  "other": [
+    {
+      "branch": "Capital Project Financing",
+      "budget": 687582248.0
+    },
+    {
+      "branch": "Neighbourhood Renewal",
+      "budget": 174386000.0
+    },
+    {
+      "branch": "Corporate Expenditures",
+      "budget": 167402341.0
+    },
+    {
+      "branch": "Taxation Expenditures",
+      "budget": 19839000.0
+    },
+    {
+      "branch": "Automated Enforcement",
+      "budget": 4055000.0
+    }
+  ]
+}

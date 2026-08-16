@@ -85,6 +85,32 @@ state is not the same as checking the intent.**)_
 
 ## Open work
 
+- [ ] **The citywide budget panel is EXPERIMENTAL and full-build-only — decide
+  whether it stays, and on what terms.** Built 2026-08-16 (`#budget`,
+  `scripts/export_budget_ranked.py`, `web/data/budget_ranked.json`,
+  `verify-budget-panel.js`, 26 checks). It ranks the FY2026 approved operating
+  budget by branch: 43 service branches, then 5 that deliver no service.
+  - **Peter's call, three separable questions:** does it stay at all; does it
+    leave `/full/`; and does it get a phone form. Today it is **desktop-only by
+    decision** — a 400px readout in a ≤390px column, and the slot it borrows
+    (`#millrates`) re-parents into `#title` on a phone, so a phone form is a
+    design question, not a width tweak.
+  - ⚠️ **It is NOT a lens and must not be made one** — citywide totals, no
+    neighbourhood dimension, nothing to draw. `DECISIONS.md` 2026-08-16.
+  - ⚠️ **Its data does NOT ride the weekly refresh** and must not be wired into
+    it: an *approved* budget moves ~annually (`rowsUpdatedAt` 2026-06-05).
+    Re-run the script by hand after a Council budget or adjustment. The panel
+    prints the SOURCE vintage, so a stale file is visible rather than silent.
+  - ⚠️ **`deploy.yml` excludes `web/data/**` from deploy triggers**, so a
+    regenerated JSON alone will NOT deploy — it needs a `web/**` code commit to
+    carry it, or a manual run.
+  - **Companion available and not built:** `m84q-ghmu` ("Approved Operating
+    Budget - Revenues", 1,414 rows, same 8 columns) is the "where the money
+    comes from" side. `data/DATA.md` §17's *"there is no revenue side here"* is
+    true of the expense feed only. ⚠️ Worth weighing against item ▶ below —
+    the revenue split (tax-funded vs fee-funded) is close to what
+    `SPEC_breakeven.md` §8.7 is choosing between.
+
 - [ ] **`glass` and `change` do not carry the institutional treatment, and today
   they cannot.** The consequence tier shipped 2026-08-15 on Money's prism mode
   and the Lab; Money's other two modes are untouched, so the same neighbourhood
