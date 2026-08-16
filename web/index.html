@@ -82,11 +82,24 @@
        stack: #a11y-menu's `calc(200% + 8px)` is a measured fix for clearing a
        TWO-button stack, so a third pod there would silently overlap it again. -->
   <div id="budget" class="panel">
+    <!-- PHONE ONLY (hidden on desktop by CSS). As a bottom sheet the panel is
+         at the opposite end of the screen from the button that opened it, so
+         the toggle stops being a usable dismissal — the same reason #temporal
+         carries a close on a surface opened by a deliberate tap. On desktop the
+         opener sits right beside the panel and lights up, so a second × there
+         would be chrome with no job. -->
+    <button id="budget-close" title="Close">&times;</button>
     <div id="budget-head"></div>
-    <div id="budget-rows"></div>
-    <span class="hd" id="budget-other-hd">Not service delivery</span>
-    <div id="budget-other"></div>
-    <div id="budget-note"></div>
+    <!-- The BODY scrolls, not the panel — same split as #temporal. If the panel
+         itself were the scroller, the total and the close button would scroll
+         away with the list, and on a 52vh phone sheet that is immediately: the
+         "$4.04B" every percentage is a share OF is the first thing lost. -->
+    <div id="budget-body">
+      <div id="budget-rows"></div>
+      <span class="hd" id="budget-other-hd">Not service delivery</span>
+      <div id="budget-other"></div>
+      <div id="budget-note"></div>
+    </div>
   </div>
 
   <!-- TOUCH-ONLY first stage of opening the history panel. A finger cannot
@@ -4862,8 +4875,8 @@
         + `<br />City of Edmonton open data, updated ${esc(b.source.rows_updated_at || "—")}.`;
     }
 
-    function toggleBudgetPanel() {
-      const open = !document.body.classList.contains("budget");
+    function toggleBudgetPanel(force) {
+      const open = force ?? !document.body.classList.contains("budget");
       document.body.classList.toggle("budget", open);
       if (!open) return;
       budgetFetch ??= fetch(BUDGET_URL)
@@ -5896,6 +5909,10 @@
       document.getElementById("budget-btn").addEventListener("click", e => {
         e.stopPropagation();
         toggleBudgetPanel();
+      });
+      document.getElementById("budget-close").addEventListener("click", e => {
+        e.stopPropagation();
+        toggleBudgetPanel(false);
       });
 
       // Mobile: tap the title to expand/collapse the blurb card. Inert on

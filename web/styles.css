@@ -498,8 +498,9 @@ body.mills #millrates { display: block; }
      control instead of clearing it — the rule #temporal's home was chosen for. */
   box-sizing: border-box;
   max-height: calc(100vh - 389px);
-  overflow-y: auto;
 }
+/* #budget-body absorbs the cap and scrolls, so the head and close stay put. */
+#budget-body { overflow-y: auto; min-height: 0; display: flex; flex-direction: column; gap: 5px; }
 body.budget #budget { display: flex; }
 body.budget #millrates { display: none; }
 #temporal.open ~ #budget { display: none; }
@@ -519,6 +520,15 @@ body.budget #millrates { display: none; }
 }
 #budget-btn:hover { color: #e8e8ef; }
 body.budget #budget-btn { background: #fcd278; color: #16111a; font-weight: 600; }
+/* Hidden on desktop, where the opener is beside the panel and lit; the phone
+   seam turns it on, because a bottom sheet is nowhere near its own button.
+   Sized there too — 24px and a fat pad, matching #temporal-close's touch form. */
+#budget-close {
+  display: none; position: absolute; top: 0; right: 0; z-index: 1;
+  appearance: none; border: 0; background: transparent; color: #6a6a80;
+  font-size: 24px; line-height: 1; padding: 10px 15px; cursor: pointer;
+}
+#budget-close:hover { color: #e8e8ef; }
 
 /* ===================================================================
    TEMPORAL LENS — the pinned assessment-history panel (SPEC_temporal.md §5).
@@ -656,15 +666,36 @@ body.budget #budget-btn { background: #fcd278; color: #16111a; font-weight: 600;
    left-edge clip of the right-anchored control pods.
    =================================================================== */
 @media (max-width: 640px) {
-  /* The budget panel is DESKTOP-ONLY and deliberately so, not merely
-     unstyled here. It is a 400px readout in a column that is 390px wide at
-     best, and the slot it borrows (#millrates) is re-parented into #title on
-     a phone rather than floating — so a phone form is a separate design
-     question, not a width tweak. Hiding the opener too, so the control cannot
-     be pressed into a panel that will not appear (the failure mode
-     docs/MOBILE_USABILITY.md keeps flagging). Experimental + full-build-only,
-     so nothing published is affected. */
-  #budget, #budget-pod { display: none !important; }
+  /* Budget panel, phone form: a BOTTOM SHEET, the same answer #temporal
+     reached and for the same reason — its desktop home (the left column under
+     the title) is where #controls lives at this seam, so keeping it there would
+     bury #views.
+     ⚠️ The mill-rates rule — "ask whether a thing needs to be its own surface
+     before asking where to put it" (DECISIONS.md 2026-08-01) — was applied and
+     comes out the OTHER WAY here. Four mill rates fold into the blurb card; 43
+     ranked branches plus a note cannot, and folding them would bury the blurb
+     they were folded into. This is a readout, not a control, so the bottom-sheet
+     refusal of 2026-08-04 does not reach it: that one refused moving the
+     CONTROLS into a sheet.
+     Covering the legend and compass while open is acceptable for the reason
+     #temporal states: it is opened by a deliberate tap and closed by one.
+     z-index 4 = above #title.expanded (3), below the open Sources pod (5). */
+  #budget {
+    top: auto; bottom: 8px; left: 8px; right: 8px; width: auto; z-index: 4;
+    /* Near-opaque, NOT the desktop 0.92. As a sheet this sits over the legend
+       and both bottom-right pods, and at 0.92 their labels read straight
+       through its rows — the #temporal lesson, which is the #about-menu lesson
+       one step further: 0.92 is enough over the map, not over other chrome. */
+    background: rgba(10,10,16,0.985);
+    /* The desktop cap is an arithmetic clearance for #botleft, which a sheet
+       anchored to the bottom does not need and must not inherit. Half the
+       viewport keeps the map — the thing being annotated — visible above it. */
+    max-height: 52vh;
+  }
+  /* Phone only: see the markup comment. Absolute inside the sheet, and the
+     header reserves room for it rather than flowing under it. */
+  #budget-close { display: block; }
+  #budget-head { padding-right: 42px; }
 
   /* Title: show only the headline by default; tap it to reveal the blurb
      as a readable card (the blurb is the top-third space hog). The tap is

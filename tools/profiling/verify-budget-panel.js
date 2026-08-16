@@ -98,9 +98,21 @@ function check(name, cond, detail = "") {
   const box = await page.locator("#budget").boundingBox();
   check("panel fits inside the viewport vertically",
     box.y + box.height <= 900, JSON.stringify(box));
-  const scrolls = await page.locator("#budget").evaluate(
+  const scrolls = await page.locator("#budget-body").evaluate(
     el => el.scrollHeight > el.clientHeight + 1);
   check("tall list scrolls rather than overflowing", scrolls);
+  // The head must NOT be inside the scroller: every percentage on screen is a
+  // share of the total printed there.
+  const headPinned = await page.evaluate(() => {
+    const body = document.getElementById("budget-body");
+    const head = document.getElementById("budget-head");
+    const before = head.getBoundingClientRect().top;
+    body.scrollTop = body.scrollHeight;
+    return Math.abs(head.getBoundingClientRect().top - before) < 1;
+  });
+  check("the total stays pinned while the list scrolls", headPinned);
+  check("close button hidden on desktop (opener is adjacent and lit)",
+    !(await page.locator("#budget-close").isVisible()));
   check("does not overlap the control column (x < 958)",
     box.x + box.width < 958, `right edge ${box.x + box.width}`);
 
@@ -112,9 +124,12 @@ function check(name, cond, detail = "") {
   for (const h of [900, 800, 720]) {
     const t = await browser.newPage({ viewport: { width: 1440, height: h } });
     await t.goto(URL, { waitUntil: "networkidle" });
-    await t.waitForTimeout(1200);
+    // ⚠️ Wait for the ELEMENT, not a fixed delay. A bare waitForTimeout raced
+    // the layout on a loaded machine and boundingBox() came back null, which
+    // reads as a crash rather than a failure.
+    await t.locator("#botleft").waitFor({ state: "visible", timeout: 15000 });
     await t.locator("#budget-btn").click();
-    await t.waitForTimeout(500);
+    await t.locator("#budget").waitFor({ state: "visible", timeout: 15000 });
     const bud = await t.locator("#budget").boundingBox();
     const bl = await t.locator("#botleft").boundingBox();
     check(`clears #botleft at ${h}px tall`, bud.y + bud.height <= bl.y,
@@ -133,12 +148,79 @@ function check(name, cond, detail = "") {
   check("opener hidden in the public build",
     !(await pub.locator("#budget-pod").isVisible()));
 
-  console.log("\n-- mobile: desktop-only by decision --");
-  const phone = await browser.newPage({
+  console.log("\n-- phone: the bottom-sheet form --");
+  for (const w of [390, 360, 320]) {
+    const phone = await browser.newPage({
+      viewport: { width: w, height: 844 }, hasTouch: true, isMobile: true });
+    await phone.goto(URL, { waitUntil: "networkidle" });
+    await phone.waitForTimeout(1400);
+
+    check(`${w}: opener is reachable`, await phone.locator("#budget-pod").isVisible());
+    await phone.locator("#budget-btn").click();
+    await phone.waitForTimeout(600);
+    check(`${w}: sheet opens`, await phone.locator("#budget").isVisible());
+
+    const s = await phone.locator("#budget").boundingBox();
+    // A SHEET, not the desktop pod: anchored to the bottom, full width.
+    check(`${w}: anchored to the bottom edge`, Math.abs((s.y + s.height) - (844 - 8)) < 2,
+      `bottom ${(s.y + s.height).toFixed(0)}`);
+    check(`${w}: spans the width without overflowing`,
+      s.x >= 7 && s.x + s.width <= w - 7, `x=${s.x} w=${s.width}`);
+    // ⚠️ The map is the subject; a sheet that eats it is a different product.
+    check(`${w}: leaves the map more than half the screen`, s.height <= 844 * 0.55,
+      `${s.height.toFixed(0)}px of 844`);
+
+    // #controls owns 58-197 at this seam — the fact that made #temporal a
+    // sheet. The sheet must not climb back into it.
+    const ctrl = await phone.locator("#controls").boundingBox();
+    check(`${w}: clears the control column`, s.y > ctrl.y + ctrl.height,
+      `sheet top ${s.y.toFixed(0)} vs controls bottom ${(ctrl.y + ctrl.height).toFixed(0)}`);
+
+    // ⚠️ THE MILL-RATES FAILURE MODE, applied here. There the phone one-liner
+    // wrapped and broke "between a class and its number"; the fix was one row
+    // each. These rows already stack, so what must hold is narrower: a long
+    // BRANCH NAME may wrap, but the "$630M · 15.6%" value must never split.
+    const wrapped = await phone.evaluate(() => {
+      const out = [];
+      document.querySelectorAll("#budget-rows .revrow, #budget-other .revrow")
+        .forEach(r => {
+          const b = r.querySelector("b");
+          const lh = parseFloat(getComputedStyle(b).lineHeight) || 16;
+          if (b.getBoundingClientRect().height > lh * 1.5) out.push(b.textContent);
+        });
+      return out;
+    });
+    check(`${w}: no value splits across lines`, wrapped.length === 0,
+      wrapped.join(" | "));
+
+    check(`${w}: close button is present and tappable`,
+      await phone.locator("#budget-close").isVisible());
+    const cb = await phone.locator("#budget-close").boundingBox();
+    check(`${w}: close meets a ~44px touch target`, cb.width >= 34 && cb.height >= 34,
+      `${cb.width}x${cb.height}`);
+
+    // Real tap, not .click() — the standing caveat is that verify scripts
+    // bypass pointer-events, and this sheet is new chrome over other chrome.
+    await phone.locator("#budget-close").tap();
+    await phone.waitForTimeout(500);
+    check(`${w}: a real TAP on close dismisses it`,
+      !(await phone.locator("#budget").isVisible()));
+
+    await phone.close();
+  }
+
+  // #temporal is a bottom sheet too; two sheets at once would overlap outright.
+  const both = await browser.newPage({
     viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
-  await phone.goto(URL, { waitUntil: "networkidle" });
-  await phone.waitForTimeout(1200);
-  check("opener hidden at 390px", !(await phone.locator("#budget-pod").isVisible()));
+  await both.goto(URL, { waitUntil: "networkidle" });
+  await both.waitForTimeout(1400);
+  await both.locator("#budget-btn").click();
+  await both.waitForTimeout(400);
+  await both.evaluate(() => document.getElementById("temporal").classList.add("open"));
+  await both.waitForTimeout(300);
+  check("budget yields to an open #temporal (both are sheets on a phone)",
+    !(await both.locator("#budget").isVisible()));
+  await both.close();
 
   await browser.close();
   console.log(`\n${checks - failures}/${checks} checks passed`);

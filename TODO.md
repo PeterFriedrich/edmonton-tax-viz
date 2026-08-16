@@ -206,6 +206,28 @@ state is not the same as checking the intent.**)_
   - Read `docs/MOBILE_USABILITY.md` first; keep the CONFIRMED /
     NEEDS-CONFIRMATION split honest.
 
+- [ ] **A THIRD verify script fails on unmodified `origin/master`, and this one
+  is FLAKY rather than stale — `verify-temporal.js`, found 2026-08-16.**
+  Its control-clickability sweep fails a `page.click(sel, { timeout: 4000 })`,
+  and ⚠️ **the failing selector MOVES between runs** (`#revcut
+  button[data-revcut="nonres_revenue_per_acre"]` on 3 of 4 runs, `#metric-row
+  button[data-metric="value"]` on the 4th) — the signature of a timing flake,
+  not a broken control.
+  - **Measured on a clean `acc425b` worktree, before the budget panel existed:
+    4 failures in 4 sequential runs**, plus 1 pass in an earlier run. So it is
+    pre-existing and intermittent, NOT caused by PR #215.
+  - ⚠️ **A single passing run is what made this look like a fresh regression.**
+    It was briefly diagnosed as "#215 broke verify-temporal" off one clean-master
+    run that happened to pass. **One sample cannot clear or convict a flaky
+    test** — re-run it several times on BOTH sides before attributing it.
+  - The element is genuinely clickable when the sequence is replicated by hand:
+    a hit-test at the button's centre returns the button itself, uncovered, on
+    both builds. So the 4000ms budget is the suspect, not the app.
+  - ⚠️ **Do not just raise the timeout to buy silence** — same rule as the other
+    two below: a guard's tolerance is a decision. Establish first whether the
+    click is slow (map re-render blocking the main thread) or genuinely
+    intercepted at some moment in the sweep.
+
 - [ ] **TWO VERIFY SCRIPTS FAIL ON UNMODIFIED `origin/master`, AND BOTH ARE
   STALE EXPECTATIONS RATHER THAN BUGS — diagnosed 2026-08-11, NOT fixed.**
   Found by running the full 33-script suite while building the deviation lens.
