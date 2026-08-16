@@ -239,7 +239,11 @@ wireframe's own base ring marks the footprint. ⚠️ **This rule is LOCAL to th
 lens.** Money's version of the same treatment uses azure `#2ec4ff`, because its
 three *sequential* ramps peak near white (`glow` at `#fff6e4`, where white scores
 ΔE 3.5) and have no poles for a cool hue to lean toward. No single colour clears
-all four ramps — form is the shared identity, colour is per-lens.
+all four ramps — form is the shared identity, colour is per-lens. ⚠️ Money also
+renders its band as **translucent prisms (alpha 128) with opaque edges**, not
+bare wireframes; the Lab keeps outlines because neither of ITS endpoints is the
+certain one, while on an absolute rate the lower endpoint is levied in both
+worlds (2026-08-16).
 
 The reason is that the roll publishes assessments and a tax class but **not
 exemption status**, and this pipeline levies every record on it. So there are
