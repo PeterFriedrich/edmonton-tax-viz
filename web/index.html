@@ -1268,10 +1268,6 @@
     }
 
     // Active metric defaults to revenue (matches the static HTML chrome above).
-    // `residential` is the residential-only lens (off by default): when on,
-    // non-residential hoods fade translucent so residential land compares
-    // like-to-like without the Downtown / class-rate confound. Applies in the
-    // Money and Ratio views; disabled in Services (no per-hood prisms to fade).
     // `view` selects the display mode (money | services | ratio | uses | glass);
     // `prismOpacity` is the ghost-prism strength in ratio, glass and the uses
     // view's optional residential prisms (money prisms are always opaque;
@@ -1446,22 +1442,12 @@
 
     const colorFor = (value, clamp) => rampColorAt(scaleT(value, clamp));
 
-    // Residential-only lens fade: non-residential hoods all render as ONE uniform
-    // translucent light grey (no ramp hue — the differing colours were the visual
-    // interference), so only the residential hoods carry colour. Visible but
-    // see-through, so the rest of the city still reads as spatial context.
-
     // Linear-interpolated quantile of a pre-sorted array.
     function quantile(sorted, q) {
       const pos = (sorted.length - 1) * q;
       const lo = Math.floor(pos), hi = Math.ceil(pos);
       return lo === hi ? sorted[lo] : sorted[lo] + (sorted[hi] - sorted[lo]) * (pos - lo);
     }
-
-    // Colour clamp for the residential-only lens: p97.5 of the residential subset for
-    // `key` (matches the fixed clamps' percentile), so the residential distribution
-    // spreads across the full ramp instead of crushing into the low end. Cached per
-    // metric; falls back to the metric's default clamp if the subset is empty.
 
     // Money-view (neighbourhood prism) scale under the active denominator.
     // Ground: the metric's fixed clamp + elevation (or the residential subset
@@ -3494,9 +3480,9 @@
         pickable: true,
         autoHighlight: true,
         highlightColor: [255, 255, 255, 60],
-        // Re-run the accessors when the metric (field), denominator, ramp
-        // (colour), or the residential lens changes; the data reference is
-        // stable, so without these deck.gl skips the accessor.
+        // Re-run the accessors when the metric (field), denominator or ramp
+        // (colour) changes; the data reference is stable, so without these
+        // deck.gl skips the accessor.
         updateTriggers: {
           getElevation: [state.metric, state.denom],
           getFillColor: [state.metric, state.denom, state.ramp, state.colorAdjust],

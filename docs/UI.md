@@ -158,10 +158,26 @@ service (stormwater) being the standing trigger — the Roads view became the
 **Services view** (Peter's call, per-service checkboxes; the top bar stays at
 five buttons regardless of service count):
 
-- **Money** (default): the classic revenue/value prisms, always opaque. Metric
-  toggle, palette, residential lens all behave as before. Hood tooltip: active
-  metric + `19.2 road m / acre` + `$967 revenue / road metre` (ratio omitted when
-  road base is 0 / columns absent; set-aside tooltip unchanged).
+- **Money** (default): the classic revenue/value prisms, opaque. Metric toggle
+  and palette behave as before. Hood tooltip: active metric + `19.2 road m /
+  acre` + `$967 revenue / road metre` (ratio omitted when road base is 0 /
+  columns absent; set-aside tooltip unchanged).
+  - ⚠️ **This bullet is a 2026-07-05 snapshot and three of its claims have since
+    moved.** *"residential lens"* — **deleted** 2026-08 (`6fb448e`), redundant
+    against the Residential $ metric; its fade was Money's only translucent
+    element, which is why "always opaque" read as a rule later. The **road rows
+    are now revenue-cuts-only and full-build-only** (2026-07-28), not
+    unconditional. And **"always opaque" is no longer true** — see below.
+  - ⚠️ **THE ONE OPACITY EXCEPTION (2026-08-16):** the institutional band prisms
+    render at **alpha 128 with opaque edges** on the ≥25%-institutional hoods
+    that also clear the consequence cut — **6 of 358 on Total**. Everything else
+    in Money stays fully opaque, and `state.prismOpacity` is still `1` here (the
+    exception is a per-layer fill alpha, not the ghost-prism channel that
+    `ratio`/`glass`/`uses`/`development` use). **The depth-ordering quirk this
+    file flags for translucent prisms was measured before shipping this time** —
+    four camera angles, bearing 0/45/180/270° at pitch 30–70°, no incorrect
+    occlusion against the opaque prisms behind. Rationale:
+    `docs/SPEC_revenue.md` "Translucent prisms, not wireframes".
 - **Services** (generalized from Roads 2026-07-05): city services as stackable
   ground-level layers — **no prism layers at all** (an opacity-0 layer still
   tessellates, draws, picks, and auto-highlights; dropping them is the honest
