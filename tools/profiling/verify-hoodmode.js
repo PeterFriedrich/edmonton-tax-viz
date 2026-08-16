@@ -66,7 +66,24 @@ const [url] = process.argv.slice(2);
   let tip = await tipFor('DOWNTOWN');
   check('popup mode: full tooltip (metric + residential share)',
     /\/ acre/.test(tip) && /% of revenue is residential/.test(tip));
-  check('popup mode: sparkline present', /class="spark"/.test(tip));
+  // ⚠️ CHANGED 2026-08-16, and the change is a NARROWING, not a deletion: the
+  // sparkline no longer rides the REVENUE cuts, where the panel has drawn the
+  // zone mix since 2026-08-01 — a history line over a click that opens a
+  // revenue breakdown. The default state IS a revenue cut, which is why this is
+  // the check that moved. BOTH halves are asserted (absent here, present one
+  // metric away) so a regression that deletes the teaser outright still fails.
+  check('popup mode, revenue cut: NO sparkline (the panel is the zone mix)',
+    !/class="spark"/.test(tip));
+  const valueTip = await page.evaluate(() => {
+    const was = state.metric;
+    applyMetric('value_per_acre');
+    const f = state.data.features.find(x => x.properties.neighbourhood_name === 'DOWNTOWN');
+    const html = tooltipFor({ object: f }).html;
+    applyMetric(was);
+    return html;
+  });
+  check('popup mode, value: the sparkline IS there (the panel is the history)',
+    /class="spark"/.test(valueTip) && /click to pin/.test(valueTip));
   // ⚠️ The invite's WORDING became lens-dependent on 2026-08-01, and this runs
   // on the default money/revenue state — where clicking opens the zone-revenue
   // breakdown, not the history, so the hint says so. What this check defends is
@@ -203,13 +220,20 @@ const [url] = process.argv.slice(2);
   // the view's own headline number, or panel mode is a downgrade in public too.
   const pubTip = await pub.evaluate(() => {
     const f = state.data.features.find(x => x.properties.neighbourhood_name === 'DOWNTOWN');
+    const revenue = tooltipFor({ object: f }).html;
+    // Value, because that is where the panel IS the history panel — the public
+    // build loads on a revenue cut, which no longer carries the teaser.
+    applyMetric('value_per_acre');
     const full = tooltipFor({ object: f }).html;
     applyHoodMode('panel');
     const reduced = tooltipFor({ object: f }).html;
-    return { full, reduced, mode: state.hoodMode };
+    return { revenue, full, reduced, mode: state.hoodMode };
   });
   check('public build: popup-mode tooltip is full and carries the sparkline',
     /\/ acre/.test(pubTip.full) && /class="spark"/.test(pubTip.full));
+  check('public build: the revenue cut gets the invite and NO sparkline',
+    /click for the revenue mix/.test(pubTip.revenue)
+    && !/class="spark"/.test(pubTip.revenue));
   check('public build: panel mode engages', pubTip.mode === 'panel');
   check('public build: panel-mode tooltip reduces but keeps the headline',
     /\/ acre/.test(pubTip.reduced)
