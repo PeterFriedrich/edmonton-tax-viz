@@ -66,6 +66,23 @@ Test the exact host, never the domain, and re-test 5xx before recording it as an
 environmental fact.** Nothing was built this session — it was all measurement and
 docs.)_
 
+_Last reconciled: 2026-08-16 (S109 — **the session's lesson is that a threshold
+which is right for words can be wrong for geometry.** The institutional band
+selected hoods by ≥25% institutional SHARE and used that one number for both the
+caveat and the outlined range. Share is relative, so it caught hoods where the
+share is high and the dollars trivial: RIVER VALLEY CAMERON is 49% institutional
+and moves **0 rank places and 0.02 of the colour ramp**. Split into two tiers —
+share decides the words, movement on the lens's own ramp decides the geometry.
+⚠️ **And the obvious version of "worst drop" was wrong**: SPRUCE AVENUE has the
+city's second-largest dollar drop ($30,310/acre) and moves **12 rank places**,
+while EDMONTON NORTHLANDS drops fewer dollars and swings **0.62** — measure on
+the encoding the reader reads, never in the underlying units. ⚠️ **A second
+lesson, from Peter catching it:** the translucent-prism change was justified by
+measuring that translucency was UNUSED on Money, without checking whether it was
+unused ON PURPOSE — `docs/UI.md` said "always opaque", and the known
+depth-ordering quirk it flags was not tested until asked. **Measuring the current
+state is not the same as checking the intent.**)_
+
 ## Open work
 
 - [ ] **`glass` and `change` do not carry the institutional treatment, and today
