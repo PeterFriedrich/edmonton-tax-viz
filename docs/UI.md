@@ -1769,3 +1769,61 @@ work.
 that row wraps at ≤640px — the shortest label that still reads as unfinished.
 ⚠️ **That row is the one piece of chrome every view shares, and it has not been
 checked on a phone** (`TODO.md`).
+
+## The city budget panel: a readout that is not a lens, in two forms (2026-08-16)
+
+*"could we do a test lens in full, listing off the highest cost budget items in
+a simple way"* — followed, once it shipped, by *"can we try a phone form?"*
+
+**It is not a lens, and that was the first decision.** The Lab exists for
+experiments, and the obvious move was to add a seventh `#views` button. But a
+view has to fill `buildViewLayers`, `viewTooltip` and `refreshLegend`, and
+**branch budgets are citywide totals with no neighbourhood dimension** — there
+is nothing to draw and nothing to hover. It would have been a view with no
+prisms and an empty legend. So it is a pod that opens a readout, and
+`CONTROLS_MATRIX.md` records it as the first control there that never "bites in"
+on any view.
+
+**The split at the top of the list is the content decision.** Ranked naively,
+the City's largest operating line is `Capital Project Financing` at **$687.6M** —
+ahead of Police. That is true of the ledger and misleading about the City, so
+the list separates branches that deliver a service from branches that only move
+money. ⚠️ **The rule is derived from each branch's category mix, never a
+branch-name list**: measured, `Transfer to Reserves` spans 11 branches
+*including Police*, so a category filter would strip service branches of their
+own budget, and a name list would misclassify the first time the budget tree is
+re-cut — which it has been, twice, inside Parks and Roads alone.
+
+**Two forms, and the phone one is a bottom sheet.** Desktop is a left-column pod
+in `#millrates`' slot. On a phone that slot is where `#controls` lives
+(`#title` collapsed is 20–43, `#controls` owns **58–197**), so it becomes a
+sheet — the same answer `#temporal` reached at the same seam.
+
+⚠️ **The mill-rates test was applied and came out the other way.** The locked
+rule is *"on a phone, ask whether a thing needs to be its own surface before
+asking where to put it"*, and the mill rates famously did not — they fold into
+the blurb card. **43 ranked branches plus a note cannot**, and folding them
+would bury the blurb they were folded into. The 2026-08-04 bottom-sheet refusal
+does not reach this either: that refused moving the **controls** into a sheet.
+
+**Three details that are not cosmetic:**
+- **`0.985` opaque on the sheet, not the desktop `0.92`.** A sheet sits over the
+  legend and both bottom-right pods, and at 0.92 their labels read through its
+  rows. The `#about-menu` lesson one step further: 0.92 is enough over the map,
+  not over other chrome.
+- **The body scrolls, not the panel.** With the panel as the scroller, the
+  `$4.04B` that every percentage is a share *of* is the first thing lost. Same
+  `#temporal-body` split — and it was wrong on **desktop** too until the phone
+  form forced the question.
+- **A phone-only `×`.** A sheet is at the opposite end of the screen from the
+  button that opened it, so the toggle stops being a usable dismissal. On
+  desktop the opener sits beside the panel and lights up, so a `×` there would
+  be chrome with no job.
+
+⚠️ **The layout bug that assertions missed.** The desktop panel's first height
+cap fitted the viewport — and ran **117px straight through the compass, legend
+and set-aside swatch**, identically at 900/800/720 because both boxes are
+anchored to the viewport bottom. `panel fits inside the viewport` passed the
+whole time; a **screenshot** caught it. Fixed by capping to clear `#botleft`,
+**not** by a z-index bump, which would have buried the legend rather than
+cleared it. The clearance is now asserted at all three heights.

@@ -270,6 +270,34 @@ problem**, so revisit it only after the blurb collapse lands.
 
 ## 2b. Current state — NEEDS CONFIRMATION
 
+- **The city budget sheet (`#budget`) has never been touched on a real device —
+  built 2026-08-16, headless only.** It is the newest phone surface and the only
+  one that is **full-build-only**, so nothing published is exposed by it.
+  - ✅ **MEASURED headless at 390 / 360 / 320**, `hasTouch`/`isMobile`, with the
+    sheet open: bottom-anchored at `844-8`, inside both gutters, **≤ 52vh** so
+    the map keeps over half the screen, clear of `#controls` (the 58–197 band
+    that made `#temporal` a sheet), and it yields to an open `#temporal` — two
+    bottom sheets at once would overlap outright. `verify-budget-panel.js`,
+    58 checks.
+  - ✅ **Dismissal driven with a real `tap()`, not `.click()`** — the standing
+    caveat is that verify scripts bypass `pointer-events`, and this is new
+    chrome sitting over other chrome. The close button measures ≥34px and is
+    asserted against a ~44px touch target.
+  - ✅ **Screenshot-checked at all three widths**, because every mobile defect
+    in this file was *seen* rather than predicted. Long branch NAMES wrap at
+    360/320; **values never split**, which is the mill-rates failure mode, and
+    that is asserted rather than eyeballed.
+  - **STILL NEEDS CONFIRMATION:** a real finger on a real device — scroll
+    momentum inside a 52vh sheet over a WebGL map (headless cannot tell whether
+    the map steals the gesture), whether the `×` is reachable one-handed at the
+    top of a bottom sheet, and whether 11.5px rows are readable at arm's length.
+  - ⚠️ **A desktop bug here was invisible to assertions for a full PR cycle:**
+    the panel itself was the scroller, so the `$4.04B` total that every
+    percentage is a share *of* scrolled away with the list. The phone form is
+    what forced the question; the fix (`#budget-body` scrolls, the head does
+    not) applies to both. **A cap that "fits" is not the same as a layout that
+    reads.**
+
 - **The hover tooltip fired on TOUCH and ran off the right edge — CONFIRMED ON
   DEVICE 2026-07-31, fixed same day.** Peter, asked whether a tooltip box
   appeared as well as the peek card: **yes, both.** deck's `getTooltip` is
