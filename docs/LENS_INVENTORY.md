@@ -55,8 +55,19 @@ system in `CONTROLS_MATRIX.md`.
 | `#toggle` — **two rows**: Revenue \| Value, with Total \| Residential \| Non-residential nested under Revenue (2026-07-26) | Money (both detail modes) | **HIDDEN** (`display:none`) — Money-scoped since the regroup |
 | `#coloradj` — `Colour: sqrt scaling` / `Colour: linear` | Money (both detail modes) | **HIDDEN** + `disabled` (2026-07-26; greyed read as *broken*) |
 
+| `#budget-pod` 🔒 — `City budget` `beta` (2026-08-16) | **nowhere** — it modifies no view | never hidden in `/full/`; **hidden entirely** in the public build |
+
 The button label **is** the state readout for `#coloradj` (no caption since
 2026-07-25), and **nothing greys any more** — it hides where it doesn't apply.
+
+> ⚠️ **`#budget-pod` is in this table but it is NOT a lens, and it must not
+> become one.** It opens `#budget`, a ranked readout of the City's approved
+> operating budget by branch. Those are **citywide totals with no neighbourhood
+> dimension**, so there is nothing to draw, nothing to hover, and no legend to
+> fill — a `#views` button would have been a view with no prisms. It is the only
+> entry here that modifies nothing about any view, and it is independent of
+> view, metric and denominator alike. Two forms: a left-column pod on desktop, a
+> **bottom sheet ≤640px**. `DECISIONS.md` 2026-08-16, `data/DATA.md` §18.
 
 > **`#lens` (Highlight residential) was REMOVED 2026-07-26.** It faded
 > neighbourhoods below 50% residential zoned area — a *binary* cut, which the
