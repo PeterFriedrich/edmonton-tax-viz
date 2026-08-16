@@ -129,7 +129,7 @@ lenses" pass.
 | **Ratio** view | ❌ _(locked 2026-07-28)_ | ✅ |
 | **Uses** view (dominant zoned land use) | ❌ _(locked 2026-07-28)_ | ✅ |
 | **Infill** lens on Development | ❌ | ✅ |
-| **Assessment-history panel + hover sparkline + `#hoodmode`** | ✅ _(promoted 2026-07-31)_ | ✅ | _(⚠️ **Services has its own panel as of 2026-08-10** — cost against revenue, not history. `#hoodmode` is offered there again; the sparkline is not, it belongs to the history data)_ |
+| **Assessment-history panel + hover sparkline + `#hoodmode`** | ✅ _(promoted 2026-07-31)_ | ✅ | _(⚠️ **The sparkline now rides only where the PANEL is the history panel** — 2026-08-16: on the revenue cuts of Money/Glass the hover gets the invite alone, because the click opens the zone mix. ⚠️ **Services has its own panel as of 2026-08-10** — cost against revenue, not history — and `#hoodmode` is offered there again. **This cell used to claim the sparkline was not offered in Services; MEASURED 2026-08-16, it is** — `hoodPanelLens()` is true there once the cost columns ship, so the hover plots history and says `click to pin` under a panel that opens costs. Same defect as the revenue cuts, deliberately left live pending a copy decision (`TODO.md`).)_ |
 | **Change over time** lens on Money (`#moneymode` / `#chgwindow`) | ✅ _(promoted 2026-07-31)_ | ✅ |
 | **Lab** view + every experiment in it (`#labpick` / `#labcut`) | ❌ _(2026-08-11 — unfinished by definition)_ | ✅ `beta` |
 | **`#peek`, the touch-only peek card** | ✅ | ✅ | _(gated on `(hover: none)`, not on build — invisible to every mouse in both)_ |

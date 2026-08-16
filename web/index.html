@@ -4663,11 +4663,15 @@
       return { className: "tip", html };
     }
 
-    // The sparkline rides on every OTHER view's tooltip (Services excepted —
-    // see temporalFor), appended here rather than in the branches above. A
-    // hood's assessment history is a fact about the neighbourhood, not about
-    // the lens you happen to be in, and one wrapper is a smaller change than
-    // separate edits that must then stay in step.
+    // The sparkline rides on every tooltip WHOSE PANEL IS THE HISTORY PANEL
+    // (the revenue cuts excepted below — ⚠️ and SERVICES IS NOT YET EXCEPTED
+    // though it should be: hoodPanelLens() is true there once the cost columns
+    // ship, so the hover still plots history under a click that opens costs.
+    // Same defect, open in TODO.md pending its invite copy), appended here
+    // rather than in the branches above. A hood's assessment
+    // history is a fact about the neighbourhood, not about the lens you happen
+    // to be in — but the teaser is a promise about the CLICK, so it belongs
+    // wherever the click delivers history and nowhere else.
     //
     // It also carries the only hint that clicking does anything — click-to-pin
     // is undiscoverable otherwise, the same reason the compass exists as visible
@@ -4700,20 +4704,27 @@
                  html: `<b>${esc(p.neighbourhood_name)}</b><br/>` + primaryRow(p) };
       const tip = viewTooltip(info);
       if (!tip) return null;
+      // ⚠️ THE TEASER ONLY RIDES WHERE THE PANEL DRAWS WHAT IT TEASES. On the
+      // revenue cuts the panel has shown the ZONE MIX since 2026-08-01 — but the
+      // sparkline stayed, so the hover plotted assessment share while the click
+      // delivered a revenue breakdown: a chart of one subject advertising
+      // another. 2026-08-01 rewrote the INVITE for exactly this reason and left
+      // the chart, which is the half that reads as the promise (Peter, hovering
+      // the Money lens, 2026-08-16). The invite stays either way — click-to-open
+      // is undiscoverable without it (2026-07-29), same reason the compass is
+      // buttons rather than drag-rotate.
+      if (revenuePanelFor(p))
+        return { ...tip, html: tip.html
+          + `<br/><span class="muted">click for the revenue mix</span>` };
       const t = hoodPanelLens() ? temporalFor(p.neighbourhood_name) : null;
       if (!t) return tip;   // no file, public build, no history, or no panel here
       const i = t.years.length - 1;
       const gap = t.years.length > 1
         && t.years[i] - t.years[0] + 1 > t.years.length;
-      // The hint names WHAT pinning gives, because since 2026-08-01 that is not
-      // always this sparkline's subject: on the revenue metrics the panel shows
-      // the zone breakdown, so a bare "click to pin" directly under a history
-      // line would read as a promise of more history.
-      const invite = revenuePanelFor(p) ? "click for the revenue mix" : "click to pin";
       return { ...tip, html: tip.html + sparklineSvg(t)
         + `<span class="muted">${fmtPct(t.share[0])} → ${fmtPct(t.share[i])} `
         + `of city base, ${t.years[0]}–${t.years[i]}`
-        + (gap ? " (2024 n/a)" : "") + ` · ${invite}</span>` };
+        + (gap ? " (2024 n/a)" : "") + ` · click to pin</span>` };
     }
 
     // Switch metric: rebuild layers and update the title/legend/toggle chrome.
