@@ -181,6 +181,16 @@ three places a lens leaks.
 | `#toggle` (T2, listed here for the comparison) | **two rows**: `Revenue \| Value` over either `Total \| Residential \| Non-residential` (under Revenue) or `Current \| Change over time` (under Value, 2026-08-01) | **Money** — both detail modes, **and the Change lens**, which it hosts the way out of | **HIDDEN** (regroup, 2026-07-23 — was live-but-inert) |
 | `#palette`, `Labels` | 3 ramps; hood names on/off | — | moved into the `#a11y` **Display** popover; apply everywhere (palette is n/a in Uses' categorical legend) |
 | `#reference-on` (2026-07-27) | `Landmarks & nearby places` on/off — river, ring road, **and the 7 regional place names** | **every view** — `buildLayers()` BRACKETS `buildViewLayers()` (river under, ring road over), so no view can miss it; the place names go into the shared label pool, which every view already composes | never hidden. **Default ON**, unlike `Labels` — with no basemap tiles it is the only orientation cue, so it should not need hunting for |
+| `#budget-pod` 🔒 (2026-08-16) | `City budget` `beta` — opens/closes `#budget` | **no view** — it modifies nothing on the map. It opens a citywide readout that is **independent of view, metric and denominator**, so it is the first pod here that never "bites in" anywhere | never hidden in `/full/` on desktop; **hidden entirely** in the public build and at **≤640px** (desktop-only by decision, `DECISIONS.md` 2026-08-16) |
+
+⚠️ **`#budget-pod` does not fit the tier model, and that is the honest place for
+it** (2026-08-16). Every other control here answers *what* is drawn, *which* cut,
+or *how* it is painted. This one opens a separate readout and touches the map not
+at all — the figures are citywide branch budgets with no neighbourhood dimension.
+It sits in `#controls` for proximity, not because it is a map control, and it is
+deliberately **not** in `#views`: it is not a lens (`DECISIONS.md` 2026-08-16).
+If a second view-independent readout ever appears, these two want their own
+group rather than a fourth tier.
 
 **The one control that gates part of another control's layer** (2026-07-27):
 `#reference-on` and `Labels` both feed the single `hood-labels` TextLayer, each
