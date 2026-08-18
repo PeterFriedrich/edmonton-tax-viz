@@ -711,12 +711,25 @@ them.)
   (= the shared `NAME_CORRECTIONS`) resolves `CHAPPELLE AREA` etc.
 
 **Also exports:** `export_dev_grid(csv, out_path, years, years_recent,
-cell_m)` — the Development view's **100 m detail layer** (added 2026-07-15).
-Bins GEOCODED new-construction ∩ residential permits into the **same
-EPSG:3400 100 m cells as `export_value_grid`** (Glass grid) →
-`web/data/dev_grid.json` (committed, lazy-loaded): `[lon, lat, units,
-permits, units_3yr, permits_3yr]` rows at each cell's SW corner, plus a
-per-window `coverage` block. **Geocode coverage is reported, not silent** —
+years_long, cell_m, price_index_path)` — the Development view's **100 m detail
+layer** (added 2026-07-15). Bins GEOCODED new-construction permits into the
+**same EPSG:3400 100 m cells as `export_value_grid`** (Glass grid) →
+`web/data/dev_grid.json` (committed, lazy-loaded): `[lon, lat, units, permits,
+ind_cv, ind_n, …]` rows at each cell's SW corner (the four repeat per window),
+plus a per-window `coverage` block.
+
+**Industrial cells (added 2026-08-18)** carry `ind_cv` — **deflated declared
+construction value** — and `ind_n`, the permit count. Two contracts here are
+load-bearing:
+- ⚠️ **`price_index_path` is a REQUIRED input in practice**, defaulting to the
+  committed `data/construction_price_index.json`
+  (`scripts/fetch_construction_price_index.py`, a manual reviewed input off the
+  weekly refresh). A permit year with no deflator **raises**; nominal dollars
+  must never reach the grid, because 2009 vs 2025 differ by 1.72×.
+- ⚠️ **`ind_n` is not redundant with `ind_cv`.** 12 permits declare exactly $0,
+  so cells are selected on the COUNT; dollars alone would drop them.
+Absence of industrial permits **warns rather than raises** — industrial is the
+secondary metric, and failing would withhold the residential grid too. **Geocode coverage is reported, not silent** —
 coordinates lag on the newest permits (DATA.md §10), so ungeocoded permits
 are excluded from cells but counted in `coverage` for the web blurb to
 disclose; positions are never faked. Raises if the CSV predates the
