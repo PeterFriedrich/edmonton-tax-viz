@@ -330,6 +330,57 @@ more than it does in the Lab.
   pointwise once it goes see-through. The wireframe stays at full alpha and
   carries the contrast guarantee; the fill only has to make the mass legible.
 
+### The banded prism is its own hover target (2026-08-17)
+
+Peter: *"i want people to be able to just mouse over prisms (or tap on mobile)
+cuz they're gonna wanna see why they're special color"* — which is the whole
+point of a band: the prism announces that something is different and the reader
+goes looking for why.
+
+⚠️ **The bug was not "no tooltip", it was THE WRONG HOOD'S.** A banded hood's
+own geometry in `metric-extrusion` is flattened to 0 and painted `[0,0,0,0]`, so
+the azure prism is the only thing standing over that footprint. Unpickable, it
+did not fall through to its own hood — it fell through to whoever was **behind**
+it. Measured at pitch 60 over the U of A: `MCKERNAN`, `RIVER VALLEY VICTORIA`,
+`WÎHKWÊNTÔWIN`, with the pointer on U of A geometry the whole time. The Lab's
+band did the same. ⚠️ **A flat overhead check cannot see this** — at pitch 0 the
+transparent footprint picks correctly, which is why "you had to mouse over the
+neighbourhood flat below it" was a fair description of the good case.
+
+**DECIDED — Money's band layers become pickable; the Lab's get a separate
+invisible pick target.** The difference is forced, not stylistic:
+
+| | Money | Lab |
+|---|---|---|
+| band fill | alpha 128 — a real surface | `filled: false`, outline only |
+| fix | `pickable: true` on the two band layers | two extra invisible solids |
+| render cost | 24 px, below the 45 px noise floor | 21 px, same |
+
+- ⚠️ **The Lab's outline layers must NOT own the picking.** With `filled:false`
+  the only pickable surface is the 2px wireframe. Turning their fill on even at
+  **alpha 0** costs **499 px**: a depth-writing fill hides the prism's own back
+  edges, so the see-through cage that lets you read both endpoints becomes a
+  box. It would also have broken the existing *"band endpoints are OUTLINE ONLY"*
+  assertion — the guard was already there.
+- **The pick targets carry `depthMask: false`** so they write no depth and
+  occlude nothing; `depthTest` stays **on**, or a prism genuinely in front would
+  stop winning the pick. Leaving the mask on moved **818 px**.
+- ⚠️ **Filtered to the banded hoods.** At 406 rows these height-0 transparent
+  solids would win the pick from `deviation-extrusion` over every *certain*
+  hood — which does `autoHighlight` — so the whole Lab would silently stop
+  lighting up on hover. Same reason `instBandLayers` filters.
+- ⚠️ **`autoHighlight` is OFF on every band layer.** The pick resolves to one of
+  two shells, so a highlight lights the levied world and leaves the exempt one
+  dark: exactly the primacy the "no solid fill on either endpoint" rule refuses.
+  The tooltip is the feedback.
+- **All render deltas measured against a 45 px noise floor** (a no-op
+  clone+`setProps` rebuild of the same frame), not against zero.
+- An alpha-0 fill still picks in deck.gl — **measured, not assumed**, and the
+  same idiom `hoodHoverLayer` already runs on.
+
+Both starred assertions are **falsified against the pre-fix build**: 3 fail in
+`verify-inst-caveat.js`, 3 in `verify-deviation.js`, no collateral.
+
 ### ⚠️ The band colour is NOT the Lab's white, and that is measured
 
 White was validated against the deviation lens's **diverging** teal↔orange ramp.

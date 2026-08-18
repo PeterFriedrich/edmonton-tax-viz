@@ -184,6 +184,49 @@ const BANNED = /\b(lost|uncollected|foregone|should be|really|actually)\b/i;
   check('NO band prisms under Value', valHollow.n === 0 && valHollow.band === 0,
     `${valHollow.n} hoods, ${valHollow.band} banded`);
 
+  // --- the prism is its own hover target (2026-08-17) -----------------------
+  // ⚠️ THE BUG THIS CATCHES IS NOT "no tooltip", IT IS THE WRONG HOOD'S.
+  // A banded hood's metric-extrusion geometry is flattened to 0 and painted
+  // transparent, so if the azure prism standing over that footprint is not
+  // pickable the cursor falls through to whatever is BEHIND it — measured at
+  // pitch 55 before the fix: MCKERNAN, RIVER VALLEY VICTORIA, WÎHKWÊNTÔWIN,
+  // all while the pointer sat on the U of A's geometry. A flat overhead test
+  // cannot see this: at pitch 0 the transparent footprint picks correctly.
+  const pick = await page.evaluate(async () => {
+    const f = state.data.features.find(
+      x => x.properties.neighbourhood_name === 'UNIVERSITY OF ALBERTA');
+    const rg = f.geometry.type === 'Polygon'
+      ? f.geometry.coordinates[0] : f.geometry.coordinates[0][0];
+    let lng = 0, lat = 0;
+    for (const c of rg) { lng += c[0]; lat += c[1]; }
+    lng /= rg.length; lat /= rg.length;
+    map.jumpTo({ center: [lng, lat], zoom: 12.4, pitch: 60, bearing: 0 });
+    await new Promise(r => setTimeout(r, 1800));
+    const vp = overlay._deck.getViewports()[0];
+    const [sx, sy] = vp.project([lng, lat]);
+    // Walk UP the screen from the footprint, through the prism body.
+    const hits = [];
+    for (let dy = -30; dy >= -200; dy -= 10) {
+      const i = overlay._deck.pickObject({ x: Math.round(sx), y: Math.round(sy + dy), radius: 0 });
+      if (i) hits.push({ layer: i.layer.id, hood: i.object.properties.neighbourhood_name });
+    }
+    const band = overlay._props.layers.filter(l => l.id.startsWith('inst-band'));
+    return { hits, pickable: band.map(l => !!l.props.pickable),
+             highlight: band.map(l => !!l.props.autoHighlight) };
+  });
+  const onBand = pick.hits.filter(h => h.layer.startsWith('inst-band'));
+  check('*** the azure prism BODY is pickable, not just the flat below it ***',
+    onBand.length > 0, `${onBand.length} of ${pick.hits.length} sampled pixels`);
+  check('*** every pick on the band returns ITS OWN hood ***',
+    onBand.length > 0 && onBand.every(h => h.hood === 'UNIVERSITY OF ALBERTA'),
+    [...new Set(onBand.map(h => h.hood))].join(', ') || 'none');
+  check('both band layers are pickable',
+    pick.pickable.length === 2 && pick.pickable.every(Boolean), JSON.stringify(pick.pickable));
+  // The pick lands on ONE of the two shells, so a highlight would light the
+  // levied world and leave the exempt one dark — the primacy the band refuses.
+  check('neither band layer autoHighlights',
+    pick.highlight.every(h => !h), JSON.stringify(pick.highlight));
+
   // --- wording -------------------------------------------------------------
   check('copy says "zoned" (class share vs zoning share)', /institutionally-zoned/.test(ua));
   check('copy asserts no direction', !BANNED.test(ua.replace(/<[^>]+>/g, ' ')));
