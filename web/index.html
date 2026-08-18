@@ -2366,7 +2366,23 @@
         getLineWidth: 30,
         lineWidthMinPixels: 2,
         material: { ambient: 0.55, diffuse: 0.6, shininess: 32, specularColor: [60, 60, 70] },
-        pickable: false,
+        // ⚠️ PICKABLE, and it has to be THESE layers rather than the flat below.
+        // A banded hood's `metric-extrusion` geometry is flattened to 0 and made
+        // fully transparent, so the only thing standing over that footprint is
+        // this prism — and an unpickable prism does not fall through to its own
+        // hood, it falls through to WHOEVER IS BEHIND IT. Measured at pitch 55
+        // over the U of A: the pick came back MCKERNAN, RIVER VALLEY VICTORIA,
+        // WÎHKWÊNTÔWIN. Not "no tooltip" — the wrong hood's tooltip, while the
+        // cursor sits on azure geometry that exists to say THIS hood is the
+        // uncertain one (Peter, 2026-08-17: "they're gonna wanna see why they're
+        // special color").
+        pickable: true,
+        // ⚠️ autoHighlight OFF, and this is the band's own logic, not an
+        // oversight. The pick resolves to ONE of the two shells, so the
+        // highlight would light the levied world and leave the exempt one dark —
+        // exactly the primacy the band refuses to grant (same reason neither
+        // endpoint gets a solid fill in the Lab). The tooltip is the feedback.
+        autoHighlight: false,
         updateTriggers: { getElevation: [state.metric, state.denom] },
       });
       // Exempt first so the taller levied prism blends OVER the certain base.
@@ -2517,25 +2533,71 @@
     // footprint do not z-fight.
     function deviationBandLayers() {
       const cfg = METRICS[state.labCut];
+      // ⚠️ FILTERED to the banded hoods, and that is what makes the layer safe
+      // to make pickable. Left at `state.data` these transparent pick targets
+      // would sit at height 0 over all 406 footprints and win the pick from
+      // `deviation-extrusion` everywhere — which has autoHighlight and this does
+      // not, so every CERTAIN hood in the Lab would silently stop lighting up on
+      // hover. Same reason instBandLayers filters (a tint there, a stolen pick
+      // here).
+      const banded = state.data.features.filter(f => deviationBand(f.properties));
+      const elevation = pick => f => {
+        const b = deviationBand(f.properties);
+        return b ? pick(b) : 0;
+      };
       const mk = (id, pick) => new deck.GeoJsonLayer({
         id,
-        data: state.data,
+        data: banded,
         extruded: true,
         filled: false,
         stroked: false,
         wireframe: true,
-        getElevation: f => {
-          const b = deviationBand(f.properties);
-          return b ? pick(b) : 0;
-        },
+        getElevation: elevation(pick),
         elevationScale: cfg.elevationScale,
         getLineColor: UNCERTAIN_COLOR.concat([255]),
         getLineWidth: 30,
         lineWidthMinPixels: 2,
-        pickable: false,
+        pickable: false,        // the invisible target below owns the picking
         updateTriggers: { getElevation: [state.labCut] },
       });
-      return [mk("deviation-band-levied", b => b.levied), mk("deviation-band-exempt", b => b.exempt)];
+      // ⚠️ THE HOVER TARGET IS A SEPARATE INVISIBLE SOLID, and every part of
+      // that sentence was forced by a measurement.
+      //   · SEPARATE, because the outline layers cannot own it: with
+      //     filled:false the only pickable surface is the 2px wireframe, and
+      //     turning their own fill on (even at alpha 0) costs 499 px of the
+      //     render — a depth-writing fill hides the prism's OWN back edges, so
+      //     the see-through cage that lets you read both endpoints turns into a
+      //     box. Measured A/B in one frame.
+      //   · INVISIBLE rather than a faint fill, because a fill on either
+      //     endpoint hands that world visual primacy — the rule three
+      //     paragraphs up. An alpha-0 fill still picks in deck.gl; MEASURED,
+      //     not assumed (`metric-extrusion` returns UNIVERSITY OF ALBERTA at
+      //     pitch 0 while painting that hood [0,0,0,0]), and it is the same
+      //     idiom `hoodHoverLayer` already runs on.
+      //   · `depthMask: false` so it writes no depth and therefore occludes
+      //     nothing. depthTest stays ON: a prism genuinely in front must still
+      //     win the pick. With the mask left on, the render moved by 818 px.
+      //   · autoHighlight OFF — see instBandLayers: the pick lands on one of
+      //     two shells, and lighting one is the primacy this refuses.
+      const target = (id, pick) => new deck.GeoJsonLayer({
+        id,
+        data: banded,
+        extruded: true,
+        filled: true,
+        stroked: false,
+        wireframe: false,
+        getElevation: elevation(pick),
+        elevationScale: cfg.elevationScale,
+        getFillColor: [0, 0, 0, 0],
+        parameters: { depthMask: false },
+        pickable: true,
+        autoHighlight: false,
+        updateTriggers: { getElevation: [state.labCut] },
+      });
+      return [mk("deviation-band-levied", b => b.levied),
+              mk("deviation-band-exempt", b => b.exempt),
+              target("deviation-band-pick-levied", b => b.levied),
+              target("deviation-band-pick-exempt", b => b.exempt)];
     }
 
     // ⚠️ KEEP THIS SHORT. Development's and Infill's blurbs are 442px and 479px

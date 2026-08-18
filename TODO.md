@@ -85,6 +85,26 @@ state is not the same as checking the intent.**)_
 
 ## Open work
 
+- [ ] **THE RATIO AND USES PRISMS STILL PICK THE HOOD BEHIND THEM — same defect
+  as the band prisms (fixed 2026-08-17), but the fix needs a call on OPACITY
+  first.** Measured at pitch 55 over the U of A: hovering up a `ratio-extrusion`
+  ghost prism returns `hood-hover :: RIVER VALLEY VICTORIA` / `WÎHKWÊNTÔWIN` —
+  the flat hood layer beneath, not the prism the cursor is on. Uses' optional
+  residential prisms are the same shape of problem.
+  - **Why it was not fixed with the bands:** both layers ride
+    `state.prismOpacity` (ratio's default is the 5% *ghost*; the slider reaches
+    0). ⚠️ **A pickable prism at opacity 0 hijacks hovers over what looks like
+    empty air** — the Services comment already names this trap ("an opacity-0
+    layer would still tessellate, draw, pick, and highlight").
+  - **The question is Peter's:** should a ghost prism own the hover at all? On
+    `ratio` the ROADS are the subject and the prisms are context, so picking the
+    prism may be the wrong answer even when it works. Options: always pickable;
+    pickable only above some opacity; leave as is.
+  - The band fix needs none of this — those prisms have no opacity control and
+    the hood beneath them is deliberately blank.
+  - Precedent + measurements: `docs/SPEC_revenue.md` "The banded prism is its own
+    hover target", `docs/DECISIONS.md` 2026-08-17.
+
 - [ ] **SERVICES' HOVER STILL TEASES A CHART ITS PANEL DOES NOT OPEN — the same
   defect fixed on the revenue cuts 2026-08-16, left live because the replacement
   copy is Peter's call.** In Services (with the cost columns shipped) the hover

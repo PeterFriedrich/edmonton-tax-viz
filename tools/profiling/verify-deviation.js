@@ -242,6 +242,73 @@ const check = (name, ok, detail = '') => {
     `${band.stillExtruded} banded hoods still extruded`);
   check('the exempt RATE never exceeds the levied rate', band.wrongOrder === 0,
     `${band.wrongOrder} inverted`);
+
+  // --- the band is its own hover target (2026-08-17) -----------------------
+  // ⚠️ THE OUTLINE LAYERS CANNOT OWN THE PICKING and must not be made to: with
+  // filled:false the only pickable surface is the 2px wireframe, and turning
+  // their fill on — even at alpha 0 — costs 499 px of render, because a
+  // depth-writing fill hides the prism's OWN back edges and the see-through
+  // cage that lets you read both endpoints becomes a box. The hover target is
+  // therefore a separate invisible solid with depthMask off. What fails
+  // silently if that regresses: the pointer sits on a banded hood's geometry
+  // and the tooltip names a DIFFERENT hood (pre-fix, at pitch 60, the U of A's
+  // prism picked WÎHKWÊNTÔWIN) — which on this lens is the wrong hood's
+  // uncertainty range.
+  const pick = await page.evaluate(async () => {
+    const f = state.data.features.find(
+      x => x.properties.neighbourhood_name === 'UNIVERSITY OF ALBERTA');
+    const rg = f.geometry.type === 'Polygon'
+      ? f.geometry.coordinates[0] : f.geometry.coordinates[0][0];
+    let lng = 0, lat = 0;
+    for (const c of rg) { lng += c[0]; lat += c[1]; }
+    lng /= rg.length; lat /= rg.length;
+    map.jumpTo({ center: [lng, lat], zoom: 12.4, pitch: 60, bearing: 0 });
+    await new Promise(r => setTimeout(r, 1800));
+    const vp = overlay._deck.getViewports()[0];
+    const [sx, sy] = vp.project([lng, lat]);
+    const hits = [];
+    for (let dy = -30; dy >= -200; dy -= 10) {
+      const i = overlay._deck.pickObject({ x: Math.round(sx), y: Math.round(sy + dy), radius: 0 });
+      if (i) hits.push({ layer: i.layer.id, hood: i.object.properties.neighbourhood_name });
+    }
+    const outlines = overlay._props.layers.filter(
+      l => /^deviation-band-(levied|exempt)$/.test(l.id));
+    const targets = overlay._props.layers.filter(l => l.id.includes('band-pick'));
+    return { hits,
+             outlinesPickable: outlines.map(l => !!l.props.pickable),
+             targetsPickable: targets.map(l => !!l.props.pickable),
+             targetFillAlpha: targets.map(l => l.props.getFillColor[3]),
+             depthMask: targets.map(l => l.props.parameters && l.props.parameters.depthMask),
+             targetRows: targets.map(l => l.props.data.length) };
+  });
+  const onBand = pick.hits.filter(h => h.layer.includes('band-pick'));
+  check('*** the band prism BODY is pickable, not just the flat below it ***',
+    onBand.length > 0, `${onBand.length} of ${pick.hits.length} sampled pixels`);
+  check('*** every pick on the band returns ITS OWN hood ***',
+    onBand.length > 0 && onBand.every(h => h.hood === 'UNIVERSITY OF ALBERTA'),
+    [...new Set(onBand.map(h => h.hood))].join(', ') || 'none');
+  check('the OUTLINE layers stay unpickable (their fill must stay off)',
+    pick.outlinesPickable.length === 2 && !pick.outlinesPickable.some(Boolean),
+    JSON.stringify(pick.outlinesPickable));
+  // ⚠️ Length asserted explicitly: every `.every()` below is vacuously true on
+  // an empty array, so without this the whole group passes on a build that
+  // ships no pick targets at all.
+  check('both pick targets exist and are pickable',
+    pick.targetsPickable.length === 2 && pick.targetsPickable.every(Boolean),
+    JSON.stringify(pick.targetsPickable));
+  check('the pick targets are invisible', pick.targetFillAlpha.every(a => a === 0),
+    JSON.stringify(pick.targetFillAlpha));
+  // depthMask:false is what keeps an invisible solid from occluding the
+  // outlines behind it. depthTest stays ON — a prism genuinely in front must
+  // still win the pick.
+  check('the pick targets write no depth', pick.depthMask.every(d => d === false),
+    JSON.stringify(pick.depthMask));
+  // Filtered to the banded hoods: at 406 rows these height-0 transparent
+  // targets would win the pick from deviation-extrusion over every certain
+  // hood, which DOES autoHighlight — so every hood in the Lab would silently
+  // stop lighting up on hover.
+  check('the pick targets carry only the banded hoods',
+    pick.targetRows.every(n => n === band.drawn), `${pick.targetRows} vs ${band.drawn} banded`);
   // ⚠️ THE INVERSION MOVED, IT DID NOT GO AWAY. Until 2026-08-15 this asserted
   // that at least one DRAWN band inverts (EVERGREEN +$87, RIVER VALLEY CAMERON
   // +$842), which justified deviationBandSpan sorting for display. The
