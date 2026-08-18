@@ -425,9 +425,13 @@ Lens A build-time decisions, now LOCKED:
   one permit; many single houses are many permits). ABBOTTSFIELD is the extreme:
   248 units from 2 permits. A **third `#devmetric` option "Industrial"** ships
   (2026-07-18, SPEC_industrial.md A3): new industrial (400-series `building_type`)
-  permits per acre, count only — a Development-view **choropleth only** (no
-  detail-grid cells, and reset away on entering Infill, since an industrial
-  permit isn't residential infill). See SPEC_industrial.md A3 + DATA.md §10.
+  permits per acre, count only — a Development-view choropleth, reset away on
+  entering Infill (an industrial permit isn't residential infill). ⚠️ **It was
+  choropleth-only until 2026-08-18**, when it gained 100 m detail cells; those
+  cells are measured in **deflated construction value**, not permit count,
+  because counts are too sparse to form a surface (89% of cells hold one
+  permit) and a bigger cell does not fix it. See SPEC_industrial.md A3 +
+  DATA.md §10.
 - **Null-`work_type` rows** — ✅ excluded, count reported (in-window ~41k of the
   ~60k are null/blank; INFO-logged each load). Same for null `building_type`.
 - **"AREA"-suffix greenfield names** — ✅ resolved via the shared

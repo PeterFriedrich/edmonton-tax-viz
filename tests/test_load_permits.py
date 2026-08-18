@@ -18,7 +18,7 @@ YEARS = (2021, 2022, 2023, 2024, 2025)
 
 def _row(year=2023, work_type="(01) New",
          building_type="Single Detached House (110)", units_added=1,
-         neighbourhood="ALPHA"):
+         neighbourhood="ALPHA", construction_value=250000):
     return {
         "year": year,
         # extra columns prove the loader slims via usecols
@@ -26,6 +26,7 @@ def _row(year=2023, work_type="(01) New",
         "work_type": work_type,
         "building_type": building_type,
         "units_added": units_added,
+        "construction_value": construction_value,
         "neighbourhood": neighbourhood,
     }
 
@@ -259,7 +260,8 @@ def test_dev_grid_bins_nearby_points_into_one_cell(tmp_path):
     out = tmp_path / "dev_grid.json"
     export_dev_grid(_write(tmp_path, rows), out, YEARS)
     payload = _read(out)
-    assert payload["columns"] == ["lon", "lat", "units", "permits"]
+    assert payload["columns"] == ["lon", "lat", "units", "permits",
+                                  "ind_cv", "ind_n"]
     assert payload["cell_m"] == 100.0
     cells = {tuple(c[:2]): c[2:] for c in payload["cells"]}
     assert len(cells) == 2  # A+B share a cell; FAR is its own
@@ -272,9 +274,13 @@ def test_dev_grid_3yr_columns_and_window_split(tmp_path):
     export_dev_grid(_write(tmp_path, rows), out, YEARS, years_recent=(2023, 2024, 2025))
     payload = _read(out)
     assert payload["columns"] == ["lon", "lat", "units", "permits",
-                                  "units_3yr", "permits_3yr"]
+                                  "ind_cv", "ind_n",
+                                  "units_3yr", "permits_3yr",
+                                  "ind_cv_3yr", "ind_n_3yr"]
     (cell,) = payload["cells"]
-    assert cell[2:] == [5, 5, 3, 3]
+    # units/permits per window unchanged; the industrial pair is 0 here because
+    # these fixtures are all residential.
+    assert cell[2:] == [5, 5, 0, 0, 3, 3, 0, 0]
 
 
 def test_dev_grid_long_columns_and_window_split(tmp_path):
@@ -289,11 +295,14 @@ def test_dev_grid_long_columns_and_window_split(tmp_path):
     )
     payload = _read(out)
     assert payload["columns"] == ["lon", "lat", "units", "permits",
+                                  "ind_cv", "ind_n",
                                   "units_3yr", "permits_3yr",
-                                  "units_long", "permits_long"]
+                                  "ind_cv_3yr", "ind_n_3yr",
+                                  "units_long", "permits_long",
+                                  "ind_cv_long", "ind_n_long"]
     (cell,) = payload["cells"]  # 2015 permit shares the same point as 2021-25
-    # 5yr=5u/5p, 3yr=3u/3p, long=5+4=9u/6p
-    assert cell[2:] == [5, 5, 3, 3, 9, 6]
+    # 5yr=5u/5p, 3yr=3u/3p, long=5+4=9u/6p; industrial 0 (residential fixtures)
+    assert cell[2:] == [5, 5, 0, 0, 3, 3, 0, 0, 9, 6, 0, 0]
     assert set(payload["coverage"]) == {"5yr", "3yr", "long"}
     assert payload["coverage"]["long"]["units"] == 9
 
@@ -306,7 +315,10 @@ def test_dev_grid_reports_geocode_coverage(tmp_path):
     stats = export_dev_grid(_write(tmp_path, rows), out, YEARS)
     cov = _read(out)["coverage"]["5yr"]
     assert cov == {"units": 15, "units_geocoded": 5,
-                   "permits": 6, "permits_geocoded": 5}
+                   "permits": 6, "permits_geocoded": 5,
+                   "ind_permits": 0, "ind_permits_geocoded": 0,
+                   "ind_value": 0, "ind_value_geocoded": 0,
+                   "ind_permits_zero_value": 0}
     assert stats["coverage"]["5yr"] == cov
     # the ungeocoded permit contributes NO cell
     assert sum(c[2] for c in _read(out)["cells"]) == 5
@@ -389,3 +401,111 @@ def test_parkade_490_not_industrial(tmp_path):
 def test_industrial_set_disjoint_from_residential():
     assert not (INDUSTRIAL_BUILDING_TYPES & RESIDENTIAL_BUILDING_TYPES)
     assert INDUSTRIAL_BUILDING_TYPES <= KNOWN_BUILDING_TYPES
+
+
+# --- industrial detail grid (SPEC_industrial.md A3, dollars 2026-08-18) ------
+
+def _price_index(tmp_path, base_year=2025, index=None):
+    """A deflator table in the shape fetch_construction_price_index.py writes."""
+    import json
+    index = index or {"2021": 80.0, "2022": 90.0, "2023": 100.0,
+                      "2024": 105.0, "2025": 110.0}
+    base = index[str(base_year)]
+    p = tmp_path / "cpi.json"
+    p.write_text(json.dumps({
+        "base_year": base_year,
+        "first_year": min(int(y) for y in index),
+        "index": index,
+        "deflators": {y: round(base / v, 6) for y, v in index.items()},
+    }))
+    return p
+
+
+def _ig(year, cv, **kw):
+    """A geocoded new INDUSTRIAL permit with a declared construction value."""
+    return _grow(year=year, building_type="Storage Buildings, Warehouses (460)",
+                 units_added=0, construction_value=cv, **kw)
+
+
+def test_dev_grid_industrial_value_is_deflated_to_base_year(tmp_path):
+    # Two identical $1M warehouses, 2021 and 2025, in the same cell. Nominally
+    # they sum to $2M; in constant 2025 dollars the 2021 one is worth MORE
+    # (110/80 = 1.375x), which is the whole point of deflating.
+    rows = _geo_window_rows() + [_ig(2021, 1_000_000), _ig(2025, 1_000_000)]
+    out = tmp_path / "dev_grid.json"
+    export_dev_grid(_write(tmp_path, rows), out, YEARS,
+                    price_index_path=_price_index(tmp_path))
+    payload = _read(out)
+    cols = payload["columns"]
+    (cell,) = [c for c in payload["cells"] if c[cols.index("ind_n")] == 2]
+    assert cell[cols.index("ind_cv")] == round(1_000_000 * 1.375 + 1_000_000)
+    assert payload["ind_value_note"]["base_year"] == 2025
+
+
+def test_dev_grid_industrial_zero_value_permit_is_not_dropped(tmp_path):
+    # A $0 declared value would render as a zero-height cell and vanish. The
+    # permit COUNT is what keeps it on the map, and coverage reports how many.
+    rows = _geo_window_rows() + [_ig(2023, 0, lat=LAT_FAR, lon=LON_FAR)]
+    out = tmp_path / "dev_grid.json"
+    export_dev_grid(_write(tmp_path, rows), out, YEARS,
+                    price_index_path=_price_index(tmp_path))
+    payload = _read(out)
+    cols = payload["columns"]
+    far = [c for c in payload["cells"] if c[cols.index("ind_n")] > 0]
+    assert len(far) == 1
+    assert far[0][cols.index("ind_cv")] == 0      # nothing to show in dollars
+    assert far[0][cols.index("ind_n")] == 1       # but the building is there
+    assert payload["coverage"]["5yr"]["ind_permits_zero_value"] == 1
+
+
+def test_dev_grid_industrial_does_not_pollute_residential_columns(tmp_path):
+    rows = _geo_window_rows() + [_ig(2023, 5_000_000)]
+    out = tmp_path / "dev_grid.json"
+    export_dev_grid(_write(tmp_path, rows), out, YEARS,
+                    price_index_path=_price_index(tmp_path))
+    payload = _read(out)
+    cols = payload["columns"]
+    # the 5 residential permits are unchanged; the warehouse adds no units
+    assert sum(c[cols.index("units")] for c in payload["cells"]) == 5
+    assert sum(c[cols.index("permits")] for c in payload["cells"]) == 5
+    assert payload["coverage"]["5yr"]["ind_permits"] == 1
+
+
+def test_dev_grid_missing_deflator_year_raises(tmp_path):
+    # A permit year with no index must FAIL, never pass through at nominal —
+    # that is the silent-correctness failure this guard exists for.
+    rows = _geo_window_rows() + [_ig(2021, 1_000_000)]
+    idx = {"2022": 90.0, "2023": 100.0, "2024": 105.0, "2025": 110.0}  # no 2021
+    with pytest.raises(ValueError, match="no construction-price deflator"):
+        export_dev_grid(_write(tmp_path, rows), tmp_path / "g.json", YEARS,
+                        price_index_path=_price_index(tmp_path, index=idx))
+
+
+def test_dev_grid_missing_price_index_file_raises(tmp_path):
+    rows = _geo_window_rows() + [_ig(2023, 1_000_000)]
+    with pytest.raises(FileNotFoundError, match="fetch_construction_price_index"):
+        export_dev_grid(_write(tmp_path, rows), tmp_path / "g.json", YEARS,
+                        price_index_path=tmp_path / "absent.json")
+
+
+def test_dev_grid_rebased_index_raises(tmp_path):
+    # base_year whose factor isn't exactly 1.0 means the table was rebased
+    # inconsistently — every dollar on the map would be scaled by a constant.
+    import json
+    p = tmp_path / "bad.json"
+    p.write_text(json.dumps({"base_year": 2025, "deflators": {"2025": 1.2}}))
+    with pytest.raises(ValueError, match="expected exactly 1.0"):
+        export_dev_grid(_write(tmp_path, _geo_window_rows()),
+                        tmp_path / "g.json", YEARS, price_index_path=p)
+
+
+def test_dev_grid_no_industrial_permits_warns_but_still_exports(tmp_path, caplog):
+    # Industrial is secondary: its absence must not withhold the residential
+    # grid (which would silently hide the Detail toggle entirely).
+    with caplog.at_level("WARNING"):
+        stats = export_dev_grid(_write(tmp_path, _geo_window_rows()),
+                                tmp_path / "g.json", YEARS,
+                                price_index_path=_price_index(tmp_path))
+    assert stats["n_cells"] == 1
+    assert stats["coverage"]["5yr"]["ind_permits"] == 0
+    assert any("INDUSTRIAL_BUILDING_TYPES" in r.message for r in caplog.records)

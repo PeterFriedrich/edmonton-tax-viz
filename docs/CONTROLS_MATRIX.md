@@ -362,9 +362,14 @@ has at least one section to show.
 - `#devdetail` — the **2-way Detail selector**. Shipped 3-way (decision #7,
   §7) replacing the old `#dev-grid` checkbox + `#devspike` picker; the third
   option, Stock age, was **withdrawn 2026-07-27** (`DECISIONS.md`). Offered whenever
-  the grid file loaded **and** the metric isn't Industrial (`devGridOfferable =
-  !!devGridData && !devIndustrial()`). The long "Since 2009" window **is**
-  offerable (its own grid, PR #80). Industrial is the only choropleth-only metric.
+  the grid file loaded **and** the active metric has cells in the active window
+  (`devGridOfferable = !!devGridData && (!devIndustrial() || devIndCellsPresent())`).
+  The long "Since 2009" window **is** offerable (its own grid, PR #80).
+  ⚠️ **Industrial stopped being choropleth-only on 2026-08-18** — it now has
+  cells too, measured in deflated construction value rather than permit count,
+  and is checked PER WINDOW against the file's own `coverage.ind_permits_geocoded`
+  so a window with no geocoded industrial permits hides the toggle instead of
+  drawing an empty grid. **There is no longer a choropleth-only metric.**
 - **Metric and Window now apply in both Detail modes.** They were suppressed
   only while Stock age was up; with it gone, nothing in this view hides them.
 
@@ -471,4 +476,4 @@ above describe the result. Mirrored in `DECISIONS.md`.
 | 2026-07-23 | **Top stack reorders to tier order: View → Variant → Presentation.** ① `#views` (T1); ② `#toggle` (T2, Money's metric picker); ③ `#optpanel` (T2 `#layers` + T3 `#coloradj`/`#lens`); ④ accessibility button, out of the tier flow. Consequence: **`#toggle` becomes Money-scoped** and stops floating live-but-inert. | old §5.A, §5.C |
 | 2026-07-23 | **`Residential only` → "Highlight residential"** — kills the name clash with the `Residential $` metric. Intent-first label. **Label-only — no mechanics, no scope change.** | old §5.E |
 | 2026-07-23 | **Development's `#dev-grid` checkbox + `#devspike` picker collapse into ONE 3-way "Detail" selector**: **① Neighbourhood** · **② 100 m grid — activity** · **③ Stock age**. Metric + Window apply to ①/②; ③ hides them as an EXPLICIT mode choice. Motivated by phone usability — a nested checkbox reveal is a weak tap target (structure-before-mobile). | old §5.A, §5.B |
-| 2026-07-23 | **Industrial tagged full-only** — it's choropleth-only, so in public it would leave the new Detail selector with two dead options. **Public Development is airtight: units + permits, both grid-capable.** | old §5.F, §2 |
+| 2026-07-23 | **Industrial tagged full-only** — it's choropleth-only, so in public it would leave the new Detail selector with two dead options. **Public Development is airtight: units + permits, both grid-capable.** ⚠️ **The stated reason EXPIRED 2026-08-18**: Industrial is now grid-capable too, so it would no longer leave a dead option. The tag stands (nothing was changed) but it is now unargued — whether Industrial goes public is Peter's call. | old §5.F, §2 |

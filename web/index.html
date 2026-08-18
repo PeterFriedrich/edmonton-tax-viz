@@ -1239,7 +1239,34 @@
     const devChoroplethBlurb = () => VIEWS.development.blurb.replace(
       "the last five full years (2021–2025)", DEV_WINDOW_PHRASE[state.devWindow]);
     const devBlurb = () => {
-      if (devIndustrial()) return VIEWS.development.indBlurb;
+      if (devIndustrial()) {
+        if (!devGridActive()) return VIEWS.development.indBlurb;
+        const cov = devGridData.coverage && devGridData.coverage[state.devWindow];
+        const note = devGridData.indNote;
+        const pct = cov && cov.ind_permits
+          ? Math.round(100 * (1 - cov.ind_permits_geocoded / cov.ind_permits)) : null;
+        // Everything quantitative here is read from the FILE, so the disclosure
+        // cannot drift from the dollars it describes (the geocode-coverage
+        // idiom). Three things must be said: the dollars are an ESTIMATE, they
+        // are DEFLATED, and the newest permits are not all on the grid.
+        const z = cov ? cov.ind_permits_zero_value : 0;
+        return VIEWS.development.indBlurb +
+          " The 100 m grid replaces the neighbourhood colours with individual " +
+          "permit cells — height is linear in declared construction value, " +
+          "colour square-root scaled. Industrial has no dwelling-unit count and " +
+          "permit counts are too sparse to form a surface (most cells hold one " +
+          "permit), so the dollars carry the pattern" +
+          (note ? ": the applicant's ESTIMATED cost at permit time, land " +
+            "excluded, in " + note.basis + " (" + note.deflator + ")." : ".") +
+          (pct != null && pct > 0
+            ? " Only geocoded permits appear: ~" + pct + "% are not on the grid " +
+              "yet and count only in the neighbourhood view."
+            : "") +
+          (z > 0
+            ? " " + z + " permit" + (z === 1 ? "" : "s") + " declared at $0 " +
+              "show at a minimum height rather than vanishing."
+            : "");
+      }
       if (!devGridActive()) return devChoroplethBlurb();
       const what = state.devMetric === "permits" ? "permits" : "homes";
       const cov = devGridData.coverage && devGridData.coverage[state.devWindow];
@@ -1742,17 +1769,27 @@
     };
     // Industrial permit COUNT total per window, for the tooltip (no units total).
     const DEV_IND_TOTAL = { "5yr": "ind_permits", "3yr": "ind_permits_3yr", "long": "ind_permits_long" };
-    // Industrial is a hood-level choropleth only — no detail grid, not infill.
+    // Industrial is a hood-level choropleth, and (since 2026-08-18) also has
+    // detail cells — but it is still NOT infill.
     const devIndustrial = () => state.devMetric === "industrial";
-    // The 100 m detail grid applies to the residential metrics only: industrial
-    // is choropleth-only and dev_grid.json carries no industrial cells, so the
-    // Detail toggle hides and the render stays flat while industrial is up.
-    const devGridActive = () => state.devGrid && devGridData && !devIndustrial();
+    // Industrial detail cells exist only if the window actually has geocoded
+    // industrial permits. The column-guard idiom (state.hasIndPermits): an
+    // empty window hides the toggle rather than drawing a blank grid, so a
+    // building_type vocabulary drift shows up as a missing control, not as a
+    // city with no industrial construction.
+    const devIndCellsPresent = () => {
+      const cov = devGridData && devGridData.coverage &&
+        devGridData.coverage[state.devWindow];
+      return !!(cov && cov.ind_permits_geocoded > 0);
+    };
+    const devGridActive = () => state.devGrid && devGridData &&
+      (!devIndustrial() || devIndCellsPresent());
     // Whether the Detail toggle + Spikes picker should be OFFERED (independent of
     // whether it's currently checked): the grid file loaded AND the current
-    // metric has cells (industrial is choropleth-only; all three windows —
-    // 5yr/3yr/long — carry cells).
-    const devGridOfferable = () => !!devGridData && !devIndustrial();
+    // metric has cells in the active window (all three windows — 5yr/3yr/long —
+    // carry residential cells; industrial is checked per window).
+    const devGridOfferable = () => !!devGridData &&
+      (!devIndustrial() || devIndCellsPresent());
     const DEV_WINDOW_LABEL = { "5yr": "2021–2025", "3yr": "2023–2025", "long": "2009–2025" };
     const devCol = () => DEV_COLS[state.devMetric][state.devWindow];
     const _devScale = {};
@@ -1801,9 +1838,12 @@
     // the file itself (devBlurb).
     const DEV_GRID_URL = "./data/dev_grid.json";
     const DEV_GRID_COLS = {
-      units:   { "5yr": "units",   "3yr": "units_3yr",   "long": "units_long" },
-      permits: { "5yr": "permits", "3yr": "permits_3yr", "long": "permits_long" },
+      units:      { "5yr": "units",      "3yr": "units_3yr",      "long": "units_long" },
+      permits:    { "5yr": "permits",    "3yr": "permits_3yr",    "long": "permits_long" },
+      industrial: { "5yr": "industrial", "3yr": "industrial_3yr", "long": "industrial_long" },
     };
+    // Industrial's companion permit-count column, per window.
+    const DEV_GRID_IND_N = { "5yr": "ind_n", "3yr": "ind_n_3yr", "long": "ind_n_long" };
     const devGridColKey = () => DEV_GRID_COLS[state.devMetric][state.devWindow];
     const DEV_GRID_PEAK = 2500; // m at the tallest cell (USES_PRISM_PEAK kin)
     let _devGridScales = null;
@@ -1820,29 +1860,51 @@
         elevationScale: vals.length ? DEV_GRID_PEAK / vals[vals.length - 1] : 1,
       });
     }
+    // A cell the reader can SEE at the smallest value. Industrial needs this
+    // and residential does not, for a structural reason: units are QUANTISED
+    // (a permit adds at least 1, so no residential cell renders below 5 m —
+    // measured 0%), while declared dollars are CONTINUOUS down to $0. 39–44%
+    // of industrial cells render under 5 m on a linear scale topping out at
+    // $190M, and 6 of them are declared at exactly $0 — permitted buildings
+    // that are simply not on the map.
+    // ⚠️ Keep this SMALL. It flattens every cell below it to one height, so it
+    // must only reach values the eye could not resolve anyway: at 6 m it lifts
+    // cells under ~$460k, all of which were rendering at under 6 m regardless.
+    // An earlier 60 m floor lifted cells worth up to $4.6M — real projects — to
+    // the same height as $0, erasing the differentiation the dollars exist to
+    // provide. Display height only; the tooltip dollars are never floored.
+    const DEV_GRID_MIN_M = 6; // metres, pre-elevationScale
     function devGridLayer() {
       const colKey = devGridColKey();
       const col = devGridData.columns[colKey];
       const gs = devGridScale();
+      // Industrial cells are kept on the permit COUNT, not the dollars, so a
+      // $0-declared permit still gets a cell. Residential keeps its own filter.
+      const ind = devIndustrial();
+      const nCol = ind ? devGridData.columns[DEV_GRID_IND_N[state.devWindow]] : -1;
+      const present = ind ? (d => d[nCol] > 0) : (d => d[col] > 0);
+      const floor = DEV_GRID_MIN_M / gs.elevationScale;
       // Cache the non-zero subset per column so the layer's data identity is
       // stable across rebuilds (the Glass grid's re-tessellation lesson).
       devGridData.cellsFor ??= {};
       const cells = (devGridData.cellsFor[colKey] ??=
-        devGridData.cells.filter(c => c[col] > 0));
+        devGridData.cells.filter(present));
       return new deck.GridCellLayer({
         id: "dev-grid-cells",
         data: cells,
         cellSize: devGridData.cell,
         extruded: true,
         getPosition: d => [d[0], d[1]], // cell SW corner (export_dev_grid)
-        getElevation: d => d[col],
+        getElevation: ind ? (d => Math.max(d[col], floor)) : (d => d[col]),
         elevationScale: gs.elevationScale,
         // sqrt colour always, matching the choropleth's locked transform
         getFillColor: d => rampColorAt(Math.sqrt(Math.min(1, d[col] / gs.clamp))),
         opacity: state.prismOpacity,
         material: { ambient: 0.55, diffuse: 0.6, shininess: 32, specularColor: [60, 60, 70] },
         pickable: false, // the neutral plane keeps the hood tooltip
-        updateTriggers: { getElevation: colKey, getFillColor: [colKey, state.ramp] },
+        updateTriggers: {
+          getElevation: [colKey, ind], getFillColor: [colKey, state.ramp],
+        },
       });
     }
 
@@ -5167,10 +5229,11 @@
     }
 
     // Shared development-view chrome refresh after a metric/window switch: the
-    // Detail toggle + opacity slider only apply where the grid has cells —
-    // industrial is the ONLY choropleth-only cut, and all three windows
-    // (5yr/3yr/long) carry cells (see devGridOfferable). The title/blurb carry
-    // the window.
+    // Detail toggle + opacity slider only apply where the grid has cells. All
+    // three windows (5yr/3yr/long) carry residential cells; industrial carries
+    // them per window and is checked against the file's coverage, so a window
+    // with no geocoded industrial permits hides the toggle rather than drawing
+    // an empty grid (see devGridOfferable). The title/blurb carry the window.
     function syncDevChrome() {
       const gridShow = devGridOfferable();
       document.getElementById("devdetail-hd").style.display = gridShow ? "block" : "none";
@@ -5327,8 +5390,13 @@
         // Grid mode: the legend follows the spikes (per 100 m cell), not the
         // per-acre choropleth it replaced.
         const gridMode = devGridActive();
+        // The industrial GRID is measured in constant dollars, not permits —
+        // the choropleth of the same metric is still permits per acre, so the
+        // label must follow the mode, not just the metric.
+        const indGridMode = gridMode && devIndustrial();
         document.getElementById("legend-label").textContent =
-          (state.devMetric === "permits" ? "New permits"
+          (indGridMode ? "Declared construction value"
+            : state.devMetric === "permits" ? "New permits"
             : state.devMetric === "industrial" ? "Industrial permits"
             : "New homes") +
           (gridMode ? " per 100 m cell" : " per acre") +
@@ -5338,7 +5406,11 @@
         // Small per-acre clamps (industrial permits run ~0.01/acre) need more
         // decimals than the per-100m-cell counts; match fmtDev's precision.
         const dp = gridMode ? 0 : clamp < 1 ? 2 : clamp < 10 ? 1 : 0;
-        document.getElementById("legend-max").textContent = clamp.toFixed(dp) + "+";
+        // fmtBig (not fmtLevy): this bound is already a p97.5 clamp, so whole
+        // megas are inside its own precision — the fmtLevy caveat is about
+        // exact headline levies, not a colour-ramp end.
+        document.getElementById("legend-max").textContent =
+          (indGridMode ? fmtBig(clamp) : clamp.toFixed(dp)) + "+";
         // The set-aside mask is overridden here, so there is no off-scale grey
         // category — hide the aside swatch row entirely for this view.
         document.querySelector("#legend .aside").style.display = "none";
@@ -5790,9 +5862,18 @@
                 permits_3yr: p.columns.indexOf("permits_3yr"),
                 units_long: p.columns.indexOf("units_long"),
                 permits_long: p.columns.indexOf("permits_long"),
+                industrial: p.columns.indexOf("ind_cv"),
+                industrial_3yr: p.columns.indexOf("ind_cv_3yr"),
+                industrial_long: p.columns.indexOf("ind_cv_long"),
+                // permit COUNT per cell — the floor that keeps a $0-declared
+                // industrial permit visible (export_dev_grid)
+                ind_n: p.columns.indexOf("ind_n"),
+                ind_n_3yr: p.columns.indexOf("ind_n_3yr"),
+                ind_n_long: p.columns.indexOf("ind_n_long"),
               },
               cells: p.cells,
               coverage: p.coverage,
+              indNote: p.ind_value_note || null,
             };
           })
           .catch(() => {});
