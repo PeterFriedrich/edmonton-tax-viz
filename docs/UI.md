@@ -1168,7 +1168,18 @@ mode and each of which was a special case in shared code:
 §5: #3 (*"Stock age still morphs the Development panel"*) and #6 (*"Stock age
 is arguably a lens wearing a Detail costume"*). #6 is worth keeping in mind in
 the shape it was written — **if a control ignores the pickers around it, it is
-probably a lens, not a detail mode.** Industrial is the surviving instance.
+probably a lens, not a detail mode.** Industrial was the surviving instance.
+
+⚠️ **Industrial stopped being that instance on 2026-08-18**, and the way it
+stopped is the point. It ignored the Detail picker (the toggle hid) not because
+it was secretly a lens, but because **nobody had built its cells** — the
+"ignores its neighbours" signal was reporting missing data, not a mis-typed
+control. Giving it a grid made it an ordinary metric that answers to all three
+pickers. ⚠️ **So the #6 heuristic needs a second question before it fires: is
+this control ignoring its neighbours because it is a different KIND of thing,
+or because its version of the shared thing was never built?** Stock age was the
+first; Industrial was the second, and reading it as the first would have argued
+for promoting it to a lens instead of finishing it.
 
 **Separately: the activity spikes now default to 50% opacity.**
 `VIEWS.development.opacity` was `null`, commented *"no prisms in this view"* —

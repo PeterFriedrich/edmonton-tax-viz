@@ -112,7 +112,7 @@ Measured over the wire (GitHub Pages gzips everything, `.geojson` included;
 | Glass | `value_grid.json` | 930 KB |
 | Uses | `zoning.geojson` | ~444 KB |
 | Services / Ratio | `roads.geojson` (+ bike 52, lrt 4.5, transit 1.1, fire 0.4) | ~264 KB |
-| Development | `dev_grid.json` | ~92 KB |
+| Development | `dev_grid.json` | **~111 KB** |
 | Money / Value / Infill / Change | reads `state.data` | **0** |
 
 ⚠️ **THE ONE COST THAT SCALES WITH LENS COUNT is the served hood GeoJSON**, because
@@ -121,6 +121,12 @@ columns its attributes (176 KB gzip) had already outgrown its geometry (138 KB).
 Precision was the fix — see `DECISIONS.md` 2026-08-09 and `DATA.md` §3: **340 KB
 → 166 KB**, from two kwargs. Before adding a lens's columns there, check what the
 boot payload is at.
+
+**`dev_grid.json` grew ~92 → ~111 KB gzip on 2026-08-18** (raw 0.36 → 0.51 MB)
+when the industrial detail cells landed: four new columns on every row plus
+~835 industrial-only cells. Lazy-loaded on entering Development, so it is not
+boot cost. The two industrial columns per window are the price of keeping the
+$0-declared permits visible — `ind_n` (count) cannot be derived from `ind_cv`.
 
 ⚠️ **`value_grid.json` is measured and deliberately left alone** — only 16%
 available, nobody pays it at boot, and `median_year_built` is a column where
