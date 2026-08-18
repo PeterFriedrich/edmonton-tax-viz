@@ -381,6 +381,58 @@ invisible pick target.** The difference is forced, not stylistic:
 Both starred assertions are **falsified against the pre-fix build**: 3 fail in
 `verify-inst-caveat.js`, 3 in `verify-deviation.js`, no collateral.
 
+#### ⚠️ Amended same week: the prism must GLOW, and both shells must glow together
+
+Peter, 2026-08-18: the banded prisms *"don't glow the same as the regular prisms
+when you mouse over, so lacking proper confirmation you hovered (or tapped on
+mobile) on the intended hood."* Correct, and it was the cost of the
+`autoHighlight: false` decision above — answering on hover is not the same as
+**confirming** which hood you are on. Measured on the shipped build: hovering a
+banded prism moved **0 pixels**.
+
+⚠️ **`autoHighlight` is still the wrong instrument, for the original reason AND
+a measured one.** It lights only the shell the pick landed on. On Money that
+happens to look right (the levied shell encloses the exempt one, so lighting it
+lights the visible mass) — but **in the Lab it is nearly invisible**: a crossing
+band's exempt endpoint extrudes *downward*, mostly underground, and it is the
+last pickable layer drawn, so it wins the pick and then glows on **276 px**
+against the levied prism's **19,654**.
+
+**DECIDED — the glow is index-driven (`highlightedObjectIndex`), so both shells
+light as one.** That satisfies the no-primacy rule the way refusing the
+highlight was trying to: neither unknowable world is singled out because **both**
+light. Same white every other prism uses, `[255,255,255,60]`.
+
+| | lit px | mean Δ (sum RGB) |
+|---|---|---|
+| ordinary Money prism (the reference) | 35,538 | 34.4 |
+| Money band, both shells | 19,643 | **73.0** |
+| Lab band, both endpoints | 24,900 | **97.6** |
+| Lab band under `autoHighlight` (rejected) | 276 | — |
+
+The band reads *stronger* than an ordinary prism at the same alpha, because
+white over a translucent azure fill separates further than white over an opaque
+ramp colour. No alpha bump was needed — and 110/160 were measured before
+settling on 60.
+
+- ⚠️ **A layer REBUILD clears the index, deliberately.** It addresses a position
+  in the *banded subset*, and the toggles that trigger a rebuild — revenue cut,
+  denominator — re-select that subset, so a carried index would light a
+  different neighbourhood than the cursor is on. The glow drops until the
+  pointer moves a pixel; the alternative is a confident highlight on the wrong
+  hood, which is the exact class of bug this whole change removes.
+- **Hover updates clone the live layers rather than calling `buildLayers()`** — a
+  rebuild recomputes `topRings()` (~89k ring vertices) on every hover
+  transition, while cloning one prop leaves every other layer identity-equal for
+  deck to diff to a no-op.
+- **On touch it lights on TAP and stays lit**, which is what confirms the peek
+  card belongs to the hood you meant. It clears on the next tap elsewhere.
+- ⚠️ **The Lab's invisible pick targets render exactly one thing: this glow.** A
+  highlight raises the fragment alpha (`highlightAlpha + color.a * (1 -
+  highlightAlpha)`), so an alpha-0 fill becomes a translucent prism while the
+  pointer is on it. Transient and symmetric, so the resting "no solid fill on
+  either endpoint" rule is untouched.
+
 ### ⚠️ The band colour is NOT the Lab's white, and that is measured
 
 White was validated against the deviation lens's **diverging** teal↔orange ramp.

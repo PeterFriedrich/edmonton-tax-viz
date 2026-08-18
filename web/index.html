@@ -2346,6 +2346,42 @@
     // ⚠️ Filtered to the banded hoods rather than returning 0 for the rest — a
     // zero-height prism would tint all 406 footprints azure.
     const INST_BAND_ALPHA = 128;
+
+    // ⚠️ THE BAND'S HOVER GLOW IS INDEX-DRIVEN, NOT autoHighlight, so BOTH
+    // shells light at once (Peter, 2026-08-18: the banded prisms "don't glow the
+    // same as the regular prisms when you mouse over, so lacking proper
+    // confirmation you hovered … on the intended hood").
+    //
+    // autoHighlight lights only the shell the pick landed on, and that fails
+    // differently in each lens. On Money it happens to look right — the levied
+    // shell encloses the exempt one, so lighting it lights the visible mass.
+    // ⚠️ In the LAB it is nearly invisible: a crossing band's exempt endpoint
+    // extrudes DOWNWARD, mostly underground, and it is the last pickable layer
+    // drawn — so it wins the pick and then glows on 276 px (versus 19,654 for
+    // the levied prism). Measured, both lenses.
+    //
+    // Lighting both also keeps the no-primacy rule intact, which was the reason
+    // autoHighlight was refused in the first place: neither unknowable world may
+    // be picked out over the other, and the fix for that is to light BOTH, not
+    // to light neither.
+    //
+    // The two layers of a lens share one `banded` array, so one index addresses
+    // the same hood in both.
+    let bandHoverIdx = -1;
+    const isBandLayer = id => id.startsWith("inst-band") || id.includes("band-pick");
+    // ⚠️ Clones the LIVE layers instead of calling buildLayers(). A rebuild would
+    // recompute topRings() — ~89k ring vertices — on every hover transition;
+    // cloning one prop leaves every other layer identity-equal, so deck diffs
+    // them to a no-op. (buildLayers deliberately CLEARS the index — see there.)
+    function bandHover(info) {
+      const idx = info && info.picked && info.layer && isBandLayer(info.layer.id)
+        ? info.index : -1;
+      if (idx === bandHoverIdx || !overlay || !overlay._deck) return;
+      bandHoverIdx = idx;
+      overlay.setProps({ layers: overlay._deck.props.layers.map(
+        l => isBandLayer(l.id) ? l.clone({ highlightedObjectIndex: idx }) : l) });
+    }
+
     function instBandLayers(sc) {
       const banded = state.data.features.filter(f => instBandedMoney(f.properties));
       const mk = (id, exempt) => new deck.GeoJsonLayer({
@@ -2377,12 +2413,14 @@
         // uncertain one (Peter, 2026-08-17: "they're gonna wanna see why they're
         // special color").
         pickable: true,
-        // ⚠️ autoHighlight OFF, and this is the band's own logic, not an
-        // oversight. The pick resolves to ONE of the two shells, so the
-        // highlight would light the levied world and leave the exempt one dark —
-        // exactly the primacy the band refuses to grant (same reason neither
-        // endpoint gets a solid fill in the Lab). The tooltip is the feedback.
+        // ⚠️ autoHighlight stays OFF — it would light only the picked shell.
+        // bandHover lights both by index instead; see the note above it. The
+        // white matches every other prism's hover; at alpha 60 over this
+        // translucent azure it measures mean Δ71 against the ordinary prism's
+        // Δ34, so it is if anything the clearer of the two.
         autoHighlight: false,
+        highlightColor: [255, 255, 255, 60],
+        highlightedObjectIndex: bandHoverIdx,
         updateTriggers: { getElevation: [state.metric, state.denom] },
       });
       // Exempt first so the taller levied prism blends OVER the certain base.
@@ -2591,7 +2629,19 @@
         getFillColor: [0, 0, 0, 0],
         parameters: { depthMask: false },
         pickable: true,
+        // ⚠️ The hover glow is the one thing these invisible solids DO render.
+        // A highlight raises the fragment's alpha (deck blends
+        // `highlightAlpha + color.a * (1 - highlightAlpha)`), so an alpha-0 fill
+        // becomes a translucent white prism for exactly as long as the pointer
+        // is on it — which is what makes a tap on a phone confirm the hood.
+        // Index-driven so BOTH endpoints light: autoHighlight would light only
+        // the picked one, and on a crossing band that is the downward, mostly
+        // buried endpoint (276 lit px vs 19,654). Transient by construction, so
+        // the "no solid fill on either endpoint" rule is untouched — that rule
+        // governs the resting render, and both endpoints light together anyway.
         autoHighlight: false,
+        highlightColor: [255, 255, 255, 60],
+        highlightedObjectIndex: bandHoverIdx,
         updateTriggers: { getElevation: [state.labCut] },
       });
       return [mk("deviation-band-levied", b => b.levied),
@@ -3323,6 +3373,15 @@
     // has one return per view, and a future view would silently ship without
     // the orientation layers. deck draws in array order, so first = bottom.
     function buildLayers() {
+      // ⚠️ A REBUILD CLEARS THE BAND GLOW, and it must. `bandHoverIdx` is an
+      // index into the banded subset, and that subset is rebuilt by the very
+      // toggles that land here — switching revenue cut or denominator changes
+      // WHICH hoods are banded, so carrying index 2 across would light a
+      // different neighbourhood than the one under the cursor. The cost is that
+      // the glow drops until the pointer moves a pixel; the alternative is a
+      // confident highlight on the wrong hood, which is the class of bug this
+      // whole change exists to remove.
+      bandHoverIdx = -1;
       return [...referenceUnderLayers(), ...buildViewLayers(), ...referenceOverLayers()];
     }
 
@@ -5870,6 +5929,7 @@
         layers: buildLayers(),
         getTooltip: tooltipFor,
         onClick: temporalClick,
+        onHover: bandHover,
       });
       map.addControl(overlay);
 
