@@ -95,17 +95,40 @@ RESIDENTIAL_BUILDING_TYPES = frozenset({
 # building_type values counted as INDUSTRIAL (SPEC_industrial.md A3) — the
 # City's 400-series codes, enumerated by FULL STRING like the residential set
 # (codes duplicate across unrelated types: Parkade shares (490) with
-# Engineering and is NOT industrial; Mixed Use / Office Complex share (522)).
+# Engineering; Mixed Use / Office Complex share (522)).
 # Commercial (5xx) and institutional (6xx) stay out — this is the industrial
 # permit-velocity cut, not a non-residential catch-all.
+#
+# ⚠️ **Two 400-series types were REMOVED 2026-08-18 because they are not
+# industrial in this data**, found when the 100 m grid drew a $91.2M spike on
+# DOWNTOWN (measured by `job_description`, 2009–2026):
+#   Engineering (490)            95% parkades ($189.3M of $202.1M; $10.5M else)
+#   Transportation Terminals (440)  100% LRT/transit ($326.1M LRT stations,
+#                                   pedways, platforms + $33.4M parkade)
+# ⚠️ **The full-string rule did not protect against this, and the comment above
+# shows why we thought it would**: it assumed one physical thing carries one
+# label, but the City files underground parkades under BOTH `Parkade (490)` and
+# `Engineering (490)`. Excluding the obvious string left the same buildings in
+# under the other one. **Enumerating by string only helps if the strings
+# partition the things — check what is actually IN a category, not just that
+# its name sounds right.**
+# The kept types are clean: Warehouses (58% of the metric's dollars) and
+# Manufacturing measure 0% parkade/LRT. 450 and 480 retain some LRT
+# maintenance/utility facilities (30% / 24% of their own dollars) — those are
+# genuine industrial operations and stay in; the 2026-08-18 decision names them.
 INDUSTRIAL_BUILDING_TYPES = frozenset({
     "Animal and Plant Services (410)",
     "Manufacturing Buildings (430)",
-    "Transportation Terminals (440)",
     "Maintenance Buildings incl Hangars (450)",
     "Storage Buildings, Warehouses (460)",
     "Communication Buildings (470)",
     "Utility Buildings (480)",
+})
+
+# Removed from INDUSTRIAL above but still part of the KNOWN vocabulary — they
+# are real building_type values, so they must not trip the warn-on-unseen guard.
+NON_INDUSTRIAL_400_SERIES = frozenset({
+    "Transportation Terminals (440)",
     "Engineering (490)",
 })
 
@@ -113,7 +136,8 @@ INDUSTRIAL_BUILDING_TYPES = frozenset({
 # industrial sets above UNION the remaining codes below. Anything absent from
 # this union is UNSEEN: logged loudly, treated as excluded until reviewed (it
 # could be a new residential variant that should be counted).
-KNOWN_BUILDING_TYPES = RESIDENTIAL_BUILDING_TYPES | INDUSTRIAL_BUILDING_TYPES | frozenset({
+KNOWN_BUILDING_TYPES = RESIDENTIAL_BUILDING_TYPES | INDUSTRIAL_BUILDING_TYPES | \
+        NON_INDUSTRIAL_400_SERIES | frozenset({
     "Carport (090)",
     "Clinics, Health Units (642)",
     "Convention Centres (536)", "Day Cares, Nursing Homes (650)",

@@ -509,3 +509,41 @@ def test_dev_grid_no_industrial_permits_warns_but_still_exports(tmp_path, caplog
     assert stats["n_cells"] == 1
     assert stats["coverage"]["5yr"]["ind_permits"] == 0
     assert any("INDUSTRIAL_BUILDING_TYPES" in r.message for r in caplog.records)
+
+
+def test_parkade_and_lrt_types_are_known_but_not_industrial(tmp_path, caplog):
+    # ⚠️ Removed from INDUSTRIAL 2026-08-18: Engineering (490) is 95% parkades
+    # and Transportation Terminals (440) is 100% LRT/transit by dollars. They
+    # are still REAL building_type values, so they must stay in the KNOWN
+    # vocabulary — counted as industrial would overstate the metric by 16%,
+    # warned as unseen would cry wolf on every run.
+    from load_permits import NON_INDUSTRIAL_400_SERIES
+    assert not (NON_INDUSTRIAL_400_SERIES & INDUSTRIAL_BUILDING_TYPES)
+    assert NON_INDUSTRIAL_400_SERIES <= KNOWN_BUILDING_TYPES
+    rows = _window_rows("BETA") + [
+        _row(year=2023, neighbourhood="PARKADE",
+             building_type="Engineering (490)", units_added=0),
+        _row(year=2023, neighbourhood="LRTSTOP",
+             building_type="Transportation Terminals (440)", units_added=0),
+    ]
+    with caplog.at_level("WARNING"):
+        out = load_permits(_write(tmp_path, rows), YEARS)
+    ind = out.set_index("neighbourhood_name")["ind_permits"]
+    assert ind.get("PARKADE", 0) == 0 and ind.get("LRTSTOP", 0) == 0
+    assert not any("KNOWN_BUILDING_TYPES" in r.message for r in caplog.records)
+
+
+def test_dev_grid_excludes_parkades_from_industrial_cells(tmp_path):
+    # The grid must not draw a downtown parkade as industrial construction —
+    # this is the defect the 100 m grid surfaced ($91.2M spike on DOWNTOWN).
+    rows = _geo_window_rows() + [
+        _grow(year=2023, building_type="Engineering (490)", units_added=0,
+              construction_value=91_200_000, lat=LAT_FAR, lon=LON_FAR),
+    ]
+    out = tmp_path / "dev_grid.json"
+    export_dev_grid(_write(tmp_path, rows), out, YEARS,
+                    price_index_path=_price_index(tmp_path))
+    payload = _read(out)
+    cols = payload["columns"]
+    assert all(c[cols.index("ind_n")] == 0 for c in payload["cells"])
+    assert payload["coverage"]["5yr"]["ind_permits"] == 0
