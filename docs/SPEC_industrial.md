@@ -158,6 +158,46 @@ while dollars are CONTINUOUS to zero (39–44% of industrial cells do). An
 earlier 60 m floor lifted cells worth up to **$4.6M** to the same height as
 $0, erasing the very differentiation the dollars provide.
 
+### Two 400-series types are not industrial (corrected 2026-08-18)
+
+⚠️ **The grid found a defect the choropleth had hidden since 2026-07-18.** Its
+first render put a **$91.2M spike on DOWNTOWN**. Peter: *"uh what are those
+downtown industrial permits"*. They were **underground parkades and LRT
+infrastructure**. Measured on `job_description` over 2009–2026:
+
+| building_type | $M | % of metric | parkade / LRT share |
+|---|---|---|---|
+| Storage Buildings, Warehouses (460) | 2,077.8 | 58% | **0%** |
+| Transportation Terminals (440) | 360.6 | 10% | **100%** |
+| Manufacturing Buildings (430) | 335.3 | 9% | **0%** |
+| Utility Buildings (480) | 263.1 | 7% | 24% |
+| Maintenance Buildings incl Hangars (450) | 256.4 | 7% | 30% |
+| Engineering (490) | 202.1 | 6% | **95%** |
+| Animal and Plant Services (410) | 57.3 | 2% | 0% |
+| Communication Buildings (470) | 5.0 | 0% | 0% |
+
+**`Engineering (490)` and `Transportation Terminals (440)` are REMOVED** from
+`INDUSTRIAL_BUILDING_TYPES` (Peter, 2026-08-18). 490 is $189.3M of parkades
+against $10.5M of anything else; 440 is $326.1M of LRT stations, pedways and
+platforms plus $33.4M of parkade against $1.1M of anything else. They stay in
+`KNOWN_BUILDING_TYPES` via `NON_INDUSTRIAL_400_SERIES` — they are real values
+and must not trip warn-on-unseen.
+
+**450 and 480 are KEPT** despite 30% / 24% transit-related dollars: LRT
+maintenance shops and utility facilities are genuine industrial operations, and
+separating them would need `job_description` keyword matching, which this
+project avoids in favour of explicit enumeration.
+
+**Effect** (5yr / 3yr / long): permits 285→249, 191→159, 1,281→1,184; dollars
+−15% / −17% / −16%; hoods with any activity 118→111, 86→78, 264→251.
+⚠️ **The 7 hoods that drop to zero are the argument**: BONNIE DOON, GORMAN,
+LYMBURN, POTTER GREENS, SUMMERLEA, TWIN BROOKS, WEST JASPER PLACE — *residential*
+neighbourhoods that registered as industrial purely on parkades and LRT.
+
+⚠️ **The choropleth carried this for a month and nobody saw it.** Per-acre
+counts smeared across a whole neighbourhood; a $91M spike could not hide. **A
+finer rendering is a correctness check on the aggregate above it.**
+
 **Consequence for a locked decision, NOT resolved here:** `DECISIONS.md`
 2026-07-23 made Industrial `/full/`-only *because* it was choropleth-only and
 would "leave the new 3-way Detail selector with dead options". That rationale
@@ -172,10 +212,19 @@ counts 2026-07-18): **400-series = industrial** — `Animal and Plant Services
 (480)` 344, `Engineering (490)` 277. 500-series = commercial (Retail 510,
 Office 520, Hotels 530, …), 600-series = institutional.
 
+⚠️ **"400-series = industrial" is FALSE for two of them — corrected
+2026-08-18.** See "Two 400-series types are not industrial" below;
+`Engineering (490)` and `Transportation Terminals (440)` are out.
+
 - **Enumerate by full string, not code** — codes duplicate across unrelated
   types (`Parkade (490)` vs `Engineering (490)`; `Mixed Use (522)` vs `Office
   Complex (522)`). Hand-enumerated dict + warn-on-unseen, the exact
-  `load_permits.py` idiom.
+  `load_permits.py` idiom. ⚠️ **This rule is necessary but NOT sufficient, and
+  2026-08-18 is the proof**: it assumes one physical thing carries one label,
+  and the City files underground parkades under BOTH `Parkade (490)` and
+  `Engineering (490)`. Excluding the obvious string left the same buildings in
+  under the other one. **Check what is actually IN a category, not just that
+  its name sounds right.**
 - **Numerator:** permit **count** (`ind_permits_per_acre`). `units_added` is
   meaningless for industrial; `construction_value` is available and is the
   natural intensity measure but stays **reserved** for now (consistent with
