@@ -828,6 +828,8 @@ the data disproved it (`.venv/bin/python` count by year).
 | `building_type` | **residential-dwelling filter.** 71 distinct values with many spelling variants of each category — `Apartments (310)`/`Apartment (310)`/`Apartment Condos (315)`; `Row House (330)`/`Row Houses (330)`; `Semi Detached House` (no code); `Backyard House (110)` (a garden suite, counted). All enumerated in `RESIDENTIAL_BUILDING_TYPES`, never prefix-matched. Garages, commercial, `Mixed Use (522)` excluded. **Also `INDUSTRIAL_BUILDING_TYPES`** (400-series: Animal & Plant Services 410, Manufacturing 430, Transport Terminals 440, Maintenance/Hangars 450, Warehouses 460, Communication 470, Utility 480, Engineering 490) drives the separate industrial-permit-velocity count (§ below) — enumerated by FULL STRING because codes duplicate across unrelated types (`Parkade (490)` is NOT industrial). |
 | `year` | integer permit year — drives the pinned window filter (vs parsing `issue_date`). |
 | `neighbourhood` | **UPPERCASE, matches `neighbourhood_name`** — the join key. |
+| `construction_value` | **added to the `$select` 2026-08-18** — the industrial detail grid's height (§ below). Documented by the City as *"Estimated value of construction work"*: a **declared estimate at permit application**, not audited spend, never reconciled. The permit fee is derived from it (an incentive to declare low) and **land is excluded**. 78% of values end in `000`, 26% in `00000` — round-number estimating, not accounting. Populated on **99.6%** of industrial new-construction rows (284/285, 5yr). ⚠️ **Nominal** — must be deflated before summing across years (§ below). ⚠️ **13 industrial permits declare exactly $0**, 32 ≤$1,000, 118 ≤$10,000; on a dollar-driven encoding those disappear unless carried by a count. |
+| `floor_area` | **square footage** (per the City's field description — this resolves the m² ambiguity: median industrial permit is 3,843 sq ft ≈ 19 m square, comfortably inside a 100 m cell; p95 is 121,214 sq ft, which does span cells). ⚠️ **NOT fetched and NOT usable as an intensity measure** — populated on only **51%** of industrial new-construction permits (vs 99% residential), against `construction_value`'s 99.6%. Considered and rejected 2026-08-18; don't reach for it again without re-measuring coverage. |
 
 ### Known Quirks
 - **`count(*)` aliases as `count_1`, not `count`** on this dataset (a Socrata
@@ -879,11 +881,48 @@ window, build time): **283 new industrial permits across 117 hoods** (3yr: 189
 across 85); top hoods are the industrial areas (SOUTHEAST INDUSTRIAL, MISTATIM,
 CLOVER BAR, WINTERBURN, EASTGATE BUSINESS PARK); per-acre is small (p97.5 ≈
 0.015/acre). Web: third `#devmetric` option "Industrial" — a Development-view
-**choropleth only** (no detail-grid cells; not an Infill activity — the roll
-has no industrial-vs-commercial split anyway, § 2). **NOTE — no
+choropleth (not an Infill activity — the roll has no industrial-vs-commercial
+split anyway, § 2), and **since 2026-08-18 also a 100 m detail grid**
+(below). **NOTE — no
 industrial-vs-commercial split exists in the assessment roll** (§ 2), so this
 permit-based cut is the ONLY industrial-specific spatial signal the project
 has; it is construction activity, not assessment base.
+
+#### The industrial 100 m detail grid, and its deflator (added 2026-08-18)
+
+`export_dev_grid` emits `ind_cv` / `ind_n` per window alongside the
+residential `units` / `permits`. **Height is deflated construction value, not
+permit count** — measured first: **89% of 5yr industrial cells hold exactly
+one permit**, so count is a dot map, and **enlarging the cell does not fix it**
+(100 m → 400 m is a 16× area increase that removes 19 of 184 cells). Dollars
+spread the same cells over 164×.
+
+⚠️ **Nominal dollars encode inflation as development.** Deflated to **constant
+2025 dollars** via `data/construction_price_index.json`, built by
+`scripts/fetch_construction_price_index.py` from **StatCan table
+18-10-0289-01** (GEO `Edmonton, Alberta`, Type of building `Industrial
+buildings [62211]`, Division `Division composite`, `Index, 2023=100`, vector
+`v1617916332`). Factors: **2009 → 1.717×**, 2021 → 1.325×, 2025 → 1.000×. The
+permits' own warehouse $/sqft corroborates independently (1.92× 2009→2025).
+A permit year with no deflator **hard-fails**.
+
+⚠️ **A manual, reviewed input** — mill-rates / FIR-debt pattern (§ 4, § 11).
+**NOT on the weekly refresh**: a price index that moved silently would restate
+every historical spike on the map at once. Re-run by hand when a year
+completes, eyeball the diff, commit.
+
+⚠️ **Two predecessor tables are ARCHIVED and must not be pinned**:
+18-10-0135 stops at **2022-Q2**, 18-10-0276 at **2024-Q2**. Both still
+download and still answer queries — they simply stop — so a stale pin fails
+**silently**. The fetcher checks `archiveStatusEn` and warns; the successor is
+findable via the WDS `getAllCubesListLite` endpoint.
+
+⚠️ **Zero-dollar permits are carried by `ind_n`, not dropped.** 12 of 1,281
+industrial permits declare exactly $0; the client floors their cells to a
+visible 6 m. The floor is deliberately small — dwelling units are QUANTISED
+(0% of residential cells render under 5 m) while dollars are CONTINUOUS to
+zero (39–44% of industrial cells do), and a 60 m floor flattened cells worth
+up to $4.6M to the same height as $0.
 
 ## 11. Alberta FIR Debt Series (debt lens D5, added 2026-07-14)
 

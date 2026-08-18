@@ -150,8 +150,10 @@ New building activity per acre from issued permits.
   Shown in both so you can toggle back. Public build never sees this row.
 - **Metric** (`#devmetric`, needs `hasPermitsPerAcre`): **Dwelling units**
   (supply) · **Permits** (project density) · **Industrial** (400-series permits
-  per acre — **full only**, choropleth-only, and **hidden inside Infill**, where
-  the metric silently resets to units).
+  per acre — **full only** and **hidden inside Infill**, where the metric
+  silently resets to units. Choropleth-only until 2026-08-18; it now also has
+  100 m cells, whose height is **deflated construction value**, not permit
+  count — see `docs/SPEC_industrial.md` A3).
 - **Window** (`#devwindow`): **Last 5 yr** (2021–2025) · **Last 3 yr**
   (2023–2025) · **Since 2009** (whole record). Each gated on its columns.
 - **Detail** (`#devdetail`, Housing-built only, needs the dev-grid file and a

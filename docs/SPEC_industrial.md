@@ -100,12 +100,69 @@ zoning≠assessment-class caveat attached. That is a possible later refinement,
 **As built** (`feat/ind-permit-velocity`): `INDUSTRIAL_BUILDING_TYPES` in
 `load_permits` (400-series, full-string) → `ind_permits` count →
 `ind_permits_per_acre` (+ `_3yr`) in `SLIM_COLUMNS`. Third `#devmetric` option
-**"Industrial"** — a Development-view choropleth only (Detail toggle hides; not
-an Infill activity: entering Infill resets the metric to a residential column
-and hides the button). Column-guarded (`state.hasIndPermits`). Real data:
-283 permits / 117 hoods (5yr), top hoods = the industrial areas. Display
-open-decision resolved to the recommendation below (Peter, 2026-07-18).
-`verify-ind-permits.js` ALL PASS. Original spec kept below.
+**"Industrial"** — a Development-view choropleth (not an Infill activity:
+entering Infill resets the metric to a residential column and hides the
+button). Column-guarded (`state.hasIndPermits`). Real data: 283 permits / 117
+hoods (5yr), top hoods = the industrial areas. Display open-decision resolved
+to the recommendation below (Peter, 2026-07-18). `verify-ind-permits.js` ALL
+PASS. Original spec kept below.
+
+**Amended 2026-08-18 — the metric gained a 100 m detail grid, and it is
+measured in DOLLARS.** The Detail toggle no longer hides while Industrial is
+up. Three things were measured before building, and each changed the design:
+
+- ⚠️ **Permit COUNT does not form a surface at 100 m.** 89% of 5yr industrial
+  cells hold exactly one permit (81% on the long window); the tallest holds
+  ten. A count-driven grid is a dot map wearing a density map's clothes.
+- ⚠️ **Enlarging the cell does NOT fix it.** 100 m → 400 m is a **16× area
+  increase that removes 19 of 184 cells** and drops singletons from 89% to
+  78%; even 800 m leaves 145 cells and 75% singletons. Industrial permits are
+  not clustered at the sub-kilometre scale, so merging cells merges nothing.
+  The $ spread is near-invariant to cell size (281× at 100 m, 292× at 400 m),
+  confirming the differentiation comes from permit SIZE, not clustering. The
+  100 m cell is kept — it preserves the shared geometry with the Glass grid.
+- **`construction_value` is what carries the pattern** — 172 distinct heights
+  across 184 5yr cells (723 of 835 on the long window), max/median 164×. The
+  reservation on this column (below, "Numerator") is therefore LIFTED for the
+  grid; the choropleth stays permit count per acre.
+
+⚠️ **What the dollars ARE.** The dataset documents `CONSTRUCTION_VALUE` as
+*"Estimated value of construction work"* — a **declared estimate at permit
+application**. Not audited spend, never reconciled; the permit fee is derived
+from it (an incentive to declare low); land is excluded. 78% of values end in
+`000` and 26% in `00000`, which is the signature of round-number estimating.
+It is a **scale-of-development proxy**, not investment, and the blurb says so.
+
+⚠️ **They are deflated, and they had to be.** Nominal sums encode
+construction-cost inflation as development. Two independent measurements
+agree: StatCan BCPI (Edmonton, industrial buildings) puts 2009→2025 at
+**1.72×** and 2021→2025 at 1.33×; the permits' own warehouse $/sqft says 1.92×
+over the same span. Values are expressed in **constant 2025 dollars** via
+`scripts/fetch_construction_price_index.py` →
+`data/construction_price_index.json` (a manual reviewed input, mill-rates
+pattern — NOT on the weekly refresh). A permit year with no deflator
+**hard-fails**; it never passes through at nominal.
+
+⚠️ **The live StatCan table is 18-10-0289.** Its two predecessors are
+**ARCHIVED** — 18-10-0135 stops at 2022-Q2, 18-10-0276 at 2024-Q2 — and both
+still download and still answer queries. A stale pin fails **silently**, which
+is why the fetcher checks `archiveStatusEn` and warns.
+
+⚠️ **A $0-declared permit would vanish.** 12 of 1,281 industrial permits are
+declared at exactly $0 (118 at ≤$10k). On a dollar-driven height that is a
+permitted building simply not on the map. Cells are therefore kept on the
+permit COUNT (`ind_n`), not the dollars, and a **6 m display floor** keeps
+every cell visible. The floor is small on purpose: dwelling units are
+QUANTISED (a permit adds ≥1, so 0% of residential cells render under 5 m)
+while dollars are CONTINUOUS to zero (39–44% of industrial cells do). An
+earlier 60 m floor lifted cells worth up to **$4.6M** to the same height as
+$0, erasing the very differentiation the dollars provide.
+
+**Consequence for a locked decision, NOT resolved here:** `DECISIONS.md`
+2026-07-23 made Industrial `/full/`-only *because* it was choropleth-only and
+would "leave the new 3-way Detail selector with dead options". That rationale
+no longer holds — Industrial is now grid-capable. Whether it becomes public is
+Peter's call; nothing was changed.
 
 A filter on data already in the pipeline (General Building Permits
 `24uj-dj8v`, DATA.md §10). `building_type` carries a coded taxonomy (live
@@ -123,7 +180,12 @@ Office 520, Hotels 530, …), 600-series = institutional.
   meaningless for industrial; `construction_value` is available and is the
   natural intensity measure but stays **reserved** for now (consistent with
   the Lens C reservation, SPEC_development) — revisit if count alone reads
-  flat.
+  flat. ⚠️ **RESOLVED 2026-08-18: it did read flat, on the 100 m grid.** The
+  reservation is lifted for the DETAIL GRID only (deflated dollars); the
+  choropleth is still permit count per acre. See the amendment above.
+  `floor_area` was considered as the intensity measure instead and **rejected
+  on coverage**: it is populated on only **51%** of industrial new-construction
+  permits (vs 99% residential), where `construction_value` is on 99.6%.
 - **Window:** the pinned Lens A windows (5yr base + 3yr recent), same
   `work_type` new-construction set.
 - **Display (open decision, recommendation below):** the Development view is

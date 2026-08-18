@@ -102,6 +102,22 @@ Services carries no sparkline — measured, it does.)_
 
 ## Open work
 
+- [ ] **PETER'S CALL — should Industrial go PUBLIC now that it is grid-capable?**
+  `docs/DECISIONS.md` 2026-07-23 tagged the Industrial `#devmetric` `/full/`-only
+  with one stated reason: *it's choropleth-only, so in public it would leave the
+  new 3-way Detail selector with dead options*. ⚠️ **That reason expired
+  2026-08-18** — Industrial now has its own 100 m cells, so it would leave no
+  dead option. The tag was NOT changed; it is simply now unargued.
+  - **What it would cost:** one `BUILD`-flag guard removed (`web/index.html`,
+    the `state.hasIndPermits && FULL_BUILD` branch in `syncDevControls`) plus
+    the public build's verify expectations.
+  - ⚠️ **The public build has no other dollar-valued layer whose numbers are a
+    DECLARED ESTIMATE.** The blurb discloses it, but a public reader is likelier
+    to read "construction value" as money actually spent than a specialist is —
+    weigh that, not just the control-surface tidiness.
+  - Full reasoning + measurements: `docs/SPEC_industrial.md` A3 amendment,
+    `docs/DECISIONS.md` 2026-08-18 (three rows), `docs/CONTROLS_MATRIX.md` §7.
+
 - [ ] **THE RATIO AND USES PRISMS STILL PICK THE HOOD BEHIND THEM — same defect
   as the band prisms (fixed 2026-08-17), but the fix needs a call on OPACITY
   first.** Measured at pitch 55 over the U of A: hovering up a `ratio-extrusion`
