@@ -176,16 +176,21 @@ SOURCES = {
         # Development & Infill lens A (docs/SPEC_development.md): issued
         # building permits, one row per permit. Slim $select — we need only
         # the filter/join/numerator columns, not the 34-column full schema
-        # (construction_value, geometry_point, etc.). $select does NOT change
+        # (geometry_point, job_description, etc.). $select does NOT change
         # the row count, so both truncation guards still apply. UPPERCASE
         # `neighbourhood` matches our neighbourhood_name format.
         # latitude/longitude (added 2026-07-15) feed the 100 m dev-grid
         # detail layer (load_permits.export_dev_grid); recent permits lag
         # geocoding — nulls are reported, never silently dropped (DATA.md §10).
+        # construction_value (added 2026-08-18) is the industrial detail grid's
+        # height: industrial has no units_added analogue, so count alone drew a
+        # dot map (89% of 100 m cells held exactly one permit). It is the
+        # permit's DECLARED ESTIMATE, deflated to constant dollars at export
+        # (data/construction_price_index.json) — see SPEC_industrial.md A3.
         "url": (
             "https://data.edmonton.ca/resource/24uj-dj8v.csv"
             "?$select=year,issue_date,work_type,building_type,units_added,"
-            "neighbourhood,latitude,longitude"
+            "construction_value,neighbourhood,latitude,longitude"
             "&$limit=1000000"
         ),
         "dest": RAW / "building_permits.csv",

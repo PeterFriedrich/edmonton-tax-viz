@@ -327,6 +327,40 @@ def load_permits(
     return out
 
 
+DEFAULT_PRICE_INDEX = Path(__file__).resolve().parents[1] / "data" / \
+    "construction_price_index.json"
+
+
+def _load_deflators(path: str | Path | None) -> tuple[dict[int, float], int]:
+    """Load the construction-price deflator table (year -> factor, base year).
+
+    Produced by ``scripts/fetch_construction_price_index.py`` — a manual,
+    reviewed input, deliberately NOT on the weekly refresh. Missing file is
+    fatal: silently exporting nominal dollars is the failure this exists to
+    prevent, and it would look identical on the map.
+    """
+    path = Path(path) if path else DEFAULT_PRICE_INDEX
+    if not path.exists():
+        raise FileNotFoundError(
+            f"{path} not found — run scripts/fetch_construction_price_index.py. "
+            f"The industrial grid's dollars are meaningless without it (a 2009 "
+            f"permit is 1.72x understated against a 2025 one)."
+        )
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    try:
+        deflators = {int(y): float(v) for y, v in payload["deflators"].items()}
+        base_year = int(payload["base_year"])
+    except (KeyError, TypeError, ValueError) as exc:
+        raise ValueError(f"{path} is not a deflator table ({exc})") from exc
+    if deflators.get(base_year) != 1.0:
+        raise ValueError(
+            f"{path}: base year {base_year} has factor "
+            f"{deflators.get(base_year)}, expected exactly 1.0 — the table was "
+            f"rebased inconsistently"
+        )
+    return deflators, base_year
+
+
 def export_dev_grid(
     permits_csv: str | Path,
     out_path: str | Path,
@@ -334,20 +368,51 @@ def export_dev_grid(
     years_recent: tuple[int, ...] | None = None,
     years_long: tuple[int, ...] | None = None,
     cell_m: float = 100.0,
+    price_index_path: str | Path | None = None,
 ) -> dict:
-    """100 m grid of new residential units — the Development view's detail layer.
+    """100 m grid of new construction — the Development view's detail layer.
 
-    Bins GEOCODED new-construction ∩ residential permits into ``cell_m`` squares
-    on the same EPSG:3400 grid as ``export_value_grid`` (Glass view), so the two
-    detail layers share cell geometry. Emits compact flat JSON::
+    Bins GEOCODED new-construction permits into ``cell_m`` squares on the same
+    EPSG:3400 grid as ``export_value_grid`` (Glass view), so the detail layers
+    share cell geometry. Residential cells carry dwelling units and permit
+    counts; industrial cells carry **deflated construction value** and a permit
+    count. Emits compact flat JSON::
 
         { "cell_m": 100.0,
           "crs_note": "...",
-          "columns": ["lon", "lat", "units", "permits", "units_3yr", "permits_3yr"],
-          "cells": [[lon, lat, u, p, u3, p3], ...],   # lon/lat = cell SW corner
+          "columns": ["lon", "lat", "units", "permits", "ind_cv", "ind_n", ...],
+          "cells": [[lon, lat, u, p, cv, n, ...], ...],  # lon/lat = cell SW corner
           "coverage": { "5yr": {"units": ..., "units_geocoded": ...,
-                                "permits": ..., "permits_geocoded": ...},
+                                "permits": ..., "permits_geocoded": ...,
+                                "ind_permits": ..., "ind_permits_geocoded": ...,
+                                "ind_value": ..., "ind_value_geocoded": ...,
+                                "ind_permits_zero_value": ...},
                         "3yr": {...} } }
+
+    **Why industrial is measured in dollars.** Industrial has no ``units_added``
+    analogue, and permit COUNT alone does not form a surface at this resolution:
+    measured 2026-08-18, 89% of 5yr industrial cells hold exactly one permit and
+    the tallest holds ten, so a count-driven grid is a dot map wearing a density
+    map's clothes. Declared construction value spreads those same cells over
+    191x (5yr max/median), which is what makes the height carry information.
+    Enlarging the cell does NOT fix the count problem — 100 m to 400 m is a 16x
+    area increase that removes 19 of 184 cells (SPEC_industrial.md A3).
+
+    ⚠️ **The dollars are a DECLARED ESTIMATE at permit application**, not audited
+    spend and not investment: land is excluded, the permit fee is derived from
+    the figure, and 78% of values end in ``000``. They are deflated to constant
+    dollars here (``price_index_path``, default
+    ``data/construction_price_index.json``) because nominal sums encode
+    construction-cost inflation as development — an identical building permitted
+    in 2009 would otherwise draw a spike 1.72x shorter than a 2025 one. A permit
+    year with no deflator HARD-FAILS rather than passing through at nominal.
+
+    ⚠️ **Zero-value industrial permits are counted, never dropped.** 13 of 1,314
+    industrial permits are declared at exactly $0 (118 at <=$10k), which on a
+    dollar-driven height would render as a zero-height cell — a building that
+    silently vanishes from the map. ``ind_n`` ships alongside ``ind_cv`` so the
+    client can floor those cells to a visible height; the count of them is
+    reported per window in ``coverage``.
 
     The ``_3yr`` / ``_long`` columns appear only when ``years_recent`` /
     ``years_long`` are given (mirroring the hood columns' suffix convention).
@@ -370,42 +435,87 @@ def export_dev_grid(
         windows["long"] = tuple(sorted(years_long))
 
     header = pd.read_csv(permits_csv, nrows=0)
-    needed = set(REQUIRED_COLUMNS) | {"latitude", "longitude"}
+    needed = set(REQUIRED_COLUMNS) | {"latitude", "longitude", "construction_value"}
     missing = sorted(needed - set(header.columns))
     if missing:
         raise ValueError(
             f"columns {missing} not in {permits_csv} — the permits CSV predates "
-            f"the lat/long $select (scripts/download_data.py, 2026-07-15); "
-            f"re-download before exporting the dev grid"
+            f"the lat/long (2026-07-15) or construction_value (2026-08-18) "
+            f"$select (scripts/download_data.py); re-download before exporting "
+            f"the dev grid"
         )
+
+    deflators, base_year = _load_deflators(price_index_path)
 
     df = pd.read_csv(permits_csv, usecols=sorted(needed), low_memory=False)
     df["year"] = pd.to_numeric(df["year"], errors="coerce")
     df["units_added"] = pd.to_numeric(df["units_added"], errors="coerce").fillna(0.0)
+    df["construction_value"] = pd.to_numeric(
+        df["construction_value"], errors="coerce").fillna(0.0)
     is_new = df["work_type"].astype("string").str.strip().isin(NEW_WORK_TYPES)
-    is_res = df["building_type"].astype("string").str.strip().isin(
-        RESIDENTIAL_BUILDING_TYPES)
+    btype = df["building_type"].astype("string").str.strip()
+    is_res = btype.isin(RESIDENTIAL_BUILDING_TYPES)
+    is_ind = btype.isin(INDUSTRIAL_BUILDING_TYPES)
     lat = pd.to_numeric(df["latitude"], errors="coerce")
     lon = pd.to_numeric(df["longitude"], errors="coerce")
     geocoded = lat.notna() & lon.notna()
 
     all_years = sorted({y for w in windows.values() for y in w})
-    kept = df.loc[is_new & is_res & df["year"].isin(all_years)].copy()
+    in_range = is_new & df["year"].isin(all_years)
+    kept = df.loc[in_range & is_res].copy()
+    kept_ind = df.loc[in_range & is_ind].copy()
     if not len(kept):
         raise ValueError(
             f"no new residential permits in {all_years} — wrong input or "
             f"vocabulary drift (load_permits would have warned)"
         )
+    if not len(kept_ind):
+        # NOT fatal, deliberately: industrial is the secondary metric, and
+        # hard-failing here would withhold the whole grid — including the
+        # residential cells — and silently hide the Detail toggle. The empty
+        # columns still ship; `coverage[*].ind_permits == 0` is what the client
+        # gates the Industrial option on, so it hides rather than drawing a
+        # blank map.
+        logger.warning(
+            "No new industrial permits in %s — the industrial detail grid will "
+            "be EMPTY. Expect ~285 in a 5yr window; check for building_type "
+            "vocabulary drift (INDUSTRIAL_BUILDING_TYPES).", all_years,
+        )
+
+    # Deflate to constant dollars BEFORE any summing: a cell aggregates permits
+    # from different years, so nominal addition would mix price levels inside a
+    # single number. A missing year is fatal — see the docstring.
+    missing_years = sorted({int(y) for y in kept_ind["year"].dropna().unique()}
+                           - set(deflators))
+    if missing_years:
+        raise ValueError(
+            f"no construction-price deflator for permit years {missing_years} "
+            f"(have {min(deflators)}–{max(deflators)}). Re-run "
+            f"scripts/fetch_construction_price_index.py; do NOT let those "
+            f"permits through at nominal value."
+        )
+    kept_ind["cv_real"] = (kept_ind["construction_value"]
+                           * kept_ind["year"].map(deflators).astype(float))
 
     coverage = {}
     for name, w in windows.items():
         in_w = kept["year"].isin(w)
         geo = in_w & geocoded.loc[kept.index]
+        in_wi = kept_ind["year"].isin(w)
+        geo_i = in_wi & geocoded.loc[kept_ind.index]
         coverage[name] = {
             "units": round(float(kept.loc[in_w, "units_added"].sum())),
             "units_geocoded": round(float(kept.loc[geo, "units_added"].sum())),
             "permits": int(in_w.sum()),
             "permits_geocoded": int(geo.sum()),
+            "ind_permits": int(in_wi.sum()),
+            "ind_permits_geocoded": int(geo_i.sum()),
+            "ind_value": round(float(kept_ind.loc[in_wi, "cv_real"].sum())),
+            "ind_value_geocoded": round(float(kept_ind.loc[geo_i, "cv_real"].sum())),
+            # Declared at $0 — real permits the dollar height cannot show on its
+            # own. The client floors them; this is how many it is flooring.
+            "ind_permits_zero_value": int(
+                (kept_ind.loc[geo_i, "construction_value"] <= 0).sum()),
         }
         logger.info(
             "Dev grid %s window: %d of %d permits geocoded (%.0f of %.0f units) "
@@ -413,35 +523,52 @@ def export_dev_grid(
             name, coverage[name]["permits_geocoded"], coverage[name]["permits"],
             coverage[name]["units_geocoded"], coverage[name]["units"],
         )
+        logger.info(
+            "Dev grid %s industrial: %d of %d permits geocoded ($%.1fM of $%.1fM "
+            "in %d dollars); %d geocoded permits declared $0",
+            name, coverage[name]["ind_permits_geocoded"], coverage[name]["ind_permits"],
+            coverage[name]["ind_value_geocoded"] / 1e6, coverage[name]["ind_value"] / 1e6,
+            base_year, coverage[name]["ind_permits_zero_value"],
+        )
 
     pts = kept.loc[geocoded.loc[kept.index]].copy()
+    pts_ind = kept_ind.loc[geocoded.loc[kept_ind.index]].copy()
     # Same projection + floor-binning as export_value_grid, so a dev-grid cell
     # and a value-grid cell with equal corners are the SAME 100 m square.
     to_alberta = Transformer.from_crs(4326, 3400, always_xy=True)
-    x, y = to_alberta.transform(pts["longitude"].values, pts["latitude"].values)
-    pts["cx"] = (x // cell_m).astype(int)
-    pts["cy"] = (y // cell_m).astype(int)
+    for frame in (pts, pts_ind):
+        x, y = to_alberta.transform(frame["longitude"].values, frame["latitude"].values)
+        frame["cx"] = (x // cell_m).astype(int)
+        frame["cy"] = (y // cell_m).astype(int)
 
-    per_cell = {}
+    per_cell, per_cell_ind = {}, {}
     for name, w in windows.items():
         g = (pts.loc[pts["year"].isin(w)]
              .groupby(["cx", "cy"])
              .agg(units=("units_added", "sum"), permits=("units_added", "size")))
         per_cell[name] = g[g["units"] + g["permits"] > 0]
-    # A cell is emitted if ANY window has activity there (long-only cells —
-    # active 2009–2020 but not in the 5yr window — carry 0 in the shorter
-    # windows, which the client's `c[col] > 0` filter drops when they're viewed).
-    cells_idx = per_cell["5yr"].index
+        # Industrial keeps every cell with a PERMIT, including the $0 ones —
+        # the count is what stops a zero-dollar building disappearing.
+        gi = (pts_ind.loc[pts_ind["year"].isin(w)]
+              .groupby(["cx", "cy"])
+              .agg(ind_cv=("cv_real", "sum"), ind_n=("cv_real", "size")))
+        per_cell_ind[name] = gi[gi["ind_n"] > 0]
+    # A cell is emitted if ANY window has activity there, residential OR
+    # industrial (long-only cells — active 2009–2020 but not in the 5yr window —
+    # carry 0 in the shorter windows, which the client's `c[col] > 0` filter
+    # drops when they're viewed).
+    cells_idx = per_cell["5yr"].index.union(per_cell_ind["5yr"].index)
     for name in ("3yr", "long"):
         if name in per_cell:
             cells_idx = cells_idx.union(per_cell[name].index)
+            cells_idx = cells_idx.union(per_cell_ind[name].index)
 
     to_wgs84 = Transformer.from_crs(3400, 4326, always_xy=True)
-    columns = ["lon", "lat", "units", "permits"]
-    if "3yr" in windows:
-        columns += ["units_3yr", "permits_3yr"]
-    if "long" in windows:
-        columns += ["units_long", "permits_long"]
+    SUFFIX = {"5yr": "", "3yr": "_3yr", "long": "_long"}
+    columns = ["lon", "lat"]
+    for name in windows:
+        s = SUFFIX[name]
+        columns += [f"units{s}", f"permits{s}", f"ind_cv{s}", f"ind_n{s}"]
     rows = []
     for cx, cy in cells_idx:
         lon_sw, lat_sw = to_wgs84.transform(cx * cell_m, cy * cell_m)
@@ -452,11 +579,31 @@ def export_dev_grid(
                 row += [round(float(rec["units"])), int(rec["permits"])]
             else:
                 row += [0, 0]
+            if (cx, cy) in per_cell_ind[name].index:
+                rec = per_cell_ind[name].loc[(cx, cy)]
+                row += [round(float(rec["ind_cv"])), int(rec["ind_n"])]
+            else:
+                row += [0, 0]
         rows.append(row)
 
     payload = {
         "cell_m": cell_m,
         "crs_note": "cells binned in EPSG:3400; SW corners reprojected to WGS84",
+        # The blurb reads the basis from the FILE, so the disclosure cannot go
+        # stale against the dollars it describes (the geocode-coverage idiom).
+        "ind_value_note": {
+            "basis": f"constant {base_year} dollars",
+            "base_year": base_year,
+            # Short enough to print in the blurb and still findable. The full
+            # dimension detail (series, vector, units) lives in
+            # data/construction_price_index.json, which is where provenance
+            # belongs — the blurb already runs long.
+            "deflator": "StatCan table 18-10-0289 (Edmonton, industrial)",
+            "oldest_factor": round(max(deflators[y] for y in all_years
+                                       if y in deflators), 3),
+            "meaning": "declared estimate of construction work at permit "
+                       "application — excludes land, not audited spend",
+        },
         "columns": columns,
         "cells": rows,
         "coverage": coverage,

@@ -1,0 +1,63 @@
+{
+  "source": {
+    "dataset": "Statistics Canada, Building construction price indexes, by type of building and division (quarterly)",
+    "table_id": "18-10-0289-01",
+    "url": "https://www150.statcan.gc.ca/n1/tbl/csv/18100289-eng.zip",
+    "series": {
+      "GEO": "Edmonton, Alberta",
+      "Type of building": "Industrial buildings [62211]",
+      "Division": "Division composite"
+    },
+    "vector": "v1617916332",
+    "units": "Index, 2023=100",
+    "cube_status": "CURRENT - a cube available to the public and that is current (cube ends 2026-04-01)",
+    "retrieved": "2026-08-18"
+  },
+  "notes": [
+    "Multiply a NOMINAL construction value by deflators[<permit year>] to express it in 2025 dollars.",
+    "Annual figures are the mean of the four published quarters. A trailing partial year is excluded, not averaged (excluded here: [2026]).",
+    "Industrial buildings, Edmonton CMA \u2014 chosen to match the permits being deflated (400-series building_type). It is NOT the all-non-residential index and must not be reused for other lenses without checking the type of building.",
+    "Predecessor tables 18-10-0135 (ends 2022-Q2) and 18-10-0276 (ends 2024-Q2) are ARCHIVED. They still download and still answer, so a stale pin fails silently rather than loudly \u2014 re-run this script rather than reusing an old extract.",
+    "Manual, reviewed input: NOT part of the weekly refresh. A price index that moved silently would restate every historical spike on the map at once."
+  ],
+  "base_year": 2025,
+  "first_year": 2009,
+  "index": {
+    "2009": 64.05,
+    "2010": 65.1,
+    "2011": 68.4,
+    "2012": 71.725,
+    "2013": 73.05,
+    "2014": 74.75,
+    "2015": 73.75,
+    "2016": 71.1,
+    "2017": 71.1,
+    "2018": 72.975,
+    "2019": 75.275,
+    "2020": 75.625,
+    "2021": 82.95,
+    "2022": 95.05,
+    "2023": 100.0,
+    "2024": 105.05,
+    "2025": 109.95
+  },
+  "deflators": {
+    "2009": 1.716628,
+    "2010": 1.68894,
+    "2011": 1.607456,
+    "2012": 1.532938,
+    "2013": 1.505133,
+    "2014": 1.470903,
+    "2015": 1.490847,
+    "2016": 1.546414,
+    "2017": 1.546414,
+    "2018": 1.50668,
+    "2019": 1.460644,
+    "2020": 1.453884,
+    "2021": 1.325497,
+    "2022": 1.15676,
+    "2023": 1.0995,
+    "2024": 1.046644,
+    "2025": 1.0
+  }
+}

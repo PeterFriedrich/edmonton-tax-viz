@@ -460,10 +460,13 @@ def run(
                 "Temporal lens skipped — %s not found (download_data.py --only "
                 "assessment_historical)", historical_csv,
             )
-        # 100 m new-units grid for the Development view's detail toggle —
+        # 100 m new-construction grid for the Development view's detail toggle —
         # rides with the permits lens (skipped with it). Needs the lat/long
-        # columns (download_data $select, 2026-07-15); an older CSV degrades
-        # to a warning so a stale snapshot can't fail the whole pipeline.
+        # columns (download_data $select, 2026-07-15) and construction_value +
+        # the committed deflator table (2026-08-18); any of those missing
+        # degrades to a warning so a stale snapshot can't fail the whole
+        # pipeline. Degrading means NO grid file, which hides the Detail toggle
+        # client-side — never a grid holding undeflated dollars.
         if permits is not None:
             try:
                 export_dev_grid(
@@ -471,7 +474,7 @@ def run(
                     permit_years, permit_years_recent, permit_years_long,
                     cell_m=GRID_CELL_M,
                 )
-            except ValueError as e:
+            except (ValueError, FileNotFoundError) as e:
                 logger.warning("Dev grid not exported: %s", e)
         # Fire-station context dots for the Services view's fire layer —
         # rides with the fire lens (skipped with it).
