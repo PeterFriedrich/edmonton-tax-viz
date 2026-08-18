@@ -309,6 +309,39 @@ const check = (name, ok, detail = '') => {
   // stop lighting up on hover.
   check('the pick targets carry only the banded hoods',
     pick.targetRows.every(n => n === band.drawn), `${pick.targetRows} vs ${band.drawn} banded`);
+
+  // ⚠️ THE GLOW IS WHY THE TARGETS ARE INDEX-DRIVEN RATHER THAN autoHighlight,
+  // and this lens is where the difference is stark. A crossing band's exempt
+  // endpoint extrudes DOWNWARD, mostly underground, and it is the last pickable
+  // layer drawn — so it wins the pick, and autoHighlight would then light 276
+  // px against the levied prism's 19,654. Lighting BOTH by index also keeps the
+  // no-primacy rule: neither unknowable world may be singled out.
+  const glow = await page.evaluate(() => {
+    // ⚠️ Report a MISSING handler as a failed check, not a stack trace: a
+    // build without it should say which contract broke.
+    if (typeof bandHover !== 'function') return { absent: true };
+    const tg = () => overlay._deck.props.layers.filter(l => l.id.includes('band-pick'));
+    const idxs = () => tg().map(l => l.props.highlightedObjectIndex);
+    const lev = tg().find(l => l.id === 'deviation-band-pick-levied');
+    const i = lev.props.data.findIndex(
+      f => f.properties.neighbourhood_name === 'UNIVERSITY OF ALBERTA');
+    const before = idxs();
+    bandHover({ picked: true, index: i, layer: { id: 'deviation-band-pick-exempt' } });
+    const during = idxs();
+    bandHover({ picked: false, layer: null });
+    return { i, before, during, off: idxs(),
+             hood: lev.props.data[i].properties.neighbourhood_name,
+             colors: tg().map(l => l.props.highlightColor.join(',')) };
+  });
+  check('the band hover handler EXISTS', !glow.absent);
+  check('*** the hidden endpoint winning the pick still lights BOTH ***',
+    !glow.absent && glow.during.length === 2 && glow.during.every(v => v === glow.i),
+    `${JSON.stringify(glow.during)} for index ${glow.i} (${glow.hood})`);
+  check('the Lab glow is the same white as every other prism',
+    !glow.absent && glow.colors.length === 2 && glow.colors.every(c => c === '255,255,255,60'), glow.colors.join(' | '));
+  check('the Lab band is unlit at rest and goes out again',
+    !glow.absent && glow.before.length === 2 && glow.before.every(v => v === -1) && glow.off.every(v => v === -1),
+    `${JSON.stringify(glow.before)} -> ${JSON.stringify(glow.off)}`);
   // ⚠️ THE INVERSION MOVED, IT DID NOT GO AWAY. Until 2026-08-15 this asserted
   // that at least one DRAWN band inverts (EVERGREEN +$87, RIVER VALLEY CAMERON
   // +$842), which justified deviationBandSpan sorting for display. The

@@ -227,6 +227,57 @@ const BANNED = /\b(lost|uncollected|foregone|should be|really|actually)\b/i;
   check('neither band layer autoHighlights',
     pick.highlight.every(h => !h), JSON.stringify(pick.highlight));
 
+  // --- the hover glow (2026-08-18) ------------------------------------------
+  // ⚠️ WHAT FAILS SILENTLY HERE IS *CONFIRMATION*: pickable alone made the band
+  // answer on hover, but it did not light up like every other prism, so nothing
+  // on screen told you which hood you were on (Peter). The glow is index-driven
+  // rather than autoHighlight so BOTH shells light — autoHighlight lights only
+  // the shell the pick landed on, which is the primacy the band refuses.
+  // Driven through bandHover() directly rather than a real pointer move: the
+  // wiring is asserted separately, and a synthetic call cannot go flaky on the
+  // SwiftShader picking pass.
+  const glow = await page.evaluate(() => {
+    // ⚠️ Report a MISSING handler as a failed check, not a stack trace: a
+    // build without it should say which contract broke.
+    if (typeof bandHover !== 'function') return { absent: true };
+    const bands = () => overlay._deck.props.layers.filter(l => l.id.startsWith('inst-band'));
+    const idxs = () => bands().map(l => l.props.highlightedObjectIndex);
+    const lev = bands().find(l => l.id === 'inst-band-levied');
+    const i = lev.props.data.findIndex(
+      f => f.properties.neighbourhood_name === 'UNIVERSITY OF ALBERTA');
+    const before = idxs();
+    bandHover({ picked: true, index: i, layer: { id: 'inst-band-levied' } });
+    const during = idxs();
+    const colors = bands().map(l => l.props.highlightColor.join(','));
+    // Moving off the band must put it out again.
+    bandHover({ picked: false, layer: null });
+    const off = idxs();
+    // A rebuild must CLEAR it: the banded subset is rebuilt by the same toggles,
+    // so a carried index would light a different hood than the cursor is on.
+    bandHover({ picked: true, index: i, layer: { id: 'inst-band-levied' } });
+    overlay.setProps({ layers: buildLayers() });
+    const afterRebuild = idxs();
+    return { i, before, during, off, afterRebuild, colors,
+             wired: overlay._props.onHover === bandHover,
+             hood: lev.props.data[i].properties.neighbourhood_name };
+  });
+  check('the band hover handler EXISTS', !glow.absent);
+  if (glow.absent) { glow.before = glow.during = glow.off = glow.afterRebuild = [];
+                     glow.colors = []; }
+  check('the hover handler is wired into deck', !glow.absent && glow.wired);
+  check('nothing is lit at rest', !glow.absent && glow.before.length === 2 && glow.before.every(v => v === -1), JSON.stringify(glow.before));
+  check('*** hovering the band lights BOTH shells, not just the picked one ***',
+    !glow.absent && glow.during.length === 2 && glow.during.every(v => v === glow.i),
+    `${JSON.stringify(glow.during)} for index ${glow.i} (${glow.hood})`);
+  check('the glow is the same white every other prism uses',
+    !glow.absent && glow.colors.length === 2 && glow.colors.every(c => c === '255,255,255,60'), glow.colors.join(' | '));
+  check('moving off the band puts it out', !glow.absent && glow.off.length === 2 && glow.off.every(v => v === -1),
+    JSON.stringify(glow.off));
+  // ⚠️ Not cosmetic: switching cut or denominator re-selects the banded hoods,
+  // so a carried index is a confident highlight on the WRONG neighbourhood.
+  check('*** a layer rebuild CLEARS the glow (the index is subset-relative) ***',
+    !glow.absent && glow.afterRebuild.length === 2 && glow.afterRebuild.every(v => v === -1), JSON.stringify(glow.afterRebuild));
+
   // --- wording -------------------------------------------------------------
   check('copy says "zoned" (class share vs zoning share)', /institutionally-zoned/.test(ua));
   check('copy asserts no direction', !BANNED.test(ua.replace(/<[^>]+>/g, ' ')));
