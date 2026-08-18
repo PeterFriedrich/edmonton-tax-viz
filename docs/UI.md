@@ -1827,3 +1827,61 @@ anchored to the viewport bottom. `panel fits inside the viewport` passed the
 whole time; a **screenshot** caught it. Fixed by capping to clear `#botleft`,
 **not** by a z-index bump, which would have buried the legend rather than
 cleared it. The clearance is now asserted at all three heights.
+
+## What the hover promises, and what it confirms (2026-08-16 → 18)
+
+Three changes in two days, all one question: when the pointer is over something,
+does the readout tell the truth about *what you are on* and *what clicking will
+give you*.
+
+### The teaser was promising a chart the click no longer opened
+
+*"the money revenue lense has the assessment plot coming up when you mouse over…
+maybe find out why that popped up again without permission"*
+
+**It never popped back — it never left.** `git log -S "sparklineSvg(t)"` returns
+one commit, the temporal lens's phase 3. The sparkline had ridden the revenue
+cuts continuously since 2026-07-29 under *"the sparkline rides every view's
+tooltip."* What moved was underneath it: on **2026-08-01** the revenue cuts got
+their own panel — the zone mix, not the history. That change spotted the
+mismatch and fixed **half** of it, rewriting the invite's wording
+(`click to pin` → `click for the revenue mix`) and leaving the chart.
+
+⚠️ **The chart is the louder half.** A reader sees a line move and expects the
+click to enlarge *that*. The teaser is a promise about the click, so it now
+rides only where the click delivers history — Value keeps it, the three revenue
+cuts get the invite alone. The invite stays either way: click-to-open is
+undiscoverable without it, and it is the only route to the revenue mix.
+
+### The band prism was answering with the wrong hood's numbers
+
+*"i want people to be able to just mouse over prisms (or tap on mobile) cuz
+they're gonna wanna see why they're special color"*
+
+⚠️ **Not a missing tooltip — the WRONG hood's.** A banded hood's own geometry is
+flattened to 0 and painted transparent, so the azure prism is the only thing
+over that footprint; unpickable, it fell through to whoever stood **behind** it.
+At pitch 60 over the U of A: `MCKERNAN`, `RIVER VALLEY VICTORIA`,
+`WÎHKWÊNTÔWIN`, pointer on U of A geometry throughout.
+
+⚠️ **A flat overhead check cannot see it** — at pitch 0 the transparent footprint
+picks correctly, which is exactly why "you had to mouse over the neighbourhood
+flat below it" described the *good* case. The full reasoning, including why the
+Lab needed separate invisible pick targets rather than a fill, is in
+`SPEC_revenue.md`.
+
+### Answering is not confirming
+
+*"the banded prisms now don't glow the same as the regular prisms when you mouse
+over, so lacking proper confirmation you hovered … on the intended hood"*
+
+The same-day cost of making the prism pickable but refusing `autoHighlight`
+(which lights only one of the band's two shells, and so grants one unknowable
+world primacy over the other). **Measured: hovering a banded prism moved 0
+pixels.** The answer was not to accept the primacy but to light **both** shells
+by index — mean Δ73 (Money) and Δ98 (Lab) against an ordinary prism's Δ34.
+
+**The generalisable part:** a *principled* refusal to draw something still has to
+be checked against the affordance it removes. Both halves here — the teaser that
+kept promising, and the glow that stopped confirming — were caught by Peter
+using the map, not by a suite that covers both surfaces in detail.
