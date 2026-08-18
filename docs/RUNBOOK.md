@@ -162,6 +162,24 @@ time.
    window) needs NO edit** — it is DERIVED from `PERMIT_YEARS`' last year
    (`range(2009, PERMIT_YEARS[-1] + 1)`), so bumping `PERMIT_YEARS` extends it
    automatically; its 2009 start never moves.
+   - ⚠️ **BUT the construction-price deflator DOES need a re-run (added
+     2026-08-18).** Extending the windows pulls a new permit year in, and
+     `export_dev_grid` **hard-fails** on a permit year with no deflator (by
+     design — it must never sum nominal dollars into the industrial grid).
+     Run **`python scripts/fetch_construction_price_index.py`**, eyeball the
+     diff on `data/construction_price_index.json`, commit. It rebases to the
+     newest COMPLETE year automatically, so no constant needs editing.
+   - ⚠️ **The failure mode is quiet, so check for it.** `main.py` catches the
+     error and logs `Dev grid not exported: no construction-price deflator for
+     permit years [...]` — the site then loses the **whole** Development Detail
+     toggle (residential grid included), which looks like a UI regression, not
+     a data one. Grep the refresh run's log for `Dev grid not exported`.
+   - ⚠️ **StatCan may have archived the table by then.** 18-10-0289 is the
+     third in the series (18-10-0135 stopped at 2022-Q2, 18-10-0276 at
+     2024-Q2), and archived tables **still download and still answer queries**
+     — they just stop. The fetcher warns on `archiveStatusEn`; if it does, find
+     the successor via the WDS `getAllCubesListLite` endpoint and update
+     `TABLE_ID`. Do NOT let a stale index through: it fails silently.
 5. **Confirm `data/stormwater_rates.json` has the new year** — stormwater
    rates are year-keyed and must match the roll year, same rule as mill rates.
 6. **Bump `DATA_YEAR` / `RATE_YEAR` in `scripts/generate_status.py`** —
