@@ -208,6 +208,41 @@ the transform doesn't *invert or reorder* magnitude (a bigger number must never
 render smaller/dimmer), and that clamped outliers are handled honestly (capped
 colour, not hidden).
 
+### T8 — A hand-enumerated category contains what its NAME says
+`src/load_permits.py` (`INDUSTRIAL_BUILDING_TYPES`, `RESIDENTIAL_BUILDING_TYPES`),
+`src/load_zoning.py` (`NONRES_CATEGORIES`, `SET_ASIDE_CATEGORIES`),
+`src/load_water.py` (`HOUSEHOLD_CLASSES`), `src/load_temporal.py`
+(`COMMERCIAL_CLASSES`).
+
+**Added 2026-08-18, from a live defect.** This project enumerates category
+membership by FULL STRING and warns on unseen values — a good rule that
+prevented code-prefix collisions and did **not** prevent this. Underground
+parkades are filed by the City under both `Parkade (490)` *and*
+`Engineering (490)`; excluding the obvious string left the same buildings in
+under the other. `Engineering (490)` measured **95% parkades** and
+`Transportation Terminals (440)` **100% LRT/transit** — together 19% of the
+industrial metric's dollars, and enough to flag 7 *residential* neighbourhoods
+as industrial.
+
+**What to check:** for each enumerated set, sample the free-text description
+(`job_description` here) of its members and ask what they actually ARE. Do not
+audit the set by reading its member names — that is the thing that already
+passed. ⚠️ **Enumerating by string only helps if the strings partition the
+things.**
+
+⚠️ **Rank by NUMERATOR, because it decides whether the error is self-limiting.**
+- A **quantity** numerator is self-checking: `units_added` is 0 for a permit
+  that isn't a dwelling, so a misclassified member contributes nothing. Measured:
+  only 8 of 25,146 residential permits carry 0 units, and the 119 whose
+  description mentions a parkade are apartment buildings *with* parkades —
+  correctly included. **`RESIDENTIAL_BUILDING_TYPES` does not have this defect.**
+- A **count or value-sum** numerator has no such check: every member counts for
+  its full weight whatever it is. `ind_permits` was exactly this shape.
+**So audit the count/sum-over-enumerated-category metrics first.**
+(`export_budget_ranked.py`'s `SERVICE_CATEGORIES` is already hardened — its
+split is DERIVED from category mix rather than a name list, `DECISIONS.md`
+2026-08-16.)
+
 ---
 
 ## 4. Completeness pass

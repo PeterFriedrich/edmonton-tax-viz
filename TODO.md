@@ -102,6 +102,28 @@ Services carries no sparkline — measured, it does.)_
 
 ## Open work
 
+- [ ] **THE OTHER HAND-ENUMERATED CATEGORY SETS HAVE NOT BEEN CHECKED FOR THE
+  DEFECT FOUND ON 2026-08-18.** `Engineering (490)` turned out to be 95%
+  parkades and `Transportation Terminals (440)` 100% LRT — 19% of the industrial
+  metric's dollars — and **the full-string-enumeration rule did not prevent it**
+  (the City files parkades under two different strings). Now `T8` in
+  `docs/DATA_INTEGRITY.md`.
+  - **Already settled, do not redo:** `RESIDENTIAL_BUILDING_TYPES` is CLEAR
+    (its `units_added` numerator is self-checking — 8 of 25,146 permits carry 0
+    units); `export_budget_ranked.py`'s `SERVICE_CATEGORIES` is hardened by
+    derivation (`DECISIONS.md` 2026-08-16).
+  - **Unchecked:** `load_zoning.NONRES_CATEGORIES` / `SET_ASIDE_CATEGORIES`,
+    `load_water.HOUSEHOLD_CLASSES`, `load_temporal.COMMERCIAL_CLASSES`.
+  - ⚠️ **Rank by NUMERATOR, not by how wrong the names look.** A count or
+    value-sum over an enumerated category has no self-check — every member
+    counts for its full weight whatever it is. A quantity numerator limits the
+    damage on its own. Zoning's area sums are the count-shaped ones.
+  - ⚠️ **Do not audit a set by reading its member names** — that is exactly what
+    already passed. Sample what the members ARE (free-text description, sample
+    of real records).
+  - Full reasoning: `docs/DATA_INTEGRITY.md` T8, `docs/AUDIT_LEDGER.md`
+    2026-08-18, `docs/DECISIONS.md` 2026-08-18.
+
 - [ ] **PETER'S CALL — should Industrial go PUBLIC now that it is grid-capable?**
   `docs/DECISIONS.md` 2026-07-23 tagged the Industrial `#devmetric` `/full/`-only
   with one stated reason: *it's choropleth-only, so in public it would leave the
