@@ -83,6 +83,23 @@ unused ON PURPOSE — `docs/UI.md` said "always opaque", and the known
 depth-ordering quirk it flags was not tested until asked. **Measuring the current
 state is not the same as checking the intent.**)_
 
+_Last reconciled: 2026-08-18 (S111 — **three hover fixes, and each one's real
+defect was worse than the report**. The revenue sparkline had not "come back":
+`git log -S` shows one call site, never removed — 2026-08-01 gave the revenue
+cuts a different panel and rewrote the invite's WORDING while leaving the chart,
+so the teaser kept promising a chart the click no longer opened. The band prisms
+were not merely unhoverable: unpickable geometry over a flattened, transparent
+footprint fell through to **whoever stood behind it**, so the tooltip named the
+WRONG hood — invisible to any flat overhead check, because at pitch 0 the
+transparent footprint picks correctly. And the fix's own no-primacy refusal
+(`autoHighlight: false`) silently removed hover CONFIRMATION: 0 pixels moved.
+⚠️ **A principled refusal to draw something still has to be checked against the
+affordance it removes.** Two new open items came out of it: Services' hover
+teases a chart its panel does not open (same defect, blocked on invite copy),
+and ratio/uses prisms still pick the hood behind them (blocked on an opacity
+call). Also corrected `CONTROLS_MATRIX.md`, which had claimed for six days that
+Services carries no sparkline — measured, it does.)_
+
 ## Open work
 
 - [ ] **THE RATIO AND USES PRISMS STILL PICK THE HOOD BEHIND THEM — same defect
