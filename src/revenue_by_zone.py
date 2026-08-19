@@ -92,29 +92,34 @@ def _categorize_codes(codes: pd.Series) -> pd.Series:
     return category
 
 
-def revenue_by_zone(
+def property_zone_categories(
     assessment: pd.DataFrame,
     zoning: gpd.GeoDataFrame,
     *,
     zoning_column: str = "zoning",
-) -> pd.DataFrame:
-    """Return per-neighbourhood revenue shares by zoning category.
+) -> pd.Series:
+    """Return each property's zoning CATEGORY, indexed like ``assessment``.
 
-    ``assessment`` must already carry ``levy`` (run ``apply_tax_rates`` first).
-    Returns ``neighbourhood_name`` plus one ``rev_frac_*`` column per category,
-    each row summing to 1.0, and ``rev_zone_matched_frac`` — the share of the
-    neighbourhood's levy that landed in a real polygon.
+    The per-property assignment behind every zone share in this project. It was
+    an internal step of ``revenue_by_zone`` until 2026-08-19, when the Glass
+    view needed the same assignment binned by grid cell instead of by
+    neighbourhood — and the two must not be computed twice, both for the ~440k
+    point-in-polygon cost and because a second join could drift from the first.
+    A hood share and a cell share now disagree only where the geometry does.
+
+    Unplaceable and unmatched properties are ``UNZONED`` rather than dropped, so
+    a consumer's denominator stays the FULL levy of whatever it groups by.
     """
     missing = [c for c in REQUIRED_COLUMNS if c not in assessment.columns]
     if missing:
         raise KeyError(
-            f"revenue_by_zone needs {missing} — run apply_tax_rates first "
-            f"(have: {sorted(assessment.columns)})"
+            f"property_zone_categories needs {missing} — run apply_tax_rates "
+            f"first (have: {sorted(assessment.columns)})"
         )
     if zoning_column not in zoning.columns:
         raise KeyError(f"zoning frame has no {zoning_column!r} column")
 
-    df = assessment[list(REQUIRED_COLUMNS)].copy()
+    df = assessment[list(REQUIRED_COLUMNS)]
 
     no_coords = df["latitude"].isna() | df["longitude"].isna()
     if no_coords.any():
@@ -160,15 +165,46 @@ def revenue_by_zone(
             joined.loc[unmatched, "levy"].sum(),
             UNZONED,
         )
-    joined["category"] = category.fillna(UNZONED)
-
     # Properties with no coordinates rejoin here so the denominator is the
-    # neighbourhood's FULL levy, not just its placeable share.
-    stranded = df.loc[no_coords].assign(category=UNZONED)
-    tall = pd.concat(
-        [joined[["neighbourhood_name", "levy", "category"]], stranded[["neighbourhood_name", "levy", "category"]]],
-        ignore_index=True,
+    # consumer's FULL levy, not just its placeable share.
+    return (
+        category.fillna(UNZONED)
+        .reindex(assessment.index)
+        .fillna(UNZONED)
+        .rename("category")
     )
+
+
+def revenue_by_zone(
+    assessment: pd.DataFrame,
+    zoning: gpd.GeoDataFrame,
+    *,
+    zoning_column: str = "zoning",
+    categories: pd.Series | None = None,
+) -> pd.DataFrame:
+    """Return per-neighbourhood revenue shares by zoning category.
+
+    ``assessment`` must already carry ``levy`` (run ``apply_tax_rates`` first).
+    Returns ``neighbourhood_name`` plus one ``rev_frac_*`` column per category,
+    each row summing to 1.0, and ``rev_zone_matched_frac`` — the share of the
+    neighbourhood's levy that landed in a real polygon.
+
+    ``categories`` accepts an already-computed ``property_zone_categories``
+    result so a caller that needs the assignment for something else (the Glass
+    grid) pays for the join once.
+    """
+    missing = [c for c in REQUIRED_COLUMNS if c not in assessment.columns]
+    if missing:
+        raise KeyError(
+            f"revenue_by_zone needs {missing} — run apply_tax_rates first "
+            f"(have: {sorted(assessment.columns)})"
+        )
+    if categories is None:
+        categories = property_zone_categories(
+            assessment, zoning, zoning_column=zoning_column
+        )
+
+    tall = assessment[["neighbourhood_name", "levy"]].assign(category=categories)
 
     by_cat = (
         tall.groupby(["neighbourhood_name", "category"])["levy"]

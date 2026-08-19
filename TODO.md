@@ -208,16 +208,20 @@ Services carries no sparkline — measured, it does.)_
     the revenue split (tax-funded vs fee-funded) is close to what
     `SPEC_breakeven.md` §8.7 is choosing between.
 
-- [ ] **`glass` and `change` do not carry the institutional treatment, and today
-  they cannot.** The consequence tier shipped 2026-08-15 on Money's prism mode
-  and the Lab; Money's other two modes are untouched, so the same neighbourhood
-  is outlined-and-uncertain on one mode of a view and confident on another.
-  - **Blocked on data, not on design.** `rev_frac_inst` is a NEIGHBOURHOOD
-    column; the 100 m grid cells carry no institutional share, so `glass` has
-    nothing to threshold on. A cell-level share would come out of
-    `export_value_grid.py` the way `revenue_by_zone.py` derives the hood one.
+- [ ] **`change` does not carry the institutional treatment.** The consequence
+  tier shipped 2026-08-15 on Money's prism mode and the Lab; `glass` followed
+  2026-08-19 (`inst_frac` + azure cell bands, `DECISIONS.md`), leaving `change`
+  as the one Money mode where the same neighbourhood is outlined-and-uncertain
+  on one mode of a view and confident on another.
+  - ⚠️ **THIS ITEM SAID `glass` WAS "BLOCKED ON DATA" AND IT NEVER WAS** — the
+    cell-level share was one `groupby` off a join `revenue_by_zone` was already
+    doing and discarding. The claim sat here unchecked from 2026-08-15 to
+    2026-08-19 and would have kept deferring the work. **Re-measure a stated
+    blocker before believing it**; that is now twice this file has been wrong
+    about one.
   - `change` is share-of-base movement over time, a different quantity again —
-    it may need its own answer rather than this one.
+    it may need its own answer rather than this one. ⚠️ **Do not assume it is
+    blocked either.** Check what the change columns are derived from first.
   - ⚠️ **Re-measure before building.** The 6-hood set is `revenue_per_acre` on
     today's refresh; it moves with the roll.
   - ⚠️ **`value_per_acre` is NOT a candidate and never will be** — exemption
