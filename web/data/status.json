@@ -2,8 +2,8 @@
   "data_year": 2025,
   "rate_year": 2025,
   "zoning_year": 2024,
-  "generated": "2026-08-17",
-  "last_checked": "2026-08-17",
+  "generated": "2026-08-19",
+  "last_checked": "2026-08-19",
   "banner": null,
   "municipal_rates": {
     "unit": "per $1,000 assessed",
@@ -56,5 +56,5 @@
       }
     ]
   },
-  "_geojson_sha256": "29f50d37400fffa235bafb45c069dd38db680b62e0468d9d0a31d912ec65b0cb"
+  "_geojson_sha256": "c5bac987710c1bd995eb2f0e8262e4d66f2d99df22777cab0a9aff893903790c"
 }
