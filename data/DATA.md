@@ -535,11 +535,13 @@ contrast: "nothing to apportion" is not "0% institutional"). Rounded to 4
 decimals — a display gate, not an accounting figure; ⚠️ that rounding is
 load-bearing at the top end, where a 99.95% cell keeps a real (invisible)
 levied residual and only an **exactly 1.0** cell collapses its base to zero.
-Real-data anchors (2026-08-09 roll, 34,671 cells): citywide institutional
-share of levy **4.8%**; **624 cells (1.8%) at or above the 0.25 display
-threshold, carrying 4.9% of city levy**; of the 714 cells above 10%, **467 are
-above 99%** — the distribution is bimodal, which is why the Glass band needs
-only one threshold where the hood treatment needed two. Flagged cells are
+Real-data anchors (**the shipped 2026-08-19 refresh**, 34,666 cells): citywide
+institutional share of levy **4.8%**; **623 cells (1.8%) at or above the 0.25
+display threshold, carrying 4.9% of city levy**; of the 714 cells above 10%,
+**467 are above 99%** — the distribution is bimodal, which is why the Glass band
+needs only one threshold where the hood treatment needed two. (The design was
+measured on a local 2026-08-09 roll giving 624 of 34,671; ⚠️ **the set moves
+with the roll**, so re-measure rather than citing these as fixed.) Flagged cells are
 lower on average (median $9,261/acre vs $18,127) but heavier at the top (p90
 $97,610 vs $53,673), and **18 of the city's top 100 cells by $/acre are
 flagged**, the tallest at **$5.66M/acre, 100% institutional**. Consumed by the
