@@ -455,9 +455,72 @@ colours. Brute-forced through the dataviz validator, not eyeballed.
 why**: a cool hue there leans toward the **teal surplus pole**. Money's ramps are
 sequential magnitude — no poles — so azure asserts no direction.
 
-**Still open:** `glass` and `change` cannot follow — grid cells carry no
-institutional share — so Money's prism mode is treated and its two other modes
-are not. Tracked in `TODO.md`.
+**Still open:** `change` cannot follow — share-of-base movement over time is a
+different quantity again, and may need its own answer rather than this one.
+Tracked in `TODO.md`. `glass` was closed 2026-08-19, below.
+
+## The cell-level band — Glass (2026-08-19)
+
+`glass` was listed above as *cannot follow: grid cells carry no institutional
+share*. ⚠️ **That was wrong, and it was wrong from the start** — the share was
+one `groupby` away. `revenue_by_zone` already assigned every property a zoning
+category and threw it away after its neighbourhood rollup. Extracted as
+`property_zone_categories`, computed once in `main.py`, and grouped by cell
+instead of by hood it yields `inst_frac` (`data/DATA.md`, the
+institutional-share grid column). The hood and cell shares now come from one
+point-in-polygon pass, so they cannot disagree except where the geometry does.
+
+**DECIDED — one tier at 100 m, not two, and the distribution decides it.** Of
+the 714 cells above 10% institutional, **467 are above 99%** and only 159 sit
+between 10% and 50%. A 100 m cell is institutional or it is not; the mixed case
+barely exists, so there is nothing for a consequence tier to narrow. Moving the
+threshold anywhere across 0.10–0.99 changes the marked set by **247 cells out of
+34,671** — the hood equivalent moved 15 hoods to 6. `GLASS_INST_MIN` = 0.25,
+matching `INST_UNCERTAIN_MIN` so the two surfaces agree on the word "mostly".
+**Marks 624 cells (1.8%), 4.9% of city levy.**
+
+**DECIDED — the ramp fill survives, which the hood band destroys.** A knowing
+divergence from the rule three sections up (*a ramp-coloured floor under the
+band would assert the very value the band exists to withhold*). Flattening 624
+cells would delete them from a view whose entire content **is** ramp-coloured
+cells — including the tallest flagged cell in the city (**$5.66M/acre, 100%
+institutional, inside the top 100 by height**). Losing the magnitude of an
+enormous uncertain spike is a larger error than over-asserting it, so the cell
+keeps its height and colour and gains an azure band over it.
+
+⚠️ **The wireframe form was rejected BY MEASUREMENT, not by taste.** The first
+build drew a bare azure cage — the "form carries the identity" rule above —
+because a cage reads even on a 100%-institutional cell whose levied endpoint is
+0 (467 of the 624). deck 9.0.38's `GridCellLayer` **ignores `filled: false`,
+draws its default opaque black fill, and does not render the wireframe at all**.
+The flagged cells came out solid black. ⚠️ **Every layer prop read back
+correctly and all 14 assertions passed — only the screenshot caught it.**
+`GridCellLayer` is fill-only; an outlined cell needs a different layer class.
+
+**The shipped form is the hood band's own:** two filled prisms at the **same
+alpha** (levied base, full-height cap), overlapping from the ground to the
+levied height so that section composites denser while the cap stays faint —
+*this much regardless, that much depending on an unpublished status*. At 25%
+institutional a tall solid base carries a short faint tip; at 100% the base is
+zero and the whole spike goes faint, which is exactly the claim. Both layers
+ride `state.prismOpacity` with the cells; at a fixed 1.0 the azure stopped
+reading as part of the composition and became an object sitting on top of it.
+
+⚠️ **Azure was re-validated as a translucent FILL** — the ΔE work above tested
+it as an outline against ramp *stops*, and a fill blends with them. Rendered on
+all three ramps: **mint over cividis's yellow high end, bright cyan over its
+navy low end** (the collision worried about in advance — `#2ec4ff` is far
+brighter than `#00224e`, so it does not read as a low-value cell), and
+**ice-blue against `glow`'s near-white peak**, the case that defeats a white
+outline. Revenue cuts only, same rule and same reason as the hood caveat:
+exemption changes whether a levy is collected, not what a parcel is assessed at.
+
+The blurb names the azure cells and counts them, for the Lab's reason — a colour
+that is not on the ramp reads as a value unless the prose says otherwise.
+⚠️ It is built from `gridData.cells`, **not** the render's `cellsFor` cache:
+`setView` writes the blurb *before* `buildLayers` (the title block is chrome the
+label sweep measures, so it must be final first), and reading the cache made the
+sentence silently absent on entry.
 
 ## Cross-refs
 

@@ -51,7 +51,11 @@ from load_permits import load_permits, export_dev_grid
 from join_and_calculate import join_and_calculate, export_geojson, load_unit_costs
 from export_value_grid import export_value_grid, check_lot_acre_bounds, build_hood_lot_acres
 from load_temporal import load_temporal, export_temporal_web
-from revenue_by_zone import FRACTION_DECIMALS, revenue_by_zone
+from revenue_by_zone import (
+    FRACTION_DECIMALS,
+    property_zone_categories,
+    revenue_by_zone,
+)
 from plot_choropleth import plot_choropleth
 
 logger = logging.getLogger(__name__)
@@ -238,8 +242,19 @@ def run(
         # disagree about what "commercial" means. Needs the levy, so it is
         # skipped on the value-only path along with everything else revenue.
         if "levy" in assessment.columns:
+            zoning_polygons = gpd.read_file(str(zoning_geojson))
+            # ONE point-in-polygon pass over ~440k properties, two consumers:
+            # the hood shares below and the Glass grid's `inst_frac` (attached
+            # here so it rides the property-info merge into grid_input). Joining
+            # twice would cost the same again and let the two drift apart.
+            zone_categories = property_zone_categories(assessment, zoning_polygons)
+            assessment["inst_levy"] = assessment["levy"].where(
+                zone_categories == "inst", 0.0
+            )
             aggregated = aggregated.merge(
-                revenue_by_zone(assessment, gpd.read_file(str(zoning_geojson))),
+                revenue_by_zone(
+                    assessment, zoning_polygons, categories=zone_categories,
+                ),
                 on="neighbourhood_name",
                 how="left",
             )

@@ -1202,7 +1202,21 @@
               "natural/undeveloped land. The spikes are translucent so it " +
               "reads through.",
     };
-    const glassBlurb = () => withColourClause(GLASS_BLURBS[state.denom]);
+    // The azure cells need a sentence for the same reason the Lab's outlined
+    // hoods do — a reader who sees a colour that is not on the ramp will
+    // otherwise read it as a value. Appended only when bands actually draw
+    // (revenue cuts, and only once the pipeline ships `inst_frac`), so the
+    // prose can never describe geometry that isn't there.
+    const glassInstBlurb = () => {
+      if (!(gridData && gridData.hasInst && isRevenue(state.metric))) return "";
+      const n = glassInstCount();
+      if (!n) return "";
+      return " " + n + " azure cell" + (n === 1 ? " is" : "s are") +
+        " mostly institutionally-zoned land — the roll does not say whether " +
+        "that revenue is levied, so the solid part is what stands either way.";
+    };
+    const glassBlurb = () =>
+      withColourClause(GLASS_BLURBS[state.denom]) + glassInstBlurb();
 
     // Uses blurb: the base zoning caveat, plus the height sentence while the
     // residential prisms are on (honesty: the render gains a magnitude, so
@@ -1324,12 +1338,18 @@
               // prisms via the same col >= 0 guard.
               nonres_revenue_per_acre: p.columns.indexOf("nonres_revenue_per_acre"),
               nonres_revenue_per_lot_acre: p.columns.indexOf("nonres_revenue_per_lot_acre"),
+              // Institutionally-zoned share of the cell's levy (pipeline
+              // 2026-08-19) — absent on older files (-1), and the uncertainty
+              // bands simply do not draw. NOT a per-acre column: it is a share,
+              // so it serves both denominators (see export_value_grid).
+              inst_frac: p.columns.indexOf("inst_frac"),
             },
             cells: p.cells,
           };
           // The denominator toggle needs the lot-acre columns (pipeline
           // 2026-07-05) — absent on older files, and the control stays hidden.
           gridData.hasLot = gridData.columns.value_per_lot_acre >= 0;
+          gridData.hasInst = gridData.columns.inst_frac >= 0;
         })
         .catch(() => {});
       return gridFetch;
@@ -2488,6 +2508,97 @@
       // Exempt first so the taller levied prism blends OVER the certain base.
       return [mk("inst-band-exempt", true), mk("inst-band-levied", false)];
     }
+
+    // --- the same doubt, at 100 m -------------------------------------------
+    // ⚠️ ONE THRESHOLD, NOT TWO, and the distribution is why. At hood level the
+    // share tier had to be narrowed by a CONSEQUENCE tier because the two were
+    // measuring different things and the share alone over-selected at the floor.
+    // At 100 m there is nothing to narrow: of the 714 cells above 10%, 467 are
+    // above 99% and only 159 sit between 10% and 50% (measured 2026-08-19 on the
+    // 2026-08-09 roll). A cell is institutional or it is not — the mixed case
+    // barely exists, so a second tier would separate almost nothing. Moving this
+    // threshold anywhere from 0.10 to 0.99 changes the marked set by 247 cells
+    // out of 34,671; the hood equivalent moved 15 hoods to 6.
+    const GLASS_INST_MIN = 0.25;
+
+    // ⚠️ THE RAMP FILL SURVIVES HERE, WHICH MONEY'S BAND DELIBERATELY DOES NOT
+    // — a knowing divergence, recorded in DECISIONS.md 2026-08-19. Money
+    // flattens a banded hood to nothing and lets two azure prisms carry it,
+    // because "a ramp-coloured floor under the band would assert the very value
+    // the band exists to withhold". Doing that to 624 cells would delete them
+    // from a view whose entire content IS ramp-coloured cells — including the
+    // tallest flagged cell in the city ($5.66M/acre, 100% institutional, inside
+    // the top 100 by height). Deleting the magnitude to avoid over-asserting it
+    // trades a small error for a large one: the reader loses the fact that a
+    // enormous spike is uncertain, which is the whole point of marking it. So
+    // the cell keeps its height and colour and gains an azure cage.
+    //
+    // Two layers, the same two endpoints Money draws, with the SAME alpha on
+    // both so neither unknowable world gets primacy (the 2026-08-12 rule):
+    //   · the levied BASE at height x (1 - inst_frac) — "this much regardless";
+    //   · the full-height CAP — "that much depending on an unpublished status".
+    // They overlap from the ground to the levied height, so that section
+    // composites denser while the cap above it stays faint. Money's
+    // denser-base-under-a-fainter-cap, unchanged: at 25% institutional a tall
+    // solid base carries a short faint tip; at 100% the base is zero and the
+    // whole spike goes faint, which is exactly the claim being made.
+    //
+    // ⚠️ NO WIREFRAME, and this was measured rather than chosen: deck 9.0.38's
+    // GridCellLayer IGNORES `filled: false` and draws its DEFAULT OPAQUE BLACK
+    // fill, then declines to render the wireframe at all. A first pass shipped
+    // exactly that and the flagged cells came out solid black — caught in the
+    // screenshot, not by any assertion, since every layer prop read back
+    // correctly. GridCellLayer is fill-only; an outlined cell would need a
+    // different layer class.
+    // The flagged subset for the active column, cached like `cellsFor` so the
+    // blurb and the layers count the same cells and neither re-filters 34k
+    // rows on a redraw.
+    //
+    // ⚠️ FILTERS `gridData.cells`, NOT `cellsFor` — setView writes the blurb
+    // BEFORE buildLayers runs (deliberately: the title block is chrome the
+    // label sweep measures, so it must be final first), and `cellsFor` does
+    // not exist until the render populates it. Reading it here made the
+    // sentence silently absent on entry and appear only after some later
+    // rebuild. The null-metric guard is repeated rather than inherited so the
+    // two paths cannot disagree about which cells exist.
+    function glassInstCells() {
+      const fcol = gridData?.columns.inst_frac ?? -1;
+      const col = gridData ? gridData.columns[gridColKey()] : -1;
+      if (fcol < 0 || col < 0) return [];
+      gridData.instFor ??= {};
+      return (gridData.instFor[col] ??= gridData.cells.filter(
+        c => c[col] != null && c[fcol] != null && c[fcol] >= GLASS_INST_MIN));
+    }
+    const glassInstCount = () => glassInstCells().length;
+
+    function glassInstBandLayers(gs, col) {
+      const fcol = gridData.columns.inst_frac;
+      const flagged = glassInstCells();
+      if (!flagged.length) return [];
+      const mk = (id, getElevation) => new deck.GridCellLayer({
+        id,
+        data: flagged,
+        cellSize: gridData.cell,
+        extruded: true,
+        getPosition: d => [d[0], d[1]],
+        getElevation,
+        elevationScale: gs.elevationScale,
+        getFillColor: INST_OUTLINE_COLOR.concat([INST_BAND_ALPHA]),
+        // Rides the same glass opacity as the cells it marks — at a fixed 1.0
+        // the azure stopped reading as part of the composition and became a
+        // solid object sitting on top of it.
+        opacity: state.prismOpacity,
+        material: { ambient: 0.55, diffuse: 0.6, shininess: 32, specularColor: [60, 60, 70] },
+        pickable: false, // the plane still owns the hover, like the cells
+        updateTriggers: { getElevation: col },
+      });
+      // Levied first so the taller uncertain cap blends OVER the certain base,
+      // the same order as Money's pair.
+      return [
+        mk("glass-inst-levied", d => d[col] * (1 - d[fcol])),
+        mk("glass-inst-cap", d => d[col]),
+      ];
+    }
     // The rate with institutional revenue removed — the other coherent world.
     const deviationRateExempt = p =>
       p[state.labCut] * (1 - instFrac(p)) / devAcreFrac(p);
@@ -3620,7 +3731,14 @@
               getElevation: colKey,
               getFillColor: [colKey, state.ramp, state.colorAdjust],
             },
-          }), ...labelLayer()];
+          }),
+          // ⚠️ REVENUE CUTS ONLY, the same rule the hood caveat follows and for
+          // the same reason: exemption changes whether a levy is collected, not
+          // what a parcel is assessed at, so a band under `value_per_acre`
+          // would claim a doubt the data does not carry.
+          ...(gridData.hasInst && isRevenue(state.metric)
+            ? glassInstBandLayers(gs, col) : []),
+          ...labelLayer()];
         }
         // Fallback (grid file absent — older deploy): translucent
         // NEIGHBOURHOOD prisms, the coarse version of the same composition.

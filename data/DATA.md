@@ -519,6 +519,33 @@ Glass; it rides in this file because the age layer needs the whole-roll cell
 population, which `dev_grid.json` (permit cells only) doesn't have. Older
 files lack the column and the picker stays hidden.
 
+**Institutional-share grid column (added 2026-08-19):** `export_value_grid.py`
+also rolls **`inst_frac`** — the share of a cell's levy sitting on
+**institutionally-zoned** land — appended LAST in the payload columns. Source
+is `revenue_by_zone`'s per-property zoning category, which used to be an
+internal step and is now `property_zone_categories`; `main.py` computes it
+**once** and attaches `inst_levy` to the assessment frame, so the hood
+`rev_frac_inst` and the cell `inst_frac` come from the SAME point-in-polygon
+pass and cannot drift. ⚠️ **A SHARE, not a per-acre column, and there is
+deliberately no `_lot` sibling** — which land is institutional is a fact about
+the land, so the one fraction serves both denominators, exactly as
+`rev_frac_inst` already does at hood level. A cell with **no levy to
+apportion carries `null`, never 0** (same rule as `res_levy`'s real-$0
+contrast: "nothing to apportion" is not "0% institutional"). Rounded to 4
+decimals — a display gate, not an accounting figure; ⚠️ that rounding is
+load-bearing at the top end, where a 99.95% cell keeps a real (invisible)
+levied residual and only an **exactly 1.0** cell collapses its base to zero.
+Real-data anchors (2026-08-09 roll, 34,671 cells): citywide institutional
+share of levy **4.8%**; **624 cells (1.8%) at or above the 0.25 display
+threshold, carrying 4.9% of city levy**; of the 714 cells above 10%, **467 are
+above 99%** — the distribution is bimodal, which is why the Glass band needs
+only one threshold where the hood treatment needed two. Flagged cells are
+lower on average (median $9,261/acre vs $18,127) but heavier at the top (p90
+$97,610 vs $53,673), and **18 of the city's top 100 cells by $/acre are
+flagged**, the tallest at **$5.66M/acre, 100% institutional**. Consumed by the
+**Glass view's uncertainty bands** (revenue cuts only). Older files lack the
+column and the bands simply do not draw.
+
 ---
 
 ## 5. Zoning Bylaw Geographical Data (land-use layer, added 2026-06-29)

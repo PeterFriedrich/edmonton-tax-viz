@@ -10,6 +10,7 @@ sys.path.insert(0, "src")
 from revenue_by_zone import (
     OUTPUT_NAMES,
     UNZONED,
+    property_zone_categories,
     revenue_by_zone,
     top_zones,
 )
@@ -132,3 +133,35 @@ def test_top_zones_excludes_unzoned_by_default():
     r = _row(revenue_by_zone(a, _zoning()), "A")
     assert top_zones(r) == [("res", pytest.approx(0.1))]
     assert top_zones(r, include_unzoned=True)[0][0] == UNZONED
+
+
+def test_property_zone_categories_indexed_like_input():
+    # One row per property, aligned to the input index — the contract the Glass
+    # grid relies on to attach `inst_levy` without a merge key.
+    a = _assessment([("H", 10.0, 0.5, 0.5), ("H", 20.0, 1.5, 0.5)])
+    cats = property_zone_categories(a, _zoning())
+    assert list(cats.index) == list(a.index)
+    assert list(cats) == ["res", "ind"]
+
+
+def test_property_zone_categories_keeps_unplaceable_as_unzoned():
+    # No coordinates -> UNZONED, never dropped: a consumer's denominator has to
+    # stay the full levy of whatever it groups by.
+    a = _assessment([("H", 10.0, 0.5, 0.5), ("H", 20.0, None, None)])
+    cats = property_zone_categories(a, _zoning())
+    assert list(cats) == ["res", UNZONED]
+
+
+def test_precomputed_categories_match_the_internal_join():
+    # The shared-join optimisation must be invisible: passing categories in
+    # gives byte-identical shares to letting revenue_by_zone join for itself.
+    # This is the guard against the hood shares and the cell shares drifting.
+    a = _assessment([
+        ("H", 10.0, 0.5, 0.5), ("H", 20.0, 1.5, 0.5),
+        ("K", 30.0, 1.5, 0.5), ("K", 40.0, None, None),
+    ])
+    z = _zoning()
+    cats = property_zone_categories(a, z)
+    pd.testing.assert_frame_equal(
+        revenue_by_zone(a, z), revenue_by_zone(a, z, categories=cats)
+    )

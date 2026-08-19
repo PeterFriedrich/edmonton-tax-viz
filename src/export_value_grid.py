@@ -37,8 +37,9 @@ square geometry don't need per-feature geometry objects):
                   "value_per_lot_acre", "revenue_per_lot_acre",
                   "res_revenue_per_acre", "res_revenue_per_lot_acre",
                   "median_year_built",
-                  "nonres_revenue_per_acre", "nonres_revenue_per_lot_acre"],
-      "cells": [[lon, lat, v, r, vl, rl, rr, rrl, yb, nr, nrl], ...]  # lon/lat = SW corner
+                  "nonres_revenue_per_acre", "nonres_revenue_per_lot_acre",
+                  "inst_frac"],
+      "cells": [[lon, lat, v, r, vl, rl, rr, rrl, yb, nr, nrl, i], ...]  # lon/lat = SW corner
     }
 
 ``revenue_*`` columns are omitted on the Phase 1 value-only path, the
@@ -49,9 +50,11 @@ apply_tax_rates' ``res_levy``) are omitted when ``res_levy`` is absent, the
 SPEC_industrial.md A1) are omitted when ``nonres_levy`` is absent, and
 ``median_year_built`` (Development-view stock-age spikes, from
 load_property_info's ``year_built``) is omitted when ``year_built`` is absent
-— mirroring the graceful degradation everywhere else; the web columns map
-indexes by name, so the dependent web features fall back / stay hidden on
-older files. Cells with no eligible lot acres carry ``null`` in the lot-acre
+and ``inst_frac`` (the cell's institutionally-zoned share of levy, from
+revenue_by_zone's per-property category attached upstream as ``inst_levy``) is
+omitted when ``inst_levy`` is absent — mirroring the graceful degradation
+everywhere else; the web columns map indexes by name, so the dependent web
+features fall back / stay hidden on older files. Cells with no eligible lot acres carry ``null`` in the lot-acre
 slots; cells where no property has a known ``year_built`` carry ``null`` in
 the year slot (age has no meaningful zero — a real-zero convention like
 ``res_levy``'s would read as "year 0").
@@ -74,6 +77,11 @@ SQ_M_PER_ACRE = 4046.8564224
 # once). Results are insensitive to the exact cut from 500-2000 m² — see
 # docs/FINDINGS_lot_dedupe.md §4.3.
 SHARE_MAX_M2 = 1000.0
+
+# `inst_frac` is a display gate, not an accounting figure — 4 decimals is
+# 0.01%, two orders finer than the threshold that reads it, and it keeps ~35k
+# cells from carrying full float repr for a number nobody sums.
+INST_FRAC_DECIMALS = 4
 
 # Hoods allowed to exceed the physical bound in check_lot_acre_bounds.
 # PEMBINA: 1.41x — a 619-unit manufactured-home point claiming 96 lot acres
@@ -144,6 +152,11 @@ def build_value_grid(df: pd.DataFrame, cell_m: float = 100.0) -> pd.DataFrame:
         nonres_revenue_per_acre float  sum(nonres_levy) / cell ground acres —
                                        only when ``nonres_levy`` is present;
                                        same real-zero convention
+        inst_frac               float  sum(inst_levy) / sum(levy) — the share
+                                       of the cell's levy sitting on
+                                       institutionally-zoned land; only when
+                                       ``inst_levy`` is present; NaN where the
+                                       cell has no levy to apportion
         median_year_built       float  median construction year of the cell's
                                        properties (unit-weighted; a condo
                                        tower's repeated year IS the median, so
@@ -190,6 +203,13 @@ def build_value_grid(df: pd.DataFrame, cell_m: float = 100.0) -> pd.DataFrame:
     if has_nonres:
         cells["nonres_levy"] = pts["nonres_levy"].to_numpy()
         agg_spec["nonres_levy"] = "sum"
+    # Levy sitting on institutionally-zoned land (revenue_by_zone's per-property
+    # category, attached upstream). Summed like any other dollar column; it
+    # becomes a SHARE below because the share is what the Glass band reads.
+    has_inst = "inst_levy" in pts.columns
+    if has_inst:
+        cells["inst_levy"] = pts["inst_levy"].to_numpy()
+        agg_spec["inst_levy"] = "sum"
     has_year = "year_built" in pts.columns
     if has_year:
         cells["year_built"] = pts["year_built"].to_numpy()
@@ -231,6 +251,22 @@ def build_value_grid(df: pd.DataFrame, cell_m: float = 100.0) -> pd.DataFrame:
             out["nonres_revenue_per_lot_acre"] = grid["nonres_levy_eligible"] / grid["lot_acres"]
     if has_year:
         out["median_year_built"] = grid["year_built"]
+    if has_inst and has_levy:
+        # ⚠️ A SHARE, not a per-acre column, and ONE share rather than a
+        # ground/lot pair — mirroring `rev_frac_inst`, which is likewise a
+        # single full-levy fraction applied under both denominators. Which land
+        # is institutional is a fact about the land; only a CONSEQUENCE measure
+        # (Money's `instShiftMoney`) has to follow the denominator toggle, and
+        # the Glass band has no consequence tier — the 100 m distribution is
+        # bimodal, so one threshold on the share carries the whole decision.
+        #
+        # NaN where a cell's levy is 0 (a wholly exempt cell): "no revenue to
+        # apportion" is not "0% institutional", the same distinction
+        # revenue_by_zone makes for a $0 neighbourhood.
+        total = grid["levy"]
+        out["inst_frac"] = (grid["inst_levy"] / total.where(total > 0)).round(
+            INST_FRAC_DECIMALS
+        )
 
     logger.info(
         "Value grid: %d properties -> %d occupied %.0f m cells (%d rows without coordinates)",
@@ -467,6 +503,7 @@ def export_value_grid(
     has_res = "res_revenue_per_acre" in grid.columns
     has_nonres = "nonres_revenue_per_acre" in grid.columns
     has_year = "median_year_built" in grid.columns
+    has_inst = "inst_frac" in grid.columns
 
     # New columns append at the END so existing slots keep their positions
     # (the web reads the map by columns.indexOf — order-independent — but a
@@ -488,6 +525,8 @@ def export_value_grid(
         columns.append("nonres_revenue_per_acre")
         if has_lot:
             columns.append("nonres_revenue_per_lot_acre")
+    if has_inst:
+        columns.append("inst_frac")
 
     def _int(v) -> int | None:
         return None if pd.isna(v) else round(v)
@@ -511,6 +550,10 @@ def export_value_grid(
             row.append(round(t.nonres_revenue_per_acre))
             if has_lot:
                 row.append(_int(t.nonres_revenue_per_lot_acre))
+        if has_inst:
+            # A fraction, so NOT _int — and null where the cell has no levy
+            # to apportion, which the web reads as "not flagged".
+            row.append(None if pd.isna(t.inst_frac) else t.inst_frac)
         rows.append(row)
 
     payload = {
@@ -532,12 +575,15 @@ def export_value_grid(
         "has_res": has_res,
         "has_nonres": has_nonres,
         "has_year": has_year,
+        "has_inst": has_inst,
         "bytes": out_path.stat().st_size,
     }
     if has_lot:
         stats["n_cells_without_lot"] = int(grid["value_per_lot_acre"].isna().sum())
     if has_year:
         stats["n_cells_without_year"] = int(grid["median_year_built"].isna().sum())
+    if has_inst:
+        stats["n_cells_without_inst"] = int(grid["inst_frac"].isna().sum())
     logger.info(
         "Wrote %s: %d cells, %.1f MB", out_path.name, stats["n_cells"], stats["bytes"] / 1e6
     )
