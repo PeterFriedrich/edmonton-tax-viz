@@ -102,6 +102,33 @@ Services carries no sparkline — measured, it does.)_
 
 ## Open work
 
+- [ ] **PETER'S CALL — the road service life is 50 years and a sitting
+  councillor is publicly using 25.** Both readings sit on the SAME City page we
+  already cite (`city_unit_costs.json` → `roadway_om_renewal.source`,
+  "Development Impact on Infrastructure"), which publishes the life as *"usually
+  25, extended to 50 with proper maintenance"*. Your call 2026-07-15 took 50.
+  - ⚠️ **This is a denominator choice, NOT a data discrepancy** — same $600,000/km
+    O&M numerator either way. Do not "reconcile" it by changing the value.
+  - **What the choice is worth:** the O&M half is **$12,000/km/yr** at 50 yr vs
+    **$24,000/km/yr** at 25 — exactly 2×. The full lifecycle rate the site
+    actually ships is **$50,000/km/yr**; at 25 yr it would be **$100,000/km/yr**
+    (already recorded as `roadway_om_renewal.sensitivity`).
+  - **Why 50 still looks right:** the independent cross-check — the same page's
+    ~3%/yr set-aside rule on $1.5M/km ≈ **$45,000/km/yr** — corroborates the
+    50-year $50,000, not the 25-year reading.
+  - **The decision is only whether the methodology note should SAY SO.** Right now
+    nothing in the UI or `DATA.md` explains why a reader who has met the 25-year
+    figure elsewhere sees half of it here. Verified 2026-08-20 against served
+    output, not config (least-squares back-solve on
+    `neighbourhood_value_per_acre.geojson`: road $50.0001/m/yr, fire
+    $3,142/event, 404 hoods).
+  - ⚠️ **The op-ed is NOT a citable source and must not be named** in `DATA.md`,
+    methodology notes, UI copy, or commits — it publishes the figures with no
+    footnote. We cite the City page directly; that we independently hold the
+    same numbers is a confidence signal, not a citation. Its unsourced
+    *"30% of road users are not Edmonton taxpayers"* claim is traceable to
+    nothing and must not be repeated even informally.
+
 - [ ] **THE OTHER HAND-ENUMERATED CATEGORY SETS HAVE NOT BEEN CHECKED FOR THE
   DEFECT FOUND ON 2026-08-18.** `Engineering (490)` turned out to be 95%
   parkades and `Transportation Terminals (440)` 100% LRT — 19% of the industrial
