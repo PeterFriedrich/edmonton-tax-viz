@@ -816,3 +816,66 @@ is the series public discourse uses.
 
 **Do NOT use the `NONRES MUNICIPAL` class for anything** -- it is 1-2 accounts and
 its share swings 30-53% on noise.
+
+---
+
+## 11. The capital budget — a spatial layer we do not have (NEW 2026-08-21, SOURCED, not built)
+
+**Auto + by hand.** Every dollar this project models is **operating**. The
+capital side has never been in the repo, and it is the side that answers *"what
+is the City committing to build here?"* — a different question from *"what does
+this neighbourhood cost to run?"*
+
+### The sources exist and are reachable from the Oracle box
+Probed 2026-08-21. ⚠️ **The open data portal has NO capital sibling to
+`da9s-v9j8`** — a domain search for approved budgets returns only the two
+OPERATING feeds (`da9s-v9j8` expenses, `m84q-ghmu` revenues), `552h-hjwj`
+Capital Projects, and a 2015 relic (`pdmi-3qjb` / `r993-376i`). The real capital
+budget is on the **Open Budget portal** (§17's host), which was never probed
+beyond `operating_budget.csv`:
+
+| endpoint | rows | grain |
+|---|---|---|
+| `budget.edmonton.ca/api/capital_budget.csv` | **1,884** | `fiscal_year, service, branch, profile_id, profile, fund_type, fund, approved` — **the profile-level budget** |
+| `budget.edmonton.ca/api/capital_projects.csv` | **399** | `profile_id` → description, phase, address, **lat/long** — joins to the above |
+| `data.edmonton.ca` `552h-hjwj` | 214 | the `building.edmonton.ca` app feed: `neighbourhood`, `ward`, lat/long, `approved_budget_m`; only 4 asset types |
+
+**Shape of `capital_budget.csv`:** FY2023–2037, **$11.51B** total, dense over the
+**2023–2026 cycle ($9.22B)** with thin carry-forward tails (60 rows in 2027 → 1
+in 2037). Top services: LRT Expansion $4.10B, Roads $1.48B, Recreation & Culture
+$1.02B, Yellowhead Freeway Conversion $789M, Neighbourhoods $716M. Funding
+splits by `fund_type` (Grants $4.60B, Tax-Supported Debt $3.50B, Reserves $1.23B,
+PAYG $852M…) — so *who pays for it* is answerable, not just *what it costs*.
+
+### Why it is interesting spatially
+`capital_projects.csv` carries lat/long for 399 profiles and `552h-hjwj` carries
+a `neighbourhood` string for 210 of 214. Either could put committed capital on
+the map beside the operating cost the Services lens already shows.
+
+⚠️ **But the two do not have the same population** (1,884 budget rows vs 399
+described profiles vs 214 app records) — **measure the join coverage before
+promising a layer.** A capital map covering 214 of ~700 profiles is a
+misleading map, not a partial one.
+
+### ⚠️ New-vs-renewal is NOT a published field, and enumerating it is the T8 trap
+There is no column separating new construction from renewal. A keyword pass over
+`profile` (`renew|reconstruct|rehabilit|resurfac|overlay|replacement|preservation`)
+across the three road-ish services for 2023–26 gives **$1,023M renewal /
+$1,490M new, 27.3% of all capital** — but that is **exactly the
+hand-enumeration shape `DATA_INTEGRITY.md` T8 exists to distrust**: a value-sum
+over a name-matched set, no self-check, every member counting for its full
+weight. Two profiles named `Transportation: … - Renewal` are explicit; the rest
+are inferred from words like "Reconstruction". **Treat the split as indicative
+only; do not publish a new-vs-renewal number sourced this way.**
+
+### Cadence — ⚠️ NOT annual, and the endpoint gives NO freshness signal
+The capital budget is a **four-year cycle** (this file is 2023–2026), moved
+within-cycle by supplemental adjustments. ⚠️ **`capital_budget.csv` sends
+`Cache-Control: no-cache` and a `Last-Modified` that merely echoes `Date`** — so
+unlike Socrata's `rowsUpdatedAt` (§18), **there is no header to date the data
+from.** Any staleness check must be content-based (hash the payload, diff the
+row count / cycle totals), and any published figure must date itself from the
+budget cycle rather than from the fetch.
+
+**Prerequisite for any of this:** the manual reviewed-input pattern (§13, §16,
+§18) — hand-fetch, eyeball the diff, commit. Never the weekly refresh.
