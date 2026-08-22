@@ -275,7 +275,22 @@ opportunity end, so the asymmetric gate keeps it. The pressure end is therefore
 end now surfaces genuine mature residential infill candidates (CANOSSA,
 HOMESTEADER, STEINHAUER, MENISA, WELLINGTON, MCLEOD, ROSSLYN, CAPILANO — all
 established, low FAR, near-zero recent activity). EVERGREEN (residential-zoned,
-vacated floodplain) legitimately stays teal. `is_residential` and `far` are both
+vacated floodplain) legitimately stays teal.
+
+⚠️ **AMENDED 2026-08-22 — EVERGREEN is now OFF THE SCALE, and the gate was doing
+a second job nobody had written down.** Measured while testing whether this lens
+survives the 100 m grid: `gross_area` is null/zero on ~6.2% of rows, the pipeline
+summed it with `NaN → 0`, and **69 in-scale hoods have >50% of their eligible rows
+missing it** — so their `far` was understated and pushed toward the teal end. The
+lens was nonetheless CLEAN, because **only 2 of those 69 are residential and the
+asymmetric gate bars the other 67 from the opportunity end anyway.** The gate has
+therefore been absorbing a *data-completeness* gap as well as the land-use one
+argued for above — which is precisely the job it cannot do per cell, where
+`is_residential`'s equivalent is often measured on a single property.
+`build_hood_lot_acres` now emits `far = null` where no eligible row records a
+floor area, so EVERGREEN (4 eligible rows, none with `gross_area`) renders grey
+"no infill data" instead of saturating the teal endpoint. Its teal was never a
+measurement. Full numbers: `docs/FINDINGS_infill_granularity.md`. `is_residential` and `far` are both
 already in the geojson, so **no new pipeline column was needed** (the planned
 `median_year_built` backend work was avoided). The blurb frames the whole view as
 *relative and exploratory, not a target*.
@@ -306,7 +321,7 @@ its *own* p95 — `clampPos` = p95 of positive scores (≈ 1.49 on units × 5yr)
 the tooltip verdict branches on clamped `t` at **±0.4** (`INFILL_VERDICT_T`,
 chosen off the shipped data: ~25% of the teal arm / ~31% of the orange arm read
 as verdicts on the default column, and the median hood at t ≈ 0.29 sits clear of
-the cut). The teal endpoint now saturates (EVERGREEN, WESTVIEW VILLAGE); the
+the cut). The teal endpoint now saturates (EVERGREEN, WESTVIEW VILLAGE — ⚠️ EVERGREEN went OFF the scale 2026-08-22, see the amendment above; WESTVIEW VILLAGE still saturates); the
 pressure ordering is unchanged (DOWNTOWN still #1). Nothing else about Lens B
 changed. Locked in `docs/DECISIONS.md` (2026-07-14); implementation brief was
 `docs/FABLE_infill_perarm_scaling.md`. Deploy: web-only → live on the next

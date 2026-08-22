@@ -1949,6 +1949,7 @@ Services carries no sparkline — measured, it does.)_
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
 
+- [x] **`gross_area` MISSING and `gross_area` ZERO were the same number — `far` now emits `null`, not 0, where no floor area is recorded.** — DONE 2026-08-22 · `docs/TODO_archive.md`
 - [x] **The Services lens has no hood panel — BUILT 2026-08-10. Revenue vs each service cost, grouped by basis, NO total (two no-sum rules).** — DONE 2026-08-10 · `docs/TODO_archive.md`
 - [x] **Sweep the doc-to-doc citations — DONE 2026-08-09 (S104). ONE REAL DEFECT, and it was a locked decision built on a display artifact.** — DONE 2026-08-09 · `docs/TODO_archive.md`
 

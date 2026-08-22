@@ -893,3 +893,47 @@ budget cycle rather than from the fetch.
 
 **Prerequisite for any of this:** the manual reviewed-input pattern (§13, §16,
 §18) — hand-fetch, eyeball the diff, commit. Never the weekly refresh.
+
+---
+
+## 12. Infill at 100 m + amenity proximity (NEW 2026-08-22, MEASURED, not built)
+
+Full measurement write-up: `docs/FINDINGS_infill_granularity.md`. Locked calls:
+`docs/DECISIONS.md` 2026-08-22 (×2). This section holds only what is still open.
+
+**The question.** Peter: *"shouldn't we actually have it more granular? … one of
+the affectors i wanted was like, distance of each block from lrt stations, and
+schools, for each property, then it would get filled into each spike."*
+
+**Settled by measurement, do not re-derive:**
+- Activity at cell grain is **88% zeros** on the default column; a **600 m disc
+  kernel** fixes it (73.0% non-zero). No cliff in the curve.
+- **`far == 0` is 16.2% of cells and means missing `gross_area`** — 3,964 in-scale
+  cells tie at the maximum opportunity score.
+- **Euclidean distance to LRT is 55% false-positive at a 600 m band.** Use the
+  road network.
+- **Nothing here is blocked on data acquisition.** LRT stations derive from the
+  GTFS in `data/raw/`; schools are `996c-239n` (225) + `gfxq-u8uu` (97).
+
+**Still open — in dependency order:**
+
+1. ✅ **DONE 2026-08-22 — total absence of `gross_area` now emits `null`.**
+   ⚠️ **PARTIAL coverage is still unhandled and is the live residual**: MAPLE
+   RIDGE records a floor area on ~33% of its eligible rows, so its `far` is
+   understated ~3× and it sits **#2 on the teal arm** of the shipped lens. A
+   coverage threshold or a coverage-scaled FAR would reach it; **both need a
+   "what fraction is enough" call, the same shape as the 0.90 set-aside
+   threshold, and neither should be guessed.** See the findings §6a.
+2. **A `T8` membership pass on the derived LRT station set** before it is used —
+   33 parents including a tail track and two bus-garage platforms.
+3. **Per-cell replacements for `is_set_aside` and the asymmetric residential
+   gate.** ⚠️ The gate is doing more work than the spec claims (it absorbs the
+   `gross_area` gap), and per-cell its `f_res` is often measured on ONE point —
+   so a naive port makes it weaker exactly where it matters most.
+4. **The radius is a judgement, not a discovery.** 600 m clears the default
+   column; the 3yr window wants 800 m. Whether the kernel radius should follow
+   the window picker is undecided.
+5. **What a 100 m infill spike should be HEIGHT-wise** is unasked. The shipped
+   Infill view is a flat diverging plane, not spikes — Peter's "filled into each
+   spike" implies an extrusion the lens has never had, and a signed diverging
+   score has no natural height (which arm gets tall?).

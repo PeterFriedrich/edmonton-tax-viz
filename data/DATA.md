@@ -307,7 +307,13 @@ Sources checked 2026-08-08: [City of Edmonton — Grants in Lieu of Taxes](https
   suitability proxy: `far` = Σ `gross_area` (per unit, over eligible points) ÷
   deduped lot area per hood, computed in `build_hood_lot_acres` on the same
   dedupe as the lot-acre denominator. 27,202 rows (~6.2%) have null/zero
-  `gross_area` (flagged on load); all 406 hoods still get a `far`. Sanity: FAR
+  `gross_area` (flagged on load). ⚠️ **A hood whose eligible rows record NO floor
+  area gets `far = null`, NOT 0** (changed 2026-08-22): null and zero both mean
+  "not recorded", and `far == 0` is the maximum-OPPORTUNITY end of the Infill
+  scale, so summing the gap to 0 turned absent data into a finding. **16 of 410
+  hoods** are null on the current snapshot — 12 already set-aside grey, 4 newly
+  off the scale, of which one (EVERGREEN, 4 eligible rows) is residential.
+  Sanity: FAR
   ranges DOWNTOWN 3.37 / WÎHKWÊNTÔWIN 1.89 / GARNEAU 1.53 (densest) down to ≈0
   at River Valley / Anthony Henday greenfield edges. Low FAR = underused. Ships
   in the neighbourhood geojson (`far`, SLIM). See `docs/SPEC_development.md`
