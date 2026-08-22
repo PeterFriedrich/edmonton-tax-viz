@@ -148,6 +148,86 @@ def test_a_raising_check_does_not_kill_the_digest(monkeypatch):
     assert vr.UNKNOWN in [r[0] for r in results]
 
 
+_CAP_HEADER = ("fiscal_year,service,branch,profile_id,profile,"
+               "fund_type,fund,approved\n")
+_CAP_BODY = ("2023,Roads,Infrastructure Delivery,23-40-9033,Ottewell,"
+             "Grants,Fed,100.00\n"
+             "2024,Roads,Infrastructure Delivery,CM-25-0000,Renewal,"
+             "Reserves,Res,250.00\n")
+_CAP = _CAP_HEADER + _CAP_BODY
+
+
+class _FakeTextResp:
+    def __init__(self, text):
+        self.text = text
+
+    def raise_for_status(self):
+        pass
+
+
+def _cap_local(monkeypatch, tmp_path, text):
+    f = tmp_path / "capital_budget.csv"
+    f.write_text(text)
+    monkeypatch.setattr(vr, "CAPITAL_BUDGET", f)
+
+
+def test_capital_budget_ok_when_upstream_matches(monkeypatch, tmp_path):
+    _cap_local(monkeypatch, tmp_path, _CAP)
+    monkeypatch.setattr(vr.requests, "get", lambda *a, **k: _FakeTextResp(_CAP))
+    status, _, detail = vr.check_capital_budget()
+    assert status == vr.OK
+    assert "2 rows" in detail.replace(",", "")
+
+
+def test_capital_budget_fires_when_upstream_moves(monkeypatch, tmp_path):
+    _cap_local(monkeypatch, tmp_path, _CAP)
+    moved = _CAP + ("2027,Roads,Infrastructure Delivery,27-00-0001,New,"
+                    "Grants,Fed,500.00\n")
+    monkeypatch.setattr(vr.requests, "get", lambda *a, **k: _FakeTextResp(moved))
+    status, _, detail = vr.check_capital_budget()
+    assert status == vr.ACTION
+    assert "+1" in detail and "+500" in detail
+
+
+def test_capital_budget_ignores_row_order(monkeypatch, tmp_path):
+    """⚠️ The endpoint is generated per request behind no-cache, so a server-side
+    reorder must NOT read as a budget change. Hashing raw bytes would."""
+    _cap_local(monkeypatch, tmp_path, _CAP)
+    lines = _CAP_BODY.splitlines()
+    reordered = _CAP_HEADER + "\n".join(reversed(lines)) + "\n"
+    assert reordered != _CAP
+    monkeypatch.setattr(vr.requests, "get", lambda *a, **k: _FakeTextResp(reordered))
+    assert vr.check_capital_budget()[0] == vr.OK
+
+
+def test_capital_budget_unreachable_is_unknown_not_action(monkeypatch, tmp_path):
+    """A guard must never manufacture an alarm out of an unreachable source."""
+    _cap_local(monkeypatch, tmp_path, _CAP)
+    monkeypatch.setattr(vr.requests, "get", _boom)
+    assert vr.check_capital_budget()[0] == vr.UNKNOWN
+
+
+def test_capital_budget_wrong_shape_is_unknown(monkeypatch, tmp_path):
+    """A 404 HTML page parses as CSV without raising — the header check catches it."""
+    _cap_local(monkeypatch, tmp_path, _CAP)
+    monkeypatch.setattr(vr.requests, "get",
+                        lambda *a, **k: _FakeTextResp("<!DOCTYPE html><html>404"))
+    assert vr.check_capital_budget()[0] == vr.UNKNOWN
+
+
+def test_capital_budget_missing_local_copy_is_unknown(monkeypatch, tmp_path):
+    monkeypatch.setattr(vr, "CAPITAL_BUDGET", tmp_path / "absent.csv")
+    assert vr.check_capital_budget()[0] == vr.UNKNOWN
+
+
+def test_committed_capital_budget_parses():
+    """The real committed file must satisfy the fingerprint's own header contract."""
+    n, total, digest = vr._capital_fingerprint(vr.CAPITAL_BUDGET.read_text())
+    assert n > 1000
+    assert total > 1e9
+    assert len(digest) == 64
+
+
 class _FakeResp:
     def __init__(self, payload):
         self._payload = payload
