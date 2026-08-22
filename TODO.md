@@ -102,8 +102,8 @@ Services carries no sparkline — measured, it does.)_
 
 ## Open work
 
-- [ ] **PETER'S CALL — the road service life is 50 years and a sitting
-  councillor is publicly using 25.** Both readings sit on the SAME City page we
+- [ ] **PETER'S CALL — the road service life is 50 years and figures in public
+  circulation use 25.** Both readings sit on the SAME City page we
   already cite (`city_unit_costs.json` → `roadway_om_renewal.source`,
   "Development Impact on Infrastructure"), which publishes the life as *"usually
   25, extended to 50 with proper maintenance"*. Your call 2026-07-15 took 50.
@@ -122,12 +122,13 @@ Services carries no sparkline — measured, it does.)_
     output, not config (least-squares back-solve on
     `neighbourhood_value_per_acre.geojson`: road $50.0001/m/yr, fire
     $3,142/event, 404 hoods).
-  - ⚠️ **The op-ed is NOT a citable source and must not be named** in `DATA.md`,
-    methodology notes, UI copy, or commits — it publishes the figures with no
-    footnote. We cite the City page directly; that we independently hold the
-    same numbers is a confidence signal, not a citation. Its unsourced
-    *"30% of road users are not Edmonton taxpayers"* claim is traceable to
-    nothing and must not be repeated even informally.
+  - ⚠️ **The secondary write-up that carries these figures is NOT a citable
+    source and must not be named** in `DATA.md`, methodology notes, UI copy, or
+    commits — it publishes them with no footnote. We cite the City page
+    directly; that we independently hold the same numbers is a confidence
+    signal, not a citation. An accompanying *"30% of road users are not
+    Edmonton taxpayers"* claim is traceable to nothing in our reference list and
+    must not be repeated even informally.
 
 - [ ] **THE OTHER HAND-ENUMERATED CATEGORY SETS HAVE NOT BEEN CHECKED FOR THE
   DEFECT FOUND ON 2026-08-18.** `Engineering (490)` turned out to be 95%
