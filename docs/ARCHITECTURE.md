@@ -467,7 +467,10 @@ returns per-hood `lot_acres_eligible` + `value_lot_eligible`
 (+ `revenue_lot_eligible`), the eligible-point deduped acres and the dollars at
 those points. When `gross_area` is present it also returns `far` (Development
 Lens B built floor-area ratio = Σ floor area over eligible-point rows ÷ deduped
-lot m²; low FAR = underused/suitable — SPEC_development Lens B). `main.py` builds
+lot m²; low FAR = underused/suitable — SPEC_development Lens B). ⚠️ **`far` is
+`null`, not 0, where no eligible row recorded a floor area** (2026-08-22): null
+and zero both mean "not recorded" and are masked before the sum, because
+`far == 0` is the maximum-OPPORTUNITY end of the Infill scale. `main.py` builds
 it from the same `grid_input` (assessment + `load_property_info`) that feeds the
 grid, and hands it to `join_and_calculate` — which divides + guards (below);
 `far` rides through UNSUPPRESSED (a density ratio, not a per-lot-acre dollar).
