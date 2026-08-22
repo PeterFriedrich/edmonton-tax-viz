@@ -372,7 +372,11 @@ def build_hood_lot_acres(df: pd.DataFrame) -> pd.DataFrame:
                                      summed per unit (each condo unit its own
                                      floor space); the land was already deduped
                                      once per point (docs/SPEC_development.md
-                                     Lens B).
+                                     Lens B). **NaN — not 0.0 — where no eligible
+                                     row records a floor area**, since absent data
+                                     and nothing-built are different claims and
+                                     far == 0 is the maximum-opportunity end of
+                                     the Infill scale.
     """
     pts = df.loc[df["latitude"].notna() & df["longitude"].notna()]
     per_point = _point_lot_stats(pts[["latitude", "longitude", "lot_size"]])
@@ -408,9 +412,19 @@ def build_hood_lot_acres(df: pd.DataFrame) -> pd.DataFrame:
     if "nonres_levy" in df.columns:
         agg["nonres_levy"] = "sum"
     has_gross = "gross_area" in df.columns
-    if has_gross:
-        agg["gross_area"] = "sum"
     dollars = rows.loc[eligible].groupby("neighbourhood_name").agg(agg)
+    if has_gross:
+        # Null AND zero both mean "no floor area recorded" — DATA.md counts them
+        # together (~6.2% of rows) — so both are masked out before the sum, and a
+        # hood with no usable value at all sums to NaN rather than 0.0. A plain
+        # sum makes absent data indistinguishable from nothing-built — and
+        # far == 0 is the maximum OPPORTUNITY end of the Infill scale, so the
+        # gap reads as a finding (docs/FINDINGS_infill_granularity.md).
+        elig_rows = rows.loc[eligible]
+        gross = (
+            elig_rows["gross_area"].where(elig_rows["gross_area"] > 0)
+            .groupby(elig_rows["neighbourhood_name"]).sum(min_count=1)
+        )
 
     ineligible = per_point[~per_point["eligible"]]
     if len(ineligible):
@@ -426,9 +440,16 @@ def build_hood_lot_acres(df: pd.DataFrame) -> pd.DataFrame:
     if has_gross:
         # FAR = Σ floor area (m²) / Σ deduped lot area (m²), dimensionless.
         # NaN where a hood has floor area but no eligible lot m² (guarded by the
-        # outer join filling lot_m2 with NaN → ratio NaN, not a divide-by-zero).
-        out["far"] = out["gross_area"] / lot_m2.reindex(out.index)
-        out = out.drop(columns=["gross_area"])
+        # outer join filling lot_m2 with NaN → ratio NaN, not a divide-by-zero),
+        # and NaN where no eligible row recorded a floor area at all.
+        out["far"] = gross.reindex(out.index) / lot_m2.reindex(out.index)
+        no_far = out["far"].isna().sum()
+        if no_far:
+            logger.info(
+                "FAR: %d of %d hoods have no eligible row with a recorded "
+                "gross_area — far is NaN there (off the Infill scale), not 0",
+                int(no_far), len(out),
+            )
     out = out.reset_index()
     return out.rename(columns={
         "assessed_value": "value_lot_eligible", "levy": "revenue_lot_eligible",

@@ -198,12 +198,36 @@ passenger stations — `Heath Sciences Tail Track`, `Kathleen Andrews Platform`,
   schools) and are the right grain: compute per property, aggregate to the cell,
   rather than measuring from the cell centroid.
 
+## 6a. ⚠️ The fix shipped 2026-08-22 handles TOTAL absence, NOT partial
+
+`build_hood_lot_acres` now emits `far = null` where **no** eligible row records a
+floor area (16 of 410 hoods on the local snapshot; 12 were already set-aside
+grey). Re-scoring the shipped population before/after:
+
+| | in scale | clampPos | top of the teal arm |
+|---|---|---|---|
+| before | 358 | 0.765 | EVERGREEN 1.51, WESTVIEW VILLAGE 1.49, MAPLE RIDGE 1.46 |
+| after | 348 | 0.774 | WESTVIEW VILLAGE 1.50, MAPLE RIDGE 1.47, CANOSSA 0.98 |
+
+EVERGREEN leaves the scale (its teal was never a measurement — 4 eligible rows,
+none with a floor area); WESTVIEW VILLAGE still saturates and becomes #1; MCLEOD
+joins the saturating set. The ordering is otherwise unchanged.
+
+⚠️ **A hood that is PARTLY missing still has an understated `far`, and one of
+them is #2 on the teal arm.** MAPLE RIDGE records a floor area on only ~33% of
+its eligible rows, so its FAR is understated by roughly 3× and it keeps a
+near-saturating opportunity score. The null fix cannot reach this case — there is
+a usable value, it is just built from a third of the rows. Options not taken: a
+coverage threshold (null the hood below X% recorded) or a coverage-scaled FAR
+(divide by the recorded share). **Both need a decision about what fraction is
+enough, and neither should be guessed** — the same shape as the 0.90 set-aside
+threshold. Open in `docs/ANALYSIS_BACKLOG.md` §12.
+
 ## 7. What this implies for build order
 
-1. ⚠️ **`gross_area` absence must become explicit before any cell-grain FAR
-   exists.** A cell with no data should emit `null`, not `0`. This is worth doing
-   on its own merits — in the grid path today "no data" and "nothing built" are
-   the same number.
+1. ✅ **DONE 2026-08-22 — `gross_area` absence is now explicit.** A unit with no
+   recorded floor area emits `null`, not `0` (§6a). ⚠️ Partial coverage is
+   **still** unhandled and still biases toward opportunity.
 2. Distances (network, both amenity sets) are **independent of the score** and
    can ship as per-cell attributes + filters without touching Lens B.
    **Decision taken 2026-08-22 (Peter): attributes and a filter, NOT a weighted

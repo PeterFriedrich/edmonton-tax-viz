@@ -513,6 +513,45 @@ def test_hood_lot_acres_far_sums_floor_area_over_deduped_land():
     assert out.loc["HOODX", "far"] == pytest.approx((120.0 + 130.0) / 5000.0)
 
 
+def test_hood_lot_acres_far_is_nan_when_no_gross_area_recorded():
+    # A hood whose eligible rows record NO floor area gets NaN, not 0.0 — absent
+    # data and nothing-built are different claims, and far == 0 is the maximum
+    # OPPORTUNITY end of the Infill scale, so a 0 here would read as a finding.
+    df = _frame([
+        {**A, "neighbourhood_name": "HOODX", "lot_size": SQ_M_PER_ACRE,
+         "assessed_value": 1000.0, "gross_area": None},
+        {**B, "neighbourhood_name": "HOODY", "lot_size": SQ_M_PER_ACRE,
+         "assessed_value": 1000.0, "gross_area": 500.0},
+    ])
+    out = build_hood_lot_acres(df).set_index("neighbourhood_name")
+    assert pd.isna(out.loc["HOODX", "far"])
+    assert out.loc["HOODY", "far"] == pytest.approx(500.0 / SQ_M_PER_ACRE)
+
+
+def test_hood_lot_acres_far_treats_zero_gross_area_as_missing():
+    # ZERO is the other half of the same gap (DATA.md counts null AND zero as
+    # "no floor area recorded"), so a hood of zeros is NaN too — not FAR 0.
+    df = _frame([
+        {**A, "neighbourhood_name": "HOODX", "lot_size": SQ_M_PER_ACRE,
+         "assessed_value": 1000.0, "gross_area": 0.0},
+    ])
+    out = build_hood_lot_acres(df).set_index("neighbourhood_name")
+    assert pd.isna(out.loc["HOODX", "far"])
+
+
+def test_hood_lot_acres_far_ignores_zeros_but_keeps_real_floor_area():
+    # A partially-recorded hood keeps a real FAR from the rows that HAVE one —
+    # the zeros must not drag the numerator down, and must not null the hood.
+    df = _frame([
+        {**A, "neighbourhood_name": "HOODX", "lot_size": 5000.0,
+         "assessed_value": 100.0, "gross_area": 0.0},
+        {**A, "neighbourhood_name": "HOODX", "lot_size": 5000.0,
+         "assessed_value": 200.0, "gross_area": 250.0},
+    ])
+    out = build_hood_lot_acres(df).set_index("neighbourhood_name")
+    assert out.loc["HOODX", "far"] == pytest.approx(250.0 / 5000.0)
+
+
 def test_hood_lot_acres_omits_far_without_gross_area():
     # Backward-compat: no gross_area column -> no far column emitted.
     df = _frame([

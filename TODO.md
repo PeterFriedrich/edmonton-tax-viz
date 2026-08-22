@@ -102,28 +102,6 @@ Services carries no sparkline — measured, it does.)_
 
 ## Open work
 
-- [ ] **⚠️ `gross_area` MISSING AND `gross_area` ZERO ARE THE SAME NUMBER IN THE
-  GRID PATH — a cell with no data emits `far = 0`, which reads as maximum infill
-  opportunity.** Measured 2026-08-22: the field is null/zero on **6.25% of
-  eligible rows**, `build_hood_lot_acres` / `_cell_lot_metrics` sum it with
-  `NaN → 0`, and at 100 m grain **16.2% of cells land on `far == 0` with 100% of
-  their own properties missing the field** (median). 3,964 in-scale cells tie at
-  the identical maximum opportunity score.
-  - **The fix:** emit `null` where no property in the unit has a usable
-    `gross_area`, the way `median_year_built` already does for year (*"age has no
-    meaningful zero"* — same argument, same file).
-  - ⚠️ **The SHIPPED hood lens is NOT wrong today** — reproduce before "fixing"
-    the live output. 69 in-scale hoods exceed 50% missing but **only 2 are
-    residential**, so the asymmetric residential gate bars the rest from the teal
-    end anyway. The defect is real; its blast radius at hood grain is 2 hoods,
-    both with 3–4 eligible rows.
-  - ⚠️ **The gate absorbing a DATA gap is undocumented behaviour** — `SPEC_development.md`
-    Lens B justifies it purely as a land-use filter. Worth stating there, because
-    it is precisely what the gate cannot do per-cell.
-  - Prerequisite for any cell-grain FAR. Full measurements:
-    `docs/FINDINGS_infill_granularity.md`; open work:
-    `docs/ANALYSIS_BACKLOG.md` §12.
-
 - [ ] **PETER'S CALL — the road service life is 50 years and figures in public
   circulation use 25.** Both readings sit on the SAME City page we
   already cite (`city_unit_costs.json` → `roadway_om_renewal.source`,
@@ -1971,6 +1949,7 @@ Services carries no sparkline — measured, it does.)_
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
 
+- [x] **`gross_area` MISSING and `gross_area` ZERO were the same number — `far` now emits `null`, not 0, where no floor area is recorded.** — DONE 2026-08-22 · `docs/TODO_archive.md`
 - [x] **The Services lens has no hood panel — BUILT 2026-08-10. Revenue vs each service cost, grouped by basis, NO total (two no-sum rules).** — DONE 2026-08-10 · `docs/TODO_archive.md`
 - [x] **Sweep the doc-to-doc citations — DONE 2026-08-09 (S104). ONE REAL DEFECT, and it was a locked decision built on a display artifact.** — DONE 2026-08-09 · `docs/TODO_archive.md`
 

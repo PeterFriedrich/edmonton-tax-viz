@@ -1608,3 +1608,31 @@ produces a readout", not "a tap opens the card".
     this.** It encodes a regression that reached production (the card is the
     ONLY per-hood readout on touch); the checks there are what stop it
     recurring, and they must keep passing in whatever the panel becomes.
+
+---
+
+## `gross_area` null-vs-zero in `far` — CLOSED 2026-08-22
+
+- [ ] **⚠️ `gross_area` MISSING AND `gross_area` ZERO ARE THE SAME NUMBER IN THE
+  GRID PATH — a cell with no data emits `far = 0`, which reads as maximum infill
+  opportunity.** Measured 2026-08-22: the field is null/zero on **6.25% of
+  eligible rows**, `build_hood_lot_acres` / `_cell_lot_metrics` sum it with
+  `NaN → 0`, and at 100 m grain **16.2% of cells land on `far == 0` with 100% of
+  their own properties missing the field** (median). 3,964 in-scale cells tie at
+  the identical maximum opportunity score.
+  - **The fix:** emit `null` where no property in the unit has a usable
+    `gross_area`, the way `median_year_built` already does for year (*"age has no
+    meaningful zero"* — same argument, same file).
+  - ⚠️ **The SHIPPED hood lens is NOT wrong today** — reproduce before "fixing"
+    the live output. 69 in-scale hoods exceed 50% missing but **only 2 are
+    residential**, so the asymmetric residential gate bars the rest from the teal
+    end anyway. The defect is real; its blast radius at hood grain is 2 hoods,
+    both with 3–4 eligible rows.
+  - ⚠️ **The gate absorbing a DATA gap is undocumented behaviour** — `SPEC_development.md`
+    Lens B justifies it purely as a land-use filter. Worth stating there, because
+    it is precisely what the gate cannot do per-cell.
+  - Prerequisite for any cell-grain FAR. Full measurements:
+    `docs/FINDINGS_infill_granularity.md`; open work:
+    `docs/ANALYSIS_BACKLOG.md` §12.
+
+**Outcome:** fixed in `build_hood_lot_acres` (null and zero both masked, `min_count=1`), +3 tests. 16 of 410 hoods go null; 12 were already set-aside grey. EVERGREEN leaves the Infill scale and `SPEC_development.md` Lens B was amended — its teal was never a measurement. ⚠️ **PARTIAL coverage is still open** (MAPLE RIDGE, ~33% recorded, #2 on the teal arm): `docs/ANALYSIS_BACKLOG.md` §12. Full reasoning: `docs/DECISIONS.md` 2026-08-22, `docs/FINDINGS_infill_granularity.md` §6a.

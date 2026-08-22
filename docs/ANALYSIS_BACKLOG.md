@@ -917,10 +917,13 @@ schools, for each property, then it would get filled into each spike."*
 
 **Still open — in dependency order:**
 
-1. ⚠️ **`gross_area` null-vs-zero in the grid path.** A cell with no data must emit
-   `null`, not FAR `0`. Prerequisite for every cell-grain FAR figure, and a
-   standalone correctness fix regardless of this lens. **The hood path is NOT
-   affected in practice** (see the findings §4) but shares the `NaN → 0` sum.
+1. ✅ **DONE 2026-08-22 — total absence of `gross_area` now emits `null`.**
+   ⚠️ **PARTIAL coverage is still unhandled and is the live residual**: MAPLE
+   RIDGE records a floor area on ~33% of its eligible rows, so its `far` is
+   understated ~3× and it sits **#2 on the teal arm** of the shipped lens. A
+   coverage threshold or a coverage-scaled FAR would reach it; **both need a
+   "what fraction is enough" call, the same shape as the 0.90 set-aside
+   threshold, and neither should be guessed.** See the findings §6a.
 2. **A `T8` membership pass on the derived LRT station set** before it is used —
    33 parents including a tail track and two bus-garage platforms.
 3. **Per-cell replacements for `is_set_aside` and the asymmetric residential
