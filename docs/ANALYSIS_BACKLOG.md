@@ -852,10 +852,24 @@ PAYG $852M…) — so *who pays for it* is answerable, not just *what it costs*.
 a `neighbourhood` string for 210 of 214. Either could put committed capital on
 the map beside the operating cost the Services lens already shows.
 
-⚠️ **But the two do not have the same population** (1,884 budget rows vs 399
-described profiles vs 214 app records) — **measure the join coverage before
-promising a layer.** A capital map covering 214 of ~700 profiles is a
-misleading map, not a partial one.
+⚠️ **MEASURED 2026-08-22 — and the binding constraint is NOT what it first
+looked like.** `capital_budget.csv` and `capital_projects.csv` are the SAME
+population, not different ones: **399 distinct `profile_id`s each, 397 shared**
+(2 unmatched per side). The 1,884-vs-399 gap is a difference of GRAIN — the
+budget repeats a profile across years and funds — not of coverage.
+
+**The real limit is that only 104 of the 399 profiles carry a coordinate.**
+Those 104 cover 831 of 1,884 budget rows and **$8.58B of $11.51B — 74.6% of the
+dollars**. What falls out is partly non-spatial by nature (`LRV Replacements`
+$240.5M, `Vehicle and Equipment Replacement` $119.6M) and partly linear
+infrastructure a point could not honestly represent anyway
+(`Yellowhead Trail - 156 Street to St Albert Trail` $103.9M,
+`Metro Line LRT (NAIT - Blatchford) Extension` $111.1M).
+
+⚠️ **So a point map would silently omit a quarter of the money, and would omit
+it NON-RANDOMLY** — the fleet and the corridors, not a random 25%. Decide what
+the unplaced quarter does before drawing anything; `552h-hjwj`'s `neighbourhood`
+string (210 of 214) is a different and coarser handle on the same problem.
 
 ### ⚠️ New-vs-renewal is NOT a published field, and enumerating it is the T8 trap
 There is no column separating new construction from renewal. A keyword pass over

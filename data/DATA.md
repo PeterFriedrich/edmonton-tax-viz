@@ -1778,6 +1778,21 @@ looking for a Socrata capital sibling again; there isn't one.
 **1,884 rows**, one per `fiscal_year, service, branch, profile_id, profile,
 fund_type, fund, approved`. FY**2023–2037**, **$11,510,831,000** total.
 
+⚠️ **THE GRAIN IS NOT ONE ROW PER PROJECT.** 1,884 rows carry only **399 distinct
+`profile_id`s** — a profile repeats across fiscal years AND across funding
+sources (up to **8 rows** for a single year+profile). Any per-project count or
+average must `groupby("profile_id")` first; `len(df)` is a row count, not a
+project count.
+
+⚠️ **`approved` GOES NEGATIVE — 87 rows totalling −$161,302,000.** These are
+funding-source reallocations, not cancellations: `15-75-0108 Mitchell Transit
+Garage` carries **+$500,000 Developer / Partner Financing and −$500,000
+Pay-As-You-Go** in the same year, netting to zero. **$11.51B is the NET**
+(gross positive $11,672,133,000). ⚠️ **This breaks naive `fund_type` filtering** —
+"how much is PAYG-funded?" is wrong unless the negatives are carried, and they
+straddle fund types by construction, so a positives-only filter double-counts
+the swap. 7 year+profile pairs net to exactly $0.
+
 | | |
 |---|---|
 | dense window | **2023–2026 = $9,216,794,000** (the approved four-year cycle) |
