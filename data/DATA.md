@@ -535,11 +535,13 @@ contrast: "nothing to apportion" is not "0% institutional"). Rounded to 4
 decimals — a display gate, not an accounting figure; ⚠️ that rounding is
 load-bearing at the top end, where a 99.95% cell keeps a real (invisible)
 levied residual and only an **exactly 1.0** cell collapses its base to zero.
-Real-data anchors (2026-08-09 roll, 34,671 cells): citywide institutional
-share of levy **4.8%**; **624 cells (1.8%) at or above the 0.25 display
-threshold, carrying 4.9% of city levy**; of the 714 cells above 10%, **467 are
-above 99%** — the distribution is bimodal, which is why the Glass band needs
-only one threshold where the hood treatment needed two. Flagged cells are
+Real-data anchors (**the shipped 2026-08-19 refresh**, 34,666 cells): citywide
+institutional share of levy **4.8%**; **623 cells (1.8%) at or above the 0.25
+display threshold, carrying 4.9% of city levy**; of the 714 cells above 10%,
+**467 are above 99%** — the distribution is bimodal, which is why the Glass band
+needs only one threshold where the hood treatment needed two. (The design was
+measured on a local 2026-08-09 roll giving 624 of 34,671; ⚠️ **the set moves
+with the roll**, so re-measure rather than citing these as fixed.) Flagged cells are
 lower on average (median $9,261/acre vs $18,127) but heavier at the top (p90
 $97,610 vs $53,673), and **18 of the city's top 100 cells by $/acre are
 flagged**, the tallest at **$5.66M/acre, 100% institutional**. Consumed by the
@@ -1760,3 +1762,74 @@ Branch totals must reconcile to the cent against an independently queried fund
 total; every branch must classify and both blocks must be non-empty; a negative
 branch total hard-fails; an unknown budget year hard-fails. `tests/test_export_budget_ranked.py`
 covers each guard.
+
+## 19. Approved Capital Budget — profile level (added 2026-08-22)
+`data/capital_budget.csv`, hand-fetched from
+**`https://budget.edmonton.ca/api/capital_budget.csv`** — the same Open Budget
+portal host as §17, whose capital endpoints had never been probed.
+
+⚠️ **THE OPEN DATA PORTAL HAS NO CAPITAL BUDGET.** Searched `data.edmonton.ca`
+2026-08-21: approved-budget datasets are `da9s-v9j8` (operating expenses, §18)
+and `m84q-ghmu` (operating revenues) — **both OPERATING** — plus `552h-hjwj`
+(214 rows, the `building.edmonton.ca` app feed, 4 asset types) and a 2015 relic
+(`pdmi-3qjb` / `r993-376i`). None of them is the capital budget. Do not go
+looking for a Socrata capital sibling again; there isn't one.
+
+**1,884 rows**, one per `fiscal_year, service, branch, profile_id, profile,
+fund_type, fund, approved`. FY**2023–2037**, **$11,510,831,000** total.
+
+⚠️ **THE GRAIN IS NOT ONE ROW PER PROJECT.** 1,884 rows carry only **399 distinct
+`profile_id`s** — a profile repeats across fiscal years AND across funding
+sources (up to **8 rows** for a single year+profile). Any per-project count or
+average must `groupby("profile_id")` first; `len(df)` is a row count, not a
+project count.
+
+⚠️ **`approved` GOES NEGATIVE — 87 rows totalling −$161,302,000.** These are
+funding-source reallocations, not cancellations: `15-75-0108 Mitchell Transit
+Garage` carries **+$500,000 Developer / Partner Financing and −$500,000
+Pay-As-You-Go** in the same year, netting to zero. **$11.51B is the NET**
+(gross positive $11,672,133,000). ⚠️ **This breaks naive `fund_type` filtering** —
+"how much is PAYG-funded?" is wrong unless the negatives are carried, and they
+straddle fund types by construction, so a positives-only filter double-counts
+the swap. 7 year+profile pairs net to exactly $0.
+
+| | |
+|---|---|
+| dense window | **2023–2026 = $9,216,794,000** (the approved four-year cycle) |
+| tails | carry-forwards only — 60 rows in 2027 falling to 1 in 2037 |
+| top services | LRT Expansion $4.10B · Roads $1.48B · Recreation & Culture $1.02B · Yellowhead Freeway Conversion $789M · Neighbourhoods $716M |
+| `fund_type` | Grants $4.60B · Tax-Supported Debt $3.50B · Reserves $1.23B · PAYG $852M · Retained Earnings $766M · CRL $290M |
+
+A sibling `capital_projects.csv` (399 rows: `profile_id` → description, phase,
+address, **lat/long**) is **NOT committed** — see the join-coverage warning in
+`docs/ANALYSIS_BACKLOG.md` §11 before building anything spatial on it.
+
+### Cadence — ⚠️ NOT annual, and there is NO freshness header
+The capital budget is a **four-year cycle** moved by supplemental adjustments —
+not weekly, not annual. **Manual reviewed input** (§13, §16, §18 pattern);
+`download_data.py` does not fetch it and nothing in `src/` or `main.py` reads it.
+
+⚠️ **`Last-Modified` merely ECHOES `Date`, behind `Cache-Control: no-cache`** —
+there is no `rowsUpdatedAt` equivalent (§18), so **the committed file IS the
+pin** and `vintage_report.check_capital_budget` compares content, not dates.
+Any figure published from this must date itself from the **budget cycle**, never
+from the fetch. The `⚠️ Capital budget` digest row is `docs/RUNBOOK.md` §1a.
+
+### Known Quirks
+- ⚠️ **NEW-VS-RENEWAL IS NOT A PUBLISHED FIELD.** Only two profiles are named
+  outright (`Transportation: Neighbourhoods - Renewal` $69.8M,
+  `Transportation: Bridges & Auxiliary Structures - Renewal` $50.7M); everything
+  else would have to be inferred from words like "Reconstruction" in `profile`.
+  **That is the `DATA_INTEGRITY.md` T8 hand-enumeration shape** — a value-sum
+  over a name-matched set with no self-check. A keyword pass gives ~$1.02B
+  renewal / ~$1.49B new across the road-ish services for 2023–26; treat it as
+  **indicative only and do not publish a split sourced that way.**
+- **The endpoint is byte-stable** (two fetches identical, 2026-08-21) but is
+  generated per request, so the digest hashes **sorted** rows — a server-side
+  reorder must not read as a budget change.
+- ⚠️ **`approved` is a BUDGET, not spend.** These are approved profile amounts
+  across a multi-year cycle, not cash out the door in any given year, and the
+  2027+ rows are carry-forward. Never sum a `fiscal_year` slice and call it
+  annual spending.
+- ⚠️ **This is the CAPITAL side and §18 is the OPERATING side. Never sum them.**
+  Same rule, same reason, as `city_unit_costs.json`'s `_two_bases`.

@@ -58,6 +58,7 @@ has silently stopped running. Green months are the proof of life.
 | Stormwater rates | no entry for the pinned year | §1 step 5 |
 | Pinned activity windows | a calendar year completed and `FIRE_YEARS`/`PERMIT_YEARS`/`PERMIT_YEARS_RECENT` still end before it | §1 step 4 |
 | Temporal archive | the live year was never captured | §1 step 8 |
+| Capital budget | `data/capital_budget.csv` no longer matches upstream | §1a |
 | Site banner | a banner is up in `status.json` | §1 step 10 |
 
 ⚠️ **A network failure reports `❓ UNKNOWN`, never `⚠️ ACTION`** — same rule as
@@ -219,6 +220,46 @@ time.
    cleared (by design, so a manual notice isn't wiped by the heartbeat) — the
    realigned weekly run will NOT clear it for you. Note: the banner change
    reaches the live site on the next workflow run's deploy, not on push.
+
+## 1a. `⚠️ Capital budget` row — upstream moved, re-fetch it
+
+**What it means:** the monthly digest compared `data/capital_budget.csv` against
+`budget.edmonton.ca/api/capital_budget.csv` and they no longer match. The row
+prints the deltas (rows and total approved) so you can tell a supplemental
+adjustment from a whole new cycle before you fetch anything.
+
+**Expect this to stay green for months and then move in one step.** The capital
+budget is a **four-year cycle** (the committed copy is 2023–2026), nudged
+in between by supplemental adjustments. It is not on any weekly or annual
+rhythm, which is exactly why a digest row exists instead of a calendar reminder.
+
+**The fix — the manual reviewed-input pattern (`data/DATA.md` §13, §16, §18):**
+
+```bash
+curl -s https://budget.edmonton.ca/api/capital_budget.csv -o /tmp/capital_budget.csv
+diff <(sort data/capital_budget.csv) <(sort /tmp/capital_budget.csv) | head -40
+```
+
+**Eyeball the diff before replacing anything.** A handful of changed `approved`
+figures is a supplemental adjustment; hundreds of new rows carrying new
+`fiscal_year` values is a new cycle, and a new cycle means every citation of a
+total in `docs/ANALYSIS_BACKLOG.md` §11 is now describing the old one.
+
+```bash
+cp /tmp/capital_budget.csv data/capital_budget.csv
+python scripts/vintage_report.py     # the row should go green
+pytest tests/test_vintage_report.py -q
+```
+
+Then commit, and update `ANALYSIS_BACKLOG.md` §11's figures if the cycle rolled.
+
+⚠️ **Nothing in `src/` or `main.py` reads this file** — it is a reviewed input
+and a sourcing record, not a pipeline input. Re-fetching it cannot change the
+live site, so this is never urgent.
+
+⚠️ **A `❓ UNKNOWN` on this row is not a change.** It means the host was
+unreachable or the CSV header was not what we expect (a 404 page parses as
+neither) — go look by hand, don't re-fetch blind.
 
 ## 2. The weekly run failed (red X email)
 

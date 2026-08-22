@@ -26,7 +26,9 @@ Usage:
 """
 
 import argparse
+import csv
 import datetime as dt
+import hashlib
 import json
 import logging
 import os
@@ -45,9 +47,11 @@ MILL_RATES = ROOT / "data" / "mill_rates.json"
 STORMWATER_RATES = ROOT / "data" / "stormwater_rates.json"
 TEMPORAL_ARCHIVE = ROOT / "data" / "temporal_archive.json"
 STATUS_JSON = ROOT / "web" / "data" / "status.json"
+CAPITAL_BUDGET = ROOT / "data" / "capital_budget.csv"
 
 ASSESSMENT_METADATA_URL = "https://data.edmonton.ca/api/views/q7d6-ambg.json"
 MILL_RATES_URL = "https://data.edmonton.ca/resource/pwis-wc4c.json"
+CAPITAL_BUDGET_URL = "https://budget.edmonton.ca/api/capital_budget.csv"
 
 OK, ACTION, UNKNOWN = "OK", "ACTION", "UNKNOWN"
 
@@ -190,6 +194,58 @@ def check_temporal_archive():
             f"(`docs/SPEC_temporal.md` §0).")
 
 
+def _capital_fingerprint(text):
+    """Row count, total approved, and an ORDER-INDEPENDENT hash of the CSV body.
+
+    ⚠️ Sorted rather than hashed as raw bytes on purpose. The endpoint is
+    byte-stable today (verified 2026-08-21, two fetches identical), but it is
+    generated per request behind `Cache-Control: no-cache`, so a server-side
+    regeneration could reorder rows without changing a single figure. Hashing
+    the bytes would call that a budget change; hashing sorted rows does not.
+    """
+    rows = list(csv.reader(text.splitlines()))
+    if not rows or rows[0][0] != "fiscal_year":
+        raise ValueError(f"unexpected header {rows[0] if rows else '(empty)'!r}")
+    body = rows[1:]
+    total = sum(float(r[-1]) for r in body)
+    digest = hashlib.sha256("\n".join(sorted(",".join(r) for r in body)).encode()).hexdigest()
+    return len(body), total, digest
+
+
+def check_capital_budget(timeout=60):
+    """Has the capital budget moved since the copy committed in data/?
+
+    ⚠️ There is NO freshness header to key off — `Last-Modified` merely echoes
+    `Date` (unlike Socrata's `rowsUpdatedAt`), so the committed file IS the pin
+    and the comparison is content-based. The budget is a four-year cycle moved
+    by supplemental adjustments, so this is expected to stay green for months
+    and then move in one step. `data/DATA.md` §19.
+    """
+    try:
+        local = _capital_fingerprint(CAPITAL_BUDGET.read_text())
+    except FileNotFoundError:
+        return (UNKNOWN, "Capital budget",
+                "No local copy at `data/capital_budget.csv` to compare against.")
+    try:
+        resp = requests.get(CAPITAL_BUDGET_URL, timeout=timeout)
+        resp.raise_for_status()
+        upstream = _capital_fingerprint(resp.text)
+    except Exception as exc:  # noqa: BLE001 — unreachable is UNKNOWN, never ACTION
+        return (UNKNOWN, "Capital budget",
+                f"Could not reach or parse {CAPITAL_BUDGET_URL} ({exc}).")
+
+    n_loc, tot_loc, dig_loc = local
+    n_up, tot_up, dig_up = upstream
+    if dig_loc == dig_up:
+        return (OK, "Capital budget",
+                f"Unchanged ({n_loc:,} rows, ${tot_loc:,.0f} approved).")
+    return (ACTION, "Capital budget",
+            f"**Upstream moved**: {n_loc:,} -> {n_up:,} rows, "
+            f"${tot_loc:,.0f} -> ${tot_up:,.0f} approved "
+            f"(delta {n_up - n_loc:+,} rows, ${tot_up - tot_loc:+,.0f}). "
+            f"Re-fetch and commit — `docs/RUNBOOK.md` §1a.")
+
+
 def check_banner():
     """A banner left up after its cause is fixed is a live-site correctness issue."""
     banner = json.loads(STATUS_JSON.read_text()).get("banner")
@@ -209,6 +265,7 @@ CHECKS = (
     check_stormwater,
     check_window_pins,
     check_temporal_archive,
+    check_capital_budget,
     check_banner,
 )
 
