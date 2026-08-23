@@ -38,8 +38,9 @@ square geometry don't need per-feature geometry objects):
                   "res_revenue_per_acre", "res_revenue_per_lot_acre",
                   "median_year_built",
                   "nonres_revenue_per_acre", "nonres_revenue_per_lot_acre",
-                  "inst_frac"],
-      "cells": [[lon, lat, v, r, vl, rl, rr, rrl, yb, nr, nrl, i], ...]  # lon/lat = SW corner
+                  "inst_frac", "dist_lrt_m", "dist_school_m"],
+      "cells": [[lon, lat, v, r, vl, rl, rr, rrl, yb, nr, nrl, i, dl, ds], ...]
+      # lon/lat = SW corner
     }
 
 ``revenue_*`` columns are omitted on the Phase 1 value-only path, the
@@ -58,6 +59,12 @@ features fall back / stay hidden on older files. Cells with no eligible lot acre
 slots; cells where no property has a known ``year_built`` carry ``null`` in
 the year slot (age has no meaningful zero — a real-zero convention like
 ``res_levy``'s would read as "year 0").
+
+``dist_lrt_m`` / ``dist_school_m`` (whole road-network metres to the nearest
+LRT station / catchment school, from amenity_distance attached upstream per
+property) are omitted when those columns are absent. They are the MEDIAN of
+the cell's properties, and ``null`` where no amenity is reachable — never a
+large sentinel, which a filter would read as a real "far away".
 """
 
 import json
@@ -82,6 +89,11 @@ SHARE_MAX_M2 = 1000.0
 # 0.01%, two orders finer than the threshold that reads it, and it keeps ~35k
 # cells from carrying full float repr for a number nobody sums.
 INST_FRAC_DECIMALS = 4
+
+# Road-network metres to the nearest amenity, attached per property upstream by
+# amenity_distance. Listed in emission order; absent columns degrade gracefully
+# like every other optional input.
+DIST_COLUMNS = ("dist_lrt_m", "dist_school_m")
 
 # Hoods allowed to exceed the physical bound in check_lot_acre_bounds.
 # PEMBINA: 1.41x — a 619-unit manufactured-home point claiming 96 lot acres
@@ -214,6 +226,16 @@ def build_value_grid(df: pd.DataFrame, cell_m: float = 100.0) -> pd.DataFrame:
     if has_year:
         cells["year_built"] = pts["year_built"].to_numpy()
         agg_spec["year_built"] = "median"  # NaN-skipping; all-NaN cell -> NaN
+    # Amenity distances (amenity_distance, attached upstream): the MEDIAN of the
+    # cell's properties, not the minimum. The minimum would let one corner
+    # property near a station make the whole cell read as served — the same
+    # optimistic error as the euclidean distance this metric exists to avoid
+    # (docs/FINDINGS_infill_granularity.md §5). NaN-skipping; a cell whose every
+    # property is unreachable stays NaN.
+    dist_cols = [c for c in DIST_COLUMNS if c in pts.columns]
+    for col in dist_cols:
+        cells[col] = pts[col].to_numpy()
+        agg_spec[col] = "median"
     grid = cells.groupby(["ix", "iy"], as_index=False).agg(agg_spec)
 
     # Conservation guard: binning must not create or lose a dollar.
@@ -267,6 +289,8 @@ def build_value_grid(df: pd.DataFrame, cell_m: float = 100.0) -> pd.DataFrame:
         out["inst_frac"] = (grid["inst_levy"] / total.where(total > 0)).round(
             INST_FRAC_DECIMALS
         )
+    for col in dist_cols:
+        out[col] = grid[col]
 
     logger.info(
         "Value grid: %d properties -> %d occupied %.0f m cells (%d rows without coordinates)",
@@ -525,6 +549,7 @@ def export_value_grid(
     has_nonres = "nonres_revenue_per_acre" in grid.columns
     has_year = "median_year_built" in grid.columns
     has_inst = "inst_frac" in grid.columns
+    dist_cols = [c for c in DIST_COLUMNS if c in grid.columns]
 
     # New columns append at the END so existing slots keep their positions
     # (the web reads the map by columns.indexOf — order-independent — but a
@@ -548,6 +573,7 @@ def export_value_grid(
             columns.append("nonres_revenue_per_lot_acre")
     if has_inst:
         columns.append("inst_frac")
+    columns.extend(dist_cols)
 
     def _int(v) -> int | None:
         return None if pd.isna(v) else round(v)
@@ -575,6 +601,11 @@ def export_value_grid(
             # A fraction, so NOT _int — and null where the cell has no levy
             # to apportion, which the web reads as "not flagged".
             row.append(None if pd.isna(t.inst_frac) else t.inst_frac)
+        for col in dist_cols:
+            # Whole metres — the graph snaps at 0.1 m and the source is road
+            # centrelines, so anything finer would be false precision. Null
+            # where no amenity is reachable, never a large sentinel.
+            row.append(_int(getattr(t, col)))
         rows.append(row)
 
     payload = {
@@ -597,6 +628,7 @@ def export_value_grid(
         "has_nonres": has_nonres,
         "has_year": has_year,
         "has_inst": has_inst,
+        "dist_columns": dist_cols,
         "bytes": out_path.stat().st_size,
     }
     if has_lot:
@@ -605,6 +637,8 @@ def export_value_grid(
         stats["n_cells_without_year"] = int(grid["median_year_built"].isna().sum())
     if has_inst:
         stats["n_cells_without_inst"] = int(grid["inst_frac"].isna().sum())
+    for col in dist_cols:
+        stats[f"n_cells_without_{col}"] = int(grid[col].isna().sum())
     logger.info(
         "Wrote %s: %d cells, %.1f MB", out_path.name, stats["n_cells"], stats["bytes"] / 1e6
     )

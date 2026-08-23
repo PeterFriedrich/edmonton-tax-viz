@@ -54,6 +54,15 @@ validation, raises on new violations), and hands it to `export_value_grid.py`
 for the 100 m cell file (`web/data/value_grid.json`, ground- AND lot-acre
 metrics). Absent property-info file → ground-acre only.
 
+**Also in the flow (amenity distance, 2026-08-23):** a second side branch on
+that same per-property frame, immediately before the grid export.
+`load_transit.derive_lrt_stations` and `load_schools.py` produce two point
+sets; `amenity_distance.py` builds ONE road graph from the roads GeoJSON and
+runs one Dijkstra per set, attaching `dist_lrt_m` / `dist_school_m` per
+property. `export_value_grid` then takes the cell median. Nothing here reaches
+the hood join, and nothing reaches a score — the columns are attributes and a
+filter input. Absent roads or amenity file → the columns are simply absent.
+
 **Also in the flow (stormwater lens, built 2026-07-05):** `load_stormwater.py`
 reads the property-info CSV directly (per-point A × I × R charge model — see
 its module entry) with a `fixa-tstc` point-in-polygon fallback for zone-null
@@ -376,6 +385,14 @@ lot acres). ~34.7k cells / 1.8 MB on current data. Returns a stats dict.
   (`_point_lot_stats` / `SHARE_MAX_M2`); majority-null multi-unit points are
   ineligible (excluded from numerator AND denominator, count + value
   reported).
+- **Amenity distances** (when `dist_lrt_m` / `dist_school_m` are present —
+  `main.py` attaches them per property from `amenity_distance`): the cell
+  **MEDIAN**, emitted in whole metres. ⚠️ **Median, not minimum**: the minimum
+  would let one corner property near a station make a whole cell read as
+  served, the same optimistic error as the euclidean distance the module
+  exists to replace. `null` where no property in the cell can reach an
+  amenity — never a large sentinel, which a filter would read as a real
+  "far away".
 - `check_lot_acre_bounds(df, boundaries)`: physical-bound validation —
   per-hood deduped lot acres ≤ boundary acres, `KNOWN_BOUND_OUTLIERS`
   (PEMBINA) exempt; RAISES on any new violation. `main.py` runs it before
@@ -673,9 +690,83 @@ location_type-1 stations (58: LRT stations + transit centres) as
 `web/data/transit_stations.json` (committed, lazy-loaded), fire-station
 pattern and shape.
 
+**Also derives:** `derive_lrt_stations(stops, routes, trips, stop_times)` —
+the **30 passenger LRT stations** the amenity-distance columns measure to, as
+`station_id, station_name, latitude, longitude`. ⚠️ **A different and stricter
+set than the 58 context dots above.** The light-rail routes → trips →
+stop_ids → `parent_station` derivation gives 33, which includes a tail track
+and two bus-garage platforms; the membership rule is **structural** — a
+passenger station has at least one `location_type == 2` street entrance, and
+those three have none. The dropped set is logged every run so a feed change
+surfaces (DATA.md §20).
+
 **Does not:** claim ridership/usage, model cost, apply the metric to
 on-demand transit (absent from GTFS), or touch assessment data. Like
 roads, a **refreshed input** with no roll-year pin (weekly CI re-pull).
+
+---
+
+### `src/load_schools.py` (amenity distance — added 2026-08-23)
+
+Dataset facts in `DATA.md` §20; design in `docs/SPEC_development.md`
+"Amenity distance". **Point set only** — it computes no metric.
+
+**Inputs:** `data/raw/schools_public.csv` (EPSB `996c-239n`) and
+`schools_catholic.csv` (ECSD `gfxq-u8uu`). Both required; main.py skips the
+school column when either is missing.
+
+**Outputs:** `pd.DataFrame` — `school_name, board, latitude, longitude`, one
+row per **catchment** school (303 on 2026-08-23).
+
+**Responsibilities:**
+- Harmonize two incompatible schemas (EPSB `school_nam`/`sch_type`, ECSD
+  `school_name`/`grade_level`) into one frame
+- Exclude city-wide/specialized programs via the explicit
+  `EPSB_TYPE_IS_CATCHMENT` / `ECSD_LEVEL_IS_CATCHMENT` dicts — the
+  `ZONE_CATEGORY`/`ROUTE_MODE` philosophy, never a keyword heuristic
+- **No silent drops:** an unknown category is KEPT as a catchment school and
+  logged loudly; null coordinates are dropped and reported
+- HARD-ERROR on a point outside the Edmonton bbox — the swapped-lat/long
+  failure a distance column would otherwise absorb into plausible metres
+
+**Does not:** rank schools, model capacity or enrolment, or claim to cover
+private/charter/francophone schools (absent from the source).
+
+---
+
+### `src/amenity_distance.py` (amenity distance — added 2026-08-23)
+
+Dataset facts in `DATA.md` §20; the measurement that forced network distance
+is `docs/FINDINGS_infill_granularity.md` §5. **Distance only** — it does not
+know what an amenity means, and nothing here enters a score.
+
+**Inputs:** the roads GeoJSON (`9j8t-zm52`, the file `load_roads` reads); a
+`points` frame and an `amenities` frame, each with `latitude`/`longitude`.
+
+**Outputs:** `build_road_graph(path) -> RoadGraph` (nodes, CSR edge weights,
+a cKDTree); `network_distance_m(graph, points, amenities, label) -> np.ndarray`
+of metres aligned to `points`, `NaN` where nothing is reachable.
+
+**Responsibilities:**
+- Build the graph in **EPSG:3400** (CRS explicit), one node per centreline
+  vertex, one edge per consecutive pair — curve geometry, not
+  intersection-to-intersection straight lines
+- ⚠️ Keep `centerline_type == "Road"` ONLY. Excluding railways is a
+  **correctness filter**: routing over them walks the LRT track to the LRT
+  station. It also leaves the graph better connected (99.83% vs 99.45%)
+- Collapse duplicate (i, j) pairs to the MINIMUM — they SUM in a coo→csr
+  conversion, and a doubled weight silently lengthens every route through it
+- One Dijkstra per amenity set, from a **virtual super-source** joined to each
+  snapped amenity by its own snap offset (`min_only=True` cannot do this — it
+  would ignore the per-amenity offsets)
+- Include BOTH snap offsets: a station 90 m off the centreline is 90 m from a
+  property standing on it, not 0 m
+- **No silent drops / no sentinels:** unreachable points emit `NaN`; far snaps
+  and unreachable counts are logged with the distribution
+
+**Does not:** model walking speed or time, route over sidewalks/trails (absent
+from the source), weight amenities, or feed the Infill score — the columns are
+attributes and a filter input, by decision (`DECISIONS.md` 2026-08-22).
 
 ---
 

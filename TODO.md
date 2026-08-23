@@ -102,6 +102,21 @@ Services carries no sparkline — measured, it does.)_
 
 ## Open work
 
+- [ ] **PETER'S CALL — the amenity bands are FIXED at 600 m / 800 m
+  (`AMENITY_BANDS` in `web/index.html`).** Built and live behind the weekly
+  refresh 2026-08-23; the filter works, the numbers in it are conventions.
+  - **What a change would cost:** the band value is repeated in each row's
+    tooltip copy, so `AMENITY_BANDS` and the two `title=` strings move together
+    (the code comment says so).
+  - **Undecided:** whether the LRT band should follow the activity window
+    picker — the 3yr kernel wants 800 m where the 5yr wants 600 m. A band that
+    moves under the reader needs a reason better than symmetry.
+  - **Not urgent.** 600 m is the TOD walkshed convention and 800 m the usual
+    school-walk figure; both are defensible as they stand.
+  - ⚠️ **Do NOT fold distance into the Infill score** without deliberately
+    reopening `DECISIONS.md` 2026-08-22 — proximity is a desirability input, and
+    a weighted term nothing can falsify is exactly what that decision refused.
+
 - [ ] **PETER'S CALL — the road service life is 50 years and figures in public
   circulation use 25.** Both readings sit on the SAME City page we
   already cite (`city_unit_costs.json` → `roadway_om_renewal.source`,

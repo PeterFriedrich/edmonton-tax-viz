@@ -21,6 +21,8 @@ Most inputs come from Edmonton's Socrata open-data portal:
   - gtfs_stop_times greh-g7ac (ETS GTFS: stop times, slim $select)      -> CSV
   - gtfs_calendar_dates f2sy-bth7 (ETS GTFS: calendar dates)            -> CSV
   - permits        24uj-dj8v  (General Building Permits, slim $select)   -> CSV
+  - schools_public 996c-239n  (EPSB School Locations)                   -> CSV
+  - schools_catholic gfxq-u8uu (Edmonton Catholic Schools, current)      -> CSV
 
 Mill rates (pwis-wc4c) are NOT fetched here — they live in the committed
 ``data/mill_rates.json`` (see DATA.md); refreshing them for a new year is a
@@ -235,6 +237,21 @@ SOURCES = {
         "dest": RAW / "lrt_routes.geojson",
         "limit": 500,  # 4 routes as of 2026-07
         "count_url": _count_url("rpjw-4jft"),
+    },
+    "schools_public": {
+        # Amenity proximity (docs/SPEC_development.md "Amenity distance"):
+        # school points for the grid's dist_school_m column. The two boards
+        # publish incompatible schemas — load_schools harmonizes them.
+        "url": "https://data.edmonton.ca/resource/996c-239n.csv?$limit=2000",
+        "dest": RAW / "schools_public.csv",
+        "limit": 2000,  # 225 schools as of 2026-08
+        "count_url": _count_url("996c-239n"),
+    },
+    "schools_catholic": {
+        "url": "https://data.edmonton.ca/resource/gfxq-u8uu.csv?$limit=2000",
+        "dest": RAW / "schools_catholic.csv",
+        "limit": 2000,  # 97 schools as of 2026-08
+        "count_url": _count_url("gfxq-u8uu"),
     },
 }
 

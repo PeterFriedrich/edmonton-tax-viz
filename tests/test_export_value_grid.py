@@ -722,3 +722,64 @@ def test_export_inst_frac_serialises_null_not_zero(tmp_path):
     i = payload["columns"].index("inst_frac")
     assert sorted(r[i] for r in payload["cells"] if r[i] is not None) == [0.25]
     assert sum(1 for r in payload["cells"] if r[i] is None) == 1
+
+
+# --- amenity distance columns (amenity_distance, attached upstream) ----------
+
+def test_distance_columns_take_the_cell_median_not_the_minimum():
+    """One corner property near a station must not make the whole cell read as served."""
+    df = _frame([
+        {**A, "assessed_value": 100.0, "dist_lrt_m": 100.0, "dist_school_m": 200.0},
+        {**A2, "assessed_value": 100.0, "dist_lrt_m": 900.0, "dist_school_m": 400.0},
+        {**B, "assessed_value": 100.0, "dist_lrt_m": 5000.0, "dist_school_m": 800.0},
+    ])
+    grid = build_value_grid(df, cell_m=100.0).sort_values("dist_lrt_m").reset_index(drop=True)
+    assert grid.loc[0, "dist_lrt_m"] == pytest.approx(500.0)  # median of 100/900
+    assert grid.loc[0, "dist_school_m"] == pytest.approx(300.0)
+    assert grid.loc[1, "dist_lrt_m"] == pytest.approx(5000.0)
+
+
+def test_distance_median_skips_nulls_and_all_null_cell_is_nan():
+    df = _frame([
+        {**A, "assessed_value": 100.0, "dist_lrt_m": 400.0},
+        {**A2, "assessed_value": 100.0, "dist_lrt_m": None},
+        {**B, "assessed_value": 100.0, "dist_lrt_m": None},
+    ])
+    grid = build_value_grid(df, cell_m=100.0)
+    dists = sorted(grid["dist_lrt_m"], key=lambda v: (pd.isna(v), v))
+    assert dists[0] == pytest.approx(400.0)
+    assert pd.isna(dists[1])
+
+
+def test_no_distance_columns_omitted():
+    grid = build_value_grid(_frame([{**A, "assessed_value": 100.0}]))
+    assert "dist_lrt_m" not in grid.columns
+    assert "dist_school_m" not in grid.columns
+
+
+def test_one_distance_column_ships_without_the_other():
+    """Graceful degradation: no GTFS feed still leaves the school column usable."""
+    df = _frame([{**A, "assessed_value": 100.0, "dist_school_m": 250.0}])
+    grid = build_value_grid(df)
+    assert "dist_school_m" in grid.columns
+    assert "dist_lrt_m" not in grid.columns
+
+
+def test_export_distance_columns_appended_last(tmp_path):
+    df = _frame([
+        {**A, "assessed_value": 100.0, "dist_lrt_m": 612.4, "dist_school_m": 250.0},
+        {**B, "assessed_value": 400.0, "dist_lrt_m": None, "dist_school_m": 900.0},
+    ])
+    out = tmp_path / "value_grid.json"
+    stats = export_value_grid(df, out, cell_m=100.0)
+    payload = json.loads(out.read_text())
+    assert payload["columns"] == [
+        "lon", "lat", "value_per_acre", "dist_lrt_m", "dist_school_m",
+    ]
+    assert stats["dist_columns"] == ["dist_lrt_m", "dist_school_m"]
+    assert stats["n_cells_without_dist_lrt_m"] == 1
+    lrt = sorted((r[3] for r in payload["cells"]), key=lambda v: (v is None, v))
+    # Whole metres — the graph snaps at 0.1 m and the source is centrelines.
+    assert lrt[0] == 612 and isinstance(lrt[0], int)
+    # Unreachable is null, NOT a large sentinel a filter would read as "far".
+    assert lrt[1] is None

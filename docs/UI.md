@@ -493,6 +493,40 @@ plane is mouseover geography. Implementation (`web/index.html`,
   ground-vs-lot at 100% (`tools/profiling/shot-denom.js` — the WEM needle
   visibly collapses in lot mode; downtown becomes the sole peak).
 
+#### Amenity bands (built 2026-08-23 — `#amenity`, two checkboxes)
+Filter the cells by road-network distance to an LRT station (600 m) or a
+catchment school (800 m). Design + the locked calls: `SPEC_development.md`
+"Amenity distance", `DECISIONS.md` 2026-08-23, state space in
+`CONTROLS_MATRIX.md`.
+- **Two independent rows, not one composite switch** — the bands are ~14x
+  apart in what they select (1.6% vs 21.8% of cells at 600 m) and ANDing the
+  conventional pair leaves **0.8%**. One switch would hide that collapse
+  behind a word, and would be a weighted index by another name.
+- **Out-of-band cells DIM, they do not disappear.** At 1.6% a hard hide leaves
+  scattered dots with nothing to place them against; dimming keeps the city's
+  shape while all ramp signal belongs to the selection. It also keeps ONE
+  stable cell array, so a toggle cannot re-tessellate 34k cells. Dim colour is
+  `SET_ASIDE_COLOR` at alpha 60 — deliberate reuse of the "off the scale"
+  meaning the plane below already carries.
+- ⚠️ **The blurb has to say grey is "not zero and not set-aside"** — the legend
+  already spends that grey on set-aside land, so a greyed CELL is ambiguous
+  without the sentence. It also carries the live in-band count, because at
+  1.6% a filtered map otherwise looks broken.
+- ⚠️ **The negative phrasing does not survive two bands** — "further than 600 m
+  of an LRT station AND within 800 m of a school" is a contradiction. The
+  prose is built around what KEEPS colour.
+- **Rows self-gate on their own column** and are hidden on a served file from
+  before the pipeline (the house pattern). `syncAmenityControls` runs from
+  `applyView` **after** `await ensureGridData()`, and once at init because
+  `applyView` is not called on load.
+- Headless-verified 2026-08-23 (`tools/profiling/verify-amenity.js`, 24
+  checks: view + per-row gating, dim-not-drop with an unchanged cell count,
+  stable data identity across a toggle, the AND being stricter than either
+  band, null-is-out-of-band, blurb honesty + live counts, cross-view
+  persistence, and the house-pattern path against the real served file).
+  Blurb height measured rather than assumed: +113px, still clearing `#botleft`
+  by 166px at 1280x720.
+
 ### Neighbourhood denominator toggle (Money view, built 2026-07-08)
 The Glass "Ground acres | Lot acres" control, mirrored onto the **Money view's
 neighbourhood prisms** — the "value per *developable* acre" view (Urban3-

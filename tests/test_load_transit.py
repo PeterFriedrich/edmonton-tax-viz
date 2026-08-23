@@ -1,4 +1,5 @@
 import json
+import logging
 import sys
 
 import geopandas as gpd
@@ -8,6 +9,7 @@ from shapely.geometry import Polygon
 
 sys.path.insert(0, "src")
 from load_transit import (
+    derive_lrt_stations,
     export_transit_lines_web,
     export_transit_stations_web,
     load_transit,
@@ -300,3 +302,86 @@ def test_lines_export_errors_when_all_excluded(tmp_path):
 def test_lines_export_errors_on_empty_file(tmp_path):
     with pytest.raises(ValueError, match="no features"):
         export_transit_lines_web(_write_routes(tmp_path, []), tmp_path / "out.json")
+
+
+# --- derive_lrt_stations: the amenity-distance station set -------------------
+#
+# One real passenger station (P1, with a street entrance), one garage platform
+# (G1, no entrance) and one bus-only station (B1) that LRT never serves. The
+# membership rule is structural, so the fixture models the STRUCTURE: platform
+# children under a parent, entrances only where a passenger can get in.
+STATION_STOPS = [
+    {"stop_id": "P1", "stop_name": "Real Station", "stop_lat": 53.540, "stop_lon": -113.490,
+     "location_type": 1, "parent_station": None},
+    {"stop_id": "P1a", "stop_name": "Real Station Platform", "stop_lat": 53.540, "stop_lon": -113.490,
+     "location_type": 0, "parent_station": "P1"},
+    {"stop_id": "P1e", "stop_name": "Real Station East Entrance", "stop_lat": 53.5401, "stop_lon": -113.4901,
+     "location_type": 2, "parent_station": "P1"},
+    {"stop_id": "G1", "stop_name": "Somewhere Garage Platform", "stop_lat": 53.560, "stop_lon": -113.470,
+     "location_type": 1, "parent_station": None},
+    {"stop_id": "G1a", "stop_name": "Garage Platform", "stop_lat": 53.560, "stop_lon": -113.470,
+     "location_type": 0, "parent_station": "G1"},
+    {"stop_id": "B1", "stop_name": "Bus Transit Centre", "stop_lat": 53.520, "stop_lon": -113.450,
+     "location_type": 1, "parent_station": None},
+    {"stop_id": "B1a", "stop_name": "Bus Bay", "stop_lat": 53.520, "stop_lon": -113.450,
+     "location_type": 0, "parent_station": "B1"},
+    {"stop_id": "B1e", "stop_name": "Bus Centre Entrance", "stop_lat": 53.5201, "stop_lon": -113.4501,
+     "location_type": 2, "parent_station": "B1"},
+]
+
+STATION_STOP_TIMES = [
+    {"trip_id": "t2", "stop_id": "P1a"},   # LRT trip
+    {"trip_id": "t2", "stop_id": "G1a"},   # LRT trip passes the garage platform
+    {"trip_id": "t1", "stop_id": "B1a"},   # bus trip only
+]
+
+
+def _stations(tmp_path, stops=None, stop_times=None, routes=None, trips=None):
+    return derive_lrt_stations(
+        _write(tmp_path, "st_stops.csv", stops or STATION_STOPS),
+        _write(tmp_path, "st_routes.csv", routes or DEFAULT_ROUTES),
+        _write(tmp_path, "st_trips.csv", trips or DEFAULT_TRIPS),
+        _write(tmp_path, "st_stop_times.csv", stop_times or STATION_STOP_TIMES),
+    )
+
+
+def test_lrt_stations_keep_only_parents_with_a_street_entrance(tmp_path):
+    """The T8 membership pass: a garage platform is named like a station and is not one."""
+    out = _stations(tmp_path)
+    assert list(out["station_name"]) == ["Real Station"]
+
+
+def test_bus_only_station_is_not_an_lrt_station(tmp_path):
+    """location_type == 1 alone is the WRONG set — it mixes in bus transit centres."""
+    assert "Bus Transit Centre" not in set(_stations(tmp_path)["station_name"])
+
+
+def test_dropped_stations_are_named_in_the_log(tmp_path, caplog):
+    """A feed change must surface, not silently resize the amenity set."""
+    with caplog.at_level(logging.INFO):
+        _stations(tmp_path)
+    assert "Somewhere Garage Platform" in caplog.text
+
+
+def test_a_garage_that_gains_an_entrance_is_kept(tmp_path):
+    """The rule is structural, so it follows the feed rather than a frozen name list."""
+    stops = STATION_STOPS + [
+        {"stop_id": "G1e", "stop_name": "Garage Entrance", "stop_lat": 53.5601,
+         "stop_lon": -113.4701, "location_type": 2, "parent_station": "G1"},
+    ]
+    assert set(_stations(tmp_path, stops=stops)["station_name"]) == {
+        "Real Station", "Somewhere Garage Platform",
+    }
+
+
+def test_no_station_has_an_entrance_raises(tmp_path):
+    """Silently emitting zero stations would make every distance null."""
+    stops = [s for s in STATION_STOPS if s["location_type"] != 2]
+    with pytest.raises(ValueError, match="membership rule"):
+        _stations(tmp_path, stops=stops)
+
+
+def test_no_light_rail_route_raises(tmp_path):
+    routes = [{"route_id": "rb", "route_type_descr": "Bus"}]
+    with pytest.raises(ValueError, match="no light-rail routes"):
+        _stations(tmp_path, routes=routes)

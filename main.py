@@ -44,10 +44,13 @@ from load_franchise import load_franchise
 from load_fire import load_fire_events, export_fire_stations_web
 from load_transit import (
     load_transit,
+    derive_lrt_stations,
     export_transit_stations_web,
     export_transit_lines_web,
 )
 from load_permits import load_permits, export_dev_grid
+from load_schools import load_schools
+from amenity_distance import build_road_graph, network_distance_m
 from join_and_calculate import join_and_calculate, export_geojson, load_unit_costs
 from export_value_grid import export_value_grid, check_lot_acre_bounds, build_hood_lot_acres
 from load_temporal import load_temporal, export_temporal_web
@@ -84,6 +87,10 @@ PERMITS_CSV = ROOT / "data/raw/building_permits.csv"
 # Temporal lens (SPEC_temporal.md): the year x hood x class SERVER-SIDE
 # aggregate, ~14.8k rows — never the 5.5M-row raw dataset.
 HISTORICAL_CSV = ROOT / "data/raw/assessment_historical_by_hood.csv"
+# School points for the grid's amenity-distance column (DATA.md §12); the two
+# boards publish separately and load_schools harmonizes them.
+SCHOOLS_PUBLIC_CSV = ROOT / "data/raw/schools_public.csv"
+SCHOOLS_CATHOLIC_CSV = ROOT / "data/raw/schools_catholic.csv"
 MILL_RATES_JSON = ROOT / "data/mill_rates.json"
 STORMWATER_RATES_JSON = ROOT / "data/stormwater_rates.json"
 WATER_RATES_JSON = ROOT / "data/water_rates.json"
@@ -200,6 +207,9 @@ def run(
     gtfs_stop_times_csv: Path | None = GTFS_STOP_TIMES_CSV,
     gtfs_calendar_dates_csv: Path | None = GTFS_CALENDAR_DATES_CSV,
     lrt_routes_geojson: Path | None = LRT_ROUTES_GEOJSON,
+    schools_public_csv: Path | None = SCHOOLS_PUBLIC_CSV,
+    schools_catholic_csv: Path | None = SCHOOLS_CATHOLIC_CSV,
+    amenity_distances: bool = True,
     setback_m: float = SETBACK_M,
     simplify_tolerance_m: float = SIMPLIFY_TOLERANCE_M,
 ) -> None:
@@ -454,6 +464,41 @@ def run(
                 str(zoning_geojson), boundaries, str(ZONING_WEB_OUT),
                 setback_m=setback_m,
             )
+        # Road-network distance from each property to the nearest LRT station and
+        # catchment school (SPEC_development.md "Amenity distance"). Attached to
+        # grid_input as per-property columns; export_value_grid takes the median
+        # per cell. Straight-line distance is NOT an acceptable substitute here —
+        # it is 55% false-positive at a 600 m band (FINDINGS_infill_granularity
+        # §5) — so without the road graph the columns are simply absent, like
+        # every other optional input.
+        amenities = {}
+        if amenity_distances and roads_geojson is not None and Path(roads_geojson).exists():
+            if gtfs_stops_csv is not None and Path(gtfs_stops_csv).exists():
+                amenities["dist_lrt_m"] = derive_lrt_stations(
+                    gtfs_stops_csv, gtfs_routes_csv, gtfs_trips_csv, gtfs_stop_times_csv,
+                )
+            if (
+                schools_public_csv is not None and Path(schools_public_csv).exists()
+                and schools_catholic_csv is not None and Path(schools_catholic_csv).exists()
+            ):
+                amenities["dist_school_m"] = load_schools(schools_public_csv, schools_catholic_csv)
+            else:
+                logger.warning(
+                    "School files not found (%s, %s) — no dist_school_m column",
+                    schools_public_csv, schools_catholic_csv,
+                )
+            if amenities:
+                graph = build_road_graph(str(roads_geojson))
+                grid_input = grid_input.assign(**{
+                    col: network_distance_m(graph, grid_input, points, col)
+                    for col, points in amenities.items()
+                })
+        elif amenity_distances:
+            logger.warning(
+                "Roads file not found (%s) — no amenity-distance columns on the grid",
+                roads_geojson,
+            )
+
         # Grid-cell spikes for the Glass view (Urban3-style detail). Reuses the
         # grid_input (assessment + lot_size) built above; the lot-acre variant
         # is deduped per docs/FINDINGS_lot_dedupe.md, and without the
@@ -564,6 +609,10 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p.add_argument("--historical-csv", type=Path, default=HISTORICAL_CSV)
     p.add_argument("--skip-permits", action="store_true",
                    help="skip the development/infill activity lens (SPEC_development.md \"Lens A\")")
+    p.add_argument("--schools-public-csv", type=Path, default=SCHOOLS_PUBLIC_CSV)
+    p.add_argument("--schools-catholic-csv", type=Path, default=SCHOOLS_CATHOLIC_CSV)
+    p.add_argument("--skip-amenity-distance", action="store_true",
+                   help="skip the grid's dist_lrt_m / dist_school_m columns")
     p.add_argument("--log-level", default="INFO", help="logging level (default INFO)")
     return p.parse_args(argv)
 
@@ -600,6 +649,9 @@ def main(argv: list[str] | None = None) -> None:
         lrt_routes_geojson=None if args.skip_transit else args.lrt_routes_geojson,
         permits_csv=None if args.skip_permits else args.permits_csv,
         historical_csv=args.historical_csv,
+        schools_public_csv=args.schools_public_csv,
+        schools_catholic_csv=args.schools_catholic_csv,
+        amenity_distances=not args.skip_amenity_distance,
         setback_m=args.setback_m,
         simplify_tolerance_m=args.simplify_tolerance_m,
     )

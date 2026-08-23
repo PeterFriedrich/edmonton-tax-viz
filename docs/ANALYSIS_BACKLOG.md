@@ -915,6 +915,15 @@ schools, for each property, then it would get filled into each spike."*
 - **Nothing here is blocked on data acquisition.** LRT stations derive from the
   GTFS in `data/raw/`; schools are `996c-239n` (225) + `gfxq-u8uu` (97).
 
+✅ **DONE 2026-08-23 — the distances themselves ship** (`feat/amenity-distance`):
+`dist_lrt_m` / `dist_school_m` as per-cell attributes on `value_grid.json`,
+computed per property over a road graph and taken as the cell median.
+⚠️ **No UI reads them yet** — the filter is the next unit of work, and the band
+value is a Peter call (`SPEC_development.md` "Amenity distance").
+⚠️ **One correction to the measurement above:** S115's probe graph included
+railway centrelines, so its network distances could route along the LRT track.
+The shipped graph excludes them; the 55% figure is if anything understated.
+
 **Still open — in dependency order:**
 
 1. ✅ **DONE 2026-08-22 — total absence of `gross_area` now emits `null`.**
@@ -924,8 +933,11 @@ schools, for each property, then it would get filled into each spike."*
    coverage threshold or a coverage-scaled FAR would reach it; **both need a
    "what fraction is enough" call, the same shape as the 0.90 set-aside
    threshold, and neither should be guessed.** See the findings §6a.
-2. **A `T8` membership pass on the derived LRT station set** before it is used —
-   33 parents including a tail track and two bus-garage platforms.
+2. ✅ **DONE 2026-08-23 — the `T8` membership pass is paid, and the rule is
+   STRUCTURAL.** A passenger station has a `location_type == 2` street entrance;
+   exactly the 3 suspects have none, all 30 survivors have one. ⚠️ Trip counts
+   could NOT have separated them (two tie exactly with Belvedere/Clareview at
+   3,601 trips — they sit on the alignment). `DECISIONS.md` 2026-08-23.
 3. **Per-cell replacements for `is_set_aside` and the asymmetric residential
    gate.** ⚠️ The gate is doing more work than the spec claims (it absorbs the
    `gross_area` gap), and per-cell its `f_res` is often measured on ONE point —
@@ -937,3 +949,39 @@ schools, for each property, then it would get filled into each spike."*
    Infill view is a flat diverging plane, not spikes — Peter's "filled into each
    spike" implies an extrusion the lens has never had, and a signed diverging
    score has no natural height (which arm gets tall?).
+
+## 13. The school amenity set is two boards out of five (NEW 2026-08-23, SOURCED, not built)
+
+`dist_school_m` measures to **303 catchment schools** from EPSB + ECSD. Private,
+charter and francophone (Conseil scolaire Centre-Nord) schools are **not in it**,
+so the column overstates distance wherever one of those is nearest. Dataset facts
++ the three probes: `data/DATA.md` §20.
+
+**Settled by probe 2026-08-23, do not re-derive:**
+- **The property roll cannot answer it.** No field says what a building IS;
+  `legal_description` is `Plan / Block / Lot`; **0 of 439,685 rows** mention
+  "school".
+- **Zoning cannot answer it either.** `US` — the zone schools nominally occupy —
+  is on **one** parcel citywide, and `PS`/`PSN` (751/949) mean parks. Institutional
+  land is hospitals, fire halls, worship and community leagues too.
+- **Edmonton's portal has no such dataset.** The catalogue's `school` results are
+  entirely EPSB/ECSD (locations, catchments, footprints, ward boundaries,
+  historical vintages).
+- **Alberta publishes lists that cover them — as PDFs**, not rows.
+
+**Still open — and it is a JUDGEMENT, not a lookup:**
+1. **Is a hand-built list worth its staleness?** Transcribing + geocoding the
+   provincial PDFs is a few dozen points and `amenity_distance` takes any point
+   frame, so the *work* is small. ⚠️ **The cost is that it would go stale
+   SILENTLY** — the two board feeds re-download weekly and a manual list would
+   not, so a school opening or closing keeps answering with the old geometry.
+   That is the `archived-tables-still-answer` shape: reachable is not updated.
+2. **If built, it needs the manual-reviewed-input treatment** (`DATA.md` §13/§16/
+   §18 pattern): committed file, content-hash digest, a vintage row in
+   `RUNBOOK.md` §0. Adding it as a quiet extra point set would be the worst of
+   both — wider coverage, no freshness contract.
+3. **The error direction is currently SAFE and would stay safe if left alone.**
+   Missing schools means "further than you are", which under-claims proximity —
+   the same direction as the node-snap and walk-proxy approximations. Closing the
+   gap partially (say, private but not francophone) does not change that; it just
+   moves the boundary.
