@@ -418,3 +418,102 @@ def export_transit_lines_web(lrt_routes_geojson: str | Path, out_path: str | Pat
         json.dump({"lines": lines}, f, separators=(",", ":"), ensure_ascii=False)
     logger.info("Wrote %d LRT track segments to %s", len(lines), out_path)
     return len(lines)
+
+
+# GTFS location_type values, named rather than inlined — the station membership
+# rule below turns on the difference between them.
+LOC_STOP, LOC_STATION, LOC_ENTRANCE = "0", "1", "2"
+
+
+def derive_lrt_stations(
+    stops_csv: str | Path,
+    routes_csv: str | Path,
+    trips_csv: str | Path,
+    stop_times_csv: str | Path,
+) -> pd.DataFrame:
+    """Passenger LRT stations from the GTFS feed, as ``station_id, station_name,
+    latitude, longitude``.
+
+    Derivation: the light-rail routes (ROUTE_MODE 'lrt') -> their trips -> the
+    stop_ids those trips serve -> each stop's ``parent_station``. That yields 33
+    parents on the 2026-08 feed and is NOT the answer on its own — the set
+    includes a tail track and two bus-garage platforms, which sit on the
+    alignment, take a scheduled time on every trip, and are named like stations.
+
+    ⚠️ **The membership rule is STRUCTURAL, not a name list.** A passenger
+    station has at least one ``location_type == 2`` ENTRANCE child; the tail
+    track and the garage platforms have none, because there is no way in from
+    the street. Measured 2026-08-23: exactly 3 of 33 parents have zero
+    entrances, and all 30 survivors have at least one — a clean split with
+    nothing near the boundary. The dropped set is logged every run, so a feed
+    that gives a garage an entrance (or takes a real station's away) shows up
+    instead of silently changing the amenity set.
+
+    Excluded here means excluded from the *amenity distance* — the transit
+    SERVICE metric (load_transit) counts stop-events at every served stop and
+    is unaffected.
+    """
+    routes = pd.read_csv(routes_csv, dtype=str)
+    descr = routes["route_type_descr"].astype("string").str.strip().str.upper()
+    lrt_route_ids = set(routes.loc[descr.map(ROUTE_MODE) == "lrt", "route_id"])
+    if not lrt_route_ids:
+        raise ValueError(
+            f"no light-rail routes in {routes_csv} — ROUTE_MODE found no 'lrt' "
+            f"among {sorted(set(descr.dropna()))}"
+        )
+
+    trips = pd.read_csv(trips_csv, dtype=str, usecols=["trip_id", "route_id"])
+    lrt_trips = set(trips.loc[trips["route_id"].isin(lrt_route_ids), "trip_id"])
+    stop_times = pd.read_csv(stop_times_csv, dtype=str, usecols=["trip_id", "stop_id"])
+    served = set(stop_times.loc[stop_times["trip_id"].isin(lrt_trips), "stop_id"])
+
+    stops = pd.read_csv(stops_csv, dtype=str)
+    for needed in ("stop_id", "stop_name", "stop_lat", "stop_lon", "location_type",
+                   "parent_station"):
+        if needed not in stops.columns:
+            raise ValueError(
+                f"expected column {needed!r} not in {stops_csv} — headers: "
+                f"{list(stops.columns)}"
+            )
+    served_rows = stops.loc[stops["stop_id"].isin(served)]
+    orphans = served_rows["parent_station"].isna()
+    if orphans.any():
+        logger.warning(
+            "%d LRT-served stop(s) have no parent_station — excluded from the "
+            "station set: %s",
+            int(orphans.sum()), sorted(served_rows.loc[orphans, "stop_name"].dropna()),
+        )
+    parent_ids = set(served_rows["parent_station"].dropna())
+
+    has_entrance = set(
+        stops.loc[stops["location_type"] == LOC_ENTRANCE, "parent_station"].dropna()
+    )
+    parents = stops.loc[stops["stop_id"].isin(parent_ids)].copy()
+    keep = parents["stop_id"].isin(has_entrance)
+    if not keep.any():
+        raise ValueError(
+            f"no LRT parent station in {stops_csv} has a location_type=={LOC_ENTRANCE} "
+            "entrance child — the feed's station modelling changed; re-measure the "
+            "membership rule before trusting this set."
+        )
+    logger.info(
+        "LRT stations: %d of %d served parents kept (>=1 street entrance); "
+        "dropped %s",
+        int(keep.sum()), len(parents),
+        ", ".join(sorted(parents.loc[~keep, "stop_name"].fillna("?"))) or "none",
+    )
+
+    lat = pd.to_numeric(parents.loc[keep, "stop_lat"], errors="coerce")
+    lon = pd.to_numeric(parents.loc[keep, "stop_lon"], errors="coerce")
+    bad = lat.isna() | lon.isna()
+    if bad.any():
+        logger.warning("%d LRT station(s) have null coordinates — dropped", int(bad.sum()))
+    out = pd.DataFrame({
+        "station_id": parents.loc[keep, "stop_id"],
+        "station_name": parents.loc[keep, "stop_name"],
+        "latitude": lat,
+        "longitude": lon,
+    }).loc[~bad.to_numpy()].reset_index(drop=True)
+    if out.empty:
+        raise ValueError(f"no LRT stations with coordinates in {stops_csv}")
+    return out
