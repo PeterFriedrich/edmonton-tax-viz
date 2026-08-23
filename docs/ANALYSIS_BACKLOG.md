@@ -915,6 +915,15 @@ schools, for each property, then it would get filled into each spike."*
 - **Nothing here is blocked on data acquisition.** LRT stations derive from the
   GTFS in `data/raw/`; schools are `996c-239n` (225) + `gfxq-u8uu` (97).
 
+✅ **DONE 2026-08-23 — the distances themselves ship** (`feat/amenity-distance`):
+`dist_lrt_m` / `dist_school_m` as per-cell attributes on `value_grid.json`,
+computed per property over a road graph and taken as the cell median.
+⚠️ **No UI reads them yet** — the filter is the next unit of work, and the band
+value is a Peter call (`SPEC_development.md` "Amenity distance").
+⚠️ **One correction to the measurement above:** S115's probe graph included
+railway centrelines, so its network distances could route along the LRT track.
+The shipped graph excludes them; the 55% figure is if anything understated.
+
 **Still open — in dependency order:**
 
 1. ✅ **DONE 2026-08-22 — total absence of `gross_area` now emits `null`.**
@@ -924,8 +933,11 @@ schools, for each property, then it would get filled into each spike."*
    coverage threshold or a coverage-scaled FAR would reach it; **both need a
    "what fraction is enough" call, the same shape as the 0.90 set-aside
    threshold, and neither should be guessed.** See the findings §6a.
-2. **A `T8` membership pass on the derived LRT station set** before it is used —
-   33 parents including a tail track and two bus-garage platforms.
+2. ✅ **DONE 2026-08-23 — the `T8` membership pass is paid, and the rule is
+   STRUCTURAL.** A passenger station has a `location_type == 2` street entrance;
+   exactly the 3 suspects have none, all 30 survivors have one. ⚠️ Trip counts
+   could NOT have separated them (two tie exactly with Belvedere/Clareview at
+   3,601 trips — they sit on the alignment). `DECISIONS.md` 2026-08-23.
 3. **Per-cell replacements for `is_set_aside` and the asymmetric residential
    gate.** ⚠️ The gate is doing more work than the spec claims (it absorbs the
    `gross_area` gap), and per-cell its `f_res` is often measured on ONE point —

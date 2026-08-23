@@ -1839,3 +1839,68 @@ from the fetch. The `⚠️ Capital budget` digest row is `docs/RUNBOOK.md` §1a
   annual spending.
 - ⚠️ **This is the CAPITAL side and §18 is the OPERATING side. Never sum them.**
   Same rule, same reason, as `city_unit_costs.json`'s `_two_bases`.
+
+## 20. Schools + amenity distance (grid columns, added 2026-08-23)
+
+Feeds `value_grid.json`'s `dist_lrt_m` / `dist_school_m` — road-network metres
+from a cell to the nearest LRT station and catchment school. Built by
+`src/load_schools.py` + `src/amenity_distance.py`; the station set comes from
+`load_transit.derive_lrt_stations`. Design + the locked calls:
+`docs/SPEC_development.md` "Amenity distance", `docs/DECISIONS.md` 2026-08-23.
+
+### Sources
+| dataset | id | rows | fetched |
+|---|---|---|---|
+| EPSB School Locations | `996c-239n` | 225 | `download_data.py --only schools_public` |
+| Edmonton Catholic Schools (Current) | `gfxq-u8uu` | 97 | `--only schools_catholic` |
+| LRT stations | — | 30 | derived from the GTFS already on disk (§9) |
+| Road graph | `9j8t-zm52` | 39,515 walkable | the roads file the services lens uses (§7) |
+
+Both school datasets carry `latitude`/`longitude` (zero nulls, 2026-08-23) and a
+grade field, and **their schemas disagree**: EPSB has `sch_type` (`EL`/`EJ`/`JR`/
+`SR`/`SP`/…) plus a free-text `grades`; ECSD has `grade_level` (`Elementary`,
+`Junior`, `Senior`, `Outreach`, and comma-joined combinations) plus
+`grades_offered`. `load_schools` harmonizes them; neither field is parsed as text.
+
+### ⚠️ Coverage gap — this is NOT every school in Edmonton
+The portal publishes the two public boards and nothing else. **Private, charter,
+and francophone (Conseil scolaire Centre-Nord) schools are absent**, so
+`dist_school_m` overstates distance for any block whose nearest school is one of
+them. Never label the column "distance to the nearest school".
+
+### Known Quirks
+- ⚠️ **19 rows are city-wide programs, not neighbourhood schools**, and they sit
+  in the same table as the catchment ones: EPSB `sch_type == 'SP'` (15 — the four
+  Learning Store storefronts, Glenrose Hospital, Metro Continuing Ed., AB School
+  for Deaf, Braemar, Aspen Program, L. Y. Cairns, …) and ECSD
+  `grade_level == 'Outreach'` (4 — the CCAC centres). Including them would put a
+  fake "school nearby" on downtown and hospital cells. Excluded by **enumerated
+  category** in `load_schools`; an unknown category is KEPT and logged.
+- ⚠️ **The 33 GTFS LRT "stations" include a tail track and two bus-garage
+  platforms** (`Heath Sciences Tail Track`, `DL Macdonald Platform`,
+  `Kathleen Andrews Platform`). They sit on the alignment and take a scheduled
+  time on every trip, so trip counts do NOT separate them. What does: a passenger
+  station has at least one `location_type == 2` **street entrance** child, and
+  those three have none. 30 stations survive. ⚠️ **The 58 `location_type == 1`
+  stops are a DIFFERENT and wrong set** — that one mixes LRT with bus transit
+  centres, and it is what the `transit_stations.json` context dots draw.
+- ⚠️ **Railway centrelines are excluded from the road graph on purpose.** Routing
+  over them lets a walk travel *along the LRT track* to reach an LRT station.
+  Dropping alleys + railways also leaves the graph better connected: 163,841
+  nodes at 99.83% in one component vs 186,931 at 99.45% unfiltered.
+- **`responsible_party` is NOT filtered here**, unlike `load_roads`. That filter
+  exists there because the services lens measures what the City maintains; a
+  provincial or private road is still walkable, and excluding it carves holes.
+- **440 of 439,685 properties (0.1%) cannot reach any amenity** over the graph —
+  they sit in one of the 17 disconnected fragments. They emit `null`, never a
+  large sentinel a filter would read as a real "far away".
+- **Points snap to the nearest graph NODE, not the nearest point on an edge.**
+  Measured over 20,000 real properties: median 3.5 m of excess, p90 35 m, p99
+  67 m, 0.19% over 100 m. It always ADDS distance, so the error direction
+  under-claims proximity.
+- ⚠️ **Road centrelines are a walk PROXY, not a walkshed.** Sidewalks, river-valley
+  trails, shared-use paths and pedestrian bridges are not in the source, so a
+  block whose real route is a footpath reads as further than it is.
+- Distribution on the 2026-07-06 snapshot: `dist_lrt_m` median 5,346 m per cell,
+  **554 cells (1.6%) within 600 m**; `dist_school_m` median 982 m, **37.8% within
+  800 m**. Network/euclidean ratio to LRT: median **1.36**.

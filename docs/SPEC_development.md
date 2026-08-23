@@ -544,6 +544,39 @@ now". Design decisions:
 recomputes, null-cell absence, picker hiding, and the shared-fetch Glass
 regression.
 
+## Amenity distance — BUILT 2026-08-23 (pipeline; UI filter still to come)
+
+Peter, 2026-08-22: *"one of the affectors i wanted was like, distance of each
+block from lrt stations, and schools, for each property."* Shipped as **two
+per-cell attributes on the 100 m grid**, `dist_lrt_m` and `dist_school_m`.
+
+⚠️ **They are NOT terms in the Infill score, by decision** (`DECISIONS.md`
+2026-08-22). Proximity is a *desirability* input, not an *underused* input;
+folding it into `−(z(far) + z(activity))` would turn a descriptive metric into
+a weighted index whose weights nothing can falsify. As attributes they answer
+the question directly ("show me the quiet-opportunity cells within 600 m of
+LRT") and stay independent of whether the score itself ever re-grains.
+
+**What is locked**
+| | |
+|---|---|
+| Distance basis | **Road-network**, never straight-line — euclidean is 55% false-positive at a 600 m band (`FINDINGS_infill_granularity.md` §5) |
+| Graph | `centerline_type == "Road"` only; railways excluded as a **correctness** filter (they let a walk travel the LRT track to the LRT station) |
+| Per-cell statistic | **Median** of the cell's properties, not the minimum — one corner property must not make a whole cell read as served |
+| LRT station set | The **30** parents with a street entrance, not the 33 served parents and not the 58 `location_type == 1` stops |
+| Schools | Both public boards, **catchment schools only** (19 city-wide/specialized programs excluded); private/charter/francophone are absent from the source |
+| Missing | `null`, never a large sentinel — 0.1% of properties reach no amenity over the graph |
+
+**What is still open**
+- **The UI filter has not been built.** The columns ship; nothing reads them yet.
+  A control needs a home in the existing grouping (`CONTROLS_MATRIX.md`) and the
+  band values (600 m? 800 m? the window picker?) are a Peter call.
+- **The band is a judgement, not a discovery.** 600 m is the TOD walkshed
+  convention and puts **554 cells (1.6%)** in scope; 800 m of a school covers
+  **37.8%**. Neither number falls out of a cliff in the data.
+- **Distance is not in the score and should stay out** unless that decision is
+  deliberately revisited — see the DECISIONS row before proposing it.
+
 ## Build order
 
 1. **Lens A minimal** — ✅ DONE 2026-07-12 (`feat/dev-lens-a-building-activity`):
@@ -563,6 +596,10 @@ regression.
    in-population), verify-infill.js 41/41. Optional future: one-sided choropleth
    toggles.
 4. **Lens C** — reuse service-cost columns (or V2) against Lens A.
+5. **Amenity distance** — ✅ pipeline DONE 2026-08-23 (`feat/amenity-distance`):
+   `src/load_schools.py` + `src/amenity_distance.py` +
+   `load_transit.derive_lrt_stations` + `dist_lrt_m`/`dist_school_m` on the
+   value grid. **The UI filter is NOT built** — see "Amenity distance" above.
 
 ## Cross-refs
 

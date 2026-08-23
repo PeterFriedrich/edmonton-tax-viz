@@ -102,6 +102,28 @@ Services carries no sparkline — measured, it does.)_
 
 ## Open work
 
+- [ ] **THE AMENITY-DISTANCE COLUMNS SHIP BUT NOTHING READS THEM — the UI
+  filter is the next unit (pipeline DONE 2026-08-23, `feat/amenity-distance`).**
+  `value_grid.json` now carries `dist_lrt_m` and `dist_school_m` (road-network
+  metres, cell median). ⚠️ **They reach the live site only on the next
+  `refresh.yml` run** — no deploy fires on merge, nothing in `web/` changed.
+  - **What is needed:** a control with a home in the existing grouping
+    (`docs/CONTROLS_MATRIX.md` — grouping is shared DOM, so it drives desktop
+    AND mobile) that filters grid cells by one or both distances.
+  - **PETER'S CALL — the band values.** 600 m of LRT is the TOD walkshed
+    convention and puts **554 cells (1.6%)** in scope; 800 m of a school covers
+    **37.8%**. ⚠️ **Neither falls out of a cliff in the data** — the same shape
+    of judgement as the 0.90 set-aside threshold. Whether the band should follow
+    the window picker (the 3yr kernel wants 800 m) is also undecided.
+  - **PETER'S CALL — one filter or two.** Two independent bands, an AND of both,
+    or a single "amenity-served" composite. A composite is the one to be
+    careful with: it is a weighted index by another name.
+  - ⚠️ **Do NOT fold distance into the Infill score** without deliberately
+    reopening `DECISIONS.md` 2026-08-22 — proximity is a desirability input, and
+    a weighted term nothing can falsify is exactly what that decision refused.
+  - The UI must degrade cleanly while the columns are missing from the served
+    file (the house pattern) — the gap is real until the next refresh.
+
 - [ ] **PETER'S CALL — the road service life is 50 years and figures in public
   circulation use 25.** Both readings sit on the SAME City page we
   already cite (`city_unit_costs.json` → `roadway_om_renewal.source`,

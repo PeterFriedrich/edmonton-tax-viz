@@ -160,6 +160,16 @@ Method: a routable graph built from `data/raw/roads.geojson` (186,931 nodes /
 GTFS-derived LRT stations (max station snap 108 m), against 3,982 randomly
 sampled properties.
 
+⚠️ **Correction, 2026-08-23 — this probe graph was built from ALL centrelines,
+including 2,117 RAILWAY rows** (186,931 nodes is the unfiltered count). A walk
+could therefore travel *along the LRT track itself* to reach an LRT station.
+That biases network distance DOWNWARD, toward euclidean, so the false-positive
+rates below are if anything **understated** — the conclusion holds and the
+direction is safe. The shipped graph (`src/amenity_distance.py`) keeps only
+`centerline_type == "Road"`: 163,841 nodes, and better connected at 99.83%.
+Re-measured on the shipped graph over all 439,245 reachable properties, the
+network/euclidean ratio median is **1.36** against this sample's 1.35.
+
 | band | euclidean says in-band | network says in-band | euclidean's FALSE POSITIVES |
 |---|---|---|---|
 | 400 m | 192 | 62 | **68%** |
@@ -228,8 +238,10 @@ threshold. Open in `docs/ANALYSIS_BACKLOG.md` §12.
 1. ✅ **DONE 2026-08-22 — `gross_area` absence is now explicit.** A unit with no
    recorded floor area emits `null`, not `0` (§6a). ⚠️ Partial coverage is
    **still** unhandled and still biases toward opportunity.
-2. Distances (network, both amenity sets) are **independent of the score** and
-   can ship as per-cell attributes + filters without touching Lens B.
+2. ✅ **DONE 2026-08-23 — the distances ship as per-cell attributes.**
+   `dist_lrt_m` / `dist_school_m` on `value_grid.json`, cell median, Lens B
+   untouched. ⚠️ **No UI reads them yet.** Distances (network, both amenity
+   sets) are **independent of the score** and
    **Decision taken 2026-08-22 (Peter): attributes and a filter, NOT a weighted
    term in the suitability score** — proximity is a desirability input, not an
    "underused" input, and folding it in would turn a descriptive metric into a
