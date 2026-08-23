@@ -985,3 +985,50 @@ so the column overstates distance wherever one of those is nearest. Dataset fact
    the same direction as the node-snap and walk-proxy approximations. Closing the
    gap partially (say, private but not francophone) does not change that; it just
    moves the boundary.
+
+## 14. A police cost driver — crime data exists, but not the kind this needs (NEW 2026-08-23, SOURCED, not built)
+
+`SPEC_breakeven.md` §4a: **Police Service is $597.2M, the largest line in the
+FY2025 register, with no spatial driver in hand.** Probed 2026-08-23 whether a
+crime/incident dataset could supply one.
+
+### The claim "OGC API - Records" is wrong — corrected for the record
+A relayed claim said EPS's data was "accessible programmatically... through
+OGC API - Records and GIS features." **OGC API - Records is a real but
+different standard** (catalog/metadata discovery, not incident data). What
+actually exists is a plain **Esri ArcGIS FeatureServer** — the same vendor
+technology as this project's LRT/schools boundary layers, just a different API
+shape than the Socrata `data.edmonton.ca` sources currently ingested.
+
+### What's actually there
+EPS's Community Safety Data Portal (`communitysafetydataportal.edmontonpolice.ca`)
+is an ArcGIS Hub site (`data-eps1.hub.arcgis.com`). Confirmed live endpoints in
+its service folder:
+
+| service | what |
+|---|---|
+| `EPS_OCC_30DAY` | rolling 30-day window only — no use as a stable annual driver |
+| `Historic_Occurrences_CSDP` | **the real one** — point geometry, Jan 2023 onward, ~293K incidents, 2,000 records/query (needs pagination) |
+| `Neighborhoods`, `Ward Boundaries` | boundary layers also live in the same folder |
+
+Fields on `Historic_Occurrences_CSDP`: `Reported_Date`, `Occurrence_Category`,
+`Occurrence_Group`, `Occurrence_Type_Group`, `Intersection`. **No neighbourhood
+or ward field** — same as schools/LRT, a point-to-polygon spatial join would be
+needed, which this project already knows how to do.
+
+### ⚠️ The publisher's own caveat undercuts the driver case, not just the join
+Locations are **anonymized to the nearest intersection**, and EPS states why:
+*"users should not rely on this data to assess safety or crime levels for
+specific areas"* — high-foot-traffic areas report more incidents without
+necessarily having more crime. That is the dataset's publisher warning against
+the exact per-area comparison a police-cost driver would need. It does not
+block the join technically; it means adopting this driver imports a
+**documented, self-disclosed bias** into the largest line in the register,
+which is a worse position than having no driver.
+
+**Not a lookup — the same judgement `SPEC_breakeven.md` §4a already flags**:
+allocating $597.2M by any spatial driver makes the driver choice do the
+arguing. This finding doesn't resolve that; it closes off "find better data" as
+the escape hatch. **PETER'S CALL**, same as before — population/dwelling
+surfacing (`SPEC_breakeven.md` §4a Task 1b) remains the cheaper unblock if
+police is to be reached at all.

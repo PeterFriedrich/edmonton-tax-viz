@@ -291,6 +291,14 @@ artifact than a roads-cost map, and **the driver choice would be doing the
 arguing.** Flagging it here so the decision is taken deliberately rather than
 arrived at by working down a ranked list.
 
+⚠️ **"Find better data" was checked and does not escape this.** EPS's crime
+dataset is real, live-queryable (Esri FeatureServer, not the "OGC API - Records"
+a relayed claim asserted — corrected), and joinable by point-in-polygon like
+schools/LRT — but the publisher anonymizes locations specifically because
+per-area comparison is unreliable, which imports a documented bias rather than
+resolving one. `docs/ANALYSIS_BACKLOG.md` §14. Population/dwelling surfacing
+(Task 1b, above) remains the cheaper unblock if police is to be reached at all.
+
 ### ⚠️ THE FINDING THAT CHANGES §0: 20.8% OF THE DENOMINATOR IS NOT OPERATING SPEND
 
 **$800.7M of the $3,855.9M "tax-supported operating budget" is capital
