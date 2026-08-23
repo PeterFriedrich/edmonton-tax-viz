@@ -447,15 +447,20 @@ Services carries no sparkline — measured, it does.)_
   - **Does not block the cost register.** Its own decision.
 
 - [ ] **▶ BREAK-EVEN LENS — STILL NO CODE, BUT THE MEASUREMENT IS DONE.
-  `docs/SPEC_breakeven.md`; SIX decisions in its §8 now block all code.** Opened
+  `docs/SPEC_breakeven.md`; FOUR decisions in its §8 now block all code (#2
+  name, #4 residual, #5 revenue scope, #6 transit).** Opened
   2026-08-11 (Peter: pipelines per cost category, improved one at a time,
   composing into a per-hood break-even that stays in the Lab and might one day
   reach specialists). **§4 Tasks 1 and 2 executed 2026-08-13 (PR #208, merged) —
   §4a holds the result.**
+  - ✅ **§8 #1 + #7 SETTLED 2026-08-23 (Peter): OPERATING basis, OPERATING-ONLY
+    denominator.** Coverage reads **15.5% ($473M / $3,055.2M), not 12.3%** —
+    the earlier $3,846M/12.3% figure used the full tax-supported budget and is
+    superseded. `DECISIONS.md` 2026-08-23.
   - ⚠️ **THE NUMBER IS COMPUTABLE TODAY AND WOULD BE WRONG IN A KNOWN
     DIRECTION.** Revenue modelled $2,715M against $473M of cost on the
-    operating basis — **12.3% of the City's $3,846M tax-supported operating
-    budget** — so the lens would report **every hood running a 5.7× surplus**,
+    operating basis — **15.5% of the City's $3,055.2M operating-only budget**
+    — so the lens would report **every hood running a 5.7× surplus**,
     by roughly the same factor everywhere, which is exactly what makes it look
     plausible. **Coverage is therefore the product, not a caveat**, and must be
     computed and printed wherever the number is.
@@ -472,24 +477,26 @@ Services carries no sparkline — measured, it does.)_
     working down the ranked list.** Allocating it by any spatial driver produces
     a per-neighbourhood policing-cost map, and **the driver choice would be doing
     the arguing** — a far more charged artifact than a roads-cost map. Its own
-    decision, and an editorial one before it is a data one.
-  - ⚠️ **▶ NEW DECISION §8.7 — THE COVERAGE DENOMINATOR IS 20.8% CAPITAL, AND
-    THIS ONE GETS PUBLISHED.** **$800.7M of the $3,855.9M is capital financing**
-    (debt charges $221.0M + pay-as-you-go $142.9M + external/SLRT/Valley Line
-    debt + reserve transfers + Alley Renewal), so §1's `coverage` divides an
-    **operating** numerator by a one-fifth-**capital** denominator. That is the
-    §3 basis-mixing failure sitting **in the coverage ratio rather than the
-    composite** — the worse location, because §6 puts coverage on screen wherever
-    the number is, so the mixed basis would be *printed on the face of the lens*
-    and the composite's hard error would never see it. Operating-only the
-    denominator is **$3,055.2M and the same cost side covers 15.5%, not 12.3%**.
-    Neither is wrong; the lens must say which question it answers.
-    - ⚠️ **CAPITAL IS NOT A SYNONYM FOR UNALLOCATABLE.** `Alley Renewal`
-      **$174.4M** is per-neighbourhood infrastructure renewal on the **lifecycle**
-      basis the roads term already uses — plausibly the most spatially-allocatable
-      line in the whole budget, and a larger register entry than anything shipped
-      except transit. **The genuinely hard part is the ~$400M of debt service**,
-      not "capital".
+    decision, and an editorial one before it is a data one. ⚠️ **"Find better
+    data" was checked 2026-08-23 and does not escape this** — EPS's crime
+    dataset is real and joinable, but its publisher anonymizes locations
+    specifically because per-area comparison is unreliable, so adopting it
+    would import a documented bias rather than resolve the gap.
+    `docs/ANALYSIS_BACKLOG.md` §14.
+  - ✅ **§8.7 SETTLED 2026-08-23 (Peter): OPERATING-ONLY denominator,
+    $3,055.2M — coverage reads 15.5%, not 12.3%.** Decided together with §8.1
+    (basis) because the two can contradict each other made separately. The
+    full-budget denominator would have been the §3 basis-mixing failure sitting
+    **in the coverage ratio rather than the composite** — the worse location,
+    because §6 puts coverage on screen wherever the number is. `DECISIONS.md`
+    2026-08-23, `SPEC_breakeven.md` §0/§8.
+    - ⚠️ **CAPITAL IS NOT A SYNONYM FOR UNALLOCATABLE — disclosure debt, not a
+      closed question.** `Alley Renewal` **$174.4M** is per-neighbourhood
+      infrastructure renewal on the **lifecycle** basis the roads term already
+      uses — plausibly the most spatially-allocatable line in the whole budget,
+      and a larger register entry than anything shipped except transit. **The
+      genuinely hard part is the ~$400M of debt service**, not "capital". Must
+      not silently drop out of the register once lifecycle-basis work exists.
   - ⚠️ **THE SILENT KILLER IS BASIS MIXING.** Lifecycle $50/road-m/yr vs
     operating $4.635 — same metres, 10.8× apart. The composite must HARD-ERROR
     across bases, not warn.

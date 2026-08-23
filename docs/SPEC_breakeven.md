@@ -14,8 +14,10 @@ restart.
 ## 0. THE ONE THING THAT DECIDES WHETHER THIS WORKS
 
 A break-even number is `revenue − cost`. We model the revenue side at **$2,715M**
-and, on the operating basis, the cost side at **$473M** — **12.3% of the City's
-$3,846M tax-supported operating budget.**
+and, on the operating basis, the cost side at **$473M** — **15.5% of the City's
+$3,055.2M operating-only budget** (§8 #1/#7, settled 2026-08-23: operating
+basis, operating-only denominator — the $3,846M/12.3% figure this section
+originally quoted used the full tax-supported budget, since superseded).
 
 Computed today, the lens would say **every neighbourhood in Edmonton runs a
 5.7× surplus.** That is not an uncertain answer. It is a **wrong answer in a
@@ -24,9 +26,10 @@ so it would look plausible and rank hoods in a defensible-looking order while
 being false about every one of them.
 
 ⚠️ **So coverage is not a caveat on this lens. Coverage IS the lens.** The
-headline is not "this hood nets +$8,000/acre"; it is *"of the $3.85B the City
-spends, we can place 31% of it geographically, and against that 31% this hood
-nets +$8,000/acre."* Every design choice below follows from that.
+headline is not "this hood nets +$8,000/acre"; it is *"of the $3.06B the City
+spends operating this budget, we can place 31% of it geographically, and
+against that 31% this hood nets +$8,000/acre."* Every design choice below
+follows from that.
 
 The good news is that this is the *shape of problem Peter described*: it
 improves monotonically and category by category, and each increment is
@@ -389,8 +392,11 @@ actually place.*
 
 ## 8. Decisions needed before any code
 
-1. **Basis** — operating first (recommended, §3), lifecycle first, or both in
-   parallel?
+1. ~~**Basis** — operating first (recommended, §3), lifecycle first, or both in
+   parallel?~~ **SETTLED 2026-08-23 (Peter): operating first.** Larger,
+   better-sourced universe (656 rows / 144 programs / $3,855.9M, already
+   ingested, §4a); lifecycle rests on two unit costs and a missing bikeway
+   service life Edmonton doesn't publish.
 2. **Name** — "net position"? It must not imply a cost-of-service study.
 3. ~~**The publication gate** — at what modelled coverage is the number worth
    showing?~~ **SETTLED 2026-08-11 (Peter): there is no separate gate.** The
@@ -406,18 +412,20 @@ actually place.*
    tax-supported revenue that funds the same budget?
 6. **Transit** (§2b-i) — relabel, move to the residual for break-even while the
    Services lens keeps it, or leave it and state the limit?
-7. **⚠️ NEW 2026-08-13 — the COVERAGE DENOMINATOR (§4a).** Is coverage measured
+7. ~~**⚠️ NEW 2026-08-13 — the COVERAGE DENOMINATOR (§4a).** Is coverage measured
    against the full **$3,855.9M** tax-supported budget, or the **$3,055.2M**
-   operating-only remainder after capital financing? Same numerator, **12.3% vs
-   15.5%**. Not cosmetic: §6 puts coverage on screen wherever the number is, so
-   this decision is *published*. The case for the full budget is that the revenue
-   side is the full levy, and the levy funds debt service too — matching scopes.
-   The case for operating-only is §3: an operating numerator over a 20.8%-capital
-   denominator is basis mixing, and it is the one place the composite's hard
-   error would not catch it. ⚠️ **Whichever is chosen, the split should be
-   disclosed rather than silently folded in** — and if the full budget wins, note
-   that `Alley Renewal` ($174.4M) is allocatable lifecycle spend sitting inside
-   the capital block, so "capital" is not a synonym for "unallocatable".
+   operating-only remainder after capital financing?~~ **SETTLED 2026-08-23
+   (Peter): operating-only, $3,055.2M — coverage reads 15.5%, not 12.3%.**
+   Decided together with #1: an operating numerator over the full,
+   20.8%-capital budget is the exact basis-mixing §3 forbids, just hiding in
+   the coverage ratio instead of the composite — the one place the composite's
+   hard error would not catch it. Operating-only is also the higher, more
+   flattering number, so there was no correctness-vs-optics tradeoff to make.
+   ⚠️ **Disclosure debt this creates:** the lens must state the $800.7M capital
+   exclusion explicitly (never silently fold it in), and `Alley Renewal`
+   ($174.4M of that $800.7M) is allocatable lifecycle spend, not unallocatable
+   — do not let "excluded from the denominator" quietly become "excluded from
+   the register" when lifecycle-basis work eventually attacks it.
 
 ---
 
