@@ -1868,6 +1868,31 @@ and francophone (Conseil scolaire Centre-Nord) schools are absent**, so
 `dist_school_m` overstates distance for any block whose nearest school is one of
 them. Never label the column "distance to the nearest school".
 
+**⚠️ AND IT CANNOT BE CLOSED FROM DATA WE HOLD — probed three ways 2026-08-23:**
+
+1. **The property/assessment roll cannot say what anything IS.** A parcel carries
+   account number, address, `lot_size`, `Total Gross Area`, `year_built`,
+   `zoning` and value — and `legal_description` is `Plan / Block / Lot` only.
+   **Zero of 439,685 rows mention "school"** in any field. A private school and a
+   warehouse differ only by zone code.
+2. **Zoning does not substitute.** The institutional-ish zones are `PS` (751
+   parcels), `PSN` (949) and `US` (**1**) — `US` being the zone schools nominally
+   sit in, which is by itself proof the per-property `zoning` field is not where
+   that fact reliably lives (the same lesson as the 2026-08-01 polygons-not-field
+   reversal). Even clean, "institutional land" is hospitals, fire halls, places of
+   worship and community leagues — not schools.
+3. **The portal has no such dataset.** A catalogue search for `school` returns
+   the two boards, their catchment areas, ward boundaries, building footprints
+   and historical vintages — nothing private, charter or francophone. Alberta
+   publishes lists that DO cover them (*Alberta's francophone regional
+   authorities and schools*, *Alberta accredited international schools*) but as
+   **PDFs**, not addressable rows.
+
+**The remedy is manual, not blocked** — transcribe + geocode the provincial PDF
+list; `amenity_distance` takes any point frame. ⚠️ **A hand-built list would go
+STALE SILENTLY** while the two board feeds refresh weekly. Open in
+`docs/ANALYSIS_BACKLOG.md` §13.
+
 ### Known Quirks
 - ⚠️ **19 rows are city-wide programs, not neighbourhood schools**, and they sit
   in the same table as the catchment ones: EPSB `sch_type == 'SP'` (15 — the four

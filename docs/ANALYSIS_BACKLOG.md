@@ -949,3 +949,39 @@ The shipped graph excludes them; the 55% figure is if anything understated.
    Infill view is a flat diverging plane, not spikes — Peter's "filled into each
    spike" implies an extrusion the lens has never had, and a signed diverging
    score has no natural height (which arm gets tall?).
+
+## 13. The school amenity set is two boards out of five (NEW 2026-08-23, SOURCED, not built)
+
+`dist_school_m` measures to **303 catchment schools** from EPSB + ECSD. Private,
+charter and francophone (Conseil scolaire Centre-Nord) schools are **not in it**,
+so the column overstates distance wherever one of those is nearest. Dataset facts
++ the three probes: `data/DATA.md` §20.
+
+**Settled by probe 2026-08-23, do not re-derive:**
+- **The property roll cannot answer it.** No field says what a building IS;
+  `legal_description` is `Plan / Block / Lot`; **0 of 439,685 rows** mention
+  "school".
+- **Zoning cannot answer it either.** `US` — the zone schools nominally occupy —
+  is on **one** parcel citywide, and `PS`/`PSN` (751/949) mean parks. Institutional
+  land is hospitals, fire halls, worship and community leagues too.
+- **Edmonton's portal has no such dataset.** The catalogue's `school` results are
+  entirely EPSB/ECSD (locations, catchments, footprints, ward boundaries,
+  historical vintages).
+- **Alberta publishes lists that cover them — as PDFs**, not rows.
+
+**Still open — and it is a JUDGEMENT, not a lookup:**
+1. **Is a hand-built list worth its staleness?** Transcribing + geocoding the
+   provincial PDFs is a few dozen points and `amenity_distance` takes any point
+   frame, so the *work* is small. ⚠️ **The cost is that it would go stale
+   SILENTLY** — the two board feeds re-download weekly and a manual list would
+   not, so a school opening or closing keeps answering with the old geometry.
+   That is the `archived-tables-still-answer` shape: reachable is not updated.
+2. **If built, it needs the manual-reviewed-input treatment** (`DATA.md` §13/§16/
+   §18 pattern): committed file, content-hash digest, a vintage row in
+   `RUNBOOK.md` §0. Adding it as a quiet extra point set would be the worst of
+   both — wider coverage, no freshness contract.
+3. **The error direction is currently SAFE and would stay safe if left alone.**
+   Missing schools means "further than you are", which under-claims proximity —
+   the same direction as the node-snap and walk-proxy approximations. Closing the
+   gap partially (say, private but not francophone) does not change that; it just
+   moves the boundary.

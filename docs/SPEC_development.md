@@ -564,7 +564,7 @@ LRT") and stay independent of whether the score itself ever re-grains.
 | Graph | `centerline_type == "Road"` only; railways excluded as a **correctness** filter (they let a walk travel the LRT track to the LRT station) |
 | Per-cell statistic | **Median** of the cell's properties, not the minimum — one corner property must not make a whole cell read as served |
 | LRT station set | The **30** parents with a street entrance, not the 33 served parents and not the 58 `location_type == 1` stops |
-| Schools | Both public boards, **catchment schools only** (19 city-wide/specialized programs excluded); private/charter/francophone are absent from the source |
+| Schools | Both public boards, **catchment schools only** (19 city-wide/specialized programs excluded). ⚠️ Private/charter/francophone are absent and **cannot be recovered from data we hold** — probed three ways 2026-08-23 (`ANALYSIS_BACKLOG.md` §13) |
 | Missing | `null`, never a large sentinel — 0.1% of properties reach no amenity over the graph |
 
 **The UI — BUILT 2026-08-23.** Two independent checkboxes in the Glass view's
