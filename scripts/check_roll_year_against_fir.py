@@ -26,6 +26,10 @@ question, not this check's business.
 
 Exit codes:  0 ok / skipped   3 year mismatch (the hold state)   4 inconclusive
 
+When ``GITHUB_OUTPUT`` is set (CI), writes ``result=``, ``detected_year=``,
+``pinned_year=`` and ``banner=`` for the workflow steps to branch on — the same
+contract as ``check_year_alignment.py``, so refresh.yml can gate on either.
+
 Usage:
     .venv/bin/python scripts/check_roll_year_against_fir.py
     .venv/bin/python scripts/check_roll_year_against_fir.py --expected-year 2026
@@ -36,6 +40,7 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import os
 import sys
 from pathlib import Path
 
@@ -54,6 +59,20 @@ ASSESSMENT_CSV = ROOT / "data" / "raw" / "Property_Assessment_Data__Current_Cale
 # something other than a year shift is wrong — report inconclusive, don't guess.
 MAX_PLAUSIBLE_RESIDUAL = 0.05   # 5%
 MIN_SEPARATION = 0.03           # best fit must beat the runner-up by this much
+
+EXIT_OK = 0
+EXIT_HOLD = 3
+EXIT_INCONCLUSIVE = 4
+
+
+def _write_github_output(**kv: object) -> None:
+    """Expose results to the workflow when running under GitHub Actions."""
+    out = os.environ.get("GITHUB_OUTPUT")
+    if not out:
+        return
+    with open(out, "a") as f:
+        for k, v in kv.items():
+            f.write(f"{k}={v}\n")
 
 
 def our_residential_base(csv_path: Path = ASSESSMENT_CSV) -> float:
@@ -101,11 +120,13 @@ def main(argv=None) -> int:
 
     if not args.assessment_csv.exists():
         logger.info("SKIPPED: no local roll at %s (nothing to measure)", args.assessment_csv)
-        return 0
+        _write_github_output(result="skipped")
+        return EXIT_OK
     if not args.fir_tax_base.exists():
         logger.warning("SKIPPED: no %s — run scripts/fetch_fir_tax_base.py",
                        args.fir_tax_base)
-        return 0
+        _write_github_output(result="skipped")
+        return EXIT_OK
 
     pinned = args.expected_year
     if pinned is None:
@@ -128,7 +149,8 @@ def main(argv=None) -> int:
             "Either the roll moved beyond data/fir_tax_base.json (re-run "
             "scripts/fetch_fir_tax_base.py) or something other than the year is wrong.",
             100 * MAX_PLAUSIBLE_RESIDUAL, 100 * MIN_SEPARATION)
-        return 4
+        _write_github_output(result="inconclusive", pinned_year=pinned)
+        return EXIT_INCONCLUSIVE
 
     if detected != pinned:
         logger.error(
@@ -136,11 +158,22 @@ def main(argv=None) -> int:
             "The pipeline is billing a %d roll at %d mill rates. "
             "Work docs/RUNBOOK.md §1 (the January year roll).",
             detected, pinned, detected, pinned)
-        return 3
+        # Visitor-facing wording, same contract as check_year_alignment.py's
+        # holding banner. It does NOT promise the detected year's rates exist —
+        # this guard measures the roll, and says nothing about the rate table.
+        banner = (
+            f"Showing {pinned} data — the assessment roll now measures as "
+            f"{detected}. The map updates automatically once {detected} "
+            f"municipal tax rates are incorporated."
+        )
+        _write_github_output(result="hold", detected_year=detected,
+                             pinned_year=pinned, banner=banner)
+        return EXIT_HOLD
 
     logger.info("Roll-year guard OK: roll measures as %d, pin is %d — aligned "
                 "(residual %+.1f%%).", detected, pinned, 100 * residuals[detected])
-    return 0
+    _write_github_output(result="ok", detected_year=detected, pinned_year=pinned)
+    return EXIT_OK
 
 
 if __name__ == "__main__":

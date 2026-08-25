@@ -2104,6 +2104,7 @@ Services carries no sparkline — measured, it does.)_
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
 
+- [x] **▶▶ FIXED 2026-08-25 — THE MEASURED ROLL-YEAR GUARD EXISTED BUT RAN NOWHERE — `check_roll_year_against_fir.py` was not wired into any workflow; exit 3 now HOLDS** — 2026-08-25 · `docs/TODO_archive.md`
 - [x] **▶▶▶ FIXED 2026-08-25 — THE LIVE ROLL IS THE 2026 ROLL AND WE BILLED IT AT 2025 MILL RATES — the year-alignment guard cannot see it, because it reads a** — 2026-08-25 · `docs/TODO_archive.md`
 - [x] **▶▶ FIXED 2026-08-25 — THE MAP'S LEVIED/EXEMPT UNCERTAINTY BAND WAS TOO NARROW — `PS` ("Parks and Services") is categorised `never`, not `inst`, so $88** — 2026-08-25 · `docs/TODO_archive.md`
 

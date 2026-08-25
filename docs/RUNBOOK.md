@@ -121,8 +121,10 @@ tightening that starts producing weekly issues will get the guard ignored.
 ## 1. The January year roll (the recurring one)
 
 **Symptom:** the site shows a "Showing 2025 data —…" banner, and the weekly
-run logs `::warning::YEAR MISMATCH — holding window`. This is the designed
-hold state (`scripts/check_year_alignment.py` exit 3): Edmonton rolled the
+run logs `::warning::YEAR MISMATCH — holding window` (metadata guard,
+`check_year_alignment.py`) or `::warning::ROLL YEAR MISMATCH (measured against
+FIR)` (the measured guard, `check_roll_year_against_fir.py` — trust this one).
+Either is the designed hold state at exit 3: Edmonton rolled the
 assessment feed to the new year and CI is refusing to apply stale mill rates.
 The site keeps serving last year's data and is fully functional — take your
 time.
@@ -136,8 +138,16 @@ time.
 > 2025 mill rates for months** (understating citywide levy ~$69.5M / 2.5%).
 > Caught 2026-08-25 by comparing against Alberta FIR, not by any guard.
 >
-> **So do not wait for the banner.** The authoritative check measures the
-> parcels:
+> **Since 2026-08-25 that comparison IS a guard**, and it runs in the weekly
+> refresh (`refresh.yml`, step `Check roll year against FIR filings`). It holds
+> exactly like the metadata guard — skip regeneration, keep serving the last
+> committed data, raise the banner — logging
+> `::warning::ROLL YEAR MISMATCH (measured against FIR)`. So the banner is now
+> a real signal again for this failure. **It was not when the 2026 roll landed,
+> which is why the check below stays a manual step too** — run it whenever you
+> touch the roll, rather than trusting that CI would have told you.
+>
+> The authoritative check measures the parcels:
 >
 > ```bash
 > .venv/bin/python scripts/check_roll_year_against_fir.py

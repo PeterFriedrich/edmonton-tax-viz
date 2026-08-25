@@ -18,6 +18,10 @@ pyproj==3.7.2
 scipy==1.18.0
 requests==2.34.2
 pytest==9.0.3
+# Test-only: tests/test_check_roll_year_against_fir.py parses refresh.yml to
+# assert every publish step gates on BOTH year guards. jupytext happens to pull
+# PyYAML in transitively, but a guard-shape test must not rest on that.
+PyYAML==6.0.3
 jupytext==1.19.5
 nbconvert==7.17.1
 ipykernel==7.2.0
