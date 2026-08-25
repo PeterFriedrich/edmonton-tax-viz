@@ -8,6 +8,43 @@ Items are verbatim as they were closed, newest-moved first in the order they app
 
 ---
 
+- [x] **▶▶ FIXED 2026-08-25 — THE MEASURED ROLL-YEAR GUARD EXISTED BUT RAN
+  NOWHERE — `check_roll_year_against_fir.py` was not wired into any workflow.**
+  Opened and closed 2026-08-25, immediately after the item below shipped it.
+  - **The gap.** The item below replaced the blind metadata guard with one that
+    measures parcels, and deliberately downgraded `check_year_alignment.py` so
+    it can now return only `aligned`-on-current-metadata, `inconclusive`, or
+    `hold`. But `refresh.yml` still invoked **only** `check_year_alignment.py`.
+    Net effect: with the coverage string stale (which it is), CI had **no
+    positive confirmation of the roll year at all** — the new detector ran only
+    when a human remembered to type it. A guard that exists and never executes
+    is documentation, not a guard.
+  - **Fixed by** adding a `rollyear` step to `refresh.yml` immediately after the
+    metadata guard (it must follow `Download source data` — it reads the
+    downloaded roll), and giving the script the same `$GITHUB_OUTPUT` contract
+    the metadata guard already had (`result` / `detected_year` / `pinned_year` /
+    `banner`), so the workflow can gate on either identically.
+  - **Exit 3 HOLDS** — skip regeneration, keep serving the last committed data,
+    raise the banner (Peter's call, 2026-08-25). Reasoning: unlike the metadata
+    string, this guard *measures*, so a mismatch is evidence rather than a
+    guess, and it is the exact failure that billed a 2026 roll at 2025 rates for
+    months. False-positive risk is low by construction — the script returns 4
+    (inconclusive), never 3, unless another year fits within 5% **and** beats
+    the runner-up by 3%.
+  - ⚠️ **Both guards can hold, so all seven publish steps now gate on BOTH**
+    (`steps.yearcheck… != 'hold' && steps.rollyear… != 'hold'`), and the banner
+    step fires on either, preferring the FIR banner because it measured the
+    parcels. `test_refresh_workflow_gates_every_publish_step_on_both_guards`
+    parses `refresh.yml` and asserts the coverage holds — the failure it exists
+    to catch is a future step copying a neighbour's `if:` and gating on only one.
+  - ⚠️ **`PyYAML` had to be added to `requirements-ci.txt`.** That test parses
+    the workflow; PyYAML was in `requirements.txt` only, so the test passed
+    locally and would have errored at import inside the very `pytest` step that
+    gates the refresh. `jupytext` pulls it in transitively, but a guard-shape
+    test must not rest on a transitive dep.
+  - **Verified:** 727 tests pass (713 + 14 new); the workflow parses and all
+    eight gated steps carry both conditions.
+
 - [x] **▶▶▶ FIXED 2026-08-25 — THE LIVE ROLL IS THE 2026 ROLL AND WE BILLED IT
   AT 2025 MILL RATES —
   the year-alignment guard cannot see it, because it reads a Socrata metadata

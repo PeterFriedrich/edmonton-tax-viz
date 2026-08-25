@@ -103,15 +103,38 @@ jobs:
             *) exit $code ;;
           esac
 
+      # The authoritative roll-year guard, and the reason the one above can now
+      # only ever say "inconclusive": Edmonton left `Period of Coverage` reading
+      # 2025 for the whole 2026 roll, so metadata and pin agreed with each other
+      # while both were a year stale and the pipeline billed a 2026 roll at 2025
+      # rates (~$69.5M understated, S119). This one MEASURES THE PARCELS —
+      # residential taxable base vs what Edmonton filed with Alberta (FIR
+      # Schedule MR) — so no metadata claim can hide a roll that moved. Same
+      # exit contract as above: 0 ok/skipped, 3 hold, 4 inconclusive.
+      # ⚠️ MUST run after `Download source data` — it reads the downloaded roll.
+      - name: Check roll year against FIR filings (guard before regenerating)
+        id: rollyear
+        run: |
+          set +e
+          python scripts/check_roll_year_against_fir.py
+          code=$?
+          set -e
+          case $code in
+            0) ;;
+            3) echo "::warning::ROLL YEAR MISMATCH (measured against FIR) — holding window: keeping last committed data, setting banner. Work docs/RUNBOOK.md §1, then clear the banner (generate_status.py --clear-banner)." ;;
+            4) echo "::warning::Roll-year check inconclusive — no FIR year fits. Refresh the anchor (scripts/fetch_fir_tax_base.py) or investigate; proceeding as aligned." ;;
+            *) exit $code ;;
+          esac
+
       - name: Regenerate web GeoJSON
-        if: steps.yearcheck.outputs.result != 'hold'
+        if: steps.yearcheck.outputs.result != 'hold' && steps.rollyear.outputs.result != 'hold'
         run: python main.py --skip-png    # PNG is a Phase-1 local artifact, not served
 
       # Guard AFTER regeneration: it reads the freshly written value_grid.json,
       # so it judges the artifact the site is about to serve. A hard failure here
       # stops the commit, and the last good data keeps serving.
       - name: Check cardinality value anchors (guard after regenerating)
-        if: steps.yearcheck.outputs.result != 'hold'
+        if: steps.yearcheck.outputs.result != 'hold' && steps.rollyear.outputs.result != 'hold'
         run: python scripts/check_value_anchors.py
 
       # Schema half of the same "did the artifact survive regeneration" question.
@@ -122,7 +145,7 @@ jobs:
       # verify-smoke.js's B7 below — can tell a drop from a metric that has not
       # shipped yet. Adding a column only warns; losing one fails.
       - name: Check served columns (guard after regenerating)
-        if: steps.yearcheck.outputs.result != 'hold'
+        if: steps.yearcheck.outputs.result != 'hold' && steps.rollyear.outputs.result != 'hold'
         run: python scripts/check_served_columns.py
 
       # Magnitude half, and the only guard that looks at ONE neighbourhood.
@@ -137,7 +160,7 @@ jobs:
       # good data gets switched off.
       - name: Check per-neighbourhood revenue deltas (guard after regenerating)
         id: revdelta
-        if: steps.yearcheck.outputs.result != 'hold'
+        if: steps.yearcheck.outputs.result != 'hold' && steps.rollyear.outputs.result != 'hold'
         run: python scripts/check_revenue_deltas.py --report revenue-delta.md
 
       # notebooks/verified/ (docs/VERIFICATION.md) re-runs the real src/ pipeline
@@ -149,7 +172,7 @@ jobs:
       # (regenerated every run, same as web/data) rather than CODE — see deploy.yml's
       # path exclusion, which exists for exactly this reason.
       - name: Run verified notebooks (guard before publish)
-        if: steps.yearcheck.outputs.result != 'hold'
+        if: steps.yearcheck.outputs.result != 'hold' && steps.rollyear.outputs.result != 'hold'
         run: python tools/run_verified_notebooks.py --out-dir web/verified
 
       # Temporal lens Phase 0 gate (docs/SPEC_temporal.md §0.3). Watches the
@@ -169,17 +192,19 @@ jobs:
       # ~74 kB per year; the commit step below picks it up like any other
       # regenerated file.
       - name: Check temporal years (guard before regenerating)
-        if: steps.yearcheck.outputs.result != 'hold'
+        if: steps.yearcheck.outputs.result != 'hold' && steps.rollyear.outputs.result != 'hold'
         run: python scripts/check_temporal_years.py --write-archive
 
       - name: Update status manifest (provenance + heartbeat)
-        if: steps.yearcheck.outputs.result != 'hold'
+        if: steps.yearcheck.outputs.result != 'hold' && steps.rollyear.outputs.result != 'hold'
         run: python scripts/generate_status.py
 
+      # Either guard can hold. When both do, the FIR banner wins: it measured
+      # the parcels, where the other only read a metadata string.
       - name: Update status manifest (holding window — set year-mismatch banner)
-        if: steps.yearcheck.outputs.result == 'hold'
+        if: steps.yearcheck.outputs.result == 'hold' || steps.rollyear.outputs.result == 'hold'
         env:
-          BANNER: ${{ steps.yearcheck.outputs.banner }}
+          BANNER: ${{ steps.rollyear.outputs.banner || steps.yearcheck.outputs.banner }}
         run: python scripts/generate_status.py --banner "$BANNER"
 
       - name: Commit regenerated data + heartbeat if changed
