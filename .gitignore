@@ -60,3 +60,6 @@ tools/profiling/*.png
 
 # Claude Code personal settings (per-machine permission grants)
 .claude/settings.local.json
+
+# Standalone notebook download cache (~90 MB of public data, re-fetchable)
+notebooks/standalone/exemption_data/
