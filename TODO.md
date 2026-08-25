@@ -852,6 +852,62 @@ Services carries no sparkline — measured, it does.)_
     circulated for exactly that purpose were **all wrong** — see the `## Done`
     line for the 2026-08-08 verification.
 
+- [ ] **▶▶ AN EXTERNAL LEVY ANCHOR EXISTS AFTER ALL — Alberta FIR Schedule MR —
+  AND OUR MODEL READS +18.2% AGAINST IT.** Opened 2026-08-25. ⚠️ **FIRST-PASS,
+  NOT AUDITED — do not publish any number here until it is.**
+  - ⚠️ **The premise "no City-given total exists to check against" is FALSE.**
+    It was believed because `edmonton.ca` looked unreachable (that blocker is
+    retracted above) — but the anchor was never on `edmonton.ca` at all. It is
+    in the **same Alberta Municipal Affairs FIR workbooks
+    `scripts/fetch_fir_debt.py` already downloads** for the debt lens
+    (`data/DATA.md` §11). That script reads **one** sheet (`AA(1)-Debt`) of
+    **51**. Three of the others are `MR(1)-Tax Levy`, `MR(2)-Assessment`,
+    `MR(3)-Mill Rate`; `EA(1)-Assessment` is equalized assessment.
+  - **Edmonton (code `0098`), financial year 2025, Schedule MR — filed by the
+    City with the province:**
+
+    | | taxable assessment | municipal levy |
+    |---|---|---|
+    | Residential | $148,128,818,480 | $1,129,541,492 |
+    | Farmland | $59,062,724 | $450,377 |
+    | Non-Residential (incl. linear) | $42,291,523,823 | $1,024,423,352 |
+    | Machinery & Equipment | $768,976,453 | $0 |
+    | Other (annexed, vacant, …) | $17,087,204,280 | $142,984,457 |
+    | **TOTAL** | **$208,335,585,760** | **$2,297,399,678** |
+
+  - ✅ **MR(2) IS THE TAXABLE BASE BY CONSTRUCTION — verified, not assumed.**
+    `assessment × MR(3) rate` reproduces `MR(1)` levy to **±0.0000%** for
+    Residential, Farmland and Non-Residential. ✅ **And MR(3)'s rates match
+    `data/mill_rates.json` EXACTLY** (Residential `7.6254`, Non-Residential
+    `24.2229`) — our rate inputs are independently confirmed correct.
+  - ⚠️ **THE GAP.** Our model on the same 2025 roll at the same 2025 rates:
+    **$238,448,551,458 assessed / $2,714,729,701 levy**. Against the province:
+    **+$30.1B assessed (+14.5%)** and **+$417.3M levy (+18.2%)**.
+    ✅ **Vintage is NOT the explanation** — `scripts/vintage_report.py`
+    confirms roll 2025 / pin 2025 / rates 2025, and FIR Schedule MR is 2025.
+  - ⚠️ **THIS DOES NOT RESOLVE THE INSTITUTIONAL QUESTION — IT RESIZES IT.**
+    The $5.6B of AJ/UF/UI/PU assessment is only **19%** of the $30.1B
+    assessment gap, and the $125.4M modelled institutional levy only **30%** of
+    the $417M levy gap. **So exempt institutional land cannot be more than
+    about a third of the discrepancy** — most of it is something else, and what
+    that is has not been looked at. **The direction, however, is no longer
+    unknown for the aggregate: we are OVER, not under.** (Per-parcel direction
+    for any given institutional parcel is still unknown.)
+  - **Candidates for the rest, none checked yet:** other exempt categories the
+    zoning proxy never covered (churches, non-profits, seniors' housing, City
+    land outside AJ/UF/UI/PU); the known lot-dedupe / cardinality duplication
+    (`docs/FINDINGS_lot_dedupe.md`, `FINDINGS_denominator_cardinality.md`); the
+    80 parcels whose class percentages don't sum to 100; our applying a rate to
+    **100%** of assessed value where the City may apportion; and class-bucket
+    mismatch (FIR's 5 buckets vs our 4 — ⚠️ **the TOTAL is the robust
+    comparison, the per-class rows are NOT 1:1** and should not be quoted as
+    such).
+  - **Next:** re-derive independently before trusting it; decide whether the
+    site should state a measured overstatement against a filed figure. ⚠️
+    **This is a public-number question and Peter's call**, same as sub-item (3)
+    above — but it now has an external reference point, which is exactly what
+    that item said it lacked.
+
 - [ ] **▶ WHO IS MISSING FROM THE CURRENT ROLL RIGHT NOW? — 1,534 parcels /
   $1.62B with no current-roll match.** Opened 2026-08-07 from
   `tools/audit_roll_continuity.py` (historical 2024 vs the live roll, matched by
