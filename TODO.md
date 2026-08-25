@@ -852,7 +852,8 @@ Services carries no sparkline — measured, it does.)_
     circulated for exactly that purpose were **all wrong** — see the `## Done`
     line for the 2026-08-08 verification.
 
-- [ ] **▶▶▶ THE LIVE ROLL IS THE 2026 ROLL AND WE BILL IT AT 2025 MILL RATES —
+- [x] **▶▶▶ FIXED 2026-08-25 — THE LIVE ROLL IS THE 2026 ROLL AND WE BILLED IT
+  AT 2025 MILL RATES —
   the year-alignment guard cannot see it, because it reads a Socrata metadata
   STRING instead of the data.** Opened 2026-08-25, found by the FIR comparison
   below (which is how a wrong number got caught: my own first pass compared the
@@ -892,16 +893,33 @@ Services carries no sparkline — measured, it does.)_
     at 2025 rates vs **$2,784,219,936** at 2026 — the site **understates by
     ~$69.5M (2.5%)** from the rate year alone, on top of showing a 2026 roll
     labelled 2025.
-  - **Proposed fix (NOT APPLIED — this moves every public number, Peter's call):**
-    1. Re-pin `ASSESSMENT_YEAR`/`DATA_YEAR`/`RATE_YEAR` to 2026 via
-       `docs/RUNBOOK.md`'s year-roll checklist.
-    2. ⚠️ **Fix the detector first, or this recurs silently every January.**
-       Derive the roll year from the **data** — e.g. assert our residential base
-       against FIR `MR(2)`, which is exactly the check that caught it — rather
-       than from `Period of Coverage`. At minimum, treat a coverage string older
-       than the current calendar year as ACTION, not OK.
-    3. Re-check the other pins that inherit the year (zoning 2024, activity
-       windows, temporal archive) before publishing.
+  - ✅ **APPLIED 2026-08-25** (Peter: "yeah sure can you just do them?"):
+    1. **Detector fixed FIRST**, so this cannot recur silently every January.
+       New `scripts/check_roll_year_against_fir.py` measures the **parcels**:
+       our residential base vs Edmonton's filed base (FIR `MR(2)`), exit 3 on
+       mismatch. New `scripts/fetch_fir_tax_base.py` → committed
+       `data/fir_tax_base.json` (manual/reviewed, the mill-rates pattern;
+       `data/DATA.md` §21). `check_year_alignment.py` now returns INCONCLUSIVE
+       — never "aligned" — when the coverage string is older than the calendar
+       year, so a stale string can no longer read as agreement.
+    2. **Re-pinned** `ASSESSMENT_YEAR` (`main.py`) and `DATA_YEAR`/`RATE_YEAR`
+       (`generate_status.py`) to 2026. Verified against `docs/RUNBOOK.md` §1:
+       mill rates 2026 pre-staged and complete for `DISPLAY_RATE_CLASSES`,
+       stormwater has 2026, `WATER_RATE_YEAR`/`FRANCHISE_RATE_YEAR` already
+       2026 and left alone.
+    3. ⚠️ **Activity windows deliberately NOT bumped** — `FIRE_YEARS` /
+       `PERMIT_YEARS` / `PERMIT_YEARS_RECENT` pin the last **COMPLETE** calendar
+       year, which is still 2025 in Aug 2026. No deflator re-run needed either
+       (no new permit year pulled in).
+    4. **Temporal baseline re-pinned** (`--write-baseline`) after reading the
+       guard first, per RUNBOOK step 8. 2025 correctly moved live→archive; the
+       series is now 2012-2023, 2025-2026, live year 2026, no hard-fail.
+    5. **Measured result:** citywide levy $2,714,729,701 → **$2,784,219,621**
+       (+$69.5M, the rate year alone). Pipeline run end-to-end, `pytest` 713
+       passed.
+  - ⚠️ **NOT DONE — the banner.** `generate_status.py --clear-banner` (RUNBOOK
+    step 10) was not run: no banner was ever raised, because the guard never
+    detected the roll. Confirm none is showing after the next refresh deploy.
 
 - [ ] **▶▶ AN EXTERNAL LEVY ANCHOR EXISTS AFTER ALL — Alberta FIR Schedule MR.**
   Opened 2026-08-25. ⚠️ **FIRST-PASS, NOT AUDITED — do not publish any number
@@ -1004,7 +1022,8 @@ Services carries no sparkline — measured, it does.)_
     assessed value; the residential +1.2% / $1.90B residual; and the 4% of the
     non-res gap outside the five zones.
 
-- [ ] **▶▶ THE MAP'S LEVIED/EXEMPT UNCERTAINTY BAND IS TOO NARROW — `PS`
+- [x] **▶▶ FIXED 2026-08-25 — THE MAP'S LEVIED/EXEMPT UNCERTAINTY BAND WAS TOO
+  NARROW — `PS`
   ("Parks and Services") is categorised `never`, not `inst`, so $88M/yr of levy
   is missing from the exempt scenario.** Opened 2026-08-25, falls straight out
   of the zone decomposition above. ⚠️ **This one DOES reach the rendered map**
@@ -1053,9 +1072,27 @@ Services carries no sparkline — measured, it does.)_
     with levy; the map also applies `inDeviationPop(p)`, which I did not
     replicate, and the comment predates the 2026 roll. **Re-derive in-code
     before quoting either number.**
-  - **Not applied.** Changing which zones count as exempt-candidate moves a
-    published uncertainty band — Peter's call, and it should land together with
-    the roll-vintage decision above rather than piecemeal.
+  - ✅ **APPLIED 2026-08-25, together with the roll-vintage fix above.**
+    - New `load_zoning.EXEMPT_CANDIDATE_ZONES = ("AJ","UF","UI","PU","PS")`,
+      **deliberately independent of `ZONE_CATEGORY`** — which keeps `PS` →
+      `never`, so the development lens is untouched. Both sets carry comments
+      saying why the other exists and warning against merging them.
+    - `property_zone_categories` refactored onto a new `property_zone_codes`,
+      so the exempt share reads the raw zone CODE off the **same single**
+      440k-point join rather than adding a second one.
+    - New per-hood `rev_frac_exempt` (NOT folded into the `rev_frac_*` family,
+      which partitions levy and sums to 1.0 — this cuts across it). Grid's
+      `inst_levy`/`inst_frac` renamed `exempt_levy`/`exempt_frac`; client's
+      `instFrac`/`INST_UNCERTAIN_MIN`/`GLASS_INST_MIN` renamed to match, because
+      a column named `inst_*` that includes parks is a lie.
+    - **Measured on the real pipeline output, not a model:** hoods at/over the
+      0.25 gate **17 → 24** citywide; **MILL WOODS PARK 0.000 → 1.000**. In the
+      tooltip's deviation population the caveat tier is **15 → 21** (the six new
+      ones all park-dominated) and the band-prism set is unchanged at 6.
+    - **Verified:** `verify-glass-inst.js` 15/15, `verify-inst-caveat.js` 25/25
+      (two hardcoded expectations updated with the reason recorded: the U of A
+      range moved on 2026 RATES, the count on `PS`), `verify-amenity.js` 35/35,
+      `pytest` 713 passed.
   - **Next:** re-derive independently before trusting it; decide whether the
     site should state a measured overstatement against a filed figure. ⚠️
     **This is a public-number question and Peter's call**, same as sub-item (3)

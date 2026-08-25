@@ -1,6 +1,6 @@
 {
   "_note": "Per-year citywide anchors for the temporal lens (scripts/check_temporal_years.py). Historical years are an archive and should not move; the LIVE year is deliberately absent from this file because it is a live snapshot that moves weekly. See docs/SPEC_temporal.md section 0.3.",
-  "live_year_when_pinned": 2025,
+  "live_year_when_pinned": 2026,
   "years": {
     "2012": {
       "n_accounts": {
@@ -120,6 +120,16 @@
       "total_assessed_value": {
         "min": 204309712427.01,
         "max": 206363076370.99
+      }
+    },
+    "2025": {
+      "n_accounts": {
+        "min": 437356.23,
+        "max": 441751.77
+      },
+      "total_assessed_value": {
+        "min": 237200749393.21,
+        "max": 239584676522.79
       }
     }
   }

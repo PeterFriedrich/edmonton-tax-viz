@@ -1,0 +1,104 @@
+{
+  "_source": "https://open.alberta.ca/opendata/municipal-financial-and-statistical-data",
+  "_licence": "Open Government Licence \u2013 Alberta",
+  "_municipality": {
+    "name": "EDMONTON",
+    "fir_code": "0098"
+  },
+  "_fetched": "2026-08-25",
+  "_note": "Alberta FIR Schedule MR \u2014 what Edmonton FILED with the province. MR(2) is the TAXABLE base (assessment x MR(3) reproduces MR(1); asserted by check_internal_consistency at fetch time). Only `residential` is safe to compare 1:1 against our tax classes.",
+  "years": {
+    "2023": {
+      "levy": {
+        "residential": 920053628.373103,
+        "farmland": 463612.866266,
+        "non_residential": 866100237.496565,
+        "machinery_equipment": 0.0,
+        "other": 125736213.0
+      },
+      "assessment": {
+        "residential": 131284317914.0,
+        "farmland": 66153860.0,
+        "non_residential": 41521457661.0,
+        "machinery_equipment": 757013947.0,
+        "other": 15601381376.0
+      },
+      "mill_rate": {
+        "residential": 7.0081,
+        "farmland": 7.0081,
+        "non_residential": 20.8591,
+        "machinery_equipment": 0.0,
+        "other": 0.0
+      }
+    },
+    "2024": {
+      "levy": {
+        "residential": 1030452317.0,
+        "farmland": 478535.2474,
+        "non_residential": 951313319.7,
+        "machinery_equipment": 0.0,
+        "other": 141511413.0
+      },
+      "assessment": {
+        "residential": 134439557008.0,
+        "farmland": 62432842.0,
+        "non_residential": 41977051267.0,
+        "machinery_equipment": 780646936.0,
+        "other": 16405618398.0
+      },
+      "mill_rate": {
+        "residential": 7.6648,
+        "farmland": 7.6648,
+        "non_residential": 22.6627,
+        "machinery_equipment": 0.0,
+        "other": 0.0
+      }
+    },
+    "2025": {
+      "levy": {
+        "residential": 1129541492.0,
+        "farmland": 450376.8956,
+        "non_residential": 1024423352.0,
+        "machinery_equipment": 0.0,
+        "other": 142984457.0
+      },
+      "assessment": {
+        "residential": 148128818480.0,
+        "farmland": 59062724.0,
+        "non_residential": 42291523823.0,
+        "machinery_equipment": 768976453.0,
+        "other": 17087204280.0
+      },
+      "mill_rate": {
+        "residential": 7.6254,
+        "farmland": 7.6254,
+        "non_residential": 24.2229,
+        "machinery_equipment": 0.0,
+        "other": 0.0
+      }
+    },
+    "2026": {
+      "levy": {
+        "residential": 1241589174.0,
+        "farmland": 495771.9677,
+        "non_residential": 1109389134.0,
+        "machinery_equipment": 0.0,
+        "other": 157601911.0
+      },
+      "assessment": {
+        "residential": 160372669990.0,
+        "farmland": 64037506.0,
+        "non_residential": 43985676319.0,
+        "machinery_equipment": 759582941.0,
+        "other": 19017428050.0
+      },
+      "mill_rate": {
+        "residential": 7.7419,
+        "farmland": 7.7419,
+        "non_residential": 25.2216,
+        "machinery_equipment": 0.0,
+        "other": 0.0
+      }
+    }
+  }
+}

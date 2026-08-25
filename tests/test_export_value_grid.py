@@ -643,28 +643,28 @@ def test_hood_lot_acres_nonres_revenue_variant():
     assert out.loc["HOODX", "nonres_revenue_lot_eligible"] == pytest.approx(6.0)
 
 
-def test_inst_frac_is_share_of_cell_levy():
+def test_exempt_frac_is_share_of_cell_levy():
     # Two properties in one cell, one on institutionally-zoned land: the cell's
-    # inst_frac is the LEVY share, not the property count share.
+    # exempt_frac is the LEVY share, not the property count share.
     df = _frame([
-        {**A, "assessed_value": 100.0, "levy": 1000.0, "inst_levy": 750.0},
-        {**A2, "assessed_value": 200.0, "levy": 3000.0, "inst_levy": 0.0},
-        {**B, "assessed_value": 400.0, "levy": 5000.0, "inst_levy": 5000.0},
+        {**A, "assessed_value": 100.0, "levy": 1000.0, "exempt_levy": 750.0},
+        {**A2, "assessed_value": 200.0, "levy": 3000.0, "exempt_levy": 0.0},
+        {**B, "assessed_value": 400.0, "levy": 5000.0, "exempt_levy": 5000.0},
     ])
-    grid = build_value_grid(df, cell_m=100.0).sort_values("inst_frac")
-    assert list(grid["inst_frac"]) == pytest.approx([750.0 / 4000.0, 1.0])
+    grid = build_value_grid(df, cell_m=100.0).sort_values("exempt_frac")
+    assert list(grid["exempt_frac"]) == pytest.approx([750.0 / 4000.0, 1.0])
 
 
-def test_inst_frac_is_nan_when_cell_has_no_levy():
+def test_exempt_frac_is_nan_when_cell_has_no_levy():
     # A wholly exempt cell has no revenue to apportion. NaN, not 0.0 —
     # "nothing to apportion" is not "0% institutional" (revenue_by_zone's
     # $0-neighbourhood rule, applied per cell).
     df = _frame([
-        {**A, "assessed_value": 100.0, "levy": 0.0, "inst_levy": 0.0},
-        {**B, "assessed_value": 400.0, "levy": 2000.0, "inst_levy": 1000.0},
+        {**A, "assessed_value": 100.0, "levy": 0.0, "exempt_levy": 0.0},
+        {**B, "assessed_value": 400.0, "levy": 2000.0, "exempt_levy": 1000.0},
     ])
     grid = build_value_grid(df, cell_m=100.0)
-    fracs = dict(zip(grid["revenue_per_acre"] > 0, grid["inst_frac"]))
+    fracs = dict(zip(grid["revenue_per_acre"] > 0, grid["exempt_frac"]))
     assert np.isnan(fracs[False])
     assert fracs[True] == pytest.approx(0.5)
 
@@ -672,31 +672,31 @@ def test_inst_frac_is_nan_when_cell_has_no_levy():
 def test_no_inst_levy_omits_inst_frac():
     df = _frame([{**A, "assessed_value": 100.0, "levy": 1000.0}])
     grid = build_value_grid(df, cell_m=100.0)
-    assert "inst_frac" not in grid.columns
+    assert "exempt_frac" not in grid.columns
 
 
-def test_inst_frac_needs_levy_to_be_a_share_of():
-    # inst_levy without levy: no denominator, so no column rather than a
+def test_exempt_frac_needs_levy_to_be_a_share_of():
+    # exempt_levy without levy: no denominator, so no column rather than a
     # fraction of assessed value (a different quantity entirely).
-    df = _frame([{**A, "assessed_value": 100.0, "inst_levy": 50.0}])
+    df = _frame([{**A, "assessed_value": 100.0, "exempt_levy": 50.0}])
     grid = build_value_grid(df, cell_m=100.0)
-    assert "inst_frac" not in grid.columns
+    assert "exempt_frac" not in grid.columns
 
 
-def test_export_inst_frac_appended_last(tmp_path):
-    # inst_frac appends after the nonres pair, keeping every existing slot.
+def test_export_exempt_frac_appended_last(tmp_path):
+    # exempt_frac appends after the nonres pair, keeping every existing slot.
     df = _frame([
         {**A, "assessed_value": 100.0, "levy": 3000.0, "res_levy": 1000.0,
          "nonres_levy": 2000.0, "lot_size": 500.0, "year_built": 1975.0,
-         "inst_levy": 3000.0},
+         "exempt_levy": 3000.0},
         {**B, "assessed_value": 400.0, "levy": 4000.0, "res_levy": 4000.0,
          "nonres_levy": 0.0, "lot_size": None, "year_built": None,
-         "inst_levy": 0.0},
+         "exempt_levy": 0.0},
     ])
     out = tmp_path / "value_grid.json"
     stats = export_value_grid(df, out, cell_m=100.0)
     payload = json.loads(out.read_text())
-    assert payload["columns"][-1] == "inst_frac"
+    assert payload["columns"][-1] == "exempt_frac"
     assert payload["columns"][:11] == [
         "lon", "lat", "value_per_acre", "revenue_per_acre",
         "value_per_lot_acre", "revenue_per_lot_acre",
@@ -704,22 +704,22 @@ def test_export_inst_frac_appended_last(tmp_path):
         "median_year_built",
         "nonres_revenue_per_acre", "nonres_revenue_per_lot_acre",
     ]
-    assert stats["has_inst"] is True
+    assert stats["has_exempt"] is True
     rows = sorted(payload["cells"], key=lambda r: r[11])
     assert rows[0][11] == 0.0 and rows[1][11] == 1.0
 
 
-def test_export_inst_frac_serialises_null_not_zero(tmp_path):
+def test_export_exempt_frac_serialises_null_not_zero(tmp_path):
     # The no-levy cell must reach the browser as null; 0.0 would claim the
     # cell was measured and found non-institutional.
     df = _frame([
-        {**A, "assessed_value": 100.0, "levy": 0.0, "inst_levy": 0.0},
-        {**B, "assessed_value": 400.0, "levy": 4000.0, "inst_levy": 1000.0},
+        {**A, "assessed_value": 100.0, "levy": 0.0, "exempt_levy": 0.0},
+        {**B, "assessed_value": 400.0, "levy": 4000.0, "exempt_levy": 1000.0},
     ])
     out = tmp_path / "value_grid.json"
     export_value_grid(df, out, cell_m=100.0)
     payload = json.loads(out.read_text())
-    i = payload["columns"].index("inst_frac")
+    i = payload["columns"].index("exempt_frac")
     assert sorted(r[i] for r in payload["cells"] if r[i] is not None) == [0.25]
     assert sum(1 for r in payload["cells"] if r[i] is None) == 1
 

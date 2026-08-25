@@ -44,11 +44,14 @@ const BANNED = /\b(lost|uncollected|foregone|should be|really|actually)\b/i;
   const ua = await tip('UNIVERSITY OF ALBERTA', 'revenue_per_acre');
   console.log('U of A / Total :', ua.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim());
   check('caveat fires on Total revenue', CAVEAT.test(ua) && EXEMPT.test(ua));
-  check('share is the hood\'s own rev_frac_inst', /90% of revenue/.test(ua));
+  check('share is the hood\'s own rev_frac_exempt', /90% of revenue/.test(ua));
   // U of A is in the CONSEQUENCE tier, so its headline is a range, not a
   // figure: a hollow prism beside a single confident number contradicts itself.
+  // ⚠️ Moved 2026-08-25 with the roll: was $17,522 to $171,670 at 2025 mill
+  // rates. The 2026 roll bills at 7.7419 / 25.2216 (was 7.6254 / 24.2229), so
+  // both endpoints rise ~3.9% — a RATE change, not drift in the band.
   check('a hollow hood prints a RANGE, low end first',
-    /\$17,522 to \$171,670\s*\/ acre/.test(ua.replace(/<[^>]+>/g, '')));
+    /\$18,047 to \$178,401\s*\/ acre/.test(ua.replace(/<[^>]+>/g, '')));
 
   // --- the two subset cuts carry it too ------------------------------------
   for (const m of ['res_revenue_per_acre', 'nonres_revenue_per_acre']) {
@@ -66,15 +69,15 @@ const BANNED = /\b(lost|uncollected|foregone|should be|really|actually)\b/i;
   check('DOWNTOWN (5% inst) has no caveat', !CAVEAT.test(dt) && !EXEMPT.test(dt));
 
   // --- the hood set is the Lab's, by construction --------------------------
-  // Not a re-derived list: both surfaces must read INST_UNCERTAIN_MIN, so a
+  // Not a re-derived list: both surfaces must read EXEMPT_UNCERTAIN_MIN, so a
   // future change to the threshold moves them together or this fails.
   const sets = await page.evaluate(() => {
     if (state.metric !== 'revenue_per_acre') applyMetric('revenue_per_acre');
     const props = state.data.features.map(f => f.properties);
     const live = props.filter(p => !p.is_set_aside && p.revenue_per_acre);
     return {
-      min: INST_UNCERTAIN_MIN,
-      flagged: live.filter(p => instFrac(p) >= INST_UNCERTAIN_MIN)
+      min: EXEMPT_UNCERTAIN_MIN,
+      flagged: live.filter(p => exemptFrac(p) >= EXEMPT_UNCERTAIN_MIN)
                    .map(p => p.neighbourhood_name).sort(),
       tipped: live.filter(p => /institutionally-zoned/.test(viewTooltip({ object: { properties: p } }).html))
                   .map(p => p.neighbourhood_name).sort(),
@@ -84,7 +87,11 @@ const BANNED = /\b(lost|uncollected|foregone|should be|really|actually)\b/i;
   check('tooltip set == threshold set',
         JSON.stringify(sets.flagged) === JSON.stringify(sets.tipped),
         `${sets.tipped.length} hoods`);
-  check('15 hoods carry the caveat', sets.tipped.length === 15, sets.tipped.join(', '));
+  // ⚠️ 15 -> 21 on 2026-08-25: the gate moved off the `inst` zoning CATEGORY
+  // onto EXEMPT_CANDIDATE_ZONES, which adds `PS` (Parks and Services) — $88M/yr
+  // of levy the caveat had been silent about. The six new hoods are all
+  // park-dominated (MILL WOODS PARK's entire levy sits on PS).
+  check('21 hoods carry the caveat', sets.tipped.length === 21, sets.tipped.join(', '));
 
   // --- the consequence tier: which prisms become bands ---------------------
   const hollow = await page.evaluate(() => {
@@ -93,7 +100,7 @@ const BANNED = /\b(lost|uncollected|foregone|should be|really|actually)\b/i;
     const live = props.filter(p => !p.is_set_aside && p.revenue_per_acre);
     const set = p => live.filter(p2 => p2 === p);
     const hollowed = live.filter(instBandedMoney);
-    const caveat = live.filter(p => instFrac(p) >= INST_UNCERTAIN_MIN);
+    const caveat = live.filter(p => exemptFrac(p) >= EXEMPT_UNCERTAIN_MIN);
     const main = overlay._props.layers.find(l => l.id === 'metric-extrusion');
     const lev = overlay._props.layers.find(l => l.id === 'inst-band-levied');
     const ex = overlay._props.layers.find(l => l.id === 'inst-band-exempt');
@@ -108,7 +115,7 @@ const BANNED = /\b(lost|uncollected|foregone|should be|really|actually)\b/i;
     return {
       names: before,
       caveatNames: caveat.map(p => p.neighbourhood_name).sort(),
-      outsideCaveat: hollowed.filter(p => instFrac(p) < INST_UNCERTAIN_MIN).length,
+      outsideCaveat: hollowed.filter(p => exemptFrac(p) < EXEMPT_UNCERTAIN_MIN).length,
       layersExist: !!lev && !!ex,
       bandData: lev ? lev.props.data.length : -1,
       filled: lev ? lev.props.filled : null,

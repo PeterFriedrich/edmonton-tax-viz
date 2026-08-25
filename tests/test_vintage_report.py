@@ -118,7 +118,10 @@ def test_window_pins_fire_once_the_year_completes(pinned):
 def test_year_constants_flag_drift(monkeypatch):
     """RUNBOOK §1 step 6: these are separate constants and forgetting them is silent."""
     import main
-    monkeypatch.setattr(main, "ASSESSMENT_YEAR", 2026)  # generate_status still says 2025
+    # Any year generate_status.py's DATA_YEAR/RATE_YEAR do NOT carry. Kept
+    # relative to the real pin so the 2026 roll (or the next one) can't make
+    # this assert a no-drift case again, which is how it broke on 2026-08-25.
+    monkeypatch.setattr(main, "ASSESSMENT_YEAR", main.ASSESSMENT_YEAR + 1)
     status, _, detail = vr.check_year_constants()
     assert status == vr.ACTION
     assert "DATA_YEAR" in detail

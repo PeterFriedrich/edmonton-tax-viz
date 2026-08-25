@@ -56,7 +56,10 @@ from export_value_grid import export_value_grid, check_lot_acre_bounds, build_ho
 from load_temporal import load_temporal, export_temporal_web
 from revenue_by_zone import (
     FRACTION_DECIMALS,
-    property_zone_categories,
+    categories_from_codes,
+    exempt_candidate_levy,
+    exempt_share_by_neighbourhood,
+    property_zone_codes,
     revenue_by_zone,
 )
 from plot_choropleth import plot_choropleth
@@ -115,10 +118,13 @@ TEMPORAL_WEB_OUT = ROOT / "web/data/temporal.json"
 # Committed, not under web/ — see src/load_temporal.write_archive.
 TEMPORAL_ARCHIVE = ROOT / "data/temporal_archive.json"
 
-# Assessment-year alignment: the local snapshot is 2025 data (the coverage year
-# lives in Socrata metadata, not the rows — see DATA.md). Mill rates MUST match.
-# A future re-download could roll the year; re-check metadata + bump this.
-ASSESSMENT_YEAR = 2025
+# Assessment-year alignment: the local snapshot is 2026 data. Mill rates MUST
+# match. ⚠️ The coverage year is NOT reliably in Socrata metadata — Edmonton
+# left "Period of Coverage" reading 2025 for the whole 2026 roll, which is how
+# this pin sat a year stale while every guard stayed green (TODO.md, 2026-08-25).
+# Verify against the DATA: Alberta FIR Schedule MR(2)'s residential taxable base
+# is the anchor (scripts/check_roll_year_against_fir.py).
+ASSESSMENT_YEAR = 2026
 
 # Fire lens window: the last 3 FULL calendar years, averaged (locked decision
 # 3, SPEC_services.md "Fire lens"). Pinned — an auto-rolling window could
@@ -257,14 +263,23 @@ def run(
             # the hood shares below and the Glass grid's `inst_frac` (attached
             # here so it rides the property-info merge into grid_input). Joining
             # twice would cost the same again and let the two drift apart.
-            zone_categories = property_zone_categories(assessment, zoning_polygons)
-            assessment["inst_levy"] = assessment["levy"].where(
-                zone_categories == "inst", 0.0
-            )
+            zone_codes = property_zone_codes(assessment, zoning_polygons)
+            zone_categories = categories_from_codes(zone_codes)
+            # ⚠️ The uncertainty band reads EXEMPT_CANDIDATE_ZONES, not the
+            # `inst` CATEGORY. The two answer different questions and `PS`
+            # (parks) belongs to exactly one of them — routing the band through
+            # `inst` omitted $88M/yr and drew park-dominated hoods as certain
+            # (TODO.md 2026-08-25).
+            assessment["exempt_levy"] = exempt_candidate_levy(assessment, zone_codes)
             aggregated = aggregated.merge(
                 revenue_by_zone(
                     assessment, zoning_polygons, categories=zone_categories,
                 ),
+                on="neighbourhood_name",
+                how="left",
+            )
+            aggregated = aggregated.merge(
+                exempt_share_by_neighbourhood(assessment),
                 on="neighbourhood_name",
                 how="left",
             )

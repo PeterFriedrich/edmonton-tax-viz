@@ -127,6 +127,35 @@ assessment feed to the new year and CI is refusing to apply stale mill rates.
 The site keeps serving last year's data and is fully functional — take your
 time.
 
+> ⚠️ **THE SYMPTOM CAN BE ABSENT. It was, for the whole 2026 roll.**
+> `check_year_alignment.py` reads Socrata's hand-maintained `Period of
+> Coverage` string, and Edmonton left it saying `2025-01-01 to 2025-12-31`
+> after rolling the data to 2026. Pin and metadata agreed with each other while
+> both were a year stale, so **no banner appeared, the monthly digest printed
+> "Roll is 2025, pin is 2025 — aligned", and the pipeline billed a 2026 roll at
+> 2025 mill rates for months** (understating citywide levy ~$69.5M / 2.5%).
+> Caught 2026-08-25 by comparing against Alberta FIR, not by any guard.
+>
+> **So do not wait for the banner.** The authoritative check measures the
+> parcels:
+>
+> ```bash
+> .venv/bin/python scripts/check_roll_year_against_fir.py
+> ```
+>
+> Residential land is barely exempt, so our residential base tracks Edmonton's
+> filed base (FIR Schedule `MR(2)`, `data/fir_tax_base.json`) within ~1% for the
+> right year and ~10% for a neighbouring one. Exit 3 = the roll moved and the
+> pin has not. `check_year_alignment.py` now returns INCONCLUSIVE (exit 4)
+> rather than "aligned" whenever the coverage string is older than the current
+> calendar year, so a stale string can no longer read as agreement.
+>
+> ⚠️ **`data/fir_tax_base.json` must know the new year** or the check has
+> nothing to match against — refresh it first with
+> `.venv/bin/python scripts/fetch_fir_tax_base.py` (manual, reviewed, the
+> mill-rates pattern). The province publishes the year's Schedule MR in
+> `YYYY_tax_rates.xlsx` ahead of the full financial workbook.
+
 **Checklist (in order):**
 
 1. **Wait for the City to publish the new year's municipal mill rates**

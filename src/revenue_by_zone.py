@@ -92,28 +92,28 @@ def _categorize_codes(codes: pd.Series) -> pd.Series:
     return category
 
 
-def property_zone_categories(
+def property_zone_codes(
     assessment: pd.DataFrame,
     zoning: gpd.GeoDataFrame,
     *,
     zoning_column: str = "zoning",
 ) -> pd.Series:
-    """Return each property's zoning CATEGORY, indexed like ``assessment``.
+    """Return each property's raw zone CODE, indexed like ``assessment``.
 
-    The per-property assignment behind every zone share in this project. It was
-    an internal step of ``revenue_by_zone`` until 2026-08-19, when the Glass
-    view needed the same assignment binned by grid cell instead of by
-    neighbourhood — and the two must not be computed twice, both for the ~440k
-    point-in-polygon cost and because a second join could drift from the first.
-    A hood share and a cell share now disagree only where the geometry does.
+    The single point-in-polygon pass behind every zone share in this project.
+    ``property_zone_categories`` is a thin map over this; the exempt-candidate
+    share needs the CODE itself, because ``ZONE_CATEGORY`` deliberately answers
+    a different question (see ``load_zoning.EXEMPT_CANDIDATE_ZONES``). Both
+    consumers read one join rather than two — the ~440k-point cost is paid once,
+    and a second join could drift from the first.
 
-    Unplaceable and unmatched properties are ``UNZONED`` rather than dropped, so
-    a consumer's denominator stays the FULL levy of whatever it groups by.
+    Unplaceable and unmatched properties come back as NaN, never dropped, so a
+    consumer's denominator stays the FULL levy of whatever it groups by.
     """
     missing = [c for c in REQUIRED_COLUMNS if c not in assessment.columns]
     if missing:
         raise KeyError(
-            f"property_zone_categories needs {missing} — run apply_tax_rates "
+            f"property_zone_codes needs {missing} — run apply_tax_rates "
             f"first (have: {sorted(assessment.columns)})"
         )
     if zoning_column not in zoning.columns:
@@ -155,8 +155,8 @@ def property_zone_categories(
         )
         joined = joined[~duplicated]
 
-    category = _categorize_codes(joined[zoning_column])
-    unmatched = category.isna()
+    codes = joined[zoning_column]
+    unmatched = _categorize_codes(codes).isna()
     if unmatched.any():
         logger.warning(
             "%d propert(ies) carrying $%.0f of levy fell in NO zoning polygon "
@@ -167,12 +167,57 @@ def property_zone_categories(
         )
     # Properties with no coordinates rejoin here so the denominator is the
     # consumer's FULL levy, not just its placeable share.
-    return (
-        category.fillna(UNZONED)
-        .reindex(assessment.index)
-        .fillna(UNZONED)
-        .rename("category")
+    return codes.reindex(assessment.index).rename("zone_code")
+
+
+def property_zone_categories(
+    assessment: pd.DataFrame,
+    zoning: gpd.GeoDataFrame,
+    *,
+    zoning_column: str = "zoning",
+) -> pd.Series:
+    """Return each property's zoning CATEGORY, indexed like ``assessment``.
+
+    Thin map over ``property_zone_codes``. Unmatched and unplaceable properties
+    become ``UNZONED`` rather than dropped.
+    """
+    codes = property_zone_codes(assessment, zoning, zoning_column=zoning_column)
+    return categories_from_codes(codes)
+
+
+def categories_from_codes(codes: pd.Series) -> pd.Series:
+    """Map raw zone codes to categories, bucketing anything unknown as UNZONED."""
+    return _categorize_codes(codes).fillna(UNZONED).rename("category")
+
+
+def exempt_share_by_neighbourhood(assessment: pd.DataFrame) -> pd.DataFrame:
+    """Per-hood ``rev_frac_exempt`` — the share of levy on exempt-CANDIDATE zoning.
+
+    Needs ``exempt_levy`` attached (``exempt_candidate_levy``). Deliberately NOT
+    part of the ``rev_frac_*`` family: those partition the levy and sum to 1.0,
+    while this cuts across them (it is a different question about the same
+    dollars), so folding it in would break that invariant.
+    """
+    for col in ("neighbourhood_name", "levy", "exempt_levy"):
+        if col not in assessment.columns:
+            raise KeyError(f"exempt_share_by_neighbourhood needs {col!r}")
+    g = assessment.groupby("neighbourhood_name", dropna=False).agg(
+        _exempt=("exempt_levy", "sum"), _levy=("levy", "sum"),
     )
+    frac = (g["_exempt"] / g["_levy"].where(g["_levy"] > 0)).round(FRACTION_DECIMALS)
+    return frac.rename("rev_frac_exempt").reset_index()
+
+
+def exempt_candidate_levy(assessment: pd.DataFrame, codes: pd.Series) -> pd.Series:
+    """Levy sitting on a zone that MIGHT not be levied; 0 everywhere else.
+
+    Feeds the map's levied/exempt uncertainty band. ⚠️ This is not an assertion
+    that these parcels are untaxed — Edmonton publishes no per-parcel exemption
+    status. It sizes an unknown; see ``load_zoning.EXEMPT_CANDIDATE_ZONES``.
+    """
+    from load_zoning import EXEMPT_CANDIDATE_ZONES  # noqa: PLC0415 — avoid cycle
+
+    return assessment["levy"].where(codes.isin(EXEMPT_CANDIDATE_ZONES), 0.0)
 
 
 def revenue_by_zone(

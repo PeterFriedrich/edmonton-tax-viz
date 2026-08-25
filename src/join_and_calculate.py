@@ -79,6 +79,10 @@ REVENUE_READOUT_COLUMNS = [
     "rev_frac_never", "rev_frac_notyet", "rev_frac_inst",
     "rev_frac_residential", "rev_frac_commercial", "rev_frac_industrial",
     "rev_frac_mixed", "rev_frac_dc", "rev_frac_other", "rev_frac_unzoned",
+    # Cuts ACROSS the family above rather than joining it — the rev_frac_*
+    # partition sums to 1.0 and this asks a different question of the same
+    # dollars (load_zoning.EXEMPT_CANDIDATE_ZONES).
+    "rev_frac_exempt",
 ]
 
 
@@ -1010,6 +1014,10 @@ SLIM_COLUMNS = [
     "rev_frac_never", "rev_frac_notyet", "rev_frac_inst",
     "rev_frac_residential", "rev_frac_commercial", "rev_frac_industrial",
     "rev_frac_mixed", "rev_frac_dc", "rev_frac_other", "rev_frac_unzoned",
+    # Cuts ACROSS the family above rather than joining it — the rev_frac_*
+    # partition sums to 1.0 and this asks a different question of the same
+    # dollars (load_zoning.EXEMPT_CANDIDATE_ZONES).
+    "rev_frac_exempt",
     "geometry",
 ]
 
