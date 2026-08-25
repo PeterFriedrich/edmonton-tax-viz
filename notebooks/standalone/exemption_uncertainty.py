@@ -1,5 +1,6 @@
 # ---
 # jupyter:
+#   title: What public data can and cannot say about Edmonton's tax-exempt property
 #   jupytext:
 #     text_representation:
 #       extension: .py
@@ -53,6 +54,7 @@
 # appears, with what would falsify it.
 
 # %%
+import base64
 import io
 import json
 import os
@@ -98,6 +100,23 @@ def fetch(url: str, name: str) -> Path:
     dest.write_bytes(read_url(url))
     print(f" {dest.stat().st_size / 1e6:.1f} MB")
     return dest
+
+
+def show(fig, alt: str) -> None:
+    """Display a figure carrying real alt text.
+
+    `plt.show()` emits a bare <img> with no alt attribute, so every chart is
+    invisible to a screen reader and to anyone whose images fail to load. The
+    figure is embedded by hand instead, with a description that states what the
+    chart SAYS rather than what it depicts.
+    """
+    from IPython.display import HTML, display  # noqa: PLC0415
+
+    buf = io.BytesIO()
+    fig.savefig(buf, format="png", dpi=110, facecolor=fig.get_facecolor())
+    plt.close(fig)
+    encoded = base64.b64encode(buf.getvalue()).decode("ascii")
+    display(HTML(f'<img alt="{alt}" src="data:image/png;base64,{encoded}">'))
 
 
 CHECKS: list[tuple[bool, str]] = []
@@ -464,7 +483,11 @@ for s in ("top", "right", "left"):
 ax.spines["bottom"].set_color(GRID)
 ax.tick_params(colors=INK_MUTED, length=0)
 plt.tight_layout()
-plt.show()
+show(fig, "Bar chart of how far each assessment class's roll value exceeds what "
+          "Edmonton filed as taxable. Residential is close to matching at about 1 "
+          "percent, while apartments and non-residential each stand about 21 percent "
+          "above the filed base, concentrating the unexplained value in the two classes "
+          "where institutional and non-profit property sits.")
 
 # %% [markdown]
 # ---
@@ -590,7 +613,11 @@ for s in ("top", "right", "left"):
 ax.spines["bottom"].set_color(GRID)
 ax.tick_params(colors=INK_MUTED, length=0)
 plt.tight_layout()
-plt.show()
+show(fig, "Bar chart of how much of each class's gap sits on exempt-candidate "
+          "zoning. Non-residential reaches 96 percent, close to the marked line where "
+          "zoning would fully account for the gap. Apartments reach only 13 percent and "
+          "residential 10 percent, so for those two classes zoning locates almost none "
+          "of the exempt value.")
 
 # %% [markdown]
 # ---
@@ -748,7 +775,12 @@ ax.spines["bottom"].set_color(GRID)
 ax.tick_params(colors=INK_MUTED, length=0)
 leg = ax.legend(loc="upper left", frameon=False, fontsize=8.5, labelcolor=INK_MUTED)
 plt.tight_layout()
-plt.show()
+show(fig, f"Strip plot of all {len(values):,} apartment properties on ordinary zoning "
+          f"by assessed value on a log scale, with two constructed sets marked on "
+          f"separate rows. Set A ({len(va)} properties) and set B ({len(vb)} properties) "
+          f"share no property, yet both draw from the same value range and both sum to "
+          f"the same total, so no published attribute distinguishes the correct set "
+          f"from the incorrect one.")
 
 # %% [markdown]
 # ---
