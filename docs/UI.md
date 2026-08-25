@@ -527,6 +527,29 @@ catchment school (800 m). Design + the locked calls: `SPEC_development.md`
   Blurb height measured rather than assumed: +113px, still clearing `#botleft`
   by 166px at 1280x720.
 
+#### Extended to Infill (built 2026-08-25)
+The same `#amenity` checkboxes now also show under the Infill lens (they read
+the same `value_grid.json` file Glass uses) — housing the "distance to LRT/
+schools" thread that Peter originally asked for under Infill but which
+`DECISIONS.md` 2026-08-22 kept out of the score itself. `syncAmenityControls`
+now shows the rows for `v === "glass" || v === "infill"`; `ensureGridData()`
+fetches on entering either view.
+- **Rendering direction inverts, deliberately.** Glass DIMS out-of-band cells
+  (there's a metric colour to withhold). Infill has no per-cell metric to
+  withhold — the hood-level suitability×activity score never changes — so it
+  instead HIGHLIGHTS in-band cells: a flat, non-extruded, non-pickable
+  `GridCellLayer` (`infill-amenity-grid`, `AMENITY_HIGHLIGHT_COLOR` — white at
+  alpha 70) drawn over `infill-plane`, present only while a band is checked.
+  Reuses `amenityInBand` — same null-is-out-of-band rule as Glass.
+  `infillAmenityBlurb()` is the Infill-specific sentence ("marks reach only;
+  the coloured score underneath is unchanged"), sharing `amenityWhichPhrase()`
+  with Glass's `amenityBlurb()` so the two band descriptions can't drift.
+- ⚠️ **This is a placeholder, not a finished cell-grain Infill lens.** A real
+  per-cell score is still blocked on two open items in
+  `docs/ANALYSIS_BACKLOG.md` §12 (a per-cell residential-gate equivalent, and
+  what a diverging score means as a height) — see `SPEC_development.md`
+  "Amenity distance" for the full reasoning.
+
 ### Neighbourhood denominator toggle (Money view, built 2026-07-08)
 The Glass "Ground acres | Lot acres" control, mirrored onto the **Money view's
 neighbourhood prisms** — the "value per *developable* acre" view (Urban3-
