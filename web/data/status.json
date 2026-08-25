@@ -1,24 +1,24 @@
 {
-  "data_year": 2025,
-  "rate_year": 2025,
+  "data_year": 2026,
+  "rate_year": 2026,
   "zoning_year": 2024,
-  "generated": "2026-08-23",
-  "last_checked": "2026-08-24",
+  "generated": "2026-08-25",
+  "last_checked": "2026-08-25",
   "banner": null,
   "municipal_rates": {
     "unit": "per $1,000 assessed",
     "classes": [
       {
         "name": "Residential",
-        "rate": 7.6254
+        "rate": 7.7419
       },
       {
         "name": "Other Residential",
-        "rate": 8.3116
+        "rate": 8.2064
       },
       {
         "name": "Non Residential",
-        "rate": 24.2229
+        "rate": 25.2216
       }
     ],
     "assumed": [
@@ -56,5 +56,5 @@
       }
     ]
   },
-  "_geojson_sha256": "dbf33a1c1cd0f5ca438a9c3c3efee11f831a541937b5ff31d870f646a3fab949"
+  "_geojson_sha256": "f39f903a942e24b33f44806e1e644cb3dfa39c606a40874537a4dbab4b4dd4cd"
 }
