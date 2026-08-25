@@ -205,7 +205,7 @@ const check = (name, ok, detail = '') => {
     // Every hood that would have been banded on SHARE alone, split by whether
     // the consequence cut kept it — the 2026-08-15 narrowing.
     const shareTier = state.data.features.filter(f =>
-      inDeviationPop(f.properties) && instFrac(f.properties) >= INST_UNCERTAIN_MIN);
+      inDeviationPop(f.properties) && exemptFrac(f.properties) >= EXEMPT_UNCERTAIN_MIN);
     const invertedAnywhere = shareTier.filter(f => {
       const b = deviationBandRaw(f.properties);
       return b.exempt > b.levied;

@@ -1929,3 +1929,59 @@ STALE SILENTLY** while the two board feeds refresh weekly. Open in
 - Distribution on the 2026-07-06 snapshot: `dist_lrt_m` median 5,346 m per cell,
   **554 cells (1.6%) within 600 m**; `dist_school_m` median 982 m, **37.8% within
   800 m**. Network/euclidean ratio to LRT: median **1.36**.
+
+## 21. Alberta FIR Schedule MR — the filed taxable base (roll-year guard, added 2026-08-25)
+
+**Source:** Alberta Municipal Affairs — Municipal Financial and Statistical
+Data (FIR/SIR), `https://open.alberta.ca/opendata/municipal-financial-and-statistical-data`
+— the **same workbooks** `scripts/fetch_fir_debt.py` already downloads for
+Schedule AA (§11). That script reads one sheet of 51; this reads three more.
+**Fetch:** `scripts/fetch_fir_tax_base.py` → committed `data/fir_tax_base.json`.
+**Manual, reviewed input** (the mill-rates / `fir_debt_series` pattern): NOT part
+of the weekly refresh. Re-run when a new financial year publishes, eyeball the
+diff, commit. **Licence:** Open Government Licence – Alberta.
+
+**What it holds** — Edmonton (FIR code `0098`), per year, from three sheets:
+`MR(1)-Tax Levy`, `MR(2)-Assessment`, `MR(3)-Mill Rate`. These are what the
+City **filed with the province**, so they are an external anchor on numbers the
+project otherwise only models.
+
+| year | filed residential taxable base | filed municipal levy (all classes) |
+|---|---|---|
+| 2023 | $131,284,317,914 | — |
+| 2024 | $134,439,557,008 | — |
+| 2025 | $148,128,818,480 | $2,297,399,678 |
+| 2026 | $160,372,669,990 | $2,509,075,991 |
+
+✅ **`MR(2)` is the TAXABLE base by construction, and the fetcher asserts it**
+(`check_internal_consistency`): `assessment × MR(3) rate` reproduces `MR(1)`
+levy to **±0.0000%** for Residential, Farmland and Non-Residential. ✅ **`MR(3)`
+matches `data/mill_rates.json` exactly** (2026: Residential `7.7419`,
+Non-Residential `25.2216`) — independent confirmation our rate inputs are right.
+
+**Why it exists: the roll year is not recoverable from Socrata metadata.**
+Edmonton left `Period of Coverage` reading `2025-01-01 to 2025-12-31` for the
+whole 2026 roll, so `check_year_alignment.py` — which parsed that string —
+reported "aligned" while the pipeline billed a 2026 roll at 2025 rates.
+`scripts/check_roll_year_against_fir.py` measures the parcels instead:
+residential land is barely exempt, so our residential base lands within ~1% of
+the filed base for the right year and ~10% off for a neighbouring one.
+
+### ⚠️ Known quirks
+- **The buckets are NOT 1:1 with our tax classes.** `MR(2)` column [10] is
+  *"Other (including annexed, vacant, total minimum tax, etc.)"*, **not** "Other
+  Residential" — but Edmonton has no apartment slot in Schedule MR and files
+  that sub-class there. Established from the **implied rate** (levy ÷
+  assessment = `8.2872`, within 1.0% of our Other Residential `8.2064`), not
+  from the label. ⚠️ **Only `residential` is safe to compare directly**, and it
+  is the only column the year guard uses.
+- **Machinery & Equipment is assessed and NOT levied.** 2026: $759,582,941 at a
+  `0.0000` rate → $0. Edmonton levies no municipal tax on M&E and our roll has
+  no such class, so it cannot enter a levy comparison — but it does make our
+  assessment base look ~$760M *smaller* than the province's.
+- **The newest year arrives in `YYYY_tax_rates.xlsx`**, ahead of the full
+  `YYYY_financial_year.xlsx`. `discover_resources` accepts both and prefers the
+  financial workbook when both exist.
+- **Column positions are checked, not trusted.** `_check_header` raises if
+  Schedule MR's headers stop matching the expected substrings, rather than
+  reading a shifted column blind.

@@ -39,6 +39,7 @@ import logging
 import os
 import re
 import sys
+from datetime import date
 from pathlib import Path
 
 import requests
@@ -79,6 +80,20 @@ def check_alignment(detected: int, pinned: int, rate_years: set[str]) -> tuple[s
     On hold, message is the visitor-facing banner text (SPEC_deployment
     "Year alignment" holding-window wording).
     """
+    # ⚠️ `detected` comes from Socrata's hand-maintained "Period of Coverage"
+    # string, and Edmonton left it reading 2025 for the whole 2026 roll — so
+    # "detected == pinned" agreed with itself while both were a year stale and
+    # the pipeline billed a 2026 roll at 2025 rates (TODO.md 2026-08-25). A
+    # coverage year older than the current calendar year now means the string
+    # is untrustworthy, NOT that the roll is aligned. The authoritative check
+    # measures the parcels: scripts/check_roll_year_against_fir.py.
+    if detected < date.today().year:
+        return "stale-metadata", (
+            f"Socrata reports the roll as {detected} but it is {date.today().year} — "
+            f"'Period of Coverage' is not maintained and cannot be trusted. "
+            f"Run scripts/check_roll_year_against_fir.py, which measures the roll."
+        )
+
     if detected == pinned and str(pinned) in rate_years:
         return "aligned", f"Assessment roll {detected} matches pinned rates {pinned}."
 
@@ -161,6 +176,14 @@ def main(argv: list[str] | None = None) -> int:
         return EXIT_INCONCLUSIVE
 
     result, message = check_alignment(detected, pinned, rate_years)
+    if result == "stale-metadata":
+        # Deliberately INCONCLUSIVE, not HOLD: the metadata is untrustworthy, so
+        # we know nothing about the roll — and a hold would raise a banner on a
+        # guess. check_roll_year_against_fir.py is the one that can answer.
+        logger.warning("Year-alignment check INCONCLUSIVE — %s", message)
+        _write_github_output(result="inconclusive", detected_year=detected, pinned_year=pinned)
+        return EXIT_INCONCLUSIVE
+
     if result == "aligned":
         logger.info("Year alignment OK: %s", message)
         _write_github_output(result="aligned", detected_year=detected, pinned_year=pinned)

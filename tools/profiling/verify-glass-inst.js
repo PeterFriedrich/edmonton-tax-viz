@@ -1,9 +1,9 @@
 // Verify for the Glass view's institutional uncertainty bands (2026-08-19).
 // The cell-level counterpart of Money's band prisms: cells whose levy sits on
 // institutionally-zoned land get an azure cap at full height plus a filled
-// "levied regardless" base at height x (1 - inst_frac).
+// "levied regardless" base at height x (1 - exempt_frac).
 //
-// ⚠️ SKIPS ITSELF when the served value_grid.json predates the `inst_frac`
+// ⚠️ SKIPS ITSELF when the served value_grid.json predates the `exempt_frac`
 // column (pipeline 2026-08-19) — that is the graceful-degradation contract,
 // not a failure, and the site runs on the previous refresh until the next one.
 //   node verify-glass-inst.js <url>
@@ -33,9 +33,9 @@ const check = (name, ok, detail) => {
   await click('#moneydetail button[data-moneydetail="grid"]');
   await page.waitForTimeout(3000);
 
-  const has = await page.evaluate(() => !!(gridData && gridData.hasInst));
+  const has = await page.evaluate(() => !!(gridData && gridData.hasExempt));
   if (!has) {
-    console.log('SKIP  served value_grid.json has no inst_frac column '
+    console.log('SKIP  served value_grid.json has no exempt_frac column '
       + '(pre-2026-08-19 refresh) — bands correctly absent');
     const clean = await page.evaluate(() =>
       overlay._deck.props.layers.every(l => !l.id.startsWith('glass-inst')));
@@ -49,9 +49,9 @@ const check = (name, ok, detail) => {
     const by = id => L.find(l => l.id === id);
     const colKey = gridColKey();
     const col = gridData.columns[colKey];
-    const fcol = gridData.columns.inst_frac;
+    const fcol = gridData.columns.exempt_frac;
     const cells = gridData.cellsFor[colKey] || [];
-    const expected = cells.filter(c => c[fcol] != null && c[fcol] >= GLASS_INST_MIN);
+    const expected = cells.filter(c => c[fcol] != null && c[fcol] >= GLASS_EXEMPT_MIN);
     const cap = by('glass-inst-cap'), levied = by('glass-inst-levied');
     return {
       ids: L.map(l => l.id),
@@ -76,7 +76,7 @@ const check = (name, ok, detail) => {
         // ... and the base draws the levied-regardless remainder
         elev: levied.props.getElevation(expected[0]),
         expectElev: expected[0][col] * (1 - expected[0][fcol]),
-        // ⚠️ EXACTLY 1, not >= 0.99: inst_frac ships rounded to 4 decimals, so
+        // ⚠️ EXACTLY 1, not >= 0.99: exempt_frac ships rounded to 4 decimals, so
         // a 99.95% cell keeps a real (invisible) sliver of levied base. 463 of
         // the 467 near-full cells are exactly 1.0; the other 4 must NOT be
         // forced to zero — that residual is the honest remainder.
@@ -87,8 +87,8 @@ const check = (name, ok, detail) => {
           .every(c => levied.props.getElevation(c) > 0),
       },
       // a cell below the threshold must not be in either layer
-      unflaggedExcluded: cells.some(c => c[fcol] != null && c[fcol] < GLASS_INST_MIN)
-        && !cap.props.data.some(c => c[fcol] < GLASS_INST_MIN),
+      unflaggedExcluded: cells.some(c => c[fcol] != null && c[fcol] < GLASS_EXEMPT_MIN)
+        && !cap.props.data.some(c => c[fcol] < GLASS_EXEMPT_MIN),
     };
   });
 
@@ -115,7 +115,7 @@ const check = (name, ok, detail) => {
     `${r.cap.elev} vs ${r.cap.cellElev}`);
   check('bands share the grid elevationScale', r.cap.scale === r.cap.gridScale,
     `${r.cap.scale} vs ${r.cap.gridScale}`);
-  check('base height === value x (1 - inst_frac)',
+  check('base height === value x (1 - exempt_frac)',
     Math.abs(r.levied.elev - r.levied.expectElev) < 1e-6);
   // ⚠️ The reason the cap exists: at 100% institutional the base is 0 and
   // would draw nothing, and 467 of the 624 flagged cells are exactly that.

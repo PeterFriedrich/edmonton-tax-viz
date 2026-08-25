@@ -55,8 +55,8 @@ DISPLAY_RATE_CLASSES = ["Residential", "Other Residential", "Non Residential"]
 # snapshot (single source of truth: main.py ASSESSMENT_YEAR); zoning is the 2024
 # Zoning Bylaw (see DATA.md). Overridable via CLI so the runner can pass the
 # aligned year once auto-year-detection lands (SPEC_deployment "Year alignment").
-DATA_YEAR = 2025
-RATE_YEAR = 2025
+DATA_YEAR = 2026
+RATE_YEAR = 2026
 ZONING_YEAR = 2024
 
 _SENTINEL = object()  # distinguishes "flag not passed" from "--banner '' "

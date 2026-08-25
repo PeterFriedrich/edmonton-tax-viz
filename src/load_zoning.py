@@ -79,6 +79,9 @@ ZONE_CATEGORY = {
     "EETR": "notyet",    # Edmonton Energy & Technology Park — Industrial Reserve
 
     # --- inst: institutional proxy (stays on scale) ---------------------------
+    # ⚠️ This is the DEVELOPMENT answer ("can this ever be built on?"), not the
+    # exemption answer. `PS` is deliberately NOT here — parks are `never`, which
+    # is right for infill and wrong for exemption. See EXEMPT_CANDIDATE_ZONES.
     "PU": "inst",        # Public Utility
     "UF": "inst",        # Urban Facilities
     "UI": "inst",        # Urban Institution
@@ -172,6 +175,24 @@ ZONE_CATEGORY = {
 
 # All land-use categories, in output order.
 CATEGORIES = ("never", "notyet", "inst", "res", "com", "ind", "mix", "dc", "other")
+
+# Zones whose parcels might not actually be levied, for the map's levied/exempt
+# uncertainty band. ⚠️ DELIBERATELY INDEPENDENT OF ZONE_CATEGORY, which cannot
+# answer this: that mapping answers "can this ever be developed?", where `PS`
+# (Parks and Services) is correctly `never` — parks are not infill. But parks
+# are prime EXEMPTION candidates, and routing the band through `inst` therefore
+# omitted $88M/yr of levy, 3.16% citywide, understating the exempt scenario by
+# 65% and leaving hoods like MILL WOODS PARK — whose entire levy sits on `PS` —
+# drawn as fully CERTAIN (TODO.md, 2026-08-25).
+#
+# ⚠️ Do NOT "simplify" this by moving `PS` into `inst`. That repairs the band
+# and breaks the development lens, which is the whole reason there are two sets.
+#
+# ⚠️ Candidacy is not exemption. Being on one of these zones is correlational —
+# `UF`/`PU` include privately-owned facilities (data/DATA.md), and Edmonton
+# publishes no per-parcel exemption status at all. This set exists to size an
+# UNCERTAINTY, never to assert that a parcel is untaxed.
+EXEMPT_CANDIDATE_ZONES = ("AJ", "UF", "UI", "PU", "PS")
 
 # never + notyet make up the set-aside share.
 SET_ASIDE_CATEGORIES = ("never", "notyet")

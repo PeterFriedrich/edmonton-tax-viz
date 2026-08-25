@@ -1223,10 +1223,10 @@
     // The azure cells need a sentence for the same reason the Lab's outlined
     // hoods do — a reader who sees a colour that is not on the ramp will
     // otherwise read it as a value. Appended only when bands actually draw
-    // (revenue cuts, and only once the pipeline ships `inst_frac`), so the
+    // (revenue cuts, and only once the pipeline ships `exempt_frac`), so the
     // prose can never describe geometry that isn't there.
     const glassInstBlurb = () => {
-      if (!(gridData && gridData.hasInst && isRevenue(state.metric))) return "";
+      if (!(gridData && gridData.hasExempt && isRevenue(state.metric))) return "";
       const n = glassInstCount();
       if (!n) return "";
       return " " + n + " azure cell" + (n === 1 ? " is" : "s are") +
@@ -1398,7 +1398,7 @@
               // 2026-08-19) — absent on older files (-1), and the uncertainty
               // bands simply do not draw. NOT a per-acre column: it is a share,
               // so it serves both denominators (see export_value_grid).
-              inst_frac: p.columns.indexOf("inst_frac"),
+              exempt_frac: p.columns.indexOf("exempt_frac"),
               // Road-network metres to the nearest LRT station / catchment
               // school (pipeline 2026-08-23) — absent on older files (-1),
               // and each amenity row stays hidden on its own.
@@ -1410,7 +1410,7 @@
           // The denominator toggle needs the lot-acre columns (pipeline
           // 2026-07-05) — absent on older files, and the control stays hidden.
           gridData.hasLot = gridData.columns.value_per_lot_acre >= 0;
-          gridData.hasInst = gridData.columns.inst_frac >= 0;
+          gridData.hasExempt = gridData.columns.exempt_frac >= 0;
           gridData.hasDistLrt = gridData.columns.dist_lrt_m >= 0;
           gridData.hasDistSchool = gridData.columns.dist_school_m >= 0;
         })
@@ -2407,7 +2407,12 @@
     // filled:false + wireframe:true draws outline only, and the outline
     // renders below the plane, and two prisms on one footprint do not z-fight
     // — all three MEASURED in probe-uncertainty-band.html, not assumed.
-    const INST_UNCERTAIN_MIN = 0.25;   // 15 hoods on Total; 2 on Residential
+    // ⚠️ The count below is STALE — it was 15/2 when this gate read the `inst`
+    // zoning CATEGORY. Since 2026-08-25 it reads EXEMPT_CANDIDATE_ZONES, which
+    // adds `PS` (Parks and Services): $88M/yr of levy the band had been
+    // ignoring, and hoods like MILL WOODS PARK that were drawn fully certain
+    // while their entire levy sits on park zoning. Re-derive before quoting.
+    const EXEMPT_UNCERTAIN_MIN = 0.25;   // was: 15 hoods on Total; 2 on Residential
     // ⚠️ ACHROMATIC ON PURPOSE, and it is the wording rule made visual: a band
     // that asserts no direction must not be tinted toward either pole. This
     // shipped amber first and that was wrong twice over — measured against the
@@ -2418,7 +2423,7 @@
     // rejected on meaning as much as numbers: a cool hue leans toward the teal
     // surplus pole. verify-deviation.js pins R === G === B.
     const UNCERTAIN_COLOR = [255, 255, 255];
-    const instFrac = p => p.rev_frac_inst || 0;
+    const exemptFrac = p => p.rev_frac_exempt || 0;
 
     // --- two tiers, answering two different questions ------------------------
     // ⚠️ SHARE DECIDES THE WORDS, CONSEQUENCE DECIDES THE GEOMETRY, and until
@@ -2428,7 +2433,7 @@
     // EVERGREEN moves $87 against a ±$21–48k clamp, and UNIVERSITY OF ALBERTA
     // FARM's two endpoints both clamp past the deficit floor so they draw the
     // same prism. Banding those asserts "unknown" about a reading nothing
-    // disturbs. So `INST_UNCERTAIN_MIN` (provenance — part of this rests on
+    // disturbs. So `EXEMPT_UNCERTAIN_MIN` (provenance — part of this rests on
     // land whose tax status is unpublished) gates the tooltip caveat, and
     // `INST_CONSEQUENCE_MIN` (consequence — the two worlds do not draw the same
     // thing) gates the outlined range.
@@ -2467,11 +2472,11 @@
     // band with both endpoints near zero would flip the lens's above/below
     // claim while moving nothing visible; none exists, and verify-deviation.js
     // asserts crossers ⊆ selected so the day one appears is loud, not silent.
-    const isUncertain = p => inDeviationPop(p) && instFrac(p) >= INST_UNCERTAIN_MIN
+    const isUncertain = p => inDeviationPop(p) && exemptFrac(p) >= EXEMPT_UNCERTAIN_MIN
       && instShiftDeviation(p) >= INST_CONSEQUENCE_MIN;
     // Caveat without the range: ≥25% institutional, but the two worlds draw the
     // same prism. These keep a solid bar and say so in words only.
-    const instCaveatOnly = p => inDeviationPop(p) && instFrac(p) >= INST_UNCERTAIN_MIN
+    const instCaveatOnly = p => inDeviationPop(p) && exemptFrac(p) >= EXEMPT_UNCERTAIN_MIN
       && !isUncertain(p);
     // Counted out here rather than inside deviationStats, which the shift now
     // depends on. Cheap: the blurb rebuilds on a view or cut change, not per
@@ -2496,7 +2501,7 @@
         const r = Math.max(0, Math.min(1, x / sc.clamp));
         return sqrt ? Math.sqrt(r) : r;
       };
-      return t(v) - t(v * (1 - instFrac(p)));
+      return t(v) - t(v * (1 - exemptFrac(p)));
     };
     // Money's outlined hoods: the caveat tier, narrowed to the ones whose two
     // worlds do not draw the same prism. Six on Total today, and only TWO of
@@ -2505,7 +2510,7 @@
     // is what makes this affordable on the default view at all.
     const instBandedMoney = p =>
       isRevenue(state.metric) && !p.is_set_aside
-      && instFrac(p) >= INST_UNCERTAIN_MIN
+      && exemptFrac(p) >= EXEMPT_UNCERTAIN_MIN
       && instShiftMoney(p) >= INST_CONSEQUENCE_MIN;
 
     // ⚠️ NOT the Lab's white, and the difference is measured, not stylistic.
@@ -2609,7 +2614,7 @@
         getElevation: f => {
           const p = f.properties;
           const v = p[sc.colKey] || 0;
-          return exempt ? v * (1 - instFrac(p)) : v;
+          return exempt ? v * (1 - exemptFrac(p)) : v;
         },
         elevationScale: sc.elevationScale,
         getFillColor: INST_OUTLINE_COLOR.concat([INST_BAND_ALPHA]),
@@ -2652,7 +2657,7 @@
     // barely exists, so a second tier would separate almost nothing. Moving this
     // threshold anywhere from 0.10 to 0.99 changes the marked set by 247 cells
     // out of 34,671; the hood equivalent moved 15 hoods to 6.
-    const GLASS_INST_MIN = 0.25;
+    const GLASS_EXEMPT_MIN = 0.25;
 
     // ⚠️ THE RAMP FILL SURVIVES HERE, WHICH MONEY'S BAND DELIBERATELY DOES NOT
     // — a knowing divergence, recorded in DECISIONS.md 2026-08-19. Money
@@ -2668,7 +2673,7 @@
     //
     // Two layers, the same two endpoints Money draws, with the SAME alpha on
     // both so neither unknowable world gets primacy (the 2026-08-12 rule):
-    //   · the levied BASE at height x (1 - inst_frac) — "this much regardless";
+    //   · the levied BASE at height x (1 - exempt_frac) — "this much regardless";
     //   · the full-height CAP — "that much depending on an unpublished status".
     // They overlap from the ground to the levied height, so that section
     // composites denser while the cap above it stays faint. Money's
@@ -2695,17 +2700,17 @@
     // rebuild. The null-metric guard is repeated rather than inherited so the
     // two paths cannot disagree about which cells exist.
     function glassInstCells() {
-      const fcol = gridData?.columns.inst_frac ?? -1;
+      const fcol = gridData?.columns.exempt_frac ?? -1;
       const col = gridData ? gridData.columns[gridColKey()] : -1;
       if (fcol < 0 || col < 0) return [];
       gridData.instFor ??= {};
       return (gridData.instFor[col] ??= gridData.cells.filter(
-        c => c[col] != null && c[fcol] != null && c[fcol] >= GLASS_INST_MIN));
+        c => c[col] != null && c[fcol] != null && c[fcol] >= GLASS_EXEMPT_MIN));
     }
     const glassInstCount = () => glassInstCells().length;
 
     function glassInstBandLayers(gs, col) {
-      const fcol = gridData.columns.inst_frac;
+      const fcol = gridData.columns.exempt_frac;
       const flagged = glassInstCells();
       if (!flagged.length) return [];
       const mk = (id, getElevation) => new deck.GridCellLayer({
@@ -2734,7 +2739,7 @@
     }
     // The rate with institutional revenue removed — the other coherent world.
     const deviationRateExempt = p =>
-      p[state.labCut] * (1 - instFrac(p)) / devAcreFrac(p);
+      p[state.labCut] * (1 - exemptFrac(p)) / devAcreFrac(p);
     // Both endpoints as deviations, each against ITS OWN scenario average.
     //
     // ⚠️ `exempt` IS NOT ALWAYS THE LOWER END, and the naming says so on
@@ -2767,7 +2772,7 @@
         // Banded hoods stay IN it — they are real revenue on the real roll,
         // and dropping them would move everyone else's benchmark on the
         // strength of a question nobody has answered.
-        numExempt += (p[colKey] || 0) * (1 - instFrac(p)) * a;
+        numExempt += (p[colKey] || 0) * (1 - exemptFrac(p)) * a;
       }
       const avg = devAcres ? num / devAcres : 0;
       const avgExempt = devAcres ? numExempt / devAcres : 0;
@@ -3875,7 +3880,7 @@
           // the same reason: exemption changes whether a levy is collected, not
           // what a parcel is assessed at, so a band under `value_per_acre`
           // would claim a doubt the data does not carry.
-          ...(gridData.hasInst && isRevenue(state.metric)
+          ...(gridData.hasExempt && isRevenue(state.metric)
             ? glassInstBandLayers(gs, col) : []),
           ...labelLayer()];
         }
@@ -4934,7 +4939,7 @@
           return { className: "tip", html: name +
             `<b>${fmtDeviation(sp.lo)} to ${fmtDeviation(sp.hi)}</b>` +
             ` / developed acre<br/>` +
-            `<span class="muted">${Math.round(instFrac(p) * 100)}% of its revenue ` +
+            `<span class="muted">${Math.round(exemptFrac(p) * 100)}% of its revenue ` +
             `is institutional land</span><br/>` +
             `<span class="muted">Alberta law exempts many such properties; the ` +
             `roll does not say which — so this hood's value is unknown</span>` };
@@ -4965,7 +4970,7 @@
         // not its two worlds draw the same prism. Same two rows as Money, word
         // for word, so the concept reads identically across lenses.
         const caveat = instCaveatOnly(p)
-          ? `<span class="muted">${Math.round(instFrac(p) * 100)}% of revenue is `
+          ? `<span class="muted">${Math.round(exemptFrac(p) * 100)}% of revenue is `
             + `on institutionally-zoned land</span><br/>`
             + `<span class="muted">the City does not publish which of it is `
             + `tax-exempt</span><br/>`
@@ -5030,7 +5035,7 @@
       // high-to-low (deviationBandSpan's rule — here the order is structural
       // rather than sorted, since exempt is always the lower endpoint).
       let html = name + (instBandedMoney(p)
-        ? `<b>${cfg.fmt(p[colKey] * (1 - instFrac(p)))} to ${cfg.fmt(p[colKey])}</b>`
+        ? `<b>${cfg.fmt(p[colKey] * (1 - exemptFrac(p)))} to ${cfg.fmt(p[colKey])}</b>`
           + ` / ${lot ? "lot acre" : "acre"}`
         : `${cfg.fmt(p[colKey])} / ${lot ? "lot acre" : "acre"}`);
       if (lot) html += pf;
@@ -5048,7 +5053,7 @@
         html += `<br/><span class="muted">${share}% of revenue is residential</span>`;
       }
       // ⚠️ The PROVENANCE tier — the 15 hoods, wider than the 6 that get band
-      // prisms. Both surfaces read INST_UNCERTAIN_MIN itself, so the words can
+      // prisms. Both surfaces read EXEMPT_UNCERTAIN_MIN itself, so the words can
       // never disagree with the geometry about which hoods are in question.
       // SPRUCE AVENUE and CENTRAL MCDOUGALL live here: 42%/43% institutional,
       // rank 6 and 7, and their two worlds draw the same prism, so they keep
@@ -5070,8 +5075,8 @@
       // and this is a ZONING share; without the word they read as
       // contradictory, because they do not partition the same thing —
       // EVERGREEN is 89% residential and 41% institutional, summing to 130%.
-      if (isRevenue(state.metric) && instFrac(p) >= INST_UNCERTAIN_MIN) {
-        html += `<br/><span class="muted">${Math.round(instFrac(p) * 100)}% of `
+      if (isRevenue(state.metric) && exemptFrac(p) >= EXEMPT_UNCERTAIN_MIN) {
+        html += `<br/><span class="muted">${Math.round(exemptFrac(p) * 100)}% of `
               + `revenue is on institutionally-zoned land</span>`
               + `<br/><span class="muted">the City does not publish which of `
               + `it is tax-exempt</span>`;
