@@ -231,8 +231,13 @@ it is **63%**. Hoods outside the active population — set aside, or the wrong
 side of the residential split — are **null: off the scale, flat, AND out of the
 average.**
 
-⚠️ **INSTITUTIONAL UNCERTAINTY BANDS (2026-08-12; NARROWED 2026-08-15).** A hood
-whose revenue is **≥25% institutional** (`rev_frac_inst`) gets the caveat rows in
+⚠️ **INSTITUTIONAL UNCERTAINTY BANDS (2026-08-12; NARROWED 2026-08-15; WIDENED
+2026-08-25).** ⚠️ **The counts in this paragraph predate the 2026-08-25 change**
+— the gate moved off the `inst` zoning category onto
+`load_zoning.EXEMPT_CANDIDATE_ZONES`, which adds `PS` (Parks and Services), so
+the **caveat tier is 21 hoods, not 15** (band-prism set unchanged at 6). See
+`TODO.md` 2026-08-25 and `docs/SPEC_revenue.md`. A hood
+whose revenue is **≥25% on exempt-candidate zoning** (`rev_frac_exempt`) gets the caveat rows in
 its tooltip. It draws **no prism at all** — replaced by two bare outlines, one
 per scenario, asserting no value — only if it ALSO clears
 `INST_CONSEQUENCE_MIN`: **0.25 of movement on this lens's own colour ramp**.

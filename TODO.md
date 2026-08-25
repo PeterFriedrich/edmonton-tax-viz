@@ -102,6 +102,7 @@ Services carries no sparkline — measured, it does.)_
 
 ## Open work
 
+
 - [ ] **PETER'S CALL — the amenity bands are FIXED at 600 m / 800 m
   (`AMENITY_BANDS` in `web/index.html`).** Built and live behind the weekly
   refresh 2026-08-23; the filter works, the numbers in it are conventions.
@@ -852,75 +853,6 @@ Services carries no sparkline — measured, it does.)_
     circulated for exactly that purpose were **all wrong** — see the `## Done`
     line for the 2026-08-08 verification.
 
-- [x] **▶▶▶ FIXED 2026-08-25 — THE LIVE ROLL IS THE 2026 ROLL AND WE BILLED IT
-  AT 2025 MILL RATES —
-  the year-alignment guard cannot see it, because it reads a Socrata metadata
-  STRING instead of the data.** Opened 2026-08-25, found by the FIR comparison
-  below (which is how a wrong number got caught: my own first pass compared the
-  roll to the wrong FIR year and reported +18.2%; see the correction there).
-  - ⚠️ **THE EVIDENCE — residential is the tell.** Residential land is barely
-    exempt anywhere, so our residential base should match the province's filed
-    residential base closely. Ours is **$162,273,056,185**. Against FIR:
-
-    | FIR year | filed residential base | ours reads |
-    |---|---|---|
-    | 2023 | $131,284,317,914 | +23.6% |
-    | 2024 | $134,439,557,008 | +20.7% |
-    | 2025 | $148,128,818,480 | +9.5% |
-    | **2026** | **$160,372,669,990** | **+1.2%** |
-
-    Monotonic, and 2026 fits to within noise. **The roll advanced and nothing
-    noticed.**
-  - **Corroborated three ways, independently:** (a) the dataset is literally
-    named *Property Assessment Data (**Current Calendar Year**)* and it is
-    August **2026**; (b) `data/mill_rates.json`'s 2026 block matches FIR 2026
-    `MR(3)` **exactly** (Residential `7.7419`, Non-Residential `25.2216`) — the
-    City published 2026 rates and we already hold them; (c) the residential fit
-    above.
-  - ⚠️ **WHY THE GUARD IS BLIND.** `scripts/check_year_alignment.py`
-    `parse_coverage_year()` reads
-    `metadata.custom_fields["Time Frame"]["Period of Coverage"]`, which still
-    says `"2025-01-01 to 2025-12-31"` (`Date Updated: 2026-05-11`). **The City
-    did not update that string when the roll rolled.** `vintage_report.py`
-    reports "Roll is 2025, pin is 2025 — aligned" and the January year-roll
-    checklist never fires. **A guard that trusts a publisher's free-text
-    metadata field is not measuring the data** — this is the project's
-    signature failure mode wearing a green checkmark.
-  - ⚠️ **IMPACT ON EVERY PUBLISHED LEVY NUMBER.** `main.py ASSESSMENT_YEAR = 2025`
-    feeds `apply_tax_rates(..., assessment_year)`, so the 2026 roll is billed at
-    2025 rates: Residential `7.6254` vs `7.7419` (**−1.5%**), Non-Residential
-    `24.2229` vs `25.2216` (**−4.0%**). Citywide our levy reads **$2,714,729,701**
-    at 2025 rates vs **$2,784,219,936** at 2026 — the site **understates by
-    ~$69.5M (2.5%)** from the rate year alone, on top of showing a 2026 roll
-    labelled 2025.
-  - ✅ **APPLIED 2026-08-25** (Peter: "yeah sure can you just do them?"):
-    1. **Detector fixed FIRST**, so this cannot recur silently every January.
-       New `scripts/check_roll_year_against_fir.py` measures the **parcels**:
-       our residential base vs Edmonton's filed base (FIR `MR(2)`), exit 3 on
-       mismatch. New `scripts/fetch_fir_tax_base.py` → committed
-       `data/fir_tax_base.json` (manual/reviewed, the mill-rates pattern;
-       `data/DATA.md` §21). `check_year_alignment.py` now returns INCONCLUSIVE
-       — never "aligned" — when the coverage string is older than the calendar
-       year, so a stale string can no longer read as agreement.
-    2. **Re-pinned** `ASSESSMENT_YEAR` (`main.py`) and `DATA_YEAR`/`RATE_YEAR`
-       (`generate_status.py`) to 2026. Verified against `docs/RUNBOOK.md` §1:
-       mill rates 2026 pre-staged and complete for `DISPLAY_RATE_CLASSES`,
-       stormwater has 2026, `WATER_RATE_YEAR`/`FRANCHISE_RATE_YEAR` already
-       2026 and left alone.
-    3. ⚠️ **Activity windows deliberately NOT bumped** — `FIRE_YEARS` /
-       `PERMIT_YEARS` / `PERMIT_YEARS_RECENT` pin the last **COMPLETE** calendar
-       year, which is still 2025 in Aug 2026. No deflator re-run needed either
-       (no new permit year pulled in).
-    4. **Temporal baseline re-pinned** (`--write-baseline`) after reading the
-       guard first, per RUNBOOK step 8. 2025 correctly moved live→archive; the
-       series is now 2012-2023, 2025-2026, live year 2026, no hard-fail.
-    5. **Measured result:** citywide levy $2,714,729,701 → **$2,784,219,621**
-       (+$69.5M, the rate year alone). Pipeline run end-to-end, `pytest` 713
-       passed.
-  - ⚠️ **NOT DONE — the banner.** `generate_status.py --clear-banner` (RUNBOOK
-    step 10) was not run: no banner was ever raised, because the guard never
-    detected the roll. Confirm none is showing after the next refresh deploy.
-
 - [ ] **▶▶ AN EXTERNAL LEVY ANCHOR EXISTS AFTER ALL — Alberta FIR Schedule MR.**
   Opened 2026-08-25. ⚠️ **FIRST-PASS, NOT AUDITED — do not publish any number
   here until it is.**
@@ -1021,83 +953,6 @@ Services carries no sparkline — measured, it does.)_
   - ⬜ **Still open:** whether the City apportions where we bill 100% of
     assessed value; the residential +1.2% / $1.90B residual; and the 4% of the
     non-res gap outside the five zones.
-
-- [x] **▶▶ FIXED 2026-08-25 — THE MAP'S LEVIED/EXEMPT UNCERTAINTY BAND WAS TOO
-  NARROW — `PS`
-  ("Parks and Services") is categorised `never`, not `inst`, so $88M/yr of levy
-  is missing from the exempt scenario.** Opened 2026-08-25, falls straight out
-  of the zone decomposition above. ⚠️ **This one DOES reach the rendered map**
-  (the FIR findings above are all docs-only so far).
-  - **What the band is.** `web/index.html` renders a two-scenario uncertainty
-    band per hood — a levied prism and an exempt prism
-    (`inst-band-levied`/`inst-band-exempt`, `deviation-band-*`) — gated on
-    `INST_UNCERTAIN_MIN = 0.25` against `rev_frac_inst`. Deliberately
-    **achromatic**, because a band asserting no direction must not be tinted
-    toward either pole. `GLASS_INST_MIN = 0.25` does the same for the 100 m
-    grid via `inst_frac`.
-  - ⚠️ **The defect.** `rev_frac_inst` comes from `load_zoning.ZONE_CATEGORY`,
-    where **`PS` → `"never"`** while only `AJ`/`UF`/`UI`/`PU` → `"inst"`.
-    Measured on the 2026 roll at 2026 rates:
-
-    | | levy | share of citywide |
-    |---|---|---|
-    | AJ/UF/UI/PU — drives the band | $136,423,407 | 4.90% |
-    | **PS — excluded from it** | **$88,038,783** | **3.16%** |
-
-    **Treating PS as institutional would widen the band by 65%.**
-  - ⚠️ **ONE MAPPING IS DOING TWO INCOMPATIBLE JOBS.** `ZONE_CATEGORY` answers
-    both *"can this ever be developed?"* (where `PS` → `never` is **correct** —
-    parks aren't infill) and *"might this be exempt?"* (where `PS` → `never` is
-    **wrong** — parks are prime exempt candidates). A single category cannot
-    express both. ⚠️ **Do not "fix" this by moving `PS` to `inst`** — that
-    would break the development lens. It needs a second, independent
-    exempt-candidate set.
-  - **Hoods that would newly cross the 0.25 gate: 17 → 24 (+7).**
-
-    | hood | today | with PS |
-    |---|---|---|
-    | MILL WOODS PARK | 0.000 | **1.000** |
-    | MCQUEEN | 0.190 | 0.412 |
-    | CALLINGWOOD NORTH | 0.000 | 0.373 |
-    | ROYAL GARDENS | 0.000 | 0.318 |
-    | HERITAGE VALLEY TOWN CENTRE | 0.030 | 0.310 |
-    | WOODCROFT | 0.196 | 0.298 |
-    | LEGER | 0.003 | 0.291 |
-
-    ⚠️ **MILL WOODS PARK is the headline: its ENTIRE levy sits on `PS` zoning,
-    and the map currently draws it as fully certain** — no band at all — when
-    it may be the most exempt-exposed hood in the city.
-  - ⚠️ **My 17 is an approximation of the code's 15** (`INST_UNCERTAIN_MIN`'s
-    comment says *"15 hoods on Total; 2 on Residential"*). I counted every hood
-    with levy; the map also applies `inDeviationPop(p)`, which I did not
-    replicate, and the comment predates the 2026 roll. **Re-derive in-code
-    before quoting either number.**
-  - ✅ **APPLIED 2026-08-25, together with the roll-vintage fix above.**
-    - New `load_zoning.EXEMPT_CANDIDATE_ZONES = ("AJ","UF","UI","PU","PS")`,
-      **deliberately independent of `ZONE_CATEGORY`** — which keeps `PS` →
-      `never`, so the development lens is untouched. Both sets carry comments
-      saying why the other exists and warning against merging them.
-    - `property_zone_categories` refactored onto a new `property_zone_codes`,
-      so the exempt share reads the raw zone CODE off the **same single**
-      440k-point join rather than adding a second one.
-    - New per-hood `rev_frac_exempt` (NOT folded into the `rev_frac_*` family,
-      which partitions levy and sums to 1.0 — this cuts across it). Grid's
-      `inst_levy`/`inst_frac` renamed `exempt_levy`/`exempt_frac`; client's
-      `instFrac`/`INST_UNCERTAIN_MIN`/`GLASS_INST_MIN` renamed to match, because
-      a column named `inst_*` that includes parks is a lie.
-    - **Measured on the real pipeline output, not a model:** hoods at/over the
-      0.25 gate **17 → 24** citywide; **MILL WOODS PARK 0.000 → 1.000**. In the
-      tooltip's deviation population the caveat tier is **15 → 21** (the six new
-      ones all park-dominated) and the band-prism set is unchanged at 6.
-    - **Verified:** `verify-glass-inst.js` 15/15, `verify-inst-caveat.js` 25/25
-      (two hardcoded expectations updated with the reason recorded: the U of A
-      range moved on 2026 RATES, the count on `PS`), `verify-amenity.js` 35/35,
-      `pytest` 713 passed.
-  - **Next:** re-derive independently before trusting it; decide whether the
-    site should state a measured overstatement against a filed figure. ⚠️
-    **This is a public-number question and Peter's call**, same as sub-item (3)
-    above — but it now has an external reference point, which is exactly what
-    that item said it lacked.
 
 - [ ] **▶ WHO IS MISSING FROM THE CURRENT ROLL RIGHT NOW? — 1,534 parcels /
   $1.62B with no current-roll match.** Opened 2026-08-07 from
@@ -2248,6 +2103,11 @@ Services carries no sparkline — measured, it does.)_
 ## Done
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
+
+- [x] **▶▶▶ FIXED 2026-08-25 — THE LIVE ROLL IS THE 2026 ROLL AND WE BILLED IT AT 2025 MILL RATES — the year-alignment guard cannot see it, because it reads a** — 2026-08-25 · `docs/TODO_archive.md`
+- [x] **▶▶ FIXED 2026-08-25 — THE MAP'S LEVIED/EXEMPT UNCERTAINTY BAND WAS TOO NARROW — `PS` ("Parks and Services") is categorised `never`, not `inst`, so $88** — 2026-08-25 · `docs/TODO_archive.md`
+
+
 
 - [x] **`gross_area` MISSING and `gross_area` ZERO were the same number — `far` now emits `null`, not 0, where no floor area is recorded.** — DONE 2026-08-22 · `docs/TODO_archive.md`
 - [x] **The Services lens has no hood panel — BUILT 2026-08-10. Revenue vs each service cost, grouped by basis, NO total (two no-sum rules).** — DONE 2026-08-10 · `docs/TODO_archive.md`
