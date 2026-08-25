@@ -964,15 +964,45 @@ Services carries no sparkline — measured, it does.)_
     - ❌ **Class-percentage apportionment — RULED OUT as a driver.** Slice
       percentages sum to 100 on all but **80** rows (min 85%); mean 99.9996%.
     - ✅ **Roll vintage — CONFIRMED, and it was about half of it** (item above).
-    - ⬜ **Not yet checked:** other exempt categories the zoning proxy never
-      covered (churches, non-profits, seniors' housing, City land outside
-      AJ/UF/UI/PU); whether the City apportions where we bill 100% of assessed
-      value; how FIR's "Other (annexed, vacant…)" bucket actually maps to our
-      "Other Residential" (a **+21%** gap sits there and the mapping is
-      assumed, not verified); Machinery & Equipment, which FIR assesses at
-      $759.6M and levies at **$0** while we have no such class.
-    - ⚠️ **The class-bucket mismatch is itself unresolved** (FIR's 5 vs our 4).
-      Residential is the one row safe to read directly.
+    - ✅ **Bucket mapping — RESOLVED from FIR's own headers + implied rates.**
+      `MR(2)` col [10] is *"Other (including annexed, vacant, total minimum
+      tax, etc.)"*, **not** "Other Residential" — but its **implied rate
+      `8.2872`** (levy ÷ assessment) sits within **1.0%** of our Other
+      Residential `8.2064`, and cols [5]/[7] reproduce `7.7419`/`25.2216`
+      exactly. Edmonton has no apartment slot in `MR`, so it files that
+      sub-class under [10]. **The economic pairing was right; the label was
+      not.** (Still inference, but rate-corroborated.)
+    - ✅ **Machinery & Equipment — RESOLVED, and it is a non-issue for levy.**
+      FIR assesses $759,582,941 at a **`0.0000` rate → $0 levy**. Edmonton
+      levies no municipal tax on M&E, so it cannot contribute to the levy gap;
+      it makes our *assessment* base look $759.6M **smaller**, not larger.
+  - ✅ **WHERE THE NON-RESIDENTIAL GAP PHYSICALLY SITS — spatial join run
+    2026-08-25, and one zone code closes most of it.** `gpd.sjoin` of all
+    439,581 parcels against `zoning.geojson` (439,573 matched, 8 unplaced):
+
+    | exempt-candidate zones | non-res assessed | share of the $9.08B gap |
+    |---|---|---|
+    | AJ/UF/UI/PU (the old proxy) | $5,199,452,500 | 57% |
+    | **+ PS** | **$8,681,376,500** | **96%** |
+
+    ⚠️ **`PS` is "Parks and Services" and was NEVER in the four-zone proxy** —
+    991 parcels, $3.48B. The City's own `description` field names the set:
+    `AJ` Alternative Jurisdiction, `UF` Urban Facilities, `UI` Urban
+    Institution, `PU` Public Utility, `PS` Parks and Services. **96% of the
+    non-residential gap coincides with public/institutional/parks zoning.**
+    ⚠️ **Coincidence in a zone is NOT proof of exemption** — this is
+    correlational, and `UF`/`PU` include privately-owned facilities
+    (`data/DATA.md`). But it is a far tighter fit than anything before it.
+  - ⚠️ **THE APARTMENT GAP IS A DIFFERENT ANIMAL AND THE ZONING PROXY IS BLIND
+    TO IT.** Only **13%** ($515,535,000) of the $4.00B "Other Residential" gap
+    sits on exempt-candidate zoning; the rest is on ordinary `RM`/`RS`/`DC2`
+    residential zoning. **Consistent with use-based exemptions the zoning proxy
+    structurally cannot see** — seniors' housing, non-profit and social housing
+    are exempt by *use* under MGA 362, not by zone. **A zone-based method has
+    hit its ceiling here; this bucket needs a different instrument.**
+  - ⬜ **Still open:** whether the City apportions where we bill 100% of
+    assessed value; the residential +1.2% / $1.90B residual; and the 4% of the
+    non-res gap outside the five zones.
   - **Next:** re-derive independently before trusting it; decide whether the
     site should state a measured overstatement against a filed figure. ⚠️
     **This is a public-number question and Peter's call**, same as sub-item (3)
