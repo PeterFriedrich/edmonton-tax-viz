@@ -212,7 +212,26 @@ no prism. The default Money view kept a solid, confident prism — so the same
 neighbourhood said two different things depending on which lens you were in, and
 the confident version was the public one.
 
-**Measured on `revenue_per_acre`:** 15 of 358 live hoods cross `INST_UNCERTAIN_MIN`
+> ⚠️ **SUPERSEDED FIGURES, 2026-08-25 — the reasoning below stands, the counts
+> and dollars do not.** Two changes landed together (PR #241):
+> 1. **The gate moved off the `inst` zoning CATEGORY onto
+>    `load_zoning.EXEMPT_CANDIDATE_ZONES`**, which adds `PS` (Parks and
+>    Services) — $88M/yr of levy, 3.16% citywide, that the band had been silent
+>    about. `ZONE_CATEGORY` maps `PS` to `never`, correct for the development
+>    lens and wrong for exemption; the two sets are deliberately separate.
+>    **The caveat tier is now 21 hoods, not 15.** The band-prism set is
+>    unchanged at 6 (consequence, not share, decides geometry — the rule below
+>    is exactly why this held). Constants renamed
+>    `INST_UNCERTAIN_MIN` → `EXEMPT_UNCERTAIN_MIN`, `GLASS_INST_MIN` →
+>    `GLASS_EXEMPT_MIN`, grid column `inst_frac` → `exempt_frac`.
+> 2. **The roll re-pinned to 2026**, so every dollar in the tables below is at
+>    2025 rates and reads ~1.5% (residential) to ~4.0% (non-residential) low.
+>    U of A's range, for instance, is now **$18,047 to $178,401**.
+>
+> ⚠️ **Re-derive before quoting any number in this section.** `TODO.md`
+> (2026-08-25) and `data/DATA.md` §21 carry the current figures.
+
+**Measured on `revenue_per_acre`:** 15 of 358 live hoods cross `EXEMPT_UNCERTAIN_MIN`
 — the *same 15* the Lab bands. Four sit in the top 11:
 
 | rank | hood | levied | if exempt | rank then |
@@ -242,7 +261,7 @@ coloured.
   **class** share and this is a **zoning** share; they do not partition the same
   thing, and without the word they read as contradictory — EVERGREEN is 89%
   residential and 41% institutional, summing to 130%.
-- Both surfaces read `INST_UNCERTAIN_MIN` itself rather than a copied 0.25, so
+- Both surfaces read `EXEMPT_UNCERTAIN_MIN` itself rather than a copied 0.25, so
   the Lab and the map can never disagree about which hoods are uncertain;
   `verify-inst-caveat.js` pins set-equality, not a hard-coded list.
 - The revenue-mix panel behind the click already carried this caveat in its
@@ -258,7 +277,7 @@ same prism.** Half of River Valley Cameron's revenue is in question and nothing
 about its reading changes. Outlining those asserts "unknown" about a conclusion
 nothing disturbs.
 
-**DECIDED — two tiers, one rule, both lenses.** Share (`INST_UNCERTAIN_MIN`,
+**DECIDED — two tiers, one rule, both lenses.** Share (`EXEMPT_UNCERTAIN_MIN`,
 0.25) decides the **words**; consequence (`INST_CONSEQUENCE_MIN`, 0.25 of
 movement on the lens's own colour ramp) decides the **geometry**.
 
@@ -466,7 +485,7 @@ share*. ⚠️ **That was wrong, and it was wrong from the start** — the share
 one `groupby` away. `revenue_by_zone` already assigned every property a zoning
 category and threw it away after its neighbourhood rollup. Extracted as
 `property_zone_categories`, computed once in `main.py`, and grouped by cell
-instead of by hood it yields `inst_frac` (`data/DATA.md`, the
+instead of by hood it yields `exempt_frac` (`data/DATA.md`, the
 institutional-share grid column). The hood and cell shares now come from one
 point-in-polygon pass, so they cannot disagree except where the geometry does.
 
@@ -475,8 +494,8 @@ the 714 cells above 10% institutional, **467 are above 99%** and only 159 sit
 between 10% and 50%. A 100 m cell is institutional or it is not; the mixed case
 barely exists, so there is nothing for a consequence tier to narrow. Moving the
 threshold anywhere across 0.10–0.99 changes the marked set by **247 cells out of
-34,671** — the hood equivalent moved 15 hoods to 6. `GLASS_INST_MIN` = 0.25,
-matching `INST_UNCERTAIN_MIN` so the two surfaces agree on the word "mostly".
+34,671** — the hood equivalent moved 15 hoods to 6. `GLASS_EXEMPT_MIN` = 0.25,
+matching `EXEMPT_UNCERTAIN_MIN` so the two surfaces agree on the word "mostly".
 **Marks 624 cells (1.8%), 4.9% of city levy.**
 
 **DECIDED — the ramp fill survives, which the hood band destroys.** A knowing
