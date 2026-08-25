@@ -1003,6 +1003,59 @@ Services carries no sparkline — measured, it does.)_
   - ⬜ **Still open:** whether the City apportions where we bill 100% of
     assessed value; the residential +1.2% / $1.90B residual; and the 4% of the
     non-res gap outside the five zones.
+
+- [ ] **▶▶ THE MAP'S LEVIED/EXEMPT UNCERTAINTY BAND IS TOO NARROW — `PS`
+  ("Parks and Services") is categorised `never`, not `inst`, so $88M/yr of levy
+  is missing from the exempt scenario.** Opened 2026-08-25, falls straight out
+  of the zone decomposition above. ⚠️ **This one DOES reach the rendered map**
+  (the FIR findings above are all docs-only so far).
+  - **What the band is.** `web/index.html` renders a two-scenario uncertainty
+    band per hood — a levied prism and an exempt prism
+    (`inst-band-levied`/`inst-band-exempt`, `deviation-band-*`) — gated on
+    `INST_UNCERTAIN_MIN = 0.25` against `rev_frac_inst`. Deliberately
+    **achromatic**, because a band asserting no direction must not be tinted
+    toward either pole. `GLASS_INST_MIN = 0.25` does the same for the 100 m
+    grid via `inst_frac`.
+  - ⚠️ **The defect.** `rev_frac_inst` comes from `load_zoning.ZONE_CATEGORY`,
+    where **`PS` → `"never"`** while only `AJ`/`UF`/`UI`/`PU` → `"inst"`.
+    Measured on the 2026 roll at 2026 rates:
+
+    | | levy | share of citywide |
+    |---|---|---|
+    | AJ/UF/UI/PU — drives the band | $136,423,407 | 4.90% |
+    | **PS — excluded from it** | **$88,038,783** | **3.16%** |
+
+    **Treating PS as institutional would widen the band by 65%.**
+  - ⚠️ **ONE MAPPING IS DOING TWO INCOMPATIBLE JOBS.** `ZONE_CATEGORY` answers
+    both *"can this ever be developed?"* (where `PS` → `never` is **correct** —
+    parks aren't infill) and *"might this be exempt?"* (where `PS` → `never` is
+    **wrong** — parks are prime exempt candidates). A single category cannot
+    express both. ⚠️ **Do not "fix" this by moving `PS` to `inst`** — that
+    would break the development lens. It needs a second, independent
+    exempt-candidate set.
+  - **Hoods that would newly cross the 0.25 gate: 17 → 24 (+7).**
+
+    | hood | today | with PS |
+    |---|---|---|
+    | MILL WOODS PARK | 0.000 | **1.000** |
+    | MCQUEEN | 0.190 | 0.412 |
+    | CALLINGWOOD NORTH | 0.000 | 0.373 |
+    | ROYAL GARDENS | 0.000 | 0.318 |
+    | HERITAGE VALLEY TOWN CENTRE | 0.030 | 0.310 |
+    | WOODCROFT | 0.196 | 0.298 |
+    | LEGER | 0.003 | 0.291 |
+
+    ⚠️ **MILL WOODS PARK is the headline: its ENTIRE levy sits on `PS` zoning,
+    and the map currently draws it as fully certain** — no band at all — when
+    it may be the most exempt-exposed hood in the city.
+  - ⚠️ **My 17 is an approximation of the code's 15** (`INST_UNCERTAIN_MIN`'s
+    comment says *"15 hoods on Total; 2 on Residential"*). I counted every hood
+    with levy; the map also applies `inDeviationPop(p)`, which I did not
+    replicate, and the comment predates the 2026 roll. **Re-derive in-code
+    before quoting either number.**
+  - **Not applied.** Changing which zones count as exempt-candidate moves a
+    published uncertainty band — Peter's call, and it should land together with
+    the roll-vintage decision above rather than piecemeal.
   - **Next:** re-derive independently before trusting it; decide whether the
     site should state a measured overstatement against a filed figure. ⚠️
     **This is a public-number question and Peter's call**, same as sub-item (3)
