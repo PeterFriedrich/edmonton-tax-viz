@@ -811,12 +811,39 @@ Services carries no sparkline — measured, it does.)_
     `MGA362(1)(e)` hospital boards. Fallback paragraph retired; draft and
     `DECISIONS.md` updated. ⚠️ **It does NOT tell us what Edmonton coded for any
     parcel** — the $125.4M question is untouched, direction still unknown.
-  - ⚠️ **THE ONLY THING LEFT IS WHERE TO SEND IT, and this box cannot look it
-    up.** No submission channel is recorded in the repo, and `edmonton.ca` is
-    **unreachable from the Oracle box** (`000` on 2026-08-12; `data.edmonton.ca`,
-    `alberta.ca` and `open.alberta.ca` all resolve fine). Needs a machine that
-    can reach `edmonton.ca` — Open Data portal contact vs. Assessment & Taxation
-    Branch vs. 311.
+  - ✅ **SUBMISSION CHANNEL FOUND — `opendata@edmonton.ca`, 2026-08-25.** Read
+    from the live portal itself (`https://data.edmonton.ca/`, the footer nav's
+    "Contact Us" → `mailto:opendata@edmonton.ca`) — primary source, not
+    inference. This is the right channel of the three that were listed: the ask
+    is *publish a field on dataset `q7d6-ambg`*, which is a portal/dataset
+    request, not a per-parcel assessment inquiry. **Assessment & Taxation Branch
+    is the escalation if Open Data bounces it**, not the first stop.
+    ⚠️ **Still NOT SENT — sending is Peter's call** (outward-facing, and it
+    speaks for the project).
+  - ⚠️ **THE "edmonton.ca IS UNREACHABLE FROM THE ORACLE BOX" BLOCKER WAS A
+    MIS-DIAGNOSIS — RETRACTED 2026-08-25.** This bullet used to read: *"No
+    submission channel is recorded in the repo, and `edmonton.ca` is
+    **unreachable from the Oracle box** (`000` on 2026-08-12 …). Needs a machine
+    that can reach `edmonton.ca`."* **The `000` was real; the cause was wrong,
+    and the wrong cause made a client-side problem look like a hardware one for
+    13 days.** Re-measured: DNS resolves (`35.190.75.248`), TCP connects, TLS
+    negotiates, and the server presents a **valid** cert (`CN=*.edmonton.ca`,
+    Entrust OV TLS Issuing RSA CA 2 → **Sectigo Public Server Authentication
+    Root R46**). The failure is local: this box's `ca-certificates-2023.2.60`
+    bundle (142 roots) **does not contain the Sectigo R46 root**, so curl
+    reports the chain-embedded root as `self signed certificate in certificate
+    chain`. Fetching with `certifi`'s bundle instead returns **200 / 61,938
+    bytes**. `www.edmonton.ca` deep paths 404 (their URL structure moved) — a
+    clean 404 is the host serving normally, not a block.
+    - **Workaround for any HTTPS fetch from this box:**
+      `ssl.create_default_context(cafile=certifi.where())` (or
+      `curl --cacert "$(.venv/bin/python -c 'import certifi;print(certifi.where())')"`).
+      Affects **any** host chaining to a post-2021 root, not just `edmonton.ca`.
+    - ⚠️ **Lesson (the `todo-can-lag-executed-work` pattern, sharper form):** the
+      symptom re-measured true and the blocker was *still* wrong. Re-measuring a
+      stale blocker means re-deriving its **cause**, not just re-confirming its
+      **symptom** — `000` is a client-side verdict, never evidence about the
+      remote host.
   - **Keep separate from the `qi6a-xuwt` bug report** — that one asserts a
     defect, this one requests a field. **Do not put the $125.4M in the
     message**; it depends on the very question being asked.
