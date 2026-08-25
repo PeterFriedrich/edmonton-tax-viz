@@ -1,10 +1,14 @@
-// Verify the Glass view's amenity bands (2026-08-23): two INDEPENDENT
-// layers-panel checkboxes that dim every 100 m cell further than 600 m from an
-// LRT station / 800 m from a catchment school by ROAD network distance.
+// Verify the amenity bands (2026-08-23, extended to Infill 2026-08-25): two
+// INDEPENDENT layers-panel checkboxes reading distance to the nearest LRT
+// station (600 m) / catchment school (800 m) by ROAD network distance, over
+// the same value_grid.json in both views. Glass DIMS out-of-band cells;
+// Infill HIGHLIGHTS in-band cells over its unchanged hood-level score.
 //   node verify-amenity.js <url>
 // Checks: view gating, per-row column gating, dim-not-drop (stable cell count),
 // the AND of both bands, null-is-out-of-band, blurb honesty + live counts,
-// persistence across views, and that the cell data identity does not churn.
+// persistence across views, that the cell data identity does not churn, and
+// (Infill) that the highlighted count matches Glass's lit count exactly —
+// same file, same bands, cross-view agreement is a correctness check.
 //
 // ⚠️ Needs a value_grid.json carrying dist_lrt_m / dist_school_m. On a served
 // file from before the 2026-08-23 pipeline the rows correctly stay hidden, and
@@ -44,6 +48,18 @@ function check(name, ok, detail) {
       dimmed = data.filter(d => f(d).length === 4).length;
       lit = nCells - dimmed;
     }
+    // Infill's highlight grid: no dim/lit split (nothing to withhold), just
+    // in-band cells drawn with a non-zero alpha over an otherwise-invisible
+    // (fully transparent) layer.
+    const infillGrid = (overlay._deck.props.layers.filter(Boolean)
+      .find(l => l.id === 'infill-amenity-grid')) || null;
+    let highlighted = null, infillCells = null;
+    if (infillGrid) {
+      const data = infillGrid.props.data;
+      infillCells = data.length;
+      const f = infillGrid.props.getFillColor;
+      highlighted = data.filter(d => f(d)[3] > 0).length;
+    }
     return {
       view: state.view,
       hdShown: getComputedStyle(document.getElementById('amenity-hd')).display !== 'none',
@@ -59,6 +75,8 @@ function check(name, ok, detail) {
       layers: overlay._deck.props.layers.filter(Boolean).map(l => l.id),
       dimmed, lit, nCells,
       dataRef: grid ? grid.props.data : null,
+      highlighted, infillCells,
+      infillDataRef: infillGrid ? infillGrid.props.data : null,
     };
   });
 
@@ -176,6 +194,71 @@ function check(name, ok, detail) {
   c = await chrome();
   check('all off: nothing dimmed', c.dimmed === 0, `dimmed=${c.dimmed}`);
   check('all off: blurb drops the band sentence', !/keep their colour/.test(c.blurb));
+
+  // 9. Infill (2026-08-25): same checkboxes, same file, opposite-direction
+  // render — a highlight over an unchanged hood-level score, not a dim.
+  await click('#views button[data-view="development"]');
+  await page.waitForTimeout(500);
+  await click('#devmode button[data-devmode="infill"]');
+  await page.waitForTimeout(1500);
+  c = await chrome();
+  check('infill: amenity section shown, both rows unchecked (state carried over)',
+    c.hdShown && c.boxShown && !c.lrtChecked && !c.schoolChecked);
+  check('infill: no highlight grid while both bands off',
+    !c.layers.includes('infill-amenity-grid'), JSON.stringify(c.layers));
+  check('infill: the hood-level plane is present', c.layers.includes('infill-plane'));
+
+  await click('#amenity-lrt-on');
+  await page.waitForTimeout(1500);
+  c = await chrome();
+  check('infill lrt on: highlight grid appears',
+    c.layers.includes('infill-amenity-grid'), JSON.stringify(c.layers));
+  check('infill lrt on: highlighted count matches Glass\'s lit count exactly ' +
+    '(same file, same band)', c.highlighted === lrtLit,
+    `infill=${c.highlighted} glass=${lrtLit}`);
+  check('infill lrt on: blurb names the band, the live count, and marks it a highlight',
+    /A translucent 100 m grid highlights cells within 600 m of an LRT station by road/.test(c.blurb) &&
+    c.blurb.includes(c.highlighted.toLocaleString()) &&
+    /coloured score underneath is unchanged/.test(c.blurb), c.blurb.slice(0, 220));
+
+  const infillRef = await page.evaluate(() => {
+    window.__infillRef = overlay._deck.props.layers.filter(Boolean)
+      .find(l => l.id === 'infill-amenity-grid').props.data;
+    return true;
+  });
+  await click('#amenity-school-on');
+  await page.waitForTimeout(1500);
+  c = await chrome();
+  const sameInfillRef = await page.evaluate(() =>
+    window.__infillRef === overlay._deck.props.layers.filter(Boolean)
+      .find(l => l.id === 'infill-amenity-grid').props.data);
+  check('infill both on: highlighted count shrinks (AND is stricter)',
+    c.highlighted < lrtLit, `both=${c.highlighted} lrt-only=${lrtLit}`);
+  check('infill: cell data identity is stable across a toggle (no re-tessellate)',
+    sameInfillRef);
+
+  // Cross-view persistence: leave for Glass, come back, state + grid survive.
+  await click('#views button[data-view="money"]');
+  await page.waitForTimeout(500);
+  await click('#moneydetail button[data-moneydetail="grid"]');
+  await page.waitForTimeout(3000);
+  c = await chrome();
+  check('back in glass after infill round-trip: both bands still on and dimming',
+    c.amenity.lrt && c.amenity.school && c.dimmed > 0);
+  await click('#views button[data-view="development"]');
+  await page.waitForTimeout(500);
+  await click('#devmode button[data-devmode="infill"]');
+  await page.waitForTimeout(1500);
+  c = await chrome();
+  check('back in infill: highlight grid reappears with both bands',
+    c.layers.includes('infill-amenity-grid') && c.amenity.lrt && c.amenity.school);
+
+  // Leave both off for a clean end state.
+  await click('#amenity-lrt-on');
+  await click('#amenity-school-on');
+  await page.waitForTimeout(1500);
+  c = await chrome();
+  check('infill all off: highlight grid gone', !c.layers.includes('infill-amenity-grid'));
 
   console.log(`\n${pass} passed, ${fail} failed${skip ? `, ${skip} skipped` : ''}`);
   await browser.close();
