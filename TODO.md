@@ -852,9 +852,66 @@ Services carries no sparkline — measured, it does.)_
     circulated for exactly that purpose were **all wrong** — see the `## Done`
     line for the 2026-08-08 verification.
 
-- [ ] **▶▶ AN EXTERNAL LEVY ANCHOR EXISTS AFTER ALL — Alberta FIR Schedule MR —
-  AND OUR MODEL READS +18.2% AGAINST IT.** Opened 2026-08-25. ⚠️ **FIRST-PASS,
-  NOT AUDITED — do not publish any number here until it is.**
+- [ ] **▶▶▶ THE LIVE ROLL IS THE 2026 ROLL AND WE BILL IT AT 2025 MILL RATES —
+  the year-alignment guard cannot see it, because it reads a Socrata metadata
+  STRING instead of the data.** Opened 2026-08-25, found by the FIR comparison
+  below (which is how a wrong number got caught: my own first pass compared the
+  roll to the wrong FIR year and reported +18.2%; see the correction there).
+  - ⚠️ **THE EVIDENCE — residential is the tell.** Residential land is barely
+    exempt anywhere, so our residential base should match the province's filed
+    residential base closely. Ours is **$162,273,056,185**. Against FIR:
+
+    | FIR year | filed residential base | ours reads |
+    |---|---|---|
+    | 2023 | $131,284,317,914 | +23.6% |
+    | 2024 | $134,439,557,008 | +20.7% |
+    | 2025 | $148,128,818,480 | +9.5% |
+    | **2026** | **$160,372,669,990** | **+1.2%** |
+
+    Monotonic, and 2026 fits to within noise. **The roll advanced and nothing
+    noticed.**
+  - **Corroborated three ways, independently:** (a) the dataset is literally
+    named *Property Assessment Data (**Current Calendar Year**)* and it is
+    August **2026**; (b) `data/mill_rates.json`'s 2026 block matches FIR 2026
+    `MR(3)` **exactly** (Residential `7.7419`, Non-Residential `25.2216`) — the
+    City published 2026 rates and we already hold them; (c) the residential fit
+    above.
+  - ⚠️ **WHY THE GUARD IS BLIND.** `scripts/check_year_alignment.py`
+    `parse_coverage_year()` reads
+    `metadata.custom_fields["Time Frame"]["Period of Coverage"]`, which still
+    says `"2025-01-01 to 2025-12-31"` (`Date Updated: 2026-05-11`). **The City
+    did not update that string when the roll rolled.** `vintage_report.py`
+    reports "Roll is 2025, pin is 2025 — aligned" and the January year-roll
+    checklist never fires. **A guard that trusts a publisher's free-text
+    metadata field is not measuring the data** — this is the project's
+    signature failure mode wearing a green checkmark.
+  - ⚠️ **IMPACT ON EVERY PUBLISHED LEVY NUMBER.** `main.py ASSESSMENT_YEAR = 2025`
+    feeds `apply_tax_rates(..., assessment_year)`, so the 2026 roll is billed at
+    2025 rates: Residential `7.6254` vs `7.7419` (**−1.5%**), Non-Residential
+    `24.2229` vs `25.2216` (**−4.0%**). Citywide our levy reads **$2,714,729,701**
+    at 2025 rates vs **$2,784,219,936** at 2026 — the site **understates by
+    ~$69.5M (2.5%)** from the rate year alone, on top of showing a 2026 roll
+    labelled 2025.
+  - **Proposed fix (NOT APPLIED — this moves every public number, Peter's call):**
+    1. Re-pin `ASSESSMENT_YEAR`/`DATA_YEAR`/`RATE_YEAR` to 2026 via
+       `docs/RUNBOOK.md`'s year-roll checklist.
+    2. ⚠️ **Fix the detector first, or this recurs silently every January.**
+       Derive the roll year from the **data** — e.g. assert our residential base
+       against FIR `MR(2)`, which is exactly the check that caught it — rather
+       than from `Period of Coverage`. At minimum, treat a coverage string older
+       than the current calendar year as ACTION, not OK.
+    3. Re-check the other pins that inherit the year (zoning 2024, activity
+       windows, temporal archive) before publishing.
+
+- [ ] **▶▶ AN EXTERNAL LEVY ANCHOR EXISTS AFTER ALL — Alberta FIR Schedule MR.**
+  Opened 2026-08-25. ⚠️ **FIRST-PASS, NOT AUDITED — do not publish any number
+  here until it is.**
+  - ⚠️ **CORRECTION 2026-08-25, same day: this item first said "OUR MODEL READS
+    +18.2% AGAINST IT" and that number was WRONG** — it compared our roll to FIR
+    **2025** when the roll is **2026** (item above). It is quoted here rather
+    than deleted because the error is instructive: an external anchor is only as
+    good as the year you align it to, and the mismatch is what exposed the
+    vintage drift. **Correct figures are below.**
   - ⚠️ **The premise "no City-given total exists to check against" is FALSE.**
     It was believed because `edmonton.ca` looked unreachable (that blocker is
     retracted above) — but the anchor was never on `edmonton.ca` at all. It is
@@ -880,28 +937,42 @@ Services carries no sparkline — measured, it does.)_
     Residential, Farmland and Non-Residential. ✅ **And MR(3)'s rates match
     `data/mill_rates.json` EXACTLY** (Residential `7.6254`, Non-Residential
     `24.2229`) — our rate inputs are independently confirmed correct.
-  - ⚠️ **THE GAP.** Our model on the same 2025 roll at the same 2025 rates:
-    **$238,448,551,458 assessed / $2,714,729,701 levy**. Against the province:
-    **+$30.1B assessed (+14.5%)** and **+$417.3M levy (+18.2%)**.
-    ✅ **Vintage is NOT the explanation** — `scripts/vintage_report.py`
-    confirms roll 2025 / pin 2025 / rates 2025, and FIR Schedule MR is 2025.
+  - ⚠️ **THE GAP, YEAR-ALIGNED (2026 roll vs FIR 2026, 2026 rates both sides).**
+    Ours **$238,448,551,458 assessed / $2,784,219,936 levy**; FIR 2026
+    **$224,199,394,806 / $2,509,075,991**. Gap **+$14.2B assessed (+6.4%)** and
+    **+$275.1M levy (+11.0%)**. ⚠️ **Vintage WAS a large part of the
+    explanation** — the same comparison mis-aligned to FIR 2025 read +14.5% /
+    +18.2%, so **roughly half the apparent discrepancy was the wrong year**, not
+    a modelling defect.
+  - **Where the residual concentrates — and it is NOT residential.** Against FIR
+    2026 by class: residential **+1.2%** (essentially matched), non-residential
+    **+20.6% / +$9.08B**, "other residential" vs FIR's "Other" **+21%**.
+    ⚠️ **This materially strengthens the institutional-exemption hypothesis**:
+    the $5.6B of AJ/UF/UI/PU assessment is now **62% of the non-residential
+    gap**, not the 19% of total that the mis-aligned comparison implied.
+    ⚠️ **The per-class rows are still not 1:1** (FIR's 5 buckets vs our 4) —
+    treat the residential fit as the reliable signal and the rest as a lead.
   - ⚠️ **THIS DOES NOT RESOLVE THE INSTITUTIONAL QUESTION — IT RESIZES IT.**
-    The $5.6B of AJ/UF/UI/PU assessment is only **19%** of the $30.1B
-    assessment gap, and the $125.4M modelled institutional levy only **30%** of
-    the $417M levy gap. **So exempt institutional land cannot be more than
-    about a third of the discrepancy** — most of it is something else, and what
-    that is has not been looked at. **The direction, however, is no longer
+    Exempt institutional land is now the **leading** candidate for the
+    non-residential residual (62% of it) rather than a minor one, but 38% of
+    that gap is still unaccounted for. **The direction, however, is no longer
     unknown for the aggregate: we are OVER, not under.** (Per-parcel direction
     for any given institutional parcel is still unknown.)
-  - **Candidates for the rest, none checked yet:** other exempt categories the
-    zoning proxy never covered (churches, non-profits, seniors' housing, City
-    land outside AJ/UF/UI/PU); the known lot-dedupe / cardinality duplication
-    (`docs/FINDINGS_lot_dedupe.md`, `FINDINGS_denominator_cardinality.md`); the
-    80 parcels whose class percentages don't sum to 100; our applying a rate to
-    **100%** of assessed value where the City may apportion; and class-bucket
-    mismatch (FIR's 5 buckets vs our 4 — ⚠️ **the TOTAL is the robust
-    comparison, the per-class rows are NOT 1:1** and should not be quoted as
-    such).
+  - **Candidates checked, and what they were worth:**
+    - ❌ **Duplicate parcel records — RULED OUT.** 439,581 rows, 439,581 unique
+      account numbers, **zero** duplicated accounts.
+    - ❌ **Class-percentage apportionment — RULED OUT as a driver.** Slice
+      percentages sum to 100 on all but **80** rows (min 85%); mean 99.9996%.
+    - ✅ **Roll vintage — CONFIRMED, and it was about half of it** (item above).
+    - ⬜ **Not yet checked:** other exempt categories the zoning proxy never
+      covered (churches, non-profits, seniors' housing, City land outside
+      AJ/UF/UI/PU); whether the City apportions where we bill 100% of assessed
+      value; how FIR's "Other (annexed, vacant…)" bucket actually maps to our
+      "Other Residential" (a **+21%** gap sits there and the mapping is
+      assumed, not verified); Machinery & Equipment, which FIR assesses at
+      $759.6M and levies at **$0** while we have no such class.
+    - ⚠️ **The class-bucket mismatch is itself unresolved** (FIR's 5 vs our 4).
+      Residential is the one row safe to read directly.
   - **Next:** re-derive independently before trusting it; decide whether the
     site should state a measured overstatement against a filed figure. ⚠️
     **This is a public-number question and Peter's call**, same as sub-item (3)
