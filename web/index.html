@@ -1187,17 +1187,20 @@
     function changeBlurb() {
       const w = CHG_WINDOW_LABEL[state.chgWindow];
       const y0 = CHG_WINDOWS[state.chgWindow];
-      return "Each neighbourhood is coloured by how fast its share of " +
+      return "Height and colour show how fast each neighbourhood's share of " +
         "Edmonton's total assessment base moved over " + w + " — the average " +
         "annual change relative to where it started, so a small hood doubling " +
-        "reads as strongly as a large one doubling. Teal = gaining share; " +
-        "orange = losing it. This is a SHARE of a growing pie, not a dollar " +
-        "value: a hood can lose share while its assessed value rises, which " +
-        "simply means the rest of the city rose faster. Colour saturates at " +
-        "each arm's 95th percentile. Grey = no " + y0 + " baseline — the " +
-        "neighbourhood held none of the assessment base that year, so there is " +
-        "nothing to measure change against; these are the new-growth areas, " +
-        "NOT set-aside land. Click any neighbourhood for its full history.";
+        "reads as strongly as a large one doubling. Teal rises where a hood " +
+        "gained share, orange sinks below the plane where it lost, and flat " +
+        "ground is no change. ⚠️ Height is a RATE, not a dollar amount: the " +
+        "tallest prisms are small new subdivisions growing off a near-empty " +
+        "baseline, not the biggest tax bases. A hood can lose share while its " +
+        "assessed value rises — the rest of the city simply rose faster. " +
+        "Colour saturates at each arm's 95th percentile. Grey = no " + y0 +
+        " baseline — the neighbourhood held none of the assessment base that " +
+        "year, so there is nothing to measure change against; these are the " +
+        "new-growth areas, NOT set-aside land. Click any neighbourhood for " +
+        "its full history.";
     }
 
     // Glass blurb follows the spike denominator (the layers-panel toggle). It no
@@ -2256,31 +2259,63 @@
     // collapses most of the city onto the same printed number.
     const fmtChg = r => (r > 0 ? "+" : "") + (100 * r).toFixed(2) + "% / yr";
 
-    // Flat plane — EXTRUDED IS FALSE BY DECISION, not by omission. Hoods moved
-    // both directions and the in-repo precedent for a signed metric is the
-    // infill plane, whose dark-centred diverging ramp this reuses (teal =
-    // gained share, orange = lost).
-    // ⚠️ THE REASON RECORDED HERE USED TO BE "a prism cannot have negative
-    // height", AND THAT IS FALSE — measured 2026-08-11, deck.gl 9.0.38 renders
-    // a negative getElevation as a prism below the ground plane
-    // (tools/profiling/probe-negative-elevation.html; the deviation lens ships
-    // on it). The DECISION stands on its own: a share-of-base rate is a
-    // percentage, and extruding percentages into signed towers reads as
-    // magnitude when the metric is deliberately size-independent. Do not
-    // re-open this on the strength of the retracted technical claim.
-    function changePlaneLayer() {
+    // ⚠️ SIGNED PRISMS: gaining hoods rise, losing hoods SINK below the plane —
+    // the deviation lens's rendering, adopted here 2026-08-26 (Peter). This
+    // reverses `DECISIONS.md` 2026-07-30 ("flat choropleth, never spikes"),
+    // whose two stated reasons both fell:
+    //   1. "A prism cannot have negative height" — FALSE, retracted 2026-08-11
+    //      (tools/profiling/probe-negative-elevation.html; deck.gl 9.0.38
+    //      renders a negative getElevation below the ground plane).
+    //   2. "Extruding a percentage reads as magnitude when the metric is
+    //      deliberately size-independent" — still TRUE, and deliberately
+    //      accepted: the window picker gives the reader an explicit zero to
+    //      read heights against, and the sign is the point of the lens.
+    // ⚠️ WHAT THE HEIGHT IS NOT: a dollar amount, or a hood's size. A tall
+    // prism is a hood whose share of the base grew FAST off its own baseline —
+    // DESROCHERS (+49%/yr) towers over Downtown (−3.55%/yr) on a base a
+    // fraction of the size. The blurb must keep saying so.
+    //
+    // ONE SHARED elevation scale across both arms, which is the deviation
+    // lens's rule and for its reason: per-arm scales would draw a −5%/yr loss
+    // and a +34%/yr gain as visibly equal bars. Colour keeps its per-arm p95
+    // clamps — a different question, because a ramp has two ends to spend
+    // while a height has one origin.
+    //
+    // The constant, measured over the served file: the fastest hood in either
+    // window is +51.6%/yr (ASTER, 2019–2026) and stands ~4,600 m here, the
+    // same order as Money's tallest prism (~$148,700/acre x 0.033 ≈ 4,900 m).
+    // The deepest is −22.3%/yr at ~−2,000 m. ⚠️ FIXED, NOT PER-WINDOW, so one
+    // hood's bar is comparable between Since 2012 and Since 2019; the colour
+    // clamps are per-window and are not.
+    const CHG_ELEV_SCALE = 9000;
+    function changePrismLayer() {
       return new deck.GeoJsonLayer({
-        id: "change-plane",
+        id: "change-prisms",
         data: state.data,
         filled: true,
         stroked: false,
-        extruded: false,
+        extruded: true,
+        wireframe: false,
+        // ⚠️ 0, not null: the 46 degenerate hoods (no baseline, or no endpoint)
+        // are FLAT footprints in off-scale grey. A hole in the height would be
+        // indistinguishable from "did not move", which is the one reading the
+        // colour scale already refuses for them.
+        getElevation: f => {
+          const c = changeFor(f.properties.neighbourhood_name);
+          return c && c.rate != null ? c.rate * CHG_ELEV_SCALE : 0;
+        },
         getFillColor: f => {
           const t = chgT(f.properties);
           return t == null ? SET_ASIDE_COLOR : infillColorAt(t);
         },
-        pickable: false, // hood hover layer handles tooltips
-        updateTriggers: { getFillColor: [state.chgWindow] },
+        material: { ambient: 0.55, diffuse: 0.6, shininess: 32, specularColor: [60, 60, 70] },
+        pickable: true, // the prisms carry the tooltip, like Money's and deviation's
+        autoHighlight: true,
+        highlightColor: [255, 255, 255, 60],
+        updateTriggers: {
+          getElevation: [state.chgWindow],
+          getFillColor: [state.chgWindow],
+        },
       });
     }
 
@@ -3792,9 +3827,11 @@
       }
 
       if (state.view === "change") {
-        // Single flat diverging plane (share-of-base movement) + hover + labels,
-        // the same shape as Infill — the other signed lens.
-        return [changePlaneLayer(), hoodHoverLayer(), ...labelLayer()];
+        // Signed prisms (share-of-base movement) + labels — the same shape as
+        // the deviation lens, the other signed EXTRUDED one. No hover layer:
+        // the prisms are pickable themselves, and a flat `depthTest:false`
+        // pick target would steal every pick from the geometry above it.
+        return [changePrismLayer(), ...labelLayer()];
       }
 
       if (state.view === "deviation") {
