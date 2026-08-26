@@ -102,6 +102,36 @@ Services carries no sparkline — measured, it does.)_
 
 ## Open work
 
+- [ ] **ACTIVE — how many properties are silently absent from the published
+  current roll? One case is proven; the population is a guess.** Full context:
+  `docs/DATA_ISSUES.md` "Possible issues" §A. Promoted to active work
+  2026-08-26.
+  - **The proven case:** Misericordia Community Hospital, continuously assessed
+    2012–2025 as `10095840` (~$200–260M, WEST MEADOWLARK PARK), renumbered to
+    `11495573`, **absent from `q7d6-ambg` until 2026-08-03**. The map understated
+    that neighbourhood by **~$250M** for the duration, and nothing flagged it.
+  - **The unproven part:** `tools/audit_roll_continuity.py` (run 2026-08-07 vs
+    historical 2024) finds **1,534 of 426,913 parcels — 0.36%, $1.62B** with no
+    current match, by POSITION (coordinates moved <2 m across the hospital
+    renumbering, while all three identifiers churned).
+  - ⚠️ **Those 1,534 are candidates, NOT verdicts.** Demolitions, subdivisions
+    and consolidations are indistinguishable from a dropout from the outside.
+    **The whole job is separating them** — that is what makes this unreportable
+    today, not the measurement.
+  - ⚠️ **Do NOT treat identifier churn as the defect.** Renumbering runs
+    0.15%–0.37%/yr routinely; `data/DATA.md` states outright that a vanished
+    account number is not by itself a finding. The defect is a property absent
+    from the roll **while still being assessed**.
+  - **Why it is worth the work:** it is the same dataset as `DATA_ISSUES.md` §1
+    (the coverage-year mislabel), so a confirmed result could ride along in that
+    report instead of needing its own. And it is a **live understatement of the
+    map**, unlike every other row in that file.
+  - **Done looks like:** a standalone notebook in the house pattern — live
+    sources only, figures recomputed at run time, invariants asserted, rendered
+    to `web/notebooks/` and added to that folder's hand-written `index.html`.
+    ⚠️ Re-measure first: the 1,534 is against historical 2024 as of 2026-08-07
+    and the roll has since moved to 2026.
+
 - [ ] **PETER'S CALL — the temporal archive's 2025 entry is the 2026 roll, and
   the archive is frozen by design.** Found 2026-08-26 while verifying the change
   lens; full evidence in `docs/DATA_ISSUES.md` §2. On 2026-07-28 (`865159a`) the
