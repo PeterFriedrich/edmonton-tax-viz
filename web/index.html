@@ -194,16 +194,17 @@
          1.6% of cells and the school band 21.8% — ~14x apart — and ANDing them
          leaves 0.8%. One "amenity-served" switch would hide that collapse
          behind a single word, and would be a weighted index by another name.
-         Glass AND Infill (both read the same 100 m grid file, which carries
-         the distances), and each row self-gates on its own column. Glass DIMS
-         out-of-band cells; Infill HIGHLIGHTS in-band cells over its unchanged
-         score — same bands, opposite-direction rendering per view. -->
+         ⚠️ INFILL ONLY (2026-08-26) — it reads the same 100 m grid file Money's
+         Glass mode renders, so it COULD be offered there too and was until
+         today; the question it answers ("where is there room near transit?")
+         is Infill's, and two copies read as clutter rather than two questions.
+         Each row still self-gates on its own column. -->
     <span class="hd" id="amenity-hd">Near an amenity</span>
     <div id="amenity">
-      <label id="amenity-lrt-row" title="Filter the 100 m grid to cells within 600 m of an LRT station by ROAD — the walk, not the straight line (straight-line distance says yes wrongly more than half the time at this band). 600 m is the usual transit-oriented-development walkshed; the data has no natural cut, so the number is a convention, not a finding. Stations are the 30 passenger stations, excluding a tail track and two bus-garage platforms.">
+      <label id="amenity-lrt-row" title="Highlight the 100 m cells within 600 m of an LRT station by ROAD — the walk, not the straight line (straight-line distance says yes wrongly more than half the time at this band). 600 m is the usual transit-oriented-development walkshed; the data has no natural cut, so the number is a convention, not a finding. Stations are the 30 passenger stations, excluding a tail track and two bus-garage platforms.">
         <input type="checkbox" id="amenity-lrt-on" /> Within 600 m of LRT
       </label>
-      <label id="amenity-school-row" title="Filter the 100 m grid to cells within 800 m of a school by ROAD. Public and Catholic catchment schools only — city-wide programs (Learning Stores, hospital and outreach schools) are excluded because nobody walks to them from the next block, and private, charter and francophone schools are absent from the open data entirely.">
+      <label id="amenity-school-row" title="Highlight the 100 m cells within 800 m of a school by ROAD. Public and Catholic catchment schools only — city-wide programs (Learning Stores, hospital and outreach schools) are excluded because nobody walks to them from the next block, and private, charter and francophone schools are absent from the open data entirely.">
         <input type="checkbox" id="amenity-school-on" /> Within 800 m of a school
       </label>
     </div>
@@ -1233,35 +1234,20 @@
         " mostly institutionally-zoned land — the roll does not say whether " +
         "that revenue is levied, so the solid part is what stands either way.";
     };
-    // Phrase it as what KEEPS colour/highlight. The negative form does not
+    // Phrase it as what KEEPS the highlight. The negative form does not
     // survive two bands: "further than 600 m of LRT and within 800 m of a
-    // school" reads as a contradiction. Shared by Glass and Infill's blurbs.
+    // school" reads as a contradiction.
     const amenityWhichPhrase = () => [
       state.amenity.lrt && amenityOfferable("lrt")
         ? AMENITY_BANDS.lrt + " m of an LRT station" : null,
       state.amenity.school && amenityOfferable("school")
         ? AMENITY_BANDS.school + " m of a school" : null,
     ].filter(Boolean).join(" and ");
-    // A greyed city needs to say why, and needs to say HOW MUCH survived —
-    // the LRT band alone keeps 1.6% of cells, which looks like a broken map if
-    // the prose does not own it. Same reason as glassInstBlurb: a colour that
-    // is not on the ramp must be explained where the reader is looking.
-    const amenityBlurb = () => {
-      if (!(gridData && amenityActive())) return "";
-      const cells = gridCellsFor(gridColKey());
-      const kept = cells.filter(amenityInBand).length;
-      return " Only cells within " + amenityWhichPhrase() + " by road keep their colour — " +
-        kept.toLocaleString() + " of " + cells.length.toLocaleString() +
-        ". Grey here means out of band, not zero and not set-aside. The " +
-        "distances are conventions rather than something the data picks out, " +
-        "and road distance is a walk proxy — sidewalks, river-valley trails " +
-        "and footpaths are not in the source.";
-    };
     const glassBlurb = () =>
-      withColourClause(GLASS_BLURBS[state.denom]) + glassInstBlurb() + amenityBlurb();
+      withColourClause(GLASS_BLURBS[state.denom]) + glassInstBlurb();
     // Infill's amenity overlay carries no colour of its own to defend — the
-    // hood-level score underneath is UNCHANGED — so the sentence explains a
-    // highlight, not a dim. Uses the full cell set (no metric to null-filter
+    // hood-level score underneath is UNCHANGED — so the sentence has to say the
+    // score did not move. Uses the full cell set (no metric to null-filter
     // against; every cell is either highlighted or not).
     const infillAmenityBlurb = () => {
       if (!(gridData && amenityActive())) return "";
@@ -1438,7 +1424,7 @@
                     labels: false, view: "money", prismOpacity: 1, denom: "ground",
                     reference: true, // river + ring road orientation layer (all views)
                     usesPrisms: false, // Uses-view residential prisms (off = the flat categorical view)
-                    // Glass amenity bands, each independent (SPEC_development.md
+                    // Infill amenity bands, each independent (SPEC_development.md
                     // "Amenity distance"). Persist across view switches like the
                     // rest of the layers panel.
                     amenity: { lrt: false, school: false },
@@ -1550,12 +1536,6 @@
     // either. Changing a number here changes what the tooltip promises, so
     // change both together.
     const AMENITY_BANDS = { lrt: 600, school: 800 };
-    // Out-of-band cells keep their height and lose their colour: the city's
-    // shape stays on screen (at 600 m the LRT band is 1.6% of cells, and a
-    // hard hide would leave scattered dots with nothing to place them
-    // against), while all ramp signal belongs to the selection. SET_ASIDE_COLOR
-    // is deliberate reuse — it already means "off the scale" on the plane below.
-    const AMENITY_DIM_ALPHA = 60;
     // Whether a row can be offered at all: the column has to be in the file.
     const amenityOfferable = k => !!gridData &&
       (k === "lrt" ? gridData.hasDistLrt : gridData.hasDistSchool);
@@ -2151,10 +2131,10 @@
     // thread — ANALYSIS_BACKLOG.md §12 — pending the two open calls that block
     // a REAL per-cell suitability score: a per-cell residential-gate equivalent
     // and what a diverging score means as a height). Carries no metric of its
-    // own: a flat, non-extruded overlay on the SAME grid file Glass uses
+    // own: a flat, non-extruded overlay on the SAME grid file Glass renders
     // (dist_lrt_m/dist_school_m already ride on value_grid.json), highlighting
-    // in-band cells over the unchanged hood-level score below. Reuses
-    // amenityInBand — the same "null is out of band" rule as Glass.
+    // in-band cells over the unchanged hood-level score below. ⚠️ amenityInBand
+    // treats a null distance as OUT of band — "unknown" must not read as "near".
     const AMENITY_HIGHLIGHT_COLOR = [255, 255, 255, 70];
     function amenityHighlightGridLayer() {
       return new deck.GridCellLayer({
@@ -3851,11 +3831,6 @@
         if (col >= 0) {
           const gs = gridScale();
           const cells = gridCellsFor(colKey);
-          // Amenity bands DIM rather than drop (SPEC_development.md "Amenity
-          // distance"). Dropping would also change the layer's data identity
-          // on every toggle, which is exactly what the cache above exists to
-          // avoid; a per-cell colour keeps one stable cell set.
-          const banding = amenityActive();
           return [plane, new deck.GridCellLayer({
             id: "glass-grid",
             data: cells,
@@ -3864,16 +3839,13 @@
             getPosition: d => [d[0], d[1]], // cell SW corner (export_value_grid)
             getElevation: d => d[col],
             elevationScale: gs.elevationScale,
-            getFillColor: d => (banding && !amenityInBand(d))
-              ? [...SET_ASIDE_COLOR, AMENITY_DIM_ALPHA]
-              : rampColorAt(scaleT(d[col], gs.clamp)),
+            getFillColor: d => rampColorAt(scaleT(d[col], gs.clamp)),
             opacity: state.prismOpacity,
             material: { ambient: 0.55, diffuse: 0.6, shininess: 32, specularColor: [60, 60, 70] },
             pickable: false, // the plane handles tooltips
             updateTriggers: {
               getElevation: colKey,
-              getFillColor: [colKey, state.ramp, state.colorAdjust,
-                             state.amenity.lrt, state.amenity.school],
+              getFillColor: [colKey, state.ramp, state.colorAdjust],
             },
           }),
           // ⚠️ REVENUE CUTS ONLY, the same rule the hood caveat follows and for
@@ -5822,20 +5794,20 @@
       overlay.setProps({ layers: buildLayers() });
     }
 
-    // Toggle one amenity band. Glass and Infill — the rows are hidden elsewhere
-    // and each self-gates on its own column, so a file without the distances
-    // can never reach here. State persists across view switches like the rest
-    // of the layers panel.
+    // Toggle one amenity band. Infill only — the rows are hidden elsewhere and
+    // each self-gates on its own column, so a file without the distances can
+    // never reach here. State persists across view switches like the rest of
+    // the layers panel.
     function applyAmenity(which, checked) {
       state.amenity[which] = checked;
       // Blurb before layers — the label sweep measures the title's live rect.
       document.getElementById("title-p").textContent =
-        state.view === "infill" ? VIEWS.infill.blurb + infillAmenityBlurb() : glassBlurb();
+        VIEWS.infill.blurb + infillAmenityBlurb();
       overlay.setProps({ layers: buildLayers() });
     }
 
-    // Show the amenity section in Glass and Infill (the amenity distances ride
-    // on the same 100 m grid file both views share), and only for the rows
+    // Show the amenity section in Infill only (2026-08-26 — Glass reads the
+    // same grid file and carried the rows until then), and only for the rows
     // whose column is in the grid file (the house pattern — the columns reach
     // the served file on the next weekly refresh, so BOTH rows can legitimately
     // be absent). The header hides when neither row survives, like the
@@ -5844,7 +5816,7 @@
       const rows = [["lrt", "amenity-lrt-row"], ["school", "amenity-school-row"]];
       let shown = 0;
       rows.forEach(([k, id]) => {
-        const show = (v === "glass" || v === "infill") && amenityOfferable(k);
+        const show = v === "infill" && amenityOfferable(k);
         document.getElementById(id).style.display = show ? "block" : "none";
         if (show) shown++;
       });

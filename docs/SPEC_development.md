@@ -544,7 +544,7 @@ now". Design decisions:
 recomputes, null-cell absence, picker hiding, and the shared-fetch Glass
 regression.
 
-## Amenity distance — BUILT 2026-08-23 (pipeline); UI filter BUILT 2026-08-25 in Glass AND Infill
+## Amenity distance — BUILT 2026-08-23 (pipeline); UI filter lives in Infill ONLY (2026-08-26)
 
 Peter, 2026-08-22: *"one of the affectors i wanted was like, distance of each
 block from lrt stations, and schools, for each property."* Shipped as **two
@@ -567,26 +567,38 @@ LRT") and stay independent of whether the score itself ever re-grains.
 | Schools | Both public boards, **catchment schools only** (19 city-wide/specialized programs excluded). ⚠️ Private/charter/francophone are absent and **cannot be recovered from data we hold** — probed three ways 2026-08-23 (`ANALYSIS_BACKLOG.md` §13) |
 | Missing | `null`, never a large sentinel — 0.1% of properties reach no amenity over the graph |
 
-**The UI — BUILT 2026-08-23, Glass.** Two independent checkboxes in the
-layers panel (`#amenity`), dimming out-of-band cells rather than dropping
-them. **Two, not one**, because the bands are ~14x apart in what they select
-and ANDing the conventional pair leaves 0.8% of cells — a single
-"amenity-served" switch would hide that behind one word. `verify-amenity.js`
-(24 checks).
+**The UI — two independent checkboxes** in the layers panel (`#amenity`).
+**Two, not one**, because the bands are ~14x apart in what they select and
+ANDing the conventional pair leaves 0.8% of cells — a single "amenity-served"
+switch would hide that behind one word.
 
-**Extended to Infill — BUILT 2026-08-25.** The Infill lens had no 100 m grid
-of its own (`docs/ANALYSIS_BACKLOG.md` §12 item 4 — housing this was the
-motivating question), so the SAME checkboxes now also show there, reading the
-SAME `value_grid.json` file. Rendering direction inverts to match: Glass
-*dims* out-of-band cells (the metric colour is what's being filtered), Infill
-*highlights* in-band cells with a translucent white overlay (`infill-amenity-grid`,
-`AMENITY_HIGHLIGHT_COLOR`) — the hood-level suitability×activity score
-underneath never changes. This is deliberately the cheapest correct
-placement, not the eventual one: a REAL per-cell Infill score is still
-blocked on `ANALYSIS_BACKLOG.md` §12 items 3 (a per-cell residential-gate
-equivalent) and 5 (what a diverging score means as a height) — both
-unresolved Peter calls. The highlight grid carries no metric of its own and
-does not presuppose an answer to either.
+**Where they live: Infill only.** The build order went the other way round and
+the history matters, because the code still *could* offer them in both places:
+
+1. **2026-08-23 — built in Glass** (Money → 100 m grid), dimming out-of-band
+   cells rather than dropping them. Not because Glass was the right home, but
+   because it was the only 100 m grid UI that existed and the distances ride on
+   the `value_grid.json` it already renders.
+2. **2026-08-25 — extended to Infill**, the lens they were asked for
+   (`ANALYSIS_BACKLOG.md` §12 item 4). Rendering inverts by necessity: Glass had
+   a metric colour to withhold, Infill has no per-cell metric, so it
+   *highlights* in-band cells with a translucent white overlay
+   (`infill-amenity-grid`, `AMENITY_HIGHLIGHT_COLOR`) over an unchanged
+   hood-level score.
+3. **2026-08-26 — ⚠️ REMOVED from Glass** (`DECISIONS.md` 2026-08-26). Both
+   copies worked; two copies of one control read as clutter rather than as two
+   questions. Glass's dim path, `AMENITY_DIM_ALPHA` and `amenityBlurb()` are
+   gone; `syncAmenityControls` gates on `v === "infill"` alone.
+
+The Infill placement is deliberately the cheapest correct one, not the eventual
+one: a REAL per-cell Infill score is still blocked on `ANALYSIS_BACKLOG.md` §12
+items 3 (a per-cell residential-gate equivalent) and 5 (what a diverging score
+means as a height) — both unresolved Peter calls. The highlight grid carries no
+metric of its own and does not presuppose an answer to either.
+
+`verify-amenity.js` (30 checks) covers it, **including that Glass offers no rows
+and never dims while a band is on** — the state persists across views, so the
+removal has to be asserted, not assumed.
 
 **What is still open**
 - **The bands are fixed at 600 m / 800 m in `AMENITY_BANDS`.** No slider, no
@@ -623,7 +635,8 @@ does not presuppose an answer to either.
 5. **Amenity distance** — ✅ DONE 2026-08-23 (`feat/amenity-distance`):
    `src/load_schools.py` + `src/amenity_distance.py` +
    `load_transit.derive_lrt_stations` + `dist_lrt_m`/`dist_school_m` on the
-   value grid. **The UI filter is NOT built** — see "Amenity distance" above.
+   value grid. The UI filter followed 2026-08-23 (Glass) → 2026-08-25 (Infill)
+   → 2026-08-26 (**Infill only**) — see "Amenity distance" above.
 
 ## Cross-refs
 
