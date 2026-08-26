@@ -63,3 +63,6 @@ tools/profiling/*.png
 
 # Standalone notebook download cache (~90 MB of public data, re-fetchable)
 notebooks/standalone/exemption_data/
+
+# Standalone notebook download cache (public data, re-fetchable)
+notebooks/standalone/historical_gap_data/
