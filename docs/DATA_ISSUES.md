@@ -21,6 +21,33 @@ closed parent, invisible for six days. Status must be one of
 **NOT SENT · SENT (date) · ACKNOWLEDGED (date) · FIXED (date) · WONTFIX**, and
 "the artifact exists" is **not** sent.
 
+---
+
+## Status at a glance
+
+⚠️ **This table is the authoritative send status.** `TODO.md` carries a tracker
+item that mirrors it in one line each — if the two disagree, **this one is
+right**, and the TODO is stale. Update here first.
+
+**Nothing has been sent. Five issues, zero contact, as of 2026-08-26.**
+
+| # | issue | evidence | report text | status |
+|---|---|---|---|---|
+| 1 | `Period of Coverage` names the wrong year | [published](https://peterfriedrich.github.io/edmonton-tax-viz/notebooks/roll-year-metadata.html) | ❌ not written | **NOT SENT** |
+| 2 | archive's 2025 entry is the 2026 roll | — (ours, not theirs) | n/a | **needs a decision** |
+| 3 | `qi6a-xuwt` drops 2,448 accounts | [published](https://peterfriedrich.github.io/edmonton-tax-viz/notebooks/historical-2024-gap.html) | ❌ not written | **NOT SENT** |
+| 4 | no per-parcel exemption status published | [published](https://peterfriedrich.github.io/edmonton-tax-viz/notebooks/exemption-uncertainty.html) | ✅ `docs/DRAFT_open_data_request_exemption_status.md` | **NOT SENT** |
+| 5 | 3 of 5 school boards absent from open data | ❌ none | ❌ not written | **NOT SENT** |
+
+**Channel:** `opendata@edmonton.ca`, read from the portal footer 2026-08-25 —
+primary source, not inference. Right channel for 1, 3, 4 and 5, all of which are
+dataset/portal requests. **Assessment & Taxation Branch is the escalation if
+Open Data bounces one**, not the first stop.
+
+**Issue 4 is the only one with a written message.** Everything else has evidence
+and no text. ⚠️ Sending is Peter's call in every case — it is outward-facing and
+it speaks for the project.
+
 ⚠️ **Re-measure before quoting any figure below.** Several are derived against
 the current roll, which moves weekly and rolled to 2026 in August. Each row says
 when it was last measured.

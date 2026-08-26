@@ -102,6 +102,35 @@ Services carries no sparkline — measured, it does.)_
 
 ## Open work
 
+- [ ] **OUTREACH TRACKER — five data issues found, ZERO sent. Every one is
+  Peter's call.** ⚠️ **`docs/DATA_ISSUES.md` "Status at a glance" is
+  AUTHORITATIVE** — this is a one-line mirror so the count is visible from the
+  file that gets read every session. If the two disagree, that file is right and
+  this is stale.
+  - Channel: **`opendata@edmonton.ca`** (portal footer, read 2026-08-25).
+    Assessment & Taxation is the *escalation*, not the first stop.
+
+  | # | issue | blocked on |
+  |---|---|---|
+  | 1 | `Period of Coverage` names the wrong year | **report text** — evidence is published |
+  | 3 | `qi6a-xuwt` drops 2,448 accounts | **report text** — evidence is published; see the detailed item below |
+  | 4 | no per-parcel exemption status | **nothing — the draft is written**, `docs/DRAFT_open_data_request_exemption_status.md` |
+  | 5 | 3 of 5 school boards absent | evidence, then text |
+
+  - **Issue 4 is the only one that could go today.** ⚠️ **Do not put the
+    $125.4M figure in it** — that asserts an exemption status no public source
+    states.
+  - **1 and 3 are one email's work each** now that both pages are live and
+    linkable; 1 is the cheapest of all five (a single field edit on their end)
+    and has never had a draft.
+  - **Issue 2 is not outreach** — it is ours, caused by issue 1, and needs a
+    decision rather than a message (its own item below).
+  - ⚠️ **Detailed context lives in the two long items further down** (the
+    `qi6a-xuwt` bug report, and the open-data request). **Do not duplicate their
+    content here** — this item exists to make "zero sent" impossible to miss,
+    which is exactly how the `qi6a-xuwt` report went invisible for six days
+    inside a closed parent.
+
 - [ ] **ACTIVE — how many properties are silently absent from the published
   current roll? One case is proven; the population is a guess.** Full context:
   `docs/DATA_ISSUES.md` "Possible issues" §A. Promoted to active work
