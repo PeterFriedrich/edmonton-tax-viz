@@ -209,6 +209,95 @@ value over a name-matched set with no self-check — and is not the answer.
 
 ---
 
+## Possible issues — not yet confirmed, scoped, or clearly the publisher's fault
+
+⚠️ **Nothing here is reportable as it stands.** These are candidates found by a
+sweep of `data/DATA.md`, `docs/DECISIONS.md` and `docs/ANALYSIS_BACKLOG.md` on
+2026-08-26 — real enough to record, not measured enough to send. Promote one to
+a numbered issue above only after it has an artifact that reproduces it.
+
+⚠️ **What was deliberately EXCLUDED from this list**, because it looks like a
+defect and is not: **identifier churn.** Account numbers get renumbered
+(0.15%–0.37%/yr, spiking to 0.91% in 2023→2024), addresses get re-addressed
+(`WESTMOUNT SHOPPING CENTRE NW` no longer exists), neighbourhoods get renamed
+(OLIVER → WÎHKWÊNTÔWIN moved 12,237 parcels). That is routine municipal
+practice, `data/DATA.md` says so outright, and **a vanished account number is
+not by itself a finding**. What would be a defect is a property absent from the
+published roll *while still being assessed* — which is A below, and the reason
+it is separated from the churn it hides inside.
+
+### A. Properties go transiently absent from the published current roll
+
+**⚠️ The single case is CONFIRMED; the population is not.** Now an active
+`TODO.md` item — the one candidate here worth working.
+
+Misericordia Community Hospital was continuously assessed 2012–2025 as account
+`10095840` (~$200–260M, always WEST MEADOWLARK PARK), was renumbered to
+`11495573`, and was **absent from `q7d6-ambg` entirely until 2026-08-03** —
+during which the map understated that neighbourhood by **~$250M**. All four
+major hospitals moved into a new `114955xx` block at the 2025 roll, and the old
+numbers appear in **no year** of `qi6a-xuwt`.
+
+`tools/audit_roll_continuity.py` (run 2026-08-07 against historical 2024) finds
+**1,534 of 426,913 parcels — 0.36%, $1.62B assessed** — with no current match,
+by position rather than by any of the three churning identifiers (across the
+hospital renumbering the coordinates moved **under 2 m**).
+
+⚠️ **Those 1,534 are candidates, not verdicts** — demolitions, subdivisions and
+consolidations look identical to a dropout from the outside. That is exactly
+what makes this unreportable today: we cannot yet say how many are real.
+
+Same dataset as issue 1, so if it firms up it could ride along in that report
+rather than needing its own.
+
+### B. `building_type` is an uncontrolled vocabulary (building permits)
+
+71 distinct values carrying multiple spellings of the same category —
+`Apartments (310)` / `Apartment (310)` / `Apartment Condos (315)`;
+`Row House (330)` / `Row Houses (330)`; `Semi Detached House` with no code at
+all. We handle it by enumerating full strings (`RESIDENTIAL_BUILDING_TYPES`,
+`INDUSTRIAL_BUILDING_TYPES`), never by prefix-matching.
+
+Low severity and it costs us nothing today, but it is a genuine publisher-side
+quality issue and the cheapest of these to write up. ⚠️ Any report would have
+to enumerate what the variants ARE rather than name the categories — the
+category-by-name shape is how parkades ended up classified as industrial
+elsewhere in this project.
+
+### C. No capital budget on the open data portal, and no freshness signal where it does live
+
+The portal has **no capital sibling** to `da9s-v9j8`: a domain search returns
+only the two OPERATING feeds (`da9s-v9j8` expenses, `m84q-ghmu` revenues),
+`552h-hjwj` Capital Projects (a 214-row app feed), and a 2015 relic. Probed
+2026-08-21 — do not go hunting for one again.
+
+The real capital budget is on the **Open Budget portal**, which publishes **no
+freshness header at all**: `Last-Modified` merely echoes `Date` behind
+`Cache-Control: no-cache`. So unlike Socrata's `rowsUpdatedAt` there is nothing
+to watch, and the committed file *is* the pin — `scripts/vintage_report.py`
+fingerprints sorted content instead.
+
+Two requests in one, which is why it is not yet drafted: publish capital
+alongside operating, and expose a real last-modified. ⚠️ Also note the file has
+quirks that are **not** defects: 1,884 rows over 399 `profile_id`s (not one row
+per project) and 87 rows with negative `approved` (funding-source swaps).
+
+### D. No published service life for bikeways or shared pathways
+
+⚠️ **This is about BIKEWAYS, not roads** — roads have a published figure, and
+the 25-vs-50-year question there is a judgment call on the City's own wording,
+not a gap.
+
+Searched 2026-08-04 across six sources: the Development Impact page (roads and
+fire stations only), both Bike Plan PDFs, the 2025 Infrastructure Report, the
+Infrastructure State-and-Condition / Inventory / Tools pages, and the 2023
+Capital Asset Management Audit. None state one.
+
+An availability gap rather than an error, same shape as issues 4 and 5. It is
+the last input the bikeway cost side needs.
+
+---
+
 ## Cross-refs
 
 - `data/DATA.md` — what each source *is* (§0 historical roll, §11 FIR, §20
