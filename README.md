@@ -62,6 +62,21 @@ Work that would genuinely need parcel *geometry* is catalogued in `docs/PARCEL_L
 — municipal tax revenue (and assessed value) per acre by neighbourhood, with a
 land-use set-aside layer and a residential-only lens.
 
+**Data-quality reports:** **https://peterfriedrich.github.io/edmonton-tax-viz/notebooks/**
+— standalone, reproducible findings about defects in Edmonton's published open
+data, each recomputing every figure at run time and asserting its own
+invariants:
+
+- [The current assessment roll is published under the wrong coverage year](https://peterfriedrich.github.io/edmonton-tax-viz/notebooks/roll-year-metadata.html)
+  — `q7d6-ambg`'s `Period of Coverage` says 2025; the rows are the 2026 roll.
+- [Whole buildings are missing from the 2024 slice of the Historical roll](https://peterfriedrich.github.io/edmonton-tax-viz/notebooks/historical-2024-gap.html)
+  — 2,448 accounts across 188 neighbourhoods, 29 addresses losing every account.
+- [What public data can and cannot say about tax-exempt property](https://peterfriedrich.github.io/edmonton-tax-viz/notebooks/exemption-uncertainty.html)
+  — sizing a ~$15B gap, and why public data cannot resolve it.
+
+Sources are under `notebooks/standalone/`; the register of known issues and
+whether anyone has been told is `docs/DATA_ISSUES.md`.
+
 **Full / specialist build:** **https://peterfriedrich.github.io/edmonton-tax-viz/full/**
 — the same map with additional specialist controls (Infill mode, Industrial
 metric, deeper data-detail) exposed. This is the build for anyone visiting the
