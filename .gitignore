@@ -66,3 +66,6 @@ notebooks/standalone/exemption_data/
 
 # Standalone notebook download cache (public data, re-fetchable)
 notebooks/standalone/historical_gap_data/
+
+# Standalone notebook download cache (two FIR workbooks, re-fetchable)
+notebooks/standalone/roll_year_data/

@@ -29,8 +29,18 @@ when it was last measured.
 
 ## 1. `q7d6-ambg` — `Period of Coverage` names the wrong year, and has all year
 
-**Status: NOT SENT.** No draft written.
-**Last measured: 2026-08-26** (live metadata query).
+**Status: NOT SENT.** Evidence published and linkable; the report text itself is
+not written.
+**Last measured: 2026-08-26** (every figure recomputed by the published run).
+
+**Evidence:** `/notebooks/roll-year-metadata.html`
+(source `notebooks/standalone/roll_year_metadata.py`). Standalone — live APIs
+only, imports nothing from `src/`, **8/8 invariants pass**. Two independent
+proofs by design: §2 uses **only Edmonton's own datasets** (the Historical
+table's 2025 slice against the current roll), §3 uses **Alberta's FIR filings**,
+so a reader who distrusts either source still has the other. ⚠️ The first
+invariant flips when the City corrects the field, which is how the page reports
+its own obsolescence.
 
 **The defect.** The Socrata metadata on *Property Assessment Data (Current
 Calendar Year)* reads:
