@@ -115,6 +115,12 @@ time graph (`TODO.md`). Numbers below are from the API on 2026-07-28.
 > neighbourhood produced an apparent $2.07B collapse where the real decline is
 > $1.35B — see `docs/ANALYSIS_BACKLOG.md`.
 
+**Reportable evidence for the defect:** `notebooks/standalone/historical_2024_gap.py`
+re-measures it live from the portal (no repo dependency) and is the artifact to
+send with a data-quality report — it runs both detectors, shows the missing
+accounts cluster into whole buildings, and lists account numbers Edmonton can
+check by hand.
+
 **Source:** Edmonton Open Data — dataset ID `qi6a-xuwt` ("Property Assessment
 Data (Historical)")
 **Coverage:** **14 years, 2012–2025**, 5,501,958 rows total (337k in 2012 rising
