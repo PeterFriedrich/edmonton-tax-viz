@@ -102,6 +102,32 @@ Services carries no sparkline — measured, it does.)_
 
 ## Open work
 
+- [ ] **PETER'S CALL — the temporal archive's 2025 entry is the 2026 roll, and
+  the archive is frozen by design.** Found 2026-08-26 while verifying the change
+  lens; full evidence in `docs/DATA_ISSUES.md` §2. On 2026-07-28 (`865159a`) the
+  pin still said 2025 because Edmonton's `Period of Coverage` string was a year
+  stale, so `write_archive` froze the 2026 roll under the label 2025. Both
+  entries best-fit FIR **2026** (+1.17% / +1.18%); 343 of 406 hoods are
+  byte-identical and the citywide total moves **+0.0021%**.
+  - **What it costs while unresolved:** the change lens dilutes every hood's
+    rate **~7%** (2012 window) and **~14%** (2019 window); the history panel and
+    sparkline show a 2025→2026 plateau that never happened and omit the real
+    2025, a **+8.3%** revaluation year.
+  - **Detection exists** — `scripts/check_temporal_archive_year.py` (13 tests),
+    exit 3 on today's archive. ⚠️ **Deliberately wired into NO workflow yet:** it
+    fails by design until this is decided, so gating the weekly publish on it
+    would hold the site. Wiring it is part of closing this item.
+  - ⚠️ **Not a rewrite — a decision.** `write_archive`'s freeze rule exists
+    because a rewrite could only ever be a silent downgrade
+    (`SPEC_temporal.md` §0.4). The true 2025 does exist in the historical table
+    ($220.07B) but carries its own 131-account defect, so "just re-derive it" is
+    not free either.
+  - ⚠️ **`data/expected_temporal_years.json`'s 2025 anchor was pinned FROM the
+    bad capture** and must move with whatever is decided, or the guard will
+    enforce the wrong value.
+  - ⚠️ **`CHG_WINDOW_LABEL` is hardcoded `"2012–2025"` / `"2019–2025"`** — do
+    not "fix" it to read from the data before this closes: that would advertise
+    a 2026 that carries no movement.
 
 - [ ] **PETER'S CALL — the amenity bands are FIXED at 600 m / 800 m
   (`AMENITY_BANDS` in `web/index.html`).** Built and live behind the weekly
