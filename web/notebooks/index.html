@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<!--
+  Landing page for the standalone data-quality reports (/notebooks/).
+
+  Hand-written, NOT generated: the three pages beside it are nbconvert output
+  and get overwritten wholesale on every re-render, so an index living inside
+  one of them would not survive. Add a <li> here when a report is published —
+  a page nothing links to is a page nobody reads, which is the failure this
+  file exists to prevent (docs/DATA_ISSUES.md).
+
+  Deploys on push like the reports themselves: web/notebooks/** is deliberately
+  absent from deploy.yml's exclude list, because unlike web/data/** nothing
+  regenerates these in CI, so they are code.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Data-quality reports — Edmonton revenue-per-acre analysis</title>
+<meta name="description" content="Standalone, reproducible reports on data-quality defects found in Edmonton's published open data.">
+<style>
+  :root { color-scheme: light; }
+  body {
+    margin: 0 auto; padding: 2.6rem 1.4rem 4rem; max-width: 46rem;
+    background: #fcfcfb; color: #0b0b0b;
+    font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Cantarell, sans-serif;
+  }
+  h1 { font-size: 1.6rem; line-height: 1.25; margin: 0 0 .6rem; }
+  .lede { color: #52514e; margin: 0 0 2.2rem; }
+  ul { list-style: none; padding: 0; margin: 0; }
+  li { border-top: 1px solid #dcdcd8; padding: 1.5rem 0; }
+  li:last-child { border-bottom: 1px solid #dcdcd8; }
+  a.report { font-size: 1.12rem; font-weight: 700; color: #2a78d6; text-decoration: none; }
+  a.report:hover, a.report:focus { text-decoration: underline; }
+  .dataset { font-family: ui-monospace, "DejaVu Sans Mono", monospace; font-size: .86rem; color: #52514e; }
+  p.finding { margin: .5rem 0 .4rem; }
+  .meta { font-size: .86rem; color: #52514e; margin: 0; }
+  footer { margin-top: 2.6rem; font-size: .9rem; color: #52514e; }
+  footer a { color: #2a78d6; }
+</style>
+</head>
+<body>
+
+<h1>Data-quality reports</h1>
+
+<p class="lede">
+  Findings about Edmonton's published open data, written to be checked rather
+  than taken on trust. Each page below downloads its sources live, recomputes
+  every figure in the run you are reading, and asserts a list of invariants at
+  the end — so a report that has gone out of date says so instead of looking
+  fine. None of them depend on this project's own pipeline.
+</p>
+
+<ul>
+
+  <li>
+    <a class="report" href="roll-year-metadata.html">The current assessment roll is published under the wrong coverage year</a>
+    <div class="dataset">Property Assessment Data (Current Calendar Year) — q7d6-ambg</div>
+    <p class="finding">
+      The dataset's <code>Period of Coverage</code> metadata reads
+      <em>2025-01-01 to 2025-12-31</em>, but the rows are the 2026 roll. Proved
+      twice over, once using only the City's own datasets and once against
+      Edmonton's filings with the Province. The data is sound; only the label
+      is wrong.
+    </p>
+    <p class="meta">Measured 2026-08-26 · 8 of 8 invariants passed</p>
+  </li>
+
+  <li>
+    <a class="report" href="historical-2024-gap.html">Whole buildings are missing from the 2024 slice of the Historical roll</a>
+    <div class="dataset">Property Assessment Data (Historical) — qi6a-xuwt</div>
+    <p class="finding">
+      2,448 tax accounts that exist in the 2023 slice <em>and</em> in the
+      current roll are absent from 2024, across 188 neighbourhoods. They are not
+      scattered: 29 addresses lose every account they had. The dataset's own
+      self-audit and an independent control disagree by a factor of 464.
+    </p>
+    <p class="meta">Measured 2026-08-26 · 6 of 6 invariants passed</p>
+  </li>
+
+  <li>
+    <a class="report" href="exemption-uncertainty.html">What public data can and cannot say about tax-exempt property</a>
+    <div class="dataset">Multiple sources, including Alberta's Financial Information Return</div>
+    <p class="finding">
+      The roll flags three properties as exempt, against a filed taxable base
+      roughly $15B below it. This report sizes that uncertainty and then shows
+      why it cannot be resolved from public data — including by constructing two
+      entirely disjoint sets of properties that each account for the same gap
+      exactly.
+    </p>
+    <p class="meta">Measured 2026-08-26 · 11 of 11 invariants passed</p>
+  </li>
+
+</ul>
+
+<footer>
+  <p>
+    Part of an open analysis of municipal tax revenue per acre in Edmonton —
+    <a href="../">interactive map</a> ·
+    <a href="https://github.com/PeterFriedrich/edmonton-tax-viz">source</a>.
+    Each report's source notebook is under <code>notebooks/standalone/</code>.
+  </p>
+</footer>
+
+</body>
+</html>
