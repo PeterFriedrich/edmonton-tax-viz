@@ -288,22 +288,34 @@ Services carries no sparkline — measured, it does.)_
   looked. `tools/todo_archive.py` now refuses to archive a closed parent with
   unchecked children (same date). Nothing about the finding changed while it sat
   there.
-  - **The artifact is written and ready:**
-    `notebooks/exploration/03_historical_roll_gap.ipynb` — hits the live API
-    only, no local data, runs top to bottom, re-derives every claim. 13 cells,
-    five sections; **all outputs are cleared, so it has never been run with
-    results saved.** Quick except the last cell, which pages the full account
-    lists of both datasets — a few minutes. Section 5 is the one to watch land:
-    it is where 2,448 / $2.93B / 188 comes from and where the old "~8,000" is
-    decomposed and discarded.
-  - **Deferred by Peter 2026-08-07** — offered a pre-run (rendered outputs to
-    read instead of driving it himself), declined for now. Still open, still his;
-    nothing about it changed.
-  - **Report 2,448 accounts / $2.93B / 188 neighbourhoods** (2023 ∧ current roll,
-    absent from historical 2025). Downtown 1,292 = 53%; Magrath Heights 430 =
-    17% of the hood; Glenora 269 = 15%. ⚠️ **NEVER the earlier inferred
-    "~8,000"** — that was read off row counts of different vintages and most of
-    that gap is new construction.
+  - ▶▶ **THE ARTIFACT IS NOW RUN, RENDERED AND PUBLISHED (2026-08-26).**
+    `notebooks/standalone/historical_2024_gap.py` / `.ipynb`, served at
+    **`/notebooks/historical-2024-gap.html`**. It supersedes
+    `notebooks/exploration/03_historical_roll_gap.ipynb` (still there, outputs
+    still cleared — **do not send that one**). Standalone: live API only,
+    imports nothing from `src/`, every figure computed at run time, 6/6
+    invariants asserted, ~4 min cold. **Peter can now read the rendered page
+    instead of driving a notebook**, which is what was declined in the form
+    offered on 2026-08-07.
+  - ⚠️ **FIGURES REFRESHED — re-measured live 2026-08-26, quote these.** The
+    account counts are unchanged from 2026-07-28 (**2,448** cumulative, **188**
+    neighbourhoods, Downtown **1,292**), which also proves the dataset has NOT
+    been corrected. The **value and shares moved** because the control is the
+    current roll and the roll rolled to 2026: **$3.008B** (was $2.93B) and
+    Downtown **48.4%** of that value (was 53%). Take the figures off the page,
+    not from this list.
+  - **Two things the run added beyond the old notebook.** (1) All 14 years, both
+    detectors, so "11 of 13 testable years are clean" is shown rather than
+    asserted — and the self-audit/current-roll disagreement is **464×**, which
+    is the single most useful sentence for the City. (2) The loss is
+    **building-shaped**: 2,448 accounts at **272 addresses**, **29 of which lose
+    every account**; largest are 309 and 261 units at 10310 / 10360 102 ST NW.
+  - **Incidental second finding, in the same dataset**: one Downtown address is
+    published under three spellings (`102 STREET` / `102 SSTREET` /
+    `102 STSREET`), so that building loses **315**, not 309. Cheap for them to
+    fix; cut it if it muddies the report.
+  - ⚠️ **NEVER the earlier inferred "~8,000"** — that was read off row counts of
+    different vintages and most of that gap is new construction.
   - **Cite dataset IDs + the SoQL, not prose:** `qi6a-xuwt` (Historical) and
     `q7d6-ambg` (Current Calendar Year). The notebook prints both. City data
     staff will want exact resource IDs.
@@ -792,6 +804,15 @@ Services carries no sparkline — measured, it does.)_
   `docs/DRAFT_open_data_request_exemption_status.md`. **This is the only route
   that resolves the AJ/UF/UI/PU question** — no public per-parcel exemption
   source exists, confirmed.
+  - ▶ **SUPPORTING EVIDENCE IS NOW PUBLISHED (2026-08-26)** — a standalone
+    notebook demonstrating *why* the request is necessary rather than asserting
+    it: `notebooks/standalone/exemption_uncertainty.py` / `.ipynb`, served at
+    **`/notebooks/exemption-uncertainty.html`**. It proves the identification
+    failure by construction — two **disjoint** sets of apartment properties,
+    60 and 68 of them, each reproducing the same $3.49B aggregate to 100.0000%.
+    A sum does not determine its terms, so no amount of public data closes this.
+    ⚠️ **Still do NOT put the $125.4M in the message** (unchanged); the page
+    asserts nothing about any parcel and is safe to link.
   - ⚠️ **One claim in the brief it came from is FALSE and is corrected in the
     draft: Calgary does NOT publish exemption status as open data.** Verified
     against the live schema of Calgary's `4bsw-nn7w` — 22 fields, **no
