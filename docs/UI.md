@@ -493,62 +493,83 @@ plane is mouseover geography. Implementation (`web/index.html`,
   ground-vs-lot at 100% (`tools/profiling/shot-denom.js` — the WEM needle
   visibly collapses in lot mode; downtown becomes the sole peak).
 
-#### Amenity bands (built 2026-08-23 — `#amenity`, two checkboxes)
+#### Amenity bands (built 2026-08-23 here — ⚠️ **moved out of Glass 2026-08-26**, see below)
 Filter the cells by road-network distance to an LRT station (600 m) or a
-catchment school (800 m). Design + the locked calls: `SPEC_development.md`
-"Amenity distance", `DECISIONS.md` 2026-08-23, state space in
-`CONTROLS_MATRIX.md`.
+catchment school (800 m). **The control no longer appears in Glass** — it is
+Infill-only as of 2026-08-26. This entry is kept because the reasoning below
+still governs the surviving control; only the dim rendering died with the move.
+Design + the locked calls: `SPEC_development.md` "Amenity distance",
+`DECISIONS.md` 2026-08-23 + 2026-08-26, state space in `CONTROLS_MATRIX.md`.
 - **Two independent rows, not one composite switch** — the bands are ~14x
   apart in what they select (1.6% vs 21.8% of cells at 600 m) and ANDing the
   conventional pair leaves **0.8%**. One switch would hide that collapse
   behind a word, and would be a weighted index by another name.
-- **Out-of-band cells DIM, they do not disappear.** At 1.6% a hard hide leaves
-  scattered dots with nothing to place them against; dimming keeps the city's
-  shape while all ramp signal belongs to the selection. It also keeps ONE
-  stable cell array, so a toggle cannot re-tessellate 34k cells. Dim colour is
-  `SET_ASIDE_COLOR` at alpha 60 — deliberate reuse of the "off the scale"
-  meaning the plane below already carries.
-- ⚠️ **The blurb has to say grey is "not zero and not set-aside"** — the legend
-  already spends that grey on set-aside land, so a greyed CELL is ambiguous
-  without the sentence. It also carries the live in-band count, because at
-  1.6% a filtered map otherwise looks broken.
+- **~~Out-of-band cells DIM, they do not disappear.~~** ⚠️ **Gone 2026-08-26**
+  with the Glass control (`AMENITY_DIM_ALPHA` and `amenityBlurb()` deleted). The
+  reason it was a dim and not a hide still stands and transferred: at 1.6% a
+  hard hide leaves scattered dots with nothing to place them against, and one
+  stable cell array means a toggle cannot re-tessellate 34k cells — Infill's
+  highlight keeps both properties.
+- ⚠️ **The blurb had to say grey was "not zero and not set-aside"** — the legend
+  already spends that grey on set-aside land, so a greyed CELL was ambiguous
+  without the sentence. Retired with the dim; the surviving lesson is that the
+  blurb carries the **live in-band count**, because at 1.6% a filtered map
+  otherwise looks broken.
 - ⚠️ **The negative phrasing does not survive two bands** — "further than 600 m
   of an LRT station AND within 800 m of a school" is a contradiction. The
-  prose is built around what KEEPS colour.
+  prose is built around what KEEPS the highlight.
 - **Rows self-gate on their own column** and are hidden on a served file from
   before the pipeline (the house pattern). `syncAmenityControls` runs from
   `applyView` **after** `await ensureGridData()`, and once at init because
   `applyView` is not called on load.
-- Headless-verified 2026-08-23 (`tools/profiling/verify-amenity.js`, 24
-  checks: view + per-row gating, dim-not-drop with an unchanged cell count,
-  stable data identity across a toggle, the AND being stricter than either
-  band, null-is-out-of-band, blurb honesty + live counts, cross-view
-  persistence, and the house-pattern path against the real served file).
-  Blurb height measured rather than assumed: +113px, still clearing `#botleft`
-  by 166px at 1280x720.
+- Headless-verified 2026-08-23 (`tools/profiling/verify-amenity.js`, then 24
+  checks). Blurb height measured rather than assumed: +113px, still clearing
+  `#botleft` by 166px at 1280x720.
 
 #### Extended to Infill (built 2026-08-25)
-The same `#amenity` checkboxes now also show under the Infill lens (they read
-the same `value_grid.json` file Glass uses) — housing the "distance to LRT/
+The same `#amenity` checkboxes were added under the Infill lens (reading the
+same `value_grid.json` file Glass renders) — housing the "distance to LRT/
 schools" thread that Peter originally asked for under Infill but which
 `DECISIONS.md` 2026-08-22 kept out of the score itself. `syncAmenityControls`
-now shows the rows for `v === "glass" || v === "infill"`; `ensureGridData()`
-fetches on entering either view.
-- **Rendering direction inverts, deliberately.** Glass DIMS out-of-band cells
-  (there's a metric colour to withhold). Infill has no per-cell metric to
+widened from `v === "glass"` to `v === "glass" || v === "infill"`;
+`ensureGridData()` fetches on entering either view.
+- **Rendering direction inverts, deliberately.** Glass DIMMED out-of-band cells
+  (there was a metric colour to withhold). Infill has no per-cell metric to
   withhold — the hood-level suitability×activity score never changes — so it
-  instead HIGHLIGHTS in-band cells: a flat, non-extruded, non-pickable
+  HIGHLIGHTS in-band cells instead: a flat, non-extruded, non-pickable
   `GridCellLayer` (`infill-amenity-grid`, `AMENITY_HIGHLIGHT_COLOR` — white at
   alpha 70) drawn over `infill-plane`, present only while a band is checked.
-  Reuses `amenityInBand` — same null-is-out-of-band rule as Glass.
+  Reuses `amenityInBand` — a null distance is OUT of band.
   `infillAmenityBlurb()` is the Infill-specific sentence ("marks reach only;
-  the coloured score underneath is unchanged"), sharing `amenityWhichPhrase()`
-  with Glass's `amenityBlurb()` so the two band descriptions can't drift.
+  the coloured score underneath is unchanged").
 - ⚠️ **This is a placeholder, not a finished cell-grain Infill lens.** A real
   per-cell score is still blocked on two open items in
   `docs/ANALYSIS_BACKLOG.md` §12 (a per-cell residential-gate equivalent, and
   what a diverging score means as a height) — see `SPEC_development.md`
   "Amenity distance" for the full reasoning.
+
+#### Removed from Glass (2026-08-26) — Infill is the only home
+Peter, seeing the rows under Money → 100 m grid: *"remove it from money."*
+Nothing had regressed — 2026-08-25 **widened** the gate rather than moving it,
+so both views carried the control for a day. Two copies of one control read as
+clutter rather than as two questions, and Infill is the lens the filter was
+asked for. `DECISIONS.md` 2026-08-26.
+- `syncAmenityControls` gates on `v === "infill"` alone; `applyAmenity` no
+  longer branches on the view. `ensureGridData()`'s fetch gate is **unchanged**
+  — Glass still needs the grid file for its own spikes.
+- **Deleted, not left dormant:** `AMENITY_DIM_ALPHA`, `amenityBlurb()`, the
+  `glass-grid` fill branch and its two `state.amenity` `updateTriggers`.
+  `amenityWhichPhrase()` survives with one caller (Infill's blurb).
+- ⚠️ **Band state persists across views**, so the removal has to be *asserted*:
+  `verify-amenity.js` (now 30 checks) enters Glass **with a band switched on**
+  and requires the section hidden, `dimmed === 0`, and no band sentence in the
+  blurb. Without that check the dim could come back silently.
+- The cross-view correctness check died with the second copy (it compared
+  Infill's highlighted count to Glass's lit count). Replaced by something
+  stronger: the rendered highlight count is now checked against a count
+  re-derived from the **raw `dist_lrt_m` column** at a hardcoded 600 m, so the
+  render is measured against the file rather than against the rule that drew it
+  — and moving `AMENITY_BANDS` without moving the label fails loudly.
 
 ### Neighbourhood denominator toggle (Money view, built 2026-07-08)
 The Glass "Ground acres | Lot acres" control, mirrored onto the **Money view's

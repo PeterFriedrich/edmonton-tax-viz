@@ -918,14 +918,16 @@ schools, for each property, then it would get filled into each spike."*
 ✅ **DONE 2026-08-23 — the distances themselves ship** (`feat/amenity-distance`):
 `dist_lrt_m` / `dist_school_m` as per-cell attributes on `value_grid.json`,
 computed per property over a road graph and taken as the cell median.
-✅ **DONE 2026-08-25 — the filter ships, in BOTH Glass and Infill.** Infill had
-no 100 m grid of its own, so this is what "housing" the thread there turned
-into: the same `#amenity` checkboxes now also draw over `infill-plane`, as a
-translucent highlight (not a metric, not a colour change to the hood score —
-`SPEC_development.md` "Amenity distance" § "Extended to Infill"). This is
-NOT the real per-cell Infill score item 5 below still asks for; it is the
-cheapest correct placeholder pending items 3 and 5. Band value is still a
-Peter call, unchanged (`TODO.md`).
+✅ **DONE 2026-08-25 — the filter ships under Infill.** Infill had no 100 m grid
+of its own, so this is what "housing" the thread there turned into: the
+`#amenity` checkboxes draw over `infill-plane` as a translucent highlight (not
+a metric, not a colour change to the hood score — `SPEC_development.md`
+"Amenity distance"). ⚠️ **2026-08-26 — and ONLY under Infill**: the filter was
+originally built in Money's Glass mode and 2026-08-25 widened the gate rather
+than moving it, so both views offered it for a day; the Glass copy is now
+removed (`DECISIONS.md` 2026-08-26). This is NOT the real per-cell Infill score
+item 5 below still asks for; it is the cheapest correct placeholder pending
+items 3 and 5. Band value is still a Peter call, unchanged (`TODO.md`).
 ⚠️ **One correction to the measurement above:** S115's probe graph included
 railway centrelines, so its network distances could route along the LRT track.
 The shipped graph excludes them; the 55% figure is if anything understated.

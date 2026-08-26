@@ -106,9 +106,9 @@ Services carries no sparkline — measured, it does.)_
 - [ ] **PETER'S CALL — the amenity bands are FIXED at 600 m / 800 m
   (`AMENITY_BANDS` in `web/index.html`).** Built and live behind the weekly
   refresh 2026-08-23; the filter works, the numbers in it are conventions.
-  Extended 2026-08-25 to also draw as a highlight grid under Infill (housing
-  the thread there — `DECISIONS.md` 2026-08-25) — same `AMENITY_BANDS`, both
-  views move together.
+  ⚠️ **The control is INFILL-ONLY as of 2026-08-26** — built in Glass, extended
+  to Infill 2026-08-25, and the Glass copy removed on Peter's call
+  (`DECISIONS.md` 2026-08-26). One place to change now, not two.
   - **What a change would cost:** the band value is repeated in each row's
     tooltip copy, so `AMENITY_BANDS` and the two `title=` strings move together
     (the code comment says so).
