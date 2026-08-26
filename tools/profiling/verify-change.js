@@ -17,11 +17,13 @@
 //      compound rate. They must render off-scale grey and say WHY — and must
 //      NOT read as set-aside land, which is the opposite story (these are the
 //      new-growth areas).
-//   4. It is a FLAT diverging plane, by decision — hoods moved both ways and
-//      the in-repo precedent is the infill plane. ⚠️ NOT because "a prism
-//      cannot have negative height", which this header used to say and which
-//      is false: deck.gl renders negative elevation below the plane (measured
-//      2026-08-11, and the deviation lens ships on it).
+//   4. **SIGNED PRISMS on ONE SHARED elevation scale** (2026-08-26 — replaces
+//      the flat plane this lens shipped with). Gaining hoods rise, losing
+//      hoods sink below the plane. The scale is the thing that fails silently:
+//      giving each arm its own would draw a −5%/yr loss and a +34%/yr gain as
+//      visibly equal bars, so metres-per-point is asserted EQUAL across the
+//      two arms, and the deepest/tallest ratio is checked against the raw
+//      file. The 46 degenerate hoods must be FLAT (0), not absent.
 //   5. The two windows really do differ, and switching them NEVER refetches.
 //   6. It is PUBLIC as of 2026-07-31 (promoted from full-only): `?build=public`
 //      offers the lens toggle, and reveals the window picker ON ENTERING change
@@ -177,29 +179,77 @@ const [url] = process.argv.slice(2);
   check('the legend swatch says "no baseline", not "set aside"',
     /No 2012 baseline/.test(legendAside) && !/set.aside/i.test(legendAside), legendAside);
 
-  // ---- 4. a flat diverging plane -----------------------------------------
+  // ---- 4. signed prisms on one shared scale -------------------------------
+  // Sampled through the layer's OWN live getElevation accessor, over the
+  // layer's own data — the render's answer, not a re-derivation of the rule.
   const render = await page.evaluate(() => {
     const layers = overlay._props.layers;
-    const plane = layers.find(l => l.id === 'change-plane');
+    const prisms = layers.find(l => l.id === 'change-prisms');
     const bar = getComputedStyle(document.querySelector('#legend .bar')).backgroundImage;
+    let up = 0, down = 0, flat = 0, tallest = 0, deepest = 0;
+    let scalePos = null, scaleNeg = null;
+    if (prisms) {
+      const g = prisms.props.getElevation;
+      for (const f of prisms.props.data.features) {
+        const e = g(f);
+        const c = changeFor(f.properties.neighbourhood_name);
+        const rate = c && c.rate != null ? c.rate : null;
+        if (e > 0) { up++; if (e > tallest) { tallest = e; scalePos = e / rate; } }
+        else if (e < 0) { down++; if (e < deepest) { deepest = e; scaleNeg = e / rate; } }
+        else flat++;
+        // A degenerate hood (no baseline / no endpoint) must be flat, not tall.
+        if (rate === null && e !== 0) flat = -1;
+      }
+    }
     return {
       ids: layers.map(l => l.id),
-      extruded: plane && plane.props.extruded,
+      extruded: prisms && prisms.props.extruded,
+      pickable: prisms && prisms.props.pickable,
       hasHover: layers.some(l => l.id === 'hood-hover'),
+      up, down, flat, tallest, deepest, scalePos, scaleNeg,
       barHead: bar.slice(0, 40), barTail: bar.slice(-40),
       neg: infillColorAt(-1), pos: infillColorAt(1),
     };
   });
-  check('the change plane is on the map', render.ids.includes('change-plane'));
-  check('the plane is FLAT — a prism cannot have negative height',
-    render.extruded === false, `extruded=${render.extruded}`);
-  check('the flat view carries its own hover layer', render.hasHover);
+  check('the change prisms are on the map', render.ids.includes('change-prisms'));
+  check('they are EXTRUDED (2026-08-26 — the lens shipped flat)',
+    render.extruded === true, `extruded=${render.extruded}`);
+  check('gaining hoods rise AND losing hoods sink below the plane',
+    render.up > 0 && render.down > 0, `up=${render.up} down=${render.down}`);
+  check('the degenerate hoods are FLAT, not absent and not tall',
+    render.flat > 0, `flat=${render.flat}`);
+  // ⚠️ The silent failure this lens is exposed to: someone "fixing" the visual
+  // asymmetry by scaling each arm to its own p95, which would draw a small
+  // loss and a large gain as equal bars. Metres per point of rate must match.
+  check('ONE shared elevation scale — metres per point are equal on both arms',
+    render.scalePos != null && render.scaleNeg != null &&
+    Math.abs(render.scalePos - render.scaleNeg) < 1e-6,
+    `pos=${render.scalePos} neg=${render.scaleNeg}`);
+  check('the prisms carry the tooltip themselves', render.pickable === true);
+  check('no flat hover layer steals picks from the prisms', !render.hasHover);
   check('no money prisms survive into the change lens',
-    !render.ids.some(i => /prism|glass|hood-metric/.test(i)), render.ids.join(','));
+    !render.ids.some(i => /metric-extrusion|glass|uses-res-prisms|top-edges/.test(i)),
+    render.ids.join(','));
   check('the legend bar diverges: losing arm at 0%',
     render.barHead.includes(`rgb(${render.neg.join(', ')})`), render.barHead);
   check('the legend bar diverges: gaining arm at 100%',
     render.barTail.includes(`rgb(${render.pos.join(', ')})`), render.barTail);
+
+  // The down arm must stay VISIBLE, not merely present: on one shared scale a
+  // lopsided distribution can render every loss as a scratch. Checked against
+  // the raw file's own ratio, so it tracks the data rather than a hardcoded
+  // expectation of it.
+  const armRatio = await page.evaluate(() => {
+    const rates = state.data.features
+      .map(f => changeFor(f.properties.neighbourhood_name))
+      .map(c => c && c.rate).filter(v => v != null);
+    return Math.abs(Math.min(...rates)) / Math.max(...rates);
+  });
+  check('the deepest prism is a readable fraction of the tallest',
+    Math.abs(render.deepest) / render.tallest > 0.15 &&
+    Math.abs(Math.abs(render.deepest) / render.tallest - armRatio) < 1e-6,
+    `rendered=${(100 * Math.abs(render.deepest) / render.tallest).toFixed(1)}% ` +
+    `file=${(100 * armRatio).toFixed(1)}%`);
 
   // ---- 7. panel mode's reduced readout follows the lens --------------------
   const reduced = await page.evaluate(() => {

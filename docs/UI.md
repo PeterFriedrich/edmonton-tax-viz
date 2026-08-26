@@ -1974,3 +1974,59 @@ by index — mean Δ73 (Money) and Δ98 (Lab) against an ordinary prism's Δ34.
 be checked against the affordance it removes. Both halves here — the teaser that
 kept promising, and the glow that stopped confirming — were caught by Peter
 using the map, not by a suite that covers both surfaces in detail.
+
+## The change lens gets signed prisms (2026-08-26)
+
+Peter, looking at the flat change choropleth beside the Lab's deviation lens:
+*"i want the value → change over time lens to use the same prism system as
+'lab revenue per developed acre vs the city average'. like how positives go up,
+but negatives actually go down before the floor. the lens is organized by
+'since 2012/2019'. so that should already provide a natural 0 to go up or down
+from."*
+
+He was right about the zero, and right that nothing was stopping it.
+
+**The decision that was in the way had already half-collapsed.** `DECISIONS.md`
+2026-07-30 locked the lens flat for two reasons:
+
+1. *"A prism cannot have negative height."* **False**, and known to be false
+   since 2026-08-11 — the deviation lens measured deck.gl 9.0.38 rendering a
+   negative `getElevation` below the ground plane
+   (`tools/profiling/probe-negative-elevation.html`) and shipped on it. The
+   `changePlaneLayer` comment had *recorded the retraction* while the render
+   kept the conclusion.
+2. *"Extruding a percentage reads as magnitude when the metric is deliberately
+   size-independent."* Still true. Now deliberately accepted, and paid for in
+   the blurb rather than by staying flat.
+
+⚠️ **A retracted premise does not retract the conclusion by itself** — but it
+does mean the conclusion is standing on one leg, and nothing was tracking that.
+Six days of "do not re-open this" guarded a decision that had already lost half
+its support.
+
+**What shipped.** `changePlaneLayer` → `changePrismLayer`, `change-plane` →
+`change-prisms` (a layer named *plane* that extrudes is the kind of lie this
+project's docs exist to prevent).
+- **ONE shared elevation scale**, `CHG_ELEV_SCALE = 9000` — fixed, not
+  per-window, not per-arm. Per-arm scales are the trap: the p95 arms are ~6×
+  apart, so scaling each to its own would draw a −5%/yr loss and a +34%/yr gain
+  as equal bars. Colour keeps its per-arm clamps, which is a *different*
+  question — a ramp has two ends to spend, a height has one origin.
+- **Measured before picking the constant**, not after: fastest hood in either
+  window +51.6%/yr, deepest −22.3%/yr, so the down arm renders at **35–43%** of
+  the tallest — legible on a shared scale without any help. The tallest prism
+  lands ~4,600 m, the same order as Money's tallest (~4,900 m).
+- **The 46 degenerate hoods stay flat at 0**, not absent. A hole in the height
+  reads as "did not move" — the exact reading the colour scale already refuses
+  for them.
+- **`hood-hover` is gone from this view.** The prisms are pickable themselves
+  (deviation's pattern); a flat `depthTest:false` pick target sitting under
+  extruded geometry steals every pick.
+- The blurb now leads with *"Height and colour"* and carries the cost of the
+  accepted objection: ⚠️ height is a **RATE**, so the tallest prisms are small
+  new subdivisions growing off a near-empty baseline, not the biggest tax bases.
+
+**`verify-change.js`** asserts the two things that would fail silently: that
+metres-per-point are **equal on both arms**, and that the rendered
+deepest/tallest ratio matches the **raw file's** — because the way this
+regresses is someone "fixing" the visual asymmetry.
