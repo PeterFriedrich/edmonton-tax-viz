@@ -17,7 +17,8 @@ writing any module**), `docs/CONTROLS_MATRIX.md` §2 (where a lens leaks).
 
 ## 1. What it is
 
-A per-neighbourhood time series of assessed value, 2012–2025, surfaced on the
+A per-neighbourhood time series of assessed value, **2012–2023 + 2026** (2024
+and 2025 both omitted — §0.4), surfaced on the
 map: a **sparkline in the hover tooltip** as the glance, and a **click-to-pin
 panel** as the readable version.
 
@@ -252,6 +253,33 @@ A plain "omit 2024" rule is **not sufficient**, and the reason is worth keeping:
 **✅ CLOSED 2026-07-28 — the archive.** `data/temporal_archive.json`, written by
 `load_temporal.write_archive`, captures the live year on **every** pipeline run
 and is committed by `refresh.yml`. ~74 kB/year against a 7.7 MB payload.
+
+> ### ⚠️⚠️ 2026-08-27 — THE TRAP CLOSED, AND 2025 WAS LOST ANYWAY
+>
+> **The mechanism below worked. Its input did not, and it had exactly one
+> chance.** The capture ran on time on 2026-07-28 — and captured the **2026
+> roll under the label 2025**, because `main.ASSESSMENT_YEAR` was still pinned
+> to 2025 and `check_year_alignment.py` validated that pin against Edmonton's
+> own `Period of Coverage` string, which was itself a year stale. Both sides
+> said 2025, so the guard reported *aligned* and the freeze rule then made the
+> error permanent.
+>
+> The phantom entry was **deleted 2026-08-27** (`docs/DATA_ISSUES.md` issue 2).
+> Deleting it does **not** restore 2025: with no capture, `publishable_years()`
+> omits the year rather than falling back, because 2025 is in
+> `HISTORICAL_DEFECT_YEARS` and that slice carries the same 2,448-account hole
+> that got 2024 omitted (§0.1, §0.2). **The published series is now
+> 2012–2023 + 2026, and the real 2025 — a +8.3% revaluation year — is
+> unrecoverable.**
+>
+> **The lesson is not "add a guard".** A guard existed. It read *metadata*
+> instead of measuring *data*, so it could be wrong in exactly the same
+> direction as the thing it was checking. The replacement,
+> `scripts/check_roll_year_against_fir.py`, measures parcels against an
+> external anchor (Alberta FIR) and gates `python main.py` in `refresh.yml`;
+> `scripts/check_temporal_archive_year.py` does the same for entries already
+> frozen. **A safety mechanism whose input is unverified does not merely fail —
+> it consumes the one opportunity it existed to protect.**
 
 Three rules make it safe:
 

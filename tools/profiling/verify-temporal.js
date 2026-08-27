@@ -19,7 +19,7 @@
 //      names paint underneath it.
 //   7. It is PUBLIC as of 2026-07-31 (promoted from full-only): `?build=public`
 //      fetches the history, carries the sparkline, pins the panel, and STATES
-//      the 2024 omission — a public gap with no explanation reads as broken.
+//      the 2024-2025 omission — a public gap with no explanation reads as broken.
 //   8. It collides with nothing on desktop, and becomes a bottom sheet that
 //      spares the control column at 390px.
 //   node verify-temporal.js <url>
@@ -86,9 +86,15 @@ const [url] = process.argv.slice(2);
     !!(payload && payload.defect_accounts &&
        Object.keys(payload.defect_accounts).length),
     payload ? JSON.stringify(payload.defect_accounts) : 'no payload');
-  check('2024 is absent from the year list',
-    loaded && !loaded.years.includes(2024) && loaded.years.includes(2023) &&
-    loaded.years.includes(2025), loaded ? `n=${loaded.years.length}` : '');
+  // 2025 JOINED THE OMITTED SET 2026-08-27. The archive's "2025" entry was the
+  // 2026 roll mislabelled (docs/DATA_ISSUES.md issue 2); removing it left the
+  // historical file as the only source for 2025, and that slice is one of the two
+  // PROVEN-defective ones — so 2025 is omitted on the same evidence as 2024.
+  // The gap is now TWO years wide, and every measurement below is scaled to it.
+  check('2024 and 2025 are absent from the year list',
+    loaded && !loaded.years.includes(2024) && !loaded.years.includes(2025) &&
+    loaded.years.includes(2023) && loaded.years.includes(2026),
+    loaded ? `n=${loaded.years.length}` : '');
   // ⚠️ THE LIVE YEAR IS NOT PINNABLE, AND PINNING IT HERE CRIED WOLF (S86).
   // This file used to assert Downtown 5.09% (2012) -> 3.30% (2025) as equalities.
   // The 2026-08-01 refresh moved the 2025 slice and reddened 5 checks with
@@ -144,7 +150,7 @@ const [url] = process.argv.slice(2);
   // it renders as a detached dot. One run of 13 would mean the hole was bridged.
   check('the series splits into runs at the gap, and does not bridge it',
     tip.runs.length === 2 && tip.runs[0] === 12 && tip.runs[1] === 1 &&
-    tip.gaps.length === 1 && tip.gaps[0] === 1,
+    tip.gaps.length === 1 && tip.gaps[0] === 2,
     `runs=[${tip.runs}] gaps=[${tip.gaps}]`);
   // Endpoints derived: the 2012 end is frozen, the live end tracks the roll.
   const tipRow = /([\d.]+)% → ([\d.]+)% of city base, (\d{4})–(\d{4})/.exec(tip.html);
@@ -153,7 +159,9 @@ const [url] = process.argv.slice(2);
     near(parseFloat(tipRow[2]), loaded.last) &&
     +tipRow[3] === loaded.years[0] && +tipRow[4] === loaded.liveYear,
     tipRow ? tipRow[0] : 'row absent');
-  check('tooltip row flags the 2024 hole', /\(2024 n\/a\)/.test(tip.html));
+  // Derived from the year list, not a literal: this read "(2024 n/a)" over a
+  // two-year hole until 2026-08-27.
+  check('tooltip row flags the 2024-2025 hole', /\(2024–2025 n\/a\)/.test(tip.html));
   check('tooltip advertises click-to-pin', /click to pin/.test(tip.html));
   check('sparkline also rides a set-aside tooltip', tip.onSetAside === 1);
 
@@ -196,16 +204,24 @@ const [url] = process.argv.slice(2);
   check('clicking pins the panel open', panel.open);
   check('panel names the hood', panel.name === 'DOWNTOWN', panel.name);
   check('no drawn line crosses the no-data band', !panel.spansBand);
-  // 2023 -> 2025 must be TWICE an ordinary one-year step. Index positioning
-  // would make it one, which is the whole failure this measurement exists to
-  // catch — and it is invisible to the eye on a series this dense.
-  check('x is year-scaled: 2023->2025 is ~2x a one-year step',
-    panel.stepW > 0 && Math.abs(panel.jumpW / panel.stepW - 2) < 0.15,
+  // 2023 -> 2026 must be THREE ordinary one-year steps (2024 and 2025 are both
+  // missing). Index positioning would make it one, which is the whole failure
+  // this measurement exists to catch — and it is invisible to the eye on a
+  // series this dense.
+  //
+  // ⚠️ This read ratio 3.01 against an expected 2 for a day, and was suspected of
+  // being a real rendering defect (S121 handoff). It was not: with the phantom
+  // 2025 present the detached run held TWO points and was stroked as a path, so
+  // `g circle`[0] fell through to the live-year marker at 2026 and the
+  // measurement silently changed which element it was reading. The renderer was
+  // correct throughout. Resolved 2026-08-27.
+  check('x is year-scaled: 2023->2026 is ~3x a one-year step',
+    panel.stepW > 0 && Math.abs(panel.jumpW / panel.stepW - 3) < 0.15,
     `jump=${panel.jumpW.toFixed(1)} step=${panel.stepW.toFixed(1)} ratio=${(panel.jumpW / panel.stepW).toFixed(2)}`);
-  // One year wide, not the whole 2023->2025 run: shading the bracketing years
+  // Two years wide, not the whole 2023->2026 run: shading the bracketing years
   // would claim they are missing too.
-  check('the band covers the missing year only',
-    Math.abs(panel.band.w / panel.stepW - 1) < 0.15,
+  check('the band covers the missing years only',
+    Math.abs(panel.band.w / panel.stepW - 2) < 0.15,
     `band=${panel.band.w.toFixed(1)} step=${panel.stepW.toFixed(1)}`);
   check('the gap is shaded and labelled "no data"',
     panel.svgText.includes('no data'));
@@ -217,7 +233,7 @@ const [url] = process.argv.slice(2);
     pctLabels.some(v => near(v, loaded.lo)) && pctLabels.some(v => near(v, loaded.hi)),
     panel.svgText.join(' | '));
   check('x axis names the first and last year',
-    panel.svgText.includes('2012') && panel.svgText.includes('2025'));
+    panel.svgText.includes('2012') && panel.svgText.includes('2026'));
   // Headline, commercial share and value are all the LIVE year — derived. The
   // year is asserted alongside the number so an off-by-one on the last index
   // cannot pass by landing on a neighbouring year's share.
@@ -487,7 +503,8 @@ const [url] = process.argv.slice(2);
   check('public build can pin the panel', p.open);
   // The 2024 omission must be STATED publicly, not merely rendered as a hole —
   // a visible gap with no explanation reads as broken data (SPEC_temporal §0).
-  check('public build states the 2024 omission', /2024 is omitted/.test(p.noteShown)
+  check('public build states the 2024-2025 omission',
+        /2024 and 2025 are omitted/.test(p.noteShown)
         && /not interpolated/.test(p.noteShown));
   await pub.close();
 

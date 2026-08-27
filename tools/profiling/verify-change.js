@@ -106,7 +106,8 @@ const [url] = process.argv.slice(2);
     const row = d.hoods['DOWNTOWN'][0];
     const first = 100 * row[i] / d.share_scale, last = 100 * row[j] / d.share_scale;
     return {
-      elapsed: ys[j] - ys[i],          // 13 — the honest divisor
+      lastYear: ys[j],
+      elapsed: ys[j] - ys[i],          // 14 — the honest divisor
       intervals: j - i,                // 12 — the trap
       compoundElapsed: Math.pow(last / first, 1 / (ys[j] - ys[i])) - 1,
       compoundIntervals: Math.pow(last / first, 1 / (j - i)) - 1,
@@ -114,8 +115,12 @@ const [url] = process.argv.slice(2);
     };
   });
   const app = await page.evaluate(() => changeFor('DOWNTOWN'));
-  check('the long window spans 13 elapsed years but only 12 observed intervals',
-    raw.elapsed === 13 && raw.intervals === 12, `${raw.elapsed} vs ${raw.intervals}`);
+  // 13 -> 14 elapsed on 2026-08-27: the endpoint moved to 2026 and 2025 joined
+  // 2024 in the omitted set, so the hole between the divisors WIDENED from one
+  // year to two. That makes this check's subject bigger, not stale — the
+  // interval divisor now overstates every rate by ~17%.
+  check('the long window spans 14 elapsed years but only 12 observed intervals',
+    raw.elapsed === 14 && raw.intervals === 12, `${raw.elapsed} vs ${raw.intervals}`);
   check('*** annualises over YEARS ELAPSED, not observed intervals ***',
     app.years === raw.elapsed && Math.abs(app.rate - raw.compoundElapsed) < 1e-12,
     `years=${app.years}`);
@@ -172,8 +177,12 @@ const [url] = process.argv.slice(2);
   // reading them as protected land inverts the story.
   check('the no-baseline hover does NOT say "set aside"',
     !/set.aside/i.test(holes.sampleBaseTip));
+  // DERIVED from the series endpoint, not the literal 2025 this pinned until
+  // 2026-08-27 — the app already read the year from data, so the test was the
+  // only stale half and it reddened on a roll-forward that broke nothing.
   check('the fell-to-zero hover states its own reason',
-    /Holds none of the assessment base in 2025/.test(holes.sampleEndTip));
+    new RegExp(`Holds none of the assessment base in ${raw.lastYear}`)
+      .test(holes.sampleEndTip), holes.sampleEndTip);
   const legendAside = await page.evaluate(() =>
     document.querySelector('#legend .aside span:last-child').textContent);
   check('the legend swatch says "no baseline", not "set aside"',
@@ -287,8 +296,9 @@ const [url] = process.argv.slice(2);
   }));
   check('switching windows NEVER refetches temporal.json',
     reqs.length === before, `${reqs.length - before} new fetch(es) on switch`);
-  check('the short window spans 6 elapsed years (2019-2025)',
-    shortW.dt.years === 6 && shortW.dt.from === 2019, `${shortW.dt.from}, ${shortW.dt.years} yr`);
+  check(`the short window spans ${raw.lastYear - 2019} elapsed years (2019-${raw.lastYear})`,
+    shortW.dt.years === raw.lastYear - 2019 && shortW.dt.from === 2019,
+    `${shortW.dt.from}, ${shortW.dt.years} yr`);
   check('the short window gives a different rate than the long one',
     Math.abs(shortW.dt.rate - app.rate) > 1e-4,
     `${(100 * app.rate).toFixed(2)}%/yr -> ${(100 * shortW.dt.rate).toFixed(2)}%/yr`);

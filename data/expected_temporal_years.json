@@ -1,136 +1,126 @@
 {
-  "_note": "Per-year citywide anchors for the temporal lens (scripts/check_temporal_years.py). Historical years are an archive and should not move; the LIVE year is deliberately absent from this file because it is a live snapshot that moves weekly. See docs/SPEC_temporal.md section 0.3.",
-  "live_year_when_pinned": 2026,
-  "years": {
-    "2012": {
-      "n_accounts": {
-        "min": 335611.51,
-        "max": 338984.49
-      },
-      "total_assessed_value": {
-        "min": 142647917580.57,
-        "max": 144081564993.43
-      }
-    },
-    "2013": {
-      "n_accounts": {
-        "min": 344377.46,
-        "max": 347838.54
-      },
-      "total_assessed_value": {
-        "min": 151190120311.7,
-        "max": 152709619008.3
-      }
-    },
-    "2014": {
-      "n_accounts": {
-        "min": 353988.16,
-        "max": 357545.84
-      },
-      "total_assessed_value": {
-        "min": 161266875584.53,
-        "max": 162887648203.47
-      }
-    },
-    "2015": {
-      "n_accounts": {
-        "min": 365549.07,
-        "max": 369222.93
-      },
-      "total_assessed_value": {
-        "min": 175362045796.46,
-        "max": 177124478417.54
-      }
-    },
-    "2016": {
-      "n_accounts": {
-        "min": 379119.88,
-        "max": 382930.12
-      },
-      "total_assessed_value": {
-        "min": 184300113006.86,
-        "max": 186152375449.14
-      }
-    },
-    "2017": {
-      "n_accounts": {
-        "min": 387327.63,
-        "max": 391220.37
-      },
-      "total_assessed_value": {
-        "min": 181490199681.33,
-        "max": 183314221788.67
-      }
-    },
-    "2018": {
-      "n_accounts": {
-        "min": 394178.21,
-        "max": 398139.79
-      },
-      "total_assessed_value": {
-        "min": 187989873120.75,
-        "max": 189879218579.25
-      }
-    },
-    "2019": {
-      "n_accounts": {
-        "min": 400406.91,
-        "max": 404431.09
-      },
-      "total_assessed_value": {
-        "min": 188593527997.16,
-        "max": 190488940338.84
-      }
-    },
-    "2020": {
-      "n_accounts": {
-        "min": 407337.08,
-        "max": 411430.92
-      },
-      "total_assessed_value": {
-        "min": 187967600768.12,
-        "max": 189856722383.88
-      }
-    },
-    "2021": {
-      "n_accounts": {
-        "min": 411739.96,
-        "max": 415878.04
-      },
-      "total_assessed_value": {
-        "min": 184119189583.79,
-        "max": 185969633700.21
-      }
-    },
-    "2022": {
-      "n_accounts": {
-        "min": 416887.09,
-        "max": 421076.91
-      },
-      "total_assessed_value": {
-        "min": 191237687371.12,
-        "max": 193159674178.88
-      }
-    },
-    "2023": {
-      "n_accounts": {
-        "min": 423599.36,
-        "max": 427856.64
-      },
-      "total_assessed_value": {
-        "min": 204309712427.01,
-        "max": 206363076370.99
-      }
-    },
-    "2025": {
-      "n_accounts": {
-        "min": 437356.23,
-        "max": 441751.77
-      },
-      "total_assessed_value": {
-        "min": 237200749393.21,
-        "max": 239584676522.79
-      }
-    }
+ "_note": "Per-year citywide anchors for the temporal lens (scripts/check_temporal_years.py). Historical years are an archive and should not move; the LIVE year is deliberately absent from this file because it is a live snapshot that moves weekly. See docs/SPEC_temporal.md section 0.3. 2025 IS ALSO ABSENT AND MUST NOT BE RE-PINNED FROM THE ARCHIVE: its anchor was pinned on 2026-08-26 from a capture that was really the 2026 roll (band $237.2B-$239.6B against a true historical 2025 of $220.07B) and was removed 2026-08-27. 2025 is omitted from the series -- see docs/DATA_ISSUES.md issue 2.",
+ "live_year_when_pinned": 2026,
+ "years": {
+  "2012": {
+   "n_accounts": {
+    "min": 335611.51,
+    "max": 338984.49
+   },
+   "total_assessed_value": {
+    "min": 142647917580.57,
+    "max": 144081564993.43
+   }
+  },
+  "2013": {
+   "n_accounts": {
+    "min": 344377.46,
+    "max": 347838.54
+   },
+   "total_assessed_value": {
+    "min": 151190120311.7,
+    "max": 152709619008.3
+   }
+  },
+  "2014": {
+   "n_accounts": {
+    "min": 353988.16,
+    "max": 357545.84
+   },
+   "total_assessed_value": {
+    "min": 161266875584.53,
+    "max": 162887648203.47
+   }
+  },
+  "2015": {
+   "n_accounts": {
+    "min": 365549.07,
+    "max": 369222.93
+   },
+   "total_assessed_value": {
+    "min": 175362045796.46,
+    "max": 177124478417.54
+   }
+  },
+  "2016": {
+   "n_accounts": {
+    "min": 379119.88,
+    "max": 382930.12
+   },
+   "total_assessed_value": {
+    "min": 184300113006.86,
+    "max": 186152375449.14
+   }
+  },
+  "2017": {
+   "n_accounts": {
+    "min": 387327.63,
+    "max": 391220.37
+   },
+   "total_assessed_value": {
+    "min": 181490199681.33,
+    "max": 183314221788.67
+   }
+  },
+  "2018": {
+   "n_accounts": {
+    "min": 394178.21,
+    "max": 398139.79
+   },
+   "total_assessed_value": {
+    "min": 187989873120.75,
+    "max": 189879218579.25
+   }
+  },
+  "2019": {
+   "n_accounts": {
+    "min": 400406.91,
+    "max": 404431.09
+   },
+   "total_assessed_value": {
+    "min": 188593527997.16,
+    "max": 190488940338.84
+   }
+  },
+  "2020": {
+   "n_accounts": {
+    "min": 407337.08,
+    "max": 411430.92
+   },
+   "total_assessed_value": {
+    "min": 187967600768.12,
+    "max": 189856722383.88
+   }
+  },
+  "2021": {
+   "n_accounts": {
+    "min": 411739.96,
+    "max": 415878.04
+   },
+   "total_assessed_value": {
+    "min": 184119189583.79,
+    "max": 185969633700.21
+   }
+  },
+  "2022": {
+   "n_accounts": {
+    "min": 416887.09,
+    "max": 421076.91
+   },
+   "total_assessed_value": {
+    "min": 191237687371.12,
+    "max": 193159674178.88
+   }
+  },
+  "2023": {
+   "n_accounts": {
+    "min": 423599.36,
+    "max": 427856.64
+   },
+   "total_assessed_value": {
+    "min": 204309712427.01,
+    "max": 206363076370.99
+   }
   }
+ }
 }

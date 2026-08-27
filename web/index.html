@@ -168,8 +168,8 @@
   <div id="layers" class="panel">
     <span class="hd" id="chgwindow-hd">Window</span>
     <div id="chgwindow">
-      <button data-chgwindow="long" class="active" title="The whole assessment history (2012–2025) — the structural, era-long shift">Since 2012</button>
-      <button data-chgwindow="short" title="The recent half (2019–2025) — where the change is happening now. A seventh of neighbourhoods changed DIRECTION between the two windows">Since 2019</button>
+      <button data-chgwindow="long" class="active" title="The whole assessment history (2012–2026) — the structural, era-long shift">Since 2012</button>
+      <button data-chgwindow="short" title="The recent half (2019–2026) — where the change is happening now. A seventh of neighbourhoods changed DIRECTION between the two windows">Since 2019</button>
     </div>
     <!-- The Lab's own controls. #labpick is rendered from LAB_EXPERIMENTS and
          stays hidden while there is only one — a chooser with one option is
@@ -1439,7 +1439,7 @@
                                 roadscost: false, transitcost: false, bikecost: false },
                     svcDriver: "roads",
                     hoodMode: "popup", // where a hood's detail appears: popup | panel
-                    chgWindow: "long", // change-lens window: long (2012–2025) | short (2019–2025)
+                    chgWindow: "long", // change-lens window: long (2012–2026) | short (2019–2026)
                     lab: DEFAULT_LAB,  // which Lab experiment was last open (full build only)
                     labCut: "revenue_per_acre", // the Lab's OWN revenue cut — never Money's state.metric
                     data: null };
@@ -2195,7 +2195,12 @@
     // Same class of silent bug as index-vs-year positioning in the chart, and
     // verify-change.js asserts it first.
     const CHG_WINDOWS = { long: 2012, short: 2019 };
-    const CHG_WINDOW_LABEL = { long: "2012–2025", short: "2019–2025" };
+    // Hardcoded, and deliberately NOT derived from temporal.json's last year: the
+    // endpoint moved 2025 -> 2026 on 2026-08-27 when the archive's mislabelled
+    // "2025" entry was removed (docs/DATA_ISSUES.md issue 2), and a label that
+    // reads itself from the data would have silently renamed a phantom year
+    // rather than exposing it. Update this by hand when the window really moves.
+    const CHG_WINDOW_LABEL = { long: "2012–2026", short: "2019–2026" };
 
     // Endpoint pair + elapsed years for one hood over the active window, or
     // null when the lens can't speak for it at all. `rate` is null — NOT zero —
@@ -4018,7 +4023,7 @@
       ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
     // --- temporal lens (SPEC_temporal.md phase 3) ----------------------------
-    // Assessed-value history per neighbourhood, 2012-2025: a sparkline in the
+    // Assessed-value history per neighbourhood, 2012-2026: a sparkline in the
     // hover tooltip as the glance, a click-to-pin panel as the readable version.
     //
     // TWO INVARIANTS THIS CODE EXISTS TO HOLD, both of which fail silently:
@@ -4998,7 +5003,7 @@
           return { className: "tip", html: name +
             `<span class="muted">no assessment history</span>` };
         // ONE LINE ONLY. tooltipFor appends the sparkline and its own
-        // "first% -> last% of city base, 2012–2025" footer to every view, so a
+        // "first% -> last% of city base, 2012–2026" footer to every view, so a
         // second endpoint row here would print the same numbers twice — the
         // duplication the panel-mode reduction exists to avoid.
         //
@@ -5173,12 +5178,25 @@
       const t = hoodPanelLens() ? temporalFor(p.neighbourhood_name) : null;
       if (!t) return tip;   // no file, public build, no history, or no panel here
       const i = t.years.length - 1;
-      const gap = t.years.length > 1
-        && t.years[i] - t.years[0] + 1 > t.years.length;
+      // ⚠️ DERIVED, not the literal "2024" this used to carry. The omitted set
+      // GROWS at a roll-forward — 2025 joined it 2026-08-27 when the archive's
+      // mislabelled capture was removed (docs/DATA_ISSUES.md issue 2) — and this
+      // line then read "(2024 n/a)" over a two-year hole, understating it with
+      // every check green. The panel note next door was already derived for
+      // exactly this reason; the teaser was the copy that got missed.
+      const missing = [];
+      for (let y = t.years[0]; y <= t.years[i]; y++) {
+        if (!t.years.includes(y)) missing.push(y);
+      }
+      const contiguous = missing.length > 1
+        && missing[missing.length - 1] - missing[0] + 1 === missing.length;
+      const gapLabel = !missing.length ? ""
+        : ` (${contiguous ? `${missing[0]}–${missing[missing.length - 1]}`
+                          : missing.join(", ")} n/a)`;
       return { ...tip, html: tip.html + sparklineSvg(t)
         + `<span class="muted">${fmtPct(t.share[0])} → ${fmtPct(t.share[i])} `
         + `of city base, ${t.years[0]}–${t.years[i]}`
-        + (gap ? " (2024 n/a)" : "") + ` · click to pin</span>` };
+        + gapLabel + ` · click to pin</span>` };
     }
 
     // Switch metric: rebuild layers and update the title/legend/toggle chrome.
