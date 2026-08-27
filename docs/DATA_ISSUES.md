@@ -29,12 +29,13 @@ closed parent, invisible for six days. Status must be one of
 item that mirrors it in one line each — if the two disagree, **this one is
 right**, and the TODO is stale. Update here first.
 
-**Nothing has been sent. Five issues, zero contact, as of 2026-08-26.**
+**Nothing has been sent. Five issues, zero contact, as of 2026-08-27.** (Issue 2
+is ours, not theirs — it was never a candidate to send, and it is now fixed.)
 
 | # | issue | evidence | report text | status |
 |---|---|---|---|---|
 | 1 | `Period of Coverage` names the wrong year | [published](https://peterfriedrich.github.io/edmonton-tax-viz/notebooks/roll-year-metadata.html) | ❌ not written | **NOT SENT** |
-| 2 | archive's 2025 entry is the 2026 roll | — (ours, not theirs) | n/a | **needs a decision** |
+| 2 | archive's 2025 entry is the 2026 roll | — (ours, not theirs) | n/a | ✅ **FIXED 2026-08-27** |
 | 3 | `qi6a-xuwt` drops 2,448 accounts | [published](https://peterfriedrich.github.io/edmonton-tax-viz/notebooks/historical-2024-gap.html) | ❌ not written | **NOT SENT** |
 | 4 | no per-parcel exemption status published | [published](https://peterfriedrich.github.io/edmonton-tax-viz/notebooks/exemption-uncertainty.html) | ✅ `docs/DRAFT_open_data_request_exemption_status.md` | **NOT SENT** |
 | 5 | 3 of 5 school boards absent from open data | ❌ none | ❌ not written | **NOT SENT** |
@@ -103,9 +104,10 @@ have. The dataset is otherwise sound.
 
 ## 2. Our own consequence of issue 1 — the temporal archive's 2025 entry is the 2026 roll
 
-**Status: N/A (ours, not theirs).** Listed here because it is a *direct
-consequence* of issue 1 and would be unreadable filed anywhere else.
-**Last measured: 2026-08-26.** Needs a decision — see the bottom of this row.
+**Status: N/A (ours, not theirs). ✅ RESOLVED 2026-08-27.** Listed here because
+it is a *direct consequence* of issue 1 and would be unreadable filed anywhere
+else. **Last measured: 2026-08-26; fixed 2026-08-27** — see *The fix* at the
+bottom of this row.
 
 **What happened.** `src/load_temporal.write_archive` captures the live roll
 under whatever `main.ASSESSMENT_YEAR` says, then **freezes** it — by design,
@@ -143,12 +145,59 @@ year-on-year range of −2.05% to +16.10%.
 
 **Detection, built 2026-08-26.** `scripts/check_temporal_archive_year.py`
 checks every archived year's RESIDENTIAL total against FIR and asserts it
-best-fits the year it is filed under. It exits 3 on today's archive. ⚠️ **Not
-wired into any workflow yet** — it fails by design until the decision below is
-made, so wiring it as a hold would stop the weekly publish.
+best-fits the year it is filed under. It exited 3 on the defective archive and
+**exits 0 as of 2026-08-27**, so it is now safe to wire into a workflow.
 
-**⚠️ OPEN — needs Peter's call.** The archive is frozen by design, so this is a
-decision, not a rewrite. The options and what each costs are not yet written up.
+### The fix — 2026-08-27
+
+**The mislabelled entry was DELETED, not relabelled.** A correctly-labelled
+`2026` entry already existed (the same roll, captured four weeks later and so
+very slightly more complete), so relabelling would have collided with it;
+342 of 406 hoods were byte-identical between the two and the citywide total
+differs by **+0.0021%**. Deleting the phantom leaves the later capture, which is
+the better copy of the only year either of them actually measures.
+
+⚠️ **This does NOT restore a real 2025 — and that was the surprise.** 2025 is in
+`HISTORICAL_DEFECT_YEARS`, so with no archive entry `publishable_years()` does
+not fall back to the historical file; it **omits the year**. The published
+series is now **2012–2023 + 2026**, with a **two-year hole**. That outcome
+follows from already-locked policy rather than a new decision: the historical
+2025 slice carries the *same* cumulative defect as 2024 (2,448 accounts /
+$2.93B, 53% of it Downtown — issue 3), and `SPEC_temporal.md` §0.2 already
+rejected publishing a slice with that hole when it omitted 2024.
+
+**So the true cost of issue 1 is now clear: the real 2025 is gone for good.**
+The archive existed precisely to capture 2025 before the roll advanced past it
+(`SPEC_temporal.md` §0.4). It ran on time and captured the wrong year, because
+the stale coverage string made the guard green. **A safety mechanism whose input
+is unverified does not merely fail — it consumes its one chance to succeed.**
+
+**What moved with it:**
+
+- `data/temporal_archive.json` — the `2025` key removed; `2026` untouched.
+- `web/data/temporal.json` — regenerated: 13 years, 406 hoods, 89.3 kB.
+- `data/expected_temporal_years.json` — the 2025 anchor **removed**, with a note
+  in `_note` forbidding a re-pin from the archive. It was dormant (the guard
+  skips unpublished years) but pinned from the phantom, so it would have
+  enforced $237.2B–$239.6B against a true $220.07B for anyone republishing 2025.
+- `CHG_WINDOW_LABEL` → `"2012–2026"` / `"2019–2026"`, plus four other hardcoded
+  `2012–2025` strings. ⚠️ Still hardcoded **on purpose** — a label that read the
+  last year from the data would have silently renamed the phantom instead of
+  exposing it.
+- The tooltip's **hardcoded `"(2024 n/a)"`** is now derived from the year list.
+  It would have understated a two-year hole with every check green — the panel
+  note beside it was already derived for exactly this reason, and the teaser was
+  the copy that got missed.
+- `verify-temporal.js` (6 checks) and `verify-change.js` (3) rescaled from a
+  one-year gap to a two-year one; year references derived where they were
+  literals, so the next roll-forward does not redden them.
+
+**⚠️ The `x is year-scaled` ratio-3.01 failure was NOT a rendering defect** —
+the S121 handoff flagged it as possibly real and unexplained. With the phantom
+2025 present, the detached run held **two** points and was stroked as a path, so
+the measurement's `g circle`[0] fell through to the live-year marker at 2026 and
+silently changed which element it was reading. The renderer was correct
+throughout; the *measurement* had lost its subject.
 
 ---
 

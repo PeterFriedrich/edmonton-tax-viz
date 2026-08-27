@@ -161,32 +161,29 @@ Services carries no sparkline — measured, it does.)_
     ⚠️ Re-measure first: the 1,534 is against historical 2024 as of 2026-08-07
     and the roll has since moved to 2026.
 
-- [ ] **PETER'S CALL — the temporal archive's 2025 entry is the 2026 roll, and
-  the archive is frozen by design.** Found 2026-08-26 while verifying the change
-  lens; full evidence in `docs/DATA_ISSUES.md` §2. On 2026-07-28 (`865159a`) the
-  pin still said 2025 because Edmonton's `Period of Coverage` string was a year
-  stale, so `write_archive` froze the 2026 roll under the label 2025. Both
-  entries best-fit FIR **2026** (+1.17% / +1.18%); 343 of 406 hoods are
-  byte-identical and the citywide total moves **+0.0021%**.
-  - **What it costs while unresolved:** the change lens dilutes every hood's
-    rate **~7%** (2012 window) and **~14%** (2019 window); the history panel and
-    sparkline show a 2025→2026 plateau that never happened and omit the real
-    2025, a **+8.3%** revaluation year.
-  - **Detection exists** — `scripts/check_temporal_archive_year.py` (13 tests),
-    exit 3 on today's archive. ⚠️ **Deliberately wired into NO workflow yet:** it
-    fails by design until this is decided, so gating the weekly publish on it
-    would hold the site. Wiring it is part of closing this item.
-  - ⚠️ **Not a rewrite — a decision.** `write_archive`'s freeze rule exists
-    because a rewrite could only ever be a silent downgrade
-    (`SPEC_temporal.md` §0.4). The true 2025 does exist in the historical table
-    ($220.07B) but carries its own 131-account defect, so "just re-derive it" is
-    not free either.
-  - ⚠️ **`data/expected_temporal_years.json`'s 2025 anchor was pinned FROM the
-    bad capture** and must move with whatever is decided, or the guard will
-    enforce the wrong value.
-  - ⚠️ **`CHG_WINDOW_LABEL` is hardcoded `"2012–2025"` / `"2019–2025"`** — do
-    not "fix" it to read from the data before this closes: that would advertise
-    a 2026 that carries no movement.
+- [x] **✅ DONE 2026-08-27 — the temporal archive's mislabelled 2025 entry is
+  deleted, and 2025 is accepted as unrecoverable.** Found 2026-08-26, fixed
+  2026-08-27; full write-up in `docs/DATA_ISSUES.md` §2 and `DECISIONS.md`
+  2026-08-27. Deleted rather than relabelled — a correct `2026` entry already
+  existed (342/406 hoods byte-identical, totals +0.0021% apart). ⚠️ **Deleting
+  did NOT restore 2025**: it is in `HISTORICAL_DEFECT_YEARS`, so the year is
+  OMITTED rather than falling back to the historical file, whose 2025 slice
+  carries the same 2,448-account hole that got 2024 omitted. **Published series
+  is now 2012–2023 + 2026.** Moved with it: the `expected_temporal_years.json`
+  2025 anchor (removed, with an in-file re-pin prohibition), `CHG_WINDOW_LABEL`
+  → `2012–2026`, the tooltip's hardcoded `(2024 n/a)` (now derived), and 9
+  rescaled checks across `verify-temporal.js` / `verify-change.js` — all green.
+  `check_temporal_archive_year.py` now exits **0**.
+  - ⚠️ **STILL OPEN, split out below:** wiring that guard into a workflow. It
+    was unwired only because it failed by design; that reason is now gone.
+
+- [ ] **Wire `check_temporal_archive_year.py` into the monthly vintage digest.**
+  Unblocked 2026-08-27 — it exits 0 now, so gating no longer means holding the
+  site over an open decision. `vintage-digest.yml` already holds `issues: write`
+  and already opens `⚠️`-titled issues, and `DECISIONS.md` 2026-08-26 named it
+  the honest home for a guard that cannot gate a publish but must not go quiet.
+  ⚠️ **CI change → propose the plan first** (`CLAUDE.md` Comments & Scope).
+  Rejected once already: warn-only inside a green run, which reaches nobody.
 
 - [ ] **PETER'S CALL — the amenity bands are FIXED at 600 m / 800 m
   (`AMENITY_BANDS` in `web/index.html`).** Built and live behind the weekly
