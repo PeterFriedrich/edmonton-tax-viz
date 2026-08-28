@@ -94,6 +94,20 @@ Its sibling *Temporal archive* row checks only that the live year was
 **captured**, and was green throughout the defect this one exists to catch:
 **presence is not correctness.**
 
+⚠️ **If the refresh log says `REFUSING to overwrite the CONFIRMED <year> entry`,
+that is the guard WORKING, not a failure** (added 2026-08-28). It means this
+run's capture did not measure as the pinned year, so the archive was left
+untouched rather than letting an unproven capture destroy a proven one. **Almost
+always the cause is a stale pin: the roll has moved and `ASSESSMENT_YEAR` has
+not** — work §1 below. The archive is fine; nothing was lost; the *capture* is
+what did not happen.
+
+⚠️ **`Archive year UNPROVEN` is NOT an error and needs no action in the first
+half of the year.** Alberta files FIR months after Edmonton rolls, so a
+correctly-pinned January capture is simply not provable yet. It is still
+written, and is upgraded to confirmed automatically once the filing lands
+(re-run `scripts/fetch_fir_tax_base.py` if it stays unproven past ~September).
+
 **Why it exists:** every other guard here fires on the weekly refresh and gates
 work already in flight. Nothing told anyone, unprompted, that an upstream year
 had moved — so the 2026 mill rates sat published from **2026-04-29 to
@@ -276,6 +290,18 @@ time.
      confirm `data/temporal_archive.json` gained last year's entry** before the
      roll: the current roll covers exactly one year, so a year not captured in
      time is unrecoverable.
+   - ⚠️ **BUMPING `ASSESSMENT_YEAR` (step 3) IS WHAT LETS THE NEW YEAR BE
+     CAPTURED AT ALL** (added 2026-08-28). Since the archive refuses to let an
+     unproven capture overwrite a confirmed one, leaving the pin stale after
+     the roll no longer corrupts last year's entry — it now means **the new
+     year is not being captured**, and the refresh log says
+     `REFUSING to overwrite the CONFIRMED <year> entry` every week until the
+     pin moves. **The failure mode changed from silent corruption to a loud
+     no-op; it is still a year at risk if ignored for twelve months.**
+   - **Expect `Archive year UNPROVEN` all spring and do nothing about it** —
+     Alberta files FIR long after Edmonton rolls, so the January capture is
+     written but not provable until the filing lands, then upgraded
+     automatically. §0 has the triage.
    - **If the guard HARD-FAILS (exit 5) on a settled year losing accounts, do
      NOT re-pin.** That is the 2024 defect recurring. Re-run
      `tools/audit_historical_roll_gaps.py`, and if confirmed add the year to
