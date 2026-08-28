@@ -1821,3 +1821,15 @@ produces a readout", not "a tap opens the card".
     `docs/ANALYSIS_BACKLOG.md` §12.
 
 **Outcome:** fixed in `build_hood_lot_acres` (null and zero both masked, `min_count=1`), +3 tests. 16 of 410 hoods go null; 12 were already set-aside grey. EVERGREEN leaves the Infill scale and `SPEC_development.md` Lens B was amended — its teal was never a measurement. ⚠️ **PARTIAL coverage is still open** (MAPLE RIDGE, ~33% recorded, #2 on the teal arm): `docs/ANALYSIS_BACKLOG.md` §12. Full reasoning: `docs/DECISIONS.md` 2026-08-22, `docs/FINDINGS_infill_granularity.md` §6a.
+
+---
+
+- [ ] **Wire `check_temporal_archive_year.py` into the monthly vintage digest.**
+  Unblocked 2026-08-27 — it exits 0 now, so gating no longer means holding the
+  site over an open decision. `vintage-digest.yml` already holds `issues: write`
+  and already opens `⚠️`-titled issues, and `DECISIONS.md` 2026-08-26 named it
+  the honest home for a guard that cannot gate a publish but must not go quiet.
+  ⚠️ **CI change → propose the plan first** (`CLAUDE.md` Comments & Scope).
+  Rejected once already: warn-only inside a green run, which reaches nobody.
+
+**Outcome (2026-08-27, PR #258):** wired, and **no CI change was needed** — the digest already runs `vintage_report.py` and already folds ⚠️ into the issue title, so it is a check function plus a `CHECKS` entry (membership IS the wiring, and a test pins it). Reuses `filed_bases()`/`detect_year()`/`archived_residential_bases()` so the digest and the standalone guard cannot disagree. Reads only committed files, so it cannot fail on the network. Two deliberate reporting choices: a year outside `fir_tax_base.json` is named NOT CHECKED and never counted as passing, and a green over ONE archived year carries its own thin-population caveat. ⚠️ **A false alarm was found in the same file and fixed**: `check_assessment_roll` compared the coverage string to our pin itself, bypassing `check_alignment()`'s 2026-08-25 stale-metadata downgrade, and would have reported "Roll has moved to 2025, pin is still 2026" every month starting 2026-09-01 — recorded as issue 1's THIRD consequence (`docs/DATA_ISSUES.md`, PR #259).

@@ -58,12 +58,41 @@ has silently stopped running. Green months are the proof of life.
 | Stormwater rates | no entry for the pinned year | §1 step 5 |
 | Pinned activity windows | a calendar year completed and `FIRE_YEARS`/`PERMIT_YEARS`/`PERMIT_YEARS_RECENT` still end before it | §1 step 4 |
 | Temporal archive | the live year was never captured | §1 step 8 |
+| Archived years measure right | an ARCHIVED year's value measures as a DIFFERENT year's roll | see the ⚠️ below — a decision, not a re-run |
 | Capital budget | `data/capital_budget.csv` no longer matches upstream | §1a |
 | Site banner | a banner is up in `status.json` | §1 step 10 |
 
 ⚠️ **A network failure reports `❓ UNKNOWN`, never `⚠️ ACTION`** — same rule as
 `check_year_alignment.py`: a guard must not manufacture an alarm out of an
 unreachable source. A `❓` row means *go look by hand*, not *something is wrong*.
+
+### ⚠️ EXPECT a `❓` on "Assessment roll year" — it is not a problem (2026-08-27)
+
+Edmonton's hand-maintained `Period of Coverage` field has read **2025 through
+the entire 2026 roll**, and they have not fixed it (`DATA_ISSUES.md` issue 1).
+So this row reports `❓` every month, saying the field cannot be trusted and
+naming `check_roll_year_against_fir.py` as the authority.
+
+**That is the correct behaviour and needs no action.** Until 2026-08-27 this row
+compared the string to our pin directly and printed **"Roll has moved to 2025,
+pin is still 2026"** — sending you to §1 to redo a year roll already done. It
+would have fired every month. **The roll year is settled by the FIR guard, which
+measures parcels and gates the weekly refresh; the digest cannot run it (it needs
+the raw roll, which is not committed).** Act only if *that* guard disagrees.
+
+### ⚠️ "Archived years measure right" fires → do NOT just re-run anything
+
+The archive is **frozen by design** (`src/load_temporal.write_archive`), so a
+mislabelled entry is a decision, not a glitch — `DATA_ISSUES.md` §2 records how
+the 2026-07-28 one was resolved (the phantom entry deleted, and the year it
+claimed turned out to be **unrecoverable**, costing the published series a year).
+Run `python scripts/check_temporal_archive_year.py` for the residuals first.
+
+⚠️ **A green here is currently thin evidence and says so in its own row** — it
+checks exactly **one** archived year (2026) and gains one at each roll-forward.
+Its sibling *Temporal archive* row checks only that the live year was
+**captured**, and was green throughout the defect this one exists to catch:
+**presence is not correctness.**
 
 **Why it exists:** every other guard here fires on the weekly refresh and gates
 work already in flight. Nothing told anyone, unprompted, that an upstream year

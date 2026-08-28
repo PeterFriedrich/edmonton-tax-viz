@@ -177,14 +177,6 @@ Services carries no sparkline — measured, it does.)_
   - ⚠️ **STILL OPEN, split out below:** wiring that guard into a workflow. It
     was unwired only because it failed by design; that reason is now gone.
 
-- [ ] **Wire `check_temporal_archive_year.py` into the monthly vintage digest.**
-  Unblocked 2026-08-27 — it exits 0 now, so gating no longer means holding the
-  site over an open decision. `vintage-digest.yml` already holds `issues: write`
-  and already opens `⚠️`-titled issues, and `DECISIONS.md` 2026-08-26 named it
-  the honest home for a guard that cannot gate a publish but must not go quiet.
-  ⚠️ **CI change → propose the plan first** (`CLAUDE.md` Comments & Scope).
-  Rejected once already: warn-only inside a green run, which reaches nobody.
-
 - [ ] **PETER'S CALL — the amenity bands are FIXED at 600 m / 800 m
   (`AMENITY_BANDS` in `web/index.html`).** Built and live behind the weekly
   refresh 2026-08-23; the filter works, the numbers in it are conventions.
@@ -2204,6 +2196,7 @@ Services carries no sparkline — measured, it does.)_
     speculatively.
 
 ## Done
+- **Wire `check_temporal_archive_year.py` into the monthly vintage digest** — DONE 2026-08-27 (PR #258). No workflow change needed: the digest already runs `vintage_report.py`, so it is a check function + a `CHECKS` entry. Also fixed a FALSE ALARM found while testing — `check_assessment_roll` bypassed the stale-metadata downgrade and would have said "roll has moved to 2025" every month from 2026-09-01. `docs/RUNBOOK.md` §0, `docs/TODO_archive.md`.
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
 
