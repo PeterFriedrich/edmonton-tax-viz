@@ -86,6 +86,22 @@ def test_build_emits_both_copies(tmp_path):
     assert f'href="styles.css?v={token}"' in full
 
 
+def test_deploy_workflow_triggers_on_this_script():
+    """This file shapes the artifact but does not live under web/ — pin the path.
+
+    deploy.yml is path-filtered on ``web/**``, and build_site.py was NOT in that
+    list until 2026-08-28. A badge change merged green, deployed nothing, and
+    left the live site serving the old shaping until an unrelated web/** push:
+    silent, green and stale, with no red anywhere to notice. The trigger rule is
+    "what changes the served artifact", not "what lives in web/".
+    """
+    import yaml
+    workflow = yaml.safe_load((REPO / ".github/workflows/deploy.yml").read_text())
+    # `on` is the YAML 1.1 boolean True, not the string, once parsed.
+    paths = workflow[True]["push"]["paths"]
+    assert "scripts/build_site.py" in paths
+
+
 def test_css_token_tracks_content_not_the_deploy(tmp_path):
     """Same bytes ⇒ same token, so an unrelated deploy keeps the cached CSS."""
     a, b = tmp_path / "a.css", tmp_path / "b.css"
