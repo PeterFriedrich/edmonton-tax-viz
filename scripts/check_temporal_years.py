@@ -338,7 +338,10 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p.add_argument("--write-baseline", action="store_true")
     p.add_argument(
         "--write-archive", action="store_true",
-        help="capture the live year into the archive (previously-archived years are frozen)",
+        help="capture the live year into the archive (previously-archived years "
+             "are frozen). ⚠️ CI OWNS THIS — running it locally re-captures from "
+             "whatever roll snapshot is in data/raw/, so a stale local CSV "
+             "COMMITS A DOWNGRADED ARCHIVE. Check `git diff` before staging.",
     )
     p.add_argument(
         "--tolerance", type=float, default=HISTORICAL_TOLERANCE,
