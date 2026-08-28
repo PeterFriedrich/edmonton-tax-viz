@@ -3,6 +3,45 @@
    via its <base href="../" />. See scripts/build_site.py. */
 html, body { margin: 0; height: 100%; background: #0a0a0f; }
 #map { position: absolute; inset: 0; }
+
+/* Loading overlay. z-index 9998 clears the app's own stack (max 5) and stays
+   just under the build badge's 9999, so the beta label reads through it. */
+#loading {
+  position: absolute; inset: 0; z-index: 9998;
+  display: flex; align-items: center; justify-content: center;
+  background: #0a0a0f;
+  color: #e8e8ef;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  opacity: 1; transition: opacity 350ms ease;
+}
+#loading.is-hidden { opacity: 0; }
+/* Removed from the hit-testing tree the moment the fade starts, so a fast
+   reader cannot click the overlay instead of the control underneath it.
+   ⚠️ The fade-end handler also sets display:none — pointer-events alone is not
+   enough, verify-controls-clickable.js checks real clickability. */
+#loading.is-hidden, #loading[hidden] { pointer-events: none; }
+#loading-box { text-align: center; }
+#loading-spinner {
+  width: 28px; height: 28px; margin: 0 auto 12px;
+  border: 3px solid #2a2a35; border-top-color: #8ab4f8; border-radius: 50%;
+  animation: loading-spin 900ms linear infinite;
+}
+#loading.is-error #loading-spinner { display: none; }
+#loading-text { margin: 0; font-size: 13px; letter-spacing: 0.01em; }
+#loading-retry {
+  margin-top: 12px; padding: 6px 14px;
+  background: #1b1b24; color: #e8e8ef;
+  border: 1px solid #3a3a48; border-radius: 4px;
+  font: inherit; font-size: 12px; cursor: pointer;
+}
+#loading-retry:hover { background: #24242f; }
+@keyframes loading-spin { to { transform: rotate(360deg); } }
+/* A spinner that never stops is a problem for vestibular sensitivity, and the
+   status text carries the same information without it. */
+@media (prefers-reduced-motion: reduce) {
+  #loading-spinner { animation: none; border-top-color: #2a2a35; }
+  #loading { transition: none; }
+}
 .panel {
   position: absolute; z-index: 1; color: #e8e8ef;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -31,10 +70,11 @@ html, body { margin: 0; height: 100%; background: #0a0a0f; }
    The MAP is deliberately excluded — double-tap to zoom is the standard
    gesture there (Google/Apple Maps, Mapbox, MapLibre's default), and #map
    is a sibling of all of these, so it keeps it. */
-.panel, #controls, #botleft { touch-action: manipulation; }
+.panel, #controls, #botleft, #loading { touch-action: manipulation; }
 .panel button, .panel input, .panel label,
 #controls button, #controls input, #controls label,
-#botleft button, #botleft input { touch-action: manipulation; }
+#botleft button, #botleft input,
+#loading button { touch-action: manipulation; }
 #title { top: 20px; left: 22px; max-width: 360px; }
 #title h1 { margin: 0 0 4px; font-size: 19px; font-weight: 600; letter-spacing: 0.2px; }
 #title p  { margin: 0; font-size: 12.5px; line-height: 1.5; color: #9a9ab0; }
