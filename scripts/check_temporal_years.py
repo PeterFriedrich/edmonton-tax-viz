@@ -268,6 +268,61 @@ def _band(value: float, tol: float) -> dict[str, float]:
     return {"min": round(max(0.0, value - span), 2), "max": round(value + span, 2)}
 
 
+def _capture_measures_as(current: pd.DataFrame, live_year: int) -> bool:
+    """Does THIS capture measure as ``live_year``, or does it only inherit the pin?
+
+    Guards `write_archive`'s one irreversible act. Measures the frame about to be
+    written -- not the CSV, not a pin, not Socrata's coverage string -- against
+    Alberta's FIR filings, and reuses `check_roll_year_against_fir`'s own
+    `detect_year` rather than comparing here, so this and the standalone guard
+    can never disagree about what a mislabelled year is (the S122 lesson: a
+    duplicated comparison is a bypassed decision).
+
+    ⚠️ FALSE MEANS UNPROVEN, NOT WRONG, and during the annual FIR lag it is the
+    ordinary answer -- Alberta files months after Edmonton rolls, so a correctly
+    pinned January capture is unprovable until the filing lands. That is why an
+    unconfirmed capture is still written; see `write_archive`.
+    """
+    try:
+        sys.path.insert(0, str(ROOT / "scripts"))
+        from check_roll_year_against_fir import (  # noqa: PLC0415
+            FIR_TAX_BASE,
+            detect_year,
+            filed_bases,
+        )
+        from check_temporal_archive_year import RESIDENTIAL_CLASS  # noqa: PLC0415
+
+        if not FIR_TAX_BASE.exists():
+            logger.warning("Archive year UNPROVEN: no %s to measure against.", FIR_TAX_BASE)
+            return False
+        live = current[current["year"] == live_year]
+        ours = float(live[live["mill_class"] == RESIDENTIAL_CLASS]["assessed_value"].sum())
+        detected, residuals = detect_year(ours, filed_bases(FIR_TAX_BASE))
+    except Exception as exc:  # noqa: BLE001 — unprovable for any reason is the same answer
+        logger.warning("Archive year UNPROVEN: could not measure it (%s).", exc)
+        return False
+
+    if detected == live_year:
+        logger.info("Archive year CONFIRMED: the capture measures as %d "
+                    "(residual %+.2f%%).", live_year, residuals[live_year] * 100)
+        return True
+    if detected is None:
+        logger.warning(
+            "Archive year UNPROVEN: no FIR year fits the capture within tolerance "
+            "(residuals %s). Expected during the FIR lag; the capture is still "
+            "written, but it cannot overwrite a confirmed year.",
+            {y: f"{r:+.2%}" for y, r in sorted(residuals.items())},
+        )
+        return False
+    logger.error(
+        "Archive year MEASURES AS %d BUT THE PIN SAYS %d. The roll has almost "
+        "certainly moved past the pin -- bump ASSESSMENT_YEAR (docs/RUNBOOK.md "
+        "section 1). Residuals %s.",
+        detected, live_year, {y: f"{r:+.2%}" for y, r in sorted(residuals.items())},
+    )
+    return False
+
+
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
@@ -323,7 +378,8 @@ def main(argv: list[str] | None = None) -> int:
     current = current_roll_aggregate(load_assessment(args.assessment_csv), live_year)
 
     if args.write_archive:
-        write_archive(args.archive, current, live_year)
+        write_archive(args.archive, current, live_year,
+                      confirmed=_capture_measures_as(current, live_year))
 
     archive = load_archive(args.archive)
     table, stats = build_temporal_table(historical, current, live_year, archive=archive)

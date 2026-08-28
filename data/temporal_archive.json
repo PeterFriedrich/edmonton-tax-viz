@@ -1,5 +1,9 @@
 {
  "_note": "Assessment years captured from the CURRENT ROLL while each was the live year. The roll covers exactly one year, so a year not captured here before the roll advances is unrecoverable. Years other than the live one are FROZEN and must never be rewritten -- see src/load_temporal.write_archive. Generated; do not hand-edit.",
+ "_year_confirmed": {
+  "2026": true
+ },
+ "_year_confirmed_note": "Did the capture MEASURE as the year it is filed under (residential base vs Alberta FIR), rather than merely inherit the pin? A confirmed year is never overwritten by an unconfirmed capture -- that is the defect that cost the real 2025. Absent/false means unproven, not wrong.",
  "years": {
   "2026": {
    "ABBOTTSFIELD": {

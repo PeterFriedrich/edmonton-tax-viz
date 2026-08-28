@@ -102,44 +102,6 @@ Services carries no sparkline — measured, it does.)_
 
 ## Open work
 
-- [ ] **⚠️ PROPOSED, NEEDS PETER'S CALL — the archive can still freeze the wrong
-  year, and its window opens in January.** Audit F1, 2026-08-28;
-  `docs/FINDINGS_proxy_guards.md` T1. **The 2026-08-27 fix deleted the bad
-  entry; it did not close the door.**
-  - **Reproduced, not inferred:** `write_archive`'s freeze protects *other*
-    years — the **pinned** year's entry is reassigned every run (by design, so
-    the live capture improves). Under a **stale pin** that writes the NEW roll
-    over a CORRECT archived year, weekly and silently.
-  - ⚠️ **The FIR guard cannot catch it**: `detect_year`'s candidate set is
-    years **Alberta has filed**, and Alberta files months after Edmonton rolls.
-    Simulated on Edmonton's own history — a next-year roll at **+2%/+4%**
-    returns a confident **ALIGNED on the wrong year**; at **+6%/+8.3%/+12%**
-    it returns inconclusive, which `refresh.yml` treats as **proceed**.
-    **No revaluation rate protects the archive.**
-  - **The missed distinction is REVERSIBILITY.** "Inconclusive → proceed" is
-    right for regenerating `web/data` (recomputable) and wrong for the freeze
-    (permanent). They share one gate.
-  - **Proposed:** make `--write-archive` require a *positively confirmed* year
-    and SKIP on inconclusive, leaving regeneration untouched. A skipped capture
-    is recoverable next week; a wrong one never is. **Changes
-    `check_temporal_years.py`'s contract — propose-first, hence not built.**
-
-- [ ] **⚠️ PROPOSED, NEEDS PETER'S CALL — nothing runs the test suite on a
-  change.** Audit F3, 2026-08-28. `pytest` appears in **exactly one place**:
-  `refresh.yml`, a weekly cron. No `pull_request` workflow exists and `master`
-  is **not protected** (API returns `Branch not protected`).
-  - **`deploy.yml` publishes to the live site on every push with zero test
-    execution**, and "746 passed" in a PR body attests to the author's laptop,
-    not the merged state.
-  - A failure introduced on a Tuesday surfaces the following **Monday as a held
-    data refresh** — the symptom is a stale map, not a red check on the cause.
-  - **Real mitigation, stated honestly:** the placement *inside* `refresh.yml`
-    is correct (before download/regeneration), so a broken suite holds the data
-    path rather than corrupting it. The gap is release-gate vs merge-gate.
-  - **Proposed:** a `pull_request` + `push: master` workflow running
-    `pytest tests/ -q` + `check_doc_citations.py` — both offline, ~11s, no
-    secrets, no network. **Changes CI behaviour — propose-first, hence not
-    built.**
 
 - [ ] **⚠️ SCHEDULED TO BE WRONG IN JANUARY 2027 — 15 hardcoded activity-window
   labels, and RUNBOOK §1 step 4 mentions none of them.** Audit F4, 2026-08-28.
@@ -218,22 +180,6 @@ Services carries no sparkline — measured, it does.)_
     to `web/notebooks/` and added to that folder's hand-written `index.html`.
     ⚠️ Re-measure first: the 1,534 is against historical 2024 as of 2026-08-07
     and the roll has since moved to 2026.
-
-- [x] **✅ DONE 2026-08-27 — the temporal archive's mislabelled 2025 entry is
-  deleted, and 2025 is accepted as unrecoverable.** Found 2026-08-26, fixed
-  2026-08-27; full write-up in `docs/DATA_ISSUES.md` §2 and `DECISIONS.md`
-  2026-08-27. Deleted rather than relabelled — a correct `2026` entry already
-  existed (342/406 hoods byte-identical, totals +0.0021% apart). ⚠️ **Deleting
-  did NOT restore 2025**: it is in `HISTORICAL_DEFECT_YEARS`, so the year is
-  OMITTED rather than falling back to the historical file, whose 2025 slice
-  carries the same 2,448-account hole that got 2024 omitted. **Published series
-  is now 2012–2023 + 2026.** Moved with it: the `expected_temporal_years.json`
-  2025 anchor (removed, with an in-file re-pin prohibition), `CHG_WINDOW_LABEL`
-  → `2012–2026`, the tooltip's hardcoded `(2024 n/a)` (now derived), and 9
-  rescaled checks across `verify-temporal.js` / `verify-change.js` — all green.
-  `check_temporal_archive_year.py` now exits **0**.
-  - ⚠️ **STILL OPEN, split out below:** wiring that guard into a workflow. It
-    was unwired only because it failed by design; that reason is now gone.
 
 - [ ] **PETER'S CALL — the amenity bands are FIXED at 600 m / 800 m
   (`AMENITY_BANDS` in `web/index.html`).** Built and live behind the weekly
@@ -2254,9 +2200,15 @@ Services carries no sparkline — measured, it does.)_
     speculatively.
 
 ## Done
-- **Wire `check_temporal_archive_year.py` into the monthly vintage digest** — DONE 2026-08-27 (PR #258). No workflow change needed: the digest already runs `vintage_report.py`, so it is a check function + a `CHECKS` entry. Also fixed a FALSE ALARM found while testing — `check_assessment_roll` bypassed the stale-metadata downgrade and would have said "roll has moved to 2025" every month from 2026-09-01. `docs/RUNBOOK.md` §0, `docs/TODO_archive.md`.
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
+
+- [x] **✅ DONE 2026-08-28 — the archive can no longer freeze the wrong year.** — DONE 2026-08-28 · `docs/TODO_archive.md`
+- [x] **✅ DONE 2026-08-28 — the merge gate exists.** — DONE 2026-08-28 · `docs/TODO_archive.md`
+- [x] **✅ DONE 2026-08-27 — the temporal archive's mislabelled 2025 entry is deleted, and 2025 is accepted as unrecoverable.** — DONE 2026-08-27 · `docs/TODO_archive.md`
+
+- **Wire `check_temporal_archive_year.py` into the monthly vintage digest** — DONE 2026-08-27 (PR #258). No workflow change needed: the digest already runs `vintage_report.py`, so it is a check function + a `CHECKS` entry. Also fixed a FALSE ALARM found while testing — `check_assessment_roll` bypassed the stale-metadata downgrade and would have said "roll has moved to 2025" every month from 2026-09-01. `docs/RUNBOOK.md` §0, `docs/TODO_archive.md`.
+
 
 - [x] **▶▶ FIXED 2026-08-25 — THE MEASURED ROLL-YEAR GUARD EXISTED BUT RAN NOWHERE — `check_roll_year_against_fir.py` was not wired into any workflow; exit 3 now HOLDS** — 2026-08-25 · `docs/TODO_archive.md`
 - [x] **▶▶▶ FIXED 2026-08-25 — THE LIVE ROLL IS THE 2026 ROLL AND WE BILLED IT AT 2025 MILL RATES — the year-alignment guard cannot see it, because it reads a** — 2026-08-25 · `docs/TODO_archive.md`

@@ -8,6 +8,14 @@ the repo, audited as a **set** for the shape five accidental finds shared.
 known, and one of them is the 2026-08-27 defect still live through a different
 door.**
 
+> ### Disposition — 2026-08-28, same day
+> **F1 FIXED · F3 FIXED · F4 still open · F5 still open** (Peter: *"do f1 and
+> f3"*). The fixes are recorded at the end of each finding below; the verdicts
+> above are left as they were written, because a findings doc that edits its own
+> history stops being evidence. ⚠️ **F1's fix deliberately departs from the
+> remedy proposed here** — see its disposition for why "skip on inconclusive"
+> would have reintroduced the loss.
+
 ---
 
 ## T1 — IRREVERSIBLE GATES — **UNSOUND**
@@ -81,12 +89,46 @@ layer down.**
 advances (the anchor's own history says otherwise), or that the pin cannot be
 stale across a refresh (S119 records it stale for months).
 
-**Proposed fix — NOT built, it changes a data contract.** Split the gate by
-reversibility: let `--write-archive` require a **positively confirmed** year and
-skip on inconclusive, while regeneration keeps proceeding. A skipped capture is
-recoverable (the roll is still live next week); a wrong capture is not. Requires
-a decision on `check_temporal_years.py`'s contract, so it is proposed here and
-left for Peter.
+### ✅ F1 — FIXED 2026-08-28, and NOT the way this doc proposed
+
+The proposal above — *skip the capture on inconclusive* — **was wrong, and
+writing it out is what showed why.** Alberta files FIR months after Edmonton
+rolls, so "skip until proven" leaves the archive empty through the whole lag
+window; a January where Alberta ran late would cost a year outright. **That is
+the very loss this mechanism exists to prevent** — the remedy would have
+re-opened the hole from the other side.
+
+What shipped instead separates the two things that were conflated. **The data
+is irreplaceable; only the label was ever wrong.** So:
+
+- `write_archive(..., confirmed=)` takes whether the caller **measured** this
+  capture to be `live_year`. It **always writes** — but it **refuses to
+  overwrite an entry already recorded as confirmed** with an unconfirmed one.
+  Unproven ≠ wrong; an unproven capture still keeps improving weekly, and is
+  upgraded in place the moment FIR lands.
+- `check_temporal_years._capture_measures_as()` measures the **frame about to be
+  written** (not the CSV, not the pin, not a coverage string) and **reuses
+  `detect_year`** rather than comparing locally — the S122 lesson that a
+  duplicated comparison is a bypassed decision.
+- `data/temporal_archive.json` gains `_year_confirmed`, backfilled from
+  `check_temporal_archive_year.py`'s own re-derived verdict rather than
+  asserted (`{"2026": true}`; the guard reports `+1.2%`, ok).
+
+⚠️ **The regression test was falsified against the old logic on the DEFECT, not
+the signature** — the pre-fix function was given the new keyword and left
+otherwise untouched, and the test then fails on `assert (2026 is None)`, i.e.
+on having archived where it should have refused.
+
+**Verified end to end on the real roll**, not only by unit test:
+`Archive year CONFIRMED: the capture measures as 2026 (residual +1.17%)`.
+⚠️ That run also re-captured from this box's **older local CSV** and would have
+committed a downgraded archive — restored, and worth knowing before anyone runs
+`--write-archive` locally.
+
+**What this does NOT fix:** if the pin is stale *and* the archived entry was
+never confirmed, the overwrite still happens. Nothing today is in that state,
+and protecting an unproven entry against another unproven one has no principled
+winner.
 
 ---
 
@@ -150,10 +192,24 @@ it is a **release gate, not a merge gate**. For a repo whose failures are
 silent-correctness failures and whose guards live in `tests/`, a week of
 unverified `master` is the wrong side of the trade.
 
-**Proposed fix — NOT built, it changes CI behaviour.** A `pull_request` +
-`push: master` workflow running `pytest tests/ -q` and
-`check_doc_citations.py` (both offline, ~11s, no secrets, no network). Cheap
-and non-invasive, but CLAUDE.md requires proposing CI changes first.
+### ✅ F3 — FIXED 2026-08-28
+
+`.github/workflows/tests.yml`: `pytest tests/ -q` + `check_doc_citations.py` on
+`pull_request` and `push: master`. Offline and secret-free by construction — a
+merge gate that can go red because Socrata is down is one people learn to
+ignore, which is worse than no gate; a test asserts no `secrets.` reference.
+
+⚠️ **`refresh.yml`'s own pytest step stays, and a test pins that too.** They
+gate different things — this one the change, that one the weekly data publish
+(running before download + regeneration, so a broken suite holds the data path
+rather than corrupting it). The tempting cleanup after adding a merge gate is
+to delete the "duplicate".
+
+⚠️ **STILL OPEN, and only Peter can do it: branch protection is OFF.** The gate
+now *reports* on every PR, but with `master` unprotected nothing *blocks* a
+merge on a red one. That is a repo-settings change, not a code change. Until it
+is on, this converts a silent gap into a visible signal — which is most of the
+value, but not all of it.
 
 ---
 

@@ -1,0 +1,56 @@
+name: Tests
+
+# THE MERGE GATE. Until 2026-08-28 there wasn't one: `pytest` existed in exactly
+# one place — refresh.yml, a WEEKLY CRON — there was no pull_request workflow,
+# and `master` is not branch-protected. So `deploy.yml` published to the live
+# site on every push with zero test execution, and "746 passed" in a PR body
+# attested to the author's laptop rather than to the merged state. That is the
+# proxy-reading class one level up from the code (audit 2026-08-28, F3 —
+# docs/FINDINGS_proxy_guards.md).
+#
+# ⚠️ THIS DOES NOT REPLACE refresh.yml's OWN pytest STEP, and that step must
+# stay. This gates the CHANGE; that one gates the weekly DATA PUBLISH, running
+# immediately before download + regeneration so a broken suite holds the data
+# path instead of corrupting it. Two different questions, two runs — deleting
+# either re-opens a hole.
+#
+# Deliberately OFFLINE and secret-free: pytest and the citation guard read only
+# committed files, so this needs no network, no Socrata, and no token. It stays
+# fast (~15s) and cannot flake on an upstream outage — a merge gate that goes
+# red for reasons unrelated to the change is a gate people learn to ignore.
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: requirements-ci.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements-ci.txt
+
+      - name: Run tests
+        run: python -m pytest tests/ -q
+
+      # Same guard the docs sweep automated (DECISIONS.md 2026-08-09): bans
+      # line-number citations and fails on an unresolvable section pointer.
+      # Offline, so it belongs on the merge gate rather than the weekly run.
+      - name: Check doc citations
+        run: python scripts/check_doc_citations.py
