@@ -274,6 +274,14 @@ problem**, so revisit it only after the blurb collapse lands.
     actually"** — the overlay is barely dwelt on, which is the intended
     outcome, and it confirms the ~900ms headless figure was not an artifact of
     the font fallback below.
+  - ⚠️ **The TITLE STRING CHANGED AFTER that confirmation** (2026-08-28,
+    `DECISIONS.md`): `Edmonton: Tax Revenue per Acre` → `Edmonton: Property Tax
+    Visualization`, **30 → 36 chars, ~20% longer**. The dwell-time and
+    renders-correctly findings still hold; **the wrap finding does not — Peter
+    confirmed a shorter string than the one now shipping.** Headless in the mono
+    fallback: one line at 1280px, two at 390px, no overflow. Two lines on a
+    phone is acceptable (`text-wrap: balance` evens them); it is simply
+    unconfirmed.
   - ✅ **Screenshot-checked headless at 390×844 and 1280×800**, normal and
     error states.
   - ✅ `text-wrap: balance` on both lines, chosen BECAUSE the wrap point is
