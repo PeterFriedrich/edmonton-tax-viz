@@ -245,3 +245,96 @@ def _boom(*a, **k):
 
 def _boom_check():
     raise RuntimeError("this check is broken")
+
+
+# --- archived years measure as filed ----------------------------------------
+#
+# The sibling check (check_temporal_archive) confirms the live year was
+# CAPTURED and was green throughout the 2026-07-28 defect, because the capture
+# did happen — it just captured the wrong year. These tests drive the
+# correctness half, so a mislabelled entry cannot go quiet the same way.
+
+def _archive(tmp_path, years):
+    """years: {year: residential_base}. Shape matches temporal_archive.json."""
+    payload = {"years": {
+        str(y): {"SOME HOOD": {"RESIDENTIAL": [100, base]}}
+        for y, base in years.items()
+    }}
+    return _write(tmp_path, "arch.json", payload)
+
+
+def _fir(tmp_path, years):
+    """A FIR tax-base file shaped as filed_bases() reads it: years -> assessment."""
+    return _write(tmp_path, "fir.json", {
+        "years": {str(y): {"assessment": {"residential": v}} for y, v in years.items()}
+    })
+
+
+def test_archived_year_measuring_as_another_year_fires(tmp_path, monkeypatch):
+    """The exact 2026-07-28 defect: the 2026 roll filed under the label 2025."""
+    fir = _fir(tmp_path, {2025: 148_130_000_000, 2026: 160_370_000_000})
+    monkeypatch.setattr(vr, "FIR_TAX_BASE", fir)
+    # Filed as 2025, but the value is unmistakably the 2026 base.
+    monkeypatch.setattr(vr, "TEMPORAL_ARCHIVE",
+                        _archive(tmp_path, {2025: 162_255_000_000}))
+    status, _, detail = vr.check_temporal_archive_year()
+    assert status == vr.ACTION
+    assert "2026 roll" in detail
+
+
+def test_archived_year_matching_its_label_is_ok(tmp_path, monkeypatch):
+    fir = _fir(tmp_path, {2025: 148_130_000_000, 2026: 160_370_000_000})
+    monkeypatch.setattr(vr, "FIR_TAX_BASE", fir)
+    monkeypatch.setattr(vr, "TEMPORAL_ARCHIVE",
+                        _archive(tmp_path, {2026: 162_264_000_000}))
+    status, _, detail = vr.check_temporal_archive_year()
+    assert status == vr.OK
+    # A green over ONE year must carry its own caveat — a bare tick reads far
+    # stronger than a population of 1 supports.
+    assert "thin population" in detail
+
+
+def test_archived_year_outside_fir_range_is_named_never_counted(tmp_path, monkeypatch):
+    """An unverifiable year silently reading as verified is the defect's own shape."""
+    fir = _fir(tmp_path, {2025: 148_130_000_000, 2026: 160_370_000_000})
+    monkeypatch.setattr(vr, "FIR_TAX_BASE", fir)
+    monkeypatch.setattr(vr, "TEMPORAL_ARCHIVE",
+                        _archive(tmp_path, {2031: 200_000_000_000}))
+    status, _, detail = vr.check_temporal_archive_year()
+    assert status == vr.UNKNOWN
+    assert "NOT CHECKED" in detail and "2031" in detail
+
+
+# --- the roll-year check must not cry wolf on stale metadata ----------------
+
+def test_stale_coverage_string_is_unknown_not_action(pinned, monkeypatch):
+    """⚠️ REGRESSION. Edmonton's `Period of Coverage` sat a year stale through the
+    whole 2026 roll. This check compared `detected == pinned` itself, bypassing
+    check_alignment()'s stale-metadata downgrade (DECISIONS.md 2026-08-25), so it
+    reported "roll has moved to 2025, pin is still 2026" — telling Peter to redo a
+    year-roll already done, once a month, in the only channel that reaches him.
+    """
+    import main
+    monkeypatch.setattr(main, "ASSESSMENT_YEAR", dt.date.today().year)
+    monkeypatch.setattr(vr, "parse_coverage_year", None, raising=False)
+    monkeypatch.setattr(
+        vr.requests, "get",
+        lambda *a, **k: type("R", (), {"json": lambda self: {"metadata": {"custom_fields": {
+            "Time Frame": {"Period of Coverage":
+                           f"{dt.date.today().year - 1}-01-01 to "
+                           f"{dt.date.today().year - 1}-12-31"}}}}})(),
+    )
+    status, _, detail = vr.check_assessment_roll()
+    assert status == vr.UNKNOWN, f"stale metadata must not fire an ACTION: {detail}"
+    assert "not being kept current" in detail
+
+
+def test_both_archive_checks_are_registered():
+    """⚠️ The digest is wired by MEMBERSHIP, not by a workflow step — so this list
+    is the whole wiring, and dropping a name from it is silent. Both archive
+    checks must be here: `check_temporal_archive` (was the year CAPTURED) and
+    `check_temporal_archive_year` (does a captured year MEASURE as its label).
+    The first was green throughout the defect the second exists to catch.
+    """
+    assert vr.check_temporal_archive in vr.CHECKS
+    assert vr.check_temporal_archive_year in vr.CHECKS
