@@ -104,13 +104,18 @@ artifact**:
 
 | Path in artifact | Build | Contents |
 |---|---|---|
-| `_site/` (root) | **PUBLIC** (curated) | whole `web/` tree, shared `data/` + `vendor/`, `DEFAULT_BUILD` rewritten to `"public"`. The advertised URL. |
-| `_site/full/` | **SPECIALIST** (everything) | `index.html` only, `DEFAULT_BUILD` `"full"`, `<base href="../">` so its relative asset URLs resolve to the root's shared `data/` + `vendor/`, plus an injected WIP badge. Discoverable-but-unlisted; linked from the README. |
+| `_site/` (root) | **PUBLIC** (curated) | whole `web/` tree, shared `data/` + `vendor/`, `DEFAULT_BUILD` rewritten to `"public"`, plus an injected **`Beta build — work in progress`** badge. The advertised URL. |
+| `_site/full/` | **SPECIALIST** (everything) | `index.html` only, `DEFAULT_BUILD` `"full"`, `<base href="../">` so its relative asset URLs resolve to the root's shared `data/` + `vendor/`, plus an injected **`Specialist build (beta) — work in progress`** badge. Discoverable-but-unlisted; linked from the README. |
+
+⚠️ **Both builds carry a badge, and the two labels must differ** (`BADGE_LABELS`
+in `build_site.py`, pinned by test). The badge is the reader's only on-page cue
+to *which* build they are in — a public page announcing the specialist build
+would tell every reader they are somewhere they are not.
 
 **One source of truth.** There is one hand-edited file, `web/index.html`, carrying
 a single `const DEFAULT_BUILD = "public|full";` literal. The public and full
-outputs are byte-identical *except* that literal (plus the `<base>` tag and WIP
-badge injected into full). So:
+outputs are byte-identical *except* that literal (plus the `<base>` tag injected
+into full, and each build's own badge). So:
 
 - **Both builds regenerate on every deploy, from the same source** — code push or
   weekly data refresh, doesn't matter. They *cannot* drift: any change to

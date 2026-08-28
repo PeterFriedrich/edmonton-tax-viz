@@ -7,14 +7,15 @@ into the single Pages artifact:
 
   <out>/            PUBLIC build (curated). The whole web/ tree — shared data/ +
                     vendor/ — with index.html's DEFAULT_BUILD rewritten to
-                    "public". This is the site root, the advertised URL.
+                    "public". This is the site root, the advertised URL. Carries
+                    a "Beta build" badge.
   <out>/full/       SPECIALIST build (everything). index.html ONLY, with a
                     ``<base href="../">`` so its relative asset URLs (./data/...,
                     vendor/...) resolve to the ROOT's shared data/ + vendor/ — no
                     duplication of the multi-MB GeoJSON. DEFAULT_BUILD stays
-                    "full", and a visible work-in-progress badge is injected (the
-                    mitigation for /full/ being discoverable-but-unlisted, not
-                    access-controlled — PLAN_public_release.md §2a).
+                    "full", and its badge names the build as well as the beta
+                    status (the mitigation for /full/ being discoverable-but-
+                    unlisted, not access-controlled — PLAN_public_release.md §2a).
 
 No data download or regeneration happens here: it is a pure code-shaping step, so
 it lives on the CODE deploy path. Run it before actions/upload-pages-artifact in
@@ -29,17 +30,36 @@ import re
 import shutil
 from pathlib import Path
 
-# Fixed WIP badge for the specialist build. pointer-events:none so it never
+# WIP badge, one per build with its own label. pointer-events:none so it never
 # eats a map click; bottom-centre keeps clear of the legend (bottom-left) and
 # the MapLibre attribution (bottom-right).
-WIP_BADGE = (
-    '<div id="wip-badge" style="position:fixed;left:50%;bottom:10px;'
-    'transform:translateX(-50%);z-index:9999;pointer-events:none;'
-    "font:600 11px -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;"
-    'color:#f3e2b0;background:rgba(40,30,12,0.92);border:1px solid #6b5a2a;'
-    'border-radius:5px;padding:4px 10px;">'
-    'Specialist build — work in progress</div>'
-)
+BADGE_LABELS = {
+    "public": "Beta build — work in progress",
+    "full": "Specialist build (beta) — work in progress",
+}
+
+
+def wip_badge(label: str) -> str:
+    return (
+        '<div id="wip-badge" style="position:fixed;left:50%;bottom:10px;'
+        'transform:translateX(-50%);z-index:9999;pointer-events:none;'
+        "font:600 11px -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;"
+        'color:#f3e2b0;background:rgba(40,30,12,0.92);border:1px solid #6b5a2a;'
+        'border-radius:5px;padding:4px 10px;">'
+        f'{label}</div>'
+    )
+
+
+def inject_badge(html: str, mode: str) -> str:
+    """Insert the build's badge before the document's own </body>.
+
+    The LAST </body> is the document's; the first is only the same tag when
+    nothing below quotes it in a string (web/index.html is nearly all script).
+    """
+    body_end = html.rfind("</body>")
+    if body_end < 0:
+        raise SystemExit("build_site: no </body> in the source")
+    return html[:body_end] + f"  {wip_badge(BADGE_LABELS[mode])}\n" + html[body_end:]
 
 BUILD_RE = re.compile(r'const DEFAULT_BUILD = "(?:public|full)";')
 STYLES_RE = re.compile(r'href="styles\.css"')
@@ -102,7 +122,10 @@ def build(src: Path, out: Path) -> None:
     shutil.copytree(src, out)
     root_index = out / "index.html"
     root_index.write_text(
-        cache_bust(set_default_build(root_index.read_text(), "public"), token)
+        inject_badge(
+            cache_bust(set_default_build(root_index.read_text(), "public"), token),
+            "public",
+        )
     )
 
     # /full/ = SPECIALIST: index.html only, sharing the root's data/ + vendor/
@@ -127,13 +150,7 @@ def build(src: Path, out: Path) -> None:
     if head.count("<head>") != 1:
         raise SystemExit("build_site: expected exactly one <head>")
     full_html = full_html.replace("<head>", '<head>\n  <base href="../" />', 1)
-    # The badge goes before the LAST </body>, which is the document's own; the
-    # first is only the same tag when nothing below quotes it in a string.
-    body_end = full_html.rfind("</body>")
-    if body_end < 0:
-        raise SystemExit("build_site: no </body> in the source")
-    full_html = (full_html[:body_end] + f"  {WIP_BADGE}\n"
-                 + full_html[body_end:])
+    full_html = inject_badge(full_html, "full")
     full_dir = out / "full"
     full_dir.mkdir()
     (full_dir / "index.html").write_text(full_html)
