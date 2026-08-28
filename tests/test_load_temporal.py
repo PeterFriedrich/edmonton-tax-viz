@@ -270,6 +270,60 @@ def test_write_archive_refreshes_the_year_while_it_is_still_live(tmp_path):
     assert int(back[back["year"] == 2025]["n_accounts"].iloc[0]) == 13
 
 
+def test_a_stale_pin_cannot_overwrite_a_confirmed_year(tmp_path):
+    """THE 2025 DEFECT, in one test. Audit 2026-08-28 F1.
+
+    The freeze protects OTHER years; the pinned year is reassigned every run so
+    the live capture can improve. When the pin goes stale that same line writes
+    the NEXT roll over a CORRECT archived year — which is how the real 2025 was
+    lost. A capture that cannot prove it is the pinned year must not destroy one
+    that did.
+    """
+    p = tmp_path / "arch.json"
+    write_archive(p, _long([(2026, "ALPHA", "RESIDENTIAL", 20, 2000.0)]), 2026,
+                  confirmed=True)
+    # The roll advances to 2027; nobody bumps the pin. The frame therefore
+    # carries the 2027 roll under the 2026 label, exactly as main.py would.
+    summary = write_archive(p, _long([(2026, "ALPHA", "RESIDENTIAL", 99, 9999.0)]), 2026,
+                            confirmed=False)
+
+    assert summary["archived_year"] is None and summary["refused_year"] == 2026
+    back = load_archive(p)
+    assert int(back[back["year"] == 2026]["n_accounts"].iloc[0]) == 20
+    assert float(back[back["year"] == 2026]["assessed_value"].iloc[0]) == 2000.0
+
+
+def test_an_unconfirmed_capture_is_still_written_when_nothing_is_at_risk(tmp_path):
+    """Refusing to capture at all would REINTRODUCE the loss.
+
+    Alberta files FIR months after Edmonton rolls, so a correctly pinned January
+    capture is unprovable for most of the year. The data is irreplaceable; only
+    the label was ever wrong. Keep the data, refuse the overwrite.
+    """
+    p = tmp_path / "arch.json"
+    summary = write_archive(p, _long([(2027, "ALPHA", "RESIDENTIAL", 7, 700.0)]), 2027,
+                            confirmed=False)
+    assert summary["archived_year"] == 2027
+    back = load_archive(p)
+    assert int(back[back["year"] == 2027]["n_accounts"].iloc[0]) == 7
+
+    # ...and it keeps improving week to week while it stays unproven.
+    write_archive(p, _long([(2027, "ALPHA", "RESIDENTIAL", 8, 800.0)]), 2027, confirmed=False)
+    back = load_archive(p)
+    assert int(back[back["year"] == 2027]["n_accounts"].iloc[0]) == 8
+
+
+def test_confirmation_upgrades_an_unproven_year_once_fir_lands(tmp_path):
+    p = tmp_path / "arch.json"
+    write_archive(p, _long([(2027, "ALPHA", "RESIDENTIAL", 7, 700.0)]), 2027, confirmed=False)
+    write_archive(p, _long([(2027, "ALPHA", "RESIDENTIAL", 9, 900.0)]), 2027, confirmed=True)
+    assert json.loads(p.read_text())["_year_confirmed"]["2027"] is True
+    # ...and from then on it is protected.
+    summary = write_archive(p, _long([(2027, "ALPHA", "RESIDENTIAL", 1, 1.0)]), 2027,
+                            confirmed=False)
+    assert summary["refused_year"] == 2027
+
+
 def test_write_archive_refuses_when_there_is_nothing_to_capture(tmp_path):
     with pytest.raises(ValueError, match="nothing to archive"):
         write_archive(tmp_path / "a.json", _long([(2024, "A", "RESIDENTIAL", 1, 1.0)]), 2025)

@@ -281,11 +281,41 @@ and is committed by `refresh.yml`. ~74 kB/year against a 7.7 MB payload.
 > frozen. **A safety mechanism whose input is unverified does not merely fail —
 > it consumes the one opportunity it existed to protect.**
 
+> ### ⚠️ 2026-08-28 — THE DOOR WAS STILL OPEN, AND IS NOW SHUT
+>
+> Deleting the phantom fixed the entry, not the mechanism. **The freeze
+> protects OTHER years; the pinned year is reassigned on every run** — by
+> design, so the live capture improves week to week — so a *stale pin* makes
+> the same line write the NEW roll over a CORRECT archived year. Reproduced by
+> calling `write_archive` twice (audit 2026-08-28 F1,
+> `docs/FINDINGS_proxy_guards.md`).
+>
+> ⚠️ **And the FIR replacement could not catch it**, because `detect_year` can
+> only return a year **Alberta has FILED**, and Alberta files months after
+> Edmonton rolls. Simulated on Edmonton's own history, a next-year roll at
+> +2%/+4% made the guard report a confident **ALIGNED on the wrong year**;
+> at +6%/+8.3%/+12% it reported inconclusive, which `refresh.yml` treats as
+> *proceed*. **No revaluation rate protected the archive.** Measuring instead
+> of reading metadata was necessary and not sufficient: **a check is only as
+> good as its candidate set, and that set is controlled by a publisher too.**
+>
+> **Rule 1 below now has a fourth clause** (`confirmed=`): an unproven capture
+> can never overwrite a proven one. It is deliberately *not* a refusal to
+> capture — that would re-open the original loss during the FIR lag.
+
 Three rules make it safe:
 
 1. **Freeze.** Only the live year is ever written. A year already captured is
    never rewritten, because once the roll advances we no longer hold a complete
    source for it — any rewrite could only be a silent downgrade.
+   ⚠️ **And since 2026-08-28, the live year is protected from a stale pin too:**
+   `write_archive(..., confirmed=)` records whether the capture was *measured*
+   to be the year it is filed under, and **refuses to overwrite a confirmed
+   entry with an unconfirmed capture** (`data/temporal_archive.json`'s
+   `_year_confirmed`). ⚠️ **An unconfirmed capture is still WRITTEN** — the data
+   is irreplaceable and only the label was ever wrong, so refusing to capture
+   through the months-long FIR lag would reintroduce exactly the loss this
+   file exists to prevent. Unproven ≠ wrong.
 2. **Capture everything, use it selectively.** Every live year is captured
    (which years turn out defective is not knowable in advance — the whole lesson
    of this dataset), but the archive only **wins** for years in

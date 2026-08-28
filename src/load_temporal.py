@@ -199,7 +199,8 @@ def load_archive(path: str | Path) -> pd.DataFrame:
     return pd.DataFrame(rows, columns=cols)
 
 
-def write_archive(path: str | Path, current: pd.DataFrame, live_year: int) -> dict:
+def write_archive(path: str | Path, current: pd.DataFrame, live_year: int,
+                  *, confirmed: bool | None = None) -> dict:
     """Capture the live year into the archive. Returns a summary dict.
 
     THE FREEZE RULE, and it is the whole safety story: only the LIVE year is ever
@@ -212,22 +213,64 @@ def write_archive(path: str | Path, current: pd.DataFrame, live_year: int) -> di
     freezes by itself when the roll moves on. Nobody has to remember to do this
     in January, which is the point -- a step that must be performed exactly once,
     at a date months away, is a step that does not happen.
+
+    ⚠️ THE FREEZE PROTECTS OTHER YEARS, NOT THE PINNED ONE -- and that gap is how
+    the real 2025 was lost. ``live_year`` is a HAND-BUMPED pin; the line writing
+    ``years[str(live_year)]`` reassigns unconditionally, which is exactly what
+    lets the live capture improve week to week. When the pin is STALE, the same
+    line writes the NEW roll over a CORRECT archived year, weekly and silently
+    (audited 2026-08-28, F1: reproduced by calling this twice).
+
+    ``confirmed`` closes it. It says whether the caller MEASURED this capture to
+    be ``live_year`` (never whether it read a pin, a metadata string, or anything
+    else the publisher controls -- see docs/FABLE_AUDIT_proxy_guards.md):
+
+      True   measured as ``live_year``. Writes, and records the year confirmed.
+      False  measured as something else, or unmeasurable. Writes ONLY if the
+             stored entry is not already confirmed.
+      None   caller did not check. Same protection as False; records nothing.
+
+    ⚠️ AN UNCONFIRMED CAPTURE IS STILL WRITTEN, DELIBERATELY. Skipping it would
+    reintroduce the loss this file exists to prevent: Alberta files FIR months
+    after Edmonton rolls, so refusing to capture until the year is provable
+    leaves the archive empty through the whole lag window, and a January where
+    FIR ran late would cost a year outright. The DATA is irreplaceable; the
+    LABEL is what was wrong in 2025. So we always keep the data, and refuse only
+    to let an unproven capture destroy a proven one.
     """
     path = Path(path)
     payload = json.loads(path.read_text()) if path.exists() else {}
     years = payload.setdefault("years", {})
+    confirmations = payload.setdefault("_year_confirmed", {})
+    key = str(live_year)
 
     frozen = sorted(int(y) for y in years if int(y) != live_year)
     live = current[current["year"] == live_year]
     if live.empty:
         raise ValueError(f"nothing to archive: the frame carries no rows for {live_year}")
 
+    if key in years and confirmations.get(key) is True and confirmed is not True:
+        logger.error(
+            "REFUSING to overwrite the CONFIRMED %d entry with an unconfirmed "
+            "capture. The pin says %d; this capture did not measure as %d, so "
+            "either the roll has moved past the pin (bump ASSESSMENT_YEAR -- "
+            "docs/RUNBOOK.md section 1) or the roll year is not yet provable. "
+            "The archive is UNCHANGED and the existing %d entry is intact.",
+            live_year, live_year, live_year, live_year,
+        )
+        return {
+            "archived_year": None, "refused_year": live_year, "hoods": 0,
+            "frozen_years": tuple(frozen), "bytes": path.stat().st_size,
+        }
+
     entry: dict[str, dict[str, list]] = {}
     for row in live.itertuples():
         entry.setdefault(row.neighbourhood_name, {})[row.mill_class] = [
             int(row.n_accounts), round(float(row.assessed_value), 2)
         ]
-    years[str(live_year)] = entry
+    years[key] = entry
+    if confirmed is not None:
+        confirmations[key] = bool(confirmed)
 
     payload["_note"] = (
         "Assessment years captured from the CURRENT ROLL while each was the live "
@@ -236,17 +279,26 @@ def write_archive(path: str | Path, current: pd.DataFrame, live_year: int) -> di
         "are FROZEN and must never be rewritten -- see src/load_temporal."
         "write_archive. Generated; do not hand-edit."
     )
+    payload["_year_confirmed_note"] = (
+        "Did the capture MEASURE as the year it is filed under (residential base "
+        "vs Alberta FIR), rather than merely inherit the pin? A confirmed year is "
+        "never overwritten by an unconfirmed capture -- that is the defect that "
+        "cost the real 2025. Absent/false means unproven, not wrong."
+    )
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=1, sort_keys=True) + "\n")
 
     summary = {
         "archived_year": live_year,
         "hoods": len(entry),
         "frozen_years": tuple(frozen),
+        "confirmed": confirmed,
         "bytes": path.stat().st_size,
     }
     logger.info(
-        "Archived %d (%d hoods) -> %s; %d frozen year(s) left untouched %s",
-        live_year, len(entry), path.name, len(frozen), list(frozen),
+        "Archived %d (%d hoods, year %s) -> %s; %d frozen year(s) left untouched %s",
+        live_year, len(entry),
+        {True: "CONFIRMED", False: "UNCONFIRMED", None: "unchecked"}[confirmed],
+        path.name, len(frozen), list(frozen),
     )
     return summary
 
