@@ -102,6 +102,64 @@ Services carries no sparkline — measured, it does.)_
 
 ## Open work
 
+- [ ] **⚠️ PROPOSED, NEEDS PETER'S CALL — the archive can still freeze the wrong
+  year, and its window opens in January.** Audit F1, 2026-08-28;
+  `docs/FINDINGS_proxy_guards.md` T1. **The 2026-08-27 fix deleted the bad
+  entry; it did not close the door.**
+  - **Reproduced, not inferred:** `write_archive`'s freeze protects *other*
+    years — the **pinned** year's entry is reassigned every run (by design, so
+    the live capture improves). Under a **stale pin** that writes the NEW roll
+    over a CORRECT archived year, weekly and silently.
+  - ⚠️ **The FIR guard cannot catch it**: `detect_year`'s candidate set is
+    years **Alberta has filed**, and Alberta files months after Edmonton rolls.
+    Simulated on Edmonton's own history — a next-year roll at **+2%/+4%**
+    returns a confident **ALIGNED on the wrong year**; at **+6%/+8.3%/+12%**
+    it returns inconclusive, which `refresh.yml` treats as **proceed**.
+    **No revaluation rate protects the archive.**
+  - **The missed distinction is REVERSIBILITY.** "Inconclusive → proceed" is
+    right for regenerating `web/data` (recomputable) and wrong for the freeze
+    (permanent). They share one gate.
+  - **Proposed:** make `--write-archive` require a *positively confirmed* year
+    and SKIP on inconclusive, leaving regeneration untouched. A skipped capture
+    is recoverable next week; a wrong one never is. **Changes
+    `check_temporal_years.py`'s contract — propose-first, hence not built.**
+
+- [ ] **⚠️ PROPOSED, NEEDS PETER'S CALL — nothing runs the test suite on a
+  change.** Audit F3, 2026-08-28. `pytest` appears in **exactly one place**:
+  `refresh.yml`, a weekly cron. No `pull_request` workflow exists and `master`
+  is **not protected** (API returns `Branch not protected`).
+  - **`deploy.yml` publishes to the live site on every push with zero test
+    execution**, and "746 passed" in a PR body attests to the author's laptop,
+    not the merged state.
+  - A failure introduced on a Tuesday surfaces the following **Monday as a held
+    data refresh** — the symptom is a stale map, not a red check on the cause.
+  - **Real mitigation, stated honestly:** the placement *inside* `refresh.yml`
+    is correct (before download/regeneration), so a broken suite holds the data
+    path rather than corrupting it. The gap is release-gate vs merge-gate.
+  - **Proposed:** a `pull_request` + `push: master` workflow running
+    `pytest tests/ -q` + `check_doc_citations.py` — both offline, ~11s, no
+    secrets, no network. **Changes CI behaviour — propose-first, hence not
+    built.**
+
+- [ ] **⚠️ SCHEDULED TO BE WRONG IN JANUARY 2027 — 15 hardcoded activity-window
+  labels, and RUNBOOK §1 step 4 mentions none of them.** Audit F4, 2026-08-28.
+  - `FIRE_YEARS` / `PERMIT_YEARS` / `PERMIT_YEARS_RECENT` are restated as
+    literals across 15 user-facing sites in `web/index.html` (`DEV_WINDOW_LABEL`
+    alone feeds 5 render sites). **All correct today** — only because the
+    project is younger than one year-roll.
+  - Step 4 bumps the pins and re-runs the deflator, and says the drift guard
+    means a stale pin "can't be missed silently". **True of the pin, false of
+    all 15 strings.**
+  - ⚠️ **This is the `(2024 n/a)` defect (S122) at 15×**, with the same tell:
+    correctly-derived copy sits beside it (the vintage footer reads
+    `status.json`).
+  - **Not a one-line fix:** `status.json` carries no activity window, so the
+    browser cannot derive these. Closing it means `generate_status.py`
+    publishing the three windows — an **output-schema change**, propose-first.
+    ⚠️ **Do not ship the cheap partial alone** (a RUNBOOK line + a test pinning
+    label against pin) without deciding: a half-fix that makes step 4 *look*
+    complete is its own hazard.
+
 - [ ] **OUTREACH TRACKER — five data issues found, ZERO sent. Every one is
   Peter's call.** ⚠️ **`docs/DATA_ISSUES.md` "Status at a glance" is
   AUTHORITATIVE** — this is a one-line mirror so the count is visible from the
