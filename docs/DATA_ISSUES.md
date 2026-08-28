@@ -84,7 +84,11 @@ base at $148.1B for 2025 and $160.4B for 2026, and our measurement of the served
 file is **$162.3B, +1.2% against 2026 and +9.5% against 2025**. The hand-
 maintained coverage string has been a year stale for the whole 2026 roll.
 
-**What it broke here — twice, and the second one is still broken:**
+**What it broke here — THREE times.** ⚠️ **This is the argument for sending it.**
+One un-maintained metadata field has now produced three separate defects
+downstream, in three different subsystems, over roughly a month — and each was
+found by accident rather than by looking. All three are fixed on our side; the
+field is not.
 
 1. **The mill-rate pin sat a year stale.** `check_year_alignment.py` validated
    our `ASSESSMENT_YEAR` against this string; both said 2025, so it reported
@@ -94,11 +98,26 @@ maintained coverage string has been a year stale for the whole 2026 roll.
    instead of reading anyone's metadata (`DECISIONS.md` 2026-08-25), and wired
    into `refresh.yml` 2026-08-26 so `python main.py` is gated on it.
 2. **The temporal archive froze the 2026 roll under the label 2025** — issue 2
-   below, unresolved.
+   below. ✅ Resolved 2026-08-27, but **the cost was permanent**: the phantom
+   entry was deleted and the real 2025 turned out to be unrecoverable, so the
+   published series lost a year (2012–2023 + 2026).
+3. **The monthly digest was about to cry wolf, every month.**
+   `vintage_report.check_assessment_roll` compared the coverage string against
+   our pin *itself*, bypassing the stale-metadata downgrade
+   `check_year_alignment.py` locked in 2026-08-25. With their field reading
+   2025 and our pin correctly at 2026, it reported **"Roll has moved to 2025,
+   pin is still 2026"** and told Peter to work the year-roll runbook for a roll
+   already done — a false ⚠️ due to fire 2026-09-01, in the only channel here
+   that reaches a human on a schedule. Fixed 2026-08-27 (PR #258) by routing
+   through `check_alignment()`; now reports UNKNOWN and names the FIR guard as
+   the authority. ⚠️ **Found while testing something else, not by looking** —
+   the same way the other two surfaced.
 
-**Why report it.** It costs Edmonton one field edit, and it is the kind of
+**Why report it.** It costs Edmonton **one field edit**, and it is the kind of
 defect no consumer can detect without an external anchor most consumers don't
-have. The dataset is otherwise sound.
+have. The dataset is otherwise sound. ⚠️ **Cheapest of all five to fix and the
+most expensive left unfixed** — see the three-defect list above. It is also the
+only issue whose evidence page is live while it has never had a draft written.
 
 ---
 
