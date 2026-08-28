@@ -1117,7 +1117,7 @@ tier sits alongside them for a human reader rather than CI:
 | tier | what it can catch | when it runs |
 |---|---|---|
 | `pytest` | pipeline logic, schema contracts | every CI run |
-| `verify-*.js` (29 scripts) | UI behaviour, layout, per-feature contracts. **Carry literals calibrated to a data snapshot**, so they are for the CODE path | locally + before merging |
+| `verify-*.js` (38 scripts) | UI behaviour, layout, per-feature contracts. **Carry literals calibrated to a data snapshot**, so they are for the CODE path | locally + before merging |
 | `verify-smoke.js` | the render surviving a DATA change. **Invariant-only — nothing pinned to a value** | **`refresh.yml`, gating the weekly publish** |
 | `notebooks/verified/*.py` (via `tools/run_verified_notebooks.py`) | the pipeline producing correct numbers on real data, narrated for a human to read rather than a machine to gate on. **Invariant-only, same discipline as `verify-smoke.js`** — but rendered to HTML, not pass/fail | locally, on demand, **and `refresh.yml`**, gating the weekly publish alongside `verify-smoke.js` (renders to `web/verified/`, published per `docs/VERIFICATION.md`) |
 
@@ -1128,6 +1128,22 @@ guard deliberately refuses to band. `verify-smoke.js` exists because the weekly
 path needs assertions that cannot cry wolf: counts derived from the served files,
 required columns derived from `METRICS`/`USE_CATEGORIES`' own keys, and a
 garbage sweep over every hood × lens.
+
+⚠️ **"Locally + before merging" is aspirational for 37 of the 38** — there is no
+runner, no `npm test`, and only `verify-smoke.js` is wired into a workflow, so
+the rest run when someone remembers to type them. The shape is not uniform
+either: **34 use the `process.exit(fail ? 1 : 0)` convention and only 23 print
+the `ALL CHECKS PASSED` banner**, the remainder being diagnostic printers that
+always exit 0 (`verify-labels.js`). **A batch runner that greps for the banner
+will therefore report those as failures** — it did on 2026-08-28.
+
+⚠️ `verify-loading-overlay.js` (2026-08-28) is the one script that carries **no
+data literals at all**, so unlike the rest of the tier it could run weekly
+without crying wolf. It is still deliberately manual: `refresh.yml` is the data
+publish and would be gating a data refresh on a UI regression, while
+`tests.yml` is the right gate but is deliberately browser-free. It also asserts
+a **mechanism rather than a clock reading** — see the `DECISIONS.md` 2026-08-28
+loading-overlay row for why a millisecond threshold could not work.
 
 ⚠️ **A garbage sweep cannot see a dropped column** — `viewTooltip` guards each row
 with `!= null`, so a missing property **omits the row** rather than printing NaN.
