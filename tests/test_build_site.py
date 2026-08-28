@@ -60,13 +60,23 @@ def test_build_emits_both_copies(tmp_path):
     root = (out / "index.html").read_text()
     full = (out / "full" / "index.html").read_text()
     # Root = public, shares the tree; /full/ = specialist, base-href to root,
-    # WIP badge, and NOT a duplicated data/ dir.
+    # and NOT a duplicated data/ dir. BOTH builds carry a beta badge, and the
+    # labels must differ — a public badge naming the specialist build would
+    # tell every reader they are somewhere they are not.
     assert 'const DEFAULT_BUILD = "public";' in root
     assert (out / "data" / "x.json").is_file()
     assert 'const DEFAULT_BUILD = "full";' in full
     assert '<base href="../" />' in full
-    assert "work in progress" in full.lower()
     assert not (out / "full" / "data").exists()
+
+    assert build_site.BADGE_LABELS["public"] in root
+    assert build_site.BADGE_LABELS["full"] in full
+    assert build_site.BADGE_LABELS["full"] not in root
+    assert build_site.BADGE_LABELS["public"] not in full
+    for label in build_site.BADGE_LABELS.values():
+        assert "beta" in label.lower()
+    assert "work in progress" in root.lower()
+    assert "work in progress" in full.lower()
 
     # Both copies carry the SAME token, and it is the source CSS's own hash —
     # /full/ reads the root's styles.css through its <base>, so a divergent
