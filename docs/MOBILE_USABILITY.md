@@ -268,31 +268,27 @@ EDMONTON SOUTH EAST straight through the legend, obscuring the `$50k+` scale
 label. **Label density on mobile is not a label problem — it is the panel-size
 problem**, so revisit it only after the blurb collapse lands.
 
-## 2b. Current state — NEEDS CONFIRMATION
+- **The loading screen (`#loading`) — CONFIRMED on a real phone 2026-08-28.**
+  Title plus a one-line blurb, sized to a measured ~900ms dwell.
+  - ✅ **Peter, on a real device: renders correctly, and "is just very fast
+    actually"** — the overlay is barely dwelt on, which is the intended
+    outcome, and it confirms the ~900ms headless figure was not an artifact of
+    the font fallback below.
+  - ✅ **Screenshot-checked headless at 390×844 and 1280×800**, normal and
+    error states.
+  - ✅ `text-wrap: balance` on both lines, chosen BECAUSE the wrap point is
+    font-dependent and was unknowable here.
+  - ⚠️ **This box cannot check glyph-width questions and never will**: three
+    font families (Cantarell, DejaVu Sans Mono, Fixed), none of the CSS stack,
+    so `sans-serif` falls back to MONO and every width measured here reads
+    **~15–20% long**. In that fallback the title wrapped to two lines at 390px
+    and the blurb to two; on the real device neither does. A first pass tuned
+    `max-width` against the mono rendering — against a font no reader will ever
+    see — and was backed out. **Do not re-tune `max-width` from a headless
+    measurement on this box.** This caveat is retained after confirmation
+    because it applies to any future text change here, not just this one.
 
-- **The loading screen's text wrap has never been seen in the real font —
-  added 2026-08-28, and this box structurally CANNOT check it.** The overlay
-  (`#loading`) carries a title and a one-line blurb, sized to a measured ~900ms
-  dwell.
-  - ⚠️ **This machine has three font families — Cantarell, DejaVu Sans Mono,
-    Fixed — and none of the CSS stack**, so `sans-serif` falls back to MONO and
-    every width measured here reads **~15–20% long**. A first pass tuned
-    `max-width` against that, i.e. against a font no reader will ever see, and
-    was backed out. This is not a "run it again" gap: no headless run on this
-    box can close it.
-  - ✅ **Screenshot-checked at 390×844 and 1280×800**, normal and error states.
-    In the mono fallback the title wraps to two lines at 390 and the blurb to
-    two; in the real stack both are expected to fit, since the stack is ~15–20%
-    narrower — **expected, not measured.**
-  - ✅ `text-wrap: balance` on both lines, chosen precisely BECAUSE the wrap
-    point is font-dependent and unknowable here: it evens a wrap wherever it
-    lands rather than orphaning the last word, and degrades to normal wrapping
-    where unsupported.
-  - **STILL NEEDS CONFIRMATION:** a real phone. Specifically whether
-    "Edmonton: Tax Revenue per Acre" holds one line at 390px in the system
-    font, and whether the blurb orphans its last word. ⚠️ **Do not re-tune
-    `max-width` from a headless measurement on this box** — that is the
-    mistake already made once.
+## 2b. Current state — NEEDS CONFIRMATION
 
 - **The city budget sheet (`#budget`) has never been touched on a real device —
   built 2026-08-16, headless only.** It is the newest phone surface and the only
