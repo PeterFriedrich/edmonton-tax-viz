@@ -16,6 +16,16 @@
 </head>
 <body>
   <div id="map"></div>
+  <!-- Covers the gap between first paint and the first deck frame. Ships
+       VISIBLE (no JS needed to show it) so a script error leaves the reader on
+       a labelled screen rather than an empty dark map. -->
+  <div id="loading" role="status" aria-live="polite">
+    <div id="loading-box">
+      <div id="loading-spinner" aria-hidden="true"></div>
+      <p id="loading-text">Loading basemap…</p>
+      <button id="loading-retry" type="button" hidden>Retry</button>
+    </div>
+  </div>
 
   <div id="banner" class="panel"></div>
 
@@ -1736,6 +1746,101 @@
       pitch: HOME.pitch,
       bearing: HOME.bearing,
       antialias: true,
+    });
+
+    // --- loading overlay ----------------------------------------------------
+    // Two gates, tracked separately because they fail independently and the
+    // status text is the only way to tell WHICH one is slow when a load hangs.
+    //
+    // ⚠️ The basemap gate is nearly free HERE and that is a property of this
+    // style, not of the pattern: `sources: {}` above declares no tile sources,
+    // so `idle` fires as soon as the backdrop paints. It is kept because it is
+    // the only signal that MapLibre came up at all — a dead WebGL context never
+    // reaches the data gate. If a real tile source is ever added, this gate
+    // starts costing what it looks like it costs, and `idle` is already the
+    // right event: `load` only means the style parsed.
+    //
+    // The gate that actually costs time is the data one. DATA_URL is ~1.1MB and
+    // the deck layers do not exist until it lands.
+    // ⚠️ 300, not the 500 this started at, and the difference is MEASURED.
+    // A floor implemented as a plain timer can be STARVED: the lazily-fetched
+    // secondary layers parse on the main thread from roughly first paint to
+    // ~5.4s, so a 500ms timer scheduled at startup did not actually run until
+    // 5433ms — the floor stopped being a floor and became a 5-second spinner
+    // over a map that had looked right since 427ms. 300ms sits below the
+    // measured first paint, so the remaining wait is normally zero and the
+    // overlay lifts on the gates rather than on a timer that has to compete
+    // with JSON parsing. Re-measure before raising it.
+    const MIN_OVERLAY_MS = 300;
+    const overlayShownAt = performance.now();
+    const LOAD_TIMEOUT_MS = 15000;
+    const loadingEl = document.getElementById("loading");
+    const loadingTextEl = document.getElementById("loading-text");
+    let overlaySettled = false;   // hidden or errored — either way, stop touching it
+
+    let markFramePainted;
+    // Resolve-only. A failure calls failLoading() directly rather than
+    // rejecting, so there is no rejection to leave unhandled.
+    const framePainted = new Promise(res => { markFramePainted = res; });
+    const basemapReady = new Promise(res => map.once("idle", res));
+
+    // ⚠️ The data gate is the FIRST RENDER after the layers attach, NOT a second
+    // map `idle` — measured, and the difference is ~5 seconds of overlay.
+    //
+    // The first idle (~210ms) only proves the backdrop painted, so a gate needs
+    // a later signal; but the next idle after the layers attach lands at
+    // ~5.6s, because the lazily-fetched secondary layers (reference, temporal,
+    // roads — all deliberately NOT awaited in the load handler) keep the map
+    // busy long after the prisms are visible. Gating on idle covers a map that
+    // already looks right.
+    //
+    // Interleaved deck draws inside MapLibre's render pass, so the map's own
+    // `render` event is the frame that contains the prisms: measured at 592ms
+    // against deck's internal first draw at 591ms. Resolved once, below.
+
+    basemapReady.then(() => {
+      if (!overlaySettled) loadingTextEl.textContent = "Loading tax data…";
+    });
+
+    const loadTimer = setTimeout(
+      () => failLoading("Map failed to load — the data request timed out."),
+      LOAD_TIMEOUT_MS);
+
+    function failLoading(message) {
+      if (overlaySettled) return;
+      overlaySettled = true;
+      clearTimeout(loadTimer);
+      loadingEl.classList.add("is-error");
+      loadingTextEl.textContent = message;
+      const retry = document.getElementById("loading-retry");
+      retry.hidden = false;
+      // A reload rather than a re-fetch: state.data is awaited inside the map's
+      // own load handler, so there is no partially-built app to retry INTO.
+      retry.addEventListener("click", () => location.reload());
+      retry.focus();
+    }
+
+    function hideLoading() {
+      if (overlaySettled) return;
+      overlaySettled = true;
+      clearTimeout(loadTimer);
+      loadingEl.classList.add("is-hidden");
+      // display:none only after the fade, so the transition is visible — but
+      // pinned to a timer as well, because transitionend does not fire when the
+      // element is display:none'd early or when motion is reduced to 0s.
+      const done = () => { loadingEl.hidden = true; loadingEl.style.display = "none"; };
+      loadingEl.addEventListener("transitionend", done, { once: true });
+      setTimeout(done, 600);
+    }
+
+    // Both gates, then whatever is LEFT of the floor — computed at gate time
+    // rather than raced as a third promise. On a load already past the floor
+    // (the normal case here) that is zero and no timer is scheduled at all,
+    // which is what keeps a starved timer out of the hiding path.
+    Promise.all([basemapReady, framePainted]).then(() => {
+      const remaining = MIN_OVERLAY_MS - (performance.now() - overlayShownAt);
+      if (remaining <= 0) hideLoading();
+      else setTimeout(hideLoading, remaining);
     });
 
     // Build the roof ring of each prism: the polygon's exterior ring lifted to
@@ -6329,7 +6434,20 @@
     }
 
     map.on("load", async () => {
-      state.data = await fetch(DATA_URL).then(r => r.json());
+      try {
+        // The status check is what makes the overlay's error path reachable on
+        // a 404: a missing DATA_URL served an HTML error page would otherwise
+        // only surface as a JSON parse error here, after the app is committed.
+        state.data = await fetch(DATA_URL).then(r => {
+          if (!r.ok) throw new Error(`${DATA_URL} → HTTP ${r.status}`);
+          return r.json();
+        });
+      } catch (err) {
+        // Terminal: every layer below reads state.data. Surfacing it now beats
+        // spinning until the 15s timeout.
+        failLoading("Map failed to load — the tax data could not be fetched.");
+        return;
+      }
 
       overlay = new deck.MapboxOverlay({
         interleaved: true,
@@ -6339,6 +6457,10 @@
         onHover: bandHover,
       });
       map.addControl(overlay);
+      // Data gate: the next painted frame is the first one with prisms in it.
+      // Registered after addControl, and rendering happens in rAF, so no frame
+      // can slip between the two. See the gates by the map constructor.
+      map.once("render", markFramePainted);
 
       // The panel's empty-state prompt names the lens's own panel, and the app
       // loads on Revenue — so it has to be set once here rather than only on the
