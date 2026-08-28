@@ -109,5 +109,3 @@ See [`/research`](/research) for background findings and data source inventory.
 This is an independent civic project. If you work in urban planning, municipal finance, or GIS and want to collaborate — or if you have access to data that could help — get in touch.
 
 For code contributions, see [`CONTRIBUTING.md`](CONTRIBUTING.md).
-
-Aligned with the work of [Strong Towns YEG](https://strongtownsyeg.ca/).
