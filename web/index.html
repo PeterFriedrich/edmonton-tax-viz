@@ -1762,15 +1762,14 @@
     //
     // The gate that actually costs time is the data one. DATA_URL is ~1.1MB and
     // the deck layers do not exist until it lands.
-    // ⚠️ 300, not the 500 this started at, and the difference is MEASURED.
-    // A floor implemented as a plain timer can be STARVED: the lazily-fetched
-    // secondary layers parse on the main thread from roughly first paint to
-    // ~5.4s, so a 500ms timer scheduled at startup did not actually run until
-    // 5433ms — the floor stopped being a floor and became a 5-second spinner
-    // over a map that had looked right since 427ms. 300ms sits below the
-    // measured first paint, so the remaining wait is normally zero and the
-    // overlay lifts on the gates rather than on a timer that has to compete
-    // with JSON parsing. Re-measure before raising it.
+    // ⚠️ 300, not the 500 this started at, and applied as the REMAINDER at gate
+    // time rather than raced as a third promise. A floor implemented as a raced
+    // timer gets starved: the lazily-fetched secondary layers parse on the main
+    // thread right after first paint, so the timer does not run when it is due.
+    // Measured on an idle box, three runs each: this shape lifts at 549-568ms,
+    // the raced-500ms shape at 1049-1132ms. 300ms sits below the measured first
+    // paint, so the remaining wait is normally zero and no timer is scheduled
+    // at all. Re-measure before raising it.
     const MIN_OVERLAY_MS = 300;
     const overlayShownAt = performance.now();
     const LOAD_TIMEOUT_MS = 15000;
@@ -1785,18 +1784,21 @@
     const basemapReady = new Promise(res => map.once("idle", res));
 
     // ⚠️ The data gate is the FIRST RENDER after the layers attach, NOT a second
-    // map `idle` — measured, and the difference is ~5 seconds of overlay.
+    // map `idle`.
     //
-    // The first idle (~210ms) only proves the backdrop painted, so a gate needs
-    // a later signal; but the next idle after the layers attach lands at
-    // ~5.6s, because the lazily-fetched secondary layers (reference, temporal,
-    // roads — all deliberately NOT awaited in the load handler) keep the map
-    // busy long after the prisms are visible. Gating on idle covers a map that
-    // already looks right.
+    // The first idle only proves the backdrop painted, so a gate needs a later
+    // signal — but the next idle lands well after the prisms are visible,
+    // because the lazily-fetched secondary layers (reference, temporal, roads —
+    // all deliberately NOT awaited in the load handler) keep the map busy.
+    // Gating on it covers a map that already looks right. Measured on an idle
+    // box, three runs each: this shape lifts at 549-568ms, the idle-gated shape
+    // at 1045-1091ms.
     //
     // Interleaved deck draws inside MapLibre's render pass, so the map's own
-    // `render` event is the frame that contains the prisms: measured at 592ms
-    // against deck's internal first draw at 591ms. Resolved once, below.
+    // `render` event is the frame that contains the prisms. Resolved once,
+    // below. tools/profiling/verify-loading-overlay.js guards the choice by
+    // MECHANISM rather than by a clock reading: an idle-gated lift lands within
+    // a millisecond of an idle event, and this one must not.
 
     basemapReady.then(() => {
       if (!overlaySettled) loadingTextEl.textContent = "Loading tax data…";
