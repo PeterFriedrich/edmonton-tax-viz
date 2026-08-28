@@ -20,14 +20,35 @@ html, body { margin: 0; height: 100%; background: #0a0a0f; }
    ⚠️ The fade-end handler also sets display:none — pointer-events alone is not
    enough, verify-controls-clickable.js checks real clickability. */
 #loading.is-hidden, #loading[hidden] { pointer-events: none; }
-#loading-box { text-align: center; }
+/* Sized against the real dwell time (~560ms up, faded by ~900ms): the title
+   carries it, the blurb is one line, and the status text sits below the
+   spinner as the smallest thing on screen — it is a debugging aid, not the
+   message. max-width caps the measure so the blurb wraps to a readable column
+   instead of running the full viewport; it is not a promise of one line, and
+   this box cannot check that — it has three font families and none of the
+   stack, so `sans-serif` falls back to mono and every width here reads long. */
+#loading-box { text-align: center; max-width: 30rem; padding: 0 24px; }
+/* text-wrap: balance evens out a wrap instead of orphaning the last word, which
+   matters because the wrap point is font-dependent and cannot be checked here.
+   Ignored by browsers that lack it — the text just wraps normally. */
+#loading-title {
+  margin: 0 0 6px; font-size: 19px; font-weight: 600; letter-spacing: 0.2px;
+  text-wrap: balance;
+}
+#loading-blurb {
+  margin: 0 0 22px; font-size: 12.5px; line-height: 1.5; color: #9a9ab0;
+  text-wrap: balance;
+}
 #loading-spinner {
   width: 28px; height: 28px; margin: 0 auto 12px;
   border: 3px solid #2a2a35; border-top-color: #8ab4f8; border-radius: 50%;
   animation: loading-spin 900ms linear infinite;
 }
 #loading.is-error #loading-spinner { display: none; }
-#loading-text { margin: 0; font-size: 13px; letter-spacing: 0.01em; }
+#loading-text { margin: 0; font-size: 12px; letter-spacing: 0.01em; color: #7d7d92; }
+/* In the error state this stops being a progress note and becomes the whole
+   message, so it takes the foreground the spinner just vacated. */
+#loading.is-error #loading-text { font-size: 13px; color: #e8e8ef; }
 #loading-retry {
   margin-top: 12px; padding: 6px 14px;
   background: #1b1b24; color: #e8e8ef;

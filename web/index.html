@@ -21,6 +21,14 @@
        a labelled screen rather than an empty dark map. -->
   <div id="loading" role="status" aria-live="polite">
     <div id="loading-box">
+      <!-- Title and blurb ONLY. The overlay is up ~560ms and faded by ~900ms,
+           which is one glance — anything more does not get read. The wording is
+           the page's own <h1>, not a second name for the same thing; the blurb
+           is the first clause of #title-p, which is six lines and far too long
+           to land here. Deliberately NOT an <h1>: the page already has one, and
+           a second would compete with it in the accessibility tree. -->
+      <p id="loading-title">Edmonton: Tax Revenue per Acre</p>
+      <p id="loading-blurb">Municipal property-tax revenue per acre, by neighbourhood.</p>
       <div id="loading-spinner" aria-hidden="true"></div>
       <p id="loading-text">Loading basemap…</p>
       <button id="loading-retry" type="button" hidden>Retry</button>
