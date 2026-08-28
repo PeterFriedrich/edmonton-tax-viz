@@ -23,12 +23,22 @@ on:
     # commit lands: web/data/** and web/verified/** are already deployed inside
     # the refresh run, so excluding them here avoids a redundant second deploy.
     # A push that touches both code and data still matches (the code path is
-    # not excluded). Non-web changes (docs/, src/, main.py, session-summary/)
-    # don't alter the served artifact, so they correctly don't trigger a deploy.
+    # not excluded). Most non-web changes (docs/, src/, main.py,
+    # session-summary/) don't alter the served artifact, so they correctly
+    # don't trigger a deploy.
+    #
+    # ⚠️ scripts/build_site.py IS an exception and must stay listed: it is not
+    # under web/, but it is the step that SHAPES the served artifact (the two
+    # builds, the <base> tag, the badges). It was missing here until
+    # 2026-08-28, when a badge change merged green, deployed nothing, and left
+    # the live site serving the old shaping until an unrelated web/** push —
+    # silent, green and stale. The rule is "what changes the artifact", not
+    # "what lives in web/".
     paths:
       - 'web/**'
       - '!web/data/**'
       - '!web/verified/**'
+      - 'scripts/build_site.py'          # shapes the artifact; see the note above
       - '.github/workflows/deploy.yml'   # redeploy if this workflow itself changes
   workflow_dispatch: {}                    # manual "redeploy current web/ as-is"
 
