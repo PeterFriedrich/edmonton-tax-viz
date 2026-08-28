@@ -46,6 +46,7 @@ sys.path.insert(0, str(ROOT))
 MILL_RATES = ROOT / "data" / "mill_rates.json"
 STORMWATER_RATES = ROOT / "data" / "stormwater_rates.json"
 TEMPORAL_ARCHIVE = ROOT / "data" / "temporal_archive.json"
+FIR_TAX_BASE = ROOT / "data" / "fir_tax_base.json"
 STATUS_JSON = ROOT / "web" / "data" / "status.json"
 CAPITAL_BUDGET = ROOT / "data" / "capital_budget.csv"
 
@@ -74,18 +75,42 @@ def check_assessment_roll(timeout=60):
     """
     pinned = _pins().ASSESSMENT_YEAR
     try:
-        from scripts.check_year_alignment import parse_coverage_year  # noqa: PLC0415
+        from scripts.check_year_alignment import (  # noqa: PLC0415
+            _load_rate_years,
+            check_alignment,
+            parse_coverage_year,
+        )
         meta = requests.get(ASSESSMENT_METADATA_URL, timeout=timeout).json()
         detected = parse_coverage_year(meta)
     except Exception as exc:  # noqa: BLE001 — any failure is the same outcome
         return (UNKNOWN, "Assessment roll year",
                 f"Could not read Socrata metadata ({exc}). Pin is {pinned}.")
-    if detected == pinned:
+
+    # ⚠️ ROUTED THROUGH check_alignment() RATHER THAN COMPARING HERE. This used
+    # to test `detected == pinned` itself, which silently bypassed the
+    # stale-metadata downgrade locked in on 2026-08-25 (`DECISIONS.md`): a
+    # coverage year older than the calendar year means the STRING is untrusted,
+    # not that the roll moved. With Edmonton's field reading 2025 through the
+    # whole 2026 roll and our pin correctly at 2026, this check reported
+    # "**Roll has moved to 2025, pin is still 2026**" and told Peter to work the
+    # year-roll runbook for a roll already done — a false ⚠️ every month, in the
+    # one channel that reaches a human. A digest that cries wolf monthly is how
+    # the real alarm gets ignored.
+    result, message = check_alignment(detected, pinned, _load_rate_years(MILL_RATES))
+    if result == "aligned":
         return (OK, "Assessment roll year",
                 f"Roll is {detected}, pin is {pinned} — aligned.")
+    if result == "stale-metadata":
+        return (UNKNOWN, "Assessment roll year",
+                f"**Socrata's `Period of Coverage` says {detected} but it is "
+                f"{dt.date.today().year} — the field is hand-maintained and is not "
+                f"being kept current, so it says nothing about the roll.** Our pin "
+                f"is {pinned}. The authority is `scripts/check_roll_year_against_fir.py`, "
+                f"which measures parcels against Alberta FIR and gates the weekly "
+                f"refresh; this digest cannot run it (it needs the raw roll, which "
+                f"is not committed). Not an action unless that guard disagrees.")
     return (ACTION, "Assessment roll year",
-            f"**Roll has moved to {detected}, pin is still {pinned}.** The weekly "
-            f"refresh is holding and the site is showing a banner. Work "
+            f"**Roll reads {detected}, pin is {pinned}.** {message} Work "
             f"`docs/RUNBOOK.md` §1 top to bottom.")
 
 
@@ -194,6 +219,83 @@ def check_temporal_archive():
             f"(`docs/SPEC_temporal.md` §0).")
 
 
+def check_temporal_archive_year():
+    """Every ARCHIVED year must measure as the year it is filed under.
+
+    ⚠️ THE SIBLING CHECK ABOVE WAS GREEN THROUGHOUT THE DEFECT THIS EXISTS TO
+    CATCH, and the difference between them is the whole point.
+    `check_temporal_archive` confirms the live year was CAPTURED; on 2026-07-28
+    it was, so that check passed — but the capture was the 2026 roll filed under
+    the label 2025, because the pin was stale and the guard validating it read
+    Edmonton's own coverage string rather than measuring anything
+    (`docs/DATA_ISSUES.md` issues 1-2). **Presence is not correctness.**
+
+    Reuses scripts/check_temporal_archive_year.py rather than reimplementing it,
+    so the digest and the standalone guard can never disagree about what a
+    mislabelled year is. Reads only committed files (the archive + FIR), so
+    unlike its neighbours it cannot fail on the network.
+    """
+    sys.path.insert(0, str(ROOT / "scripts"))
+    from check_roll_year_against_fir import detect_year, filed_bases
+    from check_temporal_archive_year import archived_residential_bases
+
+    filed = filed_bases(FIR_TAX_BASE)
+    ours = archived_residential_bases(TEMPORAL_ARCHIVE)
+    if not ours:
+        return (OK, "Archived years measure right", "The archive holds no years.")
+
+    mismatched, inconclusive, unchecked, good = [], [], [], []
+    for year in sorted(ours):
+        if year not in filed:
+            # Named, never counted as passing: an unverifiable year reading as
+            # verified is the same failure shape being detected.
+            unchecked.append(year)
+            continue
+        detected, _ = detect_year(ours[year], filed)
+        if detected is None:
+            inconclusive.append(year)
+        elif detected != year:
+            mismatched.append((year, detected))
+        else:
+            good.append(year)
+
+    if mismatched:
+        detail = "; ".join(f"**{f} measures as the {d} roll**" for f, d in mismatched)
+        return (ACTION, "Archived years measure right",
+                f"{detail}. The archive is FROZEN by design "
+                f"(`src/load_temporal.write_archive`), so this needs a decision, "
+                f"not a rewrite — `docs/DATA_ISSUES.md` §2 records how the last "
+                f"one was resolved (the phantom entry was deleted, and the year "
+                f"it claimed turned out to be unrecoverable). Run "
+                f"`python scripts/check_temporal_archive_year.py` for the residuals.")
+    if unchecked and not good:
+        return (UNKNOWN, "Archived years measure right",
+                f"**NOT CHECKED** — {_years(unchecked)} outside "
+                f"`data/fir_tax_base.json`. Re-run `scripts/fetch_fir_tax_base.py`.")
+    if inconclusive:
+        return (UNKNOWN, "Archived years measure right",
+                f"**INCONCLUSIVE** for {_years(inconclusive)} — no FIR year fits "
+                f"within tolerance. Either FIR has not published that year yet, or "
+                f"something other than the label is wrong.")
+
+    # ⚠️ The COUNT is printed, not just a tick. After the 2026-08-27 deletion this
+    # check ran against exactly ONE archived year, and a bare ✅ over a population
+    # of 1 reads far stronger than the evidence is. It thickens by one each
+    # January; until then the number is the caveat.
+    note = f"{len(good)} archived year(s) measure as filed ({_years(good)})."
+    if len(good) == 1:
+        note += (" ⚠️ **One year is a thin population** — this goes green on a "
+                 "single comparison and gains a year at each roll-forward.")
+    if unchecked:
+        note += (f" ⚠️ {_years(unchecked)} NOT CHECKED (outside "
+                 f"`data/fir_tax_base.json`) and not counted above.")
+    return (OK, "Archived years measure right", note)
+
+
+def _years(ys):
+    return ", ".join(str(y) for y in ys)
+
+
 def _capital_fingerprint(text):
     """Row count, total approved, and an ORDER-INDEPENDENT hash of the CSV body.
 
@@ -265,6 +367,7 @@ CHECKS = (
     check_stormwater,
     check_window_pins,
     check_temporal_archive,
+    check_temporal_archive_year,
     check_capital_budget,
     check_banner,
 )
