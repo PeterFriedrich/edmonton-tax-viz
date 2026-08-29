@@ -1,5 +1,10 @@
 # Verification
 
+⚠️ **This covers `notebooks/verified/` — the pipeline notebooks that run inside
+`refresh.yml` and gate the weekly publish. The public-facing EVIDENCE notebooks
+backing `docs/DATA_ISSUES.md` are a different artifact with an opposite purpose:
+see `docs/EVIDENCE_NOTEBOOKS.md`.**
+
 [`docs/METHODS.md`](METHODS.md) explains what the numbers mean and how they're
 built. This doc is for a different question: **how do you know it actually ran
 correctly, this week, on real data** — not just that the method sounds right on
