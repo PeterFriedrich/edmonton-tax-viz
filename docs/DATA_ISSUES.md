@@ -38,15 +38,16 @@ is ours, not theirs — it was never a candidate to send, and it is now fixed.)
 | 2 | archive's 2025 entry is the 2026 roll | — (ours, not theirs) | n/a | ✅ **FIXED 2026-08-27** |
 | 3 | `qi6a-xuwt` drops 2,448 accounts | [published](https://peterfriedrich.github.io/edmonton-tax-viz/notebooks/historical-2024-gap.html) | ❌ not written | **NOT SENT** |
 | 4 | no per-parcel exemption status published | [published](https://peterfriedrich.github.io/edmonton-tax-viz/notebooks/exemption-uncertainty.html) | ✅ `docs/DRAFT_open_data_request_exemption_status.md` | **NOT SENT** |
-| 5 | 3 of 5 school boards absent from open data | ❌ none | ❌ not written | **NOT SENT** |
+| 5 | 3 of 5 school boards absent from open data | [published](https://peterfriedrich.github.io/edmonton-tax-viz/notebooks/school-coverage-gap.html) | ❌ not written | **NOT SENT** |
 
 **Channel:** `opendata@edmonton.ca`, read from the portal footer 2026-08-25 —
 primary source, not inference. Right channel for 1, 3, 4 and 5, all of which are
 dataset/portal requests. **Assessment & Taxation Branch is the escalation if
 Open Data bounces one**, not the first stop.
 
-**Issue 4 is the only one with a written message.** Everything else has evidence
-and no text. ⚠️ Sending is Peter's call in every case — it is outward-facing and
+**Issue 4 is the only one with a written message.** ⚠️ **As of 2026-08-29 all
+four sendable issues now have published notebook evidence** (issue 5's landed
+last) — so every remaining blocker is REPORT TEXT, not measurement. ⚠️ Sending is Peter's call in every case — it is outward-facing and
 it speaks for the project.
 
 ⚠️ **Re-measure before quoting any figure below.** Several are derived against
@@ -290,7 +291,18 @@ committed outputs from a cold-cache run that fetched all three sources live).
 ## 5. Private, charter and francophone schools are absent from open data
 
 **Status: NOT SENT.** No draft. Lowest priority of the five.
-**Last measured: 2026-08-23.**
+**Last measured: 2026-08-29** (evidence notebook, live re-fetch).
+
+**Evidence:** [published](https://peterfriedrich.github.io/edmonton-tax-viz/notebooks/school-coverage-gap.html)
+— `notebooks/standalone/school_coverage_gap.py`, 4 of 4 invariants passed.
+⚠️ **This one argues an ABSENCE, so it is built the opposite way round from the
+other three:** it runs the catalogue searches that would DISPROVE the claim
+(`private school`, `charter school`, `independent school`, `francophone`,
+`Centre-Nord`) and shows they return no school point set for any missing
+operator. Its invariants are written to **FAIL if the City publishes the
+missing schools** — the outcome the report asks for. It establishes only that
+the portal exposed no such dataset on the run date, not that the City holds
+none internally.
 
 Two of five school boards publish catchment locations (`996c-239n`, 225 rows;
 `gfxq-u8uu`, 97 rows). The rest are not in the open data at all, and the gap
