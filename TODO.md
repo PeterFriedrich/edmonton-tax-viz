@@ -688,6 +688,37 @@ Services carries no sparkline — measured, it does.)_
     **`git checkout -- web/data/` after any local `main.py`**, and the DATA
     VINTAGE item below should say so instead of what it currently says.
 
+- [ ] **DEFERRED TO A LAPTOP — the minimum colour transition on state swaps.**
+  Peter, 2026-08-29: *"we may do this on the laptop so I can judge it on local
+  host"* — it is a **taste call that needs a real screen**, not a headless one,
+  and this box has no way to judge it (three font families, none of the CSS
+  stack; screenshots are the only output and they cannot show motion).
+  - **Rules are already locked — do not re-derive them.** `docs/TRANSITIONS.md`
+    (rules, our controls, the engine's limits) and the `DECISIONS.md` 2026-08-29
+    row. This item is the *build*, and only the smallest honest slice of it.
+  - **Scope, ~15 lines, one function:** `transitions: { getFillColor: 250 }` on
+    `metric-extrusion`, the same on `getColor` for `top-edges` (or the roof
+    outlines snap colour while the prisms fade), and a guard computing the
+    duration:
+    - ramp / `#coloradj` changed with metric+denominator unchanged → 250
+    - Revenue ⇄ Residential $ ⇄ Non-res $ → 250
+    - **everything else → 0**, i.e. exactly today's hard cut
+  - ⚠️ **The bare one-liner is WRONG and looks right** — without the guard it
+    also fires on Revenue→**Value**, which `TRANSITIONS.md` §2 rules a
+    cross-fade, not a tween.
+  - ⚠️ **`prefers-reduced-motion` needs JS here** (`matchMedia`), forcing 0. The
+    existing `web/styles.css` block covers CSS only; deck.gl transitions are not
+    CSS and would ignore it.
+  - **NO height, NO cross-fade, NO view swaps** — height cannot animate at all
+    (`TRANSITIONS.md` §5) and cross-fading needs both layer stacks alive, which
+    collides on `hood-hover`/`hood-labels`. Keeping to colour is what makes this
+    ~15 lines instead of a render-path change.
+  - **Cost is measured, and smaller than assumed: CI is UNAFFECTED.**
+    `verify-smoke.js` is the only script `refresh.yml` runs and it never clicks
+    a control. Exposure is 10 local scripts that click a ramp/metric button,
+    concentrated in the 6 `shot-*` screenshot ones — they would need a settle
+    wait.
+
 - [ ] **RESIDUAL from the panel/blurb fix (2026-08-02): below ~768px tall,
   Development and Infill have no left column left to give.** The placement fix
   clears the blurb in all ten states at 1440x900 and clears `#botleft` too. At
