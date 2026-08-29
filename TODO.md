@@ -136,8 +136,11 @@ Services carries no sparkline — measured, it does.)_
   | 1 | `Period of Coverage` names the wrong year | **report text** — evidence is published |
   | 3 | `qi6a-xuwt` drops 2,448 accounts | **report text** — evidence is published; see the detailed item below |
   | 4 | no per-parcel exemption status | **nothing — the draft is written**, `docs/DRAFT_open_data_request_exemption_status.md` |
-  | 5 | 3 of 5 school boards absent | evidence, then text |
+  | 5 | 3 of 5 school boards absent | **report text** — evidence is published 2026-08-29 |
 
+  - ⚠️ **Every sendable issue now has published notebook evidence** (issue 5's
+    landed 2026-08-29). **The only remaining blocker on all four is REPORT
+    TEXT** — there is no measurement left to do.
   - **Issue 4 is the only one that could go today.** ⚠️ **Do not put the
     $125.4M figure in it** — that asserts an exemption status no public source
     states.
