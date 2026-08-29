@@ -23,6 +23,10 @@ closed parent, invisible for six days. Status must be one of
 
 ---
 
+⚠️ **What each evidence notebook stands on — which datasets, both directions —
+is inventoried in `docs/EVIDENCE_NOTEBOOKS.md`.** This file owns SEND STATUS;
+that one owns what the evidence rests on.
+
 ## Status at a glance
 
 ⚠️ **This table is the authoritative send status.** `TODO.md` carries a tracker
