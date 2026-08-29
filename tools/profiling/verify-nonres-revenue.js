@@ -72,15 +72,32 @@ function approx(a, b, rel = 1e-6) { return Math.abs(a - b) <= rel * Math.max(Mat
     const layer = overlay._deck.props.layers.find(l => l.id === 'metric-extrusion');
     const f = state.data.features.find(x =>
       x.properties.nonres_revenue_per_acre != null && !x.properties.is_set_aside);
-    const eps = 1 + 1e-9;
+    // ⚠️ The tolerance is DERIVED from the served precision, not chosen. The
+    // export rounds every attribute to 6 significant figures INDEPENDENTLY at
+    // write time (`WEB_SIGNIFICANT_FIGURES`, DECISIONS.md 2026-08-09), while
+    // `export_geojson()` still returns the full-precision frame — so the parts
+    // can each round up past the rounded whole even though the decomposition is
+    // exact upstream. The old `1 + 1e-9` was calibrated BEFORE that decision
+    // shipped and was never re-set; it failed on 127 of 406 hoods.
+    //
+    // Measured across all 406 hoods 2026-08-29: every breach sits inside this
+    // bound and NONE exceeds it — worst is WÎHKWÊNTÔWIN at 0.4 against 0.6. So
+    // this is not a wider epsilon bought to buy silence; it is the largest
+    // discrepancy the rounding can produce, per hood, and a real breach of any
+    // size beyond it still fails.
+    const halfUlp = v => v === 0 ? 0
+      : 0.5 * Math.pow(10, Math.floor(Math.log10(Math.abs(v))) - 5);
+    const slack = (...vs) => vs.reduce((a, v) => a + halfUlp(v), 0);
     const bad = state.data.features.filter(x =>
       x.properties.nonres_revenue_per_acre != null && x.properties.revenue_per_acre != null &&
-      x.properties.nonres_revenue_per_acre > x.properties.revenue_per_acre * eps).length;
+      x.properties.nonres_revenue_per_acre > x.properties.revenue_per_acre
+        + slack(x.properties.nonres_revenue_per_acre, x.properties.revenue_per_acre)).length;
     const badSum = state.data.features.filter(x =>
       x.properties.nonres_revenue_per_acre != null && x.properties.res_revenue_per_acre != null &&
       x.properties.revenue_per_acre != null &&
       x.properties.nonres_revenue_per_acre + x.properties.res_revenue_per_acre >
-        x.properties.revenue_per_acre * eps).length;
+        x.properties.revenue_per_acre + slack(x.properties.nonres_revenue_per_acre,
+          x.properties.res_revenue_per_acre, x.properties.revenue_per_acre)).length;
     const cfg = METRICS[state.metric];
     return { elev: layer.props.getElevation(f), base: f.properties.nonres_revenue_per_acre,
              clamp: cfg.colorClamp, subsetViolations: bad, sumViolations: badSum };

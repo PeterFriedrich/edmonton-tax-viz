@@ -103,6 +103,7 @@ Services carries no sparkline — measured, it does.)_
 ## Open work
 
 
+
 - [ ] **⚠️ SCHEDULED TO BE WRONG IN JANUARY 2027 — 15 hardcoded activity-window
   labels, and RUNBOOK §1 step 4 mentions none of them.** Audit F4, 2026-08-28.
   - `FIRE_YEARS` / `PERMIT_YEARS` / `PERMIT_YEARS_RECENT` are restated as
@@ -444,63 +445,6 @@ Services carries no sparkline — measured, it does.)_
     what a phone user actually meets first.
   - Read `docs/MOBILE_USABILITY.md` first; keep the CONFIRMED /
     NEEDS-CONFIRMATION split honest.
-
-- [ ] **A THIRD verify script fails on unmodified `origin/master`, and this one
-  is FLAKY rather than stale — `verify-temporal.js`, found 2026-08-16.**
-  Its control-clickability sweep fails a `page.click(sel, { timeout: 4000 })`,
-  and ⚠️ **the failing selector MOVES between runs** (`#revcut
-  button[data-revcut="nonres_revenue_per_acre"]` on 3 of 4 runs, `#metric-row
-  button[data-metric="value"]` on the 4th) — the signature of a timing flake,
-  not a broken control.
-  - **Measured on a clean `acc425b` worktree, before the budget panel existed:
-    4 failures in 4 sequential runs**, plus 1 pass in an earlier run. So it is
-    pre-existing and intermittent, NOT caused by PR #215.
-  - ⚠️ **A single passing run is what made this look like a fresh regression.**
-    It was briefly diagnosed as "#215 broke verify-temporal" off one clean-master
-    run that happened to pass. **One sample cannot clear or convict a flaky
-    test** — re-run it several times on BOTH sides before attributing it.
-  - The element is genuinely clickable when the sequence is replicated by hand:
-    a hit-test at the button's centre returns the button itself, uncovered, on
-    both builds. So the 4000ms budget is the suspect, not the app.
-  - ⚠️ **Do not just raise the timeout to buy silence** — same rule as the other
-    two below: a guard's tolerance is a decision. Establish first whether the
-    click is slow (map re-render blocking the main thread) or genuinely
-    intercepted at some moment in the sweep.
-
-- [ ] **TWO VERIFY SCRIPTS FAIL ON UNMODIFIED `origin/master`, AND BOTH ARE
-  STALE EXPECTATIONS RATHER THAN BUGS — diagnosed 2026-08-11, NOT fixed.**
-  Found by running the full 33-script suite while building the deviation lens.
-  ⚠️ **Both were reproduced on a clean `origin/master` worktree before being
-  called pre-existing** — the suite was last recorded green on 2026-07-31, so
-  something has drifted since. **Neither is touched here on purpose: both fixes
-  are loosening a guard, and this project's rule is that a guard's tolerance is
-  a decision, not a cleanup** (the cardinality-guard item's *"do not widen it
-  further to buy silence"*). Peter's call on both.
-  - [ ] **`verify-nonres-revenue.js` — "res + nonres ≤ revenue in every hood".
-    127 of 406 hoods breach it, and the cause is the SERVED ROUNDING, not the
-    pipeline.** Max absolute excess **$0.42**, max relative **6.15e-6**; the
-    worst is STARLING (res 11,611.6 + nonres 424.374 = 12,035.974 against a
-    served revenue of 12,035.9). Each column is rounded to **6 significant
-    figures independently** at write time (`DECISIONS.md` 2026-08-09), so the
-    parts can round up past the rounded whole. The test's epsilon is
-    **`1 + 1e-9`**, ~3 orders of magnitude tighter than the rounding it now has
-    to tolerate — **it was calibrated before that decision shipped and was
-    never re-set.** ⚠️ **Check the invariant against the UNROUNDED pipeline
-    output before picking a new epsilon**, so this closes on evidence the
-    decomposition is exact rather than on a tolerance wide enough to hide a
-    real breach.
-  - [ ] **`verify-revenue-panel.js` — 3 failures, all the same cause: it counts
-    `.revrow` ELEMENTS instead of VISIBLE ones.** Measured on master with a
-    visibility probe: under Revenue there are **8 `.revrow` in the DOM but only
-    4 visible**, because the panel and the touch peek card each hold their own
-    copy. Switching to Value or leaving for Development removes `#revmix`
-    **entirely** (`getComputedStyle` → element absent) and **0 rows remain
-    visible** — i.e. **the app does exactly what the test's own comment says it
-    should**; the 4 the test still counts are the other surface's copy, which
-    no user sees. Fix is to scope the selector to `#revmix` or filter on
-    `offsetParent !== null`. ⚠️ **The `mix > 0` check in the same script passes
-    by luck for the same reason** — fix all four together or the pass becomes
-    as meaningless as the failures.
 
 - [ ] **▶ THE DENSITY/INCOME CONFOUND — it applies to a lens that is ALREADY
   LIVE, and we cannot currently measure it.** Opened 2026-08-11 from the
@@ -2202,6 +2146,10 @@ Services carries no sparkline — measured, it does.)_
 ## Done
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
+
+- [x] **CLOSED 2026-08-29 — the three verify failures are resolved, and one of them was NEVER a master failure.** — CLOSED 2026-08-29 · `docs/TODO_archive.md`
+
+
 
 - [x] **✅ DONE 2026-08-28 — the archive can no longer freeze the wrong year.** — DONE 2026-08-28 · `docs/TODO_archive.md`
 - [x] **✅ DONE 2026-08-28 — the merge gate exists.** — DONE 2026-08-28 · `docs/TODO_archive.md`
