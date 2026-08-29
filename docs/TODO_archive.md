@@ -8,6 +8,47 @@ Items are verbatim as they were closed, newest-moved first in the order they app
 
 ---
 
+- [x] **CLOSED 2026-08-29 — the three verify failures are resolved, and one of
+  them was NEVER a master failure.** Replaces the two items previously here
+  (`verify-temporal.js` "fails on unmodified master", and the two "stale
+  expectation" scripts). Reproduced before acting, per the standing rule.
+  - **`verify-temporal.js` — NOT a defect, and the item's headline was wrong.**
+    6/6 PASS on clean `master` on an idle box. Re-run under deliberate
+    contention (12 concurrent chromiums) it FAILS **on the exact selectors the
+    old item named**, both `Timeout 4000ms exceeded`. ⚠️ **This is the
+    already-documented `run-verify-scripts-alone` condition, not a third
+    broken script** — the 2026-08-16 "4 failures in 4 sequential runs" was
+    measured on a box that was not actually idle. **The 4000ms budget was NOT
+    raised**: nothing is wrong with it under the protocol the project already
+    requires. Folded into the `verify-peek.js` flakiness item below, which is
+    the same root cause.
+  - **`verify-revenue-panel.js` — FIXED, and the old diagnosis was stale.** It
+    listed 3 failures with one cause; there were **6 with two**, and the new
+    three were the interesting ones. ⚠️ **`rev_frac_*` is NOT one partition —
+    it is two overlapping dimensions.** `rev_frac_exempt` is a CROSS-CUTTING
+    flag (an exempt institutional parcel counts in `rev_frac_inst` AND in
+    `rev_frac_exempt`), so the test's ground truth of "every `rev_frac_*` > 0"
+    summed to 1.054081 for DOWNTOWN — the excess being exactly its 0.054082
+    exempt share. The app was right throughout: `REV_CATEGORIES` excludes
+    exempt by construction and the panel note discloses it separately. Ground
+    truth now excludes it, **and a new check asserts exempt IS cross-cutting**
+    so the exclusion did not silently drop coverage. The other three were the
+    known element-vs-visible count, fixed with the house `getClientRects()`
+    idiom.
+  - **`verify-nonres-revenue.js` — FIXED by DERIVING the tolerance, not
+    widening it.** The old `1 + 1e-9` predated the 6-significant-figure export
+    decision (`DECISIONS.md` 2026-08-09) and failed on 127 of 406 hoods. ⚠️
+    **The invariant was checked against what the rounding can produce before
+    any epsilon was touched**, which is what the old item demanded: measured
+    across all 406 hoods, **every breach sits inside the half-ULP bound of the
+    three rounded values and NONE exceeds it** (worst: WÎHKWÊNTÔWIN, excess
+    0.4 against a bound of 0.6). So the decomposition is exact upstream. The
+    test now computes that per-hood bound instead of carrying a magic number.
+    **Falsified against injected breaches**: 0.5× the bound passes, 2× and 10×
+    both fail — it discriminates at the rounding boundary rather than being
+    loosened into uselessness.
+
+
 - [x] **✅ DONE 2026-08-28 — the archive can no longer freeze the wrong year.**
   Built on Peter's *"do f1 and f3"*. `write_archive(..., confirmed=)` refuses to
   overwrite a confirmed entry with an unconfirmed capture; the caller MEASURES

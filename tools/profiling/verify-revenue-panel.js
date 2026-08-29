@@ -51,9 +51,19 @@ const [url] = process.argv.slice(2);
     const d = await (await fetch('./data/neighbourhood_value_per_acre.geojson')).json();
     const p = d.features.map(f => f.properties)
       .find(x => x.neighbourhood_name === 'DOWNTOWN');
-    const mix = Object.keys(p).filter(k => k.startsWith('rev_frac_') && p[k] > 0)
+    // ⚠️ `rev_frac_*` is NOT one partition — it is two overlapping dimensions,
+    // and taking every column > 0 conflates them. `rev_frac_exempt` is a
+    // CROSS-CUTTING flag: an exempt institutional parcel is counted in
+    // `rev_frac_inst` AND in `rev_frac_exempt`, so including it makes the
+    // shares sum past 1 (DOWNTOWN: 1.054081, and the excess is exactly its
+    // 0.054082 exempt share). The app excludes it from `REV_CATEGORIES` by
+    // construction and discloses it separately in the panel note, which is
+    // asserted below — so the ROW set is the zone partition plus `unzoned`.
+    const EXEMPT = 'rev_frac_exempt';
+    const mix = Object.keys(p).filter(k => k.startsWith('rev_frac_') && k !== EXEMPT && p[k] > 0)
       .map(k => [k, p[k]]).sort((a, b) => b[1] - a[1]);
     return { levy: p.total_revenue, share: p.revenue_share_city, mix,
+             exempt: p[EXEMPT],
              sum: mix.reduce((a, kv) => a + kv[1], 0) };
   });
   check('the served file carries the revenue columns',
@@ -61,6 +71,12 @@ const [url] = process.argv.slice(2);
     `levy=${raw.levy} share=${raw.share} cats=${raw.mix.length}`);
   check('the served shares sum to 1 (no unstated remainder)',
     Math.abs(raw.sum - 1) < 0.005, raw.sum.toFixed(6));
+  // Excluding exempt above must not silently drop coverage of it: the two
+  // facts that made it excludable are asserted here and in the note check
+  // below. DOWNTOWN is a real case — 5.4% exempt, non-trivial.
+  check('exempt is a CROSS-CUTTING share, not a member of the partition',
+    raw.exempt > 0 && Math.abs(raw.sum + raw.exempt - 1) > 0.005,
+    `exempt=${raw.exempt}, partition+exempt=${(raw.sum + raw.exempt).toFixed(6)}`);
 
   // ---- 1. THE PANEL RENDERS THE MIX, NOT THE CHART ------------------------
   const panel = await page.evaluate(() => {
@@ -148,7 +164,7 @@ const [url] = process.argv.slice(2);
     const c = await page.evaluate((m) => {
       applyMetric(m);
       return { open: document.getElementById('temporal').classList.contains('open'),
-               rows: document.querySelectorAll('.revrow').length,
+               rows: [...document.querySelectorAll('.revrow')].filter(r => r.getClientRects().length).length,
                note: document.getElementById('temporal-note').textContent };
     }, cut);
     check(`${cut}: the panel still shows the mix`, c.open && c.rows > 0, `${c.rows} rows`);
@@ -160,7 +176,7 @@ const [url] = process.argv.slice(2);
   const swap = await page.evaluate(() => {
     const state1 = () => ({
       chart: !!document.querySelector('#temporal-chart svg'),
-      mix: document.querySelectorAll('.revrow').length,
+      mix: [...document.querySelectorAll('.revrow')].filter(r => r.getClientRects().length).length,
       open: document.getElementById('temporal').classList.contains('open'),
     });
     applyMetric('revenue_per_acre');
@@ -182,7 +198,7 @@ const [url] = process.argv.slice(2);
   const left = await page.evaluate(async () => {
     await applyView('development');
     return { chart: !!document.querySelector('#temporal-chart svg'),
-             mix: document.querySelectorAll('.revrow').length };
+             mix: [...document.querySelectorAll('.revrow')].filter(r => r.getClientRects().length).length };
   });
   check('*** leaving Money takes the revenue breakdown with it ***',
     left.mix === 0, `${left.mix} rows still shown`);
@@ -227,7 +243,7 @@ const [url] = process.argv.slice(2);
     const out = {
       open: document.getElementById('temporal').classList.contains('open'),
       chart: !!document.querySelector('#temporal-chart svg'),
-      mix: document.querySelectorAll('.revrow').length,
+      mix: [...document.querySelectorAll('.revrow')].filter(r => r.getClientRects().length).length,
     };
     Object.assign(f.properties, saved);
     return out;
