@@ -7796,7 +7796,7 @@ a.anchor-link {
 <!-- End of mermaid configuration --></head>
 <body class="jp-Notebook" data-jp-theme-light="true" data-jp-theme-name="JupyterLab Light">
 <main>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=ec292f6d">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=5c4fe270">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7835,7 +7835,7 @@ needed for any of it.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=f159123d">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=3bc0ae25">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7874,6 +7874,28 @@ needed for any of it.</p>
 
 <span class="n">CACHE</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"ROLL_YEAR_DATA"</span><span class="p">,</span> <span class="s2">"./roll_year_data"</span><span class="p">))</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
 <span class="n">CACHE</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># ⚠️ THIS REPORT IS A SNAPSHOT, and the published page has to say so on its own</span>
+<span class="c1"># face — it is the artifact that gets handed to someone, usually without the</span>
+<span class="c1"># index page that would otherwise date it. Two of these four carried NO date at</span>
+<span class="c1"># all until 2026-08-29.</span>
+<span class="c1">#</span>
+<span class="c1"># FIRST_MEASURED is when the finding was made and does NOT change on re-run.</span>
+<span class="c1"># _STAMPED_AT is when this page was last re-executed against live data. Both are</span>
+<span class="c1"># shown: "first found on" and "still true today" are different claims and a</span>
+<span class="c1"># reader needs each. Imports are aliased and local to this block so it can be</span>
+<span class="c1"># pasted into any of these notebooks unchanged.</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">_dt</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">IPython.display</span><span class="w"> </span><span class="kn">import</span> <span class="n">Markdown</span> <span class="k">as</span> <span class="n">_Md</span><span class="p">,</span> <span class="n">display</span> <span class="k">as</span> <span class="n">_disp</span>
+
+<span class="n">FIRST_MEASURED</span> <span class="o">=</span> <span class="s2">"2026-08-26"</span>
+<span class="n">_STAMPED_AT</span> <span class="o">=</span> <span class="n">_dt</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">_dt</span><span class="o">.</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">)</span>
+
+<span class="n">_disp</span><span class="p">(</span><span class="n">_Md</span><span class="p">(</span>
+    <span class="sa">f</span><span class="s2">"**Snapshot.** Finding first measured **</span><span class="si">{</span><span class="n">FIRST_MEASURED</span><span class="si">}</span><span class="s2">**; this page "</span>
+    <span class="sa">f</span><span class="s2">"re-executed against live data **</span><span class="si">{</span><span class="n">_STAMPED_AT</span><span class="si">:</span><span class="s2">%Y-%m-%d</span><span class="si">}</span><span class="s2">** (UTC). "</span>
+    <span class="sa">f</span><span class="s2">"Nothing re-runs these on a schedule — re-execute before citing a figure."</span><span class="p">))</span>
 
 <span class="n">CHECKS</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
 
@@ -7922,6 +7944,12 @@ needed for any of it.</p>
 <div class="jp-OutputArea jp-Cell-outputArea">
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-OutputArea-output" data-mime-type="text/markdown" tabindex="0">
+<p><strong>Snapshot.</strong> Finding first measured <strong>2026-08-26</strong>; this page re-executed against live data <strong>2026-08-29</strong> (UTC). Nothing re-runs these on a schedule — re-execute before citing a figure.</p>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>cache: /tmp/roll_year_data
 </pre>
@@ -7930,7 +7958,7 @@ needed for any of it.</p>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=f203edf9">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=63080356">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7942,7 +7970,7 @@ It is the only place the file's tax year is stated.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=a5bb8d8d">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=b4403a16">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8015,7 +8043,7 @@ The metadata claims the roll covers: 2025
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=9b17b3b3">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=848684c7">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8033,7 +8061,7 @@ that could be silently truncated.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=2e8ee0c8">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=cbe54798">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8113,7 +8141,7 @@ that could be silently truncated.</p>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=18372e40">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=92db67a9">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8125,7 +8153,7 @@ does not sit at 2025; it sits a year beyond the end of it.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=9747c379">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=cbe8d760">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8187,7 +8215,7 @@ does not sit at 2025; it sits a year beyond the end of it.</p>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=0050bd68">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=2d306eb2">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8207,7 +8235,7 @@ rather than suggestive.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=48dbacdc">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=256f979c">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8287,7 +8315,7 @@ rather than suggestive.</p>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=74483605">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=93d93906">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8299,7 +8327,7 @@ across all three slots — taking only slot 1 would understate it.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=136bad77">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=36b5d7f9">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8410,7 +8438,7 @@ apportioned residential base in the current roll: $162,290,045,465
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=6cfefbf1">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=fd29e89b">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8466,7 +8494,7 @@ apportioned residential base in the current roll: $162,290,045,465
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=0736f813">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=1a3c010a">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8504,7 +8532,7 @@ done its job.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=d8ffd29f">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=1183a5ff">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>

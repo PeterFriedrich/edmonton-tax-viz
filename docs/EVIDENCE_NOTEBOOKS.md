@@ -24,17 +24,70 @@ per-report data description was a prose caption in `web/notebooks/index.html`.
 | **Exemption uncertainty** | What public data can and cannot say about tax-exempt property | `exemption_uncertainty.py` | [exemption-uncertainty.html](https://peterfriedrich.github.io/edmonton-tax-viz/notebooks/exemption-uncertainty.html) |
 | **School coverage gap** | Open data covers two school authorities, not all of them | `school_coverage_gap.py` | [school-coverage-gap.html](https://peterfriedrich.github.io/edmonton-tax-viz/notebooks/school-coverage-gap.html) |
 
-| report | `DATA_ISSUES.md` | invariants | last run |
-|---|---|---|---|
-| Roll year metadata | issue **1** | 8 of 8 | 2026-08-26 |
-| Historical 2024 gap | issue **3** | 6 of 6 | 2026-08-26 |
-| Exemption uncertainty | issue **4** | 11 of 11 | 2026-08-26 |
-| School coverage gap | issue **5** | 4 of 4 | 2026-08-29 |
+| report | `DATA_ISSUES.md` | status | invariants | re-verified |
+|---|---|---|---|---|
+| Roll year metadata | issue **1** | **ACTIVE** | 8 of 8 | 2026-08-29 |
+| Historical 2024 gap | issue **3** | **ACTIVE** | 6 of 6 | 2026-08-29 |
+| Exemption uncertainty | issue **4** | **ACTIVE** | 11 of 11 | 2026-08-29 |
+| School coverage gap | issue **5** | **ACTIVE** | 4 of 4 | 2026-08-29 |
 
-⚠️ **"Last run" is the date the committed HTML was produced, not a freshness
-guarantee.** Nothing re-executes these on a schedule — that was chosen
-deliberately (`DECISIONS.md` 2026-08-26) and the cost is that a report can
-silently age past the data it describes. **Re-run before citing a figure.**
+⚠️ **"Re-verified" is the date the committed HTML was last executed, not a
+freshness guarantee.** Nothing re-runs these on a schedule — chosen deliberately
+(`DECISIONS.md` 2026-08-26). All four were re-executed 2026-08-29 and every
+invariant still passed, so no finding here has yet been overtaken.
+
+---
+
+## Lifecycle — these are SNAPSHOTS, not living documents
+
+**A report is evidence that something was true on a date.** It is not maintained
+toward the present, and it is not supposed to be. Every report states its own
+two dates on its face — *first measured* and *re-executed* — because the
+published HTML is the artifact that gets handed to someone, usually without the
+index page that would otherwise date it.
+
+⚠️ **Two of the four carried NO date at all until 2026-08-29.** A snapshot that
+does not say what it is a snapshot of is the failure mode this section exists to
+prevent.
+
+### Status vocabulary
+
+| status | meaning |
+|---|---|
+| **ACTIVE** | the defect stands; the report is current evidence |
+| **RESOLVED** | the publisher fixed it — the report stays up as the record |
+| **AMENDED** | the defect changed shape; same report, findings updated |
+| **SUPERSEDED** | replaced by a different report; archived, not deleted |
+
+### The three transitions
+
+**1. They fix it → RESOLVED, and the report STAYS PUBLISHED.**
+⚠️ **Do not delete or unpublish it.** It becomes the record that the issue was
+found, reported and fixed — which is the only durable evidence the work
+mattered. Mark it RESOLVED here, add a dated note at the top of the notebook
+saying what changed, and update `DATA_ISSUES.md`. ⚠️ **The invariants will now
+FAIL, and that is correct** — several are deliberately written to fail on the
+fix. Do not "repair" them into passing; a report that keeps agreeing with itself
+after being acted on is one nobody notices has succeeded.
+
+**2. It morphs → AMENDED, same report.**
+The defect is still there but has changed shape, or main-project work turned up
+something that alters the premise. Update the notebook in place, re-execute,
+and leave `FIRST_MEASURED` alone — it records when the finding was made, not
+when it was last touched.
+
+**3. It is replaced by a different bug → SUPERSEDED, archive and write a new
+one.** When the finding is not the same finding any more, do not stretch the
+old report to cover it. Move it to `notebooks/standalone/archive/` and its page
+to `web/notebooks/archive/`, mark it SUPERSEDED **with a pointer to the report
+that replaced it**, and write the new one fresh. ⚠️ **Archive, never delete** —
+the same rule as `docs/TODO_archive.md`. A public URL that 404s is worse than
+one that explains itself, and outreach may already have cited it.
+
+⚠️ **Only transition 1 is detectable automatically** (the invariants flip).
+Transitions 2 and 3 are human judgement, usually triggered by main-project work
+rather than by the data — so the per-source table below is the tool: when a
+source's understanding changes, check who depends on it.
 
 ---
 
@@ -119,13 +172,15 @@ published artifact stays self-contained.
 1. Write `notebooks/standalone/<name>.py` in jupytext percent format, matching
    the house pattern: self-contained, live public sources, a `CHECKS` list, and
    a final cell that raises `AssertionError` if any invariant fails.
-2. Execute it **cold-cache** so the committed outputs prove the notebook's own
+2. Set `FIRST_MEASURED` to today and leave it alone forever after — it dates
+   the FINDING, not the last edit. Execute it **cold-cache** so the committed outputs prove the notebook's own
    portability, then commit both the `.py` and the executed `.ipynb`.
 3. Render to `web/notebooks/<name-with-dashes>.html` (underscores become
    dashes) and add an entry to that folder's hand-written `index.html`.
 4. Update `docs/DATA_ISSUES.md` — **the status table there is authoritative for
    send status**, not this file.
-5. Add rows to **both** tables above; the reverse lookup is the point.
+5. Add rows to **both** tables above (status **ACTIVE**); the reverse lookup is
+   the point.
 
 ⚠️ **Write invariants that fail when the publisher fixes the defect.** That is
 the house style here, and it is what makes a report notice its own success.
