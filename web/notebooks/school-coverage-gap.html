@@ -7796,7 +7796,7 @@ a.anchor-link {
 <!-- End of mermaid configuration --></head>
 <body class="jp-Notebook" data-jp-theme-light="true" data-jp-theme-name="JupyterLab Light">
 <main>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=bbcc01ee">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=7e31cccb">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7837,7 +7837,7 @@ The whole notebook runs in seconds and needs no API token.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=db05b5ee">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=afa82e44">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7860,6 +7860,28 @@ The whole notebook runs in seconds and needs no API token.</p>
 <span class="n">SSL_CTX</span> <span class="o">=</span> <span class="n">ssl</span><span class="o">.</span><span class="n">create_default_context</span><span class="p">(</span><span class="n">cafile</span><span class="o">=</span><span class="n">certifi</span><span class="o">.</span><span class="n">where</span><span class="p">())</span>
 
 <span class="n">RUN_AT</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">)</span>
+
+<span class="c1"># ⚠️ THIS REPORT IS A SNAPSHOT, and the published page has to say so on its own</span>
+<span class="c1"># face — it is the artifact that gets handed to someone, usually without the</span>
+<span class="c1"># index page that would otherwise date it. Two of these four carried NO date at</span>
+<span class="c1"># all until 2026-08-29.</span>
+<span class="c1">#</span>
+<span class="c1"># FIRST_MEASURED is when the finding was made and does NOT change on re-run.</span>
+<span class="c1"># _STAMPED_AT is when this page was last re-executed against live data. Both are</span>
+<span class="c1"># shown: "first found on" and "still true today" are different claims and a</span>
+<span class="c1"># reader needs each. Imports are aliased and local to this block so it can be</span>
+<span class="c1"># pasted into any of these notebooks unchanged.</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">_dt</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">IPython.display</span><span class="w"> </span><span class="kn">import</span> <span class="n">Markdown</span> <span class="k">as</span> <span class="n">_Md</span><span class="p">,</span> <span class="n">display</span> <span class="k">as</span> <span class="n">_disp</span>
+
+<span class="n">FIRST_MEASURED</span> <span class="o">=</span> <span class="s2">"2026-08-29"</span>
+<span class="n">_STAMPED_AT</span> <span class="o">=</span> <span class="n">_dt</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">_dt</span><span class="o">.</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">)</span>
+
+<span class="n">_disp</span><span class="p">(</span><span class="n">_Md</span><span class="p">(</span>
+    <span class="sa">f</span><span class="s2">"**Snapshot.** Finding first measured **</span><span class="si">{</span><span class="n">FIRST_MEASURED</span><span class="si">}</span><span class="s2">**; this page "</span>
+    <span class="sa">f</span><span class="s2">"re-executed against live data **</span><span class="si">{</span><span class="n">_STAMPED_AT</span><span class="si">:</span><span class="s2">%Y-%m-%d</span><span class="si">}</span><span class="s2">** (UTC). "</span>
+    <span class="sa">f</span><span class="s2">"Nothing re-runs these on a schedule — re-execute before citing a figure."</span><span class="p">))</span>
 
 <span class="n">CHECKS</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
 
@@ -7905,15 +7927,21 @@ The whole notebook runs in seconds and needs no API token.</p>
 <div class="jp-OutputArea jp-Cell-outputArea">
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-OutputArea-output" data-mime-type="text/markdown" tabindex="0">
+<p><strong>Snapshot.</strong> Finding first measured <strong>2026-08-29</strong>; this page re-executed against live data <strong>2026-08-29</strong> (UTC). Nothing re-runs these on a schedule — re-execute before citing a figure.</p>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>run at: 2026-08-29 01:39 UTC
+<pre>run at: 2026-08-29 08:21 UTC
 </pre>
 </div>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=4f15939b">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=040c2b18">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7925,7 +7953,7 @@ number.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=f0e0482d">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=4a045576">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8012,7 +8040,7 @@ total published school points: 322
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=e1da1833">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=e4a46b04">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8025,7 +8053,7 @@ school point sets on the portal, which §2 establishes.</p>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=98f0604c">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=6f67be7e">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8038,7 +8066,7 @@ surface for at least one of them.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=56e842b5">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=2ba07df6">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8157,7 +8185,7 @@ surface for at least one of them.</p>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=0dcc2a7b">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=4a34149a">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8171,7 +8199,7 @@ so a result only counts if its title names one of the missing operators
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=f78366a7">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=6bbf6865">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8183,7 +8211,7 @@ checked against the whole result set rather than asserted.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=d29bb231">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=55ac5233">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8280,7 +8308,7 @@ checked against the whole result set rather than asserted.</p>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=93983baa">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=7da68518">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8293,7 +8321,7 @@ property IS.</strong></p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=c25710fc">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=df27f4df">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8351,7 +8379,7 @@ columns describing land use or occupancy: NONE
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=bacf1f24">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=f63f90f4">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8366,7 +8394,7 @@ remain the only source of school locations.</p>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=a0bbf17a">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=540446aa">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8389,7 +8417,7 @@ exists to close.</p>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=25cadc87">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=180e0b01">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8402,7 +8430,7 @@ notebook should stop agreeing with itself the moment it arrives.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=b2774d32">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=e8bbdf6e">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>

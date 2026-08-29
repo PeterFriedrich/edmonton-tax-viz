@@ -90,6 +90,28 @@ CAST = "::number"
 CACHE = Path(os.environ.get("ROLL_YEAR_DATA", "./roll_year_data")).resolve()
 CACHE.mkdir(parents=True, exist_ok=True)
 
+# ⚠️ THIS REPORT IS A SNAPSHOT, and the published page has to say so on its own
+# face — it is the artifact that gets handed to someone, usually without the
+# index page that would otherwise date it. Two of these four carried NO date at
+# all until 2026-08-29.
+#
+# FIRST_MEASURED is when the finding was made and does NOT change on re-run.
+# _STAMPED_AT is when this page was last re-executed against live data. Both are
+# shown: "first found on" and "still true today" are different claims and a
+# reader needs each. Imports are aliased and local to this block so it can be
+# pasted into any of these notebooks unchanged.
+import datetime as _dt
+
+from IPython.display import Markdown as _Md, display as _disp
+
+FIRST_MEASURED = "2026-08-26"
+_STAMPED_AT = _dt.datetime.now(_dt.timezone.utc)
+
+_disp(_Md(
+    f"**Snapshot.** Finding first measured **{FIRST_MEASURED}**; this page "
+    f"re-executed against live data **{_STAMPED_AT:%Y-%m-%d}** (UTC). "
+    f"Nothing re-runs these on a schedule — re-execute before citing a figure."))
+
 CHECKS: list[tuple[bool, str]] = []
 
 

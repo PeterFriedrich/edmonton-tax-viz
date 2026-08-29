@@ -7796,7 +7796,7 @@ a.anchor-link {
 <!-- End of mermaid configuration --></head>
 <body class="jp-Notebook" data-jp-theme-light="true" data-jp-theme-name="JupyterLab Light">
 <main>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=18d2b6e8">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=dd8dadfe">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7826,7 +7826,7 @@ the first run takes a few minutes and re-runs are fast. No API token needed.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=effc98b2">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=8f5a7eea">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7864,6 +7864,28 @@ the first run takes a few minutes and re-runs are fast. No API token needed.</p>
 
 <span class="n">CACHE</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"HISTORICAL_GAP_DATA"</span><span class="p">,</span> <span class="s2">"./historical_gap_data"</span><span class="p">))</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
 <span class="n">CACHE</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># ⚠️ THIS REPORT IS A SNAPSHOT, and the published page has to say so on its own</span>
+<span class="c1"># face — it is the artifact that gets handed to someone, usually without the</span>
+<span class="c1"># index page that would otherwise date it. Two of these four carried NO date at</span>
+<span class="c1"># all until 2026-08-29.</span>
+<span class="c1">#</span>
+<span class="c1"># FIRST_MEASURED is when the finding was made and does NOT change on re-run.</span>
+<span class="c1"># _STAMPED_AT is when this page was last re-executed against live data. Both are</span>
+<span class="c1"># shown: "first found on" and "still true today" are different claims and a</span>
+<span class="c1"># reader needs each. Imports are aliased and local to this block so it can be</span>
+<span class="c1"># pasted into any of these notebooks unchanged.</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">_dt</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">IPython.display</span><span class="w"> </span><span class="kn">import</span> <span class="n">Markdown</span> <span class="k">as</span> <span class="n">_Md</span><span class="p">,</span> <span class="n">display</span> <span class="k">as</span> <span class="n">_disp</span>
+
+<span class="n">FIRST_MEASURED</span> <span class="o">=</span> <span class="s2">"2026-08-26"</span>
+<span class="n">_STAMPED_AT</span> <span class="o">=</span> <span class="n">_dt</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">_dt</span><span class="o">.</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">)</span>
+
+<span class="n">_disp</span><span class="p">(</span><span class="n">_Md</span><span class="p">(</span>
+    <span class="sa">f</span><span class="s2">"**Snapshot.** Finding first measured **</span><span class="si">{</span><span class="n">FIRST_MEASURED</span><span class="si">}</span><span class="s2">**; this page "</span>
+    <span class="sa">f</span><span class="s2">"re-executed against live data **</span><span class="si">{</span><span class="n">_STAMPED_AT</span><span class="si">:</span><span class="s2">%Y-%m-%d</span><span class="si">}</span><span class="s2">** (UTC). "</span>
+    <span class="sa">f</span><span class="s2">"Nothing re-runs these on a schedule — re-execute before citing a figure."</span><span class="p">))</span>
 
 <span class="n">CHECKS</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
 
@@ -7930,6 +7952,12 @@ the first run takes a few minutes and re-runs are fast. No API token needed.</p>
 <div class="jp-OutputArea jp-Cell-outputArea">
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-OutputArea-output" data-mime-type="text/markdown" tabindex="0">
+<p><strong>Snapshot.</strong> Finding first measured <strong>2026-08-26</strong>; this page re-executed against live data <strong>2026-08-29</strong> (UTC). Nothing re-runs these on a schedule — re-execute before citing a figure.</p>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>cache: /tmp/historical_gap_data
 </pre>
@@ -7938,7 +7966,7 @@ the first run takes a few minutes and re-runs are fast. No API token needed.</p>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=845cfb64">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=af2f2df9">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7950,7 +7978,7 @@ slice contain? Edmonton grows steadily, so account counts should rise steadily.<
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=5162561e">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=9016e2f2">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8033,7 +8061,7 @@ year
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=8a4ce527">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=46e4c527">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8093,7 +8121,7 @@ year
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=4ed6fcfb">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=56ab9f9c">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8105,7 +8133,7 @@ specific, identifiable accounts are missing.</p>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=c099ebbf">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=db53b958">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8118,7 +8146,7 @@ independent control. Each download is verified against the server's own
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=282bad60">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=8f8e8e62">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8267,7 +8295,7 @@ independent control. Each download is verified against the server's own
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=50ab92f8">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=3e3efddf">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8287,7 +8315,7 @@ honest answer is their union — but the gap <em>between</em> them is the findin
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=f5655d4a">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=3bea99da">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8349,7 +8377,7 @@ year
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=b21594c0">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=7e25196b">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8406,7 +8434,7 @@ year
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=55af1efd">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=4450baf2">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8419,7 +8447,7 @@ accounts a user of this dataset silently loses today.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=05c176fc">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=6021e484">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8466,7 +8494,7 @@ neighbourhoods affected: 188
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=58f6339f">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=bf1420b8">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8483,7 +8511,7 @@ hiding it.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=eb609d88">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=0d72231a">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8515,7 +8543,7 @@ hiding it.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=3f76182b">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=ee0fab6a">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8561,7 +8589,7 @@ CLOVER BAR AREA                        7       $31,865,000     1.1%
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=86f3f274">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=f51ce5d5">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8574,7 +8602,7 @@ addresses, and at many of those addresses <strong>every</strong> account is gone
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=276b5a76">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=1983e3cc">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8648,7 +8676,7 @@ addresses losing EVERY account:      29 (969 accounts)
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=4fc23846">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=cc2eb146">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8664,7 +8692,7 @@ dataset and is easy to fix, so it is reported here too.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=c62bb395">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=0435997c">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8710,7 +8738,7 @@ Merging the spellings, the largest affected building loses 315 accounts, not 309
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=820438ce">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=78da02b7">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8768,7 +8796,7 @@ Merging the spellings, the largest affected building loses 315 accounts, not 309
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=f9454efd">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=5da9dc7a">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8779,7 +8807,7 @@ confirmed directly against the portal without re-running any of this.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=bc64eb66">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=05eedcee">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8835,7 +8863,7 @@ and none appears in the 2024 or 2025 slices. To confirm one:
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=e94ec7a2">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=34382765">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8875,7 +8903,7 @@ can only be higher than what is reported here.</li>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=c85f2715">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=825dee76">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
