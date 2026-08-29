@@ -71,7 +71,7 @@ colour-only by construction — no geometry moves.
 | Revenue/Residential/Non-res → **Value** | 2 | **Cross-fade.** Different quantity, 55× scale. |
 | Per acre ⇄ per lot acre | 3 | **Flag.** The genuine gray area here — see below. |
 | View swap (Money → Services → Uses …) | 2 | **Cut.** Different lenses, different geometry entirely. |
-| A future year stepper | 1 | **Tween — but read §3 first.** |
+| A future year stepper | 1 | **Tween — but read §4 first.** |
 
 ### The three revenue metrics are subsets, and that settles rule 3 for them
 
@@ -92,7 +92,7 @@ them. Cross-fade.
 Same numerator, same geometry, different denominator. Object constancy is
 perfect, which argues rule 4 — but the halfway frame is a height computed
 against *neither* neighbourhood acres nor lot acres, i.e. no denominator that
-exists. Unresolved, and mechanically blocked anyway (§4). Cross-fade if forced
+exists. Unresolved, and mechanically blocked anyway (§5). Cross-fade if forced
 to choose today.
 
 ### Any future non-dollar metric cross-fades
@@ -105,7 +105,88 @@ metrics; rule 3's tween is the exception that has to be argued.
 
 ---
 
-## 3. ⚠️ A year tween must not bridge the gap
+## 3. Cross-fading in practice
+
+Rule 2 says cross-fade. This is what that means concretely, and it is the side
+of the rule most likely to be got subtly wrong.
+
+### Height resets instantly. Only opacity moves.
+
+**Never fade opacity and tween height at the same time.** The eye still tracks
+"this prism grew into that one" underneath a fade — the same false relationship
+a direct tween asserts, just harder to notice and therefore worse. The incoming
+stack must already stand at its **final** height as it fades in.
+
+This costs nothing today only because height cannot animate here at all (§5).
+That is an accident of the engine, not a guarantee — the rule is written down so
+it survives the day someone lifts that constraint.
+
+### The three forms, in order of how unrelated the lenses are
+
+1. **Simultaneous** — old fades out while new fades in. Fastest, feels
+   responsive. Muddy at the midpoint, because both stacks are semi-visible at
+   once. ⚠️ **That midpoint is at its worst here**: every lens draws the *same*
+   406 neighbourhood polygons, so a simultaneous fade overlaps two translucent
+   copies of one geometry at different heights, not two different-looking maps.
+   Reserve it for genuinely adjacent lenses.
+2. **Sequential** (fade out → brief hold → fade in) — **the default for lens
+   switching.** The empty beat makes the "these are different things" boundary
+   explicit. A lens switch is a deliberate context change, not a data stream, so
+   the small latency cost buys the right reading. A continuous control (a time
+   slider) would want form 1 instead.
+3. **Fade through a neutral beat** — dip to a flat, uniform hood plane, then
+   rise into the new metric. Strongest possible "no relationship" signal, and
+   overkill for most swaps. Reach for it only if readers are actually misreading
+   cross-fades as continuity. ⚠️ Note this is **not** a dip to parcels — the
+   analysis unit is the neighbourhood by locked decision (`DECISIONS.md`,
+   Phase 1). The neutral plane already exists as `GLASS_PLANE_COLOR`, drawn by
+   `dev-neutral-plane` and `glass-plane`, so this form is cheaper here than it
+   would normally be.
+
+### Land the UI signal with the fade, not before it
+
+Pair the visual cross-fade with the labelling change — legend, title, blurb — so
+they land at the **same moment**. The mode switch reads clearly when the words
+confirm "context changed" exactly as the layer does.
+
+⚠️ **Today they would not.** A lens swap rewrites the title, blurb, legend label
+and legend endpoints from the `METRICS` config synchronously on click. Add a
+250ms fade and the copy would assert a new context a quarter-second before the
+map showed one — the labelling would be describing a map still fading out.
+Whatever drives the fade has to drive the copy swap too.
+
+### ⚠️ This is not a props change — what it actually costs
+
+Measured 2026-08-29 against the vendored build, because the obvious
+implementation does not exist:
+
+- **`opacity` is NOT a transitionable deck.gl prop here.** The bundle does carry
+  `uniformTransitions` machinery, so grepping for it is misleading — but **no
+  numeric uniform prop opts in** (`opacity` and `elevationScale` both lack the
+  flag; every `transition: true` in the build is on an accessor-backed
+  attribute). So a fade cannot be declared. It must be driven — a rAF/timer loop
+  stepping opacity and re-issuing `setProps({ layers })` — or done by animating
+  the **alpha inside `getFillColor`**, which *is* attribute-backed and does
+  transition. The second is free but per-layer, and covers no `PathLayer` or
+  `TextLayer` without its own `getColor`.
+- **Both stacks have to be alive during the fade.** `buildLayers()` returns only
+  the current view's stack, and ~20 sites call
+  `overlay.setProps({ layers: buildLayers() })`, so the outgoing layers are
+  removed the instant the swap lands. Cross-fading means returning a union for
+  the duration.
+- **⚠️ A naive union collides on ids.** `hoodHoverLayer()` (`hood-hover`) and
+  `labelLayer()` (`hood-labels`) are in nearly every view's stack, so both
+  halves of the fade would carry the same layer ids. The shared chrome has to be
+  hoisted out of the fade and issued once.
+- **⚠️ The outgoing stack must be made unpickable.** An **alpha-0 fill still
+  picks in deck.gl** — measured in this repo, not assumed (see the
+  `deviationBandLayers` comment in `web/index.html`). A fading-out lens would
+  otherwise keep answering hovers, and a tooltip from the lens you just left is
+  a silent-correctness failure, not a cosmetic one.
+
+---
+
+## 4. ⚠️ A year tween must not bridge the gap
 
 The most likely future rule-1 case is a year stepper on the assessment series,
 and it carries a trap specific to this project.
@@ -127,7 +208,7 @@ and it is the one pair in this repo that cannot be drawn.)
 
 ---
 
-## 4. ⚠️ What the engine will and will not do
+## 5. ⚠️ What the engine will and will not do
 
 Rules are useless if the renderer cannot honour them. Measured 2026-08-29 on
 deck.gl 9.0.38 (`web/vendor/`, which does include `AttributeTransitionManager`):
@@ -137,9 +218,12 @@ deck.gl 9.0.38 (`web/vendor/`, which does include `AttributeTransitionManager`):
   `getFillColor`/`getElevation`, so a `transitions: { getFillColor: 250 }` prop
   is the whole change. Same for `getColor` on `top-edges`.
 - **⚠️ Height transitions are NOT currently available, for two independent
-  reasons.** `elevationScale` is a layer *uniform*, not a per-vertex attribute,
-  so deck.gl cannot interpolate it — a Revenue→Value swap would collapse the
-  scene 55× instantly while the raw values slid underneath. And `top-edges` is a
+  reasons.** `elevationScale` is a layer *uniform*, and **no numeric uniform
+  prop opts into transitions in this build** — the bundle carries
+  `uniformTransitions` machinery, but every `transition: true` in it sits on an
+  accessor-backed attribute, so `elevationScale` (and `opacity`, §3) cannot be
+  interpolated. A Revenue→Value swap would collapse the scene 55× instantly
+  while the raw values slid underneath. And `top-edges` is a
   `PathLayer` whose *data* is rebuilt by `topRings()` at the new heights, so the
   roof outlines would snap while the prisms were still moving. Both are fixable
   by baking the scale into `getElevation` and setting `elevationScale: 1`, but
@@ -154,14 +238,14 @@ deck.gl 9.0.38 (`web/vendor/`, which does include `AttributeTransitionManager`):
 
 ---
 
-## 5. Adding a metric — the checklist
+## 6. Adding a metric — the checklist
 
 1. Is the new metric a **component** of an existing one, in the same unit? → may
    tween. Anything else → cross-fade with an independent height reset.
 2. Run the **halfway-frame test** and write the answer into the metric's config
    comment, so the next person inherits the reasoning rather than the verdict.
 3. If it tweens on height, confirm `elevationScale` is **identical** to the
-   metric it tweens from. If not, §4 applies and it cross-fades regardless of
+   metric it tweens from. If not, §5 applies and it cross-fades regardless of
    what rule 1–5 says.
 4. Extend the `prefers-reduced-motion` block.
 5. Add a settle wait to any `shot-*`/`verify-*` script that clicks the control.
