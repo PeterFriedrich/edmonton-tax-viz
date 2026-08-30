@@ -241,27 +241,50 @@ Services carries no sparkline — measured, it does.)_
     Edmonton taxpayers"* claim is traceable to nothing in our reference list and
     must not be repeated even informally.
 
-- [ ] **THE OTHER HAND-ENUMERATED CATEGORY SETS HAVE NOT BEEN CHECKED FOR THE
-  DEFECT FOUND ON 2026-08-18.** `Engineering (490)` turned out to be 95%
-  parkades and `Transportation Terminals (440)` 100% LRT — 19% of the industrial
-  metric's dollars — and **the full-string-enumeration rule did not prevent it**
-  (the City files parkades under two different strings). Now `T8` in
-  `docs/DATA_INTEGRITY.md`.
+- [ ] **T8 FOLLOW-UPS — the three unchecked category sets were AUDITED 2026-08-30
+  and none carries the 2026-08-18 defect.** Two follow-ups survive; the sweep
+  itself is done (`docs/AUDIT_LEDGER.md` 2026-08-30, verdicts + measurements).
+  - ✅ **`load_zoning` (area numerator, highest risk) — PASS.** `frac_other` and
+    `rev_frac_other` are **0.0000 across all 406 hoods**: every zone code in the
+    served `zoning.geojson` classifies, so nothing lands in the unmatched bucket.
+  - ✅ **`load_water.HOUSEHOLD_CLASSES` — PASS.** Vocabulary fully enumerated;
+    the only household-like class excluded is `FARMLAND` (512 parcels, 0.12%),
+    consistent with the residential-only lock (2026-07-06) and logged out-of-scope.
+  - ⚠️ **`load_temporal.COMMERCIAL_CLASSES` — WARN, and it is FORCED.** It tests
+    `Assessment Class 1` only, but a parcel carries up to three classes: 1,094
+    parcels / **$9.06B** have a class 2. Effect is bounded and nearly
+    self-cancelling citywide (**−0.50%**, 22.10% vs 22.21% apportioned) but not
+    per hood — **max 6.5 pp, 23 hoods >1 pp, 3 hoods >5 pp** (worst: EDMONTON
+    SOUTH CENTRAL EAST −6.54, U OF A FARM +6.33). ⚠️ **Do NOT "fix" it by
+    apportioning the live half:** `qi6a-xuwt` publishes `mill_class_1` only, no
+    class 2/3, so the archive half CANNOT be apportioned and doing one side
+    alone would break splice consistency — a worse error than the one it fixes.
+    - **The open item is documentation, not code.** `data/DATA.md` §470 records
+      split-class for the levy pipeline; nothing says the temporal commercial
+      cut is class-1-only or what that costs a hood.
+  - ⚠️ **LATENT — `other` is the unmatched bucket, and `NONRES_CATEGORIES`
+    counts it as non-residential.** **No zone code maps to `other` explicitly**;
+    it exists only as `DEFAULT_CATEGORY`. So `frac_nonres` = com+ind+mix+dc+*"we
+    could not classify it"*, which contradicts `DEFAULT_CATEGORY`'s own comment
+    (*"does NOT claim it as residential or any specific non-residential use"*).
+    Inert today because nothing is unmatched, and `frac_nonres` is not served —
+    but `_categorize` only **warns**, so the next zoning-bylaw code addition
+    turns unclassified land into "non-residential" with a log line and no
+    failure. ⚠️ **Decide before the next bylaw update**, not after.
+  - ⚠️ **METHOD, and it cost a wrong number in this very run:** a parcel-level
+    cross-tab on `Property_Info.zoning` said `other` held **$36.8B**. It does
+    not — that column's vocabulary is not the one the metric uses
+    (`zoning.geojson`). **Audit the actual numerator, never a proxy for it.**
   - **Already settled, do not redo:** `RESIDENTIAL_BUILDING_TYPES` is CLEAR
     (its `units_added` numerator is self-checking — 8 of 25,146 permits carry 0
     units); `export_budget_ranked.py`'s `SERVICE_CATEGORIES` is hardened by
     derivation (`DECISIONS.md` 2026-08-16).
-  - **Unchecked:** `load_zoning.NONRES_CATEGORIES` / `SET_ASIDE_CATEGORIES`,
-    `load_water.HOUSEHOLD_CLASSES`, `load_temporal.COMMERCIAL_CLASSES`.
   - ⚠️ **Rank by NUMERATOR, not by how wrong the names look.** A count or
     value-sum over an enumerated category has no self-check — every member
     counts for its full weight whatever it is. A quantity numerator limits the
-    damage on its own. Zoning's area sums are the count-shaped ones.
-  - ⚠️ **Do not audit a set by reading its member names** — that is exactly what
-    already passed. Sample what the members ARE (free-text description, sample
-    of real records).
+    damage on its own.
   - Full reasoning: `docs/DATA_INTEGRITY.md` T8, `docs/AUDIT_LEDGER.md`
-    2026-08-18, `docs/DECISIONS.md` 2026-08-18.
+    2026-08-18 and 2026-08-30, `docs/DECISIONS.md` 2026-08-18.
 
 - [ ] **PETER'S CALL — should Industrial go PUBLIC now that it is grid-capable?**
   `docs/DECISIONS.md` 2026-07-23 tagged the Industrial `#devmetric` `/full/`-only
