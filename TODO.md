@@ -259,9 +259,10 @@ Services carries no sparkline — measured, it does.)_
     apportioning the live half:** `qi6a-xuwt` publishes `mill_class_1` only, no
     class 2/3, so the archive half CANNOT be apportioned and doing one side
     alone would break splice consistency — a worse error than the one it fixes.
-    - **The open item is documentation, not code.** `data/DATA.md` §470 records
-      split-class for the levy pipeline; nothing says the temporal commercial
-      cut is class-1-only or what that costs a hood.
+    - ✅ **DOCUMENTED 2026-08-30** — `docs/SPEC_temporal.md` §3 carries the cut,
+      the per-hood cost and why apportioning one half is worse than the error it
+      removes; locked in `DECISIONS.md` the same day. **Nothing is open here —
+      do not reopen it as a code change.**
   - ⚠️ **LATENT — `other` is the unmatched bucket, and `NONRES_CATEGORIES`
     counts it as non-residential.** **No zone code maps to `other` explicitly**;
     it exists only as `DEFAULT_CATEGORY`. So `frac_nonres` = com+ind+mix+dc+*"we

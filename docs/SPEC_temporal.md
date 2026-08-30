@@ -128,6 +128,29 @@ server-side `$group` query: ~5,600 rows, ~3 s, under 100 kB reshaped** — rough
 1% of the current 7.7 MB payload. Full schema, quirks and the `$limit` trap in
 `data/DATA.md` §0.
 
+### ⚠️ The commercial cut is CLASS-1-ONLY, and that is forced (audited 2026-08-30)
+
+`COMMERCIAL_CLASSES` tests the **first** assessment class only. A parcel can
+carry three: on the current roll **1,094 parcels / $9.06B have a class 2**, so
+some parcels counted as wholly commercial are not (439 parcels, $3.37B, with
+`% 1 < 100`) and some with a real commercial component count as zero (127
+parcels, $492M).
+
+**The error nearly cancels citywide — 22.10% against 22.21% apportioned, −0.50%
+— but it does not cancel per hood**, and this metric is per hood: **max 6.5
+percentage points, 23 hoods over 1 pp, 3 over 5 pp** (worst: EDMONTON SOUTH
+CENTRAL EAST −6.54, UNIVERSITY OF ALBERTA FARM +6.33).
+
+⚠️ **Do NOT "fix" this by apportioning the live half.** `qi6a-xuwt` publishes
+`mill_class_1` and `tax_class_pct_1` only — **no class 2 or 3** — so the archive
+half cannot be apportioned at all. Apportioning one side of a spliced series
+makes the two halves mean different things, which is a worse error than the
+bounded one it removes. The cut is class-1-only *because* the splice has to be
+consistent, not because the finer data was overlooked.
+
+`data/DATA.md` §470 records the same split-class limit for the levy pipeline
+(~0.25% of rows); measurements and verdict in `docs/AUDIT_LEDGER.md` 2026-08-30.
+
 ---
 
 ## 4. Phase 0 — THE DATA GATE (blocking)
