@@ -243,6 +243,29 @@ things.**
 split is DERIVED from category mix rather than a name list, `DECISIONS.md`
 2026-08-16.)
 
+**✅ SWEPT 2026-08-30 — the three remaining sets do NOT carry the defect.**
+`load_zoning` PASS (`frac_other`/`rev_frac_other` are 0.0000 across all 406
+hoods — every served zone code classifies); `load_water.HOUSEHOLD_CLASSES` PASS
+(only `FARMLAND`, 512 parcels / 0.12%, is household-like and excluded, per the
+residential-only lock); `load_temporal.COMMERCIAL_CLASSES` **WARN** — bounded and
+forced. Verdicts + measurements: `AUDIT_LEDGER.md` 2026-08-30. **Do not re-run
+the sweep; two follow-ups are open in `TODO.md`.**
+
+⚠️ **Two method lessons from that run, both worth applying to the next T8:**
+
+- **Audit the ACTUAL numerator, never a proxy for it.** A parcel-level cross-tab
+  on `Property_Info.zoning` put **$36.8B** in the unmatched bucket. That number
+  was wrong: the metric reads `zoning.geojson`, a different code vocabulary, and
+  measuring on the served columns showed the true figure is **zero**. The proxy
+  was more convenient and more available, which is exactly why it was reached
+  for.
+- **The defect has a second shape: overlapping membership, not just mislabelled
+  members.** 2026-08-18 was "two strings for one thing". `COMMERCIAL_CLASSES` is
+  the mirror — one *parcel* in two classes at once (1,094 parcels carry a class
+  2), so an enumeration that partitions the STRINGS still cannot partition the
+  THINGS. Same shape as the `rev_frac_exempt` finding (2026-08-29). Ask both
+  questions.
+
 ---
 
 ## 4. Completeness pass
