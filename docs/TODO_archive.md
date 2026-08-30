@@ -1947,3 +1947,54 @@ produces a readout", not "a tap opens the card".
   Rejected once already: warn-only inside a green run, which reaches nobody.
 
 **Outcome (2026-08-27, PR #258):** wired, and **no CI change was needed** — the digest already runs `vintage_report.py` and already folds ⚠️ into the issue title, so it is a check function plus a `CHECKS` entry (membership IS the wiring, and a test pins it). Reuses `filed_bases()`/`detect_year()`/`archived_residential_bases()` so the digest and the standalone guard cannot disagree. Reads only committed files, so it cannot fail on the network. Two deliberate reporting choices: a year outside `fir_tax_base.json` is named NOT CHECKED and never counted as passing, and a green over ONE archived year carries its own thin-population caveat. ⚠️ **A false alarm was found in the same file and fixed**: `check_assessment_roll` compared the coverage string to our pin itself, bypassing `check_alignment()`'s 2026-08-25 stale-metadata downgrade, and would have reported "Roll has moved to 2025, pin is still 2026" every month starting 2026-09-01 — recorded as issue 1's THIRD consequence (`docs/DATA_ISSUES.md`, PR #259).
+
+---
+
+- [x] **CLOSED 2026-08-30 — the 15 hardcoded activity-window labels now read from
+  one constant, and drift fails the build.** Audit F4, opened 2026-08-28.
+
+  Original item:
+  - `FIRE_YEARS` / `PERMIT_YEARS` / `PERMIT_YEARS_RECENT` are restated as
+    literals across 15 user-facing sites in `web/index.html` (`DEV_WINDOW_LABEL`
+    alone feeds 5 render sites). **All correct today** — only because the
+    project is younger than one year-roll.
+  - Step 4 bumps the pins and re-runs the deflator, and says the drift guard
+    means a stale pin "can't be missed silently". **True of the pin, false of
+    all 15 strings.**
+  - ⚠️ **This is the `(2024 n/a)` defect (S122) at 15×**, with the same tell:
+    correctly-derived copy sits beside it (the vintage footer reads
+    `status.json`).
+  - **Not a one-line fix:** `status.json` carries no activity window, so the
+    browser cannot derive these. Closing it means `generate_status.py`
+    publishing the three windows — an **output-schema change**, propose-first.
+    ⚠️ **Do not ship the cheap partial alone** (a RUNBOOK line + a test pinning
+    label against pin) without deciding: a half-fix that makes step 4 *look*
+    complete is its own hazard.
+
+**Outcome:** closed the other way round from what the item proposed. The
+`status.json` route was **rejected on measurement, not cost** — the manifest is
+fetched async and lands after first render (`web/index.html`, the STATUS_URL
+fetch), so every label would still need a literal fallback and the fix would
+have created **two** sources of truth rather than removing one.
+
+Shipped instead: a single `WINDOWS` block in the tunables, `${WIN.<key>}` at
+every JS site and `{{<key>}}` placeholders in the seven static tooltips,
+substituted at parse time. `tests/test_window_labels.py` (4 tests) asserts
+`WINDOWS` equals `main.py`'s pins, that both change windows end at
+`ASSESSMENT_YEAR`, that no user-facing string spells a range out, and that every
+placeholder names a real key. RUNBOOK §1 step 4 now names the second edit.
+
+⚠️ **Scope grew by one lens on Peter's call**: `CHG_WINDOW_LABEL` /
+`CHG_WINDOWS` (2012–2026 / 2019–2026) carry the same defect on a different pin
+and were folded in. Their ends stay PINNED rather than read off `temporal.json`
+— the 2026-08-27 phantom-year decision — and the comment saying so was kept and
+amended rather than deleted.
+
+⚠️ **The four remaining literals in the file are comments**, one describing an
+unrelated ASTER window that happens to share a range; the guard strips comments
+for that reason. The other three were reworded to stop restating years.
+
+Verified: mutation (a stale pin and a reintroduced literal each fail the guard),
+760 tests, and the live page — all six ranges render byte-identical to before,
+no unsubstituted token, no page error. Full reasoning: `docs/DECISIONS.md`
+2026-08-30.

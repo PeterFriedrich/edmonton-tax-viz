@@ -245,6 +245,14 @@ time.
    window) needs NO edit** — it is DERIVED from `PERMIT_YEARS`' last year
    (`range(2009, PERMIT_YEARS[-1] + 1)`), so bumping `PERMIT_YEARS` extends it
    automatically; its 2009 start never moves.
+   - ⚠️ **THEN bump `WINDOWS` in `web/index.html` to match (added 2026-08-30).**
+     The pins drive the numbers; `WINDOWS` drives every year range the reader
+     *sees* — tooltips, legend, chart titles, blurbs. The drift guard protects
+     the pin and says nothing about the copy, which is how ~15 labels came to
+     be scheduled to go quietly wrong at this step (audit F4). Also bump
+     `chgLong`/`chgShort` if `ASSESSMENT_YEAR` moved in step 1.
+     `tests/test_window_labels.py` fails until they agree, so this one *is*
+     caught — but fix it here rather than reading it off a red build.
    - ⚠️ **BUT the construction-price deflator DOES need a re-run (added
      2026-08-18).** Extending the windows pulls a new permit year in, and
      `export_dev_grid` **hard-fails** on a permit year with no deflator (by
