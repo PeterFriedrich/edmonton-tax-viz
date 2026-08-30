@@ -163,14 +163,19 @@ Services carries no sparkline — measured, it does.)_
     2012–2025 as `10095840` (~$200–260M, WEST MEADOWLARK PARK), renumbered to
     `11495573`, **absent from `q7d6-ambg` until 2026-08-03**. The map understated
     that neighbourhood by **~$250M** for the duration, and nothing flagged it.
-  - **The unproven part:** `tools/audit_roll_continuity.py` (run 2026-08-07 vs
-    historical 2024) finds **1,534 of 426,913 parcels — 0.36%, $1.62B** with no
-    current match, by POSITION (coordinates moved <2 m across the hospital
-    renumbering, while all three identifiers churned).
-  - ⚠️ **Those 1,534 are candidates, NOT verdicts.** Demolitions, subdivisions
-    and consolidations are indistinguishable from a dropout from the outside.
-    **The whole job is separating them** — that is what makes this unreportable
-    today, not the measurement.
+  - **The unproven part:** `tools/audit_roll_continuity.py` (re-run 2026-08-30 vs
+    historical 2024) finds **1,457 of 426,913 parcels — 0.34%, $1.07B** with no
+    current match, by POSITION (all three identifiers churn, so none can match).
+  - ⚠️ **THIS REPLACES 1,534 / $1.62B, re-measured 2026-08-30.** Of 1,578
+    position-unmatched parcels, **121 ($592M — 35.6% of the value) are still on
+    the roll under the same account number**, recentroided past the 5 m
+    tolerance. **The three largest cases the backlog named for three weeks were
+    never missing.** Detail + the do-not-widen-the-tolerance warning are on the
+    long item further down; don't re-derive them here.
+  - ⚠️ **Those 1,457 are candidates, NOT verdicts, and an upper bound.**
+    Demolitions, subdivisions and consolidations are indistinguishable from a
+    dropout from the outside. **The whole job is separating them** — that is what
+    makes this unreportable today, not the measurement.
   - ⚠️ **Do NOT treat identifier churn as the defect.** Renumbering runs
     0.15%–0.37%/yr routinely; `data/DATA.md` states outright that a vanished
     account number is not by itself a finding. The defect is a property absent
@@ -182,8 +187,12 @@ Services carries no sparkline — measured, it does.)_
   - **Done looks like:** a standalone notebook in the house pattern — live
     sources only, figures recomputed at run time, invariants asserted, rendered
     to `web/notebooks/` and added to that folder's hand-written `index.html`.
-    ⚠️ Re-measure first: the 1,534 is against historical 2024 as of 2026-08-07
-    and the roll has since moved to 2026.
+    ✅ The re-measure this used to ask for is **done (2026-08-30)** and the
+    per-parcel baseline is committed at
+    `data/roll_continuity_candidates_2026-08-30.csv`. ⚠️ **What is still missing
+    is the transient/permanent split** — that needs one more observation diffed
+    against that file, and it is the only thing that would make a notebook worth
+    writing. A notebook on today's figures would publish an upper bound.
 
 - [ ] **PETER'S CALL — the amenity bands are FIXED at 600 m / 800 m
   (`AMENITY_BANDS` in `web/index.html`).** Built and live behind the weekly
@@ -1031,13 +1040,24 @@ Services carries no sparkline — measured, it does.)_
     assessed value; the residential +1.2% / $1.90B residual; and the 4% of the
     non-res gap outside the five zones.
 
-- [ ] **▶ WHO IS MISSING FROM THE CURRENT ROLL RIGHT NOW? — 1,534 parcels /
-  $1.62B with no current-roll match.** Opened 2026-08-07 from
+- [ ] **▶ WHO IS MISSING FROM THE CURRENT ROLL RIGHT NOW? — 1,457 parcels /
+  $1.07B with no current-roll match.** Opened 2026-08-07 from
   `tools/audit_roll_continuity.py` (historical 2024 vs the live roll, matched by
   **position** within 5 m so renumbering / re-addressing / hood renames do not
-  register). 216 of them are over $1M, totalling **$1.40B**. Largest: MILL WOODS
-  TOWN CENTRE `9980213` $69.0M, YELLOWHEAD CORRIDOR WEST `10275721` $60.5M,
-  SOUTHEAST INDUSTRIAL `9985679` $53.5M.
+  register). 168 of them are over $1M, totalling **$856M**. Largest: EDMONTON
+  SOUTH CENTRAL `10884618` $38.4M, WOODCROFT `1012137` $37.7M, GRANVILLE
+  `10501062` $33.8M.
+  - ⚠️ **THESE FIGURES REPLACE 1,534 / $1.62B — AND SO DO THE EXAMPLES.**
+    Re-measured 2026-08-30 (second observation, below). **The three parcels this
+    item used to name as its largest cases — MILL WOODS TOWN CENTRE `9980213`
+    $69.0M, YELLOWHEAD CORRIDOR WEST `10275721` $60.5M, SOUTHEAST INDUSTRIAL
+    `9985679` $53.5M — were never missing.** All three sit on the current roll
+    under their original account numbers. Do not cite them.
+  - **The per-parcel list is now committed** —
+    `data/roll_continuity_candidates_2026-08-30.csv` (1,578 rows, `acquitted`
+    column). ⚠️ **Diff the next run against this file**, and pass `--out`; the
+    reason this item stalled three times is that only the headline count ever
+    survived a run.
   - **Why it matters:** every one of these is a potential Misericordia — a
     property still assessed but absent from the published current roll, whose
     neighbourhood is **understated on the live map** for as long as the gap
@@ -1051,15 +1071,39 @@ Services carries no sparkline — measured, it does.)_
     reappears was a transient gap (and its hood was understated meanwhile);
     anything still absent months later is a real removal. Nothing else about
     this item can be settled without that second observation.
-  - ⚠️ **ATTEMPTED 2026-08-09 — NO SECOND OBSERVATION EXISTS YET, and the gate is
-    NOT elapsed time.** `q7d6-ambg`'s published roll is **byte-identical**
-    between 2026-08-07 and 2026-08-09 (md5 `8bd57af7fe4a63268fe538d91d6b9d5a`,
-    **439,631** rows). The City has not republished it, so the audit is
-    guaranteed to return the same 1,534 / $1.62B no matter how often it runs.
-    **The gate is the CITY REPUBLISHING THE ROLL, not the calendar.**
+  - ✅ **SECOND OBSERVATION DONE 2026-08-30** (first attempted 2026-08-09, when
+    the roll had not moved). Roll republished: **439,634** rows against the
+    439,631 baseline — **+3 net**, yet the candidate set moved by 44, so a tiny
+    row delta hides real churn. ⚠️ **Do not use the row count to decide the
+    answer can't have changed** — only to decide whether the source moved at all.
+    - **What the diff CANNOT say:** nothing persisted the 2026-08-07 per-parcel
+      list, so transient-vs-permanent is still unseparated. Fixed forward — the
+      list is committed now.
+  - ⚠️ **THE BIG FINDING IS A FALSE-POSITIVE CLASS, NOT THE DELTA.** Position
+    matched 1,578 as unmatched; **121 of them ($592M — 35.6% of the value at
+    risk) carry an account number still on the current roll.** They never left,
+    they were recentroided past the 5 m tolerance. Verified against account
+    reuse: 121/121 resolve to a plausible same-property current record (104
+    identical hood, 17 boundary/rename churn like `CHAPPELLE` → `CHAPPELLE
+    AREA`). The tool now runs an **acquittal pass**.
+    - ⚠️ **DO NOT WIDEN `--tolerance-m` TO "FIX" THIS.** The acquitted moved a
+      **median 58 m, max 559 m**; at 25 m only 30 of 121 come back, and a
+      tolerance that wide starts matching the *neighbouring* parcel — trading a
+      visible false positive for a silent false negative. The 5 m figure came
+      from a **four-hospital sample** (0.6–1.6 m) that does not generalize to
+      large commercial parcels.
+    - **Why an identifier is allowed here** after `DECISIONS.md` 2026-08-07 said
+      never to match on one: matching **on** an identifier creates false
+      negatives (they all churn), but using one only to **acquit** can only
+      remove false positives. The asymmetry is the licence.
+  - ⚠️ **$1.07B IS STILL AN UPPER BOUND.** A parcel that both renumbered *and*
+    recentroided past 5 m is a false positive the acquittal cannot see. Every one
+    of the 1,457 has *some* current parcel within 427 m (median 36 m), so
+    distance alone acquits no more of them.
+  - **Running it again:**
     - **Readiness test before spending a run:** fetch the current roll and
-      compare its row count and md5 to the baseline above. Same hash → do not
-      bother; the answer cannot have changed.
+      compare its row count to the baseline. Identical → the source has not
+      moved and the answer cannot have changed.
     - ⚠️ **`--cache-dir` DEFAULTS TO `/tmp/roll_continuity` AND A WARM CACHE
       MAKES THE "RE-RUN" A REPLAY.** The first 2026-08-09 attempt reproduced
       1,534 / $1.62B off 45-hour-old files and read as a real null result. The
@@ -1072,10 +1116,17 @@ Services carries no sparkline — measured, it does.)_
       **439,631** — the roll *shrank* by 54 accounts. Irrelevant to this tool,
       which fetches from Socrata directly, but it means a local
       `download_data.py` does **nothing** for this item. Do not repeat that.
-  - ⚠️ **Do not report this upstream yet.** 0.36% of parcels is within the range
-    ordinary demolition/subdivision could explain, and we have **no baseline for
-    how much of it is normal** — unlike the `qi6a-xuwt` gap, which was measured
-    against a control. Get the second run first.
+  - ⚠️ **Do not report this upstream yet — and the second run STRENGTHENED that.**
+    0.34% of parcels is within the range ordinary demolition/subdivision could
+    explain, and we still have **no baseline for how much of it is normal** —
+    unlike the `qi6a-xuwt` gap, which was measured against a control. A report
+    sent on 2026-08-07's figures would have named three parcels that were on the
+    roll the whole time.
+  - **What would actually settle it, now that a baseline list exists:** diff the
+    next observation against `data/roll_continuity_candidates_2026-08-30.csv`.
+    A candidate that has reappeared was a transient gap (and its hood was
+    understated meanwhile); one still absent months later is a real removal.
+    That split is the reportable finding — the raw count never was.
   - ⚠️ **Do NOT "fix" this by dropping the parcels.** We apply published rates to
     the published roll; silently excluding records the City published is the
     exact silent-correctness failure the guards exist to prevent.
@@ -1097,8 +1148,12 @@ Services carries no sparkline — measured, it does.)_
   - **What argues against:** it adds a **second issue-filing channel** on top of
     `revenue-delta`, and ⚠️ **the audit itself cannot separate a transient
     renumber gap from a permanent removal in one run** — so a CI version would
-    file issues it cannot adjudicate. **Settle the 1,534-parcel item above
-    first**; its second run is what tells us the base rate.
+    file issues it cannot adjudicate. **Settle the 1,457-parcel item above
+    first**; a diff against its committed baseline is what tells us the base
+    rate. ⚠️ **The 2026-08-30 run sharpened this argument, not softened it:** a
+    third of the value it reported was parcels that never left the roll, so a CI
+    version wired up before the false-positive class was understood would have
+    filed issues about parcels sitting on the roll the whole time.
   - If built, it must follow the existing guard's shape: **warn-not-fail, always
     exit 0, run BEFORE the commit step** or its baseline becomes the new data.
 

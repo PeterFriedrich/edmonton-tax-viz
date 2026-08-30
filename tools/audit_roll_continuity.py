@@ -33,13 +33,44 @@ Cross Cancer 0.6m). So this matches historical parcels to current ones
 genuinely immutable. It exists ONLY in the historical roll, not in ``q7d6-ambg``,
 so it cannot join the two. Noted so nobody re-derives that dead end.)
 
+⚠️ POSITION IS STABLE ENOUGH TO MATCH, BUT NOT STABLE ENOUGH TO CONVICT
+(measured 2026-08-30). The <2m figure above is a four-hospital sample and it does
+NOT generalize: of the parcels this audit reported as unmatched, **121 carry an
+account number that is still on the current roll** — they never left, they were
+just recentroided past the tolerance. They moved a **median 58m, up to 559m**, so
+no tolerance that would catch them is safe (at 25m only 30 of 121 come back, and
+a 58m tolerance starts matching the neighbouring parcel instead). ⚠️ **Do not
+"fix" this by widening ``--tolerance-m``** — that trades a visible false positive
+for a silent false negative, which is the worse of the two here.
+
+The fix is an ACQUITTAL PASS, and its asymmetry is the whole point:
+
+  * matching **on** an identifier creates FALSE NEGATIVES, because every
+    identifier churns — that is why position leads and why it always will.
+  * using an identifier only to **acquit** can only ever remove false positives.
+    A parcel whose account number is on the current roll IS on the current roll,
+    whatever its coordinates say. It cannot manufacture a dropout.
+
+So: match by position, then acquit by ``account_number``. Verified against
+reuse — 121/121 acquitted parcels resolve to a plausible same-property current
+record (104 identical neighbourhood, 17 boundary/rename churn such as
+``CHAPPELLE`` -> ``CHAPPELLE AREA``), so an account number is not being recycled
+onto an unrelated property.
+
 ⚠️ WHAT THIS PRODUCES IS CANDIDATES, NOT VERDICTS. A demolished parcel, a
 subdivision, or a consolidation legitimately has no 1:1 successor and will be
-flagged. A single run also cannot distinguish a transient renumber gap from a
+flagged. And the residual is still an UPPER BOUND: a parcel that both renumbered
+*and* recentroided past the tolerance is a false positive the acquittal cannot
+see. A single run also cannot distinguish a transient renumber gap from a
 permanent removal — that needs two runs separated in time. Read the output as
 "these are worth a look", the same contract as ``check_revenue_deltas.py``.
 
-Reproduce:  .venv/bin/python tools/audit_roll_continuity.py
+⚠️ **PASS ``--out`` EVERY TIME.** The prescribed next step for this audit has
+always been *re-run it and diff*, and that failed three times because nothing
+persisted the per-parcel list — only the headline count survived, so the second
+observation could compare two numbers and nothing else.
+
+Reproduce:  .venv/bin/python tools/audit_roll_continuity.py --out candidates.csv
             .venv/bin/python tools/audit_roll_continuity.py --year 2023 --tolerance-m 10
 """
 
@@ -62,9 +93,17 @@ CURRENT = "https://data.edmonton.ca/resource/q7d6-ambg.json"
 # Same projected CRS the pipeline uses for all distance/area math (src/*.py).
 METRIC_CRS = "EPSG:3400"
 
-# Default comparison year: the most recent COMPLETE historical slice. 2025 is
-# excluded on purpose — SPEC_temporal.md §0 documents that slice as proven
-# incomplete, and comparing against it would manufacture dropouts.
+# Default comparison year. ⚠️ 2024 is NOT a complete slice — this comment used to
+# claim it was, and SPEC_temporal.md §0.1 says the opposite: 2024 is where the
+# historical file's defect BEGINS (2,322 accounts, 0.54%), and §0.2 calls it the
+# only irreparable year. 2023 is the most recent sound slice.
+#
+# 2024 is still the right default here, for a reason worth stating: its 2,322
+# missing accounts are missing from the HISTORICAL side, so they are never tested
+# and cannot become dropouts (detector B confirmed 2,317 of them are on the
+# current roll). The defect costs this audit 0.54% of coverage, not accuracy —
+# and 2024 is one year closer to the current roll than 2023, so it accumulates
+# one year less ordinary demolition and subdivision.
 DEFAULT_YEAR = 2024
 
 PAGE = 50_000
@@ -147,6 +186,17 @@ def unmatched(historical: gpd.GeoDataFrame, current: gpd.GeoDataFrame,
     return joined[joined["index_right"].isna()].drop(columns=["index_right", "_dist"])
 
 
+def acquit(gone: gpd.GeoDataFrame, current: pd.DataFrame) -> pd.Series:
+    """Which position-unmatched parcels are still on the roll under the same account?
+
+    Returns a boolean Series aligned to ``gone``. See the module docstring for why
+    an identifier may acquit here but must never match: acquitting can only remove
+    false positives, so it cannot manufacture the dropout this audit reports.
+    """
+    on_roll = set(current["account_number"].astype(str))
+    return gone["account_number"].astype(str).isin(on_roll)
+
+
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
@@ -159,6 +209,11 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--min-value", type=float, default=0.0,
                    help="only report parcels assessed above this (default 0 = all)")
     p.add_argument("--top", type=int, default=25)
+    p.add_argument("--out", type=pathlib.Path,
+                   help="write the per-parcel candidate list here as CSV, with an "
+                        "`acquitted` column. ⚠️ PASS THIS — without it only the "
+                        "headline count survives the run and the next observation "
+                        "has nothing to diff against (it has failed that way 3×)")
     p.add_argument("--cache-dir", type=pathlib.Path, default=pathlib.Path("/tmp/roll_continuity"))
     p.add_argument("--log-level", default="INFO")
     args = p.parse_args(argv)
@@ -189,35 +244,54 @@ def main(argv: list[str] | None = None) -> int:
     gone = unmatched(hist, cur, args.tolerance_m)
     if args.min_value:
         gone = gone[gone["assessed_value"] >= args.min_value]
+    gone = gone.assign(acquitted=acquit(gone, cur_raw))
+    residual = gone[~gone["acquitted"]]
 
     total_val = hist["assessed_value"].sum()
     gone_val = gone["assessed_value"].sum()
+    acq_val = gone.loc[gone["acquitted"], "assessed_value"].sum()
+    res_val = residual["assessed_value"].sum()
     print(f"\n=== ROLL CONTINUITY: historical {args.year} vs the live current roll ===")
     print(f"matched within {args.tolerance_m:.0f} m; position-based, so renumbering, "
           f"re-addressing and hood renames do NOT register")
     print(f"\n  historical {args.year}:  {len(hist):>7,} located parcels  ${total_val:>16,.0f}")
-    print(f"  no current match:  {len(gone):>7,} parcels ({len(gone)/len(hist)*100:.2f}%)"
+    print(f"  no position match: {len(gone):>7,} parcels ({len(gone)/len(hist)*100:.2f}%)"
           f"  ${gone_val:>16,.0f} ({gone_val/total_val*100:.2f}%)")
+    print(f"    of which ACQUITTED (account still on the roll — never left, just "
+          f"moved):\n{'':21}{gone['acquitted'].sum():>7,} parcels{'':16}${acq_val:>16,.0f}")
+    print(f"  CANDIDATES:        {len(residual):>7,} parcels "
+          f"({len(residual)/len(hist)*100:.2f}%)  ${res_val:>16,.0f} "
+          f"({res_val/total_val*100:.2f}%)")
 
-    if gone.empty:
-        print("\n  Nothing unmatched. The current roll covers every located historical parcel.")
+    if args.out:
+        gone.drop(columns="geometry").to_csv(args.out, index=False)
+        print(f"\n  per-parcel list -> {args.out}  (diff this against the next run)")
+    else:
+        logger.warning("No --out given: this run leaves nothing for the next "
+                       "observation to diff against.")
+
+    if residual.empty:
+        print("\n  No candidates. The current roll accounts for every located "
+              f"historical {args.year} parcel.")
         return 0
 
-    print(f"\n--- largest unmatched parcels (top {args.top}) ---")
+    print(f"\n--- largest candidates (top {args.top}, acquitted excluded) ---")
     cols = ["account_number", "house_number", "street_name", "neighbourhood_name", "assessed_value"]
-    top = gone.nlargest(args.top, "assessed_value")[cols]
+    top = residual.nlargest(args.top, "assessed_value")[cols]
     print(top.to_string(index=False, formatters={"assessed_value": lambda v: f"${v:,.0f}"}))
 
     print("\n--- by neighbourhood, by value at risk ---")
-    by_hood = (gone.groupby("neighbourhood_name")["assessed_value"]
+    by_hood = (residual.groupby("neighbourhood_name")["assessed_value"]
                .agg(parcels="size", value="sum").nlargest(15, "value"))
     for hood, row in by_hood.iterrows():
         print(f"  {str(hood):32s} {int(row.parcels):>6,} parcels  ${row.value:>15,.0f}")
 
-    print("\n⚠️ CANDIDATES, NOT VERDICTS. Demolitions, subdivisions and "
-          "consolidations legitimately have no 1:1 successor and appear here. A "
-          "single run cannot tell a transient renumber gap from a permanent "
-          "removal — re-run later and compare.")
+    print("\n⚠️ CANDIDATES, NOT VERDICTS, and an UPPER BOUND. Demolitions, "
+          "subdivisions and consolidations legitimately have no 1:1 successor and "
+          "appear here, and a parcel that both renumbered AND recentroided past "
+          "the tolerance is a false positive the acquittal cannot see. A single "
+          "run cannot tell a transient renumber gap from a permanent removal — "
+          "re-run later and diff the --out files.")
     return 0
 
 

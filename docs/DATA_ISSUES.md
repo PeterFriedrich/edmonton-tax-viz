@@ -349,14 +349,25 @@ during which the map understated that neighbourhood by **~$250M**. All four
 major hospitals moved into a new `114955xx` block at the 2025 roll, and the old
 numbers appear in **no year** of `qi6a-xuwt`.
 
-`tools/audit_roll_continuity.py` (run 2026-08-07 against historical 2024) finds
-**1,534 of 426,913 parcels — 0.36%, $1.62B assessed** — with no current match,
-by position rather than by any of the three churning identifiers (across the
-hospital renumbering the coordinates moved **under 2 m**).
+`tools/audit_roll_continuity.py` (re-run 2026-08-30 against historical 2024)
+finds **1,457 of 426,913 parcels — 0.34%, $1.07B assessed** — with no current
+match, by position rather than by any of the three churning identifiers.
 
-⚠️ **Those 1,534 are candidates, not verdicts** — demolitions, subdivisions and
-consolidations look identical to a dropout from the outside. That is exactly
-what makes this unreportable today: we cannot yet say how many are real.
+⚠️ **This supersedes the 1,534 / $1.62B figure carried here from 2026-08-07.**
+Position matched 1,578 as unmatched, but **121 of them ($592M — 35.6% of the
+value) are still on the roll under the same account number**: recentroided past
+the 5 m tolerance, not missing. The <2 m drift the tolerance was built on is a
+four-hospital sample that does not generalize — these moved a median 58 m, up to
+559 m. The tool now acquits them, and ⚠️ **widening the tolerance is the wrong
+remedy**: it would trade a visible false positive for a silent false negative.
+
+⚠️ **Those 1,457 are candidates, not verdicts, and the figure is an upper
+bound** — demolitions, subdivisions and consolidations look identical to a
+dropout from the outside, and a parcel that both renumbered *and* moved past the
+tolerance is a false positive nothing here can see. That is exactly what makes
+this unreportable today: we cannot yet say how many are real. The per-parcel
+list is committed at `data/roll_continuity_candidates_2026-08-30.csv` so the
+next observation can be diffed against it rather than compared as a bare count.
 
 Same dataset as issue 1, so if it firms up it could ride along in that report
 rather than needing its own.
