@@ -133,6 +133,60 @@ available, nobody pays it at boot, and `median_year_built` is a column where
 scale-invariant rounding is actively wrong. Do not re-open without reading the
 2026-08-09 decision.
 
+## Boot time is a THIRD budget, and it is neither frames nor bytes (2026-08-30)
+
+Prompted by Peter: *"why is mobile super fast to load, but desktop is not"*.
+Measured against a local server on an idle box, median of 5 runs per profile,
+Playwright device emulation.
+
+**The answer is that the page has no device-dependent load path at all, and the
+load is not network-bound either.**
+
+| | desktop 1440×900 | mobile (Pixel 5) |
+|---|---|---|
+| loading overlay hidden | 5,722 ms | 5,841 ms |
+| first contentful paint | 236 ms | 248 ms |
+| requests / bytes | 10 / 3.56 MB | 10 / 3.56 MB |
+
+Identical, with emulated mobile marginally **slower**. The three `matchMedia`
+calls in `web/index.html` gate chrome only — a bottom-sheet position, a blurb
+placement, a folded panel. **No fetch is gated on viewport**, and the lazy `??=`
+memoization above means the boot set is the same everywhere.
+
+⚠️ **Every byte is on the page by ~600 ms.** Vendor JS lands at 37 ms, the hood
+GeoJSON at 240 ms, reference/temporal/status by 600. **The remaining 5–9 seconds
+is GPU work, not download and not application JS**: a CDP CPU profile of the
+whole boot attributes **94.6% of samples to `(program)`** — native/GL time — and
+the highest real JS frame is deck.gl's `_getLinkStatus`, i.e. **shader program
+linking**. Application code does not appear.
+
+**So a "slow load" report is a driver question first.** A phone always gets
+hardware WebGL; a desktop Chrome that has fallen back to software rendering does
+not, and it will lose to a phone on precisely this workload — which is the only
+shape of explanation that fits an otherwise backwards symptom. Check
+`chrome://gpu` (**WebGL / WebGL2**: *Hardware accelerated* vs *Software only*)
+before touching the page. Usual causes: hardware acceleration disabled in
+settings, a blocklisted or stale driver, a VM or remote-desktop session.
+
+⚠️ **Two limits on the numbers above, both load-bearing:**
+
+- **This box has no GPU.** Its renderer is `ANGLE (… SwiftShader driver)`, so
+  5.7 s is a *software-GL* figure and is not what anyone's desktop sees. It is
+  valid for A/B comparison (§How to profile, harness 1) and worthless as an
+  absolute.
+- **Emulation shares the host GPU.** Playwright's mobile profile changes
+  viewport, DPR, touch and UA — nothing else. That is exactly why this test can
+  prove **no code branch** explains a device gap, and can prove **nothing** about
+  hardware. Do not use it to argue a device is fast or slow.
+
+**If the shader-link cost ever needs reducing**, the lever is the number of
+distinct **layer types** in the boot stack, not the data volume —
+`buildLayers()` returns `referenceUnderLayers() + buildViewLayers() +
+referenceOverLayers()` in one shot, and each distinct layer class costs its own
+program compile. Vertex count (the lever for §Findings) does **not** help here.
+
+---
+
 ## Rules of thumb
 
 1. **No `wireframe: true`** on extruded layers at this polygon count.
@@ -142,3 +196,7 @@ scale-invariant rounding is actively wrong. Do not re-open without reading the
 4. **Judge on the iGPU baseline,** not a discrete GPU.
 5. **Confirm the *feel* on a real GPU** (DevTools Performance) before declaring a
    perf change done — the headless harness only points at the suspect.
+6. **A "slow load" is a GPU question until proven otherwise.** Boot is ~600 ms of
+   network and seconds of shader link; check `chrome://gpu` before profiling the
+   page. And ⚠️ **never conclude a device difference from emulation** — it shares
+   the host GPU (2026-08-30).

@@ -6,6 +6,15 @@ render) vs **NEEDS CONFIRMATION** (plausible but unverified — do NOT act on th
 as fact; the last two sessions both burned time on unchecked premises). Update
 the split as items get verified.
 
+⚠️ **CONFIRMED 2026-08-30 — LOAD TIME IS NOT ONE OF THE THINGS THAT DIFFERS.**
+Desktop and mobile fetch the same 10 resources and the same 3.56 MB; no fetch is
+gated on viewport, and emulated mobile measured marginally *slower*. Boot is
+~600 ms of network and then seconds of **shader linking**, so a device gap in
+load speed is a GPU/driver difference, not a page one. Full measurements and the
+two limits on them: `docs/PERFORMANCE.md` "Boot time is a THIRD budget". **Do not
+open a mobile-vs-desktop performance item without checking `chrome://gpu`
+first.**
+
 ---
 
 ## 1. Architecture: what can be separated, what can't
