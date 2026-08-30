@@ -25,7 +25,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tools"))
 
-from audit_roll_continuity import to_points, unmatched  # noqa: E402
+from audit_roll_continuity import acquit, to_points, unmatched  # noqa: E402
 
 # Misericordia, historical vs current. ~0.7m apart across the renumbering.
 MISERICORDIA_HIST = (53.52170884084244, -113.61159282909364)
@@ -87,6 +87,48 @@ def test_rows_without_coordinates_are_dropped_not_matched():
                  "street_name": "Y", "neighbourhood_name": "H"}
     pts = to_points(df)
     assert list(pts["account_number"]) == ["A"]
+
+
+def test_a_recentroided_parcel_is_acquitted_not_reported():
+    """The 2026-08-30 finding: still on the roll, same account, moved past 5m.
+
+    MILL WOODS TOWN CENTRE 9980213 moved 14.3m and was reported as a dropout for
+    three weeks while sitting on the roll the whole time.
+    """
+    hist = to_points(_roll(("9980213", 53.5, -113.5, 68_964_000)))
+    cur = to_points(_roll(("9980213", 53.500129, -113.5, 66_263_000)))   # ~14.3m
+    gone = unmatched(hist, cur, 5.0)
+    assert len(gone) == 1, "position alone must still flag it — that is the input"
+    assert acquit(gone, cur).all()
+
+
+def test_acquittal_cannot_manufacture_a_dropout():
+    """Falsification. Acquitting is allowed to REMOVE candidates, never add one.
+
+    Misericordia renumbered, so its account is NOT on the current roll — the
+    acquittal must leave the position match alone rather than convicting it.
+    """
+    hist = to_points(_roll(("10095840", *MISERICORDIA_HIST, 250_236_500)))
+    cur = to_points(_roll(("11495573", *MISERICORDIA_CUR, 247_780_500)))
+    gone = unmatched(hist, cur, 5.0)
+    assert gone.empty
+    assert acquit(gone, cur).sum() == 0
+
+
+def test_a_truly_absent_parcel_survives_the_acquittal():
+    """A renumbered-and-gone parcel must not be acquitted by accident."""
+    hist = to_points(_roll(("10095840", *MISERICORDIA_HIST, 250_236_500)))
+    cur = to_points(_roll(("999", 53.6, -113.4, 1_000)))
+    gone = unmatched(hist, cur, 5.0)
+    assert not acquit(gone, cur).any()
+
+
+def test_acquittal_compares_account_numbers_as_strings():
+    """Socrata returns account numbers as text; a numeric read would miss matches."""
+    hist = to_points(_roll(("9980213", 53.5, -113.5, 1_000)))
+    cur = to_points(_roll(("9980213", 53.500129, -113.5, 1_000)))
+    cur["account_number"] = cur["account_number"].astype("int64")
+    assert acquit(unmatched(hist, cur, 5.0), cur).all()
 
 
 @pytest.mark.parametrize("value,expected", [("250236500", 250_236_500.0), ("", None)])
