@@ -60,6 +60,7 @@ has silently stopped running. Green months are the proof of life.
 | Temporal archive | the live year was never captured | §1 step 8 |
 | Archived years measure right | an ARCHIVED year's value measures as a DIFFERENT year's roll | see the ⚠️ below — a decision, not a re-run |
 | Capital budget | `data/capital_budget.csv` no longer matches upstream | §1a |
+| Unclassified zoning | a hood carries `frac_other > 0` — a zone code is missing from `ZONE_CATEGORY` | map it from the bylaw purpose statement, `data/DATA.md` §5 |
 | Site banner | a banner is up in `status.json` | §1 step 10 |
 
 ⚠️ **A network failure reports `❓ UNKNOWN`, never `⚠️ ACTION`** — same rule as

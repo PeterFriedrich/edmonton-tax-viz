@@ -644,9 +644,12 @@ per neighbourhood → drives the colour-scale set-aside. See `SPEC_revenue.md`
   Heritage Area and `MMS` Marquis Main Street are mixed (ground-floor retail +
   res/office above); `MED`/`AED` entertainment districts are commercial. Unknown
   codes now default to `other` (on scale, claimed as no specific use, flagged
-  loudly) instead of `nonres`; `frac_nonres` is kept as the sum of the four split
-  categories + `other` for continuity. `frac_other` = 0 on current data (all 95
-  codes mapped).
+  loudly) instead of `nonres`. `frac_other` = 0 on current data (all 95 codes
+  mapped). ⚠️ **There is no aggregate non-residential column.** `frac_nonres`
+  (com+ind+mix+dc+other) was removed 2026-08-31 — nothing consumed it and it
+  never reached the served GeoJSON, and it was the one place unclassified land
+  was asserted as a non-residential use. The monthly digest reports a non-zero
+  `frac_other` (`docs/RUNBOOK.md` §0) since a new bylaw code only WARNS.
 - **Refresh requirement:** re-pull each pipeline cycle so developing land (rezoned
   FD/AG → residential) graduates off the set-aside list automatically.
 

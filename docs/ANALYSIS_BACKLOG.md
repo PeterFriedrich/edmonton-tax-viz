@@ -50,7 +50,8 @@ mixed-use may deserve its own treatment rather than folding into `nonres`).
 
 **Approach — auto:**
 - Surface **top-N and bottom-N** by `revenue_per_acre` *and* `value_per_acre`, each
-  row annotated with: zoning composition (`frac_residential`/`frac_nonres`/`frac_inst`/
+  row annotated with: zoning composition (`frac_residential`/`frac_commercial`/`frac_industrial`/
+  `frac_mixed`/`frac_dc`/`frac_inst`/
   `set_aside_frac`), dominant zone code(s) + description, `is_set_aside`/`is_residential`,
   and a location signal (distance from centre / core-vs-outskirts).
 - Flag likely **mixed-use** hoods explicitly (MU/MUN/CMU/RMU and DC sites) — they're

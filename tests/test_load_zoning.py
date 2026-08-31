@@ -170,9 +170,26 @@ def test_commercial_hood_not_residential():
     result = _run(hood, zoning)
     row = result.iloc[0]
     assert row["frac_commercial"] == 1.0
-    assert row["frac_nonres"] == 1.0  # continuity: sum of the split categories
     assert row["frac_residential"] == 0.0
     assert bool(row["is_residential"]) is False
+
+
+def test_unclassified_land_is_not_folded_into_a_nonres_total():
+    """An unmatched code lands in `frac_other` and stays visible as its own share.
+
+    `frac_nonres` (com+ind+mix+dc+other) was removed 2026-08-31: it was the one
+    place `other` got asserted as a non-residential use, contradicting
+    `DEFAULT_CATEGORY`'s own comment, and nothing consumed it. This pins both
+    halves — the column is gone, and the unclassified share is still reported.
+    """
+    hood = _boundaries(["ODDBALL"], [_square(0, 0, 100)])
+    zoning = _zoning(["ZZZ"], [_square(0, 0, 100)])  # not in ZONE_CATEGORY
+    result = _run(hood, zoning)
+    row = result.iloc[0]
+    assert row["frac_other"] == 1.0
+    assert "frac_nonres" not in result.columns
+    assert row["frac_commercial"] == 0.0
+    assert row["frac_residential"] == 0.0
 
 
 # --- use-mix composition ---------------------------------------------------------
@@ -193,7 +210,6 @@ def test_composition_fractions_sum_to_one():
         "frac_commercial", "frac_industrial", "frac_mixed", "frac_dc", "frac_other",
     ]
     assert abs(sum(row[c] for c in frac_cols) - 1.0) < 1e-6
-    assert abs(row["frac_nonres"] - 0.75) < 1e-6
 
 
 def test_mixed_use_hood_composition():

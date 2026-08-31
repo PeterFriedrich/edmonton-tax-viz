@@ -338,3 +338,40 @@ def test_both_archive_checks_are_registered():
     """
     assert vr.check_temporal_archive in vr.CHECKS
     assert vr.check_temporal_archive_year in vr.CHECKS
+
+
+# --- unclassified zoning ----------------------------------------------------
+
+def _served(tmp_path, rows):
+    return _write(tmp_path, "served.geojson", {"features": [
+        {"properties": {"neighbourhood_name": n, "frac_other": v}} for n, v in rows]})
+
+
+def test_unclassified_zoning_ok_when_everything_classifies(tmp_path, monkeypatch):
+    monkeypatch.setattr(vr, "SERVED_GEOJSON",
+                        _served(tmp_path, [("A", 0.0), ("B", 0.0)]))
+    status, _, detail = vr.check_unclassified_zoning()
+    assert status == vr.OK
+    assert "2 hoods" in detail
+
+
+def test_unclassified_zoning_fires_and_names_the_worst(tmp_path, monkeypatch):
+    monkeypatch.setattr(vr, "SERVED_GEOJSON",
+                        _served(tmp_path, [("A", 0.0), ("B", 0.02), ("C", 0.31)]))
+    status, _, detail = vr.check_unclassified_zoning()
+    assert status == vr.ACTION
+    assert "1 of 3 hoods" not in detail and "2 of 3 hoods" in detail
+    assert detail.index("C 31.0%") < detail.index("B 2.0%")  # worst first
+    assert "ZONE_CATEGORY" in detail
+
+
+def test_unclassified_zoning_treats_missing_column_as_zero(tmp_path, monkeypatch):
+    """A pre-frac_other served file must not fire — absence is not a defect."""
+    monkeypatch.setattr(vr, "SERVED_GEOJSON", _write(
+        tmp_path, "served.geojson", {"features": [{"properties": {}}]}))
+    assert vr.check_unclassified_zoning()[0] == vr.OK
+
+
+def test_unclassified_zoning_check_is_registered():
+    """Membership IS the wiring — see test_both_archive_checks_are_registered."""
+    assert vr.check_unclassified_zoning in vr.CHECKS
