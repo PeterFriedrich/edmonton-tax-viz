@@ -244,15 +244,15 @@ Services carries no sparkline — measured, it does.)_
       the per-hood cost and why apportioning one half is worse than the error it
       removes; locked in `DECISIONS.md` the same day. **Nothing is open here —
       do not reopen it as a code change.**
-  - ⚠️ **LATENT — `other` is the unmatched bucket, and `NONRES_CATEGORIES`
-    counts it as non-residential.** **No zone code maps to `other` explicitly**;
-    it exists only as `DEFAULT_CATEGORY`. So `frac_nonres` = com+ind+mix+dc+*"we
-    could not classify it"*, which contradicts `DEFAULT_CATEGORY`'s own comment
-    (*"does NOT claim it as residential or any specific non-residential use"*).
-    Inert today because nothing is unmatched, and `frac_nonres` is not served —
-    but `_categorize` only **warns**, so the next zoning-bylaw code addition
-    turns unclassified land into "non-residential" with a log line and no
-    failure. ⚠️ **Decide before the next bylaw update**, not after.
+  - ✅ **CLOSED 2026-08-31 — the `other`-in-`frac_nonres` contradiction is gone,
+    resolved by DELETING the column.** Nothing consumed `frac_nonres` (it never
+    reached the served GeoJSON), so the contradiction had no consumer, only a
+    trap. ⚠️ **Measuring the exposure changed the fix:** the served path was
+    already honest — `frac_other` renders as "Unclassified" grey. The real
+    weakness was `_categorize` only **warning**, which a weekly CI refresh
+    swallows; the monthly digest now reports it
+    (`vintage_report.check_unclassified_zoning`) rather than failing the
+    pipeline. `DECISIONS.md` 2026-08-31. **Nothing is open here.**
   - ⚠️ **METHOD, and it cost a wrong number in this very run:** a parcel-level
     cross-tab on `Property_Info.zoning` said `other` held **$36.8B**. It does
     not — that column's vocabulary is not the one the metric uses

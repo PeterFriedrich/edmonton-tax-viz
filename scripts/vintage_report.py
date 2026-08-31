@@ -49,6 +49,7 @@ TEMPORAL_ARCHIVE = ROOT / "data" / "temporal_archive.json"
 FIR_TAX_BASE = ROOT / "data" / "fir_tax_base.json"
 STATUS_JSON = ROOT / "web" / "data" / "status.json"
 CAPITAL_BUDGET = ROOT / "data" / "capital_budget.csv"
+SERVED_GEOJSON = ROOT / "web" / "data" / "neighbourhood_value_per_acre.geojson"
 
 ASSESSMENT_METADATA_URL = "https://data.edmonton.ca/api/views/q7d6-ambg.json"
 MILL_RATES_URL = "https://data.edmonton.ca/resource/pwis-wc4c.json"
@@ -360,6 +361,32 @@ def check_banner():
             f"themselves. `docs/RUNBOOK.md` §1 step 10.")
 
 
+def check_unclassified_zoning():
+    """Land the zoning map could not classify, off the SERVED file.
+
+    `_categorize` defaults an unmatched code to `other` and only WARNS. In a
+    weekly CI refresh a log line is effectively silent, so a new zoning-bylaw
+    code would land unnoticed. This reports it instead of failing: the map draws
+    the bucket as "Unclassified" grey, which is honest, so a new code is a
+    go-look signal, not a reason to stop publishing (added 2026-08-31).
+    """
+    feats = json.loads(SERVED_GEOJSON.read_text())["features"]
+    hoods = [(f["properties"].get("neighbourhood_name", "?"),
+              f["properties"].get("frac_other") or 0.0) for f in feats]
+    hit = sorted(((v, n) for n, v in hoods if v > 0), reverse=True)
+    if not hit:
+        return (OK, "Unclassified zoning",
+                f"No unclassified land ({len(hoods):,} hoods, frac_other all 0).")
+    worst = ", ".join(f"{n} {v:.1%}" for v, n in hit[:3])
+    return (ACTION, "Unclassified zoning",
+            f"**{len(hit)} of {len(hoods):,} hoods carry unclassified zoning** "
+            f"(worst: {worst}). A zone code is missing from "
+            f"`load_zoning.ZONE_CATEGORY` — grep the refresh log for `Unmatched "
+            f"zone codes` to name it, then map it from the bylaw's purpose "
+            f"statement (`data/DATA.md` §5). ⚠️ Do NOT fold it into a "
+            f"non-residential total (`docs/DECISIONS.md` 2026-08-31).")
+
+
 CHECKS = (
     check_assessment_roll,
     check_mill_rates,
@@ -369,6 +396,7 @@ CHECKS = (
     check_temporal_archive,
     check_temporal_archive_year,
     check_capital_budget,
+    check_unclassified_zoning,
     check_banner,
 )
 

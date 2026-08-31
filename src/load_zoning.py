@@ -197,12 +197,16 @@ EXEMPT_CANDIDATE_ZONES = ("AJ", "UF", "UI", "PU", "PS")
 # never + notyet make up the set-aside share.
 SET_ASIDE_CATEGORIES = ("never", "notyet")
 
-# The non-residential developed group (the pre-split "nonres" bucket) — summed
-# into frac_nonres for continuity with docs/analyses that reference it.
-NONRES_CATEGORIES = ("com", "ind", "mix", "dc", "other")
-
 # Unknown codes default here (conservative — keeps land on the scale, does NOT
-# claim it as residential or any specific non-residential use). Flagged.
+# claim it as residential or any specific non-residential use). Flagged, and
+# served as its own `frac_other`, which the map draws as "Unclassified" grey.
+#
+# ⚠️ There is deliberately NO aggregate that folds `other` into a non-residential
+# total. `frac_nonres` did (the pre-split bucket, kept for continuity) and was
+# removed 2026-08-31: nothing read it — it never reached the served GeoJSON —
+# and it was the one place an unclassified parcel got asserted as a
+# non-residential use, contradicting the paragraph above. Don't reintroduce it
+# without deciding that question first (docs/DECISIONS.md 2026-08-31).
 DEFAULT_CATEGORY = "other"
 
 # Human-readable dominant-reason labels for the tooltip.
@@ -288,8 +292,6 @@ def load_zoning(zoning_path: str, boundaries: gpd.GeoDataFrame) -> pd.DataFrame:
         frac_never, frac_notyet, frac_inst, frac_residential, frac_commercial,
         frac_industrial, frac_mixed, frac_dc, frac_other
                         — land-use composition (shares of total zoned area; sum to 1)
-        frac_nonres     — commercial + industrial + mixed + dc + other (the
-                          pre-split bucket, kept for continuity)
         set_aside_frac  — never + notyet share (0–1)
         is_set_aside    — set_aside_frac >= SET_ASIDE_THRESHOLD
         set_aside_reason — dominant set-aside category label (tooltip); "" if not set aside
@@ -342,8 +344,6 @@ def load_zoning(zoning_path: str, boundaries: gpd.GeoDataFrame) -> pd.DataFrame:
             "frac_other": fracs["other"],
         }
     )
-    # Pre-split bucket, kept for continuity (docs/ANALYSIS_BACKLOG reference it).
-    result["frac_nonres"] = sum(fracs[c] for c in NONRES_CATEGORIES)
     result["set_aside_frac"] = result["frac_never"] + result["frac_notyet"]
     result["is_set_aside"] = result["set_aside_frac"] >= SET_ASIDE_THRESHOLD
 

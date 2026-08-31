@@ -215,7 +215,6 @@ GeoDataFrame from `load_boundaries.py` (needs projected geometry for the overlay
   `frac_commercial`/`frac_industrial`/`frac_mixed`/`frac_dc`/`frac_other`, shares of
   zoned area, sum to 1 — the use-mix view's input; nonres split 4 ways 2026-07-03,
   ambiguous codes resolved from bylaw purpose statements, DATA.md §5)
-- `frac_nonres` — sum of com/ind/mix/dc/other (the pre-split bucket, kept for continuity)
 
 **Responsibilities:**
 - Load zoning polygons, reproject to **EPSG:3400** (CRS set explicitly, per project

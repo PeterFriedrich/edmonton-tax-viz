@@ -210,7 +210,8 @@ colour, not hidden).
 
 ### T8 — A hand-enumerated category contains what its NAME says
 `src/load_permits.py` (`INDUSTRIAL_BUILDING_TYPES`, `RESIDENTIAL_BUILDING_TYPES`),
-`src/load_zoning.py` (`NONRES_CATEGORIES`, `SET_ASIDE_CATEGORIES`),
+`src/load_zoning.py` (`ZONE_CATEGORY`, `SET_ASIDE_CATEGORIES` — `NONRES_CATEGORIES`
+was removed 2026-08-31, see below),
 `src/load_water.py` (`HOUSEHOLD_CLASSES`), `src/load_temporal.py`
 (`COMMERCIAL_CLASSES`).
 
@@ -249,7 +250,19 @@ hoods — every served zone code classifies); `load_water.HOUSEHOLD_CLASSES` PAS
 (only `FARMLAND`, 512 parcels / 0.12%, is household-like and excluded, per the
 residential-only lock); `load_temporal.COMMERCIAL_CLASSES` **WARN** — bounded and
 forced. Verdicts + measurements: `AUDIT_LEDGER.md` 2026-08-30. **Do not re-run
-the sweep; two follow-ups are open in `TODO.md`.**
+the sweep.**
+
+**✅ The latent follow-up is CLOSED 2026-08-31.** `NONRES_CATEGORIES` folded the
+unmatched `other` bucket into `frac_nonres`, contradicting `DEFAULT_CATEGORY`'s
+own comment. Resolved by **deleting** rather than adjusting: nothing consumed
+`frac_nonres` — it never reached the served GeoJSON — so the contradiction had
+no consumer, only a trap. ⚠️ **The exposed surface was smaller than the sweep
+implied, and measuring it changed the fix**: the served path was already honest
+(`frac_other` renders as "Unclassified" grey). What was genuinely weak is that
+`_categorize` only **warns**, which in a weekly CI refresh is effectively
+silent — now reported by the monthly digest (`vintage_report.check_unclassified_zoning`)
+rather than made a pipeline failure, since unclassified land is drawn honestly
+and is a go-look signal, not a reason to stop publishing.
 
 ⚠️ **Two method lessons from that run, both worth applying to the next T8:**
 
