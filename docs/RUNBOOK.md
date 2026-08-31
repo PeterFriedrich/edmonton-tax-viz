@@ -496,7 +496,31 @@ Triage by which step failed, in the run log:
   node tools/profiling/verify-smoke.js http://localhost:8931/index.html
   node tools/profiling/verify-smoke.js http://localhost:8931/full/index.html
   ```
-- **Commit/deploy steps** — transient GitHub issues; re-run.
+- **"Commit regenerated data + heartbeat if changed"** with **`GH006: Protected
+  branch update failed` / `Required status check "test" is expected`** (first
+  seen 2026-08-31) — **not a data failure.** Every guard above it passed and the
+  GeoJSON regenerated; the push to `master` was refused by branch protection.
+  A commit pushed straight to `master` carries no check results yet, so a
+  required `test` context can never be satisfied by a direct push — only an
+  identity that BYPASSES protection can land it.
+  - **Cause:** `master` gained a required status check
+    (`gh api repos/PeterFriedrich/edmonton-tax-viz/branches/master/protection`)
+    while the run was pushing as the `github-actions` bot, which is not an
+    admin. ⚠️ **Check `gh secret list` first** — if it is empty,
+    `HEARTBEAT_TOKEN` is unset and `refresh.yml` fell back to `github.token`
+    (see §3; the fallback is silent).
+  - **Fix:** set `HEARTBEAT_TOKEN` to a fine-grained PAT of an admin (§3 has the
+    exact scopes). Protection is configured `enforce_admins: false`, so a push
+    authenticated as the owner bypasses the required check while PR merges stay
+    gated. Then `gh run rerun <id> --failed`.
+  - ⚠️ **It is not self-healing and not urgent.** The site keeps serving
+    last-good data, but `last_checked` never bumped, so the **staleness banner
+    appears to visitors 14 days after the last SUCCESSFUL run** — and every
+    following Monday fails identically until the token is set.
+  - Distinguish from an **expired** PAT, which fails the push with a 403 auth
+    error rather than `GH006`. `GH006` means authentication succeeded and
+    *protection* declined.
+- **Commit/deploy steps, otherwise** — transient GitHub issues; re-run.
 
 **Loud warnings worth a look even on green runs:** unknown zone / road-class
 codes (hand-assign to the dicts), new fire `event_type_group` values (kept in
@@ -525,9 +549,16 @@ workflow. The banner clears itself on the next successful run — there is no
 ### The heartbeat token (`HEARTBEAT_TOKEN`)
 
 `refresh.yml` checks out with `secrets.HEARTBEAT_TOKEN` when it exists and
-falls back to `github.token` when it doesn't, so the workflow runs either way —
-the secret is an *upgrade*, not a dependency. A push authenticated by a PAT
+falls back to `github.token` when it doesn't. A push authenticated by a PAT
 counts as repo activity; one by `GITHUB_TOKEN` may not.
+
+⚠️ **The secret used to be an *upgrade*; since `master` gained a required status
+check it is a DEPENDENCY** (2026-08-31). The `github.token` fallback cannot push
+to a protected `master` — it is not an admin, so it cannot bypass the required
+`test` context, and a direct push can never satisfy it. The fallback makes an
+unset secret **silent**: the workflow ran for months as the bot and only turned
+red when protection arrived. If `gh secret list` is empty, this is unset. See §2
+for the `GH006` triage.
 
 To create or rotate it: GitHub → Settings → Developer settings →
 **Fine-grained tokens** → repo access limited to `edmonton-tax-viz`, repository
