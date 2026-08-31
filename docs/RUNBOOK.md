@@ -512,7 +512,14 @@ Triage by which step failed, in the run log:
   - **Fix:** set `HEARTBEAT_TOKEN` to a fine-grained PAT of an admin (§3 has the
     exact scopes). Protection is configured `enforce_admins: false`, so a push
     authenticated as the owner bypasses the required check while PR merges stay
-    gated. Then `gh run rerun <id> --failed`.
+    gated.
+  - ⚠️ **Then DISPATCH A FRESH RUN — do not `gh run rerun` the failed one**
+    (learned the hard way 2026-08-31). A re-run checks out the SHA its ORIGINAL
+    trigger fired at, so once `master` has moved since — and it will have, if
+    you merged the fix — the push fails again with a *different* error,
+    `! [rejected] master -> master (fetch first)`. That is a stale base, not a
+    permissions problem, and it says nothing about whether the token worked.
+    Use `gh workflow run refresh.yml --ref master`.
   - ⚠️ **It is not self-healing and not urgent.** The site keeps serving
     last-good data, but `last_checked` never bumped, so the **staleness banner
     appears to visitors 14 days after the last SUCCESSFUL run** — and every
