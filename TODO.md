@@ -104,6 +104,22 @@ Services carries no sparkline — measured, it does.)_
 
 
 
+- [ ] **DECIDE — `origin/docs/viz-stack` is the only surviving branch besides
+  `master`, and it holds 272 lines that never got a PR.** Surfaced 2026-08-31
+  during the branch prune.
+  - One commit (`0efd62b`, 2026-08-07) adding `docs/VIZ_STACK.md` (+272) and a
+    `TODO.md` block (+31). **No PR was ever opened**, so nothing has ever
+    reviewed or rejected it — it is unmerged by neglect, not by decision.
+  - ⚠️ **Not a duplicate of master's `docs/STACK.md`.** Different file,
+    different scope; don't assume the shipped stack inventory covers it.
+  - S99 (2026-08-07) kept it deliberately: it deleted the *other* stack branch
+    (`claude/kunicki-app-stack-analysis-hs3kiv`) only after confirming
+    `VIZ_STACK.md` was byte-identical on both, and left this one intact.
+  - Nothing outside `session-summary/archive/2026-08-07-s99.md` references the
+    file. Read it, then land it, fold it into `docs/STACK.md`, or close it with
+    a reason on the record — **the one outcome to avoid is a fourth session
+    walking past it.**
+
 - [ ] **PROPOSE-FIRST — `refresh.yml`'s token fallback hid an unset secret for
   months, and the secret is now load-bearing.** Opened 2026-08-31 after the
   weekly refresh failed.
