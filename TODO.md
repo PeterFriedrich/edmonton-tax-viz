@@ -104,6 +104,24 @@ Services carries no sparkline — measured, it does.)_
 
 
 
+- [ ] **PROPOSE-FIRST — `refresh.yml`'s token fallback hid an unset secret for
+  months, and the secret is now load-bearing.** Opened 2026-08-31 after the
+  weekly refresh failed.
+  - `refresh.yml:48` checks out with `secrets.HEARTBEAT_TOKEN || github.token`.
+    The secret had **never been set**; the fallback ran as the
+    `github-actions` bot and worked fine — until `master` gained a required
+    `test` status check, which the bot cannot bypass. First red: 2026-08-31.
+  - ⚠️ **The failure mode is exactly the one the surrounding comments guard
+    against, one step removed.** They reject `git push || true` because an
+    EXPIRED token would report green — but nothing catches the secret being
+    **ABSENT**, which is the same silence with a different cause.
+  - Proposal: a step that fails loudly when `HEARTBEAT_TOKEN` is unset, so the
+    fallback stops being a silent downgrade. **Changes CI behaviour — propose
+    before building.** ⚠️ Decide what it does on a *fork or a fresh clone*,
+    where no secret exists and hard-failing would be wrong.
+  - ⚠️ **Token expires ~2027-09-01** (fine-grained max, 366 days). When it
+    lapses the refresh goes red the same way. `RUNBOOK.md` §3.
+
 - [ ] **OUTREACH TRACKER — five data issues found, ZERO sent. Every one is
   Peter's call.** ⚠️ **`docs/DATA_ISSUES.md` "Status at a glance" is
   AUTHORITATIVE** — this is a one-line mirror so the count is visible from the
