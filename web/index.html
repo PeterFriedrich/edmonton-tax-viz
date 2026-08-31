@@ -190,8 +190,8 @@
   <div id="layers" class="panel">
     <span class="hd" id="chgwindow-hd">Window</span>
     <div id="chgwindow">
-      <button data-chgwindow="long" class="active" title="The whole assessment history (2012–2026) — the structural, era-long shift">Since 2012</button>
-      <button data-chgwindow="short" title="The recent half (2019–2026) — where the change is happening now. A seventh of neighbourhoods changed DIRECTION between the two windows">Since 2019</button>
+      <button data-chgwindow="long" class="active" title="The whole assessment history ({{chgLong}}) — the structural, era-long shift">Since 2012</button>
+      <button data-chgwindow="short" title="The recent half ({{chgShort}}) — where the change is happening now. A seventh of neighbourhoods changed DIRECTION between the two windows">Since 2019</button>
     </div>
     <!-- The Lab's own controls. #labpick is rendered from LAB_EXPERIMENTS and
          stays hidden while there is only one — a chooser with one option is
@@ -249,9 +249,9 @@
     </div>
     <span class="hd" id="devwindow-hd">Window</span>
     <div id="devwindow">
-      <button data-devwindow="3yr" title="Building activity summed over the last three full calendar years (2023–2025) — the more recent, current-activity view">Last 3 yr</button>
-      <button data-devwindow="5yr" title="Building activity summed over the last five full calendar years (2021–2025) — the more stable, structural view">Last 5 yr</button>
-      <button data-devwindow="long" class="active" title="Building activity summed over the whole permit record (2009–2025) — the density added over the era">Since 2009</button>
+      <button data-devwindow="3yr" title="Building activity summed over the last three full calendar years ({{permitsRecent}}) — the more recent, current-activity view">Last 3 yr</button>
+      <button data-devwindow="5yr" title="Building activity summed over the last five full calendar years ({{permits}}) — the more stable, structural view">Last 5 yr</button>
+      <button data-devwindow="long" class="active" title="Building activity summed over the whole permit record ({{permitsLong}}) — the density added over the era">Since 2009</button>
     </div>
     <span class="hd" id="devdetail-hd">Detail</span>
     <div id="devdetail">
@@ -335,7 +335,7 @@
         </label>
       </div>
       <div class="svc" data-service="fire">
-        <label title="Each neighbourhood coloured by dispatched fire-department emergency events per acre per year (2023–2025 average) — demand, not response coverage; dots mark the 31 fire stations">
+        <label title="Each neighbourhood coloured by dispatched fire-department emergency events per acre per year ({{fire}} average) — demand, not response coverage; dots mark the 31 fire stations">
           <input type="checkbox" class="svc-on" /> Fire — events/acre/yr
         </label>
         <label class="svc-colour" title="This service drives the colour ramp; the others render neutral">
@@ -367,7 +367,7 @@
     <span class="hd" id="ratio-denom-hd">Ratio denominator</span>
     <div id="ratio-denom">
       <button data-ratio-denom="roads" class="active" title="Revenue per metre of city-maintained neighbourhood road (collector + local) — the levy-funded network this land's layout entails">Per road metre</button>
-      <button data-ratio-denom="fire" title="Revenue per dispatched fire-department emergency event (2023–2025 average) — levy-funded demand; most events are medical calls">Per fire event</button>
+      <button data-ratio-denom="fire" title="Revenue per dispatched fire-department emergency event ({{fire}} average) — levy-funded demand; most events are medical calls">Per fire event</button>
       <button data-ratio-denom="servicecost" title="Property-tax revenue as a multiple of the modeled roads + fire service cost — the two levy-funded services this project can measure, NOT the total cost of city services (police, parks, transit and the rest are not included, so most neighbourhoods read well above 1×)">Per service $</button>
     </div>
   </div>
@@ -574,6 +574,34 @@
     const HOME_2D = { center: CENTER, zoom: 10.2, pitch: 0, bearing: 0 };
     const ROT_STEP = 30;  // degrees per compass-arrow press (12 presses = full turn)
     const ROT_MS = 300;   // arrow-press ease duration; also the press-chaining window
+
+    // Every user-facing year range on the page derives from this block — lens
+    // tooltips, legend labels, chart titles, blurbs, and the {{token}} slots in
+    // the static markup above. It MUST agree with main.py's pins, and
+    // tests/test_window_labels.py fails if it drifts.
+    //
+    // The pins bump by hand each January (docs/RUNBOOK.md §1 step 4). Before
+    // this block existed that bump rolled the NUMBERS and left ~15 labels still
+    // naming the old years, with nothing to catch it (audit F4, 2026-08-28).
+    // Ends are pinned, never read off the loaded data — see CHG_WINDOW_LABEL
+    // for the phantom-year episode that decided this for the change lens.
+    const WINDOWS = {
+      fire:          [2023, 2025],  // main.py FIRE_YEARS
+      permits:       [2021, 2025],  // main.py PERMIT_YEARS
+      permitsRecent: [2023, 2025],  // main.py PERMIT_YEARS_RECENT
+      permitsLong:   [2009, 2025],  // main.py PERMIT_YEARS_LONG
+      chgLong:       [2012, 2026],  // load_temporal.FIRST_YEAR .. main.py ASSESSMENT_YEAR
+      chgShort:      [2019, 2026],  // CHG_WINDOWS.short .. main.py ASSESSMENT_YEAR
+    };
+    const WIN = Object.fromEntries(
+      Object.entries(WINDOWS).map(([k, [a, b]]) => [k, `${a}–${b}`]));
+    // Static tooltips carry {{key}} placeholders so the markup stays readable
+    // and the years still come from one place. Safe to run at parse time: this
+    // script tag sits after the markup it patches. An unknown key would survive
+    // to the screen, so the test asserts every token is a WINDOWS key.
+    document.querySelectorAll("[title*='{{']").forEach(el => {
+      el.title = el.title.replace(/\{\{(\w+)\}\}/g, (m, k) => WIN[k] ?? m);
+    });
 
     // Build mode: "public" (curated) | "full" (specialist). ONE hand-edited
     // source; the deploy step (scripts/build_site.py) emits two copies and
@@ -786,7 +814,7 @@
         fmt: v => "$" + Math.round(v).toLocaleString() + " / fire event",
         component: p => `${p.fire_events_per_acre.toFixed(2)} fire events / acre / yr`,
         blurb: "Ghost prisms show municipal property-tax revenue per dispatched " +
-               "fire-department emergency event (2023–2025 average) — how much " +
+               `fire-department emergency event (${WIN.fire} average) — how much ` +
                "revenue backs each call a neighbourhood's land generates. Demand, " +
                "not response coverage, and most dispatched events are medical " +
                "calls. Height is linear; colour is log-scaled. Grey flat = " +
@@ -943,7 +971,7 @@
         label: "Fire",
         plane: { col: "fire_events_per_acre", transform: "sqrt" },
         blurb: "Each neighbourhood is coloured by dispatched fire-department " +
-               "emergency events per acre per year, averaged over 2023–2025 — " +
+               `emergency events per acre per year, averaged over ${WIN.fire} — ` +
                "a demand measure, not response coverage (the open data has no " +
                "on-scene times). Most dispatched events are medical calls, not " +
                "fires; alarms, vehicle incidents, rescues and fires make up the " +
@@ -1094,10 +1122,10 @@
         opacity: 35, // residential-prism default; the slider shows while they're on
       },
       development: {
-        title: "Edmonton: New Housing Built (2021–2025)",
+        title: `Edmonton: New Housing Built (${WIN.permits})`,
         blurb: "Each neighbourhood is coloured by new dwelling units added per " +
                "acre from issued building permits over the last five full years " +
-               "(2021–2025) — new houses, semis, row houses and apartments, " +
+               `(${WIN.permits}) — new houses, semis, row houses and apartments, ` +
                "counted where construction was permitted. New supply, not billed " +
                "or assessed value: where the city is actually growing. Colour is " +
                "square-root scaled — a few dense-infill neighbourhoods dominate. " +
@@ -1304,10 +1332,10 @@
     // DEV_WINDOW_LABEL / DEV_WINDOW_PHRASE are defined with the other DEV_* maps
     // below; both are read at call time, so definition order is irrelevant.
     const DEV_WINDOW_PHRASE = {
-      "5yr":  "the last five full years (2021–2025)",
-      "3yr":  "the last three full years (2023–2025)",
-      "long": "the whole permit record since 2009 (2009–2025) — the density " +
-              "added over the era",
+      "5yr":  `the last five full years (${WIN.permits})`,
+      "3yr":  `the last three full years (${WIN.permitsRecent})`,
+      "long": `the whole permit record since ${WINDOWS.permitsLong[0]} ` +
+              `(${WIN.permitsLong}) — the density added over the era`,
     };
     const devTitle = () => {
       const yrs = "(" + DEV_WINDOW_LABEL[state.devWindow] + ")";
@@ -1318,7 +1346,7 @@
     // The choropleth blurb with the active window's phrase substituted for the
     // stored 5yr default.
     const devChoroplethBlurb = () => VIEWS.development.blurb.replace(
-      "the last five full years (2021–2025)", DEV_WINDOW_PHRASE[state.devWindow]);
+      `the last five full years (${WIN.permits})`, DEV_WINDOW_PHRASE[state.devWindow]);
     const devBlurb = () => {
       if (devIndustrial()) {
         if (!devGridActive()) return VIEWS.development.indBlurb;
@@ -1455,13 +1483,13 @@
                     amenity: { lrt: false, school: false },
                     ratioDenom: "roads", // Ratio-view denominator (RATIO_DENOMS); persists like denom
                     devMetric: "units", // Development-view sub-metric: units | permits per acre
-                    devWindow: "long", // Development-view activity window: 3yr (recent) | 5yr | long (2009–2025, the default)
+                    devWindow: "long", // Development-view activity window: 3yr (recent) | 5yr | long (WINDOWS.permitsLong, the default)
                     devGrid: true, // Development-view 100 m detail grid (the default; off = the hood choropleth)
                     services: { roads: true, storm: false, fire: false, water: false, transit: false, bike: false, servicecost: false,
                                 roadscost: false, transitcost: false, bikecost: false },
                     svcDriver: "roads",
                     hoodMode: "popup", // where a hood's detail appears: popup | panel
-                    chgWindow: "long", // change-lens window: long (2012–2026) | short (2019–2026)
+                    chgWindow: "long", // change-lens window: long | short (WINDOWS.chgLong / chgShort)
                     lab: DEFAULT_LAB,  // which Lab experiment was last open (full build only)
                     labCut: "revenue_per_acre", // the Lab's OWN revenue cut — never Money's state.metric
                     data: null };
@@ -1980,7 +2008,7 @@
     // independent of the colour-adjust toggle (like the fire/transit planes).
     // Two Development-view pickers select the choropleth column together:
     // state.devMetric (units vs permits per acre — supply added vs project
-    // density) × state.devWindow (5yr base 2021–2025 vs 3yr recent 2023–2025).
+    // density) × state.devWindow (5yr base vs 3yr recent; see WINDOWS).
     // The 5yr columns are the unsuffixed base; 3yr carry a _3yr suffix (pipeline
     // 2026-07-13). Each of the four columns keeps its own p97.5 clamp, cached by
     // column name. DEV_TOTAL_COLS gives the tooltip's (units total, permit count)
@@ -2023,7 +2051,7 @@
     // carry residential cells; industrial is checked per window).
     const devGridOfferable = () => !!devGridData &&
       (!devIndustrial() || devIndCellsPresent());
-    const DEV_WINDOW_LABEL = { "5yr": "2021–2025", "3yr": "2023–2025", "long": "2009–2025" };
+    const DEV_WINDOW_LABEL = { "5yr": WIN.permits, "3yr": WIN.permitsRecent, "long": WIN.permitsLong };
     const devCol = () => DEV_COLS[state.devMetric][state.devWindow];
     const _devScale = {};
     function devScale() {
@@ -2313,13 +2341,15 @@
     // intervals, so annualising over intervals inflates every hood's rate ~8%.
     // Same class of silent bug as index-vs-year positioning in the chart, and
     // verify-change.js asserts it first.
-    const CHG_WINDOWS = { long: 2012, short: 2019 };
-    // Hardcoded, and deliberately NOT derived from temporal.json's last year: the
-    // endpoint moved 2025 -> 2026 on 2026-08-27 when the archive's mislabelled
-    // "2025" entry was removed (docs/DATA_ISSUES.md issue 2), and a label that
-    // reads itself from the data would have silently renamed a phantom year
-    // rather than exposing it. Update this by hand when the window really moves.
-    const CHG_WINDOW_LABEL = { long: "2012–2026", short: "2019–2026" };
+    const CHG_WINDOWS = { long: WINDOWS.chgLong[0], short: WINDOWS.chgShort[0] };
+    // Pinned in WINDOWS, and still deliberately NOT derived from temporal.json's
+    // last year: the endpoint moved 2025 -> 2026 on 2026-08-27 when the
+    // archive's mislabelled "2025" entry was removed (docs/DATA_ISSUES.md issue
+    // 2), and a label that reads itself from the data would have silently
+    // renamed a phantom year rather than exposing it. Moving these into WINDOWS
+    // does not weaken that — WINDOWS is a hand-edited pin, checked against
+    // main.py's own pins, never against the loaded file.
+    const CHG_WINDOW_LABEL = { long: WIN.chgLong, short: WIN.chgShort };
 
     // Endpoint pair + elapsed years for one hood over the active window, or
     // null when the lens can't speak for it at all. `rate` is null — NOT zero —
@@ -5122,7 +5152,7 @@
           return { className: "tip", html: name +
             `<span class="muted">no assessment history</span>` };
         // ONE LINE ONLY. tooltipFor appends the sparkline and its own
-        // "first% -> last% of city base, 2012–2026" footer to every view, so a
+        // "first% -> last% of city base, <first>–<last>" footer to every view, so a
         // second endpoint row here would print the same numbers twice — the
         // duplication the panel-mode reduction exists to avoid.
         //
@@ -5709,7 +5739,7 @@
           sw.style.background = "rgb(104,108,122)";
         } else if (state.svcDriver === "fire") {
           document.getElementById("legend-label").textContent =
-            "Fire dispatches per acre / yr (2023–2025 avg, sqrt colour)";
+            `Fire dispatches per acre / yr (${WIN.fire} avg, sqrt colour)`;
           document.getElementById("legend-min").textContent = "0";
           const clamp = svcScale("fire_events_per_acre").clamp;
           document.getElementById("legend-max").textContent =

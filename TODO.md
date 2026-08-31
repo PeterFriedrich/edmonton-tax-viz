@@ -104,25 +104,6 @@ Services carries no sparkline — measured, it does.)_
 
 
 
-- [ ] **⚠️ SCHEDULED TO BE WRONG IN JANUARY 2027 — 15 hardcoded activity-window
-  labels, and RUNBOOK §1 step 4 mentions none of them.** Audit F4, 2026-08-28.
-  - `FIRE_YEARS` / `PERMIT_YEARS` / `PERMIT_YEARS_RECENT` are restated as
-    literals across 15 user-facing sites in `web/index.html` (`DEV_WINDOW_LABEL`
-    alone feeds 5 render sites). **All correct today** — only because the
-    project is younger than one year-roll.
-  - Step 4 bumps the pins and re-runs the deflator, and says the drift guard
-    means a stale pin "can't be missed silently". **True of the pin, false of
-    all 15 strings.**
-  - ⚠️ **This is the `(2024 n/a)` defect (S122) at 15×**, with the same tell:
-    correctly-derived copy sits beside it (the vintage footer reads
-    `status.json`).
-  - **Not a one-line fix:** `status.json` carries no activity window, so the
-    browser cannot derive these. Closing it means `generate_status.py`
-    publishing the three windows — an **output-schema change**, propose-first.
-    ⚠️ **Do not ship the cheap partial alone** (a RUNBOOK line + a test pinning
-    label against pin) without deciding: a half-fix that makes step 4 *look*
-    complete is its own hazard.
-
 - [ ] **OUTREACH TRACKER — five data issues found, ZERO sent. Every one is
   Peter's call.** ⚠️ **`docs/DATA_ISSUES.md` "Status at a glance" is
   AUTHORITATIVE** — this is a one-line mirror so the count is visible from the
@@ -2259,6 +2240,8 @@ Services carries no sparkline — measured, it does.)_
 ## Done
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
+
+- [x] **CLOSED 2026-08-30 — the 15 hardcoded activity-window labels now read from one constant, and drift fails the build.** (Audit F4; the `status.json` route was rejected on measurement.) — CLOSED 2026-08-30 · `docs/TODO_archive.md`
 
 - [x] **CLOSED 2026-08-29 — the three verify failures are resolved, and one of them was NEVER a master failure.** — CLOSED 2026-08-29 · `docs/TODO_archive.md`
 
