@@ -20,7 +20,13 @@
 //     measures DRAW cost well and hides FILL cost.
 //     **Compare `devicePx total` between machines before trusting any fps
 //     ratio across them.** The script warns below if the viewport is short.
-//  3. Paste this whole file into the Console and press Enter. It takes ~25 s:
+//  2b. ⚠️ **Run with EXTENSIONS OFF** — a private window, or a clean profile.
+//     The 2026-09-01 old-laptop capture ran with **Dark Reader, AdBlock and
+//     uBlock Origin all enabled**, and Dark Reader can apply a page-level CSS
+//     filter, i.e. a fill-rate cost that scales with viewport pixels — the exact
+//     variable under test. The other machine's extension set was never recorded,
+//     so the cross-machine comparison has never controlled the browser at all.
+//  3. Paste this whole file into the Console and press Enter. It takes ~26 s:
 //     it pans the map twice, once per grid resolution.
 //  4. Copy the printed markdown table back.
 //  5. ⚠️ Read the REAL adapter separately, and copy **EVERY** GPU block with its
@@ -61,6 +67,27 @@
     return { label, frames, fps: +(frames / (elapsed / 1000)).toFixed(1) };
   };
 
+  // ⚠️ The PRESENTATION CEILING, and it is not optional context — it is what
+  // makes the pan numbers interpretable at all. rAF fires at the display's
+  // refresh, so frame times quantise to multiples of 1/refresh: an old laptop
+  // capped at 60 Hz reads 36.6 fps as a MIX of 1- and 2-vsync frames, not as a
+  // 27.3 ms render. 2026-09-01: the two machines compared here turned out to be
+  // in different regimes (60 Hz capped vs reading 117-139 fps), which silently
+  // invalidated every cross-machine "marginal ms per cell" figure derived from
+  // their fps. Mean fps over ~900 frames is still a sound monotone proxy for
+  // render cost WITHIN one machine; converting it to milliseconds and comparing
+  // ACROSS machines is not. Capture the ceiling so nobody redoes that.
+  const idleRefresh = async () => {
+    let frames = 0, stop = false;
+    const tick = () => { if (!stop) { frames++; requestAnimationFrame(tick); } };
+    requestAnimationFrame(tick);
+    const t0 = performance.now();
+    await new Promise(r => setTimeout(r, 1000));
+    const elapsed = performance.now() - t0;
+    stop = true;
+    return +(frames / (elapsed / 1000)).toFixed(1);
+  };
+
   const enter = async detail => {
     document.querySelector('#views button[data-view="money"]').click();
     await new Promise(r => setTimeout(r, 400));
@@ -73,6 +100,7 @@
     await new Promise(r => setTimeout(r, 1500));
   };
 
+  const refresh = await idleRefresh();   // measure on the QUIET page, before any pan
   await enter('grid');
   const cells100 = gridData && gridData.cells.length;
   const fps100 = await panFps('100 m grid');
@@ -88,6 +116,7 @@
     ['devicePx total', canvas ? (canvas.width * canvas.height).toLocaleString() : 'n/a'],
     ['gpu (SANITISED — see about:support)',
       dbg ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : 'unavailable'],
+    ['refresh ceiling (idle rAF)', `${refresh} fps`],
     ['ttfb_ms', Math.round(nav.responseStart - nav.requestStart)],
     ['download_ms', Math.round(nav.responseEnd - nav.responseStart)],
     ['domInteractive_ms', Math.round(nav.domInteractive)],
@@ -130,6 +159,18 @@
       'finer grid\'s cost — the figure you get is a FLOOR. Undock devtools ' +
       'into its own window and re-run.');
   }
+  // ⚠️ Clipping check. A pan reading within 5% of the ceiling is not measuring
+  // the site at all — it is measuring the display. The first gaming-laptop
+  // capture (139 fps) is a live suspect for exactly this.
+  if (fps100.fps > 0.95 * refresh || fps50.fps > 0.95 * refresh) {
+    console.warn(`⚠️ a pan reading is within 5% of the ${refresh} fps refresh ` +
+      'ceiling — that run is CLIPPED and understates the machine. The ratio ' +
+      'between a clipped and an unclipped reading is meaningless.');
+  }
+  console.log('⚠️ Do NOT convert these fps figures to "marginal ms per cell" ' +
+    'and compare them ACROSS machines: frame times quantise to 1/refresh, and ' +
+    'two machines at different ceilings are in different regimes. Within-machine ' +
+    'fps RATIOS at a fixed viewport are the comparable quantity.');
   console.log('⚠️ cross-machine: compare `devicePx total` first. Two machines ' +
     'at different device-pixel counts are not comparable on frame rate — and ' +
     'neither are two runs on the SAME machine (668,880 px read 3.7%, ' +
