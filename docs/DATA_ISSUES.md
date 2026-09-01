@@ -418,6 +418,53 @@ Capital Asset Management Audit. None state one.
 An availability gap rather than an error, same shape as issues 4 and 5. It is
 the last input the bikeway cost side needs.
 
+### E. `lot_size` holds ownership SHARES, not square metres, for some condo records
+
+**⚠️ CONFIRMED and exactly reproducible; NOT PROMOTED because it has no
+published artifact yet** — the bar every numbered issue above clears.
+
+Found 2026-09-01 by the Glass grid halving to 50 m, which stopped diluting it.
+The needle cell is three WESTMOUNT condo records at identical coordinates:
+
+| account | assessed | `lot_size` |
+|---|---|---|
+| 4259396 | $469,500 | **0.505** |
+| 4259412 | $185,500 | **0.218** |
+| 4259420 | $204,500 | **0.277** |
+| | $859,500 | **sum = 1.000** |
+
+Three values summing to exactly 1.000 are **ownership shares of one parcel**,
+recorded in a field whose every other row is square metres. The result is
+$859,500 of assessment sitting on a nominal 1 m² lot — **$3.48B per lot-acre**,
+79× the 99.9th-percentile cell.
+
+Population, from `Property_Info__Current_Calendar_Year_.csv` (439,685 rows):
+
+| `lot_size` band | rows | share |
+|---|---|---|
+| 0 < x < 1 m² | **7,984** | 1.82% |
+| < 2 m² | 16,377 | 3.72% |
+| < 5 m² | 27,990 | 6.37% |
+| < 50 m² | 63,271 | 14.39% |
+
+⚠️ **The share hypothesis is CONFIRMED for this parcel and NOT generalised** —
+only 3 of 158 coordinate groups containing sub-1 m² lots sum to ~1.000, so
+whatever produces the other 7,981 rows is unestablished and may be several
+different things. **That gap is exactly what stops this being sendable.**
+
+⚠️ **It does NOT reach a reader.** The Glass grid is `gridPickable: false` and
+the legend clamps at p97.5, so no absurd number is displayed; the harm is to
+the lot-acre denominator's credibility, not to a rendered figure.
+
+⚠️ **The dedupe rule is not at fault.** `FINDINGS_lot_dedupe.md` §3 contributes
+`k × value` for repeats under `SHARE_MAX_M2 = 1000 m²` — correct for the
+townhouse regime it was built for. These three values are *distinct* and each
+appears once, so the rule passes them through untouched. **The inputs are
+wrong, not the heuristic.**
+
+To promote: a standalone notebook that reproduces the population from a live
+fetch and settles what the other 7,981 rows are. `TODO.md` carries it.
+
 ---
 
 ## Cross-refs

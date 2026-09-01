@@ -179,7 +179,15 @@ FRANCHISE_RATE_YEAR = 2026
 # untouched by either of these. See docs/PERFORMANCE.md / docs/ARCHITECTURE.md.
 SETBACK_M = 45.0             # inward buffer -> "city blocks" gaps between prisms
 SIMPLIFY_TOLERANCE_M = 10.0  # Douglas-Peucker vertex cut (applied AFTER setback)
-GRID_CELL_M = 100.0          # Glass-view spike grid (~35k occupied cells, 2026-07)
+# Glass-view spike grid. Halved 100 -> 50 m on 2026-09-01: occupancy is sparse
+# enough that quartering a cell only multiplies the count 2.69x (34,662 ->
+# 93,201), for 2.74 MB gzipped on a file that is lazy-fetched and so never
+# touches first load. Levy totals reconcile at both edges (docs/DECISIONS.md).
+GRID_CELL_M = 50.0
+# The Development permit grid is deliberately NOT halved with it: permits are
+# far sparser than assessments, and nothing has measured that grid at 50 m.
+# Kept separate so either can move without dragging the other.
+DEV_GRID_CELL_M = 100.0
 
 
 def run(
@@ -547,7 +555,7 @@ def run(
                 export_dev_grid(
                     permits_csv, DEV_GRID_WEB_OUT,
                     permit_years, permit_years_recent, permit_years_long,
-                    cell_m=GRID_CELL_M,
+                    cell_m=DEV_GRID_CELL_M,
                 )
             except (ValueError, FileNotFoundError) as e:
                 logger.warning("Dev grid not exported: %s", e)

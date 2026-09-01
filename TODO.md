@@ -104,6 +104,29 @@ Services carries no sparkline — measured, it does.)_
 
 
 
+- [ ] **INVESTIGATE — `lot_size` holds ownership shares for an unknown number of
+  condo records; 7,984 rows are under 1 m².** Opened 2026-09-01, found by the
+  50 m Glass grid (`docs/DATA_ISSUES.md` §E has the full measurement).
+  - Confirmed for exactly one parcel: three WESTMOUNT accounts
+    (4259396/4259412/4259420, $859,500) whose `lot_size` reads
+    0.505/0.218/0.277 — **summing to 1.000**, i.e. shares, not m².
+  - ⚠️ **The hypothesis does NOT generalise yet** — only 3 of 158 coordinate
+    groups containing sub-1 m² lots sum to ~1.000. What produces the other
+    **7,981** rows is unestablished, and it may be several different causes.
+    **Do not write a report until that is settled**; a publisher who finds one
+    counter-example bins the whole thing.
+  - ⚠️ **Not user-visible** — the Glass grid is `gridPickable: false` and the
+    legend clamps at p97.5. This is denominator credibility, not a wrong number
+    on screen. Priority accordingly.
+  - ⚠️ **The dedupe heuristic is NOT the bug** (`FINDINGS_lot_dedupe.md` §3):
+    the three values are distinct and unrepeated, so the rule passes them
+    through. Don't "fix" `SHARE_MAX_M2`.
+  - Blocks re-tightening `lot_needle_ratio`, which is parked at ±50% because a
+    single degenerate record now sets it (`data/expected_value_anchors.json`).
+  - To promote to a numbered issue it needs a standalone notebook that
+    reproduces the population from a live fetch — the bar all five numbered
+    issues clear.
+
 - [ ] **CAPTURE — the gaming laptop's half of the two-machine perf comparison.**
   Opened 2026-09-01. Peter reports the site **loads faster on an old laptop but
   pans more smoothly on a newer gaming one** — opposite bottlenecks (load is

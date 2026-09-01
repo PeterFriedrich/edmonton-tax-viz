@@ -209,24 +209,29 @@
     <span class="hd" id="moneydetail-hd">Detail</span>
     <div id="moneydetail">
       <button data-moneydetail="hood" class="active" title="Solid neighbourhood prisms — each hood's metric per acre (the default view)">Neighbourhood</button>
-      <button data-moneydetail="grid" title="Translucent 100 m grid-cell spikes over a neutral neighbourhood plane — the metric binned to squares; hover the plane for each neighbourhood's numbers">100 m grid</button>
+      <button data-moneydetail="grid" data-tok title="Translucent {{cellGlass}} grid-cell spikes over a neutral neighbourhood plane — the metric binned to squares; hover the plane for each neighbourhood's numbers">{{cellGlass}} grid</button>
     </div>
     <!-- Amenity proximity (SPEC_development.md "Amenity distance"). Two
          INDEPENDENT bands, not one composite: at 600 m the LRT band selects
-         1.6% of cells and the school band 21.8% — ~14x apart — and ANDing them
-         leaves 0.8%. One "amenity-served" switch would hide that collapse
+         1.4% of cells and the school band 42.3% — ~30x apart — and ANDing them
+         leaves 0.7%. One "amenity-served" switch would hide that collapse
          behind a single word, and would be a weighted index by another name.
-         ⚠️ INFILL ONLY (2026-08-26) — it reads the same 100 m grid file Money's
+         ⚠️ Re-measured on the 50 m grid, 2026-09-01. The previous figures
+         (1.6% / 21.8% / ~14x) were stale on their OWN 100 m grid, which then
+         read 1.59% / 37.81% / 23.8x — the school band moved when the schools
+         CSVs refreshed 2026-08-23 and nothing re-ran this. The argument only
+         got stronger; the numbers had drifted for a week.
+         ⚠️ INFILL ONLY (2026-08-26) — it reads the same grid file Money's
          Glass mode renders, so it COULD be offered there too and was until
          today; the question it answers ("where is there room near transit?")
          is Infill's, and two copies read as clutter rather than two questions.
          Each row still self-gates on its own column. -->
     <span class="hd" id="amenity-hd">Near an amenity</span>
     <div id="amenity">
-      <label id="amenity-lrt-row" title="Highlight the 100 m cells within 600 m of an LRT station by ROAD — the walk, not the straight line (straight-line distance says yes wrongly more than half the time at this band). 600 m is the usual transit-oriented-development walkshed; the data has no natural cut, so the number is a convention, not a finding. Stations are the 30 passenger stations, excluding a tail track and two bus-garage platforms.">
+      <label id="amenity-lrt-row" title="Highlight the {{cellGlass}} cells within 600 m of an LRT station by ROAD — the walk, not the straight line (straight-line distance says yes wrongly more than half the time at this band). 600 m is the usual transit-oriented-development walkshed; the data has no natural cut, so the number is a convention, not a finding. Stations are the 30 passenger stations, excluding a tail track and two bus-garage platforms.">
         <input type="checkbox" id="amenity-lrt-on" /> Within 600 m of LRT
       </label>
-      <label id="amenity-school-row" title="Highlight the 100 m cells within 800 m of a school by ROAD. Public and Catholic catchment schools only — city-wide programs (Learning Stores, hospital and outreach schools) are excluded because nobody walks to them from the next block, and private, charter and francophone schools are absent from the open data entirely.">
+      <label id="amenity-school-row" title="Highlight the {{cellGlass}} cells within 800 m of a school by ROAD. Public and Catholic catchment schools only — city-wide programs (Learning Stores, hospital and outreach schools) are excluded because nobody walks to them from the next block, and private, charter and francophone schools are absent from the open data entirely.">
         <input type="checkbox" id="amenity-school-on" /> Within 800 m of a school
       </label>
     </div>
@@ -256,7 +261,7 @@
     <span class="hd" id="devdetail-hd">Detail</span>
     <div id="devdetail">
       <button data-devdetail="hood" title="Neighbourhood choropleth — each hood coloured by the metric per acre">Neighbourhood</button>
-      <button data-devdetail="grid" class="active" title="100 m grid-cell spikes of geocoded permits — height and colour show new units (or permits) per cell; the flat plane underneath keeps the neighbourhood hover (the default)">100 m grid — activity</button>
+      <button data-devdetail="grid" class="active" data-tok title="{{cellDev}} grid-cell spikes of geocoded permits — height and colour show new units (or permits) per cell; the flat plane underneath keeps the neighbourhood hover (the default)">{{cellDev}} grid — activity</button>
     </div>
     <span class="hd" id="prism-hd">Money plane</span>
     <label id="prism-row" title="Prism opacity — how strongly the ratio prisms overlay the road network">
@@ -595,12 +600,31 @@
     };
     const WIN = Object.fromEntries(
       Object.entries(WINDOWS).map(([k, [a, b]]) => [k, `${a}–${b}`]));
+    // Grid cell edges, in metres — the same pinning problem as WINDOWS, so the
+    // same treatment. The two grids are separate pins because they move
+    // independently (the Glass grid halved 2026-09-01; the Development one
+    // did not). Both files DO carry cell_m, but every label below renders
+    // before either is fetched — they are lazy — so reading it off the data
+    // would leave the labels empty on first paint. That is F4's async lesson.
+    const CELLS = {
+      cellGlass:  50,  // main.py GRID_CELL_M
+      cellDev:   100,  // main.py DEV_GRID_CELL_M
+    };
+    const CELL = Object.fromEntries(
+      Object.entries(CELLS).map(([k, v]) => [k, `${v} m`]));
     // Static tooltips carry {{key}} placeholders so the markup stays readable
     // and the years still come from one place. Safe to run at parse time: this
     // script tag sits after the markup it patches. An unknown key would survive
-    // to the screen, so the test asserts every token is a WINDOWS key.
-    document.querySelectorAll("[title*='{{']").forEach(el => {
-      el.title = el.title.replace(/\{\{(\w+)\}\}/g, (m, k) => WIN[k] ?? m);
+    // to the screen, so the test asserts every token is a WINDOWS or CELLS key.
+    const TOKENS = { ...WIN, ...CELL };
+    document.querySelectorAll("[title*='{{'], [data-tok]").forEach(el => {
+      el.title = el.title.replace(/\{\{(\w+)\}\}/g, (m, k) => TOKENS[k] ?? m);
+      // hasAttribute, not dataset.tok: the attribute is valueless, so
+      // dataset.tok is "" and a truthiness test silently skips every button.
+      if (el.hasAttribute("data-tok")) {
+        el.textContent = el.textContent.replace(
+          /\{\{(\w+)\}\}/g, (m, k) => TOKENS[k] ?? m);
+      }
     });
 
     // Build mode: "public" (curated) | "full" (specialist). ONE hand-edited
@@ -1258,14 +1282,14 @@
     // translucency is fixed, so the prose must not point at a control that isn't
     // there. (Uses/Development still say "slider" because theirs still exists.)
     const GLASS_BLURBS = {
-      ground: "The active metric in 100 m grid cells — property points " +
+      ground: `The active metric in ${CELL.cellGlass} grid cells — property points ` +
               "binned to squares, each cell's total divided by its ground " +
               "acres. Height is linear; colour is square-root–scaled to " +
               "the cell distribution. The neutral plane below is the " +
               "neighbourhoods — hover for their numbers; grey = set-aside " +
               "natural/undeveloped land. The spikes are translucent so it " +
               "reads through.",
-      lot:    "The active metric in 100 m grid cells, divided by the parcel " +
+      lot:    `The active metric in ${CELL.cellGlass} grid cells, divided by the parcel ` +
               "acres the cell's properties own (city lot sizes, deduplicated " +
               "at multi-unit points; cells with no usable lot size are " +
               "omitted). Height is linear; colour is square-root–scaled to " +
@@ -1306,7 +1330,7 @@
       if (!(gridData && amenityActive())) return "";
       const cells = gridData.cells;
       const kept = cells.filter(amenityInBand).length;
-      return " A translucent 100 m grid highlights cells within " +
+      return ` A translucent ${CELL.cellGlass} grid highlights cells within ` +
         amenityWhichPhrase() + " by road — " + kept.toLocaleString() + " of " +
         cells.length.toLocaleString() + ". It marks reach only; the coloured " +
         "score underneath is unchanged. Road distance is a walk proxy — " +
@@ -1360,7 +1384,7 @@
         // are DEFLATED, and the newest permits are not all on the grid.
         const z = cov ? cov.ind_permits_zero_value : 0;
         return VIEWS.development.indBlurb +
-          " The 100 m grid replaces the neighbourhood colours with individual " +
+          ` The ${CELL.cellDev} grid replaces the neighbourhood colours with individual ` +
           "permit cells — height is linear in declared construction value, " +
           "colour square-root scaled. Industrial has no dwelling-unit count and " +
           "permit counts are too sparse to form a surface (most cells hold one " +
@@ -1382,7 +1406,7 @@
       const pct = cov && cov.units
         ? Math.round(100 * (1 - cov.units_geocoded / cov.units)) : null;
       return devChoroplethBlurb() +
-        " The 100 m grid replaces the neighbourhood colours with individual " +
+        ` The ${CELL.cellDev} grid replaces the neighbourhood colours with individual ` +
         "permit cells — height is linear in new " + what + " per cell, colour " +
         "square-root scaled. Only geocoded permits appear" +
         (pct != null
@@ -5837,7 +5861,7 @@
             : state.devMetric === "permits" ? "New permits"
             : state.devMetric === "industrial" ? "Industrial permits"
             : "New homes") +
-          (gridMode ? " per 100 m cell" : " per acre") +
+          (gridMode ? ` per ${CELL.cellDev} cell` : " per acre") +
           ` (${DEV_WINDOW_LABEL[state.devWindow]}, sqrt colour)`;
         document.getElementById("legend-min").textContent = "0";
         const clamp = gridMode ? devGridScale().clamp : devScale().clamp;
@@ -5916,7 +5940,7 @@
         const lot = grid && state.denom === "lot";
         document.getElementById("legend-label").textContent =
           (lot ? cfg.legendLabel.replace("per acre", "per lot acre") : cfg.legendLabel) +
-          (grid ? " (100 m cells)" : "");
+          (grid ? ` (${CELL.cellGlass} cells)` : "");
         document.getElementById("legend-min").textContent = "$0";
         document.getElementById("legend-max").textContent =
           grid ? cfg.fmt(gridScale().clamp) + "+" : cfg.legendMax;

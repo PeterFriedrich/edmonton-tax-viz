@@ -214,15 +214,39 @@ def test_the_drifting_ineligible_pair_was_left_wide_on_purpose():
         )
 
 
+def test_lot_needle_was_widened_when_one_cell_started_setting_it():
+    """⚠️ Pins the 2026-09-01 re-pin, so re-tightening fails here.
+
+    Was one of the four +/-25% frozen anchors. The 50 m Glass grid moved it
+    12 -> 79 -- resolution, not data: halving the cell stopped diluting three
+    WESTMOUNT condo records whose lot_size holds ownership shares rather than
+    m². Its value is now set by ONE degenerate record, so the flatness that
+    earned the +/-25% no longer describes it, and tightening would red the
+    weekly publish on a single upstream edit. Revisit only after the sub-1 m²
+    lot_size defect is fixed (docs/DATA_ISSUES.md §E).
+    """
+    base = _committed_baseline()
+    b = base["lot_needle_ratio"]
+    centre = (b["min"] + b["max"]) / 2
+    half_width = (b["max"] - b["min"]) / 2 / centre
+    assert half_width == pytest.approx(0.50, abs=0.01), (
+        f"lot_needle_ratio half-width is {half_width:.3f}, expected 0.50 -- see "
+        "_lot_needle_is_now_one_cell in the baseline before re-tightening it"
+    )
+
+
 def test_tightened_anchors_are_actually_tighter_than_the_old_uniform_band():
-    """The four frozen anchors must stay at +/-25%, not drift back to +/-50%.
+    """The three still-frozen anchors must stay at +/-25%, not drift back to
+    +/-50%.
 
     ``--write-baseline`` applies ONE global --tolerance to every anchor and
-    would silently flatten the split this file now encodes.
+    would silently flatten the split this file now encodes. ⚠️
+    ``lot_needle_ratio`` was a fourth member until 2026-09-01 -- see the test
+    above for why it left, and do not add it back without re-measuring.
     """
     base = _committed_baseline()
     for key in ("dup_parcel_points", "dup_parcel_value_frac",
-                "dedupe_effect_pct", "lot_needle_ratio"):
+                "dedupe_effect_pct"):
         b = base[key]
         centre = (b["min"] + b["max"]) / 2
         half_width = (b["max"] - b["min"]) / 2 / centre
