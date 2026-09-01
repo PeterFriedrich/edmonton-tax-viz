@@ -133,60 +133,62 @@ Services carries no sparkline — measured, it does.)_
     reproduces the population from a live fetch — the bar all five numbered
     issues clear.
 
-- [ ] **CAPTURE — the gaming laptop's half of the two-machine perf comparison.**
-  Opened 2026-09-01. Peter reports the site **loads faster on an old laptop but
-  pans more smoothly on a newer gaming one** — opposite bottlenecks (load is
-  CPU/network, panning is GPU fill rate), so the pair is what's diagnostic. Only
-  the old machine has been measured; **do not theorise further until the second
-  table exists.**
+- [ ] **CAPTURE — the OLD laptop's pan frame rate. The two-machine comparison is
+  still half-open, now in the opposite direction.** Opened 2026-09-01, rescoped
+  the same day when the gaming-laptop table landed.
+  - **What is now measured:** both machines' LOAD, and the gaming laptop's PAN.
+  - **What is missing:** the old laptop's **pan fps**. Its capture predates
+    `tools/profiling/client-perf-snippet.js` and carries no frame rate at all.
+  - ⚠️ **Peter's pan claim is therefore still UNTESTED.** *"Pans more smoothly on
+    the newer gaming one"* is a comparison, and we have one side of it. Re-run
+    the snippet on the old laptop; nothing about panning should be concluded
+    until then.
 
-  Old laptop, captured 2026-09-01 (Firefox):
+  Captured 2026-09-01 (Firefox, both warm — `download_ms` 0 on each):
 
-  | field | value |
-  |---|---|
-  | `dpr` | 1 |
-  | `screen` | 1600x900 |
-  | `cssPx` / `devicePx` | 1534x503 (identical — DPR 1) |
-  | `gpu` | `Intel(R) HD Graphics, or similar` |
-  | `ttfb_ms` | 26 |
-  | `download_ms` | **0** |
-  | `domInteractive_ms` | 481 |
-  | `loadEvent_ms` | 494 |
+  | field | old laptop | gaming laptop |
+  |---|---|---|
+  | `dpr` | 1 | 1.364 |
+  | `screen` | 1600x900 | 1408x792 |
+  | `cssPx` | 1534x503 | **1363x264** |
+  | `devicePx` | 1534x503 | 1858x360 |
+  | `devicePx total` | **771,602** | **668,880** (−13.3%) |
+  | `gpu` (sanitised) | `Intel(R) HD Graphics, or similar` | `ANGLE (Intel, Intel(R) HD Graphics Direct3D11 vs_5_0 ps_5_0), or similar` |
+  | `ttfb_ms` | 26 | **178** |
+  | `domInteractive_ms` | 481 | **800** |
+  | `loadEvent_ms` | 494 | 804 |
+  | `pan fps @100 m` | **not captured** | 139 (1113 frames / 8 s) |
+  | `pan fps @50 m` | **not captured** | 133.9 (1073 frames / 8 s) |
 
-  ⚠️ **Three caveats that make this baseline weaker than it looks:**
-  - **`download_ms` of 0 with a 26 ms TTFB means it was served from cache**, so
-    481 ms is a *warm* number. The second capture must be warm too, or the
-    comparison measures cache state and nothing else.
-  - **Firefox sanitises the renderer string** — `Intel(R) HD Graphics, or
-    similar` is a privacy placeholder, not the adapter. `WEBGL_debug_renderer_info`
-    is deprecated there. Read the real adapter from `about:support` → Graphics
-    (Firefox) or `chrome://gpu` (Chrome).
-  - **`cssPx` height was 503 px**, i.e. devtools docked. Viewport size sets the
-    fragment count, so both captures need the devtools dock in the same place or
-    the pixel counts aren't comparable.
+  **What the second table settled:**
+  - ✅ **The load report is CONFIRMED and is mostly NETWORK.** domInteractive
+    800 vs 481 (+319 ms), both warm — but `ttfb` is 178 vs 26, so **152 ms of
+    that 319 is time-to-first-byte**, before a line of this codebase runs.
+    Net of ttfb the gap is +167 ms (622 vs 455). Per this item's own criterion,
+    high ttfb means *"network or cold cache, nothing to do with this codebase"*.
+  - ❌ **THE UNCAPPED-DPR HYPOTHESIS IS DEAD.** It predicted *"a much larger
+    `devicePx`"* on the slower-loading machine. The opposite is true: the gaming
+    laptop renders **13.3% FEWER** device pixels (668,880 vs 771,602) at DPR
+    **1.36, not 2**. Do not reach for a DPR cap; there is nothing here for it to
+    fix, and this is now a measured refutation rather than a suspicion.
+  - ✅ **The 50 m grid is nearly free on the GPU — 3.7% of frame rate** (139 →
+    133.9 fps for 2.69x the cells). This was the last unmeasured risk in the
+    50 m option and it argues for keeping it. ⚠️ **Read with the caveat below.**
 
-  What the second table decides:
-  - High `ttfb_ms`/`download_ms` on the gaming laptop → network or cold cache,
-    **nothing to do with this codebase**.
-  - Those low but `domInteractive_ms` high, with a much larger `devicePx` →
-    the uncapped pixel ratio. `web/index.html` sets **no** `devicePixelRatio`
-    anywhere and runs deck `interleaved: true` inside MapLibre's context, so it
-    renders at whatever the display reports; a DPR-2 panel rasterises ~4× the
-    fragments for the same bytes.
-  - The `gpu` row also settles whether the machine is even on its discrete card
-    or quietly running integrated.
-  **RULED OUT 2026-09-01 — browser difference.** Peter confirms **Firefox on
-  both machines**, so engine, JS parse and WebGL backend are held constant and
-  the difference is hardware, display or network. This was the one confound that
-  could have carried the whole result on its own.
-
-  ⚠️ **A DPR cap is NOT the obvious fix even if DPR is the cause** — it would
-  speed up the machine that is already smooth and do nothing for the laggy one,
-  whose viewport is 771,602 device pixels at DPR 1. The old laptop's pan lag is
-  fill rate on weak integrated graphics, a different problem from its load time.
-
-  ⚠️ **Not measurable on the Oracle box** — SwiftShader, no GPU; absolute render
-  and boot timings there are meaningless.
+  ⚠️ **Two things this capture does NOT establish:**
+  - **The GPU is still unknown on BOTH machines.** Every string above is
+    Firefox's privacy placeholder — the `, or similar` suffix is the tell, and
+    it is present on the gaming laptop too. **It does NOT establish that the
+    machine is on integrated graphics**, tempting as the `Intel` reads. Get
+    `about:support` → Graphics → Description. If the gaming laptop really is
+    running integrated, the premise of the whole comparison changes.
+  - **The fill-rate result is under-stressed.** The gaming capture ran at a
+    **264 px tall** viewport against the baseline's 503 — devtools took half the
+    window. Fragment cost scales with pixels, so the 3.7% figure measures the
+    50 m grid's **geometry/draw** cost well and its **fragment** cost barely.
+    The two captures are also not comparable to each other on fill rate at all
+    (−13.3% device pixels). Re-run with a taller viewport before treating 3.7%
+    as the fill-rate answer.
 
 - [ ] **DECIDE — `origin/docs/viz-stack` is the only surviving branch besides
   `master`, and it holds 272 lines that never got a PR.** Surfaced 2026-08-31

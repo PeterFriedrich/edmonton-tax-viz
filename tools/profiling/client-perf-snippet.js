@@ -11,9 +11,15 @@
 //  1. Open the site. **Reload once and let it settle** — the baseline capture
 //     was WARM (download_ms 0, ttfb 26 ms), so a cold run measures cache state
 //     and nothing else.
-//  2. Open devtools and **dock it at the BOTTOM**. The baseline ran at
-//     1534x503 with devtools docked; viewport size sets the fragment count, so
-//     an undocked window is not the same measurement.
+//  2. ⚠️ **Make the viewport as TALL as you can** — undock devtools into its
+//     own window rather than docking it. "Dock it at the bottom" was the
+//     instruction for the first two captures and it was WRONG: the gaming
+//     laptop came back at 1363x264 against the old laptop's 1534x503, so the
+//     two disagreed by 13% on device pixels and could not be compared on fill
+//     rate at all. Fragment cost scales with pixels, so a short viewport
+//     measures DRAW cost well and hides FILL cost.
+//     **Compare `devicePx total` between machines before trusting any fps
+//     ratio across them.** The script warns below if the viewport is short.
 //  3. Paste this whole file into the Console and press Enter. It takes ~25 s:
 //     it pans the map twice, once per grid resolution.
 //  4. Copy the printed markdown table back.
@@ -98,4 +104,15 @@
     console.warn('⚠️ 100 m baseline is under 30 fps — the ratio below it is ' +
                  'not meaningful. Report the raw frame counts.');
   }
+  // ⚠️ The viewport guard, added after the gaming-laptop capture came back at
+  // 264 px tall (baseline 503) because devtools was docked. Fill rate scales
+  // with pixels, so a short viewport quietly turns a fill-rate test into a draw
+  // -call test and reports a reassuring number for the wrong question.
+  if (canvas && canvas.clientHeight < 400) {
+    console.warn(`⚠️ viewport is only ${canvas.clientHeight} px tall — devtools ` +
+      'is probably docked. Fill rate is UNDER-STRESSED, so the fps ratio ' +
+      'understates the finer grid\'s cost. Undock devtools and re-run.');
+  }
+  console.log('⚠️ cross-machine: compare `devicePx total` first. Two machines ' +
+    'at different device-pixel counts are not comparable on frame rate.');
 })();
