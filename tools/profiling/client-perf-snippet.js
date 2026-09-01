@@ -115,10 +115,20 @@
   // 264 px tall (baseline 503) because devtools was docked. Fill rate scales
   // with pixels, so a short viewport quietly turns a fill-rate test into a draw
   // -call test and reports a reassuring number for the wrong question.
-  if (canvas && canvas.clientHeight < 400) {
-    console.warn(`⚠️ viewport is only ${canvas.clientHeight} px tall — devtools ` +
-      'is probably docked. Fill rate is UNDER-STRESSED, so the fps ratio ' +
-      'understates the finer grid\'s cost. Undock devtools and re-run.');
+  // ⚠️ An absolute floor is NOT sufficient on its own, and 2026-09-01 proved it:
+  // the old laptop came back at 551 px on a 900 px screen. That clears 400, so
+  // this guard stayed SILENT on a capture that was still ~30% short of what the
+  // display allowed — i.e. it under-stressed fill anyway. "Tall enough" is a
+  // question about the SCREEN, not an absolute pixel count.
+  const shortAbs = canvas && canvas.clientHeight < 400;
+  const shortRel = canvas && canvas.clientHeight < 0.65 * screen.height;
+  if (shortAbs || shortRel) {
+    const pct = Math.round(100 * canvas.clientHeight / screen.height);
+    console.warn(`⚠️ viewport is ${canvas.clientHeight} px tall on a ` +
+      `${screen.height} px screen (${pct}% of it) — devtools is probably ` +
+      'docked. Fill rate is UNDER-STRESSED, so the fps ratio UNDERSTATES the ' +
+      'finer grid\'s cost — the figure you get is a FLOOR. Undock devtools ' +
+      'into its own window and re-run.');
   }
   console.log('⚠️ cross-machine: compare `devicePx total` first. Two machines ' +
     'at different device-pixel counts are not comparable on frame rate — and ' +
