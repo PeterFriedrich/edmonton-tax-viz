@@ -145,6 +145,14 @@ quarters: roads, parks, river valley.
 rate at a realistic window** (117.3 -> 105.2 fps for 2.69x the cells; Firefox,
 `dpr` 1.36, 1,083,214 device px). Acceptable for an opt-in lazy layer that
 starts unselected, but **not free**.
+⚠️ **That is an INTEGRATED-GPU number: Intel Iris Xe.** The machine it came from
+also carries an NVIDIA RTX 3050 Ti, and `about:support` shows it `Active: No` —
+Firefox was on the integrated adapter throughout, confirmed by WebGPU reporting
+`wgpuDeviceType: "IntegratedGpu"`. **This site has never been measured on a
+discrete GPU.** That is the right default to tune against (it is what most
+readers have), but it means the numbers here are a floor-ish case, not a ceiling,
+and nothing in this repo selects the adapter — it is a Windows per-app graphics
+preference.
 
 ⚠️ **THE COST IS VIEWPORT-DEPENDENT, and the first measurement understated it
 by ~3x.** A short-viewport run (668,880 px, devtools docked) read **3.7%**. At
