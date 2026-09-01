@@ -102,7 +102,19 @@ Services carries no sparkline — measured, it does.)_
 
 ## Open work
 
-
+_Last reconciled: 2026-09-01 (S129 — **the 50 m grid is now an OPTION, not a
+replacement**, closing S128's scope correction, and the two questions it was
+blocked on were answered by Peter in one line. Three items on this list were
+rewritten by MEASUREMENT rather than work: the gaming-laptop perf item was
+rescoped twice in one session and its load half **WITHDRAWN** (the same machine
+varied 800→409 ms, wider than the between-machine gap it existed to explain),
+its DPR hypothesis **refuted** (13.3% FEWER device pixels, not more), and its
+GPU question **answered against the premise** — that machine runs integrated
+Iris Xe with its RTX `Active: No`, so the comparison was never
+discrete-vs-integrated. ⚠️ **`docs/DECISIONS.md`'s last five rows are all
+2026-09-01 and two of them retract or correct an earlier one** — read them in
+order. Also: a 4x spike-height bug shipped in the 50 m option and was caught by
+Peter on a phone, not by any of the ten green verify scripts.)_
 
 - [ ] **INVESTIGATE — `lot_size` holds ownership shares for an unknown number of
   condo records; 7,984 rows are under 1 m².** Opened 2026-09-01, found by the
