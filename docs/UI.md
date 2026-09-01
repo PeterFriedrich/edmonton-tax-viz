@@ -2091,6 +2091,26 @@ wait that isn't reads as a stutter. ⚠️ **Cleared on the fetch's own settle, 
 after the caller's re-render**: a failed fetch resolves (see the `.catch`), so
 this is also what stops a dead request stranding the stripe on forever.
 
+**Then the wait was largely removed for the default resolution** (same day, on
+Peter's *"can we not actually do background loading, before they even select
+it?"*). The **100 m** grid is warmed on idle once the loading overlay lifts, and
+**50 m** is warmed on `pointerenter`/`focus` of its own button. Rationale, the
+boot window it exploits, and the Save-Data guard: `docs/PERFORMANCE.md`.
+
+⚠️ **So the stripe's normal state on 100 m is now ABSENT.** That is the feature —
+there is no wait to report — and a reader of this section should not "fix" a
+missing indicator there. It still appears if the click beats the warm.
+
+⚠️ **`loadGridData` vs `ensureGridData` is the load-bearing split.** A warm fills
+`gridStore` and touches nothing else; only `ensureGridData` repoints
+`gridData`/`gridCell`, raises the stripe, and re-renders. Hovering a control is
+not a request to see its contents, and a background warm must not move the active
+grid under a view that is not drawing one.
+
+⚠️ **The 50 m tooltip changed with it** — it used to promise "fetched only when
+you pick it", which the hover warm makes false. Now "fetched only on demand",
+which stays true of a pointer that has arrived on the button.
+
 **`verify-grid-loading.js`** covers it, and the instrument is the point: over
 localhost the fetch settles in tens of milliseconds, so **sampling the class
 between clicks reads "not busy" whether the stripe worked perfectly or was never
