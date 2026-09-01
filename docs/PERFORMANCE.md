@@ -139,10 +139,20 @@ the Detail row picks between them and each is lazy, so the cost is **per-choice,
 not additive** — a visitor who never switches pays ~1.08 MB, one who does pays
 ~2.82 MB for the second, and **boot is untouched either way**. The 2.69× cell
 count (34.7k → 93.2k) is sub-linear because quartering a cell leaves empty
-quarters: roads, parks, river valley. ⚠️ **The GPU cost of 93.2k cells has NOT
-been measured on real hardware** — this box has no GPU (SwiftShader), so its
-frame timings are meaningless. That measurement belongs with the two-laptop perf
-comparison, and it is the one number that could argue for pulling the option.
+quarters: roads, parks, river valley.
+
+**MEASURED 2026-09-01 on real hardware — the finer grid costs ~3.7% of frame
+rate** (139 -> 133.9 fps for 2.69x the cells; Firefox, `dpr` 1.36). This was the
+last unmeasured risk in the 50 m option and it argues for keeping it: 2.69x the
+geometry for under 4% of the frame budget.
+⚠️ **Two limits on that number.** It was captured at a **264 px tall viewport**
+(devtools docked), and fragment cost scales with pixels — so it measures the
+grid's **draw** cost well and its **fill** cost barely. And it is ONE machine:
+the older laptop's pan rate is still uncaptured, so the *comparative* claim
+("pans more smoothly on the newer one") stays untested. Re-run
+`tools/profiling/client-perf-snippet.js` at a TALL viewport on both.
+⚠️ Not measurable on the Oracle box at all — SwiftShader saturates at ~0.9 fps
+on BOTH resolutions and once reported the finer grid as *faster* (ratio 1.29).
 
 ## Boot time is a THIRD budget, and it is neither frames nor bytes (2026-08-30)
 
