@@ -52,7 +52,8 @@ def test_build_emits_both_copies(tmp_path):
     (src / "index.html").write_text(
         '<head>\n<script src="vendor/a.js"></script>\n'
         '<link href="styles.css" rel="stylesheet" />\n</head>\n'
-        '<body><script>const DEFAULT_BUILD = "full";</script></body>'
+        '<body><script>const DEFAULT_BUILD = "full";'
+        'const BUILD_STAMP = "dev";</script></body>'
     )
     out = tmp_path / "_site"
     build_site.build(src, out)
@@ -84,6 +85,17 @@ def test_build_emits_both_copies(tmp_path):
     token = build_site.css_token(src / "styles.css")
     assert f'href="styles.css?v={token}"' in root
     assert f'href="styles.css?v={token}"' in full
+
+    # Both copies carry the SAME stamp: same commit, same run. Computing it per
+    # copy could date them apart across midnight, reading as two deploys of one
+    # artifact. And the placeholder must be GONE — a build that ships "dev" is
+    # indistinguishable from an unbuilt checkout in exactly the bug report this
+    # stamp exists to answer.
+    stamps = build_site.STAMP_RE.findall(root)
+    assert len(stamps) == 1
+    assert stamps == build_site.STAMP_RE.findall(full)
+    assert 'const BUILD_STAMP = "dev";' not in root
+    assert 'const BUILD_STAMP = "dev";' not in full
 
 
 def test_deploy_workflow_triggers_on_this_script():
@@ -119,7 +131,8 @@ def test_build_rejects_source_with_existing_base(tmp_path):
     (src / "styles.css").write_text("#map { color: red }")
     (src / "index.html").write_text(
         '<head><base href="/"><link href="styles.css" rel="stylesheet" /></head>'
-        '<body><script>const DEFAULT_BUILD = "full";</script></body>'
+        '<body><script>const DEFAULT_BUILD = "full";'
+        'const BUILD_STAMP = "dev";</script></body>'
     )
     with pytest.raises(SystemExit):
         build_site.build(src, tmp_path / "_site")
@@ -139,6 +152,7 @@ def test_build_ignores_head_markup_quoted_below_the_head(tmp_path):
     (src / "index.html").write_text(
         '<head><link href="styles.css" rel="stylesheet" /></head>\n'
         '<body><script>const DEFAULT_BUILD = "full";\n'
+        'const BUILD_STAMP = "dev";\n'
         '// /full/ gets a <base href="../"> injected after <head> at build time\n'
         'const tpl = "</body>";\n'
         "</script></body>"
@@ -154,3 +168,38 @@ def test_build_ignores_head_markup_quoted_below_the_head(tmp_path):
     assert '<base href="../">' in body
     # The badge goes before the document's own </body>, not the quoted one.
     assert body.index("work in progress") > body.index('const tpl = "</body>"')
+
+
+def test_source_has_exactly_one_build_stamp_literal():
+    """The real web/index.html must carry the literal the deploy step rewrites."""
+    html = (REPO / "web" / "index.html").read_text()
+    assert len(build_site.STAMP_RE.findall(html)) == 1
+
+
+def test_set_build_stamp_fails_on_drift():
+    with pytest.raises(SystemExit):
+        build_site.set_build_stamp("no literal here", "abc1234")
+
+
+def test_set_build_stamp_refuses_a_quote():
+    """The stamp is injected into a JS string literal, so a quote would escape it."""
+    src = 'const BUILD_STAMP = "dev";'
+    with pytest.raises(SystemExit):
+        build_site.set_build_stamp(src, 'a"; alert(1); //')
+
+
+def test_build_stamp_prefers_the_ci_env_over_git(monkeypatch):
+    """GITHUB_SHA is authoritative in CI; git may describe a different commit."""
+    monkeypatch.setenv("GITHUB_SHA", "0123456789abcdef")
+    assert build_site.build_stamp().startswith("0123456 ")
+
+
+def test_build_stamp_falls_back_to_dev_without_env_or_git(monkeypatch):
+    """Fail OPEN on the deploy path: no git is not a reason to refuse to publish."""
+    monkeypatch.delenv("GITHUB_SHA", raising=False)
+
+    def boom(*a, **k):
+        raise OSError("no git")
+
+    monkeypatch.setattr(build_site.subprocess, "run", boom)
+    assert build_site.build_stamp() == "dev"
