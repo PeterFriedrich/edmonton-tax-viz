@@ -114,5 +114,16 @@
       'understates the finer grid\'s cost. Undock devtools and re-run.');
   }
   console.log('⚠️ cross-machine: compare `devicePx total` first. Two machines ' +
-    'at different device-pixel counts are not comparable on frame rate.');
+    'at different device-pixel counts are not comparable on frame rate — and ' +
+    'neither are two runs on the SAME machine (668,880 px read 3.7%, ' +
+    '1,083,214 px read 10.3%).');
+  // ⚠️ THE TWO HALVES OF THIS TABLE ARE NOT EQUALLY SOLID, and printing them in
+  // one block hid that. The fps rows aggregate ~900 frames over 8 s; every load
+  // row is n=1, one navigation, unrepeatable without a reload. The same gaming
+  // laptop read domInteractive 800 ms and then 409 ms — a 2x spread, wider than
+  // the between-machine difference those numbers were being used to explain.
+  console.log('⚠️ LOAD ROWS ARE n=1 (ttfb/download/domInteractive/loadEvent). ' +
+    'Reload and re-run at least 3x per machine and report the SPREAD; a single ' +
+    'load sample has been observed to vary 2x on one machine. The fps rows are ' +
+    'well-sampled (~900 frames) and do not need this.');
 })();
