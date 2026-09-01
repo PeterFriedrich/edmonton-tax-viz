@@ -141,18 +141,27 @@ not additive** — a visitor who never switches pays ~1.08 MB, one who does pays
 count (34.7k → 93.2k) is sub-linear because quartering a cell leaves empty
 quarters: roads, parks, river valley.
 
-**MEASURED 2026-09-01 on real hardware — the finer grid costs ~3.7% of frame
-rate** (139 -> 133.9 fps for 2.69x the cells; Firefox, `dpr` 1.36). This was the
-last unmeasured risk in the 50 m option and it argues for keeping it: 2.69x the
-geometry for under 4% of the frame budget.
-⚠️ **Two limits on that number.** It was captured at a **264 px tall viewport**
-(devtools docked), and fragment cost scales with pixels — so it measures the
-grid's **draw** cost well and its **fill** cost barely. And it is ONE machine:
-the older laptop's pan rate is still uncaptured, so the *comparative* claim
-("pans more smoothly on the newer one") stays untested. Re-run
-`tools/profiling/client-perf-snippet.js` at a TALL viewport on both.
-⚠️ Not measurable on the Oracle box at all — SwiftShader saturates at ~0.9 fps
-on BOTH resolutions and once reported the finer grid as *faster* (ratio 1.29).
+**MEASURED 2026-09-01 on real hardware — the finer grid costs ~10.3% of frame
+rate at a realistic window** (117.3 -> 105.2 fps for 2.69x the cells; Firefox,
+`dpr` 1.36, 1,083,214 device px). Acceptable for an opt-in lazy layer that
+starts unselected, but **not free**.
+
+⚠️ **THE COST IS VIEWPORT-DEPENDENT, and the first measurement understated it
+by ~3x.** A short-viewport run (668,880 px, devtools docked) read **3.7%**. At
+1.62x the pixels the finer grid's marginal frame time went **0.274 ms -> 0.981
+ms (3.6x)** while the 100 m baseline grew only **1.18x** — so the added cost is
+concentrated in the fine grid and scales with what is on screen. Superlinear
+because a taller viewport shows **more cells**, not merely more pixels per cell:
+geometry count and fragment load both rise.
+⚠️ **Do not extrapolate from two points.** Fullscreen at that DPR is ~2.07M px,
+**1.91x** the tall run — plausibly worse than 10.3%, but that is arithmetic, not
+a measurement. **Always record `devicePx total` beside any fps figure here**; a
+frame rate without the pixel count it was measured at is not a fact about the
+site, and quoting one across viewports is how 3.7% happened.
+⚠️ The comparative claim ("pans more smoothly on the newer laptop") is still
+untested — the older machine has no pan capture at all.
+⚠️ Not measurable on the Oracle box — SwiftShader saturates at ~0.9 fps on BOTH
+resolutions and once reported the finer grid as *faster* (ratio 1.29).
 
 ## Boot time is a THIRD budget, and it is neither frames nor bytes (2026-08-30)
 

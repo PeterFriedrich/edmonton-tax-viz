@@ -133,62 +133,57 @@ Services carries no sparkline — measured, it does.)_
     reproduces the population from a live fetch — the bar all five numbered
     issues clear.
 
-- [ ] **CAPTURE — the OLD laptop's pan frame rate. The two-machine comparison is
-  still half-open, now in the opposite direction.** Opened 2026-09-01, rescoped
-  the same day when the gaming-laptop table landed.
-  - **What is now measured:** both machines' LOAD, and the gaming laptop's PAN.
-  - **What is missing:** the old laptop's **pan fps**. Its capture predates
-    `tools/profiling/client-perf-snippet.js` and carries no frame rate at all.
-  - ⚠️ **Peter's pan claim is therefore still UNTESTED.** *"Pans more smoothly on
-    the newer gaming one"* is a comparison, and we have one side of it. Re-run
-    the snippet on the old laptop; nothing about panning should be concluded
-    until then.
+- [ ] **CAPTURE — the OLD laptop's pan frame rate, and REPEAT LOAD RUNS on both.**
+  Opened 2026-09-01; rescoped twice the same day as captures landed.
+  - **Missing:** the old laptop's **pan fps** (its capture predates
+    `tools/profiling/client-perf-snippet.js`), and **repeat load samples on
+    either machine** — see the variance finding below.
+  - ⚠️ Peter's pan claim (*"pans more smoothly on the newer one"*) is still
+    **untested**: we have one side of a comparison.
 
-  Captured 2026-09-01 (Firefox, both warm — `download_ms` 0 on each):
+  | field | old laptop | gaming A (short) | **gaming B (tall)** |
+  |---|---|---|---|
+  | `dpr` | 1 | 1.364 | 1.364 |
+  | `cssPx` | 1534x503 | 1363x264 | **1363x428** |
+  | `devicePx total` | 771,602 | 668,880 | **1,083,214** |
+  | `ttfb_ms` | 26 | 178 | 150 |
+  | `domInteractive_ms` | 481 | **800** | **409** |
+  | `pan fps @100 m` | not captured | 139 | **117.3** |
+  | `pan fps @50 m` | not captured | 133.9 | **105.2** |
+  | 50 m cost | — | 3.7% | **10.3%** |
 
-  | field | old laptop | gaming laptop |
-  |---|---|---|
-  | `dpr` | 1 | 1.364 |
-  | `screen` | 1600x900 | 1408x792 |
-  | `cssPx` | 1534x503 | **1363x264** |
-  | `devicePx` | 1534x503 | 1858x360 |
-  | `devicePx total` | **771,602** | **668,880** (−13.3%) |
-  | `gpu` (sanitised) | `Intel(R) HD Graphics, or similar` | `ANGLE (Intel, Intel(R) HD Graphics Direct3D11 vs_5_0 ps_5_0), or similar` |
-  | `ttfb_ms` | 26 | **178** |
-  | `domInteractive_ms` | 481 | **800** |
-  | `loadEvent_ms` | 494 | 804 |
-  | `pan fps @100 m` | **not captured** | 139 (1113 frames / 8 s) |
-  | `pan fps @50 m` | **not captured** | 133.9 (1073 frames / 8 s) |
+  ⚠️ **THE LOAD COMPARISON IS NOT ESTABLISHED — WITHDRAW THE EARLIER FINDING.**
+  The same machine read `domInteractive` **800 ms then 409 ms**. That 2x spread
+  is *larger than the between-machine difference the whole item exists to
+  explain* (481 vs 800), and the gaming laptop's fresh reading (**409**) is
+  **faster** than the old laptop's single sample (481) — the reverse of the
+  reported symptom. **Nothing about load can be concluded from single samples**,
+  including the 2026-09-01 "confirmed, and mostly network" entry in
+  `DECISIONS.md`, which rested on the 800 ms reading alone.
+  - Why this was invisible before: **the fps figures aggregate ~900 frames over
+    8 s, while every load figure is n=1** — one navigation, unrepeatable without
+    a reload. The same table mixes a well-sampled statistic with a single draw.
+  - **Next:** at least 3 reloads per machine, report the spread, not a point.
+    Only then is the ttfb split (150–178 vs 26) worth interpreting.
 
-  **What the second table settled:**
-  - ✅ **The load report is CONFIRMED and is mostly NETWORK.** domInteractive
-    800 vs 481 (+319 ms), both warm — but `ttfb` is 178 vs 26, so **152 ms of
-    that 319 is time-to-first-byte**, before a line of this codebase runs.
-    Net of ttfb the gap is +167 ms (622 vs 455). Per this item's own criterion,
-    high ttfb means *"network or cold cache, nothing to do with this codebase"*.
-  - ❌ **THE UNCAPPED-DPR HYPOTHESIS IS DEAD.** It predicted *"a much larger
-    `devicePx`"* on the slower-loading machine. The opposite is true: the gaming
-    laptop renders **13.3% FEWER** device pixels (668,880 vs 771,602) at DPR
-    **1.36, not 2**. Do not reach for a DPR cap; there is nothing here for it to
-    fix, and this is now a measured refutation rather than a suspicion.
-  - ✅ **The 50 m grid is nearly free on the GPU — 3.7% of frame rate** (139 →
-    133.9 fps for 2.69x the cells). This was the last unmeasured risk in the
-    50 m option and it argues for keeping it. ⚠️ **Read with the caveat below.**
+  ✅ **The 50 m grid's GPU cost is REAL and VIEWPORT-DEPENDENT — 10.3% at a
+  realistic window, not the 3.7% first measured.** The earlier figure was a
+  short-viewport artifact, exactly as flagged. Marginal frame time from the
+  finer grid went **0.274 ms → 0.981 ms (3.6x) for 1.62x the pixels**, while the
+  100 m baseline grew only 1.18x — so the cost is concentrated in the finer grid
+  and scales with what is on screen.
+  - Superlinear because a taller viewport shows **more cells**, not just more
+    pixels per cell: both the geometry count and the fragment load rise.
+  - ⚠️ **Do not extrapolate hard from two points.** Fullscreen at this DPR is
+    ~2.07M px, **1.91x run B** — plausibly worse than 10.3%, but that is
+    arithmetic, not a measurement. Capture it before quoting it.
+  - **Still acceptable**: 10.3% for 2.69x the detail, on an opt-in lazy layer
+    that starts unselected. Not free, as 3.7% implied.
 
-  ⚠️ **Two things this capture does NOT establish:**
-  - **The GPU is still unknown on BOTH machines.** Every string above is
-    Firefox's privacy placeholder — the `, or similar` suffix is the tell, and
-    it is present on the gaming laptop too. **It does NOT establish that the
-    machine is on integrated graphics**, tempting as the `Intel` reads. Get
-    `about:support` → Graphics → Description. If the gaming laptop really is
-    running integrated, the premise of the whole comparison changes.
-  - **The fill-rate result is under-stressed.** The gaming capture ran at a
-    **264 px tall** viewport against the baseline's 503 — devtools took half the
-    window. Fragment cost scales with pixels, so the 3.7% figure measures the
-    50 m grid's **geometry/draw** cost well and its **fragment** cost barely.
-    The two captures are also not comparable to each other on fill rate at all
-    (−13.3% device pixels). Re-run with a taller viewport before treating 3.7%
-    as the fill-rate answer.
+  ⚠️ **The GPU is STILL unknown on both machines.** Every renderer string is
+  Firefox's placeholder — the `, or similar` suffix is on the gaming laptop too,
+  so `Intel(R) HD Graphics` there does **not** establish integrated graphics.
+  `about:support` -> Graphics -> Description, still outstanding after two asks.
 
 - [ ] **DECIDE — `origin/docs/viz-stack` is the only surviving branch besides
   `master`, and it holds 272 lines that never got a PR.** Surfaced 2026-08-31
