@@ -104,40 +104,6 @@ Services carries no sparkline — measured, it does.)_
 
 
 
-- [ ] **⚠️ SCOPE CORRECTION — the 50 m grid was meant to be an ADDITIONAL
-  OPTION, and shipped as a REPLACEMENT.** Opened 2026-09-01, immediately after
-  PR #293 merged. Peter: *"i wanted it as an additional option, not literally
-  just change it to 50."*
-  - **What is live now:** Glass renders 50 m only; 100 m is gone from the
-    served data and from the UI. `web/data/value_grid.json` IS the 50 m file.
-  - **What was wanted:** both resolutions, user-switchable in the Glass view.
-  - ⚠️ **Do NOT fix this by reverting #293.** Everything in it is wanted and
-    most of it is resolution-independent — the `CELLS`/`{{token}}` label fix,
-    `verify-tokens.js`, the `lot_needle_ratio` re-pin, `DATA_ISSUES.md` §E,
-    the `GRID_CELL_M`/`DEV_GRID_CELL_M` split. **A revert would throw away a
-    real data-defect find to undo a default.** Build the option on top.
-  - Design notes already established, so this does not need re-deriving:
-    - Both files must ship. 100 m is **1.05 MB** gzipped, 50 m is **2.74 MB**;
-      each is lazy, so fetch only the one selected and the cost is per-choice,
-      not additive. First load is untouched either way.
-    - ⚠️ **The label mechanism already half-solves it.** `CELLS` pins the
-      DEFAULT (known at parse time, which is the constraint that forced a pin —
-      the grids are lazy, so a data-derived label is empty on first paint).
-      Once a user switches, the label can read `cell_m` off the loaded file,
-      because by then it HAS loaded. Pin the default, read the switch.
-    - `gridData` is a single slot — it needs to key by cell size, or refetch.
-      `ensureGridData()` fires for Glass **and** Infill; the amenity bands read
-      `dist_lrt_m`/`dist_school_m` off whichever grid is loaded, and **those
-      band percentages differ by resolution** (LRT 1.59%→1.43%, school
-      37.81%→42.34%). Decide whether Infill follows the switch or pins one.
-    - ⚠️ **`lot_needle_ratio` is calibrated for 50 m now** (±50%, one degenerate
-      cell sets it). If 100 m becomes selectable again the guard still only
-      measures the SERVED default — decide which file it anchors on.
-  - Open question for Peter: **which resolution is the default**, and does the
-    control live in `#moneydetail` (a third button beside Neighbourhood) or as
-    a separate cell-size row that appears only in Glass? See
-    `docs/CONTROLS_MATRIX.md` — grouping is shared DOM, so it drives mobile too.
-
 - [ ] **INVESTIGATE — `lot_size` holds ownership shares for an unknown number of
   condo records; 7,984 rows are under 1 m².** Opened 2026-09-01, found by the
   50 m Glass grid (`docs/DATA_ISSUES.md` §E has the full measurement).
@@ -157,6 +123,12 @@ Services carries no sparkline — measured, it does.)_
     through. Don't "fix" `SHARE_MAX_M2`.
   - Blocks re-tightening `lot_needle_ratio`, which is parked at ±50% because a
     single degenerate record now sets it (`data/expected_value_anchors.json`).
+    ⚠️ **That anchor reads `value_grid_50.json`, NOT the served default**
+    (2026-09-01, `check_value_anchors.py`) — the 100 m grid merges these three
+    records with neighbours holding real lots and the needle disappears
+    entirely, so guarding the default would mean this item's defect is no
+    longer detected at all. Do not "simplify" the guard back onto the
+    canonical file.
   - To promote to a numbered issue it needs a standalone notebook that
     reproduces the population from a live fetch — the bar all five numbered
     issues clear.
@@ -2386,6 +2358,8 @@ Services carries no sparkline — measured, it does.)_
 ## Done
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
+
+- [x] **CLOSED 2026-09-01 — the 50 m Glass grid is now a THIRD Detail button with 100 m as the default; the scope correction is resolved.** (Both files ship lazily; Infill pins the default; the needle guard anchors on the fine file. Verify falsification exposed a vacuous default check.) — CLOSED 2026-09-01 · `docs/TODO_archive.md`
 
 - [x] **CLOSED 2026-08-30 — the 15 hardcoded activity-window labels now read from one constant, and drift fails the build.** (Audit F4; the `status.json` route was rejected on measurement.) — CLOSED 2026-08-30 · `docs/TODO_archive.md`
 

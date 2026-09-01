@@ -486,8 +486,17 @@ denominators cancel). Real-data anchors (2025 roll): residential-class =
 p97.5 ≈ $28.5k/acre (web clamp $30k). Distinct from `is_residential`
 (§ Residential split below), which is a *zoned-area* display flag, not dollars.
 
+⚠️ **Every grid column described below ships at BOTH resolutions**
+(2026-09-01): `value_grid.json` at 100 m (the served default) and
+`value_grid_50.json` at 50 m, exported from the same frame by the same call,
+so the schemas are identical by construction and the levy reconciles across
+both ($2.7842B each). Raw sizes quoted in these subsections are the **100 m**
+file's; the 50 m one is ~2.7x larger. ⚠️ Cell-grain STATISTICS quoted anywhere
+in this file are resolution-dependent — re-measure rather than carrying a
+percentage between the two.
+
 **Glass grid variant (added 2026-07-17):** `export_value_grid.py` rolls the
-same `res_levy` into the 100 m cells — payload columns
+same `res_levy` into the grid cells — payload columns
 **`res_revenue_per_acre`** / **`res_revenue_per_lot_acre`** appended after the
 existing six (`value_grid.json` ~1.76 → ~2.1 MB raw; Pages gzips). A cell with
 assessed property but no residential-class levy reads a **real 0**, not null
@@ -507,7 +516,7 @@ class, 509 parcels) is the only slice in neither subset, so the identity
 **`levy == res_levy + nonres_levy + farmland slices`** holds exactly (tested).
 Flows mirror res: `nonres_levy` → `total_nonres_revenue` →
 **`nonres_revenue_per_acre`** / **`nonres_revenue_per_lot_acre`** (slim
-GeoJSON, LOW_PARCEL_FRAC suppression inherited) and into the 100 m cells
+GeoJSON, LOW_PARCEL_FRAC suppression inherited) and into the grid cells
 (payload columns appended LAST, after `median_year_built`; real-0/null
 conventions identical to res; `value_grid.json` ~2.28 → ~2.50 MB raw). NOTE
 there is **no industrial-vs-commercial split in the roll** — `COMMERCIAL`

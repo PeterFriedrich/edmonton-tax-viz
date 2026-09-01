@@ -51,8 +51,13 @@ touches the hood join — `main.py` takes the PER-PROPERTY frame (post
 `apply_tax_rates`), merges `load_property_info.py`'s `account_number → lot_size`
 onto it, runs `check_lot_acre_bounds` against the boundary frame (physical-bound
 validation, raises on new violations), and hands it to `export_value_grid.py`
-for the 100 m cell file (`web/data/value_grid.json`, ground- AND lot-acre
-metrics). Absent property-info file → ground-acre only.
+for the cell files (ground- AND lot-acre metrics). Absent property-info file →
+ground-acre only. ⚠️ **Called TWICE, at two resolutions** (2026-09-01): the
+default `web/data/value_grid.json` at 100 m and `web/data/value_grid_50.json` at
+50 m, from the SAME `grid_input`, so the two cannot disagree about the levy
+(both reconcile at $2.7842B). The Glass view's Detail row picks between them and
+each is fetched only if selected; Infill pins the default. The unsuffixed path
+holds the DEFAULT, so a third resolution would be a third file, not a rename.
 
 **Also in the flow (amenity distance, 2026-08-23):** a second side branch on
 that same per-property frame, immediately before the grid export.
@@ -359,14 +364,17 @@ only consumer is `tools/ward_rollup.py`; no served column changed.
 `latitude`/`longitude`/`assessed_value`; `levy` optional from
 `apply_tax_rates.py`; `lot_size` optional — `main.py` merges it in from
 `load_property_info.py` on `account_number`); output path; `cell_m`
-(default 100.0, pinned as `GRID_CELL_M` in `main.py`)
+(default 100.0; `main.py` pins `GRID_CELL_M` = 100.0 and `GRID_FINE_CELL_M`
+= 50.0 and calls the export once per resolution)
 
 **Outputs:** compact flat-JSON web file (`web/data/value_grid.json`): one row
 per occupied grid cell — `[lon, lat, value_per_acre, revenue_per_acre,
 value_per_lot_acre, revenue_per_lot_acre]` at the cell's SW corner
 (`revenue_*` omitted on the value-only path; `*_per_lot_acre` omitted when
 `lot_size` is absent; lot-acre slots `null` where the cell has no eligible
-lot acres). ~34.7k cells / 1.8 MB on current data. Returns a stats dict.
+lot acres). ~34.7k cells / 3.0 MB at 100 m, ~93.2k / 8.0 MB at 50 m on
+current data (sub-linear — quartering a cell leaves empty quarters: roads,
+parks, river valley). Returns a stats dict.
 
 **Responsibilities:**
 - Bin property points into `cell_m` squares in **EPSG:3400** (CRS explicit,

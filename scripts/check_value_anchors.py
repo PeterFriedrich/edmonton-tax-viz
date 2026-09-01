@@ -78,7 +78,16 @@ ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_ASSESSMENT_CSV = ROOT / "data" / "raw" / "Property_Assessment_Data__Current_Calendar_Year_.csv"
 DEFAULT_PROPERTY_INFO_CSV = ROOT / "data" / "raw" / "Property_Info__Current_Calendar_Year_.csv"
 DEFAULT_BASELINE = ROOT / "data" / "expected_value_anchors.json"
-DEFAULT_GRID_JSON = ROOT / "web" / "data" / "value_grid.json"
+# ⚠️ THE FINE GRID, NOT THE DEFAULT ONE — and deliberately so. The grid is read
+# for exactly one anchor (lot_needle_ratio); every other anchor comes from the
+# CSVs. That anchor exists to catch a degenerate lot_size, and the 100 m grid
+# DEMONSTRABLY MASKS the one we know about: the three WESTMOUNT ownership-share
+# records merge with neighbours holding real lots and the needle disappears
+# (ratio 12 at 100 m, 79 at 50 m — same data, see docs/DATA_ISSUES.md §E).
+# Guarding the coarser file would hand that detection back. The site's DEFAULT
+# is still web/data/value_grid.json; this is a detection choice, not a claim
+# about which grid is canonical.
+DEFAULT_GRID_JSON = ROOT / "web" / "data" / "value_grid_50.json"
 
 EXIT_OK = 0
 EXIT_DRIFT = 5
