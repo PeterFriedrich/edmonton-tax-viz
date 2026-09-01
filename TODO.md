@@ -146,9 +146,10 @@ Services carries no sparkline — measured, it does.)_
     fragments for the same bytes.
   - The `gpu` row also settles whether the machine is even on its discrete card
     or quietly running integrated.
-  - ⚠️ **Confirm both captures are the same browser.** The old one is Firefox;
-    if the gaming laptop is on Chrome, that difference alone could carry the
-    result.
+  **RULED OUT 2026-09-01 — browser difference.** Peter confirms **Firefox on
+  both machines**, so engine, JS parse and WebGL backend are held constant and
+  the difference is hardware, display or network. This was the one confound that
+  could have carried the whole result on its own.
 
   ⚠️ **A DPR cap is NOT the obvious fix even if DPR is the cause** — it would
   speed up the machine that is already smooth and do nothing for the laggy one,
