@@ -95,7 +95,11 @@ heavy lens, payload is paid by everyone who loads the page.
 **Adding a lens does NOT slow the site down.** Two mechanisms, both verified:
 
 - **Fetches are lazily memoized per lens** (`??=` guards, `web/index.html`) — an
-  unopened lens is never downloaded.
+  unopened lens is never downloaded. ⚠️ **ONE DELIBERATE EXCEPTION since
+  2026-09-01:** the **100 m** grid is warmed in the background once the loading
+  overlay lifts, so every visitor pays its 1.05 MB whether or not they open
+  Glass. See "The grid switch's wait" below for why that one and not the other.
+  Nothing else prefetches, and the 50 m grid explicitly does not.
 - **`buildViewLayers()` early-returns on `state.view`** — only the active lens
   constructs layers, so inactive lenses cost nothing per frame. The Services
   block comments on why an opacity-0 layer is not acceptable ("would still
@@ -109,8 +113,8 @@ Measured over the wire (GitHub Pages gzips everything, `.geojson` included;
 | **boot, always** | deck.gl + maplibre + `index.html` + css | ~680 KB |
 | **boot, always** | `neighbourhood_value_per_acre.geojson` (awaited, blocks the data draw) | **~185 KB** |
 | **boot, always** | reference + temporal + status | ~69 KB |
-| Glass (100 m, **default**) | `value_grid.json` | **~1.08 MB** |
-| Glass (50 m, on switch) | `value_grid_50.json` | **~2.82 MB** |
+| **boot, always (2026-09-01)** | `value_grid.json` — 100 m grid, **prefetched on idle** | **~1.05 MB** |
+| Glass (50 m, on switch or hover) | `value_grid_50.json` | **~2.78 MB** |
 | Uses | `zoning.geojson` | ~444 KB |
 | Services / Ratio | `roads.geojson` (+ bike 52, lrt 4.5, transit 1.1, fire 0.4) | ~264 KB |
 | Development | `dev_grid.json` | **~111 KB** |
@@ -209,12 +213,51 @@ Development's stock-age spikes. It is ~3% of the payload. **Left in place
 deliberately**: removing it is an output-schema change, so it is propose-first,
 and 3% is not a reason.
 
-**What was done instead:** the wait is now *reported* rather than shortened — an
-indeterminate sweep on the pending Detail button (`docs/UI.md`, "The grid
-buttons' busy state"). ⚠️ The remaining un-costed step is the deck.gl layer
-rebuild and first GPU upload of 93,201 instances, which **cannot be measured on
-this box** (SwiftShader, see above). If the switch still feels slow with the
-stripe in place, that is the thing to capture on real hardware — not the bytes.
+**What was done instead — two things.** The wait is *reported* (an indeterminate
+sweep on the pending Detail button, `docs/UI.md`), and for the default
+resolution it is largely *moved off the click*.
+
+### The prefetch, and why the boot finding is what makes it cheap
+
+Peter: *"can we not actually do background loading, before they even select it?"*
+The §Boot section below is what makes the answer yes: **every byte is on the page
+by ~600 ms and the remaining seconds are GPU shader linking**, so through the
+whole tail of boot **the wire is idle**. A background fetch there contends with
+nothing — the boot's scarce resource is the GPU and the main thread, not
+bandwidth.
+
+- **Fires from `hideLoading()`**, via `requestIdleCallback` (1.2 s `setTimeout`
+  fallback). ⚠️ **Not one step earlier**: `json()` parses on the **main thread**,
+  and dropping ~30 ms of parse into the shader-link window would spend the one
+  budget the boot is actually short of. Hanging it off the overlay lift also
+  means a **failed** load never prefetches — `failLoading` does not route through
+  there.
+- **100 m only.** It is the default resolution and the one Infill needs anyway.
+  The 50 m file is **2.78 MB against a ~3.56 MB boot set** — too much to push at
+  a reader who may never open the Detail row — so it stays demand-driven, warmed
+  on `pointerenter`/`focus` of its own button instead. Hover→click buys a few
+  hundred ms on desktop and little on touch, but it is free and wastes nothing.
+- **Save-Data is honoured for the unsolicited warm only** (`saveData`, or an
+  `effectiveType` of 2g). A pointer already on the button is a request, not a
+  guess, so the hover path does not consult it.
+
+⚠️ **A warm must not activate.** `loadGridData` fills `gridStore` and touches
+nothing else; only `ensureGridData` repoints `gridData`/`gridCell`, which are
+statements about what is **on screen**. A prefetch that set them would make
+`applyView`'s `gridCell !== wantCell` gate believe a never-drawn grid was already
+up. `verify-grid-loading.js` asserts the split directly.
+
+⚠️ **The prefetch made the busy stripe's gate falsifiable**, which it had not
+been: the warm sets `gridFetches[100]` seconds before `gridStore[100]`, so a
+click landing in that window is a real wait that the `gridFetches` gate would
+show nothing for. Before the prefetch, no arrangement of clicks distinguished the
+two.
+
+⚠️ The remaining un-costed step is the deck.gl layer rebuild and first GPU upload
+of 93,201 instances, which **cannot be measured on this box** (SwiftShader, see
+above). If the switch still feels slow with the stripe in place — or if 100 m
+still feels slow *now that its bytes arrive before the click* — that is the thing
+to capture on real hardware. It would mean the cost was never the bytes.
 
 ## Boot time is a THIRD budget, and it is neither frames nor bytes (2026-08-30)
 
