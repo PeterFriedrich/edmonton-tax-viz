@@ -195,6 +195,11 @@ GRID_FINE_CELL_M = 50.0
 # The Development permit grid is deliberately NOT halved with it: permits are
 # far sparser than assessments, and nothing has measured that grid at 50 m.
 # Kept separate so either can move without dragging the other.
+# ⚠️ If this ever becomes selectable like the Glass grid, fix `_devGridScales`
+# FIRST: it memoises devGridScale()'s clamp + elevation scale at MODULE level,
+# keyed on the column alone. That is exactly the defect that shipped on the
+# Glass grid 2026-09-01 (spikes 4x too tall after a switch, DECISIONS.md) and
+# it is inert here only because this grid has one resolution.
 DEV_GRID_CELL_M = 100.0
 
 

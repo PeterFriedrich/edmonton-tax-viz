@@ -1698,17 +1698,24 @@
     // own scale: one downtown tower in a 2.47-acre cell runs ~85x the p97.5,
     // far past the hood-level range. Lot-acre cells can be null (no eligible
     // lot acres) — excluded from the anchors and from the render.
-    let _gridScales = null;
+    // ⚠️ MEMOISED ON gridData, NOT AT MODULE LEVEL — like cellsFor/instFor, and
+    // for the same reason. Both anchors are derived from the CELLS, so they are
+    // per-RESOLUTION as well as per-column. A module-level cache keyed on the
+    // column alone survived a cell-size switch and served the 50 m grid at the
+    // 100 m grid's scale: spikes 4.00x too tall on ground acres and 5.68x on
+    // lot acres (and 4x too SHORT in the reverse order), with a stale colour
+    // clamp to match. Hanging it off the parsed object makes the cache die with
+    // the grid it describes, so a third resolution cannot reintroduce this.
     function gridScale() {
       const key = gridColKey();
-      if (_gridScales && _gridScales[key]) return _gridScales[key];
+      gridData.scales ??= {};
+      if (gridData.scales[key]) return gridData.scales[key];
       const col = gridData.columns[key];
       const vals = gridData.cells.map(c => c[col]).filter(v => v != null)
         .sort((a, b) => a - b);
       const cfg = METRICS[state.metric];
       const hoodMax = Math.max(...state.data.features.map(f => f.properties[state.metric] || 0));
-      _gridScales ??= {};
-      return (_gridScales[key] = {
+      return (gridData.scales[key] = {
         clamp: quantile(vals, 0.975),
         elevationScale: (hoodMax * cfg.elevationScale) / vals[vals.length - 1],
       });
