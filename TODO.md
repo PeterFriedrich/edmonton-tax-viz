@@ -116,6 +116,18 @@ discrete-vs-integrated. ⚠️ **`docs/DECISIONS.md`'s last five rows are all
 order. Also: a 4x spike-height bug shipped in the 50 m option and was caught by
 Peter on a phone, not by any of the ten green verify scripts.)_
 
+_Last reconciled: 2026-09-01 (S130 — **no backlog item was worked; both PRs came
+from Peter noticing the site was slow to switch grids.** Nothing here opened or
+closed as a result, so this list is unchanged except for the capture item above,
+whose two halves now sit in different states. The session's transferable result
+is a **method** note rather than a build note: a decision recorded as
+*unfalsifiable* — the busy stripe's `gridStore`-vs-`gridFetches` gate, which no
+arrangement of clicks could distinguish — **became checkable a few hours later**
+when the prefetch created the window that separates them. ⚠️ **Re-test parked
+"cannot be distinguished" caveats when the system grows; they are not permanent.**
+Also three more vacuous checks caught by falsification, all in tests written the
+same session — see `docs/DECISIONS.md`'s last two rows.)_
+
 - [ ] **INVESTIGATE — `lot_size` holds ownership shares for an unknown number of
   condo records; 7,984 rows are under 1 m².** Opened 2026-09-01, found by the
   50 m Glass grid (`docs/DATA_ISSUES.md` §E has the full measurement).
@@ -152,13 +164,19 @@ Peter on a phone, not by any of the ten green verify scripts.)_
     either machine** — see the variance finding below.
   - ⚠️ Peter's pan claim (*"pans more smoothly on the newer one"*) is still
     **untested**: we have one side of a comparison.
-  - **Added 2026-09-01: time the Detail-button grid SWITCH, both directions.**
-    The busy stripe now marks that wait (`docs/UI.md`), and the bytes half is
-    settled — transfer, already gzipped, ~6% of trimming available and not worth
-    taking (`docs/PERFORMANCE.md`). What is **un-costed** is the deck.gl layer
-    rebuild and first GPU upload of 93,201 instances, which **cannot be measured
-    on the Oracle box** (SwiftShader). ⚠️ If the switch still feels slow *with
-    the stripe showing*, that is the number to get — not the payload.
+  - **Added 2026-09-01: time the Detail-button grid SWITCH, both directions —
+    and note the two halves are now in different states.** The bytes half is
+    settled: transfer, already gzipped, only ~6% of trimming available and not
+    worth taking, and **100 m is now prefetched on idle so its switch should
+    feel instant** (`docs/PERFORMANCE.md`). What is **un-costed** is the deck.gl
+    layer rebuild and first GPU upload of 93,201 instances, which **cannot be
+    measured on the Oracle box** (SwiftShader).
+    - ⚠️ **The 100 m switch is now the diagnostic.** Its bytes arrive before the
+      click, so if it *still* feels slow, the cost was never the payload and the
+      number to get is the layer rebuild.
+    - ⚠️ **50 m on a PHONE is the untested case that matters most** — the hover
+      warm buys almost nothing on touch, so a phone pays the full 2.78 MB at tap
+      time with the stripe as its only feedback (`docs/MOBILE_USABILITY.md` §2b).
 
   | field | old laptop | gaming A (short) | **gaming B (tall)** |
   |---|---|---|---|

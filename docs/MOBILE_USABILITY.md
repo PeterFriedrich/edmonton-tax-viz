@@ -307,6 +307,25 @@ problem**, so revisit it only after the blurb collapse lands.
 
 ## 2b. Current state — NEEDS CONFIRMATION
 
+- **The grid buttons' loading behaviour is the one place phones get materially
+  less than desktop, by construction** (2026-09-01, `docs/PERFORMANCE.md`).
+  - ✅ **The busy stripe itself is shared DOM and applies unchanged** — same
+    `#moneydetail button.is-loading` rule, no `@media` branch. It respects
+    `prefers-reduced-motion`, which is likelier to be set on a phone.
+  - ✅ **The 100 m idle prefetch is device-independent**, so the default
+    resolution should switch instantly on a phone too.
+  - ⚠️ **The 50 m head start is desktop-shaped and nearly worthless on touch.**
+    It is warmed on `pointerenter`/`focus`; on a touch screen `pointerenter`
+    fires immediately before the tap rather than hundreds of ms ahead, so a
+    phone reader effectively pays the full 2.78 MB at click time — with the
+    stripe as their only feedback. **This is the case where the indicator
+    matters most, and it is exactly the case never measured on a device.**
+  - **STILL NEEDS CONFIRMATION:** whether a real phone on real mobile data finds
+    the stripe sufficient for a 50 m switch, or whether the wait is long enough
+    to need a determinate progress readout or a size warning before the fetch.
+    ⚠️ Peter reported both the original "visible time to load" and the 4x spike
+    bug **from a phone**; nothing about this row has been seen on one.
+
 - **The city budget sheet (`#budget`) has never been touched on a real device —
   built 2026-08-16, headless only.** It is the newest phone surface and the only
   one that is **full-build-only**, so nothing published is exposed by it.
