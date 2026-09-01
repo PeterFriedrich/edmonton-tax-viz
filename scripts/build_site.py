@@ -25,9 +25,12 @@ BOTH deploy.yml and refresh.yml (factor once, don't inline twice), uploading
   python scripts/build_site.py --src web --out _site
 """
 import argparse
+import datetime as dt
 import hashlib
+import os
 import re
 import shutil
+import subprocess
 from pathlib import Path
 
 # WIP badge, one per build with its own label. pointer-events:none so it never
@@ -63,6 +66,48 @@ def inject_badge(html: str, mode: str) -> str:
 
 BUILD_RE = re.compile(r'const DEFAULT_BUILD = "(?:public|full)";')
 STYLES_RE = re.compile(r'href="styles\.css"')
+STAMP_RE = re.compile(r'const BUILD_STAMP = "[^"]*";')
+
+
+def build_stamp() -> str:
+    """Short commit + UTC date identifying the deployed CODE.
+
+    Env first, git second: in CI ``GITHUB_SHA`` is authoritative and always set,
+    while ``git rev-parse`` on an Actions checkout can describe something other
+    than the commit being deployed. Locally there is no env var and git is the
+    only source.
+
+    ⚠️ Falls back to ``"dev"`` rather than raising. This runs on the deploy path,
+    and a missing git binary is not a reason to refuse to publish a working
+    site — the same fail-open reasoning as the pre-push hook. "dev" on screen is
+    honest about not being a released build; a crashed deploy would not be.
+    """
+    sha = os.environ.get("GITHUB_SHA", "")
+    if not sha:
+        try:
+            sha = subprocess.run(
+                ["git", "rev-parse", "HEAD"],
+                capture_output=True, text=True, timeout=10, check=True,
+            ).stdout.strip()
+        except (OSError, subprocess.SubprocessError):
+            return "dev"
+    if not sha:
+        return "dev"
+    return f"{sha[:7]} · {dt.datetime.now(dt.timezone.utc):%Y-%m-%d}"
+
+
+def set_build_stamp(html: str, stamp: str) -> str:
+    """Rewrite the single BUILD_STAMP literal; fail loudly if it drifted."""
+    if '"' in stamp:
+        raise SystemExit(f"build_site: refusing to inject a quote in the stamp: {stamp!r}")
+    html2, n = STAMP_RE.subn(f'const BUILD_STAMP = "{stamp}";', html)
+    if n != 1:
+        raise SystemExit(
+            f"build_site: expected exactly 1 BUILD_STAMP literal in index.html, "
+            f"found {n} — did the source change? (looked for the "
+            f'`const BUILD_STAMP = \"...\";` line)'
+        )
+    return html2
 
 
 def set_default_build(html: str, mode: str) -> str:
@@ -117,13 +162,19 @@ def build(src: Path, out: Path) -> None:
     # Both builds get the SAME token — /full/ resolves styles.css through its
     # <base href="../" />, so it reads the root's copy of the very file hashed.
     token = css_token(src / "styles.css")
+    # ONE stamp for both copies: they are the same commit, emitted in the same
+    # run. Computed once so a midnight-crossing build cannot date them apart.
+    stamp = build_stamp()
 
     # Root = PUBLIC: copy the whole tree, then flip index.html's default.
     shutil.copytree(src, out)
     root_index = out / "index.html"
     root_index.write_text(
         inject_badge(
-            cache_bust(set_default_build(root_index.read_text(), "public"), token),
+            cache_bust(
+                set_build_stamp(set_default_build(root_index.read_text(), "public"), stamp),
+                token,
+            ),
             "public",
         )
     )
@@ -132,7 +183,10 @@ def build(src: Path, out: Path) -> None:
     # via <base>. The base MUST precede the vendor <link>/<script> it rewrites,
     # so inject it immediately after <head>.
     full_html = cache_bust(
-        set_default_build((src / "index.html").read_text(), "full"), token
+        set_build_stamp(
+            set_default_build((src / "index.html").read_text(), "full"), stamp
+        ),
+        token,
     )
     # ⚠️ THESE CHECKS ARE SCOPED TO THE <head> SLICE ON PURPOSE — an unscoped
     # `"<base " in full_html` failed a green deploy on PR #117, because a single

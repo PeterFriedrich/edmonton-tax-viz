@@ -477,6 +477,10 @@
             rel="noopener">OpenStreetMap contributors</a> (ODbL); river and
          municipal boundaries from the Government of Alberta.</p>
       <p id="about-vintage" class="muted"></p>
+      <!-- Code version, as opposed to the data vintages above it. Filled from
+           the BUILD_STAMP literal, so unlike its neighbours it needs no fetch
+           and is present on first paint. -->
+      <p id="about-build" class="muted"></p>
       <span class="hd">Important caveats</span>
       <p><b>Revenue is modelled, not billed.</b> It applies Edmonton's
          class-differential mill rates to assessed value — what the land
@@ -651,6 +655,19 @@
     const _buildQS = new URLSearchParams(location.search).get("build");
     const BUILD = (_buildQS === "public" || _buildQS === "full") ? _buildQS : DEFAULT_BUILD;
     const FULL_BUILD = BUILD === "full";
+
+    // Which CODE a visitor is running — the same rewrite mechanism as
+    // DEFAULT_BUILD above, stamped by scripts/build_site.py at deploy time.
+    // ⚠️ NOT published via status.json, deliberately: that manifest carries DATA
+    // vintage, which rolls once a year, while this rolls several times a week —
+    // and it is fetched async, so it lands after first render (the reason the
+    // 2026-08-30 window-label decision rejected it). A build stamp is most
+    // wanted in a bug report, which is exactly when the page may not have got
+    // that far. Stamped into the HTML, it is readable the instant the page is.
+    // "dev" is what an unbuilt local checkout shows, and says so on screen
+    // rather than pretending to be a release.
+    const BUILD_STAMP = "dev";      // deploy step rewrites this literal
+    document.getElementById("about-build").textContent = `Build ${BUILD_STAMP}.`;
 
     // The two Data & Methods passages that describe ONLY full-only layers
     // (road/fire/transit sources; the modelled service-cost, stormwater and
