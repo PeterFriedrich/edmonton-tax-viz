@@ -109,7 +109,8 @@ Measured over the wire (GitHub Pages gzips everything, `.geojson` included;
 | **boot, always** | deck.gl + maplibre + `index.html` + css | ~680 KB |
 | **boot, always** | `neighbourhood_value_per_acre.geojson` (awaited, blocks the data draw) | **~185 KB** |
 | **boot, always** | reference + temporal + status | ~69 KB |
-| Glass | `value_grid.json` | 930 KB |
+| Glass (100 m, **default**) | `value_grid.json` | **~1.08 MB** |
+| Glass (50 m, on switch) | `value_grid_50.json` | **~2.82 MB** |
 | Uses | `zoning.geojson` | ~444 KB |
 | Services / Ratio | `roads.geojson` (+ bike 52, lrt 4.5, transit 1.1, fire 0.4) | ~264 KB |
 | Development | `dev_grid.json` | **~111 KB** |
@@ -132,6 +133,16 @@ $0-declared permits visible — `ind_n` (count) cannot be derived from `ind_cv`.
 available, nobody pays it at boot, and `median_year_built` is a column where
 scale-invariant rounding is actively wrong. Do not re-open without reading the
 2026-08-09 decision.
+
+**The 50 m grid is a SECOND file, not a bigger one (2026-09-01).** Both ship;
+the Detail row picks between them and each is lazy, so the cost is **per-choice,
+not additive** — a visitor who never switches pays ~1.08 MB, one who does pays
+~2.82 MB for the second, and **boot is untouched either way**. The 2.69× cell
+count (34.7k → 93.2k) is sub-linear because quartering a cell leaves empty
+quarters: roads, parks, river valley. ⚠️ **The GPU cost of 93.2k cells has NOT
+been measured on real hardware** — this box has no GPU (SwiftShader), so its
+frame timings are meaningless. That measurement belongs with the two-laptop perf
+comparison, and it is the one number that could argue for pulling the option.
 
 ## Boot time is a THIRD budget, and it is neither frames nor bytes (2026-08-30)
 

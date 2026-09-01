@@ -210,17 +210,23 @@
     <div id="moneydetail">
       <button data-moneydetail="hood" class="active" title="Solid neighbourhood prisms — each hood's metric per acre (the default view)">Neighbourhood</button>
       <button data-moneydetail="grid" data-tok title="Translucent {{cellGlass}} grid-cell spikes over a neutral neighbourhood plane — the metric binned to squares; hover the plane for each neighbourhood's numbers">{{cellGlass}} grid</button>
+      <button data-moneydetail="grid-fine" data-tok title="The same grid at {{cellGlassFine}} — quarter the cell area, so single high-value parcels stop being averaged into their neighbours. A larger file, fetched only when you pick it">{{cellGlassFine}} grid</button>
     </div>
     <!-- Amenity proximity (SPEC_development.md "Amenity distance"). Two
          INDEPENDENT bands, not one composite: at 600 m the LRT band selects
-         1.4% of cells and the school band 42.3% — ~30x apart — and ANDing them
-         leaves 0.7%. One "amenity-served" switch would hide that collapse
+         1.60% of cells and the school band 37.76% — ~24x apart — and ANDing
+         them leaves 0.80%. One "amenity-served" switch would hide that collapse
          behind a single word, and would be a weighted index by another name.
-         ⚠️ Re-measured on the 50 m grid, 2026-09-01. The previous figures
-         (1.6% / 21.8% / ~14x) were stale on their OWN 100 m grid, which then
-         read 1.59% / 37.81% / 23.8x — the school band moved when the schools
-         CSVs refreshed 2026-08-23 and nothing re-ran this. The argument only
-         got stronger; the numbers had drifted for a week.
+         ⚠️ THESE ARE 100 m NUMBERS and must stay that way: Infill pins the
+         DEFAULT grid, so a Detail choice in Money never moves them. Re-measured
+         2026-09-01 against the rebuilt default. The conclusion is stable across
+         resolution — the 50 m file reads 1.43% / 42.34% / 29.6x, wider still —
+         but the figures are not, so do not quote one grid's on the other's.
+         ⚠️ These have gone stale twice: the pre-2026-09-01 comment claimed
+         1.6% / 21.8% / ~14x while its own grid read 1.59% / 37.81% / 23.8x (the
+         school band moved when the schools CSVs refreshed 2026-08-23 and
+         nothing re-ran it). Nothing recomputes them — re-measure when you touch
+         the bands, the grid, or the schools/LRT inputs.
          ⚠️ INFILL ONLY (2026-08-26) — it reads the same grid file Money's
          Glass mode renders, so it COULD be offered there too and was until
          today; the question it answers ("where is there room near transit?")
@@ -601,17 +607,25 @@
     const WIN = Object.fromEntries(
       Object.entries(WINDOWS).map(([k, [a, b]]) => [k, `${a}–${b}`]));
     // Grid cell edges, in metres — the same pinning problem as WINDOWS, so the
-    // same treatment. The two grids are separate pins because they move
-    // independently (the Glass grid halved 2026-09-01; the Development one
-    // did not). Both files DO carry cell_m, but every label below renders
-    // before either is fetched — they are lazy — so reading it off the data
-    // would leave the labels empty on first paint. That is F4's async lesson.
+    // same treatment. The pins are separate because they move independently
+    // (the Development grid did not follow Glass's fine option). Every file DOES
+    // carry cell_m, but the labels below render before any of them is fetched —
+    // they are lazy — so reading it off the data would leave them empty on first
+    // paint. That is F4's async lesson.
+    // ⚠️ The two Glass pins name the two SHIPPED resolutions, so both button
+    // labels are correct at parse time. Prose that describes whichever grid is
+    // CURRENTLY drawn reads glassCellLabel() instead — by then it has loaded.
     const CELLS = {
-      cellGlass:  50,  // main.py GRID_CELL_M
-      cellDev:   100,  // main.py DEV_GRID_CELL_M
+      cellGlass:     100,  // main.py GRID_CELL_M — the Glass default
+      cellGlassFine:  50,  // main.py GRID_FINE_CELL_M — the Detail alternative
+      cellDev:       100,  // main.py DEV_GRID_CELL_M
     };
     const CELL = Object.fromEntries(
       Object.entries(CELLS).map(([k, v]) => [k, `${v} m`]));
+    // Prose that describes the grid ON SCREEN, as opposed to naming a button.
+    // Prefers the loaded file's own cell_m over the selection, so a fallback to
+    // a resolution that is not what was clicked cannot be described wrongly.
+    function glassCellLabel() { return `${gridCell ?? state.glassCell} m`; }
     // Static tooltips carry {{key}} placeholders so the markup stays readable
     // and the years still come from one place. Safe to run at parse time: this
     // script tag sits after the markup it patches. An unknown key would survive
@@ -1281,15 +1295,17 @@
     // longer promises a slider — Glass dropped that control 2026-07-25 and the
     // translucency is fixed, so the prose must not point at a control that isn't
     // there. (Uses/Development still say "slider" because theirs still exists.)
+    // ⚠️ Each is a FUNCTION, not a string: the cell size is now a user choice,
+    // so the sentence has to be built when it is read, not at parse time.
     const GLASS_BLURBS = {
-      ground: `The active metric in ${CELL.cellGlass} grid cells — property points ` +
+      ground: () => `The active metric in ${glassCellLabel()} grid cells — property points ` +
               "binned to squares, each cell's total divided by its ground " +
               "acres. Height is linear; colour is square-root–scaled to " +
               "the cell distribution. The neutral plane below is the " +
               "neighbourhoods — hover for their numbers; grey = set-aside " +
               "natural/undeveloped land. The spikes are translucent so it " +
               "reads through.",
-      lot:    `The active metric in ${CELL.cellGlass} grid cells, divided by the parcel ` +
+      lot:    () => `The active metric in ${glassCellLabel()} grid cells, divided by the parcel ` +
               "acres the cell's properties own (city lot sizes, deduplicated " +
               "at multi-unit points; cells with no usable lot size are " +
               "omitted). Height is linear; colour is square-root–scaled to " +
@@ -1321,7 +1337,7 @@
         ? AMENITY_BANDS.school + " m of a school" : null,
     ].filter(Boolean).join(" and ");
     const glassBlurb = () =>
-      withColourClause(GLASS_BLURBS[state.denom]) + glassInstBlurb();
+      withColourClause(GLASS_BLURBS[state.denom]()) + glassInstBlurb();
     // Infill's amenity overlay carries no colour of its own to defend — the
     // hood-level score underneath is UNCHANGED — so the sentence has to say the
     // score did not move. Uses the full cell set (no metric to null-filter
@@ -1434,13 +1450,27 @@
     // Loaded by the Glass view via ensureGridData(). (Development briefly
     // shared this fetch for stock-age spikes; that option was withdrawn
     // 2026-07-27 — see DECISIONS.md — but the column is still in the file.)
-    const GRID_URL = "./data/value_grid.json";
-    function ensureGridData() {
-      gridFetch ??= fetch(GRID_URL)
+    // One URL per shipped resolution. Keyed by cell size so a switch is a cache
+    // lookup after the first fetch, and so the two never overwrite each other:
+    // the memo caches (cellsFor / instFor) hang off the parsed object, and a
+    // shared slot would have served 100 m memos against 50 m cells.
+    const GRID_URLS = {
+      [CELLS.cellGlass]:     "./data/value_grid.json",
+      [CELLS.cellGlassFine]: "./data/value_grid_50.json",
+    };
+    // Infill reads the grid too (amenity bands), but it is not in Money's Detail
+    // row and so has no resolution control of its own. It pins the default —
+    // the band percentages are resolution-dependent (the LRT band selects 1.59%
+    // of 100 m cells and 1.43% of 50 m ones), and letting Money's Detail choice
+    // silently move Infill's numbers would be a reading of the data changing
+    // under a control that does not appear to touch it.
+    function ensureGridData(cellM = CELLS.cellGlass) {
+      const url = GRID_URLS[cellM];
+      gridFetches[cellM] ??= fetch(url)
         .then(r => r.ok ? r.json() : null)
         .then(p => {
           if (!p) return;
-          gridData = {
+          gridStore[cellM] = {
             cell: p.cell_m,
             columns: {
               value_per_acre: p.columns.indexOf("value_per_acre"),
@@ -1472,13 +1502,20 @@
           };
           // The denominator toggle needs the lot-acre columns (pipeline
           // 2026-07-05) — absent on older files, and the control stays hidden.
-          gridData.hasLot = gridData.columns.value_per_lot_acre >= 0;
-          gridData.hasExempt = gridData.columns.exempt_frac >= 0;
-          gridData.hasDistLrt = gridData.columns.dist_lrt_m >= 0;
-          gridData.hasDistSchool = gridData.columns.dist_school_m >= 0;
+          const g = gridStore[cellM];
+          g.hasLot = g.columns.value_per_lot_acre >= 0;
+          g.hasExempt = g.columns.exempt_frac >= 0;
+          g.hasDistLrt = g.columns.dist_lrt_m >= 0;
+          g.hasDistSchool = g.columns.dist_school_m >= 0;
         })
         .catch(() => {});
-      return gridFetch;
+      // Point the active slot at this resolution once its fetch settles. A
+      // missing file leaves gridStore[cellM] undefined, so gridData goes null
+      // and the caller's hood-prism fallback applies exactly as before.
+      return gridFetches[cellM].then(() => {
+        gridData = gridStore[cellM] ?? null;
+        gridCell = gridData ? cellM : null;
+      });
     }
 
     // Active metric defaults to revenue (matches the static HTML chrome above).
@@ -1492,6 +1529,9 @@
     // `denom` is the Glass spike denominator: "ground" (the cell's fixed
     // 2.47 acres) or "lot" (the parcel acres the cell's properties own —
     // FINDINGS_lot_dedupe.md). Glass-only; other views ignore it.
+    // `glassCell` is the Glass grid resolution in metres, one of the two shipped
+    // files. Persists across view switches like denom, so leaving Glass and
+    // coming back returns you to the resolution you were reading.
     // `services` is the per-service on/off set of the Services view;
     // `svcDriver` names the checked service that drives the colour ramp
     // (kept pointing at a checked service by applyService). Both persist
@@ -1499,6 +1539,7 @@
     const state = { metric: "revenue_per_acre", ramp: "current",
                     colorAdjust: true, // sqrt colour transform on (money/glass); off = linear+clamp
                     labels: false, view: "money", prismOpacity: 1, denom: "ground",
+                    glassCell: CELLS.cellGlass,
                     reference: true, // river + ring road orientation layer (all views)
                     usesPrisms: false, // Uses-view residential prisms (off = the flat categorical view)
                     // Infill amenity bands, each independent (SPEC_development.md
@@ -1525,8 +1566,10 @@
     let zoningData = null;  // lazy-fetched zoning ground layer (uses view)
     let zoningFetch = null; // in-flight fetch guard; null result => fallback
     let usesPrismData = null; // residential-prism subset (built once from state.data)
-    let gridData = null;    // lazy-fetched grid cells (glass view)
-    let gridFetch = null;   // in-flight fetch guard; null result => hood-prism fallback
+    let gridData = null;    // the ACTIVE grid — whichever resolution is drawn now
+    let gridCell = null;    // its cell size, or null when no grid is loaded
+    const gridStore = {};   // parsed grids, keyed by cell size (both may be held)
+    const gridFetches = {}; // in-flight fetch guard per cell size; null => hood-prism fallback
     let devGridData = null;  // lazy-fetched 100 m permit cells (development view)
     let devGridFetch = null; // in-flight fetch guard; missing file => toggle stays hidden
     let fireStationsData = null;  // lazy-fetched station dots (services view, fire on)
@@ -4024,7 +4067,7 @@
       }
 
       if (state.view === "glass") {
-        // The Urban3-infographic composition: translucent 100 m grid-cell
+        // The Urban3-infographic composition: translucent grid-cell
         // spikes over an opaque neutral hood plane. The plane carries
         // picking + highlight (the hover target is the neighbourhood under
         // the glass, and the highlight shows through the cells); the cells
@@ -5940,7 +5983,7 @@
         const lot = grid && state.denom === "lot";
         document.getElementById("legend-label").textContent =
           (lot ? cfg.legendLabel.replace("per acre", "per lot acre") : cfg.legendLabel) +
-          (grid ? ` (${CELL.cellGlass} cells)` : "");
+          (grid ? ` (${glassCellLabel()} cells)` : "");
         document.getElementById("legend-min").textContent = "$0";
         document.getElementById("legend-max").textContent =
           grid ? cfg.fmt(gridScale().clamp) + "+" : cfg.legendMax;
@@ -6130,12 +6173,43 @@
     }
 
     // Money's render toggle: Neighbourhood prisms (view "money") vs the
-    // translucent 100 m grid "glass" (internal view "glass"). Glass reuses
-    // Money's metric / colour / denominator, so it is a render-mode here rather
-    // than a top-level view; applyView keeps the Money #views button active.
+    // translucent glass grid (internal view "glass"), at either shipped
+    // resolution. Glass reuses Money's metric / colour / denominator, so it is a
+    // render-mode here rather than a top-level view; applyView keeps the Money
+    // #views button active.
+    // ⚠️ The two grid buttons share one view, so a switch BETWEEN them changes
+    // no view and applyView would early-return on `v === state.view`. That path
+    // has to fetch and re-render itself.
     function applyMoneyDetail(mode) {
-      const target = mode === "grid" ? "glass" : "money";
-      if (target !== state.view) applyView(target);
+      const target = mode === "hood" ? "money" : "glass";
+      const cell = mode === "grid-fine" ? CELLS.cellGlassFine : CELLS.cellGlass;
+      const cellChanged = target === "glass" && cell !== state.glassCell;
+      if (target === "glass") state.glassCell = cell;
+      if (target !== state.view) { applyView(target); return; }
+      if (!cellChanged) return;
+      syncMoneyDetail(state.view);
+      // Same shape as applyView's fetch: await the grid, then bail if the view
+      // moved under us, so a slow fetch cannot repaint a view you have left.
+      // Only the three things a resolution swap can move: the blurb's cell
+      // size, the legend's cell-scale anchors, and the spikes. The column
+      // flags that gate the denominator and amenity rows are identical across
+      // the two files (one export path, one schema), so those stay put.
+      // Legend BEFORE layers, matching applyView's ordering note above.
+      ensureGridData(cell).then(() => {
+        if (state.view !== "glass") return;
+        document.getElementById("title-p").textContent = glassBlurb();
+        refreshLegend();
+        overlay.setProps({ layers: buildLayers() });
+      });
+    }
+
+    // The Detail row's active button. Three buttons over two views, so the grid
+    // pair is disambiguated by state.glassCell rather than by the view alone.
+    function syncMoneyDetail(v) {
+      const active = v !== "glass" ? "hood"
+                   : state.glassCell === CELLS.cellGlassFine ? "grid-fine" : "grid";
+      document.querySelectorAll("#moneydetail button").forEach(b =>
+        b.classList.toggle("active", b.dataset.moneydetail === active));
     }
 
     // Money's Current/Change lens toggle. Change is a full-only render-mode of
@@ -6269,8 +6343,8 @@
       // denominator (money + glass, further gated on the data below), and
       // the ratio denominator picker (ratio, gated on the fire column).
       const prisms = v === "ratio" || v === "glass";
-      // Money/Glass open the layers panel for the Detail (Neighbourhood / 100 m
-      // grid) toggle, always — glass has a graceful fallback if the grid file is
+      // Money/Glass open the layers panel for the Detail (Neighbourhood / grid
+      // at either resolution) toggle, always — glass has a graceful fallback if the grid file is
       // absent, so the toggle is safe to offer unconditionally.
       const moneyDetailShow = v === "money" || v === "glass";
       // The Money view also carries the acre denominator toggle when the data
@@ -6294,11 +6368,11 @@
       syncLabControls(v);
       document.getElementById("layers").style.display =
         (prisms || v === "services" || v === "uses" || moneyDetailShow || moneyDenom || devMetricShow || devWindowShow || changeShow || labShow) ? "flex" : "none";
-      // Money's render toggle (Neighbourhood prisms vs 100 m glass grid).
+      // Money's render toggle (Neighbourhood prisms vs the glass grid, at
+      // either shipped resolution).
       document.getElementById("moneydetail-hd").style.display = moneyDetailShow ? "block" : "none";
       document.getElementById("moneydetail").style.display = moneyDetailShow ? "flex" : "none";
-      document.querySelectorAll("#moneydetail button").forEach(b =>
-        b.classList.toggle("active", b.dataset.moneydetail === (v === "glass" ? "grid" : "hood")));
+      syncMoneyDetail(v);
       document.getElementById("uses-prisms-hd").style.display = v === "uses" ? "block" : "none";
       document.getElementById("uses-prisms").style.display = v === "uses" ? "block" : "none";
       // The prism-opacity slider: Ratio (ghost prisms over the road network),
@@ -6333,11 +6407,19 @@
         if (state.view !== v) return; // switched again while the fetch ran
       }
       // Grid cells for the glass view AND infill's amenity highlight — fetched
-      // once (ensureGridData); a missing file resolves null and Glass falls
-      // back to translucent hood prisms, Infill simply offers no highlight.
-      if ((v === "glass" || v === "infill") && !gridData) {
-        await ensureGridData();
-        if (state.view !== v) return; // switched again while the fetch ran
+      // once per resolution (ensureGridData); a missing file resolves null and
+      // Glass falls back to translucent hood prisms, Infill simply offers no
+      // highlight.
+      // ⚠️ Gated on the ACTIVE cell size, not on `!gridData`: the two views can
+      // want different resolutions (Glass follows the Detail row, Infill pins
+      // the default), and a plain truthiness test would leave whichever grid
+      // loaded first serving both.
+      if (v === "glass" || v === "infill") {
+        const wantCell = v === "glass" ? state.glassCell : CELLS.cellGlass;
+        if (gridCell !== wantCell) {
+          await ensureGridData(wantCell);
+          if (state.view !== v) return; // switched again while the fetch ran
+        }
       }
       // Permit cells for the development view's detail toggle — fetched once;
       // a missing file (older deploy) resolves null and the toggle stays
@@ -6836,7 +6918,7 @@
       });
       syncServiceControls();
       // Money is the default view — open its layers panel now (applyView isn't
-      // called on load) for the Detail (Neighbourhood / 100 m grid) render
+      // called on load) for the Detail (Neighbourhood / grid) render
       // toggle, and hide the prism-slider rows, which share the panel and have
       // no CSS default-hidden state. The lot-acre denominator toggle (pipeline
       // 2026-07-08) additionally shows when the hood GeoJSON carries

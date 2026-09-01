@@ -1998,3 +1998,70 @@ Verified: mutation (a stale pin and a reintroduced literal each fail the guard),
 760 tests, and the live page — all six ranges render byte-identical to before,
 no unsubstituted token, no page error. Full reasoning: `docs/DECISIONS.md`
 2026-08-30.
+
+## CLOSED 2026-09-01 — the 50 m grid as an ADDITIONAL OPTION (the scope correction)
+
+**Resolved by:** a third `#moneydetail` button. Peter: *"let's do the 50m option,
+keep 100m as default. Can 50m not just be a third option"*. Both answers the item
+was blocked on came at once — **100 m is the default**, and the control is a
+**third button**, not a separate cell-size row.
+
+**How each design note landed** (all of them held; none needed re-deriving):
+- Both files ship. `value_grid.json` went back to **100 m** and
+  `value_grid_50.json` is new — the canonical unsuffixed path holds the DEFAULT.
+- `gridData` became the ACTIVE grid over a per-resolution `gridStore`, and the
+  fetch gate reads the **cell size**, not `!gridData`. The memo caches
+  (`cellsFor`/`instFor`) hang off the parsed object, so one shared slot would
+  have served 100 m memos against 50 m cells.
+- **Infill PINS the default** rather than following the switch — the third-button
+  shape made this the obvious answer, since Infill is not in that row. Its band
+  percentages are resolution-dependent, so a Money control silently moving them
+  would be a reading changing under a control that does not appear to touch it.
+- `lot_needle_ratio` anchors on the **fine** file. The grid is read for exactly
+  one anchor, and the 100 m grid demonstrably masks the defect that anchor
+  exists to catch (12 vs 79 on identical data), so the ±50% re-pin stands.
+- Button labels stayed `CELLS` pins (both name a fixed shipped resolution, so
+  both are correct at parse time); prose describing the grid ON SCREEN reads
+  `glassCellLabel()` off the loaded file.
+
+⚠️ **The verify script's first version was vacuous** — it asserted the default
+only after clicking the 100 m button, which SETS the value it was about to read,
+so it passed with the default pinned to 50. Caught by falsification, not review.
+
+Full reasoning: `docs/DECISIONS.md` 2026-09-01 (third row of that date).
+
+### The item as it stood when it closed
+
+- [ ] **⚠️ SCOPE CORRECTION — the 50 m grid was meant to be an ADDITIONAL
+  OPTION, and shipped as a REPLACEMENT.** Opened 2026-09-01, immediately after
+  PR #293 merged. Peter: *"i wanted it as an additional option, not literally
+  just change it to 50."*
+  - **What is live now:** Glass renders 50 m only; 100 m is gone from the
+    served data and from the UI. `web/data/value_grid.json` IS the 50 m file.
+  - **What was wanted:** both resolutions, user-switchable in the Glass view.
+  - ⚠️ **Do NOT fix this by reverting #293.** Everything in it is wanted and
+    most of it is resolution-independent — the `CELLS`/`{{token}}` label fix,
+    `verify-tokens.js`, the `lot_needle_ratio` re-pin, `DATA_ISSUES.md` §E,
+    the `GRID_CELL_M`/`DEV_GRID_CELL_M` split. **A revert would throw away a
+    real data-defect find to undo a default.** Build the option on top.
+  - Design notes already established, so this does not need re-deriving:
+    - Both files must ship. 100 m is **1.05 MB** gzipped, 50 m is **2.74 MB**;
+      each is lazy, so fetch only the one selected and the cost is per-choice,
+      not additive. First load is untouched either way.
+    - ⚠️ **The label mechanism already half-solves it.** `CELLS` pins the
+      DEFAULT (known at parse time, which is the constraint that forced a pin —
+      the grids are lazy, so a data-derived label is empty on first paint).
+      Once a user switches, the label can read `cell_m` off the loaded file,
+      because by then it HAS loaded. Pin the default, read the switch.
+    - `gridData` is a single slot — it needs to key by cell size, or refetch.
+      `ensureGridData()` fires for Glass **and** Infill; the amenity bands read
+      `dist_lrt_m`/`dist_school_m` off whichever grid is loaded, and **those
+      band percentages differ by resolution** (LRT 1.59%→1.43%, school
+      37.81%→42.34%). Decide whether Infill follows the switch or pins one.
+    - ⚠️ **`lot_needle_ratio` is calibrated for 50 m now** (±50%, one degenerate
+      cell sets it). If 100 m becomes selectable again the guard still only
+      measures the SERVED default — decide which file it anchors on.
+  - Open question for Peter: **which resolution is the default**, and does the
+    control live in `#moneydetail` (a third button beside Neighbourhood) or as
+    a separate cell-size row that appears only in Glass? See
+    `docs/CONTROLS_MATRIX.md` — grouping is shared DOM, so it drives mobile too.

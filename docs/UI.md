@@ -2030,3 +2030,42 @@ project's docs exist to prevent).
 metres-per-point are **equal on both arms**, and that the rendered
 deepest/tallest ratio matches the **raw file's** — because the way this
 regresses is someone "fixing" the visual asymmetry.
+
+---
+
+## Glass cell size as a third Detail button (2026-09-01)
+
+Peter: *"let's do the 50m option, keep 100m as default. Can 50m not just be a
+third option"*. `#moneydetail` goes from two buttons to three — **Neighbourhood
+/ 100 m grid / 50 m grid** — rather than gaining a separate cell-size row.
+
+Why the third button beat the separate row, which was the alternative on the
+table:
+- **No new control row**, so no `CONTROLS_MATRIX` regrouping and no mobile
+  chrome risk. Grouping is shared DOM: it drives desktop and phone together.
+- `#moneydetail` is **already Money-only and already hidden in Change**, so the
+  resolution choice inherits exactly the right gating without new conditions.
+- It **dissolves the "does Infill follow the switch?" question by
+  construction** — Infill is not in that row, so it pins the default. That was
+  a genuinely open design question under the separate-row shape.
+
+⚠️ **Three buttons over two views**, so the active button cannot be derived from
+the view alone — `syncMoneyDetail` disambiguates the grid pair on
+`state.glassCell`. And switching *between* the two grid buttons changes no view,
+so `applyView` early-returns; `applyMoneyDetail` owns that path's fetch and
+repaint (blurb, legend, layers — **legend before layers**, per the label-sweep
+ordering rule that already governs `applyView`).
+
+⚠️ **The button labels stay `CELLS` pins; the prose does not.** Each button names
+a fixed shipped resolution, so both are correct at parse time — this is the F4
+machinery unchanged. Prose that describes the grid *on screen* reads
+`glassCellLabel()` off the loaded file instead, which is the "pin the default,
+read the switch" resolution of F4's async constraint.
+
+**`verify-glass-cell.js`** covers the switch. ⚠️ **Its first version could not
+catch either default bug**: it asserted the default only after clicking the
+100 m button, which SETS the value it was about to read, so it passed with the
+default pinned to 50. That was found by running the falsification, not by
+reading the test — the landing check now runs before any Detail click, which is
+the only moment the default is observable. All four target defects were
+reintroduced and confirmed to go red.

@@ -110,6 +110,10 @@ ROADS_WEB_OUT = ROOT / "web/data/roads.geojson"
 BIKE_WEB_OUT = ROOT / "web/data/bike_routes.json"
 ZONING_WEB_OUT = ROOT / "web/data/zoning.geojson"
 GRID_WEB_OUT = ROOT / "web/data/value_grid.json"
+# The finer Glass grid, offered as a Detail choice beside the default. Its path
+# carries the cell size because the DEFAULT owns the unsuffixed name; adding a
+# third resolution means a third file, not a rename of these two.
+GRID_FINE_WEB_OUT = ROOT / "web/data/value_grid_50.json"
 DEV_GRID_WEB_OUT = ROOT / "web/data/dev_grid.json"
 FIRE_STATIONS_WEB_OUT = ROOT / "web/data/fire_stations.json"
 TRANSIT_STATIONS_WEB_OUT = ROOT / "web/data/transit_stations.json"
@@ -179,11 +183,15 @@ FRANCHISE_RATE_YEAR = 2026
 # untouched by either of these. See docs/PERFORMANCE.md / docs/ARCHITECTURE.md.
 SETBACK_M = 45.0             # inward buffer -> "city blocks" gaps between prisms
 SIMPLIFY_TOLERANCE_M = 10.0  # Douglas-Peucker vertex cut (applied AFTER setback)
-# Glass-view spike grid. Halved 100 -> 50 m on 2026-09-01: occupancy is sparse
-# enough that quartering a cell only multiplies the count 2.69x (34,662 ->
-# 93,201), for 2.74 MB gzipped on a file that is lazy-fetched and so never
-# touches first load. Levy totals reconcile at both edges (docs/DECISIONS.md).
-GRID_CELL_M = 50.0
+# Glass-view spike grid. BOTH resolutions ship: 100 m is the default and 50 m is
+# a Detail choice beside it (2026-09-01 — it was briefly a replacement, which is
+# not what was asked for). Quartering a cell only multiplies the count 2.69x
+# (34,662 -> 93,201) because the empty quarters are roads, parks and river
+# valley, so the fine file is 2.74 MB gzipped against 1.05. Each is fetched only
+# if selected, so the cost is per-choice rather than additive and first load is
+# untouched either way. Levy totals reconcile at both edges (docs/DECISIONS.md).
+GRID_CELL_M = 100.0
+GRID_FINE_CELL_M = 50.0
 # The Development permit grid is deliberately NOT halved with it: permits are
 # far sparser than assessments, and nothing has measured that grid at 50 m.
 # Kept separate so either can move without dragging the other.
@@ -526,7 +534,10 @@ def run(
         # grid_input (assessment + lot_size) built above; the lot-acre variant
         # is deduped per docs/FINDINGS_lot_dedupe.md, and without the
         # property-info file grid_input is the bare assessment (ground-acre only).
+        # Both resolutions, from the same grid_input — the second pass re-bins
+        # the identical rows, so the two files cannot disagree about the levy.
         export_value_grid(grid_input, GRID_WEB_OUT, cell_m=GRID_CELL_M)
+        export_value_grid(grid_input, GRID_FINE_WEB_OUT, cell_m=GRID_FINE_CELL_M)
         # Per-neighbourhood assessment over time (docs/SPEC_temporal.md). A side
         # branch: it never enters the hood join, it just writes its own compact
         # file. Needs the historical aggregate, which download_data.py fetches;
