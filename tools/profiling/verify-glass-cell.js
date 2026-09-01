@@ -11,10 +11,18 @@
 //   * glassCellLabel() pinned to CELL -> "legend/blurb follows the switch"
 //   * Infill passed state.glassCell   -> "infill pins the default"
 //   * `!gridData` truthiness gate     -> "infill pins the default"
-// ⚠️ The last two share a check, and the first version of this file could not
-// catch EITHER default bug: it asserted the default only after clicking the
-// 100 m button, which SETS the value it was about to read. The landing check
-// now runs before any Detail click, which is the only moment it is observable.
+//   * module-level gridScale cache    -> "tallest cell reaches the tallest
+//                                        hood prism" + "clamp is this grid's own"
+// ⚠️ The middle two share a check, and TWO EARLIER VERSIONS OF THIS FILE MISSED
+// A REAL BUG EACH, both the same way — asserting a value at the one moment it
+// cannot be wrong:
+//   * the default was checked only AFTER clicking the 100 m button, which SETS
+//     the value it was about to read. It passed with the default pinned to 50.
+//   * the colour clamp was checked only after RETURNING to the resolution that
+//     had seeded the scale cache — where a stale cache looks correct. The
+//     shipped 4x height bug (reported from mobile, not caught here) passed it.
+// Hence: the landing check runs before any Detail click, and the scale checks
+// run after EVERY state rather than at the end.
 //
 //   node verify-glass-cell.js <url>
 const { chromium } = require('playwright');
@@ -49,6 +57,15 @@ const check = (name, got, want) => {
     const grid = overlay._deck.props.layers.find(l => l.id === 'glass-grid');
     const active = [...document.querySelectorAll('#moneydetail button')]
       .filter(b => b.classList.contains('active')).map(b => b.dataset.moneydetail);
+    // ⚠️ The SCALE, re-derived from the cells on the spot. The anchors are
+    // memoised per grid, and a cache that outlives a switch is invisible in
+    // every label — it shows up only as height and colour.
+    const gs = gridScale();
+    const col = gridData.columns[gridColKey()];
+    const vals = gridData.cells.map(c => c[col]).filter(v => v != null).sort((a, b) => a - b);
+    const cfg = METRICS[state.metric];
+    const hoodMax = Math.max(...state.data.features.map(f => f.properties[state.metric] || 0));
+    const pos = (vals.length - 1) * 0.975, lo = Math.floor(pos);
     return {
       stateCell: state.glassCell,
       fileCell: gridData && gridData.cell,
@@ -58,8 +75,25 @@ const check = (name, got, want) => {
       blurbCell: (document.getElementById('title-p').textContent
         .match(/in (\d+) m grid cells/) || [])[1],
       active,
+      // Height parity: the tallest cell must reach the money view's tallest
+      // hood prism, at EVERY resolution. This is the invariant a stale scale
+      // breaks (4.00x too tall on ground acres, 4x too short in reverse).
+      heightParity: Math.abs(gs.elevationScale * vals[vals.length - 1]
+                             - hoodMax * cfg.elevationScale) < 1e-6,
+      // Colour clamp must be THIS grid's own p97.5, not the other grid's.
+      clampIsOwn: Math.abs(gs.clamp -
+        (vals[lo] + (vals[Math.ceil(pos)] - vals[lo]) * (pos - lo))) < 1e-6,
     };
   });
+
+  // Asserted after EVERY state, not just the last: the original version of this
+  // file checked the clamp only after returning to the resolution that had
+  // seeded the cache, which is exactly where a stale cache looks correct.
+  const checkScale = where => {
+    check(`${where}: tallest cell reaches the tallest hood prism`, last.heightParity, true);
+    check(`${where}: colour clamp is this grid's own p97.5`, last.clampIsOwn, true);
+  };
+  let last;
 
   // ⚠️ BEFORE any Detail click. Clicking a grid button SETS state.glassCell, so
   // asserting the default after one is vacuous — it passes with the default
@@ -72,8 +106,9 @@ const check = (name, got, want) => {
   await page.waitForTimeout(300);
   await click('#moneydetail button[data-moneydetail="grid"]');
   await page.waitForTimeout(3000);
-  let p = await probe();
+  let p = last = await probe();
   console.log('default        :', JSON.stringify(p));
+  checkScale('100 m fresh');
   check('100 m button serves 100 m', [p.stateCell, p.fileCell, p.layerCell], [100, 100, 100]);
   check('default cell count', p.nCells, 34671);
   check('default legend', p.legend, 'Revenue per acre (100 m cells)');
@@ -84,8 +119,9 @@ const check = (name, got, want) => {
   // has to fetch and repaint on its own.
   await click('#moneydetail button[data-moneydetail="grid-fine"]');
   await page.waitForTimeout(4000);
-  p = await probe();
+  p = last = await probe();
   console.log('switched to 50 :', JSON.stringify(p));
+  checkScale('after switching to 50 m');
   check('switch loads the other file', [p.stateCell, p.fileCell, p.layerCell], [50, 50, 50]);
   check('switch cell count', p.nCells, 93201);
   check('legend follows the switch', p.legend, 'Revenue per acre (50 m cells)');
@@ -112,8 +148,9 @@ const check = (name, got, want) => {
   await page.waitForTimeout(500);
   await click('#moneydetail button[data-moneydetail="grid-fine"]');
   await page.waitForTimeout(4000);
-  p = await probe();
+  p = last = await probe();
   console.log('back to glass  :', JSON.stringify(p));
+  checkScale('back in glass at 50 m');
   check('glass restores 50 m', [p.stateCell, p.fileCell, p.layerCell], [50, 50, 50]);
   check('restored cell count', p.nCells, 93201);
 
@@ -121,7 +158,8 @@ const check = (name, got, want) => {
   // its own p97.5 clamp — a shared memo would show the 50 m distribution here.
   await click('#moneydetail button[data-moneydetail="grid"]');
   await page.waitForTimeout(3000);
-  p = await probe();
+  p = last = await probe();
+  checkScale('back at 100 m');
   const clamp = await page.evaluate(() => {
     const col = gridData.columns[gridColKey()];
     const vals = gridData.cells.map(c => c[col]).filter(v => v != null).sort((a, b) => a - b);
