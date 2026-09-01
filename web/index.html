@@ -1475,6 +1475,15 @@
       [CELLS.cellGlass]:     "./data/value_grid.json",
       [CELLS.cellGlassFine]: "./data/value_grid_50.json",
     };
+    // The Detail button that selects a resolution, for the busy state in
+    // ensureGridData. The button always exists; in Infill the ROW is hidden, so
+    // the busy class lands on an off-screen button and simply does not draw.
+    function gridDetailButton(cellM) {
+      const mode = cellM === CELLS.cellGlassFine ? "grid-fine"
+                 : cellM === CELLS.cellGlass ? "grid" : null;
+      return mode && document.querySelector(`#moneydetail button[data-moneydetail="${mode}"]`);
+    }
+
     // Infill reads the grid too (amenity bands), but it is not in Money's Detail
     // row and so has no resolution control of its own. It pins the default —
     // the band percentages are resolution-dependent (the LRT band selects 1.59%
@@ -1483,6 +1492,23 @@
     // under a control that does not appear to touch it.
     function ensureGridData(cellM = CELLS.cellGlass) {
       const url = GRID_URLS[cellM];
+      // ⚠️ syncMoneyDetail lights the clicked button ACTIVE before this runs
+      // (both call paths), so without a busy state the control reports "done"
+      // while the map sits unchanged for the length of a multi-megabyte fetch —
+      // 2.8 MB gzipped at 50 m, 1.0 MB at 100 m. The gate keeps a switch back to
+      // an already-parsed resolution from flashing a stripe for one frame, which
+      // reads as a stutter rather than as progress.
+      // Gating on `gridFetches[cellM]` instead is EQUIVALENT on the success path
+      // (verified 2026-09-01: it passes every check in verify-grid-loading.js,
+      // including the in-flight re-entry) — they differ only after a FAILED
+      // fetch, where gridStore stays empty and each later click flashes the
+      // stripe for the microtask the settled promise takes to resolve. gridStore
+      // is kept because it states the actual question, "are the cells ready?".
+      const busyBtn = gridStore[cellM] ? null : gridDetailButton(cellM);
+      if (busyBtn) {
+        busyBtn.classList.add("is-loading");
+        busyBtn.setAttribute("aria-busy", "true");
+      }
       gridFetches[cellM] ??= fetch(url)
         .then(r => r.ok ? r.json() : null)
         .then(p => {
@@ -1530,6 +1556,15 @@
       // missing file leaves gridStore[cellM] undefined, so gridData goes null
       // and the caller's hood-prism fallback applies exactly as before.
       return gridFetches[cellM].then(() => {
+        // Cleared here rather than after the caller's re-render: the layer
+        // rebuild that follows is synchronous, so the browser paints once, with
+        // the stripe gone and the new grid drawn. Clearing on the fetch's own
+        // settle also means a FAILED fetch (which resolves, see .catch) cannot
+        // strand the stripe on forever.
+        if (busyBtn) {
+          busyBtn.classList.remove("is-loading");
+          busyBtn.removeAttribute("aria-busy");
+        }
         gridData = gridStore[cellM] ?? null;
         gridCell = gridData ? cellM : null;
       });
