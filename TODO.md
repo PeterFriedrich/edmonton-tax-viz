@@ -104,6 +104,61 @@ Services carries no sparkline — measured, it does.)_
 
 
 
+- [ ] **CAPTURE — the gaming laptop's half of the two-machine perf comparison.**
+  Opened 2026-09-01. Peter reports the site **loads faster on an old laptop but
+  pans more smoothly on a newer gaming one** — opposite bottlenecks (load is
+  CPU/network, panning is GPU fill rate), so the pair is what's diagnostic. Only
+  the old machine has been measured; **do not theorise further until the second
+  table exists.**
+
+  Old laptop, captured 2026-09-01 (Firefox):
+
+  | field | value |
+  |---|---|
+  | `dpr` | 1 |
+  | `screen` | 1600x900 |
+  | `cssPx` / `devicePx` | 1534x503 (identical — DPR 1) |
+  | `gpu` | `Intel(R) HD Graphics, or similar` |
+  | `ttfb_ms` | 26 |
+  | `download_ms` | **0** |
+  | `domInteractive_ms` | 481 |
+  | `loadEvent_ms` | 494 |
+
+  ⚠️ **Three caveats that make this baseline weaker than it looks:**
+  - **`download_ms` of 0 with a 26 ms TTFB means it was served from cache**, so
+    481 ms is a *warm* number. The second capture must be warm too, or the
+    comparison measures cache state and nothing else.
+  - **Firefox sanitises the renderer string** — `Intel(R) HD Graphics, or
+    similar` is a privacy placeholder, not the adapter. `WEBGL_debug_renderer_info`
+    is deprecated there. Read the real adapter from `about:support` → Graphics
+    (Firefox) or `chrome://gpu` (Chrome).
+  - **`cssPx` height was 503 px**, i.e. devtools docked. Viewport size sets the
+    fragment count, so both captures need the devtools dock in the same place or
+    the pixel counts aren't comparable.
+
+  What the second table decides:
+  - High `ttfb_ms`/`download_ms` on the gaming laptop → network or cold cache,
+    **nothing to do with this codebase**.
+  - Those low but `domInteractive_ms` high, with a much larger `devicePx` →
+    the uncapped pixel ratio. `web/index.html` sets **no** `devicePixelRatio`
+    anywhere and runs deck `interleaved: true` inside MapLibre's context, so it
+    renders at whatever the display reports; a DPR-2 panel rasterises ~4× the
+    fragments for the same bytes.
+  - The `gpu` row also settles whether the machine is even on its discrete card
+    or quietly running integrated.
+  **RULED OUT 2026-09-01 — browser difference.** Peter confirms **Firefox on
+  both machines**, so engine, JS parse and WebGL backend are held constant and
+  the difference is hardware, display or network. This was the one confound that
+  could have carried the whole result on its own.
+
+  ⚠️ **A DPR cap is NOT the obvious fix even if DPR is the cause** — it would
+  speed up the machine that is already smooth and do nothing for the laggy one,
+  whose viewport is 771,602 device pixels at DPR 1. The old laptop's pan lag is
+  fill rate on weak integrated graphics, a different problem from its load time.
+
+  ⚠️ **Not measurable on the Oracle box** — SwiftShader, no GPU; absolute render
+  and boot timings there are meaningless.
+
 - [ ] **DECIDE — `origin/docs/viz-stack` is the only surviving branch besides
   `master`, and it holds 272 lines that never got a PR.** Surfaced 2026-08-31
   during the branch prune.
