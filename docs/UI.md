@@ -2069,3 +2069,37 @@ default pinned to 50. That was found by running the falsification, not by
 reading the test — the landing check now runs before any Detail click, which is
 the only moment the default is observable. All four target defects were
 reintroduced and confirmed to go red.
+
+#### The grid buttons' busy state (2026-09-01)
+
+Peter, on the live site: *"50 m grid, and to some degree 100 m grid take visible
+time to load."* Both files are lazy, and `syncMoneyDetail` lights the clicked
+button **active before the fetch starts** — so the control reported "done" while
+the map sat unchanged. The affordance that was missing is feedback, not speed.
+
+An **indeterminate sweep across the pending button** (`.is-loading`, a `::after`
+gradient), set and cleared inside `ensureGridData` — the single choke point both
+call paths go through, so the clear cannot leak down one of them. Indeterminate
+because a `fetch`+`json()` reports no progress fraction to draw a real bar from.
+Dark ink, since the sweep only ever runs over the yellow `.active` background.
+`aria-busy` rides along on the same two writes. `prefers-reduced-motion` drops to
+a static tint, the same trade `#loading-spinner` already makes one screen up.
+
+⚠️ **Gated on the grid not being parsed yet**, so switching back to a resolution
+already in `gridStore` does not flash a stripe for one frame — feedback for a
+wait that isn't reads as a stutter. ⚠️ **Cleared on the fetch's own settle, not
+after the caller's re-render**: a failed fetch resolves (see the `.catch`), so
+this is also what stops a dead request stranding the stripe on forever.
+
+**`verify-grid-loading.js`** covers it, and the instrument is the point: over
+localhost the fetch settles in tens of milliseconds, so **sampling the class
+between clicks reads "not busy" whether the stripe worked perfectly or was never
+written at all**. It records class *transitions* with a `MutationObserver`
+installed before the first click, and samples the `::after` pseudo at the moment
+the class lands — a right class behind a wrong selector is an invisible control
+with green assertions. ⚠️ **Two findings came out of falsifying it**, both
+written into the file: `stripe cleared` was **vacuous** in the first version
+(`classList.remove()` writes the class attribute even when the class was never
+there, so it read true under a build that never added one), and the
+`gridStore`-vs-`gridFetches` gate **could not be falsified at all** — the two are
+equivalent on the success path, so no check here justifies that choice.

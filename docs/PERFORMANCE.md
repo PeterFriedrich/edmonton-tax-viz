@@ -171,6 +171,51 @@ untested — the older machine has no pan capture at all.
 ⚠️ Not measurable on the Oracle box — SwiftShader saturates at ~0.9 fps on BOTH
 resolutions and once reported the finer grid as *faster* (ratio 1.29).
 
+## The grid switch's wait is TRANSFER, and trimming the file does not fix it (2026-09-01)
+
+Prompted by Peter: *"50 m grid, and to some degree 100 m grid take visible time
+to load… I'm assuming we can't really speed it up too much."* Correct, and the
+breakdown says why — the wait is almost entirely bytes on the wire.
+
+| stage | 100 m | 50 m | measured how |
+|---|---|---|---|
+| transfer | **1.05 MB** gzip (2.83 MB raw) | **2.78 MB** gzip (7.63 MB raw) | `curl -w` against the live site |
+| `JSON.parse` | ~30 ms | **~90 ms** | node, 3 runs, this box (ARM) |
+| `gridScale()` first call | one sort of 34,671 values | one sort of 93,201 values | per metric+denominator, memoised on `gridData` |
+
+**GitHub Pages already gzips it** — confirmed 2026-09-01, `content-encoding:
+gzip`, 8,004,569 → 2,915,574 bytes on `value_grid_50.json`. There is no
+compression win left to take, and nothing in this repo controls the encoding.
+
+⚠️ **Payload trimming was measured and is NOT worth doing.** Three candidates,
+all against the gzipped size, which is what is actually transferred:
+
+| change | 100 m | 50 m |
+|---|---|---|
+| drop `median_year_built` | −3.3% | −2.8% |
+| lon/lat to 5 dp + `exempt_frac` to 3 dp | −3.6% | −3.6% |
+| both | **−7.0%** | **−6.4%** |
+
+2.78 MB → 2.57 MB is not a perceptible change, and each costs something real: a
+data-contract edit, or coordinates re-rounded under a 50 m grid. **Don't re-open
+this without a plan that changes the format, not the contents** — a quantised
+binary/typed-array payload is the only thing in the same conversation as a 2–3×
+win, and that is a project (new decode path, new schema), not a tweak.
+
+⚠️ **`median_year_built` ships in both grids and `web/index.html` never reads
+it** — it is absent from `ensureGridData`'s column map, though the pipeline fills
+it 89.9% / 92.6% and `export_value_grid.py` documents it as intended for
+Development's stock-age spikes. It is ~3% of the payload. **Left in place
+deliberately**: removing it is an output-schema change, so it is propose-first,
+and 3% is not a reason.
+
+**What was done instead:** the wait is now *reported* rather than shortened — an
+indeterminate sweep on the pending Detail button (`docs/UI.md`, "The grid
+buttons' busy state"). ⚠️ The remaining un-costed step is the deck.gl layer
+rebuild and first GPU upload of 93,201 instances, which **cannot be measured on
+this box** (SwiftShader, see above). If the switch still feels slow with the
+stripe in place, that is the thing to capture on real hardware — not the bytes.
+
 ## Boot time is a THIRD budget, and it is neither frames nor bytes (2026-08-30)
 
 Prompted by Peter: *"why is mobile super fast to load, but desktop is not"*.

@@ -258,6 +258,24 @@ html, body { margin: 0; height: 100%; background: #0a0a0f; }
 }
 #denom button:hover, #ratio-denom button:hover, #devmetric button:hover, #devwindow button:hover, #moneydetail button:hover, #devdetail button:hover, #devmode button:hover, #chgwindow button:hover, #labpick button:hover, #labcut button:hover { color: #e8e8ef; }
 #denom button.active, #ratio-denom button.active, #devmetric button.active, #devwindow button.active, #moneydetail button.active, #devdetail button.active, #devmode button.active, #chgwindow button.active, #labpick button.active, #labcut button.active { background: #fcd278; color: #16111a; font-weight: 600; }
+/* The two grid buttons fetch their cells on first use, and the button reports
+   itself active before that fetch starts (ensureGridData) — so the wait needs a
+   marker or the control looks done while the map has not moved. Indeterminate,
+   because a JSON fetch reports no progress fraction to draw a real bar from.
+   Dark ink: the sweep only ever runs on the yellow .active background. */
+#moneydetail button.is-loading { position: relative; overflow: hidden; }
+#moneydetail button.is-loading::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(22, 17, 26, 0.28), transparent);
+  animation: moneydetail-sweep 1100ms ease-in-out infinite;
+}
+@keyframes moneydetail-sweep { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+/* Same reasoning as #loading-spinner above: a static tint still says "busy". */
+@media (prefers-reduced-motion: reduce) {
+  #moneydetail button.is-loading::after {
+    animation: none; background: rgba(22, 17, 26, 0.16);
+  }
+}
 #toggle button, #palette button {
   appearance: none; border: 0; background: transparent; color: #9a9ab0;
   font: 12.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;

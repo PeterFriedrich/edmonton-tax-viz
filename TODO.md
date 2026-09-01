@@ -152,6 +152,13 @@ Peter on a phone, not by any of the ten green verify scripts.)_
     either machine** — see the variance finding below.
   - ⚠️ Peter's pan claim (*"pans more smoothly on the newer one"*) is still
     **untested**: we have one side of a comparison.
+  - **Added 2026-09-01: time the Detail-button grid SWITCH, both directions.**
+    The busy stripe now marks that wait (`docs/UI.md`), and the bytes half is
+    settled — transfer, already gzipped, ~6% of trimming available and not worth
+    taking (`docs/PERFORMANCE.md`). What is **un-costed** is the deck.gl layer
+    rebuild and first GPU upload of 93,201 instances, which **cannot be measured
+    on the Oracle box** (SwiftShader). ⚠️ If the switch still feels slow *with
+    the stripe showing*, that is the number to get — not the payload.
 
   | field | old laptop | gaming A (short) | **gaming B (tall)** |
   |---|---|---|---|
