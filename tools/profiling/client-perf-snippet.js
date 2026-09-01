@@ -23,11 +23,18 @@
 //  3. Paste this whole file into the Console and press Enter. It takes ~25 s:
 //     it pans the map twice, once per grid resolution.
 //  4. Copy the printed markdown table back.
-//  5. ⚠️ Read the REAL adapter separately — Firefox sanitises the WebGL
-//     renderer string to "Intel(R) HD Graphics, or similar", which is a privacy
-//     placeholder, not your card. Firefox: about:support -> Graphics ->
-//     "Description". Chrome: chrome://gpu. On a laptop with switchable
-//     graphics this is also what reveals it quietly running integrated.
+//  5. ⚠️ Read the REAL adapter separately, and copy **EVERY** GPU block with its
+//     `Active:` flag — not just the first Description. Firefox: about:support ->
+//     Graphics. Chrome: chrome://gpu.
+//     The `gpu` row this script prints is a PRIVACY PLACEHOLDER and has been
+//     wrong about the actual part, not merely vague: it read "Intel(R) HD
+//     Graphics" on a machine running **Iris Xe**, a much later and faster line.
+//     ⚠️ **The `Active:` flags are the whole point on a switchable-graphics
+//     laptop.** The 2026-09-01 capture came from a machine with an RTX 3050 Ti
+//     listed as **GPU #2, `Active: No`** — every number was integrated Iris Xe,
+//     and asking only for "the Description" would have missed that the discrete
+//     card was sitting idle. WebGPU corroborates: `wgpuDeviceType` reads
+//     "IntegratedGpu" / "DiscreteGpu" in the about:support WebGPU section.
 // ──────────────────────────────────────────────────────────────────────────
 (async () => {
   const nav = performance.getEntriesByType('navigation')[0] || {};

@@ -180,10 +180,28 @@ Services carries no sparkline — measured, it does.)_
   - **Still acceptable**: 10.3% for 2.69x the detail, on an opt-in lazy layer
     that starts unselected. Not free, as 3.7% implied.
 
-  ⚠️ **The GPU is STILL unknown on both machines.** Every renderer string is
-  Firefox's placeholder — the `, or similar` suffix is on the gaming laptop too,
-  so `Intel(R) HD Graphics` there does **not** establish integrated graphics.
-  `about:support` -> Graphics -> Description, still outstanding after two asks.
+  ✅ **RESOLVED for the gaming laptop, and it overturns the premise: it is
+  running INTEGRATED graphics.** `about:support` 2026-09-01:
+  - **GPU #1 — `Active: Yes` — Intel(R) Iris(R) Xe Graphics** (`0x8086`/`0x46a6`),
+    corroborated by WebGPU (`wgpuDeviceType: "IntegratedGpu"`).
+  - **GPU #2 — `Active: No` — NVIDIA GeForce RTX 3050 Ti Laptop GPU.**
+  ⚠️ **So the discrete card has never been in ANY measurement.** The comparison
+  was never gaming-GPU vs old-integrated; it is **Intel Iris Xe vs an older
+  Intel**, i.e. two integrated parts a few generations apart. Every fps figure
+  above — including the 10.3% — is an **Iris Xe** number. **This site has no
+  discrete-GPU measurement at all.**
+  ⚠️ **Nothing in this codebase can change that.** Which adapter Firefox gets is
+  a Windows per-app graphics preference (Settings -> Display -> Graphics) or the
+  NVIDIA control panel. Worth switching only to measure the ceiling — integrated
+  is the more representative case for the audience, so it is the better default
+  to keep tuning against.
+  ⚠️ **The placeholder was not merely vague, it was WRONG about the part.** It
+  read `Intel(R) HD Graphics`; the adapter is **Iris Xe**, a materially faster
+  and much later line. Refusing to read the sanitised string was right, and the
+  gap between placeholder and truth is bigger than "less specific".
+  ⚠️ **The OLD laptop's GPU is still unidentified** — same placeholder, never
+  checked, and it is the machine with the actual pan complaint. Get its
+  `about:support` -> Graphics with its fps run.
 
 - [ ] **DECIDE — `origin/docs/viz-stack` is the only surviving branch besides
   `master`, and it holds 272 lines that never got a PR.** Surfaced 2026-08-31
