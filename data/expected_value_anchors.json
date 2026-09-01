@@ -24,8 +24,9 @@
     "min": 0.002593,
     "max": 0.007779
   },
+  "_lot_needle_is_now_one_cell": "⚠️ RE-PINNED 2026-09-01 for the 50 m Glass grid (was 9.616-16.027 at 100 m; live reading moved 12 -> 79.01). THE MOVE IS RESOLUTION, NOT DATA — halving the cell stopped diluting a defect that was always there. The top cell is 3 WESTMOUNT condo records (accounts 4259396/4259412/4259420, $859,500 assessed) whose lot_size reads 0.505/0.218/0.277 — ownership SHARES summing to 1.000, not m². At 100 m that cell merged with neighbours holding real lots and the needle vanished entirely; at 50 m it is the top cell in the city. ⚠️ BAND IS +/-50%, NOT the +/-25% the four 'frozen' anchors use — DO NOT TIGHTEN IT TO MATCH THEM. That 25% was earned by anchors observed flat across independent data changes; this anchor's value is now set by ONE degenerate record, so its stability across a reassessment is unobserved and probably poor. Tightening would red the weekly publish on a single upstream edit. Revisit only after the sub-1 m2 lot_size defect is fixed (docs/DATA_ISSUES.md) or the first January roll, whichever lands first.",
   "lot_needle_ratio": {
-    "min": 9.616125,
-    "max": 16.026875
+    "min": 39.5,
+    "max": 118.52
   }
 }

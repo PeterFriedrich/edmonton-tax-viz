@@ -30,6 +30,16 @@ sys.path.insert(0, str(ROOT))
 INDEX = ROOT / "web/index.html"
 
 
+def _cells_block():
+    """Parse the `CELLS = { ... }` object literal into {key: metres}."""
+    src = INDEX.read_text(encoding="utf-8")
+    m = re.search(r"const CELLS = \{(.*?)\n    \};", src, re.S)
+    assert m, "CELLS block not found in web/index.html — did it get renamed?"
+    pairs = re.findall(r"(\w+):\s*(\d+),", m.group(1))
+    assert pairs, "CELLS block parsed but held no entries"
+    return {k: int(v) for k, v in pairs}
+
+
 def _windows_block():
     """Parse the `WINDOWS = { ... }` object literal into {key: (start, end)}."""
     src = INDEX.read_text(encoding="utf-8")
@@ -43,6 +53,11 @@ def _windows_block():
 @pytest.fixture(scope="module")
 def windows():
     return _windows_block()
+
+
+@pytest.fixture(scope="module")
+def cells():
+    return _cells_block()
 
 
 @pytest.fixture(scope="module")
@@ -110,25 +125,84 @@ def test_no_user_facing_string_spells_a_window_out(windows):
     )
 
 
-def test_every_placeholder_names_a_real_window(windows):
+def test_cell_sizes_match_main_pins(cells, pins):
+    """The grid edges are pinned in main.py and restated as labels, which is
+    exactly F4's shape. The Glass grid halved to 50 m on 2026-09-01; the
+    Development grid did not, so they are two independent pins."""
+    main, _ = pins
+    expected = {
+        "cellGlass": int(main.GRID_CELL_M),
+        "cellDev": int(main.DEV_GRID_CELL_M),
+    }
+    got = {k: cells[k] for k in expected}
+    assert got == expected, (
+        "web/index.html CELLS disagrees with main.py. Every 'N m' on the page "
+        f"reads from it.\n  main.py: {expected}\n  index.html: {got}"
+    )
+
+
+def test_no_user_facing_string_spells_a_cell_size_out(cells):
+    """The failure this catches is silent and was live: a 50 m grid rendering
+    under labels that still read '100 m'. Comments are stripped, same as the
+    window check — a comment may legitimately narrate a past resolution."""
+    lines = INDEX.read_text(encoding="utf-8").splitlines()
+    sizes = set(cells.values())
+    in_cells = False
+    in_html_comment = False
+    offenders = []
+    for n, line in enumerate(lines, 1):
+        if "const CELLS = {" in line:
+            in_cells = True
+        if in_cells:
+            if line.strip() == "};":
+                in_cells = False
+            continue
+        # HTML comment blocks are comments too — one of them narrates the 100 m
+        # measurements this grid replaced, which is history, not a live label.
+        if in_html_comment:
+            if "-->" in line:
+                in_html_comment = False
+            continue
+        if "<!--" in line and "-->" not in line:
+            in_html_comment = True
+            continue
+        if line.lstrip().startswith("//"):
+            continue
+        code = re.sub(r"\s+//.*$", "", line)
+        for size in sizes:
+            if re.search(rf"\b{size} m\b(?! grid file)", code):
+                offenders.append(f"  line {n}: {line.strip()[:90]}")
+                break
+    assert not offenders, (
+        "A grid cell size is spelled out instead of read from CELLS. Use "
+        "`${CELL.<key>}` in JS, or a {{<key>}} placeholder in static markup:\n"
+        + "\n".join(offenders)
+    )
+
+
+def test_every_placeholder_names_a_real_token(windows, cells):
     """An unknown {{token}} survives substitution and reaches the screen.
 
-    Scoped to `title` attributes because that is what the substitution pass
-    selects (`[title*='{{']`). A token anywhere else is never substituted at
-    all, which the second half checks.
+    Two substitution targets: `title` attributes, and the text of elements
+    marked `data-tok` (button labels, which are visible text rather than a
+    tooltip). A token anywhere else is never substituted, which the second
+    half checks.
     """
     src = INDEX.read_text(encoding="utf-8")
+    known = set(windows) | set(cells)
     tokens = {t for attr in re.findall(r'title="([^"]*)"', src)
               for t in re.findall(r"\{\{(\w+)\}\}", attr)}
+    tokens |= {t for ln in src.splitlines() if "data-tok" in ln
+               for t in re.findall(r"\{\{(\w+)\}\}", ln)}
     assert tokens, "no {{token}} placeholders found — did the markup stop using them?"
-    unknown = tokens - set(windows)
-    assert not unknown, f"placeholders with no WINDOWS key: {sorted(unknown)}"
+    unknown = tokens - known
+    assert not unknown, f"placeholders with no WINDOWS or CELLS key: {sorted(unknown)}"
 
     stray = [f"  line {n}: {ln.strip()[:90]}"
              for n, ln in enumerate(src.splitlines(), 1)
              if re.search(r"\{\{\w+\}\}", ln) and not ln.lstrip().startswith("//")
-             and 'title="' not in ln]
+             and 'title="' not in ln and "data-tok" not in ln]
     assert not stray, (
-        "a {{token}} outside a title attribute is never substituted and reaches "
-        "the screen raw:\n" + "\n".join(stray)
+        "a {{token}} outside a title attribute or a data-tok element is never "
+        "substituted and reaches the screen raw:\n" + "\n".join(stray)
     )
