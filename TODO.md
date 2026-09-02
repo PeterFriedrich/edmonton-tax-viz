@@ -116,6 +116,19 @@ discrete-vs-integrated. ⚠️ **`docs/DECISIONS.md`'s last five rows are all
 order. Also: a 4x spike-height bug shipped in the 50 m option and was caught by
 Peter on a phone, not by any of the ten green verify scripts.)_
 
+_Last reconciled: 2026-09-02 (S133 — **nothing on this list was worked; the
+session came entirely from Peter finding a spike on the live public site.**
+The `lot_size` item below had its map-defect half CLOSED and DEPLOYED (#312),
+and its "⚠️ Not user-visible" bullet was **wrong when written** — it checked
+picking and colour and missed that spike HEIGHT is not clamped. ⚠️ **Two
+separate stale "it can't be seen" claims** (here and in
+`check_value_anchors.py`'s own docstring) had been protecting the same defect.
+Also found, and now in `RUNBOOK.md` §3d: **a merged PR that edits `src/` and
+regenerates `web/data/*` triggers NO deploy at all** — #312 shipped only
+because the refresh was dispatched by hand. ⚠️ `ineligible_points` had drifted
+to its band ceiling **exactly** (84/84) and would have red the next weekly
+publish on its own, unrelated to any of this — re-pinned.)_
+
 ### Road cost estimation — the two non-capital figures do not reconcile (OPEN 2026-09-02)
 
 ⚠️ **This is a live caveat on a PUBLIC layer, not a backlog nicety.** The
@@ -163,8 +176,13 @@ Also three more vacuous checks caught by falsification, all in tests written the
 same session — see `docs/DECISIONS.md`'s last two rows.)_
 
 - [ ] **INVESTIGATE — `lot_size` holds ownership shares for an unknown number of
-  condo records; 7,984 rows are under 1 m².** Opened 2026-09-01, found by the
+  records; 7,984 rows are under 1 m².** Opened 2026-09-01, found by the
   50 m Glass grid (`docs/DATA_ISSUES.md` §E has the full measurement).
+  ⚠️ **The MAP half is CLOSED and LIVE (2026-09-02, #312 + refresh) — what is
+  still open here is the DATA question only:** what produces the other 7,981
+  rows, which is the bar for making this sendable. **Do not re-open the
+  rendering side.** (Also: they are commercial storefronts, not condos as
+  first recorded.)
   - Confirmed for exactly one parcel: three WESTMOUNT accounts
     (4259396/4259412/4259420, $859,500) whose `lot_size` reads
     0.505/0.218/0.277 — **summing to 1.000**, i.e. shares, not m².
