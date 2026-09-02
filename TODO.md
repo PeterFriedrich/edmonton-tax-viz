@@ -173,14 +173,37 @@ same session — see `docs/DECISIONS.md`'s last two rows.)_
     **7,981** rows is unestablished, and it may be several different causes.
     **Do not write a report until that is settled**; a publisher who finds one
     counter-example bins the whole thing.
-  - ⚠️ **Not user-visible** — the Glass grid is `gridPickable: false` and the
-    legend clamps at p97.5. This is denominator credibility, not a wrong number
-    on screen. Priority accordingly.
+  - ⚠️ ~~**Not user-visible**~~ — **WRONG, and it was wrong when written
+    (corrected 2026-09-02, Peter found it on the live public site).** It checked
+    picking and colour and missed **height**: `gridScale` anchors spike
+    elevation on the MAXIMUM cell, so this artifact set the vertical scale for
+    all 93,201 cells and squashed p97.5 to **0.249%** of full height. Public
+    root, Money → Revenue *or* Value → 50 m grid → Lot acres.
+  - ✅ **THE MAP DEFECT IS FIXED (2026-09-02)** — `MULTI_UNIT_MIN_LOT_M2`
+    (`src/export_value_grid.py`): a **multi-record** point totalling under
+    10 m² of lot area leaves the lot-acre metric. `lot_needle_ratio` 79.01 →
+    13.93; 50 m and 100 m now agree (13.93 vs 12.82). Cost: 4 changed fields,
+    all WESTMOUNT, all ≈0.05%. **What remains open below is the DATA question,
+    not a rendering one.**
+  - ⚠️ **Do NOT widen the rule to single-record points.** 381 of them hold real
+    tiny parcels (median 8.4 m², median value $500 — stalls, slivers). And a
+    record-level floor at 1 m² is worse: sub-1 m² values are a *continuous
+    graded series* (0.279/0.558/0.837/1.394/5.02 — multiples of one base share)
+    inside 400-unit towers, so it halves a coherent population and cascades 66
+    points into `majority_null`, dropping **$1.43B (0.598% of city value)** to
+    remove $859,500. Tests pin both directions.
   - ⚠️ **The dedupe heuristic is NOT the bug** (`FINDINGS_lot_dedupe.md` §3):
     the three values are distinct and unrepeated, so the rule passes them
     through. Don't "fix" `SHARE_MAX_M2`.
-  - Blocks re-tightening `lot_needle_ratio`, which is parked at ±50% because a
-    single degenerate record now sets it (`data/expected_value_anchors.json`).
+  - ~~Blocks re-tightening `lot_needle_ratio`~~ — **re-pinned 2026-09-02 to
+    6.96–20.89 (reading 13.93)**, the condition its own note set. ⚠️ **The old
+    band could never have caught this**: 39.5–118.52 was fitted *around* the
+    needle, so 79 sat comfortably inside it. Still ±50%, not ±25% — the new
+    value has zero observations in the post-fix regime. Also re-pinned:
+    `ineligible_points` 28–84 → 42.5–127.5, of which **only +1 is this rule**;
+    the rest was the organic drift its own note predicted (56→58→60→**84**),
+    which had hit the band ceiling exactly and would have red the next weekly
+    publish on its own.
     ⚠️ **That anchor reads `value_grid_50.json`, NOT the served default**
     (2026-09-01, `check_value_anchors.py`) — the 100 m grid merges these three
     records with neighbours holding real lots and the needle disappears

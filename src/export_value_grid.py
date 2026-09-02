@@ -85,6 +85,25 @@ SQ_M_PER_ACRE = 4046.8564224
 # docs/FINDINGS_lot_dedupe.md §4.3.
 SHARE_MAX_M2 = 1000.0
 
+# A point holding MULTIPLE titled records must sit on at least a real parcel;
+# below this its lot_size values are not areas at all. Three WESTMOUNT
+# storefronts (12203/12207/12211 107 Ave NW, $859,500) carry 0.505/0.218/0.277
+# — normalized ownership SHARES summing to exactly 1.000, a unit error, not a
+# small lot. Undetected they made a 1.0 m² denominator and $3.48B/lot-acre: the
+# tallest cell in the 50 m grid, which anchors every other cell's spike height
+# (gridScale), so one artifact flattened the whole map to 0.25% of full height.
+#
+# ⚠️ RESTRICTED TO n > 1 DELIBERATELY. 381 single-record points hold genuinely
+# tiny parcels (median 8.4 m², median value $500 — stalls, slivers); they are
+# real and produce unremarkable ratios. A plain record-level floor is worse
+# still: sub-1 m² values are a CONTINUOUS graded series (0.279/0.558/0.837/
+# 1.394/5.02 — multiples of one base share) in 400-unit towers, so any cut at
+# 1 m² slices a coherent population in half and cascaded 66 points into
+# majority_null, dropping $1.43B (0.598% of city value) instead of $859,500.
+# Results are insensitive to the exact cut from 2-50 m² (one point throughout)
+# — the rule sits in an empty gap, so this is not a tuning knob.
+MULTI_UNIT_MIN_LOT_M2 = 10.0
+
 # `exempt_frac` is a display gate, not an accounting figure — 4 decimals is
 # 0.01%, two orders finer than the threshold that reads it, and it keeps ~35k
 # cells from carrying full float repr for a number nobody sums.
@@ -141,7 +160,24 @@ def _point_lot_stats(pts: pd.DataFrame) -> pd.DataFrame:
     )
     per_point["lot_m2"] = per_point["lot_m2"].fillna(0.0)
     majority_null = (per_point["n"] > 1) & (per_point["n_null"] * 2 > per_point["n"])
-    per_point["eligible"] = ~majority_null & (per_point["lot_m2"] > 0)
+    # lot_m2 == 0 is already ineligible below; excluding it here keeps this the
+    # INCREMENTAL rule, so the warning counts what it actually removes (1 point,
+    # not the 23 all-null ones that never reached the metric anyway).
+    share_coded = (
+        (per_point["n"] > 1)
+        & (per_point["lot_m2"] > 0)
+        & (per_point["lot_m2"] < MULTI_UNIT_MIN_LOT_M2)
+    )
+    if share_coded.any():
+        logger.warning(
+            "%d multi-record point(s) carry under %.0f m² of total lot area — "
+            "share-coded lot_size, not areas; excluded from the lot-acre metric "
+            "(examples: %s)",
+            int(share_coded.sum()), MULTI_UNIT_MIN_LOT_M2,
+            per_point.loc[share_coded, ["latitude", "longitude", "n", "lot_m2"]]
+            .head(3).to_dict("records"),
+        )
+    per_point["eligible"] = ~majority_null & ~share_coded & (per_point["lot_m2"] > 0)
     return per_point
 
 

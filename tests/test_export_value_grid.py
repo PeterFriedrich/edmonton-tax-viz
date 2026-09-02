@@ -162,6 +162,48 @@ def test_half_null_point_stays_eligible():
     assert grid.iloc[0]["value_per_lot_acre"] == pytest.approx(300.0 / lot_acres)
 
 
+def test_share_coded_multi_unit_point_ineligible_and_reported(caplog):
+    # The WESTMOUNT case, to scale: 3 records at one point whose lot_size values
+    # are normalized ownership SHARES summing to 1.000, not m². Undetected this
+    # made a 1 m² denominator and $3.48B/lot-acre — the tallest cell in the 50 m
+    # grid, which anchors every other cell's height.
+    df = _frame([
+        {**A, "assessed_value": 469500.0, "lot_size": 0.505},
+        {**A, "assessed_value": 185500.0, "lot_size": 0.218},
+        {**A, "assessed_value": 204500.0, "lot_size": 0.277},
+    ])
+    with caplog.at_level("WARNING"):
+        grid = build_value_grid(df, cell_m=50.0)
+    assert "share-coded" in caplog.text
+    assert pd.isna(grid.iloc[0]["value_per_lot_acre"])
+    # ground acres are untouched — the dollars are real, only the lot area is not
+    cell_acres = 50.0 * 50.0 / SQ_M_PER_ACRE
+    assert grid.iloc[0]["value_per_acre"] == pytest.approx(859500.0 / cell_acres)
+
+
+def test_single_record_tiny_lot_stays_eligible():
+    # ⚠️ The floor is restricted to n > 1 ON PURPOSE. 381 real single-parcel
+    # points hold genuinely tiny lots (median 8.4 m², median value $500 —
+    # stalls, slivers) and produce unremarkable ratios. Widening the rule to
+    # n == 1 would delete them for no gain.
+    df = _frame([{**A, "assessed_value": 500.0, "lot_size": 8.4}])
+    grid = build_value_grid(df, cell_m=50.0)
+    lot_acres = 8.4 / SQ_M_PER_ACRE
+    assert grid.iloc[0]["value_per_lot_acre"] == pytest.approx(500.0 / lot_acres)
+
+
+def test_multi_unit_point_above_floor_stays_eligible():
+    # A real multi-unit parcel just above the floor is kept — the rule must not
+    # creep into ordinary small lots.
+    df = _frame([
+        {**A, "assessed_value": 100.0, "lot_size": 6.0},
+        {**A, "assessed_value": 200.0, "lot_size": 6.0},
+    ])
+    grid = build_value_grid(df, cell_m=50.0)
+    lot_acres = 12.0 / SQ_M_PER_ACRE  # repeated sub-SHARE_MAX value counts per unit
+    assert grid.iloc[0]["value_per_lot_acre"] == pytest.approx(300.0 / lot_acres)
+
+
 def test_zero_lot_size_treated_as_null():
     df = _frame([
         {**A, "assessed_value": 100.0, "lot_size": 0.0},

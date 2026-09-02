@@ -418,13 +418,15 @@ Capital Asset Management Audit. None state one.
 An availability gap rather than an error, same shape as issues 4 and 5. It is
 the last input the bikeway cost side needs.
 
-### E. `lot_size` holds ownership SHARES, not square metres, for some condo records
+### E. `lot_size` holds ownership SHARES, not square metres, for some records
 
 **⚠️ CONFIRMED and exactly reproducible; NOT PROMOTED because it has no
 published artifact yet** — the bar every numbered issue above clears.
 
 Found 2026-09-01 by the Glass grid halving to 50 m, which stopped diluting it.
-The needle cell is three WESTMOUNT condo records at identical coordinates:
+The needle cell is three WESTMOUNT records at identical coordinates — **commercial
+storefronts**, 12203/12207/12211 107 Avenue NW, Tax Class Non-Residential
+(`zoning` null), not condos as first recorded:
 
 | account | assessed | `lot_size` |
 |---|---|---|
@@ -452,9 +454,45 @@ only 3 of 158 coordinate groups containing sub-1 m² lots sum to ~1.000, so
 whatever produces the other 7,981 rows is unestablished and may be several
 different things. **That gap is exactly what stops this being sendable.**
 
-⚠️ **It does NOT reach a reader.** The Glass grid is `gridPickable: false` and
-the legend clamps at p97.5, so no absurd number is displayed; the harm is to
-the lot-acre denominator's credibility, not to a rendered figure.
+**What the other rows are — partial answer, 2026-09-02.** In the large towers
+they are a **continuous graded series**: one 407-record point carries
+0.279 / 0.558 / 0.837 / 1.394 / 1.952 / 5.02 … — integer multiples of a 0.279
+base, i.e. per-unit apportioned shares scaled to *something*, straddling 1 m²
+arbitrarily. So they are systematic, not junk, and the sub-1 m² population is
+**not a clean defect boundary**: a record-level floor at 1 m² cuts one coherent
+population in half. Measured cost of doing that: it cascades 66 points into
+`majority_null` and drops **$1.43B (0.598% of city value)** to remove $859,500
+— which is why the shipped rule is point-level and multi-record-only. Still
+unestablished: what the shares are scaled *to*, and whether any point-total
+recovers a true parcel area.
+
+⚠️ ~~**It does NOT reach a reader.**~~ **FALSE — corrected 2026-09-02, found by
+Peter using the live public site.** The claim checked two channels and missed
+the third: `gridPickable: false` (can't click it) and the p97.5 colour clamp
+(can't see it as colour) are both true, but **spike HEIGHT is not clamped**.
+`gridScale` (`web/index.html`) anchors elevation on `vals[vals.length - 1]` —
+the maximum cell — so the tallest cell is drawn at full height *by
+construction*. This cell won that anchor, and every real cell was divided by
+it: the p97.5 cell rendered at **0.249%** of full height on value/lot-acre and
+**0.107%** on revenue/lot-acre. One needle over a flat plane, on the **public**
+root (both `grid-fine` and `Lot acres` are ungated). Reachable via Money →
+Revenue *or* Value → 50 m grid → Lot acres.
+
+**Fixed 2026-09-02** — `MULTI_UNIT_MIN_LOT_M2` in `src/export_value_grid.py`:
+a point holding **multiple** titled records whose total deduped lot area is
+under 10 m² is not sitting on a real parcel, so it leaves the lot-acre metric
+(ground-acre is untouched — the dollars are real, only the lot area is not).
+Effect: `lot_needle_ratio` **79.01 → 13.93**, and the 50 m and 100 m grids now
+**agree** (13.93 vs 12.82) where they differed 6× before — the divergence was
+the artifact, not the resolution. Citywide cost: **4 changed fields, all
+WESTMOUNT, all ≈0.05%** (`value_per_lot_acre`, `revenue_per_lot_acre`,
+`nonres_revenue_per_lot_acre`, `far`).
+
+⚠️ **The rule is restricted to multi-record points ON PURPOSE.** 381
+single-record points hold genuinely tiny *real* parcels (median 8.4 m², median
+value $500 — stalls, slivers) and produce unremarkable ratios; a floor that
+caught them would delete real data for no gain. Insensitive to the exact cut
+from 2–50 m² (one point throughout), so the threshold is not a tuning knob.
 
 ⚠️ **The dedupe rule is not at fault.** `FINDINGS_lot_dedupe.md` §3 contributes
 `k × value` for repeats under `SHARE_MAX_M2 = 1000 m²` — correct for the
