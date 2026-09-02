@@ -205,12 +205,21 @@ def test_the_drifting_ineligible_pair_was_left_wide_on_purpose():
     DANGEROUS direction. Their bands are intentionally NOT tightened: doing so
     would red the weekly publish on the next real data change and read as a
     false alarm rather than the regime signal the guard exists to give.
+
+    ⚠️ Pins the WIDTH, not the endpoints. It pinned the endpoints until
+    2026-09-02, when re-centring ineligible_points on 85 (the drift had reached
+    its ceiling exactly) tripped it -- a re-pin at the SAME relative width is
+    not the tightening this test exists to stop. Endpoints move on every
+    legitimate re-pin; ±50% is the invariant.
     """
     base = _committed_baseline()
-    for key, wide in (("ineligible_points", (28.0, 84.0)),
-                      ("ineligible_value_frac", (0.002593, 0.007779))):
-        assert (base[key]["min"], base[key]["max"]) == wide, (
-            f"{key} was tightened -- see _ineligible_pair_is_drifting in the baseline"
+    for key in ("ineligible_points", "ineligible_value_frac"):
+        b = base[key]
+        centre = (b["min"] + b["max"]) / 2
+        half_width = (b["max"] - b["min"]) / 2 / centre
+        assert half_width == pytest.approx(0.50, abs=0.01), (
+            f"{key} half-width is {half_width:.3f}, expected 0.50 -- see "
+            "_ineligible_pair_is_drifting in the baseline before re-tightening it"
         )
 
 

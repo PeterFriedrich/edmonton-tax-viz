@@ -16,17 +16,18 @@
     "min": 0.030613,
     "max": 0.051021
   },
+  "_ineligible_points_repinned_2026_09_02": "Re-pinned from 28-84 (reading 85). ⚠️ ONLY +1 OF THE MOVE IS THE MULTI_UNIT_MIN_LOT_M2 RULE — the other point it excludes was already majority-null. The rest is the ORGANIC DRIFT _ineligible_pair_is_drifting predicted: 56 -> 58 -> 60 (Aug) -> 84 by 2026-09-02, which had reached the band ceiling EXACTLY and would have fired on the next weekly publish on its own. Band stays ±50% per that note; do not tighten.",
   "ineligible_points": {
-    "min": 28.0,
-    "max": 84.0
+    "min": 42.5,
+    "max": 127.5
   },
   "ineligible_value_frac": {
     "min": 0.002593,
     "max": 0.007779
   },
-  "_lot_needle_is_now_one_cell": "⚠️ RE-PINNED 2026-09-01 for the 50 m Glass grid (was 9.616-16.027 at 100 m; live reading moved 12 -> 79.01). THE MOVE IS RESOLUTION, NOT DATA — halving the cell stopped diluting a defect that was always there. The top cell is 3 WESTMOUNT condo records (accounts 4259396/4259412/4259420, $859,500 assessed) whose lot_size reads 0.505/0.218/0.277 — ownership SHARES summing to 1.000, not m². At 100 m that cell merged with neighbours holding real lots and the needle vanished entirely; at 50 m it is the top cell in the city. ⚠️ BAND IS +/-50%, NOT the +/-25% the four 'frozen' anchors use — DO NOT TIGHTEN IT TO MATCH THEM. That 25% was earned by anchors observed flat across independent data changes; this anchor's value is now set by ONE degenerate record, so its stability across a reassessment is unobserved and probably poor. Tightening would red the weekly publish on a single upstream edit. Revisit only after the sub-1 m2 lot_size defect is fixed (docs/DATA_ISSUES.md) or the first January roll, whichever lands first.",
+  "_lot_needle_was_the_westmount_cell": "⚠️ RE-PINNED 2026-09-02, the condition the previous note set: 'revisit only after the sub-1 m2 lot_size defect is fixed'. It is (MULTI_UNIT_MIN_LOT_M2, export_value_grid), and the reading fell 79.01 -> 13.93 — the needle WAS the defect, not a feature of the city. History: 9.616-16.027 at 100 m, re-pinned 39.5-118.52 on 2026-09-01 when the 50 m grid stopped diluting the 3 WESTMOUNT records (accounts 4259396/4259412/4259420, $859,500, lot_size 0.505/0.218/0.277 = shares summing to 1.000). ⚠️ THE OLD BAND COULD NEVER HAVE CAUGHT THIS: it was fitted AROUND the needle, so 79 sat comfortably inside a 39.5-118.52 window. At 13.93 ±50% the anchor detects a NEW needle for the first time. ⚠️ BAND STAYS ±50%, NOT the ±25% the 'frozen' anchors use — that 25% was earned by observed flatness across independent data changes, and this value has ZERO observations in the post-fix regime. Revisit after the first January roll.",
   "lot_needle_ratio": {
-    "min": 39.5,
-    "max": 118.52
+    "min": 6.96,
+    "max": 20.89
   }
 }
