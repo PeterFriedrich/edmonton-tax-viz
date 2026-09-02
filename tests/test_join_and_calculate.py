@@ -1487,6 +1487,71 @@ def test_transport_ops_roads_term_differs_from_lifecycle_roads_term():
     assert row["svc_cost_per_acre"] == pytest.approx(roads_lifecycle + 30.0)
 
 
+def test_roads_lifecycle_column_is_nested_inside_the_service_composite():
+    """cost_roads_life_per_acre is a COMPONENT of svc_cost_per_acre, not a peer.
+
+    Pins the identity rather than asserting the multiplication back: the number
+    that can go wrong is the RELATIONSHIP between the new column and the
+    composite that already shipped. If a future edit gives the standalone column
+    a different rate from the one inside the composite, the map grows two
+    lifecycle road numbers that disagree, and only this catches it.
+    """
+    result = join_and_calculate(
+        _assessment([{"neighbourhood_name": "GRIDTOWN", "total_assessed_value": 100.0}]),
+        _boundaries([{"neighbourhood_name": "GRIDTOWN", "area_acres": 10.0}]),
+        unit_costs=_TRANSPORT_COSTS,
+        **_transport_kwargs(),
+    )
+    row = result.iloc[0]
+    assert row["cost_roads_life_per_acre"] == pytest.approx(
+        25.0 * _TRANSPORT_COSTS["road_dollars_per_m"]
+    )
+    # The fire term is what the composite adds on top — nothing else.
+    fire_term = row["svc_cost_per_acre"] - row["cost_roads_life_per_acre"]
+    assert fire_term == pytest.approx(30.0)
+
+
+def test_roads_lifecycle_ships_without_fire_data():
+    """The roads-only lifecycle column must survive a run with no fire frame.
+
+    svc_cost_per_acre is deliberately all-or-nothing (roads + fire or neither),
+    so folding this column into that branch would silently drop the ONE cost
+    figure a roads-only lens can show whenever fire data is absent.
+    """
+    result = join_and_calculate(
+        _assessment([{"neighbourhood_name": "GRIDTOWN", "total_assessed_value": 100.0}]),
+        _boundaries([{"neighbourhood_name": "GRIDTOWN", "area_acres": 10.0}]),
+        roads=_roads([{"neighbourhood_name": "GRIDTOWN", "road_m_total": 250.0}]),
+        unit_costs=_TRANSPORT_COSTS,
+    )
+    row = result.iloc[0]
+    assert "svc_cost_per_acre" not in result.columns
+    assert row["cost_roads_life_per_acre"] == pytest.approx(
+        25.0 * _TRANSPORT_COSTS["road_dollars_per_m"]
+    )
+
+
+def test_roads_lifecycle_and_operating_stay_on_separate_bases():
+    """The two roads cost columns are the same metres on incompatible bases.
+
+    ⚠️ The expected ratio is DERIVED from the rates, never hardcoded: the whole
+    point of keeping the rates in city_unit_costs.json is that improving one is
+    a single-value edit, and a test pinning a literal 10.8 would red the build
+    on exactly the edit we want to stay cheap.
+    """
+    result = join_and_calculate(
+        _assessment([{"neighbourhood_name": "GRIDTOWN", "total_assessed_value": 100.0}]),
+        _boundaries([{"neighbourhood_name": "GRIDTOWN", "area_acres": 10.0}]),
+        unit_costs=_TRANSPORT_COSTS,
+        **_transport_kwargs(),
+    )
+    row = result.iloc[0]
+    expected = (_TRANSPORT_COSTS["road_dollars_per_m"]
+                / _TRANSPORT_COSTS["road_ops_dollars_per_m"])
+    assert (row["cost_roads_life_per_acre"]
+            / row["cost_roads_ops_per_acre"]) == pytest.approx(expected)
+
+
 def test_transit_ops_is_a_share_allocation_summing_to_the_budget():
     """⚠️ The per-departure figure is a SHARE, not a rate.
 

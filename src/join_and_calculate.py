@@ -613,6 +613,35 @@ def join_and_calculate(
             + FIRE_COLUMNS + ["fire_events_per_acre"] + ["geometry"]
         )
 
+    # Roads-only LIFECYCLE cost (SPEC_services.md "Roads cost — lifecycle").
+    # The same $50/m/yr rate and the same metres as the roads term inside
+    # svc_cost_per_acre — this simply publishes that term on its own, so a
+    # roads-only lens can show a lifecycle figure without dragging fire in.
+    #
+    # ⚠️ NESTED, NOT ADDITIVE: cost_roads_life_per_acre is a COMPONENT of
+    # svc_cost_per_acre (which is this + the allocated fire term). Never sum the
+    # two — that double-counts roads. Contrast cost_roads_ops_per_acre, which is
+    # the same metres on the OPERATING basis, ~10.8x smaller and never summable
+    # with either (city_unit_costs.json "_two_bases").
+    #
+    # Deliberately in its OWN guard rather than inside the roads-and-fire branch
+    # below: it needs only roads, so a run without fire data still publishes it
+    # instead of silently dropping the one cost column a roads lens can show.
+    if unit_costs is not None and roads is not None:
+        joined["cost_roads_life_per_acre"] = (
+            joined["road_m_per_acre"] * unit_costs["road_dollars_per_m"]
+        )
+        logger.info(
+            "Roads LIFECYCLE cost: $%.2f/road-m/yr -> cost_roads_life_per_acre "
+            "on %d hoods (MODELED, collector+local only, no capital-vs-ops mixing)",
+            unit_costs["road_dollars_per_m"],
+            int(joined["cost_roads_life_per_acre"].notna().sum()),
+        )
+        out_cols = (
+            [c for c in out_cols if c != "geometry"]
+            + ["cost_roads_life_per_acre"] + ["geometry"]
+        )
+
     # V2 composite: modeled city service cost per acre (SPEC_utilities
     # decision 3 — MODELED, roads + fire only, never "total city cost").
     # Needs both the road and fire per-acre columns computed above; the fire
@@ -963,7 +992,11 @@ def join_and_calculate(
 # strictly OPERATING basis (maintenance + snow, NO capital replacement) —
 # ⚠️ cost_roads_ops_per_acre and the roads term inside svc_cost_per_acre are the
 # SAME METRES ON DIFFERENT BASES, ~10.8x apart; the client must never sum or
-# compare them, which is what the _ops suffix exists to signal. new_units_per_acre
+# compare them, which is what the _ops suffix exists to signal.
+# cost_roads_life_per_acre publishes that lifecycle roads term on its own, so a
+# roads-only lens can show it without fire. ⚠️ It is NESTED INSIDE
+# svc_cost_per_acre (never sum the two — double-counts roads) and is the SAME
+# METRES as cost_roads_ops_per_acre on the other basis (never sum those either). new_units_per_acre
 # and new_permits_per_acre (+ the total/permit-count pair for the tooltip) are the
 # Development lens A activity metrics — new dwelling units / new permits from
 # issued permits, a change/flow signal, NOT revenue or cost (SPEC_development.md).
@@ -990,7 +1023,7 @@ SLIM_COLUMNS = [
     "storm_charge_per_acre",
     "fire_events_per_acre", "transit_dep_per_acre",
     "water_charge_per_acre", "water_fixed_per_acre",
-    "svc_cost_per_acre",
+    "svc_cost_per_acre", "cost_roads_life_per_acre",
     "cost_roads_ops_per_acre", "cost_bike_ops_per_acre",
     "cost_transit_ops_per_acre", "transport_cost_ops_per_acre",
     "new_units_per_acre", "new_permits_per_acre",

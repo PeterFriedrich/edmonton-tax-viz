@@ -54,3 +54,10 @@ jobs:
       # Offline, so it belongs on the merge gate rather than the weekly run.
       - name: Check doc citations
         run: python scripts/check_doc_citations.py
+
+      # Ties the rates quoted in the lens blurbs to the JSON the pipeline reads.
+      # Belongs on the MERGE gate, not the weekly run: a rate change is a code
+      # edit, and refresh.yml would only catch it days later on a site already
+      # serving the stale caption. Offline — both inputs are committed files.
+      - name: Check cost copy matches the unit-cost file
+        run: python scripts/check_cost_copy.py
