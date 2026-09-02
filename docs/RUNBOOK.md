@@ -653,6 +653,48 @@ the deployed CSS is your CSS.
 ## 3d. Publishing a data-side feature WITHOUT waiting for Monday
 (added 2026-08-04)
 
+### ⚠️ FIRST — a merged PR whose only served change is DATA deploys NOTHING
+(added 2026-09-02)
+
+This is not the "Monday is slow" problem below; it is **"nothing will ever
+happen"**. `deploy.yml` triggers on `web/**` minus `!web/data/**`, plus
+`scripts/build_site.py` and itself. A PR that edits `src/` and regenerates
+`web/data/*` matches **none** of them — `web/data/**` is excluded, and `src/**`
+was never a trigger. The merge is green, **no deploy run appears at all**, and
+**the build stamp does not move**, so there is no failure anywhere to notice.
+
+⚠️ **Not the same as §3c step 1's "a data-only change produces no run".** That
+case is self-evident — you only touched data. This one **looks like a code
+change**, because you edited `src/`, which is exactly why it slips past.
+
+**Real instance: PR #312 (2026-09-02)**, the Westmount `lot_size` fix. Ten
+changed files — `src/export_value_grid.py`, three `web/data/*`, tests, docs —
+and **zero** matched the deploy trigger.
+
+**Check it in one command before walking away from a merge** (empty output =
+no deploy will fire; verified both directions on #312 and #310):
+
+```bash
+git diff --name-only <sha>^..<sha> \
+  | grep -E '^(web/|scripts/build_site\.py|\.github/workflows/deploy\.yml)' \
+  | grep -Ev '^web/(data|verified)/'
+```
+
+**The fix is to dispatch, not to edit the workflow.** Use `refresh.yml` (below)
+when the data should be regenerated from source — the normal case, and it runs
+the whole guard chain. Use `deploy.yml` only when the committed `web/data` is
+already the verified bytes and you just need them served:
+
+```bash
+gh workflow run deploy.yml --ref master   # republish web/ as-is; stamp updates
+```
+
+⚠️ **Do NOT "fix" this by adding `src/**` to `deploy.yml`'s paths.** Deploy does
+not regenerate anything — it would publish whatever `web/data` happens to be
+committed, which is the failure mode §3b exists to prevent. The `!web/data/**`
+exclusion is also load-bearing: it stops a code deploy racing the refresh's own
+deploy, and they share the `refresh-map-data` concurrency group.
+
 §3b's last bullet says the new columns are absent "until the next refresh" —
 which is true, but the cron is weekly and that wait can be up to **six days**.
 **Dispatching `refresh.yml` by hand is the supported way to close it**, and is
