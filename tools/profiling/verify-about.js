@@ -90,8 +90,9 @@ const [url] = process.argv.slice(2);
     const src = await (await page.request.get(url)).text();
     const block = src.slice(src.indexOf('<div id="about"'), src.indexOf('<div id="botleft"'));
     // The upper bound only asserts the slice didn't run away past the pod; it
-    // moved 4000 -> 6000 when the budget-scale section landed (2026-08-03).
-    check('found the pod markup to inspect', block.length > 200 && block.length < 6000,
+    // moved 4000 -> 6000 when the budget-scale section landed (2026-08-03), and
+    // 6000 -> 8000 when the public road-cost modelled caveat did (2026-09-02).
+    check('found the pod markup to inspect', block.length > 200 && block.length < 8000,
           `${block.length} chars`);
     // Strip HTML comments first. The rule being enforced is "no year a READER
     // can see is a literal" — a comment renders nothing, so a year in one

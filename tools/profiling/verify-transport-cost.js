@@ -44,14 +44,31 @@ function check(name, ok, detail) {
 
   const click = sel => page.$eval(sel, b => b.click()); // swiftshader hangs page.click
 
-  // Services is full-only (2026-07-28): on the public build none of this is
-  // reachable, and that is the correct behaviour.
+  // ⚠️ Services is PUBLIC again as of the roads-only return (2026-09-02), so a
+  // missing view now means a pre-roads DATA file, not the public build.
   const servicesOffered = await page.evaluate(() => {
     const b = document.querySelector('#views button[data-view="services"]');
     return !!b && getComputedStyle(b).display !== 'none';
   });
   if (!servicesOffered) {
-    check('public build: services view not offered', true);
+    check('pre-roads data file: services view not offered', true);
+    await browser.close();
+    process.exit(fail ? 1 : 0);
+  }
+
+  // Of this script's three rows only ROADS cost is public; transit and bike
+  // cost stay full-only. On the public build assert exactly that split, then
+  // stop — the ramp/clamp checks below need the full row set.
+  const fullBuild = await page.evaluate(() => FULL_BUILD);
+  if (!fullBuild) {
+    for (const svc of ['transitcost', 'bikecost']) {
+      check(`public build: ${svc} row hidden`, await page.evaluate(s =>
+        getComputedStyle(document.querySelector(`#services .svc[data-service="${s}"]`)).display === 'none', svc));
+      check(`public build: ${svc} not checked`,
+        await page.evaluate(s => state.services[s] === false, svc));
+    }
+    check('public build: roadscost row still reachable', await page.evaluate(() =>
+      getComputedStyle(document.querySelector('#services .svc[data-service="roadscost"]')).display !== 'none'));
     await browser.close();
     process.exit(fail ? 1 : 0);
   }

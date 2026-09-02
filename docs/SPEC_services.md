@@ -647,6 +647,107 @@ two-term metric labelled "transportation" would be mislabeled, the same rule the
 existing composite uses. (Present-but-malformed still raises — only *absent* is
 tolerated.)
 
+## Roads cost — lifecycle (new column, 2026-09-02)
+
+**Status: BUILT.** `cost_roads_life_per_acre` = `road_m_per_acre` ×
+`roadway_om_renewal.value` ($50/m/yr). Nothing new is sourced — this is the
+lifecycle roads term that already existed *inside* `svc_cost_per_acre`,
+published on its own so a roads-only lens can show a lifecycle figure without
+dragging the fire allocation in with it.
+
+⚠️ **Three road cost numbers now ship in the same file, and no two of them may
+be combined.** This is the `_two_bases` rule plus one:
+
+| column | basis | rate | median $/acre/yr |
+|---|---|---|---|
+| `cost_roads_ops_per_acre` | operating | $4.635/m/yr | $151 |
+| `cost_roads_life_per_acre` | lifecycle | $50/m/yr | $1,629 |
+| `svc_cost_per_acre` | lifecycle **+ fire** | $50/m/yr + allocation | $3,302 |
+
+- ops vs lifecycle are **alternatives** — the same metres on incompatible
+  bases, ~10.8× apart. Never summed, never compared as if either were all-in.
+- lifecycle vs the composite are **nested** — `cost_roads_life_per_acre` is a
+  *component* of `svc_cost_per_acre`. Subtracting is meaningful (it yields the
+  fire term); **adding double-counts roads.** A different hazard from the first,
+  so the panel gives it different words ("incl. above"), not the same caption.
+
+**It sits in its own guard in `join_and_calculate`, not inside the
+roads-and-fire branch.** `svc_cost_per_acre` is deliberately all-or-nothing, so
+folding this in would silently drop the one cost column a roads-only lens can
+show whenever fire data is absent. A test pins that.
+
+**Colour: linear, INHERITED not re-derived** — a positive scalar multiple of
+`road_m_per_acre` leaves skew unchanged (the 2026-08-03 rule).
+
+**Caveats that must stay on the display**, all inherited from
+`roadway_om_renewal` and all load-bearing: one citywide published unit cost
+applied uniformly, so a 1960s street and a 2015 one cost the same here; the
+50-year life is the City's *well-maintained* figure and it also publishes 25,
+which would double the number; the rate is calibrated to local residential
+roads, so collectors are understated; and it is neither actual spend nor a
+funding gap.
+
+⚠️ **OPEN — the two non-capital road figures do not reconcile.** The published
+lifecycle O&M ($600,000/km over 50 yr = **$12/m/yr**) and the operating
+maintenance rate (**$4.635/m/yr**) both claim to be annual non-capital spend on
+neighbourhood roads and are **2.6× apart**. Neither has been traced to what it
+actually covers. Until that resolves, the operating layer's blurb says outright
+that it is the low end of a range. Sourcing questions are queued for a research
+pass (see `docs/ANALYSIS_BACKLOG.md`); the highest-value answer would replace
+the uniform rate entirely with the Neighbourhood Renewal Program's actual
+per-neighbourhood spend, if it is published.
+
+## Roads returns to the public build (2026-09-02)
+
+**Status: BUILT.** Peter's call: ship the Services lens at the public root
+carrying **roads supply + road cost on both bases and nothing else**. This is
+the **first exercise of the 2026-07-28 staged-return rule** — the three
+full-only lenses come back **one per release**, each individually reviewed
+against the release copy, rather than as a batch un-pull. Uses and Ratio follow
+the same path later, separately.
+
+**Public rows:** Roads (m/acre) · Roads cost — operating · Roads cost —
+lifecycle.
+**Full-only rows (unchanged):** Stormwater, Fire, Water/sewer, Transit, Bike,
+Transit cost, Bike cost, Service cost.
+
+**Mechanism — a `pub: true` tag on the service itself**, not scattered
+`|| !FULL_BUILD` checks at each use site. Row visibility, the colour-driver
+radio and the default checked set all read the one tag, so a row cannot be
+published in one place and hidden in another. This is the per-control tag
+`PLAN_public_release.md` §2a describes; Services is its first real use.
+⚠️ **Hiding the row is not sufficient on its own** — an unchecked-but-present
+service is still reachable through the colour radio and still contributes a
+tooltip row, so `state.services[k]` is cleared too. That is what actually keeps
+a full-only number off the public build.
+
+**The Ratio view stays full-only** and keeps the `|| !FULL_BUILD` idiom. It is a
+separate lens and gets its own release.
+
+### What came back with it, and what deliberately did not
+
+- ✅ **The Money tooltip's `road m / acre` row returns.** It was pulled on
+  2026-07-28 for one reason — the lens explaining it was hidden — and that
+  reason expired when Services returned.
+- ❌ **`$X revenue / road metre` stays gated.** It is Ratio's headline metric
+  and Ratio is still full-only; publishing it on the default public view while
+  hiding its lens is the case 2026-07-28 called *worse than either shipping or
+  not shipping it*.
+- ✅ **The road source credit returns to Data & Methods**, split out of
+  `#about-src-services` into its own `#about-src-roads` span. The public map now
+  draws the road network and colours by it, so the attribution is no longer
+  optional. Fire dispatch and the transit schedule keep the original gate.
+- ✅ **A road-cost modelled caveat is now REQUIRED publicly**
+  (`#about-modelled-roads`) — the public build ships two modelled dollar
+  columns, and a modelled figure without its caveat is the failure that pod
+  exists to prevent. Kept as its own paragraph rather than un-gating the
+  existing one, which names layers a public visitor still cannot reach.
+- ⚠️ **The public root now lazy-fetches `roads.geojson` (1.6 MB)**, reversing
+  the "free consequence" noted on 2026-07-28. Initial payload is unchanged (the
+  fetch is lazy, on first Services entry), but Services is now the heaviest
+  public view — relevant given the S131 old-laptop measurement (36.6 fps at
+  100 m on an HD 4400).
+
 ## Hood panel — cost against revenue (BUILT 2026-08-10)
 
 Clicking a hood in Services opens a panel confronting its **revenue per acre**

@@ -55,77 +55,99 @@ def _millions(value: float) -> str:
     return f"${value / 1e6:.1f} million"
 
 
-# Explicit claim table, in the project's explicit-dict style: one row per rate a
-# blurb states in words. `path` walks city_unit_costs.json; `fmt` renders the
-# value the way the copy writes it; `label` names the sentence for the error.
+_WORDS = {2: "two", 3: "three", 4: "four", 5: "five", 6: "six", 7: "seven",
+          8: "eight", 9: "nine", 10: "ten", 11: "eleven", 12: "twelve",
+          13: "thirteen", 14: "fourteen", 15: "fifteen", 16: "sixteen",
+          17: "seventeen", 18: "eighteen", 19: "nineteen", 20: "twenty"}
+
+
+def _times_in_words(ratio: float) -> str:
+    """10.79 -> "eleven times".
+
+    The gap between the two road bases is stated in WORDS in three separate
+    places (a blurb, the panel note, the methods pod), which is exactly the
+    shape of claim that goes stale in two of three when a rate moves.
+    """
+    n = round(ratio)
+    if n not in _WORDS:
+        raise ValueError(
+            f"road cost basis ratio rounds to {n}x, outside the {min(_WORDS)}-"
+            f"{max(_WORDS)} range this guard can spell. Widen _WORDS and fix "
+            "the copy, which certainly no longer says the right word."
+        )
+    return f"{_WORDS[n]} times"
+
+
+# Explicit claim table, in the project's explicit-dict style: one row per figure
+# the copy states in words. `expect` receives the whole parsed unit-cost file and
+# returns the exact string the copy must contain; `label` names it for the error.
 #
-# ⚠️ ADD A ROW WHENEVER A BLURB QUOTES A NEW RATE. A quoted rate with no row here
-# is exactly the drift this guard exists to catch, and it cannot detect its own
-# omission — the copy simply goes unchecked, silently.
+# Taking the whole file rather than one value is what lets a claim be a
+# RELATIONSHIP between rates instead of a single rate — see the ratio row, which
+# no per-rate check could catch.
+#
+# ⚠️ ADD A ROW WHENEVER THE COPY QUOTES A NEW FIGURE. A quoted figure with no row
+# here is exactly the drift this guard exists to catch, and it cannot detect its
+# own omission — the copy simply goes unchecked, silently.
 CLAIMS = [
     {
         "label": "Roads cost (lifecycle) — the $/road-metre/yr rate",
-        "path": ["roadway_om_renewal", "value"],
-        "fmt": lambda v: f"${v:,.0f} per metre per year",
+        "expect": lambda c: f"${c['roadway_om_renewal']['value']:,.0f} per metre per year",
     },
     {
         "label": "Roads cost (operating) — maintenance $/km/yr",
-        "path": ["roadway_ops", "components_per_km_per_year", "maintenance"],
-        "fmt": _money,
+        "expect": lambda c: _money(c["roadway_ops"]["components_per_km_per_year"]["maintenance"]),
     },
     {
         "label": "Roads cost (operating) — snow and ice $/km/yr",
-        "path": ["roadway_ops", "components_per_km_per_year", "snow_and_ice_control"],
-        "fmt": _money,
+        "expect": lambda c: _money(c["roadway_ops"]["components_per_km_per_year"]["snow_and_ice_control"]),
     },
     {
         "label": "Bike cost (operating) — maintenance $/km/yr",
-        "path": ["bikeway_ops", "components_per_km_per_year", "maintenance"],
-        "fmt": _money,
+        "expect": lambda c: _money(c["bikeway_ops"]["components_per_km_per_year"]["maintenance"]),
     },
     {
         "label": "Bike cost (operating) — snow and ice $/km/yr",
-        "path": ["bikeway_ops", "components_per_km_per_year", "snow_and_ice_control"],
-        "fmt": _money,
+        "expect": lambda c: _money(c["bikeway_ops"]["components_per_km_per_year"]["snow_and_ice_control"]),
     },
     {
         "label": "Transit cost — the ETS bus+LRT gross operating budget",
-        "path": ["transit_ets", "operating_budget_gross_annual"],
-        "fmt": _millions,
+        "expect": lambda c: _millions(c["transit_ets"]["operating_budget_gross_annual"]),
+    },
+    # Not a rate but a RELATIONSHIP between two of them, stated in WORDS in three
+    # separate places (a blurb, the panel note, the methods pod). A rate change
+    # moves this without touching any single quoted figure, so none of the rows
+    # above can catch it — and two of the three sentences would go stale silently.
+    {
+        "label": "The lifecycle-vs-operating road cost gap, stated in words",
+        "expect": lambda c: _times_in_words(
+            c["roadway_om_renewal"]["value"] / c["roadway_ops"]["value"]),
     },
 ]
 
 
-def _dig(data: dict, path: list[str], source: Path):
-    node = data
-    for key in path:
-        try:
-            node = node[key]
-        except (KeyError, TypeError) as e:
-            raise KeyError(
-                f"{source}: no such unit-cost field {'.'.join(path)} ({e})"
-            ) from e
-    return node
-
-
 def check(html_path: Path, costs_path: Path) -> list[str]:
-    """Return a list of failure messages; empty means every quoted rate matches."""
+    """Return a list of failure messages; empty means every quoted figure matches."""
     html = html_path.read_text(encoding="utf-8")
     costs = json.loads(costs_path.read_text(encoding="utf-8"))
 
     failures = []
     for claim in CLAIMS:
-        value = _dig(costs, claim["path"], costs_path)
-        expected = claim["fmt"](float(value))
+        try:
+            expected = claim["expect"](costs)
+        except (KeyError, TypeError, ZeroDivisionError) as e:
+            raise KeyError(
+                f"{costs_path}: cannot evaluate the claim "
+                f"{claim['label']!r} against this file ({e!r})"
+            ) from e
         if expected in html:
             logger.info("ok    %-58s %s", claim["label"], expected)
         else:
             failures.append(
-                f"{claim['label']}: {costs_path.name} says "
-                f"{'.'.join(claim['path'])} = {value}, so the copy should quote "
-                f'"{expected}" — no such text in {html_path.name}. '
-                "Either the rate changed and the blurb was not updated, or the "
-                "blurb rephrased the number into a form this guard cannot see "
+                f"{claim['label']}: {costs_path.name} implies the copy should "
+                f'contain "{expected}" — no such text in {html_path.name}. '
+                "Either a rate changed and the copy was not updated, or the "
+                "copy rephrased the figure into a form this guard cannot see "
                 "(in which case fix the wording, not this script)."
             )
     return failures
