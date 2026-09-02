@@ -463,6 +463,25 @@ parks, river valley). Returns a stats dict.
   longer supports the claim citing it is **not** checkable here and stays a
   periodic sweep — that is the third that found the retracted 14%-of-Edmonton
   measurement. See `DECISIONS.md` 2026-08-09 and `AUDIT_LEDGER.md` 2026-08-09.
+- `scripts/check_cost_copy.py`: **copy** validation — the second static repo
+  check, and like `check_doc_citations.py` it runs on the **merge gate**
+  (`tests.yml`), not `refresh.yml`. It ties the unit-cost rates that lens blurbs
+  state **as prose** (`"$1,285 per kilometre"`, `"$50 per metre per year"`) to
+  `data/city_unit_costs.json`, the file the pipeline actually reads. The gap it
+  closes is a design consequence: keeping rates in JSON makes improving one a
+  single-value edit, which means the map recomputes while the sentence under it
+  goes stale — a wrong number stated confidently. Merge gate rather than weekly,
+  because a rate change is a **code** edit and catching it on the next refresh
+  would be days late, on a site already serving the stale caption. ⚠️ **The
+  load-bearing row is not a rate but a RELATIONSHIP**: the lifecycle-vs-operating
+  road gap is written in words in three places ("about eleven times"), and a rate
+  change moves it without touching any single quoted figure, so no per-rate check
+  can see it. ⚠️ **It checks PROSE, NOT ARITHMETIC** — it cannot tell you a rate
+  is right, only that the caption and the map quote the same one. **Any mismatch
+  FAILS**, with no warn-and-re-pin side: unlike a new column, a new rate is
+  already on the map and its caption is already wrong, so there is nothing to
+  defer. Add a row whenever copy quotes a new figure — the guard cannot detect
+  its own omission.
 - `scripts/vintage_report.py`: ⚠️ **not a guard — a REPORT, and the only thing
   here that runs on its own schedule rather than inside `refresh.yml`.** Every
   script above gates work already in flight; this one runs monthly

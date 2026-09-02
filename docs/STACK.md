@@ -164,7 +164,7 @@ Doc integrity has its own guard: `scripts/check_doc_citations.py`.
 
 | workflow | trigger | does |
 |---|---|---|
-| `tests.yml` | every PR + push to `master` | pytest. **The required check is the job id `test`**, not the workflow name |
+| `tests.yml` | every PR + push to `master` | pytest, plus the two **static repo guards** that need no network — `check_doc_citations.py` and `check_cost_copy.py` (blurb rates vs `city_unit_costs.json`). **The required check is the job id `test`**, not the workflow name |
 | `deploy.yml` | push to `master` touching site code | rebuild + deploy Pages. Excludes `web/data/**` (the refresh run already deployed it) |
 | `refresh.yml` | weekly, Mon 08:00 UTC + manual | download → `main.py` → guards → verified notebooks → commit data → deploy |
 | `vintage-digest.yml` | monthly, 1st at 14:00 UTC | files the vintage/pin digest issue. `RUNBOOK.md` §0 |

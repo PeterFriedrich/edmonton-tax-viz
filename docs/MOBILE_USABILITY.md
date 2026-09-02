@@ -277,6 +277,26 @@ EDMONTON SOUTH EAST straight through the legend, obscuring the `$50k+` scale
 label. **Label density on mobile is not a label problem — it is the panel-size
 problem**, so revisit it only after the blurb collapse lands.
 
+- **The Services cost panel grew 37px when the roads lifecycle row shipped —
+  CONFIRMED by headless measurement 2026-09-02** (390×844, `openTemporal` on a
+  hood with the full row set). Height **349 → 386 px**, top edge **487 → 450**,
+  so **37 px more map now sits under the bottom sheet**. Four cost rows became
+  five (`SVC_COST_BASES`'s lifecycle group holds two nested rows in the full
+  build; the public build sees one per basis, so **public is unaffected** —
+  ⚠️ this measurement is the FULL build).
+  - ⚠️ **This was found by a test failure, not by looking.** `verify-peek` taps
+    a coordinate chosen while the panel was closed; the extra 37 px covered it
+    and the tap hit chrome. The script now re-derives its target in the view
+    under test, which also fixed a pre-existing ~1-in-5 flake on master.
+  - **NOT yet confirmed on a real device, and not yet judged.** A bottom sheet
+    covering map while open is normal behaviour, not a defect — the open
+    question is whether 386 px of a 844 px screen leaves enough map to browse
+    hood-to-hood with the panel up. That is a *Peter-on-a-phone* question.
+  - ⚠️ **`#services` itself was NOT re-measured with its 11th row.** The
+    "no clip, no overflow, 178–235 px clearance at 390/360/320 px" figure in
+    `CONTROLS_MATRIX.md` covers **10** rows. The 11th is public, so this gap
+    reaches the public build.
+
 - **The loading screen (`#loading`) — CONFIRMED on a real phone 2026-08-28.**
   Title plus a one-line blurb, sized to a measured ~900ms dwell.
   - ✅ **Peter, on a real device: renders correctly, and "is just very fast
