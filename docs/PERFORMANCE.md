@@ -145,11 +145,24 @@ not additive** — a visitor who never switches pays ~1.08 MB, one who does pays
 count (34.7k → 93.2k) is sub-linear because quartering a cell leaves empty
 quarters: roads, parks, river valley.
 
-**MEASURED 2026-09-01 on real hardware — the finer grid costs ~10.3% of frame
-rate at a realistic window** (117.3 -> 105.2 fps for 2.69x the cells; Firefox,
-`dpr` 1.36, 1,083,214 device px). Acceptable for an opt-in lazy layer that
-starts unselected, but **not free**.
-⚠️ **That is an INTEGRATED-GPU number: Intel Iris Xe.** The machine it came from
+**MEASURED on real hardware — the finer grid's cost is HARDWARE-DEPENDENT and
+there is no single number for it: ~10.3% of frame rate on Intel Iris Xe, ~42% on
+Intel HD Graphics 4400.** Acceptable for an opt-in lazy layer that starts
+unselected, and the option stays — but **quote the range, never one figure**.
+
+| machine | GPU | device px | @100 m | @50 m | cost |
+|---|---|---|---|---|---|
+| newer laptop | Iris Xe (Tiger Lake, 2020, 96 EU) | 1,083,214 | 117.3 | 105.2 | **10.3%** |
+| older laptop | HD Graphics 4400 (Haswell GT2, 2013, 20 EU) | 845,234 | 36.6 | 21.4 | **42%** |
+
+Both Firefox; both integrated; the older machine has **no second adapter** and
+runs Mesa's **legacy `crocus`** driver (gen4–gen7; `iris` starts at Broadwell).
+⚠️ **The ~4x difference in relative impact is the finding.** Ranking the machines
+is safe, but see the vsync caveat below before converting either row to
+milliseconds.
+⚠️ **The older laptop was measured at 22% FEWER device pixels** and still came in
+3.2x slower at 100 m — the confound runs in its favour, so the gap is real.
+⚠️ **10.3% is an INTEGRATED-GPU number: Intel Iris Xe.** The machine it came from
 also carries an NVIDIA RTX 3050 Ti, and `about:support` shows it `Active: No` —
 Firefox was on the integrated adapter throughout, confirmed by WebGPU reporting
 `wgpuDeviceType: "IntegratedGpu"`. **This site has never been measured on a
@@ -158,20 +171,45 @@ readers have), but it means the numbers here are a floor-ish case, not a ceiling
 and nothing in this repo selects the adapter — it is a Windows per-app graphics
 preference.
 
-⚠️ **THE COST IS VIEWPORT-DEPENDENT, and the first measurement understated it
-by ~3x.** A short-viewport run (668,880 px, devtools docked) read **3.7%**. At
-1.62x the pixels the finer grid's marginal frame time went **0.274 ms -> 0.981
-ms (3.6x)** while the 100 m baseline grew only **1.18x** — so the added cost is
-concentrated in the fine grid and scales with what is on screen. Superlinear
-because a taller viewport shows **more cells**, not merely more pixels per cell:
-geometry count and fragment load both rise.
+⚠️ **THE COST IS ALSO VIEWPORT-DEPENDENT, and the first measurement understated
+it by ~3x.** A short-viewport run (668,880 px, devtools docked) read **3.7%**
+against the tall run's 10.3% — superlinear, because a taller viewport shows
+**more cells**, not merely more pixels per cell: geometry count and fragment load
+both rise.
 ⚠️ **Do not extrapolate from two points.** Fullscreen at that DPR is ~2.07M px,
 **1.91x** the tall run — plausibly worse than 10.3%, but that is arithmetic, not
 a measurement. **Always record `devicePx total` beside any fps figure here**; a
 frame rate without the pixel count it was measured at is not a fact about the
 site, and quoting one across viewports is how 3.7% happened.
-⚠️ The comparative claim ("pans more smoothly on the newer laptop") is still
-untested — the older machine has no pan capture at all.
+
+⚠️ **DO NOT CONVERT THESE fps FIGURES TO MILLISECONDS PER CELL (withdrawn
+2026-09-02).** rAF frame times **quantise to multiples of 1/refresh**, and the
+two machines were never in the same presentation regime: the older laptop is
+**vsync-capped at 60 Hz** (`Target Frame Rate: 60`, 60 Hz panel) while the newer
+one reported **117–139 fps**. Consequences, both load-bearing:
+- The older laptop's 36.6 fps is a **mix of 1- and 2-vsync frames** (~64%
+  spilled), not a 27.3 ms render. Bounding its true marginal cost gives roughly
+  **3–36 ms** — any point estimate inside that is not a measurement.
+- An earlier version of this section quoted marginal frame times of **0.274 ms
+  and 0.981 ms**. Those are **smaller than that machine's own vsync quantum**
+  (6.9–8.3 ms) and have been removed.
+- **What survives:** mean fps over ~900 frames is a sound *monotone proxy* for
+  render cost **within one machine at a fixed viewport** — sub-quantum changes
+  shift how many frames spill into the next interval. So within-machine ratios
+  (10.3%, 42%) stand; cross-machine millisecond arithmetic does not.
+- `client-perf-snippet.js` now records a `refresh ceiling (idle rAF)` row and
+  warns when a reading is within 5% of it. ⚠️ The 3.7% run's **139 fps trips that
+  guard** against a plausible 144 Hz panel, so it may also have been clipped.
+
+⚠️ **NEITHER capture controlled the browser environment.** The older laptop ran
+with **Dark Reader, AdBlock and uBlock Origin** enabled — Dark Reader can apply a
+page-level CSS filter, a fill-rate cost scaling with viewport pixels, i.e. the
+variable under test. The newer machine's extension set was never recorded. A
+controlled re-run means **extensions off and viewport tall**.
+
+✅ The comparative claim (*"pans more smoothly on the newer laptop"*) is
+**CONFIRMED**: 117.3 vs 36.6 fps at 100 m, with the confound in the older
+machine's favour (22% fewer device pixels).
 ⚠️ Not measurable on the Oracle box — SwiftShader saturates at ~0.9 fps on BOTH
 resolutions and once reported the finer grid as *faster* (ratio 1.29).
 
@@ -319,10 +357,20 @@ program compile. Vertex count (the lever for §Findings) does **not** help here.
 2. **No rounded line joints/caps** on detailed rings — miter only.
 3. **Keep vertex count down** — it's the lever that helps every layer. Prefer a
    display-only simplify over per-layer micro-tuning.
-4. **Judge on the iGPU baseline,** not a discrete GPU.
+4. **Judge on the iGPU baseline,** not a discrete GPU. The concrete baseline is
+   now named: **Intel HD Graphics 4400 (Haswell GT2, 2013), Mesa `crocus`,
+   60 Hz** — the older laptop. The site has **never** been measured on a
+   discrete GPU.
 5. **Confirm the *feel* on a real GPU** (DevTools Performance) before declaring a
    perf change done — the headless harness only points at the suspect.
 6. **A "slow load" is a GPU question until proven otherwise.** Boot is ~600 ms of
    network and seconds of shader link; check `chrome://gpu` before profiling the
    page. And ⚠️ **never conclude a device difference from emulation** — it shares
    the host GPU (2026-08-30).
+7. **Record the refresh ceiling beside every fps figure, and never convert fps
+   to milliseconds across machines.** Frame times quantise to 1/refresh, so a
+   60 Hz machine and a 144 Hz one are not on the same scale; a reading near the
+   ceiling is measuring the display, not the site. Within-machine ratios at a
+   fixed viewport are the comparable quantity (2026-09-02).
+8. **A capture must control the browser, not just the machine** — extensions off
+   (Dark Reader's page filter is a fill-rate cost), viewport tall, run warm.

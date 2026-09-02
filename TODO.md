@@ -157,13 +157,18 @@ same session — see `docs/DECISIONS.md`'s last two rows.)_
     reproduces the population from a live fetch — the bar all five numbered
     issues clear.
 
-- [ ] **CAPTURE — the OLD laptop's pan frame rate, and REPEAT LOAD RUNS on both.**
-  Opened 2026-09-01; rescoped twice the same day as captures landed.
-  - **Missing:** the old laptop's **pan fps** (its capture predates
-    `tools/profiling/client-perf-snippet.js`), and **repeat load samples on
-    either machine** — see the variance finding below.
-  - ⚠️ Peter's pan claim (*"pans more smoothly on the newer one"*) is still
-    **untested**: we have one side of a comparison.
+- [ ] **CAPTURE — REPEAT LOAD RUNS on both machines, and a CONTROLLED re-run.**
+  Opened 2026-09-01; rescoped three times as captures landed. **SHELVED
+  2026-09-02 at Peter's call** — the numbers below are recorded, the remaining
+  work is measurement, and nothing is broken.
+  - ✅ **The old laptop's pan fps is CAPTURED** (2026-09-01, below) and ✅ **its
+    GPU is IDENTIFIED** (2026-09-02, below). Both were the long-open halves.
+  - **Still missing:** **repeat load samples on either machine** (see the
+    variance finding below), and a **controlled** pan re-run — the one we have
+    was taken at a short viewport with browser extensions live (below).
+  - ✅ Peter's pan claim (*"pans more smoothly on the newer one"*) is
+    **CONFIRMED**: 117.3 vs 36.6 fps at 100 m, and the old laptop was measured
+    at **22% FEWER device pixels**, so the confound runs in its favour.
   - **Added 2026-09-01: time the Detail-button grid SWITCH, both directions —
     and note the two halves are now in different states.** The bytes half is
     settled: transfer, already gzipped, only ~6% of trimming available and not
@@ -178,16 +183,33 @@ same session — see `docs/DECISIONS.md`'s last two rows.)_
       warm buys almost nothing on touch, so a phone pays the full 2.78 MB at tap
       time with the stripe as its only feedback (`docs/MOBILE_USABILITY.md` §2b).
 
-  | field | old laptop | gaming A (short) | **gaming B (tall)** |
-  |---|---|---|---|
-  | `dpr` | 1 | 1.364 | 1.364 |
-  | `cssPx` | 1534x503 | 1363x264 | **1363x428** |
-  | `devicePx total` | 771,602 | 668,880 | **1,083,214** |
-  | `ttfb_ms` | 26 | 178 | 150 |
-  | `domInteractive_ms` | 481 | **800** | **409** |
-  | `pan fps @100 m` | not captured | 139 | **117.3** |
-  | `pan fps @50 m` | not captured | 133.9 | **105.2** |
-  | 50 m cost | — | 3.7% | **10.3%** |
+  | field | old A | **old B (2026-09-01)** | gaming A (short) | gaming B (tall) |
+  |---|---|---|---|---|
+  | `dpr` | 1 | **1** | 1.364 | 1.364 |
+  | `cssPx` | 1534x503 | **1534x551** | 1363x264 | 1363x428 |
+  | `devicePx total` | 771,602 | **845,234** | 668,880 | 1,083,214 |
+  | `ttfb_ms` | 26 | **56** | 178 | 150 |
+  | `domInteractive_ms` | 481 | **780** | 800 | 409 |
+  | `loadEvent_ms` | — | **827** | — | — |
+  | `pan fps @100 m` | not captured | **36.6** (295 fr / 8 s) | 139 | 117.3 |
+  | `pan fps @50 m` | not captured | **21.4** (171 fr / 8 s) | 133.9 | 105.2 |
+  | 50 m cost | — | **42%** | 3.7% | 10.3% |
+
+  **The old laptop's GPU, 2026-09-02 — `about:support`, one adapter only:**
+  **GPU #1 `Active: Yes` — Mesa Intel(R) HD Graphics 4400 (HSW GT2)**,
+  `0x8086`/`0x0a16`, driver **`mesa/crocus` 25.0.7**, `RAM: 0` (UMA).
+  `Target Frame Rate: 60`; `Display0: 1600x900@60Hz`. Firefox 153 **snap**
+  (`canonical-002`) on **Wayland**, Ubuntu 24.04, 7.5 GB RAM.
+  - **So the machine pair is Haswell GT2 (2013, 20 EU) vs Tiger Lake Iris Xe
+    (2020, 96 EU)** — two integrated parts ~7 years apart. No discrete GPU
+    exists on either machine (the other's RTX 3050 Ti is `Active: No`).
+    `crocus` is Mesa's **legacy** driver for gen4–gen7; `iris` starts at
+    Broadwell. This is a representative low end, not a broken machine.
+  - ⚠️ **The sanitised WebGL string was RIGHT this time** (`Intel(R) HD
+    Graphics`) after being **wrong** on the other machine (it read HD Graphics
+    for an Iris Xe). That does not rehabilitate it — it means the placeholder is
+    unreliable in **both** directions and the string cannot tell you which case
+    you are in. Always read `about:support`.
 
   ⚠️ **THE LOAD COMPARISON IS NOT ESTABLISHED — WITHDRAW THE EARLIER FINDING.**
   The same machine read `domInteractive` **800 ms then 409 ms**. That 2x spread
@@ -201,21 +223,55 @@ same session — see `docs/DECISIONS.md`'s last two rows.)_
     8 s, while every load figure is n=1** — one navigation, unrepeatable without
     a reload. The same table mixes a well-sampled statistic with a single draw.
   - **Next:** at least 3 reloads per machine, report the spread, not a point.
-    Only then is the ttfb split (150–178 vs 26) worth interpreting.
+    Only then is the ttfb split (150–178 vs 26–56) worth interpreting.
+  - ⚠️ **And the ttfb split may not be about the site at all.** The old laptop's
+    profile carries `security.pki.mitm_canary_issuer` naming an **Aruba network
+    appliance**, i.e. TLS interception on some network it has used, and has
+    `network.http.speculative-parallel-limit: 0` /  `network.prefetch-next:
+    false` / `network.dns.disablePrefetch: true`, which suppress Firefox's own
+    speculative connections and add first-connection latency. **Whether the two
+    machines were on the same network was never recorded.** (Those prefs do
+    **not** affect the site's idle prefetch — that is a JS `fetch()`.)
 
-  ✅ **The 50 m grid's GPU cost is REAL and VIEWPORT-DEPENDENT — 10.3% at a
-  realistic window, not the 3.7% first measured.** The earlier figure was a
-  short-viewport artifact, exactly as flagged. Marginal frame time from the
-  finer grid went **0.274 ms → 0.981 ms (3.6x) for 1.62x the pixels**, while the
-  100 m baseline grew only 1.18x — so the cost is concentrated in the finer grid
-  and scales with what is on screen.
-  - Superlinear because a taller viewport shows **more cells**, not just more
-    pixels per cell: both the geometry count and the fragment load rise.
-  - ⚠️ **Do not extrapolate hard from two points.** Fullscreen at this DPR is
-    ~2.07M px, **1.91x run B** — plausibly worse than 10.3%, but that is
-    arithmetic, not a measurement. Capture it before quoting it.
-  - **Still acceptable**: 10.3% for 2.69x the detail, on an opt-in lazy layer
-    that starts unselected. Not free, as 3.7% implied.
+  ✅ **The 50 m grid's GPU cost is REAL, VIEWPORT-DEPENDENT, and HARDWARE-
+  DEPENDENT — 10.3% on Iris Xe, 42% on Haswell GT2.** There is no single number.
+  The 3.7% first measured was a short-viewport artifact, exactly as flagged.
+  - Superlinear in viewport because a taller window shows **more cells**, not
+    just more pixels per cell: both geometry count and fragment load rise.
+  - ⚠️ **Do not extrapolate hard from two points.** Fullscreen on the gaming
+    laptop is ~2.07M px, **1.91x run B** — plausibly worse than 10.3%, but that
+    is arithmetic, not a measurement. Capture it before quoting it.
+  - **Still acceptable, and the option STAYS** (Peter, 2026-09-01): opt-in,
+    lazily loaded, starts unselected, and 21.4 fps is degraded rather than
+    broken. Only the **quoted cost** changes, from a single figure to a range.
+
+  ⚠️ **WITHDRAWN 2026-09-02 — the "marginal ms per cell" arithmetic, including
+  the 0.274 / 0.981 ms figures this item previously recorded.** `about:support`
+  shows the old laptop is **vsync-capped at 60 Hz** (`Target Frame Rate: 60`,
+  60 Hz panel) while the gaming laptop reported **117–139 fps**, i.e. above 60.
+  **The two machines were never in the same presentation regime.**
+  - rAF frame times **quantise to multiples of 1/refresh**. The old laptop's
+    36.6 fps is a *mix* of 1- and 2-vsync frames (~64% spilled), not a 27.3 ms
+    render; bounding its true marginal cost gives a range of roughly
+    **3–36 ms**, so any point estimate inside that is not a measurement.
+  - ⚠️ **The recorded 0.981 ms is smaller than that machine's own vsync quantum**
+    (6.9–8.3 ms). It cannot be a measured render cost.
+  - **What survives:** mean fps over ~900 frames is a sound *monotone proxy* for
+    render cost **within one machine at a fixed viewport**, because sub-quantum
+    changes shift how many frames spill. So the **within-machine ratios (42% vs
+    10.3%) stand**, and the ~4x difference in relative impact between the two
+    GPUs stands. Converting fps to milliseconds and comparing **across**
+    machines does not.
+  - `client-perf-snippet.js` now captures a `refresh ceiling (idle rAF)` row and
+    warns when a reading is within 5% of it. ⚠️ **Gaming A's 139 fps trips that
+    guard against a plausible 144 Hz panel** — that run may be clipped, which
+    would be a *second*, independent reason 3.7% was meaningless.
+
+  ⚠️ **NEITHER pan capture controlled the browser environment.** The old-laptop
+  run had **Dark Reader, AdBlock and uBlock Origin all enabled**; Dark Reader can
+  apply a page-level CSS filter, which is a fill-rate cost scaling with viewport
+  pixels — the exact variable under test. The gaming laptop's extension set was
+  never recorded. **A controlled re-run means: extensions off, viewport tall.**
 
   ✅ **RESOLVED for the gaming laptop, and it overturns the premise: it is
   running INTEGRATED graphics.** `about:support` 2026-09-01:
