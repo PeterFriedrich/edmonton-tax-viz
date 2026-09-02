@@ -116,6 +116,40 @@ discrete-vs-integrated. ⚠️ **`docs/DECISIONS.md`'s last five rows are all
 order. Also: a 4x spike-height bug shipped in the 50 m option and was caught by
 Peter on a phone, not by any of the ten green verify scripts.)_
 
+### Road cost estimation — the two non-capital figures do not reconcile (OPEN 2026-09-02)
+
+⚠️ **This is a live caveat on a PUBLIC layer, not a backlog nicety.** The
+published lifecycle O&M half (**$600,000/km ÷ 50 yr = $12/m/yr**) and the
+operating maintenance rate (**$4.635/m/yr**) both claim to be annual
+non-capital spend on neighbourhood roads and sit **2.6× apart**. Neither has
+been traced to what it actually covers. The Roads cost (operating) blurb
+currently says outright that it is the low end of a range.
+
+Seven sourcing questions were written up for a research pass (given to Peter
+2026-09-02 to run externally). The two that would change the most:
+
+1. **What does Edmonton's $600,000/km "operate and maintain" actually
+   include** — snow? lighting? sweeping, signs, signals? — and what is in the
+   narrower $1,285/km "maintenance" figure.
+2. **Is there a better source class entirely?** A uniform per-km rate cannot
+   tell a 1960s neighbourhood from a 2015 one, which is precisely the
+   distinction a revenue-vs-cost map exists to show. If the **Neighbourhood
+   Renewal Program** publishes actual per-neighbourhood spend, that replaces
+   the model with observed money. ⚠️ **That would be a real rework** — the
+   metric stops being `metres × rate` — though the row/legend/panel machinery
+   survives it.
+
+Also open: the 25-vs-50 year service life (halves or doubles the whole
+lifecycle number, currently chosen on one parenthetical phrase); a published
+per-class cost differential; the snow rate's denominator, which blends over
+11,000 km **including priority-cleared arterials** while our numerator is
+collector+local only.
+
+**Adjusting a rate is cheap by construction** — one value in
+`data/city_unit_costs.json`, two test assertions, and the next refresh
+recomputes; `scripts/check_cost_copy.py` fails the build if the prose is not
+updated with it. Do not let the open question block shipping.
+
 _Last reconciled: 2026-09-01 (S130 — **no backlog item was worked; both PRs came
 from Peter noticing the site was slow to switch grids.** Nothing here opened or
 closed as a result, so this list is unchanged except for the capture item above,
@@ -2466,6 +2500,8 @@ same session — see `docs/DECISIONS.md`'s last two rows.)_
 ## Done
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
+
+- [x] **CLOSED 2026-09-02 — the Services lens returns to the PUBLIC build, roads only (supply + road cost on both bases); `cost_roads_life_per_acre` published; a copy guard now ties quoted rates to the unit-cost JSON.** (First exercise of the staged-return rule. Ratio and Uses still out, still return one per release.) — CLOSED 2026-09-02 · `docs/SPEC_services.md`
 
 - [x] **CLOSED 2026-09-01 — the 50 m Glass grid is now a THIRD Detail button with 100 m as the default; the scope correction is resolved.** (Both files ship lazily; Infill pins the default; the needle guard anchors on the fine file. Verify falsification exposed a vacuous default check.) — CLOSED 2026-09-01 · `docs/TODO_archive.md`
 
