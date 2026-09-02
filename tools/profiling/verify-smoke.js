@@ -155,12 +155,18 @@ const GARBAGE = /\bNaN\b|\bundefined\b|\bnull\b|\bInfinity\b|\$NaN|\$undefined/;
         svcCols.map(col => [col, geo.features.filter(f => f.properties[col] === undefined).length])),
       // The flag the data gate actually writes: each services row is
       // `style.display = "none"`d when its column is missing. Read the row's
-      // OWN inline display, never computed visibility — the services view is
-      // full-only, so in the public build every row is hidden by an ancestor
-      // and a visibility test would report all six as gated off.
+      // OWN inline display, never computed visibility — a computed test would
+      // report every row as gated off whenever the panel itself is closed.
+      //
+      // ⚠️ FULL-ONLY ROWS ARE EXCLUDED IN THE PUBLIC BUILD (2026-09-02). Two
+      // different gates now write the same inline `display:none`: the DATA gate
+      // (column missing) and the BUILD gate (`SERVICES[k].pub`). B8 is about the
+      // first, and since the roads-only return the public build legitimately
+      // hides eight rows whose columns are present — without this filter B8
+      // reports all eight as data-gate bugs.
       svcRowHidden: Object.fromEntries(
         Object.entries(SERVICES)
-          .filter(([, s]) => s.plane && s.plane.col)
+          .filter(([, s]) => s.plane && s.plane.col && (FULL_BUILD || s.pub))
           .map(([key, s]) => {
             const row = document.querySelector(`#services .svc[data-service="${key}"]`);
             return [s.plane.col, row ? row.style.display === 'none' : null];

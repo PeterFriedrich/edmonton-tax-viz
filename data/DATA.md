@@ -1080,6 +1080,23 @@ only** — never label the derived metric "total city cost".
   Services line. The V2 fire term divides this by the pipeline's OWN citywide
   kept-event total (don't hardcode dispatches), so the unit cost's denominator
   matches the `fire_events_per_acre` numerator.
+- ⚠️ **`cost_roads_life_per_acre` (2026-09-02) is the SAME $50/m/yr roads term
+  published on its own**, so a roads-only lens can show a lifecycle figure
+  without the fire allocation. It is **NESTED INSIDE `svc_cost_per_acre`**
+  (= this + the fire term): subtracting the two is meaningful, **adding them
+  double-counts roads**. It is also the **same metres as
+  `cost_roads_ops_per_acre` on the other basis** (~10.8× apart) — never sum
+  those either. Three road cost numbers now ship in one file and no two of them
+  combine. Computed under its own `roads is not None` guard, so it survives a
+  run with no fire data (which `svc_cost_per_acre`, being all-or-nothing, does
+  not). Median $1,629/acre/yr vs $151 operating; 9 hoods where roads alone
+  exceed the levy, vs 1 on the operating basis.
+- ⚠️ **OPEN: the two non-capital road figures do not reconcile.** The lifecycle
+  O&M half ($600,000/km ÷ 50 yr = **$12/m/yr**) and the operating maintenance
+  rate (**$4.635/m/yr**) both claim to be annual non-capital spend on
+  neighbourhood roads and sit **2.6× apart**; neither has been traced to what it
+  actually covers. The operating blurb says outright it is the low end of a
+  range. See `docs/SPEC_services.md` "Roads cost — lifecycle".
 - **Consumed (2026-07-15)** by `join_and_calculate.load_unit_costs` (validates
   loudly — a malformed hand edit fails the pipeline) → the `unit_costs` arg
   computes `svc_cost_per_acre` (in `SLIM_COLUMNS`). The per-event divisor is

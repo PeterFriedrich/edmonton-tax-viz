@@ -30,14 +30,32 @@ function check(name, ok, detail) {
 
   const click = sel => page.$eval(sel, b => b.click()); // swiftshader hangs page.click
 
-  // Services is full-only (2026-07-28). On the public build the correct
-  // behaviour is that none of this is reachable.
+  // ⚠️ Services is PUBLIC again as of the roads-only return (2026-09-02), so
+  // "the view is hidden" is no longer the public build's signature — BIKE is
+  // what stays full-only. A missing view now means a pre-roads data file.
   const servicesOffered = await page.evaluate(() => {
     const b = document.querySelector('#views button[data-view="services"]');
     return !!b && getComputedStyle(b).display !== 'none';
   });
   if (!servicesOffered) {
-    check('public build: services view not offered', true);
+    check('pre-roads data file: services view not offered', true);
+    await browser.close();
+    process.exit(fail ? 1 : 0);
+  }
+
+  // The public build reaches the view but must not reach this row. Assert both
+  // halves — a hidden row whose state stayed checked would still colour the
+  // ramp and still print a tooltip line.
+  const bikeReachable = await page.evaluate(() => {
+    const r = document.querySelector('#services .svc[data-service="bike"]');
+    return !!r && getComputedStyle(r).display !== 'none';
+  });
+  if (!bikeReachable) {
+    check('public build: bike row hidden', true);
+    check('public build: bike not checked',
+      await page.evaluate(() => state.services.bike === false));
+    check('public build: bike is not the colour driver',
+      await page.evaluate(() => state.svcDriver !== 'bike'));
     await browser.close();
     process.exit(fail ? 1 : 0);
   }

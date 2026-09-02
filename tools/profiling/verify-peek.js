@@ -427,8 +427,47 @@ const closeBox = page => page.evaluate(() => {
     check('services: the deliberate opt-in is still armed (the hard case)',
       svc.optedIn === true, `panelByChoice=${svc.optedIn}`);
 
+    // ⚠️ RE-DERIVE THE TAP TARGET IN *THIS* VIEW. `t` was scanned in Money,
+    // against EXTRUDED prisms at 52 degrees pitch and with no panel open. In
+    // Services the only pickable layer is the FLAT hood plane and the panel may
+    // be open, so a Money coordinate is not a Services coordinate: the prism's
+    // screen footprint sits well above its ground footprint, and the bottom
+    // sheet covers the lower map. Reusing `t` here made this block depend on
+    // which hood the Money scan happened to find first -- master fails roughly
+    // 1 run in 5 on that alone, and the 2026-09-02 Services panel gained a row
+    // (+37px on a 390x844 phone, top edge 487 -> 450) which turned the same
+    // latent flake into a deterministic failure by covering y=464.
+    // Scanning here fixes both: `elementFromPoint === CANVAS` accounts for
+    // whatever chrome is actually on screen right now.
+    const st = await page.evaluate(() => {
+      const at = (x, y) => {
+        const o = overlay._deck.pickObject({ x, y, radius: 0 });
+        return (o && o.object && o.object.properties) || null;
+      };
+      // Scan the whole map area, not a Money-shaped slice: the usable band here
+      // is bounded ABOVE by #controls and BELOW by the bottom sheet, and both
+      // move. elementFromPoint is what actually decides, so let it decide.
+      const H = innerHeight, W = innerWidth;
+      for (let y = Math.round(H * 0.75); y > H * 0.12; y -= 7) {
+        for (let x = Math.round(W * 0.15); x < W * 0.88; x += 7) {
+          const top = document.elementFromPoint(x, y);
+          if (!top || top.tagName !== 'CANVAS') continue;
+          const p = at(x, y), nm = p && p.neighbourhood_name;
+          if (!nm || p.is_set_aside || !temporalFor(nm)) continue;
+          const solid = [[8, 0], [-8, 0], [0, 8], [0, -8]].every(([dx, dy]) => {
+            const q = at(x + dx, y + dy);
+            return q && q.neighbourhood_name === nm;
+          });
+          if (solid) return { x, y, name: nm };
+        }
+      }
+      return null;
+    });
+    check('services: found a tappable hood in THIS view', !!st, JSON.stringify(st));
+    if (!st) { await ctx.close(); await browser.close(); process.exit(1); }
+
     // Path 1: opt-in ARMED -- the path that used to fall through to nothing.
-    await gesture(page, t[0].x, t[0].y, true);
+    await gesture(page, st.x, st.y, true);
     s = await snap(page);
     check('*** services/panel: a tap lands on a readout, not on nothing ***',
       s.panelOpen || s.peekShown,
@@ -443,10 +482,10 @@ const closeBox = page => page.evaluate(() => {
     // still the only readout for anyone who never presses the mode button.
     await page.evaluate(async () => { closeTemporal(); await applyHoodMode('popup'); });
     await page.waitForTimeout(600);
-    await gesture(page, t[0].x, t[0].y, true);
+    await gesture(page, st.x, st.y, true);
     s = await snap(page);
     check('*** services/card: a tap STILL opens the card (the touch default) ***',
-      s.peekShown && s.peekName === t[0].name,
+      s.peekShown && s.peekName === st.name,
       `peek=${s.peekShown} name=${s.peekName}`);
     check('services/card: the card carries the SERVICE rows, not the money lens\'s',
       /road m \/ acre/.test(s.peekRead) && !/revenue is residential/.test(s.peekRead),
@@ -465,11 +504,11 @@ const closeBox = page => page.evaluate(() => {
     await page.waitForTimeout(1000);
     s = await snap(page);
     check('services: tapping the card commits to the cost panel, not an empty box',
-      !s.peekShown && s.panelOpen && s.pinned === t[0].name,
+      !s.peekShown && s.panelOpen && s.pinned === st.name,
       `peek=${s.peekShown} panel=${s.panelOpen} pinned=${s.pinned}`);
 
     // Leaving the lens must not leave the previous lens's numbers on screen.
-    await gesture(page, t[0].x, t[0].y, true);
+    await gesture(page, st.x, st.y, true);
     await page.evaluate(async () => { await applyView('money'); });
     await page.waitForTimeout(1000);
     s = await snap(page);

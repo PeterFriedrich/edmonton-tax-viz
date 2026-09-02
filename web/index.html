@@ -336,6 +336,19 @@
           <input type="radio" name="svc-driver" /> colour
         </label>
       </div>
+      <!-- Its own caption again, and for the sharper version of the same reason:
+           this is the SAME METRES as Roads cost above, on the basis that counts
+           rebuilding. ~11x apart. Two rows this similar under one heading would
+           read as alternatives to add up; the captions are what stop that. -->
+      <div class="svc-group">Roads cost — lifecycle</div>
+      <div class="svc" data-service="roadslife">
+        <label title="Modeled annual lifecycle cost of collector + local roads per acre — upkeep plus eventual rebuilding, from the City's published per-kilometre figures over a 50-year life; one citywide rate applied to every neighbourhood, not actual spending">
+          <input type="checkbox" class="svc-on" /> Roads cost — $/acre/yr
+        </label>
+        <label class="svc-colour" title="This service drives the colour ramp; the others render neutral">
+          <input type="radio" name="svc-driver" /> colour
+        </label>
+      </div>
       <div class="svc-group">Other services</div>
       <div class="svc" data-service="storm">
         <label title="Each neighbourhood coloured by its modeled annual stormwater utility charge per acre — estimated from lot sizes and zoning, not billed amounts">
@@ -441,14 +454,18 @@
     <button id="about-btn" title="Data sources, licence, caveats and methodology — City of Edmonton open data">Data &amp; Methods</button>
     <div id="about-menu">
       <span class="hd">Sources</span>
-      <!-- The road/fire/transit sources feed ONLY the Services and Ratio views,
-           which are full-only (2026-07-28) — so the span holding them is hidden
-           in the public build. The list stays grammatical either way: the "all"
-           does the summarizing work, so no "and" is needed before the dash.
-           Zoning is deliberately NOT in the span: it also classifies the
+      <!-- ⚠️ THE ROAD CREDIT SPLIT OUT OF THIS SPAN when Services returned to
+           the public build carrying roads: the public map now draws the road
+           network and colours by it, so crediting it is no longer optional.
+           Fire dispatch and the transit schedule still feed only full-only
+           rows, so they keep the original gate. The list stays grammatical in
+           all three combinations because the "all" does the summarizing work
+           and no "and" is needed before the dash.
+           Zoning is deliberately NOT in either span: it also classifies the
            set-aside land the public build greys out. -->
       <p>Property assessment, tax rates, zoning, building permits<span
-         id="about-src-services">, the road network, fire dispatch and the
+         id="about-src-roads">, the road network</span><span
+         id="about-src-services">, fire dispatch and the
          transit schedule</span> — all published by the City of Edmonton.
          Rebuilt weekly from the open data portal.</p>
       <!-- The licence's PRESCRIBED attribution statement, verbatim. The OGL –
@@ -485,6 +502,27 @@
       <p><b>Revenue is modelled, not billed.</b> It applies Edmonton's
          class-differential mill rates to assessed value — what the land
          <i>generates</i> at those rates, not what any owner was charged.</p>
+      <!-- ⚠️ PUBLIC, and REQUIRED rather than optional: the public build now
+           ships two modelled dollar columns, and a modelled figure without its
+           caveat is the failure this pod exists to prevent. Kept separate from
+           the full-only paragraph below rather than ungating that one, because
+           that one names layers a public visitor cannot reach.
+           ⚠️ The rate is written in the exact form check_cost_copy.py looks
+           for. If you rephrase it, the guard stops seeing it and a future rate
+           change will ship a stale sentence here. Quote rates verbatim or not
+           at all. -->
+      <p id="about-modelled-roads">Both <b>road cost</b> layers are modelled:
+         one published citywide cost per kilometre applied to every
+         neighbourhood's road length. Neither is what the City actually spent
+         on any particular neighbourhood, and neither is a funding gap. They
+         are shown on two bases that must not be added or compared — operating
+         (upkeep and snow clearing only) and lifecycle ($50 per metre per year,
+         upkeep plus eventual rebuilding spread over a 50-year life). The same
+         road metre is about eleven times more expensive on the second. The
+         50-year life is the City's figure for a well-maintained road; it also
+         publishes 25 years, which would double the lifecycle number. Roads are
+         one of many services the levy funds, so neither figure is the cost of
+         serving a neighbourhood.</p>
       <!-- Full-only: every layer this caveat describes lives in Services/Ratio,
            so in the public build it would warn about things nobody can reach. -->
       <p id="about-modelled">The <b>service cost, stormwater and water/sewer</b>
@@ -669,12 +707,16 @@
     const BUILD_STAMP = "dev";      // deploy step rewrites this literal
     document.getElementById("about-build").textContent = `Build ${BUILD_STAMP}.`;
 
-    // The two Data & Methods passages that describe ONLY full-only layers
-    // (road/fire/transit sources; the modelled service-cost, stormwater and
-    // water/sewer caveat). Static markup with no data dependency, so this runs
-    // here rather than in the load-time data guards below. Both elements are
-    // visible in the source, and this is the only thing that hides them — the
-    // full build never touches them.
+    // The Data & Methods passages that describe ONLY full-only layers: the
+    // fire/transit source credit, and the modelled service-cost/stormwater/
+    // water caveat. ⚠️ Their ROAD halves deliberately are NOT here — the road
+    // source credit (`about-src-roads`) and the road-cost modelled caveat
+    // (`about-modelled-roads`) ship in BOTH builds, because the public build
+    // now draws the road network and colours by two modelled cost columns.
+    // Adding either id to this list would drop a required attribution and a
+    // required caveat from the public site.
+    // Static markup with no data dependency, so this runs here rather than in
+    // the load-time data guards below.
     if (!FULL_BUILD) {
       ["about-src-services", "about-modelled"].forEach(id => {
         document.getElementById(id).style.display = "none";
@@ -1002,9 +1044,18 @@
     // of the ramp), transit SQRT (FINDINGS §6.8 — raw skew +3.34,
     // clamp/median 4.3x, linear median at 23% of ramp). Clamp: p97.5 of
     // the non-set-aside hoods, computed from the data like ratioScale.
+    // `pub: true` marks a service the PUBLIC build ships. Everything else is
+    // full-only (SPEC_services.md "Roads returns to the public build").
+    // ⚠️ The tag lives HERE, on the service, not as scattered `|| !FULL_BUILD`
+    // checks at each use site: row visibility, the colour radio and the default
+    // checked set all read it, so a row cannot be published in one place and
+    // hidden in another. This is the per-control tag mechanism PLAN_public_release
+    // §2a describes, and Services is its first real exercise — Uses and Ratio
+    // return the same way, one lens per release.
     const SERVICES = {
       roads: {
         label: "Roads",
+        pub: true,
         blurb: "City-maintained roads. Collector and local roads are coloured by " +
                "their neighbourhood's road metres per acre — brighter means more " +
                "road to maintain per unit of land (colour is linear). Arterials " +
@@ -1087,19 +1138,49 @@
       // 3 dp), so roads stays linear and bike/transit stay sqrt. Do not re-derive.
       roadscost: {
         label: "Roads cost",
+        pub: true,
         plane: { col: "cost_roads_ops_per_acre" },
         blurb: "Each neighbourhood is coloured by the modeled annual operating " +
                "cost of its collector and local roads per acre — $1,285 per " +
                "kilometre to maintain plus $3,350 per kilometre for snow and " +
                "ice control. Operating only: capital reconstruction is a " +
                "separate and much larger budget, so this is not what a road " +
-               "costs over its life. It is also not the roads figure inside " +
-               "Service cost, which uses a lifecycle rate roughly eleven times " +
-               "higher for the same metres. The snow rate is a citywide average " +
-               "over a network that includes arterials, which are cleared first " +
-               "and cost more per kilometre, so the local-road figure is likely " +
-               "a little high. Colour is linear. Grey = set-aside natural/" +
+               "costs over its life — the lifecycle layer below puts the same " +
+               "metres about eleven times higher. The snow rate is a citywide " +
+               "average over a network that includes arterials, which are " +
+               "cleared first and cost more per kilometre, so the local-road " +
+               "figure is likely a little high. A further caution: the City " +
+               "separately publishes a lifecycle maintenance figure that works " +
+               "out to about two and a half times the $1,285 rate for what " +
+               "looks like the same activity, and the two have not been " +
+               "reconciled — treat this as the low end of a range, not a " +
+               "settled number. Colour is linear. Grey = set-aside natural/" +
                "undeveloped land.",
+      },
+      // ⚠️ The SAME METRES as roadscost above on the OTHER basis, ~10.8x apart,
+      // and a COMPONENT of servicecost below (which adds fire). Never summed
+      // with either — see SVC_COST_BASES and city_unit_costs.json "_two_bases".
+      roadslife: {
+        label: "Roads cost — lifecycle",
+        pub: true,
+        plane: { col: "cost_roads_life_per_acre" },
+        blurb: "Each neighbourhood is coloured by the modeled annual lifecycle " +
+               "cost of its collector and local roads per acre — $50 per metre " +
+               "per year, covering both upkeep and eventual rebuilding. It " +
+               "comes from the City's published figures for a kilometre of " +
+               "neighbourhood road ($600,000 to operate and maintain, " +
+               "$1,900,000 to renew and replace) spread over a 50-year life. " +
+               "Modeled, and in several ways: one citywide rate is applied to " +
+               "every neighbourhood, so a 1960s street and a 2015 one cost the " +
+               "same here, which they do not in reality. The 50-year life is " +
+               "the City's figure for a well-maintained road; it also says " +
+               "roads usually last 25 years, and at 25 this number would " +
+               "double. The rate is calibrated to local residential roads, so " +
+               "collectors are understated. This is not the City's actual " +
+               "spending on any particular neighbourhood, and it is not a " +
+               "funding gap — it is what a road of this length would cost per " +
+               "year if the published unit costs held everywhere. Colour is " +
+               "linear. Grey = set-aside natural/undeveloped land.",
       },
       transitcost: {
         label: "Transit cost",
@@ -1639,7 +1720,7 @@
                     devWindow: "long", // Development-view activity window: 3yr (recent) | 5yr | long (WINDOWS.permitsLong, the default)
                     devGrid: true, // Development-view 100 m detail grid (the default; off = the hood choropleth)
                     services: { roads: true, storm: false, fire: false, water: false, transit: false, bike: false, servicecost: false,
-                                roadscost: false, transitcost: false, bikecost: false },
+                                roadscost: false, roadslife: false, transitcost: false, bikecost: false },
                     svcDriver: "roads",
                     hoodMode: "popup", // where a hood's detail appears: popup | panel
                     chgWindow: "long", // change-lens window: long | short (WINDOWS.chgLong / chgShort)
@@ -2142,6 +2223,11 @@
     // the one place a reader meets it with no legend or blurb alongside.
     const fmtRoadsCost = v => "$" + Math.round(v).toLocaleString() +
       " modeled road operating cost / acre / yr";
+    // Same rule one step more important: this is the SAME METRES as
+    // fmtRoadsCost on the other basis, so a readout that omitted "lifecycle"
+    // would be indistinguishable from one ~11x smaller.
+    const fmtRoadsLife = v => "$" + Math.round(v).toLocaleString() +
+      " modeled road lifecycle cost / acre / yr";
     const fmtTransitCost = v => "$" + Math.round(v).toLocaleString() +
       " ETS operating budget share / acre / yr";
     const fmtBikeCost = v => "$" + Math.round(v).toLocaleString() +
@@ -4459,9 +4545,18 @@
     // So each cost keeps its own row and its own ratio, and the rows are GROUPED
     // BY BASIS — the incompatibility is in the layout, not only in the caption,
     // because a reader who skips prose can still not add across a heading.
+    // ⚠️ THE LIFECYCLE GROUP'S TWO ROWS ARE NESTED, NOT PEERS. "Roads" is a
+    // COMPONENT of "Roads + fire" — subtracting them is meaningful, adding them
+    // double-counts roads. That is a different hazard from the cross-basis one
+    // above (where the rows are alternatives), so it needs its own words: the
+    // label says "of which", which is the one phrasing a reader cannot read as
+    // an addable line item. The public build only ever sees the roads row, so
+    // this hazard is full-build-only.
     const SVC_COST_BASES = [
-      { basis: "lifecycle", note: "roads at a 50-year lifecycle rate, plus fire",
-        rows: [{ col: "svc_cost_per_acre", label: "Roads + fire" }] },
+      { basis: "lifecycle", note: "upkeep plus eventual rebuilding, over a 50-year life",
+        rows: [{ col: "cost_roads_life_per_acre", label: "Roads" },
+               { col: "svc_cost_per_acre", label: "Roads + fire", full: true,
+                 nested: "cost_roads_life_per_acre" }] },
       { basis: "operating", note: "maintenance and snow clearing only, no capital",
         rows: [{ col: "cost_roads_ops_per_acre", label: "Roads" },
                { col: "cost_transit_ops_per_acre", label: "Transit" },
@@ -4474,7 +4569,8 @@
     // degrades to no panel rather than to an empty box.
     const serviceLens = () => state.view === "services";
     const svcCostRows = p => SVC_COST_BASES
-      .map(g => ({ ...g, rows: g.rows.filter(r => p[r.col] != null) }))
+      .map(g => ({ ...g, rows: g.rows.filter(
+        r => p[r.col] != null && (FULL_BUILD || !r.full)) }))
       .filter(g => g.rows.length);
     const servicePanelFor = p => serviceLens() && !!p
       && p.revenue_per_acre != null && svcCostRows(p).length > 0;
@@ -4744,10 +4840,15 @@
     function renderServiceCost(p) {
       const rev = p.revenue_per_acre;
       const groups = svcCostRows(p);
-      const bar = col => {
-        const frac = rev > 0 ? p[col] / rev : 0;
+      // `nested` rows CONTAIN the row above them, so they are labelled
+      // "of which" rather than left to read as another addable line.
+      const bar = r => {
+        const frac = rev > 0 ? p[r.col] / rev : 0;
         const over = frac > 1;
-        return `<div class="svcrow"><span>${esc(SVC_LABEL[col])}</span>`
+        const label = r.nested && p[r.nested] != null
+          ? `${SVC_LABEL[r.col]} <span class="muted">(incl. above)</span>`
+          : esc(SVC_LABEL[r.col]);
+        return `<div class="svcrow"><span>${label}</span>`
           + `<i><b style="width:${(Math.min(1, frac) * 100).toFixed(1)}%;`
           + `background:${over ? "#fcd278" : "#55556a"}"></b></i>`
           + `<em${over ? ' class="over"' : ""}>${fmtSvcRatio(frac)}</em></div>`;
@@ -4758,17 +4859,25 @@
         + `<div id="svccost">` + groups.map(g =>
             `<div class="svcbasis">${esc(g.basis)} basis `
             + `<span class="muted">— ${esc(g.note)}</span></div>`
-            + g.rows.map(r => bar(r.col)).join("")).join("") + `</div>`;
+            + g.rows.map(bar).join("")).join("") + `</div>`;
       // ⚠️ The note has to say BOTH things. "Different bases" alone reads as a
       // caveat about precision, when the actual instruction is that no total
       // exists — including within the operating group, where the bases DO match
       // and the temptation to add is strongest.
+      // ⚠️ Build-aware because the ROWS differ: the public build shows road cost
+      // on two bases and nothing else, so "the operating three" and the nesting
+      // caution would both describe rows that are not on screen. A note listing
+      // hazards a reader cannot see teaches them to skip the note.
       document.getElementById("temporal-note").textContent =
         "Each cost is modelled and shown against this neighbourhood's own levy. "
         + "The two bases measure different things — the same road metre costs "
         + "about eleven times more at the lifecycle rate than to operate — so "
-        + "they are never added, and the operating three are not added to each "
-        + "other either. There is no total.";
+        + "they are never added"
+        + (FULL_BUILD
+            ? ", the operating three are not added to each other either, and "
+              + "the roads + fire row already contains the roads row above it. "
+            : ". ")
+        + "There is no total.";
     }
 
     const SVC_LABEL = Object.fromEntries(
@@ -5063,6 +5172,7 @@
           bike:        [p.bike_m_per_acre, fmtBike],
           servicecost: [p.svc_cost_per_acre, fmtSvcCost],
           roadscost:   [p.cost_roads_ops_per_acre, fmtRoadsCost],
+          roadslife:   [p.cost_roads_life_per_acre, fmtRoadsLife],
           transitcost: [p.cost_transit_ops_per_acre, fmtTransitCost],
           bikecost:    [p.cost_bike_ops_per_acre, fmtBikeCost],
         }[state.svcDriver] || [];
@@ -5160,6 +5270,8 @@
           rows.push(`<span class="muted">${fmtSvcCost(p.svc_cost_per_acre)}</span>`);
         if (state.services.roadscost && p.cost_roads_ops_per_acre != null)
           rows.push(`<span class="muted">${fmtRoadsCost(p.cost_roads_ops_per_acre)}</span>`);
+        if (state.services.roadslife && p.cost_roads_life_per_acre != null)
+          rows.push(`<span class="muted">${fmtRoadsLife(p.cost_roads_life_per_acre)}</span>`);
         if (state.services.transitcost && p.cost_transit_ops_per_acre != null)
           rows.push(`<span class="muted">${fmtTransitCost(p.cost_transit_ops_per_acre)}</span>`);
         if (state.services.bikecost && p.cost_bike_ops_per_acre != null)
@@ -5420,20 +5532,23 @@
               + `<br/><span class="muted">the City does not publish which of `
               + `it is tax-exempt</span>`;
       }
-      // Road supply and revenue-per-road-metre: FULL-only (2026-07-28). The
-      // second row IS the Ratio view's headline metric, and Ratio is full-only
-      // now — leaving it on the default view's hover would publish the number
-      // while hiding the lens that explains it. The supply row goes with it:
-      // on its own it is an unexplained figure from a lens the public build no
-      // longer has. Both return with `?build=full`.
+      // ⚠️ THE TWO ROWS SPLIT ON BUILD, and the split is the whole point.
+      // Both were pulled together on 2026-07-28 for ONE reason — the lens that
+      // explained them was hidden — so the reason expires for each row exactly
+      // when its own lens returns. Services is public again, so SUPPLY is
+      // explicable and comes back; RATIO's lens is still full-only, so the
+      // revenue-per-road-metre row stays gated. Publishing it here while its
+      // view is hidden is the case 2026-07-28 called worse than either
+      // shipping or not shipping it, and that has not changed.
       //
       // Also revenue-only, for the same reason as the residential share: the
       // second row divides REVENUE by road metres, so it does not belong under
-      // an assessed-value map. The supply row goes with it rather than standing
-      // alone (it already only ships full).
-      if (isRevenue(state.metric) && p.road_m_per_acre != null && FULL_BUILD) {
+      // an assessed-value map. The supply row is revenue-only for a weaker
+      // reason — it simply reads as part of that block — but the pairing is
+      // deliberate and predates this change.
+      if (isRevenue(state.metric) && p.road_m_per_acre != null) {
         html += `<br/><span class="muted">${p.road_m_per_acre.toFixed(1)} road m / acre</span>`;
-        if (p.road_m_per_acre > 0 && p.revenue_per_acre != null) {
+        if (FULL_BUILD && p.road_m_per_acre > 0 && p.revenue_per_acre != null) {
           const perM = p.revenue_per_acre / p.road_m_per_acre;
           html += `<br/><span class="muted">$${Math.round(perM).toLocaleString()} revenue / road metre</span>`;
         }
@@ -5954,6 +6069,14 @@
           document.getElementById("legend-min").textContent = "$0";
           document.getElementById("legend-max").textContent =
             "$" + Math.round(svcScale("cost_roads_ops_per_acre").clamp).toLocaleString() + "+";
+          label.textContent = "Set aside — natural / undeveloped land";
+          sw.style.background = "rgb(104,108,122)";
+        } else if (state.svcDriver === "roadslife") {
+          document.getElementById("legend-label").textContent =
+            "Modeled road lifecycle cost per acre / yr — upkeep + rebuilding";
+          document.getElementById("legend-min").textContent = "$0";
+          document.getElementById("legend-max").textContent =
+            "$" + Math.round(svcScale("cost_roads_life_per_acre").clamp).toLocaleString() + "+";
           label.textContent = "Set aside — natural / undeveloped land";
           sw.style.background = "rgb(104,108,122)";
         } else if (state.svcDriver === "transitcost") {
@@ -6972,14 +7095,30 @@
       // ratio views — hide those buttons rather than offer views that can't
       // render. A file with roads but no stormwater column (pre-2026-07-05)
       // keeps the view and just hides the stormwater row.
-      // Both are also FULL-only views now (2026-07-28, Peter — provisional
-      // "for now", same framing as the Uses pull below): hidden in the public
-      // build as well as on older data, so public #views = Money · Development.
-      // Same idiom as Uses/Industrial (`|| !FULL_BUILD`); nothing is stripped
-      // from the file, and `?build=full` still reaches them locally.
-      if (!state.data.features.some(f => f.properties.road_m_per_acre != null) || !FULL_BUILD) {
+      // SERVICES IS PUBLIC AGAIN as of the roads-only return (Peter) — the first
+      // exercise of the 2026-07-28 staged-return rule, which un-pulls the three
+      // full-only lenses ONE PER RELEASE rather than as a batch. It comes back
+      // carrying roads supply and road cost on both bases and nothing else; the
+      // other eight service rows stay full-only via their `pub` tag. RATIO stays
+      // full-only and keeps the `|| !FULL_BUILD` idiom — it is a separate lens
+      // and gets its own release.
+      if (!state.data.features.some(f => f.properties.road_m_per_acre != null)) {
         document.querySelectorAll('#views button[data-view="services"], #views button[data-view="ratio"]')
           .forEach(b => { b.style.display = "none"; });
+      } else if (!FULL_BUILD) {
+        document.querySelector('#views button[data-view="ratio"]').style.display = "none";
+      }
+      // The per-control half of the same decision. Hiding the row is not enough
+      // on its own — an unchecked-but-present service would still be reachable
+      // through the colour radio and would still contribute a tooltip row, so
+      // state.services is cleared too, which is what actually keeps the number
+      // off the public build.
+      if (!FULL_BUILD) {
+        Object.keys(SERVICES).filter(k => !SERVICES[k].pub).forEach(k => {
+          const row = document.querySelector(`#services .svc[data-service="${k}"]`);
+          if (row) row.style.display = "none";
+          state.services[k] = false;
+        });
       }
       if (!state.data.features.some(f => f.properties.storm_charge_per_acre != null)) {
         document.querySelector('#services .svc[data-service="storm"]').style.display = "none";
@@ -7010,9 +7149,13 @@
         state.services.bike = false;
       }
       // Same guard for the three Stage 2 operating-cost columns (pipeline
-      // 2026-08-03; they ship on the first weekly refresh after this merge, so
-      // every row below hides on today's published data and appears on its own).
+      // 2026-08-03) and the roads lifecycle column, which arrives with this
+      // change. Each hides on data older than its own column and appears on its
+      // own — ⚠️ which is why the PUBLIC build must degrade sensibly here too:
+      // on a pre-lifecycle data file the public Services view is roads supply
+      // plus operating cost only, and that is correct, not broken.
       [["roadscost", "cost_roads_ops_per_acre"],
+       ["roadslife", "cost_roads_life_per_acre"],
        ["transitcost", "cost_transit_ops_per_acre"],
        ["bikecost", "cost_bike_ops_per_acre"]].forEach(([svc, col]) => {
         if (!state.data.features.some(f => f.properties[col] != null)) {
