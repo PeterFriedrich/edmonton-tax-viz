@@ -48,6 +48,8 @@ Anchors (see ``data/expected_value_anchors.json`` for the committed bands):
 Outcomes (exit codes; 2 is argparse's):
   0  ok    — every anchor inside its committed band.
   5  drift — an anchor moved in the DANGEROUS direction. FAIL.
+  5        — ``--write-baseline`` REFUSED because the raw inputs are stale or
+            mismatched. See ``report_raw_vintage``.
 
 Anchors moving in the benign direction (fewer ineligible points, a stronger
 inversion) warn and ask for a baseline update, but never red the build — same
@@ -56,6 +58,17 @@ policy as ``check_unmatched_names.py``.
 Runs in CI (refresh.yml) AFTER regeneration, so it sees the roll the site is
 about to serve. Regenerate the baseline with ``--write-baseline`` when a move is
 understood and intentional.
+
+⚠️ THESE ANCHORS ARE ONLY MEANINGFUL AGAINST ONE FRESH PULL. A hand-run on a
+stale ``data/raw/`` is not a weaker reading, it is a different measurement: on
+2026-09-02 this repo's box read ``ineligible_points`` 85 where CI read 58 the
+same day, and that 85 reached the committed baseline and widened a band in the
+dangerous direction. The vintage of every raw file is now logged, and
+``--write-baseline`` refuses on a stale or mismatched pair. **To re-pin from a
+reading you can trust, take it from a refresh run's log**
+(``gh run view <id> --log | grep 'INFO:   '``) and add it to ``OBSERVED_IN_CI``
+in ``tests/test_check_value_anchors.py``, which pins every band's centre to a
+reading CI actually produced.
 
 Usage:
     python scripts/check_value_anchors.py                    # live data/raw + baseline
@@ -67,6 +80,7 @@ import json
 import logging
 import os
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 import numpy as np
@@ -107,6 +121,18 @@ DANGER = {
 # Percentile the top cell is measured against in lot_needle_ratio. High enough
 # to sit in the real body of the distribution, robust to a single artifact.
 NEEDLE_PCTILE = 99.9
+
+# ⚠️ A LOCAL RUN ON STALE RAW HANDED SOMEONE A RE-PIN (2026-09-03). On 2026-09-02
+# this box read ineligible_points 85 against CI's 58 — same code, same day — from
+# a data/raw/ holding a 2026-07-06 property-info file beside a 2026-08-09
+# assessment file. That 85 was then written into the baseline as a real reading
+# and widened a band 84 -> 127.5 in the guard's own dangerous direction. The
+# anchors are only meaningful against ONE fresh pull, so say so out loud.
+# 14 days = two missed weekly crons, the STALE_DAYS convention used site-wide.
+STALE_RAW_DAYS = 14
+# Both files come from the same scripts/download_data.py run, so any real gap
+# means two different pulls got mixed.
+MISMATCHED_RAW_DAYS = 2
 
 
 def compute_anchors(df: pd.DataFrame) -> dict[str, float]:
@@ -217,6 +243,47 @@ def compare_to_baseline(
     return ("drift" if dangerous else "ok"), detail
 
 
+def report_raw_vintage(
+    paths: dict[str, Path], now: datetime | None = None
+) -> list[str]:
+    """Log the mtime of each raw input; return warnings for stale or mixed pulls.
+
+    Warn-only by contract: a stale local checkout is the operator's problem, not
+    a reason to red the weekly publish. In CI the mtimes are the download times,
+    so this is silent there and only ever speaks up on a hand-run.
+    """
+    now = now or datetime.now(timezone.utc)
+    seen = {
+        name: datetime.fromtimestamp(p.stat().st_mtime, timezone.utc)
+        for name, p in paths.items()
+    }
+    for name, when in sorted(seen.items(), key=lambda kv: kv[1]):
+        logger.info("  raw vintage: %-14s %s", name, when.date().isoformat())
+
+    warnings = []
+    oldest_name, oldest = min(seen.items(), key=lambda kv: kv[1])
+    age = (now - oldest).days
+    if age > STALE_RAW_DAYS:
+        warnings.append(
+            f"raw data is STALE — {oldest_name} is {age} days old "
+            f"({oldest.date().isoformat()}). These anchors describe the data they "
+            f"were computed from; do not re-pin a band from this run. Re-pull with "
+            f"scripts/download_data.py, or read the values CI logged on the last "
+            f"refresh run instead."
+        )
+    spread = (max(seen.values()) - oldest).days
+    if spread > MISMATCHED_RAW_DAYS:
+        warnings.append(
+            f"raw data is MISMATCHED — {spread} days between the oldest "
+            f"({oldest_name}) and newest input. They should come from one "
+            f"download_data.py run; the ineligible_* anchors are especially "
+            f"sensitive to a stale property-info file paired with a fresh roll."
+        )
+    for w in warnings:
+        logger.warning("%s", w)
+    return warnings
+
+
 def _load_live(assessment_csv: Path, property_info_csv: Path) -> pd.DataFrame:
     """Run the real loaders so the guard sees exactly what the pipeline sees."""
     sys.path.insert(0, str(ROOT / "src"))
@@ -255,6 +322,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--write-baseline",
         action="store_true",
         help="recompute and overwrite the baseline bands (use when a move is understood)",
+    )
+    p.add_argument(
+        "--allow-stale-baseline",
+        action="store_true",
+        help="permit --write-baseline even when the raw inputs are stale or mismatched",
     )
     p.add_argument(
         "--tolerance",
@@ -299,6 +371,21 @@ def main(argv: list[str] | None = None) -> int:
         )
         _write_github_output(result="skipped")
         return EXIT_OK
+
+    vintage_warnings = report_raw_vintage({
+        "assessment": args.assessment_csv,
+        "property-info": args.property_info_csv,
+    })
+    # Reading stale anchors is merely misleading; WRITING a band from them is how
+    # the 2026-09-02 re-pin happened. Refuse that one, and only that one.
+    if vintage_warnings and args.write_baseline and not args.allow_stale_baseline:
+        logger.error(
+            "REFUSING --write-baseline: the raw inputs are stale or mismatched "
+            "(above). A band pinned here describes your checkout, not the data the "
+            "site publishes. Re-pull, or pass --allow-stale-baseline if you truly "
+            "mean to pin from this snapshot."
+        )
+        return EXIT_DRIFT
 
     df = _load_live(args.assessment_csv, args.property_info_csv)
     live = compute_anchors(df)

@@ -1499,30 +1499,10 @@ same session — see `docs/DECISIONS.md`'s last two rows.)_
   - [x] **Tighten the bands — DONE 2026-08-05, but only FOUR of six.** See the
     `## Done` line; the split and its reasoning live in
     `data/expected_value_anchors.json`'s own `_why_two_widths` /
-    `_ineligible_pair_is_drifting` fields.
-  - [ ] **▶ WHY IS VALUE LEAVING THE LOT-ACRE DENOMINATOR? (NEW 2026-08-05, out
-    of the band work.)** `ineligible_points` and `ineligible_value_frac` moved
-    **monotonically upward on every independent data change** — 56 → 58 → 60 and
-    0.00517 → 0.00575 → 0.00633 across 2026-08-01 / 08-03 / 08-04, no reversal.
-    That is the **dangerous** direction by the guard's own `DANGER` map: growth
-    means more assessed value silently dropping out of the lot-acre metric.
-    - **This is the guard doing its job**, not a nuisance. `check_value_anchors`
-      calls these points *"majority-null multi-unit"* — they leave the lot-acre
-      numerator AND denominator while staying in ground-acre, so the two lenses
-      quietly diverge as the count grows.
-    - ⚠️ **`ineligible_value_frac` has used ~72% of its band** and would breach
-      in roughly **2–3 more moves of the observed size**. Its band was left wide
-      deliberately so that when it fires it fires on something real — **do not
-      widen it further to buy silence, and do not tighten it to "finish" the
-      band work.** A test pins both against exactly that.
-    - **What would answer it:** which points became ineligible between two
-      refreshes, and why — a new majority-null pattern in `Property_Info`, a
-      condo/multi-unit regime change, or upstream nulls. ⚠️ **Needs two dated
-      raw snapshots to diff**; `data/raw/` holds only the current pull, so this
-      likely means capturing the next one or two refreshes before diffing.
-    - ⚠️ **Only 3 independent observations exist** (the 2026-08-02 and 08-05
-      runs committed `status.json` only, so their anchors re-measure unchanged
-      input). Confirm the trend continues before treating the slope as real.
+    `_ineligible_pair_was_NOT_drifting` fields.
+  - [x] **WHY IS VALUE LEAVING THE LOT-ACRE DENOMINATOR? — CLOSED 2026-09-03: it
+    wasn't. The trend was one step with an invented midpoint.** See the `## Done`
+    line.
   - [ ] **Optional, Peter's call: lower `STALE_DAYS`.** Currently 14 against a
     weekly cron = one missed run tolerated, two consecutive misses warn. A
     drift failure is therefore viewer-silent for 14 days. If that is too long
@@ -2569,6 +2549,8 @@ same session — see `docs/DECISIONS.md`'s last two rows.)_
 ## Done
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
+
+- [x] **CLOSED 2026-09-03 — "why is value leaving the lot-acre denominator?" It ISN'T, and the trend that opened this item was ONE STEP WITH AN INVENTED MIDPOINT.** The premise was `ineligible_points` 56→58→60 and `ineligible_value_frac` 0.00517→0.00575→0.00633 "monotonically upward on every independent data change, no reversal". ⚠️ **The middle observation was never observed** — it matched no CI run, and all five of its anchors were exact midpoints of the rows either side; it sat as a pinned row in `OBSERVED_IN_CI` until now. The 08-01→08-05 window holds **six** runs and only **two** distinct data states, the step falling between the 05:17 and 11:19 runs of 08-03. ⚠️ **And it reverted on 08-10** and has been flat for 8 independent pulls since (~0.3%); `ineligible_value_frac` sits at **49.4% of its band**, not the 83% two handoffs headlined. ⚠️ **The 83%/85 readings came from a stale local `data/raw/`** (a 2026-07-06 property-info file beside a 2026-08-09 roll) — CI read 58 the same day — and that phantom had already widened a band 84→127.5 in the guard's own *dangerous* direction. Re-pinned to 29–87 on the real reading; `check_value_anchors.py` now prints each raw file's vintage, warns on stale/mismatched pulls, and **refuses `--write-baseline`** on them; a new test pins every band's *centre* to a reading CI actually logged (falsified against the phantom band first). — 2026-09-03 · `docs/TODO_archive.md`
 
 - [x] **CLOSED 2026-09-02 — the Services lens returns to the PUBLIC build, roads only (supply + road cost on both bases); `cost_roads_life_per_acre` published; a copy guard now ties quoted rates to the unit-cost JSON.** (First exercise of the staged-return rule. Ratio and Uses still out, still return one per release.) — CLOSED 2026-09-02 · `docs/SPEC_services.md`
 
