@@ -169,6 +169,29 @@ collector+local only.
 recomputes; `scripts/check_cost_copy.py` fails the build if the prose is not
 updated with it. Do not let the open question block shipping.
 
+- [ ] **⚠️ OBSERVED MONEY SAYS THE $50/m/yr IS A FLOOR — measured 2026-09-03,
+  no value changed.** `docs/FINDINGS_nrp_reconstruction_cross_check.md`. The
+  Neighbourhood Renewal Program **does** publish per-neighbourhood spend and it
+  was already in `data/capital_budget.csv`; **14 full-reconstruction profiles
+  covering ~24 neighbourhoods run $3,762/road-m aggregate (median $4,259)
+  against the City's published $1,900/m renew-and-replace** — 10 of 14 above 2×.
+  **This is the first time the roads model has been checked against dollars
+  rather than against another published unit rate off the same page.**
+  - ⚠️ **NOT actionable as a rate yet, and do not re-pin anything on it.** Two
+    biases of opposite sign: the numerator bundles alleys/sidewalks/lighting/
+    drainage with no sub-asset detail published (alley-only profiles alone run
+    $634/road-m), while cycle-boundary tails and sub-area projects understate
+    others. ⚠️ **The three profiles closest to $1,900/m are the three that read
+    as partial** — the flattering evidence is the least trustworthy.
+  - **It compounds with the open 25-vs-50 life question rather than offsetting
+    it** — both push the same direction. `roadway_om_renewal.sensitivity`
+    already calls $50 "a mild lower bound"; this is a third, larger reason.
+  - **Unblocking it needs one thing:** a published sub-asset decomposition of an
+    NRP reconstruction (§4.2 of the send-back brief below). Nothing in the
+    profile listing or the API carries it.
+  - ⚠️ **Touches the LIFECYCLE basis only** — nothing here speaks to the
+    $12-vs-$4.635 operating gap above.
+
 - [ ] **PETER TO SEND — the follow-up brief is written and unsent.**
   `/home/opc/road_cost_sendback_brief.md` (**outside the repo**, same as the Q8
   addendum). Written 2026-09-03 (S136) for the next external research pass. It
