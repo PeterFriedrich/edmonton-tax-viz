@@ -1865,6 +1865,32 @@ from the fetch. The `⚠️ Capital budget` digest row is `docs/RUNBOOK.md` §1a
   over a name-matched set with no self-check. A keyword pass gives ~$1.02B
   renewal / ~$1.49B new across the road-ish services for 2023–26; treat it as
   **indicative only and do not publish a split sourced that way.**
+  - ✅ **BUT THE SPLIT IS PUBLISHED — just not in this CSV** (added 2026-09-03).
+    **Table 8, "Adopted Capital Budget by Service", pp.56–57** of the
+    *2023-2026 Capital Budget* (December 2022,
+    `https://www.edmonton.ca/sites/default/files/public-files/2023-2026CapitalBudget.pdf`)
+    carries explicit **Growth** and **Renewal** columns per service. The
+    road-relevant lines, $millions, 2023–2026:
+    **Active Pathways and Roads Service — Growth 622.8 / Renewal 1,171.2 /
+    Total 1,794.0**; **Yellowhead Trail Freeway Conversion — Growth 493.4**
+    (booked separately as a transformational service); Grand Total
+    4,997.6 / 2,194.9 / **7,192.5**. So a defensible new-vs-renewal figure can be
+    **cited rather than hand-built** — use this instead of a keyword pass.
+  - ⚠️ **Three methods, and they disagree mostly on the NEW side.** Renewal:
+    ~$1.02B (keyword) · $1.08B (hand bucket classification, 2026-09-03) ·
+    **$1.17B (Table 8)** — a ~15% spread. New: ~$1.49B (keyword) · $1.04B
+    (hand) · **$1.12B (Table 8)** — a **~1.4× spread**, three times wider. The keyword pass
+    overstates *new* because it sweeps in ~$326M of active-transport, pedway,
+    pedestrian-bridge and streetscape profiles that are neither road
+    construction nor road maintenance. **The warning above is right; Table 8 is
+    the way out of it.**
+  - ⚠️ **DO NOT MIX TABLE 8 WITH THIS CSV'S TOTALS — different vintages of the
+    same cycle.** Table 8 is the budget **as adopted December 2022**
+    (2023–26 = **$7,192.5M**); this CSV is the budget **as since adjusted**
+    (2023–26 = **$9,216.8M**, +28%). Applying Table 8's *ratio* to the CSV's
+    *total* silently blends the two. Table 8 is also **coarser** — its category
+    is "Active Pathways **and** Roads", which bundles pathways with roadways by
+    construction and cannot be decomposed.
 - ⚠️ **A COMPOSITE PROFILE DOES NOT CARRY ITS PROGRAM'S SPEND** (found 2026-09-03).
   `CM-25-0000 Transportation: Neighbourhoods - Renewal` reads **$69.8M** — but the
   neighbourhood renewal program is far larger than that. The composite has been
