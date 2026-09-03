@@ -535,6 +535,21 @@ same session — see `docs/DECISIONS.md`'s last two rows.)_
     signal, not a citation. An accompanying *"30% of road users are not
     Edmonton taxpayers"* claim is traceable to nothing in our reference list and
     must not be repeated even informally.
+  - [ ] **DEFERRED 2026-09-03 (Peter: "later") — verify the four external
+    service-life figures before any of them informs this call.** Relayed
+    road-cost research surfaced: a **60-year** reconstruction life from a City
+    staffer (ConstructConnect/Journal of Commerce, 2016, with microsurfacing at
+    10 and 40 yrs and overlay at 30); **Alberta Transportation's 20-year**
+    pavement design life (provincial highways, not municipal local roads);
+    **Calgary "up to 20 years"** for full reconstruction; **Winnipeg 25 years**
+    for asphalt *regional* streets (not local). ⚠️ **NONE HAS BEEN CHECKED** —
+    they are relayed claims of exactly the shape that produced a year-late
+    source date in the same batch (`DECISIONS.md` 2026-09-03). **Grep/fetch
+    before use.** ⚠️ **Even if all four verify they do not settle this item** —
+    it is a *denominator choice* between two readings on the City page we
+    already cite, and an Alberta-highway or Winnipeg-regional figure is a
+    different asset class. They are context for the methodology note, not a
+    tiebreaker.
 
 - [ ] **T8 FOLLOW-UPS — the three unchecked category sets were AUDITED 2026-08-30
   and none carries the 2026-08-18 defect.** Two follow-ups survive; the sweep
