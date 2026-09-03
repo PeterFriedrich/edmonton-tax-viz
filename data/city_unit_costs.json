@@ -19,7 +19,7 @@
       }
     },
     "derivation": "lifecycle O&M ($600k) + renewal ($1.9M) = $2.5M per km, annualized over the 50-year (well-maintained) life -> $50,000/km/yr = $50/m/yr. Peter's call 2026-07-15 (50-yr, not 25-yr).",
-    "cross_check": "3% of the $1.5M capital value ≈ $45,000/km/yr ≈ $45/m/yr — same order, corroborates $50.",
+    "cross_check": "⚠️ NOT AN INDEPENDENT CHECK — demoted 2026-09-03, do not cite it as corroboration. 3% of the $1.5M capital value ≈ $45,000/km/yr ≈ $45/m/yr, which LOOKS like a second opinion agreeing with $50. It is not. The City defines its 3% ON THE SAME PAGE as covering 'operate, maintain, renew and replace' — i.e. exactly the $600k + $1.9M bundle over exactly this life, so it is the same arithmetic restated. This file already computes the bundle's own implied rate as 3.33%/yr (see bikeway_capital.three_percent_rule_does_not_transfer); $45,000 vs $50,000 is the gap between a rounded 3% and the actual 3.33%, not an agreement between two measurements. The rule is asset-specific in the source anyway — the same page assigns fire stations 'at least 6%' — so the road 3% is a property of this worked example, not a general law that could confirm it. ⚠️ WHAT SURVIVES: it still DISCRIMINATES the 50-year reading from the 25-year one directionally (3.33%/yr vs 6.67%/yr), because the life is the only free variable. That much is usable and is the honest version of the claim. What is NOT usable is calling it independent. The $50 value does not change and nothing served moves; this key has no code consumers.",
     "sensitivity": "25-year (unmanaged) life would double this to ~$100/m/yr. Calibrated to NEIGHBOURHOOD (local) roads; collectors cost somewhat more per metre, so this is a mild lower bound for the collector share.",
     "caveat": "MODELED, roads-only. A published per-km lifecycle unit cost applied uniformly — not Edmonton's actual per-segment spend."
   },
@@ -60,8 +60,9 @@
       "snow_and_ice_control": 3350
     },
     "source": {
-      "publication": "Taproot Edmonton, 'Why it costs so much more to clear snow from sidewalks, bike lanes than roads' (2026-08-29 reporting date as supplied), quoting City of Edmonton infrastructure field operations staff directly",
-      "retrieved": "2026-08-03 (relayed, not fetched from the Oracle box)",
+      "publication": "Taproot Edmonton, 'Why it costs so much more to clear snow from sidewalks, bike lanes than roads', by Stephanie Swensrude, quoting City of Edmonton infrastructure field operations supervisor Valerie Dacyk directly. Published 2025-08-29.",
+      "url": "https://edmonton.taproot.news/briefs/2025/08/29/why-it-costs-so-much-more-to-clear-snow-from-sidewalks-bike-lanes-than-roads",
+      "retrieved": "2026-08-03 (relayed, not fetched from the Oracle box). ⚠️ DATE CORRECTED 2026-09-03: this block read '2026-08-29 reporting date as supplied' and the article is in fact 2025-08-29 — the relayed date was a YEAR LATE. Verified by fetching the URL above, which also confirms the $1,285/km, $178/km and $67M figures and the Dacyk attribution. The rates are unaffected; only the source's vintage moves, and it moves the wrong way (this is a one-year-older figure than the file claimed). The 'as supplied' hedge is what made the error findable — keep hedging relayed dates that way.",
       "snow_derivation": "~$36.85M annual road snow-clearing / ~11,000 km citywide road network = $3,350/km/yr"
     },
     "derivation": "($1,285 maintenance + $3,350 snow) / km / yr = $4,635/km/yr = $4.635/m/yr.",
