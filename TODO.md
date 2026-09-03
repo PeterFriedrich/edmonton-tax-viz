@@ -173,16 +173,21 @@ updated with it. Do not let the open question block shipping.
   no value changed.** `docs/FINDINGS_nrp_reconstruction_cross_check.md`. The
   Neighbourhood Renewal Program **does** publish per-neighbourhood spend and it
   was already in `data/capital_budget.csv`; **14 full-reconstruction profiles
-  covering ~24 neighbourhoods run $3,762/road-m aggregate (median $4,259)
-  against the City's published $1,900/m renew-and-replace** — 10 of 14 above 2×.
+  covering ~24 neighbourhoods run $3,151/road-m aggregate (median $3,528)
+  against the City's published $1,900/m renew-and-replace** — 10 of 14 above the
+  published rate, 6 above twice it.
   **This is the first time the roads model has been checked against dollars
   rather than against another published unit rate off the same page.**
   - ⚠️ **NOT actionable as a rate yet, and do not re-pin anything on it.** Two
     biases of opposite sign: the numerator bundles alleys/sidewalks/lighting/
     drainage with no sub-asset detail published (alley-only profiles alone run
-    $634/road-m), while cycle-boundary tails and sub-area projects understate
-    others. ⚠️ **The three profiles closest to $1,900/m are the three that read
-    as partial** — the flattering evidence is the least trustworthy.
+    $521/road-m), while cycle-boundary tails and sub-area projects understate
+    others. ⚠️ **The three cheapest profiles are the three that read as
+    partial** — the flattering evidence is the least trustworthy.
+  - ⚠️ **A first run of this overstated every $/m by ~16%** by taking hood acres
+    from the served GeoJSON, which carries a setback + simplification. That is
+    `FINDINGS_utility_validation.md` §4's documented gotcha, walked into anyway.
+    **Any hood total needs `load_boundaries()` full-res `area_acres`.**
   - **It compounds with the open 25-vs-50 life question rather than offsetting
     it** — both push the same direction. `roadway_om_renewal.sensitivity`
     already calls $50 "a mild lower bound"; this is a third, larger reason.
