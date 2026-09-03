@@ -506,9 +506,22 @@ same session — see `docs/DECISIONS.md`'s last two rows.)_
     **$24,000/km/yr** at 25 — exactly 2×. The full lifecycle rate the site
     actually ships is **$50,000/km/yr**; at 25 yr it would be **$100,000/km/yr**
     (already recorded as `roadway_om_renewal.sensitivity`).
-  - **Why 50 still looks right:** the independent cross-check — the same page's
-    ~3%/yr set-aside rule on $1.5M/km ≈ **$45,000/km/yr** — corroborates the
-    50-year $50,000, not the 25-year reading.
+  - **Why 50 still looks right — but on weaker ground than this item claimed
+    until 2026-09-03.** The same page's ~3%/yr set-aside rule on $1.5M/km ≈
+    **$45,000/km/yr** does point at the 50-year $50,000 rather than the 25-year
+    $100,000. ⚠️ **But it is NOT an "independent cross-check" and this item used
+    to call it one.** The City defines that 3% as covering
+    operate+maintain+renew+replace — the same $2.5M bundle over the same life —
+    so it is the same page's arithmetic restated, and $45k vs $50k is just a
+    rounded 3% against the bundle's actual **3.33%/yr**. The rule is
+    asset-specific in the source too (fire stations get "at least 6%").
+    **What survives:** it still *discriminates* 50 from 25 directionally, since
+    the life is the only free variable (3.33% vs 6.67%). **What does not:**
+    calling it independent confirmation. Full reasoning in
+    `city_unit_costs.json` → `roadway_om_renewal.cross_check`. **This does not
+    reopen the 50-year choice** — it removes one supporting argument, and the
+    choice was Peter's call on the page's own "extended to 50 with proper
+    maintenance", not on the 3% rule.
   - **The decision is only whether the methodology note should SAY SO.** Right now
     nothing in the UI or `DATA.md` explains why a reader who has met the 25-year
     figure elsewhere sees half of it here. Verified 2026-08-20 against served

@@ -1865,6 +1865,23 @@ from the fetch. The `⚠️ Capital budget` digest row is `docs/RUNBOOK.md` §1a
   over a name-matched set with no self-check. A keyword pass gives ~$1.02B
   renewal / ~$1.49B new across the road-ish services for 2023–26; treat it as
   **indicative only and do not publish a split sourced that way.**
+- ⚠️ **A COMPOSITE PROFILE DOES NOT CARRY ITS PROGRAM'S SPEND** (found 2026-09-03).
+  `CM-25-0000 Transportation: Neighbourhoods - Renewal` reads **$69.8M** — but the
+  neighbourhood renewal program is far larger than that. The composite has been
+  **decomposed into 45 standalone named profiles** (`23-40-9033` Ottewell $89.8M,
+  `25-25-9506` Dunluce $89.6M, `24-40-9049` Overlanders/Homesteader $66.3M,
+  `23-40-9032` McCauley $64.5M, `23-40-9031` Baturyn $45.0M, …) filed under the
+  **`Neighbourhoods` service, not `Roads`** — so the composite holds only the
+  unallocated remainder. Summing `CM-25-0000` alone under-counts by roughly
+  **$475M**. For scale, the Dec-2022 budget book's Appendix A still showed this
+  profile at **$545.7M**; individual projects graduate out of the composite as
+  they are scoped.
+  ⚠️ **This is nastier than the keyword-matching trap above**, because it punishes
+  doing the obvious right thing: reaching for the one profile the City *names*
+  after the program. **Before treating any composite total as complete, sum its
+  standalone descendants and compare.** Same family as
+  `check-where-the-value-can-be-wrong` — the number looks authoritative precisely
+  where it cannot be checked.
 - **The endpoint is byte-stable** (two fetches identical, 2026-08-21) but is
   generated per request, so the digest hashes **sorted** rows — a server-side
   reorder must not read as a budget change.
