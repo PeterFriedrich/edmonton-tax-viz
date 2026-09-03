@@ -139,7 +139,13 @@ been traced to what it actually covers. The Roads cost (operating) blurb
 currently says outright that it is the low end of a range.
 
 Seven sourcing questions were written up for a research pass (given to Peter
-2026-09-02 to run externally). The two that would change the most:
+2026-09-02 to run externally). ⚠️ **THAT ROUND CAME BACK 2026-09-03 AND DID NOT
+CLOSE THIS ITEM** — Q1 and Q4–Q7 re-derived what `city_unit_costs.json` already
+documents, usually in less detail, and the 2.6× gap was restated rather than
+traced. What it did produce was the Table 8 route, the composite-profile trap
+(`data/DATA.md` §19) and the demotion of the 3% cross-check. **Question 2 below
+was answered by data we already held, not by the research** — see the send-off
+item at the end of this section. The two that would change the most:
 
 1. **What does Edmonton's $600,000/km "operate and maintain" actually
    include** — snow? lighting? sweeping, signs, signals? — and what is in the
@@ -162,6 +168,25 @@ collector+local only.
 `data/city_unit_costs.json`, two test assertions, and the next refresh
 recomputes; `scripts/check_cost_copy.py` fails the build if the prose is not
 updated with it. Do not let the open question block shipping.
+
+- [ ] **PETER TO SEND — the follow-up brief is written and unsent.**
+  `/home/opc/road_cost_sendback_brief.md` (**outside the repo**, same as the Q8
+  addendum). Written 2026-09-03 (S136) for the next external research pass. It
+  carries: **six corrections** to the last round (the 3% rule is not an
+  independent cross-check; the year-late Taproot date; the composite-profile
+  undercount; Table 8 exists; the adopted-vs-adjusted vintage trap; the endpoint
+  was not a discovery), **six ranked questions**, and the §4 measurement below.
+  ⚠️ **Q1 is the only one under a published layer** — what the $600k/km
+  "operate and maintain" covers vs the $1,285/km "maintenance", i.e. this item's
+  own 2.6× gap. The other five are verification chores (snow denominator; the
+  four service-life figures; $965.2M provenance; the June 2026 council report;
+  the 403'd op-ed original).
+  - ⚠️ **The brief opens with a "what we already hold, do not re-derive"
+    section.** The last round spent most of seven questions restating
+    `city_unit_costs.json` in less detail; that section exists to stop it
+    happening twice, and it is the part to keep current if the brief is reused.
+  - ⚠️ **Grep before applying anything it returns** — relayed research invents
+    file names and sources, and produced a year-late date in the last batch.
 
 _Last reconciled: 2026-09-01 (S130 — **no backlog item was worked; both PRs came
 from Peter noticing the site was slow to switch grids.** Nothing here opened or
