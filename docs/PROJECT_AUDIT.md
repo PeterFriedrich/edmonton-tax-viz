@@ -152,8 +152,17 @@ no serverless functions, no third-party analytics service.
 - Services-panel mobile confirmation is CONFIRMED for layout/overflow but
   **NOT CONFIRMED** for real touch interaction — verify scripts drive `.click()`,
   which bypasses `pointer-events` (a standing caveat, `docs/MOBILE_USABILITY.md`).
-- `ineligible_points`/`ineligible_value_frac` cardinality is tracked at ~72%
-  of its guard band, not yet acted on (carried in recent handoffs).
+- ~~`ineligible_points`/`ineligible_value_frac` cardinality is tracked at ~72%
+  of its guard band~~ — **RESOLVED 2026-09-03: there was no drift.** The trend
+  was one step with an interpolated midpoint, it reverted on 2026-08-10, and
+  the ~72%/83% readings came from a stale local `data/raw/`. `DECISIONS.md`
+  2026-09-03. ⚠️ The debt it leaves is a different one, below.
+- ⚠️ **No committed baseline in this repo ties its numbers to the run that
+  produced them, except `expected_value_anchors.json` (since 2026-09-03).**
+  `expected_columns.json`, `expected_temporal_years.json` and the
+  `city_unit_costs.json` rates are the same shape — a pinned value whose
+  provenance is a prose comment — and none was checked for the interpolated or
+  stale-sourced row found in the anchors' own history.
 - Historical assessment dataset (`qi6a-xuwt`) is catalogued but unused; 2024
   is a **known, deliberately-omitted** gap in the temporal lens (`SPEC_temporal.md`
   §0) — this is a documented decision, not an unnoticed hole.

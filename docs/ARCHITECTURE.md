@@ -413,6 +413,12 @@ parks, river valley). Returns a stats dict.
   **cell** grain against `web/data/value_grid.json`. Dollar figures are
   deliberately NOT pinned (reassessment moves them yearly). Baseline:
   `data/expected_value_anchors.json`. See `DECISIONS.md` 2026-07-28.
+  ⚠️ **The baseline is only re-pinnable from a fresh pull** — `report_raw_vintage`
+  logs each raw file's date and `--write-baseline` refuses on stale or mismatched
+  inputs, because a hand-run on a stale `data/raw/` measures something the site
+  never served and once put a phantom reading into a band
+  (`DECISIONS.md` 2026-09-03, RUNBOOK §3). A band's **centre** must be a reading
+  CI logged; `OBSERVED_IN_CI` in the tests holds the series and pins it.
 - `scripts/check_served_columns.py`: **schema** validation, run from
   `refresh.yml` beside the anchors above. Where they pin what the numbers look
   like, this pins **which columns exist** in the served neighbourhood GeoJSON,

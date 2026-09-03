@@ -406,6 +406,26 @@ Triage by which step failed, in the run log:
   `data/expected_value_anchors.json`. Moves in the benign direction (fewer
   ineligible points, a flatter distribution) only warn. **The January year-roll
   is the most likely trigger** — see §1.
+  - ⚠️ **RE-PIN FROM A CI READING, NOT FROM YOUR LAPTOP (added 2026-09-03).**
+    These anchors are only meaningful against **one fresh pull**. A hand-run on
+    a stale `data/raw/` is not a weaker reading, it is a *different
+    measurement*: on 2026-09-02 the Oracle box read `ineligible_points` **85**
+    where CI read **58** the same day, and that 85 reached the baseline and
+    widened a band in the guard's own dangerous direction. The guard now prints
+    every raw file's vintage and **refuses `--write-baseline` on stale (>14 d)
+    or mismatched (>2 d apart) inputs** — `--allow-stale-baseline` overrides,
+    and you almost never want it.
+  - **The reading you want is in the refresh run's log:**
+    `gh run view <run-id> --log | grep 'INFO:   '` prints all six anchors as CI
+    measured them. Add it to `OBSERVED_IN_CI` in
+    `tests/test_check_value_anchors.py` **in the same commit as the re-pin** —
+    a test requires every band's centre to be a reading that table holds, so a
+    centre with no CI run behind it fails the merge gate.
+  - ⚠️ **That log is also the only history these anchors have.** Nothing
+    persists them; the run list is the series. Harvesting it is what falsified
+    the 2026-08-05 "monotonic drift" (`DECISIONS.md` 2026-09-03) — **before
+    treating a moving anchor as a trend, harvest the runs and check that every
+    point in the series is one CI actually produced.**
 - **"Check served columns"** (exit 5, `scripts/check_served_columns.py`) — a
   column the site serves **disappeared**, or landed on only some neighbourhoods.
   Runs after regen, before the commit, so the site keeps serving last-good data.
