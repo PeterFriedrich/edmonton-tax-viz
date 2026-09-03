@@ -173,16 +173,21 @@ updated with it. Do not let the open question block shipping.
   no value changed.** `docs/FINDINGS_nrp_reconstruction_cross_check.md`. The
   Neighbourhood Renewal Program **does** publish per-neighbourhood spend and it
   was already in `data/capital_budget.csv`; **14 full-reconstruction profiles
-  covering ~24 neighbourhoods run $3,762/road-m aggregate (median $4,259)
-  against the City's published $1,900/m renew-and-replace** — 10 of 14 above 2×.
+  covering ~24 neighbourhoods run $3,151/road-m aggregate (median $3,528)
+  against the City's published $1,900/m renew-and-replace** — 10 of 14 above the
+  published rate, 6 above twice it.
   **This is the first time the roads model has been checked against dollars
   rather than against another published unit rate off the same page.**
   - ⚠️ **NOT actionable as a rate yet, and do not re-pin anything on it.** Two
     biases of opposite sign: the numerator bundles alleys/sidewalks/lighting/
     drainage with no sub-asset detail published (alley-only profiles alone run
-    $634/road-m), while cycle-boundary tails and sub-area projects understate
-    others. ⚠️ **The three profiles closest to $1,900/m are the three that read
-    as partial** — the flattering evidence is the least trustworthy.
+    $521/road-m), while cycle-boundary tails and sub-area projects understate
+    others. ⚠️ **The three cheapest profiles are the three that read as
+    partial** — the flattering evidence is the least trustworthy.
+  - ⚠️ **A first run of this overstated every $/m by ~16%** by taking hood acres
+    from the served GeoJSON, which carries a setback + simplification. That is
+    `FINDINGS_utility_validation.md` §4's documented gotcha, walked into anyway.
+    **Any hood total needs `load_boundaries()` full-res `area_acres`.**
   - **It compounds with the open 25-vs-50 life question rather than offsetting
     it** — both push the same direction. `roadway_om_renewal.sensitivity`
     already calls $50 "a mild lower bound"; this is a third, larger reason.
@@ -191,6 +196,33 @@ updated with it. Do not let the open question block shipping.
     profile listing or the API carries it.
   - ⚠️ **Touches the LIFECYCLE basis only** — nothing here speaks to the
     $12-vs-$4.635 operating gap above.
+
+- [ ] **PETER'S CALL — road-per-dwelling is a good DIAGNOSTIC and a bad MAP.**
+  Measured 2026-09-03 on a fresh pull:
+  `docs/FINDINGS_road_per_dwelling.md`. It discriminates ~1.8× better than the
+  shipped `road_m_per_acre` (p90/p10 2.8× vs 1.6×) and orders hoods exactly as
+  built form predicts — Garneau 1.09 m/dwelling, Laurier Heights 18.52.
+  ⚠️ **But road supply per acre is nearly flat across residential Edmonton (3.1×
+  total range, r = −0.10 with density), so the ratio varies almost entirely
+  because the DENOMINATOR does — density explains ~79% of it (log r = −0.888).
+  A road-per-dwelling map would re-plot dwelling density under a cost-sounding
+  name**, which is the objection that made the franchise lenses columns-only on
+  2026-07-07. The decision needed is whether that is acceptable; the residual
+  ~21% is real road-supply variation and the rank order does change (Spearman
+  0.567 vs road/acre).
+  - ⚠️ **Four hoods must be excluded BY NAME if this is ever published** —
+    WESTVIEW VILLAGE (1,059 dwellings, **1** road metre), MAPLE RIDGE, EVERGREEN,
+    CALLINGWOOD SOUTH. **Private internal roads, not a clipping artifact.** The
+    per-acre metric hides them; per-dwelling divides by ~nothing.
+  - ⚠️ **A per-dwelling denominator is a different normative claim than
+    per-acre** — this is a denominator decision like the 25-vs-50 life, not a
+    build task.
+  - **Already built, do not re-derive:** the dwelling model
+    (`load_water.build_connections`, 552,113 dwellings), `road_m_per_acre`, and
+    road-per-dwelling itself as an analysis variable
+    (`FINDINGS_land_use_diversity.md` §3.2, 2026-07-07, where it is a **null**
+    against land-use diversity). ⚠️ **The project has NO population-by-hood
+    source**, so the per-capita variant of this cannot be computed at all.
 
 - [ ] **PETER TO SEND — the follow-up brief is written and unsent.**
   `/home/opc/road_cost_sendback_brief.md` (**outside the repo**, same as the Q8
