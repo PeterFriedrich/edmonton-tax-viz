@@ -8,6 +8,102 @@ Items are verbatim as they were closed, newest-moved first in the order they app
 
 ---
 
+- [x] **CLOSED 2026-09-03 — WHY IS VALUE LEAVING THE LOT-ACRE DENOMINATOR? It
+  isn't. The trend was ONE STEP WITH AN INVENTED MIDPOINT, and the number that
+  kept it alive came from stale local data.**
+
+  Opened 2026-08-05 out of the band work, on this premise: `ineligible_points`
+  and `ineligible_value_frac` moved *"monotonically upward on every independent
+  data change"* — 56 → 58 → 60 and 0.00517 → 0.00575 → 0.00633 across
+  2026-08-01 / 08-03 / 08-04, no reversal — in the guard's own **dangerous**
+  direction. The item flagged its own weakness and was right to: *"Only 3
+  independent observations exist… Confirm the trend continues before treating
+  the slope as real."* Nobody did, for four weeks, while it headlined two
+  handoffs as *"the most likely thing to fail next."*
+
+  **The confirming data existed the whole time.** Every `refresh.yml` run logs
+  all six anchors against a fresh `download_data.py` pull, so
+  `gh run view <id> --log | grep 'INFO:   '` over the run list is the entire
+  series. Fourteen runs, harvested 2026-09-03:
+
+  | date | `ineligible_points` | `ineligible_value_frac` |
+  |---|---|---|
+  | 08-01, 08-02, 08-03 05:17 | 56 | 0.00517178 |
+  | 08-03 11:19, 08-04, 08-05 | 60 | 0.00632732 |
+  | **08-10** | **56** | **0.00516634** |
+  | 08-17, 08-19, 08-23, 08-24 | 57 | 0.00516946 |
+  | 08-25 | 57 | 0.00515087 |
+  | 08-31 | 57 | 0.00515159 |
+  | 09-02 | 58 | 0.00515519 |
+
+  ⚠️ **THE MIDDLE OBSERVATION WAS NEVER OBSERVED.** The `58 / 0.00575` matched
+  no run. All five of its anchors were midpoints of the rows either side —
+  `lot_needle_ratio` 12.82175 exactly between 12.822 and 12.8215, points 58
+  exactly between 56 and 60. It had been sitting as a pinned row in
+  `OBSERVED_IN_CI` in `tests/test_check_value_anchors.py` since 2026-08-05,
+  where it was load-bearing: **it is what turned a single step into an apparent
+  monotone three-point trend.** The 08-01→08-05 window holds **six** runs and
+  only **two** distinct data states; the step fell between the 05:17 and 11:19
+  runs of 08-03, which the harvest had collapsed into one "08-03".
+
+  ⚠️ **And the step reverted on 08-10.** Since then the pair has moved ~0.3%
+  across 8 independent pulls. `ineligible_value_frac` sits at **49.4% of its
+  band** — dead centre — not the 72% its own note estimated nor the 83% the
+  S133/S134 handoffs carried. There was never a breach coming.
+
+  ⚠️ **Where 83% came from: a stale, MISMATCHED local `data/raw/`.** This box
+  held `Property_Info__Current_Calendar_Year_.csv` dated 2026-07-06 beside a
+  2026-08-09 assessment file. Against that pair the guard reads
+  `ineligible_points` **85** / `ineligible_value_frac` 0.00646; CI, same code,
+  same day, fresh pull, read **58** / 0.00515519. Majority-null `lot_size` is
+  exactly what a stale property-info file paired with a newer roll distorts.
+
+  ⚠️ **THAT PHANTOM HAD ALREADY COST SOMETHING.** The 2026-09-02 re-pin note
+  claimed the reading *"had reached the band ceiling EXACTLY and would have
+  fired on the next weekly publish on its own"* and widened `ineligible_points`
+  28–84 → 42.5–127.5. It would not have fired — CI read 58, comfortably inside
+  28–84. The ceiling moved 84 → 127.5, **halving the guard's sensitivity in its
+  own declared dangerous direction to accommodate a number the published
+  pipeline never produced.** (The floor move was harmless: below-band on a
+  high-danger anchor is `benign`, warn-only, never reds the publish.)
+
+  **What shipped**
+
+  1. `ineligible_points` re-pinned to **29–87**, centre 58, the real 2026-09-02
+     CI reading, same ±50%. `ineligible_value_frac` deliberately NOT re-pinned —
+     it is already within 0.6% of its centre.
+  2. `OBSERVED_IN_CI` replaced with the full verified series, interpolated row
+     gone, distinct states labelled by the run that first produced them.
+  3. `scripts/check_value_anchors.py` gains `report_raw_vintage()`: it logs each
+     raw file's date, warns above `STALE_RAW_DAYS` (14, the site-wide
+     convention) or `MISMATCHED_RAW_DAYS` (2, since both files come from one
+     `download_data.py` run), and **refuses `--write-baseline`** on either
+     condition (`--allow-stale-baseline` overrides). Reading stale anchors is
+     merely misleading; *writing a band from them* is how this happened. Silent
+     in CI, where the mtimes are the download times.
+  4. New `test_every_band_is_centred_on_a_reading_ci_actually_produced` —
+     **falsified against the 42.5–127.5 band first**, where it fails with
+     *"centred on 85, outside every reading CI has logged (56-60)"*. Widths were
+     already pinned; **provenance was not**, which is the whole gap.
+
+  **Transferable rules.** ⚠️ *A trend needs three REAL observations — check that
+  the middle one is one.* An interpolated point is indistinguishable from data
+  once it is in a table, and it manufactures exactly the monotonicity that makes
+  a trend look real. ⚠️ *A guard run on stale input is not a weaker reading, it
+  is a different measurement* — and this project already had the harvest habit
+  (`_why_two_widths` was built from CI logs) but reached for the local run
+  anyway. ⚠️ *Pinning a band's width without pinning its centre guards the wrong
+  half.* Same family as *a band fitted around a defect* (S133) and *an assertion
+  placed where the value can't be wrong* (S133).
+
+  Related: `_why_two_widths`'s *"5 runs, 3 independent data changes"* is also
+  wrong — six runs, two states — so the ±25% given the four "frozen" anchors
+  rested on two observations, not three. **Their bands need no change:** 8
+  further CI states through 2026-09-02 keep `dedupe_effect_pct` in
+  0.040806–0.0408324, `dup_parcel_value_frac` in 0.00309363–0.00309689 and
+  `dup_parcel_points` flat at 33, all far inside ±25%. The claim was overstated;
+  the conclusion happened to survive.
+
 - [x] **CLOSED 2026-08-29 — the three verify failures are resolved, and one of
   them was NEVER a master failure.** Replaces the two items previously here
   (`verify-temporal.js` "fails on unmodified master", and the two "stale
