@@ -197,6 +197,33 @@ updated with it. Do not let the open question block shipping.
   - ⚠️ **Touches the LIFECYCLE basis only** — nothing here speaks to the
     $12-vs-$4.635 operating gap above.
 
+- [ ] **PETER'S CALL — road-per-dwelling is a good DIAGNOSTIC and a bad MAP.**
+  Measured 2026-09-03 on a fresh pull:
+  `docs/FINDINGS_road_per_dwelling.md`. It discriminates ~1.8× better than the
+  shipped `road_m_per_acre` (p90/p10 2.8× vs 1.6×) and orders hoods exactly as
+  built form predicts — Garneau 1.09 m/dwelling, Laurier Heights 18.52.
+  ⚠️ **But road supply per acre is nearly flat across residential Edmonton (3.1×
+  total range, r = −0.10 with density), so the ratio varies almost entirely
+  because the DENOMINATOR does — density explains ~79% of it (log r = −0.888).
+  A road-per-dwelling map would re-plot dwelling density under a cost-sounding
+  name**, which is the objection that made the franchise lenses columns-only on
+  2026-07-07. The decision needed is whether that is acceptable; the residual
+  ~21% is real road-supply variation and the rank order does change (Spearman
+  0.567 vs road/acre).
+  - ⚠️ **Four hoods must be excluded BY NAME if this is ever published** —
+    WESTVIEW VILLAGE (1,059 dwellings, **1** road metre), MAPLE RIDGE, EVERGREEN,
+    CALLINGWOOD SOUTH. **Private internal roads, not a clipping artifact.** The
+    per-acre metric hides them; per-dwelling divides by ~nothing.
+  - ⚠️ **A per-dwelling denominator is a different normative claim than
+    per-acre** — this is a denominator decision like the 25-vs-50 life, not a
+    build task.
+  - **Already built, do not re-derive:** the dwelling model
+    (`load_water.build_connections`, 552,113 dwellings), `road_m_per_acre`, and
+    road-per-dwelling itself as an analysis variable
+    (`FINDINGS_land_use_diversity.md` §3.2, 2026-07-07, where it is a **null**
+    against land-use diversity). ⚠️ **The project has NO population-by-hood
+    source**, so the per-capita variant of this cannot be computed at all.
+
 - [ ] **PETER TO SEND — the follow-up brief is written and unsent.**
   `/home/opc/road_cost_sendback_brief.md` (**outside the repo**, same as the Q8
   addendum). Written 2026-09-03 (S136) for the next external research pass. It
