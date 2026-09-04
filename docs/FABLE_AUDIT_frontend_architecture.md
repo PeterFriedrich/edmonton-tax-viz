@@ -86,9 +86,15 @@ size, and neither holds more than one section that bears on this audit.
    > - ⚠️ **`DEFAULT_BUILD` must stay in `index.html`** — if the JS moves, that literal
    >   stays behind or `build_site.py` moves with it.
    > - ⚠️ **"11 verify scripts reference `index.html`" was WRONG, and it pointed the risk
-   >   at the wrong half of the repo.** It is **8 of 65**, and every one names it as a
-   >   served **URL** (`localhost:PORT/index.html`), not the source file — an ESM split
-   >   leaves them working. **The real coupling is 11 Python/CI files**: `build_site.py`,
+   >   at the wrong half of the repo.** It is **8 of 65**, and **7** name it as a served
+   >   **URL** (`localhost:PORT/index.html`), not the source file — an ESM split leaves
+   >   those working. ⚠️ **The eighth is the exception:
+   >   `tools/profiling/verify-staleness-banner.js` reads `web/index.html` off disk**
+   >   (`fs.readFileSync`, line 66) and regexes `const STALE_DAYS = (\d+);` out of the
+   >   source — a literal declared under the `tunables` banner, **inside the `<script>`
+   >   block a split moves**. It fails loudly (`process.exit(1)`), but it is **the one
+   >   JS-side file a split must carry**. **The real coupling is 11 Python/CI files**:
+   >   `build_site.py`,
    >   `check_cost_copy.py`, `check_served_columns.py`, `check_doc_citations.py`,
    >   `build_reference_layers.py`, `tools/codemap.py`, `tests/test_build_site.py`,
    >   `tests/test_codemap.py`, `tests/test_window_labels.py`, plus the `refresh.yml` and
@@ -214,9 +220,12 @@ seam? Stage 1 (CSS) was chosen because it had **zero coupling** and could be ver
 pixel-identical screenshots. Is there an equivalent first slice here, or is ESM
 all-or-nothing?
 
-Note the verification asymmetry: `verify-*.js` scripts reference the page by **URL**
-(`localhost:PORT/index.html`), not by source file, so they keep working across a split —
-they can verify the migration but cannot detect a bad seam.
+Note the verification asymmetry: 7 of the 8 `verify-*.js` scripts reference the page by
+**URL** (`localhost:PORT/index.html`), not by source file, so they keep working across a
+split — they can verify the migration but cannot detect a bad seam. ⚠️ **The eighth,
+`verify-staleness-banner.js`, breaks on any split that moves `STALE_DAYS` out of
+`index.html`** — so the JS harness is simultaneously too weak to catch a bad seam and
+strong enough to fail on a good one.
 
 ### Level 6 — Code correctness (only after the above)
 
@@ -235,7 +244,7 @@ Only if Levels 0–5 leave something to say. Not the point of this session.
 | `state` in-degree | **110** (next: `buildLayers` 34) | `CODEMAP.md` |
 | **at stage 1 (2026-07-29)** | **3,305 JS lines, 9 banners** | `DECISIONS.md` |
 | `web/styles.css` | ~52 KB (extracted stage 1) | `STACK.md` |
-| profiling scripts naming `index.html` | **8 of 65** — all as a served **URL** | 2026-09-04 |
+| profiling scripts naming `index.html` | **8 of 65** — **7** as a served **URL**, **1 reads the source** | 2026-09-04 |
 | Python/CI files reading it | **11** | 2026-09-04 |
 | vendored libs | deck.gl 9.0.38, maplibre-gl 4.7.1 | `STACK.md` §3 |
 
@@ -250,8 +259,17 @@ came from measurement rather than taste.** Weigh it accordingly — and note tha
   something this session, say so — do not report it as confirmed.
 - **Do not narrate your reasoning process into the output.** Report the verdict, the
   argument, the alternative, and the evidence — not a transcript of how you got there.
-  (This also avoids tripping Fable's reasoning-extraction classifier, which can silently
-  reroute the session to Opus mid-task.)
+  ⚠️ **The stakes here were stated wrong and are worse than advertised** (corrected
+  2026-09-04 by reading the CLI binary, 2.1.258; the original claim came from a relayed
+  external report). `reasoning_extraction` **is real** — it is an API refusal category in
+  `stop_details.category`, alongside `cyber`, `bio` and `frontier_llm`. But it does
+  **not** "silently reroute the session to Opus": refusal fallbacks are a **per-category
+  route map**, and for a Fable session that map is `{bio → claude-opus-5,
+  cyber → claude-opus-4-8}` — **`reasoning_extraction` is not in it**. An unmapped
+  refusal resolves to `matched:"none", reason:"unmapped"`, and **a refused request simply
+  stops.** The catch-all that would route it anyway is off unless
+  `CLAUDE_CODE_REFUSAL_FALLBACK_CATCH_ALL` is set, and it is not set on this box.
+  **So the cost of narrating reasoning is a hard stop mid-audit, not a quiet downgrade.**
 - No subagents — single session.
 - Do **not** edit `docs/STACK.md`, `docs/DECISIONS.md`, or `web/index.html`. Those are
   the record and the artifact. Log findings; propose changes; don't make them. If a

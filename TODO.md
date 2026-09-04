@@ -2737,9 +2737,19 @@ same session — see `docs/DECISIONS.md`'s last two rows.)_
     moves, that literal stays behind or `build_site.py` moves with it.
   - ⚠️ **"11 verify scripts reference `index.html` directly" was WRONG, and it
     pointed the risk at the wrong half of the repo.** Measured 2026-09-04:
-    **8 of 65** profiling scripts name it, and every one names it as a **URL**
-    (`localhost:PORT/index.html`) — the served page, not the source file. An ESM
-    split leaves that URL working, so the JS harness is **mostly not the risk**.
+    **8 of 65** profiling scripts name it, **7 as a served URL**
+    (`localhost:PORT/index.html`) — the page, not the source — so an ESM split
+    leaves those working and the JS harness is **mostly not the risk**.
+    ⚠️ **The eighth is the exception, and "every one is a URL" was wrong
+    (re-measured 2026-09-04, S138): `tools/profiling/verify-staleness-banner.js`
+    reads `web/index.html` OFF DISK** (`fs.readFileSync`, line 66) and regexes
+    `const STALE_DAYS = (\d+);` out of the source — a literal declared at the
+    `tunables` banner, **inside the `<script>` block that a stage-2 split
+    moves**. It fails loudly (`process.exit(1)`, "not found"), not silently, but
+    it is **the one JS-side file a split must carry**, and it is a second
+    instance of the same pattern as `check_cost_copy.py` /
+    `check_served_columns.py`: **a guard asserting on the text of the artifact
+    rather than on the value.**
   - ⚠️ **THE REAL COUPLING IS THE PYTHON/CI SIDE — 11 non-doc files read the
     single file**: `build_site.py` (the `DEFAULT_BUILD` regex, above),
     `check_cost_copy.py` and `check_served_columns.py` (both scan the HTML for
