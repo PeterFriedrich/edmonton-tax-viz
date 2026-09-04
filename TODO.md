@@ -2609,7 +2609,12 @@ same session — see `docs/DECISIONS.md`'s last two rows.)_
   global CLAUDE.md, use the Jupyter MCP server tools, not NotebookEdit.
 
 - [ ] **STAGE 2 of the `web/index.html` split — the JS into ES modules (NOT
-  started, and deliberately deferred).** Stage 1 (CSS → `web/styles.css`) shipped
+  started, and deliberately deferred).** ⚠️ **PREPPED FOR A FABLE DECISION
+  SESSION 2026-09-04 — `docs/FABLE_AUDIT_frontend_architecture.md`.** Do not
+  re-plan this item inline; the brief hands the call to a 7-level decision stack
+  (Level 0 should the front end be hand-written at all → Level 6 code), and its
+  §3 carries the measured facts so the session doesn't re-derive them. **Nothing
+  below is decided until that runs.** Stage 1 (CSS → `web/styles.css`) shipped
   2026-07-29, PR #116; see `DECISIONS.md` that date for the full reasoning.
   Remaining, **re-measured 2026-09-04 (S136): ~6,750 lines of JS in one block
   with 19 section banners** — the structure is already latent, it just isn't
