@@ -130,7 +130,7 @@ git ls-files | grep -vE '\.(geojson|png|csv)$' | xargs wc -l | sort -n | tail -3
 - `session-summary/` — growing every `/handoff`; archive policy above keeps it bounded.
 - `docs/` — largest doc category; fine today, but if any single doc passes ~400 lines
   consider whether it should be sectioned or split.
-- `web/index.html` (**~4,250 lines** as of 2026-07-30, markup + JS) + `web/styles.css`
+- `web/index.html` (**~7,345 lines** as of 2026-09-03, markup + JS) + `web/styles.css`
   (~400 lines). The CSS was extracted 2026-07-29. Use `docs/CODEMAP.md` (rule 5).
   **A further reason not to split it into ES modules:** every verify script calls
   bare globals inside `page.evaluate` (RUNBOOK quirk (i)); module scope is not

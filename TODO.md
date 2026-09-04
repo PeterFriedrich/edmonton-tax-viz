@@ -230,7 +230,10 @@ updated with it. Do not let the open question block shipping.
   carries: **six corrections** to the last round (the 3% rule is not an
   independent cross-check; the year-late Taproot date; the composite-profile
   undercount; Table 8 exists; the adopted-vs-adjusted vintage trap; the endpoint
-  was not a discovery), **six ranked questions**, and the §4 measurement below.
+  was not a discovery), **six ranked questions**, the §4 NRP measurement, and a
+  **§6 correcting the follow-up road-per-dwelling task** — three things already
+  built, four wrong premises (including that this project has **no
+  population-by-hood source at all**), and what measuring it actually showed.
   ⚠️ **Q1 is the only one under a published layer** — what the $600k/km
   "operate and maintain" covers vs the $1,285/km "maintenance", i.e. this item's
   own 2.6× gap. The other five are verification chores (snow denominator; the

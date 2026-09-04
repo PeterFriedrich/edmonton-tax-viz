@@ -1,6 +1,6 @@
 # STACK — what this project is built out of
 
-One page, current as of **2026-08-30**. Answers "what am I working with?" without
+One page, current as of **2026-09-03**. Answers "what am I working with?" without
 reading four other docs. **Versions here are the pinned ones**, not ranges —
 if a number here disagrees with `requirements*.txt` or `web/vendor/README.md`,
 those files are right and this is stale.
@@ -68,7 +68,7 @@ would break the scheduled refresh, and no test would catch it locally.
 
 **No React, no bundler, no npm install to serve the site, no transpile step.**
 
-- `web/index.html` — **~404 KB, ~4,250 lines**, hand-edited, markup + all the JS.
+- `web/index.html` — **~424 KB, ~7,345 lines**, hand-edited, markup + all the JS.
   Navigate it via `docs/CODEMAP.md` (generated symbol index, auto-refreshed by a
   `PostToolUse` hook) rather than scanning.
 - `web/styles.css` — ~52 KB, all CSS (extracted 2026-07-29).
@@ -126,9 +126,9 @@ REQUESTS_CA_BUNDLE=$(.venv/bin/python -m certifi) .venv/bin/python <script>
 
 **Two independent harnesses.**
 
-- **pytest** — 44 test files, **756 tests**, ~11 s. Tiers and what each can see:
+- **pytest** — 45 test files, **784 tests**, ~11 s. Tiers and what each can see:
   `docs/ARCHITECTURE.md` §Testing.
-- **Playwright + Chromium** — `tools/profiling/`, **59 JS scripts** (`verify-*`
+- **Playwright + Chromium** — `tools/profiling/`, **65 JS scripts** (`verify-*`
   assert behaviour, `shot-*` capture screenshots). Node **v20.20.2**,
   `playwright ^1.61.1`.
 
@@ -183,10 +183,10 @@ silent** — check `gh run list`.
 | path | count | what |
 |---|---|---|
 | `src/` | 22 modules | the pipeline; each independently runnable |
-| `scripts/` | 24 | guards, site build, status generation |
-| `tools/` | 16 py + 59 js | audits + the headless harness |
-| `tests/` | 44 files | pytest |
-| `docs/` | ~55 | specs, findings, decisions, runbook |
+| `scripts/` | 25 | guards, site build, status generation |
+| `tools/` | 16 py + 65 js | audits + the headless harness |
+| `tests/` | 45 files | pytest |
+| `docs/` | 61 | specs, findings, decisions, runbook |
 | `web/` | — | the served site |
 | `data/raw/`, `data/processed/` | — | local snapshots; **never `Read` these** (`docs/TOKEN_EFFICIENCY.md`) |
 
