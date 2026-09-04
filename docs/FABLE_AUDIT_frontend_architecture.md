@@ -186,10 +186,14 @@ were added around it. A decomposition inherited from chronology is not obviously
 decomposition by responsibility. Consider instead: shared kernel (state, scales, ramps,
 formatting) vs per-lens layer builders vs chrome/panels vs reference layers.
 
-⚠️ **`state` IS A GOD OBJECT — in-degree 110**, against 34 for `buildLayers` and 16
-for `METRICS`. **Every proposed module boundary crosses it**, so the real question at
-this level is not *which sections split* but **can `state` be decomposed at all** — and
-if it cannot, whether a split that leaves a god-module is worth taking.
+⚠️ **`state` is central — in-degree 110**, against 34 for `buildLayers` and 16 for
+`METRICS`, and **every proposed module boundary crosses it.** ⚠️ **But "god object" was
+the wrong diagnosis, and the question "can `state` be decomposed at all" is the wrong
+question. Both were retired by measurement on 2026-09-04 — see §3a. Do not re-derive
+this and do not open the file for it.** In one sentence: it is mutated in exactly two
+places (controls, boot), **every lens is read-only against it**, and that seam is
+already respected without exception. ⚠️ **This removes an assumed blocker; it does not
+supply an argument FOR splitting.** Level 2 still has to be won on its own.
 
 The graph is generated into `CODEMAP.md` on every edit. ⚠️ It is a **regex reference
 count, not a call graph** (a name in a comment counts; nested symbols attribute to the
@@ -242,11 +246,60 @@ Only if Levels 0–5 leave something to say. Not the point of this session.
 | section banners | **19** | " |
 | indexed symbols · graph edges | 278 · **852** | `CODEMAP.md` |
 | `state` in-degree | **110** (next: `buildLayers` 34) | `CODEMAP.md` |
+| `state` fields · accesses | **32** · 453 (**420 read / 33 write**) | 2026-09-04 — §3a |
+| — sections that WRITE `state` | **2** (controls, boot). **Lenses: 0** | " |
+| `web/index.html` full read | ~429 KB ≈ **107K tokens** | " |
 | **at stage 1 (2026-07-29)** | **3,305 JS lines, 9 banners** | `DECISIONS.md` |
 | `web/styles.css` | ~52 KB (extracted stage 1) | `STACK.md` |
 | profiling scripts naming `index.html` | **8 of 65** — **7** as a served **URL**, **1 reads the source** | 2026-09-04 |
 | Python/CI files reading it | **11** | 2026-09-04 |
 | vendored libs | deck.gl 9.0.38, maplibre-gl 4.7.1 | `STACK.md` §3 |
+
+## 3a. `state`, measured — the Level 3 blocker that isn't one
+
+⚠️ **Take this whole section as given. It is the one thing that would otherwise force you
+to open `web/index.html` (~107K tokens), and it was measured so you don't have to.**
+
+`const state = { … }` — a single object literal, **32 fields**, declared once under the
+`the Lab` banner. **453 field accesses: 420 reads, 33 writes.**
+
+**The 33 writes are the entire mutation surface**, verified by falsification — zero hits
+for `Object.assign(state`, computed-key writes (`state[k] =`), `delete state.`, nested
+array mutation, compound assignment, `++`/`--`, destructuring out of `state`, **or
+`state` being passed as a function argument anywhere.** Readers close over the
+module-scope binding.
+
+They fall into exactly three groups, and there is no fourth:
+
+| group | lines | n | what |
+|---|---|---|---|
+| **control handlers** | 5009–6810 | **22** | plain assignment from a UI event: `state.metric = metric`, `state.view = v`, `state.ramp = name` |
+| **the data load** | 6823 | **1** | `state.data = await fetch(DATA_URL)…` |
+| **capability flags** | 7130–7275 | **10** | pure derivations of `state.data`, computed once at boot: `state.hasFire = state.data.features.some(…)` |
+
+⚠️ **NOT ONE LENS OR LAYER SECTION WRITES TO `state`.** Money, services, uses, infill,
+change, deviation, temporal, the uncertainty band (all three sections) and the reference
+layers are **read-only against it, without exception.** The writer/reader seam a split
+would need already exists in the code — accidentally, but completely.
+
+⚠️ **10 of the 32 fields are not state at all.** The `has*` flags are a memoized
+projection of `state.data`, written once at boot and read-only after. They are a derived
+view, not mutable state, and they are the reason the raw field count looks worse than the
+object is.
+
+Field spread: **12 fields are shared** (≥4 sections, 357 refs — `data` 53, `view` 87,
+`metric` 43, `services` 44, `ramp`, `denom`, `colorAdjust`…), **20 are lens-scoped**
+(≤3 sections, 96 refs — `chgWindow` to the change lens, `devWindow`/`devMetric` to
+development, `svcDriver` to services, `ratioDenom`, `usesPrisms`…).
+
+**What this does and does not settle.** It kills the argument that a split is blocked
+because every seam crosses a mutable god object: the coupling is real but
+**one-directional**, so in ESM terms an `export const state` imported by lens modules
+works without ceremony. ⚠️ **It is not an argument FOR splitting** — a read-mostly config
+object is also perfectly survivable in one file. **Level 2 must still be won on its own
+merits, and "stay as is" remains a legitimate verdict.**
+
+## 3b. Growth
 
 ⚠️ **The JS roughly DOUBLED in five weeks** (3,305 → 6,748) while the banner count went
 9 → 19. **The trajectory is the strongest argument in this brief and the only one that
