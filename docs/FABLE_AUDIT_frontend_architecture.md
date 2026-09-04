@@ -16,9 +16,18 @@ thing (one 7,345-line `web/index.html`) is the *status quo option*, and it compe
 equal terms with the alternatives. Each level therefore needs both a verdict **and**
 what you would do instead.
 
-This session uses Fable 5 usage that counts against plan limits at a higher rate than
+This session uses Fable usage that counts against plan limits at a higher rate than
 Opus — don't spend it re-deriving context that is already written down. §3 below is the
 measured evidence; take it and argue, don't re-measure.
+
+⚠️ **Run this on `claude-fable-5-1` at effort `high`.** Both are deliberate.
+**Fable 5.1** is the same $10/M in, $50/M out as Fable 5 but **$0.25/M cache read
+against Fable 5's $1.00** — and this brief plus its reading list is re-read on every
+turn, which is exactly the cost a cache read governs. **Effort `high`** is the model
+default (cost index 1.0); `xhigh` and `max` cost **1.74×** and **1.91×** and buy deeper
+visible reasoning, which §4 then tells you to suppress. **Do not raise effort to
+compensate for a hard question — raise it only if a level's verdict genuinely cannot be
+reached, and say so.**
 
 ## 0. The one rule that makes this audit different
 

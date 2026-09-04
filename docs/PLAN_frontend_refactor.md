@@ -9,6 +9,14 @@ believed, and what it is *not allowed* to do yet.
 ⚠️ **Do not start refactoring from this document.** It records a pending
 decision, not a plan of record. The one thing to do next is run the brief.
 
+⚠️ **BLOCKED ON ACCOUNT CREDIT, NOT ON PREP (2026-09-04).** The brief, its
+measured facts and the launch recipe (§6 step 1) are finished and verified.
+`claude -p --model claude-fable-5` **and** `--model claude-fable-5-1` both return
+*"You've hit your monthly spend limit"* from this box — an account-level usage
+gate, **not** a per-model entitlement and **not** a stale CLI (2.1.258 carries
+both models in its baked catalog). Top up at `claude.ai/settings/usage`; nothing
+in the repo needs to change first.
+
 ## 1. The question
 
 `web/index.html` is a single hand-edited 7,345-line file holding the entire
@@ -161,8 +169,30 @@ read/write ratio would stop meaning what it means today.
    cd /home/opc/edmonton-tax-viz
    CLAUDE_CODE_SUBAGENT_MODEL=claude-haiku-4-5-20251001 \
    CLAUDE_CODE_SUBAGENT_MODEL_FORCE=1 \
-   claude --model claude-fable-5 --disallowed-tools Agent Task
+   claude --model claude-opus-5 --effort high --disallowed-tools Agent Task
+   #  …read the handoff and orient on Opus, keeping it SHORT, then in-session:
+   #  /model claude-fable-5-1
    ```
+
+   ⚠️ **Launch ONCE and swap models in-session — do not start a second session
+   for the Fable half.** `--disallowed-tools` and both env vars are **launch-time
+   only**; a session started later without them has no subagent cap at all.
+   `/model` and the effort pin both survive the swap.
+
+   ⚠️ **Keep the Opus orientation phase short.** Everything in context when you
+   swap is re-read on every subsequent Fable turn. Fable 5.1's $0.25/M cache read
+   makes that cheap, not free.
+
+   **`claude-fable-5-1`, not `claude-fable-5`** — identical $10/M in and $50/M
+   out, but **$0.25/M cache read against Fable 5's $1.00** (catalog tiers
+   `tier_10_50_cache_read_0_25` vs `tier_10_50`). This session re-reads a ~154 KB
+   brief every turn; the cache read is the rate that matters.
+
+   **`--effort high`, and it is a pin.** `high` is the model default (cost index
+   1.0). `xhigh` is **1.74×** and `max` is **1.91×** — and what they buy is deeper
+   visible reasoning, which the brief's §4 then tells the session to suppress.
+   A launch-time `--effort` **pins** the level so an in-session `/effort` cannot
+   quietly raise it; release it interactively if a level genuinely stalls.
 
    ⚠️ **The env vars are not decoration.** The brief's §4 says *"No subagents —
    single session"*, and until this line existed that rule was **enforced by
