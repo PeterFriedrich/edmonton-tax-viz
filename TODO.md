@@ -102,6 +102,16 @@ Services carries no sparkline — measured, it does.)_
 
 ## Open work
 
+_Last reconciled: 2026-09-04 (S137 — **no lens, pipeline or served-value work.**
+The Fable brief's §1 was rewritten to quote its two cited sections inline instead
+of pointing at `DECISIONS.md` + `TODO.md`, cutting its reading list 733 KB → 149 KB.
+That measurement then surfaced the item below: ⚠️ **`DECISIONS.md` has drifted off
+its own header contract — 13% one-sentence compliance, median row 16× its May
+size** — and `AUDIT_LEDGER.md` has the same drift under a header naming the same
+rule. ⚠️ **My own first two measurements of it were both wrong** (an inflated
+uniqueness count, and a corpus exclusion that could not have failed); both
+corrected and falsified in `FINDINGS_decisions_index_drift.md` §3.)_
+
 _Last reconciled: 2026-09-01 (S129 — **the 50 m grid is now an OPTION, not a
 replacement**, closing S128's scope correction, and the two questions it was
 blocked on were answered by Peter in one line. Three items on this list were
@@ -139,6 +149,40 @@ regenerates `web/data/*` triggers NO deploy at all** — #312 shipped only
 because the refresh was dispatched by hand. ⚠️ `ineligible_points` had drifted
 to its band ceiling **exactly** (84/84) and would have red the next weekly
 publish on its own, unrelated to any of this — re-pinned.)_
+
+### The pointer-style index files drifted off their own contracts (OPEN 2026-09-04)
+
+- [ ] **PETER'S CALL — trim `docs/DECISIONS.md`'s rows, or rewrite its header to
+  describe what the file has become.** Full measurement:
+  `docs/FINDINGS_decisions_index_drift.md`. ⚠️ **Do not start trimming before this
+  is decided** — the two options point opposite ways and only one is reversible
+  cheaply.
+  - **The drift:** the header promises *"one line per locked decision… the
+    one-sentence why… duplicates no rationale"*. One-line and the pointer column
+    both hold (247 rows; only 3 lack a pointer). **The one-sentence rule is at 13%**
+    (median 6 sentences, max 19), and the median row went **138 → 2,219 chars
+    between 2026-05 and 2026-09** — 16×, with **no `DECISIONS.md` line reopening the
+    format**. The Decision column is 88% of the 367 KB file.
+  - ⚠️ **Duplication is real but PARAPHRASED, not verbatim** — median 8-gram overlap
+    with the pointed-to doc is only **4%**, while **98.8% of distinctive facts are
+    recoverable elsewhere in the repo**. That is why four months of review never
+    caught it: there is no wording to match on.
+  - ⚠️ **`docs/AUDIT_LEDGER.md` has the same drift** — median **1,941** chars/row,
+    max 5,416, under a header that says *"Rules (mirror `DECISIONS.md`): … one-line
+    verdict + pointer, never duplicate findings or rationale here."* **Fixing only
+    `DECISIONS.md` treats the instance, not the cause.**
+  - **If the answer is trim:** ~8 values live **only** in `DECISIONS.md` and must be
+    rescued into their owning docs first — `0.06%` (L205), `$14,048.73/acre` +
+    `$234,399` (L223), `258px`/`272px` (L226–227), `$161.3M` (L245),
+    `$88,038,783/yr` (L258), `152/167/319 ms` (L287). A trim touches **12 of 247
+    rows** destructively; the rest is safe.
+  - **If the answer is rewrite the header:** the case is that four months of authors
+    chose the long form every single time, which is evidence the file became a
+    useful decision *log*. ⚠️ **Not measured, and it decides this:** whether the
+    *connective reasoning* is recoverable from the pointed-to docs. §3 measured
+    facts, not arguments.
+  - **Gate:** nothing is blocked on this. It costs money only when a doc-heavy
+    session loads these files — which is what surfaced it.
 
 ### Road cost estimation — the two non-capital figures do not reconcile (OPEN 2026-09-02)
 
