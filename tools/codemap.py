@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Emit docs/CODEMAP.md — a symbol index for the big single-file front end.
 
-Why this exists: `web/index.html` is ~4,000 lines holding the whole app, so a
+Why this exists: `web/index.html` is ~7,300 lines holding the whole app, so a
 session that needs `refreshLegend` has no way to find it except scanning. That
 scanning is the dominant context cost of a front-end session (S79). This gives
 every symbol a line range and a one-line purpose, so you can jump straight to a

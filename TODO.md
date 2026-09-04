@@ -2611,23 +2611,43 @@ same session — see `docs/DECISIONS.md`'s last two rows.)_
 - [ ] **STAGE 2 of the `web/index.html` split — the JS into ES modules (NOT
   started, and deliberately deferred).** Stage 1 (CSS → `web/styles.css`) shipped
   2026-07-29, PR #116; see `DECISIONS.md` that date for the full reasoning.
-  Remaining: ~3,300 lines of JS in one block with **nine existing section
-  banners** (tunables, services lens, uses view, services view, base map,
-  development detail grid, infill lens, reference layers, money view) — the
-  structure is already latent, it just isn't expressed as files. Native ESM
-  (`<script type="module">` + relative imports) needs no bundler and works on
-  Pages.
+  Remaining, **re-measured 2026-09-04 (S136): ~6,750 lines of JS in one block
+  with 19 section banners** — the structure is already latent, it just isn't
+  expressed as files. Native ESM (`<script type="module">` + relative imports)
+  needs no bundler and works on Pages.
+  - ⚠️ **IT DOUBLED IN FIVE WEEKS.** This item was written 2026-07-29 against
+    **3,305 lines / 9 banners**; the file is now **6,748 / 19**, and the whole
+    page is 7,345 lines. **The trajectory is the argument, not the size** — and
+    it is the one number here that came from measurement rather than taste.
+    The five banners added since: change lens, deviation lens, the institutional
+    band (×3 sections), temporal lens, the revenue panel, the budget panel.
   - ⚠️ **Do NOT justify this on token savings — that was measured and is false.**
     See `docs/TOKEN_EFFICIENCY.md` "Files to watch". Justify it on navigability,
     grep precision and blast radius, or not at all.
   - ⚠️ **`DEFAULT_BUILD` must stay in `index.html`** — `scripts/build_site.py`
     regexes it there and hard-fails on anything but exactly one match. If the JS
     moves, that literal stays behind or `build_site.py` moves with it.
-  - ⚠️ **11 verify scripts reference `index.html` directly** — that is where the
-    risk lives, and why this is a separate stage.
+  - ⚠️ **"11 verify scripts reference `index.html` directly" was WRONG, and it
+    pointed the risk at the wrong half of the repo.** Measured 2026-09-04:
+    **8 of 65** profiling scripts name it, and every one names it as a **URL**
+    (`localhost:PORT/index.html`) — the served page, not the source file. An ESM
+    split leaves that URL working, so the JS harness is **mostly not the risk**.
+  - ⚠️ **THE REAL COUPLING IS THE PYTHON/CI SIDE — 11 non-doc files read the
+    single file**: `build_site.py` (the `DEFAULT_BUILD` regex, above),
+    `check_cost_copy.py` and `check_served_columns.py` (both scan the HTML for
+    copy/column gating), `check_doc_citations.py`, `build_reference_layers.py`,
+    `tools/codemap.py`, `tests/test_build_site.py`, `test_codemap.py`,
+    `test_window_labels.py` (WINDOWS literals vs `main.py`), plus `refresh.yml`
+    and `deploy.yml` path triggers. ⚠️ **`tools/codemap.py` is the sharp one** —
+    it parses the banners out of this file to generate `docs/CODEMAP.md`, which
+    a `PostToolUse` hook regenerates and `CLAUDE.md` names as the way to
+    navigate. **Move the JS without moving codemap.py and the project's own
+    navigation aid silently empties.**
   - **Gate: wait until stage 1 has actually helped** (the mobile-chrome work in
     `MOBILE_USABILITY.md` §3 is the first real test of it). Don't do stage 2
-    speculatively.
+    speculatively. ⚠️ **The doubling arguably moots this gate** — the item was
+    deferred when the file was half its current size. Re-read the gate before
+    invoking it as a reason to defer again.
 
 ## Done
 
