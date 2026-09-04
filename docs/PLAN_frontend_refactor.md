@@ -43,6 +43,15 @@ Three reasons, all worth preserving:
 | `docs/SPEC_deployment.md` | The two-build fan-out that exists *because* there is no build step. |
 | `docs/MOBILE_USABILITY.md` §1, §3 | The separation seam, and the work stage 2 was gated behind. |
 
+⚠️ **One input is being sought before step 1 of §6 runs:**
+`/home/opc/frontend_refactor_research_prompt.md` (**outside the repo**) is a
+research prompt for an external web session, asking what established practice
+says about *this class* of decision and — the valuable part — **what inputs a
+decision like this normally needs that we appear to be missing**. It is
+deliberately NOT asking that session to make the call, and it explicitly forbids
+speculation about what a model "prefers", because that is the confabulation this
+channel has produced before. **Grep before applying anything it returns.**
+
 ## 4. What is already measured (do not re-derive)
 
 | fact | value | when |
