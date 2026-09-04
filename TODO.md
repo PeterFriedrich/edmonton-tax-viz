@@ -110,7 +110,10 @@ its own header contract — 13% one-sentence compliance, median row 16× its May
 size** — and `AUDIT_LEDGER.md` has the same drift under a header naming the same
 rule. ⚠️ **My own first two measurements of it were both wrong** (an inflated
 uniqueness count, and a corpus exclusion that could not have failed); both
-corrected and falsified in `FINDINGS_decisions_index_drift.md` §3.)_
+corrected and falsified in `FINDINGS_decisions_index_drift.md` §3. Also
+evaluated a relayed `fable-session` skill draft — **three of its claims about
+this repo were false**; kept as an open item with the eval recorded so it
+needn't be redone.)_
 
 _Last reconciled: 2026-09-01 (S129 — **the 50 m grid is now an OPTION, not a
 replacement**, closing S128's scope correction, and the two questions it was
@@ -149,6 +152,51 @@ regenerates `web/data/*` triggers NO deploy at all** — #312 shipped only
 because the refresh was dispatched by hand. ⚠️ `ineligible_points` had drifted
 to its band ceiling **exactly** (84/84) and would have red the next weekly
 publish on its own, unrelated to any of this — re-pinned.)_
+
+### A `fable-session` credit-discipline skill — evaluated, corrections pending (OPEN 2026-09-04)
+
+- [ ] **Write the corrected `fable-session` skill as a new directory under
+  `.claude/skills/`** (same layout as the two there now). Peter deferred it 2026-09-04
+  ("later"); the **evaluation is done and is recorded here so it needn't be
+  redone**. A relayed draft was checked against the repo — keep its shape, fix
+  the below.
+  - ⚠️ **Three claims were FALSE about this repo** (the relayed-advice pattern
+    again — grep before applying):
+    1. It cites *"the project's 'propose don't do' rule"* for `web/index.html`.
+       **No such rule.** `CLAUDE.md` scopes propose-first to new modules,
+       data-contract/schema changes and CI behaviour, and says *"routine edits
+       don't need a proposal."* The index.html edit ban is
+       `FABLE_AUDIT_frontend_architecture.md` §4 — **brief-specific**.
+    2. It writes plans to `PLAN-<topic>.md`. Ours is **`docs/PLAN_<topic>.md`**.
+    3. Its handoff step says `/clear` with no handoff. `CLAUDE.md` requires
+       **`/handoff` before `/clear`, always**.
+  - ⚠️ **Its Step 1 (regenerate the code graph at session start, verify its
+    timestamp) is DEAD WORK here** — the `PostToolUse` hook already re-runs
+    `tools/codemap.py` on every `Edit`/`Write` to `web/index.html`, and
+    `CODEMAP.md` was verified in sync 2026-09-04. Its *"do not regenerate
+    mid-session"* rule is **unenforceable** — the hook fires regardless.
+    **Keep only the residual real risk: the hook fires on TOOL edits, so branch
+    switches and merges can still drift the graph.**
+  - ⚠️ **The biggest gap: it sizes context by "the big file" and is silent on the
+    doc reading list.** That is backwards for this repo — the Fable brief's cut
+    from **733 KB → 149 KB** never involved `web/index.html` at all; the 80% was
+    two markdown index files (see the item below). **Add a step: measure the
+    total bytes of everything the brief tells Fable to read, before spending.**
+  - ⚠️ **No branch for "the plan is: change nothing."** Its steps 3–4 assume an
+    implementation plan handed to a cheaper model, but
+    `PLAN_frontend_refactor.md` §6 step 2 makes **"stay as is" a legitimate
+    outcome** — as written it would dispatch a Sonnet session to execute a
+    decision that says don't.
+  - **What holds and should be kept as-is:** the outcome-plus-boundaries prompt
+    template (matches how the brief is already written); the subagent-pinning
+    step — **verified live 2026-09-04: `CLAUDE_CODE_SUBAGENT_MODEL` and
+    `..._FORCE` are unset and NO `agents/` dir exists in project or user scope,
+    so nothing is pinned and model inheritance is the real exposure**; and the
+    anti-filler rule.
+  - ⚠️ **Hedge the billing claim consistently.** The draft's Step 5 correctly
+    calls nested per-model attribution *inferred, not confirmed*, then its
+    preamble states it as flat fact. **Unverifiable from here** — the first-party
+    model reference covers API rates, not Pro-plan credit mechanics.
 
 ### The pointer-style index files drifted off their own contracts (OPEN 2026-09-04)
 
