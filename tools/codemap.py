@@ -15,6 +15,7 @@ file is the lookup table that makes it navigable.
     python tools/codemap.py --check    # exit 1 if stale (for CI, if wanted)
 """
 import argparse
+import collections
 import pathlib
 import re
 import sys
@@ -32,6 +33,10 @@ ID_ATTR = re.compile(r'\bid="([\w-]+)"')
 # The file's own section banners: `// --- title -------`. Grouping by them beats
 # one flat 250-row table — you usually know the AREA before the symbol.
 BANNER = re.compile(r"^\s*//\s*-{2,}\s*(?P<title>.+?)\s*-{3,}\s*$")
+# Identifiers NOT preceded by a dot — i.e. references to a symbol, not property
+# access on some object that happens to share the name. Matches the whole body
+# in one pass (see reference_graph).
+IDENT = re.compile(r"(?<![\w$.])([A-Za-z_$][\w$]*)")
 
 
 def leading_comment(lines, i):
@@ -96,6 +101,30 @@ def collect(path):
     return hits, lines
 
 
+def reference_graph(hits, lines):
+    """Who references whom: symbol -> set of other indexed symbols in its body.
+
+    ⚠️ A REGEX COUNT, NOT A CALL GRAPH. It matches an identifier anywhere in a
+    symbol's line range, so a name inside a comment or string counts as an edge,
+    and a symbol nested in another is attributed to the enclosing range. It is
+    good enough to answer "what is central" and "would this seam hold"; it is
+    not ground truth for drawing a final module boundary.
+
+    Exists because the symbol index gives NODES and the questions that actually
+    come up about this file ("what breaks if I move this?") are about EDGES.
+    """
+    names = {h["name"] for h in hits}
+    edges = {}
+    for h in hits:
+        body = "\n".join(lines[h["line"]:h["end"]])   # skip the declaration line
+        # Tokenize the body ONCE and intersect, rather than running one regex
+        # per indexed name over it: the per-name loop is O(symbols x lines) and
+        # took 3.3s here against 40ms for the rest of the tool — too slow for a
+        # PostToolUse hook that fires on every edit to the file.
+        edges[h["name"]] = (set(IDENT.findall(body)) & names) - {h["name"]}
+    return edges
+
+
 def element_ids(lines):
     """Element ids in markup order — the control surface, by name."""
     out = []
@@ -136,6 +165,49 @@ def render():
                   "| symbol | lines | what it does |", "|---|---|---|"]
         why = h["why"].replace("|", "\\|")
         L.append("| `{}` | {}–{} | {} |".format(h["name"], h["line"], h["end"], why))
+    # --- dependency graph ---------------------------------------------------
+    edges = reference_graph(hits, lines)
+    sec = {h["name"]: h["section"] for h in hits}
+    indeg = collections.Counter()
+    for src_name, dsts in edges.items():
+        for d in dsts:
+            indeg[d] += 1
+    total = collections.Counter()
+    internal = collections.Counter()
+    for src_name, dsts in edges.items():
+        for d in dsts:
+            total[sec[src_name]] += 1
+            if sec[d] == sec[src_name]:
+                internal[sec[src_name]] += 1
+
+    L += [
+        "",
+        "## Dependency graph ({} edges)".format(sum(len(v) for v in edges.values())),
+        "",
+        "⚠️ **A regex reference count, not a call graph** — a name in a comment or "
+        "string counts, and a nested symbol is attributed to its enclosing range. "
+        "Use it for *what is central* and *would this seam hold*, never as ground "
+        "truth for a final module boundary.",
+        "",
+        "**Most depended-on** — moving one of these touches everything below it.",
+        "",
+        "| symbol | referenced by | section |",
+        "|---|---|---|",
+    ]
+    for name, count in indeg.most_common(15):
+        L.append("| `{}` | {} | {} |".format(name, count, sec[name]))
+    L += [
+        "",
+        "**Section self-containment** — share of each section's outgoing edges that "
+        "stay inside it. Low means a module cut on this banner would mostly import "
+        "its neighbours.",
+        "",
+        "| section | edges | self-contained |",
+        "|---|---|---|",
+    ]
+    for s in sorted(total, key=lambda s: -(internal[s] / total[s])):
+        L.append("| {} | {} | {:.0f}% |".format(s, total[s],
+                                                100 * internal[s] / total[s]))
     L += [
         "",
         "## Element ids ({}) — the control surface".format(len(ids)),

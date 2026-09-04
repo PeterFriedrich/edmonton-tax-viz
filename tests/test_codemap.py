@@ -76,3 +76,36 @@ def test_committed_map_exists_and_parses():
     assert MAP.exists(), "docs/CODEMAP.md is missing — run: python tools/codemap.py"
     rows = re.findall(r"^\| `\w+` \| \d+–\d+ \|", MAP.read_text(encoding="utf-8"), re.M)
     assert len(rows) > 50, f"docs/CODEMAP.md has only {len(rows)} symbol rows"
+
+
+def test_reference_graph_ignores_property_access():
+    """`foo.state` must NOT count as a reference to the symbol `state`.
+
+    Without the no-dot lookbehind, every `props.state`-shaped access inflates
+    the in-degree of a common name — and in-degree is the number the front-end
+    refactor decision reads to find the shared kernel. A graph that silently
+    counted property access would make an ordinary symbol look load-bearing.
+
+    ⚠️ Asserted from CALLER's edges, not `state`'s own: `reference_graph`
+    strips self-references, so a fixture where `state` is the only symbol
+    cannot fail this no matter what the regex does.
+    """
+    def graph(body_line):
+        hits = [{"name": "state", "line": 1, "section": "s", "why": "", "end": 1},
+                {"name": "caller", "line": 2, "section": "s", "why": "", "end": 3}]
+        lines = ["const state = {};", "const caller = () => {", body_line]
+        return codemap.reference_graph(hits, lines)["caller"]
+
+    assert graph("  return state.view;") == {"state"}, "a real reference was missed"
+    assert graph("  return foo.state;") == set(), "property access counted as a reference"
+
+
+def test_reference_graph_is_not_degenerate_on_the_real_file():
+    """A blind graph (all-empty, or everything referencing everything) is the
+    failure this catches — it would look fine in the rendered table."""
+    hits, lines = codemap.collect(SRC)
+    edges = codemap.reference_graph(hits, lines)
+    total = sum(len(v) for v in edges.values())
+    assert total > 100, f"only {total} edges — the identifier regex went blind"
+    assert total < len(hits) ** 2 / 4, f"{total} edges is implausibly dense"
+    assert any(edges[h["name"]] for h in hits), "no symbol references any other"
