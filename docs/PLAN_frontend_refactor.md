@@ -61,6 +61,9 @@ channel has produced before. **Grep before applying anything it returns.**
 | indexed symbols · edges | 278 · **852** | " |
 | **at stage 1 (2026-07-29)** | **3,305 JS lines, 9 banners** | `DECISIONS.md` |
 | `state` in-degree | **110** (next: `buildLayers` 34, `METRICS` 16) | 2026-09-04 |
+| `state` fields · accesses | **32** · 453 — **420 read / 33 write** | " |
+| sections that WRITE `state` | **2** (controls, boot) — **lenses: 0** | " |
+| full read of `web/index.html` | ~429 KB ≈ **107K tokens** (~$1.07 at Fable in-rate) | " |
 | profiling scripts naming the file | **8 of 65** — **7** as a served **URL**, **1 reads the source** | " |
 | Python/CI files reading the file | **11** | " |
 
@@ -70,15 +73,65 @@ Three findings follow, and each one closes a line of enquiry:
    **This is the strongest argument in the whole discussion and the only one
    that came from measurement rather than taste.** The 2026-07-29 deferral was
    decided when the file was half its current size.
-2. ⚠️ **`state` is a god object at in-degree 110.** Every proposed module
-   boundary crosses it. The real Level 3 question is not "which sections split"
-   but "can `state` be decomposed at all."
+2. ⚠️ **"`state` is a god object" was WRONG — retired by measurement 2026-09-04.**
+   In-degree is 110 and every seam does cross it, but the coupling is
+   **one-directional**: **453 accesses, 420 read / 33 write**, and the 33 writes
+   are only **UI control handlers (22), the data fetch (1), and 10 capability
+   flags derived from `state.data` at boot**. **No lens or layer section writes
+   to it at all** — money, services, uses, infill, change, deviation, temporal,
+   the uncertainty band and the reference layers are read-only against it,
+   without exception. Verified by falsification: zero `Object.assign(state`,
+   computed-key writes, `delete`, nested mutation, compound assignment, or
+   `state` passed as an argument. **The writer/reader seam already exists in the
+   code.** ⚠️ **This removes an argument against splitting; it supplies none
+   for.** A read-mostly config object survives fine in one file too. Full
+   measurement: the brief's **§3a**.
 3. ⚠️ **BANNER-PER-MODULE IS A DEAD END.** The banners mark where someone
    started typing, not concerns: `money view (default)` — the **default lens** —
    has **1 symbol and 29 lines** under its banner, while
    `the citywide budget panel (EXPERIMENTAL)` has **35 symbols and 1,587**.
    Self-containment runs 27–44% for the large sections. Modules cut on these
    lines would mostly import each other.
+
+## 4a. Reproducing the `state` measurement
+
+Kept here rather than in the brief: the brief is loaded on every Fable
+invocation and pays tokens for it, and the session needs the conclusion, not the
+script.
+
+```bash
+cd /home/opc/edmonton-tax-viz
+.venv/bin/python - <<'PY'
+import re, collections
+lines = open('web/index.html').read().split('\n')
+acc = collections.Counter(); writes = []
+for i, l in enumerate(lines, 1):
+    acc.update(re.findall(r'\bstate\.([A-Za-z_$][\w$]*)', l))
+    for m in re.finditer(r'\bstate\.([A-Za-z_$][\w$]*)\s*=(?!=)', l):
+        writes.append((i, m.group(1)))
+print(f'{len(acc)} fields, {sum(acc.values())} accesses, {len(writes)} writes')
+# expect: 32 fields, 453 accesses, 33 writes
+# ⚠️ THE FALSIFICATION IS THE POINT — the write count is only the whole mutation
+# surface if all of these stay at zero. Assert, don't eyeball.
+for name, p in {
+    'Object.assign': r'Object\.assign\(\s*state\b',
+    'computed key':  r'\bstate\[[^\]]+\]\s*=(?!=)',
+    'delete':        r'\bdelete\s+state\.',
+    'nested mutate': r'\bstate\.[\w$.]+\.(push|splice|pop|shift|unshift|sort|reverse)\(',
+    'compound':      r'\bstate\.[\w$]+\s*(\+=|-=|\*=|\|\|=|\?\?=|&&=)',
+    'incr/decr':     r'\bstate\.[\w$]+\s*(\+\+|--)|(\+\+|--)\s*state\.',
+    'passed as arg': r'\(\s*state\s*[,)]',
+    'destructured':  r'\{[^{}]*\}\s*=\s*state\b',
+}.items():
+    n = sum(1 for l in lines if re.search(p, l))
+    print(f'  {name:14} {n}   {"OK" if n == 0 else "*** ESCAPE — recount ***"}')
+PY
+```
+
+⚠️ **If any escape count goes non-zero, §4 finding 2 is void until re-measured.**
+A single `Object.assign(state, …)` or one `f(state)` that mutates its argument
+would turn the one-directional coupling back into a genuine god object, and the
+read/write ratio would stop meaning what it means today.
 
 ## 5. Rules this initiative inherits
 
