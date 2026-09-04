@@ -116,6 +116,17 @@ discrete-vs-integrated. ⚠️ **`docs/DECISIONS.md`'s last five rows are all
 order. Also: a 4x spike-height bug shipped in the 50 m option and was caught by
 Peter on a phone, not by any of the ten green verify scripts.)_
 
+_Last reconciled: 2026-09-04 (S136 — **no lens or pipeline work; the session ran
+on two tracks, and BOTH found a stale-or-wrong claim in our own records rather
+than in the data.** Roads: the NRP publishes per-neighbourhood spend and it had
+been in `capital_budget.csv` since 2026-08-22 — the research round that asked for
+it returned those profiles only as a *trap*. Front end: the Stage 2 item's own
+risk assessment pointed at the wrong half of the repo. ⚠️ **I also shipped a
+defect and caught it the same day** — the NRP cross-check took hood acres from
+the served GeoJSON, which carries a setback + simplification and understates area
+~16%, so every `$/m` was that much too high; `FINDINGS_utility_validation.md` §4
+exists to prevent exactly that. Two out-of-repo briefs are written and unsent.)_
+
 _Last reconciled: 2026-09-02 (S133 — **nothing on this list was worked; the
 session came entirely from Peter finding a spike on the live public site.**
 The `lot_size` item below had its map-defect half CLOSED and DEPLOYED (#312),
