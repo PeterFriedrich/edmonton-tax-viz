@@ -47,11 +47,55 @@ justifications:**
 
 ## 1. Ground yourself first (in this order, then stop reading and start judging)
 
+⚠️ **Items 2 and 3 are quoted in full below — do NOT open `docs/DECISIONS.md` (367 KB)
+or `TODO.md` (214 KB).** Between them they are ~80% of this brief's reading list by
+size, and neither holds more than one section that bears on this audit.
+
 1. `docs/STACK.md` — §3 (frameworkless front end) and **§9 (what this project
    deliberately does NOT use)**. §9 is the decision you are being asked to reopen.
-2. `docs/DECISIONS.md` **2026-07-29** — stage 1 (CSS → `styles.css`), and the recorded
-   reasoning for why **stage 2 was deliberately NOT taken**.
-3. `TODO.md` → *"STAGE 2 of the `web/index.html` split"* — re-measured 2026-09-04.
+2. **`docs/DECISIONS.md` 2026-07-29 — the stage-1 decision, quoted in its load-bearing
+   parts:**
+
+   > `web/index.html`'s CSS is extracted to `web/styles.css` — **stage 1 of splitting the
+   > single file, and the only stage taken**. The file was 83% JS / 10% CSS / 7% markup,
+   > and **the CSS is the one part with zero coupling to the rest**, so it moves at
+   > near-zero risk and directly serves the queued mobile-chrome work (which previously
+   > had to navigate 3,300 lines of deck.gl layer code to reach 400 lines of styles).
+   > **The motivation is navigability and blast radius, NOT tokens** — the file was
+   > already read in grep-located windows of 100–400 lines, not end-to-end, so the split
+   > saves little context and may cost slightly more for the common change that touches
+   > CSS + DOM + handler together (three file opens vs three offsets). **`DEFAULT_BUILD`
+   > must stay in `index.html`**: `scripts/build_site.py` regexes it there and hard-fails
+   > unless it finds exactly one. Both builds work unchanged — the public root copies the
+   > whole `web/` tree, and `/full/` (index.html only) resolves `styles.css` through its
+   > existing `<base href="../" />`. Verified by pixel-identical screenshots vs master at
+   > 1440px and 390px. **Stage 2 — splitting the JS along its section banners into ES
+   > modules — is deliberately NOT taken**; it carries the real risk and should wait
+   > until stage 1 proves it helps.
+
+   ⚠️ **That last sentence's stated risk was measured wrong** — see item 3.
+
+3. **`TODO.md` → "STAGE 2 of the `web/index.html` split" — the constraints §3 does not
+   carry, quoted** (its numbers are all in §3; re-measured 2026-09-04):
+
+   > - **Gate: wait until stage 1 has actually helped** — the mobile-chrome work in
+   >   `MOBILE_USABILITY.md` §3 is the first real test of it. Don't do stage 2
+   >   speculatively. ⚠️ **The doubling arguably moots this gate**: the item was deferred
+   >   when the file was half its current size. **Re-read the gate before invoking it as
+   >   a reason to defer again.**
+   > - ⚠️ **`DEFAULT_BUILD` must stay in `index.html`** — if the JS moves, that literal
+   >   stays behind or `build_site.py` moves with it.
+   > - ⚠️ **"11 verify scripts reference `index.html`" was WRONG, and it pointed the risk
+   >   at the wrong half of the repo.** It is **8 of 65**, and every one names it as a
+   >   served **URL** (`localhost:PORT/index.html`), not the source file — an ESM split
+   >   leaves them working. **The real coupling is 11 Python/CI files**: `build_site.py`,
+   >   `check_cost_copy.py`, `check_served_columns.py`, `check_doc_citations.py`,
+   >   `build_reference_layers.py`, `tools/codemap.py`, `tests/test_build_site.py`,
+   >   `tests/test_codemap.py`, `tests/test_window_labels.py`, plus the `refresh.yml` and
+   >   `deploy.yml` path triggers. ⚠️ **`tools/codemap.py` is the sharp one** — it parses
+   >   the banners out of this file to generate `docs/CODEMAP.md`, the navigation aid
+   >   `CLAUDE.md` points at. **Move the JS without moving `codemap.py` and the project's
+   >   own navigation aid silently empties.**
 4. `docs/CODEMAP.md` — the generated symbol index (278 symbols, 124 element ids)
    **and its `## Dependency graph` section — the evidence for Level 3.**
    ⚠️ **Skim its section list; do NOT read `web/index.html` end to end.** If you need
