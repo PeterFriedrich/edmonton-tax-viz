@@ -2712,8 +2712,15 @@ same session — see `docs/DECISIONS.md`'s last two rows.)_
   global CLAUDE.md, use the Jupyter MCP server tools, not NotebookEdit.
 
 - [ ] **STAGE 2 of the `web/index.html` split — the JS into ES modules (NOT
-  started, and deliberately deferred).** ⚠️ **PREPPED FOR A FABLE DECISION
-  SESSION 2026-09-04 — `docs/FABLE_AUDIT_frontend_architecture.md`.** Do not
+  started, and deliberately deferred).** ⚠️ **PREP IS COMPLETE (S138,
+  2026-09-04) AND THE SESSION IS BLOCKED ONLY ON ACCOUNT CREDIT** — both
+  `claude-fable-5` and `claude-fable-5-1` return *"You've hit your monthly spend
+  limit"* from this box. That is an account usage gate, **not** model entitlement
+  and **not** a stale CLI. **Launch recipe, model and effort are settled in
+  `docs/PLAN_frontend_refactor.md` §6 step 1 — use it verbatim** (launch ONCE on
+  Opus with the guard flags, then `/model claude-fable-5-1` in-session; the flags
+  are launch-time only). Instrument:
+  **`docs/FABLE_AUDIT_frontend_architecture.md`.** Do not
   re-plan this item inline; the brief hands the call to a 7-level decision stack
   (Level 0 should the front end be hand-written at all → Level 6 code), and its
   §3 carries the measured facts so the session doesn't re-derive them. **Nothing
