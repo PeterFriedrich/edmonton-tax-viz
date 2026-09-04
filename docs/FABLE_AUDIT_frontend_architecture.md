@@ -1,6 +1,8 @@
 # Fable 5 Brief — Front-End Architecture DECISION Audit
 
-Read this in full before opening any code. This is **not** the security/architecture
+Read this in full before opening any code. `docs/PLAN_frontend_refactor.md` is the
+standing container for this initiative — status, artifacts, and what is already
+measured; this brief is the instrument it points at. This is **not** the security/architecture
 brief (`docs/FABLE_AUDIT_BRIEF.md`) and not the Development-lens brief
 (`docs/FABLE_AUDIT_development_lens.md`) — separate sessions, separate questions.
 
@@ -50,7 +52,8 @@ justifications:**
 2. `docs/DECISIONS.md` **2026-07-29** — stage 1 (CSS → `styles.css`), and the recorded
    reasoning for why **stage 2 was deliberately NOT taken**.
 3. `TODO.md` → *"STAGE 2 of the `web/index.html` split"* — re-measured 2026-09-04.
-4. `docs/CODEMAP.md` — the generated symbol index (278 symbols, 124 element ids).
+4. `docs/CODEMAP.md` — the generated symbol index (278 symbols, 124 element ids)
+   **and its `## Dependency graph` section — the evidence for Level 3.**
    ⚠️ **Skim its section list; do NOT read `web/index.html` end to end.** If you need
    code, open one named symbol's range.
 5. `docs/security-audit.md` **S1** — why deck.gl and maplibre are vendored rather than
@@ -119,7 +122,13 @@ That is the crux, and a defensible UNSOUND verdict on splitting is a legitimate 
 ### Level 3 — If modules: what are the seams?
 
 The file carries **19 `// --- section ---` banners** and the obvious move is one module
-per banner. Interrogate that.
+per banner. ⚠️ **THAT IS ALREADY MEASURED AND IT DOES NOT WORK — do not spend the
+session rediscovering it.** `docs/CODEMAP.md` → *Dependency graph* has the numbers:
+`money view (default)`, the **default lens**, has **1 indexed symbol and 29 lines**
+under its banner, while `the citywide budget panel (EXPERIMENTAL, full build only)`
+has **35 symbols and 1,587**. Self-containment runs **27–44%** across the large
+sections. The banners mark where someone started typing; the tail after each one
+absorbs everything until the next.
 
 ⚠️ **The banners are in BUILD order, not concern order** — `money view (default)` is
 second-to-last despite being the default lens, because it was written before the others
@@ -127,9 +136,14 @@ were added around it. A decomposition inherited from chronology is not obviously
 decomposition by responsibility. Consider instead: shared kernel (state, scales, ramps,
 formatting) vs per-lens layer builders vs chrome/panels vs reference layers.
 
-Also: what is the actual coupling between sections? `state`, `RAMPS`, `METRICS`,
-`buildLayers()` and `overlay.setProps` are touched from everywhere. A split that leaves
-a god-module is not a split.
+⚠️ **`state` IS A GOD OBJECT — in-degree 110**, against 34 for `buildLayers` and 16
+for `METRICS`. **Every proposed module boundary crosses it**, so the real question at
+this level is not *which sections split* but **can `state` be decomposed at all** — and
+if it cannot, whether a split that leaves a god-module is worth taking.
+
+The graph is generated into `CODEMAP.md` on every edit. ⚠️ It is a **regex reference
+count, not a call graph** (a name in a comment counts; nested symbols attribute to the
+enclosing range) — sound for *what is central*, not for drawing a final boundary.
 
 ### Level 4 — The build/guard coupling: constraint, or the real smell?
 
@@ -173,7 +187,8 @@ Only if Levels 0–5 leave something to say. Not the point of this session.
 | — `<body>` markup | ~575 lines (124 element ids) | " |
 | — one `<script>` block | **~6,748 lines** | " |
 | section banners | **19** | " |
-| indexed symbols | 278 | `CODEMAP.md` |
+| indexed symbols · graph edges | 278 · **852** | `CODEMAP.md` |
+| `state` in-degree | **110** (next: `buildLayers` 34) | `CODEMAP.md` |
 | **at stage 1 (2026-07-29)** | **3,305 JS lines, 9 banners** | `DECISIONS.md` |
 | `web/styles.css` | ~52 KB (extracted stage 1) | `STACK.md` |
 | profiling scripts naming `index.html` | **8 of 65** — all as a served **URL** | 2026-09-04 |

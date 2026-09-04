@@ -376,6 +376,52 @@ Grouped by the file's own `// --- section ---` banners, in file order.
 | `applyService` | 6794–6807 |  |
 | `applySvcDriver` | 6808–7345 |  |
 
+## Dependency graph (852 edges)
+
+⚠️ **A regex reference count, not a call graph** — a name in a comment or string counts, and a nested symbol is attributed to its enclosing range. Use it for *what is central* and *would this seam hold*, never as ground truth for a final module boundary.
+
+**Most depended-on** — moving one of these touches everything below it.
+
+| symbol | referenced by | section |
+|---|---|---|
+| `state` | 110 | the Lab: a container for unfinished lenses |
+| `buildLayers` | 34 | geographic reference layers (all views) |
+| `METRICS` | 16 | tunables |
+| `refreshLegend` | 14 | the citywide budget panel (EXPERIMENTAL, full build only) |
+| `applyView` | 13 | the citywide budget panel (EXPERIMENTAL, full build only) |
+| `SERVICES` | 12 | services view (SPEC_services.md UI generalization, 2026-07-05) |
+| `CELLS` | 10 | tunables |
+| `quantile` | 10 | the Lab: a container for unfinished lenses |
+| `deviationStats` | 9 | the same doubt, at 100 m |
+| `ratioDenom` | 8 | services lens views (SPEC_services.md display architecture) |
+| `ratioScale` | 8 | geographic reference layers (all views) |
+| `devIndustrial` | 8 | loading overlay |
+| `devCol` | 8 | loading overlay |
+| `labelPool` | 8 | geographic reference layers (all views) |
+| `esc` | 8 | money view (default): the classic metric prisms |
+
+**Section self-containment** — share of each section's outgoing edges that stay inside it. Low means a module cut on this banner would mostly import its neighbours.
+
+| section | edges | self-contained |
+|---|---|---|
+| services lens views (SPEC_services.md display architecture) | 1 | 100% |
+| uses view (use-mix, 2026-07-03) | 3 | 67% |
+| deviation lens: revenue per developed acre against peer average | 3 | 67% |
+| Infill lens (SPEC_development.md Lens B) | 26 | 65% |
+| the Lab: a container for unfinished lenses | 100 | 63% |
+| tunables | 10 | 60% |
+| Development 100 m detail grid (layers-panel toggle, 2026-07-15) | 9 | 44% |
+| change lens: how each hood's share of the assessment base moved | 16 | 44% |
+| loading overlay | 44 | 43% |
+| geographic reference layers (all views) | 86 | 42% |
+| Money's revenue panel: where a hood's levy comes from | 186 | 38% |
+| two tiers, answering two different questions | 27 | 33% |
+| the same doubt, at 100 m | 53 | 30% |
+| the citywide budget panel (EXPERIMENTAL, full build only) | 269 | 27% |
+| services view (SPEC_services.md UI generalization, 2026-07-05) | 16 | 0% |
+| the institutional uncertainty band | 2 | 0% |
+| temporal lens (SPEC_temporal.md phase 3) | 1 | 0% |
+
 ## Element ids (124) — the control surface
 
 | id | line |
