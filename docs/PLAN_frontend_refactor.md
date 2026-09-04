@@ -61,7 +61,7 @@ channel has produced before. **Grep before applying anything it returns.**
 | indexed symbols · edges | 278 · **852** | " |
 | **at stage 1 (2026-07-29)** | **3,305 JS lines, 9 banners** | `DECISIONS.md` |
 | `state` in-degree | **110** (next: `buildLayers` 34, `METRICS` 16) | 2026-09-04 |
-| profiling scripts naming the file | **8 of 65** — all as a served **URL** | " |
+| profiling scripts naming the file | **8 of 65** — **7** as a served **URL**, **1 reads the source** | " |
 | Python/CI files reading the file | **11** | " |
 
 Three findings follow, and each one closes a line of enquiry:
@@ -102,7 +102,31 @@ Three findings follow, and each one closes a line of enquiry:
 ## 6. Sequence
 
 1. ☐ **Run the Fable session** against the brief. Output: a verdict per level
-   and one actionable recommendation.
+   and one actionable recommendation. Launch it as:
+
+   ```bash
+   cd /home/opc/edmonton-tax-viz
+   CLAUDE_CODE_SUBAGENT_MODEL=claude-haiku-4-5-20251001 \
+   CLAUDE_CODE_SUBAGENT_MODEL_FORCE=1 \
+   claude --model claude-fable-5 --disallowed-tools Agent Task
+   ```
+
+   ⚠️ **The env vars are not decoration.** The brief's §4 says *"No subagents —
+   single session"*, and until this line existed that rule was **enforced by
+   prose only** — the same failure mode `FINDINGS_decisions_index_drift.md`
+   documents for `DECISIONS.md`'s own header. `--disallowed-tools` is the
+   enforcement; the two env vars are the cap if the tool is named differently in
+   a future build. Verified against the CLI binary (2.1.258) on 2026-09-04:
+   **`CLAUDE_CODE_SUBAGENT_MODEL` only sets a *default*** — an agent
+   definition's `model:` and an explicit per-spawn `model` both override it —
+   whereas **`_FORCE` removes the `model` parameter from the tool schema
+   outright** and ignores agent-definition models. Only the second is a cap.
+   ⚠️ **Do not move these into `.claude/settings.json`**: they would apply to
+   every session in this repo and silently downgrade ordinary Explore/Plan
+   fan-out to haiku. This is per-invocation on purpose.
+   ⚠️ **Nothing is pinned by default** — there is no `.claude/agents/` or
+   `~/.claude/agents/`, and both env vars are unset in the shell, so an
+   unguarded Fable session's subagents would inherit **Fable**.
 2. ☐ **Record the outcome as a `DECISIONS.md` line** — including *"stay as is"*,
    which is a legitimate result and should be logged as one so this is not
    reopened every quarter.
@@ -111,9 +135,15 @@ Three findings follow, and each one closes a line of enquiry:
    could be verified by pixel-identical screenshots; find the equivalent.
 4. ☐ Update `STACK.md` §9 and this file with what was decided.
 
-⚠️ **Note the verification asymmetry before step 3:** the `verify-*.js` scripts
-reference the page by URL, so they keep passing across a split. They can confirm
-a migration did not break the page; **they cannot detect a bad seam.**
+⚠️ **Note the verification asymmetry before step 3:** 7 of the 8 `verify-*.js`
+scripts reference the page by URL, so they keep passing across a split. They can
+confirm a migration did not break the page; **they cannot detect a bad seam.**
+⚠️ **The eighth inverts it.** `tools/profiling/verify-staleness-banner.js` reads
+`web/index.html` off disk and regexes `const STALE_DAYS = (\d+);` out of the
+source, so **it fails on any split that moves that literal** — loudly
+(`process.exit(1)`), but on a *correct* migration. Carry it with the JS. It
+belongs with §7's second open question: a guard asserting on the **text of the
+artifact** rather than on the value.
 
 ## 7. Open questions the brief does not settle
 
