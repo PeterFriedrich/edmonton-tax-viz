@@ -12,7 +12,10 @@ sentence under it is stale — a wrong number presented with full confidence,
 which is this project's characteristic failure mode rather than an unlikely one.
 The road rates are actively expected to move (the published $600k/km lifecycle
 O&M and the $1,285/km operating maintenance figure are ~2.6x apart on what look
-like the same quantity, and that is unresolved), so this is not a hypothetical.
+like the same quantity; measured 2026-09-05, that gap is mostly the $1,285 being
+4.65x below the City's own published roads-maintenance program, and a re-scope is
+Peter's open call — docs/FINDINGS_roadway_maintenance_rate.md), so this is not a
+hypothetical.
 
 ⚠️ THIS GUARD CHECKS PROSE, NOT ARITHMETIC. It cannot tell you a rate is *right*
 — only that the map and the caption are quoting the SAME rate. Sourcing lives in
