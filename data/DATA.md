@@ -1098,7 +1098,9 @@ only** — never label the derived metric "total city cost".
   apart**. ✅ **The cause is the maintenance half:** the City's published FY2017
   `Roadway Maintenance` program (§17, $65,671,000, budgeted separately from
   snow) is **$5,970/km — 4.65× the $1,285/km** the rate is built on;
-  substituting closes 2.6× to **1.29×**, and correcting the vintage to **1.06×**.
+  substituting closes 2.6× to **1.29×**, and correcting the vintage to **~1.1×**
+  (1.06× on a FY2025 endpoint, 1.11× on FY2026 — ⚠️ **1.29× is the figure that
+  needs no escalation assumption; prefer it**).
   ⚠️ **Value UNCHANGED and not naively swappable** — $5,970 is a citywide blend
   including arterials. ⚠️ **Split treatment to resolve: §16 retired this same
   $1,285/km as ~5× too low, while it remains the maintenance half in §13.**

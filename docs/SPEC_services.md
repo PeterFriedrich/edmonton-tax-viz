@@ -697,7 +697,9 @@ roads and are **2.6× apart**.
 The City's published FY2017 `Roadway Maintenance` program ($65,671,000, budgeted
 separately from snow) is **$5,970/km — 4.65× the $1,285/km** this rate is built
 on. Substituting it gives $9.32/m/yr operating (**1.29×**); correcting the 2017
-vintage gives $11.32/m/yr (**1.06×**). **The two sources do not disagree about
+vintage gives $11.32/m/yr (**~1.1×**; 1.06× on a FY2025 endpoint, 1.11× on
+FY2026 — **quote the 1.29× if you want the figure that needs no escalation
+assumption**). **The two sources do not disagree about
 roads.**
 
 ⚠️ **The value has NOT changed and must not be swapped naively** — $5,970/km is

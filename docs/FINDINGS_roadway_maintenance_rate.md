@@ -81,13 +81,31 @@ article states **no** denominator for $1,285 — see §3.)
 | $7,974 (escalated 1.336× to 2025) | | $11.32/m/yr | **1.06×** |
 
 The escalation is the `Parks & Roads Services` branch's own FY2017→FY2025 growth
-($244,856,000 → $327,064,221 = **1.336×**), which is the ~34% `DATA.md` §16
-already records.
+($244,856,000 → $327,064,221 = **1.3357×**), computed from the fetched CSV's own
+rows (58 branch rows in FY2017, 42 in FY2025) — **not recalled**.
+
+⚠️ **Its agreement with `DATA.md` §16's "~34% ($244.9M → $327.1M)" is NOT
+corroboration.** §16 was itself derived from this same portal, so the two are one
+source restated. **This is the same trap as the 3% set-aside cross-check demoted
+2026-09-03** (`roadway_om_renewal.cross_check`) — do not count it twice.
+
+⚠️ **ENDPOINT SENSITIVITY — FY2025 is the SERIES MAXIMUM**, and FY2026 is lower
+($307,325,053). The escalated row above therefore uses the more favourable of the
+two available endpoints. Both are disclosed:
+
+| endpoint | growth | maintenance | operating all-in | gap vs $12 |
+|---|---|---|---|---|
+| **FY2025** (used above; §16's year) | 1.3357× | $7,974/km | $11.32/m/yr | **1.06×** |
+| FY2026 | 1.2551× | $7,493/km | $10.84/m/yr | **1.11×** |
+
+**The conclusion is robust to the choice — both land near 1.1×** — but the
+uncorrected FY2017 comparison (**1.29×**) is the one that needs no escalation
+assumption at all, and is the safer figure to quote.
 
 **The open item's premise — that two sources irreconcilably disagree about the
 cost of maintaining a road — does not survive.** Substituting the published
 program for the narrow rate closes 2.59× to 1.29×, and correcting the 2017
-vintage closes it to 1.06×.
+vintage closes it to ~1.1×.
 
 ## 4. ⚠️ Why this is NOT a licence to substitute $5,970
 
@@ -161,8 +179,13 @@ print(f"{prog/NET:,.0f}/km  = {prog/NET/1285:.2f}x the shipped $1,285")
 print(f"operating all-in -> ${(prog/NET + SNOW)/1000:.2f}/m/yr  vs $12.00 lifecycle O&M")
 
 b = d[d.branch.astype(str).str.contains('Parks', na=False)].groupby('budget_year')['budget'].sum()
-print(f"branch growth 2017->2025: {b.loc[2025]/b.loc[2017]:.3f}x")   # expect 1.336
+print(b)                                                  # ⚠️ FY2025 is the series MAX
+print(f"2017->2025: {b.loc[2025]/b.loc[2017]:.4f}x")      # expect 1.3357
+print(f"2017->2026: {b.loc[2026]/b.loc[2017]:.4f}x")      # expect 1.2551 (endpoint sensitivity)
 ```
+
+⚠️ **Derive the growth from these rows; do not recall it.** It coincides with
+`DATA.md` §16's "~34%", and **that is one source restated, not two agreeing.**
 
 The article sentence in §1 is at `roadway_ops.source.url`; fetch it with a
 `User-Agent` header set.
