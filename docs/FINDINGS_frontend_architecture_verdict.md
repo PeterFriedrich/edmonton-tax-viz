@@ -300,6 +300,9 @@ needs a proposal (CLAUDE.md); it is logged here, not started.
 
 ## 7. Corrections to the brief (so it is not re-quoted wrong)
 
+⚠️ **Correction 1 was itself under-measured, and Condition 2 (§4.3) falls with
+it — see item 1's ⚠️CORRECTED block and item 4. Executed in S141.**
+
 1. **"8 of 65 profiling scripts name `index.html`, 7 as a URL, so the JS harness
    is mostly not the risk"** — the coupling is by **scope**, not by filename.
    **39 of 65 scripts reach page-scope globals inside `page.evaluate`**
@@ -321,12 +324,38 @@ needs a proposal (CLAUDE.md); it is logged here, not started.
    pointer, "RUNBOOK quirk (i)", was dangling; fixed in the same PR.) This is
    the S139 shape again: a fact recorded in one file and absent from the
    instrument built beside it.
+   ⚠️ **CORRECTED (S141, 2026-09-05) — the counts above are wrong, and low.**
+   They were produced by grepping for a *pre-chosen* list of eight names, which
+   can only confirm the list it was given. Re-measured the other way round —
+   take all **377** top-level declarations in the script, then find which of
+   them appear as **free variables** (not locally declared, not parameters)
+   inside `.evaluate` / `.waitForFunction` / `$eval` bodies — the harness reads
+   **122 distinct page globals across 48 of the 65 scripts**, not 8 across 39:
+   `state` (172 bodies), `overlay` (93), `tooltipFor` (33), `map` (29),
+   `applyMetric` (27), `rampColorAt` (18), `openTemporal` (16), `gridData` (15),
+   `SET_ASIDE_COLOR` (12), `applyView` (12) and 112 more. `noHover`, one of the
+   eight, is not read as a free variable in any body. **The measurement lesson
+   is one this project keeps re-learning** (*check where the value can be
+   wrong*): a grep for a candidate list cannot falsify the list. The
+   intersection had to be computed against the full name set.
 2. **"11 Python/CI files read `web/index.html`"** — 7 read it; 2 mention it in
    comments; neither workflow names it (§6).
 3. **"`check_cost_copy.py` and `check_served_columns.py` both scan the HTML"** —
    only the first does. `check_served_columns.py` reads the served GeoJSON and
    the committed baseline; its docstring mentions the HTML to explain *why*
    a dropped column is silent.
+4. ⚠️ **NEW (S141) — Condition 2 of §4.3 is withdrawn: `<script type="module">`
+   was NOT taken, and `"use strict"` shipped instead.** That condition's
+   feasibility rested entirely on correction 1's "eight names cover all 39
+   scripts". At 122 names across 48 scripts the shim is a re-export of a third
+   of the file's top-level surface, at which point module scope isolates nothing
+   and the flip buys only the strict mode a one-line directive already gives.
+   The other half a module would have bought — duplicate top-level declarations
+   becoming a `SyntaxError` — belongs in CI, where the extracted block already
+   parses clean as ESM (`node --check`); that is exactly the read-only checker
+   the 2026-09-05 `DECISIONS.md` row permits. **Condition 1 was taken as
+   written** and did what it predicted: `applySvcDriver` 6808–7345 → 6810–6820,
+   and `applyView`/`refreshLegend` left the budget-panel section.
 
 One thing the brief's §3a *did* get right that this session leaned on without
 re-measuring: the `state` write surface. S139 re-ran the falsification (all
@@ -339,19 +368,21 @@ eight escapes zero) the day before; taken as given.
 well under 30 lines of diff to `web/index.html`: add the three tail banners and
 name the boot function (Condition 1 — regenerate `CODEMAP.md` and confirm
 `applySvcDriver`'s range collapses to ~13 lines and `applyView` moves out of the
-budget section), then flip `<script>` to `<script type="module">` with the
-`window.__app` shim and update the 39 scripts' `page.evaluate` prefixes
-(Condition 2 — run all 65 one at a time; pixel-compare 1440/390 against
-master as stage 1 did). Separately and on its own timetable: the manifest
+budget section), then ~~flip `<script>` to `<script type="module">` with the
+`window.__app` shim and update the 39 scripts' `page.evaluate` prefixes~~
+**⚠️ SUPERSEDED (S141) — add `"use strict";` instead; see §7 item 4 for why the
+module flip was withdrawn** (Condition 2 — run all 65 one at a time). Separately and on its own timetable: the manifest
 finding in §6, and the read-only-checker question in §3, both of which are the
 owner's calls.
 
 ## 9. Not verifiable this session
 
-- Whether the script body has **runtime** strict-mode violations (assignment to
-  an undeclared name). `node --check` proves it parses as a module, not that
-  it runs as one. The 65 verify scripts are the test; running them is the
-  first PR's job, not this session's.
+- ~~Whether the script body has **runtime** strict-mode violations (assignment
+  to an undeclared name).~~ ✅ **RESOLVED (S141): none.** Under `"use strict"`,
+  38 of the 42 `verify-*.js` scripts pass, run one at a time, with no page
+  exception anywhere in the sweep. The other four fail **identically on
+  `origin/master`** — verified by serving master's page from the same server —
+  so they are stale expectations, not regressions. See `TODO.md`.
 - Whether the 24 later-declared-`const` references would actually hit a TDZ
   under some module ordering — only matters if a split happens; not traced.
 - Whether Peter (the human reader) uses `CODEMAP.md` at all, or only models do.
