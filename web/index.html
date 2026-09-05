@@ -391,14 +391,6 @@
           <input type="radio" name="svc-driver" /> colour
         </label>
       </div>
-      <div class="svc" data-service="servicecost">
-        <label title="Each neighbourhood coloured by one modeled city-service cost per acre — road metres × published roadway lifecycle cost + fire-dispatch demand × Fire Rescue budget per dispatch. Roads and fire only, never the total cost of city services; modeled, not a budget line">
-          <input type="checkbox" class="svc-on" /> Service cost (roads+fire) — modeled $/acre
-        </label>
-        <label class="svc-colour" title="This service drives the colour ramp; the others render neutral">
-          <input type="radio" name="svc-driver" /> colour
-        </label>
-      </div>
     </div>
     <span class="hd" id="denom-hd">Denominator</span>
     <div id="denom">
@@ -409,7 +401,6 @@
     <div id="ratio-denom">
       <button data-ratio-denom="roads" class="active" title="Revenue per metre of city-maintained neighbourhood road (collector + local) — the levy-funded network this land's layout entails">Per road metre</button>
       <button data-ratio-denom="fire" title="Revenue per dispatched fire-department emergency event ({{fire}} average) — levy-funded demand; most events are medical calls">Per fire event</button>
-      <button data-ratio-denom="servicecost" title="Property-tax revenue as a multiple of the modeled roads + fire service cost — the two levy-funded services this project can measure, NOT the total cost of city services (police, parks, transit and the rest are not included, so most neighbourhoods read well above 1×)">Per service $</button>
     </div>
   </div>
     <!-- Where a neighbourhood's detail appears. Same "the label IS the state"
@@ -941,35 +932,6 @@
                "calls. Height is linear; colour is log-scaled. Grey flat = " +
                "set-aside land or too few events for a meaningful ratio.",
       },
-      // The V2 composite as a coverage denominator (2026-07-16, SPEC_utilities
-      // decision 3(b)): revenue_per_acre ÷ svc_cost_per_acre is dimensionless —
-      // revenue dollars per modeled service dollar. Treated as MAGNITUDE, not a
-      // break-even ratio (Peter 2026-07-16): the SAME log ramp as the others,
-      // no 1.0 marking. The numerator is FULL property tax but the denominator
-      // is only two services (roads+fire), so most hoods read well above 1× —
-      // the blurb/tooltip say so, never "pays its way". boundFmt shows the
-      // legend bounds as ×-multiples (dimensionless), not dollars.
-      servicecost: {
-        col: "svc_cost_per_acre",
-        floor: 230, // $/acre/yr ≈ the kept subset's p2.5; below this the ratio is an artifact
-        floorText: "modeled service cost below $230 / acre / yr",
-        title: "Edmonton: Revenue vs Modeled Service Cost",
-        legend: "Revenue ÷ modeled roads+fire cost (log colour)",
-        aside: "Set aside / insufficient service base",
-        boundFmt: v => v.toFixed(v < 10 ? 1 : 0) + "×",
-        fmt: v => v.toFixed(v < 10 ? 1 : 0) + "× the modeled roads+fire cost",
-        component: p => `$${Math.round(p.svc_cost_per_acre).toLocaleString()} modeled roads+fire cost / acre / yr`,
-        blurb: "Ghost prisms show municipal property-tax revenue as a multiple " +
-               "of the modeled roads + fire service cost a neighbourhood's land " +
-               "entails — how many dollars of revenue back each dollar of that " +
-               "cost. Roads and fire only: the two levy-funded services this " +
-               "project can measure, NOT the total cost of city services " +
-               "(police, parks, transit and the rest are unmeasured), so most " +
-               "neighbourhoods read well above 1× — this is not a sign the land " +
-               "pays its full way. Height is linear; colour is log-scaled. Grey " +
-               "flat = set-aside land or too little service base for a " +
-               "meaningful ratio.",
-      },
     };
     const ratioDenom = () => RATIO_DENOMS[state.ratioDenom];
     const ratioOf = p => p.revenue_per_acre / p[ratioDenom().col];
@@ -1181,9 +1143,9 @@
                "settled number. Colour is linear. Grey = set-aside natural/" +
                "undeveloped land.",
       },
-      // ⚠️ The SAME METRES as roadscost above on the OTHER basis, ~10.8x apart,
-      // and a COMPONENT of servicecost below (which adds fire). Never summed
-      // with either — see SVC_COST_BASES and city_unit_costs.json "_two_bases".
+      // ⚠️ The SAME METRES as roadscost above on the OTHER basis, ~10.8x apart.
+      // Alternatives, never summed — see SVC_COST_BASES and the
+      // city_unit_costs.json "_two_bases" field.
       roadslife: {
         label: "Roads cost — lifecycle",
         pub: true,
@@ -1241,23 +1203,6 @@
                "covers pedestrian squares, bus stops, LRT platforms and " +
                "staircases, so it does not describe bikeways alone. Colour is " +
                "square-root scaled. Grey = set-aside natural/undeveloped land.",
-      },
-      servicecost: {
-        label: "Service cost",
-        plane: { col: "svc_cost_per_acre", transform: "sqrt" },
-        blurb: "Each neighbourhood is coloured by one modeled cost to the City " +
-               "of serving its land per acre per year: road metres times a " +
-               "published roadway lifecycle cost ($50 per metre per year — " +
-               "operations plus renewal over a 50-year life) plus fire-dispatch " +
-               "demand times the Fire Rescue operating budget shared over " +
-               "citywide dispatches. Roads and fire only — the two levy-funded " +
-               "services this project can measure; police, parks, transit and " +
-               "the rest are not included, so this is not the total cost of city " +
-               "services. Modeled, not a budget line: the fire share allocates a " +
-               "mostly-fixed department budget by where the calls are, so a " +
-               "quiet neighbourhood still costs something to protect. Colour is " +
-               "square-root scaled — cost concentrates in the fire-heavy core. " +
-               "Grey = set-aside natural/undeveloped land.",
       },
     };
 
@@ -1811,7 +1756,7 @@
                     devMetric: "units", // Development-view sub-metric: units | permits per acre
                     devWindow: "long", // Development-view activity window: 3yr (recent) | 5yr | long (WINDOWS.permitsLong, the default)
                     devGrid: true, // Development-view 100 m detail grid (the default; off = the hood choropleth)
-                    services: { roads: true, storm: false, fire: false, water: false, transit: false, bike: false, servicecost: false,
+                    services: { roads: true, storm: false, fire: false, water: false, transit: false, bike: false,
                                 roadscost: false, roadslife: false, transitcost: false, bikecost: false },
                     svcDriver: "roads",
                     hoodMode: "popup", // where a hood's detail appears: popup | panel
@@ -2323,8 +2268,6 @@
     const fmtWater = (v, fixed) => "$" + Math.round(v).toLocaleString() +
       " modeled water+sewer / acre / yr" +
       (fixed != null ? ` (fixed $${Math.round(fixed).toLocaleString()})` : "");
-    const fmtSvcCost = v => "$" + Math.round(v).toLocaleString() +
-      " modeled roads+fire service cost / acre / yr";
     // Stage 2 operating-cost readouts. Each says "operating" in the readout
     // itself: the number is meaningless without its basis, and the tooltip is
     // the one place a reader meets it with no legend or blurb alongside.
@@ -4644,27 +4587,23 @@
     // ⚠️ THERE IS NO SINGLE COST NUMBER HERE AND THERE CANNOT BE. Two separate
     // locked rules forbid one, and a panel that produced a headline "cost" would
     // be arithmetically true and descriptively false:
-    //   1. svc_cost_per_acre is a LIFECYCLE basis ($50/road-m/yr) while the three
-    //      transport costs are OPERATING ($4.635/road-m/yr) — the SAME metres,
-    //      ~10.8x apart (DATA.md §13, the file's own `_two_bases`).
+    //   1. cost_roads_life_per_acre is a LIFECYCLE basis ($50/road-m/yr) while
+    //      the three transport costs are OPERATING ($4.635/road-m/yr) — the SAME
+    //      metres, ~10.8x apart (DATA.md §13, the file's own `_two_bases`).
     //   2. Even within the operating basis the three are deliberately NOT summed
     //      (2026-08-03, see SERVICES above): the total is 91% transit at the
     //      median and buries the per-mode finding.
     // So each cost keeps its own row and its own ratio, and the rows are GROUPED
     // BY BASIS — the incompatibility is in the layout, not only in the caption,
     // because a reader who skips prose can still not add across a heading.
-    // ⚠️ THE LIFECYCLE GROUP'S TWO ROWS ARE NESTED, NOT PEERS. "Roads" is a
-    // COMPONENT of "Roads + fire" — subtracting them is meaningful, adding them
-    // double-counts roads. That is a different hazard from the cross-basis one
-    // above (where the rows are alternatives), so it needs its own words: the
-    // label says "of which", which is the one phrasing a reader cannot read as
-    // an addable line item. The public build only ever sees the roads row, so
-    // this hazard is full-build-only.
+    // ⚠️ The lifecycle group had a second, NESTED "Roads + fire" row until
+    // 2026-09-05, when the roads+fire composite was retired (DECISIONS.md;
+    // docs/FINDINGS_services_cost_lens_verdict.md). The `nested` / "of which"
+    // machinery went with it — do not reintroduce a row whose value CONTAINS
+    // another row's without restoring that wording.
     const SVC_COST_BASES = [
       { basis: "lifecycle", note: "upkeep plus eventual rebuilding, over a 50-year life",
-        rows: [{ col: "cost_roads_life_per_acre", label: "Roads" },
-               { col: "svc_cost_per_acre", label: "Roads + fire", full: true,
-                 nested: "cost_roads_life_per_acre" }] },
+        rows: [{ col: "cost_roads_life_per_acre", label: "Roads" }] },
       { basis: "operating", note: "maintenance and snow clearing only, no capital",
         rows: [{ col: "cost_roads_ops_per_acre", label: "Roads" },
                { col: "cost_transit_ops_per_acre", label: "Transit" },
@@ -4688,13 +4627,20 @@
     // shipped, so an older geojson keeps the pre-2026-08-10 behaviour (card and
     // hover only) instead of advertising a panel that would open empty.
     //
+    // ⚠️ GATED ON THE LIFECYCLE COLUMN, NOT ON A FULL-ONLY ONE. This read
+    // `state.hasSvcCost` until 2026-09-05; that flag came from the retired
+    // roads+fire composite, which the PUBLIC build carried in its data and never
+    // displayed — so retiring the column would have silently killed the Services
+    // panel on the public site, roads rows and all. The gate must name a column
+    // the public build actually shows.
+    //
     // ⚠️ DELIBERATELY NOT FOLDED INTO temporalFor, which was the first attempt
     // and shipped a live regression: gating the ACCESSOR also killed the touch
     // PEEK CARD, and on a phone that card is the only per-hood readout there is
     // (tooltipFor returns null when noHover()), so Services became unreadable —
     // no tooltip AND no card. Panel-ness is a property of the VIEW; having
     // history is a property of the DATA. They must stay separate tests.
-    const hoodPanelLens = () => !serviceLens() || state.hasSvcCost;
+    const hoodPanelLens = () => !serviceLens() || state.hasRoadsLife;
 
     // Decoded series for one hood, or null when the lens can't speak for it
     // (no file, public build, or a name with no history row).
@@ -4948,15 +4894,14 @@
     function renderServiceCost(p) {
       const rev = p.revenue_per_acre;
       const groups = svcCostRows(p);
-      // `nested` rows CONTAIN the row above them, so they are labelled
-      // "of which" rather than left to read as another addable line.
+      // Every row is now a peer of the others in its basis group. The "(incl.
+      // above)" label existed for the one NESTED row (roads inside roads+fire),
+      // retired 2026-09-05 — restore it with any future row that CONTAINS
+      // another, because a contained value read as a line item double-counts.
       const bar = r => {
         const frac = rev > 0 ? p[r.col] / rev : 0;
         const over = frac > 1;
-        const label = r.nested && p[r.nested] != null
-          ? `${SVC_LABEL[r.col]} <span class="muted">(incl. above)</span>`
-          : esc(SVC_LABEL[r.col]);
-        return `<div class="svcrow"><span>${label}</span>`
+        return `<div class="svcrow"><span>${esc(SVC_LABEL[r.col])}</span>`
           + `<i><b style="width:${(Math.min(1, frac) * 100).toFixed(1)}%;`
           + `background:${over ? "#fcd278" : "#55556a"}"></b></i>`
           + `<em${over ? ' class="over"' : ""}>${fmtSvcRatio(frac)}</em></div>`;
@@ -4973,17 +4918,16 @@
       // exists — including within the operating group, where the bases DO match
       // and the temptation to add is strongest.
       // ⚠️ Build-aware because the ROWS differ: the public build shows road cost
-      // on two bases and nothing else, so "the operating three" and the nesting
-      // caution would both describe rows that are not on screen. A note listing
-      // hazards a reader cannot see teaches them to skip the note.
+      // on two bases and nothing else, so "the operating three" would describe
+      // rows that are not on screen. A note listing hazards a reader cannot see
+      // teaches them to skip the note.
       document.getElementById("temporal-note").textContent =
         "Each cost is modelled and shown against this neighbourhood's own levy. "
         + "The two bases measure different things — the same road metre costs "
         + "about eleven times more at the lifecycle rate than to operate — so "
         + "they are never added"
         + (FULL_BUILD
-            ? ", the operating three are not added to each other either, and "
-              + "the roads + fire row already contains the roads row above it. "
+            ? ", and the operating three are not added to each other either. "
             : ". ")
         + "There is no total.";
     }
@@ -5278,7 +5222,6 @@
           water:       [p.water_charge_per_acre, v => fmtWater(v, p.water_fixed_per_acre)],
           transit:     [p.transit_dep_per_acre, fmtTransit],
           bike:        [p.bike_m_per_acre, fmtBike],
-          servicecost: [p.svc_cost_per_acre, fmtSvcCost],
           roadscost:   [p.cost_roads_ops_per_acre, fmtRoadsCost],
           roadslife:   [p.cost_roads_life_per_acre, fmtRoadsLife],
           transitcost: [p.cost_transit_ops_per_acre, fmtTransitCost],
@@ -5374,8 +5317,6 @@
           rows.push(`<span class="muted">${fmtTransit(p.transit_dep_per_acre)}</span>`);
         if (state.services.bike && p.bike_m_per_acre != null)
           rows.push(`<span class="muted">${fmtBike(p.bike_m_per_acre)}</span>`);
-        if (state.services.servicecost && p.svc_cost_per_acre != null)
-          rows.push(`<span class="muted">${fmtSvcCost(p.svc_cost_per_acre)}</span>`);
         if (state.services.roadscost && p.cost_roads_ops_per_acre != null)
           rows.push(`<span class="muted">${fmtRoadsCost(p.cost_roads_ops_per_acre)}</span>`);
         if (state.services.roadslife && p.cost_roads_life_per_acre != null)
@@ -6205,14 +6146,6 @@
             "$" + Math.round(svcScale("cost_bike_ops_per_acre").clamp).toLocaleString() + "+";
           label.textContent = "Set aside — natural / undeveloped land";
           sw.style.background = "rgb(104,108,122)";
-        } else if (state.svcDriver === "servicecost") {
-          document.getElementById("legend-label").textContent =
-            "Modeled roads + fire cost per acre / yr (sqrt colour)";
-          document.getElementById("legend-min").textContent = "$0";
-          document.getElementById("legend-max").textContent =
-            "$" + Math.round(svcScale("svc_cost_per_acre").clamp).toLocaleString() + "+";
-          label.textContent = "Set aside — natural / undeveloped land";
-          sw.style.background = "rgb(104,108,122)";
         } else {
           document.getElementById("legend-label").textContent = "Road metres per acre";
           document.getElementById("legend-min").textContent = "0 m";
@@ -6821,7 +6754,9 @@
       // when the data offers a real choice beyond the roads default — i.e. it
       // carries the fire column and/or the service-cost composite. Roads-only
       // data offers no choice, so the control stays hidden and roads applies.
-      const ratioDenomShow = v === "ratio" && (state.hasFire || state.hasSvcCost);
+      // The Ratio picker opens on fire alone now: its third denominator was the
+      // retired roads+fire composite (2026-09-05), leaving road metre | fire event.
+      const ratioDenomShow = v === "ratio" && state.hasFire;
       document.getElementById("ratio-denom-hd").style.display = ratioDenomShow ? "block" : "none";
       document.getElementById("ratio-denom").style.display = ratioDenomShow ? "flex" : "none";
       // The development sub-metric + window + spike pickers (mode-aware:
@@ -7279,18 +7214,15 @@
           state.services[svc] = false;
         }
       });
-      // Same guard for the modeled service-cost composite (svc_cost_per_acre —
-      // pipeline 2026-07-15, ships on the next refresh after the metric PR). A
-      // data file from before that refresh keeps the view and just hides this
-      // row + the matching Ratio denominator until the column lands. The flag
-      // also opens the Ratio picker (applyView): a data file with fire OR
-      // service-cost has a real denominator choice to offer.
-      state.hasSvcCost = state.data.features.some(f => f.properties.svc_cost_per_acre != null);
-      if (!state.hasSvcCost) {
-        document.querySelector('#services .svc[data-service="servicecost"]').style.display = "none";
-        state.services.servicecost = false;
-        document.querySelector('#ratio-denom button[data-ratio-denom="servicecost"]').style.display = "none";
-      }
+      // Whether the SERVICES HOOD PANEL can speak (hoodPanelLens). The loop
+      // above already hides the row itself; this flag is what decides the panel
+      // exists at all, so it names the lifecycle column — the one cost row the
+      // PUBLIC build actually shows. It read the retired roads+fire composite
+      // until 2026-09-05, a column the public build carried but never
+      // displayed, so retiring that column would have taken the public Services
+      // panel with it.
+      state.hasRoadsLife =
+        state.data.features.some(f => f.properties.cost_roads_life_per_acre != null);
       // A group caption with every row under it hidden is a heading over
       // nothing — hide it too. Walks siblings to the next caption, so it stays
       // correct however the rows are grouped.

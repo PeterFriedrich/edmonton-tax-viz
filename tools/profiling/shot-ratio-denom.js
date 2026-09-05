@@ -1,8 +1,8 @@
-// One-off: screenshot the Ratio view under each denominator (roads | fire |
-// servicecost), prisms at 60% so the prism colours are visible (default 5%
-// ghosts are near-invisible by design). node shot-ratio-denom.js <url> <out-prefix>
-// → <out-prefix>-roads.png, <out-prefix>-fire.png[, <out-prefix>-servicecost.png]
-// (servicecost skipped when the data file has no svc_cost_per_acre column)
+// One-off: screenshot the Ratio view under each denominator (roads | fire),
+// prisms at 60% so the prism colours are visible (default 5% ghosts are
+// near-invisible by design). node shot-ratio-denom.js <url> <out-prefix>
+// → <out-prefix>-roads.png, <out-prefix>-fire.png
+// (the servicecost denominator was retired 2026-09-05)
 const { chromium } = require('playwright');
 const [url, prefix] = process.argv.slice(2);
 (async () => {
@@ -16,9 +16,7 @@ const [url, prefix] = process.argv.slice(2);
   await page.waitForTimeout(4000);
   await page.$eval('#views button[data-view="ratio"]', b => b.click());
   await page.waitForTimeout(5000);
-  const hasSvcCost = await page.evaluate(() =>
-    state.data.features.some(f => f.properties.svc_cost_per_acre != null));
-  const denoms = ['roads', 'fire', ...(hasSvcCost ? ['servicecost'] : [])];
+  const denoms = ['roads', 'fire'];
   for (const d of denoms) {
     await page.$eval(`#ratio-denom button[data-ratio-denom="${d}"]`, b => b.click());
     await page.evaluate(() => {
