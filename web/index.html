@@ -4601,13 +4601,22 @@
     // docs/FINDINGS_services_cost_lens_verdict.md). The `nested` / "of which"
     // machinery went with it — do not reintroduce a row whose value CONTAINS
     // another row's without restoring that wording.
+    // ⚠️ EVERY ROW NAMES ITS SERVICE, and the build filter reads that service's
+    // `pub` tag — the panel does NOT get its own publish list. It had one until
+    // 2026-09-05 (a per-row `full: true`), and only the retired roads+fire row
+    // ever set it, so the PUBLIC panel printed modelled Transit and Bike cost
+    // for a hood while the public Services list hid both of those services. That
+    // is precisely the "published in one place and hidden in another" failure
+    // the `pub` tag was introduced to make unrepresentable, and it contradicted
+    // the 2026-07-28 lock (public Services = roads supply + road cost on both
+    // bases, nothing else). Add a row here and it inherits the right build.
     const SVC_COST_BASES = [
       { basis: "lifecycle", note: "upkeep plus eventual rebuilding, over a 50-year life",
-        rows: [{ col: "cost_roads_life_per_acre", label: "Roads" }] },
+        rows: [{ svc: "roadslife", col: "cost_roads_life_per_acre", label: "Roads" }] },
       { basis: "operating", note: "maintenance and snow clearing only, no capital",
-        rows: [{ col: "cost_roads_ops_per_acre", label: "Roads" },
-               { col: "cost_transit_ops_per_acre", label: "Transit" },
-               { col: "cost_bike_ops_per_acre", label: "Bike" }] },
+        rows: [{ svc: "roadscost", col: "cost_roads_ops_per_acre", label: "Roads" },
+               { svc: "transitcost", col: "cost_transit_ops_per_acre", label: "Transit" },
+               { svc: "bikecost", col: "cost_bike_ops_per_acre", label: "Bike" }] },
     ];
 
     // Lens test and per-hood test kept separate, the same split revenueLens /
@@ -4617,7 +4626,7 @@
     const serviceLens = () => state.view === "services";
     const svcCostRows = p => SVC_COST_BASES
       .map(g => ({ ...g, rows: g.rows.filter(
-        r => p[r.col] != null && (FULL_BUILD || !r.full)) }))
+        r => p[r.col] != null && (FULL_BUILD || SERVICES[r.svc].pub)) }))
       .filter(g => g.rows.length);
     const servicePanelFor = p => serviceLens() && !!p
       && p.revenue_per_acre != null && svcCostRows(p).length > 0;

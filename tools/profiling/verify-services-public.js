@@ -21,7 +21,9 @@ const [url] = process.argv.slice(2);
 // do passes under any bug that changes both halves together.
 const PUBLIC_SVC = ['roads', 'roadscost', 'roadslife'];
 const FULL_ONLY_SVC = ['storm', 'fire', 'water', 'transit', 'bike',
-                       'transitcost', 'bikecost', 'servicecost'];
+                       'transitcost', 'bikecost'];
+// Retired 2026-09-05, so it is in NEITHER list — absent from both builds.
+const RETIRED_SVC = ['servicecost'];
 
 let pass = 0, fail = 0;
 function check(name, ok, detail) {
@@ -79,6 +81,31 @@ function check(name, ok, detail) {
         await page.evaluate(s => state.services[s] === false, svc));
     }
   }
+
+  // 3b. The retired composite is in NEITHER build (2026-09-05). ⚠️ UI only —
+  //     the served geojson keeps svc_cost_per_acre until the next refresh, so a
+  //     column check here would be red for a week against a correct build; the
+  //     column's removal is pinned in tests/test_join_and_calculate.py.
+  for (const svc of RETIRED_SVC) {
+    check(`${svc} row absent from BOTH builds`,
+      await page.evaluate(s => !document.querySelector(`#services .svc[data-service="${s}"]`), svc));
+    check(`${svc} absent from SERVICES`,
+      await page.evaluate(s => !(s in SERVICES), svc));
+  }
+
+  // 3c. THE PANEL OBEYS THE SAME SPLIT AS THE ROWS. It did not until
+  //     2026-09-05: the panel carried its own per-row publish flag, so the
+  //     PUBLIC hood panel printed modelled Transit and Bike cost while the
+  //     public Services list hid both services — published in one place and
+  //     hidden in another, which is the failure the `pub` tag exists to make
+  //     unrepresentable. Derived from the same lists as the rows above.
+  const panelSvcs = await page.evaluate(() => {
+    const p = state.data.features.find(f => f.properties.revenue_per_acre != null).properties;
+    return svcCostRows(p).flatMap(g => g.rows.map(r => r.svc));
+  });
+  check('panel rows match the build split',
+    panelSvcs.every(s => fullBuild || PUBLIC_SVC.includes(s)),
+    JSON.stringify(panelSvcs));
 
   // 4. A full-only service must not be driving the ramp on the public build —
   //    the radio is the second way in, and clearing the checkbox alone would
@@ -156,15 +183,24 @@ function check(name, ok, detail) {
   check('panel shows a lifecycle basis group', /lifecycle/i.test(panel.html),
     panel.html.slice(0, 160));
   check('panel says there is no total', /no total/i.test(panel.note));
+  // ⚠️ NO ROW MAY CONTAIN ANOTHER, in either build. Until 2026-09-05 the
+  // lifecycle group had a nested "Roads + fire" row labelled "(incl. above)",
+  // with a matching clause in the note; both went with the retired composite.
+  // These assert the wording is gone with the row — a stale "(incl. above)" on
+  // a peer row would tell the reader not to add two figures that DO add, and a
+  // stale note clause would name a row that is not on screen.
+  check('no nested-row label in either build', !/incl\. above/i.test(panel.html),
+    panel.html.slice(0, 200));
+  check('note does not warn about a nesting that no longer exists',
+    !/already contains/i.test(panel.note), panel.note);
+  check('no roads+fire row in the panel', !/fire/i.test(panel.html),
+    panel.html.slice(0, 200));
   if (fullBuild) {
-    check('full: the roads+fire row is marked as containing the row above',
-      /incl\. above/i.test(panel.html));
-    check('full: note warns about the nesting', /already contains/i.test(panel.note));
+    check('full: note still warns the operating three are not added',
+      /operating three/i.test(panel.note), panel.note);
   } else {
-    check('public: no roads+fire row in the panel', !/fire/i.test(panel.html),
-      panel.html.slice(0, 200));
     check('public: note does not cite rows that are absent',
-      !/operating three|already contains/i.test(panel.note), panel.note);
+      !/operating three/i.test(panel.note), panel.note);
   }
 
   // 9. Attribution + the modelled caveat. Both are REQUIRED on the public build
