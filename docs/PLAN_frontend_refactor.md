@@ -1,6 +1,8 @@
 # PLAN — Front-End Refactor (the `web/index.html` question)
 
-**Status as of 2026-09-04: NOTHING IS DECIDED.** This document is the container
+**Status as of 2026-09-05: THE BRIEF HAS RUN (S140) — verdict is STAY ONE FILE, pending Peter's three calls.** Output: `docs/FINDINGS_frontend_architecture_verdict.md`. Steps 2–4 of §6 are what remain.
+
+**Previous status (2026-09-04): NOTHING IS DECIDED.** This document is the container
 for an initiative whose central decision has been deliberately handed to a Fable
 session rather than made inline. It exists so that the next session — human or
 model — can tell in one read what is settled, what is measured, what is merely
@@ -9,13 +11,7 @@ believed, and what it is *not allowed* to do yet.
 ⚠️ **Do not start refactoring from this document.** It records a pending
 decision, not a plan of record. The one thing to do next is run the brief.
 
-⚠️ **BLOCKED ON ACCOUNT CREDIT, NOT ON PREP (2026-09-04).** The brief, its
-measured facts and the launch recipe (§6 step 1) are finished and verified.
-`claude -p --model claude-fable-5` **and** `--model claude-fable-5-1` both return
-*"You've hit your monthly spend limit"* from this box — an account-level usage
-gate, **not** a per-model entitlement and **not** a stale CLI (2.1.258 carries
-both models in its baked catalog). Top up at `claude.ai/settings/usage`; nothing
-in the repo needs to change first.
+✅ **Unblocked 2026-09-05 (S139) and executed 2026-09-05 (S140).** The credit-gate note that stood here is history; see `session-summary/2026-09-05-s139.md` if it matters.
 
 ## 1. The question
 
@@ -162,7 +158,7 @@ read/write ratio would stop meaning what it means today.
 
 ## 6. Sequence
 
-1. ☐ **Run the Fable session** against the brief. Output: a verdict per level
+1. ✅ **DONE 2026-09-05 (S140)** — verdicts in `docs/FINDINGS_frontend_architecture_verdict.md`; the brief's §3 was corrected in three places (its §7). Launch recipe kept below for the record. ~~**Run the Fable session** against the brief.~~ Output: a verdict per level
    and one actionable recommendation. Launch it as:
 
    ```bash

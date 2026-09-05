@@ -2733,7 +2733,7 @@ same session — see `docs/DECISIONS.md`'s last two rows.)_
   global CLAUDE.md, use the Jupyter MCP server tools, not NotebookEdit.
 
 - [ ] **STAGE 2 of the `web/index.html` split — the JS into ES modules (NOT
-  started, and deliberately deferred).** ⚠️ **PREP IS COMPLETE (S138,
+  started, and deliberately deferred).** ⚠️ **THE BRIEF RAN 2026-09-05 (S140) — VERDICT: STAY ONE FILE (CONDITIONAL), see `docs/FINDINGS_frontend_architecture_verdict.md`.** Lens↔lens coupling is 3% of the codemap's edges; the two measured defects (the codemap's tail attribution, sloppy mode) are fixed in place by three tail banners + a named `boot()` + `<script type="module">` with a `window.__app` harness shim. ⚠️ Corrected: **39 of 65** harness scripts (not 8) reach page globals and break on module scope; **7** Python files read the source (not 11). **Awaiting Peter's three calls (brief §4 a/b/c) before this item closes or converts** — do not act on the sub-bullets below as a plan; the credit-gate text is history. ⚠️ **PREP IS COMPLETE (S138,
   2026-09-04) AND THE SESSION IS BLOCKED ONLY ON ACCOUNT CREDIT** — both
   `claude-fable-5` and `claude-fable-5-1` return *"You've hit your monthly spend
   limit"* from this box. That is an account usage gate, **not** model entitlement
