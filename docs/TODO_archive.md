@@ -8,6 +8,9 @@ Items are verbatim as they were closed, newest-moved first in the order they app
 
 ---
 
+- [x] **Front-end fix-in-place PR — the two defects the S140 architecture audit measured, fixed without a split.** ✅ **DONE S141 (2026-09-05)** — banners + named `boot()` shipped as specified; the module flip was **withdrawn and replaced by `"use strict";`** because its premise was falsified (`DECISIONS.md` 2026-09-05 ×2, `docs/FINDINGS_frontend_architecture_verdict.md` §7 items 1 ⚠️CORRECTED and 4). Verified: 786 python tests, `check_doc_citations` + `check_cost_copy`, and **38 of 42 `verify-*.js` green run one at a time, no page exception in the sweep**. The two carry-overs below are unchanged and still open.
+
+
 - [x] **CLOSED 2026-09-05 — STAGE 2 of the `web/index.html` split: WON'T DO. The file stays one file (Peter, S140, on the architecture brief's verdict); re-open triggers in `DECISIONS.md` 2026-09-05.** Original item head: STAGE 2 of the `web/index.html` split — the JS into ES modules (NOT started, and deliberately deferred). ⚠️ **PREP IS COMPLETE (S138,
   2026-09-04) AND THE SESSION IS BLOCKED ONLY ON ACCOUNT CREDIT** — both
   `claude-fable-5` and `claude-fable-5-1` return *"You've hit your monthly spend

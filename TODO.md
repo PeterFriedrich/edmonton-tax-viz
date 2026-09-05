@@ -156,6 +156,7 @@ publish on its own, unrelated to any of this — re-pinned.)_
 ### A `fable-session` credit-discipline skill — evaluated, corrections pending (OPEN 2026-09-04)
 
 
+
 - [ ] **Write the corrected `fable-session` skill as a new directory under
   `.claude/skills/`** (same layout as the two there now). Peter deferred it 2026-09-04
   ("later"); the **evaluation is done and is recorded here so it needn't be
@@ -2739,14 +2740,23 @@ same session — see `docs/DECISIONS.md`'s last two rows.)_
   - **Why it matters beyond tidiness:** it is the **third re-open trigger** on the `DECISIONS.md` 2026-09-05 "stay one file" decision — per-lens ES modules fall out of it for free. It is the only route by which the split becomes correct.
   - ⚠️ **Step 5 (controls) is shared desktop+mobile DOM** — read `docs/CONTROLS_MATRIX.md` first. ⚠️ **No user-visible payoff by design**; if the appetite isn't there, log the NO so this is not re-proposed every time a lens edit touches five files, and fold the 28-branch count into the Lab comment as the corrected checklist.
 
-- [ ] **Front-end fix-in-place PR — the two defects the S140 architecture audit measured, fixed without a split** (`docs/FINDINGS_frontend_architecture_verdict.md` §4.3/§8; decided `DECISIONS.md` 2026-09-05). One small PR to `web/index.html`, <30 lines:
-  - **Truthful tail banners:** add `// --- controls: wiring ---` before the `addEventListener` cluster, `// --- boot ---` at `map.on("load"` (~line 6818), `// --- capability flags ---` (~7130); name the boot `async function boot()` + `map.on("load", boot)`. Regenerate `CODEMAP.md` and confirm `applySvcDriver` collapses to ~13 lines and `applyView`/`refreshLegend` leave the budget-panel section. ⚠️ Today the codemap lists `applySvcDriver` as 6808–7345 and files the dispatchers under the EXPERIMENTAL budget banner.
-  - **`<script>` → `<script type="module">`** — the body parses unchanged as ESM (`node --check`, S140); this buys strict mode + duplicate-declaration errors. ⚠️ **Needs `window.__app = { state, applyView, buildLayers, METRICS, SERVICES, CHROME_IDS, FULL_BUILD, noHover }` first** — **39 of 65** `tools/profiling` scripts reach those as page globals inside `page.evaluate` (337 sites, no shared helper) and all break on module scope. Update their prefixes; run all 65 ONE AT A TIME; pixel-compare 1440/390 vs master as stage 1 did. `DEFAULT_BUILD`/`BUILD_STAMP` stay put; `build_site.py` untouched. Parse ≠ run: strict-mode runtime violations are what the harness run is for.
-  - **Separately, propose (don't start) the manifest change** (findings §6, data contract): serve `WINDOWS`, `CELLS` and the unit-cost values so the page stops carrying copies and `test_window_labels.py` / `verify-staleness-banner.js` stop regexing the source.
-  - **Separately, the read-only JS checker in `tests.yml`** is allowed (`DECISIONS.md` 2026-09-05) but unscheduled — `tsc --checkJs --noEmit` or eslint, in `tools/profiling/` where `node_modules` already lives; nothing may write to `_site/`.
+- [ ] **Four `verify-*.js` scripts are RED on master and have been since 2026-09-02 — nothing noticed, because nothing runs them.** ⚠️ **Found incidentally by the S141 sweep, then confirmed by serving `origin/master`'s page from the same server: all four fail identically there, so they are stale expectations, not regressions.** None is a page exception. This is the front end's only test suite and it is run by hand, so a stale expectation is indistinguishable from a healthy suite until someone happens to sweep it.
+  - `verify-deviation.js` (last edited 2026-08-25) — *"the public `#views` row is otherwise unchanged"* still expects `money,development`. **Outrun by `0f52b6d` "Services returns to the public build" (2026-09-02)**; the row is now `money,services,development`. ⚠️ **Check the expectation against `DECISIONS.md` 2026-09-02 before editing it — the test may be the thing that is right about `?build=public`.**
+  - `verify-glass-cell.js` (2026-09-01) and `verify-grid-loading.js` — pinned cell counts `34671`/`93201`, now `34662`/`93180`. **Outrun by `4661590` "Auto-refresh map data (2026-09-02)"**, which rewrote `value_grid.json` and `value_grid_50.json`. ⚠️ **Same cry-wolf-by-construction shape `verify-smoke.js`'s own header warns about** (a check pinned to a live data value that a legitimate refresh moves) — the fix is probably to derive the counts from the served file, not to re-pin them.
+  - `verify-reference-layer.js` — *"CHROME_IDS covers every `.panel` in the document"* reports `["budget","budget-pod"]` uncovered. **Not data drift** — the budget panel was added without extending `CHROME_IDS`, so this one is a real, if experimental-only, gap. Trace what reads `CHROME_IDS` (the label sweep's chrome boxes) before deciding whether the list or the panel is wrong.
+  - **The standing question this raises, and the reason it is one item not four:** the 65 scripts gate nothing. `refresh.yml` runs `verify-smoke.js` only. Decide whether some subset belongs on a schedule — otherwise the next stale expectation is also found by accident, months later.
+
+- [ ] **Two carry-overs from the S140 architecture audit, neither started.**
+  - **Propose (don't start) the manifest change** (findings §6, data contract): serve `WINDOWS`, `CELLS` and the unit-cost values so the page stops carrying copies and `test_window_labels.py` / `verify-staleness-banner.js` stop regexing the source.
+  - **The read-only JS checker in `tests.yml`** is allowed (`DECISIONS.md` 2026-09-05) but unscheduled. ⚠️ **S141 sharpened what it is FOR:** with the module flip withdrawn, parsing the extracted `<script>` block as ESM (`node --check`) is now the **only** thing that would catch a duplicate top-level declaration — 377 names, currently all distinct. It is a ~5-line step, needs no `node_modules`, and writes nothing to `_site/`.
+
 ## Done
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
+
+- [x] **Front-end fix-in-place PR — the two defects the S140 architecture audit measured, fixed without a split.** — DONE 2026-09-05 · `docs/TODO_archive.md`
+
+
 
 - [x] **CLOSED 2026-09-05 — STAGE 2 of the `web/index.html` split: WON'T DO. The file stays one file (Peter, S140, on the architecture brief's verdict); re-op** — CLOSED 2026-09-05 · `docs/TODO_archive.md`
 

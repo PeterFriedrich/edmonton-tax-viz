@@ -592,6 +592,13 @@
   </div>
 
   <script>
+    // Strict mode rather than `<script type="module">`. A module would also
+    // catch duplicate top-level declarations, but module scope hides page
+    // globals from tools/profiling, which reads 122 of them as free variables
+    // inside page.evaluate across 48 of its 65 scripts — re-exporting that many
+    // is not a seam. The duplicate-declaration half is CI's job: the extracted
+    // block parses as ESM. See docs/FINDINGS_frontend_architecture_verdict.md §7.
+    "use strict";
     // --- tunables -----------------------------------------------------------
     const DATA_URL = "./data/neighbourhood_value_per_acre.geojson";
     // Status manifest (provenance + optional maintenance banner). no-store so a
@@ -5855,6 +5862,8 @@
     // covers every path that changes it, including ones added later.
     new ResizeObserver(syncMillRates).observe(document.getElementById("title"));
 
+    // --- control appliers + the view/legend dispatchers ----------------------
+
     function applyMetric(metric) {
       if (!METRICS[metric]) return;
       if (isRevenue(metric)) lastRevCut = metric;
@@ -6815,7 +6824,11 @@
       refreshLegend();
     }
 
-    map.on("load", async () => {
+    // --- boot ----------------------------------------------------------------
+
+    // Everything that needs the map surface: fetch the data, mount the deck.gl
+    // overlay, wire every control, then hide what this data file cannot render.
+    async function boot() {
       try {
         // The status check is what makes the overlay's error path reachable on
         // a 404: a missing DATA_URL served an HTML error page would otherwise
@@ -6851,6 +6864,7 @@
       // first makes it true.
       syncPinnedPanel();
 
+      // --- controls: wiring --------------------------------------------------
       document.getElementById("coloradj-btn").addEventListener("click", applyColorAdjust);
       // Row 1 picks the QUANTITY: "revenue" restores the cut you last had (Total
       // on load), "value" leaves the revenue family entirely. Row 2 picks the
@@ -7091,6 +7105,7 @@
       map.on("moveend", () => {
         if (labelPool().length) overlay.setProps({ layers: buildLayers() });
       });
+      // --- capability flags: what this data file can render ------------------
       // A data file from before the services lens can't drive the services/
       // ratio views — hide those buttons rather than offer views that can't
       // render. A file with roads but no stormwater column (pre-2026-07-05)
@@ -7339,7 +7354,8 @@
           renderBudgetContext(s.budget_context);
         })
         .catch(() => {});
-    });
+    }
+    map.on("load", boot);
   </script>
 </body>
 </html>
