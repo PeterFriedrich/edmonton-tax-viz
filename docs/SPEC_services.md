@@ -687,15 +687,33 @@ which would double the number; the rate is calibrated to local residential
 roads, so collectors are understated; and it is neither actual spend nor a
 funding gap.
 
-⚠️ **OPEN — the two non-capital road figures do not reconcile.** The published
-lifecycle O&M ($600,000/km over 50 yr = **$12/m/yr**) and the operating
-maintenance rate (**$4.635/m/yr**) both claim to be annual non-capital spend on
-neighbourhood roads and are **2.6× apart**. Neither has been traced to what it
-actually covers. Until that resolves, the operating layer's blurb says outright
-that it is the low end of a range. Sourcing questions are queued for a research
-pass (see `docs/ANALYSIS_BACKLOG.md`); the highest-value answer would replace
-the uniform rate entirely with the Neighbourhood Renewal Program's actual
-per-neighbourhood spend, if it is published.
+⚠️ **OPEN — the two non-capital road figures do not reconcile, but the gap is
+now mostly EXPLAINED (2026-09-05).** The published lifecycle O&M ($600,000/km
+over 50 yr = **$12/m/yr**) and the operating maintenance rate
+(**$4.635/m/yr**) both claim to be annual non-capital spend on neighbourhood
+roads and are **2.6× apart**.
+
+✅ **The maintenance half is the cause** — `docs/FINDINGS_roadway_maintenance_rate.md`.
+The City's published FY2017 `Roadway Maintenance` program ($65,671,000, budgeted
+separately from snow) is **$5,970/km — 4.65× the $1,285/km** this rate is built
+on. Substituting it gives $9.32/m/yr operating (**1.29×**); correcting the 2017
+vintage gives $11.32/m/yr (**1.06×**). **The two sources do not disagree about
+roads.**
+
+⚠️ **The value has NOT changed and must not be swapped naively** — $5,970/km is
+a citywide blend **including arterials** and would overstate the collector+local
+metres here, the same mismatch snow already carries. **What $1,285 measures is
+still unknown.** ⚠️ **Note the split treatment to resolve:** `DATA.md` §16
+retired this same $1,285/km as ~5× too low on 2026-08-04, while it remains the
+maintenance half here. Peter's call — re-scope with an arterial caveat, or keep
+the value and document the operating basis as a **floor** (which is what the
+evidence now supports, symmetric with the lifecycle basis).
+
+Until that resolves, the operating layer's blurb says outright that it is the low
+end of a range. The highest-value answer would replace the uniform rate entirely
+with the Neighbourhood Renewal Program's actual per-neighbourhood spend — that
+source **does** exist (`FINDINGS_nrp_reconstruction_cross_check.md`), but covers
+only ~24 of 406 hoods and bundles sub-assets, so it is not yet usable as a rate.
 
 ## Roads returns to the public build (2026-09-02)
 

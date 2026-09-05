@@ -1091,12 +1091,20 @@ only** — never label the derived metric "total city cost".
   run with no fire data (which `svc_cost_per_acre`, being all-or-nothing, does
   not). Median $1,629/acre/yr vs $151 operating; 9 hoods where roads alone
   exceed the levy, vs 1 on the operating basis.
-- ⚠️ **OPEN: the two non-capital road figures do not reconcile.** The lifecycle
-  O&M half ($600,000/km ÷ 50 yr = **$12/m/yr**) and the operating maintenance
-  rate (**$4.635/m/yr**) both claim to be annual non-capital spend on
-  neighbourhood roads and sit **2.6× apart**; neither has been traced to what it
-  actually covers. The operating blurb says outright it is the low end of a
-  range. See `docs/SPEC_services.md` "Roads cost — lifecycle".
+- ⚠️ **OPEN: the two non-capital road figures do not reconcile — but the gap is
+  now mostly EXPLAINED (2026-09-05).** The lifecycle O&M half ($600,000/km ÷ 50
+  yr = **$12/m/yr**) and the operating maintenance rate (**$4.635/m/yr**) both
+  claim to be annual non-capital spend on neighbourhood roads and sit **2.6×
+  apart**. ✅ **The cause is the maintenance half:** the City's published FY2017
+  `Roadway Maintenance` program (§17, $65,671,000, budgeted separately from
+  snow) is **$5,970/km — 4.65× the $1,285/km** the rate is built on;
+  substituting closes 2.6× to **1.29×**, and correcting the vintage to **1.06×**.
+  ⚠️ **Value UNCHANGED and not naively swappable** — $5,970 is a citywide blend
+  including arterials. ⚠️ **Split treatment to resolve: §16 retired this same
+  $1,285/km as ~5× too low, while it remains the maintenance half in §13.**
+  Full record: `docs/FINDINGS_roadway_maintenance_rate.md`. The operating blurb
+  says outright it is the low end of a range. See also `docs/SPEC_services.md`
+  "Roads cost — lifecycle".
 - **Consumed (2026-07-15)** by `join_and_calculate.load_unit_costs` (validates
   loudly — a malformed hand edit fails the pipeline) → the `unit_costs` arg
   computes `svc_cost_per_acre` (in `SLIM_COLUMNS`). The per-event divisor is

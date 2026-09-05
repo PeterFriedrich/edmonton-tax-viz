@@ -232,7 +232,21 @@ publish on its own, unrelated to any of this — re-pinned.)_
   - **Gate:** nothing is blocked on this. It costs money only when a doc-heavy
     session loads these files — which is what surfaced it.
 
-### Road cost estimation — the two non-capital figures do not reconcile (OPEN 2026-09-02)
+### Road cost estimation — the two non-capital figures do not reconcile (OPEN 2026-09-02, mostly EXPLAINED 2026-09-05)
+
+⚠️ **PETER'S CALL NOW OPEN — the same $1,285/km was REJECTED in one place and
+RETAINED in another.** `DATA.md` §16 retired `$1,285/km × ~11,000 km = $14.135M`
+as ~5× too low on 2026-08-04 (it had been live on a public page); the same
+$1,285/km is still the maintenance half of the shipped `roadway_ops` rate.
+Measured 2026-09-05 against the City's published program —
+`docs/FINDINGS_roadway_maintenance_rate.md`. **Two ways out, and the split
+should not stand either way:**
+- **Re-scope** `roadway_ops` on the published program, with an explicit
+  arterial-blend caveat. ⚠️ Changes a served column and every blurb quoting
+  $4.635 — **data contract change, needs a proposal first.**
+- **Keep the value, document the operating basis as a FLOOR** — symmetric with
+  the lifecycle basis, which the NRP cross-check already established as one.
+**No rate, column or value was changed.**
 
 ⚠️ **This is a live caveat on a PUBLIC layer, not a backlog nicety.** The
 published lifecycle O&M half (**$600,000/km ÷ 50 yr = $12/m/yr**) and the
@@ -253,6 +267,12 @@ item at the end of this section. The two that would change the most:
 1. **What does Edmonton's $600,000/km "operate and maintain" actually
    include** — snow? lighting? sweeping, signs, signals? — and what is in the
    narrower $1,285/km "maintenance" figure.
+   ✅ **HALF-ANSWERED 2026-09-05** (`docs/FINDINGS_roadway_maintenance_rate.md`):
+   the City's own FY2017 `Roadway Maintenance` program is **$5,970/km, 4.65× the
+   $1,285**, so the $1,285 is far too narrow to be total road maintenance —
+   which closes the 2.6× gap to **1.29×** (1.06× vintage-corrected). ⚠️ **What
+   $1,285 DOES measure is still unknown** — the source gives it no scope and no
+   decomposition of the program reproduces it. The $600,000/km side is untouched.
 2. **Is there a better source class entirely?** A uniform per-km rate cannot
    tell a 1960s neighbourhood from a 2015 one, which is precisely the
    distinction a revenue-vs-cost map exists to show. If the **Neighbourhood
