@@ -1,6 +1,6 @@
 # PLAN — Front-End Refactor (the `web/index.html` question)
 
-**Status as of 2026-09-05: THE BRIEF HAS RUN (S140) — verdict is STAY ONE FILE, pending Peter's three calls.** Output: `docs/FINDINGS_frontend_architecture_verdict.md`. Steps 2–4 of §6 are what remain.
+**Status as of 2026-09-05: THE BRIEF HAS RUN (S140) — verdict is STAY ONE FILE, and Peter made the three calls the same session (checker allowed; the standard gap is static analysis; decision logged).** Output: `docs/FINDINGS_frontend_architecture_verdict.md`. §6 is complete; what remains is the first PR in the findings doc §8 (a `TODO.md` item).
 
 **Previous status (2026-09-04): NOTHING IS DECIDED.** This document is the container
 for an initiative whose central decision has been deliberately handed to a Fable
@@ -206,13 +206,13 @@ read/write ratio would stop meaning what it means today.
    ⚠️ **Nothing is pinned by default** — there is no `.claude/agents/` or
    `~/.claude/agents/`, and both env vars are unset in the shell, so an
    unguarded Fable session's subagents would inherit **Fable**.
-2. ☐ **Record the outcome as a `DECISIONS.md` line** — including *"stay as is"*,
+2. ✅ **DONE 2026-09-05** — two rows (stay one file; no-build rule re-scoped). ~~**Record the outcome as a `DECISIONS.md` line**~~ — including *"stay as is"*,
    which is a legitimate result and should be logged as one so this is not
    reopened every quarter.
-3. ☐ **Only then** plan execution: seams, order, and the smallest first slice
+3. ✅ **DONE 2026-09-05** — no split, so the "first slice" is the in-place fix (findings §4.3/§8: tail banners + `boot()`, then `type="module"` + shim). ~~**Only then** plan execution:~~ seams, order, and the smallest first slice
    that proves the seam. Stage 1 was chosen because it had zero coupling and
    could be verified by pixel-identical screenshots; find the equivalent.
-4. ☐ Update `STACK.md` §9 and this file with what was decided.
+4. ✅ **DONE 2026-09-05** — `STACK.md` §9 and this file. ~~Update `STACK.md` §9 and this file with what was decided.~~
 
 ⚠️ **Note the verification asymmetry before step 3:** 7 of the 8 `verify-*.js`
 scripts reference the page by URL, so they keep passing across a split. They can

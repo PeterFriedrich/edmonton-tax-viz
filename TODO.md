@@ -155,6 +155,7 @@ publish on its own, unrelated to any of this — re-pinned.)_
 
 ### A `fable-session` credit-discipline skill — evaluated, corrections pending (OPEN 2026-09-04)
 
+
 - [ ] **Write the corrected `fable-session` skill as a new directory under
   `.claude/skills/`** (same layout as the two there now). Peter deferred it 2026-09-04
   ("later"); the **evaluation is done and is recorded here so it needn't be
@@ -2732,72 +2733,18 @@ same session — see `docs/DECISIONS.md`'s last two rows.)_
   per-neighbourhood exempt share). Notebooks go in `notebooks/exploration/`; per
   global CLAUDE.md, use the Jupyter MCP server tools, not NotebookEdit.
 
-- [ ] **STAGE 2 of the `web/index.html` split — the JS into ES modules (NOT
-  started, and deliberately deferred).** ⚠️ **THE BRIEF RAN 2026-09-05 (S140) — VERDICT: STAY ONE FILE (CONDITIONAL), see `docs/FINDINGS_frontend_architecture_verdict.md`.** Lens↔lens coupling is 3% of the codemap's edges; the two measured defects (the codemap's tail attribution, sloppy mode) are fixed in place by three tail banners + a named `boot()` + `<script type="module">` with a `window.__app` harness shim. ⚠️ Corrected: **39 of 65** harness scripts (not 8) reach page globals and break on module scope; **7** Python files read the source (not 11). **Awaiting Peter's three calls (brief §4 a/b/c) before this item closes or converts** — do not act on the sub-bullets below as a plan; the credit-gate text is history. ⚠️ **PREP IS COMPLETE (S138,
-  2026-09-04) AND THE SESSION IS BLOCKED ONLY ON ACCOUNT CREDIT** — both
-  `claude-fable-5` and `claude-fable-5-1` return *"You've hit your monthly spend
-  limit"* from this box. That is an account usage gate, **not** model entitlement
-  and **not** a stale CLI. **Launch recipe, model and effort are settled in
-  `docs/PLAN_frontend_refactor.md` §6 step 1 — use it verbatim** (launch ONCE on
-  Opus with the guard flags, then `/model claude-fable-5-1` in-session; the flags
-  are launch-time only). Instrument:
-  **`docs/FABLE_AUDIT_frontend_architecture.md`.** Do not
-  re-plan this item inline; the brief hands the call to a 7-level decision stack
-  (Level 0 should the front end be hand-written at all → Level 6 code), and its
-  §3 carries the measured facts so the session doesn't re-derive them. **Nothing
-  below is decided until that runs.** Stage 1 (CSS → `web/styles.css`) shipped
-  2026-07-29, PR #116; see `DECISIONS.md` that date for the full reasoning.
-  Remaining, **re-measured 2026-09-04 (S136): ~6,750 lines of JS in one block
-  with 19 section banners** — the structure is already latent, it just isn't
-  expressed as files. Native ESM (`<script type="module">` + relative imports)
-  needs no bundler and works on Pages.
-  - ⚠️ **IT DOUBLED IN FIVE WEEKS.** This item was written 2026-07-29 against
-    **3,305 lines / 9 banners**; the file is now **6,748 / 19**, and the whole
-    page is 7,345 lines. **The trajectory is the argument, not the size** — and
-    it is the one number here that came from measurement rather than taste.
-    The five banners added since: change lens, deviation lens, the institutional
-    band (×3 sections), temporal lens, the revenue panel, the budget panel.
-  - ⚠️ **Do NOT justify this on token savings — that was measured and is false.**
-    See `docs/TOKEN_EFFICIENCY.md` "Files to watch". Justify it on navigability,
-    grep precision and blast radius, or not at all.
-  - ⚠️ **`DEFAULT_BUILD` must stay in `index.html`** — `scripts/build_site.py`
-    regexes it there and hard-fails on anything but exactly one match. If the JS
-    moves, that literal stays behind or `build_site.py` moves with it.
-  - ⚠️ **"11 verify scripts reference `index.html` directly" was WRONG, and it
-    pointed the risk at the wrong half of the repo.** Measured 2026-09-04:
-    **8 of 65** profiling scripts name it, **7 as a served URL**
-    (`localhost:PORT/index.html`) — the page, not the source — so an ESM split
-    leaves those working and the JS harness is **mostly not the risk**.
-    ⚠️ **The eighth is the exception, and "every one is a URL" was wrong
-    (re-measured 2026-09-04, S138): `tools/profiling/verify-staleness-banner.js`
-    reads `web/index.html` OFF DISK** (`fs.readFileSync`, line 66) and regexes
-    `const STALE_DAYS = (\d+);` out of the source — a literal declared at the
-    `tunables` banner, **inside the `<script>` block that a stage-2 split
-    moves**. It fails loudly (`process.exit(1)`, "not found"), not silently, but
-    it is **the one JS-side file a split must carry**, and it is a second
-    instance of the same pattern as `check_cost_copy.py` /
-    `check_served_columns.py`: **a guard asserting on the text of the artifact
-    rather than on the value.**
-  - ⚠️ **THE REAL COUPLING IS THE PYTHON/CI SIDE — 11 non-doc files read the
-    single file**: `build_site.py` (the `DEFAULT_BUILD` regex, above),
-    `check_cost_copy.py` and `check_served_columns.py` (both scan the HTML for
-    copy/column gating), `check_doc_citations.py`, `build_reference_layers.py`,
-    `tools/codemap.py`, `tests/test_build_site.py`, `test_codemap.py`,
-    `test_window_labels.py` (WINDOWS literals vs `main.py`), plus `refresh.yml`
-    and `deploy.yml` path triggers. ⚠️ **`tools/codemap.py` is the sharp one** —
-    it parses the banners out of this file to generate `docs/CODEMAP.md`, which
-    a `PostToolUse` hook regenerates and `CLAUDE.md` names as the way to
-    navigate. **Move the JS without moving codemap.py and the project's own
-    navigation aid silently empties.**
-  - **Gate: wait until stage 1 has actually helped** (the mobile-chrome work in
-    `MOBILE_USABILITY.md` §3 is the first real test of it). Don't do stage 2
-    speculatively. ⚠️ **The doubling arguably moots this gate** — the item was
-    deferred when the file was half its current size. Re-read the gate before
-    invoking it as a reason to defer again.
-
+- [ ] **Front-end fix-in-place PR — the two defects the S140 architecture audit measured, fixed without a split** (`docs/FINDINGS_frontend_architecture_verdict.md` §4.3/§8; decided `DECISIONS.md` 2026-09-05). One small PR to `web/index.html`, <30 lines:
+  - **Truthful tail banners:** add `// --- controls: wiring ---` before the `addEventListener` cluster, `// --- boot ---` at `map.on("load"` (~line 6818), `// --- capability flags ---` (~7130); name the boot `async function boot()` + `map.on("load", boot)`. Regenerate `CODEMAP.md` and confirm `applySvcDriver` collapses to ~13 lines and `applyView`/`refreshLegend` leave the budget-panel section. ⚠️ Today the codemap lists `applySvcDriver` as 6808–7345 and files the dispatchers under the EXPERIMENTAL budget banner.
+  - **`<script>` → `<script type="module">`** — the body parses unchanged as ESM (`node --check`, S140); this buys strict mode + duplicate-declaration errors. ⚠️ **Needs `window.__app = { state, applyView, buildLayers, METRICS, SERVICES, CHROME_IDS, FULL_BUILD, noHover }` first** — **39 of 65** `tools/profiling` scripts reach those as page globals inside `page.evaluate` (337 sites, no shared helper) and all break on module scope. Update their prefixes; run all 65 ONE AT A TIME; pixel-compare 1440/390 vs master as stage 1 did. `DEFAULT_BUILD`/`BUILD_STAMP` stay put; `build_site.py` untouched. Parse ≠ run: strict-mode runtime violations are what the harness run is for.
+  - **Separately, propose (don't start) the manifest change** (findings §6, data contract): serve `WINDOWS`, `CELLS` and the unit-cost values so the page stops carrying copies and `test_window_labels.py` / `verify-staleness-banner.js` stop regexing the source.
+  - **Separately, the read-only JS checker in `tests.yml`** is allowed (`DECISIONS.md` 2026-09-05) but unscheduled — `tsc --checkJs --noEmit` or eslint, in `tools/profiling/` where `node_modules` already lives; nothing may write to `_site/`.
 ## Done
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
+
+- [x] **CLOSED 2026-09-05 — STAGE 2 of the `web/index.html` split: WON'T DO. The file stays one file (Peter, S140, on the architecture brief's verdict); re-op** — CLOSED 2026-09-05 · `docs/TODO_archive.md`
+
+
 
 - [x] **CLOSED 2026-09-03 — "why is value leaving the lot-acre denominator?" It ISN'T, and the trend that opened this item was ONE STEP WITH AN INVENTED MIDPOINT.** The premise was `ineligible_points` 56→58→60 and `ineligible_value_frac` 0.00517→0.00575→0.00633 "monotonically upward on every independent data change, no reversal". ⚠️ **The middle observation was never observed** — it matched no CI run, and all five of its anchors were exact midpoints of the rows either side; it sat as a pinned row in `OBSERVED_IN_CI` until now. The 08-01→08-05 window holds **six** runs and only **two** distinct data states, the step falling between the 05:17 and 11:19 runs of 08-03. ⚠️ **And it reverted on 08-10** and has been flat for 8 independent pulls since (~0.3%); `ineligible_value_frac` sits at **49.4% of its band**, not the 83% two handoffs headlined. ⚠️ **The 83%/85 readings came from a stale local `data/raw/`** (a 2026-07-06 property-info file beside a 2026-08-09 roll) — CI read 58 the same day — and that phantom had already widened a band 84→127.5 in the guard's own *dangerous* direction. Re-pinned to 29–87 on the real reading; `check_value_anchors.py` now prints each raw file's vintage, warns on stale/mismatched pulls, and **refuses `--write-baseline`** on them; a new test pins every band's *centre* to a reading CI actually logged (falsified against the phantom band first). — 2026-09-03 · `docs/TODO_archive.md`
 

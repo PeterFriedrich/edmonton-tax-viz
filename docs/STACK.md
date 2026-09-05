@@ -1,6 +1,6 @@
 # STACK — what this project is built out of
 
-One page, current as of **2026-09-03**. Answers "what am I working with?" without
+One page, current as of **2026-09-05**. Answers "what am I working with?" without
 reading four other docs. **Versions here are the pinned ones**, not ranges —
 if a number here disagrees with `requirements*.txt` or `web/vendor/README.md`,
 those files are right and this is stale.
@@ -198,8 +198,14 @@ Recorded so nobody proposes them as improvements without reopening a decision.
 
 - **No GIS desktop software** (QGIS/ArcGIS) — Python-only, by project rule.
 - **No database** — static files are the interface.
-- **No front-end framework or bundler** — one hand-edited HTML file. A Stage-2
-  ES-module split is an *open, unstarted* TODO item, not a plan of record.
+- **No front-end framework, and no JS toolchain in the publish path** — one
+  hand-edited HTML file. ⚠️ **The ES-module split was DECIDED AGAINST on
+  2026-09-05** (`DECISIONS.md`; `docs/FINDINGS_frontend_architecture_verdict.md`):
+  the file stays one file, with three re-open triggers — do not re-propose it on
+  size alone. `scripts/build_site.py` is a build step (stdlib, no JS); a bundler
+  is what the rule forbids.
 - **No CDN at runtime** — see §3.
-- **No CSS preprocessor**, no TypeScript, no linter config in CI beyond the
-  tests.
+- **No CSS preprocessor**, no TypeScript. A **read-only** JS checker in
+  `tests.yml` (`tsc --checkJs --noEmit` or eslint — emits nothing to `_site/`)
+  is **allowed since 2026-09-05** (`DECISIONS.md`) but **not yet installed**;
+  S1 constrains what executes on the page, not what reads the source.

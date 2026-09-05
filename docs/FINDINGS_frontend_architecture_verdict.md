@@ -3,8 +3,9 @@
 **Run 2026-09-05 (S140) against `docs/FABLE_AUDIT_frontend_architecture.md`.**
 Container: `docs/PLAN_frontend_refactor.md`. This is the *output* of that brief:
 one verdict per level, the sharpest argument, what to do instead, and the
-evidence that would change it. Nothing in `web/index.html`, `STACK.md` or
-`DECISIONS.md` was edited — findings only, per the brief's §4.
+evidence that would change it. `web/index.html` was not edited. `STACK.md` §9 and
+`DECISIONS.md` were — but only *after* Peter made the three owner calls (§10),
+not as part of the audit itself, per the brief's §4.
 
 Every number below was either taken from the brief's §3/§3a as instructed, or
 measured this session with the command shown. The brief was wrong in three
@@ -348,6 +349,8 @@ owner's calls.
   §4.1 item 1 is still the defect.
 
 ## 10. `DECISIONS.md` lines to reopen / add (by date; proposed, not made)
+
+✅ **Made the same session (S140) after Peter's three calls: the checker is allowed, the standard gap is static analysis, and the decision is logged** — two `DECISIONS.md` rows dated 2026-09-05 and `STACK.md` §9 updated. The list below is what was proposed and what landed.
 
 - **2026-07-29** — its closing sentence, *"Stage 2 … should wait until stage 1
   proves it helps."* The gate has been **passed**, not mooted: the
