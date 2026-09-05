@@ -270,7 +270,8 @@ item at the end of this section. The two that would change the most:
    ✅ **HALF-ANSWERED 2026-09-05** (`docs/FINDINGS_roadway_maintenance_rate.md`):
    the City's own FY2017 `Roadway Maintenance` program is **$5,970/km, 4.65× the
    $1,285**, so the $1,285 is far too narrow to be total road maintenance —
-   which closes the 2.6× gap to **1.29×** (1.06× vintage-corrected). ⚠️ **What
+   which closes the 2.6× gap to **1.29×** (~1.1× vintage-corrected; 1.29× is the
+   figure that needs no escalation assumption). ⚠️ **What
    $1,285 DOES measure is still unknown** — the source gives it no scope and no
    decomposition of the program reproduces it. The $600,000/km side is untouched.
 2. **Is there a better source class entirely?** A uniform per-km rate cannot
