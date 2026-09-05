@@ -167,8 +167,15 @@ stays as-is in the Services lens, or leaving it and stating the limit.
 
 ## 3. ⚠️ ONE BASIS, AND THIS IS THE TRAP THAT WILL EAT THIS LENS
 
-`svc_cost_per_acre` is **lifecycle** ($50/road-m/yr). `cost_roads_ops_per_acre`
-is **operating** ($4.635/road-m/yr). **The same metres, ~10.8× apart.**
+`cost_roads_life_per_acre` is **lifecycle** ($50/road-m/yr).
+`cost_roads_ops_per_acre` is **operating** ($4.635/road-m/yr). **The same metres,
+~10.8× apart.** ⚠️ **This lens can no longer reach for `svc_cost_per_acre` —
+retired 2026-09-05** as 88.6% fire-allocation variance
+(`docs/FINDINGS_services_cost_lens_verdict.md`). The cost side available to a
+break-even lens is now **roads only, on two bases**, which makes the "cost side
+is radically incomplete" caveat §8 already carries *larger*, not smaller: fire
+is no longer even nominally represented. Building this lens on the roads columns
+alone is a decision to be taken deliberately, not by default.
 `city_unit_costs.json`'s own `_two_bases` field exists to keep them apart, and
 `DECISIONS.md` 2026-08-02/03 refuses a single headline cost number precisely
 because summing across bases is *arithmetically true and descriptively false*.

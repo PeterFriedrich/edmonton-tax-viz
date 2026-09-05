@@ -1080,17 +1080,15 @@ only** — never label the derived metric "total city cost".
   Services line. The V2 fire term divides this by the pipeline's OWN citywide
   kept-event total (don't hardcode dispatches), so the unit cost's denominator
   matches the `fire_events_per_acre` numerator.
-- ⚠️ **`cost_roads_life_per_acre` (2026-09-02) is the SAME $50/m/yr roads term
-  published on its own**, so a roads-only lens can show a lifecycle figure
-  without the fire allocation. It is **NESTED INSIDE `svc_cost_per_acre`**
-  (= this + the fire term): subtracting the two is meaningful, **adding them
-  double-counts roads**. It is also the **same metres as
-  `cost_roads_ops_per_acre` on the other basis** (~10.8× apart) — never sum
-  those either. Three road cost numbers now ship in one file and no two of them
-  combine. Computed under its own `roads is not None` guard, so it survives a
-  run with no fire data (which `svc_cost_per_acre`, being all-or-nothing, does
-  not). Median $1,629/acre/yr vs $151 operating; 9 hoods where roads alone
-  exceed the levy, vs 1 on the operating basis.
+- **`cost_roads_life_per_acre` (2026-09-02) is the $50/m/yr roads term**, and
+  since the roads+fire composite was retired (2026-09-05) it is **the lifecycle
+  road cost** rather than a component of one. It is the **same metres as
+  `cost_roads_ops_per_acre` on the other basis** (~10.8× apart) — the two are
+  alternatives and must never be summed or compared as if either were all-in.
+  Two road cost numbers now ship and they do not combine. Median $1,629/acre/yr
+  vs $151 operating; 9 hoods where roads alone exceed the levy (**all nine are
+  set-aside**), vs 1 on the operating basis. Pinned in
+  `data/expected_columns.json` since 2026-09-05.
 - ⚠️ **OPEN: the two non-capital road figures do not reconcile — but the gap is
   now mostly EXPLAINED (2026-09-05).** The lifecycle O&M half ($600,000/km ÷ 50
   yr = **$12/m/yr**) and the operating maintenance rate (**$4.635/m/yr**) both
@@ -1107,20 +1105,22 @@ only** — never label the derived metric "total city cost".
   Full record: `docs/FINDINGS_roadway_maintenance_rate.md`. The operating blurb
   says outright it is the low end of a range. See also `docs/SPEC_services.md`
   "Roads cost — lifecycle".
-- **Consumed (2026-07-15)** by `join_and_calculate.load_unit_costs` (validates
-  loudly — a malformed hand edit fails the pipeline) → the `unit_costs` arg
-  computes `svc_cost_per_acre` (in `SLIM_COLUMNS`). The per-event divisor is
-  the fire frame's citywide sum PRE-join (unmatched fire hoods stay in the
-  denominator). Composite requires BOTH the roads and fire lenses; either
-  missing → warn + skip. `main.py --skip-service-cost` / `--unit-costs-json`.
-- **Displayed (2026-07-16)** two ways (`web/index.html`): the Services view's
-  "Service cost (roads+fire)" checkbox (SERVICES `servicecost`, sqrt colour on
-  the shared `svc-plane`) AND the Ratio view's "Per service $" denominator
-  (`revenue_per_acre / svc_cost_per_acre` — dimensionless coverage, log colour,
-  RATIO_DENOMS `servicecost`). Both carry the caveats below; the ratio copy also
-  states it reads ≫1 because the cost side is only two services (median ≈5.8×),
-  NOT "pays its way". The column ships to the live GeoJSON on the first refresh
-  after the metric PR #59 — until then both controls are column-guarded off.
+- **Consumed** by `join_and_calculate.load_unit_costs` (validates loudly — a
+  malformed hand edit fails the pipeline) → the `unit_costs` arg computes
+  `cost_roads_life_per_acre` and the operating trio. `main.py
+  --skip-service-cost` / `--unit-costs-json`.
+- ⚠️ **`fire_response` IS NO LONGER READ BY ANYTHING (2026-09-05).** Its budget
+  fed `svc_cost_per_acre`, the roads+fire composite, which is **RETIRED** — the
+  decision audit found it **88.6% fire-allocation variance**, a fire-dispatch
+  density map priced in dollars, under a caveat saying the budget does not move
+  with dispatches. It assigned MCCAULEY $20.8M/yr (7.5% of the whole Fire Rescue
+  budget) and read it at 0.5× coverage; the four hoods it singled out take 19.9%
+  of all dispatches at 61–78% medical. `docs/FINDINGS_services_cost_lens_verdict.md`
+  §3, `DECISIONS.md` 2026-09-05. **The block stays here as the sourcing record
+  for the fire lens's copy** — `load_unit_costs` no longer requires it, and
+  `fire_events_per_acre` (the demand lens) is untouched. Retired with it: the
+  Services "Service cost" row, the Ratio view's "Per service $" denominator, and
+  the panel's nested "Roads + fire" row.
 ### The OPERATING trio (added 2026-08-03, transportation lens Stage 2)
 The same file also carries `roadway_ops`, `bikeway_ops` and `transit_ets`, on a
 **strictly operating basis** — maintenance + snow clearing, **no capital**.
@@ -1135,9 +1135,14 @@ The same file also carries `roadway_ops`, `bikeway_ops` and `transit_ets`, on a
   field operations staff; ETS from the 2024/2025 Annual Service Plan Appendix A.
   Both **relayed**, not fetched from the Oracle box.
 ### Known Quirks
-- **The fire term is a demand ALLOCATION of a mostly-fixed budget** — a hood with
-  2× the events does not cost the City 2× (most fire cost is standing capacity).
-  Carry that caveat in any UI copy. **The transit term has the identical shape.**
+- ⚠️ **A demand ALLOCATION of a mostly-fixed budget is what got the fire term
+  retired** — a hood with 2× the events does not cost the City 2× (most fire
+  cost is standing capacity), yet the map coloured land by exactly that motion.
+  **The transit term has the identical shape and SURVIVES**, because ETS chooses
+  the schedule and its costs scale with service-hours: a supply allocated by
+  supply, not standing capacity allocated by demand
+  (`docs/FINDINGS_services_cost_lens_verdict.md` §4). Keep that distinction if a
+  fourth allocation is ever proposed.
 - ⚠️ **THIS FILE HOLDS TWO INCOMPATIBLE BASES.** `roadway_om_renewal` is
   **$50/m/yr lifecycle**; `roadway_ops` is **$4.635/m/yr operating** — the SAME
   metres, **~10.8× apart**, and both ship to the served GeoJSON. Never sum or
@@ -1205,9 +1210,9 @@ The same file also carries `roadway_ops`, `bikeway_ops` and `transit_ets`, on a
   which are priority-cleared and cost more per km, so the local-road term is
   likely a little high. **The 11,000 km denominator is never imported into the
   spatial pipeline** — only the per-km rate is.
-- ⚠️ **Vintage mismatch, accepted:** ETS is 2025 while fire is 2026 Approved.
-  They never enter the same composite (fire → `svc_cost_per_acre`, transit →
-  `transport_cost_ops_per_acre`), so it is across columns, not inside a number.
+- **Vintage mismatch, now moot:** ETS is 2025 while fire is 2026 Approved. They
+  never entered the same composite, and since 2026-09-05 the fire budget enters
+  no column at all.
 - **Sidewalks are a separate, non-overlapping category** (~5,776 km, ~$5.9M/yr
   ops) and are in neither the bike metric nor the 1,500 km snow denominator.
 

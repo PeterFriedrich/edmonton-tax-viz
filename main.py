@@ -635,7 +635,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                    help="skip the fire demand lens (SPEC_services.md \"Fire lens\")")
     p.add_argument("--unit-costs-json", type=Path, default=UNIT_COSTS_JSON)
     p.add_argument("--skip-service-cost", action="store_true",
-                   help="skip the V2 modeled service-cost composite (SPEC_utilities decision 3)")
+                   help="skip every modeled cost column — the roads lifecycle cost "
+                        "and the operating transportation trio (SPEC_services.md)")
     p.add_argument("--gtfs-stops-csv", type=Path, default=GTFS_STOPS_CSV)
     p.add_argument("--gtfs-routes-csv", type=Path, default=GTFS_ROUTES_CSV)
     p.add_argument("--gtfs-trips-csv", type=Path, default=GTFS_TRIPS_CSV)

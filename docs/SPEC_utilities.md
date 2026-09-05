@@ -319,7 +319,17 @@ ANALYSIS_BACKLOG 5.
    Rejected: (b) grid-cell variant alongside Glass (bigger build, per-cell
    modeled-vs-billed labeling harder); (c) pipeline-only (lens invisible).
 3. **Does modeled utility $ enter "total services"? — DECIDED 2026-07-10
-   (Peter): NO, staged design.** The trigger ("two dollar services exist")
+   (Peter): NO, staged design.**
+   ⚠️ **V2 BELOW IS RETIRED (2026-09-05).** `svc_cost_per_acre`, its Services
+   row and its Ratio denominator are all gone — the decision audit found the
+   composite **88.6% fire-allocation variance**, a fire-dispatch density map
+   priced in dollars (`docs/FINDINGS_services_cost_lens_verdict.md` §3,
+   `DECISIONS.md` 2026-09-05). **V1 stands and is what ships**: the Ratio
+   denominator is a per-service picker, road metre | fire event. The V1 text
+   below is current; the V2 text is kept as the record of what was built and
+   why it was withdrawn. ⚠️ Its closing argument — that a combined denominator
+   needs *published city unit costs* — turned out to be the wrong test: the unit
+   costs were published and sound, and it was the ALLOCATION that failed. The trigger ("two dollar services exist")
    fired with storm + water built — but they are the wrong dollars: both
    are modeled **EPCOR** charges, and the Money-flow honesty rule above
    already forbids dividing the levy by them (they are recovered from

@@ -242,7 +242,14 @@ five buttons regardless of service count):
     `#legend-cats`, which now composes rows across fire + transit).
     Checkbox hides on data files without the column, same guard as the
     others.
-  - **Service cost (roads+fire)** (default off; fifth service — the V2
+  - ~~**Service cost (roads+fire)**~~ ⚠️ **RETIRED 2026-09-05** — the decision
+    audit found the composite **88.6% fire-allocation variance**, so this row
+    coloured land by fire-dispatch density in dollars
+    (`docs/FINDINGS_services_cost_lens_verdict.md` §3, `DECISIONS.md`). The
+    checkbox, its shared-plane branch, the legend branch and the tooltip row are
+    all gone; `fire_events_per_acre` (the demand row) is untouched. The original
+    entry is kept below for the build record.
+    (default off; fifth service — the V2
     composite, SPEC_utilities decision 3, 2026-07-16): the one MODELED
     "city service cost per acre" — `svc_cost_per_acre` = road metres ×
     $50/m/yr + fire dispatches × (Fire Rescue budget ÷ citywide dispatches).
@@ -253,7 +260,7 @@ five buttons regardless of service count):
     suburban median), clamp p97.5 of non-set-aside hoods. No context dots.
     Checkbox hides on data files without the column (it ships on the first
     refresh after the metric PR #59), same guard as the others.
-  **Plane sharing (2026-07-06):** the plane services (storm, fire, water, transit, servicecost) draw ONE
+  **Plane sharing (2026-07-06):** the plane services (storm, fire, water, transit) draw ONE
   `svc-plane` layer between them — two coplanar polygon layers would
   z-fight, and a non-driving plane's "neutral" render is the same slate
   surface anyway. `servicePlaneLayer(col)` paints the driver's column, or
@@ -267,14 +274,14 @@ five buttons regardless of service count):
   network in all-neutral grey. *2026-07-10: the denominator became a PICKER*
   ("Ratio denominator" control in the `#layers` panel, Ratio view only) —
   **per road metre** (`revenue_per_acre / road_m_per_acre`, the original),
-  **per fire event** (`revenue_per_acre / fire_events_per_acre`), or — added
-  2026-07-16, SPEC_utilities decision 3(b) — **per service $**
-  (`revenue_per_acre / svc_cost_per_acre`, the V2 composite): a DIMENSIONLESS
-  coverage ratio (revenue $ per modeled roads+fire $). Config in
+  **per fire event** (`revenue_per_acre / fire_events_per_acre`). ⚠️ A third,
+  **per service $** (`revenue_per_acre / svc_cost_per_acre`), was added
+  2026-07-16 and **RETIRED 2026-09-05** along with the composite it divided by:
+  a "coverage" ratio whose denominator is 88.6% fire allocation is revenue per
+  fire dispatch (`docs/FINDINGS_services_cost_lens_verdict.md` §3). Config in
   `RATIO_DENOMS`, state `state.ratioDenom` (persists across views like the
-  acre denominator; picker opens on `hasFire || hasSvcCost`, and each button
-  is column-guarded — the fire/service-cost options hide when their column is
-  absent). Modeled EPCOR services (storm/water) are deliberately NOT offered —
+  acre denominator; picker opens on `hasFire`, and each button is
+  column-guarded). Modeled EPCOR services (storm/water) are deliberately NOT offered —
   SPEC_utilities decision 3 (money-flow honesty). All three prism **colours
   are LOG** between each kept subset's p2.5–p97.5 (roads ≈ $264–$3,253,
   FINDINGS §6.4; fire ≈ $7,092–$298,901, §6.7; service-$ ≈ 1.8×–28×, raw skew

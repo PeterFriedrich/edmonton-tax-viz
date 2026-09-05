@@ -551,10 +551,12 @@ a primary edmonton.ca capital-$/km + service life, derived the way
 `roadway_om_renewal` was.
 
 ⚠️ **This puts TWO road-cost numbers in the same served file.**
-`cost_roads_ops_per_acre` is **$4.635/m/yr**; the roads term inside
-`svc_cost_per_acre` is **$50/m/yr** lifecycle — the same metres, **~10.8×
-apart**. That is what the `_ops` suffix exists to signal, and a test pins them
-apart.
+`cost_roads_ops_per_acre` is **$4.635/m/yr**; `cost_roads_life_per_acre` is
+**$50/m/yr** lifecycle — the same metres, **~10.8× apart**. That is what the
+`_ops` suffix exists to signal, and a test pins them apart. ⚠️ **The test could
+not have caught them collapsing until 2026-09-05**: both rates were $2.0 in its
+fixture and it compared against the retired composite, whose fire term supplied
+the whole gap.
 
 **2. Per-term rows, and NO composite row.** Driving the real pipeline showed
 `transport_cost_ops_per_acre` is **90.8% transit at the median**:
@@ -608,9 +610,9 @@ today's published data where all three rows correctly hide themselves.
 #### The originally locked design (for the record)
 
 **Publish disjoint per-term cost columns rather than a second overlapping
-composite** — `svc_cost_per_acre` already contains roads, so a
-`transport_cost_per_acre` containing roads too would leave two cost columns
-that cannot be read together:
+composite** — `svc_cost_per_acre` (retired 2026-09-05; it then existed and
+contained roads) meant a `transport_cost_per_acre` containing roads too would
+leave two cost columns that cannot be read together:
 
 ```
 cost_roads_per_acre    = road_m_per_acre      x road_dollars_per_m
@@ -619,7 +621,7 @@ cost_bike_per_acre     = bike_m_per_acre      x bikeway_dollars_per_m
 cost_fire_per_acre     = fire_events_per_acre x (fire budget / citywide events)
 
 transport_cost_per_acre = roads + transit + bike
-svc_cost_per_acre       = roads + fire        # UNCHANGED value and definition
+svc_cost_per_acre       = roads + fire        # RETIRED 2026-09-05
 ```
 
 The transit term is the **fire pattern exactly**: allocate the annual budget by
@@ -637,44 +639,42 @@ at build time" above.
 
 ⚠️ **Names as shipped differ from this block**: every column gained an `_ops`
 suffix (`cost_roads_ops_per_acre`, …, `transport_cost_ops_per_acre`) once the
-basis changed, because `cost_roads_per_acre` and the roads term inside
-`svc_cost_per_acre` would otherwise be indistinguishable at ~10.8× apart. There
-is no `cost_fire_per_acre` — fire stayed inside `svc_cost_per_acre`.
+basis changed, because `cost_roads_per_acre` and the lifecycle roads term would
+otherwise be indistinguishable at ~10.8× apart. There never was a
+`cost_fire_per_acre` — fire sat inside `svc_cost_per_acre`, **and was retired
+with it on 2026-09-05** (see "Roads cost — lifecycle" below).
 
 All three keys stay OPTIONAL in `load_unit_costs`, and
 `transport_cost_ops_per_acre` is **all-or-nothing** across its three terms: a
-two-term metric labelled "transportation" would be mislabeled, the same rule the
-existing composite uses. (Present-but-malformed still raises — only *absent* is
-tolerated.)
+two-term metric labelled "transportation" would be mislabeled. (Present-but-
+malformed still raises — only *absent* is tolerated.)
 
 ## Roads cost — lifecycle (new column, 2026-09-02)
 
 **Status: BUILT.** `cost_roads_life_per_acre` = `road_m_per_acre` ×
-`roadway_om_renewal.value` ($50/m/yr). Nothing new is sourced — this is the
-lifecycle roads term that already existed *inside* `svc_cost_per_acre`,
-published on its own so a roads-only lens can show a lifecycle figure without
-dragging the fire allocation in with it.
+`roadway_om_renewal.value` ($50/m/yr). Nothing new is sourced — it began life as
+the lifecycle roads term *inside* `svc_cost_per_acre`, published on its own so a
+roads-only lens could show a lifecycle figure without dragging the fire
+allocation in with it. **Since 2026-09-05 it is the only lifecycle road cost:
+the composite it was carved out of is retired** (below).
 
-⚠️ **Three road cost numbers now ship in the same file, and no two of them may
-be combined.** This is the `_two_bases` rule plus one:
+⚠️ **Two road cost numbers ship and they may not be combined** — the
+`_two_bases` rule:
 
 | column | basis | rate | median $/acre/yr |
 |---|---|---|---|
 | `cost_roads_ops_per_acre` | operating | $4.635/m/yr | $151 |
 | `cost_roads_life_per_acre` | lifecycle | $50/m/yr | $1,629 |
-| `svc_cost_per_acre` | lifecycle **+ fire** | $50/m/yr + allocation | $3,302 |
 
-- ops vs lifecycle are **alternatives** — the same metres on incompatible
-  bases, ~10.8× apart. Never summed, never compared as if either were all-in.
-- lifecycle vs the composite are **nested** — `cost_roads_life_per_acre` is a
-  *component* of `svc_cost_per_acre`. Subtracting is meaningful (it yields the
-  fire term); **adding double-counts roads.** A different hazard from the first,
-  so the panel gives it different words ("incl. above"), not the same caption.
+They are **alternatives** — the same metres on incompatible bases, ~10.8× apart.
+Never summed, never compared as if either were all-in. (Until 2026-09-05 there
+was a third, `svc_cost_per_acre` at $3,302 median, which *contained* the
+lifecycle column — a different, nesting hazard that needed its own wording
+("incl. above") in the panel. Both went together; do not reintroduce a row whose
+value contains another's without restoring that wording.)
 
-**It sits in its own guard in `join_and_calculate`, not inside the
-roads-and-fire branch.** `svc_cost_per_acre` is deliberately all-or-nothing, so
-folding this in would silently drop the one cost column a roads-only lens can
-show whenever fire data is absent. A test pins that.
+**It sits in its own guard in `join_and_calculate`**, so it survives a run with
+no fire data. A test pins that.
 
 **Colour: linear, INHERITED not re-derived** — a positive scalar multiple of
 `road_m_per_acre` leaves skew unchanged (the 2026-08-03 rule).
@@ -779,8 +779,8 @@ no panel: the assessment history was the wrong content there, so it was gated ou
 separate locked rules forbid one, and either would turn a headline "cost" into a
 figure that is arithmetically true and descriptively false:
 
-1. **`svc_cost_per_acre` is a LIFECYCLE basis** ($50/road-m/yr) while the three
-   transport costs are **OPERATING** ($4.635/road-m/yr) — the same metres,
+1. **`cost_roads_life_per_acre` is a LIFECYCLE basis** ($50/road-m/yr) while the
+   three transport costs are **OPERATING** ($4.635/road-m/yr) — the same metres,
    **~10.8× apart** (`data/DATA.md` §13, the unit-cost file's own `_two_bases`).
 2. **Even within the operating basis the three are not summed** (2026-08-03,
    "Transportation lens" above): the total is 91% transit at the median and

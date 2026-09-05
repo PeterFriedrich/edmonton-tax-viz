@@ -386,7 +386,13 @@ were previously undocumented:
 modeled service columns (road m/acre, storm $/acre, water $/acre, fire ev/acre),
 or the **V2 unit-cost composite** ($/acre in real dollars — laptop-gated, needs
 published unit costs; `SPEC_utilities.md` decision 3, `FINDINGS_growth_servicing.md`
-§6.2/§8). Sets **where new building is going** (Lens A) against **what the city
+§6.2/§8).
+⚠️ **THE V2 COMPOSITE NO LONGER EXISTS (retired 2026-09-05)** —
+`svc_cost_per_acre` was 88.6% fire-allocation variance
+(`docs/FINDINGS_services_cost_lens_verdict.md` §3). This lens must therefore
+choose its cost side explicitly: the **physical** service columns (the first
+option above, unaffected), or `cost_roads_life_per_acre` / the operating trio —
+never a rebuilt roads+fire composite without reopening that decision. Sets **where new building is going** (Lens A) against **what the city
 pays to service that land** — the two-ledger idiom of `FINDINGS_growth_servicing.md`
 made spatial.
 
@@ -408,7 +414,9 @@ Depends on Lens A shipping and (for true dollars) the V2 unit-cost work.
    but-quiet AND less-suitable-but-building) — a signed diverging metric, not a
    static suitability score.
 3. **Combined lens cost side = modeled city service cost** (reuse service
-   columns / V2 unit costs), NOT permit `construction_value`.
+   columns / V2 unit costs — ⚠️ the V2 *composite* was retired 2026-09-05; the
+   physical columns and the roads cost columns remain), NOT permit
+   `construction_value`.
 
 ## Methodology decisions — Lens A SETTLED (2026-07-12), Lens B/C open
 
