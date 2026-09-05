@@ -531,14 +531,21 @@ const check = (name, ok, detail = '') => {
   check('the Lab button is HIDDEN in the public build',
     !(await page.locator('#views button[data-view="lab"]').isVisible()));
   // ...and adding it changed nothing else about that row. Measured, not
-  // assumed: the public build already hid services/ratio/uses on its own
-  // (their own FULL_BUILD gates further down), so the published set is these
-  // two — if a future gate moves, this catches it here rather than in
+  // assumed: if a future gate moves, this catches it here rather than in
   // production.
-  check('the public #views row is otherwise unchanged',
-    await page.evaluate(() => [...document.querySelectorAll('#views button')]
+  // ⚠️ This is a GATE assertion, so the expected set is deliberately a literal
+  // and must be re-stated by hand when a lens is published — it is the check,
+  // not an incidental value. Updated 2026-09-05: `services` joined the public
+  // set with the roads-only return (`DECISIONS.md` 2026-09-02, the first
+  // exercise of the staged-return rule). `ratio` and `uses` stay full-only and
+  // get their own releases, so the next edit to this line should add exactly
+  // one name.
+  const publicViews = await page.evaluate(() =>
+    [...document.querySelectorAll('#views button')]
       .filter(b => getComputedStyle(b).display !== 'none')
-      .map(b => b.dataset.view).join(',')) === 'money,development');
+      .map(b => b.dataset.view).join(','));
+  check('the public #views row is otherwise unchanged',
+    publicViews === 'money,development,services', publicViews);
 
   check('no page errors', errs.length === 0, errs.slice(0, 3).join(' | '));
 

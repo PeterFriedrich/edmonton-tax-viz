@@ -8,6 +8,9 @@ Items are verbatim as they were closed, newest-moved first in the order they app
 
 ---
 
+- [x] **Four `verify-*.js` scripts were RED on master since 2026-09-02.** ✅ **FIXED S141 (2026-09-05) — the suite is 42/42 green, the first clean sweep since.** ⚠️ **One of the four was a REAL BUG, not a stale test:** `#budget` and `#budget-pod` were never added to `CHROME_IDS`, so place labels were free to draw over the budget panel in the full build — `verify-reference-layer.js` was written to catch exactly that and did; nothing ran it. The page was fixed, not the test. `verify-deviation.js`'s public `#views` expectation was re-stated by hand to `money,development,services` (a GATE assertion — publishing a lens SHOULD require a human edit; `ratio`/`uses` are still full-only, so the next edit adds exactly one name). `verify-glass-cell.js` and `verify-grid-loading.js` had cell counts **pinned to live data** (34671/93201, moved to 34662/93180 by the 2026-09-02 refresh) — now derived from the served files, plus a new `the two grids are genuinely different files` check so the derivation cannot make the count checks vacuous.
+
+
 - [x] **Front-end fix-in-place PR — the two defects the S140 architecture audit measured, fixed without a split.** ✅ **DONE S141 (2026-09-05)** — banners + named `boot()` shipped as specified; the module flip was **withdrawn and replaced by `"use strict";`** because its premise was falsified (`DECISIONS.md` 2026-09-05 ×2, `docs/FINDINGS_frontend_architecture_verdict.md` §7 items 1 ⚠️CORRECTED and 4). Verified: 786 python tests, `check_doc_citations` + `check_cost_copy`, and **38 of 42 `verify-*.js` green run one at a time, no page exception in the sweep**. The two carry-overs below are unchanged and still open.
 
 

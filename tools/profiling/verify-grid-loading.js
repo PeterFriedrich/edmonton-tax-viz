@@ -136,7 +136,13 @@ const check = (name, got, want) => {
     .waitForFunction(() => gridStore[100] != null, null, { timeout: 30000 })
     .then(() => page.evaluate(() => gridStore[100].cells.length))
     .catch(() => null);
-  check('prefetch: 100 m is warm with no click', warmCells, 34671);
+  // ⚠️ Derived, not pinned — same reason as verify-glass-cell.js: this literal
+  // was 34671 and the 2026-09-02 refresh moved it to 34662, leaving the check
+  // red on master for three days. The invariant is that the PREFETCHED store
+  // holds the whole 100 m file, not that the file is any particular size.
+  const N100 = await page.evaluate(() =>
+    fetch('./data/value_grid.json').then(r => r.json()).then(j => j.cells.length));
+  check('prefetch: 100 m is warm with no click', warmCells, N100);
   check('prefetch: 50 m was NOT pushed',
         await page.evaluate(() => gridStore[50] == null || gridFetches[50] === undefined), true);
 
