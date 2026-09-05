@@ -38,11 +38,12 @@ Three reasons, all worth preserving:
 
 | artifact | what it carries |
 |---|---|
-| **`docs/FABLE_AUDIT_frontend_architecture.md`** | **The brief. The decision stack, Levels 0–6, and the reporting contract.** Start here. |
+| **`docs/FINDINGS_frontend_architecture_verdict.md`** | **The OUTPUT — verdicts, argument, first PR. Start here.** |
+| `docs/FABLE_AUDIT_frontend_architecture.md` | The brief (instrument). ⚠️ **EXECUTED 2026-09-05 — do not re-run**; its §3 carries three corrections. |
 | `docs/CODEMAP.md` → *Dependency graph* | Generated. In-degree table + section self-containment — the evidence for Level 3. |
 | `docs/STACK.md` §3, §9 | What the front end is built out of; §9 is the decision being reopened. |
 | `docs/DECISIONS.md` **2026-07-29** | Stage 1 (CSS extraction) and the recorded reasoning for **not** taking stage 2. |
-| `TODO.md` → *"STAGE 2 of the `web/index.html` split"* | The live item, re-measured 2026-09-04. |
+| ~~`TODO.md` → *"STAGE 2 of the `web/index.html` split"*~~ | **CLOSED 2026-09-05 as WON'T DO** — body in `docs/TODO_archive.md`. The live item is now *"Front-end fix-in-place PR"*. |
 | `docs/security-audit.md` S1 | Why the libraries are vendored — the constraint on Level 1. |
 | `docs/SPEC_deployment.md` | The two-build fan-out that exists *because* there is no build step. |
 | `docs/MOBILE_USABILITY.md` §1, §3 | The separation seam, and the work stage 2 was gated behind. |

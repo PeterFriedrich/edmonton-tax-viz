@@ -311,6 +311,16 @@ needs a proposal (CLAUDE.md); it is logged here, not started.
    `tools/profiling/` to fix them in one place (`require('./…')` → 0 hits), so
    the fix is the page-side `window.__app` (§4.3).
    Method: `grep -lE '\b(state\.|applyView|METRICS|…)' tools/profiling/*.js`.
+   ⚠️ **Credit where due, and a narrowing of this correction:**
+   `docs/TOKEN_EFFICIENCY.md` "Files to watch" **already carried the qualitative
+   claim** — *"every verify script calls bare globals inside `page.evaluate`;
+   module scope is not global scope, so a split would break the whole test
+   harness"* — so the *brief* missed this, the *repo* did not. What this session
+   adds is the count (39/65, 337 sites), the eight-symbol shim list that fixes
+   it, and the correction that it is **not** a blocker. (That paragraph's
+   pointer, "RUNBOOK quirk (i)", was dangling; fixed in the same PR.) This is
+   the S139 shape again: a fact recorded in one file and absent from the
+   instrument built beside it.
 2. **"11 Python/CI files read `web/index.html`"** — 7 read it; 2 mention it in
    comments; neither workflow names it (§6).
 3. **"`check_cost_copy.py` and `check_served_columns.py` both scan the HTML"** —

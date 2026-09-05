@@ -19,9 +19,10 @@ first.**
 
 ## 1. Architecture: what can be separated, what can't
 
-The app is `web/index.html` (~3,600 lines of markup + JS) plus
-**`web/styles.css` (~400 lines — extracted 2026-07-29, all CSS lives there
-now)**, one deck.gl / MapLibre canvas. The viewport meta is already correct
+The app is `web/index.html` (**~7,345 lines** of markup + JS as of 2026-09-05 —
+this said ~3,600 until then, and it stays one file by decision, `DECISIONS.md`
+2026-09-05) plus **`web/styles.css` (~52 KB — extracted 2026-07-29, all CSS
+lives there now)**, one deck.gl / MapLibre canvas. The viewport meta is already correct
 (`width=device-width, initial-scale=1`).
 
 **The phone seam is `@media (max-width: 640px)` at the END of `web/styles.css`**
