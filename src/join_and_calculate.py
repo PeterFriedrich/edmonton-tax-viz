@@ -124,13 +124,12 @@ LOT_ACRE_COLUMNS = [
 ]
 
 def load_unit_costs(path: str | Path) -> dict[str, float]:
-    """Load the MODELED service unit costs for the V2 composite (data/city_unit_costs.json).
+    """Load the MODELED service unit costs (data/city_unit_costs.json).
 
-    Manual, reviewed input (mill-rates pattern — SPEC_utilities decision 3,
-    DATA.md §13). Returns the two numbers the composite needs:
+    Manual, reviewed input (mill-rates pattern — DATA.md §13). The one required
+    number is the roads lifecycle rate:
 
         road_dollars_per_m   $/road-metre/yr (O&M + renewal, 50-yr life)
-        fire_budget_annual   Fire Rescue gross operating budget, $/yr
 
     plus, when present, the OPERATING-basis transportation trio:
 
@@ -144,17 +143,21 @@ def load_unit_costs(path: str | Path) -> dict[str, float]:
     "_two_bases"). The operating trio is OPTIONAL: absent keys simply omit the
     transportation composite, so the file stays valid mid-sourcing.
 
+    ⚠️ ``fire_response`` IS NO LONGER READ. Its budget fed the retired
+    roads+fire composite (DECISIONS.md 2026-09-05); the block stays in the JSON
+    as the sourcing record for the fire lens's copy, and nothing consumes it. Do
+    not re-add it as a required field without re-opening that decision.
+
     Validates loudly — a malformed hand edit must fail the pipeline, not
-    silently zero a term of the composite.
+    silently zero a term.
     """
     with open(path) as f:
         data = json.load(f)
     try:
         road = data["roadway_om_renewal"]["value"]
-        fire_budget = data["fire_response"]["operating_budget_gross_annual"]
     except KeyError as e:
         raise KeyError(f"{path} is missing required unit-cost field {e}") from e
-    costs = {"road_dollars_per_m": float(road), "fire_budget_annual": float(fire_budget)}
+    costs = {"road_dollars_per_m": float(road)}
 
     for out_key, block, field in (
         ("road_ops_dollars_per_m", "roadway_ops", "value"),
@@ -171,9 +174,8 @@ def load_unit_costs(path: str | Path) -> dict[str, float]:
                     f"{path}: {block}.{field} is missing or not a number ({e})"
                 ) from e
 
-    for name, val in (("roadway value", road), ("fire budget", fire_budget)):
-        if not isinstance(val, (int, float)) or val <= 0:
-            raise ValueError(f"{path}: {name} must be a positive number, got {val!r}")
+    if not isinstance(road, (int, float)) or road <= 0:
+        raise ValueError(f"{path}: roadway value must be a positive number, got {road!r}")
     for key in ("road_ops_dollars_per_m", "bike_ops_dollars_per_m",
                 "transit_budget_annual"):
         if key in costs and costs[key] <= 0:
@@ -342,14 +344,12 @@ def join_and_calculate(
     — and are flagged.
 
     ``unit_costs`` (optional, from load_unit_costs — data/city_unit_costs.json,
-    the manual reviewed input) adds the V2 MODELED composite
-    svc_cost_per_acre = road_m_per_acre × $/road-metre/yr
-    + fire_events_per_acre × (fire budget ÷ the pipeline's own citywide
-    kept-event total) (SPEC_utilities decision 3). Roads + fire ONLY — never
-    "total city cost" — and the fire term is a demand ALLOCATION of a mostly-
-    fixed budget, not a marginal cost; both caveats belong in any display copy.
-    Requires BOTH the roads and fire frames: with either missing the composite
-    would be a mislabeled one-term metric, so it is skipped with a warning.
+    the manual reviewed input) adds the MODELED cost columns: the roads
+    LIFECYCLE term cost_roads_life_per_acre = road_m_per_acre × $/road-metre/yr,
+    and the OPERATING transportation trio below. Each is a supply column times
+    one published citywide rate, so it carries that rate's caveats and nothing
+    more — no budget is allocated to land anywhere in this pipeline
+    (DECISIONS.md 2026-09-05, the retired roads+fire composite).
 
     ``lot_acres`` (optional, from export_value_grid.build_hood_lot_acres) adds
     the neighbourhood lot-acre denominator toggle: value_per_lot_acre /
@@ -613,20 +613,12 @@ def join_and_calculate(
             + FIRE_COLUMNS + ["fire_events_per_acre"] + ["geometry"]
         )
 
-    # Roads-only LIFECYCLE cost (SPEC_services.md "Roads cost — lifecycle").
-    # The same $50/m/yr rate and the same metres as the roads term inside
-    # svc_cost_per_acre — this simply publishes that term on its own, so a
-    # roads-only lens can show a lifecycle figure without dragging fire in.
+    # Roads LIFECYCLE cost (SPEC_services.md "Roads cost — lifecycle"): the
+    # published $50/m/yr rate over the collector+local metres.
     #
-    # ⚠️ NESTED, NOT ADDITIVE: cost_roads_life_per_acre is a COMPONENT of
-    # svc_cost_per_acre (which is this + the allocated fire term). Never sum the
-    # two — that double-counts roads. Contrast cost_roads_ops_per_acre, which is
-    # the same metres on the OPERATING basis, ~10.8x smaller and never summable
-    # with either (city_unit_costs.json "_two_bases").
-    #
-    # Deliberately in its OWN guard rather than inside the roads-and-fire branch
-    # below: it needs only roads, so a run without fire data still publishes it
-    # instead of silently dropping the one cost column a roads lens can show.
+    # ⚠️ Never summed with cost_roads_ops_per_acre — the SAME metres on the
+    # OPERATING basis, ~10.8x smaller (city_unit_costs.json "_two_bases"). They
+    # are alternatives, not components.
     if unit_costs is not None and roads is not None:
         joined["cost_roads_life_per_acre"] = (
             joined["road_m_per_acre"] * unit_costs["road_dollars_per_m"]
@@ -641,45 +633,6 @@ def join_and_calculate(
             [c for c in out_cols if c != "geometry"]
             + ["cost_roads_life_per_acre"] + ["geometry"]
         )
-
-    # V2 composite: modeled city service cost per acre (SPEC_utilities
-    # decision 3 — MODELED, roads + fire only, never "total city cost").
-    # Needs both the road and fire per-acre columns computed above; the fire
-    # per-event cost divides the budget by the LOADER's citywide kept-event
-    # total (the fire frame sum, pre-join) so the unit cost's denominator
-    # matches the fire_events_per_acre numerator exactly — unmatched fire
-    # hoods still consumed budget, so they stay in the denominator.
-    if unit_costs is not None:
-        if roads is None or fire is None:
-            logger.warning(
-                "Unit costs supplied but %s frame missing — svc_cost_per_acre "
-                "needs BOTH (roads + fire only would be mislabeled); composite skipped",
-                "roads" if roads is None else "fire",
-            )
-        else:
-            citywide_events = float(fire["fire_events_per_year"].sum())
-            if citywide_events <= 0:
-                raise ValueError(
-                    "Citywide kept fire events per year is not positive "
-                    f"({citywide_events}) — cannot derive a per-event cost"
-                )
-            fire_cost_per_event = unit_costs["fire_budget_annual"] / citywide_events
-            joined["svc_cost_per_acre"] = (
-                joined["road_m_per_acre"] * unit_costs["road_dollars_per_m"]
-                + joined["fire_events_per_acre"] * fire_cost_per_event
-            )
-            logger.info(
-                "V2 service-cost composite: $%.2f/road-m/yr + $%.0f/fire-event "
-                "($%.0f budget / %.0f kept events/yr) -> svc_cost_per_acre on %d hoods "
-                "(MODELED, roads + fire only)",
-                unit_costs["road_dollars_per_m"], fire_cost_per_event,
-                unit_costs["fire_budget_annual"], citywide_events,
-                int(joined["svc_cost_per_acre"].notna().sum()),
-            )
-            out_cols = (
-                [c for c in out_cols if c != "geometry"]
-                + ["svc_cost_per_acre"] + ["geometry"]
-            )
 
     # Services lens #4: merge scheduled transit supply when supplied
     # (SPEC_services.md "Transit lens" — scheduled stop-events from the GTFS
@@ -719,13 +672,13 @@ def join_and_calculate(
 
     # Transportation lens Stage 2: the OPERATING-basis cost terms
     # (SPEC_services.md "Transportation lens"). Runs HERE, after the transit
-    # merge, because transit_dep_per_acre does not exist at the svc_cost_per_acre
+    # merge, because transit_dep_per_acre does not exist at the roads-lifecycle
     # block above.
     #
     # ⚠️ OPERATING basis: maintenance + snow clearing, NO capital replacement.
-    # The roads term here is NOT the roads term inside svc_cost_per_acre — same
-    # metres, $4.635/m/yr vs $50/m/yr lifecycle, ~10.8x apart. That is why every
-    # column below carries _ops. Never sum the two (city_unit_costs "_two_bases").
+    # The roads term here is NOT cost_roads_life_per_acre — same metres,
+    # $4.635/m/yr vs $50/m/yr lifecycle, ~10.8x apart. That is why every column
+    # below carries _ops. Never sum the two (city_unit_costs "_two_bases").
     if unit_costs is not None:
         transport_terms: dict[str, pd.Series] = {}
         if roads is not None and "road_ops_dollars_per_m" in unit_costs:
@@ -762,7 +715,7 @@ def join_and_calculate(
         added_transport = list(transport_terms)
 
         # All-or-nothing across the three terms: a two-term metric labelled
-        # "transportation" would be mislabeled (same rule svc_cost_per_acre uses).
+        # "transportation" would be mislabeled.
         wanted = {"cost_roads_ops_per_acre", "cost_bike_ops_per_acre",
                   "cost_transit_ops_per_acre"}
         missing = sorted(wanted - set(transport_terms))
@@ -984,19 +937,16 @@ def join_and_calculate(
 # fixed column shipping alongside the total so the client can show the
 # connection-vs-consumption split — the fire figure is dispatched-event
 # DEMAND, not coverage, and the transit figure is SCHEDULED service supply,
-# not ridership; the client must label all of them as such). svc_cost_per_acre
-# is the V2 composite — MODELED road $ + allocated fire $, roads + fire only,
-# never "total city cost" (SPEC_utilities decision 3; no display layer yet —
-# placement is an open call). The cost_*_ops_per_acre trio and
-# transport_cost_ops_per_acre are the Transportation lens Stage 2 composite on a
-# strictly OPERATING basis (maintenance + snow, NO capital replacement) —
-# ⚠️ cost_roads_ops_per_acre and the roads term inside svc_cost_per_acre are the
-# SAME METRES ON DIFFERENT BASES, ~10.8x apart; the client must never sum or
-# compare them, which is what the _ops suffix exists to signal.
-# cost_roads_life_per_acre publishes that lifecycle roads term on its own, so a
-# roads-only lens can show it without fire. ⚠️ It is NESTED INSIDE
-# svc_cost_per_acre (never sum the two — double-counts roads) and is the SAME
-# METRES as cost_roads_ops_per_acre on the other basis (never sum those either). new_units_per_acre
+# not ridership; the client must label all of them as such). The
+# cost_*_ops_per_acre trio and transport_cost_ops_per_acre are the
+# Transportation lens Stage 2 composite on a strictly OPERATING basis
+# (maintenance + snow, NO capital replacement); cost_roads_life_per_acre is the
+# roads LIFECYCLE cost. ⚠️ cost_roads_ops_per_acre and cost_roads_life_per_acre
+# are the SAME METRES ON DIFFERENT BASES, ~10.8x apart; the client must never
+# sum or compare them, which is what the _ops suffix exists to signal.
+# ⚠️ NO COLUMN HERE ALLOCATES A CITYWIDE BUDGET TO LAND except the transit term
+# — the roads+fire composite that did was retired 2026-09-05 (DECISIONS.md;
+# docs/FINDINGS_services_cost_lens_verdict.md). new_units_per_acre
 # and new_permits_per_acre (+ the total/permit-count pair for the tooltip) are the
 # Development lens A activity metrics — new dwelling units / new permits from
 # issued permits, a change/flow signal, NOT revenue or cost (SPEC_development.md).
@@ -1023,7 +973,7 @@ SLIM_COLUMNS = [
     "storm_charge_per_acre",
     "fire_events_per_acre", "transit_dep_per_acre",
     "water_charge_per_acre", "water_fixed_per_acre",
-    "svc_cost_per_acre", "cost_roads_life_per_acre",
+    "cost_roads_life_per_acre",
     "cost_roads_ops_per_acre", "cost_bike_ops_per_acre",
     "cost_transit_ops_per_acre", "transport_cost_ops_per_acre",
     "new_units_per_acre", "new_permits_per_acre",

@@ -3,6 +3,7 @@
   "columns": [
     "bike_m_per_acre",
     "cost_bike_ops_per_acre",
+    "cost_roads_life_per_acre",
     "cost_roads_ops_per_acre",
     "cost_transit_ops_per_acre",
     "far",
@@ -59,7 +60,6 @@
     "set_aside_frac",
     "set_aside_reason",
     "storm_charge_per_acre",
-    "svc_cost_per_acre",
     "total_revenue",
     "transit_dep_per_acre",
     "transport_cost_ops_per_acre",

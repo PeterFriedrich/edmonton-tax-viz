@@ -7,7 +7,9 @@ import pytest
 from shapely.geometry import Point, Polygon
 
 sys.path.insert(0, "src")
-from join_and_calculate import WEB_PRECISION, export_geojson, join_and_calculate
+from join_and_calculate import (
+    SLIM_COLUMNS, WEB_PRECISION, export_geojson, join_and_calculate,
+)
 
 
 def _assessment(rows):
@@ -579,17 +581,24 @@ def test_export_keeps_fire_events_per_acre_when_present(tmp_path):
     assert "fire_events_per_year" not in written.columns
 
 
-# --- V2 service-cost composite (SPEC_utilities decision 3) --------------------
-# svc_cost_per_acre = road_m_per_acre × $/m + fire_events_per_acre ×
-# (budget ÷ the fire frame's citywide kept-event total). MODELED, roads + fire
-# only; requires both frames.
+# --- the RETIRED roads+fire composite (DECISIONS.md 2026-09-05) ---------------
+# svc_cost_per_acre allocated the Fire Rescue budget to land by dispatch count.
+# The decision audit found it 88.6% fire-term variance — a dispatch-density map
+# priced in dollars (docs/FINDINGS_services_cost_lens_verdict.md §3). It is gone;
+# the roads half survives as cost_roads_life_per_acre. These tests exist so it
+# cannot come back by accident.
 
-# Small synthetic numbers: $2/road-metre, $300 budget over 30 events/yr
-# citywide -> $10/event.
-_UNIT_COSTS = {"road_dollars_per_m": 2.0, "fire_budget_annual": 300.0}
+# Small synthetic numbers: $2/road-metre lifecycle.
+_UNIT_COSTS = {"road_dollars_per_m": 2.0}
 
 
-def test_service_cost_composite_computed():
+def test_no_service_cost_composite_even_with_roads_and_fire():
+    """The retired column must not reappear when both its old inputs are present.
+
+    ⚠️ Asserted with roads AND fire supplied and unit costs loaded — the exact
+    state that used to produce it. A test that only checked a fire-less run
+    would pass under a resurrected composite.
+    """
     result = join_and_calculate(
         _assessment([{"neighbourhood_name": "GRIDTOWN", "total_assessed_value": 100.0}]),
         _boundaries([{"neighbourhood_name": "GRIDTOWN", "area_acres": 10.0}]),
@@ -597,78 +606,43 @@ def test_service_cost_composite_computed():
         fire=_fire([{"neighbourhood_name": "GRIDTOWN", "fire_events_per_year": 30.0}]),
         unit_costs=_UNIT_COSTS,
     )
-    row = result.iloc[0]
-    # 25 m/acre × $2 + 3 events/acre × ($300/30 = $10) = 50 + 30 = 80
-    assert row["svc_cost_per_acre"] == pytest.approx(80.0)
+    assert "svc_cost_per_acre" not in result.columns
+    assert "svc_cost_per_acre" not in SLIM_COLUMNS
+    # The roads half still ships, on its own rate and nothing else.
+    assert result.iloc[0]["cost_roads_life_per_acre"] == pytest.approx(25.0 * 2.0)
 
 
-def test_service_cost_per_event_uses_citywide_total_incl_unmatched():
-    # An unmatched fire hood stays in the per-event denominator (the loader's
-    # citywide total), so the matched hood's fire term shrinks accordingly.
+def test_fire_lens_survives_the_composite_retirement():
+    """fire_events_per_acre is the fire lens and was NOT retired with the cost."""
     result = join_and_calculate(
         _assessment([{"neighbourhood_name": "GRIDTOWN", "total_assessed_value": 100.0}]),
         _boundaries([{"neighbourhood_name": "GRIDTOWN", "area_acres": 10.0}]),
-        roads=_roads([{"neighbourhood_name": "GRIDTOWN", "road_m_total": 0.0}]),
-        fire=_fire([
-            {"neighbourhood_name": "GRIDTOWN", "fire_events_per_year": 30.0},
-            {"neighbourhood_name": "NOWHERE", "fire_events_per_year": 30.0},
-        ]),
-        unit_costs=_UNIT_COSTS,
+        fire=_fire([{"neighbourhood_name": "GRIDTOWN", "fire_events_per_year": 30.0}]),
     )
-    row = result.iloc[0]
-    # $300 / 60 citywide = $5/event; 3 events/acre × $5 = 15
-    assert row["svc_cost_per_acre"] == pytest.approx(15.0)
+    assert result.iloc[0]["fire_events_per_acre"] == pytest.approx(3.0)
+    assert "fire_events_per_acre" in SLIM_COLUMNS
 
 
-def test_no_unit_costs_omits_composite():
+def test_no_unit_costs_omits_the_roads_lifecycle_column():
     result = join_and_calculate(
         _assessment([{"neighbourhood_name": "GRIDTOWN", "total_assessed_value": 100.0}]),
         _boundaries([{"neighbourhood_name": "GRIDTOWN", "area_acres": 10.0}]),
         roads=_roads([{"neighbourhood_name": "GRIDTOWN", "road_m_total": 250.0}]),
         fire=_fire([{"neighbourhood_name": "GRIDTOWN", "fire_events_per_year": 30.0}]),
     )
-    assert "svc_cost_per_acre" not in result.columns
+    assert "cost_roads_life_per_acre" not in result.columns
 
 
-@pytest.mark.parametrize("missing", ["roads", "fire"])
-def test_service_cost_skipped_with_warning_when_lens_missing(caplog, missing):
-    kwargs = {
-        "roads": _roads([{"neighbourhood_name": "GRIDTOWN", "road_m_total": 250.0}]),
-        "fire": _fire([{"neighbourhood_name": "GRIDTOWN", "fire_events_per_year": 30.0}]),
-    }
-    kwargs[missing] = None
-    with caplog.at_level("WARNING"):
-        result = join_and_calculate(
-            _assessment([{"neighbourhood_name": "GRIDTOWN", "total_assessed_value": 100.0}]),
-            _boundaries([{"neighbourhood_name": "GRIDTOWN", "area_acres": 10.0}]),
-            unit_costs=_UNIT_COSTS,
-            **kwargs,
-        )
-    assert "svc_cost_per_acre" not in result.columns
-    assert "composite skipped" in caplog.text
-
-
-def test_service_cost_zero_citywide_events_raises():
-    with pytest.raises(ValueError, match="per-event cost"):
-        join_and_calculate(
-            _assessment([{"neighbourhood_name": "GRIDTOWN", "total_assessed_value": 100.0}]),
-            _boundaries([{"neighbourhood_name": "GRIDTOWN", "area_acres": 10.0}]),
-            roads=_roads([{"neighbourhood_name": "GRIDTOWN", "road_m_total": 250.0}]),
-            fire=_fire([{"neighbourhood_name": "GRIDTOWN", "fire_events_per_year": 0.0}]),
-            unit_costs=_UNIT_COSTS,
-        )
-
-
-def test_export_keeps_svc_cost_per_acre_when_present(tmp_path):
+def test_export_keeps_cost_roads_life_per_acre_when_present(tmp_path):
     result = join_and_calculate(
         _assessment([{"neighbourhood_name": "DOWNTOWN", "total_assessed_value": 100.0}]),
         _boundaries([{"neighbourhood_name": "DOWNTOWN", "area_acres": 10.0}]),
         roads=_roads([{"neighbourhood_name": "DOWNTOWN", "road_m_total": 250.0}]),
-        fire=_fire([{"neighbourhood_name": "DOWNTOWN", "fire_events_per_year": 30.0}]),
         unit_costs=_UNIT_COSTS,
     )
     written = export_geojson(result, str(tmp_path / "out.geojson"))
-    assert "svc_cost_per_acre" in written.columns
+    assert "cost_roads_life_per_acre" in written.columns
+    assert "svc_cost_per_acre" not in written.columns
 
 
 # --- load_unit_costs (data/city_unit_costs.json, the reviewed input) ----------
@@ -678,26 +652,34 @@ def test_load_unit_costs_reads_committed_file():
 
     costs = load_unit_costs("data/city_unit_costs.json")
     assert costs["road_dollars_per_m"] == 50.0
-    assert costs["fire_budget_annual"] == 276_706_000.0
+    # The fire budget is no longer read — the composite it fed is retired, and
+    # the JSON block stays only as the fire lens's sourcing record.
+    assert "fire_budget_annual" not in costs
 
 
 def test_load_unit_costs_missing_field_raises(tmp_path):
     from join_and_calculate import load_unit_costs
 
     bad = tmp_path / "unit_costs.json"
-    bad.write_text('{"roadway_om_renewal": {"value": 50}}')
-    with pytest.raises(KeyError, match="fire_response"):
+    bad.write_text('{"fire_response": {"operating_budget_gross_annual": 276706000}}')
+    with pytest.raises(KeyError, match="roadway_om_renewal"):
         load_unit_costs(bad)
+
+
+def test_load_unit_costs_needs_only_the_roadway_rate(tmp_path):
+    """A file carrying the roads rate alone is valid — fire is not required."""
+    from join_and_calculate import load_unit_costs
+
+    ok = tmp_path / "unit_costs.json"
+    ok.write_text('{"roadway_om_renewal": {"value": 50}}')
+    assert load_unit_costs(ok) == {"road_dollars_per_m": 50.0}
 
 
 def test_load_unit_costs_nonpositive_value_raises(tmp_path):
     from join_and_calculate import load_unit_costs
 
     bad = tmp_path / "unit_costs.json"
-    bad.write_text(
-        '{"roadway_om_renewal": {"value": 0},'
-        ' "fire_response": {"operating_budget_gross_annual": 276706000}}'
-    )
+    bad.write_text('{"roadway_om_renewal": {"value": 0}}')
     with pytest.raises(ValueError, match="positive"):
         load_unit_costs(bad)
 
@@ -1424,15 +1406,22 @@ def test_export_keeps_nonres_revenue_columns_when_present(tmp_path):
 # transport_cost_ops_per_acre = the three, ALL-OR-NOTHING.
 #
 # ⚠️ OPERATING basis — no capital replacement. cost_roads_ops_per_acre is NOT
-# the roads term inside svc_cost_per_acre (same metres, different basis).
+# cost_roads_life_per_acre (same metres, different basis).
 
 def _bike(rows):
     return pd.DataFrame(rows)
 
 
 # $2/road-m ops, $8/bike-m ops, $400 ETS budget over 40 citywide stop-events.
+# ⚠️ The lifecycle and operating road rates MUST DIFFER here. They were both
+# $2.0/m until 2026-09-05, which made the "the two bases must not coincide" test
+# below unable to fail for the reason it names: it compared the operating column
+# against the roads+fire composite, and the FIRE term supplied the whole gap. A
+# single rate wired into both columns would have passed. 10x mirrors the real
+# $50 vs $4.635.
 _TRANSPORT_COSTS = {
     **_UNIT_COSTS,
+    "road_dollars_per_m": 20.0,
     "road_ops_dollars_per_m": 2.0,
     "bike_ops_dollars_per_m": 8.0,
     "transit_budget_annual": 400.0,
@@ -1469,10 +1458,9 @@ def test_transport_ops_terms_and_composite():
 def test_transport_ops_roads_term_differs_from_lifecycle_roads_term():
     """The two road terms are different bases and must not coincide.
 
-    Guards the _ops suffix's whole reason for existing: svc_cost_per_acre's
-    roads term uses the $50/m lifecycle rate, cost_roads_ops_per_acre the
-    $4.635/m operating rate. If a future edit ever wires one rate into both,
-    this fails.
+    Guards the _ops suffix's whole reason for existing: cost_roads_life_per_acre
+    uses the $50/m lifecycle rate, cost_roads_ops_per_acre the $4.635/m
+    operating rate. If a future edit ever wires one rate into both, this fails.
     """
     result = join_and_calculate(
         _assessment([{"neighbourhood_name": "GRIDTOWN", "total_assessed_value": 100.0}]),
@@ -1483,18 +1471,19 @@ def test_transport_ops_roads_term_differs_from_lifecycle_roads_term():
     row = result.iloc[0]
     roads_lifecycle = 25.0 * _TRANSPORT_COSTS["road_dollars_per_m"]   # $50
     assert row["cost_roads_ops_per_acre"] == pytest.approx(25.0 * 2.0)
-    # svc_cost_per_acre still carries the LIFECYCLE roads term, untouched.
-    assert row["svc_cost_per_acre"] == pytest.approx(roads_lifecycle + 30.0)
+    assert row["cost_roads_life_per_acre"] == pytest.approx(roads_lifecycle)
+    # ⚠️ The two are ~10.8x apart on the SAME metres. Pin the gap, not just the
+    # values: a single rate wired into both would still satisfy each line above
+    # if the constants were also edited together.
+    assert row["cost_roads_life_per_acre"] > 3 * row["cost_roads_ops_per_acre"]
 
 
-def test_roads_lifecycle_column_is_nested_inside_the_service_composite():
-    """cost_roads_life_per_acre is a COMPONENT of svc_cost_per_acre, not a peer.
+def test_roads_lifecycle_is_the_supply_column_times_the_published_rate():
+    """cost_roads_life_per_acre is road_m_per_acre x the lifecycle rate, exactly.
 
-    Pins the identity rather than asserting the multiplication back: the number
-    that can go wrong is the RELATIONSHIP between the new column and the
-    composite that already shipped. If a future edit gives the standalone column
-    a different rate from the one inside the composite, the map grows two
-    lifecycle road numbers that disagree, and only this catches it.
+    It used to be pinned against the roads+fire composite as its component; with
+    that composite retired the standalone column IS the lifecycle figure, so the
+    thing to pin is its derivation from the supply column.
     """
     result = join_and_calculate(
         _assessment([{"neighbourhood_name": "GRIDTOWN", "total_assessed_value": 100.0}]),
@@ -1504,19 +1493,15 @@ def test_roads_lifecycle_column_is_nested_inside_the_service_composite():
     )
     row = result.iloc[0]
     assert row["cost_roads_life_per_acre"] == pytest.approx(
-        25.0 * _TRANSPORT_COSTS["road_dollars_per_m"]
+        row["road_m_per_acre"] * _TRANSPORT_COSTS["road_dollars_per_m"]
     )
-    # The fire term is what the composite adds on top — nothing else.
-    fire_term = row["svc_cost_per_acre"] - row["cost_roads_life_per_acre"]
-    assert fire_term == pytest.approx(30.0)
 
 
 def test_roads_lifecycle_ships_without_fire_data():
-    """The roads-only lifecycle column must survive a run with no fire frame.
+    """The lifecycle column must survive a run with no fire frame.
 
-    svc_cost_per_acre is deliberately all-or-nothing (roads + fire or neither),
-    so folding this column into that branch would silently drop the ONE cost
-    figure a roads-only lens can show whenever fire data is absent.
+    It has never depended on fire; this pins that it still does not, now that the
+    branch it used to sit beside is gone.
     """
     result = join_and_calculate(
         _assessment([{"neighbourhood_name": "GRIDTOWN", "total_assessed_value": 100.0}]),
@@ -1525,7 +1510,6 @@ def test_roads_lifecycle_ships_without_fire_data():
         unit_costs=_TRANSPORT_COSTS,
     )
     row = result.iloc[0]
-    assert "svc_cost_per_acre" not in result.columns
     assert row["cost_roads_life_per_acre"] == pytest.approx(
         25.0 * _TRANSPORT_COSTS["road_dollars_per_m"]
     )
@@ -1632,8 +1616,8 @@ def test_transport_composite_omitted_when_a_unit_cost_key_is_absent(key):
         **_transport_kwargs(),
     )
     assert "transport_cost_ops_per_acre" not in result.columns
-    # svc_cost_per_acre is unaffected by the operating trio being incomplete
-    assert "svc_cost_per_acre" in result.columns
+    # the lifecycle column is unaffected by the operating trio being incomplete
+    assert "cost_roads_life_per_acre" in result.columns
 
 
 def test_transport_ops_columns_survive_the_slim_export(tmp_path):
