@@ -8,6 +8,69 @@ Items are verbatim as they were closed, newest-moved first in the order they app
 
 ---
 
+- [x] **CLOSED 2026-09-05 — STAGE 2 of the `web/index.html` split: WON'T DO. The file stays one file (Peter, S140, on the architecture brief's verdict); re-open triggers in `DECISIONS.md` 2026-09-05.** Original item head: STAGE 2 of the `web/index.html` split — the JS into ES modules (NOT started, and deliberately deferred). ⚠️ **PREP IS COMPLETE (S138,
+  2026-09-04) AND THE SESSION IS BLOCKED ONLY ON ACCOUNT CREDIT** — both
+  `claude-fable-5` and `claude-fable-5-1` return *"You've hit your monthly spend
+  limit"* from this box. That is an account usage gate, **not** model entitlement
+  and **not** a stale CLI. **Launch recipe, model and effort are settled in
+  `docs/PLAN_frontend_refactor.md` §6 step 1 — use it verbatim** (launch ONCE on
+  Opus with the guard flags, then `/model claude-fable-5-1` in-session; the flags
+  are launch-time only). Instrument:
+  **`docs/FABLE_AUDIT_frontend_architecture.md`.** Do not
+  re-plan this item inline; the brief hands the call to a 7-level decision stack
+  (Level 0 should the front end be hand-written at all → Level 6 code), and its
+  §3 carries the measured facts so the session doesn't re-derive them. **Nothing
+  below is decided until that runs.** Stage 1 (CSS → `web/styles.css`) shipped
+  2026-07-29, PR #116; see `DECISIONS.md` that date for the full reasoning.
+  Remaining, **re-measured 2026-09-04 (S136): ~6,750 lines of JS in one block
+  with 19 section banners** — the structure is already latent, it just isn't
+  expressed as files. Native ESM (`<script type="module">` + relative imports)
+  needs no bundler and works on Pages.
+  - ⚠️ **IT DOUBLED IN FIVE WEEKS.** This item was written 2026-07-29 against
+    **3,305 lines / 9 banners**; the file is now **6,748 / 19**, and the whole
+    page is 7,345 lines. **The trajectory is the argument, not the size** — and
+    it is the one number here that came from measurement rather than taste.
+    The five banners added since: change lens, deviation lens, the institutional
+    band (×3 sections), temporal lens, the revenue panel, the budget panel.
+  - ⚠️ **Do NOT justify this on token savings — that was measured and is false.**
+    See `docs/TOKEN_EFFICIENCY.md` "Files to watch". Justify it on navigability,
+    grep precision and blast radius, or not at all.
+  - ⚠️ **`DEFAULT_BUILD` must stay in `index.html`** — `scripts/build_site.py`
+    regexes it there and hard-fails on anything but exactly one match. If the JS
+    moves, that literal stays behind or `build_site.py` moves with it.
+  - ⚠️ **"11 verify scripts reference `index.html` directly" was WRONG, and it
+    pointed the risk at the wrong half of the repo.** Measured 2026-09-04:
+    **8 of 65** profiling scripts name it, **7 as a served URL**
+    (`localhost:PORT/index.html`) — the page, not the source — so an ESM split
+    leaves those working and the JS harness is **mostly not the risk**.
+    ⚠️ **The eighth is the exception, and "every one is a URL" was wrong
+    (re-measured 2026-09-04, S138): `tools/profiling/verify-staleness-banner.js`
+    reads `web/index.html` OFF DISK** (`fs.readFileSync`, line 66) and regexes
+    `const STALE_DAYS = (\d+);` out of the source — a literal declared at the
+    `tunables` banner, **inside the `<script>` block that a stage-2 split
+    moves**. It fails loudly (`process.exit(1)`, "not found"), not silently, but
+    it is **the one JS-side file a split must carry**, and it is a second
+    instance of the same pattern as `check_cost_copy.py` /
+    `check_served_columns.py`: **a guard asserting on the text of the artifact
+    rather than on the value.**
+  - ⚠️ **THE REAL COUPLING IS THE PYTHON/CI SIDE — 11 non-doc files read the
+    single file**: `build_site.py` (the `DEFAULT_BUILD` regex, above),
+    `check_cost_copy.py` and `check_served_columns.py` (both scan the HTML for
+    copy/column gating), `check_doc_citations.py`, `build_reference_layers.py`,
+    `tools/codemap.py`, `tests/test_build_site.py`, `test_codemap.py`,
+    `test_window_labels.py` (WINDOWS literals vs `main.py`), plus `refresh.yml`
+    and `deploy.yml` path triggers. ⚠️ **`tools/codemap.py` is the sharp one** —
+    it parses the banners out of this file to generate `docs/CODEMAP.md`, which
+    a `PostToolUse` hook regenerates and `CLAUDE.md` names as the way to
+    navigate. **Move the JS without moving codemap.py and the project's own
+    navigation aid silently empties.**
+  - **Gate: wait until stage 1 has actually helped** (the mobile-chrome work in
+    `MOBILE_USABILITY.md` §3 is the first real test of it). Don't do stage 2
+    speculatively. ⚠️ **The doubling arguably moots this gate** — the item was
+    deferred when the file was half its current size. Re-read the gate before
+    invoking it as a reason to defer again.
+
+
 - [x] **CLOSED 2026-09-03 — WHY IS VALUE LEAVING THE LOT-ACRE DENOMINATOR? It
   isn't. The trend was ONE STEP WITH AN INVENTED MIDPOINT, and the number that
   kept it alive came from stale local data.**
