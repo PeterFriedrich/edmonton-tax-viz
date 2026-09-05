@@ -235,6 +235,54 @@ publish on its own, unrelated to any of this — re-pinned.)_
   - **Gate:** nothing is blocked on this. It costs money only when a doc-heavy
     session loads these files — which is what surfaced it.
 
+### Services cost lens audit — four Peter's calls (OPEN 2026-09-05, S142)
+
+The ledger's #1 candidate ran: `docs/FABLE_AUDIT_services_cost_lens.md` (brief)
+→ `docs/FINDINGS_services_cost_lens_verdict.md` (verdicts). **1× UNSOUND, 5×
+CONDITIONAL, 1× SOUND. Nothing served was changed** — every item here is a
+call, not a task.
+
+- [ ] **⚠️ PETER'S CALL — the fire term sits in a column called *cost*, and the
+  audit finds that UNSOUND** (findings §3). `svc_cost_per_acre` is **88.6%
+  fire-allocation variance** (Spearman 0.956 with dispatches vs 0.776 with road
+  metres): the "Service cost" row, the "Per service $" Ratio denominator and the
+  panel's "Roads + fire" row are a fire-dispatch density map priced in dollars,
+  under a caveat that says the budget does not move with dispatches. It assigns
+  MCCAULEY **$20.8M/yr — 7.5% of the whole Fire Rescue budget** — and reads it
+  at 0.5× coverage; the four hoods it singles out take 19.9% of all dispatches
+  at **61–78% medical**. The 2026-08-03 rule that denied the transport composite
+  a UI row (97.6% transit variance) was never applied to this one. **Options,
+  in the order the evidence favours:** (a) retire `svc_cost_per_acre` + the
+  three surfaces, keeping `fire_events_per_acre` as the fire lens — a
+  data-contract change, proposal first; (b) reframe as a *budget-share* surface
+  never called cost and never under the levy; (c) keep, accepting the caveat
+  does not carry the map. ⚠️ `/full/`-only today, so no public-root urgency —
+  but **`SPEC_development.md` Lens C and `SPEC_breakeven.md` plan to build on
+  this column and should wait for this call.** If a fire *cost* is ever wanted,
+  the allocation that matches a capacity service is by station coverage, and no
+  such layer exists as open data (DATA.md §8 points, §12 greenfield levy
+  catchments).
+- [ ] **PETER'S CALL — the public roads-ops blurb states its ratio against the
+  wrong base** (findings §7.1). *"…works out to about two and a half times the
+  $1,285 rate"*: $12,000/km lifecycle O&M is **9.3×** $1,285 and 2.6× only
+  against the whole $4,635 operating rate. A copy fix, but the right sentence
+  depends on the $1,285 item below, and the blurb should carry the strongest
+  known fact against its number (the City's program is 4.65× the maintenance
+  half), not "low end of a range". `check_cost_copy.py` checks literals, not
+  arithmetic — it cannot catch this class.
+- [ ] **PETER'S CALL — the Services panel presents break-even the Ratio view was
+  forbidden** (findings §6). DECISIONS 2026-07-16: *"MAGNITUDE, not break-even
+  … NO 1.0 marking"*; DECISIONS 2026-08-10 built bars that saturate at 100% and
+  turn amber above it, and `renderServiceCost`'s comment says the panel answers
+  *"whether this hood's levy covers each service."* No measured harm on the
+  public roads rows (the 9 over-100% hoods are all set-aside). Either one
+  DECISIONS line saying the panel deliberately shows share-of-levy with a 100%
+  mark, or change the panel.
+- [ ] The **$1,285 split treatment** is the fourth call — it is the item directly
+  below, open since S139; the audit adds only that the *state* (one repo, one
+  number, retired in §16 and shipping in §13) is the problem, whichever value
+  wins.
+
 ### Road cost estimation — the two non-capital figures do not reconcile (OPEN 2026-09-02, mostly EXPLAINED 2026-09-05)
 
 ⚠️ **PETER'S CALL NOW OPEN — the same $1,285/km was REJECTED in one place and
