@@ -1,5 +1,22 @@
 # Fable 5 Brief — Front-End Architecture DECISION Audit
 
+> ## ⚠️ EXECUTED 2026-09-05 (S140) — THE DECISION IS MADE. DO NOT RE-RUN THIS.
+>
+> **Verdict: `web/index.html` STAYS ONE FILE** (L0 SOUND · L1 SOUND · **L2
+> CONDITIONAL — stay** · L3 banners UNSOUND · L4 CONDITIONAL · L5 moot · L6 one
+> note). Locked in `DECISIONS.md` **2026-09-05** (two rows), with three re-open
+> triggers — growth alone is not one of them. Output and full argument:
+> **`docs/FINDINGS_frontend_architecture_verdict.md`**. Ledger: `AUDIT_LEDGER.md`
+> 2026-09-05 (S140).
+>
+> ⚠️ **§3 below was wrong in three places** — each cell is corrected inline and
+> marked ⚠️CORRECTED. The largest: the harness coupling is by **scope**, not
+> filename — **39 of 65** profiling scripts reach page-scope globals inside
+> `page.evaluate`, not the 8 that name the file.
+>
+> The instrument is kept intact (not rewritten) so the run is reproducible and
+> the corrections are visible against what was actually asked.
+
 Read this in full before opening any code. `docs/PLAN_frontend_refactor.md` is the
 standing container for this initiative — status, artifacts, and what is already
 measured; this brief is the instrument it points at. This is **not** the security/architecture
@@ -84,7 +101,8 @@ size, and neither holds more than one section that bears on this audit.
 
    ⚠️ **That last sentence's stated risk was measured wrong** — see item 3.
 
-3. **`TODO.md` → "STAGE 2 of the `web/index.html` split" — the constraints §3 does not
+3. ⚠️ **That item CLOSED 2026-09-05 as WON'T DO**; its body is in `docs/TODO_archive.md`. Quoted here as it stood.
+   **`TODO.md` → "STAGE 2 of the `web/index.html` split" — the constraints §3 does not
    carry, quoted** (its numbers are all in §3; re-measured 2026-09-04):
 
    > - **Gate: wait until stage 1 has actually helped** — the mobile-chrome work in
@@ -210,6 +228,7 @@ enclosing range) — sound for *what is central*, not for drawing a final bounda
 
 ### Level 4 — The build/guard coupling: constraint, or the real smell?
 
+⚠️**CORRECTED 2026-09-05: 7 files READ it, not 11** (see §3 and the findings doc §6) — the list below conflates readers with mentioners. As written:
 **11 non-doc files read `web/index.html`**: `build_site.py` (the `DEFAULT_BUILD` regex),
 `check_cost_copy.py` and `check_served_columns.py` (both *scan the HTML* for copy and
 column gating), `check_doc_citations.py`, `build_reference_layers.py`,
@@ -261,7 +280,8 @@ Only if Levels 0–5 leave something to say. Not the point of this session.
 | **at stage 1 (2026-07-29)** | **3,305 JS lines, 9 banners** | `DECISIONS.md` |
 | `web/styles.css` | ~52 KB (extracted stage 1) | `STACK.md` |
 | profiling scripts naming `index.html` | **8 of 65** — **7** as a served **URL**, **1 reads the source** | 2026-09-04 |
-| Python/CI files reading it | **11** | 2026-09-04 |
+| ⚠️CORRECTED — scripts reaching page-scope **globals** in `page.evaluate` | **39 of 65** (337 sites; `state.` in 36 files). **These are what a module split breaks**, and the filename count above does not find them | 2026-09-05 |
+| Python/CI files reading it | ~~**11**~~ ⚠️CORRECTED: **7** read it (`build_site`, `check_cost_copy`, `check_doc_citations`, `codemap`, `test_build_site`, `test_codemap`, `test_window_labels`). `check_served_columns.py` and `build_reference_layers.py` only *mention* it; `refresh.yml` has no `index.html` trigger and `deploy.yml` triggers on `web/**` | 2026-09-05 |
 | vendored libs | deck.gl 9.0.38, maplibre-gl 4.7.1 | `STACK.md` §3 |
 
 ## 3a. `state`, measured — the Level 3 blocker that isn't one

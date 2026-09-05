@@ -132,17 +132,24 @@ git ls-files | grep -vE '\.(geojson|png|csv)$' | xargs wc -l | sort -n | tail -3
   consider whether it should be sectioned or split.
 - `web/index.html` (**~7,345 lines** as of 2026-09-03, markup + JS) + `web/styles.css`
   (~400 lines). The CSS was extracted 2026-07-29. Use `docs/CODEMAP.md` (rule 5).
-  **A further reason not to split it into ES modules:** every verify script calls
-  bare globals inside `page.evaluate` (RUNBOOK quirk (i)); module scope is not
-  global scope, so a split would break the whole test harness.
+  **The ES-module split was DECIDED AGAINST 2026-09-05** (`DECISIONS.md`;
+  `docs/FINDINGS_frontend_architecture_verdict.md`) — do not re-propose it on
+  size alone. ⚠️ **This paragraph's harness point was right and is now
+  measured: 39 of the 65 profiling scripts reach page-scope globals inside
+  `page.evaluate`** (337 sites; `state.` in 36 files), and module scope hides
+  every one — but it is **not** unfixable: the page publishing
+  `window.__app = { state, applyView, buildLayers, METRICS, SERVICES,
+  CHROME_IDS, FULL_BUILD, noHover }` covers all 39. (The old pointer here,
+  *"RUNBOOK quirk (i)"*, was dangling — `RUNBOOK.md` has no such quirk list.)
   **⚠️ Splitting it further is NOT a token lever — this was measured, and the
   intuition here was wrong.** The whole file is ~57k tokens, but it is read in
   grep-located windows of 100–400 lines (~2–6k), not end-to-end, so a split saves
   almost nothing. Worse, the common change touches CSS + DOM node + JS handler
   *together* (see almost any `DECISIONS.md` row), which post-split is three **file**
   opens instead of three offsets into one file — marginally *more* expensive.
-  Split it for navigability, grep precision and blast radius if you like; do not
-  expect context savings. (`DECISIONS.md` 2026-07-29.)
+  The navigability/grep-precision/blast-radius case was then argued on its own
+  merits and **lost** — see the findings doc §4. (`DECISIONS.md` 2026-07-29 and
+  2026-09-05.)
 
 ## Going forward
 
