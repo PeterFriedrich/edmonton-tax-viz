@@ -466,7 +466,12 @@ same session — see `docs/DECISIONS.md`'s last two rows.)_
       number to get is the layer rebuild.
     - ⚠️ **50 m on a PHONE is the untested case that matters most** — the hover
       warm buys almost nothing on touch, so a phone pays the full 2.78 MB at tap
-      time with the stripe as its only feedback (`docs/MOBILE_USABILITY.md` §2b).
+      time (`docs/MOBILE_USABILITY.md` §2b). ⚠️ **The FEEDBACK half was answered
+      2026-09-05** — the cost is now stated on the button before the tap and by
+      `#gridbusy` over the map during the fetch (`DECISIONS.md` 2026-09-05) —
+      but **the wait itself is still untimed on real mobile data, and the new
+      indicator has never been seen on a device either.** Annotating a wait is
+      not measuring it; this bullet stays open for the measurement.
 
   | field | old A | **old B (2026-09-01)** | gaming A (short) | gaming B (tall) |
   |---|---|---|---|---|

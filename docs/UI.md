@@ -2095,6 +2095,48 @@ wait that isn't reads as a stutter. ⚠️ **Cleared on the fetch's own settle, 
 after the caller's re-render**: a failed fetch resolves (see the `.catch`), so
 this is also what stops a dead request stranding the stripe on forever.
 
+**The sweep was not enough, and the reason is where it lives** (2026-09-05, on
+Peter's *"my only thinking was to a more visible loading indicator, maybe
+acknowledging the detail requires more loading"*, after the 50 m grid was
+confirmed to stay in the public build). The stripe marks **which control** is
+busy — inside the options panel, which is exactly what the reader stops looking
+at the moment they tap. Two additions, neither of them a gate:
+
+- **The cost, before the tap.** The 50 m button reads `50 m grid · 2.8 MB` until
+  the file is in `gridStore`, then drops it — a cost already paid is not a
+  warning. ⚠️ **Aimed at touch.** The button's tooltip had said "a larger file"
+  since the hover warm shipped, but a touch reader never sees a tooltip and is
+  the same reader who pays the whole fetch at tap time.
+- **`#gridbusy`, over the map, for the duration.** A non-blocking pill (`.panel`,
+  so no pointer events), `role="status"`, in `CHROME_IDS` so the label sweep
+  dodges it.
+
+⚠️ **Indeterminate BY DECISION, and the obvious upgrade is wrong.** The rule
+above says "a `fetch`+`json()` reports no progress fraction"; the sharper reason
+is that Pages serves these **gzipped**, so `response.body` yields decompressed
+bytes against a compressed `Content-Length` — a `received/total` bar finishes at
+**~275%** (measured: 8,002,725 read vs 2,915,229 declared). A real percentage
+needs the decompressed size in the manifest, a data-contract change not taken.
+
+⚠️ **Both sizes are read from `Content-Length` at idle, never written into the
+markup.** A literal `2.8 MB` would go stale on the next refresh exactly as
+`verify-glass-cell.js`'s pinned cell counts did the same day.
+
+⚠️ **A HEAD whose response body is never touched is torn down as
+`net::ERR_ABORTED`** — the size still arrived, so nothing looked broken, but it
+reddened `verify-smoke.js`'s "no failed requests". `await r.arrayBuffer()` on the
+empty body retires it (three variants measured). Silent-correctness, caught only
+because the suite was run.
+
+⚠️ **Placement is measured, not assumed.** Top centre collided with `#views` at
+1280, so desktop sits bottom centre — the conventional toast slot. On a phone the
+bottom strip is full (compass, centre buttons, legend, attribution) **and** the
+top is under the options panel the reader must have open to have tapped the
+control, so the pill anchors above `#botleft` from its **live rect**: the
+legend's height moves with the view, so any constant would be right for one lens
+and wrong for the next. Zero overlaps against every visible chrome box at
+1440/1280/390. ⚠️ Headless only — never seen on a device.
+
 **Then the wait was largely removed for the default resolution** (same day, on
 Peter's *"can we not actually do background loading, before they even select
 it?"*). The **100 m** grid is warmed on idle once the loading overlay lifts, and
