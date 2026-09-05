@@ -41,6 +41,23 @@
 
   <div id="banner" class="panel"></div>
 
+  <!-- The two grid resolutions are lazy multi-megabyte fetches, and the Detail
+       buttons that trigger them live in the options panel — off where the reader
+       is looking the moment after they tap. The in-button sweep says WHICH
+       control is busy; this says the same thing where the eye already is.
+       Transient, non-blocking, and takes no pointer events (.panel).
+       ⚠️ The size is written from the response's own Content-Length and is never
+       a literal: a hardcoded "2.8 MB" would go stale on the next data refresh,
+       which is exactly how the pinned cell counts in verify-glass-cell.js
+       rotted (fixed 2026-09-05). Same reason the cell size comes from CELLS. -->
+  <div id="gridbusy" class="panel" role="status" aria-live="polite" hidden>
+    <div id="gridbusy-spinner" aria-hidden="true"></div>
+    <div>
+      <span id="gridbusy-text"></span>
+      <span id="gridbusy-size"></span>
+    </div>
+  </div>
+
   <div id="title" class="panel">
     <h1 id="title-h">Edmonton: Tax Revenue per Acre</h1>
     <p id="title-p">Height and colour show municipal property-tax revenue divided by
@@ -1572,6 +1589,68 @@
       return mode && document.querySelector(`#moneydetail button[data-moneydetail="${mode}"]`);
     }
 
+    // Transfer size of a lazy grid, read from the network rather than written
+    // down. ⚠️ A literal would go stale on the next refresh — that is exactly
+    // how verify-glass-cell.js's pinned cell counts rotted (fixed 2026-09-05).
+    // Content-Length is the COMPRESSED size, which is what a reader on mobile
+    // data actually pays; the decompressed body is ~2.7x larger, so this number
+    // is NOT a denominator for a progress bar (see showGridBusy).
+    // ⚠️ Deliberately NOT gated on Save-Data, unlike the prefetch: a HEAD costs
+    // headers, and the metered reader is precisely who the number is for.
+    const gridBytes = {};
+    function gridSize(cellM) {
+      // ⚠️ `await r.arrayBuffer()` is NOT dead code. A HEAD whose response is
+      // resolved without its body ever being touched is torn down as
+      // net::ERR_ABORTED — measured 2026-09-05, and it reddened
+      // verify-smoke.js's "no failed requests" while the size still arrived
+      // correctly. Consuming the (empty) body retires the request cleanly.
+      gridBytes[cellM] ??= fetch(GRID_URLS[cellM], { method: "HEAD" })
+        .then(async r => {
+          const n = +r.headers.get("content-length");
+          await r.arrayBuffer();
+          return n || null;
+        })
+        .catch(() => null);
+      return gridBytes[cellM];
+    }
+    const fmtMB = n => `${(n / 1048576).toFixed(1)} MB`;
+
+    // The in-button sweep says WHICH control is busy; this says THAT the app is
+    // fetching, over the map — where the reader is looking the moment after the
+    // tap, and where the options panel is not.
+    // ⚠️ INDETERMINATE ON PURPOSE. The obvious upgrade — received/Content-Length
+    // — is wrong here: Pages serves these gzipped, so the stream yields
+    // decompressed bytes against a compressed total and the bar would run to
+    // ~275% (measured 2026-09-05: 8,002,725 read vs 2,915,229 declared). A real
+    // percentage needs the DECOMPRESSED size served in the manifest, which is a
+    // data-contract change. Stating the total honestly beats animating a lie.
+    function showGridBusy(cellM) {
+      const el = document.getElementById("gridbusy");
+      const size = document.getElementById("gridbusy-size");
+      document.getElementById("gridbusy-text").textContent = `Loading ${cellM} m grid`;
+      size.textContent = "";
+      // ⚠️ PHONE PLACEMENT IS MEASURED, NOT A FIXED OFFSET. On a narrow screen
+      // the bottom strip is full (compass, centre buttons, legend, attribution)
+      // and the top is covered by the options panel — which the reader must
+      // have OPEN to have tapped this control. The one free band is between
+      // them, so sit just above #botleft, read live: the legend's height moves
+      // with the view (a category legend is taller than the ramp), so any
+      // constant here would be right for one lens and wrong for the next.
+      // Desktop keeps the CSS bottom: measured clear at 1440 and 1280.
+      el.style.bottom = "";
+      if (window.matchMedia("(max-width: 640px)").matches) {
+        const top = document.getElementById("botleft").getBoundingClientRect().top;
+        if (top > 0) el.style.bottom = `${Math.round(window.innerHeight - top + 10)}px`;
+      }
+      el.hidden = false;
+      gridSize(cellM).then(n => {
+        if (n && !el.hidden) size.textContent = ` · ${fmtMB(n)}`;
+      });
+    }
+    function hideGridBusy() {
+      document.getElementById("gridbusy").hidden = true;
+    }
+
     // Infill reads the grid too (amenity bands), but it is not in Money's Detail
     // row and so has no resolution control of its own. It pins the default —
     // the band percentages are resolution-dependent (the LRT band selects 1.59%
@@ -1661,6 +1740,7 @@
       if (busyBtn) {
         busyBtn.classList.add("is-loading");
         busyBtn.setAttribute("aria-busy", "true");
+        showGridBusy(cellM);
       }
       // Point the active slot at this resolution once its fetch settles. A
       // missing file leaves gridStore[cellM] undefined, so gridData goes null
@@ -1674,7 +1754,12 @@
         if (busyBtn) {
           busyBtn.classList.remove("is-loading");
           busyBtn.removeAttribute("aria-busy");
+          hideGridBusy();
         }
+        // A cost already paid is not a warning: once the cells are in
+        // gridStore this resolution is instant, so the size comes off its
+        // button. Re-added never — gridStore is not evicted.
+        if (gridStore[cellM]) gridDetailButton(cellM)?.querySelector(".btn-sz")?.remove();
         gridData = gridStore[cellM] ?? null;
         gridCell = gridData ? cellM : null;
       });
@@ -2137,6 +2222,21 @@
       // the wiring below as its head start.
       const warm = () => warmGrid(CELLS.cellGlass, { respectSaveData: true });
       (window.requestIdleCallback || (f => setTimeout(f, 1200)))(warm, { timeout: 3000 });
+      // Say what the UNWARMED resolution costs before the tap, not after it.
+      // The button's tooltip has always said "a larger file", but a touch reader
+      // never sees a tooltip — and that is the same reader who pays the whole
+      // fetch at click time, because the pointerenter warm fires milliseconds
+      // ahead of a tap rather than the hundreds of ms a hover gives
+      // (docs/MOBILE_USABILITY.md §2b). The fine grid is never prefetched, so
+      // this is the only resolution whose cost is still owed.
+      const fineBtn = gridDetailButton(CELLS.cellGlassFine);
+      if (fineBtn) gridSize(CELLS.cellGlassFine).then(n => {
+        if (!n || gridStore[CELLS.cellGlassFine]) return;
+        const sz = document.createElement("span");
+        sz.className = "btn-sz";
+        sz.textContent = ` · ${fmtMB(n)}`;
+        fineBtn.appendChild(sz);
+      });
     }
 
     // Both gates, then whatever is LEFT of the floor — computed at gate time
@@ -3981,7 +4081,8 @@
     const CHROME_IDS = ["banner", "title", "views", "toggle", "optpanel",
                         "a11y", "a11y-menu", "about", "about-menu",
                         "legend", "compass", "viewbtns", "temporal", "peek",
-                        "millrates", "budget", "budget-pod"];
+                        "millrates", "budget", "budget-pod",
+                        "gridbusy"];
     function chromeBoxes() {
       // The sweep works in deck-viewport pixels; getBoundingClientRect returns
       // CSS-viewport pixels. The canvas is the full window at 0,0 today so the

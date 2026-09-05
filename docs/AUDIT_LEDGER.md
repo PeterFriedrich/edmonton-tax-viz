@@ -84,7 +84,8 @@ a CAPTURE on real hardware** (the shelved `TODO.md` item), not an audit. What
    *retired as ~5× low in `DATA.md` §16 while still shipping via §13* — for a
    month, with nobody connecting them. An unaudited surface with one confirmed
    defect of that shape is where the next one is.
-2. **Should the 50 m grid ship to the PUBLIC build at all?** (opened S140).
+2. ~~**Should the 50 m grid ship to the PUBLIC build at all?**~~ ✅ **DECIDED 2026-09-05 (S141): it STAYS public, ungated, with its transfer cost stated on the control and a status pill over the map** (`DECISIONS.md` 2026-09-05). Closed as a decision, not an audit — it needed no new measurement, exactly as this entry said. Original framing follows.
+   (opened S140).
    A scope/gating decision that needs **no new measurement** — the evidence is
    already captured. ⚠️ **It is public today**: the `#moneydetail` Detail row
    carries no `FULL_BUILD` gate, so a phone reader on the public root can tap a

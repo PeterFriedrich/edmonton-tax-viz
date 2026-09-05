@@ -341,11 +341,27 @@ problem**, so revisit it only after the blurb collapse lands.
     phone reader effectively pays the full 2.78 MB at click time — with the
     stripe as their only feedback. **This is the case where the indicator
     matters most, and it is exactly the case never measured on a device.**
-  - **STILL NEEDS CONFIRMATION:** whether a real phone on real mobile data finds
-    the stripe sufficient for a 50 m switch, or whether the wait is long enough
-    to need a determinate progress readout or a size warning before the fetch.
-    ⚠️ Peter reported both the original "visible time to load" and the 4x spike
-    bug **from a phone**; nothing about this row has been seen on one.
+  - ~~**STILL NEEDS CONFIRMATION:** whether a real phone on real mobile data
+    finds the stripe sufficient for a 50 m switch~~ → **ANSWERED 2026-09-05: it
+    is not, and both remedies named here shipped** (`DECISIONS.md` 2026-09-05).
+    Peter, from the phone: *"my only thinking was to a more visible loading
+    indicator, maybe acknowledging the detail requires more loading."*
+    - **The size warning before the fetch** is on the button (`50 m grid ·
+      2.8 MB`), dropped once the file is in `gridStore`. It exists BECAUSE of
+      this row: the tooltip that carried "a larger file" is unreachable on
+      touch.
+    - **A determinate progress readout was measured and REJECTED, not skipped.**
+      Pages gzips these, so `response.body` yields decompressed bytes against a
+      compressed `Content-Length`: a `received/total` bar ends at **~275%**
+      (8,002,725 read vs 2,915,229 declared). `#gridbusy` states the total and
+      spins instead. A real percentage needs the decompressed size in the
+      manifest — a data-contract change, and the only reason to reopen this.
+    - ⚠️ **Still headless-only, and this row's warning stands for the fix as
+      much as it did for the bug**: `#gridbusy`'s phone placement is measured
+      (above `#botleft`, live rect, zero overlaps at 390) but has **not** been
+      seen on a device, and the wait it annotates has never been timed on real
+      mobile data. ⚠️ Peter reported both the original "visible time to load"
+      and the 4x spike bug **from a phone**.
 
 - **The city budget sheet (`#budget`) has never been touched on a real device —
   built 2026-08-16, headless only.** It is the newest phone surface and the only
