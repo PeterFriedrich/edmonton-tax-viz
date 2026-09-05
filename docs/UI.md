@@ -1194,7 +1194,11 @@ an explicit closed list. Two membership calls are load-bearing:
 silent and looks exactly like the original bug. So the verify suite asserts
 `CHROME_IDS` **covers every `.panel` in the document** — each panel is either
 named or has a named ancestor. Add a panel and forget this list, and the suite
-fails.
+fails. ⚠️ **It fired for real on 2026-09-05**, and only because someone happened
+to run the suite: `#budget` and `#budget-pod` had been added without being
+listed, so place labels were free to draw over the budget panel in the full
+build. The guard worked; nothing *ran* it. (`TODO.md` — the 65 scripts gate
+nothing but `verify-smoke.js`.)
 
 **The chrome test is UNPADDED, unlike the label-vs-label sweep.** `LABEL_PAD`
 is breathing room between two labels; a panel edge is not another label.

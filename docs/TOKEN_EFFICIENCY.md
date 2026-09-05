@@ -134,13 +134,19 @@ git ls-files | grep -vE '\.(geojson|png|csv)$' | xargs wc -l | sort -n | tail -3
   (~400 lines). The CSS was extracted 2026-07-29. Use `docs/CODEMAP.md` (rule 5).
   **The ES-module split was DECIDED AGAINST 2026-09-05** (`DECISIONS.md`;
   `docs/FINDINGS_frontend_architecture_verdict.md`) — do not re-propose it on
-  size alone. ⚠️ **This paragraph's harness point was right and is now
-  measured: 39 of the 65 profiling scripts reach page-scope globals inside
-  `page.evaluate`** (337 sites; `state.` in 36 files), and module scope hides
-  every one — but it is **not** unfixable: the page publishing
-  `window.__app = { state, applyView, buildLayers, METRICS, SERVICES,
-  CHROME_IDS, FULL_BUILD, noHover }` covers all 39. (The old pointer here,
-  *"RUNBOOK quirk (i)"*, was dangling — `RUNBOOK.md` has no such quirk list.)
+  size alone. ⚠️ **This paragraph's harness point was right, and is worse
+  than the first measurement of it said.** S140 recorded "39 of 65 scripts, 337
+  sites, and an eight-name `window.__app` shim covers them all"; that count came
+  from grepping for a pre-chosen list of eight names, which can only confirm the
+  list it is given. Re-measured S141 by intersecting all **377** top-level
+  declarations against **free variables** inside `.evaluate`/`.waitForFunction`/
+  `$eval` bodies: **122 distinct page globals across 48 of the 65 scripts**
+  (`state` 172 bodies, `overlay` 93, `tooltipFor` 33, `map` 29, `applyMetric`
+  27 …; `noHover`, one of the eight, appears in none). A shim that size
+  re-exports a third of the file, so **`<script type="module">` was withdrawn
+  and `"use strict";` shipped instead** (`DECISIONS.md` 2026-09-05, third row).
+  (The old pointer here, *"RUNBOOK quirk (i)"*, was dangling — `RUNBOOK.md` has
+  no such quirk list.)
   **⚠️ Splitting it further is NOT a token lever — this was measured, and the
   intuition here was wrong.** The whole file is ~57k tokens, but it is read in
   grep-located windows of 100–400 lines (~2–6k), not end-to-end, so a split saves

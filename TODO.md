@@ -157,6 +157,7 @@ publish on its own, unrelated to any of this — re-pinned.)_
 
 
 
+
 - [ ] **Write the corrected `fable-session` skill as a new directory under
   `.claude/skills/`** (same layout as the two there now). Peter deferred it 2026-09-04
   ("later"); the **evaluation is done and is recorded here so it needn't be
@@ -2740,11 +2741,7 @@ same session — see `docs/DECISIONS.md`'s last two rows.)_
   - **Why it matters beyond tidiness:** it is the **third re-open trigger** on the `DECISIONS.md` 2026-09-05 "stay one file" decision — per-lens ES modules fall out of it for free. It is the only route by which the split becomes correct.
   - ⚠️ **Step 5 (controls) is shared desktop+mobile DOM** — read `docs/CONTROLS_MATRIX.md` first. ⚠️ **No user-visible payoff by design**; if the appetite isn't there, log the NO so this is not re-proposed every time a lens edit touches five files, and fold the 28-branch count into the Lab comment as the corrected checklist.
 
-- [ ] **Four `verify-*.js` scripts are RED on master and have been since 2026-09-02 — nothing noticed, because nothing runs them.** ⚠️ **Found incidentally by the S141 sweep, then confirmed by serving `origin/master`'s page from the same server: all four fail identically there, so they are stale expectations, not regressions.** None is a page exception. This is the front end's only test suite and it is run by hand, so a stale expectation is indistinguishable from a healthy suite until someone happens to sweep it.
-  - `verify-deviation.js` (last edited 2026-08-25) — *"the public `#views` row is otherwise unchanged"* still expects `money,development`. **Outrun by `0f52b6d` "Services returns to the public build" (2026-09-02)**; the row is now `money,services,development`. ⚠️ **Check the expectation against `DECISIONS.md` 2026-09-02 before editing it — the test may be the thing that is right about `?build=public`.**
-  - `verify-glass-cell.js` (2026-09-01) and `verify-grid-loading.js` — pinned cell counts `34671`/`93201`, now `34662`/`93180`. **Outrun by `4661590` "Auto-refresh map data (2026-09-02)"**, which rewrote `value_grid.json` and `value_grid_50.json`. ⚠️ **Same cry-wolf-by-construction shape `verify-smoke.js`'s own header warns about** (a check pinned to a live data value that a legitimate refresh moves) — the fix is probably to derive the counts from the served file, not to re-pin them.
-  - `verify-reference-layer.js` — *"CHROME_IDS covers every `.panel` in the document"* reports `["budget","budget-pod"]` uncovered. **Not data drift** — the budget panel was added without extending `CHROME_IDS`, so this one is a real, if experimental-only, gap. Trace what reads `CHROME_IDS` (the label sweep's chrome boxes) before deciding whether the list or the panel is wrong.
-  - **The standing question this raises, and the reason it is one item not four:** the 65 scripts gate nothing. `refresh.yml` runs `verify-smoke.js` only. Decide whether some subset belongs on a schedule — otherwise the next stale expectation is also found by accident, months later.
+- [ ] **The 65 `verify-*.js` scripts gate NOTHING, and that is how four of them stayed red for three days.** `refresh.yml` runs `verify-smoke.js` only; `tests.yml` runs none. The suite is the front end's only test coverage and it runs when someone remembers. ⚠️ **The S141 evidence for why this matters: one of the four reds was a real label-occlusion bug that the guard caught at authoring time and nobody saw for three days** — and the other three had decayed into cry-wolf, which is the state that trains people to ignore the suite. Decide what belongs on a schedule. ⚠️ **Not "run all 65 in CI" by default** — they need a served build, they take ~40 min serially on this box, and `verify-smoke.js`'s header argues at length that a flaky gate blocking the weekly publish is worse than the gap it closes. Candidates: the non-pointer, invariant-only scripts on the merge gate; a slower full sweep on a schedule with the result reported, not blocking.
 
 - [ ] **Two carry-overs from the S140 architecture audit, neither started.**
   - **Propose (don't start) the manifest change** (findings §6, data contract): serve `WINDOWS`, `CELLS` and the unit-cost values so the page stops carrying copies and `test_window_labels.py` / `verify-staleness-banner.js` stop regexing the source.
@@ -2753,6 +2750,10 @@ same session — see `docs/DECISIONS.md`'s last two rows.)_
 ## Done
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
+
+- [x] **Four `verify-*.js` scripts were RED on master since 2026-09-02.** — 2026-09-02 · `docs/TODO_archive.md`
+
+
 
 - [x] **Front-end fix-in-place PR — the two defects the S140 architecture audit measured, fixed without a split.** — DONE 2026-09-05 · `docs/TODO_archive.md`
 

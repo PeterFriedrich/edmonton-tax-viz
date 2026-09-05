@@ -57,6 +57,8 @@ tools/profiling/*.png
 # shot-mobile.js writes screenshots to CWD (repo root when run per the docs)
 /mobile-default.png
 /mobile-after-tap.png
+# verify-deviation.js does the same
+/deviation.png
 
 # Claude Code personal settings (per-machine permission grants)
 .claude/settings.local.json

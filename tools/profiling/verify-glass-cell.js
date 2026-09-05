@@ -47,6 +47,22 @@ const check = (name, got, want) => {
   await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 });
   await page.waitForTimeout(4000);
 
+  // ⚠️ CELL COUNTS ARE DERIVED FROM THE SERVED FILES, NEVER PINNED. They were
+  // literals (34671 / 93201) until 2026-09-05, and the 2026-09-02 auto-refresh
+  // moved them to 34662 / 93180 — this file then sat RED on master for three
+  // days, which is the cry-wolf-by-construction shape verify-smoke.js's header
+  // warns about. What must hold is not a number but that each button serves ITS
+  // file, so the expectation comes from the file the button is supposed to load.
+  const cellsIn = f => page.evaluate(u => fetch(u).then(r => r.json())
+    .then(j => j.cells.length), f);
+  const N100 = await cellsIn('./data/value_grid.json');
+  const N50 = await cellsIn('./data/value_grid_50.json');
+  // Without this the two derived expectations could both be satisfied by one
+  // file, and every count check below would pass while the switch did nothing —
+  // an assertion placed where the value cannot be wrong.
+  check('the two grids are genuinely different files', N100 !== N50, true);
+  console.log(`derived counts : 100 m = ${N100}, 50 m = ${N50}`);
+
   // swiftshader can hang page.click while the render loop is busy — dispatch
   // from inside the page (the verify-glass/verify-labels workaround).
   const click = sel => page.$eval(sel, b => b.click());
@@ -110,7 +126,7 @@ const check = (name, got, want) => {
   console.log('default        :', JSON.stringify(p));
   checkScale('100 m fresh');
   check('100 m button serves 100 m', [p.stateCell, p.fileCell, p.layerCell], [100, 100, 100]);
-  check('default cell count', p.nCells, 34671);
+  check('default cell count', p.nCells, N100);
   check('default legend', p.legend, 'Revenue per acre (100 m cells)');
   check('default blurb', p.blurbCell, '100');
   check('default button active', p.active, ['grid']);
@@ -123,7 +139,7 @@ const check = (name, got, want) => {
   console.log('switched to 50 :', JSON.stringify(p));
   checkScale('after switching to 50 m');
   check('switch loads the other file', [p.stateCell, p.fileCell, p.layerCell], [50, 50, 50]);
-  check('switch cell count', p.nCells, 93201);
+  check('switch cell count', p.nCells, N50);
   check('legend follows the switch', p.legend, 'Revenue per acre (50 m cells)');
   check('blurb follows the switch', p.blurbCell, '50');
   check('fine button active', p.active, ['grid-fine']);
@@ -152,7 +168,7 @@ const check = (name, got, want) => {
   console.log('back to glass  :', JSON.stringify(p));
   checkScale('back in glass at 50 m');
   check('glass restores 50 m', [p.stateCell, p.fileCell, p.layerCell], [50, 50, 50]);
-  check('restored cell count', p.nCells, 93201);
+  check('restored cell count', p.nCells, N50);
 
   // Back to the default: the 100 m grid must come back intact from cache, with
   // its own p97.5 clamp — a shared memo would show the 50 m distribution here.
@@ -169,7 +185,7 @@ const check = (name, got, want) => {
   });
   console.log('back to 100 m  :', JSON.stringify({ ...p, clampMatchesOwnP975: clamp }));
   check('returns to 100 m', [p.stateCell, p.fileCell, p.layerCell], [100, 100, 100]);
-  check('100 m cell count intact', p.nCells, 34671);
+  check('100 m cell count intact', p.nCells, N100);
   check('clamp is this grid\'s own p97.5', clamp, true);
 
   console.log(failures ? `\n${failures} CHECK(S) FAILED` : '\nALL CHECKS PASSED');
