@@ -1417,8 +1417,10 @@ def _bike(rows):
 # $2.0/m until 2026-09-05, which made the "the two bases must not coincide" test
 # below unable to fail for the reason it names: it compared the operating column
 # against the roads+fire composite, and the FIRE term supplied the whole gap. A
-# single rate wired into both columns would have passed. 10x mirrors the real
-# $50 vs $4.635.
+# single rate wired into both columns would have passed. The 10x here is a clean
+# stand-in and DELIBERATELY DOES NOT TRACK the real ratio (5.4x since the
+# 2026-09-06 operating re-scope, 10.8x before it) — this fixture tests the
+# pipeline's wiring, not the rates, so a sourced rate change must not churn it.
 _TRANSPORT_COSTS = {
     **_UNIT_COSTS,
     "road_dollars_per_m": 20.0,
@@ -1459,7 +1461,7 @@ def test_transport_ops_roads_term_differs_from_lifecycle_roads_term():
     """The two road terms are different bases and must not coincide.
 
     Guards the _ops suffix's whole reason for existing: cost_roads_life_per_acre
-    uses the $50/m lifecycle rate, cost_roads_ops_per_acre the $4.635/m
+    uses the $50/m lifecycle rate, cost_roads_ops_per_acre the $9.32/m
     operating rate. If a future edit ever wires one rate into both, this fails.
     """
     result = join_and_calculate(
@@ -1643,7 +1645,9 @@ def test_load_unit_costs_reads_the_committed_operating_trio():
     from join_and_calculate import load_unit_costs
 
     costs = load_unit_costs("data/city_unit_costs.json")
-    assert costs["road_ops_dollars_per_m"] == pytest.approx(4.635)
+    # ⚠️ 4.635 until the 2026-09-06 re-scope of the maintenance half onto the
+    # City's published program (city_unit_costs.json roadway_ops.rescoped_2026_09_06).
+    assert costs["road_ops_dollars_per_m"] == pytest.approx(9.32)
     assert costs["bike_ops_dollars_per_m"] == pytest.approx(20.278)
     assert costs["transit_budget_annual"] == 436_605_000.0
     # ⚠️ the two road bases must stay distinct in the committed file

@@ -551,8 +551,9 @@ a primary edmonton.ca capital-$/km + service life, derived the way
 `roadway_om_renewal` was.
 
 ⚠️ **This puts TWO road-cost numbers in the same served file.**
-`cost_roads_ops_per_acre` is **$4.635/m/yr**; `cost_roads_life_per_acre` is
-**$50/m/yr** lifecycle — the same metres, **~10.8× apart**. That is what the
+`cost_roads_ops_per_acre` is **$9.32/m/yr**; `cost_roads_life_per_acre` is
+**$50/m/yr** lifecycle — the same metres, **~5.4× apart** (10.8× before the
+2026-09-06 operating re-scope). That is what the
 `_ops` suffix exists to signal, and a test pins them apart. ⚠️ **The test could
 not have caught them collapsing until 2026-09-05**: both rates were $2.0 in its
 fixture and it compared against the retired composite, whose fire term supplied
@@ -640,7 +641,8 @@ at build time" above.
 ⚠️ **Names as shipped differ from this block**: every column gained an `_ops`
 suffix (`cost_roads_ops_per_acre`, …, `transport_cost_ops_per_acre`) once the
 basis changed, because `cost_roads_per_acre` and the lifecycle roads term would
-otherwise be indistinguishable at ~10.8× apart. There never was a
+otherwise be indistinguishable at what was then ~10.8× apart (~5.4× since the
+2026-09-06 operating re-scope). There never was a
 `cost_fire_per_acre` — fire sat inside `svc_cost_per_acre`, **and was retired
 with it on 2026-09-05** (see "Roads cost — lifecycle" below).
 
@@ -663,10 +665,10 @@ the composite it was carved out of is retired** (below).
 
 | column | basis | rate | median $/acre/yr |
 |---|---|---|---|
-| `cost_roads_ops_per_acre` | operating | $4.635/m/yr | $151 |
+| `cost_roads_ops_per_acre` | operating | $9.32/m/yr | $304 |
 | `cost_roads_life_per_acre` | lifecycle | $50/m/yr | $1,629 |
 
-They are **alternatives** — the same metres on incompatible bases, ~10.8× apart.
+They are **alternatives** — the same metres on incompatible bases, ~5.4× apart.
 Never summed, never compared as if either were all-in. (Until 2026-09-05 there
 was a third, `svc_cost_per_acre` at $3,302 median, which *contained* the
 lifecycle column — a different, nesting hazard that needed its own wording
@@ -687,32 +689,35 @@ which would double the number; the rate is calibrated to local residential
 roads, so collectors are understated; and it is neither actual spend nor a
 funding gap.
 
-⚠️ **OPEN — the two non-capital road figures do not reconcile, but the gap is
-now mostly EXPLAINED (2026-09-05).** The published lifecycle O&M ($600,000/km
-over 50 yr = **$12/m/yr**) and the operating maintenance rate
-(**$4.635/m/yr**) both claim to be annual non-capital spend on neighbourhood
-roads and are **2.6× apart**.
+✅ **CLOSED 2026-09-06 — the two non-capital road figures reconcile, and the
+operating rate was RE-SCOPED to make them.** The published lifecycle O&M
+($600,000/km over 50 yr = **$12/m/yr**) and the operating maintenance rate were
+**2.6× apart** on what both called annual non-capital spend.
 
-✅ **The maintenance half is the cause** — `docs/FINDINGS_roadway_maintenance_rate.md`.
+✅ **The maintenance half was the cause** — `docs/FINDINGS_roadway_maintenance_rate.md`.
 The City's published FY2017 `Roadway Maintenance` program ($65,671,000, budgeted
-separately from snow) is **$5,970/km — 4.65× the $1,285/km** this rate is built
-on. Substituting it gives $9.32/m/yr operating (**1.29×**); correcting the 2017
-vintage gives $11.32/m/yr (**~1.1×**; 1.06× on a FY2025 endpoint, 1.11× on
-FY2026 — **quote the 1.29× if you want the figure that needs no escalation
-assumption**). **The two sources do not disagree about
-roads.**
+separately from snow) is **$5,970/km — 4.65× the $1,285/km** this rate had been
+built on. **Peter's call was to substitute it.** `roadway_ops` is now
+**$9.32/m/yr** ($5,970 maintenance + $3,350 snow), which sits at **1.29×** the
+lifecycle O&M half. **The two sources do not disagree about roads.** Correcting
+the 2017 vintage would give ~$11.3/m/yr (~1.1×), but that applies branch-level
+growth to a program-level figure, so the rate ships **unescalated** and 1.29× is
+the figure to quote — it needs no assumption.
 
-⚠️ **The value has NOT changed and must not be swapped naively** — $5,970/km is
-a citywide blend **including arterials** and would overstate the collector+local
-metres here, the same mismatch snow already carries. **What $1,285 measures is
-still unknown.** ⚠️ **Note the split treatment to resolve:** `DATA.md` §16
-retired this same $1,285/km as ~5× too low on 2026-08-04, while it remains the
-maintenance half here. Peter's call — re-scope with an arterial caveat, or keep
-the value and document the operating basis as a **floor** (which is what the
-evidence now supports, symmetric with the lifecycle basis).
+⚠️ **The substitution was NOT free, and the basis remains a FLOOR.** $5,970/km is
+a citywide blend **including arterials**, so the maintenance half now overstates
+the collector+local metres here exactly as the snow half always did; and the rate
+now **mixes vintages** (FY2017 maintenance, 2025 snow), which understates. The two
+errors have **opposite signs and neither is sized** — "floor" is a judgement about
+which is larger, not an arithmetic bound. ⚠️ **What $1,285 measured is still
+unknown** (no denominator, no scope, no decomposition of the program reproduces
+it); it was dropped because nothing supports reading it as total road
+maintenance, not because a better reading was found. **This closed the split
+treatment**: `DATA.md` §16 had retired this same $1,285/km as ~5× too low on
+2026-08-04 while it kept shipping as the maintenance half here.
 
-Until that resolves, the operating layer's blurb says outright that it is the low
-end of a range. The highest-value answer would replace the uniform rate entirely
+The operating layer's blurb no longer says it is the low end of a range — that
+sentence's premise was this gap. The highest-value answer would replace the uniform rate entirely
 with the Neighbourhood Renewal Program's actual per-neighbourhood spend — that
 source **does** exist (`FINDINGS_nrp_reconstruction_cross_check.md`), but covers
 only ~24 of 406 hoods and bundles sub-assets, so it is not yet usable as a rate.
@@ -780,8 +785,8 @@ separate locked rules forbid one, and either would turn a headline "cost" into a
 figure that is arithmetically true and descriptively false:
 
 1. **`cost_roads_life_per_acre` is a LIFECYCLE basis** ($50/road-m/yr) while the
-   three transport costs are **OPERATING** ($4.635/road-m/yr) — the same metres,
-   **~10.8× apart** (`data/DATA.md` §13, the unit-cost file's own `_two_bases`).
+   three transport costs are **OPERATING** ($9.32/road-m/yr) — the same metres,
+   **~5.4× apart** (`data/DATA.md` §13, the unit-cost file's own `_two_bases`).
 2. **Even within the operating basis the three are not summed** (2026-08-03,
    "Transportation lens" above): the total is 91% transit at the median and
    buries the per-mode finding.

@@ -133,6 +133,14 @@ replacement rate without a sub-asset decomposition of an NRP reconstruction** �
 which is question §4.2 of the follow-up brief (`/home/opc/road_cost_sendback_brief.md`,
 outside the repo).
 
+⚠️ **UPDATE 2026-09-06 — the open question named in this paragraph is CLOSED.**
+The $12-vs-$4.635 gap was traced to the maintenance half and the operating rate
+was re-scoped to **$9.32/m/yr**, landing at 1.29× the $12 lifecycle O&M half
+(`docs/FINDINGS_roadway_maintenance_rate.md`, `DECISIONS.md` 2026-09-06). ⚠️ **It
+does not disturb this document's finding** — the lifecycle basis is untouched and
+still reads as a floor. The paragraph below is left as written, at the pre-decision
+rate.
+
 ⚠️ **This does not touch the OPERATING basis.** `roadway_ops` ($4.635/m/yr) is
 maintenance and snow with no capital; reconstruction spend belongs to the
 lifecycle basis only. See `city_unit_costs.json._two_bases` — the 2.6× gap

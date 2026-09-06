@@ -9,7 +9,7 @@
 //  2. A MISSING primaryRow KEY prints "no <label> data" over a hood that has
 //     data (the `|| []` fall-through). Asserted per row.
 //  3. THE TWO ROAD BASES COLLAPSING. cost_roads_ops_per_acre and
-//     cost_roads_life_per_acre are the same metres ~10.8x apart; if a future
+//     cost_roads_life_per_acre are the same metres ~5.4x apart; if a future
 //     edit ever wires one rate into both, the readouts stop differing.
 //
 // Also asserts the 2026-08-03 decision that transport_cost_ops_per_acre ships
@@ -175,8 +175,8 @@ function check(name, ok, detail) {
   });
   check('roads OPERATING cost is far below the LIFECYCLE cost (bases distinct)',
         bases.ops * 3 < bases.life, `ops $${bases.ops.toFixed(0)} vs life $${bases.life.toFixed(0)}`);
-  check('the two road bases sit at the ~10.8x the rates imply',
-        Math.abs(bases.life / bases.ops - 50 / 4.635) < 0.05,
+  check('the two road bases sit at the ~5.4x the rates imply',
+        Math.abs(bases.life / bases.ops - 50 / 9.32) < 0.05,
         `${(bases.life / bases.ops).toFixed(3)}x`);
 
   // --- transforms inherited from the supply columns ------------------------

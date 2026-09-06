@@ -235,12 +235,15 @@ publish on its own, unrelated to any of this — re-pinned.)_
   - **Gate:** nothing is blocked on this. It costs money only when a doc-heavy
     session loads these files — which is what surfaced it.
 
-### Services cost lens audit — 1 of 4 calls made (OPEN 2026-09-05, S142)
+### Services cost lens audit — 3 of 4 calls made (OPEN 2026-09-05, S142)
 
 The ledger's #1 candidate ran: `docs/FABLE_AUDIT_services_cost_lens.md` (brief)
 → `docs/FINDINGS_services_cost_lens_verdict.md` (verdicts). **1× UNSOUND, 5×
 CONDITIONAL, 1× SOUND.** The UNSOUND one is **decided and executed**; the three
 below are still calls, not tasks.
+⚠️ **UPDATE 2026-09-06: two more were made** — the rate was re-scoped and the
+blurb's wrong-base sentence went with it. **One call remains: the break-even
+tension.**
 
 - [x] ✅ **DONE 2026-09-05 — Peter chose RETIRE, and it shipped the same day.**
   `svc_cost_per_acre`, the "Service cost" Services row, the Ratio view's "Per
@@ -259,14 +262,16 @@ below are still calls, not tasks.
     fixture had both road rates at $2.0. Both are the same shape as the
     S141/S142 lesson: **a check placed where the value cannot be wrong.**
 
-- [ ] **PETER'S CALL — the public roads-ops blurb states its ratio against the
-  wrong base** (findings §7.1). *"…works out to about two and a half times the
-  $1,285 rate"*: $12,000/km lifecycle O&M is **9.3×** $1,285 and 2.6× only
-  against the whole $4,635 operating rate. A copy fix, but the right sentence
-  depends on the $1,285 item below, and the blurb should carry the strongest
-  known fact against its number (the City's program is 4.65× the maintenance
-  half), not "low end of a range". `check_cost_copy.py` checks literals, not
-  arithmetic — it cannot catch this class.
+- [x] ✅ **DONE 2026-09-06 — the wrong-base sentence is DELETED, not corrected**
+  (findings §7.1). *"…works out to about two and a half times the $1,285 rate"*
+  stated 2.6× against $1,285 where it holds only against the whole $4,635
+  ($12,000/km lifecycle O&M is **9.3×** $1,285). Resolved by the re-scope below:
+  with $1,285 gone the sentence had no subject, and *"treat this as the low end
+  of a range"* went with it — that phrasing's premise was the 2.6× gap, now
+  closed to 1.29×. The blurb now names the two real caveats instead (arterial
+  blend; unescalated FY2017 vintage) and says which way each pushes.
+  ⚠️ **`check_cost_copy.py` still cannot catch this class** — it checks literals,
+  not arithmetic — but it *did* catch the two claims that moved with the rate.
 - [ ] **PETER'S CALL — the Services panel presents break-even the Ratio view was
   forbidden** (findings §6). DECISIONS 2026-07-16: *"MAGNITUDE, not break-even
   … NO 1.0 marking"*; DECISIONS 2026-08-10 built bars that saturate at 100% and
@@ -275,33 +280,43 @@ below are still calls, not tasks.
   public roads rows (the 9 over-100% hoods are all set-aside). Either one
   DECISIONS line saying the panel deliberately shows share-of-levy with a 100%
   mark, or change the panel.
-- [ ] The **$1,285 split treatment** is the fourth call — it is the item directly
-  below, open since S139; the audit adds only that the *state* (one repo, one
-  number, retired in §16 and shipping in §13) is the problem, whichever value
-  wins.
+- [x] ✅ **DONE 2026-09-06 — the $1,285 split treatment is closed by RE-SCOPING**
+  (the fourth call, open since S139). `roadway_ops` **$4.635 → $9.32/m/yr**,
+  maintenance half **$1,285 → $5,970/km**, the served GeoJSON regenerated in the
+  same PR. Detail in the item directly below and in `DECISIONS.md` 2026-09-06.
 
-### Road cost estimation — the two non-capital figures do not reconcile (OPEN 2026-09-02, mostly EXPLAINED 2026-09-05)
+### Road cost estimation — the reconciliation is CLOSED; the remaining sub-items are not (OPEN 2026-09-02, RESOLVED 2026-09-06)
 
-⚠️ **PETER'S CALL NOW OPEN — the same $1,285/km was REJECTED in one place and
-RETAINED in another.** `DATA.md` §16 retired `$1,285/km × ~11,000 km = $14.135M`
-as ~5× too low on 2026-08-04 (it had been live on a public page); the same
-$1,285/km is still the maintenance half of the shipped `roadway_ops` rate.
-Measured 2026-09-05 against the City's published program —
-`docs/FINDINGS_roadway_maintenance_rate.md`. **Two ways out, and the split
-should not stand either way:**
-- **Re-scope** `roadway_ops` on the published program, with an explicit
-  arterial-blend caveat. ⚠️ Changes a served column and every blurb quoting
-  $4.635 — **data contract change, needs a proposal first.**
-- **Keep the value, document the operating basis as a FLOOR** — symmetric with
-  the lifecycle basis, which the NRP cross-check already established as one.
-**No rate, column or value was changed.**
+- [x] ✅ **DONE 2026-09-06 — RE-SCOPED. `roadway_ops` $4.635 → $9.32/m/yr,
+  maintenance half $1,285 → $5,970/km (Peter's call).** The same $1,285/km had
+  been **rejected in one place and retained in another**: `DATA.md` §16 retired
+  `$1,285/km × ~11,000 km = $14.135M` as ~5× too low on 2026-08-04 (live on a
+  public page at the time) while it kept shipping as the maintenance half of
+  `roadway_ops`. Substituting the City's published FY2017 `Roadway Maintenance`
+  program closes the **2.6×** lifecycle-vs-operating gap to **1.29×** — the two
+  sources do not disagree about roads. Served GeoJSON regenerated in the same PR
+  so the map and the copy never disagreed; the choropleth is **pixel-identical**
+  (a uniform scalar cancels in `scaleT`). Median roads-ops share of levy
+  **0.8% → 1.7%**; hoods over 100% on that row **1 → 2**, both set-aside.
+  `docs/FINDINGS_roadway_maintenance_rate.md` §5, `DECISIONS.md` 2026-09-06.
+  - ⚠️ **The basis is STILL A FLOOR, and the two known errors have OPPOSITE
+    SIGNS.** The maintenance half now inherits the **arterial blend** that snow
+    always carried (overstates), and the rate **mixes vintages** — FY2017
+    maintenance against 2025 snow, deliberately unescalated (understates).
+    **Neither is sized.** "Floor" is a judgement about which is larger, not an
+    arithmetic bound — do not present it as one.
+  - ⚠️ **What $1,285 measured is STILL UNKNOWN** and that is not a leftover
+    chore: it was dropped because nothing supports reading it as total road
+    maintenance, **not** because a better reading was found. No decomposition of
+    the published program reproduces it (materials-only $1,634/km is closest,
+    still 1.27× off). **Do not reintroduce it with an invented scope.**
+  - ⚠️ **The $600,000/km side was never traced** and still has not been. Q1 of
+    the send-back brief below is now **half** answered, not answered.
 
-⚠️ **This is a live caveat on a PUBLIC layer, not a backlog nicety.** The
-published lifecycle O&M half (**$600,000/km ÷ 50 yr = $12/m/yr**) and the
-operating maintenance rate (**$4.635/m/yr**) both claim to be annual
-non-capital spend on neighbourhood roads and sit **2.6× apart**. Neither has
-been traced to what it actually covers. The Roads cost (operating) blurb
-currently says outright that it is the low end of a range.
+⚠️ **The sub-items below are UNAFFECTED and still open** — the 25-vs-50 service
+life, the per-class differential, the snow denominator, and the NRP finding that
+the lifecycle rate is itself a floor. **None of them was touched by the
+re-scope**, which moved only the operating basis.
 
 Seven sourcing questions were written up for a research pass (given to Peter
 2026-09-02 to run externally). ⚠️ **THAT ROUND CAME BACK 2026-09-03 AND DID NOT
@@ -322,6 +337,10 @@ item at the end of this section. The two that would change the most:
    figure that needs no escalation assumption). ⚠️ **What
    $1,285 DOES measure is still unknown** — the source gives it no scope and no
    decomposition of the program reproduces it. The $600,000/km side is untouched.
+   ⚠️ **ACTED ON 2026-09-06** — the $1,285 was not merely doubted, it was
+   **replaced** by the $5,970 program figure (see the closed item at the top of
+   this section). **Q1 is still worth asking**, but only its $600,000/km half:
+   what $1,285 covered no longer affects anything shipped.
 2. **Is there a better source class entirely?** A uniform per-km rate cannot
    tell a 1960s neighbourhood from a 2015 one, which is precisely the
    distinction a revenue-vs-cost map exists to show. If the **Neighbourhood
@@ -366,8 +385,10 @@ updated with it. Do not let the open question block shipping.
   - **Unblocking it needs one thing:** a published sub-asset decomposition of an
     NRP reconstruction (§4.2 of the send-back brief below). Nothing in the
     profile listing or the API carries it.
-  - ⚠️ **Touches the LIFECYCLE basis only** — nothing here speaks to the
-    $12-vs-$4.635 operating gap above.
+  - ⚠️ **Touches the LIFECYCLE basis only** — nothing here spoke to the
+    $12-vs-operating gap above, which was closed on 2026-09-06 by re-scoping the
+    operating rate to $9.32/m/yr. **This finding is unaffected**: both bases now
+    read as floors, for independent reasons.
 
 - [ ] **PETER'S CALL — road-per-dwelling is a good DIAGNOSTIC and a bad MAP.**
   Measured 2026-09-03 on a fresh pull:
@@ -407,8 +428,10 @@ updated with it. Do not let the open question block shipping.
   built, four wrong premises (including that this project has **no
   population-by-hood source at all**), and what measuring it actually showed.
   ⚠️ **Q1 is the only one under a published layer** — what the $600k/km
-  "operate and maintain" covers vs the $1,285/km "maintenance", i.e. this item's
-  own 2.6× gap. The other five are verification chores (snow denominator; the
+  "operate and maintain" covers. ⚠️ **Its second half is now MOOT (2026-09-06)**:
+  it asked what the $1,285/km "maintenance" covers, and $1,285 no longer ships.
+  **Re-word Q1 to the $600k side alone before sending**, or the round comes back
+  answering a question about a retired number. The other five are verification chores (snow denominator; the
   four service-life figures; $965.2M provenance; the June 2026 council report;
   the 403'd op-ed original).
   - ⚠️ **The brief opens with a "what we already hold, do not re-derive"
@@ -1143,8 +1166,10 @@ same session — see `docs/DECISIONS.md`'s last two rows.)_
       genuinely hard part is the ~$400M of debt service**, not "capital". Must
       not silently drop out of the register once lifecycle-basis work exists.
   - ⚠️ **THE SILENT KILLER IS BASIS MIXING.** Lifecycle $50/road-m/yr vs
-    operating $4.635 — same metres, 10.8× apart. The composite must HARD-ERROR
-    across bases, not warn.
+    operating $9.32 — same metres, 5.4× apart (10.8× before the 2026-09-06
+    re-scope). The composite must HARD-ERROR across bases, not warn. ⚠️ **The
+    gap SHRINKING is what makes this more dangerous, not less** — two numbers
+    5× apart look more like a plausible sum than two 11× apart.
   - ⚠️ **The revenue half is not the solid half either** — $2,715M modelled vs
     $2,318M budgeted (17%), the ~$125.4M institutional question is open with
     unknown direction, and levy is not all the revenue funding that budget.
