@@ -97,21 +97,49 @@ a CAPTURE on real hardware** (the shelved `TODO.md` item), not an audit. What
    pan fps** (36.6 → 21.4). Against that: it is the resolution at which single
    high-value parcels stop being averaged into neighbours, which is a real
    analytical gain. **Decide it; do not re-measure it.**
-3. **Residential-revenue metric + Glass grid columns** (shipped 2026-07-16/17,
+3. **⚠️ CHECKS THAT CANNOT FAIL — the vacuous-guard class, swept as a SET
+   (added 2026-09-06, S143; recommended as the next brief).** The **sibling** of
+   the proxy class S123 already swept: `FABLE_AUDIT_proxy_guards.md` covers a
+   check reading a **stand-in** for the property; this covers a check reading the
+   **right** property, in a condition or fixture where it **cannot differ**. Both
+   are green guards that guard nothing, and neither is found by running the suite.
+   ⚠️ **Ranked here on evidence, not absence — seven instances, every one found
+   by accident, and the rate is rising:**
+   - 2026-09-01 (×5): two assertions positioned where the value could not be
+     wrong (one had *already been written* when the bug it should have caught
+     shipped), plus three in freshly-written checks — including a literal
+     `check(true, true)`.
+   - **2026-09-05 (×2, S142):** `verify-transport-cost.js`'s "the two road bases
+     stay distinct" compared the operating column against the roads+fire
+     composite, so the **fire term supplied the entire gap** — one rate wired
+     into both road columns would have passed it; and
+     `tests/test_join_and_calculate.py`'s `_TRANSPORT_COSTS` had **both** road
+     rates at `$2.0`, green since 2026-08-03.
+   **Pair it with the open `TODO.md` item "the 65 `verify-*.js` scripts gate
+   NOTHING"** — that is the structural half of the same question: a sound check
+   that nothing runs is no better than a vacuous one that does. One brief answers
+   both (*which of these can fail, and which of them gate anything?*).
+   **The method is already written down** and is unusually mechanical for a Fable
+   target: reintroduce the defect and confirm **that named check** reds; a
+   falsification that reds via a *different* assertion, or reds nothing, is
+   itself a finding. ⚠️ Scope it to the guard/test estate — `tools/profiling/verify-*.js`,
+   `tests/`, `scripts/check_*.py` — **not** to the lenses, which have their own briefs.
+
+4. **Residential-revenue metric + Glass grid columns** (shipped 2026-07-16/17,
    post-S48): pipeline verified green at build; the *decisions* (class
    composition, MA DERELICT exclusion, real-zero convention) unaudited. The
    Round-2 brief's D6 covers the dev-grid, not these.
-4. **Refresh workflow end-to-end failure modes** (`refresh.yml` +
+5. **Refresh workflow end-to-end failure modes** (`refresh.yml` +
    `docs/RUNBOOK.md`): the security pass covered its supply chain. ⚠️ Partially
    closed since this line was written — the render gate (`verify-smoke.js` in
    `refresh.yml`, closed 2026-08-02) and the schema-baseline guard
    (`check_served_columns.py`, closed 2026-08-03) landed after. What's still
    genuinely unaudited: the HOLD-path/banner-state logic and the January
    year-roll procedure itself have a runbook but no adversarial test.
-5. **Data-integrity RE-RUN** on current data: the 2026-07-01 pass predates the
+6. **Data-integrity RE-RUN** on current data: the 2026-07-01 pass predates the
    lot-acre columns, res_levy decomposition, value/res grids, and services
    join — `docs/DATA_INTEGRITY.md` §joints may itself need updating first.
-6. **Debt lens data series** (`data/fir_debt_series.json`): anchor
+7. **Debt lens data series** (`data/fir_debt_series.json`): anchor
    cross-checks were done at build (S~53); no independent pass. Lens itself
-   still unbuilt (interaction prereq), so low urgency. *(Was 3; demoted — the
+   still unbuilt (interaction prereq), so low urgency. *(Was 3, then 6; demoted — the
    lens is still unbuilt, so an audit has nothing shipped to check.)*
