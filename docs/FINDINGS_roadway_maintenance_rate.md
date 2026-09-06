@@ -14,9 +14,13 @@ actually covers. This traces one of them.
 narrower than the City's own roads-maintenance program.** The two sources do not
 disagree about roads.
 
-⚠️ **NOTHING WAS CHANGED.** No rate, no served column, no value. `roadway_ops`
-still ships at $4.635/m/yr. The remedy is a judgement call (§4) and it is
-Peter's.
+⚠️ **RESOLVED 2026-09-06 — Peter chose to RE-SCOPE, and it shipped the same day.
+`roadway_ops` is now $9.32/m/yr ($5,970 maintenance + $3,350 snow); see §5.**
+Everything below §5 is the measurement **as it stood when the call was open**,
+and the rates it quotes ($4.635, $1,285) are the pre-decision ones. It is left
+that way on purpose — this is the evidence the decision was made on, not a
+description of what ships. For what ships, read `data/city_unit_costs.json` →
+`roadway_ops`.
 
 ## 1. The source says $1,285 is the same kind of number as the rejected $178
 
@@ -133,7 +137,33 @@ denominator and no scope, and **no clean decomposition of the published program
 reproduces it** — materials-only ($17,974,000 ÷ 11,000 km = $1,634/km) is the
 closest and is still 1.27× off. Do not invent a scope for it.
 
-## 5. The decision this leaves open (PETER'S CALL)
+## 5. The decision this left open — ✅ RESOLVED 2026-09-06: RE-SCOPE
+
+**Peter's call: substitute the published program.** `roadway_ops` moved
+**$4.635 → $9.32/m/yr** and its maintenance half **$1,285 → $5,970/km**, in the
+same PR as the served GeoJSON regeneration, so the map and the copy never
+disagreed. Full record in `docs/DECISIONS.md` 2026-09-06 and in
+`city_unit_costs.json` → `roadway_ops.rescoped_2026_09_06`.
+
+⚠️ **The three blockers in §4 were NOT dissolved — they were accepted as the
+price**, and each is now recorded where the rate lives:
+- **the arterial blend** (§4.1) → `roadway_ops.denominator_mismatch`, which now
+  covers **both** halves rather than snow alone;
+- **the mixed populations** (§4.2) and **the FY2017 vintage** (§4.3) →
+  `roadway_ops.source.⚠️_TWO_SOURCES_TWO_VINTAGES` and `.floor`. The rate ships
+  **unescalated** for the reason §3 gives: branch-level growth applied to a
+  program-level figure is a proxy, not a deflator.
+
+⚠️ **The blend and the vintage push in OPPOSITE directions and neither has been
+sized**, so "floor" stays a judgement about which error is larger — not an
+arithmetic bound. **What tipped the call** was not that $5,970 is right but that
+the repo was **rejecting $1,285 in `DATA.md` §16 while shipping it on a public
+map layer**, and that `city_budget_context.json` already published the very
+program figure the rate now uses. ⚠️ **What $1,285 measures is still unknown**
+(§4's last warning stands): it was dropped for lack of support, not replaced by a
+better reading of it.
+
+### What this section said while the call was open
 
 ⚠️ **The same $1,285 figure was REJECTED in one place and RETAINED in another.**
 `DATA.md` §16 retired `$1,285/km × ~11,000 km = $14.135M` as **~5× too low** on

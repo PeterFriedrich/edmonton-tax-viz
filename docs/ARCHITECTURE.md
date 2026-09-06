@@ -472,7 +472,7 @@ parks, river valley). Returns a stats dict.
 - `scripts/check_cost_copy.py`: **copy** validation — the second static repo
   check, and like `check_doc_citations.py` it runs on the **merge gate**
   (`tests.yml`), not `refresh.yml`. It ties the unit-cost rates that lens blurbs
-  state **as prose** (`"$1,285 per kilometre"`, `"$50 per metre per year"`) to
+  state **as prose** (`"$5,970 per kilometre"`, `"$50 per metre per year"`) to
   `data/city_unit_costs.json`, the file the pipeline actually reads. The gap it
   closes is a design consequence: keeping rates in JSON makes improving one a
   single-value edit, which means the map recomputes while the sentence under it
@@ -480,9 +480,11 @@ parks, river valley). Returns a stats dict.
   because a rate change is a **code** edit and catching it on the next refresh
   would be days late, on a site already serving the stale caption. ⚠️ **The
   load-bearing row is not a rate but a RELATIONSHIP**: the lifecycle-vs-operating
-  road gap is written in words in three places ("about eleven times"), and a rate
+  road gap is written in words in three places ("about five times"), and a rate
   change moves it without touching any single quoted figure, so no per-rate check
-  can see it. ⚠️ **It checks PROSE, NOT ARITHMETIC** — it cannot tell you a rate
+  can see it. ⚠️ **This stopped being hypothetical on 2026-09-06**: the operating
+  re-scope moved that ratio 10.8× → 5.4×, and this row is what named all three
+  sentences (they had said "eleven times"). ⚠️ **It checks PROSE, NOT ARITHMETIC** — it cannot tell you a rate
   is right, only that the caption and the map quote the same one. **Any mismatch
   FAILS**, with no warn-and-re-pin side: unlike a new column, a new rate is
   already on the map and its caption is already wrong, so there is nothing to

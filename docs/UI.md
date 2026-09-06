@@ -1746,13 +1746,17 @@ Transit cost and Bike cost, so `#services` is now **10 rows in 3 groups**.
 **Why a separate caption rather than folding into Transportation.** The group
 above is *supply* (metres, stop-events); these are *dollars*. And Roads cost is
 the same road metres as Other services' Service cost on a different basis —
-**$4.635/m/yr operating vs $50/m/yr lifecycle, ~10.8× apart, both in the same
-served file**. The caption is the one place in the panel where that shows.
+**$9.32/m/yr operating vs $50/m/yr lifecycle, ~5.4× apart, both in the same
+served file** (it was $4.635 and ~10.8× until the 2026-09-06 operating
+re-scope). The caption is the one place in the panel where that shows.
 Every column carries an `_ops` suffix for the same reason.
 
 **Why there is no "Transportation" row.** The composite exists as a column and
 was built as one, then measured: it is **90.8% transit at the median** (transit
-$2,808/acre/yr, roads $151, bike $109). ETS's budget pays to *run a service* —
+$2,808/acre/yr, roads $151, bike $109). ⚠️ **Roads is $304 since the 2026-09-06
+re-scope**, so the composite is now ~86% transit at the median — the finding is
+unchanged in kind, and the figures above are kept as the ones the decision was
+made on.** ETS's budget pays to *run a service* —
 drivers, fuel, vehicles — while the roads and bike figures only *maintain an
 asset*; the City never pays for the cars. A row labelled "Transportation" would
 therefore be 91% one term, mislabeled in exactly the way the all-or-nothing rule

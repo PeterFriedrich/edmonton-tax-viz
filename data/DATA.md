@@ -1083,28 +1083,40 @@ only** — never label the derived metric "total city cost".
 - **`cost_roads_life_per_acre` (2026-09-02) is the $50/m/yr roads term**, and
   since the roads+fire composite was retired (2026-09-05) it is **the lifecycle
   road cost** rather than a component of one. It is the **same metres as
-  `cost_roads_ops_per_acre` on the other basis** (~10.8× apart) — the two are
+  `cost_roads_ops_per_acre` on the other basis** (~5.4× apart) — the two are
   alternatives and must never be summed or compared as if either were all-in.
   Two road cost numbers now ship and they do not combine. Median $1,629/acre/yr
-  vs $151 operating; 9 hoods where roads alone exceed the levy (**all nine are
-  set-aside**), vs 1 on the operating basis. Pinned in
+  vs $304 operating; 9 hoods where roads alone exceed the levy (**all nine are
+  set-aside**), vs 2 on the operating basis (both also set-aside). ⚠️ The
+  operating figures **doubled on 2026-09-06** with the maintenance re-scope
+  below — $151 and 1 hood before it. Pinned in
   `data/expected_columns.json` since 2026-09-05.
-- ⚠️ **OPEN: the two non-capital road figures do not reconcile — but the gap is
-  now mostly EXPLAINED (2026-09-05).** The lifecycle O&M half ($600,000/km ÷ 50
-  yr = **$12/m/yr**) and the operating maintenance rate (**$4.635/m/yr**) both
-  claim to be annual non-capital spend on neighbourhood roads and sit **2.6×
-  apart**. ✅ **The cause is the maintenance half:** the City's published FY2017
-  `Roadway Maintenance` program (§17, $65,671,000, budgeted separately from
-  snow) is **$5,970/km — 4.65× the $1,285/km** the rate is built on;
-  substituting closes 2.6× to **1.29×**, and correcting the vintage to **~1.1×**
-  (1.06× on a FY2025 endpoint, 1.11× on FY2026 — ⚠️ **1.29× is the figure that
-  needs no escalation assumption; prefer it**).
-  ⚠️ **Value UNCHANGED and not naively swappable** — $5,970 is a citywide blend
-  including arterials. ⚠️ **Split treatment to resolve: §16 retired this same
-  $1,285/km as ~5× too low, while it remains the maintenance half in §13.**
-  Full record: `docs/FINDINGS_roadway_maintenance_rate.md`. The operating blurb
-  says outright it is the low end of a range. See also `docs/SPEC_services.md`
-  "Roads cost — lifecycle".
+- ✅ **CLOSED 2026-09-06 — the two non-capital road figures reconcile, and the
+  operating rate was RE-SCOPED to make them.** The lifecycle O&M half
+  ($600,000/km ÷ 50 yr = **$12/m/yr**) and the operating maintenance rate sat
+  **2.6× apart** on what both called annual non-capital spend. ✅ **The cause was
+  the maintenance half:** the City's published FY2017 `Roadway Maintenance`
+  program (§17, $65,671,000, budgeted separately from snow) is **$5,970/km —
+  4.65× the $1,285/km** the rate had been built on. **Peter's call: substitute
+  it.** `roadway_ops` is now **$9.32/m/yr** ($5,970 + $3,350 snow), which lands
+  at **1.29×** the lifecycle O&M half — the two sources do not disagree about
+  roads. ⚠️ **1.29× is the figure that needs no escalation assumption; prefer
+  it.** Vintage-correcting would give ~1.1× (1.06× on a FY2025 endpoint, 1.11×
+  on FY2026) but applies branch-level growth to a program-level figure, so the
+  rate ships **unescalated**.
+  ⚠️ **What the substitution cost, and why the basis is still a FLOOR:** $5,970
+  is a citywide blend **including arterials**, so the maintenance half now
+  carries the same overstatement the snow half always did; and the rate now
+  **mixes vintages** (FY2017 maintenance against 2025 snow), which understates.
+  **Opposite signs, neither sized.** ⚠️ **What $1,285 measured remains UNKNOWN**
+  — no denominator, no scope, and no decomposition of the program reproduces it.
+  It was dropped because nothing supports reading it as total road maintenance,
+  not because a better reading was found; do not reintroduce it with an invented
+  scope. **This also closed the §16-vs-§13 split treatment**: §16 had retired
+  this same $1,285/km as ~5× too low while §13 kept shipping it.
+  Full record: `docs/FINDINGS_roadway_maintenance_rate.md`,
+  `city_unit_costs.json` → `roadway_ops.rescoped_2026_09_06`. See also
+  `docs/SPEC_services.md` "Roads cost — lifecycle".
 - **Consumed** by `join_and_calculate.load_unit_costs` (validates loudly — a
   malformed hand edit fails the pipeline) → the `unit_costs` arg computes
   `cost_roads_life_per_acre` and the operating trio. `main.py
@@ -1124,7 +1136,10 @@ only** — never label the derived metric "total city cost".
 ### The OPERATING trio (added 2026-08-03, transportation lens Stage 2)
 The same file also carries `roadway_ops`, `bikeway_ops` and `transit_ets`, on a
 **strictly operating basis** — maintenance + snow clearing, **no capital**.
-- **Roadway ops = $4.635/m/yr** ($1,285/km maintain + $3,350/km snow).
+- **Roadway ops = $9.32/m/yr** ($5,970/km maintain + $3,350/km snow). ⚠️ The
+  maintenance half was **$1,285/km until 2026-09-06** — see the re-scope above.
+  ⚠️ **Its two halves are different publications of different years** (FY2017
+  budget portal; 2025 Taproot), deliberately.
 - **Bikeway ops = $20.278/m/yr** ($178/km maintain + $20,100/km snow) — a
   bikeway metre costs **4.4× a road metre** to operate: cheap to keep up,
   expensive to clear (24-hour bare-pavement standard).
@@ -1144,8 +1159,9 @@ The same file also carries `roadway_ops`, `bikeway_ops` and `transit_ets`, on a
   (`docs/FINDINGS_services_cost_lens_verdict.md` §4). Keep that distinction if a
   fourth allocation is ever proposed.
 - ⚠️ **THIS FILE HOLDS TWO INCOMPATIBLE BASES.** `roadway_om_renewal` is
-  **$50/m/yr lifecycle**; `roadway_ops` is **$4.635/m/yr operating** — the SAME
-  metres, **~10.8× apart**, and both ship to the served GeoJSON. Never sum or
+  **$50/m/yr lifecycle**; `roadway_ops` is **$9.32/m/yr operating** — the SAME
+  metres, **~5.4× apart** (10.8× before the 2026-09-06 re-scope), and both ship
+  to the served GeoJSON. Never sum or
   compare them. The `_ops` column suffix exists solely to keep them apart; a
   test pins them distinct. See the file's own `_two_bases` field.
 - **`roadway_renewal` = $38/m/yr is the RENEWAL HALF of basis (1), not a third
@@ -1154,8 +1170,12 @@ The same file also carries `roadway_ops`, `bikeway_ops` and `transit_ets`, on a
   ⚠️ **Never sum `roadway_renewal` with `roadway_om_renewal`** — that
   double-counts renewal; exactly one of the two may appear in any figure.
   ⚠️ **The $12 O&M half is deliberately NOT published**: it would sit beside
-  `roadway_ops`' $4.635/m/yr as a *second* recurring road number, ~2.6× apart
-  from it and from a different source. Renewal was chosen precisely because it
+  `roadway_ops`' $9.32/m/yr as a *second* recurring road number from a different
+  source. ⚠️ **The 2026-09-06 re-scope WEAKENED this argument rather than
+  strengthening it** — the two are now 1.29× apart, not 2.6×, so "it collides"
+  is a much thinner reason than when the decision was made. The decision stands
+  on the remaining one (renewal does not collide at all); revisit it on its own
+  merits, not on the gap. Renewal was chosen precisely because it
   does not collide. **Inert to the served pipeline** — `load_unit_costs` still
   returns its same 5 keys, the `bikeway_capital` pattern; only
   `tools/ward_rollup.py` reads it. ⚠️ Anything built on it is an annual

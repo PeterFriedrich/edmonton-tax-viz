@@ -130,7 +130,8 @@ caveat *"a mostly-fixed budget shared out, not a bill."*
 
 ### Level 2 — The RATE terms: one citywide published unit cost × collector+local metres
 `cost_roads_life_per_acre` ($50/m/yr, `roadway_om_renewal`),
-`cost_roads_ops_per_acre` ($4.635/m/yr, `roadway_ops`), `cost_bike_ops_per_acre`
+`cost_roads_ops_per_acre` ($9.32/m/yr since the 2026-09-06 re-scope, was
+$4.635 when this brief first ran; `roadway_ops`), `cost_bike_ops_per_acre`
 ($20.278/m/yr).
 - **A uniform rate makes the dollar map a re-labelled metres map** (Spearman
   1.0 by construction). What does the dollar layer add beyond the panel's
@@ -142,7 +143,8 @@ caveat *"a mostly-fixed budget shared out, not a bill."*
   carrying knowingly? Check the roads-ops blurb's own arithmetic against the
   figures it names.
 - **Basis choice as a free variable**: the 25-vs-50-year life doubles or halves
-  the lifecycle rate; `_two_bases` puts the same metres 10.8× apart. Is
+  the lifecycle rate; `_two_bases` puts the same metres 5.4× apart (10.8× when
+  this brief first ran). Is
   publishing *both* bases (with "never sum" scaffolding in layout, caption and
   a guard) sound, or does it delegate a decision to the reader that the authors
   could not make?
