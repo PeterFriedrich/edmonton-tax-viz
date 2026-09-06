@@ -138,7 +138,7 @@ def load_unit_costs(path: str | Path) -> dict[str, float]:
         transit_budget_annual    ETS bus+LRT gross operating budget, $/yr
 
     ⚠️ The two road numbers are DIFFERENT BASES, not a duplicate — $50/m/yr
-    lifecycle vs $4.635/m/yr operating, ~10.8x apart on the same metres. They
+    lifecycle vs $9.32/m/yr operating, ~5.4x apart on the same metres. They
     feed different columns and must never be summed (city_unit_costs.json
     "_two_bases"). The operating trio is OPTIONAL: absent keys simply omit the
     transportation composite, so the file stays valid mid-sourcing.
@@ -617,7 +617,7 @@ def join_and_calculate(
     # published $50/m/yr rate over the collector+local metres.
     #
     # ⚠️ Never summed with cost_roads_ops_per_acre — the SAME metres on the
-    # OPERATING basis, ~10.8x smaller (city_unit_costs.json "_two_bases"). They
+    # OPERATING basis, ~5.4x smaller (city_unit_costs.json "_two_bases"). They
     # are alternatives, not components.
     if unit_costs is not None and roads is not None:
         joined["cost_roads_life_per_acre"] = (
@@ -677,7 +677,7 @@ def join_and_calculate(
     #
     # ⚠️ OPERATING basis: maintenance + snow clearing, NO capital replacement.
     # The roads term here is NOT cost_roads_life_per_acre — same metres,
-    # $4.635/m/yr vs $50/m/yr lifecycle, ~10.8x apart. That is why every column
+    # $9.32/m/yr vs $50/m/yr lifecycle, ~5.4x apart. That is why every column
     # below carries _ops. Never sum the two (city_unit_costs "_two_bases").
     if unit_costs is not None:
         transport_terms: dict[str, pd.Series] = {}
@@ -942,7 +942,7 @@ def join_and_calculate(
 # Transportation lens Stage 2 composite on a strictly OPERATING basis
 # (maintenance + snow, NO capital replacement); cost_roads_life_per_acre is the
 # roads LIFECYCLE cost. ⚠️ cost_roads_ops_per_acre and cost_roads_life_per_acre
-# are the SAME METRES ON DIFFERENT BASES, ~10.8x apart; the client must never
+# are the SAME METRES ON DIFFERENT BASES, ~5.4x apart; the client must never
 # sum or compare them, which is what the _ops suffix exists to signal.
 # ⚠️ NO COLUMN HERE ALLOCATES A CITYWIDE BUDGET TO LAND except the transit term
 # — the roads+fire composite that did was retired 2026-09-05 (DECISIONS.md;

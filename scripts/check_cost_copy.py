@@ -10,12 +10,13 @@ that improving one is a single-value edit: change ``roadway_om_renewal.value``
 and the next refresh recomputes every hood. The map is then correct and the
 sentence under it is stale — a wrong number presented with full confidence,
 which is this project's characteristic failure mode rather than an unlikely one.
-The road rates are actively expected to move (the published $600k/km lifecycle
-O&M and the $1,285/km operating maintenance figure are ~2.6x apart on what look
-like the same quantity; measured 2026-09-05, that gap is mostly the $1,285 being
-4.65x below the City's own published roads-maintenance program, and a re-scope is
-Peter's open call — docs/FINDINGS_roadway_maintenance_rate.md), so this is not a
-hypothetical.
+The road rates are actively expected to move, and one already has: on 2026-09-06
+the operating maintenance half was re-scoped from $1,285/km onto the City's own
+published roads-maintenance program, $5,970/km (docs/FINDINGS_roadway_maintenance_rate.md;
+city_unit_costs.json roadway_ops.rescoped_2026_09_06). ⚠️ THIS GUARD IS WHAT MADE
+THAT EDIT SAFE — it named the two stale sentences immediately, including the
+lifecycle-vs-operating ratio, which no per-rate row could see and which was stated
+in words in three separate places. This is not a hypothetical.
 
 ⚠️ THIS GUARD CHECKS PROSE, NOT ARITHMETIC. It cannot tell you a rate is *right*
 — only that the map and the caption are quoting the SAME rate. Sourcing lives in
@@ -49,7 +50,7 @@ DEFAULT_COSTS = REPO / "data" / "city_unit_costs.json"
 
 
 def _money(value: float) -> str:
-    """$1285.0 -> "$1,285" — the form the blurbs write whole-dollar rates in."""
+    """$5970.0 -> "$5,970" — the form the blurbs write whole-dollar rates in."""
     return f"${value:,.0f}"
 
 
@@ -65,7 +66,7 @@ _WORDS = {2: "two", 3: "three", 4: "four", 5: "five", 6: "six", 7: "seven",
 
 
 def _times_in_words(ratio: float) -> str:
-    """10.79 -> "eleven times".
+    """5.365 -> "five times".
 
     The gap between the two road bases is stated in WORDS in three separate
     places (a blurb, the panel note, the methods pod), which is exactly the
