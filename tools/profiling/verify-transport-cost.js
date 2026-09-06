@@ -8,8 +8,8 @@
 //     bike bug, confidently wrong rather than blank. Asserted per row.
 //  2. A MISSING primaryRow KEY prints "no <label> data" over a hood that has
 //     data (the `|| []` fall-through). Asserted per row.
-//  3. THE TWO ROAD BASES COLLAPSING. cost_roads_ops_per_acre and the roads
-//     term inside svc_cost_per_acre are the same metres ~11x apart; if a future
+//  3. THE TWO ROAD BASES COLLAPSING. cost_roads_ops_per_acre and
+//     cost_roads_life_per_acre are the same metres ~10.8x apart; if a future
 //     edit ever wires one rate into both, the readouts stop differing.
 //
 // Also asserts the 2026-08-03 decision that transport_cost_ops_per_acre ships
@@ -162,13 +162,22 @@ function check(name, ok, detail) {
   }
 
   // --- (3) the two road bases must stay distinct ---------------------------
+  // ⚠️ Compared against cost_roads_life_per_acre, NOT the retired roads+fire
+  // composite (2026-09-05). It used to read that composite and call it "life",
+  // so the FIRE term supplied the gap this check measures — it would have
+  // passed with one rate wired into both road columns. Both sides are now the
+  // same metres, so the ratio IS the two rates and nothing else.
   const bases = await page.evaluate(() => {
     const f = state.data.features.find(x =>
-      x.properties.cost_roads_ops_per_acre > 0 && x.properties.svc_cost_per_acre > 0);
-    return { ops: f.properties.cost_roads_ops_per_acre, life: f.properties.svc_cost_per_acre };
+      x.properties.cost_roads_ops_per_acre > 0 && x.properties.cost_roads_life_per_acre > 0);
+    return { ops: f.properties.cost_roads_ops_per_acre,
+             life: f.properties.cost_roads_life_per_acre };
   });
-  check('roads OPERATING cost is far below the lifecycle composite (bases distinct)',
-        bases.ops * 3 < bases.life, `ops $${bases.ops.toFixed(0)} vs svc $${bases.life.toFixed(0)}`);
+  check('roads OPERATING cost is far below the LIFECYCLE cost (bases distinct)',
+        bases.ops * 3 < bases.life, `ops $${bases.ops.toFixed(0)} vs life $${bases.life.toFixed(0)}`);
+  check('the two road bases sit at the ~10.8x the rates imply',
+        Math.abs(bases.life / bases.ops - 50 / 4.635) < 0.05,
+        `${(bases.life / bases.ops).toFixed(3)}x`);
 
   // --- transforms inherited from the supply columns ------------------------
   const transforms = await page.evaluate(() => ({

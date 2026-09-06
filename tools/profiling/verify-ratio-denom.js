@@ -154,75 +154,23 @@ function check(name, ok, detail) {
   check('fire tooltip: off-scale names the floor',
     /fewer than 0.005 fire events/.test(tips.artifact), tips.artifact);
 
-  // 6b. Service-cost coverage denominator (2026-07-16, decision 3(b)) —
-  // skipped on data files that predate the svc_cost_per_acre column. A
-  // dimensionless ratio (revenue ÷ modeled service cost): legend bounds show
-  // as ×-multiples (boundFmt), NOT dollars; the blurb must own the "not
-  // paying its full way" caveat (full revenue over a two-service cost).
-  const hasSvcCost = await page.evaluate(() =>
-    state.data.features.some(f => f.properties.svc_cost_per_acre != null));
-  if (!hasSvcCost) {
-    check('svccost: SKIPPED (no svc_cost_per_acre column)', true);
-    check('svccost: ratio button hidden', await page.evaluate(() =>
-      getComputedStyle(document.querySelector('#ratio-denom button[data-ratio-denom="servicecost"]')).display === 'none'));
-  } else {
-    const fmtX = v => v.toFixed(v < 10 ? 1 : 0) + '×';
-    await click('#ratio-denom button[data-ratio-denom="servicecost"]');
-    await page.waitForTimeout(1500);
-    c = await chrome();
-    check('svccost: active + state', c.active === 'servicecost' && c.ratioDenom === 'servicecost');
-    check('svccost: title', c.title === 'Edmonton: Revenue vs Modeled Service Cost', c.title);
-    check('svccost: legend', c.legend === 'Revenue ÷ modeled roads+fire cost (log colour)', c.legend);
-    check('svccost: aside', c.aside === 'Set aside / insufficient service base', c.aside);
-    check('svccost: blurb owns the partial-cost caveat',
-      /not a sign the land\s+pays its full way/.test(c.blurb) && /Roads and fire only/.test(c.blurb));
-    const svcInd = await independent('svc_cost_per_acre', 230);
-    check('svccost legend min == p2.5 (× format)',
-      c.min === '≤ ' + fmtX(svcInd.lo), `${c.min} vs ${fmtX(svcInd.lo)}`);
-    check('svccost legend max == p97.5 (× format)',
-      c.max === fmtX(svcInd.hi) + '+', `${c.max} vs ${fmtX(svcInd.hi)}`);
-    // Layer parity: max kept coverage reaches the 8220 height ceiling; a
-    // kept hood extrudes on the ramp; a below-floor hood greys flat.
-    await page.waitForFunction(() => {
-      const layer = overlay._deck.layerManager.layers.find(l => l.id === 'ratio-extrusion');
-      return layer && layer.props.elevationScale === ratioScale().elevationScale;
-    }, { timeout: 20000 }).catch(() => {});
-    const svcFacts = await page.evaluate(() => {
-      const layer = overlay._deck.layerManager.layers.find(l => l.id === 'ratio-extrusion');
-      const feats = state.data.features, props = f => f.properties;
-      const artifact = feats.find(f => !props(f).is_set_aside &&
-        props(f).svc_cost_per_acre != null && props(f).svc_cost_per_acre < 230);
-      const kept = feats.find(f => props(f).neighbourhood_name === 'DOWNTOWN');
-      return {
-        artifactFill: artifact && layer.props.getFillColor(artifact),
-        artifactElev: artifact && layer.props.getElevation(artifact),
-        keptFill: kept && layer.props.getFillColor(kept),
-        keptElev: kept && layer.props.getElevation(kept),
-        elevationScale: layer.props.elevationScale,
-        setAsideColor: SET_ASIDE_COLOR,
-      };
-    });
-    const svcGrey = JSON.stringify(svcFacts.setAsideColor);
-    check('svccost: below-floor hood greyed + flat',
-      svcFacts.artifactFill == null ||
-      (JSON.stringify(svcFacts.artifactFill) === svcGrey && svcFacts.artifactElev === 0));
-    check('svccost: kept hood on ramp + extruded',
-      JSON.stringify(svcFacts.keptFill) !== svcGrey && svcFacts.keptElev > 0);
-    check('svccost: height parity (max kept reaches 8220)',
-      Math.abs(svcFacts.elevationScale * svcInd.max - 8220) < 1,
-      `${(svcFacts.elevationScale * svcInd.max).toFixed(1)}`);
-    // Tooltip prose: ×-multiple + the underlying modeled cost component.
-    const svcTip = await page.evaluate(() => {
-      const kept = state.data.features.find(f => f.properties.neighbourhood_name === 'DOWNTOWN');
-      return tooltipFor({ object: kept }).html;
-    });
-    check('svccost tooltip: ×-multiple + cost component',
-      /× the modeled roads\+fire cost/.test(svcTip) &&
-      /modeled roads\+fire cost \/ acre \/ yr/.test(svcTip), svcTip);
-    // Restore fire as the active denom for the persistence checks below.
-    await click('#ratio-denom button[data-ratio-denom="fire"]');
-    await page.waitForTimeout(1500);
-  }
+  // 6b. The service-cost coverage denominator was RETIRED 2026-09-05 — the
+  // audit found its denominator 88.6% fire-allocation variance, so "revenue per
+  // modeled service dollar" was revenue per fire dispatch (DECISIONS.md;
+  // docs/FINDINGS_services_cost_lens_verdict.md §3). The picker is back to the
+  // two physical denominators. ⚠️ Asserted gone, not simply deleted.
+  // ⚠️ UI only. The served geojson carries svc_cost_per_acre until the next
+  // refresh, so asserting the column is gone would be red for a week against a
+  // correct build; that removal is pinned in tests/test_join_and_calculate.py.
+  check('svccost: denominator retired (no button, no RATIO_DENOMS entry)',
+    await page.evaluate(() => !document.querySelector('#ratio-denom button[data-ratio-denom="servicecost"]')
+      && !('servicecost' in RATIO_DENOMS)));
+  check('picker offers exactly the two physical denominators',
+    await page.evaluate(() => JSON.stringify([...document.querySelectorAll('#ratio-denom button')]
+      .map(b => b.dataset.ratioDenom)) === '["roads","fire"]'));
+  // Leave fire active for the persistence checks below.
+  await click('#ratio-denom button[data-ratio-denom="fire"]');
+  await page.waitForTimeout(1500);
 
   // 8. Persistence: leave to Money (picker hides), return (fire still active).
   await click('#views button[data-view="money"]');

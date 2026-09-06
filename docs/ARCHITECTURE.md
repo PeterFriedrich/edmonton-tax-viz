@@ -1049,13 +1049,14 @@ unplaced. See `data/DATA.md`.
   understatement caveat recorded in the module.
 - (optional) unit-costs dict from `load_unit_costs` in this module (added
   2026-07-15; reads `data/city_unit_costs.json`, the manual reviewed input —
-  DATA.md §13) — the V2 composite `svc_cost_per_acre = road_m_per_acre ×
-  $/road-m/yr + fire_events_per_acre × (fire budget ÷ the fire frame's
-  citywide kept-event sum, PRE-join)` (`SPEC_utilities.md` decision 3).
-  Requires BOTH the roads and fire frames (either missing → warn + skip: a
-  one-term composite would be mislabeled "roads + fire"). MODELED, roads +
-  fire only, never "total city cost"; the fire term is a demand allocation
-  of a mostly-fixed budget. In `SLIM_COLUMNS`; no display layer yet.
+  DATA.md §13) — `cost_roads_life_per_acre = road_m_per_acre × $/road-m/yr`
+  (lifecycle) plus the OPERATING transportation trio, all-or-nothing across
+  its three terms. Each is a supply column times ONE published citywide rate.
+  ⚠️ **No budget is allocated to land here except the transit term.** The
+  roads+fire composite `svc_cost_per_acre` that did was **retired 2026-09-05**
+  — 88.6% fire-allocation variance (`DECISIONS.md`,
+  `docs/FINDINGS_services_cost_lens_verdict.md` §3), and `fire_response` in the
+  unit-cost file is now read by nothing.
 - (optional) lot-acre DataFrame from `export_value_grid.build_hood_lot_acres`
   (added 2026-07-08) — the neighbourhood lot-acre denominator toggle. Merged on
   `neighbourhood_name`; `value_per_lot_acre` / `revenue_per_lot_acre` =

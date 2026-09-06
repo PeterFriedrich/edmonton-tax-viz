@@ -235,33 +235,30 @@ publish on its own, unrelated to any of this — re-pinned.)_
   - **Gate:** nothing is blocked on this. It costs money only when a doc-heavy
     session loads these files — which is what surfaced it.
 
-### Services cost lens audit — four Peter's calls (OPEN 2026-09-05, S142)
+### Services cost lens audit — 1 of 4 calls made (OPEN 2026-09-05, S142)
 
 The ledger's #1 candidate ran: `docs/FABLE_AUDIT_services_cost_lens.md` (brief)
 → `docs/FINDINGS_services_cost_lens_verdict.md` (verdicts). **1× UNSOUND, 5×
-CONDITIONAL, 1× SOUND. Nothing served was changed** — every item here is a
-call, not a task.
+CONDITIONAL, 1× SOUND.** The UNSOUND one is **decided and executed**; the three
+below are still calls, not tasks.
 
-- [ ] **⚠️ PETER'S CALL — the fire term sits in a column called *cost*, and the
-  audit finds that UNSOUND** (findings §3). `svc_cost_per_acre` is **88.6%
-  fire-allocation variance** (Spearman 0.956 with dispatches vs 0.776 with road
-  metres): the "Service cost" row, the "Per service $" Ratio denominator and the
-  panel's "Roads + fire" row are a fire-dispatch density map priced in dollars,
-  under a caveat that says the budget does not move with dispatches. It assigns
-  MCCAULEY **$20.8M/yr — 7.5% of the whole Fire Rescue budget** — and reads it
-  at 0.5× coverage; the four hoods it singles out take 19.9% of all dispatches
-  at **61–78% medical**. The 2026-08-03 rule that denied the transport composite
-  a UI row (97.6% transit variance) was never applied to this one. **Options,
-  in the order the evidence favours:** (a) retire `svc_cost_per_acre` + the
-  three surfaces, keeping `fire_events_per_acre` as the fire lens — a
-  data-contract change, proposal first; (b) reframe as a *budget-share* surface
-  never called cost and never under the levy; (c) keep, accepting the caveat
-  does not carry the map. ⚠️ `/full/`-only today, so no public-root urgency —
-  but **`SPEC_development.md` Lens C and `SPEC_breakeven.md` plan to build on
-  this column and should wait for this call.** If a fire *cost* is ever wanted,
-  the allocation that matches a capacity service is by station coverage, and no
-  such layer exists as open data (DATA.md §8 points, §12 greenfield levy
-  catchments).
+- [x] ✅ **DONE 2026-09-05 — Peter chose RETIRE, and it shipped the same day.**
+  `svc_cost_per_acre`, the "Service cost" Services row, the Ratio view's "Per
+  service $" denominator and the panel's nested "Roads + fire" row are all gone
+  (`DECISIONS.md` 2026-09-05). `fire_events_per_acre` untouched;
+  `cost_roads_life_per_acre` is now the sole lifecycle road column and is pinned
+  in `expected_columns.json`. ⚠️ **`SPEC_development.md` Lens C and
+  `SPEC_breakeven.md` are unblocked but must now name their cost side** — the
+  composite they referenced does not exist.
+  - ⚠️ **Two defects surfaced during the removal, both fixed, both worth the
+    pattern:** the Services **panel kept its own publish flag**, so the PUBLIC
+    build printed modelled transit + bike cost while the row list hid them (it
+    now reads the `pub` tag); and `verify-transport-cost.js`'s "the two road
+    bases stay distinct" check **could not fail** — it compared against the
+    composite, whose *fire* term supplied the entire gap, and the unit test's
+    fixture had both road rates at $2.0. Both are the same shape as the
+    S141/S142 lesson: **a check placed where the value cannot be wrong.**
+
 - [ ] **PETER'S CALL — the public roads-ops blurb states its ratio against the
   wrong base** (findings §7.1). *"…works out to about two and a half times the
   $1,285 rate"*: $12,000/km lifecycle O&M is **9.3×** $1,285 and 2.6× only
