@@ -12,7 +12,7 @@ the joke telling itself.
 
 ---
 
-## V1 — `check_cost_copy.py` can be satisfied by a code comment  (T1, HIGH)
+## V1 — `check_cost_copy.py` can be satisfied by a code comment  (T1, HIGH) — **FIXED 2026-09-07**
 
 **The check:** every rate a lens blurb states in prose must match
 `data/city_unit_costs.json`. It runs on the **merge gate**, and it is the *only*
@@ -41,10 +41,44 @@ the check silently and permanently.
 minutes later. This is the project's cardinal failure mode, and this guard is
 the only thing standing in front of it.
 
-**Fix:** strip comments before matching, and give the check locality — match
-within the blurb string literals and the `#about-*` prose, not the whole file.
-⚠️ **Add the falsification as a test** (`check_cost_copy` has **no test file at
-all** — see §5), so the fix itself cannot rot back.
+**Fixed 2026-09-07** (Peter's call — it changes what a merge-gate guard
+accepts, so it was proposed first). **The fix is the haystack, not the match.**
+A new `prose()` builds the search space from two sources, both *derived* rather
+than enumerated so new copy is in scope automatically:
+
+1. the HTML's **visible text** — `<script>` blocks, `<!-- -->` comments and tags
+   removed; this carries the `#about-*` methods-pod paragraphs;
+2. every line-anchored **`blurb:` string literal**, with `"a " + "b"`
+   concatenation joined **seamlessly** — the lifecycle rate is written
+   `"... $50 per metre " + "per year, ..."`, so a separator between literals
+   would hide a claim the reader plainly sees.
+
+Sources are newline-joined, so a match cannot be manufactured across the seam
+between two unrelated pieces of copy. The haystack is now **4% of the file**
+(16,912 of 432,532 chars), and the falsification above returns exit 5.
+
+⚠️ **Comments are excluded BY CONSTRUCTION — nothing strips them from the JS.**
+That was the deliberate choice over the obvious one: this file has `//` inside
+five string literals and a regex literal containing **both** quote characters
+(`.replace(/[&<>"']/g, ...)`), so a comment-stripping lexer would have to
+resolve regex-vs-division correctly to stay honest. A haystack that never reads
+comments cannot get that wrong. For the same reason the `blurb:` key must start
+its line: `// Uses blurb: ...` prose appears **three times** in the real file.
+
+⚠️ **Deliberate consequence, recorded in the docstring:** a rate quoted *only*
+in a dynamic builder (`servicesBlurb()`, `changeBlurb()`, …) or in
+`temporal-note`'s `textContent` now **fails**. That is the safe direction — a
+red merge gate is visible, and a green one was not. **The fix is to widen
+`prose()`, never to loosen the match.**
+
+**`check_cost_copy` had no test file; it has 13 tests now**
+(`tests/test_check_cost_copy.py`), led by the falsification verbatim.
+⚠️ **Falsified against four mutations of the fix itself:** reverting to the
+raw-file haystack reds **6 tests by name**; joining concatenated literals with a
+space reds 2; dropping the line anchor on the `blurb:` key reds 1; joining the
+sources without a separator reds 1. A first test asserts the fixture still
+produces the figures the rest key on, so renaming a claim cannot leave them
+passing vacuously. **799 pass** (786 + 13).
 
 ---
 

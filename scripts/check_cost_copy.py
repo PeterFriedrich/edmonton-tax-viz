@@ -18,6 +18,12 @@ THAT EDIT SAFE — it named the two stale sentences immediately, including the
 lifecycle-vs-operating ratio, which no per-rate row could see and which was stated
 in words in three separate places. This is not a hypothetical.
 
+⚠️ IT CHECKS READER-VISIBLE PROSE ONLY — the HTML's text and the ``blurb:``
+literals, never comments. Matching the raw file made it vacuous: one comment
+naming a rate satisfied it permanently while the blurb showed a retired one
+(falsified 2026-09-07, docs/FINDINGS_vacuous_guards.md V1). See ``prose()`` for
+the scope, and widen that if copy legitimately moves — never loosen the match.
+
 ⚠️ THIS GUARD CHECKS PROSE, NOT ARITHMETIC. It cannot tell you a rate is *right*
 — only that the map and the caption are quoting the SAME rate. Sourcing lives in
 ``city_unit_costs.json``'s own ``source`` blocks and in ``data/DATA.md`` §13.
@@ -39,6 +45,7 @@ Usage:
 import argparse
 import json
 import logging
+import re
 import sys
 from pathlib import Path
 
@@ -130,9 +137,104 @@ CLAIMS = [
 ]
 
 
+# ── Where the guard is allowed to look ──────────────────────────────────────
+#
+# ⚠️ THE HAYSTACK IS THE GUARD. Matching against the raw file made this check
+# vacuous: `web/index.html` is ~7,300 lines and heavily commented by house
+# style, so ANY comment mentioning a rate satisfied it permanently, anywhere in
+# the file. Falsified 2026-09-07 — the roads blurb was reverted to the retired
+# $1,285 and one ordinary-looking comment carrying $5,970 was added; the guard
+# reported all 7 rates OK while the public build displayed the retired rate.
+# (docs/FINDINGS_vacuous_guards.md V1.) So: search only text a READER SEES.
+#
+# Two sources, both derived rather than enumerated, so new copy is in scope
+# automatically:
+#
+#   1. the HTML's visible text — script blocks, comments and tags removed;
+#      this is where the `#about-*` methods-pod paragraphs live;
+#   2. every `blurb:` string literal in the lens config.
+#
+# Comments are excluded BY CONSTRUCTION — nothing here strips them from JS —
+# which matters, because this file has `//` inside string literals and a regex
+# literal containing both quote characters. A comment-stripping lexer would
+# have to get those right to stay honest; not reading comments at all cannot.
+
+_SCRIPT_RE = re.compile(r"<script\b[^>]*>.*?</script>", re.S | re.I)
+_HTML_COMMENT_RE = re.compile(r"<!--.*?-->", re.S)
+_TAG_RE = re.compile(r"<[^>]+>")
+_BLURB_KEY_RE = re.compile(r"^[ \t]*blurb\s*:\s*", re.M)
+_QUOTES = "\"'`"
+
+
+def _visible_html_text(html: str) -> str:
+    """The page's reader-visible text: no scripts, no comments, no tags.
+
+    Tags are removed without substituting a separator, which is how a browser
+    renders inline markup: ``<b>road cost</b> layers`` reads as one phrase.
+    """
+    text = _SCRIPT_RE.sub(" ", html)
+    text = _HTML_COMMENT_RE.sub(" ", text)
+    return _TAG_RE.sub("", text)
+
+
+def _read_literal(src: str, i: int) -> tuple[str, int]:
+    """Read one JS string literal starting at the quote ``src[i]``.
+
+    Returns its contents and the index just past the closing quote.
+    """
+    quote = src[i]
+    out = []
+    i += 1
+    while i < len(src):
+        c = src[i]
+        if c == "\\":            # an escape cannot close the literal
+            out.append(src[i:i + 2])
+            i += 2
+            continue
+        if c == quote:
+            return "".join(out), i + 1
+        out.append(c)
+        i += 1
+    raise ValueError("unterminated string literal in web/index.html")
+
+
+def _blurb_texts(html: str) -> list[str]:
+    """Every ``blurb:`` value, with ``"a " + "b"`` concatenation joined up.
+
+    The join must be seamless: the lifecycle rate is written
+    ``"... $50 per metre " + "per year, covering ..."``, so a separator between
+    literals would hide a claim that the reader plainly sees.
+
+    A non-string value (``blurb: null``, for the lenses whose prose is built by
+    a function) yields nothing — see the scope caveat in the module docstring.
+    """
+    blurbs = []
+    for key in _BLURB_KEY_RE.finditer(html):
+        i = key.end()
+        parts = []
+        while i < len(html) and html[i] in _QUOTES:
+            text, i = _read_literal(html, i)
+            parts.append(text)
+            # Step over whitespace and the `+` joining this literal to the next.
+            while i < len(html) and html[i] in " \t\r\n+":
+                i += 1
+        if parts:
+            blurbs.append("".join(parts))
+    return blurbs
+
+
+def prose(html: str) -> str:
+    """The text a reader can actually see, as one searchable haystack.
+
+    Sources are newline-separated so a match can never be manufactured by two
+    unrelated pieces of copy abutting.
+    """
+    return "\n".join([_visible_html_text(html), *_blurb_texts(html)])
+
+
 def check(html_path: Path, costs_path: Path) -> list[str]:
     """Return a list of failure messages; empty means every quoted figure matches."""
-    html = html_path.read_text(encoding="utf-8")
+    haystack = prose(html_path.read_text(encoding="utf-8"))
     costs = json.loads(costs_path.read_text(encoding="utf-8"))
 
     failures = []
@@ -144,15 +246,18 @@ def check(html_path: Path, costs_path: Path) -> list[str]:
                 f"{costs_path}: cannot evaluate the claim "
                 f"{claim['label']!r} against this file ({e!r})"
             ) from e
-        if expected in html:
+        if expected in haystack:
             logger.info("ok    %-58s %s", claim["label"], expected)
         else:
             failures.append(
                 f"{claim['label']}: {costs_path.name} implies the copy should "
-                f'contain "{expected}" — no such text in {html_path.name}. '
-                "Either a rate changed and the copy was not updated, or the "
-                "copy rephrased the figure into a form this guard cannot see "
-                "(in which case fix the wording, not this script)."
+                f'contain "{expected}" — no such text in the READER-VISIBLE '
+                f"copy of {html_path.name}. Either a rate changed and the copy "
+                "was not updated; or the copy rephrased the figure into a form "
+                "this guard cannot see (fix the wording, not this script); or "
+                "the figure is now quoted somewhere this guard does not look "
+                "— a comment does not count, and neither does a blurb built by "
+                "a function. Widen prose(), never loosen the match."
             )
     return failures
 
