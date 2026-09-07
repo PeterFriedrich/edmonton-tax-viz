@@ -45,6 +45,7 @@
     "res_revenue_per_lot_acre",
     "rev_frac_commercial",
     "rev_frac_dc",
+    "rev_frac_exempt",
     "rev_frac_industrial",
     "rev_frac_inst",
     "rev_frac_mixed",
