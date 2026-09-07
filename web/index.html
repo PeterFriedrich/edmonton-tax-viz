@@ -4893,11 +4893,29 @@
     }
 
     // Revenue is the reference and every bar is a fraction OF IT, rather than the
-    // bars sharing a scale with each other. The question the panel answers is
-    // whether this hood's levy covers each service — and a common bar scale
-    // across the two bases is exactly the visual invitation to add them that
-    // SVC_COST_BASES exists to refuse. Over 100% the bar saturates and the
-    // percentage carries the magnitude.
+    // bars sharing a scale with each other — a common bar scale across the two
+    // bases is exactly the visual invitation to add them that SVC_COST_BASES
+    // exists to refuse. Over 100% the bar saturates and the percentage carries
+    // the magnitude.
+    // ⚠️ EACH BAR IS A SHARE OF THE LEVY, NOT A BREAK-EVEN TEST, and the wording
+    // matters because this comment used to say the panel answers "whether this
+    // hood's levy covers each service" — which is a break-even claim the bars do
+    // not make (S144 audit follow-up; DECISIONS.md 2026-09-07). One bar compares
+    // ONE service against the WHOLE levy, so it can only ever say what fraction
+    // of the levy that service would need at the published rate. It cannot say
+    // the hood does or does not pay its way: the cost side here is roads (plus
+    // transit and bike in /full/), never the full cost of serving a hood.
+    // ⚠️ The 100% mark is therefore NOT the 1.0 that the Ratio view's retired
+    // "Per service $" denominator was forbidden (SPEC_utilities.md decision 3b,
+    // Peter 2026-07-16). That one divided FULL property tax by a PARTIAL cost
+    // side and read >>1 everywhere (median ~5.8x), so a 1.0 line would have
+    // implied a break-even that the numbers could not support. This divides one
+    // service by the whole levy and reads <<1 (median 1.7% operating roads, ~9%
+    // lifecycle), so crossing 100% is a well-defined statement about that one
+    // service — "roads lifecycle alone would need 55x this hood's entire levy".
+    // ⚠️ Measured 2026-09-07: NO DEVELOPED HOOD exceeds 100% on any row in either
+    // build. All 9/2/9/12 (life/ops/transit/bike) are set-aside, worst is a golf
+    // course. Re-measure before citing that as still true.
     function renderServiceCost(p) {
       const rev = p.revenue_per_acre;
       const groups = svcCostRows(p);

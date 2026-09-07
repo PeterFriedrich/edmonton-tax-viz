@@ -179,6 +179,35 @@ spend across enough hoods to replace `metres × rate`.
 
 ## 6. Level 3 — the comparison to the levy: CONDITIONAL (roads), moot (fire)
 
+⚠️ **CORRECTED 2026-09-07 — three claims in this section were wrong, and the
+call went the other way because of it (`DECISIONS.md` 2026-09-07).**
+1. **There is no DECISIONS 2026-07-16 row.** The lock lived in
+   `SPEC_utilities.md` decision 3(b) and `docs/UI.md`; the only row that date is
+   the residential-revenue one. So this was never "two locks in tension" — it
+   was one indexed row and one decision that had **never been indexed**, which
+   is the likelier reason 08-10 did not reference it. Now back-filled.
+2. **The lock's subject is retired.** It governed `revenue_per_acre ÷
+   svc_cost_per_acre`; both went on 2026-09-05 and neither is in the front end.
+3. ⚠️ **The two constructions make different claims, and the direction is the
+   tell.** The Ratio's 1.0 divided FULL tax by a PARTIAL cost side and read
+   **≫1** (median ≈5.8×) — a 1.0 line would assert a break-even the numbers
+   cannot support. The panel divides **one service by the whole levy**, reads
+   **≪1** (median 1.7% operating roads, ~9% lifecycle), so 100% is well-defined
+   and local. **§6's own closing paragraph half-conceded this** ("an honest
+   share, not an invitation to add") without following it back to the finding.
+
+**What survived:** `renderServiceCost`'s comment *was* break-even language for a
+share-of-levy rendering, and has been rewritten. **The panel was not changed**,
+and the measurement below still holds — re-measured 2026-09-07, no **developed**
+hood exceeds 100% on any row in either build.
+
+⚠️ **The general lesson, recorded because this audit produced it twice** (see
+also §7.1, whose remedy was executed on 2026-09-06): **an audit's findings are
+claims to reproduce, not a task list.** Two of this brief's seven verdicts named
+a document that does not say what they said it said.
+
+**The section as originally written follows.**
+
 **The unrecorded amendment.** DECISIONS 2026-07-16 locked the Ratio view as
 *"MAGNITUDE, not break-even … the SAME log ramp, NO 1.0 marking … never 'pays
 its way'"*. DECISIONS 2026-08-10 built the Services panel with each cost as a
