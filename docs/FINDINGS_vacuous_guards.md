@@ -151,8 +151,23 @@ Two further facts, reported without recommendation: `enforce_admins: false`
 (an admin merge can bypass the required check) and `strict: false` (a PR need
 not be current with master before merging).
 
-**Also:** `scripts/check_temporal_archive_year.py` appears in **no workflow**.
-Its 13 tests pass; nothing runs the guard itself.
+~~**Also:** `scripts/check_temporal_archive_year.py` appears in **no workflow**.
+Its 13 tests pass; nothing runs the guard itself.~~
+
+⚠️ **WITHDRAWN 2026-09-07 (S146) — this finding was FALSE, and the way it was
+produced is the lesson.** The guard has been wired since **2026-08-27 (PR #258)**,
+by membership in `vintage_report.CHECKS`, which `vintage-digest.yml` runs monthly.
+Its filename therefore appears in no `.yml`, and T2's *"grep the workflows by
+filename"* is what manufactured the gap. **Verified in the run log, not in the
+caller:** the 2026-09-01 scheduled run (`33539478726`, success) filed the line
+
+> ✅ | **Archived years measure right** | 1 archived year(s) measure as filed (2026).
+
+and the membership is itself pinned by `tests/test_vintage_report.py:340`.
+The method has been corrected in `docs/FABLE_AUDIT_vacuous_guards.md` T2 so a
+re-run does not reproduce this. ⚠️ **A guard reachable only through a caller is
+invisible to a filename grep — audit by the check's NAME, and confirm with a
+real run's log.**
 
 ---
 
