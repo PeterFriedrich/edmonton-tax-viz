@@ -301,6 +301,22 @@ changes CI behaviour and is a proposal rather than a task (`TODO.md`).
   inconsistency the audit checklist tells auditors to flag. Lower severity than
   V2 (UTM 11N is a valid metric CRS, so areas stay areas), but unpinned.
 
+  ✅ **FIXED 2026-09-07 (S146)** —
+  `test_setback_crs_is_pinned_projected_and_matches_boundaries`. **The gap was
+  wider than reported: `EPSG:3776` (3TM 111°W) was equally silent**, so it was
+  not one substitution but the whole metric class; only `EPSG:4326` reddened
+  anything, and only because buffering by 45 *degrees* annihilates every
+  polygon. ⚠️ **The neighbouring setback tests could never have caught it** —
+  they measure the result with a hardcoded `to_crs("EPSG:3400")`, and any
+  projected CRS over Edmonton agrees far inside their `rel=0.02`. The test pins
+  the literal, asserts the property the buffer actually needs (projected, axis
+  units metre), and **derives** `load_boundaries`'s projection by running it
+  rather than restating `3400`, so the two drifting apart reds here — the case
+  where hoods would be shrunk in a CRS their `area_acres` was never computed
+  in. **Falsified four ways:** the three CRS substitutions red it, and mutating
+  `load_boundaries` *alone* — leaving `SETBACK_CRS` correct, so the literal pin
+  still passes — reds the derived assertion by itself (`assert 3400 == 26911`).
+
 ---
 
 ## §6 — What this run got wrong
