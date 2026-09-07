@@ -158,6 +158,7 @@ publish on its own, unrelated to any of this — re-pinned.)_
 
 
 
+
 - [ ] **Write the corrected `fable-session` skill as a new directory under
   `.claude/skills/`** (same layout as the two there now). Peter deferred it 2026-09-04
   ("later"); the **evaluation is done and is recorded here so it needn't be
@@ -247,135 +248,6 @@ below are still calls, not tasks.
 ⚠️ **The audit itself was wrong in three places**, all caught by re-measuring
 rather than by executing what it said — see the last item. **Worth carrying: an
 audit's findings are claims to reproduce, not a task list.**
-
-- [x] ✅ **DONE 2026-09-05 — Peter chose RETIRE, and it shipped the same day.**
-  `svc_cost_per_acre`, the "Service cost" Services row, the Ratio view's "Per
-  service $" denominator and the panel's nested "Roads + fire" row are all gone
-  (`DECISIONS.md` 2026-09-05). `fire_events_per_acre` untouched;
-  `cost_roads_life_per_acre` is now the sole lifecycle road column and is pinned
-  in `expected_columns.json`. ⚠️ **`SPEC_development.md` Lens C and
-  `SPEC_breakeven.md` are unblocked but must now name their cost side** — the
-  composite they referenced does not exist.
-  - ⚠️ **Two defects surfaced during the removal, both fixed, both worth the
-    pattern:** the Services **panel kept its own publish flag**, so the PUBLIC
-    build printed modelled transit + bike cost while the row list hid them (it
-    now reads the `pub` tag); and `verify-transport-cost.js`'s "the two road
-    bases stay distinct" check **could not fail** — it compared against the
-    composite, whose *fire* term supplied the entire gap, and the unit test's
-    fixture had both road rates at $2.0. Both are the same shape as the
-    S141/S142 lesson: **a check placed where the value cannot be wrong.**
-
-- [x] ✅ **DONE 2026-09-06 — the wrong-base sentence is DELETED, not corrected**
-  (findings §7.1). *"…works out to about two and a half times the $1,285 rate"*
-  stated 2.6× against $1,285 where it holds only against the whole $4,635
-  ($12,000/km lifecycle O&M is **9.3×** $1,285). Resolved by the re-scope below:
-  with $1,285 gone the sentence had no subject, and *"treat this as the low end
-  of a range"* went with it — that phrasing's premise was the 2.6× gap, now
-  closed to 1.29×. The blurb now names the two real caveats instead (arterial
-  blend; unescalated FY2017 vintage) and says which way each pushes.
-  ⚠️ **`check_cost_copy.py` still cannot catch this class** — it checks literals,
-  not arithmetic — but it *did* catch the two claims that moved with the rate.
-- [x] ✅ **DONE 2026-09-07 — recorded as deliberate; the panel is UNCHANGED.**
-  Peter's call. ⚠️ **Three parts of the audit's framing did not survive
-  re-measurement, and they are why the panel stayed as it is:**
-  (1) **there is no DECISIONS 2026-07-16 row** — the audit cited one; the lock
-  lived only in `SPEC_utilities.md` 3(b) and `UI.md`, and is now **back-filled**
-  into the index, because its absence is what let the 08-10 row build a 100%
-  mark without referencing it;
-  (2) **the lock's subject is retired** — it governed `revenue_per_acre ÷
-  svc_cost_per_acre`, and neither survives in the front end;
-  (3) ⚠️ **the two claims run in OPPOSITE directions.** The Ratio's 1.0 divided
-  FULL tax by a PARTIAL cost side and read **≫1** (median ≈5.8×), so a 1.0 line
-  asserted a break-even the numbers could not support; the panel divides **one
-  service by the whole levy**, reads **≪1** (median 1.7% ops, ~9% lifecycle),
-  and 100% is a well-defined local statement.
-  **Harm re-measured, both builds: still none** — 9/2/9/12 hoods over 100%
-  (life/ops/transit/bike), **all set-aside**, worst a golf course.
-  **What was real and is fixed:** `renderServiceCost`'s comment claimed the
-  panel answers *"whether this hood's levy covers each service"* — break-even
-  language for a share-of-levy rendering. The comment overclaimed; the bars did
-  not. ⚠️ **Re-open if a developed hood ever crosses 100%** — that is when the
-  amber starts describing a neighbourhood instead of a golf course.
-  `DECISIONS.md` 2026-09-07.
-- [x] ✅ **DONE 2026-09-06 — the $1,285 split treatment is closed by RE-SCOPING**
-  (the fourth call, open since S139). `roadway_ops` **$4.635 → $9.32/m/yr**,
-  maintenance half **$1,285 → $5,970/km**, the served GeoJSON regenerated in the
-  same PR. Detail in the item directly below and in `DECISIONS.md` 2026-09-06.
-
-### Road cost estimation — the reconciliation is CLOSED; the remaining sub-items are not (OPEN 2026-09-02, RESOLVED 2026-09-06)
-
-- [x] ✅ **DONE 2026-09-06 — RE-SCOPED. `roadway_ops` $4.635 → $9.32/m/yr,
-  maintenance half $1,285 → $5,970/km (Peter's call).** The same $1,285/km had
-  been **rejected in one place and retained in another**: `DATA.md` §16 retired
-  `$1,285/km × ~11,000 km = $14.135M` as ~5× too low on 2026-08-04 (live on a
-  public page at the time) while it kept shipping as the maintenance half of
-  `roadway_ops`. Substituting the City's published FY2017 `Roadway Maintenance`
-  program closes the **2.6×** lifecycle-vs-operating gap to **1.29×** — the two
-  sources do not disagree about roads. Served GeoJSON regenerated in the same PR
-  so the map and the copy never disagreed; the choropleth is **pixel-identical**
-  (a uniform scalar cancels in `scaleT`). Median roads-ops share of levy
-  **0.8% → 1.7%**; hoods over 100% on that row **1 → 2**, both set-aside.
-  `docs/FINDINGS_roadway_maintenance_rate.md` §5, `DECISIONS.md` 2026-09-06.
-  - ⚠️ **The basis is STILL A FLOOR, and the two known errors have OPPOSITE
-    SIGNS.** The maintenance half now inherits the **arterial blend** that snow
-    always carried (overstates), and the rate **mixes vintages** — FY2017
-    maintenance against 2025 snow, deliberately unescalated (understates).
-    **Neither is sized.** "Floor" is a judgement about which is larger, not an
-    arithmetic bound — do not present it as one.
-  - ⚠️ **What $1,285 measured is STILL UNKNOWN** and that is not a leftover
-    chore: it was dropped because nothing supports reading it as total road
-    maintenance, **not** because a better reading was found. No decomposition of
-    the published program reproduces it (materials-only $1,634/km is closest,
-    still 1.27× off). **Do not reintroduce it with an invented scope.**
-  - ⚠️ **The $600,000/km side was never traced** and still has not been. Q1 of
-    the send-back brief below is now **half** answered, not answered.
-
-⚠️ **The sub-items below are UNAFFECTED and still open** — the 25-vs-50 service
-life, the per-class differential, the snow denominator, and the NRP finding that
-the lifecycle rate is itself a floor. **None of them was touched by the
-re-scope**, which moved only the operating basis.
-
-Seven sourcing questions were written up for a research pass (given to Peter
-2026-09-02 to run externally). ⚠️ **THAT ROUND CAME BACK 2026-09-03 AND DID NOT
-CLOSE THIS ITEM** — Q1 and Q4–Q7 re-derived what `city_unit_costs.json` already
-documents, usually in less detail, and the 2.6× gap was restated rather than
-traced. What it did produce was the Table 8 route, the composite-profile trap
-(`data/DATA.md` §19) and the demotion of the 3% cross-check. **Question 2 below
-was answered by data we already held, not by the research** — see the send-off
-item at the end of this section. The two that would change the most:
-
-1. **What does Edmonton's $600,000/km "operate and maintain" actually
-   include** — snow? lighting? sweeping, signs, signals? — and what is in the
-   narrower $1,285/km "maintenance" figure.
-   ✅ **HALF-ANSWERED 2026-09-05** (`docs/FINDINGS_roadway_maintenance_rate.md`):
-   the City's own FY2017 `Roadway Maintenance` program is **$5,970/km, 4.65× the
-   $1,285**, so the $1,285 is far too narrow to be total road maintenance —
-   which closes the 2.6× gap to **1.29×** (~1.1× vintage-corrected; 1.29× is the
-   figure that needs no escalation assumption). ⚠️ **What
-   $1,285 DOES measure is still unknown** — the source gives it no scope and no
-   decomposition of the program reproduces it. The $600,000/km side is untouched.
-   ⚠️ **ACTED ON 2026-09-06** — the $1,285 was not merely doubted, it was
-   **replaced** by the $5,970 program figure (see the closed item at the top of
-   this section). **Q1 is still worth asking**, but only its $600,000/km half:
-   what $1,285 covered no longer affects anything shipped.
-2. **Is there a better source class entirely?** A uniform per-km rate cannot
-   tell a 1960s neighbourhood from a 2015 one, which is precisely the
-   distinction a revenue-vs-cost map exists to show. If the **Neighbourhood
-   Renewal Program** publishes actual per-neighbourhood spend, that replaces
-   the model with observed money. ⚠️ **That would be a real rework** — the
-   metric stops being `metres × rate` — though the row/legend/panel machinery
-   survives it.
-
-Also open: the 25-vs-50 year service life (halves or doubles the whole
-lifecycle number, currently chosen on one parenthetical phrase); a published
-per-class cost differential; the snow rate's denominator, which blends over
-11,000 km **including priority-cleared arterials** while our numerator is
-collector+local only.
-
-**Adjusting a rate is cheap by construction** — one value in
-`data/city_unit_costs.json`, two test assertions, and the next refresh
-recomputes; `scripts/check_cost_copy.py` fails the build if the prose is not
-updated with it. Do not let the open question block shipping.
 
 - [ ] **⚠️ OBSERVED MONEY SAYS THE $50/m/yr IS A FLOOR — measured 2026-09-03,
   no value changed.** `docs/FINDINGS_nrp_reconstruction_cross_check.md`. The
@@ -2834,11 +2706,6 @@ same session — see `docs/DECISIONS.md`'s last two rows.)_
   - ⚠️ **Step 5 (controls) is shared desktop+mobile DOM** — read `docs/CONTROLS_MATRIX.md` first. ⚠️ **No user-visible payoff by design**; if the appetite isn't there, log the NO so this is not re-proposed every time a lens edit touches five files, and fold the 28-branch count into the Lab comment as the corrected checklist.
 
 - [ ] **⚠️ PAIRED with `AUDIT_LEDGER.md` never-audited #3 ("checks that cannot fail") — Peter deferred the audit 2026-09-06 ("later"), and this item is its structural half.** A sound check nothing runs is no better than a vacuous check that does; one brief should answer both. Two more vacuous checks were found 2026-09-05 while retiring the cost composite (`verify-transport-cost.js` comparing against the composite so the *fire* term supplied its gap; `_TRANSPORT_COSTS` with both road rates at $2.0), bringing the class to seven.
-- [ ] **PETER'S CALL — `check_cost_copy.py` can be satisfied by a CODE COMMENT; the fix changes a merge-gate guard, so it is proposed not made** (2026-09-07, `docs/FINDINGS_vacuous_guards.md` V1). ⚠️ **Reproduced:** the roads blurb was reverted to the retired `$1,285` and one ordinary comment containing `$5,970` was added — **the guard reported all 7 rates OK**. It tests `expected in html` against the raw 7,300-line file with **no locality**, and `web/index.html` is heavily commented by house style. ⚠️ **Not hypothetical: the 2026-09-06 re-scope added comments naming rates**; a `$5,970` in any of them would have disarmed the check silently and permanently. **This is the only thing tying the map's rates to its captions, and it runs on the merge gate** — the failure it exists to prevent is a wrong public number.
-  - **Proposed fix:** strip `//` and `/* */` comments before matching, and give the check locality — match within the blurb string literals and the `#about-*` prose rather than the whole file.
-  - ⚠️ **`check_cost_copy.py` has NO test file**, so ship the falsification above as its first test; otherwise the fix can rot back to vacuous exactly as the thing it fixes did.
-  - **Why it is a call and not a task:** it changes what a merge-gate guard accepts, which `CLAUDE.md` says to propose first.
-
 - [ ] **The 42 `verify-*.js` scripts gate NOTHING, and that is how four of them stayed red for three days.**
   ⚠️ **AUDITED 2026-09-07 (S144) — `docs/FINDINGS_vacuous_guards.md` V3/V4. The item is SHARPER than it was, and one count in it was wrong.** (a) **It is 42, not 65** — the directory holds 42 `verify` + 17 `shot` + 6 misc. (b) **The merge gate itself is sound**: branch protection requires `test` and it reports — the gap is that `test` contains **no browser check**, so 1 of 42 runs in CI, weekly only. (c) ⚠️ **Running them is not enough, because 4 of them are wrong against the build that serves the public**: on the PUBLIC build `verify-bike.js` runs **3 of 37** checks and `verify-transport-cost.js` **5 of 29** — both exit **0** — while `verify-transit.js` and `verify-ind-permits.js` **red on a correct build**, because their early-exit guards are **DATA**-gated where both builds share the GeoJSON. **That is the trap S143 fixed in `hoodPanelLens()` and left unfixed here.** **Fix the gating BEFORE scheduling anything** — putting these on a gate today would red the publish path on a correct build. (d) Add `ran N of M` output so a partial run cannot read as a full one. (e) `check_temporal_archive_year.py` is in **no workflow** at all.
   - **Original framing, unchanged:** `refresh.yml` runs `verify-smoke.js` only; `tests.yml` runs none. The suite is the front end's only test coverage and it runs when someone remembers. ⚠️ **The S141 evidence for why this matters: one of the four reds was a real label-occlusion bug that the guard caught at authoring time and nobody saw for three days** — and the other three had decayed into cry-wolf, which is the state that trains people to ignore the suite. Decide what belongs on a schedule. ⚠️ **Not "run all 65 in CI" by default** — they need a served build, they take ~40 min serially on this box, and `verify-smoke.js`'s header argues at length that a flaky gate blocking the weekly publish is worse than the gap it closes. Candidates: the non-pointer, invariant-only scripts on the merge gate; a slower full sweep on a schedule with the result reported, not blocking.
@@ -2850,6 +2717,15 @@ same session — see `docs/DECISIONS.md`'s last two rows.)_
 ## Done
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
+
+- [x] **DONE 2026-09-05 — Peter chose RETIRE, and it shipped the same day.** — DONE 2026-09-05 · `docs/TODO_archive.md`
+- [x] **DONE 2026-09-06 — the wrong-base sentence is DELETED, not corrected** — DONE 2026-09-06 · `docs/TODO_archive.md`
+- [x] **DONE 2026-09-07 — recorded as deliberate; the panel is UNCHANGED.** — DONE 2026-09-07 · `docs/TODO_archive.md`
+- [x] **DONE 2026-09-06 — the $1,285 split treatment is closed by RE-SCOPING** — DONE 2026-09-06 · `docs/TODO_archive.md`
+- [x] **DONE 2026-09-06 — RE-SCOPED. `roadway_ops` $4.635 → $9.32/m/yr, maintenance half $1,285 → $5,970/km (Peter's call).** — DONE 2026-09-06 · `docs/TODO_archive.md`
+- [x] **DONE 2026-09-07 — `check_cost_copy.py` now searches READER-VISIBLE PROSE, not the raw file** — DONE 2026-09-07 · `docs/TODO_archive.md`
+
+
 
 - [x] **Four `verify-*.js` scripts were RED on master since 2026-09-02.** — 2026-09-02 · `docs/TODO_archive.md`
 
