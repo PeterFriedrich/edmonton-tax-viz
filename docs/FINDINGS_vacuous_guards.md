@@ -156,7 +156,7 @@ Its 13 tests pass; nothing runs the guard itself.
 
 ---
 
-## V4 — the early-exit class, and the data-vs-build trap inside it  (T4)
+## V4 — the early-exit class, and the data-vs-build trap inside it  (T4) — **(1) and (2) FIXED 2026-09-07; (3) executed**
 
 **14 early exits across 10 of the 42 scripts** leave the script's body unrun and
 still `process.exit(0)`. ⚠️ **The literal `check(name, true)` in those branches
@@ -204,6 +204,65 @@ against the public build.
 **Fix, in order:** (1) gate every early exit on a BUILD condition; (2) make the
 scripts print `ran N of M` so a partial run cannot read as a full one; (3) run
 the estate against **both** builds, which is the only reason these were found.
+
+---
+
+### Fixed 2026-09-07
+
+**(1) The two reds are now BUILD-gated.** `verify-transit.js` and
+`verify-ind-permits.js` each read `FULL_BUILD` from the page and assert the
+control matches the build **in both directions** — `shown === fullBuild`, not
+`shown`. The old form could only fail one way; the new one also fails if the
+public build ever starts *showing* a full-only control. The data gate stays
+first and separate, because an old data file hides the control on **both**
+builds and that is a different diagnosis.
+
+⚠️ **The reds were the smaller half of this defect.** `click` in these scripts
+is `page.$eval(sel, b => b.click())`, which ignores visibility — so after
+failing its row check `verify-transit.js` *kept going* and passed **23 further
+checks against a UI the public cannot reach**. A false green nested inside a red
+run, which is why the exit code alone never surfaced it.
+
+`verify-ind-permits.js`'s public branch also gained the assertion its sibling
+already had: the hidden button must not still be the **active** metric — hiding
+a control that is still colouring the map is the bike-row defect exactly.
+
+**(2) 14 early exits across 10 scripts** now print
+`PARTIAL — ran N checks, then stopped: <reason>`, and those 10 print
+`COMPLETE — ran N checks` on a full run. **Consumers key on `PARTIAL`** — the
+32 scripts with no early exit print neither line, so *absence* of `PARTIAL` is
+the passing condition. Four scripts counted only failures and needed a `ran`
+counter added. The convention is written into `tools/profiling/README.md`, whose
+absence is why the trap repeated in the first place.
+
+**(3) The both-builds sweep, which nothing had ever run.** All **20 runs exit
+0**. `/full/` is **10 of 10 COMPLETE**. Public is 6 COMPLETE + 4 correctly
+PARTIAL:
+
+| script | public | full |
+|---|---|---|
+| `verify-bike` | PARTIAL, 3 | COMPLETE, 30 |
+| `verify-transport-cost` | PARTIAL, 5 | COMPLETE, 42 |
+| `verify-transit` | PARTIAL, 4 | COMPLETE, 24 |
+| `verify-ind-permits` | PARTIAL, 2 | COMPLETE, 25 |
+| `verify-services-public` | COMPLETE, 41 | COMPLETE, 34 |
+| `verify-amenity` / `-glass-inst` / `-nonres-revenue` / `-res-revenue` / `-peek` | COMPLETE | COMPLETE |
+
+⚠️ **Both new gates were falsified, not just observed passing.** Patching the
+*built* public page to leak the two full-only controls (`if (!FULL_BUILD)` → `if
+(false)` for the service rows; dropping `|| !FULL_BUILD` for the industrial
+button) reds each script **by name**:
+
+```
+FAIL  transit checkbox row hidden on this build     shown=true full=false
+FAIL  industrial button hidden on this build        shown=true full=false
+```
+
+**What this unblocks.** The finding's standing warning — *fix the gating before
+scheduling anything, or a gate today would red the publish path on a correct
+build* — **no longer applies**: the estate is honest against both builds. What
+remains is the original question of **what belongs on a schedule**, which
+changes CI behaviour and is a proposal rather than a task (`TODO.md`).
 
 ---
 

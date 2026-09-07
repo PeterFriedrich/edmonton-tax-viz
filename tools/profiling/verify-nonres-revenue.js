@@ -28,8 +28,9 @@ function approx(a, b, rel = 1e-6) { return Math.abs(a - b) <= rel * Math.max(Mat
   await page.waitForTimeout(4000);
 
   const click = sel => page.$eval(sel, b => b.click());
-  let fail = 0;
+  let fail = 0, ran = 0;
   const check = (name, cond, extra) => {
+    ran++;
     console.log(`${cond ? 'PASS' : 'FAIL'}  ${name}${extra ? '  ' + extra : ''}`);
     if (!cond) fail++;
   };
@@ -44,6 +45,7 @@ function approx(a, b, rel = 1e-6) { return Math.abs(a - b) <= rel * Math.max(Mat
   if (!guard.has) {
     check('button hidden when column absent (guard)', !guard.btnShown);
     console.log('SKIP  data file predates nonres_revenue_per_acre — nothing more to verify');
+    console.log(`\nPARTIAL — ran ${ran} checks, then stopped: data file predates nonres_revenue_per_acre`);
     await browser.close();
     process.exit(fail ? 1 : 0);
   }
@@ -203,6 +205,7 @@ function approx(a, b, rel = 1e-6) { return Math.abs(a - b) <= rel * Math.max(Mat
     back.metric === 'nonres_revenue_per_acre' && /Non-Residential Tax Revenue/.test(back.title));
 
   console.log(fail ? `\n${fail} CHECK(S) FAILED` : '\nALL CHECKS PASSED');
+  console.log(`COMPLETE — ran ${ran} checks`);
   await browser.close();
   process.exit(fail ? 1 : 0);
 })();

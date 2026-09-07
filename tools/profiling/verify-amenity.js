@@ -102,6 +102,7 @@ function check(name, ok, detail) {
     console.log('SKIP  served value_grid.json predates the amenity columns — ' +
                 'the rows correctly stay hidden everywhere (house pattern).');
     console.log(`\n${pass} passed, ${fail} failed, ${skip} skipped`);
+    console.log(`\nPARTIAL — ran ${pass + fail} checks, then stopped: served value_grid.json predates the amenity columns`);
     await browser.close();
     process.exit(fail ? 1 : 0);
   }
@@ -226,6 +227,7 @@ function check(name, ok, detail) {
     !/translucent 100 m grid highlights/.test(c.blurb));
 
   console.log(`\n${pass} passed, ${fail} failed${skip ? `, ${skip} skipped` : ''}`);
+  console.log(`COMPLETE — ran ${pass + fail} checks`);
   await browser.close();
   process.exit(fail ? 1 : 0);
 })();

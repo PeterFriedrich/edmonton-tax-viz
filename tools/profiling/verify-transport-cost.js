@@ -52,6 +52,7 @@ function check(name, ok, detail) {
   });
   if (!servicesOffered) {
     check('pre-roads data file: services view not offered', true);
+    console.log(`\nPARTIAL — ran ${pass + fail} checks, then stopped: pre-roads data file, services view not offered`);
     await browser.close();
     process.exit(fail ? 1 : 0);
   }
@@ -69,6 +70,7 @@ function check(name, ok, detail) {
     }
     check('public build: roadscost row still reachable', await page.evaluate(() =>
       getComputedStyle(document.querySelector('#services .svc[data-service="roadscost"]')).display !== 'none'));
+    console.log(`\nPARTIAL — ran ${pass + fail} checks, then stopped: public build, transit cost and bike cost are full-only`);
     await browser.close();
     process.exit(fail ? 1 : 0);
   }
@@ -89,6 +91,7 @@ function check(name, ok, detail) {
       const off = await page.evaluate(svc => state.services[svc] === false, r.svc);
       check(`pre-Stage-2 file: ${r.svc} not checked`, off);
     }
+    console.log(`\nPARTIAL — ran ${pass + fail} checks, then stopped: data file predates the Stage 2 operating-cost columns`);
     await browser.close();
     process.exit(fail ? 1 : 0);
   }
@@ -208,6 +211,7 @@ function check(name, ok, detail) {
   check('transitcost blurb says scheduled, not ridership', /not ridership/i.test(transitBlurb));
 
   console.log(`\n${pass} passed, ${fail} failed`);
+  console.log(`COMPLETE — ran ${pass + fail} checks`);
   await browser.close();
   process.exit(fail ? 1 : 0);
 })();
