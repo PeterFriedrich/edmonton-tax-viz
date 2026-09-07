@@ -235,15 +235,18 @@ publish on its own, unrelated to any of this — re-pinned.)_
   - **Gate:** nothing is blocked on this. It costs money only when a doc-heavy
     session loads these files — which is what surfaced it.
 
-### Services cost lens audit — 3 of 4 calls made (OPEN 2026-09-05, S142)
+### Services cost lens audit — ✅ ALL 4 CALLS MADE (opened 2026-09-05 S142, closed 2026-09-07)
 
 The ledger's #1 candidate ran: `docs/FABLE_AUDIT_services_cost_lens.md` (brief)
 → `docs/FINDINGS_services_cost_lens_verdict.md` (verdicts). **1× UNSOUND, 5×
 CONDITIONAL, 1× SOUND.** The UNSOUND one is **decided and executed**; the three
 below are still calls, not tasks.
-⚠️ **UPDATE 2026-09-06: two more were made** — the rate was re-scoped and the
-blurb's wrong-base sentence went with it. **One call remains: the break-even
-tension.**
+⚠️ **UPDATE 2026-09-07: ALL FOUR ARE NOW MADE.** The composite was retired
+(09-05), the rate re-scoped and the blurb's wrong-base sentence deleted with it
+(09-06), and the break-even tension recorded as deliberate (09-07).
+⚠️ **The audit itself was wrong in three places**, all caught by re-measuring
+rather than by executing what it said — see the last item. **Worth carrying: an
+audit's findings are claims to reproduce, not a task list.**
 
 - [x] ✅ **DONE 2026-09-05 — Peter chose RETIRE, and it shipped the same day.**
   `svc_cost_per_acre`, the "Service cost" Services row, the Ratio view's "Per
@@ -272,14 +275,28 @@ tension.**
   blend; unescalated FY2017 vintage) and says which way each pushes.
   ⚠️ **`check_cost_copy.py` still cannot catch this class** — it checks literals,
   not arithmetic — but it *did* catch the two claims that moved with the rate.
-- [ ] **PETER'S CALL — the Services panel presents break-even the Ratio view was
-  forbidden** (findings §6). DECISIONS 2026-07-16: *"MAGNITUDE, not break-even
-  … NO 1.0 marking"*; DECISIONS 2026-08-10 built bars that saturate at 100% and
-  turn amber above it, and `renderServiceCost`'s comment says the panel answers
-  *"whether this hood's levy covers each service."* No measured harm on the
-  public roads rows (the 9 over-100% hoods are all set-aside). Either one
-  DECISIONS line saying the panel deliberately shows share-of-levy with a 100%
-  mark, or change the panel.
+- [x] ✅ **DONE 2026-09-07 — recorded as deliberate; the panel is UNCHANGED.**
+  Peter's call. ⚠️ **Three parts of the audit's framing did not survive
+  re-measurement, and they are why the panel stayed as it is:**
+  (1) **there is no DECISIONS 2026-07-16 row** — the audit cited one; the lock
+  lived only in `SPEC_utilities.md` 3(b) and `UI.md`, and is now **back-filled**
+  into the index, because its absence is what let the 08-10 row build a 100%
+  mark without referencing it;
+  (2) **the lock's subject is retired** — it governed `revenue_per_acre ÷
+  svc_cost_per_acre`, and neither survives in the front end;
+  (3) ⚠️ **the two claims run in OPPOSITE directions.** The Ratio's 1.0 divided
+  FULL tax by a PARTIAL cost side and read **≫1** (median ≈5.8×), so a 1.0 line
+  asserted a break-even the numbers could not support; the panel divides **one
+  service by the whole levy**, reads **≪1** (median 1.7% ops, ~9% lifecycle),
+  and 100% is a well-defined local statement.
+  **Harm re-measured, both builds: still none** — 9/2/9/12 hoods over 100%
+  (life/ops/transit/bike), **all set-aside**, worst a golf course.
+  **What was real and is fixed:** `renderServiceCost`'s comment claimed the
+  panel answers *"whether this hood's levy covers each service"* — break-even
+  language for a share-of-levy rendering. The comment overclaimed; the bars did
+  not. ⚠️ **Re-open if a developed hood ever crosses 100%** — that is when the
+  amber starts describing a neighbourhood instead of a golf course.
+  `DECISIONS.md` 2026-09-07.
 - [x] ✅ **DONE 2026-09-06 — the $1,285 split treatment is closed by RE-SCOPING**
   (the fourth call, open since S139). `roadway_ops` **$4.635 → $9.32/m/yr**,
   maintenance half **$1,285 → $5,970/km**, the served GeoJSON regenerated in the
