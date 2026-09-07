@@ -1152,7 +1152,7 @@ tier sits alongside them for a human reader rather than CI:
 | tier | what it can catch | when it runs |
 |---|---|---|
 | `pytest` | pipeline logic, schema contracts | every CI run |
-| `verify-*.js` (38 scripts) | UI behaviour, layout, per-feature contracts. **Carry literals calibrated to a data snapshot**, so they are for the CODE path | locally + before merging |
+| `verify-*.js` (42 scripts) | UI behaviour, layout, per-feature contracts. **Carry literals calibrated to a data snapshot**, so they are for the CODE path | locally + before merging |
 | `verify-smoke.js` | the render surviving a DATA change. **Invariant-only — nothing pinned to a value** | **`refresh.yml`, gating the weekly publish** |
 | `notebooks/verified/*.py` (via `tools/run_verified_notebooks.py`) | the pipeline producing correct numbers on real data, narrated for a human to read rather than a machine to gate on. **Invariant-only, same discipline as `verify-smoke.js`** — but rendered to HTML, not pass/fail | locally, on demand, **and `refresh.yml`**, gating the weekly publish alongside `verify-smoke.js` (renders to `web/verified/`, published per `docs/VERIFICATION.md`) |
 
@@ -1164,13 +1164,27 @@ path needs assertions that cannot cry wolf: counts derived from the served files
 required columns derived from `METRICS`/`USE_CATEGORIES`' own keys, and a
 garbage sweep over every hood × lens.
 
-⚠️ **"Locally + before merging" is aspirational for 37 of the 38** — there is no
+⚠️ **"Locally + before merging" is aspirational for 41 of the 42** — there is no
 runner, no `npm test`, and only `verify-smoke.js` is wired into a workflow, so
 the rest run when someone remembers to type them. The shape is not uniform
-either: **34 use the `process.exit(fail ? 1 : 0)` convention and only 23 print
+either: **32 use the `process.exit(fail ? 1 : 0)` convention and only 26 print
 the `ALL CHECKS PASSED` banner**, the remainder being diagnostic printers that
 always exit 0 (`verify-labels.js`). **A batch runner that greps for the banner
 will therefore report those as failures** — it did on 2026-08-28.
+
+⚠️ **A green exit does not mean the script ran.** 14 early exits across 10
+scripts return 0 with the body unrun, and on the public build `verify-bike.js`
+ran **3 of 37** checks that way (S144, `docs/FINDINGS_vacuous_guards.md` V4).
+Those 10 scripts now print `PARTIAL — ran N checks, then stopped: <reason>` or
+`COMPLETE — ran N checks`, so **a batch runner must key on `PARTIAL`** — the
+other 32 print neither line, so *absence* of `PARTIAL` is the passing condition.
+
+⚠️ **Gate an early exit on the BUILD, never on the DATA.** Both builds serve the
+same GeoJSON, so a column's presence cannot tell them apart; two scripts were
+red on a *correct* public build until 2026-09-07 for exactly this reason, and
+`click` here is a JS `.click()` that ignores visibility, so a missing build gate
+does not stop the script — it drives the hidden control and reports PASS. Full
+convention in `tools/profiling/README.md`.
 
 ⚠️ `verify-loading-overlay.js` (2026-08-28) is the one script that carries **no
 data literals at all**, so unlike the rest of the tier it could run weekly

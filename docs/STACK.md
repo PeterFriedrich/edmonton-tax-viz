@@ -126,7 +126,7 @@ REQUESTS_CA_BUNDLE=$(.venv/bin/python -m certifi) .venv/bin/python <script>
 
 **Two independent harnesses.**
 
-- **pytest** — 45 test files, **784 tests**, ~11 s. Tiers and what each can see:
+- **pytest** — 46 test files, **799 tests**, ~11 s. Tiers and what each can see:
   `docs/ARCHITECTURE.md` §Testing.
 - **Playwright + Chromium** — `tools/profiling/`, **65 JS scripts** (`verify-*`
   assert behaviour, `shot-*` capture screenshots). Node **v20.20.2**,
