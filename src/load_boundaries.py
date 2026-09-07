@@ -4,7 +4,14 @@ import geopandas as gpd
 
 logger = logging.getLogger(__name__)
 
-SQ_M_PER_ACRE = 4046.856422
+# The exact international acre. ⚠️ Was 4046.856422 (truncated) until
+# 2026-09-07, disagreeing with export_value_grid.py's 4046.8564224 in the
+# 11th significant figure — no published number moved (the largest
+# revenue_per_acre shifts $0.000025), but two definitions of one constant
+# is one too many. Pinned as a LITERAL in tests/test_load_boundaries.py:
+# it was previously unpinned and could be HALVED with 784 tests green
+# (docs/FINDINGS_vacuous_guards.md V2).
+SQ_M_PER_ACRE = 4046.8564224
 
 
 def load_boundaries(path: str) -> gpd.GeoDataFrame:
