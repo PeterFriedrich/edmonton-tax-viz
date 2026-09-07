@@ -39,6 +39,7 @@ function check(name, ok, detail) {
   });
   if (!servicesOffered) {
     check('pre-roads data file: services view not offered', true);
+    console.log(`\nPARTIAL — ran ${pass + fail} checks, then stopped: pre-roads data file, services view not offered`);
     await browser.close();
     process.exit(fail ? 1 : 0);
   }
@@ -56,6 +57,7 @@ function check(name, ok, detail) {
       await page.evaluate(() => state.services.bike === false));
     check('public build: bike is not the colour driver',
       await page.evaluate(() => state.svcDriver !== 'bike'));
+    console.log(`\nPARTIAL — ran ${pass + fail} checks, then stopped: public build, bike is full-only`);
     await browser.close();
     process.exit(fail ? 1 : 0);
   }
@@ -70,6 +72,7 @@ function check(name, ok, detail) {
     check('pre-bike file: checkbox row hidden', rowHidden);
     const stateOff = await page.evaluate(() => state.services.bike === false);
     check('pre-bike file: bike not checked', stateOff);
+    console.log(`\nPARTIAL — ran ${pass + fail} checks, then stopped: data file predates bike_m_per_acre`);
     await browser.close();
     process.exit(fail ? 1 : 0);
   }
@@ -228,6 +231,7 @@ function check(name, ok, detail) {
         !/bike/i.test(off.legendLabel), off.legendLabel);
 
   console.log(`\n${fail ? 'FAILURES: ' + fail : 'ALL CHECKS PASSED'} (${pass} passed)`);
+  console.log(`COMPLETE — ran ${pass + fail} checks`);
   await browser.close();
   process.exit(fail ? 1 : 0);
 })();

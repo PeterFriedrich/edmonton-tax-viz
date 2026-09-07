@@ -51,3 +51,51 @@ Software WebGL is a *proxy*, not ground truth. Use it to catch hangs and
 gross regressions (it's how the rounded-joint render hang was found). For
 final fps numbers, profile on a real GPU via browser DevTools — see
 `docs/PERFORMANCE.md`.
+
+## Conventions for `verify-*.js`
+
+Two rules, both learned from defects the harness itself carried
+(`docs/FINDINGS_vacuous_guards.md` V4).
+
+### 1. Gate an early exit on the BUILD, not on the DATA
+
+There are two builds — public (`/index.html`) and specialist (`/full/`) — and
+**they serve the SAME GeoJSON**. A column being present therefore says *nothing*
+about which build you are on. Full-only UI is gated in the app on `FULL_BUILD`
+(or on `SERVICES[x].pub` for a service row), so:
+
+```js
+const hasX = ...state.data.features.some(f => f.properties.x != null);  // DATA
+const fullBuild = await page.evaluate(() => FULL_BUILD);                // BUILD
+```
+
+Check the **data** gate first (an old data file hides the control everywhere),
+then the **build** gate. Getting this wrong fails in both directions and both
+were live on 2026-09-07: `verify-transit.js` and `verify-ind-permits.js` were
+**red on a correct public build**, while `verify-bike.js` ran 3 of 37 checks and
+exited 0. Assert the control matches the build in **both** directions —
+`shown === fullBuild`, not `shown` — so the check still fails if the public
+build starts showing something it must not.
+
+⚠️ **`click` in these scripts is `page.$eval(sel, b => b.click())`, a JS click
+that ignores visibility and `pointer-events`.** A missing build gate does not
+stop the script; it drives the hidden control and reports PASS. That is how
+`verify-transit.js` passed 23 checks against a UI the public cannot reach.
+
+### 2. Say whether the run was complete
+
+A script that early-exits prints a pass line and exits 0, which is
+indistinguishable from a full run. Every script with an early exit therefore
+ends one of two ways:
+
+```
+PARTIAL — ran 4 checks, then stopped: public build, transit is full-only
+COMPLETE — ran 26 checks
+```
+
+**A consumer should treat `PARTIAL` as the signal** — the 32 scripts with no
+early exit never print either line, so absence of `PARTIAL` is the passing
+condition, not presence of `COMPLETE`.
+
+⚠️ **Run these one at a time.** Concurrent runs manufacture failures on a
+4-core box; re-run a red **alone** before believing it.

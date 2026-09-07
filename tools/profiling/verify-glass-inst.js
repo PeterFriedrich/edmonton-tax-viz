@@ -40,6 +40,7 @@ const check = (name, ok, detail) => {
     const clean = await page.evaluate(() =>
       overlay._deck.props.layers.every(l => !l.id.startsWith('glass-inst')));
     check('no band layers without the column', clean);
+    console.log(`\nPARTIAL — ran ${pass + fail} checks, then stopped: served value_grid.json predates exempt_frac`);
     await browser.close();
     process.exit(fail ? 1 : 0);
   }
@@ -150,6 +151,7 @@ const check = (name, ok, detail) => {
     !valueBlurb.includes('azure'));
 
   console.log(`\n${pass} passed, ${fail} failed`);
+  console.log(`COMPLETE — ran ${pass + fail} checks`);
   await browser.close();
   process.exit(fail ? 1 : 0);
 })();

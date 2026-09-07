@@ -36,14 +36,35 @@ function check(name, ok, detail) {
     const rowHidden = await page.evaluate(() =>
       getComputedStyle(document.querySelector('#services .svc[data-service="transit"]')).display === 'none');
     check('pre-transit file: checkbox row hidden', rowHidden);
+    console.log(`\nPARTIAL — ran ${pass + fail} checks, then stopped: data file predates transit_dep_per_acre`);
     await browser.close();
     process.exit(fail ? 1 : 0);
   }
 
   check('data carries transit_dep_per_acre', true);
+
+  // ⚠️ BUILD gate, and it has to be SEPARATE from the data gate above. Both
+  // builds serve the SAME GeoJSON, so the column says nothing about which build
+  // this is; transit carries no `pub` tag in SERVICES, so its row is full-only.
+  // Until 2026-09-07 this asserted the row was PRESENT — red on a correct public
+  // build — and then drove the hidden row anyway, because `click` is a JS
+  // .click() that ignores visibility: 23 further checks 'passed' against a UI
+  // the public cannot reach. Assert the row matches the BUILD, both directions.
+  // (docs/FINDINGS_vacuous_guards.md V4.)
+  const fullBuild = await page.evaluate(() => FULL_BUILD);
   const rowShown = await page.evaluate(() =>
     getComputedStyle(document.querySelector('#services .svc[data-service="transit"]')).display !== 'none');
-  check('transit checkbox row present', rowShown);
+  check(`transit checkbox row ${fullBuild ? 'present' : 'hidden'} on this build`,
+        rowShown === fullBuild, `shown=${rowShown} full=${fullBuild}`);
+  if (!fullBuild) {
+    check('public build: transit not checked',
+      await page.evaluate(() => state.services.transit === false));
+    check('public build: transit is not the colour driver',
+      await page.evaluate(() => state.svcDriver !== 'transit'));
+    console.log(`\nPARTIAL — ran ${pass + fail} checks, then stopped: public build, transit is full-only`);
+    await browser.close();
+    process.exit(fail ? 1 : 0);
+  }
 
   await click('#views button[data-view="services"]');
   await page.waitForTimeout(4000); // roads lazy-fetch + rebuild
@@ -166,6 +187,7 @@ function check(name, ok, detail) {
         JSON.stringify(back));
 
   console.log(`\n${pass} passed, ${fail} failed`);
+  console.log(`COMPLETE — ran ${pass + fail} checks`);
   await browser.close();
   process.exit(fail ? 1 : 0);
 })();

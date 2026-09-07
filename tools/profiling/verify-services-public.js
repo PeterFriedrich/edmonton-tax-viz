@@ -123,6 +123,7 @@ function check(name, ok, detail) {
   if (!hasLife) {
     check('pre-lifecycle data file: roadslife row hidden', !(await visible('roadslife')));
     console.log('\n(data predates cost_roads_life_per_acre — stopping here)');
+    console.log(`\nPARTIAL — ran ${pass + fail} checks, then stopped: data file predates cost_roads_life_per_acre`);
     await browser.close();
     process.exit(fail ? 1 : 0);
   }
@@ -239,6 +240,7 @@ function check(name, ok, detail) {
     fullBuild === /revenue \/ road metre/.test(tip), tip.slice(0, 220));
 
   console.log(`\n${pass} passed, ${fail} failed`);
+  console.log(`COMPLETE — ran ${pass + fail} checks`);
   await browser.close();
   process.exit(fail ? 1 : 0);
 })();

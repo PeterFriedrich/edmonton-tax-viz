@@ -29,8 +29,9 @@ function approx(a, b, rel = 1e-6) { return Math.abs(a - b) <= rel * Math.max(Mat
   await page.waitForTimeout(4000);
 
   const click = sel => page.$eval(sel, b => b.click());
-  let fail = 0;
+  let fail = 0, ran = 0;
   const check = (name, cond, extra) => {
+    ran++;
     console.log(`${cond ? 'PASS' : 'FAIL'}  ${name}${extra ? '  ' + extra : ''}`);
     if (!cond) fail++;
   };
@@ -41,6 +42,7 @@ function approx(a, b, rel = 1e-6) { return Math.abs(a - b) <= rel * Math.max(Mat
   // --- column guard ---------------------------------------------------------
   const guard = await page.evaluate(() => ({
     has: state.hasIndPermits,
+    full: FULL_BUILD,
     btnShown: getComputedStyle(
       document.querySelector('#devmetric button[data-devmetric="industrial"]')
     ).display !== 'none',
@@ -48,10 +50,28 @@ function approx(a, b, rel = 1e-6) { return Math.abs(a - b) <= rel * Math.max(Mat
   if (!guard.has) {
     check('industrial button hidden when column absent (guard)', !guard.btnShown);
     console.log('SKIP  data file predates ind_permits_per_acre — nothing more to verify');
+    console.log(`\nPARTIAL — ran ${ran} checks, then stopped: data file predates ind_permits_per_acre`);
     await browser.close();
     process.exit(fail ? 1 : 0);
   }
-  check('industrial button shown in Development when column present', guard.btnShown);
+  // ⚠️ BUILD gate, separate from the data gate above. The app hides this button
+  // on `!state.hasIndPermits || !FULL_BUILD` — TWO conditions — but both builds
+  // serve the SAME GeoJSON, so the column above cannot tell them apart. Until
+  // 2026-09-07 this asserted the button was SHOWN whenever the column existed,
+  // which is red on a correct public build. Assert it matches the BUILD, both
+  // directions. (docs/FINDINGS_vacuous_guards.md V4.)
+  check(`industrial button ${guard.full ? 'shown' : 'hidden'} on this build`,
+        guard.btnShown === guard.full, `shown=${guard.btnShown} full=${guard.full}`);
+  if (!guard.full) {
+    // Hiding the button is not enough on its own — a hidden-but-ACTIVE metric
+    // would still colour the map, which is the shape of the bike-row defect.
+    check("public build: industrial is not the active metric",
+      !(await page.evaluate(() => document.querySelector(
+        `#devmetric button[data-devmetric="industrial"]`).classList.contains("active"))));
+    console.log(`\nPARTIAL — ran ${ran} checks, then stopped: public build, industrial is full-only`);
+    await browser.close();
+    process.exit(fail ? 1 : 0);
+  }
 
   // --- switch to Industrial --------------------------------------------------
   await click('#devmetric button[data-devmetric="industrial"]');
@@ -243,6 +263,7 @@ function approx(a, b, rel = 1e-6) { return Math.abs(a - b) <= rel * Math.max(Mat
   check('Industrial button restored in Development', back);
 
   console.log(fail ? `\n${fail} CHECK(S) FAILED` : '\nALL CHECKS PASSED');
+  console.log(`COMPLETE — ran ${ran} checks`);
   await browser.close();
   process.exit(fail ? 1 : 0);
 })();
