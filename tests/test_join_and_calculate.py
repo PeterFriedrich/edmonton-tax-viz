@@ -8,7 +8,7 @@ from shapely.geometry import Point, Polygon
 
 sys.path.insert(0, "src")
 from join_and_calculate import (
-    SLIM_COLUMNS, WEB_PRECISION, export_geojson, join_and_calculate,
+    SETBACK_CRS, SLIM_COLUMNS, WEB_PRECISION, export_geojson, join_and_calculate,
 )
 
 
@@ -242,6 +242,46 @@ def test_export_raises_without_crs(tmp_path):
     )
     with pytest.raises(ValueError, match="no CRS"):
         export_geojson(gdf, str(tmp_path / "x.geojson"))
+
+
+def test_setback_crs_is_pinned_projected_and_matches_boundaries():
+    """``SETBACK_CRS`` could be swapped for another metric CRS in total silence.
+
+    ⚠️ The setback/simplify tests around this one CANNOT catch it: they measure
+    the result with a hardcoded ``to_crs("EPSG:3400")``, and any other projected
+    CRS over Edmonton agrees far inside their ``rel=0.02``. Measured 2026-09-07 —
+    ``EPSG:26911`` (UTM 11N) and ``EPSG:3776`` (3TM 111W) each left **799 tests
+    green**. Only ``EPSG:4326`` reddened anything, and only because buffering by
+    45 *degrees* annihilates every polygon.
+
+    ``load_boundaries``'s projection has been pinned by name since
+    ``test_reprojects_to_3400``; this closes the matching gap on the constant
+    that must agree with it (``docs/FINDINGS_vacuous_guards.md`` V2's class).
+    """
+    from unittest.mock import patch  # local: needed only here
+
+    import pyproj
+
+    from load_boundaries import load_boundaries
+
+    assert SETBACK_CRS == "EPSG:3400"
+
+    # The property ``buffer(-setback_m)`` actually depends on: metres, not degrees.
+    crs = pyproj.CRS.from_user_input(SETBACK_CRS)
+    assert crs.is_projected
+    assert {ax.unit_name for ax in crs.axis_info} == {"metre"}
+
+    # The relationship the constant's comment CLAIMS. Derived by running
+    # load_boundaries rather than restating 3400, so moving that projection
+    # without moving this one reds here instead of silently shrinking hoods
+    # in a CRS their area_acres was never computed in.
+    square = Polygon([(-113.5, 53.5), (-113.4, 53.5), (-113.4, 53.6), (-113.5, 53.6)])
+    gdf_in = gpd.GeoDataFrame(
+        [{"name": "DOWNTOWN"}], geometry=[square], crs="EPSG:4326",
+    )
+    with patch("load_boundaries.gpd.read_file", return_value=gdf_in):
+        boundaries = load_boundaries("dummy.geojson")
+    assert crs.to_epsg() == boundaries.crs.to_epsg()
 
 
 def test_setback_shrinks_footprint(tmp_path):
