@@ -95,8 +95,14 @@ the edit, the check has no defined failure mode and that is the finding.
   path? Does the guard's comparison have **locality** — does it constrain *where*
   the value appears, or would any occurrence anywhere in the file satisfy it?
 - **T2 wiring.** Which workflow runs this check, on which trigger? A guard in no
-  workflow is a guard that gates nothing (`grep` the workflows by filename —
-  do not trust a comment that says it runs).
+  workflow is a guard that gates nothing. ⚠️ **Grep the workflows by filename AND
+  grep the repo for the check's importable NAME** — a guard can be wired by being
+  *called* from a script a workflow runs, in which case its filename appears in no
+  `.yml` and the filename grep reports a false gap. `check_temporal_archive_year.py`
+  is wired exactly that way (`vintage_report.CHECKS`), and the filename-only grep
+  is why S144 reported it unwired 11 days after PR #258 wired it. Confirm the
+  wiring by finding the check's **verdict line in an actual run's log**, not by
+  reading the caller. And do not trust a comment that says it runs.
 - **T4 scripts.** Does the script have an **early exit** that leaves its body
   unrun and still exits 0? Is the guard on that exit a **DATA** condition or a
   **BUILD** condition? ⚠️ Both builds share the same GeoJSON, so a data-gated
