@@ -825,3 +825,15 @@ def test_export_distance_columns_appended_last(tmp_path):
     assert lrt[0] == 612 and isinstance(lrt[0], int)
     # Unreachable is null, NOT a large sentinel a filter would read as "far".
     assert lrt[1] is None
+
+
+def test_sq_m_per_acre_is_the_international_acre():
+    """Pin this module's copy of the constant as a LITERAL too.
+
+    ⚠️ Every other use of SQ_M_PER_ACRE in this file computes the EXPECTED value
+    from the imported constant, so those ~40 assertions move with it and none of
+    them can catch it changing (docs/FINDINGS_vacuous_guards.md V2). Importing
+    the value under test is fine; deriving the expectation from it is not. This
+    test is the one that compares it to something that does not move.
+    """
+    assert SQ_M_PER_ACRE == 4046.8564224
