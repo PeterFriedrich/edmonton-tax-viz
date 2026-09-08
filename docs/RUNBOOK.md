@@ -61,6 +61,7 @@ has silently stopped running. Green months are the proof of life.
 | Archived years measure right | an ARCHIVED year's value measures as a DIFFERENT year's roll | see the ⚠️ below — a decision, not a re-run |
 | Capital budget | `data/capital_budget.csv` no longer matches upstream | §1a |
 | Unclassified zoning | a hood carries `frac_other > 0` — a zone code is missing from `ZONE_CATEGORY` | map it from the bylaw purpose statement, `data/DATA.md` §5 |
+| Zoning bylaw | the upstream zone-code VOCABULARY no longer matches `ZONE_CATEGORY` — a new code, or a mapped one gone. A wholesale move means the City replaced the bylaw, so `ZONING_YEAR` and `data/DATA.md` §5 both need re-stating | §1 step 6 |
 | Site banner | a banner is up in `status.json` | §1 step 10 |
 
 ⚠️ **A network failure reports `❓ UNKNOWN`, never `⚠️ ACTION`** — same rule as
@@ -278,6 +279,11 @@ time.
    ⚠️ these are *separate constants* from main.py's pin; forget them and
    `status.json` (and the site's vintage display) silently misreports the
    year. Bump `ZONING_YEAR` only when the zoning bylaw vintage changes.
+   ⚠️ **`ZONING_YEAR` is now PINNED** (`tests/test_generate_status.py`
+   `test_zoning_year_is_the_bylaw_year_and_does_not_track_the_roll`) — bumping it
+   with the roll reds the suite by name, and the pin's sibling assertion also
+   reds if `DATA_YEAR`/`RATE_YEAR` are the ones forgotten. The upstream half is
+   the digest's "Zoning bylaw" row (§0).
 7. **Leave `WATER_RATE_YEAR` / `FRANCHISE_RATE_YEAR` alone** unless new
    verified tariff schedules have been added to `data/water_rates.json` /
    `data/franchise_rates.json` — these are forward-looking modeled bills,
