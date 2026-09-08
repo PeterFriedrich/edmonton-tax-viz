@@ -42,6 +42,13 @@ no new data, no new dependency. That is deliberate: the question is "what
 changed since the last publish", which git already answers, and a pinned
 baseline would need re-pinning after every legitimate move.
 
+⚠️ A baseline that cannot be READ is reported, never skipped past. "The file is
+not in that commit" is a first publish and a legitimate skip; a rev that does not
+resolve, a missing git, or a corrupt blob is a fault, and it goes out through the
+same issue channel a flagged delta uses. The two used to share one exit path, so
+an unreachable baseline printed the all-clear over every neighbourhood it had not
+compared.
+
 Also reported, because it is free and it is what cracked the West Meadowlark
 case in minutes: the largest ``rev_frac_*`` shift on each flagged hood. There
 ``rev_frac_inst`` went 0.059 -> 0.590, which pointed straight at an institutional
@@ -49,7 +56,8 @@ parcel (a UF-zoned $247.8M account that had not been on the taxable roll before)
 instead of a generic "something moved".
 
 Outcomes (exit codes; 2 is argparse's):
-  0  always — flagged or not. Prints the report; sets ``flagged`` for CI.
+  0  always — flagged, clean, skipped, or unable to read its baseline. Prints
+     the report; sets ``flagged`` for CI (a count, or ``fault``).
 
 Runs in CI (refresh.yml) AFTER regeneration and BEFORE the commit, so it
 compares the artifact about to be served against the one currently served. When
@@ -94,23 +102,65 @@ def load_features(path: Path) -> dict[str, dict]:
     }
 
 
+class BaselineUnavailable(Exception):
+    """git could not produce the baseline, for a reason that is NOT "the file is
+    absent from that commit". A fault in the guard's own footing rather than a
+    finding about the data — see ``load_committed``."""
+
+
+def _git(*args: str) -> subprocess.CompletedProcess:
+    return subprocess.run(["git", *args], capture_output=True, text=True, cwd=ROOT)
+
+
 def load_committed(path: Path, rev: str = "HEAD") -> dict[str, dict] | None:
     """Same, from the version of ``path`` committed at ``rev``.
 
-    Returns None when the file is not in that commit at all — a first publish,
-    or a fresh clone with no history for it. That is "nothing to compare
-    against", not a fault, and the caller reports it as a skip.
+    Returns None in exactly ONE case: ``rev`` resolves and ``path`` is not in it
+    — a first publish, or a fresh clone with no history for that file. That is
+    "nothing to compare against", not a fault, and the caller reports it as a
+    skip.
+
+    ⚠️ EVERY OTHER git failure raises ``BaselineUnavailable``. Until 2026-09-08
+    any non-zero ``git show`` returned None, so a rev that does not resolve, a
+    missing git binary, a directory that is not a checkout, or a corrupt blob all
+    read as "first publish" — and the guard reported the all-clear over 406
+    neighbourhoods it had not compared. A guard that cannot reach its baseline
+    has to say so; silence and an all-clear must not share an exit path.
     """
-    rel = path.resolve().relative_to(ROOT)
-    proc = subprocess.run(
-        ["git", "show", f"{rev}:{rel.as_posix()}"],
-        capture_output=True,
-        text=True,
-        cwd=ROOT,
-    )
+    try:
+        rel = path.resolve().relative_to(ROOT)
+    except ValueError as exc:
+        raise BaselineUnavailable(
+            f"{path} is outside {ROOT}, so it has no committed baseline. "
+            "Pass --before to compare against a file on disk."
+        ) from exc
+
+    spec = f"{rev}:{rel.as_posix()}"
+    try:
+        probe = _git("cat-file", "-e", spec)
+        if probe.returncode != 0:
+            # The object is not there. Two very different reasons, and the whole
+            # point of this function is telling them apart: the commit exists and
+            # the file is simply not in it (a first publish), or the rev itself
+            # does not resolve (someone passed a bad --rev, or this is not a
+            # repo).
+            if _git("rev-parse", "--verify", "--quiet", f"{rev}^{{commit}}").returncode:
+                raise BaselineUnavailable(
+                    f"git cannot resolve {rev!r} in {ROOT}: {probe.stderr.strip()}"
+                )
+            return None
+        proc = _git("show", spec)
+    except OSError as exc:
+        raise BaselineUnavailable(f"cannot run git in {ROOT}: {exc}") from exc
+
     if proc.returncode != 0:
-        return None
-    payload = json.loads(proc.stdout)
+        raise BaselineUnavailable(
+            f"`git show {spec}` failed ({proc.returncode}): {proc.stderr.strip()}"
+        )
+    try:
+        payload = json.loads(proc.stdout)
+    except json.JSONDecodeError as exc:
+        raise BaselineUnavailable(f"the committed {spec} is not valid JSON: {exc}") from exc
     return {
         f["properties"][NAME_KEY]: f["properties"] for f in payload.get("features", [])
     }
@@ -244,6 +294,38 @@ def render(
     return "\n".join(lines) + "\n"
 
 
+def render_baseline_fault(reason: object, n_after: int, rev: str) -> str:
+    """Issue body for a guard that could not reach its baseline.
+
+    Deliberately not shaped like the delta report: the number to act on here is
+    how many neighbourhoods went UNCOMPARED, not how far one of them moved.
+    """
+    return "\n".join([
+        "## ⚠️ The revenue-delta guard could not read its baseline",
+        "",
+        f"**{n_after} neighbourhoods went uncompared this run.** Nothing is known "
+        "to be wrong with the data — and nothing is known to be right with it "
+        "either. This is a fault in the guard's footing, not a finding.",
+        "",
+        f"- baseline requested: `{rev}:web/data/neighbourhood_value_per_acre.geojson`",
+        f"- git said: `{reason}`",
+        "",
+        "The publish went ahead, as it always does here — this guard only ever "
+        "warns (see the script docstring's direction policy).",
+        "",
+        "### What to check",
+        "",
+        "```",
+        "git rev-parse --verify HEAD",
+        "git cat-file -e HEAD:web/data/neighbourhood_value_per_acre.geojson",
+        "python scripts/check_revenue_deltas.py",
+        "```",
+        "",
+        "Until this clears, no per-neighbourhood magnitude check is running. That "
+        "is the hole `WEST MEADOWLARK PARK` fell through on 2026-08-03.",
+    ]) + "\n"
+
+
 def _write_github_output(**kv: object) -> None:
     out = os.environ.get("GITHUB_OUTPUT")
     if not out:
@@ -290,11 +372,36 @@ def main(argv: list[str] | None = None) -> int:
         return EXIT_OK
 
     after = load_features(after_path)
-    before = (
-        load_features(args.before)
-        if args.before
-        else load_committed(after_path, args.rev)
-    )
+    try:
+        before = (
+            load_features(args.before)
+            if args.before
+            else load_committed(after_path, args.rev)
+        )
+    except BaselineUnavailable as exc:
+        # The direction policy still holds — this guard never stops a publish.
+        # But it must not report the all-clear it did not measure either, and a
+        # warning inside a green run reaches nobody (the whole reason the flagged
+        # path files an issue). So a fault goes out through that same channel:
+        # refresh.yml keys its issue step off `flagged` being neither '0' nor ''.
+        # The value is not a count here and must not be read as one; the title
+        # and the body say what actually happened.
+        logger.error("Revenue-delta guard could not read its baseline: %s", exc)
+        logger.error(
+            "%d neighbourhoods went UNCOMPARED. Not a data finding and not a "
+            "publish failure — the magnitude check simply did not run.",
+            len(after),
+        )
+        if args.report:
+            args.report.write_text(
+                render_baseline_fault(exc, len(after), args.rev)
+            )
+        _write_github_output(
+            flagged="fault",
+            title="⚠️ Revenue-delta guard could not read its baseline",
+        )
+        return EXIT_OK
+
     if before is None:
         logger.info(
             "No committed %s at %s — first publish, nothing to compare against.",
