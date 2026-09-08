@@ -158,3 +158,15 @@ def test_main_writes_github_output_when_ok(tmp_path, monkeypatch):
     text = out.read_text()
     assert "result=ok" in text
     assert "banner=" not in text      # nothing to show a visitor on a good run
+
+
+# ── the bands themselves ────────────────────────────────────────────────────
+# docs/FINDINGS_vacuous_guards_r2.md R4(1): MAX_PLAUSIBLE_RESIDUAL doubled with
+# the suite green. The tests below import it and build their fixtures from it,
+# so both sides move together — the vacuous shape. Pin the literal.
+
+def test_the_fit_thresholds_are_the_documented_pair():
+    """5% = the worst residual a correct year may show; 3% = the margin the best
+    fit must beat the runner-up by. Loosening either turns "inconclusive" into a
+    confident wrong year."""
+    assert (MAX_PLAUSIBLE_RESIDUAL, MIN_SEPARATION) == (0.05, 0.03)

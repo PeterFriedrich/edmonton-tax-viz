@@ -3,7 +3,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, "scripts")
-from check_cost_copy import CLAIMS, check, prose
+from check_cost_copy import CLAIMS, check, main, prose
 
 REPO = Path(__file__).resolve().parent.parent
 
@@ -135,3 +135,47 @@ def test_the_real_prose_keeps_the_copy_and_drops_the_comments():
     for comment in REAL_COMMENTS:
         assert comment in html, f"comment probe {comment!r} no longer in the file"
         assert comment not in haystack
+
+
+# ── the exit code CI actually reads ─────────────────────────────────────────
+# docs/FINDINGS_vacuous_guards_r2.md R2. Every test above exercises `check()`,
+# the detector. None of them reached `main()`, so the drift branch's `return 5`
+# could be changed to `return 0` — disarming the merge gate — with all 800 tests
+# green. tests.yml runs the SCRIPT, so the exit code is the whole contract.
+
+# Every claim, as reader-visible prose. Derived from CLAIMS on purpose: this
+# fixture's only job is to prove main() CAN return 0, so a guard that always
+# exited 5 would fail here rather than look correct.
+PASSING = "".join(f"<p>{c['expect'](COSTS)}</p>" for c in CLAIMS)
+
+
+def _main(monkeypatch, tmp_path, body):
+    html = tmp_path / "index.html"
+    html.write_text(body, encoding="utf-8")
+    costs = tmp_path / "city_unit_costs.json"
+    costs.write_text(json.dumps(COSTS), encoding="utf-8")
+    monkeypatch.setattr(
+        sys, "argv",
+        ["check_cost_copy", "--html", str(html), "--costs", str(costs)],
+    )
+    return main()
+
+
+def test_main_exits_nonzero_on_drift(tmp_path, monkeypatch):
+    """The V1 falsification, driven through main() to the code the gate reads."""
+    assert _main(monkeypatch, tmp_path, FALSIFICATION) == 5
+
+
+def test_main_exits_zero_when_the_copy_matches(tmp_path, monkeypatch):
+    # The other direction: a guard that always exits 5 would also "pass" the
+    # test above while reddening every merge.
+    assert _main(monkeypatch, tmp_path, PASSING) == 0
+
+
+def test_main_exits_nonzero_when_an_input_is_missing(tmp_path, monkeypatch):
+    monkeypatch.setattr(
+        sys, "argv",
+        ["check_cost_copy", "--html", str(tmp_path / "nope.html"),
+         "--costs", str(tmp_path / "nope.json")],
+    )
+    assert main() == 5
