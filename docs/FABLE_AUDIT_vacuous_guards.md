@@ -1,8 +1,9 @@
 # AUDIT BRIEF — checks that cannot fail
 
-**Read cold.** This is a reusable *instrument*, not a findings doc. The
-2026-09-07 run's output is `docs/FINDINGS_vacuous_guards.md`; the coverage map
-is `docs/AUDIT_LEDGER.md`.
+**Read cold.** This is a reusable *instrument*, not a findings doc. Run
+outputs: 2026-09-07 (Opus 5) `docs/FINDINGS_vacuous_guards.md`; 2026-09-08
+(Fable 5.1, cross-model) `docs/FINDINGS_vacuous_guards_r2.md`. The coverage
+map is `docs/AUDIT_LEDGER.md`.
 
 **Sibling brief:** `docs/FABLE_AUDIT_proxy_guards.md` covers a check reading a
 **stand-in** for the property. This one covers a check reading the **right**
@@ -131,6 +132,15 @@ the edit, the check has no defined failure mode and that is the finding.
   entries; the count was dropped rather than published.)
 - ⚠️ **`pgrep -f <name>` matches the watcher's own command line.** It bit this
   run's own tooling. See the memory `pgrep-watchers-match-themselves`.
+- ⚠️ **Confirm the mutated element is in the check's POPULATION before reading
+  the result.** Run 2 hid the roads row to falsify smoke B8 and read the PASS
+  as evidence — B8 excludes roads (no `plane.col`). A mutation the check never
+  looks at proves nothing either way. Corollary for the check itself: a guard
+  that filters out lookup misses (`hidden !== null`) has a population of zero
+  after a rename, and must report how many it examined.
+- ⚠️ **A column can be PRESENT and EMPTY.** Presence-only guards (key exists)
+  pass an all-null column; assert the value can vary, not just that the key
+  is there (run 2, R1).
 - **Do not measure under load.** Concurrent runs manufacture failures on this
   4-core box; re-run any red **alone** before believing it
   (`run-verify-scripts-alone`).

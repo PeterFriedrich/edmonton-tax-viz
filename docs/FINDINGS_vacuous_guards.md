@@ -1,6 +1,8 @@
 # Findings — checks that cannot fail (run 2026-09-07, S144)
 
 Instrument: `docs/FABLE_AUDIT_vacuous_guards.md`. Ledger row: 2026-09-07.
+**Run 2 (2026-09-08, Fable 5.1, cross-model re-run): `docs/FINDINGS_vacuous_guards_r2.md`** —
+every fix below re-falsified and still red; two new HIGH findings.
 Scope as the brief defines it: the guard/test estate and the wiring that runs
 it — **not** the lenses.
 
