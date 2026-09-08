@@ -281,6 +281,25 @@ in both modules), and 17 constants red overall — `LOW_PARCEL_FRAC`,
    (not by pytest — `test_year_constants_flag_drift` asserts only that
    `"DATA_YEAR"` appears in the detail, so dropping `RATE_YEAR` from that check
    is also green).
+
+   ✅ **FIXED 2026-09-08 (S147) — 832 → 843; `DECISIONS.md` 2026-09-08.** Both
+   halves. **The constant:** a literal pin in `tests/test_generate_status.py`,
+   whose sibling asserts `DATA_YEAR`/`RATE_YEAR` **do** track `ASSESSMENT_YEAR`
+   — the RUNBOOK §1 step 6 warning had never been in pytest at all. ⚠️ **The
+   framing that decides the shape: `ZONING_YEAR` is the one published vintage
+   that must NOT follow the roll**, so the realistic failure is the January
+   checklist bumping it along with its two neighbours. **The subject:**
+   `vintage_report.check_zoning_bylaw` — no year field exists upstream, so the
+   bylaw's identity is its zone-code vocabulary (Bylaw 20001 renamed every zone
+   in 2024), compared against `load_zoning.ZONE_CATEGORY` in both directions;
+   **95 = 95, empty both ways** on the live source. ⚠️ **An empty vocabulary
+   returns UNKNOWN** — otherwise a renamed column reports all 95 mapped codes
+   GONE, i.e. a bylaw replacement conjured out of a shape change.
+   `test_year_constants_flag_drift` now derives both names from the module and
+   has an OK-direction sibling. ⚠️ **That sibling reads `scripts.generate_status`,
+   not `generate_status`** — `sys.path` carries both `.` and `scripts/`, so the
+   two are DIFFERENT module objects and the first draft's monkeypatch silently
+   did nothing. Seven mutations red by name against the committed state.
 3. **`EXIT_*` codes (14) — self-referential, matters only in `refresh.yml`'s
    `case` labels.** Tests import them from the module under test. Folded into
    R2.

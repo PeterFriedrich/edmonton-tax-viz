@@ -583,6 +583,15 @@ column and the bands simply do not draw.
 Residential"). Assessment is 2025 — close enough; zoning is stable. Record the
 download date / `date_ext` for provenance.
 
+⚠️ **The vintage claim is published** — `generate_status.ZONING_YEAR` → `status.json`
+`zoning_year` → the About panel's vintage line ("… zoning 2024"). **Nothing measured
+it until 2026-09-08.** There is no year field in this source, so what is checked is
+the **zone-code vocabulary**: `vintage_report.check_zoning_bylaw` compares the
+upstream base codes against `src/load_zoning.ZONE_CATEGORY` in **both directions**
+(95 = 95, empty both ways, measured 2026-09-08), and the constant itself is pinned
+in `tests/test_generate_status.py`. ⚠️ **`ZONING_YEAR` moves with the BYLAW, never
+with the roll** — that is the one thing the January checklist must not do to it.
+
 **Why:** neighbourhood-level aggregation needs explicit categorization of
 non-developable land (River Valley, parks, undeveloped) that parcel-level analysis
 handles implicitly. Overlaid on neighbourhood boundaries → land-use composition %

@@ -11,6 +11,8 @@ than live calls — CI must not depend on Socrata being up to test our own logic
 import datetime as dt
 import json
 
+import requests
+
 import pytest
 
 from scripts import vintage_report as vr
@@ -124,7 +126,38 @@ def test_year_constants_flag_drift(monkeypatch):
     monkeypatch.setattr(main, "ASSESSMENT_YEAR", main.ASSESSMENT_YEAR + 1)
     status, _, detail = vr.check_year_constants()
     assert status == vr.ACTION
-    assert "DATA_YEAR" in detail
+    # ⚠️ Named BOTH, and derived, not typed: this asserted only `"DATA_YEAR" in
+    # detail`, so dropping RATE_YEAR from the check's own tuple was green (S147
+    # audit run 2, R4(2)). Reading the names off generate_status also means a
+    # renamed constant reds here rather than passing on a stale literal.
+    import scripts.generate_status as gs
+    for name in ("DATA_YEAR", "RATE_YEAR"):
+        assert hasattr(gs, name)
+        assert name in detail, f"{name} drifted but the digest does not name it"
+
+
+def test_year_constants_ok_when_all_three_agree(pinned, monkeypatch):
+    """The opposite direction. Without it, a check hard-wired to ACTION passes
+    the test above — the vacuity the sibling assertions in this suite exist for.
+
+    ⚠️ `ZONING_YEAR` is deliberately NOT in this comparison: it is the bylaw
+    year, not the roll year (`tests/test_generate_status.py`
+    `test_zoning_year_is_the_bylaw_year_and_does_not_track_the_roll`, and
+    `vr.check_zoning_bylaw` for the upstream half).
+
+    ⚠️ Read the constants off `scripts.generate_status`, which is the module the
+    check imports. `sys.path` carries BOTH `.` and `scripts/`, so `import
+    generate_status` and `import scripts.generate_status` are two DIFFERENT
+    module objects — monkeypatching the first would not touch what the check
+    reads, and the patch would silently do nothing.
+    """
+    import main
+    from scripts.generate_status import DATA_YEAR, RATE_YEAR
+    assert DATA_YEAR == RATE_YEAR, "this test's premise; the drift case is above"
+    monkeypatch.setattr(main, "ASSESSMENT_YEAR", DATA_YEAR)
+    status, _, detail = vr.check_year_constants()
+    assert status == vr.OK
+    assert str(DATA_YEAR) in detail
 
 
 # --- rendering --------------------------------------------------------------
@@ -232,11 +265,18 @@ def test_committed_capital_budget_parses():
 
 
 class _FakeResp:
-    def __init__(self, payload):
+    def __init__(self, payload, status=200):
         self._payload = payload
+        self.status_code = status
 
     def json(self):
         return self._payload
+
+    def raise_for_status(self):
+        """Present so a check that calls it is testable. An HTTP error must reach
+        the check as an exception — i.e. UNKNOWN — not as a parsed error body."""
+        if self.status_code >= 400:
+            raise requests.HTTPError(f"{self.status_code}")
 
 
 def _boom(*a, **k):
@@ -375,3 +415,104 @@ def test_unclassified_zoning_treats_missing_column_as_zero(tmp_path, monkeypatch
 def test_unclassified_zoning_check_is_registered():
     """Membership IS the wiring — see test_both_archive_checks_are_registered."""
     assert vr.check_unclassified_zoning in vr.CHECKS
+
+
+# --- zoning bylaw -----------------------------------------------------------
+#
+# ⚠️ The subject is `status.json`'s published `zoning 2024`, which nothing
+# measured (S147 audit run 2, R4(2)). There is no year field upstream to read:
+# the bylaw's identity is its ZONE-CODE VOCABULARY, and `ZONE_CATEGORY` is this
+# project's record of which bylaw it read. The pin on the constant itself lives
+# in `tests/test_generate_status.py`.
+
+
+def _zoning_rows(codes):
+    return _FakeResp([{"zoning": c} for c in codes])
+
+
+def _status(tmp_path, monkeypatch, year=2024):
+    monkeypatch.setattr(vr, "STATUS_JSON", _write(tmp_path, "status.json",
+                                                  {"zoning_year": year}))
+
+
+def test_zoning_bylaw_ok_when_the_vocabulary_is_the_one_we_mapped(tmp_path, monkeypatch):
+    from src.load_zoning import ZONE_CATEGORY
+    _status(tmp_path, monkeypatch)
+    monkeypatch.setattr(vr.requests, "get",
+                        lambda *a, **k: _zoning_rows(sorted(ZONE_CATEGORY)))
+    status, _, detail = vr.check_zoning_bylaw()
+    assert status == vr.OK
+    assert "2024" in detail
+
+
+def test_zoning_bylaw_reads_the_base_code_not_the_suffixed_string(tmp_path, monkeypatch):
+    """Upstream appends height/overlay suffixes (`RM h16`) and `load_zoning`
+    keys on the first token. Splitting differently would report all 95 codes as
+    unknown on a completely normal file."""
+    from src.load_zoning import ZONE_CATEGORY
+    _status(tmp_path, monkeypatch)
+    monkeypatch.setattr(vr.requests, "get",
+                        lambda *a, **k: _zoning_rows([f"{c} h16" for c in ZONE_CATEGORY]))
+    assert vr.check_zoning_bylaw()[0] == vr.OK
+
+
+def test_zoning_bylaw_flags_a_code_that_is_new_upstream(tmp_path, monkeypatch):
+    from src.load_zoning import ZONE_CATEGORY
+    _status(tmp_path, monkeypatch)
+    monkeypatch.setattr(vr.requests, "get",
+                        lambda *a, **k: _zoning_rows(list(ZONE_CATEGORY) + ["ZZQ"]))
+    status, _, detail = vr.check_zoning_bylaw()
+    assert status == vr.ACTION
+    assert "ZZQ" in detail
+
+
+def test_zoning_bylaw_flags_a_mapped_code_that_vanished(tmp_path, monkeypatch):
+    """⚠️ The direction `check_unclassified_zoning` cannot see at all — it reads
+    `frac_other` on the served file, and a code that DISAPPEARS contributes no
+    unclassified area. Half of what a bylaw rename looks like."""
+    from src.load_zoning import ZONE_CATEGORY
+    _status(tmp_path, monkeypatch)
+    kept = sorted(ZONE_CATEGORY)
+    dropped = kept.pop()
+    monkeypatch.setattr(vr.requests, "get", lambda *a, **k: _zoning_rows(kept))
+    status, _, detail = vr.check_zoning_bylaw()
+    assert status == vr.ACTION
+    assert dropped in detail and "GONE" in detail
+
+
+def test_zoning_bylaw_says_the_constant_does_not_follow_the_roll(tmp_path, monkeypatch):
+    """The digest must not invite the January bump it exists to prevent."""
+    _status(tmp_path, monkeypatch)
+    monkeypatch.setattr(vr.requests, "get", lambda *a, **k: _zoning_rows(["RS", "ZZQ"]))
+    _, _, detail = vr.check_zoning_bylaw()
+    assert "ASSESSMENT_YEAR" in detail and "never" in detail
+
+
+def test_zoning_bylaw_network_failure_is_unknown_not_action(tmp_path, monkeypatch):
+    """A guard must not manufacture a bylaw change out of an unreachable source."""
+    _status(tmp_path, monkeypatch)
+    monkeypatch.setattr(vr.requests, "get", _boom)
+    status, _, detail = vr.check_zoning_bylaw()
+    assert status == vr.UNKNOWN
+    assert "2024" in detail
+
+
+def test_zoning_bylaw_empty_response_is_unknown_not_a_wholesale_rename(tmp_path, monkeypatch):
+    """⚠️ The failure that would cry wolf hardest: a shape change empties every
+    `zoning` field, and a naive set difference then reports all 95 mapped codes
+    GONE — a bylaw replacement, from nothing but a renamed column."""
+    _status(tmp_path, monkeypatch)
+    monkeypatch.setattr(vr.requests, "get", lambda *a, **k: _zoning_rows([""] * 40))
+    assert vr.check_zoning_bylaw()[0] == vr.UNKNOWN
+
+
+def test_zoning_bylaw_check_is_registered():
+    """The digest is wired by MEMBERSHIP; dropping a name from CHECKS is silent."""
+    assert vr.check_zoning_bylaw in vr.CHECKS
+
+
+def test_zoning_bylaw_http_error_is_unknown_not_action(tmp_path, monkeypatch):
+    _status(tmp_path, monkeypatch)
+    monkeypatch.setattr(vr.requests, "get",
+                        lambda *a, **k: _FakeResp([{"zoning": "RS"}], status=503))
+    assert vr.check_zoning_bylaw()[0] == vr.UNKNOWN

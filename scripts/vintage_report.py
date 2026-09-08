@@ -54,6 +54,7 @@ SERVED_GEOJSON = ROOT / "web" / "data" / "neighbourhood_value_per_acre.geojson"
 ASSESSMENT_METADATA_URL = "https://data.edmonton.ca/api/views/q7d6-ambg.json"
 MILL_RATES_URL = "https://data.edmonton.ca/resource/pwis-wc4c.json"
 CAPITAL_BUDGET_URL = "https://budget.edmonton.ca/api/capital_budget.csv"
+ZONING_URL = "https://data.edmonton.ca/resource/fixa-tstc.json"
 
 OK, ACTION, UNKNOWN = "OK", "ACTION", "UNKNOWN"
 
@@ -387,6 +388,82 @@ def check_unclassified_zoning():
             f"non-residential total (`docs/DECISIONS.md` 2026-08-31).")
 
 
+def check_zoning_bylaw(timeout=60):
+    """Is `status.json`'s published `zoning 2024` still describing what is served?
+
+    ⚠️ `ZONING_YEAR` is the ONE published vintage that is not the roll year and
+    must never be made to track it. `DATA_YEAR`/`RATE_YEAR` follow
+    `ASSESSMENT_YEAR` and `check_year_constants` compares them to it; zoning is
+    the 2024 Zoning Bylaw and stays 2024 until the CITY replaces the bylaw. So
+    the January roll must not touch it — which is exactly the edit this exists
+    to make visible, together with the literal pin in
+    `tests/test_generate_status.py`.
+
+    There is no year field to read: the bylaw's identity lives in its ZONE-CODE
+    VOCABULARY. Bylaw 20001 renamed every zone in 2024 (RF1 -> RS, RF3 -> RSF,
+    CB1 -> CG …), so a wholesale rename upstream is what a replacement looks
+    like from here, and `src/load_zoning.ZONE_CATEGORY` — built by hand from
+    those 95 codes and their bylaw sections (`data/DATA.md` §5) — is the record
+    of which bylaw this project read. Measured 2026-09-08: 95 upstream base
+    codes, 95 in the dict, **both directions empty**.
+
+    ⚠️ This BOUNDS the `zoning 2024` claim; it does not prove it. An amendment
+    can add a zone without replacing the bylaw, which is why a difference is
+    ACTION ("go look") rather than a verdict.
+
+    ⚠️ NOT a duplicate of `check_unclassified_zoning`, which is the same subject
+    from the other end. That one reads `frac_other` on the SERVED file: it sees
+    an unmapped code only AFTER a refresh has run it through the pipeline, only
+    if it landed on measurable AREA, and it is blind to a code that DISAPPEARS —
+    which is half of what a rename looks like. This one reads the source's
+    vocabulary directly, before any refresh, in both directions.
+    """
+    from src.load_zoning import ZONE_CATEGORY  # noqa: PLC0415 — heavy import
+
+    try:
+        served = json.loads(STATUS_JSON.read_text()).get("zoning_year")
+    except (OSError, json.JSONDecodeError) as exc:
+        return (UNKNOWN, "Zoning bylaw", f"Could not read {STATUS_JSON.name} ({exc}).")
+
+    try:
+        resp = requests.get(
+            ZONING_URL, params={"$select": "zoning", "$limit": 50000}, timeout=timeout
+        )
+        resp.raise_for_status()
+        rows = resp.json()
+    except Exception as exc:  # noqa: BLE001 — an unreachable source is UNKNOWN, never ACTION
+        return (UNKNOWN, "Zoning bylaw",
+                f"Could not reach the zoning source ({exc}). Served `zoning_year` is {served}.")
+
+    # The base code is the FIRST whitespace token — height/overlay suffixes like
+    # "RM h16" are appended upstream, and load_zoning keys on the same token.
+    upstream = {z.split()[0] for r in rows if (z := (r.get("zoning") or "").strip())}
+    if not upstream:
+        return (UNKNOWN, "Zoning bylaw",
+                f"The zoning source returned {len(rows)} row(s) with no usable "
+                f"`zoning` code — shape change, look by hand.")
+
+    known = set(ZONE_CATEGORY)
+    new, gone = sorted(upstream - known), sorted(known - upstream)
+    if not (new or gone):
+        return (OK, "Zoning bylaw",
+                f"All {len(upstream)} upstream zone codes are the ones "
+                f"`ZONE_CATEGORY` was built from — `zoning_year` {served} still holds.")
+
+    parts = []
+    if new:
+        parts.append(f"**{len(new)} code(s) upstream are UNKNOWN here**: {', '.join(new[:8])}")
+    if gone:
+        parts.append(f"**{len(gone)} mapped code(s) are GONE upstream**: {', '.join(gone[:8])}")
+    return (ACTION, "Zoning bylaw",
+            f"{'; '.join(parts)}. Map each new code from its bylaw purpose statement "
+            f"(`data/DATA.md` §5, `src/load_zoning.ZONE_CATEGORY`) — and if the "
+            f"vocabulary has moved WHOLESALE the City has replaced the bylaw, in "
+            f"which case `generate_status.ZONING_YEAR` ({served}) and `data/DATA.md` "
+            f"§5 both need re-stating. ⚠️ A rename is NOT a roll-forward: this "
+            f"constant moves with the BYLAW, never with `ASSESSMENT_YEAR`.")
+
+
 CHECKS = (
     check_assessment_roll,
     check_mill_rates,
@@ -397,6 +474,7 @@ CHECKS = (
     check_temporal_archive_year,
     check_capital_budget,
     check_unclassified_zoning,
+    check_zoning_bylaw,
     check_banner,
 )
 
