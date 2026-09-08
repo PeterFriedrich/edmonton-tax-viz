@@ -18,6 +18,7 @@ from check_served_columns import (  # noqa: E402
     EXIT_OK,
     column_presence,
     compare_to_baseline,
+    empty_columns,
     main,
 )
 
@@ -148,3 +149,48 @@ def test_write_baseline_round_trips_the_live_schema(tmp_path):
     assert main(["--geojson", str(geo), "--baseline", str(base), "--write-baseline"]) == EXIT_OK
     assert json.loads(base.read_text())["columns"] == sorted(COLUMNS)
     assert _run(geo, base) == EXIT_OK
+
+
+# --- the column that is PRESENT and EMPTY ------------------------------------
+# docs/FINDINGS_vacuous_guards_r2.md R1. Presence is the wrong question one step
+# further along: a failed join or a renamed upstream field writes the column and
+# fills it with nulls, so `column_presence` reports every feature carrying it.
+# Falsified against the real served file — res_revenue_per_acre nulled on all
+# 406 features passed this guard AND verify-smoke.js on the public build, and a
+# blank public lens would have published.
+
+def test_a_column_null_on_every_feature_is_empty():
+    features = _full(3)
+    for f in features:
+        f["properties"]["revenue_per_acre"] = None
+    assert empty_columns(features, COLUMNS) == ["revenue_per_acre"]
+
+
+def test_a_column_null_on_some_features_is_not_empty():
+    """The cry-wolf direction, and the reason presence counts nulls as present:
+    `far` is null on 16 of 406 hoods and the four *_per_lot_acre columns on the
+    seven set-aside hoods. Those are legitimate 'no value here'."""
+    features = _full(3)
+    features[0]["properties"]["revenue_per_acre"] = None
+    assert empty_columns(features, COLUMNS) == []
+
+
+def test_an_absent_column_is_not_double_reported_as_empty():
+    """A dropped column is MISSING, not EMPTY — one diagnosis per defect."""
+    features = [_feature(neighbourhood_name=f"H{i}") for i in range(3)]
+    assert "revenue_per_acre" not in empty_columns(features, COLUMNS)
+
+
+def test_main_fails_when_a_column_is_null_on_every_feature(tmp_path):
+    features = _full(3)
+    for f in features:
+        f["properties"]["revenue_per_acre"] = None
+    assert _run(*_write(tmp_path, features)) == EXIT_DRIFT
+
+
+def test_main_still_passes_when_a_column_is_null_on_only_some_features(tmp_path):
+    # The opposite direction: without this, a guard that failed on ANY null
+    # would pass the test above while reddening every real refresh.
+    features = _full(3)
+    features[0]["properties"]["revenue_per_acre"] = None
+    assert _run(*_write(tmp_path, features)) == EXIT_OK

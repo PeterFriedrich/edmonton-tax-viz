@@ -77,12 +77,47 @@ def column_presence(features: list[dict]) -> dict[str, int]:
     the seven set-aside hoods by design — whereas a missing key means the
     pipeline never wrote the column for that row. Same distinction B6/B7 draw
     in ``verify-smoke.js``, so the two guards answer the same question.
+
+    ⚠️ Presence alone cannot see an EMPTY column: see ``empty_columns``.
     """
     counts: dict[str, int] = {}
     for feature in features:
         for column in feature.get("properties", {}):
             counts[column] = counts.get(column, 0) + 1
     return counts
+
+
+def empty_columns(features: list[dict], baseline: list[str]) -> list[str]:
+    """Baselined columns that are PRESENT on every feature and null on all of them.
+
+    Audit 2026-09-08 R1 (``docs/FINDINGS_vacuous_guards_r2.md``): presence is
+    the wrong question one step further along. A failed join or a renamed
+    upstream field does not drop the key — the pipeline writes the column and
+    fills it with nulls. ``column_presence`` reports 406 of 406 and the guard
+    passes; ``verify-smoke.js`` passes too, because the money legends are static
+    literals and ``viewTooltip`` OMITS a null row rather than rendering ``NaN``.
+    Falsified by nulling ``res_revenue_per_acre`` on all 406 features: both
+    gates green, and a blank public lens would have published.
+
+    Measured against the real distribution before choosing the rule: **0 of 67**
+    baselined columns are null everywhere today, and only five carry any nulls
+    at all (``far`` on 16 of 406, the four ``*_per_lot_acre`` on 7). So "null on
+    every feature" reds nothing that ships today, and is the same severity as
+    MISSING — the column exists but carries no information either way.
+    """
+    total = len(features)
+    if not total:
+        return []
+    props = [f.get("properties", {}) for f in features]
+    empty = []
+    for column in baseline:
+        # An absent or half-written column is MISSING or PARTIAL; reporting it
+        # here too would give one defect two diagnoses.
+        if sum(1 for p in props if column in p) != total:
+            continue
+        if not any(p.get(column) is not None for p in props):
+            empty.append(column)
+    return sorted(empty)
 
 
 def compare_to_baseline(
@@ -164,6 +199,7 @@ def main(argv: list[str] | None = None) -> int:
 
     baseline = json.loads(args.baseline.read_text())["columns"]
     missing, partial, added = compare_to_baseline(counts, total, baseline)
+    empty = empty_columns(features, baseline)
 
     for column in added:
         logger.warning(
@@ -175,21 +211,24 @@ def main(argv: list[str] | None = None) -> int:
         )
     for column in missing:
         logger.error("  %-28s MISSING — gone from every feature", column)
+    for column in empty:
+        logger.error("  %-28s EMPTY — present but null on all %d features", column, total)
 
-    if missing or partial:
+    if missing or partial or empty:
         logger.error(
-            "SERVED-COLUMN DRIFT — %d missing, %d partial, out of %d baselined "
-            "columns on %d features.\n"
+            "SERVED-COLUMN DRIFT — %d missing, %d partial, %d empty, out of %d "
+            "baselined columns on %d features.\n"
             "Every lens self-gates on its own column, so this does NOT crash the "
             "site: the affected rows and views simply disappear and the publish "
             "looks clean. Do NOT re-pin the baseline to make this pass — find why "
             "the column stopped being written (a renamed source field, a join that "
             "dropped rows, a loader that returned early). Re-pin only once the "
             "removal is understood AND intended.",
-            len(missing), len(partial), len(baseline), total,
+            len(missing), len(partial), len(empty), len(baseline), total,
         )
         _write_github_output(
-            result="drift", missing=",".join(missing), partial=",".join(partial)
+            result="drift", missing=",".join(missing), partial=",".join(partial),
+            empty=",".join(empty),
         )
         return EXIT_DRIFT
 

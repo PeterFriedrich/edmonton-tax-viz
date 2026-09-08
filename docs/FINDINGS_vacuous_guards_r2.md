@@ -17,7 +17,7 @@ below names the check, the mutation, and what actually went red. Suite baseline
 
 ---
 
-## R1 — a served column can go ALL-NULL and the entire weekly publish path stays green  (T3, HIGH)
+## R1 — a served column can go ALL-NULL and the entire weekly publish path stays green  (T3, HIGH) — **FIXED 2026-09-08**
 
 **The check:** `scripts/check_served_columns.py`, the committed schema
 baseline (`data/expected_columns.json`, 67 columns), the guard `DECISIONS.md`
@@ -170,7 +170,7 @@ had happened to be non-zero would have passed while comparing the wrong thing.
 
 ---
 
-## R3 — `verify-smoke.js` B8 examines rows through a selector and drops the misses, so a markup rename leaves it green with zero rows examined  (T3, MEDIUM)
+## R3 — `verify-smoke.js` B8 examines rows through a selector and drops the misses, so a markup rename leaves it green with zero rows examined  (T3, MEDIUM) — **FIXED 2026-09-08**
 
 **The check:** B8, *"each services row is offered exactly when its column is
 present"*, in the one browser check that gates a publish.
@@ -205,6 +205,38 @@ fix is one line.
 
 **Fix — one line, bundle with R1's proposal:** report `n rows examined` in the
 extra text and fail when `n === 0`.
+
+
+### ✅ FIXED 2026-09-08 (S147) — R1 and R3, one PR, as proposed
+
+**R1 — `empty_columns()` in `check_served_columns.py`.** A baselined column
+carried on **every** feature and null on **all** of them is now a third failing
+bucket, `EMPTY`, alongside `MISSING` and `PARTIAL`. Falsified against the real
+served file three ways — `res_revenue_per_acre`, `revenue_per_acre` and
+`rev_frac_exempt` each nulled on all 406 features → **exit 5** with
+`EMPTY — present but null on all 406 features`; the unmutated file → **exit 0**.
+
+⚠️ **The other direction is pinned too, because it is the cry-wolf risk:** a
+column null on *some* features stays OK (`far` is null on 16 of 406 hoods and
+the four `*_per_lot_acre` on the seven set-aside hoods, by design), and an
+absent or half-written column is still reported as `MISSING`/`PARTIAL` only —
+one defect, one diagnosis. Five tests, including both directions of `main()`.
+
+⚠️ **The render gate is unchanged and still cannot see this.** Re-measured after
+the fix: the all-null copy gives `verify-smoke.js` **ALL CHECKS PASSED** and
+`check_served_columns.py` **exit 5**. That split is the 2026-08-03 decision
+working as designed — only a committed baseline can tell "empty now" from
+"empty always" — not a gap left open.
+
+**R3 — B8 counts its population.** `svcGateSeen` is the rows the selector
+actually found; the check now requires `> 0` and prints `N rows examined`.
+Falsified on built copies: base **PASS, 2 rows examined** (public) and **9**
+(full); every `data-service=` → `data-svc=` gives **FAIL, 0 rows examined** on
+both builds; and a genuinely mis-gated row still reds with its own message
+(`transit_dep_per_acre gated off but present`), so the new guard did not
+displace the old one.
+
+**Suite 820 → 825.** `DECISIONS.md` 2026-09-08.
 
 ---
 
