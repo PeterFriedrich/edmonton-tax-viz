@@ -220,11 +220,20 @@ const GARBAGE = /\bNaN\b|\bundefined\b|\bnull\b|\bInfinity\b|\$NaN|\$undefined/;
   // data is silent both ways — a row offered over a column that is not there
   // renders "no X data" over hoods that have it, and a row hidden over a column
   // that IS there simply loses a lens with no error anywhere.
-  const svcGateBad = Object.entries(shape.svcRowHidden)
-    .filter(([col, hidden]) => hidden !== null && hidden !== (shape.svcColAbsent[col] === shape.served))
+  //
+  // ⚠️ COUNT WHAT WAS EXAMINED AND FAIL AT ZERO (audit 2026-09-08, R3). A row
+  // the selector cannot find yields null and is filtered OUT, so renaming
+  // `data-service`, moving the rows out of `#services` or changing the class
+  // leaves this comparing an EMPTY list and printing PASS — a green line
+  // asserting nothing. Falsified by rewriting every `data-service=` to
+  // `data-svc=` in the built page: PASS, 0 rows examined.
+  const svcGateSeen = Object.entries(shape.svcRowHidden).filter(([, h]) => h !== null);
+  const svcGateBad = svcGateSeen
+    .filter(([col, hidden]) => hidden !== (shape.svcColAbsent[col] === shape.served))
     .map(([col, hidden]) => `${col} ${hidden ? 'gated off but present' : 'offered but absent'}`);
   check('B8: each services row is offered exactly when its column is present',
-    svcGateBad.length === 0, svcGateBad.join('; '));
+    svcGateBad.length === 0 && svcGateSeen.length > 0,
+    svcGateBad.length ? svcGateBad.join('; ') : `${svcGateSeen.length} rows examined`);
 
   // The panel's chart must plot one point per PUBLISHED year. The year list is
   // deliberately non-contiguous (2024 omitted by decision), so this compares
