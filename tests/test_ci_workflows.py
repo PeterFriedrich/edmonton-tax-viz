@@ -104,11 +104,17 @@ def test_the_monthly_digest_runs_the_report_that_carries_the_checks():
     assert "scripts/vintage_report.py" in _runs("vintage-digest.yml")
 
 
-def test_the_smoke_gate_sits_between_the_build_and_the_upload():
+@pytest.mark.parametrize("workflow", ["refresh.yml", "deploy.yml"])
+def test_the_smoke_gate_sits_between_the_build_and_the_upload(workflow):
     """Position is the point: a red gate here leaves the live site serving the
     PREVIOUS good data instead of publishing a broken render. A smoke step that
-    ran after the upload would be a report, not a gate."""
-    steps = [s for job in _load("refresh.yml")["jobs"].values() for s in job["steps"]]
+    ran after the upload would be a report, not a gate.
+
+    ⚠️ BOTH PUBLISHING WORKFLOWS. refresh.yml gates the DATA path; deploy.yml
+    gates the CODE path — the one that changes the rendering — and had this same
+    seam standing empty until 2026-09-08 (audit run 2, V3 sharpened).
+    """
+    steps = [s for job in _load(workflow)["jobs"].values() for s in job["steps"]]
     smoke = next(i for i, s in enumerate(steps) if "verify-smoke.js" in s.get("run", ""))
     upload = next(
         i for i, s in enumerate(steps)
@@ -118,10 +124,11 @@ def test_the_smoke_gate_sits_between_the_build_and_the_upload():
     assert upload - smoke == 1, "a step was inserted between the gate and the upload"
 
 
-def test_the_smoke_gate_covers_both_builds():
+@pytest.mark.parametrize("workflow", ["refresh.yml", "deploy.yml"])
+def test_the_smoke_gate_covers_both_builds(workflow):
     """Both builds share one GeoJSON but not one UI, so a check run against only
     the dev server passes on full-only states the public root does not have."""
-    run = next(r for r in _run_steps(_load("refresh.yml")) if "verify-smoke.js" in r)
+    run = next(r for r in _run_steps(_load(workflow)) if "verify-smoke.js" in r)
     assert run.count("verify-smoke.js") == 2
     assert "/full/index.html" in run
 

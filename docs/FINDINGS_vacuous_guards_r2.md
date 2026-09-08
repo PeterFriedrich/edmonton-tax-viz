@@ -342,8 +342,16 @@ the second a WARNING with a distinct line.
   second row that separates the values (`test_aggregate_by_neighbourhood`
   ×2, `test_join_and_calculate:378`). No `skip`, `xfail`, or bare `except` in
   `tests/`. `pytest -q` reports **800 passed, 0 skipped**.
-- **T2 `deploy.yml`:** unchanged since run 1 — still no check between build
-  and upload; the S146 Tier 1/2/3 proposal stands and is Peter's call.
+- **T2 `deploy.yml`:** ~~unchanged since run 1 — still no check between build
+  and upload~~ ✅ **CLOSED 2026-09-08 (S147): Tier 1 shipped on Peter's yes.**
+  `verify-smoke.js` now runs on both builds in that seam, gating the publish
+  and never the merge; ~25s → ~107s. Falsified against the COMMITTED state —
+  moving the step after the upload reds the position pin, dropping the
+  `/full/` run reds the both-builds pin, deleting the step reds both, and the
+  unmutated workflow is green. ⚠️ **Tiers 2 and 3 were not taken**, and this
+  does not close *"the 42 verify scripts gate nothing"* — smoke is
+  invariants-only and would probably not have caught the four S140 reds.
+  `DECISIONS.md` 2026-09-08.
 - **T4 tautology grep** (`check(name, true)` outside early exits;
   `.length >= 0`): the only hits are the sanctioned early-exit reporters and
   `verify-revenue-panel.js`'s `segments.every(w => w >= 0)`, which sits behind
