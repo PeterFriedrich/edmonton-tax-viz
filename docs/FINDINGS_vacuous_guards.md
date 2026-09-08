@@ -151,6 +151,23 @@ Two further facts, reported without recommendation: `enforce_admins: false`
 (an admin merge can bypass the required check) and `strict: false` (a PR need
 not be current with master before merging).
 
+⚠️ **SHARPENED 2026-09-08 (S146) — the table above contains a second gap this
+run did not draw out, and it is the bigger one.** The finding was framed as
+*"no browser check gates any MERGE"*. But `deploy.yml` **publishes to the live
+site** on every `web/**` master push, and the row for it also reads **none**.
+`refresh.yml` places `verify-smoke.js` immediately before
+`upload-pages-artifact` deliberately — *"a red gate here leaves the live site
+serving the PREVIOUS good data instead of publishing a broken render"* — and
+`deploy.yml` has that **same build→upload seam, empty**. So the **DATA** path
+is gated before publish and the **CODE** path, which is the one that changes
+`web/index.html` and therefore the rendering, is not. **That is an asymmetry
+between two existing workflows rather than a missing policy**, which is what
+makes closing it cheap to justify: the same script, the same slot, the same
+stated reason. Proposed with measured costs in `TODO.md` (Tier 1 of 3);
+**nothing built, awaiting Peter.** ⚠️ **Not a substitute for this finding** —
+smoke is invariants-only, so it would probably not have caught the four S140
+reds that motivated V3.
+
 ~~**Also:** `scripts/check_temporal_archive_year.py` appears in **no workflow**.
 Its 13 tests pass; nothing runs the guard itself.~~
 
