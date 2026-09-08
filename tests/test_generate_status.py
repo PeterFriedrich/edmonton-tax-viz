@@ -274,3 +274,33 @@ def test_committed_budget_roads_maintenance_is_no_longer_derived():
     assert "derived_component" not in roads
     assert roads["components"]["maintenance"] == 65671000
     assert roads["components"]["maintenance"] != 14135000, "the ~5x-low derived figure is back"
+
+
+# --- the published vintage constants -----------------------------------------
+
+
+def test_zoning_year_is_the_bylaw_year_and_does_not_track_the_roll():
+    """`ZONING_YEAR` is served as `status.json` `zoning_year` and printed in the
+    About panel's vintage line ("… zoning 2024"). Nothing measured it.
+
+    ⚠️ It is the ONE published vintage that is deliberately NOT the roll year.
+    `DATA_YEAR`/`RATE_YEAR` follow `ASSESSMENT_YEAR` and `vintage_report
+    .check_year_constants` compares them to it — so the January roll
+    (`docs/RUNBOOK.md` §1 step 6) walks past three adjacent constants and must
+    bump exactly two. Moving this one to match is the realistic edit, it is
+    silent, and it makes the site misreport which bylaw it drew.
+
+    It moves ONLY when the City replaces the Zoning Bylaw — at which point
+    `src/load_zoning.ZONE_CATEGORY`, `data/DATA.md` §5 and this pin all change
+    together, and `vintage_report.check_zoning_bylaw` is what notices upstream.
+    """
+    import main
+    from generate_status import DATA_YEAR, RATE_YEAR, ZONING_YEAR
+
+    assert ZONING_YEAR == 2024, (
+        "ZONING_YEAR moved. Correct ONLY if the City replaced the Zoning Bylaw "
+        "(2024 = Bylaw 20001) — never as part of a roll-forward."
+    )
+    # The opposite direction, and the half RUNBOOK §1 step 6 warns about: these
+    # two DO track the roll, and until now only the MONTHLY digest said so.
+    assert (DATA_YEAR, RATE_YEAR) == (main.ASSESSMENT_YEAR, main.ASSESSMENT_YEAR)
