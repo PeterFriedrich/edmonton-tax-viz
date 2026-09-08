@@ -19,13 +19,14 @@ What replaced it is a rendered-geometry assertion in
 tools/profiling/verify-reference-layer.js: the highways must extend past the
 city on all four sides.
 """
+import json
 import sys
 from pathlib import Path
 
 import pytest
 
 gpd = pytest.importorskip("geopandas")
-from shapely.geometry import LineString, MultiLineString  # noqa: E402
+from shapely.geometry import LineString, MultiLineString, shape  # noqa: E402
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
 
@@ -233,3 +234,192 @@ def test_missing_place_raises_rather_than_silently_dropping(monkeypatch):
     monkeypatch.setattr(b.requests, "get", lambda *a, **k: _Empty())
     with pytest.raises(RuntimeError, match="No geometry returned"):
         b._fetch_places()
+
+
+# --- the CRS path ---------------------------------------------------------
+#
+# ⚠️ S147 audit run 2, R4(4): `WORKING_EPSG` could be mutated with the suite
+# green, so this script's CRS path was simply untested. RE-MEASURED 2026-09-08
+# before building, and the finding as written is HALF STALE — which changes what
+# is worth testing:
+#
+#   WORKING_EPSG = 999999  ->  3 tests already fail, but INCIDENTALLY: they
+#                              exercise the highway path, `.to_crs` raises
+#                              CRSError, and they crash. No assertion is about
+#                              the CRS, and a crash is not a measurement.
+#   WORKING_EPSG = 4326    ->  843 GREEN, and this is the dangerous one. 4326
+#                              exists, so nothing raises; the whole module's
+#                              tolerances are METRES (MARGIN_M, RIVER_SIMPLIFY_M,
+#                              HIGHWAY_SIMPLIFY_M, BOUNDARY_SIMPLIFY_M) and they
+#                              silently become DEGREES. Everything still writes.
+#
+# So the hole is a VALID-but-wrong CRS, not a nonexistent one — silent
+# correctness, the failure mode this project keeps finding.
+
+
+def test_the_working_crs_is_projected_and_measured_in_metres():
+    """The property every tolerance in this module depends on, asserted by NAME.
+
+    ⚠️ The module is written in metres throughout — `MARGIN_M` (60 km),
+    `RIVER_SIMPLIFY_M` (25 m), `HIGHWAY_SIMPLIFY_M` (30 m), `BOUNDARY_SIMPLIFY_M`
+    (100 m), `HIGHWAY_MIN_KM`. A geographic CRS makes all five degrees, and a
+    25-DEGREE simplify tolerance is ~2,800 km: the river becomes a straight line
+    and the file still writes.
+    """
+    from pyproj import CRS
+
+    crs = CRS.from_epsg(b.WORKING_EPSG)
+    assert crs.is_projected, (
+        f"EPSG:{b.WORKING_EPSG} is geographic — every *_M tolerance in this "
+        "module silently becomes degrees"
+    )
+    units = {ax.unit_name for ax in crs.axis_info}
+    assert units == {"metre"}, f"EPSG:{b.WORKING_EPSG} measures in {units}, not metres"
+
+
+def test_the_output_crs_is_the_lon_lat_the_front_end_reads():
+    """deck.gl/MapLibre consume WGS84, and every other file in web/data/ is it."""
+    from pyproj import CRS
+
+    assert b.OUT_EPSG == 4326
+    assert CRS.from_epsg(b.OUT_EPSG).is_geographic
+    assert b.WORKING_EPSG != b.OUT_EPSG, "geometry work and output must not share a CRS"
+
+
+# Edmonton, generously bounded. Wide enough that the 60 km clip margin and the
+# neighbouring counties all sit inside it; tight enough that degrees-as-metres
+# (or metres-as-degrees) lands far outside.
+_EDM_LON = (-114.5, -112.5)
+_EDM_LAT = (52.8, 54.5)
+
+
+def _synthetic(monkeypatch, tmp_path):
+    """Stub every network fetch with geometry built in 4326 and reprojected to
+    ``WORKING_EPSG`` — the same last step the real fetchers take.
+
+    ⚠️ That last step is the whole point. A stub that hard-coded metre
+    coordinates would keep handing `build()` honest metres no matter what
+    `WORKING_EPSG` says, and the test would pass under the bug — the failure
+    this project has now hit seven times. Reprojecting for real means a
+    geographic working CRS reaches `build()` as degrees, exactly as it would in
+    production.
+    """
+    from shapely.geometry import Point, Polygon
+
+    def to_working(geom):
+        return gpd.GeoSeries([geom], crs="EPSG:4326").to_crs(epsg=b.WORKING_EPSG).iloc[0]
+
+    # The "city": a ~0.4 x 0.25 degree block over Edmonton.
+    hoods = gpd.GeoDataFrame(
+        {"name": ["A"]},
+        geometry=[Polygon([(-113.7, 53.4), (-113.3, 53.4),
+                           (-113.3, 53.65), (-113.7, 53.65)])],
+        crs="EPSG:4326",
+    )
+    boundaries = tmp_path / "hoods.geojson"
+    hoods.to_file(boundaries, driver="GeoJSON")
+
+    # A river across the city, wide enough to survive a 25 m simplify and to
+    # have an area worth comparing.
+    river_4326 = Polygon([(-113.9, 53.50), (-113.1, 53.56),
+                          (-113.1, 53.58), (-113.9, 53.52)])
+    monkeypatch.setattr(b, "_fetch_river", lambda bounds: gpd.GeoDataFrame(
+        geometry=[to_working(river_4326)], crs=f"EPSG:{b.WORKING_EPSG}"))
+
+    # Two long corridors, so the welded length clears nothing in particular but
+    # exercises the same clip/weld/simplify path as the real layer.
+    hwys = [LineString([(-114.2, 53.3), (-112.8, 53.75)]),
+            LineString([(-113.5, 53.1), (-113.5, 53.9)])]
+    monkeypatch.setattr(b, "_fetch_highways", lambda bounds: gpd.GeoDataFrame(
+        {"ref": ["216", "2"]},
+        geometry=[to_working(g) for g in hwys], crs=f"EPSG:{b.WORKING_EPSG}"))
+
+    town = Polygon([(-113.0, 53.5), (-112.9, 53.5), (-112.9, 53.6), (-113.0, 53.6)])
+    monkeypatch.setattr(b, "_fetch_places", lambda: gpd.GeoDataFrame(
+        {"name": ["Townly"], "outline": [to_working(town)]},
+        geometry=[to_working(Point(-112.95, 53.55))], crs=f"EPSG:{b.WORKING_EPSG}"))
+
+    county = Polygon([(-114.0, 53.2), (-113.0, 53.2), (-113.0, 53.9), (-114.0, 53.9)])
+    monkeypatch.setattr(b, "_fetch_regions", lambda: [
+        ("Edmonton", to_working(hoods.geometry.iloc[0])),
+        ("Some County", to_working(county)),
+    ])
+    zone = Polygon([(-113.2, 53.7), (-113.0, 53.7), (-113.0, 53.8), (-113.2, 53.8)])
+    monkeypatch.setattr(b, "_fetch_zone", lambda: to_working(zone))
+    monkeypatch.setattr(b, "_fetch_point",
+                        lambda *a: to_working(Point(-113.5, 53.32)))
+    monkeypatch.setattr(b, "_fetch_airport",
+                        lambda: to_working(Point(-113.58, 53.31)))
+    return boundaries, river_4326
+
+
+def _coords(obj):
+    if isinstance(obj, (int, float)):
+        return
+    if len(obj) == 2 and all(isinstance(v, (int, float)) for v in obj):
+        yield obj
+        return
+    for part in obj:
+        yield from _coords(part)
+
+
+def test_build_writes_lon_lat_over_edmonton(monkeypatch, tmp_path):
+    """End to end through the real CRS path, no network: read -> WORKING ->
+    clip and simplify in metres -> assemble -> OUT -> write."""
+    boundaries, _ = _synthetic(monkeypatch, tmp_path)
+    out = tmp_path / "reference.geojson"
+    n = b.build(boundaries_path=boundaries, out_path=out)
+
+    assert n > 0
+    payload = json.loads(out.read_text())
+    pts = [p for f in payload["features"] for p in _coords(f["geometry"]["coordinates"])]
+    assert pts
+    for lon, lat in pts:
+        assert _EDM_LON[0] <= lon <= _EDM_LON[1], f"lon {lon} is not over Edmonton"
+        assert _EDM_LAT[0] <= lat <= _EDM_LAT[1], f"lat {lat} is not over Edmonton"
+
+
+def test_build_simplifies_in_metres_not_degrees(monkeypatch, tmp_path):
+    """⚠️ THE ASSERTION THAT CATCHES A VALID-BUT-WRONG WORKING CRS.
+
+    The lon/lat check above does NOT: with `WORKING_EPSG = 4326` the final
+    `to_crs(4326)` is a no-op, so the coordinates come out as lon/lat anyway and
+    that test passes under the bug. What does not survive is the SHAPE — a 25 m
+    river tolerance read as 25 degrees flattens the polygon.
+
+    So this measures the river's area back in the working CRS's metres and
+    requires it to survive the round trip.
+    """
+    boundaries, river_4326 = _synthetic(monkeypatch, tmp_path)
+    out = tmp_path / "reference.geojson"
+    b.build(boundaries_path=boundaries, out_path=out)
+
+    payload = json.loads(out.read_text())
+    river = next(f for f in payload["features"] if f["properties"]["t"] == "river")
+    got = gpd.GeoSeries([shape(river["geometry"])], crs="EPSG:4326").to_crs(epsg=3400)
+    want = gpd.GeoSeries([river_4326], crs="EPSG:4326").to_crs(epsg=3400)
+
+    # The river is clipped to the city bbox + 60 km margin, which contains it
+    # whole here, and simplified by 25 m — so area moves by well under 1%.
+    assert got.area.iloc[0] == pytest.approx(want.area.iloc[0], rel=0.01), (
+        "the river's area did not survive build() — a simplify tolerance was "
+        "not in metres"
+    )
+
+
+def test_the_working_crs_is_the_one_the_rest_of_the_pipeline_uses():
+    """The property tests above pass on ANY metre-based CRS — measured: EPSG:3776
+    (NAD83 / Alberta 3TM 114 W) leaves all 847 green, because it is projected, in
+    metres, and covers Edmonton, so the tolerances stay honest and the output is
+    still correct lon/lat.
+
+    That is a consistency pin, not a correctness one, and it is stated as such:
+    this layer is drawn over data built in EPSG:3400 (`src/load_roads.py`,
+    `src/amenity_distance.py`, `src/load_stormwater.py` and others all hardcode
+    it — there is no single constant to import, which is why this reads as a
+    literal).
+    """
+    assert b.WORKING_EPSG == 3400, (
+        "the reference layers would be built in a different projection from the "
+        "data they are drawn over; correct only if the whole pipeline moved"
+    )
