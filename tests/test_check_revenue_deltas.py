@@ -18,6 +18,8 @@ on a legitimate parcel completion.
 """
 
 import json
+import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -183,3 +185,144 @@ def test_missing_served_file_is_not_an_error(tmp_path):
 def test_thresholds_are_the_measured_pair():
     """Pins the documented values so a casual 'tighten it' shows up in review."""
     assert (MIN_PCT, MIN_ABS_DOLLARS) == (10.0, 1_000_000.0)
+
+
+# --- the baseline itself: a fault must not read as "first publish" -----------
+#
+# ⚠️ Until 2026-09-08 `load_committed` returned None on ANY non-zero `git show`,
+# so a bad --rev, a missing git, or a non-checkout all took the same exit path as
+# a genuine first publish: exit 0, flagged=0, "nothing to compare against" — the
+# guard reporting an all-clear over 406 neighbourhoods it never looked at.
+# Both directions are pinned below, because the cheap way to pass the first test
+# is to call everything a fault and cry wolf on every real first publish.
+
+
+def _repo(tmp_path, monkeypatch, committed=True):
+    """A real git checkout with the served file in it, as `ROOT` for the module.
+
+    A real repo, not a stubbed subprocess: what is under test IS the git
+    invocation and how its failures are classified, so stubbing it would assert
+    the stub. Only the location moves.
+    """
+    import check_revenue_deltas as mod
+
+    run = lambda *a: subprocess.run(  # noqa: E731
+        ["git", *a], cwd=tmp_path, check=True, capture_output=True
+    )
+    run("init", "-q", "-b", "main")
+    run("config", "user.email", "t@example.invalid")
+    run("config", "user.name", "t")
+    (tmp_path / "web" / "data").mkdir(parents=True)
+    served = tmp_path / "web" / "data" / "neighbourhood_value_per_acre.geojson"
+    served.write_text(json.dumps(_served([_hood("H", 5_000_000)])))
+    (tmp_path / "README").write_text("x\n")
+    run("add", "README" if not committed else ".")
+    run("commit", "-qm", "baseline")
+    monkeypatch.setattr(mod, "ROOT", tmp_path)
+    return served
+
+
+def _outputs(tmp_path, monkeypatch):
+    out = tmp_path / "gh_output"
+    out.write_text("")
+    monkeypatch.setenv("GITHUB_OUTPUT", str(out))
+    return lambda: dict(
+        line.split("=", 1) for line in out.read_text().splitlines() if "=" in line
+    )
+
+
+def test_a_rev_that_does_not_resolve_is_a_fault_not_a_first_publish(
+    tmp_path, monkeypatch, caplog
+):
+    served = _repo(tmp_path, monkeypatch)
+    read = _outputs(tmp_path, monkeypatch)
+    report = tmp_path / "r.md"
+    with caplog.at_level("INFO"):
+        code = main(["--geojson", str(served), "--rev", "deadbeef",
+                     "--report", str(report)])
+
+    assert code == EXIT_OK, "the direction policy holds: a fault never blocks"
+    assert "could not read its baseline" in caplog.text
+    assert "first publish" not in caplog.text
+    assert "Revenue-delta guard OK" not in caplog.text, (
+        "the all-clear must never be printed over neighbourhoods that were "
+        "not compared"
+    )
+    assert read()["flagged"] != "0"
+    assert "uncompared" in report.read_text().lower()
+
+
+def test_a_genuinely_uncommitted_served_file_is_still_a_clean_skip(
+    tmp_path, monkeypatch, caplog
+):
+    """The cry-wolf direction. Real repo, real HEAD, file simply not in it."""
+    served = _repo(tmp_path, monkeypatch, committed=False)
+    read = _outputs(tmp_path, monkeypatch)
+    with caplog.at_level("INFO"):
+        code = main(["--geojson", str(served)])
+
+    assert code == EXIT_OK
+    assert "first publish" in caplog.text
+    assert "could not read its baseline" not in caplog.text
+    assert read()["flagged"] == "0"
+
+
+def test_a_baseline_outside_the_repo_faults_instead_of_raising(
+    tmp_path, monkeypatch, caplog
+):
+    """`relative_to` used to raise ValueError here — a traceback and a NON-ZERO
+    exit out of the one guard that must never stop a publish."""
+    _repo(tmp_path, monkeypatch)
+    read = _outputs(tmp_path, monkeypatch)
+    stray = tmp_path.parent / "stray_served.geojson"
+    stray.write_text(json.dumps(_served([_hood("H", 5_000_000)])))
+    with caplog.at_level("INFO"):
+        code = main(["--geojson", str(stray)])
+
+    assert code == EXIT_OK
+    assert read()["flagged"] != "0"
+    assert "--before" in caplog.text, "say how to compare a file outside the repo"
+
+
+def test_a_corrupt_committed_baseline_is_a_fault(tmp_path, monkeypatch, caplog):
+    import check_revenue_deltas as mod
+
+    served = _repo(tmp_path, monkeypatch)
+    read = _outputs(tmp_path, monkeypatch)
+    monkeypatch.setattr(
+        mod, "_git",
+        lambda *a: subprocess.CompletedProcess(a, 0, stdout="{not json", stderr=""),
+    )
+    with caplog.at_level("INFO"):
+        code = main(["--geojson", str(served)])
+
+    assert code == EXIT_OK
+    assert read()["flagged"] != "0"
+    assert "first publish" not in caplog.text
+
+
+def test_the_fault_signal_actually_fires_the_issue_step(tmp_path, monkeypatch):
+    """The value is only useful if refresh.yml's condition accepts it.
+
+    `flagged` is a COUNT on the delta path and the literal `fault` here, and the
+    step is gated on a string comparison — so pin the emitted value against the
+    committed workflow rather than against a remembered condition. (S147 R2: the
+    detector passing says nothing about the wiring.)
+    """
+    served = _repo(tmp_path, monkeypatch)
+    read = _outputs(tmp_path, monkeypatch)
+    main(["--geojson", str(served), "--rev", "deadbeef"])
+    emitted = read()["flagged"]
+
+    workflow = (
+        Path(__file__).resolve().parent.parent
+        / ".github" / "workflows" / "refresh.yml"
+    ).read_text()
+    step = workflow[workflow.index("Report a big revenue delta as an issue"):]
+    condition = step[step.index("if:"): step.index("\n", step.index("if:"))]
+    assert "revdelta.outputs.flagged" in condition
+    for excluded in re.findall(r"!=\s*'([^']*)'", condition):
+        assert emitted != excluded, (
+            f"flagged={emitted!r} is excluded by refresh.yml's condition "
+            f"{condition.strip()!r} — the fault would file no issue"
+        )
