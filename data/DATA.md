@@ -710,6 +710,20 @@ boundary acre** (`road_m_per_acre`).
   infrastructure — SPEC_services.md; don't re-litigate). ~0.28% of filtered
   length falls outside all neighbourhood polygons (conservation guard reports
   it every run).
+- ⚠️ **THE CITY'S "~11,000 / 12,000 km" ROAD NETWORK IS LANE-KM, NOT CENTRELINE
+  — and this feed is how you know** (measured 2026-09-08, S149, in EPSG:3400):
+  all 53,854 segments **7,700 km**; `Road` 5,685 (Province 495 = the ring
+  road); **City of Edmonton `Road` 5,029 km = arterial 1,358 · collector 926 ·
+  local 2,740** (+6 km alley-classed); City `Alley` **1,311 km**; `Railway` 704.
+  The City states its snow inventory in lane-km (*"over 4,000 lane kms of
+  residential roads"*, Winter Roads FAQ) and reported alleys adding *"1,250 to
+  1,300 kilometres"* to it in 2021 (Taproot 2022-05-31) — one-lane alleys, so
+  that equals this feed's 1,311 alley centreline km, which pins the unit. The
+  2020 State & Condition class figures (3,500 / 1,763 / 4,830 lane-km, relayed)
+  give 2.58 / 1.90 / 1.76 lanes per centreline km. ⚠️ **Every $/km in §13's
+  `roadway_ops` is therefore $/LANE-km** — `docs/FINDINGS_road_figures_consolidation.md`
+  L2b, and the open call in `TODO.md`. Taproot 2025's *"11,000 linear
+  kilometres"* is the only source that says linear, and it is wrong.
 - **Vintage:** live feed like the others; no year semantics of its own (the
   network changes continuously, not per roll year). Refresh weekly with the
   other inputs.
@@ -1126,6 +1140,20 @@ only** — never label the derived metric "total city cost".
   Full record: `docs/FINDINGS_roadway_maintenance_rate.md`,
   `city_unit_costs.json` → `roadway_ops.rescoped_2026_09_06`. See also
   `docs/SPEC_services.md` "Roads cost — lifecycle".
+- ⚠️ **UNIT DEFECT, OPEN (2026-09-08, S149 consolidation audit):** both halves
+  of `roadway_ops` divide by the City's **lane-km** inventory (~11,000 km incl.
+  ~1,300 km of alleys) and the pipeline multiplies them by **centreline**
+  metres — the City's own feed holds 5,029 km of City road centreline (§6). Per
+  centreline metre the operating rate is **~1.8–2.2× the shipped $9.32/m**,
+  direction known; the arterial blend runs the other way but is bounded (net
+  ≥ 1.06× for an arterial-to-local cost ratio ≤ 3). **Nothing changed** — the
+  unit is Peter's call (`TODO.md`); the choropleth is invariant to a uniform
+  scalar, the legend/panel/copy are not. ⚠️ **The bullet above's "1.29× — the
+  two sources do not disagree about roads" compared $/lane-km to $/centreline-km
+  and is DEMOTED** (`DECISIONS.md` 2026-09-08): per centreline metre the
+  operating rate is ~$16.8–20.4/m against the $12 lifecycle O&M half — a real
+  disagreement, the other way. The 2026-09-06 re-scope stands on its other two
+  reasons. Full record: `docs/FINDINGS_road_figures_consolidation.md` L2a–L2b.
 - **Consumed** by `join_and_calculate.load_unit_costs` (validates loudly — a
   malformed hand edit fails the pipeline) → the `unit_costs` arg computes
   `cost_roads_life_per_acre` and the operating trio. `main.py
@@ -1743,6 +1771,22 @@ branch into programs: `Roadway Maintenance`, `Snow and Ice Control`,
 - **Corroborated §16's snow figures to 99.2%** — roads $36.85M + paths $30.15M =
   $67.0M vs the published `Snow and Ice Control` program $67,553,815 (FY2025).
 
+- **The Neighbourhood Renewal levy (2026-09-08, S149):** branch
+  `Neighbourhood Renewal`, department *Corporate Expenditures and Revenues*, is
+  **$174,386,000 in each of FY2023–FY2026** = `Neighbourhood Renewal`
+  $158,106,000 + `Alley Renewal` $22,280,000 − `Less: Microsurfacing - City
+  Operations` $6,000,000 (so **$180.386M gross**, $6.0M spent as operating,
+  **$174.386M transferred to capital**); it ramped $134.4M → $166.6M over
+  FY2017–22 and has been flat since. This is the funded side of the
+  `Neighbourhoods` renewal work in §19 — the capital file's
+  `Neighborhood Renewal Reserve` draws for 2023–26 are $720.0M, within 3% of
+  4 × $174.386M (same publisher, an identity not a corroboration). **Not a
+  pipeline input and deliberately not committed** — one `groupby` reproduces
+  it (`docs/FINDINGS_road_figures_consolidation.md` §6). ⚠️ **Portal quirk:
+  FY2025 books the whole $174,386,000 to program `Alley Renewal`** while the
+  other three years split it — `docs/DATA_ISSUES.md` F. A naive per-program
+  series shows alleys jumping 7.8× in 2025.
+
 ### Cross-checks it enabled on the OTHER manual reviewed inputs
 Run 2026-08-04. **None changed a committed value**; all are recorded so the
 inputs are corroborated rather than merely relayed.
@@ -1952,6 +1996,19 @@ from the fetch. The `⚠️ Capital budget` digest row is `docs/RUNBOOK.md` §1a
   standalone descendants and compare.** Same family as
   `check-where-the-value-can-be-wrong` — the number looks authoritative precisely
   where it cannot be checked.
+- ⚠️ **THE NEIGHBOURHOOD RENEWAL PROGRAMME IS A `fund`, NOT A `service`**
+  (2026-09-08, S149). `fund == "Neighborhood Renewal Reserve"` is **$906.7M
+  FY2023–29**: $668.2M under `Neighbourhoods` **and $238.4M under `Roads`**
+  (Pleasantview and Killarney reconstructions, 132 Avenue, 86 Street, 95
+  Avenue, 97 Street, the Minor Renewal Program); the `Neighbourhoods` service
+  in turn draws $37.8M from Local Improvements and $5.8M from the Cemetery
+  Reserve. Filtering on `service == "Neighbourhoods"` (S136) is the right
+  population for *per-neighbourhood reconstruction spend*, the wrong one for
+  *what the programme spends*. And **divide by the four-year cycle, never by
+  the FY span**: `Neighbourhoods` $716.5M ÷ 7 years read as "$102M/yr" against
+  the levy's $174.4M/yr — a 1.7× "disagreement between two City publications"
+  that was entirely this file being misread. 2023–26 reserve draws are
+  **$720.0M = $180.0M/yr**; the 2027–29 tail is carry-forward.
 - **The endpoint is byte-stable** (two fetches identical, 2026-08-21) but is
   generated per request, so the digest hashes **sorted** rows — a server-side
   reorder must not read as a budget change.
