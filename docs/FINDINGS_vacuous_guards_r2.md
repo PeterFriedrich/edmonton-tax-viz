@@ -318,6 +318,24 @@ in both modules), and 17 constants red overall — `LOW_PARCEL_FRAC`,
    `export_budget_ranked`, `check_doc_citations.MIN_BARE_NAME`. Hand-run
    producers of committed artefacts; recorded, not ranked.
 
+   ✅ **`WORKING_EPSG` FIXED 2026-09-08 (S147) — 843 → 848; `DECISIONS.md`
+   2026-09-08.** ⚠️ **Re-measured before building, and THIS ITEM WAS HALF WRONG
+   — the correction is the finding.** The mutation recorded here (a CRS that
+   does not exist) already **failed 3 tests** by the time it was executed, but
+   *incidentally*: they exercise the highway path, `.to_crs` raises `CRSError`,
+   and they crash. **No assertion was about the CRS, and a crash is not a
+   measurement** — the same distinction §5 draws elsewhere. The genuinely green
+   mutation is **`WORKING_EPSG = 4326`**, and it is far worse: 4326 exists, so
+   nothing raises, and every `*_M` tolerance in the module silently becomes
+   degrees (a 25° river tolerance is ~2,800 km) while the file still writes.
+   **The hole was a VALID-but-wrong CRS, not a missing one.** Five tests, six
+   mutations red by name. ⚠️ **Two traps worth carrying forward.** (1) The
+   stubs must reproject to `WORKING_EPSG` as the real fetchers do — one
+   hard-coding metre coordinates would feed `build()` honest metres under the
+   bug and pass. (2) **An output-is-lon/lat assertion does NOT catch 4326**:
+   the final `to_crs(4326)` becomes a no-op, so the coordinates are lon/lat
+   anyway. What does not survive is the SHAPE.
+
 ⚠️ **Do not quote "58 green" as a defect count.** Five is the number of
 constants whose silent movement would let wrong data or a loosened guard
 through; the rest are precision, warnings, or scripts nothing schedules.
