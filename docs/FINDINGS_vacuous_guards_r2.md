@@ -305,7 +305,7 @@ through; the rest are precision, warnings, or scripts nothing schedules.
 
 ---
 
-## R5 — `check_revenue_deltas.load_committed` turns ANY `git show` failure into "first publish, nothing to compare"  (T3, LOW — latent)
+## R5 — `check_revenue_deltas.load_committed` turns ANY `git show` failure into "first publish, nothing to compare"  (T3, LOW — latent) — **FIXED 2026-09-08**
 
 `load_committed()` returns `None` on any non-zero `git show` exit; `main()`
 logs *"first publish, nothing to compare against"* at INFO, writes
@@ -316,6 +316,38 @@ across 406 neighbourhoods"* — so this is a latent collapse, not a current
 one, and the guard is warn-only by policy. **Fix:** distinguish the two
 (`git cat-file -e` first, or match the "does not exist in" stderr) and make
 the second a WARNING with a distinct line.
+
+### ✅ FIXED 2026-09-08 (S147) — 827 → 832; `DECISIONS.md` 2026-09-08
+
+`None` now means exactly one thing: `git cat-file -e` missed the object **and**
+`git rev-parse --verify` confirms the rev resolves — the commit is there and the
+file is not. Everything else raises `BaselineUnavailable`.
+
+⚠️ **The "distinct WARNING line" the fix line above proposed would not have been
+enough, and the script's own docstring says why:** a warning inside a green run
+reaches nobody — which is the whole reason the flagged path files an issue. So a
+fault takes that same channel: `flagged=fault` plus a fault-shaped body, through
+the `refresh.yml` step already gated on `flagged` being neither `'0'` nor `''`.
+**On that path the value is not a count and must not be read as one.** The body
+leads with how many neighbourhoods went *uncompared*, not with how far one moved.
+**The direction policy is untouched — exit 0, always.**
+
+Also retired in the same change: a `--geojson` outside the repo raised
+`ValueError` out of `relative_to`, i.e. a traceback and a **non-zero exit** from
+the one guard that must never stop a publish. It now reports and exits 0.
+
+**Falsified four ways against the real repo** — `--rev deadbeef` → fault;
+`HEAD` → clean, 406 compared; the commit *before* the served file was added →
+clean skip, `flagged=0`; a path outside ROOT → fault. Four mutations red **by
+name** against the **committed** state (per §5): removing the resolve check
+(the original bug) reds the fault test; always-fault reds the cry-wolf test;
+emitting `flagged=0` on the fault path reds four; deleting the issue step from
+`refresh.yml` reds the wiring test.
+
+⚠️ **The tests drive `main()` against a REAL temporary git checkout** with
+`ROOT` monkeypatched to it. What is under test *is* the git invocation and how
+its failures are classified, so a stubbed subprocess would assert the stub —
+the same rule §5 applies to stubbing a detector.
 
 ---
 
