@@ -526,7 +526,11 @@
          are shown on two bases that must not be added or compared — operating
          (upkeep and snow clearing only) and lifecycle ($50 per metre per year,
          upkeep plus eventual rebuilding spread over a 50-year life). The same
-         road metre is about five times more expensive on the second. The
+         road metre is about five times more expensive on the second — but the
+         two are not on the same denominator, because the operating figures are
+         published per lane-kilometre while this map measures road length, so
+         that ratio overstates the real gap and the operating layer is a
+         floor. The
          50-year life is the City's figure for a well-maintained road; it also
          publishes 25 years, which would double the lifecycle number. Roads are
          one of many services the levy funds, so neither figure is the cost of
@@ -1128,18 +1132,21 @@
         plane: { col: "cost_roads_ops_per_acre" },
         blurb: "Each neighbourhood is coloured by the modeled annual operating " +
                "cost of its collector and local roads per acre — $5,970 per " +
-               "kilometre to maintain plus $3,350 per kilometre for snow and " +
-               "ice control. Operating only: capital reconstruction is a " +
-               "separate and much larger budget, so this is not what a road " +
-               "costs over its life — the lifecycle layer below puts the same " +
-               "metres about five times higher. Both rates are citywide " +
-               "averages over a network that includes arterials, which are " +
-               "maintained and cleared first and cost more per kilometre, so " +
-               "the local-road figure is likely somewhat high. Pushing the " +
-               "other way, the maintenance figure is the City's 2017 " +
+               "lane-kilometre to maintain plus $3,350 per lane-kilometre for " +
+               "snow and ice control. Operating only: capital reconstruction " +
+               "is a separate and much larger budget, so this is not what a " +
+               "road costs over its life — the lifecycle layer below puts the " +
+               "same metres about five times higher, though part of that gap " +
+               "is the unit mismatch described next, not a real difference. " +
+               "Treat this layer as a floor. Both City averages are per " +
+               "lane-kilometre of the whole network, while this map measures " +
+               "road length, so a two-lane street is charged for one lane; " +
+               "and the maintenance figure is the City's 2017 " +
                "roads-maintenance budget — the last year it published one for " +
-               "roads alone — and is not adjusted for inflation. Colour is " +
-               "linear. Grey = set-aside natural/undeveloped land.",
+               "roads alone — unadjusted for inflation. Both understate. " +
+               "Pushing the other way, the averages include arterials, which " +
+               "are maintained and cleared first and cost more per kilometre. " +
+               "Colour is linear. Grey = set-aside natural/undeveloped land.",
       },
       // ⚠️ The SAME METRES as roadscost above on the OTHER basis, ~5.4x apart.
       // Alternatives, never summed — see SVC_COST_BASES and the
@@ -4949,7 +4956,8 @@
       document.getElementById("temporal-note").textContent =
         "Each cost is modelled and shown against this neighbourhood's own levy. "
         + "The two bases measure different things — the same road metre costs "
-        + "about five times more at the lifecycle rate than to operate — so "
+        + "about five times more at the lifecycle rate than to operate, a gap "
+        + "the operating rate's lane-kilometre denominator widens — so "
         + "they are never added"
         + (FULL_BUILD
             ? ", and the operating three are not added to each other either. "

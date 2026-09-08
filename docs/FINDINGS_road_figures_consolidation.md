@@ -291,7 +291,7 @@ finding (13,000 is a lane-km number).
 
 ## 5. What is proposed (all Peter's calls; ranked by whether a reader's number moves)
 
-1. **The operating rate's unit.** `roadway_ops` is $/lane-km applied to
+1. ✅ **DECIDED 2026-09-08 — STATE IT, DO NOT CONVERT.** Peter: *"let's choose the floor for now. We may link directly to an external analysis I'll do later."* The value stays $9.32/m/yr, the three copy sites say **per lane-kilometre**, and `roadway_ops.floor` becomes arithmetic under a stated k (net ≥ 1.06× for k ≤ 3). Both conversions below were declined: ×1.80 rests on a secondary relay now 404, ×2.19 charges alleys nothing, and the brief's own rule is that no replacement rate comes from an audit's arithmetic. `DECISIONS.md` 2026-09-08. **The finding as put:** the operating rate's unit. `roadway_ops` is $/lane-km applied to
    centreline metres. Options are a per-class lanes-per-centreline conversion
    (1.80 on the 2020 lane-km figures — secondary, internally consistent), a
    City-centreline conversion (5,029 km, primary, alleys unallocated), or

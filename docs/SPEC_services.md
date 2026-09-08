@@ -602,7 +602,13 @@ introduce a peer-benchmark LRT-vs-bus cost ratio to "fix" this.
 also covers pedestrian squares, bus stops, LRT platforms and staircases, while
 our numerator is ~981 km of dedicated bikeway; and the road snow rate blends
 over 11,000 km **including priority-cleared arterials**, so the local-road term
-is likely a little high.
+is likely a little high. ⚠️ **AND THAT 11,000 km IS LANE-KM, NOT CENTRELINE**
+(2026-09-08, S149): both halves of `roadway_ops` are therefore $/lane-km
+applied to centreline metres, which understates by ~1.8–2.2× and outweighs the
+arterial overstatement for any plausible arterial-to-local cost ratio. **Decided
+2026-09-08: state it, do not convert** — the basis publishes as a floor and the
+copy says *per lane-kilometre* (`DECISIONS.md`;
+`docs/FINDINGS_road_figures_consolidation.md` L2b).
 
 **Verification:** `verify-transport-cost.js` — **41 checks** driven against a
 build serving real Stage-2 output, plus a **6-check pre-Stage-2 path** against
