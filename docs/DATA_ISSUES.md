@@ -505,6 +505,23 @@ fetch and settles what the other 7,981 rows are. `TODO.md` carries it.
 
 ---
 
+### F. The Open Budget portal books FY2025's whole Neighbourhood Renewal line to program `Alley Renewal`
+
+Found 2026-09-08 (S149 consolidation audit) on a fresh pull of
+`budget.edmonton.ca/api/operating_budget.csv` (1,037,656 bytes). Branch
+`Neighbourhood Renewal` is **$174,386,000 in each of FY2023–FY2026**. In
+FY2023, FY2024 and FY2026 it is three rows — `Neighbourhood Renewal`
+$158,106,000 + `Alley Renewal` $22,280,000 + `Less: Microsurfacing - City
+Operations` −$6,000,000. In **FY2025 it is ONE row, program AND category
+`Alley Renewal`, $174,386,000** — the whole levy labelled as alleys. The
+total is right; the labelling is not. **Breaks here:** nothing served — the
+line is not a pipeline input — but any per-program time series built from
+the portal (`DATA.md` §17 already warns about renames) would show alley
+renewal jumping 7.8× in 2025 and neighbourhood renewal vanishing. Same
+publication as Socrata `da9s-v9j8`, so the Socrata copy presumably carries the
+same row. **Not reported; not yet an artifact** — one `groupby` reproduces it
+(`docs/FINDINGS_road_figures_consolidation.md` §6).
+
 ## Cross-refs
 
 - `data/DATA.md` — what each source *is* (§0 historical roll, §11 FIR, §20
