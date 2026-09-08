@@ -20,6 +20,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
 sys.path.insert(0, str(ROOT / "src"))
 
+import check_value_anchors as cva  # noqa: E402
 from check_value_anchors import (  # noqa: E402
     DANGER,
     compare_to_baseline,
@@ -373,3 +374,82 @@ def test_a_fresh_but_mismatched_pair_is_still_flagged(tmp_path):
     warnings = report_raw_vintage(paths, now=now)
     assert not any("STALE" in w for w in warnings)
     assert any("MISMATCHED" in w for w in warnings)
+
+
+# ── the exit code CI actually reads ─────────────────────────────────────────
+# docs/FINDINGS_vacuous_guards_r2.md R2. Everything above exercises
+# compare_to_baseline, the detector. Nothing reached main(), so its drift branch
+# could return EXIT_OK — the weekly publish would proceed through a regime
+# change — with all 800 tests green. refresh.yml runs the SCRIPT.
+
+# Bands are written out rather than derived from the live values: a baseline
+# computed from the same frame the guard reads is the vacuity this file is
+# guarding against. Live anchors for the fixture below are dup_parcel_points 1,
+# dup_parcel_value_frac 1.0, dedupe_effect_pct 300.0, both ineligible_* 0, and
+# lot_needle_ratio 1.0 on a flat grid.
+_BANDS_ONE_ANCHOR_OUT = {
+    "dup_parcel_points": {"min": 0, "max": 0},        # live 1 — the only breach
+    "dup_parcel_value_frac": {"min": 0, "max": 2},
+    "dedupe_effect_pct": {"min": 0, "max": 400},
+    "ineligible_points": {"min": 0, "max": 5},
+    "ineligible_value_frac": {"min": 0, "max": 1},
+    "lot_needle_ratio": {"min": 0, "max": 2},
+}
+
+
+def _run_main(tmp_path, monkeypatch, bands):
+    """Drive main() end to end. Only the CSV READERS are replaced — the anchor
+    computation, the band comparison and the exit mapping are the real ones."""
+    assessment = tmp_path / "assessment.csv"
+    assessment.write_text("account_number\n")
+    info = tmp_path / "property_info.csv"
+    info.write_text("account_number\n")
+    grid = tmp_path / "value_grid.json"
+    grid.write_text(json.dumps(_grid([100.0] * 1000)))
+    baseline = tmp_path / "expected_value_anchors.json"
+    baseline.write_text(json.dumps(bands))
+
+    # The duplicated-parcel regime the guard exists to catch: four condo units
+    # each carrying the whole 5000 m2 lot.
+    monkeypatch.setattr(
+        cva, "_load_live", lambda a, p: _frame([(1.0, 1.0, 50.0, 5000.0)] * 4)
+    )
+    return cva.main([
+        "--assessment-csv", str(assessment),
+        "--property-info-csv", str(info),
+        "--grid-json", str(grid),
+        "--baseline", str(baseline),
+    ])
+
+
+def test_main_exits_with_the_drift_code_when_an_anchor_moves_dangerously(
+    tmp_path, monkeypatch
+):
+    assert _run_main(tmp_path, monkeypatch, _BANDS_ONE_ANCHOR_OUT) == cva.EXIT_DRIFT
+
+
+def test_main_exits_ok_when_every_anchor_is_inside_its_band(tmp_path, monkeypatch):
+    # The other direction, so a guard wired to always drift cannot pass above.
+    bands = {**_BANDS_ONE_ANCHOR_OUT, "dup_parcel_points": {"min": 0, "max": 5}}
+    assert _run_main(tmp_path, monkeypatch, bands) == cva.EXIT_OK
+
+
+def test_main_skips_rather_than_failing_when_an_input_is_absent(tmp_path):
+    # The documented policy: main.py degrades to ground-acre only, so the guard
+    # must not invent a hard failure the pipeline deliberately avoided.
+    assert cva.main([
+        "--assessment-csv", str(tmp_path / "nope.csv"),
+        "--property-info-csv", str(tmp_path / "nope.csv"),
+        "--grid-json", str(tmp_path / "nope.json"),
+        "--baseline", str(tmp_path / "nope.json"),
+    ]) == cva.EXIT_OK
+
+
+# ── the bands themselves ────────────────────────────────────────────────────
+# R4(1): both moved with the suite green. A loosened staleness window is silent
+# by construction — it is the thing that stops a stale local pull becoming a
+# re-pin, and the 2026-09-03 incident is why it exists.
+
+def test_the_raw_vintage_windows_are_the_documented_pair():
+    """14 days = two missed weekly crons; 2 days = one download_data.py run."""
+    assert (cva.STALE_RAW_DAYS, cva.MISMATCHED_RAW_DAYS) == (14, 2)

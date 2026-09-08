@@ -84,7 +84,7 @@ the two all-null copies above must return exit 5 and the unmutated file exit 0.
 
 ---
 
-## R2 — the merge gate's guards can be neutered at their exit line, or deleted from the workflow, with 800 tests green  (T1, HIGH)
+## R2 — the merge gate's guards can be neutered at their exit line, or deleted from the workflow, with 800 tests green  (T1, HIGH) — **FIXED 2026-09-08**
 
 **The checks:** `check_cost_copy.py` (T1 merge gate — the *only* tie between
 the map's rates and its captions, hardened in run 1), `check_value_anchors.py`
@@ -138,6 +138,35 @@ for (a) every guard step's command in each workflow, (b) smoke on **both**
 builds immediately before `upload-pages-artifact` in `refresh.yml`, and (c) the
 `case` labels equal to the scripts' `EXIT_*` constants. Falsification for the
 fix: the four mutations above must each red **by name**.
+
+
+### ✅ FIXED 2026-09-08 (S147) — test-only, 800 → 820, no CI behaviour changed
+
+**Every mutation in the table above now reds by name, and only that name.**
+
+| what | pin |
+|---|---|
+| the three guards' exit mapping | `test_main_exits_nonzero_on_drift` (cost copy), `test_main_exits_with_the_drift_code_*` (value anchors, temporal years) — each drives the real `main()`, and each has an **opposite-direction sibling** asserting the OK exit, so a guard wired to always drift cannot pass them |
+| the guards' membership in every workflow | `test_the_merge_gate_runs_both_offline_guards`, `test_the_weekly_refresh_runs_every_data_guard` (8 steps), `test_the_monthly_digest_runs_the_report_that_carries_the_checks` |
+| the smoke gate's POSITION | `test_the_smoke_gate_sits_between_the_build_and_the_upload` — asserts `upload - smoke == 1`, so a step inserted between them reds too; `test_the_smoke_gate_covers_both_builds` pins the two invocations |
+| `refresh.yml`'s `case` labels | `test_the_refresh_case_labels_match_the_scripts_exit_codes` — the labels are **derived** from each script's `EXIT_*`, so the two drifting apart reds here |
+
+⚠️ **Only the CSV READERS are replaced in the two `main()` tests.** The anchor
+computation, the splice, the structural checks, the band comparison and the exit
+mapping are the real ones — a test that stubbed the detector would assert the
+stub. The temporal fixture spans `FIRST_YEAR` onward because `main()` calls
+`structural_checks` with the default `first_year`, so a short fixture would red
+for a reason unrelated to the test.
+
+⚠️ **The value-anchor bands are written as literals, not derived from the live
+frame** — a baseline computed from the data the guard reads is exactly the
+vacuity this file documents.
+
+⚠️ **Found while writing it, and it is this class again:** the first draft read
+the success code as `getattr(mod, "EXIT_OK", None) or getattr(mod, "EXIT_ALIGNED")`.
+`EXIT_OK` is **0**, so `or` fell through and the test raised `AttributeError`
+instead of comparing anything. Caught because the test ran red; a falsy pin that
+had happened to be non-zero would have passed while comparing the wrong thing.
 
 ---
 
@@ -205,6 +234,15 @@ in both modules), and 17 constants red overall — `LOW_PARCEL_FRAC`,
    loosening floor — a wider band still sits below the observed minimum.
    **Fix:** literal pins with the measurement that set each value, per the
    revenue-deltas pattern. Test-only.
+   ✅ **FIXED 2026-09-08 (S147)** — all six pinned to their literals with the
+   measurement that set them, per the `test_thresholds_are_the_measured_pair`
+   pattern: `test_the_growth_band_is_the_measured_pair` and
+   `test_the_historical_band_stays_tight` (temporal years),
+   `test_the_raw_vintage_windows_are_the_documented_pair` (value anchors),
+   `test_the_fit_thresholds_are_the_documented_pair` (roll year — `MIN_SEPARATION`
+   pinned alongside, since the same tests build their fixtures from both). Each
+   reds by name when its constant moves.
+
 2. **Published provenance, unguarded (1) — LOW.** `generate_status.ZONING_YEAR`
    2024 → 2025 is served as `status.json` `zoning_year` and nothing measures
    it. `RATE_YEAR` is caught monthly by `vintage_report.check_year_constants`

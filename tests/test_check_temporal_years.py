@@ -15,6 +15,7 @@ import pytest
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
+import scripts.check_temporal_years as cty  # noqa: E402
 from scripts.check_temporal_years import (  # noqa: E402
     LIVE_GROWTH_MIN,
     check_live_growth,
@@ -210,3 +211,81 @@ def test_an_archived_year_counts_as_published():
         table, hist, 2026, first_year=2023, archived_years=stats["archived_years"]
     )
     assert failures == []
+
+
+# ── the exit code CI actually reads ─────────────────────────────────────────
+# docs/FINDINGS_vacuous_guards_r2.md R2. Every test above exercises
+# structural_checks, the detector. Nothing reached main(), so its failure branch
+# could return EXIT_OK — publishing a year that failed its control — with all
+# 800 tests green. refresh.yml runs the SCRIPT, before the status manifest.
+
+def _run_main(tmp_path, monkeypatch, live_n):
+    """Drive main() end to end. Only the two CSV READERS are replaced — the
+    splice, the structural checks and the exit mapping are the real ones.
+
+    The year span is the real one (FIRST_YEAR onward) because main() calls
+    structural_checks with the default first_year, so a short fixture would
+    fail the `years` check for reasons that have nothing to do with the test.
+    """
+    hist = _long([
+        (y, h, "RESIDENTIAL", 10, 1000.0)
+        for y in range(cty.FIRST_YEAR, 2027)
+        for h in ("ALPHA", "BETA")
+    ])
+    cur = _long([
+        (2026, h, "RESIDENTIAL", live_n, 1200.0) for h in ("ALPHA", "BETA")
+    ])
+    monkeypatch.setattr(cty, "load_historical_aggregate", lambda p: hist)
+    monkeypatch.setattr(cty, "load_assessment", lambda p: None)
+    monkeypatch.setattr(cty, "current_roll_aggregate", lambda a, y: cur)
+
+    historical = tmp_path / "historical.csv"
+    historical.write_text("year\n")
+    assessment = tmp_path / "assessment.csv"
+    assessment.write_text("account_number\n")
+    return cty.main([
+        "--historical-csv", str(historical),
+        "--assessment-csv", str(assessment),
+        "--archive", str(tmp_path / "no_archive.json"),
+        "--baseline", str(tmp_path / "no_baseline.json"),
+        "--live-year", "2026",
+    ])
+
+
+def test_main_exits_with_the_drift_code_when_a_structural_check_fails(
+    tmp_path, monkeypatch
+):
+    """A live year holding FEWER accounts than the historical file's own copy —
+    the splice running backwards, which is the 2024 signature."""
+    assert _run_main(tmp_path, monkeypatch, live_n=5) == cty.EXIT_DRIFT
+
+
+def test_main_exits_ok_on_a_sound_table(tmp_path, monkeypatch):
+    # The other direction, so a guard wired to always drift cannot pass above.
+    assert _run_main(tmp_path, monkeypatch, live_n=12) == cty.EXIT_OK
+
+
+def test_main_skips_rather_than_failing_when_an_input_is_absent(tmp_path):
+    assert cty.main([
+        "--historical-csv", str(tmp_path / "nope.csv"),
+        "--assessment-csv", str(tmp_path / "nope.csv"),
+        "--live-year", "2026",
+    ]) == cty.EXIT_OK
+
+
+# ── the bands themselves ────────────────────────────────────────────────────
+# R4(1): all three moved with the suite green.
+# ⚠️ test_growth_floor_sits_below_the_observed_minimum CANNOT catch a loosening
+# floor — a wider band still sits below the observed minimum — so it has to be
+# pinned to the literal.
+
+def test_the_growth_band_is_the_measured_pair():
+    """Measured over 2013-2025: +0.28% (the defect year) to +3.71%. The floor is
+    the load-bearing side; the ceiling is loose on purpose."""
+    assert (cty.LIVE_GROWTH_MIN, cty.LIVE_GROWTH_MAX) == (-0.005, 0.25)
+
+
+def test_the_historical_band_stays_tight():
+    """A settled year should not move at all; 0.5% is rounding headroom, and a
+    wider band is exactly how a year quietly loses accounts."""
+    assert cty.HISTORICAL_TOLERANCE == 0.005
