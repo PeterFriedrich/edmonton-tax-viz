@@ -310,16 +310,6 @@ audit's findings are claims to reproduce, not a task list.**
 
 - [ ] **PROPOSED (one line, touches a merge-gate guard so not taken unasked): `check_doc_citations.py`'s path escape hatch is DEAD CODE.** Its bare-name check reads `if name not in docs and (root / name).name not in docs and "/" not in name` — but the regex behind `name` is `\b([A-Za-z][\w.-]*\.md)\b`, whose character class **cannot match a `/`**, so that third clause can never fire. It plainly means to exempt a path-form citation and cannot. **Fix:** test the character *before* the match instead. **Found 2026-09-08 (S148)** writing `docs/FABLE_AUDIT_road_figures.md`, which cites four `.md` files that live in `/home/opc/` **by design** (they must not be committed — they would become a drift surface against `city_unit_costs.json`). ⚠️ **Worked around, not fixed:** those filenames are written **without the `.md` extension**, with a line in §2 saying why — otherwise they add three permanent warnings to the **2-warning baseline** that `RUNBOOK.md` and every restoration procedure quote as normal. Cheap, but it is a guard change.
 
-- [ ] **OPEN, and the more general question the digest check does NOT settle:
-  should `_classify` fail open to `local` at all?** It is deliberate (*"no silent
-  data drops"* — an unknown code keeps its length in the metric) but it silently
-  picks the **CHARGED** side, and for an `Alley-*` code that was the wrong one
-  (`Alley-Commercial`, 106 m, 2026-09-09). ⚠️ **`check_road_classes` makes the
-  event VISIBLE within a month; it does not change which way the fallback errs
-  in the meantime.** The alternatives are fail-closed (drop the length — a real
-  silent drop) or a third `unknown` group carried out of `road_m_total` and
-  reported. **A decision about which error to prefer, not a build task.**
-
 - [ ] **⚠️ TWO CONSUMED RATES HAVE UNEXAMINED DENOMINATORS — `bikeway_ops` is the
   live one.** The `source_denominator` field (added 2026-09-09, S150,
   `data/DATA.md` §13) forced the question once per rate and **the answers are
@@ -2783,6 +2773,7 @@ same session — see `docs/DECISIONS.md`'s last two rows.)_
 
 ## Done
 
+- **`_classify` fail-open-to-`local`: decided and changed** — DONE 2026-09-09 (S151). An unmappable `functional_class_code` now goes to its own `unknown` group: carried in `road_m_unknown`, out of `road_m_total`, off the web layer, reported at every stage. ⚠️ **`local` was never a neutral holding pen — it is the CHARGED side of the metric.** The manual `CLASS_GROUP` entry is unchanged (every option ended in one); the pipeline just stops guessing during the wait. Under-billing is the accepted cost. Served schema unmoved (67 columns); real feed verified unchanged at 3,654.1 km. ⚠️ The display half would have gone SILENT — a NaN `t` is excluded by both selections in `export_roads_web` without a word. `docs/DECISIONS.md` 2026-09-09.
 - **Monthly-digest check for `functional_class_code` vocabulary drift** — DONE 2026-09-09 (S151). `vintage_report.check_road_classes`, both directions, on the Road + City population `_classify` actually sees; a null class is reported separately from a new code because the fix differs; empty vocabulary → UNKNOWN, checked BEFORE the null count. Live: OK, 15 of 15. ⚠️ **The measured count was wrong in three places** — "closed at 15" counted the `null` group; it is 15 real codes now, 14 at the 2026-07-01 survey. 10 mutations red by name. `docs/DECISIONS.md` 2026-09-09, `docs/RUNBOOK.md` §0, `data/DATA.md` §6.
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
 

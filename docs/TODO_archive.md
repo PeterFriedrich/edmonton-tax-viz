@@ -2411,3 +2411,15 @@ Full reasoning: `docs/DECISIONS.md` 2026-09-01 (third row of that date).
   whether fail-open-to-`local` is right at all. It is deliberate (*"no silent
   data drops"* — an unknown code keeps its length in the metric), but it silently
   picks the **charged** side, and for an `Alley-*` code that was the wrong one.
+
+## `_classify` fail-open-to-`local` (closed 2026-09-09, S151)
+
+- [ ] **OPEN, and the more general question the digest check does NOT settle:
+  should `_classify` fail open to `local` at all?** It is deliberate (*"no silent
+  data drops"* — an unknown code keeps its length in the metric) but it silently
+  picks the **CHARGED** side, and for an `Alley-*` code that was the wrong one
+  (`Alley-Commercial`, 106 m, 2026-09-09). ⚠️ **`check_road_classes` makes the
+  event VISIBLE within a month; it does not change which way the fallback errs
+  in the meantime.** The alternatives are fail-closed (drop the length — a real
+  silent drop) or a third `unknown` group carried out of `road_m_total` and
+  reported. **A decision about which error to prefer, not a build task.**
