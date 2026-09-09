@@ -1096,8 +1096,15 @@ Peter's laptop (edmonton.ca unreachable from the Oracle box). **Roads + fire
 only** — never label the derived metric "total city cost".
 - **Roadway = $50/m/yr** (O&M + renewal). Source: edmonton.ca "Development Impact
   on Infrastructure" — neighbourhood road $600k O&M + $1.9M renewal per km,
-  annualized over a 50-yr life (Peter's call 2026-07-15); 3%-of-value rule
-  cross-checks (~$45). Applies to the collector+local `road_m_per_acre` metres.
+  annualized over a 50-yr life (Peter's call 2026-07-15). Applies to the
+  collector+local `road_m_per_acre` metres. ⚠️ **This bullet read "3%-of-value
+  rule cross-checks (~$45)" until 2026-09-09 — that cross-check was DEMOTED
+  2026-09-03 and must not be cited as corroboration**; the City defines its 3%
+  on the same page as covering the same $600k + $1.9M bundle over the same life,
+  so it restates this arithmetic rather than confirming it
+  (`city_unit_costs.json` → `roadway_om_renewal.cross_check`). ⚠️ **Whether the
+  $600k/$1.9M are per CENTRELINE km or per LANE-km is UNCONFIRMED** and two
+  conclusions turn on it — see `roadway_om_renewal.⚠️_unit_unconfirmed_2026_09_09`.
 - **Fire = 2026 gross operating budget $276.706M** (net $273.598M, 1,361 FTE).
   Source: City of Edmonton 2026 Approved Operating Budget PDF, Fire Rescue
   Services line. The V2 fire term divides this by the pipeline's OWN citywide
