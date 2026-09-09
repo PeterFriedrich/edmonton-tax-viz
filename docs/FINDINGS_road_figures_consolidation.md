@@ -219,6 +219,34 @@ counts (collector+local, alleys and arterials excluded):
 share the denominator, so both move together. Units named on every row per the
 brief's rule; the 1.80 row is the class-specific one and the conservative one.
 
+#### ⚠️ The endpoints of that range do NOT have equal standing (added 2026-09-09, S150)
+
+A correction factor here is a **lane-multiplicity**: lane-km ÷ centreline km
+**on one population**. Only the 1.80 row is that, on the population the metric
+actually charges. Stating this because a fourth ratio, **1.73**, entered
+circulation externally as *"inside the range"* — it is **below** it, and the
+reason is structural, not arithmetic:
+
+| ratio | construction | what it is |
+|---|---|---|
+| **1.73** | 11,000 ÷ 6,335 (roads **+ alleys**, both sides) | matched, but the **whole inventory** — **alleys are one lane**, so it is diluted downward. A **LOWER** bound, never interior. |
+| **1.80** | 6,593 ÷ 3,666 (collector+local, both sides) | matched **and** the right population. **The best estimate.** |
+| 2.01 | 10,093 ÷ 5,024 (all roads, both sides) | matched, but includes arterials, which are wider (2.58). |
+| **2.19** | 11,000 ÷ 5,024 (numerator **incl.** alleys, denominator **excl.**) | **not a lane-multiplicity at all** — mismatched populations. An **UPPER** bound by construction, which is the same thing as *"charges alleys nothing"*. |
+
+So **$16.8/m is a best estimate and $20.4/m is a bound**, and the range should
+not be quoted as though its two ends were alternative measurements.
+
+⚠️ **A cross-check that falls out of this, and it strengthens the unit finding
+independently of the alley argument.** The 2020 class figures are roads-only and
+total **10,093 lane-km**; add the feed's **1,311 km of alleys** (one lane, so
+lane-km = centreline km) and the inventory is **11,404 lane-km** — within
+**3.7%** of the City's *"~11,000"*. On a centreline reading the same total is
+6,335 km, which is **42% low**. Two independent sources agree the City's figure
+is lane-km. Separately, all roads come to **2.01 lanes per centreline km** —
+i.e. essentially two — which is what a road network should read and is a
+sanity check that the relayed 2020 split is internally sensible.
+
 ### 2. The 3,654 vs 3,644 km — resolved, vintage, and it falsifies a recorded claim
 
 `tools/ward_rollup.py` derives metres exactly as S136 did (served
