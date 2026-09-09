@@ -89,6 +89,21 @@ centreline in the matched neighbourhood(s)):
 
 ## 3. The result: observed reconstruction runs **1.7× the published rate**
 
+> ⚠️ **CONDITIONAL, added 2026-09-09 (S150). This whole section's SIGN depends on
+> an unconfirmed unit.** The comparison is our **centreline** $/m against the
+> City's published **$1,900/km**, and it only holds if that published figure is
+> *also* centreline — i.e. per km of one two-lane street. The S149 consolidation
+> audit established that the City's *other* road per-km figure (the "~11,000 km"
+> behind `roadway_ops`) is **lane-km**, so this is a live question, and it is
+> bullet 2 of Q1(a) in the send-back brief — **not settled**.
+> **If $1.9M/km is per LANE-km**, the published equivalent is **$3,800/centreline-m**,
+> observed $3,151/m falls to **0.83×**, and this section's conclusion inverts:
+> the renewal half would read as a **ceiling**, not a floor. The centreline
+> reading is the more likely one (the City's own framing is *"building a new
+> neighbourhood road … per kilometre"*, and alleys/sidewalks are costed
+> separately), **but likely is not confirmed — do not cite §3's direction
+> without stating this condition.**
+
 The City publishes **renew and replace = $1,900,000/km = $1,900/road-m**, and
 the shipped $50/road-m/yr annualizes it over a 50-year life as the **$38/m/yr**
 renewal half. Observed full reconstruction runs **$3,151/m aggregate, median
