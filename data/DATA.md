@@ -692,7 +692,7 @@ boundary acre** (`road_m_per_acre`).
 |---|---|
 | `centerline_type` | `Road` 39,515 / `Alley` 12,088 / `Railway` 2,117 — **filter to `Road`** |
 | `responsible_party_description` | City of Edmonton 49,794; Province 1,164 (ring road); CN/CP rail; Private 566; neighbouring municipalities — **filter to `City of Edmonton`** |
-| `functional_class_code` | **16 values as of 2026-09-09** (4 Arterial classes, Collector/Local by adjoining land use, `Local-ParkWay`, `Local-Private`, `Alley-Residential`, `Alley-Commercial`) — explicit dict `CLASS_GROUP` in `load_roads.py`. ⚠️ **NOT a closed enumeration: it grew.** It was recorded as closed at 15 on 2026-07-01 and `Alley-Commercial` appeared later — see Known Quirks |
+| `functional_class_code` | **15 codes on City-owned `Road` rows, re-measured 2026-09-09** (4 Arterial classes, Collector/Local by adjoining land use, `Local-ParkWay`, `Local-Private`, `Alley-Residential`, `Alley-Commercial`). ⚠️ **The unfiltered feed groups into 16 — the extra one is `null`**, the Alley + Railway rows; earlier notes saying "closed at 15" were counting it, and 14 real codes was the correct 2026-07-01 number — explicit dict `CLASS_GROUP` in `load_roads.py`. ⚠️ **NOT a closed enumeration: it grew.** It was recorded as closed at 15 on 2026-07-01 and `Alley-Commercial` appeared later — see Known Quirks |
 | `geometry` | LineString centrelines |
 
 ### Known Quirks
@@ -708,8 +708,10 @@ boundary acre** (`road_m_per_acre`).
   fails OPEN by design** (warn + default to `local`, "no silent data drops"),
   so this was warning on every run into a log nobody reads. ⚠️ **No test can
   catch the NEXT new code** — `test_every_alley_prefixed_code_is_the_alley_group`
-  is vacuous for a missing key, by measurement. Detecting upstream vocabulary
-  drift needs a monthly-digest check like `check_zoning_bylaw`; not built.
+  is vacuous for a missing key, by measurement. ✅ **Detecting the NEXT one is built (2026-09-09):**
+  `vintage_report.check_road_classes` compares this vocabulary to `CLASS_GROUP`
+  in both directions every month, on the Road + City population `_classify`
+  actually sees, and reports a null class separately (`docs/RUNBOOK.md` §0).
 - **Null `functional_class_code` = Alley + Railway exactly** (14,205 = 12,088 +
   2,117, verified 2026-07-01). ⚠️ **The "every row is classified after the
   Road + City filters" half of this quirk was FALSIFIED 2026-09-09** by the

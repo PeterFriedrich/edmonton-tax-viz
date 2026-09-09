@@ -2384,3 +2384,30 @@ Full reasoning: `docs/DECISIONS.md` 2026-09-01 (third row of that date).
     control live in `#moneydetail` (a third button beside Neighbourhood) or as
     a separate cell-size row that appears only in Glass? See
     `docs/CONTROLS_MATRIX.md` — grouping is shared DOM, so it drives mobile too.
+
+## Monthly-digest check for `functional_class_code` vocabulary drift (closed 2026-09-09, S151)
+
+- [ ] **DEFERRED, Peter 2026-09-09 (*"we'll do that next time"*) — NOTHING DETECTS
+  A NEW `functional_class_code` UPSTREAM.** The road feed's enumeration was
+  recorded as **closed at 15 values** (`data/DATA.md` §6, 2026-07-01) and it
+  **grew**: `Alley-Commercial` appeared later, missed `CLASS_GROUP`, and
+  `_classify`'s fail-open default (`DEFAULT_GROUP = "local"`) **charged 106 m of
+  alley as local road** until 2026-09-09 (fixed, PR #378). ⚠️ **The fix does not
+  close the hole — only that one instance of it.** `_classify` warns on an
+  unmatched code, but into a log nobody reads; that warning had been firing on
+  every pipeline run. And ⚠️ **`test_every_alley_prefixed_code_is_the_alley_group`
+  must NOT be quoted as drift protection** — it iterates the keys that are
+  present, so a MISSING key makes it vacuously true. **Measured, not assumed:**
+  deleting `Alley-Commercial` leaves it GREEN and only
+  `test_alley_commercial_is_excluded_from_the_metric` reds by name.
+  **The shape to build:** compare the feed's `functional_class_code` vocabulary
+  to `CLASS_GROUP` in the **monthly digest** — exactly what `check_zoning_bylaw`
+  does for the zoning bylaw's zone codes (`scripts/vintage_report.py`, DECISIONS
+  2026-09-08), including its two lessons: report **both directions** (a code that
+  DISAPPEARS is half of what a rename looks like), and an **empty upstream
+  vocabulary must return UNKNOWN, not ACTION**, or a renamed column conjures a
+  bylaw replacement. ⚠️ **Not taken because it changes digest behaviour** —
+  propose-first per `CLAUDE.md`. ⚠️ **Also open, and the more general question:**
+  whether fail-open-to-`local` is right at all. It is deliberate (*"no silent
+  data drops"* — an unknown code keeps its length in the metric), but it silently
+  picks the **charged** side, and for an `Alley-*` code that was the wrong one.

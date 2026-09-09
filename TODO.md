@@ -310,30 +310,16 @@ audit's findings are claims to reproduce, not a task list.**
 
 - [ ] **PROPOSED (one line, touches a merge-gate guard so not taken unasked): `check_doc_citations.py`'s path escape hatch is DEAD CODE.** Its bare-name check reads `if name not in docs and (root / name).name not in docs and "/" not in name` — but the regex behind `name` is `\b([A-Za-z][\w.-]*\.md)\b`, whose character class **cannot match a `/`**, so that third clause can never fire. It plainly means to exempt a path-form citation and cannot. **Fix:** test the character *before* the match instead. **Found 2026-09-08 (S148)** writing `docs/FABLE_AUDIT_road_figures.md`, which cites four `.md` files that live in `/home/opc/` **by design** (they must not be committed — they would become a drift surface against `city_unit_costs.json`). ⚠️ **Worked around, not fixed:** those filenames are written **without the `.md` extension**, with a line in §2 saying why — otherwise they add three permanent warnings to the **2-warning baseline** that `RUNBOOK.md` and every restoration procedure quote as normal. Cheap, but it is a guard change.
 
-- [ ] **DEFERRED, Peter 2026-09-09 (*"we'll do that next time"*) — NOTHING DETECTS
-  A NEW `functional_class_code` UPSTREAM.** The road feed's enumeration was
-  recorded as **closed at 15 values** (`data/DATA.md` §6, 2026-07-01) and it
-  **grew**: `Alley-Commercial` appeared later, missed `CLASS_GROUP`, and
-  `_classify`'s fail-open default (`DEFAULT_GROUP = "local"`) **charged 106 m of
-  alley as local road** until 2026-09-09 (fixed, PR #378). ⚠️ **The fix does not
-  close the hole — only that one instance of it.** `_classify` warns on an
-  unmatched code, but into a log nobody reads; that warning had been firing on
-  every pipeline run. And ⚠️ **`test_every_alley_prefixed_code_is_the_alley_group`
-  must NOT be quoted as drift protection** — it iterates the keys that are
-  present, so a MISSING key makes it vacuously true. **Measured, not assumed:**
-  deleting `Alley-Commercial` leaves it GREEN and only
-  `test_alley_commercial_is_excluded_from_the_metric` reds by name.
-  **The shape to build:** compare the feed's `functional_class_code` vocabulary
-  to `CLASS_GROUP` in the **monthly digest** — exactly what `check_zoning_bylaw`
-  does for the zoning bylaw's zone codes (`scripts/vintage_report.py`, DECISIONS
-  2026-09-08), including its two lessons: report **both directions** (a code that
-  DISAPPEARS is half of what a rename looks like), and an **empty upstream
-  vocabulary must return UNKNOWN, not ACTION**, or a renamed column conjures a
-  bylaw replacement. ⚠️ **Not taken because it changes digest behaviour** —
-  propose-first per `CLAUDE.md`. ⚠️ **Also open, and the more general question:**
-  whether fail-open-to-`local` is right at all. It is deliberate (*"no silent
-  data drops"* — an unknown code keeps its length in the metric), but it silently
-  picks the **charged** side, and for an `Alley-*` code that was the wrong one.
+- [ ] **OPEN, and the more general question the digest check does NOT settle:
+  should `_classify` fail open to `local` at all?** It is deliberate (*"no silent
+  data drops"* — an unknown code keeps its length in the metric) but it silently
+  picks the **CHARGED** side, and for an `Alley-*` code that was the wrong one
+  (`Alley-Commercial`, 106 m, 2026-09-09). ⚠️ **`check_road_classes` makes the
+  event VISIBLE within a month; it does not change which way the fallback errs
+  in the meantime.** The alternatives are fail-closed (drop the length — a real
+  silent drop) or a third `unknown` group carried out of `road_m_total` and
+  reported. **A decision about which error to prefer, not a build task.**
+
 - [ ] **⚠️ TWO CONSUMED RATES HAVE UNEXAMINED DENOMINATORS — `bikeway_ops` is the
   live one.** The `source_denominator` field (added 2026-09-09, S150,
   `data/DATA.md` §13) forced the question once per rate and **the answers are
@@ -2797,6 +2783,7 @@ same session — see `docs/DECISIONS.md`'s last two rows.)_
 
 ## Done
 
+- **Monthly-digest check for `functional_class_code` vocabulary drift** — DONE 2026-09-09 (S151). `vintage_report.check_road_classes`, both directions, on the Road + City population `_classify` actually sees; a null class is reported separately from a new code because the fix differs; empty vocabulary → UNKNOWN, checked BEFORE the null count. Live: OK, 15 of 15. ⚠️ **The measured count was wrong in three places** — "closed at 15" counted the `null` group; it is 15 real codes now, 14 at the 2026-07-01 survey. 10 mutations red by name. `docs/DECISIONS.md` 2026-09-09, `docs/RUNBOOK.md` §0, `data/DATA.md` §6.
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
 
 - [x] **DECIDED 2026-09-08 — STATE THE UNIT, DO NOT CONVERT: `roadway_ops` stays $9.32/m/yr and the basis publishes as a FLOOR** — DECIDED 2026-09-08 · `docs/TODO_archive.md`
