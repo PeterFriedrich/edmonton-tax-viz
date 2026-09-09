@@ -334,6 +334,26 @@ audit's findings are claims to reproduce, not a task list.**
   whether fail-open-to-`local` is right at all. It is deliberate (*"no silent
   data drops"* — an unknown code keeps its length in the metric), but it silently
   picks the **charged** side, and for an `Alley-*` code that was the wrong one.
+- [ ] **⚠️ TWO CONSUMED RATES HAVE UNEXAMINED DENOMINATORS — `bikeway_ops` is the
+  live one.** The `source_denominator` field (added 2026-09-09, S150,
+  `data/DATA.md` §13) forced the question once per rate and **the answers are
+  mostly "nobody asked"**: only `roadway_ops` is ESTABLISHED. **The exposure
+  worth acting on is `bikeway_ops`, because it IS consumed**
+  (`bike_ops_dollars_per_m` → `transport_cost_ops_per_acre`) and **both halves
+  are unexamined**: (a) **$178/km comes from the same Taproot article, same
+  sentence family, as the RETIRED $1,285/km** — the article that attaches
+  *"linear kilometres"* to the ~11,000 and is the only source saying linear;
+  (b) the **$20,100/km snow half** divides ~$30.15M by a ~1,500 km *"cleared
+  network"* whose **membership** is already flagged (`denominator_mismatch`)
+  but whose **unit** is not. ⚠️ **This bites harder on bikeways than on roads:**
+  a bikeway is frequently one direction per side of a street, so route-km and
+  lane-km can differ by ~2× on the same street. `bikeway_capital` (678 km, Bike
+  Plan Table 3) is also UNEXAMINED but **inert** — not consumed by anything —
+  so it has no live exposure. ⚠️ **DO NOT RESOLVE THESE BY ARITHMETIC.** The
+  standing rule holds: rates come from a named City publication after a scoped
+  question. The right move is a bikeway question in the next research round,
+  the same shape as Q1(a). ⚠️ **And do not fill the field in to look tidy** —
+  UNEXAMINED is the honest state and the tests permit it.
 - [ ] **PETER TO SEND — the follow-up brief is written and unsent.**
   `/home/opc/road_cost_sendback_brief.md` (**outside the repo**, same as the Q8
   addendum). Written 2026-09-03 (S136) for the next external research pass. It

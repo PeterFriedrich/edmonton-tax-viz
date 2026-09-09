@@ -1185,6 +1185,28 @@ only** — never label the derived metric "total city cost".
   operating rate is ~$16.8–20.4/m against the $12 lifecycle O&M half — a real
   disagreement, the other way. The 2026-09-06 re-scope stands on its other two
   reasons. Full record: `docs/FINDINGS_road_figures_consolidation.md` L2a–L2b.
+- ✅ **EVERY RATE NOW DECLARES WHAT ITS PUBLISHER'S DENOMINATOR COUNTS
+  (`source_denominator`, added 2026-09-09, S150).** ⚠️ **Why it did not exist
+  before, which is the reusable part:** a rate can be wrong in three ways — its
+  **provenance**, its **vintage**, and its **denominator** — and this file had
+  dedicated fields and guards for the first two and **nothing** for the third.
+  The existing `units` key describes what *we* compute (*"dollars per road-metre
+  per year"*), never what the *City's* figure was per; the source denominator
+  lived only inside prose `derivation` strings, where *"~11,000 km"* read as
+  obviously fine **for a year** while meaning **lane-km** against centreline
+  metres. `unit` ∈ {`lane-km`, `centreline-km`, `route-km`, `not-a-length-rate`,
+  `UNKNOWN`}; `confidence` ∈ {`ESTABLISHED`, `ASSUMED`, `UNEXAMINED`, `N/A`}.
+  ⚠️ **`UNKNOWN`/`UNEXAMINED` ARE CORRECT ANSWERS AND MUST NOT BE FILLED IN TO
+  LOOK TIDY** — the field's value is that it forces the question once per rate,
+  which is the step nobody had taken. **Current state: only `roadway_ops` is
+  ESTABLISHED** (lane-km). `roadway_om_renewal` + `roadway_renewal` are ASSUMED
+  centreline pending Q1(a) bullet 2; **`bikeway_ops` and `bikeway_capital` are
+  UNEXAMINED**, and ⚠️ **`bikeway_ops` is CONSUMED and takes its $178/km from the
+  same Taproot article, same sentence family, as the retired $1,285** — the
+  article this project now believes relayed *"linear kilometres"* wrongly. A
+  bikeway is often one direction per side of a street, so route-km vs lane-km
+  can differ ~2× there. Enforced by `tests/test_unit_cost_denominators.py`
+  (8 tests, all 7 mutations red by name).
 - **Consumed** by `join_and_calculate.load_unit_costs` (validates loudly — a
   malformed hand edit fails the pipeline) → the `unit_costs` arg computes
   `cost_roads_life_per_acre` and the operating trio. `main.py
