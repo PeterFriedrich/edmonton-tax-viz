@@ -62,6 +62,7 @@ has silently stopped running. Green months are the proof of life.
 | Capital budget | `data/capital_budget.csv` no longer matches upstream | §1a |
 | Unclassified zoning | a hood carries `frac_other > 0` — a zone code is missing from `ZONE_CATEGORY` | map it from the bylaw purpose statement, `data/DATA.md` §5 |
 | Zoning bylaw | the upstream zone-code VOCABULARY no longer matches `ZONE_CATEGORY` — a new code, or a mapped one gone. A wholesale move means the City replaced the bylaw, so `ZONING_YEAR` and `data/DATA.md` §5 both need re-stating | §1 step 6 |
+| Road classes | the road feed's `functional_class_code` VOCABULARY no longer matches `CLASS_GROUP` — a new code, a mapped one gone, or a City road row with no class at all. ⚠️ An unmapped code is not dropped: `_classify` fails open and CHARGES it as `local` road | map it in `src/load_roads.CLASS_GROUP` by FUNCTION, `data/DATA.md` §6 |
 | Site banner | a banner is up in `status.json` | §1 step 10 |
 
 ⚠️ **A network failure reports `❓ UNKNOWN`, never `⚠️ ACTION`** — same rule as

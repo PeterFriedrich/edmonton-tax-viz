@@ -55,6 +55,7 @@ ASSESSMENT_METADATA_URL = "https://data.edmonton.ca/api/views/q7d6-ambg.json"
 MILL_RATES_URL = "https://data.edmonton.ca/resource/pwis-wc4c.json"
 CAPITAL_BUDGET_URL = "https://budget.edmonton.ca/api/capital_budget.csv"
 ZONING_URL = "https://data.edmonton.ca/resource/fixa-tstc.json"
+ROADS_URL = "https://data.edmonton.ca/resource/9j8t-zm52.json"
 
 OK, ACTION, UNKNOWN = "OK", "ACTION", "UNKNOWN"
 
@@ -464,6 +465,117 @@ def check_zoning_bylaw(timeout=60):
             f"constant moves with the BYLAW, never with `ASSESSMENT_YEAR`.")
 
 
+def check_road_classes(timeout=60):
+    """Has the road feed's `functional_class_code` vocabulary moved under us?
+
+    ⚠️ The enumeration was recorded CLOSED and it GREW. `data/DATA.md` §6 filed
+    the field as a closed set on 2026-07-01; `Alley-Commercial` appeared
+    afterwards, missed `CLASS_GROUP`, and — because `_classify` fails OPEN to
+    `DEFAULT_GROUP = "local"` — 106 m of alley was CHARGED as local road until
+    2026-09-09 (fixed, PR #378). Fail-open means an unmapped code is never
+    missing from the metric; it is silently on the charged side of it.
+
+    `_classify` already warns on an unmatched code. It had been warning on every
+    pipeline run, into a log nobody reads — so the guard worked and the CHANNEL
+    did not. This is that warning on a channel someone opens.
+
+    ⚠️ THE POPULATION IS THE PIPELINE'S, NOT THE FEED'S, and it is built from
+    `load_roads`'s own filter constants rather than restated here. `_classify`
+    only ever sees rows that survived `centerline_type` + `responsible_party`;
+    measured 2026-09-09, the unfiltered feed carries a 16th value (`null`, the
+    14,229 Alley/Railway rows) that the filtered subset does not. Comparing the
+    whole feed would report drift in codes the classifier cannot reach, and
+    would drift itself the day a row filter changes.
+
+    ⚠️ A code that is GONE is reported, and is NOT automatically a defect.
+    `Alley-Commercial` is 2 rows — a low-count code can vanish on an ordinary
+    reclassification. It is here because a disappearance is half of what a
+    wholesale rename looks like, and the count is in the message so the reader
+    can tell the two apart. Same standing as `check_zoning_bylaw`: ACTION means
+    "go look", not a verdict.
+
+    ⚠️ An empty vocabulary is UNKNOWN, checked BEFORE the null count — a renamed
+    or emptied column must not report all 15 mapped codes GONE, and must not be
+    read as "every City road lost its class" either. Both are shape changes.
+    """
+    from src.load_roads import (  # noqa: PLC0415 — heavy import, only when needed
+        CENTERLINE_TYPE,
+        CLASS_GROUP,
+        DEFAULT_GROUP,
+        RESPONSIBLE_PARTY,
+    )
+
+    where = (f"centerline_type='{CENTERLINE_TYPE}' AND "
+             f"responsible_party_description='{RESPONSIBLE_PARTY}'")
+    try:
+        resp = requests.get(
+            ROADS_URL,
+            params={"$select": "functional_class_code,count(1)",
+                    "$group": "functional_class_code",
+                    "$where": where,
+                    "$limit": 200},
+            timeout=timeout,
+        )
+        resp.raise_for_status()
+        rows = resp.json()
+    except Exception as exc:  # noqa: BLE001 — an unreachable source is UNKNOWN, never ACTION
+        return (UNKNOWN, "Road classes",
+                f"Could not reach the road network source ({exc}). "
+                f"`CLASS_GROUP` maps {len(CLASS_GROUP)} code(s).")
+
+    upstream, unclassed = set(), 0
+    for r in rows:
+        code = (r.get("functional_class_code") or "").strip()
+        count = int(r.get("count_1") or 0)
+        if code:
+            upstream.add(code)
+        else:
+            unclassed += count
+
+    if not upstream:
+        return (UNKNOWN, "Road classes",
+                f"The road source returned {len(rows)} group(s) with no usable "
+                f"`functional_class_code` on {CENTERLINE_TYPE} / "
+                f"{RESPONSIBLE_PARTY} rows — shape change, look by hand.")
+
+    known = set(CLASS_GROUP)
+    new, gone = sorted(upstream - known), sorted(known - upstream)
+    if not (new or gone or unclassed):
+        return (OK, "Road classes",
+                f"All {len(upstream)} `functional_class_code` value(s) on "
+                f"city-maintained road segments are mapped in `CLASS_GROUP`, "
+                f"both directions.")
+
+    # ⚠️ The advice tracks WHICH direction fired. These three have different
+    # fixes — a CLASS_GROUP entry, nothing, and an upstream report — so a blanket
+    # tail would send a reader chasing the wrong one. It is what the null case
+    # is split out for.
+    parts, advice = [], []
+    if new:
+        parts.append(f"**{len(new)} code(s) upstream are UNMAPPED here**: {', '.join(new[:8])}")
+        advice.append("Map each new code in `src/load_roads.CLASS_GROUP` "
+                      "(`data/DATA.md` §6) by what the road FUNCTIONALLY is — an "
+                      "`Alley-*` code is `alley` and leaves the metric entirely, "
+                      "per the alleys-out decision.")
+    if gone:
+        parts.append(f"**{len(gone)} mapped code(s) are GONE upstream**: {', '.join(gone[:8])}")
+        advice.append("⚠️ A GONE code is not a defect by itself — a 2-row code "
+                      "vanishes on an ordinary reclassification; only a WHOLESALE "
+                      "move means the City has re-lettered the field.")
+    if unclassed:
+        parts.append(f"**{unclassed} row(s) carry NO `functional_class_code` at all** "
+                     f"— after the {CENTERLINE_TYPE} + {RESPONSIBLE_PARTY} filters "
+                     f"there should be none")
+        advice.append("A null class is an UPSTREAM defect, not a missing "
+                      "`CLASS_GROUP` entry (`data/DATA.md` §6 records nulls as "
+                      "exactly the Alley + Railway rows, which these are not).")
+    if new or unclassed:
+        advice.append(f"⚠️ `_classify` fails OPEN — it defaults an unmatched value "
+                      f"to `{DEFAULT_GROUP}`, so this length is being CHARGED as "
+                      f"road, not dropped.")
+    return (ACTION, "Road classes", f"{'; '.join(parts)}. {' '.join(advice)}")
+
+
 CHECKS = (
     check_assessment_roll,
     check_mill_rates,
@@ -475,6 +587,7 @@ CHECKS = (
     check_capital_budget,
     check_unclassified_zoning,
     check_zoning_bylaw,
+    check_road_classes,
     check_banner,
 )
 
