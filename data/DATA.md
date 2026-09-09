@@ -1140,7 +1140,15 @@ only** — never label the derived metric "total city cost".
   Full record: `docs/FINDINGS_roadway_maintenance_rate.md`,
   `city_unit_costs.json` → `roadway_ops.rescoped_2026_09_06`. See also
   `docs/SPEC_services.md` "Roads cost — lifecycle".
-- ⚠️ **UNIT DEFECT, OPEN (2026-09-08, S149 consolidation audit):** both halves
+- ⚠️ **UNIT DEFECT — FOUND AND DECIDED 2026-09-08 (S149): STATED, NOT CORRECTED.**
+  **The rate stays $9.32/m/yr and the basis publishes as a FLOOR** (Peter's
+  call; `DECISIONS.md` 2026-09-08). The three public copy sites now say **per
+  lane-kilometre**, and `roadway_ops.floor` is now an *arithmetic* floor under a
+  stated arterial-to-local cost ratio k (net ≥ 1.06× for k ≤ 3) rather than a
+  judgement. ⚠️ **Do not read the 5.4× lifecycle-vs-operating gap as a fact
+  about a road metre** — the lifecycle figures are per km of one neighbourhood
+  road, so the mismatch inflates it; per centreline metre it is ~2.5–3×. The
+  defect as found: both halves
   of `roadway_ops` divide by the City's **lane-km** inventory (~11,000 km incl.
   ~1,300 km of alleys) and the pipeline multiplies them by **centreline**
   metres — the City's own feed holds 5,029 km of City road centreline (§6). Per

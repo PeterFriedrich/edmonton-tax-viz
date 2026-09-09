@@ -160,6 +160,7 @@ publish on its own, unrelated to any of this — re-pinned.)_
 
 
 
+
 - [ ] **Write the corrected `fable-session` skill as a new directory under
   `.claude/skills/`** (same layout as the two there now). Peter deferred it 2026-09-04
   ("later"); the **evaluation is done and is recorded here so it needn't be
@@ -308,8 +309,6 @@ audit's findings are claims to reproduce, not a task list.**
     source**, so the per-capita variant of this cannot be computed at all.
 
 - [ ] **PROPOSED (one line, touches a merge-gate guard so not taken unasked): `check_doc_citations.py`'s path escape hatch is DEAD CODE.** Its bare-name check reads `if name not in docs and (root / name).name not in docs and "/" not in name` — but the regex behind `name` is `\b([A-Za-z][\w.-]*\.md)\b`, whose character class **cannot match a `/`**, so that third clause can never fire. It plainly means to exempt a path-form citation and cannot. **Fix:** test the character *before* the match instead. **Found 2026-09-08 (S148)** writing `docs/FABLE_AUDIT_road_figures.md`, which cites four `.md` files that live in `/home/opc/` **by design** (they must not be committed — they would become a drift surface against `city_unit_costs.json`). ⚠️ **Worked around, not fixed:** those filenames are written **without the `.md` extension**, with a line in §2 saying why — otherwise they add three permanent warnings to the **2-warning baseline** that `RUNBOOK.md` and every restoration procedure quote as normal. Cheap, but it is a guard change.
-
-- [ ] **PETER'S CALL — the operating road rate is DOLLARS PER LANE-KILOMETRE applied to CENTRELINE metres (S149 consolidation audit, `docs/FINDINGS_road_figures_consolidation.md` L2b).** The "~11,000 km" under both halves of `roadway_ops` ($5,970 maintenance + $3,350 snow) is the City's snow-and-ice inventory, which the City states in **lane-km** and which includes ~1,300 km of alleys; the City's own centreline feed (`data/raw/roads.geojson`, the file `load_roads` reads) holds **5,029 km of City road centreline** (1,358 arterial / 926 collector / 2,740 local) + 1,311 km alleys. Taproot's *"linear kilometres"* is the only source saying linear, and it is wrong. **Direction known: the shipped $9.32/m understates by 1.8–2.2× per centreline metre** (1.80 on the 2020 class lane-km ÷ feed centreline for collector+local; 2.19 on the feed's 5,029 km alone). The arterial-blend overstatement runs the other way but is bounded — 1.80 ÷ (0.65 + 0.35k) stays ≥ 1.06 for an arterial-to-local cost ratio k ≤ 3. ⚠️ **NOT a rate proposal** (the brief forbids one): it is a UNIT decision — convert per class, convert on City centreline, or keep the value and state the unit in `floor`/`denominator_mismatch` and the three public copy sites. **What moves on the served file if converted:** legend median $304 → $547–665/acre/yr, panel median roads-ops share of levy 1.68% → 3.0–3.7%, hoods over 100% 2 → 3–4, the copy's *"about five times higher"* → ~2.5–3× (`check_cost_copy.py` names every stale sentence). **The map does not move** — a uniform scalar cancels in `scaleT`. ⚠️ Also falls with it: the 2026-09-06 *"1.29× — the two sources do not disagree about roads"* clause, which compared $/lane-km to $/centreline-km (demoted in `DECISIONS.md` 2026-09-08; the re-scope decision itself stands on its other two reasons).
 
 - [ ] **PETER TO SEND — the follow-up brief is written and unsent.**
   `/home/opc/road_cost_sendback_brief.md` (**outside the repo**, same as the Q8
@@ -2739,6 +2738,10 @@ same session — see `docs/DECISIONS.md`'s last two rows.)_
 ## Done
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
+
+- [x] **DECIDED 2026-09-08 — STATE THE UNIT, DO NOT CONVERT: `roadway_ops` stays $9.32/m/yr and the basis publishes as a FLOOR** — DECIDED 2026-09-08 · `docs/TODO_archive.md`
+
+
 
 - [x] **DONE 2026-09-08 — the road-figure CONSOLIDATION brief RAN (S149, Fable 5.1): `docs/FINDINGS_road_figures_consolidation.md`; L0 SOUND · L1 CONDITIONAL ** — DONE 2026-09-08 · `docs/TODO_archive.md`
 
