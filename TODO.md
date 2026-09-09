@@ -269,9 +269,33 @@ publish on its own, unrelated to any of this — re-pinned.)_
     rows** destructively; the rest is safe.
   - **If the answer is rewrite the header:** the case is that four months of authors
     chose the long form every single time, which is evidence the file became a
-    useful decision *log*. ⚠️ **Not measured, and it decides this:** whether the
-    *connective reasoning* is recoverable from the pointed-to docs. §3 measured
-    facts, not arguments.
+    useful decision *log*.
+  - ✅ **THE DECIDING QUESTION IS NOW MEASURED (2026-09-09, S152 — §7 of the
+    findings), AND IT NAMES A THIRD OPTION.** Two of the longest rows were read
+    against the doc they point at (L231 → `SPEC_revenue.md`, L284 → `UI.md`):
+    **both fully recoverable, and the target doc RICHER than the row** — all three
+    of L284's reasons in order, Peter's verbatim ask included. ⚠️ **A grep test
+    would have answered this backwards** — *"SHARE decides the WORDS"* and
+    *"inherits the right gating for free"* appear nowhere else, yet both arguments
+    are present, paraphrased (§2 measured 4% n-gram overlap, so phrase-absence
+    tests are vacuous here and this had to be READ).
+  - ⚠️ **THE DEFECT IS THE POINTER COLUMN, NOT THE DECISION COLUMN.** **35 of 271
+    rows carry no `.md` pointer** (3 carry none at all), **19 of them long** —
+    those are the only rows where a trim could destroy an argument. And two of the
+    19 spot-checked have their reasoning in a doc anyway, merely unnamed (L153 in
+    `UI.md`/`STACK.md`/`TOKEN_EFFICIENCY.md`; L146 in `PLAN_public_release.md`),
+    so **19 is an upper bound.**
+  - **▶ THIRD OPTION, and it is right under EITHER of the two above — PETER'S
+    CALL:** complete the **pointer** column on those 35 rows, longest first.
+    Append-only (which is what the header already claims the file is),
+    non-destructive, reversible, and it is **the prerequisite a trim already
+    needs** — after it the trim's blast radius is re-measurable and §3's ~8
+    orphaned values are the only true rescues left. **Not started; nothing was
+    trimmed or rewritten this session.**
+  - ⚠️ **Still open either way:** whether the long form should be *blessed*. The
+    measurement says the long rows are **redundant**, not **harmful** — and §3's
+    size-the-remedy rule applies to the header rewrite too. `DECISIONS.md` has
+    also grown **367 KB → 412 KB since 2026-09-04**, so waiting is not free.
   - **Gate:** nothing is blocked on this. It costs money only when a doc-heavy
     session loads these files — which is what surfaced it.
 

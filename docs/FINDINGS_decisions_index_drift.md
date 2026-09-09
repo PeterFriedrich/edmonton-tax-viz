@@ -115,9 +115,9 @@ remedy that fixes only `DECISIONS.md` treats the instance and not the cause.
 
 ## 5. What is NOT established
 
-- **Whether the connective reasoning is recoverable.** §3 measures *facts*, not arguments.
-  A reader following a pointer may still lose the thread that joins the facts. Not
-  measured — and it is the strongest argument for leaving the rows long.
+- ~~**Whether the connective reasoning is recoverable.**~~ **MEASURED 2026-09-09
+  (S152) — see §7. It is recoverable where a row points at a doc, and the DEFECT
+  IS THE POINTER COLUMN, not the Decision column.**
 - **Whether the contract or the practice should change.** Four months of authors chose the
   long form every time. That is evidence the file has become a genuinely useful decision
   *log*, in which case the honest fix is **rewriting the header to describe what it is**,
@@ -144,3 +144,49 @@ The uniqueness sweep (§3) is the longer script; rebuild the corpus with `git ls
 exclude `docs/DECISIONS.md` **explicitly**, normalize with `re.sub(r'[,\s$]','',s.lower())`,
 and **assert the file's own header string is absent from the corpus before trusting any
 result** — without that probe the sweep cannot fail.
+
+## 7. §5's open question, measured (2026-09-09, S152)
+
+§5 said the *arguments* were unmeasured and that this decides trim-vs-rewrite. It
+does, and the answer points at neither option.
+
+**Read two of the longest rows against the doc they point at.** Both were **fully
+recoverable, and the target was RICHER than the row**:
+
+| row | pointer | verdict |
+|---|---|---|
+| L231 (3,174 ch) institutional consequence tier | `SPEC_revenue.md` "The consequence tier" | the whole argument is there — share-vs-consequence, all three over-selection counter-examples (RIVER VALLEY CAMERON 0 rank/0.02, EVERGREEN $87, U OF A FARM), **plus** the measure-on-the-ramp lesson, the fixed-transform reasoning and the inversion proof the row omits |
+| L284 (3,252 ch) Glass cell as a third Detail button | `docs/UI.md` §"Glass cell size as a third Detail button" | Peter's verbatim ask **and all three reasons in the same order**, stated more fully than the row |
+
+⚠️ **A PHRASE-ABSENCE TEST WOULD HAVE ANSWERED THIS BACKWARDS.** *"SHARE decides
+the WORDS"* and *"inherits the right gating for free"* appear **nowhere** outside
+`DECISIONS.md` — yet both arguments are fully present in the target, paraphrased.
+§2's 4% n-gram overlap already predicted this: **the rows duplicate arguments
+without duplicating wording, so any grep-based recoverability test is vacuous
+here.** This had to be read.
+
+**The at-risk set is the rows with nowhere to point, and it is small:**
+
+- **271 rows. 35 carry no `.md` pointer** (code-only or empty); **3 carry no
+  pointer at all**; **19 of the 35 are long (>800 ch)** — July 5, Aug 10, Sep 4.
+- ⚠️ **But two of those 19 spot-checked have their reasoning in a doc anyway,
+  just unnamed:** L153 (CSS extraction) is told in `UI.md`, `STACK.md`,
+  `TOKEN_EFFICIENCY.md` and 7 more; L146 (public build ships at two views —
+  **no pointer at all**) is in `PLAN_public_release.md` and `CONTROLS_MATRIX.md`,
+  Peter's *"2 views is fine"* quote included. **Evidence strength: these two are
+  phrase-presence only, not read end-to-end like L231/L284 — the at-risk count
+  is an upper bound of 19, probably much lower.**
+
+**So a THIRD option exists, and it is right under either of §5's two:** complete
+the **pointer** column on the 35 no-`.md` rows (the 19 long ones first). It is
+append-only — which is what the file's own header says it is — non-destructive,
+reversible, and it converts recoverability from luck into a property of the file.
+It is also the **prerequisite a trim already needs**, so it is not a detour: after
+it, the trim's blast radius is re-measurable and the ~8 orphaned values in §3 are
+the only true rescues left.
+
+**What is still NOT established:** whether the long form should be *blessed*
+(§5's second bullet stands — four months of authors chose it every time). This
+measurement says the long rows are **redundant**, not that they are **harmful**;
+the cost is paid only by sessions that load the file, and §3's house rule about
+sizing a remedy applies to the header rewrite too.
