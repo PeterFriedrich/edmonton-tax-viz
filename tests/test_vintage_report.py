@@ -516,3 +516,128 @@ def test_zoning_bylaw_http_error_is_unknown_not_action(tmp_path, monkeypatch):
     monkeypatch.setattr(vr.requests, "get",
                         lambda *a, **k: _FakeResp([{"zoning": "RS"}], status=503))
     assert vr.check_zoning_bylaw()[0] == vr.UNKNOWN
+
+
+# --- road class vocabulary --------------------------------------------------
+#
+# ⚠️ The sibling failure to check_zoning_bylaw's, with one difference that
+# matters: zoning's unmapped codes land in `frac_other` and are VISIBLE on the
+# served file, while an unmapped road code is charged as `local` and is visible
+# nowhere. `_classify` fails OPEN. The only prior signal was a log warning that
+# had been firing on every run, unread, for two months.
+#
+# ⚠️ `test_every_alley_prefixed_code_is_the_alley_group` in test_load_roads.py
+# must NOT be quoted as covering this: it iterates the keys that are PRESENT,
+# so a missing key makes it vacuously true (measured 2026-09-09).
+
+def _class_rows(codes, unclassed=0):
+    """Socrata `$group` shape: one row per distinct value, `count_1` as a string."""
+    rows = [{"functional_class_code": c, "count_1": "10"} for c in codes]
+    if unclassed:
+        rows.append({"functional_class_code": None, "count_1": str(unclassed)})
+    return _FakeResp(rows)
+
+
+def test_road_classes_ok_when_the_vocabulary_is_the_one_we_mapped(monkeypatch):
+    from src.load_roads import CLASS_GROUP
+    monkeypatch.setattr(vr.requests, "get", lambda *a, **k: _class_rows(sorted(CLASS_GROUP)))
+    status, _, detail = vr.check_road_classes()
+    assert status == vr.OK
+    assert str(len(CLASS_GROUP)) in detail
+
+
+def test_road_classes_queries_the_population_the_classifier_actually_sees(monkeypatch):
+    """⚠️ The defect this check exists for lives in a FILTERED subset. Measured
+    2026-09-09: the unfiltered feed carries a 16th value (null, the Alley +
+    Railway rows) that `_classify` never receives, so an unfiltered query
+    reports drift in codes the classifier cannot reach. Asserting on the
+    constants — not on the literal strings — also fails if a row filter moves
+    and the check's population stops following it."""
+    from src.load_roads import CENTERLINE_TYPE, CLASS_GROUP, RESPONSIBLE_PARTY
+    seen = {}
+
+    def _capture(*a, **k):
+        seen.update(k.get("params") or {})
+        return _class_rows(sorted(CLASS_GROUP))
+
+    monkeypatch.setattr(vr.requests, "get", _capture)
+    vr.check_road_classes()
+    where = seen["$where"]
+    assert f"centerline_type='{CENTERLINE_TYPE}'" in where
+    assert f"responsible_party_description='{RESPONSIBLE_PARTY}'" in where
+    assert seen["$group"] == "functional_class_code"
+
+
+def test_road_classes_flags_a_code_that_is_new_upstream(monkeypatch):
+    """`Alley-Commercial`, replayed: the exact event nothing detected."""
+    from src.load_roads import CLASS_GROUP
+    monkeypatch.setattr(vr.requests, "get",
+                        lambda *a, **k: _class_rows(list(CLASS_GROUP) + ["Alley-Industrial"]))
+    status, _, detail = vr.check_road_classes()
+    assert status == vr.ACTION
+    assert "Alley-Industrial" in detail and "UNMAPPED" in detail
+
+
+def test_road_classes_says_an_unmapped_code_is_charged_not_dropped(monkeypatch):
+    """⚠️ The half a reader gets backwards. `no silent data drops` reads as "the
+    length went missing"; fail-open means the opposite — it is IN road_m_total,
+    on the charged side. The digest must say which."""
+    from src.load_roads import CLASS_GROUP, DEFAULT_GROUP
+    monkeypatch.setattr(vr.requests, "get",
+                        lambda *a, **k: _class_rows(list(CLASS_GROUP) + ["Alley-Industrial"]))
+    _, _, detail = vr.check_road_classes()
+    assert DEFAULT_GROUP in detail and "CHARGED" in detail
+
+
+def test_road_classes_flags_a_mapped_code_that_vanished(monkeypatch):
+    """Half of what a wholesale re-lettering looks like, and invisible from the
+    served file — an absent code contributes no unclassified length."""
+    from src.load_roads import CLASS_GROUP
+    kept = sorted(CLASS_GROUP)
+    dropped = kept.pop()
+    monkeypatch.setattr(vr.requests, "get", lambda *a, **k: _class_rows(kept))
+    status, _, detail = vr.check_road_classes()
+    assert status == vr.ACTION
+    assert dropped in detail and "GONE" in detail
+
+
+def test_road_classes_flags_an_unclassed_row_separately_from_a_new_code(monkeypatch):
+    """A City road with a NULL class is a different defect from a new code — the
+    fix is upstream, not a `CLASS_GROUP` entry — but it is charged as `local`
+    the same way. Folding it into the new-code message would send the reader to
+    the wrong place."""
+    from src.load_roads import CLASS_GROUP
+    monkeypatch.setattr(vr.requests, "get",
+                        lambda *a, **k: _class_rows(sorted(CLASS_GROUP), unclassed=7))
+    status, _, detail = vr.check_road_classes()
+    assert status == vr.ACTION
+    assert "7 row(s) carry NO" in detail
+    assert "UNMAPPED" not in detail and "GONE" not in detail
+
+
+def test_road_classes_empty_vocabulary_is_unknown_not_a_wholesale_rename(monkeypatch):
+    """⚠️ The failure that would cry wolf hardest, and it must beat the null
+    count to the return. A renamed/emptied column yields ONE null group; a naive
+    reading reports every mapped code GONE *and* every city road unclassed —
+    two alarms, both manufactured out of a shape change."""
+    monkeypatch.setattr(vr.requests, "get", lambda *a, **k: _class_rows([], unclassed=49000))
+    status, _, detail = vr.check_road_classes()
+    assert status == vr.UNKNOWN
+    assert "GONE" not in detail
+
+
+def test_road_classes_network_failure_is_unknown_not_action(monkeypatch):
+    monkeypatch.setattr(vr.requests, "get", _boom)
+    assert vr.check_road_classes()[0] == vr.UNKNOWN
+
+
+def test_road_classes_http_error_is_unknown_not_action(monkeypatch):
+    monkeypatch.setattr(vr.requests, "get",
+                        lambda *a, **k: _FakeResp([{"functional_class_code": "Local-Residential",
+                                                    "count_1": "1"}], status=503))
+    assert vr.check_road_classes()[0] == vr.UNKNOWN
+
+
+def test_road_classes_check_is_registered():
+    """The digest is wired by MEMBERSHIP; dropping a name from CHECKS is silent."""
+    assert vr.check_road_classes in vr.CHECKS
