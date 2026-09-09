@@ -320,13 +320,29 @@ audit's findings are claims to reproduce, not a task list.**
   **§6 correcting the follow-up road-per-dwelling task** — three things already
   built, four wrong premises (including that this project has **no
   population-by-hood source at all**), and what measuring it actually showed.
-  ⚠️ **Q1 is the only one under a published layer** — what the $600k/km
-  "operate and maintain" covers. ⚠️ **Its second half is now MOOT (2026-09-06)**:
-  it asked what the $1,285/km "maintenance" covers, and $1,285 no longer ships.
-  **Re-word Q1 to the $600k side alone before sending**, or the round comes back
-  answering a question about a retired number. The other five are verification chores (snow denominator; the
-  four service-life figures; $965.2M provenance; the June 2026 council report;
-  the 403'd op-ed original).
+  ✅ **REVISED 2026-09-09 (S150) — the brief is now current and ready to send as
+  written; nothing further is needed from a model.** The retired $1,285 ran
+  through **four** places, not the one the S149 handoff flagged, and all four
+  are fixed: §1's holdings line, §1's derived-rate table (now $5,970 + $3,350 =
+  **$9.32/road-m/yr**), §2.2's verification note, and Q1. **Q1 and Q2 swapped
+  priority.** Q1 is now the **lane-km unit + the arterial ratio k**; Q2 is the
+  old scope question ($600k and the FY2017 `Roadway Maintenance` program),
+  carrying the warning that the size *and direction* of the $12-vs-$9.32 gap
+  depend on Q1(a) — 1.29× on the shipped basis, **1.4–1.7× the other way** per
+  centreline metre. Still six questions; Q3–Q6 untouched.
+  ⚠️ **Q1(b) is the one that matters: `k` is the single free variable in a
+  caveat now LIVE on the map** (*a floor unless arterials cost more than ~3.3×
+  a collector/local lane-km*). ⚠️ **The brief now declares its own weak
+  provenance** — both constants in that formula (arterials **35%** of road
+  lane-km, and the **1.80**) come from ONE secondary relay of the City's 2020
+  Infrastructure State & Condition figures **whose blog is 404** — and asks for
+  that table from a primary source as a third retrieval. It also warns the
+  reader that the source we derived from (Taproot 2025) says **"linear
+  kilometres"**, which we believe is a relay error; establishing the unit from
+  the City rather than a reporter is the job. **Three retrievals are asked for
+  because they fail from this box:** the Taproot **2022-05-31** alley brief (we
+  hold the date and quote but **no URL**, and it is half the cross-check),
+  the Winter Roads FAQ (**403**), and the 2020 class lane-km table.
   - ⚠️ **The brief opens with a "what we already hold, do not re-derive"
     section.** The last round spent most of seven questions restating
     `city_unit_costs.json` in less detail; that section exists to stop it
