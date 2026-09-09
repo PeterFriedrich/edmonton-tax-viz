@@ -269,6 +269,11 @@ LineStrings; `DATA.md` §6); the boundary GeoDataFrame from
   centreline length within the hood, by class group
 - `road_m_arterial` (float, metres) — **internal only**: computed and carried
   (conservation guard, possible later views) but NEVER included in the metric
+- `road_m_unknown` (float, metres) — **internal only, and a defect gauge**:
+  length whose `functional_class_code` is not in `CLASS_GROUP`. Carried so it
+  is never a silent drop, excluded from `road_m_total` so the pipeline never
+  bills a road it cannot classify. **0.0 on a clean feed**; non-zero means
+  upstream drift, and `vintage_report.check_road_classes` names the code
 - `road_m_total` (float) — **collector + local only** (arterials excluded:
   shared infrastructure — see SPEC_services.md; alleys/railway excluded at the
   row filter)
@@ -666,8 +671,11 @@ dict over the feed's 12 values (never prefix/keyword matching — the
 `load_zoning.ZONE_CATEGORY` philosophy). **Shared roadways map to an excluded
 group specifically because `load_roads` already counts those metres**, which is
 what keeps `road_m_per_acre` and `bike_m_per_acre` disjoint and safe to read
-together. Unmatched values default to EXCLUDED — the opposite of
-`load_roads.DEFAULT_GROUP`, and the module comment says why.
+together. Unmatched values default to EXCLUDED. ⚠️ **`load_roads.DEFAULT_GROUP` no
+longer disagrees with that** — it was `"local"` (i.e. INCLUDED, and charged)
+until 2026-09-09 and is now its own `"unknown"` group, also out of the metric.
+The two modules now err the same way for the same reason; what differs is that
+`load_roads` keeps the excluded length in a reported column.
 
 **Also exports:** `export_bike_web(bike_path, boundaries, out_path)` — the
 dedicated network welded, thinned and simplified to

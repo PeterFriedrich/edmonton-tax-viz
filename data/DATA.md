@@ -705,8 +705,13 @@ boundary acre** (`road_m_per_acre`).
   typed `Road`). **Magnitude is negligible — 106 m against 3,666 km of
   collector+local, 0.003%** — and the served file only moves on the next
   refresh; the point is the class of failure, not the size. ⚠️ **`_classify`
-  fails OPEN by design** (warn + default to `local`, "no silent data drops"),
-  so this was warning on every run into a log nobody reads. ⚠️ **No test can
+  USED TO fail OPEN** (warn + default to `local`, "no silent data drops"), so
+  this was warning on every run into a log nobody reads. ✅ **Changed
+  2026-09-09:** the default is now its own `unknown` group — carried in
+  `road_m_unknown`, held OUT of `road_m_total` and off the web layer. "Local"
+  was never a neutral holding pen; it is the CHARGED side of the metric, and
+  the safe default and the correct answer point opposite ways depending on what
+  the new code turns out to BE. ⚠️ **No test can
   catch the NEXT new code** — `test_every_alley_prefixed_code_is_the_alley_group`
   is vacuous for a missing key, by measurement. ✅ **Detecting the NEXT one is built (2026-09-09):**
   `vintage_report.check_road_classes` compares this vocabulary to `CLASS_GROUP`

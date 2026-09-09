@@ -182,7 +182,10 @@ per hood:  road_m_<class>  = Σ length(city road centrelines ∩ hood polygon), 
            road_m_per_acre = road_m_total / area_acres         # boundary acres
 ```
 
-- **Class groups:** roll the 15 codes up to **arterial / collector / local**
+- **Class groups:** roll the 15 codes up to **arterial / collector / local**,
+  plus **`unknown`** for a code the dict does not hold — carried in
+  `road_m_unknown`, never in `road_m_total` (2026-09-09; before that an
+  unmatched code defaulted to `local` and was CHARGED)
   (explicit dict, same philosophy as `ZONE_CATEGORY` — first-token/pattern
   parsing with every code hand-assigned, unknown codes warn loudly). Emit
   per-group metres even though v1 displays only the total — it is cheap and
@@ -222,7 +225,7 @@ per hood:  road_m_<class>  = Σ length(city road centrelines ∩ hood polygon), 
 - **New module `src/load_roads.py`** — mirrors `load_zoning.py`'s shape: load →
   filter → `set_crs(4326)` → `to_crs(3400)` → overlay → per-hood sums; returns
   a plain DataFrame keyed by `neighbourhood_name` (`road_m_arterial`,
-  `road_m_collector`, `road_m_local`, `road_m_total`). Synthetic-geometry unit
+  `road_m_collector`, `road_m_local`, `road_m_unknown`, `road_m_total`). Synthetic-geometry unit
   tests like `tests/test_load_zoning.py`.
 - **`scripts/download_data.py`** — add `9j8t-zm52` to `SOURCES` (with a limit
   above the row count) **and** the count-vs-limit truncation assertion for all

@@ -145,11 +145,15 @@ def test_an_unmappable_code_is_held_out_of_the_metric(caplog):
     assert "Hyperloop-Class Z" in caplog.text
 
 
-def test_an_unmappable_code_is_CARRIED_not_dropped():
+def test_an_unmappable_code_is_CARRIED_not_dropped(caplog):
     """⚠️ The other half, and the one a "just exclude it" fix would fail. Holding
     the length out of the metric must not delete it — a silent data drop is the
     failure this project forbids, and the length is how anyone sizes the defect
-    before deciding what the code is."""
+    before deciding what the code is.
+
+    Also asserts the CITYWIDE warning, which is a different one from
+    ``_classify``'s per-code notice: this is the one that says the length left
+    the metric, and it is the only place the total appears."""
     hood = _boundaries(["ALPHA"], [_square(0, 0, 100)])
     roads = _roads(
         [
@@ -157,16 +161,22 @@ def test_an_unmappable_code_is_CARRIED_not_dropped():
             ("Road", CITY, LOCAL, LineString([(0, 20), (100, 20)])),
         ]
     )
-    row = _run(hood, roads).iloc[0]
+    with caplog.at_level("WARNING"):
+        row = _run(hood, roads).iloc[0]
     assert row["road_m_unknown"] == pytest.approx(100)
+    assert "held OUT of road_m_total" in caplog.text
 
 
-def test_road_m_unknown_is_zero_on_a_clean_feed():
+def test_road_m_unknown_is_zero_on_a_clean_feed(caplog):
     """It is a defect gauge: non-zero means upstream drift, so the normal
-    reading must be 0.0 and not merely absent."""
+    reading must be 0.0 and not merely absent — and the warning must NOT fire,
+    or a warning that always fires stops meaning anything."""
     hood = _boundaries(["ALPHA"], [_square(0, 0, 100)])
     roads = _roads([("Road", CITY, LOCAL, LineString([(0, 10), (100, 10)]))])
-    assert _run(hood, roads).iloc[0]["road_m_unknown"] == 0.0
+    with caplog.at_level("WARNING"):
+        row = _run(hood, roads).iloc[0]
+    assert row["road_m_unknown"] == 0.0
+    assert "held OUT of road_m_total" not in caplog.text
 
 
 # --- load_roads ------------------------------------------------------------
