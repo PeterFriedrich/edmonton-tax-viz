@@ -692,12 +692,28 @@ boundary acre** (`road_m_per_acre`).
 |---|---|
 | `centerline_type` | `Road` 39,515 / `Alley` 12,088 / `Railway` 2,117 — **filter to `Road`** |
 | `responsible_party_description` | City of Edmonton 49,794; Province 1,164 (ring road); CN/CP rail; Private 566; neighbouring municipalities — **filter to `City of Edmonton`** |
-| `functional_class_code` | closed enumeration, 15 values (4 Arterial classes, Collector/Local by adjoining land use, `Local-ParkWay`, `Local-Private`, `Alley-Residential`) — explicit dict `CLASS_GROUP` in `load_roads.py` |
+| `functional_class_code` | **16 values as of 2026-09-09** (4 Arterial classes, Collector/Local by adjoining land use, `Local-ParkWay`, `Local-Private`, `Alley-Residential`, `Alley-Commercial`) — explicit dict `CLASS_GROUP` in `load_roads.py`. ⚠️ **NOT a closed enumeration: it grew.** It was recorded as closed at 15 on 2026-07-01 and `Alley-Commercial` appeared later — see Known Quirks |
 | `geometry` | LineString centrelines |
 
 ### Known Quirks
+- ⚠️ **THE ENUMERATION GREW, AND THE FALLBACK CHARGED AN ALLEY AS ROAD
+  (found and fixed 2026-09-09).** `Alley-Commercial` — 2 rows, 106 m, inside the
+  Road + City subset — is not in the 15-key `CLASS_GROUP` recorded 2026-07-01,
+  so `_classify` fell through to `DEFAULT_GROUP = "local"` and counted it in
+  `road_m_total`. That contradicts the alleys-out decision that **function
+  governs** (the same decision that excludes the 42 `Alley-Residential` rows
+  typed `Road`). **Magnitude is negligible — 106 m against 3,666 km of
+  collector+local, 0.003%** — and the served file only moves on the next
+  refresh; the point is the class of failure, not the size. ⚠️ **`_classify`
+  fails OPEN by design** (warn + default to `local`, "no silent data drops"),
+  so this was warning on every run into a log nobody reads. ⚠️ **No test can
+  catch the NEXT new code** — `test_every_alley_prefixed_code_is_the_alley_group`
+  is vacuous for a missing key, by measurement. Detecting upstream vocabulary
+  drift needs a monthly-digest check like `check_zoning_bylaw`; not built.
 - **Null `functional_class_code` = Alley + Railway exactly** (14,205 = 12,088 +
-  2,117, verified 2026-07-01). After the Road + City filters every row is
+  2,117, verified 2026-07-01). ⚠️ **The "every row is classified after the
+  Road + City filters" half of this quirk was FALSIFIED 2026-09-09** by the
+  bullet above. After the Road + City filters every row is
   classified — a null/unknown there means upstream drift (`load_roads` warns
   loudly and defaults to `local` so the length stays in the metric).
 - **41 Road-type rows are functionally classed `Alley-Residential`** (all

@@ -63,6 +63,10 @@ CLASS_GROUP = {
     "Local-Private": "local",
     # --- alley (excluded entirely) -----------------------------------------------
     "Alley-Residential": "alley",
+    # Appeared upstream after the 2026-07-01 survey (2 rows, 106 m, City+Road).
+    # Without it the fallback charged these as LOCAL, against the alleys-out
+    # decision that function governs — see test_functionally_alley_road_rows_excluded.
+    "Alley-Commercial": "alley",
 }
 
 # Groups carried as output columns (alley is dropped before the overlay).

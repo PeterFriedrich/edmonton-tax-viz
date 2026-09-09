@@ -8,7 +8,7 @@ import pytest
 from shapely.geometry import LineString, Polygon
 
 sys.path.insert(0, "src")
-from load_roads import _classify, export_roads_web, load_roads
+from load_roads import CLASS_GROUP, _classify, export_roads_web, load_roads
 
 
 def _square(x0, y0, size):
@@ -61,6 +61,44 @@ def test_classify_exact_strings():
 
 def test_classify_alley_residential_is_alley_group():
     assert list(_classify(pd.Series(["Alley-Residential"]))) == ["alley"]
+
+
+def test_every_alley_prefixed_code_is_the_alley_group():
+    """⚠️ The alleys-out decision is that FUNCTION governs, so every ``Alley-*``
+    code must map to "alley" — NOT to the DEFAULT_GROUP fallback, which is
+    "local" and would charge an alley as road.
+
+    Pins the class dict rather than the feed (data/raw is gitignored and 62 MB).
+    ``Alley-Commercial`` appeared upstream after the 2026-07-01 survey that
+    recorded the enumeration as closed at 15 values, fell through the fallback,
+    and was counted as local road until 2026-09-09 — this is that hole.
+
+    ⚠️ THIS TEST CANNOT CATCH THE NEXT SUCH CODE, and must not be cited as
+    drift protection. It iterates the keys that ARE here, so a missing key
+    makes it vacuously true — verified: deleting ``Alley-Commercial`` leaves it
+    GREEN and only ``test_alley_commercial_is_excluded_from_the_metric`` reds.
+    What it does catch is an ``Alley-*`` key mapped to the wrong group.
+    Detecting a NEW upstream code needs the feed's vocabulary compared to this
+    dict in the monthly digest — the shape ``check_zoning_bylaw`` already uses
+    for the zoning bylaw. Not built; see TODO.md.
+    """
+    alley_keys = [k for k in CLASS_GROUP if k.startswith("Alley-")]
+    assert alley_keys, "no Alley-* codes in CLASS_GROUP at all"
+    assert list(_classify(pd.Series(alley_keys))) == ["alley"] * len(alley_keys)
+
+
+def test_alley_commercial_is_excluded_from_the_metric():
+    """The regression itself, end to end: an Alley-Commercial row typed Road
+    must not reach road_m_total. Fails by name if the key is removed."""
+    hood = _boundaries(["ALPHA"], [_square(0, 0, 100)])
+    roads = _roads(
+        [
+            ("Road", CITY, "Alley-Commercial", LineString([(0, 10), (100, 10)])),
+            ("Road", CITY, LOCAL, LineString([(0, 20), (100, 20)])),
+        ]
+    )
+    row = _run(hood, roads).iloc[0]
+    assert row["road_m_total"] == pytest.approx(100)
 
 
 def test_classify_unknown_defaults_to_local_and_warns(caplog):
