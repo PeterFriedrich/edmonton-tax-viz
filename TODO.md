@@ -102,6 +102,27 @@ Services carries no sparkline — measured, it does.)_
 
 ## Open work
 
+_Last reconciled: 2026-09-09 (S152 — **reconciliation only; no lens, pipeline or
+served-value work.** Three records were wrong and one item was already closed by
+reality. ⚠️ **A five-day-old environment measurement had INVERTED**: the
+`fable-session` item asserted `CLAUDE_CODE_SUBAGENT_MODEL`/`..._FORCE` were unset
+*"so nothing is pinned"*; both are now set and **force every subagent to Haiku
+4.5 unoverridably**. The bullet now carries the measurement *procedure* instead of
+either answer, because the two states want opposite advice. ⚠️ **The Services
+audit heading said "closed" above 55 unrelated LIVE items** — `## Open work` was
+a flat list until 2026-09-01 and the `###` headings were added over it, so a
+2,533-line span read as one closed item; re-parented under a new
+`### General backlog`. ⚠️ **My own first read of that was WRONG and worth
+keeping**: I believed `tools/todo_archive.py` would archive the whole span, and
+running it on an isolated copy disproved it (splits on top-level `- [x]`, ignores
+`###`, refuses closed-parents-with-open-children, and zero closed items exist) —
+**the hazard is the hand rule in `CLAUDE.md`, not the tool.** Also: the two stale
+HTTP servers carried since S146 are **GONE** — verified by PID *and* by both
+ports being free *and* by no `http.server` process existing, with 18 weeks of
+uptime ruling out a reboot. And `docs/TOKEN_EFFICIENCY.md`'s baseline was
+re-measured after 10 weeks: it understated the corpus **~18×** and its verdict
+sentence was inverted.)_
+
 _Last reconciled: 2026-09-04 (S137 — **no lens, pipeline or served-value work.**
 The Fable brief's §1 was rewritten to quote its two cited sections inline instead
 of pointing at `DECISIONS.md` + `TODO.md`, cutting its reading list 733 KB → 149 KB.
@@ -195,10 +216,26 @@ publish on its own, unrelated to any of this — re-pinned.)_
     decision that says don't.
   - **What holds and should be kept as-is:** the outcome-plus-boundaries prompt
     template (matches how the brief is already written); the subagent-pinning
-    step — **verified live 2026-09-04: `CLAUDE_CODE_SUBAGENT_MODEL` and
-    `..._FORCE` are unset and NO `agents/` dir exists in project or user scope,
-    so nothing is pinned and model inheritance is the real exposure**; and the
-    anti-filler rule.
+    step; and the anti-filler rule.
+  - ⚠️ **THE PINNING MEASUREMENT INVERTED IN FIVE DAYS — re-measure it, never
+    quote it.** On **2026-09-04** `CLAUDE_CODE_SUBAGENT_MODEL` and `..._FORCE`
+    were both **unset**, so the note here read *"nothing is pinned and model
+    inheritance is the real exposure"*. Re-measured **2026-09-09 (S152)** in a
+    bridged child session (`CLAUDE_CODE_CHILD_SESSION=1`), both are **SET**:
+    `CLAUDE_CODE_SUBAGENT_MODEL=claude-haiku-4-5-20251001` **and**
+    `..._FORCE=1` — so **every** subagent is pinned to Haiku 4.5 and the pin
+    **cannot be overridden**: the binary deletes the `model` parameter from the
+    Task tool's schema when `_FORCE` is set (`FORCE ? t.omit({model:!0}) : t`)
+    and logs `Workflow agent model "X" ignored` for workflow agents. Neither var
+    is in any `settings.json`, `~/.bashrc` or `~/.profile` — **grepped, absent**
+    — so the harness sets them per session and **this is a launch property, not
+    a repo fact.** ⚠️ **The skill must therefore MEASURE (`env | grep
+    SUBAGENT`) and branch on the result, not carry either answer as text** —
+    the exposure is inheritance in one case and a silent downgrade to the
+    weakest model in the other, and those want opposite advice. (The same
+    session also found **no `Agent`/`Task` tool exposed at all**, so delegation
+    was impossible there rather than merely degraded — a third state the skill
+    has to tolerate.)
   - ⚠️ **Hedge the billing claim consistently.** The draft's Step 5 correctly
     calls nested per-model attribution *inferred, not confirmed*, then its
     preamble states it as flat fact. **Unverifiable from here** — the first-party
@@ -238,7 +275,7 @@ publish on its own, unrelated to any of this — re-pinned.)_
   - **Gate:** nothing is blocked on this. It costs money only when a doc-heavy
     session loads these files — which is what surfaced it.
 
-### Services cost lens audit — ✅ ALL 4 CALLS MADE (opened 2026-09-05 S142, closed 2026-09-07)
+### Services cost lens audit — ✅ all 4 calls made 2026-09-07; ⚠️ FOLLOW-ONS BELOW STILL OPEN (opened 2026-09-05 S142)
 
 The ledger's #1 candidate ran: `docs/FABLE_AUDIT_services_cost_lens.md` (brief)
 → `docs/FINDINGS_services_cost_lens_verdict.md` (verdicts). **1× UNSOUND, 5×
@@ -381,6 +418,20 @@ when the prefetch created the window that separates them. ⚠️ **Re-test parke
 "cannot be distinguished" caveats when the system grows; they are not permanent.**
 Also three more vacuous checks caught by falsification, all in tests written the
 same session — see `docs/DECISIONS.md`'s last two rows.)_
+
+### General backlog — the flat list (no parent item; predates the `###` headings above)
+
+⚠️ **Everything from here down is its OWN top-level work, not a child of the
+Services audit above.** `## Open work` was a flat `- [ ]` list until 2026-09-01;
+the three `###` headings were added above it on 2026-09-04, and the Services one
+was later marked closed **in place** — which left ~55 unrelated live items
+rendering as its children. Re-parented 2026-09-09 (S152) after measuring it.
+**Do not archive a `###` heading's span on the strength of the heading alone**:
+`tools/todo_archive.py` is safe here (it splits on top-level `- [x]` boxes,
+ignores `###` headings, refuses when a closed parent carries unchecked children,
+and there are currently zero closed top-level items — verified by running it on
+an isolated copy), but the hand rule in `CLAUDE.md` (*"move its body to the
+archive"*) is not, and this span is 2,533 lines.
 
 - [ ] **INVESTIGATE — `lot_size` holds ownership shares for an unknown number of
   records; 7,984 rows are under 1 m².** Opened 2026-09-01, found by the

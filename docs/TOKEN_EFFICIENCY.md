@@ -18,10 +18,63 @@ Rough tokens ≈ bytes ÷ 4.
 | `session-summary/` | 125 KB | ~31k | ⅓ of the corpus — the fastest grower |
 | **whole tracked text corpus** | 376 KB | **~94k if you read *everything*** | nobody should |
 
-**Verdict:** code + docs are nowhere near a problem. Reading every source, test,
-doc, and the web file at once is ~44k tokens; a typical task touches a handful and
-costs single-digit thousands. No file is large enough to warrant splitting (biggest
-source module is 255 lines). The only unbounded grower is `session-summary/`.
+**Verdict (2026-07-01, ⚠️ SUPERSEDED — see the re-measure below):** code + docs
+are nowhere near a problem. Reading every source, test, doc, and the web file at
+once is ~44k tokens; a typical task touches a handful and costs single-digit
+thousands. No file is large enough to warrant splitting (biggest source module is
+255 lines). The only unbounded grower is `session-summary/`.
+
+⚠️ **That verdict inverted, and the prediction inside it was half right.**
+`session-summary/` did grow — but `docs/` grew *faster*, and the sentence *"code +
+docs are nowhere near a problem"* is now the wrong way round: **code is still
+fine and docs are the problem.** Re-measured below.
+
+## Re-measure (2026-09-09, S152) — ⚠️ the corpus grew ~18× in ten weeks
+
+Human-authored, tracked, excluding `web/data`, `web/vendor` and `web/notebooks`:
+
+| Category | Size | ~tokens | vs 2026-07-01 |
+|---|---|---|---|
+| `src/` | 323 KB | ~83k | 8k → 83k |
+| `tests/` | 496 KB | ~127k | 8k → 127k |
+| **`docs/`** (74 files) | **2,088 KB** | **~535k** | **19k → 535k — 28×** |
+| **`session-summary/`** (97 files) | **2,005 KB** | **~513k** | **31k → 513k — 17×** |
+| `tools/` (42 verify scripts + helpers) | 778 KB | ~199k | not tracked then |
+| `scripts/` | 307 KB | ~78k | not tracked then |
+| `web/index.html` + `styles.css` | 479 KB | ~123k | 4k → 123k |
+| root `*.md` (TODO/README/DATA…) | 265 KB | ~68k | 5k → 68k |
+| **whole human-authored corpus** | **6.8 MB** | **~1,750k** | **94k → 1,750k — 18×** |
+
+**Generated/vendored, never to be read whole** (they are not in the total above,
+but nothing stops a glob reaching them): `web/data/` **16.4 MB ≈ ~4,200k tokens**,
+`web/vendor/` + `web/notebooks/` **4.0 MB ≈ ~1,020k**. Rule 1 already bans the raw
+`.geojson`; **`web/data/value_grid_50.json` is 8.0 MB on its own** and is the same
+hazard in a file extension rule 1 does not name.
+
+⚠️ **The biggest single files are all PROSE, and two of them are index files whose
+own headers promise brevity:**
+
+| file | size | ~tokens |
+|---|---|---|
+| `docs/DECISIONS.md` | **412 KB** | ~103k |
+| `docs/TODO_archive.md` | 173 KB | ~43k |
+| `docs/UI.md` | 135 KB | ~34k |
+| `docs/AUDIT_LEDGER.md` | **102 KB** | ~26k |
+| `docs/ARCHITECTURE.md` | 83 KB | ~21k |
+
+⚠️ **`DECISIONS.md` grew 367 KB → 412 KB (12%) in the five days** between the
+drift item's measurement (`TODO.md`, opened 2026-09-04, full numbers in
+`FINDINGS_decisions_index_drift.md`) and this one. **The open trim-or-rewrite
+decision is getting more expensive while it waits**, and `AUDIT_LEDGER.md` carries
+the same drift under a header naming the same rule.
+
+**What this does NOT change:** the per-task cost. Nobody reads the corpus; a task
+still touches a handful of files for single-digit thousands of tokens, and the
+`web/index.html` split is still refuted on its own measurement (see *Files to
+watch*). ⚠️ **What it does change is the FLOOR** — `CLAUDE.md` instructs every
+session to read `TODO.md`, plus an index doc and the latest handoff, before doing
+anything. That floor is now ~60k tokens of `TODO.md` alone. **The lever here is
+what the standing instructions require, not how the files are split.**
 
 Re-measure anytime with:
 
