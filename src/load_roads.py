@@ -70,14 +70,27 @@ CLASS_GROUP = {
 }
 
 # Groups carried as output columns (alley is dropped before the overlay).
-GROUPS = ("arterial", "collector", "local")
+GROUPS = ("arterial", "collector", "local", "unknown")
 
 # Groups that make up road_m_total (arterials are shared infrastructure).
 METRIC_GROUPS = ("collector", "local")
 
-# Unknown/null classes default here (conservative for a supply metric: the
-# length STAYS IN road_m_total rather than silently vanishing). Flagged.
-DEFAULT_GROUP = "local"
+# Unknown/null classes land in their OWN group — they are neither dropped nor
+# charged. Until 2026-09-09 this was "local", on the reasoning that keeping the
+# length in road_m_total beat a silent drop; the flaw is that "local" is not a
+# neutral holding pen, it is the CHARGED side of the metric. `Alley-Commercial`
+# proved it: an Alley-* code must leave the metric entirely (function governs),
+# and the fallback billed 106 m of it as road instead. The safe default and the
+# correct answer point opposite ways depending on what the new code turns out to
+# BE, and the fallback fires before anyone knows — so it now asserts neither.
+#
+# `unknown` is carried as a column, EXCLUDED from road_m_total (METRIC_GROUPS),
+# reported at every stage, and watched monthly by
+# `vintage_report.check_road_classes`. It is a holding pen, not an answer: a new
+# code still gets one hand-written CLASS_GROUP entry, which is the same manual
+# step every option here ends in. What changed is that the pipeline no longer
+# guesses during the wait.
+DEFAULT_GROUP = "unknown"
 
 
 def _classify(class_series: pd.Series) -> pd.Series:
@@ -86,7 +99,9 @@ def _classify(class_series: pd.Series) -> pd.Series:
     After the Road + City filters every row should carry a class (nulls in the
     raw feed are exactly the alley + railway rows — verified 2026-07-01), so a
     null or unmatched value here means upstream drift: warn loudly (no silent
-    drops) and default to DEFAULT_GROUP so the length stays in the metric.
+    drops) and default to DEFAULT_GROUP, which carries the length OUT of
+    road_m_total without discarding it — see the constant for why it is not
+    "local".
     """
     group = class_series.map(CLASS_GROUP)
 
@@ -211,6 +226,10 @@ def load_roads(roads_path: str, boundaries: gpd.GeoDataFrame) -> pd.DataFrame:
         road_m_arterial  — internal only; NEVER part of the metric
         road_m_collector
         road_m_local
+        road_m_unknown   — internal only; length whose class code is not in
+                           CLASS_GROUP. NEVER part of the metric: the pipeline
+                           will not bill a road it cannot classify. Non-zero
+                           means upstream drift — map the code (DATA.md §6).
         road_m_total     — collector + local (the metric basis;
                            road_m_per_acre is computed downstream in
                            join_and_calculate against boundary acres)
@@ -231,11 +250,13 @@ def load_roads(roads_path: str, boundaries: gpd.GeoDataFrame) -> pd.DataFrame:
             "road_m_arterial": by_group["arterial"],
             "road_m_collector": by_group["collector"],
             "road_m_local": by_group["local"],
+            "road_m_unknown": by_group["unknown"],
         }
     )
     result["road_m_total"] = sum(result[f"road_m_{g}"] for g in METRIC_GROUPS)
     result = result.reset_index()
 
+    unknown_km = result["road_m_unknown"].sum() / 1000
     logger.info(
         "Road overlay: %d neighbourhoods; %.1f km collector+local in the metric, "
         "%.1f km arterial carried internally",
@@ -243,6 +264,13 @@ def load_roads(roads_path: str, boundaries: gpd.GeoDataFrame) -> pd.DataFrame:
         result["road_m_total"].sum() / 1000,
         result["road_m_arterial"].sum() / 1000,
     )
+    if unknown_km:
+        logger.warning(
+            "%.3f km carries a functional_class_code not in CLASS_GROUP and is "
+            "held OUT of road_m_total in road_m_unknown — map it (data/DATA.md "
+            "§6); the monthly digest reports the code itself",
+            unknown_km,
+        )
     return result
 
 
@@ -288,6 +316,21 @@ def export_roads_web(
     number of features written.
     """
     overlay = _prepare_segments(roads_path, boundaries)
+
+    # `unknown` is out of road_m_total, so it must be out of the ACCESS layer
+    # too — `access_m` below IS that metric, and drawing unmapped length in it
+    # would assert on the map exactly what load_roads declines to assert.
+    # ⚠️ Dropped EXPLICITLY: leaving it to the `t` map would give it a NaN `t`,
+    # which both `== "access"` and `== "arterial"` silently exclude.
+    is_unknown = overlay["group"] == "unknown"
+    if is_unknown.any():
+        logger.warning(
+            "Web export: %d unclassified piece(s) (%.3f km) held out of the "
+            "access layer — same length load_roads holds out of road_m_total",
+            int(is_unknown.sum()), overlay.loc[is_unknown, "piece_m"].sum() / 1000,
+        )
+        overlay = overlay[~is_unknown]
+
     overlay["t"] = overlay["group"].map(
         {"arterial": "arterial", "collector": "access", "local": "access"}
     )

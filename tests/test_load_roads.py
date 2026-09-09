@@ -101,18 +101,72 @@ def test_alley_commercial_is_excluded_from_the_metric():
     assert row["road_m_total"] == pytest.approx(100)
 
 
-def test_classify_unknown_defaults_to_local_and_warns(caplog):
+def test_classify_unknown_goes_to_its_own_group_not_the_charged_one(caplog):
+    """⚠️ The fallback used to be "local", and "local" is not a neutral holding
+    pen — it is the CHARGED side of road_m_total. `Alley-Commercial` is the
+    proof: an Alley-* code must leave the metric entirely, and the old default
+    billed it as road. Asserting `!= "local"` as well as `== "unknown"` because
+    the group NAME is cosmetic and the exclusion is the contract."""
     with caplog.at_level("WARNING"):
         groups = _classify(pd.Series(["Hyperloop-Class Z"]))
-    assert list(groups) == ["local"]
+    assert list(groups) == ["unknown"]
+    assert "local" not in list(groups)
     assert "Hyperloop-Class Z" in caplog.text
 
 
-def test_classify_null_warns(caplog):
+def test_classify_null_goes_to_the_unknown_group(caplog):
     with caplog.at_level("WARNING"):
         groups = _classify(pd.Series([None]))
-    assert list(groups) == ["local"]
+    assert list(groups) == ["unknown"]
     assert "<null>" in caplog.text
+
+
+def test_the_unknown_group_is_not_in_the_metric():
+    """The whole decision, as one assertion on the constants."""
+    from load_roads import DEFAULT_GROUP, GROUPS, METRIC_GROUPS
+    assert DEFAULT_GROUP not in METRIC_GROUPS
+    assert DEFAULT_GROUP in GROUPS  # carried, not discarded
+
+
+def test_an_unmappable_code_is_held_out_of_the_metric(caplog):
+    """⚠️ The direction that inverted on 2026-09-09. Under the old fallback this
+    row was CHARGED — road_m_total would read 200. It is now held out."""
+    hood = _boundaries(["ALPHA"], [_square(0, 0, 100)])
+    roads = _roads(
+        [
+            ("Road", CITY, "Hyperloop-Class Z", LineString([(0, 10), (100, 10)])),
+            ("Road", CITY, LOCAL, LineString([(0, 20), (100, 20)])),
+        ]
+    )
+    with caplog.at_level("WARNING"):
+        row = _run(hood, roads).iloc[0]
+    assert row["road_m_total"] == pytest.approx(100)
+    assert row["road_m_local"] == pytest.approx(100)
+    assert "Hyperloop-Class Z" in caplog.text
+
+
+def test_an_unmappable_code_is_CARRIED_not_dropped():
+    """⚠️ The other half, and the one a "just exclude it" fix would fail. Holding
+    the length out of the metric must not delete it — a silent data drop is the
+    failure this project forbids, and the length is how anyone sizes the defect
+    before deciding what the code is."""
+    hood = _boundaries(["ALPHA"], [_square(0, 0, 100)])
+    roads = _roads(
+        [
+            ("Road", CITY, "Hyperloop-Class Z", LineString([(0, 10), (100, 10)])),
+            ("Road", CITY, LOCAL, LineString([(0, 20), (100, 20)])),
+        ]
+    )
+    row = _run(hood, roads).iloc[0]
+    assert row["road_m_unknown"] == pytest.approx(100)
+
+
+def test_road_m_unknown_is_zero_on_a_clean_feed():
+    """It is a defect gauge: non-zero means upstream drift, so the normal
+    reading must be 0.0 and not merely absent."""
+    hood = _boundaries(["ALPHA"], [_square(0, 0, 100)])
+    roads = _roads([("Road", CITY, LOCAL, LineString([(0, 10), (100, 10)]))])
+    assert _run(hood, roads).iloc[0]["road_m_unknown"] == 0.0
 
 
 # --- load_roads ------------------------------------------------------------
@@ -407,3 +461,64 @@ def test_export_v_matches_load_roads_metric(tmp_path):
     _export(hood, roads, out)
     access = [f for f in _read_fc(out)["features"] if f["properties"]["t"] == "access"]
     assert access[0]["properties"]["v"] == pytest.approx(expected, abs=0.05)
+
+
+def test_export_holds_unclassified_length_out_of_the_access_layer(tmp_path, caplog):
+    """⚠️ The metric and the map must agree. `access_m` IS road_m_total's basis,
+    so drawing unmapped length in the access layer would assert on the map
+    exactly what load_roads declines to assert — and the access feature's `v`
+    is that length per acre, so it would move the COLOUR too."""
+    hood = _boundaries_with_acres(["ALPHA"], [_square(0, 0, 100)])
+    roads = _roads(
+        [
+            ("Road", CITY, LOCAL, LineString([(0, 10), (100, 10)])),
+            ("Road", CITY, "Hyperloop-Class Z", LineString([(0, 20), (100, 20)])),
+        ]
+    )
+    out = tmp_path / "roads.geojson"
+    with caplog.at_level("WARNING"):
+        _export(hood, roads, out)
+    fc = _read_fc(out)
+    access = [f for f in fc["features"] if f["properties"]["t"] == "access"]
+    assert len(access) == 1
+    acres = hood["area_acres"].iloc[0]
+    assert access[0]["properties"]["v"] == pytest.approx(100 / acres, rel=1e-3)
+
+
+def test_export_reports_the_length_it_holds_out_rather_than_dropping_it_silently(
+    tmp_path, caplog
+):
+    """⚠️ The silent path this guards. `unknown` is not in the `t` map, so left
+    alone it becomes a NaN `t`, and BOTH selections below (`== "access"`,
+    `== "arterial"`) exclude a NaN — the length would leave the map with no
+    warning anywhere. The exclusion is explicit and logged for that reason."""
+    hood = _boundaries_with_acres(["ALPHA"], [_square(0, 0, 100)])
+    roads = _roads(
+        [
+            ("Road", CITY, LOCAL, LineString([(0, 10), (100, 10)])),
+            ("Road", CITY, "Hyperloop-Class Z", LineString([(0, 20), (100, 20)])),
+        ]
+    )
+    with caplog.at_level("WARNING"):
+        _export(hood, roads, tmp_path / "roads.geojson")
+    assert "held out of the access layer" in caplog.text
+    assert "0.100 km" in caplog.text
+
+
+def test_export_is_unchanged_when_every_code_maps(tmp_path, caplog):
+    """The OK direction: no warning, and the access geometry is whole. Without
+    this, an exclusion hard-wired to fire would pass every test above."""
+    hood = _boundaries_with_acres(["ALPHA"], [_square(0, 0, 100)])
+    roads = _roads(
+        [
+            ("Road", CITY, LOCAL, LineString([(0, 10), (100, 10)])),
+            ("Road", CITY, COLLECTOR, LineString([(0, 20), (100, 20)])),
+        ]
+    )
+    out = tmp_path / "roads.geojson"
+    with caplog.at_level("WARNING"):
+        _export(hood, roads, out)
+    assert "held out of the access layer" not in caplog.text
+    access = [f for f in _read_fc(out)["features"] if f["properties"]["t"] == "access"]
+    acres = hood["area_acres"].iloc[0]
+    assert access[0]["properties"]["v"] == pytest.approx(200 / acres, rel=1e-3)
