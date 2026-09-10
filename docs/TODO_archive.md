@@ -8,6 +8,10 @@ Items are verbatim as they were closed, newest-moved first in the order they app
 
 ---
 
+- [x] **`tools/todo_archive.py` swallowed trailing non-item text — FIXED 2026-09-10 (S154).** An item now ends at the first unindented non-item line; runs no longer add blank lines; `tests/test_todo_archive.py` (4 tests, 3 red against the old tool by name). Replayed on the real 2026-09-10 case: 40 lines moved, heading and notes kept. Original item follows.
+  - Found 2026-09-10 (S154) closing the send-back-brief item: it took the `_Last reconciled: 2026-09-01_` block, the `### General backlog` heading and its paragraph with it (66 lines for a 39-line item) — an item's span runs to the next `- [ ]`/`- [x]`, not to the next non-indented line. Reverted and moved by hand. **Until fixed, diff every run** (`git diff -U0 TODO.md | grep '^@@'`): CLAUDE.md points sessions at this tool for bulk closes.
+
+
 - [x] **SENT — the follow-up brief went out (Peter confirmed 2026-09-10, S154; send date not recorded). Reply pending; the Q1 hold stays until Q1(a) answers.** Original item follows.
   - **PETER TO SEND — the follow-up brief is written and unsent.**
   `/home/opc/road_cost_sendback_brief.md` (**outside the repo**, same as the Q8
