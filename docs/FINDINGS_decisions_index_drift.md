@@ -36,7 +36,7 @@ not enforced at all.
 | predicate | result | measured |
 |---|---|---|
 | one line per decision | ✅ **holds** | 247 rows, all single-line |
-| pointer to full reasoning | ✅ **holds** | only **3** of 247 rows have an empty pointer |
+| pointer to full reasoning | ✅ **holds** | ⚠️ ~~only **3** of 247 rows have an empty pointer~~ — **that 3 was a parse artifact (see §7): the naive splitter reports `L145`/`L146`/`L261`, all of which have FULL pointers. Correct answer: **1** (`L196`), which the old script's `len(c)<3` filter could not see.** |
 | **"the one-sentence why"** | ❌ **13%** | 33 of 247 rows are one sentence; median **6**, max **19** |
 | **"duplicates no rationale"** | ❌ **violated in substance** | 98.8% of distinctive facts exist elsewhere |
 
@@ -132,13 +132,17 @@ import re, statistics as st
 rows=[]
 for l in open('docs/DECISIONS.md'):
     if not l.startswith('|') or re.match(r'^\|\s*-{3,}', l): continue
-    c=[x.strip() for x in l.strip().strip('|').split('|')]
+    c=[x.strip() for x in re.split(r'(?<!\\\\)\\|', l.strip().strip('|'))]  # NOT .split('|') — see §7
     if len(c)<3 or c[0].lower()=='when': continue
     rows.append(c)
 L=[len(c[1]) for c in rows]
 print(len(rows), 'rows; median', int(st.median(L)), 'max', max(L))
 PY
 ```
+
+⚠️ **The splitter above was corrected 2026-09-09** — the original `.split('|')` broke on the five
+rows carrying a pipe inside inline code and produced §1's wrong empty-pointer count. **The pointer is the
+LAST field**, and a 2-field row (`L196`) has none and must not be silently dropped.
 
 The uniqueness sweep (§3) is the longer script; rebuild the corpus with `git ls-files`,
 exclude `docs/DECISIONS.md` **explicitly**, normalize with `re.sub(r'[,\s$]','',s.lower())`,
@@ -167,18 +171,53 @@ here.** This had to be read.
 
 **The at-risk set is the rows with nowhere to point, and it is small:**
 
-- **271 rows. 35 carry no `.md` pointer** (code-only or empty); **3 carry no
-  pointer at all**; **19 of the 35 are long (>800 ch)** — July 5, Aug 10, Sep 4.
-- ⚠️ **But two of those 19 spot-checked have their reasoning in a doc anyway,
-  just unnamed:** L153 (CSS extraction) is told in `UI.md`, `STACK.md`,
-  `TOKEN_EFFICIENCY.md` and 7 more; L146 (public build ships at two views —
-  **no pointer at all**) is in `PLAN_public_release.md` and `CONTROLS_MATRIX.md`,
-  Peter's *"2 views is fine"* quote included. **Evidence strength: these two are
-  phrase-presence only, not read end-to-end like L231/L284 — the at-risk count
-  is an upper bound of 19, probably much lower.**
+⚠️ **THE FIRST THREE COUNTS PUBLISHED HERE WERE WRONG — MY PARSER WAS, AND IT
+MANUFACTURED ONE OF THE EXAMPLES.** Corrected 2026-09-09 within the same session.
+Rows in this table contain pipes **inside inline code** (`L62`, `L145`, `L146`,
+`L196`, `L261`), so a naive `split("|")` scatters the Decision text across extra
+fields and reads the WRONG field as the pointer. Successive parses gave **35, then
+26, then 22** before the method was pinned down. **The pointer is the LAST field,
+and `\|` must not be split on.**
+
+| | first published | correct |
+|---|---|---|
+| total rows | 271 | **272** |
+| no `.md` pointer | 35 | **23** |
+| no pointer column at all | 3 (unnamed) | **1 — `L196` only** |
+| long (>800 ch) among them | 19 | **18** |
+
+⚠️ **The L146 example was BACKWARDS.** It was offered as a row with *no pointer*
+whose reasoning I had located in `PLAN_public_release.md` — **the row already
+pointed at `docs/PLAN_public_release.md` §2a and `docs/CONTROLS_MATRIX.md` §2.**
+I was rediscovering what the row said. **Same family as §3's own two method
+corrections and the vacuous checks of S135/S136: the instrument was broken in the
+direction that confirmed the hypothesis.** `L145` and `L146` both have full
+pointers; only `L196` (2026-08-04, the hand-dispatched refresh) genuinely has no
+pointer column.
+
+- **The surviving example holds:** `L153` (CSS extraction) points only at code,
+  and its story is told in `UI.md`, `STACK.md`, `TOKEN_EFFICIENCY.md` and 7 more.
+  **Evidence strength: phrase-presence only, not read end-to-end like L231/L284 —
+  so 23 is an upper bound on rows whose reasoning is genuinely homeless.**
+- ✅ **§1's "247 rows" is NOT a casualty — that one is real growth.** At the
+  commit that added this doc (`0438954`, 2026-09-04) the corrected parser counts
+  **248**; the file has since grown to **272 rows / 412 KB**. The 1-row gap is
+  `L196`, which the old script drops.
+- ⚠️ **§3's fact counts (1,295 facts / 16 unique) were NOT re-derived** and its
+  sweep reads the same columns. Re-run them with the corrected splitter before
+  acting on the trim's blast radius.
 
 **So a THIRD option exists, and it is right under either of §5's two:** complete
-the **pointer** column on the 35 no-`.md` rows (the 19 long ones first). It is
+the **pointer** column on the 23 no-`.md` rows (the 18 long ones first).
+✅ **DONE 2026-09-09 (S152) — all 272 rows now carry a doc pointer, 0 remaining.**
+Method: match each row to a doc **section heading**, preferring a heading carrying
+the row's own date (`UI.md`'s sections are dated), then confirm the row's key
+symbol appears in that doc. ⚠️ **Symbol-absence did NOT refute a candidate** —
+per this section's own finding the docs paraphrase, so 8 of 23 landed on a doc
+that never names the symbol (`RIVER_COLOR` appears only in the generated
+`CODEMAP.md`); those were placed on heading semantics and re-checked by hand.
+**`scripts/check_doc_citations.py` verified all 23 additions resolve** (guard OK
+at its 2-warning baseline), which is the property the whole exercise was for. It is
 append-only — which is what the file's own header says it is — non-destructive,
 reversible, and it converts recoverability from luck into a property of the file.
 It is also the **prerequisite a trim already needs**, so it is not a detour: after

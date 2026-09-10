@@ -279,19 +279,41 @@ publish on its own, unrelated to any of this — re-pinned.)_
     *"inherits the right gating for free"* appear nowhere else, yet both arguments
     are present, paraphrased (§2 measured 4% n-gram overlap, so phrase-absence
     tests are vacuous here and this had to be READ).
-  - ⚠️ **THE DEFECT IS THE POINTER COLUMN, NOT THE DECISION COLUMN.** **35 of 271
-    rows carry no `.md` pointer** (3 carry none at all), **19 of them long** —
-    those are the only rows where a trim could destroy an argument. And two of the
-    19 spot-checked have their reasoning in a doc anyway, merely unnamed (L153 in
-    `UI.md`/`STACK.md`/`TOKEN_EFFICIENCY.md`; L146 in `PLAN_public_release.md`),
-    so **19 is an upper bound.**
+  - ⚠️ **THE DEFECT IS THE POINTER COLUMN, NOT THE DECISION COLUMN.** **23 of 272
+    rows carry no `.md` pointer**; exactly **one (`L196`) has no pointer column at
+    all**; **18 are long**. Those are the only rows where a trim could destroy an
+    argument, and `L153` (CSS extraction, code-only pointer) is told in
+    `UI.md`/`STACK.md`/`TOKEN_EFFICIENCY.md` anyway — so **23 is an upper bound.**
+  - ⚠️ **THE FIRST COUNTS I PUBLISHED HERE WERE WRONG AND SO WAS §1's.** Rows carry
+    pipes **inside inline code** (`L62`/`L145`/`L146`/`L196`/`L261`), so a naive
+    `split("|")` reads the wrong field as the pointer; three successive parses gave
+    35, 26, 22 before the method was pinned. **The pointer is the LAST field.**
+    §1's *"only 3 rows have an empty pointer"* was the same artifact — it named
+    `L145`/`L146`/`L261`, **all of which have full pointers**, and could not see the
+    one row that has none. ⚠️ **My `L146` example was backwards**: I offered it as
+    an unpointed row whose reasoning I had *found* in `PLAN_public_release.md` —
+    the row already pointed there. Corrected in `FINDINGS_decisions_index_drift.md`
+    §7, and §6's reproduce script fixed. **§3's 1,295-facts/16-unique numbers were
+    NOT re-derived and read the same columns — re-run before trusting the trim's
+    blast radius.**
   - **▶ THIRD OPTION, and it is right under EITHER of the two above — PETER'S
-    CALL:** complete the **pointer** column on those 35 rows, longest first.
+    CALL:** complete the **pointer** column on those 23 rows, longest first.
     Append-only (which is what the header already claims the file is),
     non-destructive, reversible, and it is **the prerequisite a trim already
     needs** — after it the trim's blast radius is re-measurable and §3's ~8
-    orphaned values are the only true rescues left. **Not started; nothing was
-    trimmed or rewritten this session.**
+    orphaned values are the only true rescues left.
+  - ✅ **THE POINTER PASS IS DONE (2026-09-09, S152): all 272 rows carry a doc
+    pointer, 0 remaining**, verified by `check_doc_citations.py` — every addition
+    resolves, guard at its 2-warning baseline. **Nothing was trimmed and the header
+    was not rewritten**; the trim-vs-bless call is still yours and is now cheap to
+    act on either way. ⚠️ **8 of the 23 landed on a doc that never names the row's
+    symbol** (`RIVER_COLOR` appears only in the generated `CODEMAP.md`) — placed on
+    heading semantics instead, because per §7 the docs paraphrase and
+    symbol-absence refutes nothing. Those 8 are the ones to re-read if a pointer
+    ever looks wrong.
+  - **▶ NEXT, IF YOU WANT THE TRIM:** re-run §3's uniqueness sweep with the
+    corrected splitter (its 1,295-facts/16-unique numbers predate the fix), then
+    rescue the ~8 values that live only here.
   - ⚠️ **Still open either way:** whether the long form should be *blessed*. The
     measurement says the long rows are **redundant**, not **harmful** — and §3's
     size-the-remedy rule applies to the header rewrite too. `DECISIONS.md` has
