@@ -69,20 +69,25 @@ def main(allow_open_children=False):
     body = lines[open_ix + 1:done_ix]
     done_tail = lines[done_ix:]
 
-    # Split the body into blocks, each starting at a top-level "- [ ]"/"- [x]".
-    blocks, cur = [], []
+    # Split the body into ordered segments: an item runs from its "- [ ]"/"- [x]"
+    # line to the first UNINDENTED non-item line, which starts a text segment
+    # (`###` headings, `_Last reconciled_` blocks) that must stay where it is.
+    # Splitting on item lines alone made an item swallow the text after it, so
+    # closing it archived a heading and a reconciliation note (2026-09-10, S154).
+    segments, cur = [], None
     for l in body:
-        if ITEM.match(l):
-            if cur:
-                blocks.append(cur)
-            cur = [l]
+        if ITEM.match(l) or cur is None or (
+                cur[0] == "item" and l and not l[0].isspace()):
+            cur = ("item" if ITEM.match(l) else "text", [l])
+            segments.append(cur)
         else:
-            (cur if cur else preamble).append(l)
-    if cur:
-        blocks.append(cur)
+            cur[1].append(l)
+    blocks = [s for kind, s in segments if kind == "item"]
 
     closed = [b for b in blocks if ITEM.match(b[0]).group(1) == "x"]
     still_open = [b for b in blocks if ITEM.match(b[0]).group(1) == " "]
+    kept_body = [l for kind, s in segments
+                 if kind == "text" or ITEM.match(s[0]).group(1) == " " for l in s]
     if not closed:
         print("todo_archive: nothing closed to move")
         return 0
@@ -166,15 +171,18 @@ def main(allow_open_children=False):
     banner = (BANNER_PREFIX + " live in **`docs/TODO_archive.md`** — "
               "one line each below, reasoning there.")
     tail = [l for l in done_tail[1:] if not l.startswith(BANNER_PREFIX)]
+    while tail and not tail[0].strip():
+        tail.pop(0)
     new_done = [done_tail[0], "", banner, ""] + stubs + [""] + tail
 
-    new_todo = preamble + [""] + [l for b in still_open for l in b] + new_done
+    new_todo = preamble + kept_body + new_done
 
     # --- accounting: no closed line may vanish ---
     moved = sum(len(b) for b in closed)
     kept = sum(len(b) for b in still_open)
-    if moved + len(stubs) < 1:
-        print("todo_archive: refusing to write, nothing accounted for")
+    if moved + len(kept_body) != len(body):
+        print(f"todo_archive: REFUSING TO WRITE — {len(body)} body lines in, "
+              f"{moved} moved + {len(kept_body)} kept out")
         return 1
     # The archive only ever grows. This is the guard that would have caught the
     # overwrite bug above on its first destructive run, so it checks the SIZE of
