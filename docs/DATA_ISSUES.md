@@ -522,6 +522,25 @@ publication as Socrata `da9s-v9j8`, so the Socrata copy presumably carries the
 same row. **Not reported; not yet an artifact** — one `groupby` reproduces it
 (`docs/FINDINGS_road_figures_consolidation.md` §6).
 
+### G. The Snow & Ice annual report calls the same road inventory both "linear km" and "lane km"
+
+Found 2026-09-10 (S154), re-reading a retrieval from the road-cost send-back
+round. The City's *Snow and Ice Control Annual Report, Winter 2023-24*
+(`edmonton.ca/sites/default/files/public-files/assets/PDF/Snow-Ice-Annual-Report_Winter2023-2024.pdf`,
+28 pp.) says on **p4** *"The City maintains more than 12,000 **linear km** of
+roadways and 500 km of active pathways"*, and on **p16** *"Distances are
+represented in lane kilometres (lane km), which is a function of the length of
+the street or bike route multiplied by the number of lanes"*. p13 repeats the
+12,000 with no unit, as does the live *Winter Travel* page. **Magnitude says
+p16 is right** — the City's own centreline feed holds ~6,340 km of roads +
+alleys (`data/DATA.md` §6) — so p4 is the error. **Breaks here:** nothing
+served (`roadway_ops` is already treated as lane-km), but it is the reason a
+reporter's *"linear kilometres"* (Taproot 2025) looked sourced, and it makes
+the unit unsettleable from wording alone. **Not reported; no artifact** — two
+page quotes reproduce it. Channel if sent: `infrastructure@edmonton.ca`,
+alongside the open Q1(a) question in `TODO.md` — **not** `opendata@`, since
+this is a PDF report, not a dataset.
+
 ## Cross-refs
 
 - `data/DATA.md` — what each source *is* (§0 historical roll, §11 FIR, §20

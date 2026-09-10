@@ -186,6 +186,22 @@ kilometres"* when the 2021 policy started counting them. Taproot 2025 attaches
 *"linear kilometres"* to its 11,000 — the only source to say linear, and the one
 this project derived both halves from.
 
+> ⚠️ **CORRECTED 2026-09-10 (S154), after the send-back research round — the
+> conclusion stands, three of its supports do not.** (1) **Taproot is not the
+> only source saying linear:** the City's own *Snow and Ice Control Annual
+> Report, Winter 2023-24* says *"more than 12,000 **linear km** of roadways"*
+> (p4) and defines its distances as lane km (p16) — the City contradicts itself
+> (`docs/DATA_ISSUES.md` G). (2) **The FAQ's *"over 4,000 lane kms"* is no
+> longer on the live page** (it now redirects to *Winter Travel*, fetchable,
+> *"more than 12,000 km of roadways"*, no unit). (3) **"roadway lane
+> kilometres" is Taproot's own prose, not a City quote**, and the alley check
+> below is **not a unit check** — one-lane alleys give the same number in both
+> units; it shows the inventory *includes* alleys, nothing more. **What carries
+> the lane-km reading is the magnitude argument** (11,000–12,000 vs 6,340 km of
+> City centreline) **plus the p16 definition**; the 2020 class relay still has
+> no primary source (the 2023 State & Condition edition has no road lengths).
+> Q1(a) bullet 2 is untouched by any of this. Full list: `data/DATA.md` §6.
+
 Measured from `data/raw/roads.geojson` in EPSG:3400 (53,854 segments, the same
 feed `load_roads` reads):
 

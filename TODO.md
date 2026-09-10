@@ -364,6 +364,24 @@ audit's findings are claims to reproduce, not a task list.**
 
 - [ ] **PROPOSED (one line, touches a merge-gate guard so not taken unasked): `check_doc_citations.py`'s path escape hatch is DEAD CODE.** Its bare-name check reads `if name not in docs and (root / name).name not in docs and "/" not in name` — but the regex behind `name` is `\b([A-Za-z][\w.-]*\.md)\b`, whose character class **cannot match a `/`**, so that third clause can never fire. It plainly means to exempt a path-form citation and cannot. **Fix:** test the character *before* the match instead. **Found 2026-09-08 (S148)** writing `docs/FABLE_AUDIT_road_figures.md`, which cites four `.md` files that live in `/home/opc/` **by design** (they must not be committed — they would become a drift surface against `city_unit_costs.json`). ⚠️ **Worked around, not fixed:** those filenames are written **without the `.md` extension**, with a line in §2 saying why — otherwise they add three permanent warnings to the **2-warning baseline** that `RUNBOOK.md` and every restoration procedure quote as normal. Cheap, but it is a guard change.
 
+- [ ] **⚠️ Q1(a) BULLET 2 IS STUCK ON SEARCH — it needs a direct question to
+  City staff. The Q1 rewrite stays HELD until it answers.** Is the
+  **$600k / $1.9M / $1.5M per km** on *Development Impact on Infrastructure* per
+  **centreline** km or per **lane**-km? Two conclusions invert on it (the
+  operating-vs-O&M direction, and NRP $3,151/centreline-m at 1.66× vs 0.83× the
+  renewal rate) — so publish the flip in **neither** direction and keep **both
+  rows** of the conditional table. **Exhausted 2026-09-10 (S154):** the send-back
+  round's reply, every claim re-fetched from this box — the page (now reachable,
+  was 502) says only *"1 kilometre of a typical Edmonton neighbourhood road"*,
+  no lane or centreline anywhere; the 2023 Infrastructure State & Condition
+  report has **no road length figure at all**. **Channel:**
+  `infrastructure@edmonton.ca`, listed on that page. ⚠️ **Sending is Peter's
+  call** — outward-facing. The same message could carry two more asks from Q1:
+  the per-class lane-km table (the 3,500 / 1,763 / 4,830 relay has no current
+  primary source) and the p4-vs-p16 unit contradiction (`docs/DATA_ISSUES.md`
+  G). Round results: `data/DATA.md` §6; correction note in
+  `docs/FINDINGS_road_figures_consolidation.md` L2b §1.
+
 - [ ] **⚠️ TWO CONSUMED RATES HAVE UNEXAMINED DENOMINATORS — `bikeway_ops` is the
   live one.** The `source_denominator` field (added 2026-09-09, S150,
   `data/DATA.md` §13) forced the question once per rate and **the answers are
@@ -372,7 +390,8 @@ audit's findings are claims to reproduce, not a task list.**
   (`bike_ops_dollars_per_m` → `transport_cost_ops_per_acre`) and **both halves
   are unexamined**: (a) **$178/km comes from the same Taproot article, same
   sentence family, as the RETIRED $1,285/km** — the article that attaches
-  *"linear kilometres"* to the ~11,000 and is the only source saying linear;
+  *"linear kilometres"* to the ~11,000 (the City's own 2023-24 Snow & Ice
+  report says *"linear km"* too — `docs/DATA_ISSUES.md` G);
   (b) the **$20,100/km snow half** divides ~$30.15M by a ~1,500 km *"cleared
   network"* whose **membership** is already flagged (`denominator_mismatch`)
   but whose **unit** is not. ⚠️ **This bites harder on bikeways than on roads:**
@@ -783,7 +802,12 @@ archive"*) is not, and this span is 2,533 lines.
     10 and 40 yrs and overlay at 30); **Alberta Transportation's 20-year**
     pavement design life (provincial highways, not municipal local roads);
     **Calgary "up to 20 years"** for full reconstruction; **Winnipeg 25 years**
-    for asphalt *regional* streets (not local). ⚠️ **NONE HAS BEEN CHECKED** —
+    for asphalt *regional* streets (not local). ✅ **A fifth, PRIMARY and checked
+    (2026-09-10, S154):** the City's *2023 Infrastructure State and Condition
+    Report* p27 gives Roads **average age 43 yrs vs expected life 33 yrs**
+    ($9,747,485,291 replacement value). ⚠️ **Asset-class figure** — all roads,
+    arterials included, not a neighbourhood street — so it is context, not a
+    third reading of the 25-vs-50. ⚠️ **NONE HAS BEEN CHECKED** —
     they are relayed claims of exactly the shape that produced a year-late
     source date in the same batch (`DECISIONS.md` 2026-09-03). **Grep/fetch
     before use.** ⚠️ **Even if all four verify they do not settle this item** —

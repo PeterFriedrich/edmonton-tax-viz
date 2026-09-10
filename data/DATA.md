@@ -738,15 +738,29 @@ boundary acre** (`road_m_per_acre`).
   all 53,854 segments **7,700 km**; `Road` 5,685 (Province 495 = the ring
   road); **City of Edmonton `Road` 5,029 km = arterial 1,358 · collector 926 ·
   local 2,740** (+6 km alley-classed); City `Alley` **1,311 km**; `Railway` 704.
-  The City states its snow inventory in lane-km (*"over 4,000 lane kms of
-  residential roads"*, Winter Roads FAQ) and reported alleys adding *"1,250 to
-  1,300 kilometres"* to it in 2021 (Taproot 2022-05-31) — one-lane alleys, so
-  that equals this feed's 1,311 alley centreline km, which pins the unit. The
-  2020 State & Condition class figures (3,500 / 1,763 / 4,830 lane-km, relayed)
-  give 2.58 / 1.90 / 1.76 lanes per centreline km. ⚠️ **Every $/km in §13's
+  **What pins the unit is MAGNITUDE, not wording:** 11,000–12,000 km cannot be
+  centreline when the City's whole centreline (roads + alleys) is ~6,340 km.
+  ⚠️ **The City's wording is self-contradictory — re-read 2026-09-10 (S154):**
+  its *Snow and Ice Control Annual Report, Winter 2023-24* (edmonton.ca PDF)
+  defines on **p16** *"Distances are represented in lane kilometres (lane km),
+  which is a function of the length of the street or bike route multiplied by
+  the number of lanes"* — and on **p4** says *"The City maintains more than
+  12,000 **linear km** of roadways"*. So Taproot 2025's *"linear kilometres"* is
+  **not** the only source saying linear; the City says it too, about the same
+  inventory (`docs/DATA_ISSUES.md` G). ⚠️ **The alley match does NOT
+  discriminate:** Taproot 2022-05-31 (URL now held) reports alleys adding
+  *"1,250 to 1,300 kilometres to the city's inventory of roads and active
+  pathways"* — the reporter's paraphrase of Travis Kennedy, no unit stated — and
+  matching the feed's 1,311 alley km says the inventory includes alleys, but
+  one-lane alleys read the same in both units. The *"over 4,000 lane kms of
+  residential roads"* FAQ line is **no longer on the live page** (the URL
+  redirects to *Winter Travel*, which says *"more than 12,000 km of roadways"*,
+  no unit). The 2020 State & Condition class figures (3,500 / 1,763 / 4,830
+  lane-km, relayed) give 2.58 / 1.90 / 1.76 lanes per centreline km; ⚠️ **the
+  2023 edition has no road length figure at all** (dollars, age, condition
+  only), so that relay has no current primary source. ⚠️ **Every $/km in §13's
   `roadway_ops` is therefore $/LANE-km** — `docs/FINDINGS_road_figures_consolidation.md`
-  L2b, and the open call in `TODO.md`. Taproot 2025's *"11,000 linear
-  kilometres"* is the only source that says linear, and it is wrong.
+  L2b, and the open call in `TODO.md`.
 - **Vintage:** live feed like the others; no year semantics of its own (the
   network changes continuously, not per roll year). Refresh weekly with the
   other inputs.
