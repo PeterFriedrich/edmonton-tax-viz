@@ -121,7 +121,18 @@ HTTP servers carried since S146 are **GONE** — verified by PID *and* by both
 ports being free *and* by no `http.server` process existing, with 18 weeks of
 uptime ruling out a reboot. And `docs/TOKEN_EFFICIENCY.md`'s baseline was
 re-measured after 10 weeks: it understated the corpus **~18×** and its verdict
-sentence was inverted.)_
+sentence was inverted.
+**LATER THE SAME SESSION — the `DECISIONS.md` drift item CLOSED.** §5's open
+question was measured (findings §7): where a row points at a doc the argument is
+**fully recoverable and the target is RICHER than the row**, so Peter chose
+**bless, not trim** — header rewritten, and the mandatory invariant is now the
+**pointer**: **273/273 rows carry a doc pointer**, checked by
+`check_doc_citations.py`. `AUDIT_LEDGER.md`'s mirrored clause retired with it.
+⚠️ **My parser was wrong THREE TIMES on the way (35 → 26 → 22 → 23) and
+manufactured one of its own examples** — rows carry pipes inside inline code, and
+`L146`, offered as an unpointed row, already pointed where I claimed to have found
+its reasoning. **The same bug was in §1, written five days earlier.** ⚠️ **§3's
+1,295-facts/16-unique numbers predate the fix and were NOT re-derived.**)_
 
 _Last reconciled: 2026-09-04 (S137 — **no lens, pipeline or served-value work.**
 The Fable brief's §1 was rewritten to quote its two cited sections inline instead
