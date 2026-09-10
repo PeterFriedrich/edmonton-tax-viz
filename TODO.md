@@ -262,8 +262,21 @@ publish on its own, unrelated to any of this — re-pinned.)_
     SESSIONS compared as if they were one** — no drift, no inversion. The same
     line also explains S152's "no `Agent`/`Task` tool exposed at all", which it
     recorded as a discovered third state: that is `--disallowed-tools Agent,Task`,
-    a deliberate flag. (`CLAUDE_CODE_CHILD_SESSION=1` **is** harness-set — it is
-    on both hosts.)
+    a deliberate flag. ⚠️ **`CLAUDE_CODE_CHILD_SESSION=1` is NOT harness-set
+    either (corrected 2026-09-10, after S153).** It was on both hosts because
+    the tmux server was started from inside a Claude 2.1.201 session, and its
+    **global env** leaked `CLAUDECODE`, `CLAUDE_CODE_CHILD_SESSION`,
+    `CLAUDE_CODE_SESSION_ID=cc46ba30…`, `CLAUDE_EFFORT=high` and a 2.1.201
+    `EXECPATH` into **every** tmux session since. Stripped with
+    `tmux set-environment -gu`; a clean `--remote-control` launch carries none of
+    them. Check `tmux show-environment -g` before reading a tmux-launched
+    session's env as a harness property. (`cc` keeps them until it restarts.)
+  - **2026-09-10: tmux `fable` relaunched as a GENERAL session** (Peter's call —
+    the audit finished 2026-09-05, so its flags only restricted ordinary work):
+    `claude --model claude-opus-5 --remote-control 'edmonton-tax-viz'` — no
+    FORCE vars, no `--disallowed-tools`. **Subagents there now inherit Opus**, the
+    opposite exposure. The flagged line in the setup prompt is for a future
+    audit run only.
   - **The measure-don't-quote rule SURVIVES, for a better reason:** the value is
     a property of the launch line, so the skill can read it off the command that
     started the session — and must, because a session started without those vars
