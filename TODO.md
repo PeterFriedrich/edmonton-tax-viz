@@ -246,7 +246,13 @@ publish on its own, unrelated to any of this — re-pinned.)_
     weakest model in the other, and those want opposite advice. (The same
     session also found **no `Agent`/`Task` tool exposed at all**, so delegation
     was impossible there rather than merely degraded — a third state the skill
-    has to tolerate.)
+    has to tolerate.) Measured a **third** time **2026-09-10 (S153)**, again a
+    bridged child session (this one driven from the claude.ai/code web client
+    against the Oracle box): **identical to S152** — same model id, `_FORCE=1`,
+    `CHILD_SESSION=1`. So the run is unset → set → set, and the 09-04 reading is
+    the outlier so far. **This does not make the value quotable** — three
+    samples of a launch property is still a launch property; it only means the
+    measurement step must tolerate the pinned state being the common one.
   - ⚠️ **Hedge the billing claim consistently.** The draft's Step 5 correctly
     calls nested per-model attribution *inferred, not confirmed*, then its
     preamble states it as flat fact. **Unverifiable from here** — the first-party
