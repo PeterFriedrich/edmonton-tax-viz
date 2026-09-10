@@ -326,7 +326,7 @@ audit's findings are claims to reproduce, not a task list.**
     it** — both push the same direction. `roadway_om_renewal.sensitivity`
     already calls $50 "a mild lower bound"; this is a third, larger reason.
   - **Unblocking it needs one thing:** a published sub-asset decomposition of an
-    NRP reconstruction (§4.2 of the send-back brief, sent 2026-09-10 — reply pending). Nothing in the
+    NRP reconstruction (§4.2 of the send-back brief, sent by 2026-09-10 — reply pending). Nothing in the
     profile listing or the API carries it.
   - ⚠️ **Touches the LIFECYCLE basis only** — nothing here spoke to the
     $12-vs-operating gap above, which was closed on 2026-09-06 by re-scoping the
@@ -359,6 +359,8 @@ audit's findings are claims to reproduce, not a task list.**
     (`FINDINGS_land_use_diversity.md` §3.2, 2026-07-07, where it is a **null**
     against land-use diversity). ⚠️ **The project has NO population-by-hood
     source**, so the per-capita variant of this cannot be computed at all.
+
+- [ ] **`tools/todo_archive.py` swallows trailing non-item text into the archived item.** Found 2026-09-10 (S154) closing the send-back-brief item: it took the `_Last reconciled: 2026-09-01_` block, the `### General backlog` heading and its paragraph with it (66 lines for a 39-line item) — an item's span runs to the next `- [ ]`/`- [x]`, not to the next non-indented line. Reverted and moved by hand. **Until fixed, diff every run** (`git diff -U0 TODO.md | grep '^@@'`): CLAUDE.md points sessions at this tool for bulk closes.
 
 - [ ] **PROPOSED (one line, touches a merge-gate guard so not taken unasked): `check_doc_citations.py`'s path escape hatch is DEAD CODE.** Its bare-name check reads `if name not in docs and (root / name).name not in docs and "/" not in name` — but the regex behind `name` is `\b([A-Za-z][\w.-]*\.md)\b`, whose character class **cannot match a `/`**, so that third clause can never fire. It plainly means to exempt a path-form citation and cannot. **Fix:** test the character *before* the match instead. **Found 2026-09-08 (S148)** writing `docs/FABLE_AUDIT_road_figures.md`, which cites four `.md` files that live in `/home/opc/` **by design** (they must not be committed — they would become a drift surface against `city_unit_costs.json`). ⚠️ **Worked around, not fixed:** those filenames are written **without the `.md` extension**, with a line in §2 saying why — otherwise they add three permanent warnings to the **2-warning baseline** that `RUNBOOK.md` and every restoration procedure quote as normal. Cheap, but it is a guard change.
 
