@@ -2423,3 +2423,83 @@ Full reasoning: `docs/DECISIONS.md` 2026-09-01 (third row of that date).
   in the meantime.** The alternatives are fail-closed (drop the length — a real
   silent drop) or a third `unknown` group carried out of `road_m_total` and
   reported. **A decision about which error to prefer, not a build task.**
+
+### The pointer-style index files drifted off their own contracts (opened 2026-09-04 — CLOSED 2026-09-09, S152)
+
+- [ ] **PETER'S CALL — trim `docs/DECISIONS.md`'s rows, or rewrite its header to
+  describe what the file has become.** Full measurement:
+  `docs/FINDINGS_decisions_index_drift.md`. ⚠️ **Do not start trimming before this
+  is decided** — the two options point opposite ways and only one is reversible
+  cheaply.
+  - **The drift:** the header promises *"one line per locked decision… the
+    one-sentence why… duplicates no rationale"*. One-line and the pointer column
+    both hold (247 rows; only 3 lack a pointer). **The one-sentence rule is at 13%**
+    (median 6 sentences, max 19), and the median row went **138 → 2,219 chars
+    between 2026-05 and 2026-09** — 16×, with **no `DECISIONS.md` line reopening the
+    format**. The Decision column is 88% of the 367 KB file.
+  - ⚠️ **Duplication is real but PARAPHRASED, not verbatim** — median 8-gram overlap
+    with the pointed-to doc is only **4%**, while **98.8% of distinctive facts are
+    recoverable elsewhere in the repo**. That is why four months of review never
+    caught it: there is no wording to match on.
+  - ⚠️ **`docs/AUDIT_LEDGER.md` has the same drift** — median **1,941** chars/row,
+    max 5,416, under a header that says *"Rules (mirror `DECISIONS.md`): … one-line
+    verdict + pointer, never duplicate findings or rationale here."* **Fixing only
+    `DECISIONS.md` treats the instance, not the cause.**
+  - **If the answer is trim:** ~8 values live **only** in `DECISIONS.md` and must be
+    rescued into their owning docs first — `0.06%` (L205), `$14,048.73/acre` +
+    `$234,399` (L223), `258px`/`272px` (L226–227), `$161.3M` (L245),
+    `$88,038,783/yr` (L258), `152/167/319 ms` (L287). A trim touches **12 of 247
+    rows** destructively; the rest is safe.
+  - **If the answer is rewrite the header:** the case is that four months of authors
+    chose the long form every single time, which is evidence the file became a
+    useful decision *log*.
+  - ✅ **THE DECIDING QUESTION IS NOW MEASURED (2026-09-09, S152 — §7 of the
+    findings), AND IT NAMES A THIRD OPTION.** Two of the longest rows were read
+    against the doc they point at (L231 → `SPEC_revenue.md`, L284 → `UI.md`):
+    **both fully recoverable, and the target doc RICHER than the row** — all three
+    of L284's reasons in order, Peter's verbatim ask included. ⚠️ **A grep test
+    would have answered this backwards** — *"SHARE decides the WORDS"* and
+    *"inherits the right gating for free"* appear nowhere else, yet both arguments
+    are present, paraphrased (§2 measured 4% n-gram overlap, so phrase-absence
+    tests are vacuous here and this had to be READ).
+  - ⚠️ **THE DEFECT IS THE POINTER COLUMN, NOT THE DECISION COLUMN.** **23 of 272
+    rows carry no `.md` pointer**; exactly **one (`L196`) has no pointer column at
+    all**; **18 are long**. Those are the only rows where a trim could destroy an
+    argument, and `L153` (CSS extraction, code-only pointer) is told in
+    `UI.md`/`STACK.md`/`TOKEN_EFFICIENCY.md` anyway — so **23 is an upper bound.**
+  - ⚠️ **THE FIRST COUNTS I PUBLISHED HERE WERE WRONG AND SO WAS §1's.** Rows carry
+    pipes **inside inline code** (`L62`/`L145`/`L146`/`L196`/`L261`), so a naive
+    `split("|")` reads the wrong field as the pointer; three successive parses gave
+    35, 26, 22 before the method was pinned. **The pointer is the LAST field.**
+    §1's *"only 3 rows have an empty pointer"* was the same artifact — it named
+    `L145`/`L146`/`L261`, **all of which have full pointers**, and could not see the
+    one row that has none. ⚠️ **My `L146` example was backwards**: I offered it as
+    an unpointed row whose reasoning I had *found* in `PLAN_public_release.md` —
+    the row already pointed there. Corrected in `FINDINGS_decisions_index_drift.md`
+    §7, and §6's reproduce script fixed. **§3's 1,295-facts/16-unique numbers were
+    NOT re-derived and read the same columns — re-run before trusting the trim's
+    blast radius.**
+  - **▶ THIRD OPTION, and it is right under EITHER of the two above — PETER'S
+    CALL:** complete the **pointer** column on those 23 rows, longest first.
+    Append-only (which is what the header already claims the file is),
+    non-destructive, reversible, and it is **the prerequisite a trim already
+    needs** — after it the trim's blast radius is re-measurable and §3's ~8
+    orphaned values are the only true rescues left.
+  - ✅ **THE POINTER PASS IS DONE (2026-09-09, S152): all 272 rows carry a doc
+    pointer, 0 remaining**, verified by `check_doc_citations.py` — every addition
+    resolves, guard at its 2-warning baseline. **Nothing was trimmed and the header
+    was not rewritten**; the trim-vs-bless call is still yours and is now cheap to
+    act on either way. ⚠️ **8 of the 23 landed on a doc that never names the row's
+    symbol** (`RIVER_COLOR` appears only in the generated `CODEMAP.md`) — placed on
+    heading semantics instead, because per §7 the docs paraphrase and
+    symbol-absence refutes nothing. Those 8 are the ones to re-read if a pointer
+    ever looks wrong.
+  - **▶ NEXT, IF YOU WANT THE TRIM:** re-run §3's uniqueness sweep with the
+    corrected splitter (its 1,295-facts/16-unique numbers predate the fix), then
+    rescue the ~8 values that live only here.
+  - ⚠️ **Still open either way:** whether the long form should be *blessed*. The
+    measurement says the long rows are **redundant**, not **harmful** — and §3's
+    size-the-remedy rule applies to the header rewrite too. `DECISIONS.md` has
+    also grown **367 KB → 412 KB since 2026-09-04**, so waiting is not free.
+  - **Gate:** nothing is blocked on this. It costs money only when a doc-heavy
+    session loads these files — which is what surfaced it.

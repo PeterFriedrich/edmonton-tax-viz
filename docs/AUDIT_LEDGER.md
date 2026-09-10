@@ -7,9 +7,18 @@ reusable *instruments*, findings docs record *one run's output*, and the
 else says what has and hasn't been looked at. This does.
 
 Rules (mirror `DECISIONS.md`): add a row when an audit **executes** (not when
-a brief is written); one-line verdict + pointer, never duplicate findings or
-rationale here; verdicts are **point-in-time** — a row says the target was
-audited *as of that date*, not that it's still clean after later changes.
+a brief is written); every row carries a **pointer to the findings doc**; verdicts
+are **point-in-time** — a row says the target was audited *as of that date*, not
+that it's still clean after later changes.
+
+⚠️ **The "one-line verdict, never duplicate rationale" clause was removed
+2026-09-09**, because it had not held here either — measured median **1,941
+chars/row**, max 5,416 — and `DECISIONS.md`'s matching clause was retired the
+same day rather than enforced (its header says why; the measurement is
+`docs/FINDINGS_decisions_index_drift.md`). **Rows may summarize; the pointer
+stays mandatory and is the authority when the two disagree.** This file is not
+part of any session's mandatory reading — open it to scope an audit or to check
+what has already been covered.
 Audits are framed top-down, fundamental decisions first (the
 `FABLE_AUDIT_development_lens.md` §0 rule is the house pattern).
 
