@@ -8,6 +8,47 @@ Items are verbatim as they were closed, newest-moved first in the order they app
 
 ---
 
+- [x] **SENT — the follow-up brief went out (Peter confirmed 2026-09-10, S154; send date not recorded). Reply pending; the Q1 hold stays until Q1(a) answers.** Original item follows.
+  - **PETER TO SEND — the follow-up brief is written and unsent.**
+  `/home/opc/road_cost_sendback_brief.md` (**outside the repo**, same as the Q8
+  addendum). Written 2026-09-03 (S136) for the next external research pass. It
+  carries: **six corrections** to the last round (the 3% rule is not an
+  independent cross-check; the year-late Taproot date; the composite-profile
+  undercount; Table 8 exists; the adopted-vs-adjusted vintage trap; the endpoint
+  was not a discovery), **six ranked questions**, the §4 NRP measurement, and a
+  **§6 correcting the follow-up road-per-dwelling task** — three things already
+  built, four wrong premises (including that this project has **no
+  population-by-hood source at all**), and what measuring it actually showed.
+  ✅ **REVISED 2026-09-09 (S150) — the brief is now current and ready to send as
+  written; nothing further is needed from a model.** The retired $1,285 ran
+  through **four** places, not the one the S149 handoff flagged, and all four
+  are fixed: §1's holdings line, §1's derived-rate table (now $5,970 + $3,350 =
+  **$9.32/road-m/yr**), §2.2's verification note, and Q1. **Q1 and Q2 swapped
+  priority.** Q1 is now the **lane-km unit + the arterial ratio k**; Q2 is the
+  old scope question ($600k and the FY2017 `Roadway Maintenance` program),
+  carrying the warning that the size *and direction* of the $12-vs-$9.32 gap
+  depend on Q1(a) — 1.29× on the shipped basis, **1.4–1.7× the other way** per
+  centreline metre. Still six questions; Q3–Q6 untouched.
+  ⚠️ **Q1(b) is the one that matters: `k` is the single free variable in a
+  caveat now LIVE on the map** (*a floor unless arterials cost more than ~3.3×
+  a collector/local lane-km*). ⚠️ **The brief now declares its own weak
+  provenance** — both constants in that formula (arterials **35%** of road
+  lane-km, and the **1.80**) come from ONE secondary relay of the City's 2020
+  Infrastructure State & Condition figures **whose blog is 404** — and asks for
+  that table from a primary source as a third retrieval. It also warns the
+  reader that the source we derived from (Taproot 2025) says **"linear
+  kilometres"**, which we believe is a relay error; establishing the unit from
+  the City rather than a reporter is the job. **Three retrievals are asked for
+  because they fail from this box:** the Taproot **2022-05-31** alley brief (we
+  hold the date and quote but **no URL**, and it is half the cross-check),
+  the Winter Roads FAQ (**403**), and the 2020 class lane-km table.
+  - ⚠️ **The brief opens with a "what we already hold, do not re-derive"
+    section.** The last round spent most of seven questions restating
+    `city_unit_costs.json` in less detail; that section exists to stop it
+    happening twice, and it is the part to keep current if the brief is reused.
+  - ⚠️ **Grep before applying anything it returns** — relayed research invents
+    file names and sources, and produced a year-late date in the last batch.
+
 - [x] ✅ **DECIDED 2026-09-08 — STATE THE UNIT, DO NOT CONVERT: `roadway_ops` stays $9.32/m/yr and the basis publishes as a FLOOR** (Peter: *"let's choose the floor for now. We may link directly to an external analysis I'll do later"*). Both conversions declined — ×1.80 rests on a secondary 2020 relay now 404, ×2.19 charges alleys nothing, and rates here come from named City publications, not an audit's arithmetic. ⚠️ **The floor is now ARITHMETIC under a stated k** (net ≥ 1.06× for an arterial-to-local cost ratio k ≤ 3; flips only at k > 3.3), and the 5.4× lifecycle gap must not be read as a fact about a road metre (~2.5–3× per centreline metre). Three public copy sites say *per lane-kilometre*; served columns unchanged; `DECISIONS.md` 2026-09-08. Original item follows.
   - **PETER'S CALL — the operating road rate is DOLLARS PER LANE-KILOMETRE applied to CENTRELINE metres (S149 consolidation audit, `docs/FINDINGS_road_figures_consolidation.md` L2b).** The "~11,000 km" under both halves of `roadway_ops` ($5,970 maintenance + $3,350 snow) is the City's snow-and-ice inventory, which the City states in **lane-km** and which includes ~1,300 km of alleys; the City's own centreline feed (`data/raw/roads.geojson`, the file `load_roads` reads) holds **5,029 km of City road centreline** (1,358 arterial / 926 collector / 2,740 local) + 1,311 km alleys. Taproot's *"linear kilometres"* is the only source saying linear, and it is wrong. **Direction known: the shipped $9.32/m understates by 1.8–2.2× per centreline metre** (1.80 on the 2020 class lane-km ÷ feed centreline for collector+local; 2.19 on the feed's 5,029 km alone). The arterial-blend overstatement runs the other way but is bounded — 1.80 ÷ (0.65 + 0.35k) stays ≥ 1.06 for an arterial-to-local cost ratio k ≤ 3. ⚠️ **NOT a rate proposal** (the brief forbids one): it is a UNIT decision — convert per class, convert on City centreline, or keep the value and state the unit in `floor`/`denominator_mismatch` and the three public copy sites. **What moves on the served file if converted:** legend median $304 → $547–665/acre/yr, panel median roads-ops share of levy 1.68% → 3.0–3.7%, hoods over 100% 2 → 3–4, the copy's *"about five times higher"* → ~2.5–3× (`check_cost_copy.py` names every stale sentence). **The map does not move** — a uniform scalar cancels in `scaleT`. ⚠️ Also falls with it: the 2026-09-06 *"1.29× — the two sources do not disagree about roads"* clause, which compared $/lane-km to $/centreline-km (demoted in `DECISIONS.md` 2026-09-08; the re-scope decision itself stands on its other two reasons).
 

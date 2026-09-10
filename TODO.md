@@ -326,7 +326,7 @@ audit's findings are claims to reproduce, not a task list.**
     it** — both push the same direction. `roadway_om_renewal.sensitivity`
     already calls $50 "a mild lower bound"; this is a third, larger reason.
   - **Unblocking it needs one thing:** a published sub-asset decomposition of an
-    NRP reconstruction (§4.2 of the send-back brief below). Nothing in the
+    NRP reconstruction (§4.2 of the send-back brief, sent 2026-09-10 — reply pending). Nothing in the
     profile listing or the API carries it.
   - ⚠️ **Touches the LIFECYCLE basis only** — nothing here spoke to the
     $12-vs-operating gap above, which was closed on 2026-09-06 by re-scoping the
@@ -382,45 +382,6 @@ audit's findings are claims to reproduce, not a task list.**
   question. The right move is a bikeway question in the next research round,
   the same shape as Q1(a). ⚠️ **And do not fill the field in to look tidy** —
   UNEXAMINED is the honest state and the tests permit it.
-- [ ] **PETER TO SEND — the follow-up brief is written and unsent.**
-  `/home/opc/road_cost_sendback_brief.md` (**outside the repo**, same as the Q8
-  addendum). Written 2026-09-03 (S136) for the next external research pass. It
-  carries: **six corrections** to the last round (the 3% rule is not an
-  independent cross-check; the year-late Taproot date; the composite-profile
-  undercount; Table 8 exists; the adopted-vs-adjusted vintage trap; the endpoint
-  was not a discovery), **six ranked questions**, the §4 NRP measurement, and a
-  **§6 correcting the follow-up road-per-dwelling task** — three things already
-  built, four wrong premises (including that this project has **no
-  population-by-hood source at all**), and what measuring it actually showed.
-  ✅ **REVISED 2026-09-09 (S150) — the brief is now current and ready to send as
-  written; nothing further is needed from a model.** The retired $1,285 ran
-  through **four** places, not the one the S149 handoff flagged, and all four
-  are fixed: §1's holdings line, §1's derived-rate table (now $5,970 + $3,350 =
-  **$9.32/road-m/yr**), §2.2's verification note, and Q1. **Q1 and Q2 swapped
-  priority.** Q1 is now the **lane-km unit + the arterial ratio k**; Q2 is the
-  old scope question ($600k and the FY2017 `Roadway Maintenance` program),
-  carrying the warning that the size *and direction* of the $12-vs-$9.32 gap
-  depend on Q1(a) — 1.29× on the shipped basis, **1.4–1.7× the other way** per
-  centreline metre. Still six questions; Q3–Q6 untouched.
-  ⚠️ **Q1(b) is the one that matters: `k` is the single free variable in a
-  caveat now LIVE on the map** (*a floor unless arterials cost more than ~3.3×
-  a collector/local lane-km*). ⚠️ **The brief now declares its own weak
-  provenance** — both constants in that formula (arterials **35%** of road
-  lane-km, and the **1.80**) come from ONE secondary relay of the City's 2020
-  Infrastructure State & Condition figures **whose blog is 404** — and asks for
-  that table from a primary source as a third retrieval. It also warns the
-  reader that the source we derived from (Taproot 2025) says **"linear
-  kilometres"**, which we believe is a relay error; establishing the unit from
-  the City rather than a reporter is the job. **Three retrievals are asked for
-  because they fail from this box:** the Taproot **2022-05-31** alley brief (we
-  hold the date and quote but **no URL**, and it is half the cross-check),
-  the Winter Roads FAQ (**403**), and the 2020 class lane-km table.
-  - ⚠️ **The brief opens with a "what we already hold, do not re-derive"
-    section.** The last round spent most of seven questions restating
-    `city_unit_costs.json` in less detail; that section exists to stop it
-    happening twice, and it is the part to keep current if the brief is reused.
-  - ⚠️ **Grep before applying anything it returns** — relayed research invents
-    file names and sources, and produced a year-late date in the last batch.
 
 _Last reconciled: 2026-09-01 (S130 — **no backlog item was worked; both PRs came
 from Peter noticing the site was slow to switch grids.** Nothing here opened or
@@ -2844,6 +2805,7 @@ archive"*) is not, and this span is 2,533 lines.
 - **Monthly-digest check for `functional_class_code` vocabulary drift** — DONE 2026-09-09 (S151). `vintage_report.check_road_classes`, both directions, on the Road + City population `_classify` actually sees; a null class is reported separately from a new code because the fix differs; empty vocabulary → UNKNOWN, checked BEFORE the null count. Live: OK, 15 of 15. ⚠️ **The measured count was wrong in three places** — "closed at 15" counted the `null` group; it is 15 real codes now, 14 at the 2026-07-01 survey. 10 mutations red by name. `docs/DECISIONS.md` 2026-09-09, `docs/RUNBOOK.md` §0, `data/DATA.md` §6.
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
 
+- **Road-cost follow-up brief SENT** — 2026-09-10 (S154). `/home/opc/road_cost_sendback_brief.md` (outside the repo) went out; send date not recorded. **Reply pending — the Q1 rewrite stays held until Q1(a) (centreline vs lane-km) answers.** · `docs/TODO_archive.md`
 - [x] **DECIDED 2026-09-08 — STATE THE UNIT, DO NOT CONVERT: `roadway_ops` stays $9.32/m/yr and the basis publishes as a FLOOR** — DECIDED 2026-09-08 · `docs/TODO_archive.md`
 
 
