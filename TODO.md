@@ -239,20 +239,39 @@ publish on its own, unrelated to any of this — re-pinned.)_
     Task tool's schema when `_FORCE` is set (`FORCE ? t.omit({model:!0}) : t`)
     and logs `Workflow agent model "X" ignored` for workflow agents. Neither var
     is in any `settings.json`, `~/.bashrc` or `~/.profile` — **grepped, absent**
-    — so the harness sets them per session and **this is a launch property, not
-    a repo fact.** ⚠️ **The skill must therefore MEASURE (`env | grep
+    — so **this is a launch property, not a repo fact.** ⚠️ **S152 went one step
+    further and said "the harness sets them per session". That was WRONG — see
+    the S153 correction below.** ⚠️ **The skill must therefore MEASURE (`env | grep
     SUBAGENT`) and branch on the result, not carry either answer as text** —
     the exposure is inheritance in one case and a silent downgrade to the
     weakest model in the other, and those want opposite advice. (The same
     session also found **no `Agent`/`Task` tool exposed at all**, so delegation
     was impossible there rather than merely degraded — a third state the skill
-    has to tolerate.) Measured a **third** time **2026-09-10 (S153)**, again a
-    bridged child session (this one driven from the claude.ai/code web client
-    against the Oracle box): **identical to S152** — same model id, `_FORCE=1`,
-    `CHILD_SESSION=1`. So the run is unset → set → set, and the 09-04 reading is
-    the outlier so far. **This does not make the value quotable** — three
-    samples of a launch property is still a launch property; it only means the
-    measurement step must tolerate the pinned state being the common one.
+    has to tolerate.)
+  - ⚠️ **S153 CORRECTION (2026-09-10) — THE VARS COME FROM PETER'S OWN LAUNCH
+    LINE, AND NOTHING EVER "INVERTED".** `/proc/<pid>/environ` on the serving
+    process shows both vars in its **launch** environment; the *other* Remote
+    Control host on the box (tmux `cc`, PID 1430176) has **neither**. They are
+    set by the command in `/home/opc/fable_remote_control_setup_prompt.md`,
+    written **2026-09-04 (S139)** to enforce the Fable brief's §4 "no subagents"
+    rule:
+    `CLAUDE_CODE_SUBAGENT_MODEL=… CLAUDE_CODE_SUBAGENT_MODEL_FORCE=1 claude
+    --model claude-opus-5 --effort high --disallowed-tools Agent,Task
+    --remote-control 'edmonton-fable-audit'`.
+    **So the 09-04 "unset" and the 09-09 "set" readings were TWO DIFFERENT
+    SESSIONS compared as if they were one** — no drift, no inversion. The same
+    line also explains S152's "no `Agent`/`Task` tool exposed at all", which it
+    recorded as a discovered third state: that is `--disallowed-tools Agent,Task`,
+    a deliberate flag. (`CLAUDE_CODE_CHILD_SESSION=1` **is** harness-set — it is
+    on both hosts.)
+  - **The measure-don't-quote rule SURVIVES, for a better reason:** the value is
+    a property of the launch line, so the skill can read it off the command that
+    started the session — and must, because a session started without those vars
+    has **working subagents on the inherited model**, the opposite exposure.
+    ⚠️ **Check WHICH process you measured** — this box runs two Remote Control
+    hosts with different launches, and `ps | grep claude` does not tell them
+    apart. Walk up from your own shell:
+    `p=$$; while [ "$p" != 1 ]; do readlink -f /proc/$p/exe; p=$(awk '{print $4}' /proc/$p/stat); done`
   - ⚠️ **Hedge the billing claim consistently.** The draft's Step 5 correctly
     calls nested per-model attribution *inferred, not confirmed*, then its
     preamble states it as flat fact. **Unverifiable from here** — the first-party
