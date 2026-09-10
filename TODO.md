@@ -672,6 +672,15 @@ archive"*) is not, and this span is 2,533 lines.
   this is stale.
   - Channel: **`opendata@edmonton.ca`** (portal footer, read 2026-08-25).
     Assessment & Taxation is the *escalation*, not the first stop.
+  - **A SECOND channel, added 2026-09-10 (S154): `infrastructure@edmonton.ca`**
+    (listed on *Development Impact on Infrastructure*). **One email, NOT SENT,
+    not written**, carrying three asks: **Q1(a) bullet 2** (the $600k / $1.9M /
+    $1.5M per km — centreline or lane-km?), the **lane-km-by-road-class table**,
+    and **`DATA_ISSUES.md` G** (the Snow & Ice report's p4 "linear km" vs p16
+    lane km). Detail in the Q1(a) item above. ⚠️ **Deliberately NOT a row in
+    the table below** — that table mirrors `DATA_ISSUES.md`'s numbered issues,
+    and G is still a candidate there. **Q1(a) is the load-bearing ask** — the Q1
+    rewrite is held on it.
 
   | # | issue | blocked on |
   |---|---|---|
