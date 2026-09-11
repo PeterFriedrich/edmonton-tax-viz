@@ -22,7 +22,7 @@ override for testing.
 
 | | Public root | Specialist `/full/` |
 |---|---|---|
-| Views | Money · **Development** | + **Services · Ratio · Uses · Lab** `beta` |
+| Views | Money · **Development** · **Services** *(roads only)* · **Ratio** *(road-metre denominator only)* | + **Uses · Lab** `beta`, plus the 8 non-roads Services rows and the fire-event Ratio denominator |
 | Development extras | — | **Infill opportunity** lens · **Industrial** metric |
 | Lab experiments | — | **vs peer average** (`deviation`) |
 
@@ -30,7 +30,10 @@ override for testing.
 inferred):** it listed Services and Ratio as public, but both were pulled to
 full-only on **2026-07-28** (`CONTROLS_MATRIX.md` §2, `DECISIONS.md`), three
 days after this file was last regenerated. Probed in the running public build:
-`#views` offers exactly `money, development`. ⚠️ **The rest of this file has
+`#views` offers exactly `money, development`. ⚠️ **AND BOTH CAME BACK** —
+Services roads-only 2026-09-02, Ratio roads-only 2026-09-11, through the staged
+return. The row above is updated to the post-return split; it has **not** been
+re-probed, so it is transcribed from those two decisions, not measured. ⚠️ **The rest of this file has
 NOT been re-probed since 2026-07-25** — treat per-view detail below as
 possibly-stale and re-generate from the code before relying on it.
 

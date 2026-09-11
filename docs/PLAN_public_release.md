@@ -96,13 +96,22 @@ a full-only mode of Development).
   its own release, its own review. Ratio and Uses are still out and still return
   separately. See `DECISIONS.md` 2026-09-02 and `SPEC_services.md`
   "Roads returns to the public build".
-- **Full-only:** the **Services**, **Ratio** and **Uses** views · the **Infill**
-  mode + the **Industrial** metric on Development · deep data-detail (validation
-  ratios, modeling quirks, methodology-heavy blurbs).
+  **AMENDED AGAIN 2026-09-11 — Ratio rejoins as the fourth public view, ROADS
+  ONLY** (revenue per road metre; the fire-event denominator stays full-only).
+  Second exercise of the same rule, and the same roads-only shape — but the
+  split lands on the **denominator** rather than on a row, so the public gate is
+  that the `#ratio-denom` picker is **absent** there and `state.ratioDenom`'s
+  `roads` default stands unopposed. **Uses is the one lens still out.** See
+  `DECISIONS.md` 2026-09-11 and `CONTROLS_MATRIX.md` §2.
+- **Full-only:** the **Uses** view · the fire-event **Ratio denominator** and the
+  eight non-roads **Services** rows · the **Infill** mode + the **Industrial**
+  metric on Development · deep data-detail (validation ratios, modeling quirks,
+  methodology-heavy blurbs).
 
 **Superseded 2026-07-28 — the public build is 2 views, not 4, and this is
-LOCKED.** _(Now **3** — Services returned roads-only 2026-09-02 through the
-staged-return rule this very paragraph establishes.)_ Peter: *"2 views is fine for release, lock it in. We'll add the other
+LOCKED.** _(Now **4** — Services returned roads-only 2026-09-02 and Ratio
+roads-only 2026-09-11, both through the staged-return rule this very paragraph
+establishes. Uses is the last one out.)_ Peter: *"2 views is fine for release, lock it in. We'll add the other
 stuff later, like one lens at a time."* Services and Ratio were pulled to
 full-only during release prep; Uses had gone on 07-24. All three provisional tags
 are now settled. **Post-launch the lenses return ONE AT A TIME**, each its own
