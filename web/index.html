@@ -5614,23 +5614,26 @@
               + `<br/><span class="muted">the City does not publish which of `
               + `it is tax-exempt</span>`;
       }
-      // ⚠️ THE TWO ROWS SPLIT ON BUILD, and the split is the whole point.
-      // Both were pulled together on 2026-07-28 for ONE reason — the lens that
-      // explained them was hidden — so the reason expires for each row exactly
-      // when its own lens returns. Services is public again, so SUPPLY is
-      // explicable and comes back; RATIO's lens is still full-only, so the
-      // revenue-per-road-metre row stays gated. Publishing it here while its
-      // view is hidden is the case 2026-07-28 called worse than either
-      // shipping or not shipping it, and that has not changed.
+      // ⚠️ THE TWO ROWS NO LONGER SPLIT ON BUILD — and that is the 2026-07-28
+      // rule running to completion, not a relaxation of it. Both were pulled
+      // together for ONE reason: the lens that explained each was hidden. The
+      // reason expires per row exactly when that row's lens returns. Services
+      // came back 2026-09-02 and took SUPPLY with it; Ratio came back
+      // 2026-09-11 (roads-only, the same staged return) and takes
+      // REVENUE-PER-ROAD-METRE with it — that figure is now the headline of a
+      // view the public build offers, so publishing it here explains it rather
+      // than stranding it. ⚠️ Re-gate this row if Ratio is ever pulled again:
+      // an unexplained ratio on the DEFAULT view is the case 2026-07-28 called
+      // worse than either shipping or not shipping it.
       //
-      // Also revenue-only, for the same reason as the residential share: the
+      // Still revenue-only, for the same reason as the residential share: the
       // second row divides REVENUE by road metres, so it does not belong under
       // an assessed-value map. The supply row is revenue-only for a weaker
       // reason — it simply reads as part of that block — but the pairing is
       // deliberate and predates this change.
       if (isRevenue(state.metric) && p.road_m_per_acre != null) {
         html += `<br/><span class="muted">${p.road_m_per_acre.toFixed(1)} road m / acre</span>`;
-        if (FULL_BUILD && p.road_m_per_acre > 0 && p.revenue_per_acre != null) {
+        if (p.road_m_per_acre > 0 && p.revenue_per_acre != null) {
           const perM = p.revenue_per_acre / p.road_m_per_acre;
           html += `<br/><span class="muted">$${Math.round(perM).toLocaleString()} revenue / road metre</span>`;
         }
@@ -6789,7 +6792,13 @@
       // data offers no choice, so the control stays hidden and roads applies.
       // The Ratio picker opens on fire alone now: its third denominator was the
       // retired roads+fire composite (2026-09-05), leaving road metre | fire event.
-      const ratioDenomShow = v === "ratio" && state.hasFire;
+      // ⚠️ AND ON THE BUILD, since the roads-only public return (2026-09-11): the
+      // surviving choice is fire, which is full-only, so the public build has no
+      // choice to offer and the picker stays hidden there exactly as it does on
+      // roads-only data. This is the whole of the public gate — no control means
+      // no way to move `state.ratioDenom` off its "roads" default, and nothing
+      // persists or URL-restores that field.
+      const ratioDenomShow = v === "ratio" && state.hasFire && FULL_BUILD;
       document.getElementById("ratio-denom-hd").style.display = ratioDenomShow ? "block" : "none";
       document.getElementById("ratio-denom").style.display = ratioDenomShow ? "flex" : "none";
       // The development sub-metric + window + spike pickers (mode-aware:
@@ -7179,18 +7188,24 @@
       // ratio views — hide those buttons rather than offer views that can't
       // render. A file with roads but no stormwater column (pre-2026-07-05)
       // keeps the view and just hides the stormwater row.
-      // SERVICES IS PUBLIC AGAIN as of the roads-only return (Peter) — the first
-      // exercise of the 2026-07-28 staged-return rule, which un-pulls the three
-      // full-only lenses ONE PER RELEASE rather than as a batch. It comes back
-      // carrying roads supply and road cost on both bases and nothing else; the
-      // other eight service rows stay full-only via their `pub` tag. RATIO stays
-      // full-only and keeps the `|| !FULL_BUILD` idiom — it is a separate lens
-      // and gets its own release.
+      // SERVICES IS PUBLIC AGAIN as of the roads-only return (Peter, 2026-09-02)
+      // — the first exercise of the 2026-07-28 staged-return rule, which un-pulls
+      // the three full-only lenses ONE PER RELEASE rather than as a batch. It
+      // comes back carrying roads supply and road cost on both bases and nothing
+      // else; the other eight service rows stay full-only via their `pub` tag.
+      // RATIO IS PUBLIC AGAIN as of 2026-09-11 (Peter) — the SECOND exercise of
+      // the same rule, and roads-only on the same principle: its road-metre
+      // denominator ships, its fire-event denominator does not, so the public
+      // build gets the lens with no denominator picker at all (applyView) and
+      // `state.ratioDenom`'s "roads" default stands unopposed — nothing persists
+      // state, so there is no other way to reach the fire denominator. USES is
+      // the one lens still out, and gets its own release.
+      // ⚠️ Both builds now draw this lens, so `about-src-roads` and
+      // `about-modelled-roads` are load-bearing in BOTH — see the FULL_BUILD
+      // Data & Methods block near the top, which deliberately does not list them.
       if (!state.data.features.some(f => f.properties.road_m_per_acre != null)) {
         document.querySelectorAll('#views button[data-view="services"], #views button[data-view="ratio"]')
           .forEach(b => { b.style.display = "none"; });
-      } else if (!FULL_BUILD) {
-        document.querySelector('#views button[data-view="ratio"]').style.display = "none";
       }
       // The per-control half of the same decision. Hiding the row is not enough
       // on its own — an unchecked-but-present service would still be reachable

@@ -1,6 +1,10 @@
 // Verify the ROADS-ONLY public Services lens (2026-09-02 — SPEC_services.md
 // "Roads returns to the public build"): the first exercise of the 2026-07-28
-// staged-return rule.
+// staged-return rule. Also the ROADS-ONLY public RATIO lens (2026-09-11), the
+// second exercise — same rule, same roads-only shape, but the split lands on
+// the DENOMINATOR rather than on a row: both builds get the lens, only the full
+// build gets the fire-event denominator, and the public gate is that the picker
+// is absent (checks 2, 2b, 2c).
 //   node verify-services-public.js <url>            # public build
 //   node verify-services-public.js <url>?build=full # full build
 //
@@ -57,13 +61,33 @@ function check(name, ok, detail) {
     return !!b && getComputedStyle(b).display !== 'none';
   }));
 
-  // 2. Ratio did NOT come with it — it is a separate lens on its own release.
+  // 2. Ratio followed on its own release (2026-09-11) — the second exercise of
+  //    the staged-return rule, and roads-only the same way Services was. Both
+  //    builds offer the LENS; what splits is the DENOMINATOR (checks 2b/2c).
   const ratioOffered = await page.evaluate(() => {
     const b = document.querySelector('#views button[data-view="ratio"]');
     return !!b && getComputedStyle(b).display !== 'none';
   });
-  check(fullBuild ? 'full build: ratio view offered' : 'public build: ratio view still hidden',
-    fullBuild ? ratioOffered : !ratioOffered);
+  check('ratio view offered in both builds', ratioOffered);
+
+  // 2b. The public gate is the PICKER's absence, so assert the picker, not just
+  //     the value: with no control there is no way off the "roads" default, and
+  //     nothing persists or URL-restores state.ratioDenom. ⚠️ Asserted while the
+  //     RATIO VIEW IS OPEN — applyView sets the display, so checking from any
+  //     other view reads "hidden" for the wrong reason and passes under the bug.
+  await click('#views button[data-view="ratio"]');
+  await page.waitForTimeout(1500);
+  const denomPicker = await page.evaluate(() =>
+    getComputedStyle(document.getElementById('ratio-denom')).display !== 'none');
+  check(fullBuild ? 'full build: ratio denominator picker offered'
+                  : 'public build: ratio denominator picker HIDDEN',
+    fullBuild ? denomPicker : !denomPicker);
+
+  // 2c. And the denominator actually in force. Fire is a full-only service, so
+  //     a public build sitting on the fire denominator would publish a fire
+  //     number with its own row hidden two panels away.
+  check('ratio denominator is roads' + (fullBuild ? ' by default' : ' in public'),
+    await page.evaluate(() => state.ratioDenom === 'roads'));
 
   await click('#views button[data-view="services"]');
   await page.waitForTimeout(1500);
@@ -223,7 +247,10 @@ function check(name, ok, detail) {
   check(`full-only modelled caveat ${fullBuild ? 'shown' : 'hidden'}`,
     fullBuild ? about.otherCaveat : !about.otherCaveat);
 
-  // 10. The Money tooltip split: supply came back, the ratio row did not.
+  // 10. The Money tooltip rows. The 2026-07-28 split is now CLOSED: supply came
+  //     back with Services (2026-09-02), the ratio row with Ratio (2026-09-11).
+  //     Both builds carry both rows, so this no longer branches on the build —
+  //     if Ratio is ever pulled again the ratio row must re-gate with it.
   await click('#views button[data-view="money"]');
   await page.waitForTimeout(1200);
   // ⚠️ tooltipFor takes a deck PICK object, not bare properties — passing the
@@ -236,8 +263,8 @@ function check(name, ok, detail) {
     return t ? t.html : '(tooltipFor returned null)';
   });
   check('money tooltip carries road m / acre', /road m \/ acre/.test(tip));
-  check(`money tooltip ${fullBuild ? 'carries' : 'omits'} revenue / road metre`,
-    fullBuild === /revenue \/ road metre/.test(tip), tip.slice(0, 220));
+  check('money tooltip carries revenue / road metre',
+    /revenue \/ road metre/.test(tip), tip.slice(0, 220));
 
   console.log(`\n${pass} passed, ${fail} failed`);
   console.log(`COMPLETE — ran ${pass + fail} checks`);
