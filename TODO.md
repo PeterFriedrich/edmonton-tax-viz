@@ -271,6 +271,15 @@ publish on its own, unrelated to any of this — re-pinned.)_
     `tmux set-environment -gu`; a clean `--remote-control` launch carries none of
     them. Check `tmux show-environment -g` before reading a tmux-launched
     session's env as a harness property. (`cc` keeps them until it restarts.)
+    ⚠️ **REFINED 2026-09-11 (S154) — the leak was real, but "not harness-set" is
+    wrong for TOOL shells.** The relaunched `fable` process (PID 628276) has **no**
+    `CLAUDE*` var in its launch env and tmux global env is empty — yet every Bash
+    tool shell still shows `CLAUDECODE`, `CLAUDE_CODE_CHILD_SESSION=1`,
+    `..._SESSION_ID`, `..._BRIDGE_SESSION_ID`, `CLAUDE_EFFORT`, `CLAUDE_PID`. The
+    harness injects those into the shells it spawns. **So `env` from a tool shell
+    cannot show a leak; read `/proc/<claude pid>/environ` for the launch env.**
+    The SUBAGENT vars are NOT injected — `env | grep SUBAGENT` from a tool shell
+    is still a valid check for the pin.
   - **2026-09-10: tmux `fable` relaunched as a GENERAL session** (Peter's call —
     the audit finished 2026-09-05, so its flags only restricted ordinary work):
     `claude --model claude-opus-5 --remote-control 'edmonton-tax-viz'` — no

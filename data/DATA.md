@@ -748,7 +748,7 @@ boundary acre** (`road_m_per_acre`).
   12,000 **linear km** of roadways"*. So Taproot 2025's *"linear kilometres"* is
   **not** the only source saying linear; the City says it too, about the same
   inventory (`docs/DATA_ISSUES.md` G). ⚠️ **The alley match does NOT
-  discriminate:** Taproot 2022-05-31 (URL now held) reports alleys adding
+  discriminate:** Taproot 2022-05-31 (`edmonton.taproot.news/briefs/2022/05/31/apparent-jump-in-snow-clearing-kilometres-not-all-that-it-seems`) reports alleys adding
   *"1,250 to 1,300 kilometres to the city's inventory of roads and active
   pathways"* — the reporter's paraphrase of Travis Kennedy, no unit stated — and
   matching the feed's 1,311 alley km says the inventory includes alleys, but
@@ -757,7 +757,7 @@ boundary acre** (`road_m_per_acre`).
   redirects to *Winter Travel*, which says *"more than 12,000 km of roadways"*,
   no unit). The 2020 State & Condition class figures (3,500 / 1,763 / 4,830
   lane-km, relayed) give 2.58 / 1.90 / 1.76 lanes per centreline km; ⚠️ **the
-  2023 edition has no road length figure at all** (dollars, age, condition
+  2023 edition has no road length figure at all** (`edmonton.ca/sites/default/files/public-files/Infrastructure-Inventory-State-and-Condition.pdf`; dollars, age, condition
   only), so that relay has no current primary source. ⚠️ **Every $/km in §13's
   `roadway_ops` is therefore $/LANE-km** — `docs/FINDINGS_road_figures_consolidation.md`
   L2b, and the open call in `TODO.md`.
