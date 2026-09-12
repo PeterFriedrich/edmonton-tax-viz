@@ -5,7 +5,9 @@
 // Checks: control visibility gating, chrome/legend swap, independent
 // anchor recomputation (log p2.5–p97.5 of each kept subset), height
 // parity, fire-floor artifact greying, tooltip prose, persistence across
-// views, residential-lens re-anchoring.
+// views, residential-lens re-anchoring, and the institutional uncertainty
+// band (2026-09-12) including the two 90%-exempt hoods a naive port of Money's
+// consequence threshold would silently drop.
 const { chromium } = require('playwright');
 const [url] = process.argv.slice(2);
 
@@ -189,6 +191,79 @@ function check(name, ok, detail) {
   c = await chrome();
   check('back to roads: chrome restored',
     c.title === 'Edmonton: Revenue per Road Metre' && c.min === '≤ $' + Math.round(roadsInd.lo).toLocaleString());
+
+  // 10. The institutional uncertainty band (2026-09-12). Ratio draws the same
+  //     azure pair Money and Glass do, selected on SHARE ALONE — see the
+  //     instBandedRatio comment for why the consequence tier does not port to a
+  //     log ramp. These checks pin the decision, not just the drawing.
+  const band = await page.evaluate(() => {
+    const ls = buildLayers().filter(Boolean);
+    const b = ls.filter(l => l.id.startsWith('ratio-inst'));
+    const prisms = ls.find(l => l.id === 'ratio-extrusion');
+    const of = n => state.data.features.find(f => f.properties.neighbourhood_name === n);
+    const uofa = of('UNIVERSITY OF ALBERTA'), gb = of('RIVER VALLEY GOLD BAR');
+    return {
+      ids: b.map(l => l.id),
+      opacity: b.map(l => l.props.opacity),
+      pickable: b.map(l => l.props.pickable),
+      prismOpacity: state.prismOpacity,
+      n: state.data.features.filter(f => instBandedRatio(f.properties)).length,
+      uofa: instBandedRatio(uofa.properties),
+      goldBar: instBandedRatio(gb.properties),
+      uofaElev: prisms.props.getElevation(uofa),
+      uofaFill: prisms.props.getFillColor(uofa),
+      bandElev: b.map(l => Math.round(l.props.getElevation(uofa))),
+      blurb: document.getElementById('title-p').textContent,
+    };
+  });
+  check('ratio draws the azure pair', band.ids.length === 2, JSON.stringify(band.ids));
+  // ⚠️ Against state.prismOpacity, not against a literal — this is a GHOST-prism
+  //    view, so a band pinned at 1.0 would sit on top of the composition
+  //    instead of in it (the measured reason Glass rides the same value).
+  check('band rides the ghost opacity',
+    band.opacity.every(o => o === band.prismOpacity), JSON.stringify(band.opacity));
+  check('band is unpickable (hood-hover owns tooltips)',
+    band.pickable.every(v => v === false));
+  // ⚠️ THE REGRESSION GUARD FOR THE THRESHOLD DECISION. Both hoods are 90%
+  //    exempt and BOTH are dropped by a naive port of Money's
+  //    INST_CONSEQUENCE_MIN — U of A shifts 0.229 (log compresses its 9.9x
+  //    span), Gold Bar 0.000 (both endpoints clamp below the p2.5 anchor).
+  //    If someone "restores parity" by adding a consequence term, these go red.
+  check('U of A is banded (naive consequence port would drop it)', band.uofa);
+  check('River Valley Gold Bar is banded (both endpoints clamp)', band.goldBar);
+  check('band selects on share alone', band.n === 16, `${band.n} hoods`);
+  // The ordinary prism must be flattened AND emptied — a ramp-coloured floor
+  // under the band would assert the value the band exists to withhold.
+  check('banded hood is flattened out of ratio-extrusion', band.uofaElev === 0);
+  check('banded hood is fully transparent there',
+    band.uofaFill[3] === 0, JSON.stringify(band.uofaFill));
+  check('the two shells straddle the ratio', band.bandElev[0] < band.bandElev[1],
+    JSON.stringify(band.bandElev));
+  check('blurb explains the azure', /azure/.test(band.blurb));
+
+  // 11. A banded hood must not print a single number, and an ordinary one must.
+  const bandTips = await page.evaluate(() => {
+    const t = n => tooltipFor({ object: state.data.features.find(
+      f => f.properties.neighbourhood_name === n) }).html;
+    return { uofa: t('UNIVERSITY OF ALBERTA'), plain: t('STRATHCONA') };
+  });
+  check('banded tooltip prints a RANGE', / to .*road metre/.test(bandTips.uofa),
+    bandTips.uofa.slice(0, 150));
+  check('banded tooltip carries the provenance caveat',
+    /institutionally-zoned land/.test(bandTips.uofa) &&
+    /does not publish which of it is tax-exempt/.test(bandTips.uofa));
+  // ⚠️ The revenue row moves WITH the headline. A point revenue under a range
+  //    headline would have the tooltip contradict itself in two lines.
+  check('banded revenue row is a range too', / to .*revenue \/ acre/.test(bandTips.uofa));
+  // ⚠️ Scoped to the HEADLINE ROW, not the whole tooltip: the pinned-history
+  //    line ends "click to pin", so a whole-string " to " test passes on the
+  //    wrong text and would go green under a genuinely banded headline.
+  const headline = h => h.split('<br/>')[1] || '';
+  check('an ordinary hood still prints one number',
+    !/ to /.test(headline(bandTips.plain)) && /road metre/.test(headline(bandTips.plain)),
+    headline(bandTips.plain));
+  check('and the banded headline is the one carrying the range',
+    / to /.test(headline(bandTips.uofa)), headline(bandTips.uofa));
 
   console.log(`\n${pass} passed, ${fail} failed`);
   await browser.close();

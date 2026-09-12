@@ -1399,6 +1399,20 @@
         " mostly institutionally-zoned land — the roll does not say whether " +
         "that revenue is levied, so the solid part is what stands either way.";
     };
+    // Ratio's azure needs the same sentence as Glass's, for the same reason
+    // stated there — a reader who meets a colour that is not on the ramp reads
+    // it as a value unless told otherwise. Counted live rather than written
+    // down: the band's membership follows the data, so a hard-coded number
+    // would go stale on a refresh that changes one hood's zoning mix.
+    const ratioInstBlurb = () => {
+      const n = state.data.features.filter(f => instBandedRatio(f.properties)).length;
+      if (!n) return "";
+      return ` ${n} neighbourhood${n === 1 ? " is" : "s are"} drawn as a pair of ` +
+        "azure prisms instead: a quarter or more of their revenue sits on " +
+        "institutionally-zoned land, and the roll does not say whether it is " +
+        "levied — so the lower prism is what stands either way and the upper " +
+        "one is the as-levied reading.";
+    };
     // Phrase it as what KEEPS the highlight. The negative form does not
     // survive two bands: "further than 600 m of LRT and within 800 m of a
     // school" reads as a contradiction.
@@ -2999,6 +3013,36 @@
       && exemptFrac(p) >= EXEMPT_UNCERTAIN_MIN
       && instShiftMoney(p) >= INST_CONSEQUENCE_MIN;
 
+    // Ratio's band (Peter, 2026-09-12: the lens "doesn't line up color wise
+    // with money. That's a big inconsistency"). Its numerator IS revenue, so
+    // unlike Money there is no cut to gate on — the doubt applies always.
+    //
+    // ⚠️ SHARE ALONE — deliberately ONE tier where Money has two, and the
+    // divergence is measured, not stylistic. Money gates geometry on
+    // INST_CONSEQUENCE_MIN ("do the two worlds draw different prisms?") read off
+    // its sqrt-from-zero ramp. That question DEGENERATES on a log ramp: the
+    // shift is ln(v) − ln(v(1−e)) = −ln(1−e) over logSpan, which is
+    // algebraically INDEPENDENT of the hood's own value — not a second question
+    // at all, just a share test in a consequence costume (it reduces to
+    // e ≥ 0.469 at today's anchors).
+    //
+    // ⚠️ And where it does NOT degenerate — at the ramp's clamps — it selects
+    // BACKWARDS, dropping the very hoods it exists to catch. Measured on the
+    // 2026-09-12 data: UNIVERSITY OF ALBERTA (90% exempt) shifts 0.229, just
+    // under the 0.25 bar, because log compresses its 9.9x span by design; RIVER
+    // VALLEY GOLD BAR (90% exempt) shifts 0.000, because BOTH endpoints fall
+    // below the p2.5 anchor and clamp to the same colour. Porting Money's
+    // threshold would band 6 hoods and exclude both 90% cases.
+    //
+    // So the provenance tier carries it alone — the same EXEMPT_UNCERTAIN_MIN
+    // that gates Money's WORDS gates Ratio's geometry. 16 hoods, and the useful
+    // invariant that no hood can be uncertain in the tooltip and certain on the
+    // map. ⚠️ Do not "restore parity" by adding a consequence term here without
+    // re-measuring: the arithmetic above is why there isn't one.
+    // Pinned by verify-ratio-denom.js check 10 (both 90% hoods by name).
+    const instBandedRatio = p =>
+      ratioKept(p) && exemptFrac(p) >= EXEMPT_UNCERTAIN_MIN;
+
     // ⚠️ NOT the Lab's white, and the difference is measured, not stylistic.
     // White was validated against the deviation lens's DIVERGING teal↔orange
     // ramp; Money runs three SEQUENTIAL ramps that occupy the whole lightness
@@ -3222,6 +3266,46 @@
         mk("glass-inst-levied", d => d[col] * (1 - d[fcol])),
         mk("glass-inst-cap", d => d[col]),
       ];
+    }
+
+    // Ratio's pair. ⚠️ SHAPED ON GLASS, NOT ON MONEY, because Ratio is a
+    // ghost-prism view like Glass and not a solid-prism one:
+    //   · the azure rides `state.prismOpacity` — Glass's measured reason
+    //     applies unchanged (at a fixed 1.0 it stops reading as part of the
+    //     composition and becomes an object sitting on top of it), and it is
+    //     sharper here, where the default is 15% and the roads are the subject.
+    //   · UNPICKABLE, because hoodHoverLayer already covers every footprint
+    //     exactly as the plane does in Glass.
+    // ⚠️ Money's pickable + bandHover machinery must NOT be ported. It exists
+    // because a banded hood's flattened footprint would otherwise fall through
+    // to whatever hood is BEHIND it (measured at pitch 55 over the U of A) —
+    // a hazard Ratio does not have, since the flat hover layer is always there.
+    function ratioInstBandLayers() {
+      const banded = state.data.features.filter(f => instBandedRatio(f.properties));
+      if (!banded.length) return [];
+      const es = ratioScale().elevationScale;
+      const mk = (id, exempt) => new deck.GeoJsonLayer({
+        id,
+        data: banded,
+        extruded: true,
+        filled: true,
+        stroked: false,
+        wireframe: true,
+        getElevation: f => ratioOf(f.properties)
+          * (exempt ? 1 - exemptFrac(f.properties) : 1),
+        elevationScale: es,
+        getFillColor: INST_OUTLINE_COLOR.concat([INST_BAND_ALPHA]),
+        getLineColor: INST_OUTLINE_COLOR.concat([255]),
+        getLineWidth: 30,
+        lineWidthMinPixels: 2,
+        opacity: state.prismOpacity,
+        material: { ambient: 0.55, diffuse: 0.6, shininess: 32, specularColor: [60, 60, 70] },
+        pickable: false,
+        updateTriggers: { getElevation: state.ratioDenom },
+      });
+      // Exempt (the lower endpoint) first, so the taller as-levied prism blends
+      // OVER the certain base — Money's order and Money's naming.
+      return [mk("ratio-inst-exempt", true), mk("ratio-inst-levied", false)];
     }
     // The rate with institutional revenue removed — the other coherent world.
     const deviationRateExempt = p =>
@@ -4404,10 +4488,16 @@
           // meaningless or off the fiscal comparison). Lens on: non-residential
           // hoods take the uniform fade grey (colour anchors rescale to the
           // residential subset via ratioScale; height untouched).
-          getElevation: f => ratioKept(f.properties) ? ratioOf(f.properties) : 0,
+          // ⚠️ Banded hoods are flattened and EMPTIED here, and the azure pair
+          // carries them instead — Money's rule at its own `metric-extrusion`.
+          // Fully transparent rather than a dim slab: a ramp-coloured floor
+          // under the band would assert the very value the band withholds.
+          getElevation: f => (instBandedRatio(f.properties) || !ratioKept(f.properties))
+            ? 0 : ratioOf(f.properties),
           elevationScale: ratioScale().elevationScale,
           getFillColor: f => {
             const p = f.properties;
+            if (instBandedRatio(p)) return [0, 0, 0, 0];
             return ratioKept(p) ? rampColorAt(ratioT(ratioOf(p))) : SET_ASIDE_COLOR;
           },
           opacity: state.prismOpacity,
@@ -4416,7 +4506,8 @@
           updateTriggers: { getFillColor: [state.ramp, state.ratioDenom],
                             getElevation: [state.ratioDenom] },
         });
-        return [...roadLayers(true), ratioPrisms, hoodHoverLayer(), ...labelLayer()];
+        return [...roadLayers(true), ratioPrisms, ...ratioInstBandLayers(),
+                hoodHoverLayer(), ...labelLayer()];
       }
 
       // --- money view (default): the classic metric prisms -----------------
@@ -5395,12 +5486,33 @@
               (p[d.col] != null ? ` (${p[d.col].toFixed(d.floor < 1 ? 3 : 1)})` : "");
           return { className: "tip", html: name + `<span class="muted">${why}</span>` };
         }
-        return {
-          className: "tip",
-          html: name + d.fmt(ratioOf(p)) +
-                `<br/><span class="muted">$${Math.round(p.revenue_per_acre).toLocaleString()} revenue / acre</span>` +
-                `<br/><span class="muted">${d.component(p)}</span>`,
-        };
+        // ⚠️ A BANDED HOOD MUST NOT PRINT A SINGLE NUMBER — Money's rule at its
+        // own headline, and the two azure prisms say the same thing in
+        // geometry. Low end first so it never reads high-to-low. ⚠️ The
+        // revenue row moves WITH the headline: leaving it a point value would
+        // have the tooltip derive a range from a certainty it just asserted.
+        // The unit word is printed once, by `d.fmt` on the high end, so the
+        // range can never drift from the point form above it.
+        const banded = instBandedRatio(p);
+        const money = v => "$" + Math.round(v).toLocaleString();
+        const net = 1 - exemptFrac(p);
+        const rows = [
+          banded ? `<b>${money(ratioOf(p) * net)} to ${d.fmt(ratioOf(p))}</b>`
+                 : d.fmt(ratioOf(p)),
+          `<span class="muted">` + (banded
+            ? `${money(p.revenue_per_acre * net)} to ${money(p.revenue_per_acre)} revenue / acre`
+            : `${money(p.revenue_per_acre)} revenue / acre`) + `</span>`,
+          `<span class="muted">${d.component(p)}</span>`,
+        ];
+        // The provenance caveat, word for word as Money states it — one lens
+        // must not describe the same doubt in different terms.
+        if (exemptFrac(p) >= EXEMPT_UNCERTAIN_MIN) {
+          rows.push(`<span class="muted">${Math.round(exemptFrac(p) * 100)}% of ` +
+                    `revenue is on institutionally-zoned land</span>`);
+          rows.push(`<span class="muted">the City does not publish which of ` +
+                    `it is tax-exempt</span>`);
+        }
+        return { className: "tip", html: name + rows.join("<br/>") };
       }
 
       if (state.view === "development") {
@@ -6023,7 +6135,7 @@
       if (state.view !== "ratio") return;
       overlay.setProps({ layers: buildLayers() });
       document.getElementById("title-h").textContent = ratioDenom().title;
-      document.getElementById("title-p").textContent = ratioDenom().blurb;
+      document.getElementById("title-p").textContent = ratioDenom().blurb + ratioInstBlurb();
       refreshLegend();
     }
 
@@ -6832,7 +6944,7 @@
       document.getElementById("title-p").textContent =
         v === "glass" ? glassBlurb() :
         v === "services" ? servicesBlurb() :
-        v === "ratio" ? ratioDenom().blurb :
+        v === "ratio" ? ratioDenom().blurb + ratioInstBlurb() :
         v === "uses" ? usesBlurb() :
         v === "development" ? devBlurb() :
         v === "change" ? changeBlurb() :
