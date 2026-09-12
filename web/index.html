@@ -5614,17 +5614,17 @@
               + `<br/><span class="muted">the City does not publish which of `
               + `it is tax-exempt</span>`;
       }
-      // ⚠️ THE TWO ROWS NO LONGER SPLIT ON BUILD — and that is the 2026-07-28
-      // rule running to completion, not a relaxation of it. Both were pulled
-      // together for ONE reason: the lens that explained each was hidden. The
-      // reason expires per row exactly when that row's lens returns. Services
-      // came back 2026-09-02 and took SUPPLY with it; Ratio came back
-      // 2026-09-11 (roads-only, the same staged return) and takes
-      // REVENUE-PER-ROAD-METRE with it — that figure is now the headline of a
-      // view the public build offers, so publishing it here explains it rather
-      // than stranding it. ⚠️ Re-gate this row if Ratio is ever pulled again:
-      // an unexplained ratio on the DEFAULT view is the case 2026-07-28 called
-      // worse than either shipping or not shipping it.
+      // ⚠️ THE TWO ROWS STILL SPLIT ON BUILD, and the reason is no longer the
+      // 2026-07-28 one. Both were pulled together because the lens explaining
+      // each was hidden; SUPPLY came back when Services returned (2026-09-02),
+      // and that expiry argument said this row should follow when Ratio
+      // returned (2026-09-11). It was un-gated on that reasoning and PETER
+      // REVERSED IT the same day: *"Yeah I don't want the extra tooltip on
+      // money."* So the gate stands on a DIFFERENT footing now — a judgement
+      // about how much the default view's tooltip should carry, not about
+      // whether the number is explicable. ⚠️ Do not "fix" this back by
+      // re-running the expiry rule: the rule is satisfied and was overruled.
+      // The tooltip-weight call is Peter's and needs asking, not deriving.
       //
       // Still revenue-only, for the same reason as the residential share: the
       // second row divides REVENUE by road metres, so it does not belong under
@@ -5633,7 +5633,7 @@
       // deliberate and predates this change.
       if (isRevenue(state.metric) && p.road_m_per_acre != null) {
         html += `<br/><span class="muted">${p.road_m_per_acre.toFixed(1)} road m / acre</span>`;
-        if (p.road_m_per_acre > 0 && p.revenue_per_acre != null) {
+        if (FULL_BUILD && p.road_m_per_acre > 0 && p.revenue_per_acre != null) {
           const perM = p.revenue_per_acre / p.road_m_per_acre;
           html += `<br/><span class="muted">$${Math.round(perM).toLocaleString()} revenue / road metre</span>`;
         }
