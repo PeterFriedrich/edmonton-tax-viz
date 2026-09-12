@@ -247,10 +247,12 @@ function check(name, ok, detail) {
   check(`full-only modelled caveat ${fullBuild ? 'shown' : 'hidden'}`,
     fullBuild ? about.otherCaveat : !about.otherCaveat);
 
-  // 10. The Money tooltip rows. The 2026-07-28 split is now CLOSED: supply came
-  //     back with Services (2026-09-02), the ratio row with Ratio (2026-09-11).
-  //     Both builds carry both rows, so this no longer branches on the build —
-  //     if Ratio is ever pulled again the ratio row must re-gate with it.
+  // 10. The Money tooltip split, which SURVIVES the Ratio return. Supply came
+  //     back with Services (2026-09-02). The ratio row briefly followed Ratio
+  //     public on the same expiry argument and Peter reversed it the same day
+  //     (2026-09-11) — the gate now rests on tooltip weight, not on whether the
+  //     lens explaining it ships. So this still branches on the build, and a
+  //     future Ratio pull/return must NOT move it without asking.
   await click('#views button[data-view="money"]');
   await page.waitForTimeout(1200);
   // ⚠️ tooltipFor takes a deck PICK object, not bare properties — passing the
@@ -263,8 +265,8 @@ function check(name, ok, detail) {
     return t ? t.html : '(tooltipFor returned null)';
   });
   check('money tooltip carries road m / acre', /road m \/ acre/.test(tip));
-  check('money tooltip carries revenue / road metre',
-    /revenue \/ road metre/.test(tip), tip.slice(0, 220));
+  check(`money tooltip ${fullBuild ? 'carries' : 'omits'} revenue / road metre`,
+    fullBuild === /revenue \/ road metre/.test(tip), tip.slice(0, 220));
 
   console.log(`\n${pass} passed, ${fail} failed`);
   console.log(`COMPLETE — ran ${pass + fail} checks`);

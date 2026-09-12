@@ -134,7 +134,8 @@ lenses" pass.
 | **Lab** view + every experiment in it (`#labpick` / `#labcut`) | ❌ _(2026-08-11 — unfinished by definition)_ | ✅ `beta` |
 | **`#peek`, the touch-only peek card** | ✅ | ✅ | _(gated on `(hover: none)`, not on build — invisible to every mouse in both)_ |
 | **Industrial** metric on Development | ❌ | ✅ |
-| Money tooltip's **road m/acre + $/road metre** rows | ✅ _(the 2026-07-28 split is CLOSED: supply returned with Services 2026-09-02, the ratio row with Ratio 2026-09-11)_ | ✅ |
+| Money tooltip's **road m/acre** row | ✅ _(returned with Services, 2026-09-02)_ | ✅ |
+| Money tooltip's **$/road metre** row | ❌ _(un-gated with Ratio 2026-09-11 on the expiry rule and **reversed by Peter the same day** — the gate is now a tooltip-weight call about the default view, NOT the 2026-07-28 hidden-lens one. Do not re-derive it open.)_ | ✅ |
 | Data & Methods: modelled service-cost/stormwater/water caveat; fire + transit source credits | ❌ _(still full-only)_ | ✅ |
 | Data & Methods: **road** source credit (`#about-src-roads`) + **road-cost modelled caveat** (`#about-modelled-roads`) | ✅ _(2026-09-02 — REQUIRED, not optional: the public map draws the network and colours by two modelled cost columns)_ | ✅ |
 | Deep data-detail (validation ratios, modeling quirks, methods-heavy blurbs) | trimmed to honest labels | ✅ full |
@@ -180,6 +181,13 @@ with Ratio (2026-09-11). ⚠️ **Walk the same three places on the way back in*
 and ask of each residue *which lens explained this?* — a row left gated after
 its lens returns is as wrong as one shipped while its lens was hidden, just
 silent instead of visible.
+
+⚠️ **But expiry LICENSES the change, it does not AUTHORISE it — ASK.** The
+`$ revenue / road metre` row expired correctly on 2026-09-11 and Peter reversed
+it the same day (*"Yeah I don't want the extra tooltip on money"*). Explicable
+is necessary, not sufficient: how much the DEFAULT view's tooltip should carry
+is a weight judgement, and the expiry rule cannot make it. **Propose a residue's
+return; do not ship it inside the lens's own change.**
 
 ---
 

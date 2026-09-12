@@ -771,10 +771,12 @@ alternative denominator (fire event) is already a full-only service, so
 - ❌ **`$X revenue / road metre` stays gated.** It is Ratio's headline metric
   and Ratio is still full-only; publishing it on the default public view while
   hiding its lens is the case 2026-07-28 called *worse than either shipping or
-  not shipping it*. ⚠️ **EXPIRED 2026-09-11 — the row is public now**, because
-  Ratio is: the gate's stated condition was the hidden lens, so it fell the day
-  the lens returned, exactly as the supply row's did here. The 2026-07-28 split
-  is closed. **Re-gate it if Ratio is ever pulled again.**
+  not shipping it*. ⚠️ **STILL GATED, on a NEW footing (2026-09-11).** The
+  stated condition did expire when Ratio returned, and the row was un-gated on
+  that reasoning — Peter reversed it the same day (*"Yeah I don't want the extra
+  tooltip on money"*). It is full-only because of what the DEFAULT view's
+  tooltip should carry, not because its lens is hidden. **Do not re-derive it
+  open from the expiry rule; that rule is already satisfied and was overruled.**
 - ✅ **The road source credit returns to Data & Methods**, split out of
   `#about-src-services` into its own `#about-src-roads` span. The public map now
   draws the road network and colours by it, so the attribution is no longer
