@@ -756,7 +756,12 @@ tooltip row, so `state.services[k]` is cleared too. That is what actually keeps
 a full-only number off the public build.
 
 **The Ratio view stays full-only** and keeps the `|| !FULL_BUILD` idiom. It is a
-separate lens and gets its own release.
+separate lens and gets its own release. ⚠️ **SUPERSEDED 2026-09-11 — it took
+that release and is now public, roads-only**, the second exercise of the same
+rule. It needed no `pub` tag: its split lands on the DENOMINATOR, and the only
+alternative denominator (fire event) is already a full-only service, so
+`ratioDenomShow` gains `&& FULL_BUILD` and the picker's absence is the gate.
+`DECISIONS.md` 2026-09-11, `CONTROLS_MATRIX.md` §2.
 
 ### What came back with it, and what deliberately did not
 
@@ -766,7 +771,10 @@ separate lens and gets its own release.
 - ❌ **`$X revenue / road metre` stays gated.** It is Ratio's headline metric
   and Ratio is still full-only; publishing it on the default public view while
   hiding its lens is the case 2026-07-28 called *worse than either shipping or
-  not shipping it*.
+  not shipping it*. ⚠️ **EXPIRED 2026-09-11 — the row is public now**, because
+  Ratio is: the gate's stated condition was the hidden lens, so it fell the day
+  the lens returned, exactly as the supply row's did here. The 2026-07-28 split
+  is closed. **Re-gate it if Ratio is ever pulled again.**
 - ✅ **The road source credit returns to Data & Methods**, split out of
   `#about-src-services` into its own `#about-src-roads` span. The public map now
   draws the road network and colours by it, so the attribution is no longer

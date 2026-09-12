@@ -257,7 +257,16 @@ the drop 45.1 → 37.9 is real (the blurb collapse); the rest of the way to 27.9
 is the method correcting its own double counting. **The default phone render is
 not the problem.**
 
-⚠️ **THE PUBLIC BUILD CANNOT REACH THE WORST STATE AT ALL.** Services and Ratio
+⚠️ **THIS PARAGRAPH IS SUPERSEDED — MEASURED UNDER A 2-BUTTON PUBLIC BUILD THAT
+NO LONGER EXISTS.** Services returned to the public build roads-only on
+2026-09-02 and Ratio on 2026-09-11, so **public `#views` = Money · Development ·
+Services · Ratio**, and the Services-unfolded 53.1% state IS publicly reachable
+now. ⚠️ **The public ceiling below is therefore stale and NOT re-measured** —
+treat 52.3% as a floor until someone re-probes the public build. The percentages
+themselves were measured per view and do not move; what moved is which of them
+the public root can reach. What follows is the original 2026-08-04 finding:
+
+Services and Ratio
 are full-only since 2026-07-28 (`|| !FULL_BUILD`, `web/index.html` — the
 `applyView` data-presence gate), so **public `#views` = Money · Development**.
 A public phone user's worst reachable state is **52.3%**, and only by unfolding
@@ -492,7 +501,12 @@ Ordered; each step is independently shippable and desktop-safe.
        Options, and they fold away again. The **default** render, which is what
        a phone user actually meets, is **27.9%**.
      - **The public build cannot reach the worst state** (Services/Ratio are
-       full-only); its ceiling is 52.3%, rendered clean.
+       full-only); its ceiling is 52.3%, rendered clean. ⚠️ **No longer true —
+       both lenses returned public (2026-09-02 / 2026-09-11) and the ceiling is
+       un-re-measured.** See the superseded banner above the coverage table.
+       This argument's *conclusion* (bottom sheet not worth the desktop
+       regression risk) never rested on the ceiling alone, but the ceiling
+       figure must not be quoted again as measured.
      - Against that, a bottom sheet is a refactor of **shared desktop+mobile
        DOM** (`CONTROLS_MATRIX.md`: grouping drives both), i.e. real desktop
        regression risk to fix a state the user can dismiss.
@@ -548,7 +562,9 @@ primary switch.
 
 (Interacts with: Uses pulled to full-only 2026-07-24, then **Services and Ratio
 pulled too on 2026-07-28** — so ⚠️ **public `#views` is TWO buttons, Money ·
-Development**, not the four this line used to claim. Corrected 2026-08-04 after
+Development**, not the four this line used to claim. ⚠️ **And now FOUR again,
+by a different route: Services returned roads-only 2026-09-02, Ratio roads-only
+2026-09-11 — the staged return, not a reversal. Uses is still out.** Corrected 2026-08-04 after
 measuring the live build; the gate is `|| !FULL_BUILD` in `applyView`.
 `DECISIONS.md`.)
 
