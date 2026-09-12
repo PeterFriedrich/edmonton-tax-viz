@@ -1,6 +1,6 @@
 // One-off: screenshot the Ratio view under each denominator (roads | fire),
-// prisms at 60% so the prism colours are visible (default 5% ghosts are
-// near-invisible by design). node shot-ratio-denom.js <url> <out-prefix>
+// prisms at 60% so the prism colours are visible (the 15% ghost default --
+// 5% before 2026-09-12 -- is deliberately faint). node shot-ratio-denom.js <url> <out-prefix>
 // → <out-prefix>-roads.png, <out-prefix>-fire.png
 // (the servicecost denominator was retired 2026-09-05)
 const { chromium } = require('playwright');

@@ -880,7 +880,7 @@
     // (collector + local) segments colour by their hood's road_m_per_acre on
     // the active ramp — LINEAR, clamp = p97.5 (FINDINGS §6.3); arterials
     // neutral (shared infrastructure, no metric). "ratio": the stage-3
-    // synthesis — ghost prisms (default 5% opacity, slider-adjustable) of
+    // synthesis — ghost prisms (default 15% opacity, slider-adjustable) of
     // revenue per unit of the PICKED levy-funded service (road metre |
     // fire event — RATIO_DENOMS below) over the network in all-neutral
     // grey. Road geometry lazy-loads from ROADS_URL on first services/ratio
@@ -1221,7 +1221,7 @@
       ratio: {
         title: null, // denominator-driven — ratioDenom().title
         blurb: null, // denominator-driven — ratioDenom().blurb
-        opacity: 5, // ghost prisms by default; slider adjusts
+        opacity: 15, // ghost prisms by default; slider adjusts (5 -> 15, Peter 2026-09-12)
       },
       uses: {
         title: "Edmonton: Zoned Land Use",

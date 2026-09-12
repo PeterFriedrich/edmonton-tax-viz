@@ -98,8 +98,10 @@ button greys out, state persists and re-applies on leaving). Two effects when on
   and the log colour anchors rescale to the **residential kept subset** —
   ≤ $258 … $916+ vs the full set's $264 … $3,253 (FINDINGS §6.4: the ratio's entire
   high tail is non-residential land). Off-scale hoods (set-aside / below the road
-  floor) stay dark grey + flat regardless of lens. At the default 5% ghost opacity
-  the fade is near-invisible; it reads at higher slider values.
+  floor) stay dark grey + flat regardless of lens. At the then-default 5% ghost opacity
+  the fade was near-invisible; it read at higher slider values. ⚠️ **The default is 15%
+  as of 2026-09-12** (Peter) — that sentence was measured at 5% and has NOT been
+  re-measured at 15%, so whether the fade now reads at the default is unknown.
 - Drives off `is_residential` (≥0.50 residential zoned area; see `DATA.md` §5);
   orthogonal to the set-aside flag by construction.
 - **Done 2026-07-07:** the "Color Adjustment vs lens controls" hierarchy + self-describing
