@@ -71,7 +71,7 @@ control models (Roads checkbox + opacity slider; slider-at-0% roads-only
 mode), Peter settled on **three discrete views** — **Money** (the classic
 prisms, opaque), **Roads** (the network alone, access roads ramp-coloured by
 `road_m_per_acre`, no prism layers at all), and **Ratio** (stage 3: ghost
-prisms — default 5% opacity, slider-adjustable — of **revenue per road
+prisms — default 15% opacity (5% until 2026-09-12), slider-adjustable — of **revenue per road
 metre** over the all-neutral network). *2026-07-05: Roads GENERALIZED to the
 **Services view*** — per-service checkboxes (Roads, Stormwater; the original
 stackable idea, one level down), a "colour" radio picking which checked

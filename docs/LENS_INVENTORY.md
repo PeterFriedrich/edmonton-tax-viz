@@ -140,7 +140,7 @@ Ghost prisms of revenue-per-unit over the neutral road network.
   fire event** · **Per service $** (a coverage multiple — reads ≫1× because only
   two services are measured). Shown only when the data offers a real choice
   (`hasFire || hasSvcCost`); roads-only data hides it.
-- **Prism-opacity slider** (`#prism-row`, default 5%) — this is the one view that
+- **Prism-opacity slider** (`#prism-row`, default 15% — was 5% until 2026-09-12) — this is the one view that
   also shows the "Money plane" header.
 - `#toggle` and `#coloradj` hidden — the Options panel holds only `#layers`.
 - **Combinations:** **3** denominators (× slider, continuous). _Was 6 until
