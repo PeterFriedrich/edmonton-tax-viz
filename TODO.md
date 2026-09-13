@@ -437,6 +437,41 @@ and there are currently zero closed top-level items — verified by running it o
 an isolated copy), but the hand rule in `CLAUDE.md` (*"move its body to the
 archive"*) is not, and this span is 2,533 lines.
 
+- [ ] **RATIO vs MONEY — the two remaining colour mismatches, DEFERRED by Peter
+  2026-09-12 ("eh leave it till later").** Found while fixing the third (the
+  institutional band, now shipped — `DECISIONS.md` 2026-09-12). Both are
+  measured, neither is started. Same palette in both views; what differs is what
+  the ramp MEANS:
+  - **(a) Anchors + transform.** Money is sqrt from **true zero**, user-
+    toggleable to linear. Ratio is **log from p2.5**, hardcoded. So the darkest
+    colour means *$0* on one view and *"$268/road metre or less"* on the other,
+    and **9 kept hoods pile up at that floor rendering identically** (RIVER
+    VALLEY GOLD BAR at $161 draws the same as a hood at $268, 1.7x apart); 9 more
+    clamp at the top. The legend does label it `≤ $268`, so it is disclosed, not
+    hidden. ⚠️ **The log was chosen deliberately** (`FINDINGS` §6.4: raw skew
+    19.7, log 0.32) — changing it will flatten the visible spread hard, so
+    **re-measure the distribution before touching it**; this is not a one-line
+    swap.
+  - **(b) `#coloradj` is hidden in Ratio**, so a reader who sets "Colour: linear"
+    on Money switches to Ratio and silently gets log anyway, with no control and
+    no indication the setting stopped applying. Independent of (a) and much
+    smaller — but note it cannot simply be shown until (a) decides what the
+    toggle would even switch between here.
+  ⚠️ **Do not treat (a) as a bug to fix on sight** — it is a live design
+  question (is cross-lens colour comparability worth flattening the lens's own
+  signal?), and Peter has seen it and chosen to defer.
+
+- [ ] **RE-MEASURE the mobile coverage ceiling — the 2026-08-04 figure is stale
+  by construction.** `docs/MOBILE_USABILITY.md` measured "the public build
+  cannot reach the worst state" and a **52.3%** public ceiling when public
+  `#views` was TWO buttons. It is now **four** (Services returned 2026-09-02,
+  Ratio 2026-09-11), so the Services-unfolded **53.1%** state is publicly
+  reachable and the ceiling is simply unknown. Flagged in place 2026-09-11
+  rather than re-derived, because the per-view percentages still stand and only
+  reachability moved. **The work is one re-probe of the live public build**, not
+  a re-measurement of every state. ⚠️ The bottom-sheet refusal that cites this
+  ceiling did not rest on it alone, so this does not re-open that decision.
+
 - [ ] **INVESTIGATE — `lot_size` holds ownership shares for an unknown number of
   records; 7,984 rows are under 1 m².** Opened 2026-09-01, found by the
   50 m Glass grid (`docs/DATA_ISSUES.md` §E has the full measurement).
