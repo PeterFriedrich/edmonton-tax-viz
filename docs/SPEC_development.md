@@ -526,19 +526,52 @@ machinery applies. The plot-against-the-year-value rule still does.
 **61% of hood-years are exactly zero**; the median hood has 4 non-zero years of
 17 and 46 units total. Growth hoods read well (Chappelle, Laurel, Secord:
 15–17 non-zero years), mature hoods read as flat-with-spikes (informative — the
-Development lens's own argument), but ~50 single-year hoods have nothing a line
-can carry. **Gate the chart on a minimum non-zero-year count and give those
-hoods the number instead** — a line through one point is a shape the reader will
-read as a trend.
+Development lens's own argument).
 
-⚠️ **The sparkline is a PROMISE.** `tooltipFor`'s invariant is that a teaser
-only rides where the panel draws what it teases (the 2026-08-16 defect: hover
-plotted assessment share while the click delivered a revenue breakdown). So the
-sparkline and the history panel ship **together**, or neither. Reusing
-`sparklineSvg`/`temporalGeom` needs their hardwired `t.share` + `fmtPct` made
-into parameters — see `SPEC_temporal.md` §2's two silent-failure invariants
-before touching them. Note also that temporal history is full-build only while
-Development is public: this ships a new **public** data file.
+### As BUILT 2026-09-14 — columns, and what that changed
+
+⚠️ **The chart is COLUMNS, zero-based — not the temporal lens's line, and not
+`temporalGeom`.** Two differences make sharing that code wrong:
+
+1. This is an annual **FLOW** of discrete counts; assessment is a continuous
+   **STOCK**. A line interpolates between its points, which for permits draws
+   construction in years that had none — and with 61% of hood-years at zero
+   that is the common case, not an edge case.
+2. `temporalGeom` scales to the series' own min..max — a **non-zero baseline**,
+   correct for share (`SPEC_temporal.md` §2 invariant 2) and a lie for counts,
+   where bar LENGTH is the quantity.
+
+⚠️ **This SPEC originally called for a minimum non-zero-year gate. Choosing
+columns RETIRED it.** That gate existed because a line through one point implies
+a trend; a single column does not — it reads as exactly what it is. So the only
+hoods that get words instead of a chart are the **all-zero** ones, which get
+"No new homes permitted here" rather than an empty 28px box that would read as a
+broken chart. A design choice one level up dissolved the rule, rather than the
+rule needing enforcement.
+
+Both renderers keep the invariant `SPEC_temporal.md` §2 pins for the line:
+**x comes from the year VALUE, never the array index.** This series is
+contiguous today, so an index would agree by accident and stop agreeing silently
+the moment a year is dropped.
+
+⚠️ **The sparkline is a PROMISE**, so it ships with the panel or not at all
+(`tooltipFor`'s invariant — the 2026-08-16 defect where hover plotted assessment
+share while the click delivered a revenue breakdown). Four surfaces had to agree,
+and the last two are the ones that bite:
+- `openTemporal` / `syncPinnedPanel` — Development's series takes precedence
+  over the assessment history under that lens.
+- `syncDevChrome` calls `syncPinnedPanel`, because the chart follows the
+  units/permits/industrial picker; without it the pinned panel keeps the old
+  series under the new label.
+- **`#peek-go`** — on touch there is no hover, so the peek card is the only
+  readout; without a Development branch it promised "See assessment history" and
+  opened the permit chart.
+- **`syncHoodModePod`** gates on `temporalData || devHistoryData`, not
+  `temporalData` alone: a deploy missing `temporal.json` would otherwise hide the
+  mode control while Development's panel worked.
+
+Temporal history is full-build only while Development is public, so this ships a
+new **public** data file (49 kB). Verified by `_probe-devhist.js`, 25/25.
 
 ### Stock-age spikes on the detail grid (added 2026-07-17, **WITHDRAWN 2026-07-27**)
 
