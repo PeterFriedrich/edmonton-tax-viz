@@ -641,3 +641,121 @@ def export_dev_grid(
     logger.info("Wrote %s: %d cells, %.2f MB",
                 out_path.name, len(rows), stats["bytes"] / 1e6)
     return stats
+
+
+def export_dev_history(
+    permits_csv: str | Path,
+    out_path: str | Path,
+    years: tuple[int, ...],
+    boundary_names: set[str] | None = None,
+) -> dict:
+    """Per-year new-supply series per neighbourhood — the Development view's
+    history panel + hover sparkline (docs/SPEC_development.md "Lens A history").
+
+    The three hood columns the Development view already ships are WINDOW
+    AGGREGATES (5yr / 3yr / since-2009); this is the same numerators resolved to
+    one point per year, so the lens can show Windermere building out and
+    *stopping* against Secord still accelerating — a shape no aggregate can
+    carry. Emits compact arrays, one per series, index-aligned to ``years``::
+
+        {"years": [2009, ..., 2025],
+         "series": ["units", "permits", "ind_permits"],
+         "hoods": {"CHAPPELLE": [[units...], [permits...], [ind...]]},
+         "citywide": [[units...], [permits...], [ind...]]}
+
+    **Counts, not rates — and no scale factor.** Every value is an integer count
+    (dwelling units, permit count, industrial permit count), so unlike
+    temporal.json there is no ``share_scale``/``value_unit`` to undo: read the
+    numbers as they are. Per-acre is deliberately NOT stored — boundary acreage
+    already rides in the hood GeoJSON, so the client divides rather than the
+    file carrying a second encoding of the same fact that could drift from the
+    choropleth's.
+
+    **``citywide`` is not the sum of ``hoods``, and that is why it ships.**
+    Permits with no neighbourhood, and hoods with no rendered polygon, are
+    counted citywide but cannot appear under ``hoods`` (same reason
+    export_temporal_web writes only hoods that render). A panel that wants a
+    city reference line therefore cannot derive one client-side — summing
+    ``hoods`` would silently understate the city.
+
+    **A zero is a true zero.** A hood-year with no permits gets 0, not null:
+    ``load_permits`` already defines an absent hood as one with no new
+    residential AND no industrial permits in the window, so "no activity" is a
+    measurement, not a gap. Every hood is padded to the full ``years`` axis —
+    a hood missing a year would shift its whole series left against the shared
+    axis.
+
+    ⚠️ **This series is CONTIGUOUS, unlike the temporal lens's** (whose
+    2024–2025 hole is deliberate, SPEC_temporal.md §0). None of the gap/run
+    machinery in temporalGeom applies here. The plot-against-the-year-value
+    rule still does — it is what keeps the two renderers interchangeable.
+
+    ``years`` is a pinned window of full calendar years (main.py
+    PERMIT_YEARS_LONG — anchored at PERMIT_START_YEAR, so the January roll
+    extends it with no edit here). Each year is aggregated by its own
+    ``load_permits`` call, which keeps the filter vocabulary identical to the
+    aggregate columns by construction and applies the zero-year drift guard
+    per year rather than per window.
+    """
+    if not years:
+        raise ValueError("years window is empty")
+    years = tuple(sorted(years))
+    out_path = Path(out_path)
+
+    per_year = {}
+    for y in years:
+        # One load_permits call per year: 17 years costs ~6 s on the weekly
+        # runner, which buys identical filter semantics to the window columns
+        # instead of a second copy of the work_type/building_type logic.
+        per_year[y] = load_permits(permits_csv, (y,)).set_index("neighbourhood_name")
+
+    SERIES = [("units", "new_dwelling_units"),
+              ("permits", "new_dwelling_permits"),
+              ("ind_permits", "ind_permits")]
+
+    citywide = [[int(round(per_year[y][col].sum())) for y in years]
+                for _, col in SERIES]
+
+    names = sorted(set().union(*(df.index for df in per_year.values())))
+    rendered = sorted(n for n in names if boundary_names is None or n in boundary_names)
+    dropped = [n for n in names if n not in set(rendered)]
+    if dropped:
+        # Warn, never fail: an unmatched permit hood is a blank hood, not a
+        # wrong dollar figure (module docstring). Reported with its units so
+        # the loss is sized, not just named.
+        lost = sum(float(per_year[y]["new_dwelling_units"].get(n, 0.0))
+                   for y in years for n in dropped)
+        logger.warning(
+            # Pipe-separated, not comma: EVERY unmatched permit hood name
+            # measured 2026-09-14 contains a comma (they are multi-hood permit
+            # rows — "OLIVER, WÎHKWÊNTÔWIN"), so a comma join reads as twice as
+            # many names as it names.
+            "%d permit hoods have no rendered boundary — excluded from "
+            "dev_history (%.0f dwelling units, %.1f%% of citywide): %s",
+            len(dropped), lost,
+            100 * lost / max(1, sum(citywide[0])), " | ".join(dropped[:8]),
+        )
+
+    hoods = {}
+    for n in rendered:
+        hoods[n] = [[int(round(float(per_year[y][col].get(n, 0.0)))) for y in years]
+                    for _, col in SERIES]
+
+    payload = {
+        "years": [int(y) for y in years],
+        "series": [k for k, _ in SERIES],
+        "citywide": citywide,
+        "hoods": hoods,
+    }
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    text = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
+    out_path.write_text(text + "\n")
+
+    stats = {"hoods": len(hoods), "years": tuple(years), "dropped": len(dropped),
+             "citywide_units": sum(citywide[0]), "bytes": len(text) + 1}
+    logger.info(
+        "Wrote %s: %d hoods x %d years (%d-%d), %.0f units citywide, %.1f kB",
+        out_path.name, len(hoods), len(years), years[0], years[-1],
+        stats["citywide_units"], stats["bytes"] / 1024,
+    )
+    return stats

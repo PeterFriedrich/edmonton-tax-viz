@@ -10,6 +10,7 @@ from load_permits import (
     KNOWN_WORK_TYPES,
     NEW_WORK_TYPES,
     RESIDENTIAL_BUILDING_TYPES,
+    export_dev_history,
     load_permits,
 )
 
@@ -547,3 +548,102 @@ def test_dev_grid_excludes_parkades_from_industrial_cells(tmp_path):
     cols = payload["columns"]
     assert all(c[cols.index("ind_n")] == 0 for c in payload["cells"])
     assert payload["coverage"]["5yr"]["ind_permits"] == 0
+
+
+# --- per-year history series (dev_history.json) -------------------------------
+
+HYEARS = (2021, 2022, 2023)
+
+
+def _filler():
+    """One residential permit per history year in a hood that always renders —
+    load_permits runs its zero-year drift guard on EVERY year here, so each
+    year of the axis needs at least one kept row."""
+    return [_row(year=y, neighbourhood="FILLER", units_added=1) for y in HYEARS]
+
+
+def _hist(tmp_path, rows, years=HYEARS, boundary_names=None):
+    import json
+    out = tmp_path / "dev_history.json"
+    export_dev_history(_write(tmp_path, rows), out, years,
+                       boundary_names=boundary_names)
+    return json.loads(out.read_text())
+
+
+def _s(payload, hood, series):
+    return payload["hoods"][hood][payload["series"].index(series)]
+
+
+def test_history_resolves_units_to_the_RIGHT_year(tmp_path):
+    # The whole point of the file: 40 units in 2022 only. A series that summed
+    # correctly but landed the spike on the wrong index would render a hood
+    # booming in the wrong year — so assert the POSITION, not the total.
+    rows = _filler() + [_row(year=2022, neighbourhood="SPIKE", units_added=40)]
+    p = _hist(tmp_path, rows)
+    assert p["years"] == [2021, 2022, 2023]
+    assert _s(p, "SPIKE", "units") == [0, 40, 0]
+
+
+def test_history_pads_every_hood_to_the_full_year_axis(tmp_path):
+    # A hood with no 2021 row must carry a 0 there, not a short array — a short
+    # array shifts the whole series left against the shared year axis.
+    rows = _filler() + [_row(year=2023, neighbourhood="LATE", units_added=7)]
+    p = _hist(tmp_path, rows)
+    assert _s(p, "LATE", "units") == [0, 0, 7]
+    for hood, series in p["hoods"].items():
+        for s in series:
+            assert len(s) == len(p["years"]), hood
+
+
+def test_history_units_and_permits_are_not_the_same_series(tmp_path):
+    # An apartment permit adds many units from ONE permit, so units != permits.
+    # If the two series were swapped or aliased, this is where it shows.
+    rows = _filler() + [_row(year=2022, neighbourhood="TOWER", units_added=60,
+                             building_type="Apartments (310)")]
+    p = _hist(tmp_path, rows)
+    assert _s(p, "TOWER", "units") == [0, 60, 0]
+    assert _s(p, "TOWER", "permits") == [0, 1, 0]
+
+
+def test_history_counts_industrial_in_its_own_series(tmp_path):
+    rows = _filler() + [
+        _row(year=2021, neighbourhood="WARES", units_added=0,
+             building_type="Storage Buildings, Warehouses (460)"),
+    ]
+    p = _hist(tmp_path, rows)
+    assert _s(p, "WARES", "ind_permits") == [1, 0, 0]
+    assert _s(p, "WARES", "units") == [0, 0, 0]
+
+
+def test_history_citywide_counts_a_hood_that_does_not_render(tmp_path):
+    # The documented reason citywide ships: an unrendered hood is counted
+    # citywide but has no polygon to hover, so summing `hoods` client-side
+    # would silently understate the city.
+    rows = _filler() + [_row(year=2022, neighbourhood="NOPOLY", units_added=25)]
+    p = _hist(tmp_path, rows, boundary_names={"FILLER"})
+    assert "NOPOLY" not in p["hoods"]
+    units = p["citywide"][p["series"].index("units")]
+    assert units == [1, 26, 1]
+    assert units != [sum(h[0][i] for h in p["hoods"].values())
+                     for i in range(len(p["years"]))]
+
+
+def test_history_warns_when_a_hood_has_no_boundary(tmp_path, caplog):
+    rows = _filler() + [_row(year=2022, neighbourhood="NOPOLY", units_added=25)]
+    with caplog.at_level("WARNING"):
+        _hist(tmp_path, rows, boundary_names={"FILLER"})
+    assert any("no rendered boundary" in r.message and "NOPOLY" in str(r.args)
+               for r in caplog.records)
+
+
+def test_history_series_are_contiguous_and_sorted(tmp_path):
+    # Unlike the temporal lens, this axis has no deliberate hole — and the
+    # window is sorted on the way in, so a caller's order cannot reorder it.
+    p = _hist(tmp_path, _filler(), years=(2023, 2021, 2022))
+    assert p["years"] == [2021, 2022, 2023]
+
+
+def test_history_empty_years_raises(tmp_path):
+    with pytest.raises(ValueError, match="empty"):
+        export_dev_history(_write(tmp_path, _filler()),
+                           tmp_path / "h.json", ())
