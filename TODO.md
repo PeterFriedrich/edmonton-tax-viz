@@ -423,6 +423,30 @@ when the prefetch created the window that separates them. ⚠️ **Re-test parke
 Also three more vacuous checks caught by falsification, all in tests written the
 same session — see `docs/DECISIONS.md`'s last two rows.)_
 
+### Reader-facing copy decisions — 18 open rows in `docs/COPY_DECISIONS.md` (OPEN 2026-09-14 S157)
+
+Opened when Peter asked what "municipal levy" means in the Services panel: *"that's
+the big unintuitive addition that makes my eyes glaze when i open that panel"*. The
+term is never defined on any surface, and the same quantity carries **four different
+nouns** (Tax Revenue / Revenue / municipal levy / municipal property-tax revenue).
+
+Full list, with the measured counts and the two locked rows, in
+**`docs/COPY_DECISIONS.md`**. Decide a row there, apply it to every surface it
+names in one pass, then add a `DECISIONS.md` line citing the id.
+
+⚠️ Two rows are **not** open questions and must not be re-derived:
+- **F2** — the gold >100% bar re-introduces the break-even verdict locked against on
+  `DECISIONS.md` 2026-07-16 (magnitude, never "pays its way").
+- **F3** — a road-cost Ratio *denominator* would duplicate the road-metre map: both
+  cost columns are exact constant multiples of road metres ($50.000000/m,
+  $9.320000/m, stdev < 0.0001 across 400 hoods). That denominator also already
+  existed and was retired 2026-09-05.
+
+**F1 has a chosen direction but is not built**: the Services panel renders the same
+block for all ten layers (verified byte-identical) — it should follow the picker and
+show the selected layer plus its cost twin, degrading cleanly for the 4 layers that
+have no twin.
+
 ### General backlog — the flat list (no parent item; predates the `###` headings above)
 
 ⚠️ **Everything from here down is its OWN top-level work, not a child of the
