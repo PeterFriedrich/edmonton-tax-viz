@@ -30,6 +30,19 @@ contributes 0 activity (a visibly blank hood), not a silently wrong dollar
 figure — so the name join is warn-not-fail (unlike the assessment money path's
 CI guard, scripts/check_unmatched_names.py). The only known straggler after
 NAME_CORRECTIONS is ``GLENORA, ROSSLYN`` (1 unit, 2026-07-12), immaterial.
+
+⚠️ **THAT "IMMATERIAL" HOLDS ONLY FOR THE 5yr/3yr WINDOWS — THE LONG WINDOW
+LOSES 1,810 UNITS (1.11%), AND ONE RENDERED HOOD BY 68%.** Measured 2026-09-14
+while building export_dev_history: the unmatched names are permit rows whose
+``neighbourhood`` field holds a comma-joined LIST of hoods, and all of them
+predate 2021 — so the 5yr window sees 1 lost unit and the anchored
+``_long`` window (a PUBLISHED column since 2026-07-21) sees 23 names.
+``OLIVER, WÎHKWÊNTÔWIN`` alone is 837 units against WÎHKWÊNTÔWIN's shown 1,229
+(**+68%**), ``SOUTH TERWILLEGAR, SOUTH TERWILLEGAR`` 366 against 823 (+45%),
+and HERITAGE VALLEY AREA shows 0 where it should show 28. Not fixed here —
+70% (1,273 units) is unambiguous and belongs in PERMIT_NAME_CORRECTIONS, but
+the remaining 537 genuinely straddle 2+ hoods and need a decision (many are
+geocoded, so point-in-polygon is available). See TODO.md.
 """
 
 import json

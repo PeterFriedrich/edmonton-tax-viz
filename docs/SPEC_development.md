@@ -498,6 +498,48 @@ in the hood choropleth/tooltips; positions are never faked (no hood-centroid
 fallback). The toggle stays hidden on older data files without
 `dev_grid.json`. `verify-development.js` 54/54.
 
+### Lens A history — per-year series (data shipped 2026-09-14; UI NOT built)
+
+Peter's ask: the tooltip should show *"actual growth in dwelling units/permits
+over time"* rather than only a window total. The three columns the lens ships
+are window AGGREGATES (5yr / 3yr / since-2009); this resolves the same three
+numerators to **one point per year** so the lens can say what no aggregate can —
+Windermere building out and *stopping* against Secord still accelerating.
+
+`load_permits.export_dev_history` → `web/data/dev_history.json`: 363 hoods ×
+17 years (2009–2025), 48 kB, three integer series per hood (`units`, `permits`,
+`ind_permits`) index-aligned to a shared `years` array, plus a `citywide` triple.
+Counts, not rates — no `share_scale`/`value_unit` to undo, and per-acre is
+deliberately absent because boundary acreage already rides in the hood GeoJSON
+(a second copy could drift from the choropleth's). `citywide` is **not** the sum
+of `hoods` (unrendered hoods and no-neighbourhood permits are counted citywide
+but have no polygon to hover), which is why a panel cannot derive a city
+reference line client-side. Aggregation is one `load_permits` call per year
+(~6 s for 17 years), keeping the filter vocabulary identical to the aggregate
+columns by construction.
+
+⚠️ **This series is CONTIGUOUS**, unlike the temporal lens's deliberate
+2024–2025 hole (`SPEC_temporal.md` §0) — none of `temporalGeom`'s gap/run
+machinery applies. The plot-against-the-year-value rule still does.
+
+**Readability is uneven, and the UI must respect it.** Measured 2026-09-14:
+**61% of hood-years are exactly zero**; the median hood has 4 non-zero years of
+17 and 46 units total. Growth hoods read well (Chappelle, Laurel, Secord:
+15–17 non-zero years), mature hoods read as flat-with-spikes (informative — the
+Development lens's own argument), but ~50 single-year hoods have nothing a line
+can carry. **Gate the chart on a minimum non-zero-year count and give those
+hoods the number instead** — a line through one point is a shape the reader will
+read as a trend.
+
+⚠️ **The sparkline is a PROMISE.** `tooltipFor`'s invariant is that a teaser
+only rides where the panel draws what it teases (the 2026-08-16 defect: hover
+plotted assessment share while the click delivered a revenue breakdown). So the
+sparkline and the history panel ship **together**, or neither. Reusing
+`sparklineSvg`/`temporalGeom` needs their hardwired `t.share` + `fmtPct` made
+into parameters — see `SPEC_temporal.md` §2's two silent-failure invariants
+before touching them. Note also that temporal history is full-build only while
+Development is public: this ships a new **public** data file.
+
 ### Stock-age spikes on the detail grid (added 2026-07-17, **WITHDRAWN 2026-07-27**)
 
 > **This feature is no longer in the UI.** Peter's call — it "wasn't
