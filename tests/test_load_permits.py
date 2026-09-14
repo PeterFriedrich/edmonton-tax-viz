@@ -9,6 +9,7 @@ from load_permits import (
     KNOWN_BUILDING_TYPES,
     KNOWN_WORK_TYPES,
     NEW_WORK_TYPES,
+    PERMIT_NAME_CORRECTIONS,
     RESIDENTIAL_BUILDING_TYPES,
     export_dev_history,
     load_permits,
@@ -647,3 +648,58 @@ def test_history_empty_years_raises(tmp_path):
     with pytest.raises(ValueError, match="empty"):
         export_dev_history(_write(tmp_path, _filler()),
                            tmp_path / "h.json", ())
+
+
+# --- comma-joined multi-hood permit names (2026-09-14) -----------------------
+
+def test_comma_name_written_twice_merges_into_one_hood(tmp_path):
+    rows = _window_rows() + [
+        _row(year=2023, neighbourhood="RITCHIE, RITCHIE", units_added=4),
+        _row(year=2023, neighbourhood="RITCHIE", units_added=1),
+    ]
+    out = load_permits(_write(tmp_path, rows), YEARS)
+    assert _series(out).get("RITCHIE") == 5
+    assert "RITCHIE, RITCHIE" not in out["neighbourhood_name"].values
+
+
+def test_comma_name_carrying_a_rename_maps_to_the_current_name(tmp_path):
+    # OLIVER is the retired name and has no polygon (data/DATA.md
+    # §"Neighbourhood" — the rename moved 12,237 parcels); the permit row
+    # carries both. 837 units rode on this in the since-2009 window.
+    rows = _window_rows() + [
+        _row(year=2024, neighbourhood="OLIVER, WÎHKWÊNTÔWIN", units_added=40),
+    ]
+    out = load_permits(_write(tmp_path, rows), YEARS)
+    assert _series(out).get("WÎHKWÊNTÔWIN") == 40
+    assert not any("OLIVER" in n for n in out["neighbourhood_name"].values)
+
+
+def test_genuinely_straddling_comma_name_is_NOT_corrected(tmp_path):
+    # The deliberate non-fix: a permit across two DIFFERENT hoods cannot be
+    # split by a name correction, so it stays unmatched and warns rather than
+    # being silently attributed to whichever hood is named first. Pinning this
+    # so a later "tidy up the dict" pass cannot quietly invent a split.
+    rows = _window_rows() + [
+        _row(year=2023, neighbourhood="THE HAMPTONS, GRANVILLE", units_added=9),
+    ]
+    out = load_permits(_write(tmp_path, rows), YEARS)
+    s = _series(out)
+    assert s.get("THE HAMPTONS, GRANVILLE") == 9
+    assert "THE HAMPTONS" not in s.index and "GRANVILLE" not in s.index
+
+
+def test_no_correction_maps_TO_a_comma_list():
+    # A correction must resolve a multi-hood name, never produce one.
+    bad = {k: v for k, v in PERMIT_NAME_CORRECTIONS.items() if "," in v}
+    assert not bad, f"corrections whose TARGET is a comma list: {bad}"
+
+
+def test_every_comma_correction_key_has_a_single_target():
+    # Each comma key's parts, resolved through this same dict, must collapse to
+    # one name — that is the rule the enumerated entries stand in for.
+    for key, target in PERMIT_NAME_CORRECTIONS.items():
+        if "," not in key:
+            continue
+        resolved = {PERMIT_NAME_CORRECTIONS.get(p.strip(), p.strip())
+                    for p in key.split(",")}
+        assert target in resolved, f"{key!r} -> {target!r} not among {resolved}"

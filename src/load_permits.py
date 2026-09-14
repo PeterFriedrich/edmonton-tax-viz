@@ -31,21 +31,26 @@ figure — so the name join is warn-not-fail (unlike the assessment money path's
 CI guard, scripts/check_unmatched_names.py). The only known straggler after
 NAME_CORRECTIONS is ``GLENORA, ROSSLYN`` (1 unit, 2026-07-12), immaterial.
 
-⚠️ **THAT "IMMATERIAL" HOLDS ONLY FOR THE 5yr/3yr WINDOWS — THE LONG WINDOW
-LOSES 1,810 UNITS (1.11%), AND ONE RENDERED HOOD BY 68%.** Measured 2026-09-14
-while building export_dev_history: the unmatched names are permit rows whose
-``neighbourhood`` field holds a comma-joined LIST of hoods, and all of them
-predate 2021 — so the 5yr window sees 1 lost unit and the anchored
-``_long`` window (a PUBLISHED column since 2026-07-21) sees 23 names.
-``OLIVER, WÎHKWÊNTÔWIN`` alone is 837 units against WÎHKWÊNTÔWIN's shown 1,229
-(**+68%**), ``SOUTH TERWILLEGAR, SOUTH TERWILLEGAR`` 366 against 823 (+45%),
-and HERITAGE VALLEY AREA shows 0 where it should show 28. Not fixed here —
-70% (1,273 units) is unambiguous and belongs in PERMIT_NAME_CORRECTIONS, but
-the remaining 537 genuinely straddle 2+ hoods and need a decision — and NOT a
-spatial one: those rows are only 14.9% geocoded (``THE HAMPTONS, GRANVILLE``,
-119 units, is 0% geocoded), so point-in-polygon would resolve 128 of 537 units
-and miss the largest. The pattern is contained to this dataset — every other
-hood-bearing source joins on a numeric id or clean names. See TODO.md.
+⚠️ **THAT "IMMATERIAL" HELD ONLY FOR THE 5yr/3yr WINDOWS — the long window was
+losing 1,810 units (1.11%) and understating one rendered hood by 68%.**
+Measured 2026-09-14 while building export_dev_history: the unmatched names are
+permit rows whose ``neighbourhood`` field holds a comma-joined LIST of hoods,
+and every one predates 2021 — so the 5yr window lost 1 unit while the anchored
+``_long`` window (a PUBLISHED column since 2026-07-21) lost 23 names.
+**1,245 units across 8 names are now corrected** in
+PERMIT_NAME_CORRECTIONS below (``OLIVER, WÎHKWÊNTÔWIN`` alone was 837 units,
++68% on WÎHKWÊNTÔWIN; ``SOUTH TERWILLEGAR`` +45%), which moves attribution
+only — the citywide total is unchanged at 162,414, because these units were
+always counted, just not placed.
+
+**565 units across 15 names remain unmatched BY DECISION** — they straddle 2+
+genuinely different hoods, a name correction cannot split them, and a spatial
+fix is not available either: those rows are only 14.9% geocoded and
+``THE HAMPTONS, GRANVILLE`` (119 units) is 0%, so point-in-polygon would place
+128 of 565 and miss the largest. They stay in the warn-not-fail path pending a
+decision (even split / first-named / drop loudly). The pattern is contained to
+this dataset — every other hood-bearing source joins on a numeric id or clean
+names. See TODO.md and docs/DATA_ISSUES.md issue 6.
 """
 
 import json
@@ -180,9 +185,46 @@ KNOWN_BUILDING_TYPES = RESIDENTIAL_BUILDING_TYPES | INDUSTRIAL_BUILDING_TYPES | 
 # Permit-CSV hood names → boundary names. The permit `neighbourhood` is already
 # UPPERCASE and matches our format; the shared NAME_CORRECTIONS (CHAPPELLE AREA →
 # CHAPPELLE, etc.) resolves every AREA-suffix greenfield hood that carries
-# activity. No permit-local additions are needed as of 2026-07-12 — kept as a
-# named layer (fire-lens pattern) so a future straggler has an obvious home.
-PERMIT_NAME_CORRECTIONS = {**NAME_CORRECTIONS}
+# activity.
+#
+# ⚠️ **COMMA-JOINED MULTI-HOOD NAMES — permit-local, added 2026-09-14.** This
+# dataset (alone among our hood-bearing sources) sometimes writes the
+# `neighbourhood` field as a LIST: 546 raw rows / 92 distinct names, and 92 of
+# the 95 permit names that miss the boundary file are this one pattern. Only the
+# UNAMBIGUOUS ones are corrected here — every comma-part must resolve, via this
+# same dict, to ONE rendered hood. The 15 names whose parts resolve to 2+
+# DIFFERENT hoods are deliberately left unmatched (565 units): a name correction
+# cannot split a permit across hoods, those rows are only 14.9% geocoded so
+# point-in-polygon cannot either, and inventing a split is the trap this project
+# keeps re-learning. They stay in the warn-not-fail path; see TODO.md.
+#
+# Enumerated rather than derived by a "dedupe the parts" rule, per the module
+# docstring's locked decision (explicit dictionaries, warn on unseen) — and the
+# warning still catches any new one the City invents.
+PERMIT_NAME_CORRECTIONS = {
+    **NAME_CORRECTIONS,
+    # Same hood written twice. 384 units, and SOUTH TERWILLEGAR alone was
+    # understated by 45% on the since-2009 window.
+    "SOUTH TERWILLEGAR, SOUTH TERWILLEGAR":  "SOUTH TERWILLEGAR",
+    "ELSINORE, ELSINORE":                    "ELSINORE",
+    "RUTHERFORD, RUTHERFORD":                "RUTHERFORD",
+    "RITCHIE, RITCHIE":                      "RITCHIE",
+    "RURAL NORTH EAST HORSE HILL, RURAL NORTH EAST HORSE HILL":
+        "RURAL NORTH EAST HORSE HILL",
+    # Both parts are the same hood under NAME_CORRECTIONS' own alias.
+    "LEWIS FARMS INDUSTRIAL, LEWIS FARMS BUSINESS EMPLOYMENT":
+        "LEWIS FARMS BUSINESS EMPLOYMENT",
+    # The 2024 RENAME carrying both names — OLIVER has no polygon and is not a
+    # separate hood. 837 units; WÎHKWÊNTÔWIN was understated by 68% on the
+    # since-2009 window. Verified against data/DATA.md §"Building Permits"
+    # (the rename moved 12,237 parcels) and the boundary file, which carries
+    # only the new name — not from recall.
+    "OLIVER, WÎHKWÊNTÔWIN":                  "WÎHKWÊNTÔWIN",
+    # A containing planning AREA plus the specific hood inside it, not two
+    # peers (Pilot Sound has no polygon of its own; same shape as the
+    # AREA-suffix entries in NAME_CORRECTIONS). 24 units.
+    "PILOT SOUND AREA WEST PORTION, MCCONACHIE": "MCCONACHIE",
+}
 
 REQUIRED_COLUMNS = ("year", "work_type", "building_type", "units_added", "neighbourhood")
 
