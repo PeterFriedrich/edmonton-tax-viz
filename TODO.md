@@ -437,9 +437,29 @@ and there are currently zero closed top-level items — verified by running it o
 an isolated copy), but the hand rule in `CLAUDE.md` (*"move its body to the
 archive"*) is not, and this span is 2,533 lines.
 
-- [ ] **⚠️ LIVE DEFECT IN A PUBLISHED COLUMN — the `_long` permit window loses
-  1,810 dwelling units, and understates one rendered hood by 68%. Found
-  2026-09-14 (S156) while building `export_dev_history`; NOT fixed.** The
+- [ ] **⚠️ 565 UNITS STILL UNATTRIBUTED BY DECISION — the straddling half of the
+  comma-list permit names. The other 1,245 units are FIXED (2026-09-14, S156).**
+  ✅ **Fixed:** 8 unambiguous names corrected in `PERMIT_NAME_CORRECTIONS` —
+  WÎHKWÊNTÔWIN 1,229 → 2,066 (+68%), SOUTH TERWILLEGAR 823 → 1,189 (+45%),
+  plus ELSINORE/RUTHERFORD/RITCHIE/MCCONACHIE. Citywide unchanged at 162,414
+  (attribution moved, not totals — the invariant that says units were placed,
+  not invented). 5 tests, 3 falsified.
+  ❗ **STILL OPEN — Peter's call, 565 units across 15 names:** the rows that
+  genuinely straddle 2+ hoods (`RUTHERFORD, HERITAGE VALLEY TOWN CENTRE` 327u;
+  `THE HAMPTONS, GRANVILLE` 119u; `HOLLICK-KENYON, BRINTNELL, MILLER, BRINTNELL`
+  60u across 3). Choose one of **even split / assign to the first-named hood /
+  drop loudly**; a test currently pins the non-fix so a later tidy-up cannot
+  quietly invent a split. ⚠️ **Not a spatial problem** — 14.9% geocoded, and
+  `THE HAMPTONS, GRANVILLE` is 0%.
+  ➡️ **Also filed as an upstream defect: `docs/DATA_ISSUES.md` issue 6 (NOT
+  SENT, and the only one of the six with NO published notebook)** — asking for a
+  single-valued field, ideally the numeric `neighbourhood_id` the City already
+  publishes on three other datasets. And as **`AUDIT_LEDGER.md` never-audited
+  candidate 8** (the name-join layer).
+
+  <details><summary>Original finding (2026-09-14) — how it hid</summary>
+
+  The
   unmatched permit-side names are rows whose `neighbourhood` field holds a
   **comma-joined LIST** of hoods (`OLIVER, WÎHKWÊNTÔWIN`,
   `SOUTH TERWILLEGAR, SOUTH TERWILLEGAR`), and **every one of them predates
@@ -484,6 +504,14 @@ archive"*) is not, and this span is 2,533 lines.
   name join essentially clean. Not an architectural name-vs-geometry problem.
   ⚠️ **It also cannot GROW**: every affected row predates 2021, so the January
   `PERMIT_YEARS` roll never makes it worse. Safe to defer.
+  ⚠️ **One correction to the tier split recorded above:** the first pass called
+  it 1,273 / 537 by checking each comma-part against the boundary names *without*
+  applying `NAME_CORRECTIONS` first. Re-derived with corrections applied, it is
+  **1,245 / 565** — `CHAPPELLE AREA, HERITAGE VALLEY AREA` (28u) is genuinely
+  ambiguous, because `CHAPPELLE AREA` resolves to CHAPPELLE, a different real
+  hood. It had been about to be "fixed" into the wrong hood.
+
+  </details>
   ⚠️ **This is `a-finer-rendering-audits-the-aggregate` again** — the per-year
   series surfaced a two-month-old defect in the aggregate on its first run.
   ⚠️ **And `check_unmatched_names.py` does NOT cover this path** — it guards the
