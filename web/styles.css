@@ -1,7 +1,15 @@
 /* Extracted from web/index.html (2026-07-29). Loaded by both builds:
    the public root copies the whole web/ tree, and /full/ resolves this
    via its <base href="../" />. See scripts/build_site.py. */
-html, body { margin: 0; height: 100%; background: #0a0a0f; }
+/* The stack lives here as well as on .panel so that `font-family: inherit` —
+   the idiom every <button> in this file needs, since buttons do not inherit
+   from an ancestor — resolves to it rather than to the browser default. With
+   body undeclared, #peek's own `inherit` (ID, so it beat .panel) silently
+   rendered the whole touch peek card in Times New Roman. */
+html, body {
+  margin: 0; height: 100%; background: #0a0a0f;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
 #map { position: absolute; inset: 0; }
 
 /* Loading overlay. z-index 9998 clears the app's own stack (max 5) and stays
@@ -637,7 +645,7 @@ body.budget #budget-btn { background: #fcd278; color: #16111a; font-weight: 600;
 #budget-close {
   display: none; position: absolute; top: 0; right: 0; z-index: 1;
   appearance: none; border: 0; background: transparent; color: #6a6a80;
-  font-size: 24px; line-height: 1; padding: 10px 15px; cursor: pointer;
+  font-family: inherit; font-size: 24px; line-height: 1; padding: 10px 15px; cursor: pointer;
 }
 #budget-close:hover { color: #e8e8ef; }
 
