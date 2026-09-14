@@ -41,8 +41,11 @@ predate 2021 — so the 5yr window sees 1 lost unit and the anchored
 (**+68%**), ``SOUTH TERWILLEGAR, SOUTH TERWILLEGAR`` 366 against 823 (+45%),
 and HERITAGE VALLEY AREA shows 0 where it should show 28. Not fixed here —
 70% (1,273 units) is unambiguous and belongs in PERMIT_NAME_CORRECTIONS, but
-the remaining 537 genuinely straddle 2+ hoods and need a decision (many are
-geocoded, so point-in-polygon is available). See TODO.md.
+the remaining 537 genuinely straddle 2+ hoods and need a decision — and NOT a
+spatial one: those rows are only 14.9% geocoded (``THE HAMPTONS, GRANVILLE``,
+119 units, is 0% geocoded), so point-in-polygon would resolve 128 of 537 units
+and miss the largest. The pattern is contained to this dataset — every other
+hood-bearing source joins on a numeric id or clean names. See TODO.md.
 """
 
 import json

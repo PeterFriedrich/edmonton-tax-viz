@@ -464,10 +464,26 @@ archive"*) is not, and this span is 2,533 lines.
   **Tier 2, 537 units, genuinely straddles 2+ hoods** (`RUTHERFORD, HERITAGE
   VALLEY TOWN CENTRE` 327u; `THE HAMPTONS, GRANVILLE` 119u;
   `HOLLICK-KENYON, BRINTNELL, MILLER, BRINTNELL` 60u across 3) — a name
-  correction cannot split these. ⚠️ **Many ARE geocoded**, so point-in-polygon
-  is available (`export_dev_grid` already reads lat/long) — measure the geocode
-  rate on these 14 rows before choosing between a spatial assignment, an
-  even split, and dropping them loudly.
+  correction cannot split these.
+  ⚠️ **THE SPATIAL FIX IS DEAD — measured 2026-09-14, and this corrected an
+  unverified claim written into this item the same hour.** I wrote "many ARE
+  geocoded, so point-in-polygon is available"; measuring it inverted the answer.
+  Tier 2 is **14.9% geocoded (23.8% of units)**, and the two biggest rows are the
+  worst: `RUTHERFORD, HERITAGE VALLEY TOWN CENTRE` has 59 of 327 units geocoded
+  (18%) and `THE HAMPTONS, GRANVILLE` has **0 of 119**. Point-in-polygon would
+  resolve 128 of 537 units and leave the big ones untouched. So the real choice
+  is a 3-way judgment call — **even split / assign to the first-named hood /
+  drop loudly** — not an engineering task. (Tier 1 is 34.6% geocoded and does not
+  need geometry anyway.)
+  **Scope is CONTAINED to permits** (measured across all five hood-bearing raw
+  sources): `fire_response`, both Property CSVs and the historical assessment
+  file carry either a numeric `neighbourhood_id`/`Neighbourhood ID` or clean
+  single names — **zero comma rows**. In the raw permits file the pattern is 546
+  rows / 92 distinct names (0.22%), and **92 of the 95 names that miss the
+  boundary file are this one pattern** — so handling comma-lists makes the permit
+  name join essentially clean. Not an architectural name-vs-geometry problem.
+  ⚠️ **It also cannot GROW**: every affected row predates 2021, so the January
+  `PERMIT_YEARS` roll never makes it worse. Safe to defer.
   ⚠️ **This is `a-finer-rendering-audits-the-aggregate` again** — the per-year
   series surfaced a two-month-old defect in the aggregate on its first run.
   ⚠️ **And `check_unmatched_names.py` does NOT cover this path** — it guards the
