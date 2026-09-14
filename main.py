@@ -48,7 +48,7 @@ from load_transit import (
     export_transit_stations_web,
     export_transit_lines_web,
 )
-from load_permits import load_permits, export_dev_grid
+from load_permits import load_permits, export_dev_grid, export_dev_history
 from load_schools import load_schools
 from amenity_distance import build_road_graph, network_distance_m
 from join_and_calculate import join_and_calculate, export_geojson, load_unit_costs
@@ -115,6 +115,7 @@ GRID_WEB_OUT = ROOT / "web/data/value_grid.json"
 # third resolution means a third file, not a rename of these two.
 GRID_FINE_WEB_OUT = ROOT / "web/data/value_grid_50.json"
 DEV_GRID_WEB_OUT = ROOT / "web/data/dev_grid.json"
+DEV_HISTORY_WEB_OUT = ROOT / "web/data/dev_history.json"
 FIRE_STATIONS_WEB_OUT = ROOT / "web/data/fire_stations.json"
 TRANSIT_STATIONS_WEB_OUT = ROOT / "web/data/transit_stations.json"
 TRANSIT_LINES_WEB_OUT = ROOT / "web/data/lrt_lines.json"
@@ -575,6 +576,18 @@ def run(
                 )
             except (ValueError, FileNotFoundError) as e:
                 logger.warning("Dev grid not exported: %s", e)
+            # Per-year new-supply series for the Development history panel +
+            # hover sparkline. Rides with the permits lens like the grid, and
+            # degrades the same way: no file hides the chart client-side rather
+            # than drawing a partial series. Uses the ANCHORED long window, so
+            # the January PERMIT_YEARS bump extends it with no edit here.
+            try:
+                export_dev_history(
+                    permits_csv, DEV_HISTORY_WEB_OUT, permit_years_long,
+                    boundary_names=set(boundaries["neighbourhood_name"]),
+                )
+            except (ValueError, FileNotFoundError) as e:
+                logger.warning("Dev history not exported: %s", e)
         # Fire-station context dots for the Services view's fire layer —
         # rides with the fire lens (skipped with it).
         if fire is not None and fire_stations_csv is not None and Path(fire_stations_csv).exists():

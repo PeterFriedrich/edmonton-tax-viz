@@ -498,6 +498,81 @@ in the hood choropleth/tooltips; positions are never faked (no hood-centroid
 fallback). The toggle stays hidden on older data files without
 `dev_grid.json`. `verify-development.js` 54/54.
 
+### Lens A history — per-year series (data shipped 2026-09-14; UI NOT built)
+
+Peter's ask: the tooltip should show *"actual growth in dwelling units/permits
+over time"* rather than only a window total. The three columns the lens ships
+are window AGGREGATES (5yr / 3yr / since-2009); this resolves the same three
+numerators to **one point per year** so the lens can say what no aggregate can —
+Windermere building out and *stopping* against Secord still accelerating.
+
+`load_permits.export_dev_history` → `web/data/dev_history.json`: 363 hoods ×
+17 years (2009–2025), 48 kB, three integer series per hood (`units`, `permits`,
+`ind_permits`) index-aligned to a shared `years` array, plus a `citywide` triple.
+Counts, not rates — no `share_scale`/`value_unit` to undo, and per-acre is
+deliberately absent because boundary acreage already rides in the hood GeoJSON
+(a second copy could drift from the choropleth's). `citywide` is **not** the sum
+of `hoods` (unrendered hoods and no-neighbourhood permits are counted citywide
+but have no polygon to hover), which is why a panel cannot derive a city
+reference line client-side. Aggregation is one `load_permits` call per year
+(~6 s for 17 years), keeping the filter vocabulary identical to the aggregate
+columns by construction.
+
+⚠️ **This series is CONTIGUOUS**, unlike the temporal lens's deliberate
+2024–2025 hole (`SPEC_temporal.md` §0) — none of `temporalGeom`'s gap/run
+machinery applies. The plot-against-the-year-value rule still does.
+
+**Readability is uneven, and the UI must respect it.** Measured 2026-09-14:
+**61% of hood-years are exactly zero**; the median hood has 4 non-zero years of
+17 and 46 units total. Growth hoods read well (Chappelle, Laurel, Secord:
+15–17 non-zero years), mature hoods read as flat-with-spikes (informative — the
+Development lens's own argument).
+
+### As BUILT 2026-09-14 — columns, and what that changed
+
+⚠️ **The chart is COLUMNS, zero-based — not the temporal lens's line, and not
+`temporalGeom`.** Two differences make sharing that code wrong:
+
+1. This is an annual **FLOW** of discrete counts; assessment is a continuous
+   **STOCK**. A line interpolates between its points, which for permits draws
+   construction in years that had none — and with 61% of hood-years at zero
+   that is the common case, not an edge case.
+2. `temporalGeom` scales to the series' own min..max — a **non-zero baseline**,
+   correct for share (`SPEC_temporal.md` §2 invariant 2) and a lie for counts,
+   where bar LENGTH is the quantity.
+
+⚠️ **This SPEC originally called for a minimum non-zero-year gate. Choosing
+columns RETIRED it.** That gate existed because a line through one point implies
+a trend; a single column does not — it reads as exactly what it is. So the only
+hoods that get words instead of a chart are the **all-zero** ones, which get
+"No new homes permitted here" rather than an empty 28px box that would read as a
+broken chart. A design choice one level up dissolved the rule, rather than the
+rule needing enforcement.
+
+Both renderers keep the invariant `SPEC_temporal.md` §2 pins for the line:
+**x comes from the year VALUE, never the array index.** This series is
+contiguous today, so an index would agree by accident and stop agreeing silently
+the moment a year is dropped.
+
+⚠️ **The sparkline is a PROMISE**, so it ships with the panel or not at all
+(`tooltipFor`'s invariant — the 2026-08-16 defect where hover plotted assessment
+share while the click delivered a revenue breakdown). Four surfaces had to agree,
+and the last two are the ones that bite:
+- `openTemporal` / `syncPinnedPanel` — Development's series takes precedence
+  over the assessment history under that lens.
+- `syncDevChrome` calls `syncPinnedPanel`, because the chart follows the
+  units/permits/industrial picker; without it the pinned panel keeps the old
+  series under the new label.
+- **`#peek-go`** — on touch there is no hover, so the peek card is the only
+  readout; without a Development branch it promised "See assessment history" and
+  opened the permit chart.
+- **`syncHoodModePod`** gates on `temporalData || devHistoryData`, not
+  `temporalData` alone: a deploy missing `temporal.json` would otherwise hide the
+  mode control while Development's panel worked.
+
+Temporal history is full-build only while Development is public, so this ships a
+new **public** data file (49 kB). Verified by `_probe-devhist.js`, 25/25.
+
 ### Stock-age spikes on the detail grid (added 2026-07-17, **WITHDRAWN 2026-07-27**)
 
 > **This feature is no longer in the UI.** Peter's call — it "wasn't

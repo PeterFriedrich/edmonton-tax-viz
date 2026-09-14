@@ -33,7 +33,7 @@ that one owns what the evidence rests on.
 item that mirrors it in one line each — if the two disagree, **this one is
 right**, and the TODO is stale. Update here first.
 
-**Nothing has been sent. Five issues, zero contact, as of 2026-08-27.** (Issue 2
+**Nothing has been sent. Six issues, zero contact, as of 2026-09-14.** (Issue 2
 is ours, not theirs — it was never a candidate to send, and it is now fixed.)
 
 | # | issue | evidence | report text | status |
@@ -43,15 +43,18 @@ is ours, not theirs — it was never a candidate to send, and it is now fixed.)
 | 3 | `qi6a-xuwt` drops 2,448 accounts | [published](https://peterfriedrich.github.io/edmonton-tax-viz/notebooks/historical-2024-gap.html) | ❌ not written | **NOT SENT** |
 | 4 | no per-parcel exemption status published | [published](https://peterfriedrich.github.io/edmonton-tax-viz/notebooks/exemption-uncertainty.html) | ✅ `docs/DRAFT_open_data_request_exemption_status.md` | **NOT SENT** |
 | 5 | 3 of 5 school boards absent from open data | [published](https://peterfriedrich.github.io/edmonton-tax-viz/notebooks/school-coverage-gap.html) | ❌ not written | **NOT SENT** |
+| 6 | `24uj-dj8v` `neighbourhood` holds a LIST of hoods | ⚠️ in-repo only, **no notebook** | ❌ not written | **NOT SENT** |
 
 **Channel:** `opendata@edmonton.ca`, read from the portal footer 2026-08-25 —
 primary source, not inference. Right channel for 1, 3, 4 and 5, all of which are
 dataset/portal requests. **Assessment & Taxation Branch is the escalation if
 Open Data bounces one**, not the first stop.
 
-**Issue 4 is the only one with a written message.** ⚠️ **As of 2026-08-29 all
-four sendable issues now have published notebook evidence** (issue 5's landed
-last) — so every remaining blocker is REPORT TEXT, not measurement. ⚠️ Sending is Peter's call in every case — it is outward-facing and
+**Issue 4 is the only one with a written message.** ⚠️ **"Every remaining
+blocker is REPORT TEXT, not measurement" was true on 2026-08-29 and is NO
+LONGER** — issues 1/3/4/5 do all have published notebook evidence, but **issue 6
+(added 2026-09-14) has none**, so publishable evidence is a live blocker again
+for one of the six. Do not read the four-issue statement as covering the file. ⚠️ Sending is Peter's call in every case — it is outward-facing and
 it speaks for the project.
 
 ⚠️ **Re-measure before quoting any figure below.** Several are derived against
@@ -317,6 +320,56 @@ incomplete by construction, which the control's tooltip states outright.
 `amenity_distance` takes any point frame, so a published point set would drop
 straight in. ⚠️ A hand-built list would be the `T8` hand-enumeration shape — a
 value over a name-matched set with no self-check — and is not the answer.
+
+---
+
+## 6. `24uj-dj8v` — the `neighbourhood` field sometimes holds a LIST of hoods
+
+**Status: NOT SENT.** No draft. **Last measured: 2026-09-14** (S156, local
+re-derivation from `data/raw/building_permits.csv`).
+
+**Evidence:** ⚠️ **in-repo measurement only — no published notebook**, unlike
+issues 1/3/4/5. Reproduce with `load_permits` over
+`range(2009, 2026)` and diff its `neighbourhood_name` index against
+`load_boundaries`; the split by ambiguity is scripted in the S156 session notes.
+**This one is cheap to publish and has not been**, which by this file's own
+standard is the gap that matters.
+
+The permits dataset writes `neighbourhood` as a **comma-joined list** on some
+rows — `OLIVER, WÎHKWÊNTÔWIN`, `THE HAMPTONS, GRANVILLE`,
+`HOLLICK-KENYON, BRINTNELL, MILLER, BRINTNELL` — where every other hood-bearing
+source we consume carries either a numeric id (`fire_response`, both Property
+CSVs) or a single clean name (the historical aggregate). **546 raw rows, 92
+distinct names, 0.22%** — and **92 of the 95 permit names that miss the boundary
+file are this one pattern**, so it is essentially the entire name-join defect for
+this dataset.
+
+Three distinguishable causes are mixed into one field, which is what makes it a
+publisher problem rather than a join problem on our side:
+- **A rename carrying both names** — `OLIVER, WÎHKWÊNTÔWIN` (the 2024 rename,
+  `data/DATA.md`). One hood, two labels.
+- **The same hood written twice** — `RITCHIE, RITCHIE`,
+  `SOUTH TERWILLEGAR, SOUTH TERWILLEGAR`. Pure duplication.
+- **A permit genuinely spanning 2+ hoods** — `RUTHERFORD, HERITAGE VALLEY TOWN
+  CENTRE`. Real information, in a field with no room for it.
+
+**What it broke here:** the published since-2009 window silently dropped
+**1,810 dwelling units (1.11% citywide)**, understating WÎHKWÊNTÔWIN by **68%**
+(1,229 shown against 2,066) and SOUTH TERWILLEGAR by 45%. ⚠️ **It hid because
+every affected row predates 2021** — the 5yr and 3yr windows lose 1 unit and 0,
+so the module's "immaterial" note was true of the windows anyone had measured
+and false of the one shipped 2026-07-21. 1,245 units across 8 unambiguous names
+were corrected 2026-09-14; **565 across 15 names remain unattributed by
+decision** (see `TODO.md` — a name correction cannot split a straddling permit,
+and those rows are only 14.9% geocoded so geometry cannot either).
+
+**What to ask for:** a single-valued neighbourhood field — ideally the numeric
+`neighbourhood_id` the City already publishes on `fire_response` and both
+Property CSVs, which would remove the name join from this dataset entirely. A
+multi-hood permit then needs either a repeated row per hood or a separate
+`additional_neighbourhoods` field. ⚠️ Worth pairing with the observation that
+this dataset's `building_type` is also an uncontrolled vocabulary
+(§B below) — same dataset, same class of problem.
 
 ---
 

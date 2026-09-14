@@ -854,6 +854,23 @@ layer** (added 2026-07-15). Bins GEOCODED new-construction permits into the
 ind_cv, ind_n, …]` rows at each cell's SW corner (the four repeat per window),
 plus a per-window `coverage` block.
 
+`export_dev_history(permits_csv, out_path, years, boundary_names)` — the same
+three Development numerators resolved to **one point per year** over the anchored
+2009–present window → `web/data/dev_history.json` (committed, 48 kB): a shared
+`years` array, `series` naming the three integer series (`units`, `permits`,
+`ind_permits`), `hoods[name]` holding that triple of arrays, and a `citywide`
+triple. Data shipped 2026-09-14; **nothing reads it yet** (tooltip + history
+panel are step 2 — `SPEC_development.md` "Lens A history"). Contracts:
+- **`citywide` is not the sum of `hoods`** and ships for that reason — permits
+  with no neighbourhood and hoods with no rendered polygon are counted citywide
+  but cannot be hovered, so a city reference line is not derivable client-side.
+- **Counts, not rates, and no scale factor** — read the integers as they are.
+  Per-acre is deliberately absent (boundary acreage already rides in the hood
+  GeoJSON; a second copy could drift from the choropleth's).
+- **A zero is a true zero**, and every hood is padded to the full `years` axis —
+  a hood missing a year would shift its whole series left against the shared
+  axis. Contiguous, unlike `temporal.json`'s deliberate hole.
+
 **Industrial cells (added 2026-08-18)** carry `ind_cv` — **deflated declared
 construction value** — and `ind_n`, the permit count. Two contracts here are
 load-bearing:

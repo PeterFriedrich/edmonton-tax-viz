@@ -165,3 +165,28 @@ a CAPTURE on real hardware** (the shelved `TODO.md` item), not an audit. What
    cross-checks were done at build (S~53); no independent pass. Lens itself
    still unbuilt (interaction prereq), so low urgency. *(Was 3, then 6; demoted — the
    lens is still unbuilt, so an audit has nothing shipped to check.)*
+8. **⚠️ THE NAME-JOIN LAYER ACROSS EVERY SOURCE — `NAME_CORRECTIONS` and its
+   per-loader descendants** (added 2026-09-14, S156). **Ranked on fresh evidence,
+   which is this list's stated criterion, not on absence.** No audit run has ever
+   covered how hood names are reconciled, and S156 found a **live understatement
+   of 68% on one rendered hood** in a published column: the permits CSV writes
+   `neighbourhood` as a comma-joined list, and 1,810 dwelling units fell out of
+   the join for two months (`DATA_ISSUES.md` issue 6; 1,245 corrected, 565 left
+   by decision).
+   **What makes it brief-shaped rather than a bug to fix:** the defect was
+   invisible to every guard because the join is **warn-not-fail by design**, and
+   the warning printed into an unread pipeline log — `check_unmatched_names.py`
+   covers the assessment money path *only*. That is the project's standing
+   failure mode (a working signal on a channel with no reader), so the question
+   is not "are these dicts right" but **"which joins are allowed to lose rows
+   silently, and who reads the evidence that they did."**
+   ⚠️ **What I checked, so an audit does not redo it:** the comma-list pattern is
+   contained to `24uj-dj8v` — `fire_response` and both Property CSVs join on a
+   numeric `neighbourhood_id`, and the historical aggregate carries clean single
+   names (zero comma rows in all four). So this is **not** a name-vs-geometry
+   architecture problem, and an audit should not be framed as one. **Unexamined:**
+   the *other* 14 loaders' name handling, whether the numeric-id joins have their
+   own silent-loss modes, and why the two Property CSVs' 398 ids vs the boundary
+   file's names never got a coverage check.
+   *Companion to candidate 3* — the vacuous-guard class is "a check that cannot
+   fail"; this is "a check that fails correctly, to nobody."

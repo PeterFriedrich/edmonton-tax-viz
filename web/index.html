@@ -627,6 +627,7 @@
     // whole source, so the words in a COMMENT trip it and the deploy dies at the
     // build step. That is what broke the deploy of 86dc681.
     const TEMPORAL_URL = "./data/temporal.json";
+    const DEV_HISTORY_URL = "./data/dev_history.json";
     // Staleness fallback (docs/RUNBOOK.md §3). The backend banner only ever
     // appears if a run SET it — but the failure we most need to surface is the
     // pipeline not running AT ALL (GitHub auto-disables cron workflows after 60
@@ -1806,6 +1807,7 @@
     let bikeLinesData = null;        // lazy-fetched bike network (bike on)
     let bikeLinesFetch = null;       // in-flight fetch guard; missing file => no lines
     let temporalData = null;   // hood x year assessment history; missing file => lens absent
+    let devHistoryData = null; // hood x year new supply; missing file => no dev history panel
     let pinnedHood = null;     // hood name shown in the pinned history panel, or null
     let peekHood = null;       // hood shown in the touch-only peek card, or null
     // Panel mode reached by DELIBERATELY pressing #hoodmode-btn, as opposed to
@@ -4862,6 +4864,189 @@
            + `r="2.6" fill="#fcd278"/></g></svg>`;
     }
 
+    // ---- Development history: new supply per year ---------------------------
+    // dev_history.json (load_permits.export_dev_history). The Development
+    // choropleth is a window AGGREGATE; this is the same numerator one point per
+    // year, so the lens can say what no aggregate can — Windermere building out
+    // and STOPPING against Secord still accelerating.
+    //
+    // ⚠️ **COLUMNS, ZERO-BASED — deliberately NOT the temporal lens's line, and
+    // NOT temporalGeom.** Two differences make sharing that code wrong:
+    //   1. This is an annual FLOW of discrete counts; assessment is a continuous
+    //      STOCK. A line interpolates between its points, which for permits
+    //      draws construction in years that had none. 61% of hood-years here are
+    //      exactly zero (measured 2026-09-14), so that is the common case, not
+    //      an edge case.
+    //   2. `temporalGeom` scales to the series' own min..max — a NON-zero
+    //      baseline, correct for share (SPEC_temporal.md §2 invariant 2) and a
+    //      lie for counts, where bar LENGTH is the quantity. Zero-based here.
+    // A happy consequence: bars carry a single-year hood honestly (one column,
+    // nothing beside it), where a line through one point would imply a trend. So
+    // the only hoods that get words instead of a chart are the all-zero ones.
+    const DEVH_SERIES = { units: 0, permits: 1, ind_permits: 2 };
+    const DEVH_SPARK_W = 150, DEVH_SPARK_H = 28;
+    const DEVH_CHART_W = 300, DEVH_CHART_H = 96;
+
+    // Which series the panel and teaser read, following the Development
+    // choropleth's own sub-metric picker so the chart and the colour agree.
+    const devHistKey = () => state.devMetric === "permits" ? "permits"
+                           : state.devMetric === "industrial" ? "ind_permits"
+                           : "units";
+    // Singular, plural, and the VERB each series takes. The verb is per-series
+    // because "3,806 new permits permitted" is what a shared one produces — a
+    // permit count is already the act, so only the dwelling count needs a verb
+    // saying these are approvals rather than finished homes.
+    // ⚠️ The nouns exclude "new" because every call site already supplies it —
+    // the alternative produced "new new-construction permits". Read them as
+    // "N new <noun><verb>".
+    const DEVH_NOUN = {
+      units:       ["home", "homes", " permitted"],
+      permits:     ["construction permit", "construction permits", ""],
+      ind_permits: ["industrial permit", "industrial permits", ""],
+    };
+    const devHistNoun = (k, n) => DEVH_NOUN[k][n === 1 ? 0 : 1];
+    const devHistVerb = k => DEVH_NOUN[k][2];
+
+    // One hood's series for the ACTIVE sub-metric, or null when the lens cannot
+    // speak for it (no file, or a hood with no permit row at all). An all-zero
+    // hood returns the series — "nothing was built here" is a measurement, and
+    // the renderers below say so in words rather than drawing an empty box.
+    function devHistoryFor(name) {
+      if (!devHistoryData) return null;
+      const rows = devHistoryData.hoods[name];
+      if (!rows) return null;
+      const key = devHistKey();
+      const vals = rows[DEVH_SERIES[key]];
+      if (!vals) return null;
+      return {
+        years: devHistoryData.years,
+        vals, key,
+        total: vals.reduce((a, b) => a + b, 0),
+        nonzero: vals.filter(v => v > 0).length,
+        city: devHistoryData.citywide[DEVH_SERIES[key]],
+      };
+    }
+
+    // Column geometry. Zero-based by construction: every bar starts at the
+    // baseline and its height IS its share of the peak.
+    // ⚠️ x comes from the YEAR VALUE, not the array index — the same rule
+    // SPEC_temporal.md §2 invariant 1 pins for the line. This series happens to
+    // be contiguous today, so an index would agree by accident; it would stop
+    // agreeing the moment a year is dropped, and silently.
+    function devHistGeom(t, w, h, pad) {
+      const ys = t.years, x0 = ys[0], x1 = ys[ys.length - 1];
+      const hi = Math.max(...t.vals, 1);   // all-zero hood: a flat empty axis
+      const span = x1 - x0 || 1;
+      // One slot per year, bars inset by the 2px surface gap the mark spec asks
+      // for between adjacent fills. Capped so a short series does not draw
+      // slabs.
+      const slot = (w - 2 * pad) / (span + 1);
+      const bw = Math.max(1.5, Math.min(slot - 2, 24));
+      return {
+        hi, bw,
+        bx: y => pad + (w - 2 * pad) * (y - x0) / (span + 1) + (slot - bw) / 2,
+        by: v => h - pad - (h - 2 * pad) * (v / hi),
+        bh: v => (h - 2 * pad) * (v / hi),
+        base: h - pad,
+      };
+    }
+
+    // The hover teaser. No axes and no labels at 28px — the muted row beneath it
+    // carries the numbers, same division of labour as the temporal sparkline.
+    function devHistSparkSvg(t) {
+      const g = devHistGeom(t, DEVH_SPARK_W, DEVH_SPARK_H, 2);
+      const bars = t.years.map((y, i) => {
+        const v = t.vals[i];
+        if (!v) return "";
+        // 1px floor: a hood with one home in a year that also had a 600-unit
+        // tower would round to nothing and read as "built nothing", which is
+        // the zero the chart must never fake.
+        const hh = Math.max(1, g.bh(v));
+        return `<rect x="${g.bx(y).toFixed(1)}" y="${(g.base - hh).toFixed(1)}" `
+             + `width="${g.bw.toFixed(1)}" height="${hh.toFixed(1)}" `
+             + `rx="${Math.min(1.5, g.bw / 2).toFixed(1)}" fill="#fcd278"/>`;
+      }).join("");
+      return `<svg class="spark" width="${DEVH_SPARK_W}" height="${DEVH_SPARK_H}" `
+           + `viewBox="0 0 ${DEVH_SPARK_W} ${DEVH_SPARK_H}" aria-hidden="true">`
+           + bars + `</svg>`;
+    }
+
+    // The pinned chart: same columns plus what a 300px box can hold — a peak
+    // label, the baseline, and the first/last year ticks.
+    function devHistChartSvg(t) {
+      const W = DEVH_CHART_W, H = DEVH_CHART_H, GUT = 34;
+      const g = devHistGeom(t, W - GUT, H, 6);
+      const ys = t.years;
+      const bars = ys.map((y, i) => {
+        const v = t.vals[i];
+        if (!v) return "";
+        const hh = Math.max(1, g.bh(v));
+        return `<rect x="${g.bx(y).toFixed(1)}" y="${(g.base - hh).toFixed(1)}" `
+             + `width="${g.bw.toFixed(1)}" height="${hh.toFixed(1)}" `
+             + `rx="2" fill="#fcd278"/>`;
+      }).join("");
+      // Zero-based, so only the TOP needs a number — the bottom is 0 by
+      // definition and labelling it would imply it was a choice. That is the
+      // exact opposite of the temporal chart's both-ends rule, and for the same
+      // reason: label what the reader cannot infer.
+      const ylab = `<text x="${GUT - 5}" y="9" fill="#6a6a80" font-size="9.5" `
+                 + `text-anchor="end">${g.hi.toLocaleString()}</text>`
+                 + `<text x="${GUT - 5}" y="${H - 1}" fill="#6a6a80" `
+                 + `font-size="9.5" text-anchor="end">0</text>`;
+      const xlab = `<text x="${GUT}" y="${H + 12}" fill="#6a6a80" font-size="9.5">${ys[0]}</text>`
+                 + `<text x="${W}" y="${H + 12}" fill="#6a6a80" font-size="9.5" `
+                 + `text-anchor="end">${ys[ys.length - 1]}</text>`;
+      return `<svg width="${W}" height="${H + 15}" viewBox="0 0 ${W} ${H + 15}" `
+           + `role="img" aria-label="New ${devHistNoun(t.key, 2)} permitted per `
+           + `year, ${ys[0]} to ${ys[ys.length - 1]}">`
+           + ylab + xlab
+           + `<g transform="translate(${GUT},0)">`
+           + `<line x1="0" y1="${g.base}" x2="${W - GUT}" y2="${g.base}" `
+           + `stroke="#55556a" stroke-width="1"/>${bars}</g></svg>`;
+    }
+
+    // Where the panel shows new supply over time instead of the history or the
+    // revenue mix. Development only — Infill scores suitability rather than
+    // counting activity, so a permit series there would answer a question the
+    // lens is not asking.
+    const devHistoryPanelFor = name =>
+      state.view === "development" ? devHistoryFor(name) : null;
+
+    function renderDevHistory(t) {
+      const ys = t.years, i = ys.length - 1, key = t.key;
+      document.getElementById("temporal-chart").innerHTML =
+        t.total ? devHistChartSvg(t) : "";
+      const peak = t.vals.indexOf(Math.max(...t.vals));
+      const recent5 = t.vals.slice(-5).reduce((a, b) => a + b, 0);
+      if (!t.total) {
+        // The all-zero hood. Words, not an empty chart — and it is a finding,
+        // not a gap, so it must not read like missing data.
+        document.getElementById("temporal-read").innerHTML =
+          `<b>No new ${devHistNoun(key, 2)}</b>${devHistVerb(key)} here, `
+          + `${ys[0]}–${ys[i]}<br/><span class="muted">`
+          + `${ys.length} years of permit records, every one of them zero`
+          + `</span>`;
+      } else {
+        document.getElementById("temporal-read").innerHTML =
+          `<b>${t.total.toLocaleString()} new ${devHistNoun(key, t.total)}</b>`
+          + `${devHistVerb(key)}, ${ys[0]}–${ys[i]}<br/>`
+          + `<span class="muted">peak ${t.vals[peak].toLocaleString()} in `
+          + `${ys[peak]} · ${recent5.toLocaleString()} in the last 5 years · `
+          + `active in ${t.nonzero} of ${ys.length} years</span>`;
+      }
+      // ⚠️ States the two things that make this series narrower than it looks,
+      // both of them load_permits' own filters rather than data gaps — so the
+      // note claims a scope, not an apology.
+      document.getElementById("temporal-note").textContent =
+        key === "ind_permits"
+          ? "New industrial building permits only — a count, not floor area or "
+            + "value. Permit counts are when construction was APPROVED, not "
+            + "finished."
+          : "New construction only: suite conversions and additions add homes "
+            + "but are counted as infill, not new supply. Permits are dated when "
+            + "construction was APPROVED, not finished.";
+    }
+
     // The panel has TWO modes since 2026-08-01 — the assessment history it was
     // built for, and Money's revenue breakdown. One element, not two: #temporal
     // already owns the three dismissals, the CHROME_IDS label-sweep exemption,
@@ -4922,13 +5107,19 @@
       const p = hoodProps(name);
       const service = servicePanelFor(p);
       const revenue = !service && revenuePanelFor(p);
-      const t = (service || revenue) ? null : temporalFor(name);
-      if (!service && !revenue && !t) return;
+      // Development's own history comes before the assessment history: under
+      // that lens the reader is asking about construction, and the assessment
+      // series would answer a question they did not ask (the 2026-08-16 defect
+      // in tooltipFor — a chart of one subject standing in for another).
+      const dev = !service && !revenue && devHistoryPanelFor(name);
+      const t = (service || revenue || dev) ? null : temporalFor(name);
+      if (!service && !revenue && !dev && !t) return;
       pinnedHood = name;
       document.getElementById("temporal").classList.remove("empty");
       document.getElementById("temporal-name").textContent = name;
       if (service) renderServiceCost(p);
       else if (revenue) renderRevenueMix(p);
+      else if (dev) renderDevHistory(dev);
       else renderHistory(t);
       document.getElementById("temporal").classList.add("open");
       // AFTER .open and after the content is written: the panel has no height
@@ -5130,11 +5321,14 @@
         ? "Click a neighbourhood to compare its revenue with what it costs to serve."
         : revenueLens()
         ? "Click a neighbourhood to see where its revenue comes from."
+        : state.view === "development" && devHistoryData
+        ? "Click a neighbourhood to see what has been built there each year."
         : "Click a neighbourhood to see its assessment history.";
       if (!pinnedHood) return;
       const name = pinnedHood;
       const p = hoodProps(name);
-      if (servicePanelFor(p) || revenuePanelFor(p) || temporalFor(name)) openTemporal(name);
+      if (servicePanelFor(p) || revenuePanelFor(p) || devHistoryPanelFor(name)
+          || temporalFor(name)) openTemporal(name);
       else closeTemporal();
     }
 
@@ -5158,8 +5352,15 @@
     // view has to have a panel. Two conditions, one place, so the reveal and
     // the per-view rule cannot drift apart.
     function syncHoodModePod() {
+      // ⚠️ EITHER history file reveals it, not temporal.json alone. Development
+      // gained a panel that needs only dev_history.json, so gating on
+      // temporalData meant a deploy where temporal.json is missing or broken
+      // would hide the pod while Development's panel worked perfectly — the
+      // panel reachable only by clicking the map, with no control admitting it
+      // exists. Both fetches are unconditional and ship together, so this is
+      // the skew case, which is exactly the kind this project loses things to.
       document.getElementById("hoodmode").style.display =
-        (temporalData && hoodPanelLens()) ? "flex" : "none";
+        ((temporalData || devHistoryData) && hoodPanelLens()) ? "flex" : "none";
     }
 
     // Where a hood's detail appears. Leaving panel mode takes the panel with it;
@@ -5253,8 +5454,15 @@
       // than none, and the card is still a complete readout without it.
       const go = document.getElementById("peek-go");
       go.style.display = hoodPanelLens() ? "" : "none";
+      // ⚠️ The Development branch is load-bearing, not tidiness: without it this
+      // card promises "assessment history" on a phone and then opens the permit
+      // chart. Same class as the 2026-08-16 tooltip defect — the invite named
+      // one subject and the click delivered another — and on touch this card is
+      // the ONLY readout, so the wrong promise is the whole experience.
       go.textContent = servicePanelFor(p) ? "See cost against revenue ›"
-        : revenuePanelFor(p) ? "See revenue breakdown ›" : "See assessment history ›";
+        : revenuePanelFor(p) ? "See revenue breakdown ›"
+        : devHistoryPanelFor(p.neighbourhood_name) ? "See what was built, by year ›"
+        : "See assessment history ›";
       document.getElementById("peek").classList.add("open");
       // Same reason as the panel: the card is a new obstacle for the label
       // sweep, so re-cull now instead of leaving names under it until the next
@@ -5812,6 +6020,20 @@
       if (revenuePanelFor(p))
         return { ...tip, html: tip.html
           + `<br/><span class="muted">click for the revenue mix</span>` };
+      // Development's teaser. Rides under the same rule as the temporal one —
+      // the panel below draws exactly this chart, for exactly this sub-metric
+      // (devHistKey feeds both). An all-zero hood gets the invite with NO
+      // sparkline: there is no shape to tease, and an empty 28px box reads as a
+      // broken chart rather than as "nothing was built".
+      const dh = devHistoryPanelFor(p.neighbourhood_name);
+      if (dh)
+        return { ...tip, html: tip.html
+          + (dh.total ? devHistSparkSvg(dh) : "")
+          + `<span class="muted">`
+          + (dh.total
+              ? `${dh.total.toLocaleString()} since ${dh.years[0]}`
+              : `none since ${dh.years[0]}`)
+          + ` · click for the year-by-year</span>` };
       const t = hoodPanelLens() ? temporalFor(p.neighbourhood_name) : null;
       if (!t) return tip;   // no file, public build, no history, or no panel here
       const i = t.years.length - 1;
@@ -6171,6 +6393,12 @@
       document.getElementById("title-h").textContent = devTitle();
       document.getElementById("title-p").textContent = devBlurb();
       syncDevControls();
+      // The history panel reads devHistKey(), so a units<->permits<->industrial
+      // switch changes what it should be drawing. Without this the pinned panel
+      // keeps the old series under the new label — the same
+      // chart-says-one-thing-control-says-another defect the Money panel calls
+      // syncPinnedPanel to avoid.
+      syncPinnedPanel();
     }
 
     // Development-view window toggle (5yr base <-> 3yr recent <-> since 2009).
@@ -7098,6 +7326,19 @@
           temporalData = d;
           syncHoodModePod(); // reveals it, unless the view we landed in has no panel
           syncChangeControls(); // the file lands after the first applyView
+        })
+        .catch(() => {});
+      // New supply per year — same defensive shape, and unconditional for the
+      // same reason: a missing or broken file leaves devHistoryData null, so the
+      // Development teaser and panel simply never appear and both builds degrade
+      // identically. Not awaited; the choropleth needs nothing from it.
+      fetch(DEV_HISTORY_URL)
+        .then(r => r.ok ? r.json() : null)
+        .then(d => {
+          if (!d || !d.hoods || !d.years || !d.citywide) return;
+          devHistoryData = d;
+          syncHoodModePod(); // Development now has a panel to offer
+          syncPinnedPanel(); // the file can land after a hood is already pinned
         })
         .catch(() => {});
       // The ONLY caller that passes byChoice -- this is the deliberate route

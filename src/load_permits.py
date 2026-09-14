@@ -30,6 +30,27 @@ contributes 0 activity (a visibly blank hood), not a silently wrong dollar
 figure — so the name join is warn-not-fail (unlike the assessment money path's
 CI guard, scripts/check_unmatched_names.py). The only known straggler after
 NAME_CORRECTIONS is ``GLENORA, ROSSLYN`` (1 unit, 2026-07-12), immaterial.
+
+⚠️ **THAT "IMMATERIAL" HELD ONLY FOR THE 5yr/3yr WINDOWS — the long window was
+losing 1,810 units (1.11%) and understating one rendered hood by 68%.**
+Measured 2026-09-14 while building export_dev_history: the unmatched names are
+permit rows whose ``neighbourhood`` field holds a comma-joined LIST of hoods,
+and every one predates 2021 — so the 5yr window lost 1 unit while the anchored
+``_long`` window (a PUBLISHED column since 2026-07-21) lost 23 names.
+**1,245 units across 8 names are now corrected** in
+PERMIT_NAME_CORRECTIONS below (``OLIVER, WÎHKWÊNTÔWIN`` alone was 837 units,
++68% on WÎHKWÊNTÔWIN; ``SOUTH TERWILLEGAR`` +45%), which moves attribution
+only — the citywide total is unchanged at 162,414, because these units were
+always counted, just not placed.
+
+**565 units across 15 names remain unmatched BY DECISION** — they straddle 2+
+genuinely different hoods, a name correction cannot split them, and a spatial
+fix is not available either: those rows are only 14.9% geocoded and
+``THE HAMPTONS, GRANVILLE`` (119 units) is 0%, so point-in-polygon would place
+128 of 565 and miss the largest. They stay in the warn-not-fail path pending a
+decision (even split / first-named / drop loudly). The pattern is contained to
+this dataset — every other hood-bearing source joins on a numeric id or clean
+names. See TODO.md and docs/DATA_ISSUES.md issue 6.
 """
 
 import json
@@ -164,9 +185,46 @@ KNOWN_BUILDING_TYPES = RESIDENTIAL_BUILDING_TYPES | INDUSTRIAL_BUILDING_TYPES | 
 # Permit-CSV hood names → boundary names. The permit `neighbourhood` is already
 # UPPERCASE and matches our format; the shared NAME_CORRECTIONS (CHAPPELLE AREA →
 # CHAPPELLE, etc.) resolves every AREA-suffix greenfield hood that carries
-# activity. No permit-local additions are needed as of 2026-07-12 — kept as a
-# named layer (fire-lens pattern) so a future straggler has an obvious home.
-PERMIT_NAME_CORRECTIONS = {**NAME_CORRECTIONS}
+# activity.
+#
+# ⚠️ **COMMA-JOINED MULTI-HOOD NAMES — permit-local, added 2026-09-14.** This
+# dataset (alone among our hood-bearing sources) sometimes writes the
+# `neighbourhood` field as a LIST: 546 raw rows / 92 distinct names, and 92 of
+# the 95 permit names that miss the boundary file are this one pattern. Only the
+# UNAMBIGUOUS ones are corrected here — every comma-part must resolve, via this
+# same dict, to ONE rendered hood. The 15 names whose parts resolve to 2+
+# DIFFERENT hoods are deliberately left unmatched (565 units): a name correction
+# cannot split a permit across hoods, those rows are only 14.9% geocoded so
+# point-in-polygon cannot either, and inventing a split is the trap this project
+# keeps re-learning. They stay in the warn-not-fail path; see TODO.md.
+#
+# Enumerated rather than derived by a "dedupe the parts" rule, per the module
+# docstring's locked decision (explicit dictionaries, warn on unseen) — and the
+# warning still catches any new one the City invents.
+PERMIT_NAME_CORRECTIONS = {
+    **NAME_CORRECTIONS,
+    # Same hood written twice. 384 units, and SOUTH TERWILLEGAR alone was
+    # understated by 45% on the since-2009 window.
+    "SOUTH TERWILLEGAR, SOUTH TERWILLEGAR":  "SOUTH TERWILLEGAR",
+    "ELSINORE, ELSINORE":                    "ELSINORE",
+    "RUTHERFORD, RUTHERFORD":                "RUTHERFORD",
+    "RITCHIE, RITCHIE":                      "RITCHIE",
+    "RURAL NORTH EAST HORSE HILL, RURAL NORTH EAST HORSE HILL":
+        "RURAL NORTH EAST HORSE HILL",
+    # Both parts are the same hood under NAME_CORRECTIONS' own alias.
+    "LEWIS FARMS INDUSTRIAL, LEWIS FARMS BUSINESS EMPLOYMENT":
+        "LEWIS FARMS BUSINESS EMPLOYMENT",
+    # The 2024 RENAME carrying both names — OLIVER has no polygon and is not a
+    # separate hood. 837 units; WÎHKWÊNTÔWIN was understated by 68% on the
+    # since-2009 window. Verified against data/DATA.md §"Building Permits"
+    # (the rename moved 12,237 parcels) and the boundary file, which carries
+    # only the new name — not from recall.
+    "OLIVER, WÎHKWÊNTÔWIN":                  "WÎHKWÊNTÔWIN",
+    # A containing planning AREA plus the specific hood inside it, not two
+    # peers (Pilot Sound has no polygon of its own; same shape as the
+    # AREA-suffix entries in NAME_CORRECTIONS). 24 units.
+    "PILOT SOUND AREA WEST PORTION, MCCONACHIE": "MCCONACHIE",
+}
 
 REQUIRED_COLUMNS = ("year", "work_type", "building_type", "units_added", "neighbourhood")
 
@@ -640,4 +698,122 @@ def export_dev_grid(
              "coverage": coverage, "bytes": out_path.stat().st_size}
     logger.info("Wrote %s: %d cells, %.2f MB",
                 out_path.name, len(rows), stats["bytes"] / 1e6)
+    return stats
+
+
+def export_dev_history(
+    permits_csv: str | Path,
+    out_path: str | Path,
+    years: tuple[int, ...],
+    boundary_names: set[str] | None = None,
+) -> dict:
+    """Per-year new-supply series per neighbourhood — the Development view's
+    history panel + hover sparkline (docs/SPEC_development.md "Lens A history").
+
+    The three hood columns the Development view already ships are WINDOW
+    AGGREGATES (5yr / 3yr / since-2009); this is the same numerators resolved to
+    one point per year, so the lens can show Windermere building out and
+    *stopping* against Secord still accelerating — a shape no aggregate can
+    carry. Emits compact arrays, one per series, index-aligned to ``years``::
+
+        {"years": [2009, ..., 2025],
+         "series": ["units", "permits", "ind_permits"],
+         "hoods": {"CHAPPELLE": [[units...], [permits...], [ind...]]},
+         "citywide": [[units...], [permits...], [ind...]]}
+
+    **Counts, not rates — and no scale factor.** Every value is an integer count
+    (dwelling units, permit count, industrial permit count), so unlike
+    temporal.json there is no ``share_scale``/``value_unit`` to undo: read the
+    numbers as they are. Per-acre is deliberately NOT stored — boundary acreage
+    already rides in the hood GeoJSON, so the client divides rather than the
+    file carrying a second encoding of the same fact that could drift from the
+    choropleth's.
+
+    **``citywide`` is not the sum of ``hoods``, and that is why it ships.**
+    Permits with no neighbourhood, and hoods with no rendered polygon, are
+    counted citywide but cannot appear under ``hoods`` (same reason
+    export_temporal_web writes only hoods that render). A panel that wants a
+    city reference line therefore cannot derive one client-side — summing
+    ``hoods`` would silently understate the city.
+
+    **A zero is a true zero.** A hood-year with no permits gets 0, not null:
+    ``load_permits`` already defines an absent hood as one with no new
+    residential AND no industrial permits in the window, so "no activity" is a
+    measurement, not a gap. Every hood is padded to the full ``years`` axis —
+    a hood missing a year would shift its whole series left against the shared
+    axis.
+
+    ⚠️ **This series is CONTIGUOUS, unlike the temporal lens's** (whose
+    2024–2025 hole is deliberate, SPEC_temporal.md §0). None of the gap/run
+    machinery in temporalGeom applies here. The plot-against-the-year-value
+    rule still does — it is what keeps the two renderers interchangeable.
+
+    ``years`` is a pinned window of full calendar years (main.py
+    PERMIT_YEARS_LONG — anchored at PERMIT_START_YEAR, so the January roll
+    extends it with no edit here). Each year is aggregated by its own
+    ``load_permits`` call, which keeps the filter vocabulary identical to the
+    aggregate columns by construction and applies the zero-year drift guard
+    per year rather than per window.
+    """
+    if not years:
+        raise ValueError("years window is empty")
+    years = tuple(sorted(years))
+    out_path = Path(out_path)
+
+    per_year = {}
+    for y in years:
+        # One load_permits call per year: 17 years costs ~6 s on the weekly
+        # runner, which buys identical filter semantics to the window columns
+        # instead of a second copy of the work_type/building_type logic.
+        per_year[y] = load_permits(permits_csv, (y,)).set_index("neighbourhood_name")
+
+    SERIES = [("units", "new_dwelling_units"),
+              ("permits", "new_dwelling_permits"),
+              ("ind_permits", "ind_permits")]
+
+    citywide = [[int(round(per_year[y][col].sum())) for y in years]
+                for _, col in SERIES]
+
+    names = sorted(set().union(*(df.index for df in per_year.values())))
+    rendered = sorted(n for n in names if boundary_names is None or n in boundary_names)
+    dropped = [n for n in names if n not in set(rendered)]
+    if dropped:
+        # Warn, never fail: an unmatched permit hood is a blank hood, not a
+        # wrong dollar figure (module docstring). Reported with its units so
+        # the loss is sized, not just named.
+        lost = sum(float(per_year[y]["new_dwelling_units"].get(n, 0.0))
+                   for y in years for n in dropped)
+        logger.warning(
+            # Pipe-separated, not comma: EVERY unmatched permit hood name
+            # measured 2026-09-14 contains a comma (they are multi-hood permit
+            # rows — "OLIVER, WÎHKWÊNTÔWIN"), so a comma join reads as twice as
+            # many names as it names.
+            "%d permit hoods have no rendered boundary — excluded from "
+            "dev_history (%.0f dwelling units, %.1f%% of citywide): %s",
+            len(dropped), lost,
+            100 * lost / max(1, sum(citywide[0])), " | ".join(dropped[:8]),
+        )
+
+    hoods = {}
+    for n in rendered:
+        hoods[n] = [[int(round(float(per_year[y][col].get(n, 0.0)))) for y in years]
+                    for _, col in SERIES]
+
+    payload = {
+        "years": [int(y) for y in years],
+        "series": [k for k, _ in SERIES],
+        "citywide": citywide,
+        "hoods": hoods,
+    }
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    text = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
+    out_path.write_text(text + "\n")
+
+    stats = {"hoods": len(hoods), "years": tuple(years), "dropped": len(dropped),
+             "citywide_units": sum(citywide[0]), "bytes": len(text) + 1}
+    logger.info(
+        "Wrote %s: %d hoods x %d years (%d-%d), %.0f units citywide, %.1f kB",
+        out_path.name, len(hoods), len(years), years[0], years[-1],
+        stats["citywide_units"], stats["bytes"] / 1024,
+    )
     return stats

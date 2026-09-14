@@ -437,6 +437,88 @@ and there are currently zero closed top-level items — verified by running it o
 an isolated copy), but the hand rule in `CLAUDE.md` (*"move its body to the
 archive"*) is not, and this span is 2,533 lines.
 
+- [ ] **⚠️ 565 UNITS STILL UNATTRIBUTED BY DECISION — the straddling half of the
+  comma-list permit names. The other 1,245 units are FIXED (2026-09-14, S156).**
+  ✅ **Fixed:** 8 unambiguous names corrected in `PERMIT_NAME_CORRECTIONS` —
+  WÎHKWÊNTÔWIN 1,229 → 2,066 (+68%), SOUTH TERWILLEGAR 823 → 1,189 (+45%),
+  plus ELSINORE/RUTHERFORD/RITCHIE/MCCONACHIE. Citywide unchanged at 162,414
+  (attribution moved, not totals — the invariant that says units were placed,
+  not invented). 5 tests, 3 falsified.
+  ❗ **STILL OPEN — Peter's call, 565 units across 15 names:** the rows that
+  genuinely straddle 2+ hoods (`RUTHERFORD, HERITAGE VALLEY TOWN CENTRE` 327u;
+  `THE HAMPTONS, GRANVILLE` 119u; `HOLLICK-KENYON, BRINTNELL, MILLER, BRINTNELL`
+  60u across 3). Choose one of **even split / assign to the first-named hood /
+  drop loudly**; a test currently pins the non-fix so a later tidy-up cannot
+  quietly invent a split. ⚠️ **Not a spatial problem** — 14.9% geocoded, and
+  `THE HAMPTONS, GRANVILLE` is 0%.
+  ➡️ **Also filed as an upstream defect: `docs/DATA_ISSUES.md` issue 6 (NOT
+  SENT, and the only one of the six with NO published notebook)** — asking for a
+  single-valued field, ideally the numeric `neighbourhood_id` the City already
+  publishes on three other datasets. And as **`AUDIT_LEDGER.md` never-audited
+  candidate 8** (the name-join layer).
+
+  <details><summary>Original finding (2026-09-14) — how it hid</summary>
+
+  The
+  unmatched permit-side names are rows whose `neighbourhood` field holds a
+  **comma-joined LIST** of hoods (`OLIVER, WÎHKWÊNTÔWIN`,
+  `SOUTH TERWILLEGAR, SOUTH TERWILLEGAR`), and **every one of them predates
+  2021** — which is exactly why this hid: the 5yr window loses **1 unit** and the
+  3yr window **0**, so `load_permits`' docstring called it "immaterial" and was
+  right about the windows anyone had measured. The anchored `_long` window
+  ("since 2009", a **published** column + choropleth since 2026-07-21) loses
+  **23 names / 1,810 units / 1.11% citywide**, and the citywide figure badly
+  understates the per-hood damage:
+
+  | unmatched name | units | goes to | shown now | understated by |
+  |---|---:|---|---:|---:|
+  | `OLIVER, WÎHKWÊNTÔWIN` | 837 | WÎHKWÊNTÔWIN | 1,229 | **+68%** |
+  | `SOUTH TERWILLEGAR, SOUTH TERWILLEGAR` | 366 | SOUTH TERWILLEGAR | 823 | **+45%** |
+  | `CHAPPELLE AREA, HERITAGE VALLEY AREA` | 28 | HERITAGE VALLEY AREA | **0** | shows nothing |
+
+  **Split by how fixable each is** (measured, `/tmp` script — re-run before
+  acting): **Tier 1, 1,273 units (70%), unambiguous** — every comma-part
+  resolves to ONE rendered hood, because the row is either the same hood twice
+  (`RITCHIE, RITCHIE`) or the Oliver→Wîhkwêntôwin **rename** carrying both names.
+  These belong in `PERMIT_NAME_CORRECTIONS` and need no decision beyond a yes.
+  **Tier 2, 537 units, genuinely straddles 2+ hoods** (`RUTHERFORD, HERITAGE
+  VALLEY TOWN CENTRE` 327u; `THE HAMPTONS, GRANVILLE` 119u;
+  `HOLLICK-KENYON, BRINTNELL, MILLER, BRINTNELL` 60u across 3) — a name
+  correction cannot split these.
+  ⚠️ **THE SPATIAL FIX IS DEAD — measured 2026-09-14, and this corrected an
+  unverified claim written into this item the same hour.** I wrote "many ARE
+  geocoded, so point-in-polygon is available"; measuring it inverted the answer.
+  Tier 2 is **14.9% geocoded (23.8% of units)**, and the two biggest rows are the
+  worst: `RUTHERFORD, HERITAGE VALLEY TOWN CENTRE` has 59 of 327 units geocoded
+  (18%) and `THE HAMPTONS, GRANVILLE` has **0 of 119**. Point-in-polygon would
+  resolve 128 of 537 units and leave the big ones untouched. So the real choice
+  is a 3-way judgment call — **even split / assign to the first-named hood /
+  drop loudly** — not an engineering task. (Tier 1 is 34.6% geocoded and does not
+  need geometry anyway.)
+  **Scope is CONTAINED to permits** (measured across all five hood-bearing raw
+  sources): `fire_response`, both Property CSVs and the historical assessment
+  file carry either a numeric `neighbourhood_id`/`Neighbourhood ID` or clean
+  single names — **zero comma rows**. In the raw permits file the pattern is 546
+  rows / 92 distinct names (0.22%), and **92 of the 95 names that miss the
+  boundary file are this one pattern** — so handling comma-lists makes the permit
+  name join essentially clean. Not an architectural name-vs-geometry problem.
+  ⚠️ **It also cannot GROW**: every affected row predates 2021, so the January
+  `PERMIT_YEARS` roll never makes it worse. Safe to defer.
+  ⚠️ **One correction to the tier split recorded above:** the first pass called
+  it 1,273 / 537 by checking each comma-part against the boundary names *without*
+  applying `NAME_CORRECTIONS` first. Re-derived with corrections applied, it is
+  **1,245 / 565** — `CHAPPELLE AREA, HERITAGE VALLEY AREA` (28u) is genuinely
+  ambiguous, because `CHAPPELLE AREA` resolves to CHAPPELLE, a different real
+  hood. It had been about to be "fixed" into the wrong hood.
+
+  </details>
+  ⚠️ **This is `a-finer-rendering-audits-the-aggregate` again** — the per-year
+  series surfaced a two-month-old defect in the aggregate on its first run.
+  ⚠️ **And `check_unmatched_names.py` does NOT cover this path** — it guards the
+  assessment money path only; the permit join is warn-not-fail by design, so the
+  warning has been printing into the pipeline log unread (the project's standing
+  failure mode). Consider whether the guard should extend here.
+
 - [ ] **RATIO vs MONEY — the two remaining colour mismatches, DEFERRED by Peter
   2026-09-12 ("eh leave it till later").** Found while fixing the third (the
   institutional band, now shipped — `DECISIONS.md` 2026-09-12). Both are
