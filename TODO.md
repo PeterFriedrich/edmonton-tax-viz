@@ -437,6 +437,24 @@ and there are currently zero closed top-level items — verified by running it o
 an isolated copy), but the hand rule in `CLAUDE.md` (*"move its body to the
 archive"*) is not, and this span is 2,533 lines.
 
+- [ ] **DEV HISTORY FOLLOW-ONS — three, none blocking (opened 2026-09-14, S156,
+  after PR #389 merged).**
+  - **Nothing verifies `dev_history.json` in CI.** The feature was verified by a
+    throwaway probe (25/25) that was **deleted on merge**, so the panel, the
+    teaser, the zero-based baseline and the all-zero wording now have **no
+    standing check at all** — the one surface where a regression would be silent.
+    A `verify-devhistory.js` is ~40 lines and the probe's assertions are recorded
+    in the S156 handoff. ⚠️ **Note the honest caveat:** the 42 `verify-*.js`
+    scripts gate NOTHING (its own open item below), so this buys a runnable
+    check, not an enforced one.
+  - **The panel has never been opened on a phone.** Same class as the Services
+    panel item below. The chart is 300×96 inside a bottom-sheet at 390px — the
+    y-gutter and the two year ticks are the parts most likely to collide.
+  - **`#temporal-close`'s aria-label still says "Close the assessment-history
+    panel"** — now wrong for **three** of the four panel modes (revenue,
+    services, and the new dev history). Pre-existing, but this change widened it
+    from one-in-three to one-in-four. Screen-reader-only, one line to fix.
+
 - [ ] **⚠️ 565 UNITS STILL UNATTRIBUTED BY DECISION — the straddling half of the
   comma-list permit names. The other 1,245 units are FIXED (2026-09-14, S156).**
   ✅ **Fixed:** 8 unambiguous names corrected in `PERMIT_NAME_CORRECTIONS` —
@@ -2960,6 +2978,8 @@ archive"*) is not, and this span is 2,533 lines.
 ## Done
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
+
+- **Development gets a per-year new-supply history — SHIPPED 2026-09-14 (S156, PR #389, merged).** `export_dev_history` → `web/data/dev_history.json` (363 hoods × 17 years, 49 kB, **public**); tooltip sparkline + pinned panel, following the units/permits/industrial picker. ⚠️ **Columns, zero-based — NOT the temporal line and NOT `temporalGeom`** (annual flow of counts vs continuous stock; 61% of hood-years are zero, and temporalGeom's non-zero baseline is a lie for counts). That choice **retired the minimum-non-zero-year gate the feature was specced with**. Rationale `docs/DECISIONS.md` 2026-09-14; design `docs/SPEC_development.md` "Lens A history".
 
 - [x] **`tools/todo_archive.py` swallowed trailing non-item text — FIXED 2026-09-10 (S154).** — 2026-09-10 · `docs/TODO_archive.md`
 
