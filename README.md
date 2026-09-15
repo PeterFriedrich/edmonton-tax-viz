@@ -1,8 +1,12 @@
 # Edmonton Revenue Per Acre Analysis
 
-A public fiscal analysis comparing Edmonton's property tax revenue to the cost of servicing it, by area.
+**Which parts of Edmonton pay for themselves — mapped, per acre, from open data.**
 
-[Edmonton Tax Visualization](https://peterfriedrich.github.io/edmonton-tax-viz/)
+[![Edmonton tax revenue per acre, shown by neighbourhood and again in 50 m grid cells](docs/assets/hood-vs-50m-grid.png)](https://peterfriedrich.github.io/edmonton-tax-viz/)
+
+*Municipal property-tax revenue per acre, same camera, two resolutions. Height and
+colour are revenue per acre; grey is set-aside natural and undeveloped land.*
+**[Open the live map →](https://peterfriedrich.github.io/edmonton-tax-viz/)**
 
 ## What This Is
 
