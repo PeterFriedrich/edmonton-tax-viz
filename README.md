@@ -64,7 +64,10 @@ Work that would genuinely need parcel *geometry* is catalogued in `docs/PARCEL_L
 
 **Live:** interactive 3D map at **https://peterfriedrich.github.io/edmonton-tax-viz/**
 — municipal tax revenue (and assessed value) per acre by neighbourhood, with a
-land-use set-aside layer and a residential-only lens.
+land-use set-aside layer and a residential-only lens. The public build carries
+four lenses: **Money**, **Development** (new dwelling units and permits per acre,
+with a per-year history for each neighbourhood), **Services** (the road network
+and its modelled cost) and **Ratio** (revenue per road metre).
 
 **Data-quality reports:** **https://peterfriedrich.github.io/edmonton-tax-viz/notebooks/**
 — standalone, reproducible findings about defects in Edmonton's published open
@@ -77,6 +80,7 @@ invariants:
   — 2,448 accounts across 188 neighbourhoods, 29 addresses losing every account.
 - [What public data can and cannot say about tax-exempt property](https://peterfriedrich.github.io/edmonton-tax-viz/notebooks/exemption-uncertainty.html)
   — sizing a ~$15B gap, and why public data cannot resolve it.
+- [Edmonton's open data covers two school authorities, not all of them](https://peterfriedrich.github.io/edmonton-tax-viz/notebooks/school-coverage-gap.html)
 
 Sources are under `notebooks/standalone/`; the register of known issues and
 whether anyone has been told is `docs/DATA_ISSUES.md`.
@@ -93,8 +97,10 @@ stormwater charge** per acre, **fire-rescue service demand** per acre, and a
 **modeled water/sanitary charge** per acre; a Ratio view shows **revenue per
 road metre** — how much municipal revenue backs each metre of neighbourhood
 road. A Uses view maps the zoning bylaw's land-use categories, and a Glass
-view renders the metric in **100 m grid cells** (the Urban3-style detail
-level). Both the Money and Glass views toggle between ground acres and
+view renders the metric in **100 m or 50 m grid cells** (the Urban3-style
+detail level — the 50 m grid is the resolution at which single high-value
+parcels stop being averaged into their neighbours, and is the right-hand panel
+of the image above). Both the Money and Glass views toggle between ground acres and
 **parcel (lot) acres** as the denominator. A weekly GitHub Action regenerates
 the data and redeploys automatically (see `docs/SPEC_deployment.md`).
 
