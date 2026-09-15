@@ -445,7 +445,42 @@ names in one pass, then add a `DECISIONS.md` line citing the id.
 **F1 has a chosen direction but is not built**: the Services panel renders the same
 block for all ten layers (verified byte-identical) — it should follow the picker and
 show the selected layer plus its cost twin, degrading cleanly for the 4 layers that
-have no twin.
+have no twin. ⚠️ **Independently reconfirmed 2026-09-15 (S158)** by a different
+method — the controls drive-and-diff, which reached it without being pointed at it
+(`docs/FABLE_AUDIT_controls_state_space.md` T1).
+
+### Controls that reach nothing — brief written, audit NOT executed (OPEN 2026-09-15 S158)
+
+Brief + instrument: `docs/FABLE_AUDIT_controls_state_space.md`,
+`tools/profiling/audit-controls-diff.js`. Ledger candidate 9. The scoping run
+measured all 15 control groups × 6 views × 9 readouts on the full build:
+**no control reaches nothing** — every finding is in the `panel` column.
+
+- [ ] **T2 — `#devwindow` is the only one of Development's three sibling pickers
+  that does not reach the panel.** `#devmode` and `#devmetric` both do; every
+  other readout follows all three. ⚠️ **Answer "is `renderDevHistory`
+  deliberately all-time?" BEFORE touching the wiring** — if it is, the defect is
+  copy (a `COPY_DECISIONS.md` row), and the cheap wiring fix would silently
+  redefine a published number.
+- [ ] **T3 — `#revcut` does not reach the panel, though `#metric-row` above it
+  does.** The inner level of the app's only nested control. Plausibly correct
+  (the mix panel *is* the decomposition) — but `#millrates` lights a different
+  rate per cut on the same screen, so the cut has been shown to matter.
+  `lab / labcut` is the same three cuts with the same result; settle together.
+- [ ] **T4 — `#budget-pod`'s state class and rendered pod disagree.** Measured:
+  the button takes `#budget` `none → flex` and sets `body.budget`; `openTemporal`
+  then returns it to `none` **with the class still on**, so the next press
+  toggles off an already-invisible pod and restoring it takes two presses.
+  `CONTROLS_MATRIX.md` §3 says the mill-rates yield uses CSS *"so the two cannot
+  both think they own the slot"* — check whether the budget yield was ever
+  decided or merely inherited.
+- [ ] **Nothing verifies the Services panel** (the T1 gap). A
+  `verify-services-panel.js` asserting only *"the panel differs across layers"*
+  would have caught F1 on day one. ⚠️ Write it **before** the F1 rebuild, so it
+  is falsified against the current broken build rather than written green.
+- [ ] **T5 is NOT a cleared row.** The two Detail selectors read invariant on
+  tooltip/peek only because the probe feeds a hood feature to `viewTooltip` in
+  grid modes too. Needs a cell-grain capture before it means anything.
 
 ### General backlog — the flat list (no parent item; predates the `###` headings above)
 

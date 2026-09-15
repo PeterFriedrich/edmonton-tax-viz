@@ -443,6 +443,31 @@ bottom-sheet) was REFUSED 2026-08-04** — the control column stays a stack — 
 this has no vehicle and needs its own proposal if revisited.
 `MOBILE_USABILITY.md` §3.
 
+**8. ⚠️ MEASURED 2026-09-15 (S158): four controls do not reach the readout beside
+them.** Every combination in this matrix was probed for *what shows*; this is the
+first sweep of *what responds*. `tools/profiling/audit-controls-diff.js` drove
+all 15 control groups × 6 views and diffed 9 readouts. **No control reaches
+nothing** — every finding is the `panel` column:
+
+| control | panel | note |
+|---|:---:|---|
+| `services / services` (10 rows) | **.** | the F1 defect; 6 other readouts follow the picker |
+| `development / devwindow` | **.** | but `#devmode` and `#devmetric` both reach it |
+| `money / revcut` | **.** | but `#metric-row`, the level above it, reaches it |
+| `lab / labcut` | **.** | the same three cuts as `#revcut` |
+
+Plus `#budget-pod`, where `body.budget` stays set over a `display:none` pod once
+`#temporal` takes the column — §3's mill-rates rule (*"so the two cannot both
+think they own the slot"*) not holding here. ⚠️ **Invariance is a candidate, not
+a verdict** — `#coloradj` is *supposed* to leave the title alone. The question is
+whether the layout advertised a relationship. Brief, ranked targets and the
+method: `docs/FABLE_AUDIT_controls_state_space.md`; open items in `TODO.md`.
+
+⚠️ **§5.6's sentence, read backwards, is this item.** It says *"if a control
+ignores the pickers around it, it is probably a lens, not a detail mode."* The
+mirror: **if a readout ignores the pickers around it, the reader has been told a
+relationship that does not exist.**
+
 ### Resolved by the regroup (record)
 
 | Old | Was | Resolved by |

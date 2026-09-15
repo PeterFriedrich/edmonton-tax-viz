@@ -128,8 +128,11 @@ REQUESTS_CA_BUNDLE=$(.venv/bin/python -m certifi) .venv/bin/python <script>
 
 - **pytest** — 48 test files, **892 tests**, ~13 s. Tiers and what each can see:
   `docs/ARCHITECTURE.md` §Testing.
-- **Playwright + Chromium** — `tools/profiling/`, **66 JS scripts** (`verify-*`
-  assert behaviour, `shot-*` capture screenshots). Node **v20.20.2**,
+- **Playwright + Chromium** — `tools/profiling/`, **67 JS scripts**: `verify-*`
+  (42) assert behaviour, `shot-*` capture screenshots, and `audit-*` **measure
+  without asserting** — an audit probe prints an inventory for a human to judge
+  and has no pass/fail, so it is not part of any suite and a sweep that greps for
+  `PASS` must not score it. Node **v20.20.2**,
   `playwright ^1.61.1`. One python tool sits beside them
   (`compose-readme-sxs.py`, Pillow) — the README shot is captured in node and
   composed in python, because the two runtimes own different halves.
