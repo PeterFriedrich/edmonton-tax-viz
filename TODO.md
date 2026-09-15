@@ -442,12 +442,9 @@ names in one pass, then add a `DECISIONS.md` line citing the id.
   $9.320000/m, stdev < 0.0001 across 400 hoods). That denominator also already
   existed and was retired 2026-09-05.
 
-**F1 has a chosen direction but is not built**: the Services panel renders the same
-block for all ten layers (verified byte-identical) — it should follow the picker and
-show the selected layer plus its cost twin, degrading cleanly for the 4 layers that
-have no twin. ⚠️ **Independently reconfirmed 2026-09-15 (S158)** by a different
-method — the controls drive-and-diff, which reached it without being pointed at it
-(`docs/FABLE_AUDIT_controls_state_space.md` T1).
+**F1 is BUILT — 2026-09-15, PR #399** (`## Done`). The panel follows
+`state.svcDriver`; storm/fire/water state their scope rather than showing an empty
+group. `verify-services-panel.js` gates it and was merged RED first (#398).
 
 ### Controls that reach nothing — audit EXECUTED 2026-09-15 (S159); two decisions open
 
@@ -477,10 +474,9 @@ is in the `panel` column. T1 is public (3 of 10 service rows). T2 closed (`## Do
   Remedies are a decision, not a patch: (1) a press under the panel closes the
   panel; (2) opening the panel clears `body.budget`; (3) keep the yield and
   un-light the button from `openTemporal`/`closeTemporal`. Peter's call.
-- [ ] **Nothing verifies the Services panel** (the T1 gap). A
-  `verify-services-panel.js` asserting only *"the panel differs across layers"*
-  would have caught F1 on day one. ⚠️ Write it **before** the F1 rebuild, so it
-  is falsified against the current broken build rather than written green.
+- [x] **Nothing verifies the Services panel** (the T1 gap) — **CLOSED 2026-09-15,
+  PR #398 then #399.** Written and merged RED against the broken build (7 checks
+  failing), falsified both ways, green after the fix. `## Done`.
 - [ ] **T5 is NOT a cleared row.** The two Detail selectors read invariant on
   tooltip/peek only because the probe feeds a hood feature to `viewTooltip` in
   grid modes too. Needs a cell-grain capture before it means anything.
@@ -3041,6 +3037,8 @@ archive"*) is not, and this span is 2,533 lines.
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
 
+- **F1 — the Services panel follows the colour-driving service. BUILT 2026-09-15 (S159, PR #399, merged).** Closed the defect where one panel served all ten layers. Follows `state.svcDriver`, not the checkbox set (Peter's call — "the picker" was ambiguous for a multi-select control); shows the driver's value + rank, then that service family's cost bars; storm/fire/water state their scope instead of showing an empty group. Two defects it exposed: the operating-basis note said "snow clearing" under a bus network, and `verify-services-public.js` asserted a clause naming rows no longer on screen. `DECISIONS.md` 2026-09-15, `COPY_DECISIONS.md` F1.
+- **`verify-services-panel.js` — the T1 verification gap. CLOSED 2026-09-15 (S159, PR #398 merged RED, then #399 green).** Written before the fix so it could be falsified against the broken build: 7 checks red on arrival, all green after F1. 10 distinct panel renderings across 10 layers, 3 across 3 public.
 - **T2 `#devwindow` → panel — CLOSED 2026-09-15 (S159): wiring SOUND by decision, not a defect.** `DECISIONS.md` 2026-09-14 makes the Development history panel the *whole* per-year series with the windows as aggregates over it; `devHistoryFor` reads no window. The one copy line that ignores the picker (`… in the last 5 years`) is `COPY_DECISIONS.md` **F4**. `docs/FINDINGS_controls_state_space.md` T2.
 
 - **Development gets a per-year new-supply history — SHIPPED 2026-09-14 (S156, PR #389, merged).** `export_dev_history` → `web/data/dev_history.json` (363 hoods × 17 years, 49 kB, **public**); tooltip sparkline + pinned panel, following the units/permits/industrial picker. ⚠️ **Columns, zero-based — NOT the temporal line and NOT `temporalGeom`** (annual flow of counts vs continuous stock; 61% of hood-years are zero, and temporalGeom's non-zero baseline is a lie for counts). That choice **retired the minimum-non-zero-year gate the feature was specced with**. Rationale `docs/DECISIONS.md` 2026-09-14; design `docs/SPEC_development.md` "Lens A history".
