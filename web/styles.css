@@ -712,6 +712,11 @@ body.budget #budget-btn { background: #fcd278; color: #16111a; font-weight: 600;
 /* Services panel: cost against revenue, grouped by basis. The group heading is
    load-bearing, not decoration — it is what stops the eye adding two rows that
    measure the same road metre on scales ~11x apart (see SVC_COST_BASES). */
+/* The service the panel is about. It carries the whole point of the 2026-09-15
+   fix — the reader has to see WHICH layer these numbers describe — so it is
+   set apart from the levy headline above and the cost bars below. */
+.svchead { margin-top: 7px; font-size: 10px; text-transform: uppercase;
+           letter-spacing: 0.8px; color: #9a9ab0; }
 #svccost { margin-top: 7px; }
 .svcbasis { margin: 6px 0 2px; font-size: 10.5px; color: #9a9ab0; }
 .svcbasis:first-child { margin-top: 0; }

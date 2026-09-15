@@ -220,13 +220,22 @@ function check(name, ok, detail) {
     !/already contains/i.test(panel.note), panel.note);
   check('no roads+fire row in the panel', !/fire/i.test(panel.html),
     panel.html.slice(0, 200));
-  if (fullBuild) {
-    check('full: note still warns the operating three are not added',
-      /operating three/i.test(panel.note), panel.note);
-  } else {
-    check('public: note does not cite rows that are absent',
-      !/operating three/i.test(panel.note), panel.note);
-  }
+  // ⚠️ AMENDED 2026-09-15. The full build used to show the operating three
+  // (roads, transit, bike) in one group and the note warned against adding
+  // them. The panel now follows the colour driver and shows ONE service family,
+  // so those three can never be on screen together — which makes the clause the
+  // very thing the two checks above forbid: a note naming rows the reader
+  // cannot see. Neither build may cite it now.
+  check('note does not cite the operating three (never co-shown since 2026-09-15)',
+    !/operating three/i.test(panel.note), panel.note);
+  // The "never added" warning is a ROADS fact — the same metres on two bases —
+  // so it must ride with those two bars and appear nowhere else. Counted from
+  // the rendered groups rather than assumed from the build, so it holds for
+  // whichever service is driving.
+  const nBases = (panel.html.match(/svcbasis/g) || []).length;
+  check('the two-bases warning rides with the two bases, in both builds',
+    /never added/i.test(panel.note) === (nBases > 1),
+    `${nBases} basis group(s), warning=${/never added/i.test(panel.note)}`);
 
   // 9. Attribution + the modelled caveat. Both are REQUIRED on the public build
   //    — it draws the road network and colours by two modelled cost columns.

@@ -121,8 +121,13 @@ const SUBJECT = { storm: /storm/i, fire: /fire/i, water: /water|sewer/i };
     check(`${k}: selection took (driver=${k}, exactly one checked)`,
       r.driver === k && r.checked.length === 1 && r.checked[0] === k,
       `driver=${r.driver} checked=[${r.checked.join(',')}]`);
+    // ⚠️ NOT `rows > 0`. The three services with no cost twin degrade to a
+    // shorter form with no bars at all, which is the design — so the claim is
+    // that the panel says SOMETHING, and check 3b below is what stops the
+    // degraded form from being a blank.
     check(`${k}: the panel opens and is not empty`,
-      r.open && r.text.length > 0 && r.rows > 0, `${r.rows} rows, ${r.text.length} chars`);
+      r.open && r.text.length > 0 && (r.rows > 0 || k in SUBJECT),
+      `${r.rows} rows, ${r.text.length} chars`);
   }
 
   // ---- 2. THE PANEL IS NOT INVARIANT ACROSS LAYERS ------------------------
@@ -144,6 +149,13 @@ const SUBJECT = { storm: /storm/i, fire: /fire/i, water: /water|sewer/i };
   for (const [k, re] of Object.entries(SUBJECT)) {
     check(`*** ${k}: the panel mentions its own subject (${seen[k].label}) ***`,
       re.test(seen[k].text), seen[k].text.slice(0, 90).replace(/\n/g, ' | '));
+    // 3b. The degraded form must EXPLAIN the missing cost, not just omit it.
+    // These three have no City cost because of what the money is — utility
+    // charges, and a demand-only measure — so the panel states a scope. A
+    // blank would satisfy every other check here while reading as a gap.
+    check(`*** ${k}: the absent cost is explained, not just omitted ***`,
+      seen[k].rows === 0 && /utility charge|no fire cost|demand/i.test(seen[k].text),
+      `${seen[k].rows} rows | ${seen[k].text.split('\n')[1] || ''}`.slice(0, 110));
   }
   await page.close();
 
