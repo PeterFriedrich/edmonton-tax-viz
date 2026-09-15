@@ -449,31 +449,34 @@ have no twin. ⚠️ **Independently reconfirmed 2026-09-15 (S158)** by a differ
 method — the controls drive-and-diff, which reached it without being pointed at it
 (`docs/FABLE_AUDIT_controls_state_space.md` T1).
 
-### Controls that reach nothing — brief written, audit NOT executed (OPEN 2026-09-15 S158)
+### Controls that reach nothing — audit EXECUTED 2026-09-15 (S159); two decisions open
 
 Brief + instrument: `docs/FABLE_AUDIT_controls_state_space.md`,
-`tools/profiling/audit-controls-diff.js`. Ledger candidate 9. The scoping run
-measured all 15 control groups × 6 views × 9 readouts on the full build:
-**no control reaches nothing** — every finding is in the `panel` column.
+`tools/profiling/audit-controls-diff.js`; findings
+`docs/FINDINGS_controls_state_space.md`; ledger row 2026-09-15 (S159). Both
+builds swept, 9/9 readouts live: **no control reaches nothing** — every finding
+is in the `panel` column. T1 is public (3 of 10 service rows). T2 closed (`## Done`).
 
-- [ ] **T2 — `#devwindow` is the only one of Development's three sibling pickers
-  that does not reach the panel.** `#devmode` and `#devmetric` both do; every
-  other readout follows all three. ⚠️ **Answer "is `renderDevHistory`
-  deliberately all-time?" BEFORE touching the wiring** — if it is, the defect is
-  copy (a `COPY_DECISIONS.md` row), and the cheap wiring fix would silently
-  redefine a published number.
 - [ ] **T3 — `#revcut` does not reach the panel, though `#metric-row` above it
-  does.** The inner level of the app's only nested control. Plausibly correct
-  (the mix panel *is* the decomposition) — but `#millrates` lights a different
-  rate per cut on the same screen, so the cut has been shown to matter.
-  `lab / labcut` is the same three cuts with the same result; settle together.
-- [ ] **T4 — `#budget-pod`'s state class and rendered pod disagree.** Measured:
-  the button takes `#budget` `none → flex` and sets `body.budget`; `openTemporal`
-  then returns it to `none` **with the class still on**, so the next press
-  toggles off an already-invisible pod and restoring it takes two presses.
-  `CONTROLS_MATRIX.md` §3 says the mill-rates yield uses CSS *"so the two cannot
-  both think they own the slot"* — check whether the budget yield was ever
-  decided or merely inherited.
+  does.** Measured: `revenueMix` reads no cut, so under **Residential** the map
+  is residential $/acre and the panel is headlined with the **total** levy
+  (`$146.40M municipal levy · 5.26%` for DOWNTOWN, byte-identical across cuts);
+  the residential share is a row inside the mix. Judgement, Peter's: leave it
+  (the mix is the decomposition the cut belongs to), light the selected cut's
+  row the way `#millrates` lights the rate, or headline the cut's own levy.
+  `lab / labcut` is the same three cuts; settle together.
+- [ ] **T4 — `#budget-pod`: the yield was decided, the toggle was not.** The
+  CSS yield to `#temporal` is deliberate (`styles.css` at `#budget`, `DECISIONS.md`
+  2026-08-16) and copies the mill-rates pod — but `body.mills` is **derived** by
+  `syncMillRates` and `body.budget` is a **reader toggle**, so §3's "cannot both
+  think they own the slot" does not transfer. Measured (findings §4 table):
+  with the panel open the opener is **lit over an invisible pod** (no CSS
+  exception is possible — `#budget-pod` is not `#temporal`'s sibling), and a
+  press under the open panel toggles state with nothing visible but the button,
+  so whether the pod is there when the panel closes depends on press parity.
+  Remedies are a decision, not a patch: (1) a press under the panel closes the
+  panel; (2) opening the panel clears `body.budget`; (3) keep the yield and
+  un-light the button from `openTemporal`/`closeTemporal`. Peter's call.
 - [ ] **Nothing verifies the Services panel** (the T1 gap). A
   `verify-services-panel.js` asserting only *"the panel differs across layers"*
   would have caught F1 on day one. ⚠️ Write it **before** the F1 rebuild, so it
@@ -3037,6 +3040,8 @@ archive"*) is not, and this span is 2,533 lines.
 ## Done
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
+
+- **T2 `#devwindow` → panel — CLOSED 2026-09-15 (S159): wiring SOUND by decision, not a defect.** `DECISIONS.md` 2026-09-14 makes the Development history panel the *whole* per-year series with the windows as aggregates over it; `devHistoryFor` reads no window. The one copy line that ignores the picker (`… in the last 5 years`) is `COPY_DECISIONS.md` **F4**. `docs/FINDINGS_controls_state_space.md` T2.
 
 - **Development gets a per-year new-supply history — SHIPPED 2026-09-14 (S156, PR #389, merged).** `export_dev_history` → `web/data/dev_history.json` (363 hoods × 17 years, 49 kB, **public**); tooltip sparkline + pinned panel, following the units/permits/industrial picker. ⚠️ **Columns, zero-based — NOT the temporal line and NOT `temporalGeom`** (annual flow of counts vs continuous stock; 61% of hood-years are zero, and temporalGeom's non-zero baseline is a lie for counts). That choice **retired the minimum-non-zero-year gate the feature was specced with**. Rationale `docs/DECISIONS.md` 2026-09-14; design `docs/SPEC_development.md` "Lens A history".
 

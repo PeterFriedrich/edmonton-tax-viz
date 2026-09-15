@@ -120,6 +120,24 @@ It would duplicate the existing (and public-default) road-metre map at different
 units. A `Per service $` denominator also already existed and was **retired
 2026-09-05** with its composite column.
 
+### F4 — the Development history panel's summary line ignores the window picker
+
+`#devwindow` (3 yr / 5 yr / Since 2009) reaches every readout except the pinned
+panel (`docs/FINDINGS_controls_state_space.md` T2). **The wiring is right by
+decision**: `DECISIONS.md` 2026-09-14 makes the panel the *whole* per-year series
+(2009–2025, one column per year), and the three windows are aggregates over it —
+so the chart deliberately does not re-scope. `devHistoryFor` reads the metric key
+and nothing else.
+
+What is left is one line of copy. `renderDevHistory` writes
+`peak N in YYYY · N in the last 5 years · active in N of 17 years` under every
+window — under **3 yr** the map is 2023–2025 and the panel volunteers a five-year
+figure; under **Since 2009** the "last 5 years" is a second window the reader did
+not pick. Options: (a) make that clause follow the picker (`N in 2023–2025`), (b)
+drop it — the chart already shows the recent bars, (c) leave it, since the panel
+names its own range in the headline. ⚠️ **Not a wiring fix** — re-scoping the
+chart to the window would silently redefine the published number.
+
 ---
 
 ## Related
