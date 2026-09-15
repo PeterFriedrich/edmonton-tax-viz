@@ -4717,6 +4717,77 @@
                { svc: "bikecost", col: "cost_bike_ops_per_acre", label: "Bike" }] },
     ];
 
+    // A layer and its cost twin measure the same subject two ways, so the panel
+    // shows the family's costs whichever side of the pair the reader picked.
+    // ⚠️ Storm, fire and water are absent BY FACT, not by omission: the first two
+    // are utility charges — separate money from the municipal levy the panel
+    // divides by — and fire is a demand measure the open data carries no cost
+    // for (DECISIONS.md 2026-07-05). renderServiceCost says so rather than
+    // showing an empty group.
+    const SVC_FAMILY = {
+      roads: "roads", roadscost: "roads", roadslife: "roads",
+      transit: "transit", transitcost: "transit",
+      bike: "bike", bikecost: "bike",
+    };
+    // Why the family has no cost, in the service's own terms. ⚠️ Each states a
+    // SCOPE, not an apology — the same rule renderDevHistory's all-zero hood
+    // follows. "No data" would read as a gap we failed to fill; these are facts
+    // about what the money is.
+    const NO_SVC_COST = {
+      storm: "Stormwater is a utility charge — separate money from the municipal "
+           + "property tax above — so there is no City cost to set against this "
+           + "neighbourhood's levy.",
+      water: "Water and sewer are utility charges — separate money from the "
+           + "municipal property tax above — so there is no City cost to set "
+           + "against this neighbourhood's levy.",
+      fire: "Fire is measured as demand: dispatched events. The open data carries "
+          + "no cost and no on-scene times, so no fire cost is modelled here.",
+    };
+    // ⚠️ Exposed by scoping the panel to one family: the operating group's note
+    // says "maintenance and snow clearing", which is accurate for roads AND
+    // bikeways (both carry a clearing rate) but describes a bus network not at
+    // all. It went unseen while the three operating rows were always shown
+    // together under one roads-flavoured heading. Wording from the layer's own
+    // blurb — "new trains, garages and line extensions are excluded".
+    const SVC_OPS_NOTE = {
+      transit: "service operation only, no new trains, garages or line extensions",
+    };
+    const SVC_FAMILY_COST = {
+      roads: ["cost_roads_life_per_acre", "cost_roads_ops_per_acre"],
+      transit: ["cost_transit_ops_per_acre"],
+      bike: ["cost_bike_ops_per_acre"],
+    };
+    // 1 = highest. Ranked over the hoods that HAVE the column, not over all 406,
+    // so a service with partial coverage reports a denominator it can support.
+    function svcRank(col, v) {
+      const vals = state.data.features
+        .map(f => f.properties[col]).filter(x => x != null);
+      return { rank: vals.filter(x => x > v).length + 1, n: vals.length };
+    }
+    const ordSuffix = n => (n % 100 >= 11 && n % 100 <= 13)
+      ? "th" : (["th", "st", "nd", "rd"][n % 10] || "th");
+
+    // What the colour-driving service measures for this hood, as a number and as
+    // the sentence the reader sees. ⚠️ ONE definition, shared with primaryRow:
+    // two tables of "what the selected service measures" would drift, and the
+    // peek card and the pinned panel must not disagree about the same hood.
+    function svcDriverReading(p) {
+      const t = {
+        roads:       ["road_m_per_acre", v => `${v.toFixed(1)} road m / acre`],
+        storm:       ["storm_charge_per_acre", fmtStorm],
+        fire:        ["fire_events_per_acre", fmtFire],
+        water:       ["water_charge_per_acre", v => fmtWater(v, p.water_fixed_per_acre)],
+        transit:     ["transit_dep_per_acre", fmtTransit],
+        bike:        ["bike_m_per_acre", fmtBike],
+        roadscost:   ["cost_roads_ops_per_acre", fmtRoadsCost],
+        roadslife:   ["cost_roads_life_per_acre", fmtRoadsLife],
+        transitcost: ["cost_transit_ops_per_acre", fmtTransitCost],
+        bikecost:    ["cost_bike_ops_per_acre", fmtBikeCost],
+      }[state.svcDriver] || [];
+      const value = t[0] == null ? null : p[t[0]];
+      return { col: t[0], value, text: value == null ? null : t[1](value) };
+    }
+
     // Lens test and per-hood test kept separate, the same split revenueLens /
     // revenuePanelFor uses: the lens answers the empty-panel prompt (which has no
     // hood yet), the per-hood test also gates on the COLUMNS so a stale geojson
@@ -5207,7 +5278,19 @@
     // course. Re-measure before citing that as still true.
     function renderServiceCost(p) {
       const rev = p.revenue_per_acre;
-      const groups = svcCostRows(p);
+      const driver = state.svcDriver;
+      const fam = SVC_FAMILY[driver];
+      // ⚠️ The panel follows the COLOUR DRIVER, not the checkbox set (Peter,
+      // 2026-09-15). Several services can be checked at once; the driver is the
+      // one the choropleth and the legend are about, so it is the one the panel
+      // has to be about. Until 2026-09-15 this rendered SVC_COST_BASES whole and
+      // reported road costs under Fire, Water, Transit and Bike alike.
+      const want = fam ? SVC_FAMILY_COST[fam] : [];
+      const groups = svcCostRows(p)
+        .map(g => ({ ...g, rows: g.rows.filter(r => want.includes(r.col)) }))
+        .filter(g => g.rows.length);
+      const read = svcDriverReading(p);
+      const rank = read.value == null ? null : svcRank(read.col, read.value);
       // Every row is now a peer of the others in its basis group. The "(incl.
       // above)" label existed for the one NESTED row (roads inside roads+fire),
       // retired 2026-09-05 — restore it with any future row that CONTAINS
@@ -5223,28 +5306,38 @@
       document.getElementById("temporal-chart").innerHTML = "";
       document.getElementById("temporal-read").innerHTML =
         `<b>$${Math.round(rev).toLocaleString()}</b> municipal levy / acre / yr`
+        + `<div class="svchead">${esc(SERVICES[driver].label)}</div>`
+        + (read.text == null
+            ? `<div class="muted">No ${esc(SERVICES[driver].label.toLowerCase())} `
+              + `data for this neighbourhood.</div>`
+            : `<div>${read.text}</div><div class="muted">`
+              + `${rank.rank}${ordSuffix(rank.rank)} highest of ${rank.n} `
+              + `neighbourhoods</div>`)
         + `<div id="svccost">` + groups.map(g =>
             `<div class="svcbasis">${esc(g.basis)} basis `
-            + `<span class="muted">— ${esc(g.note)}</span></div>`
+            + `<span class="muted">— ${esc(
+                 g.basis === "operating" && SVC_OPS_NOTE[fam]
+                   ? SVC_OPS_NOTE[fam] : g.note)}</span></div>`
             + g.rows.map(bar).join("")).join("") + `</div>`;
-      // ⚠️ The note has to say BOTH things. "Different bases" alone reads as a
-      // caveat about precision, when the actual instruction is that no total
-      // exists — including within the operating group, where the bases DO match
-      // and the temptation to add is strongest.
-      // ⚠️ Build-aware because the ROWS differ: the public build shows road cost
-      // on two bases and nothing else, so "the operating three" would describe
-      // rows that are not on screen. A note listing hazards a reader cannot see
-      // teaches them to skip the note.
+      // ⚠️ A note must describe rows the reader can see, or it teaches them to
+      // skip the note. It used to be FULL_BUILD-aware because the two builds
+      // showed different row sets; now the rows are scoped to one service family
+      // and the note follows `groups` directly, which covers the build
+      // difference and the driver difference with one rule.
+      // The "never added" warning is a ROADS fact — it is the only family shown
+      // on two bases — so it is emitted where those two bars are, not always.
       document.getElementById("temporal-note").textContent =
-        "Each cost is modelled and shown against this neighbourhood's own levy. "
-        + "The two bases measure different things — the same road metre costs "
-        + "about five times more at the lifecycle rate than to operate, a gap "
-        + "the operating rate's lane-kilometre denominator widens — so "
-        + "they are never added"
-        + (FULL_BUILD
-            ? ", and the operating three are not added to each other either. "
-            : ". ")
-        + "There is no total.";
+        groups.length === 0
+          ? (NO_SVC_COST[driver]
+             || "No City cost is modelled for this service.")
+          : "Modelled cost, shown against this neighbourhood's own levy."
+            + (groups.length > 1
+                ? " The two bases measure different things — the same road metre "
+                  + "costs about five times more at the lifecycle rate than to "
+                  + "operate, a gap the operating rate's lane-kilometre "
+                  + "denominator widens — so they are never added. There is no "
+                  + "total."
+                : "");
     }
 
     const SVC_LABEL = Object.fromEntries(
@@ -5547,21 +5640,10 @@
     // headline here explicitly, and services reads state.svcDriver.
     function primaryRow(p) {
       if (state.view === "services") {
-        const svc = {
-          roads:       [p.road_m_per_acre, v => `${v.toFixed(1)} road m / acre`],
-          storm:       [p.storm_charge_per_acre, fmtStorm],
-          fire:        [p.fire_events_per_acre, fmtFire],
-          water:       [p.water_charge_per_acre, v => fmtWater(v, p.water_fixed_per_acre)],
-          transit:     [p.transit_dep_per_acre, fmtTransit],
-          bike:        [p.bike_m_per_acre, fmtBike],
-          roadscost:   [p.cost_roads_ops_per_acre, fmtRoadsCost],
-          roadslife:   [p.cost_roads_life_per_acre, fmtRoadsLife],
-          transitcost: [p.cost_transit_ops_per_acre, fmtTransitCost],
-          bikecost:    [p.cost_bike_ops_per_acre, fmtBikeCost],
-        }[state.svcDriver] || [];
-        return svc[0] == null
+        const r = svcDriverReading(p);
+        return r.text == null
           ? `<span class="muted">no ${SERVICES[state.svcDriver].label.toLowerCase()} data</span>`
-          : svc[1](svc[0]);
+          : r.text;
       }
       if (state.view === "uses") {
         const c = dominantUse(p);
