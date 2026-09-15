@@ -190,3 +190,28 @@ a CAPTURE on real hardware** (the shelved `TODO.md` item), not an audit. What
    file's names never got a coverage check.
    *Companion to candidate 3* — the vacuous-guard class is "a check that cannot
    fail"; this is "a check that fails correctly, to nobody."
+9. **⚠️ CONTROLS THAT REACH NOTHING — the control/readout surface, swept as a SET**
+   (added 2026-09-15, S158). **Brief written and the scoping measurement taken:**
+   `docs/FABLE_AUDIT_controls_state_space.md`, instrument
+   `tools/profiling/audit-controls-diff.js`. **Not yet executed as an audit** — no
+   findings doc, no row above.
+   **Third sibling of candidates 3 and 8**, moving the same shape off the guard
+   estate and onto the surface a reader actually presses: candidate 3 is a check
+   that cannot fail, 8 is a check that fails to nobody, this is **a control next
+   to a readout it does not reach**.
+   ⚠️ **Ranked on fresh evidence, which is this list's stated criterion.** S157
+   drove all ten `SERVICES` keys and got a **byte-identical** cost panel every
+   time — `renderServiceCost` reads the fixed `SVC_COST_BASES`, never the picker —
+   and **3 of those rows are public**. Nothing verifies that panel today.
+   **What the scoping run already measured, so an audit does not redo it:** all
+   15 control groups × 6 views × 9 readouts, full build. **No control reaches
+   nothing**; the finding is the `panel` column. Ranked candidates T1–T5 are in
+   the brief §4 — T1 the confirmed Services defect, **T2 the strongest new one**
+   (`#devwindow` is the only one of Development's three sibling pickers that does
+   not reach the panel), T3 `#revcut`, T4 a state-class/render disagreement on
+   `#budget-pod`, T5 **probe-limited and explicitly not a finding**.
+   ⚠️ **The brief's §2 is the load-bearing half:** the probe reported "invariant"
+   **four times without looking** (wrong join key, deck's `{html}` wrapper
+   stringified, `innerText` on a CSS-hidden node, and the probe's own panel-open
+   closing the pod it then measured). **A `DEAD` selftest line invalidates a whole
+   column.** Third brief running to need its own falsification pass first.
