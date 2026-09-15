@@ -126,11 +126,13 @@ REQUESTS_CA_BUNDLE=$(.venv/bin/python -m certifi) .venv/bin/python <script>
 
 **Two independent harnesses.**
 
-- **pytest** — 46 test files, **799 tests**, ~11 s. Tiers and what each can see:
+- **pytest** — 48 test files, **892 tests**, ~13 s. Tiers and what each can see:
   `docs/ARCHITECTURE.md` §Testing.
-- **Playwright + Chromium** — `tools/profiling/`, **65 JS scripts** (`verify-*`
+- **Playwright + Chromium** — `tools/profiling/`, **66 JS scripts** (`verify-*`
   assert behaviour, `shot-*` capture screenshots). Node **v20.20.2**,
-  `playwright ^1.61.1`.
+  `playwright ^1.61.1`. One python tool sits beside them
+  (`compose-readme-sxs.py`, Pillow) — the README shot is captured in node and
+  composed in python, because the two runtimes own different halves.
 
 ⚠️ **Playwright is installed only in `tools/profiling/node_modules`** — a script
 in `/tmp` cannot `require('playwright')`. Put the script in that directory.
