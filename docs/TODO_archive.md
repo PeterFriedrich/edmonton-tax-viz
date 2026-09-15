@@ -8,6 +8,17 @@ Items are verbatim as they were closed, newest-moved first in the order they app
 
 ---
 
+- [x] **T2 — `#devwindow` is the only one of Development's three sibling pickers
+  that does not reach the panel.** `#devmode` and `#devmetric` both do; every
+  other readout follows all three. ⚠️ **Answer "is `renderDevHistory`
+  deliberately all-time?" BEFORE touching the wiring** — if it is, the defect is
+  copy (a `COPY_DECISIONS.md` row), and the cheap wiring fix would silently
+  redefine a published number.
+  - **CLOSED 2026-09-15 (S159, Fable 5.1).** It is deliberately all-time:
+    `DECISIONS.md` 2026-09-14 makes the panel the whole per-year series and the
+    windows aggregates over it; `devHistoryFor` reads only the metric key. The
+    copy remainder is `COPY_DECISIONS.md` F4. `docs/FINDINGS_controls_state_space.md` T2.
+
 - [x] **`tools/todo_archive.py` swallowed trailing non-item text — FIXED 2026-09-10 (S154).** An item now ends at the first unindented non-item line; runs no longer add blank lines; `tests/test_todo_archive.py` (4 tests, 3 red against the old tool by name). Replayed on the real 2026-09-10 case: 40 lines moved, heading and notes kept. Original item follows.
   - Found 2026-09-10 (S154) closing the send-back-brief item: it took the `_Last reconciled: 2026-09-01_` block, the `### General backlog` heading and its paragraph with it (66 lines for a 39-line item) — an item's span runs to the next `- [ ]`/`- [x]`, not to the next non-indented line. Reverted and moved by hand. **Until fixed, diff every run** (`git diff -U0 TODO.md | grep '^@@'`): CLAUDE.md points sessions at this tool for bulk closes.
 

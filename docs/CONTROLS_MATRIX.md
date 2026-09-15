@@ -461,7 +461,10 @@ Plus `#budget-pod`, where `body.budget` stays set over a `display:none` pod once
 think they own the slot"*) not holding here. ⚠️ **Invariance is a candidate, not
 a verdict** — `#coloradj` is *supposed* to leave the title alone. The question is
 whether the layout advertised a relationship. Brief, ranked targets and the
-method: `docs/FABLE_AUDIT_controls_state_space.md`; open items in `TODO.md`.
+method: `docs/FABLE_AUDIT_controls_state_space.md`; **executed 2026-09-15 (S159),
+findings `docs/FINDINGS_controls_state_space.md`** — `devwindow` is sound by
+decision (the panel is the whole series), and the `#budget-pod` disagreement is
+the mill-rates yield inherited onto a reader-toggled class; open items in `TODO.md`.
 
 ⚠️ **§5.6's sentence, read backwards, is this item.** It says *"if a control
 ignores the pickers around it, it is probably a lens, not a detail mode."* The

@@ -1,7 +1,10 @@
 # AUDIT BRIEF — controls that reach nothing
 
-**Read cold.** This is a reusable *instrument*, not a findings doc. The coverage
-map is `docs/AUDIT_LEDGER.md`; the state space this audits is
+**Read cold.** This is a reusable *instrument*, not a findings doc. Run
+outputs: 2026-09-15 (S159, Fable 5.1, both builds)
+`docs/FINDINGS_controls_state_space.md` — T2 there is closed by a decision this
+brief had not found, T4's "two presses" is restated as *invisible presses count*.
+The coverage map is `docs/AUDIT_LEDGER.md`; the state space this audits is
 `docs/CONTROLS_MATRIX.md` (what shows when, what gates what). Scoping
 measurement taken 2026-09-15 (S158) with
 `tools/profiling/audit-controls-diff.js`.
