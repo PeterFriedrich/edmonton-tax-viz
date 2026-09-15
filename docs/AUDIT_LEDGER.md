@@ -220,3 +220,37 @@ a CAPTURE on real hardware** (the shelved `TODO.md` item), not an audit. What
    stringified, `innerText` on a CSS-hidden node, and the probe's own panel-open
    closing the pod it then measured). **A `DEAD` selftest line invalidates a whole
    column.** Third brief running to need its own falsification pass first.
+10. **⚠️ PUBLISHED NUMBERS WITH NO LOUD CHECK — the guard estate swept by ABSENCE**
+    (added 2026-09-15, S159). **Brief written and the scoping measurement taken:**
+    `docs/FABLE_AUDIT_published_numbers.md`, instrument
+    `tools/profiling/audit-published-numbers.js`. **Not yet executed as an audit** —
+    no findings doc, no row above.
+    **Fourth sibling of candidates 3, 8 and 9, and it inverts them**: those audit a
+    check that exists and is wrong (reads a stand-in / cannot differ / a control
+    reaching nothing). This audits an **absence** — a number a reader can quote with
+    nothing that fails when it goes wrong.
+    ⚠️ **Ranked on fresh evidence.** S159 closed F1, a defect **three sessions had
+    confirmed and none had fixed**; what closed it was a verify script written red,
+    not more prose. The same session checked an outside review of this project's doc
+    apparatus: two of its accusations did not survive, but one line did — *prose
+    about correctness is not a control on correctness*.
+    **What the scoping run already measured, so an audit does not redo it:** 18
+    rendered surfaces (6 views + 10 service layers), **74 distinct numeric claims a
+    reader can see, 11 named by any guard, 63 not.** ⚠️ **The 63 are NOT 63 defects**
+    — brief §1 splits them into *computed* (mostly covered by schema + pytest +
+    verify), *manifest* (hand-maintained JSON → `status.json`) and *literal* (typed
+    into a blurb). **The gap is the manifest row**: the About panel's `$3.8B` /
+    `$469M` / `12.2%` render on **all 18 surfaces**, come from
+    `data/city_budget_context.json`, were checked **once** (S94, 2026-08-05), and
+    nothing recurring can go red if they drift — `export_budget_ranked.py` and
+    `generate_status.py` are producers, not checks.
+    ⚠️ **The brief's §2 is the load-bearing half:** the first extractor was a regex
+    over `web/index.html` and counted **code comments as reader-facing copy**, and
+    split `+`-concatenated blurbs so it undercounted guard coverage. The shipped
+    instrument reads the RENDERED page. Its remaining limits (one hood, one viewport,
+    no README/notebooks) are stated in §2 and **must be closed by the run, not
+    inherited**.
+    ⚠️ **Scoped and measured by the model that built F1 and its verify script the
+    same day — it is grading its own coverage.** The brief says so and hands the run
+    explicit permission to reject its definitions of "published number" and
+    "covered". Cross-model execution is the point.

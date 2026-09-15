@@ -477,6 +477,26 @@ is in the `panel` column. T1 is public (3 of 10 service rows). T2 closed (`## Do
 - [x] **Nothing verifies the Services panel** (the T1 gap) — **CLOSED 2026-09-15,
   PR #398 then #399.** Written and merged RED against the broken build (7 checks
   failing), falsified both ways, green after the fix. `## Done`.
+- [ ] **Published numbers with no loud check — brief written, audit NOT executed
+  (OPEN 2026-09-15, S159).** Brief + instrument:
+  `docs/FABLE_AUDIT_published_numbers.md`,
+  `tools/profiling/audit-published-numbers.js`. Ledger candidate 10, **scoped for
+  a cross-model run** — the brief was written by the model that built F1 the same
+  day and says so. Scoping measured 18 rendered surfaces: **74 numeric claims a
+  reader can see, 11 guarded, 63 not** — but the 63 split three ways and only two
+  matter (§1). ⚠️ **The live gap is the hand-maintained manifest inputs**: the
+  About panel's `$3.8B` / `$469M` / `12.2%` render on all 18 surfaces, come from
+  `data/city_budget_context.json`, were checked **once** (S94, 2026-08-05), and
+  nothing recurring goes red if they drift.
+- [ ] **Retrieval logging — decide the doc question with evidence, not argument.**
+  A `PostToolUse` hook logging every Read/Grep with a filename gives a per-doc
+  read-frequency table in 2–3 weeks; a doc never opened before an action is a
+  prune candidate. ⚠️ **The mechanism is already proven here** — `.claude/settings.json`
+  runs a `PostToolUse` hook to regenerate `CODEMAP.md`. Cheap, reversible, and it
+  replaces a standing argument (is the doc apparatus load-bearing?) with a
+  measurement. Context: `/home/opc/doc_load_bearing_or_agent_scaffolding.md`
+  (external review, **two of its three repo-specific claims did not survive
+  checking** — see the S159 handoff).
 - [ ] **T5 is NOT a cleared row.** The two Detail selectors read invariant on
   tooltip/peek only because the probe feeds a hood feature to `viewTooltip` in
   grid modes too. Needs a cell-grain capture before it means anything.
