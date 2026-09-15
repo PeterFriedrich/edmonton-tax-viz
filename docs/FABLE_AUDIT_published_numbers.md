@@ -74,9 +74,23 @@ readout, legend and About panel. ⚠️ **That is the only way to enumerate what
 reader can see**, and it is the same DRAWN-vs-source rule that caught the frozen
 label sweep (`DECISIONS.md` 2026-07-27).
 
+⚠️ **AMENDED 2026-09-15 (S160, first execution — `FINDINGS_published_numbers.md`
+§1): the shipped v1 had three MORE defects than this section listed, and the
+run fixed them before trusting the inventory.** (1) It looped `Object.keys(VIEWS)`,
+which has no `money` key — **the landing view and its four metrics were never
+captured**, so "6 views" below was 8 `VIEWS` entries and no Money. (2) It drove
+views and services by JS, which works on the public build for controls that
+build hides — **18 of the public claims were unreachable by a public reader**;
+surfaces now carry `reachable`. (3) `$50k` tokenised as `$50` and merged with the
+About panel's "$50 per metre". Corrected inventory: **77 claims on `/full/`, 58
+reachable on public** (23 surfaces; 14 reachable on public).
+
 ⚠️ **Its remaining known limits, which the audit must close, not inherit:**
-- **It captures one hood (DOWNTOWN) and one viewport.** A claim that only renders
-  for another hood, or on a phone, is invisible to it.
+- **It captures one hood (DOWNTOWN) and one viewport** (`--hoods A,B` now takes
+  more; a second hood added 27 claims in S160, all computed panel readouts). A
+  claim that only renders on a phone is invisible to it. **The `moneydetail` grid
+  legends, the `denom` lot-acre variant, tooltips and the peek card are not
+  captured.**
 - **It does not read the README, the Data & Methods long copy, or the four
   evidence notebooks** — all reader-facing, all carrying numbers.
 - **Bare small integers are excluded by design** ("31 fire stations" is prose).
@@ -90,6 +104,12 @@ label sweep (`DECISIONS.md` 2026-07-27).
 
 18 surfaces captured (6 views + 10 service layers + panel states). **74 distinct
 numeric claims visible to a reader; 11 named by any guard; 63 not.**
+⚠️ **Superseded by the S160 run (§2 amendment above): 77 / 58-reachable-on-public
+with the Money view included.** The manifest rows and their ranking below are
+unchanged by the correction; the two "nothing recurring can go red" sentences
+are **half wrong** — `test_generate_status.py` pins the total, the component
+sums and the four shares against a hand *edit*; what nothing catches is the
+*world moving* (`year` 2025→2019 passes everything). Findings §3.
 
 The highest-exposure rows, and they are all **manifest**:
 
