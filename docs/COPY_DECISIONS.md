@@ -77,16 +77,19 @@ Each is a separate call — some are worth *teaching*, some worth replacing.
 Wording downstream of a layout or logic decision. These alter what a reader
 *concludes*, not just how comfortably they read.
 
-### F1 — the Services panel ignores the service picker — **direction chosen, not built**
+### F1 — the Services panel ignored the service picker — ✅ **APPLIED 2026-09-15** (PR #399)
 
-`renderServiceCost` renders the same block for all ten layers. Select Fire, Water,
-Transit or Bike, click a hood, and the panel reports **road costs**. Verified by
-driving all ten layers and diffing the rendered panel: byte-identical every time.
+`renderServiceCost` rendered the same block for all ten layers: select Fire, Water,
+Transit or Bike, click a hood, and the panel reported **road costs**.
 
-**Chosen (Peter, S157): "selected layer + its cost twin"** — the panel follows the
-picker and shows the selected layer's value, its rank, and its cost twin where one
-exists. ⚠️ 4 of 10 layers (storm, fire, water, transit-supply) have **no** cost
-twin, so the panel shape must degrade cleanly rather than render an empty group.
+**Built as: the panel follows `state.svcDriver`** — the colour-driving service, not
+the checkbox set, because Services is ten checkboxes plus a driver radio and "the
+picker" was ambiguous (Peter, 2026-09-15). It shows the driver's value and rank,
+then the cost bars for that service family. ⚠️ **3 layers have no cost twin, not
+the 4 first recorded** — storm, fire, water; transit-supply pairs with
+`transitcost`. Those three state the scope in their own terms instead of rendering
+an empty group. Gated by `tools/profiling/verify-services-panel.js`, merged RED
+first (#398). Full reasoning and the two corrections: `DECISIONS.md` 2026-09-15.
 
 ### F2 — the gold over-100% bar — ⚠️ **LOCKED AGAINST, do not re-derive**
 
