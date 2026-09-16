@@ -512,6 +512,29 @@ and there are currently zero closed top-level items — verified by running it o
 an isolated copy), but the hand rule in `CLAUDE.md` (*"move its body to the
 archive"*) is not, and this span is 2,533 lines.
 
+- [ ] **GUARD-BURST AUDIT FOLLOW-ONS — three fixes, Peter decides the first
+  (opened 2026-09-16, S164, `docs/FINDINGS_guard_burst.md` §7).** Two of the
+  six pieces are the project's own failure mode shipped fresh: a working guard
+  with no input, and a working guard with no confirmed reader.
+  - [ ] **`check_todo_branch_refs` has no input** — it waits for a merged branch
+    to be deleted, `delete_branch_on_merge` is **off**, and 0 of 145 merged
+    branches since the 2026-08-31 prune are gone (findings §1). **Peter's
+    call:** enable *Automatically delete head branches* in repo settings (one
+    click; the pre-push hook keys on PR state, unaffected), or delete the check
+    + its 11 tests + `RUNBOOK.md` §0d. Either way fix the ACTION string and §0d:
+    "was merged and deleted" → "is no longer on origin".
+  - [ ] **`handoff_gap.py` reaches nobody confirmed** — the hooks reference says
+    SessionEnd *discards* JSON output and *shows stderr to the user only*; the
+    hook sends stderr to `/dev/null` (findings §2). Emit the plain message on
+    stderr for the SessionEnd hook and drop `2>/dev/null`. Then **one `/compact`
+    with a gap present** (touch a file under `scripts/`) to settle whether
+    PreCompact honours `additionalContext` — it is not documented for that
+    event. Until then soften `CLAUDE.md`'s "the hooks … name the commits".
+  - [ ] **`clamp-drift` issue has no dedup** — drift is persistent, so once a
+    clamp leaves the 1–6% band `refresh.yml` files an identical issue every
+    Monday until the literal moves (findings §4). Skip `gh issue create` when
+    one is already open with the label.
+
 - [ ] **DEV HISTORY FOLLOW-ONS — three, none blocking (opened 2026-09-14, S156,
   after PR #389 merged).**
   - **Nothing verifies `dev_history.json` in CI.** The feature was verified by a
