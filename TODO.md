@@ -485,14 +485,6 @@ is in the `panel` column. T1 is public (3 of 10 service rows). T2 closed (`## Do
   D3, 2026-07-16) that nothing re-derives, while the permits feed refreshes weekly.
   **Re-derive from the feed, or drop the figure.** ⚠️ Not mechanical — dropping it
   loses a real disclosure, so it is a copy decision, not a guard gap. Findings §4.
-- [x] **`$50k` revenue clamp — DECIDED AND GUARDED 2026-09-16 (S162).** Peter's
-  call: it stays a **stability literal** (the lot and grid scales already track a
-  live p97.5; the landing view must not). `scripts/check_colour_clamps.py` splits
-  the two failures — legend-must-decode-to-clamp **fails the merge gate** (falsified:
-  the clamp moved to $5,000 under a `$50k+` legend with all 923 pre-existing tests
-  green), saturating-share-outside-1–6% **warns each refresh and files an issue**.
-  The band contains today's 4.5% deliberately; it catches the next move.
-  `DECISIONS.md` 2026-09-16, Findings §5.
 - [ ] **~~Retrieval logging — decide the doc question with evidence, not argument.~~**
   A `PostToolUse` hook logging every Read/Grep with a filename gives a per-doc
   read-frequency table in 2–3 weeks; a doc never opened before an action is a
@@ -2485,61 +2477,6 @@ archive"*) is not, and this span is 2,533 lines.
     (genuinely parcel-level but not open data — future phase, needs
     FOIP/per-bylaw scraping).
 
-- [ ] **Services lens — road supply (SPEC'd 2026-07-01, branch `feature/services-lens`).**
-  Spec: `docs/SPEC_services.md`. V1 = `road_m_per_acre` (city-maintained
-  **collector + local** centreline metres per boundary acre; per-class columns
-  kept internally, arterials computed but excluded from the metric); V2 fast
-  follow = revenue per road-metre. Locked: alleys OUT, arterials OUT (shared
-  infrastructure), railway OUT, City-owned only.
-  Build order:
-  - [x] ~~Prerequisite commit: `$limit` count-vs-limit assertion in
-    `scripts/download_data.py` + add roads source `9j8t-zm52`~~ — done
-    2026-07-01 (closes the data-integrity §5 follow-on below); roads
-    downloaded + verified (53,720 features, check passes).
-  - [x] ~~`src/load_roads.py` + synthetic tests~~ — done 2026-07-01 (13 tests;
-    real data: 3,644 km collector+local in metric, 0.28% unassigned).
-  - [x] ~~Wire `join_and_calculate` (`ROAD_COLUMNS`) + `main.py` flags~~ — done
-    2026-07-01 (+4 tests; GeoJSON regenerated, `road_m_per_acre` on all 406).
-  - [x] ~~Skew check on `road_m_per_acre` → pick colour transform~~ — DECIDED
-    2026-07-01: **linear** (raw skew −0.29; sqrt/log over-correct; FINDINGS §6.3).
-    Clamp ≈ p97.5 = 53 m/acre.
-  - [x] ~~Frontend: third metric in the Revenue/Value toggle~~ — done 2026-07-01
-    (per-metric transforms, linear roads, button hides on pre-services data,
-    headless-verified; set-aside grey kept per the v1 lean).
-  - [x] ~~Docs: `DATA.md` §6, `ARCHITECTURE.md` module entry, status.json
-    vintage~~ — done 2026-07-01. Resolution on vintage: **no roads year field**
-    — the network is a live feed with no roll-year semantics; provenance =
-    `last_checked` (recorded in SPEC_services + DATA.md §6).
-  - [x] **Display pivot (2026-07-01): two-plane stackable architecture — COMPLETE
-    2026-07-02** (SPEC_services.md "Display architecture — REVISED"; final control
-    model = three discrete views **Money | Roads | Ratio**, UI.md "Services
-    views"). Road prisms RETIRED; staging as executed:
-    - [ ] (1) Roads ground layer:
-      - [x] ~~pipeline: slim `web/data/roads.geojson` export (dissolved per
-        hood × arterial/access, simplified 8 m, 5 dp)~~ — done 2026-07-02
-        (`export_roads_web` in `src/load_roads.py`, wired into `main.py`;
-        791 features, 2.3 MB, committed like the polygons file; +5 tests).
-      - [x] ~~frontend: layers panel, lazy-loaded ground layer; arterials
-        neutral, access roads coloured by hood `road_m_per_acre` (linear,
-        clamp 53); remove Roads from metric toggle~~ — done 2026-07-02
-        (headless-verified; details in UI.md "Services views").
-    - [x] ~~(2) Prism transparency control (money plane overlays service
-      plane)~~ — done 2026-07-02, landed with stage 1: opacity slider in the
-      layers panel (prisms + roof edges) + 45% auto-nudge on first Roads
-      enable — needed because the network is ~invisible under opaque prisms
-      (only setback gaps show).
-    - [x] ~~(3) Ratio view: revenue vs total services (revenue-per-road-metre
-      is the single-service case — subsumes the old V2 item)~~ — done
-      2026-07-02 as the **Ratio view** (Money | Roads | Ratio buttons;
-      ghost prisms of $/road-metre over the neutral network; log colour
-      FINDINGS §6.4; road-base floor 5 m/acre greys artifacts; UI.md
-      "Services views"). "Total services" DEFINITION: DECIDED 2026-07-10 —
-      stays per-service (denominator picker; SPEC_utilities decision 3);
-      the V2 unit-cost composite is tracked under "More service layers".
-  - [x] ~~Merge `feature/services-lens` → master via PR once Peter's eyeballed
-    it~~ — done 2026-07-02: PR #8 merged, refresh workflow run green, live site
-    verified serving the three views + roads.geojson.
-
 - [ ] **DEVELOPMENT & INFILL LENS family (NEW 2026-07-12 — full plan in
   **⚠️ Stock age was WITHDRAWN from this lens 2026-07-27** (Peter: not
   working well as an option) — see `DECISIONS.md`. The UI and render path
@@ -3082,6 +3019,9 @@ archive"*) is not, and this span is 2,533 lines.
 ## Done
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
+
+- [x] **`$50k` revenue clamp — DECIDED AND GUARDED 2026-09-16 (S162).** — DECIDED 2026-09-16 · `docs/TODO_archive.md`
+- [x] **Services lens — road supply — SHIPPED (verified 2026-09-16: `road_m_per_acre` is served on all 406 hoods, the roads ground layer and Services view are** — SHIPPED 2026-09-16 · `docs/TODO_archive.md`
 
 - [x] **Nothing verifies the Services panel** — CLOSED 2026-09-15 · `docs/TODO_archive.md`
 - [x] **Published numbers with no loud check — audit EXECUTED 2026-09-15 (S160, Fable 5.1).** — EXECUTED 2026-09-15 · `docs/TODO_archive.md`

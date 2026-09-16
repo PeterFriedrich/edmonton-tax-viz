@@ -641,3 +641,97 @@ def test_road_classes_http_error_is_unknown_not_action(monkeypatch):
 def test_road_classes_check_is_registered():
     """The digest is wired by MEMBERSHIP; dropping a name from CHECKS is silent."""
     assert vr.check_road_classes in vr.CHECKS
+
+
+# --- TODO branch refs (the mechanical half of backlog staleness) -------------
+#
+# Added 2026-09-16 after a hand sample of 15 open items untouched >60 days found
+# 7 stale (47%). Two were this exact shape, and the scan then found a third the
+# sample had missed. These tests drive every branch of it, because the check's
+# whole value is going red.
+
+class _FakeProc:
+    def __init__(self, stdout="", returncode=0, stderr=""):
+        self.stdout, self.returncode, self.stderr = stdout, returncode, stderr
+
+
+def _remote(*branches):
+    return "\n".join(f"abc123\trefs/heads/{b}" for b in branches)
+
+
+def _todo(monkeypatch, tmp_path, text, remote=_remote("master", "feature/live")):
+    (tmp_path / "TODO.md").write_text(text)
+    monkeypatch.setattr(vr, "TODO_MD", tmp_path / "TODO.md")
+    monkeypatch.setattr(vr.subprocess, "run", lambda *a, **k: _FakeProc(remote))
+    return vr.check_todo_branch_refs()
+
+
+def test_todo_branch_fires_on_a_deleted_branch(monkeypatch, tmp_path):
+    status, _, detail = _todo(
+        monkeypatch, tmp_path,
+        "- [ ] **Stormwater** — v1 built on `feature/stormwater-lens` (unmerged).\n")
+    assert status == vr.ACTION
+    assert "feature/stormwater-lens" in detail and "line 1" in detail
+
+
+def test_todo_branch_ok_when_the_branch_is_live(monkeypatch, tmp_path):
+    assert _todo(monkeypatch, tmp_path,
+                 "- [ ] Work in progress on `feature/live`.\n")[0] == vr.OK
+
+
+def test_todo_branch_ignores_closed_items(monkeypatch, tmp_path):
+    """A finished item naming its long-deleted branch is history, not a live claim."""
+    assert _todo(monkeypatch, tmp_path,
+                 "- [x] ~~Shipped~~ on `feature/gone-forever`.\n")[0] == vr.OK
+
+
+def test_todo_branch_ignores_a_name_already_marked_stale(monkeypatch, tmp_path):
+    """Correcting an item quotes the dead branch. Without this the fix re-flags
+    itself forever — hit for real on TODO.md L2791, 2026-09-16."""
+    assert _todo(monkeypatch, tmp_path,
+                 '- [ ] **Utility lenses.**\n'
+                 '  ⚠️ **"unmerged on `feature/stormwater-lens`" is STALE (corrected\n'
+                 '  2026-09-16): it is on master and the branch is gone.**\n')[0] == vr.OK
+
+
+def test_todo_branch_does_not_flag_doc_paths(monkeypatch, tmp_path):
+    """`docs/` is excluded by design: measured 2026-09-16 it gave 64 hits, all of
+    them doc PATHS. This is the false-positive case that would kill the check."""
+    assert _todo(monkeypatch, tmp_path,
+                 "- [ ] See `docs/DATA_ISSUES.md` and `docs/SPEC_services.md`.\n")[0] == vr.OK
+
+
+def test_todo_branch_does_not_flag_file_paths_under_a_branchy_prefix(monkeypatch, tmp_path):
+    assert _todo(monkeypatch, tmp_path,
+                 "- [ ] Touch `scripts/check_cost_copy.py` and `src/load_roads.py`.\n")[0] == vr.OK
+
+
+def test_todo_branch_scans_sub_items(monkeypatch, tmp_path):
+    """The two real finds were both sub-items, not top-level ones."""
+    status, _, detail = _todo(
+        monkeypatch, tmp_path,
+        "- [ ] **Parent epic.**\n  - [ ] child, see `feature/dead-branch`.\n")
+    assert status == vr.ACTION and "line 2" in detail
+
+
+def test_todo_branch_unknown_when_git_fails(monkeypatch, tmp_path):
+    """Unreachable is UNKNOWN, never ACTION — the digest's standing rule."""
+    (tmp_path / "TODO.md").write_text("- [ ] `feature/x`\n")
+    monkeypatch.setattr(vr, "TODO_MD", tmp_path / "TODO.md")
+    monkeypatch.setattr(vr.subprocess, "run",
+                        lambda *a, **k: _FakeProc("", returncode=128, stderr="no remote"))
+    assert vr.check_todo_branch_refs()[0] == vr.UNKNOWN
+
+
+def test_todo_branch_empty_remote_is_unknown_not_all_stale(monkeypatch, tmp_path):
+    """An empty branch list must not read as 'every reference is dead'."""
+    assert _todo(monkeypatch, tmp_path, "- [ ] `feature/x`\n", remote="")[0] == vr.UNKNOWN
+
+
+def test_todo_branch_unknown_without_a_todo_file(monkeypatch, tmp_path):
+    monkeypatch.setattr(vr, "TODO_MD", tmp_path / "nope.md")
+    assert vr.check_todo_branch_refs()[0] == vr.UNKNOWN
+
+
+def test_todo_branch_is_registered_in_the_digest():
+    assert vr.check_todo_branch_refs in vr.CHECKS

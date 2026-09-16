@@ -63,6 +63,7 @@ has silently stopped running. Green months are the proof of life.
 | Unclassified zoning | a hood carries `frac_other > 0` — a zone code is missing from `ZONE_CATEGORY` | map it from the bylaw purpose statement, `data/DATA.md` §5 |
 | Zoning bylaw | the upstream zone-code VOCABULARY no longer matches `ZONE_CATEGORY` — a new code, or a mapped one gone. A wholesale move means the City replaced the bylaw, so `ZONING_YEAR` and `data/DATA.md` §5 both need re-stating | §1 step 6 |
 | Road classes | the road feed's `functional_class_code` VOCABULARY no longer matches `CLASS_GROUP` — a new code, a mapped one gone, or a City road row with no class at all. Its length is held in `road_m_unknown`, OUT of `road_m_total` and off the map, until the code is mapped — so the metric is briefly LOW for that hood, not wrong in the charged direction (changed 2026-09-09; it used to be billed as `local`) | map it in `src/load_roads.CLASS_GROUP` by FUNCTION, `data/DATA.md` §6 |
+| TODO branch refs | an OPEN `TODO.md` item points at a branch that no longer exists on origin — the work usually SHIPPED and the item never closed | §0d |
 | Site banner | a banner is up in `status.json` | §1 step 10 |
 
 ⚠️ **A network failure reports `❓ UNKNOWN`, never `⚠️ ACTION`** — same rule as
@@ -194,6 +195,41 @@ assessments rise; that is the price of the stability, and this issue is the
    intent* changed, not to silence a reading.
 5. **Close the issue.** Same rule as §0's green digest: a standing open issue is
    how the next one gets skimmed past.
+
+## 0d. `TODO branch refs` digest row (a backlog item outlived its branch)
+
+**What it is:** the monthly digest scanned `TODO.md`'s OPEN items for backtick'd
+branch names (`feature/x`, `fix/y`) and found one that is no longer on origin.
+The branch was merged and deleted, so whatever the item says is sitting on it is
+not sitting there.
+
+**Why it exists:** a 2026-09-16 sample of 15 open items untouched >60 days found
+**7 stale — 47%**. `CLAUDE.md` warns an open item "has lagged reality twice", and
+a stale open item costs a WRONG ACTION, not bytes: the worst one found was a
+**blocker** (*"the app has no sidebar — interaction TBD"*) gating an entire
+epic weeks after the panel shipped.
+
+⚠️ **A GREEN ROW HERE IS NOT "THE BACKLOG IS CURRENT."** It is the mechanical
+slice only — the branch half. The prose half (a discharged blocker, a superseded
+design) names no symbol and nothing can detect it. That still needs a periodic
+human pass; this row exists so the pass is *triggered* rather than remembered.
+
+**Work it in this order:**
+
+1. **Open the item at the line the row names.** Ask first: *did the work ship?*
+   Check for the symbol/file/column it describes, not for the branch.
+2. **If it shipped** — close the item with the evidence (`verified <date>: X
+   exists`), then `python tools/todo_archive.py` moves the body to
+   `docs/TODO_archive.md` and leaves a `## Done` line.
+3. **If it was superseded rather than done** — say so and say *do not rebuild
+   it*, with the `DECISIONS.md` date. A closed-as-done item invites someone to
+   rebuild a thing this project deliberately removed (`svc_cost_per_acre`,
+   retired 2026-09-05, was sitting open as "V2 — to build").
+4. **If the work is genuinely still open** — just drop or correct the branch
+   reference. Do not close it.
+5. ⚠️ **Do not "fix" it by deleting the sentence.** Correct it in place and date
+   the correction, the same discipline as a superseded `DECISIONS.md` row —
+   otherwise the next reader cannot tell a checked item from an unchecked one.
 
 ## 1. The January year roll (the recurring one)
 
