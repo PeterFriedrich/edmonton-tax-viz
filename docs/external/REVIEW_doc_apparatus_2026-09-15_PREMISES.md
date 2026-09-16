@@ -26,7 +26,7 @@ Measured on `master` @ `8e92d07`. Every command below is re-runnable from the re
 | **A7** most decisions can become a test | **HOLDS — larger than the brief assumed** | Over 280 rows: **234 (83%)** carry a numeric literal/threshold, 240 (86%) a backticked code symbol, **21 (7.5%) neither** (the "unit of analysis" kind); **108 (38%) already cite a test/verify ID**, 132 (47%) mention a test or guard. The untestable boundary is ~7%, not half. |
 | **A8** auto-memory now covers the cold-start need | **FAILS for continuity, HOLDS for lessons** | 34 memory files = 22 `feedback` + 10 `project` + 1 `reference`; **0** carry a branch, PR, stopping point or next step; the S160 handoff's §4 is 46 lines of exactly that. 32/34 memory files carry a date inline (none in frontmatter) — they inherit the staleness problem but visibly; one (`sklearn-scipy-in-venv`) exists solely to override a stale handoff note. L104's threshold (~10 sessions without cold-start pain) is untested; the retrieval log can test it once it has weeks. |
 | **P9** (added) stale docs cause shipped mistakes *here* (L12) | **HOLDS** | 8 memory files record stale-artifact incidents; `CLAUDE.md` L7 records `TODO.md` lagging reality twice; `guards-must-measure-data-not-metadata` is a stale *string* that kept a guard green. This is the review's strongest premise in this repo and it cuts against any comfort taken from A6. |
-| **P10** (added) `session-summary/` is "the single most disproportionate item" (L5) | **FAILS in the loaded path** | 3 live handoffs = **40 KB**; `TODO.md` = **261 KB** and is "read it first". `session-summary/` is 44% of repo markdown by mass but 98% archived. The loaded-path disproportion is `TODO.md`, which the review never mentions. |
+| **P10** (added) `session-summary/` is "the single most disproportionate item" (L5) | **FAILS in the loaded path — but the replacement target is NOT a mass problem either; see the P10 note below before using this row** | 3 live handoffs = **40 KB**; `TODO.md` = **261 KB** and is "read it first". `session-summary/` is 44% of repo markdown by mass but 98% archived. The loaded-path disproportion is `TODO.md`, which the review never mentions — **74% of it, and 65% of everything a session loads, is one un-parented entry (`### General backlog`, 191 KB, 57 entries, median 2,021 ch).** |
 
 Not a premise the review rests on: none of A1–A8 was found spurious; all eight are load-bearing for at least one recommendation.
 
@@ -41,6 +41,43 @@ most exposed, flagged by the author against interest: **A2** is an argument, not
 measurement (the ratio moving with the denominator is a reason to *define* the
 denominator, not to drop the metric), and **A4** leans on "0 agent reads" from a
 log this file's own grounding section says is used for nothing.
+
+### ⚠️ P10 note — the exposure is unverified OPEN items, not retained closed ones
+
+**Read this before turning P10 into a pruning recommendation.** Measuring
+`TODO.md`'s content (2026-09-16) moved the finding away from mass:
+
+- The `### General backlog` entry holds **183 checkbox sub-items: 100 unchecked
+  (144 KB), 83 checked (46 KB)**. Closed *items* have in fact been archived as
+  `CLAUDE.md` requires — `docs/TODO_archive.md` is 179 KB and **0 of the 27
+  entries carrying a ✅ are archivable; every one still has an open box.** What
+  stays behind is closed *sub-items* inside still-open parents, which
+  `tools/todo_archive.py` does not operate on.
+- **The 46 KB is relocatable, not prunable.** Deleting closed sub-items out of a
+  live parent destroys the record of what was already tried inside work still in
+  progress — which is **A6's finding applied to this file**. The defensible move
+  is moving them to the archive behind a pointer, not dropping them.
+- ⚠️ **The real exposure is the 100 unchecked boxes, and nothing has audited
+  them.** `CLAUDE.md` warns an open item "can be stale — reproduce the symptom
+  and re-measure the stated cause before acting on it (it has lagged reality
+  twice)." **Staleness in an open item is a wrong-action risk; a retained closed
+  sub-item is only bytes.** Byte-counting cannot see this, and a rec that shrinks
+  `TODO.md` addresses the smaller of the two. **The fix P10 points to is
+  verification/staleness-flagging, not pruning.**
+- **Retraction, logged deliberately rather than overwritten:** the first framing
+  of this measurement was **~149 KB of dead weight (~51% of the loaded path)**,
+  from counting any entry carrying a closure marker. Re-checked, the
+  provably-closed mass is **46 KB (16%)** — the number moved **down by 3×, against
+  the argument its author had already endorsed**. It was caught by re-checking a
+  figure that flattered the conclusion, the same way A6 was. Recorded here because
+  a later session auditing this file for self-serving corrections should be able
+  to see that it moved, and which way.
+- ⚠️ **This number has a shelf life tied to another rec landing.** If the
+  golden-test-first move (recs #6/#8 merged: write the test, *then* the prose is
+  redundant) is adopted, some of those 100 open items become executably verified
+  and the exposure shrinks without anyone editing `TODO.md`. **P10's figures are
+  dated 2026-09-16 and are not a static fact** — re-measure them after any golden
+  tests land rather than citing these.
 
 ## Recommendation survival (§A2 rule 2)
 
