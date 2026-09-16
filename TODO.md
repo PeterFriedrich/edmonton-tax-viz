@@ -512,7 +512,7 @@ and there are currently zero closed top-level items — verified by running it o
 an isolated copy), but the hand rule in `CLAUDE.md` (*"move its body to the
 archive"*) is not, and this span is 2,533 lines.
 
-- [ ] **`TODO.md` is 89% of the loaded path and grew 149 → 264 KB in 30 days — audit the ~100 open boxes, relocate the ~46 KB of closed sub-items** (opened 2026-09-16, S166; `docs/FINDINGS_doc_growth.md` §3). This is `_PREMISES.md`'s P10 note, which had no `TODO.md` item — it lived only in that file and the ledger's S162 row. The loaded path (`CLAUDE.md` + this file + newest handoff + memory index) moved **173 → 288 KB (+66%)** over the same 30 days the repo grew +69%, so the growth is NOT confined to files outside the loaded path; this file is where it lands. Two halves. ✅ **(2) THE RELOCATION IS DONE 2026-09-16 (S166): 26 KB moved, 261.6 → 238.0 KB**, 27 blocks under 11 open parents, each replaced by a pointer to `docs/TODO_archive.md` § "Closed sub-items lifted out of still-open parents"; every relocated line verified verbatim in the archive and the open-box count identical (103 → 103) before writing. ⚠️ **It was 46 KB on paper and 26 KB in fact: 3 closed sub-items carry OPEN descendants** (L2209 the 8 regroup decisions, L2379 P2.3 security checklist, L2715 "More service layers") **and were held back** — moving them archives live work out of sight, the refusal `tools/todo_archive.py` makes at top level, applied one level down. The open-box count is what caught it; a first pass that lacked the rule silently dropped 5 open boxes. **Those 3 become relocatable when their open children close, not before.** ⬜ **(1) STILL OPEN — the staleness audit**, which is the half that carries wrong-action risk: 103 open boxes, unaudited; a hand sample of 15 items untouched >60 days found **7 stale (47%)** (`DECISIONS.md` 2026-09-16). `CLAUDE.md`: reproduce the symptom and re-measure the stated cause before acting — an open item "has lagged reality twice". Do it as a verify pass (dead / stale-needs-remeasure / live), not a clear-the-easy-ones pass; expect 2–3 sessions for 103 items. ⚠️ **One-off, not a cadence** — a scheduled manual sweep is the shape rejected the same day for backlog staleness. ⚠️ **Not a growth-instrumentation item** — the doc-growth audit's L0 FAILED and nothing is to be built; re-measure the loaded path with `.venv/bin/python tools/retrieval_report.py | sed -n 4p` at the ~2026-09-30 read-log run and put the number to Peter then. This file is 3,285 lines; a default `Read` returns 2,000.
+- [ ] **`TODO.md` is 89% of the loaded path and grew 149 → 264 KB in 30 days — audit the ~100 open boxes, relocate the ~46 KB of closed sub-items** (opened 2026-09-16, S166; `docs/FINDINGS_doc_growth.md` §3). This is `_PREMISES.md`'s P10 note, which had no `TODO.md` item — it lived only in that file and the ledger's S162 row. The loaded path (`CLAUDE.md` + this file + newest handoff + memory index) moved **173 → 288 KB (+66%)** over the same 30 days the repo grew +69%, so the growth is NOT confined to files outside the loaded path; this file is where it lands. Two halves. ✅ **(2) THE RELOCATION IS DONE 2026-09-16 (S166): 26 KB moved, 261.6 → 238.0 KB**, 27 blocks under 11 open parents, each replaced by a pointer to `docs/TODO_archive.md` § "Closed sub-items lifted out of still-open parents"; every relocated line verified verbatim in the archive and the open-box count identical (103 → 103) before writing. ⚠️ **It was 46 KB on paper and 26 KB in fact: 3 closed sub-items carry OPEN descendants** (L2209 the 8 regroup decisions, L2379 P2.3 security checklist, L2715 "More service layers") **and were held back** — moving them archives live work out of sight, the refusal `tools/todo_archive.py` makes at top level, applied one level down. The open-box count is what caught it; a first pass that lacked the rule silently dropped 5 open boxes. **Those 3 become relocatable when their open children close, not before.** ⬜ **(1) STILL OPEN — the staleness audit**, which is the half that carries wrong-action risk: 103 open boxes, unaudited; a hand sample of 15 items untouched >60 days found **7 stale (47%)** (`DECISIONS.md` 2026-09-16). `CLAUDE.md`: reproduce the symptom and re-measure the stated cause before acting — an open item "has lagged reality twice". Do it as a verify pass (dead / stale-needs-remeasure / live), not a clear-the-easy-ones pass; expect 2–3 sessions for 103 items. **PASS 1 DONE 2026-09-16 (S166): 7 of 103 verified**, chosen as the cheapest-to-falsify shape — items asserting a NEGATIVE about the code. Result **2 stale / 5 accurate**: ✅ corrected — MOBILE USABILITY's *"zero `@media` queries today"* (there are 6, and `MOBILE_USABILITY.md` documents the phone seam + a CONFIRMED 390×844 render pass) and OUTREACH TRACKER's *"five data issues"* (now 10 rows / 11 `NOT SENT` — the item got BIGGER, not stale). ✅ verified LIVE and left alone — break-even "STILL NO CODE" (only comments denying it), bikeway lifecycle (the JSON's own `_status` agrees), Services hover teaser (`index.html`'s own comment confirms the defect; only the predicate NAME was stale, `hasSvcCost` → `hasRoadsLife`, fixed), ratio/uses prisms picking behind (`pickable: false` on both layers). ⚠️ **I nearly mis-called an eighth**: "Zoom-gating does not exist yet" LOOKED stale because `placeSize()`/`PLACE_MIN_ZOOM` scale labels with zoom — but no show/hide GATE exists, so the item is accurate and stays. Checking the specific claim, not the topic, is what separated them. ⚠️ **Do NOT read 2/7 as "29% stale, so the 47% was wrong"** — this sample was deliberately picked for checkable code claims and skews toward verifiable-either-way; the 47% sample was 15 items >60 d. **Next pass: the 32 items >60 d**, which is the cohort the 47% actually came from and where none of these 7 sat. ⚠️ **One-off, not a cadence** — a scheduled manual sweep is the shape rejected the same day for backlog staleness. ⚠️ **Not a growth-instrumentation item** — the doc-growth audit's L0 FAILED and nothing is to be built; re-measure the loaded path with `.venv/bin/python tools/retrieval_report.py | sed -n 4p` at the ~2026-09-30 read-log run and put the number to Peter then. This file is 3,285 lines; a default `Read` returns 2,000.
 
 - [x] **GUARD-BURST AUDIT FOLLOW-ONS — ALL 3 DONE** (opened 2026-09-16, S164;
   closed 2026-09-16, S165. `docs/FINDINGS_guard_burst.md` §7). Two of the six
@@ -946,8 +946,12 @@ archive"*) is not, and this span is 2,533 lines.
   - ⚠️ **Token expires ~2027-09-01** (fine-grained max, 366 days). When it
     lapses the refresh goes red the same way. `RUNBOOK.md` §3.
 
-- [ ] **OUTREACH TRACKER — five data issues found, ZERO sent. Every one is
-  Peter's call.** ⚠️ **`docs/DATA_ISSUES.md` "Status at a glance" is
+- [ ] **OUTREACH TRACKER — TEN data issues found, ZERO sent. Every one is
+  Peter's call.** ⚠️ **Count corrected 2026-09-16 (S166): the item said "five",
+  and `DATA_ISSUES.md` now carries 10 rows and 11 `NOT SENT` markers. The
+  substance did not go stale — it got BIGGER, and "zero sent" is still exactly
+  true.** This is the project's standing failure mode in its purest form: a
+  finding that never leaves the repo. ⚠️ **`docs/DATA_ISSUES.md` "Status at a glance" is
   AUTHORITATIVE** — this is a one-line mirror so the count is visible from the
   file that gets read every session. If the two disagree, that file is right and
   this is stale.
@@ -1193,8 +1197,14 @@ archive"*) is not, and this span is 2,533 lines.
   copy is Peter's call.** In Services (with the cost columns shipped) the hover
   plots the **assessment-share sparkline** and says **`click to pin`**, while the
   click opens the **cost-against-revenue panel** (`servicePanelFor`, 2026-08-10).
-  Measured, not inferred: `hoodPanelLens()` is `!serviceLens() || state.hasSvcCost`,
-  so the teaser is appended there like anywhere else.
+  Measured, not inferred: `hoodPanelLens()` is `!serviceLens() || state.hasRoadsLife`,
+  so the teaser is appended there like anywhere else. ⚠️ **Predicate name
+  corrected 2026-09-16 (S166) — it read `state.hasSvcCost` until 2026-09-05,
+  when the retired roads+fire composite took that flag with it; the gate had to
+  name a column the PUBLIC build actually shows. The DEFECT is unchanged and
+  still live — `web/index.html`'s own comment above `tooltipFor` says so:
+  *"SERVICES IS NOT YET EXCEPTED though it should be … the hover still plots
+  history under a click that opens costs."*
   - ⚠️ **`docs/CONTROLS_MATRIX.md` asserted the OPPOSITE** ("the sparkline is
     not [offered in Services]") from 2026-08-10 until this was measured on
     2026-08-16. The cell is corrected; the point is that the claim sat unchecked
@@ -2112,13 +2122,22 @@ archive"*) is not, and this span is 2,533 lines.
     water would read as "the river is this wide."
 
 - [ ] **MOBILE USABILITY (NEW 2026-07-22 — full plan in
-  `docs/MOBILE_USABILITY.md`; read it first).** Phone rendering is unstyled for
-  small screens (zero `@media` queries today). **Confirmed problem:** the top
-  third collides — title/blurb + all six control pods stack on top of each other
-  at 390 px (screenshot-verified); wide pods clip off the left edge. Map render +
-  bottom legend are fine; tap-to-inspect tooltips work on real devices. Separation
-  seam is clean: render is shared (one WebGL canvas), but all chrome/layout is
-  isolatable behind an `@media` block with zero desktop risk. Quick-pass order:
+  `docs/MOBILE_USABILITY.md`; read it first).** ⚠️ **STALE PREMISE CORRECTED
+  2026-09-16 (S166) — re-measured, not re-read.** The item opened *"phone
+  rendering is unstyled for small screens (zero `@media` queries today)"*. That
+  has been false for some time: **`web/styles.css` carries 6 `@media` blocks**,
+  and `MOBILE_USABILITY.md` §1 now names `@media (max-width: 640px)` at the end
+  of that file as the phone seam (with an `@media (hover: none)` block before
+  it), while its §2 is a CONFIRMED render pass at 390×844 on a real device.
+  **Do not act on the original framing — the seam exists and is in use; what
+  remains is per-surface work, not the introduction of mobile styling.** The
+  quick-pass order below predates the seam and is kept for its ordering only.
+  Original: the top third collides — title/blurb + all six control pods stack on
+  top of each other at 390 px (screenshot-verified); wide pods clip off the left
+  edge. Map render + bottom legend are fine; tap-to-inspect tooltips work on real
+  devices. Separation seam is clean: render is shared (one WebGL canvas), but all
+  chrome/layout is isolatable behind an `@media` block with zero desktop risk.
+  Quick-pass order:
   (1) add the `@media (max-width:640px)` seam, (2) fix the top-third collision
   (collapse pods + shorten the blurb), (3) stop the left-edge clip, (4) re-render
   via `tools/profiling/shot-mobile.js` + real-device check. ~~NOT greenlit for the
