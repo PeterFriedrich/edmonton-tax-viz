@@ -512,6 +512,8 @@ and there are currently zero closed top-level items — verified by running it o
 an isolated copy), but the hand rule in `CLAUDE.md` (*"move its body to the
 archive"*) is not, and this span is 2,533 lines.
 
+- [ ] **`TODO.md` is 89% of the loaded path and grew 149 → 264 KB in 30 days — audit the ~100 open boxes, relocate the ~46 KB of closed sub-items** (opened 2026-09-16, S166; `docs/FINDINGS_doc_growth.md` §3). This is `_PREMISES.md`'s P10 note, which had no `TODO.md` item — it lived only in that file and the ledger's S162 row. The loaded path (`CLAUDE.md` + this file + newest handoff + memory index) moved **173 → 288 KB (+66%)** over the same 30 days the repo grew +69%, so the growth is NOT confined to files outside the loaded path; this file is where it lands. Two halves: (1) the 100 unchecked sub-items under `### General backlog` are unaudited for staleness (`CLAUDE.md`: an open item "has lagged reality twice"); (2) closed sub-items inside still-open parents (~46 KB) are relocatable to `docs/TODO_archive.md` behind a pointer — `tools/todo_archive.py` does not operate on sub-items. ⚠️ **Not a growth-instrumentation item** — the doc-growth audit's L0 FAILED and nothing is to be built; re-measure the loaded path with `.venv/bin/python tools/retrieval_report.py | sed -n 4p` at the ~2026-09-30 read-log run and put the number to Peter then. This file is 3,285 lines; a default `Read` returns 2,000.
+
 - [x] **GUARD-BURST AUDIT FOLLOW-ONS — ALL 3 DONE** (opened 2026-09-16, S164;
   closed 2026-09-16, S165. `docs/FINDINGS_guard_burst.md` §7). Two of the six
   pieces were called the project's own failure mode shipped fresh: a working
