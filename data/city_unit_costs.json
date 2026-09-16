@@ -81,6 +81,8 @@
         "url": "https://budget.edmonton.ca/api/operating_budget.csv",
         "retrieved": "2026-09-05, fetched from the Oracle box with certifi (this box's CA bundle is stale). Reproduction in docs/FINDINGS_roadway_maintenance_rate.md §6.",
         "derivation": "$65,671,000 / ~11,000 km citywide road network = $5,970/km/yr",
+        "fiscal_year": 2017,
+        "_fiscal_year_is_quoted_publicly": "⚠️ The roadscost blurb says 'the City's 2017 maintenance figure', so this field is the source of truth for a PUBLIC number and check_cost_copy has a CLAIMS row tying the two. It exists because the vintage was recorded only in the prose below, where nothing could check it: the 2026-09-15 audit moved the blurb to 2019 with 903 tests and the copy guard green. Changing it here without changing the copy now FAILS, which is the point.",
         "why_FY2017": "⚠️ 2017 is the ONLY year Edmonton published a roads-only maintenance program. It was re-cut in 2018 into `Infrastructure Maintenance` (which also covers sidewalks, pathways and bridges, so using it would double-count) and again in 2026 into `Mobility Infrastructure Services`. Clean scope was chosen over matching vintage — the same call DATA.md §16 made for the budget pod.",
         "not_escalated": "⚠️ DELIBERATELY UNESCALATED. Escalating by the Parks & Roads Services branch's own FY2017→FY2025 growth (1.3357x) would give ~$7,974/km, but that is BRANCH-level growth applied to a PROGRAM-level figure — a proxy, not a deflator — and FY2025 is the series MAXIMUM (FY2026 gives 1.2551x). The unescalated figure needs no assumption at all and is the safer one to publish. It also makes this half an understatement, never an overstatement."
       },
