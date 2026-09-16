@@ -369,7 +369,7 @@ audit's findings are claims to reproduce, not a task list.**
     against land-use diversity). ⚠️ **The project has NO population-by-hood
     source**, so the per-capita variant of this cannot be computed at all.
 
-- [ ] **PROPOSED (one line, touches a merge-gate guard so not taken unasked): `check_doc_citations.py`'s path escape hatch is DEAD CODE.** Its bare-name check reads `if name not in docs and (root / name).name not in docs and "/" not in name` — but the regex behind `name` is `\b([A-Za-z][\w.-]*\.md)\b`, whose character class **cannot match a `/`**, so that third clause can never fire. It plainly means to exempt a path-form citation and cannot. **Fix:** test the character *before* the match instead. **Found 2026-09-08 (S148)** writing `docs/FABLE_AUDIT_road_figures.md`, which cites four `.md` files that live in `/home/opc/` **by design** (they must not be committed — they would become a drift surface against `city_unit_costs.json`). ⚠️ **Worked around, not fixed:** those filenames are written **without the `.md` extension**, with a line in §2 saying why — otherwise they add three permanent warnings to the **2-warning baseline** that `RUNBOOK.md` and every restoration procedure quote as normal. Cheap, but it is a guard change.
+- [ ] **PROPOSED (one line, touches a merge-gate guard so not taken unasked): `check_doc_citations.py`'s path escape hatch is DEAD CODE.** Its bare-name check reads `if name not in docs and (root / name).name not in docs and "/" not in name` — but the regex behind `name` is `\b([A-Za-z][\w.-]*\.md)\b`, whose character class **cannot match a `/`**, so that third clause can never fire. It plainly means to exempt a path-form citation and cannot. **Fix:** test the character *before* the match instead. **Found 2026-09-08 (S148)** writing `docs/FABLE_AUDIT_road_figures.md`, which cites four `.md` files that live in `/home/opc/` **by design** (they must not be committed — they would become a drift surface against `city_unit_costs.json`). ⚠️ **Worked around, not fixed:** those filenames are written **without the `.md` extension**, with a line in §2 saying why — otherwise they add three permanent warnings to the baseline that restoration procedures quote as normal. ⚠️ **That baseline is now ZERO** (2026-09-16, S165): the two standing warnings were both `VIZ_STACK.md` citations, resolved by landing the doc — so any warning at all is now signal, and this escape hatch matters more than it did, not less. Cheap, but it is a guard change.
 
 - [ ] **⚠️ Q1(a) BULLET 2 IS STUCK ON SEARCH — it needs a direct question to
   City staff. The Q1 rewrite stays HELD until it answers.** Is the
@@ -882,9 +882,14 @@ archive"*) is not, and this span is 2,533 lines.
   checked, and it is the machine with the actual pan complaint. Get its
   `about:support` -> Graphics with its fps run.
 
-- [ ] **DECIDE — `origin/docs/viz-stack` is the only surviving branch besides
-  `master`, and it holds 272 lines that never got a PR.** Surfaced 2026-08-31
-  during the branch prune.
+- [x] **DECIDE — `origin/docs/viz-stack` … 272 lines that never got a PR.**
+  Surfaced 2026-08-31 during the branch prune; **LANDED 2026-09-16 (S165)** as
+  `docs/VIZ_STACK.md`, cherry-picked onto a fresh branch off master. §0/§1 were
+  re-measured on landing (sizes had drifted hard: `web/data/` 8.4 → 16.1 MB, boot
+  file 1.4 → 1.04 MB, and the 7.63 MB `value_grid_50.json` did not exist when the
+  doc was written); §7's Pages Range check re-run green; §2 left as a dated
+  third-party observation and flagged as un-re-measured. The two `VIZ_STACK.md`
+  citation warnings in `check_doc_citations.py` resolve as a side effect.
   - One commit (`0efd62b`, 2026-08-07) adding `docs/VIZ_STACK.md` (+272) and a
     `TODO.md` block (+31). **No PR was ever opened**, so nothing has ever
     reviewed or rejected it — it is unmerged by neglect, not by decision.
@@ -1277,6 +1282,40 @@ archive"*) is not, and this span is 2,533 lines.
     roll). This is a good-citizen report, not a fix we need. Full evidence:
     `data/DATA.md` §0, `docs/SPEC_temporal.md` §0.1, `docs/AUDIT_LEDGER.md`
     (2026-07-28 row).
+
+- [ ] **COLD-LOAD COST HAS NEVER BEEN MEASURED ON THE WIRE** (NEW 2026-08-07,
+  out of the stack comparison in `docs/VIZ_STACK.md` — read §1 and §5 first).
+  Every payload number in this project is an **on-disk** number. Pages gzips, so
+  what a first-time visitor actually downloads is unknown, and no decision about
+  payload should be made until it is.
+  - ⚠️ **DO NOT re-file this as "we ship 16.1 MB".** That is the size of
+    `web/data/`, not a page weight, and reading it as one is the specific error
+    this item exists to stop. **Boot awaits exactly ONE file** —
+    `neighbourhood_value_per_acre.geojson`, 1.04 MB on disk (re-measured
+    2026-09-16; `web/data/` has since doubled to 16.1 MB while the boot payload
+    got *smaller* — the 7.63 MB `value_grid_50.json` is lazy). Everything else is a
+    memoized `??=` single-flight fetch gated on the view that needs it
+    (`gridFetch`, `zoningFetch`, `roadsFetch`, `devGridFetch`, …).
+  - ⚠️ **LAZY LOADING IS ALREADY DONE — do not "add" it.** It was proposed
+    2026-08-07 after spotting the pattern on `map.kunicki.app/assessment/`
+    (their `prop_details/<slug>.json`), then withdrawn on reading our own code:
+    ours is the same idea applied more broadly, to bigger files. Recorded in
+    `VIZ_STACK.md` §2 so it doesn't get re-proposed a third time.
+  - **What is actually unmeasured, and the whole of this item:** gzipped wire
+    size of (a) the 2.02 MB of vendored libraries — deck.gl 1.19 + maplibre 0.78
+    + CSS 0.06 — and (b) the 1.04 MB boot GeoJSON. **The libraries are now nearly
+    DOUBLE the boot geometry uncompressed** (they have not changed; the boot file
+    shrank), which is not what anyone assumed; JS and GeoJSON don't
+    gzip at the same ratio, so the ordering can flip on the wire and must be
+    measured, not reasoned about.
+  - **Only then is there a decision to make.** If boot geometry dominates, the
+    lever is simplification / coordinate quantization of that one file. If the
+    libraries dominate, there is no cheap lever — dropping deck.gl is refused on
+    feature grounds (`VIZ_STACK.md` §3, §4B) and vendoring is refused on
+    offline-verification grounds (§6). A measurement that changes nothing is
+    still the correct outcome here.
+  - **Not known to be a problem.** Nobody has reported the site as slow. This is
+    "we have never looked", not "we found something".
 
 - [ ] **The Services panel grouping was never checked on a phone.** Shipped
   2026-08-02 (PR #145). It added 2 group captions + 1 row, so the panel grew by
