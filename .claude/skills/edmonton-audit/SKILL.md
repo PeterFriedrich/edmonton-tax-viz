@@ -90,6 +90,16 @@ Its load-bearing rules:
   that kills a level beats ten that polish one.
 - Ground in the repo's written reasoning (SPEC, DECISIONS.md, prior
   FINDINGS) and *challenge* it — don't re-derive it.
+  ⚠️ **Read the BODIES of every `DECISIONS.md` row touching your target, and
+  never truncate them.** The index is one line per decision and the reasoning
+  lives in the tail; `grep | cut -c1-N` and `head` will hand you a row that
+  matched and hide the sentence that settles your finding. **Do this BEFORE
+  writing any finding, not after someone questions one.** Two runs have now
+  published a finding the repo had already decided — S165's whole HIGH was one
+  un-read row away (`FINDINGS_guard_channels.md` §0a), and its first
+  post-mortem misdiagnosed *that* as a search-tool limitation rather than a
+  skipped step. This bullet is not new; it is the bullet above, restated
+  because the omission is what actually happens.
 - For a substantial new target, **write the brief as a standalone
   `docs/FABLE_AUDIT_<target>.md`** (read-cold: grounding order, a
   confirm-the-hinge-fact checkpoint, the stack, per-level questions) so the
@@ -101,6 +111,25 @@ target. The classic checklists (CRS, silent drops, methodology) are in the
 appendix below.
 
 ### Step 4 — Deliver verdicts
+
+⚠️ **Every findings document MUST end with a `What this run got wrong` section,
+and it may not be empty.** This is an *output shape*, not a good intention — a
+file missing the heading is visibly missing it, which is why it is specified
+here rather than as a step you might forget. Four prior findings docs carry one
+(`FINDINGS_vacuous_guards.md` §6, `_r2.md` §7, `_published_numbers.md`,
+`_decisions_index_drift.md`) and the pattern in them is consistent and worth
+knowing before you start: **the class you are auditing shows up in your own
+instruments.** Run 1 nearly published *"`deploy.yml` gates nothing"* about a
+working merge gate; run 2 reported *"WRONG SERVER"* four times about correct
+servers. Both caught it **before** publishing. S164 and S165 did not, and each
+needed a reversal on the record.
+
+If you genuinely found no error, you have not looked — re-read your sharpest
+claim and ask what would have to be true for it to be wrong, then go check that
+thing. ⚠️ **A confident NEGATIVE — "nothing reads this", "this can never fire",
+"no gate covers this" — is the highest-risk claim shape in this repo.** All four
+reversals were that shape. Verify a negative by finding the reader/trigger, not
+by failing to find one.
 
 Decision audits: one verdict line per level, sharpest counter-argument,
 evidence-that-would-change-it. Correctness audits:

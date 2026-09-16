@@ -89,6 +89,18 @@ recurs:
 which the 15-item hand sample had missed entirely. That is the check earning its
 keep, once, at the only moment it can: just after a prune.
 
+⚠️ **CORRECTED 2026-09-16 (same day, Fable 5.1): "the prune RECURS" is itself
+overstated, and in my favour.** **n = 1.** One prune has ever happened
+(`chore/branch-prune`, #291). "150 branches in 16 days" is a *projection* that
+Peter will prune again by hand — it is not a rate, and a check whose input is a
+manual habit is the same shape this project rejected the same day for backlog
+staleness (*"a scheduled manual sweep is the thing that does not happen here"*,
+`DECISIONS.md` 2026-09-16). **So both verdicts overstated: S164's "nothing does"
+and this reversal's "it recurs."** The defensible statement is narrower — the
+check is cheap, it has fired usefully once, and its input is a manual habit with
+a sample size of one. That is enough to KEEP it and not enough to call it a
+live signal.
+
 **The real defect is SCHEDULING, not existence.** Wired into the monthly digest,
 it reports green every month until a prune, then dumps one batch — which is why
 the "stock read as flow" diagnosis felt right. But the correction that follows

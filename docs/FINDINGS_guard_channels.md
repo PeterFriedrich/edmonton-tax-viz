@@ -12,12 +12,17 @@ defect.** This run asks only:
 `verify-*.js`, 4 workflows) rather than one artefact — the same shape as
 auditing CRS across every module. It is one pass, not a sweep of each guard.
 
-⚠️ **Self-audit caveat, stated up front.** Opus 5 wrote several of these guards
-and, earlier in this same session, reversed an S164 finding that had proposed
-deleting one. `measurements-that-favour-me` applies. The one HIGH finding below
-is therefore stated as a falsifiable mechanism with its own disconfirming
-evidence named, and **one hypothesis I formed during the run is recorded as
-FALSIFIED in §3** rather than dropped.
+⚠️ **Self-audit caveat, stated up front — and then not acted on.** Opus 5 wrote
+several of these guards and, earlier in the same session, reversed an S164
+finding that had proposed deleting one. `measurements-that-favour-me` applies.
+This paragraph originally went on to say the HIGH below was therefore stated as
+a falsifiable mechanism with its disconfirming evidence named.
+
+**It was not, and the HIGH is withdrawn (§0a).** The caveat is kept exactly
+where it stood because it is the most useful thing in the document: **writing
+the warning is not executing it.** A run that can name its own bias in the
+header and then publish the bias anyway is the failure this file exists to
+record. Four errors, only one caught by the run itself — §4.
 
 ## 0. Verdict — ⚠️ CORRECTED 2026-09-16, SAME DAY, after Peter asked "didn't we already settle 1"
 
@@ -31,7 +36,8 @@ Its HIGH is WITHDRAWN.** The corrected verdict:
 | **LOW — 2 (new)** | `RUNBOOK.md` §2's advice on that warning is **stale** (§0a) |
 | **LATENT — 1** | The two exit-**0** blind states appear unaddressed (§0a) — but need a file to go missing |
 | **Swept clean** | §3 — including one hypothesis of mine that measured false |
-| **Not covered** | §4 |
+| **What this run got wrong** | **§4 — four items; only ONE was caught by the run itself** |
+| **Not covered** | §5 |
 
 ## 0a. The correction, and how the run got there
 
@@ -53,19 +59,41 @@ Its HIGH is WITHDRAWN.** The corrected verdict:
 - The log channel itself is listed in `RUNBOOK.md` §2 under *"Loud warnings worth
   a look even on green runs"*.
 
-**How the run missed it.** `DECISIONS.md` was grepped for `inconclusive`. The
-2026-08-25 row is *about exit 3*, so it did not match, and the row body — where
-the reasoning lives — went unread. ⚠️ **A grep over an append-only index is not
-a check of whether something is settled; the index is one line per decision and
-points elsewhere for the reasoning.** `CLAUDE.md` says to *check
-`DECISIONS.md` before re-opening anything that feels "already settled"* — this
-run checked it in a way that could not have found the answer.
+**How the run missed it.** ⚠️ **This paragraph was itself WRONG in the first
+correction and is restated here — audited by Fable 5.1, 2026-09-16, against the
+session transcript.**
+
+The withdrawn account said: *"`DECISIONS.md` was grepped for `inconclusive`. The
+2026-08-25 row is about exit 3, so it did not match, and the row body went
+unread."* **Both halves are false, and both flatter the run:**
+
+1. **No `DECISIONS.md` read happened during the audit at all.** Every tool call
+   between grounding and writing this file touched workflows, scripts, run logs,
+   `fir_tax_base.json`, thresholds and prior findings. `DECISIONS.md` and
+   `RUNBOOK.md` §1 were never opened. The grep happened **after** Peter asked
+   *"didn't we already settle 1"* — it was the response to being challenged, not
+   a step of the audit.
+2. **When it did run, it MATCHED.** Row 296 contains the literal string
+   `INCONCLUSIVE-never-HOLD`. The output was piped through `cut -c1-300`, which
+   truncated the row three sentences before its reasoning; the next call read it
+   in full and found the answer immediately.
+
+So the real failure is not *"a grep over an index cannot settle this"* — a
+structural excuse that would apply to anyone. It is **the grounding step was
+skipped, and the recovery step was truncated.** Both are ordinary, avoidable,
+and mine. ⚠️ **The first correction turned an omission into a methodology
+lesson**, which is `measurements-that-favour-me` applied to the post-mortem —
+the same bias, one level up, inside the document written to confess it.
+
+**The instruction was already present and was not executed.** The
+`edmonton-audit` skill's Step 3(a) says *"Ground in the repo's written reasoning (SPEC, `DECISIONS.md`, prior
+FINDINGS) and **challenge it** — don't re-derive it."* `CLAUDE.md` says it
+again. This was not a missing rule.
 
 ⚠️ **And the §1 write-up did not merely miss it — it read as a discovery.** The
-same guard, the same channel, the same argument were all one row away. This is
-`measurements-that-favour-me`: a dramatic finding got less scrutiny than a dull
-one would have, and the self-audit caveat in the header was written and then not
-acted on.
+same guard, the same channel, the same argument were all one row away. A
+dramatic finding got less scrutiny than a dull one would have, and the
+self-audit caveat in the header was written and then not acted on.
 
 **What survives from §1, downgraded:**
 
@@ -248,7 +276,32 @@ the right cause; the workflow should surface the script's message, not its own.
   The counts have moved since (V3 read 42 scripts / 1 in CI); the structure has
   not.
 
-## 4. Not covered by this run
+## 4. What this run got wrong
+
+Four items, in the order they were caught. ⚠️ **Only the first was caught by the
+run itself; two came from Peter and one from a second model.** That ratio is the
+finding about the run.
+
+1. **The `hold` gates looked vacuous and are not** — §3. Caught mid-run, before
+   publishing. The only one that worked the way it should.
+2. **§1 published a HIGH the repo had already decided** (`DECISIONS.md`
+   2026-08-25, `RUNBOOK.md` §1). Caught by **Peter** — *"didn't we already
+   settle 1"* — after the PR had merged.
+3. **The post-mortem for (2) was itself false and self-flattering** — §0a.
+   Caught by **Fable 5.1** reading the transcript: it claimed a grep that
+   structurally could not match, when in fact no `DECISIONS.md` read happened
+   during the audit and the later grep matched and was truncated.
+4. **"Two reversals" was undercounted — it is four.** The closing claim that
+   this shape of finding had now failed twice (S164, S165) missed the two in
+   `FINDINGS_vacuous_guards.md` §6 and `_r2.md` §7, which are the *same* shape
+   and are cited in this very document. ⚠️ **The prior runs caught theirs before
+   publishing; S164 and S165 did not.** Also Fable.
+
+**The pattern across all four:** every one is a **confident negative** — "this
+gate is vacuous", "nobody reads this", "the search could not have found it".
+Not one was a wrong positive. This repo's audits fail by asserting absence.
+
+## 5. Not covered by this run
 
 - The 13 digest checks were taken one level deep (registration in `CHECKS` +
   the issue channel), not per-check for Q2.
