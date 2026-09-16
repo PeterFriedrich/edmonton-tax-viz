@@ -55,6 +55,14 @@ jobs:
       - name: Check doc citations
         run: python scripts/check_doc_citations.py
 
+      # The money legend must decode to the number the colour ramp saturates at.
+      # The verify scripts pin the legend STRING only, so the clamp could be moved
+      # to $5,000 under a `$50k+` legend with all 923 tests green (measured
+      # 2026-09-16). Offline — one file, no data. The DRIFT half runs in
+      # refresh.yml, where the data is.
+      - name: Check money legend matches its colour clamp
+        run: python scripts/check_colour_clamps.py --legend-only
+
       # The decisions log's two write-time rules, enforced where a row is written:
       # a new row names a test that exists or is tagged [unverifiable]; a row that
       # supersedes an earlier one has that row marked in place. Offline.

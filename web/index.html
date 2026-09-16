@@ -781,6 +781,11 @@
         legendLabel: "Revenue per acre",
         legendMin: "$0",
         legendMax: "$50k+",
+        // Deliberately a LITERAL, not a live p97.5 like moneyScale's lot branch:
+        // this is the landing view, and a scale that re-anchors every refresh
+        // makes two visits incomparable. It therefore erodes as assessments rise
+        // — scripts/check_colour_clamps.py measures where it sits each refresh
+        // and files an issue outside its band. Never edit this without legendMax.
         colorClamp: 50_000,
         elevationScale: 0.033,
         transform: "sqrt",
@@ -813,7 +818,7 @@
         legendLabel: "Residential revenue per acre",
         legendMin: "$0",
         legendMax: "$30k+",
-        colorClamp: 30_000, // hand-set from the real-data p97.5 (~$28.5k), like Revenue's 50k
+        colorClamp: 30_000, // literal, like Revenue's 50k — see that comment and check_colour_clamps.py
         elevationScale: 0.033,
         transform: "sqrt",
         fmt: fmtMoney,
@@ -844,7 +849,7 @@
         legendLabel: "Non-residential revenue per acre",
         legendMin: "$0",
         legendMax: "$50k+",
-        colorClamp: 50_000, // hand-set from the real-data p97.5 (~$48.4k), like Revenue's 50k
+        colorClamp: 50_000, // literal, like Revenue's 50k — see that comment and check_colour_clamps.py
         elevationScale: 0.033,
         transform: "sqrt",
         fmt: fmtMoney,
