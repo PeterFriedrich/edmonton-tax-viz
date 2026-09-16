@@ -642,8 +642,21 @@ Triage by which step failed, in the run log:
 
 **Loud warnings worth a look even on green runs:** unknown zone / road-class
 codes (hand-assign to the dicts), new fire `event_type_group` values (kept in
-by design, logged), the year-check "inconclusive" warning (metadata fetch
-failed; fine once, investigate if it repeats).
+by design, logged).
+
+⚠️ **NOT on that list any more: the year-check "inconclusive" warning.** This
+entry used to read *"metadata fetch failed; fine once, investigate if it
+repeats"* — **both halves are now wrong** (corrected 2026-09-16). It repeats on
+**every** run and has for months, and the cause is not a fetch failure: Edmonton
+leaves `Period of Coverage` unmaintained, so `check_year_alignment.py` takes its
+`stale-metadata` branch and returns INCONCLUSIVE **by design**
+(`DECISIONS.md` 2026-08-25, `DATA_ISSUES.md` issue 1). Investigating it is
+investigating a non-problem. ⚠️ The workflow's own message still says
+*"(metadata fetch/parse failed)"* and is wrong for this branch — the accurate
+line is the one the script logs just above it. **The roll year is settled by
+`check_roll_year_against_fir.py`, which measures parcels; act on what THAT one
+says.** Its own blind states are written up in
+`docs/FINDINGS_guard_channels.md` §0a.
 
 ## 3. The schedule went to sleep
 

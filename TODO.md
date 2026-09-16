@@ -546,35 +546,28 @@ archive"*) is not, and this span is 2,533 lines.
     the transient-vs-persistent reason in the step comment (the revenue-delta
     step above stays undeduped deliberately: that signal *is* per-event).
 
-- [ ] **⚠️ PROPOSE-FIRST (changes CI behaviour): the roll-year guard's BLIND
-  states reach nobody, and one of them fires every January.** Opened 2026-09-16
-  (S165) by the channel sweep — `docs/FINDINGS_guard_channels.md` §1. **Read the
-  finding before acting; do not "just add an issue step".**
-  - `check_roll_year_against_fir.py` is THE roll-year authority (its sibling
-    `check_year_alignment.py` is permanently `inconclusive` — Edmonton's
-    `Period of Coverage` is unmaintained, `DATA_ISSUES.md` issue 1). It has
-    **three blind states**: roll CSV absent and FIR anchor absent both exit **0
-    with `result=skipped`** (indistinguishable from a satisfied guard), and
-    "no FIR year fits" exits 4 to a `::warning::` in a **green** run.
-  - ⚠️ **The January one is not hypothetical — it is arithmetic.** FIR's filed
-    residential base grows **9.6–12.0%/yr**; `MAX_PLAUSIBLE_RESIDUAL` is **5%**;
-    Alberta files months after Edmonton rolls. So in early January no year fits
-    and the guard goes blind **in the exact window it exists to cover**. It
-    guards the project's most expensive recorded defect (~$69.5M understated,
-    S119).
-  - ⚠️ **The digest actively stands the reader down.** Its roll-year row says
-    *"not an action unless that guard disagrees"* — and a blind guard does not
-    disagree. `data/raw/` holds only `.gitkeep`, so the digest structurally
-    cannot consult the authority it defers to.
-  - **The pattern to copy is in-repo:** `check_revenue_deltas.py`'s
-    `BaselineUnavailable` path escalates to the issue channel with a comment
-    that is itself the argument. **Dedupe like `clamp-drift`, not per-event like
-    the delta issue** — a blind guard is a persistent state, not an event.
-  - **Fix §2 first** (one line, `refresh.yml`): the exit-4 message hardcodes
-    "metadata fetch/parse failed" and fires on the `stale-metadata` branch too,
-    so it contradicts the script's own line every week. Harmless while nothing
-    reads the channel; actively misleading the moment this item gives it a
-    reader.
+- [ ] **The exit-4 inconclusive message in `refresh.yml` names the wrong cause**
+  (one line; opened 2026-09-16, S165, `docs/FINDINGS_guard_channels.md` §2).
+  The case block hardcodes `"::warning::Year-alignment check inconclusive
+  (metadata fetch/parse failed)"`, but `check_year_alignment.py` also returns 4
+  from its `stale-metadata` branch — where the fetch **succeeded**. Every weekly
+  run therefore logs two contradicting lines, and the workflow's is the false
+  one. **Fix:** surface the script's own message instead of the workflow's.
+  ⚠️ **It is a CI file, so propose before editing**, though the change is a log
+  string and not behaviour.
+  - ⚠️ **The big version of this item was WITHDRAWN the same day it was opened.**
+    It claimed the roll-year guard's blind states were unexamined and that the
+    January case was an unnoticed hole. **Both were already settled** —
+    `RUNBOOK.md` §1 anticipates the January case with a checklist step, and
+    `DECISIONS.md` 2026-08-25 decided exit 4's treatment on this very guard.
+    See `FINDINGS_guard_channels.md` §0a; **do not re-open it without reading
+    that row's body**, which is where the reasoning lives (the index line is
+    about exit 3 and does not mention exit 4 at all).
+  - **Left open, reported without recommendation:** the two exit-**0** blind
+    states (roll CSV absent, FIR anchor absent → `result=skipped`, green,
+    silent). Nothing found addresses exit 0, but both need a committed file to
+    go missing — latent, not scheduled. Decide whether that is worth a guard at
+    all before building one.
 
 - [ ] **DEV HISTORY FOLLOW-ONS — three, none blocking (opened 2026-09-14, S156,
   after PR #389 merged).**
