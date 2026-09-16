@@ -285,7 +285,13 @@ a CAPTURE on real hardware** (the shelved `TODO.md` item), not an audit. What
     has ~2 weeks; **recs 4/5/7/8/9 are answerable cold and are where the run earns
     itself**; rec 3 is the audit executed 2026-09-15, which left three public
     literals and a drifted clamp written down rather than fixed.
-    ⚠️ **§2a added 2026-09-16 on Peter's challenge: the claims file checks the
+    ⚠️ **RUN IN TWO SESSIONS (Peter's call 2026-09-16, brief §0a): A evaluates the
+    review's reasoning and STOPS; Peter names the live rows; B disposes them.** One
+    session doing both means the model evaluates a premise and then acts on its own
+    evaluation unchecked — the §0 failure one level up. §A2 caps Session A at one
+    ≤120-line file and forbids it disposing anything, opening TODO rows or touching
+    code, so the split is not just an extra place to park work.
+    ⚠️ **§A1 added 2026-09-16 on Peter's challenge: the claims file checks the
     review's ARITHMETIC, nothing checked its REASONING.** Eight premises the
     recommendations rest on, each with a test — including two that cut against the
     review from inside it (its own cited ablation study found context files do not

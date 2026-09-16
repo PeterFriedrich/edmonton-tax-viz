@@ -517,7 +517,9 @@ is in the `panel` column. T1 is public (3 of 10 service rows). T2 closed (`## Do
   constraint is the correction — disposition per row, a `TODO.md` park counts as NOT
   disposed, write-up capped by the code it changes. Recs 4/5/7/8/9 are answerable
   now; 1/2/6 wait on the log. ⚠️ **Cross-model does not fix this one** — Fable ran
-  the failed attempt.
+  the failed attempt. ⚠️ **TWO SESSIONS (§0a): A evaluates the review's premises and
+  STOPS at a handover; Peter names the live rows; B disposes them.** Running both at
+  once is the model acting on its own evaluation unchecked.
 - [ ] **~~Retrieval logging — decide the doc question with evidence, not argument.~~**
   A `PostToolUse` hook logging every Read/Grep with a filename gives a per-doc
   read-frequency table in 2–3 weeks; a doc never opened before an action is a

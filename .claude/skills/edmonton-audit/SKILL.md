@@ -35,6 +35,20 @@ is more useful than a shallow pass over everything.
 - **`docs/DECISIONS.md`** — if an audit locks or reopens a decision, append a
   one-liner there too.
 
+## ⚠️ Before Step 1 — a brief may override this skill
+
+**A `docs/FABLE_AUDIT_*.md` brief wins over these steps wherever the two
+disagree.** This file is the default procedure; a brief is the specific one, and
+it was written knowing more about its target than this file does.
+
+⚠️ **Live instance — candidate 11 (`docs/FABLE_AUDIT_doc_apparatus.md`):** it runs
+in **two separate sessions** (its §0a). **Session A evaluates an outside review's
+reasoning and executes nothing** — so its §A2 forbids exactly what Step 5 below
+demands: no ledger row, no `FINDINGS_*.md`, no TODO rows, no code changes.
+**Session A should not run through this skill at all** — read the brief directly.
+**Session B is a normal audit and does use it.** If you are about to add a ledger
+row for a session that executed nothing, stop and re-read the brief.
+
 ## How to run an audit
 
 ### Step 1 — Ground before scoping (non-negotiable)
