@@ -7,10 +7,16 @@ and a timestamp. This turns it into the table the doc-apparatus audit needs
 (`docs/FABLE_AUDIT_doc_apparatus.md`, rec #1): which docs a session actually
 opens, how many distinct sessions opened each, and which were never opened.
 
-⚠️ A doc with zero reads is a PRUNE CANDIDATE, not a verdict. Two things make a
-zero honest-but-misleading: a doc read in a session that predates the hook, and
-a doc whose content reached the model through CLAUDE.md or a grep hit rather
-than a Read. The never-read list is where to look, not what to conclude.
+⚠️ A doc with zero reads is a PRUNE CANDIDATE, not a verdict. Three things make a
+zero honest-but-misleading: a doc read in a session that predates the hook, a doc
+whose content reached the model through CLAUDE.md, and — the big one — **a doc
+read through Bash.** The hook matches the `Read`, `Grep` and `Glob` TOOLS, so
+`bash grep`, `sed`, `cat`, `head` and `python` reads are invisible to it.
+Measured 2026-09-16: the session that audited this instrument logged **4 reads
+while consulting ~14 docs**; `DECISIONS.md` and `AUDIT_LEDGER.md` both read via
+Bash, both scored zero. The undercount is not uniform — it falls hardest on the
+big files a session greps rather than opens, which are the ones a prune would
+target. The never-read list is where to look, not what to conclude.
 
 ⚠️ Read the DATE RANGE before the counts. Under ~2 weeks of normal sessions the
 table settles nothing, and the report says so at the top rather than leaving the
@@ -95,6 +101,14 @@ def main() -> int:
         tracked = {str(p.relative_to(ROOT)) for p in ROOT.glob("docs/*.md")}
         tracked |= {str(p.relative_to(ROOT)) for p in ROOT.glob("*.md")}
         never = sorted(tracked - set(counts))
+        # The warning lives here, not only in the docstring: this list is the one
+        # a prune would act on, and a caveat the actor does not see is the defect
+        # this project keeps re-learning (`_classify`, ~70 days into a log).
+        print(f"\n⚠️  A ZERO BELOW MAY MEAN 'READ THROUGH BASH', NOT 'NEVER READ'.")
+        print(f"    The hook sees the Read/Grep/Glob TOOLS only — `bash grep`, `sed`,")
+        print(f"    `cat` and `python` reads are invisible. The audit session itself")
+        print(f"    logged 4 reads while consulting ~14 docs (2026-09-16). Confirm a")
+        print(f"    zero against transcripts before treating it as evidence.")
         print(f"\nNEVER OPENED in this window — {len(never)} of {len(tracked)}:")
         for path in never:
             print(f"       .         {path}")
