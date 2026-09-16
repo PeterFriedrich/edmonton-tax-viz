@@ -92,10 +92,43 @@ he can decide. Do not "implement" them.
 
 ---
 
+## §2a — ⚠️ TEST THE PREMISES, NOT JUST THE NUMBERS
+
+The `_CLAIMS.md` file checks the review's **arithmetic** about this repo. Nobody has
+checked its **reasoning**. ⚠️ **A recommendation whose premise is false is not
+disposed by executing it** — and the premises below are the ones that, if wrong,
+change what the right answer is. Test each; **say which way it went**, because
+several of these could come back *strengthening* the review.
+
+⚠️ **This section is not a licence to reject the review.** The measured finding so
+far is that its thesis is **understated** (`_CLAIMS.md` #1). A run that contests
+every premise and executes nothing has found the comfortable answer, and should
+distrust itself accordingly.
+
+| # | premise the review rests on | why it is worth testing here |
+|---|---|---|
+| **A1** | *Cost is spread across all the artifacts.* | An unread doc costs **zero tokens**. `CLAUDE.md` loads 22 pointers; `docs/` holds **80** files. So the real cost of the other 58 is **staleness risk**, not context bloat — a different problem with a different remedy. ⚠️ Recs #6 and #9 are argued from mass; if the cost is staleness, **pruning and dating are not the same move** |
+| **A2** | *A markdown-to-code mass ratio is a meaningful signal (rec #9).* | ⚠️ **The review warns about Goodhart's Law and then proposes a ratio target.** A ratio says nothing about whether any given doc earns its place, and a ceiling is gameable by writing longer code. Is rec #9 self-undermining on the review's own terms? |
+| **A3** | *Ablation can measure a doc's value (recs #2, #6).* | ⚠️ **The review's own cited study cuts against it**: Khatri found *"injection strategy does not measurably move correctness"* and concluded context files are *"behavior steering, not capability injection"* — and the review adds that detecting a ~10pp effect needs **120–200 tasks**. If correctness cannot move, **ablation-by-correctness cannot detect value**, and rec #6 may be unrunnable at this project's scale. What *would* be measurable — process effects, wall-clock, repeated mistakes? |
+| **A4** | *The reader of these docs is the agent.* | ⚠️ **The sharpest one, and it is the blind spot of the instrument I built.** `tools/retrieval_report.py` measures **agent** reads only. But ~29 of `docs/` are `FINDINGS_*`, `DATA_ISSUES.md` and `EVIDENCE_NOTEBOOKS.md`, whose intended reader is a **skeptical outsider checking a public civic claim** — a journalist, a councillor, Edmonton Open Data. A zero-read row for one of those means *the agent never opened it*, **not** that it has no reader. Pruning on that signal would delete the artifacts the public release exists for |
+| **A5** | *This is a solo project, so the apparatus is disproportionate.* | The review's own thresholds say the calculus shifts with an audience. `docs/PLAN_public_release.md` is active work. Does "solo" still describe a **published** civic analysis whose methodology is meant to be independently checkable? |
+| **A6** | *Append-only is an anti-pattern; prune superseded entries (recs #5, #7).* | ⚠️ **This repo's error-catching has repeatedly depended on the superseded text still being there** — `AUDIT_LEDGER.md`'s S103→S104 amendment chain caught an **overstated correction**, which a prune would have erased along with the original. Is the audit trail a cost of append-only, or its point? What survives a prune that keeps corrections but drops originals? |
+| **A7** | *Most decisions can become a test (rec #8).* | *"Why the neighbourhood is the unit of analysis"* is not testable; *"the road rate is $50/m/yr"* is. Where is the boundary, and what fraction of `DECISIONS.md` falls each side? ⚠️ Rec #8 is only as good as that fraction — and the review's own §Q3 concedes *"capture the why"* is durable |
+| **A8** | *Auto-memory now covers the cold-start need (rec #4).* | Testable here, today: **34** auto-memory files exist for this project. Read them against the 3 live handoffs. What does each carry that the other does not? The review's own threshold is *"if auto-memory demonstrably carries continuity across the next ~10 sessions."* ⚠️ Memory files are also **undated assertions**, which is the staleness problem the review raises about docs — do they inherit it? |
+
+**How to report a premise test:** one line per row — `HOLDS`, `FAILS`, or `UNTESTABLE
+HERE` — plus what you measured. ⚠️ **A premise that FAILS re-opens the recommendation
+built on it**, and that re-opening is a finding, not a dodge.
+
+---
+
 ## §3 — ⚠️ THE OUTPUT CONSTRAINT (this is the part that makes the audit different)
 
 The last run failed by producing a document. These rules forbid that shape:
 
+0. **§2a's premise tests come first**, and a row whose premise `FAILS` is disposed
+   against the *corrected* premise, not the review's. Report the premise verdicts
+   even where they change nothing.
 1. **Disposition per row, one of four words:** `EXECUTED` (the change is in the
    working tree), `DECIDED-NO` (argued and rejected, with the argument),
    `MEASUREMENT-PENDING` (named, with the measurement that would settle it and when

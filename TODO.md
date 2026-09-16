@@ -491,14 +491,15 @@ is in the `panel` column. T1 is public (3 of 10 service rows). T2 closed (`## Do
   / $3.8B), re-derive `Roadway Maintenance` FY2017 + `Snow and Ice Control` and
   ACTION on change. Same function: compare `pwis-wc4c`'s pinned-year rates to
   `mill_rates.json` *values* (`check_mill_rates` compares years only). Findings §3.
-- [ ] **Three unguarded PUBLIC literals** (findings §4): (L1) `$600,000` /
-  `$1,900,000` in the roadslife blurb — two `check_cost_copy` CLAIMS rows off
-  `roadway_om_renewal.source.published_figures_per_km_neighbourhood_road`;
-  (L2) `~0.9% of units` in the infill blurb — S56's D3 measurement typed in, never
-  re-derived: re-derive from the permits feed or drop the figure; (L3) `2021–25`
-  in the same sentence — `test_window_labels` matches `YYYY–YYYY` only, so this
-  label will not roll in January 2027 and the guard stays green. Make the test
-  see the two-digit form (and the `${WIN.*}` substitution produce it).
+- [x] **L1 + L3 of the three unguarded PUBLIC literals — CLOSED 2026-09-16 (S160),
+  PR #406.** Two `check_cost_copy` CLAIMS rows now read `$600,000` / `$1,900,000`
+  from `roadway_om_renewal.source`, and the Infill blurb renders `WIN_SHORT.permits`
+  while `test_window_labels` matches **both** year spellings. Falsified six ways with
+  a green control on both ends; rendered output checked on the public build. `## Done`.
+- [ ] **L2 — `~0.9% of units` in the Infill blurb is a typed-in measurement** (S56's
+  D3, 2026-07-16) that nothing re-derives, while the permits feed refreshes weekly.
+  **Re-derive from the feed, or drop the figure.** ⚠️ Not mechanical — dropping it
+  loses a real disclosure, so it is a copy decision, not a guard gap. Findings §4.
 - [ ] **`$50k` revenue clamp has drifted** to 0.871 × p97.5 (16 hoods saturate,
   4.5% vs the 2.5% design); S104's "still at p97.0" is stale. Decide in
   `DECISIONS.md` whether the clamp is a stability literal or a percentile, and if
