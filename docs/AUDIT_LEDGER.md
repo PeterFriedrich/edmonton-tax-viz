@@ -357,3 +357,30 @@ a CAPTURE on real hardware** (the shelved `TODO.md` item), not an audit. What
     accordingly; the disposition is Session B's.
     ✅ **Session B run 2026-09-16 (S162, Fable 5.1)** — see the executed-audits row of
     that date and `docs/external/REVIEW_doc_apparatus_2026-09-15_DISPOSITIONS.md`.
+
+### 2026-09-16 — P2 oracle-scored ablation: FEASIBILITY CHECK, verdict NOT VIABLE (S163, Opus 5)
+
+**Target:** the doc-ablation eval harness authorised the same day (1 doc × 2 arms ×
+5 headless runs, `SPEC_temporal.md` §2 scored by `verify-temporal.js`).
+**Spent: 0 runs.** Two pre-checks; the second ended it.
+
+- ✅ **The oracle is non-vacuous** — falsified, not assumed. `temporalGeom`'s `pts`
+  mutated to index positioning → `ratio=1.00` against an expected ~3, 2 checks red,
+  restored and grep-verified. This is a **useful by-product for never-audited #3
+  ("checks that cannot fail")**: `verify-temporal.js`'s two invariant checks are now
+  proven to measure, and are NOT in the literal-pin class.
+- ❌ **The experiment has no arm B.** §2's invariants are restated at
+  `web/index.html:4601–4620` (a banner above the chart code, fuller than §2), twice
+  more in-file, in the oracle's own header, and in three other docs. Ablating the doc
+  leaves the rule in front of the model.
+- ❌ **Re-targeting fails and the reason generalises** — `web/index.html` is 38%
+  comments / 155 ⚠️ markers; test-covered pipeline constants are literal pins; the one
+  doc-only rationale found has no test. **The docs are the second carrier of
+  executable invariants here, never the sole one.**
+
+**Verdict: DECIDED-NO** (`DECISIONS.md` 2026-09-16). ⚠️ **Same conflict of interest
+the P2 candidate row already flags — this is Opus 5's fifth objection to the one
+instrument that would measure its own output, and the one that killed it.**
+Falsification path, at ~30% of the authorised spend, is written into the
+dispositions §P2: run arm B alone at n=3; a red verdict overturns the decision.
+Writeup: `docs/external/REVIEW_doc_apparatus_2026-09-15_DISPOSITIONS.md` §P2.
