@@ -169,6 +169,19 @@ jobs:
       # Warns only, ALWAYS exit 0: a hood's revenue can legitimately double when
       # a large parcel completes, and a guard that reds the weekly publish on
       # good data gets switched off.
+      # The ground-acre money clamps are deliberate LITERALS so the landing view's
+      # scale is comparable between two visits (DECISIONS.md 2026-09-16) — the lot
+      # and grid scales self-anchor to a live p97.5 instead. A literal erodes as
+      # assessments rise, silently: `revenue_per_acre`'s was set at p97.5 and sat
+      # at p95.5 by 2026-09-16 (16 hoods saturating, 4.5%, against a ~2.5% design)
+      # and nothing measured it. Reports the table EVERY run and only flags outside
+      # the band, because drift is a re-decide signal, not a defect — it never
+      # blocks the publish. Same issue channel as the delta guard below.
+      - name: Check money colour-clamp drift (guard after regenerating)
+        id: clampdrift
+        if: steps.yearcheck.outputs.result != 'hold' && steps.rollyear.outputs.result != 'hold'
+        run: python scripts/check_colour_clamps.py --report clamp-drift.md
+
       - name: Check per-neighbourhood revenue deltas (guard after regenerating)
         id: revdelta
         if: steps.yearcheck.outputs.result != 'hold' && steps.rollyear.outputs.result != 'hold'
@@ -265,6 +278,22 @@ jobs:
             --title "${{ steps.revdelta.outputs.title }}" \
             --body-file revenue-delta.md \
             --label revenue-delta
+
+      # Same channel and the same reason as the delta issue above: this one only
+      # ever warns, and a warning in a green run reaches nobody. It says "come and
+      # re-decide the literal", so it is not urgent and not a failure.
+      - name: Report colour-clamp drift as an issue (notification email)
+        if: steps.clampdrift.outputs.flagged != '0' && steps.clampdrift.outputs.flagged != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh label create clamp-drift \
+            --description "A money colour clamp has drifted from the distribution it was set from" \
+            --color FBCA04 || true
+          gh issue create \
+            --title "${{ steps.clampdrift.outputs.title }}" \
+            --body-file clamp-drift.md \
+            --label clamp-drift
 
       # Two-build emit (docs/PLAN_public_release.md §2a): fan web/ out into
       # _site/ = public root + _site/full/ = specialist, sharing the just-

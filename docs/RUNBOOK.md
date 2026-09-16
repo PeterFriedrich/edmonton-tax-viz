@@ -164,6 +164,37 @@ correct mill rate throughout. Full reasoning: `docs/DECISIONS.md` 2026-08-07.
 ever changed the file and fire on exactly one event in that history, so a
 tightening that starts producing weekly issues will get the guard ignored.
 
+## 0c. `⚠️ Colour clamp drifted` issue (a money legend's top band has slid)
+
+**What it is:** the weekly refresh ran `scripts/check_colour_clamps.py` and found
+a money metric whose hand-set `colorClamp` now saturates **outside 1–6%** of the
+358-odd live (non-set-aside) neighbourhoods. It files an issue labelled
+`clamp-drift`.
+
+⚠️ **NOTHING IS BROKEN, NOTHING IS BLOCKED, AND THE CLAMP IS NOT A BUG.** These
+clamps are deliberate literals so the landing view's colour scale is comparable
+between two visits (`DECISIONS.md` 2026-09-16) — the lot-acre and grid scales
+self-anchor to a live p97.5 instead, and cannot drift. A literal erodes as
+assessments rise; that is the price of the stability, and this issue is the
+"come and re-decide it" signal. It always exits 0.
+
+**Work it in this order:**
+
+1. **Read the table in the issue body** — clamp, today's p97.5, the percentile the
+   clamp now sits at, and the saturating count. The flagged row is marked ⚠️.
+2. **Decide whether the top band still says something useful.** Saturating *too
+   many* hoods means the top colour stops discriminating; *too few* wastes the
+   ramp. Look at the tail before reaching for p97.5 — on 2026-09-16 the top hood
+   was 5.1× the clamp (DOWNTOWN $256,564), so moving $50k → $57.4k changed only 7
+   hoods. A big drift number does not always mean a big visual change.
+3. **If you move it, move BOTH** — `colorClamp` and `legendMax` in `METRICS`
+   (`web/index.html`). The merge gate fails if they disagree, which is the point.
+4. **Append a `DECISIONS.md` row** naming the new figure and citing
+   `check_colour_clamps.py`; update the band in that script only if the *design
+   intent* changed, not to silence a reading.
+5. **Close the issue.** Same rule as §0's green digest: a standing open issue is
+   how the next one gets skimmed past.
+
 ## 1. The January year roll (the recurring one)
 
 **Symptom:** the site shows a "Showing 2025 data —…" banner, and the weekly

@@ -485,10 +485,14 @@ is in the `panel` column. T1 is public (3 of 10 service rows). T2 closed (`## Do
   D3, 2026-07-16) that nothing re-derives, while the permits feed refreshes weekly.
   **Re-derive from the feed, or drop the figure.** ⚠️ Not mechanical — dropping it
   loses a real disclosure, so it is a copy decision, not a guard gap. Findings §4.
-- [ ] **`$50k` revenue clamp has drifted** to 0.871 × p97.5 (16 hoods saturate,
-  4.5% vs the 2.5% design); S104's "still at p97.0" is stale. Decide in
-  `DECISIONS.md` whether the clamp is a stability literal or a percentile, and if
-  the latter, give `verify-smoke` the percentile, not the string. Findings §5.
+- [x] **`$50k` revenue clamp — DECIDED AND GUARDED 2026-09-16 (S162).** Peter's
+  call: it stays a **stability literal** (the lot and grid scales already track a
+  live p97.5; the landing view must not). `scripts/check_colour_clamps.py` splits
+  the two failures — legend-must-decode-to-clamp **fails the merge gate** (falsified:
+  the clamp moved to $5,000 under a `$50k+` legend with all 923 pre-existing tests
+  green), saturating-share-outside-1–6% **warns each refresh and files an issue**.
+  The band contains today's 4.5% deliberately; it catches the next move.
+  `DECISIONS.md` 2026-09-16, Findings §5.
 - [ ] **~~Retrieval logging — decide the doc question with evidence, not argument.~~**
   A `PostToolUse` hook logging every Read/Grep with a filename gives a per-doc
   read-frequency table in 2–3 weeks; a doc never opened before an action is a

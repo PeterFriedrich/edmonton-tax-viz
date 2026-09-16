@@ -233,6 +233,16 @@ so the colour scale is stable across refreshes — `DECISIONS.md` should say whi
 wins, stability or percentile); what this audit establishes is that **nothing
 measures it** and the S104 statement is already stale.
 
+✅ **DISPOSED 2026-09-16 (S162).** Peter's call: the clamp stays a **stability
+literal** (the lot-acre and grid scales already self-anchor to a live p97.5 —
+`moneyScale` / `gridScale` — so the landing view is the one place that must not
+move). `scripts/check_colour_clamps.py` closes both halves: the legend string
+must decode to the clamp (**fails the merge gate** — falsified by moving the
+clamp to $5,000 under a `$50k+` legend, which all **923** pre-existing tests
+passed), and the saturating share must stay in 1–6% (**warns each refresh, files
+an issue, never blocks**). The band contains today's 4.5% deliberately; it
+catches the next move. `DECISIONS.md` 2026-09-16, `RUNBOOK.md` §0c.
+
 `fmt*` functions were **not** swept beyond this; T3 is reported partial.
 
 ---
