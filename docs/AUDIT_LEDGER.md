@@ -259,3 +259,26 @@ a CAPTURE on real hardware** (the shelved `TODO.md` item), not an audit. What
     same day — it is grading its own coverage.** The brief says so and hands the run
     explicit permission to reject its definitions of "published number" and
     "covered". Cross-model execution is the point.
+
+11. **⚠️ IS THE DOC APPARATUS LOAD-BEARING, OR CEREMONY?** (added 2026-09-16, S160).
+    **Brief written, rec #1 executed, audit NOT run:**
+    `docs/FABLE_AUDIT_doc_apparatus.md`; source under audit is
+    `docs/external/REVIEW_doc_apparatus_2026-09-15.md` (9 recommendations).
+    ⚠️ **This candidate exists because the LAST attempt at it failed.** The review
+    was handed over 2026-09-15; `FABLE_AUDIT_published_numbers.md` §0 digested it to
+    one quoted sentence with **no path**, carried **1 of its 9 recommendations** —
+    the one endorsing existing practice — and the resulting run shipped **314 lines
+    of markdown and zero executable checks**. Cross-model execution did not prevent
+    it (Fable ran that audit), so the brief's §3 makes the constraint **structural**:
+    a disposition per row of `EXECUTED` / `DECIDED-NO` / `MEASUREMENT-PENDING`, a row
+    parked in `TODO.md` counts as **NOT disposed**, and the write-up may not exceed
+    the lines of code it changes.
+    **Scoreboard at brief time: 0 of 9 implemented.** ✅ **Rec #1 executed 2026-09-16**
+    — a `Read|Grep|Glob` `PostToolUse` hook logging every retrieval, plus
+    `tools/retrieval_report.py`. Recs 1/2/6 are `MEASUREMENT-PENDING` until the log
+    has ~2 weeks; **recs 4/5/7/8/9 are answerable cold and are where the run earns
+    itself**; rec 3 is the audit executed 2026-09-15, which left three public
+    literals and a drifted clamp written down rather than fixed.
+    ⚠️ **Every session that has touched this question authored the artifacts under
+    review.** The retrieval log exists because the review says judgement here cannot
+    be trusted — weight it over any argument in the brief.

@@ -76,6 +76,12 @@ SCAN_SUFFIXES = {".py", ".js", ".html", ".md", ".yml", ".yaml"}
 # documentation of a fixed bug, not a live pointer.
 EXCLUDE_PARTS = (
     "node_modules", "web/vendor", "_site", ".venv", ".git", "session-summary",
+    # Verbatim third-party documents (docs/external/). Their evidentiary value IS
+    # that they are unedited -- an outside author's citations are theirs, not ours
+    # to fix, and rewriting one to satisfy this guard would destroy the thing it is
+    # kept for. NOTE this excludes them from SCANNING only: project_docs() still
+    # lists them, so OUR citations TO such a file resolve. Added 2026-09-16.
+    "docs/external",
 )
 EXCLUDE_NAMES = ("TODO_archive.md", "AUDIT_LEDGER.md", "CODEMAP.md")
 
@@ -87,7 +93,11 @@ MIN_BARE_NAME = 5
 
 def project_docs(root: Path) -> dict[str, Path]:
     """Every markdown doc a citation could legitimately name."""
-    found = list(root.glob("*.md")) + list(root.glob("docs/*.md")) + list(root.glob("data/*.md"))
+    found = (list(root.glob("*.md")) + list(root.glob("docs/*.md"))
+             + list(root.glob("data/*.md"))
+             # Not scanned (EXCLUDE_PARTS) but nameable: a citation TO a verbatim
+             # external document must resolve like any other.
+             + list(root.glob("docs/external/*.md")))
     return {p.name: p for p in found}
 
 

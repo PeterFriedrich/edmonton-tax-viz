@@ -503,7 +503,21 @@ is in the `panel` column. T1 is public (3 of 10 service rows). T2 closed (`## Do
   4.5% vs the 2.5% design); S104's "still at p97.0" is stale. Decide in
   `DECISIONS.md` whether the clamp is a stability literal or a percentile, and if
   the latter, give `verify-smoke` the percentile, not the string. Findings §5.
-- [ ] **Retrieval logging — decide the doc question with evidence, not argument.**
+- [x] **Retrieval logging — EXECUTED 2026-09-16 (S160).** `Read|Grep|Glob`
+  `PostToolUse` hook in `.claude/settings.json` → `~/.claude/retrieval-log.jsonl`;
+  read it with `python tools/retrieval_report.py`. Proven firing (a real Read logged
+  with this session's id). ⚠️ **Harvest no earlier than ~2026-09-30** — the report
+  refuses to be treated as evidence under 14 days. This is rec #1 of
+  `docs/external/REVIEW_doc_apparatus_2026-09-15.md`.
+- [ ] **Doc-apparatus audit — brief written 2026-09-16, NOT executed.**
+  `docs/FABLE_AUDIT_doc_apparatus.md`, ledger candidate 11. ⚠️ **Scoped against the
+  failure of the last attempt**: the review was digested to one sentence, 1 of 9
+  recommendations carried, 314 lines of prose and zero checks shipped. §3's output
+  constraint is the correction — disposition per row, a `TODO.md` park counts as NOT
+  disposed, write-up capped by the code it changes. Recs 4/5/7/8/9 are answerable
+  now; 1/2/6 wait on the log. ⚠️ **Cross-model does not fix this one** — Fable ran
+  the failed attempt.
+- [ ] **~~Retrieval logging — decide the doc question with evidence, not argument.~~**
   A `PostToolUse` hook logging every Read/Grep with a filename gives a per-doc
   read-frequency table in 2–3 weeks; a doc never opened before an action is a
   prune candidate. ⚠️ **The mechanism is already proven here** — `.claude/settings.json`
