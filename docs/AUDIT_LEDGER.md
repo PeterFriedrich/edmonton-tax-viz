@@ -308,4 +308,50 @@ a CAPTURE on real hardware** (the shelved `TODO.md` item), not an audit. What
     A5, A7 hold; A1, A2, A3, A4, A6 fail; A8 fails for continuity; two added premises
     (P9 stale-docs-bite-here HOLDS, P10 the loaded-path mass is `TODO.md` not handoffs).
     Recs 2, 3, 8 survive; 1 done; 4, 5, 6, 7, 9 re-opened against corrected premises.
+    ⚠️ **A6 was CORRECTED the same day** (PR #411) — the sweep it admitted skipping
+    refutes it: 5 of 51 rows carrying supersede language are struck, 6 in 280. A6
+    **HOLDS**; recs 5 and 7 go back to SURVIVES.
+    ✅ **Executed 2026-09-16 between the sessions** (Opus 5, PRs #413–#417), all from
+    rec #3's open rows or found while checking Session A's own instruments:
+    **L2 guarded** (`scripts/check_suite_share.py`, re-derives the Infill blurb's
+    disclosed suite share from raw permits — 0.9% was movable to 9.0% with 892 green);
+    **the 2017 vintage tied** to `source.maintenance.fiscal_year` + a CLAIMS row;
+    **`.gitattributes`** states the code/not-code denominator once (ratio 1.73:1;
+    `STACK.md` §8 "Mass" says it is a sanity check, never a tracked metric);
+    **`retrieval_report.py` warns** that a zero may mean "read through Bash" (the hook
+    matches the Read/Grep/Glob TOOLS only — the Session A run logged 4 reads while
+    consulting ~14 docs, and `DECISIONS.md`/`AUDIT_LEDGER.md` both scored zero);
+    **two dangling pointers repaired** — the only unresolvable test/verify citations
+    in `DECISIONS.md`, 57 of 58 having resolved. ⚠️ **Recs 1/2/6 rest on the retrieval
+    log, so the ~2-week clock starts from the fix, not from 2026-09-16.**
+    ⚠️ **UNDISPOSED, ADDED SCOPE FOR RECS #6/#8 — two proposals from the outside
+    reviewer, 2026-09-16, NOT in the original nine.** Recorded here because they were
+    evaluated only in a terminal and would otherwise have been lost:
+    **(1) a CI gate on new `DECISIONS.md` entries** — a character cap plus "must cite
+    a test ID unless tagged `[unverifiable]`". Measured against this file: a 500-char
+    cap rejects **227 of 280** existing rows and **99% of rows written in the last two
+    months** (median 1,755 ch); `DECISIONS.md` is **not in the loaded path**, so the
+    cap disciplines a cost paid only on demand while `TODO.md` (261 KB, 89% of what
+    every session loads) has no gate at all — the review's own targeting error. The
+    test-ID half is better aimed (38% of rows already cite one; only 7.5% are
+    genuinely untestable per A7) and `check_doc_citations.py` already runs in
+    `tests.yml` doing this shape for doc pointers, ⚠️ **but a gate checking that a row
+    NAMES a test that EXISTS cannot check the test tests the decision** — the
+    presence-guard class of V1 and the four vacuous guards — and `[unverifiable]` is a
+    self-applied exemption with nothing checking it.
+    **(2) an eval harness for doc-reading practice** — ablate a doc, run real
+    scenarios twice, have a judge score the behaviour delta. ⚠️ **This is the direct
+    answer to A3**, which found the proposed oracle missing (0 of 43 verify scripts
+    read a doc), so it is the more interesting of the two. Open problems: 3–5
+    scenarios × 2 runs cannot separate signal from model nondeterminism (the review's
+    own Khatri cite puts a ~10pp effect at 120–200 tasks); "zero delta = legitimate
+    cut" is absence-of-evidence, the objection the reviewer had already accepted about
+    CI ablation; it inherits **A4**'s blind spot (it scores AGENT behaviour, and ~29
+    docs are written for an outsider checking a public civic claim); and the judge is
+    a model grading whether a model's output got worse — **this session is the
+    evidence against that**, so blind the judge to the arm at minimum.
+    ⚠️ **The evaluation above was written by Opus 5, which authored the artifacts
+    under review AND has an interest in finding (2) unworkable** — it produced four
+    objections to the one instrument that would measure its own output. Weight
+    accordingly; the disposition is Session B's.
     **Session B not started — Peter names the live rows.**
