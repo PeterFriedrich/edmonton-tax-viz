@@ -378,9 +378,28 @@ a CAPTURE on real hardware** (the shelved `TODO.md` item), not an audit. What
   doc-only rationale found has no test. **The docs are the second carrier of
   executable invariants here, never the sole one.**
 
-**Verdict: DECIDED-NO** (`DECISIONS.md` 2026-09-16). ⚠️ **Same conflict of interest
-the P2 candidate row already flags — this is Opus 5's fifth objection to the one
-instrument that would measure its own output, and the one that killed it.**
-Falsification path, at ~30% of the authorised spend, is written into the
-dispositions §P2: run arm B alone at n=3; a red verdict overturns the decision.
-Writeup: `docs/external/REVIEW_doc_apparatus_2026-09-15_DISPOSITIONS.md` §P2.
+**Verdict: DECIDED-NO as specified; routing-ablation redesign is Peter's call**
+(`DECISIONS.md` 2026-09-16, two rows — the second amends the first).
+
+⚠️ **THIS ROW'S FIRST VERSION WAS WRONG IN THREE PLACES, ALL FAVOURING ITS AUTHOR'S
+CONCLUSION, AND A DIFFERENT MODEL CAUGHT ALL THREE.** The P2 candidate row already
+warned that Opus 5 authored the artifacts under review and had an interest in this
+instrument not existing; it then wrote the objection that killed it, and a Fable 5.1
+review the same day found: the "banner directly above the chart code" is **253 lines**
+away and `temporalGeom`'s own comment omits the x-scaling rule; the decisive carrier
+(**`CLAUDE.md`'s Key Files entry for `SPEC_temporal.md` — both invariants, loaded every session**) was missed entirely;
+and "both invariant checks proven to measure" was written having falsified only one.
+⚠️ **The offered falsification path could not go red** — a check that cannot fail,
+inside a verdict about checks that cannot fail.
+
+**Corrected outcome:** invariant 2 falsified too (drop the low `ylab` endpoint → 1
+check red), so both checks are genuinely non-vacuous — the by-product for
+never-audited #3 survives. The ablation still has no arm B **as specified**, now for
+a stronger reason (`CLAUDE.md`, not adjacency). The sweeping "docs are never the sole
+carrier here" claim is **withdrawn**. A **routing-layer ablation** (that clause + §2's
+paragraph + the section banner) does have a real arm B and is the live proposal.
+
+⚠️ **Process finding, worth more than the disposition:** three errors in a
+self-audit, none caught by any guard or by the author re-reading, all caught by
+handing the page to a different model. Writeup:
+`docs/external/REVIEW_doc_apparatus_2026-09-15_DISPOSITIONS.md` §P2.

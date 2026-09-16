@@ -16,7 +16,7 @@ his call:** 1, 2, 6 (retrieval log's two-week clock restarted 2026-09-16 — re-
 | **8** test-before-prose default (L98) | **EXECUTED** | Lives in three places that fire: `CLAUDE.md` Code Style (loaded every session), `DECISIONS.md` header item 4 (the file you are in when you write a row), and `tests.yml` (the gate). A7: 7.5% of rows are genuinely untestable; the tag covers them. |
 | **9** ratio ceiling (L99) | ceiling: **DECIDED-NO** · measurement: **EXECUTED** | A2 FAILS — the number read 0.68 / 1.79 / 1.98 / 1.73 with no prose changing; `.gitattributes` now states the denominator once and `STACK.md` §8 says *sanity check, never tracked*. What A1/P10 say costs is the **loaded path**, which is denominator-free: `retrieval_report.py` now prints it (`292 KB — TODO.md 261 (89%), CLAUDE.md 12, latest handoff 12, MEMORY.md 7`). A number at the place it will be re-read, not a ceiling in a doc — Peter can put a ceiling on it there if it moves. |
 | **P1** CI gate on new rows: char cap + test ID | cap: **DECIDED-NO** · test ID: **EXECUTED** (rec 5) | A 500-char cap rejects 227/280 rows and 99% of the last two months; the file is **not** in the loaded path; Peter blessed the log form 2026-09-09. The ledger's objection stands and is in the script's docstring: the gate checks a row NAMES a test that EXISTS, not that the test tests the decision, and the tag is self-applied. |
-| **P2** eval harness: ablate a doc, judge scores the delta | as proposed: **DECIDED-NO** · oracle variant: ✅ **DECIDED-NO 2026-09-16 — not viable on this codebase, measured** | 3–5 scenarios × 2 runs cannot separate signal from nondeterminism by the review's own Khatri numbers (L47); a model judging whether a model got worse is the §0 loop; it inherits A4. **The oracle variant was authorised and then killed by its own feasibility check — see §P2 below.** In one line: the ablation has no arm B. `SPEC_temporal.md` §2 is not the sole carrier of its invariants, and no doc in this repo is the sole carrier of an invariant that a non-vacuous oracle scores. |
+| **P2** eval harness: ablate a doc, judge scores the delta | as proposed: **DECIDED-NO** · oracle variant **as specified**: ✅ **DECIDED-NO 2026-09-16** · **routing-ablation redesign: PETER-DECIDES** | 3–5 scenarios × 2 runs cannot separate signal from nondeterminism by the review's own Khatri numbers (L47); a model judging whether a model got worse is the §0 loop; it inherits A4. **The oracle variant was authorised, and its feasibility check killed the specified design and produced a working one — see §P2.** In one line: ablating `SPEC_temporal.md` §2 alone has no arm B, because `CLAUDE.md`'s Key Files entry for `SPEC_temporal.md` carries both invariants into every session; ablating the **routing layer** (that clause + §2's paragraph + the lens section banner) does have one, and both invariants are proven to redden the oracle. ⚠️ **§P2 was materially wrong on first write and was corrected by the Fable 5.1 review the same day** — three errors, all favouring its own conclusion. |
 
 ## Rec 4 — options (✅ **Peter chose A, 2026-09-16**)
 
@@ -54,27 +54,52 @@ FAIL  the band covers the missing years only               band=36.3 step=21.2
 2 CHECK(S) FAILED
 ```
 
-So `verify-temporal.js` **measures** the invariant rather than pinning a literal,
-and it is not one of the "checks that cannot fail" class. Restored and confirmed
-by grepping for the mutated literal (0 hits), not by the suite going green.
+⚠️ **That falsifies invariant 1 only, and the first version of this section claimed
+both** (Fable 5.1 review, 2026-09-16). Invariant 2 falsified separately — dropping
+the low endpoint from `ylab` in `temporalChartSvg`:
+
+```
+const ylab = [[9, g.hi], [H - 1, g.lo]]  ->  [[9, g.hi]]
+
+FAIL  both y endpoints are labelled (axis is not zero-based)  5.55% | 2012 | 2026 | no data
+1 CHECK(S) FAILED
+```
+
+So `verify-temporal.js` **measures** both invariants rather than pinning literals,
+and neither is in the "checks that cannot fail" class. Both mutations restored and
+confirmed by grepping for the mutated literal (0 hits), not by the suite going green.
 
 ### 2. There is no arm B — the ablation removes the *weakest* carrier
 
 The design assumes `SPEC_temporal.md` §2 is where an editing agent learns the
-invariant. It is not. Measured on `master`:
+invariant. It is not. ⚠️ **The first version of this section got the reason wrong
+in its own favour** — corrected by the Fable 5.1 review, 2026-09-16. Both the
+mistake and the correction matter, so both are here.
 
-| carrier of §2 invariant 1 ("x from the year value, never the array index") | |
+**What was claimed:** a "20-line banner **directly above the chart code**" at
+`web/index.html:4601–4620`. **False.** That banner heads the whole temporal-lens
+section (`// --- temporal lens ---`, line 4597); `temporalGeom` is at **4855 —
+253 lines below it**. An agent that greps the symbol and reads a window around it
+never sees the banner. And `temporalGeom`'s own comment covers the run/gap
+derivation but **says nothing about x coming from the year value**. So the
+adjacent-carrier claim, which was the load-bearing one, does not hold.
+
+**The actual decisive carrier, missed entirely on the first pass:**
+
+| carrier | |
 |---|---|
-| `web/index.html:4601–4620` | a **20-line banner directly above the chart code**, stating BOTH invariants — and stating them **more fully than §2 does** (it carries the 2,322-vs-2,448 correction that §2 lacks) |
-| `web/index.html:4853`, `:5015` | two more in-file restatements, one on `devHistGeom` naming "§2 invariant 1" explicitly |
+| **`CLAUDE.md`, Key Files → `SPEC_temporal.md`** | ⚠️ **states BOTH invariants verbatim** — *"x must be scaled from the year value, never the array index; the y axis is not zero-based, so both endpoints must stay labelled"* — in the project instructions **loaded into every session unconditionally** |
+| `web/index.html:4597–4620` | the lens section banner: both invariants, more fully than §2 (it carries the 2,322-vs-2,448 correction §2 lacks) — but 253 lines from the function |
+| `web/index.html:5015` | `devHistGeom` names "§2 invariant 1" explicitly — a *different* function, 160 lines below |
+| `web/index.html:~4932` | `// Both y labels, always — see invariant 2 above` — in situ for invariant 2, but as a **pointer**, not a statement |
 | `tools/profiling/verify-temporal.js:5–11` | the oracle's own header states both |
-| `docs/ARCHITECTURE.md:967`, `TRANSITIONS.md:197`, `SPEC_development.md:553` | three further doc copies |
+| `ARCHITECTURE.md:967`, `TRANSITIONS.md:197`, `SPEC_development.md:553`, `UI.md:1335`, `TODO_archive.md:1381` | five further doc copies |
 
-Invariant 2 is carried the same way (`UI.md:1335`, `index.html:4613`, the script
-header, `TODO_archive.md:1381`). **Deleting `SPEC_temporal.md` leaves the agent
-reading the rule at the edit site**, so both arms see it and the expected effect
-is ~0 — and a null at n=5 would be uninterpretable, indistinguishable from
-"docs don't help".
+**So the ablation has no arm B for a simpler and much harder reason than the one
+first given:** deleting `SPEC_temporal.md` §2 leaves the rule in `CLAUDE.md`, which
+is loaded every session no matter what the agent reads. Expected effect ~0, and a
+null at n=5 uninterpretable — but because of the *project instructions*, not
+because of an adjacent comment.
 
 ### 3. Re-targeting fails too, and the reason generalises
 
@@ -102,21 +127,39 @@ the conclusion rests on.
   where the EPCOR gap comes from") only in `FINDINGS_utility_validation.md` §2.1
   — and **no test references it at all**.
 
-**Conclusion.** The oracle-scored variant is not viable here, for a reason that is
-a property of the codebase rather than of the experiment: **this project
-co-locates rationale with code by convention** (`CLAUDE.md`: comments where the
-why is non-obvious), so a doc is never the sole carrier of an executable
-invariant. An ablation of a doc can therefore only ever measure ~0, and the
-honest reading of that null is "the rule was still in front of the model", not
-"the doc is worthless". ⚠️ **This also bounds what the doc apparatus can be
-blamed for**: on executable invariants the docs are redundancy, not the channel.
-The rows where docs ARE the sole carrier are the *non-executable* ones — settled
-design, rejected alternatives, "do not rebuild it" — and by construction no
-oracle scores those, which is what sent the original rec to a model judge and
-into the §0 loop.
+**Conclusion — narrowed 2026-09-16 after the Fable review.** What is established is
+that **the pilot AS SPECIFIED cannot work**: ablating `SPEC_temporal.md` §2 alone
+leaves both invariants in `CLAUDE.md`, loaded every session. The broader claim the
+first version made — *"no doc in this repo is ever the sole carrier of an
+executable invariant"* — is **overclaimed and withdrawn**. `CLAUDE.md` is itself a
+doc, and for these two invariants it is very close to a sole *routing* carrier: it
+is the only copy guaranteed to be in context before the agent chooses what to read.
 
-**Revisit if** the front end is ever split into modules (the `PROPOSAL_lens_registry.md`
-route): comment density per file drops, and a doc could become a sole carrier.
+**The redesign that IS viable, and that the first version wrongly foreclosed.**
+The unit to ablate is the **routing layer**, not one SPEC section:
+
+| | arm A | arm B |
+|---|---|---|
+| `CLAUDE.md`'s Key Files invariant clause | present | **removed** |
+| `SPEC_temporal.md` §2 invariant paragraph | present | **removed** |
+| `web/index.html:4597–4620` section banner | present | **removed** |
+| all other code, comments and the oracle | untouched | untouched |
+| task | a real edit to `temporalGeom` (e.g. *"the chart is cramped, widen the plot box"*) | same |
+| score | `verify-temporal.js` | same |
+
+**This has a real arm B**, which is exactly what the specified design lacked:
+`temporalGeom`'s own comment does **not** state the x-scaling rule, so with the
+three routing carriers gone an agent editing that function has nothing in front of
+it saying x must come from the year value. Both invariants are now proven to
+redden the oracle (§1), so a violation is scored rather than eyeballed.
+
+⚠️ **It tests routing, not prose, and must be reported as that** — "did the reader
+get pointed at the rule", not "was the SPEC well written". That is a narrower
+question than rec P2 asked, but it is the one this codebase can actually answer,
+and it is falsifiable.
+
+**Also revisit if** the front end is split into modules (`PROPOSAL_lens_registry.md`):
+per-file comment density drops and a doc could become a sole carrier outright.
 
 ### ⚠️ Conflict of interest — read this before accepting §3
 
@@ -134,12 +177,22 @@ accordingly, and note what is and is not a judgement call:
   arms see it, therefore the effect is ~0" assumes an editing agent reads the
   comment block above the function it edits. That is *likely* but **untested, and
   it is exactly the kind of claim this pilot existed to stop taking on faith.**
-- **The cheap way to falsify me**, if Peter wants the instrument to survive its
-  author's objection: run **arm B only**, n=3, ablating `SPEC_temporal.md` §2 and
-  nothing else. If a doc-less agent breaks an invariant, §2 above is wrong and
-  the pilot is back on — at ~30% of the authorised spend. **A green arm B does
-  not confirm me**, it is consistent with both explanations; only a red one is
-  decisive, and it is decisive *against* this disposition.
+- ⚠️ **THE FALSIFICATION PATH THIS SECTION FIRST OFFERED WAS ITSELF UNFALSIFIABLE,
+  and that is the sharpest thing the Fable review found.** It proposed: *"run arm B
+  only, n=3, ablating `SPEC_temporal.md` §2 and nothing else."* With that `CLAUDE.md`
+  clause intact that arm **cannot go red** — the rule is in context regardless. A
+  row arguing against checks that cannot fail shipped a check that cannot fail.
+  Same family as `check-where-the-value-can-be-wrong`: **the instrument was wrong
+  in the direction that protected the conclusion**, and that is the third time on
+  this one page (the banner claim, the both-invariants claim, this).
+- **The real falsification path is the redesign in §3** — ablate the routing layer
+  (all three carriers), n=3, arm B only. That arm CAN go red. If it does, the
+  instrument works and rec P2's oracle variant is back on at full scope. A green
+  arm B is still not a confirmation: it is consistent with "the model knows this
+  anyway", which no arrangement of this experiment separates.
+- **Three of this page's errors were caught by a different model reading it**,
+  not by its author re-reading it, and not by any guard. That is a data point
+  about the review apparatus worth more than the disposition it corrected.
 
 ## Reproduce
 
