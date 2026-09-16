@@ -512,10 +512,11 @@ and there are currently zero closed top-level items — verified by running it o
 an isolated copy), but the hand rule in `CLAUDE.md` (*"move its body to the
 archive"*) is not, and this span is 2,533 lines.
 
-- [ ] **GUARD-BURST AUDIT FOLLOW-ONS — three fixes, Peter decides the first
-  (opened 2026-09-16, S164, `docs/FINDINGS_guard_burst.md` §7).** Two of the
-  six pieces are the project's own failure mode shipped fresh: a working guard
-  with no input, and a working guard with no confirmed reader.
+- [ ] **GUARD-BURST AUDIT FOLLOW-ONS — 2 of 3 done; ⚠️ the open one is PETER'S
+  CALL, not work** (opened 2026-09-16, S164, `docs/FINDINGS_guard_burst.md` §7).
+  Two of the six pieces were the project's own failure mode shipped fresh: a
+  working guard with no input, and a working guard with no confirmed reader.
+  The reader half is fixed (PR #438); the input half needs one repo setting.
   - [ ] **`check_todo_branch_refs` has no input** — it waits for a merged branch
     to be deleted, `delete_branch_on_merge` is **off**, and 0 of 145 merged
     branches since the 2026-08-31 prune are gone (findings §1). **Peter's
@@ -523,17 +524,20 @@ archive"*) is not, and this span is 2,533 lines.
     click; the pre-push hook keys on PR state, unaffected), or delete the check
     + its 11 tests + `RUNBOOK.md` §0d. Either way fix the ACTION string and §0d:
     "was merged and deleted" → "is no longer on origin".
-  - [ ] **`handoff_gap.py` reaches nobody confirmed** — the hooks reference says
-    SessionEnd *discards* JSON output and *shows stderr to the user only*; the
-    hook sends stderr to `/dev/null` (findings §2). Emit the plain message on
-    stderr for the SessionEnd hook and drop `2>/dev/null`. Then **one `/compact`
-    with a gap present** (touch a file under `scripts/`) to settle whether
-    PreCompact honours `additionalContext` — it is not documented for that
-    event. Until then soften `CLAUDE.md`'s "the hooks … name the commits".
-  - [ ] **`clamp-drift` issue has no dedup** — drift is persistent, so once a
-    clamp leaves the 1–6% band `refresh.yml` files an identical issue every
-    Monday until the literal moves (findings §4). Skip `gh issue create` when
-    one is already open with the label.
+  - [x] **`handoff_gap.py` reaches nobody confirmed** — DONE 2026-09-16 (S164,
+    PR #438), and the fix is **not** the one the finding proposed. The
+    `/compact` experiment was unnecessary: PreCompact's only output surface is
+    exit 2 (= block compaction, which fails the request on a context-limit
+    recovery), so it **cannot carry a message at all** and the hook was deleted
+    rather than rewired. The signal moved to **`SessionStart`**, which fires
+    after `/clear` and after a compaction and whose `additionalContext` is
+    documented to reach Claude; `SessionEnd` now writes to stderr with
+    `2>/dev/null` dropped. 8 mutations red-then-green — one of which caught a
+    `check-where-the-value-can-be-wrong` defect in the new tests. Findings §2a.
+  - [x] **`clamp-drift` issue has no dedup** — DONE 2026-09-16 (S164, PR #438).
+    `refresh.yml` skips `gh issue create` while one is open with the label, with
+    the transient-vs-persistent reason in the step comment (the revenue-delta
+    step above stays undeduped deliberately: that signal *is* per-event).
 
 - [ ] **DEV HISTORY FOLLOW-ONS — three, none blocking (opened 2026-09-14, S156,
   after PR #389 merged).**

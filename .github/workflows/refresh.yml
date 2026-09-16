@@ -282,6 +282,14 @@ jobs:
       # Same channel and the same reason as the delta issue above: this one only
       # ever warns, and a warning in a green run reaches nobody. It says "come and
       # re-decide the literal", so it is not urgent and not a failure.
+      #
+      # ⚠️ DEDUPED, unlike the delta issue above, and the difference is the
+      # signal's shape: a big revenue delta is TRANSIENT (one refresh moved one
+      # hood, the next week is quiet), so each firing is its own event. Drift is
+      # PERSISTENT — a clamp outside the band stays outside until Peter re-decides
+      # the literal, so an undeduped create files the same issue every Monday
+      # until then, and a pile of identical issues is how the next real one gets
+      # skimmed past (CLAUDE.md's green-digest rule). Skip while one is open.
       - name: Report colour-clamp drift as an issue (notification email)
         if: steps.clampdrift.outputs.flagged != '0' && steps.clampdrift.outputs.flagged != ''
         env:
@@ -290,6 +298,12 @@ jobs:
           gh label create clamp-drift \
             --description "A money colour clamp has drifted from the distribution it was set from" \
             --color FBCA04 || true
+          open_count=$(gh issue list --label clamp-drift --state open --json number --jq 'length')
+          if [ "$open_count" != "0" ]; then
+            echo "A clamp-drift issue is already open — not filing a duplicate."
+            echo "Re-decide the literal to close it (docs/RUNBOOK.md §0c)."
+            exit 0
+          fi
           gh issue create \
             --title "${{ steps.clampdrift.outputs.title }}" \
             --body-file clamp-drift.md \

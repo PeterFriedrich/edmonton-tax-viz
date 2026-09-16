@@ -113,6 +113,38 @@ message to stderr on that event and drop the `2>/dev/null`. PreCompact: verify
 first; if `additionalContext` is honoured, keep; if not, the same stderr route on
 manual `/compact` is documented ("the stderr message is shown to the user").
 
+### 2a. Resolved 2026-09-16 (S164, Opus 5) — and the PreCompact fix above is wrong
+
+Settled from the reference without needing the experiment, and it closes the
+question the other way:
+
+- **PreCompact cannot inform anyone.** Its decision row is top-level `decision`
+  only; the doc explicitly names Stop and SubagentStop as the events in that row
+  that *also* accept `additionalContext`, and PreCompact is not among them.
+  Exit-0 stdout on that event goes to the debug log. **Its only surface is exit
+  2, which blocks compaction** — and *"If compaction was triggered to recover
+  from a context-limit error already returned by the API, the underlying error
+  surfaces and the current request fails."* A script whose contract is *it can
+  never be the reason a session ends badly* may not use that. So §7's "same
+  stderr route on manual `/compact`" is **not available**: that route requires
+  exit 2. The PreCompact hook is **deleted**, not rewired.
+- **`SessionStart` is the channel, and it covers what PreCompact was for.** It
+  fires with `source: "compact"` **after** a compaction and `source: "clear"`
+  **after** `/clear` — the two moments `CLAUDE.md` names — and its
+  `additionalContext` is documented to reach Claude, with `systemMessage` shown
+  to the user. It is also strictly better placed: at session start the reader is
+  at full context and can act, where at SessionEnd the message arrives too late
+  to do anything with.
+- **SessionEnd → stderr**, `2>/dev/null` dropped from that hook, as §7 said.
+
+Shipped with 8 mutations red-then-green (`test_handoff_gap.py`), including
+re-adding `2>/dev/null` and re-wiring PreCompact. ⚠️ **One of those mutations
+caught a defect in the new tests themselves**: `test_session_start_message_does_
+not_claim_the_same_session` first asserted on `message(g, at_start=True)` rather
+than on what `main()` emits, so flipping `main`'s call site left it green —
+`check-where-the-value-can-be-wrong`, written *inside the fix for that class*,
+and caught only because the mutation was run.
+
 Cost of the `docs/` exclusion, stated as a number: **126 of 197 non-merge commits
 since 2026-09-01 (64%) touch no substantive path**, so the guard cannot see them.
 S163 (3 PRs, docs-only) is the case the brief names; it wrote its own handoff, so
@@ -194,8 +226,9 @@ green. Regex covers `archive/` paths.
 
 ## 5. Not checked, and where I am agreeing rather than verifying
 
-- **PreCompact delivery** — not tested empirically (§2). This is the one open
-  question whose answer changes a verdict.
+- ~~**PreCompact delivery** — not tested empirically (§2).~~ **Resolved from the
+  reference 2026-09-16, §2a** — it cannot inform without blocking; hook deleted,
+  signal moved to `SessionStart`.
 - **The ~950 test lines** were not read line by line; L4 was not reached for any
   component, and the brief says not to do it for the two that fail higher. The
   mutation battery is the L1 evidence.

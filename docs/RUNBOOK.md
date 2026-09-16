@@ -196,6 +196,14 @@ assessments rise; that is the price of the stability, and this issue is the
 5. **Close the issue.** Same rule as §0's green digest: a standing open issue is
    how the next one gets skimmed past.
 
+⚠️ **It will not re-file while one is open** (deduped 2026-09-16, `DECISIONS.md`
+that date). Drift is a persistent *state*, not a weekly event, so the refresh
+checks for an open `clamp-drift` issue first and skips the create — unlike the
+revenue-delta issue above, which is undeduped on purpose because each delta is
+its own event. **Consequence for you: closing the issue without moving the clamp
+re-arms it, and it files again the next Monday.** That is the intended loop —
+close it when you have re-decided, not to tidy the list.
+
 ## 0d. `TODO branch refs` digest row (a backlog item outlived its branch)
 
 **What it is:** the monthly digest scanned `TODO.md`'s OPEN items for backtick'd
