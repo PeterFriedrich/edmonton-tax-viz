@@ -16,7 +16,7 @@ his call:** 1, 2, 6 (retrieval log's two-week clock restarted 2026-09-16 — re-
 | **8** test-before-prose default (L98) | **EXECUTED** | Lives in three places that fire: `CLAUDE.md` Code Style (loaded every session), `DECISIONS.md` header item 4 (the file you are in when you write a row), and `tests.yml` (the gate). A7: 7.5% of rows are genuinely untestable; the tag covers them. |
 | **9** ratio ceiling (L99) | ceiling: **DECIDED-NO** · measurement: **EXECUTED** | A2 FAILS — the number read 0.68 / 1.79 / 1.98 / 1.73 with no prose changing; `.gitattributes` now states the denominator once and `STACK.md` §8 says *sanity check, never tracked*. What A1/P10 say costs is the **loaded path**, which is denominator-free: `retrieval_report.py` now prints it (`292 KB — TODO.md 261 (89%), CLAUDE.md 12, latest handoff 12, MEMORY.md 7`). A number at the place it will be re-read, not a ceiling in a doc — Peter can put a ceiling on it there if it moves. |
 | **P1** CI gate on new rows: char cap + test ID | cap: **DECIDED-NO** · test ID: **EXECUTED** (rec 5) | A 500-char cap rejects 227/280 rows and 99% of the last two months; the file is **not** in the loaded path; Peter blessed the log form 2026-09-09. The ledger's objection stands and is in the script's docstring: the gate checks a row NAMES a test that EXISTS, not that the test tests the decision, and the tag is self-applied. |
-| **P2** eval harness: ablate a doc, judge scores the delta | as proposed: **DECIDED-NO** · oracle variant **as specified**: ✅ **DECIDED-NO 2026-09-16** · **routing-ablation redesign: PETER-DECIDES** | 3–5 scenarios × 2 runs cannot separate signal from nondeterminism by the review's own Khatri numbers (L47); a model judging whether a model got worse is the §0 loop; it inherits A4. **The oracle variant was authorised, and its feasibility check killed the specified design and produced a working one — see §P2.** In one line: ablating `SPEC_temporal.md` §2 alone has no arm B, because `CLAUDE.md`'s Key Files entry for `SPEC_temporal.md` carries both invariants into every session; ablating the **routing layer** (that clause + §2's paragraph + the lens section banner) does have one, and both invariants are proven to redden the oracle. ⚠️ **§P2 was materially wrong on first write and was corrected by the Fable 5.1 review the same day** — three errors, all favouring its own conclusion. |
+| **P2** eval harness: ablate a doc, judge scores the delta | ✅ **ALL THREE DECIDED-NO 2026-09-16** — as proposed · oracle variant as specified · routing-ablation redesign (Peter: **wrong scale**, §P2 §4) | 3–5 scenarios × 2 runs cannot separate signal from nondeterminism by the review's own Khatri numbers (L47); a model judging whether a model got worse is the §0 loop; it inherits A4. **The oracle variant was authorised, and its feasibility check killed the specified design and produced a working one — see §P2.** In one line: ablating `SPEC_temporal.md` §2 alone has no arm B, because `CLAUDE.md`'s Key Files entry for `SPEC_temporal.md` carries both invariants into every session; ablating the **routing layer** (that clause + §2's paragraph + the lens section banner) does have one, and both invariants are proven to redden the oracle — **but Peter closed it on scale grounds, not design grounds (§P2 §4): the harness is a large-operation technique whose result decays and would need re-running for ever, and `verify-temporal.js` already protects these two numbers.** ⚠️ **§P2 was materially wrong on first write and was corrected by the Fable 5.1 review the same day** — three errors, all favouring its own conclusion. |
 
 ## Rec 4 — options (✅ **Peter chose A, 2026-09-16**)
 
@@ -34,7 +34,7 @@ his call:** 1, 2, 6 (retrieval log's two-week clock restarted 2026-09-16 — re-
 | **B** short ADR register of "irreversible why" + archived dump | hand-triage of 280 rows for "irreversible"; re-opens the 2026-09-09 header decision | one-place search; 13 supersession chains cross any cut | no |
 | **C** date cut: rows older than 90 days → archive file | mechanical | the same chains, and the oldest rows are the shortest (May median 138 ch) — least mass for most breakage | no |
 
-## P2 — the oracle-scored ablation, authorised 2026-09-16 and killed by its own feasibility check
+## P2 — the oracle-scored ablation: authorised, killed by its own feasibility check, corrected, redesigned, and CLOSED ON SCALE GROUNDS (all 2026-09-16)
 
 Peter authorised the pilot (1 doc × 2 arms × 5 headless runs, scored by
 `verify-temporal.js`, no model judge). **No runs were spent.** Two checks come
@@ -157,6 +157,41 @@ redden the oracle (§1), so a violation is scored rather than eyeballed.
 get pointed at the rule", not "was the SPEC well written". That is a narrower
 question than rec P2 asked, but it is the one this codebase can actually answer,
 and it is falsifiable.
+
+### ✅ 4. DECIDED-NO on scale grounds (Peter, 2026-09-16) — the design works, the project is the wrong size for it
+
+**The redesign above is sound and was not run.** Peter's objection is that an
+ablation harness is a technique for a larger operation, and it holds on three
+counts that have nothing to do with whether the experiment is well built:
+
+- **It needs n, and n here is manufactured.** A team running agent tasks in volume
+  gets the sample as exhaust. This project runs one session at a time, so every
+  run is deliberate spend to produce data a larger operation already has.
+- **It needs a reader who does not know the code.** Docs pay off most for a fresh
+  arrival. Sessions here open `CLAUDE.md` and the latest handoff as a matter of
+  course — the routing is observably working every session, which is the thing the
+  experiment would spend runs to establish.
+- **It needs a still target.** `web/index.html` and `TODO.md` move weekly.
+
+⚠️ **The decisive one is the recurring cost.** An ablation result is a snapshot of
+*(this model, this doc, this task)*. Models turn over; the docs change weekly. So
+the answer decays and would have to be re-run indefinitely to stay meaningful —
+**a maintenance burden emitting a number with no reader.** That is this project's
+own documented standing failure mode (`CLAUDE.md`: the `_classify` warning that
+logged for ~70 days into a channel nobody read). Building a fresh instance of it
+on purpose would be perverse.
+
+**And the substitute is already built.** `verify-temporal.js` *measures* both
+invariants — §1 above proves each goes red. They cannot silently break whether or
+not any doc mentions them. That is `CLAUDE.md`'s own rule — *a decision that
+protects a number is a test first, prose second* — so the ablation asks "does the
+prose work?" about a project that already decided prose is the second line. At 43
+verify scripts and 1,174 checks the **guards are the control**, and the docs are
+cheap redundancy above them.
+
+**Revisit if** this becomes multi-person or runs agents in volume — which is the
+same point at which the docs would start being load-bearing for a reader other
+than the model that wrote them.
 
 **Also revisit if** the front end is split into modules (`PROPOSAL_lens_registry.md`):
 per-file comment density drops and a doc could become a sole carrier outright.
