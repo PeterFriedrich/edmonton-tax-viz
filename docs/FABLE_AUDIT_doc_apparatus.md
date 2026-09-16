@@ -153,6 +153,12 @@ failure. These rules are the reason the split is not just an extra step:
    when an artifact stands in for its source).
 5. **Add no ledger row.** `AUDIT_LEDGER.md`'s rule is a row when an audit *executes*.
    Session A does not execute. Note the evaluation in candidate 11's entry instead.
+6. ⚠️ **THIS SECTION OVERRIDES THE `edmonton-audit` SKILL, WHICH CONTRADICTS IT.**
+   That skill's Step 5 says *add a ledger row*, *write a `FINDINGS_*.md`*, and
+   *reconcile TODO* — rules 3 and 5 above forbid all three for Session A. **Session A
+   should not be run through the skill**; read this brief directly. (Session B is a
+   normal audit and uses the skill as written.) The skill now carries a matching
+   note, but if the two ever drift, **the brief wins** — it knows its target.
 
 ---
 
