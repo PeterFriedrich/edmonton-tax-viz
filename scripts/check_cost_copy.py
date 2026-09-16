@@ -144,6 +144,26 @@ CLAIMS = [
             c["roadway_om_renewal"]["source"]
              ["published_figures_per_km_neighbourhood_road"]["renew_and_replace"]),
     },
+    # Not a rate but a VINTAGE. The roadscost blurb says "the City's 2017
+    # maintenance figure", and 2017 is load-bearing rather than incidental: it is
+    # the only year Edmonton published a roads-only maintenance program, which is
+    # why the rate is deliberately unescalated and why this basis is called a
+    # floor (roadway_ops.source.maintenance.why_FY2017 / not_escalated). ⚠️ Added
+    # 2026-09-16: the vintage lived ONLY in that prose, so the blurb could be
+    # moved to 2019 with 903 tests and this guard green — the same shape as the
+    # two per-km figures above, found by the same audit.
+    {
+        "label": "Roads cost (operating) — the maintenance figure's fiscal vintage",
+        # ⚠️ The year is tied to the noun it qualifies, not matched bare. A bare
+        # "2017" would be satisfied by the string appearing ANYWHERE visible —
+        # a chart caption, another blurb, a future methods paragraph — which is
+        # the vacuity V1 caught in a different form. Today there is exactly one
+        # visible occurrence; this row is written so that stays true by
+        # construction rather than by luck.
+        "expect": lambda c: (
+            f"{c['roadway_ops']['source']['maintenance']['fiscal_year']} "
+            "roads-maintenance budget"),
+    },
     # Not a rate but a RELATIONSHIP between two of them, stated in WORDS in three
     # separate places (a blurb, the panel note, the methods pod). A rate change
     # moves this without touching any single quoted figure, so none of the rows

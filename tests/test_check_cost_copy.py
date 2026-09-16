@@ -23,6 +23,12 @@ COSTS = {
     "roadway_ops": {
         "value": 9.32,
         "components_per_km_per_year": {"maintenance": 5970, "snow_and_ice_control": 3350},
+        # ⚠️ 2017 is the shipped vintage, unlike the rates above — a year has no
+        # "obviously fake" value that still reads as a year, and inventing one
+        # (1999) would make the expected phrase unrecognisable in the fixture
+        # pages below. The vacuity risk it carries is covered instead by
+        # test_vintage_year_alone_does_not_satisfy_the_claim.
+        "source": {"maintenance": {"fiscal_year": 2017}},
     },
     "bikeway_ops": {
         "components_per_km_per_year": {"maintenance": 178, "snow_and_ice_control": 20100},
@@ -31,6 +37,7 @@ COSTS = {
 }
 ROADS_MAINTENANCE = "$5,970"
 LIFECYCLE = "$50 per metre per year"
+VINTAGE = "2017 roads-maintenance budget"
 
 
 def _check(tmp_path, body, figure):
@@ -51,7 +58,27 @@ def test_the_fixture_still_produces_the_figures_these_tests_key_on():
     # Without this, renaming a claim or changing a rate would leave every test
     # below passing vacuously — the defect class this file exists for.
     expected = {c["expect"](COSTS) for c in CLAIMS}
-    assert {ROADS_MAINTENANCE, LIFECYCLE} <= expected
+    assert {ROADS_MAINTENANCE, LIFECYCLE, VINTAGE} <= expected
+
+
+# ── The vintage claim: a year is a weaker literal than a dollar figure ───────
+# "$5,970" is distinctive; "2017" is not. The claim therefore matches the year
+# bound to the noun it qualifies, and these two tests are what hold that —
+# without them, loosening the row back to a bare year would pass silently.
+
+def test_vintage_year_alone_does_not_satisfy_the_claim(tmp_path):
+    body = "<p>assessment years 2012-2017 are charted here. Maintenance is unadjusted.</p>"
+    assert _check(tmp_path, body, VINTAGE)
+
+
+def test_the_vintage_phrase_satisfies_the_claim(tmp_path):
+    body = "<p>the maintenance figure is the City's 2017 roads-maintenance budget</p>"
+    assert not _check(tmp_path, body, VINTAGE)
+
+
+def test_a_wrong_vintage_in_the_right_phrase_fails(tmp_path):
+    body = "<p>the maintenance figure is the City's 2019 roads-maintenance budget</p>"
+    assert _check(tmp_path, body, VINTAGE)
 
 
 # ── V1: the falsification, verbatim ─────────────────────────────────────────
