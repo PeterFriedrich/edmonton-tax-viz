@@ -129,7 +129,7 @@ renders (`verify-transit.js` 24/24 against the vendored build).
 
 ### S2 (Low) — previously-scrubbed content still present in tree + history
 Content the project owner scrubbed from the repo on 2026-07-09 (see
-`session-summary/2026-07-09.md` §B) is still present in two places: the same
+`session-summary/archive/2026-07-09.md` §B) is still present in two places: the same
 handoff's own verbatim quote (§B first bullet), and the pre-scrub commit
 `da86117`, permanently reachable in public history via merge `5cf3d24`. The
 handoff already records the history residual as known/low-stakes; the verbatim

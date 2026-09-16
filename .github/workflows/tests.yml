@@ -55,6 +55,12 @@ jobs:
       - name: Check doc citations
         run: python scripts/check_doc_citations.py
 
+      # The decisions log's two write-time rules, enforced where a row is written:
+      # a new row names a test that exists or is tagged [unverifiable]; a row that
+      # supersedes an earlier one has that row marked in place. Offline.
+      - name: Check decisions log
+        run: python scripts/check_decisions_log.py
+
       # Ties the rates quoted in the lens blurbs to the JSON the pipeline reads.
       # Belongs on the MERGE gate, not the weekly run: a rate change is a code
       # edit, and refresh.yml would only catch it days later on a site already

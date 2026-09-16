@@ -90,6 +90,12 @@ EXCLUDE_NAMES = ("TODO_archive.md", "AUDIT_LEDGER.md", "CODEMAP.md")
 # to a doc this short must spell out the .md.
 MIN_BARE_NAME = 5
 
+# A handoff cited as a findings record (ledger rows point at S48/S56/S99's). The
+# tree is never scanned, but a citation INTO it is live like any other, and the
+# monthly archive move breaks it: 6 of 8 such citations were dead on 2026-09-16
+# and nothing had noticed.
+HANDOFF = re.compile(r"\b(session-summary/[\w./-]+\.md)\b")
+
 
 def project_docs(root: Path) -> dict[str, Path]:
     """Every markdown doc a citation could legitimately name."""
@@ -167,6 +173,14 @@ def check_citations(root: Path = ROOT) -> tuple[list[str], list[str]]:
                 if name not in docs and (root / name).name not in docs and "/" not in name:
                     if name.isupper() or name[0].isupper():
                         warnings.append(f"{where}  cites {name}, which does not exist")
+
+            for m in HANDOFF.finditer(line):
+                if _is_mention(line, m.start()) or (root / m.group(1)).is_file():
+                    continue
+                failures.append(
+                    f"{where}  cites {m.group(1)}, which does not exist — archived? "
+                    f"the file may now be under session-summary/archive/"
+                )
 
             for m in pattern.finditer(line):
                 if _is_mention(line, m.start()):

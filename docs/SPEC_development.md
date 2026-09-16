@@ -338,7 +338,7 @@ is happening* (flow), not one variable wearing two hats. Recorded in
 `ANALYSIS_BACKLOG.md` §9.
 
 **Round-2 audit caveats (recorded 2026-07-17; dispositions from the S56 delta
-audit — `session-summary/2026-07-16.md` §2.D, ledger row in
+audit — `session-summary/archive/2026-07-16.md` §2.D, ledger row in
 `docs/AUDIT_LEDGER.md`).** Four properties of Lens B that are deliberate but
 were previously undocumented:
 

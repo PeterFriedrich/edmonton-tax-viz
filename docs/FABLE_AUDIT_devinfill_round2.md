@@ -37,7 +37,7 @@ decision; check the S48 numbers before contradicting them.
    level means; do NOT re-execute it).
 3. `docs/DECISIONS.md` — the 2026-07-13 Infill line, the 2026-07-14 REOPENED
    line, and the 2026-07-14 per-arm close (`t = ±0.4`).
-4. `docs/FABLE_infill_perarm_scaling.md` + `session-summary/2026-07-14.md`
+4. `docs/FABLE_infill_perarm_scaling.md` + `session-summary/archive/2026-07-14.md`
    (S49/S50) — the fix implementation record.
 5. `docs/SPEC_development.md` Lens B — the "⚠️ REOPENED" block and its close.
 

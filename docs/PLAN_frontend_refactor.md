@@ -11,7 +11,7 @@ believed, and what it is *not allowed* to do yet.
 ⚠️ **Do not start refactoring from this document.** It records a pending
 decision, not a plan of record. The one thing to do next is run the brief.
 
-✅ **Unblocked 2026-09-05 (S139) and executed 2026-09-05 (S140).** The credit-gate note that stood here is history; see `session-summary/2026-09-05-s139.md` if it matters.
+✅ **Unblocked 2026-09-05 (S139) and executed 2026-09-05 (S140).** The credit-gate note that stood here is history; see `session-summary/archive/2026-09-05-s139.md` if it matters.
 
 ## 1. The question
 
