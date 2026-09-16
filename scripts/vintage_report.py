@@ -33,6 +33,7 @@ import json
 import logging
 import os
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -49,6 +50,7 @@ TEMPORAL_ARCHIVE = ROOT / "data" / "temporal_archive.json"
 FIR_TAX_BASE = ROOT / "data" / "fir_tax_base.json"
 STATUS_JSON = ROOT / "web" / "data" / "status.json"
 CAPITAL_BUDGET = ROOT / "data" / "capital_budget.csv"
+TODO_MD = ROOT / "TODO.md"
 SERVED_GEOJSON = ROOT / "web" / "data" / "neighbourhood_value_per_acre.geojson"
 
 ASSESSMENT_METADATA_URL = "https://data.edmonton.ca/api/views/q7d6-ambg.json"
@@ -351,6 +353,115 @@ def check_capital_budget(timeout=60):
             f"Re-fetch and commit — `docs/RUNBOOK.md` §1a.")
 
 
+# A branch reference inside an OPEN TODO item: `feature/x`, `fix/y`. `docs/` is
+# deliberately NOT a prefix here — measured 2026-09-16, it produced 64 hits and
+# every one was a doc PATH (`docs/DATA_ISSUES.md`), not a branch. A real
+# `docs/*` branch is the price of that, and it is worth paying: a guard nobody
+# believes gets switched off.
+TODO_BRANCH_REF = re.compile(
+    r"`((?:feature|fix|chore|audit|refactor|hotfix)/[A-Za-z0-9._-]+(?:/[A-Za-z0-9._-]+)*)`"
+)
+# The same name written to RECORD that it is gone is a mention, not a claim —
+# the shape `check_doc_citations.py` handles with its quoted-citation rule. Without
+# this, correcting an item re-flags it forever.
+TODO_STALE_MARKER = re.compile(
+    r"STALE|DISCHARGED|SUPERSEDED|is gone|already gone|now merged", re.I
+)
+
+
+def _open_todo_items(text):
+    """Each unchecked TODO item with its body (continuation lines up to the next
+    bullet). Sub-items count: the stale claims found 2026-09-16 were inside them."""
+    lines = text.split("\n")
+    items = []
+    for i, line in enumerate(lines):
+        if not re.match(r"\s*- \[ \]", line):
+            continue
+        body = [line]
+        for nxt in lines[i + 1:]:
+            if re.match(r"\s*- \[[ x]\]", nxt) or nxt.startswith("#"):
+                break
+            body.append(nxt)
+        items.append((i + 1, "\n".join(body)))
+    return items
+
+
+def check_todo_branch_refs():
+    """An OPEN TODO item pointing at a branch that no longer exists on origin.
+
+    Backlog items go stale silently and the cost is a WRONG ACTION, not bytes:
+    `CLAUDE.md` warns an open item "has lagged reality twice". A 2026-09-16
+    sample of 15 open items untouched >60 days found **7 stale (47%)**, and two
+    of those were exactly this shape — an item describing work as sitting
+    unmerged on a branch that had been merged and deleted weeks earlier. The
+    same scan then found `feature/services-lens`, a shipped lens still open,
+    which the hand sample had missed entirely.
+
+    ⚠️ **This is the MECHANICAL slice only, and it is the minority of the
+    problem.** The most damaging stale item in that sample was prose — "the app
+    has no sidebar, interaction TBD" gating a whole epic after the panel
+    shipped — and it names no symbol, so nothing can detect it. A green row here
+    means no BRANCH reference is stale; it is not a claim that the backlog is
+    current. The judgement half still needs a human pass, and the digest's job is
+    to say when, not to replace it.
+
+    Deliberately NOT measured here: item AGE. It needs `git blame` over full
+    history and `vintage-digest.yml` checks out shallow, so the number would be
+    silently wrong. `git ls-remote` queries the remote and works on a shallow
+    clone, which is why the branch signal is the one that runs here.
+    """
+    try:
+        text = TODO_MD.read_text()
+    except FileNotFoundError:
+        return (UNKNOWN, "TODO branch refs", "No `TODO.md` to read.")
+
+    try:
+        proc = subprocess.run(
+            ["git", "ls-remote", "--heads", "origin"],
+            capture_output=True, text=True, cwd=ROOT, timeout=60,
+        )
+        if proc.returncode != 0:
+            raise RuntimeError(proc.stderr.strip()[:200] or "non-zero exit")
+    except Exception as exc:  # noqa: BLE001 — unreachable is UNKNOWN, never ACTION
+        return (UNKNOWN, "TODO branch refs",
+                f"Could not list branches on origin ({exc}).")
+
+    live = {
+        line.split("refs/heads/")[1]
+        for line in proc.stdout.strip().split("\n")
+        if "refs/heads/" in line
+    }
+    if not live:
+        return (UNKNOWN, "TODO branch refs",
+                "`git ls-remote` returned no branches — not trusting that as 'all stale'.")
+
+    items = _open_todo_items(text)
+    stale = []
+    for lineno, body in items:
+        for m in TODO_BRANCH_REF.finditer(body):
+            ref = m.group(1)
+            if ref in live:
+                continue
+            window = body[max(0, m.start() - 200):m.end() + 200]
+            if TODO_STALE_MARKER.search(window):
+                continue  # already recorded as gone
+            stale.append((lineno, ref))
+
+    if not stale:
+        return (OK, "TODO branch refs",
+                f"No open item points at a deleted branch ({len(items)} open items, "
+                f"{len(live)} branches on origin). ⚠️ Mechanical only — prose staleness "
+                f"is not covered.")
+
+    listed = ", ".join(f"`{ref}` (TODO.md line {ln})" for ln, ref in stale[:6])
+    more = f" +{len(stale) - 6} more" if len(stale) > 6 else ""
+    return (ACTION, "TODO branch refs",
+            f"**{len(stale)} open item(s) point at a branch that no longer exists on "
+            f"origin**: {listed}{more}. The branch was merged and deleted, so the item's "
+            f"framing is stale — check whether the work SHIPPED and close it, or drop the "
+            f"branch reference if the work is still open. `docs/RUNBOOK.md` §0d.")
+
+
 def check_banner():
     """A banner left up after its cause is fixed is a live-site correctness issue."""
     banner = json.loads(STATUS_JSON.read_text()).get("banner")
@@ -588,6 +699,7 @@ CHECKS = (
     check_unclassified_zoning,
     check_zoning_bylaw,
     check_road_classes,
+    check_todo_branch_refs,
     check_banner,
 )
 
