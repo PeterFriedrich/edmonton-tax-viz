@@ -19,16 +19,39 @@ what makes the message worth reading when it appears.
 it was last committed."** A handoff can be present and wrong, and no diff can see
 that. It answers *is there unrecorded work*, not *is the record good*.
 
-⚠️ **Fails silent, always.** It runs at session end and on compaction, where
+⚠️ **Fails silent, always.** It runs at session end and at session start, where
 anything it prints competes with the user's own output and a traceback would be
 noise at the worst moment. No git, no repo, a detached HEAD, a shallow clone with
 no history for the handoff file — every one of them exits 0 saying nothing. It
 can never be the reason a session ends badly.
 
+⚠️ **THE CHANNEL IS THE HALF THAT WAS WRONG, and no test caught it** (audited
+2026-09-16, `docs/FINDINGS_guard_burst.md` §2). The first wiring emitted JSON on
+`SessionEnd` and `PreCompact`. Per the hooks reference, both throw it away:
+
+  - `SessionEnd` — *"Claude Code discards their JSON output fields, such as
+    `systemMessage`."* Its one documented surface is **stderr** ("Shows stderr
+    to user only"), and the hook was piping stderr to `/dev/null`.
+  - `PreCompact` — *"Claude Code discards a PreCompact hook's `systemMessage`
+    and `continue` fields."* `additionalContext` is not one of its fields
+    (it sits in the top-level-`decision` group), and exit-0 stdout goes to the
+    debug log. **Its only surface is exit 2, which BLOCKS compaction** — and on
+    an auto-compact recovering from a context-limit error, blocking fails the
+    request outright. A guard that swears it can never end a session badly may
+    not use that. So the PreCompact hook is gone, not rewired.
+  - `SessionStart` is the channel that works, and it covers what PreCompact was
+    reaching for: it fires with `source: "compact"` **after** a compaction and
+    `source: "clear"` **after** `/clear` — the two moments `CLAUDE.md` names —
+    and its `additionalContext` is documented to reach Claude, with
+    `systemMessage` shown to the user.
+
+18 tests pinned the JSON *shape* and none asked whether anything reads it
+(`check-where-the-value-can-be-wrong`). The tests below now pin the channel.
+
 Usage:
-    python scripts/handoff_gap.py                 # plain text, or nothing
-    python scripts/handoff_gap.py --json          # SessionEnd hook shape
-    python scripts/handoff_gap.py --json-compact   # PreCompact hook shape
+    python scripts/handoff_gap.py                  # plain text, or nothing
+    python scripts/handoff_gap.py --session-start  # SessionStart hook shape
+    python scripts/handoff_gap.py --session-end    # SessionEnd: stderr, no JSON
 """
 
 import argparse
@@ -106,7 +129,7 @@ def gap():
     return {"handoff": handoff.name, "commits": commits, "dirty": dirty}
 
 
-def message(g):
+def message(g, at_start=False):
     bits = []
     if g["commits"]:
         bits.append(f"{len(g['commits'])} commit(s) touching "
@@ -122,16 +145,25 @@ def message(g):
         lines.append(f"    {c}")
     if len(g["commits"]) > 5:
         lines.append(f"    …+{len(g['commits']) - 5} more")
-    lines.append("Append to that file (same session) or write a new one, then "
-                 "reconcile TODO.md. CLAUDE.md requires the record before the "
-                 "context is gone.")
+    if at_start:
+        # At SessionStart the gap belongs to whatever ran before this context —
+        # the previous session, or the one this compaction replaced.
+        lines.append("Whatever produced it is out of context now. Read those "
+                     "commits and either append to that handoff or write a new "
+                     "one before starting new work (CLAUDE.md).")
+    else:
+        lines.append("Append to that file (same session) or write a new one, then "
+                     "reconcile TODO.md. CLAUDE.md requires the record before the "
+                     "context is gone.")
     return "\n".join(lines)
 
 
 def main(argv=None):
     ap = argparse.ArgumentParser()
-    ap.add_argument("--json", action="store_true", help="SessionEnd hook shape")
-    ap.add_argument("--json-compact", action="store_true", help="PreCompact hook shape")
+    ap.add_argument("--session-start", action="store_true",
+                    help="SessionStart hook shape (additionalContext + systemMessage)")
+    ap.add_argument("--session-end", action="store_true",
+                    help="SessionEnd: plain text on stderr, the only surface that event has")
     args = ap.parse_args(argv)
 
     try:
@@ -141,20 +173,21 @@ def main(argv=None):
     if g is None:
         return 0  # nothing owed: say nothing, so the message means something
 
-    text = message(g)
-    if args.json_compact:
+    if args.session_start:
+        text = message(g, at_start=True)
         print(json.dumps({
-            "suppressOutput": True,
             "systemMessage": text,
             "hookSpecificOutput": {
-                "hookEventName": "PreCompact",
+                "hookEventName": "SessionStart",
                 "additionalContext": text,
             },
         }))
-    elif args.json:
-        print(json.dumps({"systemMessage": text}))
+    elif args.session_end:
+        # NOT stdout, and NOT JSON: SessionEnd discards JSON output fields and
+        # shows stderr to the user. The hook must not redirect stderr away.
+        sys.stderr.write(message(g) + "\n")
     else:
-        print(text)
+        print(message(g))
     return 0
 
 
