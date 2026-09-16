@@ -65,6 +65,26 @@ Session B does not start itself.
 
 ## §1 — Ground yourself, in this order (BOTH sessions)
 
+0. ⚠️ **SYNC THE CHECKOUT FIRST — THIS IS YOUR JOB, NOT PETER'S.** He works from the
+   Claude Code web app against a tmux session on the Oracle box and **cannot
+   conveniently run shell commands himself**, so nothing has pulled unless you pull.
+   ⚠️ **A PR merged on GitHub happens on the REMOTE**; this checkout knows nothing
+   about it, and it is usually sitting on the last feature branch — where a bare
+   `git pull` would pull *that* branch, not `master`.
+
+   ```bash
+   cd /home/opc/edmonton-tax-viz
+   git checkout master && git pull
+   git config core.hooksPath .githooks          # hooks are NOT cloned
+   grep -c "SESSION A" docs/FABLE_AUDIT_doc_apparatus.md   # MUST be ≥3
+   gh issue list --state open                   # CLAUDE.md: nothing pushes these to you
+   ```
+
+   ⚠️ **If that grep returns 0 you are reading the PRE-SPLIT brief**, which has no
+   §0a and no Session A — you would do both halves in one session, which is the
+   exact thing the split prevents. **The failure is silent**: the old brief reads as
+   complete and produces a plausible single-session result. Stop and re-pull.
+   If the working tree is dirty, say so and stop rather than stashing Peter's work.
 1. **`docs/external/REVIEW_doc_apparatus_2026-09-15_CLAIMS.md` FIRST, then the
    review `docs/external/REVIEW_doc_apparatus_2026-09-15.md` IN FULL.**
    ⚠️ **The review is kept verbatim and SEVERAL OF ITS NUMBERS ARE WRONG** — the
