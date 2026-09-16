@@ -409,6 +409,19 @@ def check_todo_branch_refs():
     history and `vintage-digest.yml` checks out shallow, so the number would be
     silently wrong. `git ls-remote` queries the remote and works on a shallow
     clone, which is why the branch signal is the one that runs here.
+
+    ⚠️ **Its input is a PRUNE, not a merge — so it reads green for long stretches
+    by design.** `delete_branch_on_merge` is off here and merged branches stay on
+    origin, so a merge never feeds this check. What feeds it is someone deleting
+    branches in bulk: the 2026-08-31 `chore/branch-prune` (#291) removed ~287 of
+    them and exposed the 7 stale items this was built from, including
+    `feature/services-lens` — a lens shipped in July, still listed open, which a
+    15-item hand sample had missed. Expect one BATCH per prune and silence
+    between. A green row means "no prune has orphaned an item since the last
+    one", which is the correct reading, not a broken check. S164's audit read
+    that silence as "the trigger cannot occur" and called it an L0 fail;
+    re-measured 2026-09-16 (S165), the trigger occurs at every prune and 150
+    branches have accumulated in the 16 days since the last one.
     """
     try:
         text = TODO_MD.read_text()
@@ -457,7 +470,8 @@ def check_todo_branch_refs():
     more = f" +{len(stale) - 6} more" if len(stale) > 6 else ""
     return (ACTION, "TODO branch refs",
             f"**{len(stale)} open item(s) point at a branch that no longer exists on "
-            f"origin**: {listed}{more}. The branch was merged and deleted, so the item's "
+            f"origin**: {listed}{more}. The branch is no longer on origin (this repo "
+            f"keeps merged branches, so the usual cause is a PRUNE), so the item's "
             f"framing is stale — check whether the work SHIPPED and close it, or drop the "
             f"branch reference if the work is still open. `docs/RUNBOOK.md` §0d.")
 

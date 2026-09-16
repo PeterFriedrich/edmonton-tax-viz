@@ -512,18 +512,25 @@ and there are currently zero closed top-level items — verified by running it o
 an isolated copy), but the hand rule in `CLAUDE.md` (*"move its body to the
 archive"*) is not, and this span is 2,533 lines.
 
-- [ ] **GUARD-BURST AUDIT FOLLOW-ONS — 2 of 3 done; ⚠️ the open one is PETER'S
-  CALL, not work** (opened 2026-09-16, S164, `docs/FINDINGS_guard_burst.md` §7).
-  Two of the six pieces were the project's own failure mode shipped fresh: a
-  working guard with no input, and a working guard with no confirmed reader.
-  The reader half is fixed (PR #438); the input half needs one repo setting.
-  - [ ] **`check_todo_branch_refs` has no input** — it waits for a merged branch
-    to be deleted, `delete_branch_on_merge` is **off**, and 0 of 145 merged
-    branches since the 2026-08-31 prune are gone (findings §1). **Peter's
-    call:** enable *Automatically delete head branches* in repo settings (one
-    click; the pre-push hook keys on PR state, unaffected), or delete the check
-    + its 11 tests + `RUNBOOK.md` §0d. Either way fix the ACTION string and §0d:
-    "was merged and deleted" → "is no longer on origin".
+- [x] **GUARD-BURST AUDIT FOLLOW-ONS — ALL 3 DONE** (opened 2026-09-16, S164;
+  closed 2026-09-16, S165. `docs/FINDINGS_guard_burst.md` §7). Two of the six
+  pieces were called the project's own failure mode shipped fresh: a working
+  guard with no input, and a working guard with no confirmed reader. The reader
+  half was real and is fixed (PR #438). **The input half was not real** — see
+  below.
+  - [x] ~~**`check_todo_branch_refs` has no input**~~ — **VERDICT REVERSED
+    2026-09-16 (S165), findings §1a. KEPT as-is; no repo setting changed.** The
+    L0 FAIL counted merges only. Merges never feed this check (merged branches
+    stay on origin) — **PRUNES do**, and the prune recurs: `chore/branch-prune`
+    (#291) removed ~287 branches on 2026-08-31 and **150 have accumulated in the
+    16 days since**. Its input arrives in one batch per prune, so long green runs
+    are the expected shape. Real defect is *scheduling*, not existence; re-open
+    the post-prune-trigger question at the next prune. ACTION string and
+    `RUNBOOK.md` §0d reworded to say "no longer on origin (usually a PRUNE)" and
+    to tell the reader green is expected. ⚠️ Also withdrawn: enabling
+    *Automatically delete head branches* was half-sold as stranding protection
+    and would not have helped — `git push` silently RECREATES a deleted remote
+    branch.
   - [x] **`handoff_gap.py` reaches nobody confirmed** — DONE 2026-09-16 (S164,
     PR #438), and the fix is **not** the one the finding proposed. The
     `/compact` experiment was unnecessary: PreCompact's only output surface is
