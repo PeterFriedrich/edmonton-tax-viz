@@ -477,17 +477,32 @@ is in the `panel` column. T1 is public (3 of 10 service rows). T2 closed (`## Do
 - [x] **Nothing verifies the Services panel** (the T1 gap) — **CLOSED 2026-09-15,
   PR #398 then #399.** Written and merged RED against the broken build (7 checks
   failing), falsified both ways, green after the fix. `## Done`.
-- [ ] **Published numbers with no loud check — brief written, audit NOT executed
-  (OPEN 2026-09-15, S159).** Brief + instrument:
-  `docs/FABLE_AUDIT_published_numbers.md`,
-  `tools/profiling/audit-published-numbers.js`. Ledger candidate 10, **scoped for
-  a cross-model run** — the brief was written by the model that built F1 the same
-  day and says so. Scoping measured 18 rendered surfaces: **74 numeric claims a
-  reader can see, 11 guarded, 63 not** — but the 63 split three ways and only two
-  matter (§1). ⚠️ **The live gap is the hand-maintained manifest inputs**: the
-  About panel's `$3.8B` / `$469M` / `12.2%` render on all 18 surfaces, come from
-  `data/city_budget_context.json`, were checked **once** (S94, 2026-08-05), and
-  nothing recurring goes red if they drift.
+- [x] **Published numbers with no loud check — audit EXECUTED 2026-09-15 (S160,
+  Fable 5.1).** `docs/FINDINGS_published_numbers.md`; ledger row. Instrument fixed
+  first (Money view was never captured; public over-counted by 18 unreachable
+  claims). Every manifest value still matches its source; **nothing recurring
+  would say so if it stopped** — falsified: `year` 2025→2019 and a wrong 2026 mill
+  rate propagated via `generate_status.py` both pass 892 tests + every merge-gate
+  guard. Follow-ups below, **nothing built**.
+- [ ] **Manifest staleness guard — Peter's yes needed (changes the monthly digest).**
+  `vintage_report.check_budget_context`: fetch `operating_budget.csv` (reachable
+  from CI, DATA.md §17), ACTION when a newer `Tax Supported` FY exists than
+  `city_budget_context.json`'s `year` (today FY2026 at $4.045B vs the pod's 2025
+  / $3.8B), re-derive `Roadway Maintenance` FY2017 + `Snow and Ice Control` and
+  ACTION on change. Same function: compare `pwis-wc4c`'s pinned-year rates to
+  `mill_rates.json` *values* (`check_mill_rates` compares years only). Findings §3.
+- [ ] **Three unguarded PUBLIC literals** (findings §4): (L1) `$600,000` /
+  `$1,900,000` in the roadslife blurb — two `check_cost_copy` CLAIMS rows off
+  `roadway_om_renewal.source.published_figures_per_km_neighbourhood_road`;
+  (L2) `~0.9% of units` in the infill blurb — S56's D3 measurement typed in, never
+  re-derived: re-derive from the permits feed or drop the figure; (L3) `2021–25`
+  in the same sentence — `test_window_labels` matches `YYYY–YYYY` only, so this
+  label will not roll in January 2027 and the guard stays green. Make the test
+  see the two-digit form (and the `${WIN.*}` substitution produce it).
+- [ ] **`$50k` revenue clamp has drifted** to 0.871 × p97.5 (16 hoods saturate,
+  4.5% vs the 2.5% design); S104's "still at p97.0" is stale. Decide in
+  `DECISIONS.md` whether the clamp is a stability literal or a percentile, and if
+  the latter, give `verify-smoke` the percentile, not the string. Findings §5.
 - [ ] **Retrieval logging — decide the doc question with evidence, not argument.**
   A `PostToolUse` hook logging every Read/Grep with a filename gives a per-doc
   read-frequency table in 2–3 weeks; a doc never opened before an action is a

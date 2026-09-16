@@ -1789,7 +1789,10 @@ verified to the dollar 2026-08-16. Never cite the two as corroborating each
 other; their agreement is a tautology.
 
 `https://budget.edmonton.ca/api/operating_budget.csv` — the City's Open Budget
-portal, **machine-readable and primary**. **7,283 rows, FY2017–FY2026**, one row
+portal, **machine-readable and primary**. **7,283 rows, FY2017–FY2026** (⚠️ **7,294
+on 2026-09-15** — FY2026 was republished between 09-05 and 09-15: 501 rows in,
+490 out, tax-supported total $4,044,711,032 → $4,045,178,891; FY2025 byte-identical.
+The file is *approved* but not frozen — `docs/FINDINGS_published_numbers.md` §3), one row
 per `budget_year, fund_type, department, branch, program, category, account_type,
 budget`. First fetched by hand on Peter's laptop 2026-08-04. **NOT downloaded by
 `download_data.py`, NOT in the weekly refresh, NOT read by `src/` or `main.py`**
