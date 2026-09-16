@@ -2713,3 +2713,407 @@ Full reasoning: `docs/DECISIONS.md` 2026-09-01 (third row of that date).
     also grown **367 KB → 412 KB since 2026-09-04**, so waiting is not free.
   - **Gate:** nothing is blocked on this. It costs money only when a doc-heavy
     session loads these files — which is what surfaced it.
+
+---
+
+## Closed sub-items lifted out of still-open parents — 2026-09-16 (S166)
+
+These shipped. They were sitting inside parent items in `TODO.md` that are
+**still open**, so `tools/todo_archive.py` could not move them — it operates on
+top-level closed items only. Lifted by hand so the file every session reads
+carries live work; the parents stay open in `TODO.md` with a pointer here.
+Verbatim as they stood. **Nothing here is a to-do.**
+
+### From: **THE LAB IS OPEN AS A CONTAINER — one experiment in it, and the only
+
+- [x] **CHECKED ON A PHONE — Peter, 2026-08-12: "lab on phone is fine."**
+  ⚠️ **This is an EYES-ON confirmation on a real device, which is the thing a
+  probe could not give us** (the standing caveat: verify scripts drive
+  `.click()` and bypass `pointer-events`). It is **not** a measurement — no
+  width numbers were captured, so if the `#views` row or the title box grows
+  again, this closure does not cover it. The untested axis was **WIDTH**: six
+  buttons wrapping at `max-width: 640px`, "Lab" widened by its `beta` tag, and
+  a title box that went **217 → 258 → 314px in one day** against Money's 176px.
+  Desktop verified at 1440x900 / 1400x900 / 1366x768 / 1280x720 / 1024x768;
+  worst `#botleft` clearance 215px at 1280x720, so vertical was never the
+  worry. ⚠️ **Still live for the NEXT change:** Development's 442px blurb is
+  what collides below 768px tall, so an addition to that blurb needs
+  re-measuring rather than assuming, and remove `.folded` from `#optpanel`
+  before measuring Options rows or every probe returns zeros (the trap this
+  file records three times now).
+
+### From: **CARDINALITY GUARD — two small follow-ons (guard shipped 2026-07-28, PR #110).**
+
+- [x] **Tighten the bands — DONE 2026-08-05, but only FOUR of six.** See the
+  `## Done` line; the split and its reasoning live in
+  `data/expected_value_anchors.json`'s own `_why_two_widths` /
+  `_ineligible_pair_was_NOT_drifting` fields.
+- [x] **WHY IS VALUE LEAVING THE LOT-ACRE DENOMINATOR? — CLOSED 2026-09-03: it
+  wasn't. The trend was one step with an invented midpoint.** See the `## Done`
+  line.
+
+### From: **GEOGRAPHIC REFERENCE LAYERS — TIERS 2 & 3 (Tier 1 shipped 2026-07-27).**
+
+- [x] ~~**Tier 3b — the REGIONAL NAMES, beyond the seven towns.**~~ **DONE
+  2026-08-08 (PR #187), live in production.** The four counties, the
+  Industrial Heartland, Nisku and the airport are named; Morinville and Stony
+  Plain joined the towns (16 names, 33 features). Edmonton's limit is drawn
+  with its own stroke but **deliberately unnamed**. ⚠️ **This reversed the
+  2026-07-27 "regions are unlabelled" decision** — see `DECISIONS.md`
+  2026-08-08 and `DATA.md` §14 before re-opening it. ⚠️ **Tier 2 below
+  inherits a hard-won constraint from it:** outlines are split into one layer
+  per stroke with CONSTANT accessors, because a per-feature `getLineColor`
+  builds a per-vertex attribute buffer and blew the verify's click timeout.
+  Style a new Tier-2 shape by adding a layer, never by adding an accessor.
+- [x] ~~**Tier 3 — the NAMES half.**~~ **DONE 2026-07-27.** Seven regional
+  place names ship on by default (St. Albert, Sherwood Park, Spruce Grove,
+  Fort Saskatchewan, Leduc, Beaumont, Devon). Split out from the boundaries
+  deliberately: the names needed no polygon fetch, and bundling them was what
+  made Tier 3 look expensive. See `DECISIONS.md` 2026-07-27 (×2),
+  `data/DATA.md` §14, `docs/UI.md`.
+- [x] ~~**Tier 3 — the BOUNDARIES half (still open).**~~ **DONE 2026-08-08 —
+  and this item was ALREADY HALF-STALE when it was worked.** The neighbouring
+  municipalities' outlines had shipped with the *names* half back on
+  2026-07-27 (`reference-boundary`, seven polygons); what was genuinely
+  missing was **Edmonton's own legal limit and the rural municipalities**,
+  which this item never asked for. Both now ship as `REGIONS` in
+  `scripts/build_reference_layers.py`: Edmonton + Strathcona / Sturgeon /
+  Parkland / Leduc County, unlabelled, unfilled, under the data.
+  ⚠️ **What it exposed is the durable part: the hood fabric is not the city.**
+  Legal boundary **782.1 km²** vs **672.4 km²** of rendered hoods → **109.6
+  km², 14.0% of Edmonton, has no neighbourhood at all** and had been reading
+  as background. One-directional (0.0 km² of fabric outside the limit), so
+  the map understates the city and never overstates it. **No metric moves**
+  (all are per-hood), but a future *citywide-per-acre* figure must state which
+  denominator it means. `DECISIONS.md` 2026-08-08, `data/DATA.md` §3 + §14.
+  Original notes below, kept because the sublayer traps are still live:
+  Alberta `urban_and_rural_municipality` MapServer, natively **EPSG:3400**.
+  **Sublayer IDs confirmed:** Edmonton / St. Albert / Leduc are all in
+  **78 (`City`, field `CITY_NAME`)**; **Strathcona County is in 104
+  (`Specialized Municipality`, `SPMUN_NAME`) — NOT 114
+  (`Municipal District and County`)**, which holds Leduc/Sturgeon/Parkland
+  *County*. Ids 67/95/105 are group layers and return no fields. Note the
+  names half needed a *third* sublayer, **66 `Urban Service Area`**, for
+  Sherwood Park — the hamlet-like service area of Strathcona County, which is
+  a different thing from the County polygon in 104.
+- [x] ~~**Which end of the stack do boundaries belong at?**~~ **ANSWERED
+  2026-07-27 for the neighbours, and 2026-08-08 for the regions: UNDER the
+  data, with the river.** The neighbours sit outside Edmonton where there is
+  no hood fabric to hide them (measured: 0–0.7% of each outline overlaps the
+  city), so underneath they are fully visible AND can never cut across a
+  prism. ⚠️ **Edmonton's own limit is the one case that argument does NOT
+  cover** — it is the only outline that runs *through* the fabric rather than
+  outside it. Under the data is still right (an over-composed line would
+  slice the prisms it crosses), but it means the limit is partly hidden where
+  hoods meet it, and fully visible exactly along the 14% that has no hood —
+  which is the read we want.
+
+### From: **MOBILE USABILITY (NEW 2026-07-22 — full plan in
+
+- [x] ~~**DECIDE FIRST: control regrouping**~~ — **DECIDED 2026-07-23** (8
+  decisions, `CONTROLS_MATRIX.md` §7 + `DECISIONS.md` "Controls & lens grouping").
+  All 7 §5 combos closed. Final shape: `#views` = 5 (Money · Services · Ratio ·
+  Uses · Development); Glass → mode of Money; Infill + Industrial → full-only Dev
+  extras; palette + Labels → an accessibility menu; stack reordered
+  View→Variant→Presentation; "Residential only" → "Highlight residential"; Dev
+  grid+spike → one 3-way Detail selector. `public|full` tags all resolved in the
+  same pass (public = Money/Services/Ratio/Uses/Development-activity; `/full/`
+  adds Infill + Industrial + deep data-detail). **Nothing built yet.**
+- [x] ~~**Two-build deploy plumbing (`PLAN_public_release.md` §2a).**~~ **BUILT
+  2026-07-23 (branch `regroup-build-s65`).** `scripts/build_site.py` fans `web/`
+  into one Pages artifact: `_site/` = public root (whole tree, `DEFAULT_BUILD` →
+  `public`) + `_site/full/` = specialist (`index.html` only, `<base href="../">`
+  so its `./data`/`vendor` resolve to the ROOT's shared copies — no GeoJSON
+  duplication — `DEFAULT_BUILD` `full`, + a fixed work-in-progress badge). Wired
+  into BOTH `deploy.yml` (system `python3`, stdlib-only → stays the fast code path)
+  and `refresh.yml` (before `upload-pages-artifact`, `path → _site`), factored once
+  as the shared script. `tests/test_build_site.py` guards the emit + that the
+  source `DEFAULT_BUILD` literal exists (a drift fails `refresh.yml`'s pytest gate
+  before deploy). Verified locally: both URLs smoke-clean. **`/full/` is unlisted,
+  NOT access-controlled** (repo is public → nothing secret; the WIP badge is the
+  mitigation).
+
+### From: **INDUSTRIAL & NON-RESIDENTIAL LENS FAMILY (NEW 2026-07-18 — full plan in
+
+- [x] ~~**A1 — Non-res $ cut (greenlit 2026-07-18)**~~ — **SHIPPED
+  2026-07-18** (`feat/nonres-revenue-metric`): `nonres_levy` = the slices
+  billed at the Non Residential rate (COMMERCIAL + MA DERELICT + DESIGNATED
+  IND PROPERTIES via `NONRES_RATE_LABELS`; exempt is $0, farmland its own
+  class; identity `levy == res + nonres + farmland` tested) → fourth Money
+  metric "Non-res $" + Glass grid columns (appended last). Real data: 47.4%
+  of citywide levy; clamp $50k (p97.5 ≈ $48.4k); 34% of cells nonres > 0.
+  `verify-nonres-revenue.js` ALL PASS; DATA.md §4 + UI.md. Live on the next
+  weekly refresh (column guard until then).
+- [x] ~~**A3 — Industrial permit velocity (greenlit 2026-07-18)**~~ —
+  **SHIPPED 2026-07-18** (`feat/ind-permit-velocity`, stacked on A1):
+  `INDUSTRIAL_BUILDING_TYPES` (400-series, full-string — Parkade 490 is NOT
+  industrial) → `ind_permits` count → `ind_permits_per_acre` (+ `_3yr`).
+  Third `#devmetric` option "Industrial" — Development-view choropleth only
+  (Detail toggle hides; Infill resets it to a residential metric + hides the
+  button). Real data: 283 permits / 117 hoods (5yr). `verify-ind-permits.js`
+  ALL PASS; DATA.md §10 + SPEC_development + SPEC_industrial A3. Live on the
+  next weekly refresh (column guard until then).
+
+### From: **PUBLIC RELEASE PREP (NEW 2026-07-09 — scope + rationale in
+
+- [x] ~~P1.1 README refresh~~ — done 2026-07-09 (this PR): "Methodology
+  (Planned)"/QGIS/AltaLIS-FOIP sections replaced with as-built.
+- [x] ~~**P1.2 In-app attribution/methods affordance**~~ — **DONE 2026-07-25**
+  (PRs #94 + #95, both merged & live). Bottom-right `#about` pod above Display,
+  labelled **`Data & Methods`**; the popover carries the City of Edmonton
+  credit + Open Government Licence, the vintages, the modelled-not-billed
+  caveat for revenue *and* the utility layers, and links to METHODS.md + the
+  repo. **All years/dates come from `status.json`**, so the January year-roll
+  can't strand a stale literal. `verify-about.js` (390/360/1440 overlap
+  geometry, paint order, link resolution, a status.json-blocked run). It first
+  shipped with the full credit AS the label; **reverted the same day** — 294px
+  wide, it sat on the legend — and the collapsed-behind-a-button form turns out
+  to be the map convention anyway (`UI.md` "What other maps actually do").
+  Fixed three latent bugs on the way: `#botleft` swallowing pointer events, the
+  z-index:1 paint-order collision, and `#legend` running under the right-hand
+  column on phones. See `DECISIONS.md` 2026-07-25.
+  - [x] ~~**Read the actual OGL – City of Edmonton text**~~ — DONE 2026-07-26
+    (v1.0 July 2022, an adaptation of OGL–Canada 2.0). **Placement assumption
+    confirmed: the licence says nothing about where attribution appears**, so
+    the collapsed pod stands and the credit does NOT return to the map surface.
+    But it caught two real gaps, both fixed the same day: (1) no link to the
+    licence, which it asks for "where possible", and (2) the prescribed
+    attribution sentence was paraphrased rather than verbatim. Added a
+    non-endorsement line too (not required; the licence forbids implying
+    official status). `docs/UI.md` "What other maps actually do",
+    `DECISIONS.md` 2026-07-26. **P1.2 now has no open questions.**
+- [x] ~~P1.3 Public METHODS page~~ — done 2026-07-09 (PR #32 merged):
+  `docs/METHODS.md` (metric definitions, denominators + guard, set-aside,
+  WEM/condo worked examples, model formulas + validation ratios,
+  limitations) + README Technical Docs link. P1.2 should link to it.
+- [x] ~~**P2.1 CI unmatched-set assertion**~~ — DONE 2026-07-11
+  (`scripts/check_unmatched_names.py` + `data/expected_unmatched.json`, wired
+  into `refresh.yml`; fails the build on a new money-path unmatched name). See
+  the data-integrity audit §4 item below for scope detail.
+- [x] ~~**P2.2 Heartbeat PAT**~~ — DONE 2026-07-26, built as *two* halves
+  because the PAT alone leaves the failure invisible when the PAT itself
+  expires: (a) `refresh.yml` checks out with
+  `${{ secrets.HEARTBEAT_TOKEN || github.token }}`, (b) the frontend ages
+  `status.json`'s `last_checked` and raises the banner past `STALE_DAYS = 14`,
+  (c) the commit step no longer swallows push failures green.
+  `verify-staleness-banner.js`, `DECISIONS.md` 2026-07-26, `RUNBOOK.md` §3.
+  - [x] ~~**Peter — one manual step left: create `HEARTBEAT_TOKEN`.**~~ —
+    **DONE. Verified 2026-09-16: `gh secret list` shows `HEARTBEAT_TOKEN`
+    created 2026-08-31**, so `refresh.yml`'s `secrets.HEARTBEAT_TOKEN ||
+    github.token` now takes the first branch and the prevention half is live,
+    not dormant. ⚠️ A fine-grained PAT **expires** — if the weekly schedule
+    goes quiet again, re-check this secret before anything else
+    (`RUNBOOK.md` §3).
+
+### From: **GROWTH INFRASTRUCTURE FINANCING PANEL ("Debt Lens") — NEW 2026-07-14
+
+- [x] **D0 — catchment polygons BUILT 2026-07-15** (approximate, reviewable).
+  `data/levy_catchments.geojson` (10 units) via
+  `scripts/build_levy_catchments.py`; QA overlay + area validation confirm the
+  footprints match Schedule A. Two flags for a future reviewer (editable
+  `CATCHMENT_HOODS` dict): **Blatchford under-covers** (catchment > mapped
+  hood) and **Riverview 1.65** (maybe drop `RIVER'S EDGE`). Full writeup:
+  `docs/FINDINGS_offsite_levy_catchments.md`. Detail below ↓
+- [x] **D0 detail — catchment polygon acquisition — DONE (verified 2026-09-16:
+  `scripts/build_levy_catchments.py` exists, and
+  `docs/FINDINGS_offsite_levy_catchments.md` records the resolution).** The 12 fire-hall off-site levy
+  catchments (names/costs/rates tabled in the brief). Probed 2026-07-14:
+  **NOT on data.edmonton.ca** (Socrata catalog: zero hits) **nor ArcGIS Hub**
+  (every "off-site levy" layer there is Calgary's).
+  **RESOLVED 2026-07-15 (laptop):** the ONLY published boundaries are a raster
+  map exhibit — **Schedule A of Bylaw 19340** ("Fire Halls with Catchment
+  Boundaries"), a JPEG in the bylaw PDF. **No GIS vector layer exists anywhere.**
+  Bylaw text confirms boundaries are advisory ("subject to change… may adjust
+  and refine over time"). Source artifacts saved to
+  `data/raw/offsite_levy/` (bylaw PDF, ScheduleA JPEG, 2026 approved rates).
+  Key enabling finding: Schedule A's catchment edges **follow the neighbourhood
+  grid**, and all 12 catchments map to clusters of neighbourhoods we already
+  hold in `neighbourhoods.geojson` (e.g. Blatchford→`BLATCHFORD AREA`,
+  Walker→`WALKER`, Cumberland→`CUMBERLAND`, Big Lake→`ANTHONY HENDAY BIG LAKE`,
+  Horse Hill→`ANTHONY HENDAY HORSE HILL` + the Horse Hill district). Three
+  paths, decreasing effort / fidelity:
+  1. **Trace/digitize** the raster (georeference + hand-trace 12 polygons) —
+     highest fidelity, most manual; boundaries are advisory anyway.
+  2. **Neighbourhood-union approximation** (RECOMMENDED) — build a
+     neighbourhood→catchment assignment table by reading Schedule A, then
+     dissolve. Reproducible from data we own, honest ("approximated to
+     neighbourhood boundaries"), aligns with our neighbourhood-unit pipeline;
+     error small because edges follow hood lines.
+  3. **Table only** — per-catchment table + text list of member hoods, no map
+     layer. Lowest effort, still honest, loses the spatial punch.
+
+### From: **DEVELOPMENT & INFILL LENS family (NEW 2026-07-12 — full plan in
+
+- [x] **Lens A — Building Activity (choropleth), PHASE 1 / first cut. DONE
+  2026-07-12** (`feat/dev-lens-a-building-activity`). `src/load_permits.py`
+  (slim `$select` download, count cross-check hardened for the `count_1`
+  alias) → new-construction `work_type` ∩ residential `building_type`
+  (hand-enumerated dicts incl. every spelling variant, warn-on-unseen) → Σ
+  `units_added` per hood → `join_and_calculate` column (`validate="m:1"`,
+  warn-not-fail) → new **Development** web view (own view, NOT a city service;
+  `new_units_per_acre`, 2021–2025 pinned, sqrt colour). **Set-aside override
+  LOCKED = full override coloured** (empirically low-impact: 6 hoods/43 units;
+  growth hoods sit below the 0.90 threshold — the S42 "headline tension" was
+  overstated for current data). `NAME_CORRECTIONS` resolves CHAPPELLE AREA etc.
+  (only GLENORA,ROSSLYN 1-unit straggler left). DATA.md §10 added; 308 pytest +
+  `verify-development.js` 25/25 green; screenshot eyeballed. Live-data: 59,696
+  units / 236 hoods, GARNEAU tops per-acre (dense infill).
+  - [x] **Lens A polish — permit-count sub-metric** (2026-07-13): pipeline
+    `new_permits_per_acre` column + web `#devmetric` units/permits picker
+    (project density vs dwelling supply); ABBOTTSFIELD 248 units / 2 permits is
+    the extreme case. 308 pytest + `verify-development.js` 31/31 green.
+  - [x] **Lens A polish — window toggle** (2026-07-13): second pinned window
+    `PERMIT_YEARS_RECENT` (3yr, 2023–2025) alongside the 5yr base →
+    `_3yr`-suffixed columns + web `#devwindow` 5yr/3yr picker (both metrics),
+    gated on the `_3yr` columns. 311 pytest + `verify-development.js` 40/40 green.
+  - [x] **Lens A — long "Since 2009" window** (2026-07-21, from the inspiration
+    lens = cumulative "homes added 2009–2023" density-in-the-core map): third
+    `#devwindow` option (2009–2025), `PERMIT_YEARS_LONG` → `_long` columns for
+    all three metrics. ANCHORED (2009 start pinned, end derived from
+    `PERMIT_YEARS[-1]` → auto-extends on the January bump). ~160k units citywide
+    vs 60k/39k. **First-class window** (2026-07-22): drives the choropleth AND
+    its own 100 m detail-grid spikes (`units_long` cells) — the initial
+    choropleth-only cut was reverted once the data showed early-year geocoding
+    is fine (2009–2023 at 95–98%; the lag is the NEWEST permits, so the long
+    grid is the best-covered of the three at 84%). DECISIONS + SPEC_development
+    "Activity window" + DATA.md §9. 402 pytest + `verify-development.js` (+11
+    long-window checks incl. the long detail grid) + age/ind regressions green;
+    choropleth + spike-map screenshots eyeballed.
+  - [x] **Lens A 100 m detail grid** (2026-07-15, Peter: "add them as a layer
+    switch this time... may want to move the others to this style later"):
+    layers-panel "Detail" toggle in the Development view swaps the choropleth
+    for the Glass composition — neutral plane + 100 m geocoded-permit spikes
+    (`load_permits.export_dev_grid` → `web/data/dev_grid.json`, 4,105 cells;
+    permits `$select` now fetches lat/long). Linear height / sqrt colour,
+    driven by the existing pickers; geocode-lag coverage (~21% of 5yr units
+    not yet mapped) written into the JSON + disclosed in the blurb.
+    DECISIONS 2026-07-15; SPEC_development "Lens A detail grid";
+    verify-development 54/54; +6 pytest (334).
+  - **Lens A polish (remaining):** the `occupancy_granted_date` completed-builds
+    variant (DATA.md §10 — only populated residential ≥2022 / non-res ≥2024).
+
+### From: **Views & lenses follow-ons — its own three asks are all DONE (verified
+
+- [x] ~~**Residential-only lens in the Ratio view.**~~ ⚠️ **BUILT 2026-07-03 and
+  REMOVED 2026-07-26** (redundant with the Residential revenue cut); the cited
+  `verify-lens.js` is deleted. Kept as the record of what happened, not as a
+  description of the app. Done 2026-07-03:
+  non-residential kept hoods fade to the lens grey (height untouched), log
+  colour anchors rescale to the residential kept subset (≤ $258 … $916+ vs
+  $264 … $3,253 — FINDINGS §6.4 addendum), lens button disables in the Roads
+  view (state persists). Headless-verified (`tools/profiling/verify-lens.js`
+  + screenshot); UI.md updated. **PR #9 merged + deployed** (run 28646374983;
+  deploy step needed one transient-error rerun); live site verified serving
+  the new code.
+- [x] ~~**Use-mix view: surface each neighbourhood's zoning composition.**~~
+  **SHIPPED 2026-07-03 — PR #10 merged + deployed** (run 28679596055, green
+  first try); live site verified serving the Uses view + `zoning.geojson`
+  (200, 1.17 MB). Shows what the land IS (res / com / ind / mixed / DC /
+  institutional / reserve), not what it yields. **Decisions (Peter,
+  2026-07-03):** nonres split 4 ways `com`/`ind`/`mix`/`dc` — DC its own
+  category (24% of nonres area, bespoke bylaws, can't honestly fold
+  elsewhere); a **fourth view button** Money | Roads | Ratio | Uses; real
+  bylaw geometry (clipped to the 45 m hood setbacks) rather than
+  dominant-colour hoods; tooltip = dominant use + stacked composition bar.
+  Sub-items below record the build trail.
+  - [x] ~~Pipeline prerequisite: split `ZONE_CATEGORY` + export the full
+    composition~~ — done 2026-07-03: 39 nonres codes re-tagged (ambiguous
+    names resolved from bylaw purpose statements — UW/HA/MMS → mix, BE →
+    ind, MED/AED → com; DATA.md §5); unknown codes now default to `other`
+    (not `nonres`); `ZONING_COLUMNS`/`SLIM_COLUMNS` extended with all 9
+    fracs; GeoJSON regenerated (0.68 MB, fracs sum to 1 on all 406, 48
+    set-aside / 226 residential unchanged; +4 tests, 135 green).
+  - [x] ~~Frontend: "Uses" view~~ — built 2026-07-03: fourth view button,
+    flat categorical fill by dominant use, validated 7-hue palette + two
+    neutral greys (UI.md "Uses view" — colours computed through the dataviz
+    validator, min all-pairs CVD 10.6 w/ gap+tooltip relief), data-driven
+    legend rows, composition tooltip, lens disabled in-view, old-data
+    guard. Headless-verified (`tools/profiling/verify-uses.js`, 0/406 fill
+    mismatches; `verify-lens.js` regression green) + screenshot.
+    (Superseded same day by the real-geometry render below; the
+    dominant-colour path remains as the fallback.)
+  - [x] ~~Tooltip mini stacked composition bar~~ — done 2026-07-03 (Peter's
+    ask): 190×8 px flex bar in the category colours above the composition
+    text; `.tip` max-width 300px so long compositions wrap.
+  - [x] ~~**Residential prisms over the Uses fabric** (Peter's ask
+    2026-07-10: "how much residential is in each neighbourhood
+    specifically")~~ — built 2026-07-10: layers-panel checkbox (default
+    off), translucent sand prisms with height = `frac_residential` on a
+    fixed 0–100% linear scale, peak deliberately 2.5 km NOT the 8.2 km
+    parity height (bounded share clusters 40–95% → full parity renders a
+    solid wall; screenshot-verified before lowering). Zero-share hoods
+    omitted (z-fight), opacity on the shared prism slider (Uses default
+    35%), labels ride roofs, blurb honesty line, state persists.
+    Client-side only — `frac_residential` already served. Headless-
+    verified (`verify-uses-prisms.js`, 20 checks) + full regression
+    suite green + screenshots. Display detail: UI.md "Uses view".
+  - [x] ~~Real zoning geometry IN the Uses view~~ (Peter's call — the
+    dominant-colour render was "meh utility"; consciously reopened the
+    "zoning polygon overlay" scope item for THIS view only) — done
+    2026-07-03: `export_zoning_web` (citywide category dissolve, simplify
+    10 m, grid-snap `set_precision` — plain rounding after the validity
+    pass broke the browser tessellator; 8 features, 1.1 MB), wired into
+    `main.py`; frontend lazy-loads it with dominant-colour fallback +
+    hood-hover tooltips on top; legend now shows all 8 present categories.
+    +4 tests (139 green); verify-uses.js + verify-lens.js green;
+    screenshot eyeballed.
+  - [x] ~~**land-use diversity analysis (Peter, 2026-07-03)**~~ — DONE
+    2026-07-07 (Sessions 22 + 24). ANALYSIS_BACKLOG item 4, see
+    `docs/FINDINGS_land_use_diversity.md`. Result: revenue/acre vs diversity
+    holds under controls (partial r +0.27, n=299) but is secondary to density;
+    road-per-dwelling vs diversity is a **null**. Prerequisite DC provision
+    scrape (ANALYSIS_BACKLOG item 3) also DONE end-to-end (crawl→extract→
+    classify→QA→rollup): the 918 DC provisions are use-classified
+    (`data/dc_inferred_use.csv`), rolled up per hood
+    (`data/dc_use_by_hood.csv`), folded into the index, and 8 of the 14
+    previously-dropped high-`frac_dc` hoods re-admitted — both verdicts
+    unchanged. Open upgrades: formal regression + p-values (needs `scipy`);
+    `notebooks/exploration/` scatter version (deferred).
+  NOTE: this is hood-level composition — it does NOT reopen the "full
+  zoning polygon overlay" scope decision below; keep them decoupled.
+  FINDING (for ANALYSIS_BACKLOG 1): the 8 dc-dominant hoods are the big-box
+  power centres — South Edmonton Common, Terra Losa, Mill Woods Town Centre,
+  Calgary Trail South, Summerlea, Place LaRue, McCauley, Strathcona Junction.
+
+### From: **Deployment follow-ons (deferred, see `docs/SPEC_deployment.md`):**
+
+- [x] ~~Year-mismatch **guard**~~ — built 2026-07-01 (`scripts/check_year_alignment.py`
+  + `refresh.yml` wiring): detects the roll year from Socrata metadata; on mismatch
+  skips regen, keeps serving committed data, auto-sets the holding banner. See
+  SPEC as-built notes + `docs/FINDINGS_data_integrity_audit.md` §3.
+- [x] ~~**Heartbeat watch:**~~ DONE 2026-07-26 — didn't wait for it to sleep;
+  added the repo-scoped PAT (with fallback) *plus* a client-side staleness
+  banner. Same item as P2.2 above; see there for the remaining manual step.
+- [x] Optional tidy — DONE (verified 2026-09-16: all six already gone from
+  origin): delete merged branches (`feature/phase2-web`,
+  `feature/deployment`, `chore/node24-actions`, and the three audit-session
+  branches from 2026-07-01: `docs/data-integrity-audit-brief`,
+  `fix/name-corrections-audit`, `feature/year-alignment-guard`).
+
+### From: **Data-integrity audit follow-ons** (first run 2026-07-01, **second run
+
+- [x] ~~**CI unmatched-set assertion (audit §4 / second-run T3c):**~~ DONE
+  2026-07-11 — `scripts/check_unmatched_names.py` asserts the live money-path
+  unmatched set == committed baseline `data/expected_unmatched.json`
+  (`assessment_not_in_boundaries` = {OLIVER}, `boundaries_not_in_assessment` =
+  {LEWIS FARMS}); wired into `refresh.yml` as a hard gate after download, before
+  regen. A NEW assessment name with no boundary (silent dollar loss) FAILS the
+  build (exit 5) → no wrong-data deploy, last-good data keeps serving. New
+  boundary holes / resolved names → exit-0 warnings (update the baseline). +8
+  tests. **Scope = the money path only** (the join that drops dollars); the five
+  service frames (zoning/roads/storm/fire/transit/water) default unmatched to
+  0/NaN — less catastrophic, still `join_and_calculate`-warned — so extending
+  the guard to them is a possible future add, not done here.
+- [x] ~~**`validate="m:1"` on the `join_and_calculate` merges (second-run
+  NEW-1):**~~ DONE 2026-07-11 — added `validate="m:1"` to all nine merges
+  (base assessment + zoning/roads/storm/fire/transit/water/franchise/lot-acre);
+  pandas now raises `MergeError` if a duplicate right-key ever appears instead
+  of silently misaligning every per-acre denominator via the positionally-reused
+  `safe_area`. +2 tests (`test_duplicate_assessment_key_raises`,
+  `test_duplicate_roads_key_raises`). Pipeline reruns clean on real data (all
+  nine pass validation). 277 pytest green.
+- [x] ~~**Socrata `$limit` truncation check (audit §5)**~~ — built 2026-07-01
+  on `feature/services-lens` (`check_not_truncated()` in
+  `scripts/download_data.py`, fails at count >= limit; +6 tests; roads
+  source added in the same commit).
+
