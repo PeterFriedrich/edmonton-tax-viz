@@ -47,7 +47,7 @@ Designated Industrial Property (provincially-assessed plants / linear / machiner
 Its own `Tax Class` field reads `Non Residential`, so it's mapped there for the
 municipal levy (the only rate this project applies). This was caught by the
 pipeline's no-silent-drop guard (`apply_tax_rates` hard-fails on an unmapped
-label), not by chance — see the deployment dry-run in `session-summary/2026-07-01.md`.
+label), not by chance — see the deployment dry-run in `session-summary/archive/2026-07-01.md`.
 
 ## Label → mill-rate class map
 

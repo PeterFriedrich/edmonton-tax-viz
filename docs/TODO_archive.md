@@ -8,6 +8,42 @@ Items are verbatim as they were closed, newest-moved first in the order they app
 
 ---
 
+- [x] **Nothing verifies the Services panel** (the T1 gap) — **CLOSED 2026-09-15,
+  PR #398 then #399.** Written and merged RED against the broken build (7 checks
+  failing), falsified both ways, green after the fix. `## Done`.
+
+- [x] **Published numbers with no loud check — audit EXECUTED 2026-09-15 (S160,
+  Fable 5.1).** `docs/FINDINGS_published_numbers.md`; ledger row. Instrument fixed
+  first (Money view was never captured; public over-counted by 18 unreachable
+  claims). Every manifest value still matches its source; **nothing recurring
+  would say so if it stopped** — falsified: `year` 2025→2019 and a wrong 2026 mill
+  rate propagated via `generate_status.py` both pass 892 tests + every merge-gate
+  guard. Follow-ups below, **nothing built**.
+
+- [x] **L1 + L3 of the three unguarded PUBLIC literals — CLOSED 2026-09-16 (S160),
+  PR #406.** Two `check_cost_copy` CLAIMS rows now read `$600,000` / `$1,900,000`
+  from `roadway_om_renewal.source`, and the Infill blurb renders `WIN_SHORT.permits`
+  while `test_window_labels` matches **both** year spellings. Falsified six ways with
+  a green control on both ends; rendered output checked on the public build. `## Done`.
+
+- [x] **Retrieval logging — EXECUTED 2026-09-16 (S160).** `Read|Grep|Glob`
+  `PostToolUse` hook in `.claude/settings.json` → `~/.claude/retrieval-log.jsonl`;
+  read it with `python tools/retrieval_report.py`. Proven firing (a real Read logged
+  with this session's id). ⚠️ **Harvest no earlier than ~2026-09-30** — the report
+  refuses to be treated as evidence under 14 days. This is rec #1 of
+  `docs/external/REVIEW_doc_apparatus_2026-09-15.md`.
+
+- [x] **Doc-apparatus audit — EXECUTED 2026-09-16: Session A (S161) `_PREMISES.md`, Session B (S162) `_DISPOSITIONS.md`; recs 1/2/6 wait on the log (~2026-09-30), rec 3's `$50k` clamp and recs 4/5's restructuring are Peter's.**
+  `docs/FABLE_AUDIT_doc_apparatus.md`, ledger candidate 11. ⚠️ **Scoped against the
+  failure of the last attempt**: the review was digested to one sentence, 1 of 9
+  recommendations carried, 314 lines of prose and zero checks shipped. §3's output
+  constraint is the correction — disposition per row, a `TODO.md` park counts as NOT
+  disposed, write-up capped by the code it changes. Recs 4/5/7/8/9 are answerable
+  now; 1/2/6 wait on the log. ⚠️ **Cross-model does not fix this one** — Fable ran
+  the failed attempt. ⚠️ **TWO SESSIONS (§0a): A evaluates the review's premises and
+  STOPS at a handover; Peter names the live rows; B disposes them.** Running both at
+  once is the model acting on its own evaluation unchecked.
+
 - [x] **T2 — `#devwindow` is the only one of Development's three sibling pickers
   that does not reach the panel.** `#devmode` and `#devmetric` both do; every
   other readout follows all three. ⚠️ **Answer "is `renderDevHistory`
@@ -1616,7 +1652,7 @@ updated with it. Do not let the open question block shipping.
 
 - [x] ~~**Dev+Infill ROUND-2 delta audit**~~ — **EXECUTED 2026-07-16 (S56, same
   session the brief was written; this line was stale until 2026-07-17).**
-  Dispositions in `session-summary/2026-07-16.md` §2.D + `docs/AUDIT_LEDGER.md`:
+  Dispositions in `session-summary/archive/2026-07-16.md` §2.D + `docs/AUDIT_LEDGER.md`:
   **0 DEGRADED**; D1+D2 CLOSED (L4→SOUND; denominator bias immaterial), D3
   numbers → recommend disclose-only, D6 SOUND (WATCH: orange clamp = p95 of a
   ~105-member arm). What's LEFT is the **post-audit copy PR** below.
@@ -1626,7 +1662,7 @@ updated with it. Do not let the open question block shipping.
     note, D5 z-compression + 0.50-cliff clauses, D3 suite-conversion
     disclosure) to `web/index.html` blurb/tooltip + `docs/SPEC_development.md`
     Lens B — pending Peter's picks on D4 grammar and the D3 fork
-    (recommendation: disclose-only). Texts: `session-summary/2026-07-16.md`
+    (recommendation: disclose-only). Texts: `session-summary/archive/2026-07-16.md`
     §2.D.
 
 

@@ -46,6 +46,7 @@ Edmonton revenue-per-acre fiscal analysis. Python-only, no GIS software.
   - The hook cannot catch everything. After any merge, confirm the work actually landed: `git merge-base --is-ancestor <sha> origin/master`. A merged PR is necessary, not sufficient.
 
 ## Code Style
+- **A decision that protects a number is a test first, prose second.** Write the guard, then the `DECISIONS.md` row cites its ID; a row with nothing to cite is tagged `[unverifiable]`. `scripts/check_decisions_log.py` gates new rows on the merge path, so the question is asked at write time, not in an audit.
 - Keep processing steps as separate, independently runnable modules in `src/`
 - No silent data drops — flag unmatched or missing records explicitly
 - Always set CRS explicitly before any area calculation

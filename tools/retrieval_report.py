@@ -80,6 +80,24 @@ def main() -> int:
               f"Report it as MEASUREMENT-PENDING.")
     print()
 
+    # What a session is TOLD to read, in bytes. This is the cost a markdown:code
+    # ratio cannot see (`_PREMISES.md` A1/P10: 89% of it was TODO.md, which the
+    # ratio buries in 4.8 MB of markdown). Denominator-free, so it does not move
+    # when the code/not-code line moves. A measurement, not a ceiling — see
+    # `_DISPOSITIONS.md` rec #9.
+    handoffs = sorted((ROOT / "session-summary").glob("*.md"))
+    memory = (Path.home() / ".claude" / "projects"
+              / str(ROOT).replace("/", "-") / "memory"
+              / ("MEMORY" ".md"))  # split so check_doc_citations does not read a doc pointer
+    loaded = [p for p in (ROOT / "CLAUDE.md", ROOT / "TODO.md", *handoffs[-1:], memory)
+              if p.is_file()]
+    sizes = {p.name: p.stat().st_size for p in loaded}
+    total = sum(sizes.values())
+    parts = ", ".join(f"{n} {s // 1024} KB ({100 * s // total}%)"
+                      for n, s in sorted(sizes.items(), key=lambda kv: -kv[1]))
+    print(f"Loaded path (what a session is told to read): {total // 1024} KB — {parts}")
+    print()
+
     reads = defaultdict(set)   # path -> session ids
     counts = defaultdict(int)
     for r in rows:
