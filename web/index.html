@@ -668,6 +668,13 @@
     };
     const WIN = Object.fromEntries(
       Object.entries(WINDOWS).map(([k, [a, b]]) => [k, `${a}–${b}`]));
+    // Abbreviated end year ("2021–25"), for prose already carrying a figure where
+    // the full form reads heavy. ⚠️ It exists because a hardcoded `2021–25` sat in
+    // the Infill blurb where `test_no_user_facing_string_spells_a_window_out` could
+    // not see it — that guard matched only the four-digit form, so the label F4 was
+    // written to protect was invisible to F4 (audit 2026-09-15, fixed 2026-09-16).
+    const WIN_SHORT = Object.fromEntries(
+      Object.entries(WINDOWS).map(([k, [a, b]]) => [k, `${a}–${String(b).slice(2)}`]));
     // Grid cell edges, in metres — the same pinning problem as WINDOWS, so the
     // same treatment. The pins are separate because they move independently
     // (the Development grid did not follow Glass's fine option). Every file DOES
@@ -1268,7 +1275,7 @@
                "inverse of built floor-area ratio (FAR = built floor area ÷ lot " +
                "area; low FAR = room to add); activity is new building over the " +
                "chosen window — new construction only; secondary-suite and " +
-               "non-res-to-residential conversions (~0.9% of units 2021–25) are " +
+               `non-res-to-residential conversions (~0.9% of units ${WIN_SHORT.permits}) are ` +
                "excluded. Each neighbourhood's colour is the gap between " +
                "the two, as standardised (z-score) values: teal = suitable but " +
                "quiet (room to build, little happening — the opportunity); " +
