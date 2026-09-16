@@ -9,6 +9,15 @@
             "command": "jq -r '.tool_input.file_path // .tool_response.filePath // empty' | { read -r f; case \"$f\" in */web/index.html) cd \"${f%/web/index.html}\" && { [ -x .venv/bin/python ] && .venv/bin/python tools/codemap.py || python3 tools/codemap.py; } >/dev/null;; esac; } 2>/dev/null || true"
           }
         ]
+      },
+      {
+        "matcher": "Read|Grep|Glob",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -c '{t:(now|todateiso8601),tool:.tool_name,path:(.tool_input.file_path // .tool_input.path // null),q:(.tool_input.pattern // null),cwd:.cwd,sid:.session_id}' >> ~/.claude/retrieval-log.jsonl 2>/dev/null || true"
+          }
+        ]
       }
     ],
     "PreCompact": [
