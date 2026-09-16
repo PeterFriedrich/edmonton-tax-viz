@@ -23,7 +23,7 @@ of the ~950 test lines.
 | `tests/test_loaded_path.py` | ⚠️ **not occurring** — 3 files live at every commit in the window; the hand rule was being kept | ✅ both invariants red | ✅ merge gate | ✅ | **KEEP** — 64 lines, no CI cost, guards a rule with no other check |
 | `check_doc_citations.py` handoff extension | ✅ 6/8 citations dead when written (not re-measured, see §5) | ✅ red on a dead path, green on a live one | ✅ merge gate | ✅ | **KEEP** |
 | `check_decisions_log.py` | ⚠️ narrow — a lint on a token, enforcing a **new** discipline; ½ of day-one rows opt out | ✅ rule 1 red/green (3 ways); rule 2 red on two real chains; one verb-class miss | ✅ merge gate | ⚠️ `CUTOFF` is a fixed date, not permanent — engages 2026-09-17 | **KEEP as a lint**, count the opt-outs |
-| `check_todo_branch_refs` (digest) | ❌ **its trigger cannot occur on this repo** (§1) | ✅ red on a synthetic dead branch | ✅ digest | ❌ two docs state a premise the repo does not satisfy | **L0 FAIL** — give it an input or delete it |
+| `check_todo_branch_refs` (digest) | ⚠️ **occurs at every PRUNE — §1's "cannot occur" counted merges only** (§1a) | ✅ red on a synthetic dead branch | ✅ digest | ✅ wording corrected S165 | ~~**L0 FAIL**~~ → **KEEP, mis-scheduled** (reversed 2026-09-16, §1a) |
 | `handoff_gap.py` (hooks) | ✅ replaces a nag with a measurement; blind to 64% of commits by design | ✅ red/green under 3.6.8 and `.venv`; silent on docs-only, as designed | ❌ **SessionEnd output is discarded by the harness; PreCompact's `additionalContext` is not a documented field for that event** (§2) | ❌ `CLAUDE.md` and the DECISIONS row claim the hooks "name" the gap | **L2 FAIL** — the measurement works and reaches nobody confirmed |
 
 The two failures are **the project's own named failure mode, shipped fresh by
@@ -31,7 +31,11 @@ the machinery built to prevent it**: a working guard on a channel nobody reads
 (`handoff_gap`), and a working guard on an input that never arrives
 (`check_todo_branch_refs`). Neither is a code defect. Every test passes.
 
-## 1. `check_todo_branch_refs` — L0 FAIL: the branch it waits for is never deleted
+## 1. `check_todo_branch_refs` — ~~L0 FAIL~~: the branch it waits for is never deleted
+
+> ⚠️ **This section's VERDICT was reversed 2026-09-16 (S165) — read §1a with it.**
+> The measurements below hold; the inference from them does not. Merges do not
+> feed this check, but **prunes do**, and the prune recurs.
 
 **Its detection condition is "an open item names a branch no longer on origin",
 and its stated cause is "the branch was merged and deleted".** Measured:
@@ -63,6 +67,42 @@ prune. The pre-push hook keys on PR state, not branch existence, so it is
 unaffected. If Peter would rather keep branches, the check should go: 112 lines,
 11 tests and a RUNBOOK section for a row that is green for structural reasons is
 the maintenance-with-no-reader shape S163 §7a rejected for P2.
+
+### 1a. ⚠️ VERDICT REVERSED 2026-09-16 (S165) — the input is a PRUNE, and §1 counted only merges
+
+**§1 above is left as written; this supersedes its verdict.** The L0 FAIL rests
+on one premise — *"its expected hit rate from here is zero until someone prunes
+branches again, **which nothing does**"* — and that clause is the error. The
+prune is not a thing that stopped happening. It is the check's input, and it
+recurs:
+
+- **437 merged PRs, 150 branches on origin.** `chore/branch-prune` (#291,
+  2026-08-31) removed ~287 of them; nothing older than 2026-08-07 survives it.
+- **150 branches have accumulated in the 16 days since.** The condition that
+  motivated the first prune is rebuilding at ~9/day.
+- The check reads **OK today** (103 open items, 150 branches) because the S162/
+  S163 passes cleared the post-prune backlog — not because it is structurally
+  green.
+
+**§1's own evidence argues against §1's verdict.** The 7 hits included
+`feature/services-lens` — a lens shipped in July, still listed as open work,
+which the 15-item hand sample had missed entirely. That is the check earning its
+keep, once, at the only moment it can: just after a prune.
+
+**The real defect is SCHEDULING, not existence.** Wired into the monthly digest,
+it reports green every month until a prune, then dumps one batch — which is why
+the "stock read as flow" diagnosis felt right. But the correction that follows
+is *fire it when its input is generated*, not *delete it*. Disposition: **KEPT
+as-is** (option 1 of 3, Peter, 2026-09-16). Re-run the choice at the next prune,
+when moving it to a post-prune trigger becomes concrete rather than hypothetical.
+
+⚠️ **Process note, and the reason this section exists.** The deletion was
+proposed *by the model that then went to carry it out*, on the strength of an
+audit finding it had not re-measured — `measurements-that-favour-me`. The
+premise took two commands to falsify (`git ls-remote | wc -l` against
+`gh pr list --state merged`). **A cross-model audit is not exempt from
+re-measurement; it relocates the bias, it does not remove it.** Related: the
+same audit's §2c, where Fable caught its own miscount the same way.
 
 Secondary, unchanged by the fix: the `docs/` exclusion. 82 of the 145 merged
 branches since #291 (57%) are `docs/*` — the exclusion hides the majority of
@@ -265,9 +305,14 @@ to prevent, one level up.
 
 ## 7. Recommendations, ranked by what they cost
 
-1. **Repo setting: enable *Automatically delete head branches*** — gives
+1. ~~**Repo setting: enable *Automatically delete head branches*** — gives
    `check_todo_branch_refs` an input and retires the manual prune. Or delete the
-   check. (Peter's call; one click either way.)
+   check. (Peter's call; one click either way.)~~ ⚠️ **WITHDRAWN 2026-09-16
+   (S165) — the premise was wrong (§1a): the check already has an input (the
+   prune). Disposition: KEPT as-is, no repo setting changed.** Note also that
+   auto-delete would not have helped the stranding problem it was half-sold on:
+   `git push` silently RECREATES a deleted remote branch, so a post-merge push
+   strands exactly as before.
 2. **`handoff_gap`: SessionEnd → plain text on stderr, drop `2>/dev/null`**;
    then one `/compact` with a gap present to settle PreCompact. Until then,
    soften `CLAUDE.md`'s "the hooks … name the commits" to what is verified.

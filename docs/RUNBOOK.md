@@ -208,8 +208,17 @@ close it when you have re-decided, not to tidy the list.
 
 **What it is:** the monthly digest scanned `TODO.md`'s OPEN items for backtick'd
 branch names (`feature/x`, `fix/y`) and found one that is no longer on origin.
-The branch was merged and deleted, so whatever the item says is sitting on it is
-not sitting there.
+Whatever the item says is sitting on that branch is not sitting there.
+
+⚠️ **This row's input is a PRUNE, not a merge — expect one BATCH then silence.**
+`delete_branch_on_merge` is off, so merged branches stay on origin and a merge
+can never trip this. Bulk branch deletion is what trips it: the 2026-08-31
+`chore/branch-prune` (#291) removed ~287 branches and orphaned the 7 items this
+row was built from. **So a long run of green is the expected shape, and the row
+is worth the most in the digest right after you prune.** Do not read a green
+month as evidence the check is broken — S164's audit did, called it an L0 fail
+on the premise that the trigger could not occur, and the verdict was reversed
+2026-09-16 (S165) once the prune was counted as the input.
 
 **Why it exists:** a 2026-09-16 sample of 15 open items untouched >60 days found
 **7 stale — 47%**. `CLAUDE.md` warns an open item "has lagged reality twice", and
