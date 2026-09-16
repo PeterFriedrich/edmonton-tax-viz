@@ -546,6 +546,36 @@ archive"*) is not, and this span is 2,533 lines.
     the transient-vs-persistent reason in the step comment (the revenue-delta
     step above stays undeduped deliberately: that signal *is* per-event).
 
+- [ ] **⚠️ PROPOSE-FIRST (changes CI behaviour): the roll-year guard's BLIND
+  states reach nobody, and one of them fires every January.** Opened 2026-09-16
+  (S165) by the channel sweep — `docs/FINDINGS_guard_channels.md` §1. **Read the
+  finding before acting; do not "just add an issue step".**
+  - `check_roll_year_against_fir.py` is THE roll-year authority (its sibling
+    `check_year_alignment.py` is permanently `inconclusive` — Edmonton's
+    `Period of Coverage` is unmaintained, `DATA_ISSUES.md` issue 1). It has
+    **three blind states**: roll CSV absent and FIR anchor absent both exit **0
+    with `result=skipped`** (indistinguishable from a satisfied guard), and
+    "no FIR year fits" exits 4 to a `::warning::` in a **green** run.
+  - ⚠️ **The January one is not hypothetical — it is arithmetic.** FIR's filed
+    residential base grows **9.6–12.0%/yr**; `MAX_PLAUSIBLE_RESIDUAL` is **5%**;
+    Alberta files months after Edmonton rolls. So in early January no year fits
+    and the guard goes blind **in the exact window it exists to cover**. It
+    guards the project's most expensive recorded defect (~$69.5M understated,
+    S119).
+  - ⚠️ **The digest actively stands the reader down.** Its roll-year row says
+    *"not an action unless that guard disagrees"* — and a blind guard does not
+    disagree. `data/raw/` holds only `.gitkeep`, so the digest structurally
+    cannot consult the authority it defers to.
+  - **The pattern to copy is in-repo:** `check_revenue_deltas.py`'s
+    `BaselineUnavailable` path escalates to the issue channel with a comment
+    that is itself the argument. **Dedupe like `clamp-drift`, not per-event like
+    the delta issue** — a blind guard is a persistent state, not an event.
+  - **Fix §2 first** (one line, `refresh.yml`): the exit-4 message hardcodes
+    "metadata fetch/parse failed" and fires on the `stale-metadata` branch too,
+    so it contradicts the script's own line every week. Harmless while nothing
+    reads the channel; actively misleading the moment this item gives it a
+    reader.
+
 - [ ] **DEV HISTORY FOLLOW-ONS — three, none blocking (opened 2026-09-14, S156,
   after PR #389 merged).**
   - **Nothing verifies `dev_history.json` in CI.** The feature was verified by a
