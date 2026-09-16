@@ -2329,7 +2329,10 @@ archive"*) is not, and this span is 2,533 lines.
   introducing for the **2027–2030 zero-based budget cycle** — citing it well anchors the
   tool's credibility without rebuilding a citywide capital/debt model we have no data for.
   **Scope (locked — do NOT deviate without flagging):**
-  - Click→panel annotation (no sidebar exists — interaction TBD) on **three
+  - Click→panel annotation (⚠️ **STALE BLOCKER, corrected 2026-09-16: the pinned
+    panel SHIPPED** — `applyHoodMode` / `#hoodmode-btn`, and the temporal,
+    services and development lenses all have one. "No sidebar exists" was true
+    2026-07-08 and is not now; design against the existing panel) on **three
     specific named hoods only**, clearly labeled as a
     different methodology (multi-decade capital pro forma) from the revenue-per-acre /
     recurring-cost map.
@@ -2387,7 +2390,13 @@ archive"*) is not, and this span is 2,533 lines.
   open.alberta.ca FIR page 200 — D2/D5 data is Oracle-doable; only D0's bylaw
   map exhibit is edmonton.ca/laptop-gated.
   **⚠ INTERACTION PREREQ (all display tickets D1–D5-chart):** the app has **no
-  sidebar** — there is no click→panel surface at all; interaction today is
+  sidebar** — ⚠️ **THIS PREREQ IS DISCHARGED. Corrected 2026-09-16: it was true
+  2026-07-14 and a pinned click→panel surface has since shipped** —
+  `applyHoodMode`, `#hoodmode-btn`, a two-gesture touch gate (DECISIONS
+  2026-07-31), and panels on the temporal, services and development lenses.
+  **D1–D5 are NOT blocked on designing an interaction; they build into the
+  existing panel.** The original text, kept because it is what the tickets below
+  were written against: there is no click→panel surface at all; interaction today is
   hover-tooltips only (S54 learning). Every "sidebar entry / extend the existing
   sidebar UI" phrasing below is aspirational shorthand from the brief, NOT an
   existing surface. **A new click→panel interaction must be designed and decided
@@ -2401,8 +2410,9 @@ archive"*) is not, and this span is 2,533 lines.
     `CATCHMENT_HOODS` dict): **Blatchford under-covers** (catchment > mapped
     hood) and **Riverview 1.65** (maybe drop `RIVER'S EDGE`). Full writeup:
     `docs/FINDINGS_offsite_levy_catchments.md`. Detail below ↓
-  - [ ] **D0 detail — catchment polygon acquisition (RISK — source resolved
-    2026-07-15; approach was Peter's call).** The 12 fire-hall off-site levy
+  - [x] **D0 detail — catchment polygon acquisition — DONE (verified 2026-09-16:
+    `scripts/build_levy_catchments.py` exists, and
+    `docs/FINDINGS_offsite_levy_catchments.md` records the resolution).** The 12 fire-hall off-site levy
     catchments (names/costs/rates tabled in the brief). Probed 2026-07-14:
     **NOT on data.edmonton.ca** (Socrata catalog: zero hits) **nor ArcGIS Hub**
     (every "off-site levy" layer there is Calgary's).
@@ -2442,7 +2452,8 @@ archive"*) is not, and this span is 2,533 lines.
     developer $3.806B (drainage $2.351B + transportation $1.455B) vs
     City/Province $1.362B, net ~$1.4B 50-yr shortfall — 2016 projections,
     **label as projection, not actual**. **Needs the click→panel interaction
-    decided first (see INTERACTION PREREQ above) — no sidebar exists yet.**
+    decided first (see INTERACTION PREREQ above — ⚠️ **DISCHARGED 2026-09-16,
+    the panel exists**).**
   - [ ] **D3 — Blatchford contrast case study.** 4th panel entry, same content
     pattern: the infill counter-example to the 3 greenfield areas —
     self-liquidating "debt recoverable" financing (Policy C597A), DESS
@@ -2653,7 +2664,9 @@ archive"*) is not, and this span is 2,533 lines.
     + screenshot); UI.md updated. **PR #9 merged + deployed** (run 28646374983;
     deploy step needed one transient-error rerun); live site verified serving
     the new code.
-  - [ ] **More service layers (water / drainage / transit / …).** Each needs its
+  - [x] **More service layers — DONE (verified 2026-09-16: `roads`, `fire`,
+    `water`, `storm`, `transit`, `bike` all ship in `METRICS`, each with a
+    `src/load_*.py`).** Each needed its
     own SPEC_services section (dataset, filters, locked decisions), a
     per-hood supply column, and a slim web export.
     - [x] ~~**Transit lens**~~ — BUILT 2026-07-11 (Peter's call, AMENDS the
@@ -2696,7 +2709,12 @@ archive"*) is not, and this span is 2,533 lines.
       **PR #33 merged (`e0da845`) + deployed 2026-07-10** (refresh run
       29099791508 green → auto-refresh `e8f58b4`; github-pages deploy
       success; live-verified 27/27 vs the Pages URL).
-    - [ ] **V2 — combined "modeled city service cost per acre".** One
+    - [x] **V2 — combined "modeled city service cost per acre" — CLOSED AS
+      SUPERSEDED (verified 2026-09-16).** `svc_cost_per_acre` was built and then
+      **RETIRED 2026-09-05** (`DECISIONS.md`: the roads+fire composite, its
+      Services row and its Ratio denominator all removed; the cost side publishes
+      DISJOINT per-term columns instead — `cost_roads_ops_per_acre` etc.).
+      **Do not rebuild it.** Original design: one
       denominator = road metres × roadway O&M+renewal $/m/yr + fire events ×
       (Fire Rescue operating budget ÷ citywide dispatches). Labeled MODELED,
       "roads + fire only", never "total city cost". Design locked in
@@ -2771,8 +2789,10 @@ archive"*) is not, and this span is 2,533 lines.
       - [ ] **January task**: bump `FIRE_YEARS` (main.py) AND the
         2023–2025 wording in the fire blurb + legend (`web/index.html`).
     - [ ] **Utility cost lenses — SPEC'd 2026-07-05 (`docs/SPEC_utilities.md`);
-      stormwater DECIDED first (Peter) and its v1 PIPELINE BUILT same day on
-      `feature/stormwater-lens` (unmerged).** Five candidates in three
+      stormwater DECIDED first (Peter) and its v1 pipeline built same day.
+      ⚠️ **"unmerged on `feature/stormwater-lens`" is STALE (corrected
+      2026-09-16): `src/load_stormwater.py` is on master and the branch is gone.**
+      The REST of this item is genuinely open.** Five candidates in three
       fidelity tiers, from Peter's methods doc
       (`docs/utility_cost_estimation_lens_methods.md` — verified 2025/2026
       tariffs; rate numbers live there). All outputs MODELED, not billed.
@@ -2978,7 +2998,8 @@ archive"*) is not, and this span is 2,533 lines.
   - [x] ~~**Heartbeat watch:**~~ DONE 2026-07-26 — didn't wait for it to sleep;
     added the repo-scoped PAT (with fallback) *plus* a client-side staleness
     banner. Same item as P2.2 above; see there for the remaining manual step.
-  - [ ] Optional tidy: delete merged branches on origin (`feature/phase2-web`,
+  - [x] Optional tidy — DONE (verified 2026-09-16: all six already gone from
+    origin): delete merged branches (`feature/phase2-web`,
     `feature/deployment`, `chore/node24-actions`, and the three audit-session
     branches from 2026-07-01: `docs/data-integrity-audit-brief`,
     `fix/name-corrections-audit`, `feature/year-alignment-guard`).
