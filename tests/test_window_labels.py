@@ -116,8 +116,13 @@ def test_no_user_facing_string_spells_a_window_out(windows):
             continue
         code = re.sub(r"\s+//.*$", "", line)
         for key, (a, b) in windows.items():
-            if f"{a}–{b}" in code:
-                offenders.append(f"  line {n}: {key} ({a}–{b}) — {line.strip()[:90]}")
+            # BOTH spellings. ⚠️ The abbreviated one was added 2026-09-16: the Infill
+            # blurb carried a literal "2021–25" and this guard — written for exactly
+            # that defect (F4) — matched only the four-digit form, so it stayed green
+            # over the label it existed to protect. `WIN_SHORT` now renders it.
+            for spelled in (f"{a}–{b}", f"{a}–{str(b)[2:]}"):
+                if spelled in code:
+                    offenders.append(f"  line {n}: {key} ({spelled}) — {line.strip()[:90]}")
     assert not offenders, (
         "A year range is spelled out instead of read from WINDOWS. Use "
         "`${WIN.<key>}` in JS, or a {{<key>}} placeholder in static markup:\n"

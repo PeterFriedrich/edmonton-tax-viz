@@ -11,7 +11,15 @@ REPO = Path(__file__).resolve().parent.parent
 # Values are the real ones, which keeps the expected strings recognisable:
 # 50 / 9.32 rounds to 5, so the words claim reads "five times".
 COSTS = {
-    "roadway_om_renewal": {"value": 50},
+    # ⚠️ Values here are DELIBERATELY NOT the shipped ones (50 vs 600000/1900000 are,
+    # but the point is the fixture must carry every field CLAIMS reads — a missing
+    # one is a collection error, not a silent pass). The `source` block backs the two
+    # published per-km figures the roadslife blurb quotes, added 2026-09-16.
+    "roadway_om_renewal": {
+        "value": 50,
+        "source": {"published_figures_per_km_neighbourhood_road": {
+            "operate_and_maintain": 600_000, "renew_and_replace": 1_900_000}},
+    },
     "roadway_ops": {
         "value": 9.32,
         "components_per_km_per_year": {"maintenance": 5970, "snow_and_ice_control": 3350},

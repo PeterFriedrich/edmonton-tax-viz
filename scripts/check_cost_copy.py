@@ -125,6 +125,25 @@ CLAIMS = [
         "label": "Transit cost — the ETS bus+LRT gross operating budget",
         "expect": lambda c: _millions(c["transit_ets"]["operating_budget_gross_annual"]),
     },
+    # The two City figures the $50/m/yr lifecycle rate is DERIVED from, quoted in the
+    # roadslife blurb on the public build. ⚠️ Added 2026-09-16: the audit of
+    # 2026-09-15 found both movable with 892 tests green and this guard at exit 0,
+    # from either side — the JSON or the copy. They matter more than a quoted rate,
+    # because the derivation ($600k + $1.9M over a 50-year life) is what a reader is
+    # being invited to check, and the unit behind them is itself still unconfirmed
+    # (city_unit_costs.json roadway_om_renewal.⚠️_unit_unconfirmed_2026_09_09).
+    {
+        "label": "Roads lifecycle — the City's published per-km operate-and-maintain figure",
+        "expect": lambda c: _money(
+            c["roadway_om_renewal"]["source"]
+             ["published_figures_per_km_neighbourhood_road"]["operate_and_maintain"]),
+    },
+    {
+        "label": "Roads lifecycle — the City's published per-km renew-and-replace figure",
+        "expect": lambda c: _money(
+            c["roadway_om_renewal"]["source"]
+             ["published_figures_per_km_neighbourhood_road"]["renew_and_replace"]),
+    },
     # Not a rate but a RELATIONSHIP between two of them, stated in WORDS in three
     # separate places (a blurb, the panel note, the methods pod). A rate change
     # moves this without touching any single quoted figure, so none of the rows
