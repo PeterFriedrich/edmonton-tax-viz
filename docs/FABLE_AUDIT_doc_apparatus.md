@@ -54,10 +54,12 @@ What happened to it:
    138 → 2,219 chars). ⚠️ The review's diagnosis was **confirmed** here and then
    dismissed as *"already measured and deliberately blessed"*; Peter's call on it
    is still open. Do not repeat that move.
-3. `output/retrieval-log/` **or `~/.claude/retrieval-log.jsonl`** — the read-frequency
-   log, started 2026-09-16 (rec #1, the only one executed before this brief).
-   **Check its date range first.** Under ~2 weeks it cannot settle anything; say so
-   and use it for nothing.
+3. **`python tools/retrieval_report.py`** — the read-frequency table (rec #1, the
+   only recommendation executed before this brief; hook in `.claude/settings.json`,
+   raw log `~/.claude/retrieval-log.jsonl`). **It prints its own date range first and
+   warns when it is too young.** Under ~2 weeks it cannot settle anything: say so and
+   use it for nothing. ⚠️ A zero-read row is a prune *candidate*, never a verdict —
+   the script's docstring says why.
 4. `docs/AUDIT_LEDGER.md` — this file's own row, and the rows for the audits whose
    output volume is under review.
 
@@ -94,18 +96,24 @@ he can decide. Do not "implement" them.
 
 The last run failed by producing a document. These rules forbid that shape:
 
-1. **Disposition per row, one of three words:** `EXECUTED` (the change is in the
-   working tree), `DECIDED-NO` (argued and rejected, with the argument), or
-   `MEASUREMENT-PENDING` (named, with the measurement that would settle it and
-   when it will exist).
+1. **Disposition per row, one of four words:** `EXECUTED` (the change is in the
+   working tree), `DECIDED-NO` (argued and rejected, with the argument),
+   `MEASUREMENT-PENDING` (named, with the measurement that would settle it and when
+   it will exist), or `PETER-DECIDES` (§2 says recs 4 and 5 delete or restructure
+   his records; you cannot execute those).
+   ⚠️ **`PETER-DECIDES` is not an escape hatch, and its FORM is fixed**: a table of
+   **2–4 concrete options**, each with what it costs, what it loses, and your
+   recommendation — not an essay, and never a row you simply declined to think
+   about. If you can dispose a row yourself, you must.
 2. ⚠️ **A row parked in the backlog for a later session counts as NOT DISPOSED.** That is the
    move this project keeps making — F1 was confirmed by three sessions and fixed by
    none, and the 2026-09-15 audit added four more such rows on the day it was told
    this was the failure mode.
-3. **The findings write-up may not exceed the lines of code and config it changes.**
-   Count both before you write. If the honest answer is that nothing should change,
-   the write-up is a paragraph, not a document — and *that is a valid outcome*,
-   reported as such.
+3. **The findings write-up may not exceed the lines of code and config it changes**,
+   counting a `PETER-DECIDES` option table as if it were the code it proposes.
+   Count before you write. If the honest answer is that nothing should change, the
+   write-up is a paragraph, not a document — and *that is a valid outcome*, reported
+   as such.
 4. **Prefer editing an existing doc to creating one.** A new `FINDINGS_*.md` for an
    audit about doc volume needs an argument.
 
