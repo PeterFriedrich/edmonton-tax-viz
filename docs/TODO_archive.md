@@ -8,6 +8,52 @@ Items are verbatim as they were closed, newest-moved first in the order they app
 
 ---
 
+- [x] **Residential-only lens — SUPERSEDED, and the built version was REMOVED.**
+  ⚠️ **Verified 2026-09-16: do NOT rebuild this.** Every sub-item below shipped,
+  and the fade lens was then deleted 2026-07-26 as redundant with the Residential
+  revenue cut (`DECISIONS.md`; `state.residential` and `#lens` are gone from
+  `web/index.html` — 0 occurrences). The goal — a residential-to-residential
+  comparison — is met by the Residential metric, not by fading prisms. Original:
+  Goal: a UI filter that fades non-residential/downtown prisms so councillors see a
+  pure residential-to-residential comparison (mature infill vs. greenfield suburb) —
+  no class-rate differential or Downtown outlier confounding the scale. The narrative
+  "third lens" after sqrt-colour (orient) + linear-height (the Downtown reveal), which
+  the current single view already fuses.
+  **Backend done (2026-07-01, commit `02704b6`)** — only the frontend remains:
+  - [x] Split `dev` → `res` / `nonres` in `ZONE_CATEGORY` (by each code's
+    `description`; 28 housing codes → res, 39 commercial/industrial/mixed/DC → nonres).
+  - [x] Emit `frac_residential` + `is_residential` (≥0.50 of zoned area) per hood.
+    Validated on real data: 226 residential, 0 overlap with set-aside.
+  - [x] Added to `ZONING_COLUMNS` + `SLIM_COLUMNS`; regenerated GeoJSON carries both.
+  - [x] Frontend filter (`web/index.html`): "Residential only" toggle fades
+    non-residential hoods translucent (fill α70 / roof-edge α45 — **visible but
+    see-through**, Peter's call), residential hoods keep full colour. Off by
+    default; preserves metric/palette state. *(Not visually verified — no headless
+    browser; preview `cd web && python -m http.server 8777`.)*
+  Note: `is_residential` is a display filter, orthogonal to `is_set_aside` (grey);
+  a set-aside hood is not residential. Keep the two flags independent.
+
+
+- [x] **Colour scale for revenue/value — SUPERSEDED 2026-09-16.** The clamp
+  question this item asks was decided that day: the ground-acre clamps STAY
+  hand-set literals (the lot and grid scales already track a live p97.5), and
+  the drift is guarded instead — `scripts/check_colour_clamps.py` fails the
+  merge gate if the legend and the clamp disagree, and warns each refresh when
+  the saturating share leaves 1–6%. ⚠️ **The "saturated plateau" this item calls
+  a fake threshold was re-measured 2026-09-16 and is real and deliberate**: the
+  tail is 5.1× the clamp (DOWNTOWN $256,564), so no clamp choice separates the
+  top hoods. `DECISIONS.md` 2026-09-16. Original text:
+  clamp ($50k / $4M, ~p97) creates a visible saturated plateau that reads as a fake
+  threshold. Once exempt is split, re-run the skew check on the status-defined
+  taxable set: if it's ≈ log-normal (likely), use `log` for the taxable scale; `sqrt`
+  is the fallback if it stays mixed. Height stays LINEAR (locked honesty choice).
+  *Colour ramps in `web/index.html`:* 3 swappable ramps (Inferno / Glow /
+  Cividis) + palette switcher. **Default = Inferno (picked 2026-07-01).** Cividis
+  retained in the switcher as a liked alternative + the colourblind-friendly
+  option (see Visual polish → colourblind (cividis) mode below).
+  *Not yet built:* scale toggle (linear+clamp / sqrt / log) for visual comparison.
+
+
 - [x] **`$50k` revenue clamp — DECIDED AND GUARDED 2026-09-16 (S162).** Peter's
   call: it stays a **stability literal** (the lot and grid scales already track a
   live p97.5; the landing view must not). `scripts/check_colour_clamps.py` splits
