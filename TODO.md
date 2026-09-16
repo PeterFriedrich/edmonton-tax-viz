@@ -2542,7 +2542,10 @@ archive"*) is not, and this span is 2,533 lines.
       verify-development 54/54; +6 pytest (334).
     - **Lens A polish (remaining):** the `occupancy_granted_date` completed-builds
       variant (DATA.md §10 — only populated residential ≥2022 / non-res ≥2024).
-  - [ ] **Lens B — Suitability × Activity mismatch, PHASE 2.** Signed diverging
+  - [ ] **Lens B — Suitability × Activity mismatch, PHASE 2 — SHIPPED; only the
+    optional refinement below is still open** (verified 2026-09-16: `far` is
+    served, `tools/profiling/verify-infill.js` exists, the Infill view is live).
+    Signed diverging
     metric `z(suitability) − z(activity)`: two views off one scale — suitable-
     but-quiet (opportunity) AND less-suitable-but-building (Peter's flip).
     - [x] **Suitability proxy LOCKED 2026-07-13 (Peter): built FAR** (`far` = Σ
@@ -2591,9 +2594,19 @@ archive"*) is not, and this span is 2,533 lines.
     FINDINGS_growth_servicing made spatial. `construction_value` NOT used here.
     Depends on Lens A + V2 unit costs.
 
-- [ ] **Views & lenses follow-ons (Peter, 2026-07-02).** Three asks on top of the
+- [ ] **Views & lenses follow-ons — its own three asks are all DONE (verified
+  2026-09-16), but this stays OPEN because live work is nested under it**
+  (utility cost lenses, the deferred Rider T question) — closing it would
+  archive that work out of sight, which `tools/todo_archive.py` refused to do.
+  ⚠️ The first ask has since been UNDONE — see its note.
+  Three asks on top of the then-shipped Money | Roads | Ratio views:
+  below are checked).** ⚠️ The first one has since been UNDONE — see its note.
+  Three asks on top of the then-shipped Money | Roads | Ratio views:
   shipped Money | Roads | Ratio views:
-  - [x] ~~**Residential-only lens in the Ratio view.**~~ — done 2026-07-03:
+  - [x] ~~**Residential-only lens in the Ratio view.**~~ ⚠️ **BUILT 2026-07-03 and
+    REMOVED 2026-07-26** (redundant with the Residential revenue cut); the cited
+    `verify-lens.js` is deleted. Kept as the record of what happened, not as a
+    description of the app. Done 2026-07-03:
     non-residential kept hoods fade to the lens grey (height untouched), log
     colour anchors rescale to the residential kept subset (≤ $258 … $916+ vs
     $264 … $3,253 — FINDINGS §6.4 addendum), lens button disables in the Roads
@@ -2677,7 +2690,12 @@ archive"*) is not, and this span is 2,533 lines.
         events/yr), composite on all 406 exported hoods, median
         $3,302/acre/yr (fire-dominated downtown ~$34k, road-dominated
         suburbs ~$3.4k — the allocation caveat is visible in the data).
-      - [ ] **Display (UI) for the composite** — **DECIDED 2026-07-16
+      - [x] **Display (UI) for the composite — BUILT, then RETIRED. Verified
+        2026-09-16: `svc_cost_per_acre` has 0 occurrences in `web/index.html`.**
+        Both halves below shipped 2026-07-16 and both were removed 2026-09-05
+        (`DECISIONS.md`: the roads+fire composite, its Services row AND the Ratio
+        "Per service $" denominator). ⚠️ **Closed as superseded, not as done — do
+        not rebuild either.** Original decision:
         (Peter): BOTH, staged** (Services checkbox first, then a Ratio-view
         coverage denominator). Carry the fixed-budget-allocation + "roads +
         fire only, never total city cost" caveats in copy.
@@ -2816,7 +2834,10 @@ archive"*) is not, and this span is 2,533 lines.
         matching an all-sector actual could be a compensating 115 GJ/dwelling
         overcount. Parked as-is with the Rider-T caveat documented; no model
         change for now.
-      - [ ] Remaining SPEC open decisions: (3) modeled $ in the "total
+      - [x] Remaining SPEC open decisions — **both resolved (verified 2026-09-16).**
+        (3) modeled $ in the "total services" denominator is **moot**: the
+        composite it would have fed was retired 2026-09-05. (4) was already marked
+        SETTLED in place. Original:
         services" denominator (recommended: not yet); (4) franchise-fee
         revenue columns only with their lenses — SETTLED (columns only,
         built above).
@@ -2890,37 +2911,6 @@ archive"*) is not, and this span is 2,533 lines.
     power centres — South Edmonton Common, Terra Losa, Mill Woods Town Centre,
     Calgary Trail South, Summerlea, Place LaRue, McCauley, Strathcona Junction.
 
-- [ ] **Residential-only lens (Phase 2 view — needs a pipeline extension first).**
-  Goal: a UI filter that fades non-residential/downtown prisms so councillors see a
-  pure residential-to-residential comparison (mature infill vs. greenfield suburb) —
-  no class-rate differential or Downtown outlier confounding the scale. The narrative
-  "third lens" after sqrt-colour (orient) + linear-height (the Downtown reveal), which
-  the current single view already fuses.
-  **Backend done (2026-07-01, commit `02704b6`)** — only the frontend remains:
-  - [x] Split `dev` → `res` / `nonres` in `ZONE_CATEGORY` (by each code's
-    `description`; 28 housing codes → res, 39 commercial/industrial/mixed/DC → nonres).
-  - [x] Emit `frac_residential` + `is_residential` (≥0.50 of zoned area) per hood.
-    Validated on real data: 226 residential, 0 overlap with set-aside.
-  - [x] Added to `ZONING_COLUMNS` + `SLIM_COLUMNS`; regenerated GeoJSON carries both.
-  - [x] Frontend filter (`web/index.html`): "Residential only" toggle fades
-    non-residential hoods translucent (fill α70 / roof-edge α45 — **visible but
-    see-through**, Peter's call), residential hoods keep full colour. Off by
-    default; preserves metric/palette state. *(Not visually verified — no headless
-    browser; preview `cd web && python -m http.server 8777`.)*
-  Note: `is_residential` is a display filter, orthogonal to `is_set_aside` (grey);
-  a set-aside hood is not residential. Keep the two flags independent.
-
-- [ ] **Colour scale for revenue/value — decide after exempt split.** Current hard
-  clamp ($50k / $4M, ~p97) creates a visible saturated plateau that reads as a fake
-  threshold. Once exempt is split, re-run the skew check on the status-defined
-  taxable set: if it's ≈ log-normal (likely), use `log` for the taxable scale; `sqrt`
-  is the fallback if it stays mixed. Height stays LINEAR (locked honesty choice).
-  *Colour ramps in `web/index.html`:* 3 swappable ramps (Inferno / Glow /
-  Cividis) + palette switcher. **Default = Inferno (picked 2026-07-01).** Cividis
-  retained in the switcher as a liked alternative + the colourblind-friendly
-  option (see Visual polish → colourblind (cividis) mode below).
-  *Not yet built:* scale toggle (linear+clamp / sqrt / log) for visual comparison.
-
 - [ ] **Deployment follow-ons (deferred, see `docs/SPEC_deployment.md`):**
   - [x] ~~Year-mismatch **guard**~~ — built 2026-07-01 (`scripts/check_year_alignment.py`
     + `refresh.yml` wiring): detects the roll year from Socrata metadata; on mismatch
@@ -2977,7 +2967,10 @@ archive"*) is not, and this span is 2,533 lines.
   - [ ] top-cap edge colour `TOP_EDGE_COLOR=[40,95,120,215]` in `web/index.html`
     ("not happy yet")
   - [ ] deferred zoom-out (~10.2→~9.4) + proportional `ELEVATION_SCALE` bundle
-  - [ ] light mode + colourblind (cividis) mode
+  - [ ] light mode — ⚠️ **the colourblind half is DONE (verified 2026-09-16:
+    `cividis` is a named palette in `web/index.html`, "perceptually uniform +
+    colour-blind safe"); only LIGHT MODE remains** (no `prefers-color-scheme` in
+    the file)
 
 - [ ] **(Optional) exploration notebook** — work `FINDINGS_assessment_classes.md`'s
   "to visualize" list (value vs levy share by class; split-class distribution;
@@ -3019,6 +3012,9 @@ archive"*) is not, and this span is 2,533 lines.
 ## Done
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
+
+- [x] **Residential-only lens — SUPERSEDED, and the built version was REMOVED.** — SHIPPED 2026-07-26 · `docs/TODO_archive.md`
+- [x] **Colour scale for revenue/value — SUPERSEDED 2026-09-16.** — 2026-09-16 · `docs/TODO_archive.md`
 
 - [x] **`$50k` revenue clamp — DECIDED AND GUARDED 2026-09-16 (S162).** — DECIDED 2026-09-16 · `docs/TODO_archive.md`
 - [x] **Services lens — road supply — SHIPPED (verified 2026-09-16: `road_m_per_acre` is served on all 406 hoods, the roads ground layer and Services view are** — SHIPPED 2026-09-16 · `docs/TODO_archive.md`
