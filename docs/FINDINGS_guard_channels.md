@@ -19,18 +19,79 @@ is therefore stated as a falsifiable mechanism with its own disconfirming
 evidence named, and **one hypothesis I formed during the run is recorded as
 FALSIFIED in §3** rather than dropped.
 
-## 0. Verdict
+## 0. Verdict — ⚠️ CORRECTED 2026-09-16, SAME DAY, after Peter asked "didn't we already settle 1"
+
+**He was right. §1 was largely settled ground, re-derived and published as new.
+Its HIGH is WITHDRAWN.** The corrected verdict:
 
 | | |
 |---|---|
-| **HIGH — 1** | The authoritative roll-year guard's BLIND states have no reader, and one of them occurs **by construction every January** (§1) |
-| **LOW — 1** | `refresh.yml`'s inconclusive message names the wrong cause, every week (§2) |
+| ~~**HIGH — 1**~~ | **WITHDRAWN (§0a).** The January blindness is documented in `RUNBOOK.md` §1; exit 4's warn-only treatment is a decision taken on this guard in `DECISIONS.md` 2026-08-25 |
+| **LOW — 1** | `refresh.yml`'s inconclusive message names the wrong cause, every week (§2) — **stands, genuinely unreported** |
+| **LOW — 2 (new)** | `RUNBOOK.md` §2's advice on that warning is **stale** (§0a) |
+| **LATENT — 1** | The two exit-**0** blind states appear unaddressed (§0a) — but need a file to go missing |
 | **Swept clean** | §3 — including one hypothesis of mine that measured false |
 | **Not covered** | §4 |
 
+## 0a. The correction, and how the run got there
+
+**What §1 claimed was new and is not:**
+
+- *"The guard goes blind every January."* — `RUNBOOK.md` **§1, the January
+  year-roll checklist**, already says: *"⚠️ `data/fir_tax_base.json` **must know
+  the new year** or the check has nothing to match against — refresh it first
+  with `scripts/fetch_fir_tax_base.py`."* The behaviour is anticipated and has a
+  checklist step. **Not a finding.**
+- *"Warn-only on a green run reaches nobody."* — `DECISIONS.md` **2026-08-25**
+  makes that exact argument about **this guard**, and acts on it: it rejects
+  warn-only for exit 3 *"(a warning in a green run reaches nobody — the same
+  channel that hid the original roll)"*, chooses the full hold, and frames exit 4
+  as the bounded safe default (*"the script returns 4, never 3, unless another
+  year fits within 5% **and** beats the runner-up by 3%"*). It also rejects
+  filing an issue, with a reason. **Exit 4's treatment is a decision, not an
+  oversight.**
+- The log channel itself is listed in `RUNBOOK.md` §2 under *"Loud warnings worth
+  a look even on green runs"*.
+
+**How the run missed it.** `DECISIONS.md` was grepped for `inconclusive`. The
+2026-08-25 row is *about exit 3*, so it did not match, and the row body — where
+the reasoning lives — went unread. ⚠️ **A grep over an append-only index is not
+a check of whether something is settled; the index is one line per decision and
+points elsewhere for the reasoning.** `CLAUDE.md` says to *check
+`DECISIONS.md` before re-opening anything that feels "already settled"* — this
+run checked it in a way that could not have found the answer.
+
+⚠️ **And the §1 write-up did not merely miss it — it read as a discovery.** The
+same guard, the same channel, the same argument were all one row away. This is
+`measurements-that-favour-me`: a dramatic finding got less scrutiny than a dull
+one would have, and the self-audit caveat in the header was written and then not
+acted on.
+
+**What survives from §1, downgraded:**
+
+- **LOW-2 (new, real):** `RUNBOOK.md` §2 describes the inconclusive warning as
+  *"metadata fetch failed; **fine once, investigate if it repeats**"*. It has
+  repeated **every weekly run for months** — by design, since Edmonton's field
+  went stale — so that advice now sends a reader to investigate a non-problem,
+  and names the wrong cause while doing it (same defect as §2). Fixed in this
+  correction.
+- **LATENT-1:** the two exit-**0** blind states (roll CSV absent, FIR anchor
+  absent → `result=skipped`, green, silent). 2026-08-25 settles exit 3 and frames
+  exit 4; nothing found addresses exit 0. Both need a committed file to go
+  missing, so this is latent, not scheduled. **Reported without recommendation.**
+
+**What is NOT withdrawn:** §2 and §3 stand as written.
+
 ---
 
-## 1. HIGH — the roll-year guard goes blind every January, and says so only into a log
+## 1. ~~HIGH~~ — the roll-year guard goes blind every January, and says so only into a log
+
+> ⚠️ **WITHDRAWN — read §0a first.** The mechanism below is accurately
+> described; the claim that it is *unexamined* is false. `RUNBOOK.md` §1
+> anticipates the January case with a checklist step, and `DECISIONS.md`
+> 2026-08-25 settles the warn-only question on this guard. Left in place
+> unedited, because a withdrawn finding that gets quietly deleted teaches the
+> next reader nothing.
 
 ### The guard, and why it is the authority
 
