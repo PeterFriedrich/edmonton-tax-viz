@@ -2741,18 +2741,9 @@ archive"*) is not, and this span is 2,533 lines.
         DECIDED 2026-07-06: **sqrt** (raw skew +7.86, the project's worst;
         clamp/median 5.8×; linear crammed 59% of hoods into the ramp's
         bottom fifth; log undefined on the 5 zero hoods. FINDINGS §6.5).
-      - [ ] **January task**: bump `FIRE_YEARS` (main.py). ⚠️ **This ticket is
-        the STALE, PARTIAL copy — corrected 2026-09-16; do the roll from
-        `RUNBOOK.md` §1 step 4, not from here.** Two things moved since it was
-        written: the three pins roll TOGETHER (`FIRE_YEARS`, `PERMIT_YEARS`,
-        `PERMIT_YEARS_RECENT`; `PERMIT_YEARS_LONG` is derived and needs no
-        edit), and the reader-facing year ranges stopped being loose strings —
-        the `WINDOWS` block in `web/index.html` (added 2026-08-30 after audit
-        F4 found ~15 labels scheduled to go quietly wrong) is the single place
-        the wording lives. Bumping `FIRE_YEARS` and hunting "2023–2025" in the
-        blurb, as written here, does 1 pin of 3 and edits copy that is now
-        generated. `tests/test_window_labels.py` catches the copy half; the
-        drift guard catches the pin half.
+      - [ ] **January task**: the fire-years roll → **`RUNBOOK.md` §1 step 4**,
+        which owns all three pins and the `WINDOWS` copy. (Local instructions
+        deleted 2026-09-16: they were a stale partial copy doing 1 pin of 3.)
     - [ ] **Utility cost lenses — SPEC'd 2026-07-05 (`docs/SPEC_utilities.md`);
       stormwater DECIDED first (Peter) and its v1 pipeline built same day.
       ⚠️ **"unmerged on `feature/stormwater-lens`" is STALE (corrected
@@ -2973,19 +2964,10 @@ archive"*) is not, and this span is 2,533 lines.
     identical municipal rate today, differs if `rate_type` ever changes (audit T1).
 
 - [ ] **Visual polish** (pre-existing, untouched):
-  - [ ] top-cap edge colour ("not happy yet"). ⚠️ **Symbol corrected
-    2026-09-16: `TOP_EDGE_COLOR` no longer exists** — the swappable-ramp
-    palette switcher moved it to `RAMPS[<ramp>].edge`, so there are now
-    **three** edge colours, not one. The cited `[40,95,120,215]` survives as
-    the FIRST ramp's; the other two are `[70,90,120,200]` and `[30,50,80,210]`.
-    Consumed by the `top-edges` `PathLayer` via `RAMPS[state.ramp].edge`.
-    Retuning one ramp and leaving two is the failure mode here.
-  - [ ] deferred zoom-out (~10.2→~9.4) + proportional elevation-scale bundle.
-    ⚠️ **Symbol corrected 2026-09-16: there is no global `ELEVATION_SCALE`** —
-    it is per-scale `elevationScale` in the metric configs (0.033 on the three
-    money metrics, 0.0006, 8220, plus ~18 computed at runtime), so
-    "proportional" means scaling a SET, and the zoom half is what stayed
-    simple (`HOME`/`HOME_2D` are still `zoom: 10.2`).
+  - [ ] top-cap edge colour ("not happy yet") — `RAMPS[<ramp>].edge`, **all
+    three ramps** (was `TOP_EDGE_COLOR`, one value, until the palette switcher).
+  - [ ] deferred zoom-out (`HOME`/`HOME_2D` ~10.2→~9.4) + the per-metric
+    `elevationScale` values scaled with it (no global `ELEVATION_SCALE`).
   - [ ] light mode — ⚠️ **the colourblind half is DONE (verified 2026-09-16:
     `cividis` is a named palette in `web/index.html`, "perceptually uniform +
     colour-blind safe"); only LIGHT MODE remains** (no `prefers-color-scheme` in
@@ -2993,12 +2975,9 @@ archive"*) is not, and this span is 2,533 lines.
 
 - [ ] **(Optional) exploration notebook** — work `FINDINGS_assessment_classes.md`'s
   "to visualize" list (value vs levy share by class; split-class distribution;
-  per-neighbourhood exempt share). Notebooks go in `notebooks/exploration/`.
-  ⚠️ **Corrected 2026-09-16: the old "per global CLAUDE.md, use the Jupyter MCP
-  server tools, not NotebookEdit" line was false in both halves** — the global
-  `/home/opc/CLAUDE.md` says nothing about Jupyter or MCP, and **no MCP server
-  is configured** (none global, none per-project, no `.mcp.json`). It pointed
-  away from `NotebookEdit`, which is the tool that actually works here.
+  per-neighbourhood exempt share). Notebooks go in `notebooks/exploration/`;
+  use `NotebookEdit`. (A "use the Jupyter MCP server tools, not NotebookEdit"
+  line was deleted 2026-09-16 — no such rule, and no MCP server is configured.)
 
 - [ ] **PROPOSED (needs Peter's yes/no): the lens registry — `docs/PROPOSAL_lens_registry.md`.** ⚠️ **Nothing built; do not start it, and do not start it alongside the fix-in-place PR below.** Finishes the registry `VIEWS` already is, moving per-lens decisions out of the dispatchers field by field (title/blurb → legend → layers → tooltip → controls → ensure), six independently shippable PRs each verified by an **identical** render.
   - **The measured problem: 28 symbols branch on lens identity** (`applyView` 50 branches, `refreshLegend` 8, `buildViewLayers` 8, `viewTooltip` 7, `primaryRow` 7, `legendGradient` 6, plus a 22-symbol tail of 1–2 each). ⚠️ **The `the Lab` banner comment's own add-a-lens checklist names FIVE places — it undercounts by 5×**, and that is why lens work feels like it touches everything.
