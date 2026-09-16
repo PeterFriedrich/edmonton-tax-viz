@@ -195,6 +195,40 @@ silent** — check `gh run list`.
 | `web/` | — | the served site |
 | `data/raw/`, `data/processed/` | — | local snapshots; **never `Read` these** (`docs/TOKEN_EFFICIENCY.md`) |
 
+### Mass — what counts as our own source
+
+`.gitattributes` is the convention, and it is the only one: `linguist-vendored`
+for third-party code, `linguist-generated` for build output. Ask git rather than
+assembling a file list by hand —
+
+```bash
+git check-attr --all -- <path>          # is this ours?
+git ls-files | while read f; do git check-attr linguist-generated \
+  linguist-vendored -- "$f"; done | grep ': set$'         # everything excluded
+```
+
+⚠️ Match `: set$`, not `-v unspecified`. The latter also catches the one
+deliberate **`unset`** — `web/notebooks/index.html`, the hand-written landing
+page exempted from the generated rule beneath it — and reports 26 exclusions
+where there are 25.
+
+Under that convention (2026-09-16): **markdown 4,839 KB ÷ source 2,795 KB =
+1.73:1**, with 25 files / 20.8 MB excluded as vendored or generated. The
+markdown splits `docs/` 2,253 · `session-summary/` 2,127 (98% of it archived out
+of the loaded path) · `TODO.md` 261 · `data/` 158.
+
+⚠️ **This is a sanity check computed on request, NOT a tracked metric.** An
+outside review led with **0.68:1** — a figure this project supplied, which had
+counted vendored libraries and exported notebook HTML as hand-written code. The
+same repo then measured 1.79 and 1.98 depending only on which directories the
+denominator admitted. **A number that swings 3× on a packaging decision, with no
+prose changed, is measuring packaging.** Do not put a ceiling on it, do not track
+it turn-to-turn, and do not quote a figure from this section without re-running
+the commands above — that is the staleness this project keeps catching. The
+number worth watching instead is **what actually loads per session** (~294 KB,
+89% of it `TODO.md`): see `docs/external/REVIEW_doc_apparatus_2026-09-15_PREMISES.md`
+premises A2 and P10.
+
 ---
 
 ## 9. What this project deliberately does NOT use
