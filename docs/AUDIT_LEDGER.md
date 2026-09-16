@@ -76,7 +76,23 @@ Audits are framed top-down, fundamental decisions first (the
 
 ## Queued — briefed, not yet run
 
-_(none — the guard-burst brief executed 2026-09-16, row above)_
+- **`docs/FABLE_AUDIT_doc_growth.md`** — *should doc growth be instrumented at
+  all, and if so how?* Briefed 2026-09-16 (S165) for **Fable 5.1, fresh
+  session**. Prompted by Peter: *"did we at least have more automation for
+  telling if docs might be bloating over time? that seems to be our main manual
+  evaluation."* Factual answer is **no** — `tools/retrieval_report.py` is
+  invoked by nothing, sizes only the 4 loaded-path files, and stores no history;
+  no digest row watches repo mass. ⚠️ **The open question is whether that
+  absence is a defect or a decision already taken** (rec 9's ceiling was
+  DECIDED-NO 2026-09-16). **L0 is "is growth a problem here at all" and "build
+  nothing" is a first-class outcome.** ⚠️ **Three-layer conflict of interest,
+  declared in the brief's §1:** Opus 5 proposed the feature, produced every
+  number, and wrote the brief — in a session where it published **three claims
+  that were reversed** (`FINDINGS_guard_channels.md` §4). §2 is a hinge-fact
+  checkpoint demanding independent re-measurement first. ⚠️ **L1 is the sharpest
+  challenge and the brief concedes it has no answer:** recs 1/2/6 already await
+  the read-frequency data ~2026-09-30, which asks a strictly better question
+  than growth.
 
 ## Never audited (candidates, roughly ranked)
 
