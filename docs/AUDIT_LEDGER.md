@@ -304,3 +304,8 @@ a CAPTURE on real hardware** (the shelved `TODO.md` item), not an audit. What
     review.** The retrieval log exists because the review says judgement here cannot
     be trusted — weight it over any argument in the brief. A run that contests every
     premise and executes nothing has found the comfortable answer.
+    ✅ **Session A run 2026-09-16 (Fable 5.1)** — `docs/external/REVIEW_doc_apparatus_2026-09-15_PREMISES.md`:
+    A5, A7 hold; A1, A2, A3, A4, A6 fail; A8 fails for continuity; two added premises
+    (P9 stale-docs-bite-here HOLDS, P10 the loaded-path mass is `TODO.md` not handoffs).
+    Recs 2, 3, 8 survive; 1 done; 4, 5, 6, 7, 9 re-opened against corrected premises.
+    **Session B not started — Peter names the live rows.**
