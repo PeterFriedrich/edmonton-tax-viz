@@ -1343,11 +1343,13 @@ drift is documentation lagging the build:
    they exist only as "Also in the flow" paragraphs above, unlike stormwater and
    fire, which got full module sections when added. The paragraphs are accurate;
    the section depth is just inconsistent.
-2. **Testing section lists 5 test files; `tests/` has 33** — one per src module
+2. **Testing section lists 5 test files; `tests/` has 53** — one per src module
    plus `test_main.py`, `test_download_data.py`, `test_check_year_alignment.py`,
    `test_generate_status.py`, `test_vintage_report.py` and others. The "what to
-   test per module" lists were never extended past Phase 1. (Count re-measured
-   2026-08-06; the stated 18 was itself stale.)
+   test per module" lists were never extended past Phase 1. ⚠️ **This bullet's
+   own count has gone stale twice** (18 → 33 on 2026-08-06 → 53 on 2026-09-16).
+   Re-measure it (`ls tests/test_*.py | wc -l`) rather than citing it — a
+   hand-maintained count of a growing directory re-rots on its own schedule.
 3. **`join_and_calculate` "Outputs" block lists only the 7 core columns** — the
    implementation also carries every documented optional-merge column
    (`ZONING_COLUMNS`, `ROAD_COLUMNS`, `STORM_COLUMNS`, `FIRE_COLUMNS`,
