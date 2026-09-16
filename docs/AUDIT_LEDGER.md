@@ -378,8 +378,17 @@ a CAPTURE on real hardware** (the shelved `TODO.md` item), not an audit. What
   doc-only rationale found has no test. **The docs are the second carrier of
   executable invariants here, never the sole one.**
 
-**Verdict: DECIDED-NO as specified; routing-ablation redesign is Peter's call**
-(`DECISIONS.md` 2026-09-16, two rows — the second amends the first).
+**Verdict: rec P2 CLOSED ENTIRELY — all three variants DECIDED-NO**
+(`DECISIONS.md` 2026-09-16, three rows; each supersedes the one before).
+The redesign below is sound and was **not** run: Peter closed it **on scale, not
+design** — an ablation harness needs an n this project would have to manufacture,
+a reader who does not already know the code, and a still target, and its result
+**decays as models and docs turn over, so it would need re-running for ever**.
+That is a maintenance burden emitting a number with no reader — this project's own
+standing failure mode. The substitute already exists: `verify-temporal.js`
+*measures* both invariants, so the guards are the control and the docs are
+redundancy above them. **Revisit if this becomes multi-person or runs agents in
+volume.**
 
 ⚠️ **THIS ROW'S FIRST VERSION WAS WRONG IN THREE PLACES, ALL FAVOURING ITS AUTHOR'S
 CONCLUSION, AND A DIFFERENT MODEL CAUGHT ALL THREE.** The P2 candidate row already
