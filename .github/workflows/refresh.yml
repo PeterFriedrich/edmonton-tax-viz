@@ -137,6 +137,17 @@ jobs:
         if: steps.yearcheck.outputs.result != 'hold' && steps.rollyear.outputs.result != 'hold'
         run: python scripts/check_value_anchors.py
 
+      # The Infill blurb discloses what Lens B's activity term EXCLUDES — suite
+      # and non-res-to-res conversions, "~0.9% of units" — a figure measured once
+      # (S56, 2026-07-16) and typed into the copy. It runs here, not in tests.yml,
+      # because it re-derives from the raw permits pull, which is gitignored.
+      # Two failures, one check: the copy drifting (the 2026-09-15 audit moved it
+      # to 9.0% with 892 tests green) and the SHARE growing, which SPEC_development.md
+      # D3 says reopens the exclusion itself rather than just the sentence.
+      - name: Check the Infill blurb's disclosed suite share (guard after regenerating)
+        if: steps.yearcheck.outputs.result != 'hold' && steps.rollyear.outputs.result != 'hold'
+        run: python scripts/check_suite_share.py
+
       # Schema half of the same "did the artifact survive regeneration" question.
       # The anchors above pin what the NUMBERS look like; this pins WHICH COLUMNS
       # EXIST, against a committed baseline. It needs that memory because every
