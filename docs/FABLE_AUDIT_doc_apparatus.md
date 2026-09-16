@@ -38,9 +38,17 @@ What happened to it:
 
 ## §1 — Ground yourself, in this order
 
-1. **`docs/external/REVIEW_doc_apparatus_2026-09-15.md` — IN FULL, FIRST.**
-   ⚠️ Do not work from any summary of it, including §0 above. Its Recommendations
-   section is your target list.
+1. **`docs/external/REVIEW_doc_apparatus_2026-09-15_CLAIMS.md` FIRST, then the
+   review `docs/external/REVIEW_doc_apparatus_2026-09-15.md` IN FULL.**
+   ⚠️ **The review is kept verbatim and SEVERAL OF ITS NUMBERS ARE WRONG** — the
+   claims file measures every one. The headline `0.68:1` ratio is really **1.79:1**
+   (vendored libs and exported notebook HTML were counted as code, an error this
+   project fed the reviewer); the "104 summaries in the loaded path" are **3**, with
+   101 already archived. Reading the review without the claims file is how those
+   become ground truth — the review's own §Q1 is about exactly that hazard.
+   ⚠️ Do not work from any summary of the review, including §0 above. Its
+   Recommendations section is your target list.
+   ⚠️ **Re-measure before relying on any figure**; the claims file is dated.
 2. `docs/FINDINGS_decisions_index_drift.md` — this project already measured its own
    `DECISIONS.md` contract collapse (13% one-sentence compliance, median row
    138 → 2,219 chars). ⚠️ The review's diagnosis was **confirmed** here and then

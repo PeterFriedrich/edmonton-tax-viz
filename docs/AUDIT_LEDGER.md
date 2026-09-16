@@ -263,7 +263,13 @@ a CAPTURE on real hardware** (the shelved `TODO.md` item), not an audit. What
 11. **⚠️ IS THE DOC APPARATUS LOAD-BEARING, OR CEREMONY?** (added 2026-09-16, S160).
     **Brief written, rec #1 executed, audit NOT run:**
     `docs/FABLE_AUDIT_doc_apparatus.md`; source under audit is
-    `docs/external/REVIEW_doc_apparatus_2026-09-15.md` (9 recommendations).
+    `docs/external/REVIEW_doc_apparatus_2026-09-15.md` (9 recommendations), kept
+    **verbatim** with its factual claims measured in a sibling
+    `..._CLAIMS.md`. ⚠️ **Several of the review's numbers are wrong and the worst
+    one was OURS**: the `0.68:1` markdown-to-code ratio is really **1.79:1**
+    (vendored libs + exported notebook HTML counted as code), and the "104 summaries
+    in the loaded path" are **3** (101 already archived). Its thesis survives —
+    #1 makes the disproportion *larger* than argued.
     ⚠️ **This candidate exists because the LAST attempt at it failed.** The review
     was handed over 2026-09-15; `FABLE_AUDIT_published_numbers.md` §0 digested it to
     one quoted sentence with **no path**, carried **1 of its 9 recommendations** —
