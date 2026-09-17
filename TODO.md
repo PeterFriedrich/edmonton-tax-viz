@@ -953,14 +953,24 @@ archive"*) is not, and this span is 2,533 lines.
 
   | # | issue | blocked on |
   |---|---|---|
-  | 1 | `Period of Coverage` names the wrong year | **report text** — evidence is published |
-  | 3 | `qi6a-xuwt` drops 2,448 accounts | **report text** — evidence is published; see the detailed item below |
+  | 1 | `Period of Coverage` names the wrong year | **nothing — the draft is written**, `docs/DRAFT_bug_report_coverage_year.md` |
+  | 3 | `qi6a-xuwt` drops 2,448 accounts | **nothing — the draft is written**, `docs/DRAFT_bug_report_historical_dropout.md` |
   | 4 | no per-parcel exemption status | **nothing — the draft is written**, `docs/DRAFT_open_data_request_exemption_status.md` |
-  | 5 | 3 of 5 school boards absent | **report text** — evidence is published 2026-08-29 |
+  | 5 | 3 of 5 school boards absent | **nothing — the draft is written**, `docs/DRAFT_open_data_request_school_locations.md` |
 
-  - ⚠️ **Every sendable issue now has published notebook evidence** (issue 5's
-    landed 2026-08-29). **The only remaining blocker on all four is REPORT
-    TEXT** — there is no measurement left to do.
+  - ✅ **REPORT TEXT WRITTEN FOR 1, 3 AND 5 ON 2026-09-17 (S169).** **All four
+    sendable issues now have both published evidence and a drafted message, so
+    nothing is blocked on work any more — the only thing left is Peter's send
+    decision.** Each draft re-verified its own premises against the live portal
+    the day it was written, because a report whose premise moved is worse than
+    none: the coverage string is still wrong **and survived the 2026-09-14
+    refresh** (a new fact — it is unmaintained, not merely stale);
+    `qi6a-xuwt` has not been republished since **2026-01-12**, so the dropout
+    stands; and the school absence was re-searched and still holds. The live
+    residential base re-measured to **$162,309,281,500**, matching August
+    exactly. ⚠️ **Each draft carries a re-check instruction in its own "Notes"
+    section** — an absence can be falsified between writing and sending, and a
+    corrected field means the report should be dropped, not sent.
   - **Issue 4 is the only one that could go today.** ⚠️ **Do not put the
     $125.4M figure in it** — that asserts an exemption status no public source
     states.

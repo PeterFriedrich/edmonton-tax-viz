@@ -38,11 +38,11 @@ is ours, not theirs — it was never a candidate to send, and it is now fixed.)
 
 | # | issue | evidence | report text | status |
 |---|---|---|---|---|
-| 1 | `Period of Coverage` names the wrong year | [published](https://peterfriedrich.github.io/edmonton-tax-viz/notebooks/roll-year-metadata.html) | ❌ not written | **NOT SENT** |
+| 1 | `Period of Coverage` names the wrong year | [published](https://peterfriedrich.github.io/edmonton-tax-viz/notebooks/roll-year-metadata.html) | ✅ `docs/DRAFT_bug_report_coverage_year.md` | **NOT SENT** |
 | 2 | archive's 2025 entry is the 2026 roll | — (ours, not theirs) | n/a | ✅ **FIXED 2026-08-27** |
-| 3 | `qi6a-xuwt` drops 2,448 accounts | [published](https://peterfriedrich.github.io/edmonton-tax-viz/notebooks/historical-2024-gap.html) | ❌ not written | **NOT SENT** |
+| 3 | `qi6a-xuwt` drops 2,448 accounts | [published](https://peterfriedrich.github.io/edmonton-tax-viz/notebooks/historical-2024-gap.html) | ✅ `docs/DRAFT_bug_report_historical_dropout.md` | **NOT SENT** |
 | 4 | no per-parcel exemption status published | [published](https://peterfriedrich.github.io/edmonton-tax-viz/notebooks/exemption-uncertainty.html) | ✅ `docs/DRAFT_open_data_request_exemption_status.md` | **NOT SENT** |
-| 5 | 3 of 5 school boards absent from open data | [published](https://peterfriedrich.github.io/edmonton-tax-viz/notebooks/school-coverage-gap.html) | ❌ not written | **NOT SENT** |
+| 5 | 3 of 5 school boards absent from open data | [published](https://peterfriedrich.github.io/edmonton-tax-viz/notebooks/school-coverage-gap.html) | ✅ `docs/DRAFT_open_data_request_school_locations.md` | **NOT SENT** |
 | 6 | `24uj-dj8v` `neighbourhood` holds a LIST of hoods | ⚠️ in-repo only, **no notebook** | ❌ not written | **NOT SENT** |
 
 **Channel:** `opendata@edmonton.ca`, read from the portal footer 2026-08-25 —
@@ -50,7 +50,7 @@ primary source, not inference. Right channel for 1, 3, 4 and 5, all of which are
 dataset/portal requests. **Assessment & Taxation Branch is the escalation if
 Open Data bounces one**, not the first stop.
 
-**Issue 4 is the only one with a written message.** ⚠️ **"Every remaining
+**Issues 1, 3, 4 and 5 all have a written message as of 2026-09-17; issue 6 does not.** ⚠️ **Report text is no longer the blocker on any of the four — the only thing between them and a send is Peter's decision.** All three new drafts re-verified their premises against the live portal on the day they were written (coverage string still wrong and it survived the 2026-09-14 refresh; `qi6a-xuwt` untouched since 2026-01-12 so the dropout stands; the school absence re-searched and still absent). ⚠️ **"Every remaining
 blocker is REPORT TEXT, not measurement" was true on 2026-08-29 and is NO
 LONGER** — issues 1/3/4/5 do all have published notebook evidence, but **issue 6
 (added 2026-09-14) has none**, so publishable evidence is a live blocker again
@@ -65,8 +65,10 @@ when it was last measured.
 
 ## 1. `q7d6-ambg` — `Period of Coverage` names the wrong year, and has all year
 
-**Status: NOT SENT.** Evidence published and linkable; the report text itself is
-not written.
+**Status: NOT SENT.** Evidence published and linkable. **Report text written
+2026-09-17: `docs/DRAFT_bug_report_coverage_year.md`** — premises re-verified live
+that day, including the new fact that the field **survived the 2026-09-14
+refresh**, so it is not maintained by the refresh.
 **Last measured: 2026-08-26** (every figure recomputed by the published run).
 
 **Evidence:** `/notebooks/roll-year-metadata.html`
@@ -230,8 +232,10 @@ throughout; the *measurement* had lost its subject.
 
 ## 3. `qi6a-xuwt` — 2,448 accounts vanish from the 2024/2025 historical slices
 
-**Status: NOT SENT.** Artifact published and linkable; the report text itself is
-not written.
+**Status: NOT SENT.** Artifact published and linkable. **Report text written
+2026-09-17: `docs/DRAFT_bug_report_historical_dropout.md`.** ⚠️ `rowsUpdatedAt`
+confirmed still **2026-01-12** that day — the table has not moved since January,
+so the defect stands and the account counts remain quotable.
 **Last measured: 2026-08-26** (re-measured live; account counts reproduced
 exactly, dollar figures moved because the control is the current roll).
 
@@ -297,7 +301,9 @@ committed outputs from a cold-cache run that fetched all three sources live).
 
 ## 5. Private, charter and francophone schools are absent from open data
 
-**Status: NOT SENT.** No draft. Lowest priority of the five.
+**Status: NOT SENT.** **Draft written 2026-09-17:
+`docs/DRAFT_open_data_request_school_locations.md`** — the absence re-searched
+live that day and it still holds. Lowest priority of the five; send last.
 **Last measured: 2026-08-29** (evidence notebook, live re-fetch).
 
 **Evidence:** [published](https://peterfriedrich.github.io/edmonton-tax-viz/notebooks/school-coverage-gap.html)
