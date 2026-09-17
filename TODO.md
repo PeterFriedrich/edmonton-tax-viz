@@ -690,17 +690,6 @@ archive"*) is not, and this span is 2,533 lines.
   question (is cross-lens colour comparability worth flattening the lens's own
   signal?), and Peter has seen it and chosen to defer.
 
-- [ ] **RE-MEASURE the mobile coverage ceiling — the 2026-08-04 figure is stale
-  by construction.** `docs/MOBILE_USABILITY.md` measured "the public build
-  cannot reach the worst state" and a **52.3%** public ceiling when public
-  `#views` was TWO buttons. It is now **four** (Services returned 2026-09-02,
-  Ratio 2026-09-11), so the Services-unfolded **53.1%** state is publicly
-  reachable and the ceiling is simply unknown. Flagged in place 2026-09-11
-  rather than re-derived, because the per-view percentages still stand and only
-  reachability moved. **The work is one re-probe of the live public build**, not
-  a re-measurement of every state. ⚠️ The bottom-sheet refusal that cites this
-  ceiling did not rest on it alone, so this does not re-open that decision.
-
 - [ ] **INVESTIGATE — `lot_size` holds ownership shares for an unknown number of
   records; 7,984 rows are under 1 m².** Opened 2026-09-01, found by the
   50 m Glass grid (`docs/DATA_ISSUES.md` §E has the full measurement).
@@ -2770,6 +2759,8 @@ archive"*) is not, and this span is 2,533 lines.
 ## Done
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
+
+- [x] **Mobile coverage ceiling — RE-PROBED 2026-09-17 (S168).** Public ceiling is **53.5%** (Money unfolded + peek), not the 52.3% on record — and not for the predicted reason: public Services is roads-only at 38.8%, so the full-build 53.1% state stayed unreachable. ⚠️ The old figure was an understatement when written, and `Development UNFOLDED 52.7%` is internally impossible. — MEASURED 2026-09-17 · `docs/TODO_archive.md`
 
 - [x] **Cold-load cost on the wire — MEASURED 2026-09-17 (S168), and the answer changes nothing about payload.** A cold visit is **2.05 MiB gzipped**, critical path **948 KB**; libraries **62.5%** of it, so per `VIZ_STACK.md` §5 axis 4 there is no cheap lever. ⚠️ The item's own premise was stale (wire numbers existed in `PERFORMANCE.md` since 2026-08-10) and three side-findings came out of it. — MEASURED 2026-09-17 · `docs/TODO_archive.md`
 

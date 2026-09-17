@@ -245,11 +245,12 @@ pixel once (2px grid sample):
 | **default** (Options folded on phone) | sum 37.9% · **union 27.9%** | sum 28.5% · **union 20.3%** |
 | **Money UNFOLDED** | sum 78.5% · **union 47.9%** | 20.3% (never folds) |
 | **Services UNFOLDED** *(full only)* | sum 112.7% · **union 53.1%** | **20.0%** |
-| **Development UNFOLDED** | sum 114.1% · **union 52.7%** | **27.4%** |
+| **Development UNFOLDED** | sum 114.1% · ⚠️ ~~union 52.7%~~ **44.7%** (2026-09-17; 52.7% contradicted the row below) | **27.4%** |
 | **Ratio UNFOLDED** *(full only)* | **union 37.4%** | 15.2% |
 | **Uses UNFOLDED** *(full only)* | **union 31.6%** | 12.1% |
 | default + peek card open | sum 53.2% · **union 34.5%** | n/a (touch-only) |
-| ⚠️ **worst PUBLIC state** — Development unfolded **+ peek open** | **union 52.3%** | n/a |
+| ⚠️ ~~**worst PUBLIC state**~~ — Development unfolded **+ peek open** | **union 52.3%** (reproduces; but **not** the worst — see the re-probe above) | n/a |
+| ⚠️ **worst PUBLIC state (2026-09-17)** — **Money** unfolded **+ peek open** | **union 53.5%** | n/a |
 
 **What this changes.** The honest phone-vs-desktop gap in the default state is
 **27.9% vs 20.3% — about 7 points, not the ~18 the old pair implied.** Part of
@@ -257,14 +258,56 @@ the drop 45.1 → 37.9 is real (the blurb collapse); the rest of the way to 27.9
 is the method correcting its own double counting. **The default phone render is
 not the problem.**
 
-⚠️ **THIS PARAGRAPH IS SUPERSEDED — MEASURED UNDER A 2-BUTTON PUBLIC BUILD THAT
-NO LONGER EXISTS.** Services returned to the public build roads-only on
-2026-09-02 and Ratio on 2026-09-11, so **public `#views` = Money · Development ·
-Services · Ratio**, and the Services-unfolded 53.1% state IS publicly reachable
-now. ⚠️ **The public ceiling below is therefore stale and NOT re-measured** —
-treat 52.3% as a floor until someone re-probes the public build. The percentages
-themselves were measured per view and do not move; what moved is which of them
-the public root can reach. What follows is the original 2026-08-04 finding:
+> ### ✅ RE-PROBED 2026-09-17 — the public ceiling is **53.5%**, and the state that sets it is one this table never measured
+>
+> Live public build, 390×844, same union method (2px grid, `CHROME_IDS` +
+> `EXTRA_IDS`). **Validated before use: it reproduces three of this table's own
+> figures to the decimal** — default 27.9%, Money unfolded 47.9%, Development
+> unfolded + peek 52.3% — and two consecutive runs were byte-identical.
+>
+> | public state (390×844) | union |
+> |---|---|
+> | default (Options folded) | 27.9% |
+> | Ratio unfolded | 30.8% · **+ peek 35.9%** |
+> | Services unfolded | 38.8% · **+ peek 42.2%** |
+> | Development unfolded | 44.7% · **+ peek 52.3%** |
+> | **Money unfolded** | 47.9% · ⚠️ **+ peek 53.5% ← the public ceiling** |
+>
+> ⚠️ **THE PREDICTED MECHANISM WAS WRONG.** The expectation was that Services
+> returning public would carry its **53.1%** in with it. It does not: **public
+> Services unfolded is 38.8%**, because the public build's Services is
+> roads-only — the 53.1% was a *full-build* panel and is not publicly reachable.
+> Confirmed by measuring `/full/` the same way (Services unfolded **62.7%**
+> there).
+>
+> ⚠️ **THE CEILING ROSE FOR A DIFFERENT REASON, AND IT WAS ALREADY WRONG WHEN
+> WRITTEN.** The worst public state is **Money unfolded + peek, 53.5%** — a
+> combination this table never measured, though it lists Money unfolded (47.9%)
+> and default + peek (34.5%) separately. Money, the Options fold and the peek
+> card were **all public affordances on 2026-08-04 too**, so 52.3% was an
+> understatement at the time of writing, not a figure that drifted. This is the
+> table's own warning ("name the state **and** name the view") landing on the
+> table itself.
+>
+> ⚠️ **`Development UNFOLDED 52.7%` BELOW CONTRADICTS ITS OWN NEIGHBOUR AND IS
+> UNRELIABLE.** A union cannot shrink when a rect is added, yet the row below it
+> has Development unfolded **+ peek** at **52.3%**. Re-measured, Development
+> unfolded is **44.7%** and + peek is 52.3% — consistent, and the +peek figure
+> reproduces exactly. Treat 52.7% as wrong, not as a state that changed.
+>
+> ⚠️ **THE FULL BUILD IS NOW TWO-THIRDS CHROME AT ITS WORST: Services unfolded +
+> peek = 66.1%** (Money 61.8%, Development 65.0%). Not comparable to this table's
+> full-build rows — `#budget-pod` did not exist when they were measured, and it
+> is present in every full-build state above. The public build does not carry it.
+> **Public is the number that matters for readers; this is noted so the next
+> person does not read 66.1% as a regression against 53.1%.**
+
+⚠️ **THE PARAGRAPH BELOW IS SUPERSEDED — MEASURED UNDER A 2-BUTTON PUBLIC BUILD
+THAT NO LONGER EXISTS**, and its successor is the re-probe above. Services
+returned to the public build roads-only on 2026-09-02 and Ratio on 2026-09-11, so
+**public `#views` = Money · Development · Services · Ratio** (verified 2026-09-17
+by visibility, not DOM presence — Uses and Lab are in the markup on both builds
+and visible only on `/full/`). What follows is the original 2026-08-04 finding:
 
 Services and Ratio
 are full-only since 2026-07-28 (`|| !FULL_BUILD`, `web/index.html` — the
@@ -273,6 +316,10 @@ A public phone user's worst reachable state is **52.3%**, and only by unfolding
 Options *and* tapping a neighbourhood — both deliberate acts, and the peek card
 is the answer to the tap. Rendered and eyeballed at that state: nothing clips,
 nothing overlaps, the middle ~40% of the map stays clear.
+⚠️ **52.3% CORRECTED TO 53.5% (2026-09-17) — the *shape* of this claim survives,
+the figure does not.** The worst public state is Money unfolded + peek, not
+Development's; see the re-probe above. "Two deliberate acts, and it folds away
+again" is unchanged and is what the argument actually rested on.
 
 **This is what closed the bottom-sheet question — see §3.** Any future coverage
 claim should quote the union, name the state **and name the view**; a
@@ -496,17 +543,20 @@ Ordered; each step is independently shippable and desktop-safe.
      The reasoning, so it is not re-opened on the old numbers:
      - The state that made this a priority, **Money unfolded at 54.3%, is now
        47.9%** — `#moneymode` moved to `#toggle` on 2026-08-02.
-     - The remaining >50% states (**Services 53.1%, Development 52.7%**) are
+     - The remaining >50% states (**Services 53.1%, Development ~~52.7%~~**) are
        **transient and user-initiated** — you reach them only by unfolding
        Options, and they fold away again. The **default** render, which is what
-       a phone user actually meets, is **27.9%**.
-     - **The public build cannot reach the worst state** (Services/Ratio are
-       full-only); its ceiling is 52.3%, rendered clean. ⚠️ **No longer true —
-       both lenses returned public (2026-09-02 / 2026-09-11) and the ceiling is
-       un-re-measured.** See the superseded banner above the coverage table.
-       This argument's *conclusion* (bottom sheet not worth the desktop
-       regression risk) never rested on the ceiling alone, but the ceiling
-       figure must not be quoted again as measured.
+       a phone user actually meets, is **27.9%** (re-confirmed 2026-09-17).
+     - ~~**The public build cannot reach the worst state**~~ ✅ **RE-PROBED
+       2026-09-17 and the ceiling is 53.5%** (Money unfolded + peek), up from the
+       52.3% quoted here — but **not** for the predicted reason: public Services
+       is roads-only and measures **38.8%**, so the 53.1% state stayed
+       full-only. The 52.3% was an understatement when written, because Money
+       unfolded + peek was never measured and was reachable then too.
+       **The argument's conclusion is unchanged** (bottom sheet not worth the
+       desktop regression risk): it never rested on the ceiling alone, and a
+       transient 53.5% is the same order as the transient 52.3% it replaces.
+       Full numbers in the re-probe box above the coverage table.
      - Against that, a bottom sheet is a refactor of **shared desktop+mobile
        DOM** (`CONTROLS_MATRIX.md`: grouping drives both), i.e. real desktop
        regression risk to fix a state the user can dismiss.
