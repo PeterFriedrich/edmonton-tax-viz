@@ -234,11 +234,21 @@ def check_budget_context(timeout=60):
     file is approved but not frozen: FY2026 was republished between 2026-09-05
     and 09-15 (7,283 -> 7,294 rows, total $4,044,711,032 -> $4,045,178,891) with
     FY2025 byte-identical. Hashing it would report that as a budget change.
+
+    ⚠️ **`acknowledged_newest_fy` SILENCES THE YEAR HALF UP TO AND INCLUDING THAT
+    FY, AND NOTHING ELSE.** Added 2026-09-17 because the pod has never been on the
+    newest FY — FY2026 was already published when the pod was set to FY2025 on
+    2026-08-04 — so without it this fires ACTION every month forever on a standing
+    decision, and a digest whose headline is permanently red is how the NEXT real
+    warning gets skimmed past. The escape is deliberately per-YEAR and not a
+    boolean: FY2027 speaks up again on its own, so the choice is re-made once a
+    year rather than switched off. The program and snow checks ignore it entirely.
     """
     try:
         local = json.loads(BUDGET_CONTEXT.read_text())
         pod_year = int(local["total_operating_budget"]["year"])
         pod_total = float(local["total_operating_budget"]["value"])
+        acknowledged = int(local["total_operating_budget"].get("acknowledged_newest_fy", 0))
         comp = {c["key"]: c.get("components", {}) for c in local["categories"]}
     except Exception as exc:  # noqa: BLE001
         return (UNKNOWN, "Budget pod manifest",
@@ -255,7 +265,7 @@ def check_budget_context(timeout=60):
 
     parts = []
     newest = max(int(r["budget_year"]) for r in _tax_supported(rows))
-    if newest > pod_year:
+    if newest > pod_year and newest > acknowledged:
         upstream_total = sum(float(r["budget"]) for r in _tax_supported(rows)
                              if int(r["budget_year"]) == newest)
         parts.append(f"**FY{newest} is published (${upstream_total:,.0f} tax-supported) "
@@ -284,9 +294,17 @@ def check_budget_context(timeout=60):
     if parts:
         return (ACTION, "Budget pod manifest",
                 f"{'. '.join(parts)}. `data/DATA.md` §17, `docs/RUNBOOK.md` §1.")
+    # ⚠️ A held-back year must SAY SO on the green line. A silent OK would read as
+    # "the pod is current", which is the misreading the whole check exists to stop.
+    if newest > pod_year:
+        vintage = (f"Pod is FY{pod_year} and FY{newest} is published — held at "
+                   f"FY{acknowledged} by decision, so this stays quiet until FY"
+                   f"{acknowledged + 1}")
+    else:
+        vintage = f"FY{pod_year} is still the newest published"
     return (OK, "Budget pod manifest",
-            f"FY{pod_year} is still the newest published; both pinned program lines "
-            f"re-derive exactly; snow cross-check {ours / published_snow:.1%}.")
+            f"{vintage}; both pinned program lines re-derive exactly; "
+            f"snow cross-check {ours / published_snow:.1%}.")
 
 
 def check_mill_rate_values(timeout=60):

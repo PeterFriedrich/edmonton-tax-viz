@@ -973,3 +973,107 @@ def test_mill_rate_values_missing_pinned_block_is_unknown(pinned, tmp_path, monk
 
 def test_mill_rate_values_is_registered_in_the_digest():
     assert vr.check_mill_rate_values in vr.CHECKS
+
+
+# --- the acknowledged-FY escape --------------------------------------------
+#
+# ⚠️ The pod has NEVER been on the newest FY (FY2026 was already published when
+# it was set to FY2025 on 2026-08-04), so without an escape the year half fires
+# ACTION every month forever on a standing decision — and a digest whose headline
+# is permanently red is how the next real warning gets skimmed past.
+
+def test_acknowledged_fy_silences_the_year_half(monkeypatch, tmp_path):
+    pod = json.loads(json.dumps(_POD))
+    pod["total_operating_budget"]["acknowledged_newest_fy"] = 2026
+    _pod_local(monkeypatch, tmp_path, pod)
+    csv_text = _ops_csv(rows=[_ops_row(2026, "Something Else", 4045178891)])
+    monkeypatch.setattr(vr.requests, "get", lambda *a, **k: _FakeTextResp(csv_text))
+    status, _, detail = vr.check_budget_context()
+    assert status == vr.OK, detail
+
+
+def test_acknowledged_fy_still_says_the_pod_is_behind(monkeypatch, tmp_path):
+    """⚠️ A silent OK would read as 'the pod is current' — the exact misreading
+    this check exists to prevent. Held back is not the same as up to date."""
+    pod = json.loads(json.dumps(_POD))
+    pod["total_operating_budget"]["acknowledged_newest_fy"] = 2026
+    _pod_local(monkeypatch, tmp_path, pod)
+    csv_text = _ops_csv(rows=[_ops_row(2026, "Something Else", 4045178891)])
+    monkeypatch.setattr(vr.requests, "get", lambda *a, **k: _FakeTextResp(csv_text))
+    _, _, detail = vr.check_budget_context()
+    assert "FY2025" in detail and "FY2026" in detail
+    assert "held at" in detail
+    assert "still the newest published" not in detail
+
+
+def test_acknowledged_fy_expires_on_the_next_year(monkeypatch, tmp_path):
+    """Per-YEAR, not a boolean: FY2027 re-opens the question on its own."""
+    pod = json.loads(json.dumps(_POD))
+    pod["total_operating_budget"]["acknowledged_newest_fy"] = 2026
+    _pod_local(monkeypatch, tmp_path, pod)
+    csv_text = _ops_csv(rows=[_ops_row(2027, "Something Else", 4200000000)])
+    monkeypatch.setattr(vr.requests, "get", lambda *a, **k: _FakeTextResp(csv_text))
+    status, _, detail = vr.check_budget_context()
+    assert status == vr.ACTION
+    assert "FY2027" in detail
+
+
+def test_acknowledged_fy_does_not_silence_the_program_checks(monkeypatch, tmp_path):
+    """⚠️ It is an escape for the YEAR half ONLY. A moved program line is a real
+    defect and must still fire with the acknowledgement set as high as you like."""
+    pod = json.loads(json.dumps(_POD))
+    pod["total_operating_budget"]["acknowledged_newest_fy"] = 2099
+    _pod_local(monkeypatch, tmp_path, pod)
+    moved = _OPS_HEADER + (
+        _ops_row(2017, "Roadway Maintenance", 70000000)
+        + _ops_row(2017, "Snow and Ice Control", 63709000)
+        + _ops_row(2025, "OPS/PARS - Snow and Ice Control", 67553815))
+    monkeypatch.setattr(vr.requests, "get", lambda *a, **k: _FakeTextResp(moved))
+    status, _, detail = vr.check_budget_context()
+    assert status == vr.ACTION
+    assert "Roadway Maintenance" in detail
+
+
+def test_acknowledged_fy_does_not_silence_the_snow_cross_check(monkeypatch, tmp_path):
+    pod = json.loads(json.dumps(_POD))
+    pod["total_operating_budget"]["acknowledged_newest_fy"] = 2099
+    pod["categories"][0]["components"]["snow_and_ice_control"] = 10_000_000
+    _pod_local(monkeypatch, tmp_path, pod)
+    monkeypatch.setattr(vr.requests, "get", lambda *a, **k: _FakeTextResp(_ops_csv()))
+    status, _, detail = vr.check_budget_context()
+    assert status == vr.ACTION
+    assert "snow cross-check drifted" in detail
+
+
+def test_absent_acknowledgement_defaults_to_loud(monkeypatch, tmp_path):
+    """The key is opt-in. A file without it must behave exactly as before."""
+    pod = json.loads(json.dumps(_POD))
+    assert "acknowledged_newest_fy" not in pod["total_operating_budget"]
+    _pod_local(monkeypatch, tmp_path, pod)
+    csv_text = _ops_csv(rows=[_ops_row(2026, "Something Else", 4045178891)])
+    monkeypatch.setattr(vr.requests, "get", lambda *a, **k: _FakeTextResp(csv_text))
+    assert vr.check_budget_context()[0] == vr.ACTION
+
+
+def test_committed_acknowledgement_is_current_and_explained():
+    """⚠️ The real file's key must be a DECISION, not a mute button.
+
+    Pinned so raising it silently is a test failure: the number may only move
+    with the note that justifies it, and it must never run ahead of a year the
+    City has actually published.
+    """
+    total = json.loads(vr.BUDGET_CONTEXT.read_text())["total_operating_budget"]
+    ack = total["acknowledged_newest_fy"]
+    assert ack == 2026, "raising this is a re-decision — update the note and this test"
+    assert ack >= int(total["year"])
+    note = total["acknowledged_note"]
+    assert "2026-09-17" in note
+    assert "never to silence the digest" in note
+
+
+def test_acknowledgement_does_not_reach_the_published_manifest():
+    """⚠️ The pod publishes VALUES ONLY. An internal decision note must not ship."""
+    from scripts.generate_status import budget_context
+    published = budget_context()
+    assert set(published) == {"total", "year", "basis", "categories"}
+    assert published["year"] == 2025
