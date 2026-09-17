@@ -265,7 +265,9 @@ by_cost     = ((val_local + val_collector)
                / (val_local / 28 + val_collector / 20))
 
 assert 25.5 <= by_our_len <= 26.5, by_our_len       # ~26.0, matches the City weighting
-assert 24.0 <= by_cost   <= 25.0, by_cost           # ~24.5, the right one for $/m/yr
+# band deliberately tight: 24.0-25.0 still passed a mutation that replaced both
+# class lives with the all-roads 24, i.e. that did no per-class weighting at all
+assert 24.4 <= by_cost   <= 24.7, by_cost           # 24.5, the right one for $/m/yr
 # local-only RAISES the figure -- the blend is not concealing a longer life
 assert by_cost < by_our_len < 28, (by_cost, by_our_len)
 # collectors are a minority of length but cost ~1.5x per lane-km, so they are a

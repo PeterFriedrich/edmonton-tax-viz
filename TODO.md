@@ -1091,6 +1091,42 @@ archive"*) is not, and this span is 2,533 lines.
     row-label flag below. None settles the call — each document states its own
     limits — but (a) is the first life figure measured on the population the
     site actually charges, and the evidence base is no longer one-sided.
+  - ⚠️ **BUT (a) FLIPPED ON 2026-09-17 (S171) AND NOW SUPPORTS 50** —
+    `docs/FINDINGS_road_class_inventory.md` **§4a**. Appendix A's **physical
+    condition** column had been omitted from the transcription, and §4 had read
+    "average age past expected life" as a renewal backlog. Condition is what
+    discriminates a backlog from a successfully extended life, and it says the
+    latter: **local roads are 10 yrs past a 28-yr life at 70/17/13 A+B/C/D+F,
+    collectors 75% past a 20-yr life at 62/34/5.** The **alley** row is the
+    backlog control inside the same table — 64% D+F at 30 yrs against a 28-yr
+    life — and **alleys are already excluded from `road_m_per_acre`**, so the one
+    class here that is genuinely failing is one the metric does not charge. The
+    expected asset life is a design life the City is demonstrably not replacing
+    on; **the observed life, in acceptable condition, is longer than 28 and the
+    mean-age arithmetic puts it above 50.**
+  - ⚠️ **"We only charge local roads, so shouldn't it be ~25?" — NO, and it does
+    not favour 25 either way.** The charged network is **25% collector by
+    centreline length and 35% by replacement value** (collectors cost 1.49× per
+    lane-km), measured from `data/raw/roads.geojson` under `load_roads`' own
+    filters. Local-only would give **28**, i.e. *higher* than the 25.9 blend. And
+    the weighting actually correct for a $/m/yr charge is by replacement cost,
+    Σvalue ÷ Σ(value/life) = **24.5** — the lowest of four reweightings, not the
+    highest. **All four land in 24–28; none of them is near either 25 as a clean
+    number or 50.** Asserted in `FINDINGS_road_class_inventory.md` §6.
+  - ⚠️ **What the two numbers actually mean, which this item never said.**
+    *"Usually 25, extended to 50 with proper maintenance"* is **not two estimates
+    of one event — it is two different events.** ~25 is when the pavement
+    structure is due for intervention; 50 is the interval to **full
+    reconstruction**, bought with the resurfacing and renewal in between while
+    the base persists. **`road_m_per_acre` charges the whole bundle (capital +
+    O&M + renewal), so its denominator is the interval over which that bundle
+    recurs — the reconstruction interval.** This is the same point as the
+    non-circular argument above, stated as a definition rather than an inference.
+  - ⚠️ **CONFLICT OF INTEREST, BOTH WAYS — this needs a cross-read before it
+    closes.** §4 was written by a model that had just produced three figures
+    cutting against the shipped number; §4a was written by a model answering a
+    question from Peter and it lands on the shipped number being right. **Both
+    rest on the same four cells of one table.** `measurements-that-favour-me`.
   - **Why 50 still looks right — but on weaker ground than this item claimed
     until 2026-09-03.** The same page's ~3%/yr set-aside rule on $1.5M/km ≈
     **$45,000/km/yr** does point at the 50-year $50,000 rather than the 25-year
