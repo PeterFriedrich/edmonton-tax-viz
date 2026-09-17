@@ -8,6 +8,41 @@ Items are verbatim as they were closed, newest-moved first in the order they app
 
 ---
 
+- [x] **Manifest staleness guard — BUILT 2026-09-17 (S167), on Peter's yes.**
+  The original item proposed ONE function; it shipped as TWO, because the digest
+  renders one row per check and folding two sources into one cell prints two
+  unrelated verdicts side by side.
+  - **`check_budget_context`** — `city_budget_context.json` is hand-maintained
+    and feeds published dollars on all 18 About-panel surfaces through
+    `status.json`, and nothing recurring read it
+    (`docs/FABLE_AUDIT_published_numbers.md` §3: *the world moves and the file
+    does not, silently, forever*). Three parts: a newer published `Tax Supported`
+    FY than the pod's `year`; the two pinned FY2017 program lines re-derived; the
+    snow cross-check against the published program. **Fired ACTION on its first
+    live run** — FY2026 $4,045,178,891 vs the pod's FY2025 $3,845,555,000.
+  - **`check_mill_rate_values`** — the pinned year's rate VALUES against
+    `pwis-wc4c`. ⚠️ `check_mill_rates` compares the SET OF YEARS only, so a rate
+    **republished for a year we already hold passes it silently**. Green on the
+    first run: all 15 2026 rates match exactly; Farmland municipal is carried
+    locally with nothing published, as its own `_assumed` note says.
+  - ⚠️ **Every pinned figure is a (program, year) PAIR, never a name followed
+    across years.** `Roadway Maintenance` and `Snow and Ice Control` are FY2017
+    ONLY; from FY2018 the latter is `OPS/PARS - Snow and Ice Control`
+    (`data/DATA.md` §17's era trap). A name-only sum would read a rename as a cut.
+  - ⚠️ **NOT a content fingerprint like `check_capital_budget`** — the file is
+    approved but not frozen (FY2026 republished between 2026-09-05 and 09-15,
+    7,283 → 7,294 rows, FY2025 byte-identical). Hashing it would call that a
+    budget change.
+  - ⚠️ **A newer FY is a PROMPT, NOT A DEFECT** — the FY2017 roads-only vintage
+    is a decision (`docs/DECISIONS.md` 2026-08-04). The message says *re-confirm
+    the vintage, do not bump the year alone*, and a test pins that wording.
+  - **13 falsification tests; 6 mutations, each caught by the right test.**
+    ⚠️ **The era-trap test was VACUOUS on first write** — its fixture used the
+    RENAMED programs, so deleting the year pin changed nothing and it passed
+    under the bug. Rewritten to republish the SAME name in a later year.
+    (`check-where-the-value-can-be-wrong`, instance 8.)
+  - `scripts/vintage_report.py`, `tests/test_vintage_report.py` (+20).
+
 - [x] **Residential-only lens — SUPERSEDED, and the built version was REMOVED.**
   ⚠️ **Verified 2026-09-16: do NOT rebuild this.** Every sub-item below shipped,
   and the fade lens was then deleted 2026-07-26 as redundant with the Residential

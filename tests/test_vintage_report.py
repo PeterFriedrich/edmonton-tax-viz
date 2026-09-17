@@ -809,23 +809,28 @@ def test_budget_context_flags_a_moved_pinned_program(monkeypatch, tmp_path):
     assert "Roadway Maintenance" in detail and "+4,329,000" in detail
 
 
-def test_budget_context_ignores_a_renamed_program_in_other_years(monkeypatch, tmp_path):
+def test_budget_context_pins_a_program_to_one_year(monkeypatch, tmp_path):
     """⚠️ The era trap `DATA.md` §17 documents, as a test.
 
-    `Roadway Maintenance` is FY2017-only and `Snow and Ice Control` FY2017-only;
-    both are renamed from FY2018. A check that followed the NAME across years
-    would read the rename as a budget cut and file an ACTION every month forever.
+    The tree was re-cut twice and program names do not survive it, so every
+    pinned figure is a (program, year) PAIR. This fixture republishes the SAME
+    name in a later year: a check that summed the name across years would read
+    $65.671M as $85.671M and file an ACTION against a line that never moved.
+
+    ⚠️ Written the other way first — same-year rows under the RENAMED programs —
+    and it passed with the year pin deleted, because the names did not match
+    anyway. An assertion placed where the value cannot be wrong passes under the
+    bug; the fixture has to contain the collision it claims to rule out.
     """
     _pod_local(monkeypatch, tmp_path)
-    renamed = _ops_csv(rows=[
+    collides = _ops_csv(rows=[
+        _ops_row(2019, "Roadway Maintenance", 20000000),
         _ops_row(2018, "OPS/PARS - Infrastructure Maintenance", 49700000),
-        _ops_row(2026, "OPS/PARS - Mobility Infrastructure Services", 76950000),
     ])
-    monkeypatch.setattr(vr.requests, "get", lambda *a, **k: _FakeTextResp(renamed))
-    # FY2026 present, so the year half fires; the PROGRAM half must not.
-    _, _, detail = vr.check_budget_context()
+    monkeypatch.setattr(vr.requests, "get", lambda *a, **k: _FakeTextResp(collides))
+    status, _, detail = vr.check_budget_context()
+    assert status == vr.OK, detail
     assert "Roadway Maintenance" not in detail
-    assert "Snow and Ice Control` FY2017" not in detail
 
 
 def test_budget_context_flags_a_drifted_snow_cross_check(monkeypatch, tmp_path):

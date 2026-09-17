@@ -474,13 +474,8 @@ is in the `panel` column. T1 is public (3 of 10 service rows). T2 closed (`## Do
   Remedies are a decision, not a patch: (1) a press under the panel closes the
   panel; (2) opening the panel clears `body.budget`; (3) keep the yield and
   un-light the button from `openTemporal`/`closeTemporal`. Peter's call.
-- [ ] **Manifest staleness guard — Peter's yes needed (changes the monthly digest).**
-  `vintage_report.check_budget_context`: fetch `operating_budget.csv` (reachable
-  from CI, DATA.md §17), ACTION when a newer `Tax Supported` FY exists than
-  `city_budget_context.json`'s `year` (today FY2026 at $4.045B vs the pod's 2025
-  / $3.8B), re-derive `Roadway Maintenance` FY2017 + `Snow and Ice Control` and
-  ACTION on change. Same function: compare `pwis-wc4c`'s pinned-year rates to
-  `mill_rates.json` *values* (`check_mill_rates` compares years only). Findings §3.
+- [x] **Manifest staleness guard — BUILT 2026-09-17 (Peter's yes).** Two checks,
+  not one: `check_budget_context` + `check_mill_rate_values`. See `## Done`.
 - [ ] **L2 — `~0.9% of units` in the Infill blurb is a typed-in measurement** (S56's
   D3, 2026-07-16) that nothing re-derives, while the permits feed refreshes weekly.
   **Re-derive from the feed, or drop the figure.** ⚠️ Not mechanical — dropping it
@@ -1157,6 +1152,9 @@ archive"*) is not, and this span is 2,533 lines.
     2026-08-18 and 2026-08-30, `docs/DECISIONS.md` 2026-08-18.
 
 - [ ] **PETER'S CALL — should Industrial go PUBLIC now that it is grid-capable?**
+  ⏸️ **PARKED 2026-09-17 on Peter's call: stays `/full/`-only, he decides when.**
+  Not unargued any more — deliberately deferred. Do not re-raise it as an open
+  call; the standing state is `/full/` and no code change is owed.
   `docs/DECISIONS.md` 2026-07-23 tagged the Industrial `#devmetric` `/full/`-only
   with one stated reason: *it's choropleth-only, so in public it would leave the
   new 3-way Detail selector with dead options*. ⚠️ **That reason expired
@@ -2806,6 +2804,8 @@ archive"*) is not, and this span is 2,533 lines.
 ## Done
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
+
+- [x] **Manifest staleness guard — BUILT 2026-09-17 (S167).** Two digest checks: `check_budget_context` + `check_mill_rate_values`. — BUILT 2026-09-17 · `docs/TODO_archive.md`
 
 - [x] **Residential-only lens — SUPERSEDED, and the built version was REMOVED.** — SHIPPED 2026-07-26 · `docs/TODO_archive.md`
 - [x] **Colour scale for revenue/value — SUPERSEDED 2026-09-16.** — 2026-09-16 · `docs/TODO_archive.md`
