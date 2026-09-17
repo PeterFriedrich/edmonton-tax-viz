@@ -23,6 +23,7 @@ per-report data description was a prose caption in `web/notebooks/index.html`.
 | **Historical 2024 gap** | Whole buildings are missing from the 2024 slice of the Historical roll | `historical_2024_gap.py` | [historical-2024-gap.html](https://peterfriedrich.github.io/edmonton-tax-viz/notebooks/historical-2024-gap.html) |
 | **Exemption uncertainty** | What public data can and cannot say about tax-exempt property | `exemption_uncertainty.py` | [exemption-uncertainty.html](https://peterfriedrich.github.io/edmonton-tax-viz/notebooks/exemption-uncertainty.html) |
 | **School coverage gap** | Open data covers two school authorities, not all of them | `school_coverage_gap.py` | [school-coverage-gap.html](https://peterfriedrich.github.io/edmonton-tax-viz/notebooks/school-coverage-gap.html) |
+| **Permit neighbourhood list** | The permits dataset puts several neighbourhoods in a one-neighbourhood field, in the name AND id columns | `permit_neighbourhood_list.py` | [permit-neighbourhood-list.html](https://peterfriedrich.github.io/edmonton-tax-viz/notebooks/permit-neighbourhood-list.html) |
 
 | report | `DATA_ISSUES.md` | status | invariants | re-verified |
 |---|---|---|---|---|
@@ -30,6 +31,7 @@ per-report data description was a prose caption in `web/notebooks/index.html`.
 | Historical 2024 gap | issue **3** | **ACTIVE** | 6 of 6 | 2026-08-29 |
 | Exemption uncertainty | issue **4** | **ACTIVE** | 11 of 11 | 2026-08-29 |
 | School coverage gap | issue **5** | **ACTIVE** | 4 of 4 | 2026-08-29 |
+| Permit neighbourhood list | issue **6** | **ACTIVE** | 5 of 5 | 2026-09-17 |
 
 ⚠️ **"Re-verified" is the date the committed HTML was last executed, not a
 freshness guarantee.** Nothing re-runs these on a schedule — chosen deliberately
@@ -101,6 +103,7 @@ source's understanding changes, check who depends on it.
 | Historical 2024 gap | `q7d6-ambg`, `qi6a-xuwt` | — |
 | Exemption uncertainty | `q7d6-ambg`, `fixa-tstc` | `open.alberta.ca` — FIR |
 | School coverage gap | `q7d6-ambg`, `996c-239n`, `gfxq-u8uu` | `api.us.socrata.com` — the **catalogue** API, not a dataset |
+| Permit neighbourhood list | `24uj-dj8v`, `65fr-66s6`, `q7d6-ambg` | — |
 
 **Read this direction to answer "if this source changes, what breaks?"**
 
@@ -111,12 +114,15 @@ source's understanding changes, check who depends on it.
 | `fixa-tstc` | Zoning Bylaw Geographical Data | Exemption uncertainty |
 | `996c-239n` | EPSB School Locations | School coverage gap |
 | `gfxq-u8uu` | Edmonton Catholic Schools (Current) | School coverage gap |
+| `24uj-dj8v` | General Building Permits | Permit neighbourhood list |
+| `65fr-66s6` | Neighbourhood Boundaries | Permit neighbourhood list |
 | `open.alberta.ca` | Financial Information Return workbooks | Roll year metadata, Exemption uncertainty |
 | `api.us.socrata.com` | Socrata catalogue search | School coverage gap |
 
-⚠️ **`q7d6-ambg` is a single point of failure for the whole evidence set.** A
-schema change there does not just break one report — it breaks every one, and
-because nothing runs them on a schedule, **it breaks them silently.** The
+⚠️ **`q7d6-ambg` is a single point of failure for the whole evidence set** — all
+five reports touch it. A schema change there does not just break one report — it
+breaks every one, and because nothing runs them on a schedule, **it breaks them
+silently.** The
 school report is the most exposed: it asserts a property of that dataset's
 *schema* (that it carries no land-use field), so a column being ADDED — the
 outcome that report would welcome — makes its invariant fail rather than pass.

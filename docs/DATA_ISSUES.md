@@ -33,7 +33,10 @@ that one owns what the evidence rests on.
 item that mirrors it in one line each — if the two disagree, **this one is
 right**, and the TODO is stale. Update here first.
 
-**Nothing has been sent. Six issues, zero contact, as of 2026-09-14.** (Issue 2
+**Nothing has been sent. Six issues, zero contact, as of 2026-09-17.** ⚠️ **All
+five sendable issues now have BOTH published evidence and drafted report text**
+(issue 6's landed 2026-09-17) — **nothing is blocked on work any more; the only
+thing left is the decision to send.** (Issue 2
 is ours, not theirs — it was never a candidate to send, and it is now fixed.)
 
 | # | issue | evidence | report text | status |
@@ -43,18 +46,16 @@ is ours, not theirs — it was never a candidate to send, and it is now fixed.)
 | 3 | `qi6a-xuwt` drops 2,448 accounts | [published](https://peterfriedrich.github.io/edmonton-tax-viz/notebooks/historical-2024-gap.html) | ✅ `docs/DRAFT_bug_report_historical_dropout.md` | **NOT SENT** |
 | 4 | no per-parcel exemption status published | [published](https://peterfriedrich.github.io/edmonton-tax-viz/notebooks/exemption-uncertainty.html) | ✅ `docs/DRAFT_open_data_request_exemption_status.md` | **NOT SENT** |
 | 5 | 3 of 5 school boards absent from open data | [published](https://peterfriedrich.github.io/edmonton-tax-viz/notebooks/school-coverage-gap.html) | ✅ `docs/DRAFT_open_data_request_school_locations.md` | **NOT SENT** |
-| 6 | `24uj-dj8v` `neighbourhood` holds a LIST of hoods | ⚠️ in-repo only, **no notebook** | ❌ not written | **NOT SENT** |
+| 6 | `24uj-dj8v` `neighbourhood` holds a LIST of hoods | [published](https://peterfriedrich.github.io/edmonton-tax-viz/notebooks/permit-neighbourhood-list.html) | ✅ `docs/DRAFT_bug_report_permit_neighbourhood_list.md` | **NOT SENT** |
 
 **Channel:** `opendata@edmonton.ca`, read from the portal footer 2026-08-25 —
 primary source, not inference. Right channel for 1, 3, 4 and 5, all of which are
 dataset/portal requests. **Assessment & Taxation Branch is the escalation if
 Open Data bounces one**, not the first stop.
 
-**Issues 1, 3, 4 and 5 all have a written message as of 2026-09-17; issue 6 does not.** ⚠️ **Report text is no longer the blocker on any of the four — the only thing between them and a send is Peter's decision.** All three new drafts re-verified their premises against the live portal on the day they were written (coverage string still wrong and it survived the 2026-09-14 refresh; `qi6a-xuwt` untouched since 2026-01-12 so the dropout stands; the school absence re-searched and still absent). ⚠️ **"Every remaining
-blocker is REPORT TEXT, not measurement" was true on 2026-08-29 and is NO
-LONGER** — issues 1/3/4/5 do all have published notebook evidence, but **issue 6
-(added 2026-09-14) has none**, so publishable evidence is a live blocker again
-for one of the six. Do not read the four-issue statement as covering the file. ⚠️ Sending is Peter's call in every case — it is outward-facing and
+**Issues 1, 3, 4 and 5 all have a written message as of 2026-09-17; issue 6 does not.** ⚠️ **Report text is no longer the blocker on any of the four — the only thing between them and a send is Peter's decision.** All three new drafts re-verified their premises against the live portal on the day they were written (coverage string still wrong and it survived the 2026-09-14 refresh; `qi6a-xuwt` untouched since 2026-01-12 so the dropout stands; the school absence re-searched and still absent). ⚠️ **Issue 6's evidence gap CLOSED 2026-09-17** — it was the
+one issue lacking a published notebook, which made "every remaining blocker is
+report text" false between 2026-09-14 and 2026-09-17. It now has both. ⚠️ Sending is Peter's call in every case — it is outward-facing and
 it speaks for the project.
 
 ⚠️ **Re-measure before quoting any figure below.** Several are derived against
@@ -334,12 +335,11 @@ value over a name-matched set with no self-check — and is not the answer.
 **Status: NOT SENT.** No draft. **Last measured: 2026-09-14** (S156, local
 re-derivation from `data/raw/building_permits.csv`).
 
-**Evidence:** ⚠️ **in-repo measurement only — no published notebook**, unlike
-issues 1/3/4/5. Reproduce with `load_permits` over
-`range(2009, 2026)` and diff its `neighbourhood_name` index against
-`load_boundaries`; the split by ambiguity is scripted in the S156 session notes.
-**This one is cheap to publish and has not been**, which by this file's own
-standard is the gap that matters.
+**Evidence:** ✅ **PUBLISHED 2026-09-17** —
+[permit-neighbourhood-list.html](https://peterfriedrich.github.io/edmonton-tax-viz/notebooks/permit-neighbourhood-list.html)
+(`notebooks/standalone/permit_neighbourhood_list.py`, **5 of 5 invariants**,
+executed cold-cache against live APIs). Measured live that day: **547 of 246,402
+rows, 0.22%** — reproducing the local figure in shape.
 
 The permits dataset writes `neighbourhood` as a **comma-joined list** on some
 rows — `OLIVER, WÎHKWÊNTÔWIN`, `THE HAMPTONS, GRANVILLE`,
@@ -369,11 +369,22 @@ were corrected 2026-09-14; **565 across 15 names remain unattributed by
 decision** (see `TODO.md` — a name correction cannot split a straddling permit,
 and those rows are only 14.9% geocoded so geometry cannot either).
 
-**What to ask for:** a single-valued neighbourhood field — ideally the numeric
-`neighbourhood_id` the City already publishes on `fire_response` and both
-Property CSVs, which would remove the name join from this dataset entirely. A
-multi-hood permit then needs either a repeated row per hood or a separate
-`additional_neighbourhoods` field. ⚠️ Worth pairing with the observation that
+**What to ask for.** ⚠️ **THE ASK RECORDED HERE UNTIL 2026-09-17 WAS WRONG, and
+would have been checkably wrong to the person receiving it.** It said to ask for
+*"the numeric `neighbourhood_id` the City already publishes"* — but this dataset
+**already carries one**, `neighbourhood_numberr`, and it is **comma-joined on
+every one of the same 547 rows** (asserted as a notebook invariant). Asking a
+publisher to publish a field they already publish costs a report its
+credibility. **The corrected ask:** make the EXISTING id single-valued, and give
+the genuine multi-hood permit somewhere to go (a repeated row per hood, or an
+`additional_neighbourhoods` field). ⚠️ **The id is nonetheless strictly MORE
+informative than the name**, which is this report's actual contribution:
+checking each id for membership in `65fr-66s6` separates the three causes
+mechanically, where names could only guess — **240 genuine straddles / 238
+renames / 69 duplications, with 0 rows unclassified**. Retired ids (`1150`
+OLIVER, `2310` GORMAN INDUSTRIAL WEST) are simply absent from the boundary file.
+Minor, and worth one line in the report: the field name has a **typo**,
+`numberr`. ⚠️ Worth pairing with the observation that
 this dataset's `building_type` is also an uncontrolled vocabulary
 (§B below) — same dataset, same class of problem.
 
