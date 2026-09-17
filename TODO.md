@@ -1316,40 +1316,6 @@ archive"*) is not, and this span is 2,533 lines.
     `data/DATA.md` §0, `docs/SPEC_temporal.md` §0.1, `docs/AUDIT_LEDGER.md`
     (2026-07-28 row).
 
-- [ ] **COLD-LOAD COST HAS NEVER BEEN MEASURED ON THE WIRE** (NEW 2026-08-07,
-  out of the stack comparison in `docs/VIZ_STACK.md` — read §1 and §5 first).
-  Every payload number in this project is an **on-disk** number. Pages gzips, so
-  what a first-time visitor actually downloads is unknown, and no decision about
-  payload should be made until it is.
-  - ⚠️ **DO NOT re-file this as "we ship 16.1 MB".** That is the size of
-    `web/data/`, not a page weight, and reading it as one is the specific error
-    this item exists to stop. **Boot awaits exactly ONE file** —
-    `neighbourhood_value_per_acre.geojson`, 1.04 MB on disk (re-measured
-    2026-09-16; `web/data/` has since doubled to 16.1 MB while the boot payload
-    got *smaller* — the 7.63 MB `value_grid_50.json` is lazy). Everything else is a
-    memoized `??=` single-flight fetch gated on the view that needs it
-    (`gridFetch`, `zoningFetch`, `roadsFetch`, `devGridFetch`, …).
-  - ⚠️ **LAZY LOADING IS ALREADY DONE — do not "add" it.** It was proposed
-    2026-08-07 after spotting the pattern on `map.kunicki.app/assessment/`
-    (their `prop_details/<slug>.json`), then withdrawn on reading our own code:
-    ours is the same idea applied more broadly, to bigger files. Recorded in
-    `VIZ_STACK.md` §2 so it doesn't get re-proposed a third time.
-  - **What is actually unmeasured, and the whole of this item:** gzipped wire
-    size of (a) the 2.02 MB of vendored libraries — deck.gl 1.19 + maplibre 0.78
-    + CSS 0.06 — and (b) the 1.04 MB boot GeoJSON. **The libraries are now nearly
-    DOUBLE the boot geometry uncompressed** (they have not changed; the boot file
-    shrank), which is not what anyone assumed; JS and GeoJSON don't
-    gzip at the same ratio, so the ordering can flip on the wire and must be
-    measured, not reasoned about.
-  - **Only then is there a decision to make.** If boot geometry dominates, the
-    lever is simplification / coordinate quantization of that one file. If the
-    libraries dominate, there is no cheap lever — dropping deck.gl is refused on
-    feature grounds (`VIZ_STACK.md` §3, §4B) and vendoring is refused on
-    offline-verification grounds (§6). A measurement that changes nothing is
-    still the correct outcome here.
-  - **Not known to be a problem.** Nobody has reported the site as slow. This is
-    "we have never looked", not "we found something".
-
 - [ ] **The Services panel grouping was never checked on a phone.** Shipped
   2026-08-02 (PR #145). It added 2 group captions + 1 row, so the panel grew by
   3 lines of shared DOM — and `CONTROLS_MATRIX.md` records that grouping drives
@@ -2804,6 +2770,8 @@ archive"*) is not, and this span is 2,533 lines.
 ## Done
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
+
+- [x] **Cold-load cost on the wire — MEASURED 2026-09-17 (S168), and the answer changes nothing about payload.** A cold visit is **2.05 MiB gzipped**, critical path **948 KB**; libraries **62.5%** of it, so per `VIZ_STACK.md` §5 axis 4 there is no cheap lever. ⚠️ The item's own premise was stale (wire numbers existed in `PERFORMANCE.md` since 2026-08-10) and three side-findings came out of it. — MEASURED 2026-09-17 · `docs/TODO_archive.md`
 
 - [x] **Manifest staleness guard — BUILT 2026-09-17 (S167).** Two digest checks: `check_budget_context` + `check_mill_rate_values`. — BUILT 2026-09-17 · `docs/TODO_archive.md`
 

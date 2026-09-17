@@ -3152,3 +3152,87 @@ Verbatim as they stood. **Nothing here is a to-do.**
   `scripts/download_data.py`, fails at count >= limit; +6 tests; roads
   source added in the same commit).
 
+### COLD-LOAD COST HAS NEVER BEEN MEASURED ON THE WIRE — CLOSED 2026-09-17 (measured; nothing to change)
+
+- [x] **COLD-LOAD COST HAS NEVER BEEN MEASURED ON THE WIRE** (NEW 2026-08-07,
+  out of the stack comparison in `docs/VIZ_STACK.md` — read §1 and §5 first).
+  Every payload number in this project is an **on-disk** number. Pages gzips, so
+  what a first-time visitor actually downloads is unknown, and no decision about
+  payload should be made until it is.
+  - ⚠️ **DO NOT re-file this as "we ship 16.1 MB".** That is the size of
+    `web/data/`, not a page weight, and reading it as one is the specific error
+    this item exists to stop. **Boot awaits exactly ONE file** —
+    `neighbourhood_value_per_acre.geojson`, 1.04 MB on disk (re-measured
+    2026-09-16; `web/data/` has since doubled to 16.1 MB while the boot payload
+    got *smaller* — the 7.63 MB `value_grid_50.json` is lazy). Everything else is a
+    memoized `??=` single-flight fetch gated on the view that needs it
+    (`gridFetch`, `zoningFetch`, `roadsFetch`, `devGridFetch`, …).
+  - ⚠️ **LAZY LOADING IS ALREADY DONE — do not "add" it.** It was proposed
+    2026-08-07 after spotting the pattern on `map.kunicki.app/assessment/`
+    (their `prop_details/<slug>.json`), then withdrawn on reading our own code:
+    ours is the same idea applied more broadly, to bigger files. Recorded in
+    `VIZ_STACK.md` §2 so it doesn't get re-proposed a third time.
+  - **What is actually unmeasured, and the whole of this item:** gzipped wire
+    size of (a) the 2.02 MB of vendored libraries — deck.gl 1.19 + maplibre 0.78
+    + CSS 0.06 — and (b) the 1.04 MB boot GeoJSON. **The libraries are now nearly
+    DOUBLE the boot geometry uncompressed** (they have not changed; the boot file
+    shrank), which is not what anyone assumed; JS and GeoJSON don't
+    gzip at the same ratio, so the ordering can flip on the wire and must be
+    measured, not reasoned about.
+  - **Only then is there a decision to make.** If boot geometry dominates, the
+    lever is simplification / coordinate quantization of that one file. If the
+    libraries dominate, there is no cheap lever — dropping deck.gl is refused on
+    feature grounds (`VIZ_STACK.md` §3, §4B) and vendoring is refused on
+    offline-verification grounds (§6). A measurement that changes nothing is
+    still the correct outcome here.
+  - **Not known to be a problem.** Nobody has reported the site as slow. This is
+    "we have never looked", not "we found something".
+
+**OUTCOME (2026-09-17, S168) — measured on the live site; the payload decision is
+"no change", which the item itself names as a correct result.**
+
+Method: headless Chromium against `https://peterfriedrich.github.io/edmonton-tax-viz/`,
+zero interaction, cross-checked two ways (per-request `sizes().responseBodySize`
+and the page's own `performance` `transferSize` — they agree to 0.02%). Full
+table in `docs/PERFORMANCE.md` §"The cold visit, end to end".
+
+- **Cold visit = 2.05 MiB gzipped over 12 requests**; critical path **948 KB**.
+- **The ordering does NOT flip, it widens.** Libraries lead boot geometry 1.94×
+  on disk and **3.13× on the wire** — GeoJSON gzips at 5.76×, minified JS at
+  3.57×. Libraries are **62.5%** of the critical path. Per §5 axis 4's own rule
+  that means **there is no cheap lever**, and trimming the boot GeoJSON attacks
+  the smallest of the three terms.
+- ⚠️ **THE ITEM'S PREMISE WAS STALE.** It asserted "every payload number in this
+  project is an on-disk number" and the wire cost "unknown". False since
+  **2026-08-10**: `PERFORMANCE.md` §Payload has carried per-file gzip figures,
+  explicitly headed "Measured over the wire", and mine agree with it to ~2%. The
+  genuinely open question was narrower — *does compression reorder the terms* —
+  and that one was real. `todo-can-lag-executed-work`, again: the premise should
+  have been re-checked before the measurement, not after.
+- ⚠️ **MY FIRST RUN MANUFACTURED A FALSE HEADLINE AND IT FLATTERED ME.** Run 1
+  reported `value_grid_50.json` (8.0 MB) fetched at boot — a dramatic "the lazy
+  architecture is broken" finding. It was **my instrument**: calling Playwright's
+  `response.body()` on the app's `HEAD` probe materialized a body that never
+  crossed the wire. The real request is a **394-byte HEAD**, exactly as
+  `index.html`'s own comment says ("the fine grid is never prefetched"). Caught
+  by re-running with methods recorded. `measurements-that-favour-me` +
+  `check-where-the-value-can-be-wrong`.
+
+**Three side-findings, all corrected in place:**
+1. **`VIZ_STACK.md` §1 listed `temporal.json`, `reference.geojson` and
+   `dev_history.json` as toggle-driven. They are unconditional boot fetches** —
+   three adjacent lines in `index.html`. `PERFORMANCE.md` had it right the whole
+   time, so **the two docs contradicted each other for five weeks**;
+   `dev_history.json` was counted as boot cost in neither.
+2. **The app shell is a third budget nobody was accounting for.** `index.html`
+   alone is **147 KB gzipped — 15.5% of the critical path and 77% of the boot
+   GeoJSON**, which is the term every payload discussion compares against. It
+   grows with every lens added.
+3. **Pages serves gzip only — no brotli, no zstd** (probed per-encoding, and
+   confirmed with a browser sending all four). Brotli would take another ~15–20%
+   off the minified JS and is **not a lever we hold**.
+
+⚠️ **Deliberately NOT built: a wire-size regression guard.** It needs network in
+CI and is a new merge-gate behaviour, which `CLAUDE.md` says to propose first.
+The numbers above are a snapshot and will drift with every data refresh — open
+question for Peter, not something to slip in.

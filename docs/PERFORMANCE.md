@@ -110,15 +110,60 @@ Measured over the wire (GitHub Pages gzips everything, `.geojson` included;
 
 | when | payload | gzip |
 |---|---|---|
-| **boot, always** | deck.gl + maplibre + `index.html` + css | ~680 KB |
+| **boot, always** | deck.gl + maplibre + `index.html` + css | ~741 KB |
 | **boot, always** | `neighbourhood_value_per_acre.geojson` (awaited, blocks the data draw) | **~185 KB** |
-| **boot, always** | reference + temporal + status | ~69 KB |
+| **boot, always** | reference + temporal + dev_history + status | ~81 KB |
 | **boot, always (2026-09-01)** | `value_grid.json` — 100 m grid, **prefetched on idle** | **~1.05 MB** |
 | Glass (50 m, on switch or hover) | `value_grid_50.json` | **~2.78 MB** |
 | Uses | `zoning.geojson` | ~444 KB |
 | Services / Ratio | `roads.geojson` (+ bike 52, lrt 4.5, transit 1.1, fire 0.4) | ~264 KB |
 | Development | `dev_grid.json` | **~111 KB** |
 | Money / Value / Infill / Change | reads `state.data` | **0** |
+
+### The cold visit, end to end (re-measured on the live site 2026-09-17)
+
+Captured against `https://peterfriedrich.github.io/edmonton-tax-viz/` with a real
+headless Chromium, zero interaction, cross-checked two ways (per-request
+`sizes().responseBodySize` and the page's own `performance` `transferSize`, which
+agree to 0.02%).
+
+| phase | wire |
+|---|---|
+| **critical path** — `index.html` 147 KB, deck.gl 369, maplibre js 215 + css 9, `styles.css` 19, boot GeoJSON 189 | **948 KB** |
+| **post-boot, unprompted** — 100 m grid prefetch 1,124 KB, temporal 43, reference 26, dev_history 12, status 0.7, one HEAD | **1,206 KB** |
+| **cold visit total** | **2,155 KB (2.05 MiB)** |
+
+⚠️ **THE IDLE PREFETCH IS THE SINGLE LARGEST THING A COLD VISITOR DOWNLOADS** —
+1,124 KB, **52% of the whole visit**, more than deck.gl and the boot GeoJSON
+combined. That is the 2026-09-01 decision working as designed (it buys an instant
+Glass), and it is gated on `Save-Data`; the point is only that any "cold-load
+budget" quoted as *libraries + boot geometry* undercounts the real visit by 2.3×.
+
+⚠️ **GZIP ONLY — Pages serves NO brotli and NO zstd.** Probed per-encoding and
+confirmed by a browser sending `gzip, deflate, br, zstd`: every asset comes back
+`content-encoding: gzip`. Brotli would typically take another ~15–20% off the
+minified JS, and it is **not a lever we hold** — it is GitHub's to enable.
+
+**The compression ratios differ enough to reorder things, so never rank payloads
+by their on-disk size:**
+
+| | on disk | wire | ratio |
+|---|---|---|---|
+| vendored libraries (deck.gl + maplibre js/css) | 2,114 KB | **593 KB** | 3.57× |
+| app shell (`index.html` + `styles.css`) | 519 KB | **166 KB** | 3.13× |
+| boot GeoJSON | 1,091 KB | **189 KB** | 5.76× |
+
+⚠️ **The libraries do NOT lose their lead on the wire — they widen it, 1.94× →
+3.13×.** GeoJSON gzips far better than minified JS (5.76× vs 3.57×), so
+compression makes the library half *more* dominant, not less. `VIZ_STACK.md` §5
+axis 4 left this open ("the ordering can flip … measure before ranking them"); it
+does not flip.
+
+⚠️ **THE APP SHELL IS A THIRD BUDGET AND WAS IN NOBODY'S ACCOUNTING.**
+`index.html` alone is **147 KB gzipped — 15.5% of the critical path, and 77% of
+the boot GeoJSON it is never compared against.** Every payload discussion here
+has been libraries-vs-geometry; the single hand-written file is the third
+comparable term, and it is the one that grows every time a lens is added.
 
 ⚠️ **THE ONE COST THAT SCALES WITH LENS COUNT is the served hood GeoJSON**, because
 each lens adds per-hood columns to it and every visitor fetches it at boot. At 66
