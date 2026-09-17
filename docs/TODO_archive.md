@@ -3236,3 +3236,62 @@ table in `docs/PERFORMANCE.md` §"The cold visit, end to end".
 CI and is a new merge-gate behaviour, which `CLAUDE.md` says to propose first.
 The numbers above are a snapshot and will drift with every data refresh — open
 question for Peter, not something to slip in.
+
+### RE-MEASURE the mobile coverage ceiling — CLOSED 2026-09-17 (re-probed; ceiling 53.5%)
+
+- [x] **RE-MEASURE the mobile coverage ceiling — the 2026-08-04 figure is stale
+  by construction.** `docs/MOBILE_USABILITY.md` measured "the public build
+  cannot reach the worst state" and a **52.3%** public ceiling when public
+  `#views` was TWO buttons. It is now **four** (Services returned 2026-09-02,
+  Ratio 2026-09-11), so the Services-unfolded **53.1%** state is publicly
+  reachable and the ceiling is simply unknown. Flagged in place 2026-09-11
+  rather than re-derived, because the per-view percentages still stand and only
+  reachability moved. **The work is one re-probe of the live public build**, not
+  a re-measurement of every state. ⚠️ The bottom-sheet refusal that cites this
+  ceiling did not rest on it alone, so this does not re-open that decision.
+
+**OUTCOME (2026-09-17, S168) — re-probed; the public ceiling is 53.5%, and the
+predicted mechanism was wrong.**
+
+Live public build, 390×844, union method (2px grid, `CHROME_IDS` + `EXTRA_IDS`).
+**Validated before use:** it reproduces three of `MOBILE_USABILITY.md`'s own
+figures to the decimal — default **27.9%**, Money unfolded **47.9%**, Development
+unfolded + peek **52.3%** — and two consecutive runs were byte-identical.
+
+| public state | union |
+|---|---|
+| default (folded) | 27.9% |
+| Ratio unfolded | 30.8% · + peek 35.9% |
+| Services unfolded | 38.8% · + peek 42.2% |
+| Development unfolded | 44.7% · + peek 52.3% |
+| **Money unfolded** | 47.9% · **+ peek 53.5% ← ceiling** |
+
+- ⚠️ **THE ITEM'S PREMISE WAS WRONG.** It expected Services returning public to
+  carry its 53.1% in. **Public Services unfolded is 38.8%** — the public build's
+  Services is roads-only, and 53.1% was a *full-build* panel (measured 62.7% on
+  `/full/` today). The 53.1% state is still not publicly reachable.
+- ⚠️ **THE CEILING ROSE VIA A STATE NOBODY HAD MEASURED, AND IT WAS ALREADY
+  WRONG IN AUGUST.** The worst public state is **Money unfolded + peek**. The
+  table lists Money unfolded (47.9%) and default + peek (34.5%) separately but
+  never their combination, and all three affordances were public on 2026-08-04
+  too — so **52.3% was an understatement when written, not drift.** That is the
+  table's own rule ("name the state and name the view") failing on the table.
+- ⚠️ **`Development UNFOLDED 52.7%` IS INTERNALLY IMPOSSIBLE.** A union cannot
+  shrink when a rect is added, yet the next row has Development unfolded **+
+  peek** at 52.3%. Re-measured: **44.7%** unfolded, 52.3% + peek — consistent,
+  with the +peek figure reproducing exactly. 52.7% is wrong, not changed.
+- **The full build is now 66.1% at its worst** (Services unfolded + peek; Money
+  61.8%, Development 65.0%). **Not comparable** to the August full-build rows —
+  `#budget-pod` did not exist then and is present in every full state now. Public
+  does not carry the pod.
+- **The bottom-sheet refusal is NOT re-opened**, as the item said it would not
+  be: it never rested on the ceiling alone, and a transient 53.5% is the same
+  order as the transient 52.3% it replaces.
+
+⚠️ **A measurement trap worth keeping: my first two sweeps recorded "+ peek"
+states in which no peek card ever opened.** The tap went to the map centre, which
+the unfolded Options panel swallows in Money and Development; a later fix tapped
+a *chrome-free* pixel and still missed, because that pixel was off the city
+polygon. Both runs printed a confident, plausible ceiling (47.9%) built on a
+state that did not exist. Fixed by scanning candidate pixels centre-out and
+**asserting `#peek` is actually visible before recording the row**.
