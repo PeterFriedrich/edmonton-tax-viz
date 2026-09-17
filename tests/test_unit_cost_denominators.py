@@ -88,11 +88,59 @@ def test_roadway_ops_is_pinned_to_lane_km(costs):
     assert sd["confidence"] == "ESTABLISHED"
 
 
-def test_the_two_lifecycle_blocks_share_one_unconfirmed_denominator(costs):
+def test_the_two_lifecycle_blocks_share_one_denominator(costs):
     """⚠️ roadway_renewal IS the $1.9M half of roadway_om_renewal, so they must
-    never drift apart on this. Both are unconfirmed pending Q1(a) bullet 2, and
-    resolving it resolves both."""
+    never drift apart on this. Both were unconfirmed pending Q1(a) bullet 2;
+    that resolved to centreline on 2026-09-17 and resolved both together, as
+    predicted. The invariant the test protects is the AGREEMENT, not the value —
+    a future re-reading must move both blocks or neither."""
     a = costs["roadway_om_renewal"]["source_denominator"]
     b = costs["roadway_renewal"]["source_denominator"]
-    assert a["unit"] == b["unit"] == "UNKNOWN"
-    assert a["confidence"] == b["confidence"] == "ASSUMED"
+    assert a["unit"] == b["unit"] == "centreline-km"
+    assert a["confidence"] == b["confidence"] == "ESTABLISHED"
+
+
+def test_the_two_road_figures_do_not_share_a_denominator(costs):
+    """⚠️ THE TRAP THIS FILE EXISTS FOR, now that the lifecycle side is resolved.
+    This file carries two City road per-km figures on GENUINELY DIFFERENT units:
+    the Development Impact lifecycle figures are centreline-km, the ~11,000 km
+    snow-and-ice inventory behind roadway_ops is lane-km. The tidy-looking error
+    is to "harmonize" them. Falsified by name: if these two ever read the same,
+    someone has propagated one resolution across both."""
+    lifecycle = costs["roadway_om_renewal"]["source_denominator"]["unit"]
+    operating = costs["roadway_ops"]["source_denominator"]["unit"]
+    assert lifecycle == "centreline-km"
+    assert operating == "lane-km"
+    assert lifecycle != operating, (
+        "the lifecycle and operating road rates now claim the same denominator — "
+        "they are different City figures and were established separately"
+    )
+
+
+def test_development_impact_figures_reconcile_to_the_pages_own_total(costs):
+    """⚠️ THE CHECK THAT PINS THE CENTRELINE READING, and the reason it is not
+    just an assertion of what we already believed.
+
+    The source page states its own lifecycle total — "about $4 million. Or about
+    2.5 times the initial capital investment" — and the three component figures
+    stored here sum to it exactly. That is what makes them ONE single-street
+    scenario rather than a mix of bases: a lane-km reading would have to explain
+    why a two-lane street's components still add to the page's one-street total.
+
+    Guards the stored figures, not the prose: change any component and this
+    fails, which is the point (the $1,285/km road-maintenance figure went a year
+    unchallenged because nothing tied it to anything else)."""
+    pub = costs["roadway_om_renewal"]["source"]["published_figures_per_km_neighbourhood_road"]
+    capital = pub["initial_capital"]
+    om = pub["operate_and_maintain"]
+    renewal = pub["renew_and_replace"]
+
+    assert (capital, om, renewal) == (1_500_000, 600_000, 1_900_000)
+    assert capital + om + renewal == 4_000_000, "no longer reconciles to the page's stated ~$4M total"
+    # The page rounds "about 2.5 times"; the exact ratio is 2.67. Anything outside
+    # this band means a component moved and the page's own framing no longer holds.
+    assert 2.5 <= (capital + om + renewal) / capital <= 2.7
+
+    # The shipped rate is that bundle, minus capital, over the 50-year life.
+    assert (om + renewal) / 50 / 1000 == costs["roadway_om_renewal"]["value"] == 50
+    assert renewal / 50 / 1000 == costs["roadway_renewal"]["value"] == 38
