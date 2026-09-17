@@ -1046,8 +1046,8 @@ archive"*) is not, and this span is 2,533 lines.
     a weighted term nothing can falsify is exactly what that decision refused.
     The Infill highlight grid is a filter overlay, not a step toward this.
 
-- [ ] **PETER'S CALL — the road service life is 50 years and figures in public
-  circulation use 25.** Both readings sit on the SAME City page we
+- [ ] **PETER'S CALL — the road service life is 50 years and the City page's
+  base-case reading is 25.** Both readings sit on the SAME City page we
   already cite (`city_unit_costs.json` → `roadway_om_renewal.source`,
   "Development Impact on Infrastructure"), which publishes the life as *"usually
   25, extended to 50 with proper maintenance"*. Your call 2026-07-15 took 50.
@@ -1057,6 +1057,36 @@ archive"*) is not, and this span is 2,533 lines.
     **$24,000/km/yr** at 25 — exactly 2×. The full lifecycle rate the site
     actually ships is **$50,000/km/yr**; at 25 yr it would be **$100,000/km/yr**
     (already recorded as `roadway_om_renewal.sensitivity`).
+  - ⚠️ **CORRECTED 2026-09-17 — this item used to open *"and figures in public
+    circulation use 25"*, and that framing was comparing two different
+    quantities.** The circulating 25-year figure is **$24,000/km/yr**, which is
+    the **$600k O&M half alone** over 25 years — NOT the $2.5M lifecycle bundle
+    over 25 years, which is the $100,000/km/yr our own sensitivity names. The
+    op-ed wording, retrieved verbatim 2026-09-17, is *"about $600,000 per
+    kilometer over its 25-year life ($24k per km/year), plus about $1.5 million
+    in initial construction costs"* — O&M and capital stated separately, with no
+    renewal term at all. **So the public number is not the 25-year version of
+    ours; it is a different quantity on a different basis.** The $50k-vs-$100k
+    arithmetic below is unaffected. What does NOT survive is the premise that a
+    reader who has met the circulating figure is seeing "half of" our number —
+    they are seeing our **O&M half doubled**, which collides with `_two_bases`
+    rather than with the service-life choice.
+  - **A NEW argument for 50, and unlike the 3% rule it is not circular.** The
+    page's own causal claim is that the road *"will usually last 25 years, but
+    proper maintenance and renewal could extend its life to 50 years"* — and the
+    $600k + $1.9M **is** that maintenance and renewal. Annualizing the bundle
+    over 25 years charges the cost of the extension while refusing to count the
+    extension. Verified verbatim off the rendered page 2026-09-17 (see the unit
+    resolution below); the page's own total, *"about $4 million ... about 2.5
+    times the initial capital investment"*, reconciles exactly to
+    $1.5M + $600k + $1.9M and confirms it describes ONE scenario, not two.
+  - ⚠️ **But two City-published routes now both land BELOW 50**, and both are
+    road-specific or road-inclusive aggregates rather than neighbourhood
+    streets: the 2023 *Infrastructure State and Condition Report* p27 expected
+    life of **33 years**, and the audited **Schedule 1 implied average life of
+    36.4–38.0 years** derived 2026-09-17 (`docs/FINDINGS_roadway_implied_life.md`).
+    Neither settles the call — see that document's limits — but the choice no
+    longer has a one-sided evidence base.
   - **Why 50 still looks right — but on weaker ground than this item claimed
     until 2026-09-03.** The same page's ~3%/yr set-aside rule on $1.5M/km ≈
     **$45,000/km/yr** does point at the 50-year $50,000 rather than the 25-year
@@ -1098,14 +1128,38 @@ archive"*) is not, and this span is 2,533 lines.
     Report* p27 gives Roads **average age 43 yrs vs expected life 33 yrs**
     ($9,747,485,291 replacement value). ⚠️ **Asset-class figure** — all roads,
     arterials included, not a neighbourhood street — so it is context, not a
-    third reading of the 25-vs-50. ⚠️ **NONE HAS BEEN CHECKED** —
+    third reading of the 25-vs-50. ⚠️ **STILL NOT CHECKED BY US** —
     they are relayed claims of exactly the shape that produced a year-late
-    source date in the same batch (`DECISIONS.md` 2026-09-03). **Grep/fetch
-    before use.** ⚠️ **Even if all four verify they do not settle this item** —
-    it is a *denominator choice* between two readings on the City page we
-    already cite, and an Alberta-highway or Winnipeg-regional figure is a
-    different asset class. They are context for the methodology note, not a
-    tiebreaker.
+    source date in the same batch (`DECISIONS.md` 2026-09-03). A research round
+    reported all four confirmed to primary sources on **2026-09-17**, and its
+    own caveat says the retrieval dates on the Alberta/Calgary/Winnipeg three
+    *"were not independently re-checked"* — so treat them as **relayed twice,
+    not verified**. **Grep/fetch before use.** ⚠️ **Even if all four verify they
+    do not settle this item** — it is a *denominator choice* between two
+    readings on the City page we already cite, and an Alberta-highway or
+    Winnipeg-regional figure is a different asset class. They are context for
+    the methodology note, not a tiebreaker.
+  - ✅ **ANSWERED 2026-09-17, and the answer is a clean NEGATIVE — the City's
+    Consolidated Financial Statements do NOT carry a road service life.** Asked
+    as Q3(a) of the send-back brief; the reply was then **verified first-hand
+    rather than taken** (the FY2023 PDF was fetched and Note 1 read directly —
+    edmonton.ca is reachable from the Oracle box again, so the "502 from here"
+    in `DATA.md` §13 and in the brief is STALE). Note 1's classes are Land
+    improvements / Buildings / Machinery and equipment / Vehicles / **Engineered
+    structures**, and roadways fall in the last one at **7 to 100 years**.
+    **There is no roads line, and a 7–100 range cannot discriminate 25 from 50.**
+    `Roadway system` appears only in Schedule 1 and Note 15 as dollars, with no
+    years. **Nothing further to ask of this source.**
+    - ✅ **But Schedule 1 answers it by another route, and that IS new** — gross
+      cost and annual amortization are on separate lines per class, so an
+      implied average life is derivable: **roadway system 36.4–38.0 years**.
+      Full derivation, method validation and limits in
+      `docs/FINDINGS_roadway_implied_life.md`.
+    - ⚠️ **An amortization life is an ACCOUNTING POLICY, not an engineering
+      service life** — the sidewalk *"amortized for 20 years"* trap one step
+      over (`DECISIONS.md` 2026-08-04). Neither the 7–100 range nor the derived
+      37 may be called "the City's road service life"; the statements never use
+      that language.
 
 - [ ] **T8 FOLLOW-UPS — the three unchecked category sets were AUDITED 2026-08-30
   and none carries the 2026-08-18 defect.** Two follow-ups survive; the sweep
