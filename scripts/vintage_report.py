@@ -29,6 +29,7 @@ import argparse
 import csv
 import datetime as dt
 import hashlib
+import io
 import json
 import logging
 import os
@@ -50,16 +51,25 @@ TEMPORAL_ARCHIVE = ROOT / "data" / "temporal_archive.json"
 FIR_TAX_BASE = ROOT / "data" / "fir_tax_base.json"
 STATUS_JSON = ROOT / "web" / "data" / "status.json"
 CAPITAL_BUDGET = ROOT / "data" / "capital_budget.csv"
+BUDGET_CONTEXT = ROOT / "data" / "city_budget_context.json"
 TODO_MD = ROOT / "TODO.md"
 SERVED_GEOJSON = ROOT / "web" / "data" / "neighbourhood_value_per_acre.geojson"
 
 ASSESSMENT_METADATA_URL = "https://data.edmonton.ca/api/views/q7d6-ambg.json"
 MILL_RATES_URL = "https://data.edmonton.ca/resource/pwis-wc4c.json"
 CAPITAL_BUDGET_URL = "https://budget.edmonton.ca/api/capital_budget.csv"
+OPERATING_BUDGET_URL = "https://budget.edmonton.ca/api/operating_budget.csv"
 ZONING_URL = "https://data.edmonton.ca/resource/fixa-tstc.json"
 ROADS_URL = "https://data.edmonton.ca/resource/9j8t-zm52.json"
 
 OK, ACTION, UNKNOWN = "OK", "ACTION", "UNKNOWN"
+
+# `mill_rates.json` key -> the `tax_rate_type` pwis-wc4c publishes it under.
+RATE_TYPES = {
+    "municipal": "Municipal",
+    "education": "Education",
+    "education_requisition_allowance": "Education Requisition Allowance",
+}
 
 
 def _rates_years(path):
@@ -170,6 +180,163 @@ def check_year_constants():
                 f"**{', '.join(off)} disagree with `ASSESSMENT_YEAR`={pinned}** — "
                 f"the site would misreport its own vintage. `docs/RUNBOOK.md` §1 step 6.")
     return (OK, "Year constants", f"`DATA_YEAR`/`RATE_YEAR`/`ASSESSMENT_YEAR` all {pinned}.")
+
+
+def _tax_supported(rows):
+    return [r for r in rows if r["fund_type"] == "Tax Supported"]
+
+
+def _program_total(rows, program, year):
+    """Tax-supported total for one program in ONE year, pinned as a PAIR.
+
+    ⚠️ NEVER follow a program NAME across years. The tree was re-cut twice
+    (`data/DATA.md` §17): `Snow and Ice Control` exists in FY2017 ONLY and is
+    `OPS/PARS - Snow and Ice Control` from FY2018, and `Roadway Maintenance` is
+    FY2017 ONLY. A `groupby(program)` shows both abruptly hitting zero, which is
+    a rename, not a cut — and a check that read that zero as a budget change
+    would file an ACTION every month forever.
+    """
+    return sum(float(r["budget"]) for r in _tax_supported(rows)
+               if r["program"] == program and int(r["budget_year"]) == year)
+
+
+# (program, fiscal year) -> the figure `city_budget_context.json` sources from it.
+# Both are FY2017 because that is the only year Edmonton published a roads-only
+# maintenance program; the vintage is deliberate (`DECISIONS.md` 2026-08-04).
+PINNED_PROGRAMS = {
+    ("Roadway Maintenance", 2017): 65_671_000.0,
+    ("Snow and Ice Control", 2017): 63_709_000.0,
+}
+# The snow components come from Taproot, NOT the portal, so they are corroborated
+# rather than compared: roads snow + path snow against the published program.
+# Recorded at 99.2% on 2026-08-04 (`city_budget_context.json` roads.snow_cross_check).
+SNOW_PROGRAM = ("OPS/PARS - Snow and Ice Control", 2025)
+SNOW_AGREEMENT_FLOOR = 0.97
+
+
+def check_budget_context(timeout=60):
+    """The budget pod's manifest: is a newer FY published, and do its lines still hold?
+
+    `city_budget_context.json` is hand-maintained and reviewed — not fetched, not
+    in the weekly refresh — and it feeds the About panel's published dollars on
+    all 18 surfaces through `status.json`. Nothing recurring watched it, which is
+    the gap `docs/FABLE_AUDIT_published_numbers.md` §3 names: *the world moves and
+    the file does not, silently, forever.* That is not hypothetical here — the
+    roads-maintenance component shipped ~5x too low until 2026-08-04.
+
+    ⚠️ A newer FY is a PROMPT, NOT A DEFECT. The pod's vintage is a choice
+    (FY2017 roads-only scope beats matching vintage, `DECISIONS.md` 2026-08-04),
+    so this asks you to re-confirm the choice once a year instead of letting it
+    lapse by default. Do not "fix" it by bumping the year alone — the components
+    are sourced per-year and would then disagree with their own total.
+
+    ⚠️ Deliberately NOT a content fingerprint like `check_capital_budget`. The
+    file is approved but not frozen: FY2026 was republished between 2026-09-05
+    and 09-15 (7,283 -> 7,294 rows, total $4,044,711,032 -> $4,045,178,891) with
+    FY2025 byte-identical. Hashing it would report that as a budget change.
+    """
+    try:
+        local = json.loads(BUDGET_CONTEXT.read_text())
+        pod_year = int(local["total_operating_budget"]["year"])
+        pod_total = float(local["total_operating_budget"]["value"])
+        comp = {c["key"]: c.get("components", {}) for c in local["categories"]}
+    except Exception as exc:  # noqa: BLE001
+        return (UNKNOWN, "Budget pod manifest",
+                f"Could not read or parse `data/city_budget_context.json` ({exc}).")
+    try:
+        resp = requests.get(OPERATING_BUDGET_URL, timeout=timeout)
+        resp.raise_for_status()
+        rows = list(csv.DictReader(io.StringIO(resp.text)))
+        if not rows or "budget_year" not in rows[0]:
+            raise ValueError(f"unexpected header {list(rows[0]) if rows else '(empty)'!r}")
+    except Exception as exc:  # noqa: BLE001 — unreachable is UNKNOWN, never ACTION
+        return (UNKNOWN, "Budget pod manifest",
+                f"Could not reach or parse {OPERATING_BUDGET_URL} ({exc}).")
+
+    parts = []
+    newest = max(int(r["budget_year"]) for r in _tax_supported(rows))
+    if newest > pod_year:
+        upstream_total = sum(float(r["budget"]) for r in _tax_supported(rows)
+                             if int(r["budget_year"]) == newest)
+        parts.append(f"**FY{newest} is published (${upstream_total:,.0f} tax-supported) "
+                     f"but the pod carries FY{pod_year} (${pod_total:,.0f})** — "
+                     f"re-confirm the vintage, do not bump the year alone")
+
+    for (program, year), pinned in sorted(PINNED_PROGRAMS.items()):
+        actual = _program_total(rows, program, year)
+        if abs(actual - pinned) > 1.0:
+            parts.append(f"**`{program}` FY{year} is now ${actual:,.0f}, was ${pinned:,.0f}** "
+                         f"(delta ${actual - pinned:+,.0f})")
+
+    published_snow = _program_total(rows, *SNOW_PROGRAM)
+    ours = (float(comp.get("roads", {}).get("snow_and_ice_control", 0))
+            + float(comp.get("active_transport", {}).get("snow_and_ice_control", 0)))
+    if not published_snow:
+        parts.append(f"**`{SNOW_PROGRAM[0]}` FY{SNOW_PROGRAM[1]} returned nothing** — "
+                     f"the program tree may have been re-cut again (`DATA.md` §17)")
+    else:
+        agreement = ours / published_snow
+        if agreement < SNOW_AGREEMENT_FLOOR or agreement > 2 - SNOW_AGREEMENT_FLOOR:
+            parts.append(f"**The snow cross-check drifted to {agreement:.1%}** "
+                         f"(${ours:,.0f} ours vs ${published_snow:,.0f} published; "
+                         f"was 99.2% on 2026-08-04)")
+
+    if parts:
+        return (ACTION, "Budget pod manifest",
+                f"{'. '.join(parts)}. `data/DATA.md` §17, `docs/RUNBOOK.md` §1.")
+    return (OK, "Budget pod manifest",
+            f"FY{pod_year} is still the newest published; both pinned program lines "
+            f"re-derive exactly; snow cross-check {ours / published_snow:.1%}.")
+
+
+def check_mill_rate_values(timeout=60):
+    """The pinned year's rate VALUES against `pwis-wc4c`, not just its year.
+
+    ⚠️ Split from `check_mill_rates` on purpose, and the split is the point:
+    that check compares the SET OF YEARS only, so a rate REPUBLISHED for a year
+    we already hold passes it silently. Same source, different question — and
+    the digest renders one row per check, so folding them would print two
+    unrelated verdicts in one cell.
+    """
+    pinned = _pins().ASSESSMENT_YEAR
+    try:
+        local = json.loads(MILL_RATES.read_text())["rates"][str(pinned)]
+    except Exception as exc:  # noqa: BLE001
+        return (UNKNOWN, "Mill rate values",
+                f"Could not read the {pinned} block of `mill_rates.json` ({exc}).")
+    try:
+        rows = requests.get(MILL_RATES_URL, params={"$limit": 2000}, timeout=timeout).json()
+    except Exception as exc:  # noqa: BLE001
+        return (UNKNOWN, "Mill rate values", f"Could not read `pwis-wc4c` ({exc}).")
+
+    upstream = {(int(r["tax_year"]), r["assessment_class"], r["tax_rate_type"]):
+                float(r["amount_per_1_000_of_assessed_value"]) for r in rows}
+    mismatched, absent, checked = [], [], 0
+    for cls, rates in local.items():
+        for key, value in rates.items():
+            # `_assumed`, `_note` etc. record a DERIVED value and its reasoning;
+            # there is nothing upstream to compare them to.
+            if key.startswith("_"):
+                continue
+            published = upstream.get((pinned, cls, RATE_TYPES[key]))
+            if published is None:
+                absent.append(f"{cls} {key}")
+            elif abs(published - float(value)) > 1e-9:
+                mismatched.append(f"**{cls} {key}: local {value} vs published {published}**")
+            else:
+                checked += 1
+
+    if mismatched:
+        return (ACTION, "Mill rate values",
+                f"{len(mismatched)} of {checked + len(mismatched)} {pinned} rates disagree "
+                f"with `pwis-wc4c`: {'; '.join(mismatched)}. The published rate is the "
+                f"authority — `docs/RUNBOOK.md` §1 step 2.")
+    note = f"All {checked} {pinned} rates match `pwis-wc4c` exactly."
+    if absent:
+        # Farmland is the standing case: no row is published and the file says so.
+        note += (f" {len(absent)} carried locally with nothing published to compare "
+                 f"({', '.join(absent)}) — see the `_assumed` note beside each.")
+    return (OK, "Mill rate values", note)
 
 
 def check_stormwater():
@@ -704,6 +871,8 @@ def check_road_classes(timeout=60):
 CHECKS = (
     check_assessment_roll,
     check_mill_rates,
+    check_mill_rate_values,
+    check_budget_context,
     check_year_constants,
     check_stormwater,
     check_window_pins,

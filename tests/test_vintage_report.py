@@ -735,3 +735,236 @@ def test_todo_branch_unknown_without_a_todo_file(monkeypatch, tmp_path):
 
 def test_todo_branch_is_registered_in_the_digest():
     assert vr.check_todo_branch_refs in vr.CHECKS
+
+
+# --- budget pod manifest ----------------------------------------------------
+#
+# The gap these close: `city_budget_context.json` is hand-maintained and feeds
+# published dollars on all 18 About-panel surfaces, and nothing recurring read
+# it. Every test here drives a check into ACTION — an all-green manifest guard
+# that cannot go red is the failure mode this project keeps re-learning.
+
+_OPS_HEADER = ("budget_year,fund_type,department,branch,program,category,"
+               "account_type,budget\n")
+
+
+def _ops_row(year, program, budget, fund="Tax Supported"):
+    return f"{year},{fund},Dept,Branch,{program},Materials,Expenses,{budget}\n"
+
+
+def _ops_csv(rows=(), pod_year=2025):
+    """The two pinned FY2017 lines plus the FY2025 snow program, at their real values."""
+    base = (_ops_row(2017, "Roadway Maintenance", 65671000)
+            + _ops_row(2017, "Snow and Ice Control", 63709000)
+            + _ops_row(2025, "OPS/PARS - Snow and Ice Control", 67553815)
+            + _ops_row(pod_year, "Something Else", 3845555000 - 67553815))
+    return _OPS_HEADER + base + "".join(rows)
+
+
+_POD = {
+    "total_operating_budget": {"year": 2025, "value": 3845555000},
+    "categories": [
+        {"key": "roads", "components": {"maintenance": 65671000,
+                                        "snow_and_ice_control": 36850000}},
+        {"key": "active_transport", "components": {"snow_and_ice_control": 30150000}},
+    ],
+}
+
+
+def _pod_local(monkeypatch, tmp_path, payload=None):
+    f = tmp_path / "city_budget_context.json"
+    f.write_text(json.dumps(payload or _POD))
+    monkeypatch.setattr(vr, "BUDGET_CONTEXT", f)
+
+
+def test_budget_context_ok_when_nothing_moved(monkeypatch, tmp_path):
+    _pod_local(monkeypatch, tmp_path)
+    monkeypatch.setattr(vr.requests, "get", lambda *a, **k: _FakeTextResp(_ops_csv()))
+    status, _, detail = vr.check_budget_context()
+    assert status == vr.OK
+    assert "99.2%" in detail
+
+
+def test_budget_context_flags_a_newer_fiscal_year(monkeypatch, tmp_path):
+    """The live case on 2026-09-17: FY2026 published, pod still on FY2025."""
+    _pod_local(monkeypatch, tmp_path)
+    csv_text = _ops_csv(rows=[_ops_row(2026, "Something Else", 4045178891)])
+    monkeypatch.setattr(vr.requests, "get", lambda *a, **k: _FakeTextResp(csv_text))
+    status, _, detail = vr.check_budget_context()
+    assert status == vr.ACTION
+    assert "FY2026" in detail and "FY2025" in detail
+    # It must say re-confirm, not "bump the year" — the vintage is a decision.
+    assert "do not bump the year alone" in detail
+
+
+def test_budget_context_flags_a_moved_pinned_program(monkeypatch, tmp_path):
+    _pod_local(monkeypatch, tmp_path)
+    moved = _OPS_HEADER + (
+        _ops_row(2017, "Roadway Maintenance", 70000000)
+        + _ops_row(2017, "Snow and Ice Control", 63709000)
+        + _ops_row(2025, "OPS/PARS - Snow and Ice Control", 67553815))
+    monkeypatch.setattr(vr.requests, "get", lambda *a, **k: _FakeTextResp(moved))
+    status, _, detail = vr.check_budget_context()
+    assert status == vr.ACTION
+    assert "Roadway Maintenance" in detail and "+4,329,000" in detail
+
+
+def test_budget_context_ignores_a_renamed_program_in_other_years(monkeypatch, tmp_path):
+    """⚠️ The era trap `DATA.md` §17 documents, as a test.
+
+    `Roadway Maintenance` is FY2017-only and `Snow and Ice Control` FY2017-only;
+    both are renamed from FY2018. A check that followed the NAME across years
+    would read the rename as a budget cut and file an ACTION every month forever.
+    """
+    _pod_local(monkeypatch, tmp_path)
+    renamed = _ops_csv(rows=[
+        _ops_row(2018, "OPS/PARS - Infrastructure Maintenance", 49700000),
+        _ops_row(2026, "OPS/PARS - Mobility Infrastructure Services", 76950000),
+    ])
+    monkeypatch.setattr(vr.requests, "get", lambda *a, **k: _FakeTextResp(renamed))
+    # FY2026 present, so the year half fires; the PROGRAM half must not.
+    _, _, detail = vr.check_budget_context()
+    assert "Roadway Maintenance" not in detail
+    assert "Snow and Ice Control` FY2017" not in detail
+
+
+def test_budget_context_flags_a_drifted_snow_cross_check(monkeypatch, tmp_path):
+    """The snow components are Taproot's, corroborated against the portal at 99.2%."""
+    pod = json.loads(json.dumps(_POD))
+    pod["categories"][0]["components"]["snow_and_ice_control"] = 10_000_000
+    _pod_local(monkeypatch, tmp_path, pod)
+    monkeypatch.setattr(vr.requests, "get", lambda *a, **k: _FakeTextResp(_ops_csv()))
+    status, _, detail = vr.check_budget_context()
+    assert status == vr.ACTION
+    assert "snow cross-check drifted" in detail
+
+
+def test_budget_context_flags_a_vanished_snow_program(monkeypatch, tmp_path):
+    """A third re-cut of the tree must say so, not divide by zero."""
+    _pod_local(monkeypatch, tmp_path)
+    gone = _OPS_HEADER + _ops_row(2017, "Roadway Maintenance", 65671000) \
+        + _ops_row(2017, "Snow and Ice Control", 63709000)
+    monkeypatch.setattr(vr.requests, "get", lambda *a, **k: _FakeTextResp(gone))
+    status, _, detail = vr.check_budget_context()
+    assert status == vr.ACTION
+    assert "returned nothing" in detail
+
+
+def test_budget_context_counts_only_tax_supported(monkeypatch, tmp_path):
+    """Utilities and Enterprise/CRL are the wrong denominator (`DATA.md` §17)."""
+    _pod_local(monkeypatch, tmp_path)
+    with_other_funds = _ops_csv(rows=[
+        _ops_row(2027, "Water", 500000000, fund="Utilities"),
+        _ops_row(2028, "CRL", 100000000, fund="Enterprise/CRL"),
+    ])
+    monkeypatch.setattr(vr.requests, "get",
+                        lambda *a, **k: _FakeTextResp(with_other_funds))
+    status, _, detail = vr.check_budget_context()
+    assert status == vr.OK, detail   # FY2027/28 are not tax-supported, so not "newer"
+
+
+def test_budget_context_unreachable_is_unknown_not_action(monkeypatch, tmp_path):
+    _pod_local(monkeypatch, tmp_path)
+    monkeypatch.setattr(vr.requests, "get", _boom)
+    assert vr.check_budget_context()[0] == vr.UNKNOWN
+
+
+def test_budget_context_wrong_shape_is_unknown(monkeypatch, tmp_path):
+    """A 404 HTML page parses as CSV without raising."""
+    _pod_local(monkeypatch, tmp_path)
+    monkeypatch.setattr(vr.requests, "get",
+                        lambda *a, **k: _FakeTextResp("<!DOCTYPE html><html>404"))
+    assert vr.check_budget_context()[0] == vr.UNKNOWN
+
+
+def test_budget_context_missing_local_file_is_unknown(monkeypatch, tmp_path):
+    monkeypatch.setattr(vr, "BUDGET_CONTEXT", tmp_path / "absent.json")
+    assert vr.check_budget_context()[0] == vr.UNKNOWN
+
+
+def test_committed_budget_context_has_what_the_check_reads():
+    """The real file must carry the keys the check pins, or it silently reads 0."""
+    local = json.loads(vr.BUDGET_CONTEXT.read_text())
+    assert int(local["total_operating_budget"]["year"]) > 2000
+    comp = {c["key"]: c.get("components", {}) for c in local["categories"]}
+    assert comp["roads"]["snow_and_ice_control"] > 0
+    assert comp["active_transport"]["snow_and_ice_control"] > 0
+    assert comp["roads"]["maintenance"] == vr.PINNED_PROGRAMS[("Roadway Maintenance", 2017)]
+
+
+def test_budget_context_is_registered_in_the_digest():
+    assert vr.check_budget_context in vr.CHECKS
+
+
+# --- mill rate VALUES -------------------------------------------------------
+
+def _rate_rows(year, municipal):
+    return [{"tax_year": str(year), "assessment_class": "Residential",
+             "tax_rate_type": "Municipal",
+             "amount_per_1_000_of_assessed_value": str(municipal)}]
+
+
+def test_mill_rate_values_flag_a_republished_rate(pinned, tmp_path, monkeypatch):
+    """⚠️ THE GAP: `check_mill_rates` compares YEARS, so this passes it silently."""
+    monkeypatch.setattr(vr, "MILL_RATES", _write(
+        tmp_path, "m.json", {"rates": {"2025": {"Residential": {"municipal": 7.6254}}}}))
+    monkeypatch.setattr(vr.requests, "get",
+                        lambda *a, **k: _FakeResp(_rate_rows(2025, 7.9999)))
+    status, _, detail = vr.check_mill_rate_values()
+    assert status == vr.ACTION
+    assert "7.6254" in detail and "7.9999" in detail
+
+
+def test_mill_rate_values_ok_when_they_match(pinned, tmp_path, monkeypatch):
+    monkeypatch.setattr(vr, "MILL_RATES", _write(
+        tmp_path, "m.json", {"rates": {"2025": {"Residential": {"municipal": 7.6254}}}}))
+    monkeypatch.setattr(vr.requests, "get",
+                        lambda *a, **k: _FakeResp(_rate_rows(2025, 7.6254)))
+    assert vr.check_mill_rate_values()[0] == vr.OK
+
+
+def test_mill_rate_values_skip_underscore_notes(pinned, tmp_path, monkeypatch):
+    """`_assumed` records a DERIVED value; there is nothing upstream to compare."""
+    monkeypatch.setattr(vr, "MILL_RATES", _write(tmp_path, "m.json", {"rates": {"2025": {
+        "Farmland": {"municipal": 7.6254, "_assumed": "set = Residential"}}}}))
+    monkeypatch.setattr(vr.requests, "get",
+                        lambda *a, **k: _FakeResp(_rate_rows(2025, 7.6254)))
+    status, _, detail = vr.check_mill_rate_values()
+    assert status == vr.OK
+    assert "_assumed" not in detail.replace("`_assumed` note", "")
+
+
+def test_mill_rate_values_report_a_class_with_nothing_published(pinned, tmp_path,
+                                                               monkeypatch):
+    monkeypatch.setattr(vr, "MILL_RATES", _write(tmp_path, "m.json", {"rates": {"2025": {
+        "Farmland": {"municipal": 7.6254}}}}))
+    monkeypatch.setattr(vr.requests, "get",
+                        lambda *a, **k: _FakeResp(_rate_rows(2025, 7.6254)))
+    status, _, detail = vr.check_mill_rate_values()
+    assert status == vr.OK
+    assert "Farmland municipal" in detail
+
+
+def test_mill_rate_values_ignore_other_years(pinned, tmp_path, monkeypatch):
+    """A 2024 rate that disagrees is not this check's business — we bill one year."""
+    monkeypatch.setattr(vr, "MILL_RATES", _write(
+        tmp_path, "m.json", {"rates": {"2025": {"Residential": {"municipal": 7.6254}}}}))
+    monkeypatch.setattr(vr.requests, "get", lambda *a, **k: _FakeResp(
+        _rate_rows(2025, 7.6254) + _rate_rows(2024, 1.1111)))
+    assert vr.check_mill_rate_values()[0] == vr.OK
+
+
+def test_mill_rate_values_network_failure_is_unknown(pinned, tmp_path, monkeypatch):
+    monkeypatch.setattr(vr, "MILL_RATES", _write(
+        tmp_path, "m.json", {"rates": {"2025": {"Residential": {"municipal": 7.6254}}}}))
+    monkeypatch.setattr(vr.requests, "get", _boom)
+    assert vr.check_mill_rate_values()[0] == vr.UNKNOWN
+
+
+def test_mill_rate_values_missing_pinned_block_is_unknown(pinned, tmp_path, monkeypatch):
+    monkeypatch.setattr(vr, "MILL_RATES", _write(tmp_path, "m.json", {"rates": {"2019": {}}}))
+    assert vr.check_mill_rate_values()[0] == vr.UNKNOWN
+
+
+def test_mill_rate_values_is_registered_in_the_digest():
+    assert vr.check_mill_rate_values in vr.CHECKS
