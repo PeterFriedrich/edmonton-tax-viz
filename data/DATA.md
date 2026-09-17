@@ -1129,8 +1129,19 @@ spatial join key in the debt-lens brief.
 `data/city_unit_costs.json` — MODELED unit costs for the V2 "city service cost
 per acre" composite (`SPEC_utilities` decision 3). Manual reviewed input
 (mill-rates pattern; NOT auto-fetched, NOT in the weekly refresh). Sourced on
-Peter's laptop (edmonton.ca unreachable from the Oracle box). **Roads + fire
-only** — never label the derived metric "total city cost".
+Peter's laptop in July 2026, when `www.edmonton.ca` was unreachable from the
+Oracle box. ✅ **THAT BLOCKER IS GONE — measured 2026-09-17, `www.edmonton.ca`
+returns HTTP 200 from this box**, root, content pages and `/sites/default/files`
+PDFs alike. The Development Impact page behind the roadway rate and the FY2023
+Consolidated Financial Statements were both fetched and read directly that day.
+⚠️ **This had cost real work**: the road service-life question was routed to an
+external research round *because* this line said the source was unreachable, and
+the page answered on the first try. **Third time a recorded blocker outlived the
+condition it described** (2026-08-13 ×2, §17) — test the exact host before
+deferring work to the laptop. ⚠️ **AND `www.edmonton.ca` SOFT-404s WITH HTTP
+200**: a missing page returns 200 with a body titled *"Page Not Found"*, so a
+status-code check alone will call a dead City URL live. Check the title.
+**Roads + fire only** — never label the derived metric "total city cost".
 - **Roadway = $50/m/yr** (O&M + renewal). Source: edmonton.ca "Development Impact
   on Infrastructure" — neighbourhood road $600k O&M + $1.9M renewal per km,
   annualized over a 50-yr life (Peter's call 2026-07-15). Applies to the
@@ -1260,6 +1271,13 @@ The same file also carries `roadway_ops`, `bikeway_ops` and `transit_ets`, on a
 - Source for the two rates: Taproot Edmonton reporting quoting City infrastructure
   field operations staff; ETS from the 2024/2025 Annual Service Plan Appendix A.
   Both **relayed**, not fetched from the Oracle box.
+- ✅ **The lane-km denominator behind these rates is now confirmed from a City
+  TABLE, not inferred** (2026-09-17). The 2020 *Infrastructure State and
+  Condition* Appendix A itemises the whole network in stated lane-km: roads
+  excluding alleys **10,116.8** + alleys **1,192.7** = **11,309.5 lane-km**,
+  which is the *"~11,000 km"* snow inventory. Previously this rested on combining
+  two City statements (S149). Per-class split, ages and expected asset lives:
+  `docs/FINDINGS_road_class_inventory.md`.
 ### Known Quirks
 - ⚠️ **A demand ALLOCATION of a mostly-fixed budget is what got the fire term
   retired** — a hood with 2× the events does not cost the City 2× (most fire

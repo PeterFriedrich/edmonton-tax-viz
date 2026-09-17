@@ -130,8 +130,19 @@ What changes is that the evidence is no longer one-sided:
 |---|---|---|
 | 25 yrs | Development Impact page, base case | neighbourhood street |
 | 50 yrs | Development Impact page, *"with proper maintenance"* — **shipped** | neighbourhood street |
-| 33 yrs | 2023 Infrastructure State and Condition, p27 (expected life) | all roads |
+| 33 yrs ⚠️ | 2023 Infrastructure State and Condition, p27 (expected life) | all roads — ⚠️ **row label in doubt**, see below |
 | **36.4–38.0 yrs** | **audited Schedule 1, implied — this document** | all roads |
+| **25.9 yrs** | **2020 Infrastructure State and Condition, Appendix A p31** | **collector + local — the population the site charges** |
+
+⚠️ **Added 2026-09-17, after this document was written: the 33 is in doubt and a
+better figure exists.** The 2020 edition of that report puts **33 against the
+*Goods and People Movement Portfolio*** (roads + bridges + active modes + LRT +
+transit bus), while its **Roads row reads 24**. Our 33 may be a portfolio number
+read as a roads number — flagged, not corrected, since the 2023 edition was not
+re-obtained. More importantly the same 2020 table publishes expected asset life
+**per road class** — Local 28, Collector 20, **25.9 lane-km weighted across
+collector+local** — which is the first life figure on the right population
+rather than a citywide aggregate. `docs/FINDINGS_road_class_inventory.md` §4–§5.
 
 ⚠️ **Both City-published aggregates land below the shipped 50**, and they were
 produced by different mechanisms (an engineering condition assessment and an

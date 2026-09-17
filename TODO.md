@@ -1080,13 +1080,17 @@ archive"*) is not, and this span is 2,533 lines.
     resolution below); the page's own total, *"about $4 million ... about 2.5
     times the initial capital investment"*, reconciles exactly to
     $1.5M + $600k + $1.9M and confirms it describes ONE scenario, not two.
-  - ⚠️ **But two City-published routes now both land BELOW 50**, and both are
-    road-specific or road-inclusive aggregates rather than neighbourhood
-    streets: the 2023 *Infrastructure State and Condition Report* p27 expected
-    life of **33 years**, and the audited **Schedule 1 implied average life of
-    36.4–38.0 years** derived 2026-09-17 (`docs/FINDINGS_roadway_implied_life.md`).
-    Neither settles the call — see that document's limits — but the choice no
-    longer has a one-sided evidence base.
+  - ⚠️ **THREE City-published routes now land BELOW 50, and one of them is on
+    the RIGHT POPULATION.** (a) The 2020 *Infrastructure State and Condition*
+    Appendix A p31 expected asset life **per road class** — Local 28, Collector
+    20, **25.9 yrs lane-km weighted across the collector+local network this
+    metric charges** (`docs/FINDINGS_road_class_inventory.md` §4). (b) The
+    audited **Schedule 1 implied average life, 36.4–38.0 yrs**, all roads
+    (`docs/FINDINGS_roadway_implied_life.md`). (c) The 2023 report's **33 yrs**,
+    all roads — ⚠️ **and that one is now IN DOUBT as a roads figure**, see the
+    row-label flag below. None settles the call — each document states its own
+    limits — but (a) is the first life figure measured on the population the
+    site actually charges, and the evidence base is no longer one-sided.
   - **Why 50 still looks right — but on weaker ground than this item claimed
     until 2026-09-03.** The same page's ~3%/yr set-aside rule on $1.5M/km ≈
     **$45,000/km/yr** does point at the 50-year $50,000 rather than the 25-year
@@ -1128,7 +1132,31 @@ archive"*) is not, and this span is 2,533 lines.
     Report* p27 gives Roads **average age 43 yrs vs expected life 33 yrs**
     ($9,747,485,291 replacement value). ⚠️ **Asset-class figure** — all roads,
     arterials included, not a neighbourhood street — so it is context, not a
-    third reading of the 25-vs-50. ⚠️ **STILL NOT CHECKED BY US** —
+    third reading of the 25-vs-50.
+    - ⚠️ **THE 33 IS IN DOUBT AS A *ROADS* FIGURE — CHECK THE ROW LABEL BEFORE
+      QUOTING IT (flagged 2026-09-17).** The **2020** edition of the same report
+      puts **33 on p19 against the "Goods and People Movement Portfolio"** (roads
+      + bridges + active modes + LRT + transit bus; bridges carry a 57-yr life,
+      which is what lifts the average), while its **Roads row is expected life
+      24**, not 33. Our note also cites **p27**, which in the 2020 edition is the
+      *Ancillary Infrastructure* page. **Not asserted wrong** — ours is the 2023
+      edition and was not re-obtained (the live City page no longer serves it) —
+      but it has the exact shape of a portfolio number read as a roads number.
+      Evidence and the 2020 table: `docs/FINDINGS_road_class_inventory.md` §5.
+  - ✅ **A SIXTH, PRIMARY, AND THE FIRST ONE ON THE RIGHT POPULATION — and it
+    reads ~26, not 50 (2026-09-17).** The 2020 *Infrastructure State and
+    Condition* Appendix A p31 publishes an expected asset life **per road
+    class**: **Local Roads 28 yrs, Collector Roads 20 yrs**, lane-km weighted
+    across the exact collector+local network `road_m_per_acre` charges =
+    **25.9 yrs** (all Roads 24; both arterial classes 22). ⚠️ **Every other life
+    figure available has been a citywide aggregate; this one is not.**
+    ⚠️ **It does NOT collapse the choice** — the same report's p19 says roads
+    *"can be maintained past their expected asset life"* with appropriate
+    maintenance and renewal, which is structurally the Development Impact page's
+    *"usually 25, extended to 50 with proper maintenance"*. The two City sources
+    agree: ~25 base, 50 is what maintenance buys. ⚠️ **But the same table says
+    the maintenance is not keeping pace** — local roads average **38 yrs against
+    a 28-yr life**, collectors **35 against 20**. `docs/FINDINGS_road_class_inventory.md` §4. ⚠️ **STILL NOT CHECKED BY US** —
     they are relayed claims of exactly the shape that produced a year-late
     source date in the same batch (`DECISIONS.md` 2026-09-03). A research round
     reported all four confirmed to primary sources on **2026-09-17**, and its
