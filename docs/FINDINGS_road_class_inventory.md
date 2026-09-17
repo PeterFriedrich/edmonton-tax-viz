@@ -13,9 +13,13 @@ itself**, and three separate things that were resting on it are now primary:
    and **1.804**, reproduce almost exactly from it.
 2. The **lane-km reading of the "~11,000 km" snow inventory**, which until now
    was inferred from two City statements rather than read off a table.
-3. ⚠️ **A per-class expected asset life on exactly the population the site
-   charges — and it is ~26 years, not 50.** See §4. This is the most consequential
-   thing in the document and it does not favour what the site ships.
+3. ⚠️ **A per-class expected *asset* life on exactly the population the site
+   charges — ~26 years — alongside a per-class *condition* that says the network
+   is being kept well past it in good shape.** See §4 and **§4a**. This is the
+   most consequential thing in the document, and ⚠️ **the two halves of it point
+   opposite ways**: §4 was first written from the life column alone, with the
+   condition column not yet transcribed, and read as evidence against the
+   50-year life the site ships. **§4a corrects that.**
 
 ## 0. Provenance, and why it is still not perfect
 
@@ -40,17 +44,22 @@ itself**, and three separate things that were resting on it are now primary:
 
 ## 1. Appendix A, p31 — transcribed in full for the road rows
 
-Replacement value in millions. `A+B / C / D+F` condition splits omitted.
+Replacement value in millions. **Physical condition transcribed 2026-09-17
+(S171)** as the table's own `A+B / C / D+F` percentage split — A+B good, C fair,
+D+F poor. ⚠️ **That column was omitted from this transcription until 2026-09-17,
+and §4's first reading of the table was wrong because of it.** Demand/Capacity
+and Functionality (two further `A+B / C / D+F` triples) are still omitted —
+neither bears on service life.
 
-| infrastructure | quantity | unit | avg age | **expected asset life** | replacement value |
-|---|---:|---|---:|---:|---:|
-| Major Arterial | 596.2 | lane km | 30 | 22 | $711 |
-| Minor Arterial | 2,927.2 | lane km | 48 | 22 | $2,914 |
-| **Local Roads** | **4,830.30** | lane km | **38** | **28** | $3,461 |
-| **Collector Roads** | **1,763.10** | lane km | **35** | **20** | $1,888 |
-| Alleys | 1,192.7 | lane km | 30 | 28 | $501 |
-| Service Roads | 56,690 | metres | 10 | 30 | $139 |
-| **Roads (total)** | 61,977 | varies | **39** | **24** | **$9,614** |
+| infrastructure | quantity | unit | avg age | **expected asset life** | **physical condition A+B / C / D+F** | replacement value |
+|---|---:|---|---:|---:|---|---:|
+| Major Arterial | 596.2 | lane km | 30 | 22 | 78 / 20 / 2 | $711 |
+| Minor Arterial | 2,927.2 | lane km | 48 | 22 | 53 / 40 / 7 | $2,914 |
+| **Local Roads** | **4,830.30** | lane km | **38** | **28** | **70 / 17 / 13** | $3,461 |
+| **Collector Roads** | **1,763.10** | lane km | **35** | **20** | **62 / 34 / 5** | $1,888 |
+| Alleys | 1,192.7 | lane km | 30 | 28 | 20 / 16 / **64** | $501 |
+| Service Roads | 56,690 | metres | 10 | 30 | 46 / 37 / 17 | $139 |
+| **Roads (total)** | 61,977 | varies | **39** | **24** | 61 / 28 / 11 | **$9,614** |
 
 ⚠️ **Two relay errors are now visible, and both were in the blog, not in us.**
 The blog printed the local-roads replacement value as *"$3.46 million"* and the
@@ -102,6 +111,26 @@ unlike every other figure available:
   **25.9 years.**
 - All Roads: **24 years**. Both arterial classes: 22.
 
+⚠️ **"We only charge local roads, so use 28" does not hold, and the blend is not
+hiding a higher number — every reweighting lands in the same 24–28 band.**
+Measured from `data/raw/roads.geojson` on 2026-09-17 under `load_roads`' own
+filters and `CLASS_GROUP`, the charged network is **local 2,739.6 km + collector
+926.2 km** centreline, so collector is **25% of the charged length** and — at
+**1.49× the replacement cost per lane-km** ($1.071M vs $0.717M) — **35% of the
+replacement value**. Four weightings:
+
+| weighting | life |
+|---|---:|
+| local only | 28.0 |
+| City lane-km, collector+local | 25.9 |
+| our own centreline-km, collector+local | 26.0 |
+| **replacement-cost weighted**, Σvalue ÷ Σ(value/life) | **24.5** |
+
+⚠️ **The cost weighting is the correct one for a $/m/yr charge** — the charge is
+an annualized replacement cost, so each class must enter in proportion to the
+dollars it consumes, not the metres it occupies. It is the **lowest** of the
+four. Dropping to local-only raises the figure; it does not lower it.
+
 ⚠️ **The site ships a 50-year life. The City's own expected asset life for the
 network the metric charges is ~26.** That is the 25 reading, not the 50 one,
 and it is the first time the question has been answered on the right population
@@ -115,17 +144,71 @@ proper maintenance"*. So the two City sources are **consistent**: ~25 is the bas
 life, and 50 is what maintenance buys. The choice was always which of those the
 site should publish, and this does not collapse it.
 
-⚠️ **But the same table also says the maintenance is not in fact keeping pace**:
-local roads average **38 years old against a 28-year life**, collectors **35
-against 20**. Both classes are already well past the base life, which is evidence
-about the *condition* attached to the 50-year reading.
+## 4a. ⚠️ CORRECTED 2026-09-17 (S171) — the condition column says the opposite
 
-**Recorded against interest** (`measurements-that-favour-me`): this is the third
-independent City figure this session to land below 50, and the session's only
-finding that flattered the shipped number was the centreline unit. **The
-25-vs-50 remains Peter's call and is NOT reopened here** — but the "why 50 still
-looks right" case in `TODO.md` now has to be made against a per-class figure,
-not only against citywide aggregates.
+**This section used to read:** *"the same table also says the maintenance is not
+in fact keeping pace — local roads average 38 years old against a 28-year life,
+collectors 35 against 20."* The ages are right. **The inference was wrong, and it
+was wrong because §1 had dropped the column that answers it.** Age past expected
+life is compatible with a renewal backlog *and* with a successfully extended
+life; only condition discriminates them. Appendix A publishes condition, it was
+not transcribed, and the reading went the way that happened to fit the rest of
+the section.
+
+| class | avg age | expected life | **physical condition A+B / C / D+F** |
+|---|---:|---:|---|
+| Local Roads | 38 | 28 | **70 / 17 / 13** |
+| Collector Roads | 35 | 20 | **62 / 34 / 5** |
+| *Alleys (excluded from the metric)* | 30 | 28 | 20 / 16 / **64** |
+
+⚠️ **The collector row sums to 101%, not 100** — transcribed as printed, and the
+only road row in Appendix A that does. Rounding in the source, and small enough
+not to touch the reading (its D+F is 5% either way), but it is a reminder that
+these are rounded published percentages, not a reconciled split. The §6
+reproduction asserts 99–101 rather than 100 **because the exact-100 version of
+that assert failed on this row** on first run.
+
+**Local roads are ten years past their expected asset life and still 70% good,
+13% poor. Collectors are 75% past theirs and only 5% poor.** That is not a
+backlog. **The alley row is what a backlog looks like in this very table** — 64%
+D+F at only 30 years against a 28-year life — and it is the control that makes
+the roads rows legible. Alleys are already out of `road_m_per_acre` by the
+alleys-out decision, so the one asset class here that *is* failing is one the
+metric does not charge.
+
+⚠️ **So the table supports the 50-year reading, not the 25-year one.** The
+expected asset life is a design life the City is demonstrably not replacing on;
+the observed life, in acceptable condition, is longer.
+
+**A second route from the same two numbers.** A stock replaced at age *L* has a
+mean age of about *L*/2, so a mean age of 38 implies *L* ≈ 76. Edmonton's road
+network grew over the period, which skews the age distribution **young** and
+therefore makes 76 a floor rather than an estimate. ⚠️ **Treat this as
+directional only** — it assumes a replacement-driven steady state, and "average
+age" here is age since original construction, not since the last overlay. Both
+caveats push the same way: the interval actually being achieved is well above
+28, and above 50.
+
+⚠️ **This is also the mechanism behind the page's wording.** *"Usually 25,
+extended to 50 with proper maintenance"* is not two estimates of one event; it is
+two different events. ~25 is when the pavement structure is due for intervention;
+50 is the interval to full reconstruction, bought with the resurfacing and
+renewal spending in between, while the base persists. **`road_m_per_acre` charges
+the whole bundle — capital + O&M + renewal — so its denominator is the interval
+over which that bundle recurs, which is the reconstruction interval, not the
+resurfacing interval.**
+
+⚠️ **RECORDED AGAINST INTEREST, IN BOTH DIRECTIONS** (`measurements-that-favour-me`,
+`check-where-the-value-can-be-wrong`). The original §4 was written by a model that
+had just produced three figures cutting against the shipped number, and it read an
+ambiguous signal as a fourth. The correction was written by a model answering
+"shouldn't that even out to 25" and it lands on the shipped number being right.
+**Both readings rest on the same four cells of one table.** The transcription in
+§1 is verbatim from p31 and the arithmetic is asserted in §6 — check those, not
+the prose. **A different model should read this section.**
+
+**The 25-vs-50 remains Peter's call and is NOT closed here.** What changed: the
+per-class figure no longer points one way. `TODO.md`'s item is updated.
 
 ## 5. ⚠️ A claim in our own files that this puts in doubt
 
@@ -171,4 +254,36 @@ assert 1.80 <= cl / 3654 <= 1.81                    # brief's 1.80 lane/centreli
 life = (local * 28 + collector * 20) / cl           # expected asset life, lane-km weighted
 assert 25.5 <= life <= 26.5, life
 print(f'collector+local expected asset life: {life:.1f} years')
+
+# --- §4a: every reweighting lands in 24-28, and the cost one is the LOWEST -----
+# our own charged centreline km, measured from data/raw/roads.geojson 2026-09-17
+our_local, our_collector = 2739.65, 926.20
+val_local, val_collector = 3461, 1888               # $M replacement value, p31
+
+by_our_len  = (our_local * 28 + our_collector * 20) / (our_local + our_collector)
+by_cost     = ((val_local + val_collector)
+               / (val_local / 28 + val_collector / 20))
+
+assert 25.5 <= by_our_len <= 26.5, by_our_len       # ~26.0, matches the City weighting
+assert 24.0 <= by_cost   <= 25.0, by_cost           # ~24.5, the right one for $/m/yr
+# local-only RAISES the figure -- the blend is not concealing a longer life
+assert by_cost < by_our_len < 28, (by_cost, by_our_len)
+# collectors are a minority of length but cost ~1.5x per lane-km, so they are a
+# LARGER share of value than of metres -- which is why the cost weighting is lower
+assert (our_collector / (our_local + our_collector)
+        < val_collector / (val_local + val_collector))
+assert 1.45 <= (val_collector / collector) / (val_local / local) <= 1.55
+
+# --- §4a: condition discriminates "extended life" from "backlog" ---------------
+# physical condition A+B / C / D+F, p31, verbatim
+cond = {"local": (70, 17, 13), "collector": (62, 34, 5), "alley": (20, 16, 64)}
+# NB the collector row sums to 101, not 100 -- rounding in the source, see S4a note
+for k, v in cond.items():
+    assert 99 <= sum(v) <= 101, (k, v)
+# both charged classes are past their expected life (38>28, 35>20) yet majority
+# good; the EXCLUDED alley class is the backlog control that makes that legible
+assert cond["local"][0] >= 70 and cond["local"][2] <= 13
+assert cond["collector"][0] >= 60 and cond["collector"][2] <= 5
+assert cond["alley"][2] > cond["alley"][0], "alleys are the failing class, not roads"
+print(f'reweightings: cost {by_cost:.1f} < our length {by_our_len:.1f} < local-only 28')
 ```
