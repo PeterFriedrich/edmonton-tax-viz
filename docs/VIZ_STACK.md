@@ -25,10 +25,20 @@ files, with hand-rolled SVG for charts, no build step, and every library
 vendored. That is an unusual combination and it is the *right* one for what's
 built — 3D prisms, per-feature JS at draw time, and a hard offline constraint.
 
-**Cold load is one file.** `web/data/` totals ~16.1 MB on disk, but boot awaits
-only `neighbourhood_value_per_acre.geojson` (1.04 MB raw) — every other heavy file
-sits behind a memoized `??=` lazy fetch gated on the view that needs it. Don't
-read the 16.1 MB as a page weight; it isn't one. See §5.
+**Cold load AWAITS one file — but it is not one file.** `web/data/` totals
+~16.1 MB on disk, and boot awaits only `neighbourhood_value_per_acre.geojson`
+(1.04 MB raw); every other heavy file sits behind a memoized `??=` lazy fetch
+gated on the view that needs it. Don't read the 16.1 MB as a page weight; it
+isn't one. See §5.
+
+⚠️ **"Cold load is one file" WAS THE HEADLINE HERE AND IT UNDERSOLD THE REAL
+VISIT BY 2.3× (corrected 2026-09-17).** *Awaited* and *downloaded* are different
+questions, and only the first one had ever been asked. Measured on the live site:
+a cold visit with zero interaction pulls **2.05 MiB gzipped over 12 requests** —
+948 KB of critical path, then 1.1 MB of 100 m grid that the idle prefetch starts
+on its own. Both facts are true at once; the lazy architecture is real *and* the
+page fetches a megabyte nobody asked for. Numbers in `PERFORMANCE.md` §"The cold
+visit, end to end".
 
 ⚠️ **That gap has WIDENED since this doc was written, which is the point.** On
 2026-08-07 it was 1.4 MB of 8.4 MB; on **2026-09-16 it is 1.04 MB of 16.1 MB** —
@@ -67,12 +77,24 @@ triggered by the view or toggle that needs them:
 | `zoning.geojson` | 2.07 MB | Uses |
 | `roads.geojson` | 1.51 MB | Services |
 | `dev_grid.json` | 508 KB | Development |
-| `bike_routes.json`, `temporal.json`, `reference.geojson`, `dev_history.json`, LRT/stations | ≤234 KB each | their own toggles |
+| `temporal.json`, `reference.geojson`, `dev_history.json` | ≤92 KB each | **boot, unconditionally** — see below |
+| `bike_routes.json`, LRT/stations | ≤234 KB each | their own toggles |
+
+⚠️ **THREE FILES IN THAT LIST WERE NOT TOGGLE-DRIVEN AND THIS TABLE SAID THEY
+WERE (corrected 2026-09-17).** `ensureReference()`, `fetch(TEMPORAL_URL)` and
+`fetch(DEV_HISTORY_URL)` are called unconditionally once the loading overlay
+lifts (`web/index.html`, three adjacent lines) — deliberately, and defensively, so
+a missing file degrades to a hidden control. `PERFORMANCE.md` had them right
+("boot, always") the whole time; **the two docs contradicted each other for five
+weeks** and the live capture settled it. `dev_history.json` was in neither as boot
+cost.
 
 On-disk sizes, **re-measured 2026-09-16** (the 2026-08-07 originals are in §0).
-Pages gzips on the wire, so transfer is smaller — **unmeasured in aggregate**,
-though `gridSize()` now reads each lazy grid's `Content-Length` at runtime rather
-than hardcoding it.
+**Wire sizes measured 2026-09-17** against the live site — the aggregate is no
+longer unmeasured: a cold visit with zero interaction is **2.05 MiB gzipped**, of
+which 948 KB is the critical path. Full table and method in `PERFORMANCE.md`
+§"The cold visit, end to end". `gridSize()` reads each lazy grid's
+`Content-Length` at runtime rather than hardcoding it.
 
 **The load-bearing choice:** MapLibre draws *nothing* here. It owns the camera,
 the pointer events, and the projection; deck.gl draws every pixel of data. That
@@ -222,14 +244,23 @@ than in a library's config surface.
    (deck.gl). Hundreds of thousands → tiles (§C), no exceptions.
 2. **3D?** deck.gl or MapLibre `fill-extrusion`. Rules out D, E, F.
 3. **Per-feature JS at draw time?** deck.gl accessors. Rules out MapLibre-native.
-4. **Cold-load budget.** Not 8.4 MB — a cold first visit is **1.99 MB of
-   vendored libraries** (deck.gl 1.19 + maplibre 0.78 + CSS 0.06) plus **1.4 MB
-   of boot geometry**. Uncompressed; wire figures unmeasured, and JS and GeoJSON
-   don't gzip at the same ratio, so measure before ranking them. Note the
-   libraries are the *larger* half — which is the one honest argument for §B,
-   though not enough of one. The remaining geometry lever is simplification and
-   coordinate quantization of that single boot file, since lazy-loading is
-   already done.
+4. **Cold-load budget — MEASURED ON THE WIRE 2026-09-17, and it settles this
+   axis.** A cold first visit with zero interaction is **2.05 MiB gzipped**;
+   the critical path alone is **948 KB**. Within that path: **libraries 593 KB
+   (62.5%)**, app shell 166 KB (17.5%), boot geometry 189 KB (20.0%).
+   - **The ordering does not flip.** This axis used to say "JS and GeoJSON don't
+     gzip at the same ratio, so measure before ranking them" — measured, the
+     libraries' lead *widens*, 1.94× on disk to **3.13× on the wire**, because
+     GeoJSON compresses at 5.76× against minified JS at 3.57×.
+   - **So the libraries dominate, and per the rule below that means there is no
+     cheap lever.** Trimming the boot GeoJSON — the geometry lever, simplification
+     and coordinate quantization — works against the *smallest* of the three
+     terms. Dropping deck.gl is refused on feature grounds (§3, §4B). This is the
+     one honest argument for §B and it is still not enough of one.
+   - ⚠️ **The remaining 1.1 MB is the 100 m idle prefetch**, a 2026-09-01
+     decision, `Save-Data`-gated. Quoting "libraries + boot geometry" as the
+     cold-load budget undercounts the real visit by 2.3×.
+   - ⚠️ **Pages serves gzip only — no brotli, no zstd.** Not a lever we hold.
 5. **Offline / air-gapped.** See §6 — this constraint is doing more work than it
    looks like.
 6. **Build step?** Every framework option costs one. Currently zero.
