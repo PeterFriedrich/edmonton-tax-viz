@@ -931,7 +931,10 @@ archive"*) is not, and this span is 2,533 lines.
     lapses the refresh goes red the same way. `RUNBOOK.md` §3.
 
 - [ ] **OUTREACH TRACKER — TEN data issues found, ZERO sent. Every one is
-  Peter's call.** ⚠️ **Count corrected 2026-09-16 (S166): the item said "five",
+  Peter's call.** ✅ **AS OF 2026-09-17 (S169) NOTHING IS BLOCKED ON WORK.** All
+  five sendable issues now carry both published evidence and drafted report
+  text; issue 6 was the last gap (notebook + draft landed that day). **The only
+  thing between every one of them and a send is the decision to send.** ⚠️ **Count corrected 2026-09-16 (S166): the item said "five",
   and `DATA_ISSUES.md` now carries 10 rows and 11 `NOT SENT` markers. The
   substance did not go stale — it got BIGGER, and "zero sent" is still exactly
   true.** This is the project's standing failure mode in its purest form: a

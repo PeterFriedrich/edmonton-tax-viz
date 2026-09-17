@@ -105,6 +105,22 @@
     <p class="meta">First measured 2026-08-29 · re-verified 2026-08-29 · 4 of 4 invariants passed</p>
   </li>
 
+  <li>
+    <a class="report" href="permit-neighbourhood-list.html">Edmonton's building permits put several neighbourhoods in a one-neighbourhood field</a>
+    <div class="dataset">General Building Permits (24uj-dj8v)</div>
+    <p class="finding">
+      On a fraction of a percent of rows, the neighbourhood field holds a
+      comma-joined list of names — and the numeric id field beside it is
+      comma-joined in exactly the same way, so switching to the id is not a
+      workaround. Three different things are mixed into that one field: a
+      municipal rename carrying both names, the same neighbourhood written
+      twice, and a permit genuinely spanning two neighbourhoods. Only the last
+      needs a list. The report shows that the ids, checked against the
+      published boundary file, separate all three mechanically.
+    </p>
+    <p class="meta">First measured 2026-09-14 · re-verified 2026-09-17 · 5 of 5 invariants passed</p>
+  </li>
+
 </ul>
 
 <footer>
