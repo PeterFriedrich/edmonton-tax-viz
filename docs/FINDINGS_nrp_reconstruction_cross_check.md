@@ -89,20 +89,26 @@ centreline in the matched neighbourhood(s)):
 
 ## 3. The result: observed reconstruction runs **1.7× the published rate**
 
-> ⚠️ **CONDITIONAL, added 2026-09-09 (S150). This whole section's SIGN depends on
-> an unconfirmed unit.** The comparison is our **centreline** $/m against the
-> City's published **$1,900/km**, and it only holds if that published figure is
-> *also* centreline — i.e. per km of one two-lane street. The S149 consolidation
-> audit established that the City's *other* road per-km figure (the "~11,000 km"
-> behind `roadway_ops`) is **lane-km**, so this is a live question, and it is
-> bullet 2 of Q1(a) in the send-back brief — **not settled**.
-> **If $1.9M/km is per LANE-km**, the published equivalent is **$3,800/centreline-m**,
-> observed $3,151/m falls to **0.83×**, and this section's conclusion inverts:
-> the renewal half would read as a **ceiling**, not a floor. The centreline
-> reading is the more likely one (the City's own framing is *"building a new
-> neighbourhood road … per kilometre"*, and alleys/sidewalks are costed
-> separately), **but likely is not confirmed — do not cite §3's direction
-> without stating this condition.**
+> ✅ **CONDITION DISCHARGED 2026-09-17. This section is no longer conditional and
+> its sign stands.** From 2026-09-09 to 2026-09-17 this paragraph warned that the
+> whole section's sign depended on an unconfirmed unit: the comparison is our
+> **centreline** $/m against the City's published **$1,900/km**, and it holds only
+> if that published figure is *also* centreline. **It is.** The *Development
+> Impact on Infrastructure* page was fetched and read directly on 2026-09-17 —
+> it states the unit as *"1 kilometre of a typical Edmonton neighbourhood road"*,
+> keeps the subject singular throughout (*"The road will…"*), never uses the word
+> *"lane"* anywhere on the page, and its own stated total (*"about $4 million"*)
+> reconciles exactly to $1.5M + $600k + $1.9M. Full wording and the three checks:
+> `data/city_unit_costs.json` → `roadway_om_renewal.✅_unit_resolved_2026_09_17`;
+> guarded by
+> `tests/test_unit_cost_denominators.py::test_development_impact_figures_reconcile_to_the_pages_own_total`.
+>
+> ⚠️ **What this retires, explicitly:** the lane-km branch — published equivalent
+> $3,800/centreline-m, observed $3,151/m falling to **0.83×**, the renewal half
+> reading as a **ceiling** — **does not apply and must not be cited**. The
+> observed figure runs **1.66× above** the published rate and the renewal half
+> reads as a **floor**. ⚠️ This says nothing about `roadway_ops`, whose ~11,000 km
+> denominator is a different City figure and is still **lane-km** (S149).
 
 The City publishes **renew and replace = $1,900,000/km = $1,900/road-m**, and
 the shipped $50/road-m/yr annualizes it over a 50-year life as the **$38/m/yr**
