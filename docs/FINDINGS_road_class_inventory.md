@@ -210,6 +210,52 @@ the prose. **A different model should read this section.**
 **The 25-vs-50 remains Peter's call and is NOT closed here.** What changed: the
 per-class figure no longer points one way. `TODO.md`'s item is updated.
 
+## 4b. The 2025 edition is live, and it turns §4a into a three-point series
+
+Added **2026-09-18 (S171)**, from the **current** edition — served from
+`edmonton.ca` itself, not an archive:
+`https://www.edmonton.ca/sites/default/files/public-files/documents/2025-infrastructure-state-and-condition-report.pdf`
+(39 pp, fetched with `certifi`, HTTP 200).
+
+**Its Appendix B (p37) prints 2025 and 2023 side by side**, which is how the 2023
+report's own Roads figures were obtained without the 2023 PDF, which is still not
+retrievable (see §5). Replacement value and condition are comparable across all
+three editions; ⚠️ **reported quantity is NOT** — the unit changed (37,177 in 2023
+vs 54,842,101 in 2025, as classes moved to square metres).
+
+| Roads (all) | replacement value | Good A+B | Fair C | **Poor D+F** |
+|---|---:|---:|---:|---:|
+| 2020, Appendix A | $9,614M | 61% | 28% | **11%** |
+| 2023, via 2025 Appendix B | $9,747M | 72.9% | 15.2% | **11.4%** |
+| 2025, Appendix B | $10,484M | 70.8% | 16.2% | **11.2%** |
+
+⚠️ **The poor share has not moved in five years: 11 → 11.4 → 11.2.** A renewal
+backlog is a rising D+F share, and this is flat while the network aged and grew
+by ~$870M of replacement value. **This is the strongest single piece of evidence
+in the 25-vs-50 file**, because it is a trend on the failure mode that matters
+rather than a level at one moment.
+
+⚠️ **Do NOT read the Good column as improvement.** 61% → 72.9% is a large jump
+across the 2020→2023 boundary, and the 2025 report states on p2 that *"the
+methodology of this report is different from previous years"*. A re-assessment
+cannot be ruled out, so the Good/Fair boundary may have moved. **The D+F share is
+the durable comparison** and it is the one that answers the backlog question.
+
+⚠️ **The current edition no longer publishes expected asset life per class at
+all.** 2025 reports through a program/service lens — its tables are replacement
+value, average age and condition only. p2 confirms the City still *collects*
+expected asset life, but it is not in the report. **So Appendix A (2020) may be
+the last published per-class life**, which is a reason to keep §1's transcription
+rather than to treat the archived PDF as replaceable.
+
+⚠️ **One sentence in it is self-contradictory and is NOT used here.** p20 says the
+Movement of People and Goods category *"has an average age of 45 years, with
+assets, on average, approaching the 39-year mark."* 45 is past 39, not
+approaching it, and the 39 is defined nowhere in the document. It has the shape
+of a category expected life (and would parallel the 2020 portfolio's 37-vs-33),
+but **it is not quoted as one** — see §5, where exactly this pairing is the thing
+in doubt.
+
 ## 5. ⚠️ A claim in our own files that this puts in doubt
 
 `TODO.md` and `docs/AUDIT_LEDGER.md` record, from S154:
@@ -236,6 +282,26 @@ page no longer serves it, and this box could not locate it). The 2023 report may
 genuinely say 43/33 for Roads. **This is a flag to check, not a correction** —
 but the 33 should not be quoted as a roads service life until someone opens p27
 of the 2023 edition and reads the row label.
+
+⚠️ **STILL OPEN after a second attempt, 2026-09-18 (S171) — and now with the
+search space narrowed.** What was tried and failed: the Internet Archive CDX
+index holds **only the 2020** edition (`matthewdance.ca/s/*` returns six
+snapshots of it and nothing else; no `edmonton.ca` snapshot of any State and
+Condition PDF matched), and the 2025 file-name pattern does **not** resolve for
+2023 or 2024 (`404` on four spellings under
+`/sites/default/files/public-files/documents/`). **The 2023 PDF is not reachable
+from here.**
+
+**But the 2025 edition's Appendix B carries the 2023 report's Roads row** (§4b) —
+and it prints **condition only, no average age and no expected life**. So it
+confirms the 2023 edition exists and what it said about road *condition*, while
+leaving the 43-vs-33 pairing exactly as unverified as before. ⚠️ **The pairing is
+published at CATEGORY level in both editions that state one** — 2020's *Goods and
+People Movement Portfolio* at 37/33, and 2025's *Movement of People and Goods* at
+45/"39" (p20, and that sentence is self-contradictory — see §4b). **Two editions
+putting this pairing on the category and never on the Roads row is further
+circumstantial support for the row-label hypothesis, and still not proof.** The
+remaining route is to ask the City for the 2023 report.
 
 ## 6. Reproduction
 
@@ -288,4 +354,23 @@ assert cond["local"][0] >= 70 and cond["local"][2] <= 13
 assert cond["collector"][0] >= 60 and cond["collector"][2] <= 5
 assert cond["alley"][2] > cond["alley"][0], "alleys are the failing class, not roads"
 print(f'reweightings: cost {by_cost:.1f} < our length {by_our_len:.1f} < local-only 28')
+
+# --- S4b: the Roads D+F share across three City editions --------------------
+# 2020 Appendix A p31; 2023 and 2025 from the 2025 edition's Appendix B p37.
+roads_cond = {            # (replacement $M, Good A+B, Fair C, Poor D+F)
+    2020: (9614,  61.0, 28.0, 11.0),
+    2023: (9747,  72.9, 15.2, 11.4),
+    2025: (10484, 70.8, 16.2, 11.2),
+}
+poor = [c[3] for c in roads_cond.values()]
+# the backlog test: D+F must be FLAT, not rising. Range across 5 yrs < 0.5 pt.
+assert max(poor) - min(poor) < 0.5, poor
+assert all(10.5 <= x <= 12.0 for x in poor), poor
+# and it stayed flat while the network GREW -- not a shrinking denominator
+vals = [c[0] for c in roads_cond.values()]
+assert vals == sorted(vals) and vals[-1] - vals[0] > 800, vals
+# the Good column is NOT a safe comparison: it jumps across the 2020->2023
+# methodology change, which is why S4b leans on D+F instead
+assert roads_cond[2023][1] - roads_cond[2020][1] > 10, "Good jumped; do not read as improvement"
+print(f'Roads D+F across 2020/2023/2025: {poor} (flat), value {vals[0]}->{vals[-1]}M')
 ```
