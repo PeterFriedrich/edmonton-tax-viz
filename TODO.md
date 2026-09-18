@@ -1136,6 +1136,19 @@ archive"*) is not, and this span is 2,533 lines.
     with it. `docs/FINDINGS_roadway_implied_life.md` §5a. **Winnipeg prints the
     identical structure** — asphalt regional streets *"designed for 25 years"*,
     rehabilitation extending service life *"to 60"*.
+  - ⚠️ **THE STRONGEST EVIDENCE IN THIS FILE IS NOW A TREND, NOT A LEVEL — the
+    Roads poor-condition share has not moved in five years.** From the **live**
+    2025 State and Condition report (`edmonton.ca`, fetched 2026-09-18) whose
+    Appendix B p37 prints 2025 and 2023 side by side, plus 2020's Appendix A:
+    **D+F = 11.0% (2020) → 11.4% (2023) → 11.2% (2025)**, while the roads
+    portfolio grew $9,614M → $10,484M. **A renewal backlog is a RISING D+F
+    share.** `docs/FINDINGS_road_class_inventory.md` §4b; asserted in §6 and
+    falsified against 4 mutations. ⚠️ **Do not read the Good column as
+    improvement** — it jumps 61→72.9 across a stated methodology change.
+  - ⚠️ **The current edition no longer publishes expected asset life per road
+    class**, so the 2020 Appendix A figures (Local 28, Collector 20) may be the
+    last ones published. Keep the §1 transcription; the archived PDF is not
+    replaceable by the live report.
   - ⚠️ **THE TWO FIGURES ON THE RIGHT POPULATION DISAGREE WITH EACH OTHER MORE
     THAN EITHER DISAGREES WITH 50** — 25.9 (expected asset life) vs 60
     (reconstruction interval). **That is the tell that they measure different
