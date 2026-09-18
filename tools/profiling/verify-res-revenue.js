@@ -79,10 +79,10 @@ function approx(a, b, rel = 1e-6) { return Math.abs(a - b) <= rel * Math.max(Mat
   }));
   console.log('res metric     :', JSON.stringify(c));
   check('state.metric switched', c.metric === 'res_revenue_per_acre');
-  check('title says Residential Tax Revenue', /Residential Tax Revenue/.test(c.title));
+  check('title says Residential City Taxes', /Residential City Taxes/.test(c.title));
   check('blurb carries the subset-of-Revenue honesty line',
     /subset of Revenue/.test(c.blurb) && /not\s+all of what the land pays/.test(c.blurb));
-  check('legend label', c.label === 'Residential revenue per acre');
+  check('legend label', c.label === 'Residential city tax per acre');
   check('legend max = hand-set clamp', c.max === '$30k+');
 
   // Prism column re-driven + subset sanity (res <= rev everywhere).
@@ -188,7 +188,7 @@ function approx(a, b, rel = 1e-6) { return Math.abs(a - b) <= rel * Math.max(Mat
   const back = await page.evaluate(() => ({ metric: state.metric,
     title: document.getElementById('title-h').textContent }));
   check('metric persists across the Glass round-trip',
-    back.metric === 'res_revenue_per_acre' && /Residential Tax Revenue/.test(back.title));
+    back.metric === 'res_revenue_per_acre' && /Residential City Taxes/.test(back.title));
 
   console.log(fail ? `\n${fail} CHECK(S) FAILED` : '\nALL CHECKS PASSED');
   console.log(`COMPLETE — ran ${ran} checks`);

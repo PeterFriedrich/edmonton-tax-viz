@@ -205,7 +205,11 @@ function check(name, ok, detail) {
     return { html: el ? el.innerHTML : '',
              note: document.getElementById('temporal-note').textContent };
   });
-  check('panel shows a lifecycle basis group', /lifecycle/i.test(panel.html),
+  // The group head dropped the word "lifecycle" 2026-09-18 (COPY_DECISIONS J4 —
+  // "basis" was accountancy). The group is still identified by its own note,
+  // which names the 50-year life no other group mentions.
+  check('panel shows a lifecycle basis group',
+    /To run and eventually rebuild/.test(panel.html) && /50-year life/.test(panel.html),
     panel.html.slice(0, 160));
   check('panel says there is no total', /no total/i.test(panel.note));
   // ⚠️ NO ROW MAY CONTAIN ANOTHER, in either build. Until 2026-09-05 the

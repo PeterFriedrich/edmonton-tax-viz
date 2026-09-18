@@ -474,8 +474,12 @@ const closeBox = page => page.evaluate(() => {
     check('*** services/panel: a tap lands on a readout, not on nothing ***',
       s.panelOpen || s.peekShown,
       `panel=${s.panelOpen} peek=${s.peekShown}`);
+    // Copy updated 2026-09-18 (COPY_DECISIONS N4/C1/J4): the headline is no
+    // longer "municipal levy / acre / yr" and the groups no longer say "basis".
+    // Still two discriminators — the money lens's panel has neither.
     check('services/panel: the panel carries the COST rows, not the money lens\'s',
-      /municipal levy \/ acre/.test(s.panelRead) && /basis/.test(s.panelRead),
+      /per acre each year/.test(s.panelRead)
+        && /To run it this year|To run and eventually rebuild/.test(s.panelRead),
       s.panelRead.slice(0, 70).replace(/\n/g, ' | '));
     check('services/panel: no cost row is presented as a total',
       !/total/i.test(s.panelRead), s.panelRead.slice(0, 70).replace(/\n/g, ' | '));
