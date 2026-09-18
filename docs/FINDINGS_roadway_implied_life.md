@@ -133,6 +133,7 @@ What changes is that the evidence is no longer one-sided:
 | 33 yrs ⚠️ | 2023 Infrastructure State and Condition, p27 (expected life) | all roads — ⚠️ **row label in doubt**, see below |
 | **36.4–38.0 yrs** | **audited Schedule 1, implied — this document** | all roads |
 | **25.9 yrs** | **2020 Infrastructure State and Condition, Appendix A p31** | **collector + local — the population the site charges** |
+| **60 yrs** | **City staffer via ConstructConnect / *Journal of Commerce*, 2016** — see §5a | **Neighbourhood Renewal reconstruction — also the right population** |
 
 ⚠️ **Added 2026-09-17, after this document was written: the 33 is in doubt and a
 better figure exists.** The 2020 edition of that report puts **33 against the
@@ -144,12 +145,16 @@ re-obtained. More importantly the same 2020 table publishes expected asset life
 collector+local** — which is the first life figure on the right population
 rather than a citywide aggregate. `docs/FINDINGS_road_class_inventory.md` §4–§5.
 
-⚠️ **Both City-published aggregates land below the shipped 50**, and they were
+⚠️ **Both City-published *aggregates* land below the shipped 50**, and they were
 produced by different mechanisms (an engineering condition assessment and an
 accounting policy), which is worth more than two agreeing numbers from one
 method. ⚠️ **But neither is a neighbourhood street**, and the site's rate is
 calibrated to one — so this is a reason to state the choice in the methodology
-note, not a reason to move the rate.
+note, not a reason to move the rate. ⚠️ **And the two figures that ARE on a
+neighbourhood street disagree with each other by more than either disagrees with
+50** — 25.9 (Appendix A, expected life) against 60 (§5a, reconstruction interval).
+That is the tell that they are measuring different events, not competing
+estimates of one.
 
 ⚠️ **Recorded against my own interest, deliberately** (`measurements-that-favour-me`):
 this finding does **not** support the number the site currently ships, and it was
@@ -161,6 +166,62 @@ rate's favour. Both were measured the same way; only one flatters the status quo
 *"proper maintenance and renewal"* the page says extends the life to 50.
 Annualizing that bundle over 25 years charges the cost of the extension while
 refusing to count the extension. See `TODO.md`'s service-life item.
+
+## 5a. ⚠️ A City-attributed 60-year reconstruction life, on the right population
+
+Added **2026-09-18 (S171)**. This is the only figure in §5's table that lands
+**above** the shipped 50, and it is on the same population as the 25.9.
+
+> *"The results of a complete reconstruction are expected to endure for **60
+> years**, so long as preventative maintenance is carried out as scheduled — such
+> as road **microsurfacing at 10 years and again at 40 years**, along with a
+> **roadway overlay completed after 30 years**."*
+
+- **ConstructConnect / *Journal of Commerce*, September 2016**, quoting the City
+  on the **Neighbourhood Renewal** program:
+  `https://canada.constructconnect.com/joc/news/infrastructure/2016/09/infrastructure-upgrades-forge-ahead-in-edmonton-1018310w`
+- **Fetched and matched verbatim from this box 2026-09-18** (`certifi`; HTTP 200).
+- ⚠️ **[SECONDARY]** — a trade publication quoting a named City staffer, not a
+  City document. It is **not** primary, and it should not be quoted as though the
+  City published it. What it is good for is the *structure*, which no primary
+  source states as plainly.
+
+**Why it matters more than its rank suggests.** It is the only source found that
+states the **maintenance schedule and the resulting interval together**, and it
+therefore explains the Development Impact page's sentence rather than competing
+with it:
+
+| event | interval | what happens |
+|---|---:|---|
+| surface treatment | 10 yr, 40 yr | microsurfacing |
+| resurfacing | 30 yr | roadway overlay |
+| **expected asset life** (Appendix A) | **~26 yr** | the structure is *due* — not the same as replaced |
+| **full reconstruction** | **50–60 yr** | base rebuilt; the cycle restarts |
+
+⚠️ **`road_m_per_acre` charges the whole bundle — capital + O&M + renewal — so
+its denominator is the interval over which the bundle recurs**, which is the
+reconstruction interval, not the resurfacing interval. On that reading the
+shipped 50 is the conservative end of 50–60, and the 25.9 is a different
+quantity rather than a competing answer.
+
+⚠️ **Provenance, stated plainly.** This figure surfaced in the external research
+round and sat in the send-back brief's Q3(b) as one of four *unverified* relayed
+service lives; it was not used at the time. Two of the other three were also
+spot-checked on 2026-09-18 and verify verbatim — **Calgary** *"A fully
+reconstructed road can last up to 20 years"* (`calgary.ca`, primary), and
+**Winnipeg**, whose regional-street asphalt is *"designed for 25 years"* with
+rehabilitation *"expected to extend the service life … to 60"* — ⚠️ **the same
+base-plus-maintained pair Edmonton prints**, from a second municipality. The
+fourth (Alberta Transportation, 20 yr) is provincial highways, a different asset
+class, and does not bear on this.
+
+⚠️ **COUNTS IN FAVOUR OF THE SHIPPED NUMBER, AND WAS RETRIEVED BY A SESSION THAT
+HAD ALREADY ARGUED FOR IT ONCE THAT DAY** (`measurements-that-favour-me`). The
+quote is verbatim from a URL that returns 200 and the fetch is repeatable in §6's
+terms; the *reading* built on it — that this is a different event from the 25.9
+rather than a contradiction of it — is an argument, not a measurement. **Read
+§4a of `docs/FINDINGS_road_class_inventory.md` together with this, and treat both
+as wanting a cross-read.**
 
 ## 6. Reproduction
 
