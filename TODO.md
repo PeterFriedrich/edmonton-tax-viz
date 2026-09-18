@@ -252,7 +252,7 @@ publish on its own, unrelated to any of this — re-pinned.)_
     LINE, AND NOTHING EVER "INVERTED".** `/proc/<pid>/environ` on the serving
     process shows both vars in its **launch** environment; the *other* Remote
     Control host on the box (tmux `cc`, PID 1430176) has **neither**. They are
-    set by the command in `/home/opc/fable_remote_control_setup_prompt.md`,
+    set by the command in `/home/opc/research/claude-code/fable_remote_control_setup_prompt.md`,
     written **2026-09-04 (S139)** to enforce the Fable brief's §4 "no subagents"
     rule:
     `CLAUDE_CODE_SUBAGENT_MODEL=… CLAUDE_CODE_SUBAGENT_MODEL_FORCE=1 claude
@@ -514,7 +514,7 @@ is in the `panel` column. T1 is public (3 of 10 service rows). T2 closed (`## Do
   prune candidate. ⚠️ **The mechanism is already proven here** — `.claude/settings.json`
   runs a `PostToolUse` hook to regenerate `CODEMAP.md`. Cheap, reversible, and it
   replaces a standing argument (is the doc apparatus load-bearing?) with a
-  measurement. Context: `/home/opc/doc_load_bearing_or_agent_scaffolding.md`
+  measurement. Context: `/home/opc/research/edmonton-tax-viz/doc_load_bearing_or_agent_scaffolding.md`
   (external review, **two of its three repo-specific claims did not survive
   checking** — see the S159 handoff).
 - [ ] **T5 is NOT a cleared row.** The two Detail selectors read invariant on
@@ -3061,7 +3061,7 @@ Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — 
 - **`_classify` fail-open-to-`local`: decided and changed** — DONE 2026-09-09 (S151). An unmappable `functional_class_code` now goes to its own `unknown` group: carried in `road_m_unknown`, out of `road_m_total`, off the web layer, reported at every stage. ⚠️ **`local` was never a neutral holding pen — it is the CHARGED side of the metric.** The manual `CLASS_GROUP` entry is unchanged (every option ended in one); the pipeline just stops guessing during the wait. Under-billing is the accepted cost. Served schema unmoved (67 columns); real feed verified unchanged at 3,654.1 km. ⚠️ The display half would have gone SILENT — a NaN `t` is excluded by both selections in `export_roads_web` without a word. `docs/DECISIONS.md` 2026-09-09.
 - **Monthly-digest check for `functional_class_code` vocabulary drift** — DONE 2026-09-09 (S151). `vintage_report.check_road_classes`, both directions, on the Road + City population `_classify` actually sees; a null class is reported separately from a new code because the fix differs; empty vocabulary → UNKNOWN, checked BEFORE the null count. Live: OK, 15 of 15. ⚠️ **The measured count was wrong in three places** — "closed at 15" counted the `null` group; it is 15 real codes now, 14 at the 2026-07-01 survey. 10 mutations red by name. `docs/DECISIONS.md` 2026-09-09, `docs/RUNBOOK.md` §0, `data/DATA.md` §6.
 
-- **Road-cost follow-up brief SENT** — 2026-09-10 (S154). `/home/opc/road_cost_sendback_brief.md` (outside the repo) went out; send date not recorded. **Reply pending — the Q1 rewrite stays held until Q1(a) (centreline vs lane-km) answers.** · `docs/TODO_archive.md`
+- **Road-cost follow-up brief SENT** — 2026-09-10 (S154). `/home/opc/research/edmonton-tax-viz/road_cost/road_cost_sendback_brief.md` (outside the repo) went out; send date not recorded. **Reply pending — the Q1 rewrite stays held until Q1(a) (centreline vs lane-km) answers.** · `docs/TODO_archive.md`
 - [x] **DECIDED 2026-09-08 — STATE THE UNIT, DO NOT CONVERT: `roadway_ops` stays $9.32/m/yr and the basis publishes as a FLOOR** — DECIDED 2026-09-08 · `docs/TODO_archive.md`
 
 

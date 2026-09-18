@@ -214,7 +214,7 @@ Items are verbatim as they were closed, newest-moved first in the order they app
 
 - [x] **SENT — the follow-up brief went out (Peter confirmed 2026-09-10, S154; send date not recorded). Reply pending; the Q1 hold stays until Q1(a) answers.** Original item follows.
   - **PETER TO SEND — the follow-up brief is written and unsent.**
-  `/home/opc/road_cost_sendback_brief.md` (**outside the repo**, same as the Q8
+  `/home/opc/research/edmonton-tax-viz/road_cost/road_cost_sendback_brief.md` (**outside the repo**, same as the Q8
   addendum). Written 2026-09-03 (S136) for the next external research pass. It
   carries: **six corrections** to the last round (the 3% rule is not an
   independent cross-check; the year-late Taproot date; the composite-profile
