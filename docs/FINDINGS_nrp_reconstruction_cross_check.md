@@ -151,7 +151,7 @@ $1,900. Sidewalks, lighting and drainage are not sized at all.
 **Verdict: the cross-check does NOT corroborate $1,900/m, and the sign of the
 disagreement survives the corrections that can be made. It is not usable as a
 replacement rate without a sub-asset decomposition of an NRP reconstruction** —
-which is question §4.2 of the follow-up brief (`/home/opc/road_cost_sendback_brief.md`,
+which is question §4.2 of the follow-up brief (`/home/opc/research/edmonton-tax-viz/road_cost/road_cost_sendback_brief.md`,
 outside the repo).
 
 ⚠️ **UPDATE 2026-09-06 — the open question named in this paragraph is CLOSED.**
