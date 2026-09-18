@@ -16,6 +16,7 @@ Lives in `tests/` rather than as a `scripts/check_*.py` because it needs no CLI,
 no report and no exit code of its own — it is a repo invariant, and pytest
 already runs on the merge gate. Same shape as `test_ci_workflows.py`.
 """
+import subprocess
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
@@ -60,5 +61,31 @@ def test_the_live_handoffs_are_the_most_recent_ones():
 
 def test_archive_is_where_the_history_actually_is():
     """A floor under the two tests above: if the archive were empty, both would
-    pass over a repo that had DELETED its history instead of moving it."""
+    pass over a repo that had DELETED its history instead of moving it. Coarse —
+    only a wholesale wipe trips it — but it needs no git, so it still holds on a
+    shallow checkout where the test below fails open."""
     assert len(_archived()) > len(_live())
+
+
+def test_archive_is_never_deleted_from():
+    """The count above cannot see a single deleted file, so ask git: no file
+    under `session-summary/archive/` may ever have been deleted. `-M` so a
+    rename (re-dating a file) is not read as a deletion. Fails open without git
+    or history — tests.yml sets fetch-depth 0 so CI actually checks.
+    Back-ported from cc-data-project-template (S173)."""
+    try:
+        out = subprocess.run(
+            ["git", "log", "-M", "--diff-filter=D", "--name-only", "--format=",
+             "--", "session-summary/archive/"],
+            cwd=REPO, capture_output=True, text=True, timeout=30,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return
+    if out.returncode != 0:
+        return  # not a git checkout: nothing to check
+    deleted = [ln for ln in out.stdout.splitlines() if ln.strip()]
+    assert not deleted, (
+        f"{len(deleted)} file(s) were DELETED from session-summary/archive/ "
+        f"(e.g. {deleted[0]}). The archive is append-only: it is the only copy "
+        f"of what earlier sessions did. Restore them."
+    )
