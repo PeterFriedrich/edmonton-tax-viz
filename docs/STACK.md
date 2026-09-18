@@ -1,13 +1,16 @@
 # STACK — what this project is built out of
 
-One page, current as of **2026-09-05**. Answers "what am I working with?" without
+One page, current as of **2026-09-18** (every count and version in it re-measured
+that day). Answers "what am I working with?" without
 reading four other docs. **Versions here are the pinned ones**, not ranges —
 if a number here disagrees with `requirements*.txt` or `web/vendor/README.md`,
 those files are right and this is stale.
 
 Related: `docs/ARCHITECTURE.md` (module interfaces + data flow — the *how*),
 `docs/SPEC_deployment.md` (deploy design), `docs/security-audit.md` (supply
-chain), `docs/PERFORMANCE.md` (render + boot cost).
+chain), `docs/PERFORMANCE.md` (render + boot cost), `docs/VIZ_STACK.md` (why the
+*rendering* choices are what they are, plus the measured contrast with
+`map.kunicki.app`).
 
 ---
 
@@ -68,18 +71,18 @@ would break the scheduled refresh, and no test would catch it locally.
 
 **No React, no bundler, no npm install to serve the site, no transpile step.**
 
-- `web/index.html` — **~424 KB, ~7,345 lines**, hand-edited, markup + all the JS.
-  Navigate it via `docs/CODEMAP.md` (generated symbol index, auto-refreshed by a
-  `PostToolUse` hook) rather than scanning.
-- `web/styles.css` — ~52 KB, all CSS (extracted 2026-07-29).
+- `web/index.html` — **~453 KB, 7,904 lines**, hand-edited, markup + all the JS.
+  Navigate it via `docs/CODEMAP.md` (generated symbol index, 304 symbols,
+  auto-refreshed by a `PostToolUse` hook) rather than scanning.
+- `web/styles.css` — ~55 KB, 920 lines, all CSS (extracted 2026-07-29).
 
 ### Vendored, not CDN-loaded
 
-| file | package | version |
-|---|---|---|
-| `web/vendor/deck.gl-9.0.38.min.js` | deck.gl | 9.0.38 |
-| `web/vendor/maplibre-gl-4.7.1.js` | maplibre-gl | 4.7.1 |
-| `web/vendor/maplibre-gl-4.7.1.css` | maplibre-gl | 4.7.1 |
+| file | package | version | on disk |
+|---|---|---|---|
+| `web/vendor/deck.gl-9.0.38.min.js` | deck.gl | 9.0.38 | 1.19 MB |
+| `web/vendor/maplibre-gl-4.7.1.js` | maplibre-gl | 4.7.1 | 784 KB |
+| `web/vendor/maplibre-gl-4.7.1.css` | maplibre-gl | 4.7.1 | 64 KB |
 
 ⚠️ **Vendoring is a security decision, not a convenience one** (`security-audit.md`
 S1): every displayed dollar figure executes through these libraries, so a
@@ -107,7 +110,7 @@ time — the pipeline does **not** read `data/raw/` for the audit tools.
 | resource | what |
 |---|---|
 | `q7d6-ambg` | Property Assessment Data — current year (the live roll) |
-| `qi6a-xuwt` | Property Assessment Data — historical, 2012–2025 |
+| `qi6a-xuwt` | Property Assessment Data — historical. ⚠️ **Published as 2012–2025; only 2012–2023 is usable.** 2024 and 2025 are both proven incomplete and omitted by decision, so the temporal lens shows **2012–2023 + 2026** and the gap is deliberately two years wide. `docs/SPEC_temporal.md` §0 before touching it |
 | plus | property info, zoning, roads, permits, fire, GTFS transit, bike, schools |
 
 Full per-source detail, column names and quirks: **`data/DATA.md`** — read it
@@ -126,9 +129,9 @@ REQUESTS_CA_BUNDLE=$(.venv/bin/python -m certifi) .venv/bin/python <script>
 
 **Two independent harnesses.**
 
-- **pytest** — 48 test files, **892 tests**, ~13 s. Tiers and what each can see:
+- **pytest** — 53 test files, **1,013 tests**, ~14 s. Tiers and what each can see:
   `docs/ARCHITECTURE.md` §Testing.
-- **Playwright + Chromium** — `tools/profiling/`, **69 JS scripts**: `verify-*`
+- **Playwright + Chromium** — `tools/profiling/`, **70 JS scripts**: `verify-*`
   (43) assert behaviour, `shot-*` capture screenshots, and `audit-*` **measure
   without asserting** — an audit probe prints an inventory for a human to judge
   and has no pass/fail, so it is not part of any suite and a sweep that greps for
@@ -188,10 +191,10 @@ silent** — check `gh run list`.
 | path | count | what |
 |---|---|---|
 | `src/` | 22 modules | the pipeline; each independently runnable |
-| `scripts/` | 25 | guards, site build, status generation |
-| `tools/` | 16 py + 65 js | audits + the headless harness |
-| `tests/` | 45 files | pytest |
-| `docs/` | 61 | specs, findings, decisions, runbook |
+| `scripts/` | 29 | guards, site build, status generation |
+| `tools/` | 18 py + 70 js | audits + the headless harness |
+| `tests/` | 53 files | pytest |
+| `docs/` | 93 | specs, findings, decisions, runbook |
 | `web/` | — | the served site |
 | `data/raw/`, `data/processed/` | — | local snapshots; **never `Read` these** (`docs/TOKEN_EFFICIENCY.md`) |
 
@@ -209,13 +212,16 @@ git ls-files | while read f; do git check-attr linguist-generated \
 
 ⚠️ Match `: set$`, not `-v unspecified`. The latter also catches the one
 deliberate **`unset`** — `web/notebooks/index.html`, the hand-written landing
-page exempted from the generated rule beneath it — and reports 26 exclusions
-where there are 25.
+page exempted from the generated rule beneath it — and so reports one exclusion
+more than there are. ⚠️ **Don't reconcile that off-by-one against a number
+written here on an earlier date**: the excluded set grows whenever an exported
+notebook lands (it went 25 → 26 on 2026-09-17, one day after the previous
+measurement). Re-run both commands; the rule is stable, the count is not.
 
-Under that convention (2026-09-16): **markdown 4,839 KB ÷ source 2,795 KB =
-1.73:1**, with 25 files / 20.8 MB excluded as vendored or generated. The
-markdown splits `docs/` 2,253 · `session-summary/` 2,127 (98% of it archived out
-of the loaded path) · `TODO.md` 261 · `data/` 158.
+Under that convention (**re-measured 2026-09-18**): **markdown 5,357 KB ÷ source
+3,032 KB = 1.77:1**, with 26 files / 21.7 MB excluded as vendored or generated.
+The markdown splits `docs/` 2,586 · `session-summary/` 2,295 (98% of it archived
+out of the loaded path) · `TODO.md` 273 · `data/` 159.
 
 ⚠️ **This is a sanity check computed on request, NOT a tracked metric.** An
 outside review led with **0.68:1** — a figure this project supplied, which had
@@ -225,9 +231,10 @@ denominator admitted. **A number that swings 3× on a packaging decision, with n
 prose changed, is measuring packaging.** Do not put a ceiling on it, do not track
 it turn-to-turn, and do not quote a figure from this section without re-running
 the commands above — that is the staleness this project keeps catching. The
-number worth watching instead is **what actually loads per session** (~294 KB,
-89% of it `TODO.md`): see `docs/external/REVIEW_doc_apparatus_2026-09-15_PREMISES.md`
-premises A2 and P10.
+number worth watching instead is **what actually loads per session** (**~312 KB
+on 2026-09-18, 88% of it `TODO.md`** — the two `CLAUDE.md` files, `TODO.md`, the
+newest session summary and the memory index): see
+`docs/external/REVIEW_doc_apparatus_2026-09-15_PREMISES.md` premises A2 and P10.
 
 ---
 
@@ -246,5 +253,7 @@ Recorded so nobody proposes them as improvements without reopening a decision.
 - **No CDN at runtime** — see §3.
 - **No CSS preprocessor**, no TypeScript. A **read-only** JS checker in
   `tests.yml` (`tsc --checkJs --noEmit` or eslint — emits nothing to `_site/`)
-  is **allowed since 2026-09-05** (`DECISIONS.md`) but **not yet installed**;
+  is **allowed since 2026-09-05** (`DECISIONS.md`) but **still not installed**
+  (confirmed 2026-09-18: no `tsc` in `tools/profiling/node_modules/.bin`, no
+  `tsc`/`eslint` step in `tests.yml`);
   S1 constrains what executes on the page, not what reads the source.
