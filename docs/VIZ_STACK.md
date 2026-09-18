@@ -16,6 +16,13 @@ third-party site (`map.kunicki.app`) as of 2026-08-07 and nothing here has
 re-checked it since; treat it as a dated observation, not current fact.
 **§3–§6 are reasoning, not measurement**, and are unaffected by the drift.
 
+⚠️ **Sizes here are BINARY units — KiB / MiB — written with the decimal
+symbols.** `value_grid_50.json` is 8.00 million bytes = **7.63 MiB**, and every
+other on-disk figure in §0/§1 is the same conversion. Re-verified 2026-09-18:
+`web/data` is **byte-for-byte unchanged** since the 2026-09-16 re-measurement,
+so the numbers are current — only the unit label was ever wrong. A reader who
+converts these as decimal MB will land ~5% low and conclude the files shrank.
+
 ---
 
 ## 0. The short version
@@ -55,7 +62,7 @@ load moving at all.
 
 | Layer | Choice | Notes |
 |---|---|---|
-| App shell | One static `web/index.html`, 452 KB + `styles.css`, 55 KB | No framework, no bundler, no build step for the site |
+| App shell | One static `web/index.html`, 453 KiB / 7,904 lines + `styles.css`, 55 KiB | No framework, no bundler, no build step for the site |
 | Map engine | **MapLibre GL JS 4.7.1**, vendored (`web/vendor/`, 784 KB) | Camera / projection / interaction **only** |
 | Basemap | **None.** Style is `sources: {}` + one background layer `#0a0a0f` | `web/index.html` — "no basemap tiles for v1 — just a dark backdrop" |
 | Data rendering | **deck.gl 9.0.38**, vendored (1.19 MB), via `MapboxOverlay` | `GeoJsonLayer` (fills, 3D extrusions, roads, prism roof rings), `ScatterplotLayer` (stations, points) |
@@ -201,7 +208,9 @@ all the interaction machinery. Viable for a print-style companion figure or a
 verified-notebook output; not for the live map.
 
 ### G. Framework shells — React (`react-map-gl`, `@deck.gl/react`), Svelte, Observable Framework
-Would give component structure and state management for a 4,250-line file that's
+Would give component structure and state management for a **7,904-line** file
+(the figure here read 4,250 until 2026-09-18 — it had nearly doubled, which
+strengthens the pressure this entry describes rather than weakening it) that's
 outgrowing plain JS. Costs a build step, a `node_modules`, and the ability to
 open `web/index.html` and just read it. Given `docs/CODEMAP.md` exists precisely
 to navigate that file, the pressure is real — but a build step also breaks the
