@@ -157,6 +157,43 @@ const SUBJECT = { storm: /storm/i, fire: /fire/i, water: /water|sewer/i };
       seen[k].rows === 0 && /utility charge|no fire cost|demand/i.test(seen[k].text),
       `${seen[k].rows} rows | ${seen[k].text.split('\n')[1] || ''}`.slice(0, 110));
   }
+  // ---- 3c. A NONZERO COST NEVER PRINTS AS "0.0%" -------------------------
+  // `fmtSvcRatio` used to `toFixed(1)` below 10%, so a real cost four orders
+  // below the levy rendered as "0.0%" — which reads as FREE, not as small. The
+  // revenue panel had the identical defect and fixed it with "<0.1%" (fmtMix,
+  // guarded above). Run the SHIPPED formatter over every served row rather than
+  // over a fixture, so the check cannot pass against a formatter the page does
+  // not use. ⚠️ The true-zero case is asserted in the SAME pass and in the
+  // opposite direction: 135 rows carry an exactly zero cost and must still say
+  // "0.0%", so a floor applied unconditionally fails here too.
+  const ratio = await page.evaluate(async () => {
+    const d = await (await fetch('./data/neighbourhood_value_per_acre.geojson')).json();
+    const cols = ['cost_roads_life_per_acre', 'cost_roads_ops_per_acre',
+                  'cost_transit_ops_per_acre', 'cost_bike_ops_per_acre'];
+    let nonzeroAsZero = 0, trueZeroMislabelled = 0, floored = 0, seen = 0;
+    for (const f of d.features) {
+      const p = f.properties, rev = p.revenue_per_acre;
+      if (!(rev > 0)) continue;
+      for (const c of cols) {
+        const v = p[c];
+        if (v == null) continue;
+        seen++;
+        const out = fmtSvcRatio(v / rev);
+        if (v > 0 && out === '0.0%') nonzeroAsZero++;
+        if (v === 0 && out !== '0.0%') trueZeroMislabelled++;
+        if (out === '<0.1%') floored++;
+      }
+    }
+    return { nonzeroAsZero, trueZeroMislabelled, floored, seen };
+  });
+  check('*** a nonzero service cost never prints as "0.0%" ***',
+    ratio.nonzeroAsZero === 0 && ratio.seen > 1000,
+    `${ratio.nonzeroAsZero} of ${ratio.seen} rows`);
+  check('*** an exactly-zero cost still prints "0.0%", not the floor ***',
+    ratio.trueZeroMislabelled === 0, `${ratio.trueZeroMislabelled} mislabelled`);
+  check('the floor actually fires on this data (the check is not vacuous)',
+    ratio.floored > 0, `${ratio.floored} rows print "<0.1%"`);
+
   await page.close();
 
   // ---- 4. PUBLIC BUILD ----------------------------------------------------

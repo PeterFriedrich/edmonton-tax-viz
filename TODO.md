@@ -446,17 +446,21 @@ province"*, and the cost groups head *"To run and eventually rebuild"* /
 pass and **caught by the guard**.
 
 ⬜ **STILL OPEN — 4 rows, and one of them got MORE visible today:**
-- **S1** `modelled` vs `modeled`. The Services panel's reading line prints
-  `modeled road lifecycle cost / acre / yr` — US spelling, directly under a
-  headline we just rewrote. 17/17 dead even across the file.
+- ✅ **S1 APPLIED 2026-09-18** — Canadian `modelled` throughout, **17
+  occurrences on 16 lines** (`grep -c` counts LINES; one tooltip carried it
+  twice, which is why the first count said 16). No element id moved.
 - **C2** — anchor "per acre" in houses (`≈ 5.3 average houses' worth`).
   Deliberately deferred: the headline is already three lines after N4 + C1.
 - **F4** — the Development history summary line ignores the window picker.
-- **UNFILED, and it should be a row:** `fmtSvcRatio` prints a literal `0.0%`
-  for **24 nonzero rows**, which reads as *free* rather than *small*. ⚠️ **The
-  same defect was already found and fixed once** in the revenue panel, which
-  prints `<0.1%` and is guarded by `verify-revenue-panel.js` — so the fix and
-  its guard both already exist in this file, one panel over.
+- ✅ **FILED AS S3 AND APPLIED 2026-09-18** — `fmtSvcRatio` floors at
+  `<0.1%`. Measured: **24 of 1,624 rendered rows were nonzero and printed
+  `0.0%`**, 17 bikeway, smallest `0.0000%`. ⚠️ **`f > 0` is load-bearing — 135
+  rows are EXACTLY zero and must keep saying `0.0%`**, so the guard asserts both
+  signs plus non-vacuity. Both mutations caught
+  (`verify-services-panel.js` §3c); `DECISIONS.md` 2026-09-18.
+  ⚠️ **The defect class was known and had never been SWEPT** — `fmtMix` fixed
+  the identical thing in the revenue panel and has been guarded since. **Worth a
+  pass over the other formatters for the same shape.**
 
 ⚠️ Two rows are **not** open questions and must not be re-derived:
 - **F2** — the gold >100% bar re-introduces the break-even verdict locked against on

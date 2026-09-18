@@ -190,7 +190,7 @@
   <div id="views" class="panel">
     <button data-view="money" class="active" title="Revenue/value prisms — the money plane">Money</button>
     <button data-view="development" title="New dwelling units built per acre from issued building permits — where the city is actually growing; greenfield growth land is shown in full colour here">Development</button>
-    <button data-view="services" title="City services on the ground — toggle each service on its own layer; roads coloured by metres per acre, stormwater by its modeled charge per acre">Services</button>
+    <button data-view="services" title="City services on the ground — toggle each service on its own layer; roads coloured by metres per acre, stormwater by its modelled charge per acre">Services</button>
     <button data-view="ratio" title="Ghost prisms of revenue per road metre — or per fire event — over the neutral road network">Ratio</button>
     <button data-view="uses" title="Each neighbourhood's dominant zoned land use — what the land is designated for, not what it yields; optional prisms show each neighbourhood's residential share">Uses</button>
     <!-- The Lab: a full-build-only container for experiments that are NOT
@@ -368,8 +368,8 @@
       </div>
       <div class="svc-group">Other services</div>
       <div class="svc" data-service="storm">
-        <label title="Each neighbourhood coloured by its modeled annual stormwater utility charge per acre — estimated from lot sizes and zoning, not billed amounts">
-          <input type="checkbox" class="svc-on" /> Stormwater — modeled $/acre
+        <label title="Each neighbourhood coloured by its modelled annual stormwater utility charge per acre — estimated from lot sizes and zoning, not billed amounts">
+          <input type="checkbox" class="svc-on" /> Stormwater — modelled $/acre
         </label>
         <label class="svc-colour" title="This service drives the colour ramp; the others render neutral">
           <input type="radio" name="svc-driver" /> colour
@@ -384,8 +384,8 @@
         </label>
       </div>
       <div class="svc" data-service="water">
-        <label title="Each neighbourhood coloured by its modeled annual residential water + sewer charge per acre — verified 2026 tariffs applied to the assessment roll, not billed amounts; commercial properties not modeled">
-          <input type="checkbox" class="svc-on" /> Water/sewer — modeled $/acre
+        <label title="Each neighbourhood coloured by its modelled annual residential water + sewer charge per acre — verified 2026 tariffs applied to the assessment roll, not billed amounts; commercial properties not modelled">
+          <input type="checkbox" class="svc-on" /> Water/sewer — modelled $/acre
         </label>
         <label class="svc-colour" title="This service drives the colour ramp; the others render neutral">
           <input type="radio" name="svc-driver" /> colour
@@ -1068,7 +1068,7 @@
       storm: {
         label: "Stormwater",
         plane: { col: "storm_charge_per_acre" },
-        blurb: "Each neighbourhood is coloured by its modeled annual stormwater " +
+        blurb: "Each neighbourhood is coloured by its modelled annual stormwater " +
                "utility charge per acre — the drainage bylaw's formula (lot area " +
                "× runoff coefficient × rate) applied to every assessed " +
                "property. Modeled, not billed: an estimate from zoning and lot " +
@@ -1092,12 +1092,12 @@
       water: {
         label: "Water/sewer",
         plane: { col: "water_charge_per_acre" },
-        blurb: "Each neighbourhood is coloured by its modeled annual water + " +
+        blurb: "Each neighbourhood is coloured by its modelled annual water + " +
                "sewer charge per acre — verified April 2026 EPCOR tariffs " +
                "(fixed connection charges by assumed meter size + typical-" +
                "household consumption) applied to every residential property " +
                "on the assessment roll. Modeled, not billed; commercial " +
-               "properties are not modeled, and the consumption portion " +
+               "properties are not modelled, and the consumption portion " +
                "tracks household density more than land. Colour is linear. " +
                "Grey = set-aside natural/undeveloped land.",
       },
@@ -1143,7 +1143,7 @@
         label: "Roads cost",
         pub: true,
         plane: { col: "cost_roads_ops_per_acre" },
-        blurb: "Each neighbourhood is coloured by the modeled annual operating " +
+        blurb: "Each neighbourhood is coloured by the modelled annual operating " +
                "cost of its collector and local roads per acre — $5,970 per " +
                "lane-kilometre to maintain plus $3,350 per lane-kilometre for " +
                "snow and ice control. Operating only: capital reconstruction " +
@@ -1168,7 +1168,7 @@
         label: "Roads cost — lifecycle",
         pub: true,
         plane: { col: "cost_roads_life_per_acre" },
-        blurb: "Each neighbourhood is coloured by the modeled annual lifecycle " +
+        blurb: "Each neighbourhood is coloured by the modelled annual lifecycle " +
                "cost of its collector and local roads per acre — $50 per metre " +
                "per year, covering both upkeep and eventual rebuilding. It " +
                "comes from the City's published figures for a kilometre of " +
@@ -1209,7 +1209,7 @@
       bikecost: {
         label: "Bike cost",
         plane: { col: "cost_bike_ops_per_acre", transform: "sqrt" },
-        blurb: "Each neighbourhood is coloured by the modeled annual operating " +
+        blurb: "Each neighbourhood is coloured by the modelled annual operating " +
                "cost of its dedicated cycling infrastructure per acre — $178 per " +
                "kilometre to maintain plus $20,100 per kilometre for snow and " +
                "ice control, which carries a 24-hour bare-pavement standard. " +
@@ -2293,28 +2293,28 @@
       return s.transform === "sqrt" ? Math.sqrt(t) : t;
     }
     const fmtStorm = v => "$" + Math.round(v).toLocaleString() +
-      " modeled stormwater / acre / yr";
+      " modelled stormwater / acre / yr";
     const fmtFire = v => v.toFixed(v < 1 ? 2 : 1) + " dispatched events / acre / yr";
     const fmtTransit = v => v.toFixed(v < 1 ? 2 : 1) +
       " scheduled transit stop-events / acre / weekday";
     const fmtBike = v => v.toFixed(v < 1 ? 2 : 1) + " dedicated bike route m / acre";
     const fmtWater = (v, fixed) => "$" + Math.round(v).toLocaleString() +
-      " modeled water+sewer / acre / yr" +
+      " modelled water+sewer / acre / yr" +
       (fixed != null ? ` (fixed $${Math.round(fixed).toLocaleString()})` : "");
     // Stage 2 operating-cost readouts. Each says "operating" in the readout
     // itself: the number is meaningless without its basis, and the tooltip is
     // the one place a reader meets it with no legend or blurb alongside.
     const fmtRoadsCost = v => "$" + Math.round(v).toLocaleString() +
-      " modeled road operating cost / acre / yr";
+      " modelled road operating cost / acre / yr";
     // Same rule one step more important: this is the SAME METRES as
     // fmtRoadsCost on the other basis, so a readout that omitted "lifecycle"
     // would be indistinguishable from one ~11x smaller.
     const fmtRoadsLife = v => "$" + Math.round(v).toLocaleString() +
-      " modeled road lifecycle cost / acre / yr";
+      " modelled road lifecycle cost / acre / yr";
     const fmtTransitCost = v => "$" + Math.round(v).toLocaleString() +
       " ETS operating budget share / acre / yr";
     const fmtBikeCost = v => "$" + Math.round(v).toLocaleString() +
-      " modeled bikeway operating cost / acre / yr";
+      " modelled bikeway operating cost / acre / yr";
 
     // The shared service ground plane (services view): flat hoods coloured
     // by the colour-driving plane service's column on the active ramp,
@@ -5364,8 +5364,15 @@
       SVC_COST_BASES.flatMap(g => g.rows.map(r => [r.col, r.label])));
     // Under 10% the ratio rounds to "0%" for three of the four services, which
     // reads as free rather than small.
+    // ⚠️ `f > 0 &&` is load-bearing: 135 rows carry an EXACTLY zero cost, and
+    // those must keep printing "0.0%" — calling a true zero "<0.1%" is the same
+    // misreading in the other direction. Measured 2026-09-18: 24 rows were
+    // NONZERO and printed "0.0%", 17 of them bikeway (the smallest is 0.0000%,
+    // i.e. a real cost four orders below the levy). Same floor and the same
+    // 0.05 rounding boundary as `fmtMix`, which fixed this in the revenue panel.
     const fmtSvcRatio = f => f >= 0.1 ? Math.round(f * 100) + "%"
-                                      : (f * 100).toFixed(1) + "%";
+                           : f > 0 && f * 100 < 0.05 ? "<0.1%"
+                           : (f * 100).toFixed(1) + "%";
 
     function renderHistory(t) {
       const i = t.years.length - 1;
