@@ -17,6 +17,30 @@ instead of restating the wording.
 
 Status column: `open` · `decided` · `applied`. Add the date when it moves.
 
+⚠️ **10 rows APPLIED 2026-09-18 (S172), in one pass** — N1–N6, C1, C3, J4, S2
+(Peter's call; `DECISIONS.md` 2026-09-18). **The noun is `city tax` / `city
+property tax`**, and "municipal levy" is gone from every reader-facing surface
+(2 mentions survive in HTML comments only). ⚠️ **Nine verify scripts asserted on
+the old strings and were updated with the copy** — `verify-peek`,
+`verify-revenue-panel` (**4 occurrences, and the 4th was missed on the first
+pass and caught by the guard**), `verify-glass-cell`, `verify-res-revenue`,
+`verify-nonres-revenue`, `verify-services-public`. That is the cost of this
+file's own one-pass rule, and it is the reason the rule exists.
+
+⚠️ **S2 was applied to the PANEL only, and the first attempt was wrong.**
+Renaming the *picker* to the same verb phrase made the panel print the sentence
+twice — once as the layer head, once as the group head. The picker names the
+**layer** (`Roads cost — lifecycle`); the group head says what the bar
+**measures** (`To run and eventually rebuild`). Different jobs, different words.
+Caught by rendering the panel, not by any guard.
+
+⚠️ **Still open: C2** (anchor "per acre" in houses) and **S1** (`modelled` vs
+`modeled` — now VISIBLE in the Services panel's reading line, which prints
+`modeled road lifecycle cost`), plus **F4**. **A new row is owed for
+`fmtSvcRatio`**, which prints a literal `0.0%` for 24 nonzero rows — it reads as
+*free* rather than *small*, and the same defect was already fixed once in the
+revenue panel (`<0.1%`, guarded by `verify-revenue-panel.js`).
+
 ---
 
 ## Group N — one quantity, four names
@@ -27,12 +51,12 @@ number. **Decide the noun once (N1) and the rest follow.**
 
 | id | surface | on screen now | proposal | status |
 |---|---|---|---|---|
-| **N1** | `#title`, Money view | `Edmonton: Tax Revenue per Acre` | `Edmonton: City Taxes per Acre` — "tax revenue" does not say *whose* tax, which is the whole reason education is excluded | open |
-| **N2** | `#legend-label` | `Revenue per acre` | `City tax per acre` — "revenue" reads as business income to a general audience | open |
-| **N3** | `renderRevenueMix` headline | `$1.89M municipal levy` | `$1.89M in city property tax`. ⚠️ This is a hood **total**, not per-acre — keep it distinct from N4 so the two panels don't look like one measure | open |
-| **N4** | `renderServiceCost` headline | `$18,721 municipal levy / acre / yr` | `City property tax collected here` / `$18,721 per acre each year`. **The line Peter flagged as eye-glazing** (S157): an accounting noun plus a rate nobody holds intuitively | open |
-| **N5** | `#loading-blurb` | `Municipal property-tax revenue per acre, by neighbourhood.` | `What each neighbourhood pays the City in property tax, per acre.` First thing anyone reads; currently the most jargon-dense sentence on the site | open |
-| **N6** | `#revcut`, `#labcut`, `#ratio-denom` ×2 | `the full municipal levy the land generates` ×2 · `the levy-funded network…` · `levy-funded demand` | Follow N1–N5; `levy-funded` → `tax-funded`. Low-visibility, but it is where a confused reader goes — the worst place to repeat the confusing word | open |
+| **N1** | `#title`, Money view | `Edmonton: Tax Revenue per Acre` | `Edmonton: City Taxes per Acre` — "tax revenue" does not say *whose* tax, which is the whole reason education is excluded | **applied 2026-09-18** |
+| **N2** | `#legend-label` | `Revenue per acre` | `City tax per acre` — "revenue" reads as business income to a general audience | **applied 2026-09-18** |
+| **N3** | `renderRevenueMix` headline | `$1.89M municipal levy` | `$1.89M in city property tax`. ⚠️ This is a hood **total**, not per-acre — keep it distinct from N4 so the two panels don't look like one measure | **applied 2026-09-18** |
+| **N4** | `renderServiceCost` headline | `$18,721 municipal levy / acre / yr` | `City property tax collected here` / `$18,721 per acre each year`. **The line Peter flagged as eye-glazing** (S157): an accounting noun plus a rate nobody holds intuitively | **applied 2026-09-18** |
+| **N5** | `#loading-blurb` | `Municipal property-tax revenue per acre, by neighbourhood.` | `What each neighbourhood pays the City in property tax, per acre.` First thing anyone reads; currently the most jargon-dense sentence on the site | **applied 2026-09-18** |
+| **N6** | `#revcut`, `#labcut`, `#ratio-denom` ×2 | `the full municipal levy the land generates` ×2 · `the levy-funded network…` · `levy-funded demand` | Follow N1–N5; `levy-funded` → `tax-funded`. Low-visibility, but it is where a confused reader goes — the worst place to repeat the confusing word | **applied 2026-09-18** |
 
 ---
 
@@ -43,9 +67,9 @@ are documented; none appear at the point of reading.
 
 | id | fact | where it lives now | proposal | status |
 |---|---|---|---|---|
-| **C1** | Education tax is excluded | `#mill-note`, inside Data & Methods | Put it on the panel headline: *"City portion only — school taxes go to the province."* A resident comparing this to their own bill finds it ~24% short (2.4366 mills residential) with no way to know why | open |
+| **C1** | Education tax is excluded | `#mill-note`, inside Data & Methods | Put it on the panel headline: *"City portion only — school taxes go to the province."* A resident comparing this to their own bill finds it ~24% short (2.4366 mills residential) with no way to know why | **applied 2026-09-18** |
 | **C2** | Nothing anchors "per acre" | nowhere | `≈ 5.3 average houses' worth of city tax per acre`. Median hood $18,060/acre ÷ $3,431 (a $450k house at 7.6254 mills). **Computable per hood — do not hardcode** | open |
-| **C3** | Roads are one service among many | `renderServiceCost` note | Say it in the headline, not the note. Without it, "Roads 5.1%" invites the reader to conclude the other 94.9% is surplus | open |
+| **C3** | Roads are one service among many | `renderServiceCost` note | Say it in the headline, not the note. Without it, "Roads 5.1%" invites the reader to conclude the other 94.9% is surplus | **applied 2026-09-18** |
 
 ---
 
@@ -59,7 +83,7 @@ Each is a separate call — some are worth *teaching*, some worth replacing.
 | **J1** | mill rate | `…applying Edmonton's class-differential mill rates.` | Teach it once: *"different rates by property type — non-residential pays 3.2× the residential rate"*. The 3.2× (24.2229 vs 7.6254) is the interesting fact the jargon hides | open |
 | **J2** | set-aside | `Set aside / insufficient road base` (legend) | `River valley, parks & undeveloped`. Project-internal term that reached the legend; 55 occurrences in the file | open |
 | **J3** | assessment base | `0.08% of Edmonton's total assessment base` | `share of everything Edmonton taxes`. ⚠️ Live on the **public** site | open |
-| **J4** | lifecycle / operating **basis** | `lifecycle basis — upkeep plus eventual rebuilding…` | Drop "basis": `To run and eventually rebuild` / `To run it this year`. The explanatory clauses are already good; only the head noun is accountancy | open |
+| **J4** | lifecycle / operating **basis** | `lifecycle basis — upkeep plus eventual rebuilding…` | Drop "basis": `To run and eventually rebuild` / `To run it this year`. The explanatory clauses are already good; only the head noun is accountancy | **applied 2026-09-18** |
 
 ---
 
@@ -68,7 +92,7 @@ Each is a separate call — some are worth *teaching*, some worth replacing.
 | id | issue | current | proposal | status |
 |---|---|---|---|---|
 | **S1** | `modelled` vs `modeled` | 17 each, dead even | Canadian `modelled` throughout — the project is otherwise strictly Canadian (`neighbourhood` 129 / `neighborhood` 0) | open |
-| **S2** | two labels, one layer | `Roads cost — lifecycle` (picker) vs `lifecycle basis → Roads` (panel) | One label, chosen with J4. Part of why the panel reads as unrelated to the map | open |
+| **S2** | two labels, one layer | `Roads cost — lifecycle` (picker) vs `lifecycle basis → Roads` (panel) | One label, chosen with J4. Part of why the panel reads as unrelated to the map | **applied 2026-09-18** |
 
 ---
 

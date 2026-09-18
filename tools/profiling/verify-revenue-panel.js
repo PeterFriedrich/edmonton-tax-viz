@@ -150,11 +150,11 @@ const [url] = process.argv.slice(2);
   check('the city share is quoted to 2 decimals',
     panel.read.includes(shareStr), `want ${shareStr}`);
   check('the city share names what it is a share OF',
-    /of Edmonton's municipal revenue/.test(panel.read));
+    /of all Edmonton city tax/.test(panel.read));
 
   // ---- 5. THE DENOMINATOR IS NAMED ---------------------------------------
-  check('*** the note names the TOTAL-levy denominator ***',
-    /total municipal levy/.test(panel.note), panel.note.slice(0, 60));
+  check('*** the note names the TOTAL-tax denominator ***',
+    /total city tax/.test(panel.note), panel.note.slice(0, 60));
   check('the note discloses the exempt-land gap',
     /exempt/i.test(panel.note));
 
@@ -168,8 +168,8 @@ const [url] = process.argv.slice(2);
                note: document.getElementById('temporal-note').textContent };
     }, cut);
     check(`${cut}: the panel still shows the mix`, c.open && c.rows > 0, `${c.rows} rows`);
-    check(`${cut}: the total-levy denominator is still named`,
-      /total municipal levy/.test(c.note));
+    check(`${cut}: the total-tax denominator is still named`,
+      /total city tax/.test(c.note));
   }
 
   // ---- 6. THE LENS SWAP RE-RENDERS A PINNED PANEL ------------------------
@@ -307,7 +307,7 @@ const [url] = process.argv.slice(2);
   });
   check('public build renders the revenue panel', p.open && p.rows > 0, `${p.rows} rows`);
   check('public build keeps the bar visible', p.barDisplay === 'flex', p.barDisplay);
-  check('public build names the denominator', /total municipal levy/.test(p.note));
+  check('public build names the denominator', /total city tax/.test(p.note));
   await pub.close();
 
   await browser.close();

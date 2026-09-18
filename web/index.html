@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Edmonton — Tax Revenue per Acre</title>
+  <title>Edmonton — City Taxes per Acre</title>
 
   <!-- Vendored locally (no CDN runtime dependency) so a compromised CDN can't
        silently alter the numbers this page renders. See web/vendor/README.md
@@ -32,7 +32,7 @@
            see. Deliberately NOT an <h1>: the page already has one, and a second
            would compete with it in the accessibility tree. -->
       <p id="loading-title">Edmonton: Property Tax Visualization</p>
-      <p id="loading-blurb">Municipal property-tax revenue per acre, by neighbourhood.</p>
+      <p id="loading-blurb">What each neighbourhood pays the City in property tax, per acre.</p>
       <div id="loading-spinner" aria-hidden="true"></div>
       <p id="loading-text">Loading basemap…</p>
       <button id="loading-retry" type="button" hidden>Retry</button>
@@ -59,7 +59,7 @@
   </div>
 
   <div id="title" class="panel">
-    <h1 id="title-h">Edmonton: Tax Revenue per Acre</h1>
+    <h1 id="title-h">Edmonton: City Taxes per Acre</h1>
     <p id="title-p">Height and colour show municipal property-tax revenue divided by
        neighbourhood area, applying Edmonton's class-differential mill rates. Tall,
        bright districts generate the most city revenue per unit of land. Height is
@@ -177,9 +177,9 @@
       <button data-metric="value" title="Total assessed property value per acre — what the land is worth, not what it pays. Pick current or change-over-time below.">Value</button>
     </div>
     <div id="revcut">
-      <button data-revcut="revenue_per_acre" class="active" title="Every property class — the full municipal levy the land generates">Total</button>
+      <button data-revcut="revenue_per_acre" class="active" title="Every property class — the full city tax the land generates">Total</button>
       <button data-revcut="res_revenue_per_acre" title="Residential-class dollars only: houses, condos and apartment buildings. A subset of Total, not all of what the land pays">Residential</button>
-      <button data-revcut="nonres_revenue_per_acre" title="Dollars billed at the non-residential rate — commercial and industrial land. A subset of Total. Residential and Non-residential are nearly the whole levy but do not sum to it exactly: farmland is a small separate class">Non-residential</button>
+      <button data-revcut="nonres_revenue_per_acre" title="Dollars billed at the non-residential rate — commercial and industrial land. A subset of Total. Residential and Non-residential are nearly all of it but do not sum to the total exactly: farmland is a small separate class">Non-residential</button>
     </div>
     <div id="moneymode">
       <button data-moneymode="current" class="active" title="The map as it stands — each neighbourhood's own per-acre figure, not set against anything else">Current</button>
@@ -219,7 +219,7 @@
     <div id="labpick"></div>
     <span class="hd" id="labcut-hd">Revenue</span>
     <div id="labcut">
-      <button data-labcut="revenue_per_acre" class="active" title="Every property class — the full municipal levy the land generates">Total</button>
+      <button data-labcut="revenue_per_acre" class="active" title="Every property class — the full city tax the land generates">Total</button>
       <button data-labcut="res_revenue_per_acre" title="Residential-class dollars only: houses, condos and apartment buildings. A subset of Total">Residential</button>
       <button data-labcut="nonres_revenue_per_acre" title="Dollars billed at the non-residential rate — commercial and industrial land. A subset of Total">Non-residential</button>
     </div>
@@ -399,8 +399,8 @@
     </div>
     <span class="hd" id="ratio-denom-hd">Ratio denominator</span>
     <div id="ratio-denom">
-      <button data-ratio-denom="roads" class="active" title="Revenue per metre of city-maintained neighbourhood road (collector + local) — the levy-funded network this land's layout entails">Per road metre</button>
-      <button data-ratio-denom="fire" title="Revenue per dispatched fire-department emergency event ({{fire}} average) — levy-funded demand; most events are medical calls">Per fire event</button>
+      <button data-ratio-denom="roads" class="active" title="Revenue per metre of city-maintained neighbourhood road (collector + local) — the tax-funded network this land's layout entails">Per road metre</button>
+      <button data-ratio-denom="fire" title="Revenue per dispatched fire-department emergency event ({{fire}} average) — tax-funded demand; most events are medical calls">Per fire event</button>
     </div>
   </div>
     <!-- Where a neighbourhood's detail appears. Same "the label IS the state"
@@ -595,7 +595,7 @@
       <button id="recenter" title="Recenter to the default 3D framing (position, zoom, tilt and rotation)">Center 3D</button>
     </div>
     <div id="legend" class="panel">
-      <div id="legend-label">Revenue per acre</div>
+      <div id="legend-label">City tax per acre</div>
       <div class="bar"></div>
       <div class="scale"><span id="legend-min">$0</span><span id="legend-max">$50k+</span></div>
       <div class="aside"><span class="sw"></span><span>Set aside — natural / undeveloped land</span></div>
@@ -772,13 +772,13 @@
     const METRICS = {
       revenue_per_acre: {
         key: "revenue_per_acre",
-        title: "Edmonton: Tax Revenue per Acre",
+        title: "Edmonton: City Taxes per Acre",
         blurb: "Height and colour show municipal property-tax revenue divided by " +
                "neighbourhood area, applying Edmonton's class-differential mill rates. " +
                "Tall, bright districts generate the most city revenue per unit of land. " +
                "Height is linear; colour is square-root–scaled to reveal the low end. " +
                "Grey = set-aside natural/undeveloped land, excluded from the scale.",
-        legendLabel: "Revenue per acre",
+        legendLabel: "City tax per acre",
         legendMin: "$0",
         legendMax: "$50k+",
         // Deliberately a LITERAL, not a live p97.5 like moneyScale's lot branch:
@@ -807,7 +807,7 @@
       // dollars — the two compose (residential dollars on residential land).
       res_revenue_per_acre: {
         key: "res_revenue_per_acre",
-        title: "Edmonton: Residential Tax Revenue per Acre",
+        title: "Edmonton: Residential City Taxes per Acre",
         blurb: "Height and colour show the residential-class share of municipal " +
                "property-tax revenue — houses, condos and apartment buildings — " +
                "divided by neighbourhood area. This is a subset of Revenue, not " +
@@ -815,7 +815,7 @@
                "excluded here. Height is linear; colour is square-root–scaled to " +
                "reveal the low end. Grey = set-aside natural/undeveloped land, " +
                "excluded from the scale.",
-        legendLabel: "Residential revenue per acre",
+        legendLabel: "Residential city tax per acre",
         legendMin: "$0",
         legendMax: "$30k+",
         colorClamp: 30_000, // literal, like Revenue's 50k — see that comment and check_colour_clamps.py
@@ -838,7 +838,7 @@
       // same elevationScale as Revenue so the bars read as comparable subsets.
       nonres_revenue_per_acre: {
         key: "nonres_revenue_per_acre",
-        title: "Edmonton: Non-Residential Tax Revenue per Acre",
+        title: "Edmonton: Non-Residential City Taxes per Acre",
         blurb: "Height and colour show the non-residential-rate share of " +
                "municipal property-tax revenue — commercial and industrial " +
                "land — divided by neighbourhood area. This is a subset of " +
@@ -846,7 +846,7 @@
                "are excluded here. Height is linear; colour is " +
                "square-root–scaled to reveal the low end. Grey = set-aside " +
                "natural/undeveloped land, excluded from the scale.",
-        legendLabel: "Non-residential revenue per acre",
+        legendLabel: "Non-residential city tax per acre",
         legendMin: "$0",
         legendMax: "$50k+",
         colorClamp: 50_000, // literal, like Revenue's 50k — see that comment and check_colour_clamps.py
@@ -4721,9 +4721,11 @@
     // the 2026-07-28 lock (public Services = roads supply + road cost on both
     // bases, nothing else). Add a row here and it inherits the right build.
     const SVC_COST_BASES = [
-      { basis: "lifecycle", note: "upkeep plus eventual rebuilding, over a 50-year life",
+      { basis: "lifecycle", head: "To run and eventually rebuild",
+        note: "over a 50-year life",
         rows: [{ svc: "roadslife", col: "cost_roads_life_per_acre", label: "Roads" }] },
-      { basis: "operating", note: "maintenance and snow clearing only, no capital",
+      { basis: "operating", head: "To run it this year",
+        note: "maintenance and snow clearing only, no capital",
         rows: [{ svc: "roadscost", col: "cost_roads_ops_per_acre", label: "Roads" },
                { svc: "transitcost", col: "cost_transit_ops_per_acre", label: "Transit" },
                { svc: "bikecost", col: "cost_bike_ops_per_acre", label: "Bike" }] },
@@ -4746,12 +4748,12 @@
     // follows. "No data" would read as a gap we failed to fill; these are facts
     // about what the money is.
     const NO_SVC_COST = {
-      storm: "Stormwater is a utility charge — separate money from the municipal "
-           + "property tax above — so there is no City cost to set against this "
-           + "neighbourhood's levy.",
-      water: "Water and sewer are utility charges — separate money from the "
-           + "municipal property tax above — so there is no City cost to set "
-           + "against this neighbourhood's levy.",
+      storm: "Stormwater is a utility charge — separate money from the city tax "
+           + "above — so there is no City cost to set against this "
+           + "neighbourhood's tax.",
+      water: "Water and sewer are utility charges — separate money from the city "
+           + "tax above — so there is no City cost to set against this "
+           + "neighbourhood's tax.",
       fire: "Fire is measured as demand: dispatched events. The open data carries "
           + "no cost and no on-scene times, so no fire cost is modelled here.",
     };
@@ -5235,10 +5237,10 @@
       // to "0.0%" or "0.1%". The category shares span 0-100% and read better at
       // one — different ranges, different precision.
       document.getElementById("temporal-read").innerHTML =
-        `<b>${fmtLevy(p.total_revenue)}</b> municipal levy`
+        `<b>${fmtLevy(p.total_revenue)}</b> in city property tax`
         + (p.revenue_share_city != null
-            ? `<br/><b>${fmtPct(p.revenue_share_city * 100)}</b> of Edmonton's `
-              + `municipal revenue`
+            ? `<br/><b>${fmtPct(p.revenue_share_city * 100)}</b> of all `
+              + `Edmonton city tax`
             : "")
         + `<div id="revmix">${rows}</div>`;
       // ⚠️ THE DENOMINATOR IS NAMED BECAUSE IT IS NOT THE CUT ON SCREEN. These
@@ -5258,7 +5260,7 @@
       // the evidence goes. data/DATA.md "Tax-exempt flag",
       // FINDINGS_revenue_scale.md §4-5.
       document.getElementById("temporal-note").textContent =
-        "Share of this neighbourhood's total municipal levy, by the zoning of "
+        "Share of this neighbourhood's total city tax, by the zoning of "
         + "each property. Institutional and public land is on the roll and is "
         + "counted above at published rates; the City does not publish which of "
         + "it is tax-exempt.";
@@ -5317,7 +5319,12 @@
       };
       document.getElementById("temporal-chart").innerHTML = "";
       document.getElementById("temporal-read").innerHTML =
-        `<b>$${Math.round(rev).toLocaleString()}</b> municipal levy / acre / yr`
+        `City property tax collected here`
+        + `<div><b>$${Math.round(rev).toLocaleString()}</b> per acre each year</div>`
+        // C1: a resident comparing this to their own bill finds it ~24% short.
+        // The fact lived in Data & Methods, which is not where that reader is.
+        + `<div class="muted">City portion only — school taxes go to the `
+        + `province.</div>`
         + `<div class="svchead">${esc(SERVICES[driver].label)}</div>`
         + (read.text == null
             ? `<div class="muted">No ${esc(SERVICES[driver].label.toLowerCase())} `
@@ -5325,8 +5332,9 @@
             : `<div>${read.text}</div><div class="muted">`
               + `${rank.rank}${ordSuffix(rank.rank)} highest of ${rank.n} `
               + `neighbourhoods</div>`)
+        + `<div class="muted">One of many services this tax pays for.</div>`
         + `<div id="svccost">` + groups.map(g =>
-            `<div class="svcbasis">${esc(g.basis)} basis `
+            `<div class="svcbasis">${esc(g.head)} `
             + `<span class="muted">— ${esc(
                  g.basis === "operating" && SVC_OPS_NOTE[fam]
                    ? SVC_OPS_NOTE[fam] : g.note)}</span></div>`
@@ -5342,9 +5350,9 @@
         groups.length === 0
           ? (NO_SVC_COST[driver]
              || "No City cost is modelled for this service.")
-          : "Modelled cost, shown against this neighbourhood's own levy."
+          : "Modelled cost, shown against this neighbourhood's own city tax."
             + (groups.length > 1
-                ? " The two bases measure different things — the same road metre "
+                ? " The two measure different things — the same road metre "
                   + "costs about five times more at the lifecycle rate than to "
                   + "operate, a gap the operating rate's lane-kilometre "
                   + "denominator widens — so they are never added. There is no "
@@ -7875,7 +7883,7 @@
             millRates = mr;
             txt("mill-head", `${s.rate_year} municipal mill rates · ${mr.unit}`);
             const assumed = mr.assumed || [];
-            txt("mill-note", "Municipal levy only; education excluded"
+            txt("mill-note", "City tax only; education excluded"
               + (assumed.length ? ` · ${assumed.join(", ")} rate assumed` : ""));
             syncMillRates();  // the manifest lands after the first applyView
           }

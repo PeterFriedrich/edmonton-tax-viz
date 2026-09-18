@@ -127,7 +127,7 @@ const check = (name, got, want) => {
   checkScale('100 m fresh');
   check('100 m button serves 100 m', [p.stateCell, p.fileCell, p.layerCell], [100, 100, 100]);
   check('default cell count', p.nCells, N100);
-  check('default legend', p.legend, 'Revenue per acre (100 m cells)');
+  check('default legend', p.legend, 'City tax per acre (100 m cells)');
   check('default blurb', p.blurbCell, '100');
   check('default button active', p.active, ['grid']);
 
@@ -140,7 +140,7 @@ const check = (name, got, want) => {
   checkScale('after switching to 50 m');
   check('switch loads the other file', [p.stateCell, p.fileCell, p.layerCell], [50, 50, 50]);
   check('switch cell count', p.nCells, N50);
-  check('legend follows the switch', p.legend, 'Revenue per acre (50 m cells)');
+  check('legend follows the switch', p.legend, 'City tax per acre (50 m cells)');
   check('blurb follows the switch', p.blurbCell, '50');
   check('fine button active', p.active, ['grid-fine']);
 

@@ -434,6 +434,30 @@ Full list, with the measured counts and the two locked rows, in
 **`docs/COPY_DECISIONS.md`**. Decide a row there, apply it to every surface it
 names in one pass, then add a `DECISIONS.md` line citing the id.
 
+✅ **10 OF 17 ROWS APPLIED 2026-09-18 (S172)** — N1–N6, C1, C3, J4, S2, on
+Peter's call, in one pass (`DECISIONS.md` 2026-09-18). **The noun is `city tax`
+/ `city property tax`**; `municipal levy` is gone from every reader-facing
+string. The Services panel headline now leads *"City property tax collected
+here / $X per acre each year / City portion only — school taxes go to the
+province"*, and the cost groups head *"To run and eventually rebuild"* /
+*"To run it this year"* instead of *"lifecycle basis"* / *"operating basis"*.
+⚠️ **Nine verify scripts asserted on the old strings and moved with the copy** —
+`verify-revenue-panel.js` alone had four, and the fourth was missed on the first
+pass and **caught by the guard**.
+
+⬜ **STILL OPEN — 4 rows, and one of them got MORE visible today:**
+- **S1** `modelled` vs `modeled`. The Services panel's reading line prints
+  `modeled road lifecycle cost / acre / yr` — US spelling, directly under a
+  headline we just rewrote. 17/17 dead even across the file.
+- **C2** — anchor "per acre" in houses (`≈ 5.3 average houses' worth`).
+  Deliberately deferred: the headline is already three lines after N4 + C1.
+- **F4** — the Development history summary line ignores the window picker.
+- **UNFILED, and it should be a row:** `fmtSvcRatio` prints a literal `0.0%`
+  for **24 nonzero rows**, which reads as *free* rather than *small*. ⚠️ **The
+  same defect was already found and fixed once** in the revenue panel, which
+  prints `<0.1%` and is guarded by `verify-revenue-panel.js` — so the fix and
+  its guard both already exist in this file, one panel over.
+
 ⚠️ Two rows are **not** open questions and must not be re-derived:
 - **F2** — the gold >100% bar re-introduces the break-even verdict locked against on
   `DECISIONS.md` 2026-07-16 (magnitude, never "pays its way").
