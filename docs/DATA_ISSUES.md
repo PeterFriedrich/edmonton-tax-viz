@@ -474,6 +474,42 @@ alongside operating, and expose a real last-modified. ⚠️ Also note the file 
 quirks that are **not** defects: 1,884 rows over 399 `profile_id`s (not one row
 per project) and 87 rows with negative `approved` (funding-source swaps).
 
+**⚠️ MEASURED CONSEQUENCE, 2026-09-18 — the missing freshness signal is no longer
+hypothetical.** The feed appears to be **~3 months behind Council**, and nothing
+about the response says so:
+
+- On **2026-06-16** Council approved a **$126.6M (1.10%) net increase**, naming
+  six newly funded projects (`edmonton.ca/city_government/budget-and-finances`).
+- Fetched **2026-09-18**, the API is **byte-identical** to the copy committed
+  **2026-08-22**, and its total is still **$11,510,831,000** —
+  **$49,169,000 below** the **$11.56B** the City states on that page.
+- **The strongest single indicator: the *"178 Street over Whitemud Drive Bridge"*
+  rehabilitation, funded $16.0M in that adjustment, has NO profile in the feed at
+  all** — zero rows on a `178` substring, in a file at profile grain covering
+  FY2023–2037.
+
+⚠️ **Stated as evidence, not proof, because the falsification attempt partly
+succeeded.** Two of the six are ambiguous rather than absent — there IS a
+*"New Transit Bus Garage"* profile at $365,109,000, which may or may not be the
+*"Southeast Transit Bus Garage"* that received $66.0M, and a TACS Transformation
+profile at $3,816,000 against a $1.3M award. **Only the 178 Street bridge is
+cleanly missing.** So: most likely pre-adjustment, and **not confirmed**.
+
+⚠️ **This is NOT a defect in `check_capital_budget`, and do not "fix" it there.**
+That guard fingerprints sorted content and answers *"has the feed changed since
+our pin"* — which is the right question for a re-fetch trigger, and it is
+correctly reporting **Unchanged**, because the feed genuinely has not changed.
+What no guard here can answer is *"does the feed still track the approved
+budget"*, and **that is unanswerable by design while the publisher exposes no
+vintage**. It is the reason the request above matters, one level up from
+`guards-must-measure-data-not-metadata`: the metadata does not merely lie, it is
+absent, so the only detector is a human noticing a Council decision is missing.
+
+**Blast radius is small and should stay stated:** `capital_budget.csv` is read
+only by `scripts/vintage_report.py`, not by the pipeline, so nothing the site
+publishes moves on this. ⚠️ **It would matter immediately if any capital figure
+were ever put on a served surface.**
+
 ### D. No published service life for bikeways or shared pathways
 
 ⚠️ **This is about BIKEWAYS, not roads** — roads have a published figure, and
