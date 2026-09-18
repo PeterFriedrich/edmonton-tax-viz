@@ -210,6 +210,16 @@ the prose. **A different model should read this section.**
 **The 25-vs-50 remains Peter's call and is NOT closed here.** What changed: the
 per-class figure no longer points one way. `TODO.md`'s item is updated.
 
+> ✅ **CROSS-READ 2026-09-18 (S172, Fable 5.1)** —
+> `docs/FINDINGS_road_life_crossread.md` §3. The condition reading **survives
+> narrowed**: the rubric itself (p35: B = *"mid-stage of its expected life"*)
+> backs it, but "70% good" is the whole class including every post-1990 suburb,
+> so the past-life cohort is bounded at roughly 45/31/24 — *not failing like
+> alleys*, not "still 70% good". ⚠️ **The "second route" above (mean age → L ≈
+> 76) is withdrawn**: a mean age of 38 reflects a near-zero replacement rate
+> before the 2009 levy, not a chosen interval, and whether reconstruction resets
+> age is defined nowhere in either edition.
+
 ## 4b. The 2025 edition is live, and it turns §4a into a three-point series
 
 Added **2026-09-18 (S171)**, from the **current** edition — served from
@@ -234,6 +244,20 @@ backlog is a rising D+F share, and this is flat while the network aged and grew
 by ~$870M of replacement value. **This is the strongest single piece of evidence
 in the 25-vs-50 file**, because it is a trend on the failure mode that matters
 rather than a level at one moment.
+
+> ❌ **CROSS-READ 2026-09-18 (S172, Fable 5.1) — this section does not carry
+> the weight it claims.** `docs/FINDINGS_road_life_crossread.md` §2. The three
+> "Roads" rows are **three differently-composed aggregates**: 2020 includes
+> Alleys ($501M at 64% D+F, ~3.3 of its 11 points); 2025 includes a **$2,097M
+> Curbs line at 7.0%** that has no value in 2023, and the printed 11.2 is
+> exactly the value-weighted blend of **Paved Roads 12.5** and curbs 7.0. The
+> paved sub-row reads **11.5 → 12.5** across the two editions that print it — the
+> `< 0.5` assert below fails on it — and that rise is itself confounded by the
+> curb split. **Composition noise exceeds the trend.** And a flat D+F would in
+> any case measure renewal *spend keeping pace* under a $174M/yr levy, which
+> both lives predict. **Demoted from "strongest single piece of evidence" to the
+> rank `roadway_renewal.citywide_scale` already holds: order-of-magnitude
+> plausible, nothing more.** The rows below stay as transcribed.
 
 ⚠️ **Do NOT read the Good column as improvement.** 61% → 72.9% is a large jump
 across the 2020→2023 boundary, and the 2025 report states on p2 that *"the

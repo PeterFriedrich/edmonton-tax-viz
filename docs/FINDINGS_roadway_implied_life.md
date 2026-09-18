@@ -223,6 +223,20 @@ rather than a contradiction of it — is an argument, not a measurement. **Read
 §4a of `docs/FINDINGS_road_class_inventory.md` together with this, and treat both
 as wanting a cross-read.**
 
+> ✅ **CROSS-READ 2026-09-18 (S172, Fable 5.1)** —
+> `docs/FINDINGS_road_life_crossread.md` §4. Quote re-fetched verbatim; the
+> two-events reading **holds** and is the only one under which the Development
+> Impact page's own $1.5M / $600k / $1.9M are internally consistent. Three
+> narrowings: (1) 60 is a **forward** claim about a road reconstructed to 2016
+> standards on a full treatment schedule, not an interval the existing
+> mean-age-38 stock has achieved — NRP exists because that stock did not last
+> 60; (2) **Calgary's primary "a fully reconstructed road can last up to 20
+> years" is filed above as verification and not weighed** — it is almost
+> certainly a base life comparable to Edmonton's "usually 25", but that has to be
+> said; (3) the schedule that buys the 60 costs more than the page's $1.9M
+> (observed NRP reconstruction 1.66× it), so the 50-year *rate* is a floor even
+> where the 50-year *life* is right.
+
 ## 6. Reproduction
 
 Figures transcribed from Schedule 1, p79 of the FY2023 statements. The check in

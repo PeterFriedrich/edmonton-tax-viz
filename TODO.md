@@ -1161,9 +1161,26 @@ archive"*) is not, and this span is 2,533 lines.
     answering a question from Peter, and **both** land on the shipped number
     being right. §4/§4a rest on the same four cells of one table; §5a's quote is
     verbatim from a live URL but the reading built on it is an argument, not a
-    measurement. `measurements-that-favour-me`. **Get a different model to read
+    measurement. `measurements-that-favour-me`. ~~**Get a different model to read
     `FINDINGS_road_class_inventory.md` §4a and `FINDINGS_roadway_implied_life.md`
-    §5a together.**
+    §5a together.**~~ ✅ **DONE 2026-09-18 (S172, Fable 5.1) —
+    `docs/FINDINGS_road_life_crossread.md`.** Every transcription checks.
+    **§4b is demoted** — the three "Roads" rows are differently-composed
+    aggregates (2020 carries alleys at 64% D+F; 2025 carries a $2.1B curbs line
+    at 7% that dilutes Paved Roads' **12.5** to the printed 11.2; the paved
+    sub-row reads 11.5 → 12.5 and §6's `< 0.5` assert fails on it), and a flat
+    D+F measures spend keeping pace under the $174M/yr levy, which both lives
+    predict. **§4a survives narrowed** — "70% good" is the whole class incl.
+    every post-1990 suburb; the past-life cohort is bounded ~45/31/24 (not
+    failing like alleys, not "still 70% good"); **the mean-age → 76 route is
+    withdrawn** (a mean age of 38 reflects near-zero replacement before the
+    2009 levy, not an interval). **§5a holds** as structure; 60 is a forward
+    claim for new construction, and Calgary's primary "up to 20 years" was
+    filed as verification rather than weighed. ⚠️ **Net: 50 still looks right,
+    but on the page's own $1.9M-exceeds-$1.5M arithmetic (the non-circular
+    argument above, which predates S171), not on the ISC trend.** Strike "the
+    mean-age arithmetic puts it above 50" and "strongest evidence is now a
+    trend" from this item when it is next rewritten.
   - **Why 50 still looks right — but on weaker ground than this item claimed
     until 2026-09-03.** The same page's ~3%/yr set-aside rule on $1.5M/km ≈
     **$45,000/km/yr** does point at the 50-year $50,000 rather than the 25-year
