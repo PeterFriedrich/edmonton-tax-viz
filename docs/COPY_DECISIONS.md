@@ -91,8 +91,9 @@ Each is a separate call — some are worth *teaching*, some worth replacing.
 
 | id | issue | current | proposal | status |
 |---|---|---|---|---|
-| **S1** | `modelled` vs `modeled` | 17 each, dead even | Canadian `modelled` throughout — the project is otherwise strictly Canadian (`neighbourhood` 129 / `neighborhood` 0) | open |
+| **S1** | `modelled` vs `modeled` | 17 each, dead even | Canadian `modelled` throughout — the project is otherwise strictly Canadian (`neighbourhood` 129 / `neighborhood` 0) | **applied 2026-09-18** — 17 occurrences on 16 lines (`grep -c` counts LINES; one tooltip carries it twice). All reader-facing; no element id moved (`about-modelled` was already Canadian). |
 | **S2** | two labels, one layer | `Roads cost — lifecycle` (picker) vs `lifecycle basis → Roads` (panel) | One label, chosen with J4. Part of why the panel reads as unrelated to the map | **applied 2026-09-18** |
+| **S3** | a nonzero cost printed as `0.0%` | `fmtSvcRatio` `toFixed(1)` below 10%, so **24 nonzero rows** rendered `0.0%` — 17 of them bikeway, the smallest a real cost four orders below the levy. **Reads as FREE, not as small.** | Floor at `<0.1%`, the fix `fmtMix` already carries one panel over. ⚠️ **`f > 0` is load-bearing** — 135 rows are EXACTLY zero and must keep saying `0.0%` | **applied 2026-09-18**, guarded by `verify-services-panel.js` §3c (3 checks, both mutations caught) |
 
 ---
 
