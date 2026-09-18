@@ -210,13 +210,11 @@ git ls-files | while read f; do git check-attr linguist-generated \
   linguist-vendored -- "$f"; done | grep ': set$'         # everything excluded
 ```
 
-⚠️ Match `: set$`, not `-v unspecified`. The latter also catches the one
-deliberate **`unset`** — `web/notebooks/index.html`, the hand-written landing
-page exempted from the generated rule beneath it — and so reports one exclusion
-more than there are. ⚠️ **Don't reconcile that off-by-one against a number
-written here on an earlier date**: the excluded set grows whenever an exported
-notebook lands (it went 25 → 26 on 2026-09-17, one day after the previous
-measurement). Re-run both commands; the rule is stable, the count is not.
+Match `: set$`, not `-v unspecified` — the latter also catches
+`web/notebooks/index.html`, a hand-written page with the attribute deliberately
+**`unset`**, and over-counts by one. The excluded set grows every time a
+notebook export lands, so there is no "right" count to check against; re-run
+the command.
 
 Under that convention (**re-measured 2026-09-18**): **markdown 5,357 KB ÷ source
 3,032 KB = 1.77:1**, with 26 files / 21.7 MB excluded as vendored or generated.
