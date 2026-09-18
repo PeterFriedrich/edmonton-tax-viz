@@ -2414,8 +2414,14 @@ archive"*) is not, and this span is 2,533 lines.
     fragility — separate project, not started.
 
 - [ ] **PARKED: Regional comparison lens (St. Albert / Strathcona; Phase 2,
-  not November scope).** Spike complete (PR #69, `docs/SPIKE_regional_lens.md`
-  — read it first). Feasible in principle but blocked on: (a) **St. Albert
+  not November scope).** ⚠️ **MOVED TO A SIBLING REPO 2026-09-18** —
+  `github.com/PeterFriedrich/alberta-regional-viz` (private; local
+  `/home/opc/alberta-regional-viz`), instantiated from
+  `cc-data-project-template`. Its `docs/SCOPE_candidates.md` carries both
+  tracks (this per-parcel one and `SPEC_industrial.md` Track B) and the open
+  decisions. **Do not build the lens here**; this item stays only so the
+  no-redo rule and the licensing warning below remain visible in this repo.
+  Spike complete (PR #69, `docs/SPIKE_regional_lens.md` — read it first). Feasible in principle but blocked on: (a) **St. Albert
   licensing** — the LandScape REST service is not a catalogued open dataset
   and its bulk-query-ability is likely incidental, not licensed; needs direct
   confirmation from the City before any raw-data use; (b) Strathcona
