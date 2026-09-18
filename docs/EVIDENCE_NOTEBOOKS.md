@@ -40,6 +40,52 @@ invariant still passed, so no finding here has yet been overtaken.
 
 ---
 
+## ⚠️ A SECOND SPECIES lives in the same folder — justification notebooks
+
+Added **2026-09-18 (S172)**. Everything above describes **defect reports**:
+evidence that someone else's published data is wrong, each tied to a
+`DATA_ISSUES.md` row, each with invariants written to **fail when the publisher
+fixes it**. A second kind of notebook now sits beside them and **must not be
+read against those rules**.
+
+| notebook | claims | source `.py` | published |
+|---|---|---|---|
+| **Roads lifecycle rate** | Why this project's roads cost lens uses **$50 per road-metre per year** — the published figures, the centreline unit, the 50-year denominator, three independent cross-checks, and the one argument that had to be withdrawn | `roads_lifecycle_rate.py` | ⚠️ **NOT PUBLISHED** — Peter's call pending |
+
+**How it differs, in the three ways that matter:**
+
+1. **It defends OUR number, not someone else's defect.** There is no
+   `DATA_ISSUES.md` row and there should not be one.
+2. **Its invariants are meant to keep passing.** A defect report that keeps
+   agreeing with itself after the fix is a failure; this one agreeing with
+   itself means the sources still say what we transcribed. ⚠️ **A failure here
+   means a transcription is wrong or a source moved** — both worth an alert,
+   neither a success.
+3. **It is not in `web/notebooks/index.html` and its HTML is not in `web/`.**
+   Rendering it into that folder publishes it to GitHub Pages whether or not
+   the index links it. **Do not move it there without Peter's say-so** — it was
+   built "internal first, publish later" on his 2026-09-18 call.
+
+⚠️ **The rule it DOES share, and the important one: it imports nothing from
+`src/` and reads nothing from `data/`.** Every figure is fetched live from a
+public URL at run time and checked against the transcription printed on the
+page, so the notebook can be handed to a skeptic who has never seen this repo —
+which is the whole point of a justification document. Two figures that cannot be
+derived without the repo (the 3,654 km charged network; the observed NRP
+reconstruction $/m) are labelled **[repo]** in place and cited rather than
+asserted. **40 invariants, all passing as of 2026-09-18.**
+
+⚠️ **Its sources are PDFs and web pages, not Socrata**, so the per-source tables
+below do not cover it. It stands on: the *Development Impact on Infrastructure*
+page, the FY2023 Consolidated Financial Statements, the 2020 and 2025
+*Infrastructure State and Condition* reports, `budget.edmonton.ca`'s capital
+budget API, and one trade-press article. ⚠️ **The 2020 report is fetched from
+the Internet Archive** — the City no longer serves it and the current edition no
+longer publishes per-class asset lives at all, so that snapshot is not
+replaceable.
+
+---
+
 ## Lifecycle — these are SNAPSHOTS, not living documents
 
 **A report is evidence that something was true on a date.** It is not maintained
