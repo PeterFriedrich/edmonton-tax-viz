@@ -1122,11 +1122,35 @@ archive"*) is not, and this span is 2,533 lines.
     O&M + renewal), so its denominator is the interval over which that bundle
     recurs — the reconstruction interval.** This is the same point as the
     non-circular argument above, stated as a definition rather than an inference.
+  - ⚠️ **A FOURTH CITY-ATTRIBUTED FIGURE, AND IT IS THE ONLY ONE ABOVE 50 —
+    60 yrs, on the right population.** ConstructConnect / *Journal of Commerce*,
+    Sept 2016, quoting the City on **Neighbourhood Renewal**: *"The results of a
+    complete reconstruction are expected to endure for 60 years, so long as
+    preventative maintenance is carried out as scheduled — such as road
+    microsurfacing at 10 years and again at 40 years, along with a roadway
+    overlay completed after 30 years."* Fetched and matched verbatim 2026-09-18.
+    ⚠️ **[SECONDARY]** — a trade publication quoting a named staffer, not a City
+    document; do not cite it as City-published. **It is the only source that
+    states the maintenance schedule and the resulting interval together**, which
+    is what makes it explain the Development Impact sentence rather than compete
+    with it. `docs/FINDINGS_roadway_implied_life.md` §5a. **Winnipeg prints the
+    identical structure** — asphalt regional streets *"designed for 25 years"*,
+    rehabilitation extending service life *"to 60"*.
+  - ⚠️ **THE TWO FIGURES ON THE RIGHT POPULATION DISAGREE WITH EACH OTHER MORE
+    THAN EITHER DISAGREES WITH 50** — 25.9 (expected asset life) vs 60
+    (reconstruction interval). **That is the tell that they measure different
+    events.** `road_m_per_acre` charges capital + O&M + renewal, so its
+    denominator is the interval over which the *bundle* recurs — reconstruction,
+    not resurfacing — and on that reading 50 is the conservative end of 50–60.
   - ⚠️ **CONFLICT OF INTEREST, BOTH WAYS — this needs a cross-read before it
     closes.** §4 was written by a model that had just produced three figures
-    cutting against the shipped number; §4a was written by a model answering a
-    question from Peter and it lands on the shipped number being right. **Both
-    rest on the same four cells of one table.** `measurements-that-favour-me`.
+    cutting against the shipped number; §4a and §5a were written by a model
+    answering a question from Peter, and **both** land on the shipped number
+    being right. §4/§4a rest on the same four cells of one table; §5a's quote is
+    verbatim from a live URL but the reading built on it is an argument, not a
+    measurement. `measurements-that-favour-me`. **Get a different model to read
+    `FINDINGS_road_class_inventory.md` §4a and `FINDINGS_roadway_implied_life.md`
+    §5a together.**
   - **Why 50 still looks right — but on weaker ground than this item claimed
     until 2026-09-03.** The same page's ~3%/yr set-aside rule on $1.5M/km ≈
     **$45,000/km/yr** does point at the 50-year $50,000 rather than the 25-year
