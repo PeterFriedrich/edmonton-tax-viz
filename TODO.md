@@ -1203,6 +1203,16 @@ archive"*) is not, and this span is 2,533 lines.
     output, not config (least-squares back-solve on
     `neighbourhood_value_per_acre.geojson`: road $50.0001/m/yr, fire
     $3,142/event, 404 hoods).
+    - ✅ **THE ARGUMENT NOW EXISTS AS AN ARTIFACT, 2026-09-18 (S172):**
+      `notebooks/standalone/roads_lifecycle_rate.py` — the whole chain
+      (published figures → centreline unit → 50-yr denominator → three
+      cross-checks → the withdrawn trend claim → the funded side → limits),
+      **40 invariants, every figure re-fetched live from public URLs**, and it
+      imports nothing from `src/`. ⚠️ **NOT PUBLISHED** — built "internal
+      first" on Peter's call; its HTML is deliberately NOT in `web/notebooks/`,
+      because that folder deploys to GitHub Pages whether or not `index.html`
+      links it. **Peter's call: does it go public, and does the methodology
+      note link to it?** That is now the remaining half of this bullet.
   - ⚠️ **The secondary write-up that carries these figures is NOT a citable
     source and must not be named** in `DATA.md`, methodology notes, UI copy, or
     commits — it publishes them with no footnote. We cite the City page
