@@ -94,6 +94,18 @@ Each is a separate call — some are worth *teaching*, some worth replacing.
 | **S1** | `modelled` vs `modeled` | 17 each, dead even | Canadian `modelled` throughout — the project is otherwise strictly Canadian (`neighbourhood` 129 / `neighborhood` 0) | **applied 2026-09-18** — 17 occurrences on 16 lines (`grep -c` counts LINES; one tooltip carries it twice). All reader-facing; no element id moved (`about-modelled` was already Canadian). |
 | **S2** | two labels, one layer | `Roads cost — lifecycle` (picker) vs `lifecycle basis → Roads` (panel) | One label, chosen with J4. Part of why the panel reads as unrelated to the map | **applied 2026-09-18** |
 | **S3** | a nonzero cost printed as `0.0%` | `fmtSvcRatio` `toFixed(1)` below 10%, so **24 nonzero rows** rendered `0.0%` — 17 of them bikeway, the smallest a real cost four orders below the levy. **Reads as FREE, not as small.** | Floor at `<0.1%`, the fix `fmtMix` already carries one panel over. ⚠️ **`f > 0` is load-bearing** — 135 rows are EXACTLY zero and must keep saying `0.0%` | **applied 2026-09-18**, guarded by `verify-services-panel.js` §3c (3 checks, both mutations caught) |
+| **S5** | a nonzero dollar amount printed as `$0` | S3's defect class, **swept for the first time 2026-09-19**. Seven dollar formatters rounded through `Math.round`, so **21 nonzero values** rendered `$0` — bikeway ops (6), roads ops (4), residential revenue (3), roads lifecycle (2), stormwater (1) and the lot-acre variants; smallest $0.0000008/acre. Same FREE-not-small misreading as S3, in dollars | Shared `money0` helper floors at `<$1` AT the rounding boundary. ⚠️ **`v > 0` is load-bearing** — a true zero must keep printing `$0` | **applied 2026-09-19**, guarded by `verify-smoke.js` §C9 (both directions, both mutations caught: 21 nonzero / 352 true zeros, distinguishable) + `verify-services-panel.js` §3d (non-vacuity) |
+| **S6** | `fmtMix` called a true zero `<0.1%` | The inverse of S3, found by the same sweep. `fmtMix` lacked the `v > 0` guard `fmtSvcRatio` carries; correct only because `revenueMix` filters `> 0` before calling — **a formatter depending on its caller for correctness** | Add `v > 0 &&`, matching `fmtSvcRatio` | **applied 2026-09-19** |
+| **S7** | the same defect in NON-dollar units — **OPEN, one decision, four surfaces** | The 2026-09-19 sweep's remainder, measured over the served file: `fmtDev` **378** values across 9 metric×window combos (`0.00 new permits / acre` on a hood that HAS permits — reads as NO development), `fmtPct` **746** (temporal share 285 + commercial 441 + `revenue_share_city` 20), `fmtFar` **37** (`0.00 FAR`), and the three non-dollar service readouts `fmtFire` 10 / `fmtBike` 3 / `fmtTransit` 2 | **NOT a port of `<$1`** — each unit needs its own floor and its own string (`<0.01 permits / acre`? `<0.01 FAR`? and is `0.00 FAR` on a near-unbuilt hood actually *correct*?). ⚠️ **Decide the rule once and apply to all four**, which is what this file exists to enforce | **OPEN — Peter's call.** ⚠️ See the DATA note below: some of these inputs may be artefacts, not small numbers, and a floor would dignify them |
+
+⚠️ **S7 has a data question underneath it, and it should be answered first.**
+The smallest values the sweep found are not plausibly real: `bike_m_per_acre`
+= 3.8e-08 (38 **nanometres** of bike route per acre), `cost_bike_ops_per_acre`
+= 7.8e-07. Those look like sliver-polygon intersection artefacts. A display
+floor would render them as `<0.01` — honest about the arithmetic, but it
+dignifies a number that may belong at zero. **Check the slivers before
+choosing the floor**; if they are artefacts the fix is upstream, in the
+intersection, and S7 shrinks to the genuinely-small values that remain.
 
 ---
 

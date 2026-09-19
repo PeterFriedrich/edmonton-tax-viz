@@ -767,7 +767,18 @@
     // `transform` is the COLOUR transform, decided per metric from its skew
     // (FINDINGS §6.1): both money metrics are right-skewed → sqrt. `fmt`
     // renders values for the tooltip + legend.
-    const fmtMoney = v => "$" + Math.round(v).toLocaleString();
+    // ⚠️ A NONZERO DOLLAR AMOUNT MUST NEVER PRINT AS "$0" — it reads as FREE,
+    // not as small, which is the one conclusion a cost lens must not hand a
+    // reader by accident (`DECISIONS.md` 2026-09-18; `fmtSvcRatio` fixed the
+    // same misreading in the services panel, `fmtMix` in the revenue panel).
+    // Floored AT the rounding boundary, so the floor fires exactly when
+    // Math.round would have produced the zero and never a value earlier.
+    // ⚠️ `v > 0` is load-bearing: a true zero must keep printing "$0", and an
+    // unconditional floor is the same misreading reversed.
+    const money0 = v => v > 0 && v < 0.5
+      ? "<$1" : "$" + Math.round(v).toLocaleString();
+
+    const fmtMoney = v => money0(v);
 
     const METRICS = {
       revenue_per_acre: {
@@ -2292,28 +2303,31 @@
       const t = Math.max(0, Math.min(1, v / s.clamp));
       return s.transform === "sqrt" ? Math.sqrt(t) : t;
     }
-    const fmtStorm = v => "$" + Math.round(v).toLocaleString() +
-      " modelled stormwater / acre / yr";
+    // All seven dollar readouts below floor through `money0` — a nonzero cost
+    // printed as "$0" reads as free. Measured 2026-09-19 over the served file:
+    // 13 nonzero rows across bikeway (6), roads ops (4), roads lifecycle (2)
+    // and stormwater (1) rendered "$0"; the smallest was $0.0000008/acre.
+    const fmtStorm = v => money0(v) + " modelled stormwater / acre / yr";
     const fmtFire = v => v.toFixed(v < 1 ? 2 : 1) + " dispatched events / acre / yr";
     const fmtTransit = v => v.toFixed(v < 1 ? 2 : 1) +
       " scheduled transit stop-events / acre / weekday";
     const fmtBike = v => v.toFixed(v < 1 ? 2 : 1) + " dedicated bike route m / acre";
-    const fmtWater = (v, fixed) => "$" + Math.round(v).toLocaleString() +
+    const fmtWater = (v, fixed) => money0(v) +
       " modelled water+sewer / acre / yr" +
-      (fixed != null ? ` (fixed $${Math.round(fixed).toLocaleString()})` : "");
+      (fixed != null ? ` (fixed ${money0(fixed)})` : "");
     // Stage 2 operating-cost readouts. Each says "operating" in the readout
     // itself: the number is meaningless without its basis, and the tooltip is
     // the one place a reader meets it with no legend or blurb alongside.
-    const fmtRoadsCost = v => "$" + Math.round(v).toLocaleString() +
+    const fmtRoadsCost = v => money0(v) +
       " modelled road operating cost / acre / yr";
     // Same rule one step more important: this is the SAME METRES as
     // fmtRoadsCost on the other basis, so a readout that omitted "lifecycle"
     // would be indistinguishable from one ~11x smaller.
-    const fmtRoadsLife = v => "$" + Math.round(v).toLocaleString() +
+    const fmtRoadsLife = v => money0(v) +
       " modelled road lifecycle cost / acre / yr";
-    const fmtTransitCost = v => "$" + Math.round(v).toLocaleString() +
+    const fmtTransitCost = v => money0(v) +
       " ETS operating budget share / acre / yr";
-    const fmtBikeCost = v => "$" + Math.round(v).toLocaleString() +
+    const fmtBikeCost = v => money0(v) +
       " modelled bikeway operating cost / acre / yr";
 
     // The shared service ground plane (services view): flat hoods coloured
@@ -4656,7 +4670,12 @@
 
     // Sub-0.1% shares print as "<0.1%", never a rounded "0.0%" — a category that
     // earned a row should not then claim to contribute nothing.
-    const fmtMix = v => v * 100 < 0.05 ? "<0.1%" : (v * 100).toFixed(1) + "%";
+    // ⚠️ `v > 0` added 2026-09-19: without it a TRUE zero also printed "<0.1%",
+    // the same misreading reversed (`fmtSvcRatio` has carried the guard since
+    // S174). Correct today only because `revenueMix` filters `> 0` before
+    // calling — a formatter must not depend on its caller for that.
+    const fmtMix = v => v > 0 && v * 100 < 0.05
+      ? "<0.1%" : (v * 100).toFixed(1) + "%";
 
     // ⚠️ NOT fmtBig, which is calibrated for ASSESSMENT totals ($10M-$10B) and
     // rounds megas to whole numbers — a $1,876,137 levy printed as "$2M" is a 7%

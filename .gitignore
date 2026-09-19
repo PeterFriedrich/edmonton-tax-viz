@@ -71,3 +71,9 @@ notebooks/standalone/historical_gap_data/
 
 # Standalone notebook download cache (two FIR workbooks, re-fetchable)
 notebooks/standalone/roll_year_data/
+
+# Local build output of scripts/build_site.py. Never committed — CI builds it
+# fresh and no workflow adds it — but it was not ignored either, so a routine
+# `git add -A` after a local verify run sweeps ~75k lines of copied data files
+# into the commit. Caught once, 2026-09-19; ignored so it cannot happen twice.
+_site/

@@ -194,6 +194,37 @@ const SUBJECT = { storm: /storm/i, fire: /fire/i, water: /water|sewer/i };
   check('the floor actually fires on this data (the check is not vacuous)',
     ratio.floored > 0, `${ratio.floored} rows print "<0.1%"`);
 
+  // ---- 3d. THE DOLLAR FLOOR IS NOT VACUOUS EITHER -------------------------
+  // The companion to `verify-smoke.js` §C9, and the half that does NOT belong
+  // on the weekly gate: C9 asserts the invariant (no nonzero renders "$0", no
+  // true zero renders the floor), which is value-free and safe to run every
+  // refresh. Whether the floor ever FIRES depends on the data — a roll where no
+  // hood sits under $0.50/acre is perfectly legitimate — so pinning it there
+  // would cry wolf, and a check that cries wolf gets ignored. It lives here,
+  // hand-run, where a zero count is a prompt to re-measure rather than a red
+  // deploy. Measured 2026-09-19: 16 of 3,248 values floor on the eight columns
+  // below. C9 counts 21 because it sweeps the four lot-acre variants too — the
+  // two numbers describe different column sets, not a discrepancy.
+  const floor = await page.evaluate(async () => {
+    const d = await (await fetch('./data/neighbourhood_value_per_acre.geojson')).json();
+    const cols = ['storm_charge_per_acre', 'water_charge_per_acre',
+                  'cost_roads_ops_per_acre', 'cost_roads_life_per_acre',
+                  'cost_transit_ops_per_acre', 'cost_bike_ops_per_acre',
+                  'res_revenue_per_acre', 'revenue_per_acre'];
+    let floored = 0, seen = 0;
+    for (const f of d.features) {
+      for (const c of cols) {
+        const v = f.properties[c];
+        if (v == null) continue;
+        seen++;
+        if (money0(v) === '<$1') floored++;
+      }
+    }
+    return { floored, seen };
+  });
+  check('the dollar floor actually fires on this data (not vacuous)',
+    floor.floored > 0, `${floor.floored} of ${floor.seen} values print "<$1"`);
+
   await page.close();
 
   // ---- 4. PUBLIC BUILD ----------------------------------------------------

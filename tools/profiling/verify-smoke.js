@@ -343,6 +343,53 @@ const GARBAGE = /\bNaN\b|\bundefined\b|\bnull\b|\bInfinity\b|\$NaN|\$undefined/;
     }
   }
 
+  // ---- C9. A NONZERO DOLLAR NEVER RENDERS AS "$0" -------------------------
+  // The same species as the rest of C and just as value-free: "$0" on a real
+  // cost reads as FREE exactly as "$NaN" reads as broken, and neither throws.
+  // Runs the SHIPPED `money0` over every served dollar column rather than over
+  // a fixture, so it cannot pass against a helper the page does not use.
+  // ⚠️ BOTH DIRECTIONS IN ONE PASS. A true zero must still print "$0", so a
+  // floor applied unconditionally fails here too — that is the `v > 0` half of
+  // the helper, and it is the half an over-eager fix removes.
+  // ⚠️ THE NON-VACUITY QUESTION (does the floor ever actually fire?) IS
+  // DELIBERATELY NOT ASKED HERE. It depends on the data, and a refresh where no
+  // hood sits under $0.50 is legitimate — pinning it would make this cry wolf,
+  // which is the one thing a weekly gate must not do. `verify-services-panel.js`
+  // §3d owns that count, run by hand.
+  const dollars = await page.evaluate(() => {
+    const cols = Object.values(METRICS).filter(m => m.fmt === fmtMoney)
+      .map(m => m.key)
+      .concat(['revenue_per_lot_acre', 'res_revenue_per_lot_acre',
+               'nonres_revenue_per_lot_acre', 'value_per_lot_acre',
+               'storm_charge_per_acre', 'water_charge_per_acre',
+               'water_fixed_per_acre', 'cost_roads_ops_per_acre',
+               'cost_roads_life_per_acre', 'cost_transit_ops_per_acre',
+               'cost_bike_ops_per_acre']);
+    let nonzeroAsZero = 0, trueZeroFloored = 0, seen = 0, worst = null;
+    for (const f of state.data.features) {
+      for (const c of cols) {
+        const v = f.properties[c];
+        if (v == null) continue;
+        seen++;
+        const out = money0(v);
+        if (v > 0 && out === '$0') {
+          nonzeroAsZero++;
+          if (worst === null || v < worst.v) worst = { v, c, n: f.properties.neighbourhood_name };
+        }
+        if (v === 0 && out !== '$0') trueZeroFloored++;
+      }
+    }
+    return { nonzeroAsZero, trueZeroFloored, seen, worst };
+  });
+  check('C9: a nonzero dollar amount never renders as "$0"',
+    dollars.nonzeroAsZero === 0 && dollars.seen > 0,
+    dollars.worst
+      ? `${dollars.nonzeroAsZero} of ${dollars.seen}, smallest ${dollars.worst.v} `
+        + `(${dollars.worst.c}, ${dollars.worst.n})`
+      : `${dollars.seen} values checked`);
+  check('C9: an exactly-zero dollar amount still renders "$0", not the floor',
+    dollars.trueZeroFloored === 0, `${dollars.trueZeroFloored} mislabelled`);
+
   // ---- D. PROVENANCE ------------------------------------------------------
   // The rates on screen are a fiscal headline read straight from the manifest;
   // a refresh that rewrites status.json must not leave the pod disagreeing with
