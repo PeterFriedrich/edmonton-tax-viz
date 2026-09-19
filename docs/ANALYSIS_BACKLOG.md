@@ -1041,3 +1041,38 @@ arguing. This finding doesn't resolve that; it closes off "find better data" as
 the escape hatch. **PETER'S CALL**, same as before — population/dwelling
 surfacing (`SPEC_breakeven.md` §4a Task 1b) remains the cheaper unblock if
 police is to be reached at all.
+
+---
+
+## Policy C592 — the industrial ARA rebate is a tax expenditure we do not account for
+
+Added 2026-09-19 (S176), from `docs/FINDINGS_ara_catchments.md` §3.
+
+**All eleven** of Edmonton's commercial/industrial ARA catchments carry a
+reduced rate under **City Policy C592, the Industrial Infrastructure Cost
+Sharing Program**. The 2026 ARA Rates PDF states it outright:
+
+> "the City contributes a portion of its **municipal property tax revenue** from
+> eligible ARA Catchment areas towards reducing the cost of development
+> assessments."
+
+**Why it matters to a revenue-per-acre lens.** Municipal levy collected from
+industrial catchments is recycled into reducing those catchments' own servicing
+charges. Residential land receives no equivalent. So the revenue side of the
+industrial story is **gross of a rebate**, and the published industrial weighted
+average ($120,595/ha) is **post-rebate** — the pre-rebate rate is not published.
+This project's industrial revenue-per-acre figures currently carry no note that
+some of that revenue flows back out to the same land.
+
+⚠️ **Do not assume a size.** C592 has not been read. Unknown: the contribution's
+magnitude, its budget line, whether it is capped, and whether it is a transfer or
+a foregone charge. **It may be immaterial** — check before it becomes a caveat.
+`measurements-that-favour-me`: this is an argument that cuts against industrial
+land looking good on our map, which is a reason to measure it carefully rather
+than to adopt it quickly.
+
+**To do:** read Policy C592 (`edmonton.ca`, reachable by curl+certifi — WebFetch
+502s), quantify the contribution, and decide whether it earns a line in the
+industrial copy. Second: read the ARA Audit (City Auditor, May 2022,
+`21491_Arterial_Roadway_Assessment_Audit.pdf`), which may state the rate-setting
+method and make the §2 rates reproducible rather than merely transcribed.
