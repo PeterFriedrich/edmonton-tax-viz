@@ -458,9 +458,25 @@ pass and **caught by the guard**.
   rows are EXACTLY zero and must keep saying `0.0%`**, so the guard asserts both
   signs plus non-vacuity. Both mutations caught
   (`verify-services-panel.js` §3c); `DECISIONS.md` 2026-09-18.
-  ⚠️ **The defect class was known and had never been SWEPT** — `fmtMix` fixed
-  the identical thing in the revenue panel and has been guarded since. **Worth a
-  pass over the other formatters for the same shape.**
+  ✅ **SWEPT 2026-09-19 (S175), PR #483** — all 22 formatters enumerated, call
+  sites traced, each one's real input distribution measured. **11 carry the
+  defect, ~1,190 values.** The **dollar half is FIXED** (S5: shared `money0`,
+  floors `<$1` at the rounding boundary, 7 formatters; S6: `fmtMix` gained the
+  `v > 0` guard it lacked — it called a true zero `<0.1%`, correct only because
+  its caller filtered first). Guard at **`verify-smoke.js` §C9**, chosen because
+  **smoke is the only verify script CI runs**; non-vaciuity at
+  `verify-services-panel.js` §3d. Both mutations caught and distinguishable
+  (21 nonzero / 352 true zeros). `DECISIONS.md` 2026-09-19.
+  ⬜ **REMAINDER OPEN as `COPY_DECISIONS.md` S7 — Peter's call, and GATED on a
+  data question.** `fmtDev` (378 values), `fmtPct` (746), `fmtFar` (37),
+  `fmtFire`/`fmtBike`/`fmtTransit` (15). One decision, four surfaces; **not** a
+  port of `<$1` — each unit needs its own floor, and `0.00 FAR` on a
+  near-unbuilt hood may be correct. ⚠️ **Answer the sliver question FIRST:**
+  `bike_m_per_acre` = 3.8e-08 is **38 nanometres of bike route per acre** and
+  `cost_bike_ops_per_acre` = 7.8e-07 — these look like sliver-polygon
+  intersection artefacts, and a floor would render them `<0.01`, dignifying a
+  number that may belong at zero. If they are artefacts the fix is upstream and
+  S7 shrinks.
 
 ⚠️ Two rows are **not** open questions and must not be re-derived:
 - **F2** — the gold >100% bar re-introduces the break-even verdict locked against on
