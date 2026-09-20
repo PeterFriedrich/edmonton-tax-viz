@@ -114,6 +114,32 @@ See [`/research`](/research) for background findings and data source inventory.
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — module contracts and data flow
 - [`docs/SPEC_phase1.md`](docs/SPEC_phase1.md) — Phase 1 deliverable and acceptance criteria
 
+## Licence
+
+Fork it. Three different things live here and they are licensed differently:
+
+| What | Licence |
+|---|---|
+| Code — `src/`, `scripts/`, `tools/`, `web/index.html`, tests, CI | [MIT](LICENSE) |
+| Written analysis — `docs/`, `research/`, this README | [CC BY 4.0](LICENSE-docs) |
+| Data — `data/`, `web/data/` | Not mine to license — see below |
+| Vendored libraries — `web/vendor/` | Their own upstream licences |
+
+The data is derived from public open-government releases and stays under its
+upstream terms: the **Open Government Licence – City of Edmonton**, the **Open
+Government Licence – Alberta**, and **ODbL** for OpenStreetMap highway
+geometry. Both OGLs permit redistribution of derived work with attribution,
+which is why it can be committed here — but if you reuse it, the attribution
+obligation runs to those publishers directly, not through me.
+[`LICENSE`](LICENSE) has the full scope split; [`data/DATA.md`](data/DATA.md)
+has per-source provenance.
+
+The analysis is CC BY rather than MIT because a software licence says nothing
+useful about a findings document. Credit it and say what you changed.
+
+This is an independent project — not affiliated with, nor endorsed by, the City
+of Edmonton.
+
 ## Contributing / Contact
 
 This is an independent civic project. If you work in urban planning, municipal finance, or GIS and want to collaborate — or if you have access to data that could help — get in touch.
