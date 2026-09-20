@@ -46,3 +46,27 @@ def test_code_cells_wrap(report: pathlib.Path):
     assert "white-space: pre-wrap" in block, (
         f"{report.name} carries the marker but not the wrap rule"
     )
+
+
+@pytest.mark.parametrize("report", REPORTS, ids=lambda p: p.name)
+def test_output_tables_scroll(report: pathlib.Path):
+    """Wide dataframes must be reachable too — the same defect, one level up.
+
+    `.jp-OutputArea-child` is `display: table; overflow: hidden`, so a dataframe
+    wider than the column loses its right-hand columns. Missed on the first
+    pass because the check was written against `.jp-OutputArea-output` and its
+    children, where the clipping cannot appear.
+
+    ⚠️ The template LOOKS like it handles this: `.jp-RenderedHTMLCommon` carries
+    `overflow-x: auto`. It is `display: table-row`, where overflow is inert —
+    so the declaration scrolls nothing. Tables scroll rather than wrap, because
+    wrapping a dataframe destroys what it is showing.
+    """
+    html = report.read_text(encoding="utf-8")
+    block = html.split(MARKER, 1)[1].split("/mobile-code-wrap", 1)[0]
+    assert ".jp-RenderedHTMLCommon table" in block, (
+        f"{report.name} has no table rule — a wide dataframe will be clipped"
+    )
+    assert "overflow-x: auto" in block, (
+        f"{report.name} carries the table selector but nothing that scrolls"
+    )
