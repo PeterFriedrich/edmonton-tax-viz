@@ -471,12 +471,18 @@ pass and **caught by the guard**.
   data question.** `fmtDev` (378 values), `fmtPct` (746), `fmtFar` (37),
   `fmtFire`/`fmtBike`/`fmtTransit` (15). One decision, four surfaces; **not** a
   port of `<$1` — each unit needs its own floor, and `0.00 FAR` on a
-  near-unbuilt hood may be correct. ⚠️ **Answer the sliver question FIRST:**
-  `bike_m_per_acre` = 3.8e-08 is **38 nanometres of bike route per acre** and
-  `cost_bike_ops_per_acre` = 7.8e-07 — these look like sliver-polygon
-  intersection artefacts, and a floor would render them `<0.01`, dignifying a
-  number that may belong at zero. If they are artefacts the fix is upstream and
-  S7 shrinks.
+  near-unbuilt hood may be correct.
+  ✅ **The sliver question is ANSWERED (2026-09-20) and it shrank S7 as hoped.**
+  They were artefacts: Beacon Heights' whole bike network was **one overlay
+  piece of 11 micrometres**, and 3.8e-08 was the distribution's **minimum**,
+  not its typical value (median 7.07). Fixed upstream — `MIN_PIECE_M = 1.0` in
+  `src/load_bike.py`, 13.5 m of 981.4 km, exactly 3 hoods zeroed.
+  **`fmtBike` 3 → 0**, so bike is out of S7 entirely and needs no floor
+  (live from the next weekly refresh). `DECISIONS.md` 2026-09-20.
+  ⬜ **`fmtDev` (378), `fmtPct` (746), `fmtFar` (37), `fmtFire` (10),
+  `fmtTransit` (2) remain — and the bike result does NOT transfer.** Fire and
+  transit use the same overlay pattern and may be the same story; nobody has
+  measured them. **Ask artefact-or-small per surface before choosing a floor.**
 
 ⚠️ Two rows are **not** open questions and must not be re-derived:
 - **F2** — the gold >100% bar re-introduces the break-even verdict locked against on
