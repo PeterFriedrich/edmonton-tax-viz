@@ -69,8 +69,28 @@ Identified by quoted text, **never by line number** — those drift.
 | 18 | 5 · 2026-09-17 | `⚠️ --geojson-out /tmp/x.geojson DOES NOT…` | **CORRECTED** | code claim re-verified, but the TITLE accused another item of advice it stopped giving on 2026-08-07; struck |
 | 19 | 5 · 2026-09-17 | `verify-peek.js IS FLAKY UNDER PARALLEL LOAD` | ACCURATE | 3/3 green run alone, 38 checks |
 | 20 | 6 · 2026-09-17 | Services hood-panel track narrow-width prediction — *sub-claim* | **CORRECTED** | **FALSIFIED by measurement** — the track is 210px at 390px against a 164px desktop control, i.e. WIDEST on a phone. The real limit is the VALUE, not the viewport |
+| 21 | 7 · 2026-09-20 | `T3 — #revcut does not reach the panel` | ACCURATE | `revenueMix = p => REV_CATEGORIES.filter(…)` takes only `p` and reads no cut; the headline reads `p.total_revenue` / `p.revenue_share_city`, neither cut-aware; `#revcut` only calls `applyMetric`. **Both quoted figures reproduce exactly** — DOWNTOWN `$146.40M` and `5.26%` |
+| 22 | 7 · 2026-09-20 | Retrieval logging (struck title, open box) | ACCURATE **+ material caveat** | The hook is live and working — 157 entries across 20 sessions since 2026-09-16. ⚠️ **But its matcher is `Read\|Grep\|Glob`, so a doc opened with `sed`/`grep`/`cat` in Bash is INVISIBLE**: three Bash file-reads produced **0** log entries, falsified directly. See the warning below |
+| 23 | 7 · 2026-09-20 | `B2 — Regional non-res mill rates` | ACCURATE | `2026_tax_rates.xlsx` still on the FIR dataset page 64 days after *"verified live"* (filename is lowercase; the item's `2026_Tax_Rates.xlsx` is a casing slip, not a dead link) |
+| 24 | 7 · 2026-09-20 | `B1 — Regional non-res assessment share` | ACCURATE | the equalized-assessment page carries exactly the **2024 / 2025 / 2026** XLSX workbooks claimed, still XLSX and not PDF-only |
+| 25 | 7 · 2026-09-20 | `A4 — Assessment-lag methods note` | **CORRECTED** | its stated blocker *"likely Peter/laptop"* is **FALSIFIED** — `www.edmonton.ca` and `pub-edmonton.escribemeetings.com` both return **200** from the Oracle box. The memo itself is still unfetched; nothing stops a session here from doing it |
 
-**Reconstructed totals: 20 distinct items · 7 CORRECTED · 13 ACCURATE.**
+**Totals: 25 distinct items · 8 CORRECTED · 17 ACCURATE** (was 20 / 7 / 13
+before pass 7).
+
+⚠️ **PASS 7'S BIGGEST FINDING IS ABOUT A MEASUREMENT WE ARE ABOUT TO ACT ON.**
+The retrieval log (row 22) exists to answer *"is the doc apparatus
+load-bearing?"* by showing which docs are never opened, with the decision rule
+*"a doc never opened before an action is a prune candidate."* **It only observes
+the `Read`, `Grep` and `Glob` tools.** Everything read through Bash — `sed -n`,
+`grep`, `cat`, `head` — leaves no trace, and that is how much of this repo's
+prose actually gets read: **this very session logged 8 `Read` entries while
+touching several times that many files.** So the ~2026-09-30 readout will
+systematically **undercount**, and the undercount is **biased toward exactly the
+docs that get consulted in passing** — which is the prune rule pointed at
+actively-used docs. ⚠️ **Do not prune anything on that table without first
+either widening the matcher to include Bash or discounting the result.**
+This is `check-where-the-value-can-be-wrong` in an instrument, again.
 ⚠️ **This is 20, where the prose running tally said 19** — pass 3 counted 3 and
 named 4 (rows 13–16). Treat the reconstruction as authoritative and the old
 tally as superseded; **35% corrected is well under the 47% the hand sample
@@ -102,6 +122,7 @@ this file's own tooling. Same trap `CLAUDE.md` documents for `todo_archive.py`.
 | 2–3 | >60 d | 2 of 9 |
 | 4 | external datasets (not items) | pipeline clean |
 | 5–6 | 30–60 d | 3 of 4 |
+| 7 | **undated** (never sampled before) | 1 of 5 |
 
 ⚠️ **The yield changes SHAPE, not just rate.** Passes 1–2 found claims overtaken
 by our own work — findable by reading. Pass 3 found an **external input that
@@ -119,14 +140,21 @@ rather than re-litigating its premise.**
    verified in pass 1 and both reappeared in pass 6's cohort of 8. **The file
    this protects is `TODO.md`, and this is not that file** — the reason for the
    old rule does not apply here.
-2. **Never annotate `TODO.md` with a check date.** It moves the item out of its
-   own cohort (see the header).
+2. **Never write a bare "checked, still fine" annotation into `TODO.md`.** It
+   moves the item out of its own cohort for no informational gain (see the
+   header). ⚠️ **A CORRECTION is different and belongs in the item** — the item's
+   content genuinely changed, so it genuinely was touched. The rule bans
+   no-op annotations on ACCURATE items, not real edits.
 3. **Check the specific claim, not the topic.** Three near-misses so far (rows
    7, 8, and the pass-3 archive item) were all the same shape: the topic had
    moved on, the specific claim had not.
-4. **The 21 undated items have never been sampled.** They are invisible to the
-   cohort metric, so no pass has ever selected one. That is the most likely
-   place for an untouched stale claim, and the obvious target for pass 7.
+4. ⚠️ **The undated pool is the standing target, and it is SMALLER than it
+   looks.** Of the 21 undated open items, **6 were already checked in passes
+   1–3** (`P2.3d S2`, `pwis-wc4c`, `MA DERELICT`, `Visual polish` + its two
+   children) — they simply carry no date, which is *why* they looked unsampled.
+   **This file caught that on its first use; without it pass 7 would have
+   re-checked all six.** Pass 7 took 5 of the remaining 15, leaving **10 never
+   sampled** — still the most likely place for an untouched stale claim.
 5. ⚠️ **Decompose any number that flatters this audit before recording it.**
    Every instrument defect found so far — the vacuous slice, the double-counted
    spans, the 5 dropped open boxes, the shrinking band, "18 of 103" — inflated
