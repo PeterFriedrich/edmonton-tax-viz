@@ -36,7 +36,7 @@ Municipal levy (or assessed value) ÷ Neighbourhood area = Revenue (value) per a
 
 with a toggleable denominator: **ground acres** (boundary area — robust to record-to-parcel cardinality issues) or **parcel/lot acres** (deduplicated titled lot area — the Urban3-analogous "developable land" view, with a low-parcel-fraction guard). The revenue numerator is the per-account municipal levy computed from assessed value × the class mill rate.
 
-The **cost side** layers service supply and modeled service cost per acre: road network supply, a bylaw-native stormwater charge model, fire-rescue service demand, and a per-connection water/sanitary model — each validated against published figures where possible (`docs/FINDINGS_utility_validation.md`). Modeled figures are labeled *modeled, not billed*.
+The **cost side, so far,** layers service supply and modeled service cost per acre: road network supply, a bylaw-native stormwater charge model, fire-rescue service demand, and a per-connection water/sanitary model — each validated against published figures where possible (`docs/FINDINGS_utility_validation.md`). Modeled figures are labeled *modeled, not billed*.
 
 **Data sources (all open data):**
 - [Property Assessment Data](https://data.edmonton.ca/City-Administration/Property-Assessment-Data-Current-Calendar-Year-/q7d6-ambg) (~440,000 records, refreshed weekly, annual roll)
@@ -62,7 +62,7 @@ Levels 2–4 are why this repo files reports rather than only shipping charts. *
 ## Comparable Work
 
 - **Ottawa (2021):** Hemson Consulting analysis found suburban greenfield development runs a **$465/person/year deficit** while high-density infill generates a **$606/person/year surplus** ([CBC, 2021-09-29](https://www.cbc.ca/news/canada/ottawa/urban-expansion-costs-menard-memo-1.6193429)). Councillor Shawn Menard requested and publicized it, and it featured in the Official Plan urban-boundary debate.
-- **Lafayette, LA:** Urban3's parcel-level [Cost of Service analysis](https://www.urbanthree.com/case-study/lafayette-la/) compared 2015 capital revenue against the 50-year cost of roads, parcel by parcel — Urban3 describes it as "the first of its kind." The closest published analogue to this project's cost side, though the parcel-level cost-allocation rule itself has not been published.
+- **Lafayette, LA:** Urban3's parcel-level [Cost of Service analysis](https://www.urbanthree.com/case-study/lafayette-la/) compared 2015 capital revenue against the 50-year cost of roads, parcel by parcel — Urban3 describes it as "the first of its kind." The closest published analogue to where this project's cost side is *headed*, though the parcel-level cost-allocation rule itself has not been published.
 - **Halifax (2005):** HRM Regional Planning's [Settlement Pattern and Form with Service Cost Analysis](https://luau.utah.gov/wp-content/uploads/Halifax-Settlement-Pattern-Form-Cost-2005.pdf) costed 8 settlement patterns and found road costs of **$1,053/household/year** in the lowest-density pattern (rural commutershed, 1.2 people/acre) against **$26** in the highest (urban high density, 92 people/acre) — a **40:1 ratio**. Across *all* services the same table spans $5,240 to $1,416, about 3.7:1, so roads are by far the most density-sensitive line in it.
 - **Arlington, VA (Rosslyn–Ballston corridor):** the transit-oriented corridor "generated **33 percent of the county tax base** on only **8 percent of its land**" ([CNU](https://www.cnu.org/what-we-do/build-great-places/rosslyn-ballston-corridor)) — a revenue-side example at scale.
 - **Calgary ([Calgary Lens](https://calgarylens.ca/property-taxes/by-community)):** an independent civic-data project (Pixeltree) mapping **total property tax by community** across Calgary's 313 communities, computed the same way as here — parcel assessed values × mill rates — from the 2026 roll. The nearest thing in form to this project, and the sharpest contrast in substance: it reports **raw dollar totals with no land-area denominator**, and includes the provincial education portion this project excludes. Revenue only; no cost side.
@@ -97,13 +97,17 @@ whether anyone has been told is `docs/DATA_ISSUES.md`.
 metric, deeper data-detail) exposed. This is the build for anyone visiting the
 repo directly; the public root above is the streamlined view.
 
-The **cost side is
-built** (`docs/SPEC_services.md`, `docs/SPEC_utilities.md`): a Services view
-layers the city-maintained road network (road supply per acre), a **modeled
-stormwater charge** per acre, **fire-rescue service demand** per acre, and a
-**modeled water/sanitary charge** per acre; a Ratio view shows **revenue per
-road metre** — how much municipal revenue backs each metre of neighbourhood
-road. A Uses view maps the zoning bylaw's land-use categories, and a Glass
+**A first cost side is built** (`docs/SPEC_services.md`,
+`docs/SPEC_utilities.md`) — though it answers a narrower question than the one
+this project is aimed at. A Services view layers the city-maintained road
+network (road supply per acre), a **modeled stormwater charge** per acre,
+**fire-rescue service demand** per acre, and a **modeled water/sanitary
+charge** per acre; a Ratio view shows **revenue per road metre** — how much
+municipal revenue backs each metre of neighbourhood road. ⚠️ These stay
+**separate per-service figures, shown against the levy as magnitude**. They are
+deliberately *not* summed into a single cost number, and nothing here rules on
+whether a neighbourhood covers what it costs — that is level 3 and 4 work
+above, not a rendering choice. A Uses view maps the zoning bylaw's land-use categories, and a Glass
 view renders the metric in **100 m or 50 m grid cells** (the Urban3-style
 detail level — the 50 m grid is the resolution at which single high-value
 parcels stop being averaged into their neighbours, and is the right-hand panel
