@@ -229,6 +229,11 @@ published artifact stays self-contained.
    portability, then commit both the `.py` and the executed `.ipynb`.
 3. Render to `web/notebooks/<name-with-dashes>.html` (underscores become
    dashes) and add an entry to that folder's hand-written `index.html`.
+   ⚠️ **Then run `python tools/inject_notebook_mobile_css.py`.** nbconvert's
+   stock template **clips** code lines wider than the viewport — no scroller,
+   nothing to find. It is invisible at desktop width and total on a phone
+   (measured 2026-09-20: 54 of 54 cells clipped at 390px, 0 at 1280px).
+   `tests/test_notebook_mobile_css.py` fails if you skip it.
 4. Update `docs/DATA_ISSUES.md` — **the status table there is authoritative for
    send status**, not this file.
 5. Add rows to **both** tables above (status **ACTIVE**); the reverse lookup is
