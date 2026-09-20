@@ -21,7 +21,7 @@ The goal: map Edmonton's property tax revenue and estimated service costs agains
 - Edmonton recently raised property taxes by **6.9%**
 - Council is actively debating development costs and suburban expansion
 - Edmonton has excellent open data infrastructure (~448,000 property assessment records publicly available)
-- No comparable public analysis exists for Edmonton, despite Calgary and Ottawa having attempted versions of this work
+- No comparable public analysis exists for Edmonton — Calgary and Ottawa each have part of it (see Comparable Work), but neither maps revenue against land area
 
 ## Methodology
 
@@ -58,7 +58,7 @@ Work that would genuinely need parcel *geometry* is catalogued in `docs/PARCEL_L
 - **Lafayette, LA:** Urban3's parcel-level [Cost of Service analysis](https://www.urbanthree.com/case-study/lafayette-la/) compared 2015 capital revenue against the 50-year cost of roads, parcel by parcel — Urban3 describes it as "the first of its kind." The closest published analogue to this project's cost side, though the parcel-level cost-allocation rule itself has not been published.
 - **Halifax (2005):** HRM Regional Planning's [Settlement Pattern and Form with Service Cost Analysis](https://luau.utah.gov/wp-content/uploads/Halifax-Settlement-Pattern-Form-Cost-2005.pdf) costed 8 settlement patterns and found road costs of **$1,053/household/year** in the lowest-density pattern (rural commutershed, 1.2 people/acre) against **$26** in the highest (urban high density, 92 people/acre) — a **40:1 ratio**. Across *all* services the same table spans $5,240 to $1,416, about 3.7:1, so roads are by far the most density-sensitive line in it.
 - **Arlington, VA (Rosslyn–Ballston corridor):** the transit-oriented corridor "generated **33 percent of the county tax base** on only **8 percent of its land**" ([CNU](https://www.cnu.org/what-we-do/build-great-places/rosslyn-ballston-corridor)) — a revenue-side example at scale.
-- **Calgary (2022):** Revenue-only analysis without a cost side.
+- **Calgary ([Calgary Lens](https://calgarylens.ca/property-taxes/by-community)):** an independent civic-data project (Pixeltree) mapping **total property tax by community** across Calgary's 313 communities, computed the same way as here — parcel assessed values × mill rates — from the 2026 roll. The nearest thing in form to this project, and the sharpest contrast in substance: it reports **raw dollar totals with no land-area denominator**, and includes the provincial education portion this project excludes. Revenue only; no cost side.
 
 ## Status
 
