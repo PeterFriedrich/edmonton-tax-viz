@@ -1,0 +1,97 @@
+MIT License
+
+Copyright (c) 2026 Peter Friedrich
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+================================================================================
+SCOPE — WHAT THIS LICENCE DOES AND DOES NOT COVER
+================================================================================
+
+The MIT grant above covers the code and configuration in this repository: the
+Python pipeline in `src/`, `scripts/` and `tools/`, the front end in
+`web/index.html` and its CSS/JS, the tests, and the CI workflows.
+
+It does NOT cover the three carve-outs below. Two of them are not mine to
+license, and the third is licensed separately on purpose.
+
+--------------------------------------------------------------------------------
+CARVE-OUT 1 — PROSE AND ANALYSIS: CC BY 4.0
+--------------------------------------------------------------------------------
+
+    docs/
+    research/
+    README.md
+    CONTRIBUTING.md
+    data/DATA.md
+    session-summary/
+
+The written analysis — methodology, findings, decision records — is licensed
+Creative Commons Attribution 4.0 International, not MIT. See `LICENSE-docs`.
+
+MIT is a software licence and reads as nonsense applied to a findings document.
+CC BY is the one that carries the terms this work actually needs: credit the
+source, and say what you changed.
+
+--------------------------------------------------------------------------------
+CARVE-OUT 2 — OPEN GOVERNMENT DATA: NOT MINE TO LICENSE
+--------------------------------------------------------------------------------
+
+    data/
+    web/data/
+
+Every data file in these directories is derived from public open-government
+releases and remains subject to its upstream terms. I hold no copyright in
+them and grant none.
+
+  - City of Edmonton sources — Open Government Licence – City of Edmonton
+    https://data.edmonton.ca/stories/s/City-of-Edmonton-Open-Data-Terms-of-Use/msh8-if28/
+
+  - Government of Alberta sources — Open Government Licence – Alberta
+
+  - Highway reference geometry — © OpenStreetMap contributors, ODbL
+    https://www.openstreetmap.org/copyright
+
+Both Open Government Licences permit redistribution of derived works with
+attribution, which is why these files can be committed here at all. Per-file
+provenance, including which source each derives from, is in `data/DATA.md`.
+
+If you reuse this data you inherit the attribution obligation directly from
+those licences — it does not pass through me. The prescribed OGL attribution
+statement, which is verbatim compliance text and must not be reworded, is
+carried on the live site and pinned by
+`tools/profiling/verify-about.js`.
+
+--------------------------------------------------------------------------------
+CARVE-OUT 3 — VENDORED THIRD-PARTY LIBRARIES
+--------------------------------------------------------------------------------
+
+    web/vendor/
+
+Third-party JS/CSS committed unmodified, under their own upstream licences:
+maplibre-gl 4.7.1 (BSD-3-Clause) and deck.gl 9.0.38 (MIT, Urban Computing
+Foundation). Versions, upstream URLs and SHA-256 provenance are in
+`web/vendor/README.md`.
+
+================================================================================
+
+The carve-out paths above are the authoritative list. `tests/test_license.py`
+reads them out of this file and fails if a data-shaped file is committed
+outside them — a new data directory that nobody adds here would otherwise be
+silently swept under the MIT grant.

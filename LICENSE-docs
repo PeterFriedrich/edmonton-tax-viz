@@ -1,0 +1,62 @@
+# Licence — written analysis
+
+The prose in this repository is licensed **Creative Commons Attribution 4.0
+International (CC BY 4.0)**.
+
+    https://creativecommons.org/licenses/by/4.0/
+
+Copyright (c) 2026 Peter Friedrich
+
+## What this covers
+
+    docs/
+    research/
+    README.md
+    CONTRIBUTING.md
+    data/DATA.md
+    session-summary/
+
+The code is MIT and the data is not mine to license; `LICENSE` holds the full
+scope split and the carve-outs.
+
+## What you may do
+
+Share and adapt the material, for any purpose including commercially, provided
+you give appropriate credit, link to the licence, and **indicate if changes
+were made**. You may not imply I endorse you or your use.
+
+## Why CC BY rather than MIT
+
+The written half of this repository is not documentation for the code — it is
+the analysis. Findings documents, the methodology note, the decisions index.
+Applying a software licence to those is a category error, and the terms that
+matter for analysis are the ones CC BY states: credit, and an indication of
+changes.
+
+There is a concrete reason this clause is here rather than assumed. An
+unsourced editorial claim in this repo was forked, indexed, and eventually
+returned by a search engine as corroboration *for itself* — the claim had
+become its own evidence, with the provenance stripped somewhere along the way
+(recorded in `session-summary/2026-09-20-s176.md`). A licence cannot prevent
+that. What it can do is make "say where this came from, and say what you
+changed" the stated term of reuse rather than a courtesy that erodes at each
+hop.
+
+## Attribution
+
+Something of this shape is enough:
+
+> Based on *Edmonton Revenue Per Acre Analysis* by Peter Friedrich
+> (https://github.com/PeterFriedrich/edmonton-tax-viz), CC BY 4.0. Changes were
+> made.
+
+If you are reusing the **numbers** rather than the prose, the underlying open
+data carries its own attribution obligation that runs directly from the City of
+Edmonton and the Government of Alberta, not from me. `LICENSE` carve-out 2 has
+the detail.
+
+## Not affiliated
+
+This is an independent project. It is not affiliated with, nor endorsed by, the
+City of Edmonton. Attribution under this licence must not be worded in a way
+that suggests otherwise.
