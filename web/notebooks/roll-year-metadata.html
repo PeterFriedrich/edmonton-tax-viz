@@ -7807,6 +7807,18 @@ a.anchor-link {
   white-space: pre-wrap;
   overflow-wrap: break-word;
 }
+
+/* Output areas have the same defect one level up: .jp-OutputArea-child is
+   `display: table; overflow: hidden`, so a dataframe wider than the column
+   loses its right-hand columns with no scroller. Tables must SCROLL — wrapping
+   a dataframe destroys the thing being shown — so make the table its own
+   block-level scroller, which keeps it inside the clipping parent. */
+.jp-RenderedHTMLCommon table {
+  display: block;
+  width: max-content;
+  max-width: 100%;
+  overflow-x: auto;
+}
 </style>
 <!-- /mobile-code-wrap -->
 </head>
