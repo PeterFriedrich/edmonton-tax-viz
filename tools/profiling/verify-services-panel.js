@@ -225,6 +225,33 @@ const SUBJECT = { storm: /storm/i, fire: /fire/i, water: /water|sewer/i };
   check('the dollar floor actually fires on this data (not vacuous)',
     floor.floored > 0, `${floor.floored} of ${floor.seen} values print "<$1"`);
 
+  // ---- 3e. NOR IS THE NON-DOLLAR FLOOR ------------------------------------
+  // Same split as 3d against `verify-smoke.js` §C10. Measured 2026-09-20 over
+  // the served file: fire 10, transit 2, revenue_share_city 20 — and the
+  // temporal shares add 726 more in their own file, not swept here.
+  // ⚠️ A zero count here is a PROMPT TO RE-MEASURE, not a defect: if the fire
+  // tail ever empties, the floor stops being load-bearing and S7's fire row
+  // should be reopened rather than the check quietly relaxed.
+  const smallFloor = await page.evaluate(async () => {
+    const d = await (await fetch('./data/neighbourhood_value_per_acre.geojson')).json();
+    let fire = 0, transit = 0, share = 0, seen = 0;
+    for (const f of d.features) {
+      const p = f.properties;
+      seen++;
+      if (p.fire_events_per_acre != null
+        && fmtFire(p.fire_events_per_acre).startsWith('<0.01')) fire++;
+      if (p.transit_dep_per_acre != null
+        && fmtTransit(p.transit_dep_per_acre).startsWith('<0.01')) transit++;
+      if (p.revenue_share_city != null
+        && fmtPct(p.revenue_share_city * 100) === '<0.01%') share++;
+    }
+    return { fire, transit, share, seen };
+  });
+  check('the non-dollar floor actually fires on this data (not vacuous)',
+    smallFloor.fire + smallFloor.transit + smallFloor.share > 0,
+    `fire ${smallFloor.fire}, transit ${smallFloor.transit}, `
+    + `city share ${smallFloor.share} of ${smallFloor.seen} hoods`);
+
   await page.close();
 
   // ---- 4. PUBLIC BUILD ----------------------------------------------------

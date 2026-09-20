@@ -280,6 +280,58 @@ const check = (name, cond) => { (cond ? pass++ : fail++); console.log(`${cond ? 
   }));
   check('round-trip back to infill rebuilds the plane', back.view === 'infill' && back.layers.includes('infill-plane'));
 
+  // ---- A RATE THAT ROUNDS TO "0.00" IS NAMED BY ITS COUNT -----------------
+  // COPY_DECISIONS S7: 378 served values render "0.00 new permits / acre", and
+  // every one is backed by an INTEGER count of 1 or more. The Development view
+  // always printed that count on the next line; here `fmtDev` stood alone next
+  // to `fmtFar`, so the tooltip read as NO development on a hood that has some.
+  // ⚠️ Asserted on the hood's OWN sub-threshold rows, both metrics, so the
+  // check cannot pass on a hood where the rate rounds visibly anyway.
+  // ⚠️ Read the rate AND count columns off the page's own maps for the window
+  // actually in state: the window picker above leaves devWindow on "3yr", and a
+  // first version of this check filtered the 5yr rate against a 3yr count and
+  // reported a defect that was its own.
+  const named = await page.evaluate(() => {
+    const out = { checked: 0, missingCount: 0, badPlural: 0, sample: null, windows: [] };
+    const before = { m: state.devMetric, w: state.devWindow };
+    for (const w of Object.keys(DEV_TOTAL_COLS)) {
+      for (const m of ['permits', 'units']) {
+        state.devMetric = m; state.devWindow = w;
+        const col = DEV_COLS[m][w], tot = DEV_TOTAL_COLS[w][m];
+        if (!col || !tot) continue;
+        let n0 = 0;
+        for (const f of state.data.features) {
+          const p = f.properties;
+          if (p.is_set_aside || p[col] == null || !(p[col] > 0 && p[col] < 0.005)) continue;
+          if (p[tot] == null) continue;
+          const n = Math.round(p[tot]);
+          const html = (viewTooltip({ object: { properties: p } }, false) || {}).html || '';
+          out.checked++; n0++;
+          const noun = m === 'permits' ? 'permit' : 'new home';
+          const want = `${n.toLocaleString()} ${noun}${n === 1 ? '' : 's'}`;
+          if (!html.includes(want)) {
+            out.missingCount++;
+            out.sample ??= { n: p.neighbourhood_name, w, m, want, got: html.slice(-170) };
+          }
+          if (n === 1 && html.includes(`1 ${noun}s`)) out.badPlural++;
+        }
+        out.windows.push(`${m}/${w}:${n0}`);
+      }
+    }
+    state.devMetric = before.m; state.devWindow = before.w;
+    return out;
+  });
+  check(`*** a "0.00" infill rate still names its count (${named.checked} rows: `
+    + `${named.windows.join(' ')}) ***`,
+    named.checked > 0 && named.missingCount === 0);
+  if (named.sample)
+    console.log(`      ${named.sample.m}/${named.sample.w} want "${named.sample.want}" `
+      + `in ${named.sample.n}: ...${named.sample.got}`);
+  // ⚠️ Not redundant with the check above: "1 permit" is a SUBSTRING of
+  // "1 permits", so the includes() test passes on a broken plural. Falsified —
+  // forcing the plural reddens this one and leaves that one green.
+  check('the count is not pluralised as "1 permits"', named.badPlural === 0);
+
   console.log(`\n${pass} passed, ${fail} failed`);
   await browser.close();
   process.exit(fail);
