@@ -2308,8 +2308,21 @@
     // 13 nonzero rows across bikeway (6), roads ops (4), roads lifecycle (2)
     // and stormwater (1) rendered "$0"; the smallest was $0.0000008/acre.
     const fmtStorm = v => money0(v) + " modelled stormwater / acre / yr";
-    const fmtFire = v => v.toFixed(v < 1 ? 2 : 1) + " dispatched events / acre / yr";
-    const fmtTransit = v => v.toFixed(v < 1 ? 2 : 1) +
+    // The non-dollar sibling of `money0`'s "<$1" and `fmtMix`'s "<0.1%": below
+    // 0.005 a two-decimal readout prints "0.00", which reads as NONE rather
+    // than as small. Measured 2026-09-20 over the served file, the values under
+    // it are real, not artefacts — fire runs 0.31–15.4 dispatches/yr spread
+    // over hoods of 291–6,931 acres, transit 0.95 and 5.5 stop-events/weekday.
+    // (Bike looked identical and was NOT: its three were overlay crumbs, fixed
+    // upstream by `MIN_PIECE_M`, which is why `fmtBike` keeps no floor.)
+    // ⚠️ `v > 0` is the half an over-eager fix deletes — a TRUE zero must keep
+    // printing "0.00", or the floor manufactures the opposite misreading.
+    // `fmtMix` shipped without that guard and carried it wrong until S174.
+    const SMALL_2DP = 0.005;
+    const under2dp = v => v > 0 && v < SMALL_2DP;
+    const fmtFire = v => (under2dp(v) ? "<0.01" : v.toFixed(v < 1 ? 2 : 1)) +
+      " dispatched events / acre / yr";
+    const fmtTransit = v => (under2dp(v) ? "<0.01" : v.toFixed(v < 1 ? 2 : 1)) +
       " scheduled transit stop-events / acre / weekday";
     const fmtBike = v => v.toFixed(v < 1 ? 2 : 1) + " dedicated bike route m / acre";
     const fmtWater = (v, fixed) => money0(v) +
@@ -4639,7 +4652,13 @@
     const SPARK_W = 150, SPARK_H = 28;    // hover teaser, no axes
     const TCHART_W = 300, TCHART_H = 96;  // pinned panel plot box (labels sit outside)
 
-    const fmtPct = v => v.toFixed(2) + "%";
+    // Two decimals, so the floor is "<0.01%" where `fmtMix`'s one decimal
+    // floors at "<0.1%" — the same rule scaled, not a second idiom.
+    // ⚠️ These shares are stored as integers of 1/`share_scale` (1e-6), so the
+    // smallest nonzero value IS one quantum: the file cannot resolve below the
+    // floor, which is exactly why printing "<0.01%" is the honest reading and
+    // a third decimal would be invented precision.
+    const fmtPct = v => (under2dp(v) ? "<0.01" : v.toFixed(2)) + "%";
     // Assessment totals run $10M-$10B across hoods, so the unit has to follow
     // the magnitude — "$0.06B" for a small hood reads as noise.
     const fmtBig = v => v >= 1e9 ? "$" + (v / 1e9).toFixed(2) + "B"
@@ -5890,22 +5909,37 @@
         const score = infillScore(p);
         if (score == null)
           return { className: "tip", html: name + `<span class="muted">no infill data</span>` };
+        // ⚠️ The Development view prints the raw count on the next line, so a
+        // rate that rounds to "0.00" self-corrects there. Here `fmtDev` stood
+        // alone beside `fmtFar` and 378 served values render "0.00 new permits
+        // / acre" — every one of them backed by an INTEGER count of 1 or more
+        // (measured 2026-09-20; one hood has 10). Naming the count is the
+        // honest fix: the numerator is already in the file, so this needs no
+        // floor string and no new data. Industrial never reaches Infill
+        // (`applyView` resets it away), so DEV_TOTAL_COLS always applies.
+        const devTot = DEV_TOTAL_COLS[state.devWindow];
+        const devN = state.devMetric === "units"
+          ? p[devTot.units] : p[devTot.permits];
+        const devNoun = state.devMetric === "units" ? "new home" : "permit";
+        const devTxt = devN == null ? fmtDev(p[devCol()])
+          : `${fmtDev(p[devCol()])} (${Math.round(devN).toLocaleString()} `
+            + `${devNoun}${Math.round(devN) === 1 ? "" : "s"}, `
+            + `${DEV_WINDOW_LABEL[state.devWindow]})`;
         if (infillOppSuppressed(p))
           return { className: "tip", html: name +
             `<span class="muted">Non-residential — off the opportunity scale</span><br/>` +
-            `<span class="muted">${fmtFar(p.far)} · ${fmtDev(p[devCol()])}</span>` };
+            `<span class="muted">${fmtFar(p.far)} · ${devTxt}</span>` };
         const t = infillT(p);
         const verdict = t > INFILL_VERDICT_T
           ? "Room to add, quiet lately"
           : t < -INFILL_VERDICT_T
             ? "More building than room suggests"
             : "Activity ≈ room";
-        const act = p[devCol()];
         return { className: "tip", html: name +
           `${verdict}<br/>` +
           `<span class="muted">mismatch ${score > 0 ? "+" : ""}${score.toFixed(2)} ` +
           `(z: suitability − activity)</span><br/>` +
-          `<span class="muted">${fmtFar(p.far)} · ${fmtDev(act)}</span>` };
+          `<span class="muted">${fmtFar(p.far)} · ${devTxt}</span>` };
       }
 
       if (state.view === "deviation") {

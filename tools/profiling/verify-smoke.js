@@ -390,6 +390,75 @@ const GARBAGE = /\bNaN\b|\bundefined\b|\bnull\b|\bInfinity\b|\$NaN|\$undefined/;
   check('C9: an exactly-zero dollar amount still renders "$0", not the floor',
     dollars.trueZeroFloored === 0, `${dollars.trueZeroFloored} mislabelled`);
 
+  // ---- C10. THE SAME INVARIANT FOR THE NON-DOLLAR READOUTS ----------------
+  // `money0` is not the only formatter that can print NONE for a real value.
+  // `fmtFire`/`fmtTransit`/`fmtPct` render two decimals, so anything under
+  // 0.005 printed "0.00" until 2026-09-20 (COPY_DECISIONS S7). Measured over
+  // the served file, those values are real — fire 0.31–15.4 dispatches/yr over
+  // very large hoods — so they floor at "<0.01" rather than being fixed
+  // upstream the way the bike slivers were.
+  // ⚠️ BOTH DIRECTIONS, same as C9: a true zero must still print "0.00".
+  // 56 hoods carry an exactly-zero transit rate and 5 an exactly-zero fire
+  // rate, so a floor applied without its `v > 0` guard fails here — that guard
+  // is the half an over-eager fix deletes, and `fmtMix` carried it wrong once.
+  // Non-vacuity is deliberately NOT asserted here, for C9's reason: a refresh
+  // where nothing sits under 0.005 is legitimate and must not cry wolf.
+  // `verify-services-panel.js` owns that count.
+  const smalls = await page.evaluate(async () => {
+    const out = { nonzeroAsZero: 0, trueZeroFloored: 0, seen: 0, worst: null };
+    out.floorTooWide = 0; out.widest = null;
+    const note = (v, fmt, zero, label, n) => {
+      out.seen++;
+      const s = fmt(v);
+      if (v > 0 && s === zero) {
+        out.nonzeroAsZero++;
+        if (out.worst === null || v < out.worst.v) out.worst = { v, c: label, n };
+      }
+      if (v === 0 && s !== zero) out.trueZeroFloored++;
+      // The floor must fire EXACTLY where two decimals would print "0.00" and
+      // nowhere else. Widening SMALL_2DP is the tidy-up that looks harmless and
+      // silently replaces real readable values ("0.25") with "<0.01" — neither
+      // check above sees it, because nothing renders "0.00" and no true zero
+      // floors. This is the `MIN_PIECE_M` / `WEB_MIN_PART_M` lesson as a check.
+      if (s.startsWith('<0.01') !== (v > 0 && v.toFixed(2) === '0.00')) {
+        out.floorTooWide++;
+        if (out.widest === null || v > out.widest.v) out.widest = { v, c: label, n, s };
+      }
+    };
+    for (const f of state.data.features) {
+      const p = f.properties, n = p.neighbourhood_name;
+      if (p.fire_events_per_acre != null)
+        note(p.fire_events_per_acre, fmtFire, '0.00 dispatched events / acre / yr', 'fire', n);
+      if (p.transit_dep_per_acre != null)
+        note(p.transit_dep_per_acre, fmtTransit,
+          '0.00 scheduled transit stop-events / acre / weekday', 'transit', n);
+      if (p.revenue_share_city != null)
+        note(p.revenue_share_city * 100, fmtPct, '0.00%', 'revenue_share_city', n);
+    }
+    // The temporal shares are the bulk of the percent surface (726 of 746) and
+    // live in their own file, quantised to integer 1/share_scale units.
+    const t = await (await fetch('./data/temporal.json')).json();
+    for (const [name, rows] of Object.entries(t.hoods))
+      for (const i of [0, 2])
+        for (const v of rows[i])
+          if (v != null) note(100 * v / t.share_scale, fmtPct, '0.00%', 'temporal', name);
+    return out;
+  });
+  check('C10: a nonzero non-dollar readout never renders as "0.00"',
+    smalls.nonzeroAsZero === 0 && smalls.seen > 1000,
+    smalls.worst
+      ? `${smalls.nonzeroAsZero} of ${smalls.seen}, smallest ${smalls.worst.v} `
+        + `(${smalls.worst.c}, ${smalls.worst.n})`
+      : `${smalls.seen} values checked`);
+  check('C10: an exactly-zero non-dollar readout still renders "0.00", not the floor',
+    smalls.trueZeroFloored === 0, `${smalls.trueZeroFloored} mislabelled`);
+  check('C10: the floor fires only where two decimals would print "0.00"',
+    smalls.floorTooWide === 0,
+    smalls.widest
+      ? `${smalls.floorTooWide} disagree, largest ${smalls.widest.v} -> `
+        + `"${smalls.widest.s}" (${smalls.widest.c}, ${smalls.widest.n})`
+      : 'floor boundary matches two-decimal rounding');
+
   // ---- D. PROVENANCE ------------------------------------------------------
   // The rates on screen are a fiscal headline read straight from the manifest;
   // a refresh that rewrites status.json must not leave the pod disagreeing with

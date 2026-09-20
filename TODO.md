@@ -467,11 +467,6 @@ pass and **caught by the guard**.
   **smoke is the only verify script CI runs**; non-vaciuity at
   `verify-services-panel.js` §3d. Both mutations caught and distinguishable
   (21 nonzero / 352 true zeros). `DECISIONS.md` 2026-09-19.
-  ⬜ **REMAINDER OPEN as `COPY_DECISIONS.md` S7 — Peter's call, and GATED on a
-  data question.** `fmtDev` (378 values), `fmtPct` (746), `fmtFar` (37),
-  `fmtFire`/`fmtBike`/`fmtTransit` (15). One decision, four surfaces; **not** a
-  port of `<$1` — each unit needs its own floor, and `0.00 FAR` on a
-  near-unbuilt hood may be correct.
   ✅ **The sliver question is ANSWERED (2026-09-20) and it shrank S7 as hoped.**
   They were artefacts: Beacon Heights' whole bike network was **one overlay
   piece of 11 micrometres**, and 3.8e-08 was the distribution's **minimum**,
@@ -479,10 +474,24 @@ pass and **caught by the guard**.
   `src/load_bike.py`, 13.5 m of 981.4 km, exactly 3 hoods zeroed.
   **`fmtBike` 3 → 0**, so bike is out of S7 entirely and needs no floor
   (live from the next weekly refresh). `DECISIONS.md` 2026-09-20.
-  ⬜ **`fmtDev` (378), `fmtPct` (746), `fmtFar` (37), `fmtFire` (10),
-  `fmtTransit` (2) remain — and the bike result does NOT transfer.** Fire and
-  transit use the same overlay pattern and may be the same story; nobody has
-  measured them. **Ask artefact-or-small per surface before choosing a floor.**
+  ✅ **S7 IS DECIDED AND APPLIED (2026-09-20) — per unit, not as one rule.**
+  All five remaining surfaces measured against the served file (hash-matched to
+  the live site first); every count reproduced. **Bike was the only artefact.**
+  `fmtDev`'s 378 are each backed by an **integer count ≥ 1**, and only the
+  **Infill** view rendered the rate without that count beside it — so it names
+  the count now rather than gaining a floor. `fmtFire`/`fmtTransit`/`fmtPct`
+  floor at `<0.01` via a shared `under2dp` guard. **`fmtFar` closed as
+  CORRECT** (FAR divides by deduped LOT area; smallest implied floor area is a
+  real 17.7 m², and a near-unbuilt hood genuinely has FAR ≈ 0).
+  Guards: `verify-smoke.js` §C10 (3 checks — the third caught a 100× widened
+  floor the first two missed), `verify-infill.js` (2, over 139 rows × 6
+  combos), `verify-services-panel.js` §3e (non-vacuity).
+  `DECISIONS.md` 2026-09-20. ⏳ Live from the next weekly refresh.
+  ❓ **One thing left unresolved, deliberately:** 238 exact zeros in temporal
+  `share` (287 in `commercial`) can't be told apart from values quantised to
+  zero by the export's 1e-6 `share_scale`. Probably benign (greenfield hoods
+  had no 2012 assessment) but **not shown to be**, and not settleable from the
+  served file — it needs the pre-export values.
 
 ⚠️ Two rows are **not** open questions and must not be re-derived:
 - **F2** — the gold >100% bar re-introduces the break-even verdict locked against on
