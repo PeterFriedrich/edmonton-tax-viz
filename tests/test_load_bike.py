@@ -11,6 +11,8 @@ sys.path.insert(0, "src")
 from load_bike import (
     CLASSIFICATION_GROUP,
     _classify,
+    MIN_PIECE_M,
+    WEB_MIN_PART_M,
     export_bike_web,
     load_bike,
 )
@@ -231,3 +233,76 @@ def test_export_bike_web_drops_clip_slivers(tmp_path):
     with patch("load_bike.gpd.read_file", return_value=bike):
         n = export_bike_web("dummy.geojson", boundaries, str(out), min_part_m=20.0)
     assert n == 1
+
+
+# --- sliver floor (MIN_PIECE_M) --------------------------------------------
+#
+# Where a route runs along a neighbourhood boundary the overlay hands a
+# micrometre-scale crumb to the neighbour, which reached the reader as a
+# nonzero bike figure on a neighbourhood with no bike route (Beacon Heights,
+# 0.000011 m, measured 2026-09-20).
+
+
+def _two_hoods():
+    """A and B share the edge at x=100."""
+    return _boundaries(["A", "B"], [_square(0, 0, 100), _square(100, 0, 100)])
+
+
+def test_sliver_piece_is_excluded_from_the_metric():
+    """A sub-metre piece in B is dropped; the real line in A is untouched.
+
+    The two hoods differ ONLY in the length of the piece they receive — same
+    class, same coming-soon flag, same type — so a failure can only be the
+    floor.
+    """
+    bike = _bike([
+        (PROTECTED, False, ON, LineString([(10, 10), (10, 60)])),        # 50 m in A
+        (PROTECTED, False, ON, LineString([(100.1, 50), (100.6, 50)])),  # 0.5 m in B
+    ])
+    result = _run(_two_hoods(), bike)
+
+    assert result.loc[result.neighbourhood_name == "A", "bike_m_total"].iat[0] == pytest.approx(50.0)
+    # B had only the sliver, so it leaves the frame entirely; join_and_calculate
+    # defaults an absent neighbourhood to a true 0 m and reports the count.
+    assert "B" not in set(result.neighbourhood_name)
+
+
+def test_piece_at_the_floor_is_kept():
+    """Falsifies the opposite error: a floor that eats real short segments.
+
+    Identical to the test above but for the length of B's piece — 1.5 m, over
+    MIN_PIECE_M — so B must survive.
+    """
+    bike = _bike([
+        (PROTECTED, False, ON, LineString([(10, 10), (10, 60)])),        # 50 m in A
+        (PROTECTED, False, ON, LineString([(100.1, 50), (101.6, 50)])),  # 1.5 m in B
+    ])
+    result = _run(_two_hoods(), bike)
+
+    assert result.loc[result.neighbourhood_name == "B", "bike_m_total"].iat[0] == pytest.approx(1.5)
+
+
+def test_sliver_drop_is_reported_not_silent(caplog):
+    """No silent data drops: the log names the neighbourhood that went to zero."""
+    bike = _bike([
+        (PROTECTED, False, ON, LineString([(10, 10), (10, 60)])),
+        (PROTECTED, False, ON, LineString([(100.1, 50), (100.6, 50)])),
+    ])
+    with caplog.at_level("INFO"):
+        _run(_two_hoods(), bike)
+
+    msg = "\n".join(r.getMessage() for r in caplog.records)
+    assert "sliver floor" in msg
+    assert "B" in msg
+
+
+def test_metric_floor_is_not_the_display_constant():
+    """⚠️ The two sliver floors are not interchangeable.
+
+    WEB_MIN_PART_M applies to WELDED display geometry, where 20 m means a 20 m
+    continuous stretch. Applied per raw overlay piece it moves 77
+    neighbourhoods instead of 3 (measured 2026-09-20), so a well-meaning
+    de-duplication of the two constants is a silent 25x widening of the cut.
+    """
+    assert MIN_PIECE_M == 1.0
+    assert MIN_PIECE_M != WEB_MIN_PART_M

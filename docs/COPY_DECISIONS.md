@@ -98,14 +98,33 @@ Each is a separate call — some are worth *teaching*, some worth replacing.
 | **S6** | `fmtMix` called a true zero `<0.1%` | The inverse of S3, found by the same sweep. `fmtMix` lacked the `v > 0` guard `fmtSvcRatio` carries; correct only because `revenueMix` filters `> 0` before calling — **a formatter depending on its caller for correctness** | Add `v > 0 &&`, matching `fmtSvcRatio` | **applied 2026-09-19** |
 | **S7** | the same defect in NON-dollar units — **OPEN, one decision, four surfaces** | The 2026-09-19 sweep's remainder, measured over the served file: `fmtDev` **378** values across 9 metric×window combos (`0.00 new permits / acre` on a hood that HAS permits — reads as NO development), `fmtPct` **746** (temporal share 285 + commercial 441 + `revenue_share_city` 20), `fmtFar` **37** (`0.00 FAR`), and the three non-dollar service readouts `fmtFire` 10 / `fmtBike` 3 / `fmtTransit` 2 | **NOT a port of `<$1`** — each unit needs its own floor and its own string (`<0.01 permits / acre`? `<0.01 FAR`? and is `0.00 FAR` on a near-unbuilt hood actually *correct*?). ⚠️ **Decide the rule once and apply to all four**, which is what this file exists to enforce | **OPEN — Peter's call.** ⚠️ See the DATA note below: some of these inputs may be artefacts, not small numbers, and a floor would dignify them |
 
-⚠️ **S7 has a data question underneath it, and it should be answered first.**
-The smallest values the sweep found are not plausibly real: `bike_m_per_acre`
-= 3.8e-08 (38 **nanometres** of bike route per acre), `cost_bike_ops_per_acre`
-= 7.8e-07. Those look like sliver-polygon intersection artefacts. A display
-floor would render them as `<0.01` — honest about the arithmetic, but it
-dignifies a number that may belong at zero. **Check the slivers before
-choosing the floor**; if they are artefacts the fix is upstream, in the
-intersection, and S7 shrinks to the genuinely-small values that remain.
+✅ **S7's data question is ANSWERED (2026-09-20), and it removed the bike
+surface from this row rather than giving it a floor.** The question was whether
+the smallest values — `bike_m_per_acre` = 3.8e-08 (38 **nanometres** of bike
+route per acre), `cost_bike_ops_per_acre` = 7.8e-07 — were small numbers or
+artefacts, because a display floor would render an artefact as `<0.01` and
+dignify a value that belongs at zero.
+
+**They were artefacts, and the instinct to fix it upstream was right.**
+Measured over the live feed: 3.8e-08 is the **minimum** of the distribution,
+not a typical value (median 7.07, max 42.2 — the metric itself is healthy).
+Beacon Heights' entire bike network was **one overlay piece of 0.000011 m**, a
+boundary-tangency crumb from `gpd.overlay`. ⚠️ **The map already drew no bike
+line there** — the display path thins slivers at `WEB_MIN_PART_M`, the metric
+path did not — so the tooltip and the map were telling a reader different
+things. Fixed upstream by `MIN_PIECE_M = 1.0` in `src/load_bike.py`
+(`DECISIONS.md` 2026-09-20; `test_sliver_piece_is_excluded_from_the_metric`).
+
+**`fmtBike` drops from 3 values to 0** — the three sub-threshold values were
+exactly the three sliver neighbourhoods, so bike needs no floor and no
+`<0.01 m / acre` string. ⏳ Live from the next weekly refresh; the served file
+still carries the three until then.
+
+⚠️ **The other non-dollar surfaces are UNMEASURED and this result does not
+transfer.** `fmtDev` 378, `fmtPct` 746, `fmtFar` 37, `fmtFire` 10,
+`fmtTransit` 2 — fire and transit come from different pipelines that use the
+same overlay pattern and may tell the same story, but nobody has checked.
+**Ask the artefact-or-small question per surface before choosing any floor.**
 
 ---
 

@@ -30,6 +30,28 @@ logger = logging.getLogger(__name__)
 # neighbourhood polygon (conservation guard) — the load_roads threshold.
 UNASSIGNED_WARN_FRAC = 0.05
 
+# Sliver floor for the METRIC path. Where a route runs along a neighbourhood
+# boundary, the route line and the polygon edge are nominally coincident but
+# disagree in the low decimals — the two layers were digitized separately — so
+# the overlay hands a micrometre-scale crumb of the route to the neighbour.
+# Beacon Heights' entire bike "network" was ONE piece of 0.000011 m, which
+# reached the reader as a nonzero bike figure on a neighbourhood the map
+# correctly draws no bike line in (the display path already thins slivers).
+#
+# 1 m is not a materiality judgement — it sits in an empty gap. Measured
+# 2026-09-20 over the live feed, per-neighbourhood totals run 11 µm, 5 cm,
+# 17 cm and then jump to 3.39 m, so the cut removes only the physically
+# impossible and lands on nothing real. It drops 13 m of 981 km (0.001%) and
+# zeroes exactly 3 neighbourhoods. A route that genuinely clips a corner (King
+# Edward Park, 3.4 m) survives: calling THAT too small to count is an editorial
+# call about materiality and belongs in COPY_DECISIONS.md, not here.
+#
+# ⚠️ NOT interchangeable with WEB_MIN_PART_M below, despite both being sliver
+# floors. That one applies to WELDED display geometry, where 20 m means a 20 m
+# continuous stretch; here it would mean each raw overlay piece, and 20 m
+# applied at this stage moves 77 neighbourhoods instead of 3.
+MIN_PIECE_M = 1.0
+
 # ---------------------------------------------------------------------------
 # Explicit classification → group dictionary.
 #
@@ -228,6 +250,28 @@ def load_bike(bike_path: str, boundaries: gpd.GeoDataFrame) -> pd.DataFrame:
                           acres
     """
     overlay = _prepare_segments(bike_path, boundaries)
+
+    # Drop boundary-tangency slivers before they become a nonzero metric. Only
+    # the metric path: the display path welds pieces first and thins its own.
+    sliver = overlay["piece_m"] < MIN_PIECE_M
+    if sliver.any():
+        dropped_m = float(overlay.loc[sliver, "piece_m"].sum())
+        assigned_m = float(overlay["piece_m"].sum())
+        had = set(overlay["neighbourhood_name"])
+        overlay = overlay[~sliver]
+        emptied = sorted(had - set(overlay["neighbourhood_name"]))
+        logger.info(
+            "Bike sliver floor (<%.3g m): dropped %d of %d overlay pieces, "
+            "%.4f m total (%.5f%% of assigned length); %d neighbourhood(s) now "
+            "have no dedicated route and default to 0 m%s",
+            MIN_PIECE_M,
+            int(sliver.sum()),
+            len(sliver),
+            dropped_m,
+            100 * dropped_m / assigned_m if assigned_m else 0.0,
+            len(emptied),
+            (": " + ", ".join(emptied)) if emptied else "",
+        )
 
     by_type = (
         overlay.groupby(["neighbourhood_name", "onroad"])["piece_m"]
