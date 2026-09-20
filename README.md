@@ -14,7 +14,9 @@ Published studies have costed suburban growth here: a Sustainable Prosperity rep
 
 **This project maps the revenue half of that question** — what each neighbourhood pays today, per acre, broken out by development pattern. No comprehensive public revenue-per-acre analysis had been published for Edmonton.
 
-It does **not** reproduce those lifecycle figures. The cost side here covers a few services, is labelled *modeled, not billed*, and shows magnitude only — it never rules on whether a neighbourhood pays its way. That comparison is the goal, not the current state.
+It does **not** reproduce those lifecycle figures. The cost side here covers a few services, is labelled *modeled, not billed*, and shows magnitude only — it never rules on whether a neighbourhood pays its way.
+
+**Getting to that comparison is where this project is going**, and it is a data problem before it is an analysis problem — see below.
 
 ## Why Now
 
@@ -43,14 +45,19 @@ The **cost side** layers service supply and modeled service cost per acre: road 
 
 **Tooling:** Python only (pandas + geopandas + shapely; deck.gl in the browser) — no GIS desktop software. The full pipeline regenerates from open data in one command and runs weekly in CI.
 
-## The Data Challenge (resolved)
+## The Data Problem — which is most of the problem
 
-Edmonton transferred parcel-level GIS *boundary* data to AltaLIS in November 2021 — it's no longer freely available. The project resolved this without AltaLIS, GEODE, or FOIP:
+Edmonton transferred parcel-level GIS *boundary* data to AltaLIS in November 2021; it is no longer freely available. That obstacle is solved — but it was the shallow end. Each step toward the cost side hits a harder version of the same thing, and working through them is most of what this project is.
 
-1. **Neighbourhood-level aggregation** on the free boundary file is the primary unit — the same resolution as Ottawa's Hemson study and the Halifax cost-of-service research.
-2. **Lot areas** (not boundary geometry) turn out to be in the open [Property Information dataset](https://data.edmonton.ca/) (`dkk9-cj3x`), which — with a repeat-aware deduplication heuristic for condo/multi-unit records (`docs/FINDINGS_lot_dedupe.md`) — supports the parcel-acre denominator and a 100 m grid view at near-Urban3 detail.
+**1. Solved by working around it.** Neighbourhood aggregation on the free boundary file is the primary unit — the resolution Ottawa's Hemson study and the Halifax research used. Lot *areas*, unlike geometry, are still open (`dkk9-cj3x`), which is what makes the parcel-acre denominator and the 100 m grid possible. Work that genuinely needs parcel geometry: `docs/PARCEL_LEVEL_OPPORTUNITIES.md`.
 
-Work that would genuinely need parcel *geometry* is catalogued in `docs/PARCEL_LEVEL_OPPORTUNITIES.md`.
+**2. Defects only the City can fix.** Published data that is wrong or incomplete, found by using it — a roll-year field naming the wrong year, 2,448 accounts missing from historical slices, a permit field holding a comma-joined list of neighbourhoods. Six confirmed, five of them with a published, reproducible notebook (`docs/DATA_ISSUES.md`). A workaround here only moves the error.
+
+**3. Data the City only sort of has.** Road costs are published as $600k / $1.9M / $1.5M per km with no stated basis — centreline or lane-km changes the answer severalfold, and the City's own snow report uses both units for the same inventory. No bikeway service life is published anywhere, so that lifecycle rate is underivable rather than merely uncertain.
+
+**4. Data that is not public at all.** Per-parcel exemption status is published nowhere, so which land is actually taxed cannot be stated. A full cost picture needs allocation detail the City holds and does not release; the break-even work models **15.5%** of the budget and says so rather than extrapolating.
+
+Levels 2–4 are why this repo files reports rather than only shipping charts. **Publishing the revenue side at this resolution is also the argument for opening the rest** — the clearest way to show what the full picture would be worth is to build the half that open data already allows.
 
 ## Comparable Work
 
