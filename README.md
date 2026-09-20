@@ -104,8 +104,6 @@ of the image above). Both the Money and Glass views toggle between ground acres 
 **parcel (lot) acres** as the denominator. A weekly GitHub Action regenerates
 the data and redeploys automatically (see `docs/SPEC_deployment.md`).
 
-See [`/research`](/research) for background findings and data source inventory.
-
 ## Technical Docs
 
 - [`docs/METHODS.md`](docs/METHODS.md) — how the numbers are made: metric definitions, denominators, models, validation, limitations
@@ -121,7 +119,7 @@ Fork it. Three different things live here and they are licensed differently:
 | What | Licence |
 |---|---|
 | Code — `src/`, `scripts/`, `tools/`, `web/index.html`, tests, CI | [MIT](LICENSE) |
-| Written analysis — `docs/`, `research/`, this README | [CC BY 4.0](LICENSE-docs) |
+| Written analysis — `docs/`, `session-summary/`, `data/DATA.md`, `CONTRIBUTING.md`, this README | [CC BY 4.0](LICENSE-docs) |
 | Data — `data/`, `web/data/` | Not mine to license — see below |
 | Vendored libraries — `web/vendor/` | Their own upstream licences |
 
