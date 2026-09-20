@@ -54,8 +54,8 @@ Work that would genuinely need parcel *geometry* is catalogued in `docs/PARCEL_L
 
 ## Comparable Work
 
-- **Ottawa (2021):** Hemson Consulting analysis found suburban greenfield development runs a **$465/person/year deficit** while high-density infill generates a **$606/person/year surplus**. Councillor Shawn Menard requested and publicized this; it became a major input to Ottawa's growth strategy.
-- **Lafayette, LA:** Urban3's parcel-by-parcel analysis found $32 billion in infrastructure obligations against $16 million in annual maintenance revenue. Apparently the most comprehensive fiscal analysis done for a North American city.
+- **Ottawa (2021):** Hemson Consulting analysis found suburban greenfield development runs a **$465/person/year deficit** while high-density infill generates a **$606/person/year surplus** ([CBC, 2021-09-29](https://www.cbc.ca/news/canada/ottawa/urban-expansion-costs-menard-memo-1.6193429)). Councillor Shawn Menard requested and publicized it, and it featured in the Official Plan urban-boundary debate.
+- **Lafayette, LA:** Urban3's parcel-level [Cost of Service analysis](https://www.urbanthree.com/case-study/lafayette-la/) compared 2015 capital revenue against the 50-year cost of roads, parcel by parcel — Urban3 describes it as "the first of its kind." The closest published analogue to this project's cost side, though the parcel-level cost-allocation rule itself has not been published.
 - **Halifax:** Academic cost-of-service study across 8 settlement types found road costs of $1,053/household/year at low density vs. $26 at high density — roughly a **40:1 ratio**.
 - **Arlington, VA (Rosslyn–Ballston corridor):** Transit-oriented corridor occupying roughly **8% of the county's land** generates about **33% of its tax revenue**, alongside some of the lowest tax rates in Northern Virginia — a revenue-side example at scale.
 - **Calgary (2022):** Revenue-only analysis without a cost side.
