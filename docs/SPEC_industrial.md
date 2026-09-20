@@ -247,10 +247,21 @@ Office 520, Hotels 530, …), 600-series = institutional.
 
 ### A2 — Shovel-ready industrial land (phase 2)
 
+⚠️ **THE DATASET IS DEFECTIVE, NOT MERELY ANNUAL — settled 2026-09-20, filed as
+`docs/DATA_ISSUES.md` §7. Read that before building anything on it.** It
+declares `Update Frequency: Annually` with no deprecation signal, but its newest
+snapshot is **2023** and it has not been touched since 2025-02-19, while the
+City published the 2023 and 2024 editions of the report behind it (the 2024 PDF
+created 2025-12-17). ⚠️ **And the methodology broke inside that gap:** vacant
+and reserved industrial land were *"previously combined (2020-2023)"* and are
+split from 2024 on, so **the snapshot series and the current report do not mean
+the same thing** — naively continuing one with the other manufactures a 72%
+collapse. Absorption from snapshot diffs (below) is still computable, but it
+**ends in 2023 and is on the old definition**.
+
 **Dataset verified live 2026-07-18:** `stt5-pzaa` "Vacant Land - Industrial"
 (data.edmonton.ca, Socrata). **Annual snapshots 2016–2023**, ~480 parcels/yr,
-3,631 rows total; dataset last updated 2025-02-19 (no 2024 vintage as open
-data yet). Extracted from the City's Tax Assessment Control System per the
+3,631 rows total; dataset last updated 2025-02-19. Extracted from the City's Tax Assessment Control System per the
 dataset description. Fields: `year`, `address`, `area_ha`, `size_category`,
 `zoning` (old-bylaw codes — all vintages predate Zoning Bylaw 20001),
 `neighbourhood_number`/`neighbourhood_name` (industrial-area naming — join
@@ -261,10 +272,18 @@ status), `ownership_type`, `latitude`/`longitude`/`geometry_point` (centroids).
 - Being a time series, **absorption is computable directly from snapshot
   diffs** (parcels leaving the vacant inventory year-over-year) — better than
   the annual report's tables, and reproducible.
-- The City's annual "Industrial Land Supply and Absorption" report (2022,
-  2023, 2024 editions confirmed to exist) is the corroboration source; the
-  2023+ editions are aligned to Bylaw 20001. Report PDFs live on edmonton.ca
-  (**laptop-gated from the Oracle box**).
+- The City's annual "Industrial Land Supply and Absorption" report (2022, 2023,
+  2024 editions confirmed **downloaded** 2026-09-20; 2025 due ~Dec 2026) is the
+  corroboration source; the 2023+ editions are aligned to Bylaw 20001. ⚠️ **The
+  "laptop-gated from the Oracle box" note here was STALE** — all three PDFs
+  fetched from this box with `curl --cacert $(python -c 'import certifi;…')`,
+  and `www.edmonton.ca/growthanalysis` returns 200. Test the exact host, never
+  the domain.
+- ⚠️ **The report does NOT answer the shovel-ready question this sub-item is
+  named for** — its own footnote 1: *"This report does not include data on
+  shovel-ready lands."* The dataset's `servicing` field is the only
+  shovel-ready proxy either source offers, which is an argument for the
+  dataset, not against it.
 - Display: undecided (point layer per vintage? hood rollup of vacant serviced
   acres? supply time series needs a chart surface that doesn't exist — same
   INTERACTION PREREQ as the debt lens). Data layer can be built and committed
