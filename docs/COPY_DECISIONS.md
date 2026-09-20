@@ -96,7 +96,7 @@ Each is a separate call — some are worth *teaching*, some worth replacing.
 | **S3** | a nonzero cost printed as `0.0%` | `fmtSvcRatio` `toFixed(1)` below 10%, so **24 nonzero rows** rendered `0.0%` — 17 of them bikeway, the smallest a real cost four orders below the levy. **Reads as FREE, not as small.** | Floor at `<0.1%`, the fix `fmtMix` already carries one panel over. ⚠️ **`f > 0` is load-bearing** — 135 rows are EXACTLY zero and must keep saying `0.0%` | **applied 2026-09-18**, guarded by `verify-services-panel.js` §3c (3 checks, both mutations caught) |
 | **S5** | a nonzero dollar amount printed as `$0` | S3's defect class, **swept for the first time 2026-09-19**. Seven dollar formatters rounded through `Math.round`, so **21 nonzero values** rendered `$0` — bikeway ops (6), roads ops (4), residential revenue (3), roads lifecycle (2), stormwater (1) and the lot-acre variants; smallest $0.0000008/acre. Same FREE-not-small misreading as S3, in dollars | Shared `money0` helper floors at `<$1` AT the rounding boundary. ⚠️ **`v > 0` is load-bearing** — a true zero must keep printing `$0` | **applied 2026-09-19**, guarded by `verify-smoke.js` §C9 (both directions, both mutations caught: 21 nonzero / 352 true zeros, distinguishable) + `verify-services-panel.js` §3d (non-vacuity) |
 | **S6** | `fmtMix` called a true zero `<0.1%` | The inverse of S3, found by the same sweep. `fmtMix` lacked the `v > 0` guard `fmtSvcRatio` carries; correct only because `revenueMix` filters `> 0` before calling — **a formatter depending on its caller for correctness** | Add `v > 0 &&`, matching `fmtSvcRatio` | **applied 2026-09-19** |
-| **S7** | the same defect in NON-dollar units — **OPEN, one decision, four surfaces** | The 2026-09-19 sweep's remainder, measured over the served file: `fmtDev` **378** values across 9 metric×window combos (`0.00 new permits / acre` on a hood that HAS permits — reads as NO development), `fmtPct` **746** (temporal share 285 + commercial 441 + `revenue_share_city` 20), `fmtFar` **37** (`0.00 FAR`), and the three non-dollar service readouts `fmtFire` 10 / `fmtBike` 3 / `fmtTransit` 2 | **NOT a port of `<$1`** — each unit needs its own floor and its own string (`<0.01 permits / acre`? `<0.01 FAR`? and is `0.00 FAR` on a near-unbuilt hood actually *correct*?). ⚠️ **Decide the rule once and apply to all four**, which is what this file exists to enforce | **OPEN — Peter's call.** ⚠️ See the DATA note below: some of these inputs may be artefacts, not small numbers, and a floor would dignify them |
+| **S7** | the same defect in NON-dollar units | The 2026-09-19 sweep's remainder, measured over the served file: `fmtDev` **378** values across 9 metric×window combos (`0.00 new permits / acre` on a hood that HAS permits — reads as NO development), `fmtPct` **746** (temporal share 285 + commercial 441 + `revenue_share_city` 20), `fmtFar` **37** (`0.00 FAR`), and the three non-dollar service readouts `fmtFire` 10 / `fmtBike` 3 / `fmtTransit` 2 | **NOT a port of `<$1`**, and after measuring, **not one rule either** — the five surfaces are different cases (see the DATA note). Per unit: name the count where one exists, floor where the unit has no numerator to name, and leave `fmtFar` alone because `0.00 FAR` is *correct* | **DECIDED + applied 2026-09-20** (Peter, per-unit). `fmtDev` names its count in Infill; `fmtFire`/`fmtTransit`/`fmtPct` floor at `<0.01`; `fmtFar` and `fmtBike` closed as needing nothing. Guards: `verify-smoke.js` §C10 (3 checks) + `verify-infill.js` (2) + `verify-services-panel.js` §3e (non-vacuity) |
 
 ✅ **S7's data question is ANSWERED (2026-09-20), and it removed the bike
 surface from this row rather than giving it a floor.** The question was whether
@@ -120,11 +120,51 @@ exactly the three sliver neighbourhoods, so bike needs no floor and no
 `<0.01 m / acre` string. ⏳ Live from the next weekly refresh; the served file
 still carries the three until then.
 
-⚠️ **The other non-dollar surfaces are UNMEASURED and this result does not
-transfer.** `fmtDev` 378, `fmtPct` 746, `fmtFar` 37, `fmtFire` 10,
-`fmtTransit` 2 — fire and transit come from different pipelines that use the
-same overlay pattern and may tell the same story, but nobody has checked.
-**Ask the artefact-or-small question per surface before choosing any floor.**
+✅ **ALL FIVE ARE NOW MEASURED (2026-09-20), and BIKE WAS THE ONLY ARTEFACT.**
+Every count above reproduced exactly against the served file (hash-matched to
+`peterfriedrich.github.io` before measuring). The artefact-or-small question was
+asked per surface, and the answers differ enough that **S7's original "decide
+the rule once and apply to all four" framing did not survive** — a single
+`<0.01` rule would have put a floor on FAR, where `0.00` is not a defect.
+
+| surface | values | what is behind the `0.00` | verdict |
+|---|---|---|---|
+| `fmtBike` | 3 | an 11 µm overlay crumb | **ARTEFACT** — fixed upstream (`MIN_PIECE_M`), surface gone |
+| `fmtDev` | 378 | **an INTEGER count ≥ 1 in every single row** (max 10 permits) | real; worst misread of the five |
+| `fmtFire` | 10 | 0.31–15.4 dispatched events/yr | real, small |
+| `fmtTransit` | 2 | 0.95 and 5.5 stop-events/weekday | real, small |
+| `fmtFar` | 37 | 17.7–31,200 m² of floor area | real, and `0.00` is **correct** |
+| `fmtPct` | 746 | 1 quantum of `share_scale` (1e-6) | at the **file's** precision floor |
+
+⚠️ **`fmtDev`'s 378 are not uniformly harmful, and that narrowed the fix.** The
+**Development** view already prints the raw count on the next line, so the rate
+self-corrects there. Only the **Infill** view rendered `fmtDev` naked beside
+`fmtFar`. So the fix is to **name the count** — the numerator is already in the
+served file — and `fmtDev` needs no floor string and no new data.
+
+⚠️ **`fmtFar` is CORRECT, not floored.** FAR = Σ floor area / Σ **deduped lot
+area**, so the tiny values are huge, near-unbuilt polygons: ring-road corridors,
+river-valley parkland, a 49 km² industrial park. The smallest implied floor area
+is **17.7 m²** of real building. A hood that is essentially unbuilt genuinely
+has FAR ≈ 0 and should say so. **A first pass divided by GROUND acres instead
+and got 0.01 m² — physically impossible, and it looked exactly like the bike
+story. The error ran toward the conclusion being reached for.** Check the
+denominator before calling a ratio an artefact.
+
+⚠️ **`fmtPct`'s floor belongs to the export, not the data.** `temporal.json`
+stores shares as integers in units of 1/`share_scale` = 1e-6, so the smallest
+nonzero value **is one quantum** — the file cannot resolve below `<0.01%`, which
+is why the floor is the honest reading and a third decimal would be invented
+precision. ❓ **UNRESOLVED:** 238 exact zeros in `share` (287 in `commercial`)
+cannot be distinguished from values quantised down to zero. Greenfield hoods
+with no assessment in 2012 are genuinely 0, so this is probably benign — but it
+is not *shown* to be, and it cannot be settled from the served file.
+
+⚠️ **`fmtBike` keeps NO floor, deliberately.** Post-`MIN_PIECE_M` the three
+sliver hoods are exact zeros, so nothing renders `0.00`. A surviving 1 m route
+in a very large hood *could* still land under 0.005 m/acre — today none does
+(base rate 0), so no guard was added on the strength of a mechanism alone.
+Re-measure if the bike tail reappears rather than pre-emptively flooring it.
 
 ---
 
