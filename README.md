@@ -1,6 +1,6 @@
 # Edmonton Revenue Per Acre Analysis
 
-**Which parts of Edmonton pay for themselves — mapped, per acre, from open data.**
+**Where Edmonton's property-tax revenue comes from — mapped, per acre, from open data.**
 
 [![Edmonton tax revenue per acre, shown by neighbourhood and again in 50 m grid cells](docs/assets/hood-vs-50m-grid.png)](https://peterfriedrich.github.io/edmonton-tax-viz/)
 
@@ -10,11 +10,11 @@ colour are revenue per acre; grey is set-aside natural and undeveloped land.*
 
 ## What This Is
 
-Several published studies have examined the fiscal balance of suburban development in Edmonton. A Sustainable Prosperity report found that costs to the city will exceed revenues by **nearly $4 billion over 60 years** across just 17 planned new developments. A 2016 analysis of three new neighbourhoods (Decoteau, Riverview, Horse Hills) found they'll cost **$1.4 billion more** than they'll generate over 50 years.
+Published studies have costed suburban growth here: a Sustainable Prosperity report found costs exceeding revenues by **nearly $4 billion over 60 years** across 17 planned developments, and a 2016 analysis of Decoteau, Riverview and Horse Hills put them **$1.4 billion** short over 50 years. Both are long-run cost projections.
 
-No comprehensive, public **revenue-per-acre analysis** has been published for Edmonton — the kind of spatial fiscal analysis that presents this data at the neighbourhood level for residents and councillors.
+**This project maps the revenue half of that question** — what each neighbourhood pays today, per acre, broken out by development pattern. No comprehensive public revenue-per-acre analysis had been published for Edmonton.
 
-The goal: map Edmonton's property tax revenue and estimated service costs against land area, broken out by area and development pattern — downtown mixed-use and established infill areas alongside suburban greenfield expansion — and present the per-acre figures.
+It does **not** reproduce those lifecycle figures. The cost side here covers a few services, is labelled *modeled, not billed*, and shows magnitude only — it never rules on whether a neighbourhood pays its way. That comparison is the goal, not the current state.
 
 ## Why Now
 
