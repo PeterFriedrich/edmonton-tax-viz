@@ -989,11 +989,18 @@ archive"*) is not, and this span is 2,533 lines.
   - ⚠️ **Token expires ~2027-09-01** (fine-grained max, 366 days). When it
     lapses the refresh goes red the same way. `RUNBOOK.md` §3.
 
-- [ ] **OUTREACH TRACKER — TEN data issues found, ZERO sent. Every one is
-  Peter's call.** ✅ **AS OF 2026-09-17 (S169) NOTHING IS BLOCKED ON WORK.** All
-  five sendable issues now carry both published evidence and drafted report
-  text; issue 6 was the last gap (notebook + draft landed that day). **The only
-  thing between every one of them and a send is the decision to send.** ⚠️ **Count corrected 2026-09-16 (S166): the item said "five",
+- [ ] **OUTREACH TRACKER — SIX confirmed sendable issues, ZERO sent. Every one
+  is Peter's call.** ⚠️ **"NOTHING IS BLOCKED ON WORK" STOPPED BEING TRUE ON
+  2026-09-20** — it held from S169, when issues 1 and 3–6 all had published
+  evidence plus drafted report text, but **`DATA_ISSUES.md` §7 (`stt5-pzaa`,
+  new 2026-09-20) has NEITHER a notebook NOR a draft.** So: **five need only the
+  decision to send; the sixth needs work first.** ⚠️ **Counts restated
+  2026-09-20 with their definition, because the previous "TEN data issues / 10
+  rows / 11 NOT SENT" does not reconstruct against the file** — nothing was
+  lost, the convention was just never written down. As counted today:
+  **7 numbered issues** (6 theirs + issue 2, which is ours and FIXED) **plus 7
+  lettered candidates A–G** under "Possible issues", which are unconfirmed and
+  not yet sendable. **Use those two numbers, not a single total.** ⚠️ **Count corrected 2026-09-16 (S166): the item said "five",
   and `DATA_ISSUES.md` now carries 10 rows and 11 `NOT SENT` markers. The
   substance did not go stale — it got BIGGER, and "zero sent" is still exactly
   true.** This is the project's standing failure mode in its purest form: a
@@ -2471,19 +2478,38 @@ archive"*) is not, and this span is 2,533 lines.
   stricter here — descriptive only, see the spec. Build order A1 → A3 → A2 →
   B2 → B1 → B3:
   - _2 closed sub-items moved to `docs/TODO_archive.md` § "Closed sub-items lifted out of still-open parents" (2026-09-16) — they shipped; nothing open was moved._
-  - [ ] **A2 — Shovel-ready industrial land:** `stt5-pzaa` verified 2026-07-18
-    (annual snapshots 2016–2023, `servicing` field, centroids); absorption
-    computable from snapshot diffs; display undecided. ⚠️ **ITS INPUT IS 19
-    MONTHS STALE — measured 2026-09-17 (S166), and "verified" above meant
-    REACHABLE, not CURRENT.** `stt5-pzaa` ("Vacant Land - Industrial") answers
-    200 and its rows have not moved since **2025-02-19**. Controls run the same
-    minute prove the field is meaningful and the portal is fine: `qi6a-xuwt`
-    rows=2026-01-12, `pwis-wc4c` rows=2026-04-29. So this table sat out two
-    assessment rolls. **Re-check `rowsUpdatedAt` before ingesting it, and treat
-    any absorption series built on it as ending in 2025, not today.** This is
-    `archived-tables-still-answer` exactly. Not yet filed in
-    `docs/DATA_ISSUES.md` — a dataset that stopped updating MAY be a publisher
-    defect or may simply be annual/retired; establish which before writing a row.
+  - [ ] **A2 — Shovel-ready industrial land:** `stt5-pzaa` (annual snapshots
+    2016–2023, `servicing` field, centroids); absorption computable from
+    snapshot diffs; display undecided. ⚠️ **ITS INPUT IS STALE — 19 months at
+    S166, 21 now.** Rows have not moved since **2025-02-19**; controls run the
+    same minute proved the portal was fine (`qi6a-xuwt` 2026-01-12, `pwis-wc4c`
+    2026-04-29). This is `archived-tables-still-answer` exactly.
+    - ✅ **THE retired/annual/defective QUESTION IS CLOSED — 2026-09-20 (S179):
+      DEFECTIVE, now `docs/DATA_ISSUES.md` §7** (its first row with neither a
+      notebook nor a draft). It declares `Update Frequency: Annually` with no
+      deprecation signal of any kind, yet the City published the **2023 and
+      2024** editions of the report behind it — the 2024 PDF created
+      **2025-12-17**, ten months after the dataset's last touch. The report
+      index `k8bn-rfq9` is frozen the same way (newest `year` 2022, touched
+      2025-02-13, six days earlier), so it is one workflow lapse, not one table.
+    - ⚠️ **BEFORE BUILDING ANY ABSORPTION SERIES: the methodology broke inside
+      the missing gap.** Vacant and reserved industrial land were *"previously
+      combined (2020-2023)"* and are split from 2024 on (2024 report, footnote
+      4). The dataset carries the **old combined** definition — its 2022/2023
+      totals are 6,655.6/6,628.5 ha against the reports' 6,715/6,687 ha, a
+      stable ~59 ha offset confirming the same series. The 2024 report's vacant
+      figure is **1,878 net ha**. **Continuing one with the other manufactures a
+      72% collapse that is purely definitional.** Any series built here ends in
+      **2023**, on the old definition.
+    - ⚠️ **The report does not answer the question this sub-item is named for**
+      — footnote 1: *"This report does not include data on shovel-ready lands."*
+      `servicing` is the only shovel-ready proxy either source offers.
+    - **A successor may be coming:** the 2024 IIAP (p.21, quoted in the report)
+      commits to *"establishing a vacant land inventory data set"*. Check for it
+      before ingesting this one.
+    - ✅ **Blocker retired:** the report PDFs were recorded as "laptop-gated from
+      the Oracle box"; all three downloaded here 2026-09-20 and
+      `www.edmonton.ca/growthanalysis` returns 200.
   - [ ] **A4 — Assessment-lag methods note:** Nov 29 2024 council memo
     attachment (Table 1, permit→assessment 3–5 yr lag) — edmonton.ca fetch,
     likely Peter/laptop.

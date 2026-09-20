@@ -33,11 +33,14 @@ that one owns what the evidence rests on.
 item that mirrors it in one line each — if the two disagree, **this one is
 right**, and the TODO is stale. Update here first.
 
-**Nothing has been sent. Six issues, zero contact, as of 2026-09-17.** ⚠️ **All
-five sendable issues now have BOTH published evidence and drafted report text**
-(issue 6's landed 2026-09-17) — **nothing is blocked on work any more; the only
-thing left is the decision to send.** (Issue 2
-is ours, not theirs — it was never a candidate to send, and it is now fixed.)
+**Nothing has been sent. Seven issues, zero contact, as of 2026-09-20.**
+⚠️ **Issues 1 and 3–6 — all five of the previously sendable set — have BOTH
+published evidence and drafted report text** (issue 6's landed 2026-09-17), so
+**nothing among those five is blocked on work; the only thing left is the
+decision to send.** ⚠️ **Issue 7 (new 2026-09-20) has NEITHER** — no notebook,
+no draft — so "every sendable issue is ready" stopped being true on 2026-09-20
+and this line is the only place that says so. (Issue 2 is ours, not theirs — it
+was never a candidate to send, and it is now fixed.)
 
 | # | issue | evidence | report text | status |
 |---|---|---|---|---|
@@ -47,13 +50,20 @@ is ours, not theirs — it was never a candidate to send, and it is now fixed.)
 | 4 | no per-parcel exemption status published | [published](https://peterfriedrich.github.io/edmonton-tax-viz/notebooks/exemption-uncertainty.html) | ✅ `docs/DRAFT_open_data_request_exemption_status.md` | **NOT SENT** |
 | 5 | 3 of 5 school boards absent from open data | [published](https://peterfriedrich.github.io/edmonton-tax-viz/notebooks/school-coverage-gap.html) | ✅ `docs/DRAFT_open_data_request_school_locations.md` | **NOT SENT** |
 | 6 | `24uj-dj8v` `neighbourhood` holds a LIST of hoods | [published](https://peterfriedrich.github.io/edmonton-tax-viz/notebooks/permit-neighbourhood-list.html) | ✅ `docs/DRAFT_bug_report_permit_neighbourhood_list.md` | **NOT SENT** |
+| 7 | `stt5-pzaa` frozen 2 annual cycles while its report kept publishing | ❌ none | ❌ none | **NOT SENT** |
 
 **Channel:** `opendata@edmonton.ca`, read from the portal footer 2026-08-25 —
 primary source, not inference. Right channel for 1, 3, 4 and 5, all of which are
 dataset/portal requests. **Assessment & Taxation Branch is the escalation if
 Open Data bounces one**, not the first stop.
 
-**Issues 1, 3, 4 and 5 all have a written message as of 2026-09-17; issue 6 does not.** ⚠️ **Report text is no longer the blocker on any of the four — the only thing between them and a send is Peter's decision.** All three new drafts re-verified their premises against the live portal on the day they were written (coverage string still wrong and it survived the 2026-09-14 refresh; `qi6a-xuwt` untouched since 2026-01-12 so the dropout stands; the school absence re-searched and still absent). ⚠️ **Issue 6's evidence gap CLOSED 2026-09-17** — it was the
+**Issues 1 and 3–6 all have a written message.** ⚠️ **This line read "issue 6
+does not" until 2026-09-20, and was wrong the day it was written** — the draft
+landed at 14:52 on 2026-09-17, eight minutes after the prose claiming its
+absence, and §6 below carried the same stale "No draft" for three days while
+the table two rows up said ✅. **The table is authoritative; prose about the
+table goes stale by the hour.** ⚠️ **Report text is no longer the blocker on any
+of the five — the only thing between them and a send is Peter's decision.** All three new drafts re-verified their premises against the live portal on the day they were written (coverage string still wrong and it survived the 2026-09-14 refresh; `qi6a-xuwt` untouched since 2026-01-12 so the dropout stands; the school absence re-searched and still absent). ⚠️ **Issue 6's evidence gap CLOSED 2026-09-17** — it was the
 one issue lacking a published notebook, which made "every remaining blocker is
 report text" false between 2026-09-14 and 2026-09-17. It now has both. ⚠️ Sending is Peter's call in every case — it is outward-facing and
 it speaks for the project.
@@ -332,8 +342,10 @@ value over a name-matched set with no self-check — and is not the answer.
 
 ## 6. `24uj-dj8v` — the `neighbourhood` field sometimes holds a LIST of hoods
 
-**Status: NOT SENT.** No draft. **Last measured: 2026-09-14** (S156, local
-re-derivation from `data/raw/building_permits.csv`).
+**Status: NOT SENT.** **Draft: `docs/DRAFT_bug_report_permit_neighbourhood_list.md`**
+(written 2026-09-17; this line said "No draft" until 2026-09-20, three days after
+the file existed). **Last measured: 2026-09-14** (S156, local re-derivation from
+`data/raw/building_permits.csv`).
 
 **Evidence:** ✅ **PUBLISHED 2026-09-17** —
 [permit-neighbourhood-list.html](https://peterfriedrich.github.io/edmonton-tax-viz/notebooks/permit-neighbourhood-list.html)
@@ -387,6 +399,108 @@ Minor, and worth one line in the report: the field name has a **typo**,
 `numberr`. ⚠️ Worth pairing with the observation that
 this dataset's `building_type` is also an uncontrolled vocabulary
 (§B below) — same dataset, same class of problem.
+
+---
+
+## 7. `stt5-pzaa` — frozen two annual cycles while the report it comes from kept publishing
+
+**Status: NOT SENT.** No notebook, no draft. **Last measured: 2026-09-20**
+(S179, live against the Socrata API and `edmonton.ca` from the Oracle box).
+
+**This closes a question `TODO.md` A2 carried unfiled for 13 sessions** — *is
+`stt5-pzaa` retired, annual, or defective?* S166 measured that its rows had not
+moved since 2025-02-19 but deliberately refused to write a row here, because a
+table that stops updating may be a publisher defect **or** may simply be annual
+or retired, and the three want different reports. **It is defective**, on the
+publisher's own declared terms.
+
+**Evidence — the dataset asserts it is current, and is not:**
+
+- Its own Socrata `custom_fields` declare **`Update Frequency: Annually`,
+  `Automated or Manual: Manual`**. There is **no deprecation signal of any
+  kind**: `moderationStatus: None`, not hidden from the data catalogue, `flags`
+  carries only routine values. ⚠️ The description's *"the City will no longer
+  provide datasets…"* sentence is the **standard ADP/AltaLIS parcel-polygon
+  boilerplate** appended across this portal, not a retirement notice — it reads
+  like one to a keyword scan, which is why the text was checked.
+- **Newest snapshot year is 2023.** Years 2016–2023, 393–487 parcels each,
+  3,631 rows.
+- `rowsUpdatedAt` = **2025-02-19**, 577 days at measurement. ⚠️ **All 3,631 rows
+  carry the identical `:updated_at` second**, so that was a full
+  truncate-and-replace; per-row load history is destroyed and **the API cannot
+  say when any snapshot first appeared.** Do not try to date the 2023 load from
+  it.
+- ⚠️ **The program did not stop — only the open data did.** The City published
+  `2023-Industrial-Land-Supply-Report.pdf` (PDF created 2024-09-17) and
+  **`2024-Vacant-Industrial-Land-Report.pdf` (created 2025-12-17, ten months
+  after the dataset's last touch)**, both HTTP 200 off
+  `edmonton.ca/growthanalysis`. The 2025 edition 404s and is **not** late — on
+  this cadence it is due ~Dec 2026.
+- **The same defect hits `k8bn-rfq9` "Growth Monitoring Reports"**, which is the
+  index *of those PDFs*: newest `year` is **2022**, last touched **2025-02-13**,
+  six days before `stt5-pzaa`. One publication workflow, two frozen tables, one
+  week apart — which is what makes this a workflow lapse rather than one broken
+  table.
+- Sibling `svsw-2ub7` "Vacant Land Inventory" (non-industrial) is frozen since
+  **2021-06-21 — 1,916 days**, also declaring `Annually`. `parr-53tk` is a
+  derived view of `stt5-pzaa` (`modifyingViewUid`), **not** independent
+  corroboration.
+
+**What it breaks here — and the staleness is the smaller half.**
+
+A2 planned to compute industrial absorption from snapshot diffs. Two problems,
+and the second is the dangerous one:
+
+**(a)** Two annual cycles (2024, 2025) are simply absent, so any series built on
+this ends in 2023, not today.
+
+**(b)** ⚠️ **THE METHODOLOGY BROKE INSIDE THE MISSING GAP, AND THE BREAK IS
+INVISIBLE FROM THE DATASET.** Footnote 4 of the 2024 report states that vacant
+and reserved industrial land were **"previously combined (2020-2023)"** and are
+now differentiated, and that the cycle newly includes industrial-zoned property
+in mixed-use neighbourhoods, office and Direct Control zones, and underutilized
+land. The dataset is the **old, combined** definition, confirmed by a stable
+offset rather than assumed:
+
+| year | `stt5-pzaa` Σ `area_ha` | the City's report | Δ |
+|---|---|---|---|
+| 2022 | 6,655.6 | 6,715 | 59.4 |
+| 2023 | 6,628.5 | 6,687 | 58.5 |
+| 2024 | **absent** | 6,990 total = 5,112 gross reserved + **1,878 net vacant** | — |
+
+A ~59 ha constant offset across both years is the same series. **Continuing the
+dataset's 6,628 ha with the 2024 report's "vacant" 1,878 ha shows a 72%
+collapse that is entirely definitional** — and that is exactly the join a
+reader, a reporter, or this project would make without reading footnote 4 of a
+PDF that is not linked from the dataset.
+
+**(c)** A2's own framing is "shovel-ready", and **footnote 1 of the 2024 report
+says it "does not include data on shovel-ready lands."** The dataset's
+`servicing` field is the only shovel-ready proxy either source offers — which
+raises the dataset's value here rather than lowering it.
+
+**What to ask for.** Refresh `stt5-pzaa` with 2024 (and 2025 when that edition
+lands), **or** mark it retired if the 2024 split means it is being superseded —
+the ask is not really about freshness, it is that **the metadata currently
+asserts a live annual cadence, so a consumer who reads it is told the data is
+current when it is two cycles behind.** If it is refreshed, ask for the
+vacant/reserved split to be carried **as a column**, so the 2020–2023 rows stay
+interpretable instead of silently changing meaning at the 2024 boundary. Same
+ask for `k8bn-rfq9` — a four-column index of PDFs, cheap to fix, and currently
+omitting two published editions. ⚠️ **One thing to raise in the City's favour,
+because it may make the whole request moot:** the 2024 report quotes the 2024
+Industrial Investment Action Plan (p.21) committing to *"establishing a vacant
+land inventory data set"* — so a successor may already be planned, and the
+right first question is whether this dataset is it.
+
+**Channel:** `opendata@edmonton.ca` — portal dataset, same as 1, 3, 4 and 5.
+
+⚠️ **Incidental, and it retires a blocker:** `docs/SPEC_industrial.md` recorded
+these report PDFs as **"laptop-gated from the Oracle box."** All three
+downloaded here over plain `curl` with the `certifi` bundle;
+`www.edmonton.ca/growthanalysis` returns **200**. That claim was stale in the
+same way the `budget.edmonton.ca` one was (S108) — **test the exact host, never
+the domain.**
 
 ---
 
