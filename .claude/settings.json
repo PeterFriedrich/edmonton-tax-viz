@@ -18,6 +18,15 @@
             "command": "jq -c '{t:(now|todateiso8601),tool:.tool_name,path:(.tool_input.file_path // .tool_input.path // null),q:(.tool_input.pattern // null),cwd:.cwd,sid:.session_id}' >> ~/.claude/retrieval-log.jsonl 2>/dev/null || true"
           }
         ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -c 'select((.tool_input.command // \"\") | test(\"(grep|rg|sed|cat|head|tail|less|awk|wc|python3?|jupytext)\")) | . as $i | ((.tool_input.command // \"\") | [scan(\"[A-Za-z0-9_./-]+[.]md\")] | unique[]) | {t:(now|todateiso8601),tool:\"Bash\",path:.,q:null,cwd:$i.cwd,sid:$i.session_id}' >> ~/.claude/retrieval-log.jsonl 2>/dev/null || true"
+          }
+        ]
       }
     ],
     "SessionStart": [

@@ -10,13 +10,21 @@ opens, how many distinct sessions opened each, and which were never opened.
 ⚠️ A doc with zero reads is a PRUNE CANDIDATE, not a verdict. Three things make a
 zero honest-but-misleading: a doc read in a session that predates the hook, a doc
 whose content reached the model through CLAUDE.md, and — the big one — **a doc
-read through Bash.** The hook matches the `Read`, `Grep` and `Glob` TOOLS, so
-`bash grep`, `sed`, `cat`, `head` and `python` reads are invisible to it.
-Measured 2026-09-16: the session that audited this instrument logged **4 reads
-while consulting ~14 docs**; `DECISIONS.md` and `AUDIT_LEDGER.md` both read via
-Bash, both scored zero. The undercount is not uniform — it falls hardest on the
-big files a session greps rather than opens, which are the ones a prune would
-target. The never-read list is where to look, not what to conclude.
+read through Bash.** Until 2026-09-21 the hook matched only the `Read`, `Grep`
+and `Glob` TOOLS, so `bash grep`, `sed`, `cat`, `head` and `python` reads were
+invisible to it. Measured 2026-09-16: the session that audited this instrument
+logged **4 reads while consulting ~14 docs**. Measured again 2026-09-21 on a
+session doing ordinary work, not auditing: **8 tracked docs consulted through
+Bash, 0 logged.** The undercount fell hardest on the big files a session greps
+rather than opens — the ones a prune would target.
+
+⚠️ **THE HOOK WAS WIDENED ON 2026-09-21 (`BASH_HOOK_SINCE`), SO THE LOG HAS TWO
+REGIMES AND THEIR COUNTS ARE NOT COMPARABLE.** A Bash entry is now written when
+a command names a `.md` path alongside a read verb. Entries before that date
+undercount; entries after it do not undercount the same way. The report says so
+whenever the window spans the change — **do not read a rise in counts as a rise
+in reading.** Residual blind spot, both regimes: a directory-wide `grep -rn foo
+docs/` names no file, so it still logs nothing.
 
 ⚠️ Read the DATE RANGE before the counts. Under ~2 weeks of normal sessions the
 table settles nothing, and the report says so at the top rather than leaving the
@@ -39,6 +47,9 @@ DEFAULT_LOG = Path.home() / ".claude" / "retrieval-log.jsonl"
 # Below this the table cannot settle the question it was built for; the report
 # leads with the warning rather than printing counts that look like evidence.
 MIN_DAYS = 14
+# The day the PostToolUse hook gained a `Bash` matcher (.claude/settings.json).
+# A window spanning it holds two differently-biased regimes; see the docstring.
+BASH_HOOK_SINCE = "2026-09-21"
 
 
 def load(log_path: Path) -> list[dict]:
@@ -78,6 +89,18 @@ def main() -> int:
     if days < MIN_DAYS:
         print(f"⚠️  ONLY {days} DAYS — under {MIN_DAYS} this table settles nothing. "
               f"Report it as MEASUREMENT-PENDING.")
+
+    # Counts either side of the widening measure different things. Said here
+    # rather than only in the docstring: the reader of the table is the one who
+    # would otherwise compare them.
+    if first[:10] < BASH_HOOK_SINCE <= last[:10]:
+        before = sum(1 for r in rows if r["t"][:10] < BASH_HOOK_SINCE)
+        bash = sum(1 for r in rows if r.get("tool") == "Bash")
+        print(f"⚠️  WINDOW SPANS THE {BASH_HOOK_SINCE} HOOK WIDENING — TWO REGIMES.")
+        print(f"    {before} of {len(rows)} calls predate it and see NO Bash reads; "
+              f"{bash} Bash {'entry' if bash == 1 else 'entries'} in the log.")
+        print(f"    A doc's count rising across that date is the INSTRUMENT changing, "
+              f"not the reading.")
     print()
 
     # What a session is TOLD to read, in bytes. This is the cost a markdown:code
@@ -123,10 +146,12 @@ def main() -> int:
         # a prune would act on, and a caveat the actor does not see is the defect
         # this project keeps re-learning (`_classify`, ~70 days into a log).
         print(f"\n⚠️  A ZERO BELOW MAY MEAN 'READ THROUGH BASH', NOT 'NEVER READ'.")
-        print(f"    The hook sees the Read/Grep/Glob TOOLS only — `bash grep`, `sed`,")
-        print(f"    `cat` and `python` reads are invisible. The audit session itself")
-        print(f"    logged 4 reads while consulting ~14 docs (2026-09-16). Confirm a")
-        print(f"    zero against transcripts before treating it as evidence.")
+        print(f"    Before {BASH_HOOK_SINCE} the hook saw the Read/Grep/Glob TOOLS only,")
+        print(f"    so every `bash grep`, `sed`, `cat` and `python` read was invisible:")
+        print(f"    one ordinary session consulted 8 tracked docs and logged 0 of them")
+        print(f"    (2026-09-21). Bash reads are captured now, but only when the command")
+        print(f"    NAMES the file — a directory-wide `grep -rn x docs/` still logs")
+        print(f"    nothing. Confirm a zero against transcripts before acting on it.")
         print(f"\nNEVER OPENED in this window — {len(never)} of {len(tracked)}:")
         for path in never:
             print(f"       .         {path}")

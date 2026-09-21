@@ -557,8 +557,19 @@ is in the `panel` column. T1 is public (3 of 10 service rows). T2 closed (`## Do
   **8 `Read` entries while touching several times that many files.** So the
   ~2026-09-30 readout will **undercount, and be biased against exactly the docs
   consulted in passing** — i.e. the prune rule aimed at docs that ARE being
-  used. ⚠️ **Widen the matcher to include Bash, or discount the table — do not
-  prune on it as it stands.**
+  used.
+  ✅ **DECIDED AND DONE 2026-09-21 — the matcher was WIDENED, not discounted.**
+  `.claude/settings.json` has a third `PostToolUse` entry matching `Bash`, which
+  logs a `.md` path when the command names one alongside a read verb; proven
+  live, not just pipe-tested. Re-measured first on a session doing ordinary work
+  rather than auditing the instrument: **8 tracked docs consulted through Bash,
+  0 logged** — worse than the S179 figure.
+  ⚠️ **STILL DO NOT PRUNE ON THE TABLE AS IT STANDS, for a NEW reason.** The log
+  now holds **two regimes** whose counts are not comparable, and the readout is
+  nine days after the change, so it is mostly pre-widening data. The report
+  prints the split itself when the window spans 2026-09-21. ⚠️ **Residual blind
+  spot in both regimes:** a directory-wide `grep -rn foo docs/` names no file and
+  logs nothing.
 - [ ] **T5 is NOT a cleared row.** The two Detail selectors read invariant on
   tooltip/peek only because the probe feeds a hood feature to `viewTooltip` in
   grid modes too. Needs a cell-grain capture before it means anything.
