@@ -248,6 +248,8 @@ for rev in ("master","a204fe6","db1d7ac","423da3d"):
 EOF
 git log -M --diff-filter=D --name-only --format= -- '*.md' | grep -c .   # 0 — no .md ever deleted
 git ls-tree -r --name-only master -- session-summary | grep -cE '2026-0(8-(1[7-9]|2[0-9]|3[01])|9-)'   # 54 sessions in window
-.venv/bin/python tools/retrieval_report.py | sed -n 4p   # the loaded-path line
+.venv/bin/python tools/retrieval_report.py | grep '^Loaded path'
+# NOT `sed -n 4p` — that was correct until 2026-09-21, when the report gained a
+# regime warning above this line and the position moved.
 grep -rl retrieval_report .github/ scripts/ tests/      # handoff_gap.py comment only
 ```
