@@ -26,6 +26,9 @@ import sys
 import time
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from inject_notebook_mobile_css import inject  # noqa: E402
+
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE_DIR = ROOT / "notebooks" / "verified"
 
@@ -66,6 +69,17 @@ def build(source: Path, out_dir: Path, timeout: int) -> tuple[bool, float, Path]
 
     log_path.write_text(run.stdout + run.stderr)
     ipynb.unlink(missing_ok=True)  # intermediate; the .py and the .html are the artifacts
+
+    # nbconvert's lab template clips code lines and wide tables on a phone
+    # instead of scrolling them. This render path is weekly and automated, so
+    # the fix has to live here — patching the committed HTML lasts until the
+    # next refresh. Measured 2026-09-21 on the published page: -428px of code
+    # and -1458px of output at 390px wide.
+    if run.returncode == 0:
+        html = out_dir / (source.stem + ".html")
+        if html.exists():
+            inject(html)
+
     return run.returncode == 0, elapsed, log_path
 
 
