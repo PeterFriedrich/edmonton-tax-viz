@@ -2671,13 +2671,14 @@
         updateTriggers: { getFillColor: [state.devMetric, state.devWindow] },
       });
     }
-    // ⚠️ "0.00 FAR" reads as NO BUILT FLOOR AREA, and for 37 hoods on the
-    // served file (2026-09-21) that was wrong — they have buildings, just very
-    // little against a huge denominator. The smallest, ANTHONY HENDAY MISTATIM
-    // at 2.0e-05, is an interchange: real structures, ~13,000 acres. `<0.01`
-    // says small; `0.00` says none. Same `v > 0` guard as every sibling — a
-    // hood with genuinely no built area keeps printing "0.00 FAR".
-    const fmtFar = v => (v > 0 && v < 0.005 ? "<0.01" : v.toFixed(2)) + " FAR";
+    // ⚠️ NO FLOOR, DECIDED — do not "fix" this. DECISIONS.md 2026-09-20 closed
+    // fmtFar as CORRECT: FAR is Σ floor area / Σ deduped lot area, so the 37
+    // hoods printing "0.00" are ring-road corridors, river-valley parkland and
+    // a 49 km² industrial park, and a near-unbuilt hood genuinely has FAR ≈ 0.
+    // Unlike the residential-share row, "0.00" here hides nobody: the unit is
+    // already a density ratio, not a count of activity. (Re-proposed and
+    // reverted 2026-09-21 by a session that had not read the row.)
+    const fmtFar = v => v.toFixed(2) + " FAR";
 
     // Infill's amenity highlight grid (housing the paused infill-granularity
     // thread — ANALYSIS_BACKLOG.md §12 — pending the two open calls that block

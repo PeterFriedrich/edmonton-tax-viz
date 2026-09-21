@@ -447,8 +447,9 @@ const GARBAGE = /\bNaN\b|\bundefined\b|\bnull\b|\bInfinity\b|\$NaN|\$undefined/;
       if (p.road_m_per_acre != null)
         note(p.road_m_per_acre, fmtRoadM, '0.0 road m / acre', 'road', n,
              '<0.1', x => x.toFixed(1) === '0.0');
-      if (p.far != null)
-        note(p.far, fmtFar, '0.00 FAR', 'far', n);
+      // ⚠️ `far` is NOT noted here, deliberately — DECISIONS.md 2026-09-20
+      // closed it as correct-not-floored, so its 37 "0.00" renders are the
+      // decided behaviour and noting it would redden this gate on purpose.
       // A whole-percent readout: its zero boundary is 0.005 of the FRACTION.
       if (p.res_revenue_per_acre != null && p.revenue_per_acre > 0)
         note(p.res_revenue_per_acre / p.revenue_per_acre, fmtResShare,
