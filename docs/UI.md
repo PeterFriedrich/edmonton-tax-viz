@@ -962,6 +962,37 @@ zoom +/− buttons we don't want (scroll/pinch already cover zoom). See
   object (e.g. `THEMES.dark` / `THEMES.light`) rather than loose top-level
   constants, with a toggle. Keeps the two palettes from drifting.
 
+- **CHROME HALF DONE (2026-09-21, `feat/chrome-light-dark`).** The CSS chrome is
+  now tokenized: every colour in `styles.css` is a `:root` custom property, and
+  the inline-SVG panel marks (temporal/dev sparklines + charts, compass needle)
+  read `var(--mark)` / `var(--mark-2)` / `var(--band)` via a `style` attribute
+  (presentation attributes don't resolve `var()`). Both commits are **inert in
+  dark** — the `:root` values are the pre-token literals verbatim. This is the
+  foundation a light theme overrides; nothing consumes it yet.
+- ⚠️ **`--mark` is deliberately SEPARATE from `--accent`.** Dark makes them equal
+  (gold), but on a light surface a data line must go *dark* to read while a button
+  highlight stays *light* — one value can't do both. The split is the whole reason
+  to tokenize.
+- **CHROME-ONLY LIGHT MODE WAS CONSIDERED AND HELD (Peter, 2026-09-21).** Two
+  findings, uncovered while designing the light values:
+  1. **It's a redesign, not a flip.** The chrome sits *on the map*, which stays
+     dark in this phase. Bare-text elements (`#title`, `#legend`, `#millrates`)
+     have no background — they are light text drawn straight on the dark map, so
+     darkening their ink makes them **invisible**. And the pods are *translucent
+     dark* (`rgba(12,12,20,·)`); a translucent light pod over black turns muddy.
+     A map-stays-dark light mode therefore needs opaque light pods **plus** light
+     scrims on the bare-text elements — new chrome, not a token swap.
+  2. **The glare paradox.** People enable OS light preference to *reduce* glare.
+     A dark map is already low-glare; light chrome makes the app **brighter** —
+     the opposite of the point. The only light mode that serves a light-preference
+     user is a **light MAP**, which is the daylight / projected / printed viewing
+     case (the context question gating this) and the ramp/backdrop rework this
+     section already anticipates.
+- **RESUME PATH.** A real light mode = the map half (the `THEMES.dark/light` ramp
+  + backdrop rework above) driving the CSS tokens already in place. The chrome
+  tokens make that cheap; do the map first, then the light `@media` / `[data-theme]`
+  block + a toggle in the Display pod fall out of it.
+
 ### Colourblind mode
 - The current sequential ramp varies mostly in **luminance**, which is already
   reasonably robust for red-green CVD (deuteranopia/protanopia). The main risk is
