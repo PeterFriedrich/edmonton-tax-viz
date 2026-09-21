@@ -937,7 +937,7 @@
         legend: "Revenue per road metre (log colour)",
         aside: "Set aside / insufficient road base",
         fmt: v => "$" + Math.round(v).toLocaleString() + " / road metre",
-        component: p => `${p.road_m_per_acre.toFixed(1)} road m / acre`,
+        component: p => fmtRoadM(p.road_m_per_acre),
         blurb: "Ghost prisms show municipal property-tax revenue per metre of " +
                "city-maintained neighbourhood road (collector + local) — how much " +
                "revenue backs each metre of the network below. Height is linear; " +
@@ -2325,6 +2325,30 @@
     const fmtTransit = v => (under2dp(v) ? "<0.01" : v.toFixed(v < 1 ? 2 : 1)) +
       " scheduled transit stop-events / acre / weekday";
     const fmtBike = v => v.toFixed(v < 1 ? 2 : 1) + " dedicated bike route m / acre";
+    // Road metres print to ONE decimal, so the bare-zero threshold here is 0.05
+    // rather than SMALL_2DP. ⚠️ Same `v > 0` guard as the rest: a hood with no
+    // collector/local road must keep reading "0.0", not "<0.1".
+    //
+    // Upstream, `MIN_PIECE_M` now drops boundary-tangency crumbs, so what
+    // survives under 0.05 is REAL road and the floor is saying so. One hood as
+    // of 2026-09-21: ANTHONY HENDAY ENERGY PARK, a single 26.5 m stub across
+    // 566 acres. ⚠️ Do NOT "fix" this by widening the upstream floor to reach
+    // it — that is an editorial call about materiality (COPY_DECISIONS.md),
+    // and deleting a real road is the opposite misreading.
+    const SMALL_1DP = 0.05;
+    const fmtRoadM = v => (v > 0 && v < SMALL_1DP ? "<0.1" : v.toFixed(1)) +
+      " road m / acre";
+    // ⚠️ "0% of revenue is residential" reads as NOBODY LIVES HERE, and on the
+    // served file 19 hoods that rounded to 0 have residents paying tax —
+    // SOUTH EDMONTON COMMON's share is 4.3e-07, a few dwellings behind a
+    // retail mega-centre. `<1%` says small; `0%` says none.
+    //
+    // A NAMED FORMATTER for one call site, deliberately: `verify-smoke.js` C10
+    // runs the SHIPPED helper over the served file rather than a fixture copy,
+    // and an inline ternary inside viewTooltip could not be reached. Same
+    // reasoning as `money0` in C9.
+    const fmtResShare = frac => (frac > 0 && frac < 0.005
+      ? "<1" : Math.round(100 * frac)) + "% of revenue is residential";
     const fmtWater = (v, fixed) => money0(v) +
       " modelled water+sewer / acre / yr" +
       (fixed != null ? ` (fixed ${money0(fixed)})` : "");
@@ -2647,7 +2671,13 @@
         updateTriggers: { getFillColor: [state.devMetric, state.devWindow] },
       });
     }
-    const fmtFar = v => v.toFixed(2) + " FAR";
+    // ⚠️ "0.00 FAR" reads as NO BUILT FLOOR AREA, and for 37 hoods on the
+    // served file (2026-09-21) that was wrong — they have buildings, just very
+    // little against a huge denominator. The smallest, ANTHONY HENDAY MISTATIM
+    // at 2.0e-05, is an interchange: real structures, ~13,000 acres. `<0.01`
+    // says small; `0.00` says none. Same `v > 0` guard as every sibling — a
+    // hood with genuinely no built area keeps printing "0.00 FAR".
+    const fmtFar = v => (v > 0 && v < 0.005 ? "<0.01" : v.toFixed(2)) + " FAR";
 
     // Infill's amenity highlight grid (housing the paused infill-granularity
     // thread — ANALYSIS_BACKLOG.md §12 — pending the two open calls that block
@@ -4825,7 +4855,7 @@
     // peek card and the pinned panel must not disagree about the same hood.
     function svcDriverReading(p) {
       const t = {
-        roads:       ["road_m_per_acre", v => `${v.toFixed(1)} road m / acre`],
+        roads:       ["road_m_per_acre", fmtRoadM],
         storm:       ["storm_charge_per_acre", fmtStorm],
         fire:        ["fire_events_per_acre", fmtFire],
         water:       ["water_charge_per_acre", v => fmtWater(v, p.water_fixed_per_acre)],
@@ -5785,7 +5815,7 @@
         // renders as muted context, same hierarchy as before.
         const rows = [];
         if (state.services.roads && p.road_m_per_acre != null)
-          rows.push(`${p.road_m_per_acre.toFixed(1)} road m / acre <span class="muted">(collector + local)</span>`);
+          rows.push(`${fmtRoadM(p.road_m_per_acre)} <span class="muted">(collector + local)</span>`);
         if (state.services.storm && p.storm_charge_per_acre != null)
           rows.push(`<span class="muted">${fmtStorm(p.storm_charge_per_acre)}</span>`);
         if (state.services.fire && p.fire_events_per_acre != null)
@@ -6064,8 +6094,8 @@
       // VALUE split, so there is no value-side equivalent to swap in; Value's
       // own rows wait on the totals work.
       if (isRevenue(state.metric) && p.res_revenue_per_acre != null && p.revenue_per_acre > 0) {
-        const share = Math.round(100 * p.res_revenue_per_acre / p.revenue_per_acre);
-        html += `<br/><span class="muted">${share}% of revenue is residential</span>`;
+        html += `<br/><span class="muted">` +
+          `${fmtResShare(p.res_revenue_per_acre / p.revenue_per_acre)}</span>`;
       }
       // ⚠️ The PROVENANCE tier — the 15 hoods, wider than the 6 that get band
       // prisms. Both surfaces read EXEMPT_UNCERTAIN_MIN itself, so the words can
@@ -6114,7 +6144,7 @@
       // reason — it simply reads as part of that block — but the pairing is
       // deliberate and predates this change.
       if (isRevenue(state.metric) && p.road_m_per_acre != null) {
-        html += `<br/><span class="muted">${p.road_m_per_acre.toFixed(1)} road m / acre</span>`;
+        html += `<br/><span class="muted">${fmtRoadM(p.road_m_per_acre)}</span>`;
         if (FULL_BUILD && p.road_m_per_acre > 0 && p.revenue_per_acre != null) {
           const perM = p.revenue_per_acre / p.road_m_per_acre;
           html += `<br/><span class="muted">$${Math.round(perM).toLocaleString()} revenue / road metre</span>`;
