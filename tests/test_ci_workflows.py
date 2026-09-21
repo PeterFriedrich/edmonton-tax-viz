@@ -165,3 +165,57 @@ def test_the_refresh_case_labels_match_the_scripts_exit_codes(script, module):
     ok = getattr(mod, "EXIT_OK", getattr(mod, "EXIT_ALIGNED", None))
     run = next(r for r in _run_steps(_load("refresh.yml")) if script in r)
     assert _case_labels(run) == {ok, mod.EXIT_HOLD, mod.EXIT_INCONCLUSIVE}
+
+
+# --- the refresh commit step's rebase-and-retry -------------------------------
+# ⚠️ These assert the SHAPE only. The behaviour was proved by running the real
+# step body against a throwaway bare repo (2026-09-21): a concurrent push is
+# rebased over and lands, an unreachable remote fails, a conflict aborts and
+# fails, 3 exhausted attempts fail, and "nothing to commit" stays green — each
+# with a green control. What a test in this file CAN do is stop the retry being
+# quietly deleted, and stop it being "simplified" into a form that swallows a
+# real failure, which is the specific regression that matters.
+
+
+def _commit_step() -> str:
+    steps = [s for job in _load("refresh.yml")["jobs"].values() for s in job["steps"]]
+    return next(s["run"] for s in steps if "Commit regenerated data" in s.get("name", ""))
+
+
+def test_the_refresh_push_is_rebased_and_retried():
+    """A bare push loses the whole run to a merge that lands mid-job.
+
+    Measured 2026-09-21: checkout 17:40:45, a PR merged 17:42:39, push rejected
+    17:48:30 — ~8 minutes of regeneration gone, unrecoverable once the runner
+    dies. Manual dispatches are usually run while someone is merging.
+    """
+    run = _commit_step()
+    assert "git rebase origin/master" in run
+    assert "git fetch origin master" in run
+    # Bounded: an unbounded retry against a genuinely broken push never exits.
+    assert re.search(r"for attempt in 1 2 3", run)
+
+
+def test_the_refresh_push_still_fails_the_run_on_a_real_failure():
+    """⚠️ THE HALF A RETRY LOOP IS MOST LIKELY TO DELETE.
+
+    The step's own comment says commit and push are allowed to fail the run,
+    because an expired token that reported green would take the heartbeat down
+    silently — the exact failure the heartbeat exists to catch. A retry that
+    ended in `|| true`, or that had no exhaustion branch, would reintroduce it.
+    """
+    run = _commit_step()
+    assert "|| true" not in run.split("git push")[-1].split("git rebase --abort")[0]
+    # Every non-race exit is explicit and nonzero.
+    assert run.count("exit 1") == 3, "expected fetch-failed, conflict and exhausted branches"
+    assert "::error::" in run
+    # The success flag is what the exhaustion branch reads; without it the loop
+    # falls through green after three rejected pushes.
+    assert 'pushed=""' in run and "if [ -z \"$pushed\" ]" in run
+
+
+def test_the_refresh_conflict_path_aborts_the_rebase():
+    """A conflict must not leave the runner mid-rebase — the next step would
+    run against a detached, half-applied tree."""
+    run = _commit_step()
+    assert "git rebase --abort" in run

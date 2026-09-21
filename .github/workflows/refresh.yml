@@ -260,7 +260,41 @@ jobs:
             echo "No changes to commit (same-day re-run with identical output)."
           else
             git commit -m "Auto-refresh map data ($(date -u +%Y-%m-%d))"
-            git push
+            # ⚠️ REBASE-AND-RETRY, because a bare push loses the WHOLE RUN to a
+            # merge that landed while we worked. Measured 2026-09-21: this job
+            # checked out master at 17:40:45, a PR merged at 17:42:39, and the
+            # push at 17:48:30 was rejected `(fetch first)` — ~8 minutes of
+            # regeneration gone, unrecoverable, because the runner dies with it.
+            # The window is the whole job, and manual dispatches are usually run
+            # while someone is actively merging, so this is routine here rather
+            # than exotic.
+            #
+            # ⚠️ IT MUST STILL FAIL LOUDLY ON A REAL FAILURE — that is the point
+            # of the `|| echo` warning above, and a retry loop is the other way
+            # to lose it. So: only a REJECTED push is retried, the count is
+            # bounded, a rebase CONFLICT aborts and fails (the refresh's data
+            # collided with something a human must look at), and exhausting the
+            # attempts fails. An expired token cannot be swallowed here: it
+            # fails the fetch inside the loop as well as the push, so every
+            # attempt fails and the step exits nonzero.
+            pushed=""
+            for attempt in 1 2 3; do
+              if git push; then pushed=1; break; fi
+              echo "::warning::push rejected (attempt $attempt/3) — master moved; rebasing onto it and retrying"
+              if ! git fetch origin master; then
+                echo "::error::cannot fetch origin/master — this is not a race (auth/network), failing"
+                exit 1
+              fi
+              if ! git rebase origin/master; then
+                git rebase --abort || true
+                echo "::error::regenerated data conflicts with origin/master — a human must resolve this"
+                exit 1
+              fi
+            done
+            if [ -z "$pushed" ]; then
+              echo "::error::push still rejected after 3 rebase attempts — master is moving faster than this job can land"
+              exit 1
+            fi
           fi
 
       # Deliberately AFTER the commit: the guard ran before it (it had to — see
