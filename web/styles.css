@@ -36,6 +36,15 @@
   --accent: #fcd278;
   --ink-on-accent: #16111a;
   --banner-ink: #f3e2b0;
+  /* Data-mark colours for the panel sparklines/charts and the compass needle,
+     set inline in index.html via style="fill:var(--mark)". SEPARATE from
+     --accent: dark makes them equal (gold), but a data line and an active
+     button need OPPOSITE luminance on a light background — the line must go
+     dark to read, the button highlight stays light. --band is the omitted-span
+     wash (SPEC_temporal): the page ink at low alpha. */
+  --mark: #fcd278;
+  --mark-2: #8a8aa0;
+  --band: rgba(232,232,239,0.05);
   --spinner: #8ab4f8;
   --spinner-track-rm: #5a6a86;
   --banner-border: #6b5a2a;

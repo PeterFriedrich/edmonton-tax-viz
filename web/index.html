@@ -578,8 +578,8 @@
       <button id="tonorth" aria-label="Snap the map north-up without moving it"
               title="Snap north-up in place — keeps your position, zoom and tilt (Center 2D reframes the whole city)">
         <svg id="needle" viewBox="0 0 20 20" aria-hidden="true">
-          <path d="M10 2L13.4 11L10 9.1L6.6 11Z" fill="#fcd278"/>
-          <path d="M10 18L6.6 11L10 12.9L13.4 11Z" fill="#8a8aa0"/>
+          <path d="M10 2L13.4 11L10 9.1L6.6 11Z" style="fill:var(--mark)"/>
+          <path d="M10 18L6.6 11L10 12.9L13.4 11Z" style="fill:var(--mark-2)"/>
         </svg>
       </button>
       <button id="rot-cw" aria-label="Rotate the map clockwise"
@@ -4967,10 +4967,10 @@
       return `<svg class="spark" width="${SPARK_W}" height="${SPARK_H}" `
            + `viewBox="0 0 ${SPARK_W} ${SPARK_H}" aria-hidden="true">`
            + g.runs.map(r => r.length === 1
-               ? `<circle cx="${r[0][0].toFixed(1)}" cy="${r[0][1].toFixed(1)}" r="1.6" fill="#fcd278"/>`
-               : `<path d="${runPath(r)}" fill="none" stroke="#fcd278" stroke-width="1.5" `
+               ? `<circle cx="${r[0][0].toFixed(1)}" cy="${r[0][1].toFixed(1)}" r="1.6" style="fill:var(--mark)"/>`
+               : `<path d="${runPath(r)}" fill="none" style="stroke:var(--mark)" stroke-width="1.5" `
                  + `stroke-linecap="round" stroke-linejoin="round"/>`).join("")
-           + `<circle cx="${last[0].toFixed(1)}" cy="${last[1].toFixed(1)}" r="2.2" fill="#fcd278"/>`
+           + `<circle cx="${last[0].toFixed(1)}" cy="${last[1].toFixed(1)}" r="2.2" style="fill:var(--mark)"/>`
            + `</svg>`;
     }
 
@@ -4987,27 +4987,27 @@
       const ys = t.years;
       const bands = g.gaps.map(gp =>
         `<rect x="${gp.x0.toFixed(1)}" y="0" width="${(gp.x1 - gp.x0).toFixed(1)}" `
-        + `height="${H}" fill="rgba(232,232,239,0.05)"/>`
+        + `height="${H}" style="fill:var(--band)"/>`
         // Rotated, because the band is only one year wide (~20px here) and
         // "no data" set horizontally spilled out of it and onto the adjacent
         // year's label. Turned on its side it fits the band's height instead,
         // which is the usual way a narrow annotation band is labelled.
         + `<text transform="rotate(-90 ${((gp.x0 + gp.x1) / 2).toFixed(1)} ${H / 2}) `
         + `translate(0 3)" x="${((gp.x0 + gp.x1) / 2).toFixed(1)}" y="${H / 2}" `
-        + `fill="#6a6a80" font-size="9" text-anchor="middle">no data</text>`).join("");
+        + `style="fill:var(--ink-3)" font-size="9" text-anchor="middle">no data</text>`).join("");
       const line = g.runs.map(r => r.length === 1
-        ? `<circle cx="${r[0][0].toFixed(1)}" cy="${r[0][1].toFixed(1)}" r="2" fill="#fcd278"/>`
-        : `<path d="${runPath(r)}" fill="none" stroke="#fcd278" stroke-width="1.75" `
+        ? `<circle cx="${r[0][0].toFixed(1)}" cy="${r[0][1].toFixed(1)}" r="2" style="fill:var(--mark)"/>`
+        : `<path d="${runPath(r)}" fill="none" style="stroke:var(--mark)" stroke-width="1.75" `
           + `stroke-linecap="round" stroke-linejoin="round"/>`).join("");
       const last = g.pts[g.pts.length - 1];
       // Both y labels, always — see invariant 2 above. Anchored to the plot's
       // own top/bottom edge, so they read as the axis extent rather than as
       // annotations on the two points that happen to sit there.
       const ylab = [[9, g.hi], [H - 1, g.lo]].map(([y, v]) =>
-        `<text x="${GUT - 5}" y="${y}" fill="#6a6a80" font-size="9.5" `
+        `<text x="${GUT - 5}" y="${y}" style="fill:var(--ink-3)" font-size="9.5" `
         + `text-anchor="end">${fmtPct(v)}</text>`).join("");
-      const xlab = `<text x="${GUT}" y="${H + 12}" fill="#6a6a80" font-size="9.5">${ys[0]}</text>`
-                 + `<text x="${W}" y="${H + 12}" fill="#6a6a80" font-size="9.5" `
+      const xlab = `<text x="${GUT}" y="${H + 12}" style="fill:var(--ink-3)" font-size="9.5">${ys[0]}</text>`
+                 + `<text x="${W}" y="${H + 12}" style="fill:var(--ink-3)" font-size="9.5" `
                  + `text-anchor="end">${ys[ys.length - 1]}</text>`;
       return `<svg width="${W}" height="${H + 15}" viewBox="0 0 ${W} ${H + 15}" `
            + `role="img" aria-label="Share of Edmonton's assessment base, `
@@ -5015,7 +5015,7 @@
            + ylab + xlab
            + `<g transform="translate(${GUT},0)">${bands}${line}`
            + `<circle cx="${last[0].toFixed(1)}" cy="${last[1].toFixed(1)}" `
-           + `r="2.6" fill="#fcd278"/></g></svg>`;
+           + `r="2.6" style="fill:var(--mark)"/></g></svg>`;
     }
 
     // ---- Development history: new supply per year ---------------------------
@@ -5118,7 +5118,7 @@
         const hh = Math.max(1, g.bh(v));
         return `<rect x="${g.bx(y).toFixed(1)}" y="${(g.base - hh).toFixed(1)}" `
              + `width="${g.bw.toFixed(1)}" height="${hh.toFixed(1)}" `
-             + `rx="${Math.min(1.5, g.bw / 2).toFixed(1)}" fill="#fcd278"/>`;
+             + `rx="${Math.min(1.5, g.bw / 2).toFixed(1)}" style="fill:var(--mark)"/>`;
       }).join("");
       return `<svg class="spark" width="${DEVH_SPARK_W}" height="${DEVH_SPARK_H}" `
            + `viewBox="0 0 ${DEVH_SPARK_W} ${DEVH_SPARK_H}" aria-hidden="true">`
@@ -5137,18 +5137,18 @@
         const hh = Math.max(1, g.bh(v));
         return `<rect x="${g.bx(y).toFixed(1)}" y="${(g.base - hh).toFixed(1)}" `
              + `width="${g.bw.toFixed(1)}" height="${hh.toFixed(1)}" `
-             + `rx="2" fill="#fcd278"/>`;
+             + `rx="2" style="fill:var(--mark)"/>`;
       }).join("");
       // Zero-based, so only the TOP needs a number — the bottom is 0 by
       // definition and labelling it would imply it was a choice. That is the
       // exact opposite of the temporal chart's both-ends rule, and for the same
       // reason: label what the reader cannot infer.
-      const ylab = `<text x="${GUT - 5}" y="9" fill="#6a6a80" font-size="9.5" `
+      const ylab = `<text x="${GUT - 5}" y="9" style="fill:var(--ink-3)" font-size="9.5" `
                  + `text-anchor="end">${g.hi.toLocaleString()}</text>`
-                 + `<text x="${GUT - 5}" y="${H - 1}" fill="#6a6a80" `
+                 + `<text x="${GUT - 5}" y="${H - 1}" style="fill:var(--ink-3)" `
                  + `font-size="9.5" text-anchor="end">0</text>`;
-      const xlab = `<text x="${GUT}" y="${H + 12}" fill="#6a6a80" font-size="9.5">${ys[0]}</text>`
-                 + `<text x="${W}" y="${H + 12}" fill="#6a6a80" font-size="9.5" `
+      const xlab = `<text x="${GUT}" y="${H + 12}" style="fill:var(--ink-3)" font-size="9.5">${ys[0]}</text>`
+                 + `<text x="${W}" y="${H + 12}" style="fill:var(--ink-3)" font-size="9.5" `
                  + `text-anchor="end">${ys[ys.length - 1]}</text>`;
       return `<svg width="${W}" height="${H + 15}" viewBox="0 0 ${W} ${H + 15}" `
            + `role="img" aria-label="New ${devHistNoun(t.key, 2)} permitted per `
@@ -5156,7 +5156,7 @@
            + ylab + xlab
            + `<g transform="translate(${GUT},0)">`
            + `<line x1="0" y1="${g.base}" x2="${W - GUT}" y2="${g.base}" `
-           + `stroke="#55556a" stroke-width="1"/>${bars}</g></svg>`;
+           + `style="stroke:var(--ink-off)" stroke-width="1"/>${bars}</g></svg>`;
     }
 
     // Where the panel shows new supply over time instead of the history or the
@@ -5383,7 +5383,7 @@
         const over = frac > 1;
         return `<div class="svcrow"><span>${esc(SVC_LABEL[r.col])}</span>`
           + `<i><b style="width:${(Math.min(1, frac) * 100).toFixed(1)}%;`
-          + `background:${over ? "#fcd278" : "#55556a"}"></b></i>`
+          + `background:${over ? "var(--mark)" : "var(--ink-off)"}"></b></i>`
           + `<em${over ? ' class="over"' : ""}>${fmtSvcRatio(frac)}</em></div>`;
       };
       document.getElementById("temporal-chart").innerHTML = "";
