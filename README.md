@@ -92,7 +92,7 @@ invariants:
 Sources are under `notebooks/standalone/`; the register of known issues and
 whether anyone has been told is `docs/DATA_ISSUES.md`.
 
-**Full / specialist build:** **https://peterfriedrich.github.io/edmonton-tax-viz/full/**
+**Full / specialist build:** **https://peterfriedrich.github.io/edmonton-tax-viz/dev-build-full/**
 — the same map with additional specialist controls (Infill mode, Industrial
 metric, deeper data-detail) exposed. This is the build for anyone visiting the
 repo directly; the public root above is the streamlined view.

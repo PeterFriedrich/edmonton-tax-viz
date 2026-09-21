@@ -310,11 +310,11 @@ jobs:
             --label clamp-drift
 
       # Two-build emit (docs/PLAN_public_release.md §2a): fan web/ out into
-      # _site/ = public root + _site/full/ = specialist, sharing the just-
+      # _site/ = public root + _site/dev-build-full/ = specialist, sharing the just-
       # regenerated data/. Same shared script as deploy.yml — factor once. Runs
       # regardless of the hold state (we still deploy the committed tree in a
       # year-mismatch hold).
-      - name: Build two-build site tree (public root + /full/ specialist)
+      - name: Build two-build site tree (public root + /dev-build-full/ specialist)
         run: python scripts/build_site.py --src web --out _site
 
       # ⚠️ THE ONLY FRONT-END CHECK ON THE DATA PATH. Every guard above this line
@@ -343,7 +343,7 @@ jobs:
           npx playwright install --with-deps chromium
 
       # ⚠️ BOTH BUILDS. The public root hides the full-only controls, so a check
-      # run only against /full/ passes on states the public site does not have —
+      # run only against /dev-build-full/ passes on states the public site does not have —
       # the failure PR #141 existed to fix.
       - name: Smoke-check the built render (gate before publish)
         run: |
@@ -353,7 +353,7 @@ jobs:
             sleep 1
           done
           node tools/profiling/verify-smoke.js http://localhost:8931/index.html
-          node tools/profiling/verify-smoke.js http://localhost:8931/full/index.html
+          node tools/profiling/verify-smoke.js http://localhost:8931/dev-build-full/index.html
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0

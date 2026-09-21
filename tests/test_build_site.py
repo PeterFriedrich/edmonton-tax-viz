@@ -4,6 +4,7 @@ The one that matters for CI: if web/index.html's ``DEFAULT_BUILD`` literal ever
 drifts (renamed/removed), the emit must FAIL loudly rather than silently ship a
 single-mode site — so refresh.yml's pytest gate catches it before deploy.
 """
+import re
 import sys
 from pathlib import Path
 
@@ -59,8 +60,8 @@ def test_build_emits_both_copies(tmp_path):
     build_site.build(src, out)
 
     root = (out / "index.html").read_text()
-    full = (out / "full" / "index.html").read_text()
-    # Root = public, shares the tree; /full/ = specialist, base-href to root,
+    full = (out / build_site.FULL_DIR / "index.html").read_text()
+    # Root = public, shares the tree; the specialist dir = base-href to root,
     # and NOT a duplicated data/ dir. BOTH builds carry a beta badge, and the
     # labels must differ — a public badge naming the specialist build would
     # tell every reader they are somewhere they are not.
@@ -68,7 +69,7 @@ def test_build_emits_both_copies(tmp_path):
     assert (out / "data" / "x.json").is_file()
     assert 'const DEFAULT_BUILD = "full";' in full
     assert '<base href="../" />' in full
-    assert not (out / "full" / "data").exists()
+    assert not (out / build_site.FULL_DIR / "data").exists()
 
     assert build_site.BADGE_LABELS["public"] in root
     assert build_site.BADGE_LABELS["full"] in full
@@ -80,7 +81,7 @@ def test_build_emits_both_copies(tmp_path):
     assert "work in progress" in full.lower()
 
     # Both copies carry the SAME token, and it is the source CSS's own hash —
-    # /full/ reads the root's styles.css through its <base>, so a divergent
+    # the specialist copy reads the root's styles.css through its <base>, so a divergent
     # token there would point at a file that never gets that name.
     token = build_site.css_token(src / "styles.css")
     assert f'href="styles.css?v={token}"' in root
@@ -153,14 +154,14 @@ def test_build_ignores_head_markup_quoted_below_the_head(tmp_path):
         '<head><link href="styles.css" rel="stylesheet" /></head>\n'
         '<body><script>const DEFAULT_BUILD = "full";\n'
         'const BUILD_STAMP = "dev";\n'
-        '// /full/ gets a <base href="../"> injected after <head> at build time\n'
+        '// the specialist copy gets a <base href="../"> injected after <head>\n'
         'const tpl = "</body>";\n'
         "</script></body>"
     )
     out = tmp_path / "_site"
     build_site.build(src, out)
 
-    full = (out / "full" / "index.html").read_text()
+    full = (out / build_site.FULL_DIR / "index.html").read_text()
     head, _, body = full.partition("</head>")
     # Injected into the real head, exactly once, and the prose left alone.
     assert '<base href="../" />' in head
@@ -203,3 +204,58 @@ def test_build_stamp_falls_back_to_dev_without_env_or_git(monkeypatch):
 
     monkeypatch.setattr(build_site.subprocess, "run", boom)
     assert build_site.build_stamp() == "dev"
+
+
+# --- FULL_DIR: the public URL segment -----------------------------------------
+
+
+def test_full_dir_is_pinned_to_its_literal():
+    """⚠️ A LITERAL PIN, not `== build_site.FULL_DIR`.
+
+    Every other assertion in this file reads the constant, so all of them move
+    silently with a rename — the `SQ_M_PER_ACRE` trap from the 2026-09-07
+    vacuous-guard audit, where 784 tests stayed green while a published figure
+    doubled. This is the one place the string is written out, so changing the
+    public URL has to red a test that names it.
+
+    The segment is reader-facing and was chosen by Peter (2026-09-21); it is NOT
+    the build keyword "full", which stays internal.
+    """
+    assert build_site.FULL_DIR == "dev-build-full"
+
+
+def test_full_dir_is_exactly_one_level_deep():
+    """The injected `<base href="../">` resolves assets by going up ONE level.
+
+    A nested segment would leave every data/ and vendor/ URL pointing at a
+    directory that does not exist, and nothing else here would notice: the
+    build succeeds, the page loads, and only the fetches 404.
+    """
+    assert "/" not in build_site.FULL_DIR
+    assert build_site.FULL_DIR not in ("", ".", "..")
+
+
+def test_full_dir_is_url_safe():
+    """It becomes a path segment in a published URL."""
+    assert build_site.FULL_DIR == build_site.FULL_DIR.strip()
+    assert re.fullmatch(r"[a-z0-9][a-z0-9._-]*", build_site.FULL_DIR)
+
+
+def test_the_specialist_build_is_not_emitted_at_the_old_path(tmp_path):
+    """The 2026-09-21 rename is a CLEAN BREAK — /full/ must 404, not redirect.
+
+    Peter's call. A redirect stub would advertise the new segment to anyone who
+    tried the old one, which defeats the point of moving it.
+    """
+    src = tmp_path / "web"
+    src.mkdir()
+    (src / "styles.css").write_text("#map { color: red }")
+    (src / "index.html").write_text(
+        '<head><link href="styles.css" rel="stylesheet" /></head>'
+        '<body><script>const DEFAULT_BUILD = "full";'
+        'const BUILD_STAMP = "dev";</script></body>'
+    )
+    out = tmp_path / "_site"
+    build_site.build(src, out)
+    assert (out / build_site.FULL_DIR / "index.html").is_file()
+    assert not (out / "full").exists()

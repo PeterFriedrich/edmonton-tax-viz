@@ -63,10 +63,10 @@ jobs:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
       # Two-build emit (docs/PLAN_public_release.md §2a): fan web/ out into
-      # _site/ = public root + _site/full/ = specialist. Pure code-shaping, no
+      # _site/ = public root + _site/dev-build-full/ = specialist. Pure code-shaping, no
       # data run — stdlib only, so the runner's system python3 is enough (keeps
       # this the fast code-only deploy). Shared with refresh.yml via the script.
-      - name: Build two-build site tree (public root + /full/ specialist)
+      - name: Build two-build site tree (public root + /dev-build-full/ specialist)
         run: python3 scripts/build_site.py --src web --out _site
 
       # ⚠️ THE GATE THIS WORKFLOW WAS MISSING (audit 2026-09-08, V3 sharpened).
@@ -97,7 +97,7 @@ jobs:
           npx playwright install --with-deps chromium
 
       # ⚠️ BOTH BUILDS. The public root hides the full-only controls, so a check
-      # run only against /full/ passes on states the public site does not have.
+      # run only against /dev-build-full/ passes on states the public site does not have.
       - name: Smoke-check the built render (gate before publish)
         run: |
           python3 -m http.server 8931 --directory _site &
@@ -106,7 +106,7 @@ jobs:
             sleep 1
           done
           node tools/profiling/verify-smoke.js http://localhost:8931/index.html
-          node tools/profiling/verify-smoke.js http://localhost:8931/full/index.html
+          node tools/profiling/verify-smoke.js http://localhost:8931/dev-build-full/index.html
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
