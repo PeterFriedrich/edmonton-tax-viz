@@ -33,6 +33,52 @@ per-report data description was a prose caption in `web/notebooks/index.html`.
 | School coverage gap | issue **5** | **ACTIVE** | 4 of 4 | 2026-08-29 |
 | Permit neighbourhood list | issue **6** | **ACTIVE** | 5 of 5 | 2026-09-17 |
 
+## ⚠️ They are re-run monthly now — and what the first run found
+
+**Added 2026-09-21.** `.github/workflows/evidence-recheck.yml` re-executes
+**every** notebook in `notebooks/standalone/` against live sources on the
+**15th of each month** and files a GitHub issue
+(`scripts/recheck_evidence_notebooks.py`; triage in `docs/RUNBOOK.md` §0e).
+An issue is filed even when all-green, for the same reason the vintage digest
+files one.
+
+**Why it had to exist.** Until that date **nothing re-ran these at all** —
+`refresh.yml` runs `notebooks/verified/`, a different directory doing a
+different job. Measured 2026-09-21: four of the five published evidence pages
+had not touched a live source since **2026-08-29**, while every file in
+`web/notebooks/` carried an mtime of the previous day, because S180's
+mobile-CSS pass had re-rendered stored outputs. ⚠️ **The files looked a day
+old and the evidence was three weeks old** — a distinction nothing on the page
+made, and the exact shape of *"updated on so-and-so"* standing in for
+*"checked"*.
+
+**The baseline, established the same day.** All seven notebooks re-executed
+against live sources — **113 invariants, 113 holding**:
+
+| notebook | kind | invariants |
+|---|---|---|
+| `roll_year_metadata` | evidence | 8 |
+| `historical_2024_gap` | evidence | 12 |
+| `exemption_uncertainty` | evidence | 22 |
+| `school_coverage_gap` | evidence | 4 |
+| `permit_neighbourhood_list` | evidence | 5 |
+| `roads_lifecycle_rate` | justification | 40 |
+| `roads_operating_rate` | justification | 22 |
+
+⚠️ **So every documented defect is still present upstream as of 2026-09-21,
+and no publisher has fixed anything.** That is unsurprising — `DATA_ISSUES.md`
+records **zero reports sent** — but it had never actually been *checked*
+before, only assumed.
+
+⚠️ **The checker found a defect in the two newest notebooks on its first live
+run.** Both roads notebooks reported their verdicts only through
+`display()`, which renders as an opaque object repr outside a Jupyter kernel —
+so run as scripts they reported **nothing** about their own invariants, and the
+checker correctly refused to call that a pass rather than trusting exit 0. Both
+now print in `check()`, the idiom the five evidence notebooks already used.
+**A new notebook in this directory needs a printing `check()` or the recheck
+cannot see it.**
+
 ⚠️ **"Re-verified" is the date the committed HTML was last executed, not a
 freshness guarantee.** Nothing re-runs these on a schedule — chosen deliberately
 (`DECISIONS.md` 2026-08-26). All four were re-executed 2026-08-29 and every

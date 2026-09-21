@@ -25,3 +25,8 @@ PyYAML==6.0.3
 jupytext==1.19.5
 nbconvert==7.17.1
 ipykernel==7.2.0
+# Standalone-notebook recheck only (.github/workflows/evidence-recheck.yml):
+# the roads justification notebooks read City PDFs, and two evidence reports
+# read published .xlsx. Neither is on the refresh path.
+pypdf==6.14.2
+openpyxl==3.1.5

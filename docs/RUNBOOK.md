@@ -248,6 +248,57 @@ human pass; this row exists so the pass is *triggered* rather than remembered.
    the correction, the same discipline as a superseded `DECISIONS.md` row —
    otherwise the next reader cannot tell a checked item from an unchecked one.
 
+## 0e. `Evidence recheck` issue (a standalone notebook no longer holds)
+
+**Symptom:** a monthly issue titled `✅ Evidence recheck — <date>`,
+`⚠️ Evidence invariant flipped — N notebook(s)` or
+`⚠️ Evidence recheck could not run — N notebook(s)`, from
+`.github/workflows/evidence-recheck.yml` (15th of the month, 14:00 UTC).
+
+**What it measures.** It re-executes every notebook in
+`notebooks/standalone/` against live sources — seven as of 2026-09-21, 113
+invariants between them — and reports what moved. ⚠️ **Nothing else re-runs
+them.** `refresh.yml` runs `notebooks/verified/`, which is a different
+directory doing a different job (`docs/VERIFICATION.md`).
+
+⚠️ **A ⚠️ HERE IS OFTEN GOOD NEWS, AND STILL NEEDS ACTING ON.** The two kinds
+of notebook fail for opposite reasons:
+
+| kind | what a failure means | what to do |
+|---|---|---|
+| **evidence** (5) | **the publisher probably FIXED the defect** this report documents — the outcome the report was written to produce | confirm the fix by hand, then **pull or re-date** the published page under `web/notebooks/`, set the row in `docs/DATA_ISSUES.md` to **FIXED (date)**, and update `docs/EVIDENCE_NOTEBOOKS.md` |
+| **justification** (2) | **a source moved under a rate this project ships on a public map** — a transcription is now wrong, or a City page was revised | re-read the source, decide whether the shipped rate still stands, and correct `data/city_unit_costs.json` **before the next Monday refresh** |
+
+⚠️ **A `❓` IS THE LOUDER RESULT — read those rows first.** It means the
+notebook verified *nothing*: it could not fetch, it timed out, or it exited 0
+without recording a single invariant. That is not a clean bill of health, and
+a source URL that will not resolve is itself a finding about a page that cites
+it. This repo has made the opposite mistake before — the revenue-delta guard
+that *could not read its baseline* once reported like a guard that read it and
+found nothing.
+
+⚠️ **"Exited 0 but recorded no invariants" usually means the notebook's
+`check()` stopped printing**, not that a source broke. Outside a Jupyter kernel
+`display()` renders as an opaque object repr, so a notebook whose verdicts go
+only through `display()` reports nothing to a script runner. Both roads
+notebooks hit exactly this on the checker's first live run (2026-09-21) and
+were fixed by printing in `check()`, the idiom the five evidence notebooks
+already used. **If a new notebook lands in that directory, give it a printing
+`check()` or the recheck cannot see it.**
+
+**A GREEN issue still gets closed.** Same rule as the vintage digest: an open
+list that always carries a stale ✅ is how the next ⚠️ gets skimmed past.
+
+**Run it by hand:**
+
+```bash
+.venv/bin/python scripts/recheck_evidence_notebooks.py --python .venv/bin/python
+.venv/bin/python scripts/recheck_evidence_notebooks.py --only roads_operating_rate --python .venv/bin/python
+```
+
+⚠️ It takes several minutes — the notebooks page Socrata and pull multi-MB
+PDFs. It writes nothing.
+
 ## 1. The January year roll (the recurring one)
 
 **Symptom:** the site shows a "Showing 2025 data —…" banner, and the weekly

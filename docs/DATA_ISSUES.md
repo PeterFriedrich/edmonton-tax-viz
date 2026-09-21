@@ -33,7 +33,14 @@ that one owns what the evidence rests on.
 item that mirrors it in one line each — if the two disagree, **this one is
 right**, and the TODO is stale. Update here first.
 
-**Nothing has been sent. Seven issues, zero contact, as of 2026-09-20.**
+**Nothing has been sent. Seven issues, zero contact, as of 2026-09-21.**
+⚠️ **And every defect below was CHECKED still-present on 2026-09-21**, not
+assumed: all five published evidence notebooks were re-executed against live
+sources and their 51 invariants all held. They are re-run **monthly** from now
+on (`.github/workflows/evidence-recheck.yml`, 15th of the month; RUNBOOK §0e),
+so a silent upstream fix will surface here instead of waiting for someone to
+think of re-running a notebook by hand. ⚠️ **Status in this table is still
+changed by a HUMAN** — the recheck reports, it does not edit rows.
 ⚠️ **Issues 1 and 3–6 — all five of the previously sendable set — have BOTH
 published evidence and drafted report text** (issue 6's landed 2026-09-17), so
 **nothing among those five is blocked on work; the only thing left is the
