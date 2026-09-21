@@ -407,7 +407,13 @@ const GARBAGE = /\bNaN\b|\bundefined\b|\bnull\b|\bInfinity\b|\$NaN|\$undefined/;
   const smalls = await page.evaluate(async () => {
     const out = { nonzeroAsZero: 0, trueZeroFloored: 0, seen: 0, worst: null };
     out.floorTooWide = 0; out.widest = null;
-    const note = (v, fmt, zero, label, n) => {
+    // `floorStr` / `roundsToZero` default to the two-decimal family. The road
+    // and residential-share readouts round to ONE decimal and to a whole
+    // percent, so their floor strings and their zero boundaries differ — a
+    // check hardcoded to "<0.01" would silently skip them.
+    const note = (v, fmt, zero, label, n,
+                  floorStr = '<0.01',
+                  roundsToZero = x => x.toFixed(2) === '0.00') => {
       out.seen++;
       const s = fmt(v);
       if (v > 0 && s === zero) {
@@ -415,12 +421,12 @@ const GARBAGE = /\bNaN\b|\bundefined\b|\bnull\b|\bInfinity\b|\$NaN|\$undefined/;
         if (out.worst === null || v < out.worst.v) out.worst = { v, c: label, n };
       }
       if (v === 0 && s !== zero) out.trueZeroFloored++;
-      // The floor must fire EXACTLY where two decimals would print "0.00" and
+      // The floor must fire EXACTLY where the readout would print zero and
       // nowhere else. Widening SMALL_2DP is the tidy-up that looks harmless and
       // silently replaces real readable values ("0.25") with "<0.01" — neither
       // check above sees it, because nothing renders "0.00" and no true zero
       // floors. This is the `MIN_PIECE_M` / `WEB_MIN_PART_M` lesson as a check.
-      if (s.startsWith('<0.01') !== (v > 0 && v.toFixed(2) === '0.00')) {
+      if (s.startsWith(floorStr) !== (v > 0 && roundsToZero(v))) {
         out.floorTooWide++;
         if (out.widest === null || v > out.widest.v) out.widest = { v, c: label, n, s };
       }
@@ -434,6 +440,21 @@ const GARBAGE = /\bNaN\b|\bundefined\b|\bnull\b|\bInfinity\b|\$NaN|\$undefined/;
           '0.00 scheduled transit stop-events / acre / weekday', 'transit', n);
       if (p.revenue_share_city != null)
         note(p.revenue_share_city * 100, fmtPct, '0.00%', 'revenue_share_city', n);
+      // Added 2026-09-21. Road metres print to one decimal, so their zero
+      // boundary is 0.05, not 0.005. ⚠️ Upstream `MIN_PIECE_M` drops the
+      // boundary-tangency crumbs first — what reaches this floor is real road,
+      // which is why the fix is split across the two layers.
+      if (p.road_m_per_acre != null)
+        note(p.road_m_per_acre, fmtRoadM, '0.0 road m / acre', 'road', n,
+             '<0.1', x => x.toFixed(1) === '0.0');
+      // ⚠️ `far` is NOT noted here, deliberately — DECISIONS.md 2026-09-20
+      // closed it as correct-not-floored, so its 37 "0.00" renders are the
+      // decided behaviour and noting it would redden this gate on purpose.
+      // A whole-percent readout: its zero boundary is 0.005 of the FRACTION.
+      if (p.res_revenue_per_acre != null && p.revenue_per_acre > 0)
+        note(p.res_revenue_per_acre / p.revenue_per_acre, fmtResShare,
+             '0% of revenue is residential', 'res_share', n,
+             '<1', x => Math.round(100 * x) === 0);
     }
     // The temporal shares are the bulk of the percent surface (726 of 746) and
     // live in their own file, quantised to integer 1/share_scale units.

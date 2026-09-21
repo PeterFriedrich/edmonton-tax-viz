@@ -30,6 +30,31 @@ RESPONSIBLE_PARTY = "City of Edmonton"  # drops provincial/private/rail/neighbou
 # neighbourhood polygon (conservation guard).
 UNASSIGNED_WARN_FRAC = 0.05
 
+# Overlay pieces shorter than this are boundary-tangency crumbs, not road, and
+# are dropped before they can become a nonzero metric. A road running ALONG a
+# boundary gets cut by it, and a few centimetres landing on the inside is an
+# artefact of two shapes touching.
+#
+# ⚠️ THE FLOOR BELONGS ON THE METRIC PATH, NOT IN `_prepare_segments`, which is
+# shared with the display export — that path welds pieces first and thins its
+# own with WEB_MIN_PART_M. Floor them in the shared half and the display loses
+# real geometry it welds into longer lines.
+#
+# ⚠️ NOT interchangeable with WEB_MIN_PART_M (20 m), despite both being sliver
+# floors — the same warning load_bike.py carries, and measured here on
+# 2026-09-21: 20 m applied to RAW OVERLAY PIECES moves 166 neighbourhoods by
+# >1%, against 3 at this value. That one means 20 m of welded continuous
+# street; this means each raw cut piece.
+#
+# Measured over the served file, 2026-09-21: drops 749 of 32,469 metric pieces,
+# 203 m of 3,654 km (0.0056% of assigned length), and zeroes exactly TWO
+# neighbourhoods — KENDAL (one 0.856 m piece across 661 acres) and WESTVIEW
+# VILLAGE (one 0.734 m piece across 228 acres). ANTHONY HENDAY ENERGY PARK's
+# single 26.5 m piece SURVIVES: that one is a real stub, and calling it too
+# small to count would be an editorial judgement about materiality, which
+# belongs in COPY_DECISIONS.md and not here. The web layer says "<0.1" for it.
+MIN_PIECE_M = 1.0
+
 # ---------------------------------------------------------------------------
 # Explicit functional_class_code → class group dictionary.
 #
@@ -235,6 +260,37 @@ def load_roads(roads_path: str, boundaries: gpd.GeoDataFrame) -> pd.DataFrame:
                            join_and_calculate against boundary acres)
     """
     overlay = _prepare_segments(roads_path, boundaries)
+
+    # Drop boundary-tangency crumbs before they become a nonzero metric. Only
+    # the metric path: the display path welds pieces first and thins its own.
+    #
+    # ⚠️ METRIC GROUPS ONLY — arterial and unknown keep every crumb on purpose.
+    # `road_m_unknown` is the upstream-drift detector ("non-zero means a class
+    # code we do not map"), and a floor over it would let a newly-unmapped code
+    # arrive silently for as long as its pieces stayed short.
+    metric = overlay["group"].isin(["collector", "local"])
+    sliver = metric & (overlay["piece_m"] < MIN_PIECE_M)
+    if sliver.any():
+        dropped_m = float(overlay.loc[sliver, "piece_m"].sum())
+        assigned_m = float(overlay.loc[metric, "piece_m"].sum())
+        had = set(overlay.loc[metric, "neighbourhood_name"])
+        overlay = overlay[~sliver]
+        still = overlay["group"].isin(["collector", "local"])
+        emptied = sorted(had - set(overlay.loc[still, "neighbourhood_name"]))
+        logger.info(
+            "Road sliver floor (<%.3g m): dropped %d of %d collector/local "
+            "overlay pieces, %.4f m of %.1f km (%.5f%% of assigned metric "
+            "length); %d neighbourhood(s) now have no collector/local road "
+            "and default to 0 m%s",
+            MIN_PIECE_M,
+            int(sliver.sum()),
+            int(metric.sum()),
+            dropped_m,
+            assigned_m / 1000,
+            100 * dropped_m / assigned_m if assigned_m else 0.0,
+            len(emptied),
+            (": " + ", ".join(emptied)) if emptied else "",
+        )
 
     by_group = (
         overlay.groupby(["neighbourhood_name", "group"])["piece_m"]
