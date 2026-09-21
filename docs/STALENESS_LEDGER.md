@@ -123,7 +123,7 @@ load-bearing?"* by showing which docs are never opened, with the decision rule
 the `Read`, `Grep` and `Glob` tools.** Everything read through Bash — `sed -n`,
 `grep`, `cat`, `head` — leaves no trace, and that is how much of this repo's
 prose actually gets read: **this very session logged 8 `Read` entries while
-touching several times that many files.** So the ~2026-09-30 readout will
+touching several times that many files.** So the readout (**2026-10-05**, moved from ~09-30) will
 systematically **undercount**, and the undercount is **biased toward exactly the
 docs that get consulted in passing** — which is the prune rule pointed at
 actively-used docs. ⚠️ **Do not prune anything on that table without first
