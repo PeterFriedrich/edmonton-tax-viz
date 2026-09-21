@@ -2532,10 +2532,19 @@ archive"*) is not, and this span is 2,533 lines.
       `www.edmonton.ca/growthanalysis` returns 200.
   - [ ] **A4 — Assessment-lag methods note:** Nov 29 2024 council memo
     attachment (Table 1, permit→assessment 3–5 yr lag) — edmonton.ca fetch.
-    ⚠️ **"likely Peter/laptop" was FALSIFIED 2026-09-20** — `www.edmonton.ca`
-    and `pub-edmonton.escribemeetings.com` both return **200** from the Oracle
-    box (curl + certifi). **Any session here can fetch it**; the memo is simply
-    still unfetched.
+    ⚠️ **THE 2026-09-20 FALSIFICATION WAS ITSELF WRONG — re-tested 2026-09-21.**
+    `pub-edmonton.escribemeetings.com` does return **200 at its root**, which is
+    all that was checked; the **document endpoint** does not.
+    `filestream.ashx?DocumentId=244141` returns **Cloudflare 403** from this box
+    via **three independent clients** — urllib+certifi, WebFetch (a different
+    network path), and headless Chromium with a real browser fingerprint — so it
+    is an IP-level block, not a user-agent one. `/Documents/244141` 404s, which
+    proves the 403 is a decision rather than a generic wall. **The memo is
+    Peter/laptop after all** (doc id `244141`, found via search; the IIAP 2024
+    update is `226110`/`226107` and the 2025 update `262705`, all the same
+    endpoint). ⚠️ **Test the exact DOCUMENT, not the host** — the 2026-08-13
+    lesson was "test the exact host, not the domain", and this is the same error
+    one level further down.
   - [ ] **B2 — Regional non-res mill rates:** `2026_Tax_Rates.xlsx` on the FIR
     page (verified live) + yearly workbooks; 6 municipalities; reviewed JSON.
   - [ ] **B1 — Regional non-res assessment share:** FIR/SIR + equalized
