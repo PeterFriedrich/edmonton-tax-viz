@@ -74,9 +74,34 @@ Identified by quoted text, **never by line number** — those drift.
 | 23 | 7 · 2026-09-20 | `B2 — Regional non-res mill rates` | ACCURATE | `2026_tax_rates.xlsx` still on the FIR dataset page 64 days after *"verified live"* (filename is lowercase; the item's `2026_Tax_Rates.xlsx` is a casing slip, not a dead link) |
 | 24 | 7 · 2026-09-20 | `B1 — Regional non-res assessment share` | ACCURATE | the equalized-assessment page carries exactly the **2024 / 2025 / 2026** XLSX workbooks claimed, still XLSX and not PDF-only |
 | 25 | 7 · 2026-09-20 | `A4 — Assessment-lag methods note` | **CORRECTED** | its stated blocker *"likely Peter/laptop"* is **FALSIFIED** — `www.edmonton.ca` and `pub-edmonton.escribemeetings.com` both return **200** from the Oracle box. The memo itself is still unfetched; nothing stops a session here from doing it |
+| 26 | 8 · 2026-09-21 | `Selective/partial data regen (DEFERRED)` | **CORRECTED** | ⚠️ **its stated payoff is FALSIFIED.** *"roads static 2+ mo while permits/fire change daily"* — row-level `max(:updated_at)` puts **Road Network at 2026-09-19** and zoning at 2026-09-14 against permits at 2026-09-19: same cadence, not static. The genuinely static sources are **GTFS (93–153 d)** and **school locations (139–151 d)**, which are small, so the optimization is worth less than the item claims |
+| 27 | 8 · 2026-09-21 | `B3 — Industrial-areas context map` | **CORRECTED** | its blocker *"municipal boundary layer source to verify"* was **resolved 2026-08-03** — `reference.geojson` ships 15 `t="boundary"` outlines including the four counties **and Industrial Heartland**. Six weeks stale; only the map is left |
+| 28 | 8 · 2026-09-21 | `D4 — sanitary trunk callout` | ACCURATE **+ material caveat** | the SSTC/EA pause is still in force, but the City states it lasts *"for the duration of the… Transformation project… expected to be completed by **Quarter 1 2027**"*. ⚠️ The item's word *"currently"* has an expiry ~2 quarters out, which a shipped panel line would outlive silently |
+| 29 | 8 · 2026-09-21 | `D1 — levy performance mini-viz` | ACCURATE | the off-site levy page still lists **2022/2023/2024** annual reports and no 2025 one, so *"cumulative $3.83M end-2024"* is still the newest published figure; `$3,033,592` / `$3,259,866` / `$32,813` all reconcile to `fable_brief_debt_lens.md` |
+| 30 | 8 · 2026-09-21 | `D3 — Blatchford contrast case study` | ACCURATE | `$32,813/ha` is in the D0/D1 table exactly as claimed (`fable_brief_debt_lens.md:31`, `:84`) |
+| 31 | 8 · 2026-09-21 | `Lens B optional refinement` | ACCURATE | ⚠️ **near-miss** — the lens itself SHIPS (`#devmode` *Infill opportunity*, `z(suitability) − z(activity)`), which is precisely the item's premise that *"the single diverging map already shows both"*; the one-sided toggles it proposes still do not exist |
+| 32 | 8 · 2026-09-21 | `Lens C — Activity vs City Service Cost` | ACCURATE | ⚠️ **near-miss** — `construction_value` IS used, in `load_permits.py`, but the item says *"NOT used **here**"* and Lens C is not built. Check the claim, not the string |
+| 33 | 8 · 2026-09-21 | `Peter's call: ingest an income variable` | ACCURATE | no income variable anywhere in `src/`, `data/DATA.md` or `web/index.html`; still an undecided call, not a lapsed one |
+| 34 | 8 · 2026-09-21 | `Display/chart — undecided design` | ACCURATE | no non-map panel exists; unchanged |
 
-**Totals: 25 distinct items · 8 CORRECTED · 17 ACCURATE** (was 20 / 7 / 13
-before pass 7).
+**Totals: 34 distinct items · 10 CORRECTED · 24 ACCURATE** (was 25 / 8 / 17
+before pass 8).
+
+⚠️ **PASS 8'S FINDING IS THAT A DEFERRED ITEM'S *JUSTIFICATION* GOES STALE
+FASTER THAN ITS *CLAIM*.** Both corrections (rows 26, 27) were items nobody was
+about to act on, and in both the thing that had rotted was the sentence saying
+**why** it was worth doing or what stopped it — the roads-are-static premise,
+the missing boundary source. Neither item's headline was wrong. **A deferred
+item is read for its blocker, so a stale blocker is the expensive half**; this
+is the same shape as row 25 (`A4`), where the blocker was also the wrong part.
+
+⚠️ **Decomposed per rule 5, and it cuts against the audit:** pass 8's 2-of-9
+yield is the *lowest* of any date-defined cohort, and neither correction changes
+what gets built next. The undated pool was predicted to be *"the most likely
+place for an untouched stale claim"* — **9 items in, it was not.** Two of the
+nine (rows 31, 32) were near-misses in the audit's own favour: reading the topic
+rather than the claim would have scored both as CORRECTED and made the pass look
+twice as productive.
 
 ⚠️ **PASS 7'S BIGGEST FINDING IS ABOUT A MEASUREMENT WE ARE ABOUT TO ACT ON.**
 The retrieval log (row 22) exists to answer *"is the doc apparatus
@@ -123,6 +148,7 @@ this file's own tooling. Same trap `CLAUDE.md` documents for `todo_archive.py`.
 | 4 | external datasets (not items) | pipeline clean |
 | 5–6 | 30–60 d | 3 of 4 |
 | 7 | **undated** (never sampled before) | 1 of 5 |
+| 8 | **undated**, the remainder | 2 of 9 |
 
 ⚠️ **The yield changes SHAPE, not just rate.** Passes 1–2 found claims overtaken
 by our own work — findable by reading. Pass 3 found an **external input that
@@ -154,7 +180,12 @@ rather than re-litigating its premise.**
    children) — they simply carry no date, which is *why* they looked unsampled.
    **This file caught that on its first use; without it pass 7 would have
    re-checked all six.** Pass 7 took 5 of the remaining 15, leaving **10 never
-   sampled** — still the most likely place for an untouched stale claim.
+   sampled**. ⚠️ **Pass 8 drained that pool (9 items — one of the 10 had since
+   been dated by a correction) and the prediction was WRONG: 2 of 9, the lowest
+   yield of any cohort.** The undated pool is now **exhausted, not promising**.
+   The next pass has no obvious cohort left; pick by shape (pass 1's method,
+   the best-yielding one) or re-run the external-dataset sweep, which is the
+   only check that finds inputs going quiet.
 5. ⚠️ **Decompose any number that flatters this audit before recording it.**
    Every instrument defect found so far — the vacuous slice, the double-counted
    spans, the 5 dropped open boxes, the shrinking band, "18 of 103" — inflated
