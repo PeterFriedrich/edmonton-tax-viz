@@ -51,6 +51,7 @@ read against those rules**.
 | notebook | claims | source `.py` | published |
 |---|---|---|---|
 | **Roads lifecycle rate** | Why this project's roads cost lens uses **$50 per road-metre per year** — the published figures, the centreline unit, the 50-year denominator, three independent cross-checks, and the one argument that had to be withdrawn | `roads_lifecycle_rate.py` | ⚠️ **NOT PUBLISHED** — Peter's call pending |
+| **Roads operating rate** | Why the same lens's *other* column is **$9.32 per road-metre per year** — the two halves and their two vintages, the secondary source that earns its place by reconciling to the City's own programme total, the **lane-km unit defect that ships disclosed rather than corrected**, the offsetting arterial blend, and the 4.65× re-scope this project was forced into by its own split treatment | `roads_operating_rate.py` | ⚠️ **NOT PUBLISHED** — same call, still pending |
 
 **How it differs, in the three ways that matter:**
 
@@ -73,16 +74,34 @@ page, so the notebook can be handed to a skeptic who has never seen this repo �
 which is the whole point of a justification document. Two figures that cannot be
 derived without the repo (the 3,654 km charged network; the observed NRP
 reconstruction $/m) are labelled **[repo]** in place and cited rather than
-asserted. **40 invariants, all passing as of 2026-09-18.**
+asserted. **40 invariants, all passing as of 2026-09-18.** The operating
+notebook follows the same rule, with the centreline km measured from
+`data/raw/roads.geojson` and the 2020 class lane-km split labelled **[repo]**
+and **[SECONDARY]** respectively. **22 invariants, all passing as of
+2026-09-21.**
 
-⚠️ **Its sources are PDFs and web pages, not Socrata**, so the per-source tables
-below do not cover it. It stands on: the *Development Impact on Infrastructure*
-page, the FY2023 Consolidated Financial Statements, the 2020 and 2025
-*Infrastructure State and Condition* reports, `budget.edmonton.ca`'s capital
-budget API, and one trade-press article. ⚠️ **The 2020 report is fetched from
-the Internet Archive** — the City no longer serves it and the current edition no
-longer publishes per-class asset lives at all, so that snapshot is not
-replaceable.
+⚠️ **Their sources are PDFs, web pages and budget APIs, not Socrata**, so the
+per-source tables below do not cover them. The lifecycle notebook stands on: the
+*Development Impact on Infrastructure* page, the FY2023 Consolidated Financial
+Statements, the 2020 and 2025 *Infrastructure State and Condition* reports,
+`budget.edmonton.ca`'s **capital** budget API, and one trade-press article. The
+operating notebook stands on: `budget.edmonton.ca`'s **operating** budget API,
+the *Snow and Ice Control Annual Report Winter 2023-24* PDF, and one Taproot
+article. ⚠️ **The 2020 report is fetched from the Internet Archive** — the City
+no longer serves it and the current edition no longer publishes per-class asset
+lives at all, so that snapshot is not replaceable.
+
+⚠️ **The two notebooks share `budget.edmonton.ca` and must not be read as
+corroborating each other through it** — one reads the capital budget, the other
+the operating budget, and a portal outage takes out a section of each.
+
+⚠️ **The operating notebook already caught its own source moving.** Its §9 pins
+the `Parks & Roads Services` FY2026 branch total, and between
+`FINDINGS_roadway_maintenance_rate.md`'s measurement (2026-09-05,
+$307,325,053 → 1.2551×) and the notebook's first execution (2026-09-21,
+$304,370,450 → 1.2431×) the portal revised it. Nothing shipped moved — the rate
+is unescalated FY2017 — but **a document that had pinned the escalated figure
+would now be wrong**, which is the case for invariants that keep passing.
 
 ---
 
