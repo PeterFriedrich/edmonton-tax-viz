@@ -9,13 +9,24 @@ into the single Pages artifact:
                     vendor/ — with index.html's DEFAULT_BUILD rewritten to
                     "public". This is the site root, the advertised URL. Carries
                     a "Beta build" badge.
-  <out>/full/       SPECIALIST build (everything). index.html ONLY, with a
+  <out>/<FULL_DIR>/ SPECIALIST build (everything). index.html ONLY, with a
                     ``<base href="../">`` so its relative asset URLs (./data/...,
                     vendor/...) resolve to the ROOT's shared data/ + vendor/ — no
                     duplication of the multi-MB GeoJSON. DEFAULT_BUILD stays
                     "full", and its badge names the build as well as the beta
-                    status (the mitigation for /full/ being discoverable-but-
+                    status (the mitigation for it being discoverable-but-
                     unlisted, not access-controlled — PLAN_public_release.md §2a).
+
+⚠️ ``FULL_DIR`` is the URL SEGMENT and is NOT the same thing as the build
+keyword ``"full"``, which is baked into ``DEFAULT_BUILD``, ``BUILD ===``, the
+``?build=`` query parameter and ``BADGE_LABELS``. Renaming the directory must
+not touch any of those — the segment is a public-facing string Peter picks, the
+keyword is internal (2026-09-21: ``full`` → ``dev-build-full``).
+
+⚠️ ``FULL_DIR`` MUST STAY EXACTLY ONE LEVEL DEEP. The ``<base href="../">``
+injected below is what lets this copy share the root's ``data/`` and
+``vendor/``; a nested segment ("dev/build/full") would need ``../../`` and
+would silently 404 every asset instead.
 
 No data download or regeneration happens here: it is a pure code-shaping step, so
 it lives on the CODE deploy path. Run it before actions/upload-pages-artifact in
@@ -40,6 +51,10 @@ BADGE_LABELS = {
     "public": "Beta build — work in progress",
     "full": "Specialist build (beta) — work in progress",
 }
+
+# The URL segment the specialist build is served at. ⚠️ NOT the build keyword —
+# see the module docstring. One level deep, always.
+FULL_DIR = "dev-build-full"
 
 
 def wip_badge(label: str) -> str:
@@ -159,8 +174,9 @@ def build(src: Path, out: Path) -> None:
     if out.exists():
         shutil.rmtree(out)
 
-    # Both builds get the SAME token — /full/ resolves styles.css through its
-    # <base href="../" />, so it reads the root's copy of the very file hashed.
+    # Both builds get the SAME token — the specialist copy resolves styles.css
+    # through its <base href="../" />, so it reads the root's copy of the very
+    # file hashed.
     token = css_token(src / "styles.css")
     # ONE stamp for both copies: they are the same commit, emitted in the same
     # run. Computed once so a midnight-crossing build cannot date them apart.
@@ -179,7 +195,7 @@ def build(src: Path, out: Path) -> None:
         )
     )
 
-    # /full/ = SPECIALIST: index.html only, sharing the root's data/ + vendor/
+    # FULL_DIR = SPECIALIST: index.html only, sharing the root's data/ + vendor/
     # via <base>. The base MUST precede the vendor <link>/<script> it rewrites,
     # so inject it immediately after <head>.
     full_html = cache_bust(
@@ -200,16 +216,16 @@ def build(src: Path, out: Path) -> None:
     head = full_html[:head_end]
     if "<base " in head:
         raise SystemExit("build_site: source already carries a <base> tag — "
-                         "the /full/ share-root injection assumes none")
+                         "the share-root <base> injection assumes none")
     if head.count("<head>") != 1:
         raise SystemExit("build_site: expected exactly one <head>")
     full_html = full_html.replace("<head>", '<head>\n  <base href="../" />', 1)
     full_html = inject_badge(full_html, "full")
-    full_dir = out / "full"
+    full_dir = out / FULL_DIR
     full_dir.mkdir()
     (full_dir / "index.html").write_text(full_html)
 
-    print(f"build_site: wrote {out}/ (public) + {out}/full/ (specialist)")
+    print(f"build_site: wrote {out}/ (public) + {out}/{FULL_DIR}/ (specialist)")
 
 
 def main() -> None:

@@ -130,7 +130,15 @@ def test_the_smoke_gate_covers_both_builds(workflow):
     the dev server passes on full-only states the public root does not have."""
     run = next(r for r in _run_steps(_load(workflow)) if "verify-smoke.js" in r)
     assert run.count("verify-smoke.js") == 2
-    assert "/full/index.html" in run
+    # ⚠️ Reads build_site.FULL_DIR so a rename cannot leave the workflow
+    # smoke-testing a path the build no longer emits — the gate would exit 0 on
+    # a 404 page and publish unchecked. `test_build_site.py` pins the literal;
+    # this one only asserts the two stay in step.
+    sys.path.insert(0, "scripts")
+    import build_site
+
+    assert f"/{build_site.FULL_DIR}/index.html" in run
+    assert "/full/index.html" not in run
 
 
 # --- the exit codes the workflow branches on ---------------------------------
