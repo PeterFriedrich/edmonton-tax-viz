@@ -73,10 +73,48 @@ Identified by quoted text, **never by line number** — those drift.
 | 22 | 7 · 2026-09-20 | Retrieval logging (struck title, open box) | ACCURATE **+ material caveat** | The hook is live and working — 157 entries across 20 sessions since 2026-09-16. ⚠️ **But its matcher is `Read\|Grep\|Glob`, so a doc opened with `sed`/`grep`/`cat` in Bash is INVISIBLE**: three Bash file-reads produced **0** log entries, falsified directly. See the warning below |
 | 23 | 7 · 2026-09-20 | `B2 — Regional non-res mill rates` | ACCURATE | `2026_tax_rates.xlsx` still on the FIR dataset page 64 days after *"verified live"* (filename is lowercase; the item's `2026_Tax_Rates.xlsx` is a casing slip, not a dead link) |
 | 24 | 7 · 2026-09-20 | `B1 — Regional non-res assessment share` | ACCURATE | the equalized-assessment page carries exactly the **2024 / 2025 / 2026** XLSX workbooks claimed, still XLSX and not PDF-only |
-| 25 | 7 · 2026-09-20 | `A4 — Assessment-lag methods note` | **CORRECTED** | its stated blocker *"likely Peter/laptop"* is **FALSIFIED** — `www.edmonton.ca` and `pub-edmonton.escribemeetings.com` both return **200** from the Oracle box. The memo itself is still unfetched; nothing stops a session here from doing it |
+| 25 | 7 · 2026-09-20 | `A4 — Assessment-lag methods note` | ~~**CORRECTED**~~ → ⚠️ **THE CORRECTION WAS WRONG, reversed 2026-09-21 (row 35)** | it read: *its stated blocker "likely Peter/laptop" is FALSIFIED — both hosts return 200 from the Oracle box*. **Only the hosts were tested.** See row 35 |
+| 26 | 8 · 2026-09-21 | `Selective/partial data regen (DEFERRED)` | **CORRECTED** | ⚠️ **its stated payoff is FALSIFIED.** *"roads static 2+ mo while permits/fire change daily"* — row-level `max(:updated_at)` puts **Road Network at 2026-09-19** and zoning at 2026-09-14 against permits at 2026-09-19: same cadence, not static. The genuinely static sources are **GTFS (93–153 d)** and **school locations (139–151 d)**, which are small, so the optimization is worth less than the item claims |
+| 27 | 8 · 2026-09-21 | `B3 — Industrial-areas context map` | **CORRECTED** | its blocker *"municipal boundary layer source to verify"* was **resolved 2026-08-03** — `reference.geojson` ships 15 `t="boundary"` outlines including the four counties **and Industrial Heartland**. Six weeks stale; only the map is left |
+| 28 | 8 · 2026-09-21 | `D4 — sanitary trunk callout` | ACCURATE **+ material caveat** | the SSTC/EA pause is still in force, but the City states it lasts *"for the duration of the… Transformation project… expected to be completed by **Quarter 1 2027**"*. ⚠️ The item's word *"currently"* has an expiry ~2 quarters out, which a shipped panel line would outlive silently |
+| 29 | 8 · 2026-09-21 | `D1 — levy performance mini-viz` | ACCURATE | the off-site levy page still lists **2022/2023/2024** annual reports and no 2025 one, so *"cumulative $3.83M end-2024"* is still the newest published figure; `$3,033,592` / `$3,259,866` / `$32,813` all reconcile to `fable_brief_debt_lens.md` |
+| 30 | 8 · 2026-09-21 | `D3 — Blatchford contrast case study` | ACCURATE | `$32,813/ha` is in the D0/D1 table exactly as claimed — `fable_brief_debt_lens.md`, Component 1 table and the Blatchford entry |
+| 31 | 8 · 2026-09-21 | `Lens B optional refinement` | ACCURATE | ⚠️ **near-miss** — the lens itself SHIPS (`#devmode` *Infill opportunity*, `z(suitability) − z(activity)`), which is precisely the item's premise that *"the single diverging map already shows both"*; the one-sided toggles it proposes still do not exist |
+| 32 | 8 · 2026-09-21 | `Lens C — Activity vs City Service Cost` | ACCURATE | ⚠️ **near-miss** — `construction_value` IS used, in `load_permits.py`, but the item says *"NOT used **here**"* and Lens C is not built. Check the claim, not the string |
+| 33 | 8 · 2026-09-21 | `Peter's call: ingest an income variable` | ACCURATE | no income variable anywhere in `src/`, `data/DATA.md` or `web/index.html`; still an undecided call, not a lapsed one |
+| 34 | 8 · 2026-09-21 | `Display/chart — undecided design` | ACCURATE | no non-map panel exists; unchanged |
+| 35 | 8 · 2026-09-21 | `A4` **re-check of row 25** | **REVERSED** — the blocker is real | ⚠️ **A CORRECTION IN THIS FILE WAS WRONG.** Row 25 tested the HOST; the **document** endpoint is what matters. `filestream.ashx?DocumentId=244141` returns **Cloudflare 403** from this box via three independent clients — urllib+certifi, WebFetch (different network path), headless Chromium with a real fingerprint — so it is an **IP-level** block, not a user-agent one. `/Documents/244141` 404s, proving the 403 is a decision and not a generic wall. **A4 is Peter/laptop after all** |
 
-**Totals: 25 distinct items · 8 CORRECTED · 17 ACCURATE** (was 20 / 7 / 13
-before pass 7).
+**Totals: 34 distinct items · 9 CORRECTED · 24 ACCURATE · 1 REVERSED** (was
+25 / 8 / 17 before pass 8; row 25 moved out of CORRECTED when row 35 reversed
+it).
+
+⚠️ **THIS FILE'S OWN VERDICTS GO STALE TOO, AND ONE WAS WRONG WITHIN A DAY.**
+Row 35 reversed row 25 after **one** day. The failure was not carelessness about
+the topic — it was **testing the reachable thing next to the thing that
+matters**: the host answered 200, so the blocker was called falsified, and the
+document was never requested. `CLAUDE.md` already carries *"test the exact host,
+not the domain"* from two 2026-08-13 instances; this is the same error one level
+further down. **When an item's blocker is "can't fetch X", the check is
+fetching X**, not proving something near it is up. ⚠️ **A verdict of CORRECTED
+is an assertion like any other and belongs to a cohort of its own** — nothing
+re-checks this file.
+
+⚠️ **PASS 8'S FINDING IS THAT A DEFERRED ITEM'S *JUSTIFICATION* GOES STALE
+FASTER THAN ITS *CLAIM*.** Both corrections (rows 26, 27) were items nobody was
+about to act on, and in both the thing that had rotted was the sentence saying
+**why** it was worth doing or what stopped it — the roads-are-static premise,
+the missing boundary source. Neither item's headline was wrong. **A deferred
+item is read for its blocker, so a stale blocker is the expensive half**; this
+is the same shape as row 25 (`A4`), where the blocker was also the wrong part.
+
+⚠️ **Decomposed per rule 5, and it cuts against the audit:** pass 8's 2-of-9
+yield is the *lowest* of any date-defined cohort, and neither correction changes
+what gets built next. The undated pool was predicted to be *"the most likely
+place for an untouched stale claim"* — **9 items in, it was not.** Two of the
+nine (rows 31, 32) were near-misses in the audit's own favour: reading the topic
+rather than the claim would have scored both as CORRECTED and made the pass look
+twice as productive.
 
 ⚠️ **PASS 7'S BIGGEST FINDING IS ABOUT A MEASUREMENT WE ARE ABOUT TO ACT ON.**
 The retrieval log (row 22) exists to answer *"is the doc apparatus
@@ -123,6 +161,7 @@ this file's own tooling. Same trap `CLAUDE.md` documents for `todo_archive.py`.
 | 4 | external datasets (not items) | pipeline clean |
 | 5–6 | 30–60 d | 3 of 4 |
 | 7 | **undated** (never sampled before) | 1 of 5 |
+| 8 | **undated**, the remainder | 2 of 9 |
 
 ⚠️ **The yield changes SHAPE, not just rate.** Passes 1–2 found claims overtaken
 by our own work — findable by reading. Pass 3 found an **external input that
@@ -154,7 +193,12 @@ rather than re-litigating its premise.**
    children) — they simply carry no date, which is *why* they looked unsampled.
    **This file caught that on its first use; without it pass 7 would have
    re-checked all six.** Pass 7 took 5 of the remaining 15, leaving **10 never
-   sampled** — still the most likely place for an untouched stale claim.
+   sampled**. ⚠️ **Pass 8 drained that pool (9 items — one of the 10 had since
+   been dated by a correction) and the prediction was WRONG: 2 of 9, the lowest
+   yield of any cohort.** The undated pool is now **exhausted, not promising**.
+   The next pass has no obvious cohort left; pick by shape (pass 1's method,
+   the best-yielding one) or re-run the external-dataset sweep, which is the
+   only check that finds inputs going quiet.
 5. ⚠️ **Decompose any number that flatters this audit before recording it.**
    Every instrument defect found so far — the vacuous slice, the double-counted
    spans, the 5 dropped open boxes, the shrinking band, "18 of 103" — inflated

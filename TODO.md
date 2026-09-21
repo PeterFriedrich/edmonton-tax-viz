@@ -2460,10 +2460,16 @@ archive"*) is not, and this span is 2,533 lines.
   - [ ] **Selective/partial data regen (DEFERRED — `SPEC_deployment.md`
     "Two deploy paths").** Teach the *data* run which datasets a change needs so
     even a refresh skips untouched sources. Signal exists (`rowsUpdatedAt` per
-    dataset; roads static 2+ mo while permits/fire change daily) but needs
-    raw-file caching across CI runs, and the weekly cron sits right on GitHub's
-    7-day cache eviction. Real payoff on slow static layers (roads/zoning), real
-    fragility — separate project, not started.
+    dataset) but needs raw-file caching across CI runs, and the weekly cron sits
+    right on GitHub's 7-day cache eviction. ⚠️ **The stated payoff was measured
+    2026-09-21 and does NOT hold: roads and zoning are not static.** Row-level
+    `max(:updated_at)` — not the metadata field — puts Road Network at
+    2026-09-19 and zoning at 2026-09-14, i.e. the same cadence as permits
+    (2026-09-19); the old claim of *"roads static 2+ mo"* is falsified. The
+    genuinely static sources are the **GTFS feeds (93–153 d)** and the **school
+    locations (139–151 d)**, so a partial-regen design has to be pointed at
+    those instead, and they are small. Real fragility, now with a smaller
+    payoff — separate project, not started.
 
 - [ ] **PARKED: Regional comparison lens (St. Albert / Strathcona; Phase 2,
   not November scope).** ⚠️ **MOVED TO A SIBLING REPO 2026-09-18** —
@@ -2526,17 +2532,30 @@ archive"*) is not, and this span is 2,533 lines.
       `www.edmonton.ca/growthanalysis` returns 200.
   - [ ] **A4 — Assessment-lag methods note:** Nov 29 2024 council memo
     attachment (Table 1, permit→assessment 3–5 yr lag) — edmonton.ca fetch.
-    ⚠️ **"likely Peter/laptop" was FALSIFIED 2026-09-20** — `www.edmonton.ca`
-    and `pub-edmonton.escribemeetings.com` both return **200** from the Oracle
-    box (curl + certifi). **Any session here can fetch it**; the memo is simply
-    still unfetched.
+    ⚠️ **THE 2026-09-20 FALSIFICATION WAS ITSELF WRONG — re-tested 2026-09-21.**
+    `pub-edmonton.escribemeetings.com` does return **200 at its root**, which is
+    all that was checked; the **document endpoint** does not.
+    `filestream.ashx?DocumentId=244141` returns **Cloudflare 403** from this box
+    via **three independent clients** — urllib+certifi, WebFetch (a different
+    network path), and headless Chromium with a real browser fingerprint — so it
+    is an IP-level block, not a user-agent one. `/Documents/244141` 404s, which
+    proves the 403 is a decision rather than a generic wall. **The memo is
+    Peter/laptop after all** (doc id `244141`, found via search; the IIAP 2024
+    update is `226110`/`226107` and the 2025 update `262705`, all the same
+    endpoint). ⚠️ **Test the exact DOCUMENT, not the host** — the 2026-08-13
+    lesson was "test the exact host, not the domain", and this is the same error
+    one level further down.
   - [ ] **B2 — Regional non-res mill rates:** `2026_Tax_Rates.xlsx` on the FIR
     page (verified live) + yearly workbooks; 6 municipalities; reviewed JSON.
   - [ ] **B1 — Regional non-res assessment share:** FIR/SIR + equalized
     assessment XLSX (2024–26 verified on open.alberta.ca — NOT PDF-only);
     rebuild the published-share-series discrepancy from primary data.
-  - [ ] **B3 — Industrial-areas context map:** illustrative; municipal
-    boundary layer source to verify.
+  - [ ] **B3 — Industrial-areas context map:** illustrative. ⚠️ **Its stated
+    blocker is gone (checked 2026-09-21):** the municipal boundary layer was
+    sourced and shipped on 2026-08-03 (`DECISIONS.md`) — `web/data/reference.geojson`
+    carries 15 `t="boundary"` outlines including the four counties **and
+    Industrial Heartland itself**, which is the context this item wanted. What
+    is left is the map, not the source.
 
 - [ ] **PUBLIC RELEASE PREP (NEW 2026-07-09 — scope + rationale in
   `docs/PLAN_public_release.md`; read it before working these).** An external
@@ -2693,7 +2712,13 @@ archive"*) is not, and this span is 2,533 lines.
   - [ ] **D4 — sanitary trunk callout** (one-line panel text, NOT mapped —
     no clean basin boundaries confirmed): SSTC/EA charges paused May 2024;
     growth trunk sanitary currently funded from the accumulated ratepayer
-    reserve, not active growth charges (figures in the brief).
+    reserve, not active growth charges (figures in the brief). ⚠️ **The pause
+    has a stated end and the copy must not outlive it (checked 2026-09-21):**
+    the City says it runs *"for the duration of the Sanitary Servicing Strategy
+    Fund Transformation project… expected to be completed by Quarter 1 2027"* —
+    so a panel line reading *"currently"* goes wrong roughly two quarters out.
+    Write it with the date in it, or don't ship it before re-checking
+    `edmonton.ca/city_government/utilities/sanitary-servicing-strategy-fund-transformation`.
   - [ ] **D5 — Component 2: citywide debt context chart (non-spatial).**
     Separate panel/chart, labelled "citywide, not neighbourhood-specific" —
     never a map layer. Headline 2025: $4.6B outstanding, 69% of the
