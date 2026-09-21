@@ -287,6 +287,72 @@ def test_hood_with_no_roads_absent_from_result():
     assert list(result["neighbourhood_name"]) == ["HASROADS"]
 
 
+# --- MIN_PIECE_M sliver floor ------------------------------------------------
+#
+# The pair below differs ONLY in the crumb's length — 0.4 m against 4.0 m, one
+# either side of MIN_PIECE_M. Everything else (hood, class, the 100 m road that
+# is not under test) is identical, so a red can only mean the floor moved.
+
+
+@pytest.mark.parametrize(
+    "crumb_m, expected_total",
+    [(0.4, 100.0), (4.0, 104.0)],
+    ids=["below-floor-dropped", "above-floor-kept"],
+)
+def test_sliver_floor_drops_only_sub_metre_pieces(crumb_m, expected_total):
+    hood = _boundaries(["ALPHA"], [_square(0, 0, 100)])
+    roads = _roads(
+        [
+            ("Road", CITY, LOCAL, LineString([(0, 10), (100, 10)])),
+            ("Road", CITY, LOCAL, LineString([(0, 50), (crumb_m, 50)])),
+        ]
+    )
+    row = _run(hood, roads).iloc[0]
+    assert row["road_m_total"] == pytest.approx(expected_total)
+
+
+def test_sliver_floor_can_zero_a_hood_and_says_so(caplog):
+    """A hood whose ONLY collector/local piece is a crumb reads 0, not a crumb.
+
+    KENDAL and WESTVIEW VILLAGE, measured 2026-09-21: one sub-metre piece each,
+    which the money tooltip was dividing revenue by to print $/road-metre.
+    """
+    hoods = _boundaries(["REAL", "CRUMB"], [_square(0, 0, 100), _square(1000, 0, 100)])
+    roads = _roads(
+        [
+            ("Road", CITY, LOCAL, LineString([(0, 10), (100, 10)])),
+            ("Road", CITY, LOCAL, LineString([(1000, 50), (1000.6, 50)])),
+        ]
+    )
+    with caplog.at_level("INFO"):
+        result = _run(hoods, roads)
+    crumb = result[result["neighbourhood_name"] == "CRUMB"]
+    assert crumb.empty or crumb.iloc[0]["road_m_total"] == pytest.approx(0.0)
+    assert result[result["neighbourhood_name"] == "REAL"].iloc[0][
+        "road_m_total"
+    ] == pytest.approx(100.0)
+    # No silent data drops: the emptied hood is named in the log.
+    assert "CRUMB" in caplog.text and "sliver floor" in caplog.text
+
+
+def test_sliver_floor_spares_arterial_and_unknown():
+    """Metric groups only — `road_m_unknown` is the upstream-drift detector,
+    and flooring it would let a newly-unmapped class code arrive silently for
+    as long as its pieces stayed short."""
+    hood = _boundaries(["ALPHA"], [_square(0, 0, 100)])
+    roads = _roads(
+        [
+            ("Road", CITY, LOCAL, LineString([(0, 10), (100, 10)])),
+            ("Road", CITY, ARTERIAL, LineString([(0, 30), (0.4, 30)])),
+            ("Road", CITY, "Neverseen-Class Z", LineString([(0, 70), (0.4, 70)])),
+        ]
+    )
+    row = _run(hood, roads).iloc[0]
+    assert row["road_m_arterial"] == pytest.approx(0.4)
+    assert row["road_m_unknown"] == pytest.approx(0.4)
+    assert row["road_m_total"] == pytest.approx(100.0)
+
+
 def test_empty_geometry_dropped():
     hood = _boundaries(["ALPHA"], [_square(0, 0, 100)])
     roads = _roads(
