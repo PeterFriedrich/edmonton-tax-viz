@@ -6197,7 +6197,7 @@
               : `none since ${dh.years[0]}`)
           + ` · click for the year-by-year</span>` };
       const t = hoodPanelLens() ? temporalFor(p.neighbourhood_name) : null;
-      if (!t) return tip;   // no file, public build, no history, or no panel here
+      if (!t) return tip;   // no file, no history, or no panel here (NOT the build: public fetches it too)
       const i = t.years.length - 1;
       // ⚠️ DERIVED, not the literal "2024" this used to carry. The omitted set
       // GROWS at a roll-forward — 2025 joined it 2026-08-27 when the archive's
