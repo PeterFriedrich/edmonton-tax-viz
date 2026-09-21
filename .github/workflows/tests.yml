@@ -2,11 +2,25 @@ name: Tests
 
 # THE MERGE GATE. Until 2026-08-28 there wasn't one: `pytest` existed in exactly
 # one place — refresh.yml, a WEEKLY CRON — there was no pull_request workflow,
-# and `master` is not branch-protected. So `deploy.yml` published to the live
+# and `master` was not branch-protected. So `deploy.yml` published to the live
 # site on every push with zero test execution, and "746 passed" in a PR body
 # attested to the author's laptop rather than to the merged state. That is the
 # proxy-reading class one level up from the code (audit 2026-08-28, F3 —
 # docs/FINDINGS_proxy_guards.md).
+#
+# ⚠️ THE GATE IS NOW ENFORCED, NOT ADVISORY — this comment said otherwise until
+# 2026-09-21. `master` IS protected and requires the `test` context (verified
+# against the branch-protection API, not assumed), so a PR cannot merge until
+# this workflow passes, and force-pushes to master are refused. Two limits worth
+# knowing: `enforce_admins` is OFF, so an admin can still merge past a red run
+# deliberately; and no review is required, so this workflow is the ONLY thing
+# standing between a PR and master.
+#
+# ⚠️ A PR showing "no checks reported" is usually the trigger LAGGING, not a
+# missing run — measured 2026-09-21, a run appeared ~3 minutes after the PR
+# opened, and a session that read the gap as a defect closed and reopened a PR
+# for nothing. Query the head commit's check-runs before concluding a workflow
+# did not fire.
 #
 # ⚠️ THIS DOES NOT REPLACE refresh.yml's OWN pytest STEP, and that step must
 # stay. This gates the CHANGE; that one gates the weekly DATA PUBLISH, running
