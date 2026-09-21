@@ -82,8 +82,18 @@ CHECKS = []
 
 
 def check(ok, claim):
-    """Record one invariant. The final cell raises if any came back False."""
+    """Record one invariant. The final cell raises if any came back False.
+
+    ⚠️ The plain-text line is not redundant with the Markdown summary at the
+    end. Outside a Jupyter kernel ``display()`` renders as an opaque object
+    repr, so a notebook run as a script would report *nothing* about its own
+    invariants — and the monthly recheck
+    (``scripts/recheck_evidence_notebooks.py``) runs these as scripts. Printing
+    here is what makes the result legible to a machine; it is the same idiom
+    the five evidence notebooks use.
+    """
     CHECKS.append((bool(ok), claim))
+    print(f"  [{'PASS' if ok else 'FAIL'}] {claim}")
     return bool(ok)
 
 
