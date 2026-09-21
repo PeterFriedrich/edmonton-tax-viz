@@ -141,7 +141,7 @@ TODO.md` — and he chose the long form both times. A digest row that says
 
 **Evidence that would change it:** (a) any doc deletion or consolidation
 decision in the next 60 days that a growth figure would have triggered earlier;
-(b) the 2026-09-30 read-frequency run showing a large never-read set **that
+(b) the 2026-10-05 read-frequency run (moved from 09-30, see below) showing a large never-read set **that
 survives the Bash-read caveat** — then growth of the *unread* subset becomes
 meaningful; (c) the loaded path crossing whatever ceiling Peter puts on it
 (§3) — which is a loaded-path question, not a growth-instrumentation one.
@@ -158,6 +158,8 @@ reported because the hinge-fact re-measure produced it.
 - **It has moved +66% in 30 days, and nothing runs `retrieval_report.py`.**
   Verified by finding the readers, not by failing to find them: its only
   invokers are three handoff next-step lines saying *"~2026-09-30: run it"*
+  (⚠️ **the run moved to 2026-10-05** when the hook was widened on 2026-09-21 —
+  14 clean days start from the change, not from 2026-09-16)
   (S163, S164, S165) — a dated manual reader for a one-shot measurement, which
   is fine for the read-log question it was parked for, and is not "tracking".
 - The remedy already exists and is already open: `_PREMISES.md`'s P10 note —
@@ -169,7 +171,7 @@ reported because the hinge-fact re-measure produced it.
 **Not recommended here:** a loaded-path digest row. That is L2 of a different
 stack, and the brief's rule is not to design under a failed L0. The number is
 already in the one place the project decided it belongs; whether it needs a
-scheduled reader is a question to put to Peter with the 2026-09-30 run, when
+scheduled reader is a question to put to Peter with the 2026-10-05 run, when
 `retrieval_report.py` will be opened anyway. What *is* actionable now is the
 P10 item, which is a `TODO.md` shape problem, not an instrumentation one.
 
