@@ -54,6 +54,15 @@ ranges). It runs *before* the site publishes, and a failing invariant blocks
 the publish the same way those guards do — the last good page keeps serving
 rather than a broken one going live silently.
 
+⚠️ Because that render is automated and weekly, anything the page needs beyond
+nbconvert's stock output has to live in `run_verified_notebooks.py` itself. It
+injects the mobile-wrap CSS (`tools/inject_notebook_mobile_css.py`) after each
+successful render for exactly that reason: measured 2026-09-21, the stock lab
+template clipped **428px of every code line and 1458px of a wide output table**
+at 390px wide, with no scroller. Patching the committed HTML would have lasted
+one week. `tests/test_notebook_mobile_css.py::test_render_path_injects` is the
+guard.
+
 ## What's covered so far
 
 Only the **Money lens** — the metric the public site defaults to. Stated
