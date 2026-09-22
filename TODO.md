@@ -582,18 +582,6 @@ list lives in `docs/AUDIT_LEDGER.md` → "Queued"; run them one per session at
 lands, close this item when the list is empty. ⚠️ #6 gates the Colour
 legibility item below; #7 waits for the 2026-09-28 refresh.
 
-### Sliver-floor audit follow-on — the boundary-allocation RULE (OPEN 2026-09-22 S187)
-
-From `docs/FINDINGS_sliver_floors.md` §1. Already done: the limitation is
-recorded and sized (`data/DATA.md` roads Known Quirks, `SPEC_services.md`
-annotated, DECISIONS 2026-09-22), the tooltip gate shipped (`verify-smoke.js`
-§C11), and the two false comments were fixed. **Open: whether to apply an
-explicit rule** for road that lies on a hood boundary, since today ~0.2 m of
-digitizing noise picks the side. Options to cost: 50/50 split between the two
-hoods (moves 25 published hoods > 5%), or keep as-is. ⚠️ Changes published
-numbers and `ward_rollup.py`'s basis, so propose before building (CLAUDE.md).
-Bike: same mechanism, 2.5 km.
-
 ### Colour legibility — two measured defects in the CURRENT dark map (OPEN 2026-09-22 S186)
 
 ⚠️ **Neither of these is light-mode work.** Both were found while verifying the
@@ -3203,6 +3191,8 @@ archive"*) is not, and this span is 2,533 lines.
 ## Done
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
+
+- [x] **Sliver-floor audit follow-on: boundary-allocation rule — BUILT 2026-09-22 (S188).** Road/bike on a shared hood boundary (within 2 m) is split equally, `load_roads.split_boundary_pieces`; 94.2 km, length conserved, 24 published hoods move > 5%. Lands on the next weekly refresh. — BUILT 2026-09-22 · `docs/TODO_archive.md`
 
 - [x] **Mobile coverage ceiling — RE-PROBED 2026-09-17 (S168).** Public ceiling is **53.5%** (Money unfolded + peek), not the 52.3% on record — and not for the predicted reason: public Services is roads-only at 38.8%, so the full-build 53.1% state stayed unreachable. ⚠️ The old figure was an understatement when written, and `Development UNFOLDED 52.7%` is internally impossible. — MEASURED 2026-09-17 · `docs/TODO_archive.md`
 

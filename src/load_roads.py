@@ -62,7 +62,8 @@ MIN_PIECE_M = 1.0
 # median 0.2 m off the boundary (p90 0.73 m) — the boundary IS the centreline,
 # and the side the overlay picked was digitizing noise. 2 m clears that noise;
 # a road further off is plausibly genuinely on one side (each carriageway of a
-# divided road already lands on its own side). 95.2 km of metric road at 2 m.
+# divided road already lands on its own side). Splits 94.2 km of metric road
+# (1,349 pieces) on the 2026-09-03 feed.
 BOUNDARY_TOL_M = 2.0
 
 # ---------------------------------------------------------------------------

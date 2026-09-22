@@ -3295,3 +3295,17 @@ a *chrome-free* pixel and still missed, because that pixel was off the city
 polygon. Both runs printed a confident, plausible ceiling (47.9%) built on a
 state that did not exist. Fixed by scanning candidate pixels centre-out and
 **asserting `#peek` is actually visible before recording the row**.
+
+### Sliver-floor audit follow-on — the boundary-allocation RULE (OPEN 2026-09-22 S187)
+
+From `docs/FINDINGS_sliver_floors.md` §1. Already done: the limitation is
+recorded and sized (`data/DATA.md` roads Known Quirks, `SPEC_services.md`
+annotated, DECISIONS 2026-09-22), the tooltip gate shipped (`verify-smoke.js`
+§C11), and the two false comments were fixed. **Open: whether to apply an
+explicit rule** for road that lies on a hood boundary, since today ~0.2 m of
+digitizing noise picks the side. Options to cost: 50/50 split between the two
+hoods (moves 25 published hoods > 5%), or keep as-is. ⚠️ Changes published
+numbers and `ward_rollup.py`'s basis, so propose before building (CLAUDE.md).
+Bike: same mechanism, 2.5 km.
+
+**CLOSED 2026-09-22 (S188): equal split built** — Peter chose 50/50 after two external research replies (`/home/opc/research/edmonton-tax-viz/road_cost/boundary_road_*_2026-09-22.md`). `load_roads.split_boundary_pieces` (`BOUNDARY_TOL_M` = 2 m), applied to the roads metric, the roads web colour driver and bike. DECISIONS 2026-09-22 (S188 row) carries the measured sizes and tests.
