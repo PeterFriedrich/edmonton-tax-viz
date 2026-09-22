@@ -574,6 +574,14 @@ is in the `panel` column. T1 is public (3 of 10 service rows). T2 closed (`## Do
   tooltip/peek only because the probe feeds a hood feature to `viewTooltip` in
   grid modes too. Needs a cell-grain capture before it means anything.
 
+### Audit backlog S173–S186 — 9 targets marked, none run (OPEN 2026-09-22 S187)
+
+Fourteen sessions ran on Opus 5 alone with no cross-model check. The ranked
+list lives in `docs/AUDIT_LEDGER.md` → "Queued"; run them one per session at
+`high` effort via `edmonton-audit`, strike each there when its Executed row
+lands, close this item when the list is empty. ⚠️ #6 gates the Colour
+legibility item below; #7 waits for the 2026-09-28 refresh.
+
 ### Colour legibility — two measured defects in the CURRENT dark map (OPEN 2026-09-22 S186)
 
 ⚠️ **Neither of these is light-mode work.** Both were found while verifying the
