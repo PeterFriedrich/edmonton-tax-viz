@@ -582,28 +582,17 @@ list lives in `docs/AUDIT_LEDGER.md` → "Queued"; run them one per session at
 lands, close this item when the list is empty. ⚠️ #6 gates the Colour
 legibility item below; #7 waits for the 2026-09-28 refresh.
 
-### Sliver-floor audit follow-ons (OPEN 2026-09-22 S187)
+### Sliver-floor audit follow-on — the boundary-allocation RULE (OPEN 2026-09-22 S187)
 
-From `docs/FINDINGS_sliver_floors.md`, where the sizes and reproduction method
-live.
-
-1. **L4 FAIL — gate the full-build `$ revenue / road metre` tooltip row on the
-   Ratio lens's own predicate** (`RATIO_DENOMS.roads.floor` + `!is_set_aside`).
-   Today 15 on-scale hoods under 5 m/acre and 43 set-aside hoods print it,
-   including the city max $53,309 (YELLOWHEAD CORRIDOR WEST, 37 m of road). Add a
-   `verify-smoke.js` check that the row appears only where `ratioKept` holds.
-   Small, and it closes the asymmetry #520 named. ⚠️ The tooltip-weight comment
-   there says row calls are Peter's.
-2. **L1 decision — boundary-on-centreline road.** 95.2 km (2.6%) of metric road
-   lies on a hood boundary, and the side it counts toward is set by ~0.2 m
-   noise. A 50/50 split moves 25 published hoods >5% and 7 >10%. Options:
-   (a) record it as a sized known limitation (DATA.md Known Quirks, and correct
-   `SPEC_services.md`'s "occasionally" and its conservation-check claim);
-   (b) an explicit allocation rule. At minimum (a). The SPEC claim that the
-   conservation check "bounds the damage" is false either way.
-3. **L5 — two false comments.** `export_roads_web` "the same metric
-   join_and_calculate publishes" (no `MIN_PIECE_M`; 8 hoods differ by 0.1), and
-   the `RATIO_DENOMS` comment still citing WESTVIEW VILLAGE's $1.3M/m as live.
+From `docs/FINDINGS_sliver_floors.md` §1. Already done: the limitation is
+recorded and sized (`data/DATA.md` roads Known Quirks, `SPEC_services.md`
+annotated, DECISIONS 2026-09-22), the tooltip gate shipped (`verify-smoke.js`
+§C11), and the two false comments were fixed. **Open: whether to apply an
+explicit rule** for road that lies on a hood boundary, since today ~0.2 m of
+digitizing noise picks the side. Options to cost: 50/50 split between the two
+hoods (moves 25 published hoods > 5%), or keep as-is. ⚠️ Changes published
+numbers and `ward_rollup.py`'s basis, so propose before building (CLAUDE.md).
+Bike: same mechanism, 2.5 km.
 
 ### Colour legibility — two measured defects in the CURRENT dark map (OPEN 2026-09-22 S186)
 

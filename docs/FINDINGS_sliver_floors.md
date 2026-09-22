@@ -109,9 +109,16 @@ Served file, today:
   roads crossing a corridor strip, longest 8.5 m), and **HERITAGE VALLEY AREA,
   $13,238**, on 16.4 m (7 stubs, longest 3.3 m). Both pieces sets clear the 1 m
   floor. Length was never the problem for these.
-- **43 set-aside hoods** also print the row.
+- ~~**43 set-aside hoods** also print the row.~~ **Wrong. They don't:** the money
+  tooltip returns early for set-aside hoods, before this row. Corrected in the
+  fix session (below).
 
-Exposure is `/dev-build-full/` only, so this is not the public build. **Fix
+✅ **FIXED 2026-09-22 (S187)**: the row now gates on `RATIO_DENOMS.roads.floor`.
+It is guarded by `verify-smoke.js` §C11 in both directions, and falsified: the
+old `> 0` gate reddens it with exactly the 15 hoods, now seen rendered, and a
+row that never matches reddens the other half. 340 kept hoods carry the row.
+
+Exposure was `/dev-build-full/` only, so this is not the public build. **Fix
 (proposed, not applied):** gate the row on the Ratio lens's own predicate —
 `RATIO_DENOMS.roads.floor` and `!p.is_set_aside` — so the two surfaces cannot
 disagree. Guard it in `verify-smoke.js` next to §C9/§C10 by asserting the row
@@ -173,7 +180,13 @@ rewrite them:
   boundary counts as "along". The 0.2 m median offset says that is rare, but it
   is not zero, and the tol sweep (51 / 95 / 123 km) shows the headline depends
   on tol.
-- **L4 is code-read plus the served file, not rendered.** No full-build
+- ⚠️ **"43 set-aside hoods also print the row" was FALSE and went out in the
+  first version of this doc (PR #529).** I counted from the served file without
+  reading the tooltip's control flow, which returns early for set-aside hoods.
+  Found only when writing the fix. That is the confident-count-from-data shape
+  this section exists to catch, and the rendered C11 run is what confirms the
+  corrected count of 15.
+- **L4 was code-read plus the served file, not rendered** (since rendered: C11). No full-build
   screenshot or verify run was taken. The condition is unambiguous in the source,
   but "prints" means "the code prints it given this data", not "seen".
 - **The overlay is on 2026-09-03 raw data**, 18 days older than the served
