@@ -79,7 +79,64 @@ Audits are framed top-down, fundamental decisions first (the
 
 ## Queued — briefed, not yet run
 
-_(nothing queued — the doc-growth brief ran 2026-09-16, S166; row above)_
+### S173–S186 backlog — marked 2026-09-22, NOT yet briefed
+
+Fourteen sessions (S173–S186, PRs #474–#527) ran on **Opus 5 alone** — the last
+cross-model row above is S172. Everything below was built **and** verified by the
+same model, so each item is a self-graded claim. Ranked by *public claim surface ×
+self-measurement*, per the rule under "Never audited". ⚠️ **Opus 5.5 is a different
+model but the same family** — better than self-review, weaker independence than
+Fable; say which ran in the row. One target per run (`edmonton-audit`); add an
+Executed row and strike the item here when it runs.
+
+1. **Road + bike sliver floors — served numbers changed** (#491 S177, #520 S184).
+   `MIN_PIECE_M = 1.0` in `src/load_bike.py` and `src/load_roads.py` zeroed hoods
+   and moved `road_m_per_acre`; the full-only `$ revenue / road metre` row divided
+   by 0.73 m before it. Check: the "empty gap" argument for 1.0 m against the live
+   distribution; that nothing real was dropped (ANTHONY HENDAY ENERGY PARK's 26.5 m
+   stub is kept on purpose); and **the asymmetry class** — any other `src/load_*.py`
+   with a display-only floor and no metric floor, and any other surface that
+   divides by an unfloored column. S184's eleven-formatter replay is the starting
+   instrument.
+2. **The two roads justification notebooks** (#474 `roads_lifecycle_rate`, #509
+   `roads_operating_rate`). Published pages defending the shipped $50/road-m/yr and
+   $1,285/km, written by the model that shipped those rates — the same conflict of
+   interest S172 was run for, and **both postdate S172** (#473). Load-bearing: #509
+   §2 (why a secondary source may carry a shipped number), §3 (lane-km defect), §7
+   (5.4× → ~3.0× on a common unit). Re-fetch primary sources; don't read the
+   transcriptions.
+3. **Readout floors and formatters** (#476, #483, #495, #520c; S175–S184).
+   `money0`, `fmtMix`'s `v > 0` guard, `under2dp` / `SMALL_2DP = 0.005`, the `<`
+   floors, `fmtBike` deliberately unfloored, `verify-smoke.js` §C9. Check: does any
+   served value now read wrong (a floor hiding a real zero, `<0.1` where 0 is true),
+   and can C9 go red on a real defect rather than only on the mutations it was
+   written for?
+4. **Evidence recheck guard** (#510 S182, CI path proven S183). 113 invariants across
+   7 notebooks, baseline all holding. The vacuous-guard question (S144/S147 class):
+   can each invariant flip, and does ❓ actually fire on a dead source rather than
+   folding into ✅? First scheduled run **2026-10-15** — audit before it, or read
+   its issue as the first live evidence.
+5. **Upstream-defect claims, before any is SENT** — `docs/DATA_ISSUES.md` (7 rows,
+   0 sent) incl. `stt5-pzaa` declared defective (#497 S179). A wrong defect report
+   to a publisher is outward-facing and can't be unsent; this audit gates sending.
+6. **S185–S186 colour work** — the backdrop sweep (near-black optimal, 14.2%
+   under 3:1), the cividis ↔ `SET_ASIDE_COLOR` ΔE 2.3 collision, the ramp-middle
+   compression — **medium-effort arithmetic, never rendered, measurement scripts
+   lost**. Plus S185's claim the chrome tokenization (#525) is inert in dark:
+   pixel-diff before/after. **Gates the `TODO.md` "Colour legibility" items.**
+7. **CI behaviour changes** (#521 `/dev-build-full/` move + `build_site.py`, #523
+   `refresh.yml` rebase-and-retry). **Run after 2026-09-28** — the first scheduled
+   refresh to exercise the retry; audit its log, not the YAML alone.
+8. **README public claims + licence** (#486–#488 Comparable Work sourcing, #490
+   three-grant licence, #500–#502 scope/status rewrite; guards
+   `test_readme_claims.py`, `test_license.py`). The public front door; check each
+   sourced claim against its source and that the guards pin the claims that matter.
+9. **Staleness passes 7–8 + rebuilt instrument** (#498, #499, #514). One verdict
+   was wrong within a day (S183 §2c, A4's blocker). Sample the verdicts, don't re-run
+   the pass.
+
+Not queued: session handoffs, the template repo (S173, other repo), S185's
+external recon (no artefact), #515/#516/#517 (tooling, low claim surface).
 
 ## Never audited (candidates, roughly ranked)
 
