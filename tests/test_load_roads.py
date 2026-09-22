@@ -365,6 +365,68 @@ def test_empty_geometry_dropped():
     assert row["road_m_total"] == pytest.approx(100)
 
 
+# --- boundary split (BOUNDARY_TOL_M) -----------------------------------------
+#
+# Where a hood boundary is drawn on a road centreline, the overlay hands the
+# road to whichever side it lands on in the low decimals (median 0.2 m off,
+# docs/FINDINGS_sliver_floors.md §1). Road within BOUNDARY_TOL_M of a shared
+# boundary is split equally instead. WEST and EAST share the edge x=100.
+
+
+def _pair():
+    return _boundaries(["WEST", "EAST"], [_square(0, 0, 100), _square(100, 0, 100)])
+
+
+def _totals(result):
+    return result.set_index("neighbourhood_name")["road_m_total"].to_dict()
+
+
+@pytest.mark.parametrize("offset", [-0.3, 0.3], ids=["west-of-line", "east-of-line"])
+def test_boundary_road_is_split_equally_whichever_side_noise_puts_it(offset):
+    """The same 80 m road 0.3 m either side of the line gives the SAME answer.
+
+    Before the rule, this pair gave WEST 80 / EAST 0 and WEST 0 / EAST 80 —
+    the published figure depended on which way the digitizing noise went."""
+    x = 100 + offset
+    roads = _roads([("Road", CITY, LOCAL, LineString([(x, 10), (x, 90)]))])
+    assert _totals(_run(_pair(), roads)) == pytest.approx({"WEST": 40.0, "EAST": 40.0})
+
+
+def test_road_clear_of_the_tolerance_stays_on_its_side():
+    """Falsifies a rule that splits everything near a boundary: 5 m inside is
+    genuinely WEST's road. Differs from the test above only in the offset."""
+    roads = _roads([("Road", CITY, LOCAL, LineString([(95, 10), (95, 90)]))])
+    assert _totals(_run(_pair(), roads)) == pytest.approx({"WEST": 80.0})
+
+
+def test_road_on_the_city_outer_edge_is_kept_whole():
+    """No neighbour to share with — the length stays, it is not halved away."""
+    roads = _roads([("Road", CITY, LOCAL, LineString([(0.3, 10), (0.3, 90)]))])
+    assert _totals(_run(_pair(), roads)) == pytest.approx({"WEST": 80.0})
+
+
+def test_boundary_split_conserves_metric_length():
+    """Split + interior + crossing + outer-edge road: the citywide metric total
+    equals the input length exactly — nothing duplicated, nothing lost."""
+    roads = _roads([
+        ("Road", CITY, LOCAL, LineString([(100.3, 10), (100.3, 90)])),    # on shared edge, 80
+        ("Road", CITY, COLLECTOR, LineString([(50, 10), (50, 60)])),      # WEST interior, 50
+        ("Road", CITY, LOCAL, LineString([(20, 95), (180, 95)])),         # crosses, 160
+        ("Road", CITY, LOCAL, LineString([(199.5, 10), (199.5, 40)])),    # outer edge, 30
+    ])
+    result = _run(_pair(), roads)
+    assert result["road_m_total"].sum() == pytest.approx(80 + 50 + 160 + 30)
+    assert _totals(result) == pytest.approx({"WEST": 40 + 50 + 80, "EAST": 40 + 80 + 30})
+
+
+def test_boundary_split_leaves_arterials_alone():
+    """Arterials are carried internally and never published per hood, so the
+    rule does not touch them — the split is metric-only."""
+    roads = _roads([("Road", CITY, ARTERIAL, LineString([(100.3, 10), (100.3, 90)]))])
+    result = _run(_pair(), roads).set_index("neighbourhood_name")
+    assert result["road_m_arterial"].to_dict() == pytest.approx({"EAST": 80.0})
+
+
 # --- export_roads_web --------------------------------------------------------
 
 
@@ -537,6 +599,29 @@ def test_export_v_matches_load_roads_metric(tmp_path):
     _export(hood, roads, out)
     access = [f for f in _read_fc(out)["features"] if f["properties"]["t"] == "access"]
     assert access[0]["properties"]["v"] == pytest.approx(expected, abs=0.05)
+
+
+def test_export_v_carries_the_boundary_split(tmp_path):
+    """⚠️ The map colour must match the published figure on a boundary road.
+
+    Without the split in export_roads_web, EAST (which holds the whole road
+    geometrically) would colour at 80 m while publishing 40."""
+    hoods = _boundaries_with_acres(["WEST", "EAST"], [_square(0, 0, 100), _square(100, 0, 100)])
+    roads = _roads([
+        ("Road", CITY, LOCAL, LineString([(100.3, 10), (100.3, 90)])),
+        ("Road", CITY, LOCAL, LineString([(150, 10), (150, 90)])),
+    ])
+    acres = hoods.set_index("neighbourhood_name")["area_acres"]
+    expected = {n: m / acres[n] for n, m in _totals(_run(hoods, roads)).items()}
+
+    out = tmp_path / "roads.geojson"
+    _export(hoods, roads, out)
+    access = {
+        f["properties"]["n"]: f["properties"]["v"]
+        for f in _read_fc(out)["features"] if f["properties"]["t"] == "access"
+    }
+    assert access["EAST"] == pytest.approx(expected["EAST"], abs=0.05)
+    assert expected["EAST"] == pytest.approx(120 / acres["EAST"])
 
 
 def test_export_holds_unclassified_length_out_of_the_access_layer(tmp_path, caplog):

@@ -244,7 +244,11 @@ def test_export_bike_web_drops_clip_slivers(tmp_path):
 
 
 def _two_hoods():
-    """A and B share the edge at x=100."""
+    """A and B share the edge at x=100.
+
+    B's short pieces sit 10 m inside it, clear of BOUNDARY_TOL_M, so these
+    tests see the floor alone and not the boundary split.
+    """
     return _boundaries(["A", "B"], [_square(0, 0, 100), _square(100, 0, 100)])
 
 
@@ -257,7 +261,7 @@ def test_sliver_piece_is_excluded_from_the_metric():
     """
     bike = _bike([
         (PROTECTED, False, ON, LineString([(10, 10), (10, 60)])),        # 50 m in A
-        (PROTECTED, False, ON, LineString([(100.1, 50), (100.6, 50)])),  # 0.5 m in B
+        (PROTECTED, False, ON, LineString([(110.1, 50), (110.6, 50)])),  # 0.5 m in B
     ])
     result = _run(_two_hoods(), bike)
 
@@ -275,7 +279,7 @@ def test_piece_at_the_floor_is_kept():
     """
     bike = _bike([
         (PROTECTED, False, ON, LineString([(10, 10), (10, 60)])),        # 50 m in A
-        (PROTECTED, False, ON, LineString([(100.1, 50), (101.6, 50)])),  # 1.5 m in B
+        (PROTECTED, False, ON, LineString([(110.1, 50), (111.6, 50)])),  # 1.5 m in B
     ])
     result = _run(_two_hoods(), bike)
 
@@ -286,7 +290,7 @@ def test_sliver_drop_is_reported_not_silent(caplog):
     """No silent data drops: the log names the neighbourhood that went to zero."""
     bike = _bike([
         (PROTECTED, False, ON, LineString([(10, 10), (10, 60)])),
-        (PROTECTED, False, ON, LineString([(100.1, 50), (100.6, 50)])),
+        (PROTECTED, False, ON, LineString([(110.1, 50), (110.6, 50)])),
     ])
     with caplog.at_level("INFO"):
         _run(_two_hoods(), bike)
@@ -306,3 +310,11 @@ def test_metric_floor_is_not_the_display_constant():
     """
     assert MIN_PIECE_M == 1.0
     assert MIN_PIECE_M != WEB_MIN_PART_M
+
+
+def test_route_on_a_shared_boundary_is_split_equally():
+    """Same rule as load_roads: a route drawn on the edge both hoods share is
+    split, not handed to whichever side it fell on (0.3 m inside B here)."""
+    bike = _bike([(PROTECTED, False, ON, LineString([(100.3, 10), (100.3, 90)]))])
+    result = _run(_two_hoods(), bike).set_index("neighbourhood_name")
+    assert result["bike_m_total"].to_dict() == pytest.approx({"A": 40.0, "B": 40.0})

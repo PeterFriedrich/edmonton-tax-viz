@@ -29,6 +29,9 @@ hoods spot-checked.
 
 ## §1 — L1: boundary-running road is allocated by digitizing noise, and the floor only catches its dust
 
+> **Resolved 2026-09-22 (S188):** Peter chose the equal split. Built as
+> `load_roads.split_boundary_pieces` (roads + bike); DECISIONS 2026-09-22.
+
 The crumbs `MIN_PIECE_M` removes are the tail of a bigger mechanism. Where a
 neighbourhood boundary is drawn **on** a road centreline, `gpd.overlay` hands the
 road to whichever side it falls on in the low decimals. Measured over collector +

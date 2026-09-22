@@ -217,6 +217,8 @@ per hood:  road_m_<class>  = Σ length(city road centrelines ∩ hood polygon), 
   metric road runs on a boundary, 43% of all boundary-running road. The
   conservation check does NOT bound it, because it is blind to which side a
   metre lands on. A 50/50 split would move 25 published hoods > 5%.
+  **RESOLVED 2026-09-22 (S188): the equal split is now applied** to metric road
+  and bike (`load_roads.split_boundary_pieces`, DECISIONS 2026-09-22).
 - **Download truncation — BUILT 2026-07-01 (the prerequisite commit):**
   53,720 rows exceeds the `$limit=20000` pattern used for zoning — a
   copy-paste download would have silently kept 37% of the network.
