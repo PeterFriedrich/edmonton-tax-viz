@@ -24,6 +24,8 @@ import pandas as pd
 from shapely.geometry import MultiLineString
 from shapely.ops import linemerge, unary_union
 
+from src.load_roads import split_boundary_pieces
+
 logger = logging.getLogger(__name__)
 
 # Warn when more than this share of filtered bike length falls outside every
@@ -272,6 +274,10 @@ def load_bike(bike_path: str, boundaries: gpd.GeoDataFrame) -> pd.DataFrame:
             len(emptied),
             (": " + ", ".join(emptied)) if emptied else "",
         )
+
+    # Same rule as road: a route drawn on a hood boundary is shared, not
+    # handed to whichever side digitizing noise picked (2.5 km, 2026-09-22).
+    overlay = split_boundary_pieces(overlay, boundaries, "Bike")
 
     by_type = (
         overlay.groupby(["neighbourhood_name", "onroad"])["piece_m"]

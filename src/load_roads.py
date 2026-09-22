@@ -55,6 +55,16 @@ UNASSIGNED_WARN_FRAC = 0.05
 # belongs in COPY_DECISIONS.md and not here. The web layer says "<0.1" for it.
 MIN_PIECE_M = 1.0
 
+# A metric piece lying wholly within this distance of its own neighbourhood's
+# boundary is road ON the boundary, and its length is shared equally with the
+# neighbour(s) whose boundary it also lies on — see split_boundary_pieces.
+# Measured 2026-09-22 (docs/FINDINGS_sliver_floors.md §1): such pieces sit a
+# median 0.2 m off the boundary (p90 0.73 m) — the boundary IS the centreline,
+# and the side the overlay picked was digitizing noise. 2 m clears that noise;
+# a road further off is plausibly genuinely on one side (each carriageway of a
+# divided road already lands on its own side). 95.2 km of metric road at 2 m.
+BOUNDARY_TOL_M = 2.0
+
 # ---------------------------------------------------------------------------
 # Explicit functional_class_code → class group dictionary.
 #
@@ -234,6 +244,60 @@ def _prepare_segments(roads_path: str, boundaries: gpd.GeoDataFrame) -> gpd.GeoD
     return overlay
 
 
+def split_boundary_pieces(
+    pieces: gpd.GeoDataFrame,
+    boundaries: gpd.GeoDataFrame,
+    label: str,
+    tol: float = BOUNDARY_TOL_M,
+) -> pd.DataFrame:
+    """Share boundary-running length equally among the hoods whose edge it is.
+
+    Where a neighbourhood boundary is drawn on a road centreline, the overlay
+    hands the road to whichever side it falls on in the low decimals. A piece
+    lying wholly within `tol` of the boundaries of k ≥ 2 hoods (its own among
+    them) is replaced by k rows of piece_m / k, one per hood; length is
+    conserved exactly. A piece on the city's outer edge has no second hood and
+    stays whole. Locked 2026-09-22 (DECISIONS.md).
+
+    Returns the pieces WITHOUT geometry (the split rows carry the original
+    piece's other columns; their geometry would be the same line k times).
+    """
+    rings = gpd.GeoDataFrame(
+        {"sharer": boundaries["neighbourhood_name"].values},
+        geometry=boundaries.geometry.boundary.buffer(tol).values,
+        crs=boundaries.crs,
+    )
+    pieces = pieces.reset_index(drop=True)
+    hits = gpd.sjoin(
+        pieces[["neighbourhood_name", "geometry"]], rings, predicate="within"
+    )[["neighbourhood_name", "sharer"]]
+    # Along-boundary means along its OWN hood's edge; a piece merely near a
+    # neighbour's edge (and not its own) is interior road and stays put.
+    along_own = hits.index[hits["neighbourhood_name"] == hits["sharer"]].unique()
+    hits = hits.loc[hits.index.isin(along_own), ["sharer"]]
+    k = hits.groupby(level=0).size()
+    shared_idx = k.index[k >= 2]
+    outer_m = float(pieces.loc[k.index[k < 2], "piece_m"].sum())
+
+    shared = hits.loc[hits.index.isin(shared_idx)]
+    split = pieces.drop(columns="geometry").loc[shared.index].copy()
+    split["neighbourhood_name"] = shared["sharer"].values
+    split["piece_m"] = split["piece_m"] / k.loc[shared.index].values
+
+    kept = pieces.drop(columns="geometry").drop(index=shared_idx)
+    out = pd.concat([kept, split], ignore_index=True)
+
+    shared_m = float(pieces.loc[shared_idx, "piece_m"].sum())
+    logger.info(
+        "%s boundary split (tol %.3g m): %d piece(s), %.1f km on a shared "
+        "neighbourhood boundary, split equally (%d three-or-more-way); %.1f km "
+        "on the city's outer edge kept whole",
+        label, tol, len(shared_idx), shared_m / 1000,
+        int((k >= 3).sum()), outer_m / 1000,
+    )
+    return out
+
+
 def load_roads(roads_path: str, boundaries: gpd.GeoDataFrame) -> pd.DataFrame:
     """Overlay road centrelines on boundaries → per-neighbourhood road metres.
 
@@ -291,6 +355,17 @@ def load_roads(roads_path: str, boundaries: gpd.GeoDataFrame) -> pd.DataFrame:
             len(emptied),
             (": " + ", ".join(emptied)) if emptied else "",
         )
+
+    # Metric groups only, after the floor: arterial and unknown are carried
+    # internally and never published per hood.
+    metric = overlay["group"].isin(["collector", "local"])
+    overlay = pd.concat(
+        [
+            overlay.loc[~metric].drop(columns="geometry"),
+            split_boundary_pieces(overlay.loc[metric], boundaries, "Road"),
+        ],
+        ignore_index=True,
+    )
 
     by_group = (
         overlay.groupby(["neighbourhood_name", "group"])["piece_m"]
@@ -394,8 +469,12 @@ def export_roads_web(
     # The colour driver: join_and_calculate's metric WITHOUT the MIN_PIECE_M
     # floor (that lives in load_roads) — differs by ≤0.1 m/acre after rounding.
     # Computed from the full-resolution pieces, BEFORE any display thinning.
+    # ⚠️ The boundary split MUST match load_roads': without it the colour
+    # disagrees with the published figure by up to ~20% (MAPLE RIDGE, GAINER).
     per_hood = (
-        overlay.loc[overlay["t"] == "access"]
+        split_boundary_pieces(
+            overlay.loc[overlay["t"] == "access"], boundaries, "Road web colour"
+        )
         .groupby("neighbourhood_name")["piece_m"].sum()
         .rename("access_m")
         .reset_index()
