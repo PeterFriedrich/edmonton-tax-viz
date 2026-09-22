@@ -574,6 +574,49 @@ is in the `panel` column. T1 is public (3 of 10 service rows). T2 closed (`## Do
   tooltip/peek only because the probe feeds a hood feature to `viewTooltip` in
   grid modes too. Needs a cell-grain capture before it means anything.
 
+### Colour legibility — two measured defects in the CURRENT dark map (OPEN 2026-09-22 S186)
+
+⚠️ **Neither of these is light-mode work.** Both were found while verifying the
+light-mode research reply (DECISIONS 2026-09-22) and both are defects in the map
+as it ships today. They would also have to be re-solved in any light ramp family,
+so fixing them first makes that build cheaper — but they do not wait on it.
+Measurement script and method: `light_mode_theme_verification_2026-09-21.md` in
+`/home/opc/research/edmonton-tax-viz/` (⚠️ **outside the repo — `git pull` does
+not restore it**; the numbers below are the durable record).
+
+- [ ] **Half the neighbourhoods sit inside ~20% of the ramp.** On the landing
+  view (`revenue_per_acre`, sqrt colour, `colorClamp` $50,000, `current` ramp),
+  the interquartile range is **$15.1k–$27.8k/acre → t 0.55–0.75**. Decile-to-
+  decile ΔE76 runs **6.1–8.6** across p20–p80 (**cividis is worse: 4.4–6.0**,
+  at/near the just-noticeable threshold for patches that are not adjacent),
+  while the tails get ΔE **48.8** (p0→p10) and **30.1** (p90→p100). So the ramp
+  spends its dynamic range where almost nobody is. This is the biggest practical
+  legibility limit in the map and it is entirely theme-independent.
+  ⚠️ **In tension with a LOCKED decision — do not just change the transform.**
+  `colorClamp` is a deliberate literal precisely so two visits stay comparable
+  (see the `METRICS.revenue_per_acre` comment and `check_colour_clamps.py`); a
+  percentile/log transform would spread the bulk and break that. The open
+  question is whether there is a fix that keeps cross-visit comparability —
+  decide it, don't silently trade it away. **Not yet reproduced visually** — the
+  numbers are ΔE76 (a screening metric, not ΔE2000) on the opaque default view;
+  shoot the real map before acting.
+- [ ] **cividis collides with the set-aside grey — "off the scale" and "a real
+  value" render the same.** `SET_ASIDE_COLOR` `#686c7a` (L\* 45.7) sits **ΔE 2.3**
+  from the cividis ramp at t=0.41. **Cost: 4 hoods within ΔE 3 ($8.0k–$9.2k/acre),
+  8 within ΔE 5 ($7.4k–$9.9k)**, against 48 genuinely grey set-aside hoods — so on
+  that palette those few read as undeveloped land. Small population, but it is a
+  **categorical** confusion rather than a magnitude error, and cividis is the
+  CVD-safe palette, i.e. the one a colour-blind reader is steered to.
+  ⚠️ **Why it was missed is the reusable part:** the comment at `SET_ASIDE_COLOR`
+  asserts the grey is *"Distinct from every ramp's low end (dark purple/blue)"* —
+  true, and that is exactly where the value cannot be wrong. Nobody checked the
+  **mid**. (`check-where-the-value-can-be-wrong`, instance 11.)
+  **Ship the fix with a guard** — assert the minimum ΔE between `SET_ASIDE_COLOR`
+  and every stop-to-stop sample of all three ramps clears a stated floor. The
+  wireframe colour already has this reasoning done by brute force (see the
+  `#2ec4ff` comment in `web/index.html`: *"no single colour clears all four
+  ramps"*); this is the same search, never run for the set-aside grey.
+
 ### General backlog — the flat list (no parent item; predates the `###` headings above)
 
 ⚠️ **Everything from here down is its OWN top-level work, not a child of the
