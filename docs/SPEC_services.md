@@ -211,6 +211,12 @@ per hood:  road_m_<class>  = Σ length(city road centrelines ∩ hood polygon), 
   collectors can still trace boundaries occasionally. Accept the residual
   noise in v1 (the conservation check bounds the damage); note it as a known
   limitation.
+  ⚠️ **Measured 2026-09-22 — both premises were wrong, and the acceptance stands
+  only as a SIZED limitation** (`data/DATA.md` roads Known Quirks,
+  `docs/FINDINGS_sliver_floors.md` §1). It is not occasional: 95.2 km (2.6%) of
+  metric road runs on a boundary, 43% of all boundary-running road. The
+  conservation check does NOT bound it, because it is blind to which side a
+  metre lands on. A 50/50 split would move 25 published hoods > 5%.
 - **Download truncation — BUILT 2026-07-01 (the prerequisite commit):**
   53,720 rows exceeds the `$limit=20000` pattern used for zoning — a
   copy-paste download would have silently kept 37% of the network.

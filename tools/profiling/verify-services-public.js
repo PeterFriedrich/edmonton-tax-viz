@@ -272,7 +272,10 @@ function check(name, ok, detail) {
   // properties returns null, which reads as "the row is missing" and would have
   // this script report a gate that is working as a gate that is broken.
   const tip = await page.evaluate(() => {
-    const feat = state.data.features.find(f => f.properties.road_m_per_acre > 0
+    // A hood past the Ratio floor: below it the row is withheld on purpose
+    // (verify-smoke.js §C11), which this check would misread as the gate.
+    const feat = state.data.features.find(f => !f.properties.is_set_aside
+      && f.properties.road_m_per_acre >= RATIO_DENOMS.roads.floor
       && f.properties.revenue_per_acre != null);
     const t = tooltipFor({ object: feat });
     return t ? t.html : '(tooltipFor returned null)';

@@ -480,6 +480,39 @@ const GARBAGE = /\bNaN\b|\bundefined\b|\bnull\b|\bInfinity\b|\$NaN|\$undefined/;
         + `"${smalls.widest.s}" (${smalls.widest.c}, ${smalls.widest.n})`
       : 'floor boundary matches two-decimal rounding');
 
+  // ---- C11. THE $/ROAD-METRE ROW AGREES WITH THE RATIO LENS'S FLOOR -------
+  // The tooltip and the Ratio lens compute the same quotient. Until 2026-09-22
+  // the tooltip gated on `> 0` only and printed $53,309/m for YELLOWHEAD
+  // CORRIDOR WEST's 37 m of road — a value the lens greys as an artifact
+  // (FINDINGS_sliver_floors.md §2). BOTH DIRECTIONS: the row must appear on
+  // every kept hood too, so deleting it everywhere fails here as well.
+  // Public build: the row is full-only, so it must appear nowhere.
+  const perM = await page.evaluate(() => {
+    applyView('money'); applyMetric('revenue_per_acre');
+    const floor = RATIO_DENOMS.roads.floor;
+    let shownBelow = 0, missingAbove = 0, kept = 0, worst = null;
+    for (const f of state.data.features) {
+      const p = f.properties;
+      if (p.is_set_aside || p.road_m_per_acre == null || p.revenue_per_acre == null) continue;
+      const t = tooltipFor({ object: f });
+      const has = !!t && /revenue \/ road metre/.test(t.html);
+      const want = FULL_BUILD && p.road_m_per_acre >= floor;
+      if (want) kept++;
+      if (has && !want) {
+        shownBelow++;
+        if (!worst || p.road_m_per_acre < worst.v) worst = { v: p.road_m_per_acre, n: p.neighbourhood_name };
+      }
+      if (want && !has) missingAbove++;
+    }
+    return { shownBelow, missingAbove, kept, full: FULL_BUILD, worst };
+  });
+  check('C11: $/road-metre row never shown below the Ratio floor (or on public)',
+    perM.shownBelow === 0,
+    perM.worst ? `${perM.shownBelow} shown, lowest ${perM.worst.v} m/acre (${perM.worst.n})` : '');
+  check('C11: $/road-metre row shown on every hood the Ratio lens keeps (full build)',
+    perM.missingAbove === 0 && (!perM.full || perM.kept > 0),
+    `${perM.kept} kept, ${perM.missingAbove} missing`);
+
   // ---- D. PROVENANCE ------------------------------------------------------
   // The rates on screen are a fiscal headline read straight from the manifest;
   // a refresh that rewrites status.json must not leave the pod disagreeing with

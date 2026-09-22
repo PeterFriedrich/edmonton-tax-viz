@@ -925,7 +925,7 @@
     // log +0.13) → colour is LOG-scaled between the kept subset's p2.5 and p97.5
     // (computed from the data, cached per denominator). Height stays linear
     // (the honesty rule). Hoods below each denominator's floor produce
-    // artifacts (roads: WESTVIEW VILLAGE, $1.3M/m on a near-zero road base;
+    // artifacts (roads: YELLOWHEAD CORRIDOR WEST, $53k/m on 37 m of road;
     // fire: four annexed-fringe hoods at $1.3–1.7M/event plus four
     // zero-event hoods) — greyed off-scale, height 0.
     const RATIO_DENOMS = {
@@ -6146,7 +6146,11 @@
       // deliberate and predates this change.
       if (isRevenue(state.metric) && p.road_m_per_acre != null) {
         html += `<br/><span class="muted">${fmtRoadM(p.road_m_per_acre)}</span>`;
-        if (FULL_BUILD && p.road_m_per_acre > 0 && p.revenue_per_acre != null) {
+        // Gated on the Ratio lens's own floor: the same quotient, so the two
+        // surfaces must agree on where it is an artifact. `> 0` alone printed
+        // $53,309/m for 37 m of crossing stubs (FINDINGS_sliver_floors.md §2).
+        if (FULL_BUILD && p.road_m_per_acre >= RATIO_DENOMS.roads.floor &&
+            p.revenue_per_acre != null) {
           const perM = p.revenue_per_acre / p.road_m_per_acre;
           html += `<br/><span class="muted">$${Math.round(perM).toLocaleString()} revenue / road metre</span>`;
         }

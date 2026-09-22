@@ -391,7 +391,8 @@ def export_roads_web(
         {"arterial": "arterial", "collector": "access", "local": "access"}
     )
 
-    # The colour driver: the same metric join_and_calculate publishes.
+    # The colour driver: join_and_calculate's metric WITHOUT the MIN_PIECE_M
+    # floor (that lives in load_roads) — differs by ≤0.1 m/acre after rounding.
     # Computed from the full-resolution pieces, BEFORE any display thinning.
     per_hood = (
         overlay.loc[overlay["t"] == "access"]

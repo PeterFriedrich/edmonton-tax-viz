@@ -733,6 +733,21 @@ boundary acre** (`road_m_per_acre`).
   infrastructure — SPEC_services.md; don't re-litigate). ~0.28% of filtered
   length falls outside all neighbourhood polygons (conservation guard reports
   it every run).
+- ⚠️ **BOUNDARY-ON-CENTRELINE ROAD IS ALLOCATED BY DIGITIZING NOISE — a known,
+  sized limitation (measured 2026-09-22, `docs/FINDINGS_sliver_floors.md` §1).**
+  Many hood boundaries are drawn ON a road centreline, so `gpd.overlay` hands
+  that road to whichever side the two separately-digitized layers put it (median
+  offset **0.2 m**). **95.2 km of collector + local road (2.6%)** lies within 2 m
+  of its hood's boundary: collector 5.8% of its length, local 1.5%, arterial
+  (out of the metric) 9.3%. The heavier side of a shared boundary holds **70%**
+  of it, weighted by length. Splitting it 50/50 instead moves **25 published
+  hoods > 5% and 7 > 10%** in `road_m_per_acre` and both roads cost columns.
+  These are mostly industrial / university lands; the residential core moves
+  ≤ 7%. ⚠️ **The conservation guard cannot see this** (a metre moved between
+  neighbours leaves the citywide total unchanged). ⚠️ **`MIN_PIECE_M` removes
+  only the sub-metre dust of it (0.2 km)**, so length is not the test for this
+  artefact. Bike: 2.5 km (0.25%), 11 hoods > 5%. No allocation rule is applied;
+  the metric is literally "road inside the polygon".
 - ⚠️ **THE CITY'S "~11,000 / 12,000 km" ROAD NETWORK IS LANE-KM, NOT CENTRELINE
   — and this feed is how you know** (measured 2026-09-08, S149, in EPSG:3400):
   all 53,854 segments **7,700 km**; `Road` 5,685 (Province 495 = the ring

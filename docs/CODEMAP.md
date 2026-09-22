@@ -2,7 +2,7 @@
 
 **Generated — do not hand-edit.** `python tools/codemap.py`
 
-`web/index.html` is a single ~7,988-line file holding the whole front end. This is the lookup table for it: jump to a symbol's range instead of scanning. **Line numbers go stale on the next edit — regenerate rather than citing them.** Prose should still name symbols, not lines.
+`web/index.html` is a single ~7,992-line file holding the whole front end. This is the lookup table for it: jump to a symbol's range instead of scanning. **Line numbers go stale on the next edit — regenerate rather than citing them.** Prose should still name symbols, not lines.
 
 ## Symbols (308 indexed)
 
@@ -361,67 +361,67 @@ Grouped by the file's own `// --- section ---` banners, in file order.
 | `closePeek` | 5662–5678 |  |
 | `temporalClick` | 5679–5736 | Click a hood to pin its history; click the pinned one again to unpin. |
 | `primaryRow` | 5737–5805 | Panel mode's one-line hover: the view's HEADLINE number and nothing else, |
-| `viewTooltip` | 5806–6180 | Tooltip content is per-view (closure over `state`) and, inside money, |
-| `tooltipFor` | 6181–6262 | The sparkline rides on every tooltip WHOSE PANEL IS THE HISTORY PANEL |
-| `REV_CUTS` | 6263–6263 | Switch metric: rebuild layers and update the title/legend/toggle chrome. |
-| `isRevenue` | 6264–6282 |  |
-| `syncMetricButtons` | 6283–6306 | Paint the metric row and whichever row 2 belongs to it — the cuts under |
-| `MILL_CUT_CLASSES` | 6307–6313 | Which classes each revenue cut is actually billed at |
-| `MILL_LABELS` | 6314–6327 | Abbreviated so all three rates fit ONE line at the title's width. Every |
-| `renderBudgetContext` | 6328–6369 | The Data & Methods pod's citywide budget-scale section (2026-08-03). |
+| `viewTooltip` | 5806–6184 | Tooltip content is per-view (closure over `state`) and, inside money, |
+| `tooltipFor` | 6185–6266 | The sparkline rides on every tooltip WHOSE PANEL IS THE HISTORY PANEL |
+| `REV_CUTS` | 6267–6267 | Switch metric: rebuild layers and update the title/legend/toggle chrome. |
+| `isRevenue` | 6268–6286 |  |
+| `syncMetricButtons` | 6287–6310 | Paint the metric row and whichever row 2 belongs to it — the cuts under |
+| `MILL_CUT_CLASSES` | 6311–6317 | Which classes each revenue cut is actually billed at |
+| `MILL_LABELS` | 6318–6331 | Abbreviated so all three rates fit ONE line at the title's width. Every |
+| `renderBudgetContext` | 6332–6373 | The Data & Methods pod's citywide budget-scale section (2026-08-03). |
 
 ### the citywide budget panel (EXPERIMENTAL, full build only)
 
 | symbol | lines | what it does |
 |---|---|---|
-| `renderBudgetPanel` | 6370–6412 |  |
-| `toggleBudgetPanel` | 6413–6438 |  |
-| `syncMillRates` | 6439–6471 | Paint the pod, gate it to the money view's revenue cuts, and place it. |
+| `renderBudgetPanel` | 6374–6416 |  |
+| `toggleBudgetPanel` | 6417–6442 |  |
+| `syncMillRates` | 6443–6475 | Paint the pod, gate it to the money view's revenue cuts, and place it. |
 
 ### control appliers + the view/legend dispatchers
 
 | symbol | lines | what it does |
 |---|---|---|
-| `applyMetric` | 6472–6493 |  |
-| `applyColorAdjust` | 6494–6515 | Colour Adjustment (sqrt scaling) — a runtime toggle for the money/glass |
-| `syncColorAdjust` | 6516–6528 | Sync the Colour Adjustment button to the toggle, and HIDE it in views |
-| `applyDenom` | 6529–6544 | Switch the denominator (ground vs lot acres). Shown in the Glass and |
-| `applyRatioDenom` | 6545–6562 | Switch the Ratio view's denominator (per road metre vs per fire event). |
-| `applyDevMetric` | 6563–6579 | Development sub-metric picker (dwelling units \| permits \| industrial). |
-| `syncDevChrome` | 6580–6601 | Shared development-view chrome refresh after a metric/window switch: the |
-| `applyDevWindow` | 6602–6618 | Development-view window toggle (5yr base <-> 3yr recent <-> since 2009). |
-| `refreshLegend` | 6619–6858 | Sync the whole legend to the current view. roads: the network's linear |
-| `usesLegendCats` | 6859–6869 | Legend rows for the uses view: the categories actually on screen |
-| `applyPalette` | 6870–6883 | Switch colour ramp: rebuild layers, restyle the background + legend gradient. |
-| `applyLabels` | 6884–6892 | Toggle the neighbourhood-name labels (accessibility-menu checkbox). |
-| `applyReference` | 6893–6903 | Toggle the orientation set: river, ring road, and the regional place |
-| `applyUsesPrisms` | 6904–6915 | Toggle the Uses view's residential prisms (height = share of zoned |
-| `applyAmenity` | 6916–6929 | Toggle one amenity band. Infill only — the rows are hidden elsewhere and |
-| `syncAmenityControls` | 6930–6950 | Show the amenity section in Infill only (2026-08-26 — Glass reads the |
-| `syncDevControls` | 6951–6998 | Sync the Development pickers' visibility to the current mode. The |
-| `syncPrismRow` | 6999–7004 | The age spikes ride on the Glass grid file — kick its (shared, single) |
-| `applyDevDetail` | 7005–7026 |  |
-| `applyMoneyDetail` | 7027–7051 | Money's render toggle: Neighbourhood prisms (view "money") vs the |
-| `syncMoneyDetail` | 7052–7063 | The Detail row's active button. Three buttons over two views, so the grid |
-| `applyMoneyMode` | 7064–7071 | Money's Current/Change lens toggle. Change is a full-only render-mode of |
-| `applyChgWindow` | 7072–7090 | Switch the change lens's window. State-only when the lens isn't on screen, |
-| `syncChangeControls` | 7091–7101 | Reveal the change window picker, and re-run the metric rows that host the |
-| `applyDevMode` | 7102–7109 | Development's Housing/Infill lens toggle (full build only). Infill is a |
-| `syncLabControls` | 7110–7126 | The Lab's controls: the experiment picker (only once there are two — see |
-| `applyLabCut` | 7127–7140 | Switch the deviation experiment's revenue cut. Its average, per-arm |
-| `setPrismOpacity` | 7141–7151 | Set the ratio view's ghost-prism opacity (0–100). UI-state only — the |
-| `applyView` | 7152–7403 | Switch view (money \| services \| ratio \| uses \| glass). Road geometry |
-| `syncServiceControls` | 7404–7413 | Services-view controls. `applyService` flips a service on/off; |
-| `applyService` | 7414–7427 |  |
-| `applySvcDriver` | 7428–7441 |  |
+| `applyMetric` | 6476–6497 |  |
+| `applyColorAdjust` | 6498–6519 | Colour Adjustment (sqrt scaling) — a runtime toggle for the money/glass |
+| `syncColorAdjust` | 6520–6532 | Sync the Colour Adjustment button to the toggle, and HIDE it in views |
+| `applyDenom` | 6533–6548 | Switch the denominator (ground vs lot acres). Shown in the Glass and |
+| `applyRatioDenom` | 6549–6566 | Switch the Ratio view's denominator (per road metre vs per fire event). |
+| `applyDevMetric` | 6567–6583 | Development sub-metric picker (dwelling units \| permits \| industrial). |
+| `syncDevChrome` | 6584–6605 | Shared development-view chrome refresh after a metric/window switch: the |
+| `applyDevWindow` | 6606–6622 | Development-view window toggle (5yr base <-> 3yr recent <-> since 2009). |
+| `refreshLegend` | 6623–6862 | Sync the whole legend to the current view. roads: the network's linear |
+| `usesLegendCats` | 6863–6873 | Legend rows for the uses view: the categories actually on screen |
+| `applyPalette` | 6874–6887 | Switch colour ramp: rebuild layers, restyle the background + legend gradient. |
+| `applyLabels` | 6888–6896 | Toggle the neighbourhood-name labels (accessibility-menu checkbox). |
+| `applyReference` | 6897–6907 | Toggle the orientation set: river, ring road, and the regional place |
+| `applyUsesPrisms` | 6908–6919 | Toggle the Uses view's residential prisms (height = share of zoned |
+| `applyAmenity` | 6920–6933 | Toggle one amenity band. Infill only — the rows are hidden elsewhere and |
+| `syncAmenityControls` | 6934–6954 | Show the amenity section in Infill only (2026-08-26 — Glass reads the |
+| `syncDevControls` | 6955–7002 | Sync the Development pickers' visibility to the current mode. The |
+| `syncPrismRow` | 7003–7008 | The age spikes ride on the Glass grid file — kick its (shared, single) |
+| `applyDevDetail` | 7009–7030 |  |
+| `applyMoneyDetail` | 7031–7055 | Money's render toggle: Neighbourhood prisms (view "money") vs the |
+| `syncMoneyDetail` | 7056–7067 | The Detail row's active button. Three buttons over two views, so the grid |
+| `applyMoneyMode` | 7068–7075 | Money's Current/Change lens toggle. Change is a full-only render-mode of |
+| `applyChgWindow` | 7076–7094 | Switch the change lens's window. State-only when the lens isn't on screen, |
+| `syncChangeControls` | 7095–7105 | Reveal the change window picker, and re-run the metric rows that host the |
+| `applyDevMode` | 7106–7113 | Development's Housing/Infill lens toggle (full build only). Infill is a |
+| `syncLabControls` | 7114–7130 | The Lab's controls: the experiment picker (only once there are two — see |
+| `applyLabCut` | 7131–7144 | Switch the deviation experiment's revenue cut. Its average, per-arm |
+| `setPrismOpacity` | 7145–7155 | Set the ratio view's ghost-prism opacity (0–100). UI-state only — the |
+| `applyView` | 7156–7407 | Switch view (money \| services \| ratio \| uses \| glass). Road geometry |
+| `syncServiceControls` | 7408–7417 | Services-view controls. `applyService` flips a service on/off; |
+| `applyService` | 7418–7431 |  |
+| `applySvcDriver` | 7432–7445 |  |
 
 ### boot
 
 | symbol | lines | what it does |
 |---|---|---|
-| `boot` | 7442–7988 | Everything that needs the map surface: fetch the data, mount the deck.gl |
+| `boot` | 7446–7992 | Everything that needs the map surface: fetch the data, mount the deck.gl |
 
-## Dependency graph (941 edges)
+## Dependency graph (942 edges)
 
 ⚠️ **A regex reference count, not a call graph** — a name in a comment or string counts, and a nested symbol is attributed to its enclosing range. Use it for *what is central* and *would this seam hold*, never as ground truth for a final module boundary.
 
@@ -462,7 +462,7 @@ Grouped by the file's own `// --- section ---` banners, in file order.
 | two tiers, answering two different questions | 29 | 31% |
 | Money's revenue panel: where a hood's levy comes from | 34 | 26% |
 | the same doubt, at 100 m | 61 | 26% |
-| Development history: new supply per year | 192 | 24% |
+| Development history: new supply per year | 193 | 24% |
 | control appliers + the view/legend dispatchers | 210 | 20% |
 | the citywide budget panel (EXPERIMENTAL, full build only) | 12 | 8% |
 | services view (SPEC_services.md UI generalization, 2026-07-05) | 16 | 0% |
