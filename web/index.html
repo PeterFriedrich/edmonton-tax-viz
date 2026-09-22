@@ -1172,7 +1172,8 @@
                "are maintained and cleared first and cost more per kilometre. " +
                "Colour is linear. Grey = set-aside natural/undeveloped land.",
       },
-      // ⚠️ The SAME METRES as roadscost above on the OTHER basis, ~5.4x apart.
+      // ⚠️ The SAME METRES as roadscost above on the OTHER basis — ~5.4x as shipped,
+      // ~3.0x on one unit (the operating rate is per LANE-km; roads_operating_rate §7).
       // Alternatives, never summed — see SVC_COST_BASES and the
       // city_unit_costs.json "_two_bases" field.
       roadslife: {
@@ -4768,7 +4769,8 @@
     // be arithmetically true and descriptively false:
     //   1. cost_roads_life_per_acre is a LIFECYCLE basis ($50/road-m/yr) while
     //      the three transport costs are OPERATING ($9.32/road-m/yr) — the SAME
-    //      metres, ~5.4x apart (DATA.md §13, the file's own `_two_bases`).
+    //      metres, ~5.4x apart as shipped, ~3.0x on one unit (DATA.md §13,
+    //      the file's own `_two_bases`; roads_operating_rate §7).
     //   2. Even within the operating basis the three are deliberately NOT summed
     //      (2026-08-03, see SERVICES above): the total is 91% transit at the
     //      median and buries the per-mode finding.

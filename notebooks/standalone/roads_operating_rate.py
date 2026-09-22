@@ -179,10 +179,24 @@ check(len(rm_by_year) == 1 and 2017 in rm_by_year.index,
       "program was re-cut in 2018, which is why this half has no later vintage")
 check(int(rm_by_year.loc[2017]) == MAINT_PROGRAM,
       f"FY2017 `Roadway Maintenance` = **${MAINT_PROGRAM:,}**, as transcribed")
-check(2017 in sn_by_year.index and int(sn_by_year.loc[2017]) != MAINT_PROGRAM,
-      f"`Snow and Ice Control` is a **separate program** (FY2017 "
-      f"${sn_by_year.loc[2017]:,.0f}), so the maintenance half is "
-      "maintenance-only and the two halves do not double-count")
+# ⚠️ Two programmes having different totals says nothing about overlap. What the
+# CSV does show: Snow and Ice Control has NO personnel of its own and is charged
+# ~$29M in, while Roadway Maintenance charges ~$28M out — the signature of
+# maintenance crews' snow time being moved across, which would leave the net
+# $65.671M snow-free. SUGGESTIVE, not proof: the two figures differ by ~$1M and
+# charges can flow to other programmes; neither is traced to its counterparty.
+def cat17(prog_rows, cat):
+    r = prog_rows[prog_rows.budget_year == 2017]
+    return float(r.loc[r.category.astype(str).str.startswith(cat), "budget"].sum())
+
+rm_out = cat17(roadway, "Intra-municipal Charges")
+sn_in = cat17(snow_prog, "Intra-municipal Charges")
+sn_staff = cat17(snow_prog, "Personnel")
+check(sn_staff == 0 and rm_out < 0 < sn_in and abs(rm_out + sn_in) / sn_in < 0.1,
+      f"FY2017: `Snow and Ice Control` carries **no personnel** and is charged "
+      f"**${sn_in:,.0f}** in, while `Roadway Maintenance` charges "
+      f"**${-rm_out:,.0f}** out — consistent with snow labour being moved out "
+      "of the maintenance half (suggestive, not traced)")
 
 # Composition — `category` is expense TYPE, not service.
 comp = (roadway[roadway.budget_year == 2017].groupby("category").budget.sum()
@@ -208,8 +222,8 @@ check(abs(comp.sum() - MAINT_PROGRAM) < 1,
 # quoting City infrastructure field operations supervisor Valerie Dacyk.
 #
 # ⚠️ **[SECONDARY]** — a news outlet quoting a named City staffer, not a City
-# document. It must not be cited as City-published. §2 is the check that earns
-# it a place anyway.
+# document. It must not be cited as City-published. §2 checks its programme
+# total against the City's; the roads/paths split it cannot check.
 
 # %%
 TAPROOT_URL = ("https://edmonton.taproot.news/briefs/2025/08/29/"
@@ -258,17 +272,20 @@ check(SHIPPED == 9.32,
       "and the shipped operating rate is exactly **$9.32/road-m/yr**")
 
 # %% [markdown]
-# ## 2. Why the secondary snow source is kept: its totals reconcile
+# ## 2. What the reconciliation checks — the TOTAL, not the roads share
 #
-# A reporter's figure normally could not carry a shipped number. This one does,
-# because the article's **two shares sum to a programme total the City itself
-# publishes** — and the City's number was not in the article for the reporter
-# to fit to.
+# The article's programme total matches the City's published `Snow and Ice
+# Control` budget. That is worth having: it shows the reporter's base is the
+# City's own number.
 #
-# ⚠️ **This is a genuine independent check, unlike the one demoted in the
-# lifecycle notebook** (§3 there): the roads and paths figures come from the
-# City staffer, and the programme total comes from the budget API. Two
-# mechanisms, one answer.
+# ⚠️ **It does NOT corroborate the 55% roads share, which is the only input that
+# reaches this rate.** $36.85M and $30.15M are exactly 55% and 45% of $67M, so
+# the two shares summing to the total is the arithmetic of a percentage split,
+# not a second mechanism. **The split rests on the City staffer alone.** This is
+# the same shape as the 3% set-aside demoted in the lifecycle notebook (§3
+# there): a check that verifies the part that was never in doubt. Corrected
+# 2026-09-22 (`docs/FINDINGS_roads_rate_notebooks.md` §4a); until then this
+# section called it "a genuine independent check".
 
 # %%
 SNOW_PATHS = 30_150_000
@@ -283,18 +300,26 @@ display(Markdown(
     f"- agreement: **{agreement * 100:.1f}%**"))
 
 check(0.97 <= agreement <= 1.03,
-      f"the article's two shares reconcile to the portal's published "
-      f"`Snow and Ice Control` programme within **{abs(1 - agreement) * 100:.1f}%** — "
-      "the check that earns a secondary source a shipped number")
-check(abs(SNOW_ROADS / article_total - 0.55) < 0.01,
-      "and the roads share is the 55% the article states, so the split is "
-      "internally consistent too")
+      f"the article's programme total reconciles to the portal's published "
+      f"`Snow and Ice Control` within **{abs(1 - agreement) * 100:.1f}%** — "
+      "the TOTAL is the City's own number")
+check(abs(SNOW_ROADS - 0.55 * 67_000_000) < 1
+      and abs(SNOW_PATHS - 0.45 * 67_000_000) < 1,
+      "⚠️ but both shares are EXACTLY 55% / 45% of the rounded $67M — the "
+      "reconciliation cannot test the split, and the 55% roads share rests on "
+      "the staffer alone")
+
+display(Markdown(
+    f"**Sensitivity of the unverified share:** each 5 points moves the snow "
+    f"half by **${0.05 * 67_000_000 / NETWORK_KM:,.0f}/km** "
+    f"(**${0.05 * 67_000_000 / NETWORK_KM / 1000:.2f}/m**, "
+    f"{0.05 * 67_000_000 / NETWORK_KM / 1000 / SHIPPED * 100:.1f}% of the rate)."))
 
 display(Markdown(
     "⚠️ **What this does NOT license.** The same article carries a "
     "**$1,285/km** roads maintenance figure that this project shipped for five "
     "weeks and then dropped (§5). Its totals reconciling does not make every "
-    "line in it sound — **it makes the snow half checkable and left the "
+    "line in it sound — **it made the snow TOTAL checkable and left the "
     "maintenance line unsupported**, which is exactly the contrast that "
     "exposed the latter."))
 
@@ -638,7 +663,8 @@ check(2.0 <= 50 / (SHIPPED * 1.80) <= 3.5,
 # 6. **A partial network.** Arterials and alleys excluded, so any citywide
 #    total understates. §4.
 # 7. **The snow half is SECONDARY** — a reporter quoting a City staffer. §2
-#    earns it a place; it does not make it City-published.
+#    confirms its programme total is the City's; the **55% roads share is the
+#    staffer's alone** and is not independently checked.
 # 8. ⚠️ **What the retired $1,285/km measured is still unknown.** §5.
 
 # %% [markdown]

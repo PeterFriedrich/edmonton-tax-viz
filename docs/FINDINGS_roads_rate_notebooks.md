@@ -189,3 +189,30 @@ arithmetic.
   rates. The two findings that cut against them (§2's bias, §4a's overclaim) are
   about provenance, not magnitude. A different model family should read §2 and
   §4a before either is acted on.
+
+## Fixes applied (2026-09-22, S187, same session, Peter's go-ahead)
+
+All six follow-ons are done. Both notebooks were re-executed live: **45/45** and
+**22/22**.
+
+1. §4a: operating §2 and §8, plus `DATA.md` §16 and its settled-list line, now
+   say the programme **total** is corroborated and the **55% share** is not. The
+   circular "roads share is 55%" invariant is replaced by one asserting both
+   shares are exact 55%/45% splits of $67M, and it prints the share's
+   sensitivity.
+2. §3: the "paved rose" invariant is withdrawn. New invariants pin the 2023
+   Roads = Paved + Unpaved identity and the paved fall / curbs appearance, and
+   state the two paved figures are not a trend.
+3. §2: lifecycle §4 limit 3 now names the fully-amortized-assets bias and its
+   direction.
+4. §4b: the "different totals" separation check is replaced by the
+   intra-municipal mirror, labelled suggestive.
+5. §5: Schedule 1 (24 values), Appendix A (whole rows including age and life),
+   Appendix B condition triples (built from the constants) and the 2020 $9,614M
+   are pinned to the fetched text. The duplicate `total == 4M` is dropped.
+   **Falsified:** mutating an S1 digit, an App A life, a triple, `PAVED_DF_23`
+   and the 2020 value each reddens exactly its pin. So do narrowing the mirror
+   tolerance and mutating `SNOW_ROADS`.
+6. §6: the "~5.4×" comments (2 × `web/index.html`, `src/join_and_calculate.py`)
+   now carry the ~3.0× on-one-unit figure. `city_unit_costs.json`'s "40-year"
+   now points at the 50-year lifecycle basis.

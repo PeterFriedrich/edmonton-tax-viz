@@ -1792,11 +1792,15 @@ imply all funds.**
   Services`). Peter's call 2026-08-04, documented rather than silently mixed, as
   with ETS 2025 vs fire 2026. Being 2017 dollars it is if anything a **lower
   bound**: the branch grew ~34% ($244.9M → $327.1M) by 2025.
-- ✅ **THE SNOW FIGURES ARE INDEPENDENTLY CORROBORATED.** Roads snow $36.85M +
-  path snow $30.15M = **$67.0M** against the portal's published `Snow and Ice
-  Control` program at **$67,553,815 (FY2025) — 99.2%**. That is why the snow
-  components were left untouched, and **the contrast with maintenance is what
-  exposed it**: same source, one number reconciling and one not.
+- ⚠️ **THE SNOW PROGRAMME TOTAL IS CORROBORATED; THE ROADS SHARE IS NOT**
+  (corrected 2026-09-22, `docs/FINDINGS_roads_rate_notebooks.md` §4a). Roads
+  snow $36.85M + path snow $30.15M = **$67.0M** against the portal's published
+  `Snow and Ice Control` program at **$67,553,815 (FY2025), 99.2%**. But the two
+  are exactly 55% / 45% of $67M, so their summing to the total is the
+  arithmetic of a split. **The 55% roads share, the input that ships, rests on
+  the City staffer alone.** This line previously read "INDEPENDENTLY
+  CORROBORATED". The contrast with maintenance still stands: the article's
+  total reconciles and its $1,285/km line has no support.
 - ⚠️ **Transit here INCLUDES DATS ($31.966M); the per-acre transit cost column
   EXCLUDES it.** Different questions, and they are *supposed* to differ — §13's
   `transit_ets` allocates by scheduled stop-events, which DATS does not generate.
@@ -1878,8 +1882,9 @@ branch into programs: `Roadway Maintenance`, `Snow and Ice Control`,
 ### What it has already settled
 - **§16's roads-maintenance component**, $14.135M (derived, ~5× low) →
   **$65.671M** published.
-- **Corroborated §16's snow figures to 99.2%** — roads $36.85M + paths $30.15M =
-  $67.0M vs the published `Snow and Ice Control` program $67,553,815 (FY2025).
+- **Corroborated §16's snow programme TOTAL to 99.2%**: roads $36.85M + paths
+  $30.15M = $67.0M vs the published `Snow and Ice Control` program $67,553,815
+  (FY2025). ⚠️ This does not test the 55/45 split (see §16).
 
 - **The Neighbourhood Renewal levy (2026-09-08, S149):** branch
   `Neighbourhood Renewal`, department *Corporate Expenditures and Revenues*, is

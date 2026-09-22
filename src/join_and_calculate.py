@@ -617,7 +617,8 @@ def join_and_calculate(
     # published $50/m/yr rate over the collector+local metres.
     #
     # ⚠️ Never summed with cost_roads_ops_per_acre — the SAME metres on the
-    # OPERATING basis, ~5.4x smaller (city_unit_costs.json "_two_bases"). They
+    # OPERATING basis, ~5.4x smaller as shipped but ~3.0x on one unit, since
+    # the operating rate is per lane-km (city_unit_costs.json "_two_bases"). They
     # are alternatives, not components.
     if unit_costs is not None and roads is not None:
         joined["cost_roads_life_per_acre"] = (
