@@ -223,9 +223,10 @@ check("1 kilometre of a typical Edmonton neighbourhood road" in di_text,
 check(lane_mentions == 0,
       f"(2) the word “lane” appears {lane_mentions} times on the entire "
       "rendered page — a lane-km figure would have to say so somewhere")
-check(total == 4_000_000,
-      "(3) the page's own $4M total reconciles to the three components, which "
-      "is a check a mixed-unit reading cannot pass")
+# (3) is the §1 reconciliation above — not asserted a second time.
+display(Markdown(
+    "(3) the page's own $4M total reconciles to the three components (§1), "
+    "which a mixed-unit reading could not do."))
 
 display(Markdown(
     "The subject also stays singular throughout — *“The road will…”*, "
@@ -352,6 +353,17 @@ S1 = {
     "ENG: Bus system":         (289_323,     297_697,  10_230, (7, 100)),
 }
 
+# Pinned to the fetched PDF (Schedule 1 is PDF page 12, printed p79): every
+# transcribed figure must appear in the document this run downloaded, so a
+# restated or corrected Schedule 1 fails here instead of passing on constants.
+cfs_text = " ".join(p.extract_text() for p in cfs_pages)
+missing = [f"{v:,}" for o, c, a, _ in S1.values() for v in (o, c, a)
+           if f"{v:,}" not in cfs_text]
+check(not missing,
+      "all 24 transcribed Schedule 1 figures (opening cost, closing cost, "
+      "amortization × 8 classes) appear in the fetched statements"
+      + (f" — missing: {', '.join(missing)}" if missing else ""))
+
 rows, inside = [], True
 for k, (o, c, a, (lo, hi)) in S1.items():
     yrs = (o / a, ((o + c) / 2) / a, c / a)
@@ -384,9 +396,14 @@ check((S1["ENG: Light rail transit"][1] / S1["ENG: Light rail transit"][2])
 #    "service life". It must not be called *"the City's road service life"*.
 # 2. **`Roadway system` is every road the City owns** — arterials, collectors,
 #    locals, alleys and capitalized structures — not a neighbourhood street.
-# 3. **It is a cost-weighted average over mixed vintages**, exact only for a
-#    stock in steady state; the stock grew 4.6% in the year, which is why a
-#    range is quoted rather than a point.
+# 3. ⚠️ **It OVERSTATES the policy life, by an unknown amount.** Fully
+#    amortized roads still in service stay in gross cost but add nothing to
+#    amortization expense, so `gross ÷ amortization` reads long. Growth alone
+#    does not bias it under straight-line (each unamortized asset contributes
+#    `cost/L` either way). Schedule 1 shows $157M of roadway disposals in the
+#    year, so some are written off, but not how many. **This bias runs
+#    AGAINST 50**: the true accounting life is at or below 36–38. A range is
+#    quoted because the stock grew 4.6% in the year (opening vs closing).
 # 4. **Historical cost, not replacement cost** — older metres enter at the
 #    dollars of their build year.
 #
@@ -430,11 +447,14 @@ show(pd.DataFrame([
 
 # The figures must actually appear on the page that was just fetched.
 flat = re.sub(r"\s+", " ", app_a)
+# The whole row in reading order — quantity, age, expected life, condition — so
+# the lives behind §5's ~26-year figure are pinned too, not just the lane-km.
 for k, (q, age, life, cond, val) in APP_A.items():
-    qs = f"{q:,.2f}" if k in ("Local Roads", "Collector Roads") else f"{q:,.1f}"
-    present = (qs.replace(",", "") in flat.replace(",", "")
-               and " / ".join(map(str, cond)) in flat)
-    check(present, f"Appendix A p31 still carries the **{k}** row as transcribed")
+    qs = f"{q:.2f}" if k in ("Local Roads", "Collector Roads") else f"{q:.1f}"
+    row = f"{k} {qs} Lane km {age} {life} {' / '.join(map(str, cond))}"
+    check(row in flat and f"${val:,}" in flat,
+          f"Appendix A p31 still carries the **{k}** row as transcribed "
+          f"(age {age}, expected life {life}, replacement ${val:,}M)")
 
 # %% [markdown]
 # ### The naive reading, and why it is wrong
@@ -611,13 +631,26 @@ display(Markdown(
 
 check(11.1 <= blend <= 11.25,
       "the printed 11.2% reproduces exactly as a curbs-diluted paved figure")
-check(PAVED_DF_25 - PAVED_DF_23 >= 0.5,
-      f"and the **paved** sub-row — the nearest thing to the charged "
-      f"population — moves {PAVED_DF_23} → {PAVED_DF_25}, a rise, not a "
-      "flat line")
+# Built FROM the constants, so a mistyped constant fails here too.
+for s_ in (f"73.1%14.4%{PAVED_DF_25}%", f"73.2%15.3%{PAVED_DF_23}%",
+           f"68.3%24.7%{CURBS_DF_25}%"):
+    check(s_ in app_b, f"Appendix B p37 carries the condition triple {s_} as transcribed")
+
+# 2023 has no Curbs line: its Roads row is Paved + Unpaved exactly, and Paved
+# FALLS $1.5B into 2025 while a $2.1B Curbs line appears.
+PAVED_23, UNPAVED_23, ROADS_23 = 9704.516452, 42.968839, 9747.485291   # $M
+check(all(v in app_b for v in ("9,704,516,452", "42,968,839", "9,747,485,291"))
+      and abs(PAVED_23 + UNPAVED_23 - ROADS_23) < 0.001,
+      "the 2023 Roads row is exactly Paved + Unpaved — no Curbs line that year")
+check(PAVED_23 - PAVED_25 > 1000 and ROADS_25 > ROADS_23,
+      f"so **2023 Paved almost certainly included curbs**: Paved falls "
+      f"${PAVED_23 - PAVED_25:,.0f}M while Roads rises and a ${CURBS_25:,.0f}M "
+      f"Curbs line appears — {PAVED_DF_23}% (2023) and {PAVED_DF_25}% (2025) "
+      "are NOT the same population and are not compared as a trend")
 
 # The 2020 figure is not the same population either: it included alleys.
 R20, ALLEY_V, ALLEY_DF = 9614, 501, 64
+check(f"${R20:,}" in flat, "the 2020 Roads replacement value ($9,614M) is on p31 as transcribed")
 ex_alleys = (R20 * 11 - ALLEY_V * ALLEY_DF) / (R20 - ALLEY_V)
 check(7.5 <= ex_alleys <= 8.7,
       f"and 2020's “11%” carries ~{ALLEY_V * ALLEY_DF / R20:.1f} points of "

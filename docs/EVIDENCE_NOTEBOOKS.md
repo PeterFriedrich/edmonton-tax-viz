@@ -65,6 +65,17 @@ against live sources — **113 invariants, 113 holding**:
 | `roads_lifecycle_rate` | justification | 40 |
 | `roads_operating_rate` | justification | 22 |
 
+⚠️ **Changed 2026-09-22 (S187, `docs/FINDINGS_roads_rate_notebooks.md`):**
+`roads_lifecycle_rate` is now **45**, so the total is **118**. One duplicate
+was dropped, the wrong "paved rose" claim was withdrawn, and 7 checks were added
+that pin the hardcoded Schedule 1, Appendix A and Appendix B tables to the
+fetched PDFs. Before that, 16 of its 40 were arithmetic on constants that could
+not see a source change. `roads_operating_rate` stays at 22, but two of them
+changed meaning: the snow check now says the 55% split is unverifiable, and the
+program-separation check is now the intra-municipal charge mirror. The recheck
+reports pass/fail per notebook and keeps no per-claim baseline, so the rewording
+raises no alert.
+
 ⚠️ **So every documented defect is still present upstream as of 2026-09-21,
 and no publisher has fixed anything.** That is unsurprising — `DATA_ISSUES.md`
 records **zero reports sent** — but it had never actually been *checked*

@@ -574,7 +574,7 @@ is in the `panel` column. T1 is public (3 of 10 service rows). T2 closed (`## Do
   tooltip/peek only because the probe feeds a hood feature to `viewTooltip` in
   grid modes too. Needs a cell-grain capture before it means anything.
 
-### Audit backlog S173–S186 — 9 targets marked, #1 run (OPEN 2026-09-22 S187)
+### Audit backlog S173–S186 — 9 targets marked, #1–#2 run (OPEN 2026-09-22 S187)
 
 Fourteen sessions ran on Opus 5 alone with no cross-model check. The ranked
 list lives in `docs/AUDIT_LEDGER.md` → "Queued"; run them one per session at
