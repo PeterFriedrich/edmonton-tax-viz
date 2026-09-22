@@ -574,7 +574,7 @@ is in the `panel` column. T1 is public (3 of 10 service rows). T2 closed (`## Do
   tooltip/peek only because the probe feeds a hood feature to `viewTooltip` in
   grid modes too. Needs a cell-grain capture before it means anything.
 
-### Audit backlog S173–S186 — 9 targets marked, #1 run (OPEN 2026-09-22 S187)
+### Audit backlog S173–S186 — 9 targets marked, #1–#2 run (OPEN 2026-09-22 S187)
 
 Fourteen sessions ran on Opus 5 alone with no cross-model check. The ranked
 list lives in `docs/AUDIT_LEDGER.md` → "Queued"; run them one per session at
@@ -593,6 +593,27 @@ digitizing noise picks the side. Options to cost: 50/50 split between the two
 hoods (moves 25 published hoods > 5%), or keep as-is. ⚠️ Changes published
 numbers and `ward_rollup.py`'s basis, so propose before building (CLAUDE.md).
 Bike: same mechanism, 2.5 km.
+
+### Roads notebook audit follow-ons (OPEN 2026-09-22 S187)
+
+From `docs/FINDINGS_roads_rate_notebooks.md`. None changes a shipped number, and
+all of them come before Peter's publish call on either notebook.
+
+1. **Operating §2 + `DATA.md` §16: downgrade "independently corroborated".** The
+   check verifies the $67M total; the 55% roads share rests on the staffer alone
+   (36.85 = 0.55 × 67 exactly). §4a.
+2. **Lifecycle §7: fix the "paved 11.5 → 12.5, a rise" invariant.** 2023 Paved
+   almost certainly includes curbs. §3.
+3. **Lifecycle §4 limit 3: name the right bias** (fully amortized assets at
+   gross cost overstate the implied life; growth alone doesn't). §2.
+4. **Operating §1a: replace the vacuous "different totals" separation check**
+   with the intra-municipal mirror (−$28.3M out / +$29.3M in), stated as
+   suggestive. §4b.
+5. **Pin the hardcoded tables to the fetched text** (Schedule 1, App A
+   lives/ages, App B shares), so the monthly recheck can see them drift. Also
+   drop the duplicated `total == 4M` invariant. §5.
+6. Small: the "~5.4×" in three code comments, and `city_unit_costs.json`
+   `roadway_ops.caveat`'s "40-year" reconstruction cycle (the basis uses 50). §6.
 
 ### Colour legibility — two measured defects in the CURRENT dark map (OPEN 2026-09-22 S186)
 
