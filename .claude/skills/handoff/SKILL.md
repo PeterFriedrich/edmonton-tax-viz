@@ -62,3 +62,16 @@ How to fill it in, in order of reliability:
 
 ## 5. Restoration Procedure
 - How to get the environment running again
+
+# After writing: land it, then give the clear verdict
+Peter runs `/handoff` INSTEAD of `/clear`. Claude cannot run `/clear`, and no hook
+can gate it (`docs/FINDINGS_guard_burst.md` §2a), so this skill's last line
+tells him whether clearing is safe.
+1. Archive to keep 3 summaries at top level, commit on a fresh branch, push, PR,
+   `gh pr merge --merge`. The previous branch may already be merged, so don't reuse it.
+2. `git fetch && git merge-base --is-ancestor <handoff sha> origin/master`.
+3. On master, `.venv/bin/python scripts/handoff_gap.py` must print nothing. It also
+   prints nothing when it fails, so step 2 is the real proof, not this one.
+4. End the reply with exactly one of these lines, and say nothing after it:
+   - `✅ Safe to /clear — S### handoff is on master.`
+   - `❌ Not safe to /clear: <what is unrecorded or unmerged>.`
