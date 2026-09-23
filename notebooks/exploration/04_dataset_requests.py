@@ -30,9 +30,10 @@
 # with different status vocabularies. In December 2023, 126 old requests that
 # had never been decided were moved to the new tracker, and on the old system
 # they were stamped `Rejected` or `Declined` as they went. A single-day bulk
-# edit in August 2026 also reset `status_date` on 241 rows. Counted naively,
-# the table double-counts requests, **overstates refusals by 2.6×**, and
-# misdates decisions.
+# edit in August 2026 also reset `status_date` on 241 rows, and two 2023
+# clean-up days declined 16 requests from 2016 about seven years late.
+# Counted naively, the table double-counts requests, **overstates decided
+# refusals by more than 3×**, and misdates decisions.
 #
 # ## Reproducing
 #
@@ -214,6 +215,32 @@ print(d[d.status_date.dt.date == biggest].status.value_counts())
 check(top_days.iloc[0] >= 100, f"a bulk status_date sweep is present ({top_days.iloc[0]} rows on {biggest})")
 
 # %% [markdown]
+# ### 2c. Two 2023 clean-up days, and a test row
+#
+# `status_date` spikes also sit inside the old system's refusals. On
+# 2023-06-07 and 2023-09-19, requests made in 2016 were declined in batches,
+# about seven years after they were asked. That is backlog housekeeping, not a
+# considered refusal, so §5 counts those rows as **closed in a clean-up sweep**
+# instead of refused. A row is swept only if it was declined on one of those
+# days **and** more than a year after it was made; a request refused the day
+# after it arrived is still a refusal.
+#
+# One row is titled `test` with details `test`. It is removed from every count
+# below and printed here.
+
+# %%
+SWEEP_DAYS = {"2023-06-07", "2023-09-19"}
+d["swept"] = ((d.system == "ODR (old)") & d.status.isin(["Rejected", "Declined"])
+              & d.status_date.dt.strftime("%Y-%m-%d").isin(SWEEP_DAYS)
+              & ((d.status_date - d.request_creation_date).dt.days > 365))
+print(d[d.swept].groupby([d.status_date.dt.date, d.request_creation_date.dt.year]).size().to_string())
+check(d.swept.sum() >= 10, f"the 2023 clean-up sweeps are still visible ({d.swept.sum()} rows)")
+test_rows = d[d.request_description.fillna("").str.strip().str.lower().eq("test")
+              & d.request_details.fillna("").str.strip().str.lower().isin(["test", ""])]
+print("\nremoved as test entries:")
+print(test_rows[["request_number", "status", "request_description", "request_details"]].to_string(index=False))
+
+# %% [markdown]
 # ## 3. Volume over time
 #
 # Requests by the year they were **first** made, each counted once (§2a).
@@ -221,7 +248,7 @@ check(top_days.iloc[0] >= 100, f"a bulk status_date sweep is present ({top_days.
 # stand on the new tracker.
 
 # %%
-u = d[~d.reintake].copy()
+u = d[~d.reintake & ~d.request_number.isin(test_rows.request_number)].copy()
 u["year"] = u.request_creation_date.dt.year
 ORDER = ["Completed", "Refused", "Closed (reason not given)", "Open", "Withdrawn"]
 COLOURS = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4"]  # dataviz reference palette, slots 1-5 in order
@@ -270,13 +297,13 @@ plt.show()
 
 # %%
 TOPICS = [
-    ("Transit", r"\bets\b|transit|\bbus|lrt|gtfs|arc card|ridership|\btrain"),
+    ("Transit", r"\bets\b|transit|\bbus(?:es)?\b|lrt|gtfs|arc card|ridership|\btrain"),
     ("Property, assessment & tax", r"assess|parcel|propert|\btax|\blot\b|lot size|title"),
     ("Planning, permits & zoning", r"permit|zoning|land use|development|bylaw \d|\barp\b|rezon|licen[cs]e"),
     ("Roads, traffic & mobility", r"road|traffic|collision|speed|parking|snow|sidewalk|bike|cycl|pathway|pedestrian|intersection|radar|scooter|micromobility|bridge|pedway"),
     ("Utilities & drainage", r"drain|sewer|water|epcor|\bgas\b|power|electric|utilit"),
     ("Public safety", r"crime|police|fire|911|emergenc|bylaw enforcement|complain"),
-    ("Parks, trees & environment", r"\bpark|tree|green|waste|garbage|trash|recycl|climate|emission|river|ravine|natural area|cemeter|washroom|picnic|graffiti|ashtray|flood"),
+    ("Parks, trees & environment", r"\bpark|\btrees?\b|green|waste|garbage|trash|recycl|climate|emission|river|ravine|natural area|cemeter|washroom|picnic|graffiti|ashtray|flood"),
     ("Recreation, library & community", r"recreation|library|leisure|community|arena|pool|school|playground"),
     ("People & census", r"census|population|demograph|income|housing|homeless|senior"),
     ("Budget & spending", r"budget|spend|\bcost|expend|revenue|contract|procure|salar|financial statement|expense|severance|capital project|renewal invest|funding|earnings"),
@@ -311,6 +338,7 @@ print(f"unclassified: {(u.topic == 'Other / unclassified').mean():.0%} of reques
 # * **Completed**
 # * **Refused**: `Rejected` or `Declined`, excluding the migration stamps
 # * **Never decided**: moved to the new tracker in December 2023
+# * **Closed in a clean-up sweep**: declined years late on a 2023 sweep day (§2c)
 # * **Withdrawn / still open**
 
 # %%
@@ -319,16 +347,18 @@ old["fate"] = "Withdrawn / still open"
 old.loc[old.status == "Completed", "fate"] = "Completed"
 old.loc[old.outcome == "Refused", "fate"] = "Refused"
 old.loc[old.moved, "fate"] = "Never decided (moved)"
-FATES = ["Completed", "Refused", "Never decided (moved)", "Withdrawn / still open"]
+old.loc[old.swept, "fate"] = "Clean-up sweep"
+FATES = ["Completed", "Refused", "Never decided (moved)", "Clean-up sweep", "Withdrawn / still open"]
 fy = pd.crosstab(old.year, old.fate).reindex(columns=FATES, fill_value=0)
 fy["completed share"] = (fy.Completed / fy[FATES].sum(axis=1)).round(2)
 display(fy)
 tot = old.fate.value_counts()
 print(f"old system overall: {tot.get('Completed', 0)} completed, {tot.get('Refused', 0)} refused, "
-      f"{tot.get('Never decided (moved)', 0)} never decided, of {len(old)}")
+      f"{tot.get('Never decided (moved)', 0)} never decided, {tot.get('Clean-up sweep', 0)} closed in a clean-up sweep, "
+      f"of {len(old)}")
 naive = old.status.isin(["Rejected", "Declined"]).sum()
 print(f"a naive count of Rejected+Declined gives {naive} refusals; "
-      f"the real figure is {tot.get('Refused', 0)} ({naive / max(tot.get('Refused', 1), 1):.1f}× overstated)")
+      f"the decided figure is {tot.get('Refused', 0)} ({naive / max(tot.get('Refused', 1), 1):.1f}× overstated)")
 
 # %% [markdown]
 # **How to read it:** after 2016 the City rarely says no outright. What
@@ -336,11 +366,14 @@ print(f"a naive count of Rejected+Declined gives {naive} refusals; "
 # requests ended up in "never decided" than in "refused" in every year. The
 # completed share falls from roughly 0.4–0.5 in 2016–2018 to about one in
 # eight in 2022–2023. 2021 is the exception, and it has only 16 requests.
+# 2016's refusals halve once the 2023 clean-up sweeps are taken out (§2c).
 #
-# Real refusals are concentrated in **utilities**: gas and power mapping, and
-# infrastructure owned by EPCOR or other outside parties. Utilities & drainage
-# is the only topic in §5b with more refusals than completions. Base maps &
-# imagery has too few requests to say.
+# Two topics come close to refusing as often as they complete (§5b), on small
+# counts. **Utilities & drainage** (7 refused, 7 completed) is mostly gas,
+# power and water-network mapping. **Property, assessment & tax** (9 refused,
+# 10 completed) is square footage, land-title transfers and sales, and extra
+# columns on the assessment dataset. Base maps & imagery has too few requests
+# to say.
 
 # %% [markdown]
 # ### 5b. By topic, old system
@@ -357,8 +390,8 @@ display(bt.sort_values("n", ascending=False))
 # %% [markdown]
 # ### 5b′. The genuine refusals
 #
-# These are old-system `Rejected` or `Declined` rows that the migration didn't
-# stamp, most recent first. The table records no reason for any refusal, so
+# These are old-system `Rejected` or `Declined` rows that neither the migration
+# (§2a) nor a clean-up sweep (§2c) stamped, most recent first. The table records no reason for any refusal, so
 # only the titles are available.
 
 # %%
@@ -454,7 +487,7 @@ def catalogue_match(row):
 
 res = {}
 for label, rows in [("old Completed (known published)", d[(d.status == "Completed") & d.dataset_published_date.notna()]),
-                    ("new CLOSED (unknown)", d[(d.status == "CLOSED") & ~d.moved])]:
+                    ("new CLOSED (unknown)", d[d.status == "CLOSED"])]:
     m = rows.apply(catalogue_match, axis=1)
     res[label] = (len(rows), m.notna().sum())
     if label.startswith("new"):
@@ -467,15 +500,21 @@ print(f"\ncatch rate on known-published requests: {recall:.0%}")
 print(f"rough estimate of CLOSED requests that produced a new asset: {h_closed / recall:.0f} of {n_closed} "
       f"(~{h_closed / recall / n_closed:.0%})")
 print(closed_hits.to_string(index=False))
+close_day = closed.dataset_published_date.dt.date
+bulk_closed = close_day.map(close_day.value_counts()).ge(3).sum()
+print(f"\nCLOSED rows whose close date is shared by 3+ closes (a bulk close, not a publish date): "
+      f"{bulk_closed} of {len(closed)}")
 
 # %% [markdown]
 # **How to read it:** on the known-published old `Completed` requests, the
-# check catches only a minority. It catches a much smaller share of new
+# check catches only a minority. On the `CLOSED` side, many close dates are
+# bulk closes (printed above), and a 45-day window around a bulk-close day says
+# nothing about when an asset was made, so the check misses even more there.
+# **The estimate is a floor.** It catches a much smaller share of new
 # `CLOSED` requests. Even after scaling for what the check misses, most
-# `CLOSED` requests don't appear to have produced a new catalogue asset.
+# `CLOSED` requests show no sign of having produced a new catalogue asset.
 # Some may have been answered by pointing to an existing dataset, which
-# nothing here can see. **Treat the estimate as an order of magnitude**, and
-# read the matched titles rather than the percentage.
+# nothing here can see. Read the matched titles rather than the percentage.
 
 # %% [markdown]
 # ## 6. Duplicate check: has anyone already asked for what we are about to ask?
@@ -522,15 +561,18 @@ for label, pat in OUR_ASKS:
 # %% [markdown]
 # ### What the hits mean for each ask
 #
-# (Written against the run of 2026-09-22. Re-read the tables above when
+# (Written against the run of 2026-09-23. Re-read the tables above when
 # re-executing.)
 #
 # * **Issue 4 (exemption status):** nobody has requested it. The request
-#   would be new. The context block lists other requests for more assessment
-#   fields. They run from 2016 to 2026, and most were never decided or were
-#   closed without a stated reason. `868ev4dbu`, which asks for a list of assessment
-#   variables, is still `NEW`. A draft could cite this record, and should be
-#   ready for a similar answer.
+#   would be new. The closest precedent is **`ODR23-363`** (April 2023), which
+#   asked to add zoning, legal description and title ownership as columns on
+#   the current assessment dataset. It was `Rejected` a week later, and that
+#   was a real refusal, not a migration stamp (§2a). A tax-status column is the
+#   same kind of ask, so a draft should expect the same answer and say why this
+#   one is different. The other requests in the context block run from 2016 to
+#   2026. Most were never decided or were closed without a stated reason.
+#   `868ev4dbu`, which asks for a list of assessment variables, is still `NEW`.
 # * **Issue 5 (schools):** every earlier request was for **school-site
 #   polygons** for the two public boards. `ODR19-241` (public schools) was
 #   Completed. The Catholic request (`ODR19-263`) was never decided on the old
