@@ -710,6 +710,17 @@ navigation" below).
 - **Verified:** `tools/profiling/verify-center2d.js` (pitch 0 + bearing 0 +
   recenter, incl. from a rotated start) and `verify-recenter.js` (all four axes
   back to `HOME`, gold cleared). Both real-hit-test the buttons.
+- **The lenses flatten with the camera (2026-09-23).** While `pitch < 1` (the
+  same test as the gold state) `buildLayers()` gives every layer a
+  `modelMatrix` that squashes z to 1e-4. A top-down camera still drew prism
+  walls, roofs displaced by perspective and the rims of sinking prisms, which
+  was worst on Change over time. Tilting past 1°, by button or drag, rebuilds
+  at full height. It is a hard cut, not a tween: `elevationScale` cannot
+  transition in this build (`docs/TRANSITIONS.md`). ⚠️ **Not zero:** deck.gl
+  passes lighting normals through the same matrix, so z = 0 left every roof
+  about 38% darker than its legend colour. `verify-center2d.js` checks all
+  three things: every layer flattened, one roof's pixel unchanged, heights
+  back after a drag-tilt. Each fails its own mutation.
 
 ### Control hierarchy sizing: views bar, Options header (2026-07-25)
 

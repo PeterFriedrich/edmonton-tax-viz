@@ -4335,6 +4335,19 @@
     // differ). Composed here rather than inside each branch: buildViewLayers
     // has one return per view, and a future view would silently ship without
     // the orientation layers. deck draws in array order, so first = bottom.
+    // A straight-down camera draws every lens flat. Seen from above, a prism
+    // still shows its walls and its roof sits off its footprint by perspective
+    // (sinking prisms show their rims), so the plan view was never the clean
+    // map the Center 2D button promises. One z-scale on every layer flattens
+    // prisms, roof rings and label heights alike, without touching the
+    // builders; tilting past the threshold rebuilds them at full height.
+    // ⚠️ NOT zero: deck.gl lights with normals passed through this matrix, so
+    // a zero z-scale zeroes every roof's normal and the fills go dark, off
+    // the legend. 1e-4 keeps roofs lit as before and leaves the tallest
+    // prism well under a metre.
+    let camFlat = false;
+    const FLATTEN_Z = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1e-4, 0, 0, 0, 0, 1];
+
     function buildLayers() {
       // ⚠️ A REBUILD CLEARS THE BAND GLOW, and it must. `bandHoverIdx` is an
       // index into the banded subset, and that subset is rebuilt by the very
@@ -4345,7 +4358,8 @@
       // confident highlight on the wrong hood, which is the class of bug this
       // whole change exists to remove.
       bandHoverIdx = -1;
-      return [...referenceUnderLayers(), ...buildViewLayers(), ...referenceOverLayers()];
+      const layers = [...referenceUnderLayers(), ...buildViewLayers(), ...referenceOverLayers()];
+      return camFlat ? layers.map(l => l.clone({ modelMatrix: FLATTEN_Z })) : layers;
     }
 
     function buildViewLayers() {
@@ -7631,7 +7645,14 @@
       // 2D shows gold while the camera is flat, keyed off the LIVE pitch so it
       // stays correct even if the user tilts by drag.
       const center2d = document.getElementById("center2d");
-      const syncMode = () => center2d.classList.toggle("flat", map.getPitch() < 1); // gold = 2D
+      const syncMode = () => {
+        const flat = map.getPitch() < 1;
+        center2d.classList.toggle("flat", flat); // gold = 2D
+        if (flat !== camFlat) {
+          camFlat = flat;
+          if (overlay) overlay.setProps({ layers: buildLayers() });
+        }
+      };
       center2d.addEventListener("click", () => map.easeTo({ ...HOME_2D, duration: 700 }));
       document.getElementById("recenter").addEventListener("click", () =>
         map.easeTo({ ...HOME, duration: 700 }));

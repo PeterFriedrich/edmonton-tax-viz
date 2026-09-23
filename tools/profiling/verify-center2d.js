@@ -48,6 +48,9 @@ const [url] = process.argv.slice(2);
   check('label is "Center 2D"', init.label === 'Center 2D');
   check('button hit-tests as itself (clickable)', init.hit === true);
   check('not gold while tilted', init.flat === false);
+  const sq0 = await page.evaluate(() => overlay._deck.props.layers.filter(Boolean)
+    .filter(l => l.props.modelMatrix && l.props.modelMatrix[10] < 0.01).length);
+  check('no layer is flattened while tilted', sq0 === 0, `${sq0} flattened`);
 
   // From the tilted default: Center 2D flattens AND north-aligns AND recenters.
   await page.click('#center2d');
@@ -59,6 +62,63 @@ const [url] = process.argv.slice(2);
   check('recenters to HOME position', Math.abs(flat.lng - home.center[0]) < 0.01 && Math.abs(flat.lat - home.center[1]) < 0.01);
   check('recenters to HOME zoom', Math.abs(flat.zoom - home.zoom) < 0.05);
   check('gold state on (2D engaged)', flat.flat === true);
+
+  // The lens flattens with the camera (2026-09-23): every layer carries the
+  // z-squash while flat and none does while tilted. Read off the live layer
+  // list, since a stale list is exactly what a missed rebuild leaves behind.
+  const squashed = () => page.evaluate(() => {
+    const ls = overlay._deck.props.layers.filter(Boolean);
+    const z = l => (l.props.modelMatrix ? l.props.modelMatrix[10] : 1);
+    return { n: ls.length, flat: ls.filter(l => z(l) < 0.01).length,
+             zeroed: ls.filter(l => z(l) === 0).length };
+  });
+  const sq = await squashed();
+  check('every layer is flattened in 2D', sq.n > 0 && sq.flat === sq.n, JSON.stringify(sq));
+
+  // ⚠️ Squashed, not zeroed: a zero z-scale also zeroes the roofs' lighting
+  // normals, and every fill went ~38% darker than its legend colour. Compare
+  // one low hood's pixel flattened vs the same camera unflattened — at pitch 0
+  // a low roof sits almost on its footprint, so the two must agree.
+  const pixel = async (x, y) => {
+    const b64 = (await page.screenshot({ clip: { x, y, width: 1, height: 1 }, timeout: 60000 })).toString('base64');
+    return page.evaluate(async s => {
+      const img = new Image(); img.src = 'data:image/png;base64,' + s; await img.decode();
+      const c = document.createElement('canvas'); c.width = c.height = 1;
+      const g = c.getContext('2d'); g.drawImage(img, 0, 0);
+      return [...g.getImageData(0, 0, 1, 1).data].slice(0, 3);
+    }, b64);
+  };
+  const probe = await page.evaluate(() => {
+    const key = moneyScale().colKey;
+    const fs = state.data.features.filter(f => f.properties[key] > 0 && !f.properties.is_set_aside && !instBandedMoney(f.properties));
+    const vals = fs.map(f => f.properties[key]).sort((a, b) => a - b);
+    const low = vals[Math.floor(vals.length * 0.25)];
+    const cands = fs.filter(f => f.properties[key] <= low).map(f => {
+      const ring = f.geometry.type === 'Polygon' ? f.geometry.coordinates[0] : f.geometry.coordinates[0][0];
+      const c = ring.reduce((a, p) => [a[0] + p[0] / ring.length, a[1] + p[1] / ring.length], [0, 0]);
+      return { c, p: map.project(c), name: f.properties.neighbourhood_name };
+    });
+    const mid = [640, 400];
+    cands.sort((a, b) => Math.hypot(a.p.x - mid[0], a.p.y - mid[1]) - Math.hypot(b.p.x - mid[0], b.p.y - mid[1]));
+    return { x: Math.round(cands[0].p.x), y: Math.round(cands[0].p.y), name: cands[0].name };
+  });
+  await page.waitForTimeout(1500);
+  const flatPx = await pixel(probe.x, probe.y);
+  await page.evaluate(() => { camFlat = false; overlay.setProps({ layers: buildLayers() }); });
+  await page.waitForTimeout(1500);
+  const tallPx = await pixel(probe.x, probe.y);
+  await page.evaluate(() => { camFlat = true; overlay.setProps({ layers: buildLayers() }); });
+  const dPx = Math.max(...flatPx.map((v, i) => Math.abs(v - tallPx[i])));
+  check('flattened roofs keep their lit colour', dPx <= 6,
+    `${probe.name} @${probe.x},${probe.y} flat ${flatPx} vs unflattened ${tallPx}`);
+
+  // Tilting by drag (no button) snaps the heights back.
+  await page.evaluate(() => map.jumpTo({ pitch: 30 }));
+  await page.waitForTimeout(300);
+  const sq3 = await squashed();
+  check('tilting restores full height', sq3.flat === 0, JSON.stringify(sq3));
+  await page.click('#center2d');
+  await settleFlat();
 
   // Even starting rotated-but-not-flat, Center 2D must north-align (regression
   // guard for the original skew complaint).
