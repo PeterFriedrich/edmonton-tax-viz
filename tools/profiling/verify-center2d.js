@@ -52,6 +52,19 @@ const [url] = process.argv.slice(2);
     document.getElementById('center2d').getBoundingClientRect().left >
     document.getElementById('recenter').getBoundingClientRect().right);
   check('Center 2D sits right of Center 3D', order);
+  // Dominant while idle — accent text + border, bold — but NOT the gold fill,
+  // which stays the "2D engaged" signal (2026-09-23).
+  const look = () => page.evaluate(() => {
+    const s = getComputedStyle(document.getElementById('center2d'));
+    const acc = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
+    const probe = document.createElement('i'); probe.style.color = acc; document.body.append(probe);
+    const accRgb = getComputedStyle(probe).color; probe.remove();
+    return { color: s.color, border: s.borderTopColor, bg: s.backgroundColor, weight: +s.fontWeight, accRgb };
+  });
+  const idle = await look();
+  check('Center 2D idle: accent text + border, bold, no gold fill',
+    idle.color === idle.accRgb && idle.border === idle.accRgb && idle.weight >= 600 && idle.bg !== idle.accRgb,
+    JSON.stringify(idle));
   check('not gold while tilted', init.flat === false);
   const sq0 = await page.evaluate(() => overlay._deck.props.layers.filter(Boolean)
     .filter(l => l.props.modelMatrix && l.props.modelMatrix[10] < 0.01).length);
@@ -71,6 +84,12 @@ const [url] = process.argv.slice(2);
   check('recenters to HOME position', Math.abs(flat.lng - home.center[0]) < 0.01 && Math.abs(flat.lat - home.center[1]) < 0.01);
   check('recenters to HOME zoom', Math.abs(flat.zoom - home.zoom) < 0.05);
   check('gold state on (2D engaged)', flat.flat === true);
+  // The class flips at pitch < 1, moments before settleFlat returns, and the
+  // button has a 0.12s background/colour transition that software GL can
+  // stretch past 400ms (main thread busy with frames): poll up to 3s.
+  let eng = await look();
+  for (let i = 0; i < 30 && eng.bg !== eng.accRgb; i++) { await page.waitForTimeout(100); eng = await look(); }
+  check('Center 2D engaged: gold fill', eng.bg === eng.accRgb, JSON.stringify(eng));
   check('Center 2D arms the in-ease flatten', await page.evaluate(() => window.__armed === 1));
 
   // The lens flattens with the camera (2026-09-23): every layer carries the
