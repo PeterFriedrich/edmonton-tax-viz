@@ -137,6 +137,12 @@ Executed row and strike the item here when it runs.
 9. **Staleness passes 7–8 + rebuilt instrument** (#498, #499, #514). One verdict
    was wrong within a day (S183 §2c, A4's blocker). Sample the verdicts, don't re-run
    the pass.
+10. **Dataset-requests notebook** (#538, #539 S189; Opus 5.5, **medium** effort,
+    public at `/notebooks/dataset-requests.html`). Its first version shipped an
+    inverted headline ("58% refused"; migration stamps misread as refusals),
+    which #539 corrected. Check the one-to-one title pairing, the topic regexes,
+    the §5e catch-rate scaling (38% on 80 rows), and every prose number against
+    the executed outputs. Small, which makes it a good quick target.
 
 Not queued: session handoffs, the template repo (S173, other repo), S185's
 external recon (no artefact), #515/#516/#517 (tooling, low claim surface).
