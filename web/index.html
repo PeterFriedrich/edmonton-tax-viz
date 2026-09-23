@@ -2352,8 +2352,12 @@
     // runs the SHIPPED helper over the served file rather than a fixture copy,
     // and an inline ternary inside viewTooltip could not be reached. Same
     // reasoning as `money0` in C9.
-    const fmtResShare = frac => (frac > 0 && frac < 0.005
-      ? "<1" : Math.round(100 * frac)) + "% of revenue is residential";
+    // The top end is the same misreading mirrored (COPY_DECISIONS S10): "100%"
+    // reads as NOTHING ELSE IS HERE, and six hoods with 0.1–0.45% non-residential
+    // revenue rounded to it. `frac < 1` keeps an all-residential hood at "100%".
+    const fmtResShare = frac => (frac > 0 && frac < 0.005 ? "<1"
+      : frac >= 0.995 && frac < 1 ? ">99"
+      : Math.round(100 * frac)) + "% of revenue is residential";
     const fmtWater = (v, fixed) => money0(v) +
       " modelled water+sewer / acre / yr" +
       (fixed != null ? ` (fixed ${money0(fixed)})` : "");

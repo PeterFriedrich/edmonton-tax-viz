@@ -486,10 +486,18 @@ const GARBAGE = /\bNaN\b|\bundefined\b|\bnull\b|\bInfinity\b|\$NaN|\$undefined/;
       // closed it as correct-not-floored, so its 37 "0.00" renders are the
       // decided behaviour and noting it would redden this gate on purpose.
       // A whole-percent readout: its zero boundary is 0.005 of the FRACTION.
-      if (p.res_revenue_per_acre != null && p.revenue_per_acre > 0)
-        note(p.res_revenue_per_acre / p.revenue_per_acre, fmtResShare,
-             '0% of revenue is residential', 'res_share', n,
+      if (p.res_revenue_per_acre != null && p.revenue_per_acre > 0) {
+        const frac = p.res_revenue_per_acre / p.revenue_per_acre;
+        note(frac, fmtResShare, '0% of revenue is residential', 'res_share', n,
              '<1', x => Math.round(100 * x) === 0);
+        // The top end, run through the same three-way note on the REMAINDER:
+        // "100%" over a nonzero remainder, ">99" over a true 100%, and ">99"
+        // outside [0.995, 1) are its three defects (COPY_DECISIONS S10).
+        const top = fmtResShare(frac);
+        note(1 - frac, () => top.startsWith('>99') ? '<1'
+             : top.startsWith('100%') ? 'zero' : 'other', 'zero', 'res_share_top', n,
+             '<1', x => Math.round(100 * x) === 0);
+      }
     }
     // The temporal shares are the bulk of the percent surface (726 of 746) and
     // live in their own file, quantised to integer 1/share_scale units.

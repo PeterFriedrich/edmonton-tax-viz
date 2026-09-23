@@ -591,7 +591,7 @@ From `docs/FINDINGS_readout_floors.md`. Fixes 1–4 applied S190 (2026-09-23), e
 - [x] **`fmtBike` through `under2dp` + bike in §C10 — BEFORE the 2026-09-28 refresh.** KING EDWARD PARK goes to 0.0046 m/acre → `0.00` (§3), caused by the S188 boundary split.
 - [x] **Ratio view: local `money` → `money0`; floor message `(0.0)` through the component formatters** (§1). UNIVERSITY OF ALBERTA FARM `$0 to …`, HERITAGE VALLEY AREA `(0.0)`.
 - [x] **Surface-level zero-token check in smoke** (§4): scan rendered tooltips for `$0`/`0.00`/`0.0` over a nonzero value. C9/C10 check helpers only.
-- [ ] **Peter's call:** `fmtResShare` prints `100%` for 6 hoods with 0.1–0.45% non-residential (§2) — `>99%`? A `COPY_DECISIONS.md` row.
+- [x] **DECIDED + applied 2026-09-23 (S190): `>99%`, COPY_DECISIONS S10.** `fmtResShare` prints `100%` for 6 hoods with 0.1–0.45% non-residential (§2) — `>99%`? A `COPY_DECISIONS.md` row.
 - [ ] **Separate audit:** FAR numerator coverage — built-but-unrecorded floor area makes WHITE / POUNDMAKER INDUSTRIAL read `0.00 FAR` (§5). ⚠️ Not a `fmtFar` floor; S9 stands.
 
 ### Colour legibility — two measured defects in the CURRENT dark map (OPEN 2026-09-22 S186)
