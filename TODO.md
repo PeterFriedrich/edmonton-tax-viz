@@ -596,7 +596,7 @@ From `docs/FINDINGS_evidence_recheck.md` §8. Code/CI/notebook changes, so Peter
 - [ ] **F7** `historical_2024_gap`: pin the tested year instead of `idxmin`/`idxmax` (check 1 is a tautology; a fix retargets to 2018) (§3).
 - [ ] **F8** `roll_year_metadata`: the coverage fix should fail an invariant, not IndexError into ❓ (§3).
 - [x] **F9** (S191) roads notebooks: pin `PAVED_25`/`UNPAVED_25`; reword operating §3's "does real work" sentence (§7).
-- [ ] **F10** PETER'S CALL — confirm the monthly recheck reverses `DECISIONS` 2026-08-29, then mark that row AMENDED (§2a).
+- [x] **F10** (S191, Peter: option 1 — keep the recheck, amend 08-29) PETER'S CALL — confirm the monthly recheck reverses `DECISIONS` 2026-08-29, then mark that row AMENDED (§2a).
 
 ### Readout-floor audit follow-ons (OPEN 2026-09-22 S188)
 
