@@ -287,6 +287,9 @@ const GARBAGE = /\bNaN\b|\bundefined\b|\bnull\b|\bInfinity\b|\$NaN|\$undefined/;
     ['money / value',          () => applyMetric('value_per_acre')],
     ['services',               () => applyView('services')],
     ['ratio',                  () => applyView('ratio')],
+    // Fire is where the banded low end sits under $0.50 (UNIVERSITY OF ALBERTA
+    // FARM), so it is the denominator that can print "$0 to …" (S188 §1).
+    ['ratio / fire',           () => applyRatioDenom('fire')],
     ['development',            () => applyView('development')],
     ['uses',                   () => applyView('uses'), 'full'],
   ];
@@ -305,13 +308,39 @@ const GARBAGE = /\bNaN\b|\bundefined\b|\bnull\b|\bInfinity\b|\$NaN|\$undefined/;
     await page.evaluate(body => { eval(`(${body})()`); }, fn.toString());
     await page.waitForTimeout(700);
     const r = await page.evaluate(() => {
-      const out = { offenders: [], rendered: 0, legend: null };
+      const out = { offenders: [], rendered: 0, legend: null, zeroes: [] };
+      // ⚠️ `.html`, not the return value: viewTooltip returns { className, html },
+      // and testing the object tests the constant "[object Object]". This check
+      // was vacuous that way from 2026-08-02 to S190 (FINDINGS_readout_floors.md §4).
+      const tip = f => { const t = viewTooltip({ object: f }); return t && t.html; };
+      // Tag-stripping by regex eats "<$1 to $5,115</b>" as one tag, so read text
+      // through a DOM node (the S188 instrument error).
+      const box = document.createElement('div');
+      const text = html => { box.innerHTML = html; return box.textContent; };
+      // ⚠️ Two zero readings are DECIDED, not defects (DECISIONS 2026-09-20,
+      // COPY_DECISIONS S7): `fmtDev` names its integer count beside the rate
+      // instead of flooring, and `fmtFar` is correct at 0.00. Exempted by the
+      // unit that follows the token, so a new unit is checked by default.
+      const ZERO = /(?:^|[^\d.,])(?:\$0(?![\d.,])|0\.0+(?!\d)|0%)(?! (?:new homes|new permits|industrial permits) \/ acre| FAR)/g;
       for (const f of state.data.features) {
-        const html = viewTooltip({ object: f });
+        const html = tip(f);
         if (html == null) continue;
         out.rendered++;
         if (/\bNaN\b|\bundefined\b|\bnull\b|\bInfinity\b|\$NaN|\$undefined/.test(html))
           out.offenders.push(f.properties.neighbourhood_name);
+        // A ZERO-LOOKING TOKEN OVER A NONZERO VALUE, read off the rendered
+        // surface rather than off a helper, so it also sees open-coded sites
+        // that C9/C10 cannot (FINDINGS_readout_floors.md §1). Re-render with
+        // every exactly-zero property set to NaN: a true zero then stops
+        // printing a zero, so any zero token that SURVIVES came from a real value.
+        const before = text(html).match(ZERO);
+        if (!before) continue;
+        const p = { ...f.properties };
+        for (const k in p) if (p[k] === 0) p[k] = NaN;
+        let after;
+        try { after = text(tip({ ...f, properties: p }) || '').match(ZERO); }
+        catch (e) { continue; }  // a NaN input can throw where a zero did not
+        if (after) out.zeroes.push(`${f.properties.neighbourhood_name}: ${after.map(z => z.slice(-5)).join(' ')}`);
       }
       // ⚠️ READ WHICHEVER LEGEND SURFACE IS ACTUALLY SHOWING. Uses is
       // categorical — it fills #legend-cats and leaves min/max hidden and
@@ -332,6 +361,9 @@ const GARBAGE = /\bNaN\b|\bundefined\b|\bnull\b|\bInfinity\b|\$NaN|\$undefined/;
     check(`C-${label}: no NaN/undefined in any hood's readout`,
       r.offenders.length === 0,
       r.offenders.length ? `${r.offenders.length} hoods, e.g. ${r.offenders.slice(0, 3).join(', ')}` : '');
+    check(`C-${label}: no zero-looking readout over a nonzero value`,
+      r.zeroes.length === 0,
+      r.zeroes.length ? `${r.zeroes.length} hoods, e.g. ${r.zeroes.slice(0, 3).join('; ')}` : '');
     if (r.legend.catsVis) {
       check(`C-${label}: the category legend is populated and clean`,
         r.legend.cats.length > 0 && !GARBAGE.test(r.legend.cats),
@@ -447,6 +479,9 @@ const GARBAGE = /\bNaN\b|\bundefined\b|\bnull\b|\bInfinity\b|\$NaN|\$undefined/;
       if (p.road_m_per_acre != null)
         note(p.road_m_per_acre, fmtRoadM, '0.0 road m / acre', 'road', n,
              '<0.1', x => x.toFixed(1) === '0.0');
+      // Added S190: the boundary split puts KING EDWARD PARK at 0.0046.
+      if (p.bike_m_per_acre != null)
+        note(p.bike_m_per_acre, fmtBike, '0.00 dedicated bike route m / acre', 'bike', n);
       // ⚠️ `far` is NOT noted here, deliberately — DECISIONS.md 2026-09-20
       // closed it as correct-not-floored, so its 37 "0.00" renders are the
       // decided behaviour and noting it would redden this gate on purpose.
