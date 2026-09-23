@@ -704,9 +704,9 @@ navigation" below).
   live pitch so it stays right even if the user tilts by drag.
 - **Order: Center 3D, then Center 2D on the right** (2026-09-23, Peter). Center
   2D is the dominant preset, especially on phones. It was on the left until then.
-  It is also styled as dominant while idle: accent text and border, bold. The
-  solid gold fill stays the "2D engaged" signal, as on every active control, so
-  idle and engaged still read apart.
+  It is also styled as dominant while idle: **white** (`--ink`) text and
+  border, bold (Peter, 2026-09-23; one PR earlier it was gold text). Gold
+  appears only as the solid "2D engaged" fill, as on every active control.
 - **One source of framing truth:** `HOME` / `HOME_2D` constants drive the map
   constructor AND both buttons — no scattered pitch/bearing literals.
 - **History:** shipped first as a single toggle "Flip to 2D/3D" (kept the
