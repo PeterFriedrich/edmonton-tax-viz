@@ -66,7 +66,13 @@ against live sources — **113 invariants, 113 holding**:
 | `roads_operating_rate` | justification | 22 |
 
 ⚠️ **Changed 2026-09-22 (S187, `docs/FINDINGS_roads_rate_notebooks.md`):**
-`roads_lifecycle_rate` is now **45**, so the total is **118**. One duplicate
+`roads_lifecycle_rate` is now **45**, so the total is **118**.
+
+⚠️ **Corrected 2026-09-23 (S191, `docs/FINDINGS_evidence_recheck.md` §5): the
+real total is 101.** `historical_2024_gap` (6) and `exemption_uncertainty` (11)
+print every verdict twice — in `check()` and in their closing summary — and the
+recheck counted lines, so it reported 12 and 22. It now counts distinct claims.
+The status table above (6 of 6, 11 of 11) was right all along. One duplicate
 was dropped, the wrong "paved rose" claim was withdrawn, and 7 checks were added
 that pin the hardcoded Schedule 1, Appendix A and Appendix B tables to the
 fetched PDFs. Before that, 16 of its 40 were arithmetic on constants that could

@@ -256,8 +256,8 @@ human pass; this row exists so the pass is *triggered* rather than remembered.
 `.github/workflows/evidence-recheck.yml` (15th of the month, 14:00 UTC).
 
 **What it measures.** It re-executes every notebook in
-`notebooks/standalone/` against live sources — seven as of 2026-09-21, 118
-invariants between them (113 until 2026-09-22; `docs/EVIDENCE_NOTEBOOKS.md`) — and reports what moved. ⚠️ **Nothing else re-runs
+`notebooks/standalone/` against live sources — seven as of 2026-09-21, **101**
+invariants between them (reported as 118 until 2026-09-23 — two notebooks print each verdict twice, now counted once; `docs/EVIDENCE_NOTEBOOKS.md`) — and reports what moved. ⚠️ **Nothing else re-runs
 them.** `refresh.yml` runs `notebooks/verified/`, which is a different
 directory doing a different job (`docs/VERIFICATION.md`).
 
@@ -273,7 +273,18 @@ of notebook fail for opposite reasons:
 notebook verified *nothing*: it could not fetch, it timed out, or it exited 0
 without recording a single invariant. That is not a clean bill of health, and
 a source URL that will not resolve is itself a finding about a page that cites
-it. This repo has made the opposite mistake before — the revenue-delta guard
+it.
+
+⚠️ **Read the ❓'s KIND before acting** (named in the detail since 2026-09-23):
+
+- **network** (`URLError`, `HTTPError`, a timeout…) — a source did not answer.
+  Check the URL by hand; a dead one is a finding about every page citing it.
+- **data shape** (`IndexError`, `KeyError`…) — the source answered, in a form
+  the notebook did not expect. ⚠️ **On an evidence report this can be the
+  publisher's FIX**: `roll_year_metadata` crashes this way when the
+  `Period of Coverage` is corrected (`docs/FINDINGS_evidence_recheck.md` §3).
+  Read the notebook at the failing line before hunting for a dead URL. Any
+  `[FAIL]` lines that fired before the crash are quoted in the detail. This repo has made the opposite mistake before — the revenue-delta guard
 that *could not read its baseline* once reported like a guard that read it and
 found nothing.
 
@@ -297,7 +308,9 @@ list that always carries a stale ✅ is how the next ⚠️ gets skimmed past.
 ```
 
 ⚠️ It takes several minutes — the notebooks page Socrata and pull multi-MB
-PDFs. It writes nothing.
+PDFs. It writes nothing. **It runs cold**: the notebooks' download caches are
+redirected to a temp dir, so a hand run is as live as CI's (before 2026-09-23 a
+warm cache here made `exemption_uncertainty` a from-disk check).
 
 ## 1. The January year roll (the recurring one)
 
