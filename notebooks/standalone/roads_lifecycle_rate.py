@@ -619,8 +619,13 @@ PAVED_DF_23 = 11.5
 
 check(abs(PAVED_25 + UNPAVED_25 + CURBS_25 - ROADS_25) < 0.001,
       "the 2025 Roads row is exactly Paved + Unpaved + **Curbs**")
-check("10,484,313,206" in app_b and "2,097,342,722" in app_b,
-      "Appendix B p37 carries the Roads total and the Curbs line as transcribed")
+# ⚠️ Paved and Unpaved are pinned too: the sum check above is arithmetic on four
+# literals, and the 11.2% blend below reads PAVED_25 — pinning only Roads and
+# Curbs left both blind to a restated Paved line.
+check(all(s in app_b for s in ("10,484,313,206", "8,204,164,788",
+                               "182,805,696", "2,097,342,722")),
+      "Appendix B p37 carries the Roads total and the Paved, Unpaved and Curbs "
+      "lines as transcribed")
 
 blend = (PAVED_25 * PAVED_DF_25 + CURBS_25 * CURBS_DF_25) / ROADS_25
 display(Markdown(
