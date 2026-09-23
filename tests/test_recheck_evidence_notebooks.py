@@ -167,3 +167,139 @@ def test_a_relative_interpreter_path_still_finds_the_interpreter(notebooks, caps
     import json
     rows = json.loads(capsys.readouterr().out)
     assert rows and rows[0]["status"] == rc.PASS
+
+
+# ⚠️ Two notebooks print each verdict in check() AND in their closing summary.
+DOUBLE_PRINT = """
+print("  [PASS] the defect is still present upstream")
+print("  [PASS] and the row count still matches")
+print("invariants checked: 2/2 passed")
+print("  [PASS] the defect is still present upstream")
+print("  [PASS] and the row count still matches")
+"""
+
+DOUBLE_PRINT_FLIP = """
+print("  [PASS] the defect is still present upstream")
+print("  [FAIL] the missing set is non-empty")
+print("  [PASS] the defect is still present upstream")
+print("  [FAIL] the missing set is non-empty")
+raise AssertionError("1 invariant(s) failed — see above")
+"""
+
+
+def test_a_verdict_printed_twice_counts_once(notebooks):
+    notebooks("double", DOUBLE_PRINT)
+    status, detail = rc.run_one("double")
+    assert status == rc.PASS
+    assert detail.startswith("2 invariant(s)")
+
+
+def test_a_flip_printed_twice_reads_one_of_two(notebooks):
+    notebooks("double_flip", DOUBLE_PRINT_FLIP)
+    status, detail = rc.run_one("double_flip")
+    assert status == rc.MOVED
+    assert "**1 of 2 flipped**" in detail
+    assert detail.count("the missing set is non-empty") == 1
+
+
+def test_distinct_claims_are_not_collapsed(notebooks):
+    notebooks("holds", HOLDS)
+    assert rc.run_one("holds")[1].startswith("2 invariant(s)")
+
+
+# Same crash position and exit code; only the exception class differs.
+NETWORK_CRASH = """
+import sys
+print("  [PASS] first check")
+print("urllib.error.URLError: <urlopen error [Errno -2] Name or service not known>",
+      file=sys.stderr)
+sys.exit(1)
+"""
+
+SHAPE_CRASH = """
+import sys
+print("  [PASS] first check")
+print("IndexError: single positional indexer is out-of-bounds", file=sys.stderr)
+sys.exit(1)
+"""
+
+
+def test_a_network_crash_says_network(notebooks):
+    notebooks("net", NETWORK_CRASH)
+    status, detail = rc.run_one("net")
+    assert status == rc.UNCHECKABLE
+    assert "**network**" in detail and "URLError" in detail
+
+
+def test_a_shape_crash_says_it_may_be_the_fix(notebooks):
+    """roll_year_metadata's coverage fix lands here (FINDINGS_evidence_recheck §3)."""
+    notebooks("shape", SHAPE_CRASH)
+    status, detail = rc.run_one("shape")
+    assert status == rc.UNCHECKABLE
+    assert "**data shape**" in detail and "IndexError" in detail
+    assert "network" not in detail
+
+
+def test_fails_before_a_crash_reach_the_issue(notebooks):
+    notebooks("fail_then_crash", """
+import sys
+print("  [FAIL] the missing set is non-empty")
+print("KeyError: 'operator'", file=sys.stderr)
+sys.exit(1)
+""")
+    status, detail = rc.run_one("fail_then_crash")
+    assert status == rc.UNCHECKABLE
+    assert "the missing set is non-empty" in detail
+
+
+def test_notebooks_run_against_an_empty_cache(notebooks, monkeypatch, tmp_path):
+    """A warm cache on the machine must not stand in for a live fetch."""
+    warm = tmp_path / "warm"
+    warm.mkdir()
+    (warm / "stale.csv").write_text("x")
+    for v in rc.CACHE_ENV_VARS:
+        monkeypatch.setenv(v, str(warm))
+    notebooks("cache", """
+import os
+for v in %r:
+    d = os.environ[v]
+    ok = not os.path.exists(d) or not os.listdir(d)
+    print(f"  [{'PASS' if ok else 'FAIL'}] {v} is cold")
+    if not ok:
+        raise AssertionError(v)
+""" % (rc.CACHE_ENV_VARS,))
+    status, detail = rc.run_one("cache")
+    assert status == rc.PASS, detail
+    assert detail.startswith(f"{len(rc.CACHE_ENV_VARS)} invariant(s)")
+
+
+def test_every_notebook_cache_var_is_redirected():
+    """The list must name every cache override the notebooks actually read."""
+    import pathlib
+    import re
+    standalone = pathlib.Path(__file__).resolve().parent.parent / "notebooks" / "standalone"
+    read = set()
+    for f in standalone.glob("*.py"):
+        read |= set(re.findall(r'os\.environ\.get\("([A-Z_]+)"', f.read_text()))
+    assert read == set(rc.CACHE_ENV_VARS)
+
+
+def test_seven_timeouts_fit_inside_the_job():
+    """A killed job files no issue at all — the one outcome this must never have."""
+    import pathlib
+    import re
+    wf = (pathlib.Path(__file__).resolve().parent.parent
+          / ".github" / "workflows" / "evidence-recheck.yml").read_text()
+    job_min = int(re.search(r"timeout-minutes:\s*(\d+)", wf).group(1))
+    n = len(rc.EVIDENCE) + len(rc.JUSTIFICATION)
+    # 10 min of headroom for checkout, pip install and filing the issue.
+    assert n * rc.PER_NOTEBOOK_TIMEOUT <= (job_min - 10) * 60
+
+
+def test_the_recheck_step_runs_with_pipefail():
+    import pathlib
+    wf = (pathlib.Path(__file__).resolve().parent.parent
+          / ".github" / "workflows" / "evidence-recheck.yml").read_text()
+    step = wf[wf.index("id: recheck"):wf.index("| tee recheck.md")]
+    # A line of its own — the comment above it also mentions `shell: bash`.
+    assert any(ln.strip() == "shell: bash" for ln in step.splitlines())

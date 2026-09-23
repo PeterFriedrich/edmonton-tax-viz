@@ -41,8 +41,10 @@ import argparse
 import datetime as dt
 import json
 import os
+import re
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
@@ -69,8 +71,46 @@ JUSTIFICATION = (
 # fetch helper, a timeout) means the run never got far enough to judge.
 ASSERTION_MARKER = "AssertionError"
 
-# Generous: these fetch multi-MB PDFs and page through Socrata.
-PER_NOTEBOOK_TIMEOUT = 1500
+# All seven finished cold in under 2 min combined (2026-09-23). ⚠️ Seven of
+# these must fit inside the workflow's `timeout-minutes: 60`, or a third hung
+# notebook gets the job killed with no issue filed — which is what the old
+# 1500 s cap allowed.
+PER_NOTEBOOK_TIMEOUT = 420
+
+# The notebooks cache their downloads beside themselves and re-read them when
+# present, with no freshness check. Pointing these at a fresh directory is what
+# makes a hand run on a machine with warm caches a LIVE check, as CI's is.
+CACHE_ENV_VARS = ("EXEMPTION_NB_DATA", "HISTORICAL_GAP_DATA", "ROLL_YEAR_DATA")
+
+# Exceptions that mean the source could not be reached. Anything else escaping
+# a notebook means the data arrived in a shape the code did not expect — which
+# for an evidence report is often the publisher's FIX (an IndexError on a year
+# that now exists, a KeyError on a column that was added), not a dead source.
+NETWORK_EXC = re.compile(
+    r"URLError|HTTPError|ConnectionError|ConnectTimeout|ReadTimeout|Timeout|"
+    r"SSLError|RemoteDisconnected|IncompleteRead|socket\.gaierror|gaierror|"
+    r"ProtocolError|MaxRetryError|ChunkedEncodingError")
+EXC_LINE = re.compile(r"^([A-Za-z_][\w.]*(?:Error|Exception|Timeout|gaierror))\b")
+
+
+def _claims(out, tag):
+    """The distinct claim lines carrying `tag`, in order.
+
+    ⚠️ Deduplicated because two notebooks print every verdict twice — once in
+    `check()` and again in their closing summary — which reported 101
+    invariants as 118 and one flip as "2 of 12". Two different invariants with
+    byte-identical text would collapse into one; a notebook should not have
+    those anyway.
+    """
+    return list(dict.fromkeys(ln.strip() for ln in out.splitlines() if tag in ln))
+
+
+def _exception(stderr):
+    for ln in reversed(stderr.strip().splitlines()):
+        m = EXC_LINE.match(ln.strip())
+        if m:
+            return m.group(1)
+    return None
 
 
 def run_one(stem, python=sys.executable, timeout=PER_NOTEBOOK_TIMEOUT):
@@ -79,17 +119,21 @@ def run_one(stem, python=sys.executable, timeout=PER_NOTEBOOK_TIMEOUT):
     if not path.exists():
         return UNCHECKABLE, f"`{path.relative_to(REPO)}` does not exist"
 
-    try:
-        proc = subprocess.run(
-            [python, str(path)],
-            capture_output=True, text=True, timeout=timeout, cwd=str(STANDALONE),
-        )
-    except subprocess.TimeoutExpired:
-        return UNCHECKABLE, f"timed out after {timeout}s — sources unreachable or slow"
+    with tempfile.TemporaryDirectory(prefix=f"recheck-{stem}-") as cache:
+        env = {**os.environ, **{v: os.path.join(cache, v.lower()) for v in CACHE_ENV_VARS}}
+        try:
+            proc = subprocess.run(
+                [python, str(path)],
+                capture_output=True, text=True, timeout=timeout,
+                cwd=str(STANDALONE), env=env,
+            )
+        except subprocess.TimeoutExpired:
+            return UNCHECKABLE, (f"**network** — timed out after {timeout}s, "
+                                 "sources unreachable or slow")
 
     out = f"{proc.stdout}\n{proc.stderr}"
-    n_pass = out.count("[PASS]")
-    n_fail = out.count("[FAIL]")
+    passed, failed = _claims(out, "[PASS]"), _claims(out, "[FAIL]")
+    n_pass, n_fail = len(passed), len(failed)
 
     if proc.returncode == 0:
         # ⚠️ Exit 0 alone does not mean the invariants ran — a notebook that
@@ -99,12 +143,21 @@ def run_one(stem, python=sys.executable, timeout=PER_NOTEBOOK_TIMEOUT):
         return PASS, f"{n_pass} invariant(s) held"
 
     if ASSERTION_MARKER in out:
-        failed = [ln.strip() for ln in out.splitlines() if "[FAIL]" in ln]
         detail = "; ".join(failed)[:600] or f"{n_fail} invariant(s) failed"
         return MOVED, f"**{n_fail} of {n_pass + n_fail} flipped** — {detail}"
 
     tail = " ".join(proc.stderr.strip().splitlines()[-3:])[:400]
-    return UNCHECKABLE, f"exit {proc.returncode}, no invariant verdict — {tail}"
+    exc = _exception(proc.stderr)
+    if exc and NETWORK_EXC.search(exc):
+        kind = f"**network** (`{exc}`) — a source did not answer"
+    elif exc:
+        kind = (f"**data shape** (`{exc}`) — a source answered with something the "
+                "notebook did not expect; for an evidence report that can be the FIX")
+    else:
+        kind = f"exit {proc.returncode}, no exception named"
+    # Verdicts that fired before the crash are evidence too — keep them.
+    before = f" Flipped before the crash: {'; '.join(failed)[:300]}." if failed else ""
+    return UNCHECKABLE, f"{kind}, no invariant verdict.{before} — {tail}"
 
 
 def run_all(only=None, python=sys.executable):
@@ -159,8 +212,11 @@ def render(results, today=None):
         "`docs/DATA_ISSUES.md`. *justification* — a source moved under a rate "
         "this project ships on a public map; re-read it before the next refresh.",
         "",
-        "**A ❓ is the louder result.** The notebook verified nothing. A source "
-        "that will not fetch is itself a finding about a page that cites it.",
+        "**A ❓ is the louder result.** The notebook verified nothing. A "
+        "**network** ❓ is a source that will not fetch — itself a finding about "
+        "a page that cites it. A **data shape** ❓ means a source answered in a "
+        "form the notebook did not expect; on an *evidence* report that can be "
+        "the publisher's fix, so read the notebook before hunting for a dead URL.",
         "",
         "---",
         "*Generated monthly by `.github/workflows/evidence-recheck.yml` "

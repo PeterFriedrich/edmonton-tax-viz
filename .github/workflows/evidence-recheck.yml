@@ -45,8 +45,10 @@ jobs:
   recheck:
     runs-on: ubuntu-latest
     # Seven notebooks, each paging Socrata or pulling multi-MB PDFs. The script
-    # caps each at 25 min and reports a timeout as "could not check" rather
-    # than letting the job die with no issue filed.
+    # caps each at 7 min and reports a timeout as "could not check" rather
+    # than letting the job die with no issue filed. ⚠️ 7 × the per-notebook cap
+    # must stay under this limit (pinned by test_recheck_evidence_notebooks.py);
+    # at the old 25-min cap a third hung notebook killed the job silently.
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
@@ -65,6 +67,9 @@ jobs:
       # mean the script itself crashed, which is a different problem.
       - name: Re-run the standalone notebooks
         id: recheck
+        # `shell: bash` adds -o pipefail: without it a crash of the script is
+        # masked by `tee` and surfaces one step later as a blank-title failure.
+        shell: bash
         run: python scripts/recheck_evidence_notebooks.py | tee recheck.md
 
       # Idempotent: `gh label create` fails loudly once the label exists, which

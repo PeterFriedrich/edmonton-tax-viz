@@ -587,10 +587,10 @@ legibility item below; #7 waits for the 2026-09-28 refresh.
 
 From `docs/FINDINGS_evidence_recheck.md` §8. Code/CI/notebook changes, so Peter merges. ⚠️ **F1–F4 before the first scheduled run, 2026-10-15.**
 
-- [ ] **F1** `run_one` counts unique claim lines — `historical_2024_gap` and `exemption_uncertainty` double-print, so 101 invariants report as 118 and one flip reads "2 of 12" (§5).
-- [ ] **F2** name the exception class in ❓ details; split `RUNBOOK.md` §0e into network (dead source) vs shape (IndexError/KeyError — possibly the FIX) (§3, §6.4).
-- [ ] **F3** point `EXEMPTION_NB_DATA` / `HISTORICAL_GAP_DATA` / `ROLL_YEAR_DATA` at a temp dir so a hand run is live (§6.3).
-- [ ] **F4** `PER_NOTEBOOK_TIMEOUT` ≈ 420 (or job timeout ≥ 180) and `shell: bash` on the recheck step (§6.1–2).
+- [x] **F1** (S191) `run_one` counts unique claim lines — `historical_2024_gap` and `exemption_uncertainty` double-print, so 101 invariants report as 118 and one flip reads "2 of 12" (§5).
+- [x] **F2** (S191) name the exception class in ❓ details; split `RUNBOOK.md` §0e into network (dead source) vs shape (IndexError/KeyError — possibly the FIX) (§3, §6.4).
+- [x] **F3** (S191) point `EXEMPTION_NB_DATA` / `HISTORICAL_GAP_DATA` / `ROLL_YEAR_DATA` at a temp dir so a hand run is live (§6.3).
+- [x] **F4** (S191) `PER_NOTEBOOK_TIMEOUT` ≈ 420 (or job timeout ≥ 180) and `shell: bash` on the recheck step (§6.1–2).
 - [ ] **F5** `exemption_uncertainty`: a fail-when-fixed invariant on `flagged_value` — today a populated exemption flag reports ✅ (§3). Re-execute + re-render.
 - [ ] **F6** `school_coverage_gap`: each falsifying search returns ≥1 raw result — empty searches currently pass as "absence" (§4).
 - [ ] **F7** `historical_2024_gap`: pin the tested year instead of `idxmin`/`idxmax` (check 1 is a tautology; a fix retargets to 2018) (§3).
