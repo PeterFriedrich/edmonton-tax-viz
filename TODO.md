@@ -575,13 +575,28 @@ is in the `panel` column. T1 is public (3 of 10 service rows). T2 closed (`## Do
   tooltip/peek only because the probe feeds a hood feature to `viewTooltip` in
   grid modes too. Needs a cell-grain capture before it means anything.
 
-### Audit backlog S173–S186 — 9 targets marked, #1–#2 run (OPEN 2026-09-22 S187)
+### Audit backlog S173–S186 — 9 targets marked, #1–#4 and #10 run (OPEN 2026-09-22 S187)
 
 Fourteen sessions ran on Opus 5 alone with no cross-model check. The ranked
 list lives in `docs/AUDIT_LEDGER.md` → "Queued"; run them one per session at
 `high` effort via `edmonton-audit`, strike each there when its Executed row
 lands, close this item when the list is empty. ⚠️ #6 gates the Colour
 legibility item below; #7 waits for the 2026-09-28 refresh.
+
+### Evidence recheck audit follow-ons (OPEN 2026-09-23 S191)
+
+From `docs/FINDINGS_evidence_recheck.md` §8. Code/CI/notebook changes, so Peter merges. ⚠️ **F1–F4 before the first scheduled run, 2026-10-15.**
+
+- [ ] **F1** `run_one` counts unique claim lines — `historical_2024_gap` and `exemption_uncertainty` double-print, so 101 invariants report as 118 and one flip reads "2 of 12" (§5).
+- [ ] **F2** name the exception class in ❓ details; split `RUNBOOK.md` §0e into network (dead source) vs shape (IndexError/KeyError — possibly the FIX) (§3, §6.4).
+- [ ] **F3** point `EXEMPTION_NB_DATA` / `HISTORICAL_GAP_DATA` / `ROLL_YEAR_DATA` at a temp dir so a hand run is live (§6.3).
+- [ ] **F4** `PER_NOTEBOOK_TIMEOUT` ≈ 420 (or job timeout ≥ 180) and `shell: bash` on the recheck step (§6.1–2).
+- [ ] **F5** `exemption_uncertainty`: a fail-when-fixed invariant on `flagged_value` — today a populated exemption flag reports ✅ (§3). Re-execute + re-render.
+- [ ] **F6** `school_coverage_gap`: each falsifying search returns ≥1 raw result — empty searches currently pass as "absence" (§4).
+- [ ] **F7** `historical_2024_gap`: pin the tested year instead of `idxmin`/`idxmax` (check 1 is a tautology; a fix retargets to 2018) (§3).
+- [ ] **F8** `roll_year_metadata`: the coverage fix should fail an invariant, not IndexError into ❓ (§3).
+- [ ] **F9** roads notebooks: pin `PAVED_25`/`UNPAVED_25`; reword operating §3's "does real work" sentence (§7).
+- [ ] **F10** PETER'S CALL — confirm the monthly recheck reverses `DECISIONS` 2026-08-29, then mark that row AMENDED (§2a).
 
 ### Readout-floor audit follow-ons (OPEN 2026-09-22 S188)
 
