@@ -229,6 +229,16 @@ deck.gl 9.0.38 (`web/vendor/`, which does include `AttributeTransitionManager`):
   by baking the scale into `getElevation` and setting `elevationScale: 1`, but
   that also touches label lift in `labelLayer` — it is a render-path change, not
   a prop.
+- **A whole-scene height scale CAN be driven, through `modelMatrix`** (added
+  2026-09-23). It is a uniform, so re-cloning built layers with a new z-scale
+  each frame costs no attribute rebuild, and it moves roof rings and label
+  heights with the prisms. Center 2D uses it to lower every height over the
+  last quarter of its tilt (`flattenDuringEase`). This scales every height by
+  the same factor. It does NOT make a metric swap tweenable, because a swap
+  changes each hood's height by a different ratio. ⚠️ Never scale z to 0:
+  lighting normals pass through the same matrix and roofs go dark. Under
+  `prefers-reduced-motion`, MapLibre's `easeTo` jumps, so the heights snap
+  with it and nothing extra moves.
 - **⚠️ Motion costs the verify suite.** ~8 `verify-*.js` and ~20 `shot-*.js`
   scripts sample pixels immediately after a click and would capture
   mid-transition frames. Any transition ships with a settle wait in those

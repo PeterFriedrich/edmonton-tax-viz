@@ -721,6 +721,15 @@ navigation" below).
   about 38% darker than its legend colour. `verify-center2d.js` checks all
   three things: every layer flattened, one roof's pixel unchanged, heights
   back after a drag-tilt. Each fails its own mutation.
+- **Center 2D lowers the heights during its ease (2026-09-23, Peter).** Heights
+  scale with pitch over the **last quarter of the tilt**, measured from the pitch
+  at the click (52° → heights start sinking at 13°, flat at 0°). It is keyed to
+  pitch, not time: MapLibre's ease curve front-loads the motion, and at
+  t = 0.75 the pitch is already 2.0° (measured), so a time-based "last quarter"
+  looked like the same end-snap. A drag that stops the ease restores full
+  height. Drag-tilting still snaps at 1°. `verify-center2d.js` checks four
+  things: the button arms the ease, every sampled frame is on the curve, at
+  least one frame is partial, and a stopped ease restores height.
 
 ### Control hierarchy sizing: views bar, Options header (2026-07-25)
 
