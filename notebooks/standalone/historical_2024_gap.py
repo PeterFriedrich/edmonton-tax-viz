@@ -181,7 +181,10 @@ print(per_year.to_string(na_rep="—", formatters={
 }))
 
 growth = per_year["growth"].dropna()
-ODD_YEAR = int(growth.idxmin())
+# Pinned, not found: this report is about 2024. Taking the year from the data
+# (idxmin) made the check below a tautology, and once 2024 is repaired it
+# would retarget every claim to whichever year then looks worst.
+ODD_YEAR = 2024
 others = growth.drop(ODD_YEAR)
 
 display(Markdown(
@@ -193,7 +196,7 @@ display(Markdown(
 ))
 
 check(growth[ODD_YEAR] < others.min(),
-      f"{ODD_YEAR} is the slowest-growing slice in the dataset, by inspection of the data")
+      f"{ODD_YEAR} is the slowest-growing slice in the dataset")
 
 # %%
 # --- chart 1 ---------------------------------------------------------------
@@ -303,7 +306,7 @@ print(defects.to_string(formatters={
 }))
 
 # %%
-worst = int(defects["union"].idxmax())
+worst = ODD_YEAR
 wa, wb = defects.loc[worst, "detector_A"], defects.loc[worst, "detector_B"]
 clean = defects.drop(worst)
 
@@ -352,6 +355,10 @@ print(f"their combined {last_sound} assessed value: ${missing['assessed_value'].
 print(f"neighbourhoods affected: {missing['neighbourhood_name'].nunique():,}")
 
 check(len(missing) > 0, "the cumulative missing set is non-empty")
+# Empty means the slices were repaired: stop here as a failed invariant rather
+# than crash in the charts below and read as a dead source.
+if missing.empty:
+    raise AssertionError("no missing accounts left — the slices may have been repaired")
 
 # %% [markdown]
 # > ⚠️ **Do not add the per-year counts together.** An account already absent in

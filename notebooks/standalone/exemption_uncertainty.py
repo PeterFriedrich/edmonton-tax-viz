@@ -148,7 +148,9 @@ def check(ok: bool, claim: str) -> None:
     """Record a structural invariant. Reported together at the end.
 
     These are claims that must hold for ANY vintage of this data — not the
-    values themselves, which move every time Edmonton refreshes the roll.
+    values themselves, which move every time Edmonton refreshes the roll —
+    except the exempt-flag claim in §3, which is meant to fail when the
+    publisher fixes the flag.
     """
     CHECKS.append((bool(ok), claim))
     print(f"  [{'PASS' if ok else 'FAIL'}] {claim}")
@@ -461,6 +463,11 @@ print(f"\nthe flag accounts for {100 * flagged_value / gaps['gap'].sum():.2f}% o
 
 check((gaps["gap"] > 0).all(),
       "every class taxes LESS than the roll carries — exemptions only subtract")
+# The one claim here that is SUPPOSED to fail: if Edmonton starts populating
+# the exempt flag, this page's headline is wrong and the monthly recheck must
+# say so. Measured at ~0.05% on 2026-08-26; 1% leaves room for drift, not a fix.
+check(flagged_value < 0.01 * gaps["gap"].sum(),
+      "the roll's exempt flag accounts for under 1% of the untaxed value")
 
 # %% [markdown]
 # **Residential is nearly explained; the other two are not.** Residential land
@@ -729,7 +736,7 @@ def subset_reaching(vals: np.ndarray, target: float) -> tuple[np.ndarray, float]
         if total + vals[i] <= target:
             picked.append(i)
             total += vals[i]
-    return np.array(picked), total
+    return np.array(picked, dtype=int), total
 
 
 pick_a, total_a = subset_reaching(values[left], invisible)
