@@ -8,6 +8,99 @@ Items are verbatim as they were closed, newest-moved first in the order they app
 
 ---
 
+- [x] **Dataset-requests notebook audit fixes — APPLIED 2026-09-23 (S190).** False §5a sentence removed, `\bbus`/`tree` regexes fixed, 16 clean-up-sweep refusals and a `test` row split out (61 decided, 3.3×), §5e called a floor, `ODR23-363` cited for Issue 4. `docs/FINDINGS_dataset_requests_notebook.md`.
+
+- [x] **Manifest staleness guard — BUILT 2026-09-17 (Peter's yes).** Two checks,
+  not one: `check_budget_context` + `check_mill_rate_values`. See `## Done`.
+
+- [x] **F1** (S191) `run_one` counts unique claim lines — `historical_2024_gap` and `exemption_uncertainty` double-print, so 101 invariants report as 118 and one flip reads "2 of 12" (§5).
+
+- [x] **F2** (S191) name the exception class in ❓ details; split `RUNBOOK.md` §0e into network (dead source) vs shape (IndexError/KeyError — possibly the FIX) (§3, §6.4).
+
+- [x] **F3** (S191) point `EXEMPTION_NB_DATA` / `HISTORICAL_GAP_DATA` / `ROLL_YEAR_DATA` at a temp dir so a hand run is live (§6.3).
+
+- [x] **F4** (S191) `PER_NOTEBOOK_TIMEOUT` ≈ 420 (or job timeout ≥ 180) and `shell: bash` on the recheck step (§6.1–2).
+
+- [x] **F5** (S192) `exemption_uncertainty`: a fail-when-fixed invariant on `flagged_value` — today a populated exemption flag reports ✅ (§3). Re-execute + re-render.
+
+- [x] **F6** (S192 — as a floor on the SUM: two of the five return 0 on a healthy catalogue, findings §10) `school_coverage_gap`: each falsifying search returns ≥1 raw result — empty searches currently pass as "absence" (§4).
+
+- [x] **F7** (S192) `historical_2024_gap`: pin the tested year instead of `idxmin`/`idxmax` (check 1 is a tautology; a fix retargets to 2018) (§3).
+
+- [x] **F8** (S192) `roll_year_metadata`: the coverage fix should fail an invariant, not IndexError into ❓ (§3).
+
+- [x] **F9** (S191) roads notebooks: pin `PAVED_25`/`UNPAVED_25`; reword operating §3's "does real work" sentence (§7).
+
+- [x] **F10** (S191, Peter: option 1 — keep the recheck, amend 08-29) PETER'S CALL — confirm the monthly recheck reverses `DECISIONS` 2026-08-29, then mark that row AMENDED (§2a).
+
+
+- [x] **`verify-smoke.js:310` → `viewTooltip(...).html`.** The C-family NaN/undefined sweep tests `"[object Object]"` and has passed vacuously since 2026-08-02 (§4b). Falsify with the NaN mutation in the findings doc. The weekly gate is blind until this lands.
+
+- [x] **`fmtBike` through `under2dp` + bike in §C10 — BEFORE the 2026-09-28 refresh.** KING EDWARD PARK goes to 0.0046 m/acre → `0.00` (§3), caused by the S188 boundary split.
+
+- [x] **Ratio view: local `money` → `money0`; floor message `(0.0)` through the component formatters** (§1). UNIVERSITY OF ALBERTA FARM `$0 to …`, HERITAGE VALLEY AREA `(0.0)`.
+
+- [x] **Surface-level zero-token check in smoke** (§4): scan rendered tooltips for `$0`/`0.00`/`0.0` over a nonzero value. C9/C10 check helpers only.
+
+- [x] **DECIDED + applied 2026-09-23 (S190): `>99%`, COPY_DECISIONS S10.** `fmtResShare` prints `100%` for 6 hoods with 0.1–0.45% non-residential (§2) — `>99%`? A `COPY_DECISIONS.md` row.
+
+- [x] **GUARD-BURST AUDIT FOLLOW-ONS — ALL 3 DONE** (opened 2026-09-16, S164;
+  closed 2026-09-16, S165. `docs/FINDINGS_guard_burst.md` §7). Two of the six
+  pieces were called the project's own failure mode shipped fresh: a working
+  guard with no input, and a working guard with no confirmed reader. The reader
+  half was real and is fixed (PR #438). **The input half was not real** — see
+  below.
+  - [x] ~~**`check_todo_branch_refs` has no input**~~ — **VERDICT REVERSED
+    2026-09-16 (S165), findings §1a. KEPT as-is; no repo setting changed.** The
+    L0 FAIL counted merges only. Merges never feed this check (merged branches
+    stay on origin) — **PRUNES do**, and the prune recurs: `chore/branch-prune`
+    (#291) removed ~287 branches on 2026-08-31 and **150 have accumulated in the
+    16 days since**. Its input arrives in one batch per prune, so long green runs
+    are the expected shape. Real defect is *scheduling*, not existence; re-open
+    the post-prune-trigger question at the next prune. ACTION string and
+    `RUNBOOK.md` §0d reworded to say "no longer on origin (usually a PRUNE)" and
+    to tell the reader green is expected. ⚠️ Also withdrawn: enabling
+    *Automatically delete head branches* was half-sold as stranding protection
+    and would not have helped — `git push` silently RECREATES a deleted remote
+    branch.
+  - [x] **`handoff_gap.py` reaches nobody confirmed** — DONE 2026-09-16 (S164,
+    PR #438), and the fix is **not** the one the finding proposed. The
+    `/compact` experiment was unnecessary: PreCompact's only output surface is
+    exit 2 (= block compaction, which fails the request on a context-limit
+    recovery), so it **cannot carry a message at all** and the hook was deleted
+    rather than rewired. The signal moved to **`SessionStart`**, which fires
+    after `/clear` and after a compaction and whose `additionalContext` is
+    documented to reach Claude; `SessionEnd` now writes to stderr with
+    `2>/dev/null` dropped. 8 mutations red-then-green — one of which caught a
+    `check-where-the-value-can-be-wrong` defect in the new tests. Findings §2a.
+  - [x] **`clamp-drift` issue has no dedup** — DONE 2026-09-16 (S164, PR #438).
+    `refresh.yml` skips `gh issue create` while one is open with the label, with
+    the transient-vs-persistent reason in the step comment (the revenue-delta
+    step above stays undeduped deliberately: that signal *is* per-event).
+
+
+- [x] **DECIDE — `origin/docs/viz-stack` … 272 lines that never got a PR.**
+  Surfaced 2026-08-31 during the branch prune; **LANDED 2026-09-16 (S165)** as
+  `docs/VIZ_STACK.md`, cherry-picked onto a fresh branch off master. §0/§1 were
+  re-measured on landing (sizes had drifted hard: `web/data/` 8.4 → 16.1 MB, boot
+  file 1.4 → 1.04 MB, and the 7.63 MB `value_grid_50.json` did not exist when the
+  doc was written); §7's Pages Range check re-run green; §2 left as a dated
+  third-party observation and flagged as un-re-measured. The two `VIZ_STACK.md`
+  citation warnings in `check_doc_citations.py` resolve as a side effect.
+  - One commit (`0efd62b`, 2026-08-07) adding `docs/VIZ_STACK.md` (+272) and a
+    `TODO.md` block (+31). **No PR was ever opened**, so nothing has ever
+    reviewed or rejected it — it is unmerged by neglect, not by decision.
+  - ⚠️ **Not a duplicate of master's `docs/STACK.md`.** Different file,
+    different scope; don't assume the shipped stack inventory covers it.
+  - S99 (2026-08-07) kept it deliberately: it deleted the *other* stack branch
+    (`claude/kunicki-app-stack-analysis-hs3kiv`) only after confirming
+    `VIZ_STACK.md` was byte-identical on both, and left this one intact.
+  - Nothing outside `session-summary/archive/2026-08-07-s99.md` references the
+    file. Read it, then land it, fold it into `docs/STACK.md`, or close it with
+    a reason on the record — **the one outcome to avoid is a fourth session
+    walking past it.**
+
+
 - [x] **Manifest staleness guard — BUILT 2026-09-17 (S167), on Peter's yes.**
   The original item proposed ONE function; it shipped as TWO, because the digest
   renders one row per check and folding two sources into one cell prints two

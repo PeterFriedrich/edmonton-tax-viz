@@ -27,10 +27,10 @@ per-report data description was a prose caption in `web/notebooks/index.html`.
 
 | report | `DATA_ISSUES.md` | status | invariants | re-verified |
 |---|---|---|---|---|
-| Roll year metadata | issue **1** | **ACTIVE** | 8 of 8 | 2026-08-29 |
-| Historical 2024 gap | issue **3** | **ACTIVE** | 6 of 6 | 2026-08-29 |
-| Exemption uncertainty | issue **4** | **ACTIVE** | 11 of 11 | 2026-08-29 |
-| School coverage gap | issue **5** | **ACTIVE** | 4 of 4 | 2026-08-29 |
+| Roll year metadata | issue **1** | **ACTIVE** | 9 of 9 | 2026-09-23 |
+| Historical 2024 gap | issue **3** | **ACTIVE** | 6 of 6 | 2026-09-23 |
+| Exemption uncertainty | issue **4** | **ACTIVE** | 12 of 12 | 2026-09-23 |
+| School coverage gap | issue **5** | **ACTIVE** | 5 of 5 | 2026-09-23 |
 | Permit neighbourhood list | issue **6** | **ACTIVE** | 5 of 5 | 2026-09-17 |
 
 ## ⚠️ They are re-run monthly now — and what the first run found
@@ -81,6 +81,19 @@ changed meaning: the snow check now says the 55% split is unverifiable, and the
 program-separation check is now the intra-municipal charge mirror. The recheck
 reports pass/fail per notebook and keeps no per-claim baseline, so the rewording
 raises no alert.
+
+⚠️ **Changed 2026-09-23 (S192, F5–F8 of `docs/FINDINGS_evidence_recheck.md`):
+the total is 104**, and all five evidence reports now fail when the publisher
+fixes them (before, only school and permit did). `exemption_uncertainty` 11 → 12
+(the exempt flag must stay under 1% of the gap), `school_coverage_gap` 4 → 5
+(the five falsifying searches must return something between them, so an empty
+catalogue no longer reads as absence), `roll_year_metadata` 8 → 9 (a labelled
+year with no historical slice fails instead of raising `IndexError`), and
+`historical_2024_gap` stays at 6 but tests **2024** by name instead of whichever
+year the data makes worst. `roll_year_metadata` and `historical_2024_gap` now
+stop with `AssertionError` at the point a fix would otherwise crash, so a fix
+reads ⚠️, not ❓ — and the recheck then reports only the checks that ran before
+the stop (e.g. "1 of 2 flipped").
 
 ⚠️ **So every documented defect is still present upstream as of 2026-09-21,
 and no publisher has fixed anything.** That is unsurprising — `DATA_ISSUES.md`

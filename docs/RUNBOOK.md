@@ -256,8 +256,8 @@ human pass; this row exists so the pass is *triggered* rather than remembered.
 `.github/workflows/evidence-recheck.yml` (15th of the month, 14:00 UTC).
 
 **What it measures.** It re-executes every notebook in
-`notebooks/standalone/` against live sources — seven as of 2026-09-21, **101**
-invariants between them (reported as 118 until 2026-09-23 — two notebooks print each verdict twice, now counted once; `docs/EVIDENCE_NOTEBOOKS.md`) — and reports what moved. ⚠️ **Nothing else re-runs
+`notebooks/standalone/` against live sources — seven as of 2026-09-21, **104**
+invariants between them (101 until F5–F8 added three on 2026-09-23, and reported as 118 before that — two notebooks print each verdict twice, now counted once; `docs/EVIDENCE_NOTEBOOKS.md`) — and reports what moved. ⚠️ **Nothing else re-runs
 them.** `refresh.yml` runs `notebooks/verified/`, which is a different
 directory doing a different job (`docs/VERIFICATION.md`).
 

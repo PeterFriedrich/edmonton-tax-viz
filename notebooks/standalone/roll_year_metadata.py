@@ -171,9 +171,14 @@ display(Markdown(f"""
 | rows last updated | **{rows_updated:%Y-%m-%d}** |
 """))
 
+# The checks that guard an index come BEFORE it: a verdict recorded after the
+# crash it was meant to prevent is never printed, and the recheck then reads a
+# changed field as a dead source (❓) instead of a moved one (⚠️).
+check(len(coverage_years) > 0, "Period of Coverage names at least one year")
+if not coverage_years:
+    raise AssertionError("Period of Coverage names no year — see above")
 claimed_year = coverage_years[-1]
 print(f"\nThe metadata claims the roll covers: {claimed_year}")
-check(len(coverage_years) > 0, "Period of Coverage names at least one year")
 
 # %% [markdown]
 # The rows were refreshed recently, so this is not an abandoned dataset — it is
@@ -200,6 +205,12 @@ hist = pd.DataFrame(soda(HISTORICAL, {
 cur = soda(CURRENT, {"$select": f"count(*) as n, sum(assessed_value{CAST}) as total"})[0]
 cur_n, cur_total = int(cur["n"]), float(cur["total"])
 
+# If the City corrects the label to the roll's real year, the historical
+# dataset has no slice for it yet — that is the fix, so it fails here.
+check((hist.assessment_year == claimed_year).any(),
+      f"the historical dataset has a slice for the labelled year {claimed_year}")
+if not (hist.assessment_year == claimed_year).any():
+    raise AssertionError(f"no historical slice for {claimed_year} — the label may have been corrected")
 hist_claimed = hist.loc[hist.assessment_year == claimed_year].iloc[0]
 gap = cur_total / hist_claimed.total - 1
 
@@ -430,8 +441,9 @@ show(fig, "Bar chart of the difference between the current roll's residential as
 # ## 6. Invariants
 #
 # Every claim above is asserted here against the numbers this run computed. If
-# the City corrects the field, the first check below flips and the report has
-# done its job.
+# the City corrects the field while the historical dataset has no slice for the
+# corrected year, the run stops at §2's slice check before
+# reaching these, and the report has done its job.
 
 # %%
 check(cur_total > hist_claimed.total,

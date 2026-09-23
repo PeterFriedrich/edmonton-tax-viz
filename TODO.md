@@ -533,9 +533,6 @@ is in the `panel` column. T1 is public (3 of 10 service rows). T2 closed (`## Do
   Remedies are a decision, not a patch: (1) a press under the panel closes the
   panel; (2) opening the panel clears `body.budget`; (3) keep the yield and
   un-light the button from `openTemporal`/`closeTemporal`. Peter's call.
-- [x] **Dataset-requests notebook audit fixes — APPLIED 2026-09-23 (S190).** False §5a sentence removed, `\bbus`/`tree` regexes fixed, 16 clean-up-sweep refusals and a `test` row split out (61 decided, 3.3×), §5e called a floor, `ODR23-363` cited for Issue 4. `docs/FINDINGS_dataset_requests_notebook.md`.
-- [x] **Manifest staleness guard — BUILT 2026-09-17 (Peter's yes).** Two checks,
-  not one: `check_budget_context` + `check_mill_rate_values`. See `## Done`.
 - [ ] **L2 — `~0.9% of units` in the Infill blurb is a typed-in measurement** (S56's
   D3, 2026-07-16) that nothing re-derives, while the permits feed refreshes weekly.
   **Re-derive from the feed, or drop the figure.** ⚠️ Not mechanical — dropping it
@@ -583,30 +580,10 @@ list lives in `docs/AUDIT_LEDGER.md` → "Queued"; run them one per session at
 lands, close this item when the list is empty. ⚠️ #6 gates the Colour
 legibility item below; #7 waits for the 2026-09-28 refresh.
 
-### Evidence recheck audit follow-ons (OPEN 2026-09-23 S191)
-
-From `docs/FINDINGS_evidence_recheck.md` §8. Code/CI/notebook changes, so Peter merges. ⚠️ **F1–F4 before the first scheduled run, 2026-10-15.**
-
-- [x] **F1** (S191) `run_one` counts unique claim lines — `historical_2024_gap` and `exemption_uncertainty` double-print, so 101 invariants report as 118 and one flip reads "2 of 12" (§5).
-- [x] **F2** (S191) name the exception class in ❓ details; split `RUNBOOK.md` §0e into network (dead source) vs shape (IndexError/KeyError — possibly the FIX) (§3, §6.4).
-- [x] **F3** (S191) point `EXEMPTION_NB_DATA` / `HISTORICAL_GAP_DATA` / `ROLL_YEAR_DATA` at a temp dir so a hand run is live (§6.3).
-- [x] **F4** (S191) `PER_NOTEBOOK_TIMEOUT` ≈ 420 (or job timeout ≥ 180) and `shell: bash` on the recheck step (§6.1–2).
-- [ ] **F5** `exemption_uncertainty`: a fail-when-fixed invariant on `flagged_value` — today a populated exemption flag reports ✅ (§3). Re-execute + re-render.
-- [ ] **F6** `school_coverage_gap`: each falsifying search returns ≥1 raw result — empty searches currently pass as "absence" (§4).
-- [ ] **F7** `historical_2024_gap`: pin the tested year instead of `idxmin`/`idxmax` (check 1 is a tautology; a fix retargets to 2018) (§3).
-- [ ] **F8** `roll_year_metadata`: the coverage fix should fail an invariant, not IndexError into ❓ (§3).
-- [x] **F9** (S191) roads notebooks: pin `PAVED_25`/`UNPAVED_25`; reword operating §3's "does real work" sentence (§7).
-- [x] **F10** (S191, Peter: option 1 — keep the recheck, amend 08-29) PETER'S CALL — confirm the monthly recheck reverses `DECISIONS` 2026-08-29, then mark that row AMENDED (§2a).
-
 ### Readout-floor audit follow-ons (OPEN 2026-09-22 S188)
 
-From `docs/FINDINGS_readout_floors.md`. Fixes 1–4 applied S190 (2026-09-23), each falsified; see `DECISIONS.md` 2026-09-23. Two left, neither mine to apply without a call.
+From `docs/FINDINGS_readout_floors.md`. Fixes 1–4 applied S190 (2026-09-23), each falsified; see `DECISIONS.md` 2026-09-23. One left, not mine to start without a call.
 
-- [x] **`verify-smoke.js:310` → `viewTooltip(...).html`.** The C-family NaN/undefined sweep tests `"[object Object]"` and has passed vacuously since 2026-08-02 (§4b). Falsify with the NaN mutation in the findings doc. The weekly gate is blind until this lands.
-- [x] **`fmtBike` through `under2dp` + bike in §C10 — BEFORE the 2026-09-28 refresh.** KING EDWARD PARK goes to 0.0046 m/acre → `0.00` (§3), caused by the S188 boundary split.
-- [x] **Ratio view: local `money` → `money0`; floor message `(0.0)` through the component formatters** (§1). UNIVERSITY OF ALBERTA FARM `$0 to …`, HERITAGE VALLEY AREA `(0.0)`.
-- [x] **Surface-level zero-token check in smoke** (§4): scan rendered tooltips for `$0`/`0.00`/`0.0` over a nonzero value. C9/C10 check helpers only.
-- [x] **DECIDED + applied 2026-09-23 (S190): `>99%`, COPY_DECISIONS S10.** `fmtResShare` prints `100%` for 6 hoods with 0.1–0.45% non-residential (§2) — `>99%`? A `COPY_DECISIONS.md` row.
 - [ ] **Separate audit:** FAR numerator coverage — built-but-unrecorded floor area makes WHITE / POUNDMAKER INDUSTRIAL read `0.00 FAR` (§5). ⚠️ Not a `fmtFar` floor; S9 stands.
 
 ### Colour legibility — two measured defects in the CURRENT dark map (OPEN 2026-09-22 S186)
@@ -670,40 +647,6 @@ archive"*) is not, and this span is 2,533 lines.
   - ✅ **(2) THE RELOCATION IS DONE 2026-09-16 (S166): 26 KB moved, 261.6 → 238.0 KB**, 27 blocks under 11 open parents, each replaced by a pointer to `docs/TODO_archive.md` § "Closed sub-items lifted out of still-open parents"; every relocated line was verified verbatim in the archive and the open-box count checked before writing. ⚠️ **It was 46 KB on paper and 26 KB in fact: 3 closed sub-items carry OPEN descendants** (the 8 regroup decisions, the P2.3 security checklist, "More service layers") **and were held back** — moving them archives live work out of sight, which is the refusal `tools/todo_archive.py` makes at top level, applied one level down. A first pass without that rule silently dropped 5 open boxes; the open-box assertion caught it. **Those 3 become relocatable when their open children close, not before.**
   - ⬜ **(1) STILL OPEN — the staleness audit.** ➡️ **The record of what has been checked now lives in `docs/STALENESS_LEDGER.md`** (moved there 2026-09-20, S179), which also fixes the three instrument defects pass 6 found: the unit, the denominator and the cohort metric are now **defined**, and every checked item has a row — including the ACCURATE ones, whose absence was causing re-checks. **20 items checked, 7 corrected, 13 accurate, out of 100 open boxes.** ⚠️ **Do NOT write a check date into an item here** — the cohort is measured by the newest date in the item body, so annotating moves an item out of its own cohort (pass 5's band shrank 12 → 8 underneath it). ⚠️ **Do not quote "18 of 103"** — 103 was never right and the tally could not see a re-check. **Next pass: the 21 open items carrying NO date at all**, which are invisible to the cohort metric and have never been sampled.
   - ⚠️ **One-off, not a cadence** — a scheduled manual sweep is the shape rejected the same day for backlog staleness. ⚠️ **Not a growth-instrumentation item** — the doc-growth audit's L0 FAILED and nothing is to be built; re-measure the loaded path with `.venv/bin/python tools/retrieval_report.py | grep '^Loaded path'` at the **2026-10-05 (⚠️ **moved from ~2026-09-30 on 2026-09-21**: the hook was widened to `Bash` that day, so a Sept 30 run would have carried only **9** days of un-undercounted data against the report's own 14-day floor)** read-log run (⚠️ **it was `sed -n 4p` until 2026-09-21, when the report grew a regime warning and that line number moved** — this number is file SIZES and is unaffected by the log's own problems) and put the number to Peter then. ⚠️ **This file is ~3,250 lines; a default `Read` returns 2,000.**
-
-- [x] **GUARD-BURST AUDIT FOLLOW-ONS — ALL 3 DONE** (opened 2026-09-16, S164;
-  closed 2026-09-16, S165. `docs/FINDINGS_guard_burst.md` §7). Two of the six
-  pieces were called the project's own failure mode shipped fresh: a working
-  guard with no input, and a working guard with no confirmed reader. The reader
-  half was real and is fixed (PR #438). **The input half was not real** — see
-  below.
-  - [x] ~~**`check_todo_branch_refs` has no input**~~ — **VERDICT REVERSED
-    2026-09-16 (S165), findings §1a. KEPT as-is; no repo setting changed.** The
-    L0 FAIL counted merges only. Merges never feed this check (merged branches
-    stay on origin) — **PRUNES do**, and the prune recurs: `chore/branch-prune`
-    (#291) removed ~287 branches on 2026-08-31 and **150 have accumulated in the
-    16 days since**. Its input arrives in one batch per prune, so long green runs
-    are the expected shape. Real defect is *scheduling*, not existence; re-open
-    the post-prune-trigger question at the next prune. ACTION string and
-    `RUNBOOK.md` §0d reworded to say "no longer on origin (usually a PRUNE)" and
-    to tell the reader green is expected. ⚠️ Also withdrawn: enabling
-    *Automatically delete head branches* was half-sold as stranding protection
-    and would not have helped — `git push` silently RECREATES a deleted remote
-    branch.
-  - [x] **`handoff_gap.py` reaches nobody confirmed** — DONE 2026-09-16 (S164,
-    PR #438), and the fix is **not** the one the finding proposed. The
-    `/compact` experiment was unnecessary: PreCompact's only output surface is
-    exit 2 (= block compaction, which fails the request on a context-limit
-    recovery), so it **cannot carry a message at all** and the hook was deleted
-    rather than rewired. The signal moved to **`SessionStart`**, which fires
-    after `/clear` and after a compaction and whose `additionalContext` is
-    documented to reach Claude; `SessionEnd` now writes to stderr with
-    `2>/dev/null` dropped. 8 mutations red-then-green — one of which caught a
-    `check-where-the-value-can-be-wrong` defect in the new tests. Findings §2a.
-  - [x] **`clamp-drift` issue has no dedup** — DONE 2026-09-16 (S164, PR #438).
-    `refresh.yml` skips `gh issue create` while one is open with the label, with
-    the transient-vs-persistent reason in the step comment (the revenue-delta
-    step above stays undeduped deliberately: that signal *is* per-event).
 
 - [ ] **The exit-4 inconclusive message in `refresh.yml` names the wrong cause**
   (one line; opened 2026-09-16, S165, `docs/FINDINGS_guard_channels.md` §2).
@@ -1052,27 +995,6 @@ archive"*) is not, and this span is 2,533 lines.
   ⚠️ **The OLD laptop's GPU is still unidentified** — same placeholder, never
   checked, and it is the machine with the actual pan complaint. Get its
   `about:support` -> Graphics with its fps run.
-
-- [x] **DECIDE — `origin/docs/viz-stack` … 272 lines that never got a PR.**
-  Surfaced 2026-08-31 during the branch prune; **LANDED 2026-09-16 (S165)** as
-  `docs/VIZ_STACK.md`, cherry-picked onto a fresh branch off master. §0/§1 were
-  re-measured on landing (sizes had drifted hard: `web/data/` 8.4 → 16.1 MB, boot
-  file 1.4 → 1.04 MB, and the 7.63 MB `value_grid_50.json` did not exist when the
-  doc was written); §7's Pages Range check re-run green; §2 left as a dated
-  third-party observation and flagged as un-re-measured. The two `VIZ_STACK.md`
-  citation warnings in `check_doc_citations.py` resolve as a side effect.
-  - One commit (`0efd62b`, 2026-08-07) adding `docs/VIZ_STACK.md` (+272) and a
-    `TODO.md` block (+31). **No PR was ever opened**, so nothing has ever
-    reviewed or rejected it — it is unmerged by neglect, not by decision.
-  - ⚠️ **Not a duplicate of master's `docs/STACK.md`.** Different file,
-    different scope; don't assume the shipped stack inventory covers it.
-  - S99 (2026-08-07) kept it deliberately: it deleted the *other* stack branch
-    (`claude/kunicki-app-stack-analysis-hs3kiv`) only after confirming
-    `VIZ_STACK.md` was byte-identical on both, and left this one intact.
-  - Nothing outside `session-summary/archive/2026-08-07-s99.md` references the
-    file. Read it, then land it, fold it into `docs/STACK.md`, or close it with
-    a reason on the record — **the one outcome to avoid is a fourth session
-    walking past it.**
 
 - [ ] **PROPOSE-FIRST — `refresh.yml`'s token fallback hid an unset secret for
   months, and the secret is now load-bearing.** Opened 2026-08-31 after the
@@ -3218,6 +3140,26 @@ archive"*) is not, and this span is 2,533 lines.
 ## Done
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
+
+- [x] **Dataset-requests notebook audit fixes — APPLIED 2026-09-23 (S190).** — 2026-09-23 · `docs/TODO_archive.md`
+- [x] **Manifest staleness guard — BUILT 2026-09-17 (Peter's yes).** — BUILT 2026-09-17 · `docs/TODO_archive.md`
+- [x] **Evidence recheck F1** · `docs/TODO_archive.md`
+- [x] **Evidence recheck F2** · `docs/TODO_archive.md`
+- [x] **Evidence recheck F3** · `docs/TODO_archive.md`
+- [x] **Evidence recheck F4** · `docs/TODO_archive.md`
+- [x] **Evidence recheck F5** · `docs/TODO_archive.md`
+- [x] **Evidence recheck F6** · `docs/TODO_archive.md`
+- [x] **Evidence recheck F7** · `docs/TODO_archive.md`
+- [x] **Evidence recheck F8** · `docs/TODO_archive.md`
+- [x] **Evidence recheck F9** · `docs/TODO_archive.md`
+- [x] **Evidence recheck F10** — 2026-08-29 AMENDED · `docs/TODO_archive.md`
+- [x] **`verify-smoke.js:310` → `viewTooltip(...).html`.** — 2026-08-02 · `docs/TODO_archive.md`
+- [x] **`fmtBike` through `under2dp` + bike in §C10 — BEFORE the 2026-09-28 refresh.** — 2026-09-28 · `docs/TODO_archive.md`
+- [x] **Ratio view: local `money` → `money0`; floor message `(0.0)` through the component formatters** · `docs/TODO_archive.md`
+- [x] **Surface-level zero-token check in smoke** · `docs/TODO_archive.md`
+- [x] **DECIDED + applied 2026-09-23 (S190): `>99%`, COPY_DECISIONS S10.** — DECIDED 2026-09-23 · `docs/TODO_archive.md`
+- [x] **GUARD-BURST AUDIT FOLLOW-ONS — ALL 3 DONE** — DONE 2026-09-16 · `docs/TODO_archive.md`
+- [x] **DECIDE — `origin/docs/viz-stack` … 272 lines that never got a PR.** — 2026-08-31 · `docs/TODO_archive.md`
 
 - [x] **Sliver-floor audit follow-on: boundary-allocation rule — BUILT 2026-09-22 (S188).** Road/bike on a shared hood boundary (within 2 m) is split equally, `load_roads.split_boundary_pieces`; 94.2 km, length conserved, 24 published hoods move > 5%. Lands on the next weekly refresh. — BUILT 2026-09-22 · `docs/TODO_archive.md`
 

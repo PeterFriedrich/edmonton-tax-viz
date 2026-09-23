@@ -206,7 +206,9 @@ display(pd.DataFrame(search_rows))
 # The middle column is the one that matters. The raw result counts are noise —
 # a loose match on "private school" returns playgrounds and sign locations —
 # so a result only counts if its title names one of the missing operators
-# **and** names a school.
+# **and** names a school. They do one job: if all five return **nothing at
+# all**, the catalogue has not answered, and §5 fails that rather than read it
+# as absence.
 
 # %% [markdown]
 # ### Every school dataset on the portal, classified
@@ -296,11 +298,19 @@ print(f"\ncolumns describing land use or occupancy: {land_use_cols or 'NONE'}")
 # ## 5. Invariants
 #
 # Every claim above is asserted here against the numbers this run computed.
-# ⚠️ **The first two are written so they FAIL if the portal starts carrying the
+# The first checks that the searches in §2 actually searched.
+# ⚠️ **The next two are written so they FAIL if the portal starts carrying the
 # missing schools** — that is the outcome this report is asking for, and the
 # notebook should stop agreeing with itself the moment it arrives.
 
 # %%
+# Without this, a catalogue that answers 200 with no results passes the next
+# check: nothing searched reads the same as nothing found. It is a floor on
+# the five together, not on each — "charter school" and "Centre-Nord" return
+# nothing at all on a healthy catalogue (measured 2026-09-23: 15/0/6/1/0).
+check(sum(r["results"] for r in search_rows) > 0,
+      "the falsifying searches returned at least one result between them — "
+      "the catalogue answered")
 check(len(found) == 0,
       "no falsifying search returned a point set for a private, charter or "
       "francophone school")

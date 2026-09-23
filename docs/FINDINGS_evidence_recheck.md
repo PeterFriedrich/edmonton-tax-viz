@@ -241,3 +241,46 @@ counts and names the ❓ kind.
   shape, not run. `historical_2024_gap`'s `fetch_frame` cross-checks every
   download against the server's count, and an emptied slice would change
   `growth`. I did not simulate it.
+
+## 10. F5–F8 applied (S192, 2026-09-23)
+
+Each change was re-run through `run_one()` under the §3/§4 patches, with a
+live control, and then reverted on its own to confirm it is the thing that
+changes the verdict.
+
+| scenario | before (§3/§4) | after | with only this fix reverted |
+|---|---|---|---|
+| exemption, control | ✅ 11 | ✅ 12 | — |
+| exemption, non-residential fix | ✅ | ⚠️ 1 of 12, the flag claim | ✅ 12 (F5 check off) |
+| exemption, full fix | ❓ IndexError | ⚠️ 2 of 12 | ❓ IndexError (`dtype=int` off) |
+| school, control | ✅ 4 | ✅ 5 | — |
+| school, falsifying searches empty | ✅ 4 | ⚠️ 1 of 5, the liveness floor | ✅ 5 (floor off) |
+| school, private set published | ⚠️ 2 | ⚠️ 2 of 5 | — |
+| roll year, control | ✅ 8 | ✅ 9 | — |
+| roll year, coverage fixed | ❓ IndexError | ⚠️ 1 of 2, the slice claim | per §3 |
+| historical, control | ✅ 6 | ✅ 6 | — |
+| historical, 2024 fixed | ⚠️ 1, via NaN | ⚠️ 3 of 6, all naming 2024 | per §3 |
+| historical, 2024 + 2025 fixed | ⚠️ naming **2018** | ⚠️ 3 of 5, naming 2024 | ❓ ValueError in a chart (stop off) |
+
+Where these depart from §8:
+
+- ⚠️ **F6 as proposed would have failed on a healthy catalogue.** §4 said "a
+  nonzero count costs nothing today". It was measured for "private school"
+  only. `charter school` and `Centre-Nord` return **0 results** on a live
+  catalogue (the five return 15/0/6/1/0). The floor is therefore on the
+  **sum** of the five. The control run caught this: the first version failed
+  1 of 5 unpatched. The sum floor cannot see one search going dead while the
+  others answer. That limit comes from what the catalogue returns, not from
+  the floor.
+- **F5 needed a second change.** With the flag fully populated, the invisible
+  apartment gap goes negative, `subset_reaching` returns an empty float
+  array, and indexing with it raises `IndexError` *after* the new check has
+  failed. The recheck would then call it ❓. The fix returns the indices as
+  `int`.
+- **F7 needed a second change as well.** With both years repaired, the missing
+  set is empty and a chart crashes on a NaN axis limit. The notebook now raises
+  `AssertionError` right after the "non-empty" check. F8 uses the same
+  pattern: a fix stops the run as a failed invariant instead of crashing
+  later.
+- A stopped run reports only the checks that ran before the stop ("1 of 2",
+  "3 of 5"). The denominator is not the notebook's full count.
