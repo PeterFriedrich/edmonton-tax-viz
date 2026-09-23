@@ -4346,7 +4346,11 @@
     // the legend. 1e-4 keeps roofs lit as before and leaves the tallest
     // prism well under a metre.
     let camFlat = false;
-    const FLATTEN_Z = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1e-4, 0, 0, 0, 0, 1];
+    const FLAT_Z = 1e-4;
+    const zMatrix = z => [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, z, 0, 0, 0, 0, 1];
+    // Mid-ease z-scale while Center 2D lowers the heights; null otherwise.
+    // Read by buildLayers so a rebuild during the ease keeps the current height.
+    let squashZ = null;
 
     function buildLayers() {
       // ⚠️ A REBUILD CLEARS THE BAND GLOW, and it must. `bandHoverIdx` is an
@@ -4359,7 +4363,42 @@
       // whole change exists to remove.
       bandHoverIdx = -1;
       const layers = [...referenceUnderLayers(), ...buildViewLayers(), ...referenceOverLayers()];
-      return camFlat ? layers.map(l => l.clone({ modelMatrix: FLATTEN_Z })) : layers;
+      const z = squashZ ?? (camFlat ? FLAT_Z : 1);
+      return z === 1 ? layers : layers.map(l => l.clone({ modelMatrix: zMatrix(z) }));
+    }
+
+    // Center 2D lowers the heights over the LAST QUARTER OF THE TILT instead
+    // of snapping them once the camera lands: from a 52° start they start
+    // sinking at 13° and are flat at 0. Keyed to pitch, not time — the ease
+    // curve front-loads the motion, so its last quarter of TIME is only the
+    // last ~2° of tilt (measured) and read as the same end-snap. Heights
+    // cannot transition in this build (docs/TRANSITIONS.md §5), but
+    // modelMatrix is a uniform, so each frame re-clones layers built ONCE
+    // (topRings alone is ~89k vertices). The halfway frame is the same map
+    // at half exaggeration. Dragging is untouched: it still snaps at 1°.
+    function flattenDuringEase() {
+      if (camFlat || !overlay) return;
+      const from = map.getPitch() / 4;
+      const base = buildLayers();
+      const onPitch = () => {
+        if (camFlat) return done();   // syncMode reached pitch < 1 and took over
+        const p = map.getPitch();
+        const z = p >= from ? 1 : Math.max(FLAT_Z, p / from);
+        if (z === (squashZ ?? 1)) return;
+        squashZ = z;
+        overlay.setProps({ layers: base.map(l => l.clone({ modelMatrix: zMatrix(z) })) });
+      };
+      const done = () => { map.off("pitch", onPitch); map.off("moveend", end); };
+      // An ease stopped short (a drag) ends here too: restore full height.
+      const end = () => {
+        done();
+        if (!camFlat && squashZ !== null) {
+          squashZ = null;
+          overlay.setProps({ layers: buildLayers() });
+        }
+      };
+      map.on("pitch", onPitch);
+      map.on("moveend", end);
     }
 
     function buildViewLayers() {
@@ -7650,10 +7689,16 @@
         center2d.classList.toggle("flat", flat); // gold = 2D
         if (flat !== camFlat) {
           camFlat = flat;
+          squashZ = null;
           if (overlay) overlay.setProps({ layers: buildLayers() });
         }
       };
-      center2d.addEventListener("click", () => map.easeTo({ ...HOME_2D, duration: 700 }));
+      center2d.addEventListener("click", () => {
+        // After easeTo: it stop()s any running ease, and that moveend would
+        // disarm a listener registered first. The pitch has not moved yet.
+        map.easeTo({ ...HOME_2D, duration: 700 });
+        flattenDuringEase();
+      });
       document.getElementById("recenter").addEventListener("click", () =>
         map.easeTo({ ...HOME, duration: 700 }));
       map.on("pitch", syncMode);

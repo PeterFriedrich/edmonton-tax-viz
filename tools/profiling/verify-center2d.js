@@ -53,6 +53,10 @@ const [url] = process.argv.slice(2);
   check('no layer is flattened while tilted', sq0 === 0, `${sq0} flattened`);
 
   // From the tilted default: Center 2D flattens AND north-aligns AND recenters.
+  // Spy on the in-ease flatten so the BUTTON is proven to arm it; the curve
+  // itself is checked on a slowed ease further down.
+  await page.evaluate(() => { const f = flattenDuringEase; window.__armed = 0;
+    flattenDuringEase = () => { window.__armed++; return f(); }; });
   await page.click('#center2d');
   await settleFlat();
   const flat = await cam();
@@ -62,6 +66,7 @@ const [url] = process.argv.slice(2);
   check('recenters to HOME position', Math.abs(flat.lng - home.center[0]) < 0.01 && Math.abs(flat.lat - home.center[1]) < 0.01);
   check('recenters to HOME zoom', Math.abs(flat.zoom - home.zoom) < 0.05);
   check('gold state on (2D engaged)', flat.flat === true);
+  check('Center 2D arms the in-ease flatten', await page.evaluate(() => window.__armed === 1));
 
   // The lens flattens with the camera (2026-09-23): every layer carries the
   // z-squash while flat and none does while tilted. Read off the live layer
@@ -111,6 +116,56 @@ const [url] = process.argv.slice(2);
   const dPx = Math.max(...flatPx.map((v, i) => Math.abs(v - tallPx[i])));
   check('flattened roofs keep their lit colour', dPx <= 6,
     `${probe.name} @${probe.x},${probe.y} flat ${flatPx} vs unflattened ${tallPx}`);
+
+  // Center 2D lowers the heights over the LAST QUARTER OF THE TILT (pitch
+  // start/4 -> 0), not at the end (2026-09-23). Every sampled frame must sit
+  // on that curve — true whatever the frame rate — and a slowed ease must
+  // land at least one frame strictly between full height and flat.
+  await page.evaluate(() => map.jumpTo(HOME));
+  await page.waitForTimeout(800);
+  const samples = await page.evaluate(() => new Promise(res => {
+    const MS = 8000, out = [], t0 = performance.now(), from = map.getPitch() / 4;
+    map.easeTo({ ...HOME_2D, duration: MS });
+    flattenDuringEase();
+    const z = () => { const l = overlay._deck.props.layers.find(Boolean);
+      return l.props.modelMatrix ? l.props.modelMatrix[10] : 1; };
+    const tick = () => {
+      const t = (performance.now() - t0) / MS;
+      out.push([t, z(), map.getPitch(), from]);
+      if (t < 1.2) requestAnimationFrame(tick); else res(out);
+    };
+    requestAnimationFrame(tick);
+  }));
+  const off = samples.filter(([, z, p, from]) => {
+    const want = p >= from ? 1 : p < 1 ? 1e-4 : p / from;
+    return Math.abs(z - want) > 0.02;
+  });
+  const partial = samples.filter(([, z]) => z > 0.001 && z < 0.99);
+  const last = samples[samples.length - 1];
+  check('height follows the last quarter of the tilt', off.length === 0,
+    off.length ? `off-curve: pitch ${off[0][2].toFixed(1)} z ${off[0][1].toFixed(3)}` : `${samples.length} frames`);
+  check('heights pass through partial frames', partial.length > 0,
+    partial.length ? `${partial.length} frames, e.g. pitch ${partial[0][2].toFixed(1)} z ${partial[0][1].toFixed(2)}` : 'none');
+  check('ends flat', last[1] < 0.01 && await page.evaluate(() => camFlat), `z=${last[1]}`);
+
+  // A drag that stops the ease part-way restores full height.
+  await page.evaluate(() => map.jumpTo(HOME));
+  await page.waitForTimeout(800);
+  const stopped = await page.evaluate(() => new Promise(res => {
+    map.easeTo({ ...HOME_2D, duration: 8000 });
+    flattenDuringEase();
+    const wait = () => {
+      if (map.getPitch() < 8) { map.stop(); requestAnimationFrame(() => {
+        const l = overlay._deck.props.layers.find(Boolean);
+        res({ pitch: map.getPitch(), z: l.props.modelMatrix ? l.props.modelMatrix[10] : 1, squashZ });
+      }); } else requestAnimationFrame(wait);
+    };
+    requestAnimationFrame(wait);
+  }));
+  check('an interrupted ease restores full height', stopped.z === 1 && stopped.squashZ === null,
+    JSON.stringify(stopped));
+  await page.evaluate(() => map.jumpTo(HOME_2D));
+  await page.waitForTimeout(500);
 
   // Tilting by drag (no button) snaps the heights back.
   await page.evaluate(() => map.jumpTo({ pitch: 30 }));
