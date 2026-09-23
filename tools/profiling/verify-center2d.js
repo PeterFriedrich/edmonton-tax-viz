@@ -47,6 +47,11 @@ const [url] = process.argv.slice(2);
   check('starts tilted + rotated (3D default)', init.pitch > 40 && init.bearing !== 0);
   check('label is "Center 2D"', init.label === 'Center 2D');
   check('button hit-tests as itself (clickable)', init.hit === true);
+  // Center 2D is the dominant preset and sits to the RIGHT of Center 3D (2026-09-23).
+  const order = await page.evaluate(() =>
+    document.getElementById('center2d').getBoundingClientRect().left >
+    document.getElementById('recenter').getBoundingClientRect().right);
+  check('Center 2D sits right of Center 3D', order);
   check('not gold while tilted', init.flat === false);
   const sq0 = await page.evaluate(() => overlay._deck.props.layers.filter(Boolean)
     .filter(l => l.props.modelMatrix && l.props.modelMatrix[10] < 0.01).length);

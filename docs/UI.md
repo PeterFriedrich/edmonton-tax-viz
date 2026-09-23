@@ -702,6 +702,8 @@ navigation" below).
   tilt-era bearing read as a skew; 2D snaps north-aligned so the map squares to
   the frame. Shows gold while the camera is flat (`pitch < 1`), keyed off the
   live pitch so it stays right even if the user tilts by drag.
+- **Order: Center 3D, then Center 2D on the right** (2026-09-23, Peter). Center
+  2D is the dominant preset, especially on phones. It was on the left until then.
 - **One source of framing truth:** `HOME` / `HOME_2D` constants drive the map
   constructor AND both buttons — no scattered pitch/bearing literals.
 - **History:** shipped first as a single toggle "Flip to 2D/3D" (kept the

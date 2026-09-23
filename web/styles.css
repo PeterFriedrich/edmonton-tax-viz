@@ -490,7 +490,7 @@ html, body {
      nothing needs it here. Same idiom as .panel / #controls. */
   pointer-events: none;
 }
-#viewbtns { display: flex; gap: 8px; } /* Center 2D + Center 3D, side by side */
+#viewbtns { display: flex; gap: 8px; } /* Center 3D, then Center 2D on the right (the dominant preset) */
 #center2d, #recenter {
   appearance: none; pointer-events: auto; cursor: pointer;
   background: var(--pod-bg); border: 1px solid var(--border); border-radius: 6px;
