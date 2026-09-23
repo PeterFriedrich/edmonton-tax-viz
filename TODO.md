@@ -430,6 +430,12 @@ anyway"*. A separate piece of work from the 2D flatten (#552), which it grew out
 of. Nothing is decided yet. The first step is to inventory the blurbs, not to
 reword one.
 
+✅ **INVENTORY DONE 2026-09-23 (S193):** `docs/COPY_DECISIONS.md` group B.
+66 public states, 11 base texts, measured by `tools/profiling/blurb-inventory.js`.
+It found two defects (B1: Development says "dwelling units" in Permits mode; B2:
+S1 missed capital `Modeled`) and five decisions for Peter (B3–B7). Next: Peter
+decides B3–B5, then draft the rewrites as rows.
+
 - **Scope: the public build's title blurbs, in every state.** The text changes
   with the view and its modes, so each builder counts, not just `VIEWS`:
   `moneyBlurb`, `GLASS_BLURBS`, `changeBlurb`, `devChoroplethBlurb` /

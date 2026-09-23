@@ -242,6 +242,60 @@ chart to the window would silently redefine the published number.
 
 ---
 
+## Group B — the public title blurbs (inventory, 2026-09-23 S193)
+
+The `#title-p` sentence under each view's title, **public build only** (TODO
+"Public blurb cleanup"). **This is the inventory; no blurb has been reworded.**
+Measured by `tools/profiling/blurb-inventory.js`, which clicks through every
+public view × control state at 1366×768 and records the text and the `#title`
+panel height. Re-run it after a rewrite to re-measure.
+
+**66 states, 11 base texts.** Most variation is appended clauses, not separate
+blurbs: the colour clause (`withColourClause`), the azure-cells sentence
+(Glass, Ratio), the Services "renders neutral" clause, and the Development
+window phrase + grid addendum. The two road-cost states include the clause
+*"The roads layer renders neutral…"*, because Roads stays checked by default.
+
+| base text (source) | public states | chars | panel px |
+|---|---|---|---|
+| Money, Total/Res/Non-res/Value, ground (`METRICS[*].blurb`) | 4 × colour | 291–412 | 176–236 |
+| Money, same four, lot (`METRICS[*].lotBlurb`) | 4 × colour | 421–452 | 214–254 |
+| Money grid, ground (`GLASS_BLURBS.ground`) | 2 cell sizes × 4 metrics × colour | 357–514 | 198–273 |
+| Money grid, lot (`GLASS_BLURBS.lot`) | same | 424–581 | 236–311 |
+| Change over time (`changeBlurb`) | 2 windows | 880 | 423 |
+| Development, neighbourhood (`devChoroplethBlurb`) | 2 metrics × 3 windows | 584–627 | 311 |
+| Development, 100 m grid (`devBlurb`) | same | 906–951 | 442 |
+| Services: Roads (`SERVICES.roads.blurb`) | 1 | 307 | 157 |
+| Services: Roads cost (`SERVICES.roadscost.blurb`) | 1 | **1,087** | **495** |
+| Services: Roads cost — lifecycle (`SERVICES.roadslife.blurb`) | 1 | **1,085** | **495** |
+| Ratio (`RATIO_DENOMS.roads.blurb` + `ratioInstBlurb`) | 1 | 561 | 292 |
+
+⚠️ **The two road-cost blurbs are the longest on the public site.** The TODO
+assumed Development was the longest. The Services picker is a public control, so
+these count.
+
+### Defects found by the inventory — no judgement needed
+
+| id | defect | status |
+|---|---|---|
+| **B1** | **The Development blurb says "dwelling units" in Permits mode.** The neighbourhood blurb is byte-identical for Dwelling units and Permits in all three windows. The grid addendum switches to "new permits per cell" but its coverage clause still says "~N% of the window's **units**". | open |
+| **B2** | **S1 missed capital `Modeled`.** It survives in the public Roads-cost-lifecycle blurb (*"Modeled, and in several ways"*) and in two public checkbox tooltips (Roads cost, Roads cost — lifecycle), plus full-only strings (water, storm, transit cost, two panel labels). S1's count was case-sensitive. | open |
+
+### Decisions the cleanup needs, per blurb
+
+| id | question | where it bites | status |
+|---|---|---|---|
+| **B3** | **Height wording in 2D.** Since #552 the map is flat in top-down, so every height claim is false there. Options: (a) say it conditionally (the blurb follows the camera, like `withColourClause` follows the toggle), (b) move height into the legend, or (c) drop it. | Money ×8 (*"Height and colour show…", "Height is linear"*), grid ×2, Change (*"Teal rises… orange sinks below the plane"*, *"⚠️ Height is a RATE"*), Development grid (*"height is linear in new homes"*), Ratio (*"Ghost prisms… Height is linear"*). Services has none. | open |
+| **B4** | **The noun.** N1–N5 set `city tax`. The title says *"City Taxes per Acre"* and every revenue blurb under it says *"municipal property-tax revenue"*, as does Ratio. The N-group was applied to the title and legend, not to `#title-p`. Follow N1; this is not reopening it. | Money Total/Res/Non-res ×2 denominators, Ratio | open |
+| **B5** | **A length budget.** There isn't one. On a 768 px screen the panel runs from 157 px (Roads) to 495 px (road costs). A target (for example ≤ 400 chars, with the rest moved to the tooltip or Data & Methods) would decide most of the rewrite. | road costs, Change, Development grid | open |
+| **B6** | **The grid blurbs never name the metric**: *"The active metric in 100 m grid cells…"*. The title does, so this is a placeholder that shipped. | Money grid, 16 states | open |
+| **B7** | **Register.** Change uses `⚠️` and ALL-CAPS (*RATE*, *NOT*). The Development long window reads *"(2009–2025) — the density added over the era — new houses…"*, two dash clauses in a row. | Change, Development | open |
+
+Already open elsewhere and on the public default blurb: **J1** (*"class-differential
+mill rates"*) and **J2** (*"set-aside"*, in every public blurb except Services: Roads).
+
+---
+
 ## Related
 
 - `docs/DECISIONS.md` — where a decided row goes once it locks (cite the id)
