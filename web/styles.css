@@ -499,13 +499,11 @@ html, body {
   transition: background 0.12s, color 0.12s;
 }
 #center2d:hover, #recenter:hover { color: var(--ink); }
-/* Center 2D is the dominant preset: accent text + border + bold while idle.
-   The gold FILL stays reserved for "2D engaged", as on every active control,
-   so the two states still read apart. ⚠️ Gold TEXT is a dark-background
-   choice (see --mark above): a light theme must override this. */
-#center2d { color: var(--accent); border-color: var(--accent); font-weight: 600; }
-#center2d:hover { color: var(--accent); background: var(--compass-hover-bg); }
-#center2d.flat { background: var(--accent); color: var(--ink-on-accent); font-weight: 600; } /* gold = 2D engaged */
+/* Center 2D is the dominant preset: white (--ink) text + border, bold, while
+   idle. Gold stays "2D engaged" only, so the two states read apart. */
+#center2d { color: var(--ink); border-color: var(--ink); font-weight: 600; }
+#center2d:hover { background: var(--compass-hover-bg); }
+#center2d.flat { background: var(--accent); border-color: var(--accent); color: var(--ink-on-accent); font-weight: 600; } /* gold = 2D engaged */
 /* Compass: the rotation cluster. It exists mostly to ADVERTISE that the map
    rotates at all (drag-rotate is undiscoverable), so the arrows are explicit
    buttons rather than a drag target. Icons are inline SVG, not glyphs — the
