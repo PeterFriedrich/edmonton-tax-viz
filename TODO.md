@@ -423,6 +423,36 @@ when the prefetch created the window that separates them. ⚠️ **Re-test parke
 Also three more vacuous checks caught by falsification, all in tests written the
 same session — see `docs/DECISIONS.md`'s last two rows.)_
 
+### Public blurb cleanup — every public view's title blurb, one pass (OPEN 2026-09-23 S192)
+
+Peter, 2026-09-23: *"i actually want to clean up all the public release blurbs
+anyway"*. A separate piece of work from the 2D flatten (#552), which it grew out
+of. Nothing is decided yet. The first step is to inventory the blurbs, not to
+reword one.
+
+- **Scope: the public build's title blurbs, in every state.** The text changes
+  with the view and its modes, so each builder counts, not just `VIEWS`:
+  `moneyBlurb`, `GLASS_BLURBS`, `changeBlurb`, `devChoroplethBlurb` /
+  `DEV_WINDOW_PHRASE`, `servicesBlurb`, the Ratio blurb, and `withColourClause`
+  (look each up in `docs/CODEMAP.md`). Full-only blurbs (Infill, Uses,
+  deviation, Lab) are out unless Peter says otherwise.
+- **Known inputs, already measured:**
+  - **Height wording vs the flat camera.** Money says *"Height and colour
+    show…"*, Change says *"Teal rises… orange sinks below the plane"*, and
+    Ratio/Glass say *"Height is linear"*. Since #552, all of that is false in
+    2D. Decide per blurb: say it conditionally, move it into the legend, or
+    drop it.
+  - **Length.** At 1366×768 and 1280×720 the two longest blurbs hit
+    `TEMPORAL_MIN_H`, and blurb length is the only lever left. See the
+    `#temporal` residual below ("RESIDUAL from the panel/blurb fix"), and
+    `deviationBlurb`'s "KEEP THIS SHORT" note (Development 442px).
+  - **Nouns already locked in `COPY_DECISIONS.md`** (`city tax`, etc.): a
+    rewrite must not re-open them. Read the status column first (see S9).
+- **How:** add the reworded blurbs as rows in `docs/COPY_DECISIONS.md`, get
+  Peter's call, then apply them in one pass. Verify scripts assert on blurb
+  strings: the 2026-09-18 pass had to update nine of them, so grep
+  `tools/profiling/` for each old string before shipping.
+
 ### Reader-facing copy decisions — 18 open rows in `docs/COPY_DECISIONS.md` (OPEN 2026-09-14 S157)
 
 Opened when Peter asked what "municipal levy" means in the Services panel: *"that's
