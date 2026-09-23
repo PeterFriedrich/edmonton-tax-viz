@@ -447,9 +447,11 @@ display(Markdown(
     "is DISCLOSED on the map rather than corrected** (`DECISIONS.md` "
     "2026-09-08). That sentence carries no ✅ below **on purpose** — it is a "
     "statement about what this project decided, and nothing in a notebook of "
-    "live source fetches can verify it. The invariant above it is the one that "
-    "does real work: it measures the City's own centreline feed against the "
-    "City's own stated inventory."))
+    "live source fetches can verify it. The invariant above it carries the "
+    "argument, but it is NOT a live fetch: it compares the City's stated "
+    "inventory with centreline totals this project measured from the City's "
+    "feed and transcribed here **[repo]**, so it cannot notice that feed "
+    "changing."))
 
 # %% [markdown]
 # ### 3d. Why it was disclosed rather than converted
