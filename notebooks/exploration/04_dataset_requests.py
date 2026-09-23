@@ -27,10 +27,12 @@
 #    and what gets refused or left open.
 #
 # ⚠️ **Read §2 before quoting any count.** The table mixes two intake systems
-# with different status vocabularies. In December 2023, 126 refused requests
-# were re-entered as new ones, and a single-day bulk edit in August 2026 reset
-# `status_date` on 241 rows. Counted naively, the table double-counts requests
-# and misdates decisions.
+# with different status vocabularies. In December 2023, 126 old requests that
+# had never been decided were moved to the new tracker, and on the old system
+# they were stamped `Rejected` or `Declined` as they went. A single-day bulk
+# edit in August 2026 also reset `status_date` on 241 rows. Counted naively,
+# the table double-counts requests, **overstates refusals by 2.6×**, and
+# misdates decisions.
 #
 # ## Reproducing
 #
@@ -143,38 +145,57 @@ print(ex[["request_number", "status", "dataset_published_date", "request_descrip
 # %% [markdown]
 # ## 2. Two artifacts that distort naive counts
 #
-# ### 2a. The December 2023 re-intake
+# ### 2a. The December 2023 migration: "Rejected" here means "moved"
 #
-# On 2023-12-12 and 2023-12-13, requests that the old system had **refused or
-# declined** were re-entered in the new tracker under new ids and new creation
-# dates. That creates a spike of more than 100 "requests" in a single month.
-# The pairs are matched here by normalised title.
+# On 2023-12-12 and 2023-12-13, old-system requests were re-entered in the new
+# tracker under new ids and new creation dates. On the **same two days**, their
+# old-system rows were set to `Rejected` or `Declined`. The pairs are matched
+# by normalised title, restricted to old rows whose `status_date` falls on
+# those two days.
 #
-# This matters in two ways:
+# These were **not refusals**. The request carried on in the new tracker, and
+# many are still open there. Most had been created years earlier with no
+# status change since, so they had simply **never been decided**. Taking the
+# old status at face value overstates refusals.
 #
-# * **For volume over time:** each re-intake row is the same request counted
-#   twice, so §3 drops those rows.
-# * **For what gets refused:** the re-intake shows the City **reconsidering its
-#   refusals**. The crosstab shows where those requests stand now.
+# The notebook handles the pairs as follows:
+#
+# * **Volume over time:** each pair is counted once, in the year the request
+#   was first made. The new-tracker row is dropped.
+# * **Outcome:** the old row takes its outcome from the new-tracker row, which
+#   is where the request actually stands now. A `moved` flag records that it
+#   was never decided on the old system.
 
 # %%
 norm = lambda s: re.sub(r"[^a-z0-9]", "", str(s).lower())
 d["title_key"] = d.request_description.map(norm)
-odr = d[d.system == "ODR (old)"]
-reintake_window = d.request_creation_date.between("2023-12-12", "2023-12-14")
-d["reintake"] = (d.system == "tracker (new)") & reintake_window & d.title_key.isin(odr.title_key)
+MIGRATION_DAYS = {"2023-12-12", "2023-12-13"}
+on_migration_day = d.status_date.dt.strftime("%Y-%m-%d").isin(MIGRATION_DAYS)
+created_on_migration_day = d.request_creation_date.dt.strftime("%Y-%m-%d").isin(MIGRATION_DAYS)
 
-pairs = (d[d.reintake]
-         .merge(odr[["title_key", "request_number", "status", "request_creation_date"]],
-                on="title_key", suffixes=("", "_orig"))
-         .drop_duplicates("request_number"))
-print(f"re-intake rows: {d.reintake.sum()} "
-      f"(of {(reintake_window & (d.system == 'tracker (new)')).sum()} tracker rows created in the window)")
-print("\nOriginal old-system status  ×  status after re-intake:")
+odr_stamped = d[(d.system == "ODR (old)") & on_migration_day]
+new_side = d[(d.system == "tracker (new)") & created_on_migration_day]
+pairs = odr_stamped.merge(new_side, on="title_key", suffixes=("_orig", ""))
+check(pairs.request_number_orig.is_unique and pairs.request_number.is_unique,
+      f"migration pairs match one-to-one by title ({len(pairs)} pairs)")
+
+d["reintake"] = d.request_number.isin(pairs.request_number)
+d["moved"] = d.request_number.isin(pairs.request_number_orig)
+d.loc[d.moved, "outcome"] = d.loc[d.moved, "request_number"].map(
+    pairs.set_index("request_number_orig").outcome)
+
+print(f"old-system rows stamped on the migration days: {len(odr_stamped)}")
+print(f"  ...of which paired with a new-tracker row:    {len(pairs)}")
+print("\nOld-system stamp  ×  where the request stands now (new tracker):")
 print(pd.crosstab(pairs.status_orig, pairs.status, margins=True))
-check(d.reintake.sum() >= 100, f"the Dec-2023 re-intake is still visible ({d.reintake.sum()} rows)")
-check(set(pairs.status_orig) <= {"Rejected", "Declined", "Completed"},
-      "re-intake originals were refused/declined (plus at most a stray Completed)")
+print("\nOld-system creation year of the moved requests:")
+print(pairs.request_creation_date_orig.dt.year.value_counts().sort_index().to_string())
+check(len(pairs) >= 100, f"the Dec-2023 migration is still visible ({len(pairs)} pairs)")
+check(len(odr_stamped) - len(pairs) <= 2,
+      f"nearly every old row stamped on the migration days was moved "
+      f"({len(pairs)} of {len(odr_stamped)}), so the stamp means 'moved', not 'refused'")
+check(set(odr_stamped.status) <= {"Rejected", "Declined"},
+      "every migration-day stamp is Rejected/Declined, the statuses a naive reading counts as refusals")
 
 # %% [markdown]
 # ### 2b. `status_date` is the date the row was last edited, not the date of the decision
@@ -195,8 +216,9 @@ check(top_days.iloc[0] >= 100, f"a bulk status_date sweep is present ({top_days.
 # %% [markdown]
 # ## 3. Volume over time
 #
-# Requests by the year they were **first** made, with re-intake rows removed.
-# Colours show each request's current outcome.
+# Requests by the year they were **first** made, each counted once (§2a).
+# Colours show each request's current outcome. Moved requests show where they
+# stand on the new tracker.
 
 # %%
 u = d[~d.reintake].copy()
@@ -235,6 +257,8 @@ plt.show()
 #   `Closed (reason not given)` or still `Open`. The drop in blue and orange
 #   after 2022 comes from the vocabulary change in §1. It is not a change in
 #   how the City decides.
+# * Green and yellow before 2021 are the moved requests: they were never
+#   decided on the old system, and they now sit on the new tracker.
 
 # %% [markdown]
 # ## 4. What people request
@@ -277,44 +301,82 @@ display(tt)
 print(f"unclassified: {(u.topic == 'Other / unclassified').mean():.0%} of requests")
 
 # %% [markdown]
-# ## 5. What gets blocked
+# ## 5. What gets through, what gets refused, what never gets decided
 #
-# ### 5a. Refusal rate by topic, old system only
+# ### 5a. Old system, by the year a request was first made
 #
-# Only the old system records a refusal, so this table is limited to `ODR`
-# rows, which cover 2016 to 2024. The denominator is requests that reached a
-# decision (`Completed` or `Refused`).
+# The old system is the only one that records an explicit outcome. Each old
+# request lands in one of four groups:
+#
+# * **Completed**
+# * **Refused**: `Rejected` or `Declined`, excluding the migration stamps
+# * **Never decided**: moved to the new tracker in December 2023
+# * **Withdrawn / still open**
 
 # %%
-old = u[u.system == "ODR (old)"]
-dec = old[old.outcome.isin(["Completed", "Refused"])]
-rr = (dec.groupby("topic").outcome
-      .agg(decided="size", refused=lambda s: (s == "Refused").sum()))
-rr["refused_share"] = (rr.refused / rr.decided).round(2)
-display(rr.sort_values("decided", ascending=False))
-print(f"overall: {rr.refused.sum()} of {rr.decided.sum()} decided old-system requests refused "
-      f"({rr.refused.sum() / rr.decided.sum():.0%})")
+old = u[u.system == "ODR (old)"].copy()
+old["fate"] = "Withdrawn / still open"
+old.loc[old.status == "Completed", "fate"] = "Completed"
+old.loc[old.outcome == "Refused", "fate"] = "Refused"
+old.loc[old.moved, "fate"] = "Never decided (moved)"
+FATES = ["Completed", "Refused", "Never decided (moved)", "Withdrawn / still open"]
+fy = pd.crosstab(old.year, old.fate).reindex(columns=FATES, fill_value=0)
+fy["completed share"] = (fy.Completed / fy[FATES].sum(axis=1)).round(2)
+display(fy)
+tot = old.fate.value_counts()
+print(f"old system overall: {tot.get('Completed', 0)} completed, {tot.get('Refused', 0)} refused, "
+      f"{tot.get('Never decided (moved)', 0)} never decided, of {len(old)}")
+naive = old.status.isin(["Rejected", "Declined"]).sum()
+print(f"a naive count of Rejected+Declined gives {naive} refusals; "
+      f"the real figure is {tot.get('Refused', 0)} ({naive / max(tot.get('Refused', 1), 1):.1f}× overstated)")
 
 # %% [markdown]
-# ### 5b. Refusal by department
+# **How to read it:** after 2016 the City rarely says no outright. What
+# changed was how many requests **never got an answer**. From 2017 on, more
+# requests ended up in "never decided" than in "refused" in every year. The
+# completed share falls from roughly 0.4–0.5 in 2016–2018 to about one in
+# eight in 2022–2023. 2021 is the exception, and it has only 16 requests.
 #
-# Department is mostly blank on refusals, so this table says little about
-# *who* refuses.
+# Real refusals are concentrated in **utilities**: gas and power mapping, and
+# infrastructure owned by EPCOR or other outside parties. Utilities & drainage
+# is the only topic in §5b with more refusals than completions. Base maps &
+# imagery has too few requests to say.
+
+# %% [markdown]
+# ### 5b. By topic, old system
+#
+# Topics use the same keyword heuristic as §4. Counts per topic are small, so
+# read the table for its broad shape, not for rank order.
 
 # %%
-print(pd.crosstab(dec.department, dec.outcome).assign(n=lambda t: t.sum(axis=1))
-      .sort_values("n", ascending=False).head(12))
+bt = pd.crosstab(old.topic, old.fate).reindex(columns=FATES, fill_value=0)
+bt["n"] = bt[FATES].sum(axis=1)
+bt["completed share"] = (bt.Completed / bt.n).round(2)
+display(bt.sort_values("n", ascending=False))
+
+# %% [markdown]
+# ### 5b′. The genuine refusals
+#
+# These are old-system `Rejected` or `Declined` rows that the migration didn't
+# stamp, most recent first. The table records no reason for any refusal, so
+# only the titles are available.
+
+# %%
+real_refusals = old[old.fate == "Refused"].sort_values("request_creation_date", ascending=False)
+print(real_refusals[["request_number", "status", "request_creation_date", "request_description"]]
+      .assign(request_creation_date=lambda t: t.request_creation_date.dt.date).head(30).to_string(index=False))
 
 # %% [markdown]
 # ### 5c. The open backlog
 #
 # Requests still `NEW`, `IN PROGRESS` or `PAUSED`, aged from the **original**
-# request date. A re-intake row is dated back to its old-system original.
+# request date. A moved request is counted once and dated back to its
+# old-system original.
 
 # %%
 orig_date = pairs.set_index("request_number").request_creation_date_orig
 d["first_asked"] = d.request_number.map(orig_date).fillna(d.request_creation_date)
-openq = d[d.outcome == "Open"].copy()
+openq = d[(d.outcome == "Open") & ~d.moved].copy()
 openq["age_years"] = ((pd.Timestamp(RUN_AT.date()) - openq.first_asked.dt.tz_localize(None)).dt.days / 365.25).round(1)
 print(f"{len(openq)} open requests; median age {openq.age_years.median()} years; "
       f"{(openq.age_years >= 5).sum()} first asked five or more years ago")
@@ -348,6 +410,72 @@ for name, pat in CLUSTERS.items():
                  ", ".join(f"{k} {v}" for k, v in hit.outcome.value_counts().items())))
 display(pd.DataFrame(rows, columns=["cluster (title match)", "requests", "first", "last", "outcomes"])
         .sort_values("requests", ascending=False))
+
+# %% [markdown]
+# ### 5e. New tracker: did a `CLOSED` request produce a dataset?
+#
+# The new tracker's `CLOSED` doesn't say whether anything was published
+# (§1). The catalogue can help. For each closed request, this looks for a
+# portal asset **created within 45 days** of the close date whose name shares
+# at least two content words with the request title.
+#
+# ⚠️ **This check misses a lot.** Many fulfilled requests extend an existing
+# dataset instead of creating a new one, and requesters' titles don't match
+# the City's dataset names. The same check is run on old-system `Completed`
+# rows, whose outcome is known, to measure how much it misses. That catch rate
+# is used to scale the `CLOSED` figure into a rough estimate.
+
+# %%
+cat_rows, off = [], 0
+while True:
+    page = json.loads(urllib.request.urlopen(urllib.request.Request(
+        "https://api.us.socrata.com/api/catalog/v1?" + urllib.parse.urlencode(
+            {"domains": "data.edmonton.ca", "limit": 1000, "offset": off}),
+        headers={"User-Agent": UA}), context=SSL_CTX, timeout=120).read())["results"]
+    cat_rows += [{"name": r["resource"]["name"], "created": r["resource"]["createdAt"]} for r in page]
+    off += 1000
+    if len(page) < 1000:
+        break
+cat = pd.DataFrame(cat_rows)
+cat["created"] = pd.to_datetime(cat.created).dt.tz_localize(None)
+STOP = set("the of and a in to for data dataset edmonton city by on with from all at or is be "
+           "map maps list request information open current".split())
+words = lambda s: {w for w in re.findall(r"[a-z]{3,}", str(s).lower()) if w not in STOP}
+cat["words"] = cat.name.map(words)
+print(f"catalogue: {len(cat):,} assets")
+
+
+def catalogue_match(row):
+    near = cat[(cat.created - row.dataset_published_date).abs() <= pd.Timedelta(days=45)]
+    rw = words(row.request_description)
+    best = max(((len(rw & cw), n) for n, cw in zip(near.name, near.words)), default=(0, None))
+    return best[1] if best[0] >= 2 else None
+
+
+res = {}
+for label, rows in [("old Completed (known published)", d[(d.status == "Completed") & d.dataset_published_date.notna()]),
+                    ("new CLOSED (unknown)", d[(d.status == "CLOSED") & ~d.moved])]:
+    m = rows.apply(catalogue_match, axis=1)
+    res[label] = (len(rows), m.notna().sum())
+    if label.startswith("new"):
+        closed_hits = rows.assign(match=m)[m.notna()][["request_number", "request_description", "match"]]
+recall = res["old Completed (known published)"][1] / res["old Completed (known published)"][0]
+n_closed, h_closed = res["new CLOSED (unknown)"]
+for k, (n, h) in res.items():
+    print(f"{k:34} {h:3} of {n:3} matched")
+print(f"\ncatch rate on known-published requests: {recall:.0%}")
+print(f"rough estimate of CLOSED requests that produced a new asset: {h_closed / recall:.0f} of {n_closed} "
+      f"(~{h_closed / recall / n_closed:.0%})")
+print(closed_hits.to_string(index=False))
+
+# %% [markdown]
+# **How to read it:** on the known-published old `Completed` requests, the
+# check catches only a minority. It catches a much smaller share of new
+# `CLOSED` requests. Even after scaling for what the check misses, most
+# `CLOSED` requests don't appear to have produced a new catalogue asset.
+# Some may have been answered by pointing to an existing dataset, which
+# nothing here can see. **Treat the estimate as an order of magnitude**, and
+# read the matched titles rather than the percentage.
 
 # %% [markdown]
 # ## 6. Duplicate check: has anyone already asked for what we are about to ask?
@@ -399,19 +527,19 @@ for label, pat in OUR_ASKS:
 #
 # * **Issue 4 (exemption status):** nobody has requested it. The request
 #   would be new. The context block lists other requests for more assessment
-#   fields. They run from 2016 to 2026 and are mostly refused or closed without
-#   a stated reason. `868ev4dbu`, which asks for a list of assessment
+#   fields. They run from 2016 to 2026, and most were never decided or were
+#   closed without a stated reason. `868ev4dbu`, which asks for a list of assessment
 #   variables, is still `NEW`. A draft could cite this record, and should be
 #   ready for a similar answer.
 # * **Issue 5 (schools):** every earlier request was for **school-site
 #   polygons** for the two public boards. `ODR19-241` (public schools) was
-#   Completed. The Catholic request was Rejected as `ODR19-263`, re-entered in
-#   the re-intake, and is now `CLOSED` as `8686qh58b`. Nobody has asked for
+#   Completed. The Catholic request (`ODR19-263`) was never decided on the old
+#   system. It was moved in December 2023 and is now `CLOSED` as `8686qh58b`. Nobody has asked for
 #   private, charter or francophone operators. The request would be new, and
 #   those precedents are worth citing.
 # * **Issue 6 (permits):** nobody has reported the defect. One related ask,
 #   **adding the assessment account number to the General Building Permit
-#   dataset** (`ODR20-301`, Rejected, re-entered as `8686qhh84`, still `NEW`),
+#   dataset** (`ODR20-301`, never decided, moved as `8686qhh84`, still `NEW`),
 #   would give permits a clean join key. It is worth mentioning alongside the
 #   defect report.
 # * **Issues 1, 3 and 7:** nobody has reported these defects. The hits only
