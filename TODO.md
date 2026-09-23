@@ -585,12 +585,12 @@ legibility item below; #7 waits for the 2026-09-28 refresh.
 
 ### Readout-floor audit follow-ons (OPEN 2026-09-22 S188)
 
-From `docs/FINDINGS_readout_floors.md`. Nothing applied yet.
+From `docs/FINDINGS_readout_floors.md`. Fixes 1–4 applied S190 (2026-09-23), each falsified; see `DECISIONS.md` 2026-09-23. Two left, neither mine to apply without a call.
 
-- [ ] **`verify-smoke.js:310` → `viewTooltip(...).html`.** The C-family NaN/undefined sweep tests `"[object Object]"` and has passed vacuously since 2026-08-02 (§4b). Falsify with the NaN mutation in the findings doc. The weekly gate is blind until this lands.
-- [ ] **`fmtBike` through `under2dp` + bike in §C10 — BEFORE the 2026-09-28 refresh.** KING EDWARD PARK goes to 0.0046 m/acre → `0.00` (§3), caused by the S188 boundary split.
-- [ ] **Ratio view: local `money` → `money0`; floor message `(0.0)` through the component formatters** (§1). UNIVERSITY OF ALBERTA FARM `$0 to …`, HERITAGE VALLEY AREA `(0.0)`.
-- [ ] **Surface-level zero-token check in smoke** (§4): scan rendered tooltips for `$0`/`0.00`/`0.0` over a nonzero value. C9/C10 check helpers only.
+- [x] **`verify-smoke.js:310` → `viewTooltip(...).html`.** The C-family NaN/undefined sweep tests `"[object Object]"` and has passed vacuously since 2026-08-02 (§4b). Falsify with the NaN mutation in the findings doc. The weekly gate is blind until this lands.
+- [x] **`fmtBike` through `under2dp` + bike in §C10 — BEFORE the 2026-09-28 refresh.** KING EDWARD PARK goes to 0.0046 m/acre → `0.00` (§3), caused by the S188 boundary split.
+- [x] **Ratio view: local `money` → `money0`; floor message `(0.0)` through the component formatters** (§1). UNIVERSITY OF ALBERTA FARM `$0 to …`, HERITAGE VALLEY AREA `(0.0)`.
+- [x] **Surface-level zero-token check in smoke** (§4): scan rendered tooltips for `$0`/`0.00`/`0.0` over a nonzero value. C9/C10 check helpers only.
 - [ ] **Peter's call:** `fmtResShare` prints `100%` for 6 hoods with 0.1–0.45% non-residential (§2) — `>99%`? A `COPY_DECISIONS.md` row.
 - [ ] **Separate audit:** FAR numerator coverage — built-but-unrecorded floor area makes WHITE / POUNDMAKER INDUSTRIAL read `0.00 FAR` (§5). ⚠️ Not a `fmtFar` floor; S9 stands.
 
