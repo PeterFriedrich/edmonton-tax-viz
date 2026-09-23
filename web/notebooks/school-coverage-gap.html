@@ -7956,13 +7956,13 @@ The whole notebook runs in seconds and needs no API token.</p>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-OutputArea-output" data-mime-type="text/markdown" tabindex="0">
-<p><strong>Snapshot.</strong> Finding first measured <strong>2026-08-29</strong>; this page re-executed against live data <strong>2026-08-29</strong> (UTC). Nothing re-runs these on a schedule — re-execute before citing a figure.</p>
+<p><strong>Snapshot.</strong> Finding first measured <strong>2026-08-29</strong>; this page re-executed against live data <strong>2026-09-23</strong> (UTC). Nothing re-runs these on a schedule — re-execute before citing a figure.</p>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>run at: 2026-08-29 08:21 UTC
+<pre>run at: 2026-09-23 16:32 UTC
 </pre>
 </div>
 </div>
@@ -8222,7 +8222,9 @@ surface for at least one of them.</p>
 <p>The middle column is the one that matters. The raw result counts are noise —
 a loose match on "private school" returns playgrounds and sign locations —
 so a result only counts if its title names one of the missing operators
-<strong>and</strong> names a school.</p>
+<strong>and</strong> names a school. They do one job: if all five return <strong>nothing at
+all</strong>, the catalogue has not answered, and §5 fails that rather than read it
+as absence.</p>
 </div>
 </div>
 </div>
@@ -8384,7 +8386,7 @@ property IS.</strong></p>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>q7d6-ambg — 439,634 rows, 14 columns:
+<pre>q7d6-ambg — 439,641 rows, 17 columns:
     account_number
     house_number
     street_name
@@ -8399,6 +8401,9 @@ property IS.</strong></p>
     latitude
     longitude
     point_location
+    :@computed_region_ecxu_fw7u
+    :@computed_region_ueb5_7sqn
+    :@computed_region_7ccj_gre3
 
 columns describing land use or occupancy: NONE
 </pre>
@@ -8452,7 +8457,8 @@ exists to close.</p>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <h2 id="5.-Invariants">5. Invariants<a class="anchor-link" href="#5.-Invariants">¶</a></h2><p>Every claim above is asserted here against the numbers this run computed.
-⚠️ <strong>The first two are written so they FAIL if the portal starts carrying the
+The first checks that the searches in §2 actually searched.
+⚠️ <strong>The next two are written so they FAIL if the portal starts carrying the
 missing schools</strong> — that is the outcome this report is asking for, and the
 notebook should stop agreeing with itself the moment it arrives.</p>
 </div>
@@ -8466,7 +8472,14 @@ notebook should stop agreeing with itself the moment it arrives.</p>
 <div class="jp-InputPrompt jp-InputArea-prompt">In [6]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">check</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">found</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># Without this, a catalogue that answers 200 with no results passes the next</span>
+<span class="c1"># check: nothing searched reads the same as nothing found. It is a floor on</span>
+<span class="c1"># the five together, not on each — "charter school" and "Centre-Nord" return</span>
+<span class="c1"># nothing at all on a healthy catalogue (measured 2026-09-23: 15/0/6/1/0).</span>
+<span class="n">check</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s2">"results"</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">search_rows</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span>
+      <span class="s2">"the falsifying searches returned at least one result between them — "</span>
+      <span class="s2">"the catalogue answered"</span><span class="p">)</span>
+<span class="n">check</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">found</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span>
       <span class="s2">"no falsifying search returned a point set for a private, charter or "</span>
       <span class="s2">"francophone school"</span><span class="p">)</span>
 <span class="n">check</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">missing_hits</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span>
@@ -8498,7 +8511,8 @@ notebook should stop agreeing with itself the moment it arrives.</p>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>  [PASS] no falsifying search returned a point set for a private, charter or francophone school
+<pre>  [PASS] the falsifying searches returned at least one result between them — the catalogue answered
+  [PASS] no falsifying search returned a point set for a private, charter or francophone school
   [PASS] no dataset in the broad 'school' search names a missing operator
   [PASS] exactly two school point sets are published, carrying 322 schools between them
   [PASS] the current roll carries no land-use or occupancy field, so schools cannot be identified from it
@@ -8508,7 +8522,15 @@ notebook should stop agreeing with itself the moment it arrives.</p>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-OutputArea-output" data-mime-type="text/markdown" tabindex="0">
-<h3 id="4-of-4-invariants-passed">4 of 4 invariants passed<a class="anchor-link" href="#4-of-4-invariants-passed">¶</a></h3>
+<h3 id="5-of-5-invariants-passed">5 of 5 invariants passed<a class="anchor-link" href="#5-of-5-invariants-passed">¶</a></h3>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-OutputArea-output" data-mime-type="text/markdown" tabindex="0">
+<ul>
+<li>✅ the falsifying searches returned at least one result between them — the catalogue answered</li>
+</ul>
 </div>
 </div>
 <div class="jp-OutputArea-child">
@@ -8546,7 +8568,7 @@ notebook should stop agreeing with itself the moment it arrives.</p>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-OutputArea-output" data-mime-type="text/markdown" tabindex="0">
-<p><em>Checked against <code>data.edmonton.ca</code> on 2026-08-29 (UTC).</em></p>
+<p><em>Checked against <code>data.edmonton.ca</code> on 2026-09-23 (UTC).</em></p>
 </div>
 </div>
 </div>

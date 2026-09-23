@@ -7981,13 +7981,13 @@ the first run takes a few minutes and re-runs are fast. No API token needed.</p>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-OutputArea-output" data-mime-type="text/markdown" tabindex="0">
-<p><strong>Snapshot.</strong> Finding first measured <strong>2026-08-26</strong>; this page re-executed against live data <strong>2026-08-29</strong> (UTC). Nothing re-runs these on a schedule — re-execute before citing a figure.</p>
+<p><strong>Snapshot.</strong> Finding first measured <strong>2026-08-26</strong>; this page re-executed against live data <strong>2026-09-23</strong> (UTC). Nothing re-runs these on a schedule — re-execute before citing a figure.</p>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>cache: /tmp/historical_gap_data
+<pre>cache: /tmp/tmp.gvgCJDbOHA/h
 </pre>
 </div>
 </div>
@@ -8030,7 +8030,10 @@ slice contain? Edmonton grows steadily, so account counts should rise steadily.<
 <span class="p">}))</span>
 
 <span class="n">growth</span> <span class="o">=</span> <span class="n">per_year</span><span class="p">[</span><span class="s2">"growth"</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
-<span class="n">ODD_YEAR</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">growth</span><span class="o">.</span><span class="n">idxmin</span><span class="p">())</span>
+<span class="c1"># Pinned, not found: this report is about 2024. Taking the year from the data</span>
+<span class="c1"># (idxmin) made the check below a tautology, and once 2024 is repaired it</span>
+<span class="c1"># would retarget every claim to whichever year then looks worst.</span>
+<span class="n">ODD_YEAR</span> <span class="o">=</span> <span class="mi">2024</span>
 <span class="n">others</span> <span class="o">=</span> <span class="n">growth</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">ODD_YEAR</span><span class="p">)</span>
 
 <span class="n">display</span><span class="p">(</span><span class="n">Markdown</span><span class="p">(</span>
@@ -8042,7 +8045,7 @@ slice contain? Edmonton grows steadily, so account counts should rise steadily.<
 <span class="p">))</span>
 
 <span class="n">check</span><span class="p">(</span><span class="n">growth</span><span class="p">[</span><span class="n">ODD_YEAR</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">others</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span>
-      <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">ODD_YEAR</span><span class="si">}</span><span class="s2"> is the slowest-growing slice in the dataset, by inspection of the data"</span><span class="p">)</span>
+      <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">ODD_YEAR</span><span class="si">}</span><span class="s2"> is the slowest-growing slice in the dataset"</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -8083,7 +8086,7 @@ year
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>  [PASS] 2024 is the slowest-growing slice in the dataset, by inspection of the data
+<pre>  [PASS] 2024 is the slowest-growing slice in the dataset
 </pre>
 </div>
 </div>
@@ -8309,7 +8312,7 @@ independent control. Each download is verified against the server's own
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>
-  current roll: 439,634 rows, 439,634 distinct
+  current roll: 439,641 rows, 439,641 distinct
 </pre>
 </div>
 </div>
@@ -8413,7 +8416,7 @@ year
 <div class="jp-InputPrompt jp-InputArea-prompt">In [6]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">worst</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">defects</span><span class="p">[</span><span class="s2">"union"</span><span class="p">]</span><span class="o">.</span><span class="n">idxmax</span><span class="p">())</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">worst</span> <span class="o">=</span> <span class="n">ODD_YEAR</span>
 <span class="n">wa</span><span class="p">,</span> <span class="n">wb</span> <span class="o">=</span> <span class="n">defects</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">worst</span><span class="p">,</span> <span class="s2">"detector_A"</span><span class="p">],</span> <span class="n">defects</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">worst</span><span class="p">,</span> <span class="s2">"detector_B"</span><span class="p">]</span>
 <span class="n">clean</span> <span class="o">=</span> <span class="n">defects</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">worst</span><span class="p">)</span>
 
@@ -8500,6 +8503,10 @@ accounts a user of this dataset silently loses today.</p>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"neighbourhoods affected: </span><span class="si">{</span><span class="n">missing</span><span class="p">[</span><span class="s1">'neighbourhood_name'</span><span class="p">]</span><span class="o">.</span><span class="n">nunique</span><span class="p">()</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
 <span class="n">check</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">missing</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">"the cumulative missing set is non-empty"</span><span class="p">)</span>
+<span class="c1"># Empty means the slices were repaired: stop here as a failed invariant rather</span>
+<span class="c1"># than crash in the charts below and read as a dead source.</span>
+<span class="k">if</span> <span class="n">missing</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+    <span class="k">raise</span> <span class="ne">AssertionError</span><span class="p">(</span><span class="s2">"no missing accounts left — the slices may have been repaired"</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -8960,7 +8967,7 @@ can only be higher than what is reported here.</li>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>invariants checked: 6/6 passed
 
-  [PASS] 2024 is the slowest-growing slice in the dataset, by inspection of the data
+  [PASS] 2024 is the slowest-growing slice in the dataset
   [PASS] every year's download matches the server's own row count (nothing truncated)
   [PASS] 2024 is an outlier by an order of magnitude, not the top of a gradient
   [PASS] the current-roll control finds strictly more than the self-audit — a self-audit alone understates this defect
