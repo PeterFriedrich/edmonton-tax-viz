@@ -7824,7 +7824,7 @@ a.anchor-link {
 </head>
 <body class="jp-Notebook" data-jp-theme-light="true" data-jp-theme-name="JupyterLab Light">
 <main>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=1ebaaaff">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=d4467de7">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7841,17 +7841,19 @@ out whether someone has already asked for it and what the City answered.</li>
 and what gets refused or left open.</li>
 </ol>
 <p>⚠️ <strong>Read §2 before quoting any count.</strong> The table mixes two intake systems
-with different status vocabularies. In December 2023, 126 refused requests
-were re-entered as new ones, and a single-day bulk edit in August 2026 reset
-<code>status_date</code> on 241 rows. Counted naively, the table double-counts requests
-and misdates decisions.</p>
+with different status vocabularies. In December 2023, 126 old requests that
+had never been decided were moved to the new tracker, and on the old system
+they were stamped <code>Rejected</code> or <code>Declined</code> as they went. A single-day bulk
+edit in August 2026 also reset <code>status_date</code> on 241 rows. Counted naively,
+the table double-counts requests, <strong>overstates refusals by 2.6×</strong>, and
+misdates decisions.</p>
 <h2 id="Reproducing">Reproducing<a class="anchor-link" href="#Reproducing">¶</a></h2><pre><code>pip install pandas matplotlib certifi
 </code></pre>
 <p>Public endpoint, no API token.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=5bf73b3d">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=3244b840">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7920,7 +7922,7 @@ and misdates decisions.</p>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-OutputArea-output" data-mime-type="text/markdown" tabindex="0">
-<p><strong>Snapshot.</strong> Executed against live data <strong>2026-09-22</strong> (UTC): <strong>656 requests</strong>, created 2016-01-26 to 2026-08-19. The source changes daily, so re-execute before citing a figure.</p>
+<p><strong>Snapshot.</strong> Executed against live data <strong>2026-09-23</strong> (UTC): <strong>656 requests</strong>, created 2016-01-26 to 2026-08-19. The source changes daily, so re-execute before citing a figure.</p>
 </div>
 </div>
 <div class="jp-OutputArea-child">
@@ -7934,7 +7936,7 @@ and misdates decisions.</p>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=08737093">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=f9395892">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7956,7 +7958,7 @@ therefore can't be compared one-for-one with new-system outcomes, and
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=beb8549f">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=4a9b1a51">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8016,7 +8018,7 @@ tracker (new) 2021-10-29 09:30:13 2026-08-19 15:37:21    286
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=854b10e7">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=3e70b277">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8028,7 +8030,7 @@ tracker the field is best read as "date closed".</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=22a91a01">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=ea599a52">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8063,27 +8065,33 @@ request_number status dataset_published_date                                    
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=9f18b752">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=897775f7">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="2.-Two-artifacts-that-distort-naive-counts">2. Two artifacts that distort naive counts<a class="anchor-link" href="#2.-Two-artifacts-that-distort-naive-counts">¶</a></h2><h3 id="2a.-The-December-2023-re-intake">2a. The December 2023 re-intake<a class="anchor-link" href="#2a.-The-December-2023-re-intake">¶</a></h3><p>On 2023-12-12 and 2023-12-13, requests that the old system had <strong>refused or
-declined</strong> were re-entered in the new tracker under new ids and new creation
-dates. That creates a spike of more than 100 "requests" in a single month.
-The pairs are matched here by normalised title.</p>
-<p>This matters in two ways:</p>
+<h2 id="2.-Two-artifacts-that-distort-naive-counts">2. Two artifacts that distort naive counts<a class="anchor-link" href="#2.-Two-artifacts-that-distort-naive-counts">¶</a></h2><h3 id="2a.-The-December-2023-migration:-%22Rejected%22-here-means-%22moved%22">2a. The December 2023 migration: "Rejected" here means "moved"<a class="anchor-link" href="#2a.-The-December-2023-migration:-%22Rejected%22-here-means-%22moved%22">¶</a></h3><p>On 2023-12-12 and 2023-12-13, old-system requests were re-entered in the new
+tracker under new ids and new creation dates. On the <strong>same two days</strong>, their
+old-system rows were set to <code>Rejected</code> or <code>Declined</code>. The pairs are matched
+by normalised title, restricted to old rows whose <code>status_date</code> falls on
+those two days.</p>
+<p>These were <strong>not refusals</strong>. The request carried on in the new tracker, and
+many are still open there. Most had been created years earlier with no
+status change since, so they had simply <strong>never been decided</strong>. Taking the
+old status at face value overstates refusals.</p>
+<p>The notebook handles the pairs as follows:</p>
 <ul>
-<li><strong>For volume over time:</strong> each re-intake row is the same request counted
-twice, so §3 drops those rows.</li>
-<li><strong>For what gets refused:</strong> the re-intake shows the City <strong>reconsidering its
-refusals</strong>. The crosstab shows where those requests stand now.</li>
+<li><strong>Volume over time:</strong> each pair is counted once, in the year the request
+was first made. The new-tracker row is dropped.</li>
+<li><strong>Outcome:</strong> the old row takes its outcome from the new-tracker row, which
+is where the request actually stands now. A <code>moved</code> flag records that it
+was never decided on the old system.</li>
 </ul>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=5b9f77be">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=7c9e7705">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8093,21 +8101,33 @@ refusals</strong>. The crosstab shows where those requests stand now.</li>
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">norm</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">"[^a-z0-9]"</span><span class="p">,</span> <span class="s2">""</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">s</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span>
 <span class="n">d</span><span class="p">[</span><span class="s2">"title_key"</span><span class="p">]</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">request_description</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">norm</span><span class="p">)</span>
-<span class="n">odr</span> <span class="o">=</span> <span class="n">d</span><span class="p">[</span><span class="n">d</span><span class="o">.</span><span class="n">system</span> <span class="o">==</span> <span class="s2">"ODR (old)"</span><span class="p">]</span>
-<span class="n">reintake_window</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">request_creation_date</span><span class="o">.</span><span class="n">between</span><span class="p">(</span><span class="s2">"2023-12-12"</span><span class="p">,</span> <span class="s2">"2023-12-14"</span><span class="p">)</span>
-<span class="n">d</span><span class="p">[</span><span class="s2">"reintake"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">system</span> <span class="o">==</span> <span class="s2">"tracker (new)"</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">reintake_window</span> <span class="o">&amp;</span> <span class="n">d</span><span class="o">.</span><span class="n">title_key</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">odr</span><span class="o">.</span><span class="n">title_key</span><span class="p">)</span>
+<span class="n">MIGRATION_DAYS</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"2023-12-12"</span><span class="p">,</span> <span class="s2">"2023-12-13"</span><span class="p">}</span>
+<span class="n">on_migration_day</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">status_date</span><span class="o">.</span><span class="n">dt</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">"%Y-%m-</span><span class="si">%d</span><span class="s2">"</span><span class="p">)</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">MIGRATION_DAYS</span><span class="p">)</span>
+<span class="n">created_on_migration_day</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">request_creation_date</span><span class="o">.</span><span class="n">dt</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">"%Y-%m-</span><span class="si">%d</span><span class="s2">"</span><span class="p">)</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">MIGRATION_DAYS</span><span class="p">)</span>
 
-<span class="n">pairs</span> <span class="o">=</span> <span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="n">d</span><span class="o">.</span><span class="n">reintake</span><span class="p">]</span>
-         <span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">odr</span><span class="p">[[</span><span class="s2">"title_key"</span><span class="p">,</span> <span class="s2">"request_number"</span><span class="p">,</span> <span class="s2">"status"</span><span class="p">,</span> <span class="s2">"request_creation_date"</span><span class="p">]],</span>
-                <span class="n">on</span><span class="o">=</span><span class="s2">"title_key"</span><span class="p">,</span> <span class="n">suffixes</span><span class="o">=</span><span class="p">(</span><span class="s2">""</span><span class="p">,</span> <span class="s2">"_orig"</span><span class="p">))</span>
-         <span class="o">.</span><span class="n">drop_duplicates</span><span class="p">(</span><span class="s2">"request_number"</span><span class="p">))</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"re-intake rows: </span><span class="si">{</span><span class="n">d</span><span class="o">.</span><span class="n">reintake</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="si">}</span><span class="s2"> "</span>
-      <span class="sa">f</span><span class="s2">"(of </span><span class="si">{</span><span class="p">(</span><span class="n">reintake_window</span><span class="w"> </span><span class="o">&amp;</span><span class="w"> </span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">system</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="s1">'tracker (new)'</span><span class="p">))</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="si">}</span><span class="s2"> tracker rows created in the window)"</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Original old-system status  ×  status after re-intake:"</span><span class="p">)</span>
+<span class="n">odr_stamped</span> <span class="o">=</span> <span class="n">d</span><span class="p">[(</span><span class="n">d</span><span class="o">.</span><span class="n">system</span> <span class="o">==</span> <span class="s2">"ODR (old)"</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">on_migration_day</span><span class="p">]</span>
+<span class="n">new_side</span> <span class="o">=</span> <span class="n">d</span><span class="p">[(</span><span class="n">d</span><span class="o">.</span><span class="n">system</span> <span class="o">==</span> <span class="s2">"tracker (new)"</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">created_on_migration_day</span><span class="p">]</span>
+<span class="n">pairs</span> <span class="o">=</span> <span class="n">odr_stamped</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">new_side</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="s2">"title_key"</span><span class="p">,</span> <span class="n">suffixes</span><span class="o">=</span><span class="p">(</span><span class="s2">"_orig"</span><span class="p">,</span> <span class="s2">""</span><span class="p">))</span>
+<span class="n">check</span><span class="p">(</span><span class="n">pairs</span><span class="o">.</span><span class="n">request_number_orig</span><span class="o">.</span><span class="n">is_unique</span> <span class="ow">and</span> <span class="n">pairs</span><span class="o">.</span><span class="n">request_number</span><span class="o">.</span><span class="n">is_unique</span><span class="p">,</span>
+      <span class="sa">f</span><span class="s2">"migration pairs match one-to-one by title (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">pairs</span><span class="p">)</span><span class="si">}</span><span class="s2"> pairs)"</span><span class="p">)</span>
+
+<span class="n">d</span><span class="p">[</span><span class="s2">"reintake"</span><span class="p">]</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">request_number</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">pairs</span><span class="o">.</span><span class="n">request_number</span><span class="p">)</span>
+<span class="n">d</span><span class="p">[</span><span class="s2">"moved"</span><span class="p">]</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">request_number</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">pairs</span><span class="o">.</span><span class="n">request_number_orig</span><span class="p">)</span>
+<span class="n">d</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">d</span><span class="o">.</span><span class="n">moved</span><span class="p">,</span> <span class="s2">"outcome"</span><span class="p">]</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">d</span><span class="o">.</span><span class="n">moved</span><span class="p">,</span> <span class="s2">"request_number"</span><span class="p">]</span><span class="o">.</span><span class="n">map</span><span class="p">(</span>
+    <span class="n">pairs</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s2">"request_number_orig"</span><span class="p">)</span><span class="o">.</span><span class="n">outcome</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"old-system rows stamped on the migration days: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">odr_stamped</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  ...of which paired with a new-tracker row:    </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">pairs</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Old-system stamp  ×  where the request stands now (new tracker):"</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">crosstab</span><span class="p">(</span><span class="n">pairs</span><span class="o">.</span><span class="n">status_orig</span><span class="p">,</span> <span class="n">pairs</span><span class="o">.</span><span class="n">status</span><span class="p">,</span> <span class="n">margins</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
-<span class="n">check</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">reintake</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">&gt;=</span> <span class="mi">100</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"the Dec-2023 re-intake is still visible (</span><span class="si">{</span><span class="n">d</span><span class="o">.</span><span class="n">reintake</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="si">}</span><span class="s2"> rows)"</span><span class="p">)</span>
-<span class="n">check</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">pairs</span><span class="o">.</span><span class="n">status_orig</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="p">{</span><span class="s2">"Rejected"</span><span class="p">,</span> <span class="s2">"Declined"</span><span class="p">,</span> <span class="s2">"Completed"</span><span class="p">},</span>
-      <span class="s2">"re-intake originals were refused/declined (plus at most a stray Completed)"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Old-system creation year of the moved requests:"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">pairs</span><span class="o">.</span><span class="n">request_creation_date_orig</span><span class="o">.</span><span class="n">dt</span><span class="o">.</span><span class="n">year</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span><span class="o">.</span><span class="n">sort_index</span><span class="p">()</span><span class="o">.</span><span class="n">to_string</span><span class="p">())</span>
+<span class="n">check</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">pairs</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">100</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"the Dec-2023 migration is still visible (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">pairs</span><span class="p">)</span><span class="si">}</span><span class="s2"> pairs)"</span><span class="p">)</span>
+<span class="n">check</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">odr_stamped</span><span class="p">)</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">pairs</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">2</span><span class="p">,</span>
+      <span class="sa">f</span><span class="s2">"nearly every old row stamped on the migration days was moved "</span>
+      <span class="sa">f</span><span class="s2">"(</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">pairs</span><span class="p">)</span><span class="si">}</span><span class="s2"> of </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">odr_stamped</span><span class="p">)</span><span class="si">}</span><span class="s2">), so the stamp means 'moved', not 'refused'"</span><span class="p">)</span>
+<span class="n">check</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">odr_stamped</span><span class="o">.</span><span class="n">status</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="p">{</span><span class="s2">"Rejected"</span><span class="p">,</span> <span class="s2">"Declined"</span><span class="p">},</span>
+      <span class="s2">"every migration-day stamp is Rejected/Declined, the statuses a naive reading counts as refusals"</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -8120,24 +8140,37 @@ refusals</strong>. The crosstab shows where those requests stand now.</li>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>re-intake rows: 126 (of 127 tracker rows created in the window)
+<pre>  [PASS] migration pairs match one-to-one by title (126 pairs)
+old-system rows stamped on the migration days: 127
+  ...of which paired with a new-tracker row:    126
 
-Original old-system status  ×  status after re-intake:
+Old-system stamp  ×  where the request stands now (new tracker):
 status       CLOSED  IN PROGRESS  NEW  PAUSED  All
 status_orig                                       
-Completed         1            0    0       0    1
 Declined         10            7    6       0   23
-Rejected         42            7   49       4  102
+Rejected         43            7   49       4  103
 All              53           14   55       4  126
-  [PASS] the Dec-2023 re-intake is still visible (126 rows)
-  [PASS] re-intake originals were refused/declined (plus at most a stray Completed)
+
+Old-system creation year of the moved requests:
+request_creation_date_orig
+2016    11
+2017    27
+2018    21
+2019    24
+2020    17
+2021     5
+2022    10
+2023    11
+  [PASS] the Dec-2023 migration is still visible (126 pairs)
+  [PASS] nearly every old row stamped on the migration days was moved (126 of 127), so the stamp means 'moved', not 'refused'
+  [PASS] every migration-day stamp is Rejected/Declined, the statuses a naive reading counts as refusals
 </pre>
 </div>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=76b7527e">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=e2e96e70">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8150,7 +8183,7 @@ this notebook doesn't compute them.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=28b34077">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=970252f7">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8198,18 +8231,19 @@ Name: count, dtype: int64
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=ed188af5">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=71f226a6">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="3.-Volume-over-time">3. Volume over time<a class="anchor-link" href="#3.-Volume-over-time">¶</a></h2><p>Requests by the year they were <strong>first</strong> made, with re-intake rows removed.
-Colours show each request's current outcome.</p>
+<h2 id="3.-Volume-over-time">3. Volume over time<a class="anchor-link" href="#3.-Volume-over-time">¶</a></h2><p>Requests by the year they were <strong>first</strong> made, each counted once (§2a).
+Colours show each request's current outcome. Moved requests show where they
+stand on the new tracker.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=318fc533">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=097417d4">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8293,53 +8327,53 @@ Colours show each request's current outcome.</p>
 <tr>
 <th>2016</th>
 <td>46</td>
-<td>51</td>
-<td>0</td>
-<td>0</td>
+<td>40</td>
+<td>6</td>
+<td>5</td>
 <td>14</td>
 <td>111</td>
 </tr>
 <tr>
 <th>2017</th>
 <td>28</td>
-<td>33</td>
-<td>0</td>
-<td>0</td>
+<td>6</td>
+<td>16</td>
+<td>11</td>
 <td>1</td>
 <td>62</td>
 </tr>
 <tr>
 <th>2018</th>
 <td>26</td>
-<td>22</td>
-<td>0</td>
-<td>0</td>
+<td>1</td>
+<td>5</td>
+<td>16</td>
 <td>3</td>
 <td>51</td>
 </tr>
 <tr>
 <th>2019</th>
 <td>17</td>
-<td>33</td>
-<td>0</td>
-<td>0</td>
+<td>9</td>
+<td>8</td>
+<td>16</td>
 <td>1</td>
 <td>51</td>
 </tr>
 <tr>
 <th>2020</th>
 <td>14</td>
-<td>25</td>
-<td>0</td>
-<td>0</td>
+<td>8</td>
+<td>6</td>
+<td>11</td>
 <td>0</td>
 <td>39</td>
 </tr>
 <tr>
 <th>2021</th>
 <td>10</td>
-<td>6</td>
-<td>2</td>
+<td>1</td>
+<td>7</td>
 <td>4</td>
 <td>0</td>
 <td>22</td>
@@ -8347,18 +8381,18 @@ Colours show each request's current outcome.</p>
 <tr>
 <th>2022</th>
 <td>2</td>
-<td>14</td>
 <td>4</td>
-<td>0</td>
+<td>7</td>
+<td>7</td>
 <td>0</td>
 <td>20</td>
 </tr>
 <tr>
 <th>2023</th>
 <td>3</td>
-<td>20</td>
-<td>19</td>
-<td>5</td>
+<td>9</td>
+<td>23</td>
+<td>12</td>
 <td>0</td>
 <td>47</td>
 </tr>
@@ -8397,13 +8431,13 @@ Colours show each request's current outcome.</p>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedImage jp-OutputArea-output" tabindex="0">
-<img alt="No description has been provided for this image" class="" src="data:image/png;base64,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n5eeP3PmjPQ+V6lSRRw6dCjT0TUzG8U4t3nL7HOa2ecxs/1cVgy1TWT1/SZE2oiqH330kXBwcBC2trbCx8dHa4TRV69eieHDhws3NzehVqtF1apVxe+//64VQ2Y5zWrkz8w+x9n5ziIikiuFEEKYsqik90+7du0QHR2N0NBQc4diUr169cL58+dzPMBI+k3Dd+7caaTIyFQOHz6Mli1b4ubNm9m6Vpdyb+LEiVi2bBkePHgAKysrc4dDRERkFjxdk8jALl68iPDwcGzatAnLli3L9nJnzpzB33//jb///hsHDx40YoRkKseOHUNQUBALPBO4evUqrl69isWLF2Pw4MEs8IiI6L3GnjwyuvetJ69kyZJ48uQJunfvjhUrVkCpzN74RgqFAo6Ojhg6dCi++eYbI0dJJC+NGzfGiRMn0KJFC2zYsCHXg3cQERHlZyzyiIiIiIiIZIS3UCAiIiIiIpIRFnlEREREREQywiIPgBACsbGx4JmrRERERESU37HIAxAXFwdHR0fExcWZOxQiIiIiIqJcYZFHREREREQkIyzyiIiIiIiIZIRFHhERERERkYywyCMiIiIiIpIRFnlEREREREQywiKPiIiIiIhIRljkERERERERyQiLPCIiIiIiIhlhkUdERERERCQjLPKIiIiIiIhkhEUeERERERGRjLDIIyIiIiIikhGVuQMgXUIIc4dgcAqFwtwhEBERERG9F1jk5VEaTaq5QzAYpdLC3CEQEREREb03eLomERERERGRjLAnL497NnsbRFKKucPIMYVahYKj25k7DCIiIiKi9w6LvDxOJKUAyfnv1E35XVVIRERERJQ/8HRNIiIiIiIiGWGRR0REREREJCMs8oiIiIiIiGSERR4REREREZGMsMgjIiIiIiKSERZ5REREREREMsIij4iIiIiISEZY5BEREREREckIizwiIiIiIiIZYZFHREREREQkIyzyiIiIiIiIZIRFHhERERERkYywyCMiIiIiIpIRFnlEREREREQywiKPiIiIiIhIRljkERERERERyQiLPCIiIiIiIhlhkUdERERERCQjLPKIiIiIiIhkhEUeERERERGRjLDIIyIiIiIikhEWeURERERERDLCIo+IiIiIiEhGzFrkHTlyBG3atEHRokWhUCiwbds2reeFEJg4cSLc3d1hY2ODgIAAXL9+XWue58+fo0ePHnBwcICTkxP69euH+Ph4E64FERERERFR3mHWIu/ly5eoVq0ali5dmunzs2fPxqJFi7B8+XKcPHkSdnZ2CAwMxOvXr6V5evTogUuXLuHgwYPYtWsXjhw5goEDB5pqFYiIiIiIiPIUhRBCmDsIAFAoFNi6dSvatWsHIK0Xr2jRohg5ciRGjRoFAIiJiYGrqyvWrl2Lrl274sqVK6hcuTJOnz6NmjVrAgD27duHli1b4v79+yhatGi2Xjs2NhaOjo6IiYmBg4ODUdYvJ4QQ0GhSAQBPp24BklPNHJEeLC1QaHwnAIBSaQGFQmHmgIiIiIiI3g8qcweQldu3byMyMhIBAQHSNEdHR9SuXRthYWHo2rUrwsLC4OTkJBV4ABAQEAClUomTJ0+iffv2mbadmJiIxMRE6XFsbCwAQKPRQKPRGGmNsi+P1N0Go9FoWOQRERERERmAUvnukzHzbJEXGRkJAHB1ddWa7urqKj0XGRmJIkWKaD2vUqng4uIizZOZGTNmYMqUKTrTH0fdR8Ir+9yGbgAKFHHNXi9kfvA46gEAeRWuRERERETm4F60xDvnybNFnjGNGzcOwcHB0uPY2Fh4enqiiKtHnjldU05FURHXYuzJIyIiIiIykTxb5Lm5uQEAoqKi4O7uLk2PioqCj4+PNM/jx4+1lktJScHz58+l5TNjZWUFKysrnelKpTJb3Z/GlvGaPDlQKpUs8oiIiIiITMT8FU0WSpUqBTc3Nxw+fFiaFhsbi5MnT8Lf3x8A4O/vj+joaJw9e1aa588//4RGo0Ht2rVNHjMREREREZG5mbUnLz4+Hjdu3JAe3759G+Hh4XBxcUHx4sUxfPhwTJ06FeXKlUOpUqUwYcIEFC1aVBqBs1KlSmjRogUGDBiA5cuXIzk5GV988QW6du2a7ZE1iYiIiIiI5MSsRd6ZM2fQpEkT6XH6dXJBQUFYu3YtRo8ejZcvX2LgwIGIjo5G/fr1sW/fPlhbW0vLbNiwAV988QU++OADKJVKdOzYEYsWLTL5uhAREREREeUFeeY+eeaU1+6Tp9FoIETarRyezd4GkZRi5ohyTqFWoeDodmn/K/LGtY5ERERERO8DFnnI20WeHLDIIyIiIiIyHf7yJiIiIiIikpE8ewsFShM9Iwgi+bW5w8gxhaU1nMatM3cYRERERETvHRZ5eZBCoUD6SbTiyV0gKf8VeUL9v8FxeI88IiIiIiLT4emaREREREREMsIij4iIiIiISEZY5BEREREREckIizwiIiIiIiIZYZFHREREREQkIyzyiIiIiIiIZIRFHhERERERkYywyCMiIiIiIpIRFnlEREREREQywiKPiIiIiIhIRljkERERERERyQiLPCIiIiIiIhlhkUdERERERCQjLPKIiIiIiIhkhEUeERERERGRjLDIIyIiIiIikhEWeURERERERDLCIo+IiIiIiEhGWOQRERERERHJCIs8IiIiIiIiGWGRR0REREREJCMs8oiIiIiIiGSERR4REREREZGMsMgjIiIiIiKSERZ5REREREREMsIij4iIiIiISEZY5BEREREREckIizwiIiIiIiIZYZFHREREREQkIyzyiIiIiIiIZIRFHhERERERkYywyCMiIiIiIpIRFnlEREREREQywiKPiIiIiIhIRljkERERERERyQiLPCIiIiIiIhlhkUdERERERCQjLPKIiIiIiIhkhEUeERERERGRjOTpIi81NRUTJkxAqVKlYGNjgzJlyuDbb7+FEEKaRwiBiRMnwt3dHTY2NggICMD169fNGDUREREREZH55Okib9asWfj++++xZMkSXLlyBbNmzcLs2bOxePFiaZ7Zs2dj0aJFWL58OU6ePAk7OzsEBgbi9evXZoyciIiIiIjIPFTmDuBtjh8/jrZt26JVq1YAgJIlS2Ljxo04deoUgLRevIULF2L8+PFo27YtAGD9+vVwdXXFtm3b0LVrV7PFTkREREREZA55usirW7cuVq5ciWvXrqF8+fK4cOECjh49ivnz5wMAbt++jcjISAQEBEjLODo6onbt2ggLC8uyyEtMTERiYqL0ODY2FgCg0Wig0WiMuEbZk/F0VDnQaDRQKBTmDoOIiIiIKN9TKt99MmaeLvLGjh2L2NhYVKxYERYWFkhNTcW0adPQo0cPAEBkZCQAwNXVVWs5V1dX6bnMzJgxA1OmTNGZ/jjqPhJe2RtwDfSlQBHXouYOwmAeRz0AIK/ClYiIiIjIHNyLlnjnPHm6yPvtt9+wYcMG/PLLL/Dy8kJ4eDiGDx+OokWLIigoSO92x40bh+DgYOlxbGwsPD09UcTVAw4ODoYIPVfSevLkUxQVcS3GnjwiIiIiIhPJ00Xel19+ibFjx0qnXVapUgV37tzBjBkzEBQUBDc3NwBAVFQU3N3dpeWioqLg4+OTZbtWVlawsrLSma5UKrPV/WlsQghoNKnmDsNglEolizwiIiIiIhMxf0XzFq9evdIpuiwsLKTr5kqVKgU3NzccPnxYej42NhYnT56Ev7+/SWMlIiIiIiLKC/J0T16bNm0wbdo0FC9eHF5eXjh//jzmz5+Pvn37AgAUCgWGDx+OqVOnoly5cihVqhQmTJiAokWLol27duYNnoiIiIiIyAzydJG3ePFiTJgwAYMGDcLjx49RtGhRfPrpp5g4caI0z+jRo/Hy5UsMHDgQ0dHRqF+/Pvbt2wdra2szRk5ERERERGQeCiG38fr1EBsbC0dHR8TExOSZgVfSr8l7EdwESMqHN3ZXW8N5fggAQKm04DV5REREREQmkqevySMiIiIiIqKcYZFHREREREQkIyzyiIiIiIiIZIRFHhERERERkYywyCMiIiIiIpIRFnlEREREREQywiKPiIiIiIhIRljkERERERERyQiLPCIiIiIiIhlhkUdERERERCQjLPKIiIiIiIhkhEUeERERERGRjLDIIyIiIiIikhEWeURERERERDLCIo+IiIiIiEhGWOQRERERERHJCIs8IiIiIiIiGWGRR0REREREJCMs8oiIiIiIiGSERR4REREREZGMsMgjIiIiIiKSERZ5REREREREMsIij4iIiIiISEZY5BEREREREckIizwiIiIiIiIZMUiRl5qaivDwcLx48cIQzREREREREZGe9Cryhg8fjh9//BFAWoHXqFEj+Pr6wtPTE6GhoYaMj4iIiIiIiHJAryJvy5YtqFatGgBg586duH37Nv7991+MGDECX3/9tUEDJCIiIiIiouzTq8h7+vQp3NzcAAB79uzBxx9/jPLly6Nv3764ePGiQQMkIiIiIiKi7NOryHN1dcXly5eRmpqKffv2oVmzZgCAV69ewcLCwqABEhERERERUfap9FmoT58+6Ny5M9zd3aFQKBAQEAAAOHnyJCpWrGjQAImIiIiIiCj79CryJk+eDG9vb9y7dw8ff/wxrKysAAAWFhYYO3asQQMkIiIiIiKi7NOryFu/fj26dOkiFXfpunXrhk2bNhkkMCIiIiIiIso5va7J69OnD2JiYnSmx8XFoU+fPrkOioiIiIiIiPSjV5EnhIBCodCZfv/+fTg6OuY6KCIiIiIiItJPjk7XrF69OhQKBRQKBT744AOoVP9bPDU1Fbdv30aLFi0MHiQRERERERFlT46KvHbt2gEAwsPDERgYiAIFCkjPqdVqlCxZEh07djRogERERERERJR9OSryJk2aBAAoWbIkunbtqjPwChEREREREZmXXtfkNW3aFE+ePJEenzp1CsOHD8fKlSsNFhgRERERERHlnF5FXvfu3RESEgIAiIyMREBAAE6dOoWvv/4a33zzjUEDJALSBvuR2x8RERERkTHodZ+8iIgI+Pn5AQB+++03VKlSBceOHcOBAwfw2WefYeLEiQYNkggANJpUc4dgMEqlhblDICIiIiKZ0qsnLzk5Wboe79ChQ/joo48AABUrVsSjR48MFx0RERERERHliF49eV5eXli+fDlatWqFgwcP4ttvvwUAPHz4EAULFjRogEQAtE5vfL5gF0Ryihmj0Y/CUgWXEa0BZH2vSSIiIiKi3NKryJs1axbat2+POXPmICgoCNWqVQMA7NixQzqN01AePHiAMWPGYO/evXj16hXKli2LNWvWoGbNmgDSfixPmjQJP/zwA6Kjo1GvXj18//33KFeunEHjoLwjvVAiIiIiIiJdehV5jRs3xtOnTxEbGwtnZ2dp+sCBA2Fra2uw4F68eIF69eqhSZMm2Lt3LwoXLozr169rvebs2bOxaNEirFu3DqVKlcKECRMQGBiIy5cvw9ra2mCxEBERERER5Qd6FXlAWg/a2bNncfPmTXTv3h329vZQq9UGLfJmzZoFT09PrFmzRppWqlQprRgWLlyI8ePHo23btgCA9evXw9XVFdu2bUPXrl0zbTcxMRGJiYnS49jYWACARqOBRqMxWPz6ktvIixqNJtenJgrxv/clekYQRPLr3IZlcgpLaziNWwcgbX3ywKZGRERERPmMUvnuYVX0KvLu3LmDFi1a4O7du0hMTESzZs1gb2+PWbNmITExEcuXL9enWR07duxAYGAgPv74Y/z1118oVqwYBg0ahAEDBgAAbt++Ld3CIZ2joyNq166NsLCwLIu8GTNmYMqUKTrTH0fdR8Ire4PEnjsKFHEtau4gDOZx1AMAuS1c/5cT8eQukJT/ijyh/l/P8uOoh8h9ToiIiIjofeNetMQ759GryBs2bBhq1qyJCxcuaA200r59e6kAM4Rbt27h+++/R3BwML766iucPn0aQ4cOhVqtRlBQECIjIwEArq6u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UlNT4erqqjXd1dUV//77b6bLjBs3DsHBwdJjjUaD58+fo2DBgnmqSje22NhYeHp64t69e3miBzMvYE50MSe6mBNdzIku5kQXc6KLOdHFnOhiTnS97zmxt7d/6/P5vsjTh5WVFaysrLSmOTk5mSeYPMDBweG9/HC8DXOiiznRxZzoYk50MSe6mBNdzIku5kQXc6KLOclcvr9PXqFChWBhYYGoqCit6VFRUXBzczNTVEREREREROaR74s8tVqNGjVq4PDhw9I0jUaDw4cPw9/f34yRERERERERmZ4sTtcMDg5GUFAQatasCT8/PyxcuBAvX75Enz59zB1anmZlZYVJkybpnLr6PmNOdDEnupgTXcyJLuZEF3OiiznRxZzoYk50MSdvJ4tbKADAkiVLpJuh+/j4YNGiRahdu7a5wyIiIiIiIjIp2RR5REREREREJINr8oiIiIiIiOh/WOQRERERERHJCIs8IiIiIiIiGWGRR0REREREJCMs8vKxGTNmoFatWrC3t0eRIkXQrl07XL16VWue169fY/DgwShYsCAKFCiAjh076tw4fujQoahRowasrKzg4+OT6WsJITB37lyUL18eVlZWKFasGKZNm2asVdObqXIyefJkKBQKnT87Oztjrp5eTLmd7N+/H3Xq1IG9vT0KFy6Mjh074r///jPSmunPlDn57bff4OPjA1tbW5QoUQJz5swx1mrliiFycuHCBXTr1g2enp6wsbFBpUqV8N133+m8VmhoKHx9fWFlZYWyZcti7dq1xl49vZgqJ48ePUL37t1Rvnx5KJVKDB8+3BSrpxdT5eSPP/5As2bNULhwYTg4OMDf3x/79+83yTrmlKlycvToUdSrVw8FCxaEjY0NKlasiAULFphkHfVhyn1KumPHjkGlUmW5PzY3U+UkNDQ0098okZGRJlnPnDDldpKYmIivv/4aJUqUgJWVFUqWLInVq1cbfR3NRlC+FRgYKNasWSMiIiJEeHi4aNmypShevLiIj4+X5vnss8+Ep6enOHz4sDhz5oyoU6eOqFu3rlY7Q4YMEUuWLBE9e/YU1apVy/S1hgwZIipUqCC2b98ubt26Jc6cOSMOHDhgzNXTi6lyEhcXJx49eqT1V7lyZREUFGTkNcw5U+Xk1q1bwsrKSowbN07cuHFDnD17VjRs2FBUr17d2KuYY6bKyZ49e4RKpRLf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"/>
+<img alt="No description has been provided for this image" class="" src="data:image/png;base64,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XESLFi3EuXPnpOdPnz4tvc/Vq1cXBw8ezHJ0zaxGMc5r3rL6nGb1ecxqP5cdY20T2X2/CZE+ouq7774rnJychL29vfD19dUZYfTFixdi5MiRwt3dXajValGjRg3x66+/6sSQVU6zG/kzq89xTr6ziIjkSiGEEOYsKunt07FjR8TExCAsLMzSoZhV3759ce7cuVwPMJJx0/CdO3eaKDIyl0OHDqFNmza4ceNGjq7VpbybPHkyVqxYgfv378PGxsbS4RAREVkEu2sSGdmFCxcQERGBzZs3Y8WKFTle7vTp0/jrr7/w119/4cCBAyaMkMzl6NGjCA4OZoFnBleuXMGVK1ewdOlSDBs2jAUeERG91Xgmj0zubTuTV6ZMGTx+/Bi9evXCqlWroFTmbHwjhUIBZ2dnjBgxAl988YWJoySSl2bNmuH48eNo3bo1Nm7cmOfBO4iIiAoyFnlEREREREQywlsoEBERERERyQiLPCIiIiIiIhlhkQdACIG4uDiw5yoRERERERV0LPIAxMfHw9nZGfHx8ZYOhYiIiIiIKE9Y5BEREREREckIizwiIiIiIiIZYZFHREREREQkIyzyiIiIiIiIZIRFHhERERERkYywyCMiIiIiIpIRFnlEREREREQywiKPiIiIiIhIRljkERERERERyQiLPCIiIiIiIhlhkUdERERERCQjLPKIiIiIiIhkRGXpAEifEMLSIRidQqGwdAhERERERG8FFnn5lFarsXQIRqNUWlk6BCIiIiKitwa7axIREREREckIz+Tlc0/nboNISbN0GLmmUKtQZGxHS4dBRERERPTWYZGXz4mUNCC14HXdlN9VhUREREREBQO7axIREREREckIizwiIiIiIiIZYZFHREREREQkIyzyiIiIiIiIZIRFHhERERERkYywyCMiIiIiIpIRFnlEREREREQywiKPiIiIiIhIRljkERERERERyQiLPCIiIiIiIhlhkUdERERERCQjLPKIiIiIiIhkhEUeERERERGRjLDIIyIiIiIikhEWeURERERERDLCIo+IiIiIiEhGWOQRERERERHJCIs8IiIiIiIiGWGRR0REREREJCMs8oiIiIiIiGSERR4REREREZGMsMgjIiIiIiKSERZ5REREREREMmLRIu/w4cNo3749SpQoAYVCgW3btuk8L4TA5MmT4eHhATs7OwQGBuLatWs68zx79gy9e/eGk5MTXFxcMHDgQCQkJJhxLYiIiIiIiPIPixZ5iYmJqFmzJpYvX57l83PnzsWSJUuwcuVKnDhxAg4ODggKCsLLly+leXr37o2LFy/iwIED2LVrFw4fPowhQ4aYaxWIiIiIiIjyFYUQQlg6CABQKBTYunUrOnbsCCD9LF6JEiUwevRojBkzBgAQGxsLNzc3rFu3Dj169MDly5dRrVo1nDp1CnXq1AEA7Nu3D23atMG9e/dQokSJHL12XFwcnJ2dERsbCycnJ5OsX24IIaDVagAAT6b/AqRqLByRAaytUHRiVwCAUmkFhUJh4YCIiIiIiN4OKksHkJ1bt24hKioKgYGB0jRnZ2fUq1cP4eHh6NGjB8LDw+Hi4iIVeAAQGBgIpVKJEydOoFOnTlm2nZycjOTkZOlxXFwcAECr1UKr1ZpojXIun9TdRqPValnkEREREREZgVL55s6Y+bbIi4qKAgC4ubnpTHdzc5Oei4qKQvHixXWeV6lUcHV1lebJyqxZszBt2jS96Y+i7yHphWNeQzcCBYq75ewsZEHwKPo+AHkVrkREREREluBRovQb58m3RZ4pTZgwASEhIdLjuLg4eHl5obibZ77primnoqi4W0meySMiIiIiMpN8W+S5u7sDAKKjo+Hh4SFNj46Ohq+vrzTPo0ePdJZLS0vDs2fPpOWzYmNjAxsbG73pSqUyR6c/TS3zNXlyoFQqWeQREREREZmJ5SuabJQtWxbu7u44dOiQNC0uLg4nTpxAQEAAACAgIAAxMTE4c+aMNM8ff/wBrVaLevXqmT1mIiIiIiIiS7PombyEhARcv35denzr1i1ERETA1dUVpUqVwsiRIzF9+nRUrFgRZcuWxaRJk1CiRAlpBM6qVauidevWGDx4MFauXInU1FR8/PHH6NGjR45H1iQiIiIiIpITixZ5p0+fRvPmzaXHGdfJBQcHY926dRg7diwSExMxZMgQxMTEoFGjRti3bx9sbW2lZTZu3IiPP/4Y77zzDpRKJbp06YIlS5aYfV2IiIiIiIjyg3xznzxLym/3ydNqtRAi/VYOT+dug0hJs3BEuadQq1BkbMf0/xX541pHIiIiIqK3AYs85O8iTw5Y5BERERERmQ9/eRMREREREclIvr2FAqWL21oeIu2FpcPINYXKHk6dblg6DCIiIiKitw6LvHxIoVAgoxOtSH4CaApekSc09tL/vEceEREREZH5sLsmERERERGRjLDIIyIiIiIikhEWeURERERERDLCIo+IiIiIiEhGWOQRERERERHJCIs8IiIiIiIiGWGRR0REREREJCMs8oiIiIiIiGSEN0PPh0TGndABKFQOEK+ZN79SqByk/4UQvCE6EREREZGZsMjL55y6PrB0CEREREREVICwuyYREREREZGM8ExePtfg4CIkaVIsHUau2VmpcSxwlKXDICIiIiJ667DIy4cUCgUyLst7lpKIJE2qZQMygJ3VfzHzejwiIiIiIvNhd00iIiIiIiIZYZFHREREREQkIyzyiIiIiIiIZIRFHhERERERkYywyCMiIiIiIpIRFnlEREREREQywiKPiIiIiIhIRljkERERERERyQiLPCIiIiIiIhlhkUdERERERCQjLPKIiIiIiIhkRGXpAEifEEL6395KbcFIDJc5biEEFAqFBaMhIiIiInp7KETmiuItFRcXB2dnZ8TGxsLJycnS4UCr1UIIraXDMBqFQgmlkieNiYiIiIjMgb+8iYiIiIiIZITdNfO5mEmdIFJfWjqMXFNY28Lly62WDoOIiIiI6K3DIi8fUigUyOhEKxJjgJSCV+QJta30P6/HIyIiIiIyH3bXJCIiIiIikhEWeURERERERDLCIo+IiIiIiEhGWOQRERERERHJCIs8IiIiIiIiGWGRR0REREREJCMs8oiIiIiIiGSERR4REREREZGMsMgjIiIiIiKSERZ5REREREREMpKvizyNRoNJkyahbNmysLOzQ/ny5fHll19CCCHNI4TA5MmT4eHhATs7OwQGBuLatWsWjJqIiIiIiMhy8nWRN2fOHHz99ddYtmwZLl++jDlz5mDu3LlYunSpNM/cuXOxZMkSrFy5EidOnICDgwOCgoLw8uVLC0ZORERERERkGSpLB/A6x44dQ4cOHdC2bVsAQJkyZbBp0yacPHkSQPpZvMWLF2PixIno0KEDAGDDhg1wc3PDtm3b0KNHD4vFTkREREREZAn5ushr0KABVq9ejatXr6JSpUo4f/48jhw5goULFwIAbt26haioKAQGBkrLODs7o169eggPD8+2yEtOTkZycrL0OC4uDgCg1Wqh1WpNuEY5k7k7qhxotVooFApLh0FEREREVOAplW/ujJmvi7zx48cjLi4OVapUgZWVFTQaDWbMmIHevXsDAKKiogAAbm5uOsu5ublJz2Vl1qxZmDZtmt70R9H3kPTC0YhrYCgFiruVsHQQRvMo+j4AeRWuRERERESW4FGi9BvnyddF3s8//4yNGzfixx9/hLe3NyIiIjBy5EiUKFECwcHBBrc7YcIEhISESI/j4uLg5eWF4m6ecHJyMkboeZJ+Jk8+RVFxt5I8k0dEREREZCb5usj79NNPMX78eKnbZfXq1XH79m3MmjULwcHBcHd3BwBER0fDw8NDWi46Ohq+vr7ZtmtjYwMbGxu96UqlMkenP01NCAGtVmPpMIxGqVSyyCMiIiIiMhPLVzSv8eLFC72iy8rKSrpurmzZsnB3d8ehQ4ek5+Pi4nDixAkEBASYNVYiIiIiIqL8IF+fyWvfvj1mzJiBUqVKwdvbG+fOncPChQsxYMAAAIBCocDIkSMxffp0VKxYEWXLlsWkSZNQokQJdOzY0bLBExERERERWUC+LvKWLl2KSZMmYejQoXj06BFKlCiBDz74AJMnT5bmGTt2LBITEzFkyBDExMSgUaNG2LdvH2xtbS0YORERERERkWUohNzG6zdAXFwcnJ2dERsbm28GXsm4Ju95SHMgpQDe2F1ti8ILQwEASqUVr8kjIiIiIjKTfH1NHhEREREREeUOizwiIiIiIiIZYZFHREREREQkIyzyiIiIiIiIZIRFHhERERERkYywyCMiIiIiIpIRFnlEREREREQywiKPiIiIiIhIRljkERERERERyQiLPCIiIiIiIhlhkUdERERERCQjLPKIiIiIiIhkhEUeERERERGRjLDIIyIiIiIikhEWeURERERERDLCIo+IiIiIiEhGWOQRERERERHJCIs8IiIiIiIiGWGRR0REREREJCMs8oiIiIiIiGSERR4REREREZGMsMgjIiIiIiKSERZ5REREREREMsIij4iIiIiISEZY5BEREREREcmIUYo8jUaDiIgIPH/+3BjNERERERERkYEMKvJGjhyJb7/9FkB6gde0aVP4+fnBy8sLYWFhxoyPiIiIiIiIcsGgIu+XX35BzZo1AQA7d+7ErVu38M8//2DUqFH4/PPPjRogERERERER5ZxBRd6TJ0/g7u4OANizZw/ee+89VKpUCQMGDMCFCxeMGiARERERERHlnEFFnpubGy5dugSNRoN9+/ahZcuWAIAXL17AysrKqAES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FaQCb8GCBahYsaLOEfVXde3aFfv378+2yOvduzeePn0qdf1KS0vDgAEDUKtWLcyePRtDhw7Fl19+CV9fX6krnUajwYABA/Ds2TOoVCoUK1YMa9euhVqtxm+//YYRI0Zg9OjRsLW1xS+//IJChQoZrcgbMmQIbty4AT8/PwD/DREPIMt9R2YbNmzAgAEDMG/ePFSoUAF169bN9hrVPn36oFSpUujSpYvUVV2lUmHXrl0YOXIkFi1aBI1Gg6JFi+LHH398Y9yJiYnS9WRytmHDBkycOBHVq1eXtulPP/0UAwYMQFhYGLy9vbFu3TqMGDECarUamzZtgkKhQOPGjbPdz7+trK2t0ahRI5w/fx5VqlQBAFSqVAnx8fFo1KiR1OU6g6urK/r27YsaNWqgUKFCOtflZeWrr75Cv379UK1aNZQsWVLqEZKV6tWro0ePHvD29kaRIkX0bsmQsc/L2L5btmyJ+fPnS11ziTJTCHPcZInIDMy1KZuzm1x2cnovvILobXof8zNzfjXI4b24c+cOunbtihMnTshiffIiISEBDg4OUCgUuHXrFgICAnDq1Cl4eXmZ/LVXrlyJe/fumWREwYKybwoLCzPbvSMNxf0LkenxTB7JBnfk8sD3MX/g+5A7pUqVwrhx43D//v0sz+q+TY4dO4ZPP/0UQPrZyEWLFpmlwAPS7zFmqvtU8jNhPMwlkenxTB4REREREZGM8D55REREREREMsIij4iIiIiISEZY5BEREREREckIizwiIiIiIiIZYZFHREREREQkIyzyiIiIiIiIZIRFHhERERERkYywyCMiIiIiIpIRFnlEREREREQywiKPiIiIiIhIRljkERERERERyQiLPCIiIiIiIhn5P39DQS/URynmAAAAAElFTkSuQmCC"/>
 </div>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=5910d46b">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=334f9b1e">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8418,12 +8452,14 @@ don't explain the peak.</li>
 <code>Closed (reason not given)</code> or still <code>Open</code>. The drop in blue and orange
 after 2022 comes from the vocabulary change in §1. It is not a change in
 how the City decides.</li>
+<li>Green and yellow before 2021 are the moved requests: they were never
+decided on the old system, and they now sit on the new tracker.</li>
 </ul>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=cdbdaa37">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=1d78a566">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8436,7 +8472,7 @@ patterns are printed so they can be argued with.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=26815bde">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=7d3b203a">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8631,19 +8667,24 @@ patterns are printed so they can be argued with.</p>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=f2fc4542">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=3a640da4">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="5.-What-gets-blocked">5. What gets blocked<a class="anchor-link" href="#5.-What-gets-blocked">¶</a></h2><h3 id="5a.-Refusal-rate-by-topic,-old-system-only">5a. Refusal rate by topic, old system only<a class="anchor-link" href="#5a.-Refusal-rate-by-topic,-old-system-only">¶</a></h3><p>Only the old system records a refusal, so this table is limited to <code>ODR</code>
-rows, which cover 2016 to 2024. The denominator is requests that reached a
-decision (<code>Completed</code> or <code>Refused</code>).</p>
+<h2 id="5.-What-gets-through,-what-gets-refused,-what-never-gets-decided">5. What gets through, what gets refused, what never gets decided<a class="anchor-link" href="#5.-What-gets-through,-what-gets-refused,-what-never-gets-decided">¶</a></h2><h3 id="5a.-Old-system,-by-the-year-a-request-was-first-made">5a. Old system, by the year a request was first made<a class="anchor-link" href="#5a.-Old-system,-by-the-year-a-request-was-first-made">¶</a></h3><p>The old system is the only one that records an explicit outcome. Each old
+request lands in one of four groups:</p>
+<ul>
+<li><strong>Completed</strong></li>
+<li><strong>Refused</strong>: <code>Rejected</code> or <code>Declined</code>, excluding the migration stamps</li>
+<li><strong>Never decided</strong>: moved to the new tracker in December 2023</li>
+<li><strong>Withdrawn / still open</strong></li>
+</ul>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=5dceff05">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=392ded95">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8651,14 +8692,21 @@ decision (<code>Completed</code> or <code>Refused</code>).</p>
 <div class="jp-InputPrompt jp-InputArea-prompt">In [8]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">old</span> <span class="o">=</span> <span class="n">u</span><span class="p">[</span><span class="n">u</span><span class="o">.</span><span class="n">system</span> <span class="o">==</span> <span class="s2">"ODR (old)"</span><span class="p">]</span>
-<span class="n">dec</span> <span class="o">=</span> <span class="n">old</span><span class="p">[</span><span class="n">old</span><span class="o">.</span><span class="n">outcome</span><span class="o">.</span><span class="n">isin</span><span class="p">([</span><span class="s2">"Completed"</span><span class="p">,</span> <span class="s2">"Refused"</span><span class="p">])]</span>
-<span class="n">rr</span> <span class="o">=</span> <span class="p">(</span><span class="n">dec</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">"topic"</span><span class="p">)</span><span class="o">.</span><span class="n">outcome</span>
-      <span class="o">.</span><span class="n">agg</span><span class="p">(</span><span class="n">decided</span><span class="o">=</span><span class="s2">"size"</span><span class="p">,</span> <span class="n">refused</span><span class="o">=</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="p">(</span><span class="n">s</span> <span class="o">==</span> <span class="s2">"Refused"</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()))</span>
-<span class="n">rr</span><span class="p">[</span><span class="s2">"refused_share"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">rr</span><span class="o">.</span><span class="n">refused</span> <span class="o">/</span> <span class="n">rr</span><span class="o">.</span><span class="n">decided</span><span class="p">)</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
-<span class="n">display</span><span class="p">(</span><span class="n">rr</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s2">"decided"</span><span class="p">,</span> <span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"overall: </span><span class="si">{</span><span class="n">rr</span><span class="o">.</span><span class="n">refused</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="si">}</span><span class="s2"> of </span><span class="si">{</span><span class="n">rr</span><span class="o">.</span><span class="n">decided</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="si">}</span><span class="s2"> decided old-system requests refused "</span>
-      <span class="sa">f</span><span class="s2">"(</span><span class="si">{</span><span class="n">rr</span><span class="o">.</span><span class="n">refused</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">rr</span><span class="o">.</span><span class="n">decided</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="si">:</span><span class="s2">.0%</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">old</span> <span class="o">=</span> <span class="n">u</span><span class="p">[</span><span class="n">u</span><span class="o">.</span><span class="n">system</span> <span class="o">==</span> <span class="s2">"ODR (old)"</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="n">old</span><span class="p">[</span><span class="s2">"fate"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"Withdrawn / still open"</span>
+<span class="n">old</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">old</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="s2">"Completed"</span><span class="p">,</span> <span class="s2">"fate"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"Completed"</span>
+<span class="n">old</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">old</span><span class="o">.</span><span class="n">outcome</span> <span class="o">==</span> <span class="s2">"Refused"</span><span class="p">,</span> <span class="s2">"fate"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"Refused"</span>
+<span class="n">old</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">old</span><span class="o">.</span><span class="n">moved</span><span class="p">,</span> <span class="s2">"fate"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"Never decided (moved)"</span>
+<span class="n">FATES</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"Completed"</span><span class="p">,</span> <span class="s2">"Refused"</span><span class="p">,</span> <span class="s2">"Never decided (moved)"</span><span class="p">,</span> <span class="s2">"Withdrawn / still open"</span><span class="p">]</span>
+<span class="n">fy</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">crosstab</span><span class="p">(</span><span class="n">old</span><span class="o">.</span><span class="n">year</span><span class="p">,</span> <span class="n">old</span><span class="o">.</span><span class="n">fate</span><span class="p">)</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="n">FATES</span><span class="p">,</span> <span class="n">fill_value</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">fy</span><span class="p">[</span><span class="s2">"completed share"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">fy</span><span class="o">.</span><span class="n">Completed</span> <span class="o">/</span> <span class="n">fy</span><span class="p">[</span><span class="n">FATES</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">display</span><span class="p">(</span><span class="n">fy</span><span class="p">)</span>
+<span class="n">tot</span> <span class="o">=</span> <span class="n">old</span><span class="o">.</span><span class="n">fate</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"old system overall: </span><span class="si">{</span><span class="n">tot</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'Completed'</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="si">}</span><span class="s2"> completed, </span><span class="si">{</span><span class="n">tot</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'Refused'</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="si">}</span><span class="s2"> refused, "</span>
+      <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">tot</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'Never decided (moved)'</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="si">}</span><span class="s2"> never decided, of </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">old</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="n">naive</span> <span class="o">=</span> <span class="n">old</span><span class="o">.</span><span class="n">status</span><span class="o">.</span><span class="n">isin</span><span class="p">([</span><span class="s2">"Rejected"</span><span class="p">,</span> <span class="s2">"Declined"</span><span class="p">])</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"a naive count of Rejected+Declined gives </span><span class="si">{</span><span class="n">naive</span><span class="si">}</span><span class="s2"> refusals; "</span>
+      <span class="sa">f</span><span class="s2">"the real figure is </span><span class="si">{</span><span class="n">tot</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'Refused'</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">naive</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="nb">max</span><span class="p">(</span><span class="n">tot</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'Refused'</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">),</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">× overstated)"</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -8688,13 +8736,17 @@ decision (<code>Completed</code> or <code>Refused</code>).</p>
 <table border="1" class="dataframe">
 <thead>
 <tr style="text-align: right;">
-<th></th>
-<th>decided</th>
-<th>refused</th>
-<th>refused_share</th>
+<th>fate</th>
+<th>Completed</th>
+<th>Refused</th>
+<th>Never decided (moved)</th>
+<th>Withdrawn / still open</th>
+<th>completed share</th>
 </tr>
 <tr>
-<th>topic</th>
+<th>year</th>
+<th></th>
+<th></th>
 <th></th>
 <th></th>
 <th></th>
@@ -8702,82 +8754,76 @@ decision (<code>Completed</code> or <code>Refused</code>).</p>
 </thead>
 <tbody>
 <tr>
-<th>Roads, traffic &amp; mobility</th>
-<td>58</td>
-<td>38</td>
-<td>0.66</td>
+<th>2016</th>
+<td>46</td>
+<td>40</td>
+<td>11</td>
+<td>14</td>
+<td>0.41</td>
 </tr>
 <tr>
-<th>Other / unclassified</th>
-<td>55</td>
-<td>23</td>
-<td>0.42</td>
-</tr>
-<tr>
-<th>Planning, permits &amp; zoning</th>
-<td>35</td>
-<td>22</td>
-<td>0.63</td>
-</tr>
-<tr>
-<th>Council, elections &amp; administration</th>
-<td>30</td>
-<td>13</td>
-<td>0.43</td>
-</tr>
-<tr>
-<th>Property, assessment &amp; tax</th>
-<td>30</td>
-<td>20</td>
-<td>0.67</td>
-</tr>
-<tr>
-<th>Parks, trees &amp; environment</th>
-<td>29</td>
-<td>17</td>
-<td>0.59</td>
-</tr>
-<tr>
-<th>Transit</th>
+<th>2017</th>
 <td>28</td>
-<td>15</td>
-<td>0.54</td>
-</tr>
-<tr>
-<th>Utilities &amp; drainage</th>
-<td>28</td>
-<td>21</td>
-<td>0.75</td>
-</tr>
-<tr>
-<th>Recreation, library &amp; community</th>
-<td>20</td>
-<td>11</td>
-<td>0.55</td>
-</tr>
-<tr>
-<th>People &amp; census</th>
-<td>11</td>
-<td>7</td>
-<td>0.64</td>
-</tr>
-<tr>
-<th>Public safety</th>
-<td>11</td>
-<td>7</td>
-<td>0.64</td>
-</tr>
-<tr>
-<th>Budget &amp; spending</th>
-<td>9</td>
-<td>5</td>
-<td>0.56</td>
-</tr>
-<tr>
-<th>Base maps &amp; imagery</th>
 <td>6</td>
+<td>27</td>
+<td>1</td>
+<td>0.45</td>
+</tr>
+<tr>
+<th>2018</th>
+<td>26</td>
+<td>1</td>
+<td>21</td>
+<td>3</td>
+<td>0.51</td>
+</tr>
+<tr>
+<th>2019</th>
+<td>17</td>
+<td>9</td>
+<td>24</td>
+<td>1</td>
+<td>0.33</td>
+</tr>
+<tr>
+<th>2020</th>
+<td>14</td>
+<td>8</td>
+<td>17</td>
+<td>0</td>
+<td>0.36</td>
+</tr>
+<tr>
+<th>2021</th>
+<td>10</td>
+<td>1</td>
 <td>5</td>
-<td>0.83</td>
+<td>0</td>
+<td>0.62</td>
+</tr>
+<tr>
+<th>2022</th>
+<td>2</td>
+<td>4</td>
+<td>10</td>
+<td>0</td>
+<td>0.12</td>
+</tr>
+<tr>
+<th>2023</th>
+<td>3</td>
+<td>9</td>
+<td>11</td>
+<td>0</td>
+<td>0.13</td>
+</tr>
+<tr>
+<th>2024</th>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>1</td>
+<td>0.00</td>
 </tr>
 </tbody>
 </table>
@@ -8787,25 +8833,45 @@ decision (<code>Completed</code> or <code>Refused</code>).</p>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>overall: 204 of 350 decided old-system requests refused (58%)
+<pre>old system overall: 146 completed, 78 refused, 126 never decided, of 370
+a naive count of Rejected+Declined gives 204 refusals; the real figure is 78 (2.6× overstated)
 </pre>
 </div>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=aaf8b07f">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=74fb5dd0">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h3 id="5b.-Refusal-by-department">5b. Refusal by department<a class="anchor-link" href="#5b.-Refusal-by-department">¶</a></h3><p>Department is mostly blank on refusals, so this table says little about
-<em>who</em> refuses.</p>
+<p><strong>How to read it:</strong> after 2016 the City rarely says no outright. What
+changed was how many requests <strong>never got an answer</strong>. From 2017 on, more
+requests ended up in "never decided" than in "refused" in every year. The
+completed share falls from roughly 0.4–0.5 in 2016–2018 to about one in
+eight in 2022–2023. 2021 is the exception, and it has only 16 requests.</p>
+<p>Real refusals are concentrated in <strong>utilities</strong>: gas and power mapping, and
+infrastructure owned by EPCOR or other outside parties. Utilities &amp; drainage
+is the only topic in §5b with more refusals than completions. Base maps &amp;
+imagery has too few requests to say.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=29108aff">
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=04cb1b03">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h3 id="5b.-By-topic,-old-system">5b. By topic, old system<a class="anchor-link" href="#5b.-By-topic,-old-system">¶</a></h3><p>Topics use the same keyword heuristic as §4. Counts per topic are small, so
+read the table for its broad shape, not for rank order.</p>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=e8b1f98f">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8813,8 +8879,206 @@ decision (<code>Completed</code> or <code>Refused</code>).</p>
 <div class="jp-InputPrompt jp-InputArea-prompt">In [9]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">crosstab</span><span class="p">(</span><span class="n">dec</span><span class="o">.</span><span class="n">department</span><span class="p">,</span> <span class="n">dec</span><span class="o">.</span><span class="n">outcome</span><span class="p">)</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="n">t</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
-      <span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s2">"n"</span><span class="p">,</span> <span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">12</span><span class="p">))</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">bt</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">crosstab</span><span class="p">(</span><span class="n">old</span><span class="o">.</span><span class="n">topic</span><span class="p">,</span> <span class="n">old</span><span class="o">.</span><span class="n">fate</span><span class="p">)</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="n">FATES</span><span class="p">,</span> <span class="n">fill_value</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">bt</span><span class="p">[</span><span class="s2">"n"</span><span class="p">]</span> <span class="o">=</span> <span class="n">bt</span><span class="p">[</span><span class="n">FATES</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">bt</span><span class="p">[</span><span class="s2">"completed share"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">bt</span><span class="o">.</span><span class="n">Completed</span> <span class="o">/</span> <span class="n">bt</span><span class="o">.</span><span class="n">n</span><span class="p">)</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">display</span><span class="p">(</span><span class="n">bt</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s2">"n"</span><span class="p">,</span> <span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output" data-mime-type="text/html" tabindex="0">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+<thead>
+<tr style="text-align: right;">
+<th>fate</th>
+<th>Completed</th>
+<th>Refused</th>
+<th>Never decided (moved)</th>
+<th>Withdrawn / still open</th>
+<th>n</th>
+<th>completed share</th>
+</tr>
+<tr>
+<th>topic</th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th>Roads, traffic &amp; mobility</th>
+<td>20</td>
+<td>15</td>
+<td>23</td>
+<td>6</td>
+<td>64</td>
+<td>0.31</td>
+</tr>
+<tr>
+<th>Other / unclassified</th>
+<td>32</td>
+<td>10</td>
+<td>13</td>
+<td>4</td>
+<td>59</td>
+<td>0.54</td>
+</tr>
+<tr>
+<th>Planning, permits &amp; zoning</th>
+<td>13</td>
+<td>4</td>
+<td>18</td>
+<td>0</td>
+<td>35</td>
+<td>0.37</td>
+</tr>
+<tr>
+<th>Property, assessment &amp; tax</th>
+<td>10</td>
+<td>11</td>
+<td>9</td>
+<td>3</td>
+<td>33</td>
+<td>0.30</td>
+</tr>
+<tr>
+<th>Council, elections &amp; administration</th>
+<td>17</td>
+<td>5</td>
+<td>8</td>
+<td>1</td>
+<td>31</td>
+<td>0.55</td>
+</tr>
+<tr>
+<th>Parks, trees &amp; environment</th>
+<td>12</td>
+<td>2</td>
+<td>15</td>
+<td>2</td>
+<td>31</td>
+<td>0.39</td>
+</tr>
+<tr>
+<th>Transit</th>
+<td>13</td>
+<td>4</td>
+<td>11</td>
+<td>1</td>
+<td>29</td>
+<td>0.45</td>
+</tr>
+<tr>
+<th>Utilities &amp; drainage</th>
+<td>7</td>
+<td>13</td>
+<td>8</td>
+<td>0</td>
+<td>28</td>
+<td>0.25</td>
+</tr>
+<tr>
+<th>Recreation, library &amp; community</th>
+<td>9</td>
+<td>4</td>
+<td>7</td>
+<td>0</td>
+<td>20</td>
+<td>0.45</td>
+</tr>
+<tr>
+<th>Public safety</th>
+<td>4</td>
+<td>2</td>
+<td>5</td>
+<td>2</td>
+<td>13</td>
+<td>0.31</td>
+</tr>
+<tr>
+<th>People &amp; census</th>
+<td>4</td>
+<td>3</td>
+<td>4</td>
+<td>0</td>
+<td>11</td>
+<td>0.36</td>
+</tr>
+<tr>
+<th>Budget &amp; spending</th>
+<td>4</td>
+<td>1</td>
+<td>4</td>
+<td>0</td>
+<td>9</td>
+<td>0.44</td>
+</tr>
+<tr>
+<th>Base maps &amp; imagery</th>
+<td>1</td>
+<td>4</td>
+<td>1</td>
+<td>1</td>
+<td>7</td>
+<td>0.14</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=5fa0d859">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h3 id="5b%E2%80%B2.-The-genuine-refusals">5b′. The genuine refusals<a class="anchor-link" href="#5b%E2%80%B2.-The-genuine-refusals">¶</a></h3><p>These are old-system <code>Rejected</code> or <code>Declined</code> rows that the migration didn't
+stamp, most recent first. The table records no reason for any refusal, so
+only the titles are available.</p>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=fd4d8d49">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [10]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">real_refusals</span> <span class="o">=</span> <span class="n">old</span><span class="p">[</span><span class="n">old</span><span class="o">.</span><span class="n">fate</span> <span class="o">==</span> <span class="s2">"Refused"</span><span class="p">]</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s2">"request_creation_date"</span><span class="p">,</span> <span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">real_refusals</span><span class="p">[[</span><span class="s2">"request_number"</span><span class="p">,</span> <span class="s2">"status"</span><span class="p">,</span> <span class="s2">"request_creation_date"</span><span class="p">,</span> <span class="s2">"request_description"</span><span class="p">]]</span>
+      <span class="o">.</span><span class="n">assign</span><span class="p">(</span><span class="n">request_creation_date</span><span class="o">=</span><span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="n">t</span><span class="o">.</span><span class="n">request_creation_date</span><span class="o">.</span><span class="n">dt</span><span class="o">.</span><span class="n">date</span><span class="p">)</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">30</span><span class="p">)</span><span class="o">.</span><span class="n">to_string</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
 </pre></div>
 </div>
 </div>
@@ -8827,48 +9091,66 @@ decision (<code>Completed</code> or <code>Refused</code>).</p>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>outcome                        Completed  Refused    n
-department                                            
-(blank)                               40       97  137
-City Operations                       29       31   60
-Financial Services                    27       31   58
-Urban Planning and Economy            18       12   30
-Community Services                    18       10   28
-Office of the City Clerk               8        4   12
-EPCOR                                  0        7    7
-Communications and Engagement          3        3    6
-Infrastructure Services                1        4    5
-Transportation Services                1        2    3
-External User                          0        1    1
-Library                                0        1    1
+<pre>request_number   status request_creation_date                                                       request_description
+     ODR23-373 Rejected            2023-09-18                                                      Properties Shapefile
+     ODR23-371 Rejected            2023-08-30                                                      city manhole numbers
+     ODR23-369 Rejected            2023-08-01                                          Shared E-Mobility - Internal CoE
+     ODR23-367 Rejected            2023-06-30                                               Community Mailbox Locations
+     ODR23-363 Rejected            2023-04-27    Added data columns to Property Assessment Data (Current Calendar Year)
+     ODR23-362 Rejected            2023-04-25                             Grocery Stores (including Convenience Stores)
+     ODR23-359 Declined            2023-03-20                                     Population Forecasts by Neighbourhood
+     ODR23-356 Declined            2023-03-06                                                      LIDAR data breakdown
+     ODR23-352 Rejected            2023-02-15                            Access to Property Sales and Transfers dataset
+     ODR22-351 Rejected            2022-12-05                             Information discrepancy between maps and data
+     ODR22-343 Rejected            2022-06-22                                            Combined sewer overflow volume
+     ODR22-341 Rejected            2022-04-11 Monthly call-outs by type of purpose of dispatch at the High Level Bridge
+     ODR22-339 Rejected            2022-03-16                   107 Avenue and 142 Street Roundabout design information
+     ODR21-330 Rejected            2021-11-01                                                         Missing incidents
+     ODR20-314 Rejected            2020-11-11                                                       Gas utility mapping
+     ODR20-313 Rejected            2020-11-11                                                       Gas utility mapping
+     ODR20-312 Rejected            2020-11-11                                                     Power utility mapping
+     ODR20-310 Rejected            2020-11-11                               Sidewalk Snow and Ice Clearing Route Status
+     ODR20-306 Rejected            2020-10-02                                                Waste Management Recycling
+     ODR20-304 Rejected            2020-08-13                                            Concerns regarding bylaw 18590
+     ODR20-289 Rejected            2020-03-26                        City Council Meeting Transcripts / Closed Captions
+     ODR20-285 Rejected            2020-02-20                                                      Vehicle Position Log
+     ODR19-277 Rejected            2019-12-19                                                    Crimes by neighborhood
+     ODR19-274 Rejected            2019-12-02                                     Area Structure Plan - GIS compatiable
+     ODR19-269 Rejected            2019-11-26                                                                      test
+     ODR19-267 Rejected            2019-11-05                                                   Lead Water Test Results
+     ODR19-262 Rejected            2019-08-01           Can we get city documents that are searchable from city website
+     ODR19-261 Rejected            2019-08-01                                                  City Guidelines pdf copy
+     ODR19-260 Rejected            2019-08-01                                                     City Plans Pdf copies
+     ODR19-242 Rejected            2019-03-06                                               Recent land title transfers
 </pre>
 </div>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=b06f98b2">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=490f88d8">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <h3 id="5c.-The-open-backlog">5c. The open backlog<a class="anchor-link" href="#5c.-The-open-backlog">¶</a></h3><p>Requests still <code>NEW</code>, <code>IN PROGRESS</code> or <code>PAUSED</code>, aged from the <strong>original</strong>
-request date. A re-intake row is dated back to its old-system original.</p>
+request date. A moved request is counted once and dated back to its
+old-system original.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=9952cde8">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=00deaa10">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [10]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [11]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">orig_date</span> <span class="o">=</span> <span class="n">pairs</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s2">"request_number"</span><span class="p">)</span><span class="o">.</span><span class="n">request_creation_date_orig</span>
 <span class="n">d</span><span class="p">[</span><span class="s2">"first_asked"</span><span class="p">]</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">request_number</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">orig_date</span><span class="p">)</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">request_creation_date</span><span class="p">)</span>
-<span class="n">openq</span> <span class="o">=</span> <span class="n">d</span><span class="p">[</span><span class="n">d</span><span class="o">.</span><span class="n">outcome</span> <span class="o">==</span> <span class="s2">"Open"</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="n">openq</span> <span class="o">=</span> <span class="n">d</span><span class="p">[(</span><span class="n">d</span><span class="o">.</span><span class="n">outcome</span> <span class="o">==</span> <span class="s2">"Open"</span><span class="p">)</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">d</span><span class="o">.</span><span class="n">moved</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
 <span class="n">openq</span><span class="p">[</span><span class="s2">"age_years"</span><span class="p">]</span> <span class="o">=</span> <span class="p">((</span><span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="p">(</span><span class="n">RUN_AT</span><span class="o">.</span><span class="n">date</span><span class="p">())</span> <span class="o">-</span> <span class="n">openq</span><span class="o">.</span><span class="n">first_asked</span><span class="o">.</span><span class="n">dt</span><span class="o">.</span><span class="n">tz_localize</span><span class="p">(</span><span class="kc">None</span><span class="p">))</span><span class="o">.</span><span class="n">dt</span><span class="o">.</span><span class="n">days</span> <span class="o">/</span> <span class="mf">365.25</span><span class="p">)</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">openq</span><span class="p">)</span><span class="si">}</span><span class="s2"> open requests; median age </span><span class="si">{</span><span class="n">openq</span><span class="o">.</span><span class="n">age_years</span><span class="o">.</span><span class="n">median</span><span class="p">()</span><span class="si">}</span><span class="s2"> years; "</span>
       <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="p">(</span><span class="n">openq</span><span class="o">.</span><span class="n">age_years</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="mi">5</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="si">}</span><span class="s2"> first asked five or more years ago"</span><span class="p">)</span>
@@ -8913,7 +9195,7 @@ request_number      status first_asked                             request_descr
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=5b6243c9">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=bd1a3477">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8926,12 +9208,12 @@ A cluster here is demand the City has seen repeatedly.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=876c67b4">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=83062f2c">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [11]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [12]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">CLUSTERS</span> <span class="o">=</span> <span class="p">{</span>
@@ -8994,7 +9276,7 @@ A cluster here is demand the City has seen repeatedly.</p>
 <td>20</td>
 <td>2016</td>
 <td>2026</td>
-<td>Closed (reason not given) 9, Refused 5, Withdrawn 2, Completed 2, Open 2</td>
+<td>Closed (reason not given) 11, Refused 3, Withdrawn 2, Completed 2, Open 2</td>
 </tr>
 <tr>
 <th>6</th>
@@ -9002,7 +9284,7 @@ A cluster here is demand the City has seen repeatedly.</p>
 <td>10</td>
 <td>2016</td>
 <td>2024</td>
-<td>Refused 5, Completed 3, Open 1, Closed (reason not given) 1</td>
+<td>Refused 3, Completed 3, Open 2, Closed (reason not given) 2</td>
 </tr>
 <tr>
 <th>0</th>
@@ -9010,7 +9292,7 @@ A cluster here is demand the City has seen repeatedly.</p>
 <td>9</td>
 <td>2016</td>
 <td>2026</td>
-<td>Refused 4, Closed (reason not given) 4, Withdrawn 1</td>
+<td>Closed (reason not given) 8, Withdrawn 1</td>
 </tr>
 <tr>
 <th>3</th>
@@ -9018,7 +9300,7 @@ A cluster here is demand the City has seen repeatedly.</p>
 <td>8</td>
 <td>2018</td>
 <td>2024</td>
-<td>Refused 4, Open 4</td>
+<td>Open 8</td>
 </tr>
 <tr>
 <th>2</th>
@@ -9026,7 +9308,7 @@ A cluster here is demand the City has seen repeatedly.</p>
 <td>6</td>
 <td>2019</td>
 <td>2025</td>
-<td>Refused 4, Open 1, Closed (reason not given) 1</td>
+<td>Closed (reason not given) 3, Open 3</td>
 </tr>
 <tr>
 <th>4</th>
@@ -9042,7 +9324,7 @@ A cluster here is demand the City has seen repeatedly.</p>
 <td>3</td>
 <td>2016</td>
 <td>2020</td>
-<td>Refused 3</td>
+<td>Refused 2, Open 1</td>
 </tr>
 </tbody>
 </table>
@@ -9052,7 +9334,122 @@ A cluster here is demand the City has seen repeatedly.</p>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=2db45f69">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=08b60329">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h3 id="5e.-New-tracker:-did-a-CLOSED-request-produce-a-dataset?">5e. New tracker: did a <code>CLOSED</code> request produce a dataset?<a class="anchor-link" href="#5e.-New-tracker:-did-a-CLOSED-request-produce-a-dataset?">¶</a></h3><p>The new tracker's <code>CLOSED</code> doesn't say whether anything was published
+(§1). The catalogue can help. For each closed request, this looks for a
+portal asset <strong>created within 45 days</strong> of the close date whose name shares
+at least two content words with the request title.</p>
+<p>⚠️ <strong>This check misses a lot.</strong> Many fulfilled requests extend an existing
+dataset instead of creating a new one, and requesters' titles don't match
+the City's dataset names. The same check is run on old-system <code>Completed</code>
+rows, whose outcome is known, to measure how much it misses. That catch rate
+is used to scale the <code>CLOSED</code> figure into a rough estimate.</p>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=0007a243">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [13]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">cat_rows</span><span class="p">,</span> <span class="n">off</span> <span class="o">=</span> <span class="p">[],</span> <span class="mi">0</span>
+<span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+    <span class="n">page</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">Request</span><span class="p">(</span>
+        <span class="s2">"https://api.us.socrata.com/api/catalog/v1?"</span> <span class="o">+</span> <span class="n">urllib</span><span class="o">.</span><span class="n">parse</span><span class="o">.</span><span class="n">urlencode</span><span class="p">(</span>
+            <span class="p">{</span><span class="s2">"domains"</span><span class="p">:</span> <span class="s2">"data.edmonton.ca"</span><span class="p">,</span> <span class="s2">"limit"</span><span class="p">:</span> <span class="mi">1000</span><span class="p">,</span> <span class="s2">"offset"</span><span class="p">:</span> <span class="n">off</span><span class="p">}),</span>
+        <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s2">"User-Agent"</span><span class="p">:</span> <span class="n">UA</span><span class="p">}),</span> <span class="n">context</span><span class="o">=</span><span class="n">SSL_CTX</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">120</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">())[</span><span class="s2">"results"</span><span class="p">]</span>
+    <span class="n">cat_rows</span> <span class="o">+=</span> <span class="p">[{</span><span class="s2">"name"</span><span class="p">:</span> <span class="n">r</span><span class="p">[</span><span class="s2">"resource"</span><span class="p">][</span><span class="s2">"name"</span><span class="p">],</span> <span class="s2">"created"</span><span class="p">:</span> <span class="n">r</span><span class="p">[</span><span class="s2">"resource"</span><span class="p">][</span><span class="s2">"createdAt"</span><span class="p">]}</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">page</span><span class="p">]</span>
+    <span class="n">off</span> <span class="o">+=</span> <span class="mi">1000</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">page</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">1000</span><span class="p">:</span>
+        <span class="k">break</span>
+<span class="n">cat</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">cat_rows</span><span class="p">)</span>
+<span class="n">cat</span><span class="p">[</span><span class="s2">"created"</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">cat</span><span class="o">.</span><span class="n">created</span><span class="p">)</span><span class="o">.</span><span class="n">dt</span><span class="o">.</span><span class="n">tz_localize</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+<span class="n">STOP</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="s2">"the of and a in to for data dataset edmonton city by on with from all at or is be "</span>
+           <span class="s2">"map maps list request information open current"</span><span class="o">.</span><span class="n">split</span><span class="p">())</span>
+<span class="n">words</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="p">{</span><span class="n">w</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="sa">r</span><span class="s2">"[a-z]{3,}"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">s</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span> <span class="k">if</span> <span class="n">w</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">STOP</span><span class="p">}</span>
+<span class="n">cat</span><span class="p">[</span><span class="s2">"words"</span><span class="p">]</span> <span class="o">=</span> <span class="n">cat</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">words</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"catalogue: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">cat</span><span class="p">)</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2"> assets"</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">catalogue_match</span><span class="p">(</span><span class="n">row</span><span class="p">):</span>
+    <span class="n">near</span> <span class="o">=</span> <span class="n">cat</span><span class="p">[(</span><span class="n">cat</span><span class="o">.</span><span class="n">created</span> <span class="o">-</span> <span class="n">row</span><span class="o">.</span><span class="n">dataset_published_date</span><span class="p">)</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span> <span class="o">&lt;=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">45</span><span class="p">)]</span>
+    <span class="n">rw</span> <span class="o">=</span> <span class="n">words</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">request_description</span><span class="p">)</span>
+    <span class="n">best</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(((</span><span class="nb">len</span><span class="p">(</span><span class="n">rw</span> <span class="o">&amp;</span> <span class="n">cw</span><span class="p">),</span> <span class="n">n</span><span class="p">)</span> <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">cw</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">near</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">near</span><span class="o">.</span><span class="n">words</span><span class="p">)),</span> <span class="n">default</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">best</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="n">best</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mi">2</span> <span class="k">else</span> <span class="kc">None</span>
+
+
+<span class="n">res</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">rows</span> <span class="ow">in</span> <span class="p">[(</span><span class="s2">"old Completed (known published)"</span><span class="p">,</span> <span class="n">d</span><span class="p">[(</span><span class="n">d</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="s2">"Completed"</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">d</span><span class="o">.</span><span class="n">dataset_published_date</span><span class="o">.</span><span class="n">notna</span><span class="p">()]),</span>
+                    <span class="p">(</span><span class="s2">"new CLOSED (unknown)"</span><span class="p">,</span> <span class="n">d</span><span class="p">[(</span><span class="n">d</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="s2">"CLOSED"</span><span class="p">)</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">d</span><span class="o">.</span><span class="n">moved</span><span class="p">])]:</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">rows</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">catalogue_match</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">res</span><span class="p">[</span><span class="n">label</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">rows</span><span class="p">),</span> <span class="n">m</span><span class="o">.</span><span class="n">notna</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+    <span class="k">if</span> <span class="n">label</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"new"</span><span class="p">):</span>
+        <span class="n">closed_hits</span> <span class="o">=</span> <span class="n">rows</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span><span class="n">match</span><span class="o">=</span><span class="n">m</span><span class="p">)[</span><span class="n">m</span><span class="o">.</span><span class="n">notna</span><span class="p">()][[</span><span class="s2">"request_number"</span><span class="p">,</span> <span class="s2">"request_description"</span><span class="p">,</span> <span class="s2">"match"</span><span class="p">]]</span>
+<span class="n">recall</span> <span class="o">=</span> <span class="n">res</span><span class="p">[</span><span class="s2">"old Completed (known published)"</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="n">res</span><span class="p">[</span><span class="s2">"old Completed (known published)"</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+<span class="n">n_closed</span><span class="p">,</span> <span class="n">h_closed</span> <span class="o">=</span> <span class="n">res</span><span class="p">[</span><span class="s2">"new CLOSED (unknown)"</span><span class="p">]</span>
+<span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">h</span><span class="p">)</span> <span class="ow">in</span> <span class="n">res</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">k</span><span class="si">:</span><span class="s2">34</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">h</span><span class="si">:</span><span class="s2">3</span><span class="si">}</span><span class="s2"> of </span><span class="si">{</span><span class="n">n</span><span class="si">:</span><span class="s2">3</span><span class="si">}</span><span class="s2"> matched"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">catch rate on known-published requests: </span><span class="si">{</span><span class="n">recall</span><span class="si">:</span><span class="s2">.0%</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"rough estimate of CLOSED requests that produced a new asset: </span><span class="si">{</span><span class="n">h_closed</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">recall</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2"> of </span><span class="si">{</span><span class="n">n_closed</span><span class="si">}</span><span class="s2"> "</span>
+      <span class="sa">f</span><span class="s2">"(~</span><span class="si">{</span><span class="n">h_closed</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">recall</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">n_closed</span><span class="si">:</span><span class="s2">.0%</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">closed_hits</span><span class="o">.</span><span class="n">to_string</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>catalogue: 2,088 assets
+old Completed (known published)     30 of  80 matched
+new CLOSED (unknown)                 6 of 152 matched
+
+catch rate on known-published requests: 38%
+rough estimate of CLOSED requests that produced a new asset: 16 of 152 (~11%)
+request_number                                     request_description                                             match
+     8686dgpc7                     2021 Federal Census (100% Longform)         2021 Federal Census: 25% Data (Long Form)
+     8686m1x37                                     Nodes and Corridors                               Nodes and Corridors
+     8686pk59h                               Waste to landfill history                         Waste to Landfill History
+     8686qg9w2                                          Items Due List Items Due to Edmonton City Council and Committees
+     868dzdxxz Aerial Ground Control Points - Geodetic Control Network                      Aerial Ground Control Points
+     868dzej26                              Remote Sensing Tiling Grid                    Remote Sensing Tiling Grid Map
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=027f0971">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<p><strong>How to read it:</strong> on the known-published old <code>Completed</code> requests, the
+check catches only a minority. It catches a much smaller share of new
+<code>CLOSED</code> requests. Even after scaling for what the check misses, most
+<code>CLOSED</code> requests don't appear to have produced a new catalogue asset.
+Some may have been answered by pointing to an existing dataset, which
+nothing here can see. <strong>Treat the estimate as an order of magnitude</strong>, and
+read the matched titles rather than the percentage.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=55200eb5">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -9069,12 +9466,12 @@ near-misses before concluding that nobody asked.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=b800f750">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=1f961f1c">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [12]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [14]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">OUR_ASKS</span> <span class="o">=</span> <span class="p">[</span>
@@ -9528,7 +9925,7 @@ near-misses before concluding that nobody asked.</p>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=9d9a864b">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=b8022182">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -9539,19 +9936,19 @@ re-executing.)</p>
 <ul>
 <li><strong>Issue 4 (exemption status):</strong> nobody has requested it. The request
 would be new. The context block lists other requests for more assessment
-fields. They run from 2016 to 2026 and are mostly refused or closed without
-a stated reason. <code>868ev4dbu</code>, which asks for a list of assessment
+fields. They run from 2016 to 2026, and most were never decided or were
+closed without a stated reason. <code>868ev4dbu</code>, which asks for a list of assessment
 variables, is still <code>NEW</code>. A draft could cite this record, and should be
 ready for a similar answer.</li>
 <li><strong>Issue 5 (schools):</strong> every earlier request was for <strong>school-site
 polygons</strong> for the two public boards. <code>ODR19-241</code> (public schools) was
-Completed. The Catholic request was Rejected as <code>ODR19-263</code>, re-entered in
-the re-intake, and is now <code>CLOSED</code> as <code>8686qh58b</code>. Nobody has asked for
+Completed. The Catholic request (<code>ODR19-263</code>) was never decided on the old
+system. It was moved in December 2023 and is now <code>CLOSED</code> as <code>8686qh58b</code>. Nobody has asked for
 private, charter or francophone operators. The request would be new, and
 those precedents are worth citing.</li>
 <li><strong>Issue 6 (permits):</strong> nobody has reported the defect. One related ask,
 <strong>adding the assessment account number to the General Building Permit
-dataset</strong> (<code>ODR20-301</code>, Rejected, re-entered as <code>8686qhh84</code>, still <code>NEW</code>),
+dataset</strong> (<code>ODR20-301</code>, never decided, moved as <code>8686qhh84</code>, still <code>NEW</code>),
 would give permits a clean join key. It is worth mentioning alongside the
 defect report.</li>
 <li><strong>Issues 1, 3 and 7:</strong> nobody has reported these defects. The hits only
@@ -9563,12 +9960,12 @@ reports go to <code>opendata@edmonton.ca</code>, not to the request form.</li>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=f0598d74">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=67c347e2">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [13]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [15]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">display</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">summary</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">"ask"</span><span class="p">,</span> <span class="s2">"hits"</span><span class="p">]))</span>
@@ -9650,7 +10047,7 @@ reports go to <code>opendata@edmonton.ca</code>, not to the request form.</li>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=5a28a494">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=55d5b2f3">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -9662,12 +10059,12 @@ changed shape and the prose above is stale.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=8326c3c2">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=a740977b">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [14]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [16]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">passed</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">ok</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">CHECKS</span> <span class="k">if</span> <span class="n">ok</span><span class="p">)</span>
@@ -9688,7 +10085,7 @@ changed shape and the prose above is stale.</p>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-OutputArea-output" data-mime-type="text/markdown" tabindex="0">
-<h3 id="7-of-7-invariants-passed">7 of 7 invariants passed<a class="anchor-link" href="#7-of-7-invariants-passed">¶</a></h3>
+<h3 id="9-of-9-invariants-passed">9 of 9 invariants passed<a class="anchor-link" href="#9-of-9-invariants-passed">¶</a></h3>
 </div>
 </div>
 <div class="jp-OutputArea-child">
@@ -9698,8 +10095,10 @@ changed shape and the prose above is stale.</p>
   [PASS] request_number is unique
   [PASS] every status maps to an outcome bucket (unmapped: none)
   [PASS] all 152 CLOSED rows carry a dataset_published_date
-  [PASS] the Dec-2023 re-intake is still visible (126 rows)
-  [PASS] re-intake originals were refused/declined (plus at most a stray Completed)
+  [PASS] migration pairs match one-to-one by title (126 pairs)
+  [PASS] the Dec-2023 migration is still visible (126 pairs)
+  [PASS] nearly every old row stamped on the migration days was moved (126 of 127), so the stamp means 'moved', not 'refused'
+  [PASS] every migration-day stamp is Rejected/Declined, the statuses a naive reading counts as refusals
   [PASS] a bulk status_date sweep is present (241 rows on 2026-08-19)
 </pre>
 </div>
