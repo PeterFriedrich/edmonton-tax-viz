@@ -533,6 +533,7 @@ is in the `panel` column. T1 is public (3 of 10 service rows). T2 closed (`## Do
   Remedies are a decision, not a patch: (1) a press under the panel closes the
   panel; (2) opening the panel clears `body.budget`; (3) keep the yield and
   un-light the button from `openTemporal`/`closeTemporal`. Peter's call.
+- [x] **Dataset-requests notebook audit fixes — APPLIED 2026-09-23 (S190).** False §5a sentence removed, `\bbus`/`tree` regexes fixed, 16 clean-up-sweep refusals and a `test` row split out (61 decided, 3.3×), §5e called a floor, `ODR23-363` cited for Issue 4. `docs/FINDINGS_dataset_requests_notebook.md`.
 - [x] **Manifest staleness guard — BUILT 2026-09-17 (Peter's yes).** Two checks,
   not one: `check_budget_context` + `check_mill_rate_values`. See `## Done`.
 - [ ] **L2 — `~0.9% of units` in the Infill blurb is a typed-in measurement** (S56's
@@ -592,17 +593,6 @@ From `docs/FINDINGS_readout_floors.md`. Nothing applied yet.
 - [ ] **Surface-level zero-token check in smoke** (§4): scan rendered tooltips for `$0`/`0.00`/`0.0` over a nonzero value. C9/C10 check helpers only.
 - [ ] **Peter's call:** `fmtResShare` prints `100%` for 6 hoods with 0.1–0.45% non-residential (§2) — `>99%`? A `COPY_DECISIONS.md` row.
 - [ ] **Separate audit:** FAR numerator coverage — built-but-unrecorded floor area makes WHITE / POUNDMAKER INDUSTRIAL read `0.00 FAR` (§5). ⚠️ Not a `fmtFar` floor; S9 stands.
-
-### Dataset-requests notebook fixes (OPEN 2026-09-23 S190)
-
-From `docs/FINDINGS_dataset_requests_notebook.md`. The page is public and states one false sentence. Nothing applied yet.
-
-- [ ] §5a prose: delete "Utilities & drainage is the only topic … more refusals than completions". Property also has more (11 vs 10) (§4).
-- [ ] Topic regexes: `\bbus` → `\bbus(?:es)?\b`, `tree` → `\btrees?\b`. Transit falls from 50 to 30 (§3).
-- [ ] Split the 2023-06-07 and 2023-09-19 backlog sweeps out of "Refused" (16 rows), drop `ODR19-269` "test", re-state the headline: ~61 decided refusals, ~3.3× (§2).
-- [ ] §5e: call the ~11% a floor; the date anchor is bulk for 57 of 152 CLOSED rows (§5). Decide `~d.moved` vs `~d.reintake`.
-- [ ] §6 Issue 4 prose: cite `ODR23-363` first; it was refused in 2023 and is the closest precedent (§6).
-- [ ] Re-render and re-inject the mobile CSS; update the index blurb if the headline changes.
 
 ### Colour legibility — two measured defects in the CURRENT dark map (OPEN 2026-09-22 S186)
 

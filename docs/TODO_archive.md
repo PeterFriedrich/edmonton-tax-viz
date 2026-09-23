@@ -3309,3 +3309,16 @@ numbers and `ward_rollup.py`'s basis, so propose before building (CLAUDE.md).
 Bike: same mechanism, 2.5 km.
 
 **CLOSED 2026-09-22 (S188): equal split built** — Peter chose 50/50 after two external research replies (`/home/opc/research/edmonton-tax-viz/road_cost/boundary_road_*_2026-09-22.md`). `load_roads.split_boundary_pieces` (`BOUNDARY_TOL_M` = 2 m), applied to the roads metric, the roads web colour driver and bike. DECISIONS 2026-09-22 (S188 row) carries the measured sizes and tests.
+
+### Dataset-requests notebook fixes (OPEN 2026-09-23 S190)
+
+From `docs/FINDINGS_dataset_requests_notebook.md`. The page is public and states one false sentence. Nothing applied yet.
+
+- [x] §5a prose: delete "Utilities & drainage is the only topic … more refusals than completions". Property also has more (11 vs 10) (§4).
+- [x] Topic regexes: `\bbus` → `\bbus(?:es)?\b`, `tree` → `\btrees?\b`. Transit falls from 50 to 30 (§3).
+- [x] Split the 2023-06-07 and 2023-09-19 backlog sweeps out of "Refused" (16 rows), drop `ODR19-269` "test", re-state the headline: ~61 decided refusals, ~3.3× (§2).
+- [x] §5e: call the ~11% a floor; the date anchor is bulk for 57 of 152 CLOSED rows (§5). Decide `~d.moved` vs `~d.reintake`.
+- [x] §6 Issue 4 prose: cite `ODR23-363` first; it was refused in 2023 and is the closest precedent (§6).
+- [x] Re-render and re-inject the mobile CSS; update the index blurb if the headline changes.
+
+**CLOSED 2026-09-23 (S190):** all five applied in one PR and re-rendered; 10 of 10 invariants. Decided refusals 61, naive overstatement 3.3×, Transit 50 → 30. The §5e `~d.moved` no-op was removed and the 53 re-intake rows kept on purpose: they are CLOSED requests like any other.
