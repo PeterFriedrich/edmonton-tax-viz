@@ -245,6 +245,25 @@ const check = (name, cond) => { (cond ? pass++ : fail++); console.log(`${cond ? 
   check('devScale clamp follows permits column p97.5', permits.clampMatches);
   check('plane recolours by permits column (sqrt)', permits.midFillOk);
   check('tooltip shows "new permits / acre"', /new permits \/ acre/.test(permits.tip));
+  // COPY_DECISIONS B1: the blurb printed the units text in permits mode, and the
+  // grid's coverage figure was computed from units. Both must follow the metric.
+  const permBlurb = await page.evaluate(() => document.getElementById('title-p').textContent);
+  check('permits blurb names permits, not dwelling units',
+        /permits issued per acre/.test(permBlurb) && !/dwelling units added/.test(permBlurb));
+  await click('#devdetail button[data-devdetail="grid"]');
+  await page.waitForTimeout(2500);
+  const permGrid = await page.evaluate(() => {
+    const cov = devGridData && devGridData.coverage[state.devWindow];
+    return { blurb: document.getElementById('title-p').textContent,
+             permPct: cov && Math.round(100 * (1 - cov.permits_geocoded / cov.permits)),
+             unitPct: cov && Math.round(100 * (1 - cov.units_geocoded / cov.units)) };
+  });
+  check('permits grid coverage is the PERMITS share, and differs from units (non-vacuous)',
+        permGrid.permPct != null && permGrid.permPct !== permGrid.unitPct &&
+        permGrid.blurb.includes(`~${permGrid.permPct}% of the window's permits`),
+        `${permGrid.permPct}% vs units ${permGrid.unitPct}%`);
+  await click('#devdetail button[data-devdetail="hood"]');
+  await page.waitForTimeout(800);
   // Switch back to units so the window + money round-trips start from the default metric.
   await click('#devmetric button[data-devmetric="units"]');
   await page.waitForTimeout(800);
