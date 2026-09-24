@@ -1360,25 +1360,23 @@
       state.labCut === "revenue_per_acre" ? "developed neighbourhoods"
         : deviationKind() + "neighbourhoods";
 
-    // Change-lens blurb follows the window picker, so the years named in the
-    // text can never disagree with the years being measured.
+    // Change-lens blurb (COPY_DECISIONS BC1, B8 shape). It follows the window
+    // picker, so the years named can never disagree with the years measured,
+    // and the camera (B3): height is this lens's main encoding and the map is
+    // flat in 2D (camFlat), so the reading sentence describes what is drawn.
     function changeBlurb() {
       const w = CHG_WINDOW_LABEL[state.chgWindow];
       const y0 = CHG_WINDOWS[state.chgWindow];
-      return "Height and colour show how fast each neighbourhood's share of " +
-        "Edmonton's total assessment base moved over " + w + " — the average " +
-        "annual change relative to where it started, so a small hood doubling " +
-        "reads as strongly as a large one doubling. Teal rises where a hood " +
-        "gained share, orange sinks below the plane where it lost, and flat " +
-        "ground is no change. ⚠️ Height is a RATE, not a dollar amount: the " +
-        "tallest prisms are small new subdivisions growing off a near-empty " +
-        "baseline, not the biggest tax bases. A hood can lose share while its " +
-        "assessed value rises — the rest of the city simply rose faster. " +
-        "Colour saturates at each arm's 95th percentile. Grey = no " + y0 +
-        " baseline — the neighbourhood held none of the assessment base that " +
-        "year, so there is nothing to measure change against; these are the " +
-        "new-growth areas, NOT set-aside land. Click any neighbourhood for " +
-        "its full history.";
+      return "How fast each neighbourhood's **share of Edmonton's assessed value** " +
+        "changed, " + w + ", against its own starting share.\n\n" +
+        (camFlat
+          ? "Teal gained share, orange lost it; stronger is faster. It is a rate, " +
+            "not dollars: the strongest are small new subdivisions."
+          : "Teal rises where it gained, orange sinks where it lost. It is a rate, " +
+            "not dollars: the tallest are small new subdivisions.") +
+        " Grey = no " + y0 + " value to start from.\n\n" +
+        "A neighbourhood can lose share while its value rises, if the rest of " +
+        "the city rose faster. Click one for its history.";
     }
 
     // Glass blurb follows the spike denominator (the layers-panel toggle). It no
@@ -1547,6 +1545,20 @@
           return p;
         }));
     }
+
+    // The active view's blurb. Read by applyView and by the camera's 2D/3D flip
+    // (syncMode), since some blurbs describe height and the flat map has none.
+    const currentBlurb = () => {
+      const v = state.view;
+      return v === "glass" ? glassBlurb() :
+        v === "services" ? servicesBlurb() :
+        v === "ratio" ? ratioDenom().blurb + ratioInstBlurb() :
+        v === "uses" ? usesBlurb() :
+        v === "development" ? devBlurb() :
+        v === "change" ? changeBlurb() :
+        v === "deviation" ? deviationBlurb() :
+        v === "infill" ? VIEWS[v].blurb + infillAmenityBlurb() : moneyBlurb();
+    };
 
     // The money/glass blurbs describe the colour transform in prose ("colour is
     // square-root–scaled …"). When the Colour Adjustment toggle is OFF that
@@ -7431,14 +7443,7 @@
         v === "ratio" ? ratioDenom().title :
         v === "deviation" ? deviationTitle() :
         v === "development" ? devTitle() : chrome.title;
-      setBlurb(v === "glass" ? glassBlurb() :
-        v === "services" ? servicesBlurb() :
-        v === "ratio" ? ratioDenom().blurb + ratioInstBlurb() :
-        v === "uses" ? usesBlurb() :
-        v === "development" ? devBlurb() :
-        v === "change" ? changeBlurb() :
-        v === "deviation" ? deviationBlurb() :
-        v === "infill" ? VIEWS[v].blurb + infillAmenityBlurb() : moneyBlurb());
+      setBlurb(currentBlurb());
       // ⚠️ THE LEGEND MOVED UP HERE TOO, 2026-08-08, for the reason the title
       // block already had: it is chrome the sweep measures, so it must be final
       // BEFORE buildLayers(). Only #title was fixed when this was first found,
@@ -7689,6 +7694,8 @@
         if (flat !== camFlat) {
           camFlat = flat;
           squashZ = null;
+          // Before buildLayers: the label sweep measures the title block.
+          if (state.data) setBlurb(currentBlurb());
           if (overlay) overlay.setProps({ layers: buildLayers() });
         }
       };
