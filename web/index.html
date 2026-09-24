@@ -63,8 +63,7 @@
     <!-- The landing state of moneyBlurb() (Total, ground acres, sqrt, 3D);
          nothing rewrites it on load. verify-money-denom.js checks they match. -->
     <div id="title-p"><p><b>City property tax per acre</b>: what each
-       neighbourhood's properties pay the City, divided by its land area. School
-       tax is not included.</p><p>Taller, brighter neighbourhoods are higher per
+       neighbourhood's properties pay the City, divided by its land area.</p><p>Taller, brighter neighbourhoods are higher per
        acre; colour is square-root scaled to show the low end. Grey = set-aside
        land (river valley, parks, undeveloped), off the scale.</p></div>
   </div>
@@ -787,9 +786,9 @@
       revenue_per_acre: {
         key: "revenue_per_acre",
         title: "Edmonton: City Taxes per Acre",
+        // Education tax is excluded (C1), said by the mill-rate pod directly below.
         blurb: "**City property tax per acre**: what each neighbourhood's " +
-               "properties pay the City, divided by its land area. School tax is " +
-               "not included.",
+               "properties pay the City, divided by its land area.",
         legendLabel: "City tax per acre",
         legendMin: "$0",
         legendMax: "$50k+",
