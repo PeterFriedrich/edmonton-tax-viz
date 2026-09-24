@@ -290,19 +290,19 @@ these count.
 | **B5** | **A length budget.** There isn't one. On a 768 px screen the panel runs from 157 px (Roads) to 495 px (road costs). A target (for example ≤ 400 chars, with the rest moved to the tooltip or Data & Methods) would decide most of the rewrite. | road costs, Change, Development grid | **decided 2026-09-24** (Peter): **≤ 400 characters** per blurb state; the caveats that don't fit move to the tooltip or Data & Methods. The worst case a visitor meets by default is Development (949 characters on entry) |
 | **B6** | **The grid blurbs never name the metric**: *"The active metric in 100 m grid cells…"*. The title does, so this is a placeholder that shipped. | Money grid, 16 states | open |
 | **B7** | **Register.** Change uses `⚠️` and ALL-CAPS (*RATE*, *NOT*). The Development long window reads *"(2009–2025) — the density added over the era — new houses…"*, two dash clauses in a row. | Change, Development | open |
-| **B8** | **A writing rule for every blurb** (Peter, 2026-09-24): *"paragraph breaks first… and bold for the very first important term/target in the lens"*. **P1** says what the lens shows, with the measured thing bolded where it first appears, and that is the only bold. **P2** says how to read it: colour, height, grey. **P3** holds caveats and mode-specific additions, and is left out when there is nothing to say. B5's 400 characters count across all paragraphs. Markup: a blank line starts a paragraph and `**x**` bolds x. `setBlurb()` builds the nodes without innerHTML. | **decided 2026-09-24**; renderer shipped. The per-state guard (1–3 paragraphs, exactly one bold) and the `DECISIONS.md` row land with the rewrite, since no blurb carries the markup yet |
+| **B8** | **A writing rule for every blurb** (Peter, 2026-09-24): *"paragraph breaks first… and bold for the very first important term/target in the lens"*. **P1** says what the lens shows, with the measured thing bolded where it first appears, and that is the only bold. **P2** says how to read it: colour, height, grey. **P3** holds caveats and mode-specific additions, and is left out when there is nothing to say. B5's 400 characters count across all paragraphs. Markup: a blank line starts a paragraph and `**x**` bolds x. `setBlurb()` builds the nodes without innerHTML. | **decided 2026-09-24**; renderer shipped. Guarded per lens as each rewrite lands (1–3 paragraphs, exactly one bold term in P1, ≤ 400 characters); Development first, in `verify-development.js` |
 
 
 ### Draft rewrites (B8 format, ≤ 400 characters)
 
-**BD1 — Development** (status: **draft, awaiting Peter**). Twelve states: 2 metrics × 3 windows × neighbourhood/grid. `{w}` is the window's year range; `{n}` is `homes` or `permits`; `{pct}` is read from `dev_grid.json` coverage for the active metric, and P3 is omitted when it is 0. The longest state is 388 characters; the default (units, since 2009, grid) is 380, down from 949.
+**BD1 — Development** (status: **applied 2026-09-24**, Peter's edits: grid P2 reads *"counts new homes permitted there"*, or *"new permits issued there"* in Permits mode; guarded by `verify-development.js` "B8: every Development state…"). Twelve states: 2 metrics × 3 windows × neighbourhood/grid. `{w}` is the window's year range; `{n}` is `homes` or `permits`; `{pct}` is read from `dev_grid.json` coverage for the active metric, and P3 is omitted when it is 0. The longest state is 388 characters; the default (units, since 2009, grid) is 380, down from 949.
 
 | part | text |
 |---|---|
 | P1, units | `**New homes per acre**, {w}: dwelling units in issued building permits — houses, semis, row houses and apartments. Where the city is growing, not what it pays.` |
 | P1, permits | `**New residential permits per acre**, {w}: one permit per building, so a house and an apartment block each count once. Where the city is growing, not what it pays.` |
 | P2, neighbourhood | `Brighter neighbourhoods added more. Colour is square-root scaled, so a few dense-infill areas don't wash out the rest.` |
-| P2, grid | `Each 100 m cell counts the {n} issued there — brighter is more. Colour is square-root scaled.` |
+| P2, grid | `Each 100 m cell counts new homes permitted there` (Permits: `new permits issued there`) `— brighter is more. Colour is square-root scaled.` |
 | P3, neighbourhood | `Undeveloped greenfield land is coloured here, not greyed: it is where much new building lands.` |
 | P3, grid | `~{pct}% of the {n} aren't on the grid yet (the newest permits lag geocoding); they still count in the neighbourhood view.` |
 
