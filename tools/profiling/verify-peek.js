@@ -179,8 +179,10 @@ const closeBox = page => page.evaluate(() => {
     const t = await targets(page, 2);
     check('touch: found two distinct pickable hoods', t.length === 2,
       t.map(x => x.name).join(' / '));
-    console.log(`\\nPARTIAL — ran ${ran} checks, then stopped: could not find two distinct pickable hoods`);
-    if (t.length < 2) { await ctx.close(); await browser.close(); process.exit(fail ? 1 : 0); }
+    if (t.length < 2) {
+      console.log(`\nPARTIAL — ran ${ran} checks, then stopped: could not find two distinct pickable hoods`);
+      await ctx.close(); await browser.close(); process.exit(fail ? 1 : 0);
+    }
 
     // The city fills the middle of the map at this zoom, so an unpicked pixel
     // only exists out near the corners -- scan the whole canvas, not the centre.
