@@ -1541,8 +1541,9 @@
       document.getElementById("title-p").replaceChildren(
         ...text.split(/\n\s*\n/).map(par => {
           const p = document.createElement("p");
-          par.split("**").forEach((t, i) =>
-            p.append(i % 2 ? Object.assign(document.createElement("b"), { textContent: t }) : t));
+          par.split("**").forEach((t, i) => {
+            if (t) p.append(i % 2 ? Object.assign(document.createElement("b"), { textContent: t }) : t);
+          });
           return p;
         }));
     }
