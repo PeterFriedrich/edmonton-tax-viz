@@ -330,7 +330,7 @@
            that distinction is visible in the panel. -->
       <div class="svc-group">Transportation cost — operating</div>
       <div class="svc" data-service="roadscost">
-        <label title="Modeled annual operating cost of collector + local roads per acre — maintenance plus snow clearing, no capital reconstruction; not the lifecycle roads figure used by Service cost">
+        <label title="Modelled annual operating cost of collector + local roads per acre — maintenance plus snow clearing, no capital reconstruction; not the lifecycle roads figure used by Service cost">
           <input type="checkbox" class="svc-on" /> Roads cost — $/acre/yr
         </label>
         <label class="svc-colour" title="This service drives the colour ramp; the others render neutral">
@@ -346,7 +346,7 @@
         </label>
       </div>
       <div class="svc" data-service="bikecost">
-        <label title="Modeled annual operating cost of dedicated cycling infrastructure per acre — maintenance plus snow clearing, which dominates it; no capital replacement">
+        <label title="Modelled annual operating cost of dedicated cycling infrastructure per acre — maintenance plus snow clearing, which dominates it; no capital replacement">
           <input type="checkbox" class="svc-on" /> Bike cost — $/acre/yr
         </label>
         <label class="svc-colour" title="This service drives the colour ramp; the others render neutral">
@@ -359,7 +359,7 @@
            read as alternatives to add up; the captions are what stop that. -->
       <div class="svc-group">Roads cost — lifecycle</div>
       <div class="svc" data-service="roadslife">
-        <label title="Modeled annual lifecycle cost of collector + local roads per acre — upkeep plus eventual rebuilding, from the City's published per-kilometre figures over a 50-year life; one citywide rate applied to every neighbourhood, not actual spending">
+        <label title="Modelled annual lifecycle cost of collector + local roads per acre — upkeep plus eventual rebuilding, from the City's published per-kilometre figures over a 50-year life; one citywide rate applied to every neighbourhood, not actual spending">
           <input type="checkbox" class="svc-on" /> Roads cost — $/acre/yr
         </label>
         <label class="svc-colour" title="This service drives the colour ramp; the others render neutral">
@@ -917,7 +917,7 @@
     // Ratio view: revenue_per_acre / <service per acre> — the acres cancel,
     // so each ratio is $ of municipal revenue per unit of a LEVY-FUNDED
     // service. The denominator is a picker (SPEC_utilities decision 3,
-    // DECIDED 2026-07-10): per-service ratios only. Modeled EPCOR charges
+    // DECIDED 2026-07-10): per-service ratios only. Modelled EPCOR charges
     // (stormwater, water) never sit under the levy — they are recovered from
     // ratepayers, not tax money (money-flow honesty, SPEC_utilities.md); a
     // combined city-cost denominator waits on published unit costs (V2).
@@ -1084,7 +1084,7 @@
         blurb: "Each neighbourhood is coloured by its modelled annual stormwater " +
                "utility charge per acre — the drainage bylaw's formula (lot area " +
                "× runoff coefficient × rate) applied to every assessed " +
-               "property. Modeled, not billed: an estimate from zoning and lot " +
+               "property. Modelled, not billed: an estimate from zoning and lot " +
                "sizes of the utility charges a neighbourhood's land generates — " +
                "separate money from municipal property tax. Colour is linear. " +
                "Grey = set-aside natural/undeveloped land.",
@@ -1109,7 +1109,7 @@
                "sewer charge per acre — verified April 2026 EPCOR tariffs " +
                "(fixed connection charges by assumed meter size + typical-" +
                "household consumption) applied to every residential property " +
-               "on the assessment roll. Modeled, not billed; commercial " +
+               "on the assessment roll. Modelled, not billed; commercial " +
                "properties are not modelled, and the consumption portion " +
                "tracks household density more than land. Colour is linear. " +
                "Grey = set-aside natural/undeveloped land.",
@@ -1188,7 +1188,7 @@
                "comes from the City's published figures for a kilometre of " +
                "neighbourhood road ($600,000 to operate and maintain, " +
                "$1,900,000 to renew and replace) spread over a 50-year life. " +
-               "Modeled, and in several ways: one citywide rate is applied to " +
+               "Modelled, and in several ways: one citywide rate is applied to " +
                "every neighbourhood, so a 1960s street and a 2015 one cost the " +
                "same here, which they do not in reality. The 50-year life is " +
                "the City's figure for a well-maintained road; it also says " +
@@ -1209,7 +1209,7 @@
                "to each neighbourhood by the service scheduled there. " +
                "Door-to-door DATS paratransit is excluded, because it runs no " +
                "scheduled stops and would otherwise be charged to any " +
-               "neighbourhood that happens to have a bus. Modeled, not a budget " +
+               "neighbourhood that happens to have a bus. Modelled, not a budget " +
                "line: this shares out a mostly-fixed budget by where the service " +
                "runs, so twice the service does not mean twice the cost to ETS. " +
                "Operating only: new trains, garages and line extensions are " +
@@ -1498,8 +1498,17 @@
     };
     // The choropleth blurb with the active window's phrase substituted for the
     // stored 5yr default.
-    const devChoroplethBlurb = () => VIEWS.development.blurb.replace(
-      `the last five full years (${WIN.permits})`, DEV_WINDOW_PHRASE[state.devWindow]);
+    // Permits mode swaps the lead clause too — the stored text describes units.
+    const devChoroplethBlurb = () => {
+      let b = VIEWS.development.blurb.replace(
+        `the last five full years (${WIN.permits})`, DEV_WINDOW_PHRASE[state.devWindow]);
+      if (state.devMetric === "permits")
+        b = b.replace("new dwelling units added per acre from issued building permits",
+                      "new residential building permits issued per acre")
+             .replace("new houses, semis, row houses and apartments,",
+                      "one permit per building — houses, semis, row houses and apartments,");
+      return b;
+    };
     const devBlurb = () => {
       if (devIndustrial()) {
         if (!devGridActive()) return VIEWS.development.indBlurb;
@@ -1530,16 +1539,16 @@
             : "");
       }
       if (!devGridActive()) return devChoroplethBlurb();
-      const what = state.devMetric === "permits" ? "permits" : "homes";
+      const what = state.devMetric === "permits" ? "permits" : "units";
       const cov = devGridData.coverage && devGridData.coverage[state.devWindow];
-      const pct = cov && cov.units
-        ? Math.round(100 * (1 - cov.units_geocoded / cov.units)) : null;
+      const pct = cov && cov[what]
+        ? Math.round(100 * (1 - cov[what + "_geocoded"] / cov[what])) : null;
       return devChoroplethBlurb() +
         ` The ${CELL.cellDev} grid replaces the neighbourhood colours with individual ` +
-        "permit cells — height is linear in new " + what + " per cell, colour " +
+        "permit cells — height is linear in new " + (what === "units" ? "homes" : what) + " per cell, colour " +
         "square-root scaled. Only geocoded permits appear" +
         (pct != null
-          ? ": ~" + pct + "% of the window's units — mostly the newest permits, " +
+          ? ": ~" + pct + "% of the window's " + what + " — mostly the newest permits, " +
             "which lag geocoding — are not on the grid yet and count only in " +
             "the neighbourhood view."
           : ".");
@@ -6712,7 +6721,7 @@
         // station-dot row (the dots show driver or not).
         if (state.svcDriver === "storm") {
           document.getElementById("legend-label").textContent =
-            "Modeled stormwater charge per acre / yr";
+            "Modelled stormwater charge per acre / yr";
           document.getElementById("legend-min").textContent = "$0";
           document.getElementById("legend-max").textContent =
             "$" + Math.round(svcScale("storm_charge_per_acre").clamp).toLocaleString() + "+";
@@ -6729,7 +6738,7 @@
           sw.style.background = "rgb(104,108,122)";
         } else if (state.svcDriver === "water") {
           document.getElementById("legend-label").textContent =
-            "Modeled water + sewer charge per acre / yr (2026 rates)";
+            "Modelled water + sewer charge per acre / yr (2026 rates)";
           document.getElementById("legend-min").textContent = "$0";
           document.getElementById("legend-max").textContent =
             "$" + Math.round(svcScale("water_charge_per_acre").clamp).toLocaleString() + "+";
@@ -6755,7 +6764,7 @@
           sw.style.background = "rgb(104,108,122)";
         } else if (state.svcDriver === "roadscost") {
           document.getElementById("legend-label").textContent =
-            "Modeled road operating cost per acre / yr — no capital";
+            "Modelled road operating cost per acre / yr — no capital";
           document.getElementById("legend-min").textContent = "$0";
           document.getElementById("legend-max").textContent =
             "$" + Math.round(svcScale("cost_roads_ops_per_acre").clamp).toLocaleString() + "+";
@@ -6763,7 +6772,7 @@
           sw.style.background = "rgb(104,108,122)";
         } else if (state.svcDriver === "roadslife") {
           document.getElementById("legend-label").textContent =
-            "Modeled road lifecycle cost per acre / yr — upkeep + rebuilding";
+            "Modelled road lifecycle cost per acre / yr — upkeep + rebuilding";
           document.getElementById("legend-min").textContent = "$0";
           document.getElementById("legend-max").textContent =
             "$" + Math.round(svcScale("cost_roads_life_per_acre").clamp).toLocaleString() + "+";
@@ -6779,7 +6788,7 @@
           sw.style.background = "rgb(104,108,122)";
         } else if (state.svcDriver === "bikecost") {
           document.getElementById("legend-label").textContent =
-            "Modeled bikeway operating cost per acre / yr (sqrt colour)";
+            "Modelled bikeway operating cost per acre / yr (sqrt colour)";
           document.getElementById("legend-min").textContent = "$0";
           document.getElementById("legend-max").textContent =
             "$" + Math.round(svcScale("cost_bike_ops_per_acre").clamp).toLocaleString() + "+";
