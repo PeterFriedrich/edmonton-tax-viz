@@ -312,7 +312,7 @@ const [url] = process.argv.slice(2);
   const bc = {};
   for (const w of ['long', 'short']) for (const cam of ['3d', '2d']) {
     await page.click(`#chgwindow button[data-chgwindow="${w}"]`);
-    await page.evaluate(p => map.jumpTo({ pitch: p }), cam === '2d' ? 0 : HOME.pitch);
+    await page.evaluate(flat => map.jumpTo({ pitch: flat ? 0 : HOME.pitch }), cam === '2d');
     await page.waitForTimeout(800);
     bc[w + cam] = await page.evaluate(() => {
       const el = document.getElementById('title-p'), ps = [...el.children], bs = el.querySelectorAll('b');
