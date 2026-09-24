@@ -423,52 +423,6 @@ when the prefetch created the window that separates them. ⚠️ **Re-test parke
 Also three more vacuous checks caught by falsification, all in tests written the
 same session — see `docs/DECISIONS.md`'s last two rows.)_
 
-### Public blurb cleanup — every public view's title blurb, one pass (OPEN 2026-09-23 S192)
-
-Peter, 2026-09-23: *"i actually want to clean up all the public release blurbs
-anyway"*. A separate piece of work from the 2D flatten (#552), which it grew out
-of. Nothing is decided yet. The first step is to inventory the blurbs, not to
-reword one.
-
-✅ **INVENTORY DONE 2026-09-23 (S193):** `docs/COPY_DECISIONS.md` group B.
-66 public states, 11 base texts (re-measure with `tools/profiling/verify-blurbs.js --dump`).
-It found two defects (B1: Development says "dwelling units" in Permits mode; B2:
-S1 missed capital `Modeled`) and five decisions for Peter (B3–B7). Next: Peter
-decides B3–B5, then draft the rewrites as rows.
-
-✅ **ALL SIX PUBLIC LENSES REWRITTEN 2026-09-24 (S193)**: BD1, BC1, BM1, BG1,
-BS1 and BR1, in the B8 shape (paragraphs, one bold term, ≤ 400 characters,
-height wording follows the camera). Enforced on every deploy by
-`tools/profiling/verify-blurbs.js` (`deploy.yml`). **Left open, for Peter:**
-four caveats the rewrites cut that now appear on no public surface. See the
-⚠️ lines under BM1/BG1 (lot-size dedup) and BS1 (arterials push the other way;
-unadjusted for inflation). Decide whether they go into Data & Methods, then
-close this item. The page titles (e.g. *"Revenue per Road Metre"*) were out of
-scope and still use the old noun (BR1).
-
-- **Scope: the public build's title blurbs, in every state.** The text changes
-  with the view and its modes, so each builder counts, not just `VIEWS`:
-  `moneyBlurb`, `GLASS_BLURBS`, `changeBlurb`, `devChoroplethBlurb` /
-  `DEV_WINDOW_PHRASE`, `servicesBlurb`, the Ratio blurb, and `withColourClause`
-  (look each up in `docs/CODEMAP.md`). Full-only blurbs (Infill, Uses,
-  deviation, Lab) are out unless Peter says otherwise.
-- **Known inputs, already measured:**
-  - **Height wording vs the flat camera.** Money says *"Height and colour
-    show…"*, Change says *"Teal rises… orange sinks below the plane"*, and
-    Ratio/Glass say *"Height is linear"*. Since #552, all of that is false in
-    2D. Decide per blurb: say it conditionally, move it into the legend, or
-    drop it.
-  - **Length.** At 1366×768 and 1280×720 the two longest blurbs hit
-    `TEMPORAL_MIN_H`, and blurb length is the only lever left. See the
-    `#temporal` residual below ("RESIDUAL from the panel/blurb fix"), and
-    `deviationBlurb`'s "KEEP THIS SHORT" note (Development 442px).
-  - **Nouns already locked in `COPY_DECISIONS.md`** (`city tax`, etc.): a
-    rewrite must not re-open them. Read the status column first (see S9).
-- **How:** add the reworded blurbs as rows in `docs/COPY_DECISIONS.md`, get
-  Peter's call, then apply them in one pass. Verify scripts assert on blurb
-  strings: the 2026-09-18 pass had to update nine of them, so grep
-  `tools/profiling/` for each old string before shipping.
-
 ### `verify-services-panel.js` and `verify-ratio-denom.js` are red on the public build (FOUND 2026-09-24 S193)
 
 Four checks fail on master as well as on branches: *"transit / bike / transitcost /
@@ -3400,3 +3354,4 @@ Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — 
   `UI`/`UF`/`AJ`/`PU` partially flags exempt-roll understatement). Refs:
   `docs/FINDINGS_revenue_scale.md` §§5–6.1, `scripts/investigate_skew.py`,
   `docs/SPEC_revenue.md` "Update 2026-06-29".
+- [x] **Public blurb cleanup — every public view's title blurb** — CLOSED 2026-09-24 · `docs/TODO_archive.md`
