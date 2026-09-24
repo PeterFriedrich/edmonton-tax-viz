@@ -239,6 +239,53 @@ const [url] = process.argv.slice(2);
     /\/ acre/.test(pubTip.reduced)
     && pubTip.reduced.length < pubTip.full.length
     && !/class="spark"/.test(pubTip.reduced));
+
+  // ---- the ASSESSMENT teaser appears only where the click opens it ---------
+  // 2026-09-24 (Peter): hovering Development, Services and Ratio showed the
+  // assessment-share sparkline. Services' click opens its cost panel, Ratio has
+  // no panel, and 44 Development hoods with no permit row fell through to the
+  // history. Swept over EVERY hood, because the Development half failed on 44
+  // of 406 and one sampled hood would not have found it.
+  const sweep = await pub.evaluate(async () => {
+    applyHoodMode('popup');
+    applyMetric('revenue_per_acre');
+    const out = {};
+    for (const v of ['development', 'services', 'ratio']) {
+      await applyView(v);
+      let hist = 0, invite = 0, n = 0;
+      for (const f of state.data.features) {
+        const t = tooltipFor({ object: f });
+        if (!t) continue;
+        n++;
+        if (/of city base/.test(t.html)) hist++;
+        if (/click to compare with service costs/.test(t.html)) invite++;
+      }
+      out[v] = { n, hist, invite, panelLens: hoodPanelLens() };
+    }
+    // A hood with no dev_history row reads as "none", and the click opens the
+    // dev panel rather than the assessment history.
+    await applyView('development');
+    const f = state.data.features.find(x => !devHistoryData.hoods[x.properties.neighbourhood_name]);
+    const name = f && f.properties.neighbourhood_name;
+    const tip = f ? tooltipFor({ object: f }).html : '';
+    if (name) openTemporal(name);
+    out.devAbsent = { name, none: /none since/.test(tip),
+      panel: document.getElementById('temporal-hint').textContent,
+      note: document.getElementById('temporal-note').textContent };
+    closeTemporal();
+    return out;
+  });
+  for (const v of ['development', 'services', 'ratio'])
+    check(`public ${v}: no hover carries the assessment sparkline`,
+      sweep[v].n > 400 && sweep[v].hist === 0, `${sweep[v].hist} of ${sweep[v].n}`);
+  check('public services: every hover invites the cost panel, in the plural',
+    sweep.services.invite === sweep.services.n, `${sweep.services.invite} of ${sweep.services.n}`);
+  check('public ratio: no panel lens, so the click is inert and no invite shows',
+    !sweep.ratio.panelLens && sweep.ratio.invite === 0);
+  check('public development: a hood with no permit row reads "none since", not history',
+    !!sweep.devAbsent.name && sweep.devAbsent.none, sweep.devAbsent.name);
+  check('public development: and its click opens the dev panel, not the assessment one',
+    !/historical assessment/.test(sweep.devAbsent.note), sweep.devAbsent.note.slice(0, 60));
   await pub.close();
 
   await browser.close();

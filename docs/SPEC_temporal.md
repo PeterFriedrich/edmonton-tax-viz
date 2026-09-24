@@ -47,7 +47,8 @@ candidate for that queue until Phase 0 closes.
 > **Consequences for anyone editing this section:**
 > - The **three surfaces that advertise the panel** are lens-dependent now and
 >   must stay in step: `#peek-go`, `#temporal-hint`, and the tooltip's invite
->   (`click to pin` ⇄ `click for the revenue mix`). A teaser for the wrong panel
+>   (`click to pin` ⇄ `click for the revenue mix` ⇄ `click to compare with service
+>   costs`; Ratio has no panel and no invite, 2026-09-24). A teaser for the wrong panel
 >   is the failure mode.
 > - **A pinned panel must re-render when the lens changes** — `syncPinnedPanel`,
 >   called from `applyMetric`, `applyView`, `applyHoodMode` and once at init. A
