@@ -459,6 +459,15 @@ decides B3–B5, then draft the rewrites as rows.
   strings: the 2026-09-18 pass had to update nine of them, so grep
   `tools/profiling/` for each old string before shipping.
 
+### `verify-services-panel.js` is red on the public build (FOUND 2026-09-24 S193)
+
+Four checks fail on master as well as on branches: *"transit / bike / transitcost /
+bikecost: the panel opens and is not empty — 0 rows"*. Those services are
+full-only (`SERVICES[*].pub` false), so the public build has no rows to show. It
+is the missing build gate `tools/profiling/README.md` convention 1 describes.
+The script is not in CI, which is why nobody saw it. Fix: gate those four on
+`FULL_BUILD` and print `PARTIAL`, the way `verify-transport-cost.js` does.
+
 ### Reader-facing copy decisions — 18 open rows in `docs/COPY_DECISIONS.md` (OPEN 2026-09-14 S157)
 
 Opened when Peter asked what "municipal levy" means in the Services panel: *"that's
