@@ -286,9 +286,9 @@ these count.
 
 | id | question | where it bites | status |
 |---|---|---|---|
-| **B3** | **Height wording in 2D.** Since #552 the map is flat in top-down, so every height claim is false there. Options: (a) say it conditionally (the blurb follows the camera, like `withColourClause` follows the toggle), (b) move height into the legend, or (c) drop it. | Money ×8 (*"Height and colour show…", "Height is linear"*), grid ×2, Change (*"Teal rises… orange sinks below the plane"*, *"⚠️ Height is a RATE"*), Development grid (*"height is linear in new homes"*), Ratio (*"Ghost prisms… Height is linear"*). Services has none. || **decided 2026-09-24** (Peter): (a) for Money and Change, where height is the main encoding, so the sentence follows the camera the way `withColourClause` follows the toggle; (c) for the *"Height is linear"* asides, which are dropped |
-| **B4** | **The noun.** N1–N5 set `city tax`. The title says *"City Taxes per Acre"* and every revenue blurb under it says *"municipal property-tax revenue"*, as does Ratio. The N-group was applied to the title and legend, not to `#title-p`. Follow N1; this is not reopening it. | Money Total/Res/Non-res ×2 denominators, Ratio | open |
-| **B5** | **A length budget.** There isn't one. On a 768 px screen the panel runs from 157 px (Roads) to 495 px (road costs). A target (for example ≤ 400 chars, with the rest moved to the tooltip or Data & Methods) would decide most of the rewrite. | road costs, Change, Development grid | **decided 2026-09-24** (Peter): **≤ 400 characters** per blurb state; the caveats that don't fit move to the tooltip or Data & Methods. The worst case a visitor meets by default is Development (949 characters on entry) |
+| **B3** | **Height wording in 2D.** Since #552 the map is flat in top-down, so every height claim is false there. Options: (a) say it conditionally (the blurb follows the camera, like `withColourClause` follows the toggle), (b) move height into the legend, or (c) drop it. | Money ×8 (*"Height and colour show…", "Height is linear"*), grid ×2, Change (*"Teal rises… orange sinks below the plane"*, *"⚠️ Height is a RATE"*), Development grid (*"height is linear in new homes"*), Ratio (*"Ghost prisms… Height is linear"*). Services has none. || **decided + applied 2026-09-24** (Peter; applied in BM1, BG1, BC1 and BR1, and Development and Services carry no height claim): (a) for Money and Change, where height is the main encoding, so the sentence follows the camera the way `withColourClause` follows the toggle; (c) for the *"Height is linear"* asides, which are dropped |
+| **B4** | **The noun.** N1–N5 set `city tax`. The title says *"City Taxes per Acre"* and every revenue blurb under it says *"municipal property-tax revenue"*, as does Ratio. The N-group was applied to the title and legend, not to `#title-p`. Follow N1; this is not reopening it. | Money Total/Res/Non-res ×2 denominators, Ratio | **applied** in BM1 (Money) and BR1 (Ratio) |
+| **B5** | **A length budget.** There isn't one. On a 768 px screen the panel runs from 157 px (Roads) to 495 px (road costs). A target (for example ≤ 400 chars, with the rest moved to the tooltip or Data & Methods) would decide most of the rewrite. | road costs, Change, Development grid | **decided + applied 2026-09-24** (Peter; the longest public state is now 398): **≤ 400 characters** per blurb state; the caveats that don't fit move to the tooltip or Data & Methods. The worst case a visitor meets by default is Development (949 characters on entry) |
 | **B6** | **The grid blurbs never name the metric**: *"The active metric in 100 m grid cells…"*. The title does, so this is a placeholder that shipped. | Money grid, 16 states | **applied in BG1** (in PR) |
 | **B7** | **Register.** Change uses `⚠️` and ALL-CAPS (*RATE*, *NOT*). The Development long window reads *"(2009–2025) — the density added over the era — new houses…"*, two dash clauses in a row. | Change, Development | **decided 2026-09-24**: drop both; applied to Development (BD1) and Change (BC1) |
 | **B8** | **A writing rule for every blurb** (Peter, 2026-09-24): *"paragraph breaks first… and bold for the very first important term/target in the lens"*. **P1** says what the lens shows, with the measured thing bolded where it first appears, and that is the only bold. **P2** says how to read it: colour, height, grey. **P3** holds caveats and mode-specific additions, and is left out when there is nothing to say. B5's 400 characters count across all paragraphs. Markup: a blank line starts a paragraph and `**x**` bolds x. `setBlurb()` builds the nodes without innerHTML. | **decided 2026-09-24**; renderer shipped. Guarded by `verify-blurbs.js` (1–3 paragraphs, exactly one bold term in P1, ≤ 400 characters, and no height claim in 2D) over every public state; every public lens is rewritten as of BR1 |
@@ -390,6 +390,21 @@ P2 is *"Brighter costs more per acre; colour is linear. Grey = set-aside land."*
 - *"unadjusted for inflation"*: only implied by "2017 roads-maintenance budget".
 
 Say if either belongs in `about-modelled-roads`.
+
+**BR1 — Ratio** (status: **in PR, awaiting Peter's merge**). Two public states (camera); the full-only fire denominator gets the same shape. 395 characters in 3D and 381 in 2D, down from 561. **With BR1, every public lens is in the B8 shape**, and `verify-blurbs.js` enforces the rules on all 150 states.
+
+| part | text |
+|---|---|
+| P1, roads | `**City tax per road metre**: what each neighbourhood pays the City, divided by its metres of collector and local road.` |
+| P2 | `Taller, brighter prisms mean` (2D: `Brighter means`) `more tax per metre; colour is log-scaled. Grey = set-aside land, or too little road to measure.` |
+| P3 (azure) | `{n} neighbourhoods show two azure prisms: a quarter or more of their tax is on institutional land the roll may not levy, so only the lower prism is certain.` |
+
+**Dropped:**
+- *"Ghost prisms"*: the reader sees they are translucent.
+- *"how much revenue backs each metre of the network below"*: restates the ratio.
+- *"Height is linear"*: B3 (c).
+
+**B4 applied:** *"municipal property-tax revenue"* became *"city tax"*. ⚠️ The title still reads *"Edmonton: Revenue per Road Metre"*; titles are outside this cleanup, so that needs its own N-row.
 
 Already open elsewhere and on the public default blurb: **J1** (*"class-differential
 mill rates"*) and **J2** (*"set-aside"*, in every public blurb except Services: Roads).
