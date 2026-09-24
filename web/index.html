@@ -1130,13 +1130,12 @@
         pub: true,
         plane: { col: "cost_roads_ops_per_acre" },
         blurb: "**Road operating cost per acre**: modelled yearly upkeep of " +
-               "collector and local roads, at $5,970 per lane-km for maintenance " +
-               "(the City's 2017 roads-maintenance budget) plus $3,350 for snow " +
-               "and ice.\n\nBrighter costs more per acre; colour is linear. Grey = " +
+               "collector and local roads: $5,970 per lane-km of maintenance (the " +
+               "City's 2017 roads-maintenance budget) plus $3,350 of snow and " +
+               "ice.\n\nBrighter costs more per acre; colour is linear. Grey = " +
                "set-aside land.",
-        blurbNote: "Operating only, so a floor: rebuilding is the lifecycle layer, " +
-                   "one lane is charged per street, and it is 2017 dollars. Data & " +
-                   "Methods has the rest.",
+        blurbNote: "Operating only, so a floor: rebuilding is the lifecycle layer, and " +
+                   "one lane is charged per street.",
       },
       // ⚠️ The SAME METRES as roadscost above on the OTHER basis — ~5.4x as shipped,
       // ~3.0x on one unit (the operating rate is per LANE-km; roads_operating_rate §7).
@@ -1152,7 +1151,7 @@
                "50-year life.\n\nBrighter costs more per acre; colour is linear. " +
                "Grey = set-aside land.",
         blurbNote: "One citywide rate: not what the City spends here, nor a funding " +
-                   "gap. Data & Methods has the rest.",
+                   "gap. More in Data & Methods.",
       },
       transitcost: {
         label: "Transit cost",

@@ -165,7 +165,7 @@ def test_the_shipped_copy_matches_the_shipped_rates():
 def test_the_real_prose_keeps_the_copy_and_drops_the_comments():
     html = (REPO / "web" / "index.html").read_text(encoding="utf-8")
     haystack = prose(html)
-    assert "$5,970 per lane-kilometre to maintain" in haystack
+    assert "$5,970 per lane-km of maintenance" in haystack
     assert "Both road cost layers are modelled" in haystack
     for comment in REAL_COMMENTS:
         assert comment in html, f"comment probe {comment!r} no longer in the file"
