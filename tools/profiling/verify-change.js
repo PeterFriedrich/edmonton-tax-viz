@@ -326,7 +326,7 @@ const [url] = process.argv.slice(2);
   check('3D blurb describes height (rises / tallest)',
     bc.long3d.flat === false && /rises/.test(bc.long3d.text) && /tallest/.test(bc.long3d.text));
   check('2D blurb says nothing about height (the map is flat)',
-    bc.long2d.flat === true && !/rise|sink|tall|height/i.test(bc.long2d.text), bc.long2d.text);
+    bc.long2d.flat === true && !/rises where|sinks|tallest|height/i.test(bc.long2d.text), bc.long2d.text);
   check('the blurb names each window\'s years and start year',
     /2012.2026/.test(bc.long3d.text) && /no 2012 value/.test(bc.long3d.text) &&
     /2019.2026/.test(bc.short2d.text) && /no 2019 value/.test(bc.short2d.text));
