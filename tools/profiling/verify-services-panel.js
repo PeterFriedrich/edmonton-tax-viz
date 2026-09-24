@@ -27,6 +27,10 @@
 //      check 2 while making the lens worse.
 //   5. **Public build.** Three of the ten rows are public (roads, roadscost,
 //      roadslife), so this is not a full-build-only defect.
+//   6. **Services shows dollars, ranked; Ratio shows the share of tax**
+//      (Peter, 2026-09-24). The percentage bars moved from Services to Ratio,
+//      so each panel is checked for its OWN form AND for the other's absence —
+//      a panel carrying both would pass either check alone.
 //
 //   node verify-services-panel.js <url>
 const { chromium } = require('playwright');
@@ -81,9 +85,45 @@ const SUBJECT = { storm: /storm/i, fire: /fire/i, water: /water|sewer/i };
       text: document.getElementById('temporal-read').textContent.trim()
           + '\n' + document.getElementById('temporal-note').textContent.trim(),
       rows: el.querySelectorAll('.svcrow').length,
+      ems: [...el.querySelectorAll('.svcrow em')].map(e => e.textContent.trim()),
       label: SERVICES[k].label,
     };
   }, key);
+
+  // A cost row in Services is a dollar figure; in Ratio it is a share of tax.
+  const DOLLAR_ROW = /^\$[\d,]+ \/ acre \/ yr$/;
+  const SHARE_ROW = /^(<0\.1|\d+(\.\d)?)%$/;
+  const ranksIn = t => (t.match(/highest of \d+ neighbourhoods/g) || []).length;
+  const servicesForm = (name, r) => {
+    check(`*** ${name}: every cost row is a dollar figure, not a share of tax ***`,
+      r.ems.every(e => DOLLAR_ROW.test(e)), r.ems.join(' | '));
+    check(`*** ${name}: every cost row carries its rank ***`,
+      ranksIn(r.text) >= r.rows, `${ranksIn(r.text)} ranks for ${r.rows} rows`);
+    check(`${name}: no city-tax comparison in Services`,
+      !/city (property )?tax|% of/i.test(r.text), r.text.split('\n')[0].slice(0, 80));
+  };
+
+  const ratioPanel = (page, d) => page.evaluate(async (d) => {
+    await applyView('ratio');
+    applyRatioDenom(d);
+    closeTemporal();
+    openTemporal('DOWNTOWN');
+    const el = document.getElementById('temporal');
+    return {
+      denom: state.ratioDenom,
+      open: el.classList.contains('open'),
+      text: document.getElementById('temporal-read').textContent.trim()
+          + '\n' + document.getElementById('temporal-note').textContent.trim(),
+      rows: el.querySelectorAll('.svcrow').length,
+      ems: [...el.querySelectorAll('.svcrow em')].map(e => e.textContent.trim()),
+    };
+  }, d);
+  const ratioForm = (name, r) => {
+    check(`${name}: the Ratio panel opens`, r.open, `denom=${r.denom}`);
+    check(`*** ${name}: the Ratio panel sets the cost against the city tax ***`,
+      /City property tax collected here/.test(r.text) && r.rows > 0
+      && r.ems.every(e => SHARE_ROW.test(e)), `${r.rows} rows: ${r.ems.join(' | ')}`);
+  };
 
   const page = await open(url);
 
@@ -153,14 +193,27 @@ const SUBJECT = { storm: /storm/i, fire: /fire/i, water: /water|sewer/i };
     for (const [k, re] of Object.entries(SUBJECT)) {
       check(`*** ${k}: the panel mentions its own subject (${seen[k].label}) ***`,
         re.test(seen[k].text), seen[k].text.slice(0, 90).replace(/\n/g, ' | '));
-      // 3b. The degraded form must EXPLAIN the missing cost, not just omit it.
-      // These three have no City cost because of what the money is — utility
-      // charges, and a demand-only measure — so the panel states a scope. A
-      // blank would satisfy every other check here while reading as a gap.
-      check(`*** ${k}: the absent cost is explained, not just omitted ***`,
-        seen[k].rows === 0 && /utility charge|no fire cost|demand/i.test(seen[k].text),
-        `${seen[k].rows} rows | ${seen[k].text.split('\n')[1] || ''}`.slice(0, 110));
+      // 3b. Fire has no cost at all, so the panel must EXPLAIN that rather
+      // than just omit it — a blank would pass every other check here. Storm
+      // and water are utility charges: since 2026-09-24 Services shows the
+      // charge itself, ranked, and says whose money it is.
+      if (k === 'fire')
+        check(`*** fire: the absent cost is explained, not just omitted ***`,
+          seen[k].rows === 0 && /no fire cost/i.test(seen[k].text),
+          `${seen[k].rows} rows | ${seen[k].text.split('\n')[1] || ''}`.slice(0, 110));
+      else
+        check(`*** ${k}: shows its charge, ranked, as a utility charge ***`,
+          /\$[\d,]+ modelled/.test(seen[k].text) && ranksIn(seen[k].text) >= 1
+          && /utility charge/i.test(seen[k].text),
+          seen[k].text.slice(0, 110).replace(/\n/g, ' | '));
     }
+    for (const k of keys) servicesForm(k, seen[k]);
+
+    // ---- 3d. RATIO CARRIES THE SHARE-OF-TAX PANEL ---------------------------
+    ratioForm('ratio/roads', await ratioPanel(page, 'roads'));
+    const rf = await ratioPanel(page, 'fire');
+    check('ratio/fire: the panel opens and explains there is no fire cost',
+      rf.open && rf.rows === 0 && /no fire cost/i.test(rf.text), `${rf.rows} rows`);
   }
   // ---- 3c. A NONZERO COST NEVER PRINTS AS "0.0%" -------------------------
   // `fmtSvcRatio` used to `toFixed(1)` below 10%, so a real cost four orders
@@ -273,7 +326,9 @@ const SUBJECT = { storm: /storm/i, fire: /fire/i, water: /water|sewer/i };
     check(`public ${k}: selection took`, r.driver === k, `driver=${r.driver}`);
     check(`public ${k}: the panel opens and is not empty`,
       r.open && r.rows > 0, `${r.rows} rows`);
+    servicesForm(`public ${k}`, r);
   }
+  ratioForm('public ratio/roads', await ratioPanel(pub, 'roads'));
   const pubDistinct = new Set(pubKeys.map(k => pubSeen[k].text)).size;
   check('*** PUBLIC: the panel differs across the three public layers ***',
     pubDistinct > 1, `${pubDistinct} distinct rendering(s) across ${pubKeys.length} layers`);

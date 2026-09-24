@@ -252,15 +252,16 @@ const [url] = process.argv.slice(2);
     const out = {};
     for (const v of ['development', 'services', 'ratio']) {
       await applyView(v);
-      let hist = 0, invite = 0, n = 0;
+      let hist = 0, invite = 0, ranked = 0, n = 0;
       for (const f of state.data.features) {
         const t = tooltipFor({ object: f });
         if (!t) continue;
         n++;
         if (/of city base/.test(t.html)) hist++;
         if (/click to compare with service costs/.test(t.html)) invite++;
+        if (/click for costs, ranked/.test(t.html)) ranked++;
       }
-      out[v] = { n, hist, invite, panelLens: hoodPanelLens() };
+      out[v] = { n, hist, invite, ranked, panelLens: hoodPanelLens() };
     }
     // A hood with no dev_history row reads as "none", and the click opens the
     // dev panel rather than the assessment history.
@@ -278,10 +279,15 @@ const [url] = process.argv.slice(2);
   for (const v of ['development', 'services', 'ratio'])
     check(`public ${v}: no hover carries the assessment sparkline`,
       sweep[v].n > 400 && sweep[v].hist === 0, `${sweep[v].hist} of ${sweep[v].n}`);
-  check('public services: every hover invites the cost panel, in the plural',
-    sweep.services.invite === sweep.services.n, `${sweep.services.invite} of ${sweep.services.n}`);
-  check('public ratio: no panel lens, so the click is inert and no invite shows',
-    !sweep.ratio.panelLens && sweep.ratio.invite === 0);
+  // Since 2026-09-24 Services' panel is ranked costs and Ratio's is the cost
+  // as a share of tax, so each lens's hover must name its OWN panel — and
+  // never the other's, which is the one-subject-promising-another defect.
+  check('public services: every hover invites the ranked-cost panel, and only that',
+    sweep.services.ranked === sweep.services.n && sweep.services.invite === 0,
+    `${sweep.services.ranked} ranked, ${sweep.services.invite} compare, of ${sweep.services.n}`);
+  check('public ratio: a panel lens, and every hover invites the cost-against-tax panel',
+    sweep.ratio.panelLens && sweep.ratio.invite === sweep.ratio.n && sweep.ratio.ranked === 0,
+    `${sweep.ratio.invite} compare, ${sweep.ratio.ranked} ranked, of ${sweep.ratio.n}`);
   check('public development: a hood with no permit row reads "none since", not history',
     !!sweep.devAbsent.name && sweep.devAbsent.none, sweep.devAbsent.name);
   check('public development: and its click opens the dev panel, not the assessment one',
