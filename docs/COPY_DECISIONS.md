@@ -346,7 +346,7 @@ The camera flip re-renders the blurb through `currentBlurb()` (from `syncMode`),
 - *"applying Edmonton's class-differential mill rates"* (J1): the mill-rate pod directly below the blurb prints the rates under every revenue cut.
 - *"School tax is not included"* was drafted in, then cut: the same pod says *"City tax only; education excluded"* (C1).
 - *"commercial and industrial dollars are excluded here"* / *"residential dollars are excluded"*: P1 already names the class.
-- *"(city lot sizes, deduplicated at multi-unit points)"*: methodology. ⚠️ It now appears on no public surface; say if it belongs in Data & Methods.
+- *"(city lot sizes, deduplicated at multi-unit points)"*: methodology. Moved to Data & Methods (`about-lot-acres`, 2026-09-24, Peter).
 - *"Height is linear"*: B3 (c).
 
 **BG1 — Money, grid detail (100 m / 50 m)** (status: **in PR, awaiting Peter's merge**). 64 states: 2 cell sizes × 4 metrics × 2 denominators × colour × camera. It names the metric (B6) from `METRICS[*].legendLabel`. The longest state (Non-residential, lot acres, linear colour, 3D, azure cells showing) is 391 characters, down from 581.
@@ -385,11 +385,7 @@ P2 is *"Brighter costs more per acre; colour is linear. Grey = set-aside land."*
 - *"calibrated to local residential roads, so collectors are understated"*;
 - *"a 1960s street and a 2015 one cost the same"*.
 
-⚠️ **Not moved, now on no public surface:**
-- *"the averages include arterials, which are maintained and cleared first and cost more per kilometre"*: the one caveat pushing the other way;
-- *"unadjusted for inflation"*: only implied by "2017 roads-maintenance budget".
-
-Say if either belongs in `about-modelled-roads`.
+**Moved to `about-modelled-roads` later** (2026-09-24, Peter): *"the averages include arterials, which are maintained and cleared first and cost more per kilometre"* and *"unadjusted for inflation"*. The year is not repeated there: `check_cost_copy.py` ties "2017 roads-maintenance budget" to exactly one visible occurrence.
 
 **BR1 — Ratio** (status: **in PR, awaiting Peter's merge**). Two public states (camera); the full-only fire denominator gets the same shape. 395 characters in 3D and 381 in 2D, down from 561. **With BR1, every public lens is in the B8 shape**, and `verify-blurbs.js` enforces the rules on all 150 states.
 
