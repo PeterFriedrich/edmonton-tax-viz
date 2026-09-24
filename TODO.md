@@ -436,6 +436,16 @@ It found two defects (B1: Development says "dwelling units" in Permits mode; B2:
 S1 missed capital `Modeled`) and five decisions for Peter (B3–B7). Next: Peter
 decides B3–B5, then draft the rewrites as rows.
 
+✅ **ALL SIX PUBLIC LENSES REWRITTEN 2026-09-24 (S193)**: BD1, BC1, BM1, BG1,
+BS1 and BR1, in the B8 shape (paragraphs, one bold term, ≤ 400 characters,
+height wording follows the camera). Enforced on every deploy by
+`tools/profiling/verify-blurbs.js` (`deploy.yml`). **Left open, for Peter:**
+four caveats the rewrites cut that now appear on no public surface. See the
+⚠️ lines under BM1/BG1 (lot-size dedup) and BS1 (arterials push the other way;
+unadjusted for inflation). Decide whether they go into Data & Methods, then
+close this item. The page titles (e.g. *"Revenue per Road Metre"*) were out of
+scope and still use the old noun (BR1).
+
 - **Scope: the public build's title blurbs, in every state.** The text changes
   with the view and its modes, so each builder counts, not just `VIEWS`:
   `moneyBlurb`, `GLASS_BLURBS`, `changeBlurb`, `devChoroplethBlurb` /
@@ -459,7 +469,7 @@ decides B3–B5, then draft the rewrites as rows.
   strings: the 2026-09-18 pass had to update nine of them, so grep
   `tools/profiling/` for each old string before shipping.
 
-### `verify-services-panel.js` is red on the public build (FOUND 2026-09-24 S193)
+### `verify-services-panel.js` and `verify-ratio-denom.js` are red on the public build (FOUND 2026-09-24 S193)
 
 Four checks fail on master as well as on branches: *"transit / bike / transitcost /
 bikecost: the panel opens and is not empty — 0 rows"*. Those services are
@@ -467,6 +477,10 @@ full-only (`SERVICES[*].pub` false), so the public build has no rows to show. It
 is the missing build gate `tools/profiling/README.md` convention 1 describes.
 The script is not in CI, which is why nobody saw it. Fix: gate those four on
 `FULL_BUILD` and print `PARTIAL`, the way `verify-transport-cost.js` does.
+
+`verify-ratio-denom.js` has the same defect: *"ratio: picker shown"* fails on
+the public build, where the denominator picker is full-only by design
+(`ratioDenomShow` requires `FULL_BUILD`). It passes 42/42 on the full build.
 
 ### Reader-facing copy decisions — 18 open rows in `docs/COPY_DECISIONS.md` (OPEN 2026-09-14 S157)
 

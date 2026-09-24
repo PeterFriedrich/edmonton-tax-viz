@@ -912,11 +912,11 @@
         aside: "Set aside / insufficient road base",
         fmt: v => money0(v) + " / road metre",
         component: p => fmtRoadM(p.road_m_per_acre),
-        blurb: "Ghost prisms show municipal property-tax revenue per metre of " +
-               "city-maintained neighbourhood road (collector + local) — how much " +
-               "revenue backs each metre of the network below. Height is linear; " +
-               "colour is log-scaled. Grey flat = set-aside land or too little " +
-               "road base for a meaningful ratio.",
+        // P1 only; ratioBlurb() adds the reading line and the azure note.
+        blurb: "**City tax per road metre**: what each neighbourhood pays the " +
+               "City, divided by its metres of collector and local road.",
+        unit: "metre",
+        thin: "too little road to measure",
       },
       fire: {
         col: "fire_events_per_acre",
@@ -928,12 +928,12 @@
         fmt: v => money0(v) + " / fire event",
         component: p => (under2dp(p.fire_events_per_acre) ? "<0.01"
           : p.fire_events_per_acre.toFixed(2)) + " fire events / acre / yr",
-        blurb: "Ghost prisms show municipal property-tax revenue per dispatched " +
-               `fire-department emergency event (${WIN.fire} average) — how much ` +
-               "revenue backs each call a neighbourhood's land generates. Demand, " +
-               "not response coverage, and most dispatched events are medical " +
-               "calls. Height is linear; colour is log-scaled. Grey flat = " +
-               "set-aside land or too few events for a meaningful ratio.",
+        blurb: "**City tax per fire event**: what each neighbourhood pays the " +
+               "City, divided by its dispatched fire-department emergency events " +
+               `(${WIN.fire} average). Demand, not response coverage; most are ` +
+               "medical calls.",
+        unit: "event",
+        thin: "too few events to measure",
       },
     };
     const ratioDenom = () => RATIO_DENOMS[state.ratioDenom];
@@ -1200,7 +1200,7 @@
       },
       ratio: {
         title: null, // denominator-driven — ratioDenom().title
-        blurb: null, // denominator-driven — ratioDenom().blurb
+        blurb: null, // denominator- and camera-driven — ratioBlurb()
         opacity: 15, // ghost prisms by default; slider adjusts (5 -> 15, Peter 2026-09-12)
       },
       uses: {
@@ -1364,11 +1364,17 @@
     const ratioInstBlurb = () => {
       const n = state.data.features.filter(f => instBandedRatio(f.properties)).length;
       if (!n) return "";
-      return ` ${n} neighbourhood${n === 1 ? " is" : "s are"} drawn as a pair of ` +
-        "azure prisms instead: a quarter or more of their revenue sits on " +
-        "institutionally-zoned land, and the roll does not say whether it is " +
-        "levied — so the lower prism is what stands either way and the upper " +
-        "one is the as-levied reading.";
+      return `\n\n${n} neighbourhood${n === 1 ? " shows" : "s show"} two azure ` +
+        "prisms: a quarter or more of their tax is on institutional land the " +
+        "roll may not levy, so only the lower prism is certain.";
+    };
+    // Ratio blurb (COPY_DECISIONS BR1, B8 shape): the denominator's P1, a
+    // reading line that follows the camera (B3), and the azure note as P3.
+    const ratioBlurb = () => {
+      const d = ratioDenom();
+      return d.blurb + "\n\n" + (camFlat ? "Brighter means" : "Taller, brighter " +
+        "prisms mean") + ` more tax per ${d.unit}; colour is log-scaled. Grey = ` +
+        `set-aside land, or ${d.thin}.` + ratioInstBlurb();
     };
     // Phrase it as what KEEPS the highlight. The negative form does not
     // survive two bands: "further than 600 m of LRT and within 800 m of a
@@ -1495,7 +1501,7 @@
       const v = state.view;
       return v === "glass" ? glassBlurb() :
         v === "services" ? servicesBlurb() :
-        v === "ratio" ? ratioDenom().blurb + ratioInstBlurb() :
+        v === "ratio" ? ratioBlurb() :
         v === "uses" ? usesBlurb() :
         v === "development" ? devBlurb() :
         v === "change" ? changeBlurb() :
@@ -6579,7 +6585,7 @@
       if (state.view !== "ratio") return;
       overlay.setProps({ layers: buildLayers() });
       document.getElementById("title-h").textContent = ratioDenom().title;
-      setBlurb(ratioDenom().blurb + ratioInstBlurb());
+      setBlurb(ratioBlurb());
       refreshLegend();
     }
 

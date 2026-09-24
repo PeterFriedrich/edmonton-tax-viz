@@ -14,9 +14,6 @@
 //      equal currentBlurb() for the live state. This is what ties A to the
 //      page: A proves the functions, B proves the page shows them.
 //
-// Lenses not yet rewritten (CONVERTED below) are reported as OPEN, not failed,
-// so the output doubles as the cleanup's remaining-work list.
-//
 //   node verify-blurbs.js <url>                 (use ?build=public)
 //   node verify-blurbs.js <url> --dump out.json (every state's text, length
 //                                                and rendered height)
@@ -24,11 +21,8 @@ const { chromium } = require('playwright');
 const [url, ...rest] = process.argv.slice(2);
 const dumpPath = rest[0] === '--dump' ? rest[1] : null;
 
-// Lenses already in the B8 shape. Add a lens here when its rewrite lands; when
-// every public lens is listed, the OPEN branch below can go.
-const CONVERTED = ['money', 'glass', 'change', 'development', 'services'];
 // Lenses whose main encoding is height, so their 3D blurb must say so (B3 (a)).
-const HEIGHT_LENSES = ['money', 'glass', 'change'];
+const HEIGHT_LENSES = ['money', 'glass', 'change', 'ratio'];
 const PUBLIC_VIEWS = ['money', 'development', 'services', 'ratio'];
 
 (async () => {
@@ -98,7 +92,7 @@ const PUBLIC_VIEWS = ['money', 'development', 'services', 'ratio'];
 
   // ---- A. rules over every public state ------------------------------------
   const t0 = Date.now();
-  const res = await page.evaluate(({ CONVERTED, HEIGHT_LENSES, dump }) => {
+  const res = await page.evaluate(({ HEIGHT_LENSES, dump }) => {
     const KEEP = ['view', 'metric', 'denom', 'colorAdjust', 'chgWindow', 'devMetric',
                   'devWindow', 'devGrid', 'svcDriver', 'glassCell'];
     const saved = { ...Object.fromEntries(KEEP.map(k => [k, state[k]])),
@@ -131,7 +125,7 @@ const PUBLIC_VIEWS = ['money', 'development', 'services', 'ratio'];
       states.push({ lens: 'ratio', flat, set: { view: 'ratio' } });
     }
 
-    const out = [], bad = [], open = {};
+    const out = [], bad = [];
     for (const s of states) {
       Object.assign(state, s.set);
       if (s.services) state.services = s.services;
@@ -146,15 +140,12 @@ const PUBLIC_VIEWS = ['money', 'development', 'services', 'ratio'];
       const why = [];
       // Markup is well-formed on every lens, rewritten or not.
       if (paras.some(p => (p.match(/\*\*/g) || []).length % 2)) why.push('unpaired **');
-      const conv = CONVERTED.includes(s.lens);
-      const shape = [];
-      if (!(paras.length >= 1 && paras.length <= 3)) shape.push(`${paras.length} paragraphs`);
+      if (!(paras.length >= 1 && paras.length <= 3)) why.push(`${paras.length} paragraphs`);
       const bolds = (raw.match(/\*\*/g) || []).length / 2;
-      if (bolds !== 1 || !/\*\*[^*]+\*\*/.test(paras[0])) shape.push(`${bolds} bold, not one in P1`);
-      if (plain.length > 400) shape.push(`${plain.length} chars`);
-      if (s.flat && HEIGHT.test(plain)) shape.push('2D text claims height: "' + plain.match(HEIGHT)[0] + '"');
-      if (conv) why.push(...shape); else if (shape.length) (open[s.lens] ??= new Set()).add(shape.join(', ').replace(/\d+ chars/, '>400 chars'));
-      if (conv && HEIGHT_LENSES.includes(s.lens) && !s.flat && !HEIGHT.test(plain)) why.push('3D text omits height');
+      if (bolds !== 1 || !/\*\*[^*]+\*\*/.test(paras[0])) why.push(`${bolds} bold, not one in P1`);
+      if (plain.length > 400) why.push(`${plain.length} chars`);
+      if (s.flat && HEIGHT.test(plain)) why.push('2D text claims height: "' + plain.match(HEIGHT)[0] + '"');
+      if (HEIGHT_LENSES.includes(s.lens) && !s.flat && !HEIGHT.test(plain)) why.push('3D text omits height');
       if (s.lens === 'money' || s.lens === 'glass') {
         if (state.colorAdjust !== /square-root/.test(plain) || state.colorAdjust === /colour is linear/.test(plain))
           why.push('colour clause does not follow the toggle');
@@ -187,15 +178,12 @@ const PUBLIC_VIEWS = ['money', 'development', 'services', 'ratio'];
     setBlurb(currentBlurb());
     const byLens = {};
     for (const r of out) byLens[r.lens] = (byLens[r.lens] || 0) + 1;
-    return { n: out.length, byLens, bad, open: Object.fromEntries(Object.entries(open).map(([k, v]) => [k, [...v]])),
-             max: Math.max(...out.filter(r => CONVERTED.includes(r.lens)).map(r => r.chars)), rows: dump ? out : null };
-  }, { CONVERTED, HEIGHT_LENSES, dump: !!dumpPath });
+    return { n: out.length, byLens, bad, max: Math.max(...out.map(r => r.chars)), rows: dump ? out : null };
+  }, { HEIGHT_LENSES, dump: !!dumpPath });
   console.log(`rules: ${res.n} states in ${Date.now() - t0} ms  ${JSON.stringify(res.byLens)}`);
-  check(`rules: every rewritten lens's states pass (longest ${res.max} chars)`, res.bad.length === 0);
+  check(`rules: every public state passes (longest ${res.max} chars)`, res.bad.length === 0);
   res.bad.slice(0, 12).forEach(b => console.log('   ' + b));
   if (res.bad.length > 12) console.log(`   ... ${res.bad.length - 12} more`);
-  for (const [lens, issues] of Object.entries(res.open))
-    console.log(`OPEN  ${lens} (not yet rewritten): ${issues.join(' | ')}`);
   if (dumpPath) require('fs').writeFileSync(dumpPath, JSON.stringify(res.rows, null, 1));
 
   // ---- B. wiring: every control that rewrites the blurb --------------------
