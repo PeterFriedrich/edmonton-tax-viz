@@ -431,7 +431,7 @@ of. Nothing is decided yet. The first step is to inventory the blurbs, not to
 reword one.
 
 ✅ **INVENTORY DONE 2026-09-23 (S193):** `docs/COPY_DECISIONS.md` group B.
-66 public states, 11 base texts, measured by `tools/profiling/blurb-inventory.js`.
+66 public states, 11 base texts (re-measure with `tools/profiling/verify-blurbs.js --dump`).
 It found two defects (B1: Development says "dwelling units" in Permits mode; B2:
 S1 missed capital `Modeled`) and five decisions for Peter (B3–B7). Next: Peter
 decides B3–B5, then draft the rewrites as rows.

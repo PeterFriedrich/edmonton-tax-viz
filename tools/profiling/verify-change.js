@@ -307,32 +307,6 @@ const [url] = process.argv.slice(2);
   check('the legend label follows the window', /2019/.test(shortW.label), shortW.label);
   check('the off-scale swatch follows the window', /No 2019 baseline/.test(shortW.aside));
 
-  // COPY_DECISIONS BC1 / B3 / B8: the blurb follows the window AND the camera.
-  // Flat (2D) draws no height, so it must not say anything rises or sinks.
-  const bc = {};
-  for (const w of ['long', 'short']) for (const cam of ['3d', '2d']) {
-    await page.click(`#chgwindow button[data-chgwindow="${w}"]`);
-    await page.evaluate(flat => map.jumpTo({ pitch: flat ? 0 : HOME.pitch }), cam === '2d');
-    await page.waitForTimeout(800);
-    bc[w + cam] = await page.evaluate(() => {
-      const el = document.getElementById('title-p'), ps = [...el.children], bs = el.querySelectorAll('b');
-      return { text: ps.map(p => p.textContent).join(' '), np: ps.length,
-               bold: bs.length === 1 && ps[0].contains(bs[0]), flat: camFlat };
-    });
-  }
-  const b8 = Object.entries(bc).filter(([, b]) => !(b.np >= 1 && b.np <= 3 && b.bold && b.text.length <= 400));
-  check('B8: every Change state is 1-3 paragraphs, one bold in P1, <= 400 chars',
-    b8.length === 0, b8.map(([k, b]) => `${k} ${b.np}p ${b.text.length}ch`).join('; '));
-  check('3D blurb describes height (rises / tallest)',
-    bc.long3d.flat === false && /rises/.test(bc.long3d.text) && /tallest/.test(bc.long3d.text));
-  check('2D blurb says nothing about height (the map is flat)',
-    bc.long2d.flat === true && !/rises where|sinks|tallest|height/i.test(bc.long2d.text), bc.long2d.text);
-  check('the blurb names each window\'s years and start year',
-    /2012.2026/.test(bc.long3d.text) && /no 2012 value/.test(bc.long3d.text) &&
-    /2019.2026/.test(bc.short2d.text) && /no 2019 value/.test(bc.short2d.text));
-  await page.evaluate(() => map.jumpTo({ pitch: HOME.pitch }));
-  await page.waitForTimeout(500);
-
   // Returning to Current lands on the prisms, never Glass — the Detail
   // selector is hidden in Change, so restoring Glass would drop you somewhere
   // you cannot see you are.

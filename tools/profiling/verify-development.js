@@ -429,30 +429,6 @@ const check = (name, cond) => { (cond ? pass++ : fail++); console.log(`${cond ? 
     check('grid off: blurb back to base', off.blurbBase);
   }
 
-  // COPY_DECISIONS B8 + B5 over every public Development state: 1-3 paragraphs,
-  // exactly one bold term, in paragraph 1, <= 400 characters in all.
-  const b8bad = [];
-  for (const m of ['units', 'permits']) for (const w of ['3yr', '5yr', 'long']) for (const d of ['hood', 'grid']) {
-    await click(`#devmetric button[data-devmetric="${m}"]`);
-    await click(`#devwindow button[data-devwindow="${w}"]`);
-    await click(`#devdetail button[data-devdetail="${d}"]`);
-    await page.waitForTimeout(600);
-    const b = await page.evaluate(() => {
-      const el = document.getElementById('title-p'), ps = [...el.children];
-      const bs = el.querySelectorAll('b');
-      return { np: ps.length, nb: bs.length, leads: bs.length === 1 && ps[0].contains(bs[0]),
-               len: ps.map(p => p.textContent).join(' ').length, stars: /\*\*/.test(el.textContent) };
-    });
-    if (!(b.np >= 1 && b.np <= 3 && b.nb === 1 && b.leads && b.len <= 400 && !b.stars))
-      b8bad.push(`${m}/${w}/${d} ${JSON.stringify(b)}`);
-  }
-  check('B8: every Development state is 1-3 paragraphs, one bold in P1, <= 400 chars',
-        b8bad.length === 0);
-  if (b8bad.length) console.log(b8bad.join('\n'));
-  await click('#devmetric button[data-devmetric="units"]');
-  await click('#devwindow button[data-devwindow="long"]');
-  await click('#devdetail button[data-devdetail="grid"]');
-
   // Round-trip back to money restores the aside row and hides the toggle.
   await click('#views button[data-view="money"]');
   await page.waitForTimeout(1500);

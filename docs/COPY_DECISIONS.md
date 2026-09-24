@@ -246,9 +246,10 @@ chart to the window would silently redefine the published number.
 
 The `#title-p` sentence under each view's title, **public build only** (TODO
 "Public blurb cleanup"). **This is the inventory; no blurb has been reworded.**
-Measured by `tools/profiling/blurb-inventory.js`, which clicks through every
-public view × control state at 1366×768 and records the text and the `#title`
-panel height. Re-run it after a rewrite to re-measure.
+Measured 2026-09-23 with a click-through script, since replaced by
+`tools/profiling/verify-blurbs.js`. Its `--dump out.json` writes every public
+state's text, length and rendered height in about 30 seconds. Re-run it after a
+rewrite to re-measure.
 
 **66 states, 11 base texts.** Most variation is appended clauses, not separate
 blurbs: the colour clause (`withColourClause`), the azure-cells sentence
@@ -290,12 +291,12 @@ these count.
 | **B5** | **A length budget.** There isn't one. On a 768 px screen the panel runs from 157 px (Roads) to 495 px (road costs). A target (for example ≤ 400 chars, with the rest moved to the tooltip or Data & Methods) would decide most of the rewrite. | road costs, Change, Development grid | **decided 2026-09-24** (Peter): **≤ 400 characters** per blurb state; the caveats that don't fit move to the tooltip or Data & Methods. The worst case a visitor meets by default is Development (949 characters on entry) |
 | **B6** | **The grid blurbs never name the metric**: *"The active metric in 100 m grid cells…"*. The title does, so this is a placeholder that shipped. | Money grid, 16 states | **applied in BG1** (in PR) |
 | **B7** | **Register.** Change uses `⚠️` and ALL-CAPS (*RATE*, *NOT*). The Development long window reads *"(2009–2025) — the density added over the era — new houses…"*, two dash clauses in a row. | Change, Development | **decided 2026-09-24**: drop both; applied to Development (BD1) and Change (BC1) |
-| **B8** | **A writing rule for every blurb** (Peter, 2026-09-24): *"paragraph breaks first… and bold for the very first important term/target in the lens"*. **P1** says what the lens shows, with the measured thing bolded where it first appears, and that is the only bold. **P2** says how to read it: colour, height, grey. **P3** holds caveats and mode-specific additions, and is left out when there is nothing to say. B5's 400 characters count across all paragraphs. Markup: a blank line starts a paragraph and `**x**` bolds x. `setBlurb()` builds the nodes without innerHTML. | **decided 2026-09-24**; renderer shipped. Guarded per lens as each rewrite lands (1–3 paragraphs, exactly one bold term in P1, ≤ 400 characters); Development first, in `verify-development.js` |
+| **B8** | **A writing rule for every blurb** (Peter, 2026-09-24): *"paragraph breaks first… and bold for the very first important term/target in the lens"*. **P1** says what the lens shows, with the measured thing bolded where it first appears, and that is the only bold. **P2** says how to read it: colour, height, grey. **P3** holds caveats and mode-specific additions, and is left out when there is nothing to say. B5's 400 characters count across all paragraphs. Markup: a blank line starts a paragraph and `**x**` bolds x. `setBlurb()` builds the nodes without innerHTML. | **decided 2026-09-24**; renderer shipped. Guarded by `verify-blurbs.js` (1–3 paragraphs, exactly one bold term in P1, ≤ 400 characters, and no height claim in 2D) over every public state. A lens not yet rewritten prints as `OPEN`, not as a failure |
 
 
 ### Draft rewrites (B8 format, ≤ 400 characters)
 
-**BD1 — Development** (status: **applied 2026-09-24**, Peter's edits: grid P2 reads *"counts new homes permitted there"*, or *"new permits issued there"* in Permits mode; guarded by `verify-development.js` "B8: every Development state…"). Twelve states: 2 metrics × 3 windows × neighbourhood/grid. `{w}` is the window's year range; `{n}` is `homes` or `permits`; `{pct}` is read from `dev_grid.json` coverage for the active metric, and P3 is omitted when it is 0. The longest state is 388 characters; the default (units, since 2009, grid) is 380, down from 949.
+**BD1 — Development** (status: **applied 2026-09-24**, Peter's edits: grid P2 reads *"counts new homes permitted there"*, or *"new permits issued there"* in Permits mode; guarded by `verify-blurbs.js`). Twelve states: 2 metrics × 3 windows × neighbourhood/grid. `{w}` is the window's year range; `{n}` is `homes` or `permits`; `{pct}` is read from `dev_grid.json` coverage for the active metric, and P3 is omitted when it is 0. The longest state is 388 characters; the default (units, since 2009, grid) is 380, down from 949.
 
 | part | text |
 |---|---|
