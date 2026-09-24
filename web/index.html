@@ -1352,28 +1352,16 @@
         "the city rose faster. Click one for its history.";
     }
 
-    // Glass blurb follows the spike denominator (the layers-panel toggle). It no
-    // longer promises a slider — Glass dropped that control 2026-07-25 and the
-    // translucency is fixed, so the prose must not point at a control that isn't
-    // there. (Uses/Development still say "slider" because theirs still exists.)
-    // ⚠️ Each is a FUNCTION, not a string: the cell size is now a user choice,
-    // so the sentence has to be built when it is read, not at parse time.
-    const GLASS_BLURBS = {
-      ground: () => `The active metric in ${glassCellLabel()} grid cells — property points ` +
-              "binned to squares, each cell's total divided by its ground " +
-              "acres. Height is linear; colour is square-root–scaled to " +
-              "the cell distribution. The neutral plane below is the " +
-              "neighbourhoods — hover for their numbers; grey = set-aside " +
-              "natural/undeveloped land. The spikes are translucent so it " +
-              "reads through.",
-      lot:    () => `The active metric in ${glassCellLabel()} grid cells, divided by the parcel ` +
-              "acres the cell's properties own (city lot sizes, deduplicated " +
-              "at multi-unit points; cells with no usable lot size are " +
-              "omitted). Height is linear; colour is square-root–scaled to " +
-              "the cell distribution. The neutral plane below is the " +
-              "neighbourhoods — hover for their numbers; grey = set-aside " +
-              "natural/undeveloped land. The spikes are translucent so it " +
-              "reads through.",
+    // Grid blurb (COPY_DECISIONS BG1, B8 shape). Names the metric (B6) and the
+    // cell size (a user choice, so built when read), follows the spike
+    // denominator, the camera (B3) and — via glassBlurb — the colour toggle.
+    const glassLead = () => {
+      const label = METRICS[state.metric].legendLabel;
+      return state.denom === "lot"
+        ? `**${label.replace("per acre", "per lot acre")} in ${glassCellLabel()} grid ` +
+          "cells**, over the parcel acres each cell's properties own."
+        : `**${label} in ${glassCellLabel()} grid cells**: property points binned ` +
+          "to squares.";
     };
     // The azure cells need a sentence for the same reason the Lab's outlined
     // hoods do — a reader who sees a colour that is not on the ramp will
@@ -1384,9 +1372,9 @@
       if (!(gridData && gridData.hasExempt && isRevenue(state.metric))) return "";
       const n = glassInstCount();
       if (!n) return "";
-      return " " + n + " azure cell" + (n === 1 ? " is" : "s are") +
-        " mostly institutionally-zoned land — the roll does not say whether " +
-        "that revenue is levied, so the solid part is what stands either way.";
+      return "\n\n" + n.toLocaleString() + " azure cell" + (n === 1 ? " is" : "s are") +
+        " mostly institutional land, where the roll doesn't say if tax is " +
+        "levied: only the solid part is certain.";
     };
     // Ratio's azure needs the same sentence as Glass's, for the same reason
     // stated there — a reader who meets a colour that is not on the ramp reads
@@ -1411,8 +1399,10 @@
       state.amenity.school && amenityOfferable("school")
         ? AMENITY_BANDS.school + " m of a school" : null,
     ].filter(Boolean).join(" and ");
-    const glassBlurb = () =>
-      withColourClause(GLASS_BLURBS[state.denom]()) + glassInstBlurb();
+    const glassBlurb = () => glassLead() + "\n\n" + withColourClause(
+      (camFlat ? "Brighter cells" : "Taller, brighter spikes") + " are higher; colour is " +
+      "square-root scaled to show the low end. Hover the plane for neighbourhood " +
+      "numbers. Grey = set-aside land.") + glassInstBlurb();
     // Infill's amenity overlay carries no colour of its own to defend — the
     // hood-level score underneath is UNCHANGED — so the sentence has to say the
     // score did not move. Uses the full cell set (no metric to null-filter

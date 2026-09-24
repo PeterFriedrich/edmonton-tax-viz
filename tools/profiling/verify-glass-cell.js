@@ -188,6 +188,47 @@ const check = (name, got, want) => {
   check('100 m cell count intact', p.nCells, N100);
   check('clamp is this grid\'s own p97.5', clamp, true);
 
+  // COPY_DECISIONS BG1 / B3 / B6 / B8 over every public grid state: 2 cell
+  // sizes x 4 metrics x 2 denominators x colour toggle x camera. 1-3
+  // paragraphs, one bold in P1 naming the metric and cell, <= 400 chars; 2D
+  // says nothing about height; the colour clause follows the toggle.
+  const bad = [];
+  const cuts = [['revenue', 'revenue_per_acre'], ['revenue', 'res_revenue_per_acre'],
+                ['revenue', 'nonres_revenue_per_acre'], ['value', null]];
+  for (const [det, cell] of [['grid', 100], ['grid-fine', 50]]) {
+    await click(`#moneydetail button[data-moneydetail="${det}"]`);
+    await page.waitForTimeout(3000);
+    for (const [m, cut] of cuts) {
+      await click(`#metric-row button[data-metric="${m}"]`);
+      if (cut) await click(`#revcut button[data-revcut="${cut}"]`);
+      await page.waitForTimeout(800);
+      for (const den of ['ground', 'lot']) for (const sqrt of [true, false]) for (const flat of [false, true]) {
+        await click(`#denom button[data-denom="${den}"]`);
+        if (await page.evaluate(() => state.colorAdjust) !== sqrt) await click('#coloradj-btn');
+        await page.evaluate(f => map.jumpTo({ pitch: f ? 0 : HOME.pitch }), flat);
+        await page.waitForTimeout(300);
+        const b = await page.evaluate(() => {
+          const el = document.getElementById('title-p'), ps = [...el.children], bs = el.querySelectorAll('b');
+          return { view: state.view, np: ps.length, one: bs.length === 1 && ps[0].contains(bs[0]),
+                   bold: bs.length ? bs[0].textContent : '', label: METRICS[state.metric].legendLabel,
+                   text: ps.map(p => p.textContent).join(' ') };
+        });
+        const id = `${cell}/${cut || 'value'}/${den}/${sqrt ? 'sqrt' : 'linear'}/${flat ? '2d' : '3d'}`;
+        const why = [];
+        if (b.view !== 'glass') why.push('view ' + b.view);
+        if (!(b.np >= 1 && b.np <= 3 && b.one && b.text.length <= 400)) why.push(`B8 ${b.np}p ${b.text.length}ch`);
+        const want = (den === 'lot' ? b.label.replace('per acre', 'per lot acre') : b.label) + ` in ${cell} m grid cells`;
+        if (b.bold !== want) why.push(`bold "${b.bold}"`);
+        if (flat && /taller|height|spikes/i.test(b.text)) why.push('2D mentions height');
+        if (!flat && !/Taller/.test(b.text)) why.push('3D omits height');
+        if (sqrt !== /square-root/.test(b.text) || sqrt === /colour is linear/.test(b.text)) why.push('colour clause');
+        if (why.length) bad.push(id + ': ' + why.join(', '));
+      }
+    }
+  }
+  check('BG1: every grid state is B8-shaped, names metric + cell, follows camera + colour', bad.slice(0, 6), []);
+  await page.evaluate(() => map.jumpTo({ pitch: HOME.pitch }));
+
   console.log(failures ? `\n${failures} CHECK(S) FAILED` : '\nALL CHECKS PASSED');
   await browser.close();
   process.exit(failures ? 1 : 0);
