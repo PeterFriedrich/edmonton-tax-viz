@@ -802,6 +802,14 @@ alternative denominator (fire event) is already a full-only service, so
 
 ## Hood panel — cost against revenue (BUILT 2026-08-10)
 
+⚠️ **MOVED 2026-09-24 (Peter): the cost-against-revenue panel described below
+now opens in the RATIO lens, following the ratio's denominator.** The Services
+panel instead shows each cost of the colour-driving service **in dollars per acre
+per year, each ranked against the other neighbourhoods**, with no city-tax line;
+stormwater and water/sewer show their modelled charge ranked, as a utility charge
+paid to EPCOR. The no-single-total rules below apply to both panels unchanged.
+(`DECISIONS.md` 2026-09-24; `renderServiceCost` / `renderRatioCost`.)
+
 Clicking a hood in Services opens a panel confronting its **revenue per acre**
 with what the City spends serving it. Until this, Services was the only lens with
 no panel: the assessment history was the wrong content there, so it was gated out

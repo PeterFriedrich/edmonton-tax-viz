@@ -4856,12 +4856,6 @@
     // follows. "No data" would read as a gap we failed to fill; these are facts
     // about what the money is.
     const NO_SVC_COST = {
-      storm: "Stormwater is a utility charge — separate money from the city tax "
-           + "above — so there is no City cost to set against this "
-           + "neighbourhood's tax.",
-      water: "Water and sewer are utility charges — separate money from the city "
-           + "tax above — so there is no City cost to set against this "
-           + "neighbourhood's tax.",
       fire: "Fire is measured as demand: dispatched events. The open data carries "
           + "no cost and no on-scene times, so no fire cost is modelled here.",
     };
@@ -4893,7 +4887,7 @@
     // the sentence the reader sees. ⚠️ ONE definition, shared with primaryRow:
     // two tables of "what the selected service measures" would drift, and the
     // peek card and the pinned panel must not disagree about the same hood.
-    function svcDriverReading(p) {
+    function svcDriverReading(p, key = state.svcDriver) {
       const t = {
         roads:       ["road_m_per_acre", fmtRoadM],
         storm:       ["storm_charge_per_acre", fmtStorm],
@@ -4905,7 +4899,7 @@
         roadslife:   ["cost_roads_life_per_acre", fmtRoadsLife],
         transitcost: ["cost_transit_ops_per_acre", fmtTransitCost],
         bikecost:    ["cost_bike_ops_per_acre", fmtBikeCost],
-      }[state.svcDriver] || [];
+      }[key] || [];
       const value = t[0] == null ? null : p[t[0]];
       return { col: t[0], value, text: value == null ? null : t[1](value) };
     }
@@ -4920,6 +4914,11 @@
         r => p[r.col] != null && (FULL_BUILD || SERVICES[r.svc].pub)) }))
       .filter(g => g.rows.length);
     const servicePanelFor = p => serviceLens() && !!p
+      && p.revenue_per_acre != null && svcCostRows(p).length > 0;
+    // Ratio carries the cost-as-a-share-of-tax panel that Services had until
+    // 2026-09-24 (Peter): it is the lens about tax against service, so it is
+    // the one that sets a cost beside the tax. Same column gate.
+    const ratioPanelFor = p => state.view === "ratio" && !!p
       && p.revenue_per_acre != null && svcCostRows(p).length > 0;
 
     // Whether the pinned-hood PANEL applies to the current view. Services now has
@@ -4940,10 +4939,11 @@
     // (tooltipFor returns null when noHover()), so Services became unreadable —
     // no tooltip AND no card. Panel-ness is a property of the VIEW; having
     // history is a property of the DATA. They must stay separate tests.
-    // Ratio has no panel of its own (Peter, 2026-09-24): falling through to the
-    // assessment history put a chart of another subject under its hover.
-    const hoodPanelLens = () => state.view !== "ratio"
-      && (!serviceLens() || state.hasRoadsLife);
+    // Services and Ratio both open a cost panel, so both need the cost columns;
+    // without them there is no panel rather than a fall-through to the
+    // assessment history, a chart of another subject (Peter, 2026-09-24).
+    const hoodPanelLens = () => (!serviceLens() && state.view !== "ratio")
+      || state.hasRoadsLife;
 
     // Decoded series for one hood, or null when the lens can't speak for it
     // (no file, public build, or a name with no history row).
@@ -5315,7 +5315,8 @@
 
     function openTemporal(name) {
       const p = hoodProps(name);
-      const service = servicePanelFor(p);
+      const ratio = ratioPanelFor(p);
+      const service = ratio || servicePanelFor(p);
       const revenue = !service && revenuePanelFor(p);
       // Development's own history comes before the assessment history: under
       // that lens the reader is asking about construction, and the assessment
@@ -5327,7 +5328,8 @@
       pinnedHood = name;
       document.getElementById("temporal").classList.remove("empty");
       document.getElementById("temporal-name").textContent = name;
-      if (service) renderServiceCost(p);
+      if (ratio) renderRatioCost(p);
+      else if (service) renderServiceCost(p);
       else if (revenue) renderRevenueMix(p);
       else if (dev) renderDevHistory(dev);
       else renderHistory(t);
@@ -5415,9 +5417,12 @@
     // ⚠️ Measured 2026-09-07: NO DEVELOPED HOOD exceeds 100% on any row in either
     // build. All 9/2/9/12 (life/ops/transit/bike) are set-aside, worst is a golf
     // course. Re-measure before citing that as still true.
-    function renderServiceCost(p) {
+    // The Ratio panel: each cost as a share of this hood's city tax. Moved here
+    // from Services on 2026-09-24 (Peter). It follows the ratio's DENOMINATOR the
+    // way the Services panel follows the colour driver.
+    function renderRatioCost(p) {
       const rev = p.revenue_per_acre;
-      const driver = state.svcDriver;
+      const driver = state.ratioDenom;
       const fam = SVC_FAMILY[driver];
       // ⚠️ The panel follows the COLOUR DRIVER, not the checkbox set (Peter,
       // 2026-09-15). Several services can be checked at once; the driver is the
@@ -5428,7 +5433,7 @@
       const groups = svcCostRows(p)
         .map(g => ({ ...g, rows: g.rows.filter(r => want.includes(r.col)) }))
         .filter(g => g.rows.length);
-      const read = svcDriverReading(p);
+      const read = svcDriverReading(p, driver);
       const rank = read.value == null ? null : svcRank(read.col, read.value);
       // Every row is now a peer of the others in its basis group. The "(incl.
       // above)" label existed for the one NESTED row (roads inside roads+fire),
@@ -5476,6 +5481,59 @@
           ? (NO_SVC_COST[driver]
              || "No City cost is modelled for this service.")
           : "Modelled cost, shown against this neighbourhood's own city tax."
+            + (groups.length > 1
+                ? " The two measure different things — the same road metre "
+                  + "costs about five times more at the lifecycle rate than to "
+                  + "operate, a gap the operating rate's lane-kilometre "
+                  + "denominator widens — so they are never added. There is no "
+                  + "total."
+                : "");
+    }
+
+    // The Services panel: what each cost IS for this hood, in dollars, and where
+    // it ranks — no tax comparison (Peter, 2026-09-24; that moved to Ratio). With
+    // the tax gone, stormwater and water/sewer show too, as the utility charges
+    // they are: they were kept out only because they are not City money to set
+    // against City tax.
+    function renderServiceCost(p) {
+      const driver = state.svcDriver;
+      const fam = SVC_FAMILY[driver];
+      const want = fam ? SVC_FAMILY_COST[fam] : [];
+      const groups = svcCostRows(p)
+        .map(g => ({ ...g, rows: g.rows.filter(r => want.includes(r.col)) }))
+        .filter(g => g.rows.length);
+      const read = svcDriverReading(p);
+      // A cost driver's reading is one of the rows below; printing it twice
+      // would read as two figures.
+      const inRows = groups.some(g => g.rows.some(r => r.col === read.col));
+      const ranked = (col, v) => {
+        const r = svcRank(col, v);
+        return `<div class="muted">${r.rank}${ordSuffix(r.rank)} highest of `
+          + `${r.n} neighbourhoods</div>`;
+      };
+      const utility = driver === "storm" || driver === "water";
+      document.getElementById("temporal-chart").innerHTML = "";
+      document.getElementById("temporal-read").innerHTML =
+        `<div class="svchead">${esc(SERVICES[driver].label)}</div>`
+        + (inRows ? ""
+          : read.text == null
+            ? `<div class="muted">No ${esc(SERVICES[driver].label.toLowerCase())} `
+              + `data for this neighbourhood.</div>`
+            : `<div>${read.text}</div>` + ranked(read.col, read.value)
+              + (utility ? `<div class="muted">A utility charge paid to EPCOR, `
+                  + `not a City cost.</div>` : ""))
+        + `<div id="svccost">` + groups.map(g =>
+            `<div class="svcbasis">${esc(g.head)} `
+            + `<span class="muted">— ${esc(
+                 g.basis === "operating" && SVC_OPS_NOTE[fam]
+                   ? SVC_OPS_NOTE[fam] : g.note)}</span></div>`
+            + g.rows.map(r => `<div class="svcrow cost"><span>${esc(SVC_LABEL[r.col])}</span>`
+                + `<em>${money0(p[r.col])} / acre / yr</em></div>`
+                + ranked(r.col, p[r.col])).join("")).join("") + `</div>`;
+      document.getElementById("temporal-note").textContent =
+        groups.length === 0 && !utility
+          ? (NO_SVC_COST[driver] || "No City cost is modelled for this service.")
+          : "Modelled, not billed."
             + (groups.length > 1
                 ? " The two measure different things — the same road metre "
                   + "costs about five times more at the lifecycle rate than to "
@@ -5562,8 +5620,11 @@
       }
       // The empty-state prompt names the panel it is a prompt FOR, so entering
       // panel mode on the revenue map does not promise history.
-      document.getElementById("temporal-hint").textContent = serviceLens()
+      document.getElementById("temporal-hint").textContent =
+        state.view === "ratio"
         ? "Click a neighbourhood to compare its revenue with what it costs to serve."
+        : serviceLens()
+        ? "Click a neighbourhood to see what its services cost, against other neighbourhoods."
         : revenueLens()
         ? "Click a neighbourhood to see where its revenue comes from."
         : state.view === "development" && devHistoryData
@@ -5572,7 +5633,8 @@
       if (!pinnedHood) return;
       const name = pinnedHood;
       const p = hoodProps(name);
-      if (servicePanelFor(p) || revenuePanelFor(p) || devHistoryPanelFor(name)
+      if (ratioPanelFor(p) || servicePanelFor(p) || revenuePanelFor(p)
+          || devHistoryPanelFor(name)
           || temporalFor(name)) openTemporal(name);
       else closeTemporal();
     }
@@ -5704,7 +5766,8 @@
       // chart. Same class as the 2026-08-16 tooltip defect — the invite named
       // one subject and the click delivered another — and on touch this card is
       // the ONLY readout, so the wrong promise is the whole experience.
-      go.textContent = servicePanelFor(p) ? "See cost against revenue ›"
+      go.textContent = ratioPanelFor(p) ? "See cost against revenue ›"
+        : servicePanelFor(p) ? "See service costs, ranked ›"
         : revenuePanelFor(p) ? "See revenue breakdown ›"
         : devHistoryPanelFor(p.neighbourhood_name) ? "See what was built, by year ›"
         : "See assessment history ›";
@@ -6274,9 +6337,12 @@
           + `<br/><span class="muted">click for the revenue mix</span>` };
       // Same rule for Services' cost panel. "costs", plural: the panel has no
       // single total and the invite must not promise one (DATA.md §13).
-      if (servicePanelFor(p))
+      if (ratioPanelFor(p))
         return { ...tip, html: tip.html
           + `<br/><span class="muted">click to compare with service costs</span>` };
+      if (servicePanelFor(p))
+        return { ...tip, html: tip.html
+          + `<br/><span class="muted">click for costs, ranked</span>` };
       // Development's teaser. Rides under the same rule as the temporal one —
       // the panel below draws exactly this chart, for exactly this sub-metric
       // (devHistKey feeds both). An all-zero hood gets the invite with NO

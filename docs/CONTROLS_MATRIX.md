@@ -129,7 +129,7 @@ lenses" pass.
 | **Ratio** view | ✅ _(returned 2026-09-11, **roads-only denominator**)_ | ✅ |
 | **Uses** view (dominant zoned land use) | ❌ _(locked 2026-07-28)_ | ✅ |
 | **Infill** lens on Development | ❌ | ✅ |
-| **Assessment-history panel + hover sparkline + `#hoodmode`** | ✅ _(promoted 2026-07-31)_ | ✅ | _(⚠️ **The sparkline now rides only where the PANEL is the history panel** — 2026-08-16: on the revenue cuts of Money/Glass the hover gets the invite alone, because the click opens the zone mix. ⚠️ **Services has its own panel as of 2026-08-10** — cost against revenue, not history — and `#hoodmode` is offered there again. ✅ **Fixed 2026-09-24: Services' hover says `click to compare with service costs`, with no sparkline. Ratio has NO panel (`hoodPanelLens()` is false there): no teaser, the click is inert, `#hoodmode` and `#peek-go` hide. Development hoods with no permit row read `none since` instead of falling through to history.** Guarded by `verify-hoodmode.js` (every-hood sweep).)_ |
+| **Assessment-history panel + hover sparkline + `#hoodmode`** | ✅ _(promoted 2026-07-31)_ | ✅ | _(⚠️ **The sparkline now rides only where the PANEL is the history panel** — 2026-08-16: on the revenue cuts of Money/Glass the hover gets the invite alone, because the click opens the zone mix. ⚠️ **Services has its own panel as of 2026-08-10** — cost against revenue, not history — and `#hoodmode` is offered there again. ✅ **Fixed 2026-09-24: Services' hover says `click for costs, ranked` (its panel is each cost in dollars, ranked), with no sparkline. Ratio's says `click to compare with service costs`: the cost-as-a-share-of-tax panel moved there from Services the same day, and `hoodPanelLens()` is true in both when the cost columns shipped. Development hoods with no permit row read `none since` instead of falling through to history.** Guarded by `verify-hoodmode.js` (every-hood sweep).)_ |
 | **Change over time** lens on Money (`#moneymode` / `#chgwindow`) | ✅ _(promoted 2026-07-31)_ | ✅ |
 | **Lab** view + every experiment in it (`#labpick` / `#labcut`) | ❌ _(2026-08-11 — unfinished by definition)_ | ✅ `beta` |
 | **`#peek`, the touch-only peek card** | ✅ | ✅ | _(gated on `(hover: none)`, not on build — invisible to every mouse in both)_ |
@@ -244,8 +244,9 @@ the 2026-08-06 behaviour on a geojson predating the cost columns rather than
 advertising a panel that would open empty. Rationale for both moves:
 `DECISIONS.md` 2026-08-06 and 2026-08-10.
 
-⚠️ **The panel's CONTENT is now three-way, not two** (`openTemporal`): service
-cost, revenue mix, assessment history — tested in that order, first match wins.
+⚠️ **The panel's CONTENT is now five-way** (`openTemporal`): ratio cost-against-tax,
+service costs ranked, revenue mix, development history, assessment history — tested
+in that order, first match wins.
 
 It is the one control that changes **what the tooltip contains**: in panel mode
 a view's hover collapses to its **headline number only**, and the temporal

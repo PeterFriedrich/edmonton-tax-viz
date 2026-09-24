@@ -207,6 +207,10 @@ lifecycle road cost has **median 10.9×** and only **2.2%** of hoods fall below 
 
 ### F3 — the Ratio panel shows assessment history
 
+✅ **CLOSED 2026-09-24, differently from the proposal below:** Peter moved the
+Services panel's cost-as-a-share-of-tax form to Ratio, and Services now shows
+ranked dollars (`DECISIONS.md` 2026-09-24).
+
 `syncPinnedPanel` falls through to `temporalFor`, so the Ratio lens's pinned panel
 reads `2026: 0.08% of Edmonton's total assessment base · $192M assessed`. The lens
 that **is** about revenue-versus-service is the one lens whose panel says nothing
