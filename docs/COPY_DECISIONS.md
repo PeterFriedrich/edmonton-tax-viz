@@ -364,6 +364,33 @@ The camera flip re-renders the blurb through `currentBlurb()` (from `syncMode`),
 - *"The spikes are translucent so it reads through"*: the reader can see that.
 - *"Height is linear"*: B3 (c).
 
+**BS1 — Services (Roads, Roads cost, Roads cost — lifecycle)** (status: **in PR, awaiting Peter's merge**). 24 states: driver × other checked layers × camera. The two road-cost blurbs go from about 1,090 characters to 393–398. `SERVICES[*].blurb` is P1 + P2 and `blurbNote` is P3. `servicesBlurb()` adds *"Other checked layers draw neutral."* to P2 when another layer is on; it used to name each one, at up to 84 characters, and the colour radio's tooltip already says it.
+
+| service | P1 | P3 |
+|---|---|---|
+| Roads | `**Road metres per acre**: how much city-maintained collector and local road each neighbourhood has per acre of land.` | — |
+| Roads cost | `**Road operating cost per acre**: modelled yearly upkeep of collector and local roads: $5,970 per lane-km of maintenance (the City's 2017 roads-maintenance budget) plus $3,350 of snow and ice.` | `Operating only, so a floor: rebuilding is the lifecycle layer, and one lane is charged per street.` |
+| Roads cost — lifecycle | `**Road lifecycle cost per acre**: modelled yearly cost to run and rebuild collector and local roads, $50 per metre per year: the City's $600,000 upkeep plus $1,900,000 renewal per km over a 50-year life.` | `One citywide rate: not what the City spends here, nor a funding gap. More in Data & Methods.` |
+
+P2 is *"Brighter costs more per acre; colour is linear. Grey = set-aside land."*. For Roads it is *"Brighter means more road to maintain; colour is linear. Arterials show neutral grey: every kind of development shares them, so they are left out."*
+
+**Kept, because guards require them:**
+- Every figure `check_cost_copy.py` ties to `city_unit_costs.json`: $5,970, $3,350, 2017, $50/m/yr, $600,000 and $1,900,000.
+- *"Operating only"* and the pointer to the lifecycle layer (`verify-transport-cost.js`).
+
+**Moved to Data & Methods** (`about-modelled-roads`, which already says all of it):
+- the lane-km vs road-length mismatch;
+- *"about five times higher"*;
+- the 25-year life that would double the lifecycle number;
+- *"calibrated to local residential roads, so collectors are understated"*;
+- *"a 1960s street and a 2015 one cost the same"*.
+
+⚠️ **Not moved, now on no public surface:**
+- *"the averages include arterials, which are maintained and cleared first and cost more per kilometre"*: the one caveat pushing the other way;
+- *"unadjusted for inflation"*: only implied by "2017 roads-maintenance budget".
+
+Say if either belongs in `about-modelled-roads`.
+
 Already open elsewhere and on the public default blurb: **J1** (*"class-differential
 mill rates"*) and **J2** (*"set-aside"*, in every public blurb except Services: Roads).
 

@@ -1045,11 +1045,11 @@
       roads: {
         label: "Roads",
         pub: true,
-        blurb: "City-maintained roads. Collector and local roads are coloured by " +
-               "their neighbourhood's road metres per acre — brighter means more " +
-               "road to maintain per unit of land (colour is linear). Arterials " +
-               "are shown in neutral grey: shared infrastructure that any " +
-               "development pattern entails, excluded from the measure.",
+        blurb: "**Road metres per acre**: how much city-maintained collector and " +
+               "local road each neighbourhood has per acre of land.\n\nBrighter " +
+               "means more road to maintain; colour is linear. Arterials show " +
+               "neutral grey: every kind of development shares them, so they are " +
+               "left out.",
       },
       storm: {
         label: "Stormwater",
@@ -1129,23 +1129,13 @@
         label: "Roads cost",
         pub: true,
         plane: { col: "cost_roads_ops_per_acre" },
-        blurb: "Each neighbourhood is coloured by the modelled annual operating " +
-               "cost of its collector and local roads per acre — $5,970 per " +
-               "lane-kilometre to maintain plus $3,350 per lane-kilometre for " +
-               "snow and ice control. Operating only: capital reconstruction " +
-               "is a separate and much larger budget, so this is not what a " +
-               "road costs over its life — the lifecycle layer below puts the " +
-               "same metres about five times higher, though part of that gap " +
-               "is the unit mismatch described next, not a real difference. " +
-               "Treat this layer as a floor. Both City averages are per " +
-               "lane-kilometre of the whole network, while this map measures " +
-               "road length, so a two-lane street is charged for one lane; " +
-               "and the maintenance figure is the City's 2017 " +
-               "roads-maintenance budget — the last year it published one for " +
-               "roads alone — unadjusted for inflation. Both understate. " +
-               "Pushing the other way, the averages include arterials, which " +
-               "are maintained and cleared first and cost more per kilometre. " +
-               "Colour is linear. Grey = set-aside natural/undeveloped land.",
+        blurb: "**Road operating cost per acre**: modelled yearly upkeep of " +
+               "collector and local roads: $5,970 per lane-km of maintenance (the " +
+               "City's 2017 roads-maintenance budget) plus $3,350 of snow and " +
+               "ice.\n\nBrighter costs more per acre; colour is linear. Grey = " +
+               "set-aside land.",
+        blurbNote: "Operating only, so a floor: rebuilding is the lifecycle layer, and " +
+                   "one lane is charged per street.",
       },
       // ⚠️ The SAME METRES as roadscost above on the OTHER basis — ~5.4x as shipped,
       // ~3.0x on one unit (the operating rate is per LANE-km; roads_operating_rate §7).
@@ -1155,23 +1145,13 @@
         label: "Roads cost — lifecycle",
         pub: true,
         plane: { col: "cost_roads_life_per_acre" },
-        blurb: "Each neighbourhood is coloured by the modelled annual lifecycle " +
-               "cost of its collector and local roads per acre — $50 per metre " +
-               "per year, covering both upkeep and eventual rebuilding. It " +
-               "comes from the City's published figures for a kilometre of " +
-               "neighbourhood road ($600,000 to operate and maintain, " +
-               "$1,900,000 to renew and replace) spread over a 50-year life. " +
-               "Modelled, and in several ways: one citywide rate is applied to " +
-               "every neighbourhood, so a 1960s street and a 2015 one cost the " +
-               "same here, which they do not in reality. The 50-year life is " +
-               "the City's figure for a well-maintained road; it also says " +
-               "roads usually last 25 years, and at 25 this number would " +
-               "double. The rate is calibrated to local residential roads, so " +
-               "collectors are understated. This is not the City's actual " +
-               "spending on any particular neighbourhood, and it is not a " +
-               "funding gap — it is what a road of this length would cost per " +
-               "year if the published unit costs held everywhere. Colour is " +
-               "linear. Grey = set-aside natural/undeveloped land.",
+        blurb: "**Road lifecycle cost per acre**: modelled yearly cost to run and " +
+               "rebuild collector and local roads, $50 per metre per year: the " +
+               "City's $600,000 upkeep plus $1,900,000 renewal per km over a " +
+               "50-year life.\n\nBrighter costs more per acre; colour is linear. " +
+               "Grey = set-aside land.",
+        blurbNote: "One citywide rate: not what the City spends here, nor a funding " +
+                   "gap. More in Data & Methods.",
       },
       transitcost: {
         label: "Transit cost",
@@ -3953,20 +3933,15 @@
         .catch(() => {});
     }
 
-    // Services-view blurb: the colour-driving service's story, plus one line
-    // naming any other service that's on screen in neutral.
+    // Services-view blurb (COPY_DECISIONS BS1, B8 shape): the colour-driving
+    // service's own P1 + P2, a note in P2 when other checked layers draw
+    // neutral, and the service's caveat (blurbNote) as P3.
     function servicesBlurb() {
-      const others = Object.keys(SERVICES)
-        .filter(k => state.services[k] && k !== state.svcDriver)
-        .map(k => SERVICES[k].label.toLowerCase());
-      let b = SERVICES[state.svcDriver].blurb;
-      if (others.length === 1)
-        b += ` The ${others[0]} layer renders neutral — its "colour" ` +
-             `dot moves the ramp there.`;
-      else if (others.length)
-        b += ` The ${others.join(" and ")} layers render neutral — their ` +
-             `"colour" dots move the ramp.`;
-      return b;
+      const others = Object.keys(SERVICES).some(k => state.services[k] && k !== state.svcDriver);
+      const svc = SERVICES[state.svcDriver];
+      let b = svc.blurb;
+      if (others) b += " Other checked layers draw neutral.";
+      return b + (svc.blurbNote ? "\n\n" + svc.blurbNote : "");
     }
 
     // Flat invisible hood layer for the services/ratio views: keeps the hood

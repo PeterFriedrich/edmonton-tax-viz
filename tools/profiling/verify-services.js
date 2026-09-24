@@ -33,7 +33,9 @@ const [url] = process.argv.slice(2);
   const chrome = () => page.evaluate(() => ({
     view: state.view,
     title: document.getElementById('title-h').textContent,
-    blurbIsServices: document.getElementById('title-p').textContent === servicesBlurb(),
+    // B8 markup: compare the text a reader sees, not the raw string.
+    blurbIsServices: document.getElementById('title-p').textContent ===
+      servicesBlurb().replace(/\*\*/g, '').split(/\n\s*\n/).join(''),
     label: document.getElementById('legend-label').textContent,
     min: document.getElementById('legend-min').textContent,
     max: document.getElementById('legend-max').textContent,
