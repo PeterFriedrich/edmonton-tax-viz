@@ -137,7 +137,7 @@ const [url] = process.argv.slice(2);
              midFillOk: grid.props.getFillColor(mid).join() === expected.join(),
              label: document.getElementById('legend-label').textContent,
              max: document.getElementById('legend-max').textContent,
-             blurbIsLot: document.getElementById('title-p').textContent === GLASS_BLURBS.lot };
+             blurbIsLot: /per lot acre/.test(document.getElementById('title-p').textContent) };
   });
   console.log('denom -> lot   :', JSON.stringify(lot));
 

@@ -129,11 +129,13 @@ const check = (name, ok, detail) => {
   // colour off the ramp reads as a value unless the blurb names it.
   const blurb = await page.evaluate(() => ({
     text: document.getElementById('title-p').textContent,
-    isGlass: document.getElementById('title-p').textContent === glassBlurb(),
+    // B8 markup: compare the text a reader sees, not the raw string.
+    isGlass: document.getElementById('title-p').textContent ===
+      glassBlurb().replace(/\*\*/g, '').split(/\n\s*\n/).join(''),
     n: glassInstCount(),
   }));
   check('blurb names the azure cells and counts them',
-    blurb.isGlass && blurb.text.includes(`${blurb.n} azure cells`)
+    blurb.isGlass && blurb.text.includes(`${blurb.n.toLocaleString()} azure cells`)
     && blurb.n === r.expected, `n=${blurb.n}`);
 
   // Value is not a revenue cut: exemption changes whether a levy is COLLECTED,

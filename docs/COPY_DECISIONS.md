@@ -288,7 +288,7 @@ these count.
 | **B3** | **Height wording in 2D.** Since #552 the map is flat in top-down, so every height claim is false there. Options: (a) say it conditionally (the blurb follows the camera, like `withColourClause` follows the toggle), (b) move height into the legend, or (c) drop it. | Money ×8 (*"Height and colour show…", "Height is linear"*), grid ×2, Change (*"Teal rises… orange sinks below the plane"*, *"⚠️ Height is a RATE"*), Development grid (*"height is linear in new homes"*), Ratio (*"Ghost prisms… Height is linear"*). Services has none. || **decided 2026-09-24** (Peter): (a) for Money and Change, where height is the main encoding, so the sentence follows the camera the way `withColourClause` follows the toggle; (c) for the *"Height is linear"* asides, which are dropped |
 | **B4** | **The noun.** N1–N5 set `city tax`. The title says *"City Taxes per Acre"* and every revenue blurb under it says *"municipal property-tax revenue"*, as does Ratio. The N-group was applied to the title and legend, not to `#title-p`. Follow N1; this is not reopening it. | Money Total/Res/Non-res ×2 denominators, Ratio | open |
 | **B5** | **A length budget.** There isn't one. On a 768 px screen the panel runs from 157 px (Roads) to 495 px (road costs). A target (for example ≤ 400 chars, with the rest moved to the tooltip or Data & Methods) would decide most of the rewrite. | road costs, Change, Development grid | **decided 2026-09-24** (Peter): **≤ 400 characters** per blurb state; the caveats that don't fit move to the tooltip or Data & Methods. The worst case a visitor meets by default is Development (949 characters on entry) |
-| **B6** | **The grid blurbs never name the metric**: *"The active metric in 100 m grid cells…"*. The title does, so this is a placeholder that shipped. | Money grid, 16 states | open |
+| **B6** | **The grid blurbs never name the metric**: *"The active metric in 100 m grid cells…"*. The title does, so this is a placeholder that shipped. | Money grid, 16 states | **applied in BG1** (in PR) |
 | **B7** | **Register.** Change uses `⚠️` and ALL-CAPS (*RATE*, *NOT*). The Development long window reads *"(2009–2025) — the density added over the era — new houses…"*, two dash clauses in a row. | Change, Development | **decided 2026-09-24**: drop both; applied to Development (BD1) and Change (BC1) |
 | **B8** | **A writing rule for every blurb** (Peter, 2026-09-24): *"paragraph breaks first… and bold for the very first important term/target in the lens"*. **P1** says what the lens shows, with the measured thing bolded where it first appears, and that is the only bold. **P2** says how to read it: colour, height, grey. **P3** holds caveats and mode-specific additions, and is left out when there is nothing to say. B5's 400 characters count across all paragraphs. Markup: a blank line starts a paragraph and `**x**` bolds x. `setBlurb()` builds the nodes without innerHTML. | **decided 2026-09-24**; renderer shipped. Guarded per lens as each rewrite lands (1–3 paragraphs, exactly one bold term in P1, ≤ 400 characters); Development first, in `verify-development.js` |
 
@@ -346,6 +346,21 @@ The camera flip re-renders the blurb through `currentBlurb()` (from `syncMode`),
 - *"School tax is not included"* was drafted in, then cut: the same pod says *"City tax only; education excluded"* (C1).
 - *"commercial and industrial dollars are excluded here"* / *"residential dollars are excluded"*: P1 already names the class.
 - *"(city lot sizes, deduplicated at multi-unit points)"*: methodology. ⚠️ It now appears on no public surface; say if it belongs in Data & Methods.
+- *"Height is linear"*: B3 (c).
+
+**BG1 — Money, grid detail (100 m / 50 m)** (status: **in PR, awaiting Peter's merge**). 64 states: 2 cell sizes × 4 metrics × 2 denominators × colour × camera. It names the metric (B6) from `METRICS[*].legendLabel`. The longest state (Non-residential, lot acres, linear colour, 3D, azure cells showing) is 391 characters, down from 581.
+
+| part | text |
+|---|---|
+| P1, ground | `**{legend label} in {cell} m grid cells**: property points binned to squares.` |
+| P1, lot | `**{legend label, per lot acre} in {cell} m grid cells**, over the parcel acres each cell's properties own.` |
+| P2 | `Taller, brighter spikes` (2D: `Brighter cells`) `are higher; colour is square-root scaled to show the low end. Hover the plane for neighbourhood numbers. Grey = set-aside land.` |
+| P3, revenue cuts with azure cells | `{n} azure cells are mostly institutional land, where the roll doesn't say if tax is levied: only the solid part is certain.` |
+
+**Dropped:**
+- *"each cell's total divided by its ground acres"*: "per acre" in the bold term says it.
+- *"(city lot sizes, deduplicated at multi-unit points; cells with no usable lot size are omitted)"*: methodology, the same open question as in BM1.
+- *"The spikes are translucent so it reads through"*: the reader can see that.
 - *"Height is linear"*: B3 (c).
 
 Already open elsewhere and on the public default blurb: **J1** (*"class-differential
