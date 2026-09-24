@@ -117,7 +117,7 @@ the data and redeploys automatically (see `docs/SPEC_deployment.md`).
 
 ## Technical Docs
 
-- [`docs/METHODS.md`](docs/METHODS.md) — how the numbers are made: metric definitions, denominators, models, validation, limitations
+- [Methods & definitions](https://peterfriedrich.github.io/edmonton-tax-viz/verified/02_methods.html) — how the numbers are made: metric definitions, denominators, models, limitations. A notebook re-executed every week ([source](notebooks/verified/02_methods.py)), so its figures are this week's
 - [`docs/VERIFICATION.md`](docs/VERIFICATION.md) — how to check the pipeline actually ran correctly, not just read about how it's supposed to work
 - [`CONTRIBUTING.md`](CONTRIBUTING.md) — dev pipeline, setup, coding conventions, AI-assisted workflow
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — module contracts and data flow
