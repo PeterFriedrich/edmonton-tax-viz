@@ -107,6 +107,11 @@ jobs:
           done
           node tools/profiling/verify-smoke.js http://localhost:8931/index.html
           node tools/profiling/verify-smoke.js http://localhost:8931/dev-build-full/index.html
+          # The public blurb rules (docs/COPY_DECISIONS.md group B), ~30 s. PUBLIC
+          # ROOT ONLY: the rules are the public build's, and the script refuses
+          # the full build rather than check states it does not enumerate. Not
+          # in refresh.yml: these fail on a code change, which this run catches.
+          node tools/profiling/verify-blurbs.js http://localhost:8931/index.html
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0

@@ -24,6 +24,13 @@ So a UI/button edit ships on push; a data change ships on the weekly run. Both
 share the `refresh-map-data` concurrency group, so they never deploy at once.
 If a code push didn't update the site, first check the deploy.yml run (not
 refresh.yml); if only data is stale, that's refresh.yml.
+⚠️ **deploy.yml gates the publish on two browser checks**: `verify-smoke.js`
+(both builds) and `verify-blurbs.js` (public root, added 2026-09-24). A red in
+either leaves the last good site serving. `verify-blurbs` red means a title
+blurb broke a `docs/COPY_DECISIONS.md` group B rule (over 400 characters, not
+one bold term, height wording in 2D) or the page showed a stale blurb after a
+click. It names the failing state, e.g. `money/…/2d`. Reproduce locally with
+`node tools/profiling/verify-blurbs.js "<served url>?build=public"`.
 
 - Live site: https://peterfriedrich.github.io/edmonton-tax-viz/
 - Runs: https://github.com/PeterFriedrich/edmonton-tax-viz/actions
