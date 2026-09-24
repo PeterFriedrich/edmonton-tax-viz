@@ -196,14 +196,16 @@ function check(name, ok, detail) {
   check('bikecost transform matches bike (sqrt)', transforms.bikecost === transforms.bike);
 
   // --- the blurbs must carry the basis caveat ------------------------------
+  // A caveat may sit in blurbNote, the blurb's third paragraph (COPY_DECISIONS B8).
+  const fullBlurb = svc => page.evaluate(k => SERVICES[k].blurb + ' ' + (SERVICES[k].blurbNote || ''), svc);
   for (const r of ROWS) {
-    const blurb = await page.evaluate(svc => SERVICES[svc].blurb, r.svc);
+    const blurb = await fullBlurb(r.svc);
     check(`${r.svc}: blurb says operating-only`, /[Oo]perating only/.test(blurb));
   }
   const bikeBlurb = await page.evaluate(() => SERVICES.bikecost.blurb);
   check('bikecost blurb discloses the wider clearing network',
         /pedestrian squares|bus stops|staircases/i.test(bikeBlurb));
-  const roadsBlurb = await page.evaluate(() => SERVICES.roadscost.blurb);
+  const roadsBlurb = await fullBlurb('roadscost');
   check('roadscost blurb distinguishes itself from Service cost',
         /lifecycle/i.test(roadsBlurb));
   const transitBlurb = await page.evaluate(() => SERVICES.transitcost.blurb);

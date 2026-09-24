@@ -26,7 +26,7 @@ const dumpPath = rest[0] === '--dump' ? rest[1] : null;
 
 // Lenses already in the B8 shape. Add a lens here when its rewrite lands; when
 // every public lens is listed, the OPEN branch below can go.
-const CONVERTED = ['money', 'glass', 'change', 'development'];
+const CONVERTED = ['money', 'glass', 'change', 'development', 'services'];
 // Lenses whose main encoding is height, so their 3D blurb must say so (B3 (a)).
 const HEIGHT_LENSES = ['money', 'glass', 'change'];
 const PUBLIC_VIEWS = ['money', 'development', 'services', 'ratio'];
@@ -173,6 +173,9 @@ const PUBLIC_VIEWS = ['money', 'development', 'services', 'ratio'];
         if (state.devMetric === 'permits' ? !/New residential permits per acre/.test(plain) || /dwelling units/.test(plain)
                                           : !/New homes per acre/.test(plain)) why.push('metric misnamed');
       }
+      if (s.lens === 'services' &&
+          Object.values(s.services).filter(Boolean).length > 1 !== /Other checked layers draw neutral/.test(plain))
+        why.push('neutral-layers note does not follow the checked set');
       if (why.length) bad.push(id + ': ' + why.join('; '));
       const row = { id, lens: s.lens, chars: plain.length, text: paras.map(p => p.replace(/\*\*/g, '')).join('\n\n') };
       if (dump) { setBlurb(raw); row.px = document.getElementById('title-p').offsetHeight; }
