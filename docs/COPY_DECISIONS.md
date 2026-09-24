@@ -289,7 +289,7 @@ these count.
 | **B4** | **The noun.** N1–N5 set `city tax`. The title says *"City Taxes per Acre"* and every revenue blurb under it says *"municipal property-tax revenue"*, as does Ratio. The N-group was applied to the title and legend, not to `#title-p`. Follow N1; this is not reopening it. | Money Total/Res/Non-res ×2 denominators, Ratio | open |
 | **B5** | **A length budget.** There isn't one. On a 768 px screen the panel runs from 157 px (Roads) to 495 px (road costs). A target (for example ≤ 400 chars, with the rest moved to the tooltip or Data & Methods) would decide most of the rewrite. | road costs, Change, Development grid | **decided 2026-09-24** (Peter): **≤ 400 characters** per blurb state; the caveats that don't fit move to the tooltip or Data & Methods. The worst case a visitor meets by default is Development (949 characters on entry) |
 | **B6** | **The grid blurbs never name the metric**: *"The active metric in 100 m grid cells…"*. The title does, so this is a placeholder that shipped. | Money grid, 16 states | open |
-| **B7** | **Register.** Change uses `⚠️` and ALL-CAPS (*RATE*, *NOT*). The Development long window reads *"(2009–2025) — the density added over the era — new houses…"*, two dash clauses in a row. | Change, Development | open |
+| **B7** | **Register.** Change uses `⚠️` and ALL-CAPS (*RATE*, *NOT*). The Development long window reads *"(2009–2025) — the density added over the era — new houses…"*, two dash clauses in a row. | Change, Development | **decided 2026-09-24**: drop both; applied to Development (BD1) and Change (BC1) |
 | **B8** | **A writing rule for every blurb** (Peter, 2026-09-24): *"paragraph breaks first… and bold for the very first important term/target in the lens"*. **P1** says what the lens shows, with the measured thing bolded where it first appears, and that is the only bold. **P2** says how to read it: colour, height, grey. **P3** holds caveats and mode-specific additions, and is left out when there is nothing to say. B5's 400 characters count across all paragraphs. Markup: a blank line starts a paragraph and `**x**` bolds x. `setBlurb()` builds the nodes without innerHTML. | **decided 2026-09-24**; renderer shipped. Guarded per lens as each rewrite lands (1–3 paragraphs, exactly one bold term in P1, ≤ 400 characters); Development first, in `verify-development.js` |
 
 
@@ -312,6 +312,23 @@ these count.
 - *"the density added over the era"*: the long-window aside (B7).
 - *"height is linear in new homes per cell"*: B3 (c).
 - *"Unlike the other lenses"*: the Development button's tooltip already says greenfield land is shown in full colour.
+
+**BC1 — Change over time** (status: **in PR, awaiting Peter's merge**). Four states: 2 windows × camera. `{w}` is the window's years and `{y0}` its first year. 393 characters in 3D and 394 in 2D, down from 880. It also applies B3 (a) and B7 (no `⚠️`, no ALL-CAPS).
+
+| part | text |
+|---|---|
+| P1 | `How fast each neighbourhood's **share of Edmonton's assessed value** changed, {w}, against its own starting share.` |
+| P2, 3D | `Teal rises where it gained, orange sinks where it lost. It is a rate, not dollars: the tallest are small new subdivisions. Grey = no {y0} value to start from.` |
+| P2, 2D | `Teal gained share, orange lost it; stronger is faster. It is a rate, not dollars: the strongest are small new subdivisions. Grey = no {y0} value to start from.` |
+| P3 | `A neighbourhood can lose share while its value rises, if the rest of the city rose faster. Click one for its history.` |
+
+**Dropped:**
+- *"so a small hood doubling reads as strongly as a large one doubling"*: the P2 "tallest are small new subdivisions" sentence carries the consequence.
+- *"Colour saturates at each arm's 95th percentile"*: the legend's job.
+- *"these are the new-growth areas, NOT set-aside land"*: the legend swatch and the hover already say "No {y0} baseline", and `verify-change.js` guards that neither says set-aside.
+- *"assessment base"* → *"assessed value"*: J3's direction, applied to this blurb only.
+
+The camera flip re-renders the blurb through `currentBlurb()` (from `syncMode`), before `buildLayers`, because the label sweep measures the title block.
 
 Already open elsewhere and on the public default blurb: **J1** (*"class-differential
 mill rates"*) and **J2** (*"set-aside"*, in every public blurb except Services: Roads).
