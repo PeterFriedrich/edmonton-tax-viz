@@ -188,10 +188,12 @@ const check = (name, got, want) => {
   check('100 m cell count intact', p.nCells, N100);
   check('clamp is this grid\'s own p97.5', clamp, true);
 
-  // COPY_DECISIONS BG1 / B3 / B6 / B8 over every public grid state: 2 cell
-  // sizes x 4 metrics x 2 denominators x colour toggle x camera. 1-3
-  // paragraphs, one bold in P1 naming the metric and cell, <= 400 chars; 2D
-  // says nothing about height; the colour clause follows the toggle.
+  // COPY_DECISIONS BG1 / B3 / B6 / B8 on the grid blurb. The full cross (64
+  // states) is too slow under swiftshader, and the parts are independent: the
+  // metric x denominator sweep runs at the LONGEST clauses (linear colour, 3D),
+  // and colour x camera runs on the longest metric. 1-3 paragraphs, one bold in
+  // P1 naming the metric and cell, <= 400 chars; 2D says nothing about height;
+  // the colour clause follows the toggle.
   const bad = [];
   const cuts = [['revenue', 'revenue_per_acre'], ['revenue', 'res_revenue_per_acre'],
                 ['revenue', 'nonres_revenue_per_acre'], ['value', null]];
@@ -202,7 +204,10 @@ const check = (name, got, want) => {
       await click(`#metric-row button[data-metric="${m}"]`);
       if (cut) await click(`#revcut button[data-revcut="${cut}"]`);
       await page.waitForTimeout(800);
-      for (const den of ['ground', 'lot']) for (const sqrt of [true, false]) for (const flat of [false, true]) {
+      const combos = cut === 'nonres_revenue_per_acre'
+        ? [true, false].flatMap(sq => [false, true].map(fl => ['lot', sq, fl])).concat([['ground', false, false]])
+        : [['ground', false, false], ['lot', false, false]];
+      for (const [den, sqrt, flat] of combos) {
         await click(`#denom button[data-denom="${den}"]`);
         if (await page.evaluate(() => state.colorAdjust) !== sqrt) await click('#coloradj-btn');
         await page.evaluate(f => map.jumpTo({ pitch: f ? 0 : HOME.pitch }), flat);

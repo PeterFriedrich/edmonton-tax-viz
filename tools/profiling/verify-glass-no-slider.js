@@ -65,13 +65,13 @@ const [url] = process.argv.slice(2);
   const money = await probe();
   check('[money] no slider', money.sliderShown === false && money.headerShown === false);
 
-  // --- Ratio still has it, at its own 5% default
+  // --- Ratio still has it, at its own 15% default (5 -> 15, 620720d)
   await view('ratio');
   const ratio = await probe();
   console.log('ratio      :', JSON.stringify(ratio));
   check('[ratio] slider still offered', ratio.sliderShown === true);
   check('[ratio] header still offered', ratio.headerShown === true);
-  check('[ratio] at its own 5% default', ratio.sliderVal === 5 && ratio.opacity === 0.05);
+  check('[ratio] at its own 15% default', ratio.sliderVal === 15 && ratio.opacity === 0.15);
   // drive it, to prove the control still works
   await page.locator('#prism-opacity').fill('80');
   await page.locator('#prism-opacity').dispatchEvent('input');
