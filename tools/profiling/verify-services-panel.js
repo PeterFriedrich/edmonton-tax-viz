@@ -107,55 +107,60 @@ const SUBJECT = { storm: /storm/i, fire: /fire/i, water: /water|sewer/i };
     Object.values(raw.demand).every(v => v != null),
     JSON.stringify(raw.demand));
 
-  // ---- 1. DRIVE ALL TEN, ONE AT A TIME ------------------------------------
-  const keys = await page.evaluate(() => Object.keys(SERVICES));
-  check('the full build offers all ten service layers', keys.length === 10,
-    `${keys.length}: ${keys.join(',')}`);
+  // §1–3 drive all ten layers, seven of them full-only. On a public URL they
+  // cannot open, so skip them; §4 covers the public three from either URL.
+  const fullBuild = await page.evaluate(() => FULL_BUILD);
+  if (fullBuild) {
+    // ---- 1. DRIVE ALL TEN, ONE AT A TIME ------------------------------------
+    const keys = await page.evaluate(() => Object.keys(SERVICES));
+    check('the full build offers all ten service layers', keys.length === 10,
+      `${keys.length}: ${keys.join(',')}`);
 
-  const seen = {};
-  for (const k of keys) {
-    const r = await panelFor(page, k);
-    seen[k] = r;
-    // Precondition, asserted rather than assumed: the capture below means
-    // nothing if the selection did not take.
-    check(`${k}: selection took (driver=${k}, exactly one checked)`,
-      r.driver === k && r.checked.length === 1 && r.checked[0] === k,
-      `driver=${r.driver} checked=[${r.checked.join(',')}]`);
-    // ⚠️ NOT `rows > 0`. The three services with no cost twin degrade to a
-    // shorter form with no bars at all, which is the design — so the claim is
-    // that the panel says SOMETHING, and check 3b below is what stops the
-    // degraded form from being a blank.
-    check(`${k}: the panel opens and is not empty`,
-      r.open && r.text.length > 0 && (r.rows > 0 || k in SUBJECT),
-      `${r.rows} rows, ${r.text.length} chars`);
-  }
+    const seen = {};
+    for (const k of keys) {
+      const r = await panelFor(page, k);
+      seen[k] = r;
+      // Precondition, asserted rather than assumed: the capture below means
+      // nothing if the selection did not take.
+      check(`${k}: selection took (driver=${k}, exactly one checked)`,
+        r.driver === k && r.checked.length === 1 && r.checked[0] === k,
+        `driver=${r.driver} checked=[${r.checked.join(',')}]`);
+      // ⚠️ NOT `rows > 0`. The three services with no cost twin degrade to a
+      // shorter form with no bars at all, which is the design — so the claim is
+      // that the panel says SOMETHING, and check 3b below is what stops the
+      // degraded form from being a blank.
+      check(`${k}: the panel opens and is not empty`,
+        r.open && r.text.length > 0 && (r.rows > 0 || k in SUBJECT),
+        `${r.rows} rows, ${r.text.length} chars`);
+    }
 
-  // ---- 2. THE PANEL IS NOT INVARIANT ACROSS LAYERS ------------------------
-  // The brief's minimal claim, and the one that cannot pass vacuously.
-  const texts = keys.map(k => seen[k].text);
-  const distinct = new Set(texts).size;
-  check('*** THE PANEL DIFFERS ACROSS SERVICE LAYERS (not byte-identical) ***',
-    distinct > 1, `${distinct} distinct rendering(s) across ${keys.length} layers`);
-  // A sharper pair: a demand layer and a cost layer for a DIFFERENT service are
-  // about different subjects by any reading of the design.
-  check('*** roads and transitcost do not render the same panel ***',
-    seen.roads.text !== seen.transitcost.text,
-    seen.roads.text === seen.transitcost.text ? 'byte-identical' : 'differ');
-  check('*** the two roads-cost bases do not render the same panel ***',
-    seen.roadscost.text !== seen.roadslife.text,
-    seen.roadscost.text === seen.roadslife.text ? 'byte-identical' : 'differ');
+    // ---- 2. THE PANEL IS NOT INVARIANT ACROSS LAYERS ------------------------
+    // The brief's minimal claim, and the one that cannot pass vacuously.
+    const texts = keys.map(k => seen[k].text);
+    const distinct = new Set(texts).size;
+    check('*** THE PANEL DIFFERS ACROSS SERVICE LAYERS (not byte-identical) ***',
+      distinct > 1, `${distinct} distinct rendering(s) across ${keys.length} layers`);
+    // A sharper pair: a demand layer and a cost layer for a DIFFERENT service are
+    // about different subjects by any reading of the design.
+    check('*** roads and transitcost do not render the same panel ***',
+      seen.roads.text !== seen.transitcost.text,
+      seen.roads.text === seen.transitcost.text ? 'byte-identical' : 'differ');
+    check('*** the two roads-cost bases do not render the same panel ***',
+      seen.roadscost.text !== seen.roadslife.text,
+      seen.roadscost.text === seen.roadslife.text ? 'byte-identical' : 'differ');
 
-  // ---- 3. THE NO-TWIN THREE NAME THEIR OWN SUBJECT ------------------------
-  for (const [k, re] of Object.entries(SUBJECT)) {
-    check(`*** ${k}: the panel mentions its own subject (${seen[k].label}) ***`,
-      re.test(seen[k].text), seen[k].text.slice(0, 90).replace(/\n/g, ' | '));
-    // 3b. The degraded form must EXPLAIN the missing cost, not just omit it.
-    // These three have no City cost because of what the money is — utility
-    // charges, and a demand-only measure — so the panel states a scope. A
-    // blank would satisfy every other check here while reading as a gap.
-    check(`*** ${k}: the absent cost is explained, not just omitted ***`,
-      seen[k].rows === 0 && /utility charge|no fire cost|demand/i.test(seen[k].text),
-      `${seen[k].rows} rows | ${seen[k].text.split('\n')[1] || ''}`.slice(0, 110));
+    // ---- 3. THE NO-TWIN THREE NAME THEIR OWN SUBJECT ------------------------
+    for (const [k, re] of Object.entries(SUBJECT)) {
+      check(`*** ${k}: the panel mentions its own subject (${seen[k].label}) ***`,
+        re.test(seen[k].text), seen[k].text.slice(0, 90).replace(/\n/g, ' | '));
+      // 3b. The degraded form must EXPLAIN the missing cost, not just omit it.
+      // These three have no City cost because of what the money is — utility
+      // charges, and a demand-only measure — so the panel states a scope. A
+      // blank would satisfy every other check here while reading as a gap.
+      check(`*** ${k}: the absent cost is explained, not just omitted ***`,
+        seen[k].rows === 0 && /utility charge|no fire cost|demand/i.test(seen[k].text),
+        `${seen[k].rows} rows | ${seen[k].text.split('\n')[1] || ''}`.slice(0, 110));
+    }
   }
   // ---- 3c. A NONZERO COST NEVER PRINTS AS "0.0%" -------------------------
   // `fmtSvcRatio` used to `toFixed(1)` below 10%, so a real cost four orders
@@ -276,5 +281,6 @@ const SUBJECT = { storm: /storm/i, fire: /fire/i, water: /water|sewer/i };
 
   await browser.close();
   console.log(fail ? `\n${fail} CHECK(S) FAILED` : '\nALL CHECKS PASSED');
+  if (!fullBuild) console.log('PARTIAL — skipped §1–3: public URL, seven of the ten service layers are full-only');
   process.exit(fail ? 1 : 0);
 })();
