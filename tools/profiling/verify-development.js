@@ -126,11 +126,10 @@ const check = (name, cond) => { (cond ? pass++ : fail++); console.log(`${cond ? 
         hoodMode.devGrid === false && hoodMode.layers.includes('dev-plane'));
   check('choropleth legend label mentions new homes per acre',
         /new homes per acre/i.test(hoodMode.label), hoodMode.label);
-  // The blurb substitutes the ACTIVE window's phrase over the stored 5yr one,
-  // so with `long` the default it must name the permit record, not five years.
-  // Sampled before the 5yr click above.
-  check('choropleth blurb reflects the active window, not the stored 5yr text',
-        /since 2009/i.test(longBlurb) && !/last five full years/i.test(longBlurb));
+  // The blurb names the ACTIVE window's years; with `long` the default it must
+  // name the whole record, not the 5yr range. Sampled before the 5yr click above.
+  check('choropleth blurb reflects the active window, not the 5yr range',
+        /2009.2025/.test(longBlurb) && !/2021.2025/.test(longBlurb));
 
   // Set-aside override: a set-aside hood WITH activity must render coloured,
   // NOT the set-aside grey.
@@ -249,7 +248,7 @@ const check = (name, cond) => { (cond ? pass++ : fail++); console.log(`${cond ? 
   // grid's coverage figure was computed from units. Both must follow the metric.
   const permBlurb = await page.evaluate(() => document.getElementById('title-p').textContent);
   check('permits blurb names permits, not dwelling units',
-        /permits issued per acre/.test(permBlurb) && !/dwelling units added/.test(permBlurb));
+        /New residential permits per acre/.test(permBlurb) && !/dwelling units/.test(permBlurb));
   await click('#devdetail button[data-devdetail="grid"]');
   await page.waitForTimeout(2500);
   const permGrid = await page.evaluate(() => {
@@ -260,7 +259,7 @@ const check = (name, cond) => { (cond ? pass++ : fail++); console.log(`${cond ? 
   });
   check('permits grid coverage is the PERMITS share, and differs from units (non-vacuous)',
         permGrid.permPct != null && permGrid.permPct !== permGrid.unitPct &&
-        permGrid.blurb.includes(`~${permGrid.permPct}% of the window's permits`),
+        permGrid.blurb.includes(`~${permGrid.permPct}% of the permits`),
         `${permGrid.permPct}% vs units ${permGrid.unitPct}%`);
   await click('#devdetail button[data-devdetail="hood"]');
   await page.waitForTimeout(800);
@@ -423,11 +422,36 @@ const check = (name, cond) => { (cond ? pass++ : fail++); console.log(`${cond ? 
     await page.waitForTimeout(1200);
     const off = await page.evaluate(() => ({
       ids: overlay._deck.props.layers.map(l => l.id),
-      blurbBase: document.getElementById('title-p').textContent === VIEWS.development.blurb,
+      blurbBase: /Brighter neighbourhoods/.test(document.getElementById('title-p').textContent) &&
+                 !/cell/.test(document.getElementById('title-p').textContent),
     }));
     check('grid off: choropleth restored', off.ids.includes('dev-plane') && !off.ids.includes('dev-grid-cells'));
     check('grid off: blurb back to base', off.blurbBase);
   }
+
+  // COPY_DECISIONS B8 + B5 over every public Development state: 1-3 paragraphs,
+  // exactly one bold term, in paragraph 1, <= 400 characters in all.
+  const b8bad = [];
+  for (const m of ['units', 'permits']) for (const w of ['3yr', '5yr', 'long']) for (const d of ['hood', 'grid']) {
+    await click(`#devmetric button[data-devmetric="${m}"]`);
+    await click(`#devwindow button[data-devwindow="${w}"]`);
+    await click(`#devdetail button[data-devdetail="${d}"]`);
+    await page.waitForTimeout(600);
+    const b = await page.evaluate(() => {
+      const el = document.getElementById('title-p'), ps = [...el.children];
+      const bs = el.querySelectorAll('b');
+      return { np: ps.length, nb: bs.length, leads: bs.length === 1 && ps[0].contains(bs[0]),
+               len: ps.map(p => p.textContent).join(' ').length, stars: /\*\*/.test(el.textContent) };
+    });
+    if (!(b.np >= 1 && b.np <= 3 && b.nb === 1 && b.leads && b.len <= 400 && !b.stars))
+      b8bad.push(`${m}/${w}/${d} ${JSON.stringify(b)}`);
+  }
+  check('B8: every Development state is 1-3 paragraphs, one bold in P1, <= 400 chars',
+        b8bad.length === 0);
+  if (b8bad.length) console.log(b8bad.join('\n'));
+  await click('#devmetric button[data-devmetric="units"]');
+  await click('#devwindow button[data-devwindow="long"]');
+  await click('#devdetail button[data-devdetail="grid"]');
 
   // Round-trip back to money restores the aside row and hides the toggle.
   await click('#views button[data-view="money"]');

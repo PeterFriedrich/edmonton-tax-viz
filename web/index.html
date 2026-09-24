@@ -1260,16 +1260,7 @@
       },
       development: {
         title: `Edmonton: New Housing Built (${WIN.permits})`,
-        blurb: "Each neighbourhood is coloured by new dwelling units added per " +
-               "acre from issued building permits over the last five full years " +
-               `(${WIN.permits}) — new houses, semis, row houses and apartments, ` +
-               "counted where construction was permitted. New supply, not billed " +
-               "or assessed value: where the city is actually growing. Colour is " +
-               "square-root scaled — a few dense-infill neighbourhoods dominate. " +
-               "Unlike the other lenses, set-aside greenfield land is shown in " +
-               "full colour here — that undeveloped land is exactly where much " +
-               "new building lands; a neighbourhood's set-aside status still " +
-               "shows on hover.",
+        blurb: null, // metric-, window- and detail-driven — see devBlurb()
         // Industrial permit-velocity choropleth (SPEC_industrial.md A3) — a
         // count, not a dwelling supply; descriptive, no editorial framing.
         indBlurb: "Each neighbourhood is coloured by new industrial building " +
@@ -1475,39 +1466,17 @@
         "residential (height is linear). The slider sets prism opacity."
       : "");
 
-    // Development blurb: the base choropleth prose, plus — when the 100 m
-    // detail grid is on — what the spikes are and the geocode-coverage
-    // disclosure read from the grid file itself (export_dev_grid "coverage").
-    // The gap is a geocoding lag on the newest permits; those permits still
-    // count in the hood totals, so the honest framing is "not on the grid yet".
-    // Window-aware chrome: title year range follows the active window, and the
-    // choropleth blurb's window phrase is swapped in (mirrors withColourClause).
-    // DEV_WINDOW_LABEL / DEV_WINDOW_PHRASE are defined with the other DEV_* maps
-    // below; both are read at call time, so definition order is irrelevant.
-    const DEV_WINDOW_PHRASE = {
-      "5yr":  `the last five full years (${WIN.permits})`,
-      "3yr":  `the last three full years (${WIN.permitsRecent})`,
-      "long": `the whole permit record since ${WINDOWS.permitsLong[0]} ` +
-              `(${WIN.permitsLong}) — the density added over the era`,
-    };
+    // Development blurb, in the COPY_DECISIONS B8 shape (BD1): what the lens
+    // shows, how to read it, then one caveat. The grid's caveat is the
+    // geocode-coverage disclosure read from the grid file itself
+    // (export_dev_grid "coverage"). The gap is a geocoding lag on the newest
+    // permits; those permits still count in the hood totals, so the honest
+    // framing is "not on the grid yet".
     const devTitle = () => {
       const yrs = "(" + DEV_WINDOW_LABEL[state.devWindow] + ")";
       return devIndustrial()
         ? "Edmonton: New Industrial Building " + yrs
         : "Edmonton: New Housing Built " + yrs;
-    };
-    // The choropleth blurb with the active window's phrase substituted for the
-    // stored 5yr default.
-    // Permits mode swaps the lead clause too — the stored text describes units.
-    const devChoroplethBlurb = () => {
-      let b = VIEWS.development.blurb.replace(
-        `the last five full years (${WIN.permits})`, DEV_WINDOW_PHRASE[state.devWindow]);
-      if (state.devMetric === "permits")
-        b = b.replace("new dwelling units added per acre from issued building permits",
-                      "new residential building permits issued per acre")
-             .replace("new houses, semis, row houses and apartments,",
-                      "one permit per building — houses, semis, row houses and apartments,");
-      return b;
     };
     const devBlurb = () => {
       if (devIndustrial()) {
@@ -1538,20 +1507,31 @@
               "show at a minimum height rather than vanishing."
             : "");
       }
-      if (!devGridActive()) return devChoroplethBlurb();
-      const what = state.devMetric === "permits" ? "permits" : "units";
+      const permits = state.devMetric === "permits";
+      const lead = permits
+        ? `**New residential permits per acre**, ${DEV_WINDOW_LABEL[state.devWindow]}: ` +
+          "one permit per building, so a house and an apartment block each count once."
+        : `**New homes per acre**, ${DEV_WINDOW_LABEL[state.devWindow]}: dwelling ` +
+          "units in issued building permits — houses, semis, row houses and apartments.";
+      const head = lead + " Where the city is growing, not what it pays.\n\n";
+      if (!devGridActive())
+        return head + "Brighter neighbourhoods added more. Colour is square-root " +
+          "scaled, so a few dense-infill areas don't wash out the rest.\n\n" +
+          "Undeveloped greenfield land is coloured here, not greyed: it is where " +
+          "much new building lands.";
+      const what = permits ? "permits" : "units";
+      const noun = permits ? "permits" : "homes";
       const cov = devGridData.coverage && devGridData.coverage[state.devWindow];
       const pct = cov && cov[what]
         ? Math.round(100 * (1 - cov[what + "_geocoded"] / cov[what])) : null;
-      return devChoroplethBlurb() +
-        ` The ${CELL.cellDev} grid replaces the neighbourhood colours with individual ` +
-        "permit cells — height is linear in new " + (what === "units" ? "homes" : what) + " per cell, colour " +
-        "square-root scaled. Only geocoded permits appear" +
-        (pct != null
-          ? ": ~" + pct + "% of the window's " + what + " — mostly the newest permits, " +
-            "which lag geocoding — are not on the grid yet and count only in " +
-            "the neighbourhood view."
-          : ".");
+      return head + `Each ${CELL.cellDev} cell counts new ` +
+        (permits ? "permits issued" : "homes permitted") + " there — brighter is " +
+        "more. Colour is square-root scaled." +
+        (pct == null ? "\n\nOnly geocoded permits appear on the grid; the rest " +
+            "count in the neighbourhood view."
+          : pct > 0 ? `\n\n~${pct}% of the ${noun} aren't on the grid yet (the ` +
+            "newest permits lag geocoding); they still count in the neighbourhood view."
+          : "");
     };
 
     // Blurb markup (COPY_DECISIONS B8): a blank line starts a new paragraph and
@@ -1561,8 +1541,9 @@
       document.getElementById("title-p").replaceChildren(
         ...text.split(/\n\s*\n/).map(par => {
           const p = document.createElement("p");
-          par.split("**").forEach((t, i) =>
-            p.append(i % 2 ? Object.assign(document.createElement("b"), { textContent: t }) : t));
+          par.split("**").forEach((t, i) => {
+            if (t) p.append(i % 2 ? Object.assign(document.createElement("b"), { textContent: t }) : t);
+          });
           return p;
         }));
     }
