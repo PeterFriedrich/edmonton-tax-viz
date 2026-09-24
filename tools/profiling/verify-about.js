@@ -134,7 +134,7 @@ const [url] = process.argv.slice(2);
         /never the full cost/i.test(p.menuText));
 
   // --- 4. links ------------------------------------------------------------
-  const methods = p.links.find(l => /METHODS\.md$/.test(l.href || ''));
+  const methods = p.links.find(l => /verified\/02_methods\.html$/.test(l.href || ''));
   const verification = p.links.find(l => /VERIFICATION\.md$/.test(l.href || ''));
   const repo = p.links.find(l => /edmonton-tax-viz\/?$/.test(l.href || ''));
   check('methods link present', !!methods, methods && methods.href);
