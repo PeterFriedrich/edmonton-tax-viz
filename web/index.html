@@ -60,11 +60,12 @@
 
   <div id="title" class="panel">
     <h1 id="title-h">Edmonton: City Taxes per Acre</h1>
-    <div id="title-p"><p>Height and colour show municipal property-tax revenue divided by
-       neighbourhood area, applying Edmonton's class-differential mill rates. Tall,
-       bright districts generate the most city revenue per unit of land. Height is
-       linear; colour is square-root–scaled to reveal the low end. Grey = set-aside
-       natural/undeveloped land, excluded from the scale.</p></div>
+    <!-- The landing state of moneyBlurb() (Total, ground acres, sqrt, 3D);
+         nothing rewrites it on load. verify-money-denom.js checks they match. -->
+    <div id="title-p"><p><b>City property tax per acre</b>: what each
+       neighbourhood's properties pay the City, divided by its land area.</p><p>Taller, brighter neighbourhoods are higher per
+       acre; colour is square-root scaled to show the low end. Grey = set-aside
+       land (river valley, parks, undeveloped), off the scale.</p></div>
   </div>
 
   <!-- Temporal lens (SPEC_temporal.md phase 3): the pinned readable version of
@@ -785,11 +786,9 @@
       revenue_per_acre: {
         key: "revenue_per_acre",
         title: "Edmonton: City Taxes per Acre",
-        blurb: "Height and colour show municipal property-tax revenue divided by " +
-               "neighbourhood area, applying Edmonton's class-differential mill rates. " +
-               "Tall, bright districts generate the most city revenue per unit of land. " +
-               "Height is linear; colour is square-root–scaled to reveal the low end. " +
-               "Grey = set-aside natural/undeveloped land, excluded from the scale.",
+        // Education tax is excluded (C1), said by the mill-rate pod directly below.
+        blurb: "**City property tax per acre**: what each neighbourhood's " +
+               "properties pay the City, divided by its land area.",
         legendLabel: "City tax per acre",
         legendMin: "$0",
         legendMax: "$50k+",
@@ -802,13 +801,9 @@
         elevationScale: 0.033,
         transform: "sqrt",
         fmt: fmtMoney,
-        lotBlurb: "Height and colour show municipal property-tax revenue divided " +
-                  "by the parcel (lot) acres a neighbourhood's properties actually " +
-                  "own — the land-productivity view, where park, river-valley and " +
-                  "large-lot land stop diluting the figure (city lot sizes, " +
-                  "deduplicated at multi-unit points). Height is linear; colour is " +
-                  "square-root–scaled to reveal the low end. Grey = set-aside land, " +
-                  "or too little parcel land for a lot-acre value.",
+        lotBlurb: "**City property tax per lot acre**: what each neighbourhood's " +
+                  "properties pay the City, divided by the parcel land they own, so " +
+                  "parks, river valley and big lots don't dilute it.",
       },
       // Residential-revenue decomposition: the RESIDENTIAL + OTHER RESIDENTIAL
       // class subset of the levy — a SUBSET of Revenue, never all of what the
@@ -820,13 +815,9 @@
       res_revenue_per_acre: {
         key: "res_revenue_per_acre",
         title: "Edmonton: Residential City Taxes per Acre",
-        blurb: "Height and colour show the residential-class share of municipal " +
-               "property-tax revenue — houses, condos and apartment buildings — " +
-               "divided by neighbourhood area. This is a subset of Revenue, not " +
-               "all of what the land pays: commercial and industrial dollars are " +
-               "excluded here. Height is linear; colour is square-root–scaled to " +
-               "reveal the low end. Grey = set-aside natural/undeveloped land, " +
-               "excluded from the scale.",
+        blurb: "**Residential city tax per acre**: what houses, condos and " +
+               "apartment buildings pay the City, divided by the neighbourhood's " +
+               "land area.",
         legendLabel: "Residential city tax per acre",
         legendMin: "$0",
         legendMax: "$30k+",
@@ -834,14 +825,10 @@
         elevationScale: 0.033,
         transform: "sqrt",
         fmt: fmtMoney,
-        lotBlurb: "Height and colour show the residential-class share of municipal " +
-                  "property-tax revenue — houses, condos and apartment buildings, " +
-                  "a subset of Revenue, not all of what the land pays — divided " +
-                  "by the parcel (lot) acres a neighbourhood's properties actually " +
-                  "own (city lot sizes, deduplicated at multi-unit points). Height " +
-                  "is linear; colour is square-root–scaled to reveal the low end. " +
-                  "Grey = set-aside land, or too little parcel land for a " +
-                  "lot-acre value.",
+        lotBlurb: "**Residential city tax per lot acre**: what houses, condos and " +
+                  "apartment buildings pay the City, divided by the parcel land the " +
+                  "neighbourhood's properties own.",
+        blurbNote: "A subset of Revenue, not all of what the land pays.",
       },
       // Non-residential decomposition: the slices billed at the Non
       // Residential rate (commercial + industrial; SPEC_industrial.md A1) —
@@ -851,13 +838,9 @@
       nonres_revenue_per_acre: {
         key: "nonres_revenue_per_acre",
         title: "Edmonton: Non-Residential City Taxes per Acre",
-        blurb: "Height and colour show the non-residential-rate share of " +
-               "municipal property-tax revenue — commercial and industrial " +
-               "land — divided by neighbourhood area. This is a subset of " +
-               "Revenue, not all of what the land pays: residential dollars " +
-               "are excluded here. Height is linear; colour is " +
-               "square-root–scaled to reveal the low end. Grey = set-aside " +
-               "natural/undeveloped land, excluded from the scale.",
+        blurb: "**Non-residential city tax per acre**: what commercial and " +
+               "industrial property pays the City, divided by the neighbourhood's " +
+               "land area.",
         legendLabel: "Non-residential city tax per acre",
         legendMin: "$0",
         legendMax: "$50k+",
@@ -865,23 +848,17 @@
         elevationScale: 0.033,
         transform: "sqrt",
         fmt: fmtMoney,
-        lotBlurb: "Height and colour show the non-residential-rate share of " +
-                  "municipal property-tax revenue — commercial and industrial " +
-                  "land, a subset of Revenue, not all of what the land pays — " +
-                  "divided by the parcel (lot) acres a neighbourhood's " +
-                  "properties actually own (city lot sizes, deduplicated at " +
-                  "multi-unit points). Height is linear; colour is " +
-                  "square-root–scaled to reveal the low end. Grey = set-aside " +
-                  "land, or too little parcel land for a lot-acre value.",
+        lotBlurb: "**Non-residential city tax per lot acre**: what commercial and " +
+                  "industrial property pays the City, divided by the parcel land the " +
+                  "neighbourhood's properties own.",
+        blurbNote: "A subset of Revenue, not all of what the land pays.",
       },
       value_per_acre: {
         key: "value_per_acre",
         title: "Edmonton: Assessed Value per Acre",
-        blurb: "Height and colour show total assessed property value divided by " +
-               "neighbourhood area. Tall, bright districts hold the most assessed " +
-               "value per unit of land. Height is linear; colour is square-root–scaled " +
-               "to reveal the low end. Grey = set-aside natural/undeveloped land, " +
-               "excluded from the scale.",
+        blurb: "**Assessed value per acre**: the total assessed value of each " +
+               "neighbourhood's property, divided by its land area. What the land " +
+               "is worth, not what it pays.",
         legendLabel: "Value per acre",
         legendMin: "$0",
         legendMax: "$4M+",
@@ -889,13 +866,9 @@
         elevationScale: 0.0006,
         transform: "sqrt",
         fmt: fmtMoney,
-        lotBlurb: "Height and colour show total assessed property value divided by " +
-                  "the parcel (lot) acres a neighbourhood's properties actually own " +
-                  "— the land-productivity view, where park, river-valley and " +
-                  "large-lot land stop diluting the figure (city lot sizes, " +
-                  "deduplicated at multi-unit points). Height is linear; colour is " +
-                  "square-root–scaled to reveal the low end. Grey = set-aside land, " +
-                  "or too little parcel land for a lot-acre value.",
+        lotBlurb: "**Assessed value per lot acre**: the total assessed value of each " +
+                  "neighbourhood's property, divided by the parcel land it sits on. " +
+                  "What the land is worth, not what it pays.",
       },
     };
 
@@ -2063,10 +2036,19 @@
       };
     }
 
-    // The money blurb under the active denominator (ground = the metric's own
-    // prose, lot = its lotBlurb), with the colour-transform clause kept honest.
-    const moneyBlurb = () => withColourClause(
-      state.denom === "lot" ? METRICS[state.metric].lotBlurb : METRICS[state.metric].blurb);
+    // The money blurb (COPY_DECISIONS BM1, B8 shape): the metric's own P1 under
+    // the active denominator, a reading line that follows the camera (B3 — the
+    // map is flat in 2D) and the colour toggle (withColourClause), then the
+    // metric's caveat if it has one.
+    const moneyBlurb = () => {
+      const m = METRICS[state.metric], lot = state.denom === "lot";
+      return (lot ? m.lotBlurb : m.blurb) + "\n\n" + withColourClause(
+        (camFlat ? "Brighter" : "Taller, brighter") + " neighbourhoods are higher " +
+        "per acre; colour is square-root scaled to show the low end." +
+        (lot ? " Grey = set-aside land, or too little parcel land to measure."
+             : " Grey = set-aside land (river valley, parks, undeveloped), off the scale.")) +
+        (m.blurbNote ? "\n\n" + m.blurbNote : "");
+    };
 
     // Per-feature fill: set-aside hoods grey, everything else the ramp colour at
     // the metric clamp.

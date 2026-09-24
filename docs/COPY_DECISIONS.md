@@ -330,6 +330,24 @@ these count.
 
 The camera flip re-renders the blurb through `currentBlurb()` (from `syncMode`), before `buildLayers`, because the label sweep measures the title block.
 
+**BM1 — Money, neighbourhood prisms** (status: **in PR, awaiting Peter's merge**). 32 states: 4 metrics × 2 denominators × colour toggle × camera. P1 is the metric's own (`METRICS[*].blurb` / `.lotBlurb`). P2 is built by `moneyBlurb()`, following the camera (B3) and the colour toggle (`withColourClause`). P3 is `blurbNote`, on the two split cuts only. The landing state goes from 348 to about 230 characters, and the longest state is under 375.
+
+| part | text |
+|---|---|
+| P1, Total | `**City property tax per acre**: what each neighbourhood's properties pay the City, divided by its land area.` (lot: `…per lot acre**: … divided by the parcel land they own, so parks, river valley and big lots don't dilute it.`) |
+| P1, Residential | `**Residential city tax per acre**: what houses, condos and apartment buildings pay the City, divided by the neighbourhood's land area.` |
+| P1, Non-residential | `**Non-residential city tax per acre**: what commercial and industrial property pays the City, divided by the neighbourhood's land area.` |
+| P1, Value | `**Assessed value per acre**: the total assessed value of each neighbourhood's property, divided by its land area. What the land is worth, not what it pays.` |
+| P2 | `Taller, brighter` (2D: `Brighter`) `neighbourhoods are higher per acre; colour is square-root scaled to show the low end. Grey = set-aside land (river valley, parks, undeveloped), off the scale.` (lot: `Grey = set-aside land, or too little parcel land to measure.`) |
+| P3, split cuts | `A subset of Revenue, not all of what the land pays.` (the honesty line `verify-res-revenue` / `verify-nonres-revenue` guard) |
+
+**Dropped:**
+- *"applying Edmonton's class-differential mill rates"* (J1): the mill-rate pod directly below the blurb prints the rates under every revenue cut.
+- *"School tax is not included"* was drafted in, then cut: the same pod says *"City tax only; education excluded"* (C1).
+- *"commercial and industrial dollars are excluded here"* / *"residential dollars are excluded"*: P1 already names the class.
+- *"(city lot sizes, deduplicated at multi-unit points)"*: methodology. ⚠️ It now appears on no public surface; say if it belongs in Data & Methods.
+- *"Height is linear"*: B3 (c).
+
 Already open elsewhere and on the public default blurb: **J1** (*"class-differential
 mill rates"*) and **J2** (*"set-aside"*, in every public blurb except Services: Roads).
 
