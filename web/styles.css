@@ -157,7 +157,10 @@ html, body {
 #loading button { touch-action: manipulation; }
 #title { top: 20px; left: 22px; max-width: 360px; }
 #title h1 { margin: 0 0 4px; font-size: 19px; font-weight: 600; letter-spacing: 0.2px; }
-#title p  { margin: 0; font-size: 12.5px; line-height: 1.5; color: var(--ink-2); }
+#title-p { font-size: 12.5px; line-height: 1.5; color: var(--ink-2); }
+#title-p p { margin: 0; }
+#title-p p + p { margin-top: 6px; }
+#title-p b { font-weight: 600; color: var(--ink); }
 /* Right-side control stack: a single flex column, so pods can show/hide per
    view without leaving gaps. Tier order (View → Variant → Presentation →
    accessibility) is set with `order:` rather than DOM order. The map stays
@@ -887,12 +890,12 @@ body.budget #budget-btn { background: var(--accent); color: var(--ink-on-accent)
      (#title's height feeds chromeBoxes() and the label cull). */
   #title h1::after { content: " \25BE"; color: var(--ink-caret-mobile); font-weight: 400; font-size: 22px; line-height: 0; } /* ▾ expand affordance */
   #title.expanded h1::after { content: " \25B4"; } /* ▴ when open */
-  #title p { display: none; margin-top: 6px; }
+  #title-p { display: none; margin-top: 6px; }
   #title.expanded {
     z-index: 3; background: var(--read-bg);
     border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px;
   }
-  #title.expanded p { display: block; }
+  #title.expanded #title-p { display: block; }
 
   /* Drop the control column below the now one-line title, and bound it to
      the viewport (left+right) so the right-anchored pods can't grow off the
@@ -963,7 +966,7 @@ body.budget #budget-btn { background: var(--accent); color: var(--ink-on-accent)
      line to read on, which is the only cue for which rate the cut is billed at. */
   #mill-rows span { display: block; }
   #mill-rows span + span::before { content: none; }
-  /* Collapsed, the rates hide with the blurb — same rule #title p follows, and
+  /* Collapsed, the rates hide with the blurb — same rule #title-p follows, and
      it must out-specify `body.mills #millrates { display: block }`. */
   #title:not(.expanded) #millrates { display: none; }
   /* Static positioning has to be forced (.panel sets position:absolute). The

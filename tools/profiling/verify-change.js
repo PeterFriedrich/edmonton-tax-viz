@@ -337,7 +337,7 @@ const [url] = process.argv.slice(2);
   }));
   check('*** picking Revenue leaves the change view ***', viaRev.view === 'money', viaRev.view);
   check('Revenue restores the last cut', viaRev.metric === 'revenue_per_acre', viaRev.metric);
-  check('the title follows the metric out of the lens', /revenue/i.test(viaRev.title), viaRev.title);
+  check('the title follows the metric out of the lens', /city taxes/i.test(viaRev.title), viaRev.title);
   check('the cut row is back and the lens row is gone', viaRev.cuts && !viaRev.mode);
   await page.close();
 

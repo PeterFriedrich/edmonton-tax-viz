@@ -60,11 +60,11 @@
 
   <div id="title" class="panel">
     <h1 id="title-h">Edmonton: City Taxes per Acre</h1>
-    <p id="title-p">Height and colour show municipal property-tax revenue divided by
+    <div id="title-p"><p>Height and colour show municipal property-tax revenue divided by
        neighbourhood area, applying Edmonton's class-differential mill rates. Tall,
        bright districts generate the most city revenue per unit of land. Height is
        linear; colour is square-root–scaled to reveal the low end. Grey = set-aside
-       natural/undeveloped land, excluded from the scale.</p>
+       natural/undeveloped land, excluded from the scale.</p></div>
   </div>
 
   <!-- Temporal lens (SPEC_temporal.md phase 3): the pinned readable version of
@@ -1553,6 +1553,19 @@
             "the neighbourhood view."
           : ".");
     };
+
+    // Blurb markup (COPY_DECISIONS B8): a blank line starts a new paragraph and
+    // **x** bolds x. Built as nodes rather than innerHTML because several blurbs
+    // splice in text read from data files.
+    function setBlurb(text) {
+      document.getElementById("title-p").replaceChildren(
+        ...text.split(/\n\s*\n/).map(par => {
+          const p = document.createElement("p");
+          par.split("**").forEach((t, i) =>
+            p.append(i % 2 ? Object.assign(document.createElement("b"), { textContent: t }) : t));
+          return p;
+        }));
+    }
 
     // The money/glass blurbs describe the colour transform in prose ("colour is
     // square-root–scaled …"). When the Colour Adjustment toggle is OFF that
@@ -6560,8 +6573,7 @@
       const cfg = METRICS[metric];
       overlay.setProps({ layers: buildLayers() });
       document.getElementById("title-h").textContent = cfg.title;
-      document.getElementById("title-p").textContent =
-        state.view === "glass" ? glassBlurb() : moneyBlurb();
+      setBlurb(state.view === "glass" ? glassBlurb() : moneyBlurb());
       refreshLegend(); // per-metric transform: the gradient bar changes too
     }
 
@@ -6575,8 +6587,7 @@
       syncColorAdjust();
       if (state.view !== "money" && state.view !== "glass") return;
       overlay.setProps({ layers: buildLayers() });
-      document.getElementById("title-p").textContent =
-        state.view === "glass" ? glassBlurb() : moneyBlurb();
+      setBlurb(state.view === "glass" ? glassBlurb() : moneyBlurb());
       refreshLegend(); // legendGradient reads the transform through scaleT
     }
 
@@ -6612,8 +6623,7 @@
         b.classList.toggle("active", b.dataset.denom === d));
       if (state.view !== "money" && state.view !== "glass") return;
       overlay.setProps({ layers: buildLayers() });
-      document.getElementById("title-p").textContent =
-        state.view === "glass" ? glassBlurb() : moneyBlurb();
+      setBlurb(state.view === "glass" ? glassBlurb() : moneyBlurb());
       refreshLegend();
     }
 
@@ -6629,7 +6639,7 @@
       if (state.view !== "ratio") return;
       overlay.setProps({ layers: buildLayers() });
       document.getElementById("title-h").textContent = ratioDenom().title;
-      document.getElementById("title-p").textContent = ratioDenom().blurb + ratioInstBlurb();
+      setBlurb(ratioDenom().blurb + ratioInstBlurb());
       refreshLegend();
     }
 
@@ -6663,7 +6673,7 @@
       document.getElementById("prism-row").style.display =
         devGridActive() ? "flex" : "none";
       document.getElementById("title-h").textContent = devTitle();
-      document.getElementById("title-p").textContent = devBlurb();
+      setBlurb(devBlurb());
       syncDevControls();
       // The history panel reads devHistKey(), so a units<->permits<->industrial
       // switch changes what it should be drawing. Without this the pinned panel
@@ -6984,7 +6994,7 @@
       state.usesPrisms = checked;
       document.getElementById("prism-row").style.display = checked ? "flex" : "none";
       // Blurb before layers — the label sweep measures the title's live rect.
-      document.getElementById("title-p").textContent = usesBlurb();
+      setBlurb(usesBlurb());
       overlay.setProps({ layers: buildLayers() });
     }
 
@@ -6995,8 +7005,7 @@
     function applyAmenity(which, checked) {
       state.amenity[which] = checked;
       // Blurb before layers — the label sweep measures the title's live rect.
-      document.getElementById("title-p").textContent =
-        VIEWS.infill.blurb + infillAmenityBlurb();
+      setBlurb(VIEWS.infill.blurb + infillAmenityBlurb());
       overlay.setProps({ layers: buildLayers() });
     }
 
@@ -7090,7 +7099,7 @@
       if (state.view !== "development") return;
       // Blurb before layers — the label sweep measures the title's live rect,
       // and the grid blurb is materially longer than the choropleth one.
-      document.getElementById("title-p").textContent = devBlurb();
+      setBlurb(devBlurb());
       overlay.setProps({ layers: buildLayers() });
       refreshLegend();
     }
@@ -7120,7 +7129,7 @@
       // Legend BEFORE layers, matching applyView's ordering note above.
       ensureGridData(cell).then(() => {
         if (state.view !== "glass") return;
-        document.getElementById("title-p").textContent = glassBlurb();
+        setBlurb(glassBlurb());
         refreshLegend();
         overlay.setProps({ layers: buildLayers() });
       });
@@ -7155,7 +7164,7 @@
         b.classList.toggle("active", b.dataset.chgwindow === w));
       if (state.view !== "change") return;
       // Blurb before layers — the label sweep measures the title's live rect.
-      document.getElementById("title-p").textContent = changeBlurb();
+      setBlurb(changeBlurb());
       overlay.setProps({ layers: buildLayers() });
       refreshLegend();
     }
@@ -7210,7 +7219,7 @@
         b.classList.toggle("active", b.dataset.labcut === col));
       if (state.view !== "deviation") return;
       document.getElementById("title-h").textContent = deviationTitle();
-      document.getElementById("title-p").textContent = deviationBlurb();
+      setBlurb(deviationBlurb());
       refreshLegend();
       overlay.setProps({ layers: buildLayers() });
     }
@@ -7441,15 +7450,14 @@
         v === "ratio" ? ratioDenom().title :
         v === "deviation" ? deviationTitle() :
         v === "development" ? devTitle() : chrome.title;
-      document.getElementById("title-p").textContent =
-        v === "glass" ? glassBlurb() :
+      setBlurb(v === "glass" ? glassBlurb() :
         v === "services" ? servicesBlurb() :
         v === "ratio" ? ratioDenom().blurb + ratioInstBlurb() :
         v === "uses" ? usesBlurb() :
         v === "development" ? devBlurb() :
         v === "change" ? changeBlurb() :
         v === "deviation" ? deviationBlurb() :
-        v === "infill" ? VIEWS[v].blurb + infillAmenityBlurb() : moneyBlurb();
+        v === "infill" ? VIEWS[v].blurb + infillAmenityBlurb() : moneyBlurb());
       // ⚠️ THE LEGEND MOVED UP HERE TOO, 2026-08-08, for the reason the title
       // block already had: it is chrome the sweep measures, so it must be final
       // BEFORE buildLayers(). Only #title was fixed when this was first found,
@@ -7500,7 +7508,7 @@
       if (k === "bike" && checked) ensureBikeLines();
       syncServiceControls();
       // Blurb before layers — the label sweep measures the title's live rect.
-      document.getElementById("title-p").textContent = servicesBlurb();
+      setBlurb(servicesBlurb());
       overlay.setProps({ layers: buildLayers() });
       refreshLegend();
     }
@@ -7509,7 +7517,7 @@
       state.svcDriver = k;
       syncServiceControls();
       // Blurb before layers — the label sweep measures the title's live rect.
-      document.getElementById("title-p").textContent = servicesBlurb();
+      setBlurb(servicesBlurb());
       overlay.setProps({ layers: buildLayers() });
       refreshLegend();
     }
