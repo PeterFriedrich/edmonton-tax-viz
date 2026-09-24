@@ -278,8 +278,8 @@ these count.
 
 | id | defect | status |
 |---|---|---|
-| **B1** | **The Development blurb says "dwelling units" in Permits mode.** The neighbourhood blurb is byte-identical for Dwelling units and Permits in all three windows. The grid addendum switches to "new permits per cell" but its coverage clause still says "~N% of the window's **units**". | open |
-| **B2** | **S1 missed capital `Modeled`.** It survives in the public Roads-cost-lifecycle blurb (*"Modeled, and in several ways"*) and in two public checkbox tooltips (Roads cost, Roads cost — lifecycle), plus full-only strings (water, storm, transit cost, two panel labels). S1's count was case-sensitive. | open |
+| **B1** | **The Development blurb says "dwelling units" in Permits mode.** The neighbourhood blurb is byte-identical for Dwelling units and Permits in all three windows. The grid addendum switches to "new permits per cell" but its coverage clause still says "~N% of the window's **units**". ⚠️ **The figure was also computed from units**: on the long window it showed ~16% missing where permits are ~8%. | **applied 2026-09-24**, guarded by `verify-development.js` (2 checks, both fail on the pre-fix file) |
+| **B2** | **S1 missed capital `Modeled`.** It survives in the public Roads-cost-lifecycle blurb (*"Modeled, and in several ways"*) and in two public checkbox tooltips (Roads cost, Roads cost — lifecycle), plus full-only strings (water, storm, transit cost, two panel labels). S1's count was case-sensitive. | **applied 2026-09-24**: 12 strings; the one left is an all-caps code comment |
 
 ### Decisions the cleanup needs, per blurb
 
