@@ -1465,34 +1465,6 @@ archive"*) is not, and this span is 2,533 lines.
   - Precedent + measurements: `docs/SPEC_revenue.md` "The banded prism is its own
     hover target", `docs/DECISIONS.md` 2026-08-17.
 
-- [ ] **SERVICES' HOVER STILL TEASES A CHART ITS PANEL DOES NOT OPEN — the same
-  defect fixed on the revenue cuts 2026-08-16, left live because the replacement
-  copy is Peter's call.** In Services (with the cost columns shipped) the hover
-  plots the **assessment-share sparkline** and says **`click to pin`**, while the
-  click opens the **cost-against-revenue panel** (`servicePanelFor`, 2026-08-10).
-  Measured, not inferred: `hoodPanelLens()` is `!serviceLens() || state.hasRoadsLife`,
-  so the teaser is appended there like anywhere else. ⚠️ **Predicate name
-  corrected 2026-09-16 (S166) — it read `state.hasSvcCost` until 2026-09-05,
-  when the retired roads+fire composite took that flag with it; the gate had to
-  name a column the PUBLIC build actually shows. The DEFECT is unchanged and
-  still live — `web/index.html`'s own comment above `tooltipFor` says so:
-  *"SERVICES IS NOT YET EXCEPTED though it should be … the hover still plots
-  history under a click that opens costs."*
-  - ⚠️ **`docs/CONTROLS_MATRIX.md` asserted the OPPOSITE** ("the sparkline is
-    not [offered in Services]") from 2026-08-10 until this was measured on
-    2026-08-16. The cell is corrected; the point is that the claim sat unchecked
-    for six days because nobody hovered a Services hood.
-  - **The fix is one predicate** — the revenue branch in `tooltipFor` already
-    demonstrates it; Services needs `servicePanelFor(p)` treated the same way.
-  - **What is NOT decided is the invite's wording.** The revenue cuts say
-    `click for the revenue mix`; Services would need its own line (`click for the
-    cost breakdown`?), and naming a "cost" in one phrase brushes the locked rule
-    that ⚠️ **there is no single cost number and there cannot be** — two bases,
-    ~10.8× apart, deliberately not summed (`data/DATA.md` §13, `SPEC_services.md`).
-    A hint that implies one total would be the same class of error as the chart.
-  - Precedent + full reasoning: `docs/DECISIONS.md` 2026-08-16 (the sparkline
-    row), `docs/SPEC_temporal.md` §2 (the amended row).
-
 - [ ] **The citywide budget panel is EXPERIMENTAL and full-build-only — decide
   whether it stays, and on what terms.** Built 2026-08-16 (`#budget`,
   `scripts/export_budget_ranked.py`, `web/data/budget_ranked.json`,
@@ -3140,6 +3112,8 @@ archive"*) is not, and this span is 2,533 lines.
 ## Done
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
+
+- [x] **SERVICES' HOVER STILL TEASES A CHART ITS PANEL DOES NOT OPEN** — CLOSED 2026-09-24 · `docs/TODO_archive.md`
 
 - [x] **Dataset-requests notebook audit fixes — APPLIED 2026-09-23 (S190).** — 2026-09-23 · `docs/TODO_archive.md`
 - [x] **Manifest staleness guard — BUILT 2026-09-17 (Peter's yes).** — BUILT 2026-09-17 · `docs/TODO_archive.md`

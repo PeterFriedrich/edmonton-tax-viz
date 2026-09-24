@@ -4939,7 +4939,10 @@
     // (tooltipFor returns null when noHover()), so Services became unreadable —
     // no tooltip AND no card. Panel-ness is a property of the VIEW; having
     // history is a property of the DATA. They must stay separate tests.
-    const hoodPanelLens = () => !serviceLens() || state.hasRoadsLife;
+    // Ratio has no panel of its own (Peter, 2026-09-24): falling through to the
+    // assessment history put a chart of another subject under its hover.
+    const hoodPanelLens = () => state.view !== "ratio"
+      && (!serviceLens() || state.hasRoadsLife);
 
     // Decoded series for one hood, or null when the lens can't speak for it
     // (no file, public build, or a name with no history row).
@@ -5106,8 +5109,22 @@
     function devHistoryFor(name) {
       if (!devHistoryData) return null;
       const rows = devHistoryData.hoods[name];
-      if (!rows) return null;
       const key = devHistKey();
+      // The exporter writes only hoods with a permit, so 44 rendered hoods have
+      // no row. Returning null there fell through to the ASSESSMENT history in
+      // tooltipFor/openTemporal — a chart of the wrong subject on a Development
+      // hover. Zero-fill only when the map's own long-window count confirms the
+      // zero, so a name mismatch still shows as missing rather than as "none".
+      if (!rows) {
+        const p = hoodProps(name);
+        const col = { units: "new_dwelling_units_long",
+                      permits: "new_dwelling_permits_long",
+                      ind_permits: "ind_permits_long" }[key];
+        if (!p || p[col] !== 0) return null;
+        const zeros = devHistoryData.years.map(() => 0);
+        return { years: devHistoryData.years, vals: zeros, key, total: 0,
+                 nonzero: 0, city: devHistoryData.citywide[DEVH_SERIES[key]] };
+      }
       const vals = rows[DEVH_SERIES[key]];
       if (!vals) return null;
       return {
@@ -6205,10 +6222,7 @@
     }
 
     // The sparkline rides on every tooltip WHOSE PANEL IS THE HISTORY PANEL
-    // (the revenue cuts excepted below — ⚠️ and SERVICES IS NOT YET EXCEPTED
-    // though it should be: hoodPanelLens() is true there once the cost columns
-    // ship, so the hover still plots history under a click that opens costs.
-    // Same defect, open in TODO.md pending its invite copy), appended here
+    // (the revenue cuts and Services excepted below; Ratio has no panel), appended here
     // rather than in the branches above. A hood's assessment
     // history is a fact about the neighbourhood, not about the lens you happen
     // to be in — but the teaser is a promise about the CLICK, so it belongs
@@ -6257,6 +6271,11 @@
       if (revenuePanelFor(p))
         return { ...tip, html: tip.html
           + `<br/><span class="muted">click for the revenue mix</span>` };
+      // Same rule for Services' cost panel. "costs", plural: the panel has no
+      // single total and the invite must not promise one (DATA.md §13).
+      if (servicePanelFor(p))
+        return { ...tip, html: tip.html
+          + `<br/><span class="muted">click to compare with service costs</span>` };
       // Development's teaser. Rides under the same rule as the temporal one —
       // the panel below draws exactly this chart, for exactly this sub-metric
       // (devHistKey feeds both). An all-zero hood gets the invite with NO
