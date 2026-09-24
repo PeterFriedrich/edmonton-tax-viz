@@ -45,6 +45,13 @@ const PUBLIC_VIEWS = ['money', 'development', 'services', 'ratio'];
   };
   await page.goto(url, { waitUntil: 'networkidle', timeout: 60000 });
   await page.waitForTimeout(3000);
+  // The rules are the PUBLIC build's (TODO "Public blurb cleanup"); the full
+  // build has more views and cuts than this script enumerates.
+  if (await page.evaluate(() => FULL_BUILD)) {
+    console.log('FAIL  PARTIAL — ran 0 checks: this is the full build; pass ?build=public or the public root');
+    await browser.close();
+    process.exit(1);
+  }
 
   // What a reader sees for a blurb string, whitespace-normalised (the landing
   // copy is static HTML with line breaks).
@@ -69,13 +76,12 @@ const PUBLIC_VIEWS = ['money', 'development', 'services', 'ratio'];
     await page.evaluate(() => __shown().slice(0, 80)));
 
   // ---- the public surface this script enumerates ---------------------------
-  // Hard-coded below, so assert it still matches the page: a new public view or
-  // service must fail here rather than go unchecked.
+  // Hard-coded below, so assert it still matches the page: a new public view
+  // must fail here rather than go unchecked. (Services are enumerated from
+  // SERVICES[*].pub, so a newly public service is covered automatically.)
   const surface = await page.evaluate(() => ({
     views: [...document.querySelectorAll('#views button')]
       .filter(b => getComputedStyle(b).display !== 'none').map(b => b.dataset.view),
-    services: Object.keys(SERVICES).filter(k => SERVICES[k].pub),
-    ratioDenoms: getComputedStyle(document.getElementById('ratio-denom') || document.body).display,
   }));
   check('public views are the ones enumerated', JSON.stringify(surface.views) === JSON.stringify(PUBLIC_VIEWS),
     surface.views.join(','));
@@ -243,6 +249,7 @@ const PUBLIC_VIEWS = ['money', 'development', 'services', 'ratio'];
     JSON.stringify(r));
 
   console.log(fail ? `\n${fail} CHECK(S) FAILED` : '\nALL CHECKS PASSED');
+  console.log('COMPLETE — ran every check (public build)');
   await browser.close();
   process.exit(fail ? 1 : 0);
 })();

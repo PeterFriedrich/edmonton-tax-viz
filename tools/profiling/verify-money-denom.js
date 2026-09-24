@@ -48,7 +48,6 @@ function approx(a, b, rel = 1e-6) { return Math.abs(a - b) <= rel * Math.max(Mat
   // --- money / ground (default) --------------------------------------------
   console.log('money ground   :', JSON.stringify(await chrome()));
   let c = await chrome();
-  check('landing blurb (static HTML) matches moneyBlurb()', c.blurbIsMoney);
   check('denom control shown in Money', c.denomShown && c.layersShown);
   check('denom header says "Denominator"', c.denomHd === 'Denominator');
   check('prism-slider row hidden in Money', !c.prismRowShown);
@@ -137,43 +136,6 @@ function approx(a, b, rel = 1e-6) { return Math.abs(a - b) <= rel * Math.max(Mat
   await page.waitForTimeout(2000);
   c = await chrome();
   check('back to Money still lot', c.denom === 'lot' && /per lot acre/.test(c.label));
-
-  // COPY_DECISIONS BM1 / B3 / B8 over every public Money prism state: 4 metrics
-  // x 2 denominators x colour toggle x camera. 1-3 paragraphs, one bold in P1,
-  // <= 400 chars; 2D says nothing about height; the colour clause follows the
-  // toggle; the split cuts keep the subset-of-Revenue line.
-  const bad = [];
-  const cuts = [['revenue', 'revenue_per_acre'], ['revenue', 'res_revenue_per_acre'],
-                ['revenue', 'nonres_revenue_per_acre'], ['value', null]];
-  for (const [m, cut] of cuts) {
-    await click(`#metric-row button[data-metric="${m}"]`);
-    if (cut) await click(`#revcut button[data-revcut="${cut}"]`);
-    else await click('#moneymode button[data-moneymode="current"]');
-    for (const den of ['ground', 'lot']) for (const sqrt of [true, false]) for (const flat of [false, true]) {
-      await click(`#denom button[data-denom="${den}"]`);
-      if (await page.evaluate(() => state.colorAdjust) !== sqrt) await click('#coloradj-btn');
-      await page.evaluate(f => map.jumpTo({ pitch: f ? 0 : HOME.pitch }), flat);
-      await page.waitForTimeout(300);
-      const b = await page.evaluate(() => {
-        const el = document.getElementById('title-p'), ps = [...el.children], bs = el.querySelectorAll('b');
-        return { view: state.view, np: ps.length, bold: bs.length === 1 && ps[0].contains(bs[0]),
-                 text: ps.map(p => p.textContent).join(' '), flat: camFlat };
-      });
-      const id = `${cut || 'value'}/${den}/${sqrt ? 'sqrt' : 'linear'}/${flat ? '2d' : '3d'}`;
-      const why = [];
-      if (b.view !== 'money') why.push('view ' + b.view);
-      if (!(b.np >= 1 && b.np <= 3 && b.bold && b.text.length <= 400)) why.push(`B8 ${b.np}p ${b.text.length}ch`);
-      if (b.flat !== flat) why.push('camera did not flip');
-      if (flat && /taller|tallest|height|rises/i.test(b.text)) why.push('2D mentions height');
-      if (!flat && !/Taller/.test(b.text)) why.push('3D omits height');
-      if (sqrt !== /square-root/.test(b.text) || sqrt === /colour is linear/.test(b.text)) why.push('colour clause');
-      if (/res_/.test(cut || '') && !(/subset of Revenue/.test(b.text) && /not all of what the land pays/.test(b.text))) why.push('subset line');
-      if (why.length) bad.push(id + ': ' + why.join(', '));
-    }
-  }
-  check('BM1: every Money state is B8-shaped and follows camera + colour toggle', bad.length === 0,
-    bad.slice(0, 6).join(' | '));
-  await page.evaluate(() => map.jumpTo({ pitch: HOME.pitch }));
 
   console.log(fail ? `\n${fail} CHECK(S) FAILED` : '\nALL CHECKS PASSED');
   await browser.close();
