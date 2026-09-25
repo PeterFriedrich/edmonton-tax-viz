@@ -584,8 +584,8 @@ legibility item below; #7 waits for the 2026-09-28 refresh.
 
 From `docs/FINDINGS_methods_notebook.md`. No printed figure is wrong; these are about when the page runs and what its guards see.
 
-- [ ] **F1 — move `Run verified notebooks` after `Update status manifest (provenance + heartbeat)` in `refresh.yml`** (CI change, needs Peter's OK), then delete invariant 1. Until then the page's dates are one run stale, and the first refresh after the January year-roll checklist's step 9 reds on healthy data. ⚠️ **Do this before January.** First, check the 2026-09-28 render: it should say *last checked 2026-09-21*.
-- [ ] **F2 — replace the located-dollars identity** with `rows["eligible"].notna().all()` and use `.astype(bool)` masks (findings §3).
+- [x] ✅ **F1 — DONE S197 (PR pending merge):** move `Run verified notebooks` after `Update status manifest (provenance + heartbeat)` in `refresh.yml`** (CI change, needs Peter's OK), then delete invariant 1. Until then the page's dates are one run stale, and the first refresh after the January year-roll checklist's step 9 reds on healthy data. ⚠️ **Do this before January.** First, check the 2026-09-28 render: it should say *last checked 2026-09-21*.
+- [x] ✅ **F2 — DONE S197 (mutant reds by name, 8,159 unclassified):** replace the located-dollars identity with `rows["eligible"].notna().all()` and use `.astype(bool)` masks (findings §3).
 - [ ] **F3/F4 — Peter's call:** the public Methods page describes full-only layers (fire, storm, water, the Ratio fire picker) with live numbers, omits the public Development and Change lenses, and prints modelled stormwater without the unbilled-land pairing.
 
 ### Readout-floor audit follow-ons (OPEN 2026-09-22 S188)
