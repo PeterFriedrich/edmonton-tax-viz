@@ -572,13 +572,21 @@ is in the `panel` column. T1 is public (3 of 10 service rows). T2 closed (`## Do
   tooltip/peek only because the probe feeds a hood feature to `viewTooltip` in
   grid modes too. Needs a cell-grain capture before it means anything.
 
-### Audit backlog S173–S186 — 9 targets marked, #1–#4 and #10 run (OPEN 2026-09-22 S187)
+### Audit backlog S173–S196 — 14 targets marked, #1–#4, #10 and #11 run (OPEN 2026-09-22 S187, extended S197)
 
 Fourteen sessions ran on Opus 5 alone with no cross-model check. The ranked
 list lives in `docs/AUDIT_LEDGER.md` → "Queued"; run them one per session at
 `high` effort via `edmonton-audit`, strike each there when its Executed row
 lands, close this item when the list is empty. ⚠️ #6 gates the Colour
 legibility item below; #7 waits for the 2026-09-28 refresh.
+
+### Methods-notebook audit follow-ons (OPEN 2026-09-25 S197)
+
+From `docs/FINDINGS_methods_notebook.md`. No printed figure is wrong; these are about when the page runs and what its guards see.
+
+- [ ] **F1 — move `Run verified notebooks` after `Update status manifest (provenance + heartbeat)` in `refresh.yml`** (CI change, needs Peter's OK), then delete invariant 1. Until then the page's dates are one run stale, and the first refresh after the January year-roll checklist's step 9 reds on healthy data. ⚠️ **Do this before January.** First, check the 2026-09-28 render: it should say *last checked 2026-09-21*.
+- [ ] **F2 — replace the located-dollars identity** with `rows["eligible"].notna().all()` and use `.astype(bool)` masks (findings §3).
+- [ ] **F3/F4 — Peter's call:** the public Methods page describes full-only layers (fire, storm, water, the Ratio fire picker) with live numbers, omits the public Development and Change lenses, and prints modelled stormwater without the unbilled-land pairing.
 
 ### Readout-floor audit follow-ons (OPEN 2026-09-22 S188)
 
