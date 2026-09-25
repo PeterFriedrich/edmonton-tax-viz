@@ -8,6 +8,12 @@ Items are verbatim as they were closed, newest-moved first in the order they app
 
 ---
 
+- [x] **Possibly an `AGENTS.md` for the repo**, so tools other than Claude Code
+  get the same instructions. Decide whether it is a pointer or symlink to
+  `CLAUDE.md` or a separate file. A copy would drift, and `CLAUDE.md` changes
+  weekly. Check what `cc-data-project-template` does and keep the two consistent.
+  **CLOSED 2026-09-25 (S196), no file:** Peter's call. An agent from another tool finds `CLAUDE.md` by looking around the repo, the repo takes no outside contributions, and much of `CLAUDE.md` is Claude-Code-specific anyway. Revisit in `cc-data-project-template` if anywhere.
+
 - [x] **SERVICES' HOVER STILL TEASES A CHART ITS PANEL DOES NOT OPEN** — CLOSED 2026-09-24 (S194): Peter picked `click to compare with service costs`; Ratio lost its fallback history panel and 44 Development hoods stopped falling through to it (`verify-hoodmode.js` sweep). **Was:** the same
   defect fixed on the revenue cuts 2026-08-16, left live because the replacement
   copy is Peter's call.** In Services (with the cost columns shipped) the hover

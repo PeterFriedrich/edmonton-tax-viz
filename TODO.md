@@ -643,10 +643,6 @@ not restore it**; the numbers below are the durable record).
   collapsed hood panel?) and measure its current size on a phone viewport.
   The mobile coverage figures on record (DECISIONS 2026-08-04, 27.9% default)
   are the budget any extra height spends.
-- [ ] **Possibly an `AGENTS.md` for the repo**, so tools other than Claude Code
-  get the same instructions. Decide whether it is a pointer or symlink to
-  `CLAUDE.md` or a separate file. A copy would drift, and `CLAUDE.md` changes
-  weekly. Check what `cc-data-project-template` does and keep the two consistent.
 
 ### General backlog — the flat list (no parent item; predates the `###` headings above)
 
@@ -3132,6 +3128,7 @@ archive"*) is not, and this span is 2,533 lines.
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
 
+- [x] **Possibly an `AGENTS.md` for the repo** — CLOSED 2026-09-25, no file: agents find `CLAUDE.md` by looking around; no outside contributors · `docs/TODO_archive.md`
 - [x] **SERVICES' HOVER STILL TEASES A CHART ITS PANEL DOES NOT OPEN** — CLOSED 2026-09-24 · `docs/TODO_archive.md`
 
 - [x] **Dataset-requests notebook audit fixes — APPLIED 2026-09-23 (S190).** — 2026-09-23 · `docs/TODO_archive.md`
