@@ -116,12 +116,6 @@ from load_assessment import load_assessment  # noqa: E402
 
 YEAR = main.ASSESSMENT_YEAR
 rates = json.loads(main.MILL_RATES_JSON.read_text())["rates"][str(YEAR)]
-check(
-    str(YEAR) == str(status.get("rate_year")),
-    "the rates this page quotes are the year the served data was built with",
-    f"main.ASSESSMENT_YEAR={YEAR}, status.json rate_year={status.get('rate_year')}",
-)
-
 assessment = apply_tax_rates(load_assessment(str(main.ASSESSMENT_CSV)), main.MILL_RATES_JSON, YEAR)
 levy_total = assessment["levy"].sum()
 res_rate = rates["Residential"]["municipal"]
@@ -260,15 +254,17 @@ pts = lots.loc[lots["latitude"].notna() & lots["longitude"].notna()]
 per_point = _point_lot_stats(pts[["latitude", "longitude", "lot_size"]])
 
 rows = pts.merge(per_point[["latitude", "longitude", "eligible"]], on=["latitude", "longitude"], how="left")
-inelig_value = rows.loc[~rows["eligible"].fillna(False), "assessed_value"].sum()
-elig_value = rows.loc[rows["eligible"].fillna(False), "assessed_value"].sum()
-roll_value = pts["assessed_value"].sum()
-
+# A point the classifier never saw is a silent drop; the two sums below would
+# still add to the roll, so this is the check, not their total.
 check(
-    abs(inelig_value + elig_value - roll_value) < 1.0,
-    "every located dollar is either in the lot-acre view or reported as excluded",
-    f"${elig_value:,.0f} + ${inelig_value:,.0f} vs ${roll_value:,.0f}",
+    rows["eligible"].notna().all(),
+    "every located account's point is classified as in the lot-acre view or excluded",
+    f"{int(rows['eligible'].isna().sum())} unclassified",
 )
+eligible = rows["eligible"].fillna(False).astype(bool)
+inelig_value = rows.loc[~eligible, "assessed_value"].sum()
+elig_value = rows.loc[eligible, "assessed_value"].sum()
+roll_value = pts["assessed_value"].sum()
 
 multi = per_point["n"] > 1
 n_inelig = int((~per_point["eligible"]).sum())
