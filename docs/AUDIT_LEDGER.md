@@ -149,6 +149,30 @@ Executed row and strike the item here when it runs.
 Not queued: session handoffs, the template repo (S173, other repo), S185's
 external recon (no artefact), #515/#516/#517 (tooling, low claim surface).
 
+### S187–S196 backlog — marked 2026-09-25 (S197), NOT yet briefed
+
+PRs #528–#586 ran on **Opus 5.5 alone**, including the four audits above that
+closed items 1–4 and 10, so their *remedies* were also self-graded. Same ranking
+rule. Item 7 above now also covers the #569 blurb deploy gate and the #578
+notebook publish gate, which the 2026-09-28 refresh exercises for the first time.
+
+11. **The Methods notebook** (`notebooks/verified/02_methods.py`, #578). The
+    public Methods page, and a failing run blocks the weekly publish. The
+    dataset-requests notebook (S190), built the same way, shipped a false
+    sentence. Check every prose figure against the executed output, and whether
+    each of the 6 invariants can fail on a real defect and not on a healthy run.
+    **Run before 2026-09-28**, its first scheduled execution.
+12. **Blurb claims** (#559–#571). Every public lens's intro text was rewritten;
+    `verify-blurbs.js` checks shape, length and wiring, never truth. The same
+    pass found a shipped figure 2× wrong (B1: 16% shown, 8% true). Check every
+    number and factual claim across the 150 public states against the data.
+13. **Remedies from the S187–S191 audits** (#535, #543, #544, #547/#551, #548).
+    #535 (boundary-road split) moved served `road_m_per_acre`: check citywide
+    road length is conserved, nothing is double-counted, and which hoods moved.
+14. **Services ranked panel + Development zero-fill** (#580, #575). New public
+    claims: "Nth highest of 406" (tie handling), storm/water "a utility charge
+    paid to EPCOR, not a City cost", and 44 hoods zero-filled by inference.
+
 ## Never audited (candidates, roughly ranked)
 
 Surfaces no audit run has covered, **re-ranked 2026-09-05 (S140)** at Peter's
