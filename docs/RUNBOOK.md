@@ -613,7 +613,7 @@ Triage by which step failed, in the run log:
 - **"Run verified notebooks"** (exit 1, `tools/run_verified_notebooks.py`,
   added 2026-08-05) — an invariant inside a `notebooks/verified/` notebook
   (`01_money_lens.py` or `02_methods.py`) failed: the pipeline, re-run independently in notebook form, disagrees with
-  itself. Runs after regen, before the commit, so the site (and the last
+  itself. Runs after regen and after the status manifest, before the commit, so the site (and the last
   published `web/verified/*.html`, `docs/VERIFICATION.md`) keeps
   serving last-good. Take this one seriously — unlike the UI-facing guards
   below, it's a second, differently-shaped recomputation of the exact numbers
