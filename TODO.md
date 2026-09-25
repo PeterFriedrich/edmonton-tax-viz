@@ -644,6 +644,27 @@ not restore it**; the numbers below are the durable record).
   The mobile coverage figures on record (DECISIONS 2026-08-04, 27.9% default)
   are the budget any extra height spends.
 
+- [ ] **A verified notebook for the roads lens (Services).** The chain from
+  road centrelines to road-metres per neighbourhood to the $/acre the panel shows
+  has no end-to-end re-run. `docs/VERIFICATION.md` "What's covered so far" lists
+  it among the uncovered `/full/` lenses. Model it on `01_money_lens.py`: import
+  `src/` and assert invariants. It joins the weekly publish gate automatically,
+  because the runner globs `notebooks/verified/`.
+- [ ] **Tie the evidence notebooks' road rates to the rate the pipeline uses.**
+  `roads_lifecycle_rate` and `roads_operating_rate` justify $50 and $9.32 per
+  road-metre per year, but they are standalone and import nothing.
+  `test_load_unit_costs_reads_the_committed_operating_trio` pins
+  `city_unit_costs.json` to 9.32 by a literal. Nothing checks the notebook
+  against the config, so a rate change could update the config and its test and
+  leave the notebook justifying the old number. Measured 2026-09-25: the only
+  file outside `notebooks/` that names either notebook is
+  `scripts/recheck_evidence_notebooks.py`.
+- [ ] **Run the verified notebooks at merge time, not only in the weekly
+  refresh.** `tests.yml` doesn't run them, so a PR that changes a `src/`
+  function they call passes CI and breaks the next Monday's publish (loudly, but
+  days late). CI change, so propose it first. It needs the served data available
+  in `tests.yml`; check what `run_verified_notebooks.py` reads.
+
 ### General backlog — the flat list (no parent item; predates the `###` headings above)
 
 ⚠️ **Everything from here down is its OWN top-level work, not a child of the
