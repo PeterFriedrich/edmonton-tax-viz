@@ -343,7 +343,9 @@ them hold at least one account this week.
 # ## 5. The cost side (Services view)
 #
 # Revenue alone is half the fiscal story. Each service layer is a *supply* or a
-# *modelled cost* per acre; none of them changes the revenue numbers.
+# *modelled cost* per acre; none of them changes the revenue numbers. Layers
+# marked *in development* are built and described here but are not on the
+# public map yet.
 #
 # - **Roads** — metres of City-maintained **collector and local** road
 #   centreline per acre (`9j8t-zm52`). Arterials are computed but excluded: they
@@ -354,19 +356,19 @@ them hold at least one account this week.
 #   metres on two bases that must never be added or compared: *lifecycle*
 #   (upkeep plus eventual rebuilding, annualized) and *operating* (upkeep and
 #   snow clearing only, from the last roads-only budget the City published).
-# - The **Ratio view** divides revenue by road metres, or (a picker) by fire
-#   events. Only those two appear because only they are services the property
+# - The **Ratio view** divides revenue by road metres (and, *in development*,
+#   by fire events). Only those two appear because only they are services the property
 #   tax levy funds — the modelled EPCOR charges below are paid by utility
 #   ratepayers, and dividing tax revenue by them would compare unrelated money
 #   flows. (`docs/SPEC_services.md`, `docs/SPEC_utilities.md`)
-# - **Fire rescue (demand)** — emergency response events per acre per year,
+# - **Fire rescue (demand)**, *in development* — emergency response events per acre per year,
 #   averaged over a pinned window of full calendar years (`7hsn-idqi`), with the
 #   station locations plotted. This is *service demand*, not response-time
 #   performance; medical calls are the majority of events (a documented caveat,
 #   not a filter). Training and similar operational events are excluded.
-# - **Stormwater (modelled)** — EPCOR's own bylaw formula (area × intensity ×
+# - **Stormwater (modelled)**, *in development* — EPCOR's own bylaw formula (area × intensity ×
 #   runoff coefficient) applied to every roll parcel.
-# - **Water + sanitary (modelled)** — a per-connection model: meter-size fixed
+# - **Water + sanitary (modelled)**, *in development* — a per-connection model: meter-size fixed
 #   charges plus block volumetric rates.
 # - **Electricity/gas franchise fees** — modelled as data columns but *not*
 #   mapped: a flat per-dwelling proxy makes every map of them a dwelling-density
@@ -400,9 +402,9 @@ This week, in figures:
 | road centreline in the metric ({' + '.join(METRIC_GROUPS)}) | **{road_km:,.0f} km** |
 | lifecycle road rate | **${unit_costs['road_dollars_per_m']:,.2f}** per road metre per year |
 | operating road rate | **${unit_costs['road_ops_dollars_per_m']:,.2f}** per road metre per year |
-| fire events | **{citywide('fire_events_per_acre'):,.0f}** per year, window **{min(main.FIRE_YEARS)}–{max(main.FIRE_YEARS)}**, **{n_stations}** stations |
-| stormwater, modelled | **${citywide('storm_charge_per_acre') / 1e6:,.1f}M** per year |
-| water + sanitary, modelled | **${citywide('water_charge_per_acre') / 1e6:,.1f}M** per year |
+| fire events (in development) | **{citywide('fire_events_per_acre'):,.0f}** per year, window **{min(main.FIRE_YEARS)}–{max(main.FIRE_YEARS)}**, **{n_stations}** stations |
+| stormwater, modelled (in development) | **${citywide('storm_charge_per_acre') / 1e6:,.1f}M** per year |
+| water + sanitary, modelled (in development) | **${citywide('water_charge_per_acre') / 1e6:,.1f}M** per year |
 """)
 
 # %% [markdown]
