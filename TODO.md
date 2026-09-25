@@ -629,6 +629,25 @@ not restore it**; the numbers below are the durable record).
   `#2ec4ff` comment in `web/index.html`: *"no single colour clears all four
   ramps"*); this is the same search, never run for the set-aside grey.
 
+### Peter's list, 2026-09-25 (S196) — not scoped yet
+
+- [ ] **Tutorial pop-up for the toolbar on a first mobile visit, and maybe a
+  smaller one on desktop.** It would show once and walk through the controls.
+  Nothing in `DECISIONS.md` covers onboarding or a tutorial yet.
+  - Before designing, read `docs/MOBILE_USABILITY.md` and `docs/CONTROLS_MATRIX.md`.
+    The controls are shared DOM, so a tour of them touches desktop too.
+  - A "seen it" flag in `localStorage` must fail safe: private windows and
+    headless runs start empty, and the verify scripts will meet the pop-up.
+- [ ] **Mobile panel before it opens: more colour and height so it reads as
+  tappable.** First pin down which element this means (the peek card, or the
+  collapsed hood panel?) and measure its current size on a phone viewport.
+  The mobile coverage figures on record (DECISIONS 2026-08-04, 27.9% default)
+  are the budget any extra height spends.
+- [ ] **Possibly an `AGENTS.md` for the repo**, so tools other than Claude Code
+  get the same instructions. Decide whether it is a pointer or symlink to
+  `CLAUDE.md` or a separate file. A copy would drift, and `CLAUDE.md` changes
+  weekly. Check what `cc-data-project-template` does and keep the two consistent.
+
 ### General backlog — the flat list (no parent item; predates the `###` headings above)
 
 ⚠️ **Everything from here down is its OWN top-level work, not a child of the
