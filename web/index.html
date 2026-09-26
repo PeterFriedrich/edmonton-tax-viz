@@ -180,7 +180,7 @@
     <div id="revcut">
       <button data-revcut="revenue_per_acre" class="active" title="Every property class — the full city tax the land generates">Total</button>
       <button data-revcut="res_revenue_per_acre" title="Residential-class dollars only: houses, condos and apartment buildings. A subset of Total, not all of what the land pays">Residential</button>
-      <button data-revcut="nonres_revenue_per_acre" title="Dollars billed at the non-residential rate — commercial and industrial land. A subset of Total. Residential and Non-residential are nearly all of it but do not sum to the total exactly: farmland is a small separate class">Non-residential</button>
+      <button data-revcut="nonres_revenue_per_acre" title="Dollars billed at the non-residential rate — business, industry and institutions. A subset of Total. Residential and Non-residential are nearly all of it but do not sum to the total exactly: farmland is a small separate class">Non-residential</button>
     </div>
     <div id="moneymode">
       <button data-moneymode="current" class="active" title="The map as it stands — each neighbourhood's own per-acre figure, not set against anything else">Current</button>
@@ -222,7 +222,7 @@
     <div id="labcut">
       <button data-labcut="revenue_per_acre" class="active" title="Every property class — the full city tax the land generates">Total</button>
       <button data-labcut="res_revenue_per_acre" title="Residential-class dollars only: houses, condos and apartment buildings. A subset of Total">Residential</button>
-      <button data-labcut="nonres_revenue_per_acre" title="Dollars billed at the non-residential rate — commercial and industrial land. A subset of Total">Non-residential</button>
+      <button data-labcut="nonres_revenue_per_acre" title="Dollars billed at the non-residential rate — business, industry and institutions. A subset of Total">Non-residential</button>
     </div>
     <span class="hd" id="moneydetail-hd">Detail</span>
     <div id="moneydetail">
@@ -845,8 +845,8 @@
       nonres_revenue_per_acre: {
         key: "nonres_revenue_per_acre",
         title: "Edmonton: Non-Residential City Taxes per Acre",
-        blurb: "**Non-residential city tax per acre**: what commercial and " +
-               "industrial property pays the City, divided by the neighbourhood's " +
+        blurb: "**Non-residential city tax per acre**: what non-residential property " +
+               "(business, industry and institutions) pays the City, divided by the neighbourhood's " +
                "land area.",
         legendLabel: "Non-residential city tax per acre",
         legendMin: "$0",
@@ -855,8 +855,8 @@
         elevationScale: 0.033,
         transform: "sqrt",
         fmt: fmtMoney,
-        lotBlurb: "**Non-residential city tax per lot acre**: what commercial and " +
-                  "industrial property pays the City, divided by the parcel land the " +
+        lotBlurb: "**Non-residential city tax per lot acre**: what non-residential property " +
+                  "(business, industry and institutions) pays the City, divided by the parcel land the " +
                   "neighbourhood's properties own.",
         blurbNote: "A subset of Revenue, not all of what the land pays.",
       },
@@ -3291,13 +3291,19 @@
     // sentence silently absent on entry and appear only after some later
     // rebuild. The null-metric guard is repeated rather than inherited so the
     // two paths cannot disagree about which cells exist.
+    //
+    // ⚠️ `> 0`, NOT `!= null`: exempt_frac is a share of the TOTAL levy, so on
+    // a subset cut a flagged cell can hold $0 of that cut — 1,064 of 1,332 on
+    // Residential drew as flat azure squares and inflated the blurb's count
+    // (docs/FINDINGS_blurb_claims.md F1). Interim until the pipeline ships a
+    // per-cut share; the certain/uncertain split still uses the total share.
     function glassInstCells() {
       const fcol = gridData?.columns.exempt_frac ?? -1;
       const col = gridData ? gridData.columns[gridColKey()] : -1;
       if (fcol < 0 || col < 0) return [];
       gridData.instFor ??= {};
       return (gridData.instFor[col] ??= gridData.cells.filter(
-        c => c[col] != null && c[fcol] != null && c[fcol] >= GLASS_EXEMPT_MIN));
+        c => c[col] > 0 && c[fcol] != null && c[fcol] >= GLASS_EXEMPT_MIN));
     }
     const glassInstCount = () => glassInstCells().length;
 
