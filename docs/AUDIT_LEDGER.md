@@ -132,7 +132,7 @@ these do not update):
 | `audit-error` | 9 | 0 | 0 |
 | `guard-noisy` | 8 | 1 | 0 |
 | `input` | 8 | 4 | 1 |
-| `membership` | 7 | 3 (+1 full) | 2 |
+| `membership` | 7 | 2 (+2 full) | 2 |
 | `pipeline` | 7 | 2 | 3 |
 | `premise` | 7 | 0 | 0 |
 | `process` | 7 | 0 | 0 |
@@ -144,7 +144,7 @@ these do not update):
 Reading it: **guards are the biggest class but almost never the thing the
 reader saw** (1 of 32) — a blind guard is how a defect *survives*, not the
 defect. What reaches readers is copy (`claim`), rendering and the hand-entered
-`input` rates. Findings per month rose 12 → 50 → 75 and public ones 1 → 8 → 22
+`input` rates. Findings per month rose 12 → 50 → 75 and public ones 1 → 7 → 22
 (Jul → Sep), which tracks more and deeper audits of published surfaces, not
 necessarily worse code. 9 findings were the audits' own errors, and 7 audits
 started from a false premise.
@@ -184,13 +184,13 @@ started from a false premise.
 | 08-09 S104 | Roll-continuity re-run replayed a warm cache and looked like a second observation | guard-blind | no | scoped | fixed |
 | 08-11 S106 | `verify-nonres-revenue.js` epsilon stale after a rounding change (red on correct data) | guard-noisy | no | side | fixed |
 | 08-11 S106 | `verify-revenue-panel.js` counted DOM copies, not visible rows; `mix > 0` passed by luck | guard-noisy | no | side | fixed |
-| 08-11 S106 | Four verify scripts print no PASS lines, so a grep sweep reads silence as green | guard-blind | no | side | unknown |
+| 08-11 S106 | Four verify scripts (`glass`, `labels`, `services`, `uses`) assert nothing and always exit 0; the runner lists them `ok`, 0 checks | guard-blind | no | side | open |
 | 08-18 S112 | Industrial set: Engineering (490) 95% parkades, Terminals (440) 100% transit — 19% of dollars | membership | full | accident | fixed |
 | 08-20 S114 | External per-km figures are the same City numbers; only the service-life denominator differs | none | no | scoped | n/a |
-| 08-22 S115 | `far == 0` means missing `gross_area`; 3,964 cells tie at max opportunity | pipeline | latent | scoped | unknown |
+| 08-22 S115 | `far == 0` means missing `gross_area`; 3,964 cells tie at max opportunity | pipeline | latent | scoped | fixed |
 | 08-22 S115 | Straight-line distance to LRT: 55% of in-band properties false positives | input | latent | scoped | accepted |
 | 08-23 S116 | 3 of 33 GTFS "stations" are a tail track and bus-garage platforms | membership | latent | scoped | fixed |
-| 08-23 S116 | The 58 context-dot stops mix LRT with bus centres | membership | yes | side | unknown |
+| 08-23 S116 | The 58 context-dot stops mix LRT with bus centres (the docstring intends both; `DATA.md` §20 calls the set wrong) | membership | full | side | open |
 | 08-23 S116 | Probe road graph included 2,117 railway centrelines | membership | no | side | fixed |
 | 08-23 S116 | School set cannot be completed from held data (feasibility: no) | none | no | scoped | n/a |
 | 08-25 S119 | Roll was the 2026 roll while the pin said 2025: levy understated $69.5M | pipeline | yes | side | fixed |
@@ -206,7 +206,7 @@ started from a false premise.
 | 08-28 S123 | FIR guard cannot see a roll Alberta has not filed yet | guard-blind | latent | scoped | accepted |
 | 08-28 S123 | F3 nothing ran the test suite on a change; `master` unprotected | process | no | scoped | fixed |
 | 08-28 S123 | F4 15 hardcoded window labels would misdate the map in January 2027 | claim | latent | scoped | fixed |
-| 08-28 S123 | F5 refresh-gate test name claims coverage it does not check | guard-blind | latent | scoped | unknown |
+| 08-28 S123 | F5 refresh-gate test name claims coverage it does not check | guard-blind | latent | scoped | open |
 | 08-30 S126 | 121 "unmatched" parcels ($592M, all three named examples) never left the roll | premise | no | scoped | fixed |
 | 08-30 S126 | 5 m match tolerance derived from a four-hospital sample | input | no | scoped | accepted |
 | 08-30 S126 | Nothing persisted the first per-parcel list, so nothing to diff | process | no | scoped | fixed |
@@ -220,7 +220,7 @@ started from a false premise.
 | 09-03 S134 | The run's Q8 addendum reported a source already in `DATA.md` as a discovery | audit-error | no | scoped | withdrawn |
 | 09-03 S135 | The anchor drift trend: an interpolated midpoint plus stale mismatched local raw | premise | no | scoped | n/a |
 | 09-03 S135 | Guard band widened 84 → 127.5 on the phantom trend | guard-blind | no | scoped | fixed |
-| 09-03 S135 | `_why_two_widths` run count wrong; frozen bands rested on two observations | claim | no | scoped | unknown |
+| 09-03 S135 | `_why_two_widths` run count wrong; frozen bands rested on two observations | claim | no | scoped | fixed |
 | 09-03 S136 | $50/m lifecycle rate not corroborated by NRP spend ($3,151/m vs $1,900) | input | yes | scoped | accepted |
 | 09-03 S136 | First run used setback geometry, overstating every $/m | audit-error | no | scoped | withdrawn |
 | 09-04 S137 | `DECISIONS.md` drifted from its one-sentence contract (median row 16×) | process | no | accident | fixed |
@@ -268,7 +268,7 @@ started from a false premise.
 | 09-18 S172 | §4b "flat D+F" is three differently-composed aggregates | claim | no | scoped | fixed |
 | 09-18 S172 | §4a mean-age "second route" withdrawn | claim | no | scoped | fixed |
 | 09-22 S187 | 95.2 km of boundary road assigned by ~0.2 m noise; 25 hoods move >5% | method | yes | scoped | fixed |
-| 09-22 S187 | `$ revenue / road metre` tooltip ignores the Ratio floor + gate | render | full | scoped | unknown |
+| 09-22 S187 | `$ revenue / road metre` tooltip ignores the Ratio floor + gate | render | full | scoped | fixed |
 | 09-22 S187 | Snow figures "independently corroborated" — the check verifies the total, not the share | claim | no | scoped | fixed |
 | 09-22 S187 | "Paved rose 11.5 → 12.5" compares curbs-inclusive with curbs-exclusive | claim | no | scoped | fixed |
 | 09-22 S187 | Lifecycle §4 omitted the fully-amortized-assets bias | claim | no | scoped | fixed |
