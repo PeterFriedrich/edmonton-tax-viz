@@ -145,7 +145,8 @@ evidence-that-would-change-it. Correctness audits:
 
 1. **Add a row to `docs/AUDIT_LEDGER.md`**: date, target/scope, instrument,
    output pointer, one-line verdict, outstanding items. Follow the existing
-   rows' style.
+   rows' style. Then add one **Findings register** row per finding (class,
+   public, found, status — vocabulary defined in that section).
 2. Write findings where they belong: a `FINDINGS_*.md` for big runs, the
    session handoff §2 for delta/smaller runs — the ledger row just points.
 3. Reconcile `TODO.md` (tick executed items, add follow-up items for
