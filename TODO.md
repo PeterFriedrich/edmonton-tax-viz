@@ -580,6 +580,14 @@ list lives in `docs/AUDIT_LEDGER.md` → "Queued"; run them one per session at
 lands, close this item when the list is empty. ⚠️ #6 gates the Colour
 legibility item below; #7 waits for the 2026-09-28 refresh.
 
+### Findings-register open items (OPEN 2026-09-26)
+
+Three findings the register backfill (`docs/AUDIT_LEDGER.md` "Findings register") found still open with no item here.
+
+- [ ] **Four verify scripts assert nothing** (S106): `verify-glass`, `-labels`, `-services`, `-uses` print values and always exit 0, so `verify.js` lists them `ok` with 0 checks. Add assertions, or rename them as probes so the runner stops counting them. Local sweeps only; CI does not run them.
+- [ ] **`test_refresh_workflow_gates_every_publish_step_on_both_guards` checks consistency, not coverage** (S123 F5, `docs/FINDINGS_proxy_guards.md`): a new publish step with no `if:` is invisible to it. Latent — today's ungated steps are deliberate. Fix the test or its name.
+- [ ] **The 58 `transit_stations.json` context dots mix LRT stations with bus transit centres** (S116, `data/DATA.md` §20). The export docstring intends both; DATA.md calls the set wrong. Decide which it is, then either filter to the 30 passenger stations or reword DATA.md. `/full/` only.
+
 ### Methods-notebook audit follow-ons (OPEN 2026-09-25 S197)
 
 From `docs/FINDINGS_methods_notebook.md`. No printed figure is wrong; these are about when the page runs and what its guards see.
