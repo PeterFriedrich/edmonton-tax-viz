@@ -341,7 +341,7 @@ The camera flip re-renders the blurb through `currentBlurb()` (from `syncMode`),
 |---|---|
 | P1, Total | `**City property tax per acre**: what each neighbourhood's properties pay the City, divided by its land area.` (lot: `…per lot acre**: … divided by the parcel land they own, so parks, river valley and big lots don't dilute it.`) |
 | P1, Residential | `**Residential city tax per acre**: what houses, condos and apartment buildings pay the City, divided by the neighbourhood's land area.` |
-| P1, Non-residential | `**Non-residential city tax per acre**: what commercial and industrial property pays the City, divided by the neighbourhood's land area.` |
+| P1, Non-residential | ~~`what commercial and industrial property pays the City`~~ → **2026-09-26 (Peter, provisional):** `**Non-residential city tax per acre**: what non-residential property (business, industry and institutions) pays the City, divided by the neighbourhood's land area.` Same noun on the two Non-residential button titles. The class includes school, park and institutional parcels (`FINDINGS_blurb_claims.md` F2); revisit when the exemption-status data request answers. |
 | P1, Value | `**Assessed value per acre**: the total assessed value of each neighbourhood's property, divided by its land area. What the land is worth, not what it pays.` |
 | P2 | `Taller, brighter` (2D: `Brighter`) `neighbourhoods are higher per acre; colour is square-root scaled to show the low end. Grey = set-aside land (river valley, parks, undeveloped), off the scale.` (lot: `Grey = set-aside land, or too little parcel land to measure.`) |
 | P3, split cuts | `A subset of Revenue, not all of what the land pays.` (the honesty line `verify-res-revenue` / `verify-nonres-revenue` guard) |

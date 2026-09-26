@@ -155,6 +155,15 @@ const PUBLIC_VIEWS = ['money', 'development', 'services', 'ratio'];
         const want = (state.denom === 'lot' ? label.replace('per acre', 'per lot acre') : label) + ` in ${s.cell} m grid cells`;
         const got = (paras[0].match(/\*\*([^*]+)\*\*/) || [])[1];
         if (got !== want) why.push(`bold "${got}", want "${want}"`);
+        // The azure count is a claim about cells that carry tax on THIS cut.
+        // Recomputed here from the raw cells, not from glassInstCells(), so a
+        // regression in that filter cannot also pass this check (F1).
+        const cols = gridData.columns, col = cols[gridColKey()], fcol = cols.exempt_frac ?? -1;
+        const want_n = fcol < 0 || !isRevenue(state.metric) ? 0 : gridData.cells.filter(
+          c => c[col] > 0 && c[fcol] != null && c[fcol] >= GLASS_EXEMPT_MIN).length;
+        const said = plain.match(/([\d,]+) azure cells? (?:is|are)/);
+        const said_n = said ? Number(said[1].replace(/,/g, '')) : 0;
+        if (said_n !== want_n) why.push(`says ${said_n} azure cells, ${want_n} flagged cells carry tax on this cut`);
       }
       if (s.lens === 'change' && !(plain.includes(CHG_WINDOW_LABEL[state.chgWindow]) &&
           plain.includes(`no ${CHG_WINDOWS[state.chgWindow]} value`)))
