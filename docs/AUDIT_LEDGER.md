@@ -83,6 +83,213 @@ Audits are framed top-down, fundamental decisions first (the
 | 2026-09-23 (S191, **Opus 5.5**, `high`) | **THE EVIDENCE RECHECK GUARD (`scripts/recheck_evidence_notebooks.py` + `evidence-recheck.yml`, #510/S183) — S173–S186 backlog item #4**, before its first scheduled run 2026-10-15. Can each invariant flip; does ❓ fire on a dead source rather than fold into ✅. Decision stack L0–L5. ⚠️ Same family as the author | `edmonton-audit` skill, decision family; cold-cache live baseline (7/7 green, 1m55s), then each evidence notebook run through `run_one()` under source patches simulating **the publisher's fix** and **an empty-200 source** | `docs/FINDINGS_evidence_recheck.md` | **CONDITIONAL.** The classifier is sound (network error → ❓; exit 0 without invariants ≠ pass). **The "⚠️ = publisher fixed it" premise holds for 2 of 5 evidence notebooks** (school, permit): `exemption_uncertainty` stays **✅ with $8.78B flagged exempt** — no `check()` reads the flag its headline is about (structural invariants, pre-dates the fail-when-fixed style); `roll_year_metadata`'s fix lands as **❓** (IndexError); `historical_2024_gap` flips only via a NaN comparison and self-retargeting claims (`ODD_YEAR = idxmin` makes check 1 a tautology). **Empty 200 folds into ✅** on the school report (falsifying searches return `[]` → 4/4 pass). **Counts inflated by 17** (two notebooks double-print: real 101, reported 118). Job timeout 60 min < 7 × 25 min per-notebook cap; `| tee` without pipefail; a hand run reads download caches. L0 CONDITIONAL: builds the monthly re-run `DECISIONS` 2026-08-29 rejected, no AMENDED marker | F1–F10 in the findings §8 — code/CI/notebooks, Peter's to merge; **F1–F4 before 2026-10-15**. F10 (mark 08-29 AMENDED) needs Peter's confirmation. See `TODO.md` "Evidence recheck audit follow-ons" |
 | 2026-09-25 (S197, **Opus 5.5**, `high`) | **THE METHODS NOTEBOOK (`notebooks/verified/02_methods.py`, #578) — S187–S196 backlog item 11.** Every printed figure, and whether each of the 6 invariants can fail on a real defect and not on a healthy run; before its first scheduled run (2026-09-28). | `edmonton-audit` (correctness), in-process mutants + a January-state run of the runner | `docs/FINDINGS_methods_notebook.md` | **Every printed figure correct** (levy $2.78B ties to served revenue). **F1 MEDIUM:** the notebook step runs BEFORE `generate_status.py`, so vintage/last-checked are one run stale every week, and the year invariant REDS a healthy January refresh (reproduced) while catching nothing the test suite misses. **F2 LOW:** the located-dollars invariant is an identity (PASS with 43% and 100% of dollars missing); class already guarded by `check_value_anchors.py`. **F3 WARN:** public page describes full-only layers with live numbers, omits Development + Change. | F1 CI move (Peter); F2 one-line fix; F3/F4 Peter's call; confirm F1(a) on the 09-28 render |
 
+
+## Findings register
+
+One row per **finding** from the executed audits above, tagged so patterns can
+be counted instead of recalled. The table above has one row per *audit* with
+free-text verdicts; this one splits them. Backfilled 2026-09-26 from the
+verdict and outstanding columns plus `TODO.md`; the findings docs are the
+authority where they disagree. **Add rows here in the same PR as a new audit
+row.** A finding is one defect or one retracted claim, not every sub-number;
+an audit with no defect gets one `none` row so every audit appears.
+
+**Class** — what kind of thing was wrong:
+
+| Class | Meaning |
+|---|---|
+| `pipeline` | code computed, joined or wrote the wrong thing |
+| `input` | a hand-entered or external rate, constant, unit or source was wrong or mis-scoped |
+| `method` | a modelling choice that doesn't measure what it claims |
+| `membership` | a category or set holds members that aren't what its name says |
+| `render` | the front end shows a figure or state it shouldn't |
+| `claim` | copy, doc or comment states something the evidence doesn't support |
+| `guard-blind` | a check that passes under the defect it exists for (vacuous, proxy-reading, identity, unread) |
+| `guard-noisy` | a check that fails on a correct state, or re-files without dedup |
+| `process` | repo/CI apparatus drift (merge gate, doc contracts, persistence) |
+| `security` | security finding |
+| `upstream` | defect in data we don't control (`DATA_ISSUES.md`) |
+| `premise` | the question or backlog item the audit started from was false |
+| `audit-error` | the audit's own finding was wrong and was corrected or withdrawn |
+| `none` | audit found no defect |
+
+**Public** — `yes` a wrong figure, claim or state was visible on the public
+site or a published page; `full` only on `/full/`; `latent` could not yet
+fire; `no` internal only. **Found** — `scoped` the audit's own question;
+`side` outside its scope, during the run or its fix; `accident` the audit
+itself was started by stumbling on a symptom. **Status** — `fixed`, `open`,
+`accepted` (decided to keep or disclose), `withdrawn`, `n/a`, or `unknown`
+(the backfill could not establish it — resolve before counting on it).
+
+**Counts as of 2026-09-26** (137 findings, 54 audits; re-count from the table,
+these do not update):
+
+| Class | Findings | Reached public | Latent |
+|---|---|---|---|
+| `guard-blind` | 32 | 1 | 12 |
+| `claim` | 30 | 9 | 2 |
+| `render` | 11 | 8 (+1 full) | 2 |
+| `audit-error` | 9 | 0 | 0 |
+| `guard-noisy` | 8 | 1 | 0 |
+| `input` | 8 | 4 | 1 |
+| `membership` | 7 | 3 (+1 full) | 2 |
+| `pipeline` | 7 | 2 | 3 |
+| `premise` | 7 | 0 | 0 |
+| `process` | 7 | 0 | 0 |
+| `upstream` | 4 | 1 | 0 |
+| `method` | 2 | 2 | 0 |
+| `security` | 2 | 0 | 0 |
+| `none` | 3 | — | — |
+
+Reading it: **guards are the biggest class but almost never the thing the
+reader saw** (1 of 32) — a blind guard is how a defect *survives*, not the
+defect. What reaches readers is copy (`claim`), rendering and the hand-entered
+`input` rates. Findings per month rose 12 → 50 → 75 and public ones 1 → 8 → 22
+(Jul → Sep), which tracks more and deeper audits of published surfaces, not
+necessarily worse code. 9 findings were the audits' own errors, and 7 audits
+started from a false premise.
+
+| Audit | Finding | Class | Public | Found | Status |
+|---|---|---|---|---|---|
+| 07-01 | Heritage Valley Town Centre at ~1/250th of its value — 946 accounts dropped on an unmatched name | pipeline | no | scoped | fixed |
+| 07-01 | Lewis Farms Industrial $106M dropped on an unmatched name, a hole in the map | pipeline | no | scoped | fixed |
+| 07-01 | No roll-year / mill-rate vintage guard | guard-blind | no | scoped | fixed |
+| 07-01 | CI unmatched-name check was warning-only | guard-blind | no | scoped | fixed |
+| 07-01 | Downloader trusted Socrata not to truncate at `$limit` | pipeline | latent | scoped | fixed |
+| 07-08 | "WEM is several records" — it is one $1.285B account | premise | no | scoped | n/a |
+| 07-09 | CDN scripts loaded without SRI (Medium) + 4 Low | security | no | scoped | fixed |
+| 07-09 | S2: scrubbed content still in git history | security | no | scoped | open |
+| 07-13 S48 | Infill single-scale colour saturation (decision reopened) | render | yes | scoped | fixed |
+| 07-16 S56 | 0 degraded; S48's conditionals dispositioned | none | no | scoped | n/a |
+| 07-28 S74 | Point-grain artifact (Westmount $3,478M/lot-acre) — never reaches the 100 m map | render | latent | side | accepted |
+| 07-28 S75 | `qi6a-xuwt` 2024–25 dropout: 2,448 accounts, $2.93B, 188 hoods | upstream | no | accident | accepted |
+| 08-02 S86 | `verify-temporal.js` pinned the live year as an equality; red on a correct refresh | guard-noisy | no | accident | fixed |
+| 08-02 S86 | A data-only refresh had no check on the render | guard-blind | no | scoped | fixed |
+| 08-05 S94 | Roads maintenance `$1,285/km × network`, ~5× low, live on the public budget pod | input | yes | scoped | fixed |
+| 08-05 S95 | No new bugs; the ledger's own "never audited" item 4 was stale | process | no | side | fixed |
+| 08-07 S99 | Two brief premises false (an 800 m LRT buffer that doesn't exist; ward geography) | premise | no | scoped | n/a |
+| 08-07 S100 | Misericordia renumbered and absent from the roll: hood understated ~$250M | upstream | yes | accident | fixed |
+| 08-07 S100 | `DATA.md` "exempt institutional land is absent from the roll" false as a blanket claim | claim | no | side | fixed |
+| 08-07 S100 | Identifier-based checks reported $469.8M "missing" that was renumbered | guard-noisy | no | scoped | fixed |
+| 08-08 S101 | Three external worked-example parcels all wrong | premise | no | scoped | n/a |
+| 08-08 S101 | A retracted claim was still live on the site | claim | yes | side | fixed |
+| 08-08 S102 | Gap note said 2024 missing 2,448 accounts (2,322; 2,448 is cumulative to 2025) | claim | yes | scoped | fixed |
+| 08-08 S102 | `verify-temporal.js` pinned the wrong 2,448 | guard-blind | no | scoped | fixed |
+| 08-08 S102 | Three comment-only wrong figures (fire/transit skew) | claim | no | scoped | fixed |
+| 08-09 S103 | Line-number citation drifted (`DATA.md line ~308`) | claim | no | scoped | fixed |
+| 08-09 S103 | 19 accounts described as 19 rows (16) | claim | no | scoped | fixed |
+| 08-09 S103 | S102's own follow-up note (2) was false | audit-error | no | scoped | withdrawn |
+| 08-09 S104 | Locked decision on a display artifact: "109.6 km² unmapped" is the 45 m setback | claim | no | scoped | fixed |
+| 08-09 S104 | S103 overstated "three missing files" (one was) | audit-error | no | scoped | withdrawn |
+| 08-09 S104 | Roll-continuity re-run replayed a warm cache and looked like a second observation | guard-blind | no | scoped | fixed |
+| 08-11 S106 | `verify-nonres-revenue.js` epsilon stale after a rounding change (red on correct data) | guard-noisy | no | side | fixed |
+| 08-11 S106 | `verify-revenue-panel.js` counted DOM copies, not visible rows; `mix > 0` passed by luck | guard-noisy | no | side | fixed |
+| 08-11 S106 | Four verify scripts print no PASS lines, so a grep sweep reads silence as green | guard-blind | no | side | unknown |
+| 08-18 S112 | Industrial set: Engineering (490) 95% parkades, Terminals (440) 100% transit — 19% of dollars | membership | full | accident | fixed |
+| 08-20 S114 | External per-km figures are the same City numbers; only the service-life denominator differs | none | no | scoped | n/a |
+| 08-22 S115 | `far == 0` means missing `gross_area`; 3,964 cells tie at max opportunity | pipeline | latent | scoped | unknown |
+| 08-22 S115 | Straight-line distance to LRT: 55% of in-band properties false positives | input | latent | scoped | accepted |
+| 08-23 S116 | 3 of 33 GTFS "stations" are a tail track and bus-garage platforms | membership | latent | scoped | fixed |
+| 08-23 S116 | The 58 context-dot stops mix LRT with bus centres | membership | yes | side | unknown |
+| 08-23 S116 | Probe road graph included 2,117 railway centrelines | membership | no | side | fixed |
+| 08-23 S116 | School set cannot be completed from held data (feasibility: no) | none | no | scoped | n/a |
+| 08-25 S119 | Roll was the 2026 roll while the pin said 2025: levy understated $69.5M | pipeline | yes | side | fixed |
+| 08-25 S119 | Year guard parsed a Socrata metadata string Edmonton never updates | guard-blind | no | side | fixed |
+| 08-25 S119 | "No City total exists to check against" — FIR workbooks already downloaded had one | premise | no | scoped | n/a |
+| 08-26 S120 | One building published under three street spellings | upstream | no | side | open |
+| 08-26 S121 | Temporal archive's `2025` entry is the 2026 roll | pipeline | yes | accident | fixed |
+| 08-26 S121 | Frozen archive entries had no guard | guard-blind | no | accident | fixed |
+| 08-27 S122 | Tooltip hardcoded `(2024 n/a)` would understate a two-year hole | claim | latent | side | fixed |
+| 08-27 S122 | `check_assessment_roll` bypassed the stale-metadata downgrade: false ⚠️ monthly | guard-noisy | no | side | fixed |
+| 08-27 S122 | "x is year-scaled" red was the measurement losing its subject, not a render bug | guard-noisy | no | scoped | fixed |
+| 08-28 S123 | F1 `write_archive` reassigned the pinned year every run; stale pin overwrites a correct year | pipeline | latent | scoped | fixed |
+| 08-28 S123 | FIR guard cannot see a roll Alberta has not filed yet | guard-blind | latent | scoped | accepted |
+| 08-28 S123 | F3 nothing ran the test suite on a change; `master` unprotected | process | no | scoped | fixed |
+| 08-28 S123 | F4 15 hardcoded window labels would misdate the map in January 2027 | claim | latent | scoped | fixed |
+| 08-28 S123 | F5 refresh-gate test name claims coverage it does not check | guard-blind | latent | scoped | unknown |
+| 08-30 S126 | 121 "unmatched" parcels ($592M, all three named examples) never left the roll | premise | no | scoped | fixed |
+| 08-30 S126 | 5 m match tolerance derived from a four-hospital sample | input | no | scoped | accepted |
+| 08-30 S126 | Nothing persisted the first per-parcel list, so nothing to diff | process | no | scoped | fixed |
+| 08-30 S126 | `COMMERCIAL_CLASSES` reads class 1 only: per-hood error up to 6.5 pp | membership | yes | scoped | accepted |
+| 08-30 S126 | `other` counted as non-residential against its own comment | membership | latent | scoped | fixed |
+| 08-30 S126 | `_categorize` only warned on unclassified zoning | guard-blind | no | scoped | fixed |
+| 09-03 S134 | ~3%/yr set-aside "cross-check" is circular | claim | no | scoped | fixed |
+| 09-03 S134 | Taproot source dated a year late (relayed date) | input | no | scoped | fixed |
+| 09-03 S134 | A composite capital profile undercounts its program ~$475M | input | no | scoped | fixed |
+| 09-03 S134 | `DATA.md` §19 said the new-vs-renewal split was unpublished (Table 8 has it) | claim | no | scoped | fixed |
+| 09-03 S134 | The run's Q8 addendum reported a source already in `DATA.md` as a discovery | audit-error | no | scoped | withdrawn |
+| 09-03 S135 | The anchor drift trend: an interpolated midpoint plus stale mismatched local raw | premise | no | scoped | n/a |
+| 09-03 S135 | Guard band widened 84 → 127.5 on the phantom trend | guard-blind | no | scoped | fixed |
+| 09-03 S135 | `_why_two_widths` run count wrong; frozen bands rested on two observations | claim | no | scoped | unknown |
+| 09-03 S136 | $50/m lifecycle rate not corroborated by NRP spend ($3,151/m vs $1,900) | input | yes | scoped | accepted |
+| 09-03 S136 | First run used setback geometry, overstating every $/m | audit-error | no | scoped | withdrawn |
+| 09-04 S137 | `DECISIONS.md` drifted from its one-sentence contract (median row 16×) | process | no | accident | fixed |
+| 09-05 S139 | $1,285/km maintenance half contradicted 4.65× by the City's own program | input | yes | accident | fixed |
+| 09-05 S139 | `bikeway_ops` "~33× low" stale (85×) | claim | no | side | fixed |
+| 09-05 S140 | `CODEMAP.md` filed the 527-line boot under `applySvcDriver` | process | no | scoped | fixed |
+| 09-05 S140 | The run's own correction (39 of 65 scripts) under-measured: 122 globals in 48 | audit-error | no | scoped | withdrawn |
+| 09-05 S142 | `svc_cost_per_acre` was 88.6% fire-dispatch variance priced as a cost | method | yes | scoped | fixed |
+| 09-05 S142 | Public roads-ops blurb stated a ratio that held only against the old rate | claim | yes | scoped | fixed |
+| 09-05 S142 | Services panel published transit + bike cost on the public build | render | yes | side | fixed |
+| 09-05 S142 | `verify-transport-cost.js` "two bases distinct" could not fail | guard-blind | no | side | fixed |
+| 09-05 S142 | Panel shows 100% break-even saturation that 07-16 forbade, unrecorded | render | yes | scoped | open |
+| 09-07 S144 | V1 `check_cost_copy.py` satisfied by a code comment while the blurb showed $1,285 | guard-blind | yes | scoped | fixed |
+| 09-07 S144 | V2 `SQ_M_PER_ACRE` could be halved with 784 tests green | guard-blind | latent | scoped | fixed |
+| 09-07 S144 | V3 no browser check on the merge gate | guard-blind | no | scoped | fixed |
+| 09-07 S144 | V4 14 early exits exit 0 with the body unrun | guard-blind | no | scoped | fixed |
+| 09-07 S144 | `SETBACK_CRS` unpinned (any metric CRS silent) | guard-blind | latent | side | fixed |
+| 09-07 S144 | "`check_temporal_archive_year` is in no workflow" — false | audit-error | no | scoped | withdrawn |
+| 09-08 S147 | R1 an all-null served column passed the whole publish path | guard-blind | latent | scoped | fixed |
+| 09-08 S147 | R2 merge-gate guards neutered at their exit line with 800 green | guard-blind | latent | scoped | fixed |
+| 09-08 S147 | R3 smoke B8 dropped selector misses (0 rows examined = pass) | guard-blind | latent | scoped | fixed |
+| 09-08 S147 | R4 six unpinned guard bands | guard-blind | latent | scoped | fixed |
+| 09-08 S147 | R5 an unreadable baseline read as "first publish" | guard-blind | latent | scoped | fixed |
+| 09-08 S149 | Operating rate is $/lane-km applied to centreline metres (1.8–2.2× under) | input | yes | scoped | accepted |
+| 09-08 S149 | 09-06 "two sources do not disagree" (1.29×) computed across units | claim | no | scoped | fixed |
+| 09-08 S149 | "1.7× disagreement between City publications" was our scope error | claim | no | scoped | fixed |
+| 09-08 S149 | "Provably refresh-invariant" road length falsified by vintage (+10.2 km) | claim | no | scoped | fixed |
+| 09-08 S149 | Portal books FY2025 all to `Alley Renewal` | upstream | no | side | open |
+| 09-15 S159 | Services panel served one layer for all ten (3 of 10 rows public) | render | yes | scoped | fixed |
+| 09-15 S159 | Budget pod return depends on press parity (T4) | render | yes | scoped | open |
+| 09-15 S160 | A wrong year or mill rate in the manifest passed 892 tests + all guards | guard-blind | latent | scoped | fixed |
+| 09-15 S160 | Public literals unguarded, incl. `2021–25` in `test_window_labels`' blind spot | guard-blind | latent | scoped | fixed |
+| 09-15 S160 | `~0.9% of units` typed in from a two-month-old measurement | claim | yes | scoped | open |
+| 09-15 S160 | `$50k` clamp drifted to 0.871 × p97.5; S104's "still p97.0" stale | render | yes | scoped | fixed |
+| 09-15 S160 | The audit's own instrument missed the Money view and tokenised `$50k` as `$50` | audit-error | no | scoped | fixed |
+| 09-16 S162 | 13 supersessions announced, 4 marked | process | no | scoped | fixed |
+| 09-16 S162 | 6 of 8 handoff citations in docs dead | claim | no | side | fixed |
+| 09-16 S165 | HIGH on the roll-year guard's January blindness — already settled in `DECISIONS.md` | audit-error | no | scoped | withdrawn |
+| 09-16 S165 | `refresh.yml` exit-4 message names the wrong cause | claim | no | scoped | open |
+| 09-16 S165 | Two exit-0 blind states in the roll-year guard | guard-blind | latent | scoped | accepted |
+| 09-16 S164 | `check_todo_branch_refs` L0 FAIL — reversed next day (counted merges, not prunes) | audit-error | no | scoped | withdrawn |
+| 09-16 S164 | `handoff_gap` SessionEnd output had no reader | guard-blind | no | scoped | fixed |
+| 09-16 S164 | `clamp-drift` issue step re-files weekly (no dedup) | guard-noisy | no | scoped | fixed |
+| 09-16 S166 | Brief's "the growth is outside the loaded path" false (loaded path +66%) | premise | no | scoped | n/a |
+| 09-18 S172 | §4b "flat D+F" is three differently-composed aggregates | claim | no | scoped | fixed |
+| 09-18 S172 | §4a mean-age "second route" withdrawn | claim | no | scoped | fixed |
+| 09-22 S187 | 95.2 km of boundary road assigned by ~0.2 m noise; 25 hoods move >5% | method | yes | scoped | fixed |
+| 09-22 S187 | `$ revenue / road metre` tooltip ignores the Ratio floor + gate | render | full | scoped | unknown |
+| 09-22 S187 | Snow figures "independently corroborated" — the check verifies the total, not the share | claim | no | scoped | fixed |
+| 09-22 S187 | "Paved rose 11.5 → 12.5" compares curbs-inclusive with curbs-exclusive | claim | no | scoped | fixed |
+| 09-22 S187 | Lifecycle §4 omitted the fully-amortized-assets bias | claim | no | scoped | fixed |
+| 09-22 S188 | Two ratio-view sites bypass the readout floors (`$0 to $5,115`) | render | yes | scoped | fixed |
+| 09-22 S188 | `fmtBike` zero exemption breaks after the boundary split (`0.00`) | render | latent | scoped | fixed |
+| 09-22 S188 | Smoke C-family tooltip-garbage sweep vacuous since 08-02 | guard-blind | no | scoped | fixed |
+| 09-22 S188 | `fmtResShare` prints `100%` on 6 mixed hoods | render | yes | scoped | fixed |
+| 09-23 S190 | False published sentence: "Utilities is the only topic with more refusals" | claim | yes | scoped | fixed |
+| 09-23 S190 | "78 real refusals" includes 16 backlog sweeps and a test row | claim | yes | scoped | fixed |
+| 09-23 S190 | `\bbus` matches "business": 20 of 50 Transit requests | membership | yes | scoped | fixed |
+| 09-23 S190 | §5e anchors on bulk close dates, so its estimate is a floor | claim | yes | scoped | fixed |
+| 09-23 S191 | "⚠️ = publisher fixed it" holds for 2 of 5 evidence notebooks | guard-blind | no | scoped | fixed |
+| 09-23 S191 | An empty 200 folds into ✅ | guard-blind | no | scoped | fixed |
+| 09-23 S191 | Invariant counts inflated by 17 (double-printing) | guard-blind | no | scoped | fixed |
+| 09-23 S191 | Job timeout below the per-notebook caps; `tee` without pipefail | process | no | scoped | fixed |
+| 09-25 S197 | F1 notebook ran before the status manifest: dates one run stale, January red | guard-noisy | yes | scoped | fixed |
+| 09-25 S197 | F2 located-dollars invariant was an identity | guard-blind | no | scoped | fixed |
+| 09-25 S197 | F3 public Methods page described full-only layers | claim | yes | scoped | open |
+| 09-25 S197 | F4 stormwater figure lost its unbilled-land pairing | claim | yes | scoped | open |
+
+
 ## Queued — briefed, not yet run
 
 ### S173–S186 backlog — marked 2026-09-22, NOT yet briefed
