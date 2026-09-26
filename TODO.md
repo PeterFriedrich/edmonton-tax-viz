@@ -572,7 +572,7 @@ is in the `panel` column. T1 is public (3 of 10 service rows). T2 closed (`## Do
   tooltip/peek only because the probe feeds a hood feature to `viewTooltip` in
   grid modes too. Needs a cell-grain capture before it means anything.
 
-### Audit backlog S173–S196 — 14 targets marked, #1–#4, #10 and #11 run (OPEN 2026-09-22 S187, extended S197)
+### Audit backlog S173–S196 — 14 targets marked, #1–#4, #10, #11 and #12 run (OPEN 2026-09-22 S187, extended S197)
 
 Fourteen sessions ran on Opus 5 alone with no cross-model check. The ranked
 list lives in `docs/AUDIT_LEDGER.md` → "Queued"; run them one per session at
@@ -587,6 +587,14 @@ Three findings the register backfill (`docs/AUDIT_LEDGER.md` "Findings register"
 - [ ] **Four verify scripts assert nothing** (S106): `verify-glass`, `-labels`, `-services`, `-uses` print values and always exit 0, so `verify.js` lists them `ok` with 0 checks. Add assertions, or rename them as probes so the runner stops counting them. Local sweeps only; CI does not run them.
 - [ ] **`test_refresh_workflow_gates_every_publish_step_on_both_guards` checks consistency, not coverage** (S123 F5, `docs/FINDINGS_proxy_guards.md`): a new publish step with no `if:` is invisible to it. Latent — today's ungated steps are deliberate. Fix the test or its name.
 - [ ] **The 58 `transit_stations.json` context dots mix LRT stations with bus transit centres** (S116, `data/DATA.md` §20). The export docstring intends both; DATA.md calls the set wrong. Decide which it is, then either filter to the 30 passenger stations or reword DATA.md. `/full/` only.
+
+### Blurb-claims audit follow-ons (OPEN 2026-09-26 S199)
+
+From `docs/FINDINGS_blurb_claims.md`. Every number in the public blurbs is right; these are about what the words say the numbers mean. Copy wording is Peter's call (`COPY_DECISIONS.md`); drafts are in findings §4.
+
+- [ ] **F1 + F2, one root — the institutional share is of the TOTAL levy, but every band and caveat reads it on the Residential and Non-residential cuts too.** On Residential, the Glass blurb says 1,332 azure cells and 1,064 of them hold $0 residential tax (flat azure squares). On Non-residential, 112 hoods carry ≥25% of their figure on exempt-candidate zoning (mostly `PS` school sites) with no band or caveat. The real fix is a per-cut exempt share from the pipeline, which is a **data-contract change: propose first**. Interim, copy only: count only nonzero cells, or drop the count on subset cuts. Add the guard: stated count == flagged cells with a nonzero value on the active column.
+- [ ] **F2 copy:** the Non-res P1 "what commercial and industrial property pays" → name institutions (findings §4).
+- [ ] **F3–F6 copy:** lot P1 "big lots don't dilute it" (backwards); Development grid "(the newest permits lag geocoding)" (half the Since-2009 units gap is old apartments, never geocoded); "dense-infill areas" (the top is greenfield); Value "what the land is worth"; Roads omits set-aside grey.
 
 ### Methods-notebook audit follow-ons (OPEN 2026-09-25 S197)
 

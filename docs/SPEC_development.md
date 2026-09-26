@@ -436,7 +436,8 @@ Lens A build-time decisions, now LOCKED:
   bump extends it — no separate pin). A **first-class window** (2026-07-22): it
   drives both the hood choropleth and its own 100 m detail grid (`units_long`
   cells). The geocoding lag is on the NEWEST permits, not the oldest (2009–2023 at
-  95–98%, 2025 ~72%), so the long grid is the *best*-covered of the three (84% of
+  95–98% of permits — but 80–93% of UNITS, a permanent apartment gap, see
+  `FINDINGS_blurb_claims.md` F4 — 2025 ~72%), so the long grid is the *best*-covered of the three (84% of
   units on the grid vs 79%/71% for 5yr/3yr) — an earlier cut wrongly made it
   choropleth-only on a sparse-early-geocoding assumption the data disproved.
   Applies to all three metrics (units/permits/industrial). Citywide: ~160k units

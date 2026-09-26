@@ -949,7 +949,12 @@ it drives both the hood choropleth AND its own 100 m detail grid (`export_dev_gr
 emits `units_long`/`permits_long` cells + `coverage["long"]`, added 2026-07-22).
 The geocoding lag is on the NEWEST permits, not the oldest — **2009–2023 sit at
 95–98% geocoded, 2025 at ~72%** — so the long window is the *best*-covered of the
-three grids (84% of units on the grid, vs 79% / 71% for 5yr / 3yr). An earlier cut
+three grids (84% of units on the grid, vs 79% / 71% for 5yr / 3yr). ⚠️ **Those
+percentages are by PERMIT count.** By units, 2009–2023 run 80–93%: the old
+ungeocoded permits are big multi-unit ones (7.3 units each vs 1.75 geocoded;
+apartment units 2009–20 are 77% geocoded), so **about half the long window's
+off-grid units are 2009–2020 permits that never got coordinates** — a permanent
+gap, not lag (`docs/FINDINGS_blurb_claims.md` F4, 2026-09-26). An earlier cut
 made it choropleth-only on the mistaken belief that early-year geocoding was sparse;
 the data disproved it (`.venv/bin/python` count by year).
 
