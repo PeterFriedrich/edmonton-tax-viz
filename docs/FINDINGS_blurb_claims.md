@@ -163,6 +163,8 @@ the noun.
 
 ## 4. Remedies (none applied — copy is Peter's call, F1/F2 touch a data contract)
 
+> **Status 2026-09-27 (S201):** F1 interim and F2 copy applied in #597. F3, F5 and both F6 drafts applied as written below. **F4 held** for a cross-model read.
+
 - **F1/F2 (one fix):** gate and scale the band per cut on that cut's own
   exempt share. That needs class-split exempt levy from the pipeline
   (`exempt_res_levy` / `exempt_nonres_levy` or per-cut `exempt_frac_*`), which

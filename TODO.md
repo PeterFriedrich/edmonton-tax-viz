@@ -594,7 +594,7 @@ From `docs/FINDINGS_blurb_claims.md`. Every number in the public blurbs is right
 
 - [ ] **F1 + F2, one root — the institutional share is of the TOTAL levy, but every band and caveat reads it on the Residential and Non-residential cuts too.** On Residential, the Glass blurb says 1,332 azure cells and 1,064 of them hold $0 residential tax (flat azure squares). On Non-residential, 112 hoods carry ≥25% of their figure on exempt-candidate zoning (mostly `PS` school sites) with no band or caveat. The real fix is a per-cut exempt share from the pipeline, which is a **data-contract change: propose first**. **Interim done (S200):** band + count now cover only cells with a nonzero value on the active cut; `verify-blurbs.js` guards the count. The per-cut share (and F2's missing band/caveat on 112 non-res hoods) remains.
 - [x] **F2 copy (provisional):** Non-res P1 and button titles now say "business, industry and institutions" (PR, S200); revisit when the exemption data request answers.
-- [ ] **F3–F6 copy:** lot P1 "big lots don't dilute it" (backwards); Development grid "(the newest permits lag geocoding)" (half the Since-2009 units gap is old apartments, never geocoded); "dense-infill areas" (the top is greenfield); Value "what the land is worth"; Roads omits set-aside grey.
+- [ ] **F4 copy — held for a cross-model read** (Peter, S201): Development grid "(the newest permits lag geocoding)" — half the Since-2009 units gap is 2009–20 apartments never geocoded. Get another model to re-check the numbers in findings §2 F4, then pick the wording (draft in §4). F3, F5, F6 applied S201.
 
 ### Methods-notebook audit follow-ons (OPEN 2026-09-25 S197)
 
