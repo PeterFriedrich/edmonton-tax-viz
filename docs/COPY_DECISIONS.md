@@ -306,7 +306,7 @@ these count.
 |---|---|
 | P1, units | `**New homes per acre**, {w}: dwelling units in issued building permits — houses, semis, row houses and apartments. Where the city is growing, not what it pays.` |
 | P1, permits | `**New residential permits per acre**, {w}: one permit per building, so a house and an apartment block each count once. Where the city is growing, not what it pays.` |
-| P2, neighbourhood | `Brighter neighbourhoods added more. Colour is square-root scaled, so a few dense-infill areas don't wash out the rest.` |
+| P2, neighbourhood | `Brighter neighbourhoods added more. Colour is square-root scaled, so a few fast-growing areas don't wash out the rest.` (S201 F5; was "dense-infill") |
 | P2, grid | `Each 100 m cell counts new homes permitted there` (Permits: `new permits issued there`) `— brighter is more. Colour is square-root scaled.` |
 | P3, neighbourhood | `Undeveloped greenfield land is coloured here, not greyed: it is where much new building lands.` |
 | P3, grid | `~{pct}% of the {n} aren't on the grid yet (the newest permits lag geocoding); they still count in the neighbourhood view.` |
@@ -339,10 +339,10 @@ The camera flip re-renders the blurb through `currentBlurb()` (from `syncMode`),
 
 | part | text |
 |---|---|
-| P1, Total | `**City property tax per acre**: what each neighbourhood's properties pay the City, divided by its land area.` (lot: `…per lot acre**: … divided by the parcel land they own, so parks, river valley and big lots don't dilute it.`) |
+| P1, Total | `**City property tax per acre**: what each neighbourhood's properties pay the City, divided by its land area.` (lot: `…per lot acre**: … divided by the parcel land they own, so roads and unparcelled river valley don't dilute it.`, S201 F3) |
 | P1, Residential | `**Residential city tax per acre**: what houses, condos and apartment buildings pay the City, divided by the neighbourhood's land area.` |
 | P1, Non-residential | ~~`what commercial and industrial property pays the City`~~ → **2026-09-26 (Peter, provisional):** `**Non-residential city tax per acre**: what non-residential property (business, industry and institutions) pays the City, divided by the neighbourhood's land area.` Same noun on the two Non-residential button titles. The class includes school, park and institutional parcels (`FINDINGS_blurb_claims.md` F2); revisit when the exemption-status data request answers. |
-| P1, Value | `**Assessed value per acre**: the total assessed value of each neighbourhood's property, divided by its land area. What the land is worth, not what it pays.` |
+| P1, Value | `**Assessed value per acre**: the total assessed value of each neighbourhood's property, divided by its land area. What the property is worth, not what it pays.` (S201 F6; was "the land") |
 | P2 | `Taller, brighter` (2D: `Brighter`) `neighbourhoods are higher per acre; colour is square-root scaled to show the low end. Grey = set-aside land (river valley, parks, undeveloped), off the scale.` (lot: `Grey = set-aside land, or too little parcel land to measure.`) |
 | P3, split cuts | `A subset of Revenue, not all of what the land pays.` (the honesty line `verify-res-revenue` / `verify-nonres-revenue` guard) |
 
@@ -376,7 +376,7 @@ The camera flip re-renders the blurb through `currentBlurb()` (from `syncMode`),
 | Roads cost | `**Road operating cost per acre**: modelled yearly upkeep of collector and local roads: $5,970 per lane-km of maintenance (the City's 2017 roads-maintenance budget) plus $3,350 of snow and ice.` | `Operating only, so a floor: rebuilding is the lifecycle layer, and one lane is charged per street.` |
 | Roads cost — lifecycle | `**Road lifecycle cost per acre**: modelled yearly cost to run and rebuild collector and local roads, $50 per metre per year: the City's $600,000 upkeep plus $1,900,000 renewal per km over a 50-year life.` | `One citywide rate: not what the City spends here, nor a funding gap. More in Data & Methods.` |
 
-P2 is *"Brighter costs more per acre; colour is linear. Grey = set-aside land."*. For Roads it is *"Brighter means more road to maintain; colour is linear. Arterials show neutral grey: every kind of development shares them, so they are left out."*
+P2 is *"Brighter costs more per acre; colour is linear. Grey = set-aside land."*. For Roads it is *"Brighter means more road to maintain; colour is linear. Arterials show neutral grey: every kind of development shares them, so they are left out. Grey neighbourhoods = set-aside land."* (S201 F6 added the last sentence)
 
 **Kept, because guards require them:**
 - Every figure `check_cost_copy.py` ties to `city_unit_costs.json`: $5,970, $3,350, 2017, $50/m/yr, $600,000 and $1,900,000.

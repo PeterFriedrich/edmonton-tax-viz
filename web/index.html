@@ -175,7 +175,7 @@
   <div id="toggle" class="panel">
     <div id="metric-row">
       <button data-metric="revenue" class="active" title="Municipal property-tax revenue per acre — what the land generates at Edmonton's class-differential mill rates. Pick which classes to count below.">Revenue</button>
-      <button data-metric="value" title="Total assessed property value per acre — what the land is worth, not what it pays. Pick current or change-over-time below.">Value</button>
+      <button data-metric="value" title="Total assessed property value per acre — what the property is worth, not what it pays. Pick current or change-over-time below.">Value</button>
     </div>
     <div id="revcut">
       <button data-revcut="revenue_per_acre" class="active" title="Every property class — the full city tax the land generates">Total</button>
@@ -810,7 +810,7 @@
         fmt: fmtMoney,
         lotBlurb: "**City property tax per lot acre**: what each neighbourhood's " +
                   "properties pay the City, divided by the parcel land they own, so " +
-                  "parks, river valley and big lots don't dilute it.",
+                  "roads and unparcelled river valley don't dilute it.",
       },
       // Residential-revenue decomposition: the RESIDENTIAL + OTHER RESIDENTIAL
       // class subset of the levy — a SUBSET of Revenue, never all of what the
@@ -864,8 +864,8 @@
         key: "value_per_acre",
         title: "Edmonton: Assessed Value per Acre",
         blurb: "**Assessed value per acre**: the total assessed value of each " +
-               "neighbourhood's property, divided by its land area. What the land " +
-               "is worth, not what it pays.",
+               "neighbourhood's property, divided by its land area. What the " +
+               "property is worth, not what it pays.",
         legendLabel: "Value per acre",
         legendMin: "$0",
         legendMax: "$4M+",
@@ -875,7 +875,7 @@
         fmt: fmtMoney,
         lotBlurb: "**Assessed value per lot acre**: the total assessed value of each " +
                   "neighbourhood's property, divided by the parcel land it sits on. " +
-                  "What the land is worth, not what it pays.",
+                  "What the property is worth, not what it pays.",
       },
     };
 
@@ -1056,7 +1056,7 @@
                "local road each neighbourhood has per acre of land.\n\nBrighter " +
                "means more road to maintain; colour is linear. Arterials show " +
                "neutral grey: every kind of development shares them, so they are " +
-               "left out.",
+               "left out. Grey neighbourhoods = set-aside land.",
       },
       storm: {
         label: "Stormwater",
@@ -1470,7 +1470,7 @@
       const head = lead + " Where the city is growing, not what it pays.\n\n";
       if (!devGridActive())
         return head + "Brighter neighbourhoods added more. Colour is square-root " +
-          "scaled, so a few dense-infill areas don't wash out the rest.\n\n" +
+          "scaled, so a few fast-growing areas don't wash out the rest.\n\n" +
           "Undeveloped greenfield land is coloured here, not greyed: it is where " +
           "much new building lands.";
       const what = permits ? "permits" : "units";
