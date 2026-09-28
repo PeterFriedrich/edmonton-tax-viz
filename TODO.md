@@ -593,15 +593,12 @@ Three findings the register backfill (`docs/AUDIT_LEDGER.md` "Findings register"
 From `docs/FINDINGS_blurb_claims.md`. Every number in the public blurbs is right; these are about what the words say the numbers mean. Copy wording is Peter's call (`COPY_DECISIONS.md`); drafts are in findings §4.
 
 - [ ] **F1 + F2, one root — the institutional share is of the TOTAL levy, but every band and caveat reads it on the Residential and Non-residential cuts too.** On Residential, the Glass blurb says 1,332 azure cells and 1,064 of them hold $0 residential tax (flat azure squares). On Non-residential, **165** hoods (spatial zoning; 112 was a roll-zoning undercount, findings §6) carry ≥25% of their figure on exempt-candidate zoning (mostly `PS` school sites) with no band or caveat. The real fix is a per-cut exempt share from the pipeline, which is a **data-contract change: propose first**. **Proposal written S201: `docs/PROPOSAL_per_cut_exempt_share.md` — awaiting Peter's three decisions there.** **Interim done (S200):** band + count now cover only cells with a nonzero value on the active cut; `verify-blurbs.js` guards the count. The per-cut share (and F2's missing band/caveat on 144 non-res hoods) remains. The citywide 9–17% range is reconciled to 16.4% (findings §6, S201).
-- [x] **F2 copy (provisional):** Non-res P1 and button titles now say "business, industry and institutions" (PR, S200); revisit when the exemption data request answers.
 - [ ] **F4 copy — held for a cross-model read** (Peter, S201): Development grid "(the newest permits lag geocoding)" — half the Since-2009 units gap is 2009–20 apartments never geocoded. Get another model to re-check the numbers in findings §2 F4, then pick the wording (draft in §4). F3, F5, F6 applied S201.
 
 ### Methods-notebook audit follow-ons (OPEN 2026-09-25 S197)
 
 From `docs/FINDINGS_methods_notebook.md`. No printed figure is wrong; these are about when the page runs and what its guards see.
 
-- [x] ✅ **F1 — DONE S197 (PR pending merge):** move `Run verified notebooks` after `Update status manifest (provenance + heartbeat)` in `refresh.yml`** (CI change, needs Peter's OK), then delete invariant 1. Until then the page's dates are one run stale, and the first refresh after the January year-roll checklist's step 9 reds on healthy data. ⚠️ **Do this before January.** First, check the 2026-09-28 render: it should say *last checked 2026-09-21*.
-- [x] ✅ **F2 — DONE S197 (mutant reds by name, 8,159 unclassified):** replace the located-dollars identity with `rows["eligible"].notna().all()` and use `.astype(bool)` masks (findings §3).
 - [ ] **F3/F4 — Peter's call, partly done:** the full-only layers (fire, storm, water, the Ratio fire denominator) are now labelled *in development* on the Methods page (Peter, S197). Still open: the page omits the public Development and Change lenses, and prints modelled stormwater without the unbilled-land pairing.
 
 ### Readout-floor audit follow-ons (OPEN 2026-09-22 S188)
@@ -668,21 +665,6 @@ not restore it**; the numbers below are the durable record).
   The mobile coverage figures on record (DECISIONS 2026-08-04, 27.9% default)
   are the budget any extra height spends.
 
-- [ ] **A verified notebook for the roads lens (Services).** The chain from
-  road centrelines to road-metres per neighbourhood to the $/acre the panel shows
-  has no end-to-end re-run. `docs/VERIFICATION.md` "What's covered so far" lists
-  it among the uncovered `/full/` lenses. Model it on `01_money_lens.py`: import
-  `src/` and assert invariants. It joins the weekly publish gate automatically,
-  because the runner globs `notebooks/verified/`.
-  - ⚠️ **Now also the only road delta signal (S202 audit §5):** nothing reads a
-    served road column between refreshes; the 2026-09-28 refresh moved 45 hoods
-    > 5% and only a by-hand decomposition explained them. Invariants measured
-    that day, ready to assert: citywide metric km in a band (3,655.4); split
-    conserves exactly; served = `load_roads` rebuild to 1e-3; `roads.geojson`
-    `v` = served to 0.06; cost ÷ length = config rate; `road_m_unknown` = 0;
-    outside-boundary share < 1% (0.28%). Feasible on CI: `03_assumptions`
-    already runs `load_roads` on the runner. (Services is PUBLIC since
-    2026-09-02 — "`/full/` lenses" above is stale.)
 - [ ] **Tie the evidence notebooks' road rates to the rate the pipeline uses.**
   `roads_lifecycle_rate` and `roads_operating_rate` justify $50 and $9.32 per
   road-metre per year, but they are standalone and import nothing.
@@ -3196,6 +3178,11 @@ archive"*) is not, and this span is 2,533 lines.
 ## Done
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
+
+- [x] **F2 copy (provisional):** · `docs/TODO_archive.md`
+- [x] **F1 — DONE S197 (PR pending merge):** — 2026-09-28 · `docs/TODO_archive.md`
+- [x] **F2 — DONE S197 (mutant reds by name, 8,159 unclassified):** · `docs/TODO_archive.md`
+- [x] **A verified notebook for the roads lens (Services).** — 2026-09-28 · `docs/TODO_archive.md`
 
 - [x] **Possibly an `AGENTS.md` for the repo** — CLOSED 2026-09-25, no file: agents find `CLAUDE.md` by looking around; no outside contributors · `docs/TODO_archive.md`
 - [x] **SERVICES' HOVER STILL TEASES A CHART ITS PANEL DOES NOT OPEN** — CLOSED 2026-09-24 · `docs/TODO_archive.md`

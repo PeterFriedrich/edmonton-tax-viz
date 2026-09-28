@@ -75,12 +75,12 @@ guard.
 
 ## What's covered so far
 
-Only the **Money lens** — the metric the public site defaults to. The methods
+The **Money lens** — the metric the public site defaults to — and the **Roads lens** (below). The methods
 page recomputes the figures it quotes, but it is a description, not an
 end-to-end re-run of any lens. Stated
 explicitly so the silence on everything else isn't mistaken for a clean bill
-of health: the Development lens, and everything `/full/` adds (Services,
-Ratio, Uses, Glass, Temporal), aren't covered by a verified notebook yet.
+of health: the Development lens, and the other lenses (the rest of Services, Ratio, Uses,
+Glass, Temporal) aren't covered by a verified notebook yet.
 
 **[The main assumptions, sized](https://peterfriedrich.github.io/edmonton-tax-viz/verified/03_assumptions.html)**
 (`03_assumptions.py`, 2026-09-28) is the third page. It is not a re-run of a
@@ -88,3 +88,16 @@ lens either. It measures how much of the levy, land or homes each main
 assumption touches across Money, Glass, Development, Change and Roads. It
 gates on structural checks only: a size that can't be computed, or two
 measures of the same thing that disagree. It never gates on a size moving.
+
+**[The Roads lens, end to end](https://peterfriedrich.github.io/edmonton-tax-viz/verified/04_roads_lens.html)**
+(`04_roads_lens.py`, 2026-09-28) is the second lens re-run. It covers Services'
+road metres per acre, from centrelines to both cost columns. It runs `load_roads`
+and observes the clip's length accounting and the boundary split, rather than
+re-implementing them. It asserts that the split conserves length, that served
+equals the rebuild on every neighbourhood, that the map colour matches the
+served figure, and that each cost column is length × the configured rate. Its one
+value check is a wide citywide-length band. It also tabulates the road moves
+against the last committed run. That table never gates, but it is the only
+place road deltas show between refreshes (`docs/FINDINGS_roads_end_to_end.md`
+§5). Falsified 2026-09-28: disabling the split, leaking it, and changing the
+lifecycle rate each fail by name.
