@@ -2238,3 +2238,11 @@ written into the file: `stripe cleared` was **vacuous** in the first version
 there, so it read true under a build that never added one), and the
 `gridStore`-vs-`gridFetches` gate **could not be falsified at all** — the two are
 equivalent on the success path, so no check here justifies that choice.
+
+## Shareable URL hash (2026-09-28)
+
+The address bar now carries the view and its options
+(`#view=services&on=roads,roadscost&colour=roadscost`), so a link reopens what
+the sender saw. Key table, the offered-only restore rule and the three traps
+it hit (the full build's `<base>`, Change without its file, deck's first
+frame): `docs/CONTROLS_MATRIX.md` §8. Guard: `verify-url-state.js`.

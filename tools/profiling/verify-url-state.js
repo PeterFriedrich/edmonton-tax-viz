@@ -10,11 +10,16 @@
 //   * a bad value breaking the page or taking good keys down with it.
 //   * the full build's <base href="../"> moving the address bar to the root.
 //
-// FALSIFIED 2026-09-28 — each defect was reintroduced and the named check went red:
-//   * relative replaceState("#…")          -> "path is unchanged after writing"
-//   * offered() always true                 -> "public: <hash> falls back"
-//   * no `await temporalReady` + no revert  -> "no history file: mode=change"
-//   * `detail` dropped from urlHash()       -> "round trip" (Money grid)
+// FALSIFIED 2026-09-28 — each defect was reintroduced and went red by name:
+//   * relative replaceState("#…")   -> "<walk>: path is unchanged after writing"
+//                                      (full build; every round trip)
+//   * offered() always true          -> "round trip …" (the walk and the restore
+//                                      both reach hidden controls)
+//   * no metric revert when Change is
+//     not offered                    -> "no history file: #mode=change lands on"
+//   * `detail` dropped from urlHash() -> "round trip money > moneydetail…" and
+//                                      both grid "lands on" links
+// Runtime on the Oracle box: public ~3 min (31 trips), full ~5.5 min (57).
 //
 //   node verify-url-state.js <url>      (run once per build)
 const { chromium } = require('playwright');

@@ -526,3 +526,54 @@ above describe the result. Mirrored in `DECISIONS.md`.
 | 2026-07-23 | **`Residential only` → "Highlight residential"** — kills the name clash with the `Residential $` metric. Intent-first label. **Label-only — no mechanics, no scope change.** | old §5.E |
 | 2026-07-23 | **Development's `#dev-grid` checkbox + `#devspike` picker collapse into ONE 3-way "Detail" selector**: **① Neighbourhood** · **② 100 m grid — activity** · **③ Stock age**. Metric + Window apply to ①/②; ③ hides them as an EXPLICIT mode choice. Motivated by phone usability — a nested checkbox reveal is a weak tap target (structure-before-mobile). | old §5.A, §5.B |
 | 2026-07-23 | **Industrial tagged full-only** — it's choropleth-only, so in public it would leave the new Detail selector with two dead options. **Public Development is airtight: units + permits, both grid-capable.** ⚠️ **The stated reason EXPIRED 2026-08-18**: Industrial is now grid-capable too, so it would no longer leave a dead option. The tag stands (nothing was changed) but it is now unargued — whether Industrial goes public is Peter's call. | old §5.F, §2 |
+
+---
+
+## 8. The URL hash — a link to the view on screen (2026-09-28)
+
+The address bar carries the current view and its options, so a link reopens
+what the sender saw: `…/#view=development&metric=permits&window=3yr`. Written
+on every control change (`replaceState`, so no back-button history), read once
+at the end of boot, and an edited hash reloads the page.
+
+| `view=` | keys (default in **bold**; defaults are never written) |
+|---|---|
+| *(omitted)* **money** | `metric=`**total**/residential/nonresidential/value · `detail=`**hood**/grid/grid50 · `denom=`**ground**/lot · `scale=`**sqrt**/linear · `mode=change` with `window=`**long**/short |
+| development | `mode=infill` · `metric=`units/permits/industrial · `window=`3yr/5yr/**long** · `detail=`hood/**grid** · `amenity=lrt,school` (Infill) |
+| services | `on=`**roads**/…/`none` (comma list) · `colour=` one of those, written when ≥2 are on |
+| ratio | `denom=`**roads**/fire |
+| uses | `prisms=1` |
+| lab | `exp=`**deviation** · `cut=`total/residential/nonresidential |
+
+**The values are public names, not column names** — a shared link is a
+contract, and a column rename must not break one. **Not in the URL, by
+decision:** the Display popover (ramp, labels, reference layer — the viewer's
+preferences), the opacity slider, popup/panel readout mode, the camera and a
+selected neighbourhood (a possible level 3).
+
+⚠️ **Restore selects only what a button offers.** Every build and data gate on
+this page is a hidden button, and code elsewhere relies on hidden meaning
+unreachable (the Ratio fire denominator's public gate is exactly that). So each
+key is applied only if its control is on screen at that moment (`offered()`,
+which ignores the phone's Options fold); anything else is dropped, the view
+keeps its default, and the hash is rewritten from what landed. That one rule is
+the whole of "a full-only link falls back on the public site" and "a bad value
+is ignored".
+
+⚠️ **Three traps, each found by measuring:**
+- **The full build's `<base href="../">`** resolves a relative
+  `replaceState("#…")` against the ROOT — the address bar moves to the public
+  build and every copied link opens the wrong one. The hash is written absolute.
+- **`applyView("change")` renders with no history file behind it** (title, no
+  error). The button only appears once `temporal.json` lands, so restore waits
+  on `temporalReady` and reverts the metric if Change is still not offered.
+- **Restoring before deck's first frame throws** in the label layer (no
+  viewport yet), so restore waits on `framePainted`. A grid or Change link
+  therefore shows default Money for ~a second first — accepted.
+
+Guarded by `tools/profiling/verify-url-state.js` (both builds): it clicks every
+reachable control from a cold page, round-trips the hash through a fresh load,
+and compares title, view and every active control; plus the fallback, bad-value,
+no-history-file, base-path and edited-hash cases. ⚠️ It launches a browser
+PER LOAD and SIGKILLs the last: tearing down a page that drew a grid costs ~10 s
+under software GL, and `newPage`/navigation hung on it.
