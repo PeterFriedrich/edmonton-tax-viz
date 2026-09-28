@@ -449,6 +449,9 @@ data last checked **{status.get('last_checked')}**.
 # %% [markdown]
 # ## 8. Known limitations
 #
+# How big each of these is this week, alongside the other main assumptions
+# the public lenses make: [the assumptions page](03_assumptions.html).
+#
 # 1. **Exempt institutional land is invisible to the roll** (§3) — the biggest
 #    structural understatement, measured but not correctable.
 # 2. **One coordinate per account** — a large property's dollars pin to a

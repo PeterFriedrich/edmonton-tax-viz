@@ -81,3 +81,10 @@ end-to-end re-run of any lens. Stated
 explicitly so the silence on everything else isn't mistaken for a clean bill
 of health: the Development lens, and everything `/full/` adds (Services,
 Ratio, Uses, Glass, Temporal), aren't covered by a verified notebook yet.
+
+**[The main assumptions, sized](https://peterfriedrich.github.io/edmonton-tax-viz/verified/03_assumptions.html)**
+(`03_assumptions.py`, 2026-09-28) is the third page. It is not a re-run of a
+lens either. It measures how much of the levy, land or homes each main
+assumption touches across Money, Glass, Development, Change and Roads. It
+gates on structural checks only: a size that can't be computed, or two
+measures of the same thing that disagree. It never gates on a size moving.
