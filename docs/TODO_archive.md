@@ -8,6 +8,28 @@ Items are verbatim as they were closed, newest-moved first in the order they app
 
 ---
 
+- [x] **F2 copy (provisional):** Non-res P1 and button titles now say "business, industry and institutions" (PR, S200); revisit when the exemption data request answers.
+
+- [x] ✅ **F1 — DONE S197 (PR pending merge):** move `Run verified notebooks` after `Update status manifest (provenance + heartbeat)` in `refresh.yml`** (CI change, needs Peter's OK), then delete invariant 1. Until then the page's dates are one run stale, and the first refresh after the January year-roll checklist's step 9 reds on healthy data. ⚠️ **Do this before January.** First, check the 2026-09-28 render: it should say *last checked 2026-09-21*.
+
+- [x] ✅ **F2 — DONE S197 (mutant reds by name, 8,159 unclassified):** replace the located-dollars identity with `rows["eligible"].notna().all()` and use `.astype(bool)` masks (findings §3).
+
+- [x] **A verified notebook for the roads lens (Services).** ✅ 2026-09-28: `notebooks/verified/04_roads_lens.py`, 15 invariants + a week-over-week road-move table (info only); falsified ×3. The chain from
+  road centrelines to road-metres per neighbourhood to the $/acre the panel shows
+  has no end-to-end re-run. `docs/VERIFICATION.md` "What's covered so far" lists
+  it among the uncovered `/full/` lenses. Model it on `01_money_lens.py`: import
+  `src/` and assert invariants. It joins the weekly publish gate automatically,
+  because the runner globs `notebooks/verified/`.
+  - ⚠️ **Now also the only road delta signal (S202 audit §5):** nothing reads a
+    served road column between refreshes; the 2026-09-28 refresh moved 45 hoods
+    > 5% and only a by-hand decomposition explained them. Invariants measured
+    that day, ready to assert: citywide metric km in a band (3,655.4); split
+    conserves exactly; served = `load_roads` rebuild to 1e-3; `roads.geojson`
+    `v` = served to 0.06; cost ÷ length = config rate; `road_m_unknown` = 0;
+    outside-boundary share < 1% (0.28%). Feasible on CI: `03_assumptions`
+    already runs `load_roads` on the runner. (Services is PUBLIC since
+    2026-09-02 — "`/full/` lenses" above is stale.)
+
 - [x] **Possibly an `AGENTS.md` for the repo**, so tools other than Claude Code
   get the same instructions. Decide whether it is a pointer or symlink to
   `CLAUDE.md` or a separate file. A copy would drift, and `CLAUDE.md` changes
