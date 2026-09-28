@@ -1804,6 +1804,7 @@
     let bikeLinesData = null;        // lazy-fetched bike network (bike on)
     let bikeLinesFetch = null;       // in-flight fetch guard; missing file => no lines
     let temporalData = null;   // hood x year assessment history; missing file => lens absent
+    let temporalReady = Promise.resolve(); // settles when that fetch does (restoreFromHash waits on it)
     let devHistoryData = null; // hood x year new supply; missing file => no dev history panel
     let pinnedHood = null;     // hood name shown in the pinned history panel, or null
     let peekHood = null;       // hood shown in the touch-only peek card, or null
@@ -7161,7 +7162,7 @@
       const cell = mode === "grid-fine" ? CELLS.cellGlassFine : CELLS.cellGlass;
       const cellChanged = target === "glass" && cell !== state.glassCell;
       if (target === "glass") state.glassCell = cell;
-      if (target !== state.view) { applyView(target); return; }
+      if (target !== state.view) return applyView(target);
       if (!cellChanged) return;
       syncMoneyDetail(state.view);
       // Same shape as applyView's fetch: await the grid, then bail if the view
@@ -7171,7 +7172,7 @@
       // flags that gate the denominator and amenity rows are identical across
       // the two files (one export path, one schema), so those stay put.
       // Legend BEFORE layers, matching applyView's ordering note above.
-      ensureGridData(cell).then(() => {
+      return ensureGridData(cell).then(() => {
         if (state.view !== "glass") return;
         setBlurb(glassBlurb());
         refreshLegend();
@@ -7461,8 +7462,8 @@
       // surviving choice is fire, which is full-only, so the public build has no
       // choice to offer and the picker stays hidden there exactly as it does on
       // roads-only data. This is the whole of the public gate — no control means
-      // no way to move `state.ratioDenom` off its "roads" default, and nothing
-      // persists or URL-restores that field.
+      // no way to move `state.ratioDenom` off its "roads" default — the URL hash
+      // included, since restoreFromHash only selects a button that is offered.
       const ratioDenomShow = v === "ratio" && state.hasFire && FULL_BUILD;
       document.getElementById("ratio-denom-hd").style.display = ratioDenomShow ? "block" : "none";
       document.getElementById("ratio-denom").style.display = ratioDenomShow ? "flex" : "none";
@@ -7559,6 +7560,164 @@
       refreshLegend();
     }
 
+    // --- shareable URL: the hash names the view on screen --------------------
+    // `#view=development&metric=permits&window=3yr`. Only the current view's
+    // keys are written and defaults are omitted, so the default map has no
+    // hash. The values are public names, not column names: a shared link is a
+    // contract, and a column rename must not break it.
+    //
+    // ⚠️ RESTORE ONLY SELECTS WHAT A BUTTON OFFERS. Every build and data gate
+    // on this page is a hidden button (Uses, Lab, Industrial, the full-only
+    // service rows, the Ratio fire denominator), and code elsewhere relies on
+    // hidden meaning unreachable. So a key is applied only if its control is on
+    // screen at that moment; anything else is dropped and the view keeps its
+    // default. `applyView("change")` renders with no history file behind it,
+    // which is why Change waits on temporalReady like its button does.
+    const URL_METRIC = new Map([["revenue_per_acre", "total"], ["res_revenue_per_acre", "residential"],
+                                ["nonres_revenue_per_acre", "nonresidential"], ["value_per_acre", "value"]]);
+    const METRIC_FROM_URL = new Map([...URL_METRIC].map(([k, v]) => [v, k]));
+    let restoring = false;
+
+    function urlHash() {
+      const v = state.view, p = [];
+      const put = (k, val) => p.push(`${k}=${val}`);
+      if (v === "money" || v === "glass") {
+        if (state.metric !== "revenue_per_acre") put("metric", URL_METRIC.get(state.metric));
+        if (v === "glass") put("detail", state.glassCell === CELLS.cellGlassFine ? "grid50" : "grid");
+        if (state.denom !== "ground") put("denom", state.denom);
+        if (!state.colorAdjust) put("scale", "linear");
+      } else if (v === "change") {
+        put("mode", "change");
+        if (state.chgWindow !== "long") put("window", state.chgWindow);
+      } else if (v === "development" || v === "infill") {
+        put("view", "development");
+        if (v === "infill") put("mode", "infill");
+        if (state.devMetric !== "units") put("metric", state.devMetric);
+        if (state.devWindow !== "long") put("window", state.devWindow);
+        if (v === "development" && !state.devGrid) put("detail", "hood");
+        const am = Object.keys(state.amenity).filter(k => state.amenity[k]);
+        if (v === "infill" && am.length) put("amenity", am.join(","));
+      } else if (v === "services") {
+        put("view", "services");
+        const on = Object.keys(SERVICES).filter(k => state.services[k]);
+        if (on.join() !== "roads") put("on", on.length ? on.join(",") : "none");
+        if (on.length >= 2) put("colour", state.svcDriver);
+      } else if (v === "ratio") {
+        put("view", "ratio");
+        if (state.ratioDenom !== "roads") put("denom", state.ratioDenom);
+      } else if (v === "uses") {
+        put("view", "uses");
+        if (state.usesPrisms) put("prisms", "1");
+      } else if (LAB_VIEWS.includes(v)) {
+        put("view", "lab");
+        if (v !== DEFAULT_LAB) put("exp", v);
+        if (state.labCut !== "revenue_per_acre") put("cut", URL_METRIC.get(state.labCut));
+      }
+      return p.join("&");
+    }
+
+    // Absolute on purpose: the full build carries <base href="../">, and a
+    // relative "#…" resolves against it — the address bar would move to the
+    // PUBLIC root and every copied link would open the other build.
+    function writeUrlHash() {
+      if (restoring) return;
+      const u = new URL(location.href);
+      u.hash = urlHash();
+      if (u.href !== location.href) history.replaceState(history.state, "", u.href);
+    }
+
+    // On screen, ignoring the Options fold: a folded panel on a phone hides
+    // controls the reader can still open, so it is not a gate.
+    function offered(el) {
+      if (!el) return false;
+      for (let n = el; n && n !== document.body; n = n.parentElement)
+        if (n.id !== "opt-body" && getComputedStyle(n).display === "none") return false;
+      return true;
+    }
+
+    async function applyUrlState(p) {
+      const q = (sel, val) => document.querySelector(sel.replace("%", CSS.escape(val ?? "")));
+      const tick = el => { if (offered(el) && !el.checked) el.click(); };
+      const view = p.get("view") || "money";
+      if (view !== "money" && !offered(q('#views button[data-view="%"]', view))) return;
+
+      if (view === "money" && p.get("mode") === "change") {
+        await temporalReady;
+        if (!offered(q('#metric-row button[data-metric="%"]', "value"))) return;
+        applyMetric("value_per_acre");
+        if (!offered(q('#moneymode button[data-moneymode="%"]', "change"))) {
+          applyMetric("revenue_per_acre");
+          return;
+        }
+        await applyView("change");
+        const w = p.get("window");
+        if (offered(q('#chgwindow button[data-chgwindow="%"]', w))) applyChgWindow(w);
+      } else if (view === "money") {
+        const col = METRIC_FROM_URL.get(p.get("metric"));
+        const metricBtn = col === "value_per_acre"
+          ? q('#metric-row button[data-metric="%"]', "value")
+          : q('#revcut button[data-revcut="%"]', col);
+        if (col && offered(metricBtn)) applyMetric(col);
+        const detail = { grid: "grid", grid50: "grid-fine" }[p.get("detail")];
+        if (detail && offered(q('#moneydetail button[data-moneydetail="%"]', detail)))
+          await applyMoneyDetail(detail);
+        const d = p.get("denom");
+        if (offered(q('#denom button[data-denom="%"]', d))) applyDenom(d);
+        if (p.get("scale") === "linear" && state.colorAdjust
+            && offered(document.getElementById("coloradj-btn"))) applyColorAdjust();
+      } else if (view === "development") {
+        await applyView("development");
+        if (p.get("mode") === "infill" && offered(q('#devmode button[data-devmode="%"]', "infill")))
+          await applyView("infill");
+        const m = p.get("metric"), w = p.get("window"), dd = p.get("detail");
+        if (offered(q('#devmetric button[data-devmetric="%"]', m))) applyDevMetric(m);
+        if (offered(q('#devwindow button[data-devwindow="%"]', w))) applyDevWindow(w);
+        // After metric and window: whether the grid is offered depends on both.
+        if (state.view === "development" && offered(q('#devdetail button[data-devdetail="%"]', dd)))
+          applyDevDetail(dd);
+        for (const k of (p.get("amenity") || "").split(","))
+          if (Object.hasOwn(state.amenity, k)) tick(document.getElementById(`amenity-${k}-on`));
+      } else if (view === "services") {
+        await applyView("services");
+        const on = p.get("on");
+        if (on !== null) {
+          const want = new Set(on.split(","));
+          // The checkbox's own handler, so the driver hand-off runs as on a click.
+          for (const k of Object.keys(SERVICES)) {
+            const row = q('#services .svc[data-service="%"]', k);
+            if (offered(row) && want.has(k) !== state.services[k]) row.querySelector(".svc-on").click();
+          }
+        }
+        const c = p.get("colour");
+        const radio = Object.hasOwn(SERVICES, c) && q('#services .svc[data-service="%"] input[type="radio"]', c);
+        if (offered(radio) && state.services[c]) radio.click();
+      } else if (view === "ratio") {
+        await applyView("ratio");
+        const d = p.get("denom");
+        if (offered(q('#ratio-denom button[data-ratio-denom="%"]', d))) applyRatioDenom(d);
+      } else if (view === "uses") {
+        await applyView("uses");
+        if (p.get("prisms") === "1") tick(document.getElementById("uses-prisms-on"));
+      } else if (view === "lab") {
+        await applyView(LAB_VIEWS.includes(p.get("exp")) ? p.get("exp") : state.lab);
+        const col = METRIC_FROM_URL.get(p.get("cut"));
+        if (offered(q('#labcut button[data-labcut="%"]', col))) applyLabCut(col);
+      }
+    }
+
+    // Once, at the end of boot, after every build and data gate has run. The
+    // hash is rewritten afterwards from what actually landed, so a dropped key
+    // leaves the address bar too.
+    async function restoreFromHash() {
+      const p = new URLSearchParams(location.hash.slice(1));
+      if (![...p.keys()].length) return;
+      restoring = true;
+      // Not before deck's first frame: until it draws, the overlay has no
+      // viewport and building the label layer throws (found by the verify).
+      try { await framePainted; await applyUrlState(p); }
+      finally { restoring = false; writeUrlHash(); }
+    }
+
     // --- boot ----------------------------------------------------------------
 
     // Everything that needs the map surface: fetch the data, mount the deck.gl
@@ -7636,7 +7795,7 @@
       // unconditional, and BOTH builds degrade identically if the file is gone.
       // The mode control has nothing to switch to until this lands, so it ships
       // hidden (in CSS) and is revealed inside the .then — not at load.
-      fetch(TEMPORAL_URL)
+      temporalReady = fetch(TEMPORAL_URL)
         .then(r => r.ok ? r.json() : null)
         .then(d => {
           if (!d || !d.hoods || !d.years) return;
@@ -7991,7 +8150,7 @@
       }
       // Same guard for the Residential cut: it needs res_revenue_per_acre
       // (pipeline 2026-07-16) — hide the button on older data files. state.metric
-      // can't be stuck on it (no persistence; the default is revenue_per_acre).
+      // can't be stuck on it (the URL hash only selects offered buttons).
       state.hasResRevenue =
         state.data.features.some(f => f.properties.res_revenue_per_acre != null);
       if (!state.hasResRevenue) {
@@ -8031,7 +8190,7 @@
         state.data.features.some(f => f.properties.new_units_per_acre_3yr != null);
       // The "Since 2009" long window needs the _long columns (pipeline
       // 2026-07-21) — hide the button on older files (state.devWindow can't be
-      // stuck on it: no persistence, default is 5yr).
+      // stuck on it: the URL hash only selects offered buttons).
       state.hasLongWindow =
         state.data.features.some(f => f.properties.new_units_per_acre_long != null);
       if (!state.hasLongWindow) {
@@ -8039,7 +8198,7 @@
       }
       // The Industrial sub-metric needs ind_permits_per_acre (pipeline
       // 2026-07-18) — hide the button on older files (state.devMetric can't be
-      // stuck on it: no persistence, default is units).
+      // stuck on it: the URL hash only selects offered buttons).
       // Industrial is also a FULL-only metric (decision: public Development =
       // units + permits, both grid-capable, so the Detail selector never has a
       // dead option) — hidden in the public build as well as on older data.
@@ -8058,6 +8217,18 @@
         state.data.features.some(f => f.properties.new_units_per_acre != null);
       // Sync the legend gradient to the default ramp (single source of truth).
       document.querySelector("#legend .bar").style.background = legendGradient();
+
+      // The hash follows every control through ONE listener rather than a call
+      // in each applier: it runs after the control's own handler (setTimeout),
+      // and applyView sets state.view before its first await, so the state is
+      // already the new one. verify-url-state.js round-trips every control, so
+      // a control this misses fails there by name. An edited hash reloads:
+      // restore assumes it starts from the defaults.
+      const scheduleHash = () => setTimeout(writeUrlHash, 0);
+      document.addEventListener("click", scheduleHash);
+      document.addEventListener("change", scheduleHash);
+      window.addEventListener("hashchange", () => location.reload());
+      restoreFromHash();
 
       // Returns banner text when the manifest has gone stale, else null. Every
       // way of being unsure returns null — a missing/garbled last_checked, or a
