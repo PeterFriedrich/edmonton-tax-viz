@@ -1,6 +1,6 @@
 # AUDIT BRIEF — the shareable URL hash
 
-**Read cold.** This is a reusable *instrument*, not a findings doc. No run yet.
+**Read cold.** This is a reusable *instrument*, not a findings doc. Run 1: 2026-09-28 (S204, same model as the builder) → `docs/FINDINGS_url_state.md`.
 Written 2026-09-28 (S203, Opus 5.5) by the session that BUILT the feature
 (PR #608), so everything it says about the feature is a self-graded claim.
 **Run it on a different model** (house rule: `measurements-that-favour-me`; the
@@ -127,8 +127,11 @@ below it.
   walk and the restore, so a lost URL key would pass. The falsification caught
   `offered()` returning true everywhere. It never tested `offered()` returning
   **false** for one real control.
-  - Test: mutate `offered()` to hide one control (e.g. `#denom`) and see
-    whether anything goes red.
+  - Test: mutate `offered()` to hide one control and see whether anything
+    goes red. ⚠️ **Not `#denom`** (S204): a hand-written `lands` link pins it,
+    so it goes red by accident and hides the blind spot. Pick a control only
+    the walk guards (`#devmetric`, `#revcut`, `#devdetail`). Run 1 result:
+    `docs/FINDINGS_url_state.md` F1.
   - Remedy direction: enumerate with Playwright's `isVisible()` or
     `audit-controls-diff.js`, independently of the page.
 - **Walk coverage:**

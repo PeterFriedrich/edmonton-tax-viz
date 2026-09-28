@@ -669,7 +669,24 @@ not restore it**; the numbers below are the durable record).
   `docs/FABLE_AUDIT_url_state.md`; queue item 15 in `docs/AUDIT_LEDGER.md`.
   Pending decision it leans on: whether `verify-url-state.js` joins CI (S203
   options: full build only in deploy.yml +5.5 min, both +9 min, on web/ PRs,
-  or manual).
+  or manual). ⚠️ **A same-model run executed 2026-09-28 (S204,
+  `docs/FINDINGS_url_state.md`)**; the cross-model read is still owed and
+  should target that run's SOUND verdicts on L1–L4.
+- [ ] **`verify-url-state.js` must not share `offered()` with the page (URL
+  audit F1).** A control `offered()` wrongly hides drops from every link and
+  the verify stays green (mutant: 31→26 trips, all passed). Swap the four
+  `offered` uses in the script for `el.checkVisibility()` — validated: red by
+  name on the mutant, green on clean (public 31, full 58). Worth doing BEFORE
+  the CI decision above, or CI gates on a blind check. Tools change → PR for Peter.
+- [ ] **Pin the URL vocabulary (URL audit F2).** A rename of any value passes
+  the round trip. Add every §8 value to the verify as a frozen link that must
+  restore to itself, and **Peter to decide the policy**: rename/retire = an
+  alias entry, never a silent drop (OWID's `GrapherUrlMigrations.ts` is the
+  prior art). Fix §8's "public names" sentence to say which keys are mapped.
+- [ ] **`state.devWindow` defaults to a window the data may lack (URL audit
+  F3).** On a no-`_long` file (a supported pipeline output) Development opens
+  titled 2009–2025 with 0/406 values. One line at the `hasLongWindow` gate
+  (fall back to `5yr`) plus the comment beside it, which says the opposite.
 - [ ] **Check the roads notebook's first scheduled run (2026-10-05)**: queue
   item 16 in `docs/AUDIT_LEDGER.md`. Mainly, does its week-over-week table read
   last week's committed data on the runner?
