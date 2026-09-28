@@ -572,7 +572,7 @@ is in the `panel` column. T1 is public (3 of 10 service rows). T2 closed (`## Do
   tooltip/peek only because the probe feeds a hood feature to `viewTooltip` in
   grid modes too. Needs a cell-grain capture before it means anything.
 
-### Audit backlog S173–S196 — 14 targets marked, #1–#4, #10, #11 and #12 run (OPEN 2026-09-22 S187, extended S197)
+### Audit backlog S173–S196 — 14 targets marked, #1–#4, #10, #11, #12 and #13 (roads half) run (OPEN 2026-09-22 S187, extended S197)
 
 Fourteen sessions ran on Opus 5 alone with no cross-model check. The ranked
 list lives in `docs/AUDIT_LEDGER.md` → "Queued"; run them one per session at
@@ -674,6 +674,15 @@ not restore it**; the numbers below are the durable record).
   it among the uncovered `/full/` lenses. Model it on `01_money_lens.py`: import
   `src/` and assert invariants. It joins the weekly publish gate automatically,
   because the runner globs `notebooks/verified/`.
+  - ⚠️ **Now also the only road delta signal (S202 audit §5):** nothing reads a
+    served road column between refreshes; the 2026-09-28 refresh moved 45 hoods
+    > 5% and only a by-hand decomposition explained them. Invariants measured
+    that day, ready to assert: citywide metric km in a band (3,655.4); split
+    conserves exactly; served = `load_roads` rebuild to 1e-3; `roads.geojson`
+    `v` = served to 0.06; cost ÷ length = config rate; `road_m_unknown` = 0;
+    outside-boundary share < 1% (0.28%). Feasible on CI: `03_assumptions`
+    already runs `load_roads` on the runner. (Services is PUBLIC since
+    2026-09-02 — "`/full/` lenses" above is stale.)
 - [ ] **Tie the evidence notebooks' road rates to the rate the pipeline uses.**
   `roads_lifecycle_rate` and `roads_operating_rate` justify $50 and $9.32 per
   road-metre per year, but they are standalone and import nothing.
@@ -683,6 +692,21 @@ not restore it**; the numbers below are the durable record).
   leave the notebook justifying the old number. Measured 2026-09-25: the only
   file outside `notebooks/` that names either notebook is
   `scripts/recheck_evidence_notebooks.py`.
+  - **Confirmed 2026-09-28 (S202 §3):** the checks are `roads_lifecycle_rate.py`
+    `check(SHIPPED == 50.0)` and `roads_operating_rate.py` `check(SHIPPED == 9.32)`.
+    Keep the notebooks standalone (by design); the fix is a `tests/` check that
+    extracts each `SHIPPED ==` literal and asserts it equals the config value.
+- [ ] **Roads end-to-end audit follow-ons (S202, `docs/FINDINGS_roads_end_to_end.md`).**
+  - **Peter's call (§1):** road on a boundary with a SET-ASIDE hood is split
+    equally, so half goes into the grey hood. Sized: 22.9 km; excluding River
+    Valley / Parks sharers moves 53 published hoods, 5 > 5% (ARGYLL +9.2%).
+    (a) record as a sized limitation in `DATA.md`, or (b) exclude River Valley
+    sharers in `split_boundary_pieces`, which needs the set-aside reason upstream
+    of `load_roads` (data-contract change, propose first).
+  - `data/city_unit_costs.json` `roadway_renewal.why_the_renewal_half_alone`
+    still says roadway_ops is "$4.635/m/yr" (it is $9.32 since 2026-09-06).
+  - Low: `_prepare_segments`' conservation guard only warns when road goes
+    *missing*; a double count makes it look healthier. Warn on `after > before`.
 - [ ] **Run the verified notebooks at merge time, not only in the weekly
   refresh.** `tests.yml` doesn't run them, so a PR that changes a `src/`
   function they call passes CI and breaks the next Monday's publish (loudly, but
