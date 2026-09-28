@@ -665,6 +665,14 @@ not restore it**; the numbers below are the durable record).
   The mobile coverage figures on record (DECISIONS 2026-08-04, 27.9% default)
   are the budget any extra height spends.
 
+- [ ] **Audit the shareable URL hash (#608), cross-model.** Brief:
+  `docs/FABLE_AUDIT_url_state.md`; queue item 15 in `docs/AUDIT_LEDGER.md`.
+  Pending decision it leans on: whether `verify-url-state.js` joins CI (S203
+  options: full build only in deploy.yml +5.5 min, both +9 min, on web/ PRs,
+  or manual).
+- [ ] **Check the roads notebook's first scheduled run (2026-10-05)**: queue
+  item 16 in `docs/AUDIT_LEDGER.md`. Mainly, does its week-over-week table read
+  last week's committed data on the runner?
 - [ ] **Tie the evidence notebooks' road rates to the rate the pipeline uses.**
   `roads_lifecycle_rate` and `roads_operating_rate` justify $50 and $9.32 per
   road-metre per year, but they are standalone and import nothing.

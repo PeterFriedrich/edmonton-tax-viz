@@ -397,6 +397,22 @@ notebook publish gate, which the 2026-09-28 refresh exercises for the first time
     claims: "Nth highest of 406" (tie handling), storm/water "a utility charge
     paid to EPCOR, not a City cost", and 44 hoods zero-filled by inference.
 
+### S202–S203 — marked 2026-09-28, briefed
+
+Built and verified by Opus 5.5 alone.
+
+15. **The shareable URL hash** (#608). **Briefed:** `docs/FABLE_AUDIT_url_state.md`
+    (decision stack L0–L6). Every URL key is now a public contract, and the guard
+    (`verify-url-state.js`) picks what to walk with the page's own `offered()`,
+    so a control it wrongly hides would pass (L5). **Run cross-model.**
+16. **The roads verified notebook's first scheduled run** (#607,
+    `notebooks/verified/04_roads_lens.py`). This is a check, not an audit. After
+    the 2026-10-05 refresh, confirm the notebook ran in `refresh.yml`, its HTML
+    is served, and its runtime. Check that section 5's delta table compares
+    against the PREVIOUS committed run, i.e. that HEAD on the runner is last
+    week's data and not this run's. Locally, HEAD equalled the served file, so
+    that path has only ever shown zero moves.
+
 ## Never audited (candidates, roughly ranked)
 
 Surfaces no audit run has covered, **re-ranked 2026-09-05 (S140)** at Peter's
