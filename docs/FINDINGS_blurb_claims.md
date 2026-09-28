@@ -73,11 +73,16 @@ utilities, and, in residential neighbourhoods, school and park sites zoned
   The pipeline's served shares imply up to 17%, under the assumption that all
   exempt-candidate levy is non-res class. That assumption breaks for EVERGREEN
   (41% exempt-candidate, 88% residential class), so treat 9–17% as the range.
+  ⚠️ **Reconciled S201 (§6): the figure is 16.4%.** The 9% was an artifact of
+  blank roll zoning, not a real disagreement.
 - **Per hood**, by roll zoning: in **112** non-set-aside hoods, ≥25% of the
   non-res figure sits on exempt-candidate zoning. In **63** hoods it is ≥50%.
   Examples: TWEDDLE PLACE 99%, OXFORD 99%, CHAMBERY 96%, ASPEN GARDENS 91%
   (all of it `PS`). The pipeline-implied share agrees for 7 of the 8 checked;
   ALCES disagrees (17% vs 85%), because spatial and roll zoning differ.
+  ⚠️ **Recounted S201 (§6) by the pipeline's own spatial zoning: 165 hoods
+  ≥25%, 97 ≥50%, and 144 of them sit under the band gate.** The roll-zoning
+  counts undercount for the same reason as the 9%.
 - **None of those 112 gets a band or a tooltip caveat on this cut**, because
   every gate reads the total share. ASPEN GARDENS' 9% of total levy is under
   0.25, even though that 9% is its entire non-res figure. Verified by reading
@@ -192,8 +197,8 @@ the noun.
   refutes that assumption for at least one hood. The class-aware roll-zoning
   count (112) is the headline. The two instruments also disagree on ALCES by
   5×, so per-hood F2 figures are ±, not exact.
-- **F2's citywide share spans 9–17%** across the two instruments, and I have
-  not reconciled why (spatial 2024-bylaw zoning vs the roll's `zoning` field
+- **F2's citywide share spans 9–17%** across the two instruments, and I had
+  not reconciled why (✅ reconciled S201, §6: 16.4%) (spatial 2024-bylaw zoning vs the roll's `zoning` field
   is the likely split).
 - **F3, F4 and the F2 roll figures come from `data/raw` of 2026-09-03**, not
   the served week. F4 ties to served coverage within 15 units. F3's park
@@ -202,3 +207,47 @@ the noun.
   rendering at z=0 is confirmed there, not on a GPU.
 - **Same-model check.** Opus 5.5 wrote these blurbs and graded them here. A
   cross-model read of F2 and F4 before acting is warranted.
+
+## 6. F2 reconciliation (S201, 2026-09-28)
+
+**The citywide share is 16.4%, and the 9% was wrong.** Recomputed from
+`data/raw` of 2026-09-03 through the pipeline's own loaders
+(`load_assessment` → `apply_tax_rates` → `property_zone_codes`), with the
+roll's `zoning` field joined from Property Info on `account_number`. The
+measure is the share of `nonres_levy` on `EXEMPT_CANDIDATE_ZONES`.
+
+| instrument | candidate share of non-res levy |
+|---|---|
+| spatial zoning (what the pipeline serves) | **16.4%** |
+| roll `zoning` field, blank counted as "not candidate" | 8.9% |
+| both, on parcels where the roll field is filled | 10.7% vs 10.8% |
+
+- **The class assumption was not the cause.** Only 2.5% (spatial) or 2.2%
+  (roll) of candidate-zone levy is residential class. So "all candidate levy
+  is non-res" moves the figure by 0.4 points (16.4 → 16.8), not 8.
+- **The cause is blank roll zoning.** The roll's `zoning` is null on 157,032
+  of 439,569 parcels, and those carry **17.7% of non-res levy**. They sit
+  disproportionately on candidate zones: **46% of spatial-candidate non-res
+  levy has a blank roll zoning**. The top spatial codes are PS 2.8%, AJ 2.5%,
+  and UF 2.2% of non-res levy. Counting blanks as non-candidate halves the share.
+- **Where both fields are filled, they agree.** 99.6% of non-res levy is
+  classified the same way by both. The discordant 0.4% is scattered: the
+  largest cells are spatial PU vs roll DC2, and spatial A vs roll UF, each
+  under 0.1%.
+- **Per hood, by spatial zoning, over the 356 non-set-aside hoods with
+  non-res levy:** 165 are ≥25% candidate and 97 are ≥50%. That compares
+  with 119 and 62 by roll zoning in the same run. The audit's 112 and 63 came
+  from a slightly different run (its denominator isn't recorded) and have the
+  same undercount. **144 of the 165 fall under the served gate**
+  (`rev_frac_exempt` < 0.25 of TOTAL levy), so on the Non-residential cut
+  they get no band and no caveat. F2's gap is larger than first stated.
+- **ALCES** is one parcel. A $30.5k non-res levy is zoned UF on the roll and
+  sits inside an `RSM h12` polygon spatially. That is 48% of the hood's
+  $63.6k non-res levy: spatial gives 17%, roll gives 65%. The audit's 85% came
+  from the earlier run. It reads as a rezoning where the roll and the bylaw
+  map disagree. It's a single-parcel case, and not evidence that either
+  instrument is systematically wrong.
+- **Consequence for the per-cut proposal (TODO F1+F2):** the pipeline's
+  spatial codes are the right instrument, and it already computes
+  `nonres_levy` and `res_levy` per parcel. A per-cut exempt share needs no
+  new join.
