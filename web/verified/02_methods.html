@@ -7824,7 +7824,7 @@ a.anchor-link {
 </head>
 <body class="jp-Notebook" data-jp-theme-light="true" data-jp-theme-name="JupyterLab Light">
 <main>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=81f760c3">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=b294878a">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7846,7 +7846,7 @@ number attached — see the last section for that list.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=2e59d4d0">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=f9d5f957">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7929,15 +7929,15 @@ number attached — see the last section for that list.</p>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>served neighbourhoods: 406
 roll year / rate year: 2026 / 2026
-served data generated: 2026-09-21
-executed:              2026-09-24 13:59 UTC
+served data generated: 2026-09-28
+executed:              2026-09-28 16:36 UTC
 </pre>
 </div>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=e25690d5">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=7da65aeb">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7956,7 +7956,7 @@ map's toggle shows either this revenue or raw assessed value (the
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=c295db69">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=f037df5f">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7969,12 +7969,6 @@ map's toggle shows either this revenue or raw assessed value (the
 
 <span class="n">YEAR</span> <span class="o">=</span> <span class="n">main</span><span class="o">.</span><span class="n">ASSESSMENT_YEAR</span>
 <span class="n">rates</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">main</span><span class="o">.</span><span class="n">MILL_RATES_JSON</span><span class="o">.</span><span class="n">read_text</span><span class="p">())[</span><span class="s2">"rates"</span><span class="p">][</span><span class="nb">str</span><span class="p">(</span><span class="n">YEAR</span><span class="p">)]</span>
-<span class="n">check</span><span class="p">(</span>
-    <span class="nb">str</span><span class="p">(</span><span class="n">YEAR</span><span class="p">)</span> <span class="o">==</span> <span class="nb">str</span><span class="p">(</span><span class="n">status</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"rate_year"</span><span class="p">)),</span>
-    <span class="s2">"the rates this page quotes are the year the served data was built with"</span><span class="p">,</span>
-    <span class="sa">f</span><span class="s2">"main.ASSESSMENT_YEAR=</span><span class="si">{</span><span class="n">YEAR</span><span class="si">}</span><span class="s2">, status.json rate_year=</span><span class="si">{</span><span class="n">status</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'rate_year'</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
-<span class="p">)</span>
-
 <span class="n">assessment</span> <span class="o">=</span> <span class="n">apply_tax_rates</span><span class="p">(</span><span class="n">load_assessment</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">main</span><span class="o">.</span><span class="n">ASSESSMENT_CSV</span><span class="p">)),</span> <span class="n">main</span><span class="o">.</span><span class="n">MILL_RATES_JSON</span><span class="p">,</span> <span class="n">YEAR</span><span class="p">)</span>
 <span class="n">levy_total</span> <span class="o">=</span> <span class="n">assessment</span><span class="p">[</span><span class="s2">"levy"</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
 <span class="n">res_rate</span> <span class="o">=</span> <span class="n">rates</span><span class="p">[</span><span class="s2">"Residential"</span><span class="p">][</span><span class="s2">"municipal"</span><span class="p">]</span>
@@ -8003,13 +7997,6 @@ map's toggle shows either this revenue or raw assessed value (the
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>  [PASS] the rates this page quotes are the year the served data was built with  — main.ASSESSMENT_YEAR=2026, status.json rate_year=2026
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>apply_tax_rates: 80 propert(ies) with class % not summing to 100 — billed as-stated, not normalized
 </pre>
 </div>
@@ -8019,7 +8006,7 @@ map's toggle shows either this revenue or raw assessed value (the
 <div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-OutputArea-output" data-mime-type="text/markdown" tabindex="0">
 <p>For <strong>2026</strong> the rates are Residential <strong>7.7419</strong>, Other Residential
 <strong>8.2064</strong> and Non Residential
-<strong>25.2216</strong> per $1,000. Applied to <strong>439,569</strong> accounts, that
+<strong>25.2216</strong> per $1,000. Applied to <strong>439,643</strong> accounts, that
 gives a citywide municipal levy of <strong>$2.78B</strong>.</p>
 <p>The gap between the value view and the revenue view is exactly Edmonton's
 class-differential rates: non-residential property is taxed
@@ -8030,7 +8017,7 @@ class-differential rates: non-residential property is taxed
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=ef14d3d1">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=e4ff289c">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8055,7 +8042,7 @@ robustness-motivated addition, not borrowed methodology.
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=601484d0">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=69fd9641">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8127,7 +8114,7 @@ and are greyed out in lot-acre mode.</p>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=e5d8fd88">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=0d2bf175">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8144,7 +8131,7 @@ land are both visible.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=127d2577">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=1144b0cc">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8196,7 +8183,7 @@ land are both visible.</p>
 <strong>Summerlea</strong>, where it is <strong>79%</strong>
 of the neighbourhood's assessed value.</p>
 <p>On the grid, its cell carries <strong>$13,117,253</strong> of levy
-per ground acre — number <strong>1</strong> of 34,664 cells. Per acre
+per ground acre — number <strong>1</strong> of 34,671 cells. Per acre
 of lot it carries <strong>$302,525</strong> and ranks
 <strong>177</strong>, because its lot is large; the top lot-acre cell carries
 <strong>$15,443,990</strong>, about
@@ -8234,35 +8221,35 @@ can be seen.</p>
 </thead>
 <tbody>
 <tr>
-<th>4790</th>
+<th>4793</th>
 <td>53.521560</td>
 <td>-113.623821</td>
 <td>13117253</td>
 <td>302525.0</td>
 </tr>
 <tr>
-<th>18760</th>
+<th>18763</th>
 <td>53.546121</td>
 <td>-113.497700</td>
 <td>6335745</td>
 <td>15443990.0</td>
 </tr>
 <tr>
-<th>15375</th>
+<th>15378</th>
 <td>53.520372</td>
 <td>-113.524264</td>
 <td>5890539</td>
 <td>666212.0</td>
 </tr>
 <tr>
-<th>18759</th>
+<th>18762</th>
 <td>53.545223</td>
 <td>-113.497731</td>
 <td>5557683</td>
 <td>1464577.0</td>
 </tr>
 <tr>
-<th>14814</th>
+<th>14817</th>
 <td>53.517731</td>
 <td>-113.528883</td>
 <td>4467964</td>
@@ -8276,7 +8263,7 @@ can be seen.</p>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=1f252429">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=a6cde2ca">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8301,7 +8288,7 @@ test.)</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=eb277138">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=3b7eff55">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8314,15 +8301,17 @@ test.)</p>
 <span class="n">per_point</span> <span class="o">=</span> <span class="n">_point_lot_stats</span><span class="p">(</span><span class="n">pts</span><span class="p">[[</span><span class="s2">"latitude"</span><span class="p">,</span> <span class="s2">"longitude"</span><span class="p">,</span> <span class="s2">"lot_size"</span><span class="p">]])</span>
 
 <span class="n">rows</span> <span class="o">=</span> <span class="n">pts</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">per_point</span><span class="p">[[</span><span class="s2">"latitude"</span><span class="p">,</span> <span class="s2">"longitude"</span><span class="p">,</span> <span class="s2">"eligible"</span><span class="p">]],</span> <span class="n">on</span><span class="o">=</span><span class="p">[</span><span class="s2">"latitude"</span><span class="p">,</span> <span class="s2">"longitude"</span><span class="p">],</span> <span class="n">how</span><span class="o">=</span><span class="s2">"left"</span><span class="p">)</span>
-<span class="n">inelig_value</span> <span class="o">=</span> <span class="n">rows</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="o">~</span><span class="n">rows</span><span class="p">[</span><span class="s2">"eligible"</span><span class="p">]</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="kc">False</span><span class="p">),</span> <span class="s2">"assessed_value"</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
-<span class="n">elig_value</span> <span class="o">=</span> <span class="n">rows</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">rows</span><span class="p">[</span><span class="s2">"eligible"</span><span class="p">]</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="kc">False</span><span class="p">),</span> <span class="s2">"assessed_value"</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
-<span class="n">roll_value</span> <span class="o">=</span> <span class="n">pts</span><span class="p">[</span><span class="s2">"assessed_value"</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
-
+<span class="c1"># A point the classifier never saw is a silent drop; the two sums below would</span>
+<span class="c1"># still add to the roll, so this is the check, not their total.</span>
 <span class="n">check</span><span class="p">(</span>
-    <span class="nb">abs</span><span class="p">(</span><span class="n">inelig_value</span> <span class="o">+</span> <span class="n">elig_value</span> <span class="o">-</span> <span class="n">roll_value</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">1.0</span><span class="p">,</span>
-    <span class="s2">"every located dollar is either in the lot-acre view or reported as excluded"</span><span class="p">,</span>
-    <span class="sa">f</span><span class="s2">"$</span><span class="si">{</span><span class="n">elig_value</span><span class="si">:</span><span class="s2">,.0f</span><span class="si">}</span><span class="s2"> + $</span><span class="si">{</span><span class="n">inelig_value</span><span class="si">:</span><span class="s2">,.0f</span><span class="si">}</span><span class="s2"> vs $</span><span class="si">{</span><span class="n">roll_value</span><span class="si">:</span><span class="s2">,.0f</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+    <span class="n">rows</span><span class="p">[</span><span class="s2">"eligible"</span><span class="p">]</span><span class="o">.</span><span class="n">notna</span><span class="p">()</span><span class="o">.</span><span class="n">all</span><span class="p">(),</span>
+    <span class="s2">"every located account's point is classified as in the lot-acre view or excluded"</span><span class="p">,</span>
+    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">rows</span><span class="p">[</span><span class="s1">'eligible'</span><span class="p">]</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span><span class="si">}</span><span class="s2"> unclassified"</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="n">eligible</span> <span class="o">=</span> <span class="n">rows</span><span class="p">[</span><span class="s2">"eligible"</span><span class="p">]</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">bool</span><span class="p">)</span>
+<span class="n">inelig_value</span> <span class="o">=</span> <span class="n">rows</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="o">~</span><span class="n">eligible</span><span class="p">,</span> <span class="s2">"assessed_value"</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+<span class="n">elig_value</span> <span class="o">=</span> <span class="n">rows</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">eligible</span><span class="p">,</span> <span class="s2">"assessed_value"</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+<span class="n">roll_value</span> <span class="o">=</span> <span class="n">pts</span><span class="p">[</span><span class="s2">"assessed_value"</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
 
 <span class="n">multi</span> <span class="o">=</span> <span class="n">per_point</span><span class="p">[</span><span class="s2">"n"</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">1</span>
 <span class="n">n_inelig</span> <span class="o">=</span> <span class="nb">int</span><span class="p">((</span><span class="o">~</span><span class="n">per_point</span><span class="p">[</span><span class="s2">"eligible"</span><span class="p">])</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
@@ -8364,7 +8353,7 @@ test.)</p>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>  [PASS] every located dollar is either in the lot-acre view or reported as excluded  — $237,135,281,458 + $1,228,812,500 vs $238,364,093,958
+<pre>  [PASS] every located account's point is classified as in the lot-acre view or excluded  — 0 unclassified
 </pre>
 </div>
 </div>
@@ -8373,13 +8362,13 @@ test.)</p>
 <div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-OutputArea-output" data-mime-type="text/markdown" tabindex="0">
 <p>The share threshold is <strong>1,000 m²</strong>, and a multi-unit point
 totalling under <strong>10 m²</strong> is treated as share-coded
-rather than an area. This week the roll has <strong>287,032</strong> distinct
-property points, <strong>2,997</strong> of them multi-unit. <strong>58</strong>
+rather than an area. This week the roll has <strong>287,056</strong> distinct
+property points, <strong>2,998</strong> of them multi-unit. <strong>58</strong>
 points are excluded from the lot-acre view, carrying
-<strong>$1.23B</strong> — <strong>0.52%</strong> of located
+<strong>$1.23B</strong> — <strong>0.51%</strong> of located
 assessed value.</p>
-<p>The eligible lots total <strong>142,033</strong> acres, which is
-<strong>74%</strong> of the ground acres above;
+<p>The eligible lots total <strong>142,023</strong> acres, which is
+<strong>73%</strong> of the ground acres above;
 the rest is roads, parks, rights-of-way and land with no usable lot record.</p>
 <p>A pipeline check asserts each neighbourhood's deduplicated lot acres fit inside
 its boundary. Known, documented exceptions:
@@ -8389,7 +8378,7 @@ its boundary. Known, documented exceptions:
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=80533f75">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=4e99afdc">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8409,7 +8398,7 @@ refresh. (<code>docs/FINDINGS_revenue_scale.md</code>)</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=411dfece">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=8a523755">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8455,7 +8444,7 @@ refresh. (<code>docs/FINDINGS_revenue_scale.md</code>)</p>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=4864130a">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=81599a88">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8474,7 +8463,7 @@ no spreading — so a cell shows exactly the accounts pinned inside it.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=183e8958">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=a016c257">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8498,21 +8487,23 @@ no spreading — so a cell shows exactly the accounts pinned inside it.</p>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-OutputArea-output" data-mime-type="text/markdown" tabindex="0">
-<p>The cells are <strong>100 m</strong> on a side; <strong>34,664</strong> of
+<p>The cells are <strong>100 m</strong> on a side; <strong>34,671</strong> of
 them hold at least one account this week.</p>
 </div>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=39190265">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=0302d5df">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <h2 id="5.-The-cost-side-(Services-view)">5. The cost side (Services view)<a class="anchor-link" href="#5.-The-cost-side-(Services-view)">¶</a></h2><p>Revenue alone is half the fiscal story. Each service layer is a <em>supply</em> or a
-<em>modelled cost</em> per acre; none of them changes the revenue numbers.</p>
+<em>modelled cost</em> per acre; none of them changes the revenue numbers. Layers
+marked <em>in development</em> are built and described here but are not on the
+public map yet.</p>
 <ul>
 <li><strong>Roads</strong> — metres of City-maintained <strong>collector and local</strong> road
 centreline per acre (<code>9j8t-zm52</code>). Arterials are computed but excluded: they
@@ -8523,19 +8514,19 @@ cost, and it is measured, not modelled. Two <strong>road cost</strong> layers pr
 metres on two bases that must never be added or compared: <em>lifecycle</em>
 (upkeep plus eventual rebuilding, annualized) and <em>operating</em> (upkeep and
 snow clearing only, from the last roads-only budget the City published).</li>
-<li>The <strong>Ratio view</strong> divides revenue by road metres, or (a picker) by fire
-events. Only those two appear because only they are services the property
+<li>The <strong>Ratio view</strong> divides revenue by road metres (and, <em>in development</em>,
+by fire events). Only those two appear because only they are services the property
 tax levy funds — the modelled EPCOR charges below are paid by utility
 ratepayers, and dividing tax revenue by them would compare unrelated money
 flows. (<code>docs/SPEC_services.md</code>, <code>docs/SPEC_utilities.md</code>)</li>
-<li><strong>Fire rescue (demand)</strong> — emergency response events per acre per year,
+<li><strong>Fire rescue (demand)</strong>, <em>in development</em> — emergency response events per acre per year,
 averaged over a pinned window of full calendar years (<code>7hsn-idqi</code>), with the
 station locations plotted. This is <em>service demand</em>, not response-time
 performance; medical calls are the majority of events (a documented caveat,
 not a filter). Training and similar operational events are excluded.</li>
-<li><strong>Stormwater (modelled)</strong> — EPCOR's own bylaw formula (area × intensity ×
+<li><strong>Stormwater (modelled)</strong>, <em>in development</em> — EPCOR's own bylaw formula (area × intensity ×
 runoff coefficient) applied to every roll parcel.</li>
-<li><strong>Water + sanitary (modelled)</strong> — a per-connection model: meter-size fixed
+<li><strong>Water + sanitary (modelled)</strong>, <em>in development</em> — a per-connection model: meter-size fixed
 charges plus block volumetric rates.</li>
 <li><strong>Electricity/gas franchise fees</strong> — modelled as data columns but <em>not</em>
 mapped: a flat per-dwelling proxy makes every map of them a dwelling-density
@@ -8547,7 +8538,7 @@ before shipping (<code>docs/FINDINGS_utility_validation.md</code>).</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=b45cf26e">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=87b1b575">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8578,9 +8569,9 @@ before shipping (<code>docs/FINDINGS_utility_validation.md</code>).</p>
 <span class="s2">| road centreline in the metric (</span><span class="si">{</span><span class="s1">' + '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">METRIC_GROUPS</span><span class="p">)</span><span class="si">}</span><span class="s2">) | **</span><span class="si">{</span><span class="n">road_km</span><span class="si">:</span><span class="s2">,.0f</span><span class="si">}</span><span class="s2"> km** |</span>
 <span class="s2">| lifecycle road rate | **$</span><span class="si">{</span><span class="n">unit_costs</span><span class="p">[</span><span class="s1">'road_dollars_per_m'</span><span class="p">]</span><span class="si">:</span><span class="s2">,.2f</span><span class="si">}</span><span class="s2">** per road metre per year |</span>
 <span class="s2">| operating road rate | **$</span><span class="si">{</span><span class="n">unit_costs</span><span class="p">[</span><span class="s1">'road_ops_dollars_per_m'</span><span class="p">]</span><span class="si">:</span><span class="s2">,.2f</span><span class="si">}</span><span class="s2">** per road metre per year |</span>
-<span class="s2">| fire events | **</span><span class="si">{</span><span class="n">citywide</span><span class="p">(</span><span class="s1">'fire_events_per_acre'</span><span class="p">)</span><span class="si">:</span><span class="s2">,.0f</span><span class="si">}</span><span class="s2">** per year, window **</span><span class="si">{</span><span class="nb">min</span><span class="p">(</span><span class="n">main</span><span class="o">.</span><span class="n">FIRE_YEARS</span><span class="p">)</span><span class="si">}</span><span class="s2">–</span><span class="si">{</span><span class="nb">max</span><span class="p">(</span><span class="n">main</span><span class="o">.</span><span class="n">FIRE_YEARS</span><span class="p">)</span><span class="si">}</span><span class="s2">**, **</span><span class="si">{</span><span class="n">n_stations</span><span class="si">}</span><span class="s2">** stations |</span>
-<span class="s2">| stormwater, modelled | **$</span><span class="si">{</span><span class="n">citywide</span><span class="p">(</span><span class="s1">'storm_charge_per_acre'</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e6</span><span class="si">:</span><span class="s2">,.1f</span><span class="si">}</span><span class="s2">M** per year |</span>
-<span class="s2">| water + sanitary, modelled | **$</span><span class="si">{</span><span class="n">citywide</span><span class="p">(</span><span class="s1">'water_charge_per_acre'</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e6</span><span class="si">:</span><span class="s2">,.1f</span><span class="si">}</span><span class="s2">M** per year |</span>
+<span class="s2">| fire events (in development) | **</span><span class="si">{</span><span class="n">citywide</span><span class="p">(</span><span class="s1">'fire_events_per_acre'</span><span class="p">)</span><span class="si">:</span><span class="s2">,.0f</span><span class="si">}</span><span class="s2">** per year, window **</span><span class="si">{</span><span class="nb">min</span><span class="p">(</span><span class="n">main</span><span class="o">.</span><span class="n">FIRE_YEARS</span><span class="p">)</span><span class="si">}</span><span class="s2">–</span><span class="si">{</span><span class="nb">max</span><span class="p">(</span><span class="n">main</span><span class="o">.</span><span class="n">FIRE_YEARS</span><span class="p">)</span><span class="si">}</span><span class="s2">**, **</span><span class="si">{</span><span class="n">n_stations</span><span class="si">}</span><span class="s2">** stations |</span>
+<span class="s2">| stormwater, modelled (in development) | **$</span><span class="si">{</span><span class="n">citywide</span><span class="p">(</span><span class="s1">'storm_charge_per_acre'</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e6</span><span class="si">:</span><span class="s2">,.1f</span><span class="si">}</span><span class="s2">M** per year |</span>
+<span class="s2">| water + sanitary, modelled (in development) | **$</span><span class="si">{</span><span class="n">citywide</span><span class="p">(</span><span class="s1">'water_charge_per_acre'</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e6</span><span class="si">:</span><span class="s2">,.1f</span><span class="si">}</span><span class="s2">M** per year |</span>
 <span class="s2">"""</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -8623,15 +8614,15 @@ before shipping (<code>docs/FINDINGS_utility_validation.md</code>).</p>
 <td><strong>$9.32</strong> per road metre per year</td>
 </tr>
 <tr>
-<td>fire events</td>
+<td>fire events (in development)</td>
 <td><strong>88,047</strong> per year, window <strong>2023–2025</strong>, <strong>31</strong> stations</td>
 </tr>
 <tr>
-<td>stormwater, modelled</td>
-<td><strong>$256.9M</strong> per year</td>
+<td>stormwater, modelled (in development)</td>
+<td><strong>$256.8M</strong> per year</td>
 </tr>
 <tr>
-<td>water + sanitary, modelled</td>
+<td>water + sanitary, modelled (in development)</td>
 <td><strong>$588.3M</strong> per year</td>
 </tr>
 </tbody>
@@ -8641,7 +8632,7 @@ before shipping (<code>docs/FINDINGS_utility_validation.md</code>).</p>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=724f6de7">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=37d2d55c">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8716,7 +8707,7 @@ download is truncated. (<code>docs/SPEC_deployment.md</code>)</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=1a9ab0ed">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=42832b3e">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8743,19 +8734,21 @@ download is truncated. (<code>docs/SPEC_deployment.md</code>)</p>
 <div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-OutputArea-output" data-mime-type="text/markdown" tabindex="0">
 <p>This week's vintages, from the site's own manifest: roll <strong>2026</strong>,
 rates <strong>2026</strong>, zoning <strong>2024</strong>;
-data last checked <strong>2026-09-21</strong>.</p>
+data last checked <strong>2026-09-28</strong>.</p>
 </div>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=7777e928">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=7275f29a">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="8.-Known-limitations">8. Known limitations<a class="anchor-link" href="#8.-Known-limitations">¶</a></h2><ol>
+<h2 id="8.-Known-limitations">8. Known limitations<a class="anchor-link" href="#8.-Known-limitations">¶</a></h2><p>How big each of these is this week, alongside the other main assumptions
+the public lenses make: <a href="03_assumptions.html">the assumptions page</a>.</p>
+<ol>
 <li><strong>Exempt institutional land is invisible to the roll</strong> (§3) — the biggest
 structural understatement, measured but not correctable.</li>
 <li><strong>One coordinate per account</strong> — a large property's dollars pin to a
@@ -8781,7 +8774,7 @@ rather than quoted from a run that no longer exists:</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=173a8884">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=524aac0f">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8812,12 +8805,11 @@ rather than quoted from a run that no longer exists:</p>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>6/6 invariants held
+<pre>5/5 invariants held
 
-  [PASS] the rates this page quotes are the year the served data was built with  — main.ASSESSMENT_YEAR=2026, status.json rate_year=2026
   [PASS] every served neighbourhood has a boundary area  — 0 without
   [PASS] no lot-acre figure is served below the parcel-coverage floor  — 0 served below 15%
-  [PASS] every located dollar is either in the lot-acre view or reported as excluded  — $237,135,281,458 + $1,228,812,500 vs $238,364,093,958
+  [PASS] every located account's point is classified as in the lot-acre view or excluded  — 0 unclassified
   [PASS] the grey flag is exactly the set-aside share at or above the threshold  — 48 flagged
   [PASS] the served road metric covers a positive length  — 3,655 km
 

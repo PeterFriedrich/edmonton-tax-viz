@@ -3,7 +3,7 @@
 <html lang="en">
 <head><meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>01_money_lens</title><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
+<title>03_assumptions</title><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
 <style type="text/css">
     pre { line-height: 125%; }
 td.linenos .normal { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
@@ -7824,34 +7824,29 @@ a.anchor-link {
 </head>
 <body class="jp-Notebook" data-jp-theme-light="true" data-jp-theme-name="JupyterLab Light">
 <main>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=35853003">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=8562aefa">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h1 id="The-Money-lens,-end-to-end">The Money lens, end to end<a class="anchor-link" href="#The-Money-lens,-end-to-end">¶</a></h1><p>This is one of the two lenses the <strong>public</strong> build exposes (the other is
-Development). It answers: <em>how much assessed value, and how much municipal tax
-revenue, does each neighbourhood carry per acre?</em></p>
-<h2 id="How-to-read-this-notebook">How to read this notebook<a class="anchor-link" href="#How-to-read-this-notebook">¶</a></h2><p>It imports the real <code>src/</code> modules and runs the same calls, in the same order,
-as <code>main.run()</code>. It does not reimplement the pipeline — if it drifts from
-production, that is a bug in this notebook, not a difference of opinion.</p>
-<p>Two rules govern everything below, and they exist because the previous
-walkthrough notebook rotted silently:</p>
-<ul>
-<li><strong>No number is written by hand.</strong> Every figure in the prose is interpolated
-from the run you are reading. The data refreshes weekly, so any hand-typed
-count is wrong within days.</li>
-<li><strong>Invariants are asserted, values are not.</strong> <code>dropped == 50</code> would be a
-weekly false alarm. <code>aggregation preserves total assessed value</code> must hold
-for any data, forever — so that is what gets pinned.</li>
-</ul>
-<p>Checks accumulate and are reported together at the end, so one failure does
-not hide the rest.</p>
+<h1 id="The-main-assumptions,-and-how-big-each-one-is">The main assumptions, and how big each one is<a class="anchor-link" href="#The-main-assumptions,-and-how-big-each-one-is">¶</a></h1><p><a href="02_methods.html">Methods &amp; definitions</a> says how each number on
+<a href="https://peterfriedrich.github.io/edmonton-tax-viz/">the map</a> is built and
+lists its known limitations. This page <strong>sizes</strong> them: for each assumption a
+public lens makes, how much of the levy, land, homes or records it touches
+this week.</p>
+<p>The same rules as the other two pages apply. <strong>No number below is typed by
+hand</strong>: each is recomputed from this week's data. The table is <strong>sorted by
+the computed size</strong>, so its order can change from week to week. The checks at
+the end assert that each size could be computed and that two measures of the
+same thing agree. They never fail because a size moved.</p>
+<p>⚠️ The sizes are not on one scale. "30% of recent homes" and "8% of the
+levy" have different denominators. The ranking tells you what to read first,
+not which assumption matters more.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=e153fe5a">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=4e59d13f">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7866,12 +7861,13 @@ not hide the rest.</p>
 <span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timezone</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">IPython.display</span><span class="w"> </span><span class="kn">import</span> <span class="n">Markdown</span><span class="p">,</span> <span class="n">display</span>
 
-<span class="c1"># Resolve the repo root. nbconvert executes with cwd set to the notebook's own</span>
-<span class="c1"># directory — which is a build directory, not the repo — so the runner passes</span>
-<span class="c1"># the root explicitly. The cwd search is the fallback for running interactively</span>
-<span class="c1"># in Jupyter. (`__file__` is not available in a kernel, so it is no use here.)</span>
+
+<span class="c1"># Same root resolution as 01/02: nbconvert's cwd is the build dir, so the runner</span>
+<span class="c1"># passes the root; the cwd search is for running interactively.</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">_find_root</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
     <span class="n">env</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"EDMONTON_REPO_ROOT"</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">env</span><span class="p">:</span>
@@ -7887,16 +7883,12 @@ not hide the rest.</p>
 
 <span class="n">REPO_ROOT</span> <span class="o">=</span> <span class="n">_find_root</span><span class="p">()</span>
 <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">REPO_ROOT</span><span class="p">))</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">main</span>  <span class="c1"># noqa: E402  (import-safe; puts src/ on the path)</span>
 
-<span class="c1"># Input paths and the rate year come from main.py rather than being restated</span>
-<span class="c1"># here. Restating them is exactly how a documentation notebook drifts from the</span>
-<span class="c1"># pipeline it claims to document — it would keep passing while describing files</span>
-<span class="c1"># production no longer reads. main.py is import-safe and puts src/ on the path.</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">main</span>  <span class="c1"># noqa: E402</span>
-
-<span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">stream</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">"</span><span class="si">%(name)s</span><span class="s2">: </span><span class="si">%(message)s</span><span class="s2">"</span><span class="p">)</span>
+<span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">stream</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">WARNING</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">"</span><span class="si">%(name)s</span><span class="s2">: </span><span class="si">%(message)s</span><span class="s2">"</span><span class="p">)</span>
 
 <span class="n">CHECKS</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">ROWS</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">check</span><span class="p">(</span><span class="n">ok</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">claim</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">detail</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -7905,17 +7897,27 @@ not hide the rest.</p>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  [</span><span class="si">{</span><span class="s1">'PASS'</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">ok</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">'FAIL'</span><span class="si">}</span><span class="s2">] </span><span class="si">{</span><span class="n">claim</span><span class="si">}{</span><span class="s1">'  — '</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">detail</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">detail</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">''</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
 
-<span class="n">ASSESSMENT_CSV</span> <span class="o">=</span> <span class="n">main</span><span class="o">.</span><span class="n">ASSESSMENT_CSV</span>
-<span class="n">BOUNDARIES</span> <span class="o">=</span> <span class="n">main</span><span class="o">.</span><span class="n">BOUNDARIES_GEOJSON</span>
-<span class="n">MILL_RATES</span> <span class="o">=</span> <span class="n">main</span><span class="o">.</span><span class="n">MILL_RATES_JSON</span>
-<span class="n">ASSESSMENT_YEAR</span> <span class="o">=</span> <span class="n">main</span><span class="o">.</span><span class="n">ASSESSMENT_YEAR</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">row</span><span class="p">(</span><span class="n">lens</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">assumption</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">share</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">of_what</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">direction</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">where</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">ROWS</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">lens</span><span class="o">=</span><span class="n">lens</span><span class="p">,</span> <span class="n">assumption</span><span class="o">=</span><span class="n">assumption</span><span class="p">,</span> <span class="n">share</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">share</span><span class="p">),</span>
+                     <span class="n">of_what</span><span class="o">=</span><span class="n">of_what</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="n">direction</span><span class="p">,</span> <span class="n">where</span><span class="o">=</span><span class="n">where</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">share</span><span class="si">:</span><span class="s2">6.1%</span><span class="si">}</span><span class="s2">  </span><span class="si">{</span><span class="n">lens</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">assumption</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
-<span class="n">vintage</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">fromtimestamp</span><span class="p">(</span><span class="n">ASSESSMENT_CSV</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_mtime</span><span class="p">,</span> <span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"repo root:        </span><span class="si">{</span><span class="n">REPO_ROOT</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"assessment roll:  </span><span class="si">{</span><span class="n">ASSESSMENT_CSV</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"data vintage:     </span><span class="si">{</span><span class="n">vintage</span><span class="si">:</span><span class="s2">%Y-%m-%d %H:%M UTC</span><span class="si">}</span><span class="s2">  (file mtime)"</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"mill-rate year:   </span><span class="si">{</span><span class="n">ASSESSMENT_YEAR</span><span class="si">}</span><span class="s2">  (from main.ASSESSMENT_YEAR)"</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"executed:         </span><span class="si">{</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">)</span><span class="si">:</span><span class="s2">%Y-%m-%d %H:%M UTC</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">md</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="c1"># A pair of bare `$` reads as TeX math delimiters in the renderer.</span>
+    <span class="n">display</span><span class="p">(</span><span class="n">Markdown</span><span class="p">(</span><span class="n">text</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"$"</span><span class="p">,</span> <span class="sa">r</span><span class="s2">"\$"</span><span class="p">)))</span>
+
+
+<span class="n">WEB_DATA</span> <span class="o">=</span> <span class="n">REPO_ROOT</span> <span class="o">/</span> <span class="s2">"web"</span> <span class="o">/</span> <span class="s2">"data"</span>
+<span class="n">served</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">([</span><span class="n">f</span><span class="p">[</span><span class="s2">"properties"</span><span class="p">]</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span>
+    <span class="p">(</span><span class="n">WEB_DATA</span> <span class="o">/</span> <span class="s2">"neighbourhood_value_per_acre.geojson"</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">())[</span><span class="s2">"features"</span><span class="p">]])</span>
+<span class="n">status</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">((</span><span class="n">WEB_DATA</span> <span class="o">/</span> <span class="s2">"status.json"</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">())</span>
+<span class="n">dev</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">((</span><span class="n">WEB_DATA</span> <span class="o">/</span> <span class="s2">"dev_grid.json"</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">())</span>
+<span class="n">temporal</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">((</span><span class="n">WEB_DATA</span> <span class="o">/</span> <span class="s2">"temporal.json"</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">())</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"roll year / rate year: </span><span class="si">{</span><span class="n">status</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'data_year'</span><span class="p">)</span><span class="si">}</span><span class="s2"> / </span><span class="si">{</span><span class="n">status</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'rate_year'</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"served data generated: </span><span class="si">{</span><span class="n">status</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'generated'</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"executed:              </span><span class="si">{</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">)</span><span class="si">:</span><span class="s2">%Y-%m-%d %H:%M UTC</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -7928,37 +7930,29 @@ not hide the rest.</p>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>repo root:        /home/runner/work/edmonton-tax-viz/edmonton-tax-viz
-assessment roll:  Property_Assessment_Data__Current_Calendar_Year_.csv
-data vintage:     2026-09-28 16:28 UTC  (file mtime)
-mill-rate year:   2026  (from main.ASSESSMENT_YEAR)
-executed:         2026-09-28 16:36 UTC
+<pre>roll year / rate year: 2026 / 2026
+served data generated: 2026-09-28
+executed:              2026-09-28 16:37 UTC
 </pre>
 </div>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=173f283a">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=f84f5814">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="Step-1-%E2%80%94-Load-the-assessment-roll">Step 1 — Load the assessment roll<a class="anchor-link" href="#Step-1-%E2%80%94-Load-the-assessment-roll">¶</a></h2><p>One row per property. <code>load_assessment</code> normalises neighbourhood names so they
-will match the boundary file later, applies the documented name corrections,
-drops rows with null or zero assessed value, and <em>flags</em> tax-exempt rows
-without removing them.</p>
-<p>That last distinction is the one worth understanding: <strong>exclusion is a policy
-choice, not a data-cleaning step.</strong> Dropping a zero-value row is arithmetic
-hygiene — it cannot change a ratio. Removing exempt institutional land would
-change what the map claims, so the pipeline refuses to make that call
-silently. Watch the log lines below: the drop is reported as a drop, the flag
-as a flag.</p>
+<h2 id="Loading-the-roll-once">Loading the roll once<a class="anchor-link" href="#Loading-the-roll-once">¶</a></h2><p>The levy-based rows need the per-property roll, the zone code each property
+falls in (the same point-in-polygon join the pipeline makes), and the
+roll's own property-information fields. These are the pipeline's loaders,
+not re-implementations.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=c32f1360">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=805e4aa7">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7966,11 +7960,21 @@ as a flag.</p>
 <div class="jp-InputPrompt jp-InputArea-prompt">In [2]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">load_assessment</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_assessment</span>  <span class="c1"># noqa: E402</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">geopandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">gpd</span>  <span class="c1"># noqa: E402</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">load_assessment</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_assessment</span>  <span class="c1"># noqa: E402</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">apply_tax_rates</span><span class="w"> </span><span class="kn">import</span> <span class="n">apply_tax_rates</span>  <span class="c1"># noqa: E402</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">revenue_by_zone</span><span class="w"> </span><span class="kn">import</span> <span class="n">property_zone_codes</span>  <span class="c1"># noqa: E402</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">load_zoning</span><span class="w"> </span><span class="kn">import</span> <span class="n">EXEMPT_CANDIDATE_ZONES</span>  <span class="c1"># noqa: E402</span>
 
-<span class="n">assessment</span> <span class="o">=</span> <span class="n">load_assessment</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">ASSESSMENT_CSV</span><span class="p">))</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">rows: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">assessment</span><span class="p">)</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">   columns: </span><span class="si">{</span><span class="n">assessment</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-<span class="n">assessment</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+<span class="n">roll</span> <span class="o">=</span> <span class="n">apply_tax_rates</span><span class="p">(</span><span class="n">load_assessment</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">main</span><span class="o">.</span><span class="n">ASSESSMENT_CSV</span><span class="p">)),</span>
+                       <span class="n">main</span><span class="o">.</span><span class="n">MILL_RATES_JSON</span><span class="p">,</span> <span class="n">main</span><span class="o">.</span><span class="n">ASSESSMENT_YEAR</span><span class="p">)</span>
+<span class="n">roll</span><span class="p">[</span><span class="s2">"zone"</span><span class="p">]</span> <span class="o">=</span> <span class="n">property_zone_codes</span><span class="p">(</span><span class="n">roll</span><span class="p">,</span> <span class="n">gpd</span><span class="o">.</span><span class="n">read_file</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">main</span><span class="o">.</span><span class="n">ZONING_GEOJSON</span><span class="p">)))</span>
+<span class="n">info</span> <span class="o">=</span> <span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">main</span><span class="o">.</span><span class="n">PROPERTY_INFO_CSV</span><span class="p">,</span> <span class="n">usecols</span><span class="o">=</span><span class="p">[</span><span class="s2">"Account Number"</span><span class="p">,</span> <span class="s2">"zoning"</span><span class="p">,</span> <span class="s2">"lot_size"</span><span class="p">])</span>
+          <span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="s2">"Account Number"</span><span class="p">:</span> <span class="s2">"account_number"</span><span class="p">,</span> <span class="s2">"zoning"</span><span class="p">:</span> <span class="s2">"roll_zoning"</span><span class="p">})</span>
+          <span class="o">.</span><span class="n">drop_duplicates</span><span class="p">(</span><span class="s2">"account_number"</span><span class="p">))</span>
+<span class="n">roll</span> <span class="o">=</span> <span class="n">roll</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">info</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="s2">"account_number"</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="s2">"left"</span><span class="p">)</span>
+<span class="n">LEVY</span><span class="p">,</span> <span class="n">NONRES</span> <span class="o">=</span> <span class="n">roll</span><span class="p">[</span><span class="s2">"levy"</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">(),</span> <span class="n">roll</span><span class="p">[</span><span class="s2">"nonres_levy"</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"properties: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">roll</span><span class="p">)</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">   levy $</span><span class="si">{</span><span class="n">LEVY</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e9</span><span class="si">:</span><span class="s2">,.2f</span><span class="si">}</span><span class="s2">B   non-res $</span><span class="si">{</span><span class="n">NONRES</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e9</span><span class="si">:</span><span class="s2">,.2f</span><span class="si">}</span><span class="s2">B"</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -7980,233 +7984,6 @@ as a flag.</p>
 <div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
 </div>
 <div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>load_assessment: Flagged 2 tax-exempt rows (Assessment Class 1 == 'NONRES MUNICIPAL/RES EDUCATION')
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>load_assessment: Dropping 53 rows with null or zero assessed_value
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>
-rows: 439,643   columns: 13
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[2]:</div>
-<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html" tabindex="0">
-<div>
-<style scoped="">
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-<thead>
-<tr style="text-align: right;">
-<th></th>
-<th>account_number</th>
-<th>neighbourhood_name</th>
-<th>assessed_value</th>
-<th>is_exempt</th>
-<th>tax_class</th>
-<th>assessment_class_1</th>
-<th>assessment_class_2</th>
-<th>assessment_class_3</th>
-<th>assessment_class_pct_1</th>
-<th>assessment_class_pct_2</th>
-<th>assessment_class_pct_3</th>
-<th>latitude</th>
-<th>longitude</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<th>0</th>
-<td>11140552</td>
-<td>ASTER</td>
-<td>570000.0</td>
-<td>False</td>
-<td>Residential</td>
-<td>RESIDENTIAL</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>100</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>53.450942</td>
-<td>-113.362159</td>
-</tr>
-<tr>
-<th>1</th>
-<td>10704838</td>
-<td>AMBLESIDE</td>
-<td>287000.0</td>
-<td>False</td>
-<td>Residential</td>
-<td>RESIDENTIAL</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>100</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>53.433782</td>
-<td>-113.600287</td>
-</tr>
-<tr>
-<th>2</th>
-<td>4108601</td>
-<td>ALBERTA AVENUE</td>
-<td>185500.0</td>
-<td>False</td>
-<td>Residential</td>
-<td>RESIDENTIAL</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>100</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>53.568288</td>
-<td>-113.485282</td>
-</tr>
-<tr>
-<th>3</th>
-<td>10712364</td>
-<td>ALLARD</td>
-<td>445500.0</td>
-<td>False</td>
-<td>Residential</td>
-<td>RESIDENTIAL</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>100</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>53.396268</td>
-<td>-113.531481</td>
-</tr>
-<tr>
-<th>4</th>
-<td>10410096</td>
-<td>ALBANY</td>
-<td>251500.0</td>
-<td>False</td>
-<td>Residential</td>
-<td>RESIDENTIAL</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>100</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>53.630888</td>
-<td>-113.548561</td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=f07f635f">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="Step-2-%E2%80%94-Apply-the-mill-rates">Step 2 — Apply the mill rates<a class="anchor-link" href="#Step-2-%E2%80%94-Apply-the-mill-rates">¶</a></h2><p>The municipal levy for a property is <em>not</em> one rate times one value. A parcel
-can be split across up to three assessment classes, each with its own
-percentage and its own rate:</p>
-<p>$$\text{levy} = \text{assessed value} \times \sum_{\text{slot}}
-  \frac{\text{pct}_{\text{slot}}}{100} \times
-  \frac{\text{rate}[\text{class}_{\text{slot}}]}{1000}$$</p>
-<p><code>res_levy</code> and <code>nonres_levy</code> are <em>subsets</em> of <code>levy</code> — a split-class parcel
-contributes only its residential slice to <code>res_levy</code>. They do not sum to
-<code>levy</code>, because other rate classes (farmland, machinery) exist. That
-relationship is the invariant worth pinning.</p>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=9c4390a5">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [3]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">apply_tax_rates</span><span class="w"> </span><span class="kn">import</span> <span class="n">apply_tax_rates</span>  <span class="c1"># noqa: E402</span>
-
-<span class="n">rates_file</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">MILL_RATES</span><span class="o">.</span><span class="n">read_text</span><span class="p">())</span>
-<span class="n">published_years</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">rates_file</span><span class="p">[</span><span class="s2">"rates"</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"mill_rates.json publishes: </span><span class="si">{</span><span class="n">published_years</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"pipeline asks for:         </span><span class="si">{</span><span class="n">ASSESSMENT_YEAR</span><span class="si">}</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
-
-<span class="n">check</span><span class="p">(</span>
-    <span class="nb">str</span><span class="p">(</span><span class="n">ASSESSMENT_YEAR</span><span class="p">)</span> <span class="ow">in</span> <span class="n">rates_file</span><span class="p">[</span><span class="s2">"rates"</span><span class="p">],</span>
-    <span class="s2">"the rate year main.py asks for exists in mill_rates.json"</span><span class="p">,</span>
-    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">ASSESSMENT_YEAR</span><span class="si">}</span><span class="s2"> in </span><span class="si">{</span><span class="n">published_years</span><span class="si">}</span><span class="s2"> — the January year-roll breaks this first"</span><span class="p">,</span>
-<span class="p">)</span>
-
-<span class="n">assessment</span> <span class="o">=</span> <span class="n">apply_tax_rates</span><span class="p">(</span><span class="n">assessment</span><span class="p">,</span> <span class="n">MILL_RATES</span><span class="p">,</span> <span class="n">ASSESSMENT_YEAR</span><span class="p">)</span>
-
-<span class="n">levy_total</span> <span class="o">=</span> <span class="n">assessment</span><span class="p">[</span><span class="s2">"levy"</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
-<span class="n">res_total</span> <span class="o">=</span> <span class="n">assessment</span><span class="p">[</span><span class="s2">"res_levy"</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
-<span class="n">nonres_total</span> <span class="o">=</span> <span class="n">assessment</span><span class="p">[</span><span class="s2">"nonres_levy"</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
-
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">citywide municipal levy: $</span><span class="si">{</span><span class="n">levy_total</span><span class="si">:</span><span class="s2">,.0f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  residential slices:    $</span><span class="si">{</span><span class="n">res_total</span><span class="si">:</span><span class="s2">,.0f</span><span class="si">}</span><span class="s2">  (</span><span class="si">{</span><span class="n">res_total</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">levy_total</span><span class="si">:</span><span class="s2">.1%</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  non-residential:       $</span><span class="si">{</span><span class="n">nonres_total</span><span class="si">:</span><span class="s2">,.0f</span><span class="si">}</span><span class="s2">  (</span><span class="si">{</span><span class="n">nonres_total</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">levy_total</span><span class="si">:</span><span class="s2">.1%</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  other classes:         $</span><span class="si">{</span><span class="n">levy_total</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">res_total</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">nonres_total</span><span class="si">:</span><span class="s2">,.0f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-
-<span class="n">check</span><span class="p">(</span>
-    <span class="n">res_total</span> <span class="o">+</span> <span class="n">nonres_total</span> <span class="o">&lt;=</span> <span class="n">levy_total</span> <span class="o">*</span> <span class="mf">1.0000001</span><span class="p">,</span>
-    <span class="s2">"res + nonres levy never exceeds total levy"</span><span class="p">,</span>
-    <span class="sa">f</span><span class="s2">"$</span><span class="si">{</span><span class="n">res_total</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">nonres_total</span><span class="si">:</span><span class="s2">,.0f</span><span class="si">}</span><span class="s2"> &lt;= $</span><span class="si">{</span><span class="n">levy_total</span><span class="si">:</span><span class="s2">,.0f</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
-<span class="p">)</span>
-<span class="n">check</span><span class="p">(</span><span class="n">levy_total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">"citywide levy is positive"</span><span class="p">)</span>
-<span class="n">check</span><span class="p">(</span>
-    <span class="p">(</span><span class="n">assessment</span><span class="p">[</span><span class="s2">"levy"</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span>
-    <span class="s2">"no property carries a negative levy"</span><span class="p">,</span>
-<span class="p">)</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell-outputWrapper">
-<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
-</div>
-<div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>mill_rates.json publishes: ['2025', '2026']
-pipeline asks for:         2026
-
-  [PASS] the rate year main.py asks for exists in mill_rates.json  — 2026 in ['2025', '2026'] — the January year-roll breaks this first
-</pre>
-</div>
-</div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
@@ -8217,43 +7994,95 @@ pipeline asks for:         2026
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>apply_tax_rates: Computed municipal levy for 439643 properties (year 2026); total $2,783,390,245 (residential-class $1,448,013,937 = 52.0%, non-res-rate $1,334,836,783 = 48.0%)
+<pre>revenue_by_zone: 8 propert(ies) carrying $9239 of levy fell in NO zoning polygon (bucketed as 'unzoned')
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>
-citywide municipal levy: $2,783,390,245
-  residential slices:    $1,448,013,937  (52.0%)
-  non-residential:       $1,334,836,783  (48.0%)
-  other classes:         $539,525
-  [PASS] res + nonres levy never exceeds total levy  — $2,782,850,720 &lt;= $2,783,390,245
-  [PASS] citywide levy is positive
-  [PASS] no property carries a negative levy
+<pre>properties: 439,643   levy $2.78B   non-res $1.33B
 </pre>
 </div>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=6eb82639">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=7ebb4dda">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="Step-3-%E2%80%94-Aggregate-to-neighbourhoods">Step 3 — Aggregate to neighbourhoods<a class="anchor-link" href="#Step-3-%E2%80%94-Aggregate-to-neighbourhoods">¶</a></h2><p>Collapse ~440k property rows to one row per neighbourhood. This is the step
-that makes the whole project a <em>neighbourhood</em> analysis rather than a parcel
-one — and it is why <code>docs/PARCEL_LEVEL_OPPORTUNITIES.md</code> exists as a separate
-backlog.</p>
-<p>Aggregation is a pure sum, so it must be <strong>value-preserving</strong>. If this
-invariant ever fails, a neighbourhood is being dropped or double-counted.</p>
+<h2 id="Money-and-Glass">Money and Glass<a class="anchor-link" href="#Money-and-Glass">¶</a></h2><p><strong>Exempt-candidate land is counted as billed.</strong> The roll computes a levy for
+parcels on zoning where many properties are tax-exempt (<code>AJ</code>, <code>UF</code>, <code>UI</code>,
+<code>PU</code>, <code>PS</code>). Edmonton publishes no per-parcel exemption status, so the map
+cannot tell which of those dollars are real. Where they aren't, the figure
+is overstated. The map bands the hoods where this is large
+(<code>docs/FINDINGS_exempt_institutional.md</code>,
+<code>docs/FINDINGS_blurb_claims.md</code> §6).</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=11645416">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=281c62f6">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [3]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">cand</span> <span class="o">=</span> <span class="n">roll</span><span class="p">[</span><span class="s2">"zone"</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">EXEMPT_CANDIDATE_ZONES</span><span class="p">)</span>
+<span class="n">exempt_total</span> <span class="o">=</span> <span class="n">roll</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">cand</span><span class="p">,</span> <span class="s2">"levy"</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">/</span> <span class="n">LEVY</span>
+<span class="n">exempt_nonres</span> <span class="o">=</span> <span class="n">roll</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">cand</span><span class="p">,</span> <span class="s2">"nonres_levy"</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">/</span> <span class="n">NONRES</span>
+<span class="n">row</span><span class="p">(</span><span class="s2">"Money (non-residential)"</span><span class="p">,</span> <span class="s2">"levy on exempt-candidate zoning is counted as paid"</span><span class="p">,</span>
+    <span class="n">exempt_nonres</span><span class="p">,</span> <span class="s2">"of non-residential levy"</span><span class="p">,</span> <span class="s2">"may overstate"</span><span class="p">,</span>
+    <span class="s2">"FINDINGS_blurb_claims.md §6"</span><span class="p">)</span>
+<span class="n">row</span><span class="p">(</span><span class="s2">"Money (total)"</span><span class="p">,</span> <span class="s2">"levy on exempt-candidate zoning is counted as paid"</span><span class="p">,</span>
+    <span class="n">exempt_total</span><span class="p">,</span> <span class="s2">"of total levy"</span><span class="p">,</span> <span class="s2">"may overstate"</span><span class="p">,</span> <span class="s2">"FINDINGS_exempt_institutional.md"</span><span class="p">)</span>
+
+<span class="n">served_exempt</span> <span class="o">=</span> <span class="p">(</span><span class="n">served</span><span class="p">[</span><span class="s2">"rev_frac_exempt"</span><span class="p">]</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">*</span> <span class="n">served</span><span class="p">[</span><span class="s2">"total_revenue"</span><span class="p">]</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> \
+    <span class="o">/</span> <span class="n">served</span><span class="p">[</span><span class="s2">"total_revenue"</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+<span class="n">check</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">served_exempt</span> <span class="o">-</span> <span class="n">exempt_total</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">0.005</span><span class="p">,</span>
+      <span class="s2">"the served per-hood exempt share rebuilds the citywide share recomputed from the roll"</span><span class="p">,</span>
+      <span class="sa">f</span><span class="s2">"served </span><span class="si">{</span><span class="n">served_exempt</span><span class="si">:</span><span class="s2">.2%</span><span class="si">}</span><span class="s2"> vs roll </span><span class="si">{</span><span class="n">exempt_total</span><span class="si">:</span><span class="s2">.2%</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>   16.4%  Money (non-residential): levy on exempt-candidate zoning is counted as paid
+    8.1%  Money (total): levy on exempt-candidate zoning is counted as paid
+  [PASS] the served per-hood exempt share rebuilds the citywide share recomputed from the roll  — served 8.05% vs roll 8.05%
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=a4cc2953">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<p><strong>Zone shares come from the bylaw map, not the roll's own zoning field.</strong>
+The roll carries a <code>zoning</code> field, but it is blank on a large share of
+parcels, and those parcels sit disproportionately on institutional zones.
+Reading it would halve the exempt-candidate share above. The pipeline places
+every property in a bylaw polygon instead. This row sizes what the roll field
+would have missed. It is not a bias on the map.</p>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=8eb8080b">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8261,33 +8090,10 @@ invariant ever fails, a neighbourhood is being dropped or double-counted.</p>
 <div class="jp-InputPrompt jp-InputArea-prompt">In [4]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">aggregate_by_neighbourhood</span><span class="w"> </span><span class="kn">import</span> <span class="n">aggregate_by_neighbourhood</span>  <span class="c1"># noqa: E402</span>
-
-<span class="n">aggregated</span> <span class="o">=</span> <span class="n">aggregate_by_neighbourhood</span><span class="p">(</span><span class="n">assessment</span><span class="p">)</span>
-
-<span class="n">value_before</span> <span class="o">=</span> <span class="n">assessment</span><span class="p">[</span><span class="s2">"assessed_value"</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
-<span class="n">value_after</span> <span class="o">=</span> <span class="n">aggregated</span><span class="p">[</span><span class="s2">"total_assessed_value"</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
-<span class="n">revenue_after</span> <span class="o">=</span> <span class="n">aggregated</span><span class="p">[</span><span class="s2">"total_revenue"</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
-
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">neighbourhoods: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">aggregated</span><span class="p">)</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"assessed value  before $</span><span class="si">{</span><span class="n">value_before</span><span class="si">:</span><span class="s2">,.0f</span><span class="si">}</span><span class="s2">  after $</span><span class="si">{</span><span class="n">value_after</span><span class="si">:</span><span class="s2">,.0f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-
-<span class="n">check</span><span class="p">(</span>
-    <span class="nb">abs</span><span class="p">(</span><span class="n">value_before</span> <span class="o">-</span> <span class="n">value_after</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">1.0</span><span class="p">,</span>
-    <span class="s2">"aggregation preserves total assessed value"</span><span class="p">,</span>
-    <span class="sa">f</span><span class="s2">"delta $</span><span class="si">{</span><span class="nb">abs</span><span class="p">(</span><span class="n">value_before</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">value_after</span><span class="p">)</span><span class="si">:</span><span class="s2">,.4f</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
-<span class="p">)</span>
-<span class="n">check</span><span class="p">(</span>
-    <span class="nb">abs</span><span class="p">(</span><span class="n">levy_total</span> <span class="o">-</span> <span class="n">revenue_after</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">1.0</span><span class="p">,</span>
-    <span class="s2">"aggregation preserves total levy"</span><span class="p">,</span>
-    <span class="sa">f</span><span class="s2">"delta $</span><span class="si">{</span><span class="nb">abs</span><span class="p">(</span><span class="n">levy_total</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">revenue_after</span><span class="p">)</span><span class="si">:</span><span class="s2">,.4f</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
-<span class="p">)</span>
-<span class="n">check</span><span class="p">(</span>
-    <span class="n">aggregated</span><span class="p">[</span><span class="s2">"neighbourhood_name"</span><span class="p">]</span><span class="o">.</span><span class="n">is_unique</span><span class="p">,</span>
-    <span class="s2">"one row per neighbourhood after aggregation"</span><span class="p">,</span>
-<span class="p">)</span>
-
-<span class="n">aggregated</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s2">"total_assessed_value"</span><span class="p">,</span> <span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">blank</span> <span class="o">=</span> <span class="n">roll</span><span class="p">[</span><span class="s2">"roll_zoning"</span><span class="p">]</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span>
+<span class="n">row</span><span class="p">(</span><span class="s2">"Money / Glass"</span><span class="p">,</span> <span class="s2">"zone shares use the bylaw map; the roll's own zoning field is blank here"</span><span class="p">,</span>
+    <span class="n">roll</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">blank</span><span class="p">,</span> <span class="s2">"nonres_levy"</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">/</span> <span class="n">NONRES</span><span class="p">,</span> <span class="s2">"of non-residential levy"</span><span class="p">,</span>
+    <span class="s2">"none on the map (instrument choice)"</span><span class="p">,</span> <span class="s2">"FINDINGS_blurb_claims.md §6"</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -8300,156 +8106,27 @@ invariant ever fails, a neighbourhood is being dropped or double-counted.</p>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>aggregate_by_neighbourhood: Aggregated 439643 properties into 407 neighbourhoods
+<pre>   17.7%  Money / Glass: zone shares use the bylaw map; the roll's own zoning field is blank here
 </pre>
 </div>
 </div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>
-neighbourhoods: 407
-assessed value  before $238,662,305,857  after $238,662,305,857
-  [PASS] aggregation preserves total assessed value  — delta $0.0000
-  [PASS] aggregation preserves total levy  — delta $0.0000
-  [PASS] one row per neighbourhood after aggregation
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[4]:</div>
-<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html" tabindex="0">
-<div>
-<style scoped="">
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-<thead>
-<tr style="text-align: right;">
-<th></th>
-<th>neighbourhood_name</th>
-<th>total_assessed_value</th>
-<th>total_revenue</th>
-<th>total_res_revenue</th>
-<th>total_nonres_revenue</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<th>109</th>
-<td>DOWNTOWN</td>
-<td>7.787736e+09</td>
-<td>1.463142e+08</td>
-<td>2.306416e+07</td>
-<td>1.232500e+08</td>
-</tr>
-<tr>
-<th>402</th>
-<td>WÎHKWÊNTÔWIN</td>
-<td>4.198990e+09</td>
-<td>4.594036e+07</td>
-<td>2.776856e+07</td>
-<td>1.817179e+07</td>
-</tr>
-<tr>
-<th>397</th>
-<td>WINDERMERE</td>
-<td>3.708288e+09</td>
-<td>3.276745e+07</td>
-<td>2.695548e+07</td>
-<td>5.804146e+06</td>
-</tr>
-<tr>
-<th>82</th>
-<td>CHAPPELLE</td>
-<td>3.303812e+09</td>
-<td>2.983873e+07</td>
-<td>2.390248e+07</td>
-<td>5.935647e+06</td>
-</tr>
-<tr>
-<th>358</th>
-<td>SUMMERSIDE</td>
-<td>3.251272e+09</td>
-<td>3.012595e+07</td>
-<td>2.308340e+07</td>
-<td>7.042552e+06</td>
-</tr>
-<tr>
-<th>194</th>
-<td>KESWICK</td>
-<td>2.687904e+09</td>
-<td>2.297987e+07</td>
-<td>1.991700e+07</td>
-<td>3.062660e+06</td>
-</tr>
-<tr>
-<th>210</th>
-<td>LAUREL</td>
-<td>2.585409e+09</td>
-<td>2.073266e+07</td>
-<td>1.981975e+07</td>
-<td>9.129046e+05</td>
-</tr>
-<tr>
-<th>336</th>
-<td>SECORD</td>
-<td>2.376065e+09</td>
-<td>2.061900e+07</td>
-<td>1.759915e+07</td>
-<td>3.019845e+06</td>
-</tr>
-<tr>
-<th>377</th>
-<td>WALKER</td>
-<td>2.370254e+09</td>
-<td>2.161346e+07</td>
-<td>1.695026e+07</td>
-<td>4.663196e+06</td>
-</tr>
-<tr>
-<th>367</th>
-<td>THE ORCHARDS AT ELLERSLIE</td>
-<td>2.275520e+09</td>
-<td>1.930221e+07</td>
-<td>1.693284e+07</td>
-<td>2.366926e+06</td>
-</tr>
-</tbody>
-</table>
 </div>
 </div>
 </div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=441cd1d0">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=769c824d">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="Step-4-%E2%80%94-Citywide-revenue-share,-computed-before-the-boundary-join">Step 4 — Citywide revenue share, computed <em>before</em> the boundary join<a class="anchor-link" href="#Step-4-%E2%80%94-Citywide-revenue-share,-computed-before-the-boundary-join">¶</a></h2><p><code>main.run()</code> computes each neighbourhood's share of citywide revenue here,
-against the full roll — deliberately, and the ordering is load-bearing.</p>
-<p>The boundary join in step 6 can drop a neighbourhood the roll knows about.
-Deriving the share <em>after</em> that join (or in the browser, by summing the served
-features) would renormalise over whatever survived — so a neighbourhood's
-"% of city revenue" would silently depend on <strong>who else made it onto the
-map</strong>. Computing it here means the denominator is the real city.</p>
+<p><strong>The lot-acre denominator counts only parcelled land.</strong> Roads and
+unparcelled valley drop out of it, so a hood reads higher per lot acre
+than per acre. The size is the unparcelled share of the median
+neighbourhood's land.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=4ca2e8bd">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=0bc1cd55">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8457,19 +8134,10 @@ map</strong>. Computing it here means the denominator is the real city.</p>
 <div class="jp-InputPrompt jp-InputArea-prompt">In [5]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">city_revenue</span> <span class="o">=</span> <span class="n">aggregated</span><span class="p">[</span><span class="s2">"total_revenue"</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
-<span class="n">aggregated</span><span class="p">[</span><span class="s2">"pct_of_city_revenue"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">aggregated</span><span class="p">[</span><span class="s2">"total_revenue"</span><span class="p">]</span> <span class="o">/</span> <span class="n">city_revenue</span> <span class="o">*</span> <span class="mi">100</span><span class="p">)</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
-
-<span class="n">top</span> <span class="o">=</span> <span class="n">aggregated</span><span class="o">.</span><span class="n">nlargest</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="s2">"pct_of_city_revenue"</span><span class="p">)[[</span><span class="s2">"neighbourhood_name"</span><span class="p">,</span> <span class="s2">"pct_of_city_revenue"</span><span class="p">]]</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"citywide revenue denominator: $</span><span class="si">{</span><span class="n">city_revenue</span><span class="si">:</span><span class="s2">,.0f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"shares sum to: </span><span class="si">{</span><span class="n">aggregated</span><span class="p">[</span><span class="s1">'pct_of_city_revenue'</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">%</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
-
-<span class="n">check</span><span class="p">(</span>
-    <span class="nb">abs</span><span class="p">(</span><span class="n">aggregated</span><span class="p">[</span><span class="s2">"pct_of_city_revenue"</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">-</span> <span class="mf">100.0</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">0.05</span><span class="p">,</span>
-    <span class="s2">"revenue shares sum to 100</span><span class="si">% a</span><span class="s2">cross the full roll"</span><span class="p">,</span>
-    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">aggregated</span><span class="p">[</span><span class="s1">'pct_of_city_revenue'</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">%"</span><span class="p">,</span>
-<span class="p">)</span>
-<span class="n">top</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">pf</span> <span class="o">=</span> <span class="n">served</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="o">~</span><span class="n">served</span><span class="p">[</span><span class="s2">"is_set_aside"</span><span class="p">]</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">bool</span><span class="p">),</span> <span class="s2">"parcel_frac"</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
+<span class="n">row</span><span class="p">(</span><span class="s2">"Money (lot acres)"</span><span class="p">,</span> <span class="s2">"the lot-acre denominator leaves out roads and unparcelled land"</span><span class="p">,</span>
+    <span class="mi">1</span> <span class="o">-</span> <span class="n">pf</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">upper</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">median</span><span class="p">(),</span> <span class="s2">"of the median hood's land"</span><span class="p">,</span> <span class="s2">"raises per-lot-acre figures"</span><span class="p">,</span>
+    <span class="s2">"Methods §1"</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -8482,86 +8150,25 @@ map</strong>. Computing it here means the denominator is the real city.</p>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>citywide revenue denominator: $2,783,390,245
-shares sum to: 100.00%
-
-  [PASS] revenue shares sum to 100% across the full roll  — 100.0005%
+<pre>   30.6%  Money (lot acres): the lot-acre denominator leaves out roads and unparcelled land
 </pre>
 </div>
 </div>
-<div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[5]:</div>
-<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html" tabindex="0">
-<div>
-<style scoped="">
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-<thead>
-<tr style="text-align: right;">
-<th></th>
-<th>neighbourhood_name</th>
-<th>pct_of_city_revenue</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<th>109</th>
-<td>DOWNTOWN</td>
-<td>5.2567</td>
-</tr>
-<tr>
-<th>374</th>
-<td>UNIVERSITY OF ALBERTA</td>
-<td>1.8920</td>
-</tr>
-<tr>
-<th>402</th>
-<td>WÎHKWÊNTÔWIN</td>
-<td>1.6505</td>
-</tr>
-<tr>
-<th>252</th>
-<td>MISTATIM INDUSTRIAL</td>
-<td>1.3892</td>
-</tr>
-<tr>
-<th>357</th>
-<td>SUMMERLEA</td>
-<td>1.3021</td>
-</tr>
-</tbody>
-</table>
 </div>
 </div>
 </div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=def8deed">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=8bd8c79a">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="Step-5-%E2%80%94-Neighbourhood-boundaries-and-area">Step 5 — Neighbourhood boundaries and area<a class="anchor-link" href="#Step-5-%E2%80%94-Neighbourhood-boundaries-and-area">¶</a></h2><p><code>load_boundaries</code> returns geometry plus <code>area_acres</code>. The CRS is set
-explicitly before any area calculation — projecting after measuring would
-silently produce wrong acreages, which is why the project rule says to set it
-up front rather than trusting a file's declared CRS.</p>
+<p><strong>Set-aside neighbourhoods are grey, off the scale.</strong> Their revenue is real,
+but they are not ranked (Methods §3).</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=66d3e611">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=83ead726">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8569,19 +8176,10 @@ up front rather than trusting a file's declared CRS.</p>
 <div class="jp-InputPrompt jp-InputArea-prompt">In [6]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">load_boundaries</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_boundaries</span>  <span class="c1"># noqa: E402</span>
-
-<span class="n">boundaries</span> <span class="o">=</span> <span class="n">load_boundaries</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">BOUNDARIES</span><span class="p">))</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"boundaries: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">boundaries</span><span class="p">)</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">   CRS: </span><span class="si">{</span><span class="n">boundaries</span><span class="o">.</span><span class="n">crs</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"total area: </span><span class="si">{</span><span class="n">boundaries</span><span class="p">[</span><span class="s1">'area_acres'</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="si">:</span><span class="s2">,.0f</span><span class="si">}</span><span class="s2"> acres"</span><span class="p">)</span>
-
-<span class="n">check</span><span class="p">(</span><span class="n">boundaries</span><span class="o">.</span><span class="n">crs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">"boundaries carry an explicit CRS"</span><span class="p">)</span>
-<span class="n">check</span><span class="p">(</span>
-    <span class="p">(</span><span class="n">boundaries</span><span class="p">[</span><span class="s2">"area_acres"</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">(),</span>
-    <span class="s2">"every boundary has positive area"</span><span class="p">,</span>
-    <span class="s2">"a zero would make value_per_acre infinite"</span><span class="p">,</span>
-<span class="p">)</span>
-<span class="n">boundaries</span><span class="p">[[</span><span class="s2">"neighbourhood_name"</span><span class="p">,</span> <span class="s2">"area_acres"</span><span class="p">]]</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">aside</span> <span class="o">=</span> <span class="n">served</span><span class="p">[</span><span class="s2">"is_set_aside"</span><span class="p">]</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">bool</span><span class="p">)</span>
+<span class="n">row</span><span class="p">(</span><span class="s2">"Money"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">aside</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span><span class="si">}</span><span class="s2"> set-aside neighbourhoods are greyed, not ranked"</span><span class="p">,</span>
+    <span class="n">served</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">aside</span><span class="p">,</span> <span class="s2">"total_revenue"</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">/</span> <span class="n">served</span><span class="p">[</span><span class="s2">"total_revenue"</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">(),</span>
+    <span class="s2">"of total levy"</span><span class="p">,</span> <span class="s2">"none (excluded from the scale, not the totals)"</span><span class="p">,</span> <span class="s2">"FINDINGS_revenue_scale.md"</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -8594,103 +8192,25 @@ up front rather than trusting a file's declared CRS.</p>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>load_boundaries: Loaded 407 boundary features (input CRS: EPSG:4326)
+<pre>    0.7%  Money: 48 set-aside neighbourhoods are greyed, not ranked
 </pre>
 </div>
 </div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>load_boundaries: area_acres range: 26.6 – 13180.4
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>boundaries: 407   CRS: EPSG:3400
-total area: 193,263 acres
-  [PASS] boundaries carry an explicit CRS
-  [PASS] every boundary has positive area  — a zero would make value_per_acre infinite
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[6]:</div>
-<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html" tabindex="0">
-<div>
-<style scoped="">
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-<thead>
-<tr style="text-align: right;">
-<th></th>
-<th>neighbourhood_name</th>
-<th>area_acres</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<th>0</th>
-<td>ABBOTTSFIELD</td>
-<td>101.104033</td>
-</tr>
-<tr>
-<th>1</th>
-<td>ALBANY</td>
-<td>208.137756</td>
-</tr>
-<tr>
-<th>2</th>
-<td>ALBERTA AVENUE</td>
-<td>414.762759</td>
-</tr>
-<tr>
-<th>3</th>
-<td>ALBERTA PARK INDUSTRIAL</td>
-<td>164.040076</td>
-</tr>
-<tr>
-<th>4</th>
-<td>ALCES</td>
-<td>952.916247</td>
-</tr>
-</tbody>
-</table>
 </div>
 </div>
 </div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=bbf3116f">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=be822a1c">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="Step-6-%E2%80%94-Join,-and-account-for-every-unmatched-name">Step 6 — Join, and account for every unmatched name<a class="anchor-link" href="#Step-6-%E2%80%94-Join,-and-account-for-every-unmatched-name">¶</a></h2><p><code>join_and_calculate</code> left-joins boundaries → assessment and computes
-<code>value_per_acre</code> and <code>revenue_per_acre</code>. Every optional service layer is left
-at <code>None</code> here, so this is the Money lens alone; the cost lenses that <code>/full/</code>
-adds are a separate notebook.</p>
-<p><strong>No silent data drops</strong> is the project's core rule, so the point of this step
-is not that the join succeeds — it is that anything unmatched is <em>named</em>. Watch
-for the warning about the known straggler documented in <code>data/DATA.md</code>.</p>
+<p><strong>Glass pins each account to one point.</strong> A property bigger than a grid cell
+puts all its dollars in one cell. The lot-acre toggle is the counterweight.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=446ed77a">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=1f5978f2">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8698,35 +8218,11 @@ for the warning about the known straggler documented in <code>data/DATA.md</code
 <div class="jp-InputPrompt jp-InputArea-prompt">In [7]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">join_and_calculate</span><span class="w"> </span><span class="kn">import</span> <span class="n">join_and_calculate</span>  <span class="c1"># noqa: E402</span>
-
-<span class="n">joined</span> <span class="o">=</span> <span class="n">join_and_calculate</span><span class="p">(</span><span class="n">aggregated</span><span class="p">,</span> <span class="n">boundaries</span><span class="p">)</span>
-
-<span class="n">matched</span> <span class="o">=</span> <span class="n">joined</span><span class="p">[</span><span class="s2">"total_assessed_value"</span><span class="p">]</span><span class="o">.</span><span class="n">notna</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">features: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">joined</span><span class="p">)</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">   with assessment: </span><span class="si">{</span><span class="n">matched</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-
-<span class="n">roll_names</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">aggregated</span><span class="p">[</span><span class="s2">"neighbourhood_name"</span><span class="p">])</span>
-<span class="n">boundary_names</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">boundaries</span><span class="p">[</span><span class="s2">"neighbourhood_name"</span><span class="p">])</span>
-<span class="n">in_roll_only</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">roll_names</span> <span class="o">-</span> <span class="n">boundary_names</span><span class="p">)</span>
-<span class="n">in_boundary_only</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">boundary_names</span> <span class="o">-</span> <span class="n">roll_names</span><span class="p">)</span>
-
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">in roll but not on the map (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">in_roll_only</span><span class="p">)</span><span class="si">}</span><span class="s2">): </span><span class="si">{</span><span class="n">in_roll_only</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"on the map but not in the roll (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">in_boundary_only</span><span class="p">)</span><span class="si">}</span><span class="s2">): </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">in_boundary_only</span><span class="p">)</span><span class="si">}</span><span class="s2"> names"</span><span class="p">)</span>
-
-<span class="n">check</span><span class="p">(</span>
-    <span class="nb">len</span><span class="p">(</span><span class="n">joined</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">boundaries</span><span class="p">),</span>
-    <span class="s2">"the join is boundary-preserving (left join, no row multiplication)"</span><span class="p">,</span>
-    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">joined</span><span class="p">)</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2"> == </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">boundaries</span><span class="p">)</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
-<span class="p">)</span>
-<span class="n">check</span><span class="p">(</span>
-    <span class="n">joined</span><span class="p">[</span><span class="s2">"neighbourhood_name"</span><span class="p">]</span><span class="o">.</span><span class="n">is_unique</span><span class="p">,</span>
-    <span class="s2">"no boundary was duplicated by the join"</span><span class="p">,</span>
-<span class="p">)</span>
-<span class="n">check</span><span class="p">(</span>
-    <span class="n">matched</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">joined</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.9</span><span class="p">,</span>
-    <span class="s2">"over 90</span><span class="si">% o</span><span class="s2">f boundaries matched an assessment row"</span><span class="p">,</span>
-    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">matched</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">joined</span><span class="p">)</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2"> = </span><span class="si">{</span><span class="n">matched</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="nb">len</span><span class="p">(</span><span class="n">joined</span><span class="p">)</span><span class="si">:</span><span class="s2">.1%</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
-<span class="p">)</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">cell_m2</span> <span class="o">=</span> <span class="n">main</span><span class="o">.</span><span class="n">GRID_CELL_M</span> <span class="o">**</span> <span class="mi">2</span>
+<span class="n">big</span> <span class="o">=</span> <span class="n">roll</span><span class="p">[</span><span class="s2">"lot_size"</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">cell_m2</span>
+<span class="n">row</span><span class="p">(</span><span class="s2">"Glass"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"one point per account; the lot is bigger than a </span><span class="si">{</span><span class="n">main</span><span class="o">.</span><span class="n">GRID_CELL_M</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2"> m cell"</span><span class="p">,</span>
+    <span class="n">roll</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">big</span><span class="p">,</span> <span class="s2">"levy"</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">/</span> <span class="n">LEVY</span><span class="p">,</span> <span class="s2">"of total levy"</span><span class="p">,</span> <span class="s2">"concentrates dollars in one cell"</span><span class="p">,</span>
+    <span class="s2">"Methods §4"</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -8739,57 +8235,26 @@ for the warning about the known straggler documented in <code>data/DATA.md</code
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>join_and_calculate: 1 assessment neighbourhood(s) with no boundary match (excluded from map):
-  OLIVER
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>join_and_calculate: 1 boundary neighbourhood(s) with no assessment data:
-  LEWIS FARMS
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>join_and_calculate: Joined 407 boundary neighbourhoods; 406 with value_per_acre calculated
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>
-features: 407   with assessment: 406
-
-in roll but not on the map (1): ['OLIVER']
-on the map but not in the roll (1): 1 names
-  [PASS] the join is boundary-preserving (left join, no row multiplication)  — 407 == 407
-  [PASS] no boundary was duplicated by the join
-  [PASS] over 90% of boundaries matched an assessment row  — 406/407 = 99.8%
+<pre>   32.7%  Glass: one point per account; the lot is bigger than a 100 m cell
 </pre>
 </div>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=087e9c9c">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=68afddbf">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="Step-7-%E2%80%94-The-published-metric,-checked-by-hand">Step 7 — The published metric, checked by hand<a class="anchor-link" href="#Step-7-%E2%80%94-The-published-metric,-checked-by-hand">¶</a></h2><p><code>value_per_acre = total_assessed_value / area_acres</code>. Recomputing it
-independently for the top neighbourhoods is the cheapest possible guard
-against a units or denominator error — the failure mode this project
-actually has.</p>
+<p><strong>Split-class percentages are billed as stated.</strong> A few properties' class
+percentages do not sum to 100. The pipeline bills them as written rather than
+inventing where the missing share belongs.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=6a5dfb31">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=57f9818d">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8797,30 +8262,11 @@ actually has.</p>
 <div class="jp-InputPrompt jp-InputArea-prompt">In [8]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">have</span> <span class="o">=</span> <span class="n">joined</span><span class="p">[</span><span class="n">joined</span><span class="p">[</span><span class="s2">"value_per_acre"</span><span class="p">]</span><span class="o">.</span><span class="n">notna</span><span class="p">()]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-<span class="n">have</span><span class="p">[</span><span class="s2">"recomputed"</span><span class="p">]</span> <span class="o">=</span> <span class="n">have</span><span class="p">[</span><span class="s2">"total_assessed_value"</span><span class="p">]</span> <span class="o">/</span> <span class="n">have</span><span class="p">[</span><span class="s2">"area_acres"</span><span class="p">]</span>
-<span class="n">have</span><span class="p">[</span><span class="s2">"delta"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">have</span><span class="p">[</span><span class="s2">"value_per_acre"</span><span class="p">]</span> <span class="o">-</span> <span class="n">have</span><span class="p">[</span><span class="s2">"recomputed"</span><span class="p">])</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span>
-
-<span class="n">worst</span> <span class="o">=</span> <span class="n">have</span><span class="p">[</span><span class="s2">"delta"</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
-<span class="n">check</span><span class="p">(</span>
-    <span class="n">worst</span> <span class="o">&lt;</span> <span class="mf">0.01</span><span class="p">,</span>
-    <span class="s2">"value_per_acre equals total_assessed_value / area_acres for every feature"</span><span class="p">,</span>
-    <span class="sa">f</span><span class="s2">"largest disagreement $</span><span class="si">{</span><span class="n">worst</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
-<span class="p">)</span>
-
-<span class="k">if</span> <span class="s2">"revenue_per_acre"</span> <span class="ow">in</span> <span class="n">have</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
-    <span class="n">rev</span> <span class="o">=</span> <span class="n">have</span><span class="p">[</span><span class="n">have</span><span class="p">[</span><span class="s2">"revenue_per_acre"</span><span class="p">]</span><span class="o">.</span><span class="n">notna</span><span class="p">()]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-    <span class="n">rev_delta</span> <span class="o">=</span> <span class="p">(</span><span class="n">rev</span><span class="p">[</span><span class="s2">"revenue_per_acre"</span><span class="p">]</span> <span class="o">-</span> <span class="n">rev</span><span class="p">[</span><span class="s2">"total_revenue"</span><span class="p">]</span> <span class="o">/</span> <span class="n">rev</span><span class="p">[</span><span class="s2">"area_acres"</span><span class="p">])</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
-    <span class="n">check</span><span class="p">(</span>
-        <span class="n">rev_delta</span> <span class="o">&lt;</span> <span class="mf">0.01</span><span class="p">,</span>
-        <span class="s2">"revenue_per_acre equals total_revenue / area_acres for every feature"</span><span class="p">,</span>
-        <span class="sa">f</span><span class="s2">"largest disagreement $</span><span class="si">{</span><span class="n">rev_delta</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
-    <span class="p">)</span>
-
-<span class="n">cols</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"neighbourhood_name"</span><span class="p">,</span> <span class="s2">"total_assessed_value"</span><span class="p">,</span> <span class="s2">"area_acres"</span><span class="p">,</span> <span class="s2">"value_per_acre"</span><span class="p">]</span>
-<span class="k">if</span> <span class="s2">"revenue_per_acre"</span> <span class="ow">in</span> <span class="n">have</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
-    <span class="n">cols</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"revenue_per_acre"</span><span class="p">)</span>
-<span class="n">have</span><span class="o">.</span><span class="n">nlargest</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="s2">"value_per_acre"</span><span class="p">)[</span><span class="n">cols</span><span class="p">]</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">pct</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">(</span><span class="n">roll</span><span class="p">[</span><span class="sa">f</span><span class="s2">"assessment_class_pct_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">"</span><span class="p">],</span> <span class="n">errors</span><span class="o">=</span><span class="s2">"coerce"</span><span class="p">)</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+<span class="n">off</span> <span class="o">=</span> <span class="p">(</span><span class="n">pct</span> <span class="o">-</span> <span class="mi">100</span><span class="p">)</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mf">0.01</span>
+<span class="n">row</span><span class="p">(</span><span class="s2">"Money"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">off</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span><span class="si">}</span><span class="s2"> properties' class percentages don't sum to 100"</span><span class="p">,</span>
+    <span class="n">roll</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">off</span><span class="p">,</span> <span class="s2">"levy"</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">/</span> <span class="n">LEVY</span><span class="p">,</span> <span class="s2">"of total levy"</span><span class="p">,</span> <span class="s2">"either way, billed as stated"</span><span class="p">,</span>
+    <span class="s2">"src/apply_tax_rates.py"</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -8833,119 +8279,313 @@ actually has.</p>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>  [PASS] value_per_acre equals total_assessed_value / area_acres for every feature  — largest disagreement $0.000000
-  [PASS] revenue_per_acre equals total_revenue / area_acres for every feature  — largest disagreement $0.000000
+<pre>    0.3%  Money: 80 properties' class percentages don't sum to 100
 </pre>
 </div>
 </div>
-<div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[8]:</div>
-<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html" tabindex="0">
-<div>
-<style scoped="">
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=a33d1c21">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h2 id="Development">Development<a class="anchor-link" href="#Development">¶</a></h2><p><strong>The grid shows only permits with a location.</strong> The neighbourhood view counts
+every permit. The grid can place only the geocoded ones. The gap is mostly
+recent permits not yet geocoded, plus older apartment permits that never were,
+so the grid under-places dense growth (<code>docs/FINDINGS_blurb_claims.md</code> F4).</p>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=542632d7">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [9]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">cols</span> <span class="o">=</span> <span class="n">dev</span><span class="p">[</span><span class="s2">"columns"</span><span class="p">]</span>
+<span class="k">for</span> <span class="n">window</span><span class="p">,</span> <span class="n">suffix</span><span class="p">,</span> <span class="n">label</span> <span class="ow">in</span> <span class="p">((</span><span class="s2">"3yr"</span><span class="p">,</span> <span class="s2">"_3yr"</span><span class="p">,</span> <span class="s2">"3 years"</span><span class="p">),</span> <span class="p">(</span><span class="s2">"5yr"</span><span class="p">,</span> <span class="s2">""</span><span class="p">,</span> <span class="s2">"5 years"</span><span class="p">),</span>
+                              <span class="p">(</span><span class="s2">"long"</span><span class="p">,</span> <span class="s2">"_long"</span><span class="p">,</span> <span class="s2">"since 2009"</span><span class="p">)):</span>
+    <span class="n">cov</span> <span class="o">=</span> <span class="n">dev</span><span class="p">[</span><span class="s2">"coverage"</span><span class="p">][</span><span class="n">window</span><span class="p">]</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="n">cols</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s2">"units"</span> <span class="o">+</span> <span class="n">suffix</span><span class="p">)</span>
+    <span class="n">check</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">c</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">dev</span><span class="p">[</span><span class="s2">"cells"</span><span class="p">])</span> <span class="o">==</span> <span class="n">cov</span><span class="p">[</span><span class="s2">"units_geocoded"</span><span class="p">],</span>
+          <span class="sa">f</span><span class="s2">"grid cells hold exactly the geocoded units (</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">)"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">cov</span><span class="p">[</span><span class="s1">'units_geocoded'</span><span class="p">]</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">row</span><span class="p">(</span><span class="s2">"Development (grid)"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"homes permitted in the last </span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2"> with no location are off the grid"</span>
+        <span class="k">if</span> <span class="n">window</span> <span class="o">!=</span> <span class="s2">"long"</span> <span class="k">else</span> <span class="s2">"homes permitted since 2009 with no location are off the grid"</span><span class="p">,</span>
+        <span class="mi">1</span> <span class="o">-</span> <span class="n">cov</span><span class="p">[</span><span class="s2">"units_geocoded"</span><span class="p">]</span> <span class="o">/</span> <span class="n">cov</span><span class="p">[</span><span class="s2">"units"</span><span class="p">],</span> <span class="sa">f</span><span class="s2">"of new homes (</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">)"</span><span class="p">,</span>
+        <span class="s2">"grid under-places them; the neighbourhood view counts them"</span><span class="p">,</span> <span class="s2">"FINDINGS_blurb_claims.md F4"</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>  [PASS] grid cells hold exactly the geocoded units (3 years)  — 27,491
+   29.9%  Development (grid): homes permitted in the last 3 years with no location are off the grid
+  [PASS] grid cells hold exactly the geocoded units (5 years)  — 46,933
+   21.4%  Development (grid): homes permitted in the last 5 years with no location are off the grid
+  [PASS] grid cells hold exactly the geocoded units (since 2009)  — 136,107
+   16.2%  Development (grid): homes permitted since 2009 with no location are off the grid
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=97dc094e">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h2 id="Change-over-time">Change over time<a class="anchor-link" href="#Change-over-time">¶</a></h2><p><strong>Two roll years are omitted.</strong> The historical file's 2024 and 2025 slices are
+proven incomplete, so the published series skips them
+(<code>docs/SPEC_temporal.md</code> §0).</p>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=d645cebd">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [10]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">years</span> <span class="o">=</span> <span class="n">temporal</span><span class="p">[</span><span class="s2">"years"</span><span class="p">]</span>
+<span class="n">span</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">years</span><span class="p">)</span> <span class="o">-</span> <span class="nb">min</span><span class="p">(</span><span class="n">years</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+<span class="n">missing</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">years</span><span class="p">),</span> <span class="nb">max</span><span class="p">(</span><span class="n">years</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">years</span><span class="p">))</span>
+<span class="n">check</span><span class="p">(</span><span class="ow">not</span> <span class="nb">set</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="n">temporal</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"defect_accounts"</span><span class="p">,</span> <span class="p">[])))</span> <span class="o">&amp;</span> <span class="nb">set</span><span class="p">(</span><span class="n">years</span><span class="p">),</span>
+      <span class="s2">"no year with a defective slice is published"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"omitted: </span><span class="si">{</span><span class="n">missing</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="n">row</span><span class="p">(</span><span class="s2">"Change over time"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"roll years </span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span><span class="w"> </span><span class="n">missing</span><span class="p">))</span><span class="si">}</span><span class="s2"> are omitted"</span><span class="p">,</span>
+    <span class="nb">len</span><span class="p">(</span><span class="n">missing</span><span class="p">)</span> <span class="o">/</span> <span class="n">span</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"of the </span><span class="si">{</span><span class="nb">min</span><span class="p">(</span><span class="n">years</span><span class="p">)</span><span class="si">}</span><span class="s2">–</span><span class="si">{</span><span class="nb">max</span><span class="p">(</span><span class="n">years</span><span class="p">)</span><span class="si">}</span><span class="s2"> years"</span><span class="p">,</span> <span class="s2">"changes span the gap"</span><span class="p">,</span>
+    <span class="s2">"SPEC_temporal.md §0"</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>  [PASS] no year with a defective slice is published  — omitted: [2024, 2025]
+   13.3%  Change over time: roll years 2024, 2025 are omitted
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=b6f8309e">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h2 id="Roads">Roads<a class="anchor-link" href="#Roads">¶</a></h2><p><strong>Arterials are left out of road metres.</strong> Every kind of development shares
+them, so they are not charged to the neighbourhood they cross.</p>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=914362cb">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [11]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">load_boundaries</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_boundaries</span>  <span class="c1"># noqa: E402</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">load_roads</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_roads</span>  <span class="c1"># noqa: E402</span>
 
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
+<span class="n">roads</span> <span class="o">=</span> <span class="n">load_roads</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">main</span><span class="o">.</span><span class="n">ROADS_GEOJSON</span><span class="p">),</span> <span class="n">load_boundaries</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">main</span><span class="o">.</span><span class="n">BOUNDARIES_GEOJSON</span><span class="p">)))</span>
+<span class="n">art</span> <span class="o">=</span> <span class="n">roads</span><span class="p">[</span><span class="s2">"road_m_arterial"</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+<span class="n">row</span><span class="p">(</span><span class="s2">"Roads"</span><span class="p">,</span> <span class="s2">"arterial roads are left out of road metres"</span><span class="p">,</span>
+    <span class="n">art</span> <span class="o">/</span> <span class="p">(</span><span class="n">art</span> <span class="o">+</span> <span class="n">roads</span><span class="p">[</span><span class="s2">"road_m_total"</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()),</span> <span class="s2">"of classified centreline length"</span><span class="p">,</span>
+    <span class="s2">"lowers road metres where arterials run"</span><span class="p">,</span> <span class="s2">"DECISIONS.md 2026-07-01"</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>   27.0%  Roads: arterial roads are left out of road metres
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=fa3238f0">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h2 id="The-table,-largest-first">The table, largest first<a class="anchor-link" href="#The-table,-largest-first">¶</a></h2>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=3cd9fe02">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [12]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">t</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">ROWS</span><span class="p">)</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s2">"share"</span><span class="p">,</span> <span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">check</span><span class="p">(</span><span class="n">t</span><span class="p">[</span><span class="s2">"share"</span><span class="p">]</span><span class="o">.</span><span class="n">between</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span> <span class="ow">and</span> <span class="n">t</span><span class="p">[</span><span class="s2">"share"</span><span class="p">]</span><span class="o">.</span><span class="n">notna</span><span class="p">()</span><span class="o">.</span><span class="n">all</span><span class="p">(),</span>
+      <span class="s2">"every size computed and lies in [0, 1]"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">t</span><span class="p">)</span><span class="si">}</span><span class="s2"> rows"</span><span class="p">)</span>
+<span class="n">md</span><span class="p">(</span><span class="s2">"| size | of what | lens | assumption | effect | argued in |</span><span class="se">\n</span><span class="s2">|---|---|---|---|---|---|</span><span class="se">\n</span><span class="s2">"</span> <span class="o">+</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+    <span class="sa">f</span><span class="s2">"| **</span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">share</span><span class="si">:</span><span class="s2">.1%</span><span class="si">}</span><span class="s2">** | </span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">of_what</span><span class="si">}</span><span class="s2"> | </span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">lens</span><span class="si">}</span><span class="s2"> | </span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">assumption</span><span class="si">}</span><span class="s2"> | </span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">direction</span><span class="si">}</span><span class="s2"> | `</span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">where</span><span class="si">}</span><span class="s2">` |"</span>
+    <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">t</span><span class="o">.</span><span class="n">itertuples</span><span class="p">()))</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>  [PASS] every size computed and lies in [0, 1]  — 12 rows
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-OutputArea-output" data-mime-type="text/markdown" tabindex="0">
+<table>
 <thead>
-<tr style="text-align: right;">
-<th></th>
-<th>neighbourhood_name</th>
-<th>total_assessed_value</th>
-<th>area_acres</th>
-<th>value_per_acre</th>
-<th>revenue_per_acre</th>
+<tr>
+<th>size</th>
+<th>of what</th>
+<th>lens</th>
+<th>assumption</th>
+<th>effect</th>
+<th>argued in</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<th>109</th>
-<td>DOWNTOWN</td>
-<td>7.787736e+09</td>
-<td>570.634403</td>
-<td>1.364751e+07</td>
-<td>256406.120876</td>
+<td><strong>32.7%</strong></td>
+<td>of total levy</td>
+<td>Glass</td>
+<td>one point per account; the lot is bigger than a 100 m cell</td>
+<td>concentrates dollars in one cell</td>
+<td><code>Methods §4</code></td>
 </tr>
 <tr>
-<th>402</th>
-<td>WÎHKWÊNTÔWIN</td>
-<td>4.198990e+09</td>
-<td>421.511381</td>
-<td>9.961749e+06</td>
-<td>108989.597411</td>
+<td><strong>30.6%</strong></td>
+<td>of the median hood's land</td>
+<td>Money (lot acres)</td>
+<td>the lot-acre denominator leaves out roads and unparcelled land</td>
+<td>raises per-lot-acre figures</td>
+<td><code>Methods §1</code></td>
 </tr>
 <tr>
-<th>142</th>
-<td>GARNEAU</td>
-<td>1.815364e+09</td>
-<td>204.606492</td>
-<td>8.872465e+06</td>
-<td>86509.699840</td>
+<td><strong>29.9%</strong></td>
+<td>of new homes (3 years)</td>
+<td>Development (grid)</td>
+<td>homes permitted in the last 3 years with no location are off the grid</td>
+<td>grid under-places them; the neighbourhood view counts them</td>
+<td><code>FINDINGS_blurb_claims.md F4</code></td>
 </tr>
 <tr>
-<th>374</th>
-<td>UNIVERSITY OF ALBERTA</td>
-<td>2.242118e+09</td>
-<td>295.185819</td>
-<td>7.595614e+06</td>
-<td>178401.220154</td>
+<td><strong>27.0%</strong></td>
+<td>of classified centreline length</td>
+<td>Roads</td>
+<td>arterial roads are left out of road metres</td>
+<td>lowers road metres where arterials run</td>
+<td><code>DECISIONS.md 2026-07-01</code></td>
 </tr>
 <tr>
-<th>357</th>
-<td>SUMMERLEA</td>
-<td>1.627544e+09</td>
-<td>271.601909</td>
-<td>5.992388e+06</td>
-<td>133441.298853</td>
+<td><strong>21.4%</strong></td>
+<td>of new homes (5 years)</td>
+<td>Development (grid)</td>
+<td>homes permitted in the last 5 years with no location are off the grid</td>
+<td>grid under-places them; the neighbourhood view counts them</td>
+<td><code>FINDINGS_blurb_claims.md F4</code></td>
 </tr>
 <tr>
-<th>53</th>
-<td>BOYLE STREET</td>
-<td>1.129263e+09</td>
-<td>217.675919</td>
-<td>5.187818e+06</td>
-<td>60422.720560</td>
+<td><strong>17.7%</strong></td>
+<td>of non-residential levy</td>
+<td>Money / Glass</td>
+<td>zone shares use the bylaw map; the roll's own zoning field is blank here</td>
+<td>none on the map (instrument choice)</td>
+<td><code>FINDINGS_blurb_claims.md §6</code></td>
 </tr>
 <tr>
-<th>352</th>
-<td>STRATHCONA</td>
-<td>1.908900e+09</td>
-<td>385.835534</td>
-<td>4.947443e+06</td>
-<td>50172.543948</td>
+<td><strong>16.4%</strong></td>
+<td>of non-residential levy</td>
+<td>Money (non-residential)</td>
+<td>levy on exempt-candidate zoning is counted as paid</td>
+<td>may overstate</td>
+<td><code>FINDINGS_blurb_claims.md §6</code></td>
 </tr>
 <tr>
-<th>398</th>
-<td>WINDSOR PARK</td>
-<td>8.475745e+08</td>
-<td>187.086054</td>
-<td>4.530399e+06</td>
-<td>36713.297781</td>
+<td><strong>16.2%</strong></td>
+<td>of new homes (since 2009)</td>
+<td>Development (grid)</td>
+<td>homes permitted since 2009 with no location are off the grid</td>
+<td>grid under-places them; the neighbourhood view counts them</td>
+<td><code>FINDINGS_blurb_claims.md F4</code></td>
 </tr>
 <tr>
-<th>222</th>
-<td>MAGRATH HEIGHTS</td>
-<td>1.281178e+09</td>
-<td>303.520292</td>
-<td>4.221062e+06</td>
-<td>35026.068805</td>
+<td><strong>13.3%</strong></td>
+<td>of the 2012–2026 years</td>
+<td>Change over time</td>
+<td>roll years 2024, 2025 are omitted</td>
+<td>changes span the gap</td>
+<td><code>SPEC_temporal.md §0</code></td>
 </tr>
 <tr>
-<th>221</th>
-<td>MACTAGGART</td>
-<td>1.027532e+09</td>
-<td>256.557412</td>
-<td>4.005074e+06</td>
-<td>36634.471214</td>
+<td><strong>8.1%</strong></td>
+<td>of total levy</td>
+<td>Money (total)</td>
+<td>levy on exempt-candidate zoning is counted as paid</td>
+<td>may overstate</td>
+<td><code>FINDINGS_exempt_institutional.md</code></td>
+</tr>
+<tr>
+<td><strong>0.7%</strong></td>
+<td>of total levy</td>
+<td>Money</td>
+<td>48 set-aside neighbourhoods are greyed, not ranked</td>
+<td>none (excluded from the scale, not the totals)</td>
+<td><code>FINDINGS_revenue_scale.md</code></td>
+</tr>
+<tr>
+<td><strong>0.3%</strong></td>
+<td>of total levy</td>
+<td>Money</td>
+<td>80 properties' class percentages don't sum to 100</td>
+<td>either way, billed as stated</td>
+<td><code>src/apply_tax_rates.py</code></td>
 </tr>
 </tbody>
 </table>
@@ -8953,32 +8593,12 @@ actually has.</p>
 </div>
 </div>
 </div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=1f03dba0">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="What-this-notebook-does-not-cover">What this notebook does <em>not</em> cover<a class="anchor-link" href="#What-this-notebook-does-not-cover">¶</a></h2><p>Stated explicitly so its silence is never mistaken for a clean bill of health:</p>
-<ul>
-<li>the <strong>lot-acre denominator</strong> (<code>lot_acres_eligible</code>, <code>parcel_frac</code>) and its
-cardinality guard — the <code>ineligible_points</code> drift is an open investigation;</li>
-<li>the <strong>Development lens</strong> (building permits) — the public build's other lens;</li>
-<li>every <strong>cost lens</strong> that <code>/full/</code> adds: services, transport, temporal, ratio;</li>
-<li>the <strong>web export</strong> itself — setback, simplification, and the served column
-contract, which <code>scripts/check_served_columns.py</code> already guards.</li>
-</ul>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=eb0b4792">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=7ebf560a">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [9]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [13]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">failed</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">CHECKS</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">c</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
@@ -9004,23 +8624,14 @@ contract, which <code>scripts/check_served_columns.py</code> already guards.</li
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>15/15 invariants held
+<pre>6/6 invariants held
 
-  [PASS] the rate year main.py asks for exists in mill_rates.json  — 2026 in ['2025', '2026'] — the January year-roll breaks this first
-  [PASS] res + nonres levy never exceeds total levy  — $2,782,850,720 &lt;= $2,783,390,245
-  [PASS] citywide levy is positive
-  [PASS] no property carries a negative levy
-  [PASS] aggregation preserves total assessed value  — delta $0.0000
-  [PASS] aggregation preserves total levy  — delta $0.0000
-  [PASS] one row per neighbourhood after aggregation
-  [PASS] revenue shares sum to 100% across the full roll  — 100.0005%
-  [PASS] boundaries carry an explicit CRS
-  [PASS] every boundary has positive area  — a zero would make value_per_acre infinite
-  [PASS] the join is boundary-preserving (left join, no row multiplication)  — 407 == 407
-  [PASS] no boundary was duplicated by the join
-  [PASS] over 90% of boundaries matched an assessment row  — 406/407 = 99.8%
-  [PASS] value_per_acre equals total_assessed_value / area_acres for every feature  — largest disagreement $0.000000
-  [PASS] revenue_per_acre equals total_revenue / area_acres for every feature  — largest disagreement $0.000000
+  [PASS] the served per-hood exempt share rebuilds the citywide share recomputed from the roll  — served 8.05% vs roll 8.05%
+  [PASS] grid cells hold exactly the geocoded units (3 years)  — 27,491
+  [PASS] grid cells hold exactly the geocoded units (5 years)  — 46,933
+  [PASS] grid cells hold exactly the geocoded units (since 2009)  — 136,107
+  [PASS] no year with a defective slice is published  — omitted: [2024, 2025]
+  [PASS] every size computed and lies in [0, 1]  — 12 rows
 
 All invariants held.
 </pre>
