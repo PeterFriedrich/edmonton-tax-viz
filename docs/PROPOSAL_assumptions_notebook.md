@@ -1,6 +1,6 @@
 # Proposal: `03_assumptions` verified notebook
 
-**Status: PROPOSED 2026-09-28 (S201). No code until Peter approves.** It adds
+**Status: APPROVED and BUILT 2026-09-28 (S201): new notebook, gating.** Rows as built differ slightly: the excluded-permit-types row was dropped, and the roll-zoning row sizes non-res levy. It adds
 a gate to the weekly publish, which is a CI behaviour change.
 
 ## Why
