@@ -123,14 +123,14 @@ lr.logger.addHandler(cap)
 lr.logger.setLevel(logging.INFO)
 lr.logger.propagate = False  # keep the INFO chatter out of the page
 
-SPLITS: list[tuple[float, float, set, set]] = []
+SPLITS: list[tuple[float, float, set]] = []
 _split = lr.split_boundary_pieces
 
 
 def _observed_split(pieces, boundaries, label, tol=lr.BOUNDARY_TOL_M):
     out = _split(pieces, boundaries, label, tol)
     SPLITS.append((float(pieces["piece_m"].sum()), float(out["piece_m"].sum()),
-                   set(pieces["neighbourhood_name"]), set(out["neighbourhood_name"])))
+                   set(out["neighbourhood_name"])))
     return out
 
 
@@ -178,13 +178,12 @@ check(pct_outside < 1.0, "less than 1% of City road lies outside every neighbour
 # %% [markdown]
 # **The boundary split conserves length.** A shared piece is replaced by k
 # equal parts, one per neighbourhood whose edge it runs along, so the total
-# before and after must match to rounding. It must also not hand road to a
-# neighbourhood that wasn't already on either side of the line. Every sharer
-# is a neighbourhood from the boundary file.
+# before and after must match to rounding, and every neighbourhood it hands
+# road to must be one from the boundary file.
 
 # %%
 check(len(SPLITS) == 1, "load_roads split the boundary pieces exactly once", f"{len(SPLITS)} call(s)")
-m_in, m_out, names_in, names_out = SPLITS[0] if SPLITS else (np.nan, np.nan, set(), set())
+m_in, m_out, names_out = SPLITS[0] if SPLITS else (np.nan, np.nan, set())
 check(abs(m_in - m_out) < 1e-3, "the boundary split conserves metric road length",
       f"{m_in / 1000:,.4f} km in, {m_out / 1000:,.4f} km out")
 unknown_sharers = names_out - set(boundaries["neighbourhood_name"])
