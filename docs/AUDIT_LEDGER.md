@@ -290,7 +290,7 @@ started from a false premise.
 | 09-25 S197 | F3 public Methods page described full-only layers | claim | yes | scoped | open |
 | 09-25 S197 | F4 stormwater figure lost its unbilled-land pairing | claim | yes | scoped | open |
 | 09-26 S199 | F1 Glass azure count on subset cuts counts cells with $0 on that cut (total-levy share) | render | yes | scoped | open |
-| 09-26 S199 | F2 Non-res "commercial and industrial" includes exempt-candidate sites; 112 hoods ≥25%, uncaveated on the cut | claim | yes | scoped | open |
+| 09-26 S199 | F2 Non-res "commercial and industrial" includes exempt-candidate sites; 112 hoods ≥25%, uncaveated on the cut (S201 recount: 165 by spatial zoning, 144 uncaveated) | claim | yes | scoped | open |
 | 09-26 S199 | F3 lot P1 "big lots don't dilute it" backwards; roll parks are in the denominator | claim | yes | scoped | open |
 | 09-26 S199 | F4 "newest permits lag geocoding": half the Since-2009 unit gap is old apartments never geocoded; DATA.md's 95–98% was by permit | claim | yes | scoped | open |
 | 09-26 S199 | F5 "dense-infill areas" top the Development scale; they are greenfield | claim | yes | scoped | open |
