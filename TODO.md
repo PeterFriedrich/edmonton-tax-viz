@@ -677,10 +677,6 @@ not restore it**; the numbers below are the durable record).
   restore to itself, and **Peter to decide the policy**: rename/retire = an
   alias entry, never a silent drop (OWID's `GrapherUrlMigrations.ts` is the
   prior art). Fix §8's "public names" sentence to say which keys are mapped.
-- [ ] **`state.devWindow` defaults to a window the data may lack (URL audit
-  F3).** On a no-`_long` file (a supported pipeline output) Development opens
-  titled 2009–2025 with 0/406 values. One line at the `hasLongWindow` gate
-  (fall back to `5yr`) plus the comment beside it, which says the opposite.
 - [ ] **Check the roads notebook's first scheduled run (2026-10-05)**: queue
   item 16 in `docs/AUDIT_LEDGER.md`. Mainly, does its week-over-week table read
   last week's committed data on the runner?
@@ -3197,6 +3193,8 @@ archive"*) is not, and this span is 2,533 lines.
 ## Done
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
+
+- [x] **`state.devWindow` defaults to a window the data may lack (URL audit F3) — DONE S205 (PR pending merge).** · `docs/TODO_archive.md`
 
 - [x] **`verify-url-state.js` must not share `offered()` with the page (URL audit F1) — DONE S205 (PR pending merge).** — 2026-09-29 · `docs/TODO_archive.md`
 

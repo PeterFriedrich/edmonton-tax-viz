@@ -2,7 +2,7 @@
 
 **Generated — do not hand-edit.** `python tools/codemap.py`
 
-`web/index.html` is a single ~8,296-line file holding the whole front end. This is the lookup table for it: jump to a symbol's range instead of scanning. **Line numbers go stale on the next edit — regenerate rather than citing them.** Prose should still name symbols, not lines.
+`web/index.html` is a single ~8,300-line file holding the whole front end. This is the lookup table for it: jump to a symbol's range instead of scanning. **Line numbers go stale on the next edit — regenerate rather than citing them.** Prose should still name symbols, not lines.
 
 ## Symbols (319 indexed)
 
@@ -429,15 +429,15 @@ Grouped by the file's own `// --- section ---` banners, in file order.
 | `writeUrlHash` | 7622–7630 | Absolute on purpose: the full build carries <base href="../">, and a |
 | `offered` | 7631–7637 | On screen, ignoring the Options fold: a folded panel on a phone hides |
 | `applyUrlState` | 7638–7710 |  |
-| `restoreFromHash` | 7711–7722 | Once, at the end of boot, after every build and data gate has run. The |
+| `restoreFromHash` | 7711–7724 | Once, at the end of boot, after every build and data gate has run. The |
 
 ### boot
 
 | symbol | lines | what it does |
 |---|---|---|
-| `boot` | 7723–8296 | Everything that needs the map surface: fetch the data, mount the deck.gl |
+| `boot` | 7725–8300 | Everything that needs the map surface: fetch the data, mount the deck.gl |
 
-## Dependency graph (1022 edges)
+## Dependency graph (1026 edges)
 
 ⚠️ **A regex reference count, not a call graph** — a name in a comment or string counts, and a nested symbol is attributed to its enclosing range. Use it for *what is central* and *would this seam hold*, never as ground truth for a final module boundary.
 
@@ -478,14 +478,14 @@ Grouped by the file's own `// --- section ---` banners, in file order.
 | Money's revenue panel: where a hood's levy comes from | 35 | 29% |
 | the same doubt, at 100 m | 61 | 26% |
 | Development history: new supply per year | 215 | 23% |
-| shareable URL: the hash names the view on screen | 23 | 22% |
-| control appliers + the view/legend dispatchers | 218 | 20% |
+| shareable URL: the hash names the view on screen | 24 | 21% |
 | services lens views (SPEC_services.md display architecture) | 5 | 20% |
+| control appliers + the view/legend dispatchers | 220 | 20% |
 | the citywide budget panel (EXPERIMENTAL, full build only) | 12 | 8% |
 | services view (SPEC_services.md UI generalization, 2026-07-05) | 18 | 0% |
 | the institutional uncertainty band | 2 | 0% |
 | temporal lens (SPEC_temporal.md phase 3) | 4 | 0% |
-| boot | 61 | 0% |
+| boot | 62 | 0% |
 
 ## Element ids (129) — the control surface
 

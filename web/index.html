@@ -8189,12 +8189,14 @@
       state.hasDevWindow =
         state.data.features.some(f => f.properties.new_units_per_acre_3yr != null);
       // The "Since 2009" long window needs the _long columns (pipeline
-      // 2026-07-21) — hide the button on older files (state.devWindow can't be
-      // stuck on it: the URL hash only selects offered buttons).
+      // 2026-07-21; join_and_calculate omits them when no long-window permits
+      // are passed). It is also the DEFAULT window, so hiding the button is not
+      // enough: fall back to the base 5yr, or Development opens blank.
       state.hasLongWindow =
         state.data.features.some(f => f.properties.new_units_per_acre_long != null);
       if (!state.hasLongWindow) {
         document.querySelector('#devwindow button[data-devwindow="long"]').style.display = "none";
+        applyDevWindow("5yr");
       }
       // The Industrial sub-metric needs ind_permits_per_acre (pipeline
       // 2026-07-18) — hide the button on older files (state.devMetric can't be
