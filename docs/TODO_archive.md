@@ -8,6 +8,11 @@ Items are verbatim as they were closed, newest-moved first in the order they app
 
 ---
 
+- [x] **`state.devWindow` defaults to a window the data may lack (URL audit
+  F3) — DONE S205 (PR pending merge).** `applyDevWindow("5yr")` at the gate; on a `_long`-stripped copy Development opens 5yr lit, 406/406 values (old page: 0/406); served data unchanged (long, 406). On a no-`_long` file (a supported pipeline output) Development opens
+  titled 2009–2025 with 0/406 values. One line at the `hasLongWindow` gate
+  (fall back to `5yr`) plus the comment beside it, which says the opposite.
+
 - [x] **`verify-url-state.js` must not share `offered()` with the page (URL
   audit F1) — DONE S205 (PR pending merge).** Re-run 2026-09-29: clean public 31 / full 58 all passed; F1 mutant 6 FAILED by name; `offered()`-always-true mutant 7 FAILED (lands-on links). A control `offered()` wrongly hides drops from every link and
   the verify stays green (mutant: 31→26 trips, all passed). Swap the four
