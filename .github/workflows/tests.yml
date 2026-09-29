@@ -32,6 +32,8 @@ name: Tests
 # committed files, so this needs no network, no Socrata, and no token. It stays
 # fast (~15s) and cannot flake on an upstream outage — a merge gate that goes
 # red for reasons unrelated to the change is a gate people learn to ignore.
+# (That describes the `test` job. The `url-state` job below is the exception:
+# it needs npm and a browser, and runs only on PRs that touch web/.)
 
 on:
   pull_request:
@@ -91,3 +93,60 @@ jobs:
       # serving the stale caption. Offline — both inputs are committed files.
       - name: Check cost copy matches the unit-cost file
         run: python scripts/check_cost_copy.py
+
+  # The shareable URL hash (verify-url-state.js): every offered control is
+  # clicked, the hash reopened in a fresh page, and the two screens compared.
+  # Its failures are silent — a shared link opens the wrong view — and until
+  # 2026-09-29 it ran only by hand (Peter chose "on web/ PRs", S203 option 3).
+  #
+  # PRs only, and only when the served artifact or the check itself changed:
+  # ~9 min on the Oracle box, too dear for doc PRs. The filter is a STEP, not a
+  # job-level `paths:`, so a PR it doesn't apply to still reports this job as
+  # passed — a path-filtered job that never starts would leave a required check
+  # pending forever. web/data/** is deliberately included: a missing history
+  # file changes which controls are offered, which is what this checks.
+  url-state:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0  # the diff below needs the base branch
+
+      - name: Does this PR touch the served artifact or the check?
+        id: changed
+        run: |
+          files=$(git diff --name-only "origin/${{ github.base_ref }}...HEAD")
+          echo "$files"
+          if echo "$files" | grep -qE '^(web/|scripts/build_site\.py$|tools/profiling/(verify-url-state\.js|package(-lock)?\.json)$|\.github/workflows/tests\.yml$)'; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            echo "No web/ change — URL-state check not needed."
+          fi
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        if: steps.changed.outputs.run == 'true'
+        with:
+          node-version: '20'
+
+      - name: Install the verify harness
+        if: steps.changed.outputs.run == 'true'
+        working-directory: tools/profiling
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      # ⚠️ BOTH BUILDS: the full build's <base href="../"> is one of the defects
+      # this catches, and the public build is the one readers share links from.
+      - name: Check the URL hash round-trips (public, then full)
+        if: steps.changed.outputs.run == 'true'
+        run: |
+          python3 scripts/build_site.py --src web --out _site
+          python3 -m http.server 8931 --directory _site &
+          for _ in $(seq 30); do
+            curl -sf http://localhost:8931/index.html >/dev/null && break
+            sleep 1
+          done
+          node tools/profiling/verify-url-state.js http://localhost:8931/index.html
+          node tools/profiling/verify-url-state.js http://localhost:8931/dev-build-full/index.html

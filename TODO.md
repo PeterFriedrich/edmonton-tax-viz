@@ -683,9 +683,8 @@ not restore it**; the numbers below are the durable record).
 
 - [ ] **Audit the shareable URL hash (#608), cross-model.** Brief:
   `docs/FABLE_AUDIT_url_state.md`; queue item 15 in `docs/AUDIT_LEDGER.md`.
-  Pending decision it leans on: whether `verify-url-state.js` joins CI (S203
-  options: full build only in deploy.yml +5.5 min, both +9 min, on web/ PRs,
-  or manual). ⚠️ **A same-model run executed 2026-09-28 (S204,
+  `verify-url-state.js` now gates web/ PRs (S207, `tests.yml` `url-state`
+  job). ⚠️ **A same-model run executed 2026-09-28 (S204,
   `docs/FINDINGS_url_state.md`)**; the cross-model read is still owed and
   should target that run's SOUND verdicts on L1–L4.
 - [ ] **Pin the URL vocabulary (URL audit F2).** A rename of any value passes
