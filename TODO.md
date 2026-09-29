@@ -650,6 +650,26 @@ not restore it**; the numbers below are the durable record).
   `#2ec4ff` comment in `web/index.html`: *"no single colour clears all four
   ramps"*); this is the same search, never run for the set-aside grey.
 
+### Peter's ask, 2026-09-29 (S205) — ⚠️ DO NEXT SESSION
+
+- [ ] **Audit the pre-merge verify runtime: does it need to take this long?**
+  Peter asked after F1/F3 (PRs #613/#614). Each needed ~15 min of headless runs
+  before a PR could open: `verify-url-state.js` alone is ~3 min on public and
+  ~6 min on full, and the runs must be sequential on this 4-core box.
+  - **Measure first; don't guess.** Inventory which checks actually gate a merge
+    (`tests.yml` pytest is ~16 s) versus which are by-hand habit (73
+    `tools/profiling/*.js`). Get each one's wall time, and where that time goes:
+    - a browser relaunch per load;
+    - grid teardown under software GL (~10 s);
+    - `settle` / `networkidle` waits;
+    - walk depth and repeated states (the URL walk revisits views from cold).
+  - **Then decide per script:** keep, trim, or move to a scheduled or deploy-time
+    run. Which checks does a given kind of diff actually need?
+  - **Don't cut a check without re-running its FALSIFIED mutants** on the
+    trimmed version. A faster guard that goes blind is the F1 failure again.
+  - **Feeds** the pending CI decision for `verify-url-state.js` (S203's four
+    options; CI would pay the same minutes).
+
 ### Peter's list, 2026-09-25 (S196) — not scoped yet
 
 - [ ] **Tutorial pop-up for the toolbar on a first mobile visit, and maybe a
