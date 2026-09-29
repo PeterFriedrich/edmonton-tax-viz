@@ -672,12 +672,6 @@ not restore it**; the numbers below are the durable record).
   or manual). ⚠️ **A same-model run executed 2026-09-28 (S204,
   `docs/FINDINGS_url_state.md`)**; the cross-model read is still owed and
   should target that run's SOUND verdicts on L1–L4.
-- [ ] **`verify-url-state.js` must not share `offered()` with the page (URL
-  audit F1).** A control `offered()` wrongly hides drops from every link and
-  the verify stays green (mutant: 31→26 trips, all passed). Swap the four
-  `offered` uses in the script for `el.checkVisibility()` — validated: red by
-  name on the mutant, green on clean (public 31, full 58). Worth doing BEFORE
-  the CI decision above, or CI gates on a blind check. Tools change → PR for Peter.
 - [ ] **Pin the URL vocabulary (URL audit F2).** A rename of any value passes
   the round trip. Add every §8 value to the verify as a frozen link that must
   restore to itself, and **Peter to decide the policy**: rename/retire = an
@@ -3203,6 +3197,8 @@ archive"*) is not, and this span is 2,533 lines.
 ## Done
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
+
+- [x] **`verify-url-state.js` must not share `offered()` with the page (URL audit F1) — DONE S205 (PR pending merge).** — 2026-09-29 · `docs/TODO_archive.md`
 
 - [x] **F2 copy (provisional):** · `docs/TODO_archive.md`
 - [x] **F1 — DONE S197 (PR pending merge):** — 2026-09-28 · `docs/TODO_archive.md`

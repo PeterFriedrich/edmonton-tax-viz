@@ -8,6 +8,13 @@ Items are verbatim as they were closed, newest-moved first in the order they app
 
 ---
 
+- [x] **`verify-url-state.js` must not share `offered()` with the page (URL
+  audit F1) — DONE S205 (PR pending merge).** Re-run 2026-09-29: clean public 31 / full 58 all passed; F1 mutant 6 FAILED by name; `offered()`-always-true mutant 7 FAILED (lands-on links). A control `offered()` wrongly hides drops from every link and
+  the verify stays green (mutant: 31→26 trips, all passed). Swap the four
+  `offered` uses in the script for `el.checkVisibility()` — validated: red by
+  name on the mutant, green on clean (public 31, full 58). Worth doing BEFORE
+  the CI decision above, or CI gates on a blind check. Tools change → PR for Peter.
+
 - [x] **F2 copy (provisional):** Non-res P1 and button titles now say "business, industry and institutions" (PR, S200); revisit when the exemption data request answers.
 
 - [x] ✅ **F1 — DONE S197 (PR pending merge):** move `Run verified notebooks` after `Update status manifest (provenance + heartbeat)` in `refresh.yml`** (CI change, needs Peter's OK), then delete invariant 1. Until then the page's dates are one run stale, and the first refresh after the January year-roll checklist's step 9 reds on healthy data. ⚠️ **Do this before January.** First, check the 2026-09-28 render: it should say *last checked 2026-09-21*.
