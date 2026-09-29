@@ -13,13 +13,22 @@
 // FALSIFIED 2026-09-28 — each defect was reintroduced and went red by name:
 //   * relative replaceState("#…")   -> "<walk>: path is unchanged after writing"
 //                                      (full build; every round trip)
-//   * offered() always true          -> "round trip …" (the walk and the restore
-//                                      both reach hidden controls)
+//   * offered() always true          -> "#view=lab&cut=residential lands on"
+//                                      and 6 more links a button cannot reach
+//                                      (re-run 2026-09-29, after the change below)
 //   * no metric revert when Change is
 //     not offered                    -> "no history file: #mode=change lands on"
 //   * `detail` dropped from urlHash() -> "round trip money > moneydetail…" and
 //                                      both grid "lands on" links
-// Runtime on the Oracle box: public ~3 min (31 trips), full ~5.5 min (57).
+//   * offered() hides #devmetric/#revcut
+//     (both keys drop from every link) -> "round trip money > revcut…" and
+//                                      "round trip development > devmetric…"
+//
+// What is on screen is decided by the browser (checkVisibility), NEVER by the
+// page's own offered(): the hash writer and restore both lean on offered(), so
+// a checker using it too walked 26 trips instead of 31 and passed while two
+// keys vanished from every link (docs/FINDINGS_url_state.md F1).
+// Runtime on the Oracle box: public ~3 min (31 trips), full ~6 min (58).
 //
 //   node verify-url-state.js <url>      (run once per build)
 const { chromium } = require('playwright');
@@ -49,7 +58,7 @@ const IDENT = `el => el.closest('[id]').id + '|' + (el.id || JSON.stringify(
 // What a reader sees: the view, the title, and every offered control's state.
 const screen = page => page.evaluate(skip => {
   const on = [...document.querySelectorAll('#controls button, #controls input')]
-    .filter(el => !el.matches(skip) && offered(el))
+    .filter(el => !el.matches(skip) && el.checkVisibility())
     .filter(el => el.tagName === 'BUTTON' ? el.classList.contains('active') : el.checked)
     .map(el => (el.closest('[id]').id + ':' + (el.textContent.trim() ||
       el.closest('[data-service]')?.dataset.service + '/' + el.type)));
@@ -104,7 +113,7 @@ const screen = page => page.evaluate(skip => {
   const keysOf = page => page.evaluate(([skip, ident]) => {
     const id = eval(ident);
     return [...document.querySelectorAll('#controls button, #controls input')]
-      .filter(el => !el.matches(skip) && !el.closest('#views') && offered(el))
+      .filter(el => !el.matches(skip) && !el.closest('#views') && el.checkVisibility())
       // An active button in a group is a no-op; a lone toggle (the colour
       // scale, which is active by default) is not.
       .filter(el => !(el.tagName === 'BUTTON' && el.classList.contains('active')
@@ -115,7 +124,7 @@ const screen = page => page.evaluate(skip => {
     const found = await page.evaluate(([skip, ident, key]) => {
       const id = eval(ident);
       const el = [...document.querySelectorAll('#controls button, #controls input')]
-        .find(el => !el.matches(skip) && offered(el) && id(el) === key);
+        .find(el => !el.matches(skip) && el.checkVisibility() && id(el) === key);
       if (el) el.click();
       return !!el;
     }, [SKIP, IDENT, key]);
@@ -140,7 +149,7 @@ const screen = page => page.evaluate(skip => {
     trips++;
   };
   const views = await home.evaluate(() => [...document.querySelectorAll('#views button')]
-    .filter(offered).map(b => b.dataset.view));
+    .filter(b => b.checkVisibility()).map(b => b.dataset.view));
   for (const v of views) {
     const seen = new Set();
     const visit = async trail => {
