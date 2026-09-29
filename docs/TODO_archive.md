@@ -8,6 +8,12 @@ Items are verbatim as they were closed, newest-moved first in the order they app
 
 ---
 
+- [x] **Runner preload: a browser process per page, SIGKILL on close — DONE S207** (`tools/profiling/fast-teardown.js`, wired in `verify.js`; re-run 26.6 + 30.9 = 57.5 min, only the 5 known harness reds).
+  Measured 82 → 57 min for the whole suite (both builds), with 90/90 script
+  statuses and check counts unchanged. It is a new file in `tools/profiling/`
+  plus an `env` line in `verify.js`'s `spawn`. No script is edited and CI is
+  untouched. The measurement preload is in the findings doc §6.
+
 - [x] **Audit the pre-merge verify runtime: does it need to take this long?** — DONE S206: `docs/FINDINGS_verify_runtime.md`
   Peter asked after F1/F3 (PRs #613/#614). Each needed ~15 min of headless runs
   before a PR could open: `verify-url-state.js` alone is ~3 min on public and
