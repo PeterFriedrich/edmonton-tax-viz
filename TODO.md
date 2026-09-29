@@ -650,25 +650,21 @@ not restore it**; the numbers below are the durable record).
   `#2ec4ff` comment in `web/index.html`: *"no single colour clears all four
   ramps"*); this is the same search, never run for the set-aside grey.
 
-### Peter's ask, 2026-09-29 (S205) — ⚠️ DO NEXT SESSION
+### Verify runtime — from the S206 audit (`docs/FINDINGS_verify_runtime.md`)
 
-- [ ] **Audit the pre-merge verify runtime: does it need to take this long?**
-  Peter asked after F1/F3 (PRs #613/#614). Each needed ~15 min of headless runs
-  before a PR could open: `verify-url-state.js` alone is ~3 min on public and
-  ~6 min on full, and the runs must be sequential on this 4-core box.
-  - **Measure first; don't guess.** Inventory which checks actually gate a merge
-    (`tests.yml` pytest is ~16 s) versus which are by-hand habit (73
-    `tools/profiling/*.js`). Get each one's wall time, and where that time goes:
-    - a browser relaunch per load;
-    - grid teardown under software GL (~10 s);
-    - `settle` / `networkidle` waits;
-    - walk depth and repeated states (the URL walk revisits views from cold).
-  - **Then decide per script:** keep, trim, or move to a scheduled or deploy-time
-    run. Which checks does a given kind of diff actually need?
-  - **Don't cut a check without re-running its FALSIFIED mutants** on the
-    trimmed version. A faster guard that goes blind is the F1 failure again.
-  - **Feeds** the pending CI decision for `verify-url-state.js` (S203's four
-    options; CI would pay the same minutes).
+- [ ] **Runner preload: a browser process per page, SIGKILL on close — AWAITING PETER'S YES.**
+  Measured 82 → 57 min for the whole suite (both builds), with 90/90 script
+  statuses and check counts unchanged. It is a new file in `tools/profiling/`
+  plus an `env` line in `verify.js`'s `spawn`. No script is edited and CI is
+  untouched. The measurement preload is in the findings doc §6.
+- [ ] **Three verify scripts are red on public for harness reasons** (findings §4.1):
+  - `verify-uses.js` and `verify-budget-panel.js` need a `FULL_BUILD` gate.
+    Use the README convention: `PARTIAL` plus a both-directions assert.
+  - `verify-deviation.js` must take its URL from `argv`, not hardcode `:8777`.
+- [ ] **Four `verify-*` scripts have no assertions** (`glass`, `labels`,
+  `services`, `uses`). They are named like guards but can only fail by
+  crashing. Peter's call: rename them to `probe-*` (the runner would drop
+  them), or give them asserts.
 
 ### Peter's list, 2026-09-25 (S196) — not scoped yet
 
@@ -3213,6 +3209,8 @@ archive"*) is not, and this span is 2,533 lines.
 ## Done
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
+
+- [x] **Audit the pre-merge verify runtime: does it need to take this long?** · `docs/TODO_archive.md`
 
 - [x] **`state.devWindow` defaults to a window the data may lack (URL audit F3) — DONE S205 (PR pending merge).** · `docs/TODO_archive.md`
 

@@ -8,6 +8,25 @@ Items are verbatim as they were closed, newest-moved first in the order they app
 
 ---
 
+- [x] **Audit the pre-merge verify runtime: does it need to take this long?** — DONE S206: `docs/FINDINGS_verify_runtime.md`
+  Peter asked after F1/F3 (PRs #613/#614). Each needed ~15 min of headless runs
+  before a PR could open: `verify-url-state.js` alone is ~3 min on public and
+  ~6 min on full, and the runs must be sequential on this 4-core box.
+  - **Measure first; don't guess.** Inventory which checks actually gate a merge
+    (`tests.yml` pytest is ~16 s) versus which are by-hand habit (73
+    `tools/profiling/*.js`). Get each one's wall time, and where that time goes:
+    - a browser relaunch per load;
+    - grid teardown under software GL (~10 s);
+    - `settle` / `networkidle` waits;
+    - walk depth and repeated states (the URL walk revisits views from cold).
+  - **Then decide per script:** keep, trim, or move to a scheduled or deploy-time
+    run. Which checks does a given kind of diff actually need?
+  - **Don't cut a check without re-running its FALSIFIED mutants** on the
+    trimmed version. A faster guard that goes blind is the F1 failure again.
+  - **Feeds** the pending CI decision for `verify-url-state.js` (S203's four
+    options; CI would pay the same minutes).
+
+
 - [x] **`state.devWindow` defaults to a window the data may lack (URL audit
   F3) — DONE S205 (PR pending merge).** `applyDevWindow("5yr")` at the gate; on a `_long`-stripped copy Development opens 5yr lit, 406/406 values (old page: 0/406); served data unchanged (long, 406). On a no-`_long` file (a supported pipeline output) Development opens
   titled 2009–2025 with 0/406 values. One line at the `hasLongWindow` gate
