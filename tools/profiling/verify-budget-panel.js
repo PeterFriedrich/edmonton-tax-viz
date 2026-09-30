@@ -54,7 +54,7 @@ function check(name, cond, detail = "") {
 
   console.log("\n-- open/close --");
   check("panel starts closed", !(await page.locator("#budget").isVisible()));
-  // Both directions (tools/profiling/README.md §1): the opener shows exactly
+  // Both directions (tools/profiling/README.md, "Gate an early exit on the BUILD"): the opener shows exactly
   // when the build is full. On public, everything below drives a hidden panel.
   const fullBuild = await page.evaluate(() => FULL_BUILD);
   check(`opener is ${fullBuild ? "visible" : "hidden"} on this build`,

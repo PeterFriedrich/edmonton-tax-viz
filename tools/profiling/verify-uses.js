@@ -25,7 +25,7 @@ const [url] = process.argv.slice(2);
     catRows: [...document.querySelectorAll('#legend .cat span:last-child')].map(s => s.textContent),
   }));
 
-  // Both directions (README §1): Uses is full-only, so on public the button
+  // Both directions (tools/profiling/README.md, "Gate an early exit on the BUILD"): Uses is full-only, so on public the button
   // must be hidden and nothing below can run.
   const fullBuild = await page.evaluate(() => FULL_BUILD);
   const usesShown = await page.locator('#views button[data-view="uses"]').isVisible();
