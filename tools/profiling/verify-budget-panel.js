@@ -22,8 +22,9 @@ const URL = process.argv[2] || "http://localhost:8791/index.html";
 let failures = 0, checks = 0;
 function check(name, cond, detail = "") {
   checks++;
-  if (cond) { console.log(`  ok   ${name}`); }
-  else { failures++; console.log(`  FAIL ${name}${detail ? " — " + detail : ""}`); }
+  // Unindented PASS/FAIL: verify.js counts /^PASS|^FAIL/ and names failures from them.
+  if (cond) { console.log(`PASS ${name}`); }
+  else { failures++; console.log(`FAIL ${name}${detail ? " — " + detail : ""}`); }
 }
 
 (async () => {
@@ -53,8 +54,16 @@ function check(name, cond, detail = "") {
 
   console.log("\n-- open/close --");
   check("panel starts closed", !(await page.locator("#budget").isVisible()));
-  check("opener is visible in the full build",
-    await page.locator("#budget-pod").isVisible());
+  // Both directions (tools/profiling/README.md §1): the opener shows exactly
+  // when the build is full. On public, everything below drives a hidden panel.
+  const fullBuild = await page.evaluate(() => FULL_BUILD);
+  check(`opener is ${fullBuild ? "visible" : "hidden"} on this build`,
+    (await page.locator("#budget-pod").isVisible()) === fullBuild);
+  if (!fullBuild) {
+    await browser.close();
+    console.log(`\nPARTIAL — ran ${checks} checks, then stopped: public build, the budget panel is full-only`);
+    process.exit(failures ? 1 : 0);
+  }
 
   await page.locator("#budget-btn").click();
   await page.waitForTimeout(600);
@@ -224,5 +233,6 @@ function check(name, cond, detail = "") {
 
   await browser.close();
   console.log(`\n${checks - failures}/${checks} checks passed`);
+  console.log(`COMPLETE — ran ${checks} checks`);
   process.exit(failures ? 1 : 0);
 })();

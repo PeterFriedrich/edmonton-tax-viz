@@ -8,6 +8,11 @@ Items are verbatim as they were closed, newest-moved first in the order they app
 
 ---
 
+- [x] **Three verify scripts are red on public for harness reasons — DONE S207** (gates + argv URL; `verify-deviation` then caught a stale public-views literal missing `ratio`, fixed; `verify-budget-panel` lines made runner-countable) (findings §4.1):
+  - `verify-uses.js` and `verify-budget-panel.js` need a `FULL_BUILD` gate.
+    Use the README convention: `PARTIAL` plus a both-directions assert.
+  - `verify-deviation.js` must take its URL from `argv`, not hardcode `:8777`.
+
 - [x] **Runner preload: a browser process per page, SIGKILL on close — DONE S207** (`tools/profiling/fast-teardown.js`, wired in `verify.js`; re-run 26.6 + 30.9 = 57.5 min, only the 5 known harness reds).
   Measured 82 → 57 min for the whole suite (both builds), with 90/90 script
   statuses and check counts unchanged. It is a new file in `tools/profiling/`

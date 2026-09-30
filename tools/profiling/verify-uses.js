@@ -25,6 +25,19 @@ const [url] = process.argv.slice(2);
     catRows: [...document.querySelectorAll('#legend .cat span:last-child')].map(s => s.textContent),
   }));
 
+  // Both directions (README §1): Uses is full-only, so on public the button
+  // must be hidden and nothing below can run.
+  const fullBuild = await page.evaluate(() => FULL_BUILD);
+  const usesShown = await page.locator('#views button[data-view="uses"]').isVisible();
+  const gateOk = usesShown === fullBuild;
+  console.log(`${gateOk ? 'PASS' : 'FAIL'} Uses button ${fullBuild ? 'shown' : 'hidden'} on this build (shown=${usesShown})`);
+  if (!gateOk) process.exitCode = 1;
+  if (!fullBuild) {
+    await browser.close();
+    console.log('\nPARTIAL — ran 1 check, then stopped: public build, Uses is full-only');
+    return;
+  }
+
   console.log('money default  :', JSON.stringify(await chrome()));
 
   await page.click('#views button[data-view="uses"]');

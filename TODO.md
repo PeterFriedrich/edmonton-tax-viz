@@ -652,10 +652,6 @@ not restore it**; the numbers below are the durable record).
 
 ### Verify runtime — from the S206 audit (`docs/FINDINGS_verify_runtime.md`)
 
-- [ ] **Three verify scripts are red on public for harness reasons** (findings §4.1):
-  - `verify-uses.js` and `verify-budget-panel.js` need a `FULL_BUILD` gate.
-    Use the README convention: `PARTIAL` plus a both-directions assert.
-  - `verify-deviation.js` must take its URL from `argv`, not hardcode `:8777`.
 - [ ] **Four `verify-*` scripts have no assertions** (`glass`, `labels`,
   `services`, `uses`). They are named like guards but can only fail by
   crashing. Peter's call: rename them to `probe-*` (the runner would drop
@@ -3203,6 +3199,8 @@ archive"*) is not, and this span is 2,533 lines.
 ## Done
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
+
+- [x] **Three verify scripts are red on public for harness reasons — DONE S207** · `docs/TODO_archive.md`
 
 - [x] **Runner preload: a browser process per page, SIGKILL on close — DONE S207** · `docs/TODO_archive.md`
 
