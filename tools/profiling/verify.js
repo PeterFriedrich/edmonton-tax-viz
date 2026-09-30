@@ -76,9 +76,15 @@ if (!scripts.length) {
   process.exit(2);
 }
 
+// fast-teardown.js gives each page its own browser process and kills it on
+// close — graceful close was deferring GPU teardown into the next page (31% of
+// the suite). Appended, so a caller's own NODE_OPTIONS survive.
+const env = { ...process.env, NODE_OPTIONS:
+  `${process.env.NODE_OPTIONS || ""} --require ${path.join(dir, "fast-teardown.js")}`.trim() };
+
 const run = script => new Promise(resolve => {
   const started = Date.now();
-  const p = spawn("node", [path.join(dir, script), url], { cwd: path.join(dir, "..", "..") });
+  const p = spawn("node", [path.join(dir, script), url], { cwd: path.join(dir, "..", ".."), env });
   let out = "";
   p.stdout.on("data", d => { out += d; });
   p.stderr.on("data", d => { out += d; });
