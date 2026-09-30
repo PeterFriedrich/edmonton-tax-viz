@@ -185,6 +185,11 @@ because the refresh was dispatched by hand. ⚠️ `ineligible_points` had drift
 to its band ceiling **exactly** (84/84) and would have red the next weekly
 publish on its own, unrelated to any of this — re-pinned.)_
 
+- [ ] **Set up the claude.ai Project and press Sync (Peter).** The brief
+  merged in #625. Create a private Project, add the repo from GitHub, select
+  `docs/BRIEF.md` + `docs/SPEC_*.md`, press **Sync**, and review
+  `docs/SCOPE.md`. After that, `/handoff`'s sync check prompts for each re-sync
+  (`docs/CLAUDE_WEB.md`).
 - [ ] **Make the URL feature a button export, not default exposed** (Peter,
   2026-09-30). Today `writeUrlHash` rewrites the address bar on every control
   change (`history.replaceState`), so the state hash is always visible. Wanted:
@@ -659,6 +664,26 @@ not restore it**; the numbers below are the durable record).
   ramps"*); this is the same search, never run for the set-aside grey.
 
 ### Verify runtime — from the S206 audit (`docs/FINDINGS_verify_runtime.md`)
+
+Done so far: the runner preload (#620, 82 → 57.5 min), the harness reds (#621),
+the probe renames (#622). What is left, cheapest first:
+
+- [ ] **Fixed sleeps: 798 s of `waitForTimeout` on the full build (findings §3).**
+  Loads settle in ~1–2 s, then most scripts sleep 3.5–4 s. Don't sweep: a sleep
+  can cover a deck.gl frame a pixel read needs. Convert a script to a ready
+  condition (`waitForFunction`, as `verify-url-state.js`'s `settle`) only when
+  it earns a gate or a schedule, and falsify it then.
+- [ ] **A smaller `url-state` check for ordinary `web/` PRs.** The job runs the
+  full walk (9 min on GitHub) on every web/ PR. Findings §0: a ~2-min targeted
+  probe fits an ordinary `web/index.html` change; the full walk is needed only
+  when the verify itself changes. Changes CI, so propose first.
+- [ ] **Runner reports "0 checks" for `verify-glass-cell`, `verify-grid-loading`,
+  `verify-url-state` (findings §4.3).** They gate by exit code, so this is
+  reporting, not coverage: print `PASS`/`FAIL` lines, or teach the runner
+  their format.
+- [ ] **`verify-blurbs` reads FAIL on every full-build sweep (findings §4.4).** It
+  refuses the full build by design; the runner should skip or mark it, not
+  count it red.
 
 ### Peter's list, 2026-09-25 (S196) — not scoped yet
 
