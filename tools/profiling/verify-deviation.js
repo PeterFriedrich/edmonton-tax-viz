@@ -17,6 +17,10 @@
 //   4. the Lab leaks into the public build.
 // Each gets an assertion against numbers re-derived in the page, not pinned.
 const { chromium } = require('playwright');
+// Bare URL of either build: this script checks BOTH builds itself through the
+// `?build=` override, so any query on the argument is dropped.
+const base = (process.argv[2] || '').split('?')[0];
+if (!base) { console.error('usage: node verify-deviation.js <url>'); process.exit(2); }
 
 const EPS = 1e-6;
 let failures = 0;
@@ -36,7 +40,7 @@ const check = (name, ok, detail = '') => {
   page.on('console', m => { if (m.type() === 'error') errs.push(m.text()); });
 
   // --- full build --------------------------------------------------------
-  await page.goto('http://localhost:8777/index.html?build=full', { waitUntil: 'networkidle' });
+  await page.goto(`${base}?build=full`, { waitUntil: 'networkidle' });
   await page.waitForTimeout(3500);
 
   // The Lab is its own top-level #views button, NOT a mode of Money — that
@@ -526,7 +530,7 @@ const check = (name, ok, detail = '') => {
     /Revenue/i.test(viaValue.title) && !/Assessed Value/i.test(viaValue.title), viaValue.title);
 
   // --- public build ------------------------------------------------------
-  await page.goto('http://localhost:8777/index.html?build=public', { waitUntil: 'networkidle' });
+  await page.goto(`${base}?build=public`, { waitUntil: 'networkidle' });
   await page.waitForTimeout(3000);
   check('the Lab button is HIDDEN in the public build',
     !(await page.locator('#views button[data-view="lab"]').isVisible()));
@@ -537,15 +541,16 @@ const check = (name, ok, detail = '') => {
   // and must be re-stated by hand when a lens is published — it is the check,
   // not an incidental value. Updated 2026-09-05: `services` joined the public
   // set with the roads-only return (`DECISIONS.md` 2026-09-02, the first
-  // exercise of the staged-return rule). `ratio` and `uses` stay full-only and
-  // get their own releases, so the next edit to this line should add exactly
-  // one name.
+  // exercise of the staged-return rule). Updated 2026-09-30: `ratio` returned
+  // roads-only on 2026-09-11 (DECISIONS) and this literal went stale unseen,
+  // because the script hardcoded :8777 and never ran in the runner. `uses` is
+  // the last lens out, so the next edit to this line should add exactly it.
   const publicViews = await page.evaluate(() =>
     [...document.querySelectorAll('#views button')]
       .filter(b => getComputedStyle(b).display !== 'none')
       .map(b => b.dataset.view).join(','));
   check('the public #views row is otherwise unchanged',
-    publicViews === 'money,development,services', publicViews);
+    publicViews === 'money,development,services,ratio', publicViews);
 
   check('no page errors', errs.length === 0, errs.slice(0, 3).join(' | '));
 
