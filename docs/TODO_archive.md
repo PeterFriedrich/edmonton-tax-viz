@@ -8,6 +8,14 @@ Items are verbatim as they were closed, newest-moved first in the order they app
 
 ---
 
+- [x] **Four verify scripts assert nothing — DONE S207, renamed `probe-*`** (S106): `verify-glass`, `-labels`, `-services`, `-uses` print values and always exit 0, so `verify.js` lists them `ok` with 0 checks. Add assertions, or rename them as probes so the runner stops counting them. Local sweeps only; CI does not run them.
+
+- [x] **Four `verify-*` scripts have no assertions — DONE S207, renamed `probe-*`** (`glass`, `labels`,
+  `services`, `uses`). They are named like guards but can only fail by
+  crashing. Peter's call: rename them to `probe-*` (the runner would drop
+  them), or give them asserts.
+
+
 - [x] **Three verify scripts are red on public for harness reasons — DONE S207** (gates + argv URL; `verify-deviation` then caught a stale public-views literal missing `ratio`, fixed; `verify-budget-panel` lines made runner-countable) (findings §4.1):
   - `verify-uses.js` and `verify-budget-panel.js` need a `FULL_BUILD` gate.
     Use the README convention: `PARTIAL` plus a both-directions assert.

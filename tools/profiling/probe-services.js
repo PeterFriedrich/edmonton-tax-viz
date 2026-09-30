@@ -11,7 +11,7 @@
 // driving service unchecks, tooltip carries every service, station dots
 // appear with the fire service, state persists across a view round-trip.
 // Fire checks SKIP cleanly when the data file predates the fire column.
-//   node verify-services.js <url>
+//   node probe-services.js <url>
 const { chromium } = require('playwright');
 const [url] = process.argv.slice(2);
 
@@ -27,7 +27,7 @@ const [url] = process.argv.slice(2);
   await page.waitForTimeout(4000);
 
   // swiftshader can hang page.click while the render loop is busy — dispatch
-  // the click from inside the page instead (same workaround as verify-labels).
+  // the click from inside the page instead (same workaround as probe-labels).
   const click = sel => page.$eval(sel, b => b.click());
 
   const chrome = () => page.evaluate(() => ({

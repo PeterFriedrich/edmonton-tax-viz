@@ -2,7 +2,7 @@
 // legend swaps to categorical rows (and back), per-hood fills match the
 // dominant composition category, tooltip composition, lens-button disable
 // in Uses, and the layer stack (single flat pickable layer, no prisms).
-//   node verify-uses.js <url>
+//   node probe-uses.js <url>
 const { chromium } = require('playwright');
 const [url] = process.argv.slice(2);
 

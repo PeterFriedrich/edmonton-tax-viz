@@ -6,7 +6,7 @@
 // opacity live with per-view defaults, metric toggle renders live with a
 // metric-driven title + the glass blurb + cell-scale legend, lens DISABLED,
 // labels at ground, tooltip falls through to the money branch.
-//   node verify-glass.js <url>
+//   node probe-glass.js <url>
 const { chromium } = require('playwright');
 const [url] = process.argv.slice(2);
 
@@ -22,7 +22,7 @@ const [url] = process.argv.slice(2);
   await page.waitForTimeout(4000);
 
   // swiftshader can hang page.click while the render loop is busy — dispatch
-  // the click from inside the page instead (same workaround as verify-labels).
+  // the click from inside the page instead (same workaround as probe-labels).
   const click = sel => page.$eval(sel, b => b.click());
   // Glass is now Money's "100 m grid" render mode (no top-level view button) —
   // reach it by going to Money then flipping the Detail toggle; works from any
