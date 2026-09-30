@@ -54,6 +54,11 @@ final fps numbers, profile on a real GPU via browser DevTools — see
 
 ## Conventions for `verify-*.js`
 
+A `verify-*.js` script asserts and exits non-zero on failure; `verify.js` runs
+every one. A script that only prints state for a human is named `probe-*.js`,
+and the runner skips it — four assertion-less scripts were renamed so on
+2026-09-30, because the runner had been listing them `ok` with 0 checks.
+
 Two rules, both learned from defects the harness itself carried
 (`docs/FINDINGS_vacuous_guards.md` V4).
 

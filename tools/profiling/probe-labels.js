@@ -2,7 +2,7 @@
 // DOM/accessor-level: label layer present per view when on, absent when off,
 // anchors sane, roof-height z in extruded views, greedy culling overlap-free
 // and zoom-responsive, residential-lens disable untouched by the new button.
-//   node verify-labels.js <url>
+//   node probe-labels.js <url>
 const { chromium } = require('playwright');
 const [url] = process.argv.slice(2);
 

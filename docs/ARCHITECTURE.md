@@ -1194,7 +1194,7 @@ runner, no `npm test`, and only `verify-smoke.js` is wired into a workflow, so
 the rest run when someone remembers to type them. The shape is not uniform
 either: **32 use the `process.exit(fail ? 1 : 0)` convention and only 26 print
 the `ALL CHECKS PASSED` banner**, the remainder being diagnostic printers that
-always exit 0 (`verify-labels.js`). **A batch runner that greps for the banner
+always exit 0 (`verify-labels.js`, renamed `probe-labels.js` 2026-09-30). **A batch runner that greps for the banner
 will therefore report those as failures** — it did on 2026-08-28.
 
 ⚠️ **A green exit does not mean the script ran.** 14 early exits across 10
