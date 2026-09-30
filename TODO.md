@@ -185,6 +185,15 @@ because the refresh was dispatched by hand. ⚠️ `ineligible_points` had drift
 to its band ceiling **exactly** (84/84) and would have red the next weekly
 publish on its own, unrelated to any of this — re-pinned.)_
 
+- [ ] **Make the URL feature a button export, not default exposed** (Peter,
+  2026-09-30). Today `writeUrlHash` rewrites the address bar on every control
+  change (`history.replaceState`), so the state hash is always visible. Wanted:
+  a clean URL by default, and a button that produces the share link on demand.
+  This revisits the 2026-09-28 DECISIONS row (#608). Before building, decide
+  whether restore-from-hash on load stays as-is (a shared link must still
+  open), and update `verify-url-state.js`, which round-trips through the live
+  hash.
+
 ### A `fable-session` credit-discipline skill — evaluated, corrections pending (OPEN 2026-09-04)
 
 
