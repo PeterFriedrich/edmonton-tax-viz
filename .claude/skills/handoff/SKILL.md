@@ -36,6 +36,28 @@ How to fill it in, in order of reliability:
 - If work spanned models, note **which parts** each did. That is the whole
   point of the section.
 
+# Claude web brief + sync check
+Regenerate the brief and commit it with the handoff (`docs/CLAUDE_WEB.md` — no
+merge gate keeps it current here, this step does):
+
+```bash
+.venv/bin/python scripts/make_brief.py --write
+```
+
+The Project's copy refreshes only when Peter presses Sync, and nothing on the
+web side can notice it is stale. After the handoff PR merges, run:
+
+```bash
+last=$(git log -1 --format=%H -- session-summary/)
+git fetch -q origin && git log --oneline ${last:+$last..}origin/master -- docs/BRIEF.md 'docs/SPEC_*.md'
+```
+
+⚠️ Run it BEFORE committing this handoff, or `$last` is this handoff and the
+range is empty. Any output → Next Steps item 1 is "**Press Sync in the claude.ai
+Project** (changed on master: <files>)"; the regenerated brief counts, so add
+it when `--write` changed `docs/BRIEF.md`. No output and no brief change → say
+nothing about it.
+
 # Output Format
 
 ## 0. Session Metadata
