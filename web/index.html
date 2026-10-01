@@ -68,6 +68,24 @@
        land (river valley, parks, undeveloped), off the scale.</p></div>
   </div>
 
+  <!-- Neighbourhood search (2026-10-01). Beside the title rather than in a
+       bottom pod: a phone keyboard covers the bottom half, so the field and its
+       results have to live at the top (Google/Apple Maps put search there for
+       the same reason). Hidden until the data loads — the names come from it. -->
+  <div id="search">
+    <button id="search-btn" aria-label="Search neighbourhoods" title="Search neighbourhoods (/)">
+      <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12.6 12.6 L17.5 17.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+    <div id="search-box">
+      <input id="search-input" type="text" placeholder="Search neighbourhoods"
+             autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="go"
+             role="combobox" aria-expanded="false" aria-controls="search-list"
+             aria-autocomplete="list" aria-label="Search neighbourhoods">
+      <button id="search-close" aria-label="Close search">&times;</button>
+    </div>
+    <ul id="search-list" role="listbox" aria-label="Matching neighbourhoods"></ul>
+  </div>
+
   <!-- Temporal lens (SPEC_temporal.md phase 3): the pinned readable version of
        the hover sparkline. Left column under the title — the one region no other
        chrome claims, so pinning a panel never buries a control. Hidden until a
@@ -1815,6 +1833,7 @@
     let devHistoryData = null; // hood x year new supply; missing file => no dev history panel
     let pinnedHood = null;     // hood name shown in the pinned history panel, or null
     let peekHood = null;       // hood shown in the touch-only peek card, or null
+    let searchHood = null;     // a search pick that opened no readout, outlined, or null
     // Panel mode reached by DELIBERATELY pressing #hoodmode-btn, as opposed to
     // falling into it by committing a peek card. Only the deliberate route earns
     // one-tap pinning on touch; see temporalClick.
@@ -4185,7 +4204,7 @@
                         "a11y", "a11y-menu", "about", "about-menu", "share",
                         "legend", "compass", "viewbtns", "temporal", "peek",
                         "millrates", "budget", "budget-pod",
-                        "gridbusy"];
+                        "gridbusy", "search"];
     function chromeBoxes() {
       // The sweep works in deck-viewport pixels; getBoundingClientRect returns
       // CSS-viewport pixels. The canvas is the full window at 0,0 today so the
@@ -4292,6 +4311,26 @@
       })];
     }
 
+    // The outline of the hood being read: the pinned panel's, the peek card's,
+    // or a search pick that opened neither (a hood with no panel content, or a
+    // view with no panel on desktop). Without it a search flies the camera to
+    // a patch of 406 lookalike shapes and leaves the reader to guess which one.
+    // depthTest off so a tall neighbour cannot hide it; a dark halo under a
+    // light line so it reads on every ramp colour and on the set-aside grey.
+    function selectedHoodLayer() {
+      const name = pinnedHood || peekHood || searchHood;
+      const f = name && state.data && state.data.features.find(
+        x => x.properties.neighbourhood_name === name);
+      if (!f) return [];
+      const mk = (id, col, w) => new deck.GeoJsonLayer({
+        id, data: [f], filled: false, stroked: true,
+        getLineColor: col, getLineWidth: w, lineWidthUnits: "pixels",
+        parameters: { depthTest: false }, pickable: false,
+      });
+      return [mk("hood-selected-halo", [0, 0, 0, 200], 6),
+              mk("hood-selected", [255, 255, 255, 255], 2.5)];
+    }
+
     // Ratio-view scale anchors, computed once per DENOMINATOR from its kept
     // subset (hoods under that denominator's floor / set-aside excluded):
     // log-colour between p2.5 and p97.5, linear height scaled so the max kept
@@ -4352,7 +4391,8 @@
       // confident highlight on the wrong hood, which is the class of bug this
       // whole change exists to remove.
       bandHoverIdx = -1;
-      const layers = [...referenceUnderLayers(), ...buildViewLayers(), ...referenceOverLayers()];
+      const layers = [...referenceUnderLayers(), ...buildViewLayers(), ...referenceOverLayers(),
+                      ...selectedHoodLayer()];
       const z = squashZ ?? (camFlat ? FLAT_Z : 1);
       return z === 1 ? layers : layers.map(l => l.clone({ modelMatrix: zMatrix(z) }));
     }
@@ -5355,7 +5395,8 @@
       syncTemporalPos();
       // The panel is a new obstacle for the label sweep, so re-cull now —
       // otherwise hood names sit under it until the next camera move.
-      if (labelPool().length) overlay.setProps({ layers: buildLayers() });
+      // Unconditional since the selected-hood outline: it follows pinnedHood.
+      overlay.setProps({ layers: buildLayers() });
     }
 
     // Where the hood's levy comes from, by the zoning of each property. The
@@ -5665,7 +5706,7 @@
       // The empty prompt is a fraction of the chart's height, so it must be
       // re-placed rather than left sitting at the pinned panel's max-height.
       syncTemporalPos();
-      if (labelPool().length) overlay.setProps({ layers: buildLayers() });
+      overlay.setProps({ layers: buildLayers() });
     }
 
     // The readout-mode pod is offered only where BOTH destinations exist: the
@@ -5730,7 +5771,7 @@
       // to place it too — otherwise entering panel mode from the button renders
       // it unpositioned.
       syncTemporalPos();
-      if (labelPool().length) overlay.setProps({ layers: buildLayers() });
+      overlay.setProps({ layers: buildLayers() });
     }
 
     // A finger cannot hover, so touch needs a stage the mouse gets for free.
@@ -5789,14 +5830,14 @@
       // Same reason as the panel: the card is a new obstacle for the label
       // sweep, so re-cull now instead of leaving names under it until the next
       // camera move.
-      if (labelPool().length) overlay.setProps({ layers: buildLayers() });
+      overlay.setProps({ layers: buildLayers() });
     }
 
     function closePeek() {
       if (!peekHood) return;
       peekHood = null;
       document.getElementById("peek").classList.remove("open");
-      if (labelPool().length) overlay.setProps({ layers: buildLayers() });
+      overlay.setProps({ layers: buildLayers() });
     }
 
     // Click a hood to pin its history; click the pinned one again to unpin.
@@ -5811,6 +5852,9 @@
     // and the way in for someone who would rather not click the map.
     function temporalClick({ object }) {
       const name = object && object.properties && object.properties.neighbourhood_name;
+      // A map click is a new selection, so a search pick's own outline yields
+      // to whatever this click opens (or to nothing).
+      searchHood = null;
       // TOUCH: two gestures per hood, EVERY time -- not just on the way in.
       // Without hover a single tap was both the preview and the commit, so the
       // panel opened on any stray tap (Peter, 2026-07-31).
@@ -5856,6 +5900,119 @@
       if (!noHover() && name === pinnedHood) { closeTemporal(); return; }
       applyHoodMode("panel");
       openTemporal(name);
+    }
+
+    // --- neighbourhood search ------------------------------------------------
+    // Apostrophes are DROPPED (so "rivers" finds RIVER'S EDGE) and every other
+    // non-alphanumeric becomes a space (so "hollick kenyon" finds the hyphen).
+    const searchNorm = s => s.toLowerCase().replace(/['’]/g, "")
+      .replace(/[^a-z0-9]+/g, " ").trim();
+    const SEARCH_MAX = 8;
+    let searchActive = -1;     // keyboard-highlighted row in #search-list
+
+    // Ranked: the name starts with the query, then a later WORD does (so
+    // "brooks" finds TWIN BROOKS above anything merely containing it), then any
+    // substring; alphabetical within a rank.
+    function searchMatches(q) {
+      const nq = searchNorm(q);
+      if (!nq || !state.data) return [];
+      const hits = [];
+      for (const f of state.data.features) {
+        const name = f.properties.neighbourhood_name;
+        const n = searchNorm(name);
+        const rank = n.startsWith(nq) ? 0 : (" " + n).includes(" " + nq) ? 1
+          : n.includes(nq) ? 2 : -1;
+        if (rank >= 0) hits.push({ name, rank });
+      }
+      hits.sort((a, b) => a.rank - b.rank || a.name.localeCompare(b.name));
+      return hits.slice(0, SEARCH_MAX).map(h => h.name);
+    }
+
+    function renderSearchList() {
+      const input = document.getElementById("search-input");
+      const list = document.getElementById("search-list");
+      const names = searchMatches(input.value);
+      searchActive = names.length ? Math.min(Math.max(searchActive, 0), names.length - 1) : -1;
+      list.replaceChildren(...names.map((name, i) => {
+        const li = document.createElement("li");
+        li.id = `search-opt-${i}`;
+        li.setAttribute("role", "option");
+        li.setAttribute("aria-selected", i === searchActive ? "true" : "false");
+        li.dataset.name = name;
+        li.textContent = name;
+        return li;
+      }));
+      // An empty result says so rather than showing nothing: a blank list
+      // under a typed query reads as broken, not as "no match".
+      if (!names.length && searchNorm(input.value)) {
+        const li = document.createElement("li");
+        li.className = "search-none";
+        li.textContent = "No neighbourhood matches";
+        list.append(li);
+      }
+      const open = list.children.length > 0;
+      list.classList.toggle("open", open);
+      input.setAttribute("aria-expanded", open ? "true" : "false");
+      if (searchActive >= 0) input.setAttribute("aria-activedescendant", `search-opt-${searchActive}`);
+      else input.removeAttribute("aria-activedescendant");
+    }
+
+    function openSearch() {
+      if (!state.data) return;
+      const el = document.getElementById("search");
+      el.classList.add("open");
+      const input = document.getElementById("search-input");
+      input.value = "";
+      searchActive = -1;
+      renderSearchList();
+      // Inside the tap's own handler, which is what lets iOS raise the keyboard.
+      input.focus();
+      if (labelPool().length) overlay.setProps({ layers: buildLayers() });
+    }
+
+    function closeSearch() {
+      const el = document.getElementById("search");
+      if (!el.classList.contains("open")) return;
+      el.classList.remove("open");
+      const input = document.getElementById("search-input");
+      input.blur();   // drops the phone keyboard, so the card it opens is visible
+      document.getElementById("search-list").classList.remove("open");
+      input.setAttribute("aria-expanded", "false");
+      if (labelPool().length) overlay.setProps({ layers: buildLayers() });
+    }
+
+    // Keep the current tilt and rotation, so the camera moves TO the hood
+    // rather than resetting the view on the way. Padding keeps the hood clear
+    // of the chrome: the control column and title at the top, the peek card or
+    // panel at the bottom, the left/right columns on desktop.
+    function flyToHood(f) {
+      let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+      const polys = f.geometry.type === "Polygon" ? [f.geometry.coordinates] : f.geometry.coordinates;
+      for (const poly of polys) for (const [x, y] of poly[0]) {
+        x0 = Math.min(x0, x); y0 = Math.min(y0, y);
+        x1 = Math.max(x1, x); y1 = Math.max(y1, y);
+      }
+      const w = window.innerWidth, h = window.innerHeight;
+      const side = Math.min(420, w * 0.25), vert = h * 0.25;
+      const cam = map.cameraForBounds([[x0, y0], [x1, y1]], {
+        padding: { top: vert, bottom: vert, left: side, right: side },
+        bearing: map.getBearing(), maxZoom: 14,
+      });
+      if (cam) map.easeTo({ center: cam.center, zoom: cam.zoom, duration: 900 });
+    }
+
+    // A pick reads exactly like tapping or clicking the hood (temporalClick
+    // owns those rules: peek card on touch, pinned panel on a pointer), plus
+    // the camera move. Re-picking the hood already open is not a click on it
+    // — on a pointer that would unpin it.
+    function pickSearch(name) {
+      const f = state.data.features.find(x => x.properties.neighbourhood_name === name);
+      if (!f) return;
+      closeSearch();
+      flyToHood(f);
+      if (name !== pinnedHood && name !== peekHood) temporalClick({ object: f });
+      searchHood = (name === pinnedHood || name === peekHood) ? null : name;
+      overlay.setProps({ layers: buildLayers() });
     }
 
     // Panel mode's one-line hover: the view's HEADLINE number and nothing else,
@@ -7877,9 +8034,53 @@
         openTemporal(name);
       });
       document.addEventListener("keydown", e => {
+        // "/" opens search, the shortcut GitHub, YouTube and Gmail use — except
+        // while typing, where it is just a character.
+        if (e.key === "/" && !e.target.closest("input, textarea, select")) {
+          e.preventDefault();
+          openSearch();
+          return;
+        }
         if (e.key !== "Escape") return;
+        // Innermost first: an open search is what the key is dismissing.
+        if (document.getElementById("search").classList.contains("open")) { closeSearch(); return; }
+        if (searchHood) { searchHood = null; overlay.setProps({ layers: buildLayers() }); }
         if (state.hoodMode === "panel") applyHoodMode("popup"); else closeTemporal();
       });
+      document.getElementById("search-btn").addEventListener("click", e => {
+        e.stopPropagation();
+        openSearch();
+      });
+      document.getElementById("search-close").addEventListener("click", e => {
+        e.stopPropagation();
+        closeSearch();
+      });
+      const searchInput = document.getElementById("search-input");
+      searchInput.addEventListener("input", () => { searchActive = 0; renderSearchList(); });
+      searchInput.addEventListener("keydown", e => {
+        const n = document.querySelectorAll("#search-list [role=option]").length;
+        if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+          e.preventDefault();
+          if (!n) return;
+          searchActive = (searchActive + (e.key === "ArrowDown" ? 1 : n - 1)) % n;
+          renderSearchList();
+        } else if (e.key === "Enter") {
+          // Enter takes the highlighted row, which is the top match until the
+          // arrows move it — the phone keyboard's "Go" lands here too.
+          e.preventDefault();
+          const li = document.getElementById(`search-opt-${Math.max(searchActive, 0)}`);
+          if (li) pickSearch(li.dataset.name);
+        }
+      });
+      document.getElementById("search-list").addEventListener("click", e => {
+        const li = e.target.closest("[role=option]");
+        if (li) pickSearch(li.dataset.name);
+      });
+      // Click-outside closes, like the bottom-right popovers.
+      document.addEventListener("click", e => {
+        if (!document.getElementById("search").contains(e.target)) closeSearch();
+      });
+      document.getElementById("search").style.display = "flex";
       // The two bottom-right popovers (Display, Sources) open/close the same
       // way: the button toggles, a click outside closes, and opening one closes
       // the other — both menus expand upward into the same strip of screen, so
