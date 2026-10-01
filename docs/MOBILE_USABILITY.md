@@ -504,6 +504,14 @@ problem**, so revisit it only after the blurb collapse lands.
   touch-target guideline — unmeasured.
 - Pinch-zoom / two-finger pitch feel; whether page-zoom vs map-zoom conflict —
   unverified.
+- **Neighbourhood search (2026-10-01) — headless only, needs a real phone.**
+  `verify-search.js` confirms in emulation: a 40px magnifier that clears the
+  title in every view at 390/360, 16px field text, results in the top 60% of
+  the screen, field blurred after a pick, peek card (not panel) on pick. **Not
+  confirmable headless:** that iOS raises the keyboard on the magnifier tap
+  (`focus()` runs inside the tap handler, which iOS requires), that it does NOT
+  zoom the page on focus, that the keyboard drops after a pick, and that the
+  results list stays above the keyboard on a short phone.
 - Landscape orientation — not tested (portrait only so far).
 - Legend bar fixed 200 px width, title `max-width:360px` — reflow behaviour on
   <360 px devices unverified.
