@@ -40,6 +40,13 @@
 //   * no address-bar fallback        -> "no clipboard: the link goes in the
 //                                      address bar"
 //
+// FALSIFIED 2026-10-01, the frozen vocabulary (URL audit F2), with all 31
+// public round trips still green under both mutants:
+//   * URL_METRIC residential -> res  -> "frozen #metric=residential&… restores
+//                                      to itself"
+//   * SERVICES roadscost -> roadcost -> "frozen #view=services&on=roadscost…"
+//     (a consistent internal rename)    and the three-service link
+//
 // The link is read from the real clipboard (the context grants
 // clipboard-read), so the button's own path is what is tested.
 //

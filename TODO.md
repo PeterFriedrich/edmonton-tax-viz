@@ -697,11 +697,6 @@ the probe renames (#622). What is left, cheapest first:
   job). ⚠️ **A same-model run executed 2026-09-28 (S204,
   `docs/FINDINGS_url_state.md`)**; the cross-model read is still owed and
   should target that run's SOUND verdicts on L1–L4.
-- [ ] **Pin the URL vocabulary (URL audit F2).** A rename of any value passes
-  the round trip. Add every §8 value to the verify as a frozen link that must
-  restore to itself, and **Peter to decide the policy**: rename/retire = an
-  alias entry, never a silent drop (OWID's `GrapherUrlMigrations.ts` is the
-  prior art). Fix §8's "public names" sentence to say which keys are mapped.
 - [ ] **Check the roads notebook's first scheduled run (2026-10-05)**: queue
   item 16 in `docs/AUDIT_LEDGER.md`. Mainly, does its week-over-week table read
   last week's committed data on the runner?
@@ -3218,6 +3213,8 @@ archive"*) is not, and this span is 2,533 lines.
 ## Done
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
+
+- [x] **Pin the URL vocabulary (URL audit F2) — DONE S209.** — DONE 2026-10-01 · `docs/TODO_archive.md`
 
 - [x] **Make the URL feature a button export, not default exposed — DONE S209** — DONE 2026-09-30 · `docs/TODO_archive.md`
 
