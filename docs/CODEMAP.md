@@ -2,7 +2,7 @@
 
 **Generated — do not hand-edit.** `python tools/codemap.py`
 
-`web/index.html` is a single ~8,321-line file holding the whole front end. This is the lookup table for it: jump to a symbol's range instead of scanning. **Line numbers go stale on the next edit — regenerate rather than citing them.** Prose should still name symbols, not lines.
+`web/index.html` is a single ~8,328-line file holding the whole front end. This is the lookup table for it: jump to a symbol's range instead of scanning. **Line numbers go stale on the next edit — regenerate rather than citing them.** Prose should still name symbols, not lines.
 
 ## Symbols (320 indexed)
 
@@ -418,27 +418,27 @@ Grouped by the file's own `// --- section ---` banners, in file order.
 | `applyView` | 7292–7535 | Switch view (money \| services \| ratio \| uses \| glass). Road geometry |
 | `syncServiceControls` | 7536–7545 | Services-view controls. `applyService` flips a service on/off; |
 | `applyService` | 7546–7559 |  |
-| `applySvcDriver` | 7560–7585 |  |
+| `applySvcDriver` | 7560–7592 |  |
 
 ### shareable URL: the hash names the view on screen
 
 | symbol | lines | what it does |
 |---|---|---|
-| `METRIC_FROM_URL` | 7586–7588 |  |
-| `urlHash` | 7589–7629 |  |
-| `shareLink` | 7630–7638 | Absolute on purpose: the full build carries <base href="../">, and a |
-| `copyShareLink` | 7639–7650 | With no clipboard (an insecure origin, a denied permission) the link goes |
-| `offered` | 7651–7657 | On screen, ignoring the Options fold: a folded panel on a phone hides |
-| `applyUrlState` | 7658–7730 |  |
-| `restoreFromHash` | 7731–7749 | Once, at the end of boot, after every build and data gate has run. The |
+| `METRIC_FROM_URL` | 7593–7595 |  |
+| `urlHash` | 7596–7636 |  |
+| `shareLink` | 7637–7645 | Absolute on purpose: the full build carries <base href="../">, and a |
+| `copyShareLink` | 7646–7657 | With no clipboard (an insecure origin, a denied permission) the link goes |
+| `offered` | 7658–7664 | On screen, ignoring the Options fold: a folded panel on a phone hides |
+| `applyUrlState` | 7665–7737 |  |
+| `restoreFromHash` | 7738–7756 | Once, at the end of boot, after every build and data gate has run. The |
 
 ### boot
 
 | symbol | lines | what it does |
 |---|---|---|
-| `boot` | 7750–8321 | Everything that needs the map surface: fetch the data, mount the deck.gl |
+| `boot` | 7757–8328 | Everything that needs the map surface: fetch the data, mount the deck.gl |
 
-## Dependency graph (1027 edges)
+## Dependency graph (1028 edges)
 
 ⚠️ **A regex reference count, not a call graph** — a name in a comment or string counts, and a nested symbol is attributed to its enclosing range. Use it for *what is central* and *would this seam hold*, never as ground truth for a final module boundary.
 
@@ -481,7 +481,7 @@ Grouped by the file's own `// --- section ---` banners, in file order.
 | Development history: new supply per year | 215 | 23% |
 | shareable URL: the hash names the view on screen | 24 | 21% |
 | services lens views (SPEC_services.md display architecture) | 5 | 20% |
-| control appliers + the view/legend dispatchers | 220 | 20% |
+| control appliers + the view/legend dispatchers | 221 | 20% |
 | the citywide budget panel (EXPERIMENTAL, full build only) | 12 | 8% |
 | services view (SPEC_services.md UI generalization, 2026-07-05) | 18 | 0% |
 | the institutional uncertainty band | 2 | 0% |

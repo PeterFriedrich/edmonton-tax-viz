@@ -551,8 +551,17 @@ change (`replaceState`).
 | uses | `prisms=1` |
 | lab | `exp=`**deviation** · `cut=`total/residential/nonresidential |
 
-**The values are public names, not column names** — a shared link is a
-contract, and a column rename must not break one. **Not in the URL, by
+**A shared link is a contract, and every value above is frozen** (URL audit
+F2, 2026-10-01). Only `metric=` and `cut=` are mapped from column names to
+public names (`URL_METRIC`), so a column rename cannot break them; **every other
+key writes the state value itself** (`denom=lot`, `window=3yr`, `on=roadscost`,
+`exp=deviation`), so renaming or retiring one of those values breaks links
+readers hold. **The rule:** a rename maps the old value to the new one at the
+top of `restoreFromHash`, never a silent drop; a value retired with nothing to
+map to moves to the verify's expected-to-drop links. `verify-url-state.js`
+carries every value in this table in a frozen list of hand-written links that
+must restore to themselves; the round trip cannot see a rename, because the page
+writes the new name and reads it back. **Not in the URL, by
 decision:** the Display popover (ramp, labels, reference layer — the viewer's
 preferences), the opacity slider, popup/panel readout mode, the camera and a
 selected neighbourhood (a possible level 3).

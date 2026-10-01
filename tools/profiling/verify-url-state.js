@@ -40,6 +40,13 @@
 //   * no address-bar fallback        -> "no clipboard: the link goes in the
 //                                      address bar"
 //
+// FALSIFIED 2026-10-01, the frozen vocabulary (URL audit F2), with all 31
+// public round trips still green under both mutants:
+//   * URL_METRIC residential -> res  -> "frozen #metric=residential&… restores
+//                                      to itself"
+//   * SERVICES roadscost -> roadcost -> "frozen #view=services&on=roadscost…"
+//     (a consistent internal rename)    and the three-service link
+//
 // The link is read from the real clipboard (the context grants
 // clipboard-read), so the button's own path is what is tested.
 //
@@ -199,13 +206,7 @@ const screen = page => page.evaluate(skip => {
   await lands('metric=__proto__&denom=constructor&scale=x&detail=toString', '', 'money');
   await lands('view=development&metric=bogus&window=3yr', 'view=development&window=3yr', 'development');
   await lands('view=services&on=constructor,roads&colour=__proto__', 'view=services', 'services');
-  await lands('view=services&on=none', 'view=services&on=none', 'services');
-  await lands('mode=change&window=short', 'mode=change&window=short', 'change');
   await lands('mode=change', '', 'money', { blockTemporal: true });
-  await lands('detail=grid50&metric=value', 'metric=value&detail=grid50', 'glass');
-  // Glass's denominator row is gated on the grid file's own lot column, which
-  // exists only after the grid lands — the restore must wait for it.
-  await lands('detail=grid&denom=lot&scale=linear', 'detail=grid&denom=lot&scale=linear', 'glass');
   if (!FULL) {
     for (const [h, want, v] of [
       ['view=uses&prisms=1', '', 'money'],
@@ -216,10 +217,48 @@ const screen = page => page.evaluate(skip => {
       ['view=ratio&denom=fire', 'view=ratio', 'ratio'],
     ]) await lands(h, want, v);
   } else {
-    await lands('view=uses&prisms=1', 'view=uses&prisms=1', 'uses');
-    await lands('view=lab&cut=residential', 'view=lab&cut=residential', 'deviation');
     await lands('view=development&mode=infill&metric=industrial',
                 'view=development&mode=infill', 'infill');
+  }
+
+  // --- the frozen vocabulary (URL audit F2) ----------------------------------
+  // Every value a link can carry (CONTROLS_MATRIX §8), each in at least one
+  // link that must restore to itself. The round trip above cannot see a
+  // rename: the page writes the new name and reads it back. These links were
+  // written by hand on 2026-10-01 and are what readers may hold.
+  // ⚠️ A RED HERE MEANS A SHARED LINK BROKE. Don't edit the link to match:
+  // add an alias that maps the old value to the new one (the rule beside
+  // URL_METRIC), and give the entry its new expected link as a third element.
+  // A retired value with nothing to map to moves to the expected-to-drop
+  // links above instead.
+  const norm = h => [...new URLSearchParams(h)].map(([k, v]) => `${k}=${v}`).sort().join('&');
+  const FROZEN = [
+    ['metric=residential&denom=lot&scale=linear', 'money'],
+    // Glass's denominator row is gated on the grid file's own lot column,
+    // which exists only after the grid lands — the restore must wait for it.
+    ['metric=nonresidential&detail=grid&denom=lot&scale=linear', 'glass'],
+    ['metric=value&detail=grid50', 'glass'],
+    ['mode=change&window=short', 'change'],
+    ['view=development&metric=permits&window=3yr&detail=hood', 'development'],
+    ['view=development&window=5yr', 'development'],
+    ['view=services&on=none', 'services'],
+    ['view=services&on=roadscost', 'services'],
+    ['view=services&on=roads,roadscost,roadslife&colour=roadslife', 'services'],
+    ['view=ratio', 'ratio'],
+  ];
+  const FROZEN_FULL = [
+    ['view=development&metric=industrial&window=3yr', 'development'],
+    ['view=development&mode=infill&metric=permits&amenity=lrt,school', 'infill'],
+    ['view=services&on=storm,fire,water,transit,bike,transitcost,bikecost&colour=bikecost', 'services'],
+    ['view=ratio&denom=fire', 'ratio'],
+    ['view=uses&prisms=1', 'uses'],
+    ['view=lab&cut=residential', 'deviation'],
+    ['view=lab&exp=deviation&cut=nonresidential', 'deviation', 'view=lab&cut=nonresidential'],
+  ];
+  for (const [h, view, want = h] of [...FROZEN, ...(FULL ? FROZEN_FULL : [])]) {
+    const p = await open('#' + h);
+    check(`frozen #${h} restores to itself`,
+          [norm(await hashOf(p)), await p.evaluate(() => state.view)], [norm(want), view]);
   }
 
   // An edited hash is honoured without a manual reload. A page on the

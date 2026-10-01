@@ -8,6 +8,14 @@ Items are verbatim as they were closed, newest-moved first in the order they app
 
 ---
 
+- [x] **Pin the URL vocabulary (URL audit F2) — DONE S209.** A rename of any value passes
+  the round trip. Add every §8 value to the verify as a frozen link that must
+  restore to itself, and **Peter to decide the policy**: rename/retire = an
+  alias entry, never a silent drop (OWID's `GrapherUrlMigrations.ts` is the
+  prior art). Fix §8's "public names" sentence to say which keys are mapped.
+  **Done S209 (2026-10-01):** Peter approved the alias policy; 17 frozen links
+  (10 both builds, 7 full) cover every §8 value. DECISIONS 2026-10-01.
+
 - [x] **Make the URL feature a button export, not default exposed — DONE S209** (Peter,
   2026-09-30). Today `writeUrlHash` rewrites the address bar on every control
   change (`history.replaceState`), so the state hash is always visible. Wanted:

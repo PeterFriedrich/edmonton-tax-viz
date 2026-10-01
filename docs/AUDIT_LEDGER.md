@@ -304,8 +304,8 @@ started from a false premise.
 | 09-28 S202 | `_prepare_segments` conservation guard is one-directional: a double count only makes it look healthier | guard-blind | no | scoped | open |
 | 09-28 S202 | `city_unit_costs.json` renewal rationale still names roadway_ops as $4.635/m/yr | claim | no | scoped | open |
 | 09-28 S204 | F1 `verify-url-state.js` walks and compares with the page's own `offered()`: a control it wrongly hides drops from every link and the verify stays green | guard-blind | no | scoped | open |
-| 09-28 S204 | F2 URL vocabulary unpinned: a self-consistent rename of a value passes the round trip; 9 key contexts write internal state values; no rename/retire policy | guard-blind | latent | scoped | open |
-| 09-28 S204 | F2 CONTROLS_MATRIX §8 "values are public names, not column names" true only for `metric`/`cut` | claim | no | scoped | open |
+| 09-28 S204 | F2 URL vocabulary unpinned: a self-consistent rename of a value passes the round trip; 9 key contexts write internal state values; no rename/retire policy | guard-blind | latent | scoped | fixed |
+| 09-28 S204 | F2 CONTROLS_MATRIX §8 "values are public names, not column names" true only for `metric`/`cut` | claim | no | scoped | fixed |
 | 09-28 S204 | F3 `state.devWindow` defaults to `long`; on a supported no-`_long` file Development opens blank (0/406, "no permit data"); #608's comment asserts it can't | render | latent | scoped | open |
 | 09-28 S204 | `?build=` comment says "overrides locally"; it overrides on the deployed site too (consistent with 07-22, wording only) | claim | no | side | open |
 
