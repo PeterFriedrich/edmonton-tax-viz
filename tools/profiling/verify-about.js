@@ -277,6 +277,7 @@ const [url] = process.argv.slice(2);
       `top=${g.mTop}`);
     // Both menus open upward past the Copy link pod, so each must clear it
     // the same way (geometry, not paint order, for the reason above).
+    // Falsified 2026-10-01: #a11y-menu at its old `200% + 8px` reds all three.
     for (const [btn, menu] of [['a11y-btn', 'a11y-menu'], ['about-btn', 'about-menu']]) {
       if (btn === 'about-btn') { await p.click('#about-btn'); await p.waitForTimeout(400); }
       const c = await p.evaluate(menu => {

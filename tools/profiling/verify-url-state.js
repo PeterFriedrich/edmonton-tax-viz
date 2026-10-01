@@ -232,14 +232,18 @@ const screen = page => page.evaluate(skip => {
     [state.view, Object.values(state.services).some(Boolean)]), ['services', false]);
 
   // No clipboard (an insecure origin, a denied permission): the link must
-  // still reach the reader, through the address bar.
-  const blind = await open('#view=services&on=none');
+  // still reach the reader, through the address bar. Reached by a CLICK, not
+  // a restored hash: a hash that restore failed to remove passed this check
+  // with the fallback deleted.
+  const blind = await open();
+  await blind.evaluate(() => document.querySelector('#views button[data-view="services"]').click());
+  await settle(blind);
   await blind.evaluate(() => { navigator.clipboard.writeText = () => Promise.reject(new Error('denied')); });
   await blind.evaluate(() => document.getElementById('share-btn').click());
   await blind.waitForTimeout(300);
   check('no clipboard: the link goes in the address bar', await blind.evaluate(() =>
     [location.hash, document.getElementById('share-btn').textContent]),
-    ['#view=services&on=none', 'Link in address bar']);
+    ['#view=services', 'Link in address bar']);
 
   await server.kill();
   console.log(failures ? `\n${failures} FAILED` : '\nall passed');
