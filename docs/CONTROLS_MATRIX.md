@@ -529,12 +529,18 @@ above describe the result. Mirrored in `DECISIONS.md`.
 
 ---
 
-## 8. The URL hash — a link to the view on screen (2026-09-28)
+## 8. The URL hash — a link to the view on screen (2026-09-28; button since 2026-10-01)
 
-The address bar carries the current view and its options, so a link reopens
-what the sender saw: `…/#view=development&metric=permits&window=3yr`. Written
-on every control change (`replaceState`, so no back-button history), read once
-at the end of boot, and an edited hash reloads the page.
+A link carries the current view and its options, so it reopens what the sender
+saw: `…/#view=development&metric=permits&window=3yr`. **The address bar stays
+clean** (Peter, 2026-09-30): the link is built only when the reader presses
+**Copy link** (`#share`, top of the bottom-right stack, above Data & Methods),
+which puts it on the clipboard — or, with no clipboard, into the address bar.
+An incoming hash is read once at the end of boot and then removed, because
+nothing rewrites it as the reader moves and it would soon name a view no longer
+on screen; so reloading a shared link's page lands on the default. An edited
+hash reloads the page. Until 2026-10-01 the hash was written on every control
+change (`replaceState`).
 
 | `view=` | keys (default in **bold**; defaults are never written) |
 |---|---|
@@ -561,9 +567,9 @@ the whole of "a full-only link falls back on the public site" and "a bad value
 is ignored".
 
 ⚠️ **Three traps, each found by measuring:**
-- **The full build's `<base href="../">`** resolves a relative
-  `replaceState("#…")` against the ROOT — the address bar moves to the public
-  build and every copied link opens the wrong one. The hash is written absolute.
+- **The full build's `<base href="../">`** resolves a relative `"#…"` against
+  the ROOT, so every copied link would open the public build. The link is
+  built from `location.href`, absolute.
 - **`applyView("change")` renders with no history file behind it** (title, no
   error). The button only appears once `temporal.json` lands, so restore waits
   on `temporalReady` and reverts the metric if Change is still not offered.
@@ -572,8 +578,11 @@ is ignored".
   therefore shows default Money for ~a second first — accepted.
 
 Guarded by `tools/profiling/verify-url-state.js` (both builds): it clicks every
-reachable control from a cold page, round-trips the hash through a fresh load,
-and compares title, view and every active control; plus the fallback, bad-value,
-no-history-file, base-path and edited-hash cases. ⚠️ It launches a browser
+reachable control from a cold page, presses Copy link and reads the real
+clipboard, round-trips that link through a fresh load, and compares title, view
+and every active control; it also checks the address bar is clean after clicks
+and after restore, plus the fallback, bad-value, no-history-file, base-path,
+edited-hash and no-clipboard cases. `verify-about.js` checks both bottom-right
+menus clear the Copy link pod. ⚠️ It launches a browser
 PER LOAD and SIGKILLs the last: tearing down a page that drew a grid costs ~10 s
 under software GL, and `newPage`/navigation hung on it.

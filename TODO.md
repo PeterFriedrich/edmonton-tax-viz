@@ -190,15 +190,6 @@ publish on its own, unrelated to any of this — re-pinned.)_
   `docs/BRIEF.md` + `docs/SPEC_*.md`, press **Sync**, and review
   `docs/SCOPE.md`. After that, `/handoff`'s sync check prompts for each re-sync
   (`docs/CLAUDE_WEB.md`).
-- [ ] **Make the URL feature a button export, not default exposed** (Peter,
-  2026-09-30). Today `writeUrlHash` rewrites the address bar on every control
-  change (`history.replaceState`), so the state hash is always visible. Wanted:
-  a clean URL by default, and a button that produces the share link on demand.
-  This revisits the 2026-09-28 DECISIONS row (#608). Before building, decide
-  whether restore-from-hash on load stays as-is (a shared link must still
-  open), and update `verify-url-state.js`, which round-trips through the live
-  hash.
-
 ### A `fable-session` credit-discipline skill — evaluated, corrections pending (OPEN 2026-09-04)
 
 
@@ -3227,6 +3218,8 @@ archive"*) is not, and this span is 2,533 lines.
 ## Done
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
+
+- [x] **Make the URL feature a button export, not default exposed — DONE S209** — DONE 2026-09-30 · `docs/TODO_archive.md`
 
 - [x] **Four verify scripts assert nothing — DONE S207, renamed `probe-*`** · `docs/TODO_archive.md`
 - [x] **Four `verify-*` scripts have no assertions — DONE S207, renamed `probe-*`** · `docs/TODO_archive.md`

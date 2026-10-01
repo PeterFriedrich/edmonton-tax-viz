@@ -8,6 +8,19 @@ Items are verbatim as they were closed, newest-moved first in the order they app
 
 ---
 
+- [x] **Make the URL feature a button export, not default exposed — DONE S209** (Peter,
+  2026-09-30). Today `writeUrlHash` rewrites the address bar on every control
+  change (`history.replaceState`), so the state hash is always visible. Wanted:
+  a clean URL by default, and a button that produces the share link on demand.
+  This revisits the 2026-09-28 DECISIONS row (#608). Before building, decide
+  whether restore-from-hash on load stays as-is (a shared link must still
+  open), and update `verify-url-state.js`, which round-trips through the live
+  hash.
+  **Done S209 (2026-10-01):** a Copy link pod tops the bottom-right stack;
+  restore stays and then removes the hash; no-clipboard falls back to the
+  address bar. DECISIONS 2026-10-01, `CONTROLS_MATRIX.md` §8.
+
+
 - [x] **Four verify scripts assert nothing — DONE S207, renamed `probe-*`** (S106): `verify-glass`, `-labels`, `-services`, `-uses` print values and always exit 0, so `verify.js` lists them `ok` with 0 checks. Add assertions, or rename them as probes so the runner stops counting them. Local sweeps only; CI does not run them.
 
 - [x] **Four `verify-*` scripts have no assertions — DONE S207, renamed `probe-*`** (`glass`, `labels`,

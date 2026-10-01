@@ -1,6 +1,8 @@
-// Verify for the shareable URL hash (2026-09-28). The hash names the view on
-// screen (`#view=development&metric=permits`), and restore may only select a
-// control that is offered. What can go silently wrong:
+// Verify for the shareable URL hash (2026-09-28; behind a Copy link button
+// since 2026-10-01). The hash names the view on screen
+// (`#view=development&metric=permits`), the address bar stays clean, and
+// restore may only select a control that is offered. What can go silently
+// wrong:
 //   * a control the hash writer does not cover — its state is lost on reload.
 //     Caught by the ROUND TRIP: every offered control is clicked for real, the
 //     hash read, a fresh page opened on it, and the two screens compared. It
@@ -8,11 +10,11 @@
 //   * a link reaching a state no button can (a full-only lens on the public
 //     build, Change with no history file behind it).
 //   * a bad value breaking the page or taking good keys down with it.
-//   * the full build's <base href="../"> moving the address bar to the root.
+//   * the full build's <base href="../"> pointing the copied link at the root.
+//   * a hash left in the address bar after restore, naming a view the reader
+//     has since left.
 //
 // FALSIFIED 2026-09-28 — each defect was reintroduced and went red by name:
-//   * relative replaceState("#…")   -> "<walk>: path is unchanged after writing"
-//                                      (full build; every round trip)
 //   * offered() always true          -> "#view=lab&cut=residential lands on"
 //                                      and 6 more links a button cannot reach
 //                                      (re-run 2026-09-29, after the change below)
@@ -29,6 +31,17 @@
 // a checker using it too walked 26 trips instead of 31 and passed while two
 // keys vanished from every link (docs/FINDINGS_url_state.md F1).
 // Runtime on the Oracle box: public ~3 min (31 trips), full ~6 min (58).
+//
+// FALSIFIED 2026-10-01, the Copy link button:
+//   * link resolved against <base>   -> "<walk>: the link keeps the page's
+//                                      path" (full build; every round trip)
+//   * hash not removed after restore -> "<walk>: the address bar is clean
+//                                      after restore" (every round trip)
+//   * no address-bar fallback        -> "no clipboard: the link goes in the
+//                                      address bar"
+//
+// The link is read from the real clipboard (the context grants
+// clipboard-read), so the button's own path is what is tested.
 //
 //   node verify-url-state.js <url>      (run once per build)
 const { chromium } = require('playwright');
@@ -79,7 +92,8 @@ const screen = page => page.evaluate(skip => {
              '--ignore-gpu-blocklist', '--enable-webgl'],
     });
     const browser = await chromium.connect(server.wsEndpoint());
-    const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+    const page = await browser.newPage({ viewport: { width: 1280, height: 800 },
+                                         permissions: ['clipboard-read', 'clipboard-write'] });
     page.on('pageerror', e => { console.log('PAGE EXCEPTION:', e.message); failures++; });
     if (blockTemporal) await page.route('**/temporal.json', r => r.abort());
     await page.goto(url + hash, { waitUntil: 'networkidle', timeout: 60000 });
@@ -93,13 +107,22 @@ const screen = page => page.evaluate(skip => {
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(300);
   };
-  const hashOf = page => page.evaluate(() => location.hash.replace(/^#/, ''));
+  // Pressing Copy link, and reading back what it put on the clipboard.
+  const linkOf = async page => {
+    await page.evaluate(() => navigator.clipboard.writeText(''));
+    await page.evaluate(() => document.getElementById('share-btn').click());
+    await page.waitForFunction(() => document.getElementById('share-btn').textContent === 'Link copied',
+                               null, { timeout: 5000, polling: 50 });
+    return page.evaluate(() => navigator.clipboard.readText());
+  };
+  const hashOf = async page => new URL(await linkOf(page)).hash.replace(/^#/, '');
+  const barOf = page => page.evaluate(() => location.href.includes('#'));
 
   const home = await open();
   const FULL = await home.evaluate(() => FULL_BUILD);
   const path = await home.evaluate(() => location.pathname);
   console.log(`build: ${FULL ? 'full' : 'public'}  ${url}`);
-  check('default view writes no hash', await home.evaluate(() => location.href.includes('#')), false);
+  check('default view: the link carries no hash', (await linkOf(home)).includes('#'), false);
 
   // --- round trip: every offered control, clicked for real ------------------
   // Each control is reached from a FRESH page by real clicks along a path, so
@@ -141,11 +164,14 @@ const screen = page => page.evaluate(skip => {
   let trips = 0;
   const roundTrip = async (page, label) => {
     const want = await screen(page);
-    const hash = await hashOf(page);
-    check(`${label}: path is unchanged after writing`, await page.evaluate(() => location.pathname), path);
+    check(`${label}: the address bar is clean after clicks`, await barOf(page), false);
+    const link = await linkOf(page);
+    const hash = new URL(link).hash.replace(/^#/, '');
+    check(`${label}: the link keeps the page's path`, new URL(link).pathname, path);
     const fresh = await open(hash ? '#' + hash : '');
     check(`round trip ${label} -> #${hash}`, await screen(fresh), want);
-    check(`round trip ${label} rewrites the same hash`, await hashOf(fresh), hash);
+    check(`round trip ${label}: the address bar is clean after restore`, await barOf(fresh), false);
+    check(`round trip ${label} copies the same link`, await hashOf(fresh), hash);
     trips++;
   };
   const views = await home.evaluate(() => [...document.querySelectorAll('#views button')]
@@ -204,6 +230,16 @@ const screen = page => page.evaluate(skip => {
   await settle(edited);
   check('an edited hash is applied', await edited.evaluate(() =>
     [state.view, Object.values(state.services).some(Boolean)]), ['services', false]);
+
+  // No clipboard (an insecure origin, a denied permission): the link must
+  // still reach the reader, through the address bar.
+  const blind = await open('#view=services&on=none');
+  await blind.evaluate(() => { navigator.clipboard.writeText = () => Promise.reject(new Error('denied')); });
+  await blind.evaluate(() => document.getElementById('share-btn').click());
+  await blind.waitForTimeout(300);
+  check('no clipboard: the link goes in the address bar', await blind.evaluate(() =>
+    [location.hash, document.getElementById('share-btn').textContent]),
+    ['#view=services&on=none', 'Link in address bar']);
 
   await server.kill();
   console.log(failures ? `\n${failures} FAILED` : '\nall passed');
