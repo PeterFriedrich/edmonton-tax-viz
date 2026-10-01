@@ -5984,7 +5984,9 @@
     // Keep the current tilt and rotation, so the camera moves TO the hood
     // rather than resetting the view on the way. Padding keeps the hood clear
     // of the chrome: the control column and title at the top, the peek card or
-    // panel at the bottom, the left/right columns on desktop.
+    // panel at the bottom, the left/right columns on desktop. maxZoom 12.5,
+    // not closer: a small hood at 14 filled the screen with its neighbours'
+    // walls and the outline lost the context that says where it is.
     function flyToHood(f) {
       let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
       const polys = f.geometry.type === "Polygon" ? [f.geometry.coordinates] : f.geometry.coordinates;
@@ -5996,7 +5998,7 @@
       const side = Math.min(420, w * 0.25), vert = h * 0.25;
       const cam = map.cameraForBounds([[x0, y0], [x1, y1]], {
         padding: { top: vert, bottom: vert, left: side, right: side },
-        bearing: map.getBearing(), maxZoom: 14,
+        bearing: map.getBearing(), maxZoom: 12.5,
       });
       if (cam) map.easeTo({ center: cam.center, zoom: cam.zoom, duration: 900 });
     }

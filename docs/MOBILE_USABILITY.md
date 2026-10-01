@@ -511,7 +511,10 @@ problem**, so revisit it only after the blurb collapse lands.
   confirmable headless:** that iOS raises the keyboard on the magnifier tap
   (`focus()` runs inside the tap handler, which iOS requires), that it does NOT
   zoom the page on focus, that the keyboard drops after a pick, and that the
-  results list stays above the keyboard on a short phone.
+  results list stays above the keyboard on a short phone. **Also: the title
+  now leaves 82px for the magnifier** (was 44); on this box the full-build Lab
+  title wraps to 3 lines at 360px and overlaps `#controls` (top 58px) —
+  likely a font artefact (no web fonts here), check Lab on a narrow phone.
 - Landscape orientation — not tested (portrait only so far).
 - Legend bar fixed 200 px width, title `max-width:360px` — reflow behaviour on
   <360 px devices unverified.

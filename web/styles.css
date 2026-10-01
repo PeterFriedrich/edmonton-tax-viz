@@ -951,7 +951,7 @@ body.budget #budget-btn { background: var(--accent); color: var(--ink-on-accent)
      the results drop down from it — the half of the screen a keyboard leaves.
      40px for a fingertip. 16px text: iOS zooms the whole page into any field
      whose text is smaller, and it does not zoom back out. */
-  #search { top: 12px; left: auto; right: 8px; }
+  #search { top: 12px; left: auto; right: 8px; z-index: 4; }  /* above #title.expanded (3) */
   #search-btn { width: 40px; height: 40px; }
   #search.open { left: 8px; align-items: stretch; }
   #search-box, #search-list { width: auto; }
@@ -963,14 +963,23 @@ body.budget #budget-btn { background: var(--accent); color: var(--ink-on-accent)
   /* 22px ≈ √3 × 13px — ~3× glyph area, matching the #opt-caret bump.
      line-height:0 so the taller glyph does not grow the h1's line box
      (#title's height feeds chromeBoxes() and the label cull). */
-  #title h1::after { content: " \25BE"; color: var(--ink-caret-mobile); font-weight: 400; font-size: 22px; line-height: 0; } /* ▾ expand affordance */
-  #title.expanded h1::after { content: " \25B4"; } /* ▴ when open */
+  /* No leading space, padding instead: a space is a break opportunity, and
+     the narrower title (room for #search-btn) wrapped the caret alone onto a
+     second line. Without it the caret travels with the last word. */
+  #title h1::after { content: "\25BE"; padding-left: 0.25em; color: var(--ink-caret-mobile); font-weight: 400; font-size: 22px; line-height: 0; } /* ▾ expand affordance */
+  #title.expanded h1::after { content: "\25B4"; } /* ▴ when open */
   #title-p { display: none; margin-top: 6px; }
   #title.expanded {
     z-index: 3; background: var(--read-bg);
     border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px;
   }
   #title.expanded #title-p { display: block; }
+  /* Open, the card takes back the full width (the narrower one pushed the
+     mill rates 25px down, into the history sheet at 360px) and only its
+     HEADING stays clear of the magnifier, which floats above the card's
+     corner: the blurb below starts under the button's 52px bottom edge. */
+  #title.expanded { max-width: calc(100vw - 44px); }
+  #title.expanded h1 { padding-right: 20px; }
 
   /* Drop the control column below the now one-line title, and bound it to
      the viewport (left+right) so the right-anchored pods can't grow off the
