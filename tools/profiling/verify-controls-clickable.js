@@ -56,6 +56,7 @@ const [url] = process.argv.slice(2);
         // slider live in #layers too, so they'd break the same way.
         ...document.querySelectorAll('#controls button, #controls input'),
         document.getElementById('a11y-btn'), // Display popover trigger (bottom-right)
+        document.getElementById('share-btn'), // Copy link (top of the bottom-right stack)
       ].filter(Boolean);
       for (const el of buttons) {
         if (getComputedStyle(el).display === 'none') continue;

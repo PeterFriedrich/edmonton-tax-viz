@@ -12,7 +12,8 @@
 //   3. The caveat the project must not bury: revenue and the utility layers are
 //      MODELLED, not billed.
 //   4. Methods + verification + repo links are real, absolute and target=_blank.
-//   5. The two bottom-right popovers never sit open at once (they'd overlap).
+//   5. The two bottom-right popovers never sit open at once (they'd overlap),
+//      and neither covers the Copy link pod above them (2026-10-01).
 //   6. It survives a missing/broken status.json — the credit still reads.
 //   node verify-about.js <url>
 const { chromium } = require('playwright');
@@ -188,13 +189,16 @@ const [url] = process.argv.slice(2);
       const box = id => { const b = document.getElementById(id).getBoundingClientRect();
                           return { l: b.left, r: b.right, t: b.top, b: b.bottom }; };
       const hit = (a, b) => a.l < b.r && b.l < a.r && a.t < b.b && b.t < a.b;
-      const btn = box('about-btn'), bl = box('botleft'), a11y = box('a11y');
+      const btn = box('about-btn'), bl = box('botleft'), a11y = box('a11y'), share = box('share');
       return { btnW: Math.round(btn.r - btn.l), btnL: Math.round(btn.l),
-               blR: Math.round(bl.r), onBotleft: hit(btn, bl), onA11y: hit(btn, a11y) };
+               blR: Math.round(bl.r), onBotleft: hit(btn, bl), onA11y: hit(btn, a11y),
+               shareOnBotleft: hit(share, bl), shareOnAbout: hit(share, box('about')) };
     });
     check(`${vp.width}px: button clear of the bottom-left cluster`, !g.onBotleft,
           `button ${g.btnL}..${g.btnL + g.btnW}, cluster ends ${g.blR}`);
     check(`${vp.width}px: button clear of the Display pod`, !g.onA11y);
+    check(`${vp.width}px: Copy link clear of the bottom-left cluster`, !g.shareOnBotleft);
+    check(`${vp.width}px: Copy link clear of the Data & Methods pod`, !g.shareOnAbout);
     await pg.close();
   }
 
@@ -271,6 +275,20 @@ const [url] = process.argv.slice(2);
       !g.overlap, `menu ${g.mTop}-${g.mBottom} vs button ${g.aTop}-${g.aBottom}`);
     check(`${w}x${h}: Display menu is still fully on screen`, g.menuOnScreen,
       `top=${g.mTop}`);
+    // Both menus open upward past the Copy link pod, so each must clear it
+    // the same way (geometry, not paint order, for the reason above).
+    // Falsified 2026-10-01: #a11y-menu at its old `200% + 8px` reds all three.
+    for (const [btn, menu] of [['a11y-btn', 'a11y-menu'], ['about-btn', 'about-menu']]) {
+      if (btn === 'about-btn') { await p.click('#about-btn'); await p.waitForTimeout(400); }
+      const c = await p.evaluate(menu => {
+        const m = document.getElementById(menu).getBoundingClientRect();
+        const s = document.getElementById('share-btn').getBoundingClientRect();
+        return { mBottom: Math.round(m.bottom), sTop: Math.round(s.top), sBottom: Math.round(s.bottom),
+                 overlap: m.right > s.left && m.left < s.right && m.bottom > s.top && m.top < s.bottom };
+      }, menu);
+      check(`${w}x${h}: ${menu} clears the Copy link button`, !c.overlap,
+        `menu bottom ${c.mBottom} vs button ${c.sTop}-${c.sBottom}`);
+    }
     await p.close();
   }
 

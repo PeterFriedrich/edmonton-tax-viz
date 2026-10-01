@@ -435,6 +435,13 @@
   </div>
   </div>
 
+  <!-- Top of the bottom-right stack (#share 96px, #about 68px, #a11y 40px).
+       The address bar no longer carries the view; this builds the link on
+       demand (CONTROLS_MATRIX §8). -->
+  <div id="share" class="panel">
+    <button id="share-btn" title="Copy a link that opens this view with these options. The camera, a selected neighbourhood and the Display settings are not included">Copy link</button>
+  </div>
+
   <div id="a11y" class="panel">
     <button id="a11y-btn" title="Display &amp; accessibility — colour ramp and neighbourhood labels">Display</button>
     <div id="a11y-menu">
@@ -4175,7 +4182,7 @@
     //     that makes a label unreadable is the test, not opacity — text over
     //     text is the case actually reported.
     const CHROME_IDS = ["banner", "title", "views", "toggle", "optpanel",
-                        "a11y", "a11y-menu", "about", "about-menu",
+                        "a11y", "a11y-menu", "about", "about-menu", "share",
                         "legend", "compass", "viewbtns", "temporal", "peek",
                         "millrates", "budget", "budget-pod",
                         "gridbusy"];
@@ -7563,7 +7570,8 @@
     // --- shareable URL: the hash names the view on screen --------------------
     // `#view=development&metric=permits&window=3yr`. Only the current view's
     // keys are written and defaults are omitted, so the default map has no
-    // hash. The values are public names, not column names: a shared link is a
+    // hash. The address bar stays clean: the link is built on demand by the
+    // Copy link button, and an incoming hash is removed once it is applied. The values are public names, not column names: a shared link is a
     // contract, and a column rename must not break it.
     //
     // ⚠️ RESTORE ONLY SELECTS WHAT A BUTTON OFFERS. Every build and data gate
@@ -7617,13 +7625,25 @@
     }
 
     // Absolute on purpose: the full build carries <base href="../">, and a
-    // relative "#…" resolves against it — the address bar would move to the
-    // PUBLIC root and every copied link would open the other build.
-    function writeUrlHash() {
-      if (restoring) return;
+    // relative "#…" resolves against it — the link would open the PUBLIC root,
+    // the other build.
+    function shareLink() {
       const u = new URL(location.href);
       u.hash = urlHash();
-      if (u.href !== location.href) history.replaceState(history.state, "", u.href);
+      return u.href;
+    }
+
+    // With no clipboard (an insecure origin, a denied permission) the link goes
+    // into the address bar instead, which is the one place it can always be
+    // copied from.
+    async function copyShareLink(btn) {
+      const href = shareLink();
+      let copied = true;
+      try { await navigator.clipboard.writeText(href); }
+      catch { copied = false; history.replaceState(history.state, "", href); }
+      btn.textContent = copied ? "Link copied" : "Link in address bar";
+      clearTimeout(btn._reset);
+      btn._reset = setTimeout(() => { btn.textContent = "Copy link"; }, 2000);
     }
 
     // On screen, ignoring the Options fold: a folded panel on a phone hides
@@ -7706,8 +7726,8 @@
     }
 
     // Once, at the end of boot, after every build and data gate has run. The
-    // hash is rewritten afterwards from what actually landed, so a dropped key
-    // leaves the address bar too.
+    // hash is then removed: nothing rewrites it as the reader moves, so left
+    // in place it would soon name a view that is no longer on screen.
     async function restoreFromHash() {
       const p = new URLSearchParams(location.hash.slice(1));
       if (![...p.keys()].length) return;
@@ -7715,7 +7735,12 @@
       // Not before deck's first frame: until it draws, the overlay has no
       // viewport and building the label layer throws (found by the verify).
       try { await framePainted; await applyUrlState(p); }
-      finally { restoring = false; writeUrlHash(); }
+      finally {
+        restoring = false;
+        const u = new URL(location.href);
+        u.hash = "";
+        history.replaceState(history.state, "", u.href);
+      }
     }
 
     // --- boot ----------------------------------------------------------------
@@ -8220,15 +8245,11 @@
       // Sync the legend gradient to the default ramp (single source of truth).
       document.querySelector("#legend .bar").style.background = legendGradient();
 
-      // The hash follows every control through ONE listener rather than a call
-      // in each applier: it runs after the control's own handler (setTimeout),
-      // and applyView sets state.view before its first await, so the state is
-      // already the new one. verify-url-state.js round-trips every control, so
-      // a control this misses fails there by name. An edited hash reloads:
-      // restore assumes it starts from the defaults.
-      const scheduleHash = () => setTimeout(writeUrlHash, 0);
-      document.addEventListener("click", scheduleHash);
-      document.addEventListener("change", scheduleHash);
+      // verify-url-state.js round-trips every control through this button, so
+      // a control urlHash() misses fails there by name. An edited hash
+      // reloads: restore assumes it starts from the defaults.
+      const shareBtn = document.getElementById("share-btn");
+      shareBtn.addEventListener("click", () => copyShareLink(shareBtn));
       window.addEventListener("hashchange", () => location.reload());
       restoreFromHash();
 
