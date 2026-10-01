@@ -7571,8 +7571,15 @@
     // `#view=development&metric=permits&window=3yr`. Only the current view's
     // keys are written and defaults are omitted, so the default map has no
     // hash. The address bar stays clean: the link is built on demand by the
-    // Copy link button, and an incoming hash is removed once it is applied. The values are public names, not column names: a shared link is a
-    // contract, and a column rename must not break it.
+    // Copy link button, and an incoming hash is removed once it is applied.
+    //
+    // A shared link is a contract. `metric=` and `cut=` map column names to
+    // public names (URL_METRIC), so a column rename cannot break one; every
+    // other key writes the state value itself (`denom=lot`, `on=roadscost`).
+    // ⚠️ SO RENAMING OR RETIRING ANY VALUE A KEY CAN CARRY BREAKS LINKS
+    // readers already hold. Map the old value to the new one at the top of
+    // restoreFromHash rather than dropping it; verify-url-state.js's frozen
+    // list of links (URL audit F2) goes red until you do.
     //
     // ⚠️ RESTORE ONLY SELECTS WHAT A BUTTON OFFERS. Every build and data gate
     // on this page is a hidden button (Uses, Lab, Industrial, the full-only
