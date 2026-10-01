@@ -176,8 +176,11 @@ const rect = (page, sel) => page.$eval(sel, e => { const r = e.getBoundingClient
       await page.waitForTimeout(600);
       const t = await rect(page, '#title-h'), b = await rect(page, '#search-btn');
       if (overlap(t, b) || t.right > b.left) clashes.push(`${id}: title right ${Math.round(t.right)} vs btn ${Math.round(b.left)}`);
+      // The narrower title may wrap: it must still end above the controls.
+      const c = await rect(page, '#controls');
+      if (t.bottom > c.top) clashes.push(`${id}: title bottom ${Math.round(t.bottom)} vs controls top ${Math.round(c.top)}`);
     }
-    check(`${tag}: magnifier clears the title in all ${views.length} views`, !clashes.length, clashes.join('; '));
+    check(`${tag}: magnifier clears the title, title clears the controls, in all ${views.length} views`, !clashes.length, clashes.join('; '));
     await page.evaluate(v => document.querySelector(`#views [data-view="${v}"]`).click(), views[0]);
     await page.waitForTimeout(800);
 
@@ -216,6 +219,12 @@ const rect = (page, sel) => page.$eval(sel, e => { const r = e.getBoundingClient
     s = await state_(page);
     check(`${tag}: card commit pins the picked hood, outline kept`,
           s.pinned === 'TWIN BROOKS' && s.panelOpen && (await outlined(page)) === 'TWIN BROOKS');
+    // With BOTH label classes off: the reference layer is on by default, so
+    // the old label-gated rebuild would still fire and hide a missing one.
+    await page.evaluate(() => ['reference-on', 'labels-on'].forEach(id => {
+      const c = document.getElementById(id); if (c.checked) c.click(); }));
+    await page.waitForTimeout(400);
+    check(`${tag}: label pool empty for the next check`, await page.evaluate(() => labelPool().length === 0));
     await page.tap('#temporal-close');
     await page.waitForTimeout(400);
     check(`${tag}: closing the panel removes the outline`, (await outlined(page)) === null, await outlined(page));
