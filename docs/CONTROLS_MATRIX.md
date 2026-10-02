@@ -283,6 +283,19 @@ deliberately different scopes: the **×** clears the pinned hood (content),
 **Escape** and **`#hoodmode`** leave the mode. Design and the two rendering
 invariants: `SPEC_temporal.md` §2.
 
+**`#search`, neighbourhood search (2026-10-01), is a second way to make a
+selection, not a control.** A magnifier beside the title (right end of the title
+row on a phone) opens a field; a pick moves the camera to the hood (tilt and
+rotation kept) and then runs `temporalClick`, so it opens exactly what a tap or
+click on that hood would — the peek card on touch, the pinned panel on a pointer.
+Re-picking the hood already open does nothing (a pointer click on it would
+unpin). **The hood being read is outlined** (`selectedHoodLayer`: `pinnedHood ||
+peekHood || searchHood`), whichever route selected it; `searchHood` covers a pick
+that opened no readout and clears on the next map click or Escape. `/` opens it,
+Escape closes it before touching the panel. Every view, both builds. Not in the
+URL (§8). Guarded by `verify-search.js` (real mouse, keyboard and touch gestures;
+phone checks at 390 and 360).
+
 **`#peek`, the touch-only peek card (2026-07-31), is the stage BEFORE it.** Not
 a control and not a tier — a readout, and the only surface in the app whose
 existence is decided by the **pointer** rather than by the view, the build or the

@@ -448,6 +448,54 @@ html, body {
 #about-btn:hover { color: var(--ink); }
 #about.open #about-btn { background: var(--accent); color: var(--ink-on-accent); font-weight: 600; }
 /* Copy link: top of the bottom-right stack, styled like the two pods below. */
+/* Neighbourhood search: a magnifier beside the title that opens into a field
+   with its results underneath. JS reveals it (display:flex) once the data, and
+   so the names, have loaded. z-index 6 clears every other chrome surface (max
+   5) while open; #loading's 9998 still covers it during boot. */
+#search {
+  display: none; position: absolute; top: 16px; left: 392px; z-index: 2;
+  flex-direction: column; align-items: flex-start;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+#search.open { z-index: 6; }
+#search-btn {
+  appearance: none; display: flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; padding: 0; cursor: pointer; color: var(--ink-2);
+  background: var(--pod-bg); border: 1px solid var(--border); border-radius: 6px;
+}
+#search-btn:hover { color: var(--ink); }
+#search.open #search-btn { display: none; }
+#search-box {
+  display: none; align-items: center; width: 300px;
+  background: var(--read-bg); border: 1px solid var(--border-strong); border-radius: 6px;
+}
+#search.open #search-box { display: flex; }
+#search-input {
+  flex: 1; min-width: 0; appearance: none; border: 0; outline: none;
+  background: transparent; color: var(--ink); font: inherit; font-size: 14px;
+  padding: 8px 10px;
+}
+#search-input::placeholder { color: var(--ink-3); }
+#search-box:focus-within { border-color: var(--ink-2); }
+#search-close {
+  appearance: none; border: 0; background: transparent; color: var(--ink-2);
+  font-size: 20px; line-height: 1; padding: 4px 10px; cursor: pointer;
+}
+#search-close:hover { color: var(--ink); }
+#search-list {
+  display: none; list-style: none; margin: 4px 0 0; padding: 4px 0; width: 300px;
+  max-height: 60vh; overflow-y: auto;
+  background: var(--sheet-bg); border: 1px solid var(--border); border-radius: 6px;
+}
+#search.open #search-list.open { display: block; }
+#search-list li {
+  padding: 7px 12px; font-size: 13px; color: var(--ink); cursor: pointer;
+}
+#search-list li[aria-selected="true"], #search-list li[role="option"]:hover {
+  background: var(--surface-btn-hover);
+}
+#search-list li.search-none { color: var(--ink-3); cursor: default; }
+#search-btn, #search-input, #search-close, #search-list li { touch-action: manipulation; }
 #share { position: absolute; right: 22px; bottom: 96px; z-index: 1; }
 #share-btn {
   appearance: none; border: 0; background: transparent; color: var(--ink-2);
@@ -896,19 +944,42 @@ body.budget #budget-btn { background: var(--accent); color: var(--ink-on-accent)
      as a readable card (the blurb is the top-third space hog). The tap is
      wired in JS but only reachable here — .panel is pointer-events:none on
      desktop, so the handler is inert there and the blurb stays always-on. */
-  #title { max-width: calc(100vw - 44px); pointer-events: auto; cursor: pointer; }
+  /* 82px, not 44: the right 52px of the title row belongs to #search-btn. */
+  #title { max-width: calc(100vw - 82px); pointer-events: auto; cursor: pointer; }
+  /* Search, phone form: the magnifier at the right end of the title row; open,
+     the field spans the top of the screen over the title and the controls, and
+     the results drop down from it — the half of the screen a keyboard leaves.
+     40px for a fingertip. 16px text: iOS zooms the whole page into any field
+     whose text is smaller, and it does not zoom back out. */
+  #search { top: 12px; left: auto; right: 8px; z-index: 4; }  /* above #title.expanded (3) */
+  #search-btn { width: 40px; height: 40px; }
+  #search.open { left: 8px; align-items: stretch; }
+  #search-box, #search-list { width: auto; }
+  #search-input { font-size: 16px; padding: 10px 12px; }
+  #search-close { font-size: 24px; padding: 6px 14px; }
+  #search-list { max-height: 45vh; }
+  #search-list li { font-size: 15px; padding: 11px 14px; }
   #title h1 { font-size: 16px; }
   /* 22px ≈ √3 × 13px — ~3× glyph area, matching the #opt-caret bump.
      line-height:0 so the taller glyph does not grow the h1's line box
      (#title's height feeds chromeBoxes() and the label cull). */
-  #title h1::after { content: " \25BE"; color: var(--ink-caret-mobile); font-weight: 400; font-size: 22px; line-height: 0; } /* ▾ expand affordance */
-  #title.expanded h1::after { content: " \25B4"; } /* ▴ when open */
+  /* No leading space, padding instead: a space is a break opportunity, and
+     the narrower title (room for #search-btn) wrapped the caret alone onto a
+     second line. Without it the caret travels with the last word. */
+  #title h1::after { content: "\25BE"; padding-left: 0.25em; color: var(--ink-caret-mobile); font-weight: 400; font-size: 22px; line-height: 0; } /* ▾ expand affordance */
+  #title.expanded h1::after { content: "\25B4"; } /* ▴ when open */
   #title-p { display: none; margin-top: 6px; }
   #title.expanded {
     z-index: 3; background: var(--read-bg);
     border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px;
   }
   #title.expanded #title-p { display: block; }
+  /* Open, the card takes back the full width (the narrower one pushed the
+     mill rates 25px down, into the history sheet at 360px) and only its
+     HEADING stays clear of the magnifier, which floats above the card's
+     corner: the blurb below starts under the button's 52px bottom edge. */
+  #title.expanded { max-width: calc(100vw - 44px); }
+  #title.expanded h1 { padding-right: 20px; }
 
   /* Drop the control column below the now one-line title, and bound it to
      the viewport (left+right) so the right-anchored pods can't grow off the
