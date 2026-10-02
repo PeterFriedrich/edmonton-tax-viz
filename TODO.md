@@ -664,10 +664,6 @@ the probe renames (#622). What is left, cheapest first:
   can cover a deck.gl frame a pixel read needs. Convert a script to a ready
   condition (`waitForFunction`, as `verify-url-state.js`'s `settle`) only when
   it earns a gate or a schedule, and falsify it then.
-- [ ] **A smaller `url-state` check for ordinary `web/` PRs.** The job runs the
-  full walk (9 min on GitHub) on every web/ PR. Findings §0: a ~2-min targeted
-  probe fits an ordinary `web/index.html` change; the full walk is needed only
-  when the verify itself changes. Changes CI, so propose first.
 - [ ] **Runner reports "0 checks" for `verify-glass-cell`, `verify-grid-loading`,
   `verify-url-state` (findings §4.3).** They gate by exit code, so this is
   reporting, not coverage: print `PASS`/`FAIL` lines, or teach the runner
@@ -3213,6 +3209,8 @@ archive"*) is not, and this span is 2,533 lines.
 ## Done
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
+
+- [x] **A smaller `url-state` check for ordinary `web/` PRs.** — 2026-10-02 · `docs/TODO_archive.md`
 
 - [x] **Pin the URL vocabulary (URL audit F2) — DONE S209.** — DONE 2026-10-01 · `docs/TODO_archive.md`
 
