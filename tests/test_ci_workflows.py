@@ -219,3 +219,31 @@ def test_the_refresh_conflict_path_aborts_the_rebase():
     run against a detached, half-applied tree."""
     run = _commit_step()
     assert "git rebase --abort" in run
+
+
+def _shards():
+    return _load("tests.yml")["jobs"]["url-state-shard"]["strategy"]["matrix"]["include"]
+
+
+def test_url_state_shards_partition_each_build_exactly():
+    """Each build's views are walked once, and its catch-all excepts exactly
+    the views the other shards name. S211: an unquoted flow mapping split
+    `--views-except=money,services,development` at the commas, so the catch-all
+    ran `--views-except=money` and walked two views twice — every flag still
+    valid, every shard green."""
+    pages = {}
+    for m in _shards():
+        assert set(m) == {"shard", "page", "flags"}, m
+        flags = dict(f.split("=", 1) for f in m["flags"].split())
+        assert set(flags) <= {"--part", "--views", "--views-except"}, m
+        pages.setdefault(m["page"], []).append(flags)
+    for page, shards in pages.items():
+        named = [v for f in shards for v in f.get("--views", "").split(",") if v]
+        assert len(named) == len(set(named)), (page, named)
+        excepts = [f["--views-except"] for f in shards if "--views-except" in f]
+        if named or excepts:
+            assert len(excepts) == 1, (page, excepts)
+            assert sorted(excepts[0].split(",")) == sorted(named), (page, excepts, named)
+        # Every shard of a build walks or links; between them, both happen.
+        parts = {f.get("--part", "all") for f in shards}
+        assert parts & {"walk", "all"} and parts & {"links", "all"}, (page, parts)
