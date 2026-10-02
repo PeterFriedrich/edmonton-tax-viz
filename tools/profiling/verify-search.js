@@ -9,8 +9,8 @@
 //   2. A pick reads like a click on desktop (the panel pins on that hood) and
 //      like a tap on a phone (the peek card, NOT the panel), and the camera
 //      moves to it.
-//   3. The picked hood is MARKED -- its own prism lit in 3D, outlined in 2D
-//      or where it has no prism of its own (a banded hood) -- the mark
+//   3. The picked hood is MARKED -- its own prism lit in 3D (both azure
+//      shells for a banded hood), outlined in 2D -- the mark
 //      follows the readout (closing the panel removes it), and a pick that
 //      opens no readout is still marked (searchHood).
 //   4. Re-picking the pinned hood does not unpin it (a click on it would).
@@ -41,13 +41,15 @@ const boot = async (browser, opts) => {
   return { ctx, page };
 };
 
-// "NAME:prism" / "NAME:outline" / null -- which hood is marked, and how.
+// "NAME:prism" / "NAME:band2" (both band shells lit) / "NAME:outline" / null
+// -- which hood is marked, and how.
 const marked = page => page.evaluate(() => {
-  const ls = overlay._deck.props.layers || [];
-  const p = ls.find(x => x && x.id === 'hood-selected-prism');
-  const o = ls.find(x => x && x.id === 'hood-selected');
-  const l = p || o;
-  return l ? `${l.props.data[0].properties.neighbourhood_name}:${p ? 'prism' : 'outline'}` : null;
+  const ls = (overlay._deck.props.layers || []).filter(x => x && x.id.startsWith('hood-selected'));
+  if (!ls.length) return null;
+  const name = ls[ls.length - 1].props.data[0].properties.neighbourhood_name;
+  const bands = ls.filter(l => !['hood-selected', 'hood-selected-halo', 'hood-selected-prism'].includes(l.id));
+  return `${name}:${bands.length ? 'band' + bands.length
+    : ls.some(l => l.id === 'hood-selected-prism') ? 'prism' : 'outline'}`;
 });
 const listed = page => page.$$eval('#search-list li', els => els.map(e => e.textContent));
 const state_ = page => page.evaluate(() => ({
@@ -152,13 +154,13 @@ const rect = (page, sel) => page.$eval(sel, e => { const r = e.getBoundingClient
     await page.waitForTimeout(3000);
     check('back in 3D: the prism lights again', (await marked(page)) === `${picked}:prism`, await marked(page));
 
-    // A banded hood has no prism of its own (flattened, emptied), so 3D
-    // outlines it.
+    // A banded hood's own prism is flattened and emptied; both azure shells
+    // light instead, not the outline.
     await page.click('#search-btn');
     await page.keyboard.type('UNIVERSITY OF ALBERTA');
     await page.keyboard.press('Enter');
     await page.waitForTimeout(1500);
-    check('3D, banded hood: outlined, not lit', (await marked(page)) === 'UNIVERSITY OF ALBERTA:outline',
+    check('3D, banded hood: both band shells light', (await marked(page)) === 'UNIVERSITY OF ALBERTA:band2',
           await marked(page));
 
     // A pick that opens NO readout: the mark alone shows it. Every hood has

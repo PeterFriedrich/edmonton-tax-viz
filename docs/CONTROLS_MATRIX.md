@@ -291,9 +291,9 @@ click on that hood would — the peek card on touch, the pinned panel on a point
 Re-picking the hood already open does nothing (a pointer click on it would
 unpin). **The hood being read is marked** (`withSelectedHood`: `pinnedHood ||
 peekHood || searchHood`), whichever route selected it: in 3D its own prism is
-held in the hover highlight's white; in 2D, or where it has no prism of its own
-(flat lenses, grid cells, a banded or flattened hood), a white outline over a
-dark halo. `searchHood` covers a pick that opened no readout and clears on the
+held in the hover highlight's white (a banded hood lights both azure shells, as
+its hover does); in 2D, or where it has no prism of either kind (flat lenses,
+grid cells, a flattened hood), a white outline over a dark halo. `searchHood` covers a pick that opened no readout and clears on the
 next map click or Escape. `/` opens it,
 Escape closes it before touching the panel. Every view, both builds. Not in the
 URL (§8). Guarded by `verify-search.js` (real mouse, keyboard and touch gestures;
