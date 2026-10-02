@@ -658,22 +658,34 @@ not restore it**; the numbers below are the durable record).
 
 Done so far: the runner preload (#620, 82 → 57.5 min), the harness reds (#621),
 the probe renames (#622), `url-state` sharded (#637/#638, 8.5 → 4.0 min) and its
-public walk split (#642, → ~3 min run). **Next session: audit + close-out sweep,
-`docs/FABLE_AUDIT_test_runtime.md` (ledger queue item 17).** It decides the
-items below. What is left, cheapest first:
+public walk split (#642, → ~3 min run). **Audited and swept S213**
+(`docs/FINDINGS_verify_runtime.md` §7): sweep 62.0 min, no real red, and the
+preload still holds (12/12). What is left:
 
-- [ ] **Fixed sleeps: 798 s of `waitForTimeout` on the full build (findings §3).**
-  Loads settle in ~1–2 s, then most scripts sleep 3.5–4 s. Don't sweep: a sleep
-  can cover a deck.gl frame a pixel read needs. Convert a script to a ready
-  condition (`waitForFunction`, as `verify-url-state.js`'s `settle`) only when
-  it earns a gate or a schedule, and falsify it then.
 - [ ] **Runner reports "0 checks" for `verify-glass-cell`, `verify-grid-loading`,
   `verify-url-state` (findings §4.3).** They gate by exit code, so this is
   reporting, not coverage: print `PASS`/`FAIL` lines, or teach the runner
   their format.
+  - **Fix in #647 (S213), awaiting Peter's merge.** Close this item on merge.
 - [ ] **`verify-blurbs` reads FAIL on every full-build sweep (findings §4.4).** It
   refuses the full build by design; the runner should skip or mark it, not
   count it red.
+  - **Fix in #647 (S213), awaiting Peter's merge.** Close this item on merge.
+- [ ] **Make `url-state` a required check (S213 F1). Peter's call; it is one
+  branch-protection setting.** It walked 10 PRs, and 4 merged before it
+  reported and deployed first. DECISIONS 2026-09-29 says it "gates the merge".
+  On non-`web/` PRs it finishes inside `test`'s time, so requiring it costs
+  ~3 min on `web/` PRs only. If Peter declines, mark that row amended:
+  advisory, read by email.
+- [ ] **Merge #646 (S213 F2)**, the shard-partition test. It currently passes
+  with money, the full catch-all, or the whole full build dropped from the
+  walk.
+- [ ] **`verify-about`: treat 5xx and timeouts like 429 (S213 F4).** It was red
+  in 3 of 7 runs on 2026-10-02, each time on a host we don't control. Keep
+  404/410 red. Script change, so Peter's.
+- [ ] **The lit selected-hood prism (#635/#636) added ~100 s to `verify-peek`**
+  under SwiftShader (212 → 310 s; findings §7b). Check a tap's latency on a
+  phone with the S210 checks (MOBILE_USABILITY §2b) before deciding anything.
 
 ### Peter's list, 2026-09-25 (S196) — not scoped yet
 
@@ -3212,6 +3224,8 @@ archive"*) is not, and this span is 2,533 lines.
 ## Done
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
+
+- [x] **Fixed sleeps: 798 s of `waitForTimeout` on the full build (findings §3).** · `docs/TODO_archive.md`
 
 - [x] **A smaller `url-state` check for ordinary `web/` PRs.** — 2026-10-02 · `docs/TODO_archive.md`
 

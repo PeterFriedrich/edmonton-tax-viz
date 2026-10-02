@@ -8,6 +8,12 @@ Items are verbatim as they were closed, newest-moved first in the order they app
 
 ---
 
+- [x] **Fixed sleeps: 798 s of `waitForTimeout` on the full build (findings §3).** CLOSED S213, no sweep: none of the 798 s is paid on any gate or schedule (findings §7c).
+  Loads settle in ~1–2 s, then most scripts sleep 3.5–4 s. Don't sweep: a sleep
+  can cover a deck.gl frame a pixel read needs. Convert a script to a ready
+  condition (`waitForFunction`, as `verify-url-state.js`'s `settle`) only when
+  it earns a gate or a schedule, and falsify it then.
+
 - [x] **A smaller `url-state` check for ordinary `web/` PRs.** Done differently
   (S211): six parallel shards, full coverage kept, ~8 → ~2.5 min wall
   (`DECISIONS.md` 2026-10-02).
