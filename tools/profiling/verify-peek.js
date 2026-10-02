@@ -294,14 +294,16 @@ const closeBox = page => page.evaluate(() => {
     // definition of a lens's readout, so the two surfaces cannot drift apart.
     const body = await page.evaluate((n) => {
       const f = state.data.features.find(x => x.properties.neighbourhood_name === n);
-      return viewTooltip({ object: f }, false).html;
+      // ⚠️ Through the browser's serialiser, as the card is read back via
+      // `innerHTML` — a raw === compares MARKUP DIALECT, not content: `<br/>`
+      // comes back `<br>`, and a bare `<` in "<$1 to $5,115" comes back
+      // `&lt;`. The `<br>`-only normaliser this replaced failed on every
+      // hood whose readout opened with `<` (S210, S211).
+      const d = document.createElement('div');
+      d.innerHTML = viewTooltip({ object: f }, false).html;
+      return d.innerHTML;
     }, t[0].name);
-    // ⚠️ NORMALISE `<br/>` -> `<br>` on both sides. viewTooltip emits the XHTML
-    // form, but reading it back through `innerHTML` returns the browser's
-    // serialisation, so a raw === compares MARKUP DIALECT, not content, and
-    // fails on identical text.
-    const br = h => h.replace(/<br\s*\/?>/gi, '<br>');
-    check('touch: card body == the lens readout, nameless', br(s.peekRead) === br(body),
+    check('touch: card body == the lens readout, nameless', s.peekRead === body,
       `card="${s.peekRead}" lens="${body}"`);
     // ...and it must be MORE than the one headline line, which is the whole
     // defect: S82's touch suppression left a phone with a single row per lens.
