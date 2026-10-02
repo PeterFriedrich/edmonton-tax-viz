@@ -91,11 +91,18 @@ const run = script => new Promise(resolve => {
   p.on("close", code => {
     const lines = out.split("\n");
     const fails = lines.filter(l => /^FAIL/.test(l));
-    const passes = lines.filter(l => /^PASS/.test(l));
+    // `ok  ` is verify-url-state, -glass-cell and -grid-loading's pass line;
+    // without it they read "0 checks" when green.
+    const passes = lines.filter(l => /^(PASS|ok  )/.test(l));
+    // verify-blurbs refuses the full build with a FAIL on purpose, because on
+    // the deploy gate a refusal must be red. Here it was a red on every
+    // full-build sweep. Reporting it as a skip is safe: deploy.yml calls the
+    // script directly, never through this runner.
+    const skipped = fails.length === 1 && /^FAIL\s+PARTIAL — ran 0 checks:/.test(fails[0]);
     // A script that crashed before printing anything is a failure even with no
     // FAIL lines — exit code is the backstop, not the banner.
-    const bad = fails.length > 0 || code !== 0;
-    resolve({ script, bad, fails, passes, code, out,
+    const bad = !skipped && (fails.length > 0 || code !== 0);
+    resolve({ script, bad, skipped, fails, passes, code, out,
               secs: ((Date.now() - started) / 1000).toFixed(0) });
   });
 });
@@ -110,10 +117,11 @@ const run = script => new Promise(resolve => {
   results.sort((a, b) => a.script.localeCompare(b.script));
 
   for (const r of results) {
-    const n = r.passes.length + r.fails.length;
-    console.log(`${r.bad ? "FAIL" : "ok  "}  ${r.script.padEnd(34)} ` +
+    const n = r.skipped ? 0 : r.passes.length + r.fails.length;
+    console.log(`${r.bad ? "FAIL" : r.skipped ? "skip" : "ok  "}  ${r.script.padEnd(34)} ` +
                 `${String(n).padStart(3)} checks  ${r.secs}s` +
-                (r.bad ? `  (${r.fails.length} failed, exit ${r.code})` : ""));
+                (r.bad ? `  (${r.fails.length} failed, exit ${r.code})` : "") +
+                (r.skipped ? `  (${r.fails[0].replace(/^FAIL\s+/, "")})` : ""));
     if (r.bad) {
       // Show the failures themselves — the whole point of running it.
       for (const f of r.fails) console.log("        " + f);
@@ -123,8 +131,10 @@ const run = script => new Promise(resolve => {
   }
 
   const bad = results.filter(r => r.bad);
-  const checks = results.reduce((a, r) => a + r.passes.length + r.fails.length, 0);
+  const skips = results.filter(r => r.skipped).length;
+  const checks = results.reduce((a, r) => a + (r.skipped ? 0 : r.passes.length + r.fails.length), 0);
   console.log(`\n${results.length} script(s), ${checks} checks — ` +
-              (bad.length ? `${bad.length} SCRIPT(S) FAILED` : "all green"));
+              (bad.length ? `${bad.length} SCRIPT(S) FAILED` : "all green") +
+              (skips ? `, ${skips} skipped` : ""));
   process.exit(bad.length ? 1 : 0);
 })();
