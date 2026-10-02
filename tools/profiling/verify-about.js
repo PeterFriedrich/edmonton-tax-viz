@@ -150,12 +150,17 @@ const [url] = process.argv.slice(2);
   // good URL and tells us nothing about whether it resolves.
   // 429/403 is github throttling this box, not a verdict on the URL — report it
   // as inconclusive rather than failing the suite on someone else's rate limit.
+  // Same for 5xx and a timeout/network error: the HOST is down, which says
+  // nothing about the link (red in 3 of 7 runs on 2026-10-02 — OSM 503,
+  // data.edmonton.ca timeout). Anything else, 404/410 included, stays red.
   for (const l of p.links) {
     let st;
     try { st = (await page.request.get(l.href, { timeout: 20000 })).status(); }
     catch (e) { st = 'error:' + e.message.slice(0, 40); }
     if (st === 429 || st === 403) {
       console.log(`SKIP  link resolves: ${l.text.slice(0, 28)}  rate-limited (${st}), not checked`);
+    } else if (typeof st !== 'number' || st >= 500) {
+      console.log(`SKIP  link resolves: ${l.text.slice(0, 28)}  host unavailable (${st}), not checked`);
     } else {
       check(`link resolves: ${l.text.slice(0, 28)}`, st === 200, `status=${st} ${l.href}`);
     }
