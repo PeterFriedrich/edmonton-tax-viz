@@ -420,6 +420,16 @@ Built and verified by Opus 5.5 alone.
     week's data and not this run's. Locally, HEAD equalled the served file, so
     that path has only ever shown zero moves.
 
+### S212 — marked 2026-10-02, briefed
+
+17. **Test & verify runtime, then the close-out sweep** (#620–#622, #637/#638,
+    #642). **Briefed:** `docs/FABLE_AUDIT_test_runtime.md`. Part A asks whether
+    the speed-ups (runner preload, `url-state` shards, the public walk split,
+    `--only-shell`) kept coverage, highest level first. Part B is one full
+    local sweep against S206's baseline, then closing or rescoping every open
+    "Verify runtime" TODO item. Written by the session that built most of it, so
+    **run it cross-model** if one is available. Lined up for the next session.
+
 ## Never audited (candidates, roughly ranked)
 
 Surfaces no audit run has covered, **re-ranked 2026-09-05 (S140)** at Peter's

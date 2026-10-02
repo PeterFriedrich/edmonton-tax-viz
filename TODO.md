@@ -657,7 +657,10 @@ not restore it**; the numbers below are the durable record).
 ### Verify runtime — from the S206 audit (`docs/FINDINGS_verify_runtime.md`)
 
 Done so far: the runner preload (#620, 82 → 57.5 min), the harness reds (#621),
-the probe renames (#622). What is left, cheapest first:
+the probe renames (#622), `url-state` sharded (#637/#638, 8.5 → 4.0 min) and its
+public walk split (#642, → ~3 min run). **Next session: audit + close-out sweep,
+`docs/FABLE_AUDIT_test_runtime.md` (ledger queue item 17).** It decides the
+items below. What is left, cheapest first:
 
 - [ ] **Fixed sleeps: 798 s of `waitForTimeout` on the full build (findings §3).**
   Loads settle in ~1–2 s, then most scripts sleep 3.5–4 s. Don't sweep: a sleep
