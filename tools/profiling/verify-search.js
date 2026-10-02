@@ -9,10 +9,14 @@
 //   2. A pick reads like a click on desktop (the panel pins on that hood) and
 //      like a tap on a phone (the peek card, NOT the panel), and the camera
 //      moves to it.
-//   3. Re-picking the pinned hood does not unpin it (a click on it would).
-//   4. Keyboard: "/" opens, arrows move, Enter picks, Escape closes search
+//   3. The picked hood is MARKED -- its own prism lit in 3D, outlined in 2D
+//      or where it has no prism of its own (a banded hood) -- the mark
+//      follows the readout (closing the panel removes it), and a pick that
+//      opens no readout is still marked (searchHood).
+//   4. Re-picking the pinned hood does not unpin it (a click on it would).
+//   5. Keyboard: "/" opens, arrows move, Enter picks, Escape closes search
 //      BEFORE it touches the panel.
-//   5. Phone: the field's text is >= 16px (iOS zooms the page otherwise), the
+//   6. Phone: the field's text is >= 16px (iOS zooms the page otherwise), the
 //      keyboard is dropped after a pick (input blurred), the magnifier clears
 //      the title in EVERY view, and nothing open runs off-screen.
 //   node verify-search.js <url>
@@ -37,9 +41,17 @@ const boot = async (browser, opts) => {
   return { ctx, page };
 };
 
+// "NAME:prism" / "NAME:outline" / null -- which hood is marked, and how.
+const marked = page => page.evaluate(() => {
+  const ls = overlay._deck.props.layers || [];
+  const p = ls.find(x => x && x.id === 'hood-selected-prism');
+  const o = ls.find(x => x && x.id === 'hood-selected');
+  const l = p || o;
+  return l ? `${l.props.data[0].properties.neighbourhood_name}:${p ? 'prism' : 'outline'}` : null;
+});
 const listed = page => page.$$eval('#search-list li', els => els.map(e => e.textContent));
 const state_ = page => page.evaluate(() => ({
-  pinned: pinnedHood, peek: peekHood,
+  pinned: pinnedHood, peek: peekHood, search: searchHood,
   open: document.getElementById('search').classList.contains('open'),
   focused: document.activeElement && document.activeElement.id,
   center: map.getCenter().toArray(), zoom: map.getZoom(),
@@ -107,6 +119,7 @@ const rect = (page, sel) => page.$eval(sel, e => { const r = e.getBoundingClient
     check('desktop pick: the panel pins (as a click does), no peek card', s.panelOpen && !s.peekOpen && !s.peek);
     check('desktop pick: search closes', !s.open);
     check('desktop pick: the camera centres on the hood', await centredOn(page, L[1]));
+    check('3D: the picked hood\'s own prism lights', (await marked(page)) === `${L[1]}:prism`, await marked(page));
     const picked = L[1];
 
     // Re-pick the pinned hood: must stay pinned (a click on it would unpin).
@@ -131,6 +144,40 @@ const rect = (page, sel) => page.$eval(sel, e => { const r = e.getBoundingClient
     s = await state_(page);
     check('a click outside closes search', !s.open);
 
+    // 2D swaps the lit prism for the outline, and back.
+    await page.click('#center2d');
+    await page.waitForTimeout(3000);
+    check('2D: the pick is outlined instead', (await marked(page)) === `${picked}:outline`, await marked(page));
+    await page.click('#recenter');
+    await page.waitForTimeout(3000);
+    check('back in 3D: the prism lights again', (await marked(page)) === `${picked}:prism`, await marked(page));
+
+    // A banded hood has no prism of its own (flattened, emptied), so 3D
+    // outlines it.
+    await page.click('#search-btn');
+    await page.keyboard.type('UNIVERSITY OF ALBERTA');
+    await page.keyboard.press('Enter');
+    await page.waitForTimeout(1500);
+    check('3D, banded hood: outlined, not lit', (await marked(page)) === 'UNIVERSITY OF ALBERTA:outline',
+          await marked(page));
+
+    // A pick that opens NO readout: the mark alone shows it. Every hood has
+    // a history row today, so force the state a stale or partial deploy would
+    // give — the Value map with the history file missing.
+    await page.click('#metric-row [data-metric="value"]');
+    await page.waitForTimeout(1000);
+    await page.evaluate(() => { closeTemporal(); temporalData = null; });
+    await page.click('#search-btn');
+    await page.keyboard.type('TWIN BROOKS');
+    await page.keyboard.press('Enter');
+    await page.waitForTimeout(1500);
+    s = await state_(page);
+    const o = await marked(page);
+    check('no readout to open: the pick is still marked (searchHood)',
+          s.search === 'TWIN BROOKS' && !s.pinned && o === 'TWIN BROOKS:prism',
+          JSON.stringify({ search: s.search, pinned: s.pinned, mark: o }));
+    await page.keyboard.press('Escape');
+    check('Escape clears a search-only mark', (await marked(page)) === null);
     await Promise.race([browser.close(), new Promise(r => setTimeout(r, 3000))]);
   }
 
@@ -206,14 +253,25 @@ const rect = (page, sel) => page.$eval(sel, e => { const r = e.getBoundingClient
           JSON.stringify({ peek: s.peek, panel: s.panelOpen }));
     check(`${tag}: keyboard dropped (field blurred) and search closed`, !s.open && s.focused !== 'search-input');
     check(`${tag}: camera centres on the hood`, await centredOn(page, 'TWIN BROOKS'));
+    check(`${tag}: its prism lights`, (await marked(page)) === 'TWIN BROOKS:prism', await marked(page));
     check(`${tag}: the card names the hood`,
           (await page.$eval('#peek-name', e => e.textContent)) === 'TWIN BROOKS');
 
-    // Committing the card opens the panel on the same hood.
+    // Committing the card opens the panel on the same hood; the mark stays.
     await page.tap('#peek');
     await page.waitForTimeout(800);
     s = await state_(page);
-    check(`${tag}: card commit pins the picked hood`, s.pinned === 'TWIN BROOKS' && s.panelOpen);
+    check(`${tag}: card commit pins the picked hood, mark kept`,
+          s.pinned === 'TWIN BROOKS' && s.panelOpen && (await marked(page)) === 'TWIN BROOKS:prism');
+    // With BOTH label classes off: the reference layer is on by default, so
+    // the old label-gated rebuild would still fire and hide a missing one.
+    await page.evaluate(() => ['reference-on', 'labels-on'].forEach(id => {
+      const c = document.getElementById(id); if (c.checked) c.click(); }));
+    await page.waitForTimeout(400);
+    check(`${tag}: label pool empty for the next check`, await page.evaluate(() => labelPool().length === 0));
+    await page.tap('#temporal-close');
+    await page.waitForTimeout(400);
+    check(`${tag}: closing the panel removes the mark`, (await marked(page)) === null, await marked(page));
     await Promise.race([browser.close(), new Promise(r => setTimeout(r, 3000))]);
   }
 

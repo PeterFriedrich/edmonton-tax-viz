@@ -289,8 +289,12 @@ row on a phone) opens a field; a pick moves the camera to the hood (tilt and
 rotation kept) and then runs `temporalClick`, so it opens exactly what a tap or
 click on that hood would — the peek card on touch, the pinned panel on a pointer.
 Re-picking the hood already open does nothing (a pointer click on it would
-unpin). No extra outline marks the pick: the readout and the usual hover
-highlight do (an outline shipped 2026-10-01 and came out 2026-10-02). `/` opens it,
+unpin). **The hood being read is marked** (`withSelectedHood`: `pinnedHood ||
+peekHood || searchHood`), whichever route selected it: in 3D its own prism is
+held in the hover highlight's white; in 2D, or where it has no prism of its own
+(flat lenses, grid cells, a banded or flattened hood), a white outline over a
+dark halo. `searchHood` covers a pick that opened no readout and clears on the
+next map click or Escape. `/` opens it,
 Escape closes it before touching the panel. Every view, both builds. Not in the
 URL (§8). Guarded by `verify-search.js` (real mouse, keyboard and touch gestures;
 phone checks at 390 and 360).
