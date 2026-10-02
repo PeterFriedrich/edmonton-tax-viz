@@ -127,14 +127,14 @@ jobs:
             echo "No web/ change — URL-state check not needed."
           fi
 
-  # SIX SHARDS IN PARALLEL (2026-10-02): one job ran ~8 min of walk serially;
-  # the slowest shard is ~2.5 min. Measured split on the Oracle box: public
-  # walk ~2.5 min / links ~1 min; full money ~1.3, services ~1.8, development
-  # ~1.1, everything else + links ~1.8.
+  # SEVEN SHARDS IN PARALLEL (2026-10-02): one job ran ~8 min of walk serially.
+  # Measured on the Oracle box: public walk money 76 s, development 39 s,
+  # services 37 s, ratio 7 s (so money alone vs the rest) / links ~1 min; full
+  # money ~1.3 min, services ~1.8, development ~1.1, everything else + links ~1.8.
   # ⚠️ BOTH BUILDS: the full build's <base href="../"> is one of the defects
   # this catches, and the public build is the one readers share links from.
-  # ⚠️ The last full shard is --views-except, not a list: a view added later
-  # lands there and is walked unasked. Don't turn it into --views.
+  # ⚠️ Each build's last walk shard is --views-except, not a list: a view added
+  # later lands there and is walked unasked. Don't turn it into --views.
   url-state-shard:
     needs: url-state-changes
     if: needs.url-state-changes.outputs.run == 'true'
@@ -143,7 +143,8 @@ jobs:
       fail-fast: false  # every shard reports, so one red doesn't hide another
       matrix:
         include:
-          - { shard: public-walk,      page: index.html,                flags: "--part=walk" }
+          - { shard: public-money,     page: index.html,                flags: "--part=walk --views=money" }
+          - { shard: public-rest,      page: index.html,                flags: "--part=walk --views-except=money" }
           - { shard: public-links,     page: index.html,                flags: "--part=links" }
           - { shard: full-money,       page: dev-build-full/index.html, flags: "--part=walk --views=money" }
           - { shard: full-services,    page: dev-build-full/index.html, flags: "--part=walk --views=services" }
@@ -161,7 +162,9 @@ jobs:
         working-directory: tools/profiling
         run: |
           npm ci
-          npx playwright install --with-deps chromium
+          # Headless launches run the headless shell; full Chrome is ~6 s of
+          # download per shard that nothing uses.
+          npx playwright install --with-deps --only-shell chromium
 
       - name: Check the URL hash round-trips
         run: |
