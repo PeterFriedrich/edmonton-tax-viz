@@ -230,13 +230,21 @@ def test_url_state_shards_partition_each_build_exactly():
     the views the other shards name. S211: an unquoted flow mapping split
     `--views-except=money,services,development` at the commas, so the catch-all
     ran `--views-except=money` and walked two views twice — every flag still
-    valid, every shard green."""
+    valid, every shard green. S213: three more mutations stayed green, because
+    a view NAMED was taken as a view WALKED and the builds were never counted —
+    `--part=links` on both money shards (money walked nowhere), the catch-all
+    made `--part=links` (ratio, uses and lab walked nowhere), and every full
+    shard deleted."""
     pages = {}
     for m in _shards():
         assert set(m) == {"shard", "page", "flags"}, m
         flags = dict(f.split("=", 1) for f in m["flags"].split())
         assert set(flags) <= {"--part", "--views", "--views-except"}, m
+        # --part=links walks nothing, so a view it names is dropped, not walked.
+        if "--views" in flags or "--views-except" in flags:
+            assert flags.get("--part", "all") in {"walk", "all"}, m
         pages.setdefault(m["page"], []).append(flags)
+    assert set(pages) == {"index.html", "dev-build-full/index.html"}, sorted(pages)
     for page, shards in pages.items():
         named = [v for f in shards for v in f.get("--views", "").split(",") if v]
         assert len(named) == len(set(named)), (page, named)
