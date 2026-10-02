@@ -4317,28 +4317,44 @@
     // patch of 406 lookalike shapes and leaves the reader to guess which one.
     // In 3D its own prism lights up: a copy of it, drawn right after the
     // source layer (deck's polygon offset lets the later of two coplanar
-    // layers win) and held in the hover highlight's white. A hood with no
-    // prism of its own -- a flat lens, grid cells, a banded or flattened hood
-    // -- and every hood in 2D get the outline instead (Peter, 2026-10-02).
+    // layers win) and held in the hover highlight's white. A BANDED hood
+    // lights both of its azure shells instead -- its own prism is flattened
+    // and emptied, and lighting both is the band hover's no-primacy rule.
+    // A hood with no prism of either kind -- a flat lens, grid cells, a
+    // flattened hood -- and every hood in 2D get the outline (Peter,
+    // 2026-10-02).
+    // ⚠️ The copies' ids must stay out of isBandLayer: bandHover would
+    // re-index them into the full banded array and the light would go out.
     const SELECTED_PRISM_IDS = new Set(["metric-extrusion", "deviation-extrusion",
       "change-prisms", "ratio-extrusion", "glass-extrusion", "uses-res-prisms"]);
+    // Deviation's visible shells are wireframes; its invisible pick solids
+    // are the ones a highlight shows, so those are what light.
+    const SELECTED_BAND_IDS = new Set(["inst-band-exempt", "inst-band-levied",
+      "ratio-inst-exempt", "ratio-inst-levied",
+      "deviation-band-pick-levied", "deviation-band-pick-exempt"]);
     function withSelectedHood(layers) {
       const name = pinnedHood || peekHood || searchHood;
       const f = name && state.data && state.data.features.find(
         x => x.properties.neighbourhood_name === name);
       if (!f) return layers;
-      const i = camFlat ? -1 : layers.findIndex(l => SELECTED_PRISM_IDS.has(l.id));
-      if (i >= 0) {
-        const src = layers[i];
-        const g = (src.props.data.features || []).find(x => x === f
-          || x.properties.neighbourhood_name === name);
+      const lit = { pickable: false, autoHighlight: false,
+                    highlightedObjectIndex: 0, highlightColor: [255, 255, 255, 60] };
+      const own = l => (l.props.data.features || l.props.data || []).find(x => x === f
+        || (x.properties && x.properties.neighbourhood_name === name));
+      if (!camFlat) {
+        const bands = layers.filter(l => SELECTED_BAND_IDS.has(l.id) && own(l));
+        if (bands.length) {
+          return layers.flatMap(l => bands.includes(l)
+            ? [l, l.clone({ id: "hood-selected-" + l.id, data: [own(l)], ...lit })] : [l]);
+        }
+        const i = layers.findIndex(l => SELECTED_PRISM_IDS.has(l.id));
+        const g = i >= 0 && own(layers[i]);
         const acc = (a, d) => typeof a === "function" ? a(d, { index: 0, data: [d], target: [] }) : a;
-        const fill = g && acc(src.props.getFillColor, g);
-        if (g && acc(src.props.getElevation, g) && fill && fill[3] !== 0) {
-          return [...layers.slice(0, i + 1), src.clone({
-            id: "hood-selected-prism", data: [g], pickable: false, autoHighlight: false,
-            highlightedObjectIndex: 0, highlightColor: [255, 255, 255, 60],
-          }), ...layers.slice(i + 1)];
+        const fill = g && acc(layers[i].props.getFillColor, g);
+        if (g && acc(layers[i].props.getElevation, g) && fill && fill[3] !== 0) {
+          return [...layers.slice(0, i + 1),
+                  layers[i].clone({ id: "hood-selected-prism", data: [g], ...lit }),
+                  ...layers.slice(i + 1)];
         }
       }
       const mk = (id, col, w) => new deck.GeoJsonLayer({
