@@ -143,12 +143,12 @@ jobs:
       fail-fast: false  # every shard reports, so one red doesn't hide another
       matrix:
         include:
-          - { shard: public-walk,      page: index.html,                flags: --part=walk }
-          - { shard: public-links,     page: index.html,                flags: --part=links }
-          - { shard: full-money,       page: dev-build-full/index.html, flags: --part=walk --views=money }
-          - { shard: full-services,    page: dev-build-full/index.html, flags: --part=walk --views=services }
-          - { shard: full-development, page: dev-build-full/index.html, flags: --part=walk --views=development }
-          - { shard: full-rest,        page: dev-build-full/index.html, flags: --views-except=money,services,development }
+          - { shard: public-walk,      page: index.html,                flags: "--part=walk" }
+          - { shard: public-links,     page: index.html,                flags: "--part=links" }
+          - { shard: full-money,       page: dev-build-full/index.html, flags: "--part=walk --views=money" }
+          - { shard: full-services,    page: dev-build-full/index.html, flags: "--part=walk --views=services" }
+          - { shard: full-development, page: dev-build-full/index.html, flags: "--part=walk --views=development" }
+          - { shard: full-rest,        page: dev-build-full/index.html, flags: "--views-except=money,services,development" }
     name: url-state (${{ matrix.shard }})
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
