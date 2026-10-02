@@ -8,6 +8,21 @@ Items are verbatim as they were closed, newest-moved first in the order they app
 
 ---
 
+- [x] **Runner reports "0 checks" for `verify-glass-cell`, `verify-grid-loading`,
+  `verify-url-state` (findings §4.3).** They gate by exit code, so this is
+  reporting, not coverage: print `PASS`/`FAIL` lines, or teach the runner
+  their format.
+  - **Fixed in #647 (S213), merged 2026-10-02.**
+
+- [x] **`verify-blurbs` reads FAIL on every full-build sweep (findings §4.4).** It
+  refuses the full build by design; the runner should skip or mark it, not
+  count it red.
+  - **Fixed in #647 (S213), merged 2026-10-02.**
+
+- [x] **Merge #646 (S213 F2)** — merged 2026-10-02, the shard-partition test. It currently passes
+  with money, the full catch-all, or the whole full build dropped from the
+  walk.
+
 - [x] **Fixed sleeps: 798 s of `waitForTimeout` on the full build (findings §3).** CLOSED S213, no sweep: none of the 798 s is paid on any gate or schedule (findings §7c).
   Loads settle in ~1–2 s, then most scripts sleep 3.5–4 s. Don't sweep: a sleep
   can cover a deck.gl frame a pixel read needs. Convert a script to a ready

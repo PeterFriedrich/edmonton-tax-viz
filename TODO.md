@@ -662,27 +662,16 @@ public walk split (#642, → ~3 min run). **Audited and swept S213**
 (`docs/FINDINGS_verify_runtime.md` §7): sweep 62.0 min, no real red, and the
 preload still holds (12/12). What is left:
 
-- [ ] **Runner reports "0 checks" for `verify-glass-cell`, `verify-grid-loading`,
-  `verify-url-state` (findings §4.3).** They gate by exit code, so this is
-  reporting, not coverage: print `PASS`/`FAIL` lines, or teach the runner
-  their format.
-  - **Fix in #647 (S213), awaiting Peter's merge.** Close this item on merge.
-- [ ] **`verify-blurbs` reads FAIL on every full-build sweep (findings §4.4).** It
-  refuses the full build by design; the runner should skip or mark it, not
-  count it red.
-  - **Fix in #647 (S213), awaiting Peter's merge.** Close this item on merge.
 - [ ] **Make `url-state` a required check (S213 F1). Peter's call; it is one
   branch-protection setting.** It walked 10 PRs, and 4 merged before it
   reported and deployed first. DECISIONS 2026-09-29 says it "gates the merge".
   On non-`web/` PRs it finishes inside `test`'s time, so requiring it costs
   ~3 min on `web/` PRs only. If Peter declines, mark that row amended:
   advisory, read by email.
-- [ ] **Merge #646 (S213 F2)**, the shard-partition test. It currently passes
-  with money, the full catch-all, or the whole full build dropped from the
-  walk.
 - [ ] **`verify-about`: treat 5xx and timeouts like 429 (S213 F4).** It was red
   in 3 of 7 runs on 2026-10-02, each time on a host we don't control. Keep
   404/410 red. Script change, so Peter's.
+  - **Fix in #650 (S214), falsified against a stub host; awaiting Peter's merge.**
 - [ ] **The lit selected-hood prism (#635/#636) added ~100 s to `verify-peek`**
   under SwiftShader (212 → 310 s; findings §7b). Check a tap's latency on a
   phone with the S210 checks (MOBILE_USABILITY §2b) before deciding anything.
@@ -3224,6 +3213,10 @@ archive"*) is not, and this span is 2,533 lines.
 ## Done
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
+
+- [x] **Runner reports "0 checks" for `verify-glass-cell`, `verify-grid-loading`, `verify-url-state` (findings §4.3).** — 2026-10-02 · `docs/TODO_archive.md`
+- [x] **`verify-blurbs` reads FAIL on every full-build sweep (findings §4.4).** — 2026-10-02 · `docs/TODO_archive.md`
+- [x] **Merge #646 (S213 F2)** — 2026-10-02 · `docs/TODO_archive.md`
 
 - [x] **Fixed sleeps: 798 s of `waitForTimeout` on the full build (findings §3).** · `docs/TODO_archive.md`
 
