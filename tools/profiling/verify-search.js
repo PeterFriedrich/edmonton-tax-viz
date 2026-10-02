@@ -9,13 +9,10 @@
 //   2. A pick reads like a click on desktop (the panel pins on that hood) and
 //      like a tap on a phone (the peek card, NOT the panel), and the camera
 //      moves to it.
-//   3. The picked hood is OUTLINED, the outline follows the readout (closing
-//      the panel removes it), and a pick that opens no readout is still
-//      outlined (searchHood).
-//   4. Re-picking the pinned hood does not unpin it (a click on it would).
-//   5. Keyboard: "/" opens, arrows move, Enter picks, Escape closes search
+//   3. Re-picking the pinned hood does not unpin it (a click on it would).
+//   4. Keyboard: "/" opens, arrows move, Enter picks, Escape closes search
 //      BEFORE it touches the panel.
-//   6. Phone: the field's text is >= 16px (iOS zooms the page otherwise), the
+//   5. Phone: the field's text is >= 16px (iOS zooms the page otherwise), the
 //      keyboard is dropped after a pick (input blurred), the magnifier clears
 //      the title in EVERY view, and nothing open runs off-screen.
 //   node verify-search.js <url>
@@ -40,13 +37,9 @@ const boot = async (browser, opts) => {
   return { ctx, page };
 };
 
-const outlined = page => page.evaluate(() => {
-  const l = (overlay._deck.props.layers || []).find(x => x && x.id === 'hood-selected');
-  return l ? l.props.data[0].properties.neighbourhood_name : null;
-});
 const listed = page => page.$$eval('#search-list li', els => els.map(e => e.textContent));
 const state_ = page => page.evaluate(() => ({
-  pinned: pinnedHood, peek: peekHood, search: searchHood,
+  pinned: pinnedHood, peek: peekHood,
   open: document.getElementById('search').classList.contains('open'),
   focused: document.activeElement && document.activeElement.id,
   center: map.getCenter().toArray(), zoom: map.getZoom(),
@@ -114,7 +107,6 @@ const rect = (page, sel) => page.$eval(sel, e => { const r = e.getBoundingClient
     check('desktop pick: the panel pins (as a click does), no peek card', s.panelOpen && !s.peekOpen && !s.peek);
     check('desktop pick: search closes', !s.open);
     check('desktop pick: the camera centres on the hood', await centredOn(page, L[1]));
-    check('outline: the picked hood is outlined', (await outlined(page)) === L[1], await outlined(page));
     const picked = L[1];
 
     // Re-pick the pinned hood: must stay pinned (a click on it would unpin).
@@ -139,23 +131,6 @@ const rect = (page, sel) => page.$eval(sel, e => { const r = e.getBoundingClient
     s = await state_(page);
     check('a click outside closes search', !s.open);
 
-    // A pick that opens NO readout: the outline alone marks it. Every hood has
-    // a history row today, so force the state a stale or partial deploy would
-    // give — the Value map with the history file missing.
-    await page.click('#metric-row [data-metric="value"]');
-    await page.waitForTimeout(1000);
-    await page.evaluate(() => { closeTemporal(); temporalData = null; });
-    await page.click('#search-btn');
-    await page.keyboard.type('TWIN BROOKS');
-    await page.keyboard.press('Enter');
-    await page.waitForTimeout(1500);
-    s = await state_(page);
-    const o = await outlined(page);
-    check('no readout to open: the pick is still outlined (searchHood)',
-          s.search === 'TWIN BROOKS' && !s.pinned && o === 'TWIN BROOKS',
-          JSON.stringify({ search: s.search, pinned: s.pinned, outline: o }));
-    await page.keyboard.press('Escape');
-    check('Escape clears a search-only outline', (await outlined(page)) === null);
     await Promise.race([browser.close(), new Promise(r => setTimeout(r, 3000))]);
   }
 
@@ -231,25 +206,14 @@ const rect = (page, sel) => page.$eval(sel, e => { const r = e.getBoundingClient
           JSON.stringify({ peek: s.peek, panel: s.panelOpen }));
     check(`${tag}: keyboard dropped (field blurred) and search closed`, !s.open && s.focused !== 'search-input');
     check(`${tag}: camera centres on the hood`, await centredOn(page, 'TWIN BROOKS'));
-    check(`${tag}: outlined`, (await outlined(page)) === 'TWIN BROOKS');
     check(`${tag}: the card names the hood`,
           (await page.$eval('#peek-name', e => e.textContent)) === 'TWIN BROOKS');
 
-    // Committing the card opens the panel on the same hood; the outline stays.
+    // Committing the card opens the panel on the same hood.
     await page.tap('#peek');
     await page.waitForTimeout(800);
     s = await state_(page);
-    check(`${tag}: card commit pins the picked hood, outline kept`,
-          s.pinned === 'TWIN BROOKS' && s.panelOpen && (await outlined(page)) === 'TWIN BROOKS');
-    // With BOTH label classes off: the reference layer is on by default, so
-    // the old label-gated rebuild would still fire and hide a missing one.
-    await page.evaluate(() => ['reference-on', 'labels-on'].forEach(id => {
-      const c = document.getElementById(id); if (c.checked) c.click(); }));
-    await page.waitForTimeout(400);
-    check(`${tag}: label pool empty for the next check`, await page.evaluate(() => labelPool().length === 0));
-    await page.tap('#temporal-close');
-    await page.waitForTimeout(400);
-    check(`${tag}: closing the panel removes the outline`, (await outlined(page)) === null, await outlined(page));
+    check(`${tag}: card commit pins the picked hood`, s.pinned === 'TWIN BROOKS' && s.panelOpen);
     await Promise.race([browser.close(), new Promise(r => setTimeout(r, 3000))]);
   }
 

@@ -1833,7 +1833,6 @@
     let devHistoryData = null; // hood x year new supply; missing file => no dev history panel
     let pinnedHood = null;     // hood name shown in the pinned history panel, or null
     let peekHood = null;       // hood shown in the touch-only peek card, or null
-    let searchHood = null;     // a search pick that opened no readout, outlined, or null
     // Panel mode reached by DELIBERATELY pressing #hoodmode-btn, as opposed to
     // falling into it by committing a peek card. Only the deliberate route earns
     // one-tap pinning on touch; see temporalClick.
@@ -4311,26 +4310,6 @@
       })];
     }
 
-    // The outline of the hood being read: the pinned panel's, the peek card's,
-    // or a search pick that opened neither (a hood with no panel content, or a
-    // view with no panel on desktop). Without it a search flies the camera to
-    // a patch of 406 lookalike shapes and leaves the reader to guess which one.
-    // depthTest off so a tall neighbour cannot hide it; a dark halo under a
-    // light line so it reads on every ramp colour and on the set-aside grey.
-    function selectedHoodLayer() {
-      const name = pinnedHood || peekHood || searchHood;
-      const f = name && state.data && state.data.features.find(
-        x => x.properties.neighbourhood_name === name);
-      if (!f) return [];
-      const mk = (id, col, w) => new deck.GeoJsonLayer({
-        id, data: [f], filled: false, stroked: true,
-        getLineColor: col, getLineWidth: w, lineWidthUnits: "pixels",
-        parameters: { depthTest: false }, pickable: false,
-      });
-      return [mk("hood-selected-halo", [0, 0, 0, 200], 6),
-              mk("hood-selected", [255, 255, 255, 255], 2.5)];
-    }
-
     // Ratio-view scale anchors, computed once per DENOMINATOR from its kept
     // subset (hoods under that denominator's floor / set-aside excluded):
     // log-colour between p2.5 and p97.5, linear height scaled so the max kept
@@ -4391,8 +4370,7 @@
       // confident highlight on the wrong hood, which is the class of bug this
       // whole change exists to remove.
       bandHoverIdx = -1;
-      const layers = [...referenceUnderLayers(), ...buildViewLayers(), ...referenceOverLayers(),
-                      ...selectedHoodLayer()];
+      const layers = [...referenceUnderLayers(), ...buildViewLayers(), ...referenceOverLayers()];
       const z = squashZ ?? (camFlat ? FLAT_Z : 1);
       return z === 1 ? layers : layers.map(l => l.clone({ modelMatrix: zMatrix(z) }));
     }
@@ -5395,8 +5373,7 @@
       syncTemporalPos();
       // The panel is a new obstacle for the label sweep, so re-cull now —
       // otherwise hood names sit under it until the next camera move.
-      // Unconditional since the selected-hood outline: it follows pinnedHood.
-      overlay.setProps({ layers: buildLayers() });
+      if (labelPool().length) overlay.setProps({ layers: buildLayers() });
     }
 
     // Where the hood's levy comes from, by the zoning of each property. The
@@ -5706,7 +5683,7 @@
       // The empty prompt is a fraction of the chart's height, so it must be
       // re-placed rather than left sitting at the pinned panel's max-height.
       syncTemporalPos();
-      overlay.setProps({ layers: buildLayers() });
+      if (labelPool().length) overlay.setProps({ layers: buildLayers() });
     }
 
     // The readout-mode pod is offered only where BOTH destinations exist: the
@@ -5771,7 +5748,7 @@
       // to place it too — otherwise entering panel mode from the button renders
       // it unpositioned.
       syncTemporalPos();
-      overlay.setProps({ layers: buildLayers() });
+      if (labelPool().length) overlay.setProps({ layers: buildLayers() });
     }
 
     // A finger cannot hover, so touch needs a stage the mouse gets for free.
@@ -5830,14 +5807,14 @@
       // Same reason as the panel: the card is a new obstacle for the label
       // sweep, so re-cull now instead of leaving names under it until the next
       // camera move.
-      overlay.setProps({ layers: buildLayers() });
+      if (labelPool().length) overlay.setProps({ layers: buildLayers() });
     }
 
     function closePeek() {
       if (!peekHood) return;
       peekHood = null;
       document.getElementById("peek").classList.remove("open");
-      overlay.setProps({ layers: buildLayers() });
+      if (labelPool().length) overlay.setProps({ layers: buildLayers() });
     }
 
     // Click a hood to pin its history; click the pinned one again to unpin.
@@ -5852,9 +5829,6 @@
     // and the way in for someone who would rather not click the map.
     function temporalClick({ object }) {
       const name = object && object.properties && object.properties.neighbourhood_name;
-      // A map click is a new selection, so a search pick's own outline yields
-      // to whatever this click opens (or to nothing).
-      searchHood = null;
       // TOUCH: two gestures per hood, EVERY time -- not just on the way in.
       // Without hover a single tap was both the preview and the commit, so the
       // panel opened on any stray tap (Peter, 2026-07-31).
@@ -6013,8 +5987,6 @@
       closeSearch();
       flyToHood(f);
       if (name !== pinnedHood && name !== peekHood) temporalClick({ object: f });
-      searchHood = (name === pinnedHood || name === peekHood) ? null : name;
-      overlay.setProps({ layers: buildLayers() });
     }
 
     // Panel mode's one-line hover: the view's HEADLINE number and nothing else,
@@ -8046,7 +8018,6 @@
         if (e.key !== "Escape") return;
         // Innermost first: an open search is what the key is dismissing.
         if (document.getElementById("search").classList.contains("open")) { closeSearch(); return; }
-        if (searchHood) { searchHood = null; overlay.setProps({ layers: buildLayers() }); }
         if (state.hoodMode === "panel") applyHoodMode("popup"); else closeTemporal();
       });
       document.getElementById("search-btn").addEventListener("click", e => {
