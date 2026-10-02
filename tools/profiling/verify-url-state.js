@@ -52,7 +52,7 @@
 //
 //   node verify-url-state.js <url>      (run once per build)
 //
-// SHARDS (CI runs six in parallel, tests.yml `url-state`; 2026-10-02). With no
+// SHARDS (CI runs seven in parallel, tests.yml `url-state-shard`; 2026-10-02). With no
 // flags it runs everything, as above. Optional:
 //   --part=walk|links          only the round-trip walk, or only the links
 //                              section (unreachable links, bad values, the
