@@ -8,6 +8,10 @@ Items are verbatim as they were closed, newest-moved first in the order they app
 
 ---
 
+- [x] **A smaller `url-state` check for ordinary `web/` PRs.** Done differently
+  (S211): six parallel shards, full coverage kept, ~8 → ~2.5 min wall
+  (`DECISIONS.md` 2026-10-02).
+
 - [x] **Pin the URL vocabulary (URL audit F2) — DONE S209.** A rename of any value passes
   the round trip. Add every §8 value to the verify as a frozen link that must
   restore to itself, and **Peter to decide the policy**: rename/retire = an

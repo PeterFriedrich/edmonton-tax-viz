@@ -51,8 +51,28 @@
 // clipboard-read), so the button's own path is what is tested.
 //
 //   node verify-url-state.js <url>      (run once per build)
+//
+// SHARDS (CI runs six in parallel, tests.yml `url-state`; 2026-10-02). With no
+// flags it runs everything, as above. Optional:
+//   --part=walk|links          only the round-trip walk, or only the links
+//                              section (unreachable links, bad values, the
+//                              frozen vocabulary, edited hash, no clipboard)
+//   --views=a,b                walk only these views
+//   --views-except=a,b         walk every offered view but these
+// ⚠️ The catch-all shard is --views-except, so a view added later is walked
+// unasked. A named view that is not offered is a FAIL, not an empty walk — a
+// renamed view would otherwise drop out of CI silently.
 const { chromium } = require('playwright');
-const [url] = process.argv.slice(2);
+const [url, ...flags] = process.argv.slice(2);
+const flag = n => (flags.find(f => f.startsWith(`--${n}=`)) || '').slice(n.length + 3);
+const PART = flag('part') || 'all';
+const ONLY = flag('views') ? flag('views').split(',') : null;
+const EXCEPT = flag('views-except') ? flag('views-except').split(',') : [];
+const unknown = flags.filter(f => !/^--(part|views|views-except)=./.test(f));
+if (unknown.length || !['all', 'walk', 'links'].includes(PART)) {
+  console.error(`bad flags: ${flags.join(' ')}`);
+  process.exit(2);
+}
 
 let failures = 0;
 const check = (name, got, want) => {
@@ -181,8 +201,14 @@ const screen = page => page.evaluate(skip => {
     check(`round trip ${label} copies the same link`, await hashOf(fresh), hash);
     trips++;
   };
-  const views = await home.evaluate(() => [...document.querySelectorAll('#views button')]
+  const offeredViews = await home.evaluate(() => [...document.querySelectorAll('#views button')]
     .filter(b => b.checkVisibility()).map(b => b.dataset.view));
+  for (const v of [...(ONLY || []), ...EXCEPT])
+    check(`--views names an offered view: ${v}`, offeredViews.includes(v), true);
+  const views = PART === 'links' ? [] : offeredViews.filter(
+    v => (!ONLY || ONLY.includes(v)) && !EXCEPT.includes(v));
+  if (PART !== 'links') check('the walk has a view to walk', views.length > 0, true);
+  console.log(`walking: ${views.join(', ') || '(none)'}`);
   for (const v of views) {
     const seen = new Set();
     const visit = async trail => {
@@ -195,94 +221,96 @@ const screen = page => page.evaluate(skip => {
     await visit([]);
   }
   console.log(`(${trips} round trips)`);
+  if (PART !== 'walk') {
 
-  // --- links a button cannot reach, and bad values ---------------------------
-  const lands = async (hash, wantHash, wantView, opts) => {
-    const p = await open('#' + hash, opts);
-    check(`${opts ? 'no history file: ' : ''}#${hash} lands on`,
-          [await hashOf(p), await p.evaluate(() => state.view)], [wantHash, wantView]);
-  };
-  await lands('view=bogus', '', 'money');
-  await lands('metric=__proto__&denom=constructor&scale=x&detail=toString', '', 'money');
-  await lands('view=development&metric=bogus&window=3yr', 'view=development&window=3yr', 'development');
-  await lands('view=services&on=constructor,roads&colour=__proto__', 'view=services', 'services');
-  await lands('mode=change', '', 'money', { blockTemporal: true });
-  if (!FULL) {
-    for (const [h, want, v] of [
-      ['view=uses&prisms=1', '', 'money'],
-      ['view=lab&cut=residential', '', 'money'],
-      ['view=development&metric=industrial', 'view=development', 'development'],
-      ['view=development&mode=infill&amenity=lrt', 'view=development', 'development'],
-      ['view=services&on=roads,fire,transit', 'view=services', 'services'],
-      ['view=ratio&denom=fire', 'view=ratio', 'ratio'],
-    ]) await lands(h, want, v);
-  } else {
-    await lands('view=development&mode=infill&metric=industrial',
-                'view=development&mode=infill', 'infill');
+    // --- links a button cannot reach, and bad values ---------------------------
+    const lands = async (hash, wantHash, wantView, opts) => {
+      const p = await open('#' + hash, opts);
+      check(`${opts ? 'no history file: ' : ''}#${hash} lands on`,
+            [await hashOf(p), await p.evaluate(() => state.view)], [wantHash, wantView]);
+    };
+    await lands('view=bogus', '', 'money');
+    await lands('metric=__proto__&denom=constructor&scale=x&detail=toString', '', 'money');
+    await lands('view=development&metric=bogus&window=3yr', 'view=development&window=3yr', 'development');
+    await lands('view=services&on=constructor,roads&colour=__proto__', 'view=services', 'services');
+    await lands('mode=change', '', 'money', { blockTemporal: true });
+    if (!FULL) {
+      for (const [h, want, v] of [
+        ['view=uses&prisms=1', '', 'money'],
+        ['view=lab&cut=residential', '', 'money'],
+        ['view=development&metric=industrial', 'view=development', 'development'],
+        ['view=development&mode=infill&amenity=lrt', 'view=development', 'development'],
+        ['view=services&on=roads,fire,transit', 'view=services', 'services'],
+        ['view=ratio&denom=fire', 'view=ratio', 'ratio'],
+      ]) await lands(h, want, v);
+    } else {
+      await lands('view=development&mode=infill&metric=industrial',
+                  'view=development&mode=infill', 'infill');
+    }
+
+    // --- the frozen vocabulary (URL audit F2) ----------------------------------
+    // Every value a link can carry (CONTROLS_MATRIX §8), each in at least one
+    // link that must restore to itself. The round trip above cannot see a
+    // rename: the page writes the new name and reads it back. These links were
+    // written by hand on 2026-10-01 and are what readers may hold.
+    // ⚠️ A RED HERE MEANS A SHARED LINK BROKE. Don't edit the link to match:
+    // add an alias that maps the old value to the new one (the rule beside
+    // URL_METRIC), and give the entry its new expected link as a third element.
+    // A retired value with nothing to map to moves to the expected-to-drop
+    // links above instead.
+    const norm = h => [...new URLSearchParams(h)].map(([k, v]) => `${k}=${v}`).sort().join('&');
+    const FROZEN = [
+      ['metric=residential&denom=lot&scale=linear', 'money'],
+      // Glass's denominator row is gated on the grid file's own lot column,
+      // which exists only after the grid lands — the restore must wait for it.
+      ['metric=nonresidential&detail=grid&denom=lot&scale=linear', 'glass'],
+      ['metric=value&detail=grid50', 'glass'],
+      ['mode=change&window=short', 'change'],
+      ['view=development&metric=permits&window=3yr&detail=hood', 'development'],
+      ['view=development&window=5yr', 'development'],
+      ['view=services&on=none', 'services'],
+      ['view=services&on=roadscost', 'services'],
+      ['view=services&on=roads,roadscost,roadslife&colour=roadslife', 'services'],
+      ['view=ratio', 'ratio'],
+    ];
+    const FROZEN_FULL = [
+      ['view=development&metric=industrial&window=3yr', 'development'],
+      ['view=development&mode=infill&metric=permits&amenity=lrt,school', 'infill'],
+      ['view=services&on=storm,fire,water,transit,bike,transitcost,bikecost&colour=bikecost', 'services'],
+      ['view=ratio&denom=fire', 'ratio'],
+      ['view=uses&prisms=1', 'uses'],
+      ['view=lab&cut=residential', 'deviation'],
+      ['view=lab&exp=deviation&cut=nonresidential', 'deviation', 'view=lab&cut=nonresidential'],
+    ];
+    for (const [h, view, want = h] of [...FROZEN, ...(FULL ? FROZEN_FULL : [])]) {
+      const p = await open('#' + h);
+      check(`frozen #${h} restores to itself`,
+            [norm(await hashOf(p)), await p.evaluate(() => state.view)], [norm(want), view]);
+    }
+
+    // An edited hash is honoured without a manual reload. A page on the
+    // default, so this hash is a change and does fire hashchange.
+    const edited = await open();
+    await Promise.all([edited.waitForEvent('load'),
+                       edited.evaluate(() => { location.hash = 'view=services&on=none'; })]);
+    await settle(edited);
+    check('an edited hash is applied', await edited.evaluate(() =>
+      [state.view, Object.values(state.services).some(Boolean)]), ['services', false]);
+
+    // No clipboard (an insecure origin, a denied permission): the link must
+    // still reach the reader, through the address bar. Reached by a CLICK, not
+    // a restored hash: a hash that restore failed to remove passed this check
+    // with the fallback deleted.
+    const blind = await open();
+    await blind.evaluate(() => document.querySelector('#views button[data-view="services"]').click());
+    await settle(blind);
+    await blind.evaluate(() => { navigator.clipboard.writeText = () => Promise.reject(new Error('denied')); });
+    await blind.evaluate(() => document.getElementById('share-btn').click());
+    await blind.waitForTimeout(300);
+    check('no clipboard: the link goes in the address bar', await blind.evaluate(() =>
+      [location.hash, document.getElementById('share-btn').textContent]),
+      ['#view=services', 'Link in address bar']);
   }
-
-  // --- the frozen vocabulary (URL audit F2) ----------------------------------
-  // Every value a link can carry (CONTROLS_MATRIX §8), each in at least one
-  // link that must restore to itself. The round trip above cannot see a
-  // rename: the page writes the new name and reads it back. These links were
-  // written by hand on 2026-10-01 and are what readers may hold.
-  // ⚠️ A RED HERE MEANS A SHARED LINK BROKE. Don't edit the link to match:
-  // add an alias that maps the old value to the new one (the rule beside
-  // URL_METRIC), and give the entry its new expected link as a third element.
-  // A retired value with nothing to map to moves to the expected-to-drop
-  // links above instead.
-  const norm = h => [...new URLSearchParams(h)].map(([k, v]) => `${k}=${v}`).sort().join('&');
-  const FROZEN = [
-    ['metric=residential&denom=lot&scale=linear', 'money'],
-    // Glass's denominator row is gated on the grid file's own lot column,
-    // which exists only after the grid lands — the restore must wait for it.
-    ['metric=nonresidential&detail=grid&denom=lot&scale=linear', 'glass'],
-    ['metric=value&detail=grid50', 'glass'],
-    ['mode=change&window=short', 'change'],
-    ['view=development&metric=permits&window=3yr&detail=hood', 'development'],
-    ['view=development&window=5yr', 'development'],
-    ['view=services&on=none', 'services'],
-    ['view=services&on=roadscost', 'services'],
-    ['view=services&on=roads,roadscost,roadslife&colour=roadslife', 'services'],
-    ['view=ratio', 'ratio'],
-  ];
-  const FROZEN_FULL = [
-    ['view=development&metric=industrial&window=3yr', 'development'],
-    ['view=development&mode=infill&metric=permits&amenity=lrt,school', 'infill'],
-    ['view=services&on=storm,fire,water,transit,bike,transitcost,bikecost&colour=bikecost', 'services'],
-    ['view=ratio&denom=fire', 'ratio'],
-    ['view=uses&prisms=1', 'uses'],
-    ['view=lab&cut=residential', 'deviation'],
-    ['view=lab&exp=deviation&cut=nonresidential', 'deviation', 'view=lab&cut=nonresidential'],
-  ];
-  for (const [h, view, want = h] of [...FROZEN, ...(FULL ? FROZEN_FULL : [])]) {
-    const p = await open('#' + h);
-    check(`frozen #${h} restores to itself`,
-          [norm(await hashOf(p)), await p.evaluate(() => state.view)], [norm(want), view]);
-  }
-
-  // An edited hash is honoured without a manual reload. A page on the
-  // default, so this hash is a change and does fire hashchange.
-  const edited = await open();
-  await Promise.all([edited.waitForEvent('load'),
-                     edited.evaluate(() => { location.hash = 'view=services&on=none'; })]);
-  await settle(edited);
-  check('an edited hash is applied', await edited.evaluate(() =>
-    [state.view, Object.values(state.services).some(Boolean)]), ['services', false]);
-
-  // No clipboard (an insecure origin, a denied permission): the link must
-  // still reach the reader, through the address bar. Reached by a CLICK, not
-  // a restored hash: a hash that restore failed to remove passed this check
-  // with the fallback deleted.
-  const blind = await open();
-  await blind.evaluate(() => document.querySelector('#views button[data-view="services"]').click());
-  await settle(blind);
-  await blind.evaluate(() => { navigator.clipboard.writeText = () => Promise.reject(new Error('denied')); });
-  await blind.evaluate(() => document.getElementById('share-btn').click());
-  await blind.waitForTimeout(300);
-  check('no clipboard: the link goes in the address bar', await blind.evaluate(() =>
-    [location.hash, document.getElementById('share-btn').textContent]),
-    ['#view=services', 'Link in address bar']);
 
   await server.kill();
   console.log(failures ? `\n${failures} FAILED` : '\nall passed');
