@@ -310,9 +310,9 @@ started from a false premise.
 | 09-28 S204 | F3 `state.devWindow` defaults to `long`; on a supported no-`_long` file Development opens blank (0/406, "no permit data"); #608's comment asserts it can't | render | latent | scoped | open |
 | 09-28 S204 | `?build=` comment says "overrides locally"; it overrides on the deployed site too (consistent with 07-22, wording only) | claim | no | side | open |
 | 10-02 S213 | F1 `url-state` is not a required check: 4 of 10 walking PRs merged before it reported and deployed first; DECISIONS 09-29 says it gates the merge | process | no | scoped | open |
-| 10-02 S213 | F2 shard-partition test green with money, the full catch-all, or the whole full build dropped from the walk (a view named by a links-only shard counted as walked; builds never counted) | guard-blind | latent | scoped | open |
-| 10-02 S213 | F3 DECISIONS 10-02 sharding row and `verify-url-state.js` header say six shards; seven since #642 | claim | no | side | open |
-| 10-02 S213 | F4 `verify-about` red in 3 of 7 runs on external hosts (OSM 503, data.edmonton.ca timeout): 429 is SKIP but 5xx/timeout read as a broken link | guard-noisy | no | scoped | open |
+| 10-02 S213 | F2 shard-partition test green with money, the full catch-all, or the whole full build dropped from the walk (a view named by a links-only shard counted as walked; builds never counted) | guard-blind | latent | scoped | fixed |
+| 10-02 S213 | F3 DECISIONS 10-02 sharding row and `verify-url-state.js` header say six shards; seven since #642 | claim | no | side | partly fixed (#647 header; DECISIONS row still says six) |
+| 10-02 S213 | F4 `verify-about` red in 3 of 7 runs on external hosts (OSM 503, data.edmonton.ca timeout): 429 is SKIP but 5xx/timeout read as a broken link | guard-noisy | no | scoped | fix in #650 |
 
 
 ## Queued — briefed, not yet run
