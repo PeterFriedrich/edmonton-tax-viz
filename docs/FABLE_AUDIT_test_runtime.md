@@ -2,8 +2,9 @@
 
 **Read cold.** This is a reusable *instrument*, not a findings doc. Written
 2026-10-02 (S212, Opus 5.5) by the session that built most of what it audits
-(#637/#638, #642), so its claims about that work are self-graded. **Run it on a
-different model** if one is available (memory `measurements-that-favour-me`).
+(#637/#638, #642), so its claims about that work are self-graded. Fable if
+credits exist; otherwise Opus 5.5 is the default (DECISIONS 2026-10-02), and the
+findings must say the builder's model graded its own work.
 Family: **(a) decision audit**, top-down. Two halves: **A** audits the speed-ups,
 then **B** is the close-out sweep that ends the arc. Do A first, because a red
 in A changes what B should close.

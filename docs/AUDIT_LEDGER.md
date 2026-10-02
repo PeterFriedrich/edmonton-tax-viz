@@ -427,8 +427,9 @@ Built and verified by Opus 5.5 alone.
     the speed-ups (runner preload, `url-state` shards, the public walk split,
     `--only-shell`) kept coverage, highest level first. Part B is one full
     local sweep against S206's baseline, then closing or rescoping every open
-    "Verify runtime" TODO item. Written by the session that built most of it, so
-    **run it cross-model** if one is available. Lined up for the next session.
+    "Verify runtime" TODO item. Written by the session that built most of it;
+    runs on Opus 5.5 unless Fable credits exist (DECISIONS 2026-10-02). Lined up
+    for the next session.
 
 ## Never audited (candidates, roughly ranked)
 
