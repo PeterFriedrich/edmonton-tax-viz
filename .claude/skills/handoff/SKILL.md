@@ -49,7 +49,7 @@ web side can notice it is stale. After the handoff PR merges, run:
 
 ```bash
 last=$(git log -1 --format=%H -- session-summary/)
-git fetch -q origin && git log --oneline ${last:+$last..}origin/master -- docs/BRIEF.md 'docs/SPEC_*.md'
+git fetch -q origin && git log --oneline ${last:+$last..}origin/master -- docs/BRIEF.md 'docs/SPEC_*.md' docs/REPORT_CLAIMS.md
 ```
 
 ⚠️ Run it BEFORE committing this handoff, or `$last` is this handoff and the
