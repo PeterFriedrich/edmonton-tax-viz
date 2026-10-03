@@ -668,10 +668,6 @@ preload still holds (12/12). What is left:
   On non-`web/` PRs it finishes inside `test`'s time, so requiring it costs
   ~3 min on `web/` PRs only. If Peter declines, mark that row amended:
   advisory, read by email.
-- [ ] **`verify-about`: treat 5xx and timeouts like 429 (S213 F4).** It was red
-  in 3 of 7 runs on 2026-10-02, each time on a host we don't control. Keep
-  404/410 red. Script change, so Peter's.
-  - **Fix in #650 (S214), falsified against a stub host; awaiting Peter's merge.**
 - [ ] **The lit selected-hood prism (#635/#636) added ~100 s to `verify-peek`**
   under SwiftShader (212 → 310 s; findings §7b). Check a tap's latency on a
   phone with the S210 checks (MOBILE_USABILITY §2b) before deciding anything.
@@ -3213,6 +3209,8 @@ archive"*) is not, and this span is 2,533 lines.
 ## Done
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
+
+- [x] **`verify-about`: treat 5xx and timeouts like 429 (S213 F4).** — 2026-10-02 · `docs/TODO_archive.md`
 
 - [x] **Runner reports "0 checks" for `verify-glass-cell`, `verify-grid-loading`, `verify-url-state` (findings §4.3).** — 2026-10-02 · `docs/TODO_archive.md`
 - [x] **`verify-blurbs` reads FAIL on every full-build sweep (findings §4.4).** — 2026-10-02 · `docs/TODO_archive.md`

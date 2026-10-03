@@ -8,6 +8,11 @@ Items are verbatim as they were closed, newest-moved first in the order they app
 
 ---
 
+- [x] **`verify-about`: treat 5xx and timeouts like 429 (S213 F4).** It was red
+  in 3 of 7 runs on 2026-10-02, each time on a host we don't control. Keep
+  404/410 red. Script change, so Peter's.
+  - **Fixed in #650 (S214), merged 2026-10-03.**
+
 - [x] **Runner reports "0 checks" for `verify-glass-cell`, `verify-grid-loading`,
   `verify-url-state` (findings §4.3).** They gate by exit code, so this is
   reporting, not coverage: print `PASS`/`FAIL` lines, or teach the runner
