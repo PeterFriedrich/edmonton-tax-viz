@@ -976,7 +976,7 @@ so the column overstates distance wherever one of those is nearest. Dataset fact
 - **Edmonton's portal has no such dataset.** The catalogue's `school` results are
   entirely EPSB/ECSD (locations, catchments, footprints, ward boundaries,
   historical vintages).
-- **Alberta publishes lists that cover them — as PDFs**, not rows.
+- ~~**Alberta publishes lists that cover them — as PDFs**, not rows.~~ **WRONG — corrected 2026-10-03 (S214, `docs/FINDINGS_upstream_defect_claims.md` F1):** Alberta Education publishes an **XLSX of every school, extracted daily**, with address and authority type (no coordinates). Item 1's staleness objection below assumed a hand transcription; this source carries an `Extract Date`.
 
 **Still open — and it is a JUDGEMENT, not a lookup:**
 1. **Is a hand-built list worth its staleness?** Transcribing + geocoding the

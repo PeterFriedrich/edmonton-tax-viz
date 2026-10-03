@@ -1106,7 +1106,7 @@ archive"*) is not, and this span is 2,533 lines.
     lapses the refresh goes red the same way. `RUNBOOK.md` §3.
 
 - [ ] **OUTREACH TRACKER — SIX confirmed sendable issues, ZERO sent. Every one
-  is Peter's call.** ⚠️ **"NOTHING IS BLOCKED ON WORK" STOPPED BEING TRUE ON
+  is Peter's call.** ⚠️ **AUDITED 2026-10-03 (S214, `docs/FINDINGS_upstream_defect_claims.md`): 1, 3, 4, 6 are ready to send (re-measure on the day); issue 5 must NOT be sent as drafted — Alberta already publishes the school list.** ⚠️ **"NOTHING IS BLOCKED ON WORK" STOPPED BEING TRUE ON
   2026-09-20** — it held from S169, when issues 1 and 3–6 all had published
   evidence plus drafted report text, but **`DATA_ISSUES.md` §7 (`stt5-pzaa`,
   new 2026-09-20) has NEITHER a notebook NOR a draft.** So: **five need only the

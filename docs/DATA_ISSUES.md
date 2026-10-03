@@ -33,6 +33,8 @@ that one owns what the evidence rests on.
 item that mirrors it in one line each — if the two disagree, **this one is
 right**, and the TODO is stale. Update here first.
 
+⚠️ **Audited before sending 2026-10-03 (S214, `docs/FINDINGS_upstream_defect_claims.md`):** every claim re-measured live and all 5 evidence notebooks re-run (37 invariants ✅). **Issue 5 is UNSOUND — do not send.** Issues 1 and 3 had one outward-facing sentence each fixed in their drafts; 4 and 6 are sound.
+
 **Nothing has been sent. Seven issues, zero contact, as of 2026-09-21.**
 ⚠️ **And every defect below was CHECKED still-present on 2026-09-21**, not
 assumed: all five published evidence notebooks were re-executed against live
@@ -55,7 +57,7 @@ was never a candidate to send, and it is now fixed.)
 | 2 | archive's 2025 entry is the 2026 roll | — (ours, not theirs) | n/a | ✅ **FIXED 2026-08-27** |
 | 3 | `qi6a-xuwt` drops 2,448 accounts | [published](https://peterfriedrich.github.io/edmonton-tax-viz/notebooks/historical-2024-gap.html) | ✅ `docs/DRAFT_bug_report_historical_dropout.md` | **NOT SENT** |
 | 4 | no per-parcel exemption status published | [published](https://peterfriedrich.github.io/edmonton-tax-viz/notebooks/exemption-uncertainty.html) | ✅ `docs/DRAFT_open_data_request_exemption_status.md` | **NOT SENT** |
-| 5 | 3 of 5 school boards absent from open data | [published](https://peterfriedrich.github.io/edmonton-tax-viz/notebooks/school-coverage-gap.html) | ✅ `docs/DRAFT_open_data_request_school_locations.md` | **NOT SENT** |
+| 5 | 3 of 5 school boards absent from open data | [published](https://peterfriedrich.github.io/edmonton-tax-viz/notebooks/school-coverage-gap.html) | ✅ `docs/DRAFT_open_data_request_school_locations.md` | **NOT SENT — ⚠️ DO NOT SEND as drafted** (S214: Alberta already publishes it; `docs/FINDINGS_upstream_defect_claims.md` F1) |
 | 6 | `24uj-dj8v` `neighbourhood` holds a LIST of hoods | [published](https://peterfriedrich.github.io/edmonton-tax-viz/notebooks/permit-neighbourhood-list.html) | ✅ `docs/DRAFT_bug_report_permit_neighbourhood_list.md` | **NOT SENT** |
 | 7 | `stt5-pzaa` frozen 2 annual cycles while its report kept publishing | ❌ none | ❌ none | **NOT SENT** |
 
@@ -293,7 +295,7 @@ confirmed as `opendata@edmonton.ca` (read from the live portal footer,
 2026-08-25).
 **Last measured: 2026-08-26.**
 
-**The gap.** The roll flags **3 properties / $7.6M** as exempt — about **0.05%**
+**The gap.** The roll's nearest thing to an exempt flag — `NONRES MUNICIPAL/RES EDUCATION`, which is a split-rate class, not an exemption (S214 F5) — covers **3 properties / $7.6M** — about **0.05%**
 of what must actually be exempt. FIR shows the filed taxable base sitting
 **~$15B below** the roll, and `MR(2)` is *proven* to be the taxable base
 internally (assessment × rate reproduces the levy to −0.0000%). Five zone codes
@@ -319,7 +321,7 @@ committed outputs from a cold-cache run that fetched all three sources live).
 
 ## 5. Private, charter and francophone schools are absent from open data
 
-**Status: NOT SENT.** **Draft written 2026-09-17:
+**Status: NOT SENT. ⚠️ HELD 2026-10-03 (S214 audit, `docs/FINDINGS_upstream_defect_claims.md` F1) — do not send as drafted.** Alberta Education publishes a daily-extracted XLSX of every school with address and authority type (450 Edmonton, incl. 54 private, 11 charter, 10 francophone). The request asks the City for something the province already publishes; only the narrow claim (*Edmonton's portal* carries none) survives, and the evidence page's "PDFs, not joinable" sentence is wrong. Peter's call: withdraw, or narrow to a geocoded version. **Draft written 2026-09-17:
 `docs/DRAFT_open_data_request_school_locations.md`** — the absence re-searched
 live that day and it still holds. Lowest priority of the five; send last.
 **Last measured: 2026-08-29** (evidence notebook, live re-fetch).

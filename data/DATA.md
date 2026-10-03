@@ -2187,13 +2187,15 @@ them. Never label the column "distance to the nearest school".
    worship and community leagues — not schools.
 3. **The portal has no such dataset.** A catalogue search for `school` returns
    the two boards, their catchment areas, ward boundaries, building footprints
-   and historical vintages — nothing private, charter or francophone. Alberta
-   publishes lists that DO cover them (*Alberta's francophone regional
-   authorities and schools*, *Alberta accredited international schools*) but as
-   **PDFs**, not addressable rows.
+   and historical vintages — nothing private, charter or francophone.
+   ⚠️ **CORRECTED 2026-10-03 (S214, `docs/FINDINGS_upstream_defect_claims.md` F1):** this said Alberta's lists are
+   PDFs only. **Alberta Education publishes an XLSX of every school with street
+   address and authority type, extracted daily** (open.alberta.ca
+   `alberta-education-schools-and-authorities`): 450 with an Edmonton mailing
+   city, incl. 54 private, 25 ECS private, 11 charter, 10 francophone. No
+   coordinates — geocoding is the remaining work.
 
-**The remedy is manual, not blocked** — transcribe + geocode the provincial PDF
-list; `amenity_distance` takes any point frame. ⚠️ **A hand-built list would go
+**The remedy is a geocode, not a transcription** — the provincial XLSX above; `amenity_distance` takes any point frame. ⚠️ **A hand-built list would go
 STALE SILENTLY** while the two board feeds refresh weekly. Open in
 `docs/ANALYSIS_BACKLOG.md` §13.
 

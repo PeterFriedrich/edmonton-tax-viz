@@ -1,6 +1,6 @@
 # DRAFT — Bug report: `qi6a-xuwt` drops 2,448 accounts from its 2024/2025 slices
 
-**Status: DRAFT, NOT SENT.** Written 2026-09-17. Peter's to send, edit or discard.
+**Status: DRAFT, NOT SENT.** Written 2026-09-17. ⚠️ **Message corrected 2026-10-03 (S214, `docs/FINDINGS_upstream_defect_claims.md` F2):** it credited the City with an internal audit that is our own detector. Peter's to send, edit or discard.
 
 **Channel:** `opendata@edmonton.ca` (portal footer, read 2026-08-25). Assessment
 & Taxation is the escalation if Open Data bounces it, not the first stop.
@@ -45,7 +45,7 @@ not. Quote account counts, not dollars.
 >
 > **What I'm seeing.** Roughly **2,448 accounts** that appear both in earlier
 > slices of the same dataset and in the current assessment roll are absent from
-> the 2024 and 2025 slices. They span **188 neighbourhoods**, with Downtown
+> the 2025 slice, nearly all of them from 2024 as well. They span **188 neighbourhoods**, with Downtown
 > worst affected at about **1,292 accounts**. Eleven of the thirteen testable
 > years look clean, so this does not appear to be a systemic export problem —
 > it looks specific to those two slices.
@@ -63,11 +63,11 @@ not. Quote account counts, not dollars.
 > key anywhere in the pipeline that builds these slices, that could be part of
 > it.
 >
-> **Why I'm reporting it rather than working around it.** The dataset's own
-> quality indicators don't appear to reflect the loss — comparing its internal
-> audit figures against the current roll, the two disagree by a factor of
-> several hundred. So a user has no signal from within the data that anything is
-> missing, and any per-neighbourhood time series built from these slices
+> **Why I'm reporting it rather than working around it.** The loss is hard to
+> see from inside the dataset. Comparing each slice only with its neighbouring
+> slices finds 5 missing accounts in 2024, because these accounts drop out and
+> never come back; checking against the current roll finds 2,321. So a user has
+> no signal from within the data that anything is missing, and any per-neighbourhood time series built from these slices
 > understates 2024 and 2025 without saying so.
 >
 > Full working, including specific account numbers and the portal queries to
@@ -86,8 +86,9 @@ not. Quote account counts, not dollars.
 
 ## Notes for whoever sends this
 
-- **The 464× sentence is deliberately softened** to "disagree by a factor of
-  several hundred" in the message. The precise figure is in the linked notebook.
+- **The 464× is stated as its two counts (5 vs 2,321), not as a ratio,** and
+  as OUR check — the City publishes no audit figure (S214 F2). ~~Previously:
+  softened to "disagree by a factor of several hundred".~~ The precise figure is in the linked notebook.
   Leading with a hard multiplier on *their* quality check reads as an accusation;
   the point is to get the slices fixed, not to grade their audit.
 - **The three-spellings observation is offered as a hypothesis, not a diagnosis.**
