@@ -83,7 +83,7 @@ open, with **direction unknown**, until the City publishes or discloses it.
 
 ## Draft message
 
-> **To:** City of Edmonton Open Data / Assessment & Taxation Branch
+> **To:** City of Edmonton Open Data (`opendata@edmonton.ca`; Assessment & Taxation is the escalation only — `DATA_ISSUES.md` Channel)
 > **Subject:** Dataset request — taxable/exempt liability status on Property Assessment Data (`q7d6-ambg`)
 >
 > Hello,
@@ -156,7 +156,7 @@ open, with **direction unknown**, until the City publishes or discloses it.
   plainly instead.~~ **No longer needed — confirmed in the source 2026-08-12**
   (see "What the manual actually says"). The fallback is retired; the paragraph
   now cites the Ministerial Order.
-- ⚠️ **THE ONE THING STILL UNRESOLVED IS WHERE TO SEND IT.** No submission
+- ~~⚠️ **THE ONE THING STILL UNRESOLVED IS WHERE TO SEND IT.**~~ **STALE — resolved 2026-08-25: `opendata@edmonton.ca`, and `edmonton.ca` answers 200 from this box with `certifi` (S214, `docs/FINDINGS_upstream_defect_claims.md` F4).** Original note: No submission
   channel is recorded anywhere in this repo, and `edmonton.ca` is **unreachable
   from the Oracle box** (`000`/connection failure on 2026-08-12, while
   `data.edmonton.ca`, `alberta.ca` and `open.alberta.ca` all resolve). Finding

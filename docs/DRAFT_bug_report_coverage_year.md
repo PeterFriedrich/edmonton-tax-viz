@@ -1,6 +1,6 @@
 # DRAFT — Bug report: `Period of Coverage` on `q7d6-ambg` names the wrong year
 
-**Status: DRAFT, NOT SENT.** Written 2026-09-17. Peter's to send, edit or discard.
+**Status: DRAFT, NOT SENT.** Written 2026-09-17. ⚠️ **Message amended 2026-10-03 (S214, `docs/FINDINGS_upstream_defect_claims.md` F3):** it now answers the valuation-year reading before the City raises it; figures re-measured that day. Peter's to send, edit or discard.
 
 **Channel:** `opendata@edmonton.ca` (portal footer, read 2026-08-25). Assessment
 & Taxation is the escalation if Open Data bounces it, not the first stop.
@@ -49,15 +49,23 @@ weeks pass.
 > reporting the wrong year.
 >
 > **The field:** `Period of Coverage` currently reads `2025-01-01 to
-> 2025-12-31`. As of today the resource's `rowsUpdatedAt` is 2026-09-14, and the
+> 2025-12-31`. As of today the resource's `rowsUpdatedAt` is 2026-09-28, and the
 > content appears to be the 2026 roll rather than the 2025 one.
 >
 > **What suggests the content is 2026.** The residential assessed base on the
-> live resource sums to about $162.3B across 411,525 accounts. Edmonton's
+> live resource sums to about $162.5B across 411,575 accounts. Edmonton's
 > filings with Alberta Municipal Affairs (Financial Information Return, Schedule
 > MR(2)) put the residential base at roughly $148.1B for 2025 and $160.4B for
-> 2026. The served file is about 9.6% above the 2025 figure and within about
-> 1.2% of the 2026 one, which points fairly clearly at 2026.
+> 2026. The served file is about 9.7% above the 2025 figure and within about
+> 1.3% of the 2026 one, which points fairly clearly at 2026.
+>
+> **In case 2025 is meant as the valuation year.** I know the 2026 roll
+> reflects values as of July 1, 2025, so the field could be read that way. The
+> City's *Historical* dataset (`qi6a-xuwt`) labels by roll year, though: its
+> `assessment_year` 2025 residential total is about $149.7B, which matches the
+> 2025 filing, not the 2026 one. So the two datasets currently use the same
+> year for different rolls. If the valuation reading is intended, a note in the
+> field saying so would resolve it just as well.
 >
 > **Why it matters to data users.** The coverage string is the only statement in
 > the dataset of which roll year the rows belong to. Anyone joining this data to
