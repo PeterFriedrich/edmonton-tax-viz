@@ -9,9 +9,9 @@ name: Tests
 # docs/FINDINGS_proxy_guards.md).
 #
 # ⚠️ THE GATE IS NOW ENFORCED, NOT ADVISORY — this comment said otherwise until
-# 2026-09-21. `master` IS protected and requires the `test` context (verified
-# against the branch-protection API, not assumed), so a PR cannot merge until
-# this workflow passes, and force-pushes to master are refused. Two limits worth
+# 2026-09-21. `master` IS protected and requires the `test` and `url-state`
+# contexts (verified against the branch-protection API, not assumed; `url-state`
+# added 2026-10-03, S213 F1), so a PR cannot merge until this workflow passes, and force-pushes to master are refused. Two limits worth
 # knowing: `enforce_admins` is OFF, so an admin can still merge past a red run
 # deliberately; and no review is required, so this workflow is the ONLY thing
 # standing between a PR and master.

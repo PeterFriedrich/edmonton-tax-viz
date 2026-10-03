@@ -8,6 +8,13 @@ Items are verbatim as they were closed, newest-moved first in the order they app
 
 ---
 
+- [x] **Make `url-state` a required check (S213 F1).** Done 2026-10-03 (S214). Peter's call; it is one
+  branch-protection setting.** It walked 10 PRs, and 4 merged before it
+  reported and deployed first. DECISIONS 2026-09-29 says it "gates the merge".
+  On non-`web/` PRs it finishes inside `test`'s time, so requiring it costs
+  ~3 min on `web/` PRs only. If Peter declines, mark that row amended:
+  advisory, read by email.
+
 - [x] **`verify-about`: treat 5xx and timeouts like 429 (S213 F4).** It was red
   in 3 of 7 runs on 2026-10-02, each time on a host we don't control. Keep
   404/410 red. Script change, so Peter's.

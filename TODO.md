@@ -662,12 +662,6 @@ public walk split (#642, → ~3 min run). **Audited and swept S213**
 (`docs/FINDINGS_verify_runtime.md` §7): sweep 62.0 min, no real red, and the
 preload still holds (12/12). What is left:
 
-- [ ] **Make `url-state` a required check (S213 F1). Peter's call; it is one
-  branch-protection setting.** It walked 10 PRs, and 4 merged before it
-  reported and deployed first. DECISIONS 2026-09-29 says it "gates the merge".
-  On non-`web/` PRs it finishes inside `test`'s time, so requiring it costs
-  ~3 min on `web/` PRs only. If Peter declines, mark that row amended:
-  advisory, read by email.
 - [ ] **The lit selected-hood prism (#635/#636) added ~100 s to `verify-peek`**
   under SwiftShader (212 → 310 s; findings §7b). Check a tap's latency on a
   phone with the S210 checks (MOBILE_USABILITY §2b) before deciding anything.
@@ -3209,6 +3203,8 @@ archive"*) is not, and this span is 2,533 lines.
 ## Done
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
+
+- [x] **Make `url-state` a required check (S213 F1).** — DONE 2026-10-03 · `docs/TODO_archive.md`
 
 - [x] **`verify-about`: treat 5xx and timeouts like 429 (S213 F4).** — 2026-10-02 · `docs/TODO_archive.md`
 

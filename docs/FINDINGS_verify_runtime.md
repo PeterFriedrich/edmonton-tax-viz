@@ -208,6 +208,8 @@ are left as they were.
   - **The sharpest counter-argument:** it has never been red on CI, so a required
     check costs ~3 min per `web/` PR to catch something that hasn't happened.
     **What would change the verdict:** a `url-state` red on any PR.
+  - ✅ **Done 2026-10-03 (S214):** `url-state` added to the required checks
+    (API read-back: `test`, `url-state`).
 - **The ungated class is UI behaviour, not numbers.** 11 DECISIONS rows cite only
   a hand-run `verify-*`. About 6 are still live: Center 2D ×3, search marking
   ×2, services panel ×1. Every guard that protects a published number is
