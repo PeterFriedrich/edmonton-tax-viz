@@ -29,6 +29,12 @@
 # reasonable person can join them and believe they now hold "Edmonton's
 # schools".
 #
+# ⚠️ **Amended 2026-10-03.** §4 used to say Alberta publishes its private and
+# charter school lists only as PDFs, "not joinable by a consumer". That was
+# wrong: the province publishes a spreadsheet of every school with addresses
+# (§4 now cites it). The finding is unchanged. Edmonton's portal still carries
+# school points for two boards only, and every invariant tests that portal.
+#
 # ## The one methodological point worth reading even if nothing else
 #
 # **This is a claim about ABSENCE, and absence cannot be demonstrated the way a
@@ -289,10 +295,15 @@ print(f"\ncolumns describing land use or occupancy: {land_use_cols or 'NONE'}")
 # coverage limitation, not a source of false positives.
 #
 # What would close it: a published point set for the remaining operators, in
-# the same shape as the two that already exist. Alberta publishes lists of
-# accredited private and charter schools, but as **PDFs** — readable by a
-# person, not joinable by a consumer, which is precisely the gap open data
-# exists to close.
+# the same shape as the two that already exist. The province already holds
+# most of what that needs: Alberta Education publishes a daily-regenerated
+# spreadsheet of every school in Alberta, with street address and authority
+# type ([*Alberta Education schools and authorities*](https://open.alberta.ca/opendata/alberta-education-schools-and-authorities)).
+# On 2026-10-03 it listed **450** schools in Edmonton, including **54**
+# private, **25** private ECS operators, **11** charter and **10** francophone.
+# It carries **no coordinates**, so a consumer would have to geocode the
+# addresses before measuring a distance. What is missing is a point set on
+# Edmonton's portal beside the two board datasets, not the list itself.
 
 # %% [markdown]
 # ## 5. Invariants
