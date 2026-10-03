@@ -319,12 +319,16 @@ The threshold is **{SET_ASIDE_THRESHOLD:.0%}** of the land. This week
 """)
 
 # %% [markdown]
-# **Standing caveat:** tax-exempt institutions (universities, hospitals, crown
-# land) are *absent from the assessment roll*, not listed at zero — so revenue
-# per acre genuinely understates neighbourhoods holding them, and no flag in the
-# roll can mark it. The effect is measured instead: institutional-proxy zoning
+# **Standing caveat:** Edmonton publishes no per-parcel exemption status, and
+# the error it causes runs both ways. Some institutional land is on the roll
+# with a computed levy (the major hospitals and the University of Alberta
+# campus are), which may **overstate** what it pays. Some is not on the roll at
+# all (the Legislature), which **understates** its neighbourhood. No flag in the
+# roll marks either. Both are measured instead: institutional-proxy zoning
 # carrying no taxable account, per neighbourhood, with the University of Alberta
-# area as the worked example (`docs/FINDINGS_exempt_institutional.md`).
+# area as the worked example (`docs/FINDINGS_exempt_institutional.md`), and the
+# share of levy on exempt-candidate zoning, sized on
+# [the assumptions page](03_assumptions.html).
 #
 # ## 4. The Glass view (100 m grid)
 #
@@ -452,8 +456,8 @@ data last checked **{status.get('last_checked')}**.
 # How big each of these is this week, alongside the other main assumptions
 # the public lenses make: [the assumptions page](03_assumptions.html).
 #
-# 1. **Exempt institutional land is invisible to the roll** (§3) — the biggest
-#    structural understatement, measured but not correctable.
+# 1. **Exemption status is not published** (§3) — some exempt land is billed
+#    on the map and some is missing from it; measured but not correctable.
 # 2. **One coordinate per account** — a large property's dollars pin to a
 #    single point on the grid; the lot-acre denominator is the counterweight.
 # 3. **Lot sizes are City-supplied, not clipped to neighbourhood boundaries** —

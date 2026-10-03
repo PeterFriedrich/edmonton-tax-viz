@@ -58,7 +58,6 @@ paragraph, the paragraph belongs in the `FINDINGS_*` doc it points to.
 |---|---|---|---|---|
 | E1 | Edmonton publishes **no per-parcel exemption status**, so no map built from open data can say which institutional dollars are real. | confirmed | `DATA_ISSUES.md` issue 4; `notebooks/standalone/exemption_uncertainty.py` | evidence, re-checked monthly |
 | E2 | The error runs **both ways**. Some exempt land is on the roll with a computed levy (hospitals, the U of A campus; 2,254 parcels on UI/UF/AJ/PU zoning carry $5.6B), which may **overstate** revenue. Some is genuinely absent (e.g. the Legislature), which **understates** it. | caveated | `FINDINGS_exempt_institutional.md` (premise corrected 2026-08-07); `03_assumptions.py` (Money rows) | parcel count as of 2026-08-07; share is **live** |
-| E3 | ⚠️ "Exempt institutions are **absent from the roll**, not listed at zero" — the blanket form. | **contested** — the 2026-08-07 correction says it is false, but `02_methods.py` §3 and §8 item 1 still publish it weekly. Don't use until the methods page is fixed. | `FINDINGS_exempt_institutional.md`; `data/DATA.md` "Tax-exempt flag" | — |
 | E4 | Share of **non-residential** levy sitting on exempt-candidate zoning, citywide: **16.4%** (spatial zoning, raw data of 2026-09-03). | confirmed | `FINDINGS_blurb_claims.md` §6 | as-of; **live** version in `03_assumptions.py` |
 | E5 | The neighbourhood bands and tooltip caveats gate on the exempt share of **total** levy, so on the Non-residential cut 144 of the 165 neighbourhoods with ≥25% exempt-candidate non-res levy get no band. | caveated — known display gap, fix proposed (TODO F1+F2) | `FINDINGS_blurb_claims.md` §6 | as-of 2026-09-28 |
 
@@ -91,6 +90,7 @@ paragraph, the paragraph belongs in the `FINDINGS_*` doc it points to.
 | id | claim | status | proof | live? |
 |---|---|---|---|---|
 | U1 | Six issues with Edmonton open data are documented (issues 1 and 3–7; issue 2 was this project's own and is fixed). Five have a published evidence notebook; issue 7 (`stt5-pzaa`) has none yet. As of 2026-10-03 **none has been reported to its publisher**. | confirmed | `DATA_ISSUES.md` "Status at a glance" | send status changes by hand |
+| U2 | Edmonton's portal has school points for **two boards only** (EPSB, Edmonton Catholic). Alberta Education's spreadsheet lists every school in the city, private, charter and francophone included, with addresses but **no coordinates**. | confirmed | `notebooks/standalone/school_coverage_gap.py` §4–§5; `DATA_ISSUES.md` issue 5 | evidence, re-checked monthly; counts as of 2026-10-03 |
 
 ---
 
@@ -104,4 +104,5 @@ paragraph, the paragraph belongs in the `FINDINGS_*` doc it points to.
 | X4 | "9% of non-residential levy is on exempt-candidate zoning." | An artifact of blank roll zoning; the figure is 16.4% (E4). | `FINDINGS_blurb_claims.md` §6 |
 | X5 | "The lot-acre view stops parks, river valley and big lots diluting the figure." | Wrong for parks and backwards for big lots (M5). | `FINDINGS_blurb_claims.md` §2 (F3) |
 | X6 | "Dense-infill areas top the growth scale." | The top is greenfield (D2). | `FINDINGS_blurb_claims.md` §2 (F5) |
-| X7 | "Exempt institutional land is absent from the roll entirely." | False as a blanket claim (E2, E3). | `FINDINGS_exempt_institutional.md` |
+| X7 | "Exempt institutional land is absent from the roll entirely." | False as a blanket claim (E2). The methods page carried it until 2026-10-03. | `FINDINGS_exempt_institutional.md` |
+| X8 | "Alberta publishes its private and charter school lists only as PDFs, not joinable." | Alberta Education publishes a daily spreadsheet of every school with addresses (U2). The school evidence page carried it until 2026-10-03. | `notebooks/standalone/school_coverage_gap.py` §4 |
