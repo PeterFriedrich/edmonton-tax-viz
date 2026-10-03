@@ -42,9 +42,11 @@ docs sync as they are — they are the real thing, not a summary:
 
 - `docs/BRIEF.md` — generated, always
 - `docs/SPEC_*.md` — each one (nine as of 2026-09-30, ~277 KB)
+- `docs/REPORT_CLAIMS.md` — the claims register for the written report
+  (added 2026-10-03; see "Report rounds" below)
 
 In git pathspec form (the handoff skill uses this exact list):
-`docs/BRIEF.md 'docs/SPEC_*.md'`. To sync another file, add it in four places
+`docs/BRIEF.md 'docs/SPEC_*.md' docs/REPORT_CLAIMS.md`. To sync another file, add it in four places
 together: here, the handoff skill's command (`.claude/skills/handoff/SKILL.md`
 §"Claude web sync check"), the `CLAUDE.md` line for this doc, and the claude.ai
 Project.
@@ -73,3 +75,29 @@ research chat that needs one of those gets it pasted.
   tables into `TODO.md` / `docs/DECISIONS.md` by hand. A parser for them
   (`ingest_reply.py`) is deferred until three rounds have used the format —
   `docs/FINDINGS_harvest.md` §"D (spec sheet): recommendation".
+
+## Report rounds
+
+The written report is a Google Doc in Peter's Drive. Peter owns its prose.
+Claude web (through claude.ai's Google Drive integration) and Claude Code
+(through its Drive connector, which acts as Peter) read it and check it
+against `docs/REPORT_CLAIMS.md`. No report text is copied into the repo.
+
+- **Changes to the doc are proposals**, as comments or a clearly marked block
+  Peter accepts. Never rewrite his prose wholesale. Don't route edits through
+  the server session's `gdocs.py`: it writes whole tabs as a service account.
+- **Press Sync before a report round**, so Claude web checks against the
+  current register.
+- **Reply format for a report round** — one table, one row per claim found in
+  the doc:
+
+  | doc passage (short quote) | register row | verdict | note |
+  |---|---|---|---|
+
+  Verdict is one of `matches`, `contradicts`, `withdrawn` (the doc states an
+  X-row claim), `contested` (the row's status is contested) or `no row`. A
+  `no row` claim is reported, never silently accepted: either it gets a row
+  with a proof pointer, or it comes out of the report.
+- File the reply in `/home/opc/research/edmonton-tax-viz/` as for any round,
+  then triage: register rows into `docs/REPORT_CLAIMS.md`, doc fixes into
+  comments on the doc.
