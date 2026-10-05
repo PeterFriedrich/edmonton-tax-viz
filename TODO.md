@@ -684,13 +684,13 @@ not restore it**; the numbers below are the durable record).
   (see the `METRICS.revenue_per_acre` comment and `check_colour_clamps.py`); a
   percentile/log transform would spread the bulk and break that. The open
   question is whether there is a fix that keeps cross-visit comparability —
-  decide it, don't silently trade it away. **Not yet reproduced visually** — the
+  decide it, don't silently trade it away. **Not yet reproduced visually** (arithmetic re-confirmed 2026-10-05, identical deciles on the 09-28 data — `docs/FINDINGS_colour_claims.md`) — the
   numbers are ΔE76 (a screening metric, not ΔE2000) on the opaque default view;
   shoot the real map before acting.
 - [ ] **cividis collides with the set-aside grey — "off the scale" and "a real
   value" render the same.** `SET_ASIDE_COLOR` `#686c7a` (L\* 45.7) sits **ΔE 2.3**
   from the cividis ramp at t=0.41. **Cost: 4 hoods within ΔE 3 ($8.0k–$9.2k/acre),
-  8 within ΔE 5 ($7.4k–$9.9k)**, against 48 genuinely grey set-aside hoods — so on
+  8 within ΔE 5 ($7.4k–$9.9k)** *(re-measured 2026-10-05 on the 09-28 data: 4 within ΔE76 3, $8.2k–$9.2k; 9 within 5; min ΔE2000 1.85; **rendered top-down: ΔE2000 1.8–2.6 on screen** — `docs/FINDINGS_colour_claims.md`; the guard should use ΔE2000)*, against 48 genuinely grey set-aside hoods — so on
   that palette those few read as undeveloped land. Small population, but it is a
   **categorical** confusion rather than a magnitude error, and cividis is the
   CVD-safe palette, i.e. the one a colour-blind reader is steered to.
