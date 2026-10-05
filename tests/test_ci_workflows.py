@@ -255,3 +255,25 @@ def test_url_state_shards_partition_each_build_exactly():
         # Every shard of a build walks or links; between them, both happen.
         parts = {f.get("--part", "all") for f in shards}
         assert parts & {"walk", "all"} and parts & {"links", "all"}, (page, parts)
+
+
+@pytest.mark.parametrize("workflow", ["deploy.yml", "refresh.yml"])
+def test_the_publish_group_keeps_every_pending_run(workflow):
+    """The default queue (single) cancels a PENDING run when another queues.
+
+    A code push landing while the scheduled refresh waits behind a deploy would
+    silently drop that week's refresh (FINDINGS_ci_publish_paths.md F2).
+    """
+    conc = _load(workflow)["concurrency"]
+    assert conc["group"] == "refresh-map-data"
+    assert conc["cancel-in-progress"] is False
+    assert conc.get("queue") == "max"
+
+
+def test_the_code_deploy_builds_from_the_branch_tip():
+    """Without ref: master, a deploy queued behind a refresh checks out its
+    trigger SHA, which lacks the refresh's data commit, and republishes last
+    week's data (FINDINGS_ci_publish_paths.md F1)."""
+    steps = [s for job in _load("deploy.yml")["jobs"].values() for s in job["steps"]]
+    checkout = next(s for s in steps if s.get("uses", "").startswith("actions/checkout@"))
+    assert (checkout.get("with") or {}).get("ref") == "master"

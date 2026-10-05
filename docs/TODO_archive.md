@@ -187,3 +187,13 @@ the public build, where the denominator picker is full-only by design
 (`ratioDenomShow` requires `FULL_BUILD`). It passes 42/42 on the full build.
 
 **CLOSED 2026-09-24 (S194):** both scripts read `FULL_BUILD`. `verify-services-panel.js` skips §1–3 on a public URL (its §4 already covers the three public layers) and prints `PARTIAL`. `verify-ratio-denom.js` asserts the picker matches the build in both directions, skips the fire §4–9 on public, and prints `COMPLETE`/`PARTIAL`. The public run had been passing ~20 fire checks by JS-clicking the hidden picker. Falsified: ungating `ratioDenomShow` turns the public run red.
+
+### Publish-path ordering — two latent CI races (OPEN 2026-10-05 S215, `docs/FINDINGS_ci_publish_paths.md`)
+- **F1:** a `web/**` merge during a refresh queues a `deploy.yml` run that checks
+  out its trigger SHA and republishes last week's data. Proposed: `ref: master`
+  on deploy.yml's checkout, plus a `test_ci_workflows.py` assertion.
+- **F2:** a later code push cancels a PENDING refresh (default `queue: single`).
+  Proposed: `queue: max` on both workflows.
+- CI changes → Peter's OK before building. Neither race has fired (0 of 100 deploys).
+
+**CLOSED 2026-10-05 (S216):** both fixes built — `ref: master` on `deploy.yml`'s checkout, `queue: max` on both workflows' `concurrency`; guarded by `test_the_code_deploy_builds_from_the_branch_tip` and `test_the_publish_group_keeps_every_pending_run`.

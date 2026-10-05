@@ -73,7 +73,7 @@ checkout→push span of one run a week, and the scheduled run now fires at
 DECISIONS 2026-09-21 calls *"usually run while someone is actively merging"*,
 are the likely trigger.
 
-**Remedy (CI change → Peter):** `deploy.yml`'s checkout gets `ref: master`,
+**✅ Built 2026-10-05 (S216).** **Remedy (CI change → Peter):** `deploy.yml`'s checkout gets `ref: master`,
 so a deploy publishes the branch tip as it is when the run starts, not as it was
 at trigger time. A later deploy then never carries older data than an earlier
 one. Plus a `test_ci_workflows.py` assertion on that line.
@@ -96,7 +96,7 @@ deploy at the moment the cron fires. Never observed: the one `cancelled`
 refresh on record (2026-07-13) ran 30 min 20 s, which is a `timeout-minutes: 30`
 kill, not a replacement.
 
-**Remedy (CI change → Peter):** `queue: max` on both workflows' `concurrency`
+**✅ Built 2026-10-05 (S216).** **Remedy (CI change → Peter):** `queue: max` on both workflows' `concurrency`
 blocks. This is documented, and it is compatible with `cancel-in-progress: false`
 (only the `true` combination is rejected).
 
