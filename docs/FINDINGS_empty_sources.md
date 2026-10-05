@@ -49,6 +49,11 @@ problem. Fire's message names a specific wrong fix, and RUNBOOK §2's
 "Regenerate web GeoJSON" entry steers the operator toward extending exactly
 that mapping. **Class:** `guard-noisy` (wrong diagnosis); **reach:** no.
 
+**✅ Shipped 2026-10-05 (S216):** the 0-row check, without a per-source floor
+(`verify_download`; tests `test_verify_fails_on_empty_geojson_even_when_server_agrees`,
+`test_verify_fails_on_header_only_csv`). Run against the live empty `f2sy-bth7`,
+it fails naming the dataset.
+
 **Remedy for both (CI behaviour → Peter):** `download_data.py` fails a source
 whose download is 0 rows (or under a per-source floor), naming the dataset id
 and "upstream table is empty". That one check closes F1 at the download step,

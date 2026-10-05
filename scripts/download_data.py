@@ -52,6 +52,7 @@ import argparse
 import csv
 import json
 import logging
+import re
 import sys
 import time
 from pathlib import Path
@@ -333,12 +334,24 @@ def check_not_truncated(name: str, count: int, limit: int) -> None:
 
 
 def verify_download(name: str, src: dict) -> None:
-    """Post-download integrity checks: our-$limit check, then server count(*).
+    """Post-download integrity checks: non-empty, our-$limit check, then server count(*).
 
     A server-count MISMATCH raises (that IS truncation/incompleteness, whoever's
     limit caused it); an UNAVAILABLE server count only warns (soft-fail).
     """
     n = local_count(src["dest"])
+    # Socrata serves a table that loaded empty as a header-only CSV or
+    # `features: []`, and count(*) agrees at 0, so the server cross-check
+    # passes. Downstream it surfaces as a misleading schema/mapping error, or
+    # not at all (docs/FINDINGS_empty_sources.md). Name the real cause here.
+    if n == 0:
+        m = re.search(r"/(?:resource|views)/([a-z0-9]{4}-[a-z0-9]{4})", src.get("url", ""))
+        dataset = m.group(1) if m else "?"
+        raise RuntimeError(
+            f"{name}: downloaded 0 records — the upstream table {dataset} is EMPTY "
+            f"on data.edmonton.ca. Not a schema or column-mapping problem: don't "
+            f"edit the loader; check the dataset and log it in docs/DATA_ISSUES.md."
+        )
     if "limit" in src:
         check_not_truncated(name, n, src["limit"])
     if "count_url" in src:

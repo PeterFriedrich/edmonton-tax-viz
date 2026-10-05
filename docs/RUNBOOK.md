@@ -542,6 +542,13 @@ Triage by which step failed, in the run log:
     raise BOTH the `$limit` in the URL and the matching `limit` field.
   - *"downloaded N but server reports M"* — incomplete download; re-run. If
     it persists, the portal itself is misbehaving — wait it out.
+  - *"downloaded 0 records — the upstream table <id> is EMPTY"* — the City
+    reloaded that table with no rows (first seen 2026-10-05, GTFS calendar
+    dates `f2sy-bth7`). **Don't edit any loader or mapping**: nothing on our side
+    is wrong. Confirm with `https://data.edmonton.ca/resource/<id>.json?$select=count(*)`,
+    log it in `docs/DATA_ISSUES.md`, and dispatch the workflow once the count is
+    non-zero again. The site keeps serving the last good data; the staleness
+    banner appears after 14 days.
 - **"Check unmatched names"** (exit 5, `scripts/check_unmatched_names.py`) — a
   NEW assessment neighbourhood name has no boundary polygon, so its assessed
   value would silently drop off the map. The build stops *before* regen, so the
@@ -644,6 +651,8 @@ Triage by which step failed, in the run log:
   step 8.
 - **"Regenerate web GeoJSON"** — read the traceback; the loaders hard-error
   deliberately on upstream schema drift rather than publishing wrong numbers.
+  (An EMPTY source no longer reaches this step; it fails "Download source data"
+  by name, above. A loader error here that looks like a missing column is drift.)
   Usual fixes are extending an explicit mapping: `ZONE_CATEGORY`
   (load_zoning), the functional-class dict (load_roads), `ZONE_RUNOFF`
   (load_stormwater), `DISPATCH_COLUMN_CANDIDATES` (load_fire), the class
