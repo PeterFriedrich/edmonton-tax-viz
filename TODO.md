@@ -190,6 +190,17 @@ publish on its own, unrelated to any of this — re-pinned.)_
   `docs/BRIEF.md` + `docs/SPEC_*.md`, press **Sync**, and review
   `docs/SCOPE.md`. After that, `/handoff`'s sync check prompts for each re-sync
   (`docs/CLAUDE_WEB.md`).
+### ⚠️ Weekly refresh RED since 2026-10-05 — City's GTFS Calendar Dates loaded empty (OPEN 2026-10-05 S215)
+- `f2sy-bth7` reloaded with **0 rows** (`docs/DATA_ISSUES.md` §8). `load_transit`
+  fails loud, the site serves the 2026-09-28 data, and **the staleness banner
+  shows from 2026-10-12** if the next Monday run also fails.
+- **Before next Monday:** re-check `https://data.edmonton.ca/resource/f2sy-bth7.json?$select=count(*)`.
+  If it is non-zero, `gh workflow run refresh.yml --ref master` (RUNBOOK §2: dispatch, don't re-run).
+- **Peter decides:** report it (§8 channel); and whether to add a fallback to
+  ETS's own zip (`calendar_dates.txt`, identical service_ids) when the Socrata
+  table is empty. That is a new download source and a CI behaviour change, so it
+  needs Peter's OK before it's built.
+
 ### A `fable-session` credit-discipline skill — evaluated, corrections pending (OPEN 2026-09-04)
 
 
