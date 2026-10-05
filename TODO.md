@@ -230,6 +230,16 @@ publish on its own, unrelated to any of this — re-pinned.)_
   carve-out, so they are MIT by default. Add them to carve-out 2 (data) /
   carve-out 1 (prose) and to the README table.
 
+### Smoke gate reads no panel text (OPEN 2026-10-05 S215, `docs/FINDINGS_s187_remedies.md` F1)
+- `verify-smoke.js` §C's zero-token sweep covers `viewTooltip` only. A mutant
+  open-coding `"$" + Math.round()` in the Services panel printed "$0 / acre / yr"
+  over $0.436 on the public build and every check stayed green. Proposal: run
+  the same NaN-substitution scan on `#temporal-read` after `openTemporal` per
+  hood per view. Measure the runtime first; CI-adjacent, so Peter decides.
+- O1: one retry of ❓ notebooks in `recheck_evidence_notebooks.py` before the
+  monthly report (a transient empty 200 from budget.edmonton.ca produced a ❓
+  on 2026-10-05).
+
 ### A `fable-session` credit-discipline skill — evaluated, corrections pending (OPEN 2026-09-04)
 
 
