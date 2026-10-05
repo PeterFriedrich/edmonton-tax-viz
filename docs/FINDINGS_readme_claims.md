@@ -55,6 +55,7 @@ The live `q7d6-ambg` row count. The published notebook HTML under
   today (`DATA_ISSUES.md` §8, no notebook). The confirmed set with notebooks is
   now issues 1, 3, 4 and 6: **four**. "Five" is false either way.
 
+**✅ Fixed 2026-10-05 (S216):** ~440,000, and the counts replaced by the pointer.
 **Class:** `claim`, public. **Remedy (Peter; public copy):** fix both numbers,
 or drop the counts for a pointer ("see `docs/DATA_ISSUES.md`"), which cannot
 drift. F1 is what an unpinned count does. The 448k figure was right for an
