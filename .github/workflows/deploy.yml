@@ -51,16 +51,24 @@ permissions:
 
 # Shared with refresh.yml so a code deploy and a data deploy never race on
 # Pages. cancel-in-progress:false = queue behind an in-flight refresh rather
-# than aborting it mid-pipeline.
+# than aborting it mid-pipeline. queue:max = keep every pending run (FIFO); the
+# default (single) cancels a pending refresh when a later push queues here
+# (docs/FINDINGS_ci_publish_paths.md F2).
 concurrency:
   group: refresh-map-data
   cancel-in-progress: false
+  queue: max
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      # ref: master, not the trigger SHA: a deploy queued behind a refresh
+      # would otherwise build from a commit without that refresh's data commit
+      # and publish last week's numbers over this week's (FINDINGS_ci_publish_paths F1).
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          ref: master
 
       # Two-build emit (docs/PLAN_public_release.md §2a): fan web/ out into
       # _site/ = public root + _site/dev-build-full/ = specialist. Pure code-shaping, no

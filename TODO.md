@@ -206,14 +206,6 @@ publish on its own, unrelated to any of this — re-pinned.)_
   table is empty. That is a new download source and a CI behaviour change, so it
   needs Peter's OK before it's built.
 
-### Publish-path ordering — two latent CI races (OPEN 2026-10-05 S215, `docs/FINDINGS_ci_publish_paths.md`)
-- **F1:** a `web/**` merge during a refresh queues a `deploy.yml` run that checks
-  out its trigger SHA and republishes last week's data. Proposed: `ref: master`
-  on deploy.yml's checkout, plus a `test_ci_workflows.py` assertion.
-- **F2:** a later code push cancels a PENDING refresh (default `queue: single`).
-  Proposed: `queue: max` on both workflows.
-- CI changes → Peter's OK before building. Neither race has fired (0 of 100 deploys).
-
 ### Services/Development panel follow-ons (OPEN 2026-10-05 S215, `docs/FINDINGS_services_ranks_dev_zerofill.md`)
 - **F1:** `devHistoryFor`'s comment claims the zero-fill catches a name mismatch;
   it cannot, because both sides read one join. Fix the comment. Peter: add
@@ -3258,6 +3250,8 @@ archive"*) is not, and this span is 2,533 lines.
 ## Done
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
+
+- [x] **Publish-path ordering — two latent CI races (S215 item 7 F1/F2).** — CLOSED 2026-10-05 · `docs/TODO_archive.md`
 
 - [x] **Make `url-state` a required check (S213 F1).** — DONE 2026-10-03 · `docs/TODO_archive.md`
 

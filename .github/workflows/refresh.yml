@@ -22,10 +22,12 @@ permissions:
   id-token: write
   issues: write
 
-# Never let two refreshes race on the push/deploy.
+# Never let two refreshes race on the push/deploy. queue:max so a later code
+# push queueing in this group cannot cancel a pending refresh (FINDINGS_ci_publish_paths F2).
 concurrency:
   group: refresh-map-data
   cancel-in-progress: false
+  queue: max
 
 jobs:
   build:
