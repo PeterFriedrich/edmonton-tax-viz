@@ -209,6 +209,16 @@ publish on its own, unrelated to any of this — re-pinned.)_
   Proposed: `queue: max` on both workflows.
 - CI changes → Peter's OK before building. Neither race has fired (0 of 100 deploys).
 
+### Services/Development panel follow-ons (OPEN 2026-10-05 S215, `docs/FINDINGS_services_ranks_dev_zerofill.md`)
+- **F1:** `devHistoryFor`'s comment claims the zero-fill catches a name mismatch;
+  it cannot, because both sides read one join. Fix the comment. Peter: add
+  `CHAPPELLE AREA, HERITAGE VALLEY AREA` → CHAPPELLE to `PERMIT_NAME_CORRECTIONS`
+  (5 of 5 geocoded rows are in Chappelle; moves 8 permits / 28 units).
+- **F2 (full build):** the water panel prints "$0 … 352nd highest of 406 … a
+  utility charge paid to EPCOR" for 43 industrial/commercial hoods that the
+  residential-only model does not cover. Null out-of-scope, or change the panel
+  wording (Peter).
+
 ### A `fable-session` credit-discipline skill — evaluated, corrections pending (OPEN 2026-09-04)
 
 
