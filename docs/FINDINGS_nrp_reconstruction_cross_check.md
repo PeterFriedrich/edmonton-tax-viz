@@ -116,6 +116,13 @@ renewal half. Observed full reconstruction runs **$3,151/m aggregate, median
 $3,528/m** — **1.66× / 1.86×** the published figure. **10 of the 14 profiles
 exceed $1,900/m; 6 exceed twice it.**
 
+> **Re-measured 2026-10-04 on the 2026-09-28 data:** **$3,139/m aggregate,
+> median $3,488/m — 1.65× / 1.84×**; still 10 of 14 over, 6 over twice;
+> 1.38× ex-alley unchanged. The small drop is the 2026-09-22 equal split of
+> boundary road, which moved hood road metres after this doc was captured.
+> Cite the re-measured figure; the source is
+> `notebooks/exploration/05_roads_cost_ideal_vs_ours.py` §4.
+
 **At face value that would put the renewal half near $63/m/yr and the lifecycle
 rate near $75/m/yr rather than $50.** ⚠️ **Do not make that change** — see §4.
 The finding is directional, and the direction is the point: it lands on the same
