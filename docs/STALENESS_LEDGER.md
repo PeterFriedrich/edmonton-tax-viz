@@ -129,6 +129,11 @@ docs that get consulted in passing** — which is the prune rule pointed at
 actively-used docs. ⚠️ **Do not prune anything on that table without first
 either widening the matcher to include Bash or discounting the result.**
 This is `check-where-the-value-can-be-wrong` in an instrument, again.
+✅ **RESOLVED 2026-09-21 (`4971a80`) — the matcher was widened** with a `Bash`
+`PostToolUse` entry. Re-checked 2026-10-05 (S215, item 9 sample): the log holds
+**1,588 Bash entries** since 09-21 against 411 `Read`. The live caveat is now
+the one in `TODO.md`: two regimes, so a readout spanning 2026-09-21 must split
+at that date. A directory-wide `grep -rn` still logs nothing.
 ⚠️ **This is 20, where the prose running tally said 19** — pass 3 counted 3 and
 named 4 (rows 13–16). Treat the reconstruction as authoritative and the old
 tally as superseded; **35% corrected is well under the 47% the hand sample
