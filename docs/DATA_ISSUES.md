@@ -387,7 +387,8 @@ publisher problem rather than a join problem on our side:
 every affected row predates 2021** — the 5yr and 3yr windows lose 1 unit and 0,
 so the module's "immaterial" note was true of the windows anyone had measured
 and false of the one shipped 2026-07-21. 1,245 units across 8 unambiguous names
-were corrected 2026-09-14; **565 across 15 names remain unattributed by
+were corrected 2026-09-14, and 28 more (`CHAPPELLE AREA, HERITAGE VALLEY AREA`,
+placed by geocode) on 2026-10-05; **537 across 14 names remain unattributed by
 decision** (see `TODO.md` — a name correction cannot split a straddling permit,
 and those rows are only 14.9% geocoded so geometry cannot either).
 

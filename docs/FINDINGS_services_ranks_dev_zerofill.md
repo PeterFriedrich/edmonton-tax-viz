@@ -64,6 +64,13 @@ peer hoods would print "every one of them zero" for both.
 **Class:** `guard-blind` (an identity check: both sides read one join).
 **Reach:** public none found. Full build: 1 hood, 1 permit, set-aside.
 
+**✅ Remedies 1 and 2 built 2026-10-05 (S216):** the `devHistoryFor` comment now
+says what the check cannot catch; the Chappelle entry is in
+`PERMIT_NAME_CORRECTIONS` (re-measured: 8 of 8 geocoded rows of the name, any
+work type, in CHAPPELLE; CHAPPELLE 6,849 → 6,877 long-window units; citywide
+162,414 unchanged; unmatched 565/15 → 537/14). Remedy 3 stays with the open
+14-name decision.
+
 **Remedy (smallest first; Peter):**
 1. Correct the comment to say what the check catches (an export mismatch) and
    what it cannot (an unmatched permit name).
