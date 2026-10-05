@@ -535,8 +535,7 @@ the zip's calendar.
 **What it breaks here:** `load_transit._read_calendar` raises
 `no active service dates … wrong/empty feed`, so the 2026-10-05 refresh
 failed at "Regenerate web GeoJSON" (run 37343456450). That is the intended
-fail-loud: without dates every service weighs 0 and the transit lens would read
-zero everywhere. The site keeps serving the 2026-09-28 data. The download step
+fail-loud: with no service dates the mean-weekday metric has no denominator. The site keeps serving the 2026-09-28 data. The download step
 passed, because 0 rows downloaded equals 0 rows the server reports.
 **The staleness banner appears 14 days after the last good run, on 2026-10-12** —
 the next scheduled Monday — if the table is still empty then.
