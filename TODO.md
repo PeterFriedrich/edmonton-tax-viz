@@ -201,6 +201,14 @@ publish on its own, unrelated to any of this — re-pinned.)_
   table is empty. That is a new download source and a CI behaviour change, so it
   needs Peter's OK before it's built.
 
+### Publish-path ordering — two latent CI races (OPEN 2026-10-05 S215, `docs/FINDINGS_ci_publish_paths.md`)
+- **F1:** a `web/**` merge during a refresh queues a `deploy.yml` run that checks
+  out its trigger SHA and republishes last week's data. Proposed: `ref: master`
+  on deploy.yml's checkout, plus a `test_ci_workflows.py` assertion.
+- **F2:** a later code push cancels a PENDING refresh (default `queue: single`).
+  Proposed: `queue: max` on both workflows.
+- CI changes → Peter's OK before building. Neither race has fired (0 of 100 deploys).
+
 ### A `fable-session` credit-discipline skill — evaluated, corrections pending (OPEN 2026-09-04)
 
 

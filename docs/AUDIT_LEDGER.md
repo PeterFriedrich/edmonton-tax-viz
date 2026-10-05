@@ -88,6 +88,7 @@ Audits are framed top-down, fundamental decisions first (the
 | 2026-09-29 (S206, **Opus 5.5**, `xhigh`) | **PRE-MERGE VERIFY RUNTIME — Peter's S205 ask.** All 45 `verify-*.js` × both builds, timed through `verify.js --jobs 1`, sequential, on an unloaded box (a 7-day 100% CPU orphan from 09-21 killed first). | Full-suite baseline; phase-timed probes of load/close/reload/kill under SwiftShader; a `--require` preload re-run of the whole suite (browser process per page, SIGKILL on close) with `waitForTimeout` totals | `docs/FINDINGS_verify_runtime.md` | **Nothing browser-driven gates a merge; the suite is 82 min, and 31% of it is deferred GPU teardown from a graceful `browser.close()`/next `newPage()`. The preload measured 82 → 57 min with 90/90 status + check counts unchanged.** 43% of what remains is fixed sleeps. S205's 15 min was `verify-url-state`'s walk (≈2 loads per round trip), which neither fix touches. Hygiene: 3 public reds are harness defects (`uses`/`budget-panel` have no build gate; `deviation` hardcodes :8777); 4 `verify-*` have no assertions. | Peter's yes on the runner preload; the 3 harness defects; whether the 4 assertion-less scripts are renamed; sleeps → conditions only per script, with falsification. |
 | 2026-10-02 (S213, **Opus 5.5**, `high`) | **TEST & VERIFY RUNTIME, then the close-out sweep — queue item 17.** Did the speed-ups (#620 runner preload, #637/#638 `url-state` shards, #642 public walk split + `--only-shell`) keep coverage, top-down L0–L3; then one full local sweep of both builds against S206. ⚠️ **Same model as the builder** (DECISIONS 2026-10-02) | `docs/FABLE_AUDIT_test_runtime.md`; branch-protection API; check-run timestamps for every PR since #612; CI logs of #636 (unsharded) vs #642 (sharded) on an identical `web/` tree, compared check-for-check; 5 matrix mutations × the partition test and the full suite; `/proc/<pid>/exe` of a default headless launch; full sweep `verify.js --jobs 1` (box sampled every 60 s); preload A/B on the 6 scripts changed since S206; runner stub falsification | `docs/FINDINGS_verify_runtime.md` §7 | **L0 CONDITIONAL, L1 SOUND in effect (guard BLIND), L2 SOUND, L3 WARN.** **F1:** `url-state` is not a required check, and 4 of the 10 PRs it walked merged before it reported (each deployed first), yet DECISIONS 09-29 says it "gates the merge". On non-`web/` PRs it finishes inside `test`'s time, so requiring it costs ~3 min on `web/` PRs only. **F2:** the shard-partition test stayed green with both money walks, the full catch-all walk, or the whole full build dropped (1097/1097 green each); fixed in #646. Shards = one run check-for-check (31/58 trips). `--only-shell` is a no-op for what runs (the default launch was already `headless_shell`; the walk reads no pixels). The ungated class is UI behaviour (~6 live DECISIONS rows), not numbers. Sweep **62.0 min** (29.0 + 33.0) vs 57.3 post-preload; +4.7 min decomposed; no real red. Preload A/B on the 6 scripts changed since S206: 12/12 identical status + counts. Side: `verify-peek` +100 s comes from the lit selected-hood prism (#635/#636), bisected over 2 builds. | Peter: require `url-state` (F1); merge #646 (F2) and the runner PR (#647: 0-checks count, `verify-blurbs` full-build skip, six→seven header). F4: `verify-about` to treat 5xx/timeout like 429 (Peter). Lit-prism cost on a phone (S210 checks). |
 | 2026-10-03 (S214, **Opus 5.5**, `medium` at handoff) | **UPSTREAM-DEFECT CLAIMS, BEFORE ANY IS SENT — queue item 5.** The six publisher-facing issues in `DATA_ISSUES.md` and the five drafts: send at all (L0), true today (L1), message within the evidence (L2), hygiene (L3). ⚠️ Same model family as the drafts | `edmonton-audit` (decision stack); Socrata metadata for 7 datasets; SoQL aggregates on `q7d6-ambg`/`qi6a-xuwt`/`24uj-dj8v`; Socrata discovery API; open.alberta.ca CKAN; `recheck_evidence_notebooks.py` cold-cache (5 evidence notebooks, 37 invariants ✅) | `docs/FINDINGS_upstream_defect_claims.md` | **Issue 5 UNSOUND — do not send:** Alberta Education already publishes a daily-extracted XLSX of every school with address and authority type (450 Edmonton, incl. 54 private, 11 charter, 10 francophone); the published evidence page, `DATA.md` §20 and `ANALYSIS_BACKLOG.md` §13 all said PDFs only (F1). **Issues 1 and 3 CONDITIONAL, fixed in the drafts:** the dropout message credited the City with an internal audit that is our own detector (F2); the coverage-year message did not answer the valuation-year reading, which the City's own `qi6a-xuwt` rebuts (2025 slice $149.65B ≈ FIR 2025) (F3). **Issues 4 and 6 SOUND** (546 list rows live; 2025 manual still newest). Issue 7 still holds; not sendable without an artifact. F4/F5 internal hygiene. | Peter: send 1, 3, 4, 6 (re-measure on the send date); withdraw or narrow 5; whether to geocode the provincial XLSX into `dist_school_m` (new input, propose first). Report session: correct the `school_coverage_gap` page's PDF sentence. |
+| 2026-10-05 (S215, **Opus 5.5**, `xhigh`) | **CI BEHAVIOUR CHANGES, FROM THEIR LIVE RUNS — queue item 7.** #521 `/dev-build-full/`, #523 refresh rebase-and-retry, #569 blurb deploy gate, #578 notebook publish gate. ⚠️ Same model family as the builders | `edmonton-audit` (decision stack L0–L2); logs of refresh runs 35634413769 / 36451039239 / 37343456450 and deploy 37140648807; 100 deploy × 60 refresh runs intersected by time; live HTTP status of served paths; GitHub concurrency docs + `actions/checkout` README read from source | `docs/FINDINGS_ci_publish_paths.md` | **L0 SOUND, L1 SOUND (#521/#569/#578) + CONDITIONAL (#523: retry never exercised in production, 0 of 2 runs), L2 WARN.** **F1:** a `web/**` merge during a refresh queues a deploy that checks out its trigger SHA (no `ref:`) and republishes last week's `web/data` + `web/verified` over the fresh deploy; DECISIONS 07-22's "never race" covers simultaneity, not order. **F2:** default `queue: single` lets a later deploy CANCEL a pending refresh (lost week, silent). Both latent: 0 of 100 deploys overlapped a refresh. O1: the 08:00 UTC cron fires 6–9 h late since September. O2: a 0-row download passes `download_data.py` (0 = server 0) → queue item 18. | Peter: F1 `ref: master` on deploy.yml's checkout + test; F2 `queue: max` on both workflows (CI → Peter). Item 16 still owed (the 10-05 run died before the notebooks). |
 
 
 ## Findings register
@@ -319,6 +320,9 @@ started from a false premise.
 | 10-03 S214 | F3 coverage-year draft does not answer the valuation-year reading (the City's sibling dataset rebuts it) | claim | no | scoped | fixed |
 | 10-03 S214 | F4 exemption draft notes: channel "unresolved", `edmonton.ca` "unreachable", A&T as first stop — all stale | claim | no | scoped | fixed |
 | 10-03 S214 | F5 `DATA_ISSUES.md` §4 calls the split-rate class `NONRES MUNICIPAL/RES EDUCATION` an exemption flag | claim | no | side | fixed |
+| 10-05 S215 | F1 a code deploy queued behind a refresh checks out its trigger SHA and republishes last week's data over the fresh deploy | process | latent | scoped | open |
+| 10-05 S215 | F2 default concurrency `queue: single`: a later code push cancels a PENDING refresh (lost week, no retry) | process | latent | scoped | open |
+| 10-05 S215 | DATA_ISSUES §8 stated an unrun counterfactual ("transit would read zero everywhere") within an hour of being written | audit-error | no | side | fixed |
 
 
 ## Queued — briefed, not yet run
@@ -368,7 +372,7 @@ Executed row and strike the item here when it runs.
    compression — **medium-effort arithmetic, never rendered, measurement scripts
    lost**. Plus S185's claim the chrome tokenization (#525) is inert in dark:
    pixel-diff before/after. **Gates the `TODO.md` "Colour legibility" items.**
-7. **CI behaviour changes** (#521 `/dev-build-full/` move + `build_site.py`, #523
+7. ~~**CI behaviour changes**~~ ✅ **EXECUTED 2026-10-05 (S215)**, row above; `docs/FINDINGS_ci_publish_paths.md`. (#521 `/dev-build-full/` move + `build_site.py`, #523
    `refresh.yml` rebase-and-retry). **Run after 2026-09-28** — the first scheduled
    refresh to exercise the retry; audit its log, not the YAML alone.
 8. **README public claims + licence** (#486–#488 Comparable Work sourcing, #490
@@ -430,6 +434,7 @@ Built and verified by Opus 5.5 alone.
     against the PREVIOUS committed run, i.e. that HEAD on the runner is last
     week's data and not this run's. Locally, HEAD equalled the served file, so
     that path has only ever shown zero moves.
+    ⚠️ **Not yet runnable (2026-10-05):** that day's refresh failed at regen on an empty upstream GTFS table (`DATA_ISSUES.md` §8), before the notebooks step. Run after the first green refresh.
 
 ### S212 — marked 2026-10-02, briefed
 
@@ -442,6 +447,14 @@ Built and verified by Opus 5.5 alone.
     runs on Opus 5.5 unless Fable credits exist (DECISIONS 2026-10-02). Lined up
     for the next session.
     ⚠️ **Executed 2026-10-02 (S213, Opus 5.5)** — `docs/FINDINGS_verify_runtime.md` §7; same model as the builder.
+
+### S215 — marked 2026-10-05, NOT yet briefed
+
+18. **The empty-source class** (`FINDINGS_ci_publish_paths.md` O2). On 2026-10-05 the City reloaded a
+    GTFS table with 0 rows; `download_data.py` passed it (local 0 = server `count(*)` 0) and only
+    `load_transit`'s own check stopped the publish. For every source in `SOURCES`: what does a 0-row
+    (and a sharply shrunken) table do downstream — fail loud, or publish a zero / missing lens past
+    `check_served_columns.py`? Feed each loader an empty, header-only file; predict before running.
 
 ## Never audited (candidates, roughly ranked)
 
