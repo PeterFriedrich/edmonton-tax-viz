@@ -198,7 +198,9 @@ publish on its own, unrelated to any of this — re-pinned.)_
   If it is non-zero, `gh workflow run refresh.yml --ref master` (RUNBOOK §2: dispatch, don't re-run).
 - **Item 18 audit (`docs/FINDINGS_empty_sources.md`):** an empty school table
   publishes wrong `dist_school_m` with every gate green; 6 loud failures misdiagnose
-  an empty table. Proposed (Peter, CI): a 0-row check in `download_data.py`.
+  an empty table. ✅ **Fixed S216:** `download_data.py` now fails a 0-row source,
+  naming the dataset, so next Monday's run (if still empty) goes red at
+  "Download source data" with the real cause.
 - **Peter decides:** report it (§8 channel); and whether to add a fallback to
   ETS's own zip (`calendar_dates.txt`, identical service_ids) when the Socrata
   table is empty. That is a new download source and a CI behaviour change, so it

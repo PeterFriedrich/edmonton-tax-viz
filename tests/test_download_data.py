@@ -132,6 +132,33 @@ def test_verify_csv_source_uses_record_count(tmp_path, monkeypatch):
         verify_download("assessment", {"dest": p, "count_url": "http://x"})
 
 
+def test_verify_fails_on_empty_geojson_even_when_server_agrees(tmp_path, monkeypatch):
+    """An empty upstream table: server count(*) is 0 too, so the match must not pass."""
+    monkeypatch.setattr(download_data, "server_count", lambda url: 0)
+    src = _src(tmp_path, 0, limit=100)
+    src["url"] = "https://data.edmonton.ca/resource/rpjw-4jft.geojson?$limit=100"
+    with pytest.raises(RuntimeError, match="rpjw-4jft is EMPTY"):
+        verify_download("lrt_routes", src)
+
+
+def test_verify_fails_on_header_only_csv(tmp_path, monkeypatch):
+    """The 2026-10-05 shape: f2sy-bth7 served its header and no rows."""
+    p = tmp_path / "data.csv"
+    p.write_text("service_id,date,exception_type\n")
+    monkeypatch.setattr(download_data, "server_count", lambda url: 0)
+    src = {"dest": p, "url": SOURCES["gtfs_calendar_dates"]["url"], "count_url": "http://x"}
+    with pytest.raises(RuntimeError, match="f2sy-bth7 is EMPTY"):
+        verify_download("gtfs_calendar_dates", src)
+
+
+def test_every_source_url_names_its_dataset():
+    """The empty-table error names the dataset id parsed from the URL."""
+    for name, src in SOURCES.items():
+        assert download_data.re.search(
+            r"/(?:resource|views)/[a-z0-9]{4}-[a-z0-9]{4}", src["url"]
+        ), name
+
+
 # --- retry wrapper ----------------------------------------------------------
 
 
