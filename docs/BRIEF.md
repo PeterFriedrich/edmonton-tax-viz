@@ -389,6 +389,16 @@ Edmonton revenue-per-acre fiscal analysis. Python-only, no GIS software.
 
 - **Set up the claude.ai Project and press Sync (Peter).** The brief merged in #625. Create a private Project, add the repo from GitHub, select `docs/BRIEF.md` + `docs/SPEC_*.md`, press **Sync**, and review `docs/SCOPE.md`. After that, `/handoff`'s sync check prompts for each …
 
+**⚠️ Weekly refresh RED since 2026-10-05 — City's GTFS Calendar Dates loaded empty (OPEN 2026-10-05 S215)**
+
+**Publish-path ordering — two latent CI races (OPEN 2026-10-05 S215, `docs/FINDINGS_ci_publish_paths.md`)**
+
+**Services/Development panel follow-ons (OPEN 2026-10-05 S215, `docs/FINDINGS_services_ranks_dev_zerofill.md`)**
+
+**README + licence follow-ons (OPEN 2026-10-05 S215, `docs/FINDINGS_readme_claims.md`)**
+
+**Smoke gate reads no panel text (OPEN 2026-10-05 S215, `docs/FINDINGS_s187_remedies.md` F1)**
+
 **A `fable-session` credit-discipline skill — evaluated, corrections pending (OPEN 2026-09-04)**
 - **Write the corrected `fable-session` skill as a new directory under `.claude/skills/`** (same layout as the two there now). Peter deferred it 2026-09-04 ("later"); the **evaluation is done and is recorded here so it needn't be redone**. A relayed draft was checked against the …
 
@@ -426,7 +436,7 @@ Edmonton revenue-per-acre fiscal analysis. Python-only, no GIS software.
 
 **Colour legibility — two measured defects in the CURRENT dark map (OPEN 2026-09-22 S186)**
 - **Half the neighbourhoods sit inside ~20% of the ramp.** On the landing view (`revenue_per_acre`, sqrt colour, `colorClamp` $50,000, `current` ramp), the interquartile range is **$15.1k–$27.8k/acre → t 0.55–0.75**. Decile-to- decile ΔE76 runs **6.1–8.6** across p20–p80 …
-- **cividis collides with the set-aside grey — "off the scale" and "a real value" render the same.** `SET_ASIDE_COLOR` `#686c7a` (L\* 45.7) sits **ΔE 2.3** from the cividis ramp at t=0.41. **Cost: 4 hoods within ΔE 3 ($8.0k–$9.2k/acre), 8 within ΔE 5 ($7.4k–$9.9k)**, against 48 …
+- **cividis collides with the set-aside grey — "off the scale" and "a real value" render the same.** `SET_ASIDE_COLOR` `#686c7a` (L\* 45.7) sits **ΔE 2.3** from the cividis ramp at t=0.41. **Cost: 4 hoods within ΔE 3 ($8.0k–$9.2k/acre), 8 within ΔE 5 ($7.4k–$9.9k)** *(re-measured …
 
 **Verify runtime — from the S206 audit (`docs/FINDINGS_verify_runtime.md`)**
 - **The lit selected-hood prism (#635/#636) added ~100 s to `verify-peek`** under SwiftShader (212 → 310 s; findings §7b). Check a tap's latency on a phone with the S210 checks (MOBILE_USABILITY §2b) before deciding anything.
@@ -504,6 +514,7 @@ Edmonton revenue-per-acre fiscal analysis. Python-only, no GIS software.
 - #5 3 of 5 school boards absent from open data — status: **NOT SENT — ⚠️ DO NOT SEND as drafted** (S214: Alberta already publishes it; `docs/FINDINGS_upstream_defect_claims.md` F1)
 - #6 `24uj-dj8v` `neighbourhood` holds a LIST of hoods — status: **NOT SENT**
 - #7 `stt5-pzaa` frozen 2 annual cycles while its report kept publishing — status: **NOT SENT**
+- #8 `f2sy-bth7` GTFS Calendar Dates reloaded EMPTY (0 rows) 2026-10-05 — status: **NOT SENT** — broke the 2026-10-05 refresh; may self-heal at the City's next load
 
 ## Where things live
 
