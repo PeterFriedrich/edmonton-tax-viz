@@ -219,6 +219,17 @@ publish on its own, unrelated to any of this — re-pinned.)_
   residential-only model does not cover. Null out-of-scope, or change the panel
   wording (Peter).
 
+### README + licence follow-ons (OPEN 2026-10-05 S215, `docs/FINDINGS_readme_claims.md`)
+- **F1 (public copy, Peter):** "~448,000 property assessment records" → ~440,000
+  (live 439,696); "Six confirmed, five of them with a published notebook" →
+  four notebooks (or drop the counts for a pointer to `docs/DATA_ISSUES.md`).
+- **F2:** the school-coverage bullet under "defects in Edmonton's published open
+  data" follows Peter's issue-5 decision (withdraw → drop; narrow → reframe).
+- **F3 (licensing, Peter):** `output/historical_roll_gaps.json`,
+  `web/notebooks/`, `web/verified/` (and `notebooks/` prose) are in no LICENSE
+  carve-out, so they are MIT by default. Add them to carve-out 2 (data) /
+  carve-out 1 (prose) and to the README table.
+
 ### A `fable-session` credit-discipline skill — evaluated, corrections pending (OPEN 2026-09-04)
 
 
