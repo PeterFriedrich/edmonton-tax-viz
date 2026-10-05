@@ -35,7 +35,7 @@ right**, and the TODO is stale. Update here first.
 
 ⚠️ **Audited before sending 2026-10-03 (S214, `docs/FINDINGS_upstream_defect_claims.md`):** every claim re-measured live and all 5 evidence notebooks re-run (37 invariants ✅). **Issue 5 is UNSOUND — do not send.** Issues 1 and 3 had one outward-facing sentence each fixed in their drafts; 4 and 6 are sound.
 
-**Nothing has been sent. Seven issues, zero contact, as of 2026-09-21.**
+**Nothing has been sent. Eight issues, zero contact, as of 2026-10-05.**
 ⚠️ **And every defect below was CHECKED still-present on 2026-09-21**, not
 assumed: all five published evidence notebooks were re-executed against live
 sources and their 51 invariants all held. They are re-run **monthly** from now
@@ -60,6 +60,7 @@ was never a candidate to send, and it is now fixed.)
 | 5 | 3 of 5 school boards absent from open data | [published](https://peterfriedrich.github.io/edmonton-tax-viz/notebooks/school-coverage-gap.html) | ✅ `docs/DRAFT_open_data_request_school_locations.md` | **NOT SENT — ⚠️ DO NOT SEND as drafted** (S214: Alberta already publishes it; `docs/FINDINGS_upstream_defect_claims.md` F1) |
 | 6 | `24uj-dj8v` `neighbourhood` holds a LIST of hoods | [published](https://peterfriedrich.github.io/edmonton-tax-viz/notebooks/permit-neighbourhood-list.html) | ✅ `docs/DRAFT_bug_report_permit_neighbourhood_list.md` | **NOT SENT** |
 | 7 | `stt5-pzaa` frozen 2 annual cycles while its report kept publishing | ❌ none | ❌ none | **NOT SENT** |
+| 8 | `f2sy-bth7` GTFS Calendar Dates reloaded EMPTY (0 rows) 2026-10-05 | §8 below (measured; no notebook) | ❌ none | **NOT SENT** — broke the 2026-10-05 refresh; may self-heal at the City's next load |
 
 **Channel:** `opendata@edmonton.ca`, read from the portal footer 2026-08-25 —
 primary source, not inference. Right channel for 1, 3, 4 and 5, all of which are
@@ -510,6 +511,38 @@ downloaded here over plain `curl` with the `certifi` bundle;
 `www.edmonton.ca/growthanalysis` returns **200**. That claim was stale in the
 same way the `budget.edmonton.ca` one was (S108) — **test the exact host, never
 the domain.**
+
+---
+
+## 8. `f2sy-bth7` — GTFS Calendar Dates reloaded with 0 rows
+
+**Status: NOT SENT.** **Last measured: 2026-10-05** (S215).
+
+**What:** the City reloaded all five ETS GTFS tables on 2026-10-05 between
+14:58 and 15:21 UTC with the new signup (`feed_version 260929_1220`, window
+2026-09-29 → 2026-11-28). Four landed whole. `f2sy-bth7` (Calendar Dates,
+`rowsUpdatedAt` 14:58:12) landed with **0 rows** (`$select=count(*)` → 0).
+It held 9,248 in July.
+
+**It is the portal load, not the feed:** ETS's own zip
+(`https://gtfs.edmonton.ca/TMGTFSRealTimeWebService/GTFS/GTFS.zip`, 403 without
+a browser `User-Agent`, `Last-Modified` 2026-09-29) carries a
+`calendar_dates.txt` of **11,747 rows**, all `exception_type` 1, 2026-09-29 →
+2026-11-28. Its `trips.txt` matches Socrata `ctwr-tvrd` exactly: 85,543
+trip_ids, 1,331 service_ids, and every one of those service_ids has dates in
+the zip's calendar.
+
+**What it breaks here:** `load_transit._read_calendar` raises
+`no active service dates … wrong/empty feed`, so the 2026-10-05 refresh
+failed at "Regenerate web GeoJSON" (run 37343456450). That is the intended
+fail-loud: without dates every service weighs 0 and the transit lens would read
+zero everywhere. The site keeps serving the 2026-09-28 data. The download step
+passed, because 0 rows downloaded equals 0 rows the server reports.
+**The staleness banner appears 14 days after the last good run, on 2026-10-12** —
+the next scheduled Monday — if the table is still empty then.
+
+**Channel:** `opendata@edmonton.ca` (the portal load). The feed's own
+`feed_contact_email` is `ets-gtfs@edmonton.ca`, but the feed itself is fine.
 
 ---
 
