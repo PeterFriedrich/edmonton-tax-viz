@@ -8,6 +8,30 @@ Items are verbatim as they were closed, newest-moved first in the order they app
 
 ---
 
+- [x] **cividis collides with the set-aside grey — "off the scale" and "a real
+  value" render the same.** ✅ **CLOSED 2026-10-06 (S216):** cividis carries its own
+  `setAside: [60, 60, 62]` (ΔE2000 13.8 from its ramp), used beside ramp-coloured
+  surfaces (Money, Services plane, Ratio, Glass prisms, their legend swatch); Glass
+  ground plane and the Infill/Change/Deviation ramp keep the old grey (dark grey
+  would sit 5.2 / 7.7 from them). Peter chose cividis-only over a global change.
+  Guard: `tests/test_set_aside_colour.py` (ΔE2000 floor 10, every ramp parsed
+  from the page). `SET_ASIDE_COLOR` `#686c7a` (L\* 45.7) sits **ΔE 2.3**
+  from the cividis ramp at t=0.41. **Cost: 4 hoods within ΔE 3 ($8.0k–$9.2k/acre),
+  8 within ΔE 5 ($7.4k–$9.9k)** *(re-measured 2026-10-05 on the 09-28 data: 4 within ΔE76 3, $8.2k–$9.2k; 9 within 5; min ΔE2000 1.85; **rendered top-down: ΔE2000 1.8–2.6 on screen** — `docs/FINDINGS_colour_claims.md`; the guard should use ΔE2000)*, against 48 genuinely grey set-aside hoods — so on
+  that palette those few read as undeveloped land. Small population, but it is a
+  **categorical** confusion rather than a magnitude error, and cividis is the
+  CVD-safe palette, i.e. the one a colour-blind reader is steered to.
+  ⚠️ **Why it was missed is the reusable part:** the comment at `SET_ASIDE_COLOR`
+  asserts the grey is *"Distinct from every ramp's low end (dark purple/blue)"* —
+  true, and that is exactly where the value cannot be wrong. Nobody checked the
+  **mid**. (`check-where-the-value-can-be-wrong`, instance 11.)
+  **Ship the fix with a guard** — assert the minimum ΔE between `SET_ASIDE_COLOR`
+  and every stop-to-stop sample of all three ramps clears a stated floor. The
+  wireframe colour already has this reasoning done by brute force (see the
+  `#2ec4ff` comment in `web/index.html`: *"no single colour clears all four
+  ramps"*); this is the same search, never run for the set-aside grey.
+
+
 - [x] **Make `url-state` a required check (S213 F1).** Done 2026-10-03 (S214). Peter's call; it is one
   branch-protection setting.** It walked 10 PRs, and 4 merged before it
   reported and deployed first. DECISIONS 2026-09-29 says it "gates the merge".

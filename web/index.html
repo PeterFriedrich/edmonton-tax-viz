@@ -1870,6 +1870,10 @@
       cividis: { // perceptually uniform + colour-blind safe (blue -> yellow)
         bg: "#04101f",
         edge: [30, 50, 80, 210],
+        // Cividis passes through a neutral grey mid-ramp, ΔE2000 1.9 from
+        // SET_ASIDE_COLOR at t≈0.41, so real hoods there read as set-aside
+        // (FINDINGS_colour_claims.md claim 2). Its own dark grey is 13.8 away.
+        setAside: [60, 60, 62],
         stops: [
           [0.00, [  0,  34,  78]],
           [0.25, [ 53,  69, 108]],
@@ -1883,9 +1887,15 @@
     // Neutral off-ramp grey for set-aside neighbourhoods (>=90% never/not-yet
     // zoning). They are EXCLUDED from the colour scale — their near-zero revenue
     // is a land-use fact, not a fiscal signal (see FINDINGS §4/§6). Distinct from
-    // every ramp's low end (dark purple/blue), so "grey = not on the scale" reads
-    // unambiguously. Height stays their true (low) value — honest, de-emphasized.
+    // every ramp's low end (dark purple/blue) — but NOT from cividis's grey
+    // middle, so that ramp carries its own `setAside` (rampSetAside below). Height stays their true (low) value — honest, de-emphasized.
     const SET_ASIDE_COLOR = [104, 108, 122];
+    // The set-aside colour beside a RAMP-coloured surface. Only where the
+    // neighbours come from rampColorAt: the Infill/Change/Deviation diverging
+    // ramp and the Glass ground plane keep SET_ASIDE_COLOR, because cividis's
+    // dark grey sits 5.2 from GLASS_PLANE_COLOR and 7.7 from the diverging
+    // ramp's faint end. tests/test_set_aside_colour.py holds the distances.
+    const rampSetAside = () => RAMPS[state.ramp].setAside || SET_ASIDE_COLOR;
 
     // Glass view's ground plane: one neutral dark slate for every hood — the
     // plane is mouseover geography, not a signal carrier (all metric signal
@@ -2067,7 +2077,7 @@
       const v = p[colKey];
       // Null value == set-aside land OR (lot mode) a hood the parcel-fraction
       // guard suppressed — either way it's off the scale, grey.
-      return (p.is_set_aside || v == null) ? SET_ASIDE_COLOR : colorFor(v, clamp);
+      return (p.is_set_aside || v == null) ? rampSetAside() : colorFor(v, clamp);
     }
 
     // Legend gradient for the CURRENT ramp under the CURRENT view's transform:
@@ -2402,7 +2412,7 @@
         extruded: false,
         getFillColor: f => {
           const p = f.properties;
-          if (p.is_set_aside) return SET_ASIDE_COLOR;
+          if (p.is_set_aside) return rampSetAside();
           if (!col || p[col] == null) return GLASS_PLANE_COLOR;
           return rampColorAt(svcT(p[col], col));
         },
@@ -4663,7 +4673,7 @@
           getElevation: f => f.properties[cfg.key],
           elevationScale: cfg.elevationScale,
           getFillColor: f => f.properties.is_set_aside
-            ? SET_ASIDE_COLOR
+            ? rampSetAside()
             : colorFor(f.properties[cfg.key], cfg.colorClamp),
           opacity: state.prismOpacity,
           material: { ambient: 0.55, diffuse: 0.6, shininess: 32, specularColor: [60, 60, 70] },
@@ -4699,7 +4709,7 @@
           getFillColor: f => {
             const p = f.properties;
             if (instBandedRatio(p)) return [0, 0, 0, 0];
-            return ratioKept(p) ? rampColorAt(ratioT(ratioOf(p))) : SET_ASIDE_COLOR;
+            return ratioKept(p) ? rampColorAt(ratioT(ratioOf(p))) : rampSetAside();
           },
           opacity: state.prismOpacity,
           material: { ambient: 0.55, diffuse: 0.6, shininess: 32, specularColor: [60, 60, 70] },
@@ -6984,7 +6994,7 @@
           document.getElementById("legend-max").textContent =
             "$" + Math.round(svcScale("storm_charge_per_acre").clamp).toLocaleString() + "+";
           label.textContent = "Set aside — natural / undeveloped land";
-          sw.style.background = "rgb(104,108,122)";
+          sw.style.background = `rgb(${rampSetAside().join(",")})`;
         } else if (state.svcDriver === "fire") {
           document.getElementById("legend-label").textContent =
             `Fire dispatches per acre / yr (${WIN.fire} avg, sqrt colour)`;
@@ -6993,7 +7003,7 @@
           document.getElementById("legend-max").textContent =
             clamp.toFixed(clamp < 10 ? 1 : 0) + "+";
           label.textContent = "Set aside — natural / undeveloped land";
-          sw.style.background = "rgb(104,108,122)";
+          sw.style.background = `rgb(${rampSetAside().join(",")})`;
         } else if (state.svcDriver === "water") {
           document.getElementById("legend-label").textContent =
             "Modelled water + sewer charge per acre / yr (2026 rates)";
@@ -7001,7 +7011,7 @@
           document.getElementById("legend-max").textContent =
             "$" + Math.round(svcScale("water_charge_per_acre").clamp).toLocaleString() + "+";
           label.textContent = "Set aside — natural / undeveloped land";
-          sw.style.background = "rgb(104,108,122)";
+          sw.style.background = `rgb(${rampSetAside().join(",")})`;
         } else if (state.svcDriver === "transit") {
           document.getElementById("legend-label").textContent =
             "Scheduled transit stop-events per acre / weekday (sqrt colour)";
@@ -7010,7 +7020,7 @@
           document.getElementById("legend-max").textContent =
             clamp.toFixed(clamp < 10 ? 1 : 0) + "+";
           label.textContent = "Set aside — natural / undeveloped land";
-          sw.style.background = "rgb(104,108,122)";
+          sw.style.background = `rgb(${rampSetAside().join(",")})`;
         } else if (state.svcDriver === "bike") {
           document.getElementById("legend-label").textContent =
             "Dedicated bike route metres per acre (sqrt colour)";
@@ -7019,7 +7029,7 @@
           document.getElementById("legend-max").textContent =
             Math.round(clamp).toLocaleString() + " m+";
           label.textContent = "Set aside — natural / undeveloped land";
-          sw.style.background = "rgb(104,108,122)";
+          sw.style.background = `rgb(${rampSetAside().join(",")})`;
         } else if (state.svcDriver === "roadscost") {
           document.getElementById("legend-label").textContent =
             "Modelled road operating cost per acre / yr — no capital";
@@ -7027,7 +7037,7 @@
           document.getElementById("legend-max").textContent =
             "$" + Math.round(svcScale("cost_roads_ops_per_acre").clamp).toLocaleString() + "+";
           label.textContent = "Set aside — natural / undeveloped land";
-          sw.style.background = "rgb(104,108,122)";
+          sw.style.background = `rgb(${rampSetAside().join(",")})`;
         } else if (state.svcDriver === "roadslife") {
           document.getElementById("legend-label").textContent =
             "Modelled road lifecycle cost per acre / yr — upkeep + rebuilding";
@@ -7035,7 +7045,7 @@
           document.getElementById("legend-max").textContent =
             "$" + Math.round(svcScale("cost_roads_life_per_acre").clamp).toLocaleString() + "+";
           label.textContent = "Set aside — natural / undeveloped land";
-          sw.style.background = "rgb(104,108,122)";
+          sw.style.background = `rgb(${rampSetAside().join(",")})`;
         } else if (state.svcDriver === "transitcost") {
           document.getElementById("legend-label").textContent =
             "ETS bus + LRT budget share per acre / yr (sqrt colour)";
@@ -7043,7 +7053,7 @@
           document.getElementById("legend-max").textContent =
             "$" + Math.round(svcScale("cost_transit_ops_per_acre").clamp).toLocaleString() + "+";
           label.textContent = "Set aside — natural / undeveloped land";
-          sw.style.background = "rgb(104,108,122)";
+          sw.style.background = `rgb(${rampSetAside().join(",")})`;
         } else if (state.svcDriver === "bikecost") {
           document.getElementById("legend-label").textContent =
             "Modelled bikeway operating cost per acre / yr (sqrt colour)";
@@ -7051,7 +7061,7 @@
           document.getElementById("legend-max").textContent =
             "$" + Math.round(svcScale("cost_bike_ops_per_acre").clamp).toLocaleString() + "+";
           label.textContent = "Set aside — natural / undeveloped land";
-          sw.style.background = "rgb(104,108,122)";
+          sw.style.background = `rgb(${rampSetAside().join(",")})`;
         } else {
           document.getElementById("legend-label").textContent = "Road metres per acre";
           document.getElementById("legend-min").textContent = "0 m";
@@ -7154,7 +7164,7 @@
         document.getElementById("legend-min").textContent = "≤ " + bf(s.lo);
         document.getElementById("legend-max").textContent = bf(s.hi) + "+";
         label.textContent = ratioDenom().aside;
-        sw.style.background = "rgb(104,108,122)";
+        sw.style.background = `rgb(${rampSetAside().join(",")})`;
       } else if (state.view === "glass") {
         // Cell-scale anchors when the grid is present; the hood-prism
         // fallback keeps the metric's hood anchors. The lens never applies
@@ -7184,7 +7194,7 @@
         label.textContent = lot
           ? "Set aside, or too little parcel land"
           : "Set aside — natural / undeveloped land";
-        sw.style.background = "rgb(104,108,122)";
+        sw.style.background = `rgb(${rampSetAside().join(",")})`;
       }
       document.querySelector("#legend .bar").style.background = legendGradient();
     }
@@ -7210,7 +7220,9 @@
       const ramp = RAMPS[name];
       overlay.setProps({ layers: buildLayers() });
       map.setPaintProperty("bg", "background-color", ramp.bg);
-      document.querySelector("#legend .bar").style.background = legendGradient();
+      // The whole legend, not just the bar: the set-aside swatch follows the
+      // ramp too (rampSetAside), and it went stale when only the bar was redrawn.
+      refreshLegend();
       document.querySelectorAll("#palette button").forEach(b =>
         b.classList.toggle("active", b.dataset.ramp === name));
     }
