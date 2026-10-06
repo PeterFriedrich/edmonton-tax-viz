@@ -227,6 +227,10 @@ publish on its own, unrelated to any of this — re-pinned.)_
   carve-out 1 (prose) and to the README table.
 
 ### Smoke gate reads no panel text (OPEN 2026-10-05 S215, `docs/FINDINGS_s187_remedies.md` F1)
+- ✅ **F1 fixed S216:** §C now runs the same scan over the Ratio, Services (every
+  offered driver) and revenue-mix panels; +3 s per build; three panel mutants each
+  red by name on both builds. History and Development panels are not covered
+  (they read other files). Only O1 below is still open.
 - `verify-smoke.js` §C's zero-token sweep covers `viewTooltip` only. A mutant
   open-coding `"$" + Math.round()` in the Services panel printed "$0 / acre / yr"
   over $0.436 on the public build and every check stayed green. Proposal: run
