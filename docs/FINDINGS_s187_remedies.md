@@ -54,6 +54,12 @@ site. The panels are where #580 just added ranked dollars, and where the next
 open-coded formatter is most likely to appear.
 
 **Class:** `guard-blind`. **Reach:** latent.
+**✅ Built 2026-10-05 (S216):** checks `C-<state>: no zero-looking panel figure
+over a nonzero value` and `… no NaN/undefined in any hood's panel`. Renderers are
+called directly per hood (every offered Services driver), not via `openTemporal`;
+cost +3 s per build (13–14 s → 16–17 s, measured alone). M2 (Services), an
+open-coded Ratio bar and an open-coded city-share line each fail only their own
+panel check, on both builds.
 **Remedy (CI-adjacent → Peter):** extend §C to call `openTemporal(name)` per
 hood under each view, and run the same NaN-substitution zero-token scan on
 `#temporal-read`. The cost is one more render per hood per view. Measure that

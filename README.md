@@ -22,7 +22,7 @@ It does **not** reproduce those lifecycle figures. The cost side here covers a f
 
 - Edmonton recently raised property taxes by **6.9%**
 - Council is actively debating development costs and suburban expansion
-- Edmonton has excellent open data infrastructure (~448,000 property assessment records publicly available)
+- Edmonton has excellent open data infrastructure (~440,000 property assessment records publicly available)
 - No comparable public analysis exists for Edmonton — Calgary and Ottawa each have part of it (see Comparable Work), but neither maps revenue against land area
 
 ## Methodology
@@ -51,7 +51,7 @@ Edmonton transferred parcel-level GIS *boundary* data to AltaLIS in November 202
 
 **1. Solved by working around it.** Neighbourhood aggregation on the free boundary file is the primary unit — the resolution Ottawa's Hemson study and the Halifax research used. Lot *areas*, unlike geometry, are still open (`dkk9-cj3x`), which is what makes the parcel-acre denominator and the 100 m grid possible. Work that genuinely needs parcel geometry: `docs/PARCEL_LEVEL_OPPORTUNITIES.md`.
 
-**2. Defects only the City can fix.** Published data that is wrong or incomplete, found by using it — a roll-year field naming the wrong year, 2,448 accounts missing from historical slices, a permit field holding a comma-joined list of neighbourhoods. Six confirmed, five of them with a published, reproducible notebook (`docs/DATA_ISSUES.md`). A workaround here only moves the error.
+**2. Defects only the City can fix.** Published data that is wrong or incomplete, found by using it — a roll-year field naming the wrong year, 2,448 accounts missing from historical slices, a permit field holding a comma-joined list of neighbourhoods. Each is logged in `docs/DATA_ISSUES.md`, with a published, reproducible notebook where one exists. A workaround here only moves the error.
 
 **3. Data the City only sort of has.** Road costs are published as $600k / $1.9M / $1.5M per km with no stated basis — centreline or lane-km changes the answer severalfold, and the City's own snow report uses both units for the same inventory. No bikeway service life is published anywhere, so that lifecycle rate is underivable rather than merely uncertain.
 

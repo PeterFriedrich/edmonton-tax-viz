@@ -342,6 +342,46 @@ const GARBAGE = /\bNaN\b|\bundefined\b|\bnull\b|\bInfinity\b|\$NaN|\$undefined/;
         catch (e) { continue; }  // a NaN input can throw where a zero did not
         if (after) out.zeroes.push(`${f.properties.neighbourhood_name}: ${after.map(z => z.slice(-5)).join(' ')}`);
       }
+      // THE SAME SCAN OVER THE PINNED PANEL (FINDINGS_s187_remedies.md F1). The
+      // panels are separate render sites with their own formatting, and a
+      // mutant there printed a public "$0 / acre / yr" over $0.436 with every
+      // tooltip check green. The renderers are called directly, not through
+      // openTemporal: same dispatch, without the layout and layer rebuild per
+      // hood. A space goes in before every tag so adjacent cells cannot fuse
+      // into one token ("$1,2340.0%"). Services follows the colour driver, so
+      // every driver this build offers is swept. The history and Development
+      // panels read other files, not these properties, so this cannot test them.
+      out.panel = { rendered: 0, offenders: [], zeroes: [] };
+      const read = document.getElementById('temporal-read');
+      const panel = q => {
+        if (ratioPanelFor(q)) renderRatioCost(q);
+        else if (servicePanelFor(q)) renderServiceCost(q);
+        else if (revenuePanelFor(q)) renderRevenueMix(q);
+        else return null;
+        return text(read.innerHTML.replace(/</g, ' <'));
+      };
+      const drivers = state.view === 'services'
+        ? Object.keys(SERVICES).filter(k => FULL_BUILD || SERVICES[k].pub)
+        : [state.svcDriver];
+      const was = state.svcDriver;
+      for (const k of drivers) {
+        state.svcDriver = k;
+        for (const f of state.data.features) {
+          const name = f.properties.neighbourhood_name + (drivers.length > 1 ? ` (${k})` : '');
+          const t = panel(f.properties);
+          if (t == null) continue;
+          out.panel.rendered++;
+          if (/\bNaN\b|\bundefined\b|\bnull\b|\bInfinity\b/.test(t)) out.panel.offenders.push(name);
+          if (!t.match(ZERO)) continue;
+          const p = { ...f.properties };
+          for (const key in p) if (p[key] === 0) p[key] = NaN;
+          let after;
+          try { after = (panel(p) || '').match(ZERO); }
+          catch (e) { continue; }
+          if (after) out.panel.zeroes.push(`${name}: ${after.map(z => z.trim()).join(' ')}`);
+        }
+      }
+      state.svcDriver = was;
       // ⚠️ READ WHICHEVER LEGEND SURFACE IS ACTUALLY SHOWING. Uses is
       // categorical — it fills #legend-cats and leaves min/max hidden and
       // STALE, so asserting min/max there silently re-tests the previous
@@ -364,6 +404,16 @@ const GARBAGE = /\bNaN\b|\bundefined\b|\bnull\b|\bInfinity\b|\$NaN|\$undefined/;
     check(`C-${label}: no zero-looking readout over a nonzero value`,
       r.zeroes.length === 0,
       r.zeroes.length ? `${r.zeroes.length} hoods, e.g. ${r.zeroes.slice(0, 3).join('; ')}` : '');
+    if (r.panel.rendered) {
+      check(`C-${label}: no NaN/undefined in any hood's panel`,
+        r.panel.offenders.length === 0,
+        r.panel.offenders.length ? `${r.panel.offenders.length}, e.g. ${r.panel.offenders.slice(0, 3).join(', ')}` : '');
+      check(`C-${label}: no zero-looking panel figure over a nonzero value`,
+        r.panel.zeroes.length === 0,
+        r.panel.zeroes.length
+          ? `${r.panel.zeroes.length} of ${r.panel.rendered}, e.g. ${r.panel.zeroes.slice(0, 3).join('; ')}`
+          : `${r.panel.rendered} panels`);
+    }
     if (r.legend.catsVis) {
       check(`C-${label}: the category legend is populated and clean`,
         r.legend.cats.length > 0 && !GARBAGE.test(r.legend.cats),
