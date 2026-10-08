@@ -104,7 +104,7 @@ const [url] = process.argv.slice(2);
       // lenses can be compared rather than assumed equal.
       usesColour: (() => {
         const u = USE_CATEGORIES.find(x => x.label === 'Commercial');
-        return `rgb(${u.color.join(', ')})`;
+        return `rgb(${tc(u.color).join(', ')})`;
       })(),
     };
   });

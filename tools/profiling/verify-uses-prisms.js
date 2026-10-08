@@ -93,7 +93,7 @@ function check(name, ok, detail) {
       topFrac: top.frac_residential,
       elevOfTop: sample && l.props.getElevation(sample),
       fill: l.props.getFillColor, // constant accessor
-      sand: USE_BY_KEY.res.color,
+      sand: tc(USE_BY_KEY.res.color),
       opacity: l.props.opacity,
       pickable: !!l.props.pickable,
       nPrisms: l.props.data.features.length,

@@ -65,8 +65,8 @@ const [url] = process.argv.slice(2);
     const access = roadsData.features.find(f => f.properties.t !== 'arterial');
     const art = roadsData.features.find(f => f.properties.t === 'arterial');
     return {
-      accessColoured: roads.props.getLineColor(access).join() !== ARTERIAL_COLOR.join(),
-      arterialNeutral: roads.props.getLineColor(art).join() === ARTERIAL_COLOR.join(),
+      accessColoured: roads.props.getLineColor(access).join() !== tc(ARTERIAL_COLOR).join(),
+      arterialNeutral: roads.props.getLineColor(art).join() === tc(ARTERIAL_COLOR).join(),
       svcPlanePresent: overlay._deck.props.layers.some(l => l.id === 'svc-plane'),
     };
   });
@@ -83,8 +83,8 @@ const [url] = process.argv.slice(2);
     let neutral = 0, aside = 0, other = 0;
     for (const f of state.data.features) {
       const fill = plane.props.getFillColor(f).join();
-      if (f.properties.is_set_aside) fill === SET_ASIDE_COLOR.join() ? aside++ : other++;
-      else fill === GLASS_PLANE_COLOR.join() ? neutral++ : other++;
+      if (f.properties.is_set_aside) fill === tc(SET_ASIDE_COLOR).join() ? aside++ : other++;
+      else fill === tc(GLASS_PLANE_COLOR).join() ? neutral++ : other++;
     }
     return { planeBeforeRoads: ids.indexOf('svc-plane') < ids.indexOf('roads-ground'),
              planePickable: !!plane.props.pickable,
@@ -113,7 +113,7 @@ const [url] = process.argv.slice(2);
     const access = roadsData.features.find(f => f.properties.t !== 'arterial');
     return { clampMatchesP975: Math.abs(scale.clamp - q) < 1e-6,
              midFillOk: plane.props.getFillColor(mid).join() === expected.join(),
-             accessNeutral: roads.props.getLineColor(access).join() === ARTERIAL_COLOR.join(),
+             accessNeutral: roads.props.getLineColor(access).join() === tc(ARTERIAL_COLOR).join(),
              legendMax: document.getElementById('legend-max').textContent };
   });
   console.log('storm drives   :', JSON.stringify(stormDrives));

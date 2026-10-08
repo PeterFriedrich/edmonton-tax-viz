@@ -1045,6 +1045,19 @@ already carries its own `bg` / `edge` / `setAside`, swapped live by
 | 6. Toggle | Light/Dark in the Display pod (`#a11y`); the stored choice beats the OS; `applyPalette` maps `glow` → default when entering light. | `verify-theme.js`. |
 | 7. Checks | `verify-theme.js` (OS follow via `colorScheme` emulation, override, persistence, no dark colour left in light); `verify-smoke` in light. | — |
 
+**Phase 1 status (2026-10-08, S217): built.** Every backdrop-dependent colour is
+`themed(dark)` beside its rationale and read through `tc()`, and `state.theme` is in every
+colour `updateTriggers`. Layers with no triggers need one too: a GeoJsonLayer's sublayers
+do not see a new `material` without one (found on the Uses prisms). `applyTheme()`
+exists and nothing calls it yet. Gates: an exact dump of every layer's colour
+attributes matched master in 18 states across both builds; `verify-theme.js` swaps a
+sentinel theme in 11 states.
+⚠️ **For phase 2:** the probe only swaps `THEMED`, and the ramps are not in it yet.
+Removing `state.theme` from the Development neighbourhood layer's trigger stays GREEN
+today, because that layer draws only ramp colours (no neighbourhood lacks a value).
+When the ramps become per-theme, extend the probe to swap the ramp stops too, or that
+miss ships.
+
 Phases 1 and 4 change nothing in dark and can merge early. Phases 2–3 are the
 design work and where the time goes.
 

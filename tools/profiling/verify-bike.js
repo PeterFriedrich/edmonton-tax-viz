@@ -137,7 +137,7 @@ function check(name, ok, detail) {
       planeCount: ids.filter(id => id === 'svc-plane').length,
       linesPresent: ids.includes('bike-lines'),
       nLines: bikeLinesData ? bikeLinesData.lines.length : 0,
-      planeNeutral: plane.props.getFillColor(mid).join() === GLASS_PLANE_COLOR.join(),
+      planeNeutral: plane.props.getFillColor(mid).join() === tc(GLASS_PLANE_COLOR).join(),
     };
   });
   check('single shared svc-plane', on.planeCount === 1, `count=${on.planeCount}`);
@@ -170,7 +170,7 @@ function check(name, ok, detail) {
       transform: scale.transform,
       midFillOk: plane.props.getFillColor(mid).join() === expected.join(),
       sqrtDiffersFromLinear: expected.join() !== linear.join(),
-      asideGrey: plane.props.getFillColor(aside).join() === SET_ASIDE_COLOR.join(),
+      asideGrey: plane.props.getFillColor(aside).join() === tc(SET_ASIDE_COLOR).join(),
       legendLabel: document.getElementById('legend-label').textContent,
       legendMin: document.getElementById('legend-min').textContent,
       legendMax: document.getElementById('legend-max').textContent,

@@ -85,7 +85,7 @@ function check(name, ok, detail) {
       linesPresent: ids.includes('lrt-lines'),
       nLines: lrtLinesData ? lrtLinesData.lines.length : 0,
       linesUnderStations: ids.indexOf('lrt-lines') < ids.indexOf('transit-stations'),
-      planeNeutral: plane.props.getFillColor(mid).join() === GLASS_PLANE_COLOR.join(),
+      planeNeutral: plane.props.getFillColor(mid).join() === tc(GLASS_PLANE_COLOR).join(),
       cats: document.getElementById('legend-cats').textContent,
     };
   });
@@ -123,8 +123,8 @@ function check(name, ok, detail) {
       clampMatchesP975: Math.abs(scale.clamp - q) < 1e-6,
       clamp: scale.clamp,
       midFillOk: plane.props.getFillColor(mid).join() === expected.join(),
-      asideGrey: plane.props.getFillColor(aside).join() === SET_ASIDE_COLOR.join(),
-      accessNeutral: roads.props.getLineColor(access).join() === ARTERIAL_COLOR.join(),
+      asideGrey: plane.props.getFillColor(aside).join() === tc(SET_ASIDE_COLOR).join(),
+      accessNeutral: roads.props.getLineColor(access).join() === tc(ARTERIAL_COLOR).join(),
       legendLabel: document.getElementById('legend-label').textContent,
       legendMax: document.getElementById('legend-max').textContent,
       blurb: document.getElementById('title-p').textContent,

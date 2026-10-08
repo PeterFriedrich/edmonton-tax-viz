@@ -3194,7 +3194,7 @@ archive"*) is not, and this span is 2,533 lines.
     `elevationScale` values scaled with it (no global `ELEVATION_SCALE`).
   - [ ] **light mode: REOPENED 2026-10-08, being built.** The plan is in
     `docs/UI.md` → Light mode → Build plan, with the calls in DECISIONS 2026-10-08.
-    Phases: [ ] 1 plumbing (dark pixel-identical) · [ ] 2 light ramps (default +
+    Phases: [x] 1 plumbing (S217, `verify-theme.js`) · [ ] 2 light ramps (default +
     cividis, light → dark) · [ ] 3 re-solve dependent colours · [ ] 4 chrome
     tokens · [ ] 5 "brighter" copy · [ ] 6 Display toggle + OS follow · [ ] 7
     `verify-theme.js`.

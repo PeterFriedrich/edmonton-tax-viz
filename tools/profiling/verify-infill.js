@@ -86,7 +86,7 @@ const check = (name, cond) => { (cond ? pass++ : fail++); console.log(`${cond ? 
   // Exclusion: set-aside and no-far hoods render the grey sentinel (off scale).
   const excl = await page.evaluate(() => {
     const plane = overlay._deck.props.layers.find(l => l.id === 'infill-plane');
-    const grey = SET_ASIDE_COLOR.join();
+    const grey = tc(SET_ASIDE_COLOR).join();
     const sa = state.data.features.find(f => f.properties.is_set_aside);
     const saGrey = sa ? plane.props.getFillColor(sa.properties ? sa : sa).join() === grey : null;
     // infillScore must be null for a set-aside hood (excluded from z population).
@@ -157,7 +157,7 @@ const check = (name, cond) => { (cond ? pass++ : fail++); console.log(`${cond ? 
   // the z-scoring population — so the pressure end is unchanged.
   const gate = await page.evaluate(() => {
     const plane = overlay._deck.props.layers.find(l => l.id === 'infill-plane');
-    const grey = SET_ASIDE_COLOR.join();
+    const grey = tc(SET_ASIDE_COLOR).join();
     const col = devCol();
     const inc = state.data.features.filter(f => infillIncluded(f.properties, col));
     const nrOpp = inc.find(f => f.properties.is_residential === false && infillScore(f.properties) > 0);
@@ -234,7 +234,7 @@ const check = (name, cond) => { (cond ? pass++ : fail++); console.log(`${cond ? 
     const left = infillColorAt(-1).join(), right = infillColorAt(1).join(), mid = infillColorAt(0);
     return { drawn: document.querySelector('#legend .bar').style.background.includes('linear-gradient'),
              endsDiffer: left !== right,
-             centreNeutral: Math.abs(mid[0] - INFILL_CENTER[0]) < 2 };
+             centreNeutral: Math.abs(mid[0] - tc(INFILL_CENTER)[0]) < 2 };
   });
   check('legend gradient is drawn', grad.drawn);
   check('diverging ends differ', grad.endsDiffer);

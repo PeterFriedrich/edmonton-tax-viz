@@ -28,6 +28,7 @@ const STATES = [
   ['index.html', '#detail=grid'],
   ['index.html', '#mode=change'],
   ['index.html', '#view=development'],
+  ['index.html', '#view=development&detail=hood'],
   ['index.html', '#view=services'],
   ['index.html', '#view=ratio'],
   ['dev-build-full/index.html', '#view=development&mode=infill&amenity=lrt,school'],
