@@ -636,10 +636,12 @@ display(Markdown(
 
 check(11.1 <= blend <= 11.25,
       "the printed 11.2% reproduces exactly as a curbs-diluted paved figure")
-# Built FROM the constants, so a mistyped constant fails here too.
+# Built FROM the constants, so a mistyped constant fails here too. Matched with
+# whitespace removed: pypdf 6.19 spaces table cells apart, 6.14 ran them together.
 for s_ in (f"73.1%14.4%{PAVED_DF_25}%", f"73.2%15.3%{PAVED_DF_23}%",
            f"68.3%24.7%{CURBS_DF_25}%"):
-    check(s_ in app_b, f"Appendix B p37 carries the condition triple {s_} as transcribed")
+    check(s_ in app_b.replace(" ", ""),
+          f"Appendix B p37 carries the condition triple {s_} as transcribed")
 
 # 2023 has no Curbs line: its Roads row is Paved + Unpaved exactly, and Paved
 # FALLS $1.5B into 2025 while a $2.1B Curbs line appears.
