@@ -132,7 +132,7 @@ const rect = (page, sel) => page.$eval(sel, e => { const r = e.getBoundingClient
     check('a click on the map leaves it open', (await guide(page)).open);
     await page.keyboard.press('Escape');
 
-    // An open search hides the ?; opening the guide closes search.
+    // An open search hides the ?.
     await page.click('#search-btn');
     await page.waitForTimeout(200);
     check('an open search hides the ?',
