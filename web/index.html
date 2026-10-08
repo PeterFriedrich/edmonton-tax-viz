@@ -86,6 +86,34 @@
     <ul id="search-list" role="listbox" aria-label="Matching neighbourhoods"></ul>
   </div>
 
+  <!-- How-to-read guide (Peter, 2026-10-08): one card, shown once after the
+       loading overlay lifts and re-opened by the ? beside the magnifier. AFTER
+       #search in the DOM so an open search can hide the ? with a sibling
+       selector. A shared link gets the one-line offer (#guide-ask) instead of
+       the full card over the view it was sent to show. -->
+  <button id="guide-btn" aria-label="How to read this map" title="How to read this map"
+          aria-haspopup="dialog" aria-controls="guide" aria-expanded="false">?</button>
+  <div id="guide" role="dialog" aria-label="How to read this map">
+    <button id="guide-close" aria-label="Close the guide">&times;</button>
+    <div id="guide-ask">
+      <p><b>New here?</b> <button id="guide-show">Show the guide</button></p>
+      <p class="guide-skip">Or <span class="tapclick">tap</span> ✕ to go straight to the map.</p>
+    </div>
+    <div id="guide-body">
+      <h2>How to read this map</h2>
+      <p>What each neighbourhood pays the City in property tax, per acre.
+         Taller and brighter means more; grey is parks, river valley and
+         undeveloped land, left off the scale.</p>
+      <ul>
+        <li><b>Money · Development · Services · Ratio</b>: switch what's mapped</li>
+        <li><b>Revenue | Value</b>: what's counted</li>
+        <li><span class="tapclick" data-cap="1">Tap</span> a neighbourhood for its
+            numbers; the magnifier finds one by name</li>
+        <li><b>Center 2D</b> flattens to a plain map; <b>Center 3D</b> tilts it back</li>
+      </ul>
+    </div>
+  </div>
+
   <!-- Temporal lens (SPEC_temporal.md phase 3): the pinned readable version of
        the hover sparkline. Left column under the title — the one region no other
        chrome claims, so pinning a panel never buries a control. Hidden until a
@@ -2217,6 +2245,7 @@
       const done = () => { loadingEl.hidden = true; loadingEl.style.display = "none"; };
       loadingEl.addEventListener("transitionend", done, { once: true });
       setTimeout(done, 600);
+      maybeAutoGuide();
       // ⚠️ HERE, and not one step earlier. The boot is NOT network-bound — every
       // byte is on the page by ~600 ms and the rest of the wait is GPU shader
       // linking (docs/PERFORMANCE.md 2026-08-30), so the wire is idle and this
@@ -4214,7 +4243,7 @@
                         "a11y", "a11y-menu", "about", "about-menu", "share",
                         "legend", "compass", "viewbtns", "temporal", "peek",
                         "millrates", "budget", "budget-pod",
-                        "gridbusy", "search"];
+                        "gridbusy", "search", "guide-btn", "guide"];
     function chromeBoxes() {
       // The sweep works in deck-viewport pixels; getBoundingClientRect returns
       // CSS-viewport pixels. The canvas is the full window at 0,0 today so the
@@ -6029,6 +6058,46 @@
       document.getElementById("search-list").classList.remove("open");
       input.setAttribute("aria-expanded", "false");
       if (labelPool().length) overlay.setProps({ layers: buildLayers() });
+    }
+
+    // --- how-to-read guide -----------------------------------------------------
+    // The seen flag is the app's only localStorage use, and every access is
+    // wrapped: a private window or blocked storage throws or forgets, and the
+    // card then shows on each visit, which is harmless.
+    const GUIDE_KEY = "guideSeen";
+    // Read at parse time: restoreFromHash wipes the hash once it has applied it.
+    const arrivedWithState = location.hash.length > 1;
+
+    function openGuide(ask) {
+      closeSearch();
+      const g = document.getElementById("guide");
+      g.classList.toggle("ask", ask);
+      const verb = noHover() ? "tap" : "click";
+      g.querySelectorAll(".tapclick").forEach(s => {
+        s.textContent = s.dataset.cap ? verb[0].toUpperCase() + verb.slice(1) : verb;
+      });
+      g.classList.add("open");
+      document.getElementById("guide-btn").setAttribute("aria-expanded", "true");
+      if (labelPool().length) overlay.setProps({ layers: buildLayers() });
+    }
+
+    function closeGuide() {
+      const g = document.getElementById("guide");
+      if (!g.classList.contains("open")) return;
+      g.classList.remove("open");
+      document.getElementById("guide-btn").setAttribute("aria-expanded", "false");
+      if (labelPool().length) overlay.setProps({ layers: buildLayers() });
+    }
+
+    function maybeAutoGuide() {
+      // Never under automation: every verify script would meet a card over the
+      // map. verify-guide.js unsets navigator.webdriver to test this path.
+      if (navigator.webdriver) return;
+      try {
+        if (localStorage.getItem(GUIDE_KEY)) return;
+        localStorage.setItem(GUIDE_KEY, "1");
+      } catch (e) { /* storage blocked: show it anyway */ }
+      openGuide(arrivedWithState);
     }
 
     // Keep the current tilt and rotation, so the camera moves TO the hood
@@ -8096,7 +8165,8 @@
           return;
         }
         if (e.key !== "Escape") return;
-        // Innermost first: an open search is what the key is dismissing.
+        // Innermost first: an open guide or search is what the key is dismissing.
+        if (document.getElementById("guide").classList.contains("open")) { closeGuide(); return; }
         if (document.getElementById("search").classList.contains("open")) { closeSearch(); return; }
         if (searchHood) { searchHood = null; overlay.setProps({ layers: buildLayers() }); }
         if (state.hoodMode === "panel") applyHoodMode("popup"); else closeTemporal();
@@ -8135,6 +8205,14 @@
         if (!document.getElementById("search").contains(e.target)) closeSearch();
       });
       document.getElementById("search").style.display = "flex";
+      document.getElementById("guide-btn").addEventListener("click", e => {
+        e.stopPropagation();
+        if (document.getElementById("guide").classList.contains("open")) closeGuide();
+        else openGuide(false);
+      });
+      document.getElementById("guide-close").addEventListener("click", closeGuide);
+      document.getElementById("guide-show").addEventListener("click", () => openGuide(false));
+      document.getElementById("guide-btn").style.display = "flex";
       // The two bottom-right popovers (Display, Sources) open/close the same
       // way: the button toggles, a click outside closes, and opening one closes
       // the other — both menus expand upward into the same strip of screen, so
