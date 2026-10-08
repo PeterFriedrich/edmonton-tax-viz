@@ -687,22 +687,12 @@ not restore it**; the numbers below are the durable record).
   decide it, don't silently trade it away. **Not yet reproduced visually** (arithmetic re-confirmed 2026-10-05, identical deciles on the 09-28 data — `docs/FINDINGS_colour_claims.md`) — the
   numbers are ΔE76 (a screening metric, not ΔE2000) on the opaque default view;
   shoot the real map before acting.
-- [ ] **cividis collides with the set-aside grey — "off the scale" and "a real
-  value" render the same.** `SET_ASIDE_COLOR` `#686c7a` (L\* 45.7) sits **ΔE 2.3**
-  from the cividis ramp at t=0.41. **Cost: 4 hoods within ΔE 3 ($8.0k–$9.2k/acre),
-  8 within ΔE 5 ($7.4k–$9.9k)** *(re-measured 2026-10-05 on the 09-28 data: 4 within ΔE76 3, $8.2k–$9.2k; 9 within 5; min ΔE2000 1.85; **rendered top-down: ΔE2000 1.8–2.6 on screen** — `docs/FINDINGS_colour_claims.md`; the guard should use ΔE2000)*, against 48 genuinely grey set-aside hoods — so on
-  that palette those few read as undeveloped land. Small population, but it is a
-  **categorical** confusion rather than a magnitude error, and cividis is the
-  CVD-safe palette, i.e. the one a colour-blind reader is steered to.
-  ⚠️ **Why it was missed is the reusable part:** the comment at `SET_ASIDE_COLOR`
-  asserts the grey is *"Distinct from every ramp's low end (dark purple/blue)"* —
-  true, and that is exactly where the value cannot be wrong. Nobody checked the
-  **mid**. (`check-where-the-value-can-be-wrong`, instance 11.)
-  **Ship the fix with a guard** — assert the minimum ΔE between `SET_ASIDE_COLOR`
-  and every stop-to-stop sample of all three ramps clears a stated floor. The
-  wireframe colour already has this reasoning done by brute force (see the
-  `#2ec4ff` comment in `web/index.html`: *"no single colour clears all four
-  ramps"*); this is the same search, never run for the set-aside grey.
+- [ ] **Cividis: the arterial-road grey sits ΔE2000 4.3 from the ramp** (found
+  S216 while fixing the set-aside collision). `ARTERIAL_COLOR` (116,120,132) is
+  drawn beside ramp-coloured collector/local roads on the Roads driver, so under
+  cividis a mid-ramp road can read as an arterial. Default 28.1, glow 27.6. Lines,
+  not fills, and arterials are labelled in the legend; not rendered yet, so size it
+  on screen before deciding.
 
 ### Verify runtime — from the S206 audit (`docs/FINDINGS_verify_runtime.md`)
 
@@ -3255,6 +3245,8 @@ archive"*) is not, and this span is 2,533 lines.
 ## Done
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
+
+- [x] **cividis collides with the set-aside grey — "off the scale" and "a real value" render the same.** — CLOSED 2026-10-06 · `docs/TODO_archive.md`
 
 - [x] **Publish-path ordering — two latent CI races (S215 item 7 F1/F2).** — CLOSED 2026-10-05 · `docs/TODO_archive.md`
 
