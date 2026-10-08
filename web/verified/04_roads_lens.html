@@ -3,7 +3,7 @@
 <html lang="en">
 <head><meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>02_methods</title><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
+<title>04_roads_lens</title><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
 <style type="text/css">
     pre { line-height: 125%; }
 td.linenos .normal { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
@@ -7824,29 +7824,27 @@ a.anchor-link {
 </head>
 <body class="jp-Notebook" data-jp-theme-light="true" data-jp-theme-name="JupyterLab Light">
 <main>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=538aa215">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=13d3384e">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h1 id="Methods-&amp;-definitions">Methods &amp; definitions<a class="anchor-link" href="#Methods-&amp;-definitions">¶</a></h1><p>How the numbers on <a href="https://peterfriedrich.github.io/edmonton-tax-viz/">the map</a>
-are made — written for a reader checking the work rather than building it.</p>
-<p>This page replaced a prose <code>docs/METHODS.md</code> that quoted figures by hand. By
-the time it was retired it was still quoting the <strong>2025</strong> mill rates after
-the pipeline had moved to 2026 — nothing noticed, because nothing re-read
-it. So this page follows the rule of the
-<a href="01_money_lens.html">Money lens notebook</a>: <strong>no number below is typed by
-hand.</strong> Each one is computed from the data the site is publishing this week,
-by the code in the cell above it. Constants (thresholds, rates) are read from
-the pipeline module that uses them, never restated.</p>
-<p>Where a claim rests on a one-off investigation rather than on data this page
-can recompute, it is cited to the <code>FINDINGS_*</code> document that holds it, with no
-number attached — see the last section for that list.</p>
+<h1 id="The-Roads-lens,-end-to-end">The Roads lens, end to end<a class="anchor-link" href="#The-Roads-lens,-end-to-end">¶</a></h1><p>The Services view on <a href="https://peterfriedrich.github.io/edmonton-tax-viz/">the map</a>
+shows <strong>road metres per acre</strong>: the length of City-maintained collector and
+local road in each neighbourhood, divided by its area. It then prices those
+metres two ways, as a lifecycle cost and as an operating cost. This page
+re-runs that chain on this week's data, from the City's road centrelines to
+the figures the site is about to serve, and checks that each step agrees
+with the next.</p>
+<p>The same rules as <a href="01_money_lens.html">the Money lens page</a> apply. <strong>No
+number below is typed by hand.</strong> The checks assert things that must hold for
+any data, not values. The one exception is the citywide length band, which
+is explained where it is checked.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=c3d7d626">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=663fcf01">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7857,6 +7855,7 @@ number attached — see the last section for that list.</p>
 <div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timezone</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
@@ -7866,8 +7865,8 @@ number attached — see the last section for that list.</p>
 <span class="kn">from</span><span class="w"> </span><span class="nn">IPython.display</span><span class="w"> </span><span class="kn">import</span> <span class="n">Markdown</span><span class="p">,</span> <span class="n">display</span>
 
 
-<span class="c1"># Same root resolution as 01_money_lens: nbconvert's cwd is the build dir, so the</span>
-<span class="c1"># runner passes the root; the cwd search is for running interactively.</span>
+<span class="c1"># Same root resolution as 01–03: nbconvert's cwd is the build dir, so the runner</span>
+<span class="c1"># passes the root; the cwd search is for running interactively.</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">_find_root</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
     <span class="n">env</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"EDMONTON_REPO_ROOT"</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">env</span><span class="p">:</span>
@@ -7885,8 +7884,6 @@ number attached — see the last section for that list.</p>
 <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">REPO_ROOT</span><span class="p">))</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">main</span>  <span class="c1"># noqa: E402  (import-safe; puts src/ on the path)</span>
 
-<span class="c1"># The pipeline's INFO lines are the Money lens notebook's subject, not this</span>
-<span class="c1"># page's; warnings still surface.</span>
 <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">stream</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">WARNING</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">"</span><span class="si">%(name)s</span><span class="s2">: </span><span class="si">%(message)s</span><span class="s2">"</span><span class="p">)</span>
 
 <span class="n">CHECKS</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
@@ -7899,20 +7896,19 @@ number attached — see the last section for that list.</p>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">md</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="c1"># The notebook renderer reads a pair of bare `$` as TeX math delimiters,</span>
-    <span class="c1"># which swallows the text between two dollar amounts.</span>
+    <span class="c1"># A pair of bare `$` reads as TeX math delimiters in the renderer.</span>
     <span class="n">display</span><span class="p">(</span><span class="n">Markdown</span><span class="p">(</span><span class="n">text</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"$"</span><span class="p">,</span> <span class="sa">r</span><span class="s2">"\$"</span><span class="p">)))</span>
 
 
-<span class="n">WEB_DATA</span> <span class="o">=</span> <span class="n">REPO_ROOT</span> <span class="o">/</span> <span class="s2">"web"</span> <span class="o">/</span> <span class="s2">"data"</span>
-<span class="n">features</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">((</span><span class="n">WEB_DATA</span> <span class="o">/</span> <span class="s2">"neighbourhood_value_per_acre.geojson"</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">())[</span><span class="s2">"features"</span><span class="p">]</span>
-<span class="n">served</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">([</span><span class="n">f</span><span class="p">[</span><span class="s2">"properties"</span><span class="p">]</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">features</span><span class="p">])</span>
-<span class="n">status</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">((</span><span class="n">WEB_DATA</span> <span class="o">/</span> <span class="s2">"status.json"</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">())</span>
-<span class="n">grid</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">((</span><span class="n">WEB_DATA</span> <span class="o">/</span> <span class="s2">"value_grid.json"</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">())</span>
-<span class="n">grid_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">grid</span><span class="p">[</span><span class="s2">"cells"</span><span class="p">],</span> <span class="n">columns</span><span class="o">=</span><span class="n">grid</span><span class="p">[</span><span class="s2">"columns"</span><span class="p">])</span>
+<span class="n">SERVED_PATH</span> <span class="o">=</span> <span class="n">REPO_ROOT</span> <span class="o">/</span> <span class="s2">"web"</span> <span class="o">/</span> <span class="s2">"data"</span> <span class="o">/</span> <span class="s2">"neighbourhood_value_per_acre.geojson"</span>
 
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"served neighbourhoods: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">served</span><span class="p">)</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"roll year / rate year: </span><span class="si">{</span><span class="n">status</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'data_year'</span><span class="p">)</span><span class="si">}</span><span class="s2"> / </span><span class="si">{</span><span class="n">status</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'rate_year'</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">served_frame</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">([</span><span class="n">f</span><span class="p">[</span><span class="s2">"properties"</span><span class="p">]</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">text</span><span class="p">)[</span><span class="s2">"features"</span><span class="p">]])</span>
+
+
+<span class="n">served</span> <span class="o">=</span> <span class="n">served_frame</span><span class="p">(</span><span class="n">SERVED_PATH</span><span class="o">.</span><span class="n">read_text</span><span class="p">())</span>
+<span class="n">status</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">((</span><span class="n">REPO_ROOT</span> <span class="o">/</span> <span class="s2">"web"</span> <span class="o">/</span> <span class="s2">"data"</span> <span class="o">/</span> <span class="s2">"status.json"</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">())</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"served data generated: </span><span class="si">{</span><span class="n">status</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'generated'</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"executed:              </span><span class="si">{</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">)</span><span class="si">:</span><span class="s2">%Y-%m-%d %H:%M UTC</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </pre></div>
@@ -7927,36 +7923,34 @@ number attached — see the last section for that list.</p>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>served neighbourhoods: 406
-roll year / rate year: 2026 / 2026
-served data generated: 2026-10-08
-executed:              2026-10-08 21:38 UTC
+<pre>served data generated: 2026-10-08
+executed:              2026-10-08 21:39 UTC
 </pre>
 </div>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=af048614">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=f0ff8a65">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="1.-The-core-metric:-municipal-revenue-(or-assessed-value)-per-acre">1. The core metric: municipal revenue (or assessed value) per acre<a class="anchor-link" href="#1.-The-core-metric:-municipal-revenue-(or-assessed-value)-per-acre">¶</a></h2><p><strong>Numerator.</strong> Every account on the City's assessment roll (open dataset
-<code>q7d6-ambg</code>) carries an assessed value and up to three tax classes, each with
-a percentage of the value. Per account:</p>
-<pre><code>levy = Σ over classes  assessed_value × (class % / 100) × (mill rate / 1000)
-</code></pre>
-<p>using the City's published <strong>municipal</strong> mill rates (<code>pwis-wc4c</code>). The
-provincial education levy is excluded: the project measures the City's fiscal
-capacity, not a household's tax burden. Accounts sum by neighbourhood, and the
-map's toggle shows either this revenue or raw assessed value (the
-<a href="https://www.urbanthree.com/">Urban3</a>/Strong Towns convention).</p>
+<h2 id="1.-Centrelines-to-road-metres-per-neighbourhood">1. Centrelines to road metres per neighbourhood<a class="anchor-link" href="#1.-Centrelines-to-road-metres-per-neighbourhood">¶</a></h2><p><code>load_roads</code> keeps City-maintained road centrelines, drops alleys, and
+classifies each line. It clips the lines to neighbourhood boundaries and
+drops clipping crumbs under a metre. Road drawn along a boundary shared by
+two or more neighbourhoods is split equally between them. Only collector and
+local road counts. Arterials are shared by the whole city and are left out
+(<code>docs/SPEC_services.md</code>).</p>
+<p>This runs the pipeline's own function. Two steps inside it are observed
+rather than re-implemented: the clip's own length accounting, read from the
+log record it writes, and the boundary split, wrapped to see what goes in
+and what comes out.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=83ccf767">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=60709424">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7964,26 +7958,59 @@ map's toggle shows either this revenue or raw assessed value (the
 <div class="jp-InputPrompt jp-InputArea-prompt">In [2]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">apply_tax_rates</span><span class="w"> </span><span class="kn">import</span> <span class="n">apply_tax_rates</span>  <span class="c1"># noqa: E402</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">load_assessment</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_assessment</span>  <span class="c1"># noqa: E402</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">load_roads</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">lr</span>  <span class="c1"># noqa: E402</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">load_boundaries</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_boundaries</span>  <span class="c1"># noqa: E402</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">join_and_calculate</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_unit_costs</span>  <span class="c1"># noqa: E402</span>
 
-<span class="n">YEAR</span> <span class="o">=</span> <span class="n">main</span><span class="o">.</span><span class="n">ASSESSMENT_YEAR</span>
-<span class="n">rates</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">main</span><span class="o">.</span><span class="n">MILL_RATES_JSON</span><span class="o">.</span><span class="n">read_text</span><span class="p">())[</span><span class="s2">"rates"</span><span class="p">][</span><span class="nb">str</span><span class="p">(</span><span class="n">YEAR</span><span class="p">)]</span>
-<span class="n">assessment</span> <span class="o">=</span> <span class="n">apply_tax_rates</span><span class="p">(</span><span class="n">load_assessment</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">main</span><span class="o">.</span><span class="n">ASSESSMENT_CSV</span><span class="p">)),</span> <span class="n">main</span><span class="o">.</span><span class="n">MILL_RATES_JSON</span><span class="p">,</span> <span class="n">YEAR</span><span class="p">)</span>
-<span class="n">levy_total</span> <span class="o">=</span> <span class="n">assessment</span><span class="p">[</span><span class="s2">"levy"</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
-<span class="n">res_rate</span> <span class="o">=</span> <span class="n">rates</span><span class="p">[</span><span class="s2">"Residential"</span><span class="p">][</span><span class="s2">"municipal"</span><span class="p">]</span>
-<span class="n">nonres_rate</span> <span class="o">=</span> <span class="n">rates</span><span class="p">[</span><span class="s2">"Non Residential"</span><span class="p">][</span><span class="s2">"municipal"</span><span class="p">]</span>
 
+<span class="k">class</span><span class="w"> </span><span class="nc">_Capture</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">Handler</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">records</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">logging</span><span class="o">.</span><span class="n">LogRecord</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">emit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">records</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">record</span><span class="p">)</span>
+
+
+<span class="n">cap</span> <span class="o">=</span> <span class="n">_Capture</span><span class="p">()</span>
+<span class="n">lr</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">cap</span><span class="p">)</span>
+<span class="n">lr</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+<span class="n">lr</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">propagate</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># keep the INFO chatter out of the page</span>
+
+<span class="n">SPLITS</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">set</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">_split</span> <span class="o">=</span> <span class="n">lr</span><span class="o">.</span><span class="n">split_boundary_pieces</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_observed_split</span><span class="p">(</span><span class="n">pieces</span><span class="p">,</span> <span class="n">boundaries</span><span class="p">,</span> <span class="n">label</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="n">lr</span><span class="o">.</span><span class="n">BOUNDARY_TOL_M</span><span class="p">):</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">_split</span><span class="p">(</span><span class="n">pieces</span><span class="p">,</span> <span class="n">boundaries</span><span class="p">,</span> <span class="n">label</span><span class="p">,</span> <span class="n">tol</span><span class="p">)</span>
+    <span class="n">SPLITS</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="nb">float</span><span class="p">(</span><span class="n">pieces</span><span class="p">[</span><span class="s2">"piece_m"</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()),</span> <span class="nb">float</span><span class="p">(</span><span class="n">out</span><span class="p">[</span><span class="s2">"piece_m"</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()),</span>
+                   <span class="nb">set</span><span class="p">(</span><span class="n">out</span><span class="p">[</span><span class="s2">"neighbourhood_name"</span><span class="p">])))</span>
+    <span class="k">return</span> <span class="n">out</span>
+
+
+<span class="n">lr</span><span class="o">.</span><span class="n">split_boundary_pieces</span> <span class="o">=</span> <span class="n">_observed_split</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">boundaries</span> <span class="o">=</span> <span class="n">load_boundaries</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">main</span><span class="o">.</span><span class="n">BOUNDARIES_GEOJSON</span><span class="p">))</span>
+    <span class="n">roads</span> <span class="o">=</span> <span class="n">lr</span><span class="o">.</span><span class="n">load_roads</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">main</span><span class="o">.</span><span class="n">ROADS_GEOJSON</span><span class="p">),</span> <span class="n">boundaries</span><span class="p">)</span>
+<span class="k">finally</span><span class="p">:</span>
+    <span class="n">lr</span><span class="o">.</span><span class="n">split_boundary_pieces</span> <span class="o">=</span> <span class="n">_split</span>
+    <span class="n">lr</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">removeHandler</span><span class="p">(</span><span class="n">cap</span><span class="p">)</span>
+    <span class="n">lr</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">propagate</span> <span class="o">=</span> <span class="kc">True</span>
+
+<span class="n">cons</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">cap</span><span class="o">.</span><span class="n">records</span> <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">msg</span><span class="p">)</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"Road length conservation"</span><span class="p">)]</span>
+<span class="n">check</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">cons</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">"the clip reported its length accounting exactly once"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">cons</span><span class="p">)</span><span class="si">}</span><span class="s2"> record(s)"</span><span class="p">)</span>
+<span class="n">km_in</span><span class="p">,</span> <span class="n">km_assigned</span><span class="p">,</span> <span class="n">km_outside</span><span class="p">,</span> <span class="n">pct_outside</span> <span class="o">=</span> <span class="n">cons</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">args</span> <span class="k">if</span> <span class="n">cons</span> <span class="k">else</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,)</span> <span class="o">*</span> <span class="mi">4</span>
+
+<span class="n">metric_km</span> <span class="o">=</span> <span class="n">roads</span><span class="p">[</span><span class="s2">"road_m_total"</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">/</span> <span class="mi">1000</span>
+<span class="n">unknown_km</span> <span class="o">=</span> <span class="n">roads</span><span class="p">[</span><span class="s2">"road_m_unknown"</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">/</span> <span class="mi">1000</span>
 <span class="n">md</span><span class="p">(</span><span class="sa">f</span><span class="s2">"""</span>
-<span class="s2">For **</span><span class="si">{</span><span class="n">YEAR</span><span class="si">}</span><span class="s2">** the rates are Residential **</span><span class="si">{</span><span class="n">res_rate</span><span class="si">}</span><span class="s2">**, Other Residential</span>
-<span class="s2">**</span><span class="si">{</span><span class="n">rates</span><span class="p">[</span><span class="s1">'Other Residential'</span><span class="p">][</span><span class="s1">'municipal'</span><span class="p">]</span><span class="si">}</span><span class="s2">** and Non Residential</span>
-<span class="s2">**</span><span class="si">{</span><span class="n">nonres_rate</span><span class="si">}</span><span class="s2">** per $1,000. Applied to **</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">assessment</span><span class="p">)</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">** accounts, that</span>
-<span class="s2">gives a citywide municipal levy of **$</span><span class="si">{</span><span class="n">levy_total</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e9</span><span class="si">:</span><span class="s2">,.2f</span><span class="si">}</span><span class="s2">B**.</span>
-
-<span class="s2">The gap between the value view and the revenue view is exactly Edmonton's</span>
-<span class="s2">class-differential rates: non-residential property is taxed</span>
-<span class="s2">**</span><span class="si">{</span><span class="n">nonres_rate</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">res_rate</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">×** residential per dollar of value.</span>
-<span class="s2">(`docs/SPEC_revenue.md`)</span>
+<span class="s2">- **</span><span class="si">{</span><span class="n">km_in</span><span class="si">:</span><span class="s2">,.1f</span><span class="si">}</span><span class="s2"> km** of City road (alleys out) went into the clip.</span>
+<span class="s2">- **</span><span class="si">{</span><span class="n">km_assigned</span><span class="si">:</span><span class="s2">,.1f</span><span class="si">}</span><span class="s2"> km** landed inside a neighbourhood and **</span><span class="si">{</span><span class="n">km_outside</span><span class="si">:</span><span class="s2">,.1f</span><span class="si">}</span><span class="s2"> km</span>
+<span class="s2">  (</span><span class="si">{</span><span class="n">pct_outside</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">%)** lies outside every boundary.</span>
+<span class="s2">- Of what landed, **</span><span class="si">{</span><span class="n">metric_km</span><span class="si">:</span><span class="s2">,.1f</span><span class="si">}</span><span class="s2"> km** is collector and local road: the metric.</span>
+<span class="s2">  **</span><span class="si">{</span><span class="n">roads</span><span class="p">[</span><span class="s1">'road_m_arterial'</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">1000</span><span class="si">:</span><span class="s2">,.1f</span><span class="si">}</span><span class="s2"> km** is arterial, kept out of it.</span>
+<span class="s2">- **</span><span class="si">{</span><span class="n">unknown_km</span><span class="si">:</span><span class="s2">,.3f</span><span class="si">}</span><span class="s2"> km** carries a road class the pipeline does not recognise.</span>
+<span class="s2">  It is held out of the metric rather than guessed at.</span>
 <span class="s2">"""</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -7997,52 +8024,44 @@ map's toggle shows either this revenue or raw assessed value (the
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>apply_tax_rates: 80 propert(ies) with class % not summing to 100 — billed as-stated, not normalized
+<pre>  [PASS] the clip reported its length accounting exactly once  — 1 record(s)
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-OutputArea-output" data-mime-type="text/markdown" tabindex="0">
-<p>For <strong>2026</strong> the rates are Residential <strong>7.7419</strong>, Other Residential
-<strong>8.2064</strong> and Non Residential
-<strong>25.2216</strong> per $1,000. Applied to <strong>439,643</strong> accounts, that
-gives a citywide municipal levy of <strong>$2.78B</strong>.</p>
-<p>The gap between the value view and the revenue view is exactly Edmonton's
-class-differential rates: non-residential property is taxed
-<strong>3.3×</strong> residential per dollar of value.
-(<code>docs/SPEC_revenue.md</code>)</p>
+<ul>
+<li><strong>5,027.5 km</strong> of City road (alleys out) went into the clip.</li>
+<li><strong>5,013.3 km</strong> landed inside a neighbourhood and <strong>14.2 km
+(0.28%)</strong> lies outside every boundary.</li>
+<li>Of what landed, <strong>3,655.8 km</strong> is collector and local road: the metric.
+<strong>1,357.3 km</strong> is arterial, kept out of it.</li>
+<li><strong>0.000 km</strong> carries a road class the pipeline does not recognise.
+It is held out of the metric rather than guessed at.</li>
+</ul>
 </div>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=85c1617f">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=6f52e0d1">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<p><strong>Denominator — two, on purpose.</strong> A toggle offers:</p>
-<ul>
-<li><strong>Ground acres</strong> (the default): the neighbourhood boundary polygon's area
-(<code>65fr-66s6</code>), which includes roads, parks and rights-of-way. It is the
-default because it is <em>structurally immune</em> to parcel-record
-inconsistencies — it never reads a lot-size field.</li>
-<li><strong>Lot acres</strong>: the deduplicated area of titled lots (<code>dkk9-cj3x</code>
-<code>lot_size</code>), the denominator closest to Urban3's own method — revenue per
-acre of private land. Neighbourhoods where titled lots cover too little of
-the boundary are greyed out rather than shown, because a near-zero
-denominator explodes the ratio.</li>
-</ul>
-<p>Urban3's published method divides by <em>parcel</em> acres, so lot-acre mode is the
-comparable one; the ground-acre default is this project's own
-robustness-motivated addition, not borrowed methodology.
-(<code>docs/FINDINGS_denominator_cardinality.md</code>)</p>
+<p><strong>The clip cannot create road.</strong> The boundary polygons touch and in two
+places overlap slightly, so a line on a shared edge could land in both. The
+pipeline's own warning only fires when road goes <em>missing</em>; a double count
+would make that warning look healthier. So this checks the other direction.</p>
+<p><strong>Almost all road lands in a neighbourhood.</strong> What falls outside is road
+beyond the mapped neighbourhoods, and 1% is several times what it has been.
+A larger share means the boundaries or the feed moved.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=e7e17101">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=4c9b9c0d">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8050,40 +8069,10 @@ robustness-motivated addition, not borrowed methodology.
 <div class="jp-InputPrompt jp-InputArea-prompt">In [3]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">export_value_grid</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>  <span class="c1"># noqa: E402</span>
-    <span class="n">KNOWN_BOUND_OUTLIERS</span><span class="p">,</span> <span class="n">MULTI_UNIT_MIN_LOT_M2</span><span class="p">,</span> <span class="n">SHARE_MAX_M2</span><span class="p">,</span> <span class="n">SQ_M_PER_ACRE</span><span class="p">,</span>
-    <span class="n">_point_lot_stats</span><span class="p">,</span>
-<span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">join_and_calculate</span><span class="w"> </span><span class="kn">import</span> <span class="n">LOW_PARCEL_FRAC</span>  <span class="c1"># noqa: E402</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">load_boundaries</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_boundaries</span>  <span class="c1"># noqa: E402</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">load_property_info</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_property_info</span>  <span class="c1"># noqa: E402</span>
-
-<span class="n">boundaries</span> <span class="o">=</span> <span class="n">load_boundaries</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">main</span><span class="o">.</span><span class="n">BOUNDARIES_GEOJSON</span><span class="p">))</span>
-<span class="n">ground_acres</span> <span class="o">=</span> <span class="n">boundaries</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s2">"neighbourhood_name"</span><span class="p">)[</span><span class="s2">"area_acres"</span><span class="p">]</span>
-<span class="n">served</span><span class="p">[</span><span class="s2">"ground_acres"</span><span class="p">]</span> <span class="o">=</span> <span class="n">served</span><span class="p">[</span><span class="s2">"neighbourhood_name"</span><span class="p">]</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">ground_acres</span><span class="p">)</span>
-
-<span class="n">check</span><span class="p">(</span>
-    <span class="n">served</span><span class="p">[</span><span class="s2">"ground_acres"</span><span class="p">]</span><span class="o">.</span><span class="n">notna</span><span class="p">()</span><span class="o">.</span><span class="n">all</span><span class="p">(),</span>
-    <span class="s2">"every served neighbourhood has a boundary area"</span><span class="p">,</span>
-    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">served</span><span class="p">[</span><span class="s1">'ground_acres'</span><span class="p">]</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="si">}</span><span class="s2"> without"</span><span class="p">,</span>
-<span class="p">)</span>
-
-<span class="c1"># A hood's lot-acre figure is shown only at or above the parcel-coverage floor.</span>
-<span class="n">suppressed</span> <span class="o">=</span> <span class="n">served</span><span class="p">[</span><span class="s2">"value_per_lot_acre"</span><span class="p">]</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span>
-<span class="n">below_floor</span> <span class="o">=</span> <span class="o">~</span><span class="p">(</span><span class="n">served</span><span class="p">[</span><span class="s2">"parcel_frac"</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">LOW_PARCEL_FRAC</span><span class="p">)</span>
-<span class="n">check</span><span class="p">(</span>
-    <span class="ow">not</span> <span class="p">(</span><span class="o">~</span><span class="n">suppressed</span> <span class="o">&amp;</span> <span class="n">below_floor</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">(),</span>
-    <span class="s2">"no lot-acre figure is served below the parcel-coverage floor"</span><span class="p">,</span>
-    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">int</span><span class="p">((</span><span class="o">~</span><span class="n">suppressed</span><span class="w"> </span><span class="o">&amp;</span><span class="w"> </span><span class="n">below_floor</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span><span class="si">}</span><span class="s2"> served below </span><span class="si">{</span><span class="n">LOW_PARCEL_FRAC</span><span class="si">:</span><span class="s2">.0%</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
-<span class="p">)</span>
-
-<span class="n">md</span><span class="p">(</span><span class="sa">f</span><span class="s2">"""</span>
-<span class="s2">The map covers **</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">served</span><span class="p">)</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">** neighbourhoods and</span>
-<span class="s2">**</span><span class="si">{</span><span class="n">served</span><span class="p">[</span><span class="s1">'ground_acres'</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="si">:</span><span class="s2">,.0f</span><span class="si">}</span><span class="s2">** ground acres. The lot-acre floor is</span>
-<span class="s2">**</span><span class="si">{</span><span class="n">LOW_PARCEL_FRAC</span><span class="si">:</span><span class="s2">.0%</span><span class="si">}</span><span class="s2">**: this week **</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">below_floor</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span><span class="si">}</span><span class="s2">**</span>
-<span class="s2">neighbourhoods have titled lots covering less than that share of their boundary,</span>
-<span class="s2">and are greyed out in lot-acre mode.</span>
-<span class="s2">"""</span><span class="p">)</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">check</span><span class="p">(</span><span class="n">km_assigned</span> <span class="o">&lt;=</span> <span class="n">km_in</span> <span class="o">+</span> <span class="mf">1e-6</span><span class="p">,</span> <span class="s2">"clipping to neighbourhoods adds no road length"</span><span class="p">,</span>
+      <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">km_assigned</span><span class="si">:</span><span class="s2">,.3f</span><span class="si">}</span><span class="s2"> km out of </span><span class="si">{</span><span class="n">km_in</span><span class="si">:</span><span class="s2">,.3f</span><span class="si">}</span><span class="s2"> km in"</span><span class="p">)</span>
+<span class="n">check</span><span class="p">(</span><span class="n">pct_outside</span> <span class="o">&lt;</span> <span class="mf">1.0</span><span class="p">,</span> <span class="s2">"less than 1</span><span class="si">% o</span><span class="s2">f City road lies outside every neighbourhood"</span><span class="p">,</span>
+      <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">pct_outside</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">%"</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -8096,42 +8085,28 @@ robustness-motivated addition, not borrowed methodology.
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>  [PASS] every served neighbourhood has a boundary area  — 0 without
-  [PASS] no lot-acre figure is served below the parcel-coverage floor  — 0 served below 15%
+<pre>  [PASS] clipping to neighbourhoods adds no road length  — 5,013.327 km out of 5,027.544 km in
+  [PASS] less than 1% of City road lies outside every neighbourhood  — 0.28%
 </pre>
 </div>
 </div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-OutputArea-output" data-mime-type="text/markdown" tabindex="0">
-<p>The map covers <strong>406</strong> neighbourhoods and
-<strong>193,237</strong> ground acres. The lot-acre floor is
-<strong>15%</strong>: this week <strong>7</strong>
-neighbourhoods have titled lots covering less than that share of their boundary,
-and are greyed out in lot-acre mode.</p>
 </div>
 </div>
 </div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=a0467e76">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=cd48a935">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="2.-The-two-hard-cases,-worked-openly">2. The two hard cases, worked openly<a class="anchor-link" href="#2.-The-two-hard-cases,-worked-openly">¶</a></h2><p>Anyone spot-checking this map lands on the same two places we audited first,
-so here is what the data does there.</p>
-<p><strong>One huge account.</strong> The roll's single largest account is pinned to one
-coordinate. At the neighbourhood level it is simply summed once with its
-neighbours — no distortion. On the 100 m grid (the Glass view) one point ÷ one
-cell makes it a very tall needle under ground acres, which is why the grid
-carries the same lot-acre toggle: dollars per map cell and dollars per acre of
-land are both visible.</p>
+<p><strong>The boundary split conserves length.</strong> A shared piece is replaced by k
+equal parts, one per neighbourhood whose edge it runs along, so the total
+before and after must match to rounding, and every neighbourhood it hands
+road to must be one from the boundary file.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=51f68f58">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=fca4024a">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8139,34 +8114,15 @@ land are both visible.</p>
 <div class="jp-InputPrompt jp-InputArea-prompt">In [4]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">biggest</span> <span class="o">=</span> <span class="n">assessment</span><span class="o">.</span><span class="n">nlargest</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="s2">"assessed_value"</span><span class="p">)</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-<span class="n">hood</span> <span class="o">=</span> <span class="n">biggest</span><span class="p">[</span><span class="s2">"neighbourhood_name"</span><span class="p">]</span>
-<span class="n">hood_value</span> <span class="o">=</span> <span class="n">assessment</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">assessment</span><span class="p">[</span><span class="s2">"neighbourhood_name"</span><span class="p">]</span> <span class="o">==</span> <span class="n">hood</span><span class="p">,</span> <span class="s2">"assessed_value"</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
-
-<span class="c1"># The account's own cell: grid lon/lat are cell centres, so the nearest centre</span>
-<span class="c1"># (with longitude shrunk by cos(latitude)) is the cell it was binned into.</span>
-<span class="n">coslat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">radians</span><span class="p">(</span><span class="n">biggest</span><span class="p">[</span><span class="s2">"latitude"</span><span class="p">]))</span>
-<span class="n">dist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hypot</span><span class="p">((</span><span class="n">grid_df</span><span class="p">[</span><span class="s2">"lon"</span><span class="p">]</span> <span class="o">-</span> <span class="n">biggest</span><span class="p">[</span><span class="s2">"longitude"</span><span class="p">])</span> <span class="o">*</span> <span class="n">coslat</span><span class="p">,</span> <span class="n">grid_df</span><span class="p">[</span><span class="s2">"lat"</span><span class="p">]</span> <span class="o">-</span> <span class="n">biggest</span><span class="p">[</span><span class="s2">"latitude"</span><span class="p">])</span>
-<span class="n">its_cell</span> <span class="o">=</span> <span class="n">grid_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">dist</span><span class="o">.</span><span class="n">idxmin</span><span class="p">()]</span>
-<span class="n">ground_rank</span> <span class="o">=</span> <span class="nb">int</span><span class="p">((</span><span class="n">grid_df</span><span class="p">[</span><span class="s2">"revenue_per_acre"</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">its_cell</span><span class="p">[</span><span class="s2">"revenue_per_acre"</span><span class="p">])</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span> <span class="o">+</span> <span class="mi">1</span>
-<span class="n">lot_rank</span> <span class="o">=</span> <span class="nb">int</span><span class="p">((</span><span class="n">grid_df</span><span class="p">[</span><span class="s2">"revenue_per_lot_acre"</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">its_cell</span><span class="p">[</span><span class="s2">"revenue_per_lot_acre"</span><span class="p">])</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span> <span class="o">+</span> <span class="mi">1</span>
-<span class="n">top_lot</span> <span class="o">=</span> <span class="n">grid_df</span><span class="o">.</span><span class="n">nlargest</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="s2">"revenue_per_lot_acre"</span><span class="p">)</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-
-<span class="n">md</span><span class="p">(</span><span class="sa">f</span><span class="s2">"""</span>
-<span class="s2">This week the largest account is **$</span><span class="si">{</span><span class="n">biggest</span><span class="p">[</span><span class="s1">'assessed_value'</span><span class="p">]</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e9</span><span class="si">:</span><span class="s2">,.2f</span><span class="si">}</span><span class="s2">B** in</span>
-<span class="s2">**</span><span class="si">{</span><span class="n">hood</span><span class="o">.</span><span class="n">title</span><span class="p">()</span><span class="si">}</span><span class="s2">**, where it is **</span><span class="si">{</span><span class="n">biggest</span><span class="p">[</span><span class="s1">'assessed_value'</span><span class="p">]</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">hood_value</span><span class="si">:</span><span class="s2">.0%</span><span class="si">}</span><span class="s2">**</span>
-<span class="s2">of the neighbourhood's assessed value.</span>
-
-<span class="s2">On the grid, its cell carries **$</span><span class="si">{</span><span class="n">its_cell</span><span class="p">[</span><span class="s1">'revenue_per_acre'</span><span class="p">]</span><span class="si">:</span><span class="s2">,.0f</span><span class="si">}</span><span class="s2">** of levy</span>
-<span class="s2">per ground acre — number **</span><span class="si">{</span><span class="n">ground_rank</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">** of </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">grid_df</span><span class="p">)</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2"> cells. Per acre</span>
-<span class="s2">of lot it carries **$</span><span class="si">{</span><span class="n">its_cell</span><span class="p">[</span><span class="s1">'revenue_per_lot_acre'</span><span class="p">]</span><span class="si">:</span><span class="s2">,.0f</span><span class="si">}</span><span class="s2">** and ranks</span>
-<span class="s2">**</span><span class="si">{</span><span class="n">lot_rank</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">**, because its lot is large; the top lot-acre cell carries</span>
-<span class="s2">**$</span><span class="si">{</span><span class="n">top_lot</span><span class="p">[</span><span class="s1">'revenue_per_lot_acre'</span><span class="p">]</span><span class="si">:</span><span class="s2">,.0f</span><span class="si">}</span><span class="s2">**, about</span>
-<span class="s2">**</span><span class="si">{</span><span class="n">top_lot</span><span class="p">[</span><span class="s1">'revenue_per_lot_acre'</span><span class="p">]</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">its_cell</span><span class="p">[</span><span class="s1">'revenue_per_lot_acre'</span><span class="p">]</span><span class="si">:</span><span class="s2">,.0f</span><span class="si">}</span><span class="s2">×**</span>
-<span class="s2">more. The two rankings disagree by design — the toggle exists so both readings</span>
-<span class="s2">can be seen.</span>
-<span class="s2">"""</span><span class="p">)</span>
-<span class="n">grid_df</span><span class="o">.</span><span class="n">nlargest</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="s2">"revenue_per_acre"</span><span class="p">)[[</span><span class="s2">"lat"</span><span class="p">,</span> <span class="s2">"lon"</span><span class="p">,</span> <span class="s2">"revenue_per_acre"</span><span class="p">,</span> <span class="s2">"revenue_per_lot_acre"</span><span class="p">]]</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">check</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">SPLITS</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">"load_roads split the boundary pieces exactly once"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">SPLITS</span><span class="p">)</span><span class="si">}</span><span class="s2"> call(s)"</span><span class="p">)</span>
+<span class="n">m_in</span><span class="p">,</span> <span class="n">m_out</span><span class="p">,</span> <span class="n">names_out</span> <span class="o">=</span> <span class="n">SPLITS</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">SPLITS</span> <span class="k">else</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="nb">set</span><span class="p">())</span>
+<span class="n">check</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">m_in</span> <span class="o">-</span> <span class="n">m_out</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">1e-3</span><span class="p">,</span> <span class="s2">"the boundary split conserves metric road length"</span><span class="p">,</span>
+      <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">m_in</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">1000</span><span class="si">:</span><span class="s2">,.4f</span><span class="si">}</span><span class="s2"> km in, </span><span class="si">{</span><span class="n">m_out</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">1000</span><span class="si">:</span><span class="s2">,.4f</span><span class="si">}</span><span class="s2"> km out"</span><span class="p">)</span>
+<span class="n">unknown_sharers</span> <span class="o">=</span> <span class="n">names_out</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">boundaries</span><span class="p">[</span><span class="s2">"neighbourhood_name"</span><span class="p">])</span>
+<span class="n">check</span><span class="p">(</span><span class="ow">not</span> <span class="n">unknown_sharers</span><span class="p">,</span> <span class="s2">"every neighbourhood the split hands road to is a real neighbourhood"</span><span class="p">,</span>
+      <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">unknown_sharers</span><span class="p">)</span><span class="si">}</span><span class="s2"> unknown"</span><span class="p">)</span>
+<span class="n">check</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">metric_km</span> <span class="o">*</span> <span class="mi">1000</span> <span class="o">-</span> <span class="n">m_out</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">1e-3</span><span class="p">,</span> <span class="s2">"the per-neighbourhood totals add up to what the split produced"</span><span class="p">,</span>
+      <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">metric_km</span><span class="si">:</span><span class="s2">,.4f</span><span class="si">}</span><span class="s2"> km"</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -8178,117 +8134,32 @@ land are both visible.</p>
 <div class="jp-OutputArea jp-Cell-outputArea">
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-OutputArea-output" data-mime-type="text/markdown" tabindex="0">
-<p>This week the largest account is <strong>$1.29B</strong> in
-<strong>Summerlea</strong>, where it is <strong>79%</strong>
-of the neighbourhood's assessed value.</p>
-<p>On the grid, its cell carries <strong>$13,117,253</strong> of levy
-per ground acre — number <strong>1</strong> of 34,671 cells. Per acre
-of lot it carries <strong>$302,525</strong> and ranks
-<strong>177</strong>, because its lot is large; the top lot-acre cell carries
-<strong>$15,443,990</strong>, about
-<strong>51×</strong>
-more. The two rankings disagree by design — the toggle exists so both readings
-can be seen.</p>
-</div>
-</div>
-<div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[4]:</div>
-<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html" tabindex="0">
-<div>
-<style scoped="">
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-<thead>
-<tr style="text-align: right;">
-<th></th>
-<th>lat</th>
-<th>lon</th>
-<th>revenue_per_acre</th>
-<th>revenue_per_lot_acre</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<th>4793</th>
-<td>53.521560</td>
-<td>-113.623821</td>
-<td>13117253</td>
-<td>302525.0</td>
-</tr>
-<tr>
-<th>18763</th>
-<td>53.546121</td>
-<td>-113.497700</td>
-<td>6335745</td>
-<td>15443990.0</td>
-</tr>
-<tr>
-<th>15378</th>
-<td>53.520372</td>
-<td>-113.524264</td>
-<td>5890539</td>
-<td>666212.0</td>
-</tr>
-<tr>
-<th>18762</th>
-<td>53.545223</td>
-<td>-113.497731</td>
-<td>5557683</td>
-<td>1464577.0</td>
-</tr>
-<tr>
-<th>14817</th>
-<td>53.517731</td>
-<td>-113.528883</td>
-<td>4467964</td>
-<td>959056.0</td>
-</tr>
-</tbody>
-</table>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>  [PASS] load_roads split the boundary pieces exactly once  — 1 call(s)
+  [PASS] the boundary split conserves metric road length  — 3,655.7955 km in, 3,655.7955 km out
+  [PASS] every neighbourhood the split hands road to is a real neighbourhood  — 0 unknown
+  [PASS] the per-neighbourhood totals add up to what the split produced  — 3,655.7955 km
+</pre>
 </div>
 </div>
 </div>
 </div>
 </div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=8b9f88ad">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=67e0555b">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<p><strong>Condominiums.</strong> Many taxable units share one lot, and the open data's
-<code>lot_size</code> field encodes that inconsistently — sometimes the whole parcel
-duplicated onto every unit, sometimes real per-unit shares, sometimes null.
-Independent Urban3-style replications have typically <em>excluded</em> condos
-entirely, deleting dense high-value land from their maps. This project applies
-a repeat-aware rule instead, at each property point:</p>
-<ul>
-<li>a repeated lot size <strong>under</strong> the share threshold counts once per unit
-(genuine apportioned shares — the townhouse regime);</li>
-<li>a repeated lot size <strong>at or above</strong> it counts once (a duplicated parcel);</li>
-<li>a point whose units are mostly null, or whose total is too small to be an
-area at all, is <strong>excluded</strong> from the lot-acre view and reported — never
-silently dropped. Its dollars stay in the ground-acre view.</li>
-</ul>
-<p>(<code>docs/FINDINGS_lot_dedupe.md</code>, which also holds the threshold-sensitivity
-test.)</p>
+<p><strong>The citywide total sits in a plausible band.</strong> This is the one value
+check on the page. Edmonton's collector and local network grows by about a
+percent a year, and it measured 3,655 km on 2026-09-28. The band is wide
+enough for years of growth. Outside it, the feed has lost or duplicated a
+large share of the network, and a per-neighbourhood check could not tell.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=316a8d1c">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=78ef14d7">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8296,44 +8167,10 @@ test.)</p>
 <div class="jp-InputPrompt jp-InputArea-prompt">In [5]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">lots</span> <span class="o">=</span> <span class="n">assessment</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">load_property_info</span><span class="p">(</span><span class="n">main</span><span class="o">.</span><span class="n">PROPERTY_INFO_CSV</span><span class="p">),</span> <span class="n">on</span><span class="o">=</span><span class="s2">"account_number"</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="s2">"left"</span><span class="p">)</span>
-<span class="n">pts</span> <span class="o">=</span> <span class="n">lots</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">lots</span><span class="p">[</span><span class="s2">"latitude"</span><span class="p">]</span><span class="o">.</span><span class="n">notna</span><span class="p">()</span> <span class="o">&amp;</span> <span class="n">lots</span><span class="p">[</span><span class="s2">"longitude"</span><span class="p">]</span><span class="o">.</span><span class="n">notna</span><span class="p">()]</span>
-<span class="n">per_point</span> <span class="o">=</span> <span class="n">_point_lot_stats</span><span class="p">(</span><span class="n">pts</span><span class="p">[[</span><span class="s2">"latitude"</span><span class="p">,</span> <span class="s2">"longitude"</span><span class="p">,</span> <span class="s2">"lot_size"</span><span class="p">]])</span>
-
-<span class="n">rows</span> <span class="o">=</span> <span class="n">pts</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">per_point</span><span class="p">[[</span><span class="s2">"latitude"</span><span class="p">,</span> <span class="s2">"longitude"</span><span class="p">,</span> <span class="s2">"eligible"</span><span class="p">]],</span> <span class="n">on</span><span class="o">=</span><span class="p">[</span><span class="s2">"latitude"</span><span class="p">,</span> <span class="s2">"longitude"</span><span class="p">],</span> <span class="n">how</span><span class="o">=</span><span class="s2">"left"</span><span class="p">)</span>
-<span class="c1"># A point the classifier never saw is a silent drop; the two sums below would</span>
-<span class="c1"># still add to the roll, so this is the check, not their total.</span>
-<span class="n">check</span><span class="p">(</span>
-    <span class="n">rows</span><span class="p">[</span><span class="s2">"eligible"</span><span class="p">]</span><span class="o">.</span><span class="n">notna</span><span class="p">()</span><span class="o">.</span><span class="n">all</span><span class="p">(),</span>
-    <span class="s2">"every located account's point is classified as in the lot-acre view or excluded"</span><span class="p">,</span>
-    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">rows</span><span class="p">[</span><span class="s1">'eligible'</span><span class="p">]</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span><span class="si">}</span><span class="s2"> unclassified"</span><span class="p">,</span>
-<span class="p">)</span>
-<span class="n">eligible</span> <span class="o">=</span> <span class="n">rows</span><span class="p">[</span><span class="s2">"eligible"</span><span class="p">]</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">bool</span><span class="p">)</span>
-<span class="n">inelig_value</span> <span class="o">=</span> <span class="n">rows</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="o">~</span><span class="n">eligible</span><span class="p">,</span> <span class="s2">"assessed_value"</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
-<span class="n">elig_value</span> <span class="o">=</span> <span class="n">rows</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">eligible</span><span class="p">,</span> <span class="s2">"assessed_value"</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
-<span class="n">roll_value</span> <span class="o">=</span> <span class="n">pts</span><span class="p">[</span><span class="s2">"assessed_value"</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
-
-<span class="n">multi</span> <span class="o">=</span> <span class="n">per_point</span><span class="p">[</span><span class="s2">"n"</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">1</span>
-<span class="n">n_inelig</span> <span class="o">=</span> <span class="nb">int</span><span class="p">((</span><span class="o">~</span><span class="n">per_point</span><span class="p">[</span><span class="s2">"eligible"</span><span class="p">])</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
-<span class="n">elig_acres</span> <span class="o">=</span> <span class="n">per_point</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">per_point</span><span class="p">[</span><span class="s2">"eligible"</span><span class="p">],</span> <span class="s2">"lot_m2"</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">/</span> <span class="n">SQ_M_PER_ACRE</span>
-
-<span class="n">md</span><span class="p">(</span><span class="sa">f</span><span class="s2">"""</span>
-<span class="s2">The share threshold is **</span><span class="si">{</span><span class="n">SHARE_MAX_M2</span><span class="si">:</span><span class="s2">,.0f</span><span class="si">}</span><span class="s2"> m²**, and a multi-unit point</span>
-<span class="s2">totalling under **</span><span class="si">{</span><span class="n">MULTI_UNIT_MIN_LOT_M2</span><span class="si">:</span><span class="s2">,.0f</span><span class="si">}</span><span class="s2"> m²** is treated as share-coded</span>
-<span class="s2">rather than an area. This week the roll has **</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">per_point</span><span class="p">)</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">** distinct</span>
-<span class="s2">property points, **</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">multi</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">** of them multi-unit. **</span><span class="si">{</span><span class="n">n_inelig</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">**</span>
-<span class="s2">points are excluded from the lot-acre view, carrying</span>
-<span class="s2">**$</span><span class="si">{</span><span class="n">inelig_value</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e9</span><span class="si">:</span><span class="s2">,.2f</span><span class="si">}</span><span class="s2">B** — **</span><span class="si">{</span><span class="n">inelig_value</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">roll_value</span><span class="si">:</span><span class="s2">.2%</span><span class="si">}</span><span class="s2">** of located</span>
-<span class="s2">assessed value.</span>
-
-<span class="s2">The eligible lots total **</span><span class="si">{</span><span class="n">elig_acres</span><span class="si">:</span><span class="s2">,.0f</span><span class="si">}</span><span class="s2">** acres, which is</span>
-<span class="s2">**</span><span class="si">{</span><span class="n">elig_acres</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">served</span><span class="p">[</span><span class="s1">'ground_acres'</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="si">:</span><span class="s2">.0%</span><span class="si">}</span><span class="s2">** of the ground acres above;</span>
-<span class="s2">the rest is roads, parks, rights-of-way and land with no usable lot record.</span>
-
-<span class="s2">A pipeline check asserts each neighbourhood's deduplicated lot acres fit inside</span>
-<span class="s2">its boundary. Known, documented exceptions:</span>
-<span class="s2">**</span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">o</span><span class="o">.</span><span class="n">title</span><span class="p">()</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">o</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">KNOWN_BOUND_OUTLIERS</span><span class="p">)</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">'none'</span><span class="si">}</span><span class="s2">**.</span>
-<span class="s2">"""</span><span class="p">)</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">BAND_KM</span> <span class="o">=</span> <span class="p">(</span><span class="mi">3_200</span><span class="p">,</span> <span class="mi">4_400</span><span class="p">)</span>
+<span class="n">check</span><span class="p">(</span><span class="n">BAND_KM</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">metric_km</span> <span class="o">&lt;=</span> <span class="n">BAND_KM</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+      <span class="sa">f</span><span class="s2">"citywide collector + local road is within </span><span class="si">{</span><span class="n">BAND_KM</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">–</span><span class="si">{</span><span class="n">BAND_KM</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2"> km"</span><span class="p">,</span>
+      <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">metric_km</span><span class="si">:</span><span class="s2">,.1f</span><span class="si">}</span><span class="s2"> km"</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -8346,59 +8183,27 @@ test.)</p>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>export_value_grid: 2 multi-record point(s) carry under 10 m² of total lot area — share-coded lot_size, not areas; excluded from the lot-acre metric (examples: [{'latitude': 53.45829395304915, 'longitude': -113.5825300675948, 'n': 6, 'lot_m2': 0.093}, {'latitude': 53.55078641357152, 'longitude': -113.53289287458574, 'n': 3, 'lot_m2': 1.0}])
+<pre>  [PASS] citywide collector + local road is within 3,200–4,400 km  — 3,655.8 km
 </pre>
 </div>
 </div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>  [PASS] every located account's point is classified as in the lot-acre view or excluded  — 0 unclassified
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-OutputArea-output" data-mime-type="text/markdown" tabindex="0">
-<p>The share threshold is <strong>1,000 m²</strong>, and a multi-unit point
-totalling under <strong>10 m²</strong> is treated as share-coded
-rather than an area. This week the roll has <strong>287,056</strong> distinct
-property points, <strong>2,998</strong> of them multi-unit. <strong>58</strong>
-points are excluded from the lot-acre view, carrying
-<strong>$1.23B</strong> — <strong>0.51%</strong> of located
-assessed value.</p>
-<p>The eligible lots total <strong>142,023</strong> acres, which is
-<strong>73%</strong> of the ground acres above;
-the rest is roads, parks, rights-of-way and land with no usable lot record.</p>
-<p>A pipeline check asserts each neighbourhood's deduplicated lot acres fit inside
-its boundary. Known, documented exceptions:
-<strong>Pembina</strong>.</p>
 </div>
 </div>
 </div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=59ea4060">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=f712a9a5">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<p>The neighbourhood-level metric is structurally immune to both cases: its
-numerator never joins parcel geometry and its denominator never reads
-<code>lot_size</code>. (<code>docs/FINDINGS_denominator_cardinality.md</code>)</p>
-<h2 id="3.-Grey-neighbourhoods:-the-set-aside-layer">3. Grey neighbourhoods: the set-aside layer<a class="anchor-link" href="#3.-Grey-neighbourhoods:-the-set-aside-layer">¶</a></h2><p>Some neighbourhoods render neutral grey instead of low-red: those where most
-of the land is zoned river valley, natural area or parks ("never taxable"), or
-future-development and agricultural reserve ("not yet"), found by overlaying
-the Zoning Bylaw geometry (<code>fixa-tstc</code>) on the boundaries. Painting them as
-"low revenue" would be true arithmetic but a false story; grey says <em>this
-land is not on the taxable roll by design</em>. The rule keys off zoning, so as
-fringe land is rezoned and develops it rejoins the colour scale on a later
-refresh. (<code>docs/FINDINGS_revenue_scale.md</code>)</p>
+<h2 id="2.-Road-metres-to-road-metres-per-acre">2. Road metres to road metres per acre<a class="anchor-link" href="#2.-Road-metres-to-road-metres-per-acre">¶</a></h2><p><code>join_and_calculate</code> divides each neighbourhood's road metres by its
+boundary area in acres. A neighbourhood with no collector or local road gets
+0, not a blank. This rebuilds that division from step 1 and compares it with
+the served file, neighbourhood by neighbourhood.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=c55726a6">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=8b09be22">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8406,18 +8211,25 @@ refresh. (<code>docs/FINDINGS_revenue_scale.md</code>)</p>
 <div class="jp-InputPrompt jp-InputArea-prompt">In [6]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">load_zoning</span><span class="w"> </span><span class="kn">import</span> <span class="n">SET_ASIDE_THRESHOLD</span>  <span class="c1"># noqa: E402</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">rebuilt</span> <span class="o">=</span> <span class="p">(</span><span class="n">boundaries</span><span class="p">[[</span><span class="s2">"neighbourhood_name"</span><span class="p">,</span> <span class="s2">"area_acres"</span><span class="p">]]</span>
+           <span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">roads</span><span class="p">[[</span><span class="s2">"neighbourhood_name"</span><span class="p">,</span> <span class="s2">"road_m_total"</span><span class="p">]],</span> <span class="n">on</span><span class="o">=</span><span class="s2">"neighbourhood_name"</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="s2">"left"</span><span class="p">)</span>
+           <span class="o">.</span><span class="n">fillna</span><span class="p">({</span><span class="s2">"road_m_total"</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">}))</span>
+<span class="n">rebuilt</span><span class="p">[</span><span class="s2">"rebuilt"</span><span class="p">]</span> <span class="o">=</span> <span class="n">rebuilt</span><span class="p">[</span><span class="s2">"road_m_total"</span><span class="p">]</span> <span class="o">/</span> <span class="n">rebuilt</span><span class="p">[</span><span class="s2">"area_acres"</span><span class="p">]</span>
+<span class="n">cmp</span> <span class="o">=</span> <span class="n">served</span><span class="p">[[</span><span class="s2">"neighbourhood_name"</span><span class="p">,</span> <span class="s2">"road_m_per_acre"</span><span class="p">]]</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span>
+    <span class="n">rebuilt</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="s2">"neighbourhood_name"</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="s2">"outer"</span><span class="p">,</span> <span class="n">indicator</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-<span class="n">set_aside</span> <span class="o">=</span> <span class="n">served</span><span class="p">[</span><span class="s2">"is_set_aside"</span><span class="p">]</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">bool</span><span class="p">)</span>
-<span class="n">check</span><span class="p">(</span>
-    <span class="n">set_aside</span><span class="o">.</span><span class="n">equals</span><span class="p">(</span><span class="n">served</span><span class="p">[</span><span class="s2">"set_aside_frac"</span><span class="p">]</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">SET_ASIDE_THRESHOLD</span><span class="p">),</span>
-    <span class="s2">"the grey flag is exactly the set-aside share at or above the threshold"</span><span class="p">,</span>
-    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">set_aside</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span><span class="si">}</span><span class="s2"> flagged"</span><span class="p">,</span>
-<span class="p">)</span>
-<span class="n">md</span><span class="p">(</span><span class="sa">f</span><span class="s2">"""</span>
-<span class="s2">The threshold is **</span><span class="si">{</span><span class="n">SET_ASIDE_THRESHOLD</span><span class="si">:</span><span class="s2">.0%</span><span class="si">}</span><span class="s2">** of the land. This week</span>
-<span class="s2">**</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">set_aside</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span><span class="si">}</span><span class="s2">** of **</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">served</span><span class="p">)</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">** neighbourhoods are grey.</span>
-<span class="s2">"""</span><span class="p">)</span>
+<span class="n">only_served</span> <span class="o">=</span> <span class="n">cmp</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">cmp</span><span class="p">[</span><span class="s2">"_merge"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"left_only"</span><span class="p">,</span> <span class="s2">"neighbourhood_name"</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+<span class="n">only_boundary</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">cmp</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">cmp</span><span class="p">[</span><span class="s2">"_merge"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"right_only"</span><span class="p">,</span> <span class="s2">"neighbourhood_name"</span><span class="p">])</span>
+<span class="n">check</span><span class="p">(</span><span class="ow">not</span> <span class="n">only_served</span><span class="p">,</span> <span class="s2">"every served neighbourhood is in the boundary file"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">only_served</span><span class="p">)</span><span class="si">}</span><span class="s2"> not"</span><span class="p">)</span>
+<span class="n">check</span><span class="p">(</span><span class="n">served</span><span class="p">[</span><span class="s2">"road_m_per_acre"</span><span class="p">]</span><span class="o">.</span><span class="n">notna</span><span class="p">()</span><span class="o">.</span><span class="n">all</span><span class="p">(),</span> <span class="s2">"every served neighbourhood has a road figure"</span><span class="p">,</span>
+      <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">served</span><span class="p">[</span><span class="s1">'road_m_per_acre'</span><span class="p">]</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span><span class="si">}</span><span class="s2"> blank"</span><span class="p">)</span>
+
+<span class="n">both</span> <span class="o">=</span> <span class="n">cmp</span><span class="p">[</span><span class="n">cmp</span><span class="p">[</span><span class="s2">"_merge"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"both"</span><span class="p">]</span>
+<span class="n">err</span> <span class="o">=</span> <span class="p">(</span><span class="n">both</span><span class="p">[</span><span class="s2">"road_m_per_acre"</span><span class="p">]</span> <span class="o">-</span> <span class="n">both</span><span class="p">[</span><span class="s2">"rebuilt"</span><span class="p">])</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span>
+<span class="n">check</span><span class="p">(</span><span class="n">err</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">&lt;</span> <span class="mf">1e-3</span><span class="p">,</span> <span class="s2">"served road metres per acre equals the rebuild, every neighbourhood"</span><span class="p">,</span>
+      <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">both</span><span class="p">)</span><span class="si">}</span><span class="s2"> neighbourhoods, max difference </span><span class="si">{</span><span class="n">err</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="si">:</span><span class="s2">.2e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">only_boundary</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"in the boundary file but not served (no assessment data; data/DATA.md): </span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">only_boundary</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -8430,44 +8242,32 @@ refresh. (<code>docs/FINDINGS_revenue_scale.md</code>)</p>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>  [PASS] the grey flag is exactly the set-aside share at or above the threshold  — 48 flagged
+<pre>  [PASS] every served neighbourhood is in the boundary file  — 0 not
+  [PASS] every served neighbourhood has a road figure  — 0 blank
+  [PASS] served road metres per acre equals the rebuild, every neighbourhood  — 406 neighbourhoods, max difference 4.95e-05
+in the boundary file but not served (no assessment data; data/DATA.md): LEWIS FARMS
 </pre>
 </div>
 </div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-OutputArea-output" data-mime-type="text/markdown" tabindex="0">
-<p>The threshold is <strong>90%</strong> of the land. This week
-<strong>48</strong> of <strong>406</strong> neighbourhoods are grey.</p>
 </div>
 </div>
 </div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=6690e67a">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=6366f0ff">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<p><strong>Standing caveat:</strong> Edmonton publishes no per-parcel exemption status, and
-the error it causes runs both ways. Some institutional land is on the roll
-with a computed levy (the major hospitals and the University of Alberta
-campus are), which may <strong>overstate</strong> what it pays. Some is not on the roll at
-all (the Legislature), which <strong>understates</strong> its neighbourhood. No flag in the
-roll marks either. Both are measured instead: institutional-proxy zoning
-carrying no taxable account, per neighbourhood, with the University of Alberta
-area as the worked example (<code>docs/FINDINGS_exempt_institutional.md</code>), and the
-share of levy on exempt-candidate zoning, sized on
-<a href="03_assumptions.html">the assumptions page</a>.</p>
-<h2 id="4.-The-Glass-view-(100-m-grid)">4. The Glass view (100 m grid)<a class="anchor-link" href="#4.-The-Glass-view-(100-m-grid)">¶</a></h2><p>Sub-neighbourhood detail: each account's dollars are binned into square
-cells, and prism height is dollars in the cell ÷ cell acres, with the same
-ground/lot-acre toggle as above. It is pure point binning — no interpolation,
-no spreading — so a cell shows exactly the accounts pinned inside it.</p>
+<h2 id="3.-The-map's-colour-matches-the-panel's-number">3. The map's colour matches the panel's number<a class="anchor-link" href="#3.-The-map's-colour-matches-the-panel's-number">¶</a></h2><p>The road network on the map is a separate, much smaller file
+(<code>roads.geojson</code>). Each neighbourhood's roads carry a value <code>v</code> that drives
+their colour. It is computed from the same pieces with the same boundary
+split, but without the one-metre crumb floor and rounded to one decimal.
+The code bounds that difference at 0.1 m/acre. Without the split it
+disagreed by up to 20%, so a split that drifts out of step shows up here.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=2fee846a">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=f55ba509">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8475,108 +8275,19 @@ no spreading — so a cell shows exactly the accounts pinned inside it.</p>
 <div class="jp-InputPrompt jp-InputArea-prompt">In [7]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">md</span><span class="p">(</span><span class="sa">f</span><span class="s2">"""</span>
-<span class="s2">The cells are **</span><span class="si">{</span><span class="n">grid</span><span class="p">[</span><span class="s1">'cell_m'</span><span class="p">]</span><span class="si">:</span><span class="s2">,.0f</span><span class="si">}</span><span class="s2"> m** on a side; **</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">grid_df</span><span class="p">)</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">** of</span>
-<span class="s2">them hold at least one account this week.</span>
-<span class="s2">"""</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell-outputWrapper">
-<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
-</div>
-<div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-OutputArea-output" data-mime-type="text/markdown" tabindex="0">
-<p>The cells are <strong>100 m</strong> on a side; <strong>34,671</strong> of
-them hold at least one account this week.</p>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=358114fa">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="5.-The-cost-side-(Services-view)">5. The cost side (Services view)<a class="anchor-link" href="#5.-The-cost-side-(Services-view)">¶</a></h2><p>Revenue alone is half the fiscal story. Each service layer is a <em>supply</em> or a
-<em>modelled cost</em> per acre; none of them changes the revenue numbers. Layers
-marked <em>in development</em> are built and described here but are not on the
-public map yet.</p>
-<ul>
-<li><strong>Roads</strong> — metres of City-maintained <strong>collector and local</strong> road
-centreline per acre (<code>9j8t-zm52</code>). Arterials are computed but excluded: they
-are shared citywide infrastructure that happens to run along neighbourhood
-edges. Alleys and provincial highways are out. This is the strongest cost
-lens methodologically — road length drives recurring surface-infrastructure
-cost, and it is measured, not modelled. Two <strong>road cost</strong> layers price those
-metres on two bases that must never be added or compared: <em>lifecycle</em>
-(upkeep plus eventual rebuilding, annualized) and <em>operating</em> (upkeep and
-snow clearing only, from the last roads-only budget the City published).</li>
-<li>The <strong>Ratio view</strong> divides revenue by road metres (and, <em>in development</em>,
-by fire events). Only those two appear because only they are services the property
-tax levy funds — the modelled EPCOR charges below are paid by utility
-ratepayers, and dividing tax revenue by them would compare unrelated money
-flows. (<code>docs/SPEC_services.md</code>, <code>docs/SPEC_utilities.md</code>)</li>
-<li><strong>Fire rescue (demand)</strong>, <em>in development</em> — emergency response events per acre per year,
-averaged over a pinned window of full calendar years (<code>7hsn-idqi</code>), with the
-station locations plotted. This is <em>service demand</em>, not response-time
-performance; medical calls are the majority of events (a documented caveat,
-not a filter). Training and similar operational events are excluded.</li>
-<li><strong>Stormwater (modelled)</strong>, <em>in development</em> — EPCOR's own bylaw formula (area × intensity ×
-runoff coefficient) applied to every roll parcel.</li>
-<li><strong>Water + sanitary (modelled)</strong>, <em>in development</em> — a per-connection model: meter-size fixed
-charges plus block volumetric rates.</li>
-<li><strong>Electricity/gas franchise fees</strong> — modelled as data columns but <em>not</em>
-mapped: a flat per-dwelling proxy makes every map of them a dwelling-density
-map. Listed here for honesty about what was tried and why it isn't shown.</li>
-</ul>
-<p>Each modelled dollar figure is labelled <strong>modelled, not billed</strong> in the app,
-and each model was validated against published EPCOR or audited City figures
-before shipping (<code>docs/FINDINGS_utility_validation.md</code>).</p>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=d2897609">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [8]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">load_roads</span><span class="w"> </span><span class="kn">import</span> <span class="n">METRIC_GROUPS</span>  <span class="c1"># noqa: E402</span>
-
-<span class="kn">from</span><span class="w"> </span><span class="nn">join_and_calculate</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_unit_costs</span>  <span class="c1"># noqa: E402</span>
-
-<span class="n">unit_costs</span> <span class="o">=</span> <span class="n">load_unit_costs</span><span class="p">(</span><span class="n">main</span><span class="o">.</span><span class="n">UNIT_COSTS_JSON</span><span class="p">)</span>
-<span class="n">n_stations</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">((</span><span class="n">WEB_DATA</span> <span class="o">/</span> <span class="s2">"fire_stations.json"</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">())[</span><span class="s2">"stations"</span><span class="p">])</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">citywide</span><span class="p">(</span><span class="n">col</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-    <span class="k">return</span> <span class="p">(</span><span class="n">served</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">*</span> <span class="n">served</span><span class="p">[</span><span class="s2">"ground_acres"</span><span class="p">])</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
-
-
-<span class="n">road_km</span> <span class="o">=</span> <span class="n">citywide</span><span class="p">(</span><span class="s2">"road_m_per_acre"</span><span class="p">)</span> <span class="o">/</span> <span class="mi">1000</span>
-<span class="n">check</span><span class="p">(</span><span class="n">road_km</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">"the served road metric covers a positive length"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">road_km</span><span class="si">:</span><span class="s2">,.0f</span><span class="si">}</span><span class="s2"> km"</span><span class="p">)</span>
-
-<span class="n">md</span><span class="p">(</span><span class="sa">f</span><span class="s2">"""</span>
-<span class="s2">This week, in figures:</span>
-
-<span class="s2">| layer | citywide |</span>
-<span class="s2">|---|---|</span>
-<span class="s2">| road centreline in the metric (</span><span class="si">{</span><span class="s1">' + '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">METRIC_GROUPS</span><span class="p">)</span><span class="si">}</span><span class="s2">) | **</span><span class="si">{</span><span class="n">road_km</span><span class="si">:</span><span class="s2">,.0f</span><span class="si">}</span><span class="s2"> km** |</span>
-<span class="s2">| lifecycle road rate | **$</span><span class="si">{</span><span class="n">unit_costs</span><span class="p">[</span><span class="s1">'road_dollars_per_m'</span><span class="p">]</span><span class="si">:</span><span class="s2">,.2f</span><span class="si">}</span><span class="s2">** per road metre per year |</span>
-<span class="s2">| operating road rate | **$</span><span class="si">{</span><span class="n">unit_costs</span><span class="p">[</span><span class="s1">'road_ops_dollars_per_m'</span><span class="p">]</span><span class="si">:</span><span class="s2">,.2f</span><span class="si">}</span><span class="s2">** per road metre per year |</span>
-<span class="s2">| fire events (in development) | **</span><span class="si">{</span><span class="n">citywide</span><span class="p">(</span><span class="s1">'fire_events_per_acre'</span><span class="p">)</span><span class="si">:</span><span class="s2">,.0f</span><span class="si">}</span><span class="s2">** per year, window **</span><span class="si">{</span><span class="nb">min</span><span class="p">(</span><span class="n">main</span><span class="o">.</span><span class="n">FIRE_YEARS</span><span class="p">)</span><span class="si">}</span><span class="s2">–</span><span class="si">{</span><span class="nb">max</span><span class="p">(</span><span class="n">main</span><span class="o">.</span><span class="n">FIRE_YEARS</span><span class="p">)</span><span class="si">}</span><span class="s2">**, **</span><span class="si">{</span><span class="n">n_stations</span><span class="si">}</span><span class="s2">** stations |</span>
-<span class="s2">| stormwater, modelled (in development) | **$</span><span class="si">{</span><span class="n">citywide</span><span class="p">(</span><span class="s1">'storm_charge_per_acre'</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e6</span><span class="si">:</span><span class="s2">,.1f</span><span class="si">}</span><span class="s2">M** per year |</span>
-<span class="s2">| water + sanitary, modelled (in development) | **$</span><span class="si">{</span><span class="n">citywide</span><span class="p">(</span><span class="s1">'water_charge_per_acre'</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e6</span><span class="si">:</span><span class="s2">,.1f</span><span class="si">}</span><span class="s2">M** per year |</span>
-<span class="s2">"""</span><span class="p">)</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">web</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">([</span><span class="n">f</span><span class="p">[</span><span class="s2">"properties"</span><span class="p">]</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span>
+    <span class="p">(</span><span class="n">REPO_ROOT</span> <span class="o">/</span> <span class="s2">"web"</span> <span class="o">/</span> <span class="s2">"data"</span> <span class="o">/</span> <span class="s2">"roads.geojson"</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">())[</span><span class="s2">"features"</span><span class="p">]])</span>
+<span class="n">acc</span> <span class="o">=</span> <span class="n">web</span><span class="p">[</span><span class="n">web</span><span class="p">[</span><span class="s2">"t"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"access"</span><span class="p">]</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">served</span><span class="p">[[</span><span class="s2">"neighbourhood_name"</span><span class="p">,</span> <span class="s2">"road_m_per_acre"</span><span class="p">]],</span>
+                                     <span class="n">left_on</span><span class="o">=</span><span class="s2">"n"</span><span class="p">,</span> <span class="n">right_on</span><span class="o">=</span><span class="s2">"neighbourhood_name"</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="s2">"left"</span><span class="p">)</span>
+<span class="n">verr</span> <span class="o">=</span> <span class="p">(</span><span class="n">acc</span><span class="p">[</span><span class="s2">"v"</span><span class="p">]</span> <span class="o">-</span> <span class="n">acc</span><span class="p">[</span><span class="s2">"road_m_per_acre"</span><span class="p">])</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span>
+<span class="c1"># A boundary with no assessment data (DATA.md: LEWIS FARMS) is not served, but</span>
+<span class="c1"># the road layer is clipped to every boundary, so its roads are still drawn.</span>
+<span class="n">drawn_unserved</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">acc</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">acc</span><span class="p">[</span><span class="s2">"road_m_per_acre"</span><span class="p">]</span><span class="o">.</span><span class="n">isna</span><span class="p">(),</span> <span class="s2">"n"</span><span class="p">])</span>
+<span class="n">check</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">drawn_unserved</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="nb">set</span><span class="p">(</span><span class="n">only_boundary</span><span class="p">),</span>
+      <span class="s2">"every coloured neighbourhood on the map is served, or is a boundary the site does not serve"</span><span class="p">,</span>
+      <span class="sa">f</span><span class="s2">"drawn but not served: </span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">drawn_unserved</span><span class="p">)</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">'none'</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="n">check</span><span class="p">(</span><span class="n">verr</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">&lt;=</span> <span class="mf">0.15</span><span class="p">,</span> <span class="s2">"the map's colour value matches served road metres per acre within 0.15"</span><span class="p">,</span>
+      <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">acc</span><span class="p">)</span><span class="si">}</span><span class="s2"> neighbourhoods drawn, max difference </span><span class="si">{</span><span class="n">verr</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -8589,141 +8300,46 @@ before shipping (<code>docs/FINDINGS_utility_validation.md</code>).</p>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>  [PASS] the served road metric covers a positive length  — 3,656 km
+<pre>  [PASS] every coloured neighbourhood on the map is served, or is a boundary the site does not serve  — drawn but not served: LEWIS FARMS
+  [PASS] the map's colour value matches served road metres per acre within 0.15  — 397 neighbourhoods drawn, max difference 0.054
 </pre>
 </div>
 </div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-OutputArea-output" data-mime-type="text/markdown" tabindex="0">
-<p>This week, in figures:</p>
-<table>
-<thead>
-<tr>
-<th>layer</th>
-<th>citywide</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>road centreline in the metric (collector + local)</td>
-<td><strong>3,656 km</strong></td>
-</tr>
-<tr>
-<td>lifecycle road rate</td>
-<td><strong>$50.00</strong> per road metre per year</td>
-</tr>
-<tr>
-<td>operating road rate</td>
-<td><strong>$9.32</strong> per road metre per year</td>
-</tr>
-<tr>
-<td>fire events (in development)</td>
-<td><strong>88,047</strong> per year, window <strong>2023–2025</strong>, <strong>31</strong> stations</td>
-</tr>
-<tr>
-<td>stormwater, modelled (in development)</td>
-<td><strong>$256.8M</strong> per year</td>
-</tr>
-<tr>
-<td>water + sanitary, modelled (in development)</td>
-<td><strong>$588.3M</strong> per year</td>
-</tr>
-</tbody>
-</table>
 </div>
 </div>
 </div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=944f02da">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=bfa12a47">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="6.-Display-honesty-rules">6. Display honesty rules<a class="anchor-link" href="#6.-Display-honesty-rules">¶</a></h2><ul>
-<li><strong>Prism height is always linear.</strong> No transform ever exaggerates height.</li>
-<li>Colour ramps may use a square-root (or, where noted, log) transform to
-spread a skewed distribution across the palette, and the app has a toggle
-to turn that off and see true-magnitude colour. Every transform choice is
-recorded with its skew test in <code>docs/FINDINGS_revenue_scale.md</code> §6.</li>
-<li>No silent data drops anywhere in the pipeline: unmatched, excluded or
-suppressed records are counted and logged, and validation checks fail the
-build rather than degrade it.</li>
-</ul>
-<h2 id="7.-Data-sources">7. Data sources<a class="anchor-link" href="#7.-Data-sources">¶</a></h2><p>All open data; no desktop GIS software; Python only.</p>
-<table>
-<thead>
-<tr>
-<th>Input</th>
-<th>Edmonton Open Data ID</th>
-<th>Notes</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Property assessments</td>
-<td><code>q7d6-ambg</code></td>
-<td>the current roll, live weekly feed</td>
-</tr>
-<tr>
-<td>Property information (lot sizes)</td>
-<td><code>dkk9-cj3x</code></td>
-<td>joins to assessments by account</td>
-</tr>
-<tr>
-<td>Neighbourhood boundaries</td>
-<td><code>65fr-66s6</code></td>
-<td></td>
-</tr>
-<tr>
-<td>Tax rates</td>
-<td><code>pwis-wc4c</code></td>
-<td>municipal mill rates by class</td>
-</tr>
-<tr>
-<td>Zoning Bylaw geometry</td>
-<td><code>fixa-tstc</code></td>
-<td>land-use categories, set-aside layer</td>
-</tr>
-<tr>
-<td>Road network</td>
-<td><code>9j8t-zm52</code></td>
-<td>centreline segments</td>
-</tr>
-<tr>
-<td>Fire response events / stations</td>
-<td><code>7hsn-idqi</code> / <code>b4y7-zhnz</code></td>
-<td></td>
-</tr>
-<tr>
-<td>Utility tariffs</td>
-<td>EPCOR bylaw schedules</td>
-<td>year-pinned JSON in <code>data/</code></td>
-</tr>
-</tbody>
-</table>
-<p>A weekly GitHub Action re-downloads everything, re-runs the pipeline, runs
-this page and the Money lens notebook, and redeploys — with guards that hold
-the last good data (and show a banner) if the assessment year rolls over or a
-download is truncated. (<code>docs/SPEC_deployment.md</code>)</p>
+<h2 id="4.-Road-metres-per-acre-to-dollars-per-acre">4. Road metres per acre to dollars per acre<a class="anchor-link" href="#4.-Road-metres-per-acre-to-dollars-per-acre">¶</a></h2><p>The panel prices the same metres on two bases that must never be added
+together (<code>data/city_unit_costs.json</code>, "_two_bases"): a lifecycle rate
+(operate, maintain and renew over a 50-year life) and an operating rate
+(maintenance and snow clearing only). Each served cost column should be the
+served length times the configured rate, with rounding the only difference.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=20b7c62b">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=d35071d5">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [9]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [8]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">md</span><span class="p">(</span><span class="sa">f</span><span class="s2">"""</span>
-<span class="s2">This week's vintages, from the site's own manifest: roll **</span><span class="si">{</span><span class="n">status</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'data_year'</span><span class="p">)</span><span class="si">}</span><span class="s2">**,</span>
-<span class="s2">rates **</span><span class="si">{</span><span class="n">status</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'rate_year'</span><span class="p">)</span><span class="si">}</span><span class="s2">**, zoning **</span><span class="si">{</span><span class="n">status</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'zoning_year'</span><span class="p">)</span><span class="si">}</span><span class="s2">**;</span>
-<span class="s2">data last checked **</span><span class="si">{</span><span class="n">status</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'last_checked'</span><span class="p">)</span><span class="si">}</span><span class="s2">**.</span>
-<span class="s2">"""</span><span class="p">)</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">rates</span> <span class="o">=</span> <span class="n">load_unit_costs</span><span class="p">(</span><span class="n">main</span><span class="o">.</span><span class="n">UNIT_COSTS_JSON</span><span class="p">)</span>
+<span class="n">md</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Configured rates this run: lifecycle **$</span><span class="si">{</span><span class="n">rates</span><span class="p">[</span><span class="s1">'road_dollars_per_m'</span><span class="p">]</span><span class="si">:</span><span class="s2">,.2f</span><span class="si">}</span><span class="s2">** and "</span>
+   <span class="sa">f</span><span class="s2">"operating **$</span><span class="si">{</span><span class="n">rates</span><span class="p">[</span><span class="s1">'road_ops_dollars_per_m'</span><span class="p">]</span><span class="si">:</span><span class="s2">,.2f</span><span class="si">}</span><span class="s2">** per road-metre per year."</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">col</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">label</span> <span class="ow">in</span> <span class="p">((</span><span class="s2">"cost_roads_life_per_acre"</span><span class="p">,</span> <span class="s2">"road_dollars_per_m"</span><span class="p">,</span> <span class="s2">"lifecycle"</span><span class="p">),</span>
+                        <span class="p">(</span><span class="s2">"cost_roads_ops_per_acre"</span><span class="p">,</span> <span class="s2">"road_ops_dollars_per_m"</span><span class="p">,</span> <span class="s2">"operating"</span><span class="p">)):</span>
+    <span class="n">want</span> <span class="o">=</span> <span class="n">served</span><span class="p">[</span><span class="s2">"road_m_per_acre"</span><span class="p">]</span> <span class="o">*</span> <span class="n">rates</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+    <span class="n">rel</span> <span class="o">=</span> <span class="p">((</span><span class="n">served</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">-</span> <span class="n">want</span><span class="p">)</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span> <span class="o">/</span> <span class="n">want</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">want</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">))</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+    <span class="n">zero_ok</span> <span class="o">=</span> <span class="p">(</span><span class="n">served</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">want</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="n">col</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+    <span class="n">check</span><span class="p">(</span><span class="n">rel</span> <span class="o">&lt;</span> <span class="mf">1e-4</span> <span class="ow">and</span> <span class="n">zero_ok</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"served </span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2"> cost per acre = road metres per acre × the configured rate"</span><span class="p">,</span>
+          <span class="sa">f</span><span class="s2">"max relative difference </span><span class="si">{</span><span class="n">rel</span><span class="si">:</span><span class="s2">.1e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -8736,49 +8352,105 @@ download is truncated. (<code>docs/SPEC_deployment.md</code>)</p>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-OutputArea-output" data-mime-type="text/markdown" tabindex="0">
-<p>This week's vintages, from the site's own manifest: roll <strong>2026</strong>,
-rates <strong>2026</strong>, zoning <strong>2024</strong>;
-data last checked <strong>2026-10-08</strong>.</p>
+<p>Configured rates this run: lifecycle <strong>$50.00</strong> and operating <strong>$9.32</strong> per road-metre per year.</p>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>  [PASS] served lifecycle cost per acre = road metres per acre × the configured rate  — max relative difference 4.9e-06
+  [PASS] served operating cost per acre = road metres per acre × the configured rate  — max relative difference 7.4e-06
+</pre>
 </div>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=8da87431">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=863d332a">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="8.-Known-limitations">8. Known limitations<a class="anchor-link" href="#8.-Known-limitations">¶</a></h2><p>How big each of these is this week, alongside the other main assumptions
-the public lenses make: <a href="03_assumptions.html">the assumptions page</a>.</p>
-<ol>
-<li><strong>Exemption status is not published</strong> (§3) — some exempt land is billed
-on the map and some is missing from it; measured but not correctable.</li>
-<li><strong>One coordinate per account</strong> — a large property's dollars pin to a
-single point on the grid; the lot-acre denominator is the counterweight.</li>
-<li><strong>Lot sizes are City-supplied, not clipped to neighbourhood boundaries</strong> —
-the known bound violations (§2) are reported, not hidden.</li>
-<li><strong>Utility figures are models</strong> with stated assumptions and published
-validation ratios; they are order-of-magnitude tools, not bills.</li>
-<li><strong>Neighbourhood aggregation</strong> smooths variation within a neighbourhood;
-the 100 m grid is the partial remedy, parcel-level analysis the future one
-(<code>docs/PARCEL_LEVEL_OPPORTUNITIES.md</code>).</li>
-</ol>
-<h2 id="What-this-page-cites-rather-than-recomputes">What this page cites rather than recomputes<a class="anchor-link" href="#What-this-page-cites-rather-than-recomputes">¶</a></h2><p>These rest on one-off investigations, so they are cited without a number
-rather than quoted from a run that no longer exists:</p>
-<ul>
-<li>the lot-dedupe threshold's insensitivity range — <code>docs/FINDINGS_lot_dedupe.md</code>;</li>
-<li>the count of neighbourhoods with substantial untaxed institutional land —
-<code>docs/FINDINGS_exempt_institutional.md</code>;</li>
-<li>the utility models' validation ratios against EPCOR's published revenue —
-<code>docs/FINDINGS_utility_validation.md</code>;</li>
-<li>the colour-clamp percentiles and skew tests — <code>docs/FINDINGS_revenue_scale.md</code>.</li>
-</ul>
+<h2 id="5.-What-moved-since-the-last-published-run">5. What moved since the last published run<a class="anchor-link" href="#5.-What-moved-since-the-last-published-run">¶</a></h2><p>Nothing else reads road figures between weekly refreshes. Before this page,
+a boundary redraw or a feed defect that moved road length would have
+published with no signal. The table compares this run with the last
+committed one. <strong>It never fails the page</strong>: roads get built. It is here so
+the moves are seen.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=4435e3dc">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=6566f13b">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [9]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="k">try</span><span class="p">:</span>
+    <span class="n">prev</span> <span class="o">=</span> <span class="n">served_frame</span><span class="p">(</span><span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+        <span class="p">[</span><span class="s2">"git"</span><span class="p">,</span> <span class="s2">"show"</span><span class="p">,</span> <span class="s2">"HEAD:web/data/neighbourhood_value_per_acre.geojson"</span><span class="p">],</span>
+        <span class="n">cwd</span><span class="o">=</span><span class="n">REPO_ROOT</span><span class="p">,</span> <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">check</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>
+<span class="k">except</span> <span class="p">(</span><span class="n">subprocess</span><span class="o">.</span><span class="n">CalledProcessError</span><span class="p">,</span> <span class="ne">OSError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">,</span> <span class="ne">KeyError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="n">prev</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">md</span><span class="p">(</span><span class="sa">f</span><span class="s2">"No previous run to compare with (</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">)."</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="n">prev</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">served</span><span class="p">[[</span><span class="s2">"neighbourhood_name"</span><span class="p">,</span> <span class="s2">"road_m_per_acre"</span><span class="p">]]</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span>
+        <span class="n">prev</span><span class="p">[[</span><span class="s2">"neighbourhood_name"</span><span class="p">,</span> <span class="s2">"road_m_per_acre"</span><span class="p">]],</span> <span class="n">on</span><span class="o">=</span><span class="s2">"neighbourhood_name"</span><span class="p">,</span>
+        <span class="n">how</span><span class="o">=</span><span class="s2">"outer"</span><span class="p">,</span> <span class="n">suffixes</span><span class="o">=</span><span class="p">(</span><span class="s2">""</span><span class="p">,</span> <span class="s2">"_prev"</span><span class="p">))</span>
+    <span class="n">d</span><span class="p">[</span><span class="s2">"change"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">"road_m_per_acre"</span><span class="p">]</span> <span class="o">-</span> <span class="n">d</span><span class="p">[</span><span class="s2">"road_m_per_acre_prev"</span><span class="p">])</span> <span class="o">/</span> <span class="n">d</span><span class="p">[</span><span class="s2">"road_m_per_acre_prev"</span><span class="p">]</span>
+    <span class="n">moved</span> <span class="o">=</span> <span class="n">d</span><span class="p">[</span><span class="n">d</span><span class="p">[</span><span class="s2">"change"</span><span class="p">]</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mf">0.05</span><span class="p">]</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s2">"change"</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="nb">abs</span><span class="p">,</span> <span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">new_or_gone</span> <span class="o">=</span> <span class="n">d</span><span class="p">[</span><span class="n">d</span><span class="p">[</span><span class="s2">"road_m_per_acre"</span><span class="p">]</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span> <span class="o">|</span> <span class="n">d</span><span class="p">[</span><span class="s2">"road_m_per_acre_prev"</span><span class="p">]</span><span class="o">.</span><span class="n">isna</span><span class="p">()]</span>
+    <span class="n">md</span><span class="p">(</span><span class="sa">f</span><span class="s2">"**</span><span class="si">{</span><span class="nb">int</span><span class="p">((</span><span class="n">d</span><span class="p">[</span><span class="s1">'change'</span><span class="p">]</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">0.01</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span><span class="si">}</span><span class="s2">** neighbourhoods moved by more than 1% and "</span>
+       <span class="sa">f</span><span class="s2">"**</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">moved</span><span class="p">)</span><span class="si">}</span><span class="s2">** by more than 5%. "</span>
+       <span class="sa">f</span><span class="s2">"**</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">new_or_gone</span><span class="p">)</span><span class="si">}</span><span class="s2">** appear in only one of the two runs."</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">moved</span><span class="p">):</span>
+        <span class="n">md</span><span class="p">(</span><span class="s2">"| neighbourhood | last run | this run | change |</span><span class="se">\n</span><span class="s2">|---|---|---|---|</span><span class="se">\n</span><span class="s2">"</span> <span class="o">+</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"| </span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">neighbourhood_name</span><span class="si">}</span><span class="s2"> | </span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">road_m_per_acre_prev</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> | </span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">road_m_per_acre</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> | </span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">change</span><span class="si">:</span><span class="s2">+.1%</span><span class="si">}</span><span class="s2"> |"</span>
+            <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">moved</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">15</span><span class="p">)</span><span class="o">.</span><span class="n">itertuples</span><span class="p">()))</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-OutputArea-output" data-mime-type="text/markdown" tabindex="0">
+<p><strong>1</strong> neighbourhoods moved by more than 1% and <strong>1</strong> by more than 5%. <strong>0</strong> appear in only one of the two runs.</p>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-OutputArea-output" data-mime-type="text/markdown" tabindex="0">
+<table>
+<thead>
+<tr>
+<th>neighbourhood</th>
+<th>last run</th>
+<th>this run</th>
+<th>change</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CRYSTALLINA NERA EAST</td>
+<td>24.93</td>
+<td>26.83</td>
+<td>+7.6%</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=5c2eb886">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8809,13 +8481,23 @@ rather than quoted from a run that no longer exists:</p>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>5/5 invariants held
+<pre>15/15 invariants held
 
-  [PASS] every served neighbourhood has a boundary area  — 0 without
-  [PASS] no lot-acre figure is served below the parcel-coverage floor  — 0 served below 15%
-  [PASS] every located account's point is classified as in the lot-acre view or excluded  — 0 unclassified
-  [PASS] the grey flag is exactly the set-aside share at or above the threshold  — 48 flagged
-  [PASS] the served road metric covers a positive length  — 3,656 km
+  [PASS] the clip reported its length accounting exactly once  — 1 record(s)
+  [PASS] clipping to neighbourhoods adds no road length  — 5,013.327 km out of 5,027.544 km in
+  [PASS] less than 1% of City road lies outside every neighbourhood  — 0.28%
+  [PASS] load_roads split the boundary pieces exactly once  — 1 call(s)
+  [PASS] the boundary split conserves metric road length  — 3,655.7955 km in, 3,655.7955 km out
+  [PASS] every neighbourhood the split hands road to is a real neighbourhood  — 0 unknown
+  [PASS] the per-neighbourhood totals add up to what the split produced  — 3,655.7955 km
+  [PASS] citywide collector + local road is within 3,200–4,400 km  — 3,655.8 km
+  [PASS] every served neighbourhood is in the boundary file  — 0 not
+  [PASS] every served neighbourhood has a road figure  — 0 blank
+  [PASS] served road metres per acre equals the rebuild, every neighbourhood  — 406 neighbourhoods, max difference 4.95e-05
+  [PASS] every coloured neighbourhood on the map is served, or is a boundary the site does not serve  — drawn but not served: LEWIS FARMS
+  [PASS] the map's colour value matches served road metres per acre within 0.15  — 397 neighbourhoods drawn, max difference 0.054
+  [PASS] served lifecycle cost per acre = road metres per acre × the configured rate  — max relative difference 4.9e-06
+  [PASS] served operating cost per acre = road metres per acre × the configured rate  — max relative difference 7.4e-06
 
 All invariants held.
 </pre>
