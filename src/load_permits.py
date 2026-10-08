@@ -43,7 +43,8 @@ PERMIT_NAME_CORRECTIONS below (``OLIVER, WÎHKWÊNTÔWIN`` alone was 837 units,
 only — the citywide total is unchanged at 162,414, because these units were
 always counted, just not placed.
 
-**565 units across 15 names remain unmatched BY DECISION** — they straddle 2+
+**537 units across 14 names remain unmatched BY DECISION** (565 / 15 until
+``CHAPPELLE AREA, HERITAGE VALLEY AREA`` was placed by geocode, 2026-10-05) — they straddle 2+
 genuinely different hoods, a name correction cannot split them, and a spatial
 fix is not available either: those rows are only 14.9% geocoded and
 ``THE HAMPTONS, GRANVILLE`` (119 units) is 0%, so point-in-polygon would place
@@ -192,8 +193,9 @@ KNOWN_BUILDING_TYPES = RESIDENTIAL_BUILDING_TYPES | INDUSTRIAL_BUILDING_TYPES | 
 # `neighbourhood` field as a LIST: 546 raw rows / 92 distinct names, and 92 of
 # the 95 permit names that miss the boundary file are this one pattern. Only the
 # UNAMBIGUOUS ones are corrected here — every comma-part must resolve, via this
-# same dict, to ONE rendered hood. The 15 names whose parts resolve to 2+
-# DIFFERENT hoods are deliberately left unmatched (565 units): a name correction
+# same dict, to ONE rendered hood (one geocoded exception, marked below). The 14
+# names whose parts resolve to 2+ DIFFERENT hoods are deliberately left unmatched
+# (537 units): a name correction
 # cannot split a permit across hoods, those rows are only 14.9% geocoded so
 # point-in-polygon cannot either, and inventing a split is the trap this project
 # keeps re-learning. They stay in the warn-not-fail path; see TODO.md.
@@ -224,6 +226,13 @@ PERMIT_NAME_CORRECTIONS = {
     # peers (Pilot Sound has no polygon of its own; same shape as the
     # AREA-suffix entries in NAME_CORRECTIONS). 24 units.
     "PILOT SOUND AREA WEST PORTION, MCCONACHIE": "MCCONACHIE",
+    # ⚠️ The one entry the parts rule alone would NOT allow: HERITAGE VALLEY
+    # AREA has its own polygon, so the parts resolve to two rendered hoods.
+    # Placed by GEOCODE, not by name: all 8 geocoded rows of this name (all
+    # 2011) fall inside CHAPPELLE, the containing-area-then-hood shape of the
+    # Pilot Sound entry. 8 new-construction permits, 28 units.
+    # FINDINGS_services_ranks_dev_zerofill.md F1; re-measured 2026-10-05.
+    "CHAPPELLE AREA, HERITAGE VALLEY AREA": "CHAPPELLE",
 }
 
 REQUIRED_COLUMNS = ("year", "work_type", "building_type", "units_added", "neighbourhood")
