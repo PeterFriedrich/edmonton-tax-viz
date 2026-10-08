@@ -5235,7 +5235,10 @@
       // no row. Returning null there fell through to the ASSESSMENT history in
       // tooltipFor/openTemporal — a chart of the wrong subject on a Development
       // hover. Zero-fill only when the map's own long-window count confirms the
-      // zero, so a name mismatch still shows as missing rather than as "none".
+      // zero, which catches the two EXPORTS disagreeing. ⚠️ It cannot catch a
+      // permit whose name never matched a hood (the unmatched comma lists):
+      // both files come from the same name join, so both read 0 and the panel
+      // says "none" (FINDINGS_services_ranks_dev_zerofill.md F1).
       if (!rows) {
         const p = hoodProps(name);
         const col = { units: "new_dwelling_units_long",

@@ -207,10 +207,10 @@ publish on its own, unrelated to any of this — re-pinned.)_
   needs Peter's OK before it's built.
 
 ### Services/Development panel follow-ons (OPEN 2026-10-05 S215, `docs/FINDINGS_services_ranks_dev_zerofill.md`)
-- **F1:** `devHistoryFor`'s comment claims the zero-fill catches a name mismatch;
-  it cannot, because both sides read one join. Fix the comment. Peter: add
-  `CHAPPELLE AREA, HERITAGE VALLEY AREA` → CHAPPELLE to `PERMIT_NAME_CORRECTIONS`
-  (5 of 5 geocoded rows are in Chappelle; moves 8 permits / 28 units).
+- ✅ **F1 fixed S216:** comment corrected; `CHAPPELLE AREA, HERITAGE VALLEY AREA`
+  → CHAPPELLE in `PERMIT_NAME_CORRECTIONS` (8 of 8 geocoded rows in Chappelle;
+  8 permits / 28 units). River Valley Glenora's false industrial "none" (full) stays
+  with the open 14-name decision.
 - **F2 (full build):** the water panel prints "$0 … 352nd highest of 406 … a
   utility charge paid to EPCOR" for 43 industrial/commercial hoods that the
   residential-only model does not cover. Null out-of-scope, or change the panel
@@ -823,14 +823,16 @@ archive"*) is not, and this span is 2,533 lines.
     services, and the new dev history). Pre-existing, but this change widened it
     from one-in-three to one-in-four. Screen-reader-only, one line to fix.
 
-- [ ] **⚠️ 565 UNITS STILL UNATTRIBUTED BY DECISION — the straddling half of the
+- [ ] **⚠️ 537 UNITS (14 NAMES) STILL UNATTRIBUTED BY DECISION — was 565/15 until
+  S216 placed `CHAPPELLE AREA, HERITAGE VALLEY AREA` (28u) by geocode, 8 of 8 in
+  CHAPPELLE — the straddling half of the
   comma-list permit names. The other 1,245 units are FIXED (2026-09-14, S156).**
   ✅ **Fixed:** 8 unambiguous names corrected in `PERMIT_NAME_CORRECTIONS` —
   WÎHKWÊNTÔWIN 1,229 → 2,066 (+68%), SOUTH TERWILLEGAR 823 → 1,189 (+45%),
   plus ELSINORE/RUTHERFORD/RITCHIE/MCCONACHIE. Citywide unchanged at 162,414
   (attribution moved, not totals — the invariant that says units were placed,
   not invented). 5 tests, 3 falsified.
-  ❗ **STILL OPEN — Peter's call, 565 units across 15 names:** the rows that
+  ❗ **STILL OPEN — Peter's call, 537 units across 14 names:** the rows that
   genuinely straddle 2+ hoods (`RUTHERFORD, HERITAGE VALLEY TOWN CENTRE` 327u;
   `THE HAMPTONS, GRANVILLE` 119u; `HOLLICK-KENYON, BRINTNELL, MILLER, BRINTNELL`
   60u across 3). Choose one of **even split / assign to the first-named hood /
