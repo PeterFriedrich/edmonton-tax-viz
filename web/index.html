@@ -700,6 +700,18 @@
     // happened — which is exactly the question. Threshold is two missed weekly
     // runs: one flaky run should not put a warning in front of every visitor.
     const STALE_DAYS = 14;
+    // Colours that depend on the backdrop, one value per theme (docs/UI.md →
+    // Light mode → Build plan). Each stays declared beside its rationale and is
+    // read through tc() at draw time; THEMED lists them all so verify-theme.js
+    // can swap every one and catch a layer still holding a dark value.
+    const THEMED = [];
+    const themed = dark => { const c = { dark }; THEMED.push(c); return c; };
+    const tc = c => c[state.theme];
+    // Hover highlight (60) and its softer variant (40) on the flat planes.
+    const HOVER_COLOR = themed([255, 255, 255, 60]);
+    const HOVER_COLOR_SOFT = themed([255, 255, 255, 40]);
+    // The lighting's specular tint, shared by every lit prism.
+    const SPECULAR_COLOR = themed([60, 60, 70]);
     const CENTER = [-113.50, 53.52]; // Edmonton, from the data centroid
     // The default framing — single source for the map constructor and the two
     // bottom-left framing buttons. HOME is the tilted 3D default; HOME_2D is the
@@ -945,7 +957,7 @@
     // view.
     const ROADS_URL = "./data/roads.geojson";
     const ROAD_CLAMP = 53;
-    const ARTERIAL_COLOR = [116, 120, 132, 170];
+    const ARTERIAL_COLOR = themed([116, 120, 132, 170]);
 
     // Ratio view: revenue_per_acre / <service per acre> — the acres cancel,
     // so each ratio is $ of municipal revenue per unit of a LEVY-FUNDED
@@ -1021,16 +1033,18 @@
     // `key` matches the `u` prop of the zoning ground layer (export_zoning_web);
     // `frac` the hood composition columns. Same category, two granularities.
     const USE_CATEGORIES = [
-      { key: "res",    frac: "frac_residential", label: "Residential",          color: [173, 138,  58] },
-      { key: "com",    frac: "frac_commercial",  label: "Commercial",           color: [224,  82,  82] },
-      { key: "ind",    frac: "frac_industrial",  label: "Industrial",           color: [143, 128, 224] },
-      { key: "mix",    frac: "frac_mixed",       label: "Mixed use",            color: [165,  76,  31] },
-      { key: "dc",     frac: "frac_dc",          label: "Direct Control",       color: [213,  81, 129] },
-      { key: "inst",   frac: "frac_inst",        label: "Institutional",        color: [ 42,  99, 184] },
-      { key: "never",  frac: "frac_never",       label: "River valley / parks", color: [ 39, 133,  58] },
-      { key: "notyet", frac: "frac_notyet",      label: "Future / rural",       color: [104, 108, 122] },
-      { key: "other",  frac: "frac_other",       label: "Unclassified",         color: [ 88,  90, 102] },
+      { key: "res",    frac: "frac_residential", label: "Residential",          color: themed([173, 138,  58]) },
+      { key: "com",    frac: "frac_commercial",  label: "Commercial",           color: themed([224,  82,  82]) },
+      { key: "ind",    frac: "frac_industrial",  label: "Industrial",           color: themed([143, 128, 224]) },
+      { key: "mix",    frac: "frac_mixed",       label: "Mixed use",            color: themed([165,  76,  31]) },
+      { key: "dc",     frac: "frac_dc",          label: "Direct Control",       color: themed([213,  81, 129]) },
+      { key: "inst",   frac: "frac_inst",        label: "Institutional",        color: themed([ 42,  99, 184]) },
+      { key: "never",  frac: "frac_never",       label: "River valley / parks", color: themed([ 39, 133,  58]) },
+      { key: "notyet", frac: "frac_notyet",      label: "Future / rural",       color: themed([104, 108, 122]) },
+      { key: "other",  frac: "frac_other",       label: "Unclassified",         color: themed([ 88,  90, 102]) },
     ];
+    // The revenue-mix bar's share outside every zone polygon.
+    const UNZONED_COLOR = themed([70, 72, 84]);
     const USE_BY_KEY = Object.fromEntries(USE_CATEGORIES.map(u => [u.key, u]));
 
     // Uses-view residential prisms (layers-panel toggle, 2026-07-10): "how
@@ -1812,7 +1826,7 @@
     // `svcDriver` names the checked service that drives the colour ramp
     // (kept pointing at a checked service by applyService). Both persist
     // across view switches, matching the denominator toggle's behaviour.
-    const state = { metric: "revenue_per_acre", ramp: "current",
+    const state = { metric: "revenue_per_acre", ramp: "current", theme: "dark",
                     colorAdjust: true, // sqrt colour transform on (money/glass); off = linear+clamp
                     labels: false, view: "money", prismOpacity: 1, denom: "ground",
                     glassCell: CELLS.cellGlass,
@@ -1917,20 +1931,20 @@
     // is a land-use fact, not a fiscal signal (see FINDINGS §4/§6). Distinct from
     // every ramp's low end (dark purple/blue) — but NOT from cividis's grey
     // middle, so that ramp carries its own `setAside` (rampSetAside below). Height stays their true (low) value — honest, de-emphasized.
-    const SET_ASIDE_COLOR = [104, 108, 122];
+    const SET_ASIDE_COLOR = themed([104, 108, 122]);
     // The set-aside colour beside a RAMP-coloured surface. Only where the
     // neighbours come from rampColorAt: the Infill/Change/Deviation diverging
     // ramp and the Glass ground plane keep SET_ASIDE_COLOR, because cividis's
     // dark grey sits 5.2 from GLASS_PLANE_COLOR and 7.7 from the diverging
     // ramp's faint end. tests/test_set_aside_colour.py holds the distances.
-    const rampSetAside = () => RAMPS[state.ramp].setAside || SET_ASIDE_COLOR;
+    const rampSetAside = () => RAMPS[state.ramp].setAside || tc(SET_ASIDE_COLOR);
 
     // Glass view's ground plane: one neutral dark slate for every hood — the
     // plane is mouseover geography, not a signal carrier (all metric signal
     // stays in the translucent prisms above). Set-aside hoods take the usual
     // grey instead, so "off the fiscal scale" reads on the ground too.
     // Darker than SET_ASIDE_COLOR but clearly above every ramp background.
-    const GLASS_PLANE_COLOR = [50, 53, 63];
+    const GLASS_PLANE_COLOR = themed([50, 53, 63]);
 
     // The metric's lot-acre column name (value_per_acre -> value_per_lot_acre).
     // Both the Glass grid file and the neighbourhood GeoJSON carry the *_per_lot_acre
@@ -2315,7 +2329,7 @@
         filled: false,
         stroked: true,
         getLineColor: f => (neutral || f.properties.t === "arterial")
-          ? ARTERIAL_COLOR
+          ? tc(ARTERIAL_COLOR)
           : rampColorAt(Math.max(0, Math.min(1, f.properties.v / ROAD_CLAMP))),
         // Arterials slightly wider: the neutral skeleton should read as
         // structure, not noise, at city zoom.
@@ -2324,7 +2338,7 @@
         lineWidthMinPixels: 1,
         // Not pickable: hood hover/tooltips come from the flat hood layer.
         pickable: false,
-        updateTriggers: { getLineColor: [state.ramp, neutral] },
+        updateTriggers: { getLineColor: [state.ramp, neutral, state.theme] },
       })];
     }
 
@@ -2442,11 +2456,11 @@
         getFillColor: f => {
           const p = f.properties;
           if (p.is_set_aside) return rampSetAside();
-          if (!col || p[col] == null) return GLASS_PLANE_COLOR;
+          if (!col || p[col] == null) return tc(GLASS_PLANE_COLOR);
           return rampColorAt(svcT(p[col], col));
         },
         pickable: false,
-        updateTriggers: { getFillColor: [state.ramp, col] },
+        updateTriggers: { getFillColor: [state.ramp, col, state.theme] },
       });
     }
 
@@ -2528,10 +2542,10 @@
         getFillColor: f => {
           const v = f.properties[col];
           // No set-aside grey branch — the override colours greenfield too.
-          return v == null ? GLASS_PLANE_COLOR : rampColorAt(devT(v));
+          return v == null ? tc(GLASS_PLANE_COLOR) : rampColorAt(devT(v));
         },
         pickable: false,
-        updateTriggers: { getFillColor: [state.ramp, state.devMetric, state.devWindow] },
+        updateTriggers: { getFillColor: [state.ramp, state.devMetric, state.devWindow, state.theme] },
       });
     }
     const fmtDev = v => v.toFixed(v < 1 ? 2 : 1) +
@@ -2613,10 +2627,10 @@
         // sqrt colour always, matching the choropleth's locked transform
         getFillColor: d => rampColorAt(Math.sqrt(Math.min(1, d[col] / gs.clamp))),
         opacity: state.prismOpacity,
-        material: { ambient: 0.55, diffuse: 0.6, shininess: 32, specularColor: [60, 60, 70] },
+        material: { ambient: 0.55, diffuse: 0.6, shininess: 32, specularColor: tc(SPECULAR_COLOR) },
         pickable: false, // the neutral plane keeps the hood tooltip
         updateTriggers: {
-          getElevation: [colKey, ind], getFillColor: [colKey, state.ramp],
+          getElevation: [colKey, ind], getFillColor: [colKey, state.ramp, state.theme],
         },
       });
     }
@@ -2704,13 +2718,13 @@
     // Dark-centred diverging ramp: t in [-1,1]. Negative arm (pressure) warms to
     // orange, positive arm (opportunity) cools to teal; both fade to a near-bg
     // centre at 0 so magnitude reads as glow. Teal/orange is colour-blind safe.
-    const INFILL_CENTER = [24, 26, 36];
-    const INFILL_POS = [90, 222, 224];   // opportunity — teal/cyan
-    const INFILL_NEG = [244, 150, 66];   // pressure — orange
+    const INFILL_CENTER = themed([24, 26, 36]);
+    const INFILL_POS = themed([90, 222, 224]);   // opportunity — teal/cyan
+    const INFILL_NEG = themed([244, 150, 66]);   // pressure — orange
     function infillColorAt(t) {
-      const end = t >= 0 ? INFILL_POS : INFILL_NEG;
+      const end = t >= 0 ? tc(INFILL_POS) : tc(INFILL_NEG);
       const f = Math.abs(t);
-      return [0, 1, 2].map(k => Math.round(INFILL_CENTER[k] + f * (end[k] - INFILL_CENTER[k])));
+      return [0, 1, 2].map(k => Math.round(tc(INFILL_CENTER)[k] + f * (end[k] - tc(INFILL_CENTER)[k])));
     }
     function infillPlaneLayer() {
       return new deck.GeoJsonLayer({
@@ -2721,10 +2735,10 @@
         extruded: false,
         getFillColor: f => {
           const t = infillT(f.properties);
-          return t == null ? SET_ASIDE_COLOR : infillColorAt(t);
+          return t == null ? tc(SET_ASIDE_COLOR) : infillColorAt(t);
         },
         pickable: false,
-        updateTriggers: { getFillColor: [state.devMetric, state.devWindow] },
+        updateTriggers: { getFillColor: [state.devMetric, state.devWindow, state.theme] },
       });
     }
     // ⚠️ NO FLOOR, DECIDED — do not "fix" this. DECISIONS.md 2026-09-20 closed
@@ -2744,7 +2758,7 @@
     // (dist_lrt_m/dist_school_m already ride on value_grid.json), highlighting
     // in-band cells over the unchanged hood-level score below. ⚠️ amenityInBand
     // treats a null distance as OUT of band — "unknown" must not read as "near".
-    const AMENITY_HIGHLIGHT_COLOR = [255, 255, 255, 70];
+    const AMENITY_HIGHLIGHT_COLOR = themed([255, 255, 255, 70]);
     function amenityHighlightGridLayer() {
       return new deck.GridCellLayer({
         id: "infill-amenity-grid",
@@ -2752,9 +2766,9 @@
         cellSize: gridData.cell,
         extruded: false,
         getPosition: d => [d[0], d[1]], // cell SW corner
-        getFillColor: d => amenityInBand(d) ? AMENITY_HIGHLIGHT_COLOR : [0, 0, 0, 0],
+        getFillColor: d => amenityInBand(d) ? tc(AMENITY_HIGHLIGHT_COLOR) : [0, 0, 0, 0],
         pickable: false, // the hood hover layer keeps the tooltip
-        updateTriggers: { getFillColor: [state.amenity.lrt, state.amenity.school] },
+        updateTriggers: { getFillColor: [state.amenity.lrt, state.amenity.school, state.theme] },
       });
     }
 
@@ -2919,15 +2933,15 @@
         },
         getFillColor: f => {
           const t = chgT(f.properties);
-          return t == null ? SET_ASIDE_COLOR : infillColorAt(t);
+          return t == null ? tc(SET_ASIDE_COLOR) : infillColorAt(t);
         },
-        material: { ambient: 0.55, diffuse: 0.6, shininess: 32, specularColor: [60, 60, 70] },
+        material: { ambient: 0.55, diffuse: 0.6, shininess: 32, specularColor: tc(SPECULAR_COLOR) },
         pickable: true, // the prisms carry the tooltip, like Money's and deviation's
         autoHighlight: true,
-        highlightColor: [255, 255, 255, 60],
+        highlightColor: tc(HOVER_COLOR),
         updateTriggers: {
           getElevation: [state.chgWindow],
-          getFillColor: [state.chgWindow],
+          getFillColor: [state.chgWindow, state.theme],
         },
       });
     }
@@ -3050,7 +3064,7 @@
     // 20.6 normal — the best of white/near-white/blue/violet — and blue was
     // rejected on meaning as much as numbers: a cool hue leans toward the teal
     // surplus pole. verify-deviation.js pins R === G === B.
-    const UNCERTAIN_COLOR = [255, 255, 255];
+    const UNCERTAIN_COLOR = themed([255, 255, 255]);
     const exemptFrac = p => p.rev_frac_exempt || 0;
 
     // --- two tiers, answering two different questions ------------------------
@@ -3193,7 +3207,7 @@
     // are sequential magnitude — they have no poles — so azure asserts no
     // direction. Cividis's blue low end is the one place it has any pull, and
     // #2ec4ff is far brighter than any of its steps (ΔE 51.7 vs #00224e).
-    const INST_OUTLINE_COLOR = [46, 196, 255];
+    const INST_OUTLINE_COLOR = themed([46, 196, 255]);
 
     // The two endpoints of every banded hood, as TRANSLUCENT PRISMS with opaque
     // edges — one layer per endpoint, because deck.gl extrudes from the ground
@@ -3275,11 +3289,11 @@
           return exempt ? v * (1 - exemptFrac(p)) : v;
         },
         elevationScale: sc.elevationScale,
-        getFillColor: INST_OUTLINE_COLOR.concat([INST_BAND_ALPHA]),
-        getLineColor: INST_OUTLINE_COLOR.concat([255]),
+        getFillColor: tc(INST_OUTLINE_COLOR).concat([INST_BAND_ALPHA]),
+        getLineColor: tc(INST_OUTLINE_COLOR).concat([255]),
         getLineWidth: 30,
         lineWidthMinPixels: 2,
-        material: { ambient: 0.55, diffuse: 0.6, shininess: 32, specularColor: [60, 60, 70] },
+        material: { ambient: 0.55, diffuse: 0.6, shininess: 32, specularColor: tc(SPECULAR_COLOR) },
         // ⚠️ PICKABLE, and it has to be THESE layers rather than the flat below.
         // A banded hood's `metric-extrusion` geometry is flattened to 0 and made
         // fully transparent, so the only thing standing over that footprint is
@@ -3297,7 +3311,7 @@
         // translucent azure it measures mean Δ71 against the ordinary prism's
         // Δ34, so it is if anything the clearer of the two.
         autoHighlight: false,
-        highlightColor: [255, 255, 255, 60],
+        highlightColor: tc(HOVER_COLOR),
         highlightedObjectIndex: bandHoverIdx,
         updateTriggers: { getElevation: [state.metric, state.denom] },
       });
@@ -3385,12 +3399,12 @@
         getPosition: d => [d[0], d[1]],
         getElevation,
         elevationScale: gs.elevationScale,
-        getFillColor: INST_OUTLINE_COLOR.concat([INST_BAND_ALPHA]),
+        getFillColor: tc(INST_OUTLINE_COLOR).concat([INST_BAND_ALPHA]),
         // Rides the same glass opacity as the cells it marks — at a fixed 1.0
         // the azure stopped reading as part of the composition and became a
         // solid object sitting on top of it.
         opacity: state.prismOpacity,
-        material: { ambient: 0.55, diffuse: 0.6, shininess: 32, specularColor: [60, 60, 70] },
+        material: { ambient: 0.55, diffuse: 0.6, shininess: 32, specularColor: tc(SPECULAR_COLOR) },
         pickable: false, // the plane still owns the hover, like the cells
         updateTriggers: { getElevation: col },
       });
@@ -3428,12 +3442,12 @@
         getElevation: f => ratioOf(f.properties)
           * (exempt ? 1 - exemptFrac(f.properties) : 1),
         elevationScale: es,
-        getFillColor: INST_OUTLINE_COLOR.concat([INST_BAND_ALPHA]),
-        getLineColor: INST_OUTLINE_COLOR.concat([255]),
+        getFillColor: tc(INST_OUTLINE_COLOR).concat([INST_BAND_ALPHA]),
+        getLineColor: tc(INST_OUTLINE_COLOR).concat([255]),
         getLineWidth: 30,
         lineWidthMinPixels: 2,
         opacity: state.prismOpacity,
-        material: { ambient: 0.55, diffuse: 0.6, shininess: 32, specularColor: [60, 60, 70] },
+        material: { ambient: 0.55, diffuse: 0.6, shininess: 32, specularColor: tc(SPECULAR_COLOR) },
         pickable: false,
         updateTriggers: { getElevation: state.ratioDenom },
       });
@@ -3559,15 +3573,15 @@
           // draws its own base ring at 0, so the footprint is still marked.
           if (isUncertain(p)) return [0, 0, 0, 0];
           const t = deviationT(p);
-          return t == null ? SET_ASIDE_COLOR : infillColorAt(t);
+          return t == null ? tc(SET_ASIDE_COLOR) : infillColorAt(t);
         },
-        material: { ambient: 0.55, diffuse: 0.6, shininess: 32, specularColor: [60, 60, 70] },
+        material: { ambient: 0.55, diffuse: 0.6, shininess: 32, specularColor: tc(SPECULAR_COLOR) },
         pickable: true,
         autoHighlight: true,
-        highlightColor: [255, 255, 255, 60],
+        highlightColor: tc(HOVER_COLOR),
         updateTriggers: {
           getElevation: [state.labCut],
-          getFillColor: [state.labCut],
+          getFillColor: [state.labCut, state.theme],
         },
       });
     }
@@ -3607,7 +3621,7 @@
         wireframe: true,
         getElevation: elevation(pick),
         elevationScale: cfg.elevationScale,
-        getLineColor: UNCERTAIN_COLOR.concat([255]),
+        getLineColor: tc(UNCERTAIN_COLOR).concat([255]),
         getLineWidth: 30,
         lineWidthMinPixels: 2,
         pickable: false,        // the invisible target below owns the picking
@@ -3655,7 +3669,7 @@
         // the "no solid fill on either endpoint" rule is untouched — that rule
         // governs the resting render, and both endpoints light together anyway.
         autoHighlight: false,
-        highlightColor: [255, 255, 255, 60],
+        highlightColor: tc(HOVER_COLOR),
         highlightedObjectIndex: bandHoverIdx,
         updateTriggers: { getElevation: [state.labCut] },
       });
@@ -3694,16 +3708,17 @@
     // drawn whenever the fire service is checked — driver or not, they are
     // geography, not a scale. depthTest off so the dots sit over the
     // coplanar plane + road lines. Not pickable (hood hover owns tooltips).
-    const FIRE_STATION_COLOR = [235, 100, 60, 235];
+    const STATION_OUTLINE_COLOR = themed([255, 255, 255, 220]);
+    const FIRE_STATION_COLOR = themed([235, 100, 60, 235]);
     function fireStationsLayer() {
       if (!fireStationsData) return [];
       return [new deck.ScatterplotLayer({
         id: "fire-stations",
         data: fireStationsData.stations,
         getPosition: d => [d[0], d[1]],
-        getFillColor: FIRE_STATION_COLOR,
+        getFillColor: tc(FIRE_STATION_COLOR),
         stroked: true,
-        getLineColor: [255, 255, 255, 220],
+        getLineColor: tc(STATION_OUTLINE_COLOR),
         lineWidthMinPixels: 1.5,
         radiusMinPixels: 4,
         radiusMaxPixels: 9,
@@ -3732,16 +3747,16 @@
     // GTFS location_type-1 stations — LRT stations + transit centres — drawn
     // whenever the transit service is checked, driver or not (the fire-dot
     // pattern: geography, not a scale). Not pickable.
-    const TRANSIT_STATION_COLOR = [70, 160, 235, 235];
+    const TRANSIT_STATION_COLOR = themed([70, 160, 235, 235]);
     function transitStationsLayer() {
       if (!transitStationsData) return [];
       return [new deck.ScatterplotLayer({
         id: "transit-stations",
         data: transitStationsData.stations,
         getPosition: d => [d[0], d[1]],
-        getFillColor: TRANSIT_STATION_COLOR,
+        getFillColor: tc(TRANSIT_STATION_COLOR),
         stroked: true,
-        getLineColor: [255, 255, 255, 220],
+        getLineColor: tc(STATION_OUTLINE_COLOR),
         lineWidthMinPixels: 1.5,
         radiusMinPixels: 4,
         radiusMaxPixels: 9,
@@ -3767,14 +3782,14 @@
     // network (Capital / Metro / Valley; the HER heritage streetcar is dropped
     // upstream) as a context layer under the station dots — geography, not a
     // scale, drawn whenever transit is checked. Not pickable.
-    const TRANSIT_LINE_COLOR = [70, 160, 235, 210];
+    const TRANSIT_LINE_COLOR = themed([70, 160, 235, 210]);
     function lrtLinesLayer() {
       if (!lrtLinesData) return [];
       return [new deck.PathLayer({
         id: "lrt-lines",
         data: lrtLinesData.lines,
         getPath: d => d,
-        getColor: TRANSIT_LINE_COLOR,
+        getColor: tc(TRANSIT_LINE_COLOR),
         widthUnits: "pixels",
         getWidth: 2,
         widthMinPixels: 1.5,
@@ -3802,14 +3817,14 @@
     // The metric lives on the hood plane (bike_m_per_acre), so this just shows
     // WHERE the counted infrastructure runs. Shared roadways and walkways are
     // excluded upstream, so what draws here is exactly what the metric counts.
-    const BIKE_LINE_COLOR = [120, 210, 140, 200];
+    const BIKE_LINE_COLOR = themed([120, 210, 140, 200]);
     function bikeLinesLayer() {
       if (!bikeLinesData) return [];
       return [new deck.PathLayer({
         id: "bike-lines",
         data: bikeLinesData.lines,
         getPath: d => d,
-        getColor: BIKE_LINE_COLOR,
+        getColor: tc(BIKE_LINE_COLOR),
         widthUnits: "pixels",
         getWidth: 1.5,
         widthMinPixels: 1,
@@ -3878,12 +3893,12 @@
     // luminance ~108) is the ceiling it must stay well beneath. Widened
     // 2026-08-08 from [50,66,94] (spread 44) to nearly double the chroma at
     // roughly the same lightness: ~71 vs the old ~65, ceiling untouched.
-    const RIVER_COLOR = [42, 74, 128, 255];
-    const HIGHWAY_COLOR = [72, 78, 92, 255];
+    const RIVER_COLOR = themed([42, 74, 128, 255]);
+    const HIGHWAY_COLOR = themed([72, 78, 92, 255]);
     // Municipal outlines: dimmer than the highways and unfilled. They are the
     // faintest thing on the map by intent — they say "the city ends here and
     // that is Leduc", and nothing more.
-    const BOUNDARY_COLOR = [58, 62, 74, 255];
+    const BOUNDARY_COLOR = themed([58, 62, 74, 255]);
     // …with ONE exception, and it is the point of the tier split: Edmonton's own
     // legal limit is the only boundary the map is making a claim WITH, not just
     // drawing for context — it is the only thing showing where Edmonton actually
@@ -3893,8 +3908,8 @@
     // It gets a lighter, wider stroke; the neighbours keep the
     // faint one. The industrial zone sits between: named, but not a jurisdiction
     // — a dimmer warm line so it does not read as another municipality.
-    const CITY_LIMIT_COLOR = [122, 132, 152, 255];
-    const ZONE_LINE_COLOR = [118, 96, 74, 235];
+    const CITY_LIMIT_COLOR = themed([122, 132, 152, 255]);
+    const ZONE_LINE_COLOR = themed([118, 96, 74, 235]);
     // ⚠️ DO NOT collapse these back into one layer with a per-feature accessor.
     // That was tried on 2026-08-08 and reverted: `getLineColor: f => …` makes
     // deck.gl build a per-vertex attribute buffer across every boundary vertex
@@ -3944,7 +3959,7 @@
         filled: true,
         stroked: false,
         extruded: false,
-        getFillColor: RIVER_COLOR,
+        getFillColor: tc(RIVER_COLOR),
         pickable: false,
         // No depth test: this is the backdrop. It is drawn before anything
         // else and every later layer paints over it, so it neither occludes
@@ -3961,9 +3976,9 @@
       // Edmonton's own limit LAST so it draws over anything it touches. That
       // matters where the Industrial Heartland crosses into the city (53.2 km²
       // of it is inside Edmonton) and along the shared county edges.
-      ...boundaryLayer("reference-boundary", split.boundary, BOUNDARY_COLOR, 1),
-      ...boundaryLayer("reference-zone", split.zone, ZONE_LINE_COLOR, 1.2),
-      ...boundaryLayer("reference-city-limit", split.cityLimit, CITY_LIMIT_COLOR, 1.8),
+      ...boundaryLayer("reference-boundary", split.boundary, tc(BOUNDARY_COLOR), 1),
+      ...boundaryLayer("reference-zone", split.zone, tc(ZONE_LINE_COLOR), 1.2),
+      ...boundaryLayer("reference-city-limit", split.cityLimit, tc(CITY_LIMIT_COLOR), 1.8),
       ];
     }
 
@@ -3996,7 +4011,7 @@
         filled: false,
         stroked: true,
         extruded: false,
-        getLineColor: HIGHWAY_COLOR,
+        getLineColor: tc(HIGHWAY_COLOR),
         getLineWidth: 1.4,
         lineWidthUnits: "pixels",
         lineWidthMinPixels: 1,
@@ -4043,7 +4058,7 @@
         getFillColor: [0, 0, 0, 0],
         pickable: true,
         autoHighlight: true,
-        highlightColor: [255, 255, 255, 40],
+        highlightColor: tc(HOVER_COLOR_SOFT),
         parameters: { depthTest: false },
       });
     }
@@ -4121,10 +4136,10 @@
     // town (they are areas, not points), the zone borrows its outline's warmth,
     // and the econ names sit quietest.
     const REF_TIERS = {
-      region: { prio: PRIO_REGION, base: 14, col: [138, 150, 172, 235] },
-      zone:   { prio: PRIO_ZONE,   base: 12, col: [166, 140, 108, 230] },
-      place:  { prio: PRIO_PLACE,  base: 12, col: [150, 160, 178, 235] },
-      econ:   { prio: PRIO_ECON,   base: 11, col: [132, 142, 158, 225] },
+      region: { prio: PRIO_REGION, base: 14, col: themed([138, 150, 172, 235]) },
+      zone:   { prio: PRIO_ZONE,   base: 12, col: themed([166, 140, 108, 230]) },
+      place:  { prio: PRIO_PLACE,  base: 12, col: themed([150, 160, 178, 235]) },
+      econ:   { prio: PRIO_ECON,   base: 11, col: themed([132, 142, 158, 225]) },
     };
     // Smaller and dimmer than a hood name, and drawn in the same font: these
     // are context at the edge of the frame, so they should be legible without
@@ -4147,10 +4162,8 @@
       return PLACE_MIN_SIZE +
              (base - PLACE_MIN_SIZE) * Math.min(1, Math.max(0, t));
     }
-    // Retained as the tier default only — REF_TIERS carries the per-tier colours
-    // the labels actually draw in, and each anchor now ships its own `col`.
-    const PLACE_COLOR = REF_TIERS.place.col;
-    const HOOD_COLOR = [240, 240, 246, 250];   // hoisted: the colour accessor
+    const LABEL_OUTLINE_COLOR = themed([0, 0, 0, 255]);
+    const HOOD_COLOR = themed([240, 240, 246, 250]);   // hoisted: the colour accessor
                                                // runs per label, per rebuild.
     let _placeAnchors = null;
     function placeAnchors() {
@@ -4334,9 +4347,9 @@
         getText: d => d.name,
         getSize: d => d.size,
         sizeUnits: "pixels",
-        getColor: d => d.col || HOOD_COLOR,
+        getColor: d => tc(d.col || HOOD_COLOR),
         outlineWidth: 3,
-        outlineColor: [0, 0, 0, 255],
+        outlineColor: tc(LABEL_OUTLINE_COLOR),
         fontFamily: LABEL_FONT_FAMILY,
         fontWeight: LABEL_FONT_WEIGHT,
         // sdf is required for the outline; the 128 px atlas (default 64)
@@ -4371,13 +4384,15 @@
     const SELECTED_BAND_IDS = new Set(["inst-band-exempt", "inst-band-levied",
       "ratio-inst-exempt", "ratio-inst-levied",
       "deviation-band-pick-levied", "deviation-band-pick-exempt"]);
+    const SELECTED_COLOR = themed([255, 255, 255, 255]);
+    const SELECTED_HALO_COLOR = themed([0, 0, 0, 200]);
     function withSelectedHood(layers) {
       const name = pinnedHood || peekHood || searchHood;
       const f = name && state.data && state.data.features.find(
         x => x.properties.neighbourhood_name === name);
       if (!f) return layers;
       const lit = { pickable: false, autoHighlight: false,
-                    highlightedObjectIndex: 0, highlightColor: [255, 255, 255, 60] };
+                    highlightedObjectIndex: 0, highlightColor: tc(HOVER_COLOR) };
       const own = l => (l.props.data.features || l.props.data || []).find(x => x === f
         || (x.properties && x.properties.neighbourhood_name === name));
       if (!camFlat) {
@@ -4403,8 +4418,8 @@
       });
       // depthTest off so a tall neighbour cannot hide it; a dark halo under a
       // light line so it reads on every ramp colour and on the set-aside grey.
-      return [...layers, mk("hood-selected-halo", [0, 0, 0, 200], 6),
-              mk("hood-selected", [255, 255, 255, 255], 2.5)];
+      return [...layers, mk("hood-selected-halo", tc(SELECTED_HALO_COLOR), 6),
+              mk("hood-selected", tc(SELECTED_COLOR), 2.5)];
     }
 
     // Ratio-view scale anchors, computed once per DENOMINATOR from its kept
@@ -4512,7 +4527,7 @@
         // Real zoning geometry, flat, coloured by category; the invisible
         // hood layer on top carries hover/tooltips at the neighbourhood unit
         // (the composition data's granularity). Colours are static per
-        // feature: no updateTriggers. The optional residential prisms
+        // feature, so the only trigger is the theme. The optional residential prisms
         // (state.usesPrisms) rise over the fabric — see USES_PRISM_PEAK.
         const resPrisms = () => {
           usesPrismData ??= { type: "FeatureCollection",
@@ -4527,9 +4542,11 @@
             wireframe: false,
             getElevation: f => f.properties.frac_residential,
             elevationScale: USES_PRISM_PEAK,
-            getFillColor: USE_BY_KEY.res.color,
+            getFillColor: tc(USE_BY_KEY.res.color),
             opacity: state.prismOpacity,
-            material: { ambient: 0.55, diffuse: 0.6, shininess: 32, specularColor: [60, 60, 70] },
+            material: { ambient: 0.55, diffuse: 0.6, shininess: 32, specularColor: tc(SPECULAR_COLOR) },
+            // A new material alone does not reach the sublayers; a trigger does.
+            updateTriggers: { getFillColor: [state.theme] },
             pickable: false, // hood hover / the fallback flat layer handle tooltips
           });
         };
@@ -4541,7 +4558,8 @@
               filled: true,
               stroked: false,
               extruded: false,
-              getFillColor: f => (USE_BY_KEY[f.properties.u] || { color: [0, 0, 0, 0] }).color,
+              getFillColor: f => { const u = USE_BY_KEY[f.properties.u]; return u ? tc(u.color) : [0, 0, 0, 0]; },
+              updateTriggers: { getFillColor: [state.theme] },
               pickable: false, // hood hover layer handles tooltips
             }),
             ...(state.usesPrisms ? [resPrisms()] : []),
@@ -4557,10 +4575,11 @@
           filled: true,
           stroked: false,
           extruded: false,
-          getFillColor: f => { const c = dominantUse(f.properties); return c ? c.color : [0, 0, 0, 0]; },
+          getFillColor: f => { const c = dominantUse(f.properties); return c ? tc(c.color) : [0, 0, 0, 0]; },
+          updateTriggers: { getFillColor: [state.theme] },
           pickable: true,
           autoHighlight: true,
-          highlightColor: [255, 255, 255, 40],
+          highlightColor: tc(HOVER_COLOR_SOFT),
         }), ...(state.usesPrisms ? [resPrisms()] : []), ...labelLayer()];
       }
 
@@ -4602,7 +4621,7 @@
             filled: true,
             stroked: false,
             extruded: false,
-            getFillColor: GLASS_PLANE_COLOR,
+            getFillColor: tc(GLASS_PLANE_COLOR),
             pickable: false, // hood hover layer handles tooltips
           }), devGridLayer(),
           hoodHoverLayer(), ...labelLayer()];
@@ -4654,10 +4673,11 @@
           filled: true,
           stroked: false,
           extruded: false,
-          getFillColor: f => f.properties.is_set_aside ? SET_ASIDE_COLOR : GLASS_PLANE_COLOR,
+          getFillColor: f => f.properties.is_set_aside ? tc(SET_ASIDE_COLOR) : tc(GLASS_PLANE_COLOR),
+          updateTriggers: { getFillColor: [state.theme] },
           pickable: true,
           autoHighlight: true,
-          highlightColor: [255, 255, 255, 40],
+          highlightColor: tc(HOVER_COLOR_SOFT),
         });
         const colKey = gridColKey();
         const col = gridData ? (gridData.columns[colKey] ?? -1) : -1;
@@ -4674,11 +4694,11 @@
             elevationScale: gs.elevationScale,
             getFillColor: d => rampColorAt(scaleT(d[col], gs.clamp)),
             opacity: state.prismOpacity,
-            material: { ambient: 0.55, diffuse: 0.6, shininess: 32, specularColor: [60, 60, 70] },
+            material: { ambient: 0.55, diffuse: 0.6, shininess: 32, specularColor: tc(SPECULAR_COLOR) },
             pickable: false, // the plane handles tooltips
             updateTriggers: {
               getElevation: colKey,
-              getFillColor: [colKey, state.ramp, state.colorAdjust],
+              getFillColor: [colKey, state.ramp, state.colorAdjust, state.theme],
             },
           }),
           // ⚠️ REVENUE CUTS ONLY, the same rule the hood caveat follows and for
@@ -4705,11 +4725,11 @@
             ? rampSetAside()
             : colorFor(f.properties[cfg.key], cfg.colorClamp),
           opacity: state.prismOpacity,
-          material: { ambient: 0.55, diffuse: 0.6, shininess: 32, specularColor: [60, 60, 70] },
+          material: { ambient: 0.55, diffuse: 0.6, shininess: 32, specularColor: tc(SPECULAR_COLOR) },
           pickable: false, // the plane handles tooltips
           updateTriggers: {
             getElevation: state.metric,
-            getFillColor: [state.metric, state.ramp, state.colorAdjust],
+            getFillColor: [state.metric, state.ramp, state.colorAdjust, state.theme],
           },
         }), ...labelLayer()];
       }
@@ -4741,9 +4761,9 @@
             return ratioKept(p) ? rampColorAt(ratioT(ratioOf(p))) : rampSetAside();
           },
           opacity: state.prismOpacity,
-          material: { ambient: 0.55, diffuse: 0.6, shininess: 32, specularColor: [60, 60, 70] },
+          material: { ambient: 0.55, diffuse: 0.6, shininess: 32, specularColor: tc(SPECULAR_COLOR) },
           pickable: false, // hood hover layer handles tooltips
-          updateTriggers: { getFillColor: [state.ramp, state.ratioDenom],
+          updateTriggers: { getFillColor: [state.ramp, state.ratioDenom, state.theme],
                             getElevation: [state.ratioDenom] },
         });
         return [...roadLayers(true), ratioPrisms, ...ratioInstBandLayers(),
@@ -4774,16 +4794,16 @@
         getElevation: f => banded(f) ? 0 : (f.properties[sc.colKey] || 0),
         elevationScale: sc.elevationScale,
         getFillColor: f => banded(f) ? [0, 0, 0, 0] : fillFor(f, sc.colKey, sc.clamp),
-        material: { ambient: 0.55, diffuse: 0.6, shininess: 32, specularColor: [60, 60, 70] },
+        material: { ambient: 0.55, diffuse: 0.6, shininess: 32, specularColor: tc(SPECULAR_COLOR) },
         pickable: true,
         autoHighlight: true,
-        highlightColor: [255, 255, 255, 60],
+        highlightColor: tc(HOVER_COLOR),
         // Re-run the accessors when the metric (field), denominator or ramp
         // (colour) changes; the data reference is stable, so without these
         // deck.gl skips the accessor.
         updateTriggers: {
           getElevation: [state.metric, state.denom],
-          getFillColor: [state.metric, state.denom, state.ramp, state.colorAdjust],
+          getFillColor: [state.metric, state.denom, state.ramp, state.colorAdjust, state.theme],
         },
       });
 
@@ -4807,7 +4827,7 @@
         capRounded: false,
         jointRounded: false,
         parameters: { depthTest: true },
-        updateTriggers: { getColor: [state.ramp] },
+        updateTriggers: { getColor: [state.ramp, state.theme] },
       });
 
       return [layer, topEdges, ...instBandLayers(sc), ...labelLayer()];
@@ -4884,7 +4904,7 @@
     // quietly inflating every real category.
     const REV_CATEGORIES = USE_CATEGORIES
       .map(u => ({ label: u.label, color: u.color, col: "rev_" + u.frac }))
-      .concat([{ label: "Outside any zone", color: [70, 72, 84], col: "rev_frac_unzoned" }]);
+      .concat([{ label: "Outside any zone", color: UNZONED_COLOR, col: "rev_frac_unzoned" }]);
 
     // Sub-0.1% shares print as "<0.1%", never a rounded "0.0%" — a category that
     // earned a row should not then claim to contribute nothing.
@@ -5489,9 +5509,9 @@
       document.getElementById("temporal-chart").innerHTML =
         `<div class="mixbar">` + mix.map(c =>
           `<span style="flex:${c.share.toFixed(4)} ${c.share.toFixed(4)} 0%;`
-          + `background:rgb(${c.color.join(",")})"></span>`).join("") + `</div>`;
+          + `background:rgb(${tc(c.color).join(",")})"></span>`).join("") + `</div>`;
       const rows = mix.map(c =>
-        `<div class="revrow"><i style="background:rgb(${c.color.join(",")})"></i>`
+        `<div class="revrow"><i style="background:rgb(${tc(c.color).join(",")})"></i>`
         + `<span>${esc(c.label)}</span><b>${fmtMix(c.share)}</b></div>`).join("");
       // The city share gets fmtPct's two decimals, not fmtMix's one: it spans
       // 0.0007% to 5.2% across hoods, so one decimal collapses most of the city
@@ -6263,7 +6283,7 @@
           .filter(u => p[u.frac] >= 0.005)
           .sort((a, b) => p[b.frac] - p[a.frac]);
         const bar = comp
-          .map(u => `<span style="flex:${p[u.frac].toFixed(4)} ${p[u.frac].toFixed(4)} 0%;background:rgb(${u.color.join(",")})"></span>`)
+          .map(u => `<span style="flex:${p[u.frac].toFixed(4)} ${p[u.frac].toFixed(4)} 0%;background:rgb(${tc(u.color).join(",")})"></span>`)
           .join("");
         const parts = comp.map(u => `${u.label} ${Math.round(p[u.frac] * 100)}%`);
         return {
@@ -7051,7 +7071,7 @@
         document.getElementById("legend-label").textContent =
           zoningData ? "Zoned land use" : "Dominant zoned land use";
         document.getElementById("legend-cats").innerHTML = usesLegendCats()
-          .map(u => `<div class="cat"><span class="sw" style="background:rgb(${u.color.join(",")})"></span><span>${u.label}</span></div>`)
+          .map(u => `<div class="cat"><span class="sw" style="background:rgb(${tc(u.color).join(",")})"></span><span>${u.label}</span></div>`)
           .join("");
         return;
       }
@@ -7139,15 +7159,15 @@
           document.getElementById("legend-min").textContent = "0 m";
           document.getElementById("legend-max").textContent = ROAD_CLAMP + " m+";
           label.textContent = "Arterial — shared infrastructure";
-          sw.style.background = `rgb(${ARTERIAL_COLOR.slice(0, 3).join(",")})`;
+          sw.style.background = `rgb(${tc(ARTERIAL_COLOR).slice(0, 3).join(",")})`;
         }
         // Checked dot services add legend rows (the dots show driver or not).
         const dotRows = [];
         if (state.services.fire)
-          dotRows.push(`<div class="cat"><span class="sw" style="background:rgb(${FIRE_STATION_COLOR.slice(0, 3).join(",")});border-radius:50%"></span><span>Fire station</span></div>`);
+          dotRows.push(`<div class="cat"><span class="sw" style="background:rgb(${tc(FIRE_STATION_COLOR).slice(0, 3).join(",")});border-radius:50%"></span><span>Fire station</span></div>`);
         if (state.services.transit) {
-          dotRows.push(`<div class="cat"><span class="sw" style="background:rgb(${TRANSIT_LINE_COLOR.slice(0, 3).join(",")});height:3px;align-self:center"></span><span>LRT line</span></div>`);
-          dotRows.push(`<div class="cat"><span class="sw" style="background:rgb(${TRANSIT_STATION_COLOR.slice(0, 3).join(",")});border-radius:50%"></span><span>LRT station / transit centre</span></div>`);
+          dotRows.push(`<div class="cat"><span class="sw" style="background:rgb(${tc(TRANSIT_LINE_COLOR).slice(0, 3).join(",")});height:3px;align-self:center"></span><span>LRT line</span></div>`);
+          dotRows.push(`<div class="cat"><span class="sw" style="background:rgb(${tc(TRANSIT_STATION_COLOR).slice(0, 3).join(",")});border-radius:50%"></span><span>LRT station / transit centre</span></div>`);
         }
         // Always written (an empty write clears a stale row after uncheck);
         // the top of refreshLegend already set display:none for this view.
@@ -7192,7 +7212,7 @@
         document.getElementById("legend-min").textContent = "← less suitable, building";
         document.getElementById("legend-max").textContent = "suitable, quiet →";
         label.textContent = "Set aside / non-residential — off-scale";
-        sw.style.background = `rgb(${SET_ASIDE_COLOR.join(",")})`;
+        sw.style.background = `rgb(${tc(SET_ASIDE_COLOR).join(",")})`;
       } else if (state.view === "change") {
         // Diverging, like infill. The bounds are the per-arm p95 clamps, printed
         // as rates so the ramp's ends mean something concrete rather than
@@ -7206,7 +7226,7 @@
         document.getElementById("legend-min").textContent = "← " + fmtChg(-s.clampNeg);
         document.getElementById("legend-max").textContent = fmtChg(s.clampPos) + " →";
         label.textContent = `No ${CHG_WINDOWS[state.chgWindow]} baseline — off-scale`;
-        sw.style.background = `rgb(${SET_ASIDE_COLOR.join(",")})`;
+        sw.style.background = `rgb(${tc(SET_ASIDE_COLOR).join(",")})`;
       } else if (state.view === "deviation") {
         // Diverging, like infill and change. The ends print the per-arm p95
         // clamps as signed dollars, and the label names the average the whole
@@ -7225,7 +7245,7 @@
         // legend has one aside slot, and the blurb already explains them.
         label.textContent = "Off the scale — and out of the average" +
           (s.banded ? " · outlined = value unknown" : "");
-        sw.style.background = `rgb(${SET_ASIDE_COLOR.join(",")})`;
+        sw.style.background = `rgb(${tc(SET_ASIDE_COLOR).join(",")})`;
       } else if (state.view === "ratio") {
         const s = ratioScale();
         // Bounds format per denominator: dollars for the $/unit denominators,
@@ -7283,6 +7303,16 @@
       const present = new Set(
         state.data.features.map(f => dominantUse(f.properties)).filter(Boolean));
       return USE_CATEGORIES.filter(u => present.has(u));
+    }
+
+    // Switch theme. Every tc() colour is re-read on the rebuild, because
+    // state.theme is in each colour accessor's updateTriggers; the legend's
+    // swatches are rebuilt from the same values.
+    function applyTheme(name) {
+      if (name === state.theme) return;
+      state.theme = name;
+      overlay.setProps({ layers: buildLayers() });
+      refreshLegend();
     }
 
     // Switch colour ramp: rebuild layers, restyle the background + legend gradient.

@@ -141,7 +141,7 @@ const check = (name, cond) => { (cond ? pass++ : fail++); console.log(`${cond ? 
     const fill = plane.props.getFillColor(sa).join();
     const expected = rampColorAt(devT(sa.properties.new_units_per_acre)).join();
     return { skip: false, name: sa.properties.neighbourhood_name,
-             notGrey: fill !== SET_ASIDE_COLOR.join(), matchesRamp: fill === expected };
+             notGrey: fill !== tc(SET_ASIDE_COLOR).join(), matchesRamp: fill === expected };
   });
   if (override.skip) {
     console.log('override: no set-aside hood with activity in data — checking a plain set-aside hood instead');
@@ -149,7 +149,7 @@ const check = (name, cond) => { (cond ? pass++ : fail++); console.log(`${cond ? 
       const plane = overlay._deck.props.layers.find(l => l.id === 'dev-plane');
       const sa = state.data.features.find(f => f.properties.is_set_aside);
       const fill = plane.props.getFillColor(sa).join();
-      return { notGrey: fill !== SET_ASIDE_COLOR.join(),
+      return { notGrey: fill !== tc(SET_ASIDE_COLOR).join(),
                matchesRamp: fill === rampColorAt(devT(sa.properties.new_units_per_acre || 0)).join() };
     });
     check('set-aside hood is NOT rendered grey (override)', sa2.notGrey || true); // 0-activity set-aside = ramp low end, still not the grey sentinel
@@ -184,7 +184,7 @@ const check = (name, cond) => { (cond ? pass++ : fail++); console.log(`${cond ? 
     if (!z) return { skip: true };
     const fill = plane.props.getFillColor(z).join();
     return { skip: false, isRampLow: fill === rampColorAt(0).join(),
-             notGrey: fill !== SET_ASIDE_COLOR.join() };
+             notGrey: fill !== tc(SET_ASIDE_COLOR).join() };
   });
   if (zero.skip) check('zero-activity hood present', false);
   else {

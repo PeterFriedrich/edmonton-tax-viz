@@ -68,8 +68,8 @@ const [url] = process.argv.slice(2);
     let neutral = 0, aside = 0, bad = 0;
     for (const f of state.data.features) {
       const fill = plane.props.getFillColor(f).join();
-      if (f.properties.is_set_aside) fill === SET_ASIDE_COLOR.join() ? aside++ : bad++;
-      else fill === GLASS_PLANE_COLOR.join() ? neutral++ : bad++;
+      if (f.properties.is_set_aside) fill === tc(SET_ASIDE_COLOR).join() ? aside++ : bad++;
+      else fill === tc(GLASS_PLANE_COLOR).join() ? neutral++ : bad++;
     }
     const col = gridData.columns[state.metric];
     const vals = gridData.cells.map(c => c[col]).sort((a, b) => a - b);

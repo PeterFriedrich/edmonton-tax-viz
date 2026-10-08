@@ -56,7 +56,7 @@ const [url] = process.argv.slice(2);
     for (const f of zoningData.features) {
       const u = USE_BY_KEY[f.properties.u];
       const fill = getFill(f);
-      if (!u || fill.join() !== u.color.join()) mismatches++;
+      if (!u || fill.join() !== tc(u.color).join()) mismatches++;
       else cats[u.label] = fill;
     }
     return { layers, extruded: !!layer.props.extruded, pickable: !!layer.props.pickable,

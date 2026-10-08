@@ -132,7 +132,7 @@ function check(name, ok, detail) {
         keptFill: kept && layer.props.getFillColor(kept),
         keptElev: kept && layer.props.getElevation(kept),
         elevationScale: layer.props.elevationScale,
-        setAsideColor: SET_ASIDE_COLOR,
+        setAsideColor: tc(SET_ASIDE_COLOR),
       };
     });
     const grey = JSON.stringify(layerFacts.setAsideColor);

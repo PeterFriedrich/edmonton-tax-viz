@@ -102,9 +102,9 @@ function approx(a, b, rel = 1e-6) { return Math.abs(a - b) <= rel * Math.max(Mat
       groundTop, lotTop,
       mrNull: mr ? mr.properties[sc.colKey] == null : null,
       mrFill: mr ? layer.props.getFillColor(mr).join() : null,
-      aside: SET_ASIDE_COLOR.join(),
+      aside: tc(SET_ASIDE_COLOR).join(),
       mrElev: mr ? layer.props.getElevation(mr) : null,
-      uaColored: ua ? layer.props.getFillColor(ua).join() !== SET_ASIDE_COLOR.join() : null,
+      uaColored: ua ? layer.props.getFillColor(ua).join() !== tc(SET_ASIDE_COLOR).join() : null,
       uaVal: ua ? ua.properties[sc.colKey] : null,
     };
   });

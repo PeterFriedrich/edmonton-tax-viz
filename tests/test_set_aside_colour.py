@@ -22,7 +22,8 @@ def _rgb(text):
 
 
 def _const(name):
-    m = re.search(rf"const {name} = \[([^\]]+)\]", HTML)
+    # The dark value: themed() takes it first (docs/UI.md → Light mode).
+    m = re.search(rf"const {name} = (?:themed\()?\[([^\]]+)\]", HTML)
     assert m, name
     return _rgb(m.group(1))
 
