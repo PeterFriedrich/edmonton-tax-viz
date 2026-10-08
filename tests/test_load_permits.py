@@ -674,6 +674,21 @@ def test_comma_name_carrying_a_rename_maps_to_the_current_name(tmp_path):
     assert not any("OLIVER" in n for n in out["neighbourhood_name"].values)
 
 
+def test_chappelle_heritage_valley_list_goes_to_chappelle(tmp_path):
+    # Both parts are rendered hoods, so the parts rule alone would leave it
+    # unmatched; every geocoded row falls in CHAPPELLE (8 of 8, 2026-10-05).
+    # HERITAGE VALLEY AREA must not receive any of it.
+    rows = _window_rows() + [
+        _row(year=2023, neighbourhood="CHAPPELLE AREA, HERITAGE VALLEY AREA", units_added=4),
+        _row(year=2023, neighbourhood="CHAPPELLE", units_added=1),
+    ]
+    out = load_permits(_write(tmp_path, rows), YEARS)
+    s = _series(out)
+    assert s.get("CHAPPELLE") == 5
+    assert "HERITAGE VALLEY AREA" not in s.index
+    assert not any("," in n for n in s.index)
+
+
 def test_genuinely_straddling_comma_name_is_NOT_corrected(tmp_path):
     # The deliberate non-fix: a permit across two DIFFERENT hoods cannot be
     # split by a name correction, so it stays unmatched and warns rather than

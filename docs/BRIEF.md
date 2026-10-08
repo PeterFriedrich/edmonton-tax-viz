@@ -384,14 +384,15 @@ Edmonton revenue-per-acre fiscal analysis. Python-only, no GIS software.
 - **2026-10-02** — **Audits run on Opus 5.5 by default; a cross-model read is OPTIONAL until Fable is back** (Peter, S212: *"we not using fable for awhile probably … if i get fable credits and a new version comes out …
 - **2026-10-03** — **`url-state` is a required status check on `master`, alongside `test`** (Peter, S214; S213 F1: 4 of 10 walking PRs merged and deployed before it reported, while the 2026-09-29 row said it gates the … … Rejected: leaving it advisory, read by failed-run email after the deploy.
 - **2026-10-03** — **The written report lives in a Google Doc in Peter's Drive; the repo keeps only a claims register (`docs/REPORT_CLAIMS.md`), never report text** (Peter, report session: *"I don't want actual report … … Rejected: the server session's `gdocs.py` as the edit path (it overwrites whole tabs as a service account, so edits would be unattributed and could overwrite Peter's wording), and copying report …
+- **2026-10-05** — **A source that downloads 0 records fails `download_data.py`, naming the dataset id as an empty upstream table** (Peter, S216; item 18 F1/F2).
+- **2026-10-05** — **The shared `refresh-map-data` group keeps every pending run (`queue: max`, FIFO), and a code deploy builds from the tip of `master`, not its trigger SHA** (Peter, S216; item 7 F1/F2).
+- **2026-10-05** — **The smoke gate's zero-token scan covers the pinned panels as well as the tooltips** (Peter, S216; item 13 F1).
 
 ## Open work
 
 - **Set up the claude.ai Project and press Sync (Peter).** The brief merged in #625. Create a private Project, add the repo from GitHub, select `docs/BRIEF.md` + `docs/SPEC_*.md`, press **Sync**, and review `docs/SCOPE.md`. After that, `/handoff`'s sync check prompts for each …
 
 **⚠️ Weekly refresh RED since 2026-10-05 — City's GTFS Calendar Dates loaded empty (OPEN 2026-10-05 S215)**
-
-**Publish-path ordering — two latent CI races (OPEN 2026-10-05 S215, `docs/FINDINGS_ci_publish_paths.md`)**
 
 **Services/Development panel follow-ons (OPEN 2026-10-05 S215, `docs/FINDINGS_services_ranks_dev_zerofill.md`)**
 
