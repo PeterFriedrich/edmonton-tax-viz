@@ -1018,6 +1018,36 @@ zoom +/− buttons we don't want (scroll/pinch already cover zoom). See
   tokens make that cheap; do the map first, then the light `@media` / `[data-theme]`
   block + a toggle in the Display pod fall out of it.
 
+- **REOPENED 2026-10-08 (Peter, S217): readers want it, so it gets built.** The
+  hold above was right for chrome-only light and still is. What changes is the
+  scope: a light **map**, which removes both objections, because bare text on a
+  light map wants dark ink. DECISIONS 2026-10-08 holds the five calls.
+
+#### Build plan (2026-10-08)
+
+**Decided:** follow `prefers-color-scheme`, with a Light/Dark override in the
+Display pod remembered in `localStorage`. In light: one default ramp plus a light
+cividis, and no `glow`. Ramps run **light = low, dark = high**. The theme is not
+in the share hash.
+
+**Why it is smaller than the 2026-09-22 costing implied:** there are no basemap
+tiles (`map` style is one `background` layer, `#0a0a0f`), and each `RAMPS` entry
+already carries its own `bg` / `edge` / `setAside`, swapped live by
+`applyPalette`. A theme is the same mechanism one level up.
+
+| Phase | What | Gate |
+|---|---|---|
+| 1. Plumbing | Move the map colour constants (`SET_ASIDE_COLOR`, `GLASS_PLANE_COLOR`, `ARTERIAL_COLOR`, river/highway/boundary/city-limit/zone lines, fire/transit/bike, `HOOD_COLOR` + label halo, `INST_OUTLINE_COLOR`, `INFILL_CENTER`, `UNCERTAIN_COLOR`, `AMENITY_HIGHLIGHT_COLOR`, lighting `specularColor`) into `THEMES.dark` / `THEMES.light`; `state.theme`; `data-theme` on `<html>`. | **Dark is pixel-identical** before/after (screenshot diff, every public view). Ships alone. |
+| 2. Light ramps | Default light ramp + light cividis, light → dark, on a near-white backdrop. Design against the real distribution, not the stops: WCAG 1.4.11 3:1 vs the backdrop, decile-to-decile ΔE (fix the open "half the hoods inside ~20% of the ramp" defect here rather than inherit it), CVD simulation. | A contrast test over the published distribution. |
+| 3. Re-solve dependent colours | Everything in phase 1's list, measured against the light ramps and backdrop (the `#2ec4ff` brute-force and the set-aside ΔE search are the templates). Also the Infill/Change diverging ramp and the Uses categories. | `tests/test_set_aside_colour.py` extended to the light family. |
+| 4. Chrome | Light values for the 36 `:root` tokens, under `@media (prefers-color-scheme: light)` guarded by `:root:not([data-theme="dark"])`, and again under `[data-theme="light"]`. `--mark` darkens; `--accent` need not. | Screenshot review, both widths. |
+| 5. Copy | Every "brighter = more" string becomes theme-aware: the Money title blurb, `withColourClause`, the grid blurbs, Services' three, Development's two, the guide card. Add a `COPY_DECISIONS.md` row so a future rewording covers both themes. | A verify asserts no "brighter" string under light. |
+| 6. Toggle | Light/Dark in the Display pod (`#a11y`); the stored choice beats the OS; `applyPalette` maps `glow` → default when entering light. | `verify-theme.js`. |
+| 7. Checks | `verify-theme.js` (OS follow via `colorScheme` emulation, override, persistence, no dark colour left in light); `verify-smoke` in light. | — |
+
+Phases 1 and 4 change nothing in dark and can merge early. Phases 2–3 are the
+design work and where the time goes.
+
 ### Colourblind mode
 - The current sequential ramp varies mostly in **luminance**, which is already
   reasonably robust for red-green CVD (deuteranopia/protanopia). The main risk is

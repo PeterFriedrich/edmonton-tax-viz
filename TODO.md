@@ -3192,10 +3192,12 @@ archive"*) is not, and this span is 2,533 lines.
     three ramps** (was `TOP_EDGE_COLOR`, one value, until the palette switcher).
   - [ ] deferred zoom-out (`HOME`/`HOME_2D` ~10.2→~9.4) + the per-metric
     `elevationScale` values scaled with it (no global `ELEVATION_SCALE`).
-  - [ ] light mode — ⚠️ **the colourblind half is DONE (verified 2026-09-16:
-    `cividis` is a named palette in `web/index.html`, "perceptually uniform +
-    colour-blind safe"); only LIGHT MODE remains** (no `prefers-color-scheme` in
-    the file)
+  - [ ] **light mode: REOPENED 2026-10-08, being built.** The plan is in
+    `docs/UI.md` → Light mode → Build plan, with the calls in DECISIONS 2026-10-08.
+    Phases: [ ] 1 plumbing (dark pixel-identical) · [ ] 2 light ramps (default +
+    cividis, light → dark) · [ ] 3 re-solve dependent colours · [ ] 4 chrome
+    tokens · [ ] 5 "brighter" copy · [ ] 6 Display toggle + OS follow · [ ] 7
+    `verify-theme.js`.
 
 - [ ] **(Optional) exploration notebook** — work `FINDINGS_assessment_classes.md`'s
   "to visualize" list (value vs levy share by class; split-class distribution;
