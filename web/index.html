@@ -1926,6 +1926,57 @@
       },
     };
 
+    // The ramps for a light backdrop, per theme (docs/UI.md → Light mode, phase
+    // 2). They run the other way: LIGHT = low, DARK = high, so a tall prism is a
+    // dark one. Only `current` and `cividis`; `glow` falls back to `current`,
+    // because its point is a near-white peak against black. Measured on the
+    // published distribution (tests/test_light_ramps.py): `current` leaves 8.9%
+    // of landing-view hoods under 3:1 against `bg`, where the dark default
+    // leaves 14.5% against its own.
+    // `current` is inferno reversed, sampled at 0.99 → 0.25. ⚠️ ITS DARK END IS
+    // CAPPED AT PURPLE ON PURPOSE: in light mode near-black is the context
+    // linework's colour, so the data must not reach it (Peter, S218). Going
+    // lighter than this purple loses contrast fast (0.40: 27% of hoods under
+    // 3:1). `cividis` is the full ramp reversed and may reach its navy end.
+    // `edge` is provisional until phase 3 re-solves the dependent colours.
+    const THEME_RAMPS = {
+      light: {
+        current: {
+          bg: "#f7f7f4",
+          edge: [70, 70, 90, 150],
+          stops: [
+            [0.000, [249, 252, 157]],
+            [0.125, [246, 213,  67]],
+            [0.250, [252, 168,  13]],
+            [0.375, [245, 125,  21]],
+            [0.500, [226,  87,  52]],
+            [0.625, [198,  61,  77]],
+            [0.750, [162,  43,  98]],
+            [0.875, [124,  29, 109]],
+            [1.000, [ 87,  16, 110]],
+          ],
+        },
+        cividis: {
+          bg: "#f7f7f4",
+          edge: [70, 70, 90, 150],
+          stops: [
+            [0.000, [254, 232,  56]],
+            [0.125, [222, 201,  88]],
+            [0.250, [188, 174, 108]],
+            [0.375, [155, 148, 118]],
+            [0.500, [125, 124, 120]],
+            [0.625, [ 97, 101, 111]],
+            [0.750, [ 67,  78, 108]],
+            [0.875, [ 26,  56, 111]],
+            [1.000, [  0,  34,  78]],
+          ],
+        },
+      },
+    };
+    // The ramp actually drawn: the palette choice under the current theme.
+    const activeRamp = () => state.theme === "dark" ? RAMPS[state.ramp]
+      : THEME_RAMPS[state.theme][state.ramp] || THEME_RAMPS[state.theme].current;
+
     // Neutral off-ramp grey for set-aside neighbourhoods (>=90% never/not-yet
     // zoning). They are EXCLUDED from the colour scale — their near-zero revenue
     // is a land-use fact, not a fiscal signal (see FINDINGS §4/§6). Distinct from
@@ -1937,7 +1988,7 @@
     // ramp and the Glass ground plane keep SET_ASIDE_COLOR, because cividis's
     // dark grey sits 5.2 from GLASS_PLANE_COLOR and 7.7 from the diverging
     // ramp's faint end. tests/test_set_aside_colour.py holds the distances.
-    const rampSetAside = () => RAMPS[state.ramp].setAside || tc(SET_ASIDE_COLOR);
+    const rampSetAside = () => activeRamp().setAside || tc(SET_ASIDE_COLOR);
 
     // Glass view's ground plane: one neutral dark slate for every hood — the
     // plane is mouseover geography, not a signal carrier (all metric signal
@@ -2038,7 +2089,7 @@
 
     // Interpolate the active ramp at t in [0,1].
     function rampColorAt(t) {
-      const stops = RAMPS[state.ramp].stops;
+      const stops = activeRamp().stops;
       for (let i = 1; i < stops.length; i++) {
         if (t <= stops[i][0]) {
           const [t0, c0] = stops[i - 1], [t1, c1] = stops[i];
@@ -4813,7 +4864,7 @@
       // the LEVIED height in the ramp's edge colour — a crisp bright lid on one
       // of two unknowable worlds, which is the primacy the band exists to
       // refuse. Their own edges come from instBandLayers().
-      const edge = RAMPS[state.ramp].edge;
+      const edge = activeRamp().edge;
       const topEdges = new deck.PathLayer({
         id: "top-edges",
         data: topRings(state.data.features.filter(f => !banded(f)), sc.colKey, sc.elevationScale),
@@ -7305,13 +7356,14 @@
       return USE_CATEGORIES.filter(u => present.has(u));
     }
 
-    // Switch theme. Every tc() colour is re-read on the rebuild, because
-    // state.theme is in each colour accessor's updateTriggers; the legend's
-    // swatches are rebuilt from the same values.
+    // Switch theme. Every tc() colour and the ramp (activeRamp) are re-read on
+    // the rebuild, because state.theme is in each colour accessor's
+    // updateTriggers; the legend's swatches are rebuilt from the same values.
     function applyTheme(name) {
       if (name === state.theme) return;
       state.theme = name;
       overlay.setProps({ layers: buildLayers() });
+      map.setPaintProperty("bg", "background-color", activeRamp().bg);
       refreshLegend();
     }
 
@@ -7319,9 +7371,8 @@
     function applyPalette(name) {
       if (name === state.ramp || !RAMPS[name]) return;
       state.ramp = name;
-      const ramp = RAMPS[name];
       overlay.setProps({ layers: buildLayers() });
-      map.setPaintProperty("bg", "background-color", ramp.bg);
+      map.setPaintProperty("bg", "background-color", activeRamp().bg);
       // The whole legend, not just the bar: the set-aside swatch follows the
       // ramp too (rampSetAside), and it went stale when only the bar was redrawn.
       refreshLegend();

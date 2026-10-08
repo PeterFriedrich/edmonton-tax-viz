@@ -7,14 +7,18 @@
 // So the check does not wait for real light colours. It registers a sentinel
 // theme (`__probe`) with a distinct colour for every THEMED entry, switches to
 // it, and fails if any dark themed value is still in a layer's colour
-// attributes or colour props, or in the legend. Then it switches back and
-// requires the dark colours to return exactly.
+// attributes or colour props, or in the legend. The probe theme also carries a
+// one-colour ramp in THEME_RAMPS, so a ramp-coloured layer that kept the dark
+// ramp fails the same way. Then it switches back and requires the dark colours
+// to return exactly.
 //
 // Each state switches on what is off by default (labels, every service, both
 // amenity bands, a selected hood) so the layers that carry those colours exist.
 //   node verify-theme.js <base-url>   (the site root: checks index.html and dev-build-full/)
 const { chromium } = require('playwright');
 const [base] = process.argv.slice(2);
+// The sentinel ramp (one colour), roof edge and backdrop the probe theme swaps in.
+const PROBE_RAMP = [5, 250, 7], PROBE_EDGE = [9, 250, 9, 201], PROBE_BG = '#123456';
 
 let fail = 0, ran = 0;
 const check = (name, cond, extra) => {
@@ -50,7 +54,11 @@ const collect = page => page.evaluate(() => {
     if (am) for (const [k, a] of Object.entries(am.attributes)) {
       if (!/olor/i.test(k) || /Picking|ColorModes/.test(k) || !a.value || !a.value.length) continue;
       const n = a.size || 4, scale = a.value instanceof Float32Array ? 255 : 1;
-      for (let i = 0; i + n <= a.value.length; i += n)
+      // Only the drawn part: a reused buffer keeps the previous data's values
+      // past numInstances (the selected-hood prism carried money-view colours
+      // into Change and Ratio, S218).
+      const end = Math.min(a.value.length, l.getNumInstances() * n);
+      for (let i = 0; i + n <= end; i += n)
         add(Array.from(a.value.slice(i, i + n), x => Math.round(x * scale)), l.id);
     }
     for (const [k, v] of Object.entries(l.props))
@@ -109,17 +117,38 @@ const hits = (darks, colours) => {
     for (const x of present) covered.add(x.split(' in ')[0]);
     check(`${tag}: dark themed colours are on screen to test`, present.length > 0, `${present.length} found`);
 
-    await page.evaluate(() => {
+    // Every colour the dark ramp can produce, and its roof edge (RGB only:
+    // layers append their own alpha).
+    const rampDark = new Set(await page.evaluate(() => {
+      const s = new Set([activeRamp().edge.slice(0, 3).join()]);
+      for (let i = 0; i <= 1000; i++) s.add(rampColorAt(i / 1000).join());
+      return [...s];
+    }));
+    const rgbIn = colours => Object.keys(colours).filter(k => rampDark.has(k.split(',').slice(0, 3).join()));
+    const rampBefore = rgbIn(before.colours);
+
+    await page.evaluate(([ramp, edge, bg]) => {
       THEMED.forEach((c, i) => {
         c.__probe = [(37 * i + 11) % 256, 3, 251];
         if (c.dark.length === 4) c.__probe.push(c.dark[3]);
       });
+      // A one-colour ramp: any dark ramp colour still drawn after the switch
+      // is a layer that did not re-read activeRamp().
+      THEME_RAMPS.__probe = { current: { bg, edge, stops: [[0, ramp], [1, ramp]] } };
       applyTheme('__probe');
-    });
+    }, [PROBE_RAMP, PROBE_EDGE, PROBE_BG]);
     await page.waitForTimeout(2000);
     const probe = await collect(page);
     const left = hits(darks, probe.colours);
     check(`${tag}: no dark themed colour survives the switch`, !left.length, left.slice(0, 6).join('; '));
+    if (rampBefore.length) {
+      const rampLeft = rgbIn(probe.colours).filter(k => rampBefore.includes(k));
+      check(`${tag}: no dark ramp colour survives the switch`, !rampLeft.length,
+        rampLeft.slice(0, 4).map(k => `${k} in ${probe.colours[k].slice(0, 3).join('/')}`).join('; '));
+      check(`${tag}: the theme's ramp is drawn`, Object.keys(probe.colours).some(k => k.startsWith(PROBE_RAMP.join() + ',')));
+    }
+    check(`${tag}: the backdrop follows the theme`,
+      await page.evaluate(() => map.getPaintProperty('bg', 'background-color')) === PROBE_BG);
     const swatch = await page.evaluate(() => `rgb(${SET_ASIDE_COLOR.dark.join(',')})`);
     if (before.legend.includes(swatch))
       check(`${tag}: the legend's set-aside swatch follows the theme`, !probe.legend.includes(swatch));

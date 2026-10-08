@@ -687,6 +687,10 @@ not restore it**; the numbers below are the durable record).
   decide it, don't silently trade it away. **Not yet reproduced visually** (arithmetic re-confirmed 2026-10-05, identical deciles on the 09-28 data — `docs/FINDINGS_colour_claims.md`) — the
   numbers are ΔE76 (a screening metric, not ΔE2000) on the opaque default view;
   shoot the real map before acting.
+  **S218 measured the ramp-side fix and it is a trade:** one shared ramp can't spread
+  both bulks (Revenue, Residential and Value at t 0.55–0.75; Non-residential at 0.17–0.43).
+  A mild warp: landing middle ΔE2000 3.2 → 5.6, Non-res 3.5 → 2.4, linear mode
+  4.7 → 3.1. The light ramps ship unwarped (`docs/UI.md` → Phase 2 status).
 - [ ] **Cividis: the arterial-road grey sits ΔE2000 4.3 from the ramp** (found
   S216 while fixing the set-aside collision). `ARTERIAL_COLOR` (116,120,132) is
   drawn beside ramp-coloured collector/local roads on the Roads driver, so under
@@ -3194,8 +3198,8 @@ archive"*) is not, and this span is 2,533 lines.
     `elevationScale` values scaled with it (no global `ELEVATION_SCALE`).
   - [ ] **light mode: REOPENED 2026-10-08, being built.** The plan is in
     `docs/UI.md` → Light mode → Build plan, with the calls in DECISIONS 2026-10-08.
-    Phases: [x] 1 plumbing (S217, `verify-theme.js`) · [ ] 2 light ramps (default +
-    cividis, light → dark) · [ ] 3 re-solve dependent colours · [ ] 4 chrome
+    Phases: [x] 1 plumbing (S217, `verify-theme.js`) · [x] 2 light ramps (S218,
+    `test_light_ramps.py`) · [ ] 3 re-solve dependent colours · [ ] 4 chrome
     tokens · [ ] 5 "brighter" copy · [ ] 6 Display toggle + OS follow · [ ] 7
     `verify-theme.js`.
 

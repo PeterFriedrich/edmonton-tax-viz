@@ -1056,7 +1056,47 @@ sentinel theme in 11 states.
 Removing `state.theme` from the Development neighbourhood layer's trigger stays GREEN
 today, because that layer draws only ramp colours (no neighbourhood lacks a value).
 When the ramps become per-theme, extend the probe to swap the ramp stops too, or that
-miss ships.
+miss ships. **(Done in phase 2.)**
+
+**Phase 2 status (2026-10-08, S218): built.** `THEME_RAMPS.light` holds two ramps, and
+`activeRamp()` picks the palette choice under the current theme (`glow` falls back to
+`current`). Every ramp read goes through it, and both `applyTheme` and `applyPalette`
+set the backdrop from it.
+- **Default:** inferno reversed, sampled 0.99 → 0.25, pale lemon `(249,252,157)` →
+  purple `(87,16,110)`. **The dark end is capped at purple** (Peter: near-black is the
+  context linework's colour in light, so the data must not reach it).
+- **Colour-blind:** cividis reversed, full range, navy end allowed.
+- **Backdrop** `#f7f7f4`. **Roof edge** `[70,70,90,150]`, which is provisional and
+  phase 3 re-solves it.
+- **Measured on the 2026-10-08 data** (358 on-scale hoods, landing view, ΔE2000):
+
+  | Ramp | under 3:1 vs backdrop | middle-decile ΔE, landing | middle ΔE, Non-res |
+  |---|---|---|---|
+  | dark `current` (today) | 14.5% | 3.7 | 1.5 |
+  | **light `current`** | **8.9%** | 3.7 | 3.5 |
+  | **light `cividis`** | **7.3%** | 2.7 | 1.9 |
+
+- **Rejected candidates:**
+  - near-black inferno (0.08–0.92, 4.5%): Peter, the black reason above;
+  - plum-capped inferno (0.40–0.99): 27% under 3:1, middle ΔE 2.6;
+  - reversed magma: the middle reads as one purple;
+  - Brewer YlOrRd: Peter liked its look, but 44% under 3:1 and a Non-res middle ΔE of 1.3.
+- **The ramp-middle compression is NOT fixed here, on purpose.** A warp that spreads the
+  landing bulk (t 0.55–0.75) lifts its middle ΔE 3.2 → 5.6 but cuts Non-residential
+  (bulk at t 0.17–0.43) 3.5 → 2.4 and linear mode 4.7 → 3.1. One shared ramp can't serve
+  both, so the fix is a transform decision, and it stays the "Colour legibility" TODO.
+- **Gates:**
+  - `tests/test_light_ramps.py`: light → dark order; no near-black in the default;
+    only `current` + `cividis`; no light ramp leaves more landing hoods under 3:1 than
+    the dark default. Each was falsified by mutation.
+  - `verify-theme.js`: the probe theme also carries a one-colour ramp and a sentinel
+    backdrop. It now reads only the drawn part of each attribute, because a reused
+    buffer carried the money view's colours past `numInstances` into Change and Ratio
+    and false-failed.
+- **Still dark-only until phase 3:** every `themed()` colour (set-aside, roads,
+  river, cyan exempt tiers) has no light value yet, so `applyTheme("light")` is not
+  callable until then. Light cividis's grey middle will need its own light set-aside,
+  as dark cividis did.
 
 Phases 1 and 4 change nothing in dark and can merge early. Phases 2–3 are the
 design work and where the time goes.
