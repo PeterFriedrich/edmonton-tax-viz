@@ -718,13 +718,6 @@ preload still holds (12/12). What is left:
 
 ### Peter's list, 2026-09-25 (S196) — not scoped yet
 
-- [ ] **Tutorial pop-up for the toolbar on a first mobile visit, and maybe a
-  smaller one on desktop.** It would show once and walk through the controls.
-  Nothing in `DECISIONS.md` covers onboarding or a tutorial yet.
-  - Before designing, read `docs/MOBILE_USABILITY.md` and `docs/CONTROLS_MATRIX.md`.
-    The controls are shared DOM, so a tour of them touches desktop too.
-  - A "seen it" flag in `localStorage` must fail safe: private windows and
-    headless runs start empty, and the verify scripts will meet the pop-up.
 - [ ] **Mobile panel before it opens: more colour and height so it reads as
   tappable.** First pin down which element this means (the peek card, or the
   collapsed hood panel?) and measure its current size on a phone viewport.
@@ -3253,6 +3246,8 @@ archive"*) is not, and this span is 2,533 lines.
 ## Done
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
+
+- [x] **Tutorial pop-up for the toolbar on a first mobile visit, and maybe a smaller one on desktop.** — DONE 2026-10-08 · `docs/TODO_archive.md`
 
 - [x] **Publish-path ordering — two latent CI races (S215 item 7 F1/F2).** — CLOSED 2026-10-05 · `docs/TODO_archive.md`
 

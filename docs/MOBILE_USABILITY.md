@@ -515,6 +515,14 @@ problem**, so revisit it only after the blurb collapse lands.
   now leaves 82px for the magnifier** (was 44); on this box the full-build Lab
   title wraps to 3 lines at 360px and overlaps `#controls` (top 58px) —
   likely a font artefact (no web fonts here), check Lab on a narrow phone.
+- **How-to-read guide (2026-10-08) — headless only, needs a real phone.**
+  `verify-guide.js` confirms in emulation at 390/360: the card opens once,
+  sits fully on-screen, its x is a 44px target, and the `?` (40px, left of
+  the magnifier) clears the title in every view. **The title row lost 46px
+  to the `?`** (`#title` max-width `100vw - 128px`, was 82): on this box the
+  Money title already wraps to two lines at 390 and still ends above
+  `#controls`. Check on a narrow phone that no view's title now runs into
+  the view buttons.
 - Landscape orientation — not tested (portrait only so far).
 - Legend bar fixed 200 px width, title `max-width:360px` — reflow behaviour on
   <360 px devices unverified.

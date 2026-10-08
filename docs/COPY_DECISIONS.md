@@ -58,6 +58,8 @@ number. **Decide the noun once (N1) and the rest follow.**
 | **N5** | `#loading-blurb` | `Municipal property-tax revenue per acre, by neighbourhood.` | `What each neighbourhood pays the City in property tax, per acre.` First thing anyone reads; currently the most jargon-dense sentence on the site | **applied 2026-09-18** |
 | **N6** | `#revcut`, `#labcut`, `#ratio-denom` ×2 | `the full municipal levy the land generates` ×2 · `the levy-funded network…` · `levy-funded demand` | Follow N1–N5; `levy-funded` → `tax-funded`. Low-visibility, but it is where a confused reader goes — the worst place to repeat the confusing word | **applied 2026-09-18** |
 
+**Also carried by the how-to-read guide (`#guide`, 2026-10-08).** Its first sentence is the N5 wording, and its list names the view and metric buttons (`Money · Development · Services · Ratio`, `Revenue | Value`, `Center 2D` / `Center 3D`). Rewording any of those means rewording the card too; `verify-guide.js` matches the thesis sentence and the button names, so it goes red when the card is left behind.
+
 ---
 
 ## Group C — true, but stated where nobody reads it

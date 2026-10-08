@@ -8,6 +8,15 @@ Items are verbatim as they were closed, newest-moved first in the order they app
 
 ---
 
+- [x] **Tutorial pop-up for the toolbar on a first mobile visit, and maybe a
+  smaller one on desktop.** DONE S217 (2026-10-08): one card, `?` beside the
+  magnifier, offer-only on a shared link; DECISIONS 2026-10-08, `verify-guide.js`. It would show once and walk through the controls.
+  Nothing in `DECISIONS.md` covers onboarding or a tutorial yet.
+  - Before designing, read `docs/MOBILE_USABILITY.md` and `docs/CONTROLS_MATRIX.md`.
+    The controls are shared DOM, so a tour of them touches desktop too.
+  - A "seen it" flag in `localStorage` must fail safe: private windows and
+    headless runs start empty, and the verify scripts will meet the pop-up.
+
 - [x] **Make `url-state` a required check (S213 F1).** Done 2026-10-03 (S214). Peter's call; it is one
   branch-protection setting.** It walked 10 PRs, and 4 merged before it
   reported and deployed first. DECISIONS 2026-09-29 says it "gates the merge".

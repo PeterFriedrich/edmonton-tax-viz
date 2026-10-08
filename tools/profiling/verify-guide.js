@@ -14,7 +14,7 @@
 //      unsets navigator.webdriver, or it would test the gate, not the card.
 //   5. Small against a desktop screen; on a phone the x is a 44px target, the
 //      card stays on-screen, and the ? clears the title in every view.
-//   node verify-guide.js <url>
+//   node verify-guide.js <url>   (the PUBLIC build: the card lists its four views)
 const { chromium } = require('playwright');
 const [url] = process.argv.slice(2);
 
@@ -85,6 +85,17 @@ const rect = (page, sel) => page.$eval(sel, e => { const r = e.getBoundingClient
           /Center 2D/.test(g.text) && /Center 3D/.test(g.text));
     const bold = await page.$$eval('#guide-body b', bs => bs.map(b => b.textContent));
     check('Center 2D and Center 3D are bold', bold.includes('Center 2D') && bold.includes('Center 3D'), bold.join(' | '));
+    // The card names buttons; a rename that leaves the card behind goes red here.
+    const live = await page.evaluate(() => {
+      const txt = sel => [...document.querySelectorAll(sel)]
+        .filter(b => b.offsetParent !== null).map(b => b.textContent.trim());
+      return { views: txt('#views button').join(' · '), metric: txt('#metric-row button').join(' | '),
+               c2: document.getElementById('center2d').textContent.trim(),
+               c3: document.getElementById('recenter').textContent.trim() };
+    });
+    check('the names in the card are the buttons on screen',
+          bold.includes(live.views) && bold.includes(live.metric) &&
+          bold.includes(live.c2) && bold.includes(live.c3), JSON.stringify(live));
     check('desktop: says "click", not "tap"', /Click a neighbourhood/.test(g.text));
     check('desktop: card is small against the screen',
           g.w <= 340 && g.w * g.h < 0.25 * g.vw * g.vh, `${Math.round(g.w)}x${Math.round(g.h)}`);
