@@ -3199,8 +3199,9 @@ archive"*) is not, and this span is 2,533 lines.
   - [ ] **light mode: REOPENED 2026-10-08, being built.** The plan is in
     `docs/UI.md` → Light mode → Build plan, with the calls in DECISIONS 2026-10-08.
     Phases: [x] 1 plumbing (S217, `verify-theme.js`) · [x] 2 light ramps (S218,
-    `test_light_ramps.py`) · [x] 3 re-solve dependent colours (S218) · [ ] 4 chrome
-    tokens · [ ] 5 "brighter" copy · [ ] 6 Display toggle + OS follow · [ ] 7
+    `test_light_ramps.py`) · [x] 3 re-solve dependent colours (S218) · [x] 4 chrome
+    tokens (S219, `test_theme_tokens.py`; ⚠️ `<html>` pins `data-theme="dark"` until
+    phase 6 removes it) · [ ] 5 "brighter" copy · [ ] 6 Display toggle + OS follow · [ ] 7
     `verify-theme.js`.
 
 - [ ] **(Optional) exploration notebook** — work `FINDINGS_assessment_classes.md`'s

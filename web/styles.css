@@ -10,9 +10,9 @@
    THEME TOKENS. Dark is the default and the design intent; these
    values are the pre-token literals verbatim, so the dark render is
    unchanged. Light overrides live in the @media / [data-theme] block
-   at the foot of this file. The MAP stays dark in both themes — its
-   backdrop and the choropleth ramp are set in index.html, not here,
-   and the #legend ramp swatch below is left literal on purpose.
+   at the foot of this file. The map's own colours (backdrop, ramps)
+   are themed in index.html, not here; the #legend ramp swatch below
+   stays literal because refreshLegend overwrites it on first draw.
    --------------------------------------------------------------- */
 :root {
   --bg: #0a0a0f;
@@ -34,6 +34,10 @@
   --ink-off: #55556a;
   --ink-disabled: #4a4a5e;
   --accent: #fcd278;
+  /* --accent used as TEXT (links, panel names, tooltip bold). Equal to --accent
+     in dark; light needs a dark amber, since gold text on white is 1.4:1 while
+     a gold button fill under dark ink still reads. */
+  --accent-ink: #fcd278;
   --ink-on-accent: #16111a;
   --banner-ink: #f3e2b0;
   /* Data-mark colours for the panel sparklines/charts and the compass needle,
@@ -577,7 +581,7 @@ html, body {
 #about-menu p { margin: 0; }
 #about-menu b { color: var(--ink); font-weight: 600; }
 #about-menu .muted { color: var(--ink-3); }
-#about-menu a { color: var(--accent); text-decoration: none; }
+#about-menu a { color: var(--accent-ink); text-decoration: none; }
 #about-menu a:hover { text-decoration: underline; }
 /* Bottom-left cluster: the compass row and the framing-preset buttons
    stacked above the legend. The wrapper is the anchored element
@@ -688,7 +692,7 @@ html, body {
   padding: 6px 9px; border-radius: 5px; border: 1px solid var(--border);
   max-width: 300px; /* long uses-view compositions wrap instead of running wide */
 }
-.tip b { color: var(--accent); }
+.tip b { color: var(--accent-ink); }
 .tip .muted { color: var(--ink-2-bright); }
 /* Mini stacked composition bar (uses-view tooltip). Segments flex-grow
    proportional to their share; the 2px gaps read as the tooltip surface.
@@ -854,7 +858,7 @@ body.budget #budget-btn { background: var(--accent); color: var(--ink-on-accent)
 }
 #temporal-close:hover { color: var(--ink); }
 #temporal-name {
-  color: var(--accent); font-size: 12.5px; font-weight: 600; letter-spacing: 0.2px;
+  color: var(--accent-ink); font-size: 12.5px; font-weight: 600; letter-spacing: 0.2px;
   padding-right: 18px; /* clears the close button */
 }
 #temporal-chart { margin: 7px 0 6px; }
@@ -891,7 +895,7 @@ body.budget #budget-btn { background: var(--accent); color: var(--ink-on-accent)
 /* Services shows the dollar figure itself, which needs the bar's room. */
 .svcrow.cost em { flex: 1; width: auto; }
 /* Over 100% the bar has run out of room to say so. */
-.svcrow em.over { color: var(--accent); }
+.svcrow em.over { color: var(--accent-ink); }
 #temporal-note, #temporal-hint { margin: 7px 0 0; font-size: 10.5px; color: var(--ink-3); }
 /* Panel mode is ON but nothing is pinned: the panel is a prompt, not a read-out.
    The close button hides too — there is nothing to close, and an x that does
@@ -917,7 +921,7 @@ body.budget #budget-btn { background: var(--accent); color: var(--ink-on-accent)
   font-family: inherit; font-size: 11.5px; line-height: 1.5; color: var(--ink-2);
 }
 #peek-name {
-  display: block; color: var(--accent); font-size: 12.5px; font-weight: 600;
+  display: block; color: var(--accent-ink); font-size: 12.5px; font-weight: 600;
   letter-spacing: 0.2px;
 }
 #peek-read { display: block; color: var(--ink); margin-top: 2px; }
@@ -1111,4 +1115,95 @@ body.budget #budget-btn { background: var(--accent); color: var(--ink-on-accent)
     position: static; width: auto;
     margin-top: 8px; padding: 7px 0 0; border-top: 1px solid var(--border);
   }
+}
+
+/* ---------------------------------------------------------------
+   LIGHT THEME TOKENS. The same declarations twice, because CSS has no
+   way to share one block between a media query and an attribute
+   selector: the OS preference (unless the page pins dark) and the
+   explicit override. tests/test_theme_tokens.py holds the two blocks
+   equal and makes every :root token carry a light value.
+   Measured against the light map backdrop #f7f7f4 and the pod surface
+   over it (WCAG): every reading ink clears 4.5:1, and the dark-mode
+   order of the ink steps is kept. --ink-3 is 5.1:1 here against 3.7:1
+   in dark, so the light theme doesn't repeat the dark failure.
+   ⚠️ <html> carries data-theme="dark" until the toggle phase ships, so
+   the media block is inert today: without the pin an OS-light reader
+   would get light chrome on the dark map (UI.md, chrome-only hold).
+   --------------------------------------------------------------- */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #f7f7f4;
+    --surface-btn: #ececf0;
+    --surface-btn-hover: #e2e2e8;
+    --border: #d4d4dc;
+    --border-strong: #b4b4c2;
+    --border-subtle: #e4e4ea;
+    --spinner-track: #dcdce4;
+    --ink: #1c1c24;
+    --ink-2: #55556a;
+    --ink-3: #6c6c80;
+    --ink-2-bright: #3c3c4c;
+    --ink-toast: #26262f;
+    --ink-tip: #121218;
+    --ink-revcut: #62627a;
+    --ink-faint: #66667a;
+    --ink-caret-mobile: #6a6a7e;
+    --ink-off: #a4a4b4;
+    --ink-disabled: #b4b4c2;
+    --accent: #fcd278;
+    --accent-ink: #8a5a00;
+    --ink-on-accent: #16111a;
+    --banner-ink: #5a4300;
+    --mark: #8a5a00;
+    --mark-2: #7c7c92;
+    --band: rgba(28,28,36,0.06);
+    --spinner: #1a6fd8;
+    --spinner-track-rm: #9aa6bc;
+    --banner-border: #d6b45c;
+    --north-border: #d6b45c;
+    --pod-bg: rgba(255,255,255,0.9);
+    --read-bg: rgba(255,255,255,0.97);
+    --toast-bg: rgba(255,255,255,0.96);
+    --sheet-bg: rgba(252,252,250,0.985);
+    --compass-hover-bg: rgba(236,236,241,0.92);
+    --banner-bg: rgba(255,244,214,0.95);
+  }
+}
+:root[data-theme="light"] {
+  --bg: #f7f7f4;
+  --surface-btn: #ececf0;
+  --surface-btn-hover: #e2e2e8;
+  --border: #d4d4dc;
+  --border-strong: #b4b4c2;
+  --border-subtle: #e4e4ea;
+  --spinner-track: #dcdce4;
+  --ink: #1c1c24;
+  --ink-2: #55556a;
+  --ink-3: #6c6c80;
+  --ink-2-bright: #3c3c4c;
+  --ink-toast: #26262f;
+  --ink-tip: #121218;
+  --ink-revcut: #62627a;
+  --ink-faint: #66667a;
+  --ink-caret-mobile: #6a6a7e;
+  --ink-off: #a4a4b4;
+  --ink-disabled: #b4b4c2;
+  --accent: #fcd278;
+  --accent-ink: #8a5a00;
+  --ink-on-accent: #16111a;
+  --banner-ink: #5a4300;
+  --mark: #8a5a00;
+  --mark-2: #7c7c92;
+  --band: rgba(28,28,36,0.06);
+  --spinner: #1a6fd8;
+  --spinner-track-rm: #9aa6bc;
+  --banner-border: #d6b45c;
+  --north-border: #d6b45c;
+  --pod-bg: rgba(255,255,255,0.9);
+  --read-bg: rgba(255,255,255,0.97);
+  --toast-bg: rgba(255,255,255,0.96);
+  --sheet-bg: rgba(252,252,250,0.985);
+  --compass-hover-bg: rgba(236,236,241,0.92);
+  --banner-bg: rgba(255,244,214,0.95);
 }
