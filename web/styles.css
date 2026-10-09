@@ -961,8 +961,11 @@ body.budget #budget-btn { background: var(--accent); color: var(--ink-on-accent)
   #guide-btn { left: 470px; }
   /* The history panel lines up with the box above it. */
   #temporal { left: 12px; }
-  /* Joined while the rates show; the rates yield to an open history panel. */
-  body.mills:not(:has(#temporal.open)) #title { border-radius: 6px 6px 0 0; }
+  /* Joined while the rates are on. Not ":not(:has(#temporal.open))" for the
+     case where the rates yield to the history panel: a :has() on body re-checks
+     on every DOM change, and verify-temporal's clicks timed out in 4 of 4 runs
+     with it, 0 of 2 without (2026-10-09). Square corners there are the cost. */
+  body.mills #title { border-radius: 6px 6px 0 0; }
 }
 
 @media (hover: none) {
