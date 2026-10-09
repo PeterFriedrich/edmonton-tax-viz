@@ -621,6 +621,31 @@ const GARBAGE = /\bNaN\b|\bundefined\b|\bnull\b|\bInfinity\b|\$NaN|\$undefined/;
     perM.missingAbove === 0 && (!perM.full || perM.kept > 0),
     `${perM.kept} kept, ${perM.missingAbove} missing`);
 
+  // ---- C12. THE HOVER TOOLTIP WEARS .tip, NOT DECK'S DEFAULTS --------------
+  // deck.gl writes background/colour/padding INLINE when it builds the tooltip,
+  // so `className: "tip"` alone never restyled it: from 2026-06-25 to
+  // 2026-10-09 every tooltip was deck's slate, 1.2:1 muted text in light mode
+  // (FINDINGS_light_mode.md F1). Driven through deck's own setTooltip, the
+  // path a hover takes, and compared against an un-inlined `.tip` probe so
+  // the expected colours come from the CSS for whichever theme is loaded.
+  const tip = await page.evaluate(() => {
+    applyView('money'); applyMetric('revenue_per_acre');
+    const d = overlay._deck;
+    const w = d.widgetManager.getWidgets().find(x => x.id === 'default-tooltip');
+    const f = state.data.features.find(f => !f.properties.is_set_aside);
+    w.setTooltip(d.props.getTooltip({ object: f, x: 10, y: 10 }), 10, 10);
+    const probe = document.createElement('div');
+    probe.className = 'tip';
+    document.body.appendChild(probe);
+    const pick = el => { const cs = getComputedStyle(el); return [cs.backgroundColor, cs.color, cs.paddingTop].join(' | '); };
+    const out = { got: pick(w.element), want: pick(probe) };
+    probe.remove();
+    w.setTooltip(null);
+    return out;
+  });
+  check('C12: the hover tooltip renders the .tip surface, not deck.gl\'s inline defaults',
+    tip.got === tip.want, `got ${tip.got}; want ${tip.want}`);
+
   // ---- D. PROVENANCE ------------------------------------------------------
   // The rates on screen are a fiscal headline read straight from the manifest;
   // a refresh that rewrites status.json must not leave the pod disagreeing with
