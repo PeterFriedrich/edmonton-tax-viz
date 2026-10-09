@@ -712,13 +712,17 @@ preload still holds (12/12). What is left:
 
 ### Peter's list, 2026-09-25 (S196) — not scoped yet
 
-- [ ] **A grey cross-hatch (or similar texture) on the backdrop around the map,
-  in BOTH themes, designed together** (Peter, 2026-10-09). He raised it after seeing
-  the mid-grey light chrome. Not scoped. The constraints: the backdrop is one
-  MapLibre `background` layer per ramp (`RAMPS[*].bg` / `THEME_RAMPS.light[*].bg`), so
-  a pattern is a `background-pattern` image or a polygon fill outside the city, not a
-  colour. It must stay clear of the set-aside grey (ΔE2000 against `SET_ASIDE_COLOR`
-  and each ramp's `setAside`), and of the region/boundary linework drawn over it.
+- [ ] **Backdrop grid: BUILT (S220), two questions open.** Peter picked the square grid
+  from four textures (none / cross-hatch / diagonal / grid), faint in both themes.
+  A 16 px cell drawn as its own `background` layer (`bg-grid`), alpha 0.06 white in dark
+  and 0.045 black in light (ΔE2000 3.7–4.0 and 2.3). Guarded by `test_backdrop_grid.py`
+  (5 checks, 5 mutants each red by name). Open:
+  1. **Services shows it INSIDE the city:** the roads view draws road lines over the bare
+     backdrop, so the grid sits between streets. It is faint, but its lines are
+     orthogonal like the arterials. Keep it, or mask the city?
+  2. **It subdivides on zoom:** the cell grows 16 → 27 px across each zoom level, then
+     snaps back to 16 at the next whole zoom (MapLibre pattern behaviour, measured
+     flat over open backdrop). A fixed-km grid would need a line layer instead.
 
 - [ ] **Mobile panel before it opens: more colour and height so it reads as
   tappable.** First pin down which element this means (the peek card, or the

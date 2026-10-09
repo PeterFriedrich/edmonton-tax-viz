@@ -2252,6 +2252,23 @@
       antialias: true,
     });
 
+    // Backdrop grid (Peter, 2026-10-09): faint square lines on the ground plane
+    // around the city. Its own background layer over "bg", so every ramp keeps
+    // its backdrop colour. Light lines read stronger than dark ones at the same
+    // ΔE, so light's alpha is lower; tests/test_backdrop_grid.py holds the band.
+    const GRID_CELL = 16;
+    const GRID_INK = { dark: [255, 255, 255, 0.06], light: [0, 0, 0, 0.045] };
+    const gridName = () => state.theme === "light" ? "grid-light" : "grid-dark";
+    map.on("load", () => {
+      for (const t in GRID_INK) {
+        const [r, g, b, a] = GRID_INK[t], data = new Uint8Array(GRID_CELL * GRID_CELL * 4);
+        for (let y = 0; y < GRID_CELL; y++) for (let x = 0; x < GRID_CELL; x++)
+          if (!x || !y) data.set([r, g, b, Math.round(a * 255)], (y * GRID_CELL + x) * 4);
+        map.addImage("grid-" + t, { width: GRID_CELL, height: GRID_CELL, data });
+      }
+      map.addLayer({ id: "bg-grid", type: "background", paint: { "background-pattern": gridName() } });
+    });
+
     // --- loading overlay ----------------------------------------------------
     // Two gates, tracked separately because they fail independently and the
     // status text is the only way to tell WHICH one is slow when a load hangs.
@@ -7395,6 +7412,7 @@
       syncThemeChrome();
       overlay.setProps({ layers: buildLayers() });
       map.setPaintProperty("bg", "background-color", activeRamp().bg);
+      if (map.getLayer("bg-grid")) map.setPaintProperty("bg-grid", "background-pattern", gridName());
       refreshLegend();
     }
 

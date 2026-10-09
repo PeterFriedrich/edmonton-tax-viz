@@ -1200,6 +1200,20 @@ does not, since a data refresh does not touch theme code (DECISIONS 2026-10-09).
 Phases 1 and 4 change nothing in dark and can merge early. Phases 2–3 are the
 design work and where the time goes.
 
+### Backdrop grid (S220)
+- **What:** a faint square grid on the ground plane around the city, in both themes
+  (Peter, picked from none / cross-hatch / diagonal / grid on 2026-10-09). It is its own
+  MapLibre `background` layer, `bg-grid`, over `bg`, so every ramp keeps its backdrop
+  colour. One 16 px image per theme, swapped in `applyTheme`.
+- **Weight:** white at alpha 0.06 in dark (ΔE2000 3.7–4.0 on the three dark backdrops),
+  black at 0.045 in light (2.3). Measured on screen: +14 / −11 levels at a line.
+  A prototype at ΔE ~4.7 in both themes read stronger in light, so light carries less.
+  `tests/test_backdrop_grid.py` holds the band (1.5–4.5), light below dark, and ≥10 from
+  the set-aside grey.
+- **Known, open (TODO):** Services draws roads over the bare backdrop, so the grid shows
+  between streets there; and the cell grows 16 → 27 px across each zoom level and snaps
+  back at the next whole zoom (MapLibre pattern behaviour).
+
 ### Colourblind mode
 - The current sequential ramp varies mostly in **luminance**, which is already
   reasonably robust for red-green CVD (deuteranopia/protanopia). The main risk is
