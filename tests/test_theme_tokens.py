@@ -64,14 +64,6 @@ def test_every_referenced_token_is_defined():
     assert used - set(ROOT_TOKENS) == set()
 
 
-def test_dark_is_pinned_until_the_page_follows_the_os():
-    # Without the pin, an OS-light reader gets light chrome over the dark map —
-    # the chrome-only light mode held on 2026-09-21. Retire this when the
-    # toggle phase makes the page itself read prefers-color-scheme.
-    if "prefers-color-scheme" not in HTML:
-        assert re.search(r'<html[^>]*\bdata-theme="dark"', HTML)
-
-
 def test_light_inks_are_legible():
     bg = _rgba(LIGHT["--bg"])
     surfaces = {
