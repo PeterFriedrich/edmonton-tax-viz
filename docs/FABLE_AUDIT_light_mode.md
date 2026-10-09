@@ -2,7 +2,9 @@
 
 **Read cold.** This is a reusable *instrument*, not a findings doc. It was written
 2026-10-09 (S221, Opus 5.5) by the session family that built light mode
-(S217–S220). The coverage map is `docs/AUDIT_LEDGER.md`, queue item 19. No run yet.
+(S217–S220). The coverage map is `docs/AUDIT_LEDGER.md`, queue item 19. **Run 1:**
+2026-10-09 (S221, Opus 5.5, same family) → `docs/FINDINGS_light_mode.md`. M5 there is moot (deck.gl 9 needs
+WebGL2), and §1's negative held but its corroborating doc was stale.
 
 ⚠️ **Conflict of interest, stated first.** The builder wrote this brief. Every
 light-mode gate was designed and falsified by the same model that built the
