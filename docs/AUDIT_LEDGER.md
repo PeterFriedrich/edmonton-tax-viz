@@ -475,6 +475,18 @@ Built and verified by Opus 5.5 alone.
     (and a sharply shrunken) table do downstream — fail loud, or publish a zero / missing lens past
     `check_served_columns.py`? Feed each loader an empty, header-only file; predict before running.
 
+### S221 — marked 2026-10-09, briefed
+
+19. **Light mode and what it left behind** (S217–S220, #678–#698: all seven
+    phases plus the backdrop grid, city mask, Dark Reader lock and blurb box).
+    **Briefed:** `docs/FABLE_AUDIT_light_mode.md`. It is a decision stack,
+    L0–L7. The hinge question is whether any gate RENDERS light, or whether
+    they only check wiring and arithmetic. The brief also lists seven
+    unreproduced "missed" hypotheses (M1–M7), for example: no `color-scheme`
+    is declared, open panels across a theme switch, and light-only sub-pages.
+    Written by the builder's model family, so **run it cross-model if credits
+    allow**.
+
 ## Never audited (candidates, roughly ranked)
 
 Surfaces no audit run has covered, **re-ranked 2026-09-05 (S140)** at Peter's
