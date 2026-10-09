@@ -159,7 +159,7 @@ Edmonton revenue-per-acre fiscal analysis. Python-only, no GIS software.
 - **2026-08-01** — **The chrome-coverage figure that drove the mobile backlog for six sessions was INFLATED, and the priority it implied was wrong** — re-measured at Peter's request before deciding the bottom-sheet …
 - **2026-08-01** — **Revenue-by-zone is computed from the zoning POLYGONS by point-in-polygon, NOT from `dkk9-cj3x`'s per-property `zoning` field — and it is NOT blocked on parcel geometry** (Peter: *"percent of city …
 - **2026-08-01** — **The mill-rate pod shows ALL THREE classes in every revenue cut with the billed ones lit, rather than listing only the relevant rate; and it YIELDS to the history panel rather than displacing it** …
-- **2026-08-01** — **The mill-rate pod's phone form uses a DIFFERENT ANCHOR, not a different offset — and re-parents into the title card rather than hiding behind it** (Peter, on the desktop-only build: *"uh i see this …
+- **2026-08-01** — ⚠️ **AMENDED 2026-10-09 — "bare text is a desktop affordance" no longer holds: prisms run under the desktop corner and the map is not always dark, so the desktop blurb is boxed too; see that row.**
 - **2026-08-01** — **On a phone the mill rates are PART OF THE BLURB, not a surface of their own — the answer was not where to put the pod, it was not to have one** (Peter, after seeing a standalone card built to his …
 - **2026-08-01** — **The Current / Change-over-time lens toggle moves out of the Options panel and becomes `#toggle`'s row 2 UNDER VALUE — and it is a different KIND of nesting from the revenue cuts** (Peter: *"move … … `#chgwindow` (Since 2012 / Since 2019) **stays in Options** (Peter's call) — `#toggle` stays strictly two-level, so a third row was refused.
 - **2026-08-01** — **On Money's REVENUE metrics the pinned panel shows the hood's zone-revenue breakdown INSTEAD of the assessment history — one element, two modes** (Peter: *"under revenue, the panel still pops up …
@@ -397,6 +397,11 @@ Edmonton revenue-per-acre fiscal analysis. Python-only, no GIS software.
 - **2026-10-09** — **Light chrome: every `:root` token gets a light value, declared twice (OS media query + `[data-theme="light"]`) and held equal by test; a new `--accent-ink` carries gold-as-text; `<html>` pins … … Rejected: CSS `light-dark()` (one declaration per token, but an older browser drops every token, dark included).
 - **2026-10-09** — **Light chrome surfaces are mid grey, not near-white** (Peter, S219; light mode phase 4 follow-up).
 - **2026-10-09** — **Light mode ships to readers: the theme follows the OS, a Display-pod choice is stored and wins, and "brighter" becomes "darker" in light** (Peter, S219; light mode phases 5 + 6, shipped together so …
+- **2026-10-09** — **The code deploy smoke-checks light mode on both builds; the weekly data refresh does not** (Peter, S220; light mode phase 7).
+- **2026-10-09** — **The backdrop gets a faint square grid in both themes; light's is fainter than dark's** (Peter, S220, picked from none / cross-hatch / diagonal / grid).
+- **2026-10-09** — **The backdrop grid stops at the city limit** (Peter, S220: "mask the city for sure").
+- **2026-10-09** — **The page opts out of Dark Reader with `<meta name="darkreader-lock">`** (Peter, S220).
+- **2026-10-09** — **On desktop the top-left blurb and the mill rates sit in one reading-panel box, in both themes** (Peter, S220, picked from bare / halo / box).
 
 ## Open work
 
@@ -453,7 +458,8 @@ Edmonton revenue-per-acre fiscal analysis. Python-only, no GIS software.
 - **The lit selected-hood prism (#635/#636) added ~100 s to `verify-peek`** under SwiftShader (212 → 310 s; findings §7b). Check a tap's latency on a phone with the S210 checks (MOBILE_USABILITY §2b) before deciding anything.
 
 **Peter's list, 2026-09-25 (S196) — not scoped yet**
-- **A grey cross-hatch (or similar texture) on the backdrop around the map, in BOTH themes, designed together** (Peter, 2026-10-09). He raised it after seeing the mid-grey light chrome. Not scoped. The constraints: the backdrop is one MapLibre `background` layer per ramp …
+- **Backdrop grid: BUILT (S220, #695), city masked (S220); one question open.** Peter picked the square grid from four textures (none / cross-hatch / diagonal / grid), faint in both themes. A 16 px cell drawn as its own `background` layer (`bg-grid`), alpha 0.06 white in dark and …
+- **`verify-millrates.js` "360: rates and the bottom sheet do not overlap" is RED ON MASTER** (found S220, 2026-10-09, while checking the blurb box; master build, alone): `pod=318-416 sheet=404-732`, a 12px overlap at a 360px-wide phone. Not caused by the blurb box (that is …
 - **Mobile panel before it opens: more colour and height so it reads as tappable.** First pin down which element this means (the peek card, or the collapsed hood panel?) and measure its current size on a phone viewport. The mobile coverage figures on record (DECISIONS 2026-08-04, …
 - **Audit the shareable URL hash (#608), cross-model.** Brief: `docs/FABLE_AUDIT_url_state.md`; queue item 15 in `docs/AUDIT_LEDGER.md`. `verify-url-state.js` now gates web/ PRs (S207, `tests.yml` `url-state` job). ⚠️ **A same-model run executed 2026-09-28 (S204, …
 - **Check the roads notebook's first scheduled run (2026-10-05)**: queue item 16 in `docs/AUDIT_LEDGER.md`. Mainly, does its week-over-week table read last week's committed data on the runner?
@@ -525,7 +531,7 @@ Edmonton revenue-per-acre fiscal analysis. Python-only, no GIS software.
 - #5 3 of 5 school boards absent from open data — status: **NOT SENT — ⚠️ DO NOT SEND as drafted** (S214: Alberta already publishes it; `docs/FINDINGS_upstream_defect_claims.md` F1)
 - #6 `24uj-dj8v` `neighbourhood` holds a LIST of hoods — status: **NOT SENT**
 - #7 `stt5-pzaa` frozen 2 annual cycles while its report kept publishing — status: **NOT SENT**
-- #8 `f2sy-bth7` GTFS Calendar Dates reloaded EMPTY (0 rows) 2026-10-05 — status: **NOT SENT** — broke the 2026-10-05 refresh; may self-heal at the City's next load
+- #8 `f2sy-bth7` GTFS Calendar Dates reloaded EMPTY (0 rows) 2026-10-05 — status: ✅ **RESOLVED UPSTREAM, never sent** — the City reloaded it full (seen 2026-10-08, re-measured 2026-10-09: 13,551 rows)
 
 ## Where things live
 
