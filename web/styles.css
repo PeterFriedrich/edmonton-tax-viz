@@ -15,6 +15,7 @@
    stays literal because refreshLegend overwrites it on first draw.
    --------------------------------------------------------------- */
 :root {
+  color-scheme: only dark;   /* light overrides it; see :root[data-theme="light"] */
   --bg: #0a0a0f;
   --surface-btn: #1b1b24;
   --surface-btn-hover: #24242f;
@@ -656,6 +657,9 @@ html, body {
 #legend-cats { display: none; }
 #legend .cat { display: flex; align-items: center; gap: 7px; margin-top: 5px; color: var(--ink-2); }
 #legend .cat .sw { width: 12px; height: 12px; border-radius: 2px; flex: 0 0 auto; }
+/* The key is backgrounds only, which browsers drop when printing by default,
+   so it printed blank (FINDINGS_light_mode.md F8). Only affects print. */
+#legend .bar, #legend .sw { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 #banner {
   top: 20px; left: 50%; transform: translateX(-50%);
   max-width: 44%; pointer-events: auto; text-align: center;
@@ -1137,6 +1141,7 @@ body.budget #budget-btn { background: var(--accent); color: var(--ink-on-accent)
    --------------------------------------------------------------- */
 @media (prefers-color-scheme: light) {
   :root:not([data-theme="dark"]) {
+    color-scheme: only light;
     --bg: #f7f7f4;
     --surface-btn: #d0d0d8;
     --surface-btn-hover: #c6c6cf;
@@ -1175,6 +1180,10 @@ body.budget #budget-btn { background: var(--accent); color: var(--ink-on-accent)
   }
 }
 :root[data-theme="light"] {
+  /* Tells the browser the page is light, so Chromium's forced dark and Samsung
+     Internet do not repaint the chrome while the WebGL map stays light
+     (FINDINGS_light_mode.md F6). `:root` carries the dark counterpart. */
+  color-scheme: only light;
   --bg: #f7f7f4;
   --surface-btn: #d0d0d8;
   --surface-btn-hover: #c6c6cf;

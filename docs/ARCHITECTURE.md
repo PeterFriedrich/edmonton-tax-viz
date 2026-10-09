@@ -1177,8 +1177,8 @@ tier sits alongside them for a human reader rather than CI:
 | tier | what it can catch | when it runs |
 |---|---|---|
 | `pytest` | pipeline logic, schema contracts | every CI run |
-| `verify-*.js` (42 scripts) | UI behaviour, layout, per-feature contracts. **Carry literals calibrated to a data snapshot**, so they are for the CODE path | locally + before merging |
-| `verify-smoke.js` | the render surviving a DATA change. **Invariant-only — nothing pinned to a value** | **`refresh.yml`, gating the weekly publish** |
+| `verify-*.js` (44 scripts) | UI behaviour, layout, per-feature contracts. **Carry literals calibrated to a data snapshot**, so they are for the CODE path | locally + before merging |
+| `verify-smoke.js` | the render surviving a DATA change. **Invariant-only — nothing pinned to a value** | **`refresh.yml`, gating the weekly publish**, and `deploy.yml` (both builds, dark and light) |
 | `notebooks/verified/*.py` (via `tools/run_verified_notebooks.py`) | the pipeline producing correct numbers on real data, narrated for a human to read rather than a machine to gate on. **Invariant-only, same discipline as `verify-smoke.js`** — but rendered to HTML, not pass/fail | locally, on demand, **and `refresh.yml`**, gating the weekly publish alongside `verify-smoke.js` (renders to `web/verified/`, published per `docs/VERIFICATION.md`) |
 
 ⚠️ **The split is the point, not duplication.** The suite's pinned literals are
@@ -1189,9 +1189,10 @@ path needs assertions that cannot cry wolf: counts derived from the served files
 required columns derived from `METRICS`/`USE_CATEGORIES`' own keys, and a
 garbage sweep over every hood × lens.
 
-⚠️ **"Locally + before merging" is aspirational for 41 of the 42** — there is no
-runner, no `npm test`, and only `verify-smoke.js` is wired into a workflow, so
-the rest run when someone remembers to type them. The shape is not uniform
+⚠️ **"Locally + before merging" is aspirational for 41 of the 44** — there is no
+runner and no `npm test`. Three are wired into workflows: `verify-smoke.js`
+(`refresh.yml`, `deploy.yml`), `verify-blurbs.js` (`deploy.yml`) and
+`verify-url-state.js` (`tests.yml`). The rest run when someone remembers to type them. The shape is not uniform
 either: **32 use the `process.exit(fail ? 1 : 0)` convention and only 26 print
 the `ALL CHECKS PASSED` banner**, the remainder being diagnostic printers that
 always exit 0 (`verify-labels.js`, renamed `probe-labels.js` 2026-09-30). **A batch runner that greps for the banner
