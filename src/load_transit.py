@@ -367,8 +367,8 @@ def export_transit_lines_web(lrt_routes_geojson: str | Path, out_path: str | Pat
     """Write the LRT track lines for the web map's transit layer.
 
     A context layer (the LRT-station dots' companion), NOT part of the
-    stop-events metric. Reads the "LRT Routes" GeoJSON (four route
-    multilines), drops the HER heritage streetcar (``EXCLUDED_LRT_ROUTE_IDS``
+    stop-events metric. Reads the "LRT Routes" GeoJSON (three route
+    multilines since 2026-10), drops the HER heritage streetcar if present (``EXCLUDED_LRT_ROUTE_IDS``
     — not ETS LRT service), and flattens each remaining route's
     MultiLineString into individual paths. Writes a tiny committed JSON —
     ``{"lines": [[[lon, lat], ...], ...]}`` — the station-dots pattern, lazy-
