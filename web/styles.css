@@ -197,7 +197,11 @@ html, body {
    which stacks the per-view detail/denominator sections (#layers) above the
    colour-scaling pod. Was a two-column row until 2026-07-26, when the
    residential lens was removed and #coloradj moved to the bottom. */
-#optpanel { flex-direction: column; align-items: stretch; }
+/* max-width: Money's Detail row (three flex:1 buttons) sized the panel to all
+   three labels on one line, 351px, reaching ~70px further left than any other
+   view's panel. 289 is Development's natural width, so only Money changes:
+   "100 m grid" wraps as "50 m grid · 7.6 MB" already did (Peter, 2026-10-09). */
+#optpanel { flex-direction: column; align-items: stretch; max-width: 289px; }
 /* min-width widens the FOLDED header leftward (the pod is right-anchored, so
    extra width grows to the left) — a bigger target that reaches away from the
    corner while its right edge stays flush with the bars above. No effect when
