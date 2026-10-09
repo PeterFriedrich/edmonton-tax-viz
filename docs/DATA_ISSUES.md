@@ -60,7 +60,7 @@ was never a candidate to send, and it is now fixed.)
 | 5 | 3 of 5 school boards absent from open data | [published](https://peterfriedrich.github.io/edmonton-tax-viz/notebooks/school-coverage-gap.html) | ✅ `docs/DRAFT_open_data_request_school_locations.md` | **NOT SENT — ⚠️ DO NOT SEND as drafted** (S214: Alberta already publishes it; `docs/FINDINGS_upstream_defect_claims.md` F1) |
 | 6 | `24uj-dj8v` `neighbourhood` holds a LIST of hoods | [published](https://peterfriedrich.github.io/edmonton-tax-viz/notebooks/permit-neighbourhood-list.html) | ✅ `docs/DRAFT_bug_report_permit_neighbourhood_list.md` | **NOT SENT** |
 | 7 | `stt5-pzaa` frozen 2 annual cycles while its report kept publishing | ❌ none | ❌ none | **NOT SENT** |
-| 8 | `f2sy-bth7` GTFS Calendar Dates reloaded EMPTY (0 rows) 2026-10-05 | §8 below (measured; no notebook) | ❌ none | **NOT SENT** — broke the 2026-10-05 refresh; may self-heal at the City's next load |
+| 8 | `f2sy-bth7` GTFS Calendar Dates reloaded EMPTY (0 rows) 2026-10-05 | §8 below (measured; no notebook) | ❌ none | ✅ **RESOLVED UPSTREAM, never sent** — the City reloaded it full (seen 2026-10-08, re-measured 2026-10-09: 13,551 rows) |
 
 **Channel:** `opendata@edmonton.ca`, read from the portal footer 2026-08-25 —
 primary source, not inference. Right channel for 1, 3, 4 and 5, all of which are
@@ -517,7 +517,10 @@ the domain.**
 
 ## 8. `f2sy-bth7` — GTFS Calendar Dates reloaded with 0 rows
 
-**Status: NOT SENT.** **Last measured: 2026-10-05** (S215).
+**Status: ✅ RESOLVED UPSTREAM 2026-10-08, never sent.** First seen full in S218
+(2026-10-08). Re-measured 2026-10-09 (S220): **13,551 rows**, dates 2026-09-20 →
+2026-11-28, `rowsUpdatedAt` 2026-10-09 15:47 UTC. The 2026-10-12 refresh should
+pass and clear the staleness clock. The text below is the 2026-10-05 record.
 
 **What:** the City reloaded all five ETS GTFS tables on 2026-10-05 between
 14:58 and 15:21 UTC with the new signup (`feed_version 260929_1220`, window
