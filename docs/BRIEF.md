@@ -413,6 +413,18 @@ Edmonton revenue-per-acre fiscal analysis. Python-only, no GIS software.
 
 **README + licence follow-ons (OPEN 2026-10-05 S215, `docs/FINDINGS_readme_claims.md`)**
 
+**Light-mode audit follow-ons (OPEN 2026-10-09 S221, `docs/FINDINGS_light_mode.md`)**
+- **F1 (HIGH, public): the hover tooltip is illegible in light.** deck.gl's inline default (`background-color: rgb(41,50,60)`) beats `.tip`; light muted lines are 1.2:1. Fix: pass `style` overrides from every `viewTooltip` return (or `!important` on `.tip`), then add a render …
+- **F2 (public): 641–~930 px, the title column covers the view buttons.** #698 widened the band ~40 px; below ~860 it predates S220. Layout call: Peter.
+- **F3 (public): the Beta badge covers the phone legend and sheet.** Move or shrink it under 641 px; fix `build_site.py`'s "keeps clear of the legend" comment.
+- **F4: make `themed()` throw on a missing light value** (a `HOVER_COLOR` mutant passed every CI gate), and/or a pytest that every `themed(` has two arrays.
+- **F5: revenue-mix greys on the light panel (1.3:1 / 1.7:1).** Design call: Peter.
+- **F6: declare `color-scheme` per theme** (`only light` / `only dark` on `:root[data-theme]`); verified to stop Chromium auto-dark repainting a stored-light page.
+- **F7: re-render an open `#temporal` panel in `applyTheme`.**
+- **F8: `@media print` with `print-color-adjust: exact` on the legend bar and swatches.**
+- **F9: restore Glow on light → dark?** Peter.
+- **F10 + F12: stale text.** ARCHITECTURE verify-tier row; UI.md Light mode's `THEMES` lines; the `#title-p` and guide comments in `index.html`; the badge comment; the "plain grey landmarks" tooltip (river is blue).
+
 **Smoke gate reads no panel text (OPEN 2026-10-05 S215, `docs/FINDINGS_s187_remedies.md` F1)**
 
 **A `fable-session` credit-discipline skill — evaluated, corrections pending (OPEN 2026-09-04)**
