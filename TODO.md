@@ -724,6 +724,11 @@ preload still holds (12/12). What is left:
      snaps back to 16 at the next whole zoom (MapLibre pattern behaviour, measured
      flat over open backdrop). A fixed-km grid would need a line layer instead.
 
+- [ ] **`verify-millrates.js` "360: rates and the bottom sheet do not overlap" is RED ON
+  MASTER** (found S220, 2026-10-09, while checking the blurb box; master build, alone):
+  `pod=318-416 sheet=404-732`, a 12px overlap at a 360px-wide phone. Not caused by the
+  blurb box (that is desktop-only CSS). Reproduce on a phone width before fixing.
+
 - [ ] **Mobile panel before it opens: more colour and height so it reads as
   tappable.** First pin down which element this means (the peek card, or the
   collapsed hood panel?) and measure its current size on a phone viewport.

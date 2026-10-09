@@ -140,6 +140,8 @@ with near-zero risk to the tuned desktop experience.
 >   pod landed on the downtown prisms and 10.5px muted text on bright yellow was
 >   unreadable (seen in a screenshot, not predicted). It needed its own card
 >   background. Inside the blurb there already is one.
+>   (2026-10-09: desktop hit the same thing once prisms reached the corner, so the
+>   desktop blurb is boxed too: DECISIONS 2026-10-09, `docs/UI.md` → Blurb box.)
 > - ⚠️ **A yield must be scoped to where the contention is.**
 >   `#temporal.open ~ #millrates` shipped ungated with a comment saying it was
 >   "desktop-only in effect" — reasoning about the LAYOUT (the panel is a bottom

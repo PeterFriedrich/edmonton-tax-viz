@@ -7003,7 +7003,7 @@
       // Inside the blurb the pod is static and flows — no offset to compute, and
       // none must be left behind from the floating form after a resize.
       pod.style.top = inBlurb ? ""
-        : Math.round(title.getBoundingClientRect().bottom + 10) + "px";
+        : Math.round(title.getBoundingClientRect().bottom) + "px";   // the boxes join (styles.css)
       const billed = MILL_CUT_CLASSES[state.metric];
       // No separator in the markup: the rates are one line on desktop and a
       // stacked list on a phone, and a literal " · " between them would print as

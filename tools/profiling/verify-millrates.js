@@ -129,8 +129,13 @@ const [url] = process.argv.slice(2);
       `gap=${pod.top - title.bottom}`);
     check(`${m}: pod clears the bottom-left cluster`, !overlap(pod, botleft));
     // Two rows of one line each + the head. Anything taller means a copy edit
-    // wrapped a line, which is how this pod grows into its neighbours.
-    check(`${m}: pod stays one line per row`, pod.h > 0 && pod.h <= 50, `h=${pod.h}`);
+    // wrapped a line, which is how this pod grows into its neighbours. CONTENT
+    // height: on desktop the pod carries the blurb box's padding (2026-10-09).
+    const podText = await page.evaluate(() => {
+      const e = document.getElementById('millrates'), cs = getComputedStyle(e);
+      return Math.round(e.getBoundingClientRect().height - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom));
+    });
+    check(`${m}: pod stays one line per row`, podText > 0 && podText <= 50, `text h=${podText}`);
   }
 
   // ---- gating ---------------------------------------------------------------

@@ -1200,6 +1200,25 @@ does not, since a data refresh does not touch theme code (DECISIONS 2026-10-09).
 Phases 1 and 4 change nothing in dark and can merge early. Phases 2–3 are the
 design work and where the time goes.
 
+### Blurb box (S220)
+- **What:** on desktop the top-left blurb and the mill rates under it share ONE box in
+  the reading-panel surface (`--read-bg`), in both themes (Peter, 2026-10-09). Bare
+  text dropped to 1.4:1 where prisms ran under it (dark ink on light mode's purple,
+  light ink on dark mode's yellow). A halo was tried first and left the map showing
+  between letters; the pods' 0.7 surface still let a dark-mode tower through.
+- **Layout:** the text starts where it did; the box grows out by its padding. The
+  column is 400px, the mill pod's width, because each rate row must stay one line
+  (`verify-millrates.js`; a 360px first try wrapped the caveat and went red 3×). So the
+  title text widened 360 → 400 and `#search` / `#guide-btn` moved right by 40px (to 432 /
+  470); nothing else sits there before the control stack at x≈958. The pod joins the
+  title (the JS gap went 10 → 0), and `#temporal` moved to left 12 to line up with the
+  box. Phones keep their own expanded card (`min-width: 641px` block).
+- ⚠️ **No `:has()` on `body`.** Restoring the title's bottom corners when the rates
+  yield to the history panel was first `body.mills:not(:has(#temporal.open))`. It is
+  re-checked on every DOM change, and `verify-temporal.js`'s clicks timed out in 4 of 4
+  runs with it, 0 of 2 without (master 1 of 1 clean). The corners stay square in that
+  state instead.
+
 ### Backdrop grid (S220)
 - **What:** a faint square grid on the ground plane around the city, in both themes
   (Peter, picked from none / cross-hatch / diagonal / grid on 2026-10-09). It is its own
