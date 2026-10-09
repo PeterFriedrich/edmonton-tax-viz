@@ -37,7 +37,7 @@ Edmonton revenue-per-acre fiscal analysis. Python-only, no GIS software.
 - jupytext==1.19.5
 - nbconvert==7.17.1
 - ipykernel==7.2.0
-- pypdf==6.14.2
+- pypdf==6.19.0
 - openpyxl==3.1.5
 
 ## Locked decisions
@@ -392,6 +392,8 @@ Edmonton revenue-per-acre fiscal analysis. Python-only, no GIS software.
 - **2026-10-08** — **A how-to-read guide: ONE card, not a step-by-step tour, shown once after the loading overlay lifts and reopened by a `?` left of the magnifier** (Peter, S217). … Rejected: a step-by-step tour of arrows pointing at the controls, which breaks every time the chrome moves.
 - **2026-10-08** — **Light mode is reopened and will be built: a light MAP plus light chrome, following the OS setting** (Peter, S217). … **Five calls:** (1) the theme follows `prefers-color-scheme`, with a Light/Dark override in the Display pod remembered in `localStorage`; (2) light mode offers ONE default light ramp plus a light …
 - **2026-10-08** — **Every backdrop-dependent map colour is declared with `themed(dark)` beside its rationale and read through `tc()` at draw time; every layer drawing one carries `state.theme` in its colour … … Rejected: one central `THEMES` object, which would separate each colour from the comment that explains it, and reassigning `let` constants on a switch, where a missed reassignment fails silently.
+- **2026-10-08** — **Light mode's ramps: inferno reversed, capped at purple, as the default, plus cividis reversed. … Rejected: near-black inferno (Peter, the reason above); Brewer YlOrRd (44% under 3:1, Non-residential middle ΔE 1.3); a ramp warp for the middle compression (it trades Non-residential and linear mode …
+- **2026-10-09** — **Every backdrop-dependent colour has a light value, written `themed(dark, light)`; measured, not mirrored** (light mode phase 3, S218).
 
 ## Open work
 
