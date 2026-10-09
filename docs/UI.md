@@ -1213,6 +1213,11 @@ design work and where the time goes.
   470); nothing else sits there before the control stack at x≈958. The pod joins the
   title (the JS gap went 10 → 0), and `#temporal` moved to left 12 to line up with the
   box. Phones keep their own expanded card (`min-width: 641px` block).
+- ⚠️ **No `:has()` on `body`.** Restoring the title's bottom corners when the rates
+  yield to the history panel was first `body.mills:not(:has(#temporal.open))`. It is
+  re-checked on every DOM change, and `verify-temporal.js`'s clicks timed out in 4 of 4
+  runs with it, 0 of 2 without (master 1 of 1 clean). The corners stay square in that
+  state instead.
 
 ### Backdrop grid (S220)
 - **What:** a faint square grid on the ground plane around the city, in both themes
