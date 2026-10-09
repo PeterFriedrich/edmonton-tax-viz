@@ -129,7 +129,15 @@ def test_the_smoke_gate_covers_both_builds(workflow):
     """Both builds share one GeoJSON but not one UI, so a check run against only
     the dev server passes on full-only states the public root does not have."""
     run = next(r for r in _run_steps(_load(workflow)) if "verify-smoke.js" in r)
-    assert run.count("verify-smoke.js") == 2
+    calls = [l.split() for l in run.splitlines() if l.strip().startswith("node ")
+             and "verify-smoke.js" in l]
+    dark = [c[-1] for c in calls if c[-1] != "light"]
+    light = [c[-2] for c in calls if c[-1] == "light"]
+    assert len(dark) == 2
+    # Light on both builds in the code deploy only: automation loads dark unless
+    # a theme is stored, and a data refresh does not touch theme code
+    # (DECISIONS 2026-10-09, light mode phase 7).
+    assert sorted(light) == (sorted(dark) if workflow == "deploy.yml" else [])
     # ⚠️ Reads build_site.FULL_DIR so a rename cannot leave the workflow
     # smoke-testing a path the build no longer emits — the gate would exit 0 on
     # a 404 page and publish unchecked. `test_build_site.py` pins the literal;

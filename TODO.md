@@ -3204,15 +3204,14 @@ archive"*) is not, and this span is 2,533 lines.
     three ramps** (was `TOP_EDGE_COLOR`, one value, until the palette switcher).
   - [ ] deferred zoom-out (`HOME`/`HOME_2D` ~10.2→~9.4) + the per-metric
     `elevationScale` values scaled with it (no global `ELEVATION_SCALE`).
-  - [ ] **light mode: REOPENED 2026-10-08, being built.** The plan is in
+  - [x] **light mode: REOPENED 2026-10-08, all 7 phases shipped (S220).** The plan is in
     `docs/UI.md` → Light mode → Build plan, with the calls in DECISIONS 2026-10-08.
     Phases: [x] 1 plumbing (S217, `verify-theme.js`) · [x] 2 light ramps (S218,
     `test_light_ramps.py`) · [x] 3 re-solve dependent colours (S218) · [x] 4 chrome
     tokens (S219, `test_theme_tokens.py`) · [x] 5 "brighter" copy · [x] 6 Display toggle +
     OS follow (S219, both in `verify-theme.js` reader paths) · [x] 7 `verify-smoke <url>
-    light` passes on both builds (S220, A0 asserts the theme really loaded). **Left
-    (PROPOSAL, a CI change): add the light pass to `deploy.yml`**, both builds,
-    about +46 s. `refresh.yml` is optional, since a data refresh doesn't touch theme code.
+    light` passes on both builds (S220, A0 asserts the theme really loaded), and
+    `deploy.yml` runs it on both builds (Peter yes, S220; not `refresh.yml`).
 
 - [ ] **(Optional) exploration notebook** — work `FINDINGS_assessment_classes.md`'s
   "to visualize" list (value vs levy share by class; split-class distribution;
