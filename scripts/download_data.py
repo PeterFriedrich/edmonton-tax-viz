@@ -231,12 +231,12 @@ SOURCES = {
     },
     "lrt_routes": {
         # LRT track lines — a context layer under the transit lens (the LRT
-        # station dots' companion), NOT part of the stop-events metric. Four
-        # named route multilines; the loader drops the HER heritage streetcar
-        # (not ETS LRT service, absent from the GTFS we count). GeoJSON.
+        # station dots' companion), NOT part of the stop-events metric. Three
+        # named route multilines (the HER heritage streetcar left the dataset
+        # by 2026-10-09; the loader still drops it if it returns). GeoJSON.
         "url": "https://data.edmonton.ca/resource/rpjw-4jft.geojson?$limit=500",
         "dest": RAW / "lrt_routes.geojson",
-        "limit": 500,  # 4 routes as of 2026-07
+        "limit": 500,  # 3 routes as of 2026-10-09
         "count_url": _count_url("rpjw-4jft"),
     },
     "schools_public": {
