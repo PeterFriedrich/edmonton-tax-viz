@@ -1210,9 +1210,16 @@ design work and where the time goes.
   A prototype at ΔE ~4.7 in both themes read stronger in light, so light carries less.
   `tests/test_backdrop_grid.py` holds the band (1.5–4.5), light below dark, and ≥10 from
   the set-aside grey.
-- **Known, open (TODO):** Services draws roads over the bare backdrop, so the grid shows
-  between streets there; and the cell grows 16 → 27 px across each zoom level and snaps
+- **Masked inside the city (Peter, S220):** Services draws roads over the bare backdrop,
+  so the grid sat between streets and read as more streets. A `city-mask` fill layer
+  (the city limit from `reference.geojson`, in the backdrop colour) sits over `bg-grid`.
+  `paintBackdrop()` repaints all three layers on a theme or ramp switch. Guards:
+  `verify-smoke.js` A9 (the mask holds the city limit) and `verify-theme.js` (the mask
+  follows the probe theme).
+- **Known, open (TODO):** the cell grows 16 → 27 px across each zoom level and snaps
   back at the next whole zoom (MapLibre pattern behaviour).
+- **Cost:** none measurable here (A/B on one page, rotation-driven frames: medians
+  within one 16.7 ms tick, both directions). One extra full-screen textured fill per frame.
 
 ### Colourblind mode
 - The current sequential ramp varies mostly in **luminance**, which is already

@@ -2254,7 +2254,9 @@
 
     // Backdrop grid (Peter, 2026-10-09): faint square lines on the ground plane
     // around the city. Its own background layer over "bg", so every ramp keeps
-    // its backdrop colour. Light lines read stronger than dark ones at the same
+    // its backdrop colour. "city-mask" fills the city limit with the backdrop
+    // colour over it: Services draws roads on the bare backdrop, and a grid
+    // between streets reads as more streets. Its shape lands with reference.geojson. Light lines read stronger than dark ones at the same
     // ΔE, so light's alpha is lower; tests/test_backdrop_grid.py holds the band.
     const GRID_CELL = 16;
     const GRID_INK = { dark: [255, 255, 255, 0.06], light: [0, 0, 0, 0.045] };
@@ -2267,7 +2269,17 @@
         map.addImage("grid-" + t, { width: GRID_CELL, height: GRID_CELL, data });
       }
       map.addLayer({ id: "bg-grid", type: "background", paint: { "background-pattern": gridName() } });
+      map.addSource("city-mask", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+      map.addLayer({ id: "city-mask", type: "fill", source: "city-mask",
+                     paint: { "fill-color": activeRamp().bg, "fill-antialias": false } });
     });
+    // The backdrop's three MapLibre layers, after a theme or ramp change.
+    function paintBackdrop() {
+      map.setPaintProperty("bg", "background-color", activeRamp().bg);
+      if (!map.getLayer("bg-grid")) return;   // a switch before the map loaded
+      map.setPaintProperty("bg-grid", "background-pattern", gridName());
+      map.setPaintProperty("city-mask", "fill-color", activeRamp().bg);
+    }
 
     // --- loading overlay ----------------------------------------------------
     // Two gates, tracked separately because they fail independently and the
@@ -4123,6 +4135,7 @@
         .then(r => r.ok ? r.json() : null)
         .then(d => {
           referenceData = d;
+          if (d) map.getSource("city-mask")?.setData(referenceSplit().cityLimit);
           if (d && state.reference) overlay.setProps({ layers: buildLayers() });
         })
         .catch(() => {});
@@ -7411,8 +7424,7 @@
       if (name === "light" && state.ramp === "glow") state.ramp = "current";
       syncThemeChrome();
       overlay.setProps({ layers: buildLayers() });
-      map.setPaintProperty("bg", "background-color", activeRamp().bg);
-      if (map.getLayer("bg-grid")) map.setPaintProperty("bg-grid", "background-pattern", gridName());
+      paintBackdrop();
       refreshLegend();
     }
 
@@ -7434,7 +7446,7 @@
       if (name === state.ramp || !RAMPS[name]) return;
       state.ramp = name;
       overlay.setProps({ layers: buildLayers() });
-      map.setPaintProperty("bg", "background-color", activeRamp().bg);
+      paintBackdrop();
       // The whole legend, not just the bar: the set-aside swatch follows the
       // ramp too (rampSetAside), and it went stale when only the bar was redrawn.
       refreshLegend();

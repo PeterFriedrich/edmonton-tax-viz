@@ -108,6 +108,10 @@ const GARBAGE = /\bNaN\b|\bundefined\b|\bnull\b|\bInfinity\b|\$NaN|\$undefined/;
     dataHits.has('neighbourhood_value_per_acre.geojson'));
   check('A6: temporal.json was fetched', dataHits.has('temporal.json'));
   check('A7: status.json was fetched', dataHits.has('status.json'));
+  // The backdrop grid is masked by the city limit from reference.geojson. If
+  // that feature goes missing, the grid shows between streets again, silently.
+  const maskN = await page.evaluate(() => map.getSource('city-mask').serialize().data.features.length);
+  check('A9: the city mask holds the city limit', maskN > 0, `${maskN} features`);
 
   // ---- B. SHAPE, DERIVED FROM THE SERVED FILES ----------------------------
   // ⚠️ Every count below is read from the file the page actually loaded, never
