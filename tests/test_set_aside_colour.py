@@ -21,18 +21,20 @@ def _rgb(text):
     return tuple(int(v) for v in re.findall(r"\d+", text)[:3])
 
 
-def _const(name):
-    # The dark value: themed() takes it first (docs/UI.md → Light mode).
-    m = re.search(rf"const {name} = (?:themed\()?\[([^\]]+)\]", HTML)
+def _const(name, theme="dark"):
+    # themed(dark, light) (docs/UI.md → Light mode).
+    m = re.search(rf"const {name} = themed\(\[([^\]]+)\], \[([^\]]+)\]\)", HTML)
     assert m, name
-    return _rgb(m.group(1))
+    return _rgb(m.group(1 if theme == "dark" else 2))
 
 
-def _ramps():
-    body = HTML[HTML.index("const RAMPS = {"):]
+def _ramps(theme="dark"):
+    # Dark ramps live in RAMPS; a theme's own in THEME_RAMPS, one level deeper.
+    start, ind = ("const RAMPS = {", " " * 6) if theme == "dark" else ("const THEME_RAMPS = {", " " * 8)
+    body = HTML[HTML.index(start):]
     body = body[:body.index("\n    };")]
     ramps = {}
-    for m in re.finditer(r"\n      (\w+): \{(.*?)\n      \},", body, re.S):
+    for m in re.finditer(rf"\n{ind}(\w+): \{{(.*?)\n{ind}\}},", body, re.S):
         stops = [(float(t), _rgb(c)) for t, c in
                  re.findall(r"\[\s*([\d.]+),\s*\[([^\]]+)\]\]", m.group(2))]
         aside = re.search(r"setAside: \[([^\]]+)\]", m.group(2))
@@ -111,28 +113,31 @@ def test_de2000_matches_published_reference_pairs(lab1, lab2, expected):
     assert _de2000_lab(lab1, lab2) == pytest.approx(expected, abs=1e-4)
 
 
-RAMPS = _ramps()
+THEMES = ("dark", "light")
+RAMPS = {theme: _ramps(theme) for theme in THEMES}
 
 
 def test_every_ramp_was_parsed():
-    assert set(RAMPS) >= {"current", "glow", "cividis"}
-    assert all(len(stops) >= 2 for stops, _ in RAMPS.values())
+    assert set(RAMPS["dark"]) >= {"current", "glow", "cividis"}
+    assert set(RAMPS["light"]) >= {"current", "cividis"}
+    assert all(len(stops) >= 2 for r in RAMPS.values() for stops, _ in r.values())
 
 
-@pytest.mark.parametrize("name", sorted(RAMPS))
-def test_set_aside_is_distinct_from_its_ramp(name):
-    stops, own = RAMPS[name]
-    aside = own or _const("SET_ASIDE_COLOR")
+@pytest.mark.parametrize("theme, name", [(t, n) for t in THEMES for n in sorted(RAMPS[t])])
+def test_set_aside_is_distinct_from_its_ramp(theme, name):
+    stops, own = RAMPS[theme][name]
+    aside = own or _const("SET_ASIDE_COLOR", theme)
     worst = min(_sample(stops), key=lambda c: de2000(aside, c))
-    assert de2000(aside, worst) >= FLOOR, (name, aside, worst, round(de2000(aside, worst), 1))
+    assert de2000(aside, worst) >= FLOOR, (theme, name, aside, worst, round(de2000(aside, worst), 1))
 
 
-def test_shared_set_aside_is_distinct_from_glass_plane_and_diverging_ramp():
+@pytest.mark.parametrize("theme", THEMES)
+def test_shared_set_aside_is_distinct_from_glass_plane_and_diverging_ramp(theme):
     """Surfaces that keep SET_ASIDE_COLOR whatever the ramp: the Glass ground
     plane and the Infill/Change/Deviation diverging ramp (rampSetAside's comment)."""
-    aside = _const("SET_ASIDE_COLOR")
-    assert de2000(aside, _const("GLASS_PLANE_COLOR")) >= FLOOR
-    centre = _const("INFILL_CENTER")
-    for end in (_const("INFILL_POS"), _const("INFILL_NEG")):
+    aside = _const("SET_ASIDE_COLOR", theme)
+    assert de2000(aside, _const("GLASS_PLANE_COLOR", theme)) >= FLOOR
+    centre = _const("INFILL_CENTER", theme)
+    for end in (_const("INFILL_POS", theme), _const("INFILL_NEG", theme)):
         arm = _sample([(0.0, centre), (1.0, end)])
         assert min(de2000(aside, c) for c in arm) >= FLOOR
