@@ -2,7 +2,7 @@
 
 **Generated — do not hand-edit.** `python tools/codemap.py`
 
-`web/index.html` is a single ~8,742-line file holding the whole front end. This is the lookup table for it: jump to a symbol's range instead of scanning. **Line numbers go stale on the next edit — regenerate rather than citing them.** Prose should still name symbols, not lines.
+`web/index.html` is a single ~8,743-line file holding the whole front end. This is the lookup table for it: jump to a symbol's range instead of scanning. **Line numbers go stale on the next edit — regenerate rather than citing them.** Prose should still name symbols, not lines.
 
 ## Symbols (319 indexed)
 
@@ -405,47 +405,47 @@ Grouped by the file's own `// --- section ---` banners, in file order.
 | `applyDevWindow` | 7092–7108 | Development-view window toggle (5yr base <-> 3yr recent <-> since 2009). |
 | `refreshLegend` | 7109–7348 | Sync the whole legend to the current view. roads: the network's linear |
 | `usesLegendCats` | 7349–7361 | Legend rows for the uses view: the categories actually on screen |
-| `applyTheme` | 7362–7370 | Switch theme. Every tc() colour and the ramp (activeRamp) are re-read on |
-| `applyPalette` | 7371–7385 | Switch colour ramp: rebuild layers, restyle the background + legend gradient. |
-| `applyLabels` | 7386–7394 | Toggle the neighbourhood-name labels (accessibility-menu checkbox). |
-| `applyReference` | 7395–7405 | Toggle the orientation set: river, ring road, and the regional place |
-| `applyUsesPrisms` | 7406–7417 | Toggle the Uses view's residential prisms (height = share of zoned |
-| `applyAmenity` | 7418–7430 | Toggle one amenity band. Infill only — the rows are hidden elsewhere and |
-| `syncAmenityControls` | 7431–7451 | Show the amenity section in Infill only (2026-08-26 — Glass reads the |
-| `syncDevControls` | 7452–7499 | Sync the Development pickers' visibility to the current mode. The |
-| `syncPrismRow` | 7500–7505 | The age spikes ride on the Glass grid file — kick its (shared, single) |
-| `applyDevDetail` | 7506–7527 |  |
-| `applyMoneyDetail` | 7528–7552 | Money's render toggle: Neighbourhood prisms (view "money") vs the |
-| `syncMoneyDetail` | 7553–7564 | The Detail row's active button. Three buttons over two views, so the grid |
-| `applyMoneyMode` | 7565–7572 | Money's Current/Change lens toggle. Change is a full-only render-mode of |
-| `applyChgWindow` | 7573–7591 | Switch the change lens's window. State-only when the lens isn't on screen, |
-| `syncChangeControls` | 7592–7602 | Reveal the change window picker, and re-run the metric rows that host the |
-| `applyDevMode` | 7603–7610 | Development's Housing/Infill lens toggle (full build only). Infill is a |
-| `syncLabControls` | 7611–7627 | The Lab's controls: the experiment picker (only once there are two — see |
-| `applyLabCut` | 7628–7641 | Switch the deviation experiment's revenue cut. Its average, per-arm |
-| `setPrismOpacity` | 7642–7652 | Set the ratio view's ghost-prism opacity (0–100). UI-state only — the |
-| `applyView` | 7653–7896 | Switch view (money \| services \| ratio \| uses \| glass). Road geometry |
-| `syncServiceControls` | 7897–7906 | Services-view controls. `applyService` flips a service on/off; |
-| `applyService` | 7907–7920 |  |
-| `applySvcDriver` | 7921–7953 |  |
+| `applyTheme` | 7362–7371 | Switch theme. Every tc() colour and the ramp (activeRamp) are re-read on |
+| `applyPalette` | 7372–7386 | Switch colour ramp: rebuild layers, restyle the background + legend gradient. |
+| `applyLabels` | 7387–7395 | Toggle the neighbourhood-name labels (accessibility-menu checkbox). |
+| `applyReference` | 7396–7406 | Toggle the orientation set: river, ring road, and the regional place |
+| `applyUsesPrisms` | 7407–7418 | Toggle the Uses view's residential prisms (height = share of zoned |
+| `applyAmenity` | 7419–7431 | Toggle one amenity band. Infill only — the rows are hidden elsewhere and |
+| `syncAmenityControls` | 7432–7452 | Show the amenity section in Infill only (2026-08-26 — Glass reads the |
+| `syncDevControls` | 7453–7500 | Sync the Development pickers' visibility to the current mode. The |
+| `syncPrismRow` | 7501–7506 | The age spikes ride on the Glass grid file — kick its (shared, single) |
+| `applyDevDetail` | 7507–7528 |  |
+| `applyMoneyDetail` | 7529–7553 | Money's render toggle: Neighbourhood prisms (view "money") vs the |
+| `syncMoneyDetail` | 7554–7565 | The Detail row's active button. Three buttons over two views, so the grid |
+| `applyMoneyMode` | 7566–7573 | Money's Current/Change lens toggle. Change is a full-only render-mode of |
+| `applyChgWindow` | 7574–7592 | Switch the change lens's window. State-only when the lens isn't on screen, |
+| `syncChangeControls` | 7593–7603 | Reveal the change window picker, and re-run the metric rows that host the |
+| `applyDevMode` | 7604–7611 | Development's Housing/Infill lens toggle (full build only). Infill is a |
+| `syncLabControls` | 7612–7628 | The Lab's controls: the experiment picker (only once there are two — see |
+| `applyLabCut` | 7629–7642 | Switch the deviation experiment's revenue cut. Its average, per-arm |
+| `setPrismOpacity` | 7643–7653 | Set the ratio view's ghost-prism opacity (0–100). UI-state only — the |
+| `applyView` | 7654–7897 | Switch view (money \| services \| ratio \| uses \| glass). Road geometry |
+| `syncServiceControls` | 7898–7907 | Services-view controls. `applyService` flips a service on/off; |
+| `applyService` | 7908–7921 |  |
+| `applySvcDriver` | 7922–7954 |  |
 
 ### shareable URL: the hash names the view on screen
 
 | symbol | lines | what it does |
 |---|---|---|
-| `METRIC_FROM_URL` | 7954–7956 |  |
-| `urlHash` | 7957–7997 |  |
-| `shareLink` | 7998–8006 | Absolute on purpose: the full build carries <base href="../">, and a |
-| `copyShareLink` | 8007–8018 | With no clipboard (an insecure origin, a denied permission) the link goes |
-| `offered` | 8019–8025 | On screen, ignoring the Options fold: a folded panel on a phone hides |
-| `applyUrlState` | 8026–8098 |  |
-| `restoreFromHash` | 8099–8117 | Once, at the end of boot, after every build and data gate has run. The |
+| `METRIC_FROM_URL` | 7955–7957 |  |
+| `urlHash` | 7958–7998 |  |
+| `shareLink` | 7999–8007 | Absolute on purpose: the full build carries <base href="../">, and a |
+| `copyShareLink` | 8008–8019 | With no clipboard (an insecure origin, a denied permission) the link goes |
+| `offered` | 8020–8026 | On screen, ignoring the Options fold: a folded panel on a phone hides |
+| `applyUrlState` | 8027–8099 |  |
+| `restoreFromHash` | 8100–8118 | Once, at the end of boot, after every build and data gate has run. The |
 
 ### boot
 
 | symbol | lines | what it does |
 |---|---|---|
-| `boot` | 8118–8742 | Everything that needs the map surface: fetch the data, mount the deck.gl |
+| `boot` | 8119–8743 | Everything that needs the map surface: fetch the data, mount the deck.gl |
 
 ## Dependency graph (1081 edges)
 
