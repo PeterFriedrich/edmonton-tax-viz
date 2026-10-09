@@ -1163,6 +1163,33 @@ query and an attribute selector: under `@media (prefers-color-scheme: light)` gu
   and phone 390 (default, Options open, peek card). Dark render unchanged, and
   `verify-theme.js` passes 71/71.
 
+**Phases 5 + 6 status (2026-10-09, S219): built, in one PR** (Peter: so light never
+ships with the wrong wording).
+- **The theme is chosen in `<head>`, before first paint.** A stored choice
+  (`localStorage.theme`) wins, then the OS (`prefers-color-scheme`). `state.theme`
+  and the map's first backdrop read the attribute it sets. The dark pin on `<html>`
+  from phase 4 is gone.
+- ⚠️ **Automation is pinned to dark unless a choice is stored.** Playwright emulates
+  a LIGHT OS by default, so without the pin every verify script, all written against
+  dark, would have loaded light. This is the same `navigator.webdriver` rule as the
+  auto-guide. To test light, store `theme=light` in the context, or unset `webdriver`
+  as `verify-theme.js` does.
+- **The toggle** is Dark / Light at the top of the Display pod (`#theme`). A click is
+  stored. Until one is, a change to the OS setting is followed live. The theme is not
+  in the share link (DECISIONS 2026-10-08).
+- **Glow** has no light version. Entering light moves a Glow reader to Inferno, and
+  CSS hides the Glow button there.
+- **Copy (COPY_DECISIONS B9):** `setBlurb` swaps brighter → darker in light, so every
+  blurb follows. The guide card carries a `.more-word` span.
+- **Gate:** `verify-theme.js` reader paths, 30 checks:
+  - automation on a light OS gets dark;
+  - a light OS opens light, and an OS switch is followed live;
+  - the Light button switches, is marked, and is stored;
+  - a stored choice beats a dark OS after a reload, and an OS switch is then ignored;
+  - Glow gives way to Inferno;
+  - 9 public blurb families never say "bright", in 3D and 2D.
+  Each mutant turns its check red (see the PR).
+
 Phases 1 and 4 change nothing in dark and can merge early. Phases 2–3 are the
 design work and where the time goes.
 
