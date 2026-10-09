@@ -236,8 +236,10 @@ publish on its own, unrelated to any of this — re-pinned.)_
   the band ~40 px; below ~860 it predates S220. Layout call: Peter.
 - [ ] **F3 (public): the Beta badge covers the phone legend and sheet.** Move or shrink it
   under 641 px; fix `build_site.py`'s "keeps clear of the legend" comment.
-- [ ] **F4: make `themed()` throw on a missing light value** (a `HOVER_COLOR` mutant passed
-  every CI gate), and/or a pytest that every `themed(` has two arrays.
+- ✅ **F4 fixed S222:** `themed()` throws on a missing or mis-sized light value (the page dies at
+  load, so smoke goes red), and `test_every_themed_colour_has_a_light_value` checks every call
+  has two same-length arrays. RIVER, ARTERIAL and HOVER mutants each red the pytest; the HOVER
+  mutant now crashes smoke too.
 - [ ] **F5: revenue-mix greys on the light panel (1.3:1 / 1.7:1).** Design call: Peter.
 - [ ] **F6: declare `color-scheme` per theme** (`only light` / `only dark` on
   `:root[data-theme]`); verified to stop Chromium auto-dark repainting a stored-light page.

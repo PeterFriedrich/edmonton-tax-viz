@@ -731,7 +731,13 @@
     // read through tc() at draw time; THEMED lists them all so verify-theme.js
     // can swap every one and catch a layer still holding a dark value.
     const THEMED = [];
-    const themed = (dark, light) => { const c = { dark, light }; THEMED.push(c); return c; };
+    // Throws on a missing or mis-sized light value: deck draws `undefined`
+    // without complaint, and a HOVER_COLOR mutant passed every gate (audit F4).
+    const themed = (dark, light) => {
+      if (!Array.isArray(light) || light.length !== dark.length)
+        throw new Error(`themed(): light value ${JSON.stringify(light)} does not match dark ${JSON.stringify(dark)}`);
+      const c = { dark, light }; THEMED.push(c); return c;
+    };
     const tc = c => c[state.theme];
     // Hover highlight (60) and its softer variant (40) on the flat planes.
     const HOVER_COLOR = themed([255, 255, 255, 60], [255, 255, 255, 90]);
