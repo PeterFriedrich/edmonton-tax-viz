@@ -943,6 +943,26 @@ body.budget #budget-btn { background: var(--accent); color: var(--ink-on-accent)
    800px tablet, and a mouse does not need one in a 400px-wide desktop
    window, so width is the wrong test for both rules here.
    =================================================================== */
+/* Desktop: the blurb and the mill rates under it sit in ONE box (Peter,
+   2026-10-09), so the map's prisms cannot run under the text. A halo was tried
+   first and left the map showing between letters. Same text position as the
+   bare form: the box grows out by its padding. The reading-panel surface, not
+   the pods': at the pods' 0.7 a dark-mode tower still showed through the text.
+   Right padding is 6px, not 10, because #search starts at x=392 and the text
+   ends at 382. The phone keeps its
+   own expanded card (max-width: 640px block). */
+@media (min-width: 641px) {
+  #title { top: 12px; left: 12px; padding: 8px 6px 8px 10px; width: 360px;
+           background: var(--read-bg); border-radius: 6px; }
+  /* 360, not 400: the box's width. The caveat line wraps to two lines here. */
+  #millrates { width: 360px; margin-left: -10px; padding: 2px 6px 8px 10px;
+               background: var(--read-bg); border-radius: 0 0 6px 6px; }
+  /* The history panel lines up with the box above it. */
+  #temporal { left: 12px; }
+  /* Joined while the rates show; the rates yield to an open history panel. */
+  body.mills:not(:has(#temporal.open)) #title { border-radius: 6px 6px 0 0; }
+}
+
 @media (hover: none) {
   #peek.open { display: block; }
   /* 20x21 is comfortable for a cursor and less than half the 44px minimum for
