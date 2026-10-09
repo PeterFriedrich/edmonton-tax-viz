@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -7322,7 +7322,7 @@
         document.getElementById("legend-max").textContent =
           grid ? cfg.fmt(gridScale().clamp) + "+" : cfg.legendMax;
         label.textContent = "Set aside — natural / undeveloped land";
-        sw.style.background = "rgb(104,108,122)";
+        sw.style.background = `rgb(${tc(SET_ASIDE_COLOR).join(",")})`;
       } else {
         // Money view. The denominator toggle relabels ("per acre" -> "per lot
         // acre") and re-anchors the legend max to the lot-acre clamp (moneyScale).
@@ -7362,6 +7362,7 @@
     function applyTheme(name) {
       if (name === state.theme) return;
       state.theme = name;
+      document.documentElement.dataset.theme = name;   // the chrome tokens (styles.css)
       overlay.setProps({ layers: buildLayers() });
       map.setPaintProperty("bg", "background-color", activeRamp().bg);
       refreshLegend();
