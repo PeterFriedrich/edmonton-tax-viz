@@ -705,13 +705,13 @@
     // read through tc() at draw time; THEMED lists them all so verify-theme.js
     // can swap every one and catch a layer still holding a dark value.
     const THEMED = [];
-    const themed = dark => { const c = { dark }; THEMED.push(c); return c; };
+    const themed = (dark, light) => { const c = { dark, light }; THEMED.push(c); return c; };
     const tc = c => c[state.theme];
     // Hover highlight (60) and its softer variant (40) on the flat planes.
-    const HOVER_COLOR = themed([255, 255, 255, 60]);
-    const HOVER_COLOR_SOFT = themed([255, 255, 255, 40]);
+    const HOVER_COLOR = themed([255, 255, 255, 60], [255, 255, 255, 90]);
+    const HOVER_COLOR_SOFT = themed([255, 255, 255, 40], [255, 255, 255, 60]);
     // The lighting's specular tint, shared by every lit prism.
-    const SPECULAR_COLOR = themed([60, 60, 70]);
+    const SPECULAR_COLOR = themed([60, 60, 70], [60, 60, 70]);
     const CENTER = [-113.50, 53.52]; // Edmonton, from the data centroid
     // The default framing — single source for the map constructor and the two
     // bottom-left framing buttons. HOME is the tilted 3D default; HOME_2D is the
@@ -957,7 +957,7 @@
     // view.
     const ROADS_URL = "./data/roads.geojson";
     const ROAD_CLAMP = 53;
-    const ARTERIAL_COLOR = themed([116, 120, 132, 170]);
+    const ARTERIAL_COLOR = themed([116, 120, 132, 170], [146, 143, 154, 200]);
 
     // Ratio view: revenue_per_acre / <service per acre> — the acres cancel,
     // so each ratio is $ of municipal revenue per unit of a LEVY-FUNDED
@@ -1033,18 +1033,18 @@
     // `key` matches the `u` prop of the zoning ground layer (export_zoning_web);
     // `frac` the hood composition columns. Same category, two granularities.
     const USE_CATEGORIES = [
-      { key: "res",    frac: "frac_residential", label: "Residential",          color: themed([173, 138,  58]) },
-      { key: "com",    frac: "frac_commercial",  label: "Commercial",           color: themed([224,  82,  82]) },
-      { key: "ind",    frac: "frac_industrial",  label: "Industrial",           color: themed([143, 128, 224]) },
-      { key: "mix",    frac: "frac_mixed",       label: "Mixed use",            color: themed([165,  76,  31]) },
-      { key: "dc",     frac: "frac_dc",          label: "Direct Control",       color: themed([213,  81, 129]) },
-      { key: "inst",   frac: "frac_inst",        label: "Institutional",        color: themed([ 42,  99, 184]) },
-      { key: "never",  frac: "frac_never",       label: "River valley / parks", color: themed([ 39, 133,  58]) },
-      { key: "notyet", frac: "frac_notyet",      label: "Future / rural",       color: themed([104, 108, 122]) },
-      { key: "other",  frac: "frac_other",       label: "Unclassified",         color: themed([ 88,  90, 102]) },
+      { key: "res",    frac: "frac_residential", label: "Residential",          color: themed([173, 138,  58], [173, 138, 58]) },
+      { key: "com",    frac: "frac_commercial",  label: "Commercial",           color: themed([224,  82,  82], [224, 82, 82]) },
+      { key: "ind",    frac: "frac_industrial",  label: "Industrial",           color: themed([143, 128, 224], [143, 128, 224]) },
+      { key: "mix",    frac: "frac_mixed",       label: "Mixed use",            color: themed([165,  76,  31], [165, 76, 31]) },
+      { key: "dc",     frac: "frac_dc",          label: "Direct Control",       color: themed([213,  81, 129], [213, 81, 129]) },
+      { key: "inst",   frac: "frac_inst",        label: "Institutional",        color: themed([ 42,  99, 184], [42, 99, 184]) },
+      { key: "never",  frac: "frac_never",       label: "River valley / parks", color: themed([ 39, 133,  58], [39, 133, 58]) },
+      { key: "notyet", frac: "frac_notyet",      label: "Future / rural",       color: themed([104, 108, 122], [172, 177, 185]) },
+      { key: "other",  frac: "frac_other",       label: "Unclassified",         color: themed([ 88,  90, 102], [150, 152, 162]) },
     ];
     // The revenue-mix bar's share outside every zone polygon.
-    const UNZONED_COLOR = themed([70, 72, 84]);
+    const UNZONED_COLOR = themed([70, 72, 84], [196, 198, 206]);
     const USE_BY_KEY = Object.fromEntries(USE_CATEGORIES.map(u => [u.key, u]));
 
     // Uses-view residential prisms (layers-panel toggle, 2026-07-10): "how
@@ -1982,7 +1982,7 @@
     // is a land-use fact, not a fiscal signal (see FINDINGS §4/§6). Distinct from
     // every ramp's low end (dark purple/blue) — but NOT from cividis's grey
     // middle, so that ramp carries its own `setAside` (rampSetAside below). Height stays their true (low) value — honest, de-emphasized.
-    const SET_ASIDE_COLOR = themed([104, 108, 122]);
+    const SET_ASIDE_COLOR = themed([104, 108, 122], [172, 177, 185]);
     // The set-aside colour beside a RAMP-coloured surface. Only where the
     // neighbours come from rampColorAt: the Infill/Change/Deviation diverging
     // ramp and the Glass ground plane keep SET_ASIDE_COLOR, because cividis's
@@ -1995,7 +1995,7 @@
     // stays in the translucent prisms above). Set-aside hoods take the usual
     // grey instead, so "off the fiscal scale" reads on the ground too.
     // Darker than SET_ASIDE_COLOR but clearly above every ramp background.
-    const GLASS_PLANE_COLOR = themed([50, 53, 63]);
+    const GLASS_PLANE_COLOR = themed([50, 53, 63], [226, 227, 231]);
 
     // The metric's lot-acre column name (value_per_acre -> value_per_lot_acre).
     // Both the Glass grid file and the neighbourhood GeoJSON carry the *_per_lot_acre
@@ -2769,9 +2769,9 @@
     // Dark-centred diverging ramp: t in [-1,1]. Negative arm (pressure) warms to
     // orange, positive arm (opportunity) cools to teal; both fade to a near-bg
     // centre at 0 so magnitude reads as glow. Teal/orange is colour-blind safe.
-    const INFILL_CENTER = themed([24, 26, 36]);
-    const INFILL_POS = themed([90, 222, 224]);   // opportunity — teal/cyan
-    const INFILL_NEG = themed([244, 150, 66]);   // pressure — orange
+    const INFILL_CENTER = themed([24, 26, 36], [232, 233, 236]);
+    const INFILL_POS = themed([90, 222, 224], [4, 146, 150]);   // opportunity — teal/cyan
+    const INFILL_NEG = themed([244, 150, 66], [235, 117, 42]);   // pressure — orange
     function infillColorAt(t) {
       const end = t >= 0 ? tc(INFILL_POS) : tc(INFILL_NEG);
       const f = Math.abs(t);
@@ -2809,7 +2809,7 @@
     // (dist_lrt_m/dist_school_m already ride on value_grid.json), highlighting
     // in-band cells over the unchanged hood-level score below. ⚠️ amenityInBand
     // treats a null distance as OUT of band — "unknown" must not read as "near".
-    const AMENITY_HIGHLIGHT_COLOR = themed([255, 255, 255, 70]);
+    const AMENITY_HIGHLIGHT_COLOR = themed([255, 255, 255, 70], [0, 0, 0, 50]);
     function amenityHighlightGridLayer() {
       return new deck.GridCellLayer({
         id: "infill-amenity-grid",
@@ -3115,7 +3115,7 @@
     // 20.6 normal — the best of white/near-white/blue/violet — and blue was
     // rejected on meaning as much as numbers: a cool hue leans toward the teal
     // surplus pole. verify-deviation.js pins R === G === B.
-    const UNCERTAIN_COLOR = themed([255, 255, 255]);
+    const UNCERTAIN_COLOR = themed([255, 255, 255], [64, 64, 64]);
     const exemptFrac = p => p.rev_frac_exempt || 0;
 
     // --- two tiers, answering two different questions ------------------------
@@ -3258,7 +3258,7 @@
     // are sequential magnitude — they have no poles — so azure asserts no
     // direction. Cividis's blue low end is the one place it has any pull, and
     // #2ec4ff is far brighter than any of its steps (ΔE 51.7 vs #00224e).
-    const INST_OUTLINE_COLOR = themed([46, 196, 255]);
+    const INST_OUTLINE_COLOR = themed([46, 196, 255], [4, 139, 224]);
 
     // The two endpoints of every banded hood, as TRANSLUCENT PRISMS with opaque
     // edges — one layer per endpoint, because deck.gl extrudes from the ground
@@ -3759,8 +3759,8 @@
     // drawn whenever the fire service is checked — driver or not, they are
     // geography, not a scale. depthTest off so the dots sit over the
     // coplanar plane + road lines. Not pickable (hood hover owns tooltips).
-    const STATION_OUTLINE_COLOR = themed([255, 255, 255, 220]);
-    const FIRE_STATION_COLOR = themed([235, 100, 60, 235]);
+    const STATION_OUTLINE_COLOR = themed([255, 255, 255, 220], [255, 255, 255, 220]);
+    const FIRE_STATION_COLOR = themed([235, 100, 60, 235], [205, 70, 35, 235]);
     function fireStationsLayer() {
       if (!fireStationsData) return [];
       return [new deck.ScatterplotLayer({
@@ -3798,7 +3798,7 @@
     // GTFS location_type-1 stations — LRT stations + transit centres — drawn
     // whenever the transit service is checked, driver or not (the fire-dot
     // pattern: geography, not a scale). Not pickable.
-    const TRANSIT_STATION_COLOR = themed([70, 160, 235, 235]);
+    const TRANSIT_STATION_COLOR = themed([70, 160, 235, 235], [30, 120, 205, 235]);
     function transitStationsLayer() {
       if (!transitStationsData) return [];
       return [new deck.ScatterplotLayer({
@@ -3833,7 +3833,7 @@
     // network (Capital / Metro / Valley; the HER heritage streetcar is dropped
     // upstream) as a context layer under the station dots — geography, not a
     // scale, drawn whenever transit is checked. Not pickable.
-    const TRANSIT_LINE_COLOR = themed([70, 160, 235, 210]);
+    const TRANSIT_LINE_COLOR = themed([70, 160, 235, 210], [30, 120, 205, 210]);
     function lrtLinesLayer() {
       if (!lrtLinesData) return [];
       return [new deck.PathLayer({
@@ -3868,7 +3868,7 @@
     // The metric lives on the hood plane (bike_m_per_acre), so this just shows
     // WHERE the counted infrastructure runs. Shared roadways and walkways are
     // excluded upstream, so what draws here is exactly what the metric counts.
-    const BIKE_LINE_COLOR = themed([120, 210, 140, 200]);
+    const BIKE_LINE_COLOR = themed([120, 210, 140, 200], [40, 150, 80, 200]);
     function bikeLinesLayer() {
       if (!bikeLinesData) return [];
       return [new deck.PathLayer({
@@ -3944,12 +3944,12 @@
     // luminance ~108) is the ceiling it must stay well beneath. Widened
     // 2026-08-08 from [50,66,94] (spread 44) to nearly double the chroma at
     // roughly the same lightness: ~71 vs the old ~65, ceiling untouched.
-    const RIVER_COLOR = themed([42, 74, 128, 255]);
-    const HIGHWAY_COLOR = themed([72, 78, 92, 255]);
+    const RIVER_COLOR = themed([42, 74, 128, 255], [141, 187, 224, 255]);
+    const HIGHWAY_COLOR = themed([72, 78, 92, 255], [150, 156, 168, 255]);
     // Municipal outlines: dimmer than the highways and unfilled. They are the
     // faintest thing on the map by intent — they say "the city ends here and
     // that is Leduc", and nothing more.
-    const BOUNDARY_COLOR = themed([58, 62, 74, 255]);
+    const BOUNDARY_COLOR = themed([58, 62, 74, 255], [185, 189, 198, 255]);
     // …with ONE exception, and it is the point of the tier split: Edmonton's own
     // legal limit is the only boundary the map is making a claim WITH, not just
     // drawing for context — it is the only thing showing where Edmonton actually
@@ -3959,8 +3959,8 @@
     // It gets a lighter, wider stroke; the neighbours keep the
     // faint one. The industrial zone sits between: named, but not a jurisdiction
     // — a dimmer warm line so it does not read as another municipality.
-    const CITY_LIMIT_COLOR = themed([122, 132, 152, 255]);
-    const ZONE_LINE_COLOR = themed([118, 96, 74, 235]);
+    const CITY_LIMIT_COLOR = themed([122, 132, 152, 255], [96, 106, 126, 255]);
+    const ZONE_LINE_COLOR = themed([118, 96, 74, 235], [160, 128, 92, 235]);
     // ⚠️ DO NOT collapse these back into one layer with a per-feature accessor.
     // That was tried on 2026-08-08 and reverted: `getLineColor: f => …` makes
     // deck.gl build a per-vertex attribute buffer across every boundary vertex
@@ -4187,10 +4187,10 @@
     // town (they are areas, not points), the zone borrows its outline's warmth,
     // and the econ names sit quietest.
     const REF_TIERS = {
-      region: { prio: PRIO_REGION, base: 14, col: themed([138, 150, 172, 235]) },
-      zone:   { prio: PRIO_ZONE,   base: 12, col: themed([166, 140, 108, 230]) },
-      place:  { prio: PRIO_PLACE,  base: 12, col: themed([150, 160, 178, 235]) },
-      econ:   { prio: PRIO_ECON,   base: 11, col: themed([132, 142, 158, 225]) },
+      region: { prio: PRIO_REGION, base: 14, col: themed([138, 150, 172, 235], [84, 96, 118, 235]) },
+      zone:   { prio: PRIO_ZONE,   base: 12, col: themed([166, 140, 108, 230], [138, 106, 70, 230]) },
+      place:  { prio: PRIO_PLACE,  base: 12, col: themed([150, 160, 178, 235], [96, 106, 124, 235]) },
+      econ:   { prio: PRIO_ECON,   base: 11, col: themed([132, 142, 158, 225], [112, 122, 138, 225]) },
     };
     // Smaller and dimmer than a hood name, and drawn in the same font: these
     // are context at the edge of the frame, so they should be legible without
@@ -4213,8 +4213,8 @@
       return PLACE_MIN_SIZE +
              (base - PLACE_MIN_SIZE) * Math.min(1, Math.max(0, t));
     }
-    const LABEL_OUTLINE_COLOR = themed([0, 0, 0, 255]);
-    const HOOD_COLOR = themed([240, 240, 246, 250]);   // hoisted: the colour accessor
+    const LABEL_OUTLINE_COLOR = themed([0, 0, 0, 255], [255, 255, 255, 255]);
+    const HOOD_COLOR = themed([240, 240, 246, 250], [28, 28, 36, 250]);   // hoisted: the colour accessor
                                                // runs per label, per rebuild.
     let _placeAnchors = null;
     function placeAnchors() {
@@ -4435,8 +4435,8 @@
     const SELECTED_BAND_IDS = new Set(["inst-band-exempt", "inst-band-levied",
       "ratio-inst-exempt", "ratio-inst-levied",
       "deviation-band-pick-levied", "deviation-band-pick-exempt"]);
-    const SELECTED_COLOR = themed([255, 255, 255, 255]);
-    const SELECTED_HALO_COLOR = themed([0, 0, 0, 200]);
+    const SELECTED_COLOR = themed([255, 255, 255, 255], [20, 20, 28, 255]);
+    const SELECTED_HALO_COLOR = themed([0, 0, 0, 200], [255, 255, 255, 200]);
     function withSelectedHood(layers) {
       const name = pinnedHood || peekHood || searchHood;
       const f = name && state.data && state.data.features.find(
