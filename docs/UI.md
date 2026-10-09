@@ -1122,6 +1122,41 @@ at `[70,70,90,150]`; the renders read fine.
 light-value mutants each turned it red: set-aside onto cividis's grey, Glass onto
 set-aside, the diverging centre onto set-aside.
 
+**Phase 4 status (2026-10-09, S219): built.** Every `:root` token in `web/styles.css`
+has a light value, written twice because CSS cannot share one block between a media
+query and an attribute selector: under `@media (prefers-color-scheme: light)` guarded by
+`:root:not([data-theme="dark"])`, and under `:root[data-theme="light"]`.
+`applyTheme()` now sets `data-theme` on `<html>`, so one call switches map and chrome.
+- ⚠️ **`<html>` ships with `data-theme="dark"`.** That keeps the media block inert, because
+  nothing follows the OS yet: without the pin an OS-light reader would get light chrome
+  over the dark map, the 2026-09-21 chrome-only hold. **Phase 6 removes the pin** when the
+  page itself reads the preference, and `test_dark_is_pinned_until_the_page_follows_the_os`
+  retires itself the moment `index.html` mentions `prefers-color-scheme`.
+- **New token `--accent-ink`.** `--accent` stays gold in light: a gold fill under dark
+  ink is 13:1. But five places used `--accent` as TEXT colour (`#about-menu a`, `.tip b`,
+  `#temporal-name`, `#peek-name`, `.svcrow em.over`), and gold text on white is 1.4:1.
+  They now read `--accent-ink`, which equals `--accent` in dark and is dark amber
+  `#8a5a00` in light, the same as `--mark`.
+- **Values, measured against `#f7f7f4` and each translucent surface composited over it
+  (WCAG):** every reading ink clears 4.5:1, and the dark order of the ink steps is
+  kept. `--ink-3` is 5.1:1 where dark's is 3.7:1, so the light theme does not copy
+  dark's shortfall. Pods are white α.90: at α.82 the phone Options sheet took a visible
+  wash from the purple prisms. Reading panels are α.97: at .94 the gold buttons
+  ghosted through the open Sources pod. `--sheet-bg` stays near-opaque, as in dark.
+- **Left dark on purpose:** the `Beta build` badge (`build_site.py` injects it with its
+  own styling, and it reads on both), and the `rgba(22,17,26,·)` ink on the gold
+  loading sweep (it only ever sits on `--accent`, which does not change).
+- **Fixed while here:** the Glass legend's set-aside swatch was a literal
+  `rgb(104,108,122)`, so it stayed dark grey in light while the plane drew
+  `(172,177,185)`. It now reads `tc(SET_ASIDE_COLOR)`. This was a phase 3 miss: the
+  probe checks layer colours, not legend swatches.
+- **Gates:** `tests/test_theme_tokens.py` (both blocks equal; every root token has a light
+  value; every `var(--x)` is defined; inks legible on every surface; ink order; the dark
+  pin). Seven mutants each turned it red by name. Screenshot review: desktop 1280 (default,
+  a hood readout with Display open, Services, Development with Sources open, the budget)
+  and phone 390 (default, Options open, peek card). Dark render unchanged, and
+  `verify-theme.js` passes 71/71.
+
 Phases 1 and 4 change nothing in dark and can merge early. Phases 2–3 are the
 design work and where the time goes.
 

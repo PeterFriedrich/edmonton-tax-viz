@@ -1162,8 +1162,8 @@ body.budget #budget-btn { background: var(--accent); color: var(--ink-on-accent)
     --spinner-track-rm: #9aa6bc;
     --banner-border: #d6b45c;
     --north-border: #d6b45c;
-    --pod-bg: rgba(255,255,255,0.82);
-    --read-bg: rgba(255,255,255,0.94);
+    --pod-bg: rgba(255,255,255,0.9);
+    --read-bg: rgba(255,255,255,0.97);
     --toast-bg: rgba(255,255,255,0.96);
     --sheet-bg: rgba(252,252,250,0.985);
     --compass-hover-bg: rgba(236,236,241,0.92);
@@ -1200,8 +1200,8 @@ body.budget #budget-btn { background: var(--accent); color: var(--ink-on-accent)
   --spinner-track-rm: #9aa6bc;
   --banner-border: #d6b45c;
   --north-border: #d6b45c;
-  --pod-bg: rgba(255,255,255,0.82);
-  --read-bg: rgba(255,255,255,0.94);
+  --pod-bg: rgba(255,255,255,0.9);
+  --read-bg: rgba(255,255,255,0.97);
   --toast-bg: rgba(255,255,255,0.96);
   --sheet-bg: rgba(252,252,250,0.985);
   --compass-hover-bg: rgba(236,236,241,0.92);
