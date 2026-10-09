@@ -220,6 +220,8 @@ async function readerPaths() {
     }
     check(`${tag}: the backdrop follows the theme`,
       await page.evaluate(() => map.getPaintProperty('bg', 'background-color')) === PROBE_BG);
+    check(`${tag}: the city mask follows the theme`,
+      await page.evaluate(() => map.getPaintProperty('city-mask', 'fill-color')) === PROBE_BG);
     const swatch = await page.evaluate(() => `rgb(${SET_ASIDE_COLOR.dark.join(',')})`);
     if (before.legend.includes(swatch))
       check(`${tag}: the legend's set-aside swatch follows the theme`, !probe.legend.includes(swatch));
