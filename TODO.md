@@ -712,6 +712,14 @@ preload still holds (12/12). What is left:
 
 ### Peter's list, 2026-09-25 (S196) — not scoped yet
 
+- [ ] **A grey cross-hatch (or similar texture) on the backdrop around the map,
+  in BOTH themes, designed together** (Peter, 2026-10-09). He raised it after seeing
+  the mid-grey light chrome. Not scoped. The constraints: the backdrop is one
+  MapLibre `background` layer per ramp (`RAMPS[*].bg` / `THEME_RAMPS.light[*].bg`), so
+  a pattern is a `background-pattern` image or a polygon fill outside the city, not a
+  colour. It must stay clear of the set-aside grey (ΔE2000 against `SET_ASIDE_COLOR`
+  and each ramp's `setAside`), and of the region/boundary linework drawn over it.
+
 - [ ] **Mobile panel before it opens: more colour and height so it reads as
   tappable.** First pin down which element this means (the peek card, or the
   collapsed hood panel?) and measure its current size on a phone viewport.

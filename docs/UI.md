@@ -1139,10 +1139,16 @@ query and an attribute selector: under `@media (prefers-color-scheme: light)` gu
   `#8a5a00` in light, the same as `--mark`.
 - **Values, measured against `#f7f7f4` and each translucent surface composited over it
   (WCAG):** every reading ink clears 4.5:1, and the dark order of the ink steps is
-  kept. `--ink-3` is 5.1:1 where dark's is 3.7:1, so the light theme does not copy
-  dark's shortfall. Pods are white α.90: at α.82 the phone Options sheet took a visible
-  wash from the purple prisms. Reading panels are α.97: at .94 the gold buttons
-  ghosted through the open Sources pod. `--sheet-bg` stays near-opaque, as in dark.
+  kept. `--ink-3` is 6.7:1 on the map and 5.5:1 on a pod, where dark's is 3.7:1, so the
+  light theme does not copy dark's shortfall.
+- **Surfaces are mid grey (Peter, 2026-10-09).** Pods are `(224,224,230)` α.92, reading
+  panels `(226,226,232)` α.97, sheets α.985, buttons `#d0d0d8`. It replaced the first
+  near-white build (#686) after a side-by-side with a lighter grey, `#ececf0`. Grey costs
+  contrast, so the dim inks were darkened to keep 4.5:1 on a pod: `--ink-2` `#4a4a5e`,
+  `--ink-3` / `--ink-faint` / `--ink-caret-mobile` `#56566a`, `--ink-revcut` `#505066`,
+  `--mark-2` `#6c6c82`. Opacity history: at white α.82 the phone Options sheet took a
+  purple wash from the prisms; at α.94 the gold buttons ghosted through the open
+  Sources pod.
 - **Left dark on purpose:** the `Beta build` badge (`build_site.py` injects it with its
   own styling, and it reads on both), and the `rgba(22,17,26,·)` ink on the gold
   loading sweep (it only ever sits on `--accent`, which does not change).

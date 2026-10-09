@@ -1125,8 +1125,9 @@ body.budget #budget-btn { background: var(--accent); color: var(--ink-on-accent)
    equal and makes every :root token carry a light value.
    Measured against the light map backdrop #f7f7f4 and the pod surface
    over it (WCAG): every reading ink clears 4.5:1, and the dark-mode
-   order of the ink steps is kept. --ink-3 is 5.1:1 here against 3.7:1
-   in dark, so the light theme doesn't repeat the dark failure.
+   order of the ink steps is kept. The surfaces are mid grey (Peter,
+   2026-10-09), which is why the dim inks sit darker than a white pod
+   would need: --ink-3 is 6.7:1 on the map, 5.5:1 on a pod.
    ⚠️ <html> carries data-theme="dark" until the toggle phase ships, so
    the media block is inert today: without the pin an OS-light reader
    would get light chrome on the dark map (UI.md, chrome-only hold).
@@ -1134,21 +1135,21 @@ body.budget #budget-btn { background: var(--accent); color: var(--ink-on-accent)
 @media (prefers-color-scheme: light) {
   :root:not([data-theme="dark"]) {
     --bg: #f7f7f4;
-    --surface-btn: #ececf0;
-    --surface-btn-hover: #e2e2e8;
-    --border: #d4d4dc;
-    --border-strong: #b4b4c2;
-    --border-subtle: #e4e4ea;
+    --surface-btn: #d0d0d8;
+    --surface-btn-hover: #c6c6cf;
+    --border: #b6b6c2;
+    --border-strong: #a0a0b0;
+    --border-subtle: #c8c8d2;
     --spinner-track: #dcdce4;
     --ink: #1c1c24;
-    --ink-2: #55556a;
-    --ink-3: #6c6c80;
+    --ink-2: #4a4a5e;
+    --ink-3: #56566a;
     --ink-2-bright: #3c3c4c;
     --ink-toast: #26262f;
     --ink-tip: #121218;
-    --ink-revcut: #62627a;
-    --ink-faint: #66667a;
-    --ink-caret-mobile: #6a6a7e;
+    --ink-revcut: #505066;
+    --ink-faint: #56566a;
+    --ink-caret-mobile: #56566a;
     --ink-off: #a4a4b4;
     --ink-disabled: #b4b4c2;
     --accent: #fcd278;
@@ -1156,37 +1157,37 @@ body.budget #budget-btn { background: var(--accent); color: var(--ink-on-accent)
     --ink-on-accent: #16111a;
     --banner-ink: #5a4300;
     --mark: #8a5a00;
-    --mark-2: #7c7c92;
+    --mark-2: #6c6c82;
     --band: rgba(28,28,36,0.06);
     --spinner: #1a6fd8;
     --spinner-track-rm: #9aa6bc;
     --banner-border: #d6b45c;
     --north-border: #d6b45c;
-    --pod-bg: rgba(255,255,255,0.9);
-    --read-bg: rgba(255,255,255,0.97);
-    --toast-bg: rgba(255,255,255,0.96);
-    --sheet-bg: rgba(252,252,250,0.985);
-    --compass-hover-bg: rgba(236,236,241,0.92);
+    --pod-bg: rgba(224,224,230,0.92);
+    --read-bg: rgba(226,226,232,0.97);
+    --toast-bg: rgba(226,226,232,0.96);
+    --sheet-bg: rgba(224,224,230,0.985);
+    --compass-hover-bg: rgba(210,210,218,0.95);
     --banner-bg: rgba(255,244,214,0.95);
   }
 }
 :root[data-theme="light"] {
   --bg: #f7f7f4;
-  --surface-btn: #ececf0;
-  --surface-btn-hover: #e2e2e8;
-  --border: #d4d4dc;
-  --border-strong: #b4b4c2;
-  --border-subtle: #e4e4ea;
+  --surface-btn: #d0d0d8;
+  --surface-btn-hover: #c6c6cf;
+  --border: #b6b6c2;
+  --border-strong: #a0a0b0;
+  --border-subtle: #c8c8d2;
   --spinner-track: #dcdce4;
   --ink: #1c1c24;
-  --ink-2: #55556a;
-  --ink-3: #6c6c80;
+  --ink-2: #4a4a5e;
+  --ink-3: #56566a;
   --ink-2-bright: #3c3c4c;
   --ink-toast: #26262f;
   --ink-tip: #121218;
-  --ink-revcut: #62627a;
-  --ink-faint: #66667a;
-  --ink-caret-mobile: #6a6a7e;
+  --ink-revcut: #505066;
+  --ink-faint: #56566a;
+  --ink-caret-mobile: #56566a;
   --ink-off: #a4a4b4;
   --ink-disabled: #b4b4c2;
   --accent: #fcd278;
@@ -1194,16 +1195,16 @@ body.budget #budget-btn { background: var(--accent); color: var(--ink-on-accent)
   --ink-on-accent: #16111a;
   --banner-ink: #5a4300;
   --mark: #8a5a00;
-  --mark-2: #7c7c92;
+  --mark-2: #6c6c82;
   --band: rgba(28,28,36,0.06);
   --spinner: #1a6fd8;
   --spinner-track-rm: #9aa6bc;
   --banner-border: #d6b45c;
   --north-border: #d6b45c;
-  --pod-bg: rgba(255,255,255,0.9);
-  --read-bg: rgba(255,255,255,0.97);
-  --toast-bg: rgba(255,255,255,0.96);
-  --sheet-bg: rgba(252,252,250,0.985);
-  --compass-hover-bg: rgba(236,236,241,0.92);
+  --pod-bg: rgba(224,224,230,0.92);
+  --read-bg: rgba(226,226,232,0.97);
+  --toast-bg: rgba(226,226,232,0.96);
+  --sheet-bg: rgba(224,224,230,0.985);
+  --compass-hover-bg: rgba(210,210,218,0.95);
   --banner-bg: rgba(255,244,214,0.95);
 }
