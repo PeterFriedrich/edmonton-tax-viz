@@ -1093,10 +1093,34 @@ set the backdrop from it.
     backdrop. It now reads only the drawn part of each attribute, because a reused
     buffer carried the money view's colours past `numInstances` into Change and Ratio
     and false-failed.
-- **Still dark-only until phase 3:** every `themed()` colour (set-aside, roads,
-  river, cyan exempt tiers) has no light value yet, so `applyTheme("light")` is not
-  callable until then. Light cividis's grey middle will need its own light set-aside,
-  as dark cividis did.
+- **Still dark-only until phase 3** (done, next section).
+
+**Phase 3 status (2026-10-09, S218): built.** Every `themed()` colour now takes
+`themed(dark, light)`: 40 values, all measured against `#f7f7f4` and both light ramps
+(ΔE2000). `applyTheme("light")` now draws a complete light map. The chrome stays dark
+until phase 4, and nothing calls it yet. The constrained ones:
+
+| Colour | Light value | Why |
+|---|---|---|
+| set-aside | `(172,177,185)` | Searched over neutral greys: ≥17.9 from BOTH light ramps (32.6 default, 17.9 cividis), so light cividis needs no `setAside` of its own, unlike dark |
+| Uses "Future / rural" | = set-aside | keeps the dark-mode tie |
+| Glass plane | `(226,227,231)` | lighter than set-aside here (dark: darker), 12.7 from it |
+| exempt azure (`INST_OUTLINE_COLOR`) | `(4,139,224)` | brute-forced within azure's hue (h 235–275): ≥23.8 from both ramps, bg, set-aside and roof edge; 3.4:1 vs bg |
+| diverging centre / pos / neg | `(232,233,236)` / `(4,146,150)` / `(235,117,42)` | the centre sits just under the backdrop (dark: just over), and magnitude reads as saturation |
+| "uncertain" | `(64,64,64)` | R=G=B as before. Black measured best, but near-black is the linework (Peter, phase 2). ≥32 from both poles, normal + deutan + protan |
+| arterial | `(146,143,154,200)` | searched: 29.0 / 11.2 from the ramps, 10.9 from set-aside. ⚠️ Cividis's grey middle is still the closest, as in dark (4.3 there) |
+| hover / soft | white α90 / α60 | white α90 beat black α60 on the light ramps (min ΔE 6.0 vs 5.3; cividis 6.5 vs 3.5) |
+| amenity highlight | black α50 | a white overlay vanishes on the light diverging centre |
+| labels | text `(28,28,36)`, halo white | 16.9:1 |
+| lines | boundary 1.75:1 < highway 2.57:1 < city limit 5.07:1 vs bg | the dark map's hierarchy, inverted |
+| river | `(141,187,224)` | 12.8 from set-aside, 26+ from both ramps: still landform, not data |
+
+The Uses categories, the specular tint and the station outline keep their dark values,
+which already clear the light backdrop (Uses ≥3.0:1). The roof edge stays provisional
+at `[70,70,90,150]`; the renders read fine.
+**Gate:** `tests/test_set_aside_colour.py` runs every check for both themes. Three
+light-value mutants each turned it red: set-aside onto cividis's grey, Glass onto
+set-aside, the diverging centre onto set-aside.
 
 Phases 1 and 4 change nothing in dark and can merge early. Phases 2–3 are the
 design work and where the time goes.
