@@ -1194,7 +1194,8 @@ ships with the wrong wording).
 first paint and adds **A0**, which checks that the page really loaded in the theme it
 was asked for (without it, a light run that loaded dark would pass as light). It passes
 in light on both builds, and A0 also runs on every dark run. A mutant that stores the
-wrong key reds A0 alone. Whether CI runs the light pass is a separate proposal (TODO).
+wrong key reds A0 alone. `deploy.yml` runs the light pass on both builds; `refresh.yml`
+does not, since a data refresh does not touch theme code (DECISIONS 2026-10-09).
 
 Phases 1 and 4 change nothing in dark and can merge early. Phases 2–3 are the
 design work and where the time goes.

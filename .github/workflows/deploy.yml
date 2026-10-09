@@ -115,6 +115,11 @@ jobs:
           done
           node tools/profiling/verify-smoke.js http://localhost:8931/index.html
           node tools/profiling/verify-smoke.js http://localhost:8931/dev-build-full/index.html
+          # Light mode on both builds: automation loads dark unless a theme is
+          # stored, so without these no gate ever renders light. Not in
+          # refresh.yml: a data refresh does not touch theme code.
+          node tools/profiling/verify-smoke.js http://localhost:8931/index.html light
+          node tools/profiling/verify-smoke.js http://localhost:8931/dev-build-full/index.html light
           # The public blurb rules (docs/COPY_DECISIONS.md group B), ~30 s. PUBLIC
           # ROOT ONLY: the rules are the public build's, and the script refuses
           # the full build rather than check states it does not enumerate. Not
