@@ -862,7 +862,7 @@ Downloads" dataset is download-count *stats*, not the feed):
 | Trips | `ctwr-tvrd` | 56,812 | `data/raw/gtfs_trips.csv` |
 | Stop Times | `greh-g7ac` | 1,744,051 | `data/raw/gtfs_stop_times.csv` |
 | Calendar Dates | `f2sy-bth7` | 9,248 | `data/raw/gtfs_calendar_dates.csv` |
-| LRT Routes | `rpjw-4jft` | 4 | `data/raw/lrt_routes.geojson` |
+| LRT Routes | `rpjw-4jft` | 3 (4 until HER was removed upstream; measured 2026-10-09) | `data/raw/lrt_routes.geojson` |
 
 **Download:** `scripts/download_data.py` (all gitignored). Trips and
 stop_times use `$select` for only the keyed columns — trips otherwise
@@ -883,7 +883,7 @@ mean-weekday scheduled stop-events per neighbourhood. Consumed by
 | trips: `trip_id`, `route_id`, `service_id` | plain join keys. |
 | stop_times: `trip_id`, `stop_id` | one row = one scheduled stop-event; only these two columns downloaded. |
 | calendar_dates: `service_id`, `date`, `exception_type` | **calendar-dates-only feed** — every active service day is an `exception_type` 1 row (no calendar.txt); type-2 removals honoured generically if they ever appear. |
-| lrt_routes: `lrt_route_id`, `lrt_route_name`, `lrt_route` (multiline) | **Not part of the metric — a map context layer only.** Four route multilines: 021R Capital, 022R Metro, 023R Valley, and `HER` (High Level Bridge heritage streetcar). `export_transit_lines_web` **drops HER** (`EXCLUDED_LRT_ROUTE_IDS` — volunteer-run, not ETS LRT service, absent from the GTFS routes counted) and flattens the rest to `web/data/lrt_lines.json` (343 segments, 2026-07-11). |
+| lrt_routes: `lrt_route_id`, `lrt_route_name`, `lrt_route` (multiline) | **Not part of the metric — a map context layer only.** Four route multilines until HER left the dataset (3 measured 2026-10-09): 021R Capital, 022R Metro, 023R Valley, and `HER` (High Level Bridge heritage streetcar). `export_transit_lines_web` **drops HER** if it is present (`EXCLUDED_LRT_ROUTE_IDS` — volunteer-run, not ETS LRT service, absent from the GTFS routes counted) and flattens the rest to `web/data/lrt_lines.json` (343 segments, 2026-07-11). |
 
 ### Known Quirks
 - **The feed is a snapshot of the CURRENT signup only** — probed window
