@@ -84,6 +84,77 @@ const hits = (darks, colours) => {
   return found;
 };
 
+// What a reader meets (light mode phases 5–6): the theme chosen before first
+// paint, the OS followed live until a choice is stored, the stored choice
+// winning after a reload, Glow leaving with the dark theme, and no blurb saying
+// "brighter" where the high end is darker. Automation is pinned to dark unless
+// a choice is stored, so the OS path runs with navigator.webdriver unset, as
+// verify-guide.js does.
+async function readerPaths() {
+  const b = await chromium.launch();
+  const ready = async p => {
+    await p.waitForFunction(() => document.getElementById('loading').hidden, null, { timeout: 60000 });
+    await p.waitForTimeout(1500);
+  };
+  const theme = p => p.evaluate(() => [document.documentElement.dataset.theme, state.theme,
+    map.getPaintProperty('bg', 'background-color')].join(' '));
+  const lightBg = 'light light #f7f7f4', darkBg = 'dark dark #0a0a0f';
+
+  let ctx = await b.newContext({ viewport: { width: 1280, height: 800 }, colorScheme: 'light' });
+  let page = await ctx.newPage();
+  await page.goto(`${base}/index.html`, { waitUntil: 'networkidle' }); await ready(page);
+  check('reader: automation on a light OS gets dark', await theme(page) === darkBg, await theme(page));
+  await ctx.close();
+
+  ctx = await b.newContext({ viewport: { width: 1280, height: 800 }, colorScheme: 'light' });
+  await ctx.addInitScript(() => Object.defineProperty(navigator, 'webdriver', { get: () => false }));
+  page = await ctx.newPage();
+  const errors = [];
+  page.on('pageerror', e => errors.push(e.message));
+  await page.goto(`${base}/index.html`, { waitUntil: 'networkidle' }); await ready(page);
+  check('reader: a light OS opens in light', await theme(page) === lightBg, await theme(page));
+  check('reader: the landing blurb says darker', await page.evaluate(() =>
+    !/bright/i.test(document.getElementById('title-p').textContent) &&
+    /darker/.test(document.getElementById('title-p').textContent)));
+  check('reader: the guide card says darker', await page.evaluate(() =>
+    [...document.querySelectorAll('.more-word')].every(s => s.textContent === 'darker')));
+  await page.emulateMedia({ colorScheme: 'dark' }); await page.waitForTimeout(1500);
+  check('reader: an OS switch is followed live', await theme(page) === darkBg, await theme(page));
+  check('reader: back in dark the blurb says brighter', await page.evaluate(() =>
+    /brighter/i.test(document.getElementById('title-p').textContent)));
+
+  await page.click('#a11y-btn');
+  await page.evaluate(() => applyPalette('glow'));
+  await page.click('#theme button[data-pick="light"]'); await page.waitForTimeout(1500);
+  check('reader: the Light button switches', await theme(page) === lightBg, await theme(page));
+  check('reader: Glow gives way to Inferno in light', await page.evaluate(() =>
+    state.ramp === 'current' &&
+    document.querySelector('#palette button[data-ramp="current"]').classList.contains('active') &&
+    getComputedStyle(document.querySelector('#palette button[data-ramp="glow"]')).display === 'none'));
+  check('reader: the Light button is marked', await page.evaluate(() =>
+    document.querySelector('#theme button[data-pick="light"]').classList.contains('active') &&
+    !document.querySelector('#theme button[data-pick="dark"]').classList.contains('active')));
+  await page.reload({ waitUntil: 'networkidle' }); await ready(page);
+  check('reader: the choice beats a dark OS after a reload', await theme(page) === lightBg, await theme(page));
+  await page.emulateMedia({ colorScheme: 'light' }); await page.emulateMedia({ colorScheme: 'dark' });
+  await page.waitForTimeout(1000);
+  check('reader: with a choice stored, an OS switch is ignored', await theme(page) === lightBg, await theme(page));
+
+  // Every public blurb family, in 3D and 2D, rendered in light.
+  for (const hash of ['', '#detail=grid', '#mode=change', '#view=development', '#view=development&detail=hood',
+                      '#view=services', '#view=services&on=roadscost', '#view=services&on=roadslife', '#view=ratio']) {
+    await page.goto(`${base}/index.html${hash}`, { waitUntil: 'networkidle' }); await ready(page);
+    for (const pitch of [null, 0]) {
+      if (pitch === 0) { await page.evaluate(() => map.jumpTo({ pitch: 0 })); await page.waitForTimeout(800); }
+      const text = await page.evaluate(() => document.getElementById('title-p').textContent);
+      check(`reader: light ${hash || '(default)'}${pitch === 0 ? ' 2D' : ''} blurb never says brighter`,
+        !/bright/i.test(text), text.match(/.{0,30}bright.{0,20}/i)?.[0]);
+    }
+  }
+  check('reader: no page errors', !errors.length, errors.join('; '));
+  await b.close();
+}
+
 (async () => {
   const covered = new Set();
   let allDarks = [];
@@ -173,6 +244,7 @@ const hits = (darks, colours) => {
   for (const k of unseen.filter(k => UNDRAWN[k])) console.log(`NOTE  not drawn: ${k} (${UNDRAWN[k]})`);
   const missing = unseen.filter(k => !UNDRAWN[k]);
   check('every themed colour is drawn in at least one state, or named as undrawable', !missing.length, missing.join('; '));
+  await readerPaths();
   console.log(`\n${ran - fail}/${ran} passed`);
   process.exit(fail ? 1 : 0);
 })().catch(e => { console.error(e); process.exit(1); });

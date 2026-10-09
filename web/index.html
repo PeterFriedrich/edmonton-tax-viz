@@ -1,8 +1,24 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- The theme, set before first paint so the chrome never flashes the wrong
+       one (styles.css keys off data-theme). A stored Light/Dark choice beats the
+       OS preference. Automation gets dark, the design default, unless a choice
+       is stored: Playwright emulates a LIGHT OS by default and every verify
+       script was written against dark. verify-theme.js stores a choice, or
+       unsets navigator.webdriver, to test light. -->
+  <script>
+    (function () {
+      var t = null;
+      try { t = localStorage.getItem("theme"); } catch (e) { /* storage blocked */ }
+      if (t !== "light" && t !== "dark")
+        t = !navigator.webdriver && matchMedia("(prefers-color-scheme: light)").matches
+          ? "light" : "dark";
+      document.documentElement.dataset.theme = t;
+    })();
+  </script>
   <title>Edmonton — City Taxes per Acre</title>
 
   <!-- Vendored locally (no CDN runtime dependency) so a compromised CDN can't
@@ -102,7 +118,7 @@
     <div id="guide-body">
       <h2>How to read this map</h2>
       <p>What each neighbourhood pays the City in property tax, per acre.
-         Taller and brighter means more; grey is parks, river valley and
+         Taller and <span class="more-word">brighter</span> means more; grey is parks, river valley and
          undeveloped land, left off the scale.</p>
       <ul>
         <li><b>Money · Development · Services · Ratio</b>: switch what's mapped</li>
@@ -491,6 +507,11 @@
   <div id="a11y" class="panel">
     <button id="a11y-btn" title="Display &amp; accessibility — colour ramp and neighbourhood labels">Display</button>
     <div id="a11y-menu">
+      <span class="hd">Theme</span>
+      <div id="theme">
+        <button data-pick="dark">Dark</button>
+        <button data-pick="light">Light</button>
+      </div>
       <span class="hd">Colour ramp</span>
       <div id="palette">
         <button data-ramp="current" class="active">Inferno</button>
@@ -1558,7 +1579,12 @@
     // Blurb markup (COPY_DECISIONS B8): a blank line starts a new paragraph and
     // **x** bolds x. Built as nodes rather than innerHTML because several blurbs
     // splice in text read from data files.
+    // Light mode's ramps run light = low, dark = high, so the high end there is
+    // DARKER (COPY_DECISIONS B9). Swapped here so every blurb follows, including
+    // ones not yet written.
     function setBlurb(text) {
+      if (state.theme === "light")
+        text = text.replace(/\bbrighter\b/g, "darker").replace(/\bBrighter\b/g, "Darker");
       document.getElementById("title-p").replaceChildren(
         ...text.split(/\n\s*\n/).map(par => {
           const p = document.createElement("p");
@@ -1826,7 +1852,8 @@
     // `svcDriver` names the checked service that drives the colour ramp
     // (kept pointing at a checked service by applyService). Both persist
     // across view switches, matching the denominator toggle's behaviour.
-    const state = { metric: "revenue_per_acre", ramp: "current", theme: "dark",
+    const state = { metric: "revenue_per_acre", ramp: "current",
+                    theme: document.documentElement.dataset.theme, // set in <head>
                     colorAdjust: true, // sqrt colour transform on (money/glass); off = linear+clamp
                     labels: false, view: "money", prismOpacity: 1, denom: "ground",
                     glassCell: CELLS.cellGlass,
@@ -2216,7 +2243,7 @@
       style: {
         version: 8,
         sources: {},
-        layers: [{ id: "bg", type: "background", paint: { "background-color": "#0a0a0f" } }],
+        layers: [{ id: "bg", type: "background", paint: { "background-color": activeRamp().bg } }],
       },
       center: HOME.center,
       zoom: HOME.zoom,
@@ -7363,9 +7390,25 @@
       if (name === state.theme) return;
       state.theme = name;
       document.documentElement.dataset.theme = name;   // the chrome tokens (styles.css)
+      // Glow has no light version (DECISIONS 2026-10-08), and its button hides.
+      if (name === "light" && state.ramp === "glow") state.ramp = "current";
+      syncThemeChrome();
       overlay.setProps({ layers: buildLayers() });
       map.setPaintProperty("bg", "background-color", activeRamp().bg);
       refreshLegend();
+    }
+
+    // The theme's wording and buttons outside the map. Also run once at boot,
+    // because the <head> script may already have chosen light. The blurb goes
+    // before buildLayers: the label sweep measures the title block.
+    function syncThemeChrome() {
+      setBlurb(currentBlurb());
+      document.querySelectorAll(".more-word").forEach(s =>
+        s.textContent = state.theme === "light" ? "darker" : "brighter");
+      document.querySelectorAll("#theme button").forEach(b =>
+        b.classList.toggle("active", b.dataset.pick === state.theme));
+      document.querySelectorAll("#palette button").forEach(b =>
+        b.classList.toggle("active", b.dataset.ramp === state.ramp));
     }
 
     // Switch colour ramp: rebuild layers, restyle the background + legend gradient.
@@ -8132,6 +8175,7 @@
         return;
       }
 
+      syncThemeChrome();
       overlay = new deck.MapboxOverlay({
         interleaved: true,
         layers: buildLayers(),
@@ -8171,6 +8215,18 @@
         b.addEventListener("click", () => applyMetric(b.dataset.revcut)));
       document.querySelectorAll("#palette button").forEach(b =>
         b.addEventListener("click", () => applyPalette(b.dataset.ramp)));
+      // A click is the reader's choice and is remembered; until one exists the
+      // page follows the OS, live (the <head> script made the first call).
+      document.querySelectorAll("#theme button").forEach(b =>
+        b.addEventListener("click", () => {
+          try { localStorage.setItem("theme", b.dataset.pick); } catch (e) { /* not remembered */ }
+          applyTheme(b.dataset.pick);
+        }));
+      window.matchMedia("(prefers-color-scheme: light)").addEventListener("change", e => {
+        let stored = null;
+        try { stored = localStorage.getItem("theme"); } catch (err) { /* follow the OS */ }
+        if (!stored && !navigator.webdriver) applyTheme(e.matches ? "light" : "dark");
+      });
       document.getElementById("labels-on").addEventListener("change",
         e => applyLabels(e.target.checked));
       document.getElementById("reference-on").addEventListener("change",
