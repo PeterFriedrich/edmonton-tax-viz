@@ -3,6 +3,11 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- The site has its own dark mode. Without this, Dark Reader leaves the dark
+       theme alone but darkens the light theme's chrome and inverts its text,
+       while the WebGL map stays light (Peter, 2026-10-09). Honoured by Dark
+       Reader's default Dynamic mode only, not its Filter modes. -->
+  <meta name="darkreader-lock" />
   <!-- The theme, set before first paint so the chrome never flashes the wrong
        one (styles.css keys off data-theme). A stored Light/Dark choice beats the
        OS preference. Automation gets dark, the design default, unless a choice

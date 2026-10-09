@@ -102,3 +102,11 @@ def test_light_ink_keeps_the_dark_order():
     light = [_contrast(_rgba(LIGHT[t]), bg) for t in steps]
     assert dark == sorted(dark, reverse=True)
     assert light == sorted(light, reverse=True)
+
+
+def test_dark_reader_is_locked_out():
+    """Dark Reader darkens the light theme's chrome and inverts its text over a
+    map it cannot touch (Peter, 2026-10-09). Its documented opt-out is this tag
+    in <head> (darkreader/darkreader CONTRIBUTING.md)."""
+    head = HTML[:HTML.index("</head>")]
+    assert re.search(r'<meta name="darkreader-lock"\s*/?>', head)
