@@ -943,31 +943,6 @@ body.budget #budget-btn { background: var(--accent); color: var(--ink-on-accent)
    800px tablet, and a mouse does not need one in a 400px-wide desktop
    window, so width is the wrong test for both rules here.
    =================================================================== */
-/* Desktop: the blurb and the mill rates under it sit in ONE box (Peter,
-   2026-10-09), so the map's prisms cannot run under the text. A halo was tried
-   first and left the map showing between letters. Same text start as the bare
-   form: the box grows out by its padding. The reading-panel surface, not the
-   pods': at the pods' 0.7 a dark-mode tower still showed through the text.
-   The column is 400px, the mill pod's width (its rows must stay one line each,
-   verify-millrates.js), so the title widens to match and #search / #guide-btn
-   move right by 40px. Nothing else sits in that band before the control stack
-   at x~958. The phone keeps its own expanded card (max-width: 640px block). */
-@media (min-width: 641px) {
-  #title { top: 12px; left: 12px; padding: 8px 6px 8px 10px; width: 400px; max-width: none;
-           background: var(--read-bg); border-radius: 6px; }
-  #millrates { margin-left: -10px; padding: 2px 6px 8px 10px;
-               background: var(--read-bg); border-radius: 0 0 6px 6px; }
-  #search { left: 432px; }
-  #guide-btn { left: 470px; }
-  /* The history panel lines up with the box above it. */
-  #temporal { left: 12px; }
-  /* Joined while the rates are on. Not ":not(:has(#temporal.open))" for the
-     case where the rates yield to the history panel: a :has() on body re-checks
-     on every DOM change, and verify-temporal's clicks timed out in 4 of 4 runs
-     with it, 0 of 2 without (2026-10-09). Square corners there are the cost. */
-  body.mills #title { border-radius: 6px 6px 0 0; }
-}
-
 @media (hover: none) {
   #peek.open { display: block; }
   /* 20x21 is comfortable for a cursor and less than half the 44px minimum for

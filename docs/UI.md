@@ -1200,7 +1200,8 @@ does not, since a data refresh does not touch theme code (DECISIONS 2026-10-09).
 Phases 1 and 4 change nothing in dark and can merge early. Phases 2–3 are the
 design work and where the time goes.
 
-### Blurb box (S220)
+### Blurb box (S220) — REVERSED 2026-10-09 (S222)
+- ⚠️ **Reversed the same day: the desktop blurb is bare text again** (Peter: he no longer liked the grey behind it). A very light halo (4px, in `--bg`) and a three-layer halo were rendered: they looked clean over empty map, but neither was legible with prisms under the corner. The code is the exact pre-box form (360px title, the pod 10px below it, old `#search` / `#guide-btn` / `#temporal` positions). The notes below are history.
 - **What:** on desktop the top-left blurb and the mill rates under it share ONE box in
   the reading-panel surface (`--read-bg`), in both themes (Peter, 2026-10-09). Bare
   text dropped to 1.4:1 where prisms ran under it (dark ink on light mode's purple,
