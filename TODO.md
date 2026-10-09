@@ -712,14 +712,14 @@ preload still holds (12/12). What is left:
 
 ### Peter's list, 2026-09-25 (S196) — not scoped yet
 
-- [ ] **Backdrop grid: BUILT (S220), two questions open.** Peter picked the square grid
+- [ ] **Backdrop grid: BUILT (S220, #695), city masked (S220); one question open.** Peter picked the square grid
   from four textures (none / cross-hatch / diagonal / grid), faint in both themes.
   A 16 px cell drawn as its own `background` layer (`bg-grid`), alpha 0.06 white in dark
   and 0.045 black in light (ΔE2000 3.7–4.0 and 2.3). Guarded by `test_backdrop_grid.py`
   (5 checks, 5 mutants each red by name). Open:
-  1. **Services shows it INSIDE the city:** the roads view draws road lines over the bare
-     backdrop, so the grid sits between streets. It is faint, but its lines are
-     orthogonal like the arterials. Keep it, or mask the city?
+  1. ✅ **Masked inside the city** (Peter: "mask the city for sure"). A `city-mask` fill
+     of the city limit in the backdrop colour sits over the grid; guarded by
+     `verify-smoke.js` A9 and `verify-theme.js`.
   2. **It subdivides on zoom:** the cell grows 16 → 27 px across each zoom level, then
      snaps back to 16 at the next whole zoom (MapLibre pattern behaviour, measured
      flat over open backdrop). A fixed-km grid would need a line layer instead.
