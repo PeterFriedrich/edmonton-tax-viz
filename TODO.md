@@ -824,10 +824,8 @@ archive"*) is not, and this span is 2,533 lines.
   - **The panel has never been opened on a phone.** Same class as the Services
     panel item below. The chart is 300×96 inside a bottom-sheet at 390px — the
     y-gutter and the two year ticks are the parts most likely to collide.
-  - **`#temporal-close`'s aria-label still says "Close the assessment-history
-    panel"** — now wrong for **three** of the four panel modes (revenue,
-    services, and the new dev history). Pre-existing, but this change widened it
-    from one-in-three to one-in-four. Screen-reader-only, one line to fix.
+  - ✅ **`#temporal-close`'s aria-label** now says "Close the neighbourhood panel",
+    true in all four panel modes (S220).
 
 - [ ] **⚠️ 537 UNITS (14 NAMES) STILL UNATTRIBUTED BY DECISION — was 565/15 until
   S216 placed `CHAPPELLE AREA, HERITAGE VALLEY AREA` (28u) by geocode, 8 of 8 in
