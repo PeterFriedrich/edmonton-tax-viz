@@ -3209,9 +3209,10 @@ archive"*) is not, and this span is 2,533 lines.
     Phases: [x] 1 plumbing (S217, `verify-theme.js`) · [x] 2 light ramps (S218,
     `test_light_ramps.py`) · [x] 3 re-solve dependent colours (S218) · [x] 4 chrome
     tokens (S219, `test_theme_tokens.py`) · [x] 5 "brighter" copy · [x] 6 Display toggle +
-    OS follow (S219, both in `verify-theme.js` reader paths) · [ ] 7: most of it shipped
-    with 6 (OS follow, override, persistence, no "brighter" in light). **Left: run
-    `verify-smoke` in light**, by storing `theme=light` in the context first.
+    OS follow (S219, both in `verify-theme.js` reader paths) · [x] 7 `verify-smoke <url>
+    light` passes on both builds (S220, A0 asserts the theme really loaded). **Left
+    (PROPOSAL, a CI change): add the light pass to `deploy.yml`**, both builds,
+    about +46 s. `refresh.yml` is optional, since a data refresh doesn't touch theme code.
 
 - [ ] **(Optional) exploration notebook** — work `FINDINGS_assessment_classes.md`'s
   "to visualize" list (value vs levy share by class; split-class distribution;

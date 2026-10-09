@@ -34,11 +34,16 @@
 //
 //   node tools/profiling/verify-smoke.js http://localhost:8931/index.html
 //   node tools/profiling/verify-smoke.js http://localhost:8931/full/index.html
+//
+// A second argument `light` runs the same checks in light mode. Automation
+// loads dark unless a theme is stored (navigator.webdriver, see index.html's
+// head script), so the choice is stored before the first paint, exactly as a
+// reader's click would leave it.
 const { chromium } = require('playwright');
-const [url] = process.argv.slice(2);
+const [url, theme = 'dark'] = process.argv.slice(2);
 
-if (!url) {
-  console.error('usage: node verify-smoke.js <url>');
+if (!url || !['dark', 'light'].includes(theme)) {
+  console.error('usage: node verify-smoke.js <url> [dark|light]');
   process.exit(2);
 }
 
@@ -60,6 +65,9 @@ const GARBAGE = /\bNaN\b|\bundefined\b|\bnull\b|\bInfinity\b|\$NaN|\$undefined/;
   };
 
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+  if (theme === 'light') {
+    await page.addInitScript(() => { try { localStorage.setItem('theme', 'light'); } catch (e) {} });
+  }
 
   // ---- A. LOAD INTEGRITY --------------------------------------------------
   // Collected from the first navigation, so a 404 on any data file is caught
@@ -80,6 +88,9 @@ const GARBAGE = /\bNaN\b|\bundefined\b|\bnull\b|\bInfinity\b|\$NaN|\$undefined/;
   await page.goto(url, { waitUntil: 'networkidle', timeout: 60000 });
   await page.waitForTimeout(4000);
 
+  // Without this a light run that silently loaded dark would pass as light.
+  const got = await page.evaluate(() => [document.documentElement.dataset.theme, state.theme]);
+  check(`A0: page loaded in ${theme} mode`, got[0] === theme && got[1] === theme, got.join(' / '));
   check('A1: no 4xx/5xx on any request', bad.length === 0, bad.join('; '));
   check('A2: no failed requests', failed.length === 0, failed.join('; '));
   check('A3: no uncaught page exceptions', pageErrors.length === 0, pageErrors.join('; '));

@@ -1043,7 +1043,7 @@ already carries its own `bg` / `edge` / `setAside`, swapped live by
 | 4. Chrome | Light values for the 36 `:root` tokens, under `@media (prefers-color-scheme: light)` guarded by `:root:not([data-theme="dark"])`, and again under `[data-theme="light"]`. `--mark` darkens; `--accent` need not. | Screenshot review, both widths. |
 | 5. Copy | Every "brighter = more" string becomes theme-aware: the Money title blurb, `withColourClause`, the grid blurbs, Services' three, Development's two, the guide card. Add a `COPY_DECISIONS.md` row so a future rewording covers both themes. | A verify asserts no "brighter" string under light. |
 | 6. Toggle | Light/Dark in the Display pod (`#a11y`); the stored choice beats the OS; `applyPalette` maps `glow` → default when entering light. | `verify-theme.js`. |
-| 7. Checks | `verify-theme.js` (OS follow via `colorScheme` emulation, override, persistence, no dark colour left in light); `verify-smoke` in light. | — |
+| 7. Checks | `verify-theme.js` (OS follow via `colorScheme` emulation, override, persistence, no dark colour left in light); `verify-smoke` in light. | `verify-smoke.js <url> light` (A0). |
 
 **Phase 1 status (2026-10-08, S217): built.** Every backdrop-dependent colour is
 `themed(dark)` beside its rationale and read through `tc()`, and `state.theme` is in every
@@ -1189,6 +1189,12 @@ ships with the wrong wording).
   - Glow gives way to Inferno;
   - 9 public blurb families never say "bright", in 3D and 2D.
   Each mutant turns its check red (see the PR).
+
+**Phase 7 status (S220):** `verify-smoke.js <url> light` stores `theme=light` before
+first paint and adds **A0**, which checks that the page really loaded in the theme it
+was asked for (without it, a light run that loaded dark would pass as light). It passes
+in light on both builds, and A0 also runs on every dark run. A mutant that stores the
+wrong key reds A0 alone. Whether CI runs the light pass is a separate proposal (TODO).
 
 Phases 1 and 4 change nothing in dark and can merge early. Phases 2–3 are the
 design work and where the time goes.
