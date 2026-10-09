@@ -394,6 +394,9 @@ Edmonton revenue-per-acre fiscal analysis. Python-only, no GIS software.
 - **2026-10-08** — **Every backdrop-dependent map colour is declared with `themed(dark)` beside its rationale and read through `tc()` at draw time; every layer drawing one carries `state.theme` in its colour … … Rejected: one central `THEMES` object, which would separate each colour from the comment that explains it, and reassigning `let` constants on a switch, where a missed reassignment fails silently.
 - **2026-10-08** — **Light mode's ramps: inferno reversed, capped at purple, as the default, plus cividis reversed. … Rejected: near-black inferno (Peter, the reason above); Brewer YlOrRd (44% under 3:1, Non-residential middle ΔE 1.3); a ramp warp for the middle compression (it trades Non-residential and linear mode …
 - **2026-10-09** — **Every backdrop-dependent colour has a light value, written `themed(dark, light)`; measured, not mirrored** (light mode phase 3, S218).
+- **2026-10-09** — **Light chrome: every `:root` token gets a light value, declared twice (OS media query + `[data-theme="light"]`) and held equal by test; a new `--accent-ink` carries gold-as-text; `<html>` pins … … Rejected: CSS `light-dark()` (one declaration per token, but an older browser drops every token, dark included).
+- **2026-10-09** — **Light chrome surfaces are mid grey, not near-white** (Peter, S219; light mode phase 4 follow-up).
+- **2026-10-09** — **Light mode ships to readers: the theme follows the OS, a Display-pod choice is stored and wins, and "brighter" becomes "darker" in light** (Peter, S219; light mode phases 5 + 6, shipped together so …
 
 ## Open work
 
@@ -450,6 +453,7 @@ Edmonton revenue-per-acre fiscal analysis. Python-only, no GIS software.
 - **The lit selected-hood prism (#635/#636) added ~100 s to `verify-peek`** under SwiftShader (212 → 310 s; findings §7b). Check a tap's latency on a phone with the S210 checks (MOBILE_USABILITY §2b) before deciding anything.
 
 **Peter's list, 2026-09-25 (S196) — not scoped yet**
+- **A grey cross-hatch (or similar texture) on the backdrop around the map, in BOTH themes, designed together** (Peter, 2026-10-09). He raised it after seeing the mid-grey light chrome. Not scoped. The constraints: the backdrop is one MapLibre `background` layer per ramp …
 - **Mobile panel before it opens: more colour and height so it reads as tappable.** First pin down which element this means (the peek card, or the collapsed hood panel?) and measure its current size on a phone viewport. The mobile coverage figures on record (DECISIONS 2026-08-04, …
 - **Audit the shareable URL hash (#608), cross-model.** Brief: `docs/FABLE_AUDIT_url_state.md`; queue item 15 in `docs/AUDIT_LEDGER.md`. `verify-url-state.js` now gates web/ PRs (S207, `tests.yml` `url-state` job). ⚠️ **A same-model run executed 2026-09-28 (S204, …
 - **Check the roads notebook's first scheduled run (2026-10-05)**: queue item 16 in `docs/AUDIT_LEDGER.md`. Mainly, does its week-over-week table read last week's committed data on the runner?
