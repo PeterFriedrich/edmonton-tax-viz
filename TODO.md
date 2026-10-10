@@ -219,11 +219,9 @@ publish on its own, unrelated to any of this — re-pinned.)_
   carve-out 1 (prose) and to the README table.
 
 ### Light-mode audit follow-ons (OPEN 2026-10-09 S221, `docs/FINDINGS_light_mode.md`)
-- [ ] **F1 (HIGH, public): the hover tooltip is illegible in light.** deck.gl's inline
-  default (`background-color: rgb(41,50,60)`) beats `.tip`; light muted lines are 1.2:1.
-  Fix: pass `style` overrides from every `viewTooltip` return (or `!important` on `.tip`),
-  then add a render check that the light tooltip's computed background is not deck's slate.
-  Code PR, Peter merges.
+- ✅ **F1 fixed S222:** `getTooltip` clears deck.gl's inline background/colour/padding so `.tip`
+  applies, in both themes. Guard: `verify-smoke.js` C12 (deploy gate, both themes), red on
+  the unfixed build in dark and light.
 - [ ] **F2 (public): 641–~930 px, the title column covers the view buttons.** #698 widened
   the band ~40 px; below ~860 it predates S220. Layout call: Peter.
 - [ ] **F3 (public): the Beta badge covers the phone legend and sheet.** Move or shrink it

@@ -8217,7 +8217,13 @@
       overlay = new deck.MapboxOverlay({
         interleaved: true,
         layers: buildLayers(),
-        getTooltip: tooltipFor,
+        // deck.gl writes its own background, colour and padding INLINE on the
+        // tooltip element, which beats `.tip`; the empty strings clear them so
+        // the stylesheet applies (FINDINGS_light_mode.md F1; verify-smoke C12).
+        getTooltip: info => {
+          const t = tooltipFor(info);
+          return t && { ...t, style: { backgroundColor: "", color: "", padding: "" } };
+        },
         onClick: temporalClick,
         onHover: bandHover,
       });
