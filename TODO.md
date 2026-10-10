@@ -653,7 +653,6 @@ legibility item below; #7 waits for the 2026-09-28 refresh.
 
 Three findings the register backfill (`docs/AUDIT_LEDGER.md` "Findings register") found still open with no item here.
 
-- [ ] **`test_refresh_workflow_gates_every_publish_step_on_both_guards` checks consistency, not coverage** (S123 F5, `docs/FINDINGS_proxy_guards.md`): a new publish step with no `if:` is invisible to it. Latent — today's ungated steps are deliberate. Fix the test or its name.
 - [ ] **The 58 `transit_stations.json` context dots mix LRT stations with bus transit centres** (S116, `data/DATA.md` §20). The export docstring intends both; DATA.md calls the set wrong. Decide which it is, then either filter to the 30 passenger stations or reword DATA.md. `/full/` only.
 
 ### Blurb-claims audit follow-ons (OPEN 2026-09-26 S199)
@@ -3279,6 +3278,7 @@ archive"*) is not, and this span is 2,533 lines.
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
 
+- [x] **`test_refresh_workflow_gates_every_publish_step_on_both_guards` checks consistency, not coverage** — CLOSED 2026-10-10 · `docs/TODO_archive.md`
 - [x] **Tie the evidence notebooks' road rates to the rate the pipeline uses.** · `docs/TODO_archive.md`
 
 - [x] **Check the roads notebook's first scheduled run (2026-10-05)** — CLOSED 2026-10-10 · `docs/TODO_archive.md`

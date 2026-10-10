@@ -8,6 +8,7 @@ Items are verbatim as they were closed, newest-moved first in the order they app
 
 ---
 
+- [x] **`test_refresh_workflow_gates_every_publish_step_on_both_guards` checks consistency, not coverage** (S123 F5, `docs/FINDINGS_proxy_guards.md`): a new publish step with no `if:` is invisible to it. Latent — today's ungated steps are deliberate. Fix the test or its name. ✅ **CLOSED 2026-10-10 (S223):** now checks coverage too — every step after the guards gates on both or is in a named `deliberately_ungated` set; two mutants red by step name (findings F5 disposition).
 - [x] **Tie the evidence notebooks' road rates to the rate the pipeline uses.**
   `roads_lifecycle_rate` and `roads_operating_rate` justify $50 and $9.32 per
   road-metre per year, but they are standalone and import nothing.
