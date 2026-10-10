@@ -245,7 +245,9 @@ publish on its own, unrelated to any of this — re-pinned.)_
   "you've been linked to the alpha build, experimental lenses intended for development or
   specialist use only". Full build only; the public build shows nothing. Peter called it a
   tooltip and described a pop-up "in their face", so build it as a notice over the map.
-  To settle when it is built: how it is dismissed, and whether it returns on every visit.
+  Settled by Peter 2026-10-10: it shows on **every visit**, it closes with an **X**, and it
+  must be practically impossible to miss. At build time, first ask a research round whether
+  the notice has legal or other implications (wording, disclaimers).
   Reader-facing copy, so it gets a row in `docs/COPY_DECISIONS.md`. Web change: Peter merges.
 
 ### Dev-velocity audit follow-ons (OPEN 2026-10-10 S225, `docs/FINDINGS_dev_velocity.md` §10)
