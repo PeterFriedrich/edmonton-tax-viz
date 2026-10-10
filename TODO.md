@@ -1274,10 +1274,16 @@ archive"*) is not, and this span is 2,533 lines.
     to `web/notebooks/` and added to that folder's hand-written `index.html`.
     ✅ The re-measure this used to ask for is **done (2026-08-30)** and the
     per-parcel baseline is committed at
-    `data/roll_continuity_candidates_2026-08-30.csv`. ⚠️ **What is still missing
-    is the transient/permanent split** — that needs one more observation diffed
-    against that file, and it is the only thing that would make a notebook worth
-    writing. A notebook on today's figures would publish an upper bound.
+    `data/roll_continuity_candidates_2026-08-30.csv`.
+  - ✅ **The transient/permanent split is MEASURED (2026-10-10, S224) — and it is
+    ~all permanent.** 1,454 of the 1,457 are still absent six weeks later; the
+    3 that left the list are demolish-and-rebuild infill, not reappearances.
+    ⚠️ **That does not convict the 1,454** — a demolition is permanent too. Full
+    figures on the long item ("WHO IS MISSING …") and `docs/DATA_ISSUES.md` §A.
+    ⚠️ **It weakens the case for a notebook:** the Misericordia-shaped transient
+    gap did not occur once in this window, so what is left is ordinary
+    redevelopment that the audit cannot tell apart from a dropout. Whether to
+    demote this from ACTIVE is Peter's call.
 
 - [ ] **PETER'S CALL — the amenity bands are FIXED at 600 m / 800 m
   (`AMENITY_BANDS` in `web/index.html`).** Built and live behind the weekly
@@ -2375,8 +2381,8 @@ archive"*) is not, and this span is 2,533 lines.
     assessed value; the residential +1.2% / $1.90B residual; and the 4% of the
     non-res gap outside the five zones.
 
-- [ ] **▶ WHO IS MISSING FROM THE CURRENT ROLL RIGHT NOW? — 1,457 parcels /
-  $1.07B with no current-roll match.** Opened 2026-08-07 from
+- [ ] **▶ WHO IS MISSING FROM THE CURRENT ROLL RIGHT NOW? — 1,531 parcels /
+  $1.11B with no current-roll match (2026-10-10; was 1,457 / $1.07B on 08-30).** Opened 2026-08-07 from
   `tools/audit_roll_continuity.py` (historical 2024 vs the live roll, matched by
   **position** within 5 m so renumbering / re-addressing / hood renames do not
   register). 168 of them are over $1M, totalling **$856M**. Largest: EDMONTON
@@ -2462,6 +2468,30 @@ archive"*) is not, and this span is 2,533 lines.
     A candidate that has reappeared was a transient gap (and its hood was
     understated meanwhile); one still absent months later is a real removal.
     That split is the reportable finding — the raw count never was.
+  - ✅ **THIRD OBSERVATION DONE 2026-10-10 (S224) — the split is ~all permanent,
+    and "permanent" turned out not to mean "dropout".** Fresh `--cache-dir`;
+    roll **439,696** rows vs 439,634 on 08-30 (+62 net). 1,655 position-unmatched,
+    124 acquitted, **1,531 candidates / $1.11B**. New baseline:
+    `data/roll_continuity_candidates_2026-10-10.csv`.
+    - **Of the 1,457 from 08-30: 1,454 ($1.071B) are still absent; 3 ($1.2M) left
+      the list, and none of the 3 reappeared.** Each is a ~$414k lot in LAURIER
+      HEIGHTS / MCKERNAN / MALMO PLAINS now matched within 5 m by a NEW
+      `114xxxxx` account — a demolished house replaced by an infill build. **Zero
+      transient renumber gaps** in six weeks.
+    - **77 new candidates ($38.0M)**, parcels that matched on 08-30 and have since
+      left the roll: BOYLE STREET 36, STRATHEARN 12 (incl. `8373201` $12.0M),
+      KENILWORTH 5, three consecutive WEIR INDUSTRIAL accounts (`9993619`–`21`,
+      a consolidation shape).
+    - **Rough shape of the 1,454 still absent**, by the nearest current account
+      that is NOT on the historical 2024 roll (16,954 such accounts): **246
+      ($284M) have one within 25 m**, 235 ($327M) within 25–100 m, **973 ($460M)
+      none within 100 m**. A new account at the spot reads as
+      redevelopment/subdivision; none nearby is consolidation into an existing
+      account or a real absence, which this audit cannot tell apart.
+    - ⚠️ **What it means:** "still absent" was supposed to mark a real removal,
+      but demolition is permanent too, so persistence convicts nothing. The
+      reportable shape — a property briefly absent while still assessed — **did
+      not occur once in this window**. Misericordia stays a single proven case.
   - ⚠️ **Do NOT "fix" this by dropping the parcels.** We apply published rates to
     the published roll; silently excluding records the City published is the
     exact silent-correctness failure the guards exist to prevent.
