@@ -190,21 +190,13 @@ publish on its own, unrelated to any of this — re-pinned.)_
   `docs/BRIEF.md` + `docs/SPEC_*.md`, press **Sync**, and review
   `docs/SCOPE.md`. After that, `/handoff`'s sync check prompts for each re-sync
   (`docs/CLAUDE_WEB.md`).
-### ⚠️ Weekly refresh RED since 2026-10-05 — City's GTFS Calendar Dates loaded empty (OPEN 2026-10-05 S215)
-- `f2sy-bth7` reloaded with **0 rows** (`docs/DATA_ISSUES.md` §8). `load_transit`
-  fails loud, the site serves the 2026-09-28 data, and **the staleness banner
-  shows from 2026-10-12** if the next Monday run also fails.
-- **Before next Monday:** re-check `https://data.edmonton.ca/resource/f2sy-bth7.json?$select=count(*)`.
-  If it is non-zero, `gh workflow run refresh.yml --ref master` (RUNBOOK §2: dispatch, don't re-run).
-- **Item 18 audit (`docs/FINDINGS_empty_sources.md`):** an empty school table
-  publishes wrong `dist_school_m` with every gate green; 6 loud failures misdiagnose
-  an empty table. ✅ **Fixed S216:** `download_data.py` now fails a 0-row source,
-  naming the dataset, so next Monday's run (if still empty) goes red at
-  "Download source data" with the real cause.
-- **Peter decides:** report it (§8 channel); and whether to add a fallback to
-  ETS's own zip (`calendar_dates.txt`, identical service_ids) when the Socrata
-  table is empty. That is a new download source and a CI behaviour change, so it
-  needs Peter's OK before it's built.
+### GTFS Calendar Dates follow-on (refresh RED 2026-10-05, ✅ GREEN again 2026-10-08)
+- ✅ `f2sy-bth7` was reloaded full by the City (13,551 rows, re-measured 2026-10-10);
+  the 10-08 dispatched refresh (run 37846984412) published. `DATA_ISSUES.md` §8 is
+  RESOLVED UPSTREAM. Since S216 a 0-row source fails at "Download source data" by name.
+- **Peter decides:** whether to add a fallback to ETS's own zip (`calendar_dates.txt`,
+  identical service_ids) when the Socrata table is empty. New download source + CI
+  behaviour change, so it needs Peter's OK before it's built.
 
 ### Services/Development panel follow-ons (OPEN 2026-10-05 S215, `docs/FINDINGS_services_ranks_dev_zerofill.md`)
 - ✅ **F1 fixed S216:** comment corrected; `CHAPPELLE AREA, HERITAGE VALLEY AREA`
@@ -763,9 +755,6 @@ preload still holds (12/12). What is left:
   job). ⚠️ **A same-model run executed 2026-09-28 (S204,
   `docs/FINDINGS_url_state.md`)**; the cross-model read is still owed and
   should target that run's SOUND verdicts on L1–L4.
-- [ ] **Check the roads notebook's first scheduled run (2026-10-05)**: queue
-  item 16 in `docs/AUDIT_LEDGER.md`. Mainly, does its week-over-week table read
-  last week's committed data on the runner?
 - [ ] **Tie the evidence notebooks' road rates to the rate the pipeline uses.**
   `roads_lifecycle_rate` and `roads_operating_rate` justify $50 and $9.32 per
   road-metre per year, but they are standalone and import nothing.
@@ -3283,6 +3272,8 @@ archive"*) is not, and this span is 2,533 lines.
 ## Done
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
+
+- [x] **Check the roads notebook's first scheduled run (2026-10-05)** — CLOSED 2026-10-10 · `docs/TODO_archive.md`
 
 - [x] **cividis collides with the set-aside grey — "off the scale" and "a real value" render the same.** — CLOSED 2026-10-06 · `docs/TODO_archive.md`
 - [x] **Tutorial pop-up for the toolbar on a first mobile visit, and maybe a smaller one on desktop.** — DONE 2026-10-08 · `docs/TODO_archive.md`
