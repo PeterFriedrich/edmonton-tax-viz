@@ -159,7 +159,7 @@ Edmonton revenue-per-acre fiscal analysis. Python-only, no GIS software.
 - **2026-08-01** — **The chrome-coverage figure that drove the mobile backlog for six sessions was INFLATED, and the priority it implied was wrong** — re-measured at Peter's request before deciding the bottom-sheet …
 - **2026-08-01** — **Revenue-by-zone is computed from the zoning POLYGONS by point-in-polygon, NOT from `dkk9-cj3x`'s per-property `zoning` field — and it is NOT blocked on parcel geometry** (Peter: *"percent of city …
 - **2026-08-01** — **The mill-rate pod shows ALL THREE classes in every revenue cut with the billed ones lit, rather than listing only the relevant rate; and it YIELDS to the history panel rather than displacing it** …
-- **2026-08-01** — ⚠️ **AMENDED 2026-10-09 — "bare text is a desktop affordance" no longer holds: prisms run under the desktop corner and the map is not always dark, so the desktop blurb is boxed too; see that row.**
+- **2026-08-01** — ⚠️ **AMENDED 2026-10-09 (the desktop blurb was boxed), and that amendment was REVERSED on 2026-10-09 as well: the desktop blurb is bare text again, so "bare text is a desktop affordance" stands, with …
 - **2026-08-01** — **On a phone the mill rates are PART OF THE BLURB, not a surface of their own — the answer was not where to put the pod, it was not to have one** (Peter, after seeing a standalone card built to his …
 - **2026-08-01** — **The Current / Change-over-time lens toggle moves out of the Options panel and becomes `#toggle`'s row 2 UNDER VALUE — and it is a different KIND of nesting from the revenue cuts** (Peter: *"move … … `#chgwindow` (Since 2012 / Since 2019) **stays in Options** (Peter's call) — `#toggle` stays strictly two-level, so a third row was refused.
 - **2026-08-01** — **On Money's REVENUE metrics the pinned panel shows the hood's zone-revenue breakdown INSTEAD of the assessment history — one element, two modes** (Peter: *"under revenue, the panel still pops up …
@@ -401,7 +401,7 @@ Edmonton revenue-per-acre fiscal analysis. Python-only, no GIS software.
 - **2026-10-09** — **The backdrop gets a faint square grid in both themes; light's is fainter than dark's** (Peter, S220, picked from none / cross-hatch / diagonal / grid).
 - **2026-10-09** — **The backdrop grid stops at the city limit** (Peter, S220: "mask the city for sure").
 - **2026-10-09** — **The page opts out of Dark Reader with `<meta name="darkreader-lock">`** (Peter, S220).
-- **2026-10-09** — **On desktop the top-left blurb and the mill rates sit in one reading-panel box, in both themes** (Peter, S220, picked from bare / halo / box).
+- **2026-10-09** — **The desktop blurb and mill rates go back to bare text; this reverses the same-day blurb-box row** (Peter, S222: he no longer liked the grey behind the top-left blurb).
 
 ## Open work
 
@@ -418,12 +418,8 @@ Edmonton revenue-per-acre fiscal analysis. Python-only, no GIS software.
 - **F2 (public): 641–~930 px, the title column covers the view buttons.** #698 widened the band ~40 px; below ~860 it predates S220. Layout call: Peter.
 - **F3 (public): the Beta badge covers the phone legend and sheet.** Move or shrink it under 641 px; fix `build_site.py`'s "keeps clear of the legend" comment.
 - **F4: make `themed()` throw on a missing light value** (a `HOVER_COLOR` mutant passed every CI gate), and/or a pytest that every `themed(` has two arrays.
-- **F5: revenue-mix greys on the light panel (1.3:1 / 1.7:1).** Design call: Peter.
-- **F6: declare `color-scheme` per theme** (`only light` / `only dark` on `:root[data-theme]`); verified to stop Chromium auto-dark repainting a stored-light page.
-- **F7: re-render an open `#temporal` panel in `applyTheme`.**
-- **F8: `@media print` with `print-color-adjust: exact` on the legend bar and swatches.**
-- **F9: restore Glow on light → dark?** Peter.
-- **F10 + F12: stale text.** ARCHITECTURE verify-tier row; UI.md Light mode's `THEMES` lines; the `#title-p` and guide comments in `index.html`; the badge comment; the "plain grey landmarks" tooltip (river is blue).
+- **F5: revenue-mix greys on the light panel (1.3:1 / 1.7:1).** Design call: Peter. under emulated forced dark the stored-light chrome stays light. fresh open after the switch (two hoods with theme-dependent swatches).
+- **F9: restore Glow on light → dark?** Peter. UI.md `THEMES` lines, the `#title-p` and guide comments, "plain landmarks".
 
 **Smoke gate reads no panel text (OPEN 2026-10-05 S215, `docs/FINDINGS_s187_remedies.md` F1)**
 
