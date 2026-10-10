@@ -240,6 +240,16 @@ publish on its own, unrelated to any of this — re-pinned.)_
 - ✅ **F10 + F12 fixed S222** except the badge comment, which waits on F3: ARCHITECTURE tier table,
   UI.md `THEMES` lines, the `#title-p` and guide comments, "plain landmarks".
 
+### Dev-velocity audit follow-ons (OPEN 2026-10-10 S225, `docs/FINDINGS_dev_velocity.md` §10)
+- [ ] **`verify.js --serve <root>`: serve on a free port, md5-check the root, run, kill by pid.**
+  Removes ~324 plumbing calls (~2.5% of working time) and the reason for `pkill -f` (exit 144,
+  28× in 19 sessions). Tools change: Peter.
+- [ ] **Delete the four stray probes** `tools/profiling/_dbg.js`, `s223-probe{,2,3}.js` (committed
+  by `git add -A`; nothing references them). Peter merges.
+- [ ] **Commit the transcript instrument** as `tools/transcript_effort.py` with a classifier test
+  (now at `research/edmonton-tax-viz/dev_velocity_instrument/`). New module: Peter.
+- [ ] **Cross-model read** of the findings, aimed at §11 (a)–(d).
+
 ### Smoke gate reads no panel text (OPEN 2026-10-05 S215, `docs/FINDINGS_s187_remedies.md` F1)
 - ✅ **F1 fixed S216:** §C now runs the same scan over the Ratio, Services (every
   offered driver) and revenue-mix panels; +3 s per build; three panel mutants each

@@ -250,7 +250,7 @@ source's understanding changes, check who depends on it.
 
 | source | what it is | reports depending on it |
 |---|---|---|
-| `q7d6-ambg` | Property Assessment Data (Current Calendar Year) | ⚠️ **all four** |
+| `q7d6-ambg` | Property Assessment Data (Current Calendar Year) | ⚠️ **all five** |
 | `qi6a-xuwt` | Property Assessment Data (Historical) | Roll year metadata, Historical 2024 gap |
 | `fixa-tstc` | Zoning Bylaw Geographical Data | Exemption uncertainty |
 | `996c-239n` | EPSB School Locations | School coverage gap |
@@ -262,8 +262,8 @@ source's understanding changes, check who depends on it.
 
 ⚠️ **`q7d6-ambg` is a single point of failure for the whole evidence set** — all
 five reports touch it. A schema change there does not just break one report — it
-breaks every one, and because nothing runs them on a schedule, **it breaks them
-silently.** The
+breaks every one. Until 2026-09-21 nothing ran them on a schedule, so it would
+have broken them **silently**; the monthly recheck (above) now surfaces it. The
 school report is the most exposed: it asserts a property of that dataset's
 *schema* (that it carries no land-use field), so a column being ADDED — the
 outcome that report would welcome — makes its invariant fail rather than pass.

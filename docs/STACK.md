@@ -168,7 +168,7 @@ Doc integrity has its own guard: `scripts/check_doc_citations.py`.
 
 ---
 
-## 7. CI/CD — four GitHub Actions workflows
+## 7. CI/CD — five GitHub Actions workflows
 
 | workflow | trigger | does |
 |---|---|---|
@@ -176,6 +176,7 @@ Doc integrity has its own guard: `scripts/check_doc_citations.py`.
 | `deploy.yml` | push to `master` touching site code | rebuild, gate on `verify-smoke.js` (both builds) + `verify-blurbs.js` (public root), deploy Pages. Excludes `web/data/**` (the refresh run already deployed it) |
 | `refresh.yml` | weekly, Mon 08:00 UTC + manual | download → `main.py` → guards → verified notebooks → commit data → deploy |
 | `vintage-digest.yml` | monthly, 1st at 14:00 UTC | files the vintage/pin digest issue. `RUNBOOK.md` §0 |
+| `evidence-recheck.yml` | monthly, 15th at 14:00 UTC + manual | re-executes every `notebooks/standalone/` evidence notebook against live sources and files an issue. `RUNBOOK.md` §0e, `EVIDENCE_NOTEBOOKS.md` |
 
 **Hosting: GitHub Pages.** Static artifact, gzipped by Pages,
 `cache-control: max-age=600`.

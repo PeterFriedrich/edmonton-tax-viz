@@ -6,7 +6,10 @@ growing" lesson comes up.
 
 ## Baseline (measured 2026-07-01)
 
-Rough tokens ≈ bytes ÷ 4.
+Rough tokens ≈ bytes ÷ 4. ⚠️ **Measured 2026-10-10 (S225): this repo runs ~2.4
+characters per token**, markdown and code alike (Opus 5/5.5;
+`FINDINGS_dev_velocity.md` §2), so ÷4 understates by ~1.7×. The tables below
+keep their ÷4 figures as recorded; divide bytes by 2.4 for a current estimate.
 
 | Category | Size | ~tokens | Notes |
 |---|---|---|---|
@@ -73,7 +76,9 @@ still touches a handful of files for single-digit thousands of tokens, and the
 `web/index.html` split is still refuted on its own measurement (see *Files to
 watch*). ⚠️ **What it does change is the FLOOR** — `CLAUDE.md` instructs every
 session to read `TODO.md`, plus an index doc and the latest handoff, before doing
-anything. That floor is now ~60k tokens of `TODO.md` alone. **The lever here is
+anything. That floor is now ~60k tokens of `TODO.md` alone (⚠️ 2026-10-10: that
+is what the file *holds*; sessions read ~4.7k tokens of it, never the whole
+file — `FINDINGS_dev_velocity.md` §5a). **The lever here is
 what the standing instructions require, not how the files are split.**
 
 Re-measure anytime with:
@@ -183,7 +188,7 @@ git ls-files | grep -vE '\.(geojson|png|csv)$' | xargs wc -l | sort -n | tail -3
 - `session-summary/` — growing every `/handoff`; archive policy above keeps it bounded.
 - `docs/` — largest doc category; fine today, but if any single doc passes ~400 lines
   consider whether it should be sectioned or split.
-- `web/index.html` (**~7,345 lines** as of 2026-09-03, markup + JS) + `web/styles.css`
+- `web/index.html` (**8,849 lines** as of 2026-10-10, ~7,345 on 2026-09-03, markup + JS) + `web/styles.css`
   (~400 lines). The CSS was extracted 2026-07-29. Use `docs/CODEMAP.md` (rule 5).
   **The ES-module split was DECIDED AGAINST 2026-09-05** (`DECISIONS.md`;
   `docs/FINDINGS_frontend_architecture_verdict.md`) — do not re-propose it on
@@ -201,7 +206,9 @@ git ls-files | grep -vE '\.(geojson|png|csv)$' | xargs wc -l | sort -n | tail -3
   (The old pointer here, *"RUNBOOK quirk (i)"*, was dangling — `RUNBOOK.md` has
   no such quirk list.)
   **⚠️ Splitting it further is NOT a token lever — this was measured, and the
-  intuition here was wrong.** The whole file is ~57k tokens, but it is read in
+  intuition here was wrong.** The whole file is ~57k tokens (⚠️ ~215k at 515 KB
+and 2.4 chars/token on 2026-10-10; the largest single read in 43 days of
+transcripts was 11.9k), but it is read in
   grep-located windows of 100–400 lines (~2–6k), not end-to-end, so a split saves
   almost nothing. Worse, the common change touches CSS + DOM node + JS handler
   *together* (see almost any `DECISIONS.md` row), which post-split is three **file**
