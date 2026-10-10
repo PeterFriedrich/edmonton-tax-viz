@@ -203,6 +203,10 @@ html, body {
    view's panel. 289 is Development's natural width, so only Money changes:
    "100 m grid" wraps as "50 m grid · 7.6 MB" already did (Peter, 2026-10-09). */
 #optpanel { flex-direction: column; align-items: stretch; max-width: 289px; }
+/* Money alone goes narrower, both Detail labels wrapping to two lines (Peter,
+   2026-10-10). data-view is set by applyView. Desktop-only: this selector
+   outranks the phone seam's `#controls > div { max-width: 100% }`. */
+@media (min-width: 641px) { #optpanel[data-view="money"] { max-width: 260px; } }
 /* min-width widens the FOLDED header leftward (the pod is right-anchored, so
    extra width grows to the left) — a bigger target that reaches away from the
    corner while its right edge stays flush with the bars above. No effect when
