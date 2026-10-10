@@ -8,6 +8,12 @@ Items are verbatim as they were closed, newest-moved first in the order they app
 
 ---
 
+- [x] **Check the roads notebook's first scheduled run (2026-10-05)**: queue
+  item 16 in `docs/AUDIT_LEDGER.md`. ✅ **CLOSED 2026-10-10 (S223), SOUND:** the first
+  green refresh (10-08 dispatch) ran it in 8.3 s, committed and served it; §5's table
+  read the 09-28 commit (CRYSTALLINA NERA EAST 24.93 → 26.83, +7.6%, matches both
+  commits exactly). Ledger row 2026-10-10.
+
 - [x] **cividis collides with the set-aside grey — "off the scale" and "a real
   value" render the same.** ✅ **CLOSED 2026-10-06 (S216):** cividis carries its own
   `setAside: [60, 60, 62]` (ΔE2000 13.8 from its ramp), used beside ramp-coloured
