@@ -240,6 +240,14 @@ publish on its own, unrelated to any of this — re-pinned.)_
 - ✅ **F10 + F12 fixed S222** except the badge comment, which waits on F3: ARCHITECTURE tier table,
   UI.md `THEMES` lines, the `#title-p` and guide comments, "plain landmarks".
 
+### Alpha-build notice on the specialist build (OPEN 2026-10-10 S227, Peter's ask; not scoped yet)
+- [ ] **Anyone who lands on the specialist (full) build gets a pop-up on arrival.** Peter's wording:
+  "you've been linked to the alpha build, experimental lenses intended for development or
+  specialist use only". Full build only; the public build shows nothing. Peter called it a
+  tooltip and described a pop-up "in their face", so build it as a notice over the map.
+  To settle when it is built: how it is dismissed, and whether it returns on every visit.
+  Reader-facing copy, so it gets a row in `docs/COPY_DECISIONS.md`. Web change: Peter merges.
+
 ### Dev-velocity audit follow-ons (OPEN 2026-10-10 S225, `docs/FINDINGS_dev_velocity.md` §10)
 - [ ] **`verify.js --serve <root>`: serve on a free port, md5-check the root, run, kill by pid.**
   Removes ~324 plumbing calls (~2.5% of working time) and the reason for `pkill -f` (exit 144,
