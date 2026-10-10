@@ -438,7 +438,7 @@ audit's findings are claims to reproduce, not a task list.**
     against land-use diversity). ⚠️ **The project has NO population-by-hood
     source**, so the per-capita variant of this cannot be computed at all.
 
-- [ ] **PROPOSED (one line, touches a merge-gate guard so not taken unasked): `check_doc_citations.py`'s path escape hatch is DEAD CODE.** Its bare-name check reads `if name not in docs and (root / name).name not in docs and "/" not in name` — but the regex behind `name` is `\b([A-Za-z][\w.-]*\.md)\b`, whose character class **cannot match a `/`**, so that third clause can never fire. It plainly means to exempt a path-form citation and cannot. **Fix:** test the character *before* the match instead. **Found 2026-09-08 (S148)** writing `docs/FABLE_AUDIT_road_figures.md`, which cites four `.md` files that live in `/home/opc/` **by design** (they must not be committed — they would become a drift surface against `city_unit_costs.json`). ⚠️ **Worked around, not fixed:** those filenames are written **without the `.md` extension**, with a line in §2 saying why — otherwise they add three permanent warnings to the baseline that restoration procedures quote as normal. ⚠️ **That baseline is now ZERO** (2026-09-16, S165): the two standing warnings were both `VIZ_STACK.md` citations, resolved by landing the doc — so any warning at all is now signal, and this escape hatch matters more than it did, not less. Cheap, but it is a guard change.
+- [ ] **PROPOSED (one line, touches a merge-gate guard so not taken unasked): `check_doc_citations.py`'s path escape hatch is DEAD CODE.** Its bare-name check reads `if name not in docs and (root / name).name not in docs and "/" not in name` — but the regex behind `name` is `\b([A-Za-z][\w.-]*\.md)\b`, whose character class **cannot match a `/`**, so that third clause can never fire. It plainly means to exempt a path-form citation and cannot. **Fix:** test the character *before* the match instead. **Found 2026-09-08 (S148)** writing `docs/FABLE_AUDIT_road_figures.md`, which cites four `.md` files that live in `/home/opc/` **by design** (they must not be committed — they would become a drift surface against `city_unit_costs.json`). ⚠️ **Worked around, not fixed:** those filenames are written **without the `.md` extension**, with a line in §2 saying why — otherwise they add three permanent warnings to the baseline that restoration procedures quote as normal. ⚠️ **That baseline is now ZERO** (2026-09-16, S165): the two standing warnings were both `VIZ_STACK.md` citations, resolved by landing the doc — so any warning at all is now signal, and this escape hatch matters more than it did, not less. Cheap, but it is a guard change. ⚠️ **Re-measured 2026-10-10 (S223): the baseline is 5 warnings again, and 4 are this class** (`docs/SCOPE_candidates.md` ×2 and `docs/FINDINGS_harvest.md` live in sibling repos; `.claude/skills/handoff/SKILL.md` exists HERE, so that one is a pure false positive); the 5th is a bare `AGENTS.md` in a closed `## Done` line. The fix would clear the 4.
 
 - [ ] **⚠️ Q1(a) BULLET 2 IS STUCK ON SEARCH — it needs a direct question to
   City staff. The Q1 rewrite stays HELD until it answers.** Is the
@@ -738,10 +738,29 @@ preload still holds (12/12). What is left:
      snaps back to 16 at the next whole zoom (MapLibre pattern behaviour, measured
      flat over open backdrop). A fixed-km grid would need a line layer instead.
 
-- [ ] **`verify-millrates.js` "360: rates and the bottom sheet do not overlap" is RED ON
-  MASTER** (found S220, 2026-10-09, while checking the blurb box; master build, alone):
-  `pod=318-416 sheet=404-732`, a 12px overlap at a 360px-wide phone. Not caused by the
-  blurb box (that is desktop-only CSS). Reproduce on a phone width before fixing.
+- [ ] **PETER'S CALL — two coupled phone-layout defects in the EXPANDED title card**
+  (measured 2026-10-10, S223, master build, headless, alone).
+  1. **`verify-millrates.js` 360 overlap, RED ON MASTER since S220:** at 360×740,
+     blurb open on Non-residential (the longest blurb; the h1 wraps to 3 lines), the
+     card runs to y 425 and the pinned-hood sheet (`#temporal`, 328 px, bottom-anchored,
+     z 4 over the card's 3) starts at y 404. It hides **real text**: the second line
+     of the rates footnote ("City tax only; education excluded · Farmland rate
+     assumed"). The rates rows themselves (341–387) stay visible. 390×844 is clear
+     (card 406, sheet 508).
+  2. **The card is flush to the right edge at every phone width** (S220's "title
+     clip"): `#title.expanded { max-width: calc(100vw - 44px) }` caps the CONTENT box,
+     so 24 px padding + border push it to `right == innerWidth` (390/360/320 measured);
+     22 px left gutter, 0 right. No content is clipped, no horizontal scroll.
+  - **They pull against each other:** giving the card a symmetric 22 px gutter
+    (`box-sizing: border-box`) narrows it ~26 px, wraps more, and DEEPENS (1). The
+    styles.css comment above that rule records the same trade-off from the other side
+    ("the narrower one pushed the mill rates 25px down, into the history sheet at
+    360px"), and the `h1 { padding-right: 88px }` arithmetic assumes the flush edge.
+  - **Options:** (a) cap the phone sheet (`max-height`) so its top clears the card —
+    `#temporal-body` already scrolls; (b) collapse the blurb when the sheet opens on a
+    phone (conflicts with the "rates survive a pinned hood" check's intent); (c) accept
+    (1) as the documented "covers chrome opened by a deliberate tap" rule and relax
+    the check to the rates rows. (2) is cosmetic; fix it only alongside (a) or (b).
 
 - [ ] **Mobile panel before it opens: more colour and height so it reads as
   tappable.** First pin down which element this means (the peek card, or the
