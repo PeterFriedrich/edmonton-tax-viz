@@ -774,19 +774,6 @@ preload still holds (12/12). What is left:
   job). ⚠️ **A same-model run executed 2026-09-28 (S204,
   `docs/FINDINGS_url_state.md`)**; the cross-model read is still owed and
   should target that run's SOUND verdicts on L1–L4.
-- [ ] **Tie the evidence notebooks' road rates to the rate the pipeline uses.**
-  `roads_lifecycle_rate` and `roads_operating_rate` justify $50 and $9.32 per
-  road-metre per year, but they are standalone and import nothing.
-  `test_load_unit_costs_reads_the_committed_operating_trio` pins
-  `city_unit_costs.json` to 9.32 by a literal. Nothing checks the notebook
-  against the config, so a rate change could update the config and its test and
-  leave the notebook justifying the old number. Measured 2026-09-25: the only
-  file outside `notebooks/` that names either notebook is
-  `scripts/recheck_evidence_notebooks.py`.
-  - **Confirmed 2026-09-28 (S202 §3):** the checks are `roads_lifecycle_rate.py`
-    `check(SHIPPED == 50.0)` and `roads_operating_rate.py` `check(SHIPPED == 9.32)`.
-    Keep the notebooks standalone (by design); the fix is a `tests/` check that
-    extracts each `SHIPPED ==` literal and asserts it equals the config value.
 - [ ] **Roads end-to-end audit follow-ons (S202, `docs/FINDINGS_roads_end_to_end.md`).**
   - **Peter's call (§1):** road on a boundary with a SET-ASIDE hood is split
     equally, so half goes into the grey hood. Sized: 22.9 km; excluding River
@@ -794,10 +781,10 @@ preload still holds (12/12). What is left:
     (a) record as a sized limitation in `DATA.md`, or (b) exclude River Valley
     sharers in `split_boundary_pieces`, which needs the set-aside reason upstream
     of `load_roads` (data-contract change, propose first).
-  - `data/city_unit_costs.json` `roadway_renewal.why_the_renewal_half_alone`
-    still says roadway_ops is "$4.635/m/yr" (it is $9.32 since 2026-09-06).
-  - Low: `_prepare_segments`' conservation guard only warns when road goes
-    *missing*; a double count makes it look healthier. Warn on `after > before`.
+  - ✅ (S223) `why_the_renewal_half_alone` now notes its $4.635 is as of the 2026-08-07 decision; $9.32 since 2026-09-06.
+  - ✅ (S223, no change needed) a double count is already caught before publish: `04_roads_lens.py`
+    asserts "clipping to neighbourhoods adds no road length" (`km_assigned <= km_in`), and the
+    verified notebooks gate `refresh.yml`'s publish — the remedy the findings offered as the alternative.
 - [ ] **Run the verified notebooks at merge time, not only in the weekly
   refresh.** `tests.yml` doesn't run them, so a PR that changes a `src/`
   function they call passes CI and breaks the next Monday's publish (loudly, but
@@ -3291,6 +3278,8 @@ archive"*) is not, and this span is 2,533 lines.
 ## Done
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
+
+- [x] **Tie the evidence notebooks' road rates to the rate the pipeline uses.** · `docs/TODO_archive.md`
 
 - [x] **Check the roads notebook's first scheduled run (2026-10-05)** — CLOSED 2026-10-10 · `docs/TODO_archive.md`
 
