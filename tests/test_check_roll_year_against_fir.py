@@ -144,11 +144,33 @@ def test_refresh_workflow_gates_every_publish_step_on_both_guards():
     import yaml
     workflow = yaml.safe_load(
         (Path(__file__).resolve().parents[1] / ".github/workflows/refresh.yml").read_text())
-    conditions = [s["if"] for s in workflow["jobs"]["build"]["steps"]
-                  if "if" in s and "yearcheck" in s["if"]]
+    steps = workflow["jobs"]["build"]["steps"]
+    conditions = [s["if"] for s in steps if "if" in s and "yearcheck" in s["if"]]
     assert conditions, "no step gates on the year guard — the gate vanished"
     for cond in conditions:
         assert "rollyear" in cond, f"step gates on yearcheck but not rollyear: {cond!r}"
+
+    # Coverage, not just consistency (FINDINGS_proxy_guards.md F5): a new step
+    # with no `if:` at all would regenerate or publish during a hold unseen.
+    # These run during a hold on purpose — the commit and the build ship the
+    # banner, and the issue reporters key on outputs a held run never sets.
+    deliberately_ungated = {
+        "Commit regenerated data + heartbeat if changed",
+        "Report a big revenue delta as an issue (notification email)",
+        "Report colour-clamp drift as an issue (notification email)",
+        "Build two-build site tree (public root + /dev-build-full/ specialist)",
+        "actions/setup-node",
+        "Install the verify harness",
+        "Smoke-check the built render (gate before publish)",
+        "Upload Pages artifact",
+    }
+    names = [s.get("name") or s["uses"].split("@")[0] for s in steps]
+    # Start after the later of the two guards, not at the first gated step: an
+    # ungated first step would move that start past itself.
+    first = 1 + max(i for i, s in enumerate(steps) if s.get("id") in ("yearcheck", "rollyear"))
+    ungated = [n for n, s in zip(names[first:], steps[first:])
+               if "yearcheck" not in s.get("if", "") and n not in deliberately_ungated]
+    assert not ungated, f"steps after the guards run during a hold, ungated: {ungated}"
 
 
 def test_main_writes_github_output_when_ok(tmp_path, monkeypatch):

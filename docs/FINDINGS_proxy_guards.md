@@ -9,7 +9,7 @@ known, and one of them is the 2026-08-27 defect still live through a different
 door.**
 
 > ### Disposition — 2026-08-28, same day
-> **F1 FIXED · F3 FIXED · F4 still open · F5 still open** (Peter: *"do f1 and
+> **F1 FIXED · F3 FIXED · F4 still open · F5 FIXED 2026-10-10** (Peter: *"do f1 and
 > f3"*). The fixes are recorded at the end of each finding below; the verdicts
 > above are left as they were written, because a findings doc that edits its own
 > history stops being evidence. ⚠️ **F1's fix deliberately departs from the
@@ -267,6 +267,13 @@ invisible to it, while the name promises the opposite.
 site build) are ungated **deliberately** — both must run during a hold to ship
 the banner — so coverage is correct right now and the test's weakness is
 latent. Sound only while someone reads the workflow when adding a step.
+
+**Fixed 2026-10-10 (S223):** the test now also walks every `build` step after
+the later of the two guard steps (`id: yearcheck`/`rollyear`) and fails on any
+that neither gates on both nor appears in a named `deliberately_ungated` set (the
+data commit, the two issue reporters, the site build, the verify harness, the
+smoke gate, the Pages upload). Mutants: `if:` removed from *Regenerate web
+GeoJSON*, and a new ungated step before the notebooks, each red by step name.
 
 ---
 
