@@ -419,6 +419,12 @@ Edmonton revenue-per-acre fiscal analysis. Python-only, no GIS software.
 - **F5: revenue-mix greys on the light panel (1.3:1 / 1.7:1).** Design call: Peter. under emulated forced dark the stored-light chrome stays light. fresh open after the switch (two hoods with theme-dependent swatches).
 - **F9: restore Glow on light → dark?** Peter. UI.md `THEMES` lines, the `#title-p` and guide comments, "plain landmarks".
 
+**Dev-velocity audit follow-ons (OPEN 2026-10-10 S225, `docs/FINDINGS_dev_velocity.md` §10)**
+- **`verify.js --serve <root>`: serve on a free port, md5-check the root, run, kill by pid.** Removes ~324 plumbing calls (~2.5% of working time) and the reason for `pkill -f` (exit 144, 28× in 19 sessions). Tools change: Peter.
+- **Delete the four stray probes** `tools/profiling/_dbg.js`, `s223-probe{,2,3}.js` (committed by `git add -A`; nothing references them). Peter merges.
+- **Commit the transcript instrument** as `tools/transcript_effort.py` with a classifier test (now at `research/edmonton-tax-viz/dev_velocity_instrument/`). New module: Peter.
+- **Cross-model read** of the findings, aimed at §11 (a)–(d).
+
 **Smoke gate reads no panel text (OPEN 2026-10-05 S215, `docs/FINDINGS_s187_remedies.md` F1)**
 
 **A `fable-session` credit-discipline skill — evaluated, corrections pending (OPEN 2026-09-04)**
@@ -540,16 +546,16 @@ Edmonton revenue-per-acre fiscal analysis. Python-only, no GIS software.
 
 - `TODO.md` — living backlog and **the source of truth for progress**
 - `docs/SPEC_phase1.md` — what we're building and why
-- `docs/DECISIONS.md` — append-only index of locked decisions: one line + pointer to the doc holding the full reasoning
+- `docs/DECISIONS.md` — append-only index of locked decisions: one row per decision, a self-contained summary plus a pointer to the doc holding the full reasoning (rows may paraphrase it; the pointer is the authority
 - `docs/RUNBOOK.md` — live-site operations: the monthly vintage digest (§0), January year-roll checklist, weekly-workflow failure triage
 - `docs/SPEC_services.md` — services lens (cost side; roads first): metric, filters, locked decisions, build order
 - `docs/SPEC_temporal.md` — temporal lens (assessment over time, per neighbourhood)
 - `docs/ARCHITECTURE.md` — module interfaces, data flow, testing approach
-- `docs/STACK.md` — one-page inventory of what the project is built out of: pinned versions, the two requirements files and why they differ, the frameworkless front end, the four CI workflows, and §9's list of what this project deliberately does NOT use
+- `docs/STACK.md` — one-page inventory of what the project is built out of: pinned versions, the two requirements files and why they differ, the frameworkless front end, the five CI workflows, and §9's list of what this project deliberately does NOT use
 - `data/DATA.md` — data source details, column names, known quirks
 - `docs/TOKEN_EFFICIENCY.md` — context/token hygiene (what NOT to read raw, session-summary archiving, how to navigate the big front-end file)
-- `docs/CODEMAP.md` — **generated** symbol index for `web/index.html` (~7,345 lines): every top-level symbol with its line range + purpose, plus every element id
-- `docs/COPY_DECISIONS.md` — open decisions about **reader-facing wording**: 21 rows grouped so a noun is decided ONCE and applied to every surface that carries it (the failure mode is fixing one panel and leaving three others saying something else)
+- `docs/CODEMAP.md` — **generated** symbol index for `web/index.html` (thousands of lines; `wc -l` for today's count): every top-level symbol with its line range + purpose, plus every element id
+- `docs/COPY_DECISIONS.md` — open decisions about **reader-facing wording**: rows grouped so a noun is decided ONCE and applied to every surface that carries it (the failure mode is fixing one panel and leaving three others saying something else)
 - `docs/ANALYSIS_BACKLOG.md` — analytical questions/investigations to run later (auto + by-hand)
 - `docs/PARCEL_LEVEL_OPPORTUNITIES.md` — future work gated on parcel-level data (finer than the neighbourhood unit); the set-aside machinery exists because we aggregate to neighbourhood
 - `docs/MOBILE_USABILITY.md` — mobile/phone usability work: the desktop↔mobile separation seam (`@media` block; render is shared, chrome is isolatable), confirmed vs unconfirmed problems, quick-pass plan
