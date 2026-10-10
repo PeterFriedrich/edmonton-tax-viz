@@ -110,3 +110,30 @@ def test_dark_reader_is_locked_out():
     in <head> (darkreader/darkreader CONTRIBUTING.md)."""
     head = HTML[:HTML.index("</head>")]
     assert re.search(r'<meta name="darkreader-lock"\s*/?>', head)
+
+
+def _themed_calls():
+    """The argument text of every themed(...) call in index.html."""
+    out = []
+    for m in re.finditer(r"\bthemed\((?!\))", HTML):   # not the error text's "themed():"
+        if HTML[m.start() - 6:m.start()] == "const ":
+            continue   # the definition
+        depth, i = 1, m.end()
+        while depth:
+            depth += {"(": 1, ")": -1}.get(HTML[i], 0)
+            i += 1
+        out.append(HTML[m.end():i - 1])
+    return out
+
+
+def test_every_themed_colour_has_a_light_value():
+    # A themed(dark) with no light value draws `undefined` in light mode. When
+    # deck tolerates it nothing crashes, and a HOVER_COLOR mutant passed every
+    # CI gate (FINDINGS_light_mode.md F4). Each call must carry two numeric
+    # arrays of the same length.
+    calls = _themed_calls()
+    assert len(calls) >= 40, f"found only {len(calls)} themed() calls; has the helper been renamed?"
+    arr = r"\[\s*\d+(?:\s*,\s*\d+){2,3}\s*\]"
+    bad = [c for c in calls if not re.fullmatch(rf"\s*({arr})\s*,\s*({arr})\s*", c)
+           or len(re.findall(r"\d+", c.split("]")[0])) != len(re.findall(r"\d+", c.split("]")[1]))]
+    assert not bad, f"themed() calls without two same-length colour arrays: {bad}"

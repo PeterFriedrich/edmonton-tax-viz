@@ -149,6 +149,8 @@ Measured rects (light, 800 px high):
 
 **F4 — A colour with no light value ships when its `undefined` does not crash. MEDIUM; latent; guard-blind.**
 
+> **FIXED 2026-10-09 (S222).** `themed()` throws when the light value is missing or a different length, and `tests/test_theme_tokens.py::test_every_themed_colour_has_a_light_value` checks every call statically. Falsified with the RIVER, ARTERIAL and HOVER mutants.
+
 One mutant per colour, each declared `themed(dark)` with no light value:
 
 | Mutant | pytest (1132) | deploy light smoke | how it was caught |
