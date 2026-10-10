@@ -598,6 +598,15 @@ this unreportable today: we cannot yet say how many are real. The per-parcel
 list is committed at `data/roll_continuity_candidates_2026-08-30.csv` so the
 next observation can be diffed against it rather than compared as a bare count.
 
+**Third observation, 2026-10-10:** 1,531 candidates / $1.11B. Diffed against
+the 08-30 list, **1,454 of 1,457 are still absent** and the 3 that left were
+demolish-and-rebuild infill (a new account within 5 m), not reappearances. So
+**no transient gap of the Misericordia kind occurred in six weeks**, and the
+persistent remainder is consistent with ordinary redevelopment, which this audit
+cannot separate from a dropout. This weakens the case for a report rather than
+building one. Figures: `TODO.md` "WHO IS MISSING"; list at
+`data/roll_continuity_candidates_2026-10-10.csv`.
+
 Same dataset as issue 1, so if it firms up it could ride along in that report
 rather than needing its own.
 
