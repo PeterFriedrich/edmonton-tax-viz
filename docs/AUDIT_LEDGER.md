@@ -502,6 +502,17 @@ Built and verified by Opus 5.5 alone.
     Written by the builder's model family, so **run it cross-model if credits
     allow**. ⚠️ **Same-model run executed 2026-10-09 (S221)** — `docs/FINDINGS_light_mode.md`; a cross-model read is still open, aimed at L4 and L6.
 
+20. **Coding speed and ease: where a session's effort goes** (Peter, S224).
+    **Briefed:** `docs/FABLE_AUDIT_dev_velocity.md`. It is a decision stack,
+    L0–L5. L0 parses the session transcripts into reading, editing, verifying
+    and ceremony; everything below it waits on that measurement. The baseline
+    already rules out merge latency and CI time. The live suspects are `TODO.md`
+    regrowth (298 KB, 89% of the loaded path), `DECISIONS.md` size (562 KB),
+    merge conflicts on the committed `docs/CODEMAP.md`, and local-web-loop
+    footguns. L5 checks whether the parallel-session trial fired the one-file
+    decision's "second concurrent author" trigger. Written by the builder's
+    model, so **get the findings read cross-model**.
+
 ## Never audited (candidates, roughly ranked)
 
 Surfaces no audit run has covered, **re-ranked 2026-09-05 (S140)** at Peter's
