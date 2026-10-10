@@ -1,5 +1,6 @@
 import json
 import sys
+from pathlib import Path
 
 import geopandas as gpd
 import pandas as pd
@@ -1692,6 +1693,24 @@ def test_load_unit_costs_reads_the_committed_operating_trio():
     assert costs["transit_budget_annual"] == 436_605_000.0
     # ⚠️ the two road bases must stay distinct in the committed file
     assert costs["road_dollars_per_m"] != costs["road_ops_dollars_per_m"]
+
+
+@pytest.mark.parametrize("notebook, key", [
+    ("roads_lifecycle_rate.py", "road_dollars_per_m"),
+    ("roads_operating_rate.py", "road_ops_dollars_per_m"),
+])
+def test_evidence_notebook_justifies_the_rate_the_pipeline_uses(notebook, key):
+    # The evidence notebooks are standalone by design and import nothing, so a
+    # rate change could update the config and leave the notebook justifying the
+    # old number. Each pins its rate in a `check(SHIPPED == <literal>` line.
+    import re
+    from join_and_calculate import load_unit_costs
+
+    src = Path("notebooks/standalone", notebook).read_text()
+    pinned = re.findall(r"check\(SHIPPED == ([0-9.]+)", src)
+    assert len(pinned) == 1, f"{notebook}: expected one SHIPPED pin, found {pinned}"
+    costs = load_unit_costs("data/city_unit_costs.json")
+    assert float(pinned[0]) == pytest.approx(costs[key])
 
 
 def test_load_unit_costs_operating_trio_is_optional(tmp_path):
