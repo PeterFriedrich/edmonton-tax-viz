@@ -86,6 +86,8 @@ One stale string, F12, predates light mode.
 ## §3 — Findings, most severe first
 
 **F1 — The hover tooltip is illegible in light mode. HIGH; public.**
+
+> **FIXED 2026-10-09 (S222).** `getTooltip` returns `style: { backgroundColor: "", color: "", padding: "" }`, which clears deck's inline defaults so `.tip` applies. Guarded by `verify-smoke.js` C12, which drives deck's own `setTooltip` and compares against an un-inlined `.tip` probe. It was red on the unfixed build in both themes and is green on both builds after the fix.
 - **What happens:** deck.gl writes its default tooltip style inline:
   `background-color: rgb(41,50,60); color: rgb(160,167,180); padding: 10px`.
   Inline style beats `.tip { background: var(--read-bg); color: var(--ink-tip) }`.
@@ -146,6 +148,8 @@ Measured rects (light, 800 px high):
   comment.
 
 **F4 — A colour with no light value ships when its `undefined` does not crash. MEDIUM; latent; guard-blind.**
+
+> **FIXED 2026-10-09 (S222).** `themed()` throws when the light value is missing or a different length, and `tests/test_theme_tokens.py::test_every_themed_colour_has_a_light_value` checks every call statically. Falsified with the RIVER, ARTERIAL and HOVER mutants.
 
 One mutant per colour, each declared `themed(dark)` with no light value:
 
