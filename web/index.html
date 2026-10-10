@@ -270,7 +270,7 @@
     <button data-view="lab" title="EXPERIMENTAL, unfinished work. Exploratory lenses kept apart from the published ones — nothing here is a conclusion, and the numbers may change or be withdrawn">Lab<span class="beta">beta</span></button>
   </div>
 
-  <div id="optpanel">
+  <div id="optpanel" data-view="money">
     <button id="opt-fold" title="Show or hide the detail, denominator and colour-scaling controls">Options<span id="opt-caret">▾</span></button>
     <div id="opt-body">
   <div id="layers" class="panel">
@@ -7748,6 +7748,7 @@
                     : LAB_VIEWS.includes(v) ? "lab" : v;
       document.querySelectorAll("#views button").forEach(b =>
         b.classList.toggle("active", b.dataset.view === viewBtn));
+      document.getElementById("optpanel").dataset.view = viewBtn;  // styles.css width cap
       // The metric picker (#toggle) is Money-scoped: shown in Money/Glass, where
       // it drives the render, and in Change, which since 2026-08-01 hosts its
       // OWN lens toggle as Value's row 2 — hiding the pod there would strand

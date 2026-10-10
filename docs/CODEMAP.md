@@ -2,7 +2,7 @@
 
 **Generated — do not hand-edit.** `python tools/codemap.py`
 
-`web/index.html` is a single ~8,849-line file holding the whole front end. This is the lookup table for it: jump to a symbol's range instead of scanning. **Line numbers go stale on the next edit — regenerate rather than citing them.** Prose should still name symbols, not lines.
+`web/index.html` is a single ~8,850-line file holding the whole front end. This is the lookup table for it: jump to a symbol's range instead of scanning. **Line numbers go stale on the next edit — regenerate rather than citing them.** Prose should still name symbols, not lines.
 
 ## Symbols (323 indexed)
 
@@ -433,28 +433,28 @@ Grouped by the file's own `// --- section ---` banners, in file order.
 | `syncLabControls` | 7699–7715 | The Lab's controls: the experiment picker (only once there are two — see |
 | `applyLabCut` | 7716–7729 | Switch the deviation experiment's revenue cut. Its average, per-arm |
 | `setPrismOpacity` | 7730–7740 | Set the ratio view's ghost-prism opacity (0–100). UI-state only — the |
-| `applyView` | 7741–7984 | Switch view (money \| services \| ratio \| uses \| glass). Road geometry |
-| `syncServiceControls` | 7985–7994 | Services-view controls. `applyService` flips a service on/off; |
-| `applyService` | 7995–8008 |  |
-| `applySvcDriver` | 8009–8041 |  |
+| `applyView` | 7741–7985 | Switch view (money \| services \| ratio \| uses \| glass). Road geometry |
+| `syncServiceControls` | 7986–7995 | Services-view controls. `applyService` flips a service on/off; |
+| `applyService` | 7996–8009 |  |
+| `applySvcDriver` | 8010–8042 |  |
 
 ### shareable URL: the hash names the view on screen
 
 | symbol | lines | what it does |
 |---|---|---|
-| `METRIC_FROM_URL` | 8042–8044 |  |
-| `urlHash` | 8045–8085 |  |
-| `shareLink` | 8086–8094 | Absolute on purpose: the full build carries <base href="../">, and a |
-| `copyShareLink` | 8095–8106 | With no clipboard (an insecure origin, a denied permission) the link goes |
-| `offered` | 8107–8113 | On screen, ignoring the Options fold: a folded panel on a phone hides |
-| `applyUrlState` | 8114–8186 |  |
-| `restoreFromHash` | 8187–8205 | Once, at the end of boot, after every build and data gate has run. The |
+| `METRIC_FROM_URL` | 8043–8045 |  |
+| `urlHash` | 8046–8086 |  |
+| `shareLink` | 8087–8095 | Absolute on purpose: the full build carries <base href="../">, and a |
+| `copyShareLink` | 8096–8107 | With no clipboard (an insecure origin, a denied permission) the link goes |
+| `offered` | 8108–8114 | On screen, ignoring the Options fold: a folded panel on a phone hides |
+| `applyUrlState` | 8115–8187 |  |
+| `restoreFromHash` | 8188–8206 | Once, at the end of boot, after every build and data gate has run. The |
 
 ### boot
 
 | symbol | lines | what it does |
 |---|---|---|
-| `boot` | 8206–8849 | Everything that needs the map surface: fetch the data, mount the deck.gl |
+| `boot` | 8207–8850 | Everything that needs the map surface: fetch the data, mount the deck.gl |
 
 ## Dependency graph (1097 edges)
 
