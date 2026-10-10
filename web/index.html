@@ -81,8 +81,9 @@
 
   <div id="title" class="panel">
     <h1 id="title-h">Edmonton: City Taxes per Acre</h1>
-    <!-- The landing state of moneyBlurb() (Total, ground acres, sqrt, 3D);
-         nothing rewrites it on load. verify-money-denom.js checks they match. -->
+    <!-- The landing state of moneyBlurb() (Total, ground acres, sqrt, 3D).
+         syncThemeChrome() rewrites it at boot, under the loading overlay, so
+         no reader sees this copy; verify-money-denom.js checks they match. -->
     <div id="title-p"><p><b>City property tax per acre</b>: what each
        neighbourhood's properties pay the City, divided by its land area.</p><p>Taller, brighter neighbourhoods are higher per
        acre; colour is square-root scaled to show the low end. Grey = set-aside
@@ -532,7 +533,7 @@
            are. Still a checkbox, so the data can be read on a clean backdrop.
            The regional names ride THIS toggle, not the neighbourhood one
            above: they answer "where is this?", not "which hood is that?". -->
-      <label title="Show the North Saskatchewan River, the Anthony Henday ring road, and the names of neighbouring places — plain grey landmarks for orientation, no data attached">
+      <label title="Show the North Saskatchewan River, the Anthony Henday ring road, and the names of neighbouring places — plain landmarks for orientation, no data attached">
         <input type="checkbox" id="reference-on" checked /> Landmarks &amp; nearby places
       </label>
     </div>
@@ -6200,7 +6201,7 @@
     }
 
     // --- how-to-read guide -----------------------------------------------------
-    // The seen flag is the app's only localStorage use, and every access is
+    // The seen flag is one of two localStorage uses (the theme is the other), and every access is
     // wrapped: a private window or blocked storage throws or forgets, and the
     // card then shows on each visit, which is harmless.
     const GUIDE_KEY = "guideSeen";
@@ -7437,6 +7438,8 @@
       overlay.setProps({ layers: buildLayers() });
       paintBackdrop();
       refreshLegend();
+      // An open panel's swatches were drawn with the old theme's colours.
+      syncPinnedPanel();
     }
 
     // The theme's wording and buttons outside the map. Also run once at boot,
@@ -8220,7 +8223,13 @@
       overlay = new deck.MapboxOverlay({
         interleaved: true,
         layers: buildLayers(),
-        getTooltip: tooltipFor,
+        // deck.gl writes its own background, colour and padding INLINE on the
+        // tooltip element, which beats `.tip`; the empty strings clear them so
+        // the stylesheet applies (FINDINGS_light_mode.md F1; verify-smoke C12).
+        getTooltip: info => {
+          const t = tooltipFor(info);
+          return t && { ...t, style: { backgroundColor: "", color: "", padding: "" } };
+        },
         onClick: temporalClick,
         onHover: bandHover,
       });

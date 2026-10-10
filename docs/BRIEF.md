@@ -159,7 +159,7 @@ Edmonton revenue-per-acre fiscal analysis. Python-only, no GIS software.
 - **2026-08-01** — **The chrome-coverage figure that drove the mobile backlog for six sessions was INFLATED, and the priority it implied was wrong** — re-measured at Peter's request before deciding the bottom-sheet …
 - **2026-08-01** — **Revenue-by-zone is computed from the zoning POLYGONS by point-in-polygon, NOT from `dkk9-cj3x`'s per-property `zoning` field — and it is NOT blocked on parcel geometry** (Peter: *"percent of city …
 - **2026-08-01** — **The mill-rate pod shows ALL THREE classes in every revenue cut with the billed ones lit, rather than listing only the relevant rate; and it YIELDS to the history panel rather than displacing it** …
-- **2026-08-01** — ⚠️ **AMENDED 2026-10-09 — "bare text is a desktop affordance" no longer holds: prisms run under the desktop corner and the map is not always dark, so the desktop blurb is boxed too; see that row.**
+- **2026-08-01** — ⚠️ **AMENDED 2026-10-09 (the desktop blurb was boxed), and that amendment was REVERSED on 2026-10-09 as well: the desktop blurb is bare text again, so "bare text is a desktop affordance" stands, with …
 - **2026-08-01** — **On a phone the mill rates are PART OF THE BLURB, not a surface of their own — the answer was not where to put the pod, it was not to have one** (Peter, after seeing a standalone card built to his …
 - **2026-08-01** — **The Current / Change-over-time lens toggle moves out of the Options panel and becomes `#toggle`'s row 2 UNDER VALUE — and it is a different KIND of nesting from the revenue cuts** (Peter: *"move … … `#chgwindow` (Since 2012 / Since 2019) **stays in Options** (Peter's call) — `#toggle` stays strictly two-level, so a third row was refused.
 - **2026-08-01** — **On Money's REVENUE metrics the pinned panel shows the hood's zone-revenue breakdown INSTEAD of the assessment history — one element, two modes** (Peter: *"under revenue, the panel still pops up …
@@ -401,13 +401,13 @@ Edmonton revenue-per-acre fiscal analysis. Python-only, no GIS software.
 - **2026-10-09** — **The backdrop gets a faint square grid in both themes; light's is fainter than dark's** (Peter, S220, picked from none / cross-hatch / diagonal / grid).
 - **2026-10-09** — **The backdrop grid stops at the city limit** (Peter, S220: "mask the city for sure").
 - **2026-10-09** — **The page opts out of Dark Reader with `<meta name="darkreader-lock">`** (Peter, S220).
-- **2026-10-09** — **On desktop the top-left blurb and the mill rates sit in one reading-panel box, in both themes** (Peter, S220, picked from bare / halo / box).
+- **2026-10-09** — **The desktop blurb and mill rates go back to bare text; this reverses the same-day blurb-box row** (Peter, S222: he no longer liked the grey behind the top-left blurb).
 
 ## Open work
 
 - **Set up the claude.ai Project and press Sync (Peter).** The brief merged in #625. Create a private Project, add the repo from GitHub, select `docs/BRIEF.md` + `docs/SPEC_*.md`, press **Sync**, and review `docs/SCOPE.md`. After that, `/handoff`'s sync check prompts for each …
 
-**⚠️ Weekly refresh RED since 2026-10-05 — City's GTFS Calendar Dates loaded empty (OPEN 2026-10-05 S215)**
+**GTFS Calendar Dates follow-on (refresh RED 2026-10-05, ✅ GREEN again 2026-10-08)**
 
 **Services/Development panel follow-ons (OPEN 2026-10-05 S215, `docs/FINDINGS_services_ranks_dev_zerofill.md`)**
 
@@ -418,12 +418,8 @@ Edmonton revenue-per-acre fiscal analysis. Python-only, no GIS software.
 - **F2 (public): 641–~930 px, the title column covers the view buttons.** #698 widened the band ~40 px; below ~860 it predates S220. Layout call: Peter.
 - **F3 (public): the Beta badge covers the phone legend and sheet.** Move or shrink it under 641 px; fix `build_site.py`'s "keeps clear of the legend" comment.
 - **F4: make `themed()` throw on a missing light value** (a `HOVER_COLOR` mutant passed every CI gate), and/or a pytest that every `themed(` has two arrays.
-- **F5: revenue-mix greys on the light panel (1.3:1 / 1.7:1).** Design call: Peter.
-- **F6: declare `color-scheme` per theme** (`only light` / `only dark` on `:root[data-theme]`); verified to stop Chromium auto-dark repainting a stored-light page.
-- **F7: re-render an open `#temporal` panel in `applyTheme`.**
-- **F8: `@media print` with `print-color-adjust: exact` on the legend bar and swatches.**
-- **F9: restore Glow on light → dark?** Peter.
-- **F10 + F12: stale text.** ARCHITECTURE verify-tier row; UI.md Light mode's `THEMES` lines; the `#title-p` and guide comments in `index.html`; the badge comment; the "plain grey landmarks" tooltip (river is blue).
+- **F5: revenue-mix greys on the light panel (1.3:1 / 1.7:1).** Design call: Peter. under emulated forced dark the stored-light chrome stays light. fresh open after the switch (two hoods with theme-dependent swatches).
+- **F9: restore Glow on light → dark?** Peter. UI.md `THEMES` lines, the `#title-p` and guide comments, "plain landmarks".
 
 **Smoke gate reads no panel text (OPEN 2026-10-05 S215, `docs/FINDINGS_s187_remedies.md` F1)**
 
@@ -471,10 +467,9 @@ Edmonton revenue-per-acre fiscal analysis. Python-only, no GIS software.
 
 **Peter's list, 2026-09-25 (S196) — not scoped yet**
 - **Backdrop grid: BUILT (S220, #695), city masked (S220); one question open.** Peter picked the square grid from four textures (none / cross-hatch / diagonal / grid), faint in both themes. A 16 px cell drawn as its own `background` layer (`bg-grid`), alpha 0.06 white in dark and …
-- **`verify-millrates.js` "360: rates and the bottom sheet do not overlap" is RED ON MASTER** (found S220, 2026-10-09, while checking the blurb box; master build, alone): `pod=318-416 sheet=404-732`, a 12px overlap at a 360px-wide phone. Not caused by the blurb box (that is …
+- **PETER'S CALL — two coupled phone-layout defects in the EXPANDED title card** (measured 2026-10-10, S223, master build, headless, alone). 1. **`verify-millrates.js` 360 overlap, RED ON MASTER since S220:** at 360×740, blurb open on Non-residential (the longest blurb; the h1 …
 - **Mobile panel before it opens: more colour and height so it reads as tappable.** First pin down which element this means (the peek card, or the collapsed hood panel?) and measure its current size on a phone viewport. The mobile coverage figures on record (DECISIONS 2026-08-04, …
 - **Audit the shareable URL hash (#608), cross-model.** Brief: `docs/FABLE_AUDIT_url_state.md`; queue item 15 in `docs/AUDIT_LEDGER.md`. `verify-url-state.js` now gates web/ PRs (S207, `tests.yml` `url-state` job). ⚠️ **A same-model run executed 2026-09-28 (S204, …
-- **Check the roads notebook's first scheduled run (2026-10-05)**: queue item 16 in `docs/AUDIT_LEDGER.md`. Mainly, does its week-over-week table read last week's committed data on the runner?
 - **Tie the evidence notebooks' road rates to the rate the pipeline uses.** `roads_lifecycle_rate` and `roads_operating_rate` justify $50 and $9.32 per road-metre per year, but they are standalone and import nothing. `test_load_unit_costs_reads_the_committed_operating_trio` pins …
 - **Roads end-to-end audit follow-ons (S202, `docs/FINDINGS_roads_end_to_end.md`).** - **Peter's call (§1):** road on a boundary with a SET-ASIDE hood is split equally, so half goes into the grey hood. Sized: 22.9 km; excluding River Valley / Parks sharers moves 53 published …
 - **Run the verified notebooks at merge time, not only in the weekly refresh.** `tests.yml` doesn't run them, so a PR that changes a `src/` function they call passes CI and breaks the next Monday's publish (loudly, but days late). CI change, so propose it first. It needs the …

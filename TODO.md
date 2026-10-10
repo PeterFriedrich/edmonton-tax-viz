@@ -190,21 +190,13 @@ publish on its own, unrelated to any of this — re-pinned.)_
   `docs/BRIEF.md` + `docs/SPEC_*.md`, press **Sync**, and review
   `docs/SCOPE.md`. After that, `/handoff`'s sync check prompts for each re-sync
   (`docs/CLAUDE_WEB.md`).
-### ⚠️ Weekly refresh RED since 2026-10-05 — City's GTFS Calendar Dates loaded empty (OPEN 2026-10-05 S215)
-- `f2sy-bth7` reloaded with **0 rows** (`docs/DATA_ISSUES.md` §8). `load_transit`
-  fails loud, the site serves the 2026-09-28 data, and **the staleness banner
-  shows from 2026-10-12** if the next Monday run also fails.
-- **Before next Monday:** re-check `https://data.edmonton.ca/resource/f2sy-bth7.json?$select=count(*)`.
-  If it is non-zero, `gh workflow run refresh.yml --ref master` (RUNBOOK §2: dispatch, don't re-run).
-- **Item 18 audit (`docs/FINDINGS_empty_sources.md`):** an empty school table
-  publishes wrong `dist_school_m` with every gate green; 6 loud failures misdiagnose
-  an empty table. ✅ **Fixed S216:** `download_data.py` now fails a 0-row source,
-  naming the dataset, so next Monday's run (if still empty) goes red at
-  "Download source data" with the real cause.
-- **Peter decides:** report it (§8 channel); and whether to add a fallback to
-  ETS's own zip (`calendar_dates.txt`, identical service_ids) when the Socrata
-  table is empty. That is a new download source and a CI behaviour change, so it
-  needs Peter's OK before it's built.
+### GTFS Calendar Dates follow-on (refresh RED 2026-10-05, ✅ GREEN again 2026-10-08)
+- ✅ `f2sy-bth7` was reloaded full by the City (13,551 rows, re-measured 2026-10-10);
+  the 10-08 dispatched refresh (run 37846984412) published. `DATA_ISSUES.md` §8 is
+  RESOLVED UPSTREAM. Since S216 a 0-row source fails at "Download source data" by name.
+- **Peter decides:** whether to add a fallback to ETS's own zip (`calendar_dates.txt`,
+  identical service_ids) when the Socrata table is empty. New download source + CI
+  behaviour change, so it needs Peter's OK before it's built.
 
 ### Services/Development panel follow-ons (OPEN 2026-10-05 S215, `docs/FINDINGS_services_ranks_dev_zerofill.md`)
 - ✅ **F1 fixed S216:** comment corrected; `CHAPPELLE AREA, HERITAGE VALLEY AREA`
@@ -227,11 +219,9 @@ publish on its own, unrelated to any of this — re-pinned.)_
   carve-out 1 (prose) and to the README table.
 
 ### Light-mode audit follow-ons (OPEN 2026-10-09 S221, `docs/FINDINGS_light_mode.md`)
-- [ ] **F1 (HIGH, public): the hover tooltip is illegible in light.** deck.gl's inline
-  default (`background-color: rgb(41,50,60)`) beats `.tip`; light muted lines are 1.2:1.
-  Fix: pass `style` overrides from every `viewTooltip` return (or `!important` on `.tip`),
-  then add a render check that the light tooltip's computed background is not deck's slate.
-  Code PR, Peter merges.
+- ✅ **F1 fixed S222:** `getTooltip` clears deck.gl's inline background/colour/padding so `.tip`
+  applies, in both themes. Guard: `verify-smoke.js` C12 (deploy gate, both themes), red on
+  the unfixed build in dark and light.
 - [ ] **F2 (public): 641–~930 px, the title column covers the view buttons.** #698 widened
   the band ~40 px; below ~860 it predates S220. Layout call: Peter.
 - [ ] **F3 (public): the Beta badge covers the phone legend and sheet.** Move or shrink it
@@ -241,14 +231,14 @@ publish on its own, unrelated to any of this — re-pinned.)_
   has two same-length arrays. RIVER, ARTERIAL and HOVER mutants each red the pytest; the HOVER
   mutant now crashes smoke too.
 - [ ] **F5: revenue-mix greys on the light panel (1.3:1 / 1.7:1).** Design call: Peter.
-- [ ] **F6: declare `color-scheme` per theme** (`only light` / `only dark` on
-  `:root[data-theme]`); verified to stop Chromium auto-dark repainting a stored-light page.
-- [ ] **F7: re-render an open `#temporal` panel in `applyTheme`.**
-- [ ] **F8: `@media print` with `print-color-adjust: exact` on the legend bar and swatches.**
+- ✅ **F6 fixed S222:** `color-scheme: only dark` on `:root`, `only light` in both light blocks;
+  under emulated forced dark the stored-light chrome stays light.
+- ✅ **F7 fixed S222:** `applyTheme` calls `syncPinnedPanel()`; an open revenue-mix panel matches a
+  fresh open after the switch (two hoods with theme-dependent swatches).
+- ✅ **F8 fixed S222:** `print-color-adjust: exact` on `#legend .bar` and `.sw`; checked in a `page.pdf()`.
 - [ ] **F9: restore Glow on light → dark?** Peter.
-- [ ] **F10 + F12: stale text.** ARCHITECTURE verify-tier row; UI.md Light mode's `THEMES`
-  lines; the `#title-p` and guide comments in `index.html`; the badge comment; the
-  "plain grey landmarks" tooltip (river is blue).
+- ✅ **F10 + F12 fixed S222** except the badge comment, which waits on F3: ARCHITECTURE tier table,
+  UI.md `THEMES` lines, the `#title-p` and guide comments, "plain landmarks".
 
 ### Smoke gate reads no panel text (OPEN 2026-10-05 S215, `docs/FINDINGS_s187_remedies.md` F1)
 - ✅ **F1 fixed S216:** §C now runs the same scan over the Ratio, Services (every
@@ -448,7 +438,7 @@ audit's findings are claims to reproduce, not a task list.**
     against land-use diversity). ⚠️ **The project has NO population-by-hood
     source**, so the per-capita variant of this cannot be computed at all.
 
-- [ ] **PROPOSED (one line, touches a merge-gate guard so not taken unasked): `check_doc_citations.py`'s path escape hatch is DEAD CODE.** Its bare-name check reads `if name not in docs and (root / name).name not in docs and "/" not in name` — but the regex behind `name` is `\b([A-Za-z][\w.-]*\.md)\b`, whose character class **cannot match a `/`**, so that third clause can never fire. It plainly means to exempt a path-form citation and cannot. **Fix:** test the character *before* the match instead. **Found 2026-09-08 (S148)** writing `docs/FABLE_AUDIT_road_figures.md`, which cites four `.md` files that live in `/home/opc/` **by design** (they must not be committed — they would become a drift surface against `city_unit_costs.json`). ⚠️ **Worked around, not fixed:** those filenames are written **without the `.md` extension**, with a line in §2 saying why — otherwise they add three permanent warnings to the baseline that restoration procedures quote as normal. ⚠️ **That baseline is now ZERO** (2026-09-16, S165): the two standing warnings were both `VIZ_STACK.md` citations, resolved by landing the doc — so any warning at all is now signal, and this escape hatch matters more than it did, not less. Cheap, but it is a guard change.
+- [ ] **PROPOSED (one line, touches a merge-gate guard so not taken unasked): `check_doc_citations.py`'s path escape hatch is DEAD CODE.** Its bare-name check reads `if name not in docs and (root / name).name not in docs and "/" not in name` — but the regex behind `name` is `\b([A-Za-z][\w.-]*\.md)\b`, whose character class **cannot match a `/`**, so that third clause can never fire. It plainly means to exempt a path-form citation and cannot. **Fix:** test the character *before* the match instead. **Found 2026-09-08 (S148)** writing `docs/FABLE_AUDIT_road_figures.md`, which cites four `.md` files that live in `/home/opc/` **by design** (they must not be committed — they would become a drift surface against `city_unit_costs.json`). ⚠️ **Worked around, not fixed:** those filenames are written **without the `.md` extension**, with a line in §2 saying why — otherwise they add three permanent warnings to the baseline that restoration procedures quote as normal. ⚠️ **That baseline is now ZERO** (2026-09-16, S165): the two standing warnings were both `VIZ_STACK.md` citations, resolved by landing the doc — so any warning at all is now signal, and this escape hatch matters more than it did, not less. Cheap, but it is a guard change. ⚠️ **Re-measured 2026-10-10 (S223): the baseline is 5 warnings again, and 4 are this class** (`docs/SCOPE_candidates.md` ×2 and `docs/FINDINGS_harvest.md` live in sibling repos; `.claude/skills/handoff/SKILL.md` exists HERE, so that one is a pure false positive); the 5th is a bare `AGENTS.md` in a closed `## Done` line. The fix would clear the 4.
 
 - [ ] **⚠️ Q1(a) BULLET 2 IS STUCK ON SEARCH — it needs a direct question to
   City staff. The Q1 rewrite stays HELD until it answers.** Is the
@@ -748,10 +738,29 @@ preload still holds (12/12). What is left:
      snaps back to 16 at the next whole zoom (MapLibre pattern behaviour, measured
      flat over open backdrop). A fixed-km grid would need a line layer instead.
 
-- [ ] **`verify-millrates.js` "360: rates and the bottom sheet do not overlap" is RED ON
-  MASTER** (found S220, 2026-10-09, while checking the blurb box; master build, alone):
-  `pod=318-416 sheet=404-732`, a 12px overlap at a 360px-wide phone. Not caused by the
-  blurb box (that is desktop-only CSS). Reproduce on a phone width before fixing.
+- [ ] **PETER'S CALL — two coupled phone-layout defects in the EXPANDED title card**
+  (measured 2026-10-10, S223, master build, headless, alone).
+  1. **`verify-millrates.js` 360 overlap, RED ON MASTER since S220:** at 360×740,
+     blurb open on Non-residential (the longest blurb; the h1 wraps to 3 lines), the
+     card runs to y 425 and the pinned-hood sheet (`#temporal`, 328 px, bottom-anchored,
+     z 4 over the card's 3) starts at y 404. It hides **real text**: the second line
+     of the rates footnote ("City tax only; education excluded · Farmland rate
+     assumed"). The rates rows themselves (341–387) stay visible. 390×844 is clear
+     (card 406, sheet 508).
+  2. **The card is flush to the right edge at every phone width** (S220's "title
+     clip"): `#title.expanded { max-width: calc(100vw - 44px) }` caps the CONTENT box,
+     so 24 px padding + border push it to `right == innerWidth` (390/360/320 measured);
+     22 px left gutter, 0 right. No content is clipped, no horizontal scroll.
+  - **They pull against each other:** giving the card a symmetric 22 px gutter
+    (`box-sizing: border-box`) narrows it ~26 px, wraps more, and DEEPENS (1). The
+    styles.css comment above that rule records the same trade-off from the other side
+    ("the narrower one pushed the mill rates 25px down, into the history sheet at
+    360px"), and the `h1 { padding-right: 88px }` arithmetic assumes the flush edge.
+  - **Options:** (a) cap the phone sheet (`max-height`) so its top clears the card —
+    `#temporal-body` already scrolls; (b) collapse the blurb when the sheet opens on a
+    phone (conflicts with the "rates survive a pinned hood" check's intent); (c) accept
+    (1) as the documented "covers chrome opened by a deliberate tap" rule and relax
+    the check to the rates rows. (2) is cosmetic; fix it only alongside (a) or (b).
 
 - [ ] **Mobile panel before it opens: more colour and height so it reads as
   tappable.** First pin down which element this means (the peek card, or the
@@ -765,9 +774,6 @@ preload still holds (12/12). What is left:
   job). ⚠️ **A same-model run executed 2026-09-28 (S204,
   `docs/FINDINGS_url_state.md`)**; the cross-model read is still owed and
   should target that run's SOUND verdicts on L1–L4.
-- [ ] **Check the roads notebook's first scheduled run (2026-10-05)**: queue
-  item 16 in `docs/AUDIT_LEDGER.md`. Mainly, does its week-over-week table read
-  last week's committed data on the runner?
 - [ ] **Tie the evidence notebooks' road rates to the rate the pipeline uses.**
   `roads_lifecycle_rate` and `roads_operating_rate` justify $50 and $9.32 per
   road-metre per year, but they are standalone and import nothing.
@@ -3285,6 +3291,8 @@ archive"*) is not, and this span is 2,533 lines.
 ## Done
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
+
+- [x] **Check the roads notebook's first scheduled run (2026-10-05)** — CLOSED 2026-10-10 · `docs/TODO_archive.md`
 
 - [x] **cividis collides with the set-aside grey — "off the scale" and "a real value" render the same.** — CLOSED 2026-10-06 · `docs/TODO_archive.md`
 - [x] **Tutorial pop-up for the toolbar on a first mobile visit, and maybe a smaller one on desktop.** — DONE 2026-10-08 · `docs/TODO_archive.md`

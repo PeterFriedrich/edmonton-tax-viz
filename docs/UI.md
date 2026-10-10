@@ -983,9 +983,9 @@ zoom +/− buttons we don't want (scroll/pinch already cover zoom). See
 - Needs more than flipping the background: the inferno ramp and the cool edge are
   tuned for a dark backdrop and won't read the same on light. Expect to rework
   the background, the fill ramp's dark end, and `TOP_EDGE_COLOR` together.
-- **Implementation direction:** factor the colour tunables into a named theme
-  object (e.g. `THEMES.dark` / `THEMES.light`) rather than loose top-level
-  constants, with a toggle. Keeps the two palettes from drifting.
+- **Implementation direction (superseded by phase 1):** this first proposed a named theme
+  object (`THEMES.dark` / `THEMES.light`). Phase 1 instead kept each colour beside its
+  rationale as `themed(dark, light)`, read through `tc()`, with `THEMED` listing them all.
 
 - **CHROME HALF DONE (2026-09-21, `feat/chrome-light-dark`).** The CSS chrome is
   now tokenized: every colour in `styles.css` is a `:root` custom property, and
@@ -1013,7 +1013,7 @@ zoom +/− buttons we don't want (scroll/pinch already cover zoom). See
      user is a **light MAP**, which is the daylight / projected / printed viewing
      case (the context question gating this) and the ramp/backdrop rework this
      section already anticipates.
-- **RESUME PATH.** A real light mode = the map half (the `THEMES.dark/light` ramp
+- **RESUME PATH.** A real light mode = the map half (the theme-pair ramp
   + backdrop rework above) driving the CSS tokens already in place. The chrome
   tokens make that cheap; do the map first, then the light `@media` / `[data-theme]`
   block + a toggle in the Display pod fall out of it.
@@ -1037,7 +1037,7 @@ already carries its own `bg` / `edge` / `setAside`, swapped live by
 
 | Phase | What | Gate |
 |---|---|---|
-| 1. Plumbing | Move the map colour constants (`SET_ASIDE_COLOR`, `GLASS_PLANE_COLOR`, `ARTERIAL_COLOR`, river/highway/boundary/city-limit/zone lines, fire/transit/bike, `HOOD_COLOR` + label halo, `INST_OUTLINE_COLOR`, `INFILL_CENTER`, `UNCERTAIN_COLOR`, `AMENITY_HIGHLIGHT_COLOR`, lighting `specularColor`) into `THEMES.dark` / `THEMES.light`; `state.theme`; `data-theme` on `<html>`. | **Dark is pixel-identical** before/after (screenshot diff, every public view). Ships alone. |
+| 1. Plumbing | Move the map colour constants (`SET_ASIDE_COLOR`, `GLASS_PLANE_COLOR`, `ARTERIAL_COLOR`, river/highway/boundary/city-limit/zone lines, fire/transit/bike, `HOOD_COLOR` + label halo, `INST_OUTLINE_COLOR`, `INFILL_CENTER`, `UNCERTAIN_COLOR`, `AMENITY_HIGHLIGHT_COLOR`, lighting `specularColor`) into `themed(dark, light)` pairs (first planned as a `THEMES.dark` / `THEMES.light` object); `state.theme`; `data-theme` on `<html>`. | **Dark is pixel-identical** before/after (screenshot diff, every public view). Ships alone. |
 | 2. Light ramps | Default light ramp + light cividis, light → dark, on a near-white backdrop. Design against the real distribution, not the stops: WCAG 1.4.11 3:1 vs the backdrop, decile-to-decile ΔE (fix the open "half the hoods inside ~20% of the ramp" defect here rather than inherit it), CVD simulation. | A contrast test over the published distribution. |
 | 3. Re-solve dependent colours | Everything in phase 1's list, measured against the light ramps and backdrop (the `#2ec4ff` brute-force and the set-aside ΔE search are the templates). Also the Infill/Change diverging ramp and the Uses categories. | `tests/test_set_aside_colour.py` extended to the light family. |
 | 4. Chrome | Light values for the 36 `:root` tokens, under `@media (prefers-color-scheme: light)` guarded by `:root:not([data-theme="dark"])`, and again under `[data-theme="light"]`. `--mark` darkens; `--accent` need not. | Screenshot review, both widths. |
