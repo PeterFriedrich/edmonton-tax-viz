@@ -186,6 +186,8 @@ Swatch and bar against `--read-bg` composited over the backdrop:
   to the map, so it can't move alone.
 
 **F6 — A browser's forced dark repaints the light chrome. LOW; public.**
+
+> **FIXED 2026-10-09 (S222).** `color-scheme` declared per theme in `styles.css`; the forced-dark emulation no longer repaints the stored-light chrome.
 - **The setup (Chromium auto-dark, emulated):** OS dark, reader stored Light.
   Nothing declares `color-scheme`.
 - **The result:** Chromium darkens the title box and inverts its ink, while the
@@ -206,6 +208,8 @@ Swatch and bar against `--read-bg` composited over the backdrop:
   ([Chrome, Auto Dark Theme](https://developer.chrome.com/blog/auto-dark-theme)).
 
 **F7 — An open revenue-mix panel keeps the other theme's greys after a switch. LOW; public.**
+
+> **FIXED 2026-10-09 (S222).** `applyTheme` re-renders the pinned panel via `syncPinnedPanel()`.
 - `applyTheme` repaints layers, backdrop and legend, but not `#temporal`.
 - With a Future/rural or unzoned share showing, switching theme leaves those
   swatches at the other theme's value until the panel is re-opened. Measured
@@ -213,6 +217,8 @@ Swatch and bar against `--read-bg` composited over the backdrop:
 - **Fix:** re-render the open panel in `applyTheme`.
 
 **F8 — Print loses the legend key in both themes. LOW; public; pre-existing.**
+
+> **FIXED 2026-10-09 (S222).** `print-color-adjust: exact` on the legend bar and swatches; the key prints in a `page.pdf()`.
 - With the browsers' default "no background graphics", the gradient bar and the
   set-aside swatch print blank. The map still prints.
 - A dark print also puts light ink on white chrome.
@@ -227,6 +233,8 @@ Swatch and bar against `--read-bg` composited over the backdrop:
 - Peter's call whether the choice should be restored.
 
 **F10 — Docs left stale by the build. LOW; claim.**
+
+> **FIXED 2026-10-09 (S222).** items 1–4 corrected; item 5 (the badge comment) waits on F3.
 1. `docs/ARCHITECTURE.md` testing table: it says "42 scripts" and "only
    `verify-smoke.js` is wired into a workflow". The truth is 44 scripts, with
    smoke, blurbs and url-state in CI.
@@ -251,6 +259,8 @@ Swatch and bar against `--read-bg` composited over the backdrop:
   pod over a tower.
 
 **F12 — The Landmarks toggle says "plain grey landmarks". LOW; public; claim; pre-existing.**
+
+> **FIXED 2026-10-09 (S222).** the tooltip now says "plain landmarks".
 - The river has drawn blue in both themes since it changed from `(26,34,48)`.
   The string was written 2026-07-27 against that old colour.
 

@@ -239,14 +239,14 @@ publish on its own, unrelated to any of this — re-pinned.)_
 - [ ] **F4: make `themed()` throw on a missing light value** (a `HOVER_COLOR` mutant passed
   every CI gate), and/or a pytest that every `themed(` has two arrays.
 - [ ] **F5: revenue-mix greys on the light panel (1.3:1 / 1.7:1).** Design call: Peter.
-- [ ] **F6: declare `color-scheme` per theme** (`only light` / `only dark` on
-  `:root[data-theme]`); verified to stop Chromium auto-dark repainting a stored-light page.
-- [ ] **F7: re-render an open `#temporal` panel in `applyTheme`.**
-- [ ] **F8: `@media print` with `print-color-adjust: exact` on the legend bar and swatches.**
+- ✅ **F6 fixed S222:** `color-scheme: only dark` on `:root`, `only light` in both light blocks;
+  under emulated forced dark the stored-light chrome stays light.
+- ✅ **F7 fixed S222:** `applyTheme` calls `syncPinnedPanel()`; an open revenue-mix panel matches a
+  fresh open after the switch (two hoods with theme-dependent swatches).
+- ✅ **F8 fixed S222:** `print-color-adjust: exact` on `#legend .bar` and `.sw`; checked in a `page.pdf()`.
 - [ ] **F9: restore Glow on light → dark?** Peter.
-- [ ] **F10 + F12: stale text.** ARCHITECTURE verify-tier row; UI.md Light mode's `THEMES`
-  lines; the `#title-p` and guide comments in `index.html`; the badge comment; the
-  "plain grey landmarks" tooltip (river is blue).
+- ✅ **F10 + F12 fixed S222** except the badge comment, which waits on F3: ARCHITECTURE tier table,
+  UI.md `THEMES` lines, the `#title-p` and guide comments, "plain landmarks".
 
 ### Smoke gate reads no panel text (OPEN 2026-10-05 S215, `docs/FINDINGS_s187_remedies.md` F1)
 - ✅ **F1 fixed S216:** §C now runs the same scan over the Ratio, Services (every
