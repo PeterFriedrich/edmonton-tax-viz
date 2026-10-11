@@ -250,6 +250,16 @@ publish on its own, unrelated to any of this — re-pinned.)_
   the notice has legal or other implications (wording, disclaimers).
   Reader-facing copy, so it gets a row in `docs/COPY_DECISIONS.md`. Web change: Peter merges.
 
+### Branch cleanup and a deletion rule (OPEN 2026-10-11 S227, Peter's ask; not scoped yet)
+- [ ] **Review the branches and settle a rule for when one is deleted.** Measured 2026-10-11:
+  origin has 226 branches besides master, 225 of them already merged; the one unmerged is
+  `docs/viz-stack` (2026-08-07). This clone has 222 local branches, 218 merged. The repo
+  setting `delete_branch_on_merge` is off, so nothing is ever removed.
+  To decide: turn that setting on or prune on a schedule; what happens to an unmerged branch
+  and after how long; whether local branches follow the same rule.
+  ⚠️ A bulk prune trips the monthly digest's `TODO branch refs` row (RUNBOOK §0d), so check
+  open TODO items for branch names first. A settings change: Peter decides.
+
 ### Dev-velocity audit follow-ons (OPEN 2026-10-10 S225, `docs/FINDINGS_dev_velocity.md` §10)
 - [ ] **`verify.js --serve <root>`: serve on a free port, md5-check the root, run, kill by pid.**
   Removes ~324 plumbing calls (~2.5% of working time) and the reason for `pkill -f` (exit 144,
