@@ -273,7 +273,7 @@ publish on its own, unrelated to any of this — re-pinned.)_
      against master once more before deleting.
 
 ### Dev-velocity audit follow-ons (OPEN 2026-10-10 S225, `docs/FINDINGS_dev_velocity.md` §10)
-- [ ] **`verify.js --serve <root>`: serve on a free port, md5-check the root, run, kill by pid.**
+- [x] **`verify.js --serve <root>` — built S227 (PR pending merge): serve on a free port, md5-check the root, run, kill by pid.**
   Removes ~324 plumbing calls (~2.5% of working time) and the reason for `pkill -f` (exit 144,
   28× in 19 sessions). Tools change: Peter.
 - [x] **Delete the four stray probes — done S227 (PR pending merge).** `tools/profiling/_dbg.js`, `s223-probe{,2,3}.js` (committed

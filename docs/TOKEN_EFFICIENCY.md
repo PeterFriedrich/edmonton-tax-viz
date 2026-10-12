@@ -159,6 +159,9 @@ git ls-files | grep -vE '\.(geojson|png|csv)$' | xargs wc -l | sort -n | tail -3
    any FAIL lines: a 3-script gate goes from ~110 lines to 4. It classifies on
    `/^FAIL/` **and the exit code**, never the `ALL CHECKS PASSED` banner (five
    scripts never print it — RUNBOOK quirk (u)).
+   **Pass `--serve <root>` instead of a URL** (`--page <path>` for the full
+   build) and it starts, md5-checks and kills its own server: no port to find,
+   and no `pkill -f`.
    ⚠️ **It runs SERIALLY on this box, and that is deliberate — do not "speed it
    up" with `--jobs 3`.** The default is now `floor(cores / 3)`, which is 1 here:
    one script alone draws **~275% CPU** (headless Chromium on SwiftShader, so
