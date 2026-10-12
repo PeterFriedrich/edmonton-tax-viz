@@ -252,7 +252,7 @@ publish on its own, unrelated to any of this — re-pinned.)_
 
 ### Branch cleanup — rule decided 2026-10-12; two leftovers open (OPEN 2026-10-11 S227, Peter's ask)
 - ✅ **Rule decided** (DECISIONS 2026-10-12): no auto-delete; a session-start reminder at 90
-  merged branches on origin (`scripts/handoff_gap.py`, PR pending merge); Peter approves
+  merged branches on origin (`scripts/handoff_gap.py`, #727); Peter approves
   each prune. ✅ **First prune done 2026-10-12:** 225 merged branches deleted from origin.
   ⚠️ A bulk prune can trip the monthly digest's `TODO branch refs` row (RUNBOOK §0d), so
   check open TODO items for branch names before each one.
@@ -266,10 +266,10 @@ publish on its own, unrelated to any of this — re-pinned.)_
   master. Diff each against master before deleting.
 
 ### Dev-velocity audit follow-ons (OPEN 2026-10-10 S225, `docs/FINDINGS_dev_velocity.md` §10)
-- [x] **`verify.js --serve <root>` — built S227 (PR pending merge): serve on a free port, md5-check the root, run, kill by pid.**
+- [x] **`verify.js --serve <root>` — built S227 (#725, merged): serve on a free port, md5-check the root, run, kill by pid.**
   Removes ~324 plumbing calls (~2.5% of working time) and the reason for `pkill -f` (exit 144,
   28× in 19 sessions). Tools change: Peter.
-- [x] **Delete the four stray probes — done S227 (PR pending merge).** `tools/profiling/_dbg.js`, `s223-probe{,2,3}.js` (committed
+- [x] **Delete the four stray probes — done S227 (#724, merged).** `tools/profiling/_dbg.js`, `s223-probe{,2,3}.js` (committed
   by `git add -A`; nothing references them). Peter merges.
 - [ ] **Commit the transcript instrument** as `tools/transcript_effort.py` with a classifier test
   (now at `research/edmonton-tax-viz/dev_velocity_instrument/`). New module: Peter.

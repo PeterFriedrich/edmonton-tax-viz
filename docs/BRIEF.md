@@ -402,6 +402,7 @@ Edmonton revenue-per-acre fiscal analysis. Python-only, no GIS software.
 - **2026-10-09** — **The backdrop grid stops at the city limit** (Peter, S220: "mask the city for sure").
 - **2026-10-09** — **The page opts out of Dark Reader with `<meta name="darkreader-lock">`** (Peter, S220).
 - **2026-10-09** — **The desktop blurb and mill rates go back to bare text; this reverses the same-day blurb-box row** (Peter, S222: he no longer liked the grey behind the top-left blurb).
+- **2026-10-12** — **Merged branches are pruned by hand, on a reminder at 90, and never automatically** (Peter, S227).
 
 ## Open work
 
@@ -419,9 +420,13 @@ Edmonton revenue-per-acre fiscal analysis. Python-only, no GIS software.
 - **F5: revenue-mix greys on the light panel (1.3:1 / 1.7:1).** Design call: Peter. under emulated forced dark the stored-light chrome stays light. fresh open after the switch (two hoods with theme-dependent swatches).
 - **F9: restore Glow on light → dark?** Peter. UI.md `THEMES` lines, the `#title-p` and guide comments, "plain landmarks".
 
+**Alpha-build notice on the specialist build (OPEN 2026-10-10 S227, Peter's ask; not scoped yet)**
+- **Anyone who lands on the specialist (full) build gets a pop-up on arrival.** Peter's wording: "you've been linked to the alpha build, experimental lenses intended for development or specialist use only". Full build only; the public build shows nothing. Peter called it a tooltip …
+
+**Branch cleanup — rule decided 2026-10-12; two leftovers open (OPEN 2026-10-11 S227, Peter's ask)**
+- **Local branches in this clone: about 222, not yet cleaned.** Run `git fetch --prune`, then `git branch -d` each (never `-D`). Four show as unmerged (`git branch --no-merged master` lists them; not named here, because the digest's branch-ref row reads this file); all four PRs …
+
 **Dev-velocity audit follow-ons (OPEN 2026-10-10 S225, `docs/FINDINGS_dev_velocity.md` §10)**
-- **`verify.js --serve <root>`: serve on a free port, md5-check the root, run, kill by pid.** Removes ~324 plumbing calls (~2.5% of working time) and the reason for `pkill -f` (exit 144, 28× in 19 sessions). Tools change: Peter.
-- **Delete the four stray probes** `tools/profiling/_dbg.js`, `s223-probe{,2,3}.js` (committed by `git add -A`; nothing references them). Peter merges.
 - **Commit the transcript instrument** as `tools/transcript_effort.py` with a classifier test (now at `research/edmonton-tax-viz/dev_velocity_instrument/`). New module: Peter.
 - **Cross-model read** of the findings, aimed at §11 (a)–(d).
 
