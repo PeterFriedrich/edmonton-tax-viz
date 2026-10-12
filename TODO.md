@@ -259,6 +259,18 @@ publish on its own, unrelated to any of this — re-pinned.)_
   and after how long; whether local branches follow the same rule.
   ⚠️ A bulk prune trips the monthly digest's `TODO branch refs` row (RUNBOOK §0d), so check
   open TODO items for branch names first. A settings change: Peter decides.
+  **Reviewed S227 (2026-10-12), nothing deleted. Proposed rule, for Peter to approve:**
+  1. Merged branches: turn `delete_branch_on_merge` on, and delete the 225 merged origin
+     branches once. All date from 2026-09 or later (the last prune was 2026-08-31). No open
+     TODO item names a branch that is still on origin, so the prune adds nothing to §0d.
+  2. Unmerged branches: none is deleted without Peter's call. Today that is only
+     `docs/viz-stack`: one commit, a 272-line `VIZ_STACK.md` that never had a PR. A Done line
+     dated 2026-08-31 says it was decided, but its text was not found in the archive.
+  3. Local branches: `git fetch --prune`, then delete a local branch when its PR is merged.
+     Four locals show as unmerged (`docs/premise-tests`, `fix/loaded-path-grep`,
+     `fix/retrieval-log-bash-blindspot`, `fix/suite-share-guard`); all four PRs are merged
+     and the leftover commits look like earlier drafts of work that is on master. Diff each
+     against master once more before deleting.
 
 ### Dev-velocity audit follow-ons (OPEN 2026-10-10 S225, `docs/FINDINGS_dev_velocity.md` §10)
 - [ ] **`verify.js --serve <root>`: serve on a free port, md5-check the root, run, kill by pid.**
