@@ -276,7 +276,7 @@ publish on its own, unrelated to any of this — re-pinned.)_
 - [ ] **`verify.js --serve <root>`: serve on a free port, md5-check the root, run, kill by pid.**
   Removes ~324 plumbing calls (~2.5% of working time) and the reason for `pkill -f` (exit 144,
   28× in 19 sessions). Tools change: Peter.
-- [ ] **Delete the four stray probes** `tools/profiling/_dbg.js`, `s223-probe{,2,3}.js` (committed
+- [x] **Delete the four stray probes — done S227 (PR pending merge).** `tools/profiling/_dbg.js`, `s223-probe{,2,3}.js` (committed
   by `git add -A`; nothing references them). Peter merges.
 - [ ] **Commit the transcript instrument** as `tools/transcript_effort.py` with a classifier test
   (now at `research/edmonton-tax-viz/dev_velocity_instrument/`). New module: Peter.

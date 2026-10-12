@@ -363,7 +363,7 @@ started from a false premise.
 | 10-10 S225 | Brief premise: `DECISIONS.md` measured against a one-line contract that was rewritten 2026-09-09 | premise | no | scoped | n/a |
 | 10-10 S225 | Loaded-path bytes read as session cost: sessions read ~4.7k tokens of `TODO.md`, never the whole file (answers S166's open question) | premise | no | scoped | n/a |
 | 10-10 S225 | `pkill -f` kills its own shell (exit 144) 28× in 19 sessions, ≥18 after the memory warning against it | process | no | scoped | open |
-| 10-10 S225 | Four scratch probes committed on master by `git add -A` (`tools/profiling/_dbg.js`, `s223-probe{,2,3}.js`) | process | no | side | open |
+| 10-10 S225 | Four scratch probes committed on master by `git add -A` (`tools/profiling/_dbg.js`, `s223-probe{,2,3}.js`) | process | no | side | deleted S227 |
 | 10-10 S225 | `require('playwright')` outside `tools/profiling/` failed 19× in 16 sessions; NODE_PATH route recorded in memory | process | no | scoped | fixed |
 | 10-10 S225 | Audit's own instrument: first classifier ~3/20 right on "verifying" and 0/20 on "other"; token prior ÷3.5; counted its own echoed CONFLICT line | audit-error | no | scoped | fixed |
 
