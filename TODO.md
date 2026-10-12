@@ -250,27 +250,20 @@ publish on its own, unrelated to any of this — re-pinned.)_
   the notice has legal or other implications (wording, disclaimers).
   Reader-facing copy, so it gets a row in `docs/COPY_DECISIONS.md`. Web change: Peter merges.
 
-### Branch cleanup and a deletion rule (OPEN 2026-10-11 S227, Peter's ask; not scoped yet)
-- [ ] **Review the branches and settle a rule for when one is deleted.** Measured 2026-10-11:
-  origin has 226 branches besides master, 225 of them already merged; the one unmerged is
-  `docs/viz-stack` (2026-08-07). This clone has 222 local branches, 218 merged. The repo
-  setting `delete_branch_on_merge` is off, so nothing is ever removed.
-  To decide: turn that setting on or prune on a schedule; what happens to an unmerged branch
-  and after how long; whether local branches follow the same rule.
-  ⚠️ A bulk prune trips the monthly digest's `TODO branch refs` row (RUNBOOK §0d), so check
-  open TODO items for branch names first. A settings change: Peter decides.
-  **Reviewed S227 (2026-10-12), nothing deleted. Proposed rule, for Peter to approve:**
-  1. Merged branches: turn `delete_branch_on_merge` on, and delete the 225 merged origin
-     branches once. All date from 2026-09 or later (the last prune was 2026-08-31). No open
-     TODO item names a branch that is still on origin, so the prune adds nothing to §0d.
-  2. Unmerged branches: none is deleted without Peter's call. Today that is only
-     `docs/viz-stack`: one commit, a 272-line `VIZ_STACK.md` that never had a PR. A Done line
-     dated 2026-08-31 says it was decided, but its text was not found in the archive.
-  3. Local branches: `git fetch --prune`, then delete a local branch when its PR is merged.
-     Four locals show as unmerged (`docs/premise-tests`, `fix/loaded-path-grep`,
-     `fix/retrieval-log-bash-blindspot`, `fix/suite-share-guard`); all four PRs are merged
-     and the leftover commits look like earlier drafts of work that is on master. Diff each
-     against master once more before deleting.
+### Branch cleanup — rule decided 2026-10-12; two leftovers open (OPEN 2026-10-11 S227, Peter's ask)
+- ✅ **Rule decided** (DECISIONS 2026-10-12): no auto-delete; a session-start reminder at 90
+  merged branches on origin (`scripts/handoff_gap.py`, PR pending merge); Peter approves
+  each prune. ✅ **First prune done 2026-10-12:** 225 merged branches deleted from origin.
+  ⚠️ A bulk prune can trip the monthly digest's `TODO branch refs` row (RUNBOOK §0d), so
+  check open TODO items for branch names before each one.
+- [ ] **`docs/viz-stack`, the one unmerged origin branch: Peter's call, PR it or delete it.**
+  One commit, a 272-line `VIZ_STACK.md` that never had a PR. A Done line dated 2026-08-31
+  says it was decided, but its text was not found in the archive.
+- [ ] **Local branches in this clone: about 222, not yet cleaned.** Run `git fetch --prune`,
+  then `git branch -d` each (never `-D`). Four show as unmerged (`git branch --no-merged master`
+  lists them; not named here, because the digest's branch-ref row reads this file); all
+  four PRs are merged and the leftover commits look like earlier drafts of work that is on
+  master. Diff each against master before deleting.
 
 ### Dev-velocity audit follow-ons (OPEN 2026-10-10 S225, `docs/FINDINGS_dev_velocity.md` §10)
 - [x] **`verify.js --serve <root>` — built S227 (PR pending merge): serve on a free port, md5-check the root, run, kill by pid.**

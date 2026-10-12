@@ -10,6 +10,7 @@ The rest drive the fail-silent contract — a hook that raises at session end is
 noise at the worst possible moment.
 """
 
+import json
 import subprocess
 import sys
 from pathlib import Path
@@ -306,3 +307,61 @@ def test_hooks_do_not_reintroduce_the_unconditional_nag():
     import json
     settings = (Path(hg.__file__).parents[1] / ".claude" / "settings.json").read_text()
     assert "if you did substantive work" not in settings
+
+
+# --- merged-branch reminder -------------------------------------------------
+
+def _origin(repo, merged=0, unmerged=0):
+    """Fake remote-tracking refs: no remote is needed, only the refs."""
+    _run(repo, "update-ref", "refs/remotes/origin/master", "HEAD")
+    for i in range(merged):
+        _run(repo, "update-ref", f"refs/remotes/origin/docs/m{i}", "HEAD")
+    if unmerged:
+        _run(repo, "checkout", "-q", "-b", "side")
+        (repo / "docs" / "side.md").write_text("x")
+        _run(repo, "add", "-A")
+        _run(repo, "commit", "-qm", "side")
+        for i in range(unmerged):
+            _run(repo, "update-ref", f"refs/remotes/origin/docs/u{i}", "HEAD")
+        _run(repo, "checkout", "-q", "main")
+
+
+def test_branch_reminder_is_silent_one_below_the_threshold(repo, capsys):
+    _origin(repo, merged=hg.BRANCH_REMINDER_AT - 1)
+    assert hg.merged_branch_reminder() is None
+    assert hg.main(["--session-start"]) == 0
+    assert capsys.readouterr().out == ""
+
+
+def test_branch_reminder_fires_at_the_threshold_with_the_count(repo, capsys):
+    _origin(repo, merged=hg.BRANCH_REMINDER_AT)
+    assert f"{hg.BRANCH_REMINDER_AT} merged branches" in hg.merged_branch_reminder()
+    hg.main(["--session-start"])
+    out = json.loads(capsys.readouterr().out)
+    assert "merged branches" in out["hookSpecificOutput"]["additionalContext"]
+    # no handoff gap exists here, so the handoff sentence must not appear
+    assert "handoff" not in out["hookSpecificOutput"]["additionalContext"]
+
+
+def test_branch_reminder_does_not_count_unmerged_branches(repo):
+    _origin(repo, merged=hg.BRANCH_REMINDER_AT - 1, unmerged=5)
+    assert hg.merged_branch_reminder() is None
+
+
+def test_branch_reminder_without_origin_master_is_silent(repo):
+    assert hg.merged_branch_reminder() is None
+
+
+def test_branch_reminder_stays_out_of_session_end(repo, capsys):
+    _origin(repo, merged=hg.BRANCH_REMINDER_AT)
+    assert hg.main(["--session-end"]) == 0
+    io = capsys.readouterr()
+    assert io.out == "" and io.err == ""
+
+
+def test_branch_reminder_and_handoff_gap_are_both_reported(repo, capsys):
+    _origin(repo, merged=hg.BRANCH_REMINDER_AT)
+    _commit(repo, "src/a.py")
+    hg.main(["--session-start"])
+    text = json.loads(capsys.readouterr().out)["systemMessage"]
+    assert "merged branches" in text and "that handoff records none of it" in text
