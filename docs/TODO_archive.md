@@ -251,3 +251,20 @@ the public build, where the denominator picker is full-only by design
 - CI changes → Peter's OK before building. Neither race has fired (0 of 100 deploys).
 
 **CLOSED 2026-10-05 (S216):** both fixes built — `ref: master` on `deploy.yml`'s checkout, `queue: max` on both workflows' `concurrency`; guarded by `test_the_code_deploy_builds_from_the_branch_tip` and `test_the_publish_group_keeps_every_pending_run`.
+
+### Branch cleanup — rule decided 2026-10-12; CLOSED 2026-10-12 (OPENED 2026-10-11 S227, Peter's ask)
+- ✅ **Rule decided** (DECISIONS 2026-10-12): no auto-delete; a session-start reminder at 90
+  merged branches on origin (`scripts/handoff_gap.py`, #727); Peter approves
+  each prune. ✅ **First prune done 2026-10-12:** 225 merged branches deleted from origin.
+  ⚠️ A bulk prune can trip the monthly digest's `TODO branch refs` row (RUNBOOK §0d), so
+  check open TODO items for branch names before each one.
+- ✅ **The one unmerged origin branch (the viz-stack docs branch) is deleted** (Peter,
+  2026-10-12: "super old, toss it"). It held one commit, `0efd62b`, a 272-line
+  `VIZ_STACK.md` that never had a PR.
+- ✅ **Local branches in this clone cleaned 2026-10-12 (S228).** 224 deleted with `git branch -d`
+  after `git fetch --prune`; none refused. The four that showed as unmerged were diffed against
+  master, shown to Peter, and force-deleted on his word ("Force them"): one was patch-identical
+  to a master commit, one touched a file identical to master's, and two held early drafts that
+  master supersedes (a "NOT YET RUN" stub whose results are on master; an early form of the
+  fiscal-year row in `scripts/check_cost_copy.py`). Leftover commits, reflog only: `c49cdab`,
+  `265f9c5`, `082b8e2`, `da24207`.

@@ -250,21 +250,6 @@ publish on its own, unrelated to any of this — re-pinned.)_
   the notice has legal or other implications (wording, disclaimers).
   Reader-facing copy, so it gets a row in `docs/COPY_DECISIONS.md`. Web change: Peter merges.
 
-### Branch cleanup — rule decided 2026-10-12; two leftovers open (OPEN 2026-10-11 S227, Peter's ask)
-- ✅ **Rule decided** (DECISIONS 2026-10-12): no auto-delete; a session-start reminder at 90
-  merged branches on origin (`scripts/handoff_gap.py`, #727); Peter approves
-  each prune. ✅ **First prune done 2026-10-12:** 225 merged branches deleted from origin.
-  ⚠️ A bulk prune can trip the monthly digest's `TODO branch refs` row (RUNBOOK §0d), so
-  check open TODO items for branch names before each one.
-- ✅ **The one unmerged origin branch (the viz-stack docs branch) is deleted** (Peter,
-  2026-10-12: "super old, toss it"). It held one commit, `0efd62b`, a 272-line
-  `VIZ_STACK.md` that never had a PR.
-- [ ] **Local branches in this clone: about 222, not yet cleaned.** Run `git fetch --prune`,
-  then `git branch -d` each (never `-D`). Four show as unmerged (`git branch --no-merged master`
-  lists them; not named here, because the digest's branch-ref row reads this file); all
-  four PRs are merged and the leftover commits look like earlier drafts of work that is on
-  master. Diff each against master before deleting.
-
 ### Harness research follow-ons (OPEN 2026-10-12 S228, Peter's ask; all three propose-first)
 Source: two Claude web reports evaluated 2026-10-12, kept outside the repo at
 `/home/opc/research/claude-code/` (`harness_engineering_data_projects_reply_2026-10-12.md`,
@@ -3370,6 +3355,7 @@ archive"*) is not, and this span is 2,533 lines.
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
 
+- [x] **Branch cleanup: prune rule, first origin prune, local clone cleaned** — CLOSED 2026-10-12 · `docs/TODO_archive.md`
 - [x] **`test_refresh_workflow_gates_every_publish_step_on_both_guards` checks consistency, not coverage** — CLOSED 2026-10-10 · `docs/TODO_archive.md`
 - [x] **Tie the evidence notebooks' road rates to the rate the pipeline uses.** · `docs/TODO_archive.md`
 
