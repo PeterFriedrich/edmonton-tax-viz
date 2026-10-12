@@ -15,11 +15,21 @@
 //   node tools/profiling/verify.js <url> change temporal  # substring filter
 //   node tools/profiling/verify.js <url> --jobs 3         # force concurrency
 //   node tools/profiling/verify.js <url> -v               # show PASS lines too
+//   node tools/profiling/verify.js --serve web smoke      # serve a root itself
+//   node tools/profiling/verify.js --serve /tmp/_site --page dev-build-full/index.html
+//
+// --serve <root> replaces <url>: it starts http.server on a free port, refuses
+// to run unless the served page is byte-identical to the file on disk, and
+// kills the server by its own pid on the way out. It exists because the
+// by-hand version (start, find the port, check the root, kill) was 324 calls
+// in 60 sessions, and its kill step was usually `pkill -f`, which matches its
+// own shell (docs/FINDINGS_dev_velocity.md §7).
 //
 // ⚠️ The whole suite exceeds the 10-minute Bash cap (quirk (t)). Filter, or
 // raise the caller's timeout — this runner does not shorten the work, only the
 // output.
 const { spawn } = require("child_process");
+const crypto = require("crypto");
 const fs = require("fs");
 const os = require("os");
 const path = require("path");
@@ -27,6 +37,8 @@ const path = require("path");
 const args = process.argv.slice(2);
 const verbose = args.includes("-v") || args.includes("--verbose");
 const jobsIx = args.indexOf("--jobs");
+const serveIx = args.indexOf("--serve");
+const pageIx = args.indexOf("--page");
 
 // ⚠️ THE DEFAULT IS DERIVED FROM CORE COUNT, AND IT USED TO BE A HARDCODED 3
 // THAT THIS BOX CANNOT SUPPORT. Measured 2026-08-03 on the 4-core Oracle ARM
@@ -55,13 +67,17 @@ const jobsIx = args.indexOf("--jobs");
 const jobs = jobsIx >= 0
   ? Math.max(1, parseInt(args[jobsIx + 1], 10) || 1)
   : Math.max(1, Math.floor((os.cpus().length || 1) / 3));
+const valueOf = ix => (ix >= 0 ? args[ix + 1] : undefined);
 const rest = args.filter((a, i) =>
-  !a.startsWith("-") && !(jobsIx >= 0 && i === jobsIx + 1));
-const url = rest[0];
-const filters = rest.slice(1);
+  !a.startsWith("-") && ![jobsIx, serveIx, pageIx].some(ix => ix >= 0 && i === ix + 1));
+const serveRoot = valueOf(serveIx);
+const page = valueOf(pageIx) || "index.html";
+let url = serveIx >= 0 ? undefined : rest[0];
+const filters = serveIx >= 0 ? rest : rest.slice(1);
 
-if (!url) {
-  console.error("usage: node tools/profiling/verify.js <url> [name-filter...]");
+if (serveIx >= 0 ? !serveRoot || serveRoot.startsWith("-") : !url) {
+  console.error("usage: node tools/profiling/verify.js <url> [name-filter...]\n" +
+                "       node tools/profiling/verify.js --serve <root> [--page <path>] [name-filter...]");
   process.exit(2);
 }
 
@@ -107,7 +123,53 @@ const run = script => new Promise(resolve => {
   });
 });
 
+const md5 = buf => crypto.createHash("md5").update(buf).digest("hex");
+
+// Resolves to the page URL once the server answers with the file on disk.
+// The md5 comparison is the point: a server that failed to bind leaves an
+// OLDER one answering from another directory, and every check then passes or
+// fails against the wrong tree. Port 0 makes that collision impossible here,
+// and the comparison is what proves it.
+const serve = () => new Promise((resolve, reject) => {
+  const root = path.resolve(serveRoot);
+  const file = path.join(root, page);
+  if (!fs.existsSync(file)) return reject(new Error(`${file} does not exist`));
+  // System python3 on the Oracle box is 3.6, whose http.server wedges under
+  // these scripts; the project venv is used when there is one.
+  const venv = path.join(dir, "..", "..", ".venv", "bin", "python");
+  const server = spawn(fs.existsSync(venv) ? venv : "python3",
+    ["-u", "-m", "http.server", "0", "--bind", "127.0.0.1", "--directory", root],
+    { stdio: ["ignore", "pipe", "pipe"] });
+  process.on("exit", () => server.kill());
+  for (const sig of ["SIGINT", "SIGTERM"]) process.on(sig, () => process.exit(130));
+  let banner = "";
+  const timer = setTimeout(() => reject(new Error("http.server printed no port within 15s: " + banner)), 15000);
+  server.on("exit", code => reject(new Error(`http.server exited early (code ${code}): ${banner}`)));
+  const onData = async d => {
+    banner += d;
+    const m = banner.match(/port (\d+)/);
+    if (!m) return;
+    server.stdout.off("data", onData);
+    clearTimeout(timer);
+    const pageUrl = `http://127.0.0.1:${m[1]}/${page}`;
+    try {
+      const served = Buffer.from(await (await fetch(pageUrl)).arrayBuffer());
+      if (md5(served) !== md5(fs.readFileSync(file))) {
+        return reject(new Error(`${pageUrl} is not serving ${file} (md5 differs)`));
+      }
+      console.log(`serving ${root} at ${pageUrl} (pid ${server.pid}, md5 matches disk)`);
+      resolve(pageUrl);
+    } catch (e) { reject(e); }
+  };
+  server.stdout.on("data", onData);
+  server.stderr.on("data", d => { banner += d; });
+});
+
 (async () => {
+  if (serveIx >= 0) {
+    try { url = await serve(); }
+    catch (e) { console.error("--serve failed: " + e.message); process.exit(2); }
+  }
   const results = [];
   const queue = scripts.slice();
   const workers = Array.from({ length: Math.min(jobs, queue.length) }, async () => {

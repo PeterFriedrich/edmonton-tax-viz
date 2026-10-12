@@ -59,6 +59,15 @@ every one. A script that only prints state for a human is named `probe-*.js`,
 and the runner skips it — four assertion-less scripts were renamed so on
 2026-09-30, because the runner had been listing them `ok` with 0 checks.
 
+`verify.js --serve <root>` needs no server started first: it serves `<root>`
+on a free port, refuses to run unless the served page matches the file on
+disk, and kills the server by pid when it finishes.
+
+```bash
+node tools/profiling/verify.js --serve web smoke
+node tools/profiling/verify.js --serve /tmp/_site --page dev-build-full/index.html smoke
+```
+
 Two rules, both learned from defects the harness itself carried
 (`docs/FINDINGS_vacuous_guards.md` V4).
 
