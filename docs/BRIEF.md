@@ -403,6 +403,7 @@ Edmonton revenue-per-acre fiscal analysis. Python-only, no GIS software.
 - **2026-10-09** — **The page opts out of Dark Reader with `<meta name="darkreader-lock">`** (Peter, S220).
 - **2026-10-09** — **The desktop blurb and mill rates go back to bare text; this reverses the same-day blurb-box row** (Peter, S222: he no longer liked the grey behind the top-left blurb).
 - **2026-10-12** — **Merged branches are pruned by hand, on a reminder at 90, and never automatically** (Peter, S227).
+- **2026-10-12** — **The merged-branch reminder is in the template too, so `scripts/handoff_gap.py` no longer forks on it** (S228).
 
 ## Open work
 
@@ -423,8 +424,9 @@ Edmonton revenue-per-acre fiscal analysis. Python-only, no GIS software.
 **Alpha-build notice on the specialist build (OPEN 2026-10-10 S227, Peter's ask; not scoped yet)**
 - **Anyone who lands on the specialist (full) build gets a pop-up on arrival.** Peter's wording: "you've been linked to the alpha build, experimental lenses intended for development or specialist use only". Full build only; the public build shows nothing. Peter called it a tooltip …
 
-**Branch cleanup — rule decided 2026-10-12; two leftovers open (OPEN 2026-10-11 S227, Peter's ask)**
-- **Local branches in this clone: about 222, not yet cleaned.** Run `git fetch --prune`, then `git branch -d` each (never `-D`). Four show as unmerged (`git branch --no-merged master` lists them; not named here, because the digest's branch-ref row reads this file); all four PRs …
+**Harness research follow-ons (OPEN 2026-10-12 S228, Peter's ask; all three propose-first)**
+- **1. Show open automated-check issues at session start.** Today a session sees them only by running `gh issue list` (CLAUDE.md "Session Management"). The SessionStart hook cannot wait on the network, so it must read a cached list. If it lands, shorten that CLAUDE.md paragraph. …
+- **3. Count tests whose expected value was copied from the code's own output.** The claim to test: arXiv 2610.11835 found 8-17% of generated regression tests assert the faulty behaviour. Measure before changing anything; if the count is material, the remedy is expected values …
 
 **Dev-velocity audit follow-ons (OPEN 2026-10-10 S225, `docs/FINDINGS_dev_velocity.md` §10)**
 - **Commit the transcript instrument** as `tools/transcript_effort.py` with a classifier test (now at `research/edmonton-tax-viz/dev_velocity_instrument/`). New module: Peter.
