@@ -256,9 +256,9 @@ publish on its own, unrelated to any of this — re-pinned.)_
   each prune. ✅ **First prune done 2026-10-12:** 225 merged branches deleted from origin.
   ⚠️ A bulk prune can trip the monthly digest's `TODO branch refs` row (RUNBOOK §0d), so
   check open TODO items for branch names before each one.
-- [ ] **`docs/viz-stack`, the one unmerged origin branch: Peter's call, PR it or delete it.**
-  One commit, a 272-line `VIZ_STACK.md` that never had a PR. A Done line dated 2026-08-31
-  says it was decided, but its text was not found in the archive.
+- ✅ **The one unmerged origin branch (the viz-stack docs branch) is deleted** (Peter,
+  2026-10-12: "super old, toss it"). It held one commit, `0efd62b`, a 272-line
+  `VIZ_STACK.md` that never had a PR.
 - [ ] **Local branches in this clone: about 222, not yet cleaned.** Run `git fetch --prune`,
   then `git branch -d` each (never `-D`). Four show as unmerged (`git branch --no-merged master`
   lists them; not named here, because the digest's branch-ref row reads this file); all
