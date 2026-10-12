@@ -260,8 +260,8 @@ publish on its own, unrelated to any of this — re-pinned.)_
   One commit, a 272-line `VIZ_STACK.md` that never had a PR. A Done line dated 2026-08-31
   says it was decided, but its text was not found in the archive.
 - [ ] **Local branches in this clone: about 222, not yet cleaned.** Run `git fetch --prune`,
-  then `git branch -d` each (never `-D`). Four show as unmerged (`docs/premise-tests`,
-  `fix/loaded-path-grep`, `fix/retrieval-log-bash-blindspot`, `fix/suite-share-guard`); all
+  then `git branch -d` each (never `-D`). Four show as unmerged (`git branch --no-merged master`
+  lists them; not named here, because the digest's branch-ref row reads this file); all
   four PRs are merged and the leftover commits look like earlier drafts of work that is on
   master. Diff each against master before deleting.
 
