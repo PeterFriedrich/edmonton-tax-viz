@@ -265,6 +265,24 @@ publish on its own, unrelated to any of this — re-pinned.)_
   four PRs are merged and the leftover commits look like earlier drafts of work that is on
   master. Diff each against master before deleting.
 
+### Harness research follow-ons (OPEN 2026-10-12 S228, Peter's ask; all three propose-first)
+Source: two Claude web reports evaluated 2026-10-12, kept outside the repo at
+`/home/opc/research/claude-code/` (`harness_engineering_data_projects_reply_2026-10-12.md`,
+`harness_research_reply_2026-10-12.md`). The same list went to the `template` session, which
+owns `scripts/handoff_gap.py`; its answer decides where item 1 is built.
+- [ ] **1. Show open automated-check issues at session start.** Today a session sees them only
+  by running `gh issue list` (CLAUDE.md "Session Management"). The SessionStart hook cannot
+  wait on the network, so it must read a cached list. If it lands, shorten that CLAUDE.md
+  paragraph. Wait for the template session's reply before building.
+- [ ] **2. One wrong-data fixture per guard.** For each guard on the merge path and in the
+  weekly refresh, a fixture with one thing broken that the guard must reject (the year guard's
+  case: data rolled forward, catalogue label unchanged). Start with the two that have never
+  fired, the revenue-delta and colour-clamp guards. List the guards and what each reads first.
+- [ ] **3. Count tests whose expected value was copied from the code's own output.** The
+  claim to test: arXiv 2610.11835 found 8-17% of generated regression tests assert the faulty
+  behaviour. Measure before changing anything; if the count is material, the remedy is expected
+  values from an independent source (hand calculation, a City figure, a known parcel).
+
 ### Dev-velocity audit follow-ons (OPEN 2026-10-10 S225, `docs/FINDINGS_dev_velocity.md` §10)
 - [x] **`verify.js --serve <root>` — built S227 (#725, merged): serve on a free port, md5-check the root, run, kill by pid.**
   Removes ~324 plumbing calls (~2.5% of working time) and the reason for `pkill -f` (exit 144,
