@@ -276,10 +276,17 @@ items 2 and 3 to its CLAUDE.md skeleton as Code Style lines (its TODO G and H, t
   wait on the network, so it must read a cached list. If it lands, shorten that CLAUDE.md
   paragraph. **Do not build it here:** the template session is building it as a separate
   script (its TODO H) and asked this project to hand-port it when it lands, so no second fork.
-- [ ] **2. One wrong-data fixture per guard.** For each guard on the merge path and in the
-  weekly refresh, a fixture with one thing broken that the guard must reject (the year guard's
-  case: data rolled forward, catalogue label unchanged). Start with the two that have never
-  fired, the revenue-delta and colour-clamp guards. List the guards and what each reads first.
+- ✅ **2. One wrong-data fixture per guard — measured 2026-10-12 (S228): already in place, nothing to build.**
+  The item's premise was wrong. All 13 `scripts/check_*.py` guards, `vintage_report.py` and
+  `recheck_evidence_notebooks.py` have tests that drive a failing path (crude keyword count,
+  7 to 41 per guard), and `docs/FINDINGS_vacuous_guards.md` (2026-09-07) falsified the guards
+  that existed then. The two that have never fired in production were run end to end on the
+  real served file from the scratchpad: revenue-delta flags one neighbourhood doubled and is
+  silent on the unmutated control; colour-clamp flags all four metrics with values scaled 1.5x
+  under unchanged clamps, and exits 7 with one clamp changed under an unchanged legend.
+  - [ ] Left over, low priority: `check_decisions_log.py`, `check_suite_share.py` and
+    `recheck_evidence_notebooks.py` were added after the 2026-09-07 audit and have not had the
+    same end-to-end run. Each has failing-path tests.
 - [ ] **3. Count tests whose expected value was copied from the code's own output.** The
   claim to test: arXiv 2610.11835 found 8-17% of generated regression tests assert the faulty
   behaviour. Measure before changing anything; if the count is material, the remedy is expected
