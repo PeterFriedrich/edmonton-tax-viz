@@ -126,6 +126,37 @@ HIGHWAY_URL = "https://overpass-api.de/api/interpreter"
 # project, as its usage policy asks.
 OVERPASS_USER_AGENT = "edmonton-tax-viz/1.0 (reference-layer build script)"
 
+# Tried in order after HIGHWAY_URL fails. The main instance returned 504 on
+# every build on 2026-10-13, on a one-node query too; this mirror answered and
+# reproduced the committed file byte for byte. A mirror can lag the main
+# database, so the build logs which server answered.
+OVERPASS_MIRRORS = ("https://maps.mail.ru/osm/tools/overpass/api/interpreter",)
+
+
+def _overpass(query: str) -> dict:
+    """POST one Overpass query, falling through the mirrors on a failed request."""
+    urls = (HIGHWAY_URL, *OVERPASS_MIRRORS)
+    for i, url in enumerate(urls):
+        try:
+            # Form-encoded `data=`, with a named User-Agent: a raw body or an
+            # anonymous client gets 406 Not Acceptable from the public instance.
+            resp = requests.post(
+                url,
+                data={"data": query},
+                headers={"User-Agent": OVERPASS_USER_AGENT},
+                timeout=300,
+            )
+            resp.raise_for_status()
+            payload = resp.json()
+        except requests.RequestException as exc:
+            if i == len(urls) - 1:
+                raise
+            logger.warning("Overpass at %s failed (%s); trying %s", url, exc, urls[i + 1])
+            continue
+        if i:
+            logger.warning("Overpass answered from the mirror %s", url)
+        return payload
+
 # The two OSM classes that mean "highway" in the orientation sense: grade-
 # separated freeways (motorway) and the major intercity routes (trunk).
 # `primary` is deliberately OUT — it would add 1,591 ways and 1,786 km of
@@ -382,16 +413,7 @@ def _fetch_highways(bounds_4326: tuple[float, float, float, float]) -> gpd.GeoDa
         f"out geom;"
     )
     logger.info("Fetching %s ways from Overpass…", "/".join(HIGHWAY_CLASSES))
-    # Form-encoded `data=`, with a named User-Agent: a raw body or an anonymous
-    # client gets 406 Not Acceptable from the public instance.
-    resp = requests.post(
-        HIGHWAY_URL,
-        data={"data": query},
-        headers={"User-Agent": OVERPASS_USER_AGENT},
-        timeout=300,
-    )
-    resp.raise_for_status()
-    payload = resp.json()
+    payload = _overpass(query)
 
     elements = payload.get("elements") or []
     if not elements:
@@ -530,14 +552,7 @@ def _fetch_airport() -> Point:
         f"out tags center;"
     )
     logger.info("Fetching %s from Overpass…", AIRPORT_IATA)
-    resp = requests.post(
-        HIGHWAY_URL,
-        data={"data": query},
-        headers={"User-Agent": OVERPASS_USER_AGENT},
-        timeout=300,
-    )
-    resp.raise_for_status()
-    for el in resp.json().get("elements") or []:
+    for el in _overpass(query).get("elements") or []:
         centre = el.get("center") or {}
         if "lat" in centre and "lon" in centre:
             return (
