@@ -268,3 +268,11 @@ the public build, where the denominator picker is full-only by design
   master supersedes (a "NOT YET RUN" stub whose results are on master; an early form of the
   fiscal-year row in `scripts/check_cost_copy.py`). Leftover commits, reflog only: `c49cdab`,
   `265f9c5`, `082b8e2`, `da24207`.
+
+- [x] **Outside-name style: P4** — CLOSED 2026-10-13 (S230). The six options (P1 current; P2 all
+  mixed case; P3 caps, larger and brighter; P4 counties caps, towns mixed case and brighter;
+  P5 caps, smaller and dimmer; P6 mixed case, larger and brighter) were re-rendered in Source
+  Sans 3 and Peter picked P4. Applied to `REF_TIERS` and `placeAnchors`; `DECISIONS.md`
+  2026-10-13. Light-theme colours were not rendered or changed.
+- [x] **Peter confirmed on his laptop** — CLOSED 2026-10-13 (S230). "Live site seems fine":
+  the loading overlay (#735) and the names in Source Sans 3 (#736, #737).

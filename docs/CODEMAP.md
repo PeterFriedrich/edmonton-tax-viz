@@ -456,7 +456,7 @@ Grouped by the file's own `// --- section ---` banners, in file order.
 |---|---|---|
 | `boot` | 8236–8881 | Everything that needs the map surface: fetch the data, mount the deck.gl |
 
-## Dependency graph (1100 edges)
+## Dependency graph (1101 edges)
 
 ⚠️ **A regex reference count, not a call graph** — a name in a comment or string counts, and a nested symbol is attributed to its enclosing range. Use it for *what is central* and *would this seam hold*, never as ground truth for a final module boundary.
 
@@ -493,7 +493,7 @@ Grouped by the file's own `// --- section ---` banners, in file order.
 | base map (no basemap tiles for v1 — just a dark backdrop) | 5 | 40% |
 | Development 100 m detail grid (layers-panel toggle, 2026-07-15) | 10 | 40% |
 | neighbourhood search | 11 | 36% |
-| geographic reference layers (all views) | 99 | 34% |
+| geographic reference layers (all views) | 100 | 35% |
 | loading overlay | 57 | 33% |
 | Development history: new supply per year | 112 | 29% |
 | Money's revenue panel: where a hood's levy comes from | 35 | 29% |
