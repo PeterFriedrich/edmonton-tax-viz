@@ -83,6 +83,7 @@ would break the scheduled refresh, and no test would catch it locally.
 | `web/vendor/deck.gl-9.0.38.min.js` | deck.gl | 9.0.38 | 1.19 MB |
 | `web/vendor/maplibre-gl-4.7.1.js` | maplibre-gl | 4.7.1 | 784 KB |
 | `web/vendor/maplibre-gl-4.7.1.css` | maplibre-gl | 4.7.1 | 64 KB |
+| `web/vendor/source-sans-3-600-latin.woff2` | Source Sans 3 (label font) | weight 600, Latin subset | 16 KB |
 
 ⚠️ **Vendoring is a security decision, not a convenience one** (`security-audit.md`
 S1): every displayed dollar figure executes through these libraries, so a
