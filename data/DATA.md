@@ -1391,7 +1391,7 @@ The same file also carries `roadway_ops`, `bikeway_ops` and `transit_ets`, on a
   ops) and are in neither the bike metric nor the 1,500 km snow denominator.
 
 ## 14. Geographic Reference Layers (orientation, added 2026-07-27)
-`web/data/reference.geojson` (**94 kB, 33 features**, committed) — the North
+`web/data/reference.geojson` (**95 kB, 35 features**, committed) — the North
 Saskatchewan River, the regional **highway network**, and the named regional
 geography. So a first-time viewer can orient before reading the fiscal data. The
 map has **no basemap tiles** (just a dark backdrop), so without these there is
@@ -1511,6 +1511,34 @@ main highways to run off the edge of the frame the way the river does. See
   (the largest, simplified at 100 m — 169 vertices for all seven, ~3.6 kB) and
   **one Point** at that same polygon's centroid, so a label and the shape it
   names cannot disagree. Natively **EPSG:3400**.
+- **First Nation reserve** (added 2026-10-13) — **Enoch Cree Nation**, the
+  reserve on Edmonton's west limit. Natural Resources Canada, *Aboriginal Lands
+  of Canada Legislative Boundaries* (CLSS Administrative Boundaries MapServer,
+  layer 0), matched on **`adminAreaId = '06652'`**, not on the name: the
+  service spells it `ENOCH CREE NATION NO. 135`, Alberta's copy
+  `Enoch Cree Nation 135`, and the label is ours. **Licence: Open Government
+  Licence – Canada**, attributed in Data & Methods with the licence's own
+  sentence. One MultiPolygon of **three parts, 51.9 km²** (31.1, 20.8 and
+  0.005 km²), **all kept** — the PLACES largest-polygon rule would draw 60% of
+  it. Simplified at 100 m. Emitted as `t="boundary"` + `t="place"`, both
+  `kind="place"`, so it draws and labels in the town tier with no front-end
+  change. `RESERVES` carries a 45 km² floor that fails the build if a part goes
+  missing. Service field `absoluteAccuracy`: better than 10 m.
+  ⚠️ Alberta serves the same boundary (`boundaries/federal_indian_reserve`,
+  same parts and area) but its copyright line is **Alberta Data Partnerships
+  Ltd.**, not the Government of Alberta — which is why the federal copy is used.
+  ⚠️ **Alberta's county polygons run over reserve land.** Parkland County's
+  label point sat INSIDE the reserve (`[-113.79394, 53.45883]`), so the county
+  was named on Enoch land and the reserve's own name lost the declutter sweep
+  to it at the default camera. County anchors are now taken from the county
+  minus reserve land; Parkland's moved 4.9 km west to `[-113.85477, 53.48424]`
+  and the other three did not move.
+  ⚠️ The 2026-10-13 rebuild also moved the **highway** feature by 23 bytes (OSM
+  edits since August); every other pre-existing feature came back byte-identical.
+  The Parkland anchor was then recomputed with the script's own functions and
+  written into the file by hand, because Overpass returned 504 on three full
+  rebuilds in a row. A clean full rebuild should reproduce the file; it has not
+  been confirmed.
 
 ### Why OSM, and the trap in the obvious alternative
 Two sources were tried and rejected on 2026-08-03:
