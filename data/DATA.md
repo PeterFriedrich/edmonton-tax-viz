@@ -1537,8 +1537,12 @@ main highways to run off the edge of the frame the way the river does. See
   edits since August); every other pre-existing feature came back byte-identical.
   The Parkland anchor was then recomputed with the script's own functions and
   written into the file by hand, because Overpass returned 504 on three full
-  rebuilds in a row. A clean full rebuild should reproduce the file; it has not
-  been confirmed.
+  rebuilds in a row. **Confirmed 2026-10-13 (S230):** a full rebuild to a scratch
+  path came back byte-identical to the committed file (md5 `c2887fa5…`). The main
+  Overpass server was still returning 504, on a one-node query too, so that run
+  took its two Overpass queries from the mirror at
+  `maps.mail.ru/osm/tools/overpass/api/interpreter`; the script itself still
+  points at `overpass-api.de` and has no retry or fallback.
 
 ### Why OSM, and the trap in the obvious alternative
 Two sources were tried and rejected on 2026-08-03:

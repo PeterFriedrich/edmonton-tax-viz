@@ -252,12 +252,6 @@ publish on its own, unrelated to any of this — re-pinned.)_
 
 ### Map labels and reference layer follow-ons (OPEN 2026-10-13 S229)
 
-- [ ] **Confirm a clean full rebuild of `web/data/reference.geojson`.** Overpass
-  returned 504 on three runs of `scripts/build_reference_layers.py`, so
-  Parkland County's label anchor was recomputed with the script's functions
-  and written in by hand (`data/DATA.md` §14). Run the build to a scratch
-  path and diff it against the committed file; only the highway feature may
-  differ (OSM edits).
 - [ ] **Low priority: the overlay over-covers when the data beats the map's
   first `idle`.** Served from localhost with no delay, the basemap gate is the
   late one and the overlay stays about 0.5 s after the prisms are up
@@ -3368,6 +3362,7 @@ archive"*) is not, and this span is 2,533 lines.
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
 
+- [x] **Clean full rebuild of `reference.geojson` confirmed byte-identical** — CLOSED 2026-10-13 · `docs/TODO_archive.md`
 - [x] **Outside-name style: P4 (counties capitals, towns mixed case and brighter)** — CLOSED 2026-10-13 · `docs/TODO_archive.md`
 - [x] **Peter confirmed #735–#737 on his laptop (overlay, names in Source Sans 3)** — CLOSED 2026-10-13 · `docs/TODO_archive.md`
 - [x] **Branch cleanup: prune rule, first origin prune, local clone cleaned** — CLOSED 2026-10-12 · `docs/TODO_archive.md`
