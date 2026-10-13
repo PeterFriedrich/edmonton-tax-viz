@@ -67,6 +67,37 @@ def test_highway_query_uses_the_class_list_not_a_literal(monkeypatch):
     assert captured["ua"]
 
 
+def test_overpass_falls_through_to_a_mirror_and_says_so(monkeypatch, caplog):
+    """A 504 from the main instance must not fail the build while a mirror answers."""
+    calls = []
+
+    class _Resp:
+        def __init__(self, ok): self.ok = ok
+        def raise_for_status(self):
+            if not self.ok:
+                raise b.requests.HTTPError("504 Server Error")
+        def json(self): return {"elements": ["from-mirror"]}
+
+    def fake_post(url, **kwargs):
+        calls.append(url)
+        return _Resp(url != b.HIGHWAY_URL)
+
+    monkeypatch.setattr(b.requests, "post", fake_post)
+    with caplog.at_level("WARNING"):
+        assert b._overpass("q") == {"elements": ["from-mirror"]}
+    assert calls == [b.HIGHWAY_URL, b.OVERPASS_MIRRORS[0]]
+    assert b.OVERPASS_MIRRORS[0] in caplog.text
+
+
+def test_overpass_raises_when_every_server_fails(monkeypatch):
+    class _Resp:
+        def raise_for_status(self): raise b.requests.HTTPError("504 Server Error")
+
+    monkeypatch.setattr(b.requests, "post", lambda *a, **k: _Resp())
+    with pytest.raises(b.requests.HTTPError):
+        b._overpass("q")
+
+
 def test_ways_without_geometry_are_reported_not_silently_dropped(monkeypatch, caplog):
     """`out geom` omits geometry for ways the server cannot resolve."""
     class _Resp:

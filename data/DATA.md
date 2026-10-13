@@ -1541,8 +1541,9 @@ main highways to run off the edge of the frame the way the river does. See
   path came back byte-identical to the committed file (md5 `c2887fa5…`). The main
   Overpass server was still returning 504, on a one-node query too, so that run
   took its two Overpass queries from the mirror at
-  `maps.mail.ru/osm/tools/overpass/api/interpreter`; the script itself still
-  points at `overpass-api.de` and has no retry or fallback.
+  `maps.mail.ru/osm/tools/overpass/api/interpreter`; since then the script
+  falls back to two mirrors when `overpass-api.de` fails (`OVERPASS_MIRRORS`),
+  and logs a warning naming the server that answered.
 
 ### Why OSM, and the trap in the obvious alternative
 Two sources were tried and rejected on 2026-08-03:
