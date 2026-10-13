@@ -255,6 +255,7 @@ const PLACE_COUNT = TOWN_COUNT + RESERVE_COUNT + (REGION_COUNT - 1) + ZONE_COUNT
       layer: true,
       places: d.filter(x => x.ref).length,
       byTier: tiers,
+      names: d.filter(x => x.ref).map(x => [x.tier, x.name]),
       hoods: d.filter(x => x.prio === PRIO_HOOD).length,
       sizes: [...new Set(d.map(x => x.size))].sort((a, b) => a - b),
       anchored: placeAnchors().length,
@@ -314,6 +315,11 @@ const PLACE_COUNT = TOWN_COUNT + RESERVE_COUNT + (REGION_COUNT - 1) + ZONE_COUNT
         `${def.byTier.region || 0} of ${REGION_COUNT - 2}: ${JSON.stringify(def.byTier)}`);
   check('the town and econ tiers both draw too',
         def.byTier.place >= 5 && def.byTier.econ === 2, JSON.stringify(def.byTier));
+  // Case carries the area/point distinction (2026-10-13): counties in capitals,
+  // every other regional name as the data spells it.
+  const miscased = def.names.filter(([t, n]) => (n === n.toUpperCase()) !== (t === 'region'));
+  check('counties are in capitals and no other regional name is',
+        def.names.length > 0 && miscased.length === 0, JSON.stringify(miscased));
   // ⚠️ WAS `def.sizes.length === 1` — one reference size, because there was one
   // reference tier. Since 2026-08-08 there are four (region/zone/place/econ,
   // REF_TIERS in web/index.html), so equality-to-1 was pinning the old design
