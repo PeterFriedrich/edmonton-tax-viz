@@ -250,6 +250,29 @@ publish on its own, unrelated to any of this — re-pinned.)_
   the notice has legal or other implications (wording, disclaimers).
   Reader-facing copy, so it gets a row in `docs/COPY_DECISIONS.md`. Web change: Peter merges.
 
+### Map labels and reference layer follow-ons (OPEN 2026-10-13 S229)
+
+- [ ] **Peter's call: the style of the outside names** (towns, counties, the
+  reserve). Six options were rendered (P1 current; P2 all mixed case; P3 caps,
+  larger and brighter; P4 counties caps, towns mixed case and brighter; P5 caps,
+  smaller and dimmer; P6 mixed case, larger and brighter). He has not picked.
+  They were drawn in Inter before Source Sans 3 shipped, so re-render in the
+  shipped font before he chooses. The values are `REF_TIERS` and the
+  `toUpperCase()` in `placeAnchors` (`web/index.html`). Claude's pick was P4.
+- [ ] **Confirm a clean full rebuild of `web/data/reference.geojson`.** Overpass
+  returned 504 on three runs of `scripts/build_reference_layers.py`, so
+  Parkland County's label anchor was recomputed with the script's functions
+  and written in by hand (`data/DATA.md` §14). Run the build to a scratch
+  path and diff it against the committed file; only the highway feature may
+  differ (OSM edits).
+- [ ] **Peter to confirm on his laptop:** the loading overlay now leaves with
+  the map drawn (#735), and the names look right in Source Sans 3 (#736, #737).
+  Nothing here was measured on a real GPU.
+- [ ] **Low priority: the overlay over-covers when the data beats the map's
+  first `idle`.** Served from localhost with no delay, the basemap gate is the
+  late one and the overlay stays about 0.5 s after the prisms are up
+  (`DECISIONS.md` 2026-10-13). Not seen on a real network. Re-measure first.
+
 ### Harness research follow-ons (OPEN 2026-10-12 S228, Peter's ask; all three propose-first)
 Source: two Claude web reports evaluated 2026-10-12, kept outside the repo at
 `/home/opc/research/claude-code/` (`harness_engineering_data_projects_reply_2026-10-12.md`,
