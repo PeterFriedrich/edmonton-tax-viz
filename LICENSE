@@ -85,7 +85,8 @@ CARVE-OUT 3 — VENDORED THIRD-PARTY LIBRARIES
 
 Third-party JS/CSS committed unmodified, under their own upstream licences:
 maplibre-gl 4.7.1 (BSD-3-Clause) and deck.gl 9.0.38 (MIT, Urban Computing
-Foundation). Versions, upstream URLs and SHA-256 provenance are in
+Foundation). Also the Source Sans 3 label font (SIL Open Font License 1.1,
+Adobe; licence text in `web/vendor/source-sans-3-OFL.txt`). Versions, upstream URLs and SHA-256 provenance are in
 `web/vendor/README.md`.
 
 ================================================================================

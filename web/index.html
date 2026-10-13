@@ -4182,8 +4182,21 @@
 
     // The label font, shared by the TextLayer and the width measurer below —
     // the culling boxes are only honest if both use the same glyphs.
-    const LABEL_FONT_FAMILY = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    // The names are drawn in a font the site ships (styles.css @font-face),
+    // not a device font: the old system stack fell through to whatever a Linux
+    // machine calls sans-serif, and the weight and outline tuned on one font
+    // filled in on another (Peter's laptop, 2026-10-13). The stack behind it is
+    // the fallback if the file fails to load.
+    const LABEL_FONT_FAMILY = '"Source Sans 3", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
     const LABEL_FONT_WEIGHT = 600;
+    // ⚠️ boot() waits on this before the first label is measured or drawn. deck
+    // rasterises its glyph atlas once per font key and keeps it, so text drawn
+    // before the file lands stays in the fallback font for the whole visit.
+    // Raced against a timer so a hung font request cannot hold the map up.
+    const labelFontReady = Promise.race([
+      document.fonts.load(`${LABEL_FONT_WEIGHT} 64px "Source Sans 3"`).catch(() => {}),
+      new Promise(res => setTimeout(res, 2000)),
+    ]);
 
     // True rendered width of a name, in ems (multiply by the label size for
     // px). Canvas measureText with the layer's font — a flat chars-per-em
@@ -8230,6 +8243,7 @@
         failLoading("Map failed to load — the tax data could not be fetched.");
         return;
       }
+      await labelFontReady;
 
       syncThemeChrome();
       overlay = new deck.MapboxOverlay({

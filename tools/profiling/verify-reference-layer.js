@@ -266,6 +266,19 @@ const PLACE_COUNT = TOWN_COUNT + (REGION_COUNT - 1) + ZONE_COUNT + 2;
     return labels();
   };
 
+  // The names are drawn in the font the site ships, not a device font. deck
+  // rasterises its glyph atlas once and keeps it, so a face that is declared
+  // but lands after the first label would leave every name in the fallback.
+  const font = await page.evaluate(() => ({
+    faces: [...document.fonts].map(f => `${f.family.replace(/"/g, '')} ${f.weight} ${f.status}`),
+    first: LABEL_FONT_FAMILY.split(',')[0].replace(/"/g, '').trim(),
+    weight: LABEL_FONT_WEIGHT,
+    layer: (overlay._deck.layerManager.getLayers().find(l => l.id === 'hood-labels') || { props: {} }).props.fontFamily,
+  }));
+  check('the label font is the shipped face, and it loaded',
+        font.faces.includes(`${font.first} ${font.weight} loaded`) && font.layer === await page.evaluate(() => LABEL_FONT_FAMILY),
+        JSON.stringify(font));
+
   // ⚠️ Back to HOME first. The checks above leave the camera wherever the
   // highway-extent and view-switch probes put it, and how many names survive the
   // declutter sweep is a function of the camera — so a per-tier count taken
