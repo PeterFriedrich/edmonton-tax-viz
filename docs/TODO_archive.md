@@ -276,3 +276,10 @@ the public build, where the denominator picker is full-only by design
   2026-10-13. Light-theme colours were not rendered or changed.
 - [x] **Peter confirmed on his laptop** — CLOSED 2026-10-13 (S230). "Live site seems fine":
   the loading overlay (#735) and the names in Source Sans 3 (#736, #737).
+
+- [x] **Clean full rebuild of `web/data/reference.geojson`** — CLOSED 2026-10-13 (S230).
+  `scripts/build_reference_layers.py --out <scratch>` reproduced the committed file byte for
+  byte, so the hand-written Parkland County anchor from #738 matches what the script emits.
+  `overpass-api.de` returned 504 again (also on a one-node query), so the run used the
+  `maps.mail.ru` Overpass mirror through a scratch wrapper that set `HIGHWAY_URL`; the script
+  was not changed. `data/DATA.md` §14.
