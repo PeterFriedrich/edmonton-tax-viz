@@ -43,15 +43,16 @@ const TOWN_COUNT = 9;          // PLACES: 7 + Morinville, Stony Plain (2026-08-0
 // vanishing from the build still trips the count.
 const REGION_COUNT = 5;
 const ZONE_COUNT = 1;          // Alberta's Industrial Heartland
+const RESERVE_COUNT = 1;       // RESERVES: Enoch Cree Nation (2026-10-13), drawn in the town tier
 const HOOD_LABEL_SIZE = 15;    // LABEL_SIZE in web/index.html
-const BOUNDARY_COUNT = TOWN_COUNT + REGION_COUNT + ZONE_COUNT;
+const BOUNDARY_COUNT = TOWN_COUNT + RESERVE_COUNT + REGION_COUNT + ZONE_COUNT;
 
 // Label anchors, which is NOT the boundary count: Edmonton is drawn but
 // deliberately unnamed (the title already says it), and the two econ points
 // (Nisku, the airport) are named but have no outline to draw. Both asymmetries
 // are decisions, so they are spelled out rather than folded into one number —
 // a build that starts labelling Edmonton should trip this, not pass quietly.
-const PLACE_COUNT = TOWN_COUNT + (REGION_COUNT - 1) + ZONE_COUNT + 2;
+const PLACE_COUNT = TOWN_COUNT + RESERVE_COUNT + (REGION_COUNT - 1) + ZONE_COUNT + 2;
 
 (async () => {
   const browser = await chromium.launch({
@@ -266,7 +267,19 @@ const PLACE_COUNT = TOWN_COUNT + (REGION_COUNT - 1) + ZONE_COUNT + 2;
     return labels();
   };
 
-  // The names are drawn in the font the site ships, not a device font. deck
+  // ⚠️ Back to HOME first. The checks above leave the camera wherever the
+  // highway-extent and view-switch probes put it, and how many names survive the
+  // declutter sweep is a function of the camera — so a per-tier count taken
+  // here would be asserting against an accident of test order. The tier checks
+  // below are the ones that care; the toggle checks never did.
+  await page.evaluate(() => map.easeTo({ ...HOME, duration: 0 }));
+  await page.waitForTimeout(1200);
+
+  const def = await setToggles(true, false);
+  // The names are drawn in the font the site ships, not a device font.
+  // ⚠️ Read HERE, at HOME with the reference names up: the label layer only
+  // exists while something is in its pool, and at the camera the earlier
+  // probes leave behind that depends on which names happen to be in frame. deck
   // rasterises its glyph atlas once and keeps it, so a face that is declared
   // but lands after the first label would leave every name in the fallback.
   const font = await page.evaluate(() => ({
@@ -279,15 +292,6 @@ const PLACE_COUNT = TOWN_COUNT + (REGION_COUNT - 1) + ZONE_COUNT + 2;
         font.faces.includes(`${font.first} ${font.weight} loaded`) && font.layer === await page.evaluate(() => LABEL_FONT_FAMILY),
         JSON.stringify(font));
 
-  // ⚠️ Back to HOME first. The checks above leave the camera wherever the
-  // highway-extent and view-switch probes put it, and how many names survive the
-  // declutter sweep is a function of the camera — so a per-tier count taken
-  // here would be asserting against an accident of test order. The tier checks
-  // below are the ones that care; the toggle checks never did.
-  await page.evaluate(() => map.easeTo({ ...HOME, duration: 0 }));
-  await page.waitForTimeout(1200);
-
-  const def = await setToggles(true, false);
   check('all place anchors built from the data file',
         def.anchored === PLACE_COUNT, `${def.anchored} of ${PLACE_COUNT}`);
   // The point of the feature: names on screen with no control touched. Not

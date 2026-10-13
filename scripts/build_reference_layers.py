@@ -10,7 +10,8 @@ at a glance:
   t="highway"   the motorway/trunk network, clipped to the SAME extent so it
                 runs off the edge of the view rather than stopping at the city
                 limit (2026-08-03; replaces the hand-extracted t="henday")
-  t="boundary"  one Polygon per neighbouring municipality (PLACES), per region
+  t="boundary"  one Polygon per neighbouring municipality (PLACES), one shape
+                per First Nation reserve (RESERVES, every part), per region
                 (REGIONS: Edmonton's own legal limit plus the four counties it
                 abuts), and for the industrial zone — all unfilled outlines
   t="place"     one Point per named thing, carrying the text to draw
@@ -230,6 +231,32 @@ ZONE_URL = (
 )
 ZONE_LABEL = "Industrial Heartland"
 ZONE_MIN_KM2 = 400.0   # measured 590.7; trips loudly if the layer is repointed
+
+# First Nation reserves, added 2026-10-13 (Peter). A reserve is federal land
+# and not an Alberta municipality, so it is in none of the PLACES sublayers and
+# comes from the federal legal boundary instead: Natural Resources Canada's
+# "Aboriginal Lands of Canada Legislative Boundaries" (Open Government Licence -
+# Canada; credited in Data & Methods).
+#
+# Matched on `adminAreaId`, not on the name: the service spells this one
+# "ENOCH CREE NATION NO. 135" and Alberta's copy "Enoch Cree Nation 135", and
+# the reserve was called Stony Plain 135 before either. The label is ours.
+#
+# ⚠️ ALL parts are kept, unlike PLACES' largest-polygon rule. The reserve is
+# three polygons (31.1, 20.8 and 0.005 km², measured 2026-10-13) and the largest
+# alone would draw 60% of it. It abuts Edmonton's west limit directly.
+#
+# Alberta also serves this boundary (`boundaries/federal_indian_reserve`), with
+# the same three parts and area. Not used: its copyright line is Alberta Data
+# Partnerships Ltd., not the Government of Alberta.
+RESERVE_URL = (
+    "https://proxyinternet.nrcan-rncan.gc.ca/arcgis/rest/services/CLSS-SATC"
+    "/CLSS_Administrative_Boundaries/MapServer/0/query"
+)
+# (label, adminAreaId, minimum km² — measured 51.9; trips if a part goes missing)
+RESERVES = (
+    ("Enoch Cree Nation", "06652", 45.0),
+)
 
 # The city's own legal limit and the rural municipalities it abuts, where the
 # EDGE is the payload rather than the small-polygon-plus-name of PLACES.
@@ -631,6 +658,55 @@ def _fetch_places() -> gpd.GeoDataFrame:
     )
 
 
+def _fetch_reserves() -> list:
+    """(label, outline, anchor) per entry in RESERVES, in WORKING_EPSG.
+
+    Every part of the reserve is drawn; the anchor is the centroid of its
+    largest part, the convention PLACES uses.
+    """
+    out = []
+    for label, area_id, min_km2 in RESERVES:
+        resp = requests.get(
+            RESERVE_URL,
+            params={
+                "where": f"adminAreaId='{area_id}'",
+                "outFields": "adminAreaId,adminAreaNameEng",
+                "returnGeometry": "true",
+                "outSR": OUT_EPSG,
+                "f": "geojson",
+            },
+            timeout=180,
+        )
+        resp.raise_for_status()
+        payload = resp.json()
+        if "error" in payload:
+            raise RuntimeError(f"ArcGIS query failed for {label!r}: {payload['error']}")
+        feats = [f for f in payload.get("features") or [] if f.get("geometry")]
+        if not feats:
+            raise RuntimeError(
+                f"No geometry returned for {label!r} (adminAreaId {area_id})."
+            )
+        geom = gpd.GeoSeries(
+            [shape(f["geometry"]) for f in feats], crs=f"EPSG:{OUT_EPSG}"
+        ).to_crs(epsg=WORKING_EPSG).union_all()
+        km2 = geom.area / 1e6
+        if km2 < min_km2:
+            raise RuntimeError(
+                f"{label!r} is {km2:.1f} km², under the {min_km2:.0f} km² floor — "
+                "a part of the reserve is missing from the source."
+            )
+        biggest = max(getattr(geom, "geoms", [geom]), key=lambda p: p.area)
+        anchor = biggest.centroid
+        if not biggest.contains(anchor):
+            anchor = biggest.representative_point()
+        logger.info(
+            "  %-20s %5.1f km² in %d part(s), federal adminAreaId %s",
+            label, km2, len(getattr(geom, "geoms", [geom])), area_id,
+        )
+        out.append((label, geom.simplify(BOUNDARY_SIMPLIFY_M, preserve_topology=True), anchor))
+    return out
+
+
 def _weld(geoms) -> "gpd.base.BaseGeometry":
     """Dissolve segments into as few continuous lines as possible."""
     merged = unary_union(list(geoms))
@@ -731,6 +807,17 @@ def build(
     for point, name, outline in zip(places.geometry, places["name"], places["outline"]):
         rows.append(("place", "place", name, outline.area / 1e6, point))
 
+    # Reserves draw and label in the town tier: an outline and a name.
+    reserves = _fetch_reserves()
+    for name, outline, point in reserves:
+        rows.append(("boundary", "place", name, None, outline))
+        rows.append(("place", "place", name, outline.area / 1e6, point))
+    # ⚠️ Alberta's county polygons run straight over reserve land, and Parkland
+    # County's label landed INSIDE Enoch Cree Nation (measured 2026-10-13): the
+    # county's name on the reserve, and the reserve's own name culled by it at
+    # the default camera. A county is anchored on what is left of it.
+    reserve_land = unary_union([outline for _, outline, _ in reserves])
+
     for name, outline in regions:
         # Edmonton is the one region drawn but not named: the page title says
         # Edmonton already, and a label at the centre would sit on top of the
@@ -740,7 +827,7 @@ def build(
         rows.append(("boundary", "city" if is_city else "region", name, None, outline))
         if not is_city:
             rows.append(("place", "region", name, outline.area / 1e6,
-                         _region_anchor(outline, anchor_box)))
+                         _region_anchor(outline.difference(reserve_land), anchor_box)))
 
     rows.append(("boundary", "zone", ZONE_LABEL, None, zone))
     rows.append(("place", "zone", ZONE_LABEL, zone.area / 1e6,

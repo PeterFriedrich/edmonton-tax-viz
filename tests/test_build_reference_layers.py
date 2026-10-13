@@ -304,7 +304,7 @@ def _synthetic(monkeypatch, tmp_path):
     geographic working CRS reaches `build()` as degrees, exactly as it would in
     production.
     """
-    from shapely.geometry import Point, Polygon
+    from shapely.geometry import MultiPolygon, Point, Polygon
 
     def to_working(geom):
         return gpd.GeoSeries([geom], crs="EPSG:4326").to_crs(epsg=b.WORKING_EPSG).iloc[0]
@@ -338,6 +338,15 @@ def _synthetic(monkeypatch, tmp_path):
     monkeypatch.setattr(b, "_fetch_places", lambda: gpd.GeoDataFrame(
         {"name": ["Townly"], "outline": [to_working(town)]},
         geometry=[to_working(Point(-112.95, 53.55))], crs=f"EPSG:{b.WORKING_EPSG}"))
+
+    # Two disjoint parts: a reserve keeps every part, unlike a town.
+    reserve = MultiPolygon([
+        Polygon([(-113.8, 53.45), (-113.72, 53.45), (-113.72, 53.5), (-113.8, 53.5)]),
+        Polygon([(-113.8, 53.51), (-113.72, 53.51), (-113.72, 53.53), (-113.8, 53.53)]),
+    ])
+    monkeypatch.setattr(b, "_fetch_reserves", lambda: [
+        ("Reserve One", to_working(reserve), to_working(Point(-113.76, 53.475))),
+    ])
 
     county = Polygon([(-114.0, 53.2), (-113.0, 53.2), (-113.0, 53.9), (-114.0, 53.9)])
     monkeypatch.setattr(b, "_fetch_regions", lambda: [
@@ -423,3 +432,88 @@ def test_the_working_crs_is_the_one_the_rest_of_the_pipeline_uses():
         "the reference layers would be built in a different projection from the "
         "data they are drawn over; correct only if the whole pipeline moved"
     )
+
+
+# --- reserves ---------------------------------------------------------------
+
+_RESERVE_PARTS = [
+    [[[-113.80, 53.45], [-113.72, 53.45], [-113.72, 53.50], [-113.80, 53.50], [-113.80, 53.45]]],
+    [[[-113.80, 53.51], [-113.72, 53.51], [-113.72, 53.54], [-113.80, 53.54], [-113.80, 53.51]]],
+]
+
+
+def _reserve_response(monkeypatch, parts):
+    class _Resp:
+        status_code = 200
+        def raise_for_status(self): pass
+        def json(self):
+            return {"features": [{
+                "type": "Feature", "properties": {},
+                "geometry": {"type": "MultiPolygon", "coordinates": parts}}]}
+
+    seen = []
+
+    def _fake_get(url, params=None, timeout=None):
+        seen.append((url, params["where"]))
+        return _Resp()
+
+    monkeypatch.setattr(b.requests, "get", _fake_get)
+    return seen
+
+
+def test_a_reserve_keeps_every_part_not_just_the_largest(monkeypatch):
+    """A town draws its largest polygon; a reserve must not. Enoch Cree Nation
+    is three parts and the largest alone is 60% of it."""
+    seen = _reserve_response(monkeypatch, _RESERVE_PARTS)
+    (label, outline, anchor), = b._fetch_reserves()
+
+    assert label == b.RESERVES[0][0]
+    assert len(outline.geoms) == 2
+    assert outline.area / 1e6 == pytest.approx(47.2, abs=1.0)
+    assert max(outline.geoms, key=lambda p: p.area).contains(anchor)
+    url, where = seen[0]
+    assert url == b.RESERVE_URL
+    assert where == f"adminAreaId='{b.RESERVES[0][1]}'", "matched by id, not by name"
+
+
+def test_a_reserve_missing_a_part_fails_the_build(monkeypatch):
+    """Same response with the smaller part gone: under the floor, so it raises
+    rather than drawing a partial reserve."""
+    _reserve_response(monkeypatch, _RESERVE_PARTS[:1])
+    with pytest.raises(RuntimeError, match="floor"):
+        b._fetch_reserves()
+
+
+def test_the_served_file_carries_the_reserve_whole():
+    """The committed reference.geojson, not the builder: every part is there."""
+    payload = json.loads((b.ROOT / "web/data/reference.geojson").read_text())
+    for label, _, min_km2 in b.RESERVES:
+        feats = [f for f in payload["features"] if f["properties"].get("name") == label]
+        assert sorted(f["properties"]["t"] for f in feats) == ["boundary", "place"]
+        outline = next(f for f in feats if f["properties"]["t"] == "boundary")
+        assert outline["properties"]["kind"] == "place"
+        km2 = gpd.GeoSeries([shape(outline["geometry"])], crs="EPSG:4326").to_crs(
+            epsg=b.WORKING_EPSG).area.iloc[0] / 1e6
+        assert km2 >= min_km2, f"{label} is {km2:.1f} km² in the served file"
+
+
+def test_no_county_name_is_anchored_on_reserve_land():
+    """Alberta's county polygons run over reserve land. Before 2026-10-13
+    Parkland County's label point sat inside Enoch Cree Nation
+    ([-113.79394, 53.45883]), naming the reserve as the county."""
+    payload = json.loads((b.ROOT / "web/data/reference.geojson").read_text())
+    labels = {name for name, _, _ in b.RESERVES}
+    reserves = [shape(f["geometry"]) for f in payload["features"]
+                if f["properties"]["t"] == "boundary" and f["properties"].get("name") in labels]
+    assert reserves
+    counties = [f for f in payload["features"]
+                if f["properties"]["t"] == "place" and f["properties"]["kind"] == "region"]
+    assert counties
+    for f in counties:
+        pt = shape(f["geometry"])
+        assert not any(r.contains(pt) for r in reserves), (
+            f"{f['properties']['name']} is labelled on reserve land")
+    from shapely.geometry import Point
+    assert any(r.contains(Point(-113.79394, 53.45883)) for r in reserves), (
+        "the old Parkland County anchor should be inside the reserve — if it "
+        "is not, this test is no longer checking the defect it was written for")
