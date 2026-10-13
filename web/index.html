@@ -4267,14 +4267,14 @@
     const PRIO_ZONE = 2;
     const PRIO_REGION = 3;
     // Per-tier text style. `base` feeds placeSize(), which scales it with the
-    // camera; `col` is the draw colour. Counties read larger and cooler than a
-    // town (they are areas, not points), the zone borrows its outline's warmth,
-    // and the econ names sit quietest.
+    // camera; `col` is the draw colour. Counties are set in capitals and cooler
+    // than a town (they are areas, not points; see placeAnchors), the zone
+    // borrows its outline's warmth, and the econ names sit quietest.
     const REF_TIERS = {
       region: { prio: PRIO_REGION, base: 14, col: themed([138, 150, 172, 235], [84, 96, 118, 235]) },
-      zone:   { prio: PRIO_ZONE,   base: 12, col: themed([166, 140, 108, 230], [138, 106, 70, 230]) },
-      place:  { prio: PRIO_PLACE,  base: 12, col: themed([150, 160, 178, 235], [96, 106, 124, 235]) },
-      econ:   { prio: PRIO_ECON,   base: 11, col: themed([132, 142, 158, 225], [112, 122, 138, 225]) },
+      zone:   { prio: PRIO_ZONE,   base: 13, col: themed([186, 158, 124, 235], [138, 106, 70, 230]) },
+      place:  { prio: PRIO_PLACE,  base: 14, col: themed([200, 208, 222, 240], [96, 106, 124, 235]) },
+      econ:   { prio: PRIO_ECON,   base: 12, col: themed([168, 178, 194, 230], [112, 122, 138, 225]) },
     };
     // Smaller and dimmer than a hood name, and drawn in the same font: these
     // are context at the edge of the frame, so they should be legible without
@@ -4306,8 +4306,8 @@
       const split = referenceSplit();
       if (!split) return [];   // reference.geojson not fetched yet
       return (_placeAnchors = split.places.map(f => {
-        const name = f.properties.name.toUpperCase();
         const tier = REF_TIERS[f.properties.kind] || REF_TIERS.place;
+        const name = tier === REF_TIERS.region ? f.properties.name.toUpperCase() : f.properties.name;
         return { name, position: f.geometry.coordinates,
                  em: _measureEm(name),
                  // ⚠️ `area` is the km² of the shape this label NAMES, from the
