@@ -127,10 +127,14 @@ HIGHWAY_URL = "https://overpass-api.de/api/interpreter"
 OVERPASS_USER_AGENT = "edmonton-tax-viz/1.0 (reference-layer build script)"
 
 # Tried in order after HIGHWAY_URL fails. The main instance returned 504 on
-# every build on 2026-10-13, on a one-node query too; this mirror answered and
-# reproduced the committed file byte for byte. A mirror can lag the main
-# database, so the build logs which server answered.
-OVERPASS_MIRRORS = ("https://maps.mail.ru/osm/tools/overpass/api/interpreter",)
+# every build on 2026-10-13, on a one-node query too. Each mirror reproduced
+# the committed file byte for byte that day; the second also returned 504 for
+# part of it, hence two. A mirror can lag the main database, so the build logs
+# which server answered.
+OVERPASS_MIRRORS = (
+    "https://overpass.openstreetmap.fr/api/interpreter",
+    "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
+)
 
 
 def _overpass(query: str) -> dict:
