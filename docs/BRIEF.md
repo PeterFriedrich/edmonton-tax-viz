@@ -251,7 +251,7 @@ Edmonton revenue-per-acre fiscal analysis. Python-only, no GIS software.
 - **2026-08-28** — **`deploy.yml`'s path filter lists `scripts/build_site.py` — the trigger rule is "what changes the SERVED ARTIFACT", not "what lives under `web/`".**
 - **2026-08-28** — **The proxy-reading class is a real class, its tiers rank by REVERSIBILITY rather than by correctness, and replacing a proxy with a measurement does not by itself close it.**
 - **2026-08-28** — **An unproven archive capture is WRITTEN but can never overwrite a proven one — and the merge gate exists.** … ⚠️ **The regression test was falsified against the old logic on the DEFECT rather than the signature** — the pre-fix function was given the new keyword and left otherwise untouched, and fails on …
-- **2026-08-28** — **The loading overlay lifts on the first PAINTED FRAME after the deck layers attach, not on a second map `idle`; the min-display floor is a remainder computed at gate time, not a raced promise; and …
+- **2026-08-28** — **AMENDED 2026-10-13 (the data gate and the 549–568ms figures; see that row).**
 - **2026-08-28** — **The loading screen carries a title and ONE line, sized to a measured ~900ms dwell — and its wrap behaviour is explicitly NOT verifiable on this box.**
 - **2026-08-28** — **The loading screen's title is GENERAL — `Edmonton: Property Tax Visualization` — deliberately reversing the same-day row above that pinned it to the page's own `<h1>`.**
 - **2026-08-29** — **A guard's tolerance is DERIVED from the served precision, not chosen — and one of the three "verify scripts failing on master" was never failing on master.**
@@ -404,6 +404,9 @@ Edmonton revenue-per-acre fiscal analysis. Python-only, no GIS software.
 - **2026-10-09** — **The desktop blurb and mill rates go back to bare text; this reverses the same-day blurb-box row** (Peter, S222: he no longer liked the grey behind the top-left blurb).
 - **2026-10-12** — **Merged branches are pruned by hand, on a reminder at 90, and never automatically** (Peter, S227).
 - **2026-10-12** — **The merged-branch reminder is in the template too, so `scripts/handoff_gap.py` no longer forks on it** (S228).
+- **2026-10-13** — **The loading overlay's data gate is deck.gl's first draw that has layers (`onAfterRender` on the overlay), not the map's first `render` after the overlay attaches** (Peter, S229: he saw the overlay …
+- **2026-10-13** — **The map's name labels are drawn in a font the site ships (Source Sans 3, weight 600), at one size near and far, with a 2 px outline** (Peter, S229: on his Linux laptop the names looked "blobby").
+- **2026-10-13** — **The Enoch Cree Nation reserve is drawn and named on the map, in the town tier, from the federal boundary** (Peter, S229).
 
 ## Open work
 
@@ -423,6 +426,12 @@ Edmonton revenue-per-acre fiscal analysis. Python-only, no GIS software.
 
 **Alpha-build notice on the specialist build (OPEN 2026-10-10 S227, Peter's ask; not scoped yet)**
 - **Anyone who lands on the specialist (full) build gets a pop-up on arrival.** Peter's wording: "you've been linked to the alpha build, experimental lenses intended for development or specialist use only". Full build only; the public build shows nothing. Peter called it a tooltip …
+
+**Map labels and reference layer follow-ons (OPEN 2026-10-13 S229)**
+- **Peter's call: the style of the outside names** (towns, counties, the reserve). Six options were rendered (P1 current; P2 all mixed case; P3 caps, larger and brighter; P4 counties caps, towns mixed case and brighter; P5 caps, smaller and dimmer; P6 mixed case, larger and …
+- **Confirm a clean full rebuild of `web/data/reference.geojson`.** Overpass returned 504 on three runs of `scripts/build_reference_layers.py`, so Parkland County's label anchor was recomputed with the script's functions and written in by hand (`data/DATA.md` §14). Run the build …
+- **Peter to confirm on his laptop:** the loading overlay now leaves with the map drawn (#735), and the names look right in Source Sans 3 (#736, #737). Nothing here was measured on a real GPU.
+- **Low priority: the overlay over-covers when the data beats the map's first `idle`.** Served from localhost with no delay, the basemap gate is the late one and the overlay stays about 0.5 s after the prisms are up (`DECISIONS.md` 2026-10-13). Not seen on a real network. …
 
 **Harness research follow-ons (OPEN 2026-10-12 S228, Peter's ask; all three propose-first)**
 - **1. Show open automated-check issues at session start.** Today a session sees them only by running `gh issue list` (CLAUDE.md "Session Management"). The SessionStart hook cannot wait on the network, so it must read a cached list. If it lands, shorten that CLAUDE.md paragraph. …
