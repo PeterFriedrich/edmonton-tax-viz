@@ -1,17 +1,15 @@
 // Verify for the loading overlay (#loading, added 2026-08-28). It covers the
 // gap between first paint and the first deck frame, lifting only once BOTH
-// gates pass: MapLibre `idle` (the basemap came up) and the first painted frame
-// after the deck layers attach (the prisms are on screen).
+// gates pass: MapLibre `idle` (the basemap came up) and deck's first draw that
+// has layers (the prisms are on screen).
 //
-// The two checks that matter here are timing checks, because both failure modes
-// are SILENT — the overlay still works, it just sits over a correct map:
-//   - Gate regression: switching the data gate back to a second map `idle`
-//     pushes the lift from ~600ms to ~5.6s, because the lazily-fetched
-//     secondary layers keep the map busy long after it looks right. Guarded by
-//     the upper bound on fade start.
-//   - Floor starvation: a min-display floor implemented as a plain timer gets
-//     starved by post-paint JSON parsing (a 500ms timer measured at 5433ms).
-//     Guarded by the same upper bound.
+// The checks that matter here are about WHICH FRAME lifts it, because every
+// failure mode is SILENT — the overlay still works:
+//   - Early: lifting on the map's first `render` after the overlay attaches,
+//     which has no deck layers in it, uncovers an empty backdrop.
+//   - Late: gating on a later map `idle`, or a min-display floor implemented
+//     as a plain timer and starved by post-paint JSON parsing, sits over a
+//     correct map.
 // Timing is read from a MutationObserver, NOT by polling — polling the overlay
 // every 100ms perturbs the render loop enough to move these numbers.
 //
@@ -23,7 +21,7 @@ const [url] = process.argv.slice(2);
 
 const DATA_FILE = 'neighbourhood_value_per_acre';
 const FADE_MIN_MS = 250;    // below this the overlay flashes rather than reads
-const FADE_MAX_MS = 2500;   // an idle-gated or starved lift lands at 5.5s+
+const FADE_MAX_MS = 8000;   // backstop only; the lift waits out shader linking, ~2.9s on this box
 const TIMEOUT_WAIT_MS = 17000; // the overlay's own timeout is 15s
 
 const GL = ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader',
@@ -44,6 +42,9 @@ const OBSERVE = () => {
     if (window.__ov.texts[window.__ov.texts.length - 1] !== t) window.__ov.texts.push(t);
     if (window.__ov.fadeStartMs === null && box.classList.contains('is-hidden')) {
       window.__ov.fadeStartMs = Math.round(performance.now());
+      // What deck had to draw when the overlay let go. null = could not read.
+      try { window.__ov.layersAtFade = overlay._deck.layerManager.getLayers().length; }
+      catch (e) { window.__ov.layersAtFade = null; }
     }
   };
   // Idle timestamps, so the gate check can be RELATIVE. An absolute ms ceiling
@@ -62,6 +63,15 @@ const OBSERVE = () => {
     if (!m || typeof m.on !== 'function') return;   // still the div
     clearInterval(hunt);
     m.on('idle', () => window.__ov.idles.push(Math.round(performance.now())));
+    // The first map frame in which deck has layers: the frame the lift belongs to.
+    window.__ov.firstLayeredMs = null;
+    m.on('render', () => {
+      if (window.__ov.firstLayeredMs !== null) return;
+      try {
+        if (overlay._deck.layerManager.getLayers().length)
+          window.__ov.firstLayeredMs = Math.round(performance.now());
+      } catch (e) {}
+    });
   }, 10);
 
   let bound = false;
@@ -111,6 +121,15 @@ const errState = () => {
     const exceptions = [];
     page.on('pageerror', e => exceptions.push(e.message));
     await page.addInitScript(OBSERVE);
+    // ⚠️ The boot data is held back, as a real network holds it. Served from
+    // localhost it can land before the map's first idle, and then the basemap
+    // gate is the late one and the data gate is never the thing under test: a
+    // lift on a frame with no deck layers in it went unseen that way until
+    // 2026-10-13.
+    await page.route(`**/${DATA_FILE}*`, async r => {
+      await new Promise(f => setTimeout(f, 400));
+      r.continue();
+    });
     await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 });
     await page.waitForTimeout(4000);
 
@@ -126,33 +145,32 @@ const errState = () => {
     check('the swap lands on the data gate', ov.texts[ov.texts.length - 1] === 'Loading tax data…',
           JSON.stringify(ov.texts[ov.texts.length - 1]));
     check('overlay lifted at all', ov.fadeStartMs !== null);
+    // The overlay exists to cover the wait for the prisms. MapLibre's first
+    // `render` after the overlay control attaches has NO deck layers in it;
+    // deck builds them, and links their shaders, on the frame after.
+    check('deck had layers to draw when the overlay lifted', ov.layersAtFade > 0,
+          `layers at lift: ${ov.layersAtFade}`);
 
-    // THE regression guard, and the reason this file exists. Both known
-    // regressions — gating the data side on a second `idle`, or racing the
-    // min-display floor as a third promise where a busy main thread starves it
-    // — show up as a lift that waits for the map's post-layer idle instead of
-    // the painted frame. Measured on an idle box: shipped 549-568ms, idle-gated
-    // 1045-1091ms, raced floor 1049-1132ms, with the post-layer idle at ~1045ms
-    // in every variant. So the ORDER is the invariant, not any millisecond
-    // count, and it scales with the machine.
-    // Tests the MECHANISM, not a position on the clock: a lift driven by an
-    // idle event lands within a millisecond of one, and a lift driven by the
-    // painted frame does not. Measured — shipped: fade 549ms against idles at
-    // 340 and 1040; idle-gated: fade 1082ms against an idle at 1081; raced
-    // floor: fade 1076ms against an idle at 1075 (a starved timer resolves when
-    // the main thread frees, which is exactly when the map idles). Comparing
-    // against "the last idle" instead would pass an idle-gated build as soon as
-    // any later idle appeared in the window.
-    const idles = ov.idles || [];
+    // THE regression guard, and the reason this file exists. The lift belongs
+    // to ONE frame: the first in which deck has layers. Every known defect
+    // moves it off that frame, and all of them are silent:
+    //   - early: gating on the map's first `render` after the overlay attaches,
+    //     a frame with no deck layers in it (shipped 2026-08-28 to 2026-10-13;
+    //     the check above);
+    //   - late: gating on a later map `idle`, or racing the min-display floor
+    //     as a third promise where a busy main thread starves it.
+    // Relative to the frame, not a position on the clock, so it scales with the
+    // machine. ⚠️ An earlier version asserted the lift did NOT coincide with a
+    // map idle. The correct lift does coincide with one (measured: fade 2859ms,
+    // idles 695 / 2858 / 3676), so that check could only pass on the early lift.
     const COINCIDE_MS = 40;
-    const trigger = idles.find(t => ov.fadeStartMs >= t && ov.fadeStartMs - t <= COINCIDE_MS);
-    // Fails loudly rather than passing vacuously if it could not measure —
-    // a check that silently tests nothing is worse than an absent one.
-    check('map idle events were observed (otherwise the next check is vacuous)',
-          idles.length > 0, `idles: ${JSON.stringify(idles)}`);
-    check('lift is triggered by the painted frame, NOT by a map idle',
-          idles.length > 0 && ov.fadeStartMs !== null && trigger === undefined,
-          `fade ${ov.fadeStartMs}ms, idles ${JSON.stringify(idles)}`);
+    // Fails loudly rather than passing vacuously if it could not measure.
+    check('a frame with deck layers was observed (otherwise the next check is vacuous)',
+          ov.firstLayeredMs !== null);
+    check('lift lands on the first frame that has deck layers, not after it',
+          ov.firstLayeredMs !== null && ov.fadeStartMs !== null &&
+          Math.abs(ov.fadeStartMs - ov.firstLayeredMs) <= COINCIDE_MS,
+          `fade ${ov.fadeStartMs}ms, first layered frame ${ov.firstLayeredMs}ms, idles ${JSON.stringify(ov.idles)}`);
     // Coarse backstop only. It does not discriminate between the variants
     // above; it catches a gate that never fires or a genuinely stalled load.
     check('lift is not grossly stalled', ov.fadeStartMs !== null && ov.fadeStartMs <= FADE_MAX_MS,

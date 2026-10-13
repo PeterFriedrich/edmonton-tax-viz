@@ -2311,10 +2311,9 @@
     // time rather than raced as a third promise. A floor implemented as a raced
     // timer gets starved: the lazily-fetched secondary layers parse on the main
     // thread right after first paint, so the timer does not run when it is due.
-    // Measured on an idle box, three runs each: this shape lifts at 549-568ms,
-    // the raced-500ms shape at 1049-1132ms. 300ms sits below the measured first
-    // paint, so the remaining wait is normally zero and no timer is scheduled
-    // at all. Re-measure before raising it.
+    // 300ms sits below the measured first paint, so the remaining wait is
+    // normally zero and no timer is scheduled at all. Re-measure before
+    // raising it.
     const MIN_OVERLAY_MS = 300;
     const overlayShownAt = performance.now();
     const LOAD_TIMEOUT_MS = 15000;
@@ -2328,22 +2327,20 @@
     const framePainted = new Promise(res => { markFramePainted = res; });
     const basemapReady = new Promise(res => map.once("idle", res));
 
-    // ⚠️ The data gate is the FIRST RENDER after the layers attach, NOT a second
-    // map `idle`.
+    // ⚠️ The data gate is deck's FIRST DRAW THAT HAS LAYERS (onAfterRender on
+    // the overlay, in boot()), not the map's first `render` after the overlay
+    // attaches and not a later map `idle`.
     //
-    // The first idle only proves the backdrop painted, so a gate needs a later
-    // signal — but the next idle lands well after the prisms are visible,
-    // because the lazily-fetched secondary layers (reference, temporal, roads —
-    // all deliberately NOT awaited in the load handler) keep the map busy.
-    // Gating on it covers a map that already looks right. Measured on an idle
-    // box, three runs each: this shape lifts at 549-568ms, the idle-gated shape
-    // at 1045-1091ms.
+    // The map's first `render` after addControl has no deck layers in it: deck
+    // builds them, and links their shaders, on the frame after, and that link
+    // is most of the boot. Lifting on it uncovered an empty backdrop (shipped
+    // 2026-08-28 to 2026-10-13). A later `idle` errs the other way: it waits on
+    // the lazily-fetched secondary layers (reference, temporal, roads — all
+    // deliberately NOT awaited in the load handler) and covers a map that
+    // already looks right.
     //
-    // Interleaved deck draws inside MapLibre's render pass, so the map's own
-    // `render` event is the frame that contains the prisms. Resolved once,
-    // below. tools/profiling/verify-loading-overlay.js guards the choice by
-    // MECHANISM rather than by a clock reading: an idle-gated lift lands within
-    // a millisecond of an idle event, and this one must not.
+    // tools/profiling/verify-loading-overlay.js holds the lift to that frame,
+    // relative to the frame rather than to a clock reading.
 
     basemapReady.then(() => {
       if (!overlaySettled) loadingTextEl.textContent = "Loading tax data…";
@@ -8233,12 +8230,13 @@
         },
         onClick: temporalClick,
         onHover: bandHover,
+        // Data gate: deck's first draw that HAS layers. See the gates by the
+        // map constructor.
+        onAfterRender: () => {
+          if (overlay._deck.layerManager.getLayers().length) markFramePainted();
+        },
       });
       map.addControl(overlay);
-      // Data gate: the next painted frame is the first one with prisms in it.
-      // Registered after addControl, and rendering happens in rAF, so no frame
-      // can slip between the two. See the gates by the map constructor.
-      map.once("render", markFramePainted);
 
       // The panel's empty-state prompt names the lens's own panel, and the app
       // loads on Revenue — so it has to be set once here rather than only on the
