@@ -137,33 +137,36 @@ itself was started by stumbling on a symptom. **Status** — `fixed`, `open`,
 `accepted` (decided to keep or disclose), `withdrawn`, `n/a`, or `unknown`
 (the backfill could not establish it — resolve before counting on it).
 
-**Counts as of 2026-09-26** (137 findings, 54 audits; re-count from the table,
-these do not update):
+**Counts as of 2026-10-14** (203 findings, 60 audits; re-count from the table,
+these do not update). Statuses were reconciled against `TODO.md` and master the
+same day: 27 rows marked `open` had been fixed, 1 accepted. **23 remain open, 13
+of them public** (7 `render`, 5 `claim`, 1 `method`), almost all waiting on a
+call from Peter.
 
 | Class | Findings | Reached public | Latent |
 |---|---|---|---|
-| `guard-blind` | 32 | 1 | 12 |
-| `claim` | 30 | 9 | 2 |
-| `render` | 11 | 8 (+1 full) | 2 |
-| `audit-error` | 9 | 0 | 0 |
-| `guard-noisy` | 8 | 1 | 0 |
+| `claim` | 51 | 17 | 2 |
+| `guard-blind` | 44 | 2 (+2 full) | 16 |
+| `render` | 23 | 18 (+2 full) | 3 |
+| `audit-error` | 14 | 0 | 0 |
+| `process` | 14 | 0 | 2 |
+| `guard-noisy` | 11 | 1 | 0 |
+| `premise` | 10 | 1 | 0 |
 | `input` | 8 | 4 | 1 |
 | `membership` | 7 | 2 (+2 full) | 2 |
 | `pipeline` | 7 | 2 | 3 |
-| `premise` | 7 | 0 | 0 |
-| `process` | 7 | 0 | 0 |
-| `upstream` | 4 | 1 | 0 |
-| `method` | 2 | 2 | 0 |
+| `upstream` | 5 | 1 | 0 |
+| `method` | 3 | 3 | 0 |
 | `security` | 2 | 0 | 0 |
-| `none` | 3 | — | — |
+| `none` | 4 | — | — |
 
-Reading it: **guards are the biggest class but almost never the thing the
-reader saw** (1 of 32) — a blind guard is how a defect *survives*, not the
-defect. What reaches readers is copy (`claim`), rendering and the hand-entered
-`input` rates. Findings per month rose 12 → 50 → 75 and public ones 1 → 7 → 22
-(Jul → Sep), which tracks more and deeper audits of published surfaces, not
-necessarily worse code. 9 findings were the audits' own errors, and 7 audits
-started from a false premise.
+Reading it: **guards are a large class but almost never the thing the reader
+saw** (2 of 44) — a blind guard is how a defect *survives*, not the defect.
+What reaches readers is copy (`claim`, 17), rendering (`render`, 18 of 23) and
+the hand-entered `input` rates. As of 2026-09-26 findings per month rose
+12 → 50 → 75 and public ones 1 → 7 → 22 (Jul → Sep), which tracks more and
+deeper audits of published surfaces, not necessarily worse code. 14 findings
+were the audits' own errors, and 10 audits started from a false premise.
 
 | Audit | Finding | Class | Public | Found | Status |
 |---|---|---|---|---|---|
@@ -200,7 +203,7 @@ started from a false premise.
 | 08-09 S104 | Roll-continuity re-run replayed a warm cache and looked like a second observation | guard-blind | no | scoped | fixed |
 | 08-11 S106 | `verify-nonres-revenue.js` epsilon stale after a rounding change (red on correct data) | guard-noisy | no | side | fixed |
 | 08-11 S106 | `verify-revenue-panel.js` counted DOM copies, not visible rows; `mix > 0` passed by luck | guard-noisy | no | side | fixed |
-| 08-11 S106 | Four verify scripts (`glass`, `labels`, `services`, `uses`) assert nothing and always exit 0; the runner lists them `ok`, 0 checks | guard-blind | no | side | open |
+| 08-11 S106 | Four verify scripts (`glass`, `labels`, `services`, `uses`) assert nothing and always exit 0; the runner lists them `ok`, 0 checks | guard-blind | no | side | fixed |
 | 08-18 S112 | Industrial set: Engineering (490) 95% parkades, Terminals (440) 100% transit — 19% of dollars | membership | full | accident | fixed |
 | 08-20 S114 | External per-km figures are the same City numbers; only the service-life denominator differs | none | no | scoped | n/a |
 | 08-22 S115 | `far == 0` means missing `gross_area`; 3,964 cells tie at max opportunity | pipeline | latent | scoped | fixed |
@@ -222,7 +225,7 @@ started from a false premise.
 | 08-28 S123 | FIR guard cannot see a roll Alberta has not filed yet | guard-blind | latent | scoped | accepted |
 | 08-28 S123 | F3 nothing ran the test suite on a change; `master` unprotected | process | no | scoped | fixed |
 | 08-28 S123 | F4 15 hardcoded window labels would misdate the map in January 2027 | claim | latent | scoped | fixed |
-| 08-28 S123 | F5 refresh-gate test name claims coverage it does not check | guard-blind | latent | scoped | open |
+| 08-28 S123 | F5 refresh-gate test name claims coverage it does not check | guard-blind | latent | scoped | fixed |
 | 08-30 S126 | 121 "unmatched" parcels ($592M, all three named examples) never left the roll | premise | no | scoped | fixed |
 | 08-30 S126 | 5 m match tolerance derived from a four-hospital sample | input | no | scoped | accepted |
 | 08-30 S126 | Nothing persisted the first per-parcel list, so nothing to diff | process | no | scoped | fixed |
@@ -302,24 +305,26 @@ started from a false premise.
 | 09-23 S191 | Job timeout below the per-notebook caps; `tee` without pipefail | process | no | scoped | fixed |
 | 09-25 S197 | F1 notebook ran before the status manifest: dates one run stale, January red | guard-noisy | yes | scoped | fixed |
 | 09-25 S197 | F2 located-dollars invariant was an identity | guard-blind | no | scoped | fixed |
-| 09-25 S197 | F3 public Methods page described full-only layers | claim | yes | scoped | open |
+| 09-25 S197 | F3 public Methods page described full-only layers | claim | yes | scoped | fixed |
 | 09-25 S197 | F4 stormwater figure lost its unbilled-land pairing | claim | yes | scoped | open |
 | 09-26 S199 | F1 Glass azure count on subset cuts counts cells with $0 on that cut (total-levy share) | render | yes | scoped | open |
 | 09-26 S199 | F2 Non-res "commercial and industrial" includes exempt-candidate sites; 112 hoods ≥25%, uncaveated on the cut (S201 recount: 165 by spatial zoning, 144 uncaveated) | claim | yes | scoped | open |
-| 09-26 S199 | F3 lot P1 "big lots don't dilute it" backwards; roll parks are in the denominator | claim | yes | scoped | open |
+| 09-26 S199 | F3 lot P1 "big lots don't dilute it" backwards; roll parks are in the denominator | claim | yes | scoped | fixed |
 | 09-26 S199 | F4 "newest permits lag geocoding": half the Since-2009 unit gap is old apartments never geocoded; DATA.md's 95–98% was by permit | claim | yes | scoped | open |
-| 09-26 S199 | F5 "dense-infill areas" top the Development scale; they are greenfield | claim | yes | scoped | open |
-| 09-26 S199 | F6 Value "what the land is worth"; Roads blurb omits set-aside grey | claim | yes | scoped | open |
+| 09-26 S199 | F5 "dense-infill areas" top the Development scale; they are greenfield | claim | yes | scoped | fixed |
+| 09-26 S199 | F6 Value "what the land is worth"; Roads blurb omits set-aside grey | claim | yes | scoped | fixed |
 | 09-28 S202 | Equal boundary split halves road fronting a set-aside ravine/rural hood into the grey hood; 53–60 published hoods understated, 5–7 > 5% | method | yes | scoped | open |
-| 09-28 S202 | Roads evidence notebooks tied to the shipped rate by literal, not by config | guard-blind | no | scoped | open |
-| 09-28 S202 | No guard reads any served road column between refreshes (45 hoods > 5% moved silently, all explained by hand) | guard-blind | yes | scoped | open |
-| 09-28 S202 | `_prepare_segments` conservation guard is one-directional: a double count only makes it look healthier | guard-blind | no | scoped | open |
-| 09-28 S202 | `city_unit_costs.json` renewal rationale still names roadway_ops as $4.635/m/yr | claim | no | scoped | open |
-| 09-28 S204 | F1 `verify-url-state.js` walks and compares with the page's own `offered()`: a control it wrongly hides drops from every link and the verify stays green | guard-blind | no | scoped | open |
+| 09-28 S202 | Roads evidence notebooks tied to the shipped rate by literal, not by config | guard-blind | no | scoped | fixed |
+| 09-28 S202 | No guard reads any served road column between refreshes (45 hoods > 5% moved silently, all explained by hand) | guard-blind | yes | scoped | fixed |
+| 09-28 S202 | `_prepare_segments` conservation guard is one-directional: a double count only makes it look healthier | guard-blind | no | scoped | accepted |
+| 09-28 S202 | `city_unit_costs.json` renewal rationale still names roadway_ops as $4.635/m/yr | claim | no | scoped | fixed |
+| 09-28 S204 | F1 `verify-url-state.js` walks and compares with the page's own `offered()`: a control it wrongly hides drops from every link and the verify stays green | guard-blind | no | scoped | fixed |
 | 09-28 S204 | F2 URL vocabulary unpinned: a self-consistent rename of a value passes the round trip; 9 key contexts write internal state values; no rename/retire policy | guard-blind | latent | scoped | fixed |
 | 09-28 S204 | F2 CONTROLS_MATRIX §8 "values are public names, not column names" true only for `metric`/`cut` | claim | no | scoped | fixed |
-| 09-28 S204 | F3 `state.devWindow` defaults to `long`; on a supported no-`_long` file Development opens blank (0/406, "no permit data"); #608's comment asserts it can't | render | latent | scoped | open |
+| 09-28 S204 | F3 `state.devWindow` defaults to `long`; on a supported no-`_long` file Development opens blank (0/406, "no permit data"); #608's comment asserts it can't | render | latent | scoped | fixed |
 | 09-28 S204 | `?build=` comment says "overrides locally"; it overrides on the deployed site too (consistent with 07-22, wording only) | claim | no | side | open |
+| 09-29 S206 | Pre-merge verify suite is 82 min; 31% is deferred GPU teardown from a graceful `browser.close()` | process | no | scoped | fixed |
+| 09-29 S206 | Three public reds are harness defects (`uses`/`budget-panel` lack a build gate; `deviation` hardcodes `:8777`) | guard-noisy | no | scoped | fixed |
 | 10-02 S213 | F1 `url-state` is not a required check: 4 of 10 walking PRs merged before it reported and deployed first; DECISIONS 09-29 says it gates the merge | process | no | scoped | fixed |
 | 10-02 S213 | F2 shard-partition test green with money, the full catch-all, or the whole full build dropped from the walk (a view named by a links-only shard counted as walked; builds never counted) | guard-blind | latent | scoped | fixed |
 | 10-02 S213 | F3 DECISIONS 10-02 sharding row and `verify-url-state.js` header say six shards; seven since #642 | claim | no | side | fixed |
@@ -329,40 +334,42 @@ started from a false premise.
 | 10-03 S214 | F3 coverage-year draft does not answer the valuation-year reading (the City's sibling dataset rebuts it) | claim | no | scoped | fixed |
 | 10-03 S214 | F4 exemption draft notes: channel "unresolved", `edmonton.ca` "unreachable", A&T as first stop — all stale | claim | no | scoped | fixed |
 | 10-03 S214 | F5 `DATA_ISSUES.md` §4 calls the split-rate class `NONRES MUNICIPAL/RES EDUCATION` an exemption flag | claim | no | side | fixed |
-| 10-05 S215 | F1 a code deploy queued behind a refresh checks out its trigger SHA and republishes last week's data over the fresh deploy | process | latent | scoped | open |
-| 10-05 S215 | F2 default concurrency `queue: single`: a later code push cancels a PENDING refresh (lost week, no retry) | process | latent | scoped | open |
+| 10-05 S215 | F1 a code deploy queued behind a refresh checks out its trigger SHA and republishes last week's data over the fresh deploy | process | latent | scoped | fixed |
+| 10-05 S215 | F2 default concurrency `queue: single`: a later code push cancels a PENDING refresh (lost week, no retry) | process | latent | scoped | fixed |
 | 10-05 S215 | DATA_ISSUES §8 stated an unrun counterfactual ("transit would read zero everywhere") within an hour of being written | audit-error | no | side | fixed |
-| 10-05 S215 | F1 Development zero-fill confirms against a column from the same permit→hood join; an unmatched list name zeroes both (comment claims otherwise). Public "none" holds on geocodes; 1 false "none" on full | guard-blind | full | scoped | open |
+| 10-05 S215 | F1 Development zero-fill confirms against a column from the same permit→hood join; an unmatched list name zeroes both (comment claims otherwise). Public "none" holds on geocodes; 1 false "none" on full | guard-blind | full | scoped | fixed |
 | 10-05 S215 | F2 water panel ranks an out-of-scope $0 as a utility charge for 43 industrial/commercial hoods | render | full | scoped | open |
 | 10-05 S215 | First draft of F1 read "no geocoded point inside" as "not geocoded"; 5/5 geocoded co-named rows are in Chappelle — public half reversed before publishing | audit-error | no | scoped | fixed |
-| 10-05 S215 | README F1: "~448,000 records" (439,696 live) and "five with a published notebook" (four since S214) drifted | claim | yes | scoped | open |
+| 10-05 S215 | README F1: "~448,000 records" (439,696 live) and "five with a published notebook" (four since S214) drifted | claim | yes | scoped | fixed |
 | 10-05 S215 | README F2: school-coverage page listed as a City defect after S214 found the premise unsound | claim | yes | scoped | open |
 | 10-05 S215 | README F3: City-derived rows in `output/`, `web/notebooks/`, `web/verified/` fall under the MIT grant by default; `test_license` classifies by extension (.json/.html invisible) | guard-blind | no | scoped | open |
-| 10-05 S215 | Remedies F1: smoke's zero-token sweep reads tooltips only; an open-coded "$0" in a pinned panel (M2, public Services) passes every gate | guard-blind | latent | scoped | open |
+| 10-05 S215 | Remedies F1: smoke's zero-token sweep reads tooltips only; an open-coded "$0" in a pinned panel (M2, public Services) passes every gate | guard-blind | latent | scoped | fixed |
 | 10-05 S215 | Remedies run: first draft said no CI gate opens a panel; B5 opens one (counts chart points, reads no text) | audit-error | no | scoped | fixed |
 | 10-05 S215 | STALENESS_LEDGER pass-7 warning ("do not prune until the matcher is widened") outlived its fix by 14 days | claim | no | scoped | fixed |
-| 10-05 S215 | Colour: cividis ↔ set-aside collision re-confirmed and seen on screen (4 hoods ΔE2000 1.8–2.6 rendered) — S186's finding, now rendered | render | yes | scoped | open |
+| 10-05 S215 | Colour: cividis ↔ set-aside collision re-confirmed and seen on screen (4 hoods ΔE2000 1.8–2.6 rendered) — S186's finding, now rendered | render | yes | scoped | fixed |
 | 10-05 S215 | Colour: ledger quoted the backdrop sweep as 14.2%; source says 14.5% (52/358), reproduced | claim | no | scoped | fixed |
-| 10-05 S215 | Empty sources F1: an empty school table publishes wrong `dist_school_m` with every gate green | guard-blind | full | scoped | open |
-| 10-05 S215 | Empty sources F2: 6 of 16 loud failures misdiagnose an empty table (KeyError / wrong-fix message) | guard-noisy | no | scoped | open |
-| 10-09 S221 | Light mode F1: hover tooltip renders on deck's inline slate; light muted lines 1.2:1, name 2.2:1 (`.tip` surface never applied since 06-25) | render | yes | scoped | open |
+| 10-05 S215 | Empty sources F1: an empty school table publishes wrong `dist_school_m` with every gate green | guard-blind | full | scoped | fixed |
+| 10-05 S215 | Empty sources F2: 6 of 16 loud failures misdiagnose an empty table (KeyError / wrong-fix message) | guard-noisy | no | scoped | fixed |
+| 10-09 S221 | Light mode F1: hover tooltip renders on deck's inline slate; light muted lines 1.2:1, name 2.2:1 (`.tip` surface never applied since 06-25) | render | yes | scoped | fixed |
 | 10-09 S221 | Light mode F1b: `test_light_inks_are_legible` checks `--ink-tip`/`--read-bg`, a pair the tooltip never renders with | guard-blind | no | scoped | open |
 | 10-09 S221 | Light mode F2: 641–~930 px, title column covers the view buttons; #698 widened the band ~40 px | render | yes | scoped | open |
 | 10-09 S221 | Light mode F3: Beta badge covers the phone legend's last line and the sheet's last lines; build_site comment says it keeps clear | render | yes | side | open |
-| 10-09 S221 | Light mode F4: a `themed()` colour with no light value passes pytest and the light smoke when `undefined` does not crash | guard-blind | latent | scoped | open |
+| 10-09 S221 | Light mode F4: a `themed()` colour with no light value passes pytest and the light smoke when `undefined` does not crash | guard-blind | latent | scoped | fixed |
 | 10-09 S221 | Light mode F5: revenue-mix greys on the light reading panel 1.3:1 / 1.7:1 (dark 2.1 / 3.7); never measured vs a panel | render | yes | scoped | open |
-| 10-09 S221 | Light mode F6: forced-dark browsers repaint the stored-light chrome (no `color-scheme` declared) | render | yes | scoped | open |
-| 10-09 S221 | Light mode F7: an open revenue-mix panel keeps the other theme's greys after a switch | render | yes | scoped | open |
-| 10-09 S221 | Light mode F8: the legend key prints blank in both themes (print, light mode's original trigger) | render | yes | scoped | open |
+| 10-09 S221 | Light mode F6: forced-dark browsers repaint the stored-light chrome (no `color-scheme` declared) | render | yes | scoped | fixed |
+| 10-09 S221 | Light mode F7: an open revenue-mix panel keeps the other theme's greys after a switch | render | yes | scoped | fixed |
+| 10-09 S221 | Light mode F8: the legend key prints blank in both themes (print, light mode's original trigger) | render | yes | scoped | fixed |
 | 10-09 S221 | Light mode F9: Glow → light → dark leaves the reader on Inferno | render | yes | scoped | open |
-| 10-09 S221 | Light mode F10: five stale doc/comment claims (ARCHITECTURE verify tier, UI.md THEMES, two index.html comments, badge comment) | claim | no | scoped | open |
-| 10-09 S221 | Light mode F12: Landmarks toggle says "plain grey"; the river draws blue in both themes | claim | yes | side | open |
+| 10-09 S221 | Light mode F10: five stale doc/comment claims (ARCHITECTURE verify tier, UI.md THEMES, two index.html comments, badge comment) | claim | no | scoped | fixed |
+| 10-09 S221 | Light mode F12: Landmarks toggle says "plain grey"; the river draws blue in both themes | claim | yes | side | fixed |
 | 10-09 S221 | Light mode audit: first M2 pass reported 0 stale on a hood whose mix could not differ; three renders silently showed Money | audit-error | no | scoped | fixed |
+| 10-10 S223 | Roads verified notebook's first CI run: SOUND, 15/15 invariants, §5 delta matches the committed files | none | — | scoped | n/a |
+| 10-10 S224 | Roll continuity, third observation: 1,454 of 08-30's 1,457 candidates still absent, 77 new ($38.0M); persistence cannot separate consolidation from a real absence | upstream | no | scoped | open |
 | 10-10 S225 | Five stale statements in `CLAUDE.md` (index.html line count, DECISIONS one-line contract, four CI workflows, evidence notebooks "all four, nothing re-runs them", COPY_DECISIONS "21 rows"), plus `STACK.md` §7 omitting `evidence-recheck.yml` | claim | no | scoped | fixed |
 | 10-10 S225 | `TOKEN_EFFICIENCY.md`'s tokens ≈ bytes ÷ 4 understates this repo ~1.7× (measured 2.4 chars/token) | claim | no | scoped | fixed |
 | 10-10 S225 | Brief premise: `DECISIONS.md` measured against a one-line contract that was rewritten 2026-09-09 | premise | no | scoped | n/a |
 | 10-10 S225 | Loaded-path bytes read as session cost: sessions read ~4.7k tokens of `TODO.md`, never the whole file (answers S166's open question) | premise | no | scoped | n/a |
-| 10-10 S225 | `pkill -f` kills its own shell (exit 144) 28× in 19 sessions, ≥18 after the memory warning against it | process | no | scoped | open |
+| 10-10 S225 | `pkill -f` kills its own shell (exit 144) 28× in 19 sessions, ≥18 after the memory warning against it | process | no | scoped | fixed |
 | 10-10 S225 | Four scratch probes committed on master by `git add -A` (`tools/profiling/_dbg.js`, `s223-probe{,2,3}.js`) | process | no | side | deleted S227 |
 | 10-10 S225 | `require('playwright')` outside `tools/profiling/` failed 19× in 16 sessions; NODE_PATH route recorded in memory | process | no | scoped | fixed |
 | 10-10 S225 | Audit's own instrument: first classifier ~3/20 right on "verifying" and 0/20 on "other"; token prior ÷3.5; counted its own echoed CONFLICT line | audit-error | no | scoped | fixed |
