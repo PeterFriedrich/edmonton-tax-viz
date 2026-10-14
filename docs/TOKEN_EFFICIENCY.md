@@ -220,6 +220,22 @@ transcripts was 11.9k), but it is read in
   merits and **lost** — see the findings doc §4. (`DECISIONS.md` 2026-07-29 and
   2026-09-05.)
 
+## Disk
+
+Projects on one host share one disk. On the owner's free-tier server that is
+36 GB. On 2026-10-14 it reached 95%, mostly from build intermediates (tiles,
+venvs, downloads) that ended sessions had left in their scratchpads, about
+2.2 GB from one project. A scratchpad is not cleaned when its session ends.
+
+- **Intermediates go in one work folder** in the session's scratchpad, never
+  scattered, so one `rm -rf` clears them.
+- **Before a build that writes more than ~500 MB, check `df -h /`.** If the
+  build would leave under ~2 GB free, stop and tell Peter (size, free space,
+  what could be cleared). It is his call: he can override and go ahead.
+- **When the build finishes, delete its intermediates** without asking.
+  Anything worth keeping moves to the repo's git-ignored `data/` or `output/`
+  area, where it is visible and owned. Don't leave it in scratch.
+
 ## Going forward
 
 When you learn a new efficiency lesson (a file that shouldn't be read raw, a
