@@ -68,6 +68,12 @@ row for a session that executed nothing, stop and re-read the brief.
 - If the user named a target, use it.
 - Otherwise take the top of the ledger's "Never audited" ranked list, or —
   for correctness work — the `docs/DATA_INTEGRITY.md` joint ranking (T1–T7).
+- **Weigh candidates by what reaches readers, not by what is most common.**
+  The findings register's counts (re-count them; they are dated) have shown it
+  since 2026-09-26: blind guards are the most frequent findings but almost never
+  reached the public site, while copy (`claim`), rendered state (`render`) and
+  hand-entered rates (`input`) did. Prefer a target that publishes text, a
+  figure or a rendered state over one that only guards another.
 - Tell the user which target you picked and why before going deep.
 
 ### Step 3 — Choose the audit family
