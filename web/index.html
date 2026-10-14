@@ -4300,6 +4300,9 @@
     const LABEL_OUTLINE_COLOR = themed([0, 0, 0, 255], [255, 255, 255, 255]);
     const HOOD_COLOR = themed([240, 240, 246, 250], [28, 28, 36, 250]);   // hoisted: the colour accessor
                                                // runs per label, per rebuild.
+    // Names drawn ending at their anchor instead of centred on it. The reserve
+    // abuts the city's west limit, so a centred name ran onto the first prism.
+    const REF_END_ANCHORED = new Set(["Enoch Cree Nation"]);
     let _placeAnchors = null;
     function placeAnchors() {
       if (_placeAnchors) return _placeAnchors;
@@ -4319,6 +4322,7 @@
                  // there are two of them and they tie only with each other.
                  area: f.properties.km2 || 0, p: null, ref: true,
                  tier: f.properties.kind,
+                 end: REF_END_ANCHORED.has(f.properties.name),
                  size: tier.base, prio: tier.prio, col: tier.col };
       }));
     }
@@ -4432,9 +4436,9 @@
       const boxes = [];
       for (const d of anchors) {
         const at = [d.position[0], d.position[1], labelZ(d.p)];
-        const [px, py] = vp.project(at);
+        const [ax, py] = vp.project(at);
         // Offscreen anchors can neither render nor block others — skip.
-        if (px < -80 || px > vp.width + 80 || py < -40 || py > vp.height + 40) continue;
+        if (ax < -80 || ax > vp.width + 80 || py < -40 || py > vp.height + 40) continue;
         // The EFFECTIVE size, not d.size: places scale with the camera while
         // hoods do not. Resolved once, here, so the box and the glyphs it
         // reserves room for can never disagree — getSize reads it back off the
@@ -4446,6 +4450,7 @@
         const size = d.ref ? placeSize(vp.zoom, d.size) : d.size;
         const gw = d.em * size * LABEL_DRAW_SCALE;   // the glyphs themselves
         const gh = size * LABEL_DRAW_SCALE;
+        const px = d.end ? ax - gw / 2 : ax;   // the box's centre, not the anchor
         // Under a panel it can neither be read nor sensibly block a label that
         // ISN'T under one — so skip it, exactly like the offscreen cull above,
         // rather than keeping it and spending the spot on something invisible.
@@ -4494,6 +4499,7 @@
         // every call, so deck sees a new `data` reference and re-runs them.
         getPosition: d => [d.position[0], d.position[1], labelZ(d.p)],
         getText: d => d.name,
+        getTextAnchor: d => d.end ? "end" : "middle",
         getSize: d => d.draw ?? d.size,
         sizeUnits: "pixels",
         getColor: d => tc(d.col || HOOD_COLOR),
