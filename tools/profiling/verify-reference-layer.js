@@ -256,6 +256,8 @@ const PLACE_COUNT = TOWN_COUNT + RESERVE_COUNT + (REGION_COUNT - 1) + ZONE_COUNT
       places: d.filter(x => x.ref).length,
       byTier: tiers,
       names: d.filter(x => x.ref).map(x => [x.tier, x.name]),
+      ends: d.filter(x => { const a = l.props.getTextAnchor;
+                            return (typeof a === 'function' ? a(x) : a) === 'end'; }).map(x => x.name),
       hoods: d.filter(x => x.prio === PRIO_HOOD).length,
       sizes: [...new Set(d.map(x => x.size))].sort((a, b) => a - b),
       anchored: placeAnchors().length,
@@ -320,6 +322,9 @@ const PLACE_COUNT = TOWN_COUNT + RESERVE_COUNT + (REGION_COUNT - 1) + ZONE_COUNT
   const miscased = def.names.filter(([t, n]) => (n === n.toUpperCase()) !== (t === 'region'));
   check('counties are in capitals and no other regional name is',
         def.names.length > 0 && miscased.length === 0, JSON.stringify(miscased));
+  // Centred on its anchor, this name ran onto the city's westmost prism.
+  check('the reserve name, and only it, is drawn ending at its anchor',
+        JSON.stringify(def.ends) === '["Enoch Cree Nation"]', JSON.stringify(def.ends));
   // ⚠️ WAS `def.sizes.length === 1` — one reference size, because there was one
   // reference tier. Since 2026-08-08 there are four (region/zone/place/econ,
   // REF_TIERS in web/index.html), so equality-to-1 was pinning the old design
