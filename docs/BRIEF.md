@@ -568,7 +568,7 @@ Edmonton revenue-per-acre fiscal analysis. Python-only, no GIS software.
 - `docs/ARCHITECTURE.md` — module interfaces, data flow, testing approach
 - `docs/STACK.md` — one-page inventory of what the project is built out of: pinned versions, the two requirements files and why they differ, the frameworkless front end, the five CI workflows, and §9's list of what this project deliberately does NOT use
 - `data/DATA.md` — data source details, column names, known quirks
-- `docs/TOKEN_EFFICIENCY.md` — context/token hygiene (what NOT to read raw, session-summary archiving, how to navigate the big front-end file)
+- `docs/TOKEN_EFFICIENCY.md` — context/token hygiene (what NOT to read raw, session-summary archiving, how to navigate the big front-end file) and disk use (scratch intermediates, `df -h /` before a big build)
 - `docs/CODEMAP.md` — **generated** symbol index for `web/index.html` (thousands of lines; `wc -l` for today's count): every top-level symbol with its line range + purpose, plus every element id
 - `docs/COPY_DECISIONS.md` — open decisions about **reader-facing wording**: rows grouped so a noun is decided ONCE and applied to every surface that carries it (the failure mode is fixing one panel and leaving three others saying something else)
 - `docs/ANALYSIS_BACKLOG.md` — analytical questions/investigations to run later (auto + by-hand)
