@@ -37,7 +37,7 @@ This project uses Claude Code (Claude Sonnet) as a coding assistant. The pipelin
 ### Prerequisites
 
 - Python 3.10+
-- `pip install -r requirements.txt`
+- `uv venv .venv && uv pip install --python .venv/bin/python -r requirements.txt` (or, without uv: `python -m venv .venv && .venv/bin/pip install -r requirements.txt`). A uv venv has no pip, so add packages with `uv pip install --python .venv/bin/python <pkg>`.
 
 ### Data
 
