@@ -250,6 +250,18 @@ publish on its own, unrelated to any of this — re-pinned.)_
   the notice has legal or other implications (wording, disclaimers).
   Reader-facing copy, so it gets a row in `docs/COPY_DECISIONS.md`. Web change: Peter merges.
 
+### A data graph for each lens (OPEN 2026-10-17 S233, Peter's ask; not scoped yet)
+- [ ] **One graph per lens whose nodes are its sources, pipeline steps and joins**
+  (source dataset → `load_*` → clean/classify → spatial join or key join →
+  aggregate → served column). Peter: "it may just be notebooks, but maybe
+  something more". The prose already exists: the per-lens "Also in the flow"
+  paragraphs in `docs/ARCHITECTURE.md`, plus `notebooks/verified/` (money and
+  roads only so far). Open questions for scoping: hand-drawn or generated from
+  the code (a generated graph can't drift, a drawn one will); where it lives
+  (verified notebooks, docs, or the Data & Methods pod); whether joins show
+  their match/drop counts, which would make the graph a check, not just a
+  picture. Propose first: likely a new tool or output.
+
 ### Map labels and reference layer follow-ons (OPEN 2026-10-13 S229)
 
 - [ ] **Low priority: the overlay over-covers when the data beats the map's
