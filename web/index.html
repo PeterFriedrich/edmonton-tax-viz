@@ -5596,16 +5596,36 @@
     const TEMPORAL_MIN_H = 150;
     function syncTemporalPos() {
       const panel = document.getElementById("temporal");
-      // The phone form is a bottom sheet (top:auto): an inline top would beat
-      // the media query and strand it mid-screen.
-      if (window.matchMedia("(max-width: 640px)").matches ||
-          !panel.classList.contains("open")) {
+      if (!panel.classList.contains("open")) {
         panel.style.top = panel.style.maxHeight = "";
         return;
       }
+      // The phone form is a bottom sheet (top:auto): an inline top would beat
+      // the media query and strand it mid-screen. Only the height is capped,
+      // so the sheet's top clears an EXPANDED title card — at 360x740 the
+      // uncapped sheet hid the rates footnote (Peter, 2026-10-17, option a).
+      // Same floor as desktop: below it the sheet reaches over the card.
+      if (window.matchMedia("(max-width: 640px)").matches) {
+        panel.style.top = panel.style.maxHeight = "";
+        const title = document.getElementById("title");
+        if (!title.classList.contains("expanded")) return;
+        const rect = panel.getBoundingClientRect();
+        const room = rect.bottom - TEMPORAL_GAP
+                   - title.getBoundingClientRect().bottom;
+        if (rect.height > room)
+          panel.style.maxHeight = Math.round(Math.max(room, TEMPORAL_MIN_H)) + "px";
+        return;
+      }
       panel.style.maxHeight = "";   // measure the panel's NATURAL height
-      const top = document.getElementById("title").getBoundingClientRect().bottom
-                + TEMPORAL_GAP;
+      let top = document.getElementById("title").getBoundingClientRect().bottom
+              + TEMPORAL_GAP;
+      // Where syncControlsTop has dropped the control column below the title,
+      // its wider rows (the view buttons) reach into this column too.
+      const right = panel.getBoundingClientRect().right;
+      for (const c of document.getElementById("controls").children) {
+        const r = c.getBoundingClientRect();
+        if (r.height && r.left < right) top = Math.max(top, r.bottom + TEMPORAL_GAP);
+      }
       const room = document.getElementById("botleft").getBoundingClientRect().top
                  - TEMPORAL_GAP - top;
       panel.style.top = Math.round(top) + "px";
@@ -5620,6 +5640,32 @@
     // loop: this writes only to #temporal.
     new ResizeObserver(syncTemporalPos).observe(document.getElementById("title"));
     new ResizeObserver(syncTemporalPos).observe(document.getElementById("botleft"));
+    new ResizeObserver(syncTemporalPos).observe(document.getElementById("controls"));
+
+    // Between the phone seam and ~900px the view-button row, anchored top-right,
+    // ran into the title, the mill rates and the search/? buttons, all anchored
+    // top-left (render-compare at 641/800, 2026-10-15). There the whole control
+    // column drops below them instead (Peter, 2026-10-17). Measured, not a
+    // media-query band: where the band ends depends on the fonts the reader has,
+    // and this box renders text 15-20% wider than a real browser.
+    const CONTROLS_GAP = 8;
+    function syncControlsTop() {
+      const controls = document.getElementById("controls");
+      controls.style.top = "";
+      if (!window.matchMedia("(max-width: 640px)").matches) {
+        const left = document.getElementById("views").getBoundingClientRect().left;
+        let below = 0;
+        for (const id of ["title", "millrates", "search", "guide-btn"]) {
+          const r = document.getElementById(id).getBoundingClientRect();
+          if (r.height && r.right + CONTROLS_GAP > left) below = Math.max(below, r.bottom);
+        }
+        if (below) controls.style.top = Math.round(below + 10) + "px";
+      }
+      syncTemporalPos();
+    }
+    new ResizeObserver(syncControlsTop).observe(document.getElementById("title"));
+    new ResizeObserver(syncControlsTop).observe(document.getElementById("millrates"));
+    window.addEventListener("resize", syncControlsTop);
 
     function openTemporal(name) {
       const p = hoodProps(name);
@@ -7046,6 +7092,7 @@
       // none must be left behind from the floating form after a resize.
       pod.style.top = inBlurb ? ""
         : Math.round(title.getBoundingClientRect().bottom + 10) + "px";
+      syncControlsTop();   // it measures this pod, which just moved
       const billed = MILL_CUT_CLASSES[state.metric];
       // No separator in the markup: the rates are one line on desktop and a
       // stacked list on a phone, and a literal " · " between them would print as
@@ -7463,12 +7510,22 @@
     // Switch theme. Every tc() colour and the ramp (activeRamp) are re-read on
     // the rebuild, because state.theme is in each colour accessor's
     // updateTriggers; the legend's swatches are rebuilt from the same values.
+    // Set when light forces Glow off, so the way back to dark can return it
+    // (Peter, 2026-10-17). Only if the ramp is still the forced one: a ramp the
+    // reader picked while in light is theirs and stays.
+    let glowBeforeLight = false;
     function applyTheme(name) {
       if (name === state.theme) return;
       state.theme = name;
       document.documentElement.dataset.theme = name;   // the chrome tokens (styles.css)
       // Glow has no light version (DECISIONS 2026-10-08), and its button hides.
-      if (name === "light" && state.ramp === "glow") state.ramp = "current";
+      if (name === "light" && state.ramp === "glow") {
+        state.ramp = "current";
+        glowBeforeLight = true;
+      } else if (name !== "light") {
+        if (glowBeforeLight && state.ramp === "current") state.ramp = "glow";
+        glowBeforeLight = false;
+      }
       syncThemeChrome();
       overlay.setProps({ layers: buildLayers() });
       paintBackdrop();
@@ -7494,6 +7551,7 @@
     function applyPalette(name) {
       if (name === state.ramp || !RAMPS[name]) return;
       state.ramp = name;
+      glowBeforeLight = false;   // the reader chose; nothing to give back
       overlay.setProps({ layers: buildLayers() });
       paintBackdrop();
       // The whole legend, not just the bar: the set-aside swatch follows the
@@ -8439,6 +8497,7 @@
       document.getElementById("guide-close").addEventListener("click", closeGuide);
       document.getElementById("guide-show").addEventListener("click", () => openGuide(false));
       document.getElementById("guide-btn").style.display = "flex";
+      syncControlsTop();   // the two buttons it clears now have a box
       // The two bottom-right popovers (Display, Sources) open/close the same
       // way: the button toggles, a click outside closes, and opening one closes
       // the other — both menus expand upward into the same strip of screen, so

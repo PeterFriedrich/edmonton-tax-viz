@@ -897,6 +897,12 @@ body.budget #budget-btn { background: var(--accent); color: var(--ink-on-accent)
 .revrow i { flex: none; width: 9px; height: 9px; border-radius: 2px; }
 .revrow span { flex: 1; min-width: 0; }
 .revrow b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+/* The revenue mix's greys ("Future / rural", "Outside any zone") nearly vanish
+   on the light panel, and Future/rural is the map's set-aside colour, so it
+   cannot be retinted here alone. A 1px edge in both themes instead (Peter,
+   2026-10-17). Inset shadow, not border: it keeps the swatch 9px and the bar's
+   segment widths proportional to their shares. */
+#revmix .revrow i, #temporal-chart .mixbar span { box-shadow: inset 0 0 0 1px var(--border-strong); }
 /* Services panel: cost against revenue, grouped by basis. The group heading is
    load-bearing, not decoration — it is what stops the eye adding two rows that
    measure the same road metre on scales ~11x apart (see SVC_COST_BASES). */
