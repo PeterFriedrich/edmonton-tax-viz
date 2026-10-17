@@ -429,6 +429,9 @@ Edmonton revenue-per-acre fiscal analysis. Python-only, no GIS software.
 **Alpha-build notice on the specialist build (OPEN 2026-10-10 S227, Peter's ask; not scoped yet)**
 - **Anyone who lands on the specialist (full) build gets a pop-up on arrival.** Peter's wording: "you've been linked to the alpha build, experimental lenses intended for development or specialist use only". Full build only; the public build shows nothing. Peter called it a tooltip …
 
+**A data graph for each lens (OPEN 2026-10-17 S233, Peter's ask; not scoped yet)**
+- **One graph per lens whose nodes are its sources, pipeline steps and joins** (source dataset → `load_*` → clean/classify → spatial join or key join → aggregate → served column). Peter: "it may just be notebooks, but maybe something more". The prose already exists: the per-lens …
+
 **Map labels and reference layer follow-ons (OPEN 2026-10-13 S229)**
 - **Low priority: the overlay over-covers when the data beats the map's first `idle`.** Served from localhost with no delay, the basemap gate is the late one and the overlay stays about 0.5 s after the prisms are up (`DECISIONS.md` 2026-10-13). Not seen on a real network. …
 
@@ -576,6 +579,7 @@ Edmonton revenue-per-acre fiscal analysis. Python-only, no GIS software.
 - `docs/MOBILE_USABILITY.md` — mobile/phone usability work: the desktop↔mobile separation seam (`@media` block; render is shared, chrome is isolatable), confirmed vs unconfirmed problems, quick-pass plan
 - `docs/CONTROLS_MATRIX.md` — current-state snapshot of every view × control combination (what shows when, what gates what, the three control tiers) + flagged "weird combos" that are unpack/regroup candidates
 - `docs/DATA_INTEGRITY.md` — standalone audit brief for checking the numbers are *right* (silent-correctness, not crashes)
+- `docs/ASSUMPTIONS.md` — one-line index of every premise a published number rests on that no guard proves: status (VERIFIED / SUPPORTED / UNVERIFIED / ACCEPTED), size or "03" (sized weekly by `notebooks/verified/03_assumptions.py`), pointer to the evidence
 - `docs/AUDIT_LEDGER.md` — coverage map of executed audit runs: what's been audited, when, verdicts, what never has
 - `docs/DATA_ISSUES.md` — register of defects in data we DON'T control (Edmonton Open Data, FIR, GTFS): evidence, what it breaks here, and **whether the publisher has been told**
 - `docs/EVIDENCE_NOTEBOOKS.md` — inventory of the **standalone evidence notebooks** backing `DATA_ISSUES.md`: what each claims, which datasets it stands on (**both directions**
