@@ -1255,9 +1255,10 @@ status-code check alone will call a dead City URL live. Check the title.
   `UNKNOWN`}; `confidence` ∈ {`ESTABLISHED`, `ASSUMED`, `UNEXAMINED`, `N/A`}.
   ⚠️ **`UNKNOWN`/`UNEXAMINED` ARE CORRECT ANSWERS AND MUST NOT BE FILLED IN TO
   LOOK TIDY** — the field's value is that it forces the question once per rate,
-  which is the step nobody had taken. **Current state: only `roadway_ops` is
-  ESTABLISHED** (lane-km). `roadway_om_renewal` + `roadway_renewal` are ASSUMED
-  centreline pending Q1(a) bullet 2; **`bikeway_ops` and `bikeway_capital` are
+  which is the step nobody had taken. **Current state (2026-09-17): `roadway_ops`
+  is ESTABLISHED** (lane-km), and `roadway_om_renewal` + `roadway_renewal` are
+  ESTABLISHED centreline-km (resolved by reading the source; see the JSON's
+  `✅_unit_resolved_2026_09_17`); **`bikeway_ops` and `bikeway_capital` are
   UNEXAMINED**, and ⚠️ **`bikeway_ops` is CONSUMED and takes its $178/km from the
   same Taproot article, same sentence family, as the retired $1,285** — the
   article this project now believes relayed *"linear kilometres"* wrongly. A
