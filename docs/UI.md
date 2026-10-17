@@ -876,6 +876,14 @@ adaptation of OGL–Canada 2.0) requires only:
 design does not come back — the one thing that would have argued for it is
 absent. Text: `data.edmonton.ca/stories/s/City-of-Edmonton-Open-Data-Terms-of-Use/msh8-if28/`.
 
+**Re-reading the text without a browser** (worked 2026-10-16): the stories page
+renders with JavaScript, so a plain fetch gets no licence text. GET
+`https://data.edmonton.ca/stories/s/msh8-if28.json`; its last block is an
+`embeddedHtml` component whose `value.url` is a pre-signed S3 link (expires in
+1 h, so fetch it fresh and cite the stories page, never the link). That link
+returns the licence HTML, with "Version 1.0 July 2022" and the attribution
+clause. Use certifi: this box's CA bundle is stale.
+
 Reading it did surface **two gaps in what shipped**, both fixed the same day:
 
 1. **No link to the licence** — "where possible" plainly applied (the pod
