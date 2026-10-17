@@ -8,6 +8,38 @@ Items are verbatim as they were closed, newest-moved first in the order they app
 
 ---
 
+- [x] **`verify.js --serve <root>` — built S227 (#725, merged): serve on a free port, md5-check the root, run, kill by pid.**
+  Removes ~324 plumbing calls (~2.5% of working time) and the reason for `pkill -f` (exit 144,
+  28× in 19 sessions). Tools change: Peter.
+
+- [x] **Delete the four stray probes — done S227 (#724, merged).** `tools/profiling/_dbg.js`, `s223-probe{,2,3}.js` (committed
+  by `git add -A`; nothing references them). Peter merges.
+
+- [x] **PETER'S CALL — two coupled phone-layout defects in the EXPANDED title card** — CLOSED 2026-10-17 S234: Peter picked (a); `syncTemporalPos` caps the phone sheet's height so its top clears an expanded card (floor 150px). `verify-millrates` 360 green (sheet 435, card text to 416). (2), the flush right edge, left as is.
+  (measured 2026-10-10, S223, master build, headless, alone).
+  1. **`verify-millrates.js` 360 overlap, RED ON MASTER since S220:** at 360×740,
+     blurb open on Non-residential (the longest blurb; the h1 wraps to 3 lines), the
+     card runs to y 425 and the pinned-hood sheet (`#temporal`, 328 px, bottom-anchored,
+     z 4 over the card's 3) starts at y 404. It hides **real text**: the second line
+     of the rates footnote ("City tax only; education excluded · Farmland rate
+     assumed"). The rates rows themselves (341–387) stay visible. 390×844 is clear
+     (card 406, sheet 508).
+  2. **The card is flush to the right edge at every phone width** (S220's "title
+     clip"): `#title.expanded { max-width: calc(100vw - 44px) }` caps the CONTENT box,
+     so 24 px padding + border push it to `right == innerWidth` (390/360/320 measured);
+     22 px left gutter, 0 right. No content is clipped, no horizontal scroll.
+  - **They pull against each other:** giving the card a symmetric 22 px gutter
+    (`box-sizing: border-box`) narrows it ~26 px, wraps more, and DEEPENS (1). The
+    styles.css comment above that rule records the same trade-off from the other side
+    ("the narrower one pushed the mill rates 25px down, into the history sheet at
+    360px"), and the `h1 { padding-right: 88px }` arithmetic assumes the flush edge.
+  - **Options:** (a) cap the phone sheet (`max-height`) so its top clears the card —
+    `#temporal-body` already scrolls; (b) collapse the blurb when the sheet opens on a
+    phone (conflicts with the "rates survive a pinned hood" check's intent); (c) accept
+    (1) as the documented "covers chrome opened by a deliberate tap" rule and relax
+    the check to the rates rows. (2) is cosmetic; fix it only alongside (a) or (b).
+
+
 - [x] **`test_refresh_workflow_gates_every_publish_step_on_both_guards` checks consistency, not coverage** (S123 F5, `docs/FINDINGS_proxy_guards.md`): a new publish step with no `if:` is invisible to it. Latent — today's ungated steps are deliberate. Fix the test or its name. ✅ **CLOSED 2026-10-10 (S223):** now checks coverage too — every step after the guards gates on both or is in a named `deliberately_ungated` set; two mutants red by step name (findings F5 disposition).
 - [x] **Tie the evidence notebooks' road rates to the rate the pipeline uses.**
   `roads_lifecycle_rate` and `roads_operating_rate` justify $50 and $9.32 per

@@ -134,6 +134,15 @@ async function readerPaths() {
   check('reader: the Light button is marked', await page.evaluate(() =>
     document.querySelector('#theme button[data-pick="light"]').classList.contains('active') &&
     !document.querySelector('#theme button[data-pick="dark"]').classList.contains('active')));
+  await page.click('#theme button[data-pick="dark"]'); await page.waitForTimeout(1500);
+  check('reader: back in dark, the forced-off Glow returns', await page.evaluate(() =>
+    state.ramp === 'glow' &&
+    document.querySelector('#palette button[data-ramp="glow"]').classList.contains('active')));
+  await page.click('#theme button[data-pick="light"]'); await page.waitForTimeout(1500);
+  await page.evaluate(() => { applyPalette('cividis'); applyPalette('current'); });
+  await page.click('#theme button[data-pick="dark"]'); await page.waitForTimeout(1500);
+  check('reader: a ramp picked in light is kept in dark', await page.evaluate(() => state.ramp === 'current'));
+  await page.click('#theme button[data-pick="light"]'); await page.waitForTimeout(1500);
   await page.reload({ waitUntil: 'networkidle' }); await ready(page);
   check('reader: the choice beats a dark OS after a reload', await theme(page) === lightBg, await theme(page));
   await page.emulateMedia({ colorScheme: 'light' }); await page.emulateMedia({ colorScheme: 'dark' });

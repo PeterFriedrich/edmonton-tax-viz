@@ -122,6 +122,38 @@ const [url] = process.argv.slice(2);
   check('the map keeps its own double-tap zoom gesture',
         ta.map !== 'manipulation', `#map touch-action: ${ta.map}`);
 
+  // Between the phone seam and ~900px the top-right control column used to run
+  // into the top-left title, mill rates and search/? buttons (light-mode audit
+  // F2). syncControlsTop drops the column below them; no control box may
+  // intersect any of them, in any view, at the widths in that band.
+  for (const width of [641, 720, 800, 900]) {
+    await page.setViewportSize({ width, height: 900 });
+    for (const view of views) {
+      await page.$eval(`#views button[data-view="${view}"]`, b => b.click());
+      // Polled, not a fixed wait: the column follows the title through a
+      // ResizeObserver, which waits for a frame, and a view switch's frames
+      // are slow under software GL (a 2.5s wait was still stale on 1 of 16).
+      // A layout that never clears fails at the timeout with the overlaps.
+      const hitsNow = () => {
+        const box = el => { const r = el && el.getBoundingClientRect(); return r && r.height ? r : null; };
+        const meet = (a, b) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+        const left = ['title', 'millrates', 'search', 'guide-btn']
+          .map(id => [id, box(document.getElementById(id))]).filter(([, r]) => r);
+        const out = [];
+        for (const c of document.getElementById('controls').children) {
+          const r = box(c);
+          if (r) for (const [id, l] of left) if (meet(r, l)) out.push(`${c.id}×${id}`);
+        }
+        return out;
+      };
+      await page.waitForTimeout(600);
+      await page.waitForFunction(`(${hitsNow})().length === 0`, null, { timeout: 8000 }).catch(() => {});
+      const hits = await page.evaluate(hitsNow);
+      check(`${width}px ${view}: the control column clears the title column`,
+            hits.length === 0, hits.join(' '));
+    }
+  }
+
   console.log(fail ? `\n${fail} CHECK(S) FAILED` : '\nALL CHECKS PASSED');
   await browser.close();
   process.exit(fail ? 1 : 0);
