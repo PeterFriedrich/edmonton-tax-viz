@@ -222,21 +222,24 @@ publish on its own, unrelated to any of this — re-pinned.)_
 - ✅ **F1 fixed S222:** `getTooltip` clears deck.gl's inline background/colour/padding so `.tip`
   applies, in both themes. Guard: `verify-smoke.js` C12 (deploy gate, both themes), red on
   the unfixed build in dark and light.
-- [ ] **F2 (public): 641–~930 px, the title column covers the view buttons.** #698 widened
-  the band ~40 px; below ~860 it predates S220. Layout call: Peter.
+- ✅ **F2 fixed S234 (Peter: drop the row below the title):** `syncControlsTop` measures whether
+  `#views` reaches the title, mill rates or search/? buttons, and drops `#controls` under them
+  if so (no fixed band). `syncTemporalPos` clears any control row in its column.
 - [ ] **F3 (public): the Beta badge covers the phone legend and sheet.** Move or shrink it
   under 641 px; fix `build_site.py`'s "keeps clear of the legend" comment.
 - ✅ **F4 fixed S222:** `themed()` throws on a missing or mis-sized light value (the page dies at
   load, so smoke goes red), and `test_every_themed_colour_has_a_light_value` checks every call
   has two same-length arrays. RIVER, ARTERIAL and HOVER mutants each red the pytest; the HOVER
   mutant now crashes smoke too.
-- [ ] **F5: revenue-mix greys on the light panel (1.3:1 / 1.7:1).** Design call: Peter.
+- ✅ **F5 fixed S234 (Peter: outline, both themes):** 1px inset `--border-strong` on `#revmix`
+  swatches and the panel's `.mixbar` segments.
 - ✅ **F6 fixed S222:** `color-scheme: only dark` on `:root`, `only light` in both light blocks;
   under emulated forced dark the stored-light chrome stays light.
 - ✅ **F7 fixed S222:** `applyTheme` calls `syncPinnedPanel()`; an open revenue-mix panel matches a
   fresh open after the switch (two hoods with theme-dependent swatches).
 - ✅ **F8 fixed S222:** `print-color-adjust: exact` on `#legend .bar` and `.sw`; checked in a `page.pdf()`.
-- [ ] **F9: restore Glow on light → dark?** Peter.
+- ✅ **F9 fixed S234 (Peter: yes):** `applyTheme` restores Glow on the way back to dark unless the
+  reader picked a ramp in light. Guard: `verify-theme.js`, two "reader:" checks.
 - ✅ **F10 + F12 fixed S222** except the badge comment, which waits on F3: ARCHITECTURE tier table,
   UI.md `THEMES` lines, the `#title-p` and guide comments, "plain landmarks".
 
@@ -297,11 +300,6 @@ items 2 and 3 to its CLAUDE.md skeleton as Code Style lines (its TODO G and H, t
   values from an independent source (hand calculation, a City figure, a known parcel).
 
 ### Dev-velocity audit follow-ons (OPEN 2026-10-10 S225, `docs/FINDINGS_dev_velocity.md` §10)
-- [x] **`verify.js --serve <root>` — built S227 (#725, merged): serve on a free port, md5-check the root, run, kill by pid.**
-  Removes ~324 plumbing calls (~2.5% of working time) and the reason for `pkill -f` (exit 144,
-  28× in 19 sessions). Tools change: Peter.
-- [x] **Delete the four stray probes — done S227 (#724, merged).** `tools/profiling/_dbg.js`, `s223-probe{,2,3}.js` (committed
-  by `git add -A`; nothing references them). Peter merges.
 - [ ] **Commit the transcript instrument** as `tools/transcript_effort.py` with a classifier test
   (now at `research/edmonton-tax-viz/dev_velocity_instrument/`). New module: Peter.
 - [ ] **Cross-model read** of the findings, aimed at §11 (a)–(d).
@@ -802,30 +800,6 @@ preload still holds (12/12). What is left:
   2. **It subdivides on zoom:** the cell grows 16 → 27 px across each zoom level, then
      snaps back to 16 at the next whole zoom (MapLibre pattern behaviour, measured
      flat over open backdrop). A fixed-km grid would need a line layer instead.
-
-- [ ] **PETER'S CALL — two coupled phone-layout defects in the EXPANDED title card**
-  (measured 2026-10-10, S223, master build, headless, alone).
-  1. **`verify-millrates.js` 360 overlap, RED ON MASTER since S220:** at 360×740,
-     blurb open on Non-residential (the longest blurb; the h1 wraps to 3 lines), the
-     card runs to y 425 and the pinned-hood sheet (`#temporal`, 328 px, bottom-anchored,
-     z 4 over the card's 3) starts at y 404. It hides **real text**: the second line
-     of the rates footnote ("City tax only; education excluded · Farmland rate
-     assumed"). The rates rows themselves (341–387) stay visible. 390×844 is clear
-     (card 406, sheet 508).
-  2. **The card is flush to the right edge at every phone width** (S220's "title
-     clip"): `#title.expanded { max-width: calc(100vw - 44px) }` caps the CONTENT box,
-     so 24 px padding + border push it to `right == innerWidth` (390/360/320 measured);
-     22 px left gutter, 0 right. No content is clipped, no horizontal scroll.
-  - **They pull against each other:** giving the card a symmetric 22 px gutter
-    (`box-sizing: border-box`) narrows it ~26 px, wraps more, and DEEPENS (1). The
-    styles.css comment above that rule records the same trade-off from the other side
-    ("the narrower one pushed the mill rates 25px down, into the history sheet at
-    360px"), and the `h1 { padding-right: 88px }` arithmetic assumes the flush edge.
-  - **Options:** (a) cap the phone sheet (`max-height`) so its top clears the card —
-    `#temporal-body` already scrolls; (b) collapse the blurb when the sheet opens on a
-    phone (conflicts with the "rates survive a pinned hood" check's intent); (c) accept
-    (1) as the documented "covers chrome opened by a deliberate tap" rule and relax
-    the check to the rates rows. (2) is cosmetic; fix it only alongside (a) or (b).
 
 - [ ] **Mobile panel before it opens: more colour and height so it reads as
   tappable.** First pin down which element this means (the peek card, or the
@@ -3373,6 +3347,10 @@ archive"*) is not, and this span is 2,533 lines.
 ## Done
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
+
+- [x] **`verify.js --serve <root>` — built S227 (#725, merged): serve on a free port, md5-check the root, run, kill by pid.** · `docs/TODO_archive.md`
+- [x] **Delete the four stray probes — done S227 (#724, merged).** · `docs/TODO_archive.md`
+- [x] **PETER'S CALL — two coupled phone-layout defects in the EXPANDED title card** — CLOSED 2026-10-17 · `docs/TODO_archive.md`
 
 - [x] **Clean full rebuild of `reference.geojson` confirmed byte-identical** — CLOSED 2026-10-13 · `docs/TODO_archive.md`
 - [x] **Outside-name style: P4 (counties capitals, towns mixed case and brighter)** — CLOSED 2026-10-13 · `docs/TODO_archive.md`
