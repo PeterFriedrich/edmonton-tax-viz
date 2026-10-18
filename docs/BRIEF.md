@@ -409,6 +409,10 @@ Edmonton revenue-per-acre fiscal analysis. Python-only, no GIS software.
 - **2026-10-13** — **The Enoch Cree Nation reserve is drawn and named on the map, in the town tier, from the federal boundary** (Peter, S229).
 - **2026-10-13** — **Outside the city, counties are named in capitals and every other regional name (towns, the reserve, the industrial zone, Nisku, the airport) is drawn as the data spells it; the towns are larger and …
 - **2026-10-14** — **The Enoch Cree Nation name is drawn ending at its anchor (`REF_END_ANCHORED` in `web/index.html`), not centred on it** (Peter, S230).
+- **2026-10-17** — **On a phone, an open neighbourhood sheet is capped so its top clears an expanded title card** (Peter, S234, option (a) of the 2026-10-10 PETER'S CALL).
+- **2026-10-17** — **Above the phone seam, the control column drops below the title column when the view buttons would reach it** (Peter, S234, light-mode audit F2).
+- **2026-10-17** — **The revenue-mix panel's swatches and bar segments carry a 1 px `--border-strong` inset edge in both themes** (Peter, S234, light-mode audit F5).
+- **2026-10-17** — **Glow comes back on light → dark when light forced it off, unless the reader picked a ramp while in light** (Peter, S234, light-mode audit F9).
 
 ## Open work
 
@@ -421,10 +425,7 @@ Edmonton revenue-per-acre fiscal analysis. Python-only, no GIS software.
 **README + licence follow-ons (OPEN 2026-10-05 S215, `docs/FINDINGS_readme_claims.md`)**
 
 **Light-mode audit follow-ons (OPEN 2026-10-09 S221, `docs/FINDINGS_light_mode.md`)**
-- **F2 (public): 641–~930 px, the title column covers the view buttons.** #698 widened the band ~40 px; below ~860 it predates S220. Layout call: Peter.
 - **F3 (public): the Beta badge covers the phone legend and sheet.** Move or shrink it under 641 px; fix `build_site.py`'s "keeps clear of the legend" comment. load, so smoke goes red), and `test_every_themed_colour_has_a_light_value` checks every call has two same-length arrays. …
-- **F5: revenue-mix greys on the light panel (1.3:1 / 1.7:1).** Design call: Peter. under emulated forced dark the stored-light chrome stays light. fresh open after the switch (two hoods with theme-dependent swatches).
-- **F9: restore Glow on light → dark?** Peter. UI.md `THEMES` lines, the `#title-p` and guide comments, "plain landmarks".
 
 **Alpha-build notice on the specialist build (OPEN 2026-10-10 S227, Peter's ask; not scoped yet)**
 - **Anyone who lands on the specialist (full) build gets a pop-up on arrival.** Peter's wording: "you've been linked to the alpha build, experimental lenses intended for development or specialist use only". Full build only; the public build shows nothing. Peter called it a tooltip …
@@ -488,7 +489,6 @@ Edmonton revenue-per-acre fiscal analysis. Python-only, no GIS software.
 
 **Peter's list, 2026-09-25 (S196) — not scoped yet**
 - **Backdrop grid: BUILT (S220, #695), city masked (S220); one question open.** Peter picked the square grid from four textures (none / cross-hatch / diagonal / grid), faint in both themes. A 16 px cell drawn as its own `background` layer (`bg-grid`), alpha 0.06 white in dark and …
-- **PETER'S CALL — two coupled phone-layout defects in the EXPANDED title card** (measured 2026-10-10, S223, master build, headless, alone). 1. **`verify-millrates.js` 360 overlap, RED ON MASTER since S220:** at 360×740, blurb open on Non-residential (the longest blurb; the h1 …
 - **Mobile panel before it opens: more colour and height so it reads as tappable.** First pin down which element this means (the peek card, or the collapsed hood panel?) and measure its current size on a phone viewport. The mobile coverage figures on record (DECISIONS 2026-08-04, …
 - **Audit the shareable URL hash (#608), cross-model.** Brief: `docs/FABLE_AUDIT_url_state.md`; queue item 15 in `docs/AUDIT_LEDGER.md`. `verify-url-state.js` now gates web/ PRs (S207, `tests.yml` `url-state` job). ⚠️ **A same-model run executed 2026-09-28 (S204, …
 - **Roads end-to-end audit follow-ons (S202, `docs/FINDINGS_roads_end_to_end.md`).** - **Peter's call (§1):** road on a boundary with a SET-ASIDE hood is split equally, so half goes into the grey hood. Sized: 22.9 km; excluding River Valley / Parks sharers moves 53 published …
