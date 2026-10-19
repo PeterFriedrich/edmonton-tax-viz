@@ -960,7 +960,7 @@ def join_and_calculate(
 # must say so); the residential SHARE is derived client-side as res/revenue
 # per acre (same denominator cancels), so no share column ships.
 # nonres_revenue_per_acre / nonres_revenue_per_lot_acre are the complement by
-# rate class (COMMERCIAL + MA DERELICT + DESIGNATED IND PROPERTIES slices —
+# rate class (COMMERCIAL + [MA] DERELICT + DESIGNATED IND PROPERTIES slices —
 # SPEC_industrial.md A1), same conventions.
 SLIM_COLUMNS = [
     "neighbourhood_name", "value_per_acre", "revenue_per_acre",

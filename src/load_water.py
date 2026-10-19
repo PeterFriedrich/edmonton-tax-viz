@@ -16,8 +16,8 @@ display must carry that caveat). Two outputs per hood keep the split honest:
                          the modeled total bill, the display's colour column
 
 Scope — residential only (locked decision 2026-07-06): classes with a
-verified consumption proxy. RESIDENTIAL and MA DERELICT RESIDENTIAL rows are
-households; OTHER RESIDENTIAL rows are multi-res buildings. COMMERCIAL /
+verified consumption proxy. RESIDENTIAL and MA DERELICT RESIDENTIAL (renamed
+DERELICT RESIDENTIAL 2026-10-19) rows are households; OTHER RESIDENTIAL rows are multi-res buildings. COMMERCIAL /
 FARMLAND / everything else is excluded + counted (verified rates exist but
 no consumption benchmark — no invented numbers).
 

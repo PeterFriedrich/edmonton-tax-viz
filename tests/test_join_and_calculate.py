@@ -1367,7 +1367,7 @@ def test_export_keeps_3yr_columns_when_present(tmp_path):
 
 
 # --- non-residential decomposition (nonres_levy → nonres_revenue_per_acre) ---
-# The non-res-rate subset (COMMERCIAL + MA DERELICT + DESIGNATED IND slices,
+# The non-res-rate subset (COMMERCIAL + [MA] DERELICT + DESIGNATED IND slices,
 # SPEC_industrial.md A1), same conventions as the residential block above.
 
 
