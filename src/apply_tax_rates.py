@@ -35,6 +35,11 @@ ASSESSMENT_CLASS_TO_RATE_CLASS = {
     "OTHER RESIDENTIAL": "Other Residential",
     "FARMLAND": "Farmland",
     "MA DERELICT RESIDENTIAL": "Non Residential",
+    # The same class, renamed on the live roll 2026-10-19: all 270 accounts
+    # carrying it were MA DERELICT RESIDENTIAL in the September pull, Tax Class
+    # still "Non Residential", and pwis-wc4c still names the rate "Mature Area
+    # Derelict Residential". The old label stays for older rolls.
+    "DERELICT RESIDENTIAL": "Non Residential",
     # Designated Industrial Property (provincially-assessed plants / linear /
     # machinery). Appeared in the 2026 live feed (1 parcel); its own Tax Class
     # field reads "Non Residential", and DIP is non-residential for the municipal
@@ -46,7 +51,7 @@ ASSESSMENT_CLASS_TO_RATE_CLASS = {
 # Class labels whose levy counts as RESIDENTIAL dollars for the residential-
 # revenue decomposition (res_levy): both housing classes — RESIDENTIAL (houses,
 # condos <4 units) and OTHER RESIDENTIAL (4+ unit apartment buildings, its own
-# slightly higher rate). MA DERELICT RESIDENTIAL is deliberately EXCLUDED: the
+# slightly higher rate). [MA] DERELICT RESIDENTIAL is deliberately EXCLUDED: the
 # city bills it at the punitive Non Residential rate, so its dollars are
 # non-residential-rate dollars (see docs/DECISIONS.md 2026-07-16).
 RESIDENTIAL_RATE_LABELS = {"RESIDENTIAL", "OTHER RESIDENTIAL"}

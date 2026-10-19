@@ -156,9 +156,27 @@ def test_out_of_scope_classes_excluded_and_counted(tmp_path, caplog):
     assert out["water_charge_annual"].iloc[0] == pytest.approx(SF_FIXED + SF_VOL)
 
 
-def test_derelict_residential_is_a_household(tmp_path):
-    out = _run(tmp_path, [_assessment_row(cls="MA DERELICT RESIDENTIAL")])
+@pytest.mark.parametrize("label", ["MA DERELICT RESIDENTIAL", "DERELICT RESIDENTIAL"])
+def test_derelict_residential_is_a_household(tmp_path, label):
+    out = _run(tmp_path, [_assessment_row(cls=label)])
     assert out["water_charge_annual"].iloc[0] == pytest.approx(SF_FIXED + SF_VOL)
+
+
+# Every class label the levy knows, hand-assigned here as out of the water
+# scope. With HOUSEHOLD_CLASSES and MULTIRES_CLASS it must PARTITION the levy's
+# map: apply_tax_rates raises on an unknown label and load_water does not, so a
+# label added only to the levy's map (a rename: 2026-10-19, MA DERELICT ->
+# DERELICT RESIDENTIAL) would leave its homes out of the dwelling model silently.
+WATER_OUT_OF_SCOPE = {"COMMERCIAL", "FARMLAND", "DESIGNATED IND PROPERTIES",
+                      "NONRES MUNICIPAL/RES EDUCATION"}
+
+
+def test_every_class_the_levy_knows_is_placed_in_or_out_of_water_scope():
+    from apply_tax_rates import ASSESSMENT_CLASS_TO_RATE_CLASS
+    from load_water import HOUSEHOLD_CLASSES, MULTIRES_CLASS
+    placed = [*HOUSEHOLD_CLASSES, MULTIRES_CLASS, *WATER_OUT_OF_SCOPE]
+    assert len(placed) == len(set(placed)), "a label is placed twice"
+    assert set(placed) == set(ASSESSMENT_CLASS_TO_RATE_CLASS)
 
 
 def test_null_coords_excluded_and_reported(tmp_path, caplog):

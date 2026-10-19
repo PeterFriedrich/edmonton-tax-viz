@@ -208,7 +208,7 @@ aligned. That pull also surfaced a new `Assessment Class 1` label
 | `Longitude` | float64 | |
 | `Point Location` | str | |
 
-**Assessment Class 1 values:** RESIDENTIAL (411,563), COMMERCIAL (23,054), OTHER RESIDENTIAL (4,356), FARMLAND (509), MA DERELICT RESIDENTIAL (284), NONRES MUNICIPAL/RES EDUCATION (3)
+**Assessment Class 1 values:** RESIDENTIAL (411,563), COMMERCIAL (23,054), OTHER RESIDENTIAL (4,356), FARMLAND (509), MA DERELICT RESIDENTIAL (284; renamed DERELICT RESIDENTIAL on the live roll 2026-10-19, see below), NONRES MUNICIPAL/RES EDUCATION (3)
 
 **Tax-exempt flag:** No explicit exempt boolean. Best proxy is `Assessment Class 1 == 'NONRES MUNICIPAL/RES EDUCATION'` (3 rows). Flag these on load as `is_exempt`. So `is_exempt` cannot identify exempt-heavy neighbourhoods.
 
@@ -467,15 +467,15 @@ Non-residential is ~3.2× residential — this class differential is the basis o
 - ⚠️ **This file now feeds the FRONT END, not just the pipeline** (2026-08-01). `generate_status.py` copies the current year's municipal rates into `web/data/status.json` as `municipal_rates`, which the mill-rate pod renders. Rates are never typed into `web/index.html`. Consequence for the January roll: adding a year here is still the single edit, but the committed `status.json` only picks it up when the refresh runs — `tests/test_generate_status.py` asserts the committed manifest matches what the generator would write, so a drift fails the suite rather than shipping stale rates.
 - Rate-type label changed over time: older years (2014–2018) use `Municipal Tax Rate` / `Education Tax Rate`; 2019+ use `Municipal` / `Education`. Only 2019+ form is needed for 2025.
 - `Mature Area Derelict Residential` and `Transitional Residential` exist as rate classes but not as assessment `Tax Class` values — unused by the Tax-Class join.
-- **Two class vocabularies in the assessment CSV.** `Tax Class` (col 9) is the clean 4-value field used for the join. The `Assessment Class 1/2/3` (+ `% 1/2/3`) columns describe split-class parcels using *different* labels (`COMMERCIAL` = `Non Residential`, plus `MA DERELICT RESIDENTIAL` → Non Residential, `NONRES MUNICIPAL/RES EDUCATION` → exempt). `map(Assessment Class 1)` equals `Tax Class` in 100% of rows, so only the 2nd/3rd slices add information; split-class is rare (~0.25% of rows). Full label→rate-class map, counts, and the unified levy formula: `docs/FINDINGS_assessment_classes.md`.
+- **Two class vocabularies in the assessment CSV.** `Tax Class` (col 9) is the clean 4-value field used for the join. The `Assessment Class 1/2/3` (+ `% 1/2/3`) columns describe split-class parcels using *different* labels (`COMMERCIAL` = `Non Residential`, plus `MA DERELICT RESIDENTIAL` → Non Residential, `NONRES MUNICIPAL/RES EDUCATION` → exempt). `map(Assessment Class 1)` equals `Tax Class` in 100% of rows, so only the 2nd/3rd slices add information; split-class is rare (~0.25% of rows). ⚠️ **Renamed 2026-10-19:** the live roll's `MA DERELICT RESIDENTIAL` became `DERELICT RESIDENTIAL` (all 270 accounts were MA DERELICT in the September pull; Tax Class still `Non Residential`; `pwis-wc4c` still names the rate "Mature Area Derelict Residential"). `apply_tax_rates.py` raised on it and failed the weekly refresh, as designed; `load_water.HOUSEHOLD_CLASSES` would have dropped the homes silently. Both maps carry both spellings. Full label→rate-class map, counts, and the unified levy formula: `docs/FINDINGS_assessment_classes.md`.
 
 ### Residential-revenue decomposition (added 2026-07-16)
 
 `apply_tax_rates.py` also emits **`res_levy`** — the subset of each parcel's levy
 billed on **`RESIDENTIAL` + `OTHER RESIDENTIAL`** class slices (all housing:
 houses/condos <4 units *and* 4+ unit apartment buildings; split-class parcels
-contribute only their residential slice). **`MA DERELICT RESIDENTIAL` is
-excluded** — the city deliberately bills it at the punitive Non Residential
+contribute only their residential slice). **`MA DERELICT RESIDENTIAL` (now
+`DERELICT RESIDENTIAL`) is excluded** — the city deliberately bills it at the punitive Non Residential
 rate, so its dollars are non-residential-rate dollars. Flows: `res_levy` →
 `total_res_revenue` (aggregate) → **`res_revenue_per_acre`** /
 **`res_revenue_per_lot_acre`** (slim GeoJSON; the lot variant inherits the
@@ -508,7 +508,7 @@ Glass Residential $ metric falls back to hood prisms (web column guard).
 ### Non-residential decomposition (added 2026-07-18 — SPEC_industrial.md A1)
 
 `apply_tax_rates.py` also emits **`nonres_levy`** — the subset of each parcel's
-levy billed **at the Non Residential rate**: `COMMERCIAL` + `MA DERELICT
+levy billed **at the Non Residential rate**: `COMMERCIAL` + `[MA] DERELICT
 RESIDENTIAL` + `DESIGNATED IND PROPERTIES` slices (`NONRES_RATE_LABELS`,
 derived from the label→rate-class map so a future non-res label can't be
 missed). The complement of `res_levy` by rate class; farmland (its own rate

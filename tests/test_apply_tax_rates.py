@@ -82,11 +82,13 @@ def test_exempt_label_is_zero_levy(rates_path):
     assert out["levy"].iloc[0] == pytest.approx(0.0)
 
 
-def test_ma_derelict_bills_as_non_residential(rates_path):
+@pytest.mark.parametrize("label", ["MA DERELICT RESIDENTIAL", "DERELICT RESIDENTIAL"])
+def test_ma_derelict_bills_as_non_residential(rates_path, label):
     # MA DERELICT RESIDENTIAL → Non Residential rate (30), per the Tax Class data.
+    # DERELICT RESIDENTIAL is the same class renamed on the live roll 2026-10-19.
     df = pd.DataFrame([_row(
         tax_class="Non Residential",
-        assessment_class_1="MA DERELICT RESIDENTIAL",
+        assessment_class_1=label,
     )])
     out = apply_tax_rates(df, rates_path, 2025)
     assert out["levy"].iloc[0] == pytest.approx(30_000.0)
