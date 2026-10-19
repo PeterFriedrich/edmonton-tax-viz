@@ -208,7 +208,7 @@ aligned. That pull also surfaced a new `Assessment Class 1` label
 | `Longitude` | float64 | |
 | `Point Location` | str | |
 
-**Assessment Class 1 values:** RESIDENTIAL (411,563), COMMERCIAL (23,054), OTHER RESIDENTIAL (4,356), FARMLAND (509), MA DERELICT RESIDENTIAL (284), NONRES MUNICIPAL/RES EDUCATION (3)
+**Assessment Class 1 values:** RESIDENTIAL (411,563), COMMERCIAL (23,054), OTHER RESIDENTIAL (4,356), FARMLAND (509), MA DERELICT RESIDENTIAL (284; renamed DERELICT RESIDENTIAL on the live roll 2026-10-19, see below), NONRES MUNICIPAL/RES EDUCATION (3)
 
 **Tax-exempt flag:** No explicit exempt boolean. Best proxy is `Assessment Class 1 == 'NONRES MUNICIPAL/RES EDUCATION'` (3 rows). Flag these on load as `is_exempt`. So `is_exempt` cannot identify exempt-heavy neighbourhoods.
 
@@ -474,8 +474,8 @@ Non-residential is ~3.2× residential — this class differential is the basis o
 `apply_tax_rates.py` also emits **`res_levy`** — the subset of each parcel's levy
 billed on **`RESIDENTIAL` + `OTHER RESIDENTIAL`** class slices (all housing:
 houses/condos <4 units *and* 4+ unit apartment buildings; split-class parcels
-contribute only their residential slice). **`MA DERELICT RESIDENTIAL` is
-excluded** — the city deliberately bills it at the punitive Non Residential
+contribute only their residential slice). **`MA DERELICT RESIDENTIAL` (now
+`DERELICT RESIDENTIAL`) is excluded** — the city deliberately bills it at the punitive Non Residential
 rate, so its dollars are non-residential-rate dollars. Flows: `res_levy` →
 `total_res_revenue` (aggregate) → **`res_revenue_per_acre`** /
 **`res_revenue_per_lot_acre`** (slim GeoJSON; the lot variant inherits the
@@ -508,7 +508,7 @@ Glass Residential $ metric falls back to hood prisms (web column guard).
 ### Non-residential decomposition (added 2026-07-18 — SPEC_industrial.md A1)
 
 `apply_tax_rates.py` also emits **`nonres_levy`** — the subset of each parcel's
-levy billed **at the Non Residential rate**: `COMMERCIAL` + `MA DERELICT
+levy billed **at the Non Residential rate**: `COMMERCIAL` + `[MA] DERELICT
 RESIDENTIAL` + `DESIGNATED IND PROPERTIES` slices (`NONRES_RATE_LABELS`,
 derived from the label→rate-class map so a future non-res label can't be
 missed). The complement of `res_levy` by rate class; farmland (its own rate
