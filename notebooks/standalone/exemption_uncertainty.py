@@ -409,6 +409,7 @@ CLASS_TO_FIR = {
     "FARMLAND": "farmland",
     "COMMERCIAL": "non_residential",
     "MA DERELICT RESIDENTIAL": "non_residential",
+    "DERELICT RESIDENTIAL": "non_residential",  # renamed on the roll 2026-10-19
     "DESIGNATED IND PROPERTIES": "non_residential",
     EXEMPT_LABEL: None,
 }
