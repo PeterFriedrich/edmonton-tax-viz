@@ -403,13 +403,15 @@ print(f"filed non-residential rate: {fir['mill_rate']['non_residential']:.4f}")
 # %%
 # ASSUMPTION — this map is Edmonton's class vocabulary as of this roll. A new
 # class label appearing on the roll would be silently unmapped, so it raises.
+# The roll renamed MA DERELICT RESIDENTIAL to DERELICT RESIDENTIAL on
+# 2026-10-19; the old key stays so cached pre-rename rolls still run.
 CLASS_TO_FIR = {
     "RESIDENTIAL": "residential",
     "OTHER RESIDENTIAL": "other",
     "FARMLAND": "farmland",
     "COMMERCIAL": "non_residential",
     "MA DERELICT RESIDENTIAL": "non_residential",
-    "DERELICT RESIDENTIAL": "non_residential",  # renamed on the roll 2026-10-19
+    "DERELICT RESIDENTIAL": "non_residential",
     "DESIGNATED IND PROPERTIES": "non_residential",
     EXEMPT_LABEL: None,
 }
