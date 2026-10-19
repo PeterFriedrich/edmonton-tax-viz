@@ -48,7 +48,10 @@ logger = logging.getLogger(__name__)
 
 # Classes modeled as one household per roll record. MA DERELICT RESIDENTIAL
 # stays in (a standing structure is a serviced connection); logged either way.
-HOUSEHOLD_CLASSES = {"RESIDENTIAL", "MA DERELICT RESIDENTIAL"}
+# DERELICT RESIDENTIAL is its 2026-10-19 rename (apply_tax_rates.py), and
+# unlike that module's map this set does not raise on a label it lacks: it
+# would have dropped the derelict homes silently.
+HOUSEHOLD_CLASSES = {"RESIDENTIAL", "MA DERELICT RESIDENTIAL", "DERELICT RESIDENTIAL"}
 MULTIRES_CLASS = "OTHER RESIDENTIAL"
 
 # EPCOR's published typical-household benchmark (14,300 L/month, 2025 —

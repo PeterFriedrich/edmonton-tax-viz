@@ -35,6 +35,11 @@ ASSESSMENT_CLASS_TO_RATE_CLASS = {
     "OTHER RESIDENTIAL": "Other Residential",
     "FARMLAND": "Farmland",
     "MA DERELICT RESIDENTIAL": "Non Residential",
+    # The same class, renamed on the live roll 2026-10-19: all 270 accounts
+    # carrying it were MA DERELICT RESIDENTIAL in the September pull, Tax Class
+    # still "Non Residential", and pwis-wc4c still names the rate "Mature Area
+    # Derelict Residential". The old label stays for older rolls.
+    "DERELICT RESIDENTIAL": "Non Residential",
     # Designated Industrial Property (provincially-assessed plants / linear /
     # machinery). Appeared in the 2026 live feed (1 parcel); its own Tax Class
     # field reads "Non Residential", and DIP is non-residential for the municipal

@@ -156,9 +156,20 @@ def test_out_of_scope_classes_excluded_and_counted(tmp_path, caplog):
     assert out["water_charge_annual"].iloc[0] == pytest.approx(SF_FIXED + SF_VOL)
 
 
-def test_derelict_residential_is_a_household(tmp_path):
-    out = _run(tmp_path, [_assessment_row(cls="MA DERELICT RESIDENTIAL")])
+@pytest.mark.parametrize("label", ["MA DERELICT RESIDENTIAL", "DERELICT RESIDENTIAL"])
+def test_derelict_residential_is_a_household(tmp_path, label):
+    out = _run(tmp_path, [_assessment_row(cls=label)])
     assert out["water_charge_annual"].iloc[0] == pytest.approx(SF_FIXED + SF_VOL)
+
+
+def test_every_derelict_label_the_levy_knows_is_a_household():
+    # apply_tax_rates raises on an unknown class label; HOUSEHOLD_CLASSES does
+    # not, so a rename fixed only there drops the derelict homes from the
+    # dwelling model silently (2026-10-19: MA DERELICT -> DERELICT RESIDENTIAL).
+    from apply_tax_rates import ASSESSMENT_CLASS_TO_RATE_CLASS
+    from load_water import HOUSEHOLD_CLASSES
+    derelict = {l for l in ASSESSMENT_CLASS_TO_RATE_CLASS if "DERELICT" in l}
+    assert derelict and derelict <= HOUSEHOLD_CLASSES
 
 
 def test_null_coords_excluded_and_reported(tmp_path, caplog):
