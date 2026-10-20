@@ -149,7 +149,7 @@ makes the two halves mean different things, which is a worse error than the
 bounded one it removes. The cut is class-1-only *because* the splice has to be
 consistent, not because the finer data was overlooked.
 
-`data/DATA.md` §470 records the same split-class limit for the levy pipeline
+`data/DATA.md` §4 (Known Quirks, "Two class vocabularies") records the same split-class limit for the levy pipeline
 (~0.25% of rows); measurements and verdict in `docs/AUDIT_LEDGER.md` 2026-08-30.
 
 ---

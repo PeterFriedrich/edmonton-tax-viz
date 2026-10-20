@@ -1696,7 +1696,7 @@ archive"*) is not, and this span is 2,533 lines.
     comes from" side. `data/DATA.md` §17's *"there is no revenue side here"* is
     true of the expense feed only. ⚠️ Worth weighing against item ▶ below —
     the revenue split (tax-funded vs fee-funded) is close to what
-    `SPEC_breakeven.md` §8.7 is choosing between.
+    `SPEC_breakeven.md` §8 item 7 is choosing between.
 
 - [ ] **`change` does not carry the institutional treatment.** The consequence
   tier shipped 2026-08-15 on Money's prism mode and the Lab; `glass` followed
@@ -1931,7 +1931,7 @@ archive"*) is not, and this span is 2,533 lines.
   - ~~Decide the publication gate before the number exists (§8.3).~~ **SETTLED
     2026-08-11** — no separate gate; the Lab is full-build-only and `beta`, so
     the requirement collapses into §6's *coverage renders wherever the number
-    does*. ⚠️ **Do not re-open** (`SPEC_breakeven.md` §8.3).
+    does*. ⚠️ **Do not re-open** (`SPEC_breakeven.md` §8 item 3).
   - ⚠️ **THE FETCH IS NOT LAPTOP-ONLY — that blocker was false and had parked
     this task since 2026-08-04.** `budget.edmonton.ca` returns **HTTP 200 from
     the Oracle box**; only `www.edmonton.ca` is blocked. Corrected in
