@@ -8,6 +8,7 @@ along. These pin that an item ends at the first unindented non-item line, and
 that a run adds no blank lines of its own.
 """
 
+import subprocess
 import sys
 from pathlib import Path
 
@@ -96,3 +97,32 @@ def test_a_run_adds_no_blank_lines(run):
     todo, _ = run
     assert "\n\n\n" not in todo
     assert "## Open work\n\n_Last reconciled: preamble note._" in todo
+
+
+def test_the_archive_on_this_branch_is_not_shorter_than_on_master():
+    """The tool refuses to shrink the archive, but a hand edit never runs the
+    tool: on 2026-09-24 (7d6a728) a session closing one item overwrote the file
+    with that item alone, 3,465 lines -> 16, and it sat on master for four
+    weeks. So check the file, not the tool: the working tree may not hold fewer
+    lines than the merge base with origin/master. Fails open without git or
+    without origin/master — tests.yml sets fetch-depth 0 so CI checks."""
+    repo = Path(__file__).resolve().parent.parent
+    path = "docs/TODO_archive.md"
+    try:
+        base = subprocess.run(["git", "merge-base", "HEAD", "origin/master"],
+                              cwd=repo, capture_output=True, text=True, timeout=30)
+        if base.returncode != 0:
+            return
+        old = subprocess.run(["git", "show", f"{base.stdout.strip()}:{path}"],
+                             cwd=repo, capture_output=True, text=True, timeout=30)
+    except (OSError, subprocess.TimeoutExpired):
+        return
+    if old.returncode != 0:
+        return  # the file did not exist at the base
+    before = len(old.stdout.splitlines())
+    now = len((repo / path).read_text().splitlines())
+    assert now >= before, (
+        f"{path} shrank from {before} to {now} lines against master. It is "
+        f"append-only and the only full copy of every closed item; restore the "
+        f"lost text (git show <base>:{path}) and append, don't overwrite."
+    )

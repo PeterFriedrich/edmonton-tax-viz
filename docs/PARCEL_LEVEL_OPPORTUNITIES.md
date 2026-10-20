@@ -14,7 +14,7 @@ _Started 2026-07-01._
 The project deliberately aggregates to the neighbourhood (see `DATA.md` §2, Architecture
 Decision — Phase 1). That choice is what forces the **land-use set-aside** machinery:
 neighbourhood-level aggregation needs *explicit* categorization of non-developable land
-that a parcel-level approach (e.g. Urban3, `FINDINGS_revenue_scale.md` §7) handles
+that a parcel-level approach (e.g. Urban3, `FINDINGS_revenue_scale.md` §6.4) handles
 **implicitly** — you just include/exclude parcels by their actual status. Several
 backlog items are really the same limitation resurfacing, so they belong together.
 
@@ -91,7 +91,7 @@ lossy summary of this.
 
 ### P5. Urban3-style true parcel revenue/acre map (the gold standard)
 The parcel-level 3D revenue/acre map is the method this project approximates at the
-neighbourhood scale (`FINDINGS_revenue_scale.md` §7). A genuine parcel map is the
+neighbourhood scale (`FINDINGS_revenue_scale.md` §6.4). A genuine parcel map is the
 natural "Phase 3" once parcel geometry + a clean spatial join are in hand — and it
 would make P1–P4 fall out for free.
 

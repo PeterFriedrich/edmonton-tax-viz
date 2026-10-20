@@ -34,7 +34,7 @@ panel differs across layers"* would have caught it on day one — which is the
 whole argument for sweeping the class rather than fixing the instance.
 
 ⚠️ **The class already has a written precedent in this repo, and it was right.**
-`CONTROLS_MATRIX.md` §5.6, closed 2026-07-27:
+`CONTROLS_MATRIX.md` §5 item 6, closed 2026-07-27:
 
 > *"if a control ignores the pickers around it, it is probably a lens, not a
 > detail mode."*
