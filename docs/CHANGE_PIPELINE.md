@@ -11,7 +11,7 @@ review catch the rest. Saving review time is no saving if it comes back as
 fixes after a merge, so that count is the guardrail (step 4.6). Weigh a step
 you'd skip or a row you'd answer `no` against it.
 
-Ported by hand from `cc-data-project-template` (master `a104a5f`, 2026-10-21;
+Ported by hand from `cc-data-project-template` (master `d710841`, 2026-10-21;
 first port `5b48600`, 2026-10-19). This repo is the template's source, so
 copier never runs here: a change to the template's copy is ported by hand.
 **If you change a step here, check whether the template's copy should change
@@ -197,9 +197,13 @@ which hold by habit) is in §"This project's fit" below.
      days while its warning printed on every run to a log nobody read.
    - **A scheduled job fails quietly unless it is built not to**: an empty
      read is a failure, not a quiet week (a count check passes 0 == 0, so
-     also fail below a floor); record a run as done only after its output
-     landed; something outside the job notices a job that never ran (GitHub
-     disables a scheduled Action after 60 days without repo activity).
+     also fail below a floor); read from where the last good run stopped,
+     and run often enough that one missed run is caught up by the next;
+     record a run as done only after its output landed; something outside
+     the job notices a job that never ran (GitHub disables a scheduled Action
+     after 60 days without repo activity); one token per repo, write access
+     only where the job writes. Not yet checked against `refresh.yml`,
+     `evidence-recheck.yml` or the vintage digest.
    - Roll back: `git revert` reaches the live site only through the next
      workflow run, and a refresh run re-downloads. There is no
      deploy-without-regenerate path (`docs/RUNBOOK.md` §4, known gap).
