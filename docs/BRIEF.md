@@ -413,6 +413,8 @@ Edmonton revenue-per-acre fiscal analysis. Python-only, no GIS software.
 - **2026-10-17** — **Above the phone seam, the control column drops below the title column when the view buttons would reach it** (Peter, S234, light-mode audit F2).
 - **2026-10-17** — **The revenue-mix panel's swatches and bar segments carry a 1 px `--border-strong` inset edge in both themes** (Peter, S234, light-mode audit F5).
 - **2026-10-17** — **Glow comes back on light → dark when light forced it off, unless the reader picked a ramp while in light** (Peter, S234, light-mode audit F9).
+- **2026-10-20** — **`docs/TODO_archive.md` is guarded at the FILE, not only in the tool: a branch may not leave it shorter than the merge base with master** (Peter approved, S236). … The tool already refused to shrink it (2026-07-31 row), but 7d6a728 (2026-09-24) overwrote it by hand, 3,465 → 16 lines, unseen for four weeks; restored from `7d6a728^`.
+- **2026-10-21** — **Template pipeline rules ported up to template `d710841`: code PRs carry `Risk:` / `Tested:` / `Undo:` lines (`Cause:` on fixes), docs PRs skip them; `Risk:` is a label only — no self-merge by tier; …
 
 ## Open work
 
