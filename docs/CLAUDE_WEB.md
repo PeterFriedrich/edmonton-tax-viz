@@ -53,7 +53,10 @@ In git pathspec form (the handoff skill uses this exact list):
 `docs/BRIEF.md 'docs/SPEC_*.md' docs/REPORT_CLAIMS.md web/verified/REPORT_FIGURES.md`. To sync another file, add it in four places
 together: here, the handoff skill's command (`.claude/skills/handoff/SKILL.md`
 §"Claude web sync check"), the `CLAUDE.md` line for this doc, and the claude.ai
-Project.
+Project. `web/verified/REPORT_FIGURES.md` is the one exception to the `CLAUDE.md`
+line: that line's rule ("a PR that changes a synced file opens with *After
+merge: press Sync*") cannot fire for a file only the weekly refresh commits,
+with no PR. Its staleness signal is the handoff sync check alone.
 
 ### Knowing when to press Sync
 
