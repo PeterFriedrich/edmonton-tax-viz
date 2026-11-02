@@ -34,6 +34,36 @@ paragraph, the paragraph belongs in the `FINDINGS_*` doc it points to.
    or that contradicts a row. Unmatched claims are reported, not silently
    accepted. That is the report-side form of "no silent data drops".
 
+## Running a check round
+
+This section is the prompt for a check round. It lives in this file because
+this file is synced to the claude.ai Project, so the instructions travel with
+the register. Peter gives the Doc's link in the chat; the link is not kept in
+this repo.
+
+1. Read the whole Doc. List every factual claim it makes: each figure, each
+   comparison, each statement about method or data. Opinion and framing are
+   not claims.
+2. Match each claim to a row here by its meaning, not its wording.
+3. Reply with one table, one row per claim, in the Doc's order:
+
+   | doc passage (short quote) | register row | verdict | note |
+   |---|---|---|---|
+
+   Verdicts:
+   - `matches`: the claim agrees with the row.
+   - `contradicts`: the claim disagrees with the row. Say how.
+   - `drops caveat`: the row is **caveated** and the Doc states it without
+     the caveat.
+   - `withdrawn`: the Doc states something an `X` row says not to.
+   - `contested`: the row's status is contested.
+   - `live`: the row's figure is weekly-live and is not in the Project, so
+     the number can't be checked here. Check the wording only.
+   - `no row`: nothing here covers it.
+4. Don't rewrite Peter's prose. Where a fix is needed, put the proposed
+   wording in the note. A `no row` claim is either given a row with a proof
+   pointer or taken out of the Doc; the reply doesn't decide which.
+
 ---
 
 ## Method
