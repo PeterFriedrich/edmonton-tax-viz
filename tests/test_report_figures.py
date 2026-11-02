@@ -62,8 +62,11 @@ def test_every_declared_id_is_a_live_row():
 
 def test_every_declared_id_has_a_figure_call():
     for stem, ids in _declared().items():
-        src = (ROOT / "notebooks" / "verified" / f"{stem}.py").read_text()
-        missing = sorted(i for i in ids if f'figure("{i}"' not in src)
+        tree = ast.parse((ROOT / "notebooks" / "verified" / f"{stem}.py").read_text())
+        called = {n.args[0].value for n in ast.walk(tree)
+                  if isinstance(n, ast.Call) and getattr(n.func, "id", None) == "figure"
+                  and n.args and isinstance(n.args[0], ast.Constant)}
+        missing = sorted(ids - called)
         assert not missing, f"{stem} declares {missing} but never calls figure() for them"
 
 
@@ -85,9 +88,8 @@ def test_render_orders_by_id_and_consumes_the_json(tmp_path):
     (tmp_path / "04_roads_lens.figures.json").write_text(json.dumps(
         {"R9": [["outside", "0.31%"]], "D1": [["a", "21%"], ["b", "52%"]]}))
     md = _load_runner().render_report_figures(
-        tmp_path, {"data_year": 2026, "rate_year": 2026, "generated": "2026-11-02"},
-        "abc1234", "2026-11-02")
+        tmp_path, {"data_year": 2026, "rate_year": 2026, "generated": "2026-11-02"})
     rows = [l.split("|")[1].strip() for l in md.splitlines() if re.match(r"\| [A-Z]+\d+ ", l)]
     assert rows == ["D1", "D1", "M3", "M10", "R9"]
-    assert "`abc1234`" in md and "Roll year 2026" in md
+    assert "generated 2026-11-02" in md and "roll year 2026" in md
     assert not list(tmp_path.glob("*.figures.json"))

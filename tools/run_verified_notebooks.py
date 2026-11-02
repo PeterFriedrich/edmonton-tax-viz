@@ -39,7 +39,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SOURCE_DIR = ROOT / "notebooks" / "verified"
 
 
-def build(source: Path, out_dir: Path, timeout: int) -> tuple[bool, float, Path]:
+def build(source: Path, out_dir: Path, timeout: int, figures: bool = True) -> tuple[bool, float, Path]:
     """Convert one percent-format .py to .ipynb, execute it, render HTML."""
     ipynb = out_dir / (source.stem + ".ipynb")
     log_path = out_dir / (source.stem + ".log")
@@ -56,7 +56,9 @@ def build(source: Path, out_dir: Path, timeout: int) -> tuple[bool, float, Path]
 
     # The kernel's cwd is the notebook's directory, which is the build dir and
     # not the repo — so the root is passed explicitly rather than searched for.
-    env = {**os.environ, "EDMONTON_REPO_ROOT": str(ROOT), "REPORT_FIGURES_DIR": str(out_dir.resolve())}
+    env = {**os.environ, "EDMONTON_REPO_ROOT": str(ROOT)}
+    if figures:
+        env["REPORT_FIGURES_DIR"] = str(out_dir.resolve())
 
     started = time.monotonic()
     run = subprocess.run(
@@ -89,7 +91,7 @@ def build(source: Path, out_dir: Path, timeout: int) -> tuple[bool, float, Path]
     return run.returncode == 0, elapsed, log_path
 
 
-def render_report_figures(out_dir: Path, status: dict, commit: str, today: str) -> str:
+def render_report_figures(out_dir: Path, status: dict) -> str:
     """One table of every notebook's declared report figures; consumes the JSON."""
     rows = []
     for f in sorted(out_dir.glob("*.figures.json")):
@@ -101,9 +103,11 @@ def render_report_figures(out_dir: Path, status: dict, commit: str, today: str) 
     lines = [
         "# Report figures (weekly-live values)",
         "",
-        f"Generated {today} by `tools/run_verified_notebooks.py` from code at `{commit}`. "
-        f"Roll year {status.get('data_year')}, rate year {status.get('rate_year')}, "
-        f"served data generated {status.get('generated')}.",
+        # No run date or commit: the file changes only when a figure or the served data
+        # does, so a change to it (and the handoff's "press Sync") means something.
+        f"From the served data generated {status.get('generated')} "
+        f"(roll year {status.get('data_year')}, rate year {status.get('rate_year')}), "
+        f"by `tools/run_verified_notebooks.py`.",
         "",
         "Each value is quoted as its verified notebook states it this week. The claims "
         "are in `docs/REPORT_CLAIMS.md`; a row marked live has its number here, not there.",
@@ -136,7 +140,7 @@ def main(argv: list[str] | None = None) -> int:
 
     for source in sources:
         print(f"--- {source.name}", flush=True)
-        ok, elapsed, log_path = build(source, args.out_dir, args.timeout)
+        ok, elapsed, log_path = build(source, args.out_dir, args.timeout, figures=not args.only)
         if ok:
             print(f"    OK   {elapsed:5.1f}s  -> {args.out_dir / (source.stem + '.html')}")
         else:
@@ -150,15 +154,15 @@ def main(argv: list[str] | None = None) -> int:
     print(f"\n{len(sources) - len(failures)}/{len(sources)} notebooks executed cleanly")
     if failures:
         print(f"FAILED: {', '.join(failures)}", file=sys.stderr)
+        # The committed REPORT_FIGURES.md stays last week's; don't leave half a set.
+        for f in args.out_dir.glob("*.figures.json"):
+            f.unlink()
         return 1
     # A partial run would publish a table missing whole pages' figures.
     if not args.only:
-        commit = subprocess.run(["git", "rev-parse", "--short", "HEAD"], cwd=ROOT,
-                                capture_output=True, text=True).stdout.strip() or "unknown"
         status = json.loads((ROOT / "web" / "data" / "status.json").read_text())
         out = args.out_dir / "REPORT_FIGURES.md"
-        out.write_text(render_report_figures(args.out_dir, status, commit,
-                                             time.strftime("%Y-%m-%d", time.gmtime())))
+        out.write_text(render_report_figures(args.out_dir, status))
         print(f"report figures -> {out}")
     return 0
 

@@ -78,9 +78,10 @@ REPORT_IDS = ('R9',)
 FIGURES: dict[str, list[tuple[str, str]]] = {}
 
 
-def figure(rid: str, label: str, value: str) -> None:
-    """Record a value this page states, as the page states it, for the report."""
+def figure(rid: str, label: str, value: str) -> str:
+    """Record a value for the report and return it, so the page prints the same string."""
     FIGURES.setdefault(rid, []).append((label, value))
+    return value
 
 
 def md(text: str) -> None:
@@ -164,7 +165,8 @@ unknown_km = roads["road_m_unknown"].sum() / 1000
 md(f"""
 - **{km_in:,.1f} km** of City road (alleys out) went into the clip.
 - **{km_assigned:,.1f} km** landed inside a neighbourhood and **{km_outside:,.1f} km
-  ({pct_outside:.2f}%)** lies outside every boundary.
+  ({figure("R9", "share of City road outside every neighbourhood boundary", f"{pct_outside:.2f}%")})**
+  lies outside every boundary.
 - Of what landed, **{metric_km:,.1f} km** is collector and local road: the metric.
   **{roads['road_m_arterial'].sum() / 1000:,.1f} km** is arterial, kept out of it.
 - **{unknown_km:,.3f} km** carries a road class the pipeline does not recognise.
@@ -186,7 +188,6 @@ check(km_assigned <= km_in + 1e-6, "clipping to neighbourhoods adds no road leng
       f"{km_assigned:,.3f} km out of {km_in:,.3f} km in")
 check(pct_outside < 1.0, "less than 1% of City road lies outside every neighbourhood",
       f"{pct_outside:.2f}%")
-figure("R9", "share of City road outside every neighbourhood boundary", f"{pct_outside:.2f}%")
 
 # %% [markdown]
 # **The boundary split conserves length.** A shared piece is replaced by k
@@ -329,6 +330,8 @@ if prev is not None:
 # %%
 check(set(FIGURES) == set(REPORT_IDS), "every report figure this page declares was emitted",
       f"missing {sorted(set(REPORT_IDS) - set(FIGURES))}, undeclared {sorted(set(FIGURES) - set(REPORT_IDS))}")
+check(not any("nan" in v.lower() for vals in FIGURES.values() for _, v in vals),
+      "no report figure is NaN", str({r: [v for _, v in vals] for r, vals in FIGURES.items()}))
 if os.environ.get("REPORT_FIGURES_DIR"):
     Path(os.environ["REPORT_FIGURES_DIR"], "04_roads_lens.figures.json").write_text(json.dumps(FIGURES))
 
