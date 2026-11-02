@@ -44,9 +44,13 @@ docs sync as they are — they are the real thing, not a summary:
 - `docs/SPEC_*.md` — each one (nine as of 2026-09-30, ~277 KB)
 - `docs/REPORT_CLAIMS.md` — the claims register for the written report
   (added 2026-10-03; see "Report rounds" below)
+- `web/verified/REPORT_FIGURES.md` — this week's value for every register row
+  marked live, written by the weekly refresh from the verified notebooks
+  (added 2026-11-02; ~2 KB). ⚠️ It changes every Monday with no PR, so the
+  Project's copy is as old as the last Sync; its header carries the date.
 
 In git pathspec form (the handoff skill uses this exact list):
-`docs/BRIEF.md 'docs/SPEC_*.md' docs/REPORT_CLAIMS.md`. To sync another file, add it in four places
+`docs/BRIEF.md 'docs/SPEC_*.md' docs/REPORT_CLAIMS.md web/verified/REPORT_FIGURES.md`. To sync another file, add it in four places
 together: here, the handoff skill's command (`.claude/skills/handoff/SKILL.md`
 §"Claude web sync check"), the `CLAUDE.md` line for this doc, and the claude.ai
 Project.
