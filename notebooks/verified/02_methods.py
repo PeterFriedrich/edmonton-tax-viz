@@ -75,6 +75,19 @@ def check(ok: bool, claim: str, detail: str = "") -> None:
     print(f"  [{'PASS' if ok else 'FAIL'}] {claim}{'  — ' + detail if detail else ''}")
 
 
+# Rows of docs/REPORT_CLAIMS.md marked **live** that this page sources. Each id
+# must be emitted by figure() below; the run writes them for the report's
+# REPORT_FIGURES.md, and tests/test_report_figures.py holds the register to it.
+REPORT_IDS = ('M3', 'M6', 'M7', 'M8')
+FIGURES: dict[str, list[tuple[str, str]]] = {}
+
+
+def figure(rid: str, label: str, value: str) -> str:
+    """Record a value for the report and return it, so the page prints the same string."""
+    FIGURES.setdefault(rid, []).append((label, value))
+    return value
+
+
 def md(text: str) -> None:
     # The notebook renderer reads a pair of bare `$` as TeX math delimiters,
     # which swallows the text between two dollar amounts.
@@ -129,7 +142,8 @@ gives a citywide municipal levy of **${levy_total / 1e9:,.2f}B**.
 
 The gap between the value view and the revenue view is exactly Edmonton's
 class-differential rates: non-residential property is taxed
-**{nonres_rate / res_rate:.1f}×** residential per dollar of value.
+**{figure("M3", f"non-residential ÷ residential municipal rate ({YEAR})", f"{nonres_rate / res_rate:.1f}×")}**
+residential per dollar of value.
 (`docs/SPEC_revenue.md`)
 """)
 
@@ -182,7 +196,8 @@ check(
 md(f"""
 The map covers **{len(served):,}** neighbourhoods and
 **{served['ground_acres'].sum():,.0f}** ground acres. The lot-acre floor is
-**{LOW_PARCEL_FRAC:.0%}**: this week **{int(below_floor.sum())}**
+**{LOW_PARCEL_FRAC:.0%}**: this week
+**{figure("M6", f"neighbourhoods greyed in lot-acre mode (parcel coverage below {LOW_PARCEL_FRAC:.0%})", f"{int(below_floor.sum())}")}**
 neighbourhoods have titled lots covering less than that share of their boundary,
 and are greyed out in lot-acre mode.
 """)
@@ -274,9 +289,11 @@ md(f"""
 The share threshold is **{SHARE_MAX_M2:,.0f} m²**, and a multi-unit point
 totalling under **{MULTI_UNIT_MIN_LOT_M2:,.0f} m²** is treated as share-coded
 rather than an area. This week the roll has **{len(per_point):,}** distinct
-property points, **{int(multi.sum()):,}** of them multi-unit. **{n_inelig:,}**
+property points, **{int(multi.sum()):,}** of them multi-unit.
+**{figure("M7", "property points excluded from the lot-acre view", f"{n_inelig:,}")}**
 points are excluded from the lot-acre view, carrying
-**${inelig_value / 1e9:,.2f}B** — **{inelig_value / roll_value:.2%}** of located
+**{figure("M7", "assessed value on those points", f"${inelig_value / 1e9:,.2f}B")}** —
+**{figure("M7", "share of located assessed value", f"{inelig_value / roll_value:.2%}")}** of located
 assessed value.
 
 The eligible lots total **{elig_acres:,.0f}** acres, which is
@@ -315,7 +332,8 @@ check(
 )
 md(f"""
 The threshold is **{SET_ASIDE_THRESHOLD:.0%}** of the land. This week
-**{int(set_aside.sum())}** of **{len(served):,}** neighbourhoods are grey.
+**{figure("M8", "set-aside neighbourhoods (grey, not ranked)", f"{int(set_aside.sum())} of {len(served):,}")}**
+neighbourhoods are grey.
 """)
 
 # %% [markdown]
@@ -479,6 +497,14 @@ data last checked **{status.get('last_checked')}**.
 # - the utility models' validation ratios against EPCOR's published revenue —
 #   `docs/FINDINGS_utility_validation.md`;
 # - the colour-clamp percentiles and skew tests — `docs/FINDINGS_revenue_scale.md`.
+
+# %%
+check(set(FIGURES) == set(REPORT_IDS), "every report figure this page declares was emitted",
+      f"missing {sorted(set(REPORT_IDS) - set(FIGURES))}, undeclared {sorted(set(FIGURES) - set(REPORT_IDS))}")
+check(not any("nan" in v.lower() for vals in FIGURES.values() for _, v in vals),
+      "no report figure is NaN", str({r: [v for _, v in vals] for r, vals in FIGURES.items()}))
+if os.environ.get("REPORT_FIGURES_DIR"):
+    Path(os.environ["REPORT_FIGURES_DIR"], "02_methods.figures.json").write_text(json.dumps(FIGURES))
 
 # %%
 failed = [c for c in CHECKS if not c[0]]

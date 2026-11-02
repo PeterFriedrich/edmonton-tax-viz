@@ -74,6 +74,19 @@ def check(ok: bool, claim: str, detail: str = "") -> None:
     print(f"  [{'PASS' if ok else 'FAIL'}] {claim}{'  — ' + detail if detail else ''}")
 
 
+# Rows of docs/REPORT_CLAIMS.md marked **live** that this page sources. Each id
+# must be emitted by figure() below; the run writes them for the report's
+# REPORT_FIGURES.md, and tests/test_report_figures.py holds the register to it.
+REPORT_IDS = ('M10', 'E2', 'E4', 'R1', 'D1')
+FIGURES: dict[str, list[tuple[str, str]]] = {}
+
+
+def figure(rid: str, label: str, value: str) -> str:
+    """Record a value for the report and return it, so the page prints the same string."""
+    FIGURES.setdefault(rid, []).append((label, value))
+    return value
+
+
 def row(lens: str, assumption: str, share: float, of_what: str, direction: str, where: str) -> None:
     ROWS.append(dict(lens=lens, assumption=assumption, share=float(share),
                      of_what=of_what, direction=direction, where=where))
@@ -141,6 +154,8 @@ row("Money (non-residential)", "levy on exempt-candidate zoning is counted as pa
     "FINDINGS_blurb_claims.md §6")
 row("Money (total)", "levy on exempt-candidate zoning is counted as paid",
     exempt_total, "of total levy", "may overstate", "FINDINGS_exempt_institutional.md")
+figure("E2", "share of total levy on exempt-candidate zoning", f"{exempt_total:.1%}")
+figure("E4", "share of non-residential levy on exempt-candidate zoning", f"{exempt_nonres:.1%}")
 
 served_exempt = (served["rev_frac_exempt"].fillna(0) * served["total_revenue"].fillna(0)).sum() \
     / served["total_revenue"].sum()
@@ -191,9 +206,11 @@ row("Money", f"{int(aside.sum())} set-aside neighbourhoods are greyed, not ranke
 # %%
 cell_m2 = main.GRID_CELL_M ** 2
 big = roll["lot_size"] > cell_m2
+glass = roll.loc[big, "levy"].sum() / LEVY
 row("Glass", f"one point per account; the lot is bigger than a {main.GRID_CELL_M:.0f} m cell",
-    roll.loc[big, "levy"].sum() / LEVY, "of total levy", "concentrates dollars in one cell",
-    "Methods §4")
+    glass, "of total levy", "concentrates dollars in one cell", "Methods §4")
+# The table below prints every share at .1%; each figure() uses the same spec.
+figure("M10", f"share of total levy on lots bigger than a {main.GRID_CELL_M:.0f} m cell", f"{glass:.1%}")
 
 # %% [markdown]
 # **Split-class percentages are billed as stated.** A few properties' class
@@ -223,10 +240,29 @@ for window, suffix, label in (("3yr", "_3yr", "3 years"), ("5yr", "", "5 years")
     i = cols.index("units" + suffix)
     check(sum(c[i] for c in dev["cells"]) == cov["units_geocoded"],
           f"grid cells hold exactly the geocoded units ({label})", f"{cov['units_geocoded']:,}")
+    off_share = 1 - cov["units_geocoded"] / cov["units"]
     row("Development (grid)", f"homes permitted in the last {label} with no location are off the grid"
         if window != "long" else "homes permitted since 2009 with no location are off the grid",
-        1 - cov["units_geocoded"] / cov["units"], f"of new homes ({label})",
+        off_share, f"of new homes ({label})",
         "grid under-places them; the neighbourhood view counts them", "FINDINGS_blurb_claims.md F4")
+    figure("D1", f"share of new homes off the grid ({label})", f"{off_share:.1%}")
+
+# The long window is the 5-year window plus the years before it, so the off-grid
+# units the 5-year window does not hold are exactly the older permits'.
+cov_long, cov_5 = dev["coverage"]["long"], dev["coverage"]["5yr"]
+check(tuple(main.PERMIT_YEARS_LONG[-len(main.PERMIT_YEARS):]) == tuple(main.PERMIT_YEARS)
+      and main.PERMIT_YEARS_LONG[0] < main.PERMIT_YEARS[0],
+      "the 5-year permit window is the tail of the long one, with older years before it",
+      f"{main.PERMIT_YEARS} in {main.PERMIT_YEARS_LONG[0]}–{main.PERMIT_YEARS_LONG[-1]}")
+off_long = cov_long["units"] - cov_long["units_geocoded"]
+off_old = off_long - (cov_5["units"] - cov_5["units_geocoded"])
+older = f"{main.PERMIT_YEARS_LONG[0]}–{main.PERMIT_YEARS[0] - 1}"
+check(off_long > 0, "some homes since the long window's start are off the grid", f"{off_long:,}")
+old_share = figure("D1", f"share of off-grid homes since {main.PERMIT_YEARS_LONG[0]} from {older} permits",
+                   f"{off_old / max(off_long, 1):.0%}")
+md(f"Of the **{off_long:,}** off-grid homes since {main.PERMIT_YEARS_LONG[0]}, **{off_old:,}** "
+   f"(**{old_share}**) come from {older} permits. Those are not waiting on a "
+   f"geocode; they are a permanent gap.")
 
 # %% [markdown]
 # ## Change over time
@@ -257,9 +293,11 @@ from load_roads import load_roads  # noqa: E402
 
 roads = load_roads(str(main.ROADS_GEOJSON), load_boundaries(str(main.BOUNDARIES_GEOJSON)))
 art = roads["road_m_arterial"].sum()
+art_share = art / (art + roads["road_m_total"].sum())
 row("Roads", "arterial roads are left out of road metres",
-    art / (art + roads["road_m_total"].sum()), "of classified centreline length",
+    art_share, "of classified centreline length",
     "lowers road metres where arterials run", "DECISIONS.md 2026-07-01")
+figure("R1", "arterial share of classified centreline length", f"{art_share:.1%}")
 
 # %% [markdown]
 # ## The table, largest first
@@ -271,6 +309,14 @@ check(t["share"].between(0, 1).all() and t["share"].notna().all(),
 md("| size | of what | lens | assumption | effect | argued in |\n|---|---|---|---|---|---|\n" + "\n".join(
     f"| **{r.share:.1%}** | {r.of_what} | {r.lens} | {r.assumption} | {r.direction} | `{r.where}` |"
     for r in t.itertuples()))
+
+# %%
+check(set(FIGURES) == set(REPORT_IDS), "every report figure this page declares was emitted",
+      f"missing {sorted(set(REPORT_IDS) - set(FIGURES))}, undeclared {sorted(set(FIGURES) - set(REPORT_IDS))}")
+check(not any("nan" in v.lower() for vals in FIGURES.values() for _, v in vals),
+      "no report figure is NaN", str({r: [v for _, v in vals] for r, vals in FIGURES.items()}))
+if os.environ.get("REPORT_FIGURES_DIR"):
+    Path(os.environ["REPORT_FIGURES_DIR"], "03_assumptions.figures.json").write_text(json.dumps(FIGURES))
 
 # %%
 failed = [c for c in CHECKS if not c[0]]

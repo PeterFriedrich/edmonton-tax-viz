@@ -73,6 +73,14 @@ at 390px wide, with no scroller. Patching the committed HTML would have lasted
 one week. `tests/test_notebook_mobile_css.py::test_render_path_injects` is the
 guard.
 
+The same full run writes `web/verified/REPORT_FIGURES.md` (added 2026-11-02):
+every value a notebook declares in `REPORT_IDS` for a `docs/REPORT_CLAIMS.md`
+row marked live, quoted as the page states it, so the written report can be
+checked from the claude.ai Project. A notebook fails its run if a declared id
+was not emitted; `tests/test_report_figures.py` fails the merge if a live row
+has no notebook. Adding a live row therefore means adding its `figure()` call
+in the same PR.
+
 ## What's covered so far
 
 The **Money lens** — the metric the public site defaults to — and the **Roads lens** (below). The methods

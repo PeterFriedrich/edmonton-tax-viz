@@ -71,6 +71,19 @@ def check(ok: bool, claim: str, detail: str = "") -> None:
     print(f"  [{'PASS' if ok else 'FAIL'}] {claim}{'  — ' + detail if detail else ''}")
 
 
+# Rows of docs/REPORT_CLAIMS.md marked **live** that this page sources. Each id
+# must be emitted by figure() below; the run writes them for the report's
+# REPORT_FIGURES.md, and tests/test_report_figures.py holds the register to it.
+REPORT_IDS = ('R9',)
+FIGURES: dict[str, list[tuple[str, str]]] = {}
+
+
+def figure(rid: str, label: str, value: str) -> str:
+    """Record a value for the report and return it, so the page prints the same string."""
+    FIGURES.setdefault(rid, []).append((label, value))
+    return value
+
+
 def md(text: str) -> None:
     # A pair of bare `$` reads as TeX math delimiters in the renderer.
     display(Markdown(text.replace("$", r"\$")))
@@ -152,7 +165,8 @@ unknown_km = roads["road_m_unknown"].sum() / 1000
 md(f"""
 - **{km_in:,.1f} km** of City road (alleys out) went into the clip.
 - **{km_assigned:,.1f} km** landed inside a neighbourhood and **{km_outside:,.1f} km
-  ({pct_outside:.2f}%)** lies outside every boundary.
+  ({figure("R9", "share of City road outside every neighbourhood boundary", f"{pct_outside:.2f}%")})**
+  lies outside every boundary.
 - Of what landed, **{metric_km:,.1f} km** is collector and local road: the metric.
   **{roads['road_m_arterial'].sum() / 1000:,.1f} km** is arterial, kept out of it.
 - **{unknown_km:,.3f} km** carries a road class the pipeline does not recognise.
@@ -312,6 +326,14 @@ if prev is not None:
         md("| neighbourhood | last run | this run | change |\n|---|---|---|---|\n" + "\n".join(
             f"| {r.neighbourhood_name} | {r.road_m_per_acre_prev:.2f} | {r.road_m_per_acre:.2f} | {r.change:+.1%} |"
             for r in moved.head(15).itertuples()))
+
+# %%
+check(set(FIGURES) == set(REPORT_IDS), "every report figure this page declares was emitted",
+      f"missing {sorted(set(REPORT_IDS) - set(FIGURES))}, undeclared {sorted(set(FIGURES) - set(REPORT_IDS))}")
+check(not any("nan" in v.lower() for vals in FIGURES.values() for _, v in vals),
+      "no report figure is NaN", str({r: [v for _, v in vals] for r, vals in FIGURES.items()}))
+if os.environ.get("REPORT_FIGURES_DIR"):
+    Path(os.environ["REPORT_FIGURES_DIR"], "04_roads_lens.figures.json").write_text(json.dumps(FIGURES))
 
 # %%
 failed = [c for c in CHECKS if not c[0]]
