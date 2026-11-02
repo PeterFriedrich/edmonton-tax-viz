@@ -1077,3 +1077,15 @@ def test_acknowledgement_does_not_reach_the_published_manifest():
     published = budget_context()
     assert set(published) == {"total", "year", "basis", "categories"}
     assert published["year"] == 2025
+
+
+def test_refresh_heartbeat_ok_the_day_before_the_banner(tmp_path, monkeypatch):
+    monkeypatch.setattr(vr, "STATUS_JSON", _write(tmp_path, "st.json", {"last_checked": "2026-10-20"}))
+    assert vr.check_refresh_heartbeat(today=dt.date(2026, 11, 2))[0] == vr.OK
+
+
+def test_refresh_heartbeat_flags_on_the_day_the_banner_goes_up(tmp_path, monkeypatch):
+    # The site's stalenessBanner fires at days >= STALE_DAYS (14).
+    monkeypatch.setattr(vr, "STATUS_JSON", _write(tmp_path, "st.json", {"last_checked": "2026-10-19"}))
+    status, _, detail = vr.check_refresh_heartbeat(today=dt.date(2026, 11, 2))
+    assert status == vr.ACTION and "14 days ago" in detail

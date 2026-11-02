@@ -661,6 +661,26 @@ def check_todo_branch_refs():
             f"branch reference if the work is still open. `docs/RUNBOOK.md` §0d.")
 
 
+def check_refresh_heartbeat(today=None):
+    """Days since the weekly refresh last ran, off `status.json`'s `last_checked`.
+
+    A refresh that stops running fails nothing: no job, no issue. Until this row
+    the only signal was the page's own stale banner, which a visitor sees before
+    Peter does. `last_checked` bumps on every run; 14 days matches `STALE_DAYS`
+    in `web/index.html`, the day that banner goes up.
+    """
+    today = today or dt.date.today()
+    last = dt.date.fromisoformat(json.loads(STATUS_JSON.read_text())["last_checked"])
+    days = (today - last).days
+    if days < 14:
+        return (OK, "Weekly refresh", f"Last ran {last} ({days} days ago).")
+    return (ACTION, "Weekly refresh",
+            f"**Last ran {last}, {days} days ago** — two weekly runs missed, "
+            f"and the site is showing its stale-data banner. Check `gh run list "
+            f"--workflow refresh.yml` and the `HEARTBEAT_TOKEN` PAT. "
+            f"`docs/RUNBOOK.md` §3.")
+
+
 def check_banner():
     """A banner left up after its cause is fixed is a live-site correctness issue."""
     banner = json.loads(STATUS_JSON.read_text()).get("banner")
@@ -902,6 +922,7 @@ CHECKS = (
     check_road_classes,
     check_todo_branch_refs,
     check_banner,
+    check_refresh_heartbeat,
 )
 
 
