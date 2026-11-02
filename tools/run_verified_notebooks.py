@@ -14,13 +14,19 @@ A failing notebook produces no HTML — nbconvert fails closed rather than
 publishing figures from a run that did not finish. The captured log is written
 next to the output so CI can surface the traceback without re-running.
 
+A full run (no ``--only``) that succeeds also writes ``REPORT_FIGURES.md``: the
+values each notebook declared for a ``docs/REPORT_CLAIMS.md`` row marked live,
+as the page states them, for checking the written report against.
+
     python tools/run_verified_notebooks.py --out-dir _verified
 """
 
 from __future__ import annotations
 
 import argparse
+import json
 import os
+import re
 import subprocess
 import sys
 import time
@@ -50,7 +56,7 @@ def build(source: Path, out_dir: Path, timeout: int) -> tuple[bool, float, Path]
 
     # The kernel's cwd is the notebook's directory, which is the build dir and
     # not the repo — so the root is passed explicitly rather than searched for.
-    env = {**os.environ, "EDMONTON_REPO_ROOT": str(ROOT)}
+    env = {**os.environ, "EDMONTON_REPO_ROOT": str(ROOT), "REPORT_FIGURES_DIR": str(out_dir.resolve())}
 
     started = time.monotonic()
     run = subprocess.run(
@@ -83,6 +89,32 @@ def build(source: Path, out_dir: Path, timeout: int) -> tuple[bool, float, Path]
     return run.returncode == 0, elapsed, log_path
 
 
+def render_report_figures(out_dir: Path, status: dict, commit: str, today: str) -> str:
+    """One table of every notebook's declared report figures; consumes the JSON."""
+    rows = []
+    for f in sorted(out_dir.glob("*.figures.json")):
+        page = f.name.removesuffix(".figures.json")
+        for rid, values in json.loads(f.read_text()).items():
+            rows += [(rid, label, value, page) for label, value in values]
+        f.unlink()
+    order = lambda r: (re.match(r"[A-Z]+", r[0]).group(), int(re.search(r"\d+", r[0]).group()))
+    lines = [
+        "# Report figures (weekly-live values)",
+        "",
+        f"Generated {today} by `tools/run_verified_notebooks.py` from code at `{commit}`. "
+        f"Roll year {status.get('data_year')}, rate year {status.get('rate_year')}, "
+        f"served data generated {status.get('generated')}.",
+        "",
+        "Each value is quoted as its verified notebook states it this week. The claims "
+        "are in `docs/REPORT_CLAIMS.md`; a row marked live has its number here, not there.",
+        "",
+        "| id | figure | value | page |",
+        "|---|---|---|---|",
+    ]
+    lines += [f"| {r} | {label} | {value} | `{page}` |" for r, label, value, page in sorted(rows, key=order)]
+    return "\n".join(lines) + "\n"
+
+
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--out-dir", type=Path, default=ROOT / "_verified")
@@ -98,6 +130,8 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     args.out_dir.mkdir(parents=True, exist_ok=True)
+    for stale in args.out_dir.glob("*.figures.json"):
+        stale.unlink()
     failures = []
 
     for source in sources:
@@ -117,6 +151,15 @@ def main(argv: list[str] | None = None) -> int:
     if failures:
         print(f"FAILED: {', '.join(failures)}", file=sys.stderr)
         return 1
+    # A partial run would publish a table missing whole pages' figures.
+    if not args.only:
+        commit = subprocess.run(["git", "rev-parse", "--short", "HEAD"], cwd=ROOT,
+                                capture_output=True, text=True).stdout.strip() or "unknown"
+        status = json.loads((ROOT / "web" / "data" / "status.json").read_text())
+        out = args.out_dir / "REPORT_FIGURES.md"
+        out.write_text(render_report_figures(args.out_dir, status, commit,
+                                             time.strftime("%Y-%m-%d", time.gmtime())))
+        print(f"report figures -> {out}")
     return 0
 
 

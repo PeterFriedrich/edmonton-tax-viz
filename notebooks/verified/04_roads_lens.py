@@ -71,6 +71,18 @@ def check(ok: bool, claim: str, detail: str = "") -> None:
     print(f"  [{'PASS' if ok else 'FAIL'}] {claim}{'  — ' + detail if detail else ''}")
 
 
+# Rows of docs/REPORT_CLAIMS.md marked **live** that this page sources. Each id
+# must be emitted by figure() below; the run writes them for the report's
+# REPORT_FIGURES.md, and tests/test_report_figures.py holds the register to it.
+REPORT_IDS = ('R9',)
+FIGURES: dict[str, list[tuple[str, str]]] = {}
+
+
+def figure(rid: str, label: str, value: str) -> None:
+    """Record a value this page states, as the page states it, for the report."""
+    FIGURES.setdefault(rid, []).append((label, value))
+
+
 def md(text: str) -> None:
     # A pair of bare `$` reads as TeX math delimiters in the renderer.
     display(Markdown(text.replace("$", r"\$")))
@@ -174,6 +186,7 @@ check(km_assigned <= km_in + 1e-6, "clipping to neighbourhoods adds no road leng
       f"{km_assigned:,.3f} km out of {km_in:,.3f} km in")
 check(pct_outside < 1.0, "less than 1% of City road lies outside every neighbourhood",
       f"{pct_outside:.2f}%")
+figure("R9", "share of City road outside every neighbourhood boundary", f"{pct_outside:.2f}%")
 
 # %% [markdown]
 # **The boundary split conserves length.** A shared piece is replaced by k
@@ -312,6 +325,12 @@ if prev is not None:
         md("| neighbourhood | last run | this run | change |\n|---|---|---|---|\n" + "\n".join(
             f"| {r.neighbourhood_name} | {r.road_m_per_acre_prev:.2f} | {r.road_m_per_acre:.2f} | {r.change:+.1%} |"
             for r in moved.head(15).itertuples()))
+
+# %%
+check(set(FIGURES) == set(REPORT_IDS), "every report figure this page declares was emitted",
+      f"missing {sorted(set(REPORT_IDS) - set(FIGURES))}, undeclared {sorted(set(FIGURES) - set(REPORT_IDS))}")
+if os.environ.get("REPORT_FIGURES_DIR"):
+    Path(os.environ["REPORT_FIGURES_DIR"], "04_roads_lens.figures.json").write_text(json.dumps(FIGURES))
 
 # %%
 failed = [c for c in CHECKS if not c[0]]
