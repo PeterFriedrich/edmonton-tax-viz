@@ -88,16 +88,10 @@ against `docs/REPORT_CLAIMS.md`. No report text is copied into the repo.
   the server session's `gdocs.py`: it writes whole tabs as a service account.
 - **Press Sync before a report round**, so Claude web checks against the
   current register.
-- **Reply format for a report round** — one table, one row per claim found in
-  the doc:
-
-  | doc passage (short quote) | register row | verdict | note |
-  |---|---|---|---|
-
-  Verdict is one of `matches`, `contradicts`, `withdrawn` (the doc states an
-  X-row claim), `contested` (the row's status is contested) or `no row`. A
-  `no row` claim is reported, never silently accepted: either it gets a row
-  with a proof pointer, or it comes out of the report.
+- **The round's instructions and reply format are in `docs/REPORT_CLAIMS.md`
+  "Running a check round"** (moved there 2026-11-02, so they sync with the
+  register and the prompt is one line: "run a check round on <Doc link>").
 - File the reply in `/home/opc/research/edmonton-tax-viz/` as for any round,
-  then triage: register rows into `docs/REPORT_CLAIMS.md`, doc fixes into
-  comments on the doc.
+  log it in that folder's `report_docs.md` (which also holds the Doc links,
+  kept out of this public repo), then triage: register rows into
+  `docs/REPORT_CLAIMS.md`, doc fixes into comments on the doc.
