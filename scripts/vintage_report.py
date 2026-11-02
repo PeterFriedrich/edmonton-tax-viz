@@ -64,6 +64,9 @@ ROADS_URL = "https://data.edmonton.ca/resource/9j8t-zm52.json"
 
 OK, ACTION, UNKNOWN = "OK", "ACTION", "UNKNOWN"
 
+# Must equal `STALE_DAYS` in web/index.html (tests/test_vintage_report.py).
+STALE_DAYS = 14
+
 # `mill_rates.json` key -> the `tax_rate_type` pwis-wc4c publishes it under.
 RATE_TYPES = {
     "municipal": "Municipal",
@@ -664,19 +667,25 @@ def check_todo_branch_refs():
 def check_refresh_heartbeat(today=None):
     """Days since the weekly refresh last ran, off `status.json`'s `last_checked`.
 
-    A refresh that stops running fails nothing: no job, no issue. Until this row
-    the only signal was the page's own stale banner, which a visitor sees before
-    Peter does. `last_checked` bumps on every run; 14 days matches `STALE_DAYS`
-    in `web/index.html`, the day that banner goes up.
+    `last_checked` bumps on every run, so its age is the time since the last
+    one. 14 days is `STALE_DAYS` in `web/index.html`, the day the site's own
+    stale-data banner goes up (pinned together by a test). Monthly, so this can
+    trail that banner by weeks: it is a second channel that reaches Peter, not
+    an early warning. If GitHub disables the repo's schedules, this job stops too.
     """
     today = today or dt.date.today()
-    last = dt.date.fromisoformat(json.loads(STATUS_JSON.read_text())["last_checked"])
+    try:
+        last = dt.date.fromisoformat(json.loads(STATUS_JSON.read_text())["last_checked"])
+    except (OSError, KeyError, TypeError, ValueError) as exc:
+        return (UNKNOWN, "Weekly refresh",
+                f"Could not read `last_checked` from `status.json` ({exc!r}), so the "
+                f"site's stale-data banner cannot work either. `docs/RUNBOOK.md` §3.")
     days = (today - last).days
-    if days < 14:
+    if days < STALE_DAYS:
         return (OK, "Weekly refresh", f"Last ran {last} ({days} days ago).")
     return (ACTION, "Weekly refresh",
-            f"**Last ran {last}, {days} days ago** — two weekly runs missed, "
-            f"and the site is showing its stale-data banner. Check `gh run list "
+            f"**Last ran {last}, {days} days ago.** The site shows its stale-data "
+            f"banner unless a backend banner outranks it. Check `gh run list "
             f"--workflow refresh.yml` and the `HEARTBEAT_TOKEN` PAT. "
             f"`docs/RUNBOOK.md` §3.")
 

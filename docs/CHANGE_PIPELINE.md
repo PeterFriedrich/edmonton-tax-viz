@@ -207,10 +207,13 @@ which hold by habit) is in §"This project's fit" below.
      per-source floor was declined (`DECISIONS.md` 2026-10-05); reads are
      full-table; the commit lands after the guards; one repo-scoped PAT. A
      stopped refresh now gets a digest row (`check_refresh_heartbeat`, 14
-     days, the same threshold as the site banner), and the digest's piped
-     step runs under `shell: bash` so a crash can't file an empty issue.
-     Still uncovered: nothing outside the digest notices the digest itself
-     not running; its absence on the 1st is the only signal.
+     days, the site banner's own threshold). It is monthly, so it trails the
+     banner by up to a month, and it dies with the refresh if GitHub disables
+     the repo's schedules. The digest's piped step now runs under `shell: bash`,
+     so a crash fails the step that crashed. A crash still files no issue (it
+     never did: the title output is never written); the failed-run email is
+     the signal. Still uncovered: a check from outside GitHub, and the digest
+     itself not running.
    - Roll back: `git revert` reaches the live site only through the next
      workflow run, and a refresh run re-downloads. There is no
      deploy-without-regenerate path (`docs/RUNBOOK.md` §4, known gap).

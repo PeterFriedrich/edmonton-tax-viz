@@ -1079,13 +1079,32 @@ def test_acknowledgement_does_not_reach_the_published_manifest():
     assert published["year"] == 2025
 
 
+def test_refresh_heartbeat_threshold_is_the_sites(tmp_path):
+    """The row claims the banner is up; that is only true at the page's own number."""
+    import re
+    page = (vr.ROOT / "web" / "index.html").read_text()
+    assert int(re.search(r"const STALE_DAYS = (\d+);", page).group(1)) == vr.STALE_DAYS
+
+
+def test_refresh_heartbeat_is_in_the_digest():
+    """The digest is wired by MEMBERSHIP; dropping a name from CHECKS is silent."""
+    assert vr.check_refresh_heartbeat in vr.CHECKS
+
+
 def test_refresh_heartbeat_ok_the_day_before_the_banner(tmp_path, monkeypatch):
     monkeypatch.setattr(vr, "STATUS_JSON", _write(tmp_path, "st.json", {"last_checked": "2026-10-20"}))
     assert vr.check_refresh_heartbeat(today=dt.date(2026, 11, 2))[0] == vr.OK
 
 
 def test_refresh_heartbeat_flags_on_the_day_the_banner_goes_up(tmp_path, monkeypatch):
-    # The site's stalenessBanner fires at days >= STALE_DAYS (14).
+    # The site's stalenessBanner fires at days >= STALE_DAYS.
     monkeypatch.setattr(vr, "STATUS_JSON", _write(tmp_path, "st.json", {"last_checked": "2026-10-19"}))
     status, _, detail = vr.check_refresh_heartbeat(today=dt.date(2026, 11, 2))
     assert status == vr.ACTION and "14 days ago" in detail
+
+
+@pytest.mark.parametrize("payload", [{}, {"last_checked": None}, {"last_checked": "soon"}])
+def test_refresh_heartbeat_unreadable_is_unknown_and_named(tmp_path, monkeypatch, payload):
+    monkeypatch.setattr(vr, "STATUS_JSON", _write(tmp_path, "st.json", payload))
+    status, name, _ = vr.check_refresh_heartbeat(today=dt.date(2026, 11, 2))
+    assert (status, name) == (vr.UNKNOWN, "Weekly refresh")
