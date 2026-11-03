@@ -12,6 +12,15 @@
 > wrong, ranked." A final "what did the ranking miss?" pass is part of the job
 > (see [§4](#4-completeness-pass)).
 
+> **Status 2026-11-03 (S239 re-run, `docs/FINDINGS_data_integrity_rerun.md`).**
+> Facts below that have moved since this brief was written, so a reader does
+> not chase them: `ASSESSMENT_YEAR` is **2026**; `load_zoning.DEFAULT_CATEGORY`
+> is **`other`**, not `nonres`; only **one** unmatched assessment name remains
+> (OLIVER, $500); **T2 is guarded** — `check_roll_year_against_fir.py` gates the
+> weekly refresh; T4, T7 and T8 have had their own audits (`AUDIT_LEDGER.md`).
+> Line numbers (`~ln`) are stale — look symbols up. The ranked targets
+> themselves still stand.
+
 ---
 
 ## 0. What you are optimizing for
