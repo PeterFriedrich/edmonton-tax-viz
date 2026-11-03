@@ -618,7 +618,7 @@ per neighbourhood → drives the colour-scale set-aside. See `SPEC_revenue.md`
   codes are mostly River Valley special areas (Hawrelak, Muttart) but `AED` =
   Arena/Entertainment District (downtown), `ALA` = Ambleside apartments. Use an
   **explicit `code → category` dictionary** (exactly **95 base codes** confirmed
-  2026-06-30; `description` + `url` make each obvious). Lives in `src/load_zoning.py`.
+  2026-06-30, **96** since `RTCC` was added 2026-11-03; `description` + `url` make each obvious). Lives in `src/load_zoning.py`.
 - **`url` cross-check (confirmed 2026-06-30).** The `url` path's bylaw section is a
   useful *verification* signal but is NOT a drop-in category — groups mix set-aside and
   developed codes. The `open-space-and-urban-services-zones` group is the clearest case:
@@ -662,8 +662,8 @@ per neighbourhood → drives the colour-scale set-aside. See `SPEC_revenue.md`
   Heritage Area and `MMS` Marquis Main Street are mixed (ground-floor retail +
   res/office above); `MED`/`AED` entertainment districts are commercial. Unknown
   codes now default to `other` (on scale, claimed as no specific use, flagged
-  loudly) instead of `nonres`. `frac_other` = 0 on current data (all 95 codes
-  mapped). ⚠️ **Updated 2026-11-03:** upstream gained `RTCC` (Riverview Town Centre
+  loudly) instead of `nonres`. `frac_other` = 0 on current data (all 96 codes
+  mapped; 95 before 2026-11-03). ⚠️ **Updated 2026-11-03:** upstream gained `RTCC` (Riverview Town Centre
   Commercial; `url` = `legacy`, its page is
   `…/riverview-town-centre-special-area/3101-rtcc-…`), which left THE UPLANDS 2.7%
   `other` until it was mapped to `mix`: its purpose is "a diverse and compatible mix

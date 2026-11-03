@@ -120,13 +120,15 @@ ZONE_RUNOFF = {
     # --- [aligned] commercial: general / downtown / centres -> CB/CG -------
     "CCA": 0.75, "JAMSC": 0.75, "AED": 0.75, "MED": 0.75, "MRC": 0.75,
     "ASC": 0.75, "AUVC": 0.75, "ECB": 0.75, "TC-C": 0.75, "UC3ES": 0.75,
+    # RTCC is categorised mix (purpose names housing) but paved like TC-C:
+    # "commercial focus", hotel / entertainment / office permitted.
+    "RTCC": 0.75,
 
     # --- [aligned] industrial -> IM/IH --------------------------------------
     "EIB": 0.75, "EIM": 0.75, "ILES": 0.75, "IBES": 0.75,
 
     # --- [aligned] mixed: neighbourhood main-street / village -> MUN -------
     "MMS": 0.65, "CMUV": 0.65, "GVC": 0.65, "TC-MU": 0.65,
-    "RTCC": 0.65,
 
     # --- [aligned] mixed: downtown / major -> MU ----------------------------
     "CMU": 0.75, "HA": 0.75, "UW": 0.75, "MMUT": 0.75,
