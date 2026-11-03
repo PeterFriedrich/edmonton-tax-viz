@@ -72,6 +72,7 @@ has silently stopped running. Green months are the proof of life.
 | Road classes | the road feed's `functional_class_code` VOCABULARY no longer matches `CLASS_GROUP` — a new code, a mapped one gone, or a City road row with no class at all. Its length is held in `road_m_unknown`, OUT of `road_m_total` and off the map, until the code is mapped — so the metric is briefly LOW for that hood, not wrong in the charged direction (changed 2026-09-09; it used to be billed as `local`) | map it in `src/load_roads.CLASS_GROUP` by FUNCTION, `data/DATA.md` §6 |
 | TODO branch refs | an OPEN `TODO.md` item points at a branch that no longer exists on origin — the work usually SHIPPED and the item never closed | §0d |
 | Site banner | a banner is up in `status.json` | §1 step 10 |
+| Weekly refresh | `status.json`'s `last_checked` is 14+ days old: the refresh has stopped, and the site is already showing visitors its stale-data banner (monthly, so it trails that banner) | §3 |
 
 ⚠️ **A network failure reports `❓ UNKNOWN`, never `⚠️ ACTION`** — same rule as
 `check_year_alignment.py`: a guard must not manufacture an alarm out of an

@@ -49,6 +49,7 @@ jobs:
       # output, not the exit code. A non-zero exit here would mean a crash.
       - name: Build the digest
         id: digest
+        shell: bash   # pipefail: without it `tee` masks a crash and an empty issue is filed
         run: python scripts/vintage_report.py | tee digest.md
 
       # Idempotent: `gh label create` fails loudly if the label already exists,

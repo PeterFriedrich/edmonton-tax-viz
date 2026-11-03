@@ -202,8 +202,18 @@ which hold by habit) is in §"This project's fit" below.
      record a run as done only after its output landed; something outside
      the job notices a job that never ran (GitHub disables a scheduled Action
      after 60 days without repo activity); one token per repo, write access
-     only where the job writes. Not yet checked against `refresh.yml`,
-     `evidence-recheck.yml` or the vintage digest.
+     only where the job writes. Checked 2026-11-02 against `refresh.yml`,
+     `evidence-recheck.yml` and the vintage digest: a 0-row read fails; the
+     per-source floor was declined (`DECISIONS.md` 2026-10-05); reads are
+     full-table; the commit lands after the guards; one repo-scoped PAT. A
+     stopped refresh now gets a digest row (`check_refresh_heartbeat`, 14
+     days, the site banner's own threshold). It is monthly, so it trails the
+     banner by up to a month, and it dies with the refresh if GitHub disables
+     the repo's schedules. The digest's piped step now runs under `shell: bash`,
+     so a crash fails the step that crashed. A crash still files no issue (it
+     never did: the title output is never written); the failed-run email is
+     the signal. Still uncovered: a check from outside GitHub, and the digest
+     itself not running.
    - Roll back: `git revert` reaches the live site only through the next
      workflow run, and a refresh run re-downloads. There is no
      deploy-without-regenerate path (`docs/RUNBOOK.md` §4, known gap).
