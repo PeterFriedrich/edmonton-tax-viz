@@ -2,8 +2,9 @@
 to derive each neighbourhood's set-aside share (never + not-yet land).
 
 See docs/SPEC_revenue.md (Update 2026-06-29), docs/ARCHITECTURE.md §load_zoning,
-and data/DATA.md §5. Categorization is an EXPLICIT code→category dict (95 base
-codes confirmed 2026-06-30) — never keyword/prefix heuristics.
+and data/DATA.md §5. Categorization is an EXPLICIT code→category dict (96 base
+codes; 95 confirmed 2026-06-30, RTCC added 2026-11-03) — never keyword/prefix
+heuristics.
 """
 
 import json
@@ -165,6 +166,8 @@ ZONE_CATEGORY = {
     "TC-MU": "mix",      # Town Center Mixed Use (Heritage Valley)
     "RCRM": "mix",       # River Crossing Medium Scale Zone (redevelopment)
     "RCRL": "mix",       # River Crossing Large Scale Zone (redevelopment)
+    "RTCC": "mix",       # Riverview Town Centre Commercial (purpose = com + res + inst,
+                         # "commercial focus"; like GVC, not TC-C, whose purpose has no res)
 
     # --- dc: Direct Control — bespoke site-specific bylaws --------------------
     "DC": "dc",          # Direct Control

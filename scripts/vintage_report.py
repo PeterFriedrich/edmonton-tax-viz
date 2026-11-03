@@ -745,7 +745,8 @@ def check_zoning_bylaw(timeout=60):
     like from here, and `src/load_zoning.ZONE_CATEGORY` — built by hand from
     those 95 codes and their bylaw sections (`data/DATA.md` §5) — is the record
     of which bylaw this project read. Measured 2026-09-08: 95 upstream base
-    codes, 95 in the dict, **both directions empty**.
+    codes, 95 in the dict, **both directions empty**; 96 = 96 since `RTCC`
+    was mapped 2026-11-03 (an addition, not a rename).
 
     ⚠️ This BOUNDS the `zoning 2024` claim; it does not prove it. An amendment
     can add a zone without replacing the bylaw, which is why a difference is

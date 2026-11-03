@@ -62,6 +62,10 @@ def test_categorize_nonres_split_resolves_misleading_names():
     assert list(_categorize(pd.Series(["UW", "HA", "MMS"]))) == ["mix"] * 3
     assert list(_categorize(pd.Series(["BE"]))) == ["ind"]
     assert list(_categorize(pd.Series(["MED", "AED"]))) == ["com"] * 2
+    # RTCC is named "Commercial" but its purpose blends com + res + inst and it
+    # permits multi-unit housing, like GVC; TC-C's purpose names no housing.
+    assert list(_categorize(pd.Series(["RTCC", "GVC"]))) == ["mix"] * 2
+    assert list(_categorize(pd.Series(["TC-C"]))) == ["com"]
 
 
 def test_categorize_institutional_not_set_aside():
