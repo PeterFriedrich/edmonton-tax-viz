@@ -126,6 +126,7 @@ ZONE_RUNOFF = {
 
     # --- [aligned] mixed: neighbourhood main-street / village -> MUN -------
     "MMS": 0.65, "CMUV": 0.65, "GVC": 0.65, "TC-MU": 0.65,
+    "RTCC": 0.65,
 
     # --- [aligned] mixed: downtown / major -> MU ----------------------------
     "CMU": 0.75, "HA": 0.75, "UW": 0.75, "MMUT": 0.75,

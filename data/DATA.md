@@ -588,7 +588,7 @@ download date / `date_ext` for provenance.
 it until 2026-09-08.** There is no year field in this source, so what is checked is
 the **zone-code vocabulary**: `vintage_report.check_zoning_bylaw` compares the
 upstream base codes against `src/load_zoning.ZONE_CATEGORY` in **both directions**
-(95 = 95, empty both ways, measured 2026-09-08), and the constant itself is pinned
+(95 = 95, empty both ways, measured 2026-09-08; 96 = 96 after `RTCC` was mapped 2026-11-03), and the constant itself is pinned
 in `tests/test_generate_status.py`. ⚠️ **`ZONING_YEAR` moves with the BYLAW, never
 with the roll** — that is the one thing the January checklist must not do to it.
 
@@ -663,7 +663,13 @@ per neighbourhood → drives the colour-scale set-aside. See `SPEC_revenue.md`
   res/office above); `MED`/`AED` entertainment districts are commercial. Unknown
   codes now default to `other` (on scale, claimed as no specific use, flagged
   loudly) instead of `nonres`. `frac_other` = 0 on current data (all 95 codes
-  mapped). ⚠️ **There is no aggregate non-residential column.** `frac_nonres`
+  mapped). ⚠️ **Updated 2026-11-03:** upstream gained `RTCC` (Riverview Town Centre
+  Commercial; `url` = `legacy`, its page is
+  `…/riverview-town-centre-special-area/3101-rtcc-…`), which left THE UPLANDS 2.7%
+  `other` until it was mapped to `mix`: its purpose is "a diverse and compatible mix
+  of Commercial, Residential and institutional Uses, with a commercial focus" and it
+  permits Multi-unit/Row Housing (cf. `GVC` → `mix`; `TC-C`, whose purpose names no
+  housing → `com`). ⚠️ **There is no aggregate non-residential column.** `frac_nonres`
   (com+ind+mix+dc+other) was removed 2026-08-31 — nothing consumed it and it
   never reached the served GeoJSON, and it was the one place unclassified land
   was asserted as a non-residential use. The monthly digest reports a non-zero
