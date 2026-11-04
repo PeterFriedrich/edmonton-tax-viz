@@ -834,6 +834,14 @@ preload still holds (12/12). What is left:
 
 - [ ] **Delete `load_assessment`'s unused `is_exempt` column.** Computed, documented and returned; no pipeline code reads it (`src/`, `scripts/`, `main.py`, grepped 2026-11-03). It IS asserted in `tests/test_load_assessment.py`, carried in other test fixtures, and printed in the dataframe preview on the published `web/verified/01_money_lens.html`, so the PR changes that page's table. No number changes; `src/` PR, Peter merges.
 
+### `/code-review` control-run finds (OPEN 2026-11-04 S240; merged #725 and #742, no later fix)
+
+One small tools/tests PR, Peter merges. Neither touches a published number.
+
+- [ ] **`verify-theme.js` cannot run through `verify.js`.** It takes the site ROOT (`${base}/index.html`, `${base}/dev-build-full/…`), but the runner hands every script a PAGE URL, so it requests `/index.html/index.html` (404). Measured 2026-11-04: `verify.js --serve web theme` gives 0 checks + a crash at `verify-theme.js:183`; `verify-theme.js http://127.0.0.1:P` direct gives 54 PASS. True in URL mode too, not just `--serve`. Fix in either script (strip a trailing `/<file>.html` in verify-theme, or special-case it in the runner). The other 42 scripts take a page URL.
+- [ ] **#742's mirror-fallback tests in `tests/test_build_reference_layers.py` cannot fail.** (1) `test_overpass_falls_through_to_a_mirror_and_says_so` asserts `OVERPASS_MIRRORS[0] in caplog.text`, which the "failed (…); trying <mirror>" line already satisfies, so deleting the "answered from the mirror" log stays green; assert on `"answered from the mirror"`. (2) `test_overpass_raises_when_every_server_fails` stays green if `_overpass` raises on the FIRST failure; record calls and assert `== [HIGHWAY_URL, *OVERPASS_MIRRORS]`. Falsify both by mutation.
+- [ ] Smaller, optional, same PR if cheap: `_overpass` treats a 200 with `remark: "runtime error…"` as success, so it never tries a mirror (pre-existing; `HIGHWAY_MIN_KM` 700 catches most truncation). `verify.js --serve`: no spawn `'error'` listener; the `python3` fallback is 3.6 on Oracle (no `--directory`); the page fetch has no timeout; `--page` without `--serve` is silently ignored.
+
 ### General backlog — the flat list (no parent item; predates the `###` headings above)
 
 ⚠️ **Everything from here down is its OWN top-level work, not a child of the
