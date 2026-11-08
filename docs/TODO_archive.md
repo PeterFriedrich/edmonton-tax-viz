@@ -8,6 +8,10 @@ Items are verbatim as they were closed, newest-moved first in the order they app
 
 ---
 
+- [x] **`verify-theme.js` cannot run through `verify.js` — fixed S240 (it cuts the page off the URL it is handed).** Through the runner on a built site: 114 checks, the only FAIL the known zone-tier colour `186,158,124,235`. ⚠️ **Corrected 2026-11-08:** the "54 PASS" direct run below was against `web/`, which has no `dev-build-full/`; it crashed after 54 checks too, uncounted. It takes the site ROOT (`${base}/index.html`, `${base}/dev-build-full/…`), but the runner hands every script a PAGE URL, so it requests `/index.html/index.html` (404). Measured 2026-11-04: `verify.js --serve web theme` gives 0 checks + a crash at `verify-theme.js:183`; `verify-theme.js http://127.0.0.1:P` direct gives 54 PASS. True in URL mode too, not just `--serve`. Fix in either script (strip a trailing `/<file>.html` in verify-theme, or special-case it in the runner). The other 42 scripts take a page URL.
+
+- [x] **#742's mirror-fallback tests in `tests/test_build_reference_layers.py` cannot fail — fixed S240; each new assertion fails under its mutant, the old one passed.** (1) `test_overpass_falls_through_to_a_mirror_and_says_so` asserts `OVERPASS_MIRRORS[0] in caplog.text`, which the "failed (…); trying <mirror>" line already satisfies, so deleting the "answered from the mirror" log stays green; assert on `"answered from the mirror"`. (2) `test_overpass_raises_when_every_server_fails` stays green if `_overpass` raises on the FIRST failure; record calls and assert `== [HIGHWAY_URL, *OVERPASS_MIRRORS]`. Falsify both by mutation.
+
 - [x] **`verify.js --serve <root>` — built S227 (#725, merged): serve on a free port, md5-check the root, run, kill by pid.**
   Removes ~324 plumbing calls (~2.5% of working time) and the reason for `pkill -f` (exit 144,
   28× in 19 sessions). Tools change: Peter.

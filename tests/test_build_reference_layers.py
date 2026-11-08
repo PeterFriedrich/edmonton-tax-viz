@@ -86,16 +86,27 @@ def test_overpass_falls_through_to_a_mirror_and_says_so(monkeypatch, caplog):
     with caplog.at_level("WARNING"):
         assert b._overpass("q") == {"elements": ["from-mirror"]}
     assert calls == [b.HIGHWAY_URL, b.OVERPASS_MIRRORS[0]]
-    assert b.OVERPASS_MIRRORS[0] in caplog.text
+    # The URL alone is already in the "trying <mirror>" line; this is the one
+    # that says which server's data the build kept.
+    assert f"answered from the mirror {b.OVERPASS_MIRRORS[0]}" in caplog.text
 
 
 def test_overpass_raises_when_every_server_fails(monkeypatch):
-    class _Resp:
-        def raise_for_status(self): raise b.requests.HTTPError("504 Server Error")
+    calls = []
 
-    monkeypatch.setattr(b.requests, "post", lambda *a, **k: _Resp())
-    with pytest.raises(b.requests.HTTPError):
+    class _Resp:
+        def __init__(self, url): self.url = url
+        def raise_for_status(self): raise b.requests.HTTPError(f"504 from {self.url}")
+
+    def fake_post(url, **kwargs):
+        calls.append(url)
+        return _Resp(url)
+
+    monkeypatch.setattr(b.requests, "post", fake_post)
+    # The LAST server's error is the one raised; the earlier ones are logged.
+    with pytest.raises(b.requests.HTTPError, match=f"504 from {b.OVERPASS_MIRRORS[-1]}"):
         b._overpass("q")
+    assert calls == [b.HIGHWAY_URL, *b.OVERPASS_MIRRORS]
 
 
 def test_ways_without_geometry_are_reported_not_silently_dropped(monkeypatch, caplog):
