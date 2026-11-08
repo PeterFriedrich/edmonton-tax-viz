@@ -15,12 +15,14 @@
 // Each state switches on what is off by default (labels, every service, both
 // amenity bands, a selected hood) so the layers that carry those colours exist.
 //   node verify-theme.js <base-url>   (the site root: checks index.html and dev-build-full/)
+// Needs the BUILT tree (`scripts/build_site.py --out <dir>`): `web/` has no
+// dev-build-full/, so `verify.js --serve web theme` fails its full-build states.
 const { chromium } = require('playwright');
 // verify.js hands every script a page URL (…/index.html, or
 // …/dev-build-full/index.html under --page); this one wants the root, so the
 // page is cut back off. Without it, a runner sweep 404'd every state.
-const base = (process.argv[2] || '')
-  .replace(/\/(dev-build-full\/)?[^/]*\.html([?#].*)?$/, '').replace(/\/$/, '');
+const base = (process.argv[2] || '').replace(/[?#].*$/, '')
+  .replace(/\/(dev-build-full\/?)?([^/]*\.html)?$/, '');
 // The sentinel ramp (one colour), roof edge and backdrop the probe theme swaps in.
 const PROBE_RAMP = [5, 250, 7], PROBE_EDGE = [9, 250, 9, 201], PROBE_BG = '#123456';
 

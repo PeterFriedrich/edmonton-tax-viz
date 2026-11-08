@@ -95,14 +95,16 @@ def test_overpass_raises_when_every_server_fails(monkeypatch):
     calls = []
 
     class _Resp:
-        def raise_for_status(self): raise b.requests.HTTPError("504 Server Error")
+        def __init__(self, url): self.url = url
+        def raise_for_status(self): raise b.requests.HTTPError(f"504 from {self.url}")
 
     def fake_post(url, **kwargs):
         calls.append(url)
-        return _Resp()
+        return _Resp(url)
 
     monkeypatch.setattr(b.requests, "post", fake_post)
-    with pytest.raises(b.requests.HTTPError):
+    # The LAST server's error is the one raised; the earlier ones are logged.
+    with pytest.raises(b.requests.HTTPError, match=f"504 from {b.OVERPASS_MIRRORS[-1]}"):
         b._overpass("q")
     assert calls == [b.HIGHWAY_URL, *b.OVERPASS_MIRRORS]
 
