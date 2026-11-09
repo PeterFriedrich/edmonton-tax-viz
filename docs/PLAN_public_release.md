@@ -136,9 +136,18 @@ after launch.**
   tooltip's "% of revenue is residential"._
 - **Glass** (100 m grid, both denominators) — post-regroup a *mode of Money*,
   not a separate view (still ships public)
-- **Services view** (roads; stormwater MODELED; fire demand; water MODELED)
+- **Services view, roads only**: supply (`road_m_per_acre`) and road cost on
+  both bases (operating and lifecycle). Stormwater, water, fire, transit and
+  bike are full-build only (DECISIONS 2026-09-02).
 - **Ratio view** (revenue per road metre)
-- **Uses view** (zoning composition, real bylaw geometry)
+- **Development view** (new dwelling units per acre from permits)
+- ~~**Uses view**~~: full-build only since 2026-07-24.
+
+⚠️ **Corrected 2026-11-09:** this list said Services carried stormwater, fire
+and water, listed Uses, and left out Development. It now matches the public
+build's `#views` (Money · Services · Ratio · Development) and the `pub: true`
+entries in `SERVICES`. Peter, 2026-11-09: the first release is the public
+build as it stands.
 
 **OUT (unchanged decisions, now release-scoped):**
 - Transit — Phase 2 regardless of the fork.
