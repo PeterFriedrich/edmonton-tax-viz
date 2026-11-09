@@ -256,6 +256,9 @@ async function readerPaths() {
     '88,90,102': 'Uses "Unclassified": no zoning feature carries it today',
     '70,72,84': 'unzoned revenue share: HTML panel only, never a layer',
     '166,140,108,230': 'zone-name labels: same tc(d.col) path as the three tiers drawn here',
+    // Measured 2026-11-09: its one anchor projects to x≈1259 of 1280 at HOME,
+    // under #optpanel, so the sweep drops it; kept only from 1440x900 at z9.
+    '186,158,124,235': 'Industrial Heartland (REF_TIERS.zone): off-frame at 1280x800; same tc(d.col) path as the three tiers drawn here',
   };
   const unseen = [...new Set(allDarks.map(d => d.join(',')))].filter(k => !covered.has(k));
   for (const k of unseen.filter(k => UNDRAWN[k])) console.log(`NOTE  not drawn: ${k} (${UNDRAWN[k]})`);
