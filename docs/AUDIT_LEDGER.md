@@ -533,6 +533,16 @@ Built and verified by Opus 5.5 alone.
     decision's "second concurrent author" trigger. Written by the builder's
     model, so **get the findings read cross-model**. ⚠️ **Same-model run executed 2026-10-10 (S225)** — `docs/FINDINGS_dev_velocity.md`; a cross-model read is still open (its §11).
 
+### S241 — marked 2026-11-09, briefed
+
+21. **The public roads lens, before the first release** (Peter, 2026-11-09:
+    the first release is the public build as it stands). **Briefed:**
+    `docs/FABLE_AUDIT_roads_release.md`, decision stack L0–L6 over the three
+    public road layers and the Ratio view. Its last cross-model read was S172;
+    S187, S188, S199 and S202 were Opus-only. **Run on Fable.** Next in line:
+    a brief on whether the levy is a fair "revenue" numerator (A1/A2, the
+    FIR +11% gap).
+
 ## Never audited (candidates, roughly ranked)
 
 Surfaces no audit run has covered, **re-ranked 2026-09-05 (S140)** at Peter's
