@@ -253,7 +253,6 @@ async function readerPaths() {
   // Named exemptions, each with the reason it cannot be drawn here. A new
   // themed colour that no state draws fails until it is drawn or listed.
   const UNDRAWN = {
-    '88,90,102': 'Uses "Unclassified": no zoning feature carries it today',
     '70,72,84': 'unzoned revenue share: HTML panel only, never a layer',
     // Measured 2026-11-09: its one anchor projects to x≈1259 of 1280 at HOME,
     // under #optpanel, so the sweep drops it; kept only from 1440x900 at z9.
