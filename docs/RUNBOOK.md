@@ -11,6 +11,10 @@ year-alignment check → `main.py --skip-png` → commit `web/data/` → deploy
 `web/` to Pages.
 **Failure is safe by default** — any failed run leaves the site serving the
 last committed data. Nothing here is ever a same-day emergency.
+**A failed refresh files no issue; GitHub's own "Run failed" email is the
+channel**, and it reaches Peter (confirmed 2026-11-09). Measured then: 5 of 19
+scheduled runs failed, one (2026-11-09) a GitHub "Internal server error" with
+0 jobs, fixed by re-running via `workflow_dispatch`.
 
 **Also unattended:** `.github/workflows/vintage-digest.yml`, 1st of the month
 14:00 UTC — files a GitHub issue answering *"what needs my attention?"* (§0
