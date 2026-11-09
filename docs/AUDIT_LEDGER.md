@@ -543,6 +543,12 @@ Built and verified by Opus 5.5 alone.
     a brief on whether the levy is a fair "revenue" numerator (A1/A2, the
     FIR +11% gap).
 
+22. **Is the modelled levy a fair "what properties pay the City"?** **Briefed:**
+    `docs/FABLE_AUDIT_levy_as_revenue.md`, decision stack L0–L4 over the
+    numerator of every public Money metric, against FIR 2026 (+11.0%) and
+    A1/A2. Investigated 2026-08-25 and sized weekly, all same-model.
+    **Run on Fable**, after item 21.
+
 ## Never audited (candidates, roughly ranked)
 
 Surfaces no audit run has covered, **re-ranked 2026-09-05 (S140)** at Peter's
