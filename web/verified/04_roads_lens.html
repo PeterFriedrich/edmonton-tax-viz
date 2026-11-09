@@ -7824,7 +7824,7 @@ a.anchor-link {
 </head>
 <body class="jp-Notebook" data-jp-theme-light="true" data-jp-theme-name="JupyterLab Light">
 <main>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=a44c5554">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=c588e427">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7844,7 +7844,7 @@ is explained where it is checked.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=fc29f0f9">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=76e92a18">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7895,6 +7895,19 @@ is explained where it is checked.</p>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  [</span><span class="si">{</span><span class="s1">'PASS'</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">ok</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">'FAIL'</span><span class="si">}</span><span class="s2">] </span><span class="si">{</span><span class="n">claim</span><span class="si">}{</span><span class="s1">'  — '</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">detail</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">detail</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">''</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
 
+<span class="c1"># Rows of docs/REPORT_CLAIMS.md marked **live** that this page sources. Each id</span>
+<span class="c1"># must be emitted by figure() below; the run writes them for the report's</span>
+<span class="c1"># REPORT_FIGURES.md, and tests/test_report_figures.py holds the register to it.</span>
+<span class="n">REPORT_IDS</span> <span class="o">=</span> <span class="p">(</span><span class="s1">'R9'</span><span class="p">,)</span>
+<span class="n">FIGURES</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">figure</span><span class="p">(</span><span class="n">rid</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Record a value for the report and return it, so the page prints the same string."""</span>
+    <span class="n">FIGURES</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">rid</span><span class="p">,</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">label</span><span class="p">,</span> <span class="n">value</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">value</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">md</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="c1"># A pair of bare `$` reads as TeX math delimiters in the renderer.</span>
     <span class="n">display</span><span class="p">(</span><span class="n">Markdown</span><span class="p">(</span><span class="n">text</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"$"</span><span class="p">,</span> <span class="sa">r</span><span class="s2">"\$"</span><span class="p">)))</span>
@@ -7923,15 +7936,15 @@ is explained where it is checked.</p>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>served data generated: 2026-11-02
-executed:              2026-11-02 17:59 UTC
+<pre>served data generated: 2026-11-09
+executed:              2026-11-09 19:36 UTC
 </pre>
 </div>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=f56f7b95">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=f1f30176">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7950,7 +7963,7 @@ and what comes out.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=26893b4e">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=062646cd">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8006,7 +8019,8 @@ and what comes out.</p>
 <span class="n">md</span><span class="p">(</span><span class="sa">f</span><span class="s2">"""</span>
 <span class="s2">- **</span><span class="si">{</span><span class="n">km_in</span><span class="si">:</span><span class="s2">,.1f</span><span class="si">}</span><span class="s2"> km** of City road (alleys out) went into the clip.</span>
 <span class="s2">- **</span><span class="si">{</span><span class="n">km_assigned</span><span class="si">:</span><span class="s2">,.1f</span><span class="si">}</span><span class="s2"> km** landed inside a neighbourhood and **</span><span class="si">{</span><span class="n">km_outside</span><span class="si">:</span><span class="s2">,.1f</span><span class="si">}</span><span class="s2"> km</span>
-<span class="s2">  (</span><span class="si">{</span><span class="n">pct_outside</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">%)** lies outside every boundary.</span>
+<span class="s2">  (</span><span class="si">{</span><span class="n">figure</span><span class="p">(</span><span class="s2">"R9"</span><span class="p">,</span><span class="w"> </span><span class="s2">"share of City road outside every neighbourhood boundary"</span><span class="p">,</span><span class="w"> </span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">pct_outside</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">%"</span><span class="p">)</span><span class="si">}</span><span class="s2">)**</span>
+<span class="s2">  lies outside every boundary.</span>
 <span class="s2">- Of what landed, **</span><span class="si">{</span><span class="n">metric_km</span><span class="si">:</span><span class="s2">,.1f</span><span class="si">}</span><span class="s2"> km** is collector and local road: the metric.</span>
 <span class="s2">  **</span><span class="si">{</span><span class="n">roads</span><span class="p">[</span><span class="s1">'road_m_arterial'</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">1000</span><span class="si">:</span><span class="s2">,.1f</span><span class="si">}</span><span class="s2"> km** is arterial, kept out of it.</span>
 <span class="s2">- **</span><span class="si">{</span><span class="n">unknown_km</span><span class="si">:</span><span class="s2">,.3f</span><span class="si">}</span><span class="s2"> km** carries a road class the pipeline does not recognise.</span>
@@ -8034,7 +8048,8 @@ and what comes out.</p>
 <ul>
 <li><strong>5,030.9 km</strong> of City road (alleys out) went into the clip.</li>
 <li><strong>5,016.7 km</strong> landed inside a neighbourhood and <strong>14.2 km
-(0.28%)</strong> lies outside every boundary.</li>
+(0.28%)</strong>
+lies outside every boundary.</li>
 <li>Of what landed, <strong>3,658.6 km</strong> is collector and local road: the metric.
 <strong>1,357.9 km</strong> is arterial, kept out of it.</li>
 <li><strong>0.000 km</strong> carries a road class the pipeline does not recognise.
@@ -8045,7 +8060,7 @@ It is held out of the metric rather than guessed at.</li>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=181eb6f6">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=627a4003">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8061,7 +8076,7 @@ A larger share means the boundaries or the feed moved.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=9738e308">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=328d7678">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8093,7 +8108,7 @@ A larger share means the boundaries or the feed moved.</p>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=45ad06d2">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=c416f5d2">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8106,7 +8121,7 @@ road to must be one from the boundary file.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=6b66212f">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=24dec272">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8145,7 +8160,7 @@ road to must be one from the boundary file.</p>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=67e01d64">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=5c3d30e4">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8159,7 +8174,7 @@ large share of the network, and a per-neighbourhood check could not tell.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=835fbee8">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=eea66ead">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8190,7 +8205,7 @@ large share of the network, and a per-neighbourhood check could not tell.</p>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=83895fce">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=2a986d9d">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8203,7 +8218,7 @@ the served file, neighbourhood by neighbourhood.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=50caec3c">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=d592aa62">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8252,7 +8267,7 @@ in the boundary file but not served (no assessment data; data/DATA.md): LEWIS FA
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=941fea4d">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=b60419cc">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8267,7 +8282,7 @@ disagreed by up to 20%, so a split that drifts out of step shows up here.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=b9e83c43">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=ef7b2199">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8308,7 +8323,7 @@ disagreed by up to 20%, so a split that drifts out of step shows up here.</p>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=e99a8f30">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=13c418d8">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8322,7 +8337,7 @@ served length times the configured rate, with rounding the only difference.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=3d7594ee">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=b6c369ac">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8366,7 +8381,7 @@ served length times the configured rate, with rounding the only difference.</p>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=8d93c6f7">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=6cb74085">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8380,7 +8395,7 @@ the moves are seen.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=63d11200">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=66c182b2">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8422,40 +8437,50 @@ the moves are seen.</p>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-OutputArea-output" data-mime-type="text/markdown" tabindex="0">
-<p><strong>1</strong> neighbourhoods moved by more than 1% and <strong>1</strong> by more than 5%. <strong>0</strong> appear in only one of the two runs.</p>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-OutputArea-output" data-mime-type="text/markdown" tabindex="0">
-<table>
-<thead>
-<tr>
-<th>neighbourhood</th>
-<th>last run</th>
-<th>this run</th>
-<th>change</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>ALCES</td>
-<td>6.64</td>
-<td>9.50</td>
-<td>+43.2%</td>
-</tr>
-</tbody>
-</table>
+<p><strong>0</strong> neighbourhoods moved by more than 1% and <strong>0</strong> by more than 5%. <strong>0</strong> appear in only one of the two runs.</p>
 </div>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=2b4b2ce8">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=666093d8">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
 <div class="jp-InputPrompt jp-InputArea-prompt">In [10]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">check</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">FIGURES</span><span class="p">)</span> <span class="o">==</span> <span class="nb">set</span><span class="p">(</span><span class="n">REPORT_IDS</span><span class="p">),</span> <span class="s2">"every report figure this page declares was emitted"</span><span class="p">,</span>
+      <span class="sa">f</span><span class="s2">"missing </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">REPORT_IDS</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="nb">set</span><span class="p">(</span><span class="n">FIGURES</span><span class="p">))</span><span class="si">}</span><span class="s2">, undeclared </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">FIGURES</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="nb">set</span><span class="p">(</span><span class="n">REPORT_IDS</span><span class="p">))</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="n">check</span><span class="p">(</span><span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="s2">"nan"</span> <span class="ow">in</span> <span class="n">v</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">vals</span> <span class="ow">in</span> <span class="n">FIGURES</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">vals</span><span class="p">),</span>
+      <span class="s2">"no report figure is NaN"</span><span class="p">,</span> <span class="nb">str</span><span class="p">({</span><span class="n">r</span><span class="p">:</span> <span class="p">[</span><span class="n">v</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">vals</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span><span class="p">,</span> <span class="n">vals</span> <span class="ow">in</span> <span class="n">FIGURES</span><span class="o">.</span><span class="n">items</span><span class="p">()}))</span>
+<span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"REPORT_FIGURES_DIR"</span><span class="p">):</span>
+    <span class="n">Path</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"REPORT_FIGURES_DIR"</span><span class="p">],</span> <span class="s2">"04_roads_lens.figures.json"</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">FIGURES</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>  [PASS] every report figure this page declares was emitted  — missing [], undeclared []
+  [PASS] no report figure is NaN  — {'R9': ['0.28%']}
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=cb778c28">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [11]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">failed</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">CHECKS</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">c</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
@@ -8481,7 +8506,7 @@ the moves are seen.</p>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>15/15 invariants held
+<pre>17/17 invariants held
 
   [PASS] the clip reported its length accounting exactly once  — 1 record(s)
   [PASS] clipping to neighbourhoods adds no road length  — 5,016.697 km out of 5,030.914 km in
@@ -8498,6 +8523,8 @@ the moves are seen.</p>
   [PASS] the map's colour value matches served road metres per acre within 0.15  — 397 neighbourhoods drawn, max difference 0.054
   [PASS] served lifecycle cost per acre = road metres per acre × the configured rate  — max relative difference 4.9e-06
   [PASS] served operating cost per acre = road metres per acre × the configured rate  — max relative difference 7.4e-06
+  [PASS] every report figure this page declares was emitted  — missing [], undeclared []
+  [PASS] no report figure is NaN  — {'R9': ['0.28%']}
 
 All invariants held.
 </pre>

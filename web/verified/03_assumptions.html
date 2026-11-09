@@ -7824,7 +7824,7 @@ a.anchor-link {
 </head>
 <body class="jp-Notebook" data-jp-theme-light="true" data-jp-theme-name="JupyterLab Light">
 <main>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=b5410f0b">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=98abb701">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7846,7 +7846,7 @@ not which assumption matters more.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=34f395a8">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=e0eb17fe">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7897,6 +7897,19 @@ not which assumption matters more.</p>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  [</span><span class="si">{</span><span class="s1">'PASS'</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">ok</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">'FAIL'</span><span class="si">}</span><span class="s2">] </span><span class="si">{</span><span class="n">claim</span><span class="si">}{</span><span class="s1">'  — '</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">detail</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">detail</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">''</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
 
+<span class="c1"># Rows of docs/REPORT_CLAIMS.md marked **live** that this page sources. Each id</span>
+<span class="c1"># must be emitted by figure() below; the run writes them for the report's</span>
+<span class="c1"># REPORT_FIGURES.md, and tests/test_report_figures.py holds the register to it.</span>
+<span class="n">REPORT_IDS</span> <span class="o">=</span> <span class="p">(</span><span class="s1">'M10'</span><span class="p">,</span> <span class="s1">'E2'</span><span class="p">,</span> <span class="s1">'E4'</span><span class="p">,</span> <span class="s1">'R1'</span><span class="p">,</span> <span class="s1">'D1'</span><span class="p">)</span>
+<span class="n">FIGURES</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">figure</span><span class="p">(</span><span class="n">rid</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Record a value for the report and return it, so the page prints the same string."""</span>
+    <span class="n">FIGURES</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">rid</span><span class="p">,</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">label</span><span class="p">,</span> <span class="n">value</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">value</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">row</span><span class="p">(</span><span class="n">lens</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">assumption</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">share</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">of_what</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">direction</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">where</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="n">ROWS</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">lens</span><span class="o">=</span><span class="n">lens</span><span class="p">,</span> <span class="n">assumption</span><span class="o">=</span><span class="n">assumption</span><span class="p">,</span> <span class="n">share</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">share</span><span class="p">),</span>
                      <span class="n">of_what</span><span class="o">=</span><span class="n">of_what</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="n">direction</span><span class="p">,</span> <span class="n">where</span><span class="o">=</span><span class="n">where</span><span class="p">))</span>
@@ -7931,15 +7944,15 @@ not which assumption matters more.</p>
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>roll year / rate year: 2026 / 2026
-served data generated: 2026-11-02
-executed:              2026-11-02 17:59 UTC
+served data generated: 2026-11-09
+executed:              2026-11-09 19:35 UTC
 </pre>
 </div>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=eeae9b27">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=a2c3b241">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7952,7 +7965,7 @@ not re-implementations.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=1883324a">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=b60b111e">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7994,13 +8007,6 @@ not re-implementations.</p>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>revenue_by_zone: 1 propert(ies) in 1 unmatched zone code(s), defaulting to 'other': ['RTCC']
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>revenue_by_zone: 8 propert(ies) carrying $9239 of levy fell in NO zoning polygon (bucketed as 'unzoned')
 </pre>
 </div>
@@ -8015,7 +8021,7 @@ not re-implementations.</p>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=bbbc75ff">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=45b7e896">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8031,7 +8037,7 @@ is overstated. The map bands the hoods where this is large
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=90d7fb29">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=0b3e080c">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8047,6 +8053,8 @@ is overstated. The map bands the hoods where this is large
     <span class="s2">"FINDINGS_blurb_claims.md §6"</span><span class="p">)</span>
 <span class="n">row</span><span class="p">(</span><span class="s2">"Money (total)"</span><span class="p">,</span> <span class="s2">"levy on exempt-candidate zoning is counted as paid"</span><span class="p">,</span>
     <span class="n">exempt_total</span><span class="p">,</span> <span class="s2">"of total levy"</span><span class="p">,</span> <span class="s2">"may overstate"</span><span class="p">,</span> <span class="s2">"FINDINGS_exempt_institutional.md"</span><span class="p">)</span>
+<span class="n">figure</span><span class="p">(</span><span class="s2">"E2"</span><span class="p">,</span> <span class="s2">"share of total levy on exempt-candidate zoning"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">exempt_total</span><span class="si">:</span><span class="s2">.1%</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="n">figure</span><span class="p">(</span><span class="s2">"E4"</span><span class="p">,</span> <span class="s2">"share of non-residential levy on exempt-candidate zoning"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">exempt_nonres</span><span class="si">:</span><span class="s2">.1%</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
 <span class="n">served_exempt</span> <span class="o">=</span> <span class="p">(</span><span class="n">served</span><span class="p">[</span><span class="s2">"rev_frac_exempt"</span><span class="p">]</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">*</span> <span class="n">served</span><span class="p">[</span><span class="s2">"total_revenue"</span><span class="p">]</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> \
     <span class="o">/</span> <span class="n">served</span><span class="p">[</span><span class="s2">"total_revenue"</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
@@ -8066,15 +8074,15 @@ is overstated. The map bands the hoods where this is large
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>   16.4%  Money (non-residential): levy on exempt-candidate zoning is counted as paid
-    8.0%  Money (total): levy on exempt-candidate zoning is counted as paid
-  [PASS] the served per-hood exempt share rebuilds the citywide share recomputed from the roll  — served 8.04% vs roll 8.04%
+    8.1%  Money (total): levy on exempt-candidate zoning is counted as paid
+  [PASS] the served per-hood exempt share rebuilds the citywide share recomputed from the roll  — served 8.05% vs roll 8.05%
 </pre>
 </div>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=e75bba06">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=beef1080">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8089,7 +8097,7 @@ would have missed. It is not a bias on the map.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=fdbf71ef">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=ad9cfde7">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8120,7 +8128,7 @@ would have missed. It is not a bias on the map.</p>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=5798fcd7">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=d76f4c6c">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8133,7 +8141,7 @@ neighbourhood's land.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=a2da4ea2">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=bcb74c19">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8164,7 +8172,7 @@ neighbourhood's land.</p>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=eb7f0a6d">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=2bef55ea">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8175,7 +8183,7 @@ but they are not ranked (Methods §3).</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=7ebcc27d">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=e871c51d">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8206,7 +8214,7 @@ but they are not ranked (Methods §3).</p>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=9780fb2a">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=3b4ab5ab">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8217,7 +8225,7 @@ puts all its dollars in one cell. The lot-acre toggle is the counterweight.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=82394906">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=d6828595">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8227,9 +8235,11 @@ puts all its dollars in one cell. The lot-acre toggle is the counterweight.</p>
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">cell_m2</span> <span class="o">=</span> <span class="n">main</span><span class="o">.</span><span class="n">GRID_CELL_M</span> <span class="o">**</span> <span class="mi">2</span>
 <span class="n">big</span> <span class="o">=</span> <span class="n">roll</span><span class="p">[</span><span class="s2">"lot_size"</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">cell_m2</span>
+<span class="n">glass</span> <span class="o">=</span> <span class="n">roll</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">big</span><span class="p">,</span> <span class="s2">"levy"</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">/</span> <span class="n">LEVY</span>
 <span class="n">row</span><span class="p">(</span><span class="s2">"Glass"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"one point per account; the lot is bigger than a </span><span class="si">{</span><span class="n">main</span><span class="o">.</span><span class="n">GRID_CELL_M</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2"> m cell"</span><span class="p">,</span>
-    <span class="n">roll</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">big</span><span class="p">,</span> <span class="s2">"levy"</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">/</span> <span class="n">LEVY</span><span class="p">,</span> <span class="s2">"of total levy"</span><span class="p">,</span> <span class="s2">"concentrates dollars in one cell"</span><span class="p">,</span>
-    <span class="s2">"Methods §4"</span><span class="p">)</span>
+    <span class="n">glass</span><span class="p">,</span> <span class="s2">"of total levy"</span><span class="p">,</span> <span class="s2">"concentrates dollars in one cell"</span><span class="p">,</span> <span class="s2">"Methods §4"</span><span class="p">)</span>
+<span class="c1"># The table below prints every share at .1%; each figure() uses the same spec.</span>
+<span class="n">figure</span><span class="p">(</span><span class="s2">"M10"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"share of total levy on lots bigger than a </span><span class="si">{</span><span class="n">main</span><span class="o">.</span><span class="n">GRID_CELL_M</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2"> m cell"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">glass</span><span class="si">:</span><span class="s2">.1%</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -8246,10 +8256,16 @@ puts all its dollars in one cell. The lot-acre toggle is the counterweight.</p>
 </pre>
 </div>
 </div>
+<div class="jp-OutputArea-child jp-OutputArea-executeResult">
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[7]:</div>
+<div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
+<pre>'32.7%'</pre>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=5c6a5b81">
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=5904d0fc">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8261,7 +8277,7 @@ inventing where the missing share belongs.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=0bc31a28">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=00a0d3bc">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8293,7 +8309,7 @@ inventing where the missing share belongs.</p>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=527c3d5f">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=1bf4df13">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8306,7 +8322,7 @@ so the grid under-places dense growth (<code>docs/FINDINGS_blurb_claims.md</code
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=15fc6cf9">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=517fbccc">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8321,10 +8337,29 @@ so the grid under-places dense growth (<code>docs/FINDINGS_blurb_claims.md</code
     <span class="n">i</span> <span class="o">=</span> <span class="n">cols</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s2">"units"</span> <span class="o">+</span> <span class="n">suffix</span><span class="p">)</span>
     <span class="n">check</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">c</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">dev</span><span class="p">[</span><span class="s2">"cells"</span><span class="p">])</span> <span class="o">==</span> <span class="n">cov</span><span class="p">[</span><span class="s2">"units_geocoded"</span><span class="p">],</span>
           <span class="sa">f</span><span class="s2">"grid cells hold exactly the geocoded units (</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">)"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">cov</span><span class="p">[</span><span class="s1">'units_geocoded'</span><span class="p">]</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">off_share</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">cov</span><span class="p">[</span><span class="s2">"units_geocoded"</span><span class="p">]</span> <span class="o">/</span> <span class="n">cov</span><span class="p">[</span><span class="s2">"units"</span><span class="p">]</span>
     <span class="n">row</span><span class="p">(</span><span class="s2">"Development (grid)"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"homes permitted in the last </span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2"> with no location are off the grid"</span>
         <span class="k">if</span> <span class="n">window</span> <span class="o">!=</span> <span class="s2">"long"</span> <span class="k">else</span> <span class="s2">"homes permitted since 2009 with no location are off the grid"</span><span class="p">,</span>
-        <span class="mi">1</span> <span class="o">-</span> <span class="n">cov</span><span class="p">[</span><span class="s2">"units_geocoded"</span><span class="p">]</span> <span class="o">/</span> <span class="n">cov</span><span class="p">[</span><span class="s2">"units"</span><span class="p">],</span> <span class="sa">f</span><span class="s2">"of new homes (</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">)"</span><span class="p">,</span>
+        <span class="n">off_share</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"of new homes (</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">)"</span><span class="p">,</span>
         <span class="s2">"grid under-places them; the neighbourhood view counts them"</span><span class="p">,</span> <span class="s2">"FINDINGS_blurb_claims.md F4"</span><span class="p">)</span>
+    <span class="n">figure</span><span class="p">(</span><span class="s2">"D1"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"share of new homes off the grid (</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">)"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">off_share</span><span class="si">:</span><span class="s2">.1%</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+<span class="c1"># The long window is the 5-year window plus the years before it, so the off-grid</span>
+<span class="c1"># units the 5-year window does not hold are exactly the older permits'.</span>
+<span class="n">cov_long</span><span class="p">,</span> <span class="n">cov_5</span> <span class="o">=</span> <span class="n">dev</span><span class="p">[</span><span class="s2">"coverage"</span><span class="p">][</span><span class="s2">"long"</span><span class="p">],</span> <span class="n">dev</span><span class="p">[</span><span class="s2">"coverage"</span><span class="p">][</span><span class="s2">"5yr"</span><span class="p">]</span>
+<span class="n">check</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">main</span><span class="o">.</span><span class="n">PERMIT_YEARS_LONG</span><span class="p">[</span><span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="n">main</span><span class="o">.</span><span class="n">PERMIT_YEARS</span><span class="p">):])</span> <span class="o">==</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">main</span><span class="o">.</span><span class="n">PERMIT_YEARS</span><span class="p">)</span>
+      <span class="ow">and</span> <span class="n">main</span><span class="o">.</span><span class="n">PERMIT_YEARS_LONG</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">main</span><span class="o">.</span><span class="n">PERMIT_YEARS</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+      <span class="s2">"the 5-year permit window is the tail of the long one, with older years before it"</span><span class="p">,</span>
+      <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">main</span><span class="o">.</span><span class="n">PERMIT_YEARS</span><span class="si">}</span><span class="s2"> in </span><span class="si">{</span><span class="n">main</span><span class="o">.</span><span class="n">PERMIT_YEARS_LONG</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">–</span><span class="si">{</span><span class="n">main</span><span class="o">.</span><span class="n">PERMIT_YEARS_LONG</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="n">off_long</span> <span class="o">=</span> <span class="n">cov_long</span><span class="p">[</span><span class="s2">"units"</span><span class="p">]</span> <span class="o">-</span> <span class="n">cov_long</span><span class="p">[</span><span class="s2">"units_geocoded"</span><span class="p">]</span>
+<span class="n">off_old</span> <span class="o">=</span> <span class="n">off_long</span> <span class="o">-</span> <span class="p">(</span><span class="n">cov_5</span><span class="p">[</span><span class="s2">"units"</span><span class="p">]</span> <span class="o">-</span> <span class="n">cov_5</span><span class="p">[</span><span class="s2">"units_geocoded"</span><span class="p">])</span>
+<span class="n">older</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">main</span><span class="o">.</span><span class="n">PERMIT_YEARS_LONG</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">–</span><span class="si">{</span><span class="n">main</span><span class="o">.</span><span class="n">PERMIT_YEARS</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">"</span>
+<span class="n">check</span><span class="p">(</span><span class="n">off_long</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">"some homes since the long window's start are off the grid"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">off_long</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="n">old_share</span> <span class="o">=</span> <span class="n">figure</span><span class="p">(</span><span class="s2">"D1"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"share of off-grid homes since </span><span class="si">{</span><span class="n">main</span><span class="o">.</span><span class="n">PERMIT_YEARS_LONG</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2"> from </span><span class="si">{</span><span class="n">older</span><span class="si">}</span><span class="s2"> permits"</span><span class="p">,</span>
+                   <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">off_old</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="nb">max</span><span class="p">(</span><span class="n">off_long</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="si">:</span><span class="s2">.0%</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="n">md</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Of the **</span><span class="si">{</span><span class="n">off_long</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">** off-grid homes since </span><span class="si">{</span><span class="n">main</span><span class="o">.</span><span class="n">PERMIT_YEARS_LONG</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">, **</span><span class="si">{</span><span class="n">off_old</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">** "</span>
+   <span class="sa">f</span><span class="s2">"(**</span><span class="si">{</span><span class="n">old_share</span><span class="si">}</span><span class="s2">**) come from </span><span class="si">{</span><span class="n">older</span><span class="si">}</span><span class="s2"> permits. Those are not waiting on a "</span>
+   <span class="sa">f</span><span class="s2">"geocode; they are a permanent gap."</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -8337,19 +8372,27 @@ so the grid under-places dense growth (<code>docs/FINDINGS_blurb_claims.md</code
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>  [PASS] grid cells hold exactly the geocoded units (3 years)  — 27,488
+<pre>  [PASS] grid cells hold exactly the geocoded units (3 years)  — 27,491
    29.8%  Development (grid): homes permitted in the last 3 years with no location are off the grid
-  [PASS] grid cells hold exactly the geocoded units (5 years)  — 46,930
+  [PASS] grid cells hold exactly the geocoded units (5 years)  — 46,933
    21.3%  Development (grid): homes permitted in the last 5 years with no location are off the grid
-  [PASS] grid cells hold exactly the geocoded units (since 2009)  — 136,105
+  [PASS] grid cells hold exactly the geocoded units (since 2009)  — 136,108
    16.2%  Development (grid): homes permitted since 2009 with no location are off the grid
+  [PASS] the 5-year permit window is the tail of the long one, with older years before it  — (2021, 2022, 2023, 2024, 2025) in 2009–2025
+  [PASS] some homes since the long window's start are off the grid  — 26,252
 </pre>
 </div>
 </div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-OutputArea-output" data-mime-type="text/markdown" tabindex="0">
+<p>Of the <strong>26,252</strong> off-grid homes since 2009, <strong>13,557</strong> (<strong>52%</strong>) come from 2009–2020 permits. Those are not waiting on a geocode; they are a permanent gap.</p>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=404e24f3">
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=29508389">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8361,7 +8404,7 @@ proven incomplete, so the published series skips them
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=0640da81">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=75442baa">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8397,7 +8440,7 @@ proven incomplete, so the published series skips them
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=b6a18c2f">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=6bd05198">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8408,7 +8451,7 @@ them, so they are not charged to the neighbourhood they cross.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=7ceb5054">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=830f8191">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8421,9 +8464,11 @@ them, so they are not charged to the neighbourhood they cross.</p>
 
 <span class="n">roads</span> <span class="o">=</span> <span class="n">load_roads</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">main</span><span class="o">.</span><span class="n">ROADS_GEOJSON</span><span class="p">),</span> <span class="n">load_boundaries</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">main</span><span class="o">.</span><span class="n">BOUNDARIES_GEOJSON</span><span class="p">)))</span>
 <span class="n">art</span> <span class="o">=</span> <span class="n">roads</span><span class="p">[</span><span class="s2">"road_m_arterial"</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+<span class="n">art_share</span> <span class="o">=</span> <span class="n">art</span> <span class="o">/</span> <span class="p">(</span><span class="n">art</span> <span class="o">+</span> <span class="n">roads</span><span class="p">[</span><span class="s2">"road_m_total"</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
 <span class="n">row</span><span class="p">(</span><span class="s2">"Roads"</span><span class="p">,</span> <span class="s2">"arterial roads are left out of road metres"</span><span class="p">,</span>
-    <span class="n">art</span> <span class="o">/</span> <span class="p">(</span><span class="n">art</span> <span class="o">+</span> <span class="n">roads</span><span class="p">[</span><span class="s2">"road_m_total"</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()),</span> <span class="s2">"of classified centreline length"</span><span class="p">,</span>
+    <span class="n">art_share</span><span class="p">,</span> <span class="s2">"of classified centreline length"</span><span class="p">,</span>
     <span class="s2">"lowers road metres where arterials run"</span><span class="p">,</span> <span class="s2">"DECISIONS.md 2026-07-01"</span><span class="p">)</span>
+<span class="n">figure</span><span class="p">(</span><span class="s2">"R1"</span><span class="p">,</span> <span class="s2">"arterial share of classified centreline length"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">art_share</span><span class="si">:</span><span class="s2">.1%</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -8440,10 +8485,16 @@ them, so they are not charged to the neighbourhood they cross.</p>
 </pre>
 </div>
 </div>
+<div class="jp-OutputArea-child jp-OutputArea-executeResult">
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[11]:</div>
+<div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
+<pre>'27.1%'</pre>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=4fafcb66">
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=1d4cd333">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8453,7 +8504,7 @@ them, so they are not charged to the neighbourhood they cross.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=4a50a650">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=86d230af">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8571,7 +8622,7 @@ them, so they are not charged to the neighbourhood they cross.</p>
 <td><code>SPEC_temporal.md §0</code></td>
 </tr>
 <tr>
-<td><strong>8.0%</strong></td>
+<td><strong>8.1%</strong></td>
 <td>of total levy</td>
 <td>Money (total)</td>
 <td>levy on exempt-candidate zoning is counted as paid</td>
@@ -8600,12 +8651,45 @@ them, so they are not charged to the neighbourhood they cross.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=b516ad59">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=3ac5dd31">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
 <div class="jp-InputPrompt jp-InputArea-prompt">In [13]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">check</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">FIGURES</span><span class="p">)</span> <span class="o">==</span> <span class="nb">set</span><span class="p">(</span><span class="n">REPORT_IDS</span><span class="p">),</span> <span class="s2">"every report figure this page declares was emitted"</span><span class="p">,</span>
+      <span class="sa">f</span><span class="s2">"missing </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">REPORT_IDS</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="nb">set</span><span class="p">(</span><span class="n">FIGURES</span><span class="p">))</span><span class="si">}</span><span class="s2">, undeclared </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">FIGURES</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="nb">set</span><span class="p">(</span><span class="n">REPORT_IDS</span><span class="p">))</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="n">check</span><span class="p">(</span><span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="s2">"nan"</span> <span class="ow">in</span> <span class="n">v</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">vals</span> <span class="ow">in</span> <span class="n">FIGURES</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">vals</span><span class="p">),</span>
+      <span class="s2">"no report figure is NaN"</span><span class="p">,</span> <span class="nb">str</span><span class="p">({</span><span class="n">r</span><span class="p">:</span> <span class="p">[</span><span class="n">v</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">vals</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span><span class="p">,</span> <span class="n">vals</span> <span class="ow">in</span> <span class="n">FIGURES</span><span class="o">.</span><span class="n">items</span><span class="p">()}))</span>
+<span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"REPORT_FIGURES_DIR"</span><span class="p">):</span>
+    <span class="n">Path</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"REPORT_FIGURES_DIR"</span><span class="p">],</span> <span class="s2">"03_assumptions.figures.json"</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">FIGURES</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>  [PASS] every report figure this page declares was emitted  — missing [], undeclared []
+  [PASS] no report figure is NaN  — {'E2': ['8.1%'], 'E4': ['16.4%'], 'M10': ['32.7%'], 'D1': ['29.8%', '21.3%', '16.2%', '52%'], 'R1': ['27.1%']}
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=116fb315">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [14]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">failed</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">CHECKS</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">c</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
@@ -8631,14 +8715,18 @@ them, so they are not charged to the neighbourhood they cross.</p>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>6/6 invariants held
+<pre>10/10 invariants held
 
-  [PASS] the served per-hood exempt share rebuilds the citywide share recomputed from the roll  — served 8.04% vs roll 8.04%
-  [PASS] grid cells hold exactly the geocoded units (3 years)  — 27,488
-  [PASS] grid cells hold exactly the geocoded units (5 years)  — 46,930
-  [PASS] grid cells hold exactly the geocoded units (since 2009)  — 136,105
+  [PASS] the served per-hood exempt share rebuilds the citywide share recomputed from the roll  — served 8.05% vs roll 8.05%
+  [PASS] grid cells hold exactly the geocoded units (3 years)  — 27,491
+  [PASS] grid cells hold exactly the geocoded units (5 years)  — 46,933
+  [PASS] grid cells hold exactly the geocoded units (since 2009)  — 136,108
+  [PASS] the 5-year permit window is the tail of the long one, with older years before it  — (2021, 2022, 2023, 2024, 2025) in 2009–2025
+  [PASS] some homes since the long window's start are off the grid  — 26,252
   [PASS] no year with a defective slice is published  — omitted: [2024, 2025]
   [PASS] every size computed and lies in [0, 1]  — 12 rows
+  [PASS] every report figure this page declares was emitted  — missing [], undeclared []
+  [PASS] no report figure is NaN  — {'E2': ['8.1%'], 'E4': ['16.4%'], 'M10': ['32.7%'], 'D1': ['29.8%', '21.3%', '16.2%', '52%'], 'R1': ['27.1%']}
 
 All invariants held.
 </pre>
