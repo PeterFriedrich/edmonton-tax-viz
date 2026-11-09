@@ -213,3 +213,35 @@ S202 is the reproduction. Run only what a finding above needs.
    `docs/COPY_DECISIONS.md`. One exception: a shipped number found **wrong**
    (not merely contestable) gets a `TODO.md` item marked ⚠️ at the top of
    that heading.
+
+## Appendix — two small Development checks (after §4, only if usage remains)
+
+Development is public too, and it ships in the release (Peter, 2026-11-09).
+Its decision stack was audited in S48/S56 (July) with 0 UNSOUND, so it gets
+no full brief. These are two narrow reads that the same-model work could not
+close. Report each in a closing section of `FINDINGS_roads_release.md`.
+
+**D1 — F4, held for a cross-model read since S201.** The public Development
+grid blurb says the off-grid share is because "the newest permits lag
+geocoding".
+- `docs/FINDINGS_blurb_claims.md` §2 F4 measured that on the default state
+  (units, since 2009, grid), **52% of the off-grid units are 2009–2020
+  permits**: a permanent gap, mostly big apartment permits, not a lag.
+- Re-derive those numbers from raw `24uj-dj8v` through
+  `src/load_permits.py`'s own filters, not from the findings doc.
+- Then say whether the §4 draft wording ("most are recent permits not yet
+  geocoded; some older apartment…") is true on every public
+  Development state it renders in.
+- TODO item: "F4 copy — held for a cross-model read".
+
+**D2 — the 537 unattributed units.** Some permits name a comma-separated
+LIST of neighbourhoods (`docs/DATA_ISSUES.md` §6). 1,245 units were fixed by
+`PERMIT_NAME_CORRECTIONS` (`src/load_permits.py`); **537 units under 14 names
+were left unattributed by decision**, because they straddle hoods.
+- The question is the release, not the method: **does any public hood read
+  visibly wrong because of them?**
+- Size it per hood: the published `new_units_per_acre` with and without
+  each name's units placed by geocode, where a geocode exists.
+- A hood moved more than ~5%, or a public "no permits" that is false, is a
+  release item.
+- TODO item: "537 UNITS (14 NAMES) STILL UNATTRIBUTED BY DECISION".
