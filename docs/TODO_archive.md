@@ -3787,3 +3787,29 @@ scope and still use the old noun (BR1).
 **CLOSED 2026-11-10 (S243):** the new spelling is a second key (the live feed
 still carries one row of the old). The test fixture carries both and fails
 without the new key. The dead-key guard question stays open in TODO.
+
+- [x] **PROPOSAL (Peter): an unmatched-permit-name baseline guard, NOT a
+  dead-key guard.** Measured 2026-11-10 by running `load_permits` over the
+  since-2009 window, with the `PERMIT_NAME_CORRECTIONS` from before #790, on
+  both pulls:
+  - ⚠️ **A dead-key guard would NOT have caught the CHAPPELLE respelling.** The
+    City respelled 15 of the 16 rows, so the old key still matched the one
+    left and never died. The same partial respelling defeats it on any key.
+  - **A baseline of the unmatched set would have caught it.** It was 14 names /
+    537 units on 09-03 and 15 / 565 on 11-10. The one new name was
+    `CHAPPELLE, HERITAGE VALLEY AREA`. After #790 it is back to 14 / 537. (So
+    the docstring's "537 units across 14 names" does reproduce under the
+    pipeline's own filter; the audit's 11 came from a different filter.)
+  - **Shape:** mirror `scripts/check_unmatched_names.py`. Commit the 14 names
+    as a `permits` section of `data/expected_unmatched.json`, and run after
+    download, before regeneration. A NEW unmatched name always needs a
+    placement decision; a name that drops out of the set is benign (just
+    update the baseline).
+  - **Channel (Peter's call):** permits are warn-not-fail by decision (an
+    unmatched hood shows blank, it isn't a dollar loss). So the default is a
+    GitHub issue that doesn't block the publish, like the revenue-delta and
+    clamp guards, not exit 5. Base rate: 1 new name in 68 days.
+  - Changes CI, so it waits for Peter's go. Findings §10 D2; #790.
+ndings §10 D2.
+
+**CLOSED 2026-11-10 (S243):** Peter chose an issue, not a failing build. Built as `scripts/check_permit_names.py` + a `refresh.yml` step, `docs/RUNBOOK.md` §0f, DECISIONS 2026-11-10.

@@ -324,6 +324,37 @@ PDFs. It writes nothing. **It runs cold**: the notebooks' download caches are
 redirected to a temp dir, so a hand run is as live as CI's (before 2026-09-23 a
 warm cache here made `exemption_uncertainty` a from-disk check).
 
+## 0f. `⚠️ New unmatched permit name` issue (a permit hood the map can't place)
+
+**What it is:** the weekly refresh ran `scripts/check_permit_names.py`, which
+runs `load_permits` over the since-2009 window and found a permit
+`neighbourhood` string that matches no boundary polygon and is not in the
+`permits_not_in_boundaries` baseline (`data/expected_unmatched.json`). Those
+permits are counted citywide but placed in no hood, so the hood they belong to
+reads low. Label `permit-names`.
+
+⚠️ **NOTHING IS BLOCKED.** The guard always exits 0. Permits are warn-not-fail
+by decision: a missing name means a blank or low hood, not lost dollars.
+
+**Work the issue:**
+
+1. **Is it a respelling of a name already corrected?** Compare it with the keys
+   in `PERMIT_NAME_CORRECTIONS` (`src/load_permits.py`). The 2026-11-10 case,
+   `CHAPPELLE AREA, …` → `CHAPPELLE, …`, was this one. If so, add the new
+   spelling as a second key, and keep the old key while any live row still
+   uses it.
+2. **Is it a list whose parts all resolve to ONE rendered hood?** Then add a
+   key for it (the "parts rule" in the dict's comment).
+3. **Does it straddle 2+ hoods?** Then a name correction can't split it. Add it
+   to the baseline with its reason. Geocode placement is possible only if
+   enough of its rows carry coordinates, and that needs a decision (S216 did
+   it once).
+4. Close the issue when the PR lands. It is deduplicated by title, so leaving
+   it open while unfixed is correct.
+
+A name that LEAVES the set only logs a warning. The baseline is stale; remove
+the name from it.
+
 ## 1. The January year roll (the recurring one)
 
 **Symptom:** the site shows a "Showing 2025 data —…" banner, and the weekly
