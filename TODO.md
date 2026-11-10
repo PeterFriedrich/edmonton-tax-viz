@@ -196,16 +196,12 @@ Fable 5.2 ran `docs/FABLE_AUDIT_roads_release.md`. No level is UNSOUND and no
 shipped roads number is wrong, so **nothing here blocks the release**. Each
 item says whether it is worth settling first.
 
-- [ ] ⚠️ **WRONG SHIPPED NUMBER: CHAPPELLE's units since 2009 are 28 low
-  (6,848 served, 6,876 by the S216 decision; 0.4%).** The City renamed
-  `CHAPPELLE AREA, HERITAGE VALLEY AREA` to `CHAPPELLE, HERITAGE VALLEY AREA`
-  on 15 of 16 rows between the 09-03 and 11-10 pulls, so the key in
-  `PERMIT_NAME_CORRECTIONS` (`src/load_permits.py`) no longer matches. Fix:
-  add the new spelling as a second key. That is a `src/` PR, so Peter merges.
-  Also decide whether a guard should fail when a correction key matches no
-  row: today the only signal is a build-log warning, and
-  `tests/test_load_permits.py` passes because its fixture carries the old
-  string. **Does not block** at this size. Findings §10 D2.
+- [ ] **Decide: should a guard fail when a `PERMIT_NAME_CORRECTIONS` key
+  matches no row?** The City respelled `CHAPPELLE AREA, HERITAGE VALLEY AREA`
+  on 15 of 16 rows between the 09-03 and 11-10 pulls; the old key stopped
+  matching with only a build-log warning, and CHAPPELLE shipped 28 units low.
+  The new spelling is now keyed too (fixed 2026-11-10, `fix/chappelle-respelling`).
+  A guard changes CI behaviour, so it is a proposal for Peter first. Findings §10 D2.
 - [ ] **SETTLE BEFORE RELEASE (copy, Peter): three sentences credit the City
   with the operating rate and its unit.** The Roads cost blurb's "$5,970 per
   lane-km of maintenance (the City's 2017 roads-maintenance budget)", and
@@ -3427,6 +3423,7 @@ archive"*) is not, and this span is 2,533 lines.
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
 
+- [x] **CHAPPELLE's units since 2009 were 28 low — fixed 2026-11-10 (S243): the City's respelling `CHAPPELLE, HERITAGE VALLEY AREA` is keyed beside the old one.** · `docs/TODO_archive.md`
 - [x] **`verify-theme.js` cannot run through `verify.js` — fixed S240 (it cuts the page off the URL it is handed).** — 2026-11-08 · `docs/TODO_archive.md`
 - [x] **#742's mirror-fallback tests in `tests/test_build_reference_layers.py` cannot fail — fixed S240; each new assertion fails under its mutant, the old on** · `docs/TODO_archive.md`
 

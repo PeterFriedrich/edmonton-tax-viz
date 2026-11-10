@@ -3776,3 +3776,14 @@ scope and still use the old noun (BR1).
   `tools/profiling/` for each old string before shipping.
 
 **CLOSED 2026-09-24 (S194):** Peter put the three cut caveats in Data & Methods: lot-size dedup as `about-lot-acres`; arterials and "unadjusted for inflation" appended to `about-modelled-roads`. The titles naming pass is not part of this item.
+
+- [x] ⚠️ **WRONG SHIPPED NUMBER: CHAPPELLE's units since 2009 were 28 low
+  (6,848 served, 6,876 by the S216 decision; 0.4%).** The City renamed
+  `CHAPPELLE AREA, HERITAGE VALLEY AREA` to `CHAPPELLE, HERITAGE VALLEY AREA`
+  on 15 of 16 rows between the 09-03 and 11-10 pulls, so the key in
+  `PERMIT_NAME_CORRECTIONS` stopped matching. Findings
+  `docs/FINDINGS_roads_release.md` §10 D2.
+
+**CLOSED 2026-11-10 (S243):** the new spelling is a second key (the live feed
+still carries one row of the old). The test fixture carries both and fails
+without the new key. The dead-key guard question stays open in TODO.

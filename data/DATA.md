@@ -990,6 +990,11 @@ the data disproved it (`.venv/bin/python` count by year).
   permit hood is a blank hood, not a silent dollar loss. `CHAPPELLE AREA →
   CHAPPELLE` etc. resolve via the shared `NAME_CORRECTIONS`; the only leftover
   straggler is `GLENORA, ROSSLYN` (1 unit, immaterial).
+- **The City respells existing neighbourhood strings in place.** Between the
+  2026-09-03 and 2026-11-10 pulls, 15 of 16 `CHAPPELLE AREA, HERITAGE VALLEY
+  AREA` rows became `CHAPPELLE, HERITAGE VALLEY AREA`. A name-keyed entry in
+  `PERMIT_NAME_CORRECTIONS` then stops matching with only a build-log warning
+  (CHAPPELLE shipped 28 units low). Both spellings are now keyed.
 - `load_permits` HARD-ERRORS if a window year has zero permits (stale
   `PERMIT_YEARS` pin or upstream drift), and keeps-but-warns any `work_type` /
   `building_type` value outside the `KNOWN_*` vocab (it might be a new
