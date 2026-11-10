@@ -21,9 +21,8 @@ aggregates, so an industrial-only name is covered too.
   * a name that LEFT the set → a log warning only: the baseline is stale, and
     nothing is wrong on the site.
 
-Exits 0 on a finding: the finding never blocks the publish. A crash (a
-missing raw file, a ``load_permits`` schema error) still fails the step, as it
-would fail regeneration a few steps later anyway.
+Always exits 0. If it cannot check (missing file, a ``load_permits`` error, a bad
+baseline) it sets ``flagged=error`` and the issue says the check did not run.
 
 Usage:
     python scripts/check_permit_names.py                      # live data/raw + baseline
@@ -46,6 +45,7 @@ DEFAULT_PERMITS_CSV = ROOT / "data" / "raw" / "building_permits.csv"
 DEFAULT_BOUNDARIES_GEOJSON = ROOT / "data" / "raw" / "neighbourhoods.geojson"
 DEFAULT_BASELINE = ROOT / "data" / "expected_unmatched.json"
 BASELINE_KEY = "permits_not_in_boundaries"
+ERROR_TITLE = "⚠️ Permit-name guard could not run"
 
 
 def unmatched_permits(permits: pd.DataFrame, boundary_names: set[str]) -> pd.DataFrame:
@@ -118,8 +118,22 @@ def main(argv: list[str] | None = None) -> int:
     args = p.parse_args(argv)
     logging.basicConfig(stream=sys.stdout, level=logging.INFO, format="%(levelname)s: %(message)s")
 
-    expected = set(json.loads(args.baseline.read_text()).get(BASELINE_KEY, {}))
-    permits, boundary_names = _load_live(args.permits_csv, args.boundaries_geojson)
+    try:
+        expected = set(json.loads(args.baseline.read_text()).get(BASELINE_KEY, {}))
+        permits, boundary_names = _load_live(args.permits_csv, args.boundaries_geojson)
+    except Exception as exc:  # noqa: BLE001 — any failure here is "could not check"
+        # Reported, never raised: during a year hold main.py does not run, so a
+        # crash here would be the ONLY failure, turning a banner-serving run red.
+        # And never the all-clear: flagged=0 would claim a check that did not run.
+        logger.error("Permit-name guard could not run: %r", exc)
+        if args.report:
+            args.report.write_text(
+                "The permit-name guard (`scripts/check_permit_names.py`) could not run, "
+                "so new unmatched permit names went UNCHECKED this refresh. Nothing is "
+                f"blocked.\n\n```\n{exc!r}\n```\n\nTriage: `docs/RUNBOOK.md` §0f.\n"
+            )
+        _write_github_output(flagged="error", title=ERROR_TITLE, names="")
+        return 0
     unmatched = unmatched_permits(permits, boundary_names)
     added, removed = compare_to_baseline(set(unmatched["neighbourhood_name"]), expected)
 
