@@ -208,16 +208,32 @@ item says whether it is worth settling first.
   alias that `NAME_CORRECTIONS` already holds, and only 2 of the 10 keys have
   such a part (`CHAPPELLE AREA`, `LEWIS FARMS INDUSTRIAL`). It misses
   `HERITAGE VALLEY AREA` → `HERITAGE VALLEY`, any new alias, and every other
-  key. The dead-key guard below catches all of those. **Recommendation:**
-  build the guard first. This change is optional hardening on top, and the
-  #790 second key already covers today's case. A `src/` change: a PR for
-  Peter, plus a test that a respelled-alias variant resolves.
-- [ ] **Decide: should a guard fail when a `PERMIT_NAME_CORRECTIONS` key
-  matches no row?** The City respelled `CHAPPELLE AREA, HERITAGE VALLEY AREA`
-  on 15 of 16 rows between the 09-03 and 11-10 pulls; the old key stopped
-  matching with only a build-log warning, and CHAPPELLE shipped 28 units low.
-  The new spelling is now keyed too (fixed 2026-11-10, `fix/chappelle-respelling`).
-  A guard changes CI behaviour, so it is a proposal for Peter first. Findings §10 D2.
+  key. The unmatched-name baseline guard below catches all of those.
+  **Recommendation:** build the guard first. This change is optional hardening
+  on top, and the #790 second key already covers today's case. A `src/`
+  change: a PR for Peter, plus a test that a respelled-alias var- [ ] **PROPOSAL (Peter): an unmatched-permit-name baseline guard, NOT a
+  dead-key guard.** Measured 2026-11-10 by running `load_permits` over the
+  since-2009 window, with the `PERMIT_NAME_CORRECTIONS` from before #790, on
+  both pulls:
+  - ⚠️ **A dead-key guard would NOT have caught the CHAPPELLE respelling.** The
+    City respelled 15 of the 16 rows, so the old key still matched the one
+    left and never died. The same partial respelling defeats it on any key.
+  - **A baseline of the unmatched set would have caught it.** It was 14 names /
+    537 units on 09-03 and 15 / 565 on 11-10. The one new name was
+    `CHAPPELLE, HERITAGE VALLEY AREA`. After #790 it is back to 14 / 537. (So
+    the docstring's "537 units across 14 names" does reproduce under the
+    pipeline's own filter; the audit's 11 came from a different filter.)
+  - **Shape:** mirror `scripts/check_unmatched_names.py`. Commit the 14 names
+    as a `permits` section of `data/expected_unmatched.json`, and run after
+    download, before regeneration. A NEW unmatched name always needs a
+    placement decision; a name that drops out of the set is benign (just
+    update the baseline).
+  - **Channel (Peter's call):** permits are warn-not-fail by decision (an
+    unmatched hood shows blank, it isn't a dollar loss). So the default is a
+    GitHub issue that doesn't block the publish, like the revenue-delta and
+    clamp guards, not exit 5. Base rate: 1 new name in 68 days.
+  - Changes CI, so it waits for Peter's go. Findings §10 D2; #790.
+ndings §10 D2.
 - [ ] **SETTLE BEFORE RELEASE (copy, Peter): three sentences credit the City
   with the operating rate and its unit.** The Roads cost blurb's "$5,970 per
   lane-km of maintenance (the City's 2017 roads-maintenance budget)", and
