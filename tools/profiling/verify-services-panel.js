@@ -223,8 +223,18 @@ const SUBJECT = { storm: /storm/i, fire: /fire/i, water: /water|sewer/i };
 
     // ---- 3d. RATIO CARRIES THE SHARE-OF-TAX PANEL ---------------------------
     ratioForm('ratio/roads', await ratioPanel(page, 'roads'));
-    ratioSetAside('ratio/roads MILL WOODS GOLF COURSE',
-      await ratioPanel(page, 'roads', 'MILL WOODS GOLF COURSE'));
+    // The set-aside hood that read highest (5,422%) when F5 landed, if it is
+    // still set aside; otherwise any set-aside hood, so a rename or a zoning
+    // reclassification cannot drop the check.
+    const asideHood = await page.evaluate(() => {
+      const ps = state.data.features.map(f => f.properties).filter(p => p.is_set_aside);
+      return (ps.find(p => p.neighbourhood_name === 'MILL WOODS GOLF COURSE') || ps[0]).neighbourhood_name;
+    });
+    ratioSetAside(`ratio/roads ${asideHood}`, await ratioPanel(page, 'roads', asideHood));
+    const rfa = await ratioPanel(page, 'fire', asideHood);
+    check(`ratio/fire ${asideHood}: a driver with no cost rows keeps its own note on set-aside land`,
+      rfa.open && rfa.rows === 0 && /no fire cost/i.test(rfa.text) && !/too low for comparison/.test(rfa.text),
+      rfa.text.slice(-120).replace(/\n/g, ' | '));
     const rf = await ratioPanel(page, 'fire');
     check('ratio/fire: the panel opens and explains there is no fire cost',
       rf.open && rf.rows === 0 && /no fire cost/i.test(rf.text), `${rf.rows} rows`);
@@ -343,8 +353,11 @@ const SUBJECT = { storm: /storm/i, fire: /fire/i, water: /water|sewer/i };
     servicesForm(`public ${k}`, r);
   }
   ratioForm('public ratio/roads', await ratioPanel(pub, 'roads'));
-  ratioSetAside('public ratio/roads MILL WOODS GOLF COURSE',
-    await ratioPanel(pub, 'roads', 'MILL WOODS GOLF COURSE'));
+  const pubAside = await pub.evaluate(() => {
+    const ps = state.data.features.map(f => f.properties).filter(p => p.is_set_aside);
+    return (ps.find(p => p.neighbourhood_name === 'MILL WOODS GOLF COURSE') || ps[0]).neighbourhood_name;
+  });
+  ratioSetAside(`public ratio/roads ${pubAside}`, await ratioPanel(pub, 'roads', pubAside));
   const pubDistinct = new Set(pubKeys.map(k => pubSeen[k].text)).size;
   check('*** PUBLIC: the panel differs across the three public layers ***',
     pubDistinct > 1, `${pubDistinct} distinct rendering(s) across ${pubKeys.length} layers`);

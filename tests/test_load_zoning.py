@@ -343,4 +343,5 @@ def test_ratio_set_aside_note_states_the_live_threshold():
     m = re.search(r'const SET_ASIDE_RATIO_NOTE = ((?:"[^"]*"\s*\+?\s*)+);', html)
     assert m, "SET_ASIDE_RATIO_NOTE not found in web/index.html"
     note = "".join(re.findall(r'"([^"]*)"', m.group(1)))
-    assert f"({round(SET_ASIDE_THRESHOLD * 100)}% or more of its area)" in note, note
+    # :g, not round(): a retune to 0.905 must demand "90.5%", not pass as "91%".
+    assert f"({SET_ASIDE_THRESHOLD * 100:g}% or more of its area)" in note, note
