@@ -211,7 +211,8 @@ item says whether it is worth settling first.
   key. The unmatched-name baseline guard (built S243) catches all of those.
   **Recommendation:** build the guard first. This change is optional hardening
   on top, and the #790 second key already covers today's case. A `src/`
-  change: a PR for Peter, plus a test that a respelled-alias var- [ ] **SETTLE BEFORE RELEASE (copy, Peter): three sentences credit the City
+  change: a PR for Peter, plus a test that a respelled-alias variant resolves.
+- [ ] **SETTLE BEFORE RELEASE (copy, Peter): three sentences credit the City
   with the operating rate and its unit.** The Roads cost blurb's "$5,970 per
   lane-km of maintenance (the City's 2017 roads-maintenance budget)", and
   Data & Methods' "one published citywide cost per kilometre" and "the
