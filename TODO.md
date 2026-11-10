@@ -196,6 +196,22 @@ Fable 5.2 ran `docs/FABLE_AUDIT_roads_release.md`. No level is UNSOUND and no
 shipped roads number is wrong, so **nothing here blocks the release**. Each
 item says whether it is worth settling first.
 
+- [ ] **PROPOSAL (Peter): canonicalise comma-name keys through `NAME_CORRECTIONS`
+  before the `PERMIT_NAME_CORRECTIONS` lookup** (from #790's review). Split the
+  permit name on commas, map each part through the shared aliases, rejoin, and
+  look that up against keys canonicalised the same way. Targets stay
+  hand-enumerated, so this is not the prefix/keyword matching DECISIONS
+  2026-06-29 bans. **Measured 2026-11-10 on the live feed:** it changes the
+  resolution of 0 of the 93 distinct comma names, and none of the 10 comma keys
+  collide. It would have caught the CHAPPELLE respelling by itself.
+  ⚠️ **It is narrow.** It covers only a part the City respells to or from an
+  alias that `NAME_CORRECTIONS` already holds, and only 2 of the 10 keys have
+  such a part (`CHAPPELLE AREA`, `LEWIS FARMS INDUSTRIAL`). It misses
+  `HERITAGE VALLEY AREA` → `HERITAGE VALLEY`, any new alias, and every other
+  key. The dead-key guard below catches all of those. **Recommendation:**
+  build the guard first. This change is optional hardening on top, and the
+  #790 second key already covers today's case. A `src/` change: a PR for
+  Peter, plus a test that a respelled-alias variant resolves.
 - [ ] **Decide: should a guard fail when a `PERMIT_NAME_CORRECTIONS` key
   matches no row?** The City respelled `CHAPPELLE AREA, HERITAGE VALLEY AREA`
   on 15 of 16 rows between the 09-03 and 11-10 pulls; the old key stopped
