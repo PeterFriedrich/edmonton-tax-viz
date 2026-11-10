@@ -95,6 +95,36 @@ jobs:
         id: permitnames
         run: python scripts/check_permit_names.py --report permit-names.md
 
+      # Filed HERE, not after the commit like the delta issue: the name is in the
+      # raw whether or not this run publishes, and a later failing step must not
+      # swallow it. continue-on-error because a notification must never block the
+      # publish. Deduped PER NAME, since the issue stays open until a PR lands:
+      # skip only when every flagged name is already in an open issue's title.
+      # The title goes through env, never ${{ }} in the script, because it
+      # carries the City's strings.
+      - name: Report a new unmatched permit name as an issue (notification email)
+        if: steps.permitnames.outputs.flagged != '0' && steps.permitnames.outputs.flagged != ''
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TITLE: ${{ steps.permitnames.outputs.title }}
+          NAMES: ${{ steps.permitnames.outputs.names }}
+        run: |
+          gh label create permit-names \
+            --description "A permit neighbourhood name matches no boundary" \
+            --color FBCA04 || true
+          open_titles=$(gh issue list --label permit-names --state open --json title --jq '.[].title')
+          unreported=0
+          IFS='|' read -ra names <<< "$NAMES"
+          for n in "${names[@]}"; do
+            grep -qF -- "$n" <<< "$open_titles" || unreported=1
+          done
+          if [ "$unreported" = "0" ]; then
+            echo "Every flagged name is already in an open permit-names issue — not filing."
+            exit 0
+          fi
+          gh issue create --title "${TITLE:0:250}" --body-file permit-names.md --label permit-names
+
       # Year-alignment guard (docs/FINDINGS_data_integrity_audit.md §3, SPEC
       # "Year alignment"): the roll year lives only in Socrata metadata, so a
       # year roll would otherwise silently apply stale rates. exit 0 = aligned,
@@ -340,25 +370,6 @@ jobs:
       # the literal, so an undeduped create files the same issue every Monday
       # until then, and a pile of identical issues is how the next real one gets
       # skimmed past (CLAUDE.md's green-digest rule). Skip while one is open.
-      # PERSISTENT like clamp drift (the name stays unmatched until a PR lands),
-      # so deduped, but by TITLE: the title carries the names, so a second,
-      # different new name still gets its own issue. The title goes through an
-      # env var because it holds the City's strings.
-      - name: Report a new unmatched permit name as an issue (notification email)
-        if: steps.permitnames.outputs.flagged != '0' && steps.permitnames.outputs.flagged != ''
-        env:
-          GH_TOKEN: ${{ github.token }}
-          TITLE: ${{ steps.permitnames.outputs.title }}
-        run: |
-          gh label create permit-names \
-            --description "A permit neighbourhood name matches no boundary" \
-            --color FBCA04 || true
-          if gh issue list --label permit-names --state open --json title --jq '.[].title' | grep -qxF "$TITLE"; then
-            echo "An identical permit-name issue is already open — not filing a duplicate."
-            exit 0
-          fi
-          gh issue create --title "$TITLE" --body-file permit-names.md --label permit-names
-
       - name: Report colour-clamp drift as an issue (notification email)
         if: steps.clampdrift.outputs.flagged != '0' && steps.clampdrift.outputs.flagged != ''
         env:

@@ -349,8 +349,9 @@ by decision: a missing name means a blank or low hood, not lost dollars.
    to the baseline with its reason. Geocode placement is possible only if
    enough of its rows carry coordinates, and that needs a decision (S216 did
    it once).
-4. Close the issue when the PR lands. It is deduplicated by title, so leaving
-   it open while unfixed is correct.
+4. Close the issue when the PR lands. Leaving it open while unfixed is
+   correct: the refresh files a new issue only when a name appears that no open
+   `permit-names` issue's title already carries.
 
 A name that LEAVES the set only logs a warning. The baseline is stale; remove
 the name from it.

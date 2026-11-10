@@ -158,9 +158,6 @@ def test_refresh_workflow_gates_every_publish_step_on_both_guards():
         "Commit regenerated data + heartbeat if changed",
         "Report a big revenue delta as an issue (notification email)",
         "Report colour-clamp drift as an issue (notification email)",
-        # Its guard reads only raw permits and runs before both holds; a held
-        # run still has the name in the raw, and the next regen will publish it.
-        "Report a new unmatched permit name as an issue (notification email)",
         "Build two-build site tree (public root + /dev-build-full/ specialist)",
         "actions/setup-node",
         "Install the verify harness",

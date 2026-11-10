@@ -84,8 +84,16 @@ def test_title_has_no_shell_metacharacters_from_markup(tmp_path, monkeypatch):
     assert "`" not in title
 
 
-def test_committed_baseline_matches_the_documented_straddlers():
-    # The baseline is the decided set (src/load_permits.py): 14 names on 2026-11-10.
+def test_committed_baseline_entries_are_reasoned_comma_lists():
+    # Invariant, not a count: RUNBOOK §0f adds entries. A non-list name here would
+    # be a single hood the map is missing, which belongs in a correction instead.
     names = json.loads((ROOT / "data" / "expected_unmatched.json").read_text())[cpn.BASELINE_KEY]
-    assert len(names) == 14
-    assert all("," in n for n in names)
+    assert names
+    assert all("," in n and reason.strip() for n, reason in names.items())
+
+
+def test_names_output_is_pipe_joined_for_the_dedup_loop(tmp_path, monkeypatch):
+    # refresh.yml splits `names` on "|" and dedups each against open issue titles.
+    permits = _permits(("EKOTA, SUMMERSIDE", 5, 1, 0), ("SATOO, SUMMERSIDE", 3, 1, 0))
+    _, gho, _ = _run(tmp_path, monkeypatch, permits, set())
+    assert "names=EKOTA, SUMMERSIDE|SATOO, SUMMERSIDE" in gho

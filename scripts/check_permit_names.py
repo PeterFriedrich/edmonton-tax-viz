@@ -21,7 +21,9 @@ aggregates, so an industrial-only name is covered too.
   * a name that LEFT the set → a log warning only: the baseline is stale, and
     nothing is wrong on the site.
 
-Always exits 0 — this signal is never allowed to block the publish.
+Exits 0 on a finding: the finding never blocks the publish. A crash (a
+missing raw file, a ``load_permits`` schema error) still fails the step, as it
+would fail regeneration a few steps later anyway.
 
 Usage:
     python scripts/check_permit_names.py                      # live data/raw + baseline
@@ -138,7 +140,7 @@ def main(argv: list[str] | None = None) -> int:
         args.report.write_text(report)
     # Plain text: the names are the City's strings and the title passes through a shell.
     title = f"⚠️ New unmatched permit name — {' | '.join(sorted(added))}"
-    _write_github_output(flagged=len(added), title=title)
+    _write_github_output(flagged=len(added), title=title, names="|".join(sorted(added)))
     return 0
 
 
