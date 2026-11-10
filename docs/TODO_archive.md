@@ -3813,3 +3813,16 @@ without the new key. The dead-key guard question stays open in TODO.
 ndings §10 D2.
 
 **CLOSED 2026-11-10 (S243):** Peter chose an issue, not a failing build. Built as `scripts/check_permit_names.py` + a `refresh.yml` step, `docs/RUNBOOK.md` §0f, DECISIONS 2026-11-10.
+
+- [x] **Peter's call: the Ratio panel's 100% bar and amber fire only on
+  set-aside neighbourhoods** (8 on lifecycle, 2 on operating). No published
+  neighbourhood is above 50% at shipped rates. **Confirmed rendered
+  2026-11-10 (S243)**, public and full builds, through the pointer pin path
+  (`hoodPanelLens() && temporalFor(name)` → `openTemporal`): the panel opens on
+  all 8, with the amber bars. MILL WOODS GOLF COURSE reads 5422% / 1011%
+  against $4 per acre of city tax; RIVER VALLEY LAURIER 976% / 182%; the other
+  six are 124–443% on lifecycle only. DOWNTOWN control 0.4% / 0.1%, no amber.
+  Keep it, or stop showing the share on grey land. **Does not block.**
+  Findings §6.
+
+**CLOSED 2026-11-10 (S243):** Peter chose to stop showing the share there. Wording and guards in `docs/COPY_DECISIONS.md` F5; DECISIONS 2026-11-10.
