@@ -5,5 +5,22 @@
   },
   "boundaries_not_in_assessment": {
     "LEWIS FARMS": "Documented 406/407 hole: the LEWIS FARMS boundary polygon has no assessment rows (undeveloped/roll-absent); rendered n/a grey. DATA.md."
-  }
+  },
+  "permits_not_in_boundaries": {
+    "ALLARD, HERITAGE VALLEY AREA": "Comma list whose parts resolve to 2+ different hoods; left unmatched by decision (src/load_permits.py, PERMIT_NAME_CORRECTIONS comment). Baseline 2026-11-10: 14 names, 537 units since 2009.",
+    "CENTRAL MCDOUGALL, QUEEN MARY PARK": "Comma list whose parts resolve to 2+ different hoods; left unmatched by decision (src/load_permits.py, PERMIT_NAME_CORRECTIONS comment). Baseline 2026-11-10: 14 names, 537 units since 2009.",
+    "EDMONTON SOUTH CENTRAL, CROSSROADS": "Comma list whose parts resolve to 2+ different hoods; left unmatched by decision (src/load_permits.py, PERMIT_NAME_CORRECTIONS comment). Baseline 2026-11-10: 14 names, 537 units since 2009.",
+    "EKOTA, SUMMERSIDE": "Comma list whose parts resolve to 2+ different hoods; left unmatched by decision (src/load_permits.py, PERMIT_NAME_CORRECTIONS comment). Baseline 2026-11-10: 14 names, 537 units since 2009.",
+    "GLENORA, ROSSLYN": "Comma list whose parts resolve to 2+ different hoods; left unmatched by decision (src/load_permits.py, PERMIT_NAME_CORRECTIONS comment). Baseline 2026-11-10: 14 names, 537 units since 2009.",
+    "GORMAN, ANTHONY HENDAY HORSE HILL": "Comma list whose parts resolve to 2+ different hoods; left unmatched by decision (src/load_permits.py, PERMIT_NAME_CORRECTIONS comment). Baseline 2026-11-10: 14 names, 537 units since 2009.",
+    "HOLLICK-KENYON, BRINTNELL, MILLER, BRINTNELL": "Comma list whose parts resolve to 2+ different hoods; left unmatched by decision (src/load_permits.py, PERMIT_NAME_CORRECTIONS comment). Baseline 2026-11-10: 14 names, 537 units since 2009.",
+    "MISTATIM INDUSTRIAL, KINOKAMAU PLAINS AREA": "Comma list whose parts resolve to 2+ different hoods; left unmatched by decision (src/load_permits.py, PERMIT_NAME_CORRECTIONS comment). Baseline 2026-11-10: 14 names, 537 units since 2009.",
+    "POTTER GREENS, ANTHONY HENDAY": "Comma list whose parts resolve to 2+ different hoods; left unmatched by decision (src/load_permits.py, PERMIT_NAME_CORRECTIONS comment). Baseline 2026-11-10: 14 names, 537 units since 2009.",
+    "RIVER VALLEY VICTORIA, RIVER VALLEY GLENORA": "Comma list whose parts resolve to 2+ different hoods; left unmatched by decision (src/load_permits.py, PERMIT_NAME_CORRECTIONS comment). Baseline 2026-11-10: 14 names, 537 units since 2009.",
+    "RUTHERFORD, HERITAGE VALLEY TOWN CENTRE": "Comma list whose parts resolve to 2+ different hoods; left unmatched by decision (src/load_permits.py, PERMIT_NAME_CORRECTIONS comment). Baseline 2026-11-10: 14 names, 537 units since 2009.",
+    "SATOO, SUMMERSIDE": "Comma list whose parts resolve to 2+ different hoods; left unmatched by decision (src/load_permits.py, PERMIT_NAME_CORRECTIONS comment). Baseline 2026-11-10: 14 names, 537 units since 2009.",
+    "THE HAMPTONS, GRANVILLE": "Comma list whose parts resolve to 2+ different hoods; left unmatched by decision (src/load_permits.py, PERMIT_NAME_CORRECTIONS comment). Baseline 2026-11-10: 14 names, 537 units since 2009.",
+    "THE UPLANDS, RIVER'S EDGE": "Comma list whose parts resolve to 2+ different hoods; left unmatched by decision (src/load_permits.py, PERMIT_NAME_CORRECTIONS comment). Baseline 2026-11-10: 14 names, 537 units since 2009."
+  },
+  "_description_permits": "Asserted by scripts/check_permit_names.py, which files an issue (never fails the build) when a NEW permit name has no boundary. Activity path, not money: warn-not-fail by decision. A name that leaves this set only warns."
 }
