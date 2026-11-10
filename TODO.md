@@ -190,6 +190,75 @@ publish on its own, unrelated to any of this — re-pinned.)_
   `docs/BRIEF.md` + `docs/SPEC_*.md`, press **Sync**, and review
   `docs/SCOPE.md`. After that, `/handoff`'s sync check prompts for each re-sync
   (`docs/CLAUDE_WEB.md`).
+### Levy-as-revenue audit follow-ons (OPEN 2026-11-10, docs/FINDINGS_levy_as_revenue.md)
+
+Fable 5.2 ran `docs/FABLE_AUDIT_levy_as_revenue.md`. No level is UNSOUND. The
+model reads **+$282.0M, +11.2%** over the levy the City filed for 2026.
+"Blocks" below is the audit's recommendation; the decision is Peter's.
+
+- [ ] ⚠️ **SHIPPED NUMBERS WRONG — BLOCKS RELEASE (recommended): the band, the
+  caveat percentage and the printed range on the Residential and
+  Non-residential cuts use the TOTAL-levy share.** Same root as F1+F2 under
+  "Blurb-claims audit follow-ons"; this sizes what it prints (findings §4).
+  **Residential:** 16 of 20 caveats are false (14 hoods are under 5% on the
+  cut's own share), and both bands are spurious. West Meadowlark Park prints
+  **$2,567** to $10,342 where the low end is $9,631; University of Alberta
+  prints **$643** where it is $3,609. **Non-residential:** 142 published hoods
+  at ≥25% on the cut's own share get no caveat ($62.6M of their $132.9M);
+  West Meadowlark Park prints a low end of **$7,330** where it is $266; Hudson,
+  Royal Gardens and Virginia Park get no band. Two ways out: build
+  `docs/PROPOSAL_per_cut_exempt_share.md` (data-contract change, awaiting
+  Peter's three decisions), or turn band, range and caveat off on the split
+  cuts until it lands. Per-cut figures used the 09-03 zoning; re-measure on
+  the served file when building.
+- [ ] **BLOCKS RELEASE (recommended; copy, Peter): the app never states that
+  the model is about 11% above the City's filed levy, and a notebook on the
+  same site already says the difference is property the City "does not
+  tax".** Landing says "pay"; `/notebooks/exemption-uncertainty.html` says
+  $14.95B is assessed and not taxed; the app links to neither figure. Smallest
+  change (findings §5): one sized sentence in About, the clause "at the City's
+  published rates, with tax-exempt property not removed" in the Total blurb,
+  and a link to the notebook. Re-opens applied rows N5 and P1 in
+  `docs/COPY_DECISIONS.md`, which were settled on jargon, not on this.
+- [ ] **SETTLE BEFORE RELEASE (copy, Peter): "collected".** The Ratio panel
+  headline "City property tax collected here" (N4, applied) and the set-aside
+  note "city tax collected is too low" make a cash claim the model cannot
+  support; the headline shows on University of Alberta at $178,401. Dropping
+  the verb fixes both. Does not block by itself.
+- [ ] **SETTLE BEFORE RELEASE (copy, Peter): the Non-residential blurb names
+  institutions as payers.** "(business, industry and institutions) pays the
+  City" is the least true sentence on the site: the cut is +20.4% ($226.0M)
+  over FIR and 163 of 356 hoods are ≥25% exempt-candidate. The row is already
+  provisional (2026-09-26). A per-hood flag cannot carry a cut where 46% of
+  hoods qualify, so the statement belongs in the blurb. Draft in findings §5.
+- [ ] **Decide, not blocking: 15 caveat-only hoods are drawn solid at the
+  levied endpoint**, the one FIR says is too high ($40.0M). Spruce Avenue
+  ranks 6 and would be 15; Central McDougall ranks 7 and would be 48. This is
+  DECISIONS 2026-08-16 working as designed (both endpoints sit near the colour
+  clamp). Re-open only if the top ten should not show them at full height.
+- [ ] **Decide, not blocking: "direction unknown" is stale for the aggregate.**
+  The 2026-08-08 lock predates the FIR anchor by 17 days. Per parcel it still
+  holds, so the tooltip caveat is true as worded. `02_methods` §3 is not: "not
+  on the roll at all … which understates its neighbourhood" is the direction
+  retracted 2026-08-08 (absent land pays nothing, so a paid-tax number is right
+  about it). Notebook source is the report session's.
+- [ ] **Docs: `docs/FINDINGS_exempt_institutional.md` still calls on-roll
+  institutional land "taxed" and "taxable"** in its method and tables; the
+  2026-08-07 correction fixed the opening sentence only. FIR contradicts it
+  for about $8.7B.
+- [ ] **PROPOSAL (separate PR): the FIR row in `03_assumptions.py`, per class,
+  alarming on the non-residential residual** (roll − FIR − candidate-zoned;
+  today $0.294B, 0.66% of base), printing the FIR vintage, holding when roll
+  year ≠ FIR year. Not one total: the two residential classes gained $1.24B in
+  ten weeks against a fixed FIR figure, so a total drifts up all year. The
+  monthly evidence recheck already catches a year drift; this row would tie
+  the *served* levy to FIR. Findings §6. Changes a verified notebook, so
+  propose first.
+- No action proposed: the 46 unflagged hoods at 10–25% exempt-candidate
+  ($34.6M). Lowering the gate to 0.10 would flag 67 of 358 hoods and dilute
+  the flag; the sized sentence above covers them. The apartment gap (≈$33.4M)
+  cannot be located without exemption data, and part of it is in-year growth.
+
 ### Roads release audit follow-ons (OPEN 2026-11-10, docs/FINDINGS_roads_release.md)
 
 Fable 5.2 ran `docs/FABLE_AUDIT_roads_release.md`. No level is UNSOUND and no
