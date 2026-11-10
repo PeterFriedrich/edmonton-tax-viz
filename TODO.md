@@ -190,6 +190,75 @@ publish on its own, unrelated to any of this — re-pinned.)_
   `docs/BRIEF.md` + `docs/SPEC_*.md`, press **Sync**, and review
   `docs/SCOPE.md`. After that, `/handoff`'s sync check prompts for each re-sync
   (`docs/CLAUDE_WEB.md`).
+### Roads release audit follow-ons (OPEN 2026-11-10, docs/FINDINGS_roads_release.md)
+
+Fable 5.2 ran `docs/FABLE_AUDIT_roads_release.md`. No level is UNSOUND and no
+shipped roads number is wrong, so **nothing here blocks the release**. Each
+item says whether it is worth settling first.
+
+- [ ] ⚠️ **WRONG SHIPPED NUMBER: CHAPPELLE's units since 2009 are 28 low
+  (6,848 served, 6,876 by the S216 decision; 0.4%).** The City renamed
+  `CHAPPELLE AREA, HERITAGE VALLEY AREA` to `CHAPPELLE, HERITAGE VALLEY AREA`
+  on 15 of 16 rows between the 09-03 and 11-10 pulls, so the key in
+  `PERMIT_NAME_CORRECTIONS` (`src/load_permits.py`) no longer matches. Fix:
+  add the new spelling as a second key. That is a `src/` PR, so Peter merges.
+  Also decide whether a guard should fail when a correction key matches no
+  row: today the only signal is a build-log warning, and
+  `tests/test_load_permits.py` passes because its fixture carries the old
+  string. **Does not block** at this size. Findings §10 D2.
+- [ ] **SETTLE BEFORE RELEASE (copy, Peter): three sentences credit the City
+  with the operating rate and its unit.** The Roads cost blurb's "$5,970 per
+  lane-km of maintenance (the City's 2017 roads-maintenance budget)", and
+  Data & Methods' "one published citywide cost per kilometre" and "the
+  operating figures are published per lane-kilometre". The City published the
+  $65.671M budget; the division and the lane-km reading are this project's.
+  Reword or accept. No number moves. Findings §7; goes through
+  `docs/COPY_DECISIONS.md`.
+- [ ] **SETTLE BEFORE RELEASE (copy, Peter): the Development grid blurb's
+  "aren't on the grid yet (the newest permits lag geocoding)".** On the
+  default state 51.6% of the off-grid units are 2009–20 permits. On all six
+  public states "yet" is unsupported: no un-geocoded permit from 2009–2024
+  was geocoded between 09-03 and 11-10, and the 07-14 backlog moved by 2
+  permits in 119 days. The F4 draft wording keeps "not yet", so it does not
+  fix this. Supersedes the wording in the S199 F4 item. Findings §10 D1.
+- [ ] **CONFIRM IN A BROWSER, then Peter's call: the Ratio panel's 100% bar
+  and amber fire only on set-aside neighbourhoods** (8 on lifecycle, 2 on
+  operating, up to 5,420%). No published neighbourhood is above 50% at
+  shipped rates. Read from `ratioPanelFor` and `renderRatioCost`, not
+  rendered. If the panel does open on grey land, keep it or stop showing the
+  share there. **Does not block.** Findings §6.
+- [ ] **Does not block: say that leaving out arterials raises the Ratio
+  reading most downtown and on commercial and industrial land, or accept.**
+  Median 1.68× on 117 non-residential neighbourhoods against 1.22× on 223
+  residential; Downtown 2.8×; 5 of the top 20 change. No served number moves.
+  Findings §5.
+- [ ] **Does not block: close "50 or 25 years" as keep 50.** The City page's
+  own 3% and 6% figures fit only the long life. Closes the older "PETER'S
+  CALL — the road service life" item if Peter agrees. Findings §4.
+- [ ] **Does not block: the three Services maps are one picture** (cost maps
+  identical to 2.6×10⁻⁶ of range). Accept, or say so in one clause.
+  Findings §2.
+- [ ] **Does not block: size ASSUMPTIONS A9 per neighbourhood**, not only
+  citywide, in `notebooks/verified/03_assumptions.py`. Arterials are over
+  half the road in 49 published neighbourhoods. A code change, so propose
+  first. Findings §5.
+- [ ] **Does not block: refresh the stale share-of-levy figures in live
+  docs** (9.0% → 8.2% median lifecycle; 1.68% → 1.5% operating; 9 → 8 above
+  100%). Docs only. Findings §6.
+- [ ] **Does not block: HOLLICK-KENYON's units since 2009 are 10.3% low by
+  geocode** (582 → 642; one 60-unit 2012 permit named `HOLLICK-KENYON,
+  BRINTNELL, MILLER, BRINTNELL`). Place it, or accept. Another 387 units
+  cannot be placed by geocode: RUTHERFORD or HERITAGE VALLEY TOWN CENTRE
+  (268), THE HAMPTONS or GRANVILLE (119); each could be 5–18% low. Today's
+  raw gives 565 units under 11 names, not the 537 under 14 in the S216 item.
+  No false "no permits" was found. Findings §10 D2.
+- [ ] **Does not block: record and report the geocoding drop.**
+  New-construction permits issued since February 2025 are 21–44% geocoded,
+  with no gradient by age. Add a `docs/DATA_ISSUES.md` row, tell the City,
+  and correct `data/DATA.md`'s "expect coverage to improve". Findings §10 D1.
+- The S202 set-aside boundary split (5 published neighbourhoods above 5%,
+  ARGYLL +9.2%) is carried under its own item, unchanged.
+
 ### GTFS Calendar Dates follow-on (refresh RED 2026-10-05, ✅ GREEN again 2026-10-08)
 - ✅ `f2sy-bth7` was reloaded full by the City (13,551 rows, re-measured 2026-10-10);
   the 10-08 dispatched refresh (run 37846984412) published. `DATA_ISSUES.md` §8 is
