@@ -5775,6 +5775,9 @@
     // The Ratio panel: each cost as a share of this hood's city tax. Moved here
     // from Services on 2026-09-24 (Peter). It follows the ratio's DENOMINATOR the
     // way the Services panel follows the colour driver.
+    const SET_ASIDE_RATIO_NOTE = "Predominantly river valley, parks and undeveloped "
+      + "land (90% or more of its area). The resulting city tax collected is too "
+      + "low for comparison.";
     function renderRatioCost(p) {
       const rev = p.revenue_per_acre;
       const driver = state.ratioDenom;
@@ -5818,12 +5821,18 @@
               + `${rank.rank}${ordSuffix(rank.rank)} highest of ${rank.n} `
               + `neighbourhoods</div>`)
         + `<div class="muted">One of many services this tax pays for.</div>`
-        + `<div id="svccost">` + groups.map(g =>
+        // COPY_DECISIONS F5 (Peter, 2026-11-10): on set-aside land the tax is a
+        // few dollars, so the share runs to thousands of percent and the amber
+        // made the site's only "over" claim on land the map tells readers to skip.
+        // "90%" is SET_ASIDE_THRESHOLD (src/load_zoning.py); a test ties them.
+        + (p.is_set_aside
+            ? `<div id="svccost"><div class="muted">${SET_ASIDE_RATIO_NOTE}</div></div>`
+            : `<div id="svccost">` + groups.map(g =>
             `<div class="svcbasis">${esc(g.head)} `
             + `<span class="muted">— ${esc(
                  g.basis === "operating" && SVC_OPS_NOTE[fam]
                    ? SVC_OPS_NOTE[fam] : g.note)}</span></div>`
-            + g.rows.map(bar).join("")).join("") + `</div>`;
+            + g.rows.map(bar).join("")).join("") + `</div>`);
       // ⚠️ A note must describe rows the reader can see, or it teaches them to
       // skip the note. It used to be FULL_BUILD-aware because the two builds
       // showed different row sets; now the rows are scoped to one service family
@@ -5832,7 +5841,8 @@
       // The "never added" warning is a ROADS fact — it is the only family shown
       // on two bases — so it is emitted where those two bars are, not always.
       document.getElementById("temporal-note").textContent =
-        groups.length === 0
+        p.is_set_aside ? ""
+        : groups.length === 0
           ? (NO_SVC_COST[driver]
              || "No City cost is modelled for this service.")
           : "Modelled cost, shown against this neighbourhood's own city tax."

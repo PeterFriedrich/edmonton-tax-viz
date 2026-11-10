@@ -328,3 +328,19 @@ def test_export_unknown_code_lands_in_other(tmp_path):
     zoning = _zoning(["ZZZ"], [_square(0, 0, 100)])
     _, fc = _run_export(zoning, tmp_path)
     assert fc["features"][0]["properties"]["u"] == "other"
+
+
+def test_ratio_set_aside_note_states_the_live_threshold():
+    # COPY_DECISIONS F5: the Ratio panel tells readers a set-aside hood is "90% or
+    # more" parkland/undeveloped. That figure is SET_ASIDE_THRESHOLD; a retune that
+    # leaves the sentence behind would publish a false definition.
+    import re
+    from pathlib import Path
+
+    from load_zoning import SET_ASIDE_THRESHOLD
+
+    html = (Path(__file__).resolve().parents[1] / "web" / "index.html").read_text(encoding="utf-8")
+    m = re.search(r'const SET_ASIDE_RATIO_NOTE = ((?:"[^"]*"\s*\+?\s*)+);', html)
+    assert m, "SET_ASIDE_RATIO_NOTE not found in web/index.html"
+    note = "".join(re.findall(r'"([^"]*)"', m.group(1)))
+    assert f"({round(SET_ASIDE_THRESHOLD * 100)}% or more of its area)" in note, note
