@@ -86,6 +86,45 @@ jobs:
       - name: Check unmatched names (guard before regenerating)
         run: python scripts/check_unmatched_names.py
 
+      # Permit-name guard: the activity-path sibling of the one above. A NEW permit
+      # neighbourhood name with no boundary leaves its hood reading low; that is
+      # warn-not-fail by decision, so this always exits 0 and files an issue
+      # instead (step below). It exists because a City respelling cost CHAPPELLE
+      # 28 units in Nov 2026 with only a build-log warning (RUNBOOK §0f).
+      - name: Check permit names (guard before regenerating)
+        id: permitnames
+        run: python scripts/check_permit_names.py --report permit-names.md
+
+      # Filed HERE, not after the commit like the delta issue: the name is in the
+      # raw whether or not this run publishes, and a later failing step must not
+      # swallow it. continue-on-error because a notification must never block the
+      # publish. Deduped PER NAME, since the issue stays open until a PR lands:
+      # skip only when every flagged name is already in an open issue's title.
+      # The title goes through env, never ${{ }} in the script, because it
+      # carries the City's strings.
+      - name: Report a new unmatched permit name as an issue (notification email)
+        if: steps.permitnames.outputs.flagged != '0' && steps.permitnames.outputs.flagged != ''
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TITLE: ${{ steps.permitnames.outputs.title }}
+          NAMES: ${{ steps.permitnames.outputs.names }}
+        run: |
+          gh label create permit-names \
+            --description "A permit neighbourhood name matches no boundary" \
+            --color FBCA04 || true
+          open_titles=$(gh issue list --label permit-names --state open --json title --jq '.[].title')
+          unreported=0
+          IFS='|' read -ra names <<< "$NAMES"
+          for n in "${names[@]}"; do
+            grep -qF -- "$n" <<< "$open_titles" || unreported=1
+          done
+          if [ "$unreported" = "0" ]; then
+            echo "Every flagged name is already in an open permit-names issue — not filing."
+            exit 0
+          fi
+          gh issue create --title "${TITLE:0:250}" --body-file permit-names.md --label permit-names
+
       # Year-alignment guard (docs/FINDINGS_data_integrity_audit.md §3, SPEC
       # "Year alignment"): the roll year lives only in Socrata metadata, so a
       # year roll would otherwise silently apply stale rates. exit 0 = aligned,
