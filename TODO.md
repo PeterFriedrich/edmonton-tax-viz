@@ -3423,6 +3423,7 @@ archive"*) is not, and this span is 2,533 lines.
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
 
+- [x] **CHAPPELLE's units since 2009 were 28 low — fixed 2026-11-10 (S243): the City's respelling `CHAPPELLE, HERITAGE VALLEY AREA` is keyed beside the old one.** · `docs/TODO_archive.md`
 - [x] **`verify-theme.js` cannot run through `verify.js` — fixed S240 (it cuts the page off the URL it is handed).** — 2026-11-08 · `docs/TODO_archive.md`
 - [x] **#742's mirror-fallback tests in `tests/test_build_reference_layers.py` cannot fail — fixed S240; each new assertion fails under its mutant, the old on** · `docs/TODO_archive.md`
 
