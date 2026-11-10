@@ -115,6 +115,10 @@ jobs:
             --color FBCA04 || true
           open_titles=$(gh issue list --label permit-names --state open --json title --jq '.[].title')
           unreported=0
+          if [ -z "$NAMES" ]; then
+            # flagged=error: no names to match, so dedup on the exact title.
+            grep -qxF -- "$TITLE" <<< "$open_titles" || unreported=1
+          fi
           IFS='|' read -ra names <<< "$NAMES"
           for n in "${names[@]}"; do
             grep -qF -- "$n" <<< "$open_titles" || unreported=1

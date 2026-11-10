@@ -97,3 +97,21 @@ def test_names_output_is_pipe_joined_for_the_dedup_loop(tmp_path, monkeypatch):
     permits = _permits(("EKOTA, SUMMERSIDE", 5, 1, 0), ("SATOO, SUMMERSIDE", 3, 1, 0))
     _, gho, _ = _run(tmp_path, monkeypatch, permits, set())
     assert "names=EKOTA, SUMMERSIDE|SATOO, SUMMERSIDE" in gho
+
+
+def test_a_crash_reports_could_not_run_and_never_the_all_clear(tmp_path, monkeypatch):
+    # In a year hold main.py is skipped, so a raise here would be the run's only failure.
+    def boom(*_):
+        raise ValueError("permits CSV missing required columns: ['neighbourhood']")
+    baseline = tmp_path / "expected.json"
+    baseline.write_text(json.dumps({cpn.BASELINE_KEY: {}}))
+    monkeypatch.setattr(cpn, "_load_live", boom)
+    gho = tmp_path / "gho"
+    monkeypatch.setenv("GITHUB_OUTPUT", str(gho))
+    report = tmp_path / "r.md"
+    rc = cpn.main(["--baseline", str(baseline), "--report", str(report)])
+    assert rc == 0
+    out = gho.read_text()
+    assert "flagged=error" in out and "flagged=0" not in out
+    assert f"title={cpn.ERROR_TITLE}" in out
+    assert "UNCHECKED" in report.read_text()
