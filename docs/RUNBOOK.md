@@ -356,6 +356,11 @@ by decision: a missing name means a blank or low hood, not lost dollars.
 A name that LEAVES the set only logs a warning. The baseline is stale; remove
 the name from it.
 
+**`⚠️ Permit-name guard could not run`** means the check did NOT happen, so
+new names went unchecked that week. The body carries the exception. Fix the
+cause (often the same `load_permits` error a held run would otherwise hide);
+the guard never reports the all-clear when it couldn't check.
+
 ## 1. The January year roll (the recurring one)
 
 **Symptom:** the site shows a "Showing 2025 data —…" banner, and the weekly
