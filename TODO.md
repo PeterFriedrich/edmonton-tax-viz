@@ -226,12 +226,23 @@ item says whether it is worth settling first.
   was geocoded between 09-03 and 11-10, and the 07-14 backlog moved by 2
   permits in 119 days. The F4 draft wording keeps "not yet", so it does not
   fix this. Supersedes the wording in the S199 F4 item. Findings §10 D1.
-- [ ] **CONFIRM IN A BROWSER, then Peter's call: the Ratio panel's 100% bar
-  and amber fire only on set-aside neighbourhoods** (8 on lifecycle, 2 on
-  operating, up to 5,420%). No published neighbourhood is above 50% at
-  shipped rates. Read from `ratioPanelFor` and `renderRatioCost`, not
-  rendered. If the panel does open on grey land, keep it or stop showing the
-  share there. **Does not block.** Findings §6.
+- [ ] **Not watched: unit growth under a baselined straddler name.** The
+  permit-name guard (#793) watches the SET of unmatched names, so new permits
+  filed under one of the 14 known comma names (e.g. a big one under
+  `HOLLICK-KENYON, …`) leave a hood reading low with no signal. Possible fix:
+  store per-name units in `permits_not_in_boundaries` and flag growth above a
+  tolerance. Size it first: how often do new permits still arrive under comma
+  names? From #793's review. Does not block.
+- [ ] **Peter's call: the Ratio panel's 100% bar and amber fire only on
+  set-aside neighbourhoods** (8 on lifecycle, 2 on operating). No published
+  neighbourhood is above 50% at shipped rates. **Confirmed rendered
+  2026-11-10 (S243)**, public and full builds, through the pointer pin path
+  (`hoodPanelLens() && temporalFor(name)` → `openTemporal`): the panel opens on
+  all 8, with the amber bars. MILL WOODS GOLF COURSE reads 5422% / 1011%
+  against $4 per acre of city tax; RIVER VALLEY LAURIER 976% / 182%; the other
+  six are 124–443% on lifecycle only. DOWNTOWN control 0.4% / 0.1%, no amber.
+  Keep it, or stop showing the share on grey land. **Does not block.**
+  Findings §6.
 - [ ] **Does not block: say that leaving out arterials raises the Ratio
   reading most downtown and on commercial and industrial land, or accept.**
   Median 1.68× on 117 non-residential neighbourhoods against 1.22× on 223
