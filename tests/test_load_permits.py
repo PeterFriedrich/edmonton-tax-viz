@@ -680,11 +680,14 @@ def test_chappelle_heritage_valley_list_goes_to_chappelle(tmp_path):
     # HERITAGE VALLEY AREA must not receive any of it.
     rows = _window_rows() + [
         _row(year=2023, neighbourhood="CHAPPELLE AREA, HERITAGE VALLEY AREA", units_added=4),
+        # The City's later spelling drops "AREA" from the first part; the
+        # live feed carries both (1 row old, 15 new, 2026-11-10).
+        _row(year=2023, neighbourhood="CHAPPELLE, HERITAGE VALLEY AREA", units_added=2),
         _row(year=2023, neighbourhood="CHAPPELLE", units_added=1),
     ]
     out = load_permits(_write(tmp_path, rows), YEARS)
     s = _series(out)
-    assert s.get("CHAPPELLE") == 5
+    assert s.get("CHAPPELLE") == 7
     assert "HERITAGE VALLEY AREA" not in s.index
     assert not any("," in n for n in s.index)
 

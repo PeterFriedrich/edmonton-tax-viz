@@ -233,6 +233,10 @@ PERMIT_NAME_CORRECTIONS = {
     # Pilot Sound entry. 8 new-construction permits, 28 units.
     # FINDINGS_services_ranks_dev_zerofill.md F1; re-measured 2026-10-05.
     "CHAPPELLE AREA, HERITAGE VALLEY AREA": "CHAPPELLE",
+    # The same rows, respelled by the City between the 09-03 and 11-10 pulls
+    # (15 of the 16 now read this way). The old key alone silently stopped
+    # matching: CHAPPELLE shipped 28 units low. FINDINGS_roads_release.md §10.
+    "CHAPPELLE, HERITAGE VALLEY AREA":      "CHAPPELLE",
 }
 
 REQUIRED_COLUMNS = ("year", "work_type", "building_type", "units_added", "neighbourhood")
