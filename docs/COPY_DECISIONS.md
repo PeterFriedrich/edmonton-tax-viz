@@ -248,6 +248,22 @@ chart to the window would silently redefine the published number.
 
 ---
 
+### F5 — the Ratio panel's share of tax on set-aside land — ✅ **APPLIED 2026-11-10** (S243)
+Clicking a grey neighbourhood in Ratio opened the share-of-tax panel anyway, and
+because set-aside land collects a few dollars of tax the bars ran to **5,422%**
+(MILL WOODS GOLF COURSE, $4/acre) with the amber. All 8 hoods over 100% were
+set-aside, so the site's only "over" statement sat on land the map tells readers
+to skip (`docs/FINDINGS_roads_release.md` §6, confirmed rendered S243).
+**Wording (Peter, 2026-11-10):** *"Predominantly river valley, parks and
+undeveloped land (90% or more of its area). The resulting city tax collected is
+too low for comparison."* It replaces the bars and the note on set-aside hoods
+only; the tax line, the road reading and its rank stay. ⚠️ **The 90% is the
+LAND test** (`SET_ASIDE_THRESHOLD`, `src/load_zoning.py`), not a tax threshold.
+Peter's first draft put the threshold on the tax, and that would have been false.
+Guards: `tests/test_load_zoning.py::test_ratio_set_aside_note_states_the_live_threshold`,
+`tools/profiling/verify-services-panel.js` (`ratioSetAside`, red on master).
+The noun matches **J2**'s proposed legend wording, which is still open.
+
 ## Group B — the public title blurbs (inventory, 2026-09-23 S193)
 
 The `#title-p` sentence under each view's title, **public build only** (TODO

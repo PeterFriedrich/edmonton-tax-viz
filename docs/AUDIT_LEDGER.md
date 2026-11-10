@@ -379,7 +379,7 @@ were the audits' own errors, and 10 audits started from a false premise.
 | 11-03 S239 | `DATA_INTEGRITY.md` brief stated stale facts (2025 pin, `nonres` default, three unresolved names, T2 unguarded) | claim | no | scoped | fixed |
 | 11-03 S239 | Audit's own instrument: first re-derivation shared `NAME_CORRECTIONS` with the code; transit-zero PASS first rested on docs; "nothing reads `is_exempt`" grepped three dirs, wrong | audit-error | no | scoped | fixed |
 | 11-10 S242 | Public copy credits the City with the operating rate and its lane-km unit; the City published a budget, the division and the unit reading are this project's (three sentences) | claim | yes | scoped | open (TODO) |
-| 11-10 S242 | Ratio panel's 100% bar and amber fire only on set-aside hoods (8 lifecycle, 2 operating); read from code, not rendered | render | unknown | scoped | open (TODO) |
+| 11-10 S242 | Ratio panel's 100% bar and amber fire only on set-aside hoods (8 lifecycle, 2 operating); read from code, not rendered | render | yes (rendered S243) | scoped | fixed S243 (COPY_DECISIONS F5) |
 | 11-10 S242 | Leaving out arterials lifts the Ratio reading a median 1.68× on non-residential hoods against 1.22× on residential; not stated on the Ratio surface | method | yes | scoped | open (TODO) |
 | 11-10 S242 | Share-of-levy figures in older docs are stale (9.0% → 8.2%, 1.68% → 1.5%, 9 → 8 above 100%) | claim | no | scoped | open (TODO) |
 | 11-10 S242 | City renamed `CHAPPELLE AREA, HERITAGE VALLEY AREA`; the S216 correction key stopped matching, CHAPPELLE units since 2009 are 28 low (0.4%); the only signal is a build-log warning and the test fixture carries the old string | guard-blind | yes | scoped | fixed S243 (key added; dead-key guard open in TODO) |

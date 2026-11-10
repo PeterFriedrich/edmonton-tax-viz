@@ -103,11 +103,11 @@ const SUBJECT = { storm: /storm/i, fire: /fire/i, water: /water|sewer/i };
       !/city (property )?tax|% of/i.test(r.text), r.text.split('\n')[0].slice(0, 80));
   };
 
-  const ratioPanel = (page, d) => page.evaluate(async (d) => {
+  const ratioPanel = (page, d, hood = 'DOWNTOWN') => page.evaluate(async ([d, hood]) => {
     await applyView('ratio');
     applyRatioDenom(d);
     closeTemporal();
-    openTemporal('DOWNTOWN');
+    openTemporal(hood);
     const el = document.getElementById('temporal');
     return {
       denom: state.ratioDenom,
@@ -116,8 +116,20 @@ const SUBJECT = { storm: /storm/i, fire: /fire/i, water: /water|sewer/i };
           + '\n' + document.getElementById('temporal-note').textContent.trim(),
       rows: el.querySelectorAll('.svcrow').length,
       ems: [...el.querySelectorAll('.svcrow em')].map(e => e.textContent.trim()),
+      over: el.querySelectorAll('.svcrow em.over').length,
     };
-  }, d);
+  }, [d, hood]);
+  // COPY_DECISIONS F5: set-aside land collects a few dollars of tax, so the share
+  // ran to 5,422% with the amber. The panel opens (the reading and rank still
+  // hold) but says why there is no comparison instead of drawing one.
+  const ratioSetAside = (name, r) => {
+    check(`${name}: the Ratio panel opens on set-aside land`, r.open, `denom=${r.denom}`);
+    check(`*** ${name}: set-aside land shows no share-of-tax bars and no amber ***`,
+      r.rows === 0 && r.over === 0, `${r.rows} rows, ${r.over} over: ${r.ems.join(' | ')}`);
+    check(`${name}: set-aside land says why there is no comparison`,
+      /Predominantly river valley, parks and undeveloped land \(\d+% or more of its area\)\. The resulting city tax collected is too low for comparison\./.test(r.text)
+      && /highest of \d+ neighbourhoods/.test(r.text), r.text.slice(0, 160).replace(/\n/g, ' | '));
+  };
   const ratioForm = (name, r) => {
     check(`${name}: the Ratio panel opens`, r.open, `denom=${r.denom}`);
     check(`*** ${name}: the Ratio panel sets the cost against the city tax ***`,
@@ -211,6 +223,18 @@ const SUBJECT = { storm: /storm/i, fire: /fire/i, water: /water|sewer/i };
 
     // ---- 3d. RATIO CARRIES THE SHARE-OF-TAX PANEL ---------------------------
     ratioForm('ratio/roads', await ratioPanel(page, 'roads'));
+    // The set-aside hood that read highest (5,422%) when F5 landed, if it is
+    // still set aside; otherwise any set-aside hood, so a rename or a zoning
+    // reclassification cannot drop the check.
+    const asideHood = await page.evaluate(() => {
+      const ps = state.data.features.map(f => f.properties).filter(p => p.is_set_aside);
+      return (ps.find(p => p.neighbourhood_name === 'MILL WOODS GOLF COURSE') || ps[0]).neighbourhood_name;
+    });
+    ratioSetAside(`ratio/roads ${asideHood}`, await ratioPanel(page, 'roads', asideHood));
+    const rfa = await ratioPanel(page, 'fire', asideHood);
+    check(`ratio/fire ${asideHood}: a driver with no cost rows keeps its own note on set-aside land`,
+      rfa.open && rfa.rows === 0 && /no fire cost/i.test(rfa.text) && !/too low for comparison/.test(rfa.text),
+      rfa.text.slice(-120).replace(/\n/g, ' | '));
     const rf = await ratioPanel(page, 'fire');
     check('ratio/fire: the panel opens and explains there is no fire cost',
       rf.open && rf.rows === 0 && /no fire cost/i.test(rf.text), `${rf.rows} rows`);
@@ -329,6 +353,11 @@ const SUBJECT = { storm: /storm/i, fire: /fire/i, water: /water|sewer/i };
     servicesForm(`public ${k}`, r);
   }
   ratioForm('public ratio/roads', await ratioPanel(pub, 'roads'));
+  const pubAside = await pub.evaluate(() => {
+    const ps = state.data.features.map(f => f.properties).filter(p => p.is_set_aside);
+    return (ps.find(p => p.neighbourhood_name === 'MILL WOODS GOLF COURSE') || ps[0]).neighbourhood_name;
+  });
+  ratioSetAside(`public ratio/roads ${pubAside}`, await ratioPanel(pub, 'roads', pubAside));
   const pubDistinct = new Set(pubKeys.map(k => pubSeen[k].text)).size;
   check('*** PUBLIC: the panel differs across the three public layers ***',
     pubDistinct > 1, `${pubDistinct} distinct rendering(s) across ${pubKeys.length} layers`);

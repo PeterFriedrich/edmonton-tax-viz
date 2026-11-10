@@ -5770,11 +5770,16 @@
     // lifecycle), so crossing 100% is a well-defined statement about that one
     // service — "roads lifecycle alone would need 55x this hood's entire levy".
     // ⚠️ Measured 2026-09-07: NO DEVELOPED HOOD exceeds 100% on any row in either
-    // build. All 9/2/9/12 (life/ops/transit/bike) are set-aside, worst is a golf
-    // course. Re-measure before citing that as still true.
+    // build; all over-100% rows were set-aside (8/2 life/ops on roads, re-measured
+    // 2026-11-10). Set-aside hoods now show a note instead of bars (COPY_DECISIONS
+    // F5), so at shipped rates the `over` styling below never renders. It is kept
+    // for a rate change; re-measure before citing that as still true.
     // The Ratio panel: each cost as a share of this hood's city tax. Moved here
     // from Services on 2026-09-24 (Peter). It follows the ratio's DENOMINATOR the
     // way the Services panel follows the colour driver.
+    const SET_ASIDE_RATIO_NOTE = "Predominantly river valley, parks and undeveloped "
+      + "land (90% or more of its area). The resulting city tax collected is too "
+      + "low for comparison.";
     function renderRatioCost(p) {
       const rev = p.revenue_per_acre;
       const driver = state.ratioDenom;
@@ -5790,6 +5795,7 @@
         .filter(g => g.rows.length);
       const read = svcDriverReading(p, driver);
       const rank = read.value == null ? null : svcRank(read.col, read.value);
+      const asideNote = p.is_set_aside && groups.length > 0;
       // Every row is now a peer of the others in its basis group. The "(incl.
       // above)" label existed for the one NESTED row (roads inside roads+fire),
       // retired 2026-09-05 — restore it with any future row that CONTAINS
@@ -5818,12 +5824,20 @@
               + `${rank.rank}${ordSuffix(rank.rank)} highest of ${rank.n} `
               + `neighbourhoods</div>`)
         + `<div class="muted">One of many services this tax pays for.</div>`
-        + `<div id="svccost">` + groups.map(g =>
+        // COPY_DECISIONS F5 (Peter, 2026-11-10): on set-aside land the tax is a
+        // few dollars, so the share runs to thousands of percent and the amber
+        // made the site's only "over" claim on land the map tells readers to skip.
+        // "90%" is SET_ASIDE_THRESHOLD (src/load_zoning.py); a test ties them.
+        // Only where there are bars to replace: a driver with no cost rows keeps
+        // its own "no cost modelled" note, which is true on any land.
+        + `<div id="svccost">` + (asideNote
+            ? `<div class="muted">${SET_ASIDE_RATIO_NOTE}</div>`
+            : groups.map(g =>
             `<div class="svcbasis">${esc(g.head)} `
             + `<span class="muted">— ${esc(
                  g.basis === "operating" && SVC_OPS_NOTE[fam]
                    ? SVC_OPS_NOTE[fam] : g.note)}</span></div>`
-            + g.rows.map(bar).join("")).join("") + `</div>`;
+            + g.rows.map(bar).join("")).join("")) + `</div>`;
       // ⚠️ A note must describe rows the reader can see, or it teaches them to
       // skip the note. It used to be FULL_BUILD-aware because the two builds
       // showed different row sets; now the rows are scoped to one service family
@@ -5832,7 +5846,8 @@
       // The "never added" warning is a ROADS fact — it is the only family shown
       // on two bases — so it is emitted where those two bars are, not always.
       document.getElementById("temporal-note").textContent =
-        groups.length === 0
+        asideNote ? ""
+        : groups.length === 0
           ? (NO_SVC_COST[driver]
              || "No City cost is modelled for this service.")
           : "Modelled cost, shown against this neighbourhood's own city tax."

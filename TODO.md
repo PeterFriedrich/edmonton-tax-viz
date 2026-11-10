@@ -233,16 +233,6 @@ item says whether it is worth settling first.
   store per-name units in `permits_not_in_boundaries` and flag growth above a
   tolerance. Size it first: how often do new permits still arrive under comma
   names? From #793's review. Does not block.
-- [ ] **Peter's call: the Ratio panel's 100% bar and amber fire only on
-  set-aside neighbourhoods** (8 on lifecycle, 2 on operating). No published
-  neighbourhood is above 50% at shipped rates. **Confirmed rendered
-  2026-11-10 (S243)**, public and full builds, through the pointer pin path
-  (`hoodPanelLens() && temporalFor(name)` → `openTemporal`): the panel opens on
-  all 8, with the amber bars. MILL WOODS GOLF COURSE reads 5422% / 1011%
-  against $4 per acre of city tax; RIVER VALLEY LAURIER 976% / 182%; the other
-  six are 124–443% on lifecycle only. DOWNTOWN control 0.4% / 0.1%, no amber.
-  Keep it, or stop showing the share on grey land. **Does not block.**
-  Findings §6.
 - [ ] **Does not block: say that leaving out arterials raises the Ratio
   reading most downtown and on commercial and industrial land, or accept.**
   Median 1.68× on 117 non-residential neighbourhoods against 1.22× on 223
@@ -3443,6 +3433,7 @@ archive"*) is not, and this span is 2,533 lines.
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
 
+- [x] **Ratio amber on set-aside land — decided and applied 2026-11-10 (S243): a one-line explanation replaces the bars there (COPY_DECISIONS F5).** · `docs/TODO_archive.md`
 - [x] **Unmatched-permit-name guard — built 2026-11-10 (S243): `scripts/check_permit_names.py` files a `permit-names` issue, never fails the build.** · `docs/TODO_archive.md`
 - [x] **CHAPPELLE's units since 2009 were 28 low — fixed 2026-11-10 (S243): the City's respelling `CHAPPELLE, HERITAGE VALLEY AREA` is keyed beside the old one.** · `docs/TODO_archive.md`
 - [x] **`verify-theme.js` cannot run through `verify.js` — fixed S240 (it cuts the page off the URL it is handed).** — 2026-11-08 · `docs/TODO_archive.md`
