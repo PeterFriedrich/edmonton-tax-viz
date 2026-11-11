@@ -993,6 +993,7 @@ Reported by the `template` session and not yet re-measured here, except item 2. 
 - [ ] **`check_doc_citations.py` never scans `scripts/build_site.py` or `.github/workflows/`.** Confirmed 2026-11-11: the `".git"` entry in `EXCLUDE_PARTS` substring-matches `.github` (`any(part in p.as_posix() ...)`). Match on path components instead. The template has the same bug.
 - [ ] **Four DECISIONS rows have no pointer cell.**
 - [ ] **One backticked `§2.2` citation will go red** once the template's P1 fix is ported. Fix it in the same PR.
+- [ ] **Port `hooks_reminder()` into `scripts/handoff_gap.py`** (template PR #84, `docs/FINDINGS_session_safety_net.md`). Without it, a fresh clone with git hooks off gets no notice at session start, so pre-push never runs there. Checked 2026-11-11: both checkouts have `core.hooksPath=.githooks`, so nothing is exposed today. Port it with the template's handoff-gap tests (its TODO X1).
 
 ### General backlog — the flat list (no parent item; predates the `###` headings above)
 
