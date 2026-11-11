@@ -82,7 +82,7 @@ REVENUE_READOUT_COLUMNS = [
     # Cuts ACROSS the family above rather than joining it — the rev_frac_*
     # partition sums to 1.0 and this asks a different question of the same
     # dollars (load_zoning.EXEMPT_CANDIDATE_ZONES).
-    "rev_frac_exempt",
+    "rev_frac_exempt", "rev_frac_exempt_res", "rev_frac_exempt_nonres",
 ]
 
 
@@ -1001,7 +1001,7 @@ SLIM_COLUMNS = [
     # Cuts ACROSS the family above rather than joining it — the rev_frac_*
     # partition sums to 1.0 and this asks a different question of the same
     # dollars (load_zoning.EXEMPT_CANDIDATE_ZONES).
-    "rev_frac_exempt",
+    "rev_frac_exempt", "rev_frac_exempt_res", "rev_frac_exempt_nonres",
     "geometry",
 ]
 

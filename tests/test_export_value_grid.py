@@ -766,6 +766,56 @@ def test_export_exempt_frac_serialises_null_not_zero(tmp_path):
     assert sum(1 for r in payload["cells"] if r[i] is None) == 1
 
 
+def _class_cells():
+    # Cells A and B differ ONLY in which class carries the exempt-zoned levy
+    # (same totals, same total share 0.5), so a class-blind share fails.
+    return _frame([
+        {**A, "assessed_value": 100.0, "levy": 1000.0, "res_levy": 0.0,
+         "nonres_levy": 1000.0, "exempt_levy": 1000.0,
+         "exempt_res_levy": 0.0, "exempt_nonres_levy": 1000.0},
+        {**A2, "assessed_value": 100.0, "levy": 1000.0, "res_levy": 1000.0,
+         "nonres_levy": 0.0, "exempt_levy": 0.0,
+         "exempt_res_levy": 0.0, "exempt_nonres_levy": 0.0},
+        {**B, "assessed_value": 100.0, "levy": 1000.0, "res_levy": 1000.0,
+         "nonres_levy": 0.0, "exempt_levy": 1000.0,
+         "exempt_res_levy": 1000.0, "exempt_nonres_levy": 0.0},
+        {**B, "assessed_value": 100.0, "levy": 1000.0, "res_levy": 0.0,
+         "nonres_levy": 1000.0, "exempt_levy": 0.0,
+         "exempt_res_levy": 0.0, "exempt_nonres_levy": 0.0},
+    ])
+
+
+def test_exempt_frac_per_class_reads_its_own_class_levy():
+    grid = build_value_grid(_class_cells(), cell_m=100.0).sort_values("lat")
+    assert list(grid["exempt_frac"]) == [0.5, 0.5]
+    assert list(grid["exempt_frac_nonres"]) == [1.0, 0.0]
+    assert list(grid["exempt_frac_res"]) == [0.0, 1.0]
+
+
+def test_exempt_frac_per_class_is_nan_without_that_class():
+    df = _class_cells()
+    df.loc[1, ["res_levy", "exempt_res_levy"]] = 0.0
+    df.loc[1, "nonres_levy"] = 1000.0
+    grid = build_value_grid(df, cell_m=100.0).sort_values("lat")
+    assert pd.isna(grid["exempt_frac_res"].iloc[0])
+    assert grid["exempt_frac_nonres"].iloc[0] == 0.5
+
+
+def test_export_exempt_frac_per_class_appended_last_and_null(tmp_path):
+    df = _class_cells()
+    df.loc[1, ["res_levy", "exempt_res_levy"]] = 0.0
+    df.loc[1, "nonres_levy"] = 1000.0
+    out = tmp_path / "value_grid.json"
+    stats = export_value_grid(df, out, cell_m=100.0)
+    payload = json.loads(out.read_text())
+    assert payload["columns"][-2:] == ["exempt_frac_res", "exempt_frac_nonres"]
+    assert "exempt_frac" in payload["columns"]
+    i = payload["columns"].index("exempt_frac_res")
+    assert sorted((r[i] is None, r[i]) for r in payload["cells"]) == [
+        (False, 1.0), (True, None)]
+    assert stats["n_cells_without_exempt_frac_res"] == 1
+
+
 # --- amenity distance columns (amenity_distance, attached upstream) ----------
 
 def test_distance_columns_take_the_cell_median_not_the_minimum():

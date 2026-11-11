@@ -293,6 +293,14 @@ def run(
             # `inst` omitted $88M/yr and drew park-dominated hoods as certain
             # (TODO.md 2026-08-25).
             assessment["exempt_levy"] = exempt_candidate_levy(assessment, zone_codes)
+            # Per-class twins: the Residential and Non-residential cuts gate on
+            # the exempt share of THEIR OWN levy, not the total
+            # (docs/PROPOSAL_per_cut_exempt_share.md).
+            for cls in ("res", "nonres"):
+                if f"{cls}_levy" in assessment.columns:
+                    assessment[f"exempt_{cls}_levy"] = exempt_candidate_levy(
+                        assessment, zone_codes, levy_col=f"{cls}_levy",
+                    )
             aggregated = aggregated.merge(
                 revenue_by_zone(
                     assessment, zoning_polygons, categories=zone_categories,

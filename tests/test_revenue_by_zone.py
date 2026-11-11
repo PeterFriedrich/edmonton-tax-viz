@@ -10,6 +10,8 @@ sys.path.insert(0, "src")
 from revenue_by_zone import (
     OUTPUT_NAMES,
     UNZONED,
+    exempt_candidate_levy,
+    exempt_share_by_neighbourhood,
     property_zone_categories,
     revenue_by_zone,
     top_zones,
@@ -165,3 +167,46 @@ def test_precomputed_categories_match_the_internal_join():
     pd.testing.assert_frame_equal(
         revenue_by_zone(a, z), revenue_by_zone(a, z, categories=cats)
     )
+
+
+# --- per-class exempt shares (docs/PROPOSAL_per_cut_exempt_share.md) --------
+
+def _class_frame():
+    # X and Y differ ONLY in which class the exempt-zoned parcel is billed in:
+    # same levies, same zones, same total share (0.5). A class-blind share
+    # reads 0.5 on both cuts of both hoods and fails every assertion below.
+    df = pd.DataFrame({
+        "neighbourhood_name": ["X", "X", "Y", "Y"],
+        "levy":        [1000.0, 1000.0, 1000.0, 1000.0],
+        "res_levy":    [0.0,    1000.0, 1000.0, 0.0],
+        "nonres_levy": [1000.0, 0.0,    0.0,    1000.0],
+    })
+    codes = pd.Series(["PU", "RSF", "PU", "RSF"])
+    for col in ("levy", "res_levy", "nonres_levy"):
+        prefix = "exempt" if col == "levy" else f"exempt_{col.split('_')[0]}"
+        df[f"{prefix}_levy"] = exempt_candidate_levy(df, codes, levy_col=col)
+    return df
+
+
+def test_exempt_share_per_class_reads_its_own_class_levy():
+    out = exempt_share_by_neighbourhood(_class_frame()).set_index("neighbourhood_name")
+    assert out.loc["X", "rev_frac_exempt"] == out.loc["Y", "rev_frac_exempt"] == 0.5
+    assert out.loc["X", "rev_frac_exempt_nonres"] == 1.0
+    assert out.loc["X", "rev_frac_exempt_res"] == 0.0
+    assert out.loc["Y", "rev_frac_exempt_res"] == 1.0
+    assert out.loc["Y", "rev_frac_exempt_nonres"] == 0.0
+
+
+def test_exempt_share_per_class_is_nan_without_that_class():
+    df = _class_frame()
+    df.loc[df["neighbourhood_name"] == "X", ["res_levy", "exempt_res_levy"]] = 0.0
+    out = exempt_share_by_neighbourhood(df).set_index("neighbourhood_name")
+    assert pd.isna(out.loc["X", "rev_frac_exempt_res"])
+    assert out.loc["X", "rev_frac_exempt_nonres"] == 1.0
+
+
+def test_exempt_share_omits_class_columns_without_class_levy():
+    df = _class_frame().drop(columns=["res_levy", "exempt_res_levy",
+                                      "nonres_levy", "exempt_nonres_levy"])
+    out = exempt_share_by_neighbourhood(df)
+    assert list(out.columns) == ["neighbourhood_name", "rev_frac_exempt"]
