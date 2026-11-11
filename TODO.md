@@ -985,6 +985,15 @@ One small tools/tests PR, Peter merges. Neither touches a published number.
 
 - [ ] Smaller, optional, same PR if cheap: `_overpass` treats a 200 with `remark: "runtime error…"` as success, so it never tries a mirror (pre-existing; `HIGHWAY_MIN_KM` 700 catches most truncation). `verify.js --serve`: no spawn `'error'` listener; the `python3` fallback is 3.6 on Oracle (no `--directory`); the page fetch has no timeout; `--page` without `--serve` is silently ignored.
 
+### Merge-gate guard gaps (OPEN 2026-11-11, from `template`'s guards audit, template PR #82 `docs/FINDINGS_merge_gate_guards.md`)
+
+Reported by the `template` session and not yet re-measured here, except item 2. Open question: do we wait and port the template's fixes together (its tests first, then its P1 backticked-§ check)? Peter's call.
+
+- [ ] **Silent reversals in DECISIONS.** The 2026-08-28 row, both 2026-09-01 rows and the 2026-09-15 row reverse, correct or withdraw an earlier row that carries no mark. `check_decisions_log.py` only sees five verbs in one word order, so it passes them. Mark the earlier rows, then widen the check.
+- [ ] **`check_doc_citations.py` never scans `scripts/build_site.py` or `.github/workflows/`.** Confirmed 2026-11-11: the `".git"` entry in `EXCLUDE_PARTS` substring-matches `.github` (`any(part in p.as_posix() ...)`). Match on path components instead. The template has the same bug.
+- [ ] **Four DECISIONS rows have no pointer cell.**
+- [ ] **One backticked `§2.2` citation will go red** once the template's P1 fix is ported. Fix it in the same PR.
+
 ### General backlog — the flat list (no parent item; predates the `###` headings above)
 
 ⚠️ **Everything from here down is its OWN top-level work, not a child of the
