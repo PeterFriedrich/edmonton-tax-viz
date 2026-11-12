@@ -208,10 +208,10 @@ model reads **+$282.0M, +11.2%** over the levy the City filed for 2026.
   West Meadowlark Park prints a low end of **$7,330** where it is $266; Hudson,
   Royal Gardens and Virginia Park get no band. **Peter chose the proper fix
   (2026-11-11): `docs/PROPOSAL_per_cut_exempt_share.md`.** Decision 1
-  (schema) approved; **PR 1 (pipeline) is #803**. Open: decision 2 (the
-  measured counts, proposal "PR 1 measurements") and decision 3 (caveat
-  wording). PR 2 (front end) waits on both and on the first refresh after
-  #803 merges.
+  (schema) approved; **PR 1 (pipeline) #803 merged 2026-11-12.** Decisions
+  2 (accept the counts) and 3 (name the cut, `COPY_DECISIONS.md` F6) made
+  2026-11-11. **Next: PR 2 (front end), after the first refresh publishes
+  the new columns** (Mon 2026-11-16).
   - [ ] **Re-measure decision 2's counts on the served file** once the
     refresh publishes the new columns, before PR 2 renders anything. The
     #803 counts came from the 09-03 raw roll.

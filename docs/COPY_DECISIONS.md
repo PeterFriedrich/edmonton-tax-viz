@@ -264,6 +264,24 @@ Guards: `tests/test_load_zoning.py::test_ratio_set_aside_note_states_the_live_th
 `tools/profiling/verify-services-panel.js` (`ratioSetAside`, red on master).
 The noun matches **J2**'s proposed legend wording, which is still open.
 
+### F6 — the exempt-land caveat on the split cuts — **DECIDED 2026-11-11** (Peter, S245); applied in per-cut PR 2
+
+The tooltip caveat says *"N% of revenue is on institutionally-zoned land"* on
+every cut. Once N is the cut's own share (`docs/PROPOSAL_per_cut_exempt_share.md`),
+"revenue" alone misstates it on Residential and Non-residential.
+**Wording (Peter, 2026-11-11, option A "for now"):** name the cut.
+- Total: *"N% of revenue is on institutionally-zoned land"* (unchanged)
+- Residential: *"N% of its residential revenue is on institutionally-zoned land"*
+- Non-residential: *"N% of its non-residential revenue is on institutionally-zoned land"*
+
+The second line, *"the City does not publish which of it is tax-exempt"*, stays
+on every cut. All three surfaces change together (Money, Deviation and Glass
+tooltips share the string by design).
+**Open, not decided: option B.** Say what the land is: *"…on land zoned for
+schools, parks or public use"*. Most of the 165 non-residential caveats are `PS`
+school and park sites, which "institutionally-zoned" doesn't suggest to a
+resident. It would change Total too, so it's its own call.
+
 ## Group B — the public title blurbs (inventory, 2026-09-23 S193)
 
 The `#title-p` sentence under each view's title, **public build only** (TODO
