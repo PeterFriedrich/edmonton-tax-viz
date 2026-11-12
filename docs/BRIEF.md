@@ -419,6 +419,7 @@ Edmonton revenue-per-acre fiscal analysis. Python-only, no GIS software.
 - **2026-11-03** — **Zoning code `RTCC` (Riverview Town Centre Commercial) is `mix`, not `com`; its stormwater runoff is 0.75 (with `TC-C`), not 0.65** (S239, digest #770).
 - **2026-11-10** — **A NEW permit neighbourhood name with no boundary files a GitHub issue each week; it never fails the build** (Peter, S243).
 - **2026-11-10** — **On set-aside land the Ratio panel shows no share-of-tax bars or amber; one line says why** (Peter, S243; `COPY_DECISIONS.md` F5): *"Predominantly river valley, parks and undeveloped land (90% or …
+- **2026-11-11** — **The exempt-candidate share is served per rate class too: `rev_frac_exempt_res`/`_nonres` on the hood file, `exempt_frac_res`/`_nonres` on both grids, alongside the total share, which stays** …
 
 ## Open work
 
@@ -528,6 +529,13 @@ Edmonton revenue-per-acre fiscal analysis. Python-only, no GIS software.
 
 **`/code-review` control-run finds (OPEN 2026-11-04 S240; merged #725 and #742, no later fix)**
 - Smaller, optional, same PR if cheap: `_overpass` treats a 200 with `remark: "runtime error…"` as success, so it never tries a mirror (pre-existing; `HIGHWAY_MIN_KM` 700 catches most truncation). `verify.js --serve`: no spawn `'error'` listener; the `python3` fallback is 3.6 on …
+
+**Merge-gate guard gaps (OPEN 2026-11-11, from `template`'s guards audit, template PR #82 `docs/FINDINGS_merge_gate_guards.md`)**
+- **Silent reversals in DECISIONS.** The 2026-08-28 row, both 2026-09-01 rows and the 2026-09-15 row reverse, correct or withdraw an earlier row that carries no mark. `check_decisions_log.py` only sees five verbs in one word order, so it passes them. Mark the earlier rows, then …
+- **`check_doc_citations.py` never scans `scripts/build_site.py` or `.github/workflows/`.** Confirmed 2026-11-11: the `".git"` entry in `EXCLUDE_PARTS` substring-matches `.github` (`any(part in p.as_posix() ...)`). Match on path components instead. The template has the same bug.
+- **Four DECISIONS rows have no pointer cell.**
+- **One backticked `§2.2` citation will go red** once the template's P1 fix is ported. Fix it in the same PR.
+- **Port `hooks_reminder()` into `scripts/handoff_gap.py`** (template PR #84, `docs/FINDINGS_session_safety_net.md`). Without it, a fresh clone with git hooks off gets no notice at session start, so pre-push never runs there. Checked 2026-11-11: both checkouts have …
 
 **General backlog — the flat list (no parent item; predates the `###` headings above)**
 - **`TODO.md` is ~89% of the loaded path — audit the 100 open boxes for stale claims; relocate closed sub-items** (opened 2026-09-16, S166; `docs/FINDINGS_doc_growth.md` §3). Two halves. - ✅ **(2) THE RELOCATION IS DONE 2026-09-16 (S166): 26 KB moved, 261.6 → 238.0 KB**, 27 blocks …
