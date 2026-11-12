@@ -112,7 +112,11 @@ which hold by habit) is in §"This project's fit" below.
      highest tier any path reaches, and that path ("high (`src/load_roads.py`)").
      - **high:** `.github/workflows/`, `scripts/build_site.py`, `src/` (every
        module feeds a served number), a served column or file shape, the
-       committed inputs in `data/*.json`;
+       committed inputs in `data/*.json`, and every other writer of served
+       output: `main.py`, `scripts/generate_status.py`,
+       `scripts/build_reference_layers.py`, `scripts/export_budget_ranked.py`,
+       `tools/run_verified_notebooks.py` (the refresh writes `web/verified/`
+       with it). A new script that writes `web/data/` joins this list;
      - **medium:** `web/`, other `scripts/`, `tools/`, `notebooks/`, tests
        that change;
      - **low:** tests only added.
