@@ -2,7 +2,8 @@
 
 **Status: APPROVED 2026-11-11 (Peter: "do the proper one", after
 `docs/FINDINGS_levy_as_revenue.md` re-measured the defect). PR 1 (pipeline) built
-S245; decisions 2 and 3 still open, measured below.** It changes the served
+S245 and merged (#803). Decisions 2 and 3 made 2026-11-11 (below); PR 2 waits on
+the first refresh after #803.** It changes the served
 schema (a data contract), so CLAUDE.md requires the plan first.
 Evidence: `docs/FINDINGS_blurb_claims.md` F1, F2 and §6.
 
@@ -89,6 +90,11 @@ which is true only on Total. This is a COPY_DECISIONS row and Peter's call.
    `INST_CONSEQUENCE_MIN` gets the outlined band. I'll measure both counts on
    the served data in PR 1 and bring them back before PR 2 renders anything.
 3. **Caveat wording** on subset cuts (§3).
+
+**Decided 2026-11-11 (Peter):** 2, accept the counts as measured (the caveat
+count rises to 165 on Non-residential, and no threshold change on the split
+cuts); re-measure on the served file before PR 2 renders. 3, name the cut
+(`COPY_DECISIONS.md` F6, option A); option B stays open there.
 
 ## Build order and guards
 - **PR 1, pipeline:** add the columns. Tests:
