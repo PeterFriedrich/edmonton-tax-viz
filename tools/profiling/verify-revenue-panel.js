@@ -60,7 +60,8 @@ const [url] = process.argv.slice(2);
     // construction and discloses it separately in the panel note, which is
     // asserted below — so the ROW set is the zone partition plus `unzoned`.
     const EXEMPT = 'rev_frac_exempt';
-    const mix = Object.keys(p).filter(k => k.startsWith('rev_frac_') && k !== EXEMPT && p[k] > 0)
+    // startsWith, not ===: the per-class rev_frac_exempt_res/_nonres cut across too.
+    const mix = Object.keys(p).filter(k => k.startsWith('rev_frac_') && !k.startsWith(EXEMPT) && p[k] > 0)
       .map(k => [k, p[k]]).sort((a, b) => b[1] - a[1]);
     return { levy: p.total_revenue, share: p.revenue_share_city, mix,
              exempt: p[EXEMPT],

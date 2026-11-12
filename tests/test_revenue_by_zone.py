@@ -10,7 +10,7 @@ sys.path.insert(0, "src")
 from revenue_by_zone import (
     OUTPUT_NAMES,
     UNZONED,
-    exempt_candidate_levy,
+    exempt_candidate_levies,
     exempt_share_by_neighbourhood,
     property_zone_categories,
     revenue_by_zone,
@@ -182,10 +182,28 @@ def _class_frame():
         "nonres_levy": [1000.0, 0.0,    0.0,    1000.0],
     })
     codes = pd.Series(["PU", "RSF", "PU", "RSF"])
-    for col in ("levy", "res_levy", "nonres_levy"):
-        prefix = "exempt" if col == "levy" else f"exempt_{col.split('_')[0]}"
-        df[f"{prefix}_levy"] = exempt_candidate_levy(df, codes, levy_col=col)
-    return df
+    return df.assign(**exempt_candidate_levies(df, codes))
+
+
+def test_exempt_candidate_levies_masks_each_class_levy():
+    df = _class_frame()
+    assert list(df["exempt_levy"]) == [1000.0, 0.0, 1000.0, 0.0]
+    assert list(df["exempt_res_levy"]) == [0.0, 0.0, 1000.0, 0.0]
+    assert list(df["exempt_nonres_levy"]) == [1000.0, 0.0, 0.0, 0.0]
+
+
+def test_exempt_candidate_levies_skips_an_absent_class():
+    df = _class_frame().drop(columns=["res_levy"])
+    out = exempt_candidate_levies(df, pd.Series(["PU", "RSF", "PU", "RSF"]))
+    assert list(out.columns) == ["exempt_levy", "exempt_nonres_levy"]
+
+
+def test_exempt_share_warns_when_class_twin_is_missing(caplog):
+    df = _class_frame().drop(columns=["exempt_res_levy"])
+    with caplog.at_level(logging.WARNING):
+        out = exempt_share_by_neighbourhood(df)
+    assert "rev_frac_exempt_res" not in out.columns
+    assert "exempt_res_levy" in caplog.text
 
 
 def test_exempt_share_per_class_reads_its_own_class_levy():

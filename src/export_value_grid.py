@@ -53,7 +53,7 @@ SPEC_industrial.md A1) are omitted when ``nonres_levy`` is absent, and
 ``median_year_built`` (Development-view stock-age spikes, from
 load_property_info's ``year_built``) is omitted when ``year_built`` is absent
 and ``exempt_frac`` (the cell's share of levy sitting on EXEMPT-CANDIDATE
-zoning, from revenue_by_zone's ``exempt_candidate_levy`` attached upstream as
+zoning, from revenue_by_zone's ``exempt_candidate_levies`` attached upstream as
 ``exempt_levy``) is omitted when it is absent — mirroring the graceful degradation
 everywhere else; the web columns map indexes by name, so the dependent web
 features fall back / stay hidden on older files. Cells with no eligible lot acres carry ``null`` in the lot-acre
@@ -75,6 +75,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from pyproj import Transformer
+
+from revenue_by_zone import EXEMPT_LEVY_CLASSES
 
 logger = logging.getLogger(__name__)
 
@@ -268,10 +270,11 @@ def build_value_grid(df: pd.DataFrame, cell_m: float = 100.0) -> pd.DataFrame:
         cells["exempt_levy"] = pts["exempt_levy"].to_numpy()
         agg_spec["exempt_levy"] = "sum"
     # Per-class twins, each a share of its OWN class levy.
-    exempt_classes = [
-        cls for cls, has in (("res", has_res), ("nonres", has_nonres))
-        if has and f"exempt_{cls}_levy" in pts.columns
-    ]
+    exempt_classes = [c for c in EXEMPT_LEVY_CLASSES if f"{c}_levy" in pts.columns]
+    for cls in [c for c in exempt_classes if f"exempt_{c}_levy" not in pts.columns]:
+        logger.warning("%s_levy present without exempt_%s_levy — exempt_frac_%s omitted",
+                       cls, cls, cls)
+        exempt_classes.remove(cls)
     for cls in exempt_classes:
         cells[f"exempt_{cls}_levy"] = pts[f"exempt_{cls}_levy"].to_numpy()
         agg_spec[f"exempt_{cls}_levy"] = "sum"
@@ -610,7 +613,8 @@ def export_value_grid(
     has_year = "median_year_built" in grid.columns
     has_exempt = "exempt_frac" in grid.columns
     dist_cols = [c for c in DIST_COLUMNS if c in grid.columns]
-    exempt_cls_cols = [c for c in ("exempt_frac_res", "exempt_frac_nonres") if c in grid.columns]
+    exempt_cls_cols = [f"exempt_frac_{c}" for c in EXEMPT_LEVY_CLASSES
+                       if f"exempt_frac_{c}" in grid.columns]
 
     # New columns append at the END so existing slots keep their positions
     # (the web reads the map by columns.indexOf — order-independent — but a

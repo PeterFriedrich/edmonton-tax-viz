@@ -193,7 +193,7 @@ def categories_from_codes(codes: pd.Series) -> pd.Series:
 def exempt_share_by_neighbourhood(assessment: pd.DataFrame) -> pd.DataFrame:
     """Per-hood ``rev_frac_exempt`` — the share of levy on exempt-CANDIDATE zoning.
 
-    Needs ``exempt_levy`` attached (``exempt_candidate_levy``). Deliberately NOT
+    Needs ``exempt_levy`` attached (``exempt_candidate_levies``). Deliberately NOT
     part of the ``rev_frac_*`` family: those partition the levy and sum to 1.0,
     while this cuts across them (it is a different question about the same
     dollars), so folding it in would break that invariant.
@@ -208,10 +208,12 @@ def exempt_share_by_neighbourhood(assessment: pd.DataFrame) -> pd.DataFrame:
         if col not in assessment.columns:
             raise KeyError(f"exempt_share_by_neighbourhood needs {col!r}")
     pairs = {"rev_frac_exempt": ("exempt_levy", "levy")}
-    for cls in ("res", "nonres"):
+    for cls in EXEMPT_LEVY_CLASSES:
         num, den = f"exempt_{cls}_levy", f"{cls}_levy"
         if num in assessment.columns and den in assessment.columns:
             pairs[f"rev_frac_exempt_{cls}"] = (num, den)
+        elif den in assessment.columns:
+            logger.warning("%s present without %s — rev_frac_exempt_%s omitted", den, num, cls)
     sums = assessment.groupby("neighbourhood_name", dropna=False)[
         sorted({c for pair in pairs.values() for c in pair})
     ].sum()
@@ -222,13 +224,17 @@ def exempt_share_by_neighbourhood(assessment: pd.DataFrame) -> pd.DataFrame:
     return out.reset_index()
 
 
-def exempt_candidate_levy(
-    assessment: pd.DataFrame, codes: pd.Series, levy_col: str = "levy",
-) -> pd.Series:
+# Rate classes that get their own exempt share (docs/PROPOSAL_per_cut_exempt_share.md).
+# Each needs ``<cls>_levy`` from apply_tax_rates.
+EXEMPT_LEVY_CLASSES = ("res", "nonres")
+
+
+def exempt_candidate_levies(assessment: pd.DataFrame, codes: pd.Series) -> pd.DataFrame:
     """Levy sitting on a zone that MIGHT not be levied; 0 everywhere else.
 
-    ``levy_col`` picks which levy: ``levy`` (total), or a class subset
-    (``res_levy``/``nonres_levy``) for the per-cut shares.
+    Returns ``exempt_levy`` (from the total ``levy``) plus ``exempt_<cls>_levy``
+    for each ``EXEMPT_LEVY_CLASSES`` levy present, so the Residential and
+    Non-residential cuts can gate on their own dollars.
 
     Feeds the map's levied/exempt uncertainty band. ⚠️ This is not an assertion
     that these parcels are untaxed — Edmonton publishes no per-parcel exemption
@@ -236,7 +242,12 @@ def exempt_candidate_levy(
     """
     from load_zoning import EXEMPT_CANDIDATE_ZONES  # noqa: PLC0415 — avoid cycle
 
-    return assessment[levy_col].where(codes.isin(EXEMPT_CANDIDATE_ZONES), 0.0)
+    exempt = codes.isin(EXEMPT_CANDIDATE_ZONES)
+    out = {"exempt_levy": assessment["levy"].where(exempt, 0.0)}
+    for cls in EXEMPT_LEVY_CLASSES:
+        if f"{cls}_levy" in assessment.columns:
+            out[f"exempt_{cls}_levy"] = assessment[f"{cls}_levy"].where(exempt, 0.0)
+    return pd.DataFrame(out, index=assessment.index)
 
 
 def revenue_by_zone(
