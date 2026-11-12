@@ -176,7 +176,9 @@ def biggest_frac_shift(before: dict, after: dict) -> tuple[str, float, float] | 
     """
     best = None
     for key, old in before.items():
-        if not key.startswith("rev_frac_"):
+        # The rev_frac_exempt* shares cut across the partition (and a class
+        # share can swing 0→1 on one parcel), so they are not a fingerprint.
+        if not key.startswith("rev_frac_") or key.startswith("rev_frac_exempt"):
             continue
         new = after.get(key)
         if not isinstance(old, (int, float)) or not isinstance(new, (int, float)):

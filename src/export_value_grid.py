@@ -38,8 +38,9 @@ square geometry don't need per-feature geometry objects):
                   "res_revenue_per_acre", "res_revenue_per_lot_acre",
                   "median_year_built",
                   "nonres_revenue_per_acre", "nonres_revenue_per_lot_acre",
-                  "exempt_frac", "dist_lrt_m", "dist_school_m"],
-      "cells": [[lon, lat, v, r, vl, rl, rr, rrl, yb, nr, nrl, i, dl, ds], ...]
+                  "exempt_frac", "dist_lrt_m", "dist_school_m",
+                  "exempt_frac_res", "exempt_frac_nonres"],
+      "cells": [[lon, lat, v, r, vl, rl, rr, rrl, yb, nr, nrl, i, dl, ds, ir, inr], ...]
       # lon/lat = SW corner
     }
 
@@ -52,7 +53,7 @@ SPEC_industrial.md A1) are omitted when ``nonres_levy`` is absent, and
 ``median_year_built`` (Development-view stock-age spikes, from
 load_property_info's ``year_built``) is omitted when ``year_built`` is absent
 and ``exempt_frac`` (the cell's share of levy sitting on EXEMPT-CANDIDATE
-zoning, from revenue_by_zone's ``exempt_candidate_levy`` attached upstream as
+zoning, from revenue_by_zone's ``exempt_candidate_levies`` attached upstream as
 ``exempt_levy``) is omitted when it is absent — mirroring the graceful degradation
 everywhere else; the web columns map indexes by name, so the dependent web
 features fall back / stay hidden on older files. Cells with no eligible lot acres carry ``null`` in the lot-acre
@@ -74,6 +75,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from pyproj import Transformer
+
+from revenue_by_zone import EXEMPT_LEVY_CLASSES
 
 logger = logging.getLogger(__name__)
 
@@ -208,6 +211,11 @@ def build_value_grid(df: pd.DataFrame, cell_m: float = 100.0) -> pd.DataFrame:
                                        about any parcel's tax status. Only when
                                        ``exempt_levy`` is present; NaN where the
                                        cell has no levy to apportion
+        exempt_frac_res         float  the same share within the residential
+        exempt_frac_nonres             (``res_levy``) / non-res (``nonres_levy``)
+                                       class — only when ``exempt_res_levy`` /
+                                       ``exempt_nonres_levy`` are present; NaN
+                                       where the cell has none of that class
         median_year_built       float  median construction year of the cell's
                                        properties (unit-weighted; a condo
                                        tower's repeated year IS the median, so
@@ -261,6 +269,15 @@ def build_value_grid(df: pd.DataFrame, cell_m: float = 100.0) -> pd.DataFrame:
     if has_exempt:
         cells["exempt_levy"] = pts["exempt_levy"].to_numpy()
         agg_spec["exempt_levy"] = "sum"
+    # Per-class twins, each a share of its OWN class levy.
+    exempt_classes = [c for c in EXEMPT_LEVY_CLASSES if f"{c}_levy" in pts.columns]
+    for cls in [c for c in exempt_classes if f"exempt_{c}_levy" not in pts.columns]:
+        logger.warning("%s_levy present without exempt_%s_levy — exempt_frac_%s omitted",
+                       cls, cls, cls)
+        exempt_classes.remove(cls)
+    for cls in exempt_classes:
+        cells[f"exempt_{cls}_levy"] = pts[f"exempt_{cls}_levy"].to_numpy()
+        agg_spec[f"exempt_{cls}_levy"] = "sum"
     has_year = "year_built" in pts.columns
     if has_year:
         cells["year_built"] = pts["year_built"].to_numpy()
@@ -328,6 +345,13 @@ def build_value_grid(df: pd.DataFrame, cell_m: float = 100.0) -> pd.DataFrame:
         out["exempt_frac"] = (grid["exempt_levy"] / total.where(total > 0)).round(
             INST_FRAC_DECIMALS
         )
+    for cls in exempt_classes:
+        # Same rule within one class: NaN where the cell has none of that
+        # class's levy, which is what retires the web's `> 0` cell filter.
+        total = grid[f"{cls}_levy"]
+        out[f"exempt_frac_{cls}"] = (
+            grid[f"exempt_{cls}_levy"] / total.where(total > 0)
+        ).round(INST_FRAC_DECIMALS)
     for col in dist_cols:
         out[col] = grid[col]
 
@@ -589,6 +613,8 @@ def export_value_grid(
     has_year = "median_year_built" in grid.columns
     has_exempt = "exempt_frac" in grid.columns
     dist_cols = [c for c in DIST_COLUMNS if c in grid.columns]
+    exempt_cls_cols = [f"exempt_frac_{c}" for c in EXEMPT_LEVY_CLASSES
+                       if f"exempt_frac_{c}" in grid.columns]
 
     # New columns append at the END so existing slots keep their positions
     # (the web reads the map by columns.indexOf — order-independent — but a
@@ -613,6 +639,7 @@ def export_value_grid(
     if has_exempt:
         columns.append("exempt_frac")
     columns.extend(dist_cols)
+    columns.extend(exempt_cls_cols)
 
     def _int(v) -> int | None:
         return None if pd.isna(v) else round(v)
@@ -645,6 +672,9 @@ def export_value_grid(
             # centrelines, so anything finer would be false precision. Null
             # where no amenity is reachable, never a large sentinel.
             row.append(_int(getattr(t, col)))
+        for col in exempt_cls_cols:
+            v = getattr(t, col)
+            row.append(None if pd.isna(v) else v)
         rows.append(row)
 
     payload = {
@@ -668,6 +698,7 @@ def export_value_grid(
         "has_year": has_year,
         "has_exempt": has_exempt,
         "dist_columns": dist_cols,
+        "exempt_class_columns": exempt_cls_cols,
         "bytes": out_path.stat().st_size,
     }
     if has_lot:
@@ -676,7 +707,7 @@ def export_value_grid(
         stats["n_cells_without_year"] = int(grid["median_year_built"].isna().sum())
     if has_exempt:
         stats["n_cells_without_exempt"] = int(grid["exempt_frac"].isna().sum())
-    for col in dist_cols:
+    for col in dist_cols + exempt_cls_cols:
         stats[f"n_cells_without_{col}"] = int(grid[col].isna().sum())
     logger.info(
         "Wrote %s: %d cells, %.1f MB", out_path.name, stats["n_cells"], stats["bytes"] / 1e6

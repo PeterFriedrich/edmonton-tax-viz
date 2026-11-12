@@ -155,6 +155,15 @@ def test_biggest_frac_shift_ignores_non_frac_columns():
     assert shift[0] == "rev_frac_inst"
 
 
+def test_biggest_frac_shift_ignores_the_cross_cutting_exempt_shares():
+    # A class exempt share can swing 0→1 on one parcel; it is not the mix.
+    shift = biggest_frac_shift(
+        {"rev_frac_inst": 0.1, "rev_frac_exempt": 0.1, "rev_frac_exempt_nonres": 0.0},
+        {"rev_frac_inst": 0.2, "rev_frac_exempt": 0.6, "rev_frac_exempt_nonres": 1.0},
+    )
+    assert shift[0] == "rev_frac_inst"
+
+
 # --- exit behaviour: this guard must never stop a publish -------------------
 
 

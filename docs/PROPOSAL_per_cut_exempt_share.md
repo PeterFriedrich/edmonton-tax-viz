@@ -1,8 +1,29 @@
 # Proposal: per-cut exempt share (F1 root, F2's missing bands)
 
-**Status: PROPOSED 2026-09-28 (S201). No code until Peter approves.** It changes
-the served schema (a data contract), so CLAUDE.md requires the plan first.
+**Status: APPROVED 2026-11-11 (Peter: "do the proper one", after
+`docs/FINDINGS_levy_as_revenue.md` re-measured the defect). PR 1 (pipeline) built
+S245; decisions 2 and 3 still open, measured below.** It changes the served
+schema (a data contract), so CLAUDE.md requires the plan first.
 Evidence: `docs/FINDINGS_blurb_claims.md` F1, F2 and §6.
+
+## PR 1 measurements (S245, 2026-11-11)
+
+Per-cut shares from `src/` on the 09-03 raw roll and zoning, gated with the
+front end's literals (`EXEMPT_UNCERTAIN_MIN` and `INST_CONSEQUENCE_MIN` both
+0.25; ground acres; sqrt ramp; clamps 50k / 30k / 50k) against the served
+11-09 per-acre values. Re-measure on the served file once the refresh
+publishes. The raw data is ten weeks older; its total share drifts by up to
+0.071 against the served value (four hoods, all far from the gate).
+
+| cut | caveat today → per-cut | outlined band today → per-cut |
+|---|---|---|
+| Total | 21 → 21 | 6 → 6 |
+| Residential | 20 → 6 (2 gain, 16 lose) | 2 → 0 (UNIVERSITY OF ALBERTA and WEST MEADOWLARK PARK lose it) |
+| Non-residential | 21 → 165 (144 gain) | 6 → 9 (HUDSON, ROYAL GARDENS, VIRGINIA PARK gain it) |
+
+ASPEN GARDENS: 0.09 total, 0.00 residential, 1.00 non-residential.
+Payload with lot columns excluded: the 100 m grid grows 308 KB raw / 12 KB
+gzip, and the 50 m grid 835 KB raw / 30 KB gzip.
 
 ## The defect
 

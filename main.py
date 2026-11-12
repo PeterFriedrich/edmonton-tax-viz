@@ -57,7 +57,7 @@ from load_temporal import load_temporal, export_temporal_web
 from revenue_by_zone import (
     FRACTION_DECIMALS,
     categories_from_codes,
-    exempt_candidate_levy,
+    exempt_candidate_levies,
     exempt_share_by_neighbourhood,
     property_zone_codes,
     revenue_by_zone,
@@ -292,7 +292,11 @@ def run(
             # (parks) belongs to exactly one of them — routing the band through
             # `inst` omitted $88M/yr and drew park-dominated hoods as certain
             # (TODO.md 2026-08-25).
-            assessment["exempt_levy"] = exempt_candidate_levy(assessment, zone_codes)
+            # Also the per-class twins the Residential and Non-residential
+            # cuts gate on (docs/PROPOSAL_per_cut_exempt_share.md).
+            assessment = assessment.assign(
+                **exempt_candidate_levies(assessment, zone_codes),
+            )
             aggregated = aggregated.merge(
                 revenue_by_zone(
                     assessment, zoning_polygons, categories=zone_categories,

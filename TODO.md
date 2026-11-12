@@ -206,11 +206,20 @@ model reads **+$282.0M, +11.2%** over the levy the City filed for 2026.
   prints **$643** where it is $3,609. **Non-residential:** 142 published hoods
   at ≥25% on the cut's own share get no caveat ($62.6M of their $132.9M);
   West Meadowlark Park prints a low end of **$7,330** where it is $266; Hudson,
-  Royal Gardens and Virginia Park get no band. Two ways out: build
-  `docs/PROPOSAL_per_cut_exempt_share.md` (data-contract change, awaiting
-  Peter's three decisions), or turn band, range and caveat off on the split
-  cuts until it lands. Per-cut figures used the 09-03 zoning; re-measure on
-  the served file when building.
+  Royal Gardens and Virginia Park get no band. **Peter chose the proper fix
+  (2026-11-11): `docs/PROPOSAL_per_cut_exempt_share.md`.** Decision 1
+  (schema) approved; **PR 1 (pipeline) is #803**. Open: decision 2 (the
+  measured counts, proposal "PR 1 measurements") and decision 3 (caveat
+  wording). PR 2 (front end) waits on both and on the first refresh after
+  #803 merges.
+  - [ ] **Re-measure decision 2's counts on the served file** once the
+    refresh publishes the new columns, before PR 2 renders anything. The
+    #803 counts came from the 09-03 raw roll.
+  - [ ] **Pin the grid columns.** `check_served_columns.py` covers only the
+    hood GeoJSON, so `exempt_frac_res`/`_nonres` could drop from both grids
+    silently. PR 2's fallback to the total column would then quietly put the
+    defect back. Either guard the grid schema or drop the fallback once the
+    columns ship (found by `/code-review` on #803).
 - [ ] **BLOCKS RELEASE (recommended; copy, Peter): the app never states that
   the model is about 11% above the City's filed levy, and a notebook on the
   same site already says the difference is property the City "does not
@@ -868,7 +877,7 @@ Three findings the register backfill (`docs/AUDIT_LEDGER.md` "Findings register"
 
 From `docs/FINDINGS_blurb_claims.md`. Every number in the public blurbs is right; these are about what the words say the numbers mean. Copy wording is Peter's call (`COPY_DECISIONS.md`); drafts are in findings §4.
 
-- [ ] **F1 + F2, one root — the institutional share is of the TOTAL levy, but every band and caveat reads it on the Residential and Non-residential cuts too.** On Residential, the Glass blurb says 1,332 azure cells and 1,064 of them hold $0 residential tax (flat azure squares). On Non-residential, **165** hoods (spatial zoning; 112 was a roll-zoning undercount, findings §6) carry ≥25% of their figure on exempt-candidate zoning (mostly `PS` school sites) with no band or caveat. The real fix is a per-cut exempt share from the pipeline, which is a **data-contract change: propose first**. **Proposal written S201: `docs/PROPOSAL_per_cut_exempt_share.md` — awaiting Peter's three decisions there.** **Interim done (S200):** band + count now cover only cells with a nonzero value on the active cut; `verify-blurbs.js` guards the count. The per-cut share (and F2's missing band/caveat on 144 non-res hoods) remains. The citywide 9–17% range is reconciled to 16.4% (findings §6, S201).
+- [ ] **F1 + F2, one root — the institutional share is of the TOTAL levy, but every band and caveat reads it on the Residential and Non-residential cuts too.** On Residential, the Glass blurb says 1,332 azure cells and 1,064 of them hold $0 residential tax (flat azure squares). On Non-residential, **165** hoods (spatial zoning; 112 was a roll-zoning undercount, findings §6) carry ≥25% of their figure on exempt-candidate zoning (mostly `PS` school sites) with no band or caveat. The real fix is a per-cut exempt share from the pipeline, which is a **data-contract change: propose first**. **Proposal written S201: `docs/PROPOSAL_per_cut_exempt_share.md`; approved 2026-11-11, PR 1 is #803; tracked under "Levy-as-revenue audit follow-ons".** **Interim done (S200):** band + count now cover only cells with a nonzero value on the active cut; `verify-blurbs.js` guards the count. The per-cut share (and F2's missing band/caveat on 144 non-res hoods) remains. The citywide 9–17% range is reconciled to 16.4% (findings §6, S201).
 - [ ] **F4 copy — held for a cross-model read** (Peter, S201): Development grid "(the newest permits lag geocoding)" — half the Since-2009 units gap is 2009–20 apartments never geocoded. Get another model to re-check the numbers in findings §2 F4, then pick the wording (draft in §4). F3, F5, F6 applied S201.
 
 ### Methods-notebook audit follow-ons (OPEN 2026-09-25 S197)
