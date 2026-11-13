@@ -220,7 +220,7 @@ model reads **+$282.0M, +11.2%** over the levy the City filed for 2026.
     silently. PR 2's fallback to the total column would then quietly put the
     defect back. Either guard the grid schema or drop the fallback once the
     columns ship (found by `/code-review` on #803).
-- [ ] **BLOCKS RELEASE (recommended; copy, Peter): the app never states that
+- [ ] **[in PR `copy/levy-gap-and-collected`, awaiting Peter] BLOCKS RELEASE (recommended; copy, Peter): the app never states that
   the model is about 11% above the City's filed levy, and a notebook on the
   same site already says the difference is property the City "does not
   tax".** Landing says "pay"; `/notebooks/exemption-uncertainty.html` says
@@ -229,12 +229,12 @@ model reads **+$282.0M, +11.2%** over the levy the City filed for 2026.
   published rates, with tax-exempt property not removed" in the Total blurb,
   and a link to the notebook. Re-opens applied rows N5 and P1 in
   `docs/COPY_DECISIONS.md`, which were settled on jargon, not on this.
-- [ ] **SETTLE BEFORE RELEASE (copy, Peter): "collected".** The Ratio panel
+- [ ] **[in PR `copy/levy-gap-and-collected`, awaiting Peter] SETTLE BEFORE RELEASE (copy, Peter): "collected".** The Ratio panel
   headline "City property tax collected here" (N4, applied) and the set-aside
   note "city tax collected is too low" make a cash claim the model cannot
   support; the headline shows on University of Alberta at $178,401. Dropping
   the verb fixes both. Does not block by itself.
-- [ ] **SETTLE BEFORE RELEASE (copy, Peter): the Non-residential blurb names
+- [ ] **[in PR `copy/levy-gap-and-collected`, awaiting Peter] SETTLE BEFORE RELEASE (copy, Peter): the Non-residential blurb names
   institutions as payers.** "(business, industry and institutions) pays the
   City" is the least true sentence on the site: the cut is +20.4% ($226.0M)
   over FIR and 163 of 356 hoods are ≥25% exempt-candidate. The row is already

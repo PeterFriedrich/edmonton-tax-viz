@@ -487,6 +487,13 @@ time.
    `data/franchise_rates.json` — these are forward-looking modeled bills,
    deliberately independent of the roll year. When they do bump, the
    legend/blurb year in `web/index.html` rides along (see main.py comments).
+   7a. **Re-measure the About "about 11% above the levy the City reported for
+   2026" sentence** (`web/index.html`, the "Revenue is modelled" paragraph). It
+   is a hand-kept figure that nothing recomputes: served levy against the FIR
+   Schedule MR levy (`docs/FINDINGS_levy_as_revenue.md` §0.2). Once the new
+   roll is live it is a new year's levy against an old year's FIR, so the
+   figure no longer holds: drop or reword the sentence until the matching FIR
+   is filed, then re-measure and update the percentage and year together.
 8. **Re-pin the temporal baseline: `python scripts/check_temporal_years.py
    --write-baseline`** (`docs/SPEC_temporal.md` §0.3). The baseline pins settled
    historical years and deliberately **excludes whatever year was live when it
