@@ -35,7 +35,7 @@ right**, and the TODO is stale. Update here first.
 
 ⚠️ **Audited before sending 2026-10-03 (S214, `docs/FINDINGS_upstream_defect_claims.md`):** every claim re-measured live and all 5 evidence notebooks re-run (37 invariants ✅). **Issue 5 is UNSOUND — do not send.** Issues 1 and 3 had one outward-facing sentence each fixed in their drafts; 4 and 6 are sound.
 
-**Nothing has been sent. Eight issues, zero contact, as of 2026-10-05.**
+**Nothing has been sent. Nine issues, zero contact, as of 2026-11-13.**
 ⚠️ **And every defect below was CHECKED still-present on 2026-09-21**, not
 assumed: all five published evidence notebooks were re-executed against live
 sources and their 51 invariants all held. They are re-run **monthly** from now
@@ -60,6 +60,7 @@ was never a candidate to send, and it is now fixed.)
 | 5 | 3 of 5 school boards absent from open data | [published](https://peterfriedrich.github.io/edmonton-tax-viz/notebooks/school-coverage-gap.html) | ✅ `docs/DRAFT_open_data_request_school_locations.md` | **NOT SENT — ⚠️ DO NOT SEND as drafted** (S214: Alberta already publishes it; `docs/FINDINGS_upstream_defect_claims.md` F1) |
 | 6 | `24uj-dj8v` `neighbourhood` holds a LIST of hoods | [published](https://peterfriedrich.github.io/edmonton-tax-viz/notebooks/permit-neighbourhood-list.html) | ✅ `docs/DRAFT_bug_report_permit_neighbourhood_list.md` | **NOT SENT** |
 | 7 | `stt5-pzaa` frozen 2 annual cycles while its report kept publishing | ❌ none | ❌ none | **NOT SENT** |
+| 9 | `24uj-dj8v` stopped geocoding most new-construction permits around 2025-01 | §9 below (measured; no notebook, the draft carries a one-line query) | ✅ `docs/DRAFT_bug_report_permit_geocoding.md` | **NOT SENT** |
 | 8 | `f2sy-bth7` GTFS Calendar Dates reloaded EMPTY (0 rows) 2026-10-05 | §8 below (measured; no notebook) | ❌ none | ✅ **RESOLVED UPSTREAM, never sent** — the City reloaded it full (seen 2026-10-08, re-measured 2026-10-09: 13,551 rows) |
 
 **Channel:** `opendata@edmonton.ca`, read from the portal footer 2026-08-25 —
@@ -546,6 +547,38 @@ the next scheduled Monday — if the table is still empty then.
 
 **Channel:** `opendata@edmonton.ca` (the portal load). The feed's own
 `feed_contact_email` is `ets-gtfs@edmonton.ca`, but the feed itself is fine.
+
+---
+
+## 9. `24uj-dj8v` — most new-construction permits since early 2025 have no coordinates
+
+**Status: NOT SENT.** **Draft: `docs/DRAFT_bug_report_permit_geocoding.md`**
+(2026-11-13). **Last measured: 2026-11-13**, live pull, filtered to
+`NEW_WORK_TYPES`.
+
+**Evidence** *(measured)*. New-construction permits with both `latitude` and
+`longitude`, by issue month:
+- 94–99% from 2023-01 to 2024-03;
+- 76–89% from 2024-04 to 2024-11, 66% in 2024-12, 51% in 2025-01;
+- **21–44% every month from 2025-02 to 2026-10.**
+
+There is no age gradient, so this is not a backlog clearing. 2025-02 is 39%
+and 2026-10 is 31%, and the 2024 and 2025 un-geocoded counts moved by −2
+permits between 2026-07-14 and 2026-11-10 (`docs/FINDINGS_roads_release.md`
+§10 D1). Since 2025-02, 6,433 of 9,367 permits (14,268 of 28,267 units) have
+no coordinates. All 6,433 carry an address and 6,431 carry a neighbourhood.
+Across all permit types the drop is smaller: 96–97% to 62–77%.
+
+**What it breaks here.** The Development 100 m grid (`export_dev_grid`) bins
+geocoded permits only and discloses the live coverage. Neighbourhood totals
+are unaffected because they join on the name. The grid blurb's "aren't on the
+grid yet (the newest permits lag geocoding)" forecasts a fill-in that four
+months of data argue against. That copy is a separate call in `TODO.md`.
+
+**What we can't tell:** whether the process changed or a batch job stopped.
+The draft asks.
+
+**Channel:** `opendata@edmonton.ca`.
 
 ---
 
