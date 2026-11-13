@@ -1013,9 +1013,12 @@ the data disproved it (`.venv/bin/python` count by year).
   (`export_dev_grid`) therefore bins **geocoded permits only** — 5yr window at
   build time: 47,125 of 59,697 units (~21% not yet mapped; 3yr ~29%) — and
   writes per-window `coverage` into `dev_grid.json` so the web blurb
-  discloses the live percentage. Never backfill with hood centroids. Expect
-  coverage to improve as the city geocodes its backlog; the weekly regen
-  picks that up automatically.
+  discloses the live percentage. Never backfill with hood centroids.
+  ⚠️ **Corrected 2026-11-13: it is not a lag that is clearing.** This note
+  used to say to expect coverage to improve as the City geocoded its backlog.
+  Since February 2025 every month is 21–44% geocoded with no age gradient, and
+  the backlog moved by −2 permits in four months (`docs/DATA_ISSUES.md` §9).
+  The weekly regen would still pick up a fix automatically.
 
 ### Industrial permit velocity (SPEC_industrial.md A3, added 2026-07-18)
 

@@ -337,7 +337,7 @@ item says whether it is worth settling first.
   (268), THE HAMPTONS or GRANVILLE (119); each could be 5–18% low. Today's
   raw gives 565 units under 11 names, not the 537 under 14 in the S216 item.
   No false "no permits" was found. Findings §10 D2.
-- [ ] **Does not block: record and report the geocoding drop.**
+- [ ] **[recorded 2026-11-13: `DATA_ISSUES.md` §9, `DATA.md` corrected; send is Peter's — draft `docs/DRAFT_bug_report_permit_geocoding.md`] Does not block: record and report the geocoding drop.**
   New-construction permits issued since February 2025 are 21–44% geocoded,
   with no gradient by age. Add a `docs/DATA_ISSUES.md` row, tell the City,
   and correct `data/DATA.md`'s "expect coverage to improve". Findings §10 D1.
@@ -1426,6 +1426,7 @@ archive"*) is not, and this span is 2,533 lines.
   | 3 | `qi6a-xuwt` drops 2,448 accounts | **nothing — the draft is written**, `docs/DRAFT_bug_report_historical_dropout.md` |
   | 4 | no per-parcel exemption status | **nothing — the draft is written**, `docs/DRAFT_open_data_request_exemption_status.md` |
   | 5 | 3 of 5 school boards absent | **nothing — the draft is written**, `docs/DRAFT_open_data_request_school_locations.md` |
+  | 9 | `24uj-dj8v` stopped geocoding most new-construction permits (2026-11-13) | **nothing — the draft is written**, `docs/DRAFT_bug_report_permit_geocoding.md` |
 
   - ✅ **REPORT TEXT WRITTEN FOR 1, 3 AND 5 ON 2026-09-17 (S169).** **All four
     sendable issues now have both published evidence and a drafted message, so
