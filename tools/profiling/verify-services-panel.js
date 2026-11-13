@@ -127,13 +127,13 @@ const SUBJECT = { storm: /storm/i, fire: /fire/i, water: /water|sewer/i };
     check(`*** ${name}: set-aside land shows no share-of-tax bars and no amber ***`,
       r.rows === 0 && r.over === 0, `${r.rows} rows, ${r.over} over: ${r.ems.join(' | ')}`);
     check(`${name}: set-aside land says why there is no comparison`,
-      /Predominantly river valley, parks and undeveloped land \(\d+% or more of its area\)\. The resulting city tax collected is too low for comparison\./.test(r.text)
+      /Predominantly river valley, parks and undeveloped land \(\d+% or more of its area\)\. The resulting city tax is too low for comparison\./.test(r.text)
       && /highest of \d+ neighbourhoods/.test(r.text), r.text.slice(0, 160).replace(/\n/g, ' | '));
   };
   const ratioForm = (name, r) => {
     check(`${name}: the Ratio panel opens`, r.open, `denom=${r.denom}`);
     check(`*** ${name}: the Ratio panel sets the cost against the city tax ***`,
-      /City property tax collected here/.test(r.text) && r.rows > 0
+      /City property tax here/.test(r.text) && r.rows > 0
       && r.ems.every(e => SHARE_ROW.test(e)), `${r.rows} rows: ${r.ems.join(' | ')}`);
   };
 

@@ -85,7 +85,8 @@
          syncThemeChrome() rewrites it at boot, under the loading overlay, so
          no reader sees this copy; verify-money-denom.js checks they match. -->
     <div id="title-p"><p><b>City property tax per acre</b>: what each
-       neighbourhood's properties pay the City, divided by its land area.</p><p>Taller, brighter neighbourhoods are higher per
+       neighbourhood's properties pay the City at its published rates, divided
+       by its land area. Exempt property is not removed.</p><p>Taller, brighter neighbourhoods are higher per
        acre; colour is square-root scaled to show the low end. Grey = set-aside
        land (river valley, parks, undeveloped), off the scale.</p></div>
   </div>
@@ -595,7 +596,15 @@
       <span class="hd">Important caveats</span>
       <p><b>Revenue is modelled, not billed.</b> It applies Edmonton's
          class-differential mill rates to assessed value — what the land
-         <i>generates</i> at those rates, not what any owner was charged.</p>
+         <i>generates</i> at those rates, not what any owner was charged.
+         <!-- Hand-kept figure: served levy vs the City's 2026 Schedule MR levy
+              (docs/FINDINGS_levy_as_revenue.md §0.2: +11.2%).
+              Nothing recomputes it; RUNBOOK §1 step 7a re-measures it at the
+              January roll, and the year in the sentence dates it until then. -->
+         Citywide it is about 11% above the levy the City reported for 2026,
+         mostly on institutional and public land that is on the roll but
+         <a href="https://peterfriedrich.github.io/edmonton-tax-viz/notebooks/exemption-uncertainty.html"
+            target="_blank" rel="noopener">not taxed</a>.</p>
       <p id="about-lot-acres"><b>Lot acres</b> are the City's recorded lot
          sizes, counted once where several units share one property point.</p>
       <!-- ⚠️ PUBLIC, and REQUIRED rather than optional: the public build now
@@ -898,7 +907,8 @@
         title: "Edmonton: City Taxes per Acre",
         // Education tax is excluded (C1), said by the mill-rate pod directly below.
         blurb: "**City property tax per acre**: what each neighbourhood's " +
-               "properties pay the City, divided by its land area.",
+               "properties pay the City at its published rates, divided by its " +
+               "land area. Exempt property is not removed.",
         legendLabel: "City tax per acre",
         legendMin: "$0",
         legendMax: "$50k+",
@@ -912,8 +922,9 @@
         transform: "sqrt",
         fmt: fmtMoney,
         lotBlurb: "**City property tax per lot acre**: what each neighbourhood's " +
-                  "properties pay the City, divided by the parcel land they own, so " +
-                  "roads and unparcelled river valley don't dilute it.",
+                  "properties pay the City at its published rates, divided by the " +
+                  "parcel land they own, so roads and unparcelled river valley don't " +
+                  "dilute it. Exempt property is not removed.",
       },
       // Residential-revenue decomposition: the RESIDENTIAL + OTHER RESIDENTIAL
       // class subset of the levy — a SUBSET of Revenue, never all of what the
@@ -948,9 +959,9 @@
       nonres_revenue_per_acre: {
         key: "nonres_revenue_per_acre",
         title: "Edmonton: Non-Residential City Taxes per Acre",
-        blurb: "**Non-residential city tax per acre**: what non-residential property " +
-               "(business, industry and institutions) pays the City, divided by the neighbourhood's " +
-               "land area.",
+        blurb: "**Non-residential city tax per acre**: the City tax on business, " +
+               "industry and institutions at its published rates, divided by the " +
+               "neighbourhood's land area.",
         legendLabel: "Non-residential city tax per acre",
         legendMin: "$0",
         legendMax: "$50k+",
@@ -958,10 +969,10 @@
         elevationScale: 0.033,
         transform: "sqrt",
         fmt: fmtMoney,
-        lotBlurb: "**Non-residential city tax per lot acre**: what non-residential property " +
-                  "(business, industry and institutions) pays the City, divided by the parcel land " +
-                  "its properties own.",
-        blurbNote: "A subset of Revenue, not all of what the land pays.",
+        lotBlurb: "**Non-residential city tax per lot acre**: the City tax on business, " +
+                  "industry and institutions at its published rates, divided by the parcel " +
+                  "land its properties own.",
+        blurbNote: "A subset of Revenue. Exempt institutions are not removed.",
       },
       value_per_acre: {
         key: "value_per_acre",
@@ -5778,7 +5789,7 @@
     // from Services on 2026-09-24 (Peter). It follows the ratio's DENOMINATOR the
     // way the Services panel follows the colour driver.
     const SET_ASIDE_RATIO_NOTE = "Predominantly river valley, parks and undeveloped "
-      + "land (90% or more of its area). The resulting city tax collected is too "
+      + "land (90% or more of its area). The resulting city tax is too "
       + "low for comparison.";
     function renderRatioCost(p) {
       const rev = p.revenue_per_acre;
@@ -5810,7 +5821,7 @@
       };
       document.getElementById("temporal-chart").innerHTML = "";
       document.getElementById("temporal-read").innerHTML =
-        `City property tax collected here`
+        `City property tax here`
         + `<div><b>$${Math.round(rev).toLocaleString()}</b> per acre each year</div>`
         // C1: a resident comparing this to their own bill finds it ~24% short.
         // The fact lived in Data & Methods, which is not where that reader is.
