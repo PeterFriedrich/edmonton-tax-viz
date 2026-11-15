@@ -130,10 +130,10 @@ REQUESTS_CA_BUNDLE=$(.venv/bin/python -m certifi) .venv/bin/python <script>
 
 **Two independent harnesses.**
 
-- **pytest** — 53 test files, **1,013 tests**, ~14 s. Tiers and what each can see:
+- **pytest** — 66 test files, **1,187 tests**, ~18 s here and ~14 s on GitHub. Tiers and what each can see:
   `docs/ARCHITECTURE.md` §Testing.
-- **Playwright + Chromium** — `tools/profiling/`, **70 JS scripts**: `verify-*`
-  (43) assert behaviour, `shot-*` capture screenshots, and `audit-*` **measure
+- **Playwright + Chromium** — `tools/profiling/`, **76 JS scripts**: `verify-*`
+  (44) assert behaviour, `shot-*` capture screenshots, and `audit-*` **measure
   without asserting** — an audit probe prints an inventory for a human to judge
   and has no pass/fail, so it is not part of any suite and a sweep that greps for
   `PASS` must not score it. Node **v20.20.2**,
