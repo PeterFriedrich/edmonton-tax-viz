@@ -986,7 +986,7 @@ preload still holds (12/12). What is left:
 
 ### Data-integrity re-run follow-on (OPEN 2026-11-03 S239, `docs/FINDINGS_data_integrity_rerun.md` §6)
 
-- [ ] **Delete `load_assessment`'s unused `is_exempt` column.** Computed, documented and returned; no pipeline code reads it (`src/`, `scripts/`, `main.py`, grepped 2026-11-03). It IS asserted in `tests/test_load_assessment.py`, carried in other test fixtures, and printed in the dataframe preview on the published `web/verified/01_money_lens.html`, so the PR changes that page's table. No number changes; `src/` PR, Peter merges.
+- [ ] **[fold into per-cut exempt share PR 2, Peter 2026-11-15: not worth its own high-tier PR] Delete `load_assessment`'s unused `is_exempt` column.** Computed, documented and returned; no pipeline code reads it (`src/`, `scripts/`, `main.py`, grepped 2026-11-03). It IS asserted in `tests/test_load_assessment.py`, carried in other test fixtures, and printed in the dataframe preview on the published `web/verified/01_money_lens.html`, so the PR changes that page's table. No number changes; `src/` PR, Peter merges.
 
 ### `/code-review` control-run finds (OPEN 2026-11-04 S240; merged #725 and #742, no later fix)
 
