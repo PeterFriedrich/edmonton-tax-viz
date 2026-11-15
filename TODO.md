@@ -1004,6 +1004,13 @@ Reported by the `template` session and not yet re-measured here, except item 2. 
 - [ ] **One backticked `§2.2` citation will go red** once the template's P1 fix is ported. Fix it in the same PR.
 - [ ] **Port `hooks_reminder()` into `scripts/handoff_gap.py`** (template PR #84, `docs/FINDINGS_session_safety_net.md`). Without it, a fresh clone with git hooks off gets no notice at session start, so pre-push never runs there. Checked 2026-11-11: both checkouts have `core.hooksPath=.githooks`, so nothing is exposed today. Port it with the template's handoff-gap tests (its TODO X1).
 
+### Test-estate audit follow-ons (OPEN 2026-11-15, S247, `docs/FINDINGS_test_estate.md`)
+
+- [ ] **F1, before the January roll: `test_the_real_file_is_in_band_today` pins a count on bot-written data.** It asserts `saturating == 16` on the committed hood GeoJSON. One neighbourhood crossing the $50k clamp keeps `check_colour_clamps.py` green and turns pytest red, so every PR and the next refresh stop on a drift that the 2026-09-16 decision says only warns. Proposed: drop the two equalities and the band assertion, keep "the real files parse and yield the four money metrics". Code PR, Peter merges. If it has not landed by the roll, add a line to `docs/RUNBOOK.md` §1.
+- [ ] **F2 and F3, one decision (Peter's call).** `refresh.yml` runs all of `tests/`, so docs and process tests gate the weekly publish, against the 2026-07-30 and 2026-08-09 rows. Either (a) append a DECISIONS row correcting the 2026-08-09 one and fix `docs/ARCHITECTURE.md` "Testing" to match the wiring, or (b) partition `tests/` and have the refresh skip the repo-state part (a CI change). Recommended (a): 0 of 55 runs. The three duplicate merge-gate steps stay either way.
+- [ ] **F5: eight verify scripts are red on master** (`docs/FINDINGS_test_estate.md` F5, all reproduced alone). Update `verify-nonres-revenue.js` and `verify-about.js` for #808's copy (the copy is deliberate; for the About year, derive it or exempt the sentence). Trace `verify-transit.js` (59 stations), `verify-peek.js` touch, `verify-theme.js` `88,90,102`, `verify-center2d.js`, `verify-temporal.js` `#revcut`. `verify-guide.js` is the known full-build red.
+- [ ] **F4: the `tests/` tree in `docs/ARCHITECTURE.md` "Testing" lists 5 of 66 files.** Replace it with a pointer to `docs/FINDINGS_test_estate.md` §1 when that section is next edited.
+
 ### General backlog — the flat list (no parent item; predates the `###` headings above)
 
 ⚠️ **Everything from here down is its OWN top-level work, not a child of the
