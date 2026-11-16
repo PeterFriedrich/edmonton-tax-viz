@@ -655,6 +655,8 @@ audit's findings are claims to reproduce, not a task list.**
     (`FINDINGS_land_use_diversity.md` §3.2, 2026-07-07, where it is a **null**
     against land-use diversity). ⚠️ **The project has NO population-by-hood
     source**, so the per-capita variant of this cannot be computed at all.
+    ⚠️ **Stale 2026-11-16:** the pipeline ingests none, but the portal has the
+    2021 federal census by neighbourhood (`docs/SPEC_cost_gaps.md` §3.4).
 
 - [ ] **PROPOSED (one line, touches a merge-gate guard so not taken unasked): `check_doc_citations.py`'s path escape hatch is DEAD CODE.** Its bare-name check reads `if name not in docs and (root / name).name not in docs and "/" not in name` — but the regex behind `name` is `\b([A-Za-z][\w.-]*\.md)\b`, whose character class **cannot match a `/`**, so that third clause can never fire. It plainly means to exempt a path-form citation and cannot. **Fix:** test the character *before* the match instead. **Found 2026-09-08 (S148)** writing `docs/FABLE_AUDIT_road_figures.md`, which cites four `.md` files that live in `/home/opc/` **by design** (they must not be committed — they would become a drift surface against `city_unit_costs.json`). ⚠️ **Worked around, not fixed:** those filenames are written **without the `.md` extension**, with a line in §2 saying why — otherwise they add three permanent warnings to the baseline that restoration procedures quote as normal. ⚠️ **That baseline is now ZERO** (2026-09-16, S165): the two standing warnings were both `VIZ_STACK.md` citations, resolved by landing the doc — so any warning at all is now signal, and this escape hatch matters more than it did, not less. Cheap, but it is a guard change. ⚠️ **Re-measured 2026-10-10 (S223): the baseline is 5 warnings again, and 4 are this class** (`docs/SCOPE_candidates.md` ×2 and `docs/FINDINGS_harvest.md` live in sibling repos; `.claude/skills/handoff/SKILL.md` exists HERE, so that one is a pure false positive); the 5th is a bare `AGENTS.md` in a closed `## Done` line. The fix would clear the 4.
 
@@ -1003,6 +1005,13 @@ Reported by the `template` session and not yet re-measured here, except item 2. 
 - [ ] **Four DECISIONS rows have no pointer cell.**
 - [ ] **One backticked `§2.2` citation will go red** once the template's P1 fix is ported. Fix it in the same PR.
 - [ ] **Port `hooks_reminder()` into `scripts/handoff_gap.py`** (template PR #84, `docs/FINDINGS_session_safety_net.md`). Without it, a fresh clone with git hooks off gets no notice at session start, so pre-push never runs there. Checked 2026-11-11: both checkouts have `core.hooksPath=.githooks`, so nothing is exposed today. Port it with the template's handoff-gap tests (its TODO X1).
+
+### Cost-side data gaps (OPEN 2026-11-16, S248, `docs/SPEC_cost_gaps.md`)
+
+- [ ] **Peter: open two council documents in a browser** (both 403 to a script, re-tested 2026-11-16): `pub-edmonton.escribemeetings.com/filestream.ashx?DocumentId=164273` (*Completed NRP Projects 2009–2022*) and `DocumentId=286947` (City Auditor, Neighbourhood Renewal audit). They are the last unread sources for the reconstruction sub-asset split, the one fact between the NRP cross-check and a usable lifecycle rate (§3.1). Save them under `/home/opc/research/edmonton-tax-viz/road_cost/`.
+- [ ] **Peter's call: which of §5's prompts to run** in the claude.ai Project (P1–P5 draft report passages; P6–P10 search for missing facts). File each reply before mining it.
+- [ ] **Three stale statements** named in §1 of that doc: the "Alley Renewal $174.4M" label and Task 1b's "no dwelling or population count" in `SPEC_breakeven.md`, and the two `TODO.md` lines annotated today. Fix the spec lines when that file is next edited.
+- [ ] Not started, no decision taken: ingesting any dataset in §3 (snow priority routes `8pdx-hfxi`, parks `gdd9-eqv9`, trees `eecg-fc54`, 2021 census `xgkv-ii9t`). Each is a new module, so propose first.
 
 ### Test-estate audit follow-ons (OPEN 2026-11-15, S247, `docs/FINDINGS_test_estate.md`)
 
@@ -2077,6 +2086,9 @@ archive"*) is not, and this span is 2,533 lines.
     Fire `CS/FRS - Operations and Training` $208.2M, **Alley Renewal $174.4M**.
     Full table in `SPEC_breakeven.md` §4a. ⚠️ **Parks is NOT its own line** — it
     is bundled with roads inside `OPS/PARS - Infrastructure Operations`.
+    (FY2025 only. FY2026 has `Parks and Urban Forestry` $82.0M, and the
+    $174.4M "Alley Renewal" is the whole Neighbourhood Renewal branch:
+    `docs/SPEC_cost_gaps.md` §1.)
   - ⚠️ **▶ POLICE IS THE TOP LINE, HAS NO DRIVER, AND IS BIGGER THAN EVERYTHING
     CURRENTLY MODELLED PUT TOGETHER** ($597.2M vs $473M). **Do not reach it by
     working down the ranked list.** Allocating it by any spatial driver produces
