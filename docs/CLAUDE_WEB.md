@@ -41,7 +41,7 @@ The brief is a generated summary; it does not carry the spec itself. The spec
 docs sync as they are — they are the real thing, not a summary:
 
 - `docs/BRIEF.md` — generated, always
-- `docs/SPEC_*.md` — each one (nine as of 2026-09-30, ~277 KB)
+- `docs/SPEC_*.md` — each one (ten as of 2026-11-16, ~298 KB)
 - `docs/REPORT_CLAIMS.md` — the claims register for the written report
   (added 2026-10-03; see "Report rounds" below)
 - `web/verified/REPORT_FIGURES.md` — this week's value for every register row
