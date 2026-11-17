@@ -10,6 +10,7 @@ sys.path.insert(0, "src")
 from revenue_by_zone import (
     OUTPUT_NAMES,
     UNZONED,
+    citywide_levy,
     exempt_candidate_levies,
     exempt_share_by_neighbourhood,
     property_zone_categories,
@@ -228,3 +229,41 @@ def test_exempt_share_omits_class_columns_without_class_levy():
                                       "nonres_levy", "exempt_nonres_levy"])
     out = exempt_share_by_neighbourhood(df)
     assert list(out.columns) == ["neighbourhood_name", "rev_frac_exempt"]
+
+
+def _classed(rows):
+    """rows: (hood, levy, res_levy, nonres_levy, lon, lat)"""
+    a = _assessment([(r[0], r[1], r[4], r[5]) for r in rows])
+    return a.assign(res_levy=[r[2] for r in rows], nonres_levy=[r[3] for r in rows])
+
+
+def test_citywide_levy_splits_one_total_two_ways():
+    a = _classed([
+        ("A", 60.0, 60.0, 0.0, 0.5, 0.5),   # house, residential zone
+        ("B", 30.0, 0.0, 30.0, 1.5, 0.5),   # business, industrial zone
+        ("B", 10.0, 0.0, 0.0, 1.5, 0.5),    # farmland, industrial zone
+    ])
+    out = citywide_levy(a, property_zone_categories(a, _zoning()))
+    assert out["total"] == 100
+    assert out["by_class"] == {"residential": 60, "nonresidential": 30, "farmland": 10}
+    assert out["by_zone"]["res"] == 60
+    assert out["by_zone"]["ind"] == 40
+    assert sum(out["by_zone"].values()) == 100
+
+
+def test_citywide_levy_keeps_unplaced_revenue_in_the_total():
+    """A property outside every polygon is UNZONED, never dropped from the cut."""
+    a = _classed([
+        ("A", 60.0, 60.0, 0.0, 0.5, 0.5),
+        ("A", 40.0, 40.0, 0.0, 5.0, 5.0),   # in no polygon
+    ])
+    out = citywide_levy(a, property_zone_categories(a, _zoning()))
+    assert out["by_zone"][UNZONED] == 40
+    assert sum(out["by_zone"].values()) == out["total"] == 100
+
+
+def test_citywide_levy_raises_when_a_property_has_no_category():
+    a = _classed([("A", 60.0, 60.0, 0.0, 0.5, 0.5), ("A", 40.0, 40.0, 0.0, 1.5, 0.5)])
+    cats = property_zone_categories(a, _zoning()).iloc[:1]  # second row lost
+    with pytest.raises(ValueError, match="lost its category"):
+        citywide_levy(a, cats)

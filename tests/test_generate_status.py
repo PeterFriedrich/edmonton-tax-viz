@@ -19,6 +19,7 @@ from generate_status import (
     MILL_RATES,
     ROOT,
     build_status,
+    citywide_levy,
     content_hash,
     load_prior,
     municipal_rates,
@@ -35,6 +36,7 @@ def _build(gj, prior, **kw):
     defaults = dict(
         geojson=gj, prior=prior, today="2026-07-01",
         data_year=2025, rate_year=2025, zoning_year=2024,
+        citywide_path=gj.parent / "no_citywide_levy.json",
     )
     defaults.update(kw)
     return build_status(**defaults)
@@ -304,3 +306,76 @@ def test_zoning_year_is_the_bylaw_year_and_does_not_track_the_roll():
     # The opposite direction, and the half RUNBOOK §1 step 6 warns about: these
     # two DO track the roll, and until now only the MONTHLY digest said so.
     assert (DATA_YEAR, RATE_YEAR) == (main.ASSESSMENT_YEAR, main.ASSESSMENT_YEAR)
+
+
+
+def _split(tmp_path, gj, total=100, by_class=None, by_zone=None, sha=None):
+    p = tmp_path / "citywide_levy.json"
+    p.write_text(json.dumps({
+        "total": total,
+        "by_class": by_class or {"residential": 60, "nonresidential": 39, "farmland": 1},
+        "by_zone": by_zone or {"res": 55, "ind": 30, "dc": 15},
+        "geojson_sha256": sha or content_hash(gj),
+    }))
+    return p
+
+
+def test_citywide_levy_publishes_dollars_beside_its_own_geojson(tmp_path):
+    gj = _geojson(tmp_path)
+    out = citywide_levy(_split(tmp_path, gj), content_hash(gj))
+    assert out == {
+        "total": 100,
+        "by_class": {"residential": 60, "nonresidential": 39, "farmland": 1},
+        "by_zone": {"res": 55, "ind": 30, "dc": 15},
+    }
+
+
+def test_citywide_levy_publishes_no_share(tmp_path):
+    """Dollars only: the page divides, so a share cannot drift from its dollars."""
+    gj = _geojson(tmp_path)
+    flat = json.dumps(citywide_levy(_split(tmp_path, gj), content_hash(gj)))
+    assert "share" not in flat and "frac" not in flat and "pct" not in flat
+
+
+def test_citywide_levy_from_another_run_is_omitted(tmp_path):
+    """The intermediate is gitignored; one written beside another GeoJSON must not ship."""
+    gj = _geojson(tmp_path)
+    assert citywide_levy(_split(tmp_path, gj, sha="0" * 64), content_hash(gj)) is None
+
+
+@pytest.mark.parametrize("bad", [
+    {"total": "x"}, {"total": None}, {"by_zone": ["res"]},
+    {"by_zone": {"res": 55, "ind": 20}},   # does not sum to the total
+])
+def test_citywide_levy_malformed_degrades_to_none(tmp_path, bad):
+    """Display-only: a bad intermediate hides the section, never fails the heartbeat."""
+    gj = _geojson(tmp_path)
+    p = _split(tmp_path, gj)
+    p.write_text(json.dumps({**json.loads(p.read_text()), **bad}))
+    assert citywide_levy(p, content_hash(gj)) is None
+
+
+def test_citywide_levy_missing_file_degrades_to_none(tmp_path):
+    assert citywide_levy(tmp_path / "nope.json", "0" * 64) is None
+
+
+def test_build_status_carries_the_citywide_split(tmp_path):
+    gj = _geojson(tmp_path)
+    s = _build(gj, {}, citywide_path=_split(tmp_path, gj))
+    assert s["citywide_levy"]["by_zone"]["ind"] == 30
+
+
+def test_holding_window_keeps_the_prior_split(tmp_path):
+    """refresh.yml skips main.py in a holding window, so no intermediate exists;
+    the GeoJSON is unchanged, so the prior split still describes it."""
+    gj = _geojson(tmp_path)
+    first = _build(gj, {}, citywide_path=_split(tmp_path, gj))
+    second = _build(gj, first)  # default: no intermediate
+    assert second["citywide_levy"] == first["citywide_levy"]
+
+
+def test_changed_geojson_drops_the_prior_split(tmp_path):
+    gj = _geojson(tmp_path)
+    first = _build(gj, {}, citywide_path=_split(tmp_path, gj))
+    gj.write_text('{"changed": true}')
+    assert _build(gj, first)["citywide_levy"] is None

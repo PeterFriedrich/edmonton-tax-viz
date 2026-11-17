@@ -654,6 +654,17 @@
         <div id="about-budget-rows"></div>
         <p id="about-budget-note" class="muted"></p>
       </div>
+      <!-- Citywide city tax by rate class and by zoning (2026-11-17). Renders
+           only when status.json carries citywide_levy; dollars come from the
+           manifest and every share is divided out here, as for #about-budget. -->
+      <div id="about-split" style="display:none">
+        <span class="hd">City tax by property type</span>
+        <p id="about-split-lead" class="muted"></p>
+        <div id="about-split-class"></div>
+        <p class="muted">By the zoning of the land it sits on:</p>
+        <div id="about-split-zone"></div>
+        <p id="about-split-note" class="muted"></p>
+      </div>
       <span class="hd">More</span>
       <p><a href="https://peterfriedrich.github.io/edmonton-tax-viz/verified/02_methods.html"
             target="_blank" rel="noopener">Methods &amp; definitions</a> —
@@ -7022,6 +7033,52 @@
       box.style.display = "";
     }
 
+    // The Data & Methods pod's citywide tax split (2026-11-17). Two cuts of one
+    // total, because neither answers "how much is industrial" alone: the rate
+    // class is what the bill says but bills industry and business alike, and
+    // the zoning cut separates them but leaves Direct Control as its own line.
+    // ⚠️ CITYWIDE, from the full roll (main.py) — never re-sum the features.
+    const SPLIT_CLASS_LABELS = {
+      residential: "Residential",
+      nonresidential: "Non-residential",
+      farmland: "Farmland",
+    };
+    function renderCitywideLevy(cl, year) {
+      const box = document.getElementById("about-split");
+      if (!cl || !cl.total || !cl.by_class || !cl.by_zone) {
+        box.style.display = "none";
+        return;
+      }
+      const fmtShare = v => v >= 1 ? v.toFixed(1) + "%" : v.toFixed(2) + "%";
+      const fmtM = v => "$" + (v / 1e6).toFixed(v >= 1e8 ? 0 : 1) + "M";
+      const row = (label, v) => `<div class="revrow"><span>${esc(label)}</span>`
+        + `<b>${fmtM(v)} · ${fmtShare((v / cl.total) * 100)}</b></div>`;
+      // Below 0.01% a row prints as $0.0M · 0.00% (unzoned is ~$9k), so it is
+      // not drawn, but the note says so: the rows must visibly not add up.
+      const shown = v => v / cl.total >= 1e-4;
+      let hidden = 0;
+      const rows = (entries, label) => entries.map(([k, v]) => {
+        if (v > 0 && !shown(v)) hidden += v;
+        return shown(v) ? row(label(k), v) : "";
+      }).join("");
+      document.getElementById("about-split-lead").textContent =
+        `Of the $${(cl.total / 1e9).toFixed(2)}B in city property tax`
+        + (year ? ` on the ${year} roll` : "") + `, by the rate it is billed at:`;
+      document.getElementById("about-split-class").innerHTML = rows(
+        Object.keys(SPLIT_CLASS_LABELS).map(k => [k, cl.by_class[k] || 0]),
+        k => SPLIT_CLASS_LABELS[k]);
+      document.getElementById("about-split-zone").innerHTML = rows(
+        Object.entries(cl.by_zone).sort((a, b) => b[1] - a[1]),
+        k => USE_BY_KEY[k] ? USE_BY_KEY[k].label : "Outside any zone");
+      document.getElementById("about-split-note").textContent =
+        "Exempt property is not removed: both splits include public land that "
+        + "is on the roll but may not be taxed. The City bills business and "
+        + "industry at one rate, so industry shows only in the zoning split. "
+        + "Direct Control zones are written for one site and mix uses."
+        + (hidden ? " Rows under 0.01% of the total are not shown." : "");
+      box.style.display = "";
+    }
+
     // --- the citywide budget panel (EXPERIMENTAL, full build only) -----------
     // What the City spends the most on, ranked by branch. ⚠️ CITYWIDE TOTALS,
     // with no neighbourhood dimension and no join to the map — see the markup
@@ -8963,6 +9020,7 @@
             syncMillRates();  // the manifest lands after the first applyView
           }
           renderBudgetContext(s.budget_context);
+          renderCitywideLevy(s.citywide_levy, s.data_year);
         })
         .catch(() => {});
     }

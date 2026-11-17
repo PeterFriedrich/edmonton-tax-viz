@@ -18,6 +18,8 @@ Usage:
 """
 
 import argparse
+import hashlib
+import json
 import logging
 import sys
 from pathlib import Path
@@ -57,6 +59,7 @@ from load_temporal import load_temporal, export_temporal_web
 from revenue_by_zone import (
     FRACTION_DECIMALS,
     categories_from_codes,
+    citywide_levy,
     exempt_candidate_levies,
     exempt_share_by_neighbourhood,
     property_zone_codes,
@@ -104,6 +107,9 @@ FRANCHISE_RATES_JSON = ROOT / "data/franchise_rates.json"
 UNIT_COSTS_JSON = ROOT / "data/city_unit_costs.json"
 PNG_OUT = ROOT / "output/edmonton_value_per_acre.png"
 GEOJSON_OUT = ROOT / "web/data/neighbourhood_value_per_acre.geojson"
+# Citywide levy by class and zone. An intermediate, not served: generate_status
+# reads it into status.json, only beside the GeoJSON whose hash it carries.
+CITYWIDE_LEVY_OUT = ROOT / "data/processed/citywide_levy.json"
 ROADS_WEB_OUT = ROOT / "web/data/roads.geojson"
 # Bike network context layer (SPEC_services.md "Transportation lens") — the
 # LRT-lines pattern: geometry only, no metric (the hood plane carries it).
@@ -273,6 +279,7 @@ def run(
     # Zoning is an optional refreshed input — degrade gracefully if the file is
     # absent (join_and_calculate omits the set-aside columns when zoning is None).
     zoning = None
+    citywide = None
     if zoning_geojson is not None and Path(zoning_geojson).exists():
         zoning = load_zoning(str(zoning_geojson), boundaries)
         # Revenue by zoning category, over the SAME polygons the Uses lens
@@ -297,6 +304,7 @@ def run(
             assessment = assessment.assign(
                 **exempt_candidate_levies(assessment, zone_codes),
             )
+            citywide = citywide_levy(assessment, zone_categories)
             aggregated = aggregated.merge(
                 revenue_by_zone(
                     assessment, zoning_polygons, categories=zone_categories,
@@ -490,6 +498,16 @@ def run(
             setback_m=setback_m,
             simplify_tolerance_m=simplify_tolerance_m,
         )
+        if citywide is not None:
+            CITYWIDE_LEVY_OUT.parent.mkdir(parents=True, exist_ok=True)
+            # Stamped with the GeoJSON it belongs to; generate_status ships the
+            # split only beside that exact file.
+            citywide["geojson_sha256"] = hashlib.sha256(geojson_out.read_bytes()).hexdigest()
+            CITYWIDE_LEVY_OUT.write_text(json.dumps(citywide, indent=2) + "\n")
+        else:
+            # A run without zoning must not leave the last run's split behind:
+            # its total would still match, so generate_status could not tell.
+            CITYWIDE_LEVY_OUT.unlink(missing_ok=True)
         # Ground-layer road geometry rides with the web export (services lens
         # display architecture, SPEC_services.md) — skipped with the roads layer.
         if roads is not None:

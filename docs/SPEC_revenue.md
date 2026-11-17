@@ -4,7 +4,9 @@
 levy (`src/apply_tax_rates.py`) and emits `revenue_per_acre` alongside
 `value_per_acre` in the served GeoJSON. Total 2025 municipal levy ≈ $2.67 B;
 class reweighting confirmed (Residential 68.5% of value / 46.2% of levy;
-Non Residential 21.7% / 46.4%). Web map value↔revenue toggle: DONE (commit
+Non Residential 21.7% / 46.4%; ⚠️ stale and on a narrower grouping that left
+Other Residential out — the 2026 roll's citywide split is in `status.json`
+`citywide_levy`, see `data/DATA.md` §4). Web map value↔revenue toggle: DONE (commit
 `a0cf2a0`). This doc captures the methodology that turned the *assessed-value*-per-acre
 metric into a *tax-revenue*-per-acre metric.
 

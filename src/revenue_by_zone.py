@@ -323,3 +323,47 @@ def top_zones(row: pd.Series, n: int = 3, *, include_unzoned: bool = False) -> l
         and (include_unzoned or col != OUTPUT_NAMES[UNZONED])
     }
     return sorted(shares.items(), key=lambda kv: -kv[1])[:n]
+
+
+def citywide_levy(assessment: pd.DataFrame, categories: pd.Series) -> dict:
+    """Citywide levy DOLLARS by rate class and by zoning category, for status.json.
+
+    Computed over the FULL roll, for the reason ``revenue_share_city`` is: a sum
+    of the served features would silently exclude any hood the boundary join
+    dropped. Publishes dollars only; the page derives shares, so a printed
+    percentage cannot disagree with its dollars (generate_status.budget_context).
+
+    Two cuts of the same total, and they answer different questions. ``by_class``
+    is what the bill is charged at; it cannot isolate industry, because the roll
+    bills commercial and industrial alike at the Non Residential rate.
+    ``by_zone`` is where the property sits, which can, at the price of Direct
+    Control zones that mix uses. ``farmland`` is the residual of the class
+    identity ``levy == res + nonres + farmland`` (apply_tax_rates).
+    """
+    for col in ("levy", "res_levy", "nonres_levy"):
+        if col not in assessment.columns:
+            raise KeyError(f"citywide_levy needs {col!r} — run apply_tax_rates first")
+    total = float(assessment["levy"].sum())
+    res = float(assessment["res_levy"].sum())
+    nonres = float(assessment["nonres_levy"].sum())
+    by_zone = assessment["levy"].groupby(categories.reindex(assessment.index)).sum()
+    zone_total = float(by_zone.sum())
+    # Every property has a category (UNZONED included), so the zone cut is a
+    # partition of the same total. A gap here is a dropped property.
+    if abs(zone_total - total) > 1.0:
+        raise ValueError(
+            f"zone cut sums to ${zone_total:,.0f}, levy is ${total:,.0f} — "
+            "a property lost its category"
+        )
+    return {
+        "total": round(total),
+        "by_class": {
+            "residential": round(res),
+            "nonresidential": round(nonres),
+            "farmland": round(total - res - nonres),
+        },
+        "by_zone": {
+            cat: round(float(by_zone.get(cat, 0.0)))
+            for cat in (*CATEGORIES, UNZONED)
+        },
+    }
