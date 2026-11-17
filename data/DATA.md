@@ -482,7 +482,9 @@ rate, so its dollars are non-residential-rate dollars. Flows: `res_levy` →
 LOW_PARCEL_FRAC suppression). No share column ships — the client derives the
 residential share as `res_revenue_per_acre / revenue_per_acre` (identical
 denominators cancel). Real-data anchors (2025 roll): residential-class =
-**52.6% of the citywide levy**; hood median share ~75%, DOWNTOWN ~16%; ground
+**52.6% of the citywide levy** (2026 roll: **52.0%**, $1.445B of $2.782B,
+local snapshot 2026-11-17; the live split, by rate class AND by zoning
+category, ships in `status.json` `citywide_levy`); hood median share ~75%, DOWNTOWN ~16%; ground
 p97.5 ≈ $28.5k/acre (web clamp $30k). Distinct from `is_residential`
 (§ Residential split below), which is a *zoned-area* display flag, not dollars.
 

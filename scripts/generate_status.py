@@ -43,6 +43,8 @@ GEOJSON = ROOT / "web/data/neighbourhood_value_per_acre.geojson"
 STATUS = ROOT / "web/data/status.json"
 MILL_RATES = ROOT / "data/mill_rates.json"
 BUDGET_CONTEXT = ROOT / "data/city_budget_context.json"
+CITYWIDE_LEVY = ROOT / "data/processed/citywide_levy.json"
+
 
 # The rate classes the map's three revenue cuts are billed at, in display order:
 # Total spans all three, Residential is the two housing classes, Non-residential
@@ -160,6 +162,34 @@ def budget_context(path: Path = BUDGET_CONTEXT) -> dict | None:
     }
 
 
+def citywide_levy(path: Path, geojson_sha256: str) -> dict | None:
+    """Return main.py's citywide levy split, or None if absent, stale or malformed.
+
+    The file is a gitignored intermediate, so a run that skipped main.py finds
+    none, or one from another run. main.py stamps it with the hash of the
+    GeoJSON it wrote beside it; any other GeoJSON means the split describes
+    different numbers and is omitted. Display-only, so every defect degrades to
+    None with a warning rather than failing the manifest step (and with it the
+    heartbeat). Dollars only, like ``budget_context``.
+    """
+    try:
+        data = json.loads(Path(path).read_text())
+        if data["geojson_sha256"] != geojson_sha256:
+            logger.warning("Citywide levy split is from another run — omitting from manifest")
+            return None
+        total = float(data["total"])
+        by_class = {str(k): float(v) for k, v in data["by_class"].items()}
+        by_zone = {str(k): float(v) for k, v in data["by_zone"].items()}
+    except (OSError, json.JSONDecodeError, KeyError, TypeError, ValueError, AttributeError) as exc:
+        logger.warning("No citywide levy split (%s) — omitting from manifest", exc)
+        return None
+    for name, cut in (("by_class", by_class), ("by_zone", by_zone)):
+        if total <= 0 or abs(sum(cut.values()) - total) > len(cut):  # $1 rounding each
+            logger.warning("Citywide levy %s sums to %.0f, total is %.0f — omitting", name, sum(cut.values()), total)
+            return None
+    return {"total": data["total"], "by_class": data["by_class"], "by_zone": data["by_zone"]}
+
+
 def build_status(
     *,
     geojson: Path,
@@ -169,6 +199,7 @@ def build_status(
     rate_year: int,
     zoning_year: int,
     rates_path: Path = MILL_RATES,
+    citywide_path: Path = CITYWIDE_LEVY,
     banner=_SENTINEL,
 ) -> dict:
     """Compute the new manifest from the prior one + the current GeoJSON."""
@@ -178,6 +209,12 @@ def build_status(
     # generated: keep the prior date unless the data content actually changed
     # (or there was no prior — first run counts as "generated today").
     generated = today if (changed or "generated" not in prior) else prior["generated"]
+
+    # A run that skipped main.py (a holding window) has no intermediate, but the
+    # GeoJSON is unchanged, so the prior manifest's split still describes it.
+    citywide = citywide_levy(citywide_path, new_hash)
+    if citywide is None and not changed:
+        citywide = prior.get("citywide_levy")
 
     if banner is _SENTINEL:
         banner_value = prior.get("banner")  # preserve whatever was there
@@ -193,6 +230,7 @@ def build_status(
         "banner": banner_value,
         "municipal_rates": municipal_rates(rates_path, rate_year),
         "budget_context": budget_context(),
+        "citywide_levy": citywide,
         "_geojson_sha256": new_hash,
     }
 

@@ -93,8 +93,9 @@ const [url] = process.argv.slice(2);
     // The upper bound only asserts the slice didn't run away past the pod; it
     // moved 4000 -> 6000 when the budget-scale section landed (2026-08-03), and
     // 6000 -> 8000 when the public road-cost modelled caveat did (2026-09-02),
-    // and 8000 -> 9000 with the reserve boundary's attribution (2026-10-13).
-    check('found the pod markup to inspect', block.length > 200 && block.length < 9000,
+    // and 8000 -> 9000 with the reserve boundary's attribution (2026-10-13),
+    // and 9000 -> 10000 with the citywide tax split (2026-11-17).
+    check('found the pod markup to inspect', block.length > 200 && block.length < 10000,
           `${block.length} chars`);
     // Strip HTML comments first. The rule being enforced is "no year a READER
     // can see is a literal" — a comment renders nothing, so a year in one
@@ -376,6 +377,51 @@ const [url] = process.argv.slice(2);
     }
   }
   await bp.close();
+
+  // --- 9. the citywide tax split (2026-11-17) -------------------------------
+  // Same rule as 8: shares are divided out in the page, so recompute each from
+  // the manifest's dollars. Rows under 0.01% are hidden, and the note must then
+  // say so, or the printed shares silently fail to add up.
+  const sp = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+  await sp.goto(url, { waitUntil: 'networkidle', timeout: 60000 });
+  await sp.waitForTimeout(4000);
+  await sp.$eval('#about button', e => e.click());
+  await sp.waitForTimeout(500);
+  const sx = await sp.evaluate(async () => {
+    const s = await fetch('./data/status.json').then(r => r.json()).catch(() => null);
+    const read = id => [...document.querySelectorAll(`#${id} .revrow`)].map(r =>
+      r.querySelector('b').textContent.trim());
+    return {
+      manifest: s && s.citywide_levy,
+      shown: getComputedStyle(document.getElementById('about-split')).display !== 'none',
+      heading: document.querySelector('#about-split .hd').textContent,
+      lead: document.getElementById('about-split-lead').textContent,
+      note: document.getElementById('about-split-note').textContent,
+      byClass: read('about-split-class'), byZone: read('about-split-zone'),
+    };
+  });
+  if (!sx.manifest) {
+    check('no citywide_levy: split section hidden', !sx.shown);
+  } else {
+    check('split section renders', sx.shown);
+    check('split heading claims no payment', !/pays?\b/i.test(sx.heading), sx.heading);
+    check('split note says exempt property is not removed', /not removed/i.test(sx.note), sx.note);
+    let hidden = false;
+    for (const [name, cut, printed] of [['class', sx.manifest.by_class, sx.byClass],
+                                        ['zone', sx.manifest.by_zone, sx.byZone]]) {
+      const want = Object.values(cut).filter(v => v / sx.manifest.total >= 1e-4)
+        .map(v => (v / sx.manifest.total) * 100)
+        .map(v => v >= 1 ? v.toFixed(1) + '%' : v.toFixed(2) + '%').sort();
+      hidden = hidden || Object.values(cut).some(v => v > 0 && v / sx.manifest.total < 1e-4);
+      const got = printed.map(t => t.split(' · ')[1]).sort();
+      check(`split by ${name}: printed shares match the dollars`,
+            JSON.stringify(got) === JSON.stringify(want), `${got} vs ${want}`);
+    }
+    check('hidden rows are named in the note', !hidden || /not shown/.test(sx.note), sx.note);
+    check('split lead carries the roll year from the manifest',
+          sx.lead.includes(String(status && status.data_year)), sx.lead);
+  }
+  await sp.close();
 
   await browser.close();
   console.log(fail ? `\n${fail} CHECK(S) FAILED` : '\nALL CHECKS PASSED');
