@@ -420,6 +420,7 @@ Edmonton revenue-per-acre fiscal analysis. Python-only, no GIS software.
 - **2026-11-10** — **A NEW permit neighbourhood name with no boundary files a GitHub issue each week; it never fails the build** (Peter, S243).
 - **2026-11-10** — **On set-aside land the Ratio panel shows no share-of-tax bars or amber; one line says why** (Peter, S243; `COPY_DECISIONS.md` F5): *"Predominantly river valley, parks and undeveloped land (90% or …
 - **2026-11-11** — **The exempt-candidate share is served per rate class too: `rev_frac_exempt_res`/`_nonres` on the hood file, `exempt_frac_res`/`_nonres` on both grids, alongside the total share, which stays** …
+- **2026-11-17** — **The citywide city-tax split is a public section of the Data & Methods pod, by rate class AND by zoning category, in dollars from the full roll** (Peter: "a totals popup", "Public").
 
 ## Open work
 
@@ -536,6 +537,12 @@ Edmonton revenue-per-acre fiscal analysis. Python-only, no GIS software.
 - **Four DECISIONS rows have no pointer cell.**
 - **One backticked `§2.2` citation will go red** once the template's P1 fix is ported. Fix it in the same PR.
 - **Port `hooks_reminder()` into `scripts/handoff_gap.py`** (template PR #84, `docs/FINDINGS_session_safety_net.md`). Without it, a fresh clone with git hooks off gets no notice at session start, so pre-push never runs there. Checked 2026-11-11: both checkouts have …
+
+**Cost-side data gaps (OPEN 2026-11-16, S248, `docs/SPEC_cost_gaps.md`)**
+- **Peter: open two council documents in a browser** (both 403 to a script, re-tested 2026-11-16): `pub-edmonton.escribemeetings.com/filestream.ashx?DocumentId=164273` (*Completed NRP Projects 2009–2022*) and `DocumentId=286947` (City Auditor, Neighbourhood Renewal audit). They …
+- **Peter's call: which of §5's prompts to run** in the claude.ai Project (P1–P5 draft report passages; P6–P10 search for missing facts). File each reply before mining it.
+- **Three stale statements** named in §1 of that doc: the "Alley Renewal $174.4M" label and Task 1b's "no dwelling or population count" in `SPEC_breakeven.md`, and the two `TODO.md` lines annotated today. Fix the spec lines when that file is next edited.
+- Not started, no decision taken: ingesting any dataset in §3 (snow priority routes `8pdx-hfxi`, parks `gdd9-eqv9`, trees `eecg-fc54`, 2021 census `xgkv-ii9t`). Each is a new module, so propose first.
 
 **Test-estate audit follow-ons (OPEN 2026-11-15, S247, `docs/FINDINGS_test_estate.md`)**
 - **F1, before the January roll: `test_the_real_file_is_in_band_today` pins a count on bot-written data.** It asserts `saturating == 16` on the committed hood GeoJSON. One neighbourhood crossing the $50k clamp keeps `check_colour_clamps.py` green and turns pytest red, so every PR …
