@@ -50,7 +50,14 @@ const boot = async (browser, opts) => {
   // Flatten: at the default 52 deg pitch a prism paints well above its own
   // footprint, so a picked pixel can belong to the hood BEHIND it (quirk x).
   await page.click('#center2d');
-  await page.waitForTimeout(2500);   // the flatten is an eased camera move
+  // Wait for the flatten to FINISH, not a fixed time. A 2.5 s sleep stopped
+  // being enough (S251): the target scan then ran mid-ease, picked hoods off an
+  // intermediate camera, and every touch check tapped a map that had since
+  // moved -- 8 FAILs on both builds, 38/38 once the map had settled.
+  const t0 = Date.now();
+  await page.waitForFunction(() => camFlat && !map.isMoving(), null, { timeout: 30000 });
+  await page.waitForTimeout(500);   // one render with the flat layers
+  console.log(`(flatten settled in ${Date.now() - t0} ms)`);
   return { ctx, page };
 };
 
