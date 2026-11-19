@@ -91,7 +91,14 @@ function check(name, ok, detail) {
   });
   check('single shared svc-plane', on.planeCount === 1, `count=${on.planeCount}`);
   check('station dots layer present', on.stationsPresent);
-  check('58 stations loaded', on.nStations === 58, `n=${on.nStations}`);
+  // Against the served file, not a literal: the weekly GTFS refresh changes the
+  // count (58 -> 59 on 2026-10-08, ETS's temporary Southgate LRT-replacement
+  // stop), and a pinned number goes red with nothing wrong (S247 F5).
+  // Fetched in the page so it resolves against the full build's <base>.
+  const served = await page.evaluate(() =>
+    fetch(TRANSIT_STATIONS_URL).then(r => r.json()).then(d => d.stations.length));
+  check('every served station loaded', on.nStations > 0 && on.nStations === served,
+        `n=${on.nStations}, file=${served}`);
   check('LRT track lines layer present', on.linesPresent);
   check('LRT lines loaded (HER dropped)', on.nLines === 343, `n=${on.nLines}`);
   check('lines drawn under station dots', on.linesUnderStations);

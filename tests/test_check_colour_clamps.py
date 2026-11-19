@@ -186,14 +186,18 @@ def test_set_aside_hoods_are_excluded_and_it_matters(tmp_path):
     assert row["n"] == 100 and row["share"] == 10.0 and row["flagged"]
 
 
-def test_the_real_file_is_in_band_today(tmp_path):
-    """Records Peter's 2026-09-16 decision as a measurement: 4.5% is accepted, so
-    the band contains it. If this starts failing, the clamp moved or the data did."""
+def test_the_real_files_parse_and_yield_the_money_metrics():
+    """The real index.html and hood GeoJSON still feed the guard. Deliberately NO
+    count or band assertion: the share is bot-written data, and DECISIONS
+    2026-09-16 says drift only warns. Pinning it here made pytest the blocker
+    (FINDINGS_test_estate.md F1)."""
     rows = measure_drift(parse_metrics(REPO / "web" / "index.html"),
                          REPO / "web" / "data" / "neighbourhood_value_per_acre.geojson")
-    rev = next(r for r in rows if r["metric"] == "revenue_per_acre")
-    assert rev["saturating"] == 16 and 4.0 < rev["share"] < 5.0
-    assert BAND[0] <= rev["share"] <= BAND[1] and not rev["flagged"]
+    by_metric = {r["metric"]: r for r in rows}
+    assert {"revenue_per_acre", "res_revenue_per_acre", "nonres_revenue_per_acre",
+            "value_per_acre"} <= set(by_metric)
+    for r in by_metric.values():
+        assert r["n"] > 0 and 0.0 <= r["share"] <= 100.0
 
 
 # --- exit codes ---------------------------------------------------------------
