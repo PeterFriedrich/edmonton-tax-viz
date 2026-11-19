@@ -102,7 +102,18 @@ const [url] = process.argv.slice(2);
     // (the licence's "v1.0, July 2022", a dated DECISIONS.md pointer) can never
     // go stale on screen. Leaving them in scope would only pressure the next
     // person to delete the explanation to get the suite green.
-    const stray = block.replace(/<!--[\s\S]*?-->/g, ' ').match(/\b(19|20)\d\d\b/g);
+    // One year IS a literal on purpose: it dates the hand-kept levy gap
+    // (RUNBOOK §1 step 7a). Deriving it would roll the year forward under a
+    // stale percentage. Exempt that phrase alone, then go red once the served
+    // roll moves past it: a new roll means the figure no longer holds.
+    let visible = block.replace(/<!--[\s\S]*?-->/g, ' ');
+    const dated = visible.match(/the levy the City reported for\s+(\d{4})/);
+    if (dated) {
+      check('dated levy sentence matches the served roll year', dated[1] === String(status.data_year),
+            `sentence ${dated[1]}, roll ${status.data_year}; RUNBOOK §1 step 7a`);
+      visible = visible.replace(dated[0], ' ');
+    }
+    const stray = visible.match(/\b(19|20)\d\d\b/g);
     check('no year literal in the pod markup', !stray,
           stray ? `found: ${[...new Set(stray)].join(', ')}` : '');
   }
