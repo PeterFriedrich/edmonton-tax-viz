@@ -640,6 +640,17 @@ cannot separate from a dropout. This weakens the case for a report rather than
 building one. Figures: `TODO.md` "WHO IS MISSING"; list at
 `data/roll_continuity_candidates_2026-10-10.csv`.
 
+**Second Misericordia-shaped case, 2026-11-16 (issue #818):** account
+`9977123`, 7128 ADA BOULEVARD NW, VIRGINIA PARK. It was assessed every year from
+2012 to 2025 in `qi6a-xuwt` (always COMMERCIAL, $42.8M → $70.2M), and it was on
+`q7d6-ambg` at $67.5M Non Residential in our 2026-09-03 copy. It is **absent from
+both `q7d6-ambg` and `dkk9-cj3x`** after the 2026-11-16 15:53 UTC republish. It
+is not under its address, its coordinates or its legal description (Plan
+9926758 Block F, UI zoning, 56,070 m² lot), and no neighbourhood gained a
+matching amount. The map's VIRGINIA PARK revenue fell $2.71M → $1.03M (−61.9%).
+Renumbering, consolidation or a real exemption are all still possible from the
+outside. Re-check whether it reappears, as Misericordia did, before reporting it.
+
 Same dataset as issue 1, so if it firms up it could ride along in that report
 rather than needing its own.
 
