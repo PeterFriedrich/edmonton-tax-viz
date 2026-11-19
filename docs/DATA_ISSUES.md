@@ -85,6 +85,33 @@ when it was last measured.
 
 ---
 
+## Event log
+
+One row per time an upstream source **changed** in a way that reached us, newest
+first. The sections below keep the reasoning; this table keeps the timeline, so
+questions like "how often do accounts drop out" or "which guard catches what" are
+a count. Static gaps (4, 5, B–D, F, G) and long-standing field quirks (6, E) are
+not events and get no row. **Closing any guard issue (RUNBOOK §0–§0f) adds or
+updates a row here.**
+
+- **Seen:** when we first knew. **Changed:** when it happened upstream, `?` if
+  not recorded. The gap between them is the detection lag.
+- **Kind:** `dropout` · `reappearance` · `renumber` · `empty reload` · `frozen` ·
+  `mislabel` · `coverage drop`. Add to the list rather than writing free text.
+- **Found by:** the guard or workflow name, or `by hand` / `by accident`.
+- **Outcome:** `open` · `legitimate` · `upstream defect` · `resolved upstream
+  (date)` · `unresolved`. Send status stays in the table above.
+
+| Seen | Changed | Dataset | Kind | Size | Found by | Issue | § | Outcome |
+|---|---|---|---|---|---|---|---|---|
+| 2026-11-16 | 2026-11-16 | `q7d6-ambg`, `dkk9-cj3x` | dropout | 1 account (`9977123`), $67.5M; VIRGINIA PARK −61.9% | `revenue-delta` guard, same day | #818 | A | open |
+| 2026-10-05 | 2026-10-05 | `f2sy-bth7` | empty reload | 0 rows (9,248 in July) | weekly refresh failed loud (`load_transit`) | — | 8 | resolved upstream (2026-10-08) |
+| 2026-09-20 | 2025-02-19 | `stt5-pzaa` | frozen | 3,631 rows, newest year 2023 | by hand (S166 saw the stall, S179 classified it) | — | 7 | upstream defect |
+| 2026-08-24 | ? | `q7d6-ambg` | mislabel | `Period of Coverage` names the wrong year | by accident, three times | — | 1 | upstream defect |
+| 2026-08-07 | 2026-08-03 (reappeared) | `q7d6-ambg` | renumber + reappearance | 1 account (Misericordia), ~$250M | by accident (WEST MEADOWLARK PARK +130%) | — | A | resolved upstream (2026-08-03) |
+| 2026-07-31 | ? (`rowsUpdatedAt` 2026-01-12) | `qi6a-xuwt` | dropout | 2,448 accounts, 2024/2025 slices | by hand | — | 3 | upstream defect |
+| 2026-07-14 | ~2025-01 | `24uj-dj8v` | coverage drop | geocoded new-construction permits 94–99% → 21–44% | by hand | — | 9 | upstream defect |
+
 ## 1. `q7d6-ambg` — `Period of Coverage` names the wrong year, and has all year
 
 **Status: NOT SENT.** Evidence published and linkable. **Report text written
