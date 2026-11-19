@@ -1515,6 +1515,21 @@ archive"*) is not, and this span is 2,533 lines.
     gap did not occur once in this window, so what is left is ordinary
     redevelopment that the audit cannot tell apart from a dropout. Whether to
     demote this from ACTIVE is Peter's call.
+  - ⚠️ **A second transient-shaped case landed 2026-11-16 (issue #818).** Account
+    `9977123` (7128 Ada Blvd NW, VIRGINIA PARK, $67.5M, assessed 2012–2025) left
+    both `q7d6-ambg` and `dkk9-cj3x` in the 11-16 republish. That cut the hood's
+    revenue −61.9%, with no matching gain in a neighbour. Detail:
+    `docs/DATA_ISSUES.md` §A. **Next:** re-query the account, its lot (Plan
+    9926758 Block F) and a new account near 53.5607, −113.4464 after each weekly
+    refresh. If it comes back renumbered, that's case 2 of the Misericordia
+    pattern and strengthens the report. Keep #818 open until then.
+
+- [ ] **THINK ABOUT — a record for revenue-delta triages.** #818 was the
+  first `revenue-delta` issue to fire. Its history is now split across RUNBOOK
+  §0b (process), `TODO_archive.md` (the Meadowlark write-up), `DATA_ISSUES.md`
+  §A (mechanism) and the issue thread. Decide whether closed `revenue-delta`
+  issues are the record or a new doc or register is needed. Wait for a second
+  firing before building anything. Check `DECISIONS.md` for the convention first.
 
 - [ ] **PETER'S CALL — the amenity bands are FIXED at 600 m / 800 m
   (`AMENITY_BANDS` in `web/index.html`).** Built and live behind the weekly
