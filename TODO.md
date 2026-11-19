@@ -1524,13 +1524,6 @@ archive"*) is not, and this span is 2,533 lines.
     refresh. If it comes back renumbered, that's case 2 of the Misericordia
     pattern and strengthens the report. Keep #818 open until then.
 
-- [ ] **THINK ABOUT — a record for revenue-delta triages.** #818 was the
-  first `revenue-delta` issue to fire. Its history is now split across RUNBOOK
-  §0b (process), `TODO_archive.md` (the Meadowlark write-up), `DATA_ISSUES.md`
-  §A (mechanism) and the issue thread. Decide whether closed `revenue-delta`
-  issues are the record or a new doc or register is needed. Wait for a second
-  firing before building anything. Check `DECISIONS.md` for the convention first.
-
 - [ ] **PETER'S CALL — the amenity bands are FIXED at 600 m / 800 m
   (`AMENITY_BANDS` in `web/index.html`).** Built and live behind the weekly
   refresh 2026-08-23; the filter works, the numbers in it are conventions.
@@ -3556,6 +3549,8 @@ archive"*) is not, and this span is 2,533 lines.
 ## Done
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
+
+- [x] **THINK ABOUT — a record for revenue-delta triages.** — 2026-11-19 · `docs/TODO_archive.md`
 
 - [x] **Ratio amber on set-aside land — decided and applied 2026-11-10 (S243): a one-line explanation replaces the bars there (COPY_DECISIONS F5).** · `docs/TODO_archive.md`
 - [x] **Unmatched-permit-name guard — built 2026-11-10 (S243): `scripts/check_permit_names.py` files a `permit-names` issue, never fails the build.** · `docs/TODO_archive.md`

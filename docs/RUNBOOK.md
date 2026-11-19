@@ -41,6 +41,10 @@ click. It names the failing state, e.g. `money/…/2d`. Reproduce locally with
 - What's being served right now: `web/data/status.json` (`data_year`,
   `generated`, `banner`, GeoJSON SHA-256)
 
+⚠️ **Closing any issue from §0–§0f whose cause is an upstream change adds or
+updates a row in `docs/DATA_ISSUES.md` "Event log".** The issue thread is not
+the record. Sessions don't read closed issues.
+
 ---
 
 ## 0. The monthly digest (the one that reaches you first)
