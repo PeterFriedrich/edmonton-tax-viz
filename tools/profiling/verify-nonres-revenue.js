@@ -64,8 +64,10 @@ function approx(a, b, rel = 1e-6) { return Math.abs(a - b) <= rel * Math.max(Mat
   console.log('nonres metric  :', JSON.stringify(c));
   check('state.metric switched', c.metric === 'nonres_revenue_per_acre');
   check('title says Non-Residential City Taxes', /Non-Residential City Taxes/.test(c.title));
+  // P3 was reworded by #808 (COPY_DECISIONS P1): the caveat is now that exempt
+  // institutions are still counted, which is the claim this metric can overstate.
   check('blurb carries the subset-of-Revenue honesty line',
-    /subset of Revenue/.test(c.blurb) && /not\s+all of what the land pays/.test(c.blurb));
+    /subset of Revenue/.test(c.blurb) && /Exempt institutions are not\s+removed/.test(c.blurb));
   check('legend label', c.label === 'Non-residential city tax per acre');
   check('legend max = hand-set clamp', c.max === '$50k+');
 
