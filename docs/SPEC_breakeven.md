@@ -229,12 +229,17 @@ executed — see §4a.** ⚠️ The §13 blanket claim *"edmonton.ca is unreacha
 true only of `www.`; do not re-derive a blocker from it without testing the
 specific host.
 
-**Task 1b — ⚠️ A DWELLING-OR-POPULATION COUNT PER HOOD DOES NOT EXIST, AND
-SEVERAL OBVIOUS ALLOCATIONS NEED ONE.** Checked, not assumed: nothing in `src/`
-or the served GeoJSON carries population or employment. `new_dwelling_units` is
-a **flow from permits, not a stock**; "employment" appears only as a *zoning
-category label*; and the dwelling model the water and franchise lenses share is
-internal — never emitted per neighbourhood.
+**Task 1b — ⚠️ NO POPULATION COUNT PER HOOD IS INGESTED, AND NO DWELLING COUNT
+IS SERVED; SEVERAL OBVIOUS ALLOCATIONS NEED ONE.** Nothing in `src/` or the
+served GeoJSON carries population or employment. `new_dwelling_units` is a
+**flow from permits, not a stock**, and "employment" appears only as a *zoning
+category label*. *(Corrected 2026-11-20, `SPEC_cost_gaps.md` §1 item 3: this
+paragraph first said the dwelling model was "never emitted per neighbourhood".
+It is: `dwelling_count` has been a per-neighbourhood column on the pipeline's
+full frame since 2026-07-07 (`FRANCHISE_COLUMNS` in `src/join_and_calculate.py`),
+552,113 dwellings across 351 neighbourhoods on 2026-09-03
+(`FINDINGS_road_per_dwelling.md`). It is not in `SLIM_COLUMNS`, so it is not
+served.)*
 
 So any per-capita or per-household allocation — including the residential half
 of a functional-population split (§2b) and the §2a residual if it is smeared
@@ -243,11 +248,11 @@ ingested**. ⚠️ Note this also means the method §2b rules *out* (per-hood
 employment) is not available either, so nothing is lost by the rule today; the
 cost is entirely on the allocations we would want to add.
 
-Cheapest route first: the water/franchise dwelling model already exists and
-could be emitted as a column, which needs no new source and inherits its
-documented assumptions. Census population is the alternative and is a new
-ingest with its own boundary-matching problem (census tracts are not
-neighbourhoods).
+Cheapest route first: serve the existing `dwelling_count` column, which needs
+no new source and inherits its documented assumptions. Census population is the
+alternative and is a new ingest. The portal's 2021 census is published by
+neighbourhood (`xgkv-ii9t`, 277 of 279 names join; `SPEC_cost_gaps.md` §3.4),
+so the boundary-matching problem is two names, not a tract crosswalk.
 
 **Task 2 — order the register by control total, then build downward.** Expect
 transit, police, fire and parks to dominate. Fire and transit already have
@@ -278,7 +283,7 @@ register is tractable. Top 12:
 | 449.1 | 11.6% | 27.1% | OPS/ETS - Bus and LRT | Edmonton Transit Service |
 | 221.0 | 5.7% | 32.9% | Tax-supported Debt Charges | Capital Project Financing |
 | 208.2 | 5.4% | 38.3% | CS/FRS - Operations and Training | Fire Rescue Services |
-| 174.4 | 4.5% | 42.8% | Alley Renewal | Neighbourhood Renewal |
+| 174.4 | 4.5% | 42.8% | Alley Renewal ⚠️ (the whole branch; see below) | Neighbourhood Renewal |
 | 142.9 | 3.7% | 46.5% | Pay As You Go Funding | Capital Project Financing |
 | 134.0 | 3.5% | 50.0% | CS/CRC - Facility Operations | Community Recreation |
 | 128.2 | 3.3% | 53.3% | OPS/PARS - Infrastructure Operations | Parks and Roads |
@@ -286,6 +291,12 @@ register is tractable. Top 12:
 | 80.6 | 2.1% | 57.8% | CS/SD - Affordable Housing and Homelessness | Social Development |
 | 74.6 | 1.9% | 59.7% | OPS/FFS - Facility Maintenance Services | Fleet and Facility |
 | 73.2 | 1.9% | 61.6% | BAC/LIB - Edmonton Public Library | Public Library |
+
+⚠️ **`Alley Renewal` is the publisher's FY2025 program name for the whole
+Neighbourhood Renewal branch, not alleys** (`DATA_ISSUES.md` F). FY2023, FY2024
+and FY2026 split the same $174.4M into three rows: `Neighbourhood Renewal`
+$158.1M + `Alley Renewal` $22.3M − microsurfacing $6.0M. Alleys are about 13%.
+The rest of this spec calls the line Neighbourhood Renewal.
 
 **§4 Task 2's prediction was right on three of four.** Transit, police and fire
 do dominate, and **police is the largest line in the budget with no driver in
@@ -317,7 +328,7 @@ financing** — debt charges, pay-as-you-go, reserve transfers and renewal:
 | $M | line |
 |---|---|
 | 221.0 | Tax-supported Debt Charges |
-| 174.4 | Neighbourhood Renewal / Alley Renewal |
+| 174.4 | Neighbourhood Renewal (booked as `Alley Renewal`) |
 | 142.9 | Pay As You Go Funding |
 | 57.1 | Valley Line LRT dedicated funding |
 | 51.5 | External Debt Charges |
@@ -337,7 +348,7 @@ questions, and the lens must state which one it is answering. **New decision,
 §8.7.**
 
 ⚠️ **But capital financing is NOT uniformly unallocatable, and the build order
-should not treat it as a block to skip.** `Alley Renewal` at **$174.4M** is
+should not treat it as a block to skip.** Neighbourhood Renewal at **$174.4M** is
 plausibly the single most spatially-allocatable line in the entire budget — it
 is per-neighbourhood infrastructure renewal, on the **lifecycle** basis the
 roads term already uses, and it would be a larger register entry than anything
@@ -429,7 +440,7 @@ actually place.*
    hard error would not catch it. Operating-only is also the higher, more
    flattering number, so there was no correctness-vs-optics tradeoff to make.
    ⚠️ **Disclosure debt this creates:** the lens must state the $800.7M capital
-   exclusion explicitly (never silently fold it in), and `Alley Renewal`
+   exclusion explicitly (never silently fold it in), and Neighbourhood Renewal
    ($174.4M of that $800.7M) is allocatable lifecycle spend, not unallocatable
    — do not let "excluded from the denominator" quietly become "excluded from
    the register" when lifecycle-basis work eventually attacks it.
