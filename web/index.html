@@ -1484,9 +1484,13 @@
       if (!(gridData && gridData.hasExempt && isRevenue(state.metric))) return "";
       const n = glassInstCount();
       if (!n) return "";
-      return "\n\n" + n.toLocaleString() + " azure cell" + (n === 1 ? " is" : "s are") +
-        " mostly institutional land, where the roll doesn't say if tax is " +
-        "levied: only the solid part is certain.";
+      // COPY_DECISIONS F6: name the cut whose share this is, in the tooltip's noun.
+      // B5's 400-char cap binds here (Non-res, lot, linear, 3D): P2's hover hint
+      // was dropped to make room (Peter, 2026-11-20).
+      return "\n\n" + n.toLocaleString() + " azure cell" + (n === 1 ? " is one" : "s are ones") +
+        ` with a quarter or more of ${n === 1 ? "its" : "their"} ${exemptCutWord(state.metric)}` +
+        "revenue on institutionally-zoned land, which the roll may not levy: only " +
+        "the solid part is certain.";
     };
     // Ratio's azure needs the same sentence as Glass's, for the same reason
     // stated there — a reader who meets a colour that is not on the ramp reads
@@ -1519,8 +1523,7 @@
     ].filter(Boolean).join(" and ");
     const glassBlurb = () => glassLead() + "\n\n" + withColourClause(
       (camFlat ? "Brighter cells" : "Taller, brighter spikes") + " are higher; colour is " +
-      "square-root scaled to show the low end. Hover the plane for neighbourhood " +
-      "numbers. Grey = set-aside land.") + glassInstBlurb();
+      "square-root scaled to show the low end. Grey = set-aside land.") + glassInstBlurb();
     // Infill's amenity overlay carries no colour of its own to defend — the
     // hood-level score underneath is UNCHANGED — so the sentence has to say the
     // score did not move. Uses the full cell set (no metric to null-filter
@@ -6685,7 +6688,7 @@
             `<b>${fmtDeviation(sp.lo)} to ${fmtDeviation(sp.hi)}</b>` +
             ` / developed acre<br/>` +
             `<span class="muted">${Math.round(exemptFrac(p, state.labCut) * 100)}% of its ` +
-            `${exemptCutWord(state.labCut)}revenue is institutional land</span><br/>` +
+            `${exemptCutWord(state.labCut)}revenue is on institutionally-zoned land</span><br/>` +
             `<span class="muted">Alberta law exempts many such properties; the ` +
             `roll does not say which — so this hood's value is unknown</span>` };
         }
