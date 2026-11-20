@@ -19,6 +19,7 @@ from check_served_columns import (  # noqa: E402
     column_presence,
     compare_to_baseline,
     empty_columns,
+    grid_drift,
     main,
 )
 
@@ -47,7 +48,9 @@ def _write(tmp_path, features, baseline=COLUMNS):
 
 
 def _run(geo, base):
-    return main(["--geojson", str(geo), "--baseline", str(base)])
+    # `--grid` with no paths: these tests are about the GeoJSON half, and the
+    # default would read the real web/data grids.
+    return main(["--geojson", str(geo), "--baseline", str(base), "--grid"])
 
 
 # --- column_presence ---------------------------------------------------------
@@ -146,7 +149,8 @@ def test_main_fails_on_an_empty_feature_collection(tmp_path):
 
 def test_write_baseline_round_trips_the_live_schema(tmp_path):
     geo, base = _write(tmp_path, _full(), baseline=["stale_column"])
-    assert main(["--geojson", str(geo), "--baseline", str(base), "--write-baseline"]) == EXIT_OK
+    assert main(["--geojson", str(geo), "--baseline", str(base), "--grid",
+                 "--write-baseline"]) == EXIT_OK
     assert json.loads(base.read_text())["columns"] == sorted(COLUMNS)
     assert _run(geo, base) == EXIT_OK
 
@@ -194,3 +198,132 @@ def test_main_still_passes_when_a_column_is_null_on_only_some_features(tmp_path)
     features = _full(3)
     features[0]["properties"]["revenue_per_acre"] = None
     assert _run(*_write(tmp_path, features)) == EXIT_OK
+
+
+# --- the columnar grids (value_grid.json, value_grid_50.json) ----------------
+# The failure: `exempt_frac_res` drops from a grid, the front end's per-cut
+# accessor falls back to the TOTAL share, and the defect #803 fixed is back on a
+# green publish.
+
+GRID_COLS = ["lon", "lat", "exempt_frac", "exempt_frac_res"]
+
+
+def _grid(columns=GRID_COLS):
+    # One cell with a value in every column, one all-null cell (open land).
+    return {"cell_m": 100, "columns": list(columns),
+            "cells": [[0.5] * len(columns), [None] * len(columns)]}
+
+
+def _write_with_grid(tmp_path, grid, grid_baseline=GRID_COLS):
+    geo, base = _write(tmp_path, _full())
+    pinned = {"columns": COLUMNS}
+    if grid_baseline is not None:
+        pinned["grid_columns"] = list(grid_baseline)
+    base.write_text(json.dumps(pinned))
+    g = tmp_path / "value_grid.json"
+    g.write_text(json.dumps(grid))
+    return geo, base, g
+
+
+def _run_grid(geo, base, *grids):
+    return main(["--geojson", str(geo), "--baseline", str(base), "--grid", *map(str, grids)])
+
+
+def test_grid_drift_is_clean_on_a_complete_grid():
+    d = grid_drift(_grid(), GRID_COLS)
+    assert (d["missing"], d["empty"], d["ragged"], d["added"]) == ([], [], 0, [])
+
+
+def test_grid_drift_flags_a_dropped_column():
+    cols = [c for c in GRID_COLS if c != "exempt_frac_res"]
+    assert grid_drift(_grid(cols), GRID_COLS)["missing"] == ["exempt_frac_res"]
+
+
+def test_grid_drift_flags_a_column_null_in_every_cell():
+    g = {"columns": GRID_COLS, "cells": [[1.0, 2.0, 0.3, None], [1.1, 2.1, None, None]]}
+    assert grid_drift(g, GRID_COLS)["empty"] == ["exempt_frac_res"]
+
+
+def test_grid_drift_counts_rows_shorter_than_the_columns():
+    g = {"columns": GRID_COLS, "cells": [[0.5] * 4, [0.5] * 2]}
+    assert grid_drift(g, GRID_COLS)["ragged"] == 1
+
+
+def test_grid_drift_reports_an_unpinned_column_as_added():
+    assert grid_drift(_grid(GRID_COLS + ["new_col"]), GRID_COLS)["added"] == ["new_col"]
+
+
+def test_main_fails_on_a_ragged_grid(tmp_path):
+    grid = {"columns": GRID_COLS, "cells": [[0.5] * 4, [0.5] * 2]}
+    geo, base, g = _write_with_grid(tmp_path, grid)
+    assert _run_grid(geo, base, g) == EXIT_DRIFT
+
+
+def test_main_fails_when_the_grid_baseline_is_an_empty_list(tmp_path):
+    geo, base, g = _write_with_grid(tmp_path, _grid(), grid_baseline=[])
+    assert _run_grid(geo, base, g) == EXIT_DRIFT
+
+
+def test_write_baseline_refuses_when_the_grids_share_no_columns(tmp_path):
+    geo, base, g = _write_with_grid(tmp_path, {"cells": []})
+    assert main(["--geojson", str(geo), "--baseline", str(base), "--grid", str(g),
+                 "--write-baseline"]) == EXIT_DRIFT
+
+
+def test_write_baseline_without_grids_keeps_the_existing_grid_pin(tmp_path):
+    geo, base, _ = _write_with_grid(tmp_path, _grid())
+    assert main(["--geojson", str(geo), "--baseline", str(base), "--grid",
+                 "--write-baseline"]) == EXIT_OK
+    assert json.loads(base.read_text())["grid_columns"] == GRID_COLS
+
+
+def test_write_baseline_warns_for_every_column_it_unpins(tmp_path, caplog):
+    geo, base, g = _write_with_grid(tmp_path, _grid(GRID_COLS[:3]))
+    with caplog.at_level("WARNING"):
+        main(["--geojson", str(geo), "--baseline", str(base), "--grid", str(g),
+              "--write-baseline"])
+    assert any("exempt_frac_res" in r.message and "UNPINNED" in r.message
+               for r in caplog.records)
+
+
+def test_main_passes_on_a_complete_grid(tmp_path):
+    geo, base, g = _write_with_grid(tmp_path, _grid())
+    assert _run_grid(geo, base, g) == EXIT_OK
+
+
+def test_main_fails_when_a_grid_drops_the_per_cut_share(tmp_path):
+    cols = [c for c in GRID_COLS if c != "exempt_frac_res"]
+    geo, base, g = _write_with_grid(tmp_path, _grid(cols))
+    assert _run_grid(geo, base, g) == EXIT_DRIFT
+
+
+def test_main_fails_when_a_grid_column_is_null_in_every_cell(tmp_path):
+    grid = {"columns": GRID_COLS, "cells": [[1.0, 2.0, 0.3, None]]}
+    geo, base, g = _write_with_grid(tmp_path, grid)
+    assert _run_grid(geo, base, g) == EXIT_DRIFT
+
+
+def test_main_fails_when_the_grid_file_is_absent(tmp_path):
+    geo, base, _ = _write_with_grid(tmp_path, _grid())
+    assert _run_grid(geo, base, tmp_path / "missing_grid.json") == EXIT_DRIFT
+
+
+def test_main_fails_when_grids_are_checked_but_no_grid_baseline_is_pinned(tmp_path):
+    # Not a skip: deleting the key must not be a way to turn the check off.
+    geo, base, g = _write_with_grid(tmp_path, _grid(), grid_baseline=None)
+    assert _run_grid(geo, base, g) == EXIT_DRIFT
+
+
+def test_write_baseline_pins_only_columns_every_grid_carries(tmp_path):
+    geo, base, g = _write_with_grid(tmp_path, _grid())
+    g2 = tmp_path / "value_grid_50.json"
+    g2.write_text(json.dumps(_grid(GRID_COLS[:3])))
+    assert main(["--geojson", str(geo), "--baseline", str(base), "--grid", str(g), str(g2),
+                 "--write-baseline"]) == EXIT_OK
+    assert json.loads(base.read_text())["grid_columns"] == sorted(GRID_COLS[:3])
+
+
+def test_the_committed_baseline_pins_the_per_cut_grid_shares():
+    pinned = json.loads((Path(__file__).resolve().parent.parent
+                         / "data" / "expected_columns.json").read_text())
+    assert {"exempt_frac_res", "exempt_frac_nonres"} <= set(pinned["grid_columns"])
