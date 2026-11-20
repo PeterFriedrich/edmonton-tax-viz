@@ -1786,6 +1786,9 @@
               // bands simply do not draw. NOT a per-acre column: it is a share,
               // so it serves both denominators (see export_value_grid).
               exempt_frac: p.columns.indexOf("exempt_frac"),
+              // The same share per cut (pipeline 2026-11-12, #803).
+              exempt_frac_res: p.columns.indexOf("exempt_frac_res"),
+              exempt_frac_nonres: p.columns.indexOf("exempt_frac_nonres"),
               // Road-network metres to the nearest LRT station / catchment
               // school (pipeline 2026-08-23) — absent on older files (-1),
               // and each amenity row stays hidden on its own.
@@ -3208,7 +3211,25 @@
     // rejected on meaning as much as numbers: a cool hue leans toward the teal
     // surplus pole. verify-deviation.js pins R === G === B.
     const UNCERTAIN_COLOR = themed([255, 255, 255], [64, 64, 64]);
-    const exemptFrac = p => p.rev_frac_exempt || 0;
+    // ⚠️ THE SHARE OF THE CUT BEING DRAWN, not of the total levy
+    // (docs/PROPOSAL_per_cut_exempt_share.md). Read off the total, a
+    // Residential prism carried non-res levy that does not exist on its cut
+    // (U of A printed $643 where it is $3,609), and 144 Non-residential hoods
+    // at >=25% on their own cut got no caveat. Callers pass the cut they draw:
+    // `state.metric` (Money), `state.labCut` (Deviation), nothing (Ratio,
+    // whose numerator is total revenue). No fallback to the total column: the
+    // per-cut columns ship, and check_served_columns.py fails the publish if
+    // they stop.
+    const EXEMPT_COL = {
+      revenue_per_acre: "rev_frac_exempt",
+      res_revenue_per_acre: "rev_frac_exempt_res",
+      nonres_revenue_per_acre: "rev_frac_exempt_nonres",
+    };
+    const exemptFrac = (p, cut) => p[EXEMPT_COL[cut] ?? "rev_frac_exempt"] || 0;
+    // COPY_DECISIONS F6 (option A): the caveat names the cut its share is of.
+    const exemptCutWord = cut =>
+      cut === "res_revenue_per_acre" ? "residential " :
+      cut === "nonres_revenue_per_acre" ? "non-residential " : "";
 
     // --- two tiers, answering two different questions ------------------------
     // ⚠️ SHARE DECIDES THE WORDS, CONSEQUENCE DECIDES THE GEOMETRY, and until
@@ -3257,11 +3278,11 @@
     // band with both endpoints near zero would flip the lens's above/below
     // claim while moving nothing visible; none exists, and verify-deviation.js
     // asserts crossers ⊆ selected so the day one appears is loud, not silent.
-    const isUncertain = p => inDeviationPop(p) && exemptFrac(p) >= EXEMPT_UNCERTAIN_MIN
+    const isUncertain = p => inDeviationPop(p) && exemptFrac(p, state.labCut) >= EXEMPT_UNCERTAIN_MIN
       && instShiftDeviation(p) >= INST_CONSEQUENCE_MIN;
     // Caveat without the range: ≥25% institutional, but the two worlds draw the
     // same prism. These keep a solid bar and say so in words only.
-    const instCaveatOnly = p => inDeviationPop(p) && exemptFrac(p) >= EXEMPT_UNCERTAIN_MIN
+    const instCaveatOnly = p => inDeviationPop(p) && exemptFrac(p, state.labCut) >= EXEMPT_UNCERTAIN_MIN
       && !isUncertain(p);
     // Counted out here rather than inside deviationStats, which the shift now
     // depends on. Cheap: the blurb rebuilds on a view or cut change, not per
@@ -3286,7 +3307,7 @@
         const r = Math.max(0, Math.min(1, x / sc.clamp));
         return sqrt ? Math.sqrt(r) : r;
       };
-      return t(v) - t(v * (1 - exemptFrac(p)));
+      return t(v) - t(v * (1 - exemptFrac(p, state.metric)));
     };
     // Money's outlined hoods: the caveat tier, narrowed to the ones whose two
     // worlds do not draw the same prism. Six on Total today, and only TWO of
@@ -3295,7 +3316,7 @@
     // is what makes this affordable on the default view at all.
     const instBandedMoney = p =>
       isRevenue(state.metric) && !p.is_set_aside
-      && exemptFrac(p) >= EXEMPT_UNCERTAIN_MIN
+      && exemptFrac(p, state.metric) >= EXEMPT_UNCERTAIN_MIN
       && instShiftMoney(p) >= INST_CONSEQUENCE_MIN;
 
     // Ratio's band (Peter, 2026-09-12: the lens "doesn't line up color wise
@@ -3429,7 +3450,7 @@
         getElevation: f => {
           const p = f.properties;
           const v = p[sc.colKey] || 0;
-          return exempt ? v * (1 - exemptFrac(p)) : v;
+          return exempt ? v * (1 - exemptFrac(p, state.metric)) : v;
         },
         elevationScale: sc.elevationScale,
         getFillColor: tc(INST_OUTLINE_COLOR).concat([INST_BAND_ALPHA]),
@@ -3515,13 +3536,21 @@
     // rebuild. The null-metric guard is repeated rather than inherited so the
     // two paths cannot disagree about which cells exist.
     //
-    // ⚠️ `> 0`, NOT `!= null`: exempt_frac is a share of the TOTAL levy, so on
-    // a subset cut a flagged cell can hold $0 of that cut — 1,064 of 1,332 on
-    // Residential drew as flat azure squares and inflated the blurb's count
-    // (docs/FINDINGS_blurb_claims.md F1). Interim until the pipeline ships a
-    // per-cut share; the certain/uncertain split still uses the total share.
+    // The share is the CUT'S OWN (`exempt_frac_res`/`_nonres` on the split
+    // cuts), so it is null wherever that cut has no levy — the $0 cells F1
+    // found (docs/FINDINGS_blurb_claims.md) no longer qualify by share.
+    // ⚠️ KEEP `c[col] > 0` anyway: on LOT acres a cell can carry a share and a
+    // null lot value (33 on Total, 14 on Residential at 100 m, 2026-11-20),
+    // and it would draw as a flat azure square and count in the blurb.
+    const GRID_EXEMPT_COL = {
+      revenue_per_acre: "exempt_frac",
+      res_revenue_per_acre: "exempt_frac_res",
+      nonres_revenue_per_acre: "exempt_frac_nonres",
+    };
+    const gridExemptCol = () =>
+      gridData?.columns[GRID_EXEMPT_COL[state.metric] ?? "exempt_frac"] ?? -1;
     function glassInstCells() {
-      const fcol = gridData?.columns.exempt_frac ?? -1;
+      const fcol = gridExemptCol();
       const col = gridData ? gridData.columns[gridColKey()] : -1;
       if (fcol < 0 || col < 0) return [];
       gridData.instFor ??= {};
@@ -3531,7 +3560,7 @@
     const glassInstCount = () => glassInstCells().length;
 
     function glassInstBandLayers(gs, col) {
-      const fcol = gridData.columns.exempt_frac;
+      const fcol = gridExemptCol();
       const flagged = glassInstCells();
       if (!flagged.length) return [];
       const mk = (id, getElevation) => new deck.GridCellLayer({
@@ -3600,7 +3629,7 @@
     }
     // The rate with institutional revenue removed — the other coherent world.
     const deviationRateExempt = p =>
-      p[state.labCut] * (1 - exemptFrac(p)) / devAcreFrac(p);
+      p[state.labCut] * (1 - exemptFrac(p, state.labCut)) / devAcreFrac(p);
     // Both endpoints as deviations, each against ITS OWN scenario average.
     //
     // ⚠️ `exempt` IS NOT ALWAYS THE LOWER END, and the naming says so on
@@ -3633,7 +3662,7 @@
         // Banded hoods stay IN it — they are real revenue on the real roll,
         // and dropping them would move everyone else's benchmark on the
         // strength of a question nobody has answered.
-        numExempt += (p[colKey] || 0) * (1 - exemptFrac(p)) * a;
+        numExempt += (p[colKey] || 0) * (1 - exemptFrac(p, colKey)) * a;
       }
       const avg = devAcres ? num / devAcres : 0;
       const avgExempt = devAcres ? numExempt / devAcres : 0;
@@ -6656,8 +6685,8 @@
           return { className: "tip", html: name +
             `<b>${fmtDeviation(sp.lo)} to ${fmtDeviation(sp.hi)}</b>` +
             ` / developed acre<br/>` +
-            `<span class="muted">${Math.round(exemptFrac(p) * 100)}% of its revenue ` +
-            `is institutional land</span><br/>` +
+            `<span class="muted">${Math.round(exemptFrac(p, state.labCut) * 100)}% of its ` +
+            `${exemptCutWord(state.labCut)}revenue is institutional land</span><br/>` +
             `<span class="muted">Alberta law exempts many such properties; the ` +
             `roll does not say which — so this hood's value is unknown</span>` };
         }
@@ -6687,8 +6716,9 @@
         // not its two worlds draw the same prism. Same two rows as Money, word
         // for word, so the concept reads identically across lenses.
         const caveat = instCaveatOnly(p)
-          ? `<span class="muted">${Math.round(exemptFrac(p) * 100)}% of revenue is `
-            + `on institutionally-zoned land</span><br/>`
+          ? `<span class="muted">${Math.round(exemptFrac(p, state.labCut) * 100)}% of `
+            + (state.labCut === "revenue_per_acre" ? "" : "its ")
+            + `${exemptCutWord(state.labCut)}revenue is on institutionally-zoned land</span><br/>`
             + `<span class="muted">the City does not publish which of it is `
             + `tax-exempt</span><br/>`
           : "";
@@ -6752,7 +6782,7 @@
       // high-to-low (deviationBandSpan's rule — here the order is structural
       // rather than sorted, since exempt is always the lower endpoint).
       let html = name + (instBandedMoney(p)
-        ? `<b>${cfg.fmt(p[colKey] * (1 - exemptFrac(p)))} to ${cfg.fmt(p[colKey])}</b>`
+        ? `<b>${cfg.fmt(p[colKey] * (1 - exemptFrac(p, state.metric)))} to ${cfg.fmt(p[colKey])}</b>`
           + ` / ${lot ? "lot acre" : "acre"}`
         : `${cfg.fmt(p[colKey])} / ${lot ? "lot acre" : "acre"}`);
       if (lot) html += pf;
@@ -6792,9 +6822,10 @@
       // and this is a ZONING share; without the word they read as
       // contradictory, because they do not partition the same thing —
       // EVERGREEN is 89% residential and 41% institutional, summing to 130%.
-      if (isRevenue(state.metric) && exemptFrac(p) >= EXEMPT_UNCERTAIN_MIN) {
-        html += `<br/><span class="muted">${Math.round(exemptFrac(p) * 100)}% of `
-              + `revenue is on institutionally-zoned land</span>`
+      if (isRevenue(state.metric) && exemptFrac(p, state.metric) >= EXEMPT_UNCERTAIN_MIN) {
+        html += `<br/><span class="muted">${Math.round(exemptFrac(p, state.metric) * 100)}% of `
+              + (state.metric === "revenue_per_acre" ? "" : "its ")
+              + `${exemptCutWord(state.metric)}revenue is on institutionally-zoned land</span>`
               + `<br/><span class="muted">the City does not publish which of `
               + `it is tax-exempt</span>`;
       }
