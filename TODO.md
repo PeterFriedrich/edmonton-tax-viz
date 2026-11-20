@@ -1017,7 +1017,6 @@ Reported by the `template` session and not yet re-measured here, except item 2. 
 
 - ✅ **F1 fixed S251:** `test_the_real_file_is_in_band_today` replaced by `test_the_real_files_parse_and_yield_the_money_metrics`, with no count or band assertion. Falsified with the findings' M5 (17 of 358): the guard exits 0 and pytest is green, where the old test was red.
 - [ ] **F2 and F3, one decision (Peter's call).** `refresh.yml` runs all of `tests/`, so docs and process tests gate the weekly publish, against the 2026-07-30 and 2026-08-09 rows. Either (a) append a DECISIONS row correcting the 2026-08-09 one and fix `docs/ARCHITECTURE.md` "Testing" to match the wiring, or (b) partition `tests/` and have the refresh skip the repo-state part (a CI change). Recommended (a): 0 of 55 runs. The three duplicate merge-gate steps stay either way.
-- [ ] **F5: eight verify scripts were red on master** (`docs/FINDINGS_test_estate.md` F5). Re-run alone at `82148f5` (S251): `verify-about.js`, `verify-nonres-revenue.js` fixed (stale after #808); `verify-peek.js` fixed (the 2.5 s sleep let the target scan run mid-flatten; now waits for `camFlat && !map.isMoving()`); `verify-transit.js` fixed (pinned 58 vs 59 after ETS's temporary Southgate stop; now compared to the served file); `verify-center2d.js` green on both builds, no change. `verify-theme.js` fixed S252 (Unclassified `88,90,102` exemption restored: dropped 2026-11-09 18:44 while unmapped `RTCC` drew it, and the 19:36 refresh cleared every `frac_other`; 115/115 on the built tree). `verify-temporal.js` fixed S252 (intermittent, ~1 run in 3, on either `#revcut` button: after a metric switch software WebGL held animation frames 4+ s with the main thread idle, so `page.click` never saw two stable frames inside its 4 s timeout; now 15 s, 6/6 green on full, and a covered button still fails). F5 is down to `verify-guide.js`, the known full-build red.
 - [ ] **F4: the `tests/` tree in `docs/ARCHITECTURE.md` "Testing" lists 5 of 66 files.** Replace it with a pointer to `docs/FINDINGS_test_estate.md` §1 when that section is next edited.
 
 ### General backlog — the flat list (no parent item; predates the `###` headings above)
@@ -3549,6 +3548,8 @@ archive"*) is not, and this span is 2,533 lines.
 ## Done
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
+
+- [x] **F5: eight verify scripts were red on master — all eight fixed (S253)** — 2026-11-20 · `docs/TODO_archive.md`
 
 - [x] **THINK ABOUT — a record for revenue-delta triages.** — 2026-11-19 · `docs/TODO_archive.md`
 
