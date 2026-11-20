@@ -41,7 +41,7 @@ click. It names the failing state, e.g. `money/…/2d`. Reproduce locally with
 - What's being served right now: `web/data/status.json` (`data_year`,
   `generated`, `banner`, GeoJSON SHA-256)
 
-⚠️ **Closing any issue from §0–§0f whose cause is an upstream change adds or
+⚠️ **Closing any issue from §0–§0g whose cause is an upstream change adds or
 updates a row in `docs/DATA_ISSUES.md` "Event log".** The issue thread is not
 the record. Sessions don't read closed issues.
 
@@ -364,6 +364,43 @@ the name from it.
 new names went unchecked that week. The body carries the exception. Fix the
 cause (often the same `load_permits` error a held run would otherwise hide);
 the guard never reports the all-clear when it couldn't check.
+
+## 0g. `Verify sweep` issue (the whole verify suite, both builds)
+
+**What it is:** `.github/workflows/verify-sweep.yml` ran every verify script
+except `url-state` on a `build_site.py` tree, 8 shards per build, one script at
+a time (`scripts/verify_sweep.py`). A red script is re-run once, alone. Label
+`verify-sweep`. One issue stays open; later runs comment on it, and a green
+week comments only to say it can be closed. Stage 1 (now): manual runs only.
+
+⚠️ **NOTHING IS BLOCKED.** It gates no merge and no deploy. The live site is
+whatever `deploy.yml` / `refresh.yml` published.
+
+**By title:**
+
+- **`⚠️ Verify sweep — N red`**: each red was red twice. The table gives the
+  build, the script, a hint and the first failures. Reproduce it here first,
+  alone: `python3 scripts/build_site.py --src web --out <scratch>/site`, then
+  `node tools/profiling/verify.js --serve <scratch>/site [--page dev-build-full/index.html] --jobs 1 <script>`.
+  Green here and red on the runner usually means runner timing.
+  Then decide which it is:
+  1. **Stale expectation** (copy merged, a count moved): update the script in a
+     PR. If a refresh moved it, derive it from the served file instead
+     (`docs/FINDINGS_verify_selection.md` §4b says which literals are pinned
+     on purpose).
+  2. **Data shape** (`services-panel` floors, `deviation` bands): this is a
+     prompt to re-measure, not a defect. It may be a real change in the data.
+  3. **Real page bug**: fix it like any other bug, with the script as the
+     check that it's fixed.
+- **`Verify sweep — N flaky, none red`**: red once, then green alone. Nothing
+  to fix unless the same script flakes two weeks running. Then it's a harness
+  problem worth a TODO.
+- **`⚠️ Verify sweep could not run`**: some scripts have **no result**, so they
+  went unchecked. A shard died in setup (npm, Playwright download, build), the
+  matrix and `--of 8` disagree, or the report step crashed. Read the run log.
+  This is never the same as green.
+
+Close the issue when every red listed in it is dealt with.
 
 ## 1. The January year roll (the recurring one)
 

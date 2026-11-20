@@ -98,6 +98,12 @@ hand today; a `verify.js --changed` flag is the tooling version (§5).
 
 ## 4. Proposal: the full sweep on GitHub Actions (CI change — Peter's yes needed)
 
+**Approved and built (S259, stage 1):** `.github/workflows/verify-sweep.yml` +
+`scripts/verify_sweep.py`, manual runs only until the runner timings are
+calibrated. The shape that shipped is the `DECISIONS.md` 2026-11-20 row; it
+uses 16 shards rather than one job per script. Triage: `docs/RUNBOOK.md` §0g.
+
+
 - **What:** a new workflow, `workflow_dispatch` plus weekly after the Monday
   refresh. It builds with `build_site.py`, then runs one matrix job per
   script per build. It is non-blocking, and on a red it files one issue (the
@@ -160,7 +166,8 @@ test):**
 
 ## 5. Not done, in order
 
-1. §4. The pinned-count read is done (§4b), so the workflow can be planned.
+1. §4 stage 2: calibrate on the first manual runs, then trigger on the
+   refresh's completion (`workflow_run`).
 2. `verify.js --changed [base]`: the prototype plus §3's floor. Tools change,
    Peter merges. Worth it only if per-PR selection by hand still costs time.
 3. `verify-peek`'s 331 s: existing TODO ("The lit selected-hood prism").
