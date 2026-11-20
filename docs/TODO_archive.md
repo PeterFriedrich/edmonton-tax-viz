@@ -8,6 +8,8 @@ Items are verbatim as they were closed, newest-moved first in the order they app
 
 ---
 
+- [x] **F5: eight verify scripts were red on master — all eight fixed (S253)** (`docs/FINDINGS_test_estate.md` F5). Re-run alone at `82148f5` (S251): `verify-about.js`, `verify-nonres-revenue.js` fixed (stale after #808); `verify-peek.js` fixed (the 2.5 s sleep let the target scan run mid-flatten; now waits for `camFlat && !map.isMoving()`); `verify-transit.js` fixed (pinned 58 vs 59 after ETS's temporary Southgate stop; now compared to the served file); `verify-center2d.js` green on both builds, no change. `verify-theme.js` fixed S252 (Unclassified `88,90,102` exemption restored: dropped 2026-11-09 18:44 while unmapped `RTCC` drew it, and the 19:36 refresh cleared every `frac_other`; 115/115 on the built tree). `verify-temporal.js` fixed S252 (intermittent, ~1 run in 3, on either `#revcut` button: after a metric switch software WebGL held animation frames 4+ s with the main thread idle, so `page.click` never saw two stable frames inside its 4 s timeout; now 15 s, 6/6 green on full, and a covered button still fails). `verify-guide.js` fixed S253 (full build only: the card names the four public views and the full build adds Uses and Lab, so the exact match could never pass; on the full build each named view must now be a live button, public keeps the exact match; 43/43 on both builds, a renamed Ratio button turns both red).
+
 - [x] **THINK ABOUT — a record for revenue-delta triages.** ✅ 2026-11-19: `docs/DATA_ISSUES.md` "Event log" (DECISIONS 2026-11-19). #818 was the
   first `revenue-delta` issue to fire. Its history is now split across RUNBOOK
   §0b (process), `TODO_archive.md` (the Meadowlark write-up), `DATA_ISSUES.md`
