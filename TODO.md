@@ -1017,7 +1017,7 @@ Reported by the `template` session and not yet re-measured here, except item 2. 
 
 - ✅ **F1 fixed S251:** `test_the_real_file_is_in_band_today` replaced by `test_the_real_files_parse_and_yield_the_money_metrics`, with no count or band assertion. Falsified with the findings' M5 (17 of 358): the guard exits 0 and pytest is green, where the old test was red.
 - [ ] **F2 and F3, one decision (Peter's call).** `refresh.yml` runs all of `tests/`, so docs and process tests gate the weekly publish, against the 2026-07-30 and 2026-08-09 rows. Either (a) append a DECISIONS row correcting the 2026-08-09 one and fix `docs/ARCHITECTURE.md` "Testing" to match the wiring, or (b) partition `tests/` and have the refresh skip the repo-state part (a CI change). Recommended (a): 0 of 55 runs. The three duplicate merge-gate steps stay either way.
-- [ ] **F4: the `tests/` tree in `docs/ARCHITECTURE.md` "Testing" lists 5 of 66 files.** Replace it with a pointer to `docs/FINDINGS_test_estate.md` §1 when that section is next edited.
+- ✅ **F4 fixed S254:** the 5-file `tests/` tree in `docs/ARCHITECTURE.md` "Testing" is replaced by a one-paragraph description and a pointer to `docs/FINDINGS_test_estate.md` §1. Not done (outside this item): "What to test per module" there still covers only the five Phase-1 modules, and `tools/profiling/README.md` is still titled for profiling only (findings F4).
 
 ### General backlog — the flat list (no parent item; predates the `###` headings above)
 
