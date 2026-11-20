@@ -8,6 +8,21 @@ Items are verbatim as they were closed, newest-moved first in the order they app
 
 ---
 
+- [x] **Audit when a PR needs the whole browser suite** — CLOSED 2026-11-20 S257: no PR needs it; change-class table in `docs/CHANGE_PIPELINE.md` step 5, findings in `docs/FINDINGS_verify_selection.md` (Peter's ask,
+  2026-11-20, S256). For #852, a copy-only edit to 3 strings in
+  `web/index.html`, S256 ran all 44 scripts: 2,402 s (40 min), plus ~10 min lost
+  when the first run, started in the foreground, hit the 10-minute Bash cap
+  (`verify.js` header warns of it). The scripts that read those strings
+  (`verify-blurbs` on `?build=public`, `verify-glass-inst`, `verify-deviation`,
+  `verify-inst-caveat`, plus `verify-theme` on a `build_site.py` tree) had
+  already run green; the other 39 don't read them. Question: which change
+  classes (copy, CSS, render, data shape) need which scripts, written into
+  `docs/CHANGE_PIPELINE.md`. Size it against the suite's real catch rate
+  first (`docs/FINDINGS_test_estate.md` §1 puts it at 39–44 min, run by hand,
+  gating nothing): how often has a script outside the obvious set gone red on a
+  PR? Run it in the background (`run_in_background`), never in the foreground.
+
+
 - [x] ⚠️ **SHIPPED NUMBERS WRONG — BLOCKS RELEASE (recommended): the band, the
   caveat percentage and the printed range on the Residential and
   Non-residential cuts use the TOTAL-levy share.** Same root as F1+F2 under
