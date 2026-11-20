@@ -1157,14 +1157,7 @@ unplaced. See `data/DATA.md`.
 
 ### Structure
 
-```
-tests/
-├── test_load_assessment.py
-├── test_aggregate_by_neighbourhood.py
-├── test_load_boundaries.py
-├── test_join_and_calculate.py
-└── test_plot_choropleth.py
-```
+`tests/` is flat: one `test_<name>.py` per module or script, with no `conftest.py` and no markers. For the whole estate (pytest, the guard scripts, the verified notebooks, the browser suite, and what each one runs in and blocks), see `docs/FINDINGS_test_estate.md` §1. That map is a 2026-11-15 snapshot, so count `ls tests/test_*.py` for today's file count.
 
 Tests use `pytest`. All fixtures are synthetic — small inline DataFrames/GeoDataFrames. No real data files required, since raw data is not committed.
 
