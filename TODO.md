@@ -212,9 +212,9 @@ model reads **+$282.0M, +11.2%** over the levy the City filed for 2026.
   2 (accept the counts) and 3 (name the cut, `COPY_DECISIONS.md` F6) made
   2026-11-11. **Next: PR 2 (front end), after the first refresh publishes
   the new columns** (Mon 2026-11-16).
-  - [ ] **Re-measure decision 2's counts on the served file** once the
-    refresh publishes the new columns, before PR 2 renders anything. The
-    #803 counts came from the 09-03 raw roll.
+  - [x] **Re-measure decision 2's counts on the served file** — DONE
+    2026-11-20 (S255) on the 11-16 served file; table in the proposal. One
+    hood moved, VIRGINIA PARK, from the #818 dropout; everything else matches.
   - [ ] **Pin the grid columns.** `check_served_columns.py` covers only the
     hood GeoJSON, so `exempt_frac_res`/`_nonres` could drop from both grids
     silently. PR 2's fallback to the total column would then quietly put the
