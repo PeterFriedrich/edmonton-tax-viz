@@ -542,12 +542,10 @@ Edmonton revenue-per-acre fiscal analysis. Python-only, no GIS software.
 **Cost-side data gaps (OPEN 2026-11-16, S248, `docs/SPEC_cost_gaps.md`)**
 - **Peter: open two council documents in a browser** (both 403 to a script, re-tested 2026-11-16): `pub-edmonton.escribemeetings.com/filestream.ashx?DocumentId=164273` (*Completed NRP Projects 2009–2022*) and `DocumentId=286947` (City Auditor, Neighbourhood Renewal audit). They …
 - **Peter's call: which of §5's prompts to run** in the claude.ai Project (P1–P5 draft report passages; P6–P10 search for missing facts). File each reply before mining it.
-- **Three stale statements** named in §1 of that doc: the "Alley Renewal $174.4M" label and Task 1b's "no dwelling or population count" in `SPEC_breakeven.md`, and the two `TODO.md` lines annotated today. Fix the spec lines when that file is next edited.
 - Not started, no decision taken: ingesting any dataset in §3 (snow priority routes `8pdx-hfxi`, parks `gdd9-eqv9`, trees `eecg-fc54`, 2021 census `xgkv-ii9t`). Each is a new module, so propose first.
 
 **Test-estate audit follow-ons (OPEN 2026-11-15, S247, `docs/FINDINGS_test_estate.md`)**
 - **F2 and F3, one decision (Peter's call).** `refresh.yml` runs all of `tests/`, so docs and process tests gate the weekly publish, against the 2026-07-30 and 2026-08-09 rows. Either (a) append a DECISIONS row correcting the 2026-08-09 one and fix `docs/ARCHITECTURE.md` "Testing" …
-- **F4: the `tests/` tree in `docs/ARCHITECTURE.md` "Testing" lists 5 of 66 files.** Replace it with a pointer to `docs/FINDINGS_test_estate.md` §1 when that section is next edited.
 
 **General backlog — the flat list (no parent item; predates the `###` headings above)**
 - **`TODO.md` is ~89% of the loaded path — audit the 100 open boxes for stale claims; relocate closed sub-items** (opened 2026-09-16, S166; `docs/FINDINGS_doc_growth.md` §3). Two halves. - ✅ **(2) THE RELOCATION IS DONE 2026-09-16 (S166): 26 KB moved, 261.6 → 238.0 KB**, 27 blocks …
