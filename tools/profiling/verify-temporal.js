@@ -329,8 +329,13 @@ const [url] = process.argv.slice(2);
         }, clicks[0]));
       continue;
     }
+    // 15 s, not 4: after a metric switch, software WebGL can hold animation
+    // frames for 4+ s with the main thread idle, and page.click waits for two
+    // frames with the same box ("stable"), so a visible, uncovered button timed
+    // out in ~1 run in 3 (S252: 2 frames in 4.5 s). A covered control never
+    // becomes clickable, so it still fails, only later.
     for (const sel of clicks) {
-      try { await page.click(sel, { timeout: 4000 }); await page.waitForTimeout(350); }
+      try { await page.click(sel, { timeout: 15000 }); await page.waitForTimeout(350); }
       catch (e) { check(`${label}: control ${sel} is clickable`, false, e.message.split('\n')[0]); }
     }
     await page.waitForTimeout(450);
