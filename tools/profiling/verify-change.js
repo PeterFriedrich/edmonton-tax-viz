@@ -115,12 +115,11 @@ const [url] = process.argv.slice(2);
     };
   });
   const app = await page.evaluate(() => changeFor('DOWNTOWN'));
-  // 13 -> 14 elapsed on 2026-08-27: the endpoint moved to 2026 and 2025 joined
-  // 2024 in the omitted set, so the hole between the divisors WIDENED from one
-  // year to two. That makes this check's subject bigger, not stale — the
-  // interval divisor now overstates every rate by ~17%.
-  check('the long window spans 14 elapsed years but only 12 observed intervals',
-    raw.elapsed === 14 && raw.intervals === 12, `${raw.elapsed} vs ${raw.intervals}`);
+  // The gap between the divisors is the two omitted years (2024 and 2025, by
+  // decision; SPEC_temporal §0). It was one until 2026-08-27. Asserted as the
+  // gap rather than as 14 and 12, which the January roll moves to 15 and 13.
+  check('the long window spans two more elapsed years than observed intervals',
+    raw.elapsed - raw.intervals === 2, `${raw.elapsed} elapsed vs ${raw.intervals} intervals`);
   check('*** annualises over YEARS ELAPSED, not observed intervals ***',
     app.years === raw.elapsed && Math.abs(app.rate - raw.compoundElapsed) < 1e-12,
     `years=${app.years}`);
@@ -164,10 +163,28 @@ const [url] = process.argv.slice(2);
       noHistory: names.filter(n => !of(n)).length,
     };
   });
-  check('45 hoods have no 2012 baseline (matches the measured gate)',
-    holes.noBase === 45, `${holes.noBase}`);
-  check('the one hood that fell to zero share is a hole, not -100%/yr',
-    holes.noEnd === 1, `${holes.noEnd}`);
+  // ⚠️ Counted from temporal.json, not pinned. The endpoint is the LIVE roll,
+  // so the fell-to-zero set can move on any refresh; the baselines are frozen
+  // years but the hood list is not. Same rule as changeFor: a share that is not
+  // > 0 at the window's first year is no baseline, and at the last year no
+  // endpoint. Over the map's own hood names, since that is what gets drawn.
+  const holesIn = start => page.evaluate(async start => {
+    const d = await (await fetch('./data/temporal.json')).json();
+    const ys = d.years, j = ys.length - 1, i = ys.findIndex(y => y >= start);
+    let noBase = 0, noEnd = 0;
+    for (const f of state.data.features) {
+      const rows = d.hoods[f.properties.neighbourhood_name];
+      if (!rows) continue;
+      if (!(rows[0][i] > 0)) noBase++;
+      else if (!(rows[0][j] > 0)) noEnd++;
+    }
+    return { noBase, noEnd };
+  }, start);
+  const served = await holesIn(2012);
+  check('every no-2012-baseline hood in the file is a hole on the map',
+    served.noBase > 0 && holes.noBase === served.noBase, `${holes.noBase} vs served ${served.noBase}`);
+  check('every hood that fell to zero share is a hole, not -100%/yr',
+    holes.noEnd === served.noEnd, `${holes.noEnd} vs served ${served.noEnd}`);
   check('no hole ever carries a rate', !holes.anyRateOnHole);
   check('every hole is off the colour scale (renders the off-scale grey)', holes.greyed);
   check('every hood in the map has assessment history', holes.noHistory === 0);
@@ -180,7 +197,9 @@ const [url] = process.argv.slice(2);
   // DERIVED from the series endpoint, not the literal 2025 this pinned until
   // 2026-08-27 — the app already read the year from data, so the test was the
   // only stale half and it reddened on a roll-forward that broke nothing.
-  check('the fell-to-zero hover states its own reason',
+  // No hood fell to zero on some rolls, and then there is no hover to read.
+  if (served.noEnd === 0) console.log('SKIP  fell-to-zero hover: no such hood in this roll');
+  else check('the fell-to-zero hover states its own reason',
     new RegExp(`Holds none of the assessment base in ${raw.lastYear}`)
       .test(holes.sampleEndTip), holes.sampleEndTip);
   const legendAside = await page.evaluate(() =>
@@ -302,8 +321,10 @@ const [url] = process.argv.slice(2);
   check('the short window gives a different rate than the long one',
     Math.abs(shortW.dt.rate - app.rate) > 1e-4,
     `${(100 * app.rate).toFixed(2)}%/yr -> ${(100 * shortW.dt.rate).toFixed(2)}%/yr`);
-  check('the short window has its own (smaller) no-baseline set',
-    shortW.noBase === 11, `${shortW.noBase}`);
+  const servedShort = await holesIn(2019);
+  check('the short window has its own (smaller) no-baseline set, as served',
+    shortW.noBase === servedShort.noBase && servedShort.noBase < served.noBase,
+    `${shortW.noBase} vs served ${servedShort.noBase} (long ${served.noBase})`);
   check('the legend label follows the window', /2019/.test(shortW.label), shortW.label);
   check('the off-scale swatch follows the window', /No 2019 baseline/.test(shortW.aside));
 

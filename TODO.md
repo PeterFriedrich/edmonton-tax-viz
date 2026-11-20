@@ -907,10 +907,9 @@ preload still holds (12/12). What is left:
   `docs/FINDINGS_verify_selection.md` §4). A matrix job per script per build,
   `workflow_dispatch` plus weekly after the refresh, files one issue on red
   (`vintage-digest.yml` pattern). CI change: plan first, Peter merges.
-  ⚠️ **Do first, or it cries wolf every refresh:** read every script for pinned
-  refresh-sensitive literals and derive them from the served files (known:
-  `verify-inst-caveat.js`, `verify-ratio-denom.js`; a regex screen is not a
-  read), and give `verify-about.js` F4's remedy (5xx/timeout read as SKIP).
+  ✅ Prerequisites done: the pinned-literal read (S258, every script read; seven
+  scripts now derive from the served files, and the rest are pinned on purpose,
+  `docs/FINDINGS_verify_selection.md` §4b), and F4 was already in (#650).
   Unmeasured: SwiftShader on x86 runners.
 
 ### Peter's list, 2026-09-25 (S196) — not scoped yet

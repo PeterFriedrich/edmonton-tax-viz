@@ -112,12 +112,55 @@ hand today; a `verify.js --changed` flag is the tooling version (§5).
   served files first (`verify-inst-caveat`, `verify-ratio-denom` are known;
   the rest need reading, not a regex screen). That is S256's carried item 4.
 - **Unmeasured:** behaviour on x86 runners under SwiftShader. The first runs
-  calibrate; `verify-about`'s external-host checks need F4's remedy (5xx and
-  timeout read as SKIP) first or they will flake there too.
+  calibrate. `verify-about`'s F4 remedy (5xx and timeout read as SKIP) was
+  already in, from #650 (2026-10-02); this bullet and the TODO had gone stale.
+
+## 4b. The pinned-literal read (S258, 2026-11-20)
+
+Every one of the 44 scripts and the runner was read, not screened. A literal
+counts as **refresh-sensitive** only when a served file that the refresh
+rewrites can move it with nothing wrong. Commit counts since 2026-09-20:
+geojson 10, status 10, value_grid 9, dev_grid 7, temporal 5, transit_stations
+3. `lrt_lines.json` has not changed since 2026-07-11, and `reference.geojson`
+changed once, in a code PR.
+
+**Derived in this change (all from the served file, never from the helper under
+test):**
+
+| Script | Was | Now |
+|---|---|---|
+| `verify-inst-caveat` | caveat counts 20/6/164, band counts 5/0/8, U of A `90%` and `$18,047 to $178,401`, ASPEN GARDENS `9%`/`100%`, HUDSON + ROYAL GARDENS, DOWNTOWN `5%` | sets recomputed from `rev_frac_exempt[_res\|_nonres]` and the 0.25 bar written out; range parsed and compared to `v·(1−e)` and `v`; split-share exemplar picked from the data |
+| `verify-ratio-denom` | share-tier band `=== 15` | count from the raw file (road floor 5, bar 0.25) |
+| `verify-change` | no-baseline 45 and 11, fell-to-zero 1, elapsed 14 / intervals 12 | holes counted from `temporal.json` with changeFor's rule; the divisor gap asserted as 2 |
+| `verify-infill` | `DOWNTOWN still top pressure` (weekly permit data) | the min-score hood carries the minimum t |
+| `verify-revenue-panel` | DOWNTOWN must hold a sub-0.05% category | the `<0.1%` check runs only when one is served; `0.0%` is never allowed |
+| `verify-theme` | hand-edited Unclassified exemption (dropped 11-09, restored 11-19, both after refreshes) | exempt exactly when no served zone is `other` and no hood has `frac_other` |
+| `verify-temporal` | x-axis `'2026'`, runs `[12,1]`, the 2023→2026 jump read off the first circle | live year and run lengths from the year list; the jump reads the second path once a year follows 2026 |
+
+**Left pinned, on purpose:**
+
+- **They move only with a code change**, so the same PR updates them: the
+  Development window labels (`2009–2025`, `2021–2025`, `2023–2025`, from
+  `WINDOWS`), the change-lens start years, the `PLACES` counts in
+  `verify-reference-layer`, the public view list in `verify-deviation`, the
+  frozen links in `verify-url-state`, the service-layer counts (10, 3) and the
+  hand-set clamps (`$30k+`, `$50k+`).
+- **Frozen history:** `verify-temporal`'s DOWNTOWN 2012 = 5.09% and peak 5.55%
+  in 2016 (2012–2023 are bit-identical across refreshes).
+- **Static file:** `verify-transit`'s 343 LRT lines.
+- **Stable named exemplars:** U of A and Gold Bar banded (90% exempt), MAPLE
+  RIDGE's null lot value, TWIN BROOKS in search. A red on one of these is a real
+  event worth an issue, not churn.
+- **Data-shape checks that are rare and meaningful:** `verify-services-panel`'s
+  "the floor actually fires" (its own comment calls a zero a prompt to
+  re-measure, which is what an issue is), `verify-deviation`'s inverted and
+  zero-crossing bands, and the 5× surplus arm.
+- **Runner-sensitive, not data:** `verify-loading-overlay`'s 250 / 8000 / 40 ms.
+  The first x86 runs calibrate these.
 
 ## 5. Not done, in order
 
-1. §4, after the pinned-count read (its own TODO).
+1. §4. The pinned-count read is done (§4b), so the workflow can be planned.
 2. `verify.js --changed [base]`: the prototype plus §3's floor. Tools change,
    Peter merges. Worth it only if per-PR selection by hand still costs time.
 3. `verify-peek`'s 331 s: existing TODO ("The lit selected-hood prism").

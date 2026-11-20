@@ -132,8 +132,13 @@ const [url] = process.argv.slice(2);
       parseFloat(a[i - 1].pct.replace('<', '')) >= parseFloat(r.pct.replace('<', ''))));
   // Downtown carries a 0.013% river-valley sliver — the case that would print
   // "0.0%" if the floor were a plain toFixed(1).
-  check('*** a sub-0.1% category prints "<0.1%", never "0.0%" ***',
-    pcts.includes('<0.1%') && !pcts.includes('0.0%'), pcts.join(','));
+  // The sliver is data, so the floor case only exists when the served file has
+  // one; "0.0%" is never acceptable either way.
+  check('no category prints "0.0%"', !pcts.includes('0.0%'), pcts.join(','));
+  if (raw.mix.some(([, v]) => v * 100 < 0.05))
+    check('*** a sub-0.1% category prints "<0.1%", never "0.0%" ***',
+      pcts.includes('<0.1%'), pcts.join(','));
+  else console.log('SKIP  "<0.1%" floor: DOWNTOWN has no sub-0.05% category in this roll');
 
   // ---- 3. ONE CATEGORY SET WITH THE USES LENS ----------------------------
   const commercial = panel.rows.find(r => r.label === 'Commercial');

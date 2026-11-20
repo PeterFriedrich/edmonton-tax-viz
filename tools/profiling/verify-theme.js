@@ -252,11 +252,20 @@ async function readerPaths() {
   // A themed colour no state draws is one this check never tested.
   // Named exemptions, each with the reason it cannot be drawn here. A new
   // themed colour that no state draws fails until it is drawn or listed.
+  // ⚠️ "Unclassified" is drawable only while some zone code is unmapped, which
+  // is DATA: it was dropped on 2026-11-09 18:44 while unmapped RTCC drew it,
+  // and had to be restored on 11-19 because the 19:36 refresh (RTCC → mix)
+  // cleared it again. So the exemption follows the served files rather than
+  // a hand edit: exempt exactly when nothing served can draw it.
+  const served = async f => (await fetch(`${base}/data/${f}`)).json();
+  const unclassifiedServed =
+    (await served('zoning.geojson')).features.some(f => f.properties.u === 'other') ||
+    (await served('neighbourhood_value_per_acre.geojson')).features
+      .some(f => (f.properties.frac_other || 0) > 0);
+  console.log(`(served data ${unclassifiedServed ? 'carries' : 'carries no'} Unclassified land)`);
   const UNDRAWN = {
-    // Dropped 2026-11-09 18:44 while unmapped RTCC drew it; the 19:36 refresh
-    // (RTCC → mix) cleared every frac_other. An unmapped code brings it back,
-    // and the stale-exemption check below then says so.
-    '88,90,102': 'Uses "Unclassified": every zone code is mapped (DATA.md §5)',
+    ...(unclassifiedServed ? {} :
+      { '88,90,102': 'Uses "Unclassified": every served zone code is mapped (DATA.md §5)' }),
     '70,72,84': 'unzoned revenue share: HTML panel only, never a layer',
     // Measured 2026-11-09: its one anchor projects to x≈1259 of 1280 at HOME,
     // under #optpanel, so the sweep drops it; kept only from 1440x900 at z9.
