@@ -242,7 +242,9 @@ function check(name, ok, detail) {
   //    If someone "restores parity" by adding a consequence term, these go red.
   check('U of A is banded (naive consequence port would drop it)', band.uofa);
   check('River Valley Gold Bar is banded (both endpoints clamp)', band.goldBar);
-  check('band selects on share alone', band.n === 16, `${band.n} hoods`);
+  // 16 -> 15 on 2026-11-16: VIRGINIA PARK left when account 9977123 dropped out
+  // of the roll (#818). Back to 16 if it returns.
+  check('band selects on share alone', band.n === 15, `${band.n} hoods`);
   // The ordinary prism must be flattened AND emptied — a ramp-coloured floor
   // under the band would assert the value the band exists to withhold.
   check('banded hood is flattened out of ratio-extrusion', band.uofaElev === 0);

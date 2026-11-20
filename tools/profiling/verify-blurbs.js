@@ -158,7 +158,10 @@ const PUBLIC_VIEWS = ['money', 'development', 'services', 'ratio'];
         // The azure count is a claim about cells that carry tax on THIS cut.
         // Recomputed here from the raw cells, not from glassInstCells(), so a
         // regression in that filter cannot also pass this check (F1).
-        const cols = gridData.columns, col = cols[gridColKey()], fcol = cols.exempt_frac ?? -1;
+        // The cut's OWN share (per-cut PR 2), by column name.
+        const own = { res_revenue_per_acre: 'exempt_frac_res',
+                      nonres_revenue_per_acre: 'exempt_frac_nonres' }[state.metric] || 'exempt_frac';
+        const cols = gridData.columns, col = cols[gridColKey()], fcol = cols[own] ?? -1;
         const want_n = fcol < 0 || !isRevenue(state.metric) ? 0 : gridData.cells.filter(
           c => c[col] > 0 && c[fcol] != null && c[fcol] >= GLASS_EXEMPT_MIN).length;
         const said = plain.match(/([\d,]+) azure cells? (?:is|are)/);

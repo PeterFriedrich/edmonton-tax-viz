@@ -2,8 +2,12 @@
 
 **Status: APPROVED 2026-11-11 (Peter: "do the proper one", after
 `docs/FINDINGS_levy_as_revenue.md` re-measured the defect). PR 1 (pipeline) built
-S245 and merged (#803). Decisions 2 and 3 made 2026-11-11 (below); PR 2 waits on
-the first refresh after #803.** It changes the served
+S245 and merged (#803). Decisions 2 and 3 made 2026-11-11 (below). PR 2 (front
+end) built S255, 2026-11-20, after re-measuring on the served file (below). Two
+departures from §2: no fallback to the total column (the columns ship, and the
+grid pin in `check_served_columns.py` guards them), and Glass KEEPS its `> 0`
+filter, which is not redundant on lot acres (cells with a share and a null lot
+value: 33 on Total, 14 on Residential at 100 m).** It changes the served
 schema (a data contract), so CLAUDE.md requires the plan first.
 Evidence: `docs/FINDINGS_blurb_claims.md` F1, F2 and §6.
 
