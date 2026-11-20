@@ -26,6 +26,26 @@ ASPEN GARDENS: 0.09 total, 0.00 residential, 1.00 non-residential.
 Payload with lot columns excluded: the 100 m grid grows 308 KB raw / 12 KB
 gzip, and the 50 m grid 835 KB raw / 30 KB gzip.
 
+## Re-measured on the served file (S255, 2026-11-20)
+
+The 11-16 refresh published the new columns. Same gates, recomputed from the
+served `rev_frac_exempt*` columns. "Today" excludes hoods with no revenue on the
+cut (YELLOWHEAD CORRIDOR WEST on Residential), as S245 did.
+
+| cut | caveat today → per-cut | outlined band today → per-cut |
+|---|---|---|
+| Total | 20 → 20 | 5 → 5 |
+| Residential | 19 → 6 | 2 → 0 (UNIVERSITY OF ALBERTA and WEST MEADOWLARK PARK lose it) |
+| Non-residential | 20 → 164 | 5 → 8 (HUDSON, ROYAL GARDENS gain it) |
+
+Every difference from S245's table is one hood, VIRGINIA PARK. Account
+`9977123` ($67.5M, UI zoning) left the roll in the City's 2026-11-16 republish
+(#818), which dropped its total share from 0.70 to 0.20, under the gate. Its
+non-residential share is still 0.97, but its shift on that ramp is now 0.15, so
+it no longer gains the band. If the account returns, it does. Decision 2 stands.
+Also confirmed: each per-cut share is null exactly where that cut's revenue is
+0 or null, and ASPEN GARDENS reads 0.09 / 0.00 / 1.00.
+
 ## The defect
 
 `rev_frac_exempt` (hood) and `exempt_frac` (grid) are shares of the **total**
