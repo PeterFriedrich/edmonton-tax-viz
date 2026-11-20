@@ -215,11 +215,13 @@ model reads **+$282.0M, +11.2%** over the levy the City filed for 2026.
   - [x] **Re-measure decision 2's counts on the served file** — DONE
     2026-11-20 (S255) on the 11-16 served file; table in the proposal. One
     hood moved, VIRGINIA PARK, from the #818 dropout; everything else matches.
-  - [ ] **Pin the grid columns.** `check_served_columns.py` covers only the
-    hood GeoJSON, so `exempt_frac_res`/`_nonres` could drop from both grids
-    silently. PR 2's fallback to the total column would then quietly put the
-    defect back. Either guard the grid schema or drop the fallback once the
-    columns ship (found by `/code-review` on #803).
+  - [x] **Pin the grid columns.** — DONE 2026-11-20 (S255): both value grids
+    are in `check_served_columns.py` (`grid_columns` pin). PR 2 drops the
+    fallback to the total column.
+  - [ ] **`dev_grid.json` is not pinned.** It is columnar and read by
+    `columns.indexOf` like the value grids, so a dropped column hides its
+    Development layer on a green publish. Needs its own pinned list (different
+    schema). Found by `/code-review` on the grid pin, pre-existing.
 - [ ] **Decide, not blocking: 15 caveat-only hoods are drawn solid at the
   levied endpoint**, the one FIR says is too high ($40.0M). Spruce Avenue
   ranks 6 and would be 15; Central McDougall ranks 7 and would be 48. This is

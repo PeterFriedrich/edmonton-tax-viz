@@ -670,6 +670,11 @@ Triage by which step failed, in the run log:
   `python scripts/check_served_columns.py --write-baseline` and commit
   `data/expected_columns.json`. A **new** column only warns, so adding a metric
   never blocks the publish — re-pin at your convenience.
+  **The two value grids too** (2026-11-20): entries read `value_grid.json:<col>`
+  as `MISSING` (not in the grid's `columns`) or `EMPTY` (null in every cell), or
+  `RAGGED` (rows shorter than `columns`, so every later column is misread).
+  Same causes, same rule. A re-pin prints `UNPINNED` for every column it
+  removes from either list; read those before committing.
 - **"Run verified notebooks"** (exit 1, `tools/run_verified_notebooks.py`,
   added 2026-08-05) — an invariant inside a `notebooks/verified/` notebook
   (`01_money_lens.py` or `02_methods.py`) failed: the pipeline, re-run independently in notebook form, disagrees with
