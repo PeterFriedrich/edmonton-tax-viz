@@ -8,6 +8,29 @@ Items are verbatim as they were closed, newest-moved first in the order they app
 
 ---
 
+- [x] **CLOSED 2026-11-13 (#808 merged, `7c2f5e2`; copy confirmed on master 2026-11-20).** **BLOCKS RELEASE (recommended; copy, Peter): the app never states that
+  the model is about 11% above the City's filed levy, and a notebook on the
+  same site already says the difference is property the City "does not
+  tax".** Landing says "pay"; `/notebooks/exemption-uncertainty.html` says
+  $14.95B is assessed and not taxed; the app links to neither figure. Smallest
+  change (findings §5): one sized sentence in About, the clause "at the City's
+  published rates, with tax-exempt property not removed" in the Total blurb,
+  and a link to the notebook. Re-opens applied rows N5 and P1 in
+  `docs/COPY_DECISIONS.md`, which were settled on jargon, not on this.
+
+- [x] **CLOSED 2026-11-13 (#808 merged, `7c2f5e2`; copy confirmed on master 2026-11-20).** **SETTLE BEFORE RELEASE (copy, Peter): "collected".** The Ratio panel
+  headline "City property tax collected here" (N4, applied) and the set-aside
+  note "city tax collected is too low" make a cash claim the model cannot
+  support; the headline shows on University of Alberta at $178,401. Dropping
+  the verb fixes both. Does not block by itself.
+
+- [x] **CLOSED 2026-11-13 (#808 merged, `7c2f5e2`; copy confirmed on master 2026-11-20).** **SETTLE BEFORE RELEASE (copy, Peter): the Non-residential blurb names
+  institutions as payers.** "(business, industry and institutions) pays the
+  City" is the least true sentence on the site: the cut is +20.4% ($226.0M)
+  over FIR and 163 of 356 hoods are ≥25% exempt-candidate. The row is already
+  provisional (2026-09-26). A per-hood flag cannot carry a cut where 46% of
+  hoods qualify, so the statement belongs in the blurb. Draft in findings §5.
+
 - [x] **F5: eight verify scripts were red on master — all eight fixed (S253)** (`docs/FINDINGS_test_estate.md` F5). Re-run alone at `82148f5` (S251): `verify-about.js`, `verify-nonres-revenue.js` fixed (stale after #808); `verify-peek.js` fixed (the 2.5 s sleep let the target scan run mid-flatten; now waits for `camFlat && !map.isMoving()`); `verify-transit.js` fixed (pinned 58 vs 59 after ETS's temporary Southgate stop; now compared to the served file); `verify-center2d.js` green on both builds, no change. `verify-theme.js` fixed S252 (Unclassified `88,90,102` exemption restored: dropped 2026-11-09 18:44 while unmapped `RTCC` drew it, and the 19:36 refresh cleared every `frac_other`; 115/115 on the built tree). `verify-temporal.js` fixed S252 (intermittent, ~1 run in 3, on either `#revcut` button: after a metric switch software WebGL held animation frames 4+ s with the main thread idle, so `page.click` never saw two stable frames inside its 4 s timeout; now 15 s, 6/6 green on full, and a covered button still fails). `verify-guide.js` fixed S253 (full build only: the card names the four public views and the full build adds Uses and Lab, so the exact match could never pass; on the full build each named view must now be a live button, public keeps the exact match; 43/43 on both builds, a renamed Ratio button turns both red).
 
 - [x] **THINK ABOUT — a record for revenue-delta triages.** ✅ 2026-11-19: `docs/DATA_ISSUES.md` "Event log" (DECISIONS 2026-11-19). #818 was the
