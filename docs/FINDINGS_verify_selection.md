@@ -127,6 +127,28 @@ uses 16 shards rather than one job per script. Triage: `docs/RUNBOOK.md` §0g.
   The apt step in `--with-deps` is the likely cause (not split out yet). It
   doesn't matter for an unattended weekly run unless it gets worse.
 
+**Calibration run 2 (S260, run `44809650803`, on the #864 branch):** 84 of 84,
+83 green, 0 red, 1 flaky. `verify-search` was green in both builds (65 s,
+70 s).
+
+- **The flake is the same mechanism.** `verify-budget-panel` (full) failed
+  "survives a map click" on its first try, then crashed on a null
+  `boundingBox()` (17 of 58 checks, 8 s), and passed on the retry. Its click
+  at (720, 500) is PAPASCHASE INDUSTRIAL, a pin opens `#temporal`, and
+  `#temporal.open ~ #budget` hides the budget by design. On this box a bare
+  `page.mouse.click` on a hood never pins, but a hover first pins it every
+  time, so the box can force the runner's case. Fixed: the script finds a
+  bare-map pixel by picking (`found a bare-map pixel to click`). A hovered
+  click there stays green, and a page that closes the budget on any click
+  turns the check red.
+- **A class, not two scripts.** A verify script whose map click is meant to
+  do nothing must click a pixel it has shown is bare. Only
+  `verify-guide.js` does another raw map click. It asserts its point is
+  canvas, not that no hood is under it. It passed in both runs and is left
+  alone for now.
+- **Time:** 3,003 s of script time, jobs 3,845 s, the longest job 425 s.
+  The install step took at most 31 s on any job this time.
+
 
 - **What:** a new workflow, `workflow_dispatch` plus weekly after the Monday
   refresh. It builds with `build_site.py`, then runs one matrix job per
