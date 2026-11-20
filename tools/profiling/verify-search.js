@@ -140,11 +140,15 @@ const rect = (page, sel) => page.$eval(sel, e => { const r = e.getBoundingClient
     s = await state_(page);
     check('Escape closes search and leaves the panel', !s.open && s.pinned === picked && s.panelOpen);
 
-    // Click-outside closes.
+    // Click-outside closes. The click lands on the panel's hood name, not the
+    // map: a map pixel is a hood once the camera settles (bottom-centre is
+    // BELGRAVIA), and that click pins it, so every later check reads the wrong
+    // hood (red on the Actions runner, green on the slower box).
     await page.click('#search-btn');
-    await page.mouse.click(720, 880);
+    await page.click('#temporal-name');
     s = await state_(page);
     check('a click outside closes search', !s.open);
+    check('the outside click leaves the pin alone', s.pinned === picked, s.pinned);
 
     // 2D swaps the lit prism for the outline, and back.
     await page.click('#center2d');
