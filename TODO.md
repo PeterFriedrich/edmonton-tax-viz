@@ -1010,7 +1010,7 @@ Reported by the `template` session and not yet re-measured here, except item 2. 
 
 - [ ] **Peter: open two council documents in a browser** (both 403 to a script, re-tested 2026-11-16): `pub-edmonton.escribemeetings.com/filestream.ashx?DocumentId=164273` (*Completed NRP Projects 2009–2022*) and `DocumentId=286947` (City Auditor, Neighbourhood Renewal audit). They are the last unread sources for the reconstruction sub-asset split, the one fact between the NRP cross-check and a usable lifecycle rate (§3.1). Save them under `/home/opc/research/edmonton-tax-viz/road_cost/`.
 - [ ] **Peter's call: which of §5's prompts to run** in the claude.ai Project (P1–P5 draft report passages; P6–P10 search for missing facts). File each reply before mining it.
-- [ ] **Three stale statements** named in §1 of that doc: the "Alley Renewal $174.4M" label and Task 1b's "no dwelling or population count" in `SPEC_breakeven.md`, and the two `TODO.md` lines annotated today. Fix the spec lines when that file is next edited.
+- ✅ **Three stale statements fixed S254:** `SPEC_breakeven.md` now calls the $174.4M line Neighbourhood Renewal (with a note on the FY2025 `Alley Renewal` booking), and Task 1b says `dwelling_count` is on the full frame since 2026-07-07 but not served. That claim was already wrong when written, and is checked in `src/join_and_calculate.py` `FRANCHISE_COLUMNS`. The two `TODO.md` lines were annotated S248.
 - [ ] Not started, no decision taken: ingesting any dataset in §3 (snow priority routes `8pdx-hfxi`, parks `gdd9-eqv9`, trees `eecg-fc54`, 2021 census `xgkv-ii9t`). Each is a new module, so propose first.
 
 ### Test-estate audit follow-ons (OPEN 2026-11-15, S247, `docs/FINDINGS_test_estate.md`)
