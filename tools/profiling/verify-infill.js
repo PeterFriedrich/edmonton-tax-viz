@@ -194,14 +194,16 @@ const check = (name, cond) => { (cond ? pass++ : fail++); console.log(`${cond ? 
   const perArm = await page.evaluate(() => {
     const s = infillStats();
     const inc = state.data.features.filter(f => infillIncluded(f.properties, devCol()));
-    let maxTealT = -Infinity, lo = inc[0];
+    let maxTealT = -Infinity, minT = Infinity, lo = inc[0];
     for (const f of inc) {
       const t = infillT(f.properties);
       if (t != null && t > maxTealT) maxTealT = t;
+      if (t != null && t < minT) minT = t;
       if (infillScore(f.properties) < infillScore(lo.properties)) lo = f;
     }
-    return { clampPos: s.clampPos, clampNeg: s.clampNeg, maxTealT,
-             topPressure: lo.properties.neighbourhood_name };
+    // The arm clamps at p95, so the most orange is a TIE of saturated hoods.
+    return { clampPos: s.clampPos, clampNeg: s.clampNeg, maxTealT, minT,
+             topPressure: lo.properties.neighbourhood_name, topT: infillT(lo.properties) };
   });
   console.log('per-arm: clampPos=', perArm.clampPos.toFixed(3),
               'clampNeg=', perArm.clampNeg.toFixed(3),
@@ -209,7 +211,11 @@ const check = (name, cond) => { (cond ? pass++ : fail++); console.log(`${cond ? 
               'topPressure=', perArm.topPressure);
   check('teal arm reaches near-full saturation (max t ≥ 0.95)', perArm.maxTealT >= 0.95);
   check('per-arm clamps are independent (clampPos !== clampNeg)', perArm.clampPos !== perArm.clampNeg);
-  check('pressure ranking unchanged — DOWNTOWN still top pressure', perArm.topPressure === 'DOWNTOWN');
+  // Was "DOWNTOWN still top pressure", which the weekly permit refresh can move
+  // with nothing wrong. The claim is that per-arm scaling does not reorder the
+  // pressure end: the lowest score is also the most saturated orange.
+  check('pressure ranking unchanged — the min-score hood is the most orange',
+    perArm.topT === perArm.minT, `${perArm.topPressure} t=${perArm.topT} vs min t=${perArm.minT}`);
 
   // Tooltip: mismatch + FAR + activity; set-aside hood reads off the scale.
   const tips = await page.evaluate(() => {

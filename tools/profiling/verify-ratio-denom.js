@@ -242,9 +242,17 @@ function check(name, ok, detail) {
   //    If someone "restores parity" by adding a consequence term, these go red.
   check('U of A is banded (naive consequence port would drop it)', band.uofa);
   check('River Valley Gold Bar is banded (both endpoints clamp)', band.goldBar);
-  // 16 -> 15 on 2026-11-16: VIRGINIA PARK left when account 9977123 dropped out
-  // of the roll (#818). Back to 16 if it returns.
-  check('band selects on share alone', band.n === 15, `${band.n} hoods`);
+  // ⚠️ Against the SERVED FILE, not a literal: the count follows the roll (16 ->
+  // 15 on 2026-11-16 when account 9977123 left, #818, with nothing wrong). The
+  // roads floor (5) and the 0.25 bar are written out, as `independent` does above.
+  const wantBand = await page.evaluate(async () => {
+    const d = await (await fetch('./data/neighbourhood_value_per_acre.geojson')).json();
+    return d.features.map(f => f.properties).filter(p => !p.is_set_aside
+      && p.road_m_per_acre != null && p.road_m_per_acre >= 5 && p.revenue_per_acre != null
+      && (p.rev_frac_exempt || 0) >= 0.25).length;
+  });
+  check('band selects on share alone (the served share-tier count)',
+    wantBand > 0 && band.n === wantBand, `${band.n} hoods, served ${wantBand}`);
   // The ordinary prism must be flattened AND emptied — a ramp-coloured floor
   // under the band would assert the value the band exists to withhold.
   check('banded hood is flattened out of ratio-extrusion', band.uofaElev === 0);

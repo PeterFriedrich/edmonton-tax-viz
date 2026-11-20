@@ -40,18 +40,63 @@ const BANNED = /\b(lost|uncollected|foregone|should be|really|actually)\b/i;
   const CAVEAT = /of revenue is on institutionally-zoned land/;
   const EXEMPT = /the City does not publish which of it is tax-exempt/;
 
+  // ---- ground truth, from the SERVED FILE ----------------------------------
+  // ⚠️ EVERY COUNT AND SHARE BELOW IS DERIVED HERE, NEVER PINNED. The roll
+  // moves them with nothing wrong: account 9977123 left on 2026-11-16 (#818)
+  // and took VIRGINIA PARK, and three literals here went red. The column names
+  // and the 0.25 bar are written out rather than read from EXEMPT_COL or
+  // exemptFrac, so a regression in those helpers cannot also move the answer.
+  // Which zones count as exempt candidates is the pipeline's, pinned by pytest.
+  const OWN_COL = { revenue_per_acre: 'rev_frac_exempt',
+                    res_revenue_per_acre: 'rev_frac_exempt_res',
+                    nonres_revenue_per_acre: 'rev_frac_exempt_nonres' };
+  const BAR = 0.25;   // EXEMPT_UNCERTAIN_MIN and INST_CONSEQUENCE_MIN, both
+  const truth = await page.evaluate(async ([OWN_COL, BAR]) => {
+    const d = await (await fetch('./data/neighbourhood_value_per_acre.geojson')).json();
+    const all = d.features.map(f => f.properties);
+    const live = cut => all.filter(p => !p.is_set_aside && p[cut]);
+    const cuts = {};
+    for (const [cut, col] of Object.entries(OWN_COL)) {
+      applyMetric(cut);
+      const sc = moneyScale(), sqrt = METRICS[cut].transform === 'sqrt';
+      const t = x => { const r = Math.max(0, Math.min(1, x / sc.clamp)); return sqrt ? Math.sqrt(r) : r; };
+      const caveat = live(cut).filter(p => (p[col] || 0) >= BAR);
+      cuts[cut] = {
+        caveat: caveat.map(p => p.neighbourhood_name).sort(),
+        banded: caveat.filter(p => t(p[cut]) - t(p[cut] * (1 - p[col])) >= BAR)
+                      .map(p => p.neighbourhood_name).sort(),
+      };
+    }
+    applyMetric('revenue_per_acre');
+    const pick = p => p && { name: p.neighbourhood_name, tot: p.rev_frac_exempt || 0,
+                             nonres: p.rev_frac_exempt_nonres || 0, v: p.revenue_per_acre };
+    // The per-cut case: under the bar on the total, over it on its own cut.
+    const split = live('nonres_revenue_per_acre')
+      .filter(p => (p.rev_frac_exempt || 0) < BAR && (p.rev_frac_exempt_nonres || 0) >= BAR)
+      .sort((a, b) => b.rev_frac_exempt_nonres - a.rev_frac_exempt_nonres)[0];
+    return { cuts, split: pick(split),
+             ua: pick(all.find(p => p.neighbourhood_name === 'UNIVERSITY OF ALBERTA')),
+             dt: pick(all.find(p => p.neighbourhood_name === 'DOWNTOWN')) };
+  }, [OWN_COL, BAR]);
+  const money = s => Number(s.replace(/[$,]/g, ''));
+
   // --- fires on Total, and prints the hood's own share ----------------------
   const ua = await tip('UNIVERSITY OF ALBERTA', 'revenue_per_acre');
   console.log('U of A / Total :', ua.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim());
   check('caveat fires on Total revenue', CAVEAT.test(ua) && EXEMPT.test(ua));
-  check('share is the hood\'s own rev_frac_exempt', /90% of revenue/.test(ua));
+  check('share is the hood\'s own rev_frac_exempt',
+    ua.includes(`${Math.round(100 * truth.ua.tot)}% of revenue`), `served ${truth.ua.tot}`);
   // U of A is in the CONSEQUENCE tier, so its headline is a range, not a
   // figure: a hollow prism beside a single confident number contradicts itself.
-  // ⚠️ Moved 2026-08-25 with the roll: was $17,522 to $171,670 at 2025 mill
-  // rates. The 2026 roll bills at 7.7419 / 25.2216 (was 7.6254 / 24.2229), so
-  // both endpoints rise ~3.9% — a RATE change, not drift in the band.
-  check('a hollow hood prints a RANGE, low end first',
-    /\$18,047 to \$178,401\s*\/ acre/.test(ua.replace(/<[^>]+>/g, '')));
+  // Endpoints are parsed and compared to the served value, not to a string
+  // built with the page's own formatter.
+  check('U of A is in the consequence tier (the served shift clears the bar)',
+    truth.cuts.revenue_per_acre.banded.includes('UNIVERSITY OF ALBERTA'));
+  const range = /\$([\d,]+) to \$([\d,]+)\s*\/ acre/.exec(ua.replace(/<[^>]+>/g, ''));
+  check('a hollow hood prints a RANGE, low end first, from the served value',
+    !!range && Math.abs(money(range[1]) - truth.ua.v * (1 - truth.ua.tot)) <= 1
+      && Math.abs(money(range[2]) - truth.ua.v) <= 1,
+    range ? range[0] : 'no range');
 
   // --- the subset cuts use THEIR OWN share (per-cut PR 2, 2026-11-20) -------
   // docs/PROPOSAL_per_cut_exempt_share.md. Before it, every cut read the
@@ -62,25 +107,30 @@ const BANNED = /\b(lost|uncollected|foregone|should be|really|actually)\b/i;
     res_revenue_per_acre: /of its residential revenue is on institutionally-zoned land/,
     nonres_revenue_per_acre: /of its non-residential revenue is on institutionally-zoned land/,
   };
-  const aspenNon = await tip('ASPEN GARDENS', 'nonres_revenue_per_acre');
-  console.log('ASPEN / Non-res:', aspenNon.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim());
-  check('*** ASPEN GARDENS carries the caveat on Non-residential (its own share) ***',
-    CUT_CAVEAT.nonres_revenue_per_acre.test(aspenNon) && EXEMPT.test(aspenNon));
-  check('and prints its non-residential share, not its 9% total', /100% of its non-residential/.test(aspenNon));
-  const aspenTot = await tip('ASPEN GARDENS', 'revenue_per_acre');
-  check('ASPEN GARDENS has no caveat on Total (9%)', !CAVEAT.test(aspenTot) && !EXEMPT.test(aspenTot));
-  // ⚠️ Counts measured on the 11-16 served file (the proposal's re-measure
-  // table). A refresh can move them; re-derive, do not just re-pin.
-  const PER_CUT = { revenue_per_acre: [20, 5], res_revenue_per_acre: [6, 0],
-                    nonres_revenue_per_acre: [164, 8] };
-  for (const [cut, [nCaveat, nBand]] of Object.entries(PER_CUT)) {
+  // The exemplar is whichever served hood is furthest over the bar on its own
+  // non-residential share while under it on the total (ASPEN GARDENS, 9% / 100%,
+  // on the 11-16 roll). No such hood means the data cannot tell the two
+  // shares apart, which is itself the finding.
+  check('the served file has a hood under the bar on Total but over it on Non-residential',
+    !!truth.split, truth.split ? `${truth.split.name} ${truth.split.tot} / ${truth.split.nonres}` : 'none');
+  if (truth.split) {
+    const s = truth.split;
+    const splitNon = await tip(s.name, 'nonres_revenue_per_acre');
+    console.log('split / Non-res:', splitNon.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim());
+    check(`*** ${s.name} carries the caveat on Non-residential (its own share) ***`,
+      CUT_CAVEAT.nonres_revenue_per_acre.test(splitNon) && EXEMPT.test(splitNon));
+    check(`and prints its non-residential share, not its ${Math.round(100 * s.tot)}% total`,
+      splitNon.includes(`${Math.round(100 * s.nonres)}% of its non-residential`));
+    const splitTot = await tip(s.name, 'revenue_per_acre');
+    check(`${s.name} has no caveat on Total`, !CAVEAT.test(splitTot) && !EXEMPT.test(splitTot));
+  }
+  for (const cut of Object.keys(OWN_COL)) {
     const r = await page.evaluate(cut => {
       applyMetric(cut);
       const live = state.data.features.map(f => f.properties)
         .filter(p => !p.is_set_aside && p[cut]);
       const re = /institutionally-zoned/;
       return {
-        flagged: live.filter(p => exemptFrac(p, cut) >= EXEMPT_UNCERTAIN_MIN).map(p => p.neighbourhood_name).sort(),
         tipped: live.filter(p => re.test(viewTooltip({ object: { properties: p } }).html))
                     .map(p => p.neighbourhood_name).sort(),
         total: live.filter(p => (p.rev_frac_exempt || 0) >= EXEMPT_UNCERTAIN_MIN).length,
@@ -89,17 +139,18 @@ const BANNED = /\b(lost|uncollected|foregone|should be|really|actually)\b/i;
           / of revenue is on institutionally-zoned/.test(viewTooltip({ object: { properties: p } }).html)).length,
       };
     }, cut);
-    check(`${cut}: tooltip set == its own-share set`,
-      JSON.stringify(r.flagged) === JSON.stringify(r.tipped), `${r.tipped.length} hoods`);
-    check(`${cut}: ${nCaveat} hoods carry the caveat`, r.tipped.length === nCaveat,
-      `${r.tipped.length} (the total share would give ${r.total})`);
-    check(`${cut}: ${nBand} band prisms`, r.banded.length === nBand, r.banded.join(', '));
+    const want = truth.cuts[cut];
+    check(`${cut}: the tooltip set is the served own-share set (${want.caveat.length} hoods)`,
+      JSON.stringify(want.caveat) === JSON.stringify(r.tipped),
+      `${r.tipped.length} tipped (the total share would give ${r.total})`);
+    check(`${cut}: the band prisms are the served consequence set (${want.banded.length})`,
+      JSON.stringify(want.banded) === JSON.stringify(r.banded), r.banded.join(', '));
     if (cut !== 'revenue_per_acre')
       check(`${cut}: no tooltip says bare "of revenue"`, r.wrongWords === 0, `${r.wrongWords}`);
-    if (cut === 'nonres_revenue_per_acre')
-      check('Non-residential bands include HUDSON and ROYAL GARDENS',
-        ['HUDSON', 'ROYAL GARDENS'].every(n => r.banded.includes(n)), r.banded.join(', '));
   }
+  // Both cut-level checks above are vacuous on an empty set.
+  check('the Total caveat tier is non-empty', truth.cuts.revenue_per_acre.caveat.length > 0);
+  check('Non-residential has band prisms to compare', truth.cuts.nonres_revenue_per_acre.banded.length > 0);
 
   // --- and NOT under Value -------------------------------------------------
   const uaVal = await tip('UNIVERSITY OF ALBERTA', 'value_per_acre');
@@ -108,7 +159,8 @@ const BANNED = /\b(lost|uncollected|foregone|should be|really|actually)\b/i;
 
   // --- a low-institutional hood stays clean --------------------------------
   const dt = await tip('DOWNTOWN', 'revenue_per_acre');
-  check('DOWNTOWN (5% inst) has no caveat', !CAVEAT.test(dt) && !EXEMPT.test(dt));
+  check('DOWNTOWN is under the bar in the served file', truth.dt.tot < BAR, `${truth.dt.tot}`);
+  check('DOWNTOWN has no caveat', !CAVEAT.test(dt) && !EXEMPT.test(dt));
 
   // --- the hood set is the Lab's, by construction --------------------------
   // Not a re-derived list: both surfaces must read EXEMPT_UNCERTAIN_MIN, so a
@@ -129,13 +181,9 @@ const BANNED = /\b(lost|uncollected|foregone|should be|really|actually)\b/i;
   check('tooltip set == threshold set',
         JSON.stringify(sets.flagged) === JSON.stringify(sets.tipped),
         `${sets.tipped.length} hoods`);
-  // ⚠️ 15 -> 21 on 2026-08-25: the gate moved off the `inst` zoning CATEGORY
-  // onto EXEMPT_CANDIDATE_ZONES, which adds `PS` (Parks and Services) — $88M/yr
-  // of levy the caveat had been silent about. The six new hoods are all
-  // park-dominated (MILL WOODS PARK's entire levy sits on PS).
-  // ⚠️ 21 -> 20 on 2026-11-16: VIRGINIA PARK left when account 9977123 ($67.5M,
-  // UI zoning) dropped out of the City's roll (#818). Back to 21 if it returns.
-  check('20 hoods carry the caveat', sets.tipped.length === 20, sets.tipped.join(', '));
+  check('the threshold set is the served own-share set',
+        JSON.stringify(sets.flagged) === JSON.stringify(truth.cuts.revenue_per_acre.caveat),
+        sets.flagged.join(', '));
 
   // --- the consequence tier: which prisms become bands ---------------------
   const hollow = await page.evaluate(() => {
@@ -186,15 +234,16 @@ const BANNED = /\b(lost|uncollected|foregone|should be|really|actually)\b/i;
     };
   });
   console.log('band set     :', hollow.names.join(', '));
-  // 6 -> 5 on 2026-11-16, VIRGINIA PARK (#818), as above.
-  check('5 hoods get band prisms on Total', hollow.names.length === 5, `${hollow.names.length}`);
+  const wantBand = truth.cuts.revenue_per_acre.banded;
+  check(`the Total band prisms are the served consequence set (${wantBand.length})`,
+    JSON.stringify(hollow.names) === JSON.stringify(wantBand), hollow.names.join(', '));
   check('*** the band set is a SUBSET of the caveat tier ***', hollow.outsideCaveat === 0,
     `${hollow.outsideCaveat} outside`);
   check('it is a STRICT subset (the floor hoods keep their prisms)',
     hollow.names.length < hollow.caveatNames.length,
     `${hollow.names.length} of ${hollow.caveatNames.length}`);
   check('the two endpoint layers exist', hollow.layersExist);
-  check('they carry ONLY the banded hoods, not all 406', hollow.bandData === 5,
+  check('they carry ONLY the banded hoods, not all 406', hollow.bandData === wantBand.length,
     `${hollow.bandData} features`);
   // ⚠️ FILLED since 2026-08-15 — bare wireframes were the Lab's weak point
   // ("that hollow prism is super hard to see"). The 2026-08-12 rule is kept by

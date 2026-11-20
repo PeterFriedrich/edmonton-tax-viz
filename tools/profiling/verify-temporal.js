@@ -146,12 +146,16 @@ const [url] = process.argv.slice(2);
     };
   });
   check('sparkline is in the tooltip', /class="spark"/.test(tip.html));
-  // Two runs of 12 and 1: the 2025 point is deliberately NOT joined to 2023, so
-  // it renders as a detached dot. One run of 13 would mean the hole was bridged.
+  // Two runs, split at the 2024-2025 hole: 12 and 1 on the 2026 roll, the 2026
+  // point a detached dot. One run would mean the hole was bridged. The run
+  // lengths come from the year list, because the January roll appends the live
+  // year through the DATA (2027 makes the second run 2) with no code change.
+  const runsWant = [loaded.years.filter(y => y <= 2023).length,
+                    loaded.years.filter(y => y >= 2026).length];
   check('the series splits into runs at the gap, and does not bridge it',
-    tip.runs.length === 2 && tip.runs[0] === 12 && tip.runs[1] === 1 &&
+    tip.runs.length === 2 && tip.runs[0] === runsWant[0] && tip.runs[1] === runsWant[1] &&
     tip.gaps.length === 1 && tip.gaps[0] === 2,
-    `runs=[${tip.runs}] gaps=[${tip.gaps}]`);
+    `runs=[${tip.runs}] want [${runsWant}] gaps=[${tip.gaps}]`);
   // Endpoints derived: the 2012 end is frozen, the live end tracks the roll.
   const tipRow = /([\d.]+)% → ([\d.]+)% of city base, (\d{4})–(\d{4})/.exec(tip.html);
   check('tooltip row names the denominator + endpoints',
@@ -187,8 +191,10 @@ const [url] = process.argv.slice(2);
       svgText: [...svg.querySelectorAll('text')].map(t => t.textContent),
       nPaths: paths.length,
       stepW: first.length > 1 ? first[1] - first[0] : 0,
-      // 2023 (the last point of the long run) to 2025 (the detached dot).
-      jumpW: +svg.querySelectorAll('g circle')[0].getAttribute('cx')
+      // 2023 (the last point of the long run) to 2026, the first point after
+      // the hole: a detached dot while it is alone, the head of a second path
+      // once the roll adds a year after it (the S121 trap, below).
+      jumpW: (xs.length > 1 ? xs[1][0] : +svg.querySelectorAll('g circle')[0].getAttribute('cx'))
              - first[first.length - 1],
       chromeHitsPanel: (() => {
         const r = document.getElementById('temporal').getBoundingClientRect();
@@ -233,7 +239,8 @@ const [url] = process.argv.slice(2);
     pctLabels.some(v => near(v, loaded.lo)) && pctLabels.some(v => near(v, loaded.hi)),
     panel.svgText.join(' | '));
   check('x axis names the first and last year',
-    panel.svgText.includes('2012') && panel.svgText.includes('2026'));
+    panel.svgText.includes('2012') && panel.svgText.includes(String(loaded.liveYear)),
+    `want 2012 and ${loaded.liveYear}`);
   // Headline, commercial share and value are all the LIVE year — derived. The
   // year is asserted alongside the number so an off-by-one on the last index
   // cannot pass by landing on a neighbouring year's share.
