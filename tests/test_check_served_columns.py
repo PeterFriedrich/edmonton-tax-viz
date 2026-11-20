@@ -230,17 +230,60 @@ def _run_grid(geo, base, *grids):
 
 
 def test_grid_drift_is_clean_on_a_complete_grid():
-    assert grid_drift(_grid(), GRID_COLS) == ([], [])
+    d = grid_drift(_grid(), GRID_COLS)
+    assert (d["missing"], d["empty"], d["ragged"], d["added"]) == ([], [], 0, [])
 
 
 def test_grid_drift_flags_a_dropped_column():
     cols = [c for c in GRID_COLS if c != "exempt_frac_res"]
-    assert grid_drift(_grid(cols), GRID_COLS) == (["exempt_frac_res"], [])
+    assert grid_drift(_grid(cols), GRID_COLS)["missing"] == ["exempt_frac_res"]
 
 
 def test_grid_drift_flags_a_column_null_in_every_cell():
     g = {"columns": GRID_COLS, "cells": [[1.0, 2.0, 0.3, None], [1.1, 2.1, None, None]]}
-    assert grid_drift(g, GRID_COLS) == ([], ["exempt_frac_res"])
+    assert grid_drift(g, GRID_COLS)["empty"] == ["exempt_frac_res"]
+
+
+def test_grid_drift_counts_rows_shorter_than_the_columns():
+    g = {"columns": GRID_COLS, "cells": [[0.5] * 4, [0.5] * 2]}
+    assert grid_drift(g, GRID_COLS)["ragged"] == 1
+
+
+def test_grid_drift_reports_an_unpinned_column_as_added():
+    assert grid_drift(_grid(GRID_COLS + ["new_col"]), GRID_COLS)["added"] == ["new_col"]
+
+
+def test_main_fails_on_a_ragged_grid(tmp_path):
+    grid = {"columns": GRID_COLS, "cells": [[0.5] * 4, [0.5] * 2]}
+    geo, base, g = _write_with_grid(tmp_path, grid)
+    assert _run_grid(geo, base, g) == EXIT_DRIFT
+
+
+def test_main_fails_when_the_grid_baseline_is_an_empty_list(tmp_path):
+    geo, base, g = _write_with_grid(tmp_path, _grid(), grid_baseline=[])
+    assert _run_grid(geo, base, g) == EXIT_DRIFT
+
+
+def test_write_baseline_refuses_when_the_grids_share_no_columns(tmp_path):
+    geo, base, g = _write_with_grid(tmp_path, {"cells": []})
+    assert main(["--geojson", str(geo), "--baseline", str(base), "--grid", str(g),
+                 "--write-baseline"]) == EXIT_DRIFT
+
+
+def test_write_baseline_without_grids_keeps_the_existing_grid_pin(tmp_path):
+    geo, base, _ = _write_with_grid(tmp_path, _grid())
+    assert main(["--geojson", str(geo), "--baseline", str(base), "--grid",
+                 "--write-baseline"]) == EXIT_OK
+    assert json.loads(base.read_text())["grid_columns"] == GRID_COLS
+
+
+def test_write_baseline_warns_for_every_column_it_unpins(tmp_path, caplog):
+    geo, base, g = _write_with_grid(tmp_path, _grid(GRID_COLS[:3]))
+    with caplog.at_level("WARNING"):
+        main(["--geojson", str(geo), "--baseline", str(base), "--grid", str(g),
+              "--write-baseline"])
+    assert any("exempt_frac_res" in r.message and "UNPINNED" in r.message
+               for r in caplog.records)
 
 
 def test_main_passes_on_a_complete_grid(tmp_path):
