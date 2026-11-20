@@ -910,7 +910,12 @@ preload still holds (12/12). What is left:
   ✅ Prerequisites done: the pinned-literal read (S258, every script read; seven
   scripts now derive from the served files, and the rest are pinned on purpose,
   `docs/FINDINGS_verify_selection.md` §4b), and F4 was already in (#650).
-  Unmeasured: SwiftShader on x86 runners.
+  **Stage 1 BUILT (S259):** `verify-sweep.yml`, manual only, 16 shards, one
+  issue (`RUNBOOK.md` §0g). **Stage 2, open:** after it merges, run it 2–3 times
+  with `issue` off, calibrate `verify-loading-overlay`'s 250 / 8000 / 40 ms (and
+  any other runner-only red), then add `workflow_run` on "Refresh map data"
+  completed, with checkout pinned to `ref: master` as `deploy.yml` does. That
+  closes this item. Unmeasured until then: SwiftShader on x86 runners.
 
 ### Peter's list, 2026-09-25 (S196) — not scoped yet
 
