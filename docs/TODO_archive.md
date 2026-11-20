@@ -8,6 +8,29 @@ Items are verbatim as they were closed, newest-moved first in the order they app
 
 ---
 
+- [x] ⚠️ **SHIPPED NUMBERS WRONG — BLOCKS RELEASE (recommended): the band, the
+  caveat percentage and the printed range on the Residential and
+  Non-residential cuts use the TOTAL-levy share.** Same root as F1+F2 under
+  "Blurb-claims audit follow-ons"; this sizes what it prints (findings §4).
+  **Residential:** 16 of 20 caveats are false (14 hoods are under 5% on the
+  cut's own share), and both bands are spurious. West Meadowlark Park prints
+  **$2,567** to $10,342 where the low end is $9,631; University of Alberta
+  prints **$643** where it is $3,609. **Non-residential:** 142 published hoods
+  at ≥25% on the cut's own share get no caveat ($62.6M of their $132.9M);
+  West Meadowlark Park prints a low end of **$7,330** where it is $266; Hudson,
+  Royal Gardens and Virginia Park get no band. **Peter chose the proper fix
+  (2026-11-11): `docs/PROPOSAL_per_cut_exempt_share.md`.** Decision 1
+  (schema) approved; **PR 1 (pipeline) #803 merged 2026-11-12.** Decisions
+  2 (accept the counts) and 3 (name the cut, `COPY_DECISIONS.md` F6) made
+  2026-11-11. **PR 2 (front end) built S255, 2026-11-20, awaiting Peter's
+  merge.** **CLOSED 2026-11-20:** #847 merged (`a1f8013`, deploy green), grid pin #846 merged (`76c519f`, Tests green).
+  - [x] **Re-measure decision 2's counts on the served file** — DONE
+    2026-11-20 (S255) on the 11-16 served file; table in the proposal. One
+    hood moved, VIRGINIA PARK, from the #818 dropout; everything else matches.
+  - [x] **Pin the grid columns.** — DONE 2026-11-20 (S255): both value grids
+    are in `check_served_columns.py` (`grid_columns` pin). PR 2 drops the
+    fallback to the total column.
+
 - [x] **CLOSED 2026-11-13 (#808 merged, `7c2f5e2`; copy confirmed on master 2026-11-20).** **BLOCKS RELEASE (recommended; copy, Peter): the app never states that
   the model is about 11% above the City's filed levy, and a notebook on the
   same site already says the difference is property the City "does not
