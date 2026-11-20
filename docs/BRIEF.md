@@ -547,7 +547,6 @@ Edmonton revenue-per-acre fiscal analysis. Python-only, no GIS software.
 
 **Test-estate audit follow-ons (OPEN 2026-11-15, S247, `docs/FINDINGS_test_estate.md`)**
 - **F2 and F3, one decision (Peter's call).** `refresh.yml` runs all of `tests/`, so docs and process tests gate the weekly publish, against the 2026-07-30 and 2026-08-09 rows. Either (a) append a DECISIONS row correcting the 2026-08-09 one and fix `docs/ARCHITECTURE.md` "Testing" …
-- **F5: eight verify scripts were red on master** (`docs/FINDINGS_test_estate.md` F5). Re-run alone at `82148f5` (S251): `verify-about.js`, `verify-nonres-revenue.js` fixed (stale after #808); `verify-peek.js` fixed (the 2.5 s sleep let the target scan run mid-flatten; now waits …
 - **F4: the `tests/` tree in `docs/ARCHITECTURE.md` "Testing" lists 5 of 66 files.** Replace it with a pointer to `docs/FINDINGS_test_estate.md` §1 when that section is next edited.
 
 **General backlog — the flat list (no parent item; predates the `###` headings above)**
