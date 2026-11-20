@@ -53,10 +53,55 @@ const BANNED = /\b(lost|uncollected|foregone|should be|really|actually)\b/i;
   check('a hollow hood prints a RANGE, low end first',
     /\$18,047 to \$178,401\s*\/ acre/.test(ua.replace(/<[^>]+>/g, '')));
 
-  // --- the two subset cuts carry it too ------------------------------------
-  for (const m of ['res_revenue_per_acre', 'nonres_revenue_per_acre']) {
-    const h = await tip('UNIVERSITY OF ALBERTA', m);
-    check(`caveat fires on ${m}`, CAVEAT.test(h) && EXEMPT.test(h));
+  // --- the subset cuts use THEIR OWN share (per-cut PR 2, 2026-11-20) -------
+  // docs/PROPOSAL_per_cut_exempt_share.md. Before it, every cut read the
+  // share of the TOTAL levy: ASPEN GARDENS (9% total, 100% of its non-res
+  // levy) got no caveat on Non-residential, and Residential flagged hoods
+  // whose exempt levy is all non-residential.
+  const CUT_CAVEAT = {
+    res_revenue_per_acre: /of its residential revenue is on institutionally-zoned land/,
+    nonres_revenue_per_acre: /of its non-residential revenue is on institutionally-zoned land/,
+  };
+  const aspenNon = await tip('ASPEN GARDENS', 'nonres_revenue_per_acre');
+  console.log('ASPEN / Non-res:', aspenNon.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim());
+  check('*** ASPEN GARDENS carries the caveat on Non-residential (its own share) ***',
+    CUT_CAVEAT.nonres_revenue_per_acre.test(aspenNon) && EXEMPT.test(aspenNon));
+  check('and prints its non-residential share, not its 9% total', /100% of its non-residential/.test(aspenNon));
+  const aspenTot = await tip('ASPEN GARDENS', 'revenue_per_acre');
+  check('ASPEN GARDENS has no caveat on Total (9%)', !CAVEAT.test(aspenTot) && !EXEMPT.test(aspenTot));
+  // ⚠️ Counts measured on the 11-16 served file (the proposal's re-measure
+  // table). A refresh can move them; re-derive, do not just re-pin.
+  const PER_CUT = { revenue_per_acre: [20, 5], res_revenue_per_acre: [6, 0],
+                    nonres_revenue_per_acre: [164, 8] };
+  for (const [cut, [nCaveat, nBand]] of Object.entries(PER_CUT)) {
+    const r = await page.evaluate(cut => {
+      applyMetric(cut);
+      const live = state.data.features.map(f => f.properties)
+        .filter(p => !p.is_set_aside && p[cut]);
+      const re = /institutionally-zoned/;
+      return {
+        flagged: live.filter(p => exemptFrac(p, cut) >= EXEMPT_UNCERTAIN_MIN).map(p => p.neighbourhood_name).sort(),
+        tipped: live.filter(p => re.test(viewTooltip({ object: { properties: p } }).html))
+                    .map(p => p.neighbourhood_name).sort(),
+        total: live.filter(p => (p.rev_frac_exempt || 0) >= EXEMPT_UNCERTAIN_MIN).length,
+        banded: live.filter(instBandedMoney).map(p => p.neighbourhood_name).sort(),
+        wrongWords: cut === 'revenue_per_acre' ? 0 : live.filter(p =>
+          / of revenue is on institutionally-zoned/.test(viewTooltip({ object: { properties: p } }).html)).length,
+      };
+    }, cut);
+    check(`${cut}: tooltip set == its own-share set`,
+      JSON.stringify(r.flagged) === JSON.stringify(r.tipped), `${r.tipped.length} hoods`);
+    check(`${cut}: ${nCaveat} hoods carry the caveat`, r.tipped.length === nCaveat,
+      `${r.tipped.length} (the total share would give ${r.total})`);
+    check(`${cut}: ${nBand} band prisms`, r.banded.length === nBand, r.banded.join(', '));
+    if (cut !== 'revenue_per_acre')
+      check(`${cut}: no tooltip says bare "of revenue"`, r.wrongWords === 0, `${r.wrongWords}`);
+    if (cut === 'nonres_revenue_per_acre')
+      check('Non-residential bands include HUDSON and ROYAL GARDENS',
+        ['HUDSON', 'ROYAL GARDENS'].every(n => r.banded.includes(n)), r.banded.join(', '));
+    if (cut === 'res_revenue_per_acre')
+      check('Residential: neither UNIVERSITY OF ALBERTA nor WEST MEADOWLARK PARK is banded',
+        !r.banded.some(n => ['UNIVERSITY OF ALBERTA', 'WEST MEADOWLARK PARK'].includes(n)));
   }
 
   // --- and NOT under Value -------------------------------------------------
@@ -91,7 +136,9 @@ const BANNED = /\b(lost|uncollected|foregone|should be|really|actually)\b/i;
   // onto EXEMPT_CANDIDATE_ZONES, which adds `PS` (Parks and Services) — $88M/yr
   // of levy the caveat had been silent about. The six new hoods are all
   // park-dominated (MILL WOODS PARK's entire levy sits on PS).
-  check('21 hoods carry the caveat', sets.tipped.length === 21, sets.tipped.join(', '));
+  // ⚠️ 21 -> 20 on 2026-11-16: VIRGINIA PARK left when account 9977123 ($67.5M,
+  // UI zoning) dropped out of the City's roll (#818). Back to 21 if it returns.
+  check('20 hoods carry the caveat', sets.tipped.length === 20, sets.tipped.join(', '));
 
   // --- the consequence tier: which prisms become bands ---------------------
   const hollow = await page.evaluate(() => {
@@ -142,14 +189,15 @@ const BANNED = /\b(lost|uncollected|foregone|should be|really|actually)\b/i;
     };
   });
   console.log('band set     :', hollow.names.join(', '));
-  check('6 hoods get band prisms on Total', hollow.names.length === 6, `${hollow.names.length}`);
+  // 6 -> 5 on 2026-11-16, VIRGINIA PARK (#818), as above.
+  check('5 hoods get band prisms on Total', hollow.names.length === 5, `${hollow.names.length}`);
   check('*** the band set is a SUBSET of the caveat tier ***', hollow.outsideCaveat === 0,
     `${hollow.outsideCaveat} outside`);
   check('it is a STRICT subset (the floor hoods keep their prisms)',
     hollow.names.length < hollow.caveatNames.length,
     `${hollow.names.length} of ${hollow.caveatNames.length}`);
   check('the two endpoint layers exist', hollow.layersExist);
-  check('they carry ONLY the banded hoods, not all 406', hollow.bandData === 6,
+  check('they carry ONLY the banded hoods, not all 406', hollow.bandData === 5,
     `${hollow.bandData} features`);
   // ⚠️ FILLED since 2026-08-15 — bare wireframes were the Lab's weak point
   // ("that hollow prism is super hard to see"). The 2026-08-12 rule is kept by

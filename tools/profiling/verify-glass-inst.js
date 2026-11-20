@@ -138,6 +138,44 @@ const check = (name, ok, detail) => {
     blurb.isGlass && blurb.text.includes(`${blurb.n.toLocaleString()} azure cells`)
     && blurb.n === r.expected, `n=${blurb.n}`);
 
+  // --- the split cuts use THEIR OWN share (per-cut PR 2, 2026-11-20) ---------
+  // Recomputed from the column NAME, not from gridExemptCol(), so a regression
+  // in that lookup cannot also pass. Reverting the accessor to `exempt_frac`
+  // gives 268 Residential cells at 100 m instead of 71, and fails here.
+  const OWN = { res_revenue_per_acre: 'exempt_frac_res',
+                nonres_revenue_per_acre: 'exempt_frac_nonres' };
+  for (const [cut, own] of Object.entries(OWN)) {
+    const c = await page.evaluate(([cut, own]) => {
+      applyMetric(cut);
+      const L = overlay._deck.props.layers;
+      const cap = L.find(l => l.id === 'glass-inst-cap');
+      const levied = L.find(l => l.id === 'glass-inst-levied');
+      const col = gridData.columns[gridColKey()], f = gridData.columns[own];
+      const tot = gridData.columns.exempt_frac;
+      const expected = gridData.cells.filter(x => x[col] > 0 && x[f] != null && x[f] >= GLASS_EXEMPT_MIN);
+      const byTotal = gridData.cells.filter(x => x[col] > 0 && x[tot] != null && x[tot] >= GLASS_EXEMPT_MIN);
+      const data = cap ? cap.props.data : [];
+      return {
+        f, expected: expected.length, byTotal: byTotal.length, n: data.length,
+        nullShare: data.filter(x => x[f] == null).length,
+        baseOk: !!levied && expected.length > 0 && expected.slice(0, 50).every(x =>
+          Math.abs(levied.props.getElevation(x) - x[col] * (1 - x[f])) < 1e-6),
+        count: glassInstCount(),
+        blurbN: Number(((document.getElementById('title-p').textContent
+          .match(/([\d,]+) azure cells? (?:is|are)/) || [])[1] || '0').replace(/,/g, '')),
+      };
+    }, [cut, own]);
+    console.log(`${cut}:`, JSON.stringify(c));
+    check(`${cut}: the grid ships ${own}`, c.f >= 0);
+    check(`${cut}: cap covers exactly the cells flagged by ${own}`, c.n === c.expected,
+      `${c.n} vs ${c.expected} (the total share would flag ${c.byTotal})`);
+    check(`${cut}: no flagged cell has a null per-cut share`, c.nullShare === 0, `${c.nullShare}`);
+    check(`${cut}: base height === value x (1 - ${own})`, c.baseOk);
+    check(`${cut}: blurb counts the same cells`, c.blurbN === c.expected && c.count === c.expected,
+      `blurb ${c.blurbN}, glassInstCount ${c.count}`);
+  }
+  await page.evaluate(() => applyMetric('revenue_per_acre'));
+
   // Value is not a revenue cut: exemption changes whether a levy is COLLECTED,
   // not what a parcel is assessed at, so the bands must vanish.
   await click('#metric-row button[data-metric="value"]');
