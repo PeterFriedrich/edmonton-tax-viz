@@ -70,5 +70,23 @@
     "value_per_lot_acre",
     "water_charge_per_acre",
     "water_fixed_per_acre"
+  ],
+  "grid_columns": [
+    "dist_lrt_m",
+    "dist_school_m",
+    "exempt_frac",
+    "exempt_frac_nonres",
+    "exempt_frac_res",
+    "lat",
+    "lon",
+    "median_year_built",
+    "nonres_revenue_per_acre",
+    "nonres_revenue_per_lot_acre",
+    "res_revenue_per_acre",
+    "res_revenue_per_lot_acre",
+    "revenue_per_acre",
+    "revenue_per_lot_acre",
+    "value_per_acre",
+    "value_per_lot_acre"
   ]
 }

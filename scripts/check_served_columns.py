@@ -44,6 +44,15 @@ Outcomes (exit codes; 2 is argparse's):
   0  ok    — every baselined column present on every feature.
   5  drift — a column vanished or went partial. FAIL.
 
+⚠️ THE GRIDS TOO (2026-11-20). ``value_grid.json`` and ``value_grid_50.json``
+are columnar (a ``columns`` list, then one row per cell), and the front end reads
+them by ``columns.indexOf(...)``, which self-gates the same way: a dropped
+``exempt_frac_res`` makes the per-cut exempt share fall back to the total column
+and quietly puts back the defect it replaced (#803's review). Their baseline is
+``grid_columns``; each listed column must be in every grid's ``columns`` and
+non-null on at least one cell. A baseline without ``grid_columns`` while grids
+are being checked is drift, not a skip.
+
 Runs in CI (refresh.yml) AFTER regeneration, so it sees the file the site is
 about to serve. Re-pin with ``--write-baseline`` when a change is intentional.
 
@@ -64,6 +73,8 @@ logger = logging.getLogger(__name__)
 ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_GEOJSON = ROOT / "web" / "data" / "neighbourhood_value_per_acre.geojson"
 DEFAULT_BASELINE = ROOT / "data" / "expected_columns.json"
+DEFAULT_GRIDS = [ROOT / "web" / "data" / "value_grid.json",
+                 ROOT / "web" / "data" / "value_grid_50.json"]
 
 EXIT_OK = 0
 EXIT_DRIFT = 5
@@ -134,6 +145,25 @@ def compare_to_baseline(
     return missing, partial, added
 
 
+def grid_drift(grid: dict, baseline: list[str]) -> tuple[list[str], list[str]]:
+    """``(missing, empty)`` for one columnar grid against the grid baseline.
+
+    ``empty`` is the grid form of ``empty_columns``: listed, but null in every
+    cell. Partial presence cannot happen here (a row is positional), so there is
+    no third bucket.
+    """
+    columns = grid.get("columns", [])
+    cells = grid.get("cells", [])
+    missing = sorted(c for c in baseline if c not in columns)
+    empty = []
+    for c in baseline:
+        if c in columns:
+            i = columns.index(c)
+            if not any(len(r) > i and r[i] is not None for r in cells):
+                empty.append(c)
+    return missing, sorted(empty)
+
+
 def _write_github_output(**kv: object) -> None:
     out = os.environ.get("GITHUB_OUTPUT")
     if not out:
@@ -149,6 +179,10 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     p.add_argument("--geojson", type=Path, default=DEFAULT_GEOJSON)
     p.add_argument("--baseline", type=Path, default=DEFAULT_BASELINE)
+    p.add_argument(
+        "--grid", type=Path, nargs="*", default=DEFAULT_GRIDS,
+        help="columnar grids to check against grid_columns (pass none to skip)",
+    )
     p.add_argument(
         "--write-baseline",
         action="store_true",
@@ -183,6 +217,14 @@ def main(argv: list[str] | None = None) -> int:
     counts = column_presence(features)
     total = len(features)
 
+    grids = {}
+    for path in args.grid:
+        if not path.exists():
+            logger.error("Served grid not found: %s", path)
+            _write_github_output(result="drift", missing=f"<no {path.name}>")
+            return EXIT_DRIFT
+        grids[path.name] = json.loads(path.read_text())
+
     if args.write_baseline:
         payload = {
             "_note": (
@@ -193,13 +235,26 @@ def main(argv: list[str] | None = None) -> int:
             ),
             "columns": sorted(counts),
         }
+        if grids:
+            # Only what EVERY grid carries can be required of every grid.
+            payload["grid_columns"] = sorted(
+                set.intersection(*(set(g.get("columns", [])) for g in grids.values())))
         args.baseline.write_text(json.dumps(payload, indent=2) + "\n")
         logger.info("Wrote baseline %s with %d columns.", args.baseline, len(counts))
         return EXIT_OK
 
-    baseline = json.loads(args.baseline.read_text())["columns"]
+    pinned = json.loads(args.baseline.read_text())
+    baseline = pinned["columns"]
     missing, partial, added = compare_to_baseline(counts, total, baseline)
     empty = empty_columns(features, baseline)
+
+    if grids and "grid_columns" not in pinned:
+        logger.error("Baseline %s has no grid_columns; re-pin it.", args.baseline)
+        missing.append("<grid_columns baseline>")
+    for name, grid in grids.items():
+        g_missing, g_empty = grid_drift(grid, pinned.get("grid_columns", []))
+        missing += [f"{name}:{c}" for c in g_missing]
+        empty += [f"{name}:{c}" for c in g_empty]
 
     for column in added:
         logger.warning(
