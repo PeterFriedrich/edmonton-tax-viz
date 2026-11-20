@@ -177,7 +177,10 @@ which hold by habit) is in §"This project's fit" below.
 
 1. **Peter merges code PRs** (`src/`, `web/`, `scripts/`, `tools/`, `tests/`,
    `notebooks/`, `.github/`). Docs-only PRs, handoffs included, are
-   self-merged with `gh pr merge --merge`, by his standing instruction.
+   self-merged with `gh pr merge --merge`, by his standing instruction. A
+   regenerated `docs/BRIEF.md` doesn't stop a self-merge (`CLAUDE.md`
+   override, 2026-11-20); any other synced file (`SPEC_*.md`,
+   `REPORT_CLAIMS.md`) does.
 2. **A push after Peter has looked says so.** If you push to a PR he has
    already looked at or approved, comment on the PR before he merges: "new
    commit since you looked: <what it changes>". His look covered the commit
