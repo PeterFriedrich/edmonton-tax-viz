@@ -103,6 +103,30 @@ hand today; a `verify.js --changed` flag is the tooling version (§5).
 calibrated. The shape that shipped is the `DECISIONS.md` 2026-11-20 row; it
 uses 16 shards rather than one job per script. Triage: `docs/RUNBOOK.md` §0g.
 
+**Calibration run 1 (S260, 2026-11-20, run `44805707305` on `a8d4b35`):**
+84 of 84 results, 83 green, 1 red twice, 0 flaky.
+
+- **The red was the test, not the page.** `verify-search` (public) failed
+  "2D: the pick is outlined instead" and "back in 3D", both reading
+  `BELGRAVIA`. Its "click outside closes search" clicked the map at
+  (720, 880), which is BELGRAVIA's prism once the camera sits on GLENORA, and
+  a map click pins the hood under it. On this box the pin didn't land in time
+  to matter. With a pick read just before the click and a 500 ms wait after it, the box reproduces the runner
+  exactly. Fixed: the click goes on `#temporal-name`, and a new check, "the
+  outside click leaves the pin alone", goes red first under the old click.
+  The full build's run was green (82 s).
+- **`verify-loading-overlay`'s 250 / 8000 / 40 ms held on x86** in both
+  builds, as did `peek`, `temporal` and `grid-loading`. One run, so not yet a
+  calibration.
+- **Time:** 3,005 s of script time over the 84 runs (longest: public `theme`
+  249 s, `peek` 227–228 s in each build). Jobs total 4,285 s (~71 runner-min,
+  free on a public repo), and the run took about 12.5 min wall.
+- **Setup varies 25×.** "Install the verify harness" (`npm ci` +
+  `playwright install --with-deps`) took 16 s on `public 7` but 372 s and
+  430 s on `full 1` and `public 2`, which made those the two slowest jobs.
+  The apt step in `--with-deps` is the likely cause (not split out yet). It
+  doesn't matter for an unattended weekly run unless it gets worse.
+
 
 - **What:** a new workflow, `workflow_dispatch` plus weekly after the Monday
   refresh. It builds with `build_site.py`, then runs one matrix job per
