@@ -14,7 +14,7 @@
 //      unsets navigator.webdriver, or it would test the gate, not the card.
 //   5. Small against a desktop screen; on a phone the x is a 44px target, the
 //      card stays on-screen, and the ? clears the title in every view.
-//   node verify-guide.js <url>   (the PUBLIC build: the card lists its four views)
+//   node verify-guide.js <url>   (either build; the card lists the public four views)
 const { chromium } = require('playwright');
 const [url] = process.argv.slice(2);
 
@@ -89,12 +89,20 @@ const rect = (page, sel) => page.$eval(sel, e => { const r = e.getBoundingClient
     const live = await page.evaluate(() => {
       const txt = sel => [...document.querySelectorAll(sel)]
         .filter(b => b.offsetParent !== null).map(b => b.textContent.trim());
-      return { views: txt('#views button').join(' · '), metric: txt('#metric-row button').join(' | '),
+      return { full: FULL_BUILD, viewList: txt('#views button'),
+               views: txt('#views button').join(' · '), metric: txt('#metric-row button').join(' | '),
                c2: document.getElementById('center2d').textContent.trim(),
                c3: document.getElementById('recenter').textContent.trim() };
     });
+    // The card lists the PUBLIC views. The full build adds Uses and the Lab,
+    // which the card leaves out on purpose, so there each named view must be a
+    // live button; the exact match (which also catches a new public view the
+    // card is missing) runs on the public build.
+    const cardViews = (bold.find(b => b.includes(' · ')) || '').split(' · ').filter(Boolean);
+    const viewsOk = live.full ? cardViews.length > 0 && cardViews.every(v => live.viewList.includes(v))
+                              : bold.includes(live.views);
     check('the names in the card are the buttons on screen',
-          bold.includes(live.views) && bold.includes(live.metric) &&
+          viewsOk && bold.includes(live.metric) &&
           bold.includes(live.c2) && bold.includes(live.c3), JSON.stringify(live));
     check('desktop: says "click", not "tap"', /Click a neighbourhood/.test(g.text));
     check('desktop: card is small against the screen',
