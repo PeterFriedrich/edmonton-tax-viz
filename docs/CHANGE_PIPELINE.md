@@ -46,14 +46,29 @@ which hold by habit) is in §"This project's fit" below.
    different file (PR #117's deploy failed that way).
    - Every PR: `.venv/bin/python -m pytest -q` and every `scripts/check_*.py`
      that `tests.yml` runs.
-   - A `web/` PR also: build (`scripts/build_site.py`), serve it, and run the
-     `tools/profiling/verify-*.js` scripts for the area touched, **one at a
-     time** (concurrent runs manufacture failures on the Oracle box). After any
-     control-chrome or CSS change, `verify-controls-clickable.js`. For a visual
-     change, the `render-compare` skill. Recipe: `docs/REMOTE_VM.md` and the
-     latest handoff's Restoration Procedure. No list maps an area to its
-     scripts; pick from `docs/UI.md`, which names the script that verified each
-     feature.
+   - A `web/` PR also: build (`scripts/build_site.py --out <scratch>`), then
+     run the verify scripts for the change class below on that tree, **one at a
+     time** (concurrent runs manufacture failures on the Oracle box):
+     `node tools/profiling/verify.js --serve <scratch> <name> <name>…`, and
+     `--page dev-build-full/index.html` for full-build views. Run it with
+     `run_in_background`; the runner prints only at the end. For a visual
+     change, also the `render-compare` skill. Recipe: `docs/REMOTE_VM.md`.
+
+     | The diff… | Run |
+     |---|---|
+     | touches `web/` at all | `smoke`, `tokens` (~25 s) |
+     | changes a symbol or element id | every script that names it: `grep -lw <name> tools/profiling/verify-*.js` |
+     | changes reader-facing text | `blurbs` on the public page, plus every script that quotes the old text (`grep -l '<old phrase>' …`) |
+     | changes CSS, layout or control chrome | `controls-clickable`, `reference-layer`, `theme`; at phone widths also `millrates`, `peek`, `search`, `guide` |
+     | adds a panel, pod or chrome element | `reference-layer` (its `CHROME_IDS` check made the only real catch a full sweep has had) and `controls-clickable` |
+     | changes a colour or `THEMED` | `theme` (built tree only; red by construction on raw `web/`) |
+     | changes a served file's shape | `smoke` on both builds, and every script that names the file |
+     | changes the URL hash | nothing local: `url-state` is a required CI check on every `web/` PR |
+
+     The whole suite (~40 min) is for a change to the harness itself
+     (`verify.js`, `fast-teardown.js`, a playwright bump), not for a PR to the
+     page. Why, and what a full sweep has caught: `docs/FINDINGS_verify_selection.md`.
+     `docs/UI.md` names the script that verified each feature.
    - Passing tests are not the result in a data project. **A change that moves
      a published number shows the old and new value and why it moved.** Build
      both sides from one raw data pull, or a data refresh is blamed on the

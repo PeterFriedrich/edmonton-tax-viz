@@ -902,19 +902,16 @@ preload still holds (12/12). What is left:
 - [ ] **The lit selected-hood prism (#635/#636) added ~100 s to `verify-peek`**
   under SwiftShader (212 → 310 s; findings §7b). Check a tap's latency on a
   phone with the S210 checks (MOBILE_USABILITY §2b) before deciding anything.
-- [ ] **Audit when a PR needs the whole browser suite** (Peter's ask,
-  2026-11-20, S256). For #852, a copy-only edit to 3 strings in
-  `web/index.html`, S256 ran all 44 scripts: 2,402 s (40 min), plus ~10 min lost
-  when the first run, started in the foreground, hit the 10-minute Bash cap
-  (`verify.js` header warns of it). The scripts that read those strings
-  (`verify-blurbs` on `?build=public`, `verify-glass-inst`, `verify-deviation`,
-  `verify-inst-caveat`, plus `verify-theme` on a `build_site.py` tree) had
-  already run green; the other 39 don't read them. Question: which change
-  classes (copy, CSS, render, data shape) need which scripts, written into
-  `docs/CHANGE_PIPELINE.md`. Size it against the suite's real catch rate
-  first (`docs/FINDINGS_test_estate.md` §1 puts it at 39–44 min, run by hand,
-  gating nothing): how often has a script outside the obvious set gone red on a
-  PR? Run it in the background (`run_in_background`), never in the foreground.
+- [ ] **Run the full verify sweep on GitHub Actions, weekly and non-blocking**
+  (Peter, S257: "yeah sure" to doing it after the change-class table;
+  `docs/FINDINGS_verify_selection.md` §4). A matrix job per script per build,
+  `workflow_dispatch` plus weekly after the refresh, files one issue on red
+  (`vintage-digest.yml` pattern). CI change: plan first, Peter merges.
+  ⚠️ **Do first, or it cries wolf every refresh:** read every script for pinned
+  refresh-sensitive literals and derive them from the served files (known:
+  `verify-inst-caveat.js`, `verify-ratio-denom.js`; a regex screen is not a
+  read), and give `verify-about.js` F4's remedy (5xx/timeout read as SKIP).
+  Unmeasured: SwiftShader on x86 runners.
 
 ### Peter's list, 2026-09-25 (S196) — not scoped yet
 
@@ -3521,6 +3518,8 @@ archive"*) is not, and this span is 2,533 lines.
 ## Done
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
+
+- [x] **Audit when a PR needs the whole browser suite** — CLOSED 2026-11-20 · `docs/TODO_archive.md`
 
 - [x] **SHIPPED NUMBERS WRONG — BLOCKS RELEASE (recommended): the band, the caveat percentage and the printed range on the Residential and Non-residential cut** · `docs/TODO_archive.md`
 
