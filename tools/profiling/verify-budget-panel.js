@@ -72,10 +72,23 @@ function check(name, cond, detail = "") {
   // ⚠️ A readout, not a menu: the two bottom-right pods close on click-outside
   // and this deliberately must not, or reading it while using the map is
   // impossible.
-  await page.mouse.click(720, 500);
+  // The click goes on BARE map, found by picking. A hood pixel (the old fixed
+  // (720, 500) is PAPASCHASE INDUSTRIAL) pins the hood on some runs and not
+  // others (deck's pick timing: never on the Oracle box, sometimes on an
+  // Actions runner), and a pin opens #temporal, which the budget yields its
+  // slot to (`#temporal.open ~ #budget`) by design.
+  const bare = await page.evaluate(() => {
+    for (let y = 120; y <= 780; y += 30) for (let x = 400; x <= 1300; x += 30) {
+      const el = document.elementFromPoint(x, y);
+      if (el && el.tagName === "CANVAS" && !overlay._deck.pickObject({ x, y, radius: 4 })) return [x, y];
+    }
+    return null;
+  });
+  check("found a bare-map pixel to click", !!bare);
+  if (bare) await page.mouse.click(...bare);
   await page.waitForTimeout(400);
   check("survives a map click (does not close like #about/#a11y)",
-    await page.locator("#budget").isVisible());
+    await page.locator("#budget").isVisible(), `clicked ${bare}`);
 
   console.log("\n-- rendered content --");
   const rows = await page.locator("#budget-rows .revrow").count();
