@@ -137,6 +137,8 @@ const check = (name, ok, detail) => {
   check('blurb names the azure cells and counts them',
     blurb.isGlass && blurb.text.includes(`${blurb.n.toLocaleString()} azure cells`)
     && blurb.n === r.expected, `n=${blurb.n}`);
+  check('Total blurb says the 25% bar, not "mostly" (BG1 P3)',
+    blurb.text.includes('a quarter or more of their revenue on institutionally-zoned land'));
 
   // --- the split cuts use THEIR OWN share (per-cut PR 2, 2026-11-20) ---------
   // Recomputed from the column NAME, not from gridExemptCol(), so a regression
@@ -161,6 +163,7 @@ const check = (name, ok, detail) => {
         baseOk: !!levied && expected.length > 0 && expected.slice(0, 50).every(x =>
           Math.abs(levied.props.getElevation(x) - x[col] * (1 - x[f])) < 1e-6),
         count: glassInstCount(),
+        blurbText: document.getElementById('title-p').textContent,
         blurbN: Number(((document.getElementById('title-p').textContent
           .match(/([\d,]+) azure cells? (?:is|are)/) || [])[1] || '0').replace(/,/g, '')),
       };
@@ -173,6 +176,11 @@ const check = (name, ok, detail) => {
     check(`${cut}: base height === value x (1 - ${own})`, c.baseOk);
     check(`${cut}: blurb counts the same cells`, c.blurbN === c.expected && c.count === c.expected,
       `blurb ${c.blurbN}, glassInstCount ${c.count}`);
+    // COPY_DECISIONS F6 / BG1 P3: the share is the cut's own, so the sentence
+    // names the cut. Literal, not exemptCutWord(), so that helper can't pass itself.
+    const word = { res_revenue_per_acre: 'residential', nonres_revenue_per_acre: 'non-residential' }[cut];
+    check(`${cut}: blurb names the cut ("of their ${word} revenue")`,
+      c.blurbText.includes(`of their ${word} revenue on institutionally-zoned land`));
   }
   await page.evaluate(() => applyMetric('revenue_per_acre'));
 

@@ -234,6 +234,10 @@ const check = (name, ok, detail = '') => {
                const f = state.data.features.find(x => deviationBand(x.properties));
                return f ? main.props.getFillColor(f) : null;
              })(),
+             bandedTip: (() => {
+               const f = state.data.features.find(x => deviationBand(x.properties));
+               return f ? viewTooltip({ object: f }).html : '';
+             })(),
              tip: ua ? viewTooltip({ object: ua }).html : '' };
   });
   check('the band layers exist', !band.missing);
@@ -367,6 +371,10 @@ const check = (name, ok, detail = '') => {
   check('a caveat-only hood names the zoning share and the unpublished status',
     /institutionally-zoned land/.test(band.caveatTip)
     && /does not publish which of it is tax-exempt/.test(band.caveatTip));
+  // COPY_DECISIONS F6: one noun on every surface. The banded row said
+  // "…revenue is institutional land" until 2026-11-20.
+  check('a banded hood\'s row says "is on institutionally-zoned land" (F6)',
+    /% of its revenue is on institutionally-zoned land/.test(band.bandedTip));
   // Δt >= 0.25 contains every zero-crossing band today. A crossing band with
   // both endpoints near zero would flip the lens's above/below claim while
   // moving nothing visible; none exists, and this is how we hear about the

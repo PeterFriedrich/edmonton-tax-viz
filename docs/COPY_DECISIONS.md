@@ -274,6 +274,10 @@ every cut. Once N is the cut's own share (`docs/PROPOSAL_per_cut_exempt_share.md
 - Residential: *"N% of its residential revenue is on institutionally-zoned land"*
 - Non-residential: *"N% of its non-residential revenue is on institutionally-zoned land"*
 
+**Extended 2026-11-20 (Peter, S256):** the Lab's banded row now says
+*"…revenue is on institutionally-zoned land"* (was *"…revenue is institutional
+land"*), and the Glass azure sentence names the cut too (BG1 P3).
+
 The second line, *"the City does not publish which of it is tax-exempt"*, stays
 on every cut. All three surfaces change together (Money, Deviation and Glass
 tooltips share the string by design).
@@ -396,8 +400,8 @@ The camera flip re-renders the blurb through `currentBlurb()` (from `syncMode`),
 |---|---|
 | P1, ground | `**{legend label} in {cell} m grid cells**: property points binned to squares.` |
 | P1, lot | `**{legend label, per lot acre} in {cell} m grid cells**, over the parcel acres each cell's properties own.` |
-| P2 | `Taller, brighter spikes` (2D: `Brighter cells`) `are higher; colour is square-root scaled to show the low end. Hover the plane for neighbourhood numbers. Grey = set-aside land.` |
-| P3, revenue cuts with azure cells | `{n} azure cells are mostly institutional land, where the roll doesn't say if tax is levied: only the solid part is certain.` |
+| P2 | `Taller, brighter spikes` (2D: `Brighter cells`) `are higher; colour is square-root scaled to show the low end. Grey = set-aside land.` (2026-11-20, Peter: "Hover the plane for neighbourhood numbers." dropped to fit P3's cut word under B5's 400) |
+| P3, revenue cuts with azure cells | `{n} azure cells are ones with a quarter or more of their {cut word}revenue on institutionally-zoned land, which the roll may not levy: only the solid part is certain.` (2026-11-20, Peter: names the cut per F6, and says 25%, the `GLASS_EXEMPT_MIN` bar; was "mostly institutional land, where the roll doesn't say if tax is levied") |
 
 **Dropped:**
 - *"each cell's total divided by its ground acres"*: "per acre" in the bold term says it.
