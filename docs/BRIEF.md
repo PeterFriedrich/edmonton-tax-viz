@@ -425,6 +425,8 @@ Edmonton revenue-per-acre fiscal analysis. Python-only, no GIS software.
 - **2026-11-20** — **Every exempt-share consumer reads the share of the cut it draws; Ratio stays on the total** (proposal §2, decision 1 applied; Peter 2026-11-11 "do the proper one").
 - **2026-11-20** — **The two value grids' columns are pinned by the served-column guard, not left to the front end's fallback** (Peter, S255: "yeah sure" to pinning; TODO "Pin the grid columns", found by `/code-review` …
 - **2026-11-20** — **A `web/` PR runs the verify scripts for its change class, never the whole suite** (Peter, S257: "yeah sure"). … Rejected: the whole suite per PR (1 real catch in 14 out-of-area reds over 4 sweeps); a symbol-only selector (missed `blurbs` on #852 and everything on `2f69cca`).
+- **2026-11-20** — **The full verify sweep runs on GitHub Actions, non-blocking, and its output is one `verify-sweep` issue** (Peter, S259: "yeah go" to the plan).
+- **2026-11-20** — **A regenerated `docs/BRIEF.md` rides in the handoff PR and is self-merged; it no longer gets a PR of its own** (Peter, S260: "1. … Rejected: a separate brief PR per handoff (two piled up unmerged, #854 and #861); regenerating only before a web chat (the brief would usually be stale when used).
 
 ## Open work
 
