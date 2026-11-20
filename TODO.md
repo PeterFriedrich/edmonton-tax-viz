@@ -210,8 +210,8 @@ model reads **+$282.0M, +11.2%** over the levy the City filed for 2026.
   (2026-11-11): `docs/PROPOSAL_per_cut_exempt_share.md`.** Decision 1
   (schema) approved; **PR 1 (pipeline) #803 merged 2026-11-12.** Decisions
   2 (accept the counts) and 3 (name the cut, `COPY_DECISIONS.md` F6) made
-  2026-11-11. **Next: PR 2 (front end), after the first refresh publishes
-  the new columns** (Mon 2026-11-16).
+  2026-11-11. **PR 2 (front end) built S255, 2026-11-20, awaiting Peter's
+  merge.** Closes this item when it lands.
   - [x] **Re-measure decision 2's counts on the served file** — DONE
     2026-11-20 (S255) on the 11-16 served file; table in the proposal. One
     hood moved, VIRGINIA PARK, from the #818 dropout; everything else matches.

@@ -1440,9 +1440,7 @@
     // scored against their own half of the city (DEVIATION_POP), and a title
     // saying citywide over an average that is not would be the exact failure
     // the Lab's own state.labCut exists to prevent one level up.
-    const deviationKind = () =>
-      state.labCut === "res_revenue_per_acre" ? "residential " :
-      state.labCut === "nonres_revenue_per_acre" ? "non-residential " : "";
+    const deviationKind = () => exemptCutWord(state.labCut);
     const deviationPeers = () =>
       state.labCut === "revenue_per_acre" ? "developed neighbourhoods"
         : deviationKind() + "neighbourhoods";
@@ -3217,16 +3215,17 @@
     // (U of A printed $643 where it is $3,609), and 144 Non-residential hoods
     // at >=25% on their own cut got no caveat. Callers pass the cut they draw:
     // `state.metric` (Money), `state.labCut` (Deviation), nothing (Ratio,
-    // whose numerator is total revenue). No fallback to the total column: the
-    // per-cut columns ship, and check_served_columns.py fails the publish if
-    // they stop.
+    // whose numerator is total revenue). Only Ratio's no-cut call reads the
+    // total; a cut missing from EXEMPT_COL reads 0, never the total share. The
+    // per-cut columns are pinned by check_served_columns.py.
     const EXEMPT_COL = {
       revenue_per_acre: "rev_frac_exempt",
       res_revenue_per_acre: "rev_frac_exempt_res",
       nonres_revenue_per_acre: "rev_frac_exempt_nonres",
     };
-    const exemptFrac = (p, cut) => p[EXEMPT_COL[cut] ?? "rev_frac_exempt"] || 0;
+    const exemptFrac = (p, cut) => p[cut === undefined ? "rev_frac_exempt" : EXEMPT_COL[cut]] || 0;
     // COPY_DECISIONS F6 (option A): the caveat names the cut its share is of.
+    // Also the Lab's title word (deviationKind), so the two cannot drift.
     const exemptCutWord = cut =>
       cut === "res_revenue_per_acre" ? "residential " :
       cut === "nonres_revenue_per_acre" ? "non-residential " : "";
@@ -3310,7 +3309,7 @@
       return t(v) - t(v * (1 - exemptFrac(p, state.metric)));
     };
     // Money's outlined hoods: the caveat tier, narrowed to the ones whose two
-    // worlds do not draw the same prism. Six on Total today, and only TWO of
+    // worlds do not draw the same prism. Five on Total (11-16 roll; verify-inst-caveat.js pins the live count), and only TWO of
     // them are top-11 (U of A 2, Tawa 11) — Downtown, Wîhkwêntôwin, Garneau,
     // Spruce Ave, Central McDougall and Boyle Street keep their colour, which
     // is what makes this affordable on the default view at all.
@@ -3548,7 +3547,7 @@
       nonres_revenue_per_acre: "exempt_frac_nonres",
     };
     const gridExemptCol = () =>
-      gridData?.columns[GRID_EXEMPT_COL[state.metric] ?? "exempt_frac"] ?? -1;
+      gridData?.columns[GRID_EXEMPT_COL[state.metric]] ?? -1;
     function glassInstCells() {
       const fcol = gridExemptCol();
       const col = gridData ? gridData.columns[gridColKey()] : -1;
@@ -4988,7 +4987,7 @@
       // ⚠️ The consequence tier flattens and empties its hoods HERE, and the
       // azure band prisms below carry them instead. Fully transparent, NOT a
       // dim slab — a ramp-coloured floor under the band would assert the very
-      // value the band exists to withhold. Six hoods on Total.
+      // value the band exists to withhold. Five hoods on Total (11-16 roll).
       const banded = f => instBandedMoney(f.properties);
       const layer = new deck.GeoJsonLayer({
         id: "metric-extrusion",

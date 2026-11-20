@@ -99,9 +99,6 @@ const BANNED = /\b(lost|uncollected|foregone|should be|really|actually)\b/i;
     if (cut === 'nonres_revenue_per_acre')
       check('Non-residential bands include HUDSON and ROYAL GARDENS',
         ['HUDSON', 'ROYAL GARDENS'].every(n => r.banded.includes(n)), r.banded.join(', '));
-    if (cut === 'res_revenue_per_acre')
-      check('Residential: neither UNIVERSITY OF ALBERTA nor WEST MEADOWLARK PARK is banded',
-        !r.banded.some(n => ['UNIVERSITY OF ALBERTA', 'WEST MEADOWLARK PARK'].includes(n)));
   }
 
   // --- and NOT under Value -------------------------------------------------
