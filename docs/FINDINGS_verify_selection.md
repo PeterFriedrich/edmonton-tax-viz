@@ -149,6 +149,19 @@ uses 16 shards rather than one job per script. Triage: `docs/RUNBOOK.md` §0g.
 - **Time:** 3,003 s of script time, jobs 3,845 s, the longest job 425 s.
   The install step took at most 31 s on any job this time.
 
+**Calibration run 3 (S260, run `44814225000`, on the #865 branch `8ff32ba`):**
+84 of 84, 84 green, 0 red, 0 flaky (84 result lines, so no retries ran).
+`verify-budget-panel` (full) passed 59 checks first try (43 s); `verify-guide`
+was green in both builds (66 s, 54 s). Collected 2026-11-21 by the next
+session: S260 died in the box hang before reading it.
+
+- **Time:** 2,975 s of script time (longest: public `theme` 232 s, `peek`
+  228–230 s), jobs 3,932 s, the longest job 606 s (`full 1`), about 10.3 min
+  wall. Install step 12–277 s.
+- **Three runs, one real finding class** (the map click that should do
+  nothing) and no runner-only timing reds. `loading-overlay`'s
+  250 / 8000 / 40 ms held in all three.
+
 
 - **What:** a new workflow, `workflow_dispatch` plus weekly after the Monday
   refresh. It builds with `build_site.py`, then runs one matrix job per
