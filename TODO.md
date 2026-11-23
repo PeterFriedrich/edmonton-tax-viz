@@ -102,6 +102,11 @@ Services carries no sparkline — measured, it does.)_
 
 ## Open work
 
+### Change over time before first release (OPEN 2026-11-23, Peter: do after the verification discussion)
+
+- [ ] **Hide the public Change over time lens for the first release, then bring it back.** The math is sound. It measures share of the assessment base, so it reads as decline: 295 of the 360 neighbourhoods it rates lost share since 2012 (median -1.7%/yr). The Methods page does not explain it. Restoring it needs that section and a human check.
+- [ ] **Add a visible note for Virginia Park (#818).** Account `9977123` ($67.5M) is absent from the City's roll, and the hood's value reads $164.7M in 2023 and $113.7M in 2026. Hiding the lens does not remove this from the hood panel's history chart.
+
 _Last reconciled: 2026-09-09 (S152 — **reconciliation only; no lens, pipeline or
 served-value work.** Three records were wrong and one item was already closed by
 reality. ⚠️ **A five-day-old environment measurement had INVERTED**: the
