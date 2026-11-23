@@ -2,8 +2,8 @@
   "data_year": 2026,
   "rate_year": 2026,
   "zoning_year": 2024,
-  "generated": "2026-11-16",
-  "last_checked": "2026-11-16",
+  "generated": "2026-11-23",
+  "last_checked": "2026-11-23",
   "banner": null,
   "municipal_rates": {
     "unit": "per $1,000 assessed",
@@ -56,5 +56,25 @@
       }
     ]
   },
-  "_geojson_sha256": "4cea243ce69829c36cf15ba7b8cfba2c98e184d14b122a3ceed7bee49e0fa834"
+  "citywide_levy": {
+    "total": 2788095949,
+    "by_class": {
+      "residential": 1454852825,
+      "nonresidential": 1332703611,
+      "farmland": 539513
+    },
+    "by_zone": {
+      "never": 99609961,
+      "notyet": 26361528,
+      "inst": 135368797,
+      "res": 1333702931,
+      "com": 245547905,
+      "ind": 510648164,
+      "mix": 111013307,
+      "dc": 325834117,
+      "other": 0,
+      "unzoned": 9239
+    }
+  },
+  "_geojson_sha256": "87d54261f9c60afb430fe8e06a9a9d5d5b8f6c02c7267ee2b685110c4b8f2256"
 }

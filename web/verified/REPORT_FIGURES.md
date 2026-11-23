@@ -1,6 +1,6 @@
 # Report figures (weekly-live values)
 
-From the served data generated 2026-11-16 (roll year 2026, rate year 2026), by `tools/run_verified_notebooks.py`.
+From the served data generated 2026-11-23 (roll year 2026, rate year 2026), by `tools/run_verified_notebooks.py`.
 
 Each value is quoted as its verified notebook states it this week. The claims are in `docs/REPORT_CLAIMS.md`; a row marked live has its number here, not there.
 
