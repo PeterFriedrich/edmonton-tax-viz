@@ -27,11 +27,11 @@ per-report data description was a prose caption in `web/notebooks/index.html`.
 
 | report | `DATA_ISSUES.md` | status | invariants | re-verified |
 |---|---|---|---|---|
-| Roll year metadata | issue **1** | **ACTIVE** | 9 of 9 | 2026-09-23 |
-| Historical 2024 gap | issue **3** | **ACTIVE** | 6 of 6 | 2026-09-23 |
+| Roll year metadata | issue **1** | **ACTIVE** | 9 of 9 | 2026-11-24 |
+| Historical 2024 gap | issue **3** | **ACTIVE** | 6 of 6 | 2026-11-24 |
 | Exemption uncertainty | issue **4** | **ACTIVE** | 12 of 12 | 2026-09-23 |
 | School coverage gap | issue **5** | **ACTIVE** | 5 of 5 | 2026-10-03 |
-| Permit neighbourhood list | issue **6** | **ACTIVE** | 5 of 5 | 2026-09-17 |
+| Permit neighbourhood list | issue **6** | **ACTIVE** | 5 of 5 | 2026-11-24 |
 
 ## ⚠️ They are re-run monthly now — and what the first run found
 
