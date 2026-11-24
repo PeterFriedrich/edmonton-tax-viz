@@ -365,3 +365,55 @@ def test_branch_reminder_and_handoff_gap_are_both_reported(repo, capsys):
     hg.main(["--session-start"])
     text = json.loads(capsys.readouterr().out)["systemMessage"]
     assert "merged branches" in text and "that handoff records none of it" in text
+
+
+# --- the hooks-path reminder -------------------------------------------------
+
+
+def _ship_hooks(repo):
+    (repo / ".githooks").mkdir()
+    (repo / ".githooks" / "pre-push").write_text("#!/bin/sh\n")
+
+
+def test_hooks_reminder_fires_when_hooks_path_unset(repo, capsys):
+    _ship_hooks(repo)
+    hg.main(["--session-start"])
+    text = json.loads(capsys.readouterr().out)["systemMessage"]
+    assert "git config core.hooksPath .githooks" in text
+
+
+def test_hooks_reminder_silent_when_hooks_path_set(repo, capsys):
+    _ship_hooks(repo)
+    _run(repo, "config", "core.hooksPath", ".githooks")
+    assert hg.main(["--session-start"]) == 0
+    assert capsys.readouterr().out == ""
+
+
+def test_hooks_reminder_accepts_an_absolute_path(repo):
+    _ship_hooks(repo)
+    _run(repo, "config", "core.hooksPath", str(repo / ".githooks"))
+    assert hg.hooks_reminder() is None
+
+
+def test_hooks_reminder_fires_on_a_wrong_path(repo):
+    _ship_hooks(repo)
+    _run(repo, "config", "core.hooksPath", ".git/hooks")
+    assert hg.hooks_reminder() is not None
+
+
+def test_hooks_reminder_silent_without_githooks(repo):
+    assert hg.hooks_reminder() is None
+
+
+def test_hooks_reminder_stays_out_of_session_end(repo, capsys):
+    _ship_hooks(repo)
+    assert hg.main(["--session-end"]) == 0
+    io = capsys.readouterr()
+    assert io.out == "" and io.err == ""
+
+
+def test_hooks_reminder_expands_a_home_relative_path(repo, monkeypatch):
+    _ship_hooks(repo)
+    monkeypatch.setenv("HOME", str(repo))
+    _run(repo, "config", "core.hooksPath", "~/.githooks")
+    assert hg.hooks_reminder() is None

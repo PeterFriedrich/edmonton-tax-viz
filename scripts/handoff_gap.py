@@ -155,6 +155,27 @@ def merged_branch_reminder():
             f"without his go-ahead (TODO.md \"Branch cleanup\").")
 
 
+def hooks_reminder():
+    # type: () -> Optional[str]
+    """A reminder when the repo ships `.githooks/` but git isn't using it, else None.
+
+    `.githooks/pre-push` is what stopped work stranding on merged branches (9
+    times in edmonton-tax-viz before it, none since), but git only runs it once
+    `core.hooksPath` is set, and a fresh clone or a new cloud VM starts without
+    it. Offline: one `git config` read, no network."""
+    hooks = ROOT / ".githooks"
+    if not (hooks / "pre-push").is_file():
+        return None
+    out = _git("config", "--path", "--get", "core.hooksPath")
+    if out is not None:
+        p = Path(out.strip())
+        if (p if p.is_absolute() else ROOT / p).resolve() == hooks.resolve():
+            return None
+    return ("⚠️ The repo's git hooks are off: `core.hooksPath` isn't `.githooks`, so "
+            "`.githooks/pre-push` won't stop a push to a branch whose PR already "
+            "merged. Run `git config core.hooksPath .githooks` (CLAUDE.md).")
+
+
 def message(g, at_start=False):
     bits = []
     if g["commits"]:
@@ -194,16 +215,18 @@ def main(argv=None):
 
     try:
         g = gap()
-        # Not at SessionEnd: a prune is not something to start on the way out.
+        # Not at SessionEnd: a prune or a config fix is not something to start
+        # on the way out.
         branches = None if args.session_end else merged_branch_reminder()
+        hooks = None if args.session_end else hooks_reminder()
     except Exception:  # noqa: BLE001 — belt and braces; a hook must never raise
         return 0
-    if g is None and branches is None:
+    if g is None and branches is None and hooks is None:
         return 0  # nothing owed: say nothing, so the message means something
 
     if args.session_start:
         text = "\n\n".join(
-            t for t in (g and message(g, at_start=True), branches) if t)
+            t for t in (g and message(g, at_start=True), branches, hooks) if t)
         print(json.dumps({
             "systemMessage": text,
             "hookSpecificOutput": {
@@ -216,7 +239,7 @@ def main(argv=None):
         # shows stderr to the user. The hook must not redirect stderr away.
         sys.stderr.write(message(g) + "\n")
     else:
-        print("\n\n".join(t for t in (g and message(g), branches) if t))
+        print("\n\n".join(t for t in (g and message(g), branches, hooks) if t))
     return 0
 
 

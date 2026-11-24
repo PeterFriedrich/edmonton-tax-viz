@@ -3897,3 +3897,6 @@ ndings §10 D2.
   Findings §6.
 
 **CLOSED 2026-11-10 (S243):** Peter chose to stop showing the share there. Wording and guards in `docs/COPY_DECISIONS.md` F5; DECISIONS 2026-11-10.
+
+- [x] **`check_doc_citations.py` never scans `scripts/build_site.py` or `.github/workflows/`.** Confirmed 2026-11-11: the `".git"` entry in `EXCLUDE_PARTS` substring-matches `.github` (`any(part in p.as_posix() ...)`). Match on path components instead. The template has the same bug. **CLOSED 2026-11-24:** path components now match whole; 7 files newly scanned, 0 dead citations.
+- [x] **Port `hooks_reminder()` into `scripts/handoff_gap.py`** (template PR #84, `docs/FINDINGS_session_safety_net.md`). Without it, a fresh clone with git hooks off gets no notice at session start, so pre-push never runs there. Checked 2026-11-11: both checkouts have `core.hooksPath=.githooks`, so nothing is exposed today. Port it with the template's handoff-gap tests (its TODO X1). **CLOSED 2026-11-24:** ported with the template's six tests.

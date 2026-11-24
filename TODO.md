@@ -977,13 +977,11 @@ One small tools/tests PR, Peter merges. Neither touches a published number.
 
 ### Merge-gate guard gaps (OPEN 2026-11-11, from `template`'s guards audit, template PR #82 `docs/FINDINGS_merge_gate_guards.md`)
 
-Reported by the `template` session and not yet re-measured here, except item 2. Open question: do we wait and port the template's fixes together (its tests first, then its P1 backticked-§ check)? Peter's call.
+Reported by the `template` session and not yet re-measured here. The citation-scan gap and `hooks_reminder()` closed 2026-11-24. Open question: do we wait and port the template's remaining fixes together (its tests first, then its P1 backticked-§ check)? Peter's call.
 
 - [ ] **Silent reversals in DECISIONS.** The 2026-08-28 row, both 2026-09-01 rows and the 2026-09-15 row reverse, correct or withdraw an earlier row that carries no mark. `check_decisions_log.py` only sees five verbs in one word order, so it passes them. Mark the earlier rows, then widen the check.
-- [ ] **`check_doc_citations.py` never scans `scripts/build_site.py` or `.github/workflows/`.** Confirmed 2026-11-11: the `".git"` entry in `EXCLUDE_PARTS` substring-matches `.github` (`any(part in p.as_posix() ...)`). Match on path components instead. The template has the same bug.
 - [ ] **Four DECISIONS rows have no pointer cell.**
 - [ ] **One backticked `§2.2` citation will go red** once the template's P1 fix is ported. Fix it in the same PR.
-- [ ] **Port `hooks_reminder()` into `scripts/handoff_gap.py`** (template PR #84, `docs/FINDINGS_session_safety_net.md`). Without it, a fresh clone with git hooks off gets no notice at session start, so pre-push never runs there. Checked 2026-11-11: both checkouts have `core.hooksPath=.githooks`, so nothing is exposed today. Port it with the template's handoff-gap tests (its TODO X1).
 
 ### Cost-side data gaps (OPEN 2026-11-16, S248, `docs/SPEC_cost_gaps.md`)
 
@@ -3528,6 +3526,8 @@ archive"*) is not, and this span is 2,533 lines.
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
 
+- [x] **`check_doc_citations.py` never scanned `.github/` or `build_site.py`** — CLOSED 2026-11-24 · `docs/TODO_archive.md`
+- [x] **Port `hooks_reminder()` into `scripts/handoff_gap.py`** — CLOSED 2026-11-24 · `docs/TODO_archive.md`
 - [x] **Audit when a PR needs the whole browser suite** — CLOSED 2026-11-20 · `docs/TODO_archive.md`
 
 - [x] **SHIPPED NUMBERS WRONG — BLOCKS RELEASE (recommended): the band, the caveat percentage and the printed range on the Residential and Non-residential cut** · `docs/TODO_archive.md`
