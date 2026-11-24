@@ -175,3 +175,23 @@ def test_live_repo_citations_all_resolve():
 def test_main_exit_codes(tmp_path):
     assert main(["--root", str(_tree(tmp_path, "DATA.md §5"))]) == EXIT_OK
     assert main(["--root", str(_tree(tmp_path, "DATA.md line ~308"))]) == EXIT_DRIFT
+
+
+@pytest.mark.parametrize("rel", [".github/workflows/refresh.yml", "scripts/build_site.py"])
+def test_paths_that_only_resemble_an_exclusion_are_scanned(tmp_path, rel):
+    """".git" must not swallow .github/, nor "_site" swallow build_site.py."""
+    root = _tree(tmp_path, "DATA.md §5")
+    f = root / rel
+    f.parent.mkdir(parents=True, exist_ok=True)
+    f.write_text("# DATA.md line 3\n")
+    failures, _ = check_citations(root)
+    assert any(rel in x and "LINE NUMBER" in x for x in failures)
+
+
+@pytest.mark.parametrize("rel", ["scripts/_site/a.py", "docs/external/a.md", "tools/node_modules/a.js"])
+def test_real_exclusions_stay_excluded(tmp_path, rel):
+    root = _tree(tmp_path, "DATA.md §5")
+    f = root / rel
+    f.parent.mkdir(parents=True, exist_ok=True)
+    f.write_text("# DATA.md line 3\n")
+    assert check_citations(root)[0] == []

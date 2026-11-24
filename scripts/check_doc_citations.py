@@ -130,7 +130,10 @@ def scan_paths(root: Path) -> list[Path]:
     return sorted(
         p for p in paths
         if p.name not in EXCLUDE_NAMES
-        and not any(part in p.as_posix() for part in EXCLUDE_PARTS)
+        # Whole path components: a bare substring test made ".git" swallow .github/
+        # and "_site" swallow build_site.py, so neither was ever scanned.
+        and not any(f"/{part}/" in f"/{p.relative_to(root).as_posix()}"
+                    for part in EXCLUDE_PARTS)
     )
 
 
