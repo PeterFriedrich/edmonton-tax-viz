@@ -427,9 +427,13 @@ Edmonton revenue-per-acre fiscal analysis. Python-only, no GIS software.
 - **2026-11-20** — **A `web/` PR runs the verify scripts for its change class, never the whole suite** (Peter, S257: "yeah sure"). … Rejected: the whole suite per PR (1 real catch in 14 out-of-area reds over 4 sweeps); a symbol-only selector (missed `blurbs` on #852 and everything on `2f69cca`).
 - **2026-11-20** — **The full verify sweep runs on GitHub Actions, non-blocking, and its output is one `verify-sweep` issue** (Peter, S259: "yeah go" to the plan).
 - **2026-11-20** — **A regenerated `docs/BRIEF.md` rides in the handoff PR and is self-merged; it no longer gets a PR of its own** (Peter, S260: "1. … Rejected: a separate brief PR per handoff (two piled up unmerged, #854 and #861); regenerating only before a web chat (the brief would usually be stale when used).
+- **2026-11-23** — **The About sentence calls exempt land the likely main cause of the 11% levy gap, not the established one** (Peter: "okay soften i guess").
 
 ## Open work
 
+**Change over time before first release (OPEN 2026-11-23, Peter: do after the verification discussion)**
+- **Hide the public Change over time lens for the first release, then bring it back.** The math is sound. It measures share of the assessment base, so it reads as decline: 295 of the 360 neighbourhoods it rates lost share since 2012 (median -1.7%/yr). The Methods page does not …
+- **Add a visible note for Virginia Park (#818).** Account `9977123` ($67.5M) is absent from the City's roll, and the hood's value reads $164.7M in 2023 and $113.7M in 2026. Hiding the lens does not remove this from the hood panel's history chart.
 - **Set up the claude.ai Project and press Sync (Peter).** The brief merged in #625. Create a private Project, add the repo from GitHub, select `docs/BRIEF.md` + `docs/SPEC_*.md`, press **Sync**, and review `docs/SCOPE.md`. After that, `/handoff`'s sync check prompts for each …
 
 **Levy-as-revenue audit follow-ons (OPEN 2026-11-10, docs/FINDINGS_levy_as_revenue.md)**
