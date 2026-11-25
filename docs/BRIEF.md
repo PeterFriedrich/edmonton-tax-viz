@@ -541,13 +541,11 @@ Edmonton revenue-per-acre fiscal analysis. Python-only, no GIS software.
 
 **Merge-gate guard gaps (OPEN 2026-11-11, from `template`'s guards audit, template PR #82 `docs/FINDINGS_merge_gate_guards.md`)**
 - **Silent reversals in DECISIONS.** The 2026-08-28 row, both 2026-09-01 rows and the 2026-09-15 row reverse, correct or withdraw an earlier row that carries no mark. `check_decisions_log.py` only sees five verbs in one word order, so it passes them. Mark the earlier rows, then …
-- **`check_doc_citations.py` never scans `scripts/build_site.py` or `.github/workflows/`.** Confirmed 2026-11-11: the `".git"` entry in `EXCLUDE_PARTS` substring-matches `.github` (`any(part in p.as_posix() ...)`). Match on path components instead. The template has the same bug.
 - **Four DECISIONS rows have no pointer cell.**
 - **One backticked `§2.2` citation will go red** once the template's P1 fix is ported. Fix it in the same PR.
-- **Port `hooks_reminder()` into `scripts/handoff_gap.py`** (template PR #84, `docs/FINDINGS_session_safety_net.md`). Without it, a fresh clone with git hooks off gets no notice at session start, so pre-push never runs there. Checked 2026-11-11: both checkouts have …
 
 **Cost-side data gaps (OPEN 2026-11-16, S248, `docs/SPEC_cost_gaps.md`)**
-- **Peter: open two council documents in a browser** (both 403 to a script, re-tested 2026-11-16): `pub-edmonton.escribemeetings.com/filestream.ashx?DocumentId=164273` (*Completed NRP Projects 2009–2022*) and `DocumentId=286947` (City Auditor, Neighbourhood Renewal audit). They …
+- **Read the two road-cost council documents** (fetched 2026-11-24 by `civic-docs-index`; text in its private repo at `/home/opc/civic-docs-index/data/raw/private/text/`, never copy it into this public repo): `164273.txt` (*Completed NRP Projects 2009–2022*, complete). `286947` is …
 - **Peter's call: which of §5's prompts to run** in the claude.ai Project (P1–P5 draft report passages; P6–P10 search for missing facts). File each reply before mining it.
 - Not started, no decision taken: ingesting any dataset in §3 (snow priority routes `8pdx-hfxi`, parks `gdd9-eqv9`, trees `eecg-fc54`, 2021 census `xgkv-ii9t`). Each is a new module, so propose first.
 
