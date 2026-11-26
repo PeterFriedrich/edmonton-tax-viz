@@ -8,6 +8,8 @@ Items are verbatim as they were closed, newest-moved first in the order they app
 
 ---
 
+- [x] **Run `docs/FABLE_AUDIT_money_path_checks.md`.** — CLOSED 2026-11-26 (S264): run; matrix in `docs/FINDINGS_money_path_checks.md`, checklist in `docs/MONEY_PATH_CHECKS.md`. 16 mutations; every code mutation blocked at the merge gate; missing accounts and a wrong rate value publish green. Follow-ons below. Break each Money step on purpose (C2–C6, C8) and record which checks go red, so we know which are load-bearing and which steps only Peter's hand checks cover. Outputs the matrix in `docs/FINDINGS_money_path_checks.md` and the plain-language checklist `docs/MONEY_PATH_CHECKS.md`. Gaps get follow-on items here; new guards are code PRs.
+
 - [x] **Audit when a PR needs the whole browser suite** — CLOSED 2026-11-20 S257: no PR needs it; change-class table in `docs/CHANGE_PIPELINE.md` step 5, findings in `docs/FINDINGS_verify_selection.md` (Peter's ask,
   2026-11-20, S256). For #852, a copy-only edit to 3 strings in
   `web/index.html`, S256 ran all 44 scripts: 2,402 s (40 min), plus ~10 min lost

@@ -104,7 +104,9 @@ Services carries no sparkline — measured, it does.)_
 
 ### Release assurance: the automatic side (OPEN 2026-11-26, Peter)
 
-- [ ] **Run `docs/FABLE_AUDIT_money_path_checks.md`.** Break each Money step on purpose (C2–C6, C8) and record which checks go red, so we know which are load-bearing and which steps only Peter's hand checks cover. Outputs the matrix in `docs/FINDINGS_money_path_checks.md` and the plain-language checklist `docs/MONEY_PATH_CHECKS.md`. Gaps get follow-on items here; new guards are code PRs.
+- [ ] **A completeness check for the roll (Money-path checks F1; code PR, Peter's call).** Missing accounts never stop the publish: 1% of accounts dropped at random publishes with no signal at all (MILL WOODS PARK −32%), and the top 1% dropped (−42.9% levy) only opens a revenue-delta issue after publishing. `check_roll_year_against_fir.py` reads residential only, by design. Proposal: also band the non-residential and total taxable base against FIR, set on today's residual (`FINDINGS_levy_as_revenue.md` §0.2, +11.2% on levy). Measure the band against the last 10 refreshes before choosing fail vs warn.
+- [ ] **Compare mill-rate VALUES in the monthly digest (Money-path checks F2 = published-numbers T1b M4′, open since 2026-09-15; code PR).** A 2026 Residential rate 10% wrong passes every check (worst hood +9.99%, under the delta guard's 10%). `vintage_report.check_mill_rates` compares years only; add the pinned year's five class rates from `pwis-wc4c` vs `data/mill_rates.json`.
+- [ ] **`verify-smoke.js` zero-readout check can red a correct page (Money-path checks F3; latent; code PR).** UNIVERSITY OF ALBERTA FARM's `rev_frac_exempt` is 0.999997; when it rounds to 1.0 the tooltip's low endpoint is a true computed `$0`, and the check (which only blanks zero *properties*) stops the publish on both builds. Seen under two mutations, not on real data.
 - [ ] **Decide whether to use the GitHub wiki for reader docs (Peter's call).** Checked 2026-11-26: the wiki is enabled on this public repo and has no pages (`.wiki.git` does not exist yet). Before choosing it: a wiki is a separate git repo with no PRs and no CI, so `check_doc_citations.py` and the other doc guards can't see it, and pages drift from `docs/` with nothing to notice (this project's standing failure mode). Who may edit is a repo setting; check it before the first page. Options: (a) wiki pages generated one-way from repo docs by a script; (b) keep reader docs in `docs/` or on the Pages site and give the wiki one page of links; (c) turn the wiki off. Candidates for reader pages: `MONEY_PATH_CHECKS.md` once it exists, and the checks page.
 
 ### Change over time before first release (OPEN 2026-11-23, Peter: do after the verification discussion)
@@ -3530,6 +3532,8 @@ archive"*) is not, and this span is 2,533 lines.
 ## Done
 
 Closed items moved out of `## Open work` live in **`docs/TODO_archive.md`** — one line each below, reasoning there.
+
+- [x] **Run `docs/FABLE_AUDIT_money_path_checks.md`.** — CLOSED 2026-11-26 · `docs/TODO_archive.md`
 
 - [x] **`check_doc_citations.py` never scanned `.github/` or `build_site.py`** — CLOSED 2026-11-24 · `docs/TODO_archive.md`
 - [x] **Port `hooks_reminder()` into `scripts/handoff_gap.py`** — CLOSED 2026-11-24 · `docs/TODO_archive.md`
