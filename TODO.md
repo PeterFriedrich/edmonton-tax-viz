@@ -102,6 +102,11 @@ Services carries no sparkline — measured, it does.)_
 
 ## Open work
 
+### Waiting on the owner
+
+- [ ] **Owner runs:** `claude.ai Project → Sync now`, refreshing the whole synced set (`docs/BRIEF.md 'docs/SPEC_*.md' docs/REPORT_CLAIMS.md web/verified/REPORT_FIGURES.md`, per `docs/CLAUDE_WEB.md`); first make sure `web/verified/REPORT_FIGURES.md` is selected, since it was never confirmed added — Claude web otherwise reads a stale brief, specs and claims register (#771, #772) and no live figures · confirm: `the Project's file list shows all four paths with today's sync time, and a Claude web chat quotes this week's date from REPORT_FIGURES.md` · before the next Claude web chat or report check round · since 2026-11-18
+- [ ] **Owner runs:** `conda create -n evidence python=3.12 pandas=3.0 openpyxl matplotlib certifi jupyterlab jupytext ipykernel` on the laptop, then `git pull` — to hand-check the evidence notebooks in notebooks/standalone/ there · confirm: `conda run -n evidence python -c "import pandas, openpyxl, jupytext"` exits 0 on the laptop · when that hand-check starts; not a blocker · since 2026-11-24
+
 ### Release assurance: the automatic side (OPEN 2026-11-26, Peter)
 
 - [ ] **A completeness check for the roll (Money-path checks F1; code PR, Peter's call).** Missing accounts never stop the publish: 1% of accounts dropped at random publishes with no signal at all (MILL WOODS PARK −32%), and the top 1% dropped (−42.9% levy) only opens a revenue-delta issue after publishing. `check_roll_year_against_fir.py` reads residential only, by design. Proposal: also band the non-residential and total taxable base against FIR, set on today's residual (`FINDINGS_levy_as_revenue.md` §0.2, +11.2% on levy). Measure the band against the last 10 refreshes before choosing fail vs warn.
