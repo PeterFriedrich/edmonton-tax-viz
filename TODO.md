@@ -104,7 +104,7 @@ Services carries no sparkline — measured, it does.)_
 
 ### Waiting on the owner
 
-- [ ] **Owner runs:** `claude.ai Project → press Sync, then add web/verified/REPORT_FIGURES.md to its files` — Claude web checks the report against a stale REPORT_CLAIMS.md (#771, #772) and has never had the live-figures file · confirm: `the Project's file list shows REPORT_FIGURES.md, and a Claude web chat quotes a row from it` · before the next report check round · since 2026-11-18
+- [ ] **Owner runs:** `claude.ai Project → Sync now`, refreshing the whole synced set (`docs/BRIEF.md 'docs/SPEC_*.md' docs/REPORT_CLAIMS.md web/verified/REPORT_FIGURES.md`, per `docs/CLAUDE_WEB.md`); first make sure `web/verified/REPORT_FIGURES.md` is selected, since it was never confirmed added — Claude web otherwise reads a stale brief, specs and claims register (#771, #772) and no live figures · confirm: `the Project's file list shows all four paths with today's sync time, and a Claude web chat quotes this week's date from REPORT_FIGURES.md` · before the next Claude web chat or report check round · since 2026-11-18
 - [ ] **Owner runs:** `conda create -n evidence python=3.12 pandas=3.0 openpyxl matplotlib certifi jupyterlab jupytext ipykernel` on the laptop, then `git pull` — to hand-check the evidence notebooks in notebooks/standalone/ there · confirm: `conda run -n evidence python -c "import pandas, openpyxl, jupytext"` exits 0 on the laptop · when that hand-check starts; not a blocker · since 2026-11-24
 
 ### Release assurance: the automatic side (OPEN 2026-11-26, Peter)
