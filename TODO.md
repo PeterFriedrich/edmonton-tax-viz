@@ -102,6 +102,11 @@ Services carries no sparkline — measured, it does.)_
 
 ## Open work
 
+### Release assurance: the automatic side (OPEN 2026-11-26, Peter)
+
+- [ ] **Run `docs/FABLE_AUDIT_money_path_checks.md`.** Break each Money step on purpose (C2–C6, C8) and record which checks go red, so we know which are load-bearing and which steps only Peter's hand checks cover. Outputs the matrix in `docs/FINDINGS_money_path_checks.md` and the plain-language checklist `docs/MONEY_PATH_CHECKS.md`. Gaps get follow-on items here; new guards are code PRs.
+- [ ] **Decide whether to use the GitHub wiki for reader docs (Peter's call).** Checked 2026-11-26: the wiki is enabled on this public repo and has no pages (`.wiki.git` does not exist yet). Before choosing it: a wiki is a separate git repo with no PRs and no CI, so `check_doc_citations.py` and the other doc guards can't see it, and pages drift from `docs/` with nothing to notice (this project's standing failure mode). Who may edit is a repo setting; check it before the first page. Options: (a) wiki pages generated one-way from repo docs by a script; (b) keep reader docs in `docs/` or on the Pages site and give the wiki one page of links; (c) turn the wiki off. Candidates for reader pages: `MONEY_PATH_CHECKS.md` once it exists, and the checks page.
+
 ### Change over time before first release (OPEN 2026-11-23, Peter: do after the verification discussion)
 
 - [ ] **Hide the public Change over time lens for the first release, then bring it back.** The math is sound. It measures share of the assessment base, so it reads as decline: 295 of the 360 neighbourhoods it rates lost share since 2012 (median -1.7%/yr). The Methods page does not explain it. Restoring it needs that section and a human check.

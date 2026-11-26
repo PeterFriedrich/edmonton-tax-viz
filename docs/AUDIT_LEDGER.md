@@ -573,6 +573,16 @@ Built and verified by Opus 5.5 alone.
     row above; `docs/FINDINGS_levy_as_revenue.md`. No level UNSOUND; split-cut
     band numbers found wrong.
 
+### S263 — marked 2026-11-26, briefed
+
+23. **Which automatic checks protect the Money path?** (Peter, 2026-11-26:
+    which tests and CI checks are load-bearing.) **Briefed:**
+    `docs/FABLE_AUDIT_money_path_checks.md`. 14 mutations across C2–C6 and C8
+    of the human verification chain, each run through pytest, the data
+    guards, the Money notebook and the smoke test. Outputs a matrix
+    (`FINDINGS_money_path_checks.md`) and a plain-language checklist
+    (`MONEY_PATH_CHECKS.md`). Not run.
+
 ## Never audited (candidates, roughly ranked)
 
 Surfaces no audit run has covered, **re-ranked 2026-09-05 (S140)** at Peter's
