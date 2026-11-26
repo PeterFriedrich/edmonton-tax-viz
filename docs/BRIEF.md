@@ -431,6 +431,10 @@ Edmonton revenue-per-acre fiscal analysis. Python-only, no GIS software.
 
 ## Open work
 
+**Release assurance: the automatic side (OPEN 2026-11-26, Peter)**
+- **Run `docs/FABLE_AUDIT_money_path_checks.md`.** Break each Money step on purpose (C2–C6, C8) and record which checks go red, so we know which are load-bearing and which steps only Peter's hand checks cover. Outputs the matrix in `docs/FINDINGS_money_path_checks.md` and the …
+- **Decide whether to use the GitHub wiki for reader docs (Peter's call).** Checked 2026-11-26: the wiki is enabled on this public repo and has no pages (`.wiki.git` does not exist yet). Before choosing it: a wiki is a separate git repo with no PRs and no CI, so …
+
 **Change over time before first release (OPEN 2026-11-23, Peter: do after the verification discussion)**
 - **Hide the public Change over time lens for the first release, then bring it back.** The math is sound. It measures share of the assessment base, so it reads as decline: 295 of the 360 neighbourhoods it rates lost share since 2012 (median -1.7%/yr). The Methods page does not …
 - **Add a visible note for Virginia Park (#818).** Account `9977123` ($67.5M) is absent from the City's roll, and the hood's value reads $164.7M in 2023 and $113.7M in 2026. Hiding the lens does not remove this from the hood panel's history chart.
